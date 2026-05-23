@@ -18,7 +18,7 @@ export class Day extends Component {
 			:host {
 				display: grid;
 				grid-template-rows: min-content 1fr;
-				border-inline-end: 1px solid var(--border-color);
+				border-inline-end: var(--border);
 				position: relative;
 
 				&[data-outside-month] {
@@ -28,9 +28,9 @@ export class Day extends Component {
 
 			.header-day {
 				grid-row: 1;
-				border-bottom: 1px solid var(--border-color);
-				color: var(--text-muted);
-				background-color: var(--bg);
+				border-bottom: var(--border);
+				color: var(--color-text-muted);
+				background-color: var(--color-background);
 				position: sticky;
 				top: 0;
 				z-index: 100;
@@ -41,7 +41,7 @@ export class Day extends Component {
 					top: 0.25rem;
 					inset-inline-end: 0.65rem;
 					padding: 0.125rem 0.25rem;
-					background: var(--bg);
+					background: var(--color-background);
 					border-radius: 0.25rem;
 					border: none;
 					z-index: 10;
@@ -84,14 +84,14 @@ export class Day extends Component {
 					font-size: 0.875rem;
 					width: auto;
 					height: auto;
-					color: var(--text-light);
+					color: var(--color-text);
 					border-radius: 0.25rem;
 					padding: 0 0.125rem;
 				}
 
 				&[data-today] {
-					background-color: var(--accent);
-					color: #fff;
+					background-color: var(--color-accent);
+					color: var(--color-accent-text);
 					border-radius: 50%;
 					width: 1.75rem;
 					height: 1.75rem;
@@ -153,7 +153,7 @@ export class Day extends Component {
 			.more-btn {
 				font-size: 0.75rem;
 				font-weight: 500;
-				color: var(--text-muted);
+				color: var(--color-text-muted);
 				cursor: pointer;
 				padding: 0.125rem 0.375rem;
 				margin: 0.125rem 0.25rem 0;
@@ -165,8 +165,8 @@ export class Day extends Component {
 				}
 
 				&:hover {
-					background-color: color-mix(in srgb, var(--text-muted) 15%, transparent);
-					color: var(--text-light);
+					background-color: color-mix(in srgb, var(--color-text-muted) 15%, transparent);
+					color: var(--color-text);
 				}
 			}
 		`

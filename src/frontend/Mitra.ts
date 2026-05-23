@@ -9,12 +9,14 @@ export class Mitra extends Application {
 			${super.styles}
 
 			:root {
-				--bg: #121314;
-				--border-color: color-mix(in srgb, var(--text-light) 7.5%, var(--bg));
-				--text-muted: #888;
-				--text-light: #e3e3e3;
-				--accent: AccentColor;
-				--border: 1px solid var(--border-color);
+				color-scheme: light dark;
+				--color-background: light-dark(#ffffff, #121314);
+				--color-text: light-dark(#121314, #e3e3e3);
+				--color-text-muted: light-dark(#666666, #888888);
+				--color-accent: teal;
+				--color-accent-text: #fff;
+				--color-border: color-mix(in srgb, var(--color-text) 7.5%, var(--color-background));
+				--border: 1px solid var(--color-border);
 			}
 		`
 	}

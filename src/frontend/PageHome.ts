@@ -34,8 +34,8 @@ export class PageHome extends PageComponent {
 		return css`
 			:host {
 				padding: 0 !important;
-				background-color: var(--bg);
-				color: var(--text-light);
+				background-color: var(--color-background);
+				color: var(--color-text);
 				font-family: 'Inter', sans-serif;
 				display: flex;
 				flex-direction: column;

@@ -21,7 +21,7 @@ export class Event extends Component {
 		return css`
 			:host {
 				display: block;
-				background-color: color-mix(in srgb, var(--mitra-event-color) 25%, var(--bg));
+				background-color: color-mix(in srgb, var(--mitra-event-color) 25%, var(--color-background));
 				border-inline-start: 3px solid var(--mitra-event-color);
 				border-radius: 0.25rem;
 				color: var(--mitra-event-color);
@@ -36,9 +36,9 @@ export class Event extends Component {
 				--overlap-sp: var(--overlap-span, 1);
 
 				margin-inline-start: calc((var(--overlap-s) / var(--overlap-t)) * 100%);
-				width: min(calc((var(--overlap-sp) / var(--overlap-t)) * 100% + 0.25rem), 100%);
+				width: min(calc((var(--overlap-sp) / var(--overlap-t)) * 100% + 0.25rem), calc(100% - (var(--overlap-s) / var(--overlap-t)) * 100%));
 				z-index: calc(var(--overlap-s) + 1);
-				outline: 1px solid var(--bg);
+				outline: 1px solid var(--color-background);
 				outline-offset: -1px;
 				box-sizing: border-box;
 				container-type: size;
@@ -99,7 +99,7 @@ export class Event extends Component {
 				white-space: normal;
 				word-break: break-word;
 				line-height: 1.1;
-				color: color-mix(in srgb, var(--mitra-event-color) 50%, var(--text-light));
+				color: color-mix(in srgb, var(--mitra-event-color) 50%, var(--color-text));
 
 				@container (max-height: 45px) {
 					flex: var(--event-small-heading-flex, initial);

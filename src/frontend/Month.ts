@@ -48,7 +48,7 @@ export class Month extends Component {
 			:host {
 				display: flex;
 				flex-direction: column;
-				background-color: var(--border-color);
+				background-color: var(--color-border);
 				flex: 1;
 				min-height: 0;
 			}
@@ -57,7 +57,7 @@ export class Month extends Component {
 				display: grid;
 				grid-template-columns: repeat(7, 1fr);
 				gap: 1px;
-				background-color: var(--border-color);
+				background-color: var(--color-border);
 				z-index: 200;
 			}
 
@@ -65,7 +65,6 @@ export class Month extends Component {
 				display: grid;
 				grid-template-columns: repeat(7, 1fr);
 				gap: 1px;
-				background-color: var(--border-color);
 				flex: 1;
 				min-height: 0;
 				overflow-y: auto;
@@ -77,19 +76,19 @@ export class Month extends Component {
 			}
 
 			.weekday-header {
-				background-color: var(--bg);
+				background-color: var(--color-background);
 				padding: 0.5rem;
 				text-align: center;
 				font-size: 0.75rem;
 				font-weight: 600;
-				color: var(--text-light);
+				color: var(--color-text);
 				text-transform: uppercase;
 			}
 
 			mitra-day {
 				container-type: size;
 				height: 100%;
-				background-color: var(--bg);
+				background-color: var(--color-background);
 			}
 		`
 	}

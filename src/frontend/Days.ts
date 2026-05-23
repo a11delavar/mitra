@@ -82,12 +82,12 @@ export class Days extends Component {
 				top: 0;
 				inset-inline-start: 0;
 				z-index: 200;
-				background-color: var(--bg);
+				background-color: var(--color-background);
 				border-bottom: var(--border);
 				border-inline-end: var(--border);
 				padding: 0.625rem 0;
 				text-align: center;
-				color: var(--text-muted);
+				color: var(--color-text-muted);
 				font-size: 0.8rem;
 			}
 
@@ -107,7 +107,7 @@ export class Days extends Component {
 				position: sticky;
 				inset-inline-start: 0;
 				z-index: 90;
-				background-color: var(--bg);
+				background-color: var(--color-background);
 			}
 
 			.grid-lines {
@@ -122,7 +122,7 @@ export class Days extends Component {
 
 			.time-slot-label {
 				font-size: 0.75rem;
-				color: var(--text-muted);
+				color: var(--color-text-muted);
 				text-align: end;
 				padding-inline-end: 0.5rem;
 				transform: translateY(-50%);
