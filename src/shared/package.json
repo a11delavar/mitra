@@ -1,0 +1,7 @@
+{
+	"name": "mitra-shared",
+	"type": "module",
+	"dependencies": {
+		"@3mo/date-time": "x"
+	}
+}

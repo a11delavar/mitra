@@ -1,0 +1,11 @@
+{
+	"type": "module",
+	"scripts": {
+		"start": "node ./scripts/dev.ts"
+	},
+	"devDependencies": {
+		"@typescript/native-preview": "latest",
+		"esbuild": "*",
+		"esbuild-server": "*"
+	}
+}

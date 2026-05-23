@@ -1,0 +1,47 @@
+{
+	"include": [
+		"src/**/*.ts"
+	],
+	"compilerOptions": {
+		"incremental": true,
+		"importHelpers": true,
+		"target": "ES2024",
+		"module": "nodenext",
+		"moduleResolution": "nodenext",
+		"useDefineForClassFields": false,
+		"strict": true,
+		"noUnusedLocals": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"allowSyntheticDefaultImports": true,
+		"experimentalDecorators": true,
+		"noImplicitOverride": true,
+		"forceConsistentCasingInFileNames": true,
+		"isolatedModules": true,
+		"skipLibCheck": true,
+		"paths": {
+			"shared": [
+				"./src/shared/index.ts"
+			],
+			"shared/*": [
+				"./src/shared/*"
+			]
+		},
+		"plugins": [
+			{
+				"name": "ts-lit-plugin",
+				"strict": true,
+				"globalAttributes": [
+					"autofocus"
+				],
+				"rules": {
+					"no-missing-import": "off",
+					"no-unclosed-tag": "error",
+					"no-incompatible-type-binding": "warning",
+					"no-incompatible-property-type": "warning",
+					"no-invalid-css": "off"
+				}
+			}
+		]
+	}
+}
