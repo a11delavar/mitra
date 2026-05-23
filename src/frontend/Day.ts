@@ -1,21 +1,29 @@
-import { Component, component, html, property, css } from '@a11d/lit'
+import { Component, component, html, property, css, event } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { CalendarEvent } from 'shared'
 import './Event.js'
 
 @component('mitra-day')
 export class Day extends Component {
+	@event({ bubbles: true, composed: true }) navigate!: EventDispatcher<DateTime>
+	@event({ bubbles: true, composed: true }) switchToWeek!: EventDispatcher
+
 	@property({ type: Object }) date!: DateTime
 	@property({ type: Array }) events = new Array<CalendarEvent>()
+	@property({ type: Number }) hiddenEventsCount = 0
 	@property({ type: Boolean, reflect: true }) today = false
 
 	static override get styles() {
 		return css`
 			:host {
 				display: grid;
-				grid-template-rows: subgrid;
-				grid-row: 1 / -1;
+				grid-template-rows: min-content 1fr;
 				border-inline-end: 1px solid var(--border-color);
+				position: relative;
+
+				&[data-outside-month] {
+					opacity: 0.5;
+				}
 			}
 
 			.header-day {
@@ -27,37 +35,77 @@ export class Day extends Component {
 				top: 0;
 				z-index: 100;
 				container-type: inline-size;
+
+				@container (max-height: 450px) {
+					position: absolute;
+					top: 0.25rem;
+					inset-inline-end: 0.65rem;
+					padding: 0.125rem 0.25rem;
+					background: var(--bg);
+					border-radius: 0.25rem;
+					border: none;
+					z-index: 10;
+				}
 			}
 
 			.content {
 				display: flex;
-				flex-direction: column;
+				flex-direction: row;
 				align-items: center;
 				justify-content: center;
-				padding: 0.625rem 0;
+				padding: 0.5rem;
+				gap: 0.125rem;
 				height: 100%;
+				width: 100%;
 				box-sizing: border-box;
+
+				@container (max-height: 450px) {
+					padding: 0;
+				}
 			}
 
 			.day-name {
 				font-size: 0.85rem;
-				text-transform: uppercase;
-				letter-spacing: 1px;
-				margin-bottom: 0.25rem;
+				font-weight: 500;
+
+				@container (max-height: 450px) {
+					display: none;
+				}
 			}
 
 			.day-number {
-				font-size: 1.5rem;
-				width: 2.5rem;
-				height: 2.5rem;
+				font-size: 1.125rem;
+				font-weight: 500;
 				display: flex;
 				align-items: center;
 				justify-content: center;
+
+				@container (max-height: 450px) {
+					font-size: 0.875rem;
+					width: auto;
+					height: auto;
+					color: var(--text-light);
+					border-radius: 0.25rem;
+					padding: 0 0.125rem;
+				}
 
 				&[data-today] {
 					background-color: var(--accent);
 					color: #fff;
 					border-radius: 50%;
+					width: 1.75rem;
+					height: 1.75rem;
+					box-sizing: border-box;
+
+					@container (max-height: 450px) {
+						font-weight: 600;
+						aspect-ratio: 1;
+						min-width: 1.5rem;
+						min-height: 1.5rem;
+						width: auto;
+						height: auto;
+						padding: 0.2rem;
+					}
 				}
 			}
 
@@ -69,44 +117,56 @@ export class Day extends Component {
 				height: 100%;
 				position: relative;
 				container-type: inline-size;
+
+				@container (max-height: 450px) {
+					grid-template-rows: repeat(var(--max-slots), 1.375rem);
+					grid-auto-rows: 1.375rem;
+					row-gap: 0.125rem;
+					padding: 1.75rem 0 0 0;
+					margin-top: 0;
+					box-sizing: border-box;
+					overflow: hidden;
+				}
 			}
 
 			mitra-event {
 				grid-column: 1 / -1;
-			}
 
-			@container (max-width: 150px) {
-				.content {
-					flex-direction: row;
-					gap: 0.375rem;
-					padding: 0.25rem;
-					justify-content: flex-start;
-				}
-				.day-name { font-size: 0.75rem; margin-bottom: 0; }
-				.day-number {
-					font-size: 0.9rem; width: auto; height: auto; border-radius: 0;
-
-					&[data-today] {
-						background: none;
-						color: var(--accent);
-						font-weight: bold;
-					}
-				}
-
-				.events-container {
-					display: flex;
-					flex-direction: column;
-					gap: 0.25rem;
-					padding: 0.25rem;
-					overflow-y: auto;
-				}
-
-				mitra-event {
-					min-height: 1.5rem;
-					/* Cleanly disable JS clustering logic in narrow list mode! */
+				@container (max-height: 450px) {
+					grid-row: var(--month-slot, auto) !important;
 					--overlap-slot: 0 !important;
 					--overlap-total: 1 !important;
 					--overlap-span: 1 !important;
+
+					--event-small-flex-direction: row;
+					--event-small-align-items: center;
+					--event-small-gap: 0.375rem;
+					--event-small-padding: 0.125rem 0.375rem;
+					--event-small-time-display: block;
+					--event-small-heading-flex: 1;
+					--event-small-heading-nowrap: nowrap;
+					--event-small-heading-overflow: hidden;
+					--event-small-heading-text-overflow: ellipsis;
+				}
+			}
+
+			.more-btn {
+				font-size: 0.75rem;
+				font-weight: 500;
+				color: var(--text-muted);
+				cursor: pointer;
+				padding: 0.125rem 0.375rem;
+				margin: 0.125rem 0.25rem 0;
+				border-radius: 0.25rem;
+				transition: background-color 0.2s, color 0.2s;
+
+				@container (max-height: 450px) {
+					grid-row: var(--max-slots);
+				}
+
+				&:hover {
+					background-color: color-mix(in srgb, var(--text-muted) 15%, transparent);
+					color: var(--text-light);
 				}
 			}
 		`
@@ -122,9 +182,22 @@ export class Day extends Component {
 			</div>
 
 			<div class="events-container">
-				${CalendarEvent.cluster(this.events).map(e => html`<mitra-event .event=${e}></mitra-event>`)}
+				${this.events.map(e => html`
+					<mitra-event style="--month-slot: ${e.monthSlot !== undefined ? e.monthSlot + 1 : 'auto'};" .event=${e}></mitra-event>
+				`)}
+				${!this.hiddenEventsCount ? html.nothing : html`
+					<div class="more-btn" @click=${this.handleMoreButtonClick}>
+						${t('+${count:number} more', { count: this.hiddenEventsCount })}
+					</div>
+				`}
 			</div>
 		`
+	}
+
+	private handleMoreButtonClick = (e: Event) => {
+		e.stopPropagation()
+		this.navigate.dispatch(this.date)
+		this.switchToWeek.dispatch()
 	}
 }
 

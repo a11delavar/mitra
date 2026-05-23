@@ -4,6 +4,7 @@
 		"@a11d/lit": "x",
 		"@a11d/lit-application": "x",
 		"@a11d/lit-application-native": "x",
-		"@3mo/date-time": "x"
+		"@3mo/date-time": "x",
+		"@3mo/intersection-observer": "x"
 	}
 }

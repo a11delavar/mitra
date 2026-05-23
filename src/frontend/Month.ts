@@ -1,0 +1,137 @@
+import { Component, component, html, property, css, type PropertyValues, repeat } from '@a11d/lit'
+import { DateTime } from '@3mo/date-time'
+import { CalendarEvent } from 'shared'
+import { CalendarDatesController } from './CalendarDatesController.js'
+
+@component('mitra-month')
+export class Month extends Component {
+	@property({ type: Object }) navigatingDate = new DateTime()
+	@property({ type: Array }) events = new Array<CalendarEvent>()
+
+	private readonly buffer = new CalendarDatesController(this)
+
+	private get bufferNavigatingDate(): DateTime { return this.buffer.navigatingDate }
+	private get days(): Array<DateTime> { return this.buffer.days }
+
+	protected override initialized() {
+		this.buffer.navigatingDate = this.navigatingDate.monthStart.weekStart
+		this.buffer.scrollToDate(this.navigatingDate)
+	}
+
+	protected override updated(props: PropertyValues<this>) {
+		if (props.has('navigatingDate') && !this.navigatingDate.dayStart.equals(this.buffer.navigatingDate.dayStart)) {
+			this.buffer.navigatingDate = this.navigatingDate.monthStart.weekStart
+			this.buffer.scrollToDate(this.navigatingDate)
+		}
+	}
+
+	private handleScroll(e: Event) {
+		const target = e.target as HTMLElement
+		const daysInWeek = this.navigatingDate.daysInWeek
+		const rowCount = this.days.length / daysInWeek
+
+		const rowHeight = target.scrollHeight / rowCount
+		const centerRow = Math.floor((target.scrollTop + target.clientHeight / 2) / rowHeight)
+		const centerDate = this.days[Math.min(centerRow * daysInWeek, this.days.length - 1)]
+
+		if (centerDate && !centerDate.dayStart.equals(this.buffer.navigatingDate.dayStart)) {
+			this.buffer.navigatingDate = centerDate
+		}
+	}
+
+	private get weekDays() {
+		return CalendarDatesController.sampleWeek.map(d => d.format({ weekday: 'short' }))
+	}
+
+	static override get styles() {
+		return css`
+			:host {
+				display: flex;
+				flex-direction: column;
+				background-color: var(--border-color);
+				flex: 1;
+				min-height: 0;
+			}
+
+			.headers {
+				display: grid;
+				grid-template-columns: repeat(7, 1fr);
+				gap: 1px;
+				background-color: var(--border-color);
+				z-index: 200;
+			}
+
+			.days-grid {
+				display: grid;
+				grid-template-columns: repeat(7, 1fr);
+				gap: 1px;
+				background-color: var(--border-color);
+				flex: 1;
+				min-height: 0;
+				overflow-y: auto;
+				scrollbar-width: none;
+				overflow-anchor: auto;
+				&::-webkit-scrollbar {
+					display: none;
+				}
+			}
+
+			.weekday-header {
+				background-color: var(--bg);
+				padding: 0.5rem;
+				text-align: center;
+				font-size: 0.75rem;
+				font-weight: 600;
+				color: var(--text-light);
+				text-transform: uppercase;
+			}
+
+			mitra-day {
+				container-type: size;
+				height: 100%;
+				background-color: var(--bg);
+			}
+		`
+	}
+
+	protected override get template() {
+		const today = new DateTime().dayStart
+		const MAX_SLOTS = 4
+
+		const allClusteredEvents = CalendarEvent.clusterMonth(this.events).flatMap(e => e.items)
+
+		const getDayData = (date: DateTime) => {
+			const dayEvents = allClusteredEvents.filter(e => e.segmentDate?.dayStart.equals(date.dayStart))
+			const visible = dayEvents.filter(e => e.monthSlot !== undefined && e.monthSlot < MAX_SLOTS - 1)
+			const hiddenEventsCount = dayEvents.length - visible.length
+			return { visible, hiddenEventsCount }
+		}
+
+		return html`
+			<div class="headers">
+				${this.weekDays.map(weekday => html`<div class="weekday-header">${weekday}</div>`)}
+			</div>
+			<div class="days-grid" @scroll=${this.handleScroll} style="grid-template-rows: repeat(${this.days.length / this.navigatingDate.daysInWeek}, minmax(8.5rem, 1fr));">
+				${repeat(this.days, day => day.dayStart.toISOString(), day => {
+					const { visible, hiddenEventsCount } = getDayData(day)
+					return html`
+					<mitra-day
+						data-date=${day.dayStart.toISOString()}
+						.date=${day}
+						.events=${visible}
+						.hiddenEventsCount=${hiddenEventsCount}
+						style="--max-slots: ${MAX_SLOTS}"
+						?today=${day.dayStart.equals(today)}
+						?data-outside-month=${day.month !== this.bufferNavigatingDate.month}>
+					</mitra-day>
+				`})}
+			</div>
+		`
+	}
+}
+
+declare global {
+	interface HTMLElementTagNameMap {
+		'mitra-month': Month
+	}
+}

@@ -10,6 +10,7 @@ export class CalendarEvent {
 	slot?: number
 	total?: number
 	span?: number
+	monthSlot?: number
 	segmentDate?: DateTime
 
 	constructor(init?: Partial<CalendarEvent>) {
@@ -36,7 +37,7 @@ export class CalendarEvent {
 		const endDay = end.dayStart
 
 		if (startDay.equals(endDay) || (end.hour === 0 && end.minute === 0 && startDay.equals(endDay.subtract({ days: 1 })))) {
-			return [this]
+			return [new CalendarEvent({ ...this, segmentDate: startDay, monthSlot: this.monthSlot })]
 		}
 
 		const items = new Array<CalendarEvent>()
@@ -52,7 +53,8 @@ export class CalendarEvent {
 				...this,
 				segmentDate: currentDay,
 				continuedFromPrevious: isCrossPrevious,
-				continuesNext: isCrossNext
+				continuesNext: isCrossNext,
+				monthSlot: this.monthSlot,
 			}))
 
 			currentDay = dayEnd
@@ -63,6 +65,23 @@ export class CalendarEvent {
 
 	get duration() {
 		return this.endMinute - this.startMinute
+	}
+
+	get allDay() {
+		const { start, end } = this.range || {}
+		if (!start || !end) { return false }
+		return start.hour === 0 && start.minute === 0 && end.hour === 0 && end.minute === 0
+	}
+
+	get isTimed() {
+		// Multi-day events (segments continued across boundaries) are rendered horizontally at the top, like all-day events.
+		if (this.continuedFromPrevious || this.continuesNext) return false
+
+		// If an event starts exactly at 00:00 and ends exactly at 00:00, it is treated as an "All Day" event.
+		// These events do not have a specific duration during the day, so they are not "timed".
+		if (this.allDay) return false
+
+		return true
 	}
 
 	compareTo(other: CalendarEvent) {
@@ -88,13 +107,15 @@ export class CalendarEvent {
 		return !!start && (start.equals(dayStart) || start.isAfter(dayStart)) && start.isBefore(dayEnd)
 	}
 
-	static cluster(events: CalendarEvent[]): CalendarEvent[] {
-		if (!events || events.length === 0) return []
+	static cluster(events: Array<CalendarEvent>) {
+		if (!events?.length) {
+			return []
+		}
 
 		const sorted = [...events].sort((a, b) => a.compareTo(b))
 
-		const clusters: CalendarEvent[][] = []
-		let currentCluster: CalendarEvent[] = []
+		const clusters: Array<Array<CalendarEvent>> = []
+		let currentCluster = new Array<CalendarEvent>()
 		let clusterEnd = -1
 
 		for (const event of sorted) {
@@ -112,7 +133,7 @@ export class CalendarEvent {
 		}
 
 		for (const cluster of clusters) {
-			const columns: CalendarEvent[][] = []
+			const columns = new Array<CalendarEvent[]>()
 
 			for (const event of cluster) {
 				const col = columns.find(c => c[c.length - 1].endMinute <= event.startMinute)
@@ -135,6 +156,54 @@ export class CalendarEvent {
 					if (col.some(e => e.overlapsWith(event))) break
 					event.span++
 				}
+			}
+		}
+
+		return sorted
+	}
+
+	overlapsDaysWith(other: CalendarEvent) {
+		return this.items.some(item => !!item.segmentDate && other.fallsOnDay(item.segmentDate))
+	}
+
+	static clusterMonth(events: Array<CalendarEvent>) {
+		if (!events?.length) {
+			return []
+		}
+
+		const sorted = [...events].sort((a, b) => {
+			if (!a.range?.start || !b.range?.start || !a.range?.end || !b.range?.end) return 0
+
+			const aIsMultiDay = !a.range.start.dayStart.equals(a.range.end.dayStart)
+			const bIsMultiDay = !b.range.start.dayStart.equals(b.range.end.dayStart)
+
+			if (aIsMultiDay && !bIsMultiDay) return -1
+			if (!aIsMultiDay && bIsMultiDay) return 1
+
+			if (a.range.start.isBefore(b.range.start)) return -1
+			if (a.range.start.isAfter(b.range.start)) return 1
+
+			if (a.range.end.isAfter(b.range.end)) return -1
+			if (a.range.end.isBefore(b.range.end)) return 1
+			return 0
+		})
+
+		const rows = new Array<Array<CalendarEvent>>()
+
+		for (const event of sorted) {
+			let placed = false
+			for (let i = 0; i < rows.length; i++) {
+				const row = rows[i]
+				if (!row.some(e => e.overlapsDaysWith(event))) {
+					row.push(event)
+					event.monthSlot = i
+					placed = true
+					break
+				}
+			}
+			if (!placed) {
+				event.monthSlot = rows.length
+				rows.push([event])
 			}
 		}
 

@@ -9,8 +9,8 @@ export class Mitra extends Application {
 			${super.styles}
 
 			:root {
-				--bg: #191919;
-				--border-color: #222222;
+				--bg: #121314;
+				--border-color: color-mix(in srgb, var(--text-light) 7.5%, var(--bg));
 				--text-muted: #888;
 				--text-light: #e3e3e3;
 				--accent: AccentColor;
