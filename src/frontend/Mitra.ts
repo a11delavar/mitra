@@ -1,5 +1,10 @@
 import { component, css } from '@a11d/lit'
 import { Application, application } from '@a11d/lit-application'
+import { Month } from './Month.js'
+import { Days } from './Days.js'
+import { Day } from './Day.js'
+import { Event } from './Event.js'
+import { PageHome } from './PageHome.js'
 
 @application()
 @component('mitra-application')
@@ -18,6 +23,12 @@ export class Mitra extends Application {
 				--color-border: color-mix(in srgb, var(--color-text) 7.5%, var(--color-background));
 				--border: 1px solid var(--color-border);
 			}
+
+			${PageHome.styles}
+			${Month.styles}
+			${Days.styles}
+			${Day.styles}
+			${Event.styles}
 		`
 	}
 }

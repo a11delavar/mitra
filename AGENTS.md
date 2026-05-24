@@ -4,10 +4,11 @@ When writing code for this project, you must adhere to the following architectur
 
 - You are an expert in TypeScript, Lit, and modern CSS.
 - Use standard Lit decorators (`@component`, `@property`, `@state`).
-- Keep components small and reactive. Use shadow DOM encapsulation.
+- Keep components small and reactive. Use Light DOM encapsulation (`createRenderRoot() { return this }`) to ensure seamless View Transitions and global themability.
 - Do not use heavy frontend frameworks (React/Vue). Stick to standard web components.
 - Write concise, performant code. Avoid over-engineering.
 - For CSS, use standard nested CSS or modern native features (Container Queries, `color-mix`, native CSS variables).
+- **Idiomatic HTML/CSS Naming:** Treat CSS class names as public APIs that could be externally themed. Avoid technical or structural terms like `btn`, `wrapper`, `container`, `layout`. Use concise, unified, and semantic idiomatic names that represent the domain (e.g., `.header`, `.events`, `.time`, `.start`, `.end`, `.more`). Component templates should be as flat and simple as possible without redundant wrapper divs.
 - When generating Calendar layouts, strictly use the CSS Grid approach.
 - **Prefer CSS over JS:** If a layout can be solved with CSS Grid or Flexbox, do not use JavaScript math.
 - **Calendar Grid:** The vertical time-grid uses `1440` rows. Map minutes directly to grid rows (e.g., 9:00 AM = row `540`).

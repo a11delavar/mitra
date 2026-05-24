@@ -32,7 +32,7 @@ export class PageHome extends PageComponent {
 
 	static override get styles() {
 		return css`
-			:host {
+			mitra-page-calendar {
 				padding: 0 !important;
 				background-color: var(--color-background);
 				color: var(--color-text);
@@ -42,22 +42,24 @@ export class PageHome extends PageComponent {
 				position: absolute;
 				inset: 0;
 				overflow: hidden;
-			}
 
-			h1 {
-				border-bottom: var(--border);
-				padding: 1.25rem 1.25rem 0.625rem;
-				margin: 0;
-				font-size: 1.5rem;
-				font-weight: 500;
-			}
+				h1 {
+					border-bottom: var(--border);
+					padding: 1.25rem 1.25rem 0.625rem;
+					margin: 0;
+					font-size: 1.5rem;
+					font-weight: 500;
+				}
 
-			mitra-month, mitra-days {
-				flex: 1;
-				min-height: 0;
+				mitra-month, mitra-days {
+					flex: 1;
+					min-height: 0;
+				}
 			}
 		`
 	}
+
+	protected override createRenderRoot() { return this }
 
 	protected override get template() {
 		return html`

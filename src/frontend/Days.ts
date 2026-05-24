@@ -1,4 +1,4 @@
-import { Component, component, html, property, css, repeat, type PropertyValues } from '@a11d/lit'
+import { Component, component, html, property, css, repeat, type PropertyValues, eventListener } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { CalendarEvent } from 'shared'
 import { CalendarDatesController } from './CalendarDatesController.js'
@@ -22,9 +22,11 @@ export class Days extends Component {
 			this.buffer.navigatingDate = this.navigatingDate.monthStart.weekStart
 			this.buffer.scrollToDate(this.navigatingDate)
 		}
+		this.style.setProperty('--_days-length', this.days.length.toString())
 	}
 
-	private handleScroll(e: Event) {
+	@eventListener('scroll')
+	protected handleScroll(e: Event) {
 		const target = e.target as HTMLElement
 		const timeAxisWidth = 60 // ~3.75rem
 		const colWidth = (target.scrollWidth - timeAxisWidth) / this.days.length
@@ -37,24 +39,16 @@ export class Days extends Component {
 		}
 	}
 
-	private get gridColumnsStyle() {
-		return `var(--time-axis-width) repeat(${this.days.length}, minmax(12rem, 1fr))`
-	}
-
 	static override get styles() {
 		return css`
-			:host {
-				display: block;
+			mitra-days {
+				display: grid;
+				grid-template-rows: auto minmax(0, 1fr);
+				grid-template-columns: var(--time-axis-width) repeat(var(--_days-length), minmax(14.375rem, 1fr));
 				height: 100%;
 				min-height: 0;
 				--time-axis-width: 3.75rem;
 				container-type: inline-size;
-			}
-
-			.calendar-container {
-				display: grid;
-				grid-template-rows: auto minmax(0, 1fr);
-				height: 100%;
 				overflow-y: auto;
 				overflow-x: auto;
 				scroll-snap-type: x proximity;
@@ -66,74 +60,76 @@ export class Days extends Component {
 					display: none; /* Chrome/Safari */
 				}
 
-				&[data-hide-time-axis] {
+				&[hideTimeAxis] {
 					--time-axis-width: 0px;
 
 					.header-timezone, .time-axis, .grid-lines {
 						display: none;
 					}
 				}
-			}
 
-			.header-timezone {
-				grid-column: 1;
-				grid-row: 1;
-				position: sticky;
-				top: 0;
-				inset-inline-start: 0;
-				z-index: 200;
-				background-color: var(--color-background);
-				border-bottom: var(--border);
-				border-inline-end: var(--border);
-				padding: 0.625rem 0;
-				text-align: center;
-				color: var(--color-text-muted);
-				font-size: 0.8rem;
-			}
+				.header-timezone {
+					grid-column: 1;
+					grid-row: 1;
+					position: sticky;
+					top: 0;
+					inset-inline-start: 0;
+					z-index: 200;
+					background-color: var(--color-background);
+					border-bottom: var(--border);
+					border-inline-end: var(--border);
+					padding: 0.625rem 0;
+					text-align: center;
+					color: var(--color-text-muted);
+					font-size: 0.8rem;
+				}
 
-			mitra-day {
-				grid-row: 1 / -1;
-				grid-template-rows: subgrid;
-				scroll-snap-align: start;
-			}
+				mitra-day {
+					grid-row: 1 / -1;
+					grid-template-rows: subgrid;
+					scroll-snap-align: start;
+				}
 
-			.time-axis {
-				grid-column: 1;
-				grid-row: 2;
-				display: grid;
-				grid-template-rows: repeat(1440, var(--minute-height));
-				height: 100%;
-				border-inline-end: var(--border);
-				position: sticky;
-				inset-inline-start: 0;
-				z-index: 90;
-				background-color: var(--color-background);
-			}
+				.time-axis {
+					grid-column: 1;
+					grid-row: 2;
+					display: grid;
+					grid-template-rows: repeat(1440, var(--minute-height));
+					height: 100%;
+					border-inline-end: var(--border);
+					position: sticky;
+					inset-inline-start: 0;
+					z-index: 90;
+					background-color: var(--color-background);
+				}
 
-			.grid-lines {
-				grid-column: 2 / -1;
-				grid-row: 2;
-				display: grid;
-				grid-template-rows: repeat(1440, var(--minute-height));
-				height: 100%;
-				pointer-events: none;
-				z-index: 0;
-			}
+				.grid-lines {
+					grid-column: 2 / -1;
+					grid-row: 2;
+					display: grid;
+					grid-template-rows: repeat(1440, var(--minute-height));
+					height: 100%;
+					pointer-events: none;
+					z-index: 0;
+				}
 
-			.time-slot-label {
-				font-size: 0.75rem;
-				color: var(--color-text-muted);
-				text-align: end;
-				padding-inline-end: 0.5rem;
-				transform: translateY(-50%);
-			}
+				.time-slot-label {
+					font-size: 0.75rem;
+					color: var(--color-text-muted);
+					text-align: end;
+					padding-inline-end: 0.5rem;
+					transform: translateY(-50%);
+				}
 
-			.hour-line {
-				border-top: var(--border);
-				grid-column: 1 / -1;
+				.hour-line {
+					border-top: var(--border);
+					grid-column: 1 / -1;
+				}
 			}
 		`
 	}
+
+	protected override createRenderRoot() { return this }
 
 	protected override get template() {
 		const today = new DateTime()
@@ -144,21 +140,19 @@ export class Days extends Component {
 		}
 
 		return html`
-			<div class="calendar-container" @scroll=${this.handleScroll} ?data-hide-time-axis=${this.hideTimeAxis} style="grid-template-columns: ${this.gridColumnsStyle};">
-				<div class="header-timezone">${today.formatToParts({ timeZoneName: 'shortOffset' }).find(x => x.type === 'timeZoneName')?.value}</div>
+			<div class="header-timezone">${today.formatToParts({ timeZoneName: 'shortOffset' }).find(x => x.type === 'timeZoneName')?.value}</div>
 
-				${this.timeAxisTemplate}
+			${this.timeAxisTemplate}
 
-				${repeat(this.days, day => day.dayStart.toISOString(), (day, index) => html`
-					<mitra-day
-						data-date=${day.dayStart.toISOString()}
-						style="grid-column: ${index + 2};"
-						.date=${day}
-						.events=${getEventsForDay(day)}
-						?today=${day.dayStart.equals(today.dayStart)}
-					></mitra-day>
-				`)}
-			</div>
+			${repeat(this.days, day => day.dayStart.toISOString(), (day, index) => html`
+				<mitra-day
+					data-date=${day.dayStart.toISOString()}
+					style="grid-column: ${index + 2};"
+					.date=${day}
+					.events=${getEventsForDay(day)}
+					?today=${day.dayStart.equals(today.dayStart)}
+				></mitra-day>
+			`)}
 		`
 	}
 

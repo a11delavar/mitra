@@ -13,14 +13,16 @@ export class Event extends Component {
 			this.style.setProperty('--overlap-span', `${this.event?.span}`);
 			this.toggleAttribute('continued-from-previous', !!this.event?.continuedFromPrevious);
 			this.toggleAttribute('continues-next', !!this.event?.continuesNext);
-			this.toggleAttribute('timed', !!this.event?.isTimed);
 		}
 	}) event?: CalendarEvent
 
 	static override get styles() {
 		return css`
-			:host {
-				display: block;
+			mitra-event {
+				display: flex;
+				flex-direction: column;
+				gap: 0.125rem;
+				padding: 0.25rem 0.375rem 0;
 				background-color: color-mix(in srgb, var(--mitra-event-color) 25%, var(--color-background));
 				border-inline-start: 3px solid var(--mitra-event-color);
 				border-radius: 0.25rem;
@@ -44,19 +46,25 @@ export class Event extends Component {
 				container-type: size;
 				overflow: hidden;
 
+				@container (max-height: 45px) {
+					flex-direction: var(--event-small-flex-direction, column);
+					align-items: var(--event-small-align-items, flex-start);
+					gap: var(--event-small-gap, 0.125rem);
+					padding: var(--event-small-padding, 0.25rem 0.375rem 0);
+				}
+
 				&[continues-next] {
 					border-end-start-radius: 0;
 					border-end-end-radius: 0;
 					border-bottom: 2px dashed color-mix(in srgb, var(--mitra-event-color) 50%, transparent);
-
-					.layout-wrapper { padding-bottom: 0; }
+					padding-bottom: 0;
 
 					@container (max-height: 45px) {
 						border-start-end-radius: 0;
 						border-end-end-radius: 0;
 						border-bottom: none;
 						margin-inline-end: -0.25rem;
-						.layout-wrapper { padding-inline-end: 0.5rem; }
+						padding-inline-end: 0.5rem;
 					}
 				}
 
@@ -64,8 +72,7 @@ export class Event extends Component {
 					border-start-start-radius: 0;
 					border-start-end-radius: 0;
 					border-top: 2px dashed color-mix(in srgb, var(--mitra-event-color) 50%, transparent);
-
-					.layout-wrapper { padding-top: 0; }
+					padding-top: 0;
 
 					@container (max-height: 45px) {
 						border-start-start-radius: 0;
@@ -73,84 +80,67 @@ export class Event extends Component {
 						border-top: none;
 						border-inline-start: none;
 						margin-inline-start: -0.25rem;
-						.layout-wrapper { padding-inline-start: 0.5rem; }
+						padding-inline-start: 0.5rem;
 					}
 				}
-			}
 
-			.layout-wrapper {
-				display: flex;
-				flex-direction: column;
-				gap: 0.125rem;
-				padding: 0.25rem 0.375rem 0;
-				height: 100%;
-				box-sizing: border-box;
+				.heading {
+					font-weight: 600;
+					white-space: normal;
+					word-break: break-word;
+					line-height: 1.1;
 
-				@container (max-height: 45px) {
-					flex-direction: var(--event-small-flex-direction, column);
-					align-items: var(--event-small-align-items, flex-start);
-					gap: var(--event-small-gap, 0.125rem);
-					padding: var(--event-small-padding, 0.25rem 0.375rem 0);
-				}
-			}
+					@container (max-height: 45px) {
+						flex: var(--event-small-heading-flex, initial);
+						white-space: var(--event-small-heading-nowrap, normal);
+						overflow: var(--event-small-heading-overflow, visible);
+						text-overflow: var(--event-small-heading-text-overflow, clip);
+						min-width: 0;
+					}
 
-			.heading {
-				font-weight: 600;
-				white-space: normal;
-				word-break: break-word;
-				line-height: 1.1;
+					@container (max-height: 20px) {
+						white-space: nowrap;
+					}
 
-				@container (max-height: 45px) {
-					flex: var(--event-small-heading-flex, initial);
-					white-space: var(--event-small-heading-nowrap, normal);
-					overflow: var(--event-small-heading-overflow, visible);
-					text-overflow: var(--event-small-heading-text-overflow, clip);
-					min-width: 0;
+					@container (max-height: 12px) {
+						display: none;
+					}
 				}
 
-				@container (max-height: 20px) {
+				.time {
+					opacity: 0.75;
+					font-size: 0.7rem;
 					white-space: nowrap;
+					text-overflow: ellipsis;
+					overflow: hidden;
+
+					@container (max-height: 45px) {
+						display: var(--event-small-time-display, none);
+						flex-shrink: 0;
+					}
+
+					.separator, .end {
+						@container (max-height: 45px) {
+							display: none;
+						}
+					}
 				}
-
-				@container (max-height: 12px) {
-					display: none;
-				}
-			}
-
-			.time {
-				opacity: 0.75;
-				font-size: 0.7rem;
-				white-space: nowrap;
-				text-overflow: ellipsis;
-				overflow: hidden;
-
-				@container (max-height: 45px) {
-					display: var(--event-small-time-display, none);
-					flex-shrink: 0;
-				}
-			}
-
-			.end-time {
-				@container (max-height: 45px) {
-					display: none;
-				}
-			}
-
-			:host(:not([timed])) .time {
-				display: none;
 			}
 		`
 	}
 
+	protected override createRenderRoot() { return this }
+
 	protected override get template() {
 		return !this.event ? html.nothing : html`
-			<div class="layout-wrapper">
+			${!this.event.isTimed ? html.nothing : html`
 				<div class="time">
-					${this.event.range?.start?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}<span class="end-time"> - ${this.event.range?.end?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+					<span class="start">${this.event.range?.start?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+					<span class="separator"> - </span>
+					<span class="end">${this.event.range?.end?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
 				</div>
-				<div class="heading">${this.event.heading}</div>
-				<slot></slot>
-			</div>
+			`}
+			<div class="heading">${this.event.heading}</div>
 		`
 	}
 }

@@ -45,53 +45,54 @@ export class Month extends Component {
 
 	static override get styles() {
 		return css`
-			:host {
+			mitra-month {
 				display: flex;
 				flex-direction: column;
 				background-color: var(--color-border);
 				flex: 1;
 				min-height: 0;
-			}
 
-			.headers {
-				display: grid;
-				grid-template-columns: repeat(7, 1fr);
-				gap: 1px;
-				background-color: var(--color-border);
-				z-index: 200;
-			}
-
-			.days-grid {
-				display: grid;
-				grid-template-columns: repeat(7, 1fr);
-				gap: 1px;
-				flex: 1;
-				min-height: 0;
-				overflow-y: auto;
-				scrollbar-width: none;
-				overflow-anchor: auto;
-				&::-webkit-scrollbar {
-					display: none;
+				.headers {
+					display: grid;
+					grid-template-columns: repeat(7, 1fr);
+					gap: 1px;
+					background-color: var(--color-border);
+					z-index: 200;
 				}
-			}
 
-			.weekday-header {
-				background-color: var(--color-background);
-				padding: 0.5rem;
-				text-align: center;
-				font-size: 0.75rem;
-				font-weight: 600;
-				color: var(--color-text);
-				text-transform: uppercase;
-			}
+				.days {
+					display: grid;
+					grid-template-columns: repeat(7, 1fr);
+					gap: 1px;
+					flex: 1;
+					min-height: 0;
+					overflow-y: auto;
+					scrollbar-width: none;
+					overflow-anchor: auto;
+					&::-webkit-scrollbar {
+						display: none;
+					}
+				}
 
-			mitra-day {
-				container-type: size;
-				height: 100%;
-				background-color: var(--color-background);
+				.weekday {
+					background-color: var(--color-background);
+					padding: 0.5rem;
+					text-align: center;
+					font-size: 0.75rem;
+					font-weight: 600;
+					color: var(--color-text);
+					text-transform: uppercase;
+				}
+
+				mitra-day {
+					container-type: size;
+					height: 100%;
+				}
 			}
 		`
 	}
+
+	protected override createRenderRoot() { return this }
 
 	protected override get template() {
 		const today = new DateTime().dayStart
@@ -108,22 +109,23 @@ export class Month extends Component {
 
 		return html`
 			<div class="headers">
-				${this.weekDays.map(weekday => html`<div class="weekday-header">${weekday}</div>`)}
+				${this.weekDays.map(weekday => html`<div class="weekday">${weekday}</div>`)}
 			</div>
-			<div class="days-grid" @scroll=${this.handleScroll} style="grid-template-rows: repeat(${this.days.length / this.navigatingDate.daysInWeek}, minmax(8.5rem, 1fr));">
+			<div class="days" @scroll=${this.handleScroll} style="grid-template-rows: repeat(${this.days.length / this.navigatingDate.daysInWeek}, minmax(8.5rem, 1fr));">
 				${repeat(this.days, day => day.dayStart.toISOString(), day => {
 					const { visible, hiddenEventsCount } = getDayData(day)
 					return html`
-					<mitra-day
-						data-date=${day.dayStart.toISOString()}
-						.date=${day}
-						.events=${visible}
-						.hiddenEventsCount=${hiddenEventsCount}
-						style="--max-slots: ${MAX_SLOTS}"
-						?today=${day.dayStart.equals(today)}
-						?data-outside-month=${day.month !== this.bufferNavigatingDate.month}>
-					</mitra-day>
-				`})}
+						<mitra-day
+							data-date=${day.dayStart.toISOString()}
+							.date=${day}
+							.events=${visible}
+							.hiddenEventsCount=${hiddenEventsCount}
+							style="--max-slots: ${MAX_SLOTS}"
+							?today=${day.dayStart.equals(today)}
+							?data-with-background=${day.month === this.bufferNavigatingDate.month}>
+						</mitra-day>
+					`
+				})}
 			</div>
 		`
 	}
