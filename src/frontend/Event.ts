@@ -11,7 +11,7 @@ export class Event extends Component {
 			this.style.setProperty('--overlap-slot', `${this.segment?.slot}`);
 			this.style.setProperty('--overlap-total', `${this.segment?.total}`);
 			this.style.setProperty('--overlap-span', `${this.segment?.span}`);
-			this.style.setProperty('--month-slot', this.segment?.monthSlot !== undefined ? `${this.segment.monthSlot + 1}` : 'auto');
+			this.style.setProperty('--month-slot', this.segment?.monthSlot !== undefined ? `${this.segment.monthSlot + 2}` : 'auto');
 			this.toggleAttribute('continued-from-previous', !!this.segment?.continuedFromPrevious);
 			this.toggleAttribute('continues-next', !!this.segment?.continuesNext);
 			if (this.segment?.segmentDate) {
@@ -26,12 +26,12 @@ export class Event extends Component {
 				display: flex;
 				flex-direction: column;
 				gap: 0.125rem;
-				padding: 0.25rem 0.375rem 0;
+				padding: 0.125rem 0.25rem 0;
 				background-color: color-mix(in srgb, var(--mitra-event-color) 25%, var(--color-background));
 				border-inline-start: 3px solid var(--mitra-event-color);
 				border-radius: 0.25rem;
 				color: color-mix(in srgb, var(--mitra-event-color) 60%, var(--color-text));
-				font-size: 0.75rem;
+				font-size: 0.7rem;
 				margin-top: 1px;
 				min-height: 0;
 				grid-row: var(--mitra-event-grid-row);
@@ -111,7 +111,7 @@ export class Event extends Component {
 
 				.time {
 					opacity: 0.75;
-					font-size: 0.7rem;
+					font-size: 0.65rem;
 					white-space: nowrap;
 					text-overflow: ellipsis;
 					overflow: hidden;

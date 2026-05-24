@@ -18,34 +18,37 @@ export class Day extends Component {
 			mitra-day {
 				display: grid;
 				grid-template-rows: min-content 1fr;
-				border-inline-end: var(--border);
 				position: relative;
 				transition: background 0.15s ease;
 
 				&[data-with-background] {
-					background: var(--color-background);
+					background: var(--color-surface);
+				}
+
+				&:not([data-with-background]) {
+					.number {
+						color: var(--color-text-muted);
+					}
 				}
 
 				.header {
 					grid-row: 1;
-					border-bottom: var(--border);
 					color: var(--color-text-muted);
 					position: sticky;
 					top: 0;
 					z-index: 100;
-					container-type: inline-size;
 					display: flex;
 					flex-direction: row;
-					align-items: center;
+					align-items: baseline;
 					justify-content: center;
-					padding: 0.5rem;
-					gap: 0.125rem;
+					padding: 0.5rem 0.25rem;
+					gap: 0.375rem;
 					box-sizing: border-box;
 
 					@container (max-height: 450px) {
 						position: absolute;
 						top: 0.25rem;
-						inset-inline-end: 0.65rem;
+						inset-inline-end: 0.25rem;
 						padding: 0.125rem 0.25rem;
 						border-radius: 0.25rem;
 						border: none;
@@ -54,7 +57,7 @@ export class Day extends Component {
 				}
 
 				.name {
-					font-size: 0.85rem;
+					font-size: 0.75rem;
 					font-weight: 500;
 
 					@container (max-height: 450px) {
@@ -63,7 +66,7 @@ export class Day extends Component {
 				}
 
 				.number {
-					font-size: 1.125rem;
+					font-size: 0.875rem;
 					font-weight: 500;
 					display: flex;
 					align-items: center;
@@ -81,21 +84,26 @@ export class Day extends Component {
 					&[data-today] {
 						background-color: var(--color-accent);
 						color: var(--color-accent-text);
-						border-radius: 50%;
-						width: 1.75rem;
-						height: 1.75rem;
+						border-radius: 1rem;
+						min-width: 1.35rem;
+						height: 1.35rem;
+						padding: 0 0.35rem;
 						box-sizing: border-box;
 						view-transition-name: today-badge;
 
 						@container (max-height: 450px) {
 							font-weight: 600;
-							aspect-ratio: 1;
 							min-width: 1.5rem;
 							min-height: 1.5rem;
 							width: auto;
 							height: auto;
-							padding: 0.2rem;
+							padding: 0.2rem 0.4rem;
 						}
+					}
+
+					.month {
+						font-weight: 700;
+						margin-inline-end: 0.25rem;
 					}
 				}
 
@@ -107,12 +115,12 @@ export class Day extends Component {
 					height: 100%;
 					position: relative;
 					container-type: inline-size;
+					padding-inline: 1px;
 
 					@container (max-height: 450px) {
-						grid-template-rows: repeat(var(--max-slots), 1.375rem);
+						grid-template-rows: 1.75rem repeat(var(--max-slots), 1.375rem);
 						grid-auto-rows: 1.375rem;
 						row-gap: 0.125rem;
-						padding: 1.75rem 0 0 0;
 						margin-top: 0;
 						box-sizing: border-box;
 						overflow: hidden;
@@ -121,22 +129,14 @@ export class Day extends Component {
 
 				mitra-event {
 					grid-column: 1 / -1;
+					z-index: 2;
+					position: relative;
 
 					@container (max-height: 450px) {
 						grid-row: var(--month-slot, auto) !important;
 						--overlap-slot: 0 !important;
 						--overlap-total: 1 !important;
 						--overlap-span: 1 !important;
-
-						--event-small-flex-direction: row;
-						--event-small-align-items: center;
-						--event-small-gap: 0.375rem;
-						--event-small-padding: 0.125rem 0.375rem;
-						--event-small-time-display: block;
-						--event-small-heading-flex: 1;
-						--event-small-heading-nowrap: nowrap;
-						--event-small-heading-overflow: hidden;
-						--event-small-heading-text-overflow: ellipsis;
 					}
 				}
 
@@ -151,7 +151,8 @@ export class Day extends Component {
 					transition: background-color 0.2s, color 0.2s;
 
 					@container (max-height: 450px) {
-						grid-row: var(--max-slots);
+						grid-row: calc(var(--max-slots) + 1);
+						grid-column: 1 / -1;
 					}
 
 					&:hover {
@@ -169,7 +170,10 @@ export class Day extends Component {
 		return html`
 			<div class="header">
 				<div class="name">${this.date.format({ weekday: 'short' })}</div>
-				<div class="number" ?data-today=${this.today}>${this.date.format({ day: 'numeric' })}</div>
+				<div class="number" ?data-today=${this.today}>
+					${this.date.day === 1 ? html`<span class="month">${this.date.format({ month: 'short' })}</span>` : html.nothing}
+					${this.date.format({ day: 'numeric' })}
+				</div>
 			</div>
 
 			<div class="events">

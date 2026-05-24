@@ -117,46 +117,60 @@ export class EventSegment {
 			return []
 		}
 
-		const sorted = [...segments].sort((a, b) => {
-			if (!a.event.start || !b.event.start || !a.event.end || !b.event.end) return 0
+		const segmentsByEvent = new Map<CalendarEvent, EventSegment[]>()
+		for (const segment of segments) {
+			const arr = segmentsByEvent.get(segment.event) || []
+			arr.push(segment)
+			segmentsByEvent.set(segment.event, arr)
+		}
 
-			const aIsMultiDay = !a.event.start.dayStart.equals(a.event.end.dayStart)
-			const bIsMultiDay = !b.event.start.dayStart.equals(b.event.end.dayStart)
+		const uniqueEvents = Array.from(segmentsByEvent.keys())
+
+		const sortedEvents = uniqueEvents.sort((a, b) => {
+			if (!a.start || !b.start || !a.end || !b.end) return 0
+
+			const aIsMultiDay = !a.start.dayStart.equals(a.end.dayStart)
+			const bIsMultiDay = !b.start.dayStart.equals(b.end.dayStart)
 
 			if (aIsMultiDay && !bIsMultiDay) return -1
 			if (!aIsMultiDay && bIsMultiDay) return 1
 
-			if (a.event.start.isBefore(b.event.start)) return -1
-			if (a.event.start.isAfter(b.event.start)) return 1
+			if (a.start.isBefore(b.start)) return -1
+			if (a.start.isAfter(b.start)) return 1
 
-			if (a.event.end.isAfter(b.event.end)) return -1
-			if (a.event.end.isBefore(b.event.end)) return 1
+			if (a.end.isAfter(b.end)) return -1
+			if (a.end.isBefore(b.end)) return 1
 			return 0
 		})
 
-		const rows = new Array<Array<EventSegment>>()
+		const rows = new Array<Array<CalendarEvent>>()
 
-		for (const segment of sorted) {
+		for (const event of sortedEvents) {
+			const eventSegments = segmentsByEvent.get(event)!
 			let placed = false
 			for (let i = 0; i < rows.length; i++) {
 				const row = rows[i]
-				const overlaps = row.some(s => {
-					return s.event.segments.some(si => !!si.segmentDate && segment.fallsOnDay(si.segmentDate))
+				
+				const overlaps = row.some(rowEvent => {
+					const rowEventSegments = segmentsByEvent.get(rowEvent)!
+					return rowEventSegments.some(rs => 
+						!!rs.segmentDate && eventSegments.some(es => !!es.segmentDate && es.segmentDate.equals(rs.segmentDate))
+					)
 				})
 
 				if (!overlaps) {
-					row.push(segment)
-					segment.monthSlot = i
+					row.push(event)
+					eventSegments.forEach(s => s.monthSlot = i)
 					placed = true
 					break
 				}
 			}
 			if (!placed) {
-				segment.monthSlot = rows.length
-				rows.push([segment])
+				eventSegments.forEach(s => s.monthSlot = rows.length)
+				rows.push([event])
 			}
 		}
 
-		return sorted
+		return segments
 	}
 }

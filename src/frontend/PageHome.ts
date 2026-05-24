@@ -18,7 +18,8 @@ export class PageHome extends PageComponent {
 
 		transition(async () => {
 			this.view = value
-			await new Promise(resolve => setTimeout(resolve, 100))
+			await this.updateComplete
+			await Promise.all([...this.renderRoot.querySelectorAll('mitra-event')].map(e => e.updateComplete))
 		})
 	}
 
@@ -58,11 +59,12 @@ export class PageHome extends PageComponent {
 				overflow: hidden;
 
 				h1 {
-					border-bottom: var(--border);
-					padding: 1.25rem 1.25rem 0.625rem;
+					padding: 0.75rem 1.25rem;
 					margin: 0;
-					font-size: 1.5rem;
-					font-weight: 500;
+					font-size: 1.375rem;
+					font-weight: 600;
+					letter-spacing: -0.01em;
+					color: var(--color-text);
 				}
 
 				mitra-month, mitra-days {

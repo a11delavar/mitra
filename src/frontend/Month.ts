@@ -55,8 +55,6 @@ export class Month extends Component {
 				.headers {
 					display: grid;
 					grid-template-columns: repeat(7, 1fr);
-					gap: 1px;
-					background-color: var(--color-border);
 					z-index: 200;
 				}
 
@@ -75,13 +73,11 @@ export class Month extends Component {
 				}
 
 				.weekday {
-					background-color: var(--color-background);
 					padding: 0.5rem;
 					text-align: center;
-					font-size: 0.75rem;
-					font-weight: 600;
+					font-size: 0.8rem;
+					font-weight: 500;
 					color: var(--color-text);
-					text-transform: uppercase;
 				}
 
 				mitra-day {

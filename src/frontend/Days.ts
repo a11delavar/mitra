@@ -73,7 +73,8 @@ export class Days extends Component {
 			mitra-days {
 				display: grid;
 				grid-template-rows: auto minmax(0, 1fr);
-				grid-template-columns: var(--time-axis-width) repeat(var(--_days-length), minmax(14.375rem, 1fr));
+				grid-template-columns: var(--time-axis-width) repeat(var(--_days-length), minmax(10rem, 1fr));
+				gap: 1px;
 				height: 100%;
 				min-height: 0;
 				--time-axis-width: 3.75rem;
@@ -97,6 +98,10 @@ export class Days extends Component {
 					grid-row: 1 / -1;
 					grid-template-rows: subgrid;
 					scroll-snap-align: start;
+
+					.events {
+						background-color: var(--color-surface);
+					}
 				}
 
 				& > .time {
@@ -115,7 +120,8 @@ export class Days extends Component {
 						padding: 0.625rem 0;
 						text-align: center;
 						color: var(--color-text-muted);
-						font-size: 0.8rem;
+						font-size: 0.65rem;
+						font-weight: 600;
 					}
 
 					.axis {
@@ -137,16 +143,18 @@ export class Days extends Component {
 							transform: translateY(-50%);
 							background-color: var(--color-accent);
 							color: var(--color-accent-text);
-							padding: 0.125rem 0.375rem;
+							padding: 0.125rem 0.25rem;
 							border-radius: 4px;
-							font-size: 0.75rem;
-							font-weight: bold;
-							z-index: 101;
+							font-size: 0.65rem;
+							font-weight: 600;
+							z-index: 10;
 							line-height: 1;
 						}
 
 						.hour {
-							font-size: 0.75rem;
+							font-size: 0.65rem;
+							font-weight: 500;
+							height: min-content;
 							color: var(--color-text-muted);
 							text-align: end;
 							padding-inline-end: 0.5rem;
@@ -166,17 +174,18 @@ export class Days extends Component {
 						.hour {
 							border-top: var(--border);
 							grid-column: 1 / -1;
+							z-index: 1;
 						}
 
 						.now {
 							grid-column: 1 / -1;
-							align-self: start;
-							transform: translateY(-50%);
-							z-index: 99;
-							pointer-events: none;
 							display: grid;
 							grid-template-columns: subgrid;
 							align-items: center;
+							z-index: 10;
+							align-self: start;
+							transform: translateY(-50%);
+							pointer-events: none;
 
 							.track {
 								grid-column: 1 / -1;
@@ -229,6 +238,10 @@ export class Days extends Component {
 	}
 
 	private get timeTemplate() {
+		if (this.hideTime) {
+			return html.nothing
+		}
+
 		const today = new DateTime()
 		const reference = this.days[0] || today
 		const todayIndex = this.days.findIndex(d => d.dayStart.equals(today.dayStart))
@@ -237,25 +250,28 @@ export class Days extends Component {
 
 		return html`
 			<div class="time">
-				<div class="timezone">${today.formatToParts({ timeZoneName: 'shortOffset' }).find(x => x.type === 'timeZoneName')?.value}</div>
+				<div class="timezone">${today.formatToParts({ timeZoneName: 'shortGeneric' }).find(x => x.type === 'timeZoneName')?.value}</div>
 
 				<div class="axis">
-					${Array.from({ length: reference.hoursInDay }).map((_, i) => html`
-						<div class="hour" style="grid-row: ${i * 60 + 1};">
-							${i === 0 || !reference ? '' : reference.with({ hour: i, minute: 0, second: 0, millisecond: 0 }).format({ hour: '2-digit', minute: '2-digit', hour12: false })}
-						</div>
-					`)}
+					${Array.from({ length: reference.hoursInDay }).map((_, i) => {
+						const isCloseToNow = todayIndex !== -1 && Math.abs(i * 60 - currentMinute) < 15
+						const timeText = (i === 0 || !reference || isCloseToNow) ? '' : reference.with({ hour: i, minute: 0, second: 0, millisecond: 0 }).format({ hour: '2-digit', minute: '2-digit', hour12: false })
+						return html`
+							<div class="hour" style="grid-row: ${i * 60 + 1};">
+								${timeText}
+							</div>
+						`
+					})}
 					${todayIndex === -1 ? html.nothing : html`
-						<div class="now" style="grid-row: ${currentMinute + 1};">
-							${currentTimeString}
-						</div>
+						<div class="now" style="grid-row: ${currentMinute + 1};">${currentTimeString}</div>
 					`}
 				</div>
 
 				<div class="overlays">
-					${Array.from({ length: reference.hoursInDay }).map((_, i) => html`
-						<div class="hour" style="grid-row: ${i * 60 + 1};"></div>
-					`)}
+					${Array.from({ length: reference.hoursInDay }).map((_, i) => {
+						if (i === 0) return html.nothing
+						return html`<div class="hour" style="grid-row: ${i * 60 + 1};"></div>`
+					})}
 
 					${todayIndex === -1 ? html.nothing : html`
 						<div class="now" style="grid-row: ${currentMinute + 1};">

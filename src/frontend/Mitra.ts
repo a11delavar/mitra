@@ -15,12 +15,13 @@ export class Mitra extends Application {
 
 			:root {
 				color-scheme: light dark;
-				--color-background: light-dark(#ffffff, #121314);
-				--color-text: light-dark(#121314, #e3e3e3);
-				--color-text-muted: light-dark(#666666, #888888);
+				--color-background: color-mix(in srgb, light-dark(#f1f3f4, #121314), var(--color-accent) 2%);
+				--color-surface: color-mix(in srgb, light-dark(#ffffff, #191a1b), var(--color-accent) 4%);
+				--color-text: color-mix(in srgb, light-dark(#3c4043, #e3e3e3), var(--color-accent) 2%);
+				--color-text-muted: light-dark(#70757a, #9aa0a6);
 				--color-accent: #e05252;
-				--color-accent-text: white;
-				--color-border: color-mix(in srgb, var(--color-text) 7.5%, var(--color-background));
+				--color-accent-text: black;
+				--color-border: var(--color-background);
 				--border: 1px solid var(--color-border);
 			}
 
