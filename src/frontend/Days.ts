@@ -7,10 +7,32 @@ import { CalendarDatesController } from './CalendarDatesController.js'
 export class Days extends Component {
 	@property({ type: Object }) navigatingDate = new DateTime()
 	@property({ type: Array }) events = new Array<CalendarEvent>()
-	@property({ type: Boolean, reflect: true }) hideTimeAxis = false
+	@property({ type: Boolean, reflect: true }) hideTime = false
 
 	private readonly buffer = new CalendarDatesController(this)
 	private get days(): Array<DateTime> { return this.buffer.days }
+
+	private timeTimeout?: ReturnType<typeof setTimeout>
+
+	protected override connected() {
+		super.connected()
+		this.scheduleTimeUpdate()
+	}
+
+	private scheduleTimeUpdate() {
+		const now = new DateTime()
+		const msUntilNextMinute = 60_000 - (now.second * 1000 + now.millisecond)
+		clearTimeout(this.timeTimeout)
+		this.timeTimeout = setTimeout(() => {
+			this.requestUpdate()
+			this.scheduleTimeUpdate()
+		}, msUntilNextMinute)
+	}
+
+	protected override disconnected() {
+		super.disconnected()
+		clearTimeout(this.timeTimeout)
+	}
 
 	protected override initialized() {
 		this.buffer.navigatingDate = this.navigatingDate
@@ -65,28 +87,8 @@ export class Days extends Component {
 					display: none; /* Chrome/Safari */
 				}
 
-				&[hideTimeAxis] {
+				&[hideTime] {
 					--time-axis-width: 0px;
-
-					.header-timezone, .time-axis, .grid-lines {
-						display: none;
-					}
-				}
-
-				.header-timezone {
-					grid-column: 1;
-					grid-row: 1;
-					position: sticky;
-					top: 0;
-					inset-inline-start: 0;
-					z-index: 200;
-					background-color: var(--color-background);
-					border-bottom: var(--border);
-					border-inline-end: var(--border);
-					padding: 0.625rem 0;
-					text-align: center;
-					color: var(--color-text-muted);
-					font-size: 0.8rem;
 				}
 
 				mitra-day {
@@ -95,40 +97,121 @@ export class Days extends Component {
 					scroll-snap-align: start;
 				}
 
-				.time-axis {
-					grid-column: 1;
-					grid-row: 2;
-					display: grid;
-					grid-template-rows: repeat(1440, var(--minute-height));
-					height: 100%;
-					border-inline-end: var(--border);
-					position: sticky;
-					inset-inline-start: 0;
-					z-index: 90;
-					background-color: var(--color-background);
-				}
+				& > .time {
+					display: contents;
 
-				.grid-lines {
-					grid-column: 2 / -1;
-					grid-row: 2;
-					display: grid;
-					grid-template-rows: repeat(1440, var(--minute-height));
-					height: 100%;
-					pointer-events: none;
-					z-index: 0;
-				}
+					.timezone {
+						grid-column: 1;
+						grid-row: 1;
+						position: sticky;
+						top: 0;
+						inset-inline-start: 0;
+						z-index: 200;
+						background-color: var(--color-background);
+						border-bottom: var(--border);
+						border-inline-end: var(--border);
+						padding: 0.625rem 0;
+						text-align: center;
+						color: var(--color-text-muted);
+						font-size: 0.8rem;
+					}
 
-				.time-slot-label {
-					font-size: 0.75rem;
-					color: var(--color-text-muted);
-					text-align: end;
-					padding-inline-end: 0.5rem;
-					transform: translateY(-50%);
-				}
+					.axis {
+						grid-column: 1;
+						grid-row: 2;
+						display: grid;
+						grid-template-rows: repeat(1440, var(--minute-height));
+						height: 100%;
+						border-inline-end: var(--border);
+						position: sticky;
+						inset-inline-start: 0;
+						z-index: 110;
+						background-color: var(--color-background);
 
-				.hour-line {
-					border-top: var(--border);
-					grid-column: 1 / -1;
+						.now {
+							grid-column: 1;
+							justify-self: end;
+							align-self: start;
+							transform: translateY(-50%);
+							background-color: var(--color-accent);
+							color: var(--color-accent-text);
+							padding: 0.125rem 0.375rem;
+							border-radius: 4px;
+							font-size: 0.75rem;
+							font-weight: bold;
+							z-index: 101;
+							line-height: 1;
+						}
+
+						.hour {
+							font-size: 0.75rem;
+							color: var(--color-text-muted);
+							text-align: end;
+							padding-inline-end: 0.5rem;
+							transform: translateY(-50%);
+						}
+					}
+
+					.overlays {
+						grid-column: 2 / -1;
+						grid-row: 2;
+						display: grid;
+						grid-template-rows: repeat(1440, var(--minute-height));
+						grid-template-columns: subgrid;
+						height: 100%;
+						pointer-events: none;
+
+						.hour {
+							border-top: var(--border);
+							grid-column: 1 / -1;
+						}
+
+						.now {
+							grid-column: 1 / -1;
+							align-self: start;
+							transform: translateY(-50%);
+							z-index: 99;
+							pointer-events: none;
+							display: grid;
+							grid-template-columns: subgrid;
+							align-items: center;
+
+							.track {
+								grid-column: 1 / -1;
+								grid-row: 1;
+								height: 1px;
+								background-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
+							}
+
+							.line {
+								grid-row: 1;
+								height: 2px;
+								background-color: var(--color-accent);
+								position: relative;
+								overflow: visible;
+
+								&::before, &::after {
+									content: '';
+									position: absolute;
+									top: 50%;
+									width: 9px;
+									height: 9px;
+									border-radius: 50%;
+									background-color: var(--color-accent);
+								}
+
+								&::before {
+									inset-inline-start: 0;
+									transform: translate(-50%, -50%);
+								}
+
+								&::after {
+									inset-inline-end: 0;
+									transform: translate(50%, -50%);
+								}
+							}
+						}
+					}
 				}
 			}
 		`
@@ -137,18 +220,60 @@ export class Days extends Component {
 	protected override createRenderRoot() { return this }
 
 	protected override get template() {
+		return html`
+			${this.timeTemplate}
+			${this.dateTemplate}
+		`
+	}
+
+	private get timeTemplate() {
+		const today = new DateTime()
+		const reference = this.days[0] || today
+		const todayIndex = this.days.findIndex(d => d.dayStart.equals(today.dayStart))
+		const currentMinute = today.hour * 60 + today.minute
+		const currentTimeString = today.format({ hour: '2-digit', minute: '2-digit', hour12: false })
+
+		return html`
+			<div class="time">
+				<div class="timezone">${today.formatToParts({ timeZoneName: 'shortOffset' }).find(x => x.type === 'timeZoneName')?.value}</div>
+
+				<div class="axis">
+					${Array.from({ length: reference.hoursInDay }).map((_, i) => html`
+						<div class="hour" style="grid-row: ${i * 60 + 1};">
+							${i === 0 || !reference ? '' : reference.with({ hour: i, minute: 0, second: 0, millisecond: 0 }).format({ hour: '2-digit', minute: '2-digit', hour12: false })}
+						</div>
+					`)}
+					${todayIndex === -1 ? html.nothing : html`
+						<div class="now" style="grid-row: ${currentMinute + 1};">
+							${currentTimeString}
+						</div>
+					`}
+				</div>
+
+				<div class="overlays">
+					${Array.from({ length: reference.hoursInDay }).map((_, i) => html`
+						<div class="hour" style="grid-row: ${i * 60 + 1};"></div>
+					`)}
+
+					${todayIndex === -1 ? html.nothing : html`
+						<div class="now" style="grid-row: ${currentMinute + 1};">
+							<div class="track"></div>
+							<div class="line" style="grid-column: ${todayIndex + 1};"></div>
+						</div>
+					`}
+				</div>
+			</div>
+		`
+	}
+
+	private get dateTemplate() {
 		const today = new DateTime()
 		const allItems = this.events.flatMap(e => e.items)
 		const getEventsForDay = (date: DateTime) => {
 			const dayEvents = allItems.filter(e => e.fallsOnDay(date))
 			return dayEvents.length ? CalendarEvent.cluster(dayEvents) : []
 		}
-
 		return html`
-			<div class="header-timezone">${today.formatToParts({ timeZoneName: 'shortOffset' }).find(x => x.type === 'timeZoneName')?.value}</div>
-
-			${this.timeAxisTemplate}
-
 			${repeat(this.days, day => day.dayStart.toISOString(), (day, index) => html`
 				<mitra-day
 					data-date=${day.dayStart.toISOString()}
@@ -158,25 +283,6 @@ export class Days extends Component {
 					?today=${day.dayStart.equals(today.dayStart)}
 				></mitra-day>
 			`)}
-		`
-	}
-
-	private get timeAxisTemplate() {
-		const reference = this.days[0] || new DateTime()
-		return html`
-			<div class="time-axis">
-				${Array.from({ length: reference.hoursInDay }).map((_, i) => html`
-					<div class="time-slot-label" style="grid-row: ${i * 60 + 1};">
-						${i === 0 || !reference ? '' : reference.with({ hour: i, minute: 0, second: 0, millisecond: 0 }).format({ hour: '2-digit', minute: '2-digit', hour12: false })}
-					</div>
-				`)}
-			</div>
-
-			<div class="grid-lines">
-				${Array.from({ length: reference.hoursInDay }).map((_, i) => html`
-					<div class="hour-line" style="grid-row: ${i * 60 + 1};"></div>
-				`)}
-			</div>
 		`
 	}
 }

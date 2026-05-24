@@ -18,8 +18,8 @@ export class Mitra extends Application {
 				--color-background: light-dark(#ffffff, #121314);
 				--color-text: light-dark(#121314, #e3e3e3);
 				--color-text-muted: light-dark(#666666, #888888);
-				--color-accent: teal;
-				--color-accent-text: #fff;
+				--color-accent: #e05252;
+				--color-accent-text: white;
 				--color-border: color-mix(in srgb, var(--color-text) 7.5%, var(--color-background));
 				--border: 1px solid var(--color-border);
 			}

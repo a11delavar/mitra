@@ -30,7 +30,7 @@ export class Event extends Component {
 				background-color: color-mix(in srgb, var(--mitra-event-color) 25%, var(--color-background));
 				border-inline-start: 3px solid var(--mitra-event-color);
 				border-radius: 0.25rem;
-				color: color-mix(in srgb, var(--mitra-event-color) 60%, var(--mo-color-foreground, var(--color-text, black)));
+				color: color-mix(in srgb, var(--mitra-event-color) 60%, var(--color-text));
 				font-size: 0.75rem;
 				margin-top: 1px;
 				min-height: 0;
@@ -44,8 +44,6 @@ export class Event extends Component {
 				margin-inline-start: calc((var(--overlap-s) / var(--overlap-t)) * 100%);
 				width: min(calc((var(--overlap-sp) / var(--overlap-t)) * 100% + 0.25rem), calc(100% - (var(--overlap-s) / var(--overlap-t)) * 100%));
 				z-index: calc(var(--overlap-s) + 1);
-				outline: 1px solid var(--color-background);
-				outline-offset: -1px;
 				box-sizing: border-box;
 				container-type: size;
 				overflow: hidden;
