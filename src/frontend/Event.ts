@@ -24,7 +24,7 @@ export class Event extends Component {
 				background-color: color-mix(in srgb, var(--mitra-event-color) 25%, var(--color-background));
 				border-inline-start: 3px solid var(--mitra-event-color);
 				border-radius: 0.25rem;
-				color: var(--mitra-event-color);
+				color: color-mix(in srgb, var(--mitra-event-color) 60%, var(--mo-color-foreground, var(--color-text, black)));
 				font-size: 0.75rem;
 				margin-top: 1px;
 				min-height: 0;
@@ -99,7 +99,6 @@ export class Event extends Component {
 				white-space: normal;
 				word-break: break-word;
 				line-height: 1.1;
-				color: color-mix(in srgb, var(--mitra-event-color) 50%, var(--color-text));
 
 				@container (max-height: 45px) {
 					flex: var(--event-small-heading-flex, initial);

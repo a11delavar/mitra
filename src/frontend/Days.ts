@@ -1,4 +1,4 @@
-import { Component, component, html, property, css, repeat } from '@a11d/lit'
+import { Component, component, html, property, css, repeat, type PropertyValues } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { CalendarEvent } from 'shared'
 import { CalendarDatesController } from './CalendarDatesController.js'
@@ -17,7 +17,7 @@ export class Days extends Component {
 		this.buffer.scrollToDate(this.navigatingDate)
 	}
 
-	protected override updated(props: Map<PropertyKey, unknown>) {
+	protected override updated(props: PropertyValues<this>) {
 		if (props.has('navigatingDate') && !this.navigatingDate.dayStart.equals(this.buffer.navigatingDate.dayStart)) {
 			this.buffer.navigatingDate = this.navigatingDate.monthStart.weekStart
 			this.buffer.scrollToDate(this.navigatingDate)
