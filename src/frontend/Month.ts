@@ -1,6 +1,6 @@
 import { Component, component, html, property, css, type PropertyValues, repeat } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { CalendarEvent } from 'shared'
+import { CalendarEvent, EventSegment } from 'shared'
 import { CalendarDatesController } from './CalendarDatesController.js'
 
 @component('mitra-month')
@@ -125,12 +125,12 @@ export class Month extends Component {
 		const today = new DateTime().dayStart
 		const MAX_SLOTS = 4
 
-		const allClusteredEvents = CalendarEvent.clusterMonth(this.events).flatMap(e => e.items)
+		const allClusteredSegments = EventSegment.clusterMonth(this.events.flatMap(e => e.segments))
 
 		const getDayData = (date: DateTime) => {
-			const dayEvents = allClusteredEvents.filter(e => e.segmentDate?.dayStart.equals(date.dayStart))
-			const visible = dayEvents.filter(e => e.monthSlot !== undefined && e.monthSlot < MAX_SLOTS - 1)
-			const hiddenEventsCount = dayEvents.length - visible.length
+			const daySegments = allClusteredSegments.filter(s => s.segmentDate?.dayStart.equals(date.dayStart))
+			const visible = daySegments.filter(s => s.monthSlot !== undefined && s.monthSlot < MAX_SLOTS - 1)
+			const hiddenEventsCount = daySegments.length - visible.length
 			return { visible, hiddenEventsCount }
 		}
 

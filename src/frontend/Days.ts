@@ -1,6 +1,6 @@
 import { Component, component, html, property, css, repeat, type PropertyValues, eventListener } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { CalendarEvent } from 'shared'
+import { CalendarEvent, EventSegment } from 'shared'
 import { CalendarDatesController } from './CalendarDatesController.js'
 
 @component('mitra-days')
@@ -55,8 +55,10 @@ export class Days extends Component {
 
 		// The browser centers the element within the "snapport", which excludes the time axis.
 		// So we must calculate the center pixel of the snapport, not the whole client area.
+		// Math.abs() is required because in RTL, scrollLeft is negative.
+		const scrollDistance = Math.abs(target.scrollLeft)
 		const snapportCenterOffset = timeAxisWidth + (target.clientWidth - timeAxisWidth) / 2
-		const centerPixel = target.scrollLeft + snapportCenterOffset
+		const centerPixel = scrollDistance + snapportCenterOffset
 
 		const centerCol = Math.floor((centerPixel - timeAxisWidth) / colWidth)
 		const centerDate = this.days[Math.min(Math.max(0, centerCol), this.days.length - 1)]
@@ -268,10 +270,10 @@ export class Days extends Component {
 
 	private get dateTemplate() {
 		const today = new DateTime()
-		const allItems = this.events.flatMap(e => e.items)
+		const allSegments = this.events.flatMap(e => e.segments)
 		const getEventsForDay = (date: DateTime) => {
-			const dayEvents = allItems.filter(e => e.fallsOnDay(date))
-			return dayEvents.length ? CalendarEvent.cluster(dayEvents) : []
+			const dayEvents = allSegments.filter(e => e.fallsOnDay(date))
+			return dayEvents.length ? EventSegment.cluster(dayEvents) : []
 		}
 		return html`
 			${repeat(this.days, day => day.dayStart.toISOString(), (day, index) => html`

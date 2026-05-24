@@ -1,6 +1,6 @@
 import { Component, component, html, property, css, event } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { CalendarEvent } from 'shared'
+import { EventSegment } from 'shared'
 import './Event.js'
 
 @component('mitra-day')
@@ -9,7 +9,7 @@ export class Day extends Component {
 	@event({ bubbles: true, composed: true }) switchToWeek!: EventDispatcher
 
 	@property({ type: Object }) date!: DateTime
-	@property({ type: Array }) events = new Array<CalendarEvent>()
+	@property({ type: Array }) events = new Array<EventSegment>()
 	@property({ type: Number }) hiddenEventsCount = 0
 	@property({ type: Boolean, reflect: true }) today = false
 
@@ -173,7 +173,7 @@ export class Day extends Component {
 			</div>
 
 			<div class="events">
-				${this.events.map(e => html`<mitra-event .event=${e}></mitra-event>`)}
+				${this.events.map(s => html`<mitra-event .segment=${s}></mitra-event>`)}
 				${!this.hiddenEventsCount ? html.nothing : html`
 					<div class="more" @click=${this.handleMoreButtonClick}>
 						${t('+${count:number} more', { count: this.hiddenEventsCount })}

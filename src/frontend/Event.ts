@@ -1,24 +1,24 @@
 import { component, html, property, Component, css } from '@a11d/lit'
-import { CalendarEvent } from 'shared'
+import { EventSegment } from 'shared'
 
 @component('mitra-event')
 export class Event extends Component {
 	@property({
 		type: Object,
 		updated(this: Event) {
-			this.style.setProperty('--mitra-event-color', this.event?.color || '');
-			this.style.setProperty('--mitra-event-grid-row', `${this.event?.startMinute} / ${this.event?.endMinute}`);
-			this.style.setProperty('--overlap-slot', `${this.event?.slot}`);
-			this.style.setProperty('--overlap-total', `${this.event?.total}`);
-			this.style.setProperty('--overlap-span', `${this.event?.span}`);
-			this.style.setProperty('--month-slot', this.event?.monthSlot !== undefined ? `${this.event.monthSlot + 1}` : 'auto');
-			this.toggleAttribute('continued-from-previous', !!this.event?.continuedFromPrevious);
-			this.toggleAttribute('continues-next', !!this.event?.continuesNext);
-			if (this.event?.segmentDate) {
-				this.style.viewTransitionName = `event-${this.event.id}-${this.event.segmentDate.toISOString().split('T')[0]}`
+			this.style.setProperty('--mitra-event-color', this.segment?.event.color || '');
+			this.style.setProperty('--mitra-event-grid-row', `${this.segment?.startMinute} / ${this.segment?.endMinute}`);
+			this.style.setProperty('--overlap-slot', `${this.segment?.slot}`);
+			this.style.setProperty('--overlap-total', `${this.segment?.total}`);
+			this.style.setProperty('--overlap-span', `${this.segment?.span}`);
+			this.style.setProperty('--month-slot', this.segment?.monthSlot !== undefined ? `${this.segment.monthSlot + 1}` : 'auto');
+			this.toggleAttribute('continued-from-previous', !!this.segment?.continuedFromPrevious);
+			this.toggleAttribute('continues-next', !!this.segment?.continuesNext);
+			if (this.segment?.segmentDate) {
+				this.style.viewTransitionName = `event-${this.segment.event.id}-${this.segment.segmentDate.toISOString().split('T')[0]}`
 			}
 		}
-	}) event?: CalendarEvent
+	}) segment?: EventSegment
 
 	static override get styles() {
 		return css`
@@ -134,15 +134,15 @@ export class Event extends Component {
 	protected override createRenderRoot() { return this }
 
 	protected override get template() {
-		return !this.event ? html.nothing : html`
-			${!this.event.isTimed ? html.nothing : html`
+		return !this.segment ? html.nothing : html`
+			${!this.segment.isTimed ? html.nothing : html`
 				<div class="time">
-					<span class="start">${this.event.range?.start?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-					<span class="separator"> - </span>
-					<span class="end">${this.event.range?.end?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+					<span class="start">${this.segment.event.start?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+					<span class="separator">-</span>
+					<span class="end">${this.segment.event.end?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
 				</div>
 			`}
-			<div class="heading">${this.event.heading}</div>
+			<div class="heading">${this.segment.event.heading}</div>
 		`
 	}
 }
