@@ -11,8 +11,12 @@ export class Event extends Component {
 			this.style.setProperty('--overlap-slot', `${this.event?.slot}`);
 			this.style.setProperty('--overlap-total', `${this.event?.total}`);
 			this.style.setProperty('--overlap-span', `${this.event?.span}`);
+			this.style.setProperty('--month-slot', this.event?.monthSlot !== undefined ? `${this.event.monthSlot + 1}` : 'auto');
 			this.toggleAttribute('continued-from-previous', !!this.event?.continuedFromPrevious);
 			this.toggleAttribute('continues-next', !!this.event?.continuesNext);
+			if (this.event?.segmentDate) {
+				this.style.viewTransitionName = `event-${this.event.id}-${this.event.segmentDate.toISOString().split('T')[0]}`
+			}
 		}
 	}) event?: CalendarEvent
 
@@ -47,10 +51,10 @@ export class Event extends Component {
 				overflow: hidden;
 
 				@container (max-height: 45px) {
-					flex-direction: var(--event-small-flex-direction, column);
-					align-items: var(--event-small-align-items, flex-start);
-					gap: var(--event-small-gap, 0.125rem);
-					padding: var(--event-small-padding, 0.25rem 0.375rem 0);
+					flex-direction: column;
+					align-items: flex-start;
+					gap: 0.125rem;
+					padding: 0.25rem 0.375rem 0;
 				}
 
 				&[continues-next] {
@@ -91,10 +95,10 @@ export class Event extends Component {
 					line-height: 1.1;
 
 					@container (max-height: 45px) {
-						flex: var(--event-small-heading-flex, initial);
-						white-space: var(--event-small-heading-nowrap, normal);
-						overflow: var(--event-small-heading-overflow, visible);
-						text-overflow: var(--event-small-heading-text-overflow, clip);
+						flex: initial;
+						white-space: normal;
+						overflow: visible;
+						text-overflow: clip;
 						min-width: 0;
 					}
 
@@ -115,7 +119,7 @@ export class Event extends Component {
 					overflow: hidden;
 
 					@container (max-height: 45px) {
-						display: var(--event-small-time-display, none);
+						display: none;
 						flex-shrink: 0;
 					}
 

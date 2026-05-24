@@ -13,13 +13,13 @@ export class Days extends Component {
 	private get days(): Array<DateTime> { return this.buffer.days }
 
 	protected override initialized() {
-		this.buffer.navigatingDate = this.navigatingDate.monthStart.weekStart
+		this.buffer.navigatingDate = this.navigatingDate
 		this.buffer.scrollToDate(this.navigatingDate)
 	}
 
 	protected override updated(props: PropertyValues<this>) {
 		if (props.has('navigatingDate') && !this.navigatingDate.dayStart.equals(this.buffer.navigatingDate.dayStart)) {
-			this.buffer.navigatingDate = this.navigatingDate.monthStart.weekStart
+			this.buffer.navigatingDate = this.navigatingDate
 			this.buffer.scrollToDate(this.navigatingDate)
 		}
 		this.style.setProperty('--_days-length', this.days.length.toString())
@@ -30,7 +30,12 @@ export class Days extends Component {
 		const target = e.target as HTMLElement
 		const timeAxisWidth = 60 // ~3.75rem
 		const colWidth = (target.scrollWidth - timeAxisWidth) / this.days.length
-		const centerPixel = target.scrollLeft + target.clientWidth / 2
+
+		// The browser centers the element within the "snapport", which excludes the time axis.
+		// So we must calculate the center pixel of the snapport, not the whole client area.
+		const snapportCenterOffset = timeAxisWidth + (target.clientWidth - timeAxisWidth) / 2
+		const centerPixel = target.scrollLeft + snapportCenterOffset
+
 		const centerCol = Math.floor((centerPixel - timeAxisWidth) / colWidth)
 		const centerDate = this.days[Math.min(Math.max(0, centerCol), this.days.length - 1)]
 

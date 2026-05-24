@@ -1,6 +1,7 @@
 import { DateTime, DateTimeRange } from '@3mo/date-time'
 
 export class CalendarEvent {
+	id = Math.random().toString(36).substring(2, 9)
 	heading = ''
 	color?: string
 	range!: DateTimeRange

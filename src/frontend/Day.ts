@@ -85,6 +85,7 @@ export class Day extends Component {
 						width: 1.75rem;
 						height: 1.75rem;
 						box-sizing: border-box;
+						view-transition-name: today-badge;
 
 						@container (max-height: 450px) {
 							font-weight: 600;
@@ -172,12 +173,7 @@ export class Day extends Component {
 			</div>
 
 			<div class="events">
-				${this.events.map(e => html`
-					<mitra-event
-						style="--month-slot: ${e.monthSlot !== undefined ? e.monthSlot + 1 : 'auto'};"
-						.event=${e}>
-					</mitra-event>
-				`)}
+				${this.events.map(e => html`<mitra-event .event=${e}></mitra-event>`)}
 				${!this.hiddenEventsCount ? html.nothing : html`
 					<div class="more" @click=${this.handleMoreButtonClick}>
 						${t('+${count:number} more', { count: this.hiddenEventsCount })}

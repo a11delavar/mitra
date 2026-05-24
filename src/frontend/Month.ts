@@ -14,13 +14,13 @@ export class Month extends Component {
 	private get days(): Array<DateTime> { return this.buffer.days }
 
 	protected override initialized() {
-		this.buffer.navigatingDate = this.navigatingDate.monthStart.weekStart
+		this.buffer.navigatingDate = this.navigatingDate
 		this.buffer.scrollToDate(this.navigatingDate)
 	}
 
 	protected override updated(props: PropertyValues<this>) {
 		if (props.has('navigatingDate') && !this.navigatingDate.dayStart.equals(this.buffer.navigatingDate.dayStart)) {
-			this.buffer.navigatingDate = this.navigatingDate.monthStart.weekStart
+			this.buffer.navigatingDate = this.navigatingDate
 			this.buffer.scrollToDate(this.navigatingDate)
 		}
 	}
@@ -34,7 +34,7 @@ export class Month extends Component {
 		const centerRow = Math.floor((target.scrollTop + target.clientHeight / 2) / rowHeight)
 		const centerDate = this.days[Math.min(centerRow * daysInWeek, this.days.length - 1)]
 
-		if (centerDate && !centerDate.dayStart.equals(this.buffer.navigatingDate.dayStart)) {
+		if (centerDate && !centerDate.monthStart.equals(this.buffer.navigatingDate.monthStart)) {
 			this.buffer.navigatingDate = centerDate
 		}
 	}
@@ -87,6 +87,33 @@ export class Month extends Component {
 				mitra-day {
 					container-type: size;
 					height: 100%;
+
+					mitra-event {
+						grid-row: var(--month-slot, auto) !important;
+						--overlap-slot: 0 !important;
+						--overlap-total: 1 !important;
+						--overlap-span: 1 !important;
+
+						flex-direction: row !important;
+						align-items: center !important;
+						gap: 0.375rem !important;
+						padding: 0.125rem 0.375rem !important;
+
+						.time {
+							display: block !important;
+							.separator, .end {
+								display: none !important;
+							}
+						}
+
+						.heading {
+							flex: 1 !important;
+							white-space: nowrap !important;
+							overflow: hidden !important;
+							text-overflow: ellipsis !important;
+							display: block !important;
+						}
+					}
 				}
 			}
 		`

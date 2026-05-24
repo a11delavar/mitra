@@ -9,6 +9,20 @@ export class PageHome extends PageComponent {
 	@state() navigatingDate = new DateTime()
 	@state() view: 'week' | 'month' = 'week'
 
+	private setView(value: 'week' | 'month') {
+		if (this.view === value) {
+			return
+		}
+
+		const transition = (fn: () => Promise<void>) => !document.startViewTransition ? fn() : document.startViewTransition(fn)
+
+		transition(async () => {
+			this.view = value
+			await new Promise(resolve => setTimeout(resolve, 100))
+		})
+	}
+
+
 	@eventListener({ target: window, type: 'keydown' })
 	protected handleKeyDown(e: KeyboardEvent) {
 		if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
@@ -17,10 +31,10 @@ export class PageHome extends PageComponent {
 
 		switch (e.key.toLowerCase()) {
 			case 'w':
-				this.view = 'week'
+				this.setView('week')
 				break
 			case 'm':
-				this.view = 'month'
+				this.setView('month')
 				break
 			case 't':
 				this.navigatingDate = new DateTime()
@@ -75,7 +89,7 @@ export class PageHome extends PageComponent {
 					.events=${sampleEvents}
 					.navigatingDate=${this.navigatingDate}
 					@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
-					@switchToWeek=${() => this.view = 'week'}
+					@switchToWeek=${() => this.setView('week')}
 				></mitra-month>
 			`}
 		`
