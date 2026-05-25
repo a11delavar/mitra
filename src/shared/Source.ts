@@ -23,7 +23,7 @@ export class Source {
 	@property({ type: 'boolean' }) enabled = false
 	@property({ type: 'string', nullable: true }) syncToken?: string
 	@property({ type: 'string', nullable: true }) ctag?: string
-	@oneToMany(() => Entry, entry => entry.source, { cascade: [cascade.ALL] }) entries = new Collection<Entry>(this)
+	@oneToMany(() => Entry, entry => entry.source, { cascade: [cascade.ALL], orphanRemoval: true }) entries = new Collection<Entry>(this)
 
 	constructor(init?: Partial<Source>) {
 		Object.assign(this, init)

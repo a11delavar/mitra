@@ -4,7 +4,7 @@ import { Month } from './Month.js'
 import { Days } from './Days.js'
 import { Day } from './Day.js'
 import { EventSegmentC } from './EventSegment.js'
-import { PageHome } from './PageHome.js'
+import { PageCalendar } from './PageCalendar.js'
 
 @application()
 @component('mitra-application')
@@ -25,7 +25,7 @@ export class Mitra extends Application {
 				--border: 1px solid var(--color-border);
 			}
 
-			${PageHome.styles}
+			${PageCalendar.styles}
 			${Month.styles}
 			${Days.styles}
 			${Day.styles}

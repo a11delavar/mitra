@@ -1,12 +1,46 @@
-import { component, html, state, css, eventListener } from '@a11d/lit'
+import { component, html, state, css, eventListener, Controller } from '@a11d/lit'
 import { PageComponent, route } from '@a11d/lit-application'
 import { Task } from '@lit/task'
 import { DateTime } from '@3mo/date-time'
 import { fetchEvents } from './Api.js'
 
+class FetcherController extends Controller {
+	private readonly eventSource = new EventSource('/api/events')
+
+	constructor(override readonly host: PageCalendar) {
+		super(host)
+	}
+
+	readonly task = new Task(this.host, {
+		args: () => [this.host.navigatingDate.month, this.host.navigatingDate.year] as const,
+		task: () => {
+			const start = this.host.navigatingDate.monthStart.subtract({ months: 1 })
+			const end = this.host.navigatingDate.monthEnd.add({ months: 1 })
+			return fetchEvents(start, end)
+		}
+	})
+
+	get value() {
+		return this.task.value || []
+	}
+
+	override hostConnected() {
+		this.task.run()
+		this.eventSource.onmessage = (event) => {
+			if (event.data === 'updated') {
+				this.task.run()
+			}
+		}
+	}
+
+	override hostDisconnected() {
+		this.eventSource?.close()
+	}
+}
+
 @component('mitra-page-calendar')
 @route('/')
-export class PageHome extends PageComponent {
+export class PageCalendar extends PageComponent {
 	@state() navigatingDate = new DateTime()
 	@state() view: 'week' | 'month' = 'week'
 
@@ -24,15 +58,7 @@ export class PageHome extends PageComponent {
 		})
 	}
 
-
-	private readonly fetchTask = new Task(this, {
-		args: () => [this.navigatingDate.month, this.navigatingDate.year] as const,
-		task: () => {
-			const start = this.navigatingDate.monthStart.subtract({ months: 1 })
-			const end = this.navigatingDate.monthEnd.add({ months: 1 })
-			return fetchEvents(start, end)
-		}
-	})
+	private readonly fetcher = new FetcherController(this)
 
 	@eventListener({ target: window, type: 'keydown' })
 	protected handleKeyDown(e: KeyboardEvent) {
@@ -57,6 +83,10 @@ export class PageHome extends PageComponent {
 
 	static override get styles() {
 		return css`
+			lit-page {
+				display: contents;
+			}
+
 			mitra-page-calendar {
 				padding: 0 !important;
 				background-color: var(--color-background);
@@ -88,23 +118,25 @@ export class PageHome extends PageComponent {
 	protected override createRenderRoot() { return this }
 
 	protected override get template() {
-		const entries = this.fetchTask.value || []
+		const entries = this.fetcher.value
 		return html`
-			<h1>${this.navigatingDate.format({ month: 'long', year: 'numeric' })}</h1>
-			${this.view === 'week' ? html`
-				<mitra-days
-					.entries=${entries}
-					.navigatingDate=${this.navigatingDate}
-					@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
-				></mitra-days>
-			` : html`
-				<mitra-month
-					.entries=${entries}
-					.navigatingDate=${this.navigatingDate}
-					@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
-					@switchToWeek=${() => this.setView('week')}
-				></mitra-month>
-			`}
+			<lit-page heading='Mitra'>
+				<h1>${this.navigatingDate.format({ month: 'long', year: 'numeric' })}</h1>
+				${this.view === 'week' ? html`
+					<mitra-days
+						.entries=${entries}
+						.navigatingDate=${this.navigatingDate}
+						@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
+					></mitra-days>
+				` : html`
+					<mitra-month
+						.entries=${entries}
+						.navigatingDate=${this.navigatingDate}
+						@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
+						@switchToWeek=${() => this.setView('week')}
+					></mitra-month>
+				`}
+			</lit-page>
 		`
 	}
 }

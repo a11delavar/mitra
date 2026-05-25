@@ -48,11 +48,13 @@ export class CalDAV extends Integration<CalDAVConfig> {
 
 		const remoteUrls = new Set(remoteCalendars.map(c => c.url))
 
+		let changed = false
 		// Delete removed sources
 		for (const source of existingSources) {
 			if (!remoteUrls.has(source.url!)) {
 				em.remove(source)
 				this.sources.remove(source)
+				changed = true
 			}
 		}
 
@@ -76,15 +78,19 @@ export class CalDAV extends Integration<CalDAVConfig> {
 			}
 
 			if (source.enabled) {
-				await this.syncEntries(client, source, cal, em)
+				if (await this.syncEntries(client, source, cal, em)) {
+					changed = true
+				}
 			}
 		}
+
+		return changed
 	}
 
-	private async syncEntries(client: Awaited<ReturnType<typeof createDAVClient>>, source: Source, remoteCalendar: { url: string }, em: EntityManager) {
+	private async syncEntries(client: Awaited<ReturnType<typeof createDAVClient>>, source: Source, remoteCalendar: { url: string }, em: EntityManager): Promise<boolean> {
 		const result = await client.syncCollection({
 			url: source.url!,
-			props: { 'DAV:getetag': {} },
+			props: { 'd:getetag': {} },
 			syncLevel: 1,
 			syncToken: source.syncToken || undefined
 		})
@@ -96,6 +102,9 @@ export class CalDAV extends Integration<CalDAVConfig> {
 
 		if (!source.syncToken) {
 			changedObjects = await client.fetchCalendarObjects({ calendar: remoteCalendar })
+			const remoteUrls = new Set(changedObjects.map(o => o.url))
+			if (!source.entries.isInitialized()) await source.entries.init()
+			deletedUrls = source.entries.getItems().filter(e => !remoteUrls.has(e.url!)).map(e => e.url!)
 		} else {
 			const objectResponses = result.filter(r => r.href && r.href !== source.url && r.href + '/' !== source.url && source.url + '/' !== r.href)
 			deletedUrls = objectResponses.filter(r => r.status === 404).map(r => r.href!)
@@ -153,5 +162,7 @@ export class CalDAV extends Integration<CalDAVConfig> {
 		}
 
 		source.syncToken = newSyncToken
+
+		return deletedUrls.length > 0 || changedObjects.length > 0
 	}
 }

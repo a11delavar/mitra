@@ -1,4 +1,5 @@
 import express from 'express'
+import { EventEmitter } from 'node:events'
 import path from 'path'
 import cors from 'cors'
 import dotenv from 'dotenv'
@@ -38,7 +39,23 @@ app.use((req, _res, next) => {
 
 const PORT = 3000
 
+export const syncEmitter = new EventEmitter()
 new Synchronizer(orm).start()
+
+app.get('/api/events', (req, res) => {
+	res.writeHead(200, {
+		'Content-Type': 'text/event-stream',
+		'Cache-Control': 'no-cache',
+		'Connection': 'keep-alive'
+	})
+	
+	const listener = () => res.write(`data: updated\n\n`)
+	syncEmitter.on('updated', listener)
+	
+	req.on('close', () => {
+		syncEmitter.off('updated', listener)
+	})
+})
 
 app.get('/api/entries', async (req, res) => {
 	try {
@@ -53,7 +70,8 @@ app.get('/api/entries', async (req, res) => {
 
 		const [startDate, endDate] = [new Date(start), new Date(end)]
 
-		const entries = await orm.em.find(Entry, {
+		const em = orm.em.fork()
+		const entries = await em.find(Entry, {
 			$or: [
 				{ start: { $gte: startDate, $lte: endDate } },
 				{ end: { $gte: startDate, $lte: endDate } },

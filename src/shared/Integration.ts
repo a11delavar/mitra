@@ -12,5 +12,10 @@ export abstract class Integration<TConfig extends Record<string, any> = any> {
 	@property({ type: 'json' }) config: TConfig = {} as TConfig
 	@oneToMany(() => Source, source => source.integration, { cascade: [cascade.ALL] }) sources = new Collection<Source>(this)
 
-	abstract sync(em: EntityManager): Promise<void>
+	/**
+	 * Synchronizes the integration with its external source.
+	 * @param em The entity manager to use for database operations.
+	 * @returns A promise that resolves to a boolean indicating whether any changes were made.
+	 */
+	abstract sync(em: EntityManager): Promise<boolean>
 }

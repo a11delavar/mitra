@@ -1,4 +1,5 @@
 import { type MikroORM } from '@mikro-orm/sqlite'
+import { syncEmitter } from './server.js'
 import { Integration, createLogger } from '../shared/index.js'
 
 export class Synchronizer {
@@ -19,12 +20,19 @@ export class Synchronizer {
 			const em = this.orm.em.fork()
 			const integrations = await em.find(Integration, {})
 
+			let hasChanges = false
 			for (const integration of integrations) {
 				this.logger.debug(`Syncing ${integration.toString()}`)
-				await integration.sync(em)
+				const changed = await integration.sync(em)
+				if (changed) {
+					hasChanges = true
+				}
 			}
 
 			await em.flush()
+			if (hasChanges) {
+				syncEmitter.emit('updated')
+			}
 		} catch (error) {
 			this.logger.error('Sync failed:', error)
 		}
