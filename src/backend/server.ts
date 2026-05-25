@@ -1,4 +1,5 @@
 import express from 'express'
+import path from 'path'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { MikroORM } from '@mikro-orm/sqlite'
@@ -35,7 +36,7 @@ app.use((req, _res, next) => {
 	next()
 });
 
-const PORT = 3001
+const PORT = 3000
 
 new Synchronizer(orm).start()
 
@@ -65,6 +66,13 @@ app.get('/api/entries', async (req, res) => {
 		logger.error('Error fetching local entries:', error)
 		return res.status(500).json({ error: error.message })
 	}
+})
+
+const frontendDistPath = path.resolve(import.meta.dirname, '../../dist')
+app.use(express.static(frontendDistPath))
+
+app.get(/(.*)/, (_, res) => {
+	res.sendFile(path.join(frontendDistPath, 'index.html'))
 })
 
 app.listen(PORT, () => logger.info(`Backend API running on http://localhost:${PORT}`))

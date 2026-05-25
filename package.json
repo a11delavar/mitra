@@ -6,7 +6,6 @@
 	"devDependencies": {
 		"@typescript/native-preview": "latest",
 		"esbuild": "x",
-		"esbuild-server": "x",
 		"tsx": "4.x"
 	},
 	"workspaces": [

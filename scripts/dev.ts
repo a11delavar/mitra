@@ -1,5 +1,5 @@
 import { spawn } from 'child_process'
-import { createServer } from 'esbuild-server'
+import * as esbuild from 'esbuild'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
@@ -29,22 +29,15 @@ fs.writeFileSync(join(directory, 'index.html'), `
 </body>
 </html>
 `.trim())
-const server = createServer({
+
+const ctx = await esbuild.context({
 	bundle: true,
 	entryPoints: ['./src/frontend/index.ts'],
 	splitting: true,
 	format: 'esm',
-	loader: {
-		'.ttf': 'file'
-	},
 	legalComments: 'none',
 	sourcemap: 'inline',
 	outdir: directory,
-}, {
-	port: 3000,
-	static: directory,
-	historyApiFallback: true,
-	injectLiveReload: true,
 })
 
-await server.start()
+await ctx.watch()
