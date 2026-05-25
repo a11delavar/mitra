@@ -1,12 +1,12 @@
 import { Component, component, html, property, css, type PropertyValues, repeat } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { CalendarEvent, EventSegment } from 'shared'
+import { Entry, EntrySegment } from 'shared'
 import { CalendarDatesController } from './CalendarDatesController.js'
 
 @component('mitra-month')
 export class Month extends Component {
 	@property({ type: Object }) navigatingDate = new DateTime()
-	@property({ type: Array }) events = new Array<CalendarEvent>()
+	@property({ type: Array }) entries = new Array<Entry>()
 
 	private readonly buffer = new CalendarDatesController(this)
 
@@ -84,7 +84,7 @@ export class Month extends Component {
 					container-type: size;
 					height: 100%;
 
-					mitra-event {
+					mitra-event-segment {
 						grid-row: var(--month-slot, auto) !important;
 						--overlap-slot: 0 !important;
 						--overlap-total: 1 !important;
@@ -121,10 +121,10 @@ export class Month extends Component {
 		const today = new DateTime().dayStart
 		const MAX_SLOTS = 4
 
-		const allClusteredSegments = EventSegment.clusterMonth(this.events.flatMap(e => e.segments))
+		const allClusteredSegments = EntrySegment.clusterMonth(this.entries.flatMap(e => e.segments))
 
 		const getDayData = (date: DateTime) => {
-			const daySegments = allClusteredSegments.filter(s => s.segmentDate?.dayStart.equals(date.dayStart))
+			const daySegments = allClusteredSegments.filter(s => s.date?.dayStart.equals(date.dayStart))
 			const visible = daySegments.filter(s => s.monthSlot !== undefined && s.monthSlot < MAX_SLOTS - 1)
 			const hiddenEventsCount = daySegments.length - visible.length
 			return { visible, hiddenEventsCount }
@@ -141,7 +141,7 @@ export class Month extends Component {
 						<mitra-day
 							data-date=${day.dayStart.toISOString()}
 							.date=${day}
-							.events=${visible}
+							.entries=${visible}
 							.hiddenEventsCount=${hiddenEventsCount}
 							style="--max-slots: ${MAX_SLOTS}"
 							?today=${day.dayStart.equals(today)}

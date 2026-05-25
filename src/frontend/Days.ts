@@ -1,12 +1,12 @@
 import { Component, component, html, property, css, repeat, type PropertyValues, eventListener } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { CalendarEvent, EventSegment } from 'shared'
+import { Entry, EntrySegment } from 'shared'
 import { CalendarDatesController } from './CalendarDatesController.js'
 
 @component('mitra-days')
 export class Days extends Component {
 	@property({ type: Object }) navigatingDate = new DateTime()
-	@property({ type: Array }) events = new Array<CalendarEvent>()
+	@property({ type: Array }) entries = new Array<Entry>()
 	@property({ type: Boolean, reflect: true }) hideTime = false
 
 	private readonly buffer = new CalendarDatesController(this)
@@ -99,7 +99,7 @@ export class Days extends Component {
 					grid-template-rows: subgrid;
 					scroll-snap-align: start;
 
-					.events {
+					.entries {
 						background-color: var(--color-surface);
 					}
 				}
@@ -286,10 +286,10 @@ export class Days extends Component {
 
 	private get dateTemplate() {
 		const today = new DateTime()
-		const allSegments = this.events.flatMap(e => e.segments)
-		const getEventsForDay = (date: DateTime) => {
+		const allSegments = this.entries.flatMap(e => e.segments)
+		const getEntriesForDay = (date: DateTime) => {
 			const dayEvents = allSegments.filter(e => e.fallsOnDay(date))
-			return dayEvents.length ? EventSegment.cluster(dayEvents) : []
+			return dayEvents.length ? EntrySegment.cluster(dayEvents) : []
 		}
 		return html`
 			${repeat(this.days, day => day.dayStart.toISOString(), (day, index) => html`
@@ -297,7 +297,7 @@ export class Days extends Component {
 					data-date=${day.dayStart.toISOString()}
 					style="grid-column: ${index + 2};"
 					.date=${day}
-					.events=${getEventsForDay(day)}
+					.entries=${getEntriesForDay(day)}
 					?today=${day.dayStart.equals(today.dayStart)}
 				></mitra-day>
 			`)}

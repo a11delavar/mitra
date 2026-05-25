@@ -2,6 +2,11 @@
 	"name": "mitra-shared",
 	"type": "module",
 	"dependencies": {
-		"@3mo/date-time": "*"
+		"@3mo/date-time": "x",
+		"@a11d/api": "0.4.x",
+		"@a11d/api-model-value-constructor": "1.x",
+		"@mikro-orm/core": "7.x",
+		"@mikro-orm/decorators": "7.x",
+		"consola": "^3.x"
 	}
 }

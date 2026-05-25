@@ -1,7 +1,7 @@
 import { Component, component, html, property, css, event } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { EventSegment } from 'shared'
-import './Event.js'
+import { EntrySegment } from 'shared'
+import './EventSegment.js'
 
 @component('mitra-day')
 export class Day extends Component {
@@ -9,7 +9,7 @@ export class Day extends Component {
 	@event({ bubbles: true, composed: true }) switchToWeek!: EventDispatcher
 
 	@property({ type: Object }) date!: DateTime
-	@property({ type: Array }) events = new Array<EventSegment>()
+	@property({ type: Array }) entries = new Array<EntrySegment>()
 	@property({ type: Number }) hiddenEventsCount = 0
 	@property({ type: Boolean, reflect: true }) today = false
 
@@ -107,7 +107,7 @@ export class Day extends Component {
 					}
 				}
 
-				.events {
+				.entries {
 					grid-row: 2;
 					display: grid;
 					grid-template-rows: repeat(1440, var(--minute-height));
@@ -127,7 +127,7 @@ export class Day extends Component {
 					}
 				}
 
-				mitra-event {
+				mitra-event-segment {
 					grid-column: 1 / -1;
 					z-index: 2;
 					position: relative;
@@ -176,8 +176,8 @@ export class Day extends Component {
 				</div>
 			</div>
 
-			<div class="events">
-				${this.events.map(s => html`<mitra-event .segment=${s}></mitra-event>`)}
+			<div class="entries">
+				${this.entries.map(s => html`<mitra-event-segment .segment=${s}></mitra-event-segment>`)}
 				${!this.hiddenEventsCount ? html.nothing : html`
 					<div class="more" @click=${this.handleMoreButtonClick}>
 						${t('+${count:number} more', { count: this.hiddenEventsCount })}

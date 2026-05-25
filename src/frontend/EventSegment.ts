@@ -1,40 +1,40 @@
 import { component, html, property, Component, css } from '@a11d/lit'
-import { EventSegment } from 'shared'
+import { EntrySegment } from 'shared'
 
-@component('mitra-event')
-export class Event extends Component {
+@component('mitra-event-segment')
+export class EventSegmentC extends Component {
 	@property({
 		type: Object,
-		updated(this: Event) {
-			this.style.setProperty('--mitra-event-color', this.segment?.event.color || '');
-			this.style.setProperty('--mitra-event-grid-row', `${this.segment?.startMinute} / ${this.segment?.endMinute}`);
-			this.style.setProperty('--overlap-slot', `${this.segment?.slot}`);
-			this.style.setProperty('--overlap-total', `${this.segment?.total}`);
-			this.style.setProperty('--overlap-span', `${this.segment?.span}`);
-			this.style.setProperty('--month-slot', this.segment?.monthSlot !== undefined ? `${this.segment.monthSlot + 2}` : 'auto');
-			this.toggleAttribute('continued-from-previous', !!this.segment?.continuedFromPrevious);
-			this.toggleAttribute('continues-next', !!this.segment?.continuesNext);
-			if (this.segment?.segmentDate) {
-				this.style.viewTransitionName = `event-${this.segment.event.id}-${this.segment.segmentDate.toISOString().split('T')[0]}`
+		updated(this: EventSegmentC) {
+			this.style.setProperty('--mitra-event-segment-color', this.segment?.entry.color || '')
+			this.style.setProperty('--mitra-event-segment-grid-row', `${this.segment?.startMinute} / ${this.segment?.endMinute}`)
+			this.style.setProperty('--overlap-slot', `${this.segment?.slot}`)
+			this.style.setProperty('--overlap-total', `${this.segment?.total}`)
+			this.style.setProperty('--overlap-span', `${this.segment?.span}`)
+			this.style.setProperty('--month-slot', this.segment?.monthSlot !== undefined ? `${this.segment.monthSlot + 2}` : 'auto')
+			this.toggleAttribute('continued-from-previous', !!this.segment?.continuedFromPrevious)
+			this.toggleAttribute('continues-next', !!this.segment?.continuesNext)
+			if (this.segment?.date) {
+				this.style.viewTransitionName = `event-${this.segment.entry.id}-${this.segment.date.toISOString().split('T')[0]}`
 			}
 		}
-	}) segment?: EventSegment
+	}) segment?: EntrySegment
 
 	static override get styles() {
 		return css`
-			mitra-event {
+			mitra-event-segment {
 				display: flex;
 				flex-direction: column;
 				gap: 0.125rem;
 				padding: 0.125rem 0.25rem 0;
-				background-color: color-mix(in srgb, var(--mitra-event-color) 25%, var(--color-background));
-				border-inline-start: 3px solid var(--mitra-event-color);
+				background-color: color-mix(in srgb, var(--mitra-event-segment-color) 25%, var(--color-background));
+				border-inline-start: 3px solid var(--mitra-event-segment-color);
 				border-radius: 0.25rem;
-				color: color-mix(in srgb, var(--mitra-event-color) 60%, var(--color-text));
+				color: color-mix(in srgb, var(--mitra-event-segment-color) 60%, var(--color-text));
 				font-size: 0.7rem;
 				margin-top: 1px;
 				min-height: 0;
-				grid-row: var(--mitra-event-grid-row);
+				grid-row: var(--mitra-event-segment-grid-row);
 
 				/* Collision Overlap Logic */
 				--overlap-s: var(--overlap-slot, 0);
@@ -48,23 +48,24 @@ export class Event extends Component {
 				container-type: size;
 				overflow: hidden;
 
-				@container (max-height: 45px) {
-					flex-direction: column;
-					align-items: flex-start;
-					gap: 0.125rem;
-					padding: 0.25rem 0.375rem 0;
+				@container (max-height: 450px) {
+					flex-direction: row;
+					align-items: center;
+					gap: 0.25rem;
+					padding: 0 0.375rem;
 				}
 
 				&[continues-next] {
 					border-end-start-radius: 0;
 					border-end-end-radius: 0;
-					border-bottom: 2px dashed color-mix(in srgb, var(--mitra-event-color) 50%, transparent);
+					border-bottom: 2px dashed color-mix(in srgb, var(--mitra-event-segment-color) 50%, transparent);
 					padding-bottom: 0;
 
-					@container (max-height: 45px) {
+					@container (max-height: 450px) {
 						border-start-end-radius: 0;
 						border-end-end-radius: 0;
 						border-bottom: none;
+						border-inline-end: 2px dashed color-mix(in srgb, var(--mitra-event-segment-color) 50%, transparent);
 						margin-inline-end: -0.25rem;
 						padding-inline-end: 0.5rem;
 					}
@@ -73,14 +74,14 @@ export class Event extends Component {
 				&[continued-from-previous] {
 					border-start-start-radius: 0;
 					border-start-end-radius: 0;
-					border-top: 2px dashed color-mix(in srgb, var(--mitra-event-color) 50%, transparent);
+					border-top: 2px dashed color-mix(in srgb, var(--mitra-event-segment-color) 50%, transparent);
 					padding-top: 0;
 
-					@container (max-height: 45px) {
+					@container (max-height: 450px) {
 						border-start-start-radius: 0;
 						border-end-start-radius: 0;
 						border-top: none;
-						border-inline-start: none;
+						border-inline-start: 2px dashed color-mix(in srgb, var(--mitra-event-segment-color) 50%, transparent);
 						margin-inline-start: -0.25rem;
 						padding-inline-start: 0.5rem;
 					}
@@ -137,18 +138,18 @@ export class Event extends Component {
 		return !this.segment ? html.nothing : html`
 			${!this.segment.isTimed ? html.nothing : html`
 				<div class="time">
-					<span class="start">${this.segment.event.start?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+					<span class="start">${this.segment.entry.start?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
 					<span class="separator">-</span>
-					<span class="end">${this.segment.event.end?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+					<span class="end">${this.segment.entry.end?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
 				</div>
 			`}
-			<div class="heading">${this.segment.event.heading}</div>
+			<div class="heading">${this.segment.entry.heading}</div>
 		`
 	}
 }
 
 declare global {
 	interface HTMLElementTagNameMap {
-		'mitra-event': Event
+		'mitra-event-segment': EventSegmentC
 	}
 }

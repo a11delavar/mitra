@@ -7,6 +7,9 @@ import fs from 'fs'
 const tsgoPlatformDir = dirname(fileURLToPath(import.meta.resolve(`@typescript/native-preview-${process.platform}-${process.arch}/package.json`)))
 spawn(join(tsgoPlatformDir, `lib/tsgo${process.platform === 'win32' ? '.exe' : ''}`), ['--noEmit', '--watch'], { stdio: 'inherit' })
 
+// Spawn the backend server using tsx so it supports decorators and tsconfig paths natively
+spawn('npx', ['tsx', 'watch', 'src/backend/server.ts'], { stdio: 'inherit', shell: true })
+
 const directory = './dist'
 
 if (!fs.existsSync(directory)) {
@@ -20,12 +23,13 @@ fs.writeFileSync(join(directory, 'index.html'), `
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Mitra</title>
 	<script type="module" src="/index.js"></script>
+	<script></script>
 </head>
 <body>
 </body>
 </html>
 `.trim())
-const server = await createServer({
+const server = createServer({
 	bundle: true,
 	entryPoints: ['./src/frontend/index.ts'],
 	splitting: true,

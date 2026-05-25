@@ -1,7 +1,8 @@
 import { component, html, state, css, eventListener } from '@a11d/lit'
 import { PageComponent, route } from '@a11d/lit-application'
+import { Task } from '@lit/task'
 import { DateTime } from '@3mo/date-time'
-import { sampleEvents } from 'shared'
+import { fetchEvents } from './Api.js'
 
 @component('mitra-page-calendar')
 @route('/')
@@ -19,10 +20,19 @@ export class PageHome extends PageComponent {
 		transition(async () => {
 			this.view = value
 			await this.updateComplete
-			await Promise.all([...this.renderRoot.querySelectorAll('mitra-event')].map(e => e.updateComplete))
+			await Promise.all([...this.renderRoot.querySelectorAll('mitra-event-segment')].map(e => e.updateComplete))
 		})
 	}
 
+
+	private readonly fetchTask = new Task(this, {
+		args: () => [this.navigatingDate.month, this.navigatingDate.year] as const,
+		task: () => {
+			const start = this.navigatingDate.monthStart.subtract({ months: 1 })
+			const end = this.navigatingDate.monthEnd.add({ months: 1 })
+			return fetchEvents(start, end)
+		}
+	})
 
 	@eventListener({ target: window, type: 'keydown' })
 	protected handleKeyDown(e: KeyboardEvent) {
@@ -78,17 +88,18 @@ export class PageHome extends PageComponent {
 	protected override createRenderRoot() { return this }
 
 	protected override get template() {
+		const entries = this.fetchTask.value || []
 		return html`
 			<h1>${this.navigatingDate.format({ month: 'long', year: 'numeric' })}</h1>
 			${this.view === 'week' ? html`
 				<mitra-days
-					.events=${sampleEvents}
+					.entries=${entries}
 					.navigatingDate=${this.navigatingDate}
 					@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
 				></mitra-days>
 			` : html`
 				<mitra-month
-					.events=${sampleEvents}
+					.entries=${entries}
 					.navigatingDate=${this.navigatingDate}
 					@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
 					@switchToWeek=${() => this.setView('week')}

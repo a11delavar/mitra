@@ -5,7 +5,14 @@
 	},
 	"devDependencies": {
 		"@typescript/native-preview": "latest",
-		"esbuild": "*",
-		"esbuild-server": "*"
+		"esbuild": "x",
+		"esbuild-server": "x",
+		"tsx": "4.x"
+	},
+	"workspaces": [
+		"src/*"
+	],
+	"dependencies": {
+		"tsdav": "^2.2.2"
 	}
 }

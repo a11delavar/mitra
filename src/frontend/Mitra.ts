@@ -3,7 +3,7 @@ import { Application, application } from '@a11d/lit-application'
 import { Month } from './Month.js'
 import { Days } from './Days.js'
 import { Day } from './Day.js'
-import { Event } from './Event.js'
+import { EventSegmentC } from './EventSegment.js'
 import { PageHome } from './PageHome.js'
 
 @application()
@@ -29,7 +29,7 @@ export class Mitra extends Application {
 			${Month.styles}
 			${Days.styles}
 			${Day.styles}
-			${Event.styles}
+			${EventSegmentC.styles}
 		`
 	}
 }
