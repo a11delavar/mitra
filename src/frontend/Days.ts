@@ -1,4 +1,4 @@
-import { Component, component, html, property, css, repeat, type PropertyValues, eventListener } from '@a11d/lit'
+import { Component, component, html, property, css, repeat, type PropertyValues, eventListener, queryAsync, ifDefined } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { Entry, EntrySegment } from 'shared'
 import { CalendarDatesController } from './CalendarDatesController.js'
@@ -34,9 +34,13 @@ export class Days extends Component {
 		clearTimeout(this.timeTimeout)
 	}
 
-	protected override initialized() {
+	@queryAsync('.now') readonly nowElement?: Promise<HTMLElement>
+
+	protected override async initialized() {
 		this.buffer.navigatingDate = this.navigatingDate
 		this.buffer.scrollToDate(this.navigatingDate)
+		const now = await this.nowElement
+		now?.scrollIntoView({ block: 'center', behavior: 'smooth' })
 	}
 
 	protected override updated(props: PropertyValues<this>) {
@@ -72,7 +76,7 @@ export class Days extends Component {
 		return css`
 			mitra-days {
 				display: grid;
-				grid-template-rows: auto minmax(0, 1fr);
+				grid-template-rows: auto minmax(var(--grid-min-height), 1fr);
 				grid-template-columns: var(--time-axis-width) repeat(var(--_days-length), minmax(10rem, 1fr));
 				gap: 1px;
 				height: 100%;
@@ -84,7 +88,9 @@ export class Days extends Component {
 				scroll-snap-type: x proximity;
 				scroll-padding-inline-start: var(--time-axis-width);
 				scrollbar-width: none; /* Firefox */
-				--minute-height: calc(100% / 1440);
+				--minute-min-height: 0.75px;
+				--minute-height: max(var(--minute-min-height), calc(100% / 1440));
+				--grid-min-height: calc(1440 * var(--minute-min-height));
 
 				&::-webkit-scrollbar {
 					display: none; /* Chrome/Safari */
@@ -102,6 +108,11 @@ export class Days extends Component {
 					.entries {
 						background-color: var(--color-surface);
 					}
+
+					.header {
+						background-color: var(--color-background);
+						border-bottom: var(--border);
+					}
 				}
 
 				& > .time {
@@ -117,7 +128,7 @@ export class Days extends Component {
 						background-color: var(--color-background);
 						border-bottom: var(--border);
 						border-inline-end: var(--border);
-						padding: 0.625rem 0;
+						padding: 0.5rem 0;
 						text-align: center;
 						color: var(--color-text-muted);
 						font-size: 0.65rem;
@@ -129,7 +140,6 @@ export class Days extends Component {
 						grid-row: 2;
 						display: grid;
 						grid-template-rows: repeat(1440, var(--minute-height));
-						height: 100%;
 						border-inline-end: var(--border);
 						position: sticky;
 						inset-inline-start: 0;
@@ -168,7 +178,6 @@ export class Days extends Component {
 						display: grid;
 						grid-template-rows: repeat(1440, var(--minute-height));
 						grid-template-columns: subgrid;
-						height: 100%;
 						pointer-events: none;
 
 						.hour {
@@ -250,7 +259,9 @@ export class Days extends Component {
 
 		return html`
 			<div class="time">
-				<div class="timezone">${today.formatToParts({ timeZoneName: 'shortGeneric' }).find(x => x.type === 'timeZoneName')?.value}</div>
+				<div class="timezone" title=${ifDefined(today.formatToParts({ timeZoneName: 'long' }).find(x => x.type === 'timeZoneName')?.value)}>
+					${today.formatToParts({ timeZoneName: 'shortGeneric' }).find(x => x.type === 'timeZoneName')?.value}
+				</div>
 
 				<div class="axis">
 					${Array.from({ length: reference.hoursInDay }).map((_, i) => {
