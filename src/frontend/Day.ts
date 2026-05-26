@@ -26,7 +26,7 @@ export class Day extends Component {
 				}
 
 				&:not([data-with-background]) {
-					.number {
+					.header .day, .header .month {
 						color: var(--color-text-muted);
 					}
 				}
@@ -44,6 +44,7 @@ export class Day extends Component {
 					padding: 0.5rem 0.25rem;
 					gap: 0.375rem;
 					box-sizing: border-box;
+					margin-inline: -1px;
 
 					@container (max-height: 450px) {
 						position: absolute;
@@ -57,10 +58,14 @@ export class Day extends Component {
 
 					.weekday {
 						font-size: 0.7rem;
-						font-weight: 500;
+						font-weight: 600;
 
 						@container (max-height: 450px) {
 							display: none;
+						}
+
+						&[data-today] {
+							color: var(--color-accent);
 						}
 					}
 

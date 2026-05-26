@@ -14,6 +14,10 @@ export class EntrySegment {
 		Object.assign(this, init)
 	}
 
+	get index() {
+		return this.entry.segments.indexOf(this)
+	}
+
 	get startMinute() {
 		if (this.continuedFromPrevious) return 1
 		return this.entry.start ? this.entry.start.hour * 60 + this.entry.start.minute + 1 : 1

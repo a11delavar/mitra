@@ -6,7 +6,7 @@ import type { EntityManager } from '@mikro-orm/core'
 
 @entity({ abstract: true, discriminatorColumn: 'type' })
 export abstract class Integration<TConfig extends Record<string, any> = any> {
-	@primaryKey() id = crypto.randomUUID()
+	@primaryKey() id = crypto.randomUUID() as string
 	@manyToOne(() => User) user!: User
 	@property({ type: 'string' }) type!: string
 	@property({ type: 'json' }) config: TConfig = {} as TConfig

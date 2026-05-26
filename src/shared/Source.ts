@@ -12,7 +12,7 @@ export enum SourceType {
 @model('Source')
 @entity()
 export class Source {
-	@primaryKey() id = crypto.randomUUID()
+	@primaryKey() id = crypto.randomUUID() as string
 	@manyToOne(() => Integration) integration!: Integration
 	@property({ type: 'string' }) externalId!: string
 	@property({ type: 'string', nullable: true }) url?: string

@@ -13,7 +13,7 @@ export enum EntryType {
 @entity()
 @unique({ properties: ['source', 'externalId'] })
 export class Entry {
-	@primaryKey() id = crypto.randomUUID()
+	@primaryKey() id = crypto.randomUUID() as string
 	@property({ type: 'string' }) externalId!: string
 	@manyToOne(() => Source) source!: Source
 

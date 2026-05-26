@@ -77,7 +77,7 @@ export class Month extends Component {
 					text-align: center;
 					font-size: 0.8rem;
 					font-weight: 500;
-					color: var(--color-text);
+					color: var(--color-text-muted);
 				}
 
 				mitra-day {

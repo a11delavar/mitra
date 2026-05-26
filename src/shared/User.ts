@@ -8,7 +8,7 @@ import { Integration } from './Integration.js'
 export class User {
 	static readonly default = new User({ username: '[default_local_user]' })
 
-	@primaryKey() id = crypto.randomUUID()
+	@primaryKey() id = crypto.randomUUID() as string
 	@property({ type: 'string', unique: true }) username!: string
 	@oneToMany(() => Integration, integration => integration.user) integrations = new Collection<Integration>(this)
 

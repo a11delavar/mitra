@@ -8,6 +8,7 @@ When writing code for this project, you must adhere to the following architectur
 - Do not use heavy frontend frameworks (React/Vue). Stick to standard web components.
 - Write concise, performant code. Avoid over-engineering.
 - For CSS, use standard nested CSS or modern native features (Container Queries, `color-mix`, native CSS variables).
+- **Nested CSS:** All CSS rules MUST be nested to reflect the DOM hierarchy rather than using flat top-level class declarations.
 - **Idiomatic HTML/CSS Naming:** Treat CSS class names as public APIs that could be externally themed. Avoid technical or structural terms like `btn`, `wrapper`, `container`, `layout`. Use concise, unified, and semantic idiomatic names that represent the domain (e.g., `.header`, `.entries`, `.time`, `.start`, `.end`, `.more`). Component templates should be as flat and simple as possible without redundant wrapper divs.
 - When generating Calendar layouts, strictly use the CSS Grid approach.
 - **Prefer CSS over JS:** If a layout can be solved with CSS Grid or Flexbox, do not use JavaScript math.

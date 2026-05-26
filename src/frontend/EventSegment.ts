@@ -15,7 +15,7 @@ export class EventSegmentC extends Component {
 			this.toggleAttribute('continued-from-previous', !!this.segment?.continuedFromPrevious)
 			this.toggleAttribute('continues-next', !!this.segment?.continuesNext)
 			if (this.segment?.date) {
-				this.style.viewTransitionName = `event-${this.segment.entry.id}-${this.segment.date.toISOString().split('T')[0]}`
+				this.style.viewTransitionName = `event-${this.segment.entry.id}-${this.segment.index}`
 			}
 		}
 	}) segment?: EntrySegment

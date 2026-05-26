@@ -48,10 +48,10 @@ app.get('/api/events', (req, res) => {
 		'Cache-Control': 'no-cache',
 		'Connection': 'keep-alive'
 	})
-	
+
 	const listener = () => res.write(`data: updated\n\n`)
 	syncEmitter.on('updated', listener)
-	
+
 	req.on('close', () => {
 		syncEmitter.off('updated', listener)
 	})
@@ -72,6 +72,7 @@ app.get('/api/entries', async (req, res) => {
 
 		const em = orm.em.fork()
 		const entries = await em.find(Entry, {
+			source: { hidden: false },
 			$or: [
 				{ start: { $gte: startDate, $lte: endDate } },
 				{ end: { $gte: startDate, $lte: endDate } },
@@ -82,6 +83,42 @@ app.get('/api/entries', async (req, res) => {
 		return res.json(entries)
 	} catch (error: any) {
 		logger.error('Error fetching local entries:', error)
+		return res.status(500).json({ error: error.message })
+	}
+})
+
+app.get('/api/integrations', async (_, res) => {
+	try {
+		const em = orm.em.fork()
+		const integrations = await em.find(Integration, {}, { populate: ['sources'] })
+
+		// Break circular reference to allow JSON serialization of classes
+		for (const integration of integrations) {
+			for (const source of integration.sources.getItems()) {
+				; (source as any).integration = undefined
+			}
+		}
+
+		return res.json(integrations)
+	} catch (error: any) {
+		logger.error('Error fetching integrations:', error)
+		return res.status(500).json({ error: error.message })
+	}
+})
+
+app.put('/api/sources/:id/visibility', async (req, res) => {
+	try {
+		const em = orm.em.fork()
+		const source = await em.findOne(Source, { id: req.params.id })
+		if (!source) return res.status(404).json({ error: 'Source not found' })
+
+		source.hidden = req.body.hidden
+		await em.flush()
+
+		syncEmitter.emit('updated')
+		return res.json(source)
+	} catch (error: any) {
+		logger.error('Error updating source visibility:', error)
 		return res.status(500).json({ error: error.message })
 	}
 })
