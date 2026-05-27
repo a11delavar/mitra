@@ -39,7 +39,7 @@ export class EventSegmentC extends Component {
 				padding: 0.125rem 0.25rem 0;
 				background-color: color-mix(in srgb, var(--mitra-event-segment-color) 25%, var(--color-background));
 				border-inline-start: 3px solid var(--mitra-event-segment-color);
-				border-radius: 0.25rem;
+				border-radius: var(--border-radius);
 				color: color-mix(in srgb, var(--mitra-event-segment-color) 60%, var(--color-text));
 				font-size: 0.7rem;
 				margin-top: 1px;

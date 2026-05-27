@@ -152,7 +152,7 @@ export class Days extends Component {
 							background-color: var(--color-accent);
 							color: var(--color-accent-text);
 							padding: 0.125rem 0.25rem;
-							border-radius: 4px;
+							border-radius: var(--border-radius);
 							font-size: 0.65rem;
 							font-weight: 600;
 							z-index: 10;

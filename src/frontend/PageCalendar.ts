@@ -164,6 +164,10 @@ export class PageCalendar extends PageComponent {
 					<header>
 						<mitra-icon class="toggle" icon="panel-left" @click=${() => this.sidebarOpen = !this.sidebarOpen}></mitra-icon>
 						<h1>${this.navigatingDate.format({ month: 'long', year: 'numeric' })}</h1>
+						<div style='flex: 1'></div>
+						<button @click=${() => this.navigatingDate = new DateTime()}>
+							Today <kbd>T</kbd>
+						</button>
 					</header>
 					${this.view === 'week' ? html`
 						<mitra-days

@@ -110,7 +110,7 @@ export class Sidebar extends Component {
 							align-items: center;
 							gap: 0.625rem;
 							padding: 0.4rem 0.5rem;
-							border-radius: 0.375rem;
+							border-radius: var(--border-radius);
 							color: var(--color-text);
 							font-size: 0.8125rem;
 							font-weight: 400;
@@ -128,7 +128,7 @@ export class Sidebar extends Component {
 							.color {
 								width: 10px;
 								height: 10px;
-								border-radius: 3px;
+								border-radius: var(--border-radius);
 								flex-shrink: 0;
 							}
 

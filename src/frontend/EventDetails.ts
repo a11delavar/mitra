@@ -37,7 +37,7 @@ export class EventDetails extends Component {
 					background: color-mix(in srgb, color-mix(in srgb, var(--mitra-event-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
 					backdrop-filter: blur(10px);
 					border: var(--border);
-					border-radius: 12px;
+					border-radius: 0.5rem;
 					box-shadow:
 						0 0 0 1px rgba(80, 140, 255, 0.06),
 						0 8px 32px rgba(0, 0, 0, 0.5),
@@ -100,7 +100,7 @@ export class EventDetails extends Component {
 							padding: 0.25rem;
 							cursor: pointer;
 							color: var(--color-text-muted);
-							border-radius: 6px;
+							border-radius: var(--border-radius);
 							font-size: 14px;
 							flex-shrink: 0;
 
@@ -157,7 +157,7 @@ export class EventDetails extends Component {
 								.dot {
 									width: 11px;
 									height: 11px;
-									border-radius: 3px;
+									border-radius: var(--border-radius);
 									flex-shrink: 0;
 									margin-inline-start: 2px;
 								}
@@ -177,7 +177,7 @@ export class EventDetails extends Component {
 							display: inline-flex;
 							align-items: center;
 							background: rgba(59, 130, 246, 0.12);
-							border-radius: 4px;
+							border-radius: var(--border-radius);
 							padding: 0.05rem 0.375rem;
 							margin-inline-start: 0.375rem;
 						}

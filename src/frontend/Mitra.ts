@@ -8,6 +8,7 @@ import { PageCalendar } from './PageCalendar.js'
 import { Sidebar } from './Sidebar.js'
 import { EventDetails } from './EventDetails.js'
 import { colorContrast } from './colorContrast.js'
+import { buttonStyles } from './button.css.js'
 
 @application()
 @component('mitra-application')
@@ -18,6 +19,7 @@ export class Mitra extends Application {
 
 			:root {
 				color-scheme: light dark;
+				user-select: none;
 				--color-background: color-mix(in srgb, light-dark(#f1f3f4, #121314), var(--color-accent) 2.5%);
 				--color-surface: color-mix(in srgb, light-dark(#ffffff, #191a1b), var(--color-accent) 5%);
 				--color-text: color-mix(in srgb, light-dark(black, white), var(--color-accent) 2.5%);
@@ -26,8 +28,10 @@ export class Mitra extends Application {
 				--color-accent-text: ${colorContrast('var(--color-accent)')};
 				--color-border: var(--color-background);
 				--border: 1px solid var(--color-border);
-				user-select: none;
+				--border-radius: 4px;
 			}
+
+			${buttonStyles}
 
 			${PageCalendar.styles}
 			${Sidebar.styles}

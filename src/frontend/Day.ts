@@ -51,7 +51,7 @@ export class Day extends Component {
 						top: 0.25rem;
 						inset-inline-end: 0.25rem;
 						padding: 0.125rem 0.25rem;
-						border-radius: 0.25rem;
+						border-radius: var(--border-radius);
 						border: none;
 						z-index: 10;
 					}
@@ -82,7 +82,7 @@ export class Day extends Component {
 							width: auto;
 							height: auto;
 							color: var(--color-text);
-							border-radius: 0.25rem;
+							border-radius: var(--border-radius);
 							padding: 0 0.125rem;
 						}
 
@@ -153,7 +153,7 @@ export class Day extends Component {
 						cursor: pointer;
 						padding: 0.125rem 0.375rem;
 						margin: 0.125rem 0.25rem 0;
-						border-radius: 0.25rem;
+						border-radius: var(--border-radius);
 						transition: background-color 0.2s, color 0.2s;
 
 						@container (max-height: 450px) {
