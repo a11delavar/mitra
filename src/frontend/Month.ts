@@ -52,7 +52,7 @@ export class Month extends Component {
 				flex: 1;
 				min-height: 0;
 
-				.headers {
+				& > .headers {
 					display: grid;
 					grid-template-columns: repeat(7, 1fr);
 					z-index: 200;

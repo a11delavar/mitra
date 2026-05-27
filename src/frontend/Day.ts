@@ -26,12 +26,12 @@ export class Day extends Component {
 				}
 
 				&:not([data-with-background]) {
-					.header .day, .header .month {
+					& > .header .day, & > .header .month {
 						color: var(--color-text-muted);
 					}
 				}
 
-				.header {
+				& > .header {
 					grid-row: 1;
 					color: var(--color-text-muted);
 					position: sticky;

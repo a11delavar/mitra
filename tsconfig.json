@@ -5,7 +5,7 @@
 	"compilerOptions": {
 		"incremental": true,
 		"importHelpers": true,
-		"target": "ES2024",
+		"target": "ES2025",
 		"module": "nodenext",
 		"moduleResolution": "nodenext",
 		"useDefineForClassFields": false,

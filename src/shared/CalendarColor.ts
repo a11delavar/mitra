@@ -1,6 +1,6 @@
 export class CalendarColor {
 	private static readonly list = [
-		'#e05252', // Red
+		'#eb5a5a', // Red
 		'#e58b4b', // Orange
 		'#f9c344', // Yellow
 		'#63d18d', // Green

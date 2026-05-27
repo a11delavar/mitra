@@ -6,6 +6,8 @@ import { Day } from './Day.js'
 import { EventSegmentC } from './EventSegment.js'
 import { PageCalendar } from './PageCalendar.js'
 import { Sidebar } from './Sidebar.js'
+import { EventDetails } from './EventDetails.js'
+import { colorContrast } from './colorContrast.js'
 
 @application()
 @component('mitra-application')
@@ -20,8 +22,8 @@ export class Mitra extends Application {
 				--color-surface: color-mix(in srgb, light-dark(#ffffff, #191a1b), var(--color-accent) 5%);
 				--color-text: color-mix(in srgb, light-dark(black, white), var(--color-accent) 2.5%);
 				--color-text-muted: color-mix(in srgb, var(--color-text), var(--color-background) 45%);
-				--color-accent: #e05252;
-				--color-accent-text: black;
+				--color-accent: #eb5a5a;
+				--color-accent-text: ${colorContrast('var(--color-accent)')};
 				--color-border: var(--color-background);
 				--border: 1px solid var(--color-border);
 				user-select: none;
@@ -33,6 +35,7 @@ export class Mitra extends Application {
 			${Days.styles}
 			${Day.styles}
 			${EventSegmentC.styles}
+			${EventDetails.styles}
 		`
 	}
 }

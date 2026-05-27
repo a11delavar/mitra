@@ -1,5 +1,6 @@
-import { component, html, property, Component, css } from '@a11d/lit'
+import { component, html, property, Component, css, eventListener } from '@a11d/lit'
 import { EntrySegment } from 'shared'
+import { colorContrast } from './colorContrast.js'
 
 @component('mitra-event-segment')
 export class EventSegmentC extends Component {
@@ -17,8 +18,17 @@ export class EventSegmentC extends Component {
 			if (this.segment?.date) {
 				this.style.viewTransitionName = `event-${this.segment.entry.id}-${this.segment.index}`
 			}
+			if (this.segment?.entry.id) {
+				this.style.anchorName = `--mitra-event-segment-${this.segment.entry.id}`
+			}
 		}
 	}) segment?: EntrySegment
+
+	@eventListener('click')
+	protected handleClick(e: MouseEvent) {
+		e.stopPropagation()
+		this.querySelector<HTMLElement>('[popover]')?.togglePopover()
+	}
 
 	static override get styles() {
 		return css`
@@ -35,6 +45,7 @@ export class EventSegmentC extends Component {
 				margin-top: 1px;
 				min-height: 0;
 				grid-row: var(--mitra-event-segment-grid-row);
+				cursor: pointer;
 
 				/* Collision Overlap Logic */
 				--overlap-s: var(--overlap-slot, 0);
@@ -47,6 +58,12 @@ export class EventSegmentC extends Component {
 				box-sizing: border-box;
 				container-type: size;
 				overflow: hidden;
+				transition: background-color 0.15s ease, color 0.15s ease;
+
+				&:has([popover]:popover-open) {
+					background-color: var(--mitra-event-segment-color);
+					color: ${colorContrast('var(--mitra-event-segment-color)')};
+				}
 
 				@container (max-height: 450px) {
 					flex-direction: row;
@@ -58,14 +75,14 @@ export class EventSegmentC extends Component {
 				&[continues-next] {
 					border-end-start-radius: 0;
 					border-end-end-radius: 0;
-					border-bottom: 2px dashed color-mix(in srgb, var(--mitra-event-segment-color) 50%, transparent);
+					border-bottom: 2px dashed ${colorContrast('var(--mitra-event-segment-color)')};
 					padding-bottom: 0;
 
 					@container (max-height: 450px) {
 						border-start-end-radius: 0;
 						border-end-end-radius: 0;
 						border-bottom: none;
-						border-inline-end: 2px dashed color-mix(in srgb, var(--mitra-event-segment-color) 50%, transparent);
+						border-inline-end: 2px dashed ${colorContrast('var(--mitra-event-segment-color)')};
 						margin-inline-end: -0.25rem;
 						padding-inline-end: 0.5rem;
 					}
@@ -74,20 +91,20 @@ export class EventSegmentC extends Component {
 				&[continued-from-previous] {
 					border-start-start-radius: 0;
 					border-start-end-radius: 0;
-					border-top: 2px dashed color-mix(in srgb, var(--mitra-event-segment-color) 50%, transparent);
+					border-top: 2px dashed ${colorContrast('var(--mitra-event-segment-color)')};
 					padding-top: 0;
 
 					@container (max-height: 450px) {
 						border-start-start-radius: 0;
 						border-end-start-radius: 0;
 						border-top: none;
-						border-inline-start: 2px dashed color-mix(in srgb, var(--mitra-event-segment-color) 50%, transparent);
+						border-inline-start: 2px dashed ${colorContrast('var(--mitra-event-segment-color)')};
 						margin-inline-start: -0.25rem;
 						padding-inline-start: 0.5rem;
 					}
 				}
 
-				.heading {
+				& > .heading {
 					font-weight: 600;
 					white-space: normal;
 					word-break: break-word;
@@ -110,7 +127,7 @@ export class EventSegmentC extends Component {
 					}
 				}
 
-				.time {
+				& > .time {
 					opacity: 0.75;
 					font-size: 0.65rem;
 					white-space: nowrap;
@@ -122,7 +139,7 @@ export class EventSegmentC extends Component {
 						flex-shrink: 0;
 					}
 
-					.separator, .end {
+					& > .separator, & > .end {
 						@container (max-height: 45px) {
 							display: none;
 						}
@@ -144,6 +161,7 @@ export class EventSegmentC extends Component {
 				</div>
 			`}
 			<div class="heading">${this.segment.entry.heading}</div>
+			<mitra-event-details .segment=${this.segment}></mitra-event-details>
 		`
 	}
 }

@@ -83,9 +83,7 @@ export class Days extends Component {
 				min-height: 0;
 				--time-axis-width: 3.75rem;
 				container-type: inline-size;
-				overflow-y: auto;
-				overflow-x: auto;
-				scroll-snap-type: x proximity;
+				overflow: auto;
 				scroll-padding-inline-start: var(--time-axis-width);
 				scrollbar-width: none; /* Firefox */
 				--minute-min-height: 0.75px;
@@ -109,7 +107,7 @@ export class Days extends Component {
 						background-color: var(--color-surface);
 					}
 
-					.header {
+					& > .header {
 						background-color: var(--color-background);
 						border-bottom: var(--border);
 					}
@@ -178,7 +176,6 @@ export class Days extends Component {
 						display: grid;
 						grid-template-rows: repeat(1440, var(--minute-height));
 						grid-template-columns: subgrid;
-						pointer-events: none;
 
 						.hour {
 							border-top: var(--border);
@@ -194,7 +191,6 @@ export class Days extends Component {
 							z-index: 10;
 							align-self: start;
 							transform: translateY(-50%);
-							pointer-events: none;
 
 							.track {
 								grid-column: 1 / -1;

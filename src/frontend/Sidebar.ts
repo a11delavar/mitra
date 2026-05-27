@@ -180,7 +180,7 @@ export class Sidebar extends Component {
 	protected override createRenderRoot() { return this }
 
 	private async toggleVisibility(source: Source) {
-		await toggleSourceVisibility(source.id, source.hidden)
+		await toggleSourceVisibility(source.id, !source.hidden)
 		source.hidden = !source.hidden
 		this.fetchTask.run()
 	}

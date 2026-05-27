@@ -30,6 +30,20 @@ export class Entry {
 	@property({ type: 'datetime', nullable: true }) end?: DateTime
 	@property({ type: 'boolean', nullable: true }) done?: boolean
 
+	get duration() {
+		if (!this.start || !this.end) {
+			return undefined
+		}
+
+		const minutes = this.end.since(this.start).minutes
+
+		return new Intl.DurationFormat(Localizer.languages.current, { style: 'narrow' }).format({
+			days: Math.floor(minutes / 60 / 24),
+			hours: Math.floor(minutes / 60),
+			minutes: Math.floor(minutes % 60)
+		})
+	}
+
 	constructor(init?: Partial<Entry>) {
 		Object.assign(this, init)
 	}

@@ -10,7 +10,7 @@ export class EntrySegment {
 	monthSlot?: number
 	date?: DateTime
 
-	constructor(readonly entry: Entry, init?: Partial<Omit<EntrySegment, 'event'>>) {
+	constructor(readonly entry: Entry, init?: Partial<Omit<EntrySegment, 'entry'>>) {
 		Object.assign(this, init)
 	}
 
