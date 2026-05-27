@@ -11,6 +11,7 @@ export class EventDetails extends Component {
 		return css`
 			mitra-event-details {
 				display: contents;
+				cursor: default;
 
 				[popover] {
 					&:popover-open {
@@ -193,7 +194,7 @@ export class EventDetails extends Component {
 		}
 
 		return html`
-			<article popover style="position-anchor: ${`--mitra-event-segment-${this.segment.entry.id}`}" @click=${(e: Event) => e.stopPropagation()}>
+			<article popover style="position-anchor: ${this.segment.cssId}" @click=${(e: Event) => e.stopPropagation()}>
 				<header class="header">
 					<h2 class="title">${this.segment.entry.heading}</h2>
 					<button class="close" @click=${(e: Event) => { e.stopPropagation(); this.querySelector<HTMLElement>('[popover]')?.hidePopover() }}>

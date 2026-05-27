@@ -19,7 +19,7 @@ export class EventSegmentC extends Component {
 				this.style.viewTransitionName = `event-${this.segment.entry.id}-${this.segment.index}`
 			}
 			if (this.segment?.entry.id) {
-				this.style.anchorName = `--mitra-event-segment-${this.segment.entry.id}`
+				this.style.anchorName = this.segment.cssId
 			}
 		}
 	}) segment?: EntrySegment

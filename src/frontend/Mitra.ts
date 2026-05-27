@@ -9,6 +9,7 @@ import { Sidebar } from './Sidebar.js'
 import { EventDetails } from './EventDetails.js'
 import { colorContrast } from './colorContrast.js'
 import { buttonStyles } from './button.css.js'
+import { selectStyles } from './select.css.js'
 
 @application()
 @component('mitra-application')
@@ -32,6 +33,7 @@ export class Mitra extends Application {
 			}
 
 			${buttonStyles}
+			${selectStyles}
 
 			${PageCalendar.styles}
 			${Sidebar.styles}

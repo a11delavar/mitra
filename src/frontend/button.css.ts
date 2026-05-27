@@ -1,27 +1,33 @@
 import { css } from '@a11d/lit'
 
 export const buttonStyles = css`
-	button {
-		display: flex;
+	:is(button, select) {
+		appearance: base-select;
+		box-sizing: border-box;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 		gap: 0.375rem;
+		height: 2rem;
 		font-family: inherit;
+		font-size: 0.8125rem;
 		font-weight: 500;
-		background: color-mix(in srgb, white 5%, transparent);
+		background: color-mix(in srgb, var(--color-text) 5%, transparent);
 		color: var(--color-text);
-		border: 1px solid color-mix(in srgb, white 6%, transparent);
-		border-radius: var(--border-radius);
+		border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+		border-radius: 6px;
 		padding: 0.375rem 0.75rem;
-		transition: all 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
-		line-height: 1.2;
+		cursor: pointer;
+		transition: all 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
 
 		&:hover {
-			background: color-mix(in srgb, white 9%, transparent);
-			border-color: color-mix(in srgb, var(--color-text) 12%, transparent);
+			background: color-mix(in srgb, var(--color-text) 8%, transparent);
 		}
 
 		&:active {
-			background: color-mix(in srgb, white 14%, transparent);
-			transform: scale(0.97);
+			background: color-mix(in srgb, var(--color-text) 14%, transparent);
+			box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-text) 2%, transparent);
+			transition-duration: 0.05s;
 		}
 
 		&:focus-visible {
@@ -30,7 +36,7 @@ export const buttonStyles = css`
 			box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 20%, transparent);
 		}
 
-		kbd {
+		& kbd {
 			display: inline-flex;
 			align-items: center;
 			justify-content: center;
@@ -40,7 +46,7 @@ export const buttonStyles = css`
 			color: color-mix(in srgb, var(--color-text) 45%, transparent);
 			background: color-mix(in srgb, var(--color-text) 4%, transparent);
 			border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
-			border-radius: var(--border-radius);
+			border-radius: 4px;
 			padding: 0.125rem 0.25rem;
 			pointer-events: none;
 		}

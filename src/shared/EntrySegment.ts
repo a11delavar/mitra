@@ -38,6 +38,10 @@ export class EntrySegment {
 		return true
 	}
 
+	get cssId() {
+		return `--mitra-event-segment-${this.entry.id}`
+	}
+
 	compareTo(other: EntrySegment) {
 		if (this.startMinute !== other.startMinute) {
 			return this.startMinute - other.startMinute
