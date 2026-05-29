@@ -1,8 +1,6 @@
 import { model } from './model.js'
-import { entity, primaryKey, property, manyToOne, oneToMany, cascade } from './orm.js'
-import { Collection } from './orm.js'
+import { entity, primaryKey, property, manyToOne } from './orm.js'
 import { Integration } from './Integration.js'
-import { Entry } from './Entry.js'
 
 export enum SourceType {
 	Calendar = 'calendar',
@@ -12,8 +10,10 @@ export enum SourceType {
 @model('Source')
 @entity()
 export class Source {
-	@primaryKey() id = crypto.randomUUID() as string
-	@manyToOne(() => Integration) integration!: Integration
+	@primaryKey() id: string = crypto.randomUUID()
+
+	@manyToOne(() => Integration, { mapToPk: true, deleteRule: 'cascade' }) integrationId!: string
+
 	@property({ type: 'string' }) externalId!: string
 	@property({ type: 'string', nullable: true }) url?: string
 	@property({ type: 'string' }) type!: SourceType
@@ -23,7 +23,6 @@ export class Source {
 	@property({ type: 'boolean' }) enabled = false
 	@property({ type: 'string', nullable: true }) syncToken?: string
 	@property({ type: 'string', nullable: true }) ctag?: string
-	@oneToMany(() => Entry, entry => entry.source, { cascade: [cascade.ALL], orphanRemoval: true }) entries = new Collection<Entry>(this)
 
 	constructor(init?: Partial<Source>) {
 		Object.assign(this, init)

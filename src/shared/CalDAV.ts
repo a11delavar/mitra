@@ -1,12 +1,13 @@
+import { type EntityManager } from '@mikro-orm/sqlite'
+import { equals } from '@a11d/equals'
+import { createDAVClient } from 'tsdav'
+import ICAL from 'ical.js'
 import { model } from './model.js'
 import { entity } from './orm.js'
-import { type EntityManager } from '@mikro-orm/sqlite'
 import { Source, SourceType } from './Source.js'
 import { Integration } from './Integration.js'
 import { Entry, EntryType } from './Entry.js'
 import { CalendarColor } from './CalendarColor.js'
-import { createDAVClient } from 'tsdav'
-import ICAL from 'ical.js'
 
 export interface CalDAVConfig {
 	serverUrl: string
@@ -41,19 +42,18 @@ export class CalDAV extends Integration<CalDAVConfig> {
 	async sync(em: EntityManager) {
 		const client = await this.getClient()
 
-		// 1. Sync Sources (Calendars)
-		if (!this.sources.isInitialized()) await this.sources.init()
-		const existingSources = this.sources.getItems()
+		// 1. Sync Sources (Calendars) — looked up by foreign key, never populated.
+		const existingSources = await em.find(Source, { integrationId: this.id })
 		const remoteCalendars = await client.fetchCalendars()
 
 		const remoteUrls = new Set(remoteCalendars.map(c => c.url))
 
 		let changed = false
-		// Delete removed sources
+		// Delete removed sources; their entries are removed by the ON DELETE CASCADE
+		// foreign key declared on Entry.sourceId.
 		for (const source of existingSources) {
 			if (!remoteUrls.has(source.url!)) {
 				em.remove(source)
-				this.sources.remove(source)
 				changed = true
 			}
 		}
@@ -63,7 +63,7 @@ export class CalDAV extends Integration<CalDAVConfig> {
 			let source = existingSources.find(s => s.url === cal.url)
 			if (!source) {
 				source = new Source({
-					integration: this,
+					integrationId: this.id,
 					url: cal.url,
 					externalId: cal.url,
 					type: SourceType.Calendar,
@@ -72,7 +72,7 @@ export class CalDAV extends Integration<CalDAVConfig> {
 					enabled: false,
 				})
 				em.persist(source)
-				this.sources.add(source)
+				existingSources.push(source)
 			} else {
 				source.name = typeof cal.displayName === 'string' ? cal.displayName : source.name
 			}
@@ -95,16 +95,18 @@ export class CalDAV extends Integration<CalDAVConfig> {
 			syncToken: source.syncToken || undefined
 		})
 
-		const newSyncToken = (result[0] as any)?.raw?.multistatus?.syncToken || source.syncToken
+		const newSyncToken = result[0]?.raw?.multistatus?.syncToken || source.syncToken
 
 		let changedObjects: Awaited<ReturnType<typeof client.fetchCalendarObjects>> = []
 		let deletedUrls = new Array<string>()
 
+		// Existing entries are looked up by foreign key, never populated.
+		const existingEntries = await em.find(Entry, { sourceId: source.id })
+
 		if (!source.syncToken) {
 			changedObjects = await client.fetchCalendarObjects({ calendar: remoteCalendar })
 			const remoteUrls = new Set(changedObjects.map(o => o.url))
-			if (!source.entries.isInitialized()) await source.entries.init()
-			deletedUrls = source.entries.getItems().filter(e => !remoteUrls.has(e.url!)).map(e => e.url!)
+			deletedUrls = existingEntries.filter(e => !remoteUrls.has(e.url!)).map(e => e.url!)
 		} else {
 			const objectResponses = result.filter(r => r.href && r.href !== source.url && r.href + '/' !== source.url && source.url + '/' !== r.href)
 			deletedUrls = objectResponses.filter(r => r.status === 404).map(r => r.href!)
@@ -118,15 +120,11 @@ export class CalDAV extends Integration<CalDAVConfig> {
 			}
 		}
 
-		if (!source.entries.isInitialized()) await source.entries.init()
-		const existingEntries = source.entries.getItems()
-
 		// 1. Handle deletions
 		for (const url of deletedUrls) {
 			const entry = existingEntries.find(e => e.url === url)
 			if (entry) {
 				em.remove(entry)
-				source.entries.remove(entry)
 			}
 		}
 
@@ -136,9 +134,9 @@ export class CalDAV extends Integration<CalDAVConfig> {
 
 			let entry = existingEntries.find(e => e.url === obj.url)
 			if (!entry) {
-				entry = new Entry({ source, url: obj.url })
+				entry = new Entry({ sourceId: source.id, url: obj.url })
 				em.persist(entry)
-				source.entries.add(entry)
+				existingEntries.push(entry)
 			}
 
 			if (entry.etag !== obj.etag) {
@@ -164,5 +162,120 @@ export class CalDAV extends Integration<CalDAVConfig> {
 		source.syncToken = newSyncToken
 
 		return deletedUrls.length > 0 || changedObjects.length > 0
+	}
+
+	async updateEntry(_em: EntityManager, existing: Entry, incoming: Entry): Promise<void> {
+		if (!existing.url || !existing.rawData) {
+			throw new Error('Entry must have a URL and rawData to be updated via CalDAV')
+		}
+
+		const keys: Array<keyof Entry> = (['heading', 'description', 'color', 'start', 'end', 'done'] as const)
+			.filter(key => !Object[equals](existing[key], incoming[key]))
+
+		if (keys.length === 0) {
+			return
+		}
+
+		const comp = new ICAL.Component(ICAL.parse(existing.rawData))
+
+		const vevent = comp.getFirstSubcomponent('vevent')
+		if (!vevent) {
+			throw new Error('No vevent found in entry rawData')
+		}
+
+		if (keys.includes('heading')) {
+			vevent.updatePropertyWithValue('summary', incoming.heading)
+			existing.heading = incoming.heading
+		}
+
+		if (keys.includes('description')) {
+			vevent.updatePropertyWithValue('description', incoming.description)
+			existing.description = incoming.description
+		}
+
+		if (keys.includes('start')) {
+			vevent.updatePropertyWithValue('dtstart', ICAL.Time.fromJSDate(incoming.start!, true))
+			existing.start = incoming.start
+		}
+
+		if (keys.includes('end')) {
+			vevent.updatePropertyWithValue('dtend', ICAL.Time.fromJSDate(incoming.end!, true))
+			existing.end = incoming.end
+		}
+
+		existing.rawData = comp.toString()
+
+		const client = await this.getClient()
+		const response = await client.updateCalendarObject({
+			calendarObject: {
+				url: existing.url,
+				data: existing.rawData,
+				etag: existing.etag || undefined,
+			}
+		})
+
+		const etag = response.headers?.get('etag') || response.headers?.get('Etag') || response.headers?.get('ETag')
+		if (etag) {
+			existing.etag = etag
+		}
+	}
+
+	async createEntry(em: EntityManager, entry: Entry): Promise<Entry> {
+		const source = entry.sourceId ? await em.findOne(Source, { id: entry.sourceId }) : null
+		if (!source?.url) {
+			throw new Error('A target source with a URL is required to create an entry via CalDAV')
+		}
+
+		const uid = crypto.randomUUID()
+		const filename = `${uid}.ics`
+
+		const comp = new ICAL.Component(['vcalendar', [], []])
+		comp.updatePropertyWithValue('prodid', '-//calendar//EN')
+		comp.updatePropertyWithValue('version', '2.0')
+
+		const vevent = new ICAL.Component('vevent')
+		vevent.updatePropertyWithValue('uid', uid)
+		vevent.updatePropertyWithValue('dtstamp', ICAL.Time.now())
+		vevent.updatePropertyWithValue('summary', entry.heading)
+		!entry.description ? void 0 : vevent.updatePropertyWithValue('description', entry.description)
+		!entry.start ? void 0 : vevent.updatePropertyWithValue('dtstart', ICAL.Time.fromJSDate(entry.start, true))
+		!entry.end ? void 0 : vevent.updatePropertyWithValue('dtend', ICAL.Time.fromJSDate(entry.end, true))
+
+		comp.addSubcomponent(vevent)
+
+		const iCalString = comp.toString()
+
+		const client = await this.getClient()
+		const response = await client.createCalendarObject({
+			calendar: { url: source.url },
+			filename,
+			iCalString,
+		})
+
+		entry.externalId = uid
+		entry.type = EntryType.Event
+		entry.url = new URL(filename, source.url.endsWith('/') ? source.url : `${source.url}/`).href
+		entry.rawData = iCalString
+		entry.color = source.color
+		const etag = response.headers?.get('etag') || response.headers?.get('Etag') || response.headers?.get('ETag')
+		if (etag) {
+			entry.etag = etag
+		}
+
+		em.persist(entry)
+		return entry
+	}
+
+	async deleteEntry(em: EntityManager, entry: Entry): Promise<void> {
+		if (entry.url) {
+			const client = await this.getClient()
+			await client.deleteCalendarObject({
+				calendarObject: {
+					url: entry.url,
+					etag: entry.etag || undefined,
+				}
+			})
+		}
+		em.remove(entry)
 	}
 }

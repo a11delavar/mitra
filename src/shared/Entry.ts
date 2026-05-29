@@ -1,7 +1,7 @@
 import { type DateTime } from '@3mo/date-time'
 import { model } from './model.js'
 import { EntrySegment } from './EntrySegment.js'
-import { entity, primaryKey, property, manyToOne, enum as enumType, unique } from './orm.js'
+import { entity, primaryKey, property, enum as enumType, unique, manyToOne } from './orm.js'
 import { Source } from './Source.js'
 
 export enum EntryType {
@@ -11,11 +11,11 @@ export enum EntryType {
 
 @model('Entry')
 @entity()
-@unique({ properties: ['source', 'externalId'] })
+@unique({ properties: ['sourceId', 'externalId'] })
 export class Entry {
-	@primaryKey() id = crypto.randomUUID() as string
+	@primaryKey() id: string = crypto.randomUUID()
 	@property({ type: 'string' }) externalId!: string
-	@manyToOne(() => Source) source!: Source
+	@manyToOne(() => Source, { mapToPk: true, deleteRule: 'cascade' }) sourceId!: string
 
 	@enumType(() => EntryType) type!: EntryType
 

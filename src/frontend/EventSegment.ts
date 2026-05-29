@@ -1,4 +1,4 @@
-import { component, html, property, Component, css, eventListener } from '@a11d/lit'
+import { component, html, property, Component, css, eventListener, state, bind } from '@a11d/lit'
 import { EntrySegment } from 'shared'
 import { colorContrast } from './colorContrast.js'
 
@@ -24,10 +24,12 @@ export class EventSegmentC extends Component {
 		}
 	}) segment?: EntrySegment
 
+	@state() open = false
+
 	@eventListener('click')
-	protected handleClick(e: MouseEvent) {
+	protected async handleClick(e: MouseEvent) {
 		e.stopPropagation()
-		this.querySelector<HTMLElement>('[popover]')?.togglePopover()
+		this.open = true
 	}
 
 	static override get styles() {
@@ -161,7 +163,14 @@ export class EventSegmentC extends Component {
 				</div>
 			`}
 			<div class="heading">${this.segment.entry.heading}</div>
-			<mitra-event-details .segment=${this.segment}></mitra-event-details>
+			${!this.open ? html.nothing : html`
+				<mitra-event-details popover ?open=${bind(this, 'open')}
+					style="position-anchor: ${this.segment.cssId}"
+					.segment=${this.segment}
+					@click=${(e: Event) => e.stopPropagation()}
+					@change=${() => this.requestUpdate()}
+				></mitra-event-details>
+			`}
 		`
 	}
 }

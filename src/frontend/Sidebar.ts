@@ -1,14 +1,11 @@
 import { Component, component, html, css, property, event } from '@a11d/lit'
-import { Task } from '@lit/task'
-import { fetchIntegrations, toggleSourceVisibility } from './Api.js'
+import { getIntegrations, toggleSourceVisibility } from './Api.js'
 import type { Source } from 'shared'
 
 @component('mitra-sidebar')
 export class Sidebar extends Component {
 	@event() openChange!: EventDispatcher<boolean>
 	@property({ type: Boolean, reflect: true }) open = false
-
-	private readonly fetchTask = new Task(this, fetchIntegrations, () => [])
 
 	static override get styles() {
 		return css`
@@ -182,20 +179,20 @@ export class Sidebar extends Component {
 	private async toggleVisibility(source: Source) {
 		await toggleSourceVisibility(source.id, !source.hidden)
 		source.hidden = !source.hidden
-		this.fetchTask.run()
+		this.requestUpdate()
 	}
 
 	protected override get template() {
 		return html`
 			<div class="backdrop" ?data-open=${this.open} @click=${() => this.openChange.dispatch(false)}></div>
 			<nav ?data-open=${this.open}>
-				${this.fetchTask.value?.map(integration => html`
+				${getIntegrations().map(i => html`
 					<div class="integration">
 						<header>
-							${integration.config?.username || integration.type}
+							${i.config?.username || i.type}
 						</header>
 						<div class="sources">
-							${integration.sources.map(source => html`
+							${i.sources.map(source => html`
 								<div class="source">
 									<div class="color" style="background-color: ${source.color || 'var(--color-text-muted)'}"></div>
 									<div class="name">
