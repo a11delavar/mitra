@@ -156,7 +156,6 @@ export class Days extends Component {
 							font-size: 0.65rem;
 							font-weight: 600;
 							z-index: 10;
-							line-height: 1;
 						}
 
 						.hour {

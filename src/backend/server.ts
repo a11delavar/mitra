@@ -86,7 +86,7 @@ app.get('/api/entries', async (req, res) => {
 	const [startDate, endDate] = [new Date(start), new Date(end)]
 
 	const em = orm.em.fork()
-	const visibleSources = await em.find(Source, { hidden: false })
+	const visibleSources = await em.find(Source, { enabled: true, hidden: false })
 	const visibleSourceIds = visibleSources.map(source => source.id)
 	const entries = await em.find(Entry, {
 		sourceId: { $in: visibleSourceIds },
@@ -104,6 +104,41 @@ app.get('/api/integrations', async (_, res) => {
 	const em = orm.em.fork()
 	const integrations = await em.find(Integration, {}, { populate: ['sources'] })
 	return res.json(integrations)
+})
+
+app.post('/api/integrations/sources', async (req, res) => {
+	const incoming = req.body as Integration
+	const em = orm.em.fork()
+	const integration: Integration = await em.findOne(Integration, { id: incoming.id }) ?? new CalDAV()
+	integration.merge(incoming)
+	return res.json(await integration.getSources(em))
+})
+
+app.post('/api/integrations', async (req, res) => {
+	const em = orm.em.fork()
+	const integration: Integration = new CalDAV({ userId: (req as any).user.id })
+	em.persist(integration)
+	await integration.applyAndSync(em, req.body as Integration)
+	syncEmitter.emit('updated')
+	return res.status(201).json(await em.findOneOrFail(Integration, { id: integration.id }, { populate: ['sources'] }))
+})
+
+app.put('/api/integrations/:id', async (req, res) => {
+	const em = orm.em.fork()
+	const integration: Integration = await em.findOneOrFail(Integration, { id: req.params.id })
+	await integration.applyAndSync(em, req.body as Integration)
+	syncEmitter.emit('updated')
+	return res.json(await em.findOneOrFail(Integration, { id: integration.id }, { populate: ['sources'] }))
+})
+
+app.delete('/api/integrations/:id', async (req, res) => {
+	const em = orm.em.fork()
+	const integration = await em.findOneOrFail(Integration, { id: req.params.id })
+	em.remove(integration)
+	// Sources and their entries are removed by the ON DELETE CASCADE foreign keys.
+	await em.flush()
+	syncEmitter.emit('updated')
+	return res.status(204).end()
 })
 
 app.put('/api/sources/:id/visibility', async (req, res) => {

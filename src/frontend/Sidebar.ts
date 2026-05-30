@@ -1,5 +1,6 @@
 import { Component, component, html, css, property, event } from '@a11d/lit'
-import { getIntegrations, toggleSourceVisibility } from './Api.js'
+import { getIntegrations, toggleSourceVisibility, deleteIntegration, fetchIntegrations } from './Api.js'
+import { DialogIntegration } from './DialogIntegration.js'
 import type { Source } from 'shared'
 
 @component('mitra-sidebar')
@@ -63,7 +64,7 @@ export class Sidebar extends Component {
 					width: 280px;
 					height: 100%;
 					border-inline-end: 1px solid var(--color-surface);
-					padding: 2rem 1.5rem;
+					padding: 1.5rem 1rem;
 					gap: 2rem;
 					overflow-y: auto;
 					box-sizing: border-box;
@@ -84,17 +85,76 @@ export class Sidebar extends Component {
 					}
 				}
 
+				.add-integration {
+					all: unset;
+					margin-top: auto;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					gap: 0.5rem;
+					padding: 0.5rem 0.75rem;
+					border: 1px dashed color-mix(in srgb, var(--color-text) 15%, transparent);
+					border-radius: var(--border-radius);
+					color: var(--color-text-muted);
+					font-size: 0.8125rem;
+					font-weight: 500;
+					cursor: pointer;
+					transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+
+					mitra-icon { font-size: 16px; }
+
+					&:hover {
+						color: var(--color-text);
+						background: color-mix(in srgb, var(--color-text) 6%, transparent);
+						border-color: color-mix(in srgb, var(--color-text) 25%, transparent);
+					}
+				}
+
 				.integration {
 					display: flex;
 					flex-direction: column;
 					gap: 0.5rem;
 
 					header {
+						display: flex;
+						align-items: center;
+						gap: 0.25rem;
 						font-size: 0.75rem;
 						font-weight: 600;
 						color: var(--color-text-muted);
 						margin-bottom: 0.25rem;
-						padding-left: 0.5rem;
+						padding-inline-start: 0.5rem;
+						padding-inline-end: 0.3rem;
+
+						.title {
+							flex: 1;
+							white-space: nowrap;
+							overflow: hidden;
+							text-overflow: ellipsis;
+						}
+
+						.more {
+							all: unset;
+							display: flex;
+							align-items: center;
+							justify-content: center;
+							padding: 0.2rem;
+							border-radius: var(--border-radius);
+							color: var(--color-text-muted);
+							font-size: 16px;
+							cursor: pointer;
+							opacity: 0;
+							transition: opacity 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+
+							&:hover {
+								color: var(--color-text);
+								background: color-mix(in srgb, var(--color-text) 8%, transparent);
+							}
+						}
+					}
+
+					&:hover .more, &:has(menu:popover-open) .more {
+						opacity: 1;
 					}
 
 					.sources {
@@ -182,6 +242,21 @@ export class Sidebar extends Component {
 		this.requestUpdate()
 	}
 
+	private closeMenu(e: Event) {
+		(e.currentTarget as HTMLElement).closest<HTMLElement>('[popover]')?.hidePopover()
+	}
+
+	private async openDialog(id: string) {
+		await new DialogIntegration({ id }).confirm()
+		this.requestUpdate()
+	}
+
+	private async removeIntegration(id: string) {
+		await deleteIntegration(id)
+		await fetchIntegrations()
+		this.requestUpdate()
+	}
+
 	protected override get template() {
 		return html`
 			<div class="backdrop" ?data-open=${this.open} @click=${() => this.openChange.dispatch(false)}></div>
@@ -189,10 +264,21 @@ export class Sidebar extends Component {
 				${getIntegrations().map(i => html`
 					<div class="integration">
 						<header>
-							${i.config?.username || i.type}
+							<span class="title">${i.config?.username || i.type}</span>
+							<button class="more" popovertarget="menu-${i.id}" style="anchor-name: --anchor-${i.id}">
+								<mitra-icon icon="more-horizontal"></mitra-icon>
+							</button>
+							<menu popover id="menu-${i.id}" style="position-anchor: --anchor-${i.id}">
+								<button @click=${(e: Event) => { this.closeMenu(e); this.openDialog(i.id) }}>
+									<mitra-icon icon="pencil"></mitra-icon> Edit
+								</button>
+								<button class="danger" @click=${(e: Event) => { this.closeMenu(e); this.removeIntegration(i.id) }}>
+									<mitra-icon icon="trash-2"></mitra-icon> Delete
+								</button>
+							</menu>
 						</header>
 						<div class="sources">
-							${i.sources.map(source => html`
+							${i.sources.filter(source => source.enabled).map(source => html`
 								<div class="source">
 									<div class="color" style="background-color: ${source.color || 'var(--color-text-muted)'}"></div>
 									<div class="name">
@@ -204,6 +290,9 @@ export class Sidebar extends Component {
 						</div>
 					</div>
 				`)}
+				<button class="add-integration" @click=${() => this.openDialog('')}>
+					<mitra-icon icon="plus"></mitra-icon> Add Integration
+				</button>
 			</nav>
 		`
 	}

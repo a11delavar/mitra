@@ -20,20 +20,27 @@ export const buttonStyles = css`
 		cursor: pointer;
 		transition: all 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
 
-		&:hover {
-			background: color-mix(in srgb, var(--color-text) 8%, transparent);
-		}
+		&:not(:disabled) {
+			&:hover {
+				background: color-mix(in srgb, var(--color-text) 8%, transparent);
+			}
 
-		&:active {
-			background: color-mix(in srgb, var(--color-text) 14%, transparent);
-			box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-text) 2%, transparent);
-			transition-duration: 0.05s;
+			&:active {
+				background: color-mix(in srgb, var(--color-text) 14%, transparent);
+				box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-text) 2%, transparent);
+				transition-duration: 0.05s;
+			}
 		}
 
 		&:focus-visible {
 			outline: none;
 			border-color: var(--color-accent);
 			box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 20%, transparent);
+		}
+
+		&:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
 		}
 
 		& kbd {

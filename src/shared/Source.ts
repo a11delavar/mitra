@@ -24,6 +24,10 @@ export class Source {
 	@property({ type: 'string', nullable: true }) syncToken?: string
 	@property({ type: 'string', nullable: true }) ctag?: string
 
+	toggleEnabled() {
+		this.enabled = !this.enabled
+	}
+
 	constructor(init?: Partial<Source>) {
 		Object.assign(this, init)
 	}

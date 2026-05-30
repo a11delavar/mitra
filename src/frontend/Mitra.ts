@@ -8,10 +8,12 @@ import { EventSegmentC } from './EventSegment.js'
 import { PageCalendar } from './PageCalendar.js'
 import { Sidebar } from './Sidebar.js'
 import { EventDetails } from './EventDetails.js'
+import { DialogIntegration } from './DialogIntegration.js'
 import { colorContrast } from './colorContrast.js'
 import { buttonStyles } from './button.css.js'
 import { selectStyles } from './select.css.js'
 import { inputStyles } from './input.css.js'
+import { menuStyles } from './menu.css.js'
 
 @application()
 @component('mitra-application')
@@ -42,6 +44,7 @@ export class Mitra extends Application {
 			${buttonStyles}
 			${selectStyles}
 			${inputStyles}
+			${menuStyles}
 
 			${PageCalendar.styles}
 			${Sidebar.styles}
@@ -50,6 +53,7 @@ export class Mitra extends Application {
 			${Day.styles}
 			${EventSegmentC.styles}
 			${EventDetails.styles}
+			${DialogIntegration.styles}
 		`
 	}
 }

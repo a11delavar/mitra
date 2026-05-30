@@ -1,0 +1,147 @@
+import { component, html, css, state, Binder } from '@a11d/lit'
+import { DialogComponent } from '@a11d/lit-application'
+import { Task, TaskStatus } from '@lit/task'
+import { CalDAV, Source, type Integration } from 'shared'
+import { discoverSources, createIntegration, updateIntegration, getIntegrations, fetchIntegrations } from './Api.js'
+
+@component('mitra-dialog-integration')
+export class DialogIntegration extends DialogComponent<{ readonly id: string }, Integration> {
+	// `sources` is kept as a plain array (never a live ORM Collection) so the entity stays
+	// JSON-serializable when sent to the API — a Collection holds a circular owner reference.
+	@state() private entity = new CalDAV({ config: { serverUrl: '', username: '', password: '' }, sources: [] as any })
+
+	private readonly binder = new Binder(this, 'entity')
+
+	private readonly fetchSources = new Task(this, {
+		autoRun: false,
+		args: () => [this.entity] as const,
+		task: async ([entity]) => this.entity.sources = await discoverSources(entity) as any,
+	})
+
+	protected override createRenderRoot() { return this }
+
+	private get isEdit() { return !!this.parameters.id }
+
+	protected override connected() {
+		if (this.isEdit) {
+			const integration = getIntegrations().find(i => i.id === this.parameters.id)
+			if (integration) {
+				this.entity = new CalDAV({
+					id: this.parameters.id,
+					config: { serverUrl: integration.config?.serverUrl ?? '', username: integration.config?.username ?? '', password: '' },
+					sources: [...integration.sources].map(source => new Source({ url: source.url, name: source.name, enabled: source.enabled })) as any,
+				})
+			}
+		}
+	}
+
+	static override get styles() {
+		return css`
+			mitra-dialog-integration {
+				.content {
+					display: flex;
+					flex-direction: column;
+					gap: 1rem;
+
+					> label {
+						display: flex;
+						flex-direction: column;
+						gap: 0.3rem;
+						font-size: 0.75rem;
+						font-weight: 600;
+						color: var(--color-text-muted);
+					}
+
+					.connect {
+						align-self: flex-start;
+					}
+
+					.error {
+						margin: 0;
+						font-size: 0.8125rem;
+						color: #ff6b6b;
+					}
+				}
+
+				.sources {
+					display: flex;
+					flex-direction: column;
+					gap: 0.75rem;
+
+					.sources-title {
+						font-size: 0.75rem;
+						font-weight: 600;
+						color: var(--color-text-muted);
+					}
+
+					.source {
+						display: flex;
+						align-items: center;
+						gap: 0.625rem;
+						font-size: 0.875rem;
+						color: var(--color-text);
+						cursor: pointer;
+					}
+				}
+			}
+		`
+	}
+
+	protected override get template() {
+		const { bind } = this.binder
+		return html`
+			<mitra-dialog heading=${this.isEdit ? 'Edit integration' : 'Add integration'} primaryButtonText="Save"
+				?primaryButtonDisabled=${!this.entity.sources.length || this.fetchSources.status === TaskStatus.PENDING}
+			>
+				<form class="content" @submit=${(e: Event) => e.preventDefault()}>
+					<label>
+						Server URL
+						<input ${bind({ keyPath: 'config.serverUrl', event: 'input' })} ?readonly=${this.isEdit} placeholder="https://caldav.example.com" autocomplete="off">
+					</label>
+					<label>
+						Username
+						<input ${bind({ keyPath: 'config.username', event: 'input' })} ?readonly=${this.isEdit} autocomplete="off">
+					</label>
+					<label>
+						Password
+						<input type="password" ${bind({ keyPath: 'config.password', event: 'input' })} placeholder=${this.isEdit ? 'unchanged' : ''} autocomplete="off">
+					</label>
+
+					${this.fetchSources.render({
+						initial: () => html`
+							<button class="connect" @click=${() => this.fetchSources.run()} ?disabled=${!this.entity.config.serverUrl || !this.entity.config.username}>
+								${this.entity.sources.length ? 'Refresh' : 'Connect'}
+							</button>
+						`,
+						error: (e: unknown) => html`<p class="error">${(e as Error).message}</p>`,
+						pending: () => html`<button class="connect" disabled>Connecting…</button>`,
+					})}
+
+					${!this.entity.sources.length ? html.nothing : html`
+						<div class="sources">
+							<span class="sources-title">Sources</span>
+							${this.entity.sources.map(source => html`
+								<label class="source">
+									<input type="checkbox" .checked=${source.enabled} @change=${() => { source.toggleEnabled(); this.requestUpdate() }}>
+									${source.name}
+								</label>
+							`)}
+						</div>
+					`}
+				</form>
+			</mitra-dialog>
+		`
+	}
+
+	protected override async primaryAction() {
+		const integration = this.isEdit ? await updateIntegration(this.entity) : await createIntegration(this.entity)
+		await fetchIntegrations()
+		return integration
+	}
+}
+
+declare global {
+	interface HTMLElementTagNameMap {
+		'mitra-dialog-integration': DialogIntegration
+	}
+}

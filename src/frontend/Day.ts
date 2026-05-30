@@ -66,6 +66,7 @@ export class Day extends Component {
 
 						&[data-today] {
 							color: var(--color-accent);
+							font-weight: 700;
 						}
 					}
 

@@ -1,10 +1,10 @@
 import { css } from '@a11d/lit'
 
 export const inputStyles = css`
-	input {
+	input:not([type=checkbox]) {
 		appearance: none;
 		box-sizing: border-box;
-		field-sizing: content;
+		font-weight: 400;
 		height: 2rem;
 		font-family: inherit;
 		font-size: 0.8125rem;
@@ -18,6 +18,11 @@ export const inputStyles = css`
 		max-width: 100%;
 		outline: none;
 		transition: all 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+
+		&:read-only {
+			opacity: 0.55;
+			cursor: not-allowed;
+		}
 
 		&:hover {
 			background: color-mix(in srgb, var(--color-text) 8%, transparent);
@@ -46,6 +51,50 @@ export const inputStyles = css`
 				border-color: transparent;
 				box-shadow: none;
 			}
+		}
+	}
+
+	input[type=checkbox] {
+		appearance: none;
+		box-sizing: border-box;
+		flex-shrink: 0;
+		width: 1.125rem;
+		height: 1.125rem;
+		margin: 0;
+		padding: 0;
+		border: 1.5px solid color-mix(in srgb, var(--color-text) 28%, transparent);
+		border-radius: 5px;
+		background: color-mix(in srgb, var(--color-text) 6%, transparent);
+		display: grid;
+		place-content: center;
+		cursor: pointer;
+		transition: background-color 0.15s ease, border-color 0.15s ease;
+
+		&::before {
+			content: "";
+			width: 0.8rem;
+			height: 0.8rem;
+			transform: scale(0);
+			transition: transform 0.12s cubic-bezier(0.2, 0.9, 0.3, 1.4);
+			background-color: var(--color-accent-text);
+			-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center / contain no-repeat;
+			mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center / contain no-repeat;
+		}
+
+		&:checked {
+			background: var(--color-accent);
+			border-color: var(--color-accent);
+
+			&::before {
+				transform: scale(1.1);
+				margin-bottom: -1px;
+			}
+		}
+
+		&:focus-visible {
+			outline: none;
+			border-color: var(--color-accent);
+			box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent);
 		}
 	}
 `

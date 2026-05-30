@@ -27,8 +27,20 @@ export class CalDAV extends Integration<CalDAVConfig> {
 		return `${this.type} integration for "${this.config.username}" at ${this.config.serverUrl}`
 	}
 
+	override merge(incoming: CalDAV) {
+		this.config = {
+			serverUrl: incoming.config.serverUrl,
+			username: incoming.config.username,
+			// A blank incoming password keeps the stored secret — the edit form leaves it empty.
+			password: incoming.config.password || this.config.password,
+		}
+	}
+
+	private client?: ReturnType<typeof createDAVClient>
+
+	// Memoized so a multi-step operation (discover + sync entries) shares one account discovery.
 	private getClient(): ReturnType<typeof createDAVClient> {
-		return createDAVClient({
+		return this.client ??= createDAVClient({
 			defaultAccountType: 'caldav',
 			authMethod: 'Basic',
 			serverUrl: this.config.serverUrl,
@@ -39,55 +51,25 @@ export class CalDAV extends Integration<CalDAVConfig> {
 		})
 	}
 
-	async sync(em: EntityManager) {
+	protected override async fetchSources() {
 		const client = await this.getClient()
-
-		// 1. Sync Sources (Calendars) — looked up by foreign key, never populated.
-		const existingSources = await em.find(Source, { integrationId: this.id })
-		const remoteCalendars = await client.fetchCalendars()
-
-		const remoteUrls = new Set(remoteCalendars.map(c => c.url))
-
-		let changed = false
-		// Delete removed sources; their entries are removed by the ON DELETE CASCADE
-		// foreign key declared on Entry.sourceId.
-		for (const source of existingSources) {
-			if (!remoteUrls.has(source.url!)) {
-				em.remove(source)
-				changed = true
-			}
-		}
-
-		// Upsert sources and sync their entries
-		for (const cal of remoteCalendars) {
-			let source = existingSources.find(s => s.url === cal.url)
-			if (!source) {
-				source = new Source({
-					integrationId: this.id,
-					url: cal.url,
-					externalId: cal.url,
-					type: SourceType.Calendar,
-					name: typeof cal.displayName === 'string' ? cal.displayName : 'Untitled',
-					color: CalendarColor.get(cal.url || (typeof cal.displayName === 'string' ? cal.displayName : 'default')).value,
-					enabled: false,
-				})
-				em.persist(source)
-				existingSources.push(source)
-			} else {
-				source.name = typeof cal.displayName === 'string' ? cal.displayName : source.name
-			}
-
-			if (source.enabled) {
-				if (await this.syncEntries(client, source, cal, em)) {
-					changed = true
-				}
-			}
-		}
-
-		return changed
+		const calendars = await client.fetchCalendars()
+		return calendars.map(cal => {
+			const name = typeof cal.displayName === 'string' ? cal.displayName : 'Untitled'
+			return new Source({
+				type: SourceType.Calendar,
+				url: cal.url,
+				externalId: cal.url,
+				name,
+				color: CalendarColor.get(cal.url || name).value,
+				enabled: false,
+			})
+		})
 	}
 
-	private async syncEntries(client: Awaited<ReturnType<typeof createDAVClient>>, source: Source, remoteCalendar: { url: string }, em: EntityManager): Promise<boolean> {
+	protected override async syncSourceEntries(em: EntityManager, source: Source): Promise<void> {
+		const client = await this.getClient()
+		const remoteCalendar = { url: source.url! }
 		const result = await client.syncCollection({
 			url: source.url!,
 			props: { 'd:getetag': {} },
@@ -160,8 +142,6 @@ export class CalDAV extends Integration<CalDAVConfig> {
 		}
 
 		source.syncToken = newSyncToken
-
-		return deletedUrls.length > 0 || changedObjects.length > 0
 	}
 
 	async updateEntry(_em: EntityManager, existing: Entry, incoming: Entry): Promise<void> {
