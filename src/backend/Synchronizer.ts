@@ -1,5 +1,5 @@
 import { type MikroORM } from '@mikro-orm/sqlite'
-import { syncEmitter } from './server.js'
+import { syncEmitter } from './syncEmitter.js'
 import { Integration, createLogger } from '../shared/index.js'
 
 export class Synchronizer {

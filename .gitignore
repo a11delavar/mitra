@@ -1,5 +1,5 @@
 .antigravitycli
 node_modules
 dist
-features
+/features
 tsconfig.tsbuildinfo
