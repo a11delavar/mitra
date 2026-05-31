@@ -67,7 +67,7 @@ export class CalDAV extends Integration<CalDAVConfig> {
 		})
 	}
 
-	protected override async syncSourceEntries(em: EntityManager, source: Source): Promise<void> {
+	protected override async syncSourceEntries(em: EntityManager, source: Source): Promise<boolean> {
 		const client = await this.getClient()
 		const remoteCalendar = { url: source.url! }
 		const result = await client.syncCollection({
@@ -142,6 +142,10 @@ export class CalDAV extends Integration<CalDAVConfig> {
 		}
 
 		source.syncToken = newSyncToken
+
+		// Report whether actual entries changed. The sync-token bookkeeping above must NOT count,
+		// or the background sync would notify clients every cycle (clobbering in-progress edits).
+		return deletedUrls.length > 0 || changedObjects.length > 0
 	}
 
 	async updateEntry(_em: EntityManager, existing: Entry, incoming: Entry): Promise<void> {

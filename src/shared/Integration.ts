@@ -22,8 +22,8 @@ export abstract class Integration<TConfig extends Record<string, any> = any> {
 	 */
 	protected abstract fetchSources(): Promise<Array<Source>>
 
-	/** Fetches and stores the entries of a single source. */
-	protected abstract syncSourceEntries(em: EntityManager, source: Source): Promise<void>
+	/** Fetches and stores the entries of a single source. @returns whether any entry changed. */
+	protected abstract syncSourceEntries(em: EntityManager, source: Source): Promise<boolean>
 
 	/**
 	 * Merges the client-supplied `incoming` representation into this integration. Each
@@ -66,17 +66,28 @@ export abstract class Integration<TConfig extends Record<string, any> = any> {
 		})
 	}
 
-	/** Syncs entries for every currently enabled source. */
-	async syncEntries(em: EntityManager): Promise<void> {
+	/**
+	 * Syncs entries for every currently enabled source.
+	 * @returns whether any entry changed.
+	 */
+	async syncEntries(em: EntityManager): Promise<boolean> {
+		let changed = false
 		for (const source of await em.find(Source, { integrationId: this.id, enabled: true })) {
-			await this.syncSourceEntries(em, source)
+			if (await this.syncSourceEntries(em, source)) {
+				changed = true
+			}
 		}
+		return changed
 	}
 
-	/** Full synchronization: reconcile sources, then sync entries for the enabled ones. */
-	async sync(em: EntityManager): Promise<void> {
+	/**
+	 * Full synchronization: reconcile sources, then sync entries for the enabled ones.
+	 * @returns whether any entry changed. Source bookkeeping (e.g. sync tokens) is deliberately
+	 * not reported, so idle polls don't notify clients.
+	 */
+	async sync(em: EntityManager): Promise<boolean> {
 		await this.getSources(em)
-		await this.syncEntries(em)
+		return this.syncEntries(em)
 	}
 
 	/**

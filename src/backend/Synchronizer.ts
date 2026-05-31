@@ -20,14 +20,13 @@ export class Synchronizer {
 			const em = this.orm.em.fork()
 			const integrations = await em.find(Integration, {})
 
+			let hasChanges = false
 			for (const integration of integrations) {
 				this.logger.debug(`Syncing ${integration.toString()}`)
-				await integration.sync(em)
+				if (await integration.sync(em)) {
+					hasChanges = true
+				}
 			}
-
-			const unitOfWork = em.getUnitOfWork()
-			unitOfWork.computeChangeSets()
-			const hasChanges = unitOfWork.getChangeSets().length > 0
 
 			await em.flush()
 			if (hasChanges) {
