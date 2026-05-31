@@ -10,6 +10,7 @@
 		"@a11d/lit-application": "x",
 		"@a11d/lit-application-native": "x",
 		"@lit/task": "x",
-		"lucide": "x"
+		"lucide": "x",
+		"marked": "18.x"
 	}
 }

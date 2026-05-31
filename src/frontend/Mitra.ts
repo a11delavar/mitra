@@ -14,6 +14,7 @@ import { buttonStyles } from './button.css.js'
 import { selectStyles } from './select.css.js'
 import { inputStyles } from './input.css.js'
 import { menuStyles } from './menu.css.js'
+import { Markdown } from './Markdown.js'
 
 @application()
 @component('mitra-application')
@@ -46,6 +47,7 @@ export class Mitra extends Application {
 			${inputStyles}
 			${menuStyles}
 
+			${Markdown.styles}
 			${PageCalendar.styles}
 			${Sidebar.styles}
 			${Month.styles}

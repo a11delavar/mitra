@@ -1,7 +1,7 @@
 import { css } from '@a11d/lit'
 
 export const inputStyles = css`
-	input:not([type=checkbox]) {
+	:is(input:not([type=checkbox]), textarea) {
 		appearance: none;
 		box-sizing: border-box;
 		font-weight: 400;
@@ -54,7 +54,15 @@ export const inputStyles = css`
 		}
 	}
 
+	textarea {
+		height: auto;
+		field-sizing: content;
+		resize: none;
+		line-height: 1.4;
+	}
+
 	input[type=checkbox] {
+		display: inline-grid;
 		appearance: none;
 		box-sizing: border-box;
 		flex-shrink: 0;

@@ -1,4 +1,4 @@
-import { component, html, property, Component, css, eventListener, event, Binder } from '@a11d/lit'
+import { component, html, property, state, Component, css, eventListener, event, Binder } from '@a11d/lit'
 import { EntrySegment } from 'shared'
 import { getSource, updateEvent } from './Api.js'
 
@@ -34,6 +34,10 @@ export class EventDetails extends Component {
 	private readonly handleChange = () => updateEvent(this.segment!.entry)
 
 	private readonly binder = new Binder(this, 'segment')
+
+	private bind = (keyPath: KeyPath.Of<EntrySegment>, event = 'change') => {
+		return this.binder.bind({ keyPath, event, sourceUpdated: () => this.change.dispatch() })
+	}
 
 	static override get styles() {
 		return css`
@@ -104,13 +108,13 @@ export class EventDetails extends Component {
 					}
 				}
 
-				& > .header {
+				> .header {
 					display: flex;
 					align-items: center;
 					gap: 1rem;
 					padding: 0.5rem 0.5rem 0.5rem 0.875rem;
 
-					.title {
+					> .title {
 						flex: 1;
 						font-size: 0.9375rem;
 						font-weight: 600;
@@ -118,7 +122,7 @@ export class EventDetails extends Component {
 						line-height: 1.3;
 					}
 
-					.close {
+					> .close {
 						display: flex;
 						align-items: center;
 						justify-content: center;
@@ -138,7 +142,7 @@ export class EventDetails extends Component {
 					}
 				}
 
-				& > ul {
+				> ul {
 					list-style: none;
 					margin: 0;
 					padding: 0.5rem 1rem 1rem;
@@ -146,20 +150,20 @@ export class EventDetails extends Component {
 					grid-template-columns: auto minmax(0, 1fr);
 					gap: 1rem;
 
-					li {
+					> li {
 						display: grid;
 						grid-template-columns: subgrid;
 						grid-column: -1 / 1;
 						align-items: center;
 						gap: 0.625rem;
 
-						mitra-icon {
+						> mitra-icon {
 							font-size: 0.87rem;
 							color: var(--color-text-muted);
 							flex-shrink: 0;
 						}
 
-						.content {
+						> .content {
 							display: flex;
 							align-items: center;
 							flex-wrap: wrap;
@@ -172,16 +176,37 @@ export class EventDetails extends Component {
 							padding-block-start: 0.6875rem;
 							margin-block-start: 0.375rem;
 
-							.content {
-								white-space: pre-wrap;
-								word-break: break-word;
-								min-width: 0;
+							> mitra-icon {
+								margin-block-start: 2px;
+							}
+
+							> textarea {
+								width: 100%;
+								font: inherit;
 								line-height: 1.4;
+							}
+
+							> .rendered {
+								width: 100%;
+								/* Match the .subtle textarea's box so toggling doesn't shift layout. */
+								margin: -2px -4px;
+								padding: 2px 4px;
+								border-radius: var(--border-radius);
+								cursor: text;
+
+								&:hover {
+									background: color-mix(in srgb, var(--color-text) 6%, transparent);
+								}
+							}
+
+							.placeholder {
+								color: var(--color-text-muted);
+								line-height: 1.1rem;
 							}
 						}
 
 						&.source {
-							.dot {
+							> .dot {
 								width: 11px;
 								height: 11px;
 								border-radius: var(--border-radius);
@@ -214,12 +239,9 @@ export class EventDetails extends Component {
 	}
 
 	protected override get template() {
-		const bind = (keyPath: KeyPath.Of<EntrySegment>, event = 'change') => {
-			return this.binder.bind({ keyPath, event, sourceUpdated: () => this.change.dispatch() })
-		}
 		return !this.segment ? html.nothing : html`
 			<header class="header">
-				<input class="title subtle" ${bind('entry.heading', 'input')} @change=${this.handleChange}>
+				<input class="title subtle" ${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
 				<button class="close" @click=${(e: Event) => { e.stopPropagation(); this.querySelector<HTMLElement>('[popover]')?.hidePopover() }}>
 					<mitra-icon icon="x"></mitra-icon>
 				</button>
@@ -245,19 +267,55 @@ export class EventDetails extends Component {
 						</div>
 					</li>
 				`}
-				${!this.source?.name ? html.nothing : html`
-					<li class="source">
-						<span class="dot" style="background: ${this.source.color}"></span>
-						<div class="content">${this.source.name}</div>
-					</li>
-				`}
-				${!this.segment.entry.description ? html.nothing : html`
-					<li class="description">
-						<mitra-icon icon="align-left"></mitra-icon>
-						<div class="content">${this.segment.entry.description}</div>
-					</li>
-				`}
+				${this.sourceTemplate}
+				${this.descriptionTemplate}
 			</ul>
+		`
+	}
+
+	private get sourceTemplate() {
+		return !this.source?.name ? html.nothing : html`
+			<li class="source">
+				<span class="dot" style="background: ${this.source.color}"></span>
+				<div class="content">${this.source.name}</div>
+			</li>
+		`
+	}
+
+	@state() private editingDescription = false
+
+	private get descriptionTemplate() {
+		const editDescription = (e: Event) => {
+			// A click on a link should follow it rather than switch into edit mode.
+			if (e.composedPath().some(node => node instanceof HTMLAnchorElement)) {
+				return
+			}
+			this.editingDescription = true
+			this.updateComplete.then(() => {
+				const textarea = this.querySelector<HTMLTextAreaElement>('.description textarea')
+				textarea?.focus()
+				textarea?.setSelectionRange(textarea.value.length, textarea.value.length)
+			})
+		}
+		return html`
+			<li class="description">
+				<mitra-icon icon="align-left"></mitra-icon>
+				${this.editingDescription ? html`
+					<textarea class="subtle" rows="1" placeholder="Add a description"
+						${this.bind('entry.description', 'input')}
+						@change=${this.handleChange}
+						@blur=${() => this.editingDescription = false}
+					></textarea>
+				` : html`
+						<div class="rendered" @click=${editDescription}>
+							${!this.segment!.entry.description ? html`
+								<div class="placeholder">Add a description</div>
+							` : html`
+								<mitra-markdown .value=${this.segment!.entry.description}></mitra-markdown>
+							`}
+						</div>
+					`}
+			</li>
 		`
 	}
 }

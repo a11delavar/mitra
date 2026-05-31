@@ -95,14 +95,14 @@ export class Month extends Component {
 						gap: 0.375rem !important;
 						padding: 0.125rem 0.375rem !important;
 
-						.time {
+						> .time {
 							display: block !important;
 							.separator, .end {
 								display: none !important;
 							}
 						}
 
-						.heading {
+						> .heading {
 							flex: 1 !important;
 							white-space: nowrap !important;
 							overflow: hidden !important;
