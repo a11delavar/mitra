@@ -1,17 +1,20 @@
-import { entity, primaryKey, property, manyToOne, oneToMany, Collection } from './orm.js'
+import { entity, primaryKey, property, manyToOne, oneToMany, unique, Collection } from './orm.js'
 import { User } from './User.js'
 import { Source } from './Source.js'
 import type { Entry } from './Entry.js'
 import type { EntityManager } from '@mikro-orm/core'
 
 @entity({ abstract: true, discriminatorColumn: 'type' })
-export abstract class Integration<TConfig extends Record<string, any> = any> {
+@unique({ properties: ['userId', 'uri'] })
+export abstract class Integration<TCredentials extends Record<string, any> = any> {
 	@primaryKey() id: string = crypto.randomUUID()
 
 	@manyToOne(() => User, { mapToPk: true }) userId!: string
 
+	@property({ type: 'string', nullable: true }) uri?: string
+
 	@property({ type: 'string' }) type!: string
-	@property({ type: 'json' }) config: TConfig = {} as TConfig
+	@property({ type: 'json' }) credentials: TCredentials = {} as TCredentials
 
 	@oneToMany(() => Source, source => source.integrationId) sources = new Collection<Source>(this)
 
@@ -45,17 +48,17 @@ export abstract class Integration<TConfig extends Record<string, any> = any> {
 	async getSources(em: EntityManager): Promise<Array<Source>> {
 		const remote = await this.fetchSources()
 		const existing = await em.find(Source, { integrationId: this.id })
-		const existingByUrl = new Map(existing.map(source => [source.url, source]))
-		const remoteUrls = new Set(remote.map(source => source.url))
+		const existingByKey = new Map(existing.map(source => [source.key, source]))
+		const remoteKeys = new Set(remote.map(source => source.key))
 
 		for (const source of existing) {
-			if (!remoteUrls.has(source.url)) {
+			if (!remoteKeys.has(source.key)) {
 				em.remove(source)
 			}
 		}
 
 		return remote.map(source => {
-			const match = existingByUrl.get(source.url)
+			const match = existingByKey.get(source.key)
 			if (!match) {
 				source.integrationId = this.id
 				em.persist(source)
@@ -92,16 +95,16 @@ export abstract class Integration<TConfig extends Record<string, any> = any> {
 
 	/**
 	 * Applies the client-supplied `incoming` integration and synchronizes: merges the provider
-	 * config (preserving anything the client omitted), reconciles the available sources, activates
+	 * credentials (preserving anything the client omitted), reconciles the available sources, activates
 	 * the ones selected in `incoming` (matched by url), then syncs entries for the active sources.
 	 */
 	async applyAndSync(em: EntityManager, incoming: this): Promise<void> {
 		this.merge(incoming)
 		const sources = await this.getSources(em)
 
-		const enabledUrls = new Set([...(incoming.sources ?? [])].filter(source => source.enabled).map(source => source.url))
+		const enabledKeys = new Set([...(incoming.sources ?? [])].filter(source => source.enabled).map(source => source.key))
 		for (const source of sources) {
-			source.enabled = enabledUrls.has(source.url)
+			source.enabled = enabledKeys.has(source.key)
 		}
 		await em.flush()
 

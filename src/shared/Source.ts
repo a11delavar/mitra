@@ -1,10 +1,10 @@
 import { model } from './model.js'
-import { entity, primaryKey, property, manyToOne } from './orm.js'
+import { entity, primaryKey, property, enum as enumType, manyToOne } from './orm.js'
 import { Integration } from './Integration.js'
 
 export enum SourceType {
-	Calendar = 'calendar',
-	Tasks = 'tasks',
+	Event = 'event',
+	Task = 'task',
 }
 
 @model('Source')
@@ -14,15 +14,20 @@ export class Source {
 
 	@manyToOne(() => Integration, { mapToPk: true, deleteRule: 'cascade' }) integrationId!: string
 
-	@property({ type: 'string' }) externalId!: string
-	@property({ type: 'string', nullable: true }) url?: string
-	@property({ type: 'string' }) type!: SourceType
+	@property({ type: 'string' }) uri!: string
+
+	@enumType(() => SourceType) type!: SourceType
+
 	@property({ type: 'string' }) name!: string
 	@property({ type: 'string', nullable: true }) color?: string
 	@property({ type: 'boolean' }) hidden = false
 	@property({ type: 'boolean' }) enabled = false
-	@property({ type: 'string', nullable: true }) syncToken?: string
-	@property({ type: 'string', nullable: true }) ctag?: string
+
+	@property({ type: 'json', nullable: true }) syncState?: Record<string, any>
+
+	get key() {
+		return `${this.type}#${this.uri}`
+	}
 
 	toggleEnabled() {
 		this.enabled = !this.enabled

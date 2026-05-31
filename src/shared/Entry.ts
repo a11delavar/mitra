@@ -9,19 +9,21 @@ export enum EntryType {
 	Task = 'task',
 }
 
+export interface EntryData {
+	raw?: string
+	etag?: string
+}
+
 @model('Entry')
 @entity()
-@unique({ properties: ['sourceId', 'externalId'] })
+@unique({ properties: ['sourceId', 'uri'] })
 export class Entry {
 	@primaryKey() id: string = crypto.randomUUID()
-	@property({ type: 'string' }) externalId!: string
 	@manyToOne(() => Source, { mapToPk: true, deleteRule: 'cascade' }) sourceId!: string
+	@property({ type: 'string', nullable: true }) uri?: string
 
 	@enumType(() => EntryType) type!: EntryType
 
-	@property({ type: 'string', nullable: true }) url?: string
-	@property({ type: 'string', nullable: true }) etag?: string
-	@property({ type: 'text', nullable: true }) rawData?: string
 	@property({ type: 'string' }) heading = ''
 	@property({ type: 'string' }) description = ''
 	@property({ type: 'string', nullable: true }) color?: string
@@ -29,6 +31,8 @@ export class Entry {
 	@property({ type: 'datetime', nullable: true }) start?: DateTime
 	@property({ type: 'datetime', nullable: true }) end?: DateTime
 	@property({ type: 'boolean', nullable: true }) done?: boolean
+
+	@property({ type: 'json', nullable: true }) data?: EntryData
 
 	get duration() {
 		if (!this.start || !this.end) {

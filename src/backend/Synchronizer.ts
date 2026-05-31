@@ -7,6 +7,8 @@ export class Synchronizer {
 
 	private static readonly interval = 10_000
 
+	private syncing = false
+
 	constructor(private readonly orm: MikroORM) { }
 
 	async start() {
@@ -16,6 +18,12 @@ export class Synchronizer {
 	}
 
 	private async syncAll() {
+		// Skip this tick if the previous run is still going — a slow sync (e.g. the initial full
+		// fetch) would otherwise overlap with the next and race to insert the same rows.
+		if (this.syncing) {
+			return
+		}
+		this.syncing = true
 		try {
 			const em = this.orm.em.fork()
 			const integrations = await em.find(Integration, {})
@@ -34,6 +42,8 @@ export class Synchronizer {
 			}
 		} catch (error) {
 			this.logger.error('Sync failed:', error)
+		} finally {
+			this.syncing = false
 		}
 	}
 }

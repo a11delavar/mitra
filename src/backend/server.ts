@@ -2,6 +2,7 @@ import express, { type ErrorRequestHandler } from 'express'
 import path from 'path'
 import cors from 'cors'
 import { NotFoundError } from '@mikro-orm/sqlite'
+import { ModelValueConstructor } from '@a11d/api-model-value-constructor'
 import { createLogger } from '../shared/index.js'
 import { orm } from './orm.js'
 import { authMiddleware } from './auth.js'
@@ -18,7 +19,12 @@ new Synchronizer(orm).start()
 
 const app = express()
 app.use(cors())
-app.use(express.json())
+// Rehydrate `@type`-tagged JSON (written by the shared models' `toJSON`) back into domain instances,
+// mirroring how `@a11d/api` revives responses on the client. The reviver runs depth-first, so nested
+// models (e.g. a source within an integration) are reconstructed before their parent — routes then
+// receive real entities, with their methods and getters, instead of inert plain objects.
+const modelConstructor = new ModelValueConstructor()
+app.use(express.json({ reviver: (_key, value) => modelConstructor.shallConstruct(value) ? modelConstructor.construct(value) : value }))
 app.use(authMiddleware)
 
 app.use('/api/events', eventsRouter)

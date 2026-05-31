@@ -1,14 +1,14 @@
 import { component, html, css, state, Binder } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { Task, TaskStatus } from '@lit/task'
-import { CalDAV, Source, type Integration } from 'shared'
+import { CalDAV, Source, SourceType, type Integration } from 'shared'
 import { discoverSources, createIntegration, updateIntegration, getIntegrations, fetchIntegrations } from './Api.js'
 
 @component('mitra-dialog-integration')
 export class DialogIntegration extends DialogComponent<{ readonly id: string }, Integration> {
 	// `sources` is kept as a plain array (never a live ORM Collection) so the entity stays
 	// JSON-serializable when sent to the API — a Collection holds a circular owner reference.
-	@state() private entity = new CalDAV({ config: { serverUrl: '', username: '', password: '' }, sources: [] as any })
+	@state() private entity = new CalDAV({ uri: '', credentials: { username: '', password: '' }, sources: [] as any })
 
 	private readonly binder = new Binder(this, 'entity')
 
@@ -28,8 +28,9 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string }, 
 			if (integration) {
 				this.entity = new CalDAV({
 					id: this.parameters.id,
-					config: { serverUrl: integration.config?.serverUrl ?? '', username: integration.config?.username ?? '', password: '' },
-					sources: [...integration.sources].map(source => new Source({ url: source.url, name: source.name, enabled: source.enabled })) as any,
+					uri: integration.uri ?? '',
+					credentials: { username: integration.credentials?.username ?? '', password: '' },
+					sources: [...integration.sources].map(source => new Source({ uri: source.uri, type: source.type, name: source.name, enabled: source.enabled })) as any,
 				})
 			}
 		}
@@ -81,6 +82,11 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string }, 
 						font-size: 0.875rem;
 						color: var(--color-text);
 						cursor: pointer;
+
+						.type-icon {
+							font-size: 16px;
+							color: var(--color-text-muted);
+						}
 					}
 				}
 			}
@@ -96,20 +102,20 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string }, 
 				<form class="content" @submit=${(e: Event) => e.preventDefault()}>
 					<label>
 						Server URL
-						<input ${bind({ keyPath: 'config.serverUrl', event: 'input' })} ?readonly=${this.isEdit} placeholder="https://caldav.example.com" autocomplete="off">
+						<input ${bind({ keyPath: 'uri', event: 'input' })} ?readonly=${this.isEdit} placeholder="https://caldav.example.com" autocomplete="off">
 					</label>
 					<label>
 						Username
-						<input ${bind({ keyPath: 'config.username', event: 'input' })} ?readonly=${this.isEdit} autocomplete="off">
+						<input ${bind({ keyPath: 'credentials.username', event: 'input' })} ?readonly=${this.isEdit} autocomplete="off">
 					</label>
 					<label>
 						Password
-						<input type="password" ${bind({ keyPath: 'config.password', event: 'input' })} placeholder=${this.isEdit ? 'unchanged' : ''} autocomplete="off">
+						<input type="password" ${bind({ keyPath: 'credentials.password', event: 'input' })} placeholder=${this.isEdit ? 'unchanged' : ''} autocomplete="off">
 					</label>
 
 					${this.fetchSources.render({
 						initial: () => html`
-							<button class="connect" @click=${() => this.fetchSources.run()} ?disabled=${!this.entity.config.serverUrl || !this.entity.config.username}>
+							<button class="connect" @click=${() => this.fetchSources.run()} ?disabled=${!this.entity.uri || !this.entity.credentials.username}>
 								${this.entity.sources.length ? 'Refresh' : 'Connect'}
 							</button>
 						`,
@@ -123,6 +129,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string }, 
 							${this.entity.sources.map(source => html`
 								<label class="source">
 									<input type="checkbox" .checked=${source.enabled} @change=${() => { source.toggleEnabled(); this.requestUpdate() }}>
+									<mitra-icon class="type-icon" icon=${source.type === SourceType.Task ? 'list-todo' : 'calendar'}></mitra-icon>
 									${source.name}
 								</label>
 							`)}

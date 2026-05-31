@@ -1,7 +1,7 @@
 import { Component, component, html, css, property, event } from '@a11d/lit'
 import { getIntegrations, toggleSourceVisibility, deleteIntegration, fetchIntegrations } from './Api.js'
 import { DialogIntegration } from './DialogIntegration.js'
-import type { Source } from 'shared'
+import { SourceType, type Source } from 'shared'
 
 @component('mitra-sidebar')
 export class Sidebar extends Component {
@@ -189,6 +189,12 @@ export class Sidebar extends Component {
 								flex-shrink: 0;
 							}
 
+							.type-icon {
+								font-size: 14px;
+								color: var(--color-text-muted);
+								flex-shrink: 0;
+							}
+
 							.name {
 								flex: 1;
 								white-space: nowrap;
@@ -264,7 +270,7 @@ export class Sidebar extends Component {
 				${getIntegrations().map(i => html`
 					<div class="integration">
 						<header>
-							<span class="title">${i.config?.username || i.type}</span>
+							<span class="title">${i.credentials?.username || i.type}</span>
 							<button class="more" popovertarget="menu-${i.id}" style="anchor-name: --anchor-${i.id}">
 								<mitra-icon icon="more-horizontal"></mitra-icon>
 							</button>
@@ -281,6 +287,11 @@ export class Sidebar extends Component {
 							${i.sources.filter(source => source.enabled).map(source => html`
 								<div class="source">
 									<div class="color" style="background-color: ${source.color || 'var(--color-text-muted)'}"></div>
+									<mitra-icon
+										class="type-icon"
+										icon=${source.type === SourceType.Task ? 'list-todo' : 'calendar'}
+										title=${source.type === SourceType.Task ? 'Tasks' : 'Events'}
+									></mitra-icon>
 									<div class="name">
 										${source.name}
 									</div>
