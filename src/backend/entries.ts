@@ -73,3 +73,16 @@ entriesRouter.put('/:id', async (req, res) => {
 	syncEmitter.emit('updated')
 	return res.json(existing)
 })
+
+entriesRouter.delete('/:id', async (req, res) => {
+	const em = orm.em.fork()
+	const entry = await em.findOneOrFail(Entry, { id: req.params.id })
+	const source = await em.findOneOrFail(Source, { id: entry.sourceId })
+	const integration = await em.findOneOrFail(Integration, { id: source.integrationId })
+
+	// Removes it from the external source and locally.
+	await integration.deleteEntry(em, entry)
+	await em.flush()
+	syncEmitter.emit('updated')
+	return res.status(204).end()
+})

@@ -132,15 +132,7 @@ export class PageCalendar extends PageComponent {
 						}
 
 						.toggle {
-							cursor: pointer;
-							color: var(--color-text-muted);
-							transition: color 0.2s ease;
 							font-size: 20px;
-							display: flex;
-
-							&:hover {
-								color: var(--color-text);
-							}
 						}
 					}
 
@@ -162,7 +154,7 @@ export class PageCalendar extends PageComponent {
 				<mitra-sidebar ?open=${bind(this, 'sidebarOpen')}></mitra-sidebar>
 				<main>
 					<header>
-						<mitra-icon class="toggle" icon="panel-left" @click=${() => this.sidebarOpen = !this.sidebarOpen}></mitra-icon>
+						<mitra-icon-button class="toggle" icon="panel-left" label="Toggle sidebar" @click=${() => this.sidebarOpen = !this.sidebarOpen}></mitra-icon-button>
 						<h1>${this.navigatingDate.format({ month: 'long', year: 'numeric' })}</h1>
 						<div style="flex: 1"></div>
 						<select .value=${this.view} @change=${(e: Event) => this.setView((e.target as HTMLSelectElement).value as 'week' | 'month')}>

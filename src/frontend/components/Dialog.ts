@@ -1,5 +1,6 @@
 import { Component, component, html, css, property, state, query, event } from '@a11d/lit'
 import { DialogComponent, DialogActionKey, type ApplicationTopLayer } from '@a11d/lit-application'
+import { Mitra } from '../Mitra.js'
 
 @component('mitra-dialog')
 @DialogComponent.dialogElement()
@@ -41,12 +42,15 @@ export class Dialog extends Component {
 
 	static override get styles() {
 		return css`
+			${Mitra.styles}
+
 			:host {
 				display: contents;
 			}
 
 			dialog {
 				margin: auto;
+				outline: none;
 				background: color-mix(in srgb, var(--color-surface) 92%, transparent);
 				backdrop-filter: blur(12px);
 				color: var(--color-text);
@@ -94,30 +98,6 @@ export class Dialog extends Component {
 					font-weight: 650;
 					letter-spacing: -0.01em;
 				}
-
-				.close {
-					all: unset;
-					display: flex;
-					align-items: center;
-					justify-content: center;
-					width: 1.75rem;
-					height: 1.75rem;
-					border-radius: var(--border-radius);
-					color: var(--color-text-muted);
-					font-size: 16px;
-					cursor: pointer;
-					transition: color 0.15s ease, background 0.15s ease;
-
-					&:hover {
-						color: var(--color-text);
-						background: color-mix(in srgb, var(--color-text) 8%, transparent);
-					}
-
-					&:focus-visible {
-						outline: 2px solid var(--color-accent);
-						outline-offset: 2px;
-					}
-				}
 			}
 
 			.footer {
@@ -127,36 +107,6 @@ export class Dialog extends Component {
 
 				&[data-empty] {
 					display: none;
-				}
-
-				/* Shadow-isolated, so the global button styles do not reach it — style it fully. */
-				.primary {
-					appearance: none;
-					font: inherit;
-					font-size: 0.8125rem;
-					font-weight: 600;
-					height: 2rem;
-					padding-inline: 1.25rem;
-					border: 1px solid transparent;
-					border-radius: 6px;
-					background: var(--color-accent);
-					color: var(--color-accent-text);
-					cursor: pointer;
-					transition: background 0.2s ease;
-
-					&:hover:not(:disabled) {
-						background: color-mix(in srgb, var(--color-accent) 88%, black);
-					}
-
-					&:disabled {
-						opacity: 0.5;
-						cursor: not-allowed;
-					}
-
-					&:focus-visible {
-						outline: 2px solid var(--color-accent);
-						outline-offset: 2px;
-					}
 				}
 			}
 		`
@@ -168,9 +118,7 @@ export class Dialog extends Component {
 				<div class="panel">
 					<header class="header">
 						<h2>${this.heading}</h2>
-						<button class="close" aria-label="Close" @click=${() => this.handleAction(DialogActionKey.Cancellation)}>
-							<mitra-icon icon="x"></mitra-icon>
-						</button>
+						<mitra-icon-button icon="x" label="Close" @click=${() => this.handleAction(DialogActionKey.Cancellation)}></mitra-icon-button>
 					</header>
 					<slot></slot>
 					<footer class="footer" ?data-empty=${!this.primaryButtonText && !this.hasFooter}>

@@ -1,6 +1,6 @@
 import { component, html, property, Component, css, eventListener, state, bind } from '@a11d/lit'
 import { EntrySegment } from 'shared'
-import { colorContrast } from './colorContrast.js'
+import { colorContrast } from './components/colorContrast.js'
 
 @component('mitra-event-segment')
 export class EventSegmentC extends Component {

@@ -1,6 +1,6 @@
 import { component, html, property, state, Component, css, eventListener, event, Binder } from '@a11d/lit'
 import { EntrySegment } from 'shared'
-import { getSource, updateEvent } from './Api.js'
+import { getSource, updateEvent, deleteEvent } from './Api.js'
 
 @component('mitra-event-details')
 export class EventDetails extends Component {
@@ -32,6 +32,15 @@ export class EventDetails extends Component {
 	}
 
 	private readonly handleChange = () => updateEvent(this.segment!.entry)
+
+	private readonly handleClose = (e: Event) => {
+		e.stopPropagation()
+		this.hidePopover()
+	}
+
+	private readonly toggleMenu = (e: Event) => {
+		(e.currentTarget as HTMLElement).parentElement?.querySelector<HTMLElement>('menu[popover]')?.togglePopover()
+	}
 
 	private readonly binder = new Binder(this, 'segment')
 
@@ -111,7 +120,7 @@ export class EventDetails extends Component {
 				> .header {
 					display: flex;
 					align-items: center;
-					gap: 1rem;
+					gap: 0.25rem;
 					padding: 0.5rem 0.5rem 0.5rem 0.875rem;
 
 					> .title {
@@ -120,25 +129,6 @@ export class EventDetails extends Component {
 						font-weight: 600;
 						color: var(--color-text);
 						line-height: 1.3;
-					}
-
-					> .close {
-						display: flex;
-						align-items: center;
-						justify-content: center;
-						background: none;
-						border: none;
-						padding: 0.25rem;
-						cursor: pointer;
-						color: var(--color-text-muted);
-						border-radius: var(--border-radius);
-						font-size: 14px;
-						flex-shrink: 0;
-
-						&:hover {
-							color: var(--color-text);
-							background: rgba(255, 255, 255, 0.08);
-						}
 					}
 				}
 
@@ -242,9 +232,18 @@ export class EventDetails extends Component {
 		return !this.segment ? html.nothing : html`
 			<header class="header">
 				<input class="title subtle" ${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
-				<button class="close" @click=${(e: Event) => { e.stopPropagation(); this.querySelector<HTMLElement>('[popover]')?.hidePopover() }}>
-					<mitra-icon icon="x"></mitra-icon>
-				</button>
+				<mitra-icon-button
+					label="Options"
+					icon="more-horizontal"
+					style="anchor-name: --entry-menu-${this.segment.entry.id}"
+					@click=${this.toggleMenu}
+				></mitra-icon-button>
+				<menu popover id="entry-menu-${this.segment.entry.id}" style="position-anchor: --entry-menu-${this.segment.entry.id}">
+					<button class="danger" @click=${() => deleteEvent(this.segment!.entry.id).then(() => this.hidePopover())}>
+						<mitra-icon icon="trash-2"></mitra-icon> Delete
+					</button>
+				</menu>
+				<mitra-icon-button class="close" icon="x" label="Close" @click=${this.handleClose}></mitra-icon-button>
 			</header>
 			<ul>
 				${!this.segment.isTimed ? html.nothing : html`

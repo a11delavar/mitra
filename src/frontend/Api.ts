@@ -58,3 +58,7 @@ export function deleteIntegration(id: string) {
 export function updateEvent(entry: Entry) {
 	return Api.put<Entry>(`/entries/${entry.id}`, entry)
 }
+
+export function deleteEvent(id: string) {
+	return Api.delete(`/entries/${id}`)
+}

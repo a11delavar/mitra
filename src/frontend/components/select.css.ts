@@ -1,4 +1,5 @@
 import { css } from '@a11d/lit'
+import { outlineStyles } from './outlineStyles.js'
 
 export const selectStyles = css`
 	::picker(select) {
@@ -32,6 +33,8 @@ export const selectStyles = css`
 			mask-repeat: no-repeat;
 			transition: rotate 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
 		}
+
+		${outlineStyles};
 
 		&:is(:open, :popover-open)::picker-icon {
 			rotate: 180deg;
@@ -76,25 +79,24 @@ export const selectStyles = css`
 			&:checked {
 				font-weight: 600;
 				color: var(--color-text);
-			}
-
-			&:checked::before {
-				content: "";
-				position: absolute;
-				inset-inline-start: 0.625rem;
-				top: 50%;
-				transform: translateY(-50%);
-				width: 0.875rem;
-				height: 0.875rem;
-				background-color: var(--color-text);
-				-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
-				-webkit-mask-size: contain;
-				-webkit-mask-position: center;
-				-webkit-mask-repeat: no-repeat;
-				mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
-				mask-size: contain;
-				mask-position: center;
-				mask-repeat: no-repeat;
+				&::before {
+					content: "";
+					position: absolute;
+					inset-inline-start: 0.625rem;
+					top: 50%;
+					transform: translateY(-50%);
+					width: 0.875rem;
+					height: 0.875rem;
+					background-color: var(--color-text);
+					-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+					-webkit-mask-size: contain;
+					-webkit-mask-position: center;
+					-webkit-mask-repeat: no-repeat;
+					mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+					mask-size: contain;
+					mask-position: center;
+					mask-repeat: no-repeat;
+				}
 			}
 
 			&::checkmark {

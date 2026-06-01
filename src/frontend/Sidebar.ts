@@ -2,6 +2,7 @@ import { Component, component, html, css, property, event } from '@a11d/lit'
 import { getIntegrations, toggleSourceVisibility, deleteIntegration, fetchIntegrations } from './Api.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { SourceType, type Source } from 'shared'
+import { outlineStyles } from './components/outlineStyles.js'
 
 @component('mitra-sidebar')
 export class Sidebar extends Component {
@@ -108,6 +109,8 @@ export class Sidebar extends Component {
 						background: color-mix(in srgb, var(--color-text) 6%, transparent);
 						border-color: color-mix(in srgb, var(--color-text) 25%, transparent);
 					}
+
+					${outlineStyles};
 				}
 
 				.integration {
@@ -132,29 +135,6 @@ export class Sidebar extends Component {
 							overflow: hidden;
 							text-overflow: ellipsis;
 						}
-
-						.more {
-							all: unset;
-							display: flex;
-							align-items: center;
-							justify-content: center;
-							padding: 0.2rem;
-							border-radius: var(--border-radius);
-							color: var(--color-text-muted);
-							font-size: 16px;
-							cursor: pointer;
-							opacity: 0;
-							transition: opacity 0.15s ease, color 0.15s ease, background-color 0.15s ease;
-
-							&:hover {
-								color: var(--color-text);
-								background: color-mix(in srgb, var(--color-text) 8%, transparent);
-							}
-						}
-					}
-
-					&:hover .more, &:has(menu:popover-open) .more {
-						opacity: 1;
 					}
 
 					.sources {
@@ -166,7 +146,7 @@ export class Sidebar extends Component {
 							display: flex;
 							align-items: center;
 							gap: 0.625rem;
-							padding: 0.4rem 0.5rem;
+							padding: 0.25rem 0.5rem;
 							border-radius: var(--border-radius);
 							color: var(--color-text);
 							font-size: 0.8125rem;
@@ -176,10 +156,6 @@ export class Sidebar extends Component {
 
 							&:hover {
 								background-color: color-mix(in srgb, var(--color-text) 8%, transparent);
-
-								.more-icon {
-									opacity: 1;
-								}
 							}
 
 							.color {
@@ -208,28 +184,10 @@ export class Sidebar extends Component {
 								gap: 0.25rem;
 
 								.eye-icon {
-									opacity: 1;
-									color: var(--color-text-muted);
-									font-size: 16px;
-									transition: opacity 0.15s ease, color 0.15s ease;
-
-									&:hover {
-										color: var(--color-text);
-									}
+									transition: opacity 0.15s ease;
 
 									&.hidden {
 										opacity: 0.5;
-									}
-								}
-
-								.more-icon {
-									opacity: 0;
-									color: var(--color-text-muted);
-									font-size: 16px;
-									transition: opacity 0.15s ease, color 0.15s ease;
-
-									&:hover {
-										color: var(--color-text);
 									}
 								}
 							}
@@ -252,6 +210,10 @@ export class Sidebar extends Component {
 		(e.currentTarget as HTMLElement).closest<HTMLElement>('[popover]')?.hidePopover()
 	}
 
+	private toggleMenu(e: Event) {
+		(e.currentTarget as HTMLElement).parentElement?.querySelector<HTMLElement>('menu[popover]')?.togglePopover()
+	}
+
 	private async openDialog(id: string) {
 		await new DialogIntegration({ id }).confirm()
 		this.requestUpdate()
@@ -271,9 +233,7 @@ export class Sidebar extends Component {
 					<div class="integration">
 						<header>
 							<span class="title">${i.credentials?.username || i.type}</span>
-							<button class="more" popovertarget="menu-${i.id}" style="anchor-name: --anchor-${i.id}">
-								<mitra-icon icon="more-horizontal"></mitra-icon>
-							</button>
+							<mitra-icon-button icon="more-horizontal" label="Integration options" style="anchor-name: --anchor-${i.id}" @click=${this.toggleMenu}></mitra-icon-button>
 							<menu popover id="menu-${i.id}" style="position-anchor: --anchor-${i.id}">
 								<button @click=${(e: Event) => { this.closeMenu(e); this.openDialog(i.id) }}>
 									<mitra-icon icon="pencil"></mitra-icon> Edit
@@ -311,13 +271,12 @@ export class Sidebar extends Component {
 	private getActionsTemplate(source: Source) {
 		return html`
 			<div class="actions">
-				<mitra-icon class="more-icon" icon="more-horizontal"></mitra-icon>
-				<mitra-icon
+				<mitra-icon-button
 					class="eye-icon ${source.hidden ? 'hidden' : ''}"
 					icon=${source.hidden ? 'eye-off' : 'eye'}
-					title=${source.hidden ? 'Show source' : 'Hide source'}
+					label=${source.hidden ? 'Show source' : 'Hide source'}
 					@click=${() => this.toggleVisibility(source)}
-				></mitra-icon>
+				></mitra-icon-button>
 			</div>
 		`
 	}

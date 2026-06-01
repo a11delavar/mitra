@@ -1,4 +1,5 @@
 import { css } from '@a11d/lit'
+import { outlineStyles } from './outlineStyles.js'
 
 /** Popover dropdown menu, anchored via CSS anchor positioning (the anchor link is set per-instance). */
 export const menuStyles = css`
@@ -29,18 +30,23 @@ export const menuStyles = css`
 			gap: 0.5rem;
 			padding: 0.4rem 0.625rem;
 			border-radius: var(--border-radius);
+			border: 1px solid transparent;
 			font-size: 0.8125rem;
 			font-weight: 500;
 			color: var(--color-text);
 			cursor: pointer;
+			transition: background 0.15s ease, box-shadow 0.15s ease;
 
 			mitra-icon {
 				font-size: 15px;
 			}
 
-			&:hover {
+			&:hover,
+			&:focus-visible {
 				background: color-mix(in srgb, var(--color-text) 8%, transparent);
 			}
+
+			${outlineStyles};
 
 			&.danger {
 				color: #ff6b6b;

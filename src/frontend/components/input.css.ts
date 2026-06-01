@@ -1,4 +1,5 @@
 import { css } from '@a11d/lit'
+import { outlineStyles } from './outlineStyles.js'
 
 export const inputStyles = css`
 	:is(input:not([type=checkbox]), textarea) {
@@ -28,10 +29,7 @@ export const inputStyles = css`
 			background: color-mix(in srgb, var(--color-text) 8%, transparent);
 		}
 
-		&:focus-visible {
-			border-color: var(--color-accent);
-			box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 20%, transparent);
-		}
+		${outlineStyles};
 
 		/* Subtle: looks like plain text (inheriting its surroundings) until you interact with it. */
 		&.subtle {
@@ -70,13 +68,13 @@ export const inputStyles = css`
 		height: 1.125rem;
 		margin: 0;
 		padding: 0;
-		border: 1.5px solid color-mix(in srgb, var(--color-text) 28%, transparent);
-		border-radius: 5px;
+		border-radius: var(--border-radius);
 		background: color-mix(in srgb, var(--color-text) 6%, transparent);
 		display: grid;
 		place-content: center;
 		cursor: pointer;
-		transition: background-color 0.15s ease, border-color 0.15s ease;
+		outline: none;
+		transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 
 		&::before {
 			content: "";
@@ -99,10 +97,6 @@ export const inputStyles = css`
 			}
 		}
 
-		&:focus-visible {
-			outline: none;
-			border-color: var(--color-accent);
-			box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent);
-		}
+		${outlineStyles};
 	}
 `

@@ -39,7 +39,7 @@ export class Day extends Component {
 					z-index: 100;
 					display: flex;
 					flex-direction: row;
-					align-items: center;
+					align-items: baseline;
 					justify-content: center;
 					padding: 0.5rem 0.25rem;
 					gap: 0.375rem;
@@ -113,6 +113,11 @@ export class Day extends Component {
 						color: var(--color-text);
 						font-weight: 700;
 						font-size: 0.875rem;
+
+						&[data-today] {
+							color: var(--color-accent);
+							font-weight: 700;
+						}
 					}
 				}
 

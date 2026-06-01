@@ -9,11 +9,12 @@ import { PageCalendar } from './PageCalendar.js'
 import { Sidebar } from './Sidebar.js'
 import { EventDetails } from './EventDetails.js'
 import { DialogIntegration } from './DialogIntegration.js'
-import { colorContrast } from './colorContrast.js'
-import { buttonStyles } from './button.css.js'
-import { selectStyles } from './select.css.js'
-import { inputStyles } from './input.css.js'
-import { menuStyles } from './menu.css.js'
+import { colorContrast } from './components/colorContrast.js'
+import { IconButton } from './components/IconButton.js'
+import { buttonStyles } from './components/button.css.js'
+import { selectStyles } from './components/select.css.js'
+import { inputStyles } from './components/input.css.js'
+import { menuStyles } from './components/menu.css.js'
 import { Markdown } from './Markdown.js'
 
 @application()
@@ -47,6 +48,7 @@ export class Mitra extends Application {
 			${inputStyles}
 			${menuStyles}
 
+			${IconButton.styles}
 			${Markdown.styles}
 			${PageCalendar.styles}
 			${Sidebar.styles}
