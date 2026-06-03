@@ -53,7 +53,7 @@ entriesRouter.put('/:id', async (req, res) => {
 		type: existing.type,
 		heading: body.heading ?? existing.heading,
 		description: body.description ?? existing.description,
-		color: body.color ?? targetSource.color,
+		color: body.color !== undefined ? body.color : existing.color,
 		start: body.start ? new Date(body.start) as DateTime : existing.start,
 		end: body.end ? new Date(body.end) as DateTime : existing.end,
 		done: body.done ?? existing.done,

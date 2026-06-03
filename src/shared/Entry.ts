@@ -25,7 +25,7 @@ export class Entry {
 
 	@property({ type: 'string' }) heading = ''
 	@property({ type: 'string' }) description = ''
-	@property({ type: 'string', nullable: true }) color?: string
+	@property({ type: 'string', nullable: true }) color: string | null = null
 
 	@property({ type: 'datetime', nullable: true }) start?: DateTime
 	@property({ type: 'datetime', nullable: true }) end?: DateTime

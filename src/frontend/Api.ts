@@ -39,6 +39,10 @@ export function toggleSourceVisibility(id: string, hidden: boolean) {
 	return Api.put(`/sources/${id}/visibility`, { hidden })
 }
 
+export function updateSourceColor(id: string, color: string) {
+	return Api.put(`/sources/${id}/color`, { color })
+}
+
 export function discoverSources(integration: Integration) {
 	return Api.post<Array<Source>>('/integrations/sources', integration)
 }

@@ -15,3 +15,14 @@ sourcesRouter.put('/:id/visibility', async (req, res) => {
 	syncEmitter.emit('updated')
 	return res.json(source)
 })
+
+sourcesRouter.put('/:id/color', async (req, res) => {
+	const em = orm.em.fork()
+	const source = await em.findOneOrFail(Source, { id: req.params.id })
+
+	source.color = req.body.color
+	await em.flush()
+
+	syncEmitter.emit('updated')
+	return res.json(source)
+})

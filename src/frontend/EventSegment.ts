@@ -1,6 +1,7 @@
 import { component, html, property, Component, css, eventListener, state, bind, queryConnectedInstances } from '@a11d/lit'
 import { EntrySegment } from './EntrySegment.js'
 import { colorContrast } from './components/colorContrast.js'
+import { getSource } from './Api.js'
 
 @component('mitra-entry-segment')
 export class EntrySegmentComponent extends Component {
@@ -9,7 +10,6 @@ export class EntrySegmentComponent extends Component {
 	@property({
 		type: Object,
 		updated(this: EntrySegmentComponent) {
-			this.style.setProperty('--mitra-entry-segment-color', this.segment?.entry.color || '')
 			if (this.segment) {
 				this.style.viewTransitionName = `entry-${this.segment.id}`
 				this.style.anchorName = this.anchorName
@@ -161,7 +161,14 @@ export class EntrySegmentComponent extends Component {
 	protected override createRenderRoot() { return this }
 
 	protected override get template() {
-		return !this.segment ? html.nothing : html`
+		if (!this.segment) return html.nothing
+
+		this.style.setProperty(
+			'--mitra-entry-segment-color',
+			this.segment.entry.color ?? getSource(this.segment.entry.sourceId)?.color ?? ''
+		)
+
+		return html`
 			${this.segment.allDay ? html.nothing : html`
 				<div class="time">
 					<span class="start">${this.segment.entry.start?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>

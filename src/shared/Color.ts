@@ -1,5 +1,5 @@
-export class CalendarColor {
-	private static readonly list = [
+export class Color {
+	static readonly palette: ReadonlyArray<string> = [
 		'#eb5a5a', // Red
 		'#e58b4b', // Orange
 		'#f9c344', // Yellow
@@ -9,12 +9,12 @@ export class CalendarColor {
 		'#b4b4b4', // Grey
 	]
 
-	static get(identifier: string): CalendarColor {
+	static get(identifier: string): Color {
 		let hash = 0
 		for (let i = 0; i < identifier.length; i++) {
 			hash = identifier.charCodeAt(i) + ((hash << 5) - hash)
 		}
-		return new CalendarColor(CalendarColor.list[Math.abs(hash) % CalendarColor.list.length]!);
+		return new Color(Color.palette[Math.abs(hash) % Color.palette.length]!);
 	}
 
 	constructor(readonly value: string) { }

@@ -1,5 +1,5 @@
 import { Component, component, html, css, property, event } from '@a11d/lit'
-import { getIntegrations, toggleSourceVisibility, deleteIntegration, fetchIntegrations } from './Api.js'
+import { getIntegrations, toggleSourceVisibility, updateSourceColor, deleteIntegration, fetchIntegrations } from './Api.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { SourceType, type Source } from 'shared'
 import { outlineStyles } from './components/outlineStyles.js'
@@ -145,24 +145,39 @@ export class Sidebar extends Component {
 						.source {
 							display: flex;
 							align-items: center;
-							gap: 0.625rem;
-							padding: 0.25rem 0.5rem;
+							gap: 0.5rem;
+							padding: 0.125rem 0.5rem;
 							border-radius: var(--border-radius);
-							color: var(--color-text);
-							font-size: 0.8125rem;
-							font-weight: 400;
-							cursor: pointer;
-							transition: background-color 0.15s ease, color 0.15s ease;
 
 							&:hover {
-								background-color: color-mix(in srgb, var(--color-text) 8%, transparent);
+								background-color: color-mix(in srgb, var(--color-text) 5%, transparent);
 							}
 
-							.color {
-								width: 10px;
-								height: 10px;
-								border-radius: var(--border-radius);
+							button.color {
+								width: 0.6rem;
+								height: 0.6rem;
+								border-radius: calc(var(--border-radius) - 2px);
 								flex-shrink: 0;
+								border: none;
+								padding: 0;
+								cursor: pointer;
+								transition: transform 0.1s;
+								&:hover {
+									transform: scale(1.2);
+								}
+							}
+							
+							[popover] {
+								background: color-mix(in srgb, var(--color-surface) 90%, transparent);
+								backdrop-filter: blur(10px);
+								border: var(--border);
+								border-radius: 0.5rem;
+								padding: 0.5rem;
+								box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+								position-area: inline-end span-all;
+								position-try-options: flip-inline;
+								margin: 0;
+								overflow: visible;
 							}
 
 							.type-icon {
@@ -176,6 +191,8 @@ export class Sidebar extends Component {
 								white-space: nowrap;
 								overflow: hidden;
 								text-overflow: ellipsis;
+								font-size: 0.8125rem;
+								color: var(--color-text);
 							}
 
 							.actions {
@@ -199,6 +216,15 @@ export class Sidebar extends Component {
 	}
 
 	protected override createRenderRoot() { return this }
+
+	private async setSourceColor(source: Source, color: string | undefined, popover: HTMLElement) {
+		if (color) {
+			await updateSourceColor(source.id, color)
+			source.color = color
+			this.requestUpdate()
+		}
+		popover.hidePopover()
+	}
 
 	private async toggleVisibility(source: Source) {
 		await toggleSourceVisibility(source.id, !source.hidden)
@@ -246,7 +272,12 @@ export class Sidebar extends Component {
 						<div class="sources">
 							${i.sources.filter(source => source.enabled).map(source => html`
 								<div class="source">
-									<div class="color" style="background-color: ${source.color || 'var(--color-text-muted)'}"></div>
+									<button class="color" style="background-color: ${source.color || 'var(--color-text-muted)'}; anchor-name: --source-color-${source.id}"
+										@click=${(e: Event) => ((e.currentTarget as HTMLElement).nextElementSibling as HTMLElement)?.togglePopover()}
+									></button>
+									<div popover id="source-color-${source.id}" style="position-anchor: --source-color-${source.id}; margin-inline: 0.25rem;">
+										<mitra-color-picker .value=${source.color} @change=${(e: CustomEvent) => this.setSourceColor(source, e.detail, (e.currentTarget as HTMLElement).parentElement!)}></mitra-color-picker>
+									</div>
 									<mitra-icon
 										class="type-icon"
 										icon=${source.type === SourceType.Task ? 'list-todo' : 'calendar'}

@@ -7,7 +7,7 @@ import { entity } from './orm.js'
 import { Source, SourceType } from './Source.js'
 import { Integration } from './Integration.js'
 import { Entry, EntryType } from './Entry.js'
-import { CalendarColor } from './CalendarColor.js'
+import { Color } from './Color.js'
 
 export interface CalDAVCredentials {
 	username: string
@@ -55,7 +55,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		const calendars = await client.fetchCalendars()
 		return calendars.flatMap(cal => {
 			const name = typeof cal.displayName === 'string' ? cal.displayName : 'Untitled'
-			const color = CalendarColor.get(cal.url || name).value
+			const color = typeof cal.calendarColor === 'string' ? cal.calendarColor : Color.get(cal.url || name).value
 			// Per RFC 4791 §5.2.3 an absent/empty supported-calendar-component-set means the
 			// collection accepts every component type — so an empty list supports both.
 			const components = cal.components ?? []
@@ -156,7 +156,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			}
 
 			entry.type = entryType
-			entry.color = source.color
+			entry.color = component.getFirstPropertyValue('color')?.toString() || undefined
 			entry.data ??= {}
 			entry.data.raw = obj.data
 			entry.data.etag = obj.etag
@@ -216,6 +216,15 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			existing.description = incoming.description
 		}
 
+		if (keys.includes('color')) {
+			if (incoming.color) {
+				component.updatePropertyWithValue('color', incoming.color)
+			} else {
+				component.removeProperty('color')
+			}
+			existing.color = incoming.color
+		}
+
 		if (keys.includes('start')) {
 			component.updatePropertyWithValue('dtstart', ICAL.Time.fromJSDate(incoming.start!, true))
 			existing.start = incoming.start
@@ -263,6 +272,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		!entry.description ? void 0 : vevent.updatePropertyWithValue('description', entry.description)
 		!entry.start ? void 0 : vevent.updatePropertyWithValue('dtstart', ICAL.Time.fromJSDate(entry.start, true))
 		!entry.end ? void 0 : vevent.updatePropertyWithValue('dtend', ICAL.Time.fromJSDate(entry.end, true))
+		!entry.color ? void 0 : vevent.updatePropertyWithValue('color', entry.color)
 
 		comp.addSubcomponent(vevent)
 
@@ -279,7 +289,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		entry.uri = new URL(filename, this.collectionUrl(source)).href
 		entry.data ??= {}
 		entry.data.raw = iCalString
-		entry.color = source.color
+		entry.color = entry.color || undefined
 		const etag = response.headers?.get('etag') || response.headers?.get('Etag') || response.headers?.get('ETag')
 		if (etag) {
 			entry.data.etag = etag

@@ -204,6 +204,12 @@ export class EntryDetailsComponent extends Component {
 								margin-inline-start: 2px;
 							}
 						}
+
+						&.color {
+							.content {
+								gap: 0.375rem;
+							}
+						}
 					}
 
 					.arrow {
@@ -267,6 +273,7 @@ export class EntryDetailsComponent extends Component {
 					</li>
 				`}
 				${this.sourceTemplate}
+				${this.colorTemplate}
 				${this.descriptionTemplate}
 			</ul>
 		`
@@ -279,6 +286,37 @@ export class EntryDetailsComponent extends Component {
 				<div class="content">${this.source.name}</div>
 			</li>
 		`
+	}
+
+	private get colorTemplate() {
+		const activeColor = this.segment?.entry.color || this.source?.color
+		return !this.segment?.entry ? html.nothing : html`
+			<li class="color">
+				<mitra-icon icon="palette"></mitra-icon>
+				<div class="content">
+					<mitra-color-picker
+						.value=${activeColor}
+						.resetValue=${this.source?.color}
+						resetLabel="Reset to calendar color"
+						@change=${(e: CustomEvent<string | null>) => this.setColor(e.detail)}
+					></mitra-color-picker>
+				</div>
+			</li>
+		`
+	}
+
+	private setColor(color: string | null) {
+		if (!this.segment) {
+			return
+		}
+
+		if (color === this.source?.color) {
+			color = null
+		}
+
+		this.segment.entry.color = color ?? null
+		this.handleChange()
+		this.requestUpdate()
 	}
 
 	@state() private editingDescription = false
