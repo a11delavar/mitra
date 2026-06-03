@@ -7,8 +7,27 @@ import fs from 'fs'
 const tsgoPlatformDir = dirname(fileURLToPath(import.meta.resolve(`@typescript/native-preview-${process.platform}-${process.arch}/package.json`)))
 spawn(join(tsgoPlatformDir, `lib/tsgo${process.platform === 'win32' ? '.exe' : ''}`), ['--noEmit', '--watch'], { stdio: 'inherit' })
 
-// Spawn the backend server using tsx so it supports decorators and tsconfig paths natively
-spawn('npx', ['tsx', 'watch', 'src/backend/server.ts'], { stdio: 'inherit', shell: true })
+// Bundle the backend with esbuild (rather than running it through tsx) so dual CJS/ESM dependencies
+// resolve to their ESM `module` build — fixing the `intl-format-cache`/`@3mo/date-time` interop that
+// tsx can't, which lets the backend use `DateTime` instead of `Date`. Output two directories deep so
+// `server.ts`'s `import.meta.dirname`-relative paths (`../../data`, `../../dist`) match `src/backend`.
+const backendContext = await esbuild.context({
+	entryPoints: ['src/backend/server.ts'],
+	outfile: 'out/server/server.mjs',
+	bundle: true,
+	platform: 'node',
+	format: 'esm',
+	mainFields: ['module', 'main'],
+	sourcemap: 'inline',
+	// A `require` for the CJS deps esbuild leaves as runtime requires (e.g. express requiring node builtins).
+	banner: { js: `import { createRequire as __nodeCreateRequire } from 'node:module'; const require = __nodeCreateRequire(import.meta.url);` },
+	// Native bindings, DB drivers, and tsdav (whose CJS deps misbehave when bundled) stay external —
+	// loaded natively by Node. Only the browser-oriented `@3mo/*` graph needs bundling for the interop.
+	external: ['better-sqlite3', 'sqlite3', 'libsql', '@libsql/client', 'mariadb', 'mysql', 'mysql2', 'pg', 'oracledb', 'tedious', 'tsdav'],
+})
+await backendContext.rebuild()
+await backendContext.watch()
+spawn('node', ['--watch', 'out/server/server.mjs'], { stdio: 'inherit', shell: true, env: { ...process.env, MITRA_DEV: 'true' } })
 
 const directory = './dist'
 

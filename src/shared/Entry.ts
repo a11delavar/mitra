@@ -1,6 +1,5 @@
 import { type DateTime } from '@3mo/date-time'
 import { model } from './model.js'
-import { EntrySegment } from './EntrySegment.js'
 import { entity, primaryKey, property, enum as enumType, unique, manyToOne } from './orm.js'
 import { Source } from './Source.js'
 
@@ -52,40 +51,13 @@ export class Entry {
 		Object.assign(this, init)
 	}
 
-	get segments(): EntrySegment[] {
-		if (!this.start || !this.end) return [new EntrySegment(this)]
-
-		const start = this.start
-		const end = this.end
-
-		const startDay = start.dayStart
-		const endDay = end.dayStart
-
-		if (startDay.equals(endDay) || (end.hour === 0 && end.minute === 0 && startDay.equals(endDay.subtract({ days: 1 })))) {
-			return [new EntrySegment(this, { date: startDay })]
-		}
-
-		const segments = new Array<EntrySegment>()
-		let currentDay = startDay
-
-		while (currentDay.isBefore(endDay) || (currentDay.equals(endDay) && (this.end.hour > 0 || this.end.minute > 0))) {
-			const dayEnd = currentDay.add({ days: 1 })
-
-			segments.push(new EntrySegment(this, {
-				date: currentDay,
-				continuedFromPrevious: start.isBefore(currentDay),
-				continuesNext: end.isAfter(dayEnd),
-			}))
-
-			currentDay = dayEnd
-		}
-
-		return segments
-	}
-
 	get allDay() {
 		return this.start && this.end
 			&& this.start.hour === 0 && this.start.minute === 0
 			&& this.end.hour === 0 && this.end.minute === 0
+	}
+
+	get multiDay() {
+		return !!this.start && !!this.end && !this.start.dayStart.equals(this.end.dayStart)
 	}
 }

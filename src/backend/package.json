@@ -18,7 +18,8 @@
 		"express": "x",
 		"ical.js": "x",
 		"tsdav": "x",
-		"@3mo/date-time": "0.10.x"
+		"@3mo/date-time": "0.10.x",
+		"@3mo/resize-observer": "x"
 	},
 	"devDependencies": {
 		"@types/cors": "2.8.x",

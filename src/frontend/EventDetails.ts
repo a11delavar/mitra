@@ -1,13 +1,13 @@
 import { component, html, property, state, Component, css, eventListener, event, Binder } from '@a11d/lit'
-import { EntrySegment } from 'shared'
+import type { EntrySegment } from './EntrySegment.js'
 import { getSource, updateEvent, deleteEvent } from './Api.js'
 
-@component('mitra-event-details')
-export class EventDetails extends Component {
+@component('mitra-entry-details')
+export class EntryDetailsComponent extends Component {
 	@event() readonly openChange!: EventDispatcher<boolean>
 	@property({
 		type: Boolean,
-		updated(this: EventDetails) {
+		updated(this: EntryDetailsComponent) {
 			if (this.open) {
 				this.showPopover()
 			} else {
@@ -50,7 +50,7 @@ export class EventDetails extends Component {
 
 	static override get styles() {
 		return css`
-			mitra-event-details {
+			mitra-entry-details {
 				display: contents;
 				cursor: default;
 
@@ -77,7 +77,7 @@ export class EventDetails extends Component {
 				max-height: 80dvh;
 				overflow-y: auto;
 
-				background: color-mix(in srgb, color-mix(in srgb, var(--mitra-event-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
+				background: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
 				backdrop-filter: blur(10px);
 				border: var(--border);
 				border-radius: 0.5rem;
@@ -246,7 +246,7 @@ export class EventDetails extends Component {
 				<mitra-icon-button class="close" icon="x" label="Close" @click=${this.handleClose}></mitra-icon-button>
 			</header>
 			<ul>
-				${!this.segment.isTimed ? html.nothing : html`
+				${this.segment.allDay ? html.nothing : html`
 					<li class="time">
 						<mitra-icon icon="clock"></mitra-icon>
 						<div class="content">
@@ -321,6 +321,6 @@ export class EventDetails extends Component {
 
 declare global {
 	interface HTMLElementTagNameMap {
-		'mitra-event-details': EventDetails
+		'mitra-entry-details': EntryDetailsComponent
 	}
 }

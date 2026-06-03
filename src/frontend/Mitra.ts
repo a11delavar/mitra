@@ -4,10 +4,10 @@ import { fetchIntegrations } from './Api.js'
 import { Month } from './Month.js'
 import { Days } from './Days.js'
 import { Day } from './Day.js'
-import { EventSegmentC } from './EventSegment.js'
+import { EntrySegmentComponent } from './EventSegment.js'
 import { PageCalendar } from './PageCalendar.js'
 import { Sidebar } from './Sidebar.js'
-import { EventDetails } from './EventDetails.js'
+import { EntryDetailsComponent } from './EventDetails.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { colorContrast } from './components/colorContrast.js'
 import { IconButton } from './components/IconButton.js'
@@ -55,8 +55,8 @@ export class Mitra extends Application {
 			${Month.styles}
 			${Days.styles}
 			${Day.styles}
-			${EventSegmentC.styles}
-			${EventDetails.styles}
+			${EntrySegmentComponent.styles}
+			${EntryDetailsComponent.styles}
 			${DialogIntegration.styles}
 		`
 	}

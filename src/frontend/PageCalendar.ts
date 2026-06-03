@@ -4,7 +4,7 @@ import { Task } from '@lit/task'
 import { DateTime } from '@3mo/date-time'
 import { MediaQueryController } from '@3mo/media-query-observer'
 import { fetchEvents } from './Api.js'
-import type { EventSegmentC } from './EventSegment.js'
+import type { EntrySegmentComponent } from './EventSegment.js'
 
 class FetcherController extends Controller {
 	private readonly eventSource = new EventSource('/api/events')
@@ -53,7 +53,7 @@ export class PageCalendar extends PageComponent {
 
 	readonly mediaController = new MediaQueryController(this, '(min-width: 800px)', matches => this.sidebarOpen = matches)
 
-	@queryAll('mitra-event-segment') readonly eventSegments!: Array<EventSegmentC>
+	@queryAll('mitra-entry-segment') readonly eventSegments!: Array<EntrySegmentComponent>
 
 	private setView(value: 'week' | 'month') {
 		if (this.view === value) {

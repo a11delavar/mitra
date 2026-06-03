@@ -1,6 +1,8 @@
 import { Component, component, html, property, css, repeat, type PropertyValues, eventListener, queryAsync, ifDefined } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { Entry, EntrySegment } from 'shared'
+import { observeResize } from '@3mo/resize-observer'
+import { Entry } from 'shared'
+import { EntrySegments } from './EntrySegments.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 
 @component('mitra-days')
@@ -9,8 +11,19 @@ export class Days extends Component {
 	@property({ type: Array }) entries = new Array<Entry>()
 	@property({ type: Boolean, reflect: true }) hideTime = false
 
-	private readonly buffer = new CalendarDatesController(this)
-	private get days(): Array<DateTime> { return this.buffer.days }
+	private readonly dates = new CalendarDatesController(this)
+	private get days(): Array<DateTime> { return this.dates.days }
+	private get segments() { return EntrySegments.of(this.entries, this.days) }
+
+	// The all-day lane sticks below the (sticky) day headers, so it needs the header row's height. The
+	// time-column header cell stretches to that row, so the `observeResize` directive on it keeps
+	// `--header-height` in sync — firing only when it actually resizes (e.g. on font load), not per render.
+	private readonly updateHeaderHeight = ([entry]: ResizeObserverEntry[]) => {
+		const height = entry?.borderBoxSize?.[0]?.blockSize ?? (entry?.target as HTMLElement | undefined)?.offsetHeight
+		if (height) {
+			this.style.setProperty('--header-height', `${height}px`)
+		}
+	}
 
 	private timeTimeout?: ReturnType<typeof setTimeout>
 
@@ -37,16 +50,16 @@ export class Days extends Component {
 	@queryAsync('.now') readonly nowElement?: Promise<HTMLElement>
 
 	protected override async initialized() {
-		this.buffer.navigatingDate = this.navigatingDate
-		this.buffer.scrollToDate(this.navigatingDate)
+		this.dates.navigatingDate = this.navigatingDate
+		this.dates.scrollToDate(this.navigatingDate)
 		const now = await this.nowElement
 		now?.scrollIntoView({ block: 'center', behavior: 'smooth' })
 	}
 
 	protected override updated(props: PropertyValues<this>) {
-		if (props.has('navigatingDate') && !this.navigatingDate.dayStart.equals(this.buffer.navigatingDate.dayStart)) {
-			this.buffer.navigatingDate = this.navigatingDate
-			this.buffer.scrollToDate(this.navigatingDate)
+		if (props.has('navigatingDate') && !this.navigatingDate.dayStart.equals(this.dates.navigatingDate.dayStart)) {
+			this.dates.navigatingDate = this.navigatingDate
+			this.dates.scrollToDate(this.navigatingDate)
 		}
 		this.style.setProperty('--_days-length', this.days.length.toString())
 	}
@@ -67,8 +80,8 @@ export class Days extends Component {
 		const centerCol = Math.floor((centerPixel - timeAxisWidth) / colWidth)
 		const centerDate = this.days[Math.min(Math.max(0, centerCol), this.days.length - 1)]
 
-		if (centerDate && !centerDate.dayStart.equals(this.buffer.navigatingDate.dayStart)) {
-			this.buffer.navigatingDate = centerDate
+		if (centerDate && !centerDate.dayStart.equals(this.dates.navigatingDate.dayStart)) {
+			this.dates.navigatingDate = centerDate
 		}
 	}
 
@@ -76,7 +89,7 @@ export class Days extends Component {
 		return css`
 			mitra-days {
 				display: grid;
-				grid-template-rows: auto minmax(var(--grid-min-height), 1fr);
+				grid-template-rows: auto auto minmax(var(--grid-min-height), 1fr);
 				grid-template-columns: var(--time-axis-width) repeat(var(--_days-length), minmax(10rem, 1fr));
 				gap: 1px;
 				height: 100%;
@@ -105,11 +118,58 @@ export class Days extends Component {
 
 					.entries {
 						background-color: var(--color-surface);
+						grid-row: 3;
 					}
 
 					& > .header {
 						background-color: var(--color-background);
 						border-bottom: var(--border);
+					}
+				}
+
+				/* All-day lane: a horizontal strip below the headers where all-day events render as
+				   column-spanning bars. Sticky below the (also-sticky) headers so it stays in view. */
+				.all-day-corner {
+					grid-column: 1;
+					grid-row: 2;
+					position: sticky;
+					inset-inline-start: 0;
+					top: var(--header-height, 2.75rem);
+					z-index: 120;
+					background-color: var(--color-background);
+					border-inline-end: var(--border);
+					border-bottom: var(--border);
+				}
+
+				.all-day {
+					grid-column: 2 / -1;
+					grid-row: 2;
+					position: sticky;
+					top: var(--header-height, 2.75rem);
+					z-index: 90;
+					display: grid;
+					grid-template-columns: subgrid;
+					grid-auto-rows: 1.375rem;
+					grid-auto-flow: row dense; /* bars self-place columns by date; dense packing assigns lanes */
+					gap: 1px 1px;
+					padding-block: 2px;
+					align-content: start;
+					background-color: var(--color-background);
+					border-bottom: var(--border);
+
+					mitra-entry-segment {
+						margin-top: 0 !important;
+						flex-direction: row !important;
+						align-items: center !important;
+						gap: 0.375rem !important;
+						padding: 0 0.375rem !important;
+
+						> .heading {
+							flex: 1 !important;
+							white-space: nowrap !important;
+							overflow: hidden !important;
+							text-overflow: ellipsis !important;
+						}
 					}
 				}
 
@@ -135,7 +195,7 @@ export class Days extends Component {
 
 					.axis {
 						grid-column: 1;
-						grid-row: 2;
+						grid-row: 3;
 						display: grid;
 						grid-template-rows: repeat(1440, var(--minute-height));
 						border-inline-end: var(--border);
@@ -171,7 +231,7 @@ export class Days extends Component {
 
 					.overlays {
 						grid-column: 2 / -1;
-						grid-row: 2;
+						grid-row: 3;
 						display: grid;
 						grid-template-rows: repeat(1440, var(--minute-height));
 						grid-template-columns: subgrid;
@@ -237,7 +297,41 @@ export class Days extends Component {
 	protected override get template() {
 		return html`
 			${this.timeTemplate}
+			${this.allDayTemplate}
 			${this.dateTemplate}
+		`
+	}
+
+	private get allDayTemplate() {
+		const first = this.days[0]
+		const last = this.days.at(-1)
+		if (!first || !last) {
+			return html.nothing
+		}
+		const runs = this.segments.runsIn(first, last, entry => !!entry.allDay)
+		if (!runs.length) {
+			return html.nothing
+		}
+		// Built once per render so each bar's column is an O(1) lookup rather than a findIndex.
+		const columnByDay = new Map(this.days.map((day, index) => [day.dayStart.valueOf(), index]))
+		const columnOf = (date: DateTime) => columnByDay.get(date.dayStart.valueOf()) ?? 0
+		return html`
+			<div class="all-day-corner"></div>
+			<div class="all-day">
+				${runs.map(segment => {
+			const startColumn = columnOf(segment.date!)
+			const clippedRight = segment.runEnd.date!.isAfter(last)
+			const endColumn = columnOf(clippedRight ? last : segment.runEnd.date!)
+			return html`
+						<mitra-entry-segment
+							style="grid-column: ${startColumn + 1} / span ${endColumn - startColumn + 1};"
+							?has-previous=${segment.hasPrevious}
+							?has-next=${clippedRight}
+							.segment=${segment}
+						></mitra-entry-segment>
+					`
+				})}
+			</div>
 		`
 	}
 
@@ -254,7 +348,7 @@ export class Days extends Component {
 
 		return html`
 			<div class="time">
-				<div class="timezone" title=${ifDefined(today.formatToParts({ timeZoneName: 'long' }).find(x => x.type === 'timeZoneName')?.value)}>
+				<div class="timezone" ${observeResize(this.updateHeaderHeight)} title=${ifDefined(today.formatToParts({ timeZoneName: 'long' }).find(x => x.type === 'timeZoneName')?.value)}>
 					${today.formatToParts({ timeZoneName: 'shortGeneric' }).find(x => x.type === 'timeZoneName')?.value}
 				</div>
 
@@ -292,18 +386,13 @@ export class Days extends Component {
 
 	private get dateTemplate() {
 		const today = new DateTime()
-		const allSegments = this.entries.flatMap(e => e.segments)
-		const getEntriesForDay = (date: DateTime) => {
-			const dayEvents = allSegments.filter(e => e.fallsOnDay(date))
-			return dayEvents.length ? EntrySegment.cluster(dayEvents) : []
-		}
 		return html`
 			${repeat(this.days, day => day.dayStart.toISOString(), (day, index) => html`
 				<mitra-day
 					data-date=${day.dayStart.toISOString()}
 					style="grid-column: ${index + 2};"
 					.date=${day}
-					.entries=${getEntriesForDay(day)}
+					.entries=${this.segments.timedOn(day)}
 					?today=${day.dayStart.equals(today.dayStart)}
 				></mitra-day>
 			`)}

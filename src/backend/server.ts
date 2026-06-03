@@ -11,6 +11,7 @@ import { eventsRouter } from './events.js'
 import { entriesRouter } from './entries.js'
 import { integrationsRouter } from './integrations.js'
 import { sourcesRouter } from './sources.js'
+import { mountDevFixture } from './devFixture.js'
 
 const logger = createLogger('API')
 const PORT = 3000
@@ -26,6 +27,13 @@ app.use(cors())
 const modelConstructor = new ModelValueConstructor()
 app.use(express.json({ reviver: (_key, value) => modelConstructor.shallConstruct(value) ? modelConstructor.construct(value) : value }))
 app.use(authMiddleware)
+
+// Dev-only: a hardcoded sample integration + entries so the calendar renders without a real account.
+// Mounted before the API routers so it only shadows their GETs (see devFixture.ts).
+if (process.env.MITRA_DEV === 'true') {
+	mountDevFixture(app)
+	logger.info('Dev sample fixture mounted (sample integration + entries)')
+}
 
 app.use('/api/events', eventsRouter)
 app.use('/api/entries', entriesRouter)

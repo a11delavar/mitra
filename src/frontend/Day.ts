@@ -1,16 +1,12 @@
-import { Component, component, html, property, css, event } from '@a11d/lit'
+import { Component, component, html, property, css } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { EntrySegment } from 'shared'
+import type { EntrySegment } from './EntrySegment.js'
 import './EventSegment.js'
 
 @component('mitra-day')
 export class Day extends Component {
-	@event({ bubbles: true, composed: true }) navigate!: EventDispatcher<DateTime>
-	@event({ bubbles: true, composed: true }) switchToWeek!: EventDispatcher
-
 	@property({ type: Object }) date!: DateTime
-	@property({ type: Array }) entries = new Array<EntrySegment>()
-	@property({ type: Number }) hiddenEventsCount = 0
+	@property({ type: Array }) entries: ReadonlyArray<EntrySegment> = []
 	@property({ type: Boolean, reflect: true }) today = false
 
 	static override get styles() {
@@ -79,9 +75,6 @@ export class Day extends Component {
 						line-height: 1;
 
 						@container (max-height: 450px) {
-							font-size: 0.875rem;
-							width: auto;
-							height: auto;
 							color: var(--color-text);
 							border-radius: var(--border-radius);
 							padding: 0 0.125rem;
@@ -130,47 +123,10 @@ export class Day extends Component {
 					container-type: inline-size;
 					padding-inline: 1px;
 
-					@container (max-height: 450px) {
-						grid-template-rows: 1.75rem repeat(var(--max-slots), 1.375rem);
-						grid-auto-rows: 1.375rem;
-						row-gap: 0.125rem;
-						margin-top: 0;
-						box-sizing: border-box;
-						overflow: hidden;
-					}
-
-					mitra-event-segment {
+					mitra-entry-segment {
 						grid-column: 1 / -1;
 						z-index: 2;
 						position: relative;
-
-						@container (max-height: 450px) {
-							grid-row: var(--month-slot, auto) !important;
-							--overlap-slot: 0 !important;
-							--overlap-total: 1 !important;
-							--overlap-span: 1 !important;
-						}
-					}
-
-					.more {
-						font-size: 0.75rem;
-						font-weight: 500;
-						color: var(--color-text-muted);
-						cursor: pointer;
-						padding: 0.125rem 0.375rem;
-						margin: 0.125rem 0.25rem 0;
-						border-radius: var(--border-radius);
-						transition: background-color 0.2s, color 0.2s;
-
-						@container (max-height: 450px) {
-							grid-row: calc(var(--max-slots) + 1);
-							grid-column: 1 / -1;
-						}
-
-						&:hover {
-							background-color: color-mix(in srgb, var(--color-text-muted) 15%, transparent);
-							color: var(--color-text);
-						}
 					}
 				}
 			}
@@ -188,20 +144,16 @@ export class Day extends Component {
 			</div>
 
 			<div class="entries">
-				${this.entries.map(s => html`<mitra-event-segment .segment=${s}></mitra-event-segment>`)}
-				${!this.hiddenEventsCount ? html.nothing : html`
-					<div class="more" @click=${this.handleMoreButtonClick}>
-						${t('+${count:number} more', { count: this.hiddenEventsCount })}
-					</div>
-				`}
+				${this.entries.map(segment => html`
+					<mitra-entry-segment
+						style="grid-row: ${segment.startMinute} / ${segment.endMinute}; --overlap-slot: ${segment.overlap?.slot ?? 0}; --overlap-total: ${segment.overlap?.total ?? 1}; --overlap-span: ${segment.overlap?.span ?? 1};"
+						?has-previous=${segment.hasPrevious}
+						?has-next=${segment.hasNext}
+						.segment=${segment}
+					></mitra-entry-segment>
+				`)}
 			</div>
 		`
-	}
-
-	private handleMoreButtonClick = (e: Event) => {
-		e.stopPropagation()
-		this.navigate.dispatch(this.date)
-		this.switchToWeek.dispatch()
 	}
 }
 

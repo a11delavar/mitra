@@ -3,3 +3,5 @@ node_modules
 dist
 /features
 tsconfig.tsbuildinfo
+out_test/
+out/

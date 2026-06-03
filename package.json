@@ -1,7 +1,8 @@
 {
 	"type": "module",
 	"scripts": {
-		"start": "node ./scripts/dev.ts"
+		"start": "node ./scripts/dev.ts",
+		"test": "node ./scripts/test.ts && node --test \"out_test/**/*.js\""
 	},
 	"devDependencies": {
 		"@typescript/native-preview": "latest",

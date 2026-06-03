@@ -1,30 +1,37 @@
-import { component, html, property, Component, css, eventListener, state, bind } from '@a11d/lit'
-import { EntrySegment } from 'shared'
+import { component, html, property, Component, css, eventListener, state, bind, queryConnectedInstances } from '@a11d/lit'
+import { EntrySegment } from './EntrySegment.js'
 import { colorContrast } from './components/colorContrast.js'
 
-@component('mitra-event-segment')
-export class EventSegmentC extends Component {
+@component('mitra-entry-segment')
+export class EntrySegmentComponent extends Component {
+	@queryConnectedInstances() private static readonly instances: Set<EntrySegmentComponent>
+
 	@property({
 		type: Object,
-		updated(this: EventSegmentC) {
-			this.style.setProperty('--mitra-event-segment-color', this.segment?.entry.color || '')
-			this.style.setProperty('--mitra-event-segment-grid-row', `${this.segment?.startMinute} / ${this.segment?.endMinute}`)
-			this.style.setProperty('--overlap-slot', `${this.segment?.slot}`)
-			this.style.setProperty('--overlap-total', `${this.segment?.total}`)
-			this.style.setProperty('--overlap-span', `${this.segment?.span}`)
-			this.style.setProperty('--month-slot', this.segment?.monthSlot !== undefined ? `${this.segment.monthSlot + 2}` : 'auto')
-			this.toggleAttribute('continued-from-previous', !!this.segment?.continuedFromPrevious)
-			this.toggleAttribute('continues-next', !!this.segment?.continuesNext)
-			if (this.segment?.date) {
-				this.style.viewTransitionName = `event-${this.segment.entry.id}-${this.segment.index}`
-			}
-			if (this.segment?.entry.id) {
-				this.style.anchorName = this.segment.cssId
+		updated(this: EntrySegmentComponent) {
+			this.style.setProperty('--mitra-entry-segment-color', this.segment?.entry.color || '')
+			if (this.segment) {
+				this.style.viewTransitionName = `entry-${this.segment.id}`
+				this.style.anchorName = this.anchorName
 			}
 		}
 	}) segment?: EntrySegment
 
-	@state() open = false
+	private get anchorName() {
+		return `--mitra-entry-segment-${this.segment?.id}`
+	}
+
+	@state({
+		updated(this: EntrySegmentComponent) {
+			EntrySegmentComponent.instances.forEach(i => {
+				if (i.segment?.entry.id === this.segment?.entry.id) {
+					i.selected = this.open
+				}
+			})
+		}
+	}) open = false
+
+	@property({ type: Boolean, reflect: true }) selected = false
 
 	@eventListener('click')
 	protected async handleClick(e: MouseEvent) {
@@ -34,19 +41,18 @@ export class EventSegmentC extends Component {
 
 	static override get styles() {
 		return css`
-			mitra-event-segment {
+			mitra-entry-segment {
 				display: flex;
 				flex-direction: column;
 				gap: 0.125rem;
 				padding: 0.125rem 0.25rem 0;
-				background-color: color-mix(in srgb, var(--mitra-event-segment-color) 25%, var(--color-background));
-				border-inline-start: 3px solid var(--mitra-event-segment-color);
+				background-color: color-mix(in srgb, var(--mitra-entry-segment-color) 25%, var(--color-background));
+				border-inline-start: 3px solid var(--mitra-entry-segment-color);
 				border-radius: var(--border-radius);
-				color: color-mix(in srgb, var(--mitra-event-segment-color) 60%, var(--color-text));
+				color: color-mix(in srgb, var(--mitra-entry-segment-color) 60%, var(--color-text));
 				font-size: 0.7rem;
 				margin-top: 1px;
 				min-height: 0;
-				grid-row: var(--mitra-event-segment-grid-row);
 				cursor: pointer;
 
 				/* Collision Overlap Logic */
@@ -62,9 +68,10 @@ export class EventSegmentC extends Component {
 				overflow: hidden;
 				transition: background-color 0.15s ease, color 0.15s ease;
 
-				&:has([popover]:popover-open) {
-					background-color: var(--mitra-event-segment-color);
-					color: ${colorContrast('var(--mitra-event-segment-color)')};
+				&:has([popover]:popover-open),
+				&[selected] {
+					background-color: var(--mitra-entry-segment-color);
+					color: ${colorContrast('var(--mitra-entry-segment-color)')};
 				}
 
 				@container (max-height: 450px) {
@@ -74,33 +81,33 @@ export class EventSegmentC extends Component {
 					padding: 0 0.375rem;
 				}
 
-				&[continues-next] {
+				&[has-next] {
 					border-end-start-radius: 0;
 					border-end-end-radius: 0;
-					border-bottom: 2px dashed ${colorContrast('var(--mitra-event-segment-color)')};
+					border-bottom: 2px dashed ${colorContrast('var(--mitra-entry-segment-color)')};
 					padding-bottom: 0;
 
 					@container (max-height: 450px) {
 						border-start-end-radius: 0;
 						border-end-end-radius: 0;
 						border-bottom: none;
-						border-inline-end: 2px dashed ${colorContrast('var(--mitra-event-segment-color)')};
+						border-inline-end: 2px dashed ${colorContrast('var(--mitra-entry-segment-color)')};
 						margin-inline-end: -0.25rem;
 						padding-inline-end: 0.5rem;
 					}
 				}
 
-				&[continued-from-previous] {
+				&[has-previous] {
 					border-start-start-radius: 0;
 					border-start-end-radius: 0;
-					border-top: 2px dashed ${colorContrast('var(--mitra-event-segment-color)')};
+					border-top: 2px dashed ${colorContrast('var(--mitra-entry-segment-color)')};
 					padding-top: 0;
 
 					@container (max-height: 450px) {
 						border-start-start-radius: 0;
 						border-end-start-radius: 0;
 						border-top: none;
-						border-inline-start: 2px dashed ${colorContrast('var(--mitra-event-segment-color)')};
+						border-inline-start: 2px dashed ${colorContrast('var(--mitra-entry-segment-color)')};
 						margin-inline-start: -0.25rem;
 						padding-inline-start: 0.5rem;
 					}
@@ -155,7 +162,7 @@ export class EventSegmentC extends Component {
 
 	protected override get template() {
 		return !this.segment ? html.nothing : html`
-			${!this.segment.isTimed ? html.nothing : html`
+			${this.segment.allDay ? html.nothing : html`
 				<div class="time">
 					<span class="start">${this.segment.entry.start?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
 					<span class="separator">-</span>
@@ -164,12 +171,12 @@ export class EventSegmentC extends Component {
 			`}
 			<div class="heading">${this.segment.entry.heading}</div>
 			${!this.open ? html.nothing : html`
-				<mitra-event-details popover ?open=${bind(this, 'open')}
-					style="position-anchor: ${this.segment.cssId}"
+				<mitra-entry-details popover ?open=${bind(this, 'open')}
+					style="position-anchor: ${this.anchorName}"
 					.segment=${this.segment}
 					@click=${(e: Event) => e.stopPropagation()}
 					@change=${() => this.requestUpdate()}
-				></mitra-event-details>
+				></mitra-entry-details>
 			`}
 		`
 	}
@@ -177,6 +184,6 @@ export class EventSegmentC extends Component {
 
 declare global {
 	interface HTMLElementTagNameMap {
-		'mitra-event-segment': EventSegmentC
+		'mitra-entry-segment': EntrySegmentComponent
 	}
 }

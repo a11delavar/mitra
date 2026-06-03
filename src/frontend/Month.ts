@@ -1,17 +1,24 @@
-import { Component, component, html, property, css, type PropertyValues, repeat } from '@a11d/lit'
+import { Component, component, html, property, css, type PropertyValues, repeat, event } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { Entry, EntrySegment } from 'shared'
+import { Entry } from 'shared'
+import { EntrySegments } from './EntrySegments.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 
 @component('mitra-month')
 export class Month extends Component {
+	@event({ bubbles: true, composed: true }) readonly navigate!: EventDispatcher<DateTime>
+	@event({ bubbles: true, composed: true }) readonly switchToWeek!: EventDispatcher
+
 	@property({ type: Object }) navigatingDate = new DateTime()
 	@property({ type: Array }) entries = new Array<Entry>()
+
+	private static readonly MAX_SLOTS = 4
 
 	private readonly buffer = new CalendarDatesController(this)
 
 	private get bufferNavigatingDate(): DateTime { return this.buffer.navigatingDate }
 	private get days(): Array<DateTime> { return this.buffer.days }
+	private get segments() { return EntrySegments.of(this.entries, this.days) }
 
 	protected override initialized() {
 		this.buffer.navigatingDate = this.navigatingDate
@@ -58,6 +65,14 @@ export class Month extends Component {
 					z-index: 200;
 				}
 
+				.weekday {
+					padding: 0.5rem;
+					text-align: center;
+					font-size: 0.8rem;
+					font-weight: 500;
+					color: var(--color-text-muted);
+				}
+
 				.days {
 					display: grid;
 					grid-template-columns: repeat(7, 1fr);
@@ -72,34 +87,30 @@ export class Month extends Component {
 					}
 				}
 
-				.weekday {
-					padding: 0.5rem;
-					text-align: center;
-					font-size: 0.8rem;
-					font-weight: 500;
-					color: var(--color-text-muted);
-				}
+				.week {
+					grid-column: 1 / -1;
+					display: grid;
+					grid-template-columns: subgrid;
+					grid-template-rows: 1.75rem repeat(var(--max-slots), 1.375rem) 1fr;
+					row-gap: 0.125rem;
 
-				mitra-day {
-					container-type: size;
-					height: 100%;
+					mitra-day {
+						grid-row: 1 / -1;
+						container-type: size;
+					}
 
-					mitra-event-segment {
-						grid-row: var(--month-slot, auto) !important;
-						--overlap-slot: 0 !important;
-						--overlap-total: 1 !important;
-						--overlap-span: 1 !important;
-
+					> mitra-entry-segment {
+						z-index: 2;
+						align-self: stretch;
+						margin-top: 0 !important;
 						flex-direction: row !important;
 						align-items: center !important;
 						gap: 0.375rem !important;
-						padding: 0.125rem 0.375rem !important;
+						padding: 0 0.375rem !important;
 
 						> .time {
 							display: block !important;
-							.separator, .end {
-								display: none !important;
-							}
+							.separator, .end { display: none !important; }
 						}
 
 						> .heading {
@@ -107,7 +118,21 @@ export class Month extends Component {
 							white-space: nowrap !important;
 							overflow: hidden !important;
 							text-overflow: ellipsis !important;
-							display: block !important;
+						}
+					}
+
+					> .more {
+						grid-row: calc(var(--max-slots) + 1);
+						z-index: 2;
+						font-size: 0.7rem;
+						font-weight: 500;
+						color: var(--color-text-muted);
+						cursor: pointer;
+						padding: 0 0.375rem;
+						align-self: center;
+
+						&:hover {
+							color: var(--color-text);
 						}
 					}
 				}
@@ -119,36 +144,44 @@ export class Month extends Component {
 
 	protected override get template() {
 		const today = new DateTime().dayStart
-		const MAX_SLOTS = 4
-
-		const allClusteredSegments = EntrySegment.clusterMonth(this.entries.flatMap(e => e.segments))
-
-		const getDayData = (date: DateTime) => {
-			const daySegments = allClusteredSegments.filter(s => s.date?.dayStart.equals(date.dayStart))
-			const visible = daySegments.filter(s => s.monthSlot !== undefined && s.monthSlot < MAX_SLOTS - 1)
-			const hiddenEventsCount = daySegments.length - visible.length
-			return { visible, hiddenEventsCount }
+		const daysInWeek = this.navigatingDate.daysInWeek
+		const weeks = new Array<Array<DateTime>>()
+		for (let i = 0; i < this.days.length; i += daysInWeek) {
+			weeks.push(this.days.slice(i, i + daysInWeek))
 		}
 
 		return html`
 			<div class="headers">
 				${this.weekDays.map(weekday => html`<div class="weekday">${weekday}</div>`)}
 			</div>
-			<div class="days" @scroll=${this.handleScroll} style="grid-template-rows: repeat(${this.days.length / this.navigatingDate.daysInWeek}, minmax(8.5rem, 1fr));">
-				${repeat(this.days, day => day.dayStart.toISOString(), day => {
-					const { visible, hiddenEventsCount } = getDayData(day)
-					return html`
-						<mitra-day
-							data-date=${day.dayStart.toISOString()}
-							.date=${day}
-							.entries=${visible}
-							.hiddenEventsCount=${hiddenEventsCount}
-							style="--max-slots: ${MAX_SLOTS}"
-							?today=${day.dayStart.equals(today)}
-							?data-with-background=${day.month === this.bufferNavigatingDate.month}>
-						</mitra-day>
-					`
-				})}
+			<div class="days" @scroll=${this.handleScroll} style="grid-auto-rows: minmax(8.5rem, 1fr); --max-slots: ${Month.MAX_SLOTS};">
+				${repeat(weeks, week => week[0]!.dayStart.toISOString(), week => this.weekTemplate(week, today))}
+			</div>
+		`
+	}
+
+	private weekTemplate(week: Array<DateTime>, today: DateTime) {
+		const { bars, hiddenByColumn } = this.segments.monthWeek(week, Month.MAX_SLOTS)
+		return html`
+			<div class="week">
+				${week.map((day, col) => html`
+					<mitra-day
+						data-date=${day.dayStart.toISOString()}
+						style="grid-column: ${col + 1};"
+						.date=${day}
+						?today=${day.dayStart.equals(today)}
+						?data-with-background=${day.month === this.bufferNavigatingDate.month}>
+					</mitra-day>
+				`)}
+				${bars.map(bar => html`
+					<mitra-entry-segment
+						style="grid-column: ${bar.startColumn + 1} / span ${bar.span}; grid-row: ${bar.slot + 2};"
+						.segment=${bar.segment}
+					></mitra-entry-segment>
+				`)}
+				${hiddenByColumn.map((count, col) => !count ? html.nothing : html`
+					<div class="more" style="grid-column: ${col + 1};" @click=${() => { this.navigate.dispatch(week[col]!); this.switchToWeek.dispatch() }}>+${count} more</div>
+				`)}
 			</div>
 		`
 	}
