@@ -8,7 +8,8 @@ import type { EntrySegmentComponent } from './EventSegment.js'
 import { DraftController } from './DraftController.js'
 
 class FetcherController extends Controller {
-	private readonly eventSource = new EventSource('/api/events')
+	// `withCredentials` so the session cookie rides along behind a cookie-based auth proxy (e.g. Traefik OIDC).
+	private readonly eventSource = new EventSource('/api/events', { withCredentials: true })
 
 	constructor(override readonly host: PageCalendar) {
 		super(host)
