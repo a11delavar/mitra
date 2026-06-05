@@ -32,7 +32,7 @@ entriesRouter.get('/', async (req, res) => {
 
 entriesRouter.post('/', async (req, res) => {
 	const em = orm.em.fork()
-	
+
 	const body = req.body as Partial<Entry>
 	const targetSourceId = body.sourceId
 	if (!targetSourceId) {

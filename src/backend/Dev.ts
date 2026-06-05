@@ -26,24 +26,24 @@ export class Dev extends Integration {
 		this.uri = incoming.uri || this.uri
 	}
 
-	override async sync(): Promise<boolean> {
-		return false
+	override sync(): Promise<boolean> {
+		return Promise.resolve(false)
 	}
 
-	protected override async fetchSources(): Promise<Array<Source>> {
-		return []
+	protected override fetchSources(): Promise<Array<Source>> {
+		return Promise.resolve([])
 	}
 
-	protected override async syncSourceEntries(): Promise<boolean> {
-		return false
+	protected override syncSourceEntries(): Promise<boolean> {
+		return Promise.resolve(false)
 	}
 
-	override async createEntry(em: EntityManager, entry: Entry): Promise<Entry> {
+	override createEntry(em: EntityManager, entry: Entry): Promise<Entry> {
 		em.persist(entry)
-		return entry
+		return Promise.resolve(entry)
 	}
 
-	override async updateEntry(_em: EntityManager, existing: Entry, incoming: Entry): Promise<void> {
+	override updateEntry(_em: EntityManager, existing: Entry, incoming: Entry): Promise<void> {
 		existing.heading = incoming.heading
 		existing.description = incoming.description
 		existing.color = incoming.color
@@ -51,10 +51,12 @@ export class Dev extends Integration {
 		existing.end = incoming.end
 		existing.allDay = incoming.allDay
 		existing.done = incoming.done
+		return Promise.resolve()
 	}
 
-	override async deleteEntry(em: EntityManager, entry: Entry): Promise<void> {
+	override deleteEntry(em: EntityManager, entry: Entry): Promise<void> {
 		em.remove(entry)
+		return Promise.resolve()
 	}
 }
 
@@ -71,7 +73,7 @@ export async function seedDev(orm: MikroORM) {
 
 	// Detect the current sample by a raw read (don't hydrate — an earlier build used a different
 	// integration `type`, whose discriminator this code no longer maps).
-	const rows = await em.getConnection().execute(`select type from integration where id = ?`, [INTEGRATION_ID]) as Array<{ type: string }>
+	const rows = await em.getConnection().execute('select type from integration where id = ?', [INTEGRATION_ID]) as Array<{ type: string }>
 	const existingType = rows[0]?.type
 	if (existingType === 'dev') {
 		return // up-to-date sample already present — keep it (and any edits made to it)
@@ -82,7 +84,7 @@ export async function seedDev(orm: MikroORM) {
 		// are deleted explicitly (sample ids are fixed) in case FK cascade isn't enforced.
 		await em.nativeDelete(Entry, { sourceId: { $like: 'dev-sample-%' } })
 		await em.nativeDelete(Source, { integrationId: INTEGRATION_ID })
-		await em.getConnection().execute(`delete from integration where id = ?`, [INTEGRATION_ID])
+		await em.getConnection().execute('delete from integration where id = ?', [INTEGRATION_ID])
 	}
 
 	const user = await em.findOneOrFail(User, { username: User.default.username })

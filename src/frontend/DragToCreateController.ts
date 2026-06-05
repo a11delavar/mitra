@@ -153,6 +153,7 @@ export class DragToCreateController extends Controller {
 		}
 		const a = anchor.date.dayStart.add({ minutes: anchor.minute })
 		const b = current.date.dayStart.add({ minutes: current.minute })
+		// eslint-disable-next-line prefer-const
 		let [start, end] = a.valueOf() <= b.valueOf() ? [a, b] : [b, a]
 		if (end.valueOf() <= start.valueOf()) {
 			end = start.add({ minutes: DragToCreateController.snapMinutes })
