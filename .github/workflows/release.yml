@@ -1,0 +1,41 @@
+name: Release
+
+# Turns a pushed SemVer tag into a GitHub Release, using the notes already written
+# in CHANGELOG.md (generated from commits by `npm run changelog`, then editable by
+# hand). The release body is the file's top section — so anything you/AI add to it
+# is what gets published. Pre-release tags (`-rc`/`-beta`/`-alpha`) are marked as such.
+#
+# Cut a release with:  npm run changelog -- --tag v1.0.0  →  edit CHANGELOG.md
+#                      →  commit  →  git tag v1.0.0  →  git push origin main v1.0.0
+# (`docker.yml` builds the image off the same tag push, in parallel.)
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Extract notes for ${{ github.ref_name }} from CHANGELOG.md
+        run: |
+          # The body of the first "## [..]" section (without its header line).
+          awk '/^## \[/{c++; next} c==1' CHANGELOG.md > RELEASE_NOTES.md
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "No CHANGELOG.md section found — run 'npm run changelog -- --tag ${{ github.ref_name }}' before tagging." > RELEASE_NOTES.md
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          prerelease=""
+          case "${{ github.ref_name }}" in *-*) prerelease="--prerelease" ;; esac
+          gh release create "${{ github.ref_name }}" \
+            --title "${{ github.ref_name }}" \
+            --notes-file RELEASE_NOTES.md \
+            $prerelease

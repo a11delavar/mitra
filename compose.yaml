@@ -1,0 +1,18 @@
+# Minimal self-hosting setup. Pick a tag to match your update appetite:
+#   mitra:latest  – newest stable release (recommended)
+#   mitra:1       – stay on major 1, auto-update minor/patch
+#   mitra:1.4     – stay on 1.4.x, auto-update patch
+#   mitra:1.4.2   – pin exactly
+#   mitra:dev     – bleeding edge (latest commit on main)
+services:
+  mitra:
+    image: ghcr.io/a11delavar/mitra:latest
+    container_name: mitra
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    volumes:
+      - mitra-data:/app/data
+
+volumes:
+  mitra-data:

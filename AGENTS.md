@@ -52,14 +52,26 @@ When writing code for this project, you must adhere to the following architectur
 
 ## Build / test / run
 
+- **Node 25+** is required at build & runtime (Temporal API behaviour) — pinned in the Dockerfile and CI.
 - **Typecheck (one-shot):** run `tsgo` (`node_modules/@typescript/native-preview-<platform>/lib/tsgo[.exe] --noEmit`). esbuild does NOT typecheck.
 - **Lint:** `npm run lint` → `eslint .` (flat config `eslint.config.mjs` extending `@a11d/eslint-config`). Pinned to ESLint 9 (`eslint-plugin-lit@1` breaks on ESLint 10). Style is enforced: tabs, single quotes, **no semicolons**, **no trailing newline** (`eol-last: never`), `no-console` allows only `warn`/`error` (off in `scripts/**`), `^_`-prefixed args are ignored. Run `eslint . --fix` after edits.
 - **Tests:** `npm test` → `scripts/test.ts` esbuild-bundles `src/**/*.test.ts` → `out_test/`, then `node --test`. Use the Node built-in runner (`node:test` + `node:assert/strict`) with real `DateTime`.
 - **Dev:** `npm start` → `scripts/dev.ts`: `tsgo --watch` + esbuild watch for backend (`out/server/server.mjs`, run via `node --watch`) and frontend (`dist/`).
+- **Production build:** `npm run build` → `scripts/build.ts` (one-shot, no watch): backend bundle + minified frontend → `dist/`. The esbuild config (entry points, externals `better-sqlite3`/`tsdav`, the `createRequire` banner, the `index.html` shell) is shared between dev and prod in `scripts/esbuild.ts` — change it there, not in two places. `data/` must exist before boot (better-sqlite3 won't create it); a committed `data/.gitignore` keeps the dir, and the Dockerfile `mkdir`s it.
 - **Dev sample data:** `src/backend/Dev.ts` `seedDev(orm)` **persists** a real `Dev` sample integration + sources + entries (idempotent, keyed by a stable id; never deletes), gated by `process.env.MITRA_DEV` (set only by `scripts/dev.ts`). It seeds real rows — *not* a read-only overlay — so hiding sources, editing, creating and deleting all work through the normal routes. The user can simply delete the integration when done. Seeding runs once; a `npm start` restart re-checks but won't duplicate.
+
+## Docker, CI & releases
+
+- **Image:** multi-stage `Dockerfile` (build → `npm prune --omit=dev` → `node:25-bookworm-slim` runtime). Both stages share the base so the prebuilt/compiled `better-sqlite3` binary is ABI-compatible (the builder has `python3`/`make`/`g++` so it compiles if no prebuild exists for the Node 25 ABI). The `org.opencontainers.image.source` LABEL links the image to the repo on GHCR. Published to `ghcr.io/a11delavar/mitra`.
+- **Tagging is `docker/metadata-action`, not hand-rolled** (`.github/workflows/docker.yml`): push to `main` → `dev` + `sha-<short>`; **push tag `vX.Y.Z`** → `X.Y.Z`/`X.Y`/`X`/`latest`; pre-release tag `vX.Y.Z-rc.N` (channels `rc`/`beta`/`alpha`) → only the precise tag (`flavor: latest=auto` auto-skips floating tags + `latest` for pre-releases); PRs build-only. Multi-arch amd64/arm64 via QEMU+buildx. Image tags come off the **git ref**, so they don't depend on a GitHub Release existing.
+- **Changelog lives in the repo** as `CHANGELOG.md`, generated from commits by **git-cliff** (`npm run changelog`, config `cliff.toml`) and then hand/AI-editable. Release flow: `npm run changelog -- --tag vX.Y.Z` → edit the new section → `commit -m "release: vX.Y.Z"` → `git tag vX.Y.Z && git push origin main vX.Y.Z`. **Order matters:** the changelog edit must be committed *before* the tag points at it (the release body is extracted from the file at the tagged commit).
+- **Releasing = pushing the SemVer tag.** That one push fans out (in parallel) to `docker.yml` (builds images off the git ref) and `release.yml` (publishes the top section of `CHANGELOG.md` as the GitHub Release body; pre-release if the tag has `-rc`/`-beta`/`-alpha`). Tag-driven on purpose — avoids the `GITHUB_TOKEN`-created-release-doesn't-trigger-workflows gotcha. The README "Releasing & versioning" section is the user-facing source of truth.
+- **GHCR has no GC** → `.github/workflows/cleanup.yml` prunes untagged manifests + old `sha-*` tags (keeps `latest`/`dev`/releases). Ships in `dry-run` — verify before enabling.
+- **Quality Assurance** (`.github/workflows/qa.yml`): three **parallel** jobs — type-check (`tsgo`), lint (`eslint`), test (`npm test`) — on push/PR. Publishing untested images is not acceptable.
 
 ## Conventions
 
-- **Commits:** single-line `type: Capitalized phrase` (`feat:`/`fix:`/`refactor:`/`chore:`). Commit ONLY when explicitly asked.
+- **Commits:** single-line `type: Capitalized phrase`. The type is load-bearing — `CHANGELOG.md` is generated from commit subjects (git-cliff, `cliff.toml`), so it decides the changelog section: `feat:`→Features, `fix:`→Bug Fixes, `perf:`→Performance, `refactor:`→Refactors, `docs:`→Documentation, `test:`→Tests, **`ci:`/`build:`/`infra:`→Infrastructure**, `chore:`→Chores, anything else→Other. `release:` commits are excluded. Commit ONLY when explicitly asked.
 - Indent with **tabs**.
+- **License:** the project is **AGPL-3.0-only** (`LICENSE`, `package.json`, image label). Keep new workspace manifests consistent.
 - Public repo: keep secrets/credentials and personal identifiers out of committed files; leave the git author config unchanged.

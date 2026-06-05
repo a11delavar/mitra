@@ -1,0 +1,41 @@
+name: Cleanup GHCR
+
+# GHCR never garbage-collects, so two things pile up forever:
+#   • untagged manifests — multi-arch publishes leave child images, and a moved
+#     `dev` tag orphans its previous digest;
+#   • per-commit `sha-*` tags — one per push to main.
+# This prunes both. It starts in DRY-RUN: check the run summary, then set
+# `dry-run: false` once the selection looks right. `latest`, `dev` and release
+# tags (X.Y.Z / X.Y / X) are never matched.
+on:
+  schedule:
+    - cron: '0 4 * * 0' # Sundays 04:00 UTC
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Delete untagged versions (incl. orphaned multi-arch children)
+        uses: snok/container-retention-policy@v3.1.0
+        with:
+          account: ${{ github.repository_owner }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          image-names: mitra
+          tag-selection: untagged
+          cut-off: 1w
+          dry-run: true
+
+      - name: Prune old per-commit (sha-*) tags, keeping the most recent
+        uses: snok/container-retention-policy@v3.1.0
+        with:
+          account: ${{ github.repository_owner }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          image-names: mitra
+          tag-selection: tagged
+          image-tags: 'sha-*'
+          cut-off: 1w
+          keep-n-most-recent: 10
+          dry-run: true

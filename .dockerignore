@@ -1,0 +1,22 @@
+# Rebuilt inside the image — never copy host artifacts/deps in.
+node_modules
+**/node_modules
+out
+out_test
+dist
+
+# Local data / secrets must not leak into the image.
+data
+**/.env
+*.sqlite
+
+# VCS, CI, editor, docs.
+.git
+.github
+.vscode
+.idea
+*.md
+
+# Misc
+.DS_Store
+npm-debug.log*

@@ -1,5 +1,6 @@
 {
 	"name": "mitra",
+	"license": "AGPL-3.0-only",
 	"type": "module",
 	"scripts": {
 		"start": "node ./scripts/dev.ts",
@@ -15,6 +16,7 @@
 		"@typescript/native-preview": "latest",
 		"esbuild": "x",
 		"eslint": "9.x",
+		"git-cliff": "2.x",
 		"tsx": "4.x"
 	},
 	"workspaces": [
