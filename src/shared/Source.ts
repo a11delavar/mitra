@@ -33,6 +33,24 @@ export class Source {
 		this.enabled = !this.enabled
 	}
 
+	get collectionUri() {
+		return this.uri.endsWith('/') ? this.uri : `${this.uri}/`
+	}
+
+	normalizeUri(uri: string | null | undefined): string {
+		if (!uri) return ''
+		try {
+			return new URL(uri, this.collectionUri).href
+		} catch {
+			return uri
+		}
+	}
+
+	matchesUri(uri1: string | null | undefined, uri2: string | null | undefined): boolean {
+		if (!uri1 || !uri2) return false
+		return this.normalizeUri(uri1) === this.normalizeUri(uri2)
+	}
+
 	constructor(init?: Partial<Source>) {
 		Object.assign(this, init)
 	}

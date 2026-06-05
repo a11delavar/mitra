@@ -71,11 +71,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		})
 	}
 
-	/** A source's calendar-collection URL, normalized to end in `/` so member filenames resolve against it. */
-	private collectionUrl(source: Source) {
-		return source.uri.endsWith('/') ? source.uri : `${source.uri}/`
-	}
-
 	protected override async syncSourceEntries(em: EntityManager, source: Source): Promise<boolean> {
 		const client = await this.getClient()
 		const remoteCalendar = { url: source.uri }
@@ -85,16 +80,23 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			syncLevel: 1,
 			syncToken: source.syncState?.syncToken || undefined
 		})
+		console.log(result, source.uri);
 
 		const newSyncToken = result[0]?.raw?.multistatus?.syncToken || source.syncState?.syncToken
 
 		// Existing entries are looked up by foreign key, never populated.
 		const existingEntries = await em.find(Entry, { sourceId: source.id })
 
+		const sourceUrlNormalized = source.normalizeUri(source.uri)
+
 		// syncCollection returns one response per member href, of every component type (VEVENT,
 		// VTODO, …) — unlike fetchCalendarObjects({ calendar }), which only returns events. With no
 		// prior token it lists the whole collection; incrementally, just the changed/removed members.
-		const memberResponses = result.filter(r => r.href && r.href !== source.uri && r.href + '/' !== source.uri && source.uri + '/' !== r.href)
+		const memberResponses = result.filter(r => {
+			if (!r.href) return false
+			const rUrl = source.normalizeUri(r.href)
+			return rUrl !== sourceUrlNormalized && rUrl !== sourceUrlNormalized + '/' && sourceUrlNormalized !== rUrl + '/'
+		})
 		const changedUrls = memberResponses.filter(r => r.status !== 404).map(r => r.href!)
 		const deletedUrls = memberResponses.filter(r => r.status === 404).map(r => r.href!)
 
@@ -105,9 +107,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		// On a full sync (no prior token) every current member is listed, so any local entry that's
 		// no longer present was removed remotely.
 		if (!source.syncState?.syncToken) {
-			const remoteUris = new Set(changedUrls)
+			const remoteUris = new Set(changedUrls.map(u => source.normalizeUri(u)))
 			for (const entry of existingEntries) {
-				if (entry.uri && !remoteUris.has(entry.uri)) {
+				if (entry.uri && !remoteUris.has(source.normalizeUri(entry.uri))) {
 					deletedUrls.push(entry.uri)
 				}
 			}
@@ -123,7 +125,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 		// 1. Handle deletions
 		for (const url of deletedUrls) {
-			const entry = existingEntries.find(e => e.uri === url)
+			const entry = existingEntries.find(e => source.matchesUri(e.uri, url))
 			if (entry) {
 				em.remove(entry)
 				changed = true
@@ -144,9 +146,10 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				continue
 			}
 
-			let entry = existingEntries.find(e => e.uri === obj.url)
+			const normalizedObjUrl = source.normalizeUri(obj.url)
+			let entry = existingEntries.find(e => source.matchesUri(e.uri, obj.url))
 			if (!entry) {
-				entry = new Entry({ sourceId: source.id, uri: obj.url })
+				entry = new Entry({ sourceId: source.id, uri: normalizedObjUrl })
 				em.persist(entry)
 				existingEntries.push(entry)
 			}
@@ -286,7 +289,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		})
 
 		entry.type = EntryType.Event
-		entry.uri = new URL(filename, this.collectionUrl(source)).href
+		entry.uri = new URL(filename, source.collectionUri).href
 		entry.data ??= {}
 		entry.data.raw = iCalString
 		entry.color = entry.color || undefined

@@ -5,3 +5,4 @@ dist
 tsconfig.tsbuildinfo
 out_test/
 out/
+.DS_Store
