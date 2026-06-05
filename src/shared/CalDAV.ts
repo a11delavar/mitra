@@ -71,11 +71,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		})
 	}
 
-	/** A source's calendar-collection URL, normalized to end in `/` so member filenames resolve against it. */
-	private collectionUrl(source: Source) {
-		return source.uri.endsWith('/') ? source.uri : `${source.uri}/`
-	}
-
 	/** Build a DTSTART/DTEND value. All-day entries are written date-only (`VALUE=DATE`) — that's what
 	 * makes a real all-day event (not a 00:00→00:00 timed one); `DTEND` stays the exclusive next day. */
 	private toICALTime(date: DateTime, allDay: boolean) {
@@ -84,6 +79,38 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 		const local = ICAL.Time.fromJSDate(date as unknown as Date, false)
 		return ICAL.Time.fromData({ year: local.year, month: local.month, day: local.day, isDate: true })
+	}
+
+	static collectionUrl(sourceUri: string): string {
+		return sourceUri.endsWith('/') ? sourceUri : `${sourceUri}/`
+	}
+
+	static resolveMemberUrl(sourceUri: string, href: string | null | undefined): string {
+		if (!href) {
+			return ''
+		}
+		try {
+			return new URL(href, CalDAV.collectionUrl(sourceUri)).href
+		} catch {
+			return href
+		}
+	}
+
+	static memberUrlsMatch(sourceUri: string, a: string | null | undefined, b: string | null | undefined): boolean {
+		return !!a && !!b && CalDAV.resolveMemberUrl(sourceUri, a) === CalDAV.resolveMemberUrl(sourceUri, b)
+	}
+
+	static partitionMemberResponses(sourceUri: string, responses: ReadonlyArray<{ href?: string, status?: number }>): { changedUrls: Array<string>, deletedUrls: Array<string> } {
+		const collection = CalDAV.resolveMemberUrl(sourceUri, sourceUri)
+		const members = responses
+			.filter(r => r.href)
+			.map(r => ({ url: CalDAV.resolveMemberUrl(sourceUri, r.href), status: r.status }))
+			// Drop the collection itself, tolerant of a trailing-slash difference between it and its href.
+			.filter(m => m.url !== collection && m.url + '/' !== collection && m.url !== collection + '/')
+		return {
+			changedUrls: members.filter(m => m.status !== 404).map(m => m.url),
+			deletedUrls: members.filter(m => m.status === 404).map(m => m.url),
+		}
 	}
 
 	protected override async syncSourceEntries(em: EntityManager, source: Source): Promise<boolean> {
@@ -101,12 +128,11 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		// Existing entries are looked up by foreign key, never populated.
 		const existingEntries = await em.find(Entry, { sourceId: source.id })
 
-		// syncCollection returns one response per member href, of every component type (VEVENT,
-		// VTODO, …) — unlike fetchCalendarObjects({ calendar }), which only returns events. With no
-		// prior token it lists the whole collection; incrementally, just the changed/removed members.
-		const memberResponses = result.filter(r => r.href && r.href !== source.uri && r.href + '/' !== source.uri && source.uri + '/' !== r.href)
-		const changedUrls = memberResponses.filter(r => r.status !== 404).map(r => r.href!)
-		const deletedUrls = memberResponses.filter(r => r.status === 404).map(r => r.href!)
+		// syncCollection returns one response per member href, of every component type (VEVENT, VTODO, …)
+		// — unlike fetchCalendarObjects({ calendar }), which only returns events. With no prior token it
+		// lists the whole collection; incrementally, just the changed/removed members. Hrefs are resolved
+		// to full URLs here so the changed set is fetchable and both sets compare against stored uris.
+		const { changedUrls, deletedUrls } = CalDAV.partitionMemberResponses(source.uri, result)
 
 		const changedObjects: Awaited<ReturnType<typeof client.fetchCalendarObjects>> = changedUrls.length
 			? await client.fetchCalendarObjects({ calendar: remoteCalendar, objectUrls: changedUrls })
@@ -115,10 +141,11 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		// On a full sync (no prior token) every current member is listed, so any local entry that's
 		// no longer present was removed remotely.
 		if (!source.syncState?.syncToken) {
-			const remoteUris = new Set(changedUrls)
+			const remoteUris = new Set(changedUrls) // already resolved to full URLs
 			for (const entry of existingEntries) {
-				if (entry.uri && !remoteUris.has(entry.uri)) {
-					deletedUrls.push(entry.uri)
+				const entryUrl = CalDAV.resolveMemberUrl(source.uri, entry.uri)
+				if (entryUrl && !remoteUris.has(entryUrl)) {
+					deletedUrls.push(entryUrl)
 				}
 			}
 		}
@@ -133,7 +160,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 		// 1. Handle deletions
 		for (const url of deletedUrls) {
-			const entry = existingEntries.find(e => e.uri === url)
+			const entry = existingEntries.find(e => CalDAV.memberUrlsMatch(source.uri, e.uri, url))
 			if (entry) {
 				em.remove(entry)
 				changed = true
@@ -154,9 +181,10 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				continue
 			}
 
-			let entry = existingEntries.find(e => e.uri === obj.url)
+			const normalizedObjUrl = CalDAV.resolveMemberUrl(source.uri, obj.url)
+			let entry = existingEntries.find(e => CalDAV.memberUrlsMatch(source.uri, e.uri, obj.url))
 			if (!entry) {
-				entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: obj.url })
+				entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: normalizedObjUrl })
 				em.persist(entry)
 				existingEntries.push(entry)
 			}
@@ -305,7 +333,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		})
 
 		entry.type = EntryType.Event
-		entry.uri = new URL(filename, this.collectionUrl(source)).href
+		entry.uri = CalDAV.resolveMemberUrl(source.uri, filename)
 		entry.data ??= {}
 		entry.data.raw = iCalString
 		entry.color = entry.color || null

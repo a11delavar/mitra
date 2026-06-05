@@ -14,5 +14,6 @@ await esbuild.build({
 	format: 'esm',
 	// Prefer each dependency's ESM build so default-import interop matches what the app's bundler sees.
 	mainFields: ['module', 'main'],
+	external: ['tsdav'],
 	sourcemap: 'inline',
 })
