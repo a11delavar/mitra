@@ -1,10 +1,10 @@
-import { Component, component, html, property, css, type PropertyValues, repeat, event } from '@a11d/lit'
+import { Component, component, html, property, css, type PropertyValues, repeat, event, ifDefined } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { type Entry } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { DraftController } from './DraftController.js'
-import { DragToCreateController } from './DragToCreateController.js'
+import { EntryDragController } from './EntryDragController.js'
 
 @component('mitra-month')
 export class Month extends Component {
@@ -17,7 +17,7 @@ export class Month extends Component {
 	private static readonly MAX_SLOTS = 4
 
 	private readonly buffer = new CalendarDatesController(this)
-	protected readonly dragToCreate = new DragToCreateController(this, 'month')
+	protected readonly entryDrag = new EntryDragController(this, 'month')
 	private readonly draft = new DraftController(this)
 
 	private get bufferNavigatingDate(): DateTime { return this.buffer.navigatingDate }
@@ -180,6 +180,9 @@ export class Month extends Component {
 				${bars.map(bar => html`
 					<mitra-entry-segment
 						style="grid-column: ${bar.startColumn + 1} / span ${bar.span}; grid-row: ${bar.slot + 2};"
+						resize=${ifDefined(bar.segment.entry.allDay ? 'inline' : undefined)}
+						?has-previous=${bar.segment.hasPrevious}
+						?has-next=${bar.clippedRight}
 						.segment=${bar.segment}
 					></mitra-entry-segment>
 				`)}

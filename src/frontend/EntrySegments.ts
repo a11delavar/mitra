@@ -8,6 +8,9 @@ export interface MonthBar {
 	readonly startColumn: number
 	readonly span: number
 	readonly slot: number
+	/** The run continues past this week's trailing edge — the bar's end is clipped, not the run's real end
+	 * (so a resize handle there would target the wrong day; the view hides it via `has-next`). */
+	readonly clippedRight: boolean
 }
 
 /** A week of the month grid: the bars that fit, and per-column counts of the ones that didn't. */
@@ -158,7 +161,7 @@ export class EntrySegments {
 				}
 				continue
 			}
-			bars.push({ segment, startColumn, span: endColumn - startColumn + 1, slot })
+			bars.push({ segment, startColumn, span: endColumn - startColumn + 1, slot, clippedRight })
 		}
 		return { bars, hiddenByColumn }
 	}

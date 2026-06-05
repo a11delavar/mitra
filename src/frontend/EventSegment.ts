@@ -1,4 +1,4 @@
-import { component, html, property, Component, css, eventListener, state, bind, queryConnectedInstances } from '@a11d/lit'
+import { component, html, property, Component, css, state, bind, queryConnectedInstances, eventListener } from '@a11d/lit'
 import { type EntrySegment } from './EntrySegment.js'
 import { colorContrast } from './components/colorContrast.js'
 import { getSource } from './Api.js'
@@ -34,6 +34,11 @@ export class EntrySegmentComponent extends Component {
 
 	@property({ type: Boolean, reflect: true }) selected = false
 
+	/** The axis this segment can be resized along — `block` (timed grid, top/bottom handles) or `inline`
+	 * (all-day lane / month bar, leading/trailing handles). Unset means not resizable. Set by the view; the
+	 * gesture itself is driven by the container's `EntryDragController`, which also owns tap-to-open. */
+	@property() resize?: 'block' | 'inline'
+
 	@eventListener('click')
 	protected handleClick(e: MouseEvent) {
 		e.stopPropagation()
@@ -56,6 +61,7 @@ export class EntrySegmentComponent extends Component {
 		this.style.viewTransitionName = `entry-${this.segment!.id}`
 		this.style.anchorName = this.anchorName
 		this.toggleAttribute('data-draft', !entry.persisted)
+		this.toggleAttribute('dragging', this.draft.isDragging(entry))
 		if (this.draft.shouldAutoOpen(entry) && !this.segment!.hasPrevious) {
 			this.draft.consumeAutoOpen()
 			this.open = true
@@ -88,8 +94,54 @@ export class EntrySegmentComponent extends Component {
 				z-index: calc(var(--overlap-s) + 1);
 				box-sizing: border-box;
 				container-type: size;
+				position: relative;
 				overflow: hidden;
 				transition: background-color 0.15s ease, color 0.15s ease;
+
+				/* While actively dragged (move/resize), float full-width above the cluster instead of
+				   re-flowing with it each frame. Overriding the derived vars (not the inline --overlap-slot
+				   etc.) wins on specificity, so no !important is needed. */
+				&[dragging] {
+					z-index: 9999;
+					--overlap-s: 0;
+					--overlap-t: 1;
+					--overlap-sp: 1;
+				}
+
+				/* Resize handles: 0.25rem strips at the run's real edges, hidden where the edge is clipped or
+				   interior to a multi-day run (the has-previous/has-next attributes mean exactly that). */
+				> .resize-start, > .resize-end {
+					position: absolute;
+					z-index: 3;
+				}
+
+				&[resize=block] {
+					> .resize-start, > .resize-end {
+						inset-inline: 0;
+						block-size: min(0.25rem, 30%);
+						cursor: ns-resize;
+					}
+					> .resize-start { inset-block-start: 0; }
+					> .resize-end { inset-block-end: 0; }
+				}
+
+				&[resize=inline] {
+					> .resize-start, > .resize-end {
+						inset-block: 0;
+						inline-size: 0.25rem;
+						cursor: ew-resize;
+					}
+					> .resize-start { inset-inline-start: 0; }
+					> .resize-end { inset-inline-end: 0; }
+				}
+
+				&[has-previous] > .resize-start { display: none; }
+				&[has-next] > .resize-end { display: none; }
+
+				/* Too short for top+bottom handles plus a grab band — resize from the editor instead. */
+				@container (max-height: 24px) {
+					&[resize=block] > .resize-start, &[resize=block] > .resize-end { display: none; }
+				}
 
 				&:not([data-draft]):has([popover]:popover-open),
 				&:not([data-draft])[selected] {
@@ -202,6 +254,10 @@ export class EntrySegmentComponent extends Component {
 				</div>
 			`}
 			<div class="heading">${this.segment.entry.heading || (this.segment.entry.persisted ? '' : 'Draft')}</div>
+			${!this.resize || !this.segment.entry.persisted ? html.nothing : html`
+				<div class="resize-start"></div>
+				<div class="resize-end"></div>
+			`}
 			${!this.open ? html.nothing : html`
 				<mitra-entry-details popover ?open=${bind(this, 'open')}
 					style="position-anchor: ${this.anchorName}"

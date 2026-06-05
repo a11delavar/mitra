@@ -130,9 +130,16 @@ describe('EntrySegments', () => {
 			const { bars, hiddenByColumn } = EntrySegments.of([day, trip], week).monthWeek(week, 4)
 			const bar = (heading: string) => bars.find(b => b.segment.entry.heading === heading)!
 
-			assert.deepEqual({ ...bar('Trip'), segment: 0 }, { segment: 0, startColumn: 0, span: 3, slot: 0 })
-			assert.deepEqual({ ...bar('Day'), segment: 0 }, { segment: 0, startColumn: 1, span: 1, slot: 1 })
+			assert.deepEqual({ ...bar('Trip'), segment: 0 }, { segment: 0, startColumn: 0, span: 3, slot: 0, clippedRight: false })
+			assert.deepEqual({ ...bar('Day'), segment: 0 }, { segment: 0, startColumn: 1, span: 1, slot: 1, clippedRight: false })
 			assert.deepEqual([...hiddenByColumn], [0, 0, 0, 0, 0, 0, 0])
+		})
+
+		it('flags a bar whose run continues past the week as clipped, spanning to the week edge', () => {
+			const long = new Entry({ heading: 'Long', start: base, end: base.add({ days: 9 }) })
+			const [bar] = EntrySegments.of([long], week).monthWeek(week, 4).bars
+			assert.equal(bar!.clippedRight, true)
+			assert.equal(bar!.span, 7)
 		})
 
 		it('counts events past the slot cap as per-column overflow', () => {

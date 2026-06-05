@@ -147,6 +147,7 @@ export class Day extends Component {
 				${this.entries.map(segment => html`
 					<mitra-entry-segment
 						style="grid-row: ${segment.startMinute} / ${segment.endMinute}; --overlap-slot: ${segment.overlap?.slot ?? 0}; --overlap-total: ${segment.overlap?.total ?? 1}; --overlap-span: ${segment.overlap?.span ?? 1};"
+						resize="block"
 						?has-previous=${segment.hasPrevious}
 						?has-next=${segment.hasNext}
 						.segment=${segment}

@@ -5,7 +5,7 @@ import { type Entry } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { DraftController } from './DraftController.js'
-import { DragToCreateController } from './DragToCreateController.js'
+import { EntryDragController } from './EntryDragController.js'
 
 @component('mitra-days')
 export class Days extends Component {
@@ -16,7 +16,7 @@ export class Days extends Component {
 	private readonly dates = new CalendarDatesController(this)
 	private get days(): Array<DateTime> { return this.dates.days }
 
-	protected readonly dragToCreate = new DragToCreateController(this)
+	protected readonly entryDrag = new EntryDragController(this)
 	private readonly draft = new DraftController(this)
 	private get segments() { return EntrySegments.of(this.draft.merge(this.entries), this.days) }
 
@@ -334,6 +334,7 @@ export class Days extends Component {
 			return html`
 				<mitra-entry-segment
 					style="grid-column: ${startColumn + 1} / span ${endColumn - startColumn + 1};"
+					resize="inline"
 					?has-previous=${segment.hasPrevious}
 					?has-next=${clippedRight}
 					.segment=${segment}
