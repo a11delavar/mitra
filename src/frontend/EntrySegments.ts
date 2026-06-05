@@ -1,4 +1,4 @@
-import { DateTime } from '@3mo/date-time'
+import { type DateTime } from '@3mo/date-time'
 import type { Entry } from 'shared'
 import { EntrySegment } from './EntrySegment.js'
 

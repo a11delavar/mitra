@@ -1,5 +1,5 @@
 import { Component, component, html, property, css } from '@a11d/lit'
-import { DateTime } from '@3mo/date-time'
+import { type DateTime } from '@3mo/date-time'
 import type { EntrySegment } from './EntrySegment.js'
 import './EventSegment.js'
 

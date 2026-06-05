@@ -43,10 +43,10 @@ export class CalendarDatesController extends Controller {
 
 		const daysOffset = WEEKS_OFFSET_TRIGGER * DAYS_IN_WEEK
 
-		const isOutOfBounds = !this._days.length || value.isBefore(this._days.at(daysOffset)!) || value.isAfter(this._days.at(-daysOffset)!);
+		const isOutOfBounds = !this._days.length || value.isBefore(this._days.at(daysOffset)!) || value.isAfter(this._days.at(-daysOffset)!)
 
 		if (!isOutOfBounds && this._navigatingDate.dayStart.equals(value.dayStart)) {
-			return;
+			return
 		}
 
 		this._navigatingDate = value

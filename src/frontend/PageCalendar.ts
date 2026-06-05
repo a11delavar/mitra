@@ -160,7 +160,9 @@ export class PageCalendar extends PageComponent {
 						<h1>${this.navigatingDate.format({ month: 'long', year: 'numeric' })}</h1>
 						<div style="flex: 1"></div>
 						<select .value=${this.view} @change=${(e: Event) => this.setView((e.target as HTMLSelectElement).value as 'week' | 'month')}>
-							<button><selectedcontent></selectedcontent></button>
+							<button>
+								<selectedcontent></selectedcontent>
+							</button>
 							<option value="month">Month <kbd>M</kbd></option>
 							<option value="week">Week <kbd>W</kbd></option>
 						</select>

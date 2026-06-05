@@ -1,5 +1,5 @@
 import { Api, HttpError, apiError } from '@a11d/api'
-import { DateTime } from '@3mo/date-time'
+import { type DateTime } from '@3mo/date-time'
 import type { Entry, Integration, Source } from 'shared'
 
 /**

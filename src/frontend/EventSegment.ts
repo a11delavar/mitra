@@ -1,5 +1,5 @@
 import { component, html, property, Component, css, eventListener, state, bind, queryConnectedInstances } from '@a11d/lit'
-import { EntrySegment } from './EntrySegment.js'
+import { type EntrySegment } from './EntrySegment.js'
 import { colorContrast } from './components/colorContrast.js'
 import { getSource } from './Api.js'
 import { DraftController } from './DraftController.js'
@@ -35,7 +35,7 @@ export class EntrySegmentComponent extends Component {
 	@property({ type: Boolean, reflect: true }) selected = false
 
 	@eventListener('click')
-	protected async handleClick(e: MouseEvent) {
+	protected handleClick(e: MouseEvent) {
 		e.stopPropagation()
 		this.open = true
 	}

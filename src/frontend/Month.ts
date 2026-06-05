@@ -1,6 +1,6 @@
 import { Component, component, html, property, css, type PropertyValues, repeat, event } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { Entry } from 'shared'
+import { type Entry } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { DraftController } from './DraftController.js'

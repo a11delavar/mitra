@@ -292,7 +292,8 @@ export class EntryDetailsComponent extends Component {
 				></mitra-icon-button>
 				<menu popover id="entry-menu-${this.segment.entry.id}" style="position-anchor: --entry-menu-${this.segment.entry.id}">
 					<button class="danger" @click=${this.handleDelete}>
-						<mitra-icon icon="trash-2"></mitra-icon> Delete
+						<mitra-icon icon="trash-2"></mitra-icon>
+						Delete
 					</button>
 				</menu>
 				<mitra-icon-button class="close" icon="x" label="Close" @click=${this.handleClose}></mitra-icon-button>
@@ -390,14 +391,14 @@ export class EntryDetailsComponent extends Component {
 						@blur=${() => this.editingDescription = false}
 					></textarea>
 				` : html`
-						<div class="rendered" @click=${editDescription}>
-							${!this.segment!.entry.description ? html`
-								<div class="placeholder">Add a description</div>
+					<div class="rendered" @click=${editDescription}>
+						${!this.segment!.entry.description ? html`
+							<div class="placeholder">Add a description</div>
 							` : html`
 								<mitra-markdown .value=${this.segment!.entry.description}></mitra-markdown>
-							`}
-						</div>
-					`}
+						`}
+					</div>
+				`}
 			</li>
 		`
 	}

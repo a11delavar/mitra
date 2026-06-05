@@ -262,10 +262,12 @@ export class Sidebar extends Component {
 							<mitra-icon-button icon="more-horizontal" label="Integration options" style="anchor-name: --anchor-${i.id}" @click=${this.toggleMenu}></mitra-icon-button>
 							<menu popover id="menu-${i.id}" style="position-anchor: --anchor-${i.id}">
 								<button @click=${(e: Event) => { this.closeMenu(e); this.openDialog(i.id) }}>
-									<mitra-icon icon="pencil"></mitra-icon> Edit
+									<mitra-icon icon="pencil"></mitra-icon>
+									Edit
 								</button>
 								<button class="danger" @click=${(e: Event) => { this.closeMenu(e); this.removeIntegration(i.id) }}>
-									<mitra-icon icon="trash-2"></mitra-icon> Delete
+									<mitra-icon icon="trash-2"></mitra-icon>
+									Delete
 								</button>
 							</menu>
 						</header>
@@ -293,7 +295,8 @@ export class Sidebar extends Component {
 					</div>
 				`)}
 				<button class="add-integration" @click=${() => this.openDialog('')}>
-					<mitra-icon icon="plus"></mitra-icon> Add Integration
+					<mitra-icon icon="plus"></mitra-icon>
+					Add Integration
 				</button>
 			</nav>
 		`

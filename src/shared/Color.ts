@@ -22,7 +22,7 @@ export class Color {
 		for (let i = 0; i < identifier.length; i++) {
 			hash = identifier.charCodeAt(i) + ((hash << 5) - hash)
 		}
-		return new Color(Color.palette[Math.abs(hash) % Color.palette.length]!);
+		return new Color(Color.palette[Math.abs(hash) % Color.palette.length]!)
 	}
 
 	constructor(readonly value: string) { }

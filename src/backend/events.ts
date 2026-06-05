@@ -11,7 +11,7 @@ eventsRouter.get('/', (req, res) => {
 		'Connection': 'keep-alive',
 	})
 
-	const listener = () => res.write(`data: updated\n\n`)
+	const listener = () => res.write('data: updated\n\n')
 	syncEmitter.on('updated', listener)
 
 	req.on('close', () => syncEmitter.off('updated', listener))

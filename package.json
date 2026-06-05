@@ -1,12 +1,20 @@
 {
+	"name": "mitra",
 	"type": "module",
 	"scripts": {
 		"start": "node ./scripts/dev.ts",
-		"test": "node ./scripts/test.ts && node --test \"out_test/**/*.js\""
+		"test": "node ./scripts/test.ts && node --test \"out_test/**/*.js\"",
+		"lint": "eslint .",
+		"build": "node ./scripts/build.ts",
+		"changelog": "git-cliff -o CHANGELOG.md"
 	},
 	"devDependencies": {
+		"@a11d/eslint-config": "1.x",
+		"@eslint/eslintrc": "3.x",
+		"@eslint/js": "9.x",
 		"@typescript/native-preview": "latest",
 		"esbuild": "x",
+		"eslint": "9.x",
 		"tsx": "4.x"
 	},
 	"workspaces": [

@@ -1,7 +1,7 @@
 import { Component, component, html, property, css, repeat, type PropertyValues, eventListener, queryAsync, ifDefined } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { observeResize } from '@3mo/resize-observer'
-import { Entry } from 'shared'
+import { type Entry } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { DraftController } from './DraftController.js'
@@ -332,12 +332,12 @@ export class Days extends Component {
 			const clippedRight = segment.runEnd.dayValue! > lastValue
 			const endColumn = clippedRight ? this.days.length - 1 : columnOf(segment.runEnd.dayValue)
 			return html`
-						<mitra-entry-segment
-							style="grid-column: ${startColumn + 1} / span ${endColumn - startColumn + 1};"
-							?has-previous=${segment.hasPrevious}
-							?has-next=${clippedRight}
-							.segment=${segment}
-						></mitra-entry-segment>
+				<mitra-entry-segment
+					style="grid-column: ${startColumn + 1} / span ${endColumn - startColumn + 1};"
+					?has-previous=${segment.hasPrevious}
+					?has-next=${clippedRight}
+					.segment=${segment}
+				></mitra-entry-segment>
 					`
 				})}
 			</div>

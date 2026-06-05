@@ -53,6 +53,7 @@ When writing code for this project, you must adhere to the following architectur
 ## Build / test / run
 
 - **Typecheck (one-shot):** run `tsgo` (`node_modules/@typescript/native-preview-<platform>/lib/tsgo[.exe] --noEmit`). esbuild does NOT typecheck.
+- **Lint:** `npm run lint` → `eslint .` (flat config `eslint.config.mjs` extending `@a11d/eslint-config`). Pinned to ESLint 9 (`eslint-plugin-lit@1` breaks on ESLint 10). Style is enforced: tabs, single quotes, **no semicolons**, **no trailing newline** (`eol-last: never`), `no-console` allows only `warn`/`error` (off in `scripts/**`), `^_`-prefixed args are ignored. Run `eslint . --fix` after edits.
 - **Tests:** `npm test` → `scripts/test.ts` esbuild-bundles `src/**/*.test.ts` → `out_test/`, then `node --test`. Use the Node built-in runner (`node:test` + `node:assert/strict`) with real `DateTime`.
 - **Dev:** `npm start` → `scripts/dev.ts`: `tsgo --watch` + esbuild watch for backend (`out/server/server.mjs`, run via `node --watch`) and frontend (`dist/`).
 - **Dev sample data:** `src/backend/Dev.ts` `seedDev(orm)` **persists** a real `Dev` sample integration + sources + entries (idempotent, keyed by a stable id; never deletes), gated by `process.env.MITRA_DEV` (set only by `scripts/dev.ts`). It seeds real rows — *not* a read-only overlay — so hiding sources, editing, creating and deleting all work through the normal routes. The user can simply delete the integration when done. Seeding runs once; a `npm start` restart re-checks but won't duplicate.
