@@ -5,6 +5,7 @@ import { DateTime } from '@3mo/date-time'
 import { MediaQueryController } from '@3mo/media-query-observer'
 import { fetchEvents } from './Api.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
+import { DraftController } from './DraftController.js'
 
 class FetcherController extends Controller {
 	private readonly eventSource = new EventSource('/api/events')
@@ -19,7 +20,8 @@ class FetcherController extends Controller {
 			const start = this.host.navigatingDate.monthStart.subtract({ months: 1 })
 			const end = this.host.navigatingDate.monthEnd.add({ months: 1 })
 			return fetchEvents(start, end)
-		}
+		},
+		onComplete: entries => DraftController.reconcile(entries),
 	})
 
 	get value() {

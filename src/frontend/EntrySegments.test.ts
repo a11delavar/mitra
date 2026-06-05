@@ -60,7 +60,7 @@ describe('EntrySegments', () => {
 
 		it('excludes all-day entries and events on other days', () => {
 			const meeting = new Entry({ heading: 'Meeting', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
-			const holiday = new Entry({ heading: 'Holiday', start: base, end: base.add({ days: 1 }) })
+			const holiday = new Entry({ heading: 'Holiday', start: base, end: base.add({ days: 1 }), allDay: true })
 
 			const cohort = EntrySegments.of([meeting, holiday], [base, base.add({ days: 1 })])
 			assert.deepEqual(cohort.timedOn(base).map(s => s.entry.heading), ['Meeting'])
@@ -104,7 +104,7 @@ describe('EntrySegments', () => {
 		})
 
 		it('honours the accept predicate', () => {
-			const holiday = new Entry({ heading: 'Holiday', start: base, end: base.add({ days: 1 }) })
+			const holiday = new Entry({ heading: 'Holiday', start: base, end: base.add({ days: 1 }), allDay: true })
 			const meeting = new Entry({ heading: 'Meeting', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
 
 			const reps = EntrySegments.of([holiday, meeting], week).runsIn(base, base.add({ days: 6 }), entry => !!entry.allDay)
@@ -115,7 +115,7 @@ describe('EntrySegments', () => {
 	describe('laneRank', () => {
 		it('ranks multi-day spans top, then all-day, then timed, then undated', () => {
 			assert.equal(EntrySegments.laneRank(new Entry({ start: base, end: base.add({ days: 2 }) })), 0)
-			assert.equal(EntrySegments.laneRank(new Entry({ start: base, end: base })), 1)
+			assert.equal(EntrySegments.laneRank(new Entry({ start: base, end: base, allDay: true })), 1)
 			assert.equal(EntrySegments.laneRank(new Entry({ start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })), 2)
 			assert.equal(EntrySegments.laneRank(new Entry({})), 3)
 		})

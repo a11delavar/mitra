@@ -1,6 +1,7 @@
 import { component, html, property, state, Component, css, eventListener, event, Binder } from '@a11d/lit'
 import type { EntrySegment } from './EntrySegment.js'
-import { getSource, updateEvent, deleteEvent } from './Api.js'
+import { getSource, updateEvent, deleteEvent, createEvent } from './Api.js'
+import { DraftController } from './DraftController.js'
 
 @component('mitra-entry-details')
 export class EntryDetailsComponent extends Component {
@@ -31,7 +32,52 @@ export class EntryDetailsComponent extends Component {
 		this.openChange.dispatch(this.open)
 	}
 
-	private readonly handleChange = () => updateEvent(this.segment!.entry)
+	@eventListener('toggle')
+	protected handleToggle(e: ToggleEvent) {
+		if (e.newState === 'open') {
+			requestAnimationFrame(() => {
+				const title = this.querySelector<HTMLInputElement>('.title')
+				title?.focus()
+				title?.select()
+			})
+		}
+	}
+
+	// The in-flight create request, kept so a follow-up edit waits for it to land before issuing an update.
+	private creating?: Promise<unknown>
+
+	private readonly handleChange = async () => {
+		const entry = this.segment!.entry
+		if (!entry.persisted) {
+			// An untitled draft isn't committed yet; once a create is in flight, ignore further changes
+			// (the binder keeps the entry's fields up to date) until it lands and the entry gets its id.
+			if (this.creating || !entry.heading?.trim()) {
+				return
+			}
+			try {
+				const created = await (this.creating = createEvent(entry))
+				DraftController.confirmCreated(entry, created.id!) // now persisted; reconcile() drops it on echo
+			} catch (error) {
+				this.creating = undefined // create failed — let the user retry (it's still a dashed draft)
+				throw error
+			}
+		} else {
+			await this.creating // if a create is mid-flight, let it land first (a no-op once settled)
+			await updateEvent(entry)
+		}
+	}
+
+	private readonly handleDelete = async () => {
+		const entry = this.segment!.entry
+		this.hidePopover()
+		// A never-saved draft is only local; otherwise delete on the server (discard clears any optimistic copy).
+		if (!entry.persisted) {
+			DraftController.discard()
+		} else {
+			await deleteEvent(entry.id!)
+			DraftController.discard()
+		}
+	}
 
 	private readonly handleClose = (e: Event) => {
 		e.stopPropagation()
@@ -237,7 +283,7 @@ export class EntryDetailsComponent extends Component {
 	protected override get template() {
 		return !this.segment ? html.nothing : html`
 			<header class="header">
-				<input class="title subtle" ${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
+				<input class="title subtle" placeholder="Title" ${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
 				<mitra-icon-button
 					label="Options"
 					icon="more-horizontal"
@@ -245,7 +291,7 @@ export class EntryDetailsComponent extends Component {
 					@click=${this.toggleMenu}
 				></mitra-icon-button>
 				<menu popover id="entry-menu-${this.segment.entry.id}" style="position-anchor: --entry-menu-${this.segment.entry.id}">
-					<button class="danger" @click=${() => deleteEvent(this.segment!.entry.id).then(() => this.hidePopover())}>
+					<button class="danger" @click=${this.handleDelete}>
 						<mitra-icon icon="trash-2"></mitra-icon> Delete
 					</button>
 				</menu>

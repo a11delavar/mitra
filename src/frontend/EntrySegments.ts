@@ -79,17 +79,19 @@ export class EntrySegments {
 
 	constructor(readonly entries: ReadonlyArray<Entry>, readonly days: ReadonlyArray<DateTime>) { }
 
+	/** The non-all-day segments, computed once per cohort (each `for` is itself memoised). */
+	private _timedSegments?: ReadonlyArray<EntrySegment>
+	private get timedSegments() {
+		return this._timedSegments ??= this.entries.filter(entry => !entry.allDay).flatMap(entry => EntrySegments.for(entry))
+	}
+
 	private readonly timedCache = new Map<number, ReadonlyArray<EntrySegment>>()
 	/** This day's timed (non-all-day) segments, clustered into side-by-side columns. */
 	timedOn(date: DateTime): ReadonlyArray<EntrySegment> {
-		const key = date.dayStart.valueOf()
+		const key = date.dayStart.valueOf() // one Temporal op per day; the filter below is pure integer math
 		let segments = this.timedCache.get(key)
 		if (!segments) {
-			const onDay = this.entries
-				.filter(entry => !entry.allDay)
-				.flatMap(entry => EntrySegments.for(entry))
-				.filter(segment => segment.fallsOnDay(date))
-			segments = EntrySegments.cluster(onDay)
+			segments = EntrySegments.cluster(this.timedSegments.filter(segment => segment.fallsOn(key)))
 			this.timedCache.set(key, segments)
 		}
 		return segments
@@ -98,22 +100,22 @@ export class EntrySegments {
 	/** One segment per accepted entry whose run touches [from, to] — its first slice in range — sorted
 	 * (earliest, then longest run first) so DOM order drives `grid-auto-flow: dense` lane packing. */
 	runsIn(from: DateTime, to: DateTime, accept: (entry: Entry) => boolean): ReadonlyArray<EntrySegment> {
+		const fromValue = from.dayStart.valueOf()
+		const toValue = to.dayStart.valueOf()
 		const reps = new Array<EntrySegment>()
 		for (const entry of this.entries) {
 			if (!accept(entry)) {
 				continue
 			}
-			const inRange = EntrySegments.for(entry).filter(segment => segment.date
-				&& !segment.date.dayStart.isBefore(from.dayStart)
-				&& !segment.date.dayStart.isAfter(to.dayStart))
-			if (inRange[0]) {
-				reps.push(inRange[0])
+			const inRange = EntrySegments.for(entry).find(segment => segment.dayValue !== undefined && segment.dayValue >= fromValue && segment.dayValue <= toValue)
+			if (inRange) {
+				reps.push(inRange)
 			}
 		}
-		const runDays = (segment: EntrySegment) => segment.runEnd.date!.dayStart.valueOf() - segment.date!.dayStart.valueOf()
-		return reps.sort((a, b) => a.date!.dayStart.equals(b.date!.dayStart)
+		const runDays = (segment: EntrySegment) => segment.runEnd.dayValue! - segment.dayValue!
+		return reps.sort((a, b) => a.dayValue === b.dayValue
 			? runDays(b) - runDays(a) // longest run first, so it claims the lowest lane
-			: (a.date!.isBefore(b.date!) ? -1 : 1))
+			: a.dayValue! - b.dayValue!)
 	}
 
 	/** Lane-ordering priority for the month packing, lowest first (closest to the top): multi-day spans,
@@ -134,15 +136,18 @@ export class EntrySegments {
 	monthWeek(week: ReadonlyArray<DateTime>, maxSlots: number): MonthWeek {
 		const weekStart = week[0]!
 		const weekEnd = week[week.length - 1]!
+		const weekEndValue = weekEnd.dayStart.valueOf()
 		const lastSlot = maxSlots - 1 // the top slot is reserved for the "+N more" affordance
-		const columnOf = (date: DateTime) => week.findIndex(day => day.dayStart.equals(date.dayStart))
+		// Built once per week so each bar's column is an O(1) numeric lookup, not a findIndex.
+		const columnByDay = new Map(week.map((day, index) => [day.dayStart.valueOf(), index]))
+		const columnOf = (dayValue: number) => columnByDay.get(dayValue) ?? -1
 
 		const bars = new Array<MonthBar>()
 		const hiddenByColumn = new Array<number>(week.length).fill(0)
 		for (const segment of this.runsIn(weekStart, weekEnd, () => true)) {
-			const startColumn = columnOf(segment.date!)
-			const clippedRight = segment.runEnd.date!.isAfter(weekEnd)
-			const endColumn = columnOf(clippedRight ? weekEnd : segment.runEnd.date!)
+			const startColumn = columnOf(segment.dayValue!)
+			const clippedRight = segment.runEnd.dayValue! > weekEndValue
+			const endColumn = clippedRight ? week.length - 1 : columnOf(segment.runEnd.dayValue!)
 			if (startColumn < 0 || endColumn < 0) {
 				continue
 			}
@@ -168,7 +173,7 @@ export class EntrySegments {
 		}
 		const datesByEntry = new Map<Entry, ReadonlyArray<number>>()
 		for (const entry of this.entries) {
-			const dates = EntrySegments.for(entry).map(s => s.date?.dayStart.valueOf()).filter((v): v is number => v !== undefined)
+			const dates = EntrySegments.for(entry).map(s => s.dayValue).filter((v): v is number => v !== undefined)
 			if (dates.length) {
 				datesByEntry.set(entry, dates)
 			}

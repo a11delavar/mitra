@@ -21,12 +21,15 @@ describe('Entry', () => {
 	})
 
 	describe('allDay', () => {
-		it('is true when start and end sit at midnight', () => {
-			assert.equal(new Entry({ start: day, end: day.add({ days: 1 }) }).allDay, true)
+		it('is a stored flag, not inferred from the times', () => {
+			assert.equal(new Entry({ start: day, end: day.add({ days: 1 }), allDay: true }).allDay, true)
+			// Midnight bounds alone no longer imply all-day — the flag is explicit.
+			assert.equal(new Entry({ start: day, end: day.add({ days: 1 }) }).allDay, false)
 		})
 
-		it('is false when there is a time of day', () => {
+		it('defaults to false', () => {
 			assert.equal(new Entry({ start: day.add({ hours: 9 }), end: day.add({ hours: 10 }) }).allDay, false)
+			assert.equal(new Entry({}).allDay, false)
 		})
 	})
 })

@@ -23,6 +23,10 @@ export function fetchEvents(start: DateTime, end: DateTime) {
 	return Api.get<Array<Entry>>(`/entries?start=${start.toISOString()}&end=${end.toISOString()}`)
 }
 
+export function createEvent(entry: Entry) {
+	return Api.post<Entry>('/entries', entry)
+}
+
 export async function fetchIntegrations() {
 	return integrations = await Api.get<Array<Integration>>('/integrations')
 }
