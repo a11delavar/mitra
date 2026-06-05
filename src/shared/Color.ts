@@ -1,12 +1,20 @@
 export class Color {
+	static readonly Red = '#eb5a5a'
+	static readonly Orange = '#e58b4b'
+	static readonly Yellow = '#f9c344'
+	static readonly Green = '#63d18d'
+	static readonly Blue = '#51ace3'
+	static readonly Purple = '#9b61f9'
+	static readonly Grey = '#b4b4b4'
+
 	static readonly palette: ReadonlyArray<string> = [
-		'#eb5a5a', // Red
-		'#e58b4b', // Orange
-		'#f9c344', // Yellow
-		'#63d18d', // Green
-		'#51ace3', // Blue
-		'#9b61f9', // Purple
-		'#b4b4b4', // Grey
+		Color.Red,
+		Color.Orange,
+		Color.Yellow,
+		Color.Green,
+		Color.Blue,
+		Color.Purple,
+		Color.Grey
 	]
 
 	static get(identifier: string): Color {

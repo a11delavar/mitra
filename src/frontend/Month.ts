@@ -3,6 +3,8 @@ import { DateTime } from '@3mo/date-time'
 import { Entry } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
+import { DraftController } from './DraftController.js'
+import { DragToCreateController } from './DragToCreateController.js'
 
 @component('mitra-month')
 export class Month extends Component {
@@ -15,10 +17,12 @@ export class Month extends Component {
 	private static readonly MAX_SLOTS = 4
 
 	private readonly buffer = new CalendarDatesController(this)
+	protected readonly dragToCreate = new DragToCreateController(this, 'month')
+	private readonly draft = new DraftController(this)
 
 	private get bufferNavigatingDate(): DateTime { return this.buffer.navigatingDate }
 	private get days(): Array<DateTime> { return this.buffer.days }
-	private get segments() { return EntrySegments.of(this.entries, this.days) }
+	private get segments() { return EntrySegments.of(this.draft.merge(this.entries), this.days) }
 
 	protected override initialized() {
 		this.buffer.navigatingDate = this.navigatingDate

@@ -25,12 +25,24 @@ export class EntrySegment {
 	get hasPrevious() { return !!this.previous }
 	get hasNext() { return !!this.next }
 
+	// Cached numeric projections. Every `@3mo/date-time` field/`dayStart` accessor rebuilds a Temporal
+	// object, so we derive these once. Segments are memoised globally by `EntrySegments.for`, so the cost
+	// is paid once per segment — then same-day checks and clustering are pure integer math each render.
+	private _startMinute?: number
 	get startMinute() {
-		return this.previous ? 1 : this.entry.start ? this.entry.start.hour * 60 + this.entry.start.minute + 1 : 1
+		return this._startMinute ??= this.previous ? 1 : this.entry.start ? this.entry.start.hour * 60 + this.entry.start.minute + 1 : 1
 	}
 
+	private _endMinute?: number
 	get endMinute() {
-		return this.next ? 1441 : this.entry.end ? this.entry.end.hour * 60 + this.entry.end.minute + 1 : 2
+		return this._endMinute ??= this.next ? 1441 : this.entry.end ? this.entry.end.hour * 60 + this.entry.end.minute + 1 : 2
+	}
+
+	/** Epoch-ms of this segment's day (midnight), or `undefined` when undated — the cheap key for every
+	 * same-day comparison. Compare these numbers instead of constructing `dayStart` repeatedly. */
+	private _dayValue?: number
+	get dayValue(): number | undefined {
+		return this._dayValue ??= this.date?.dayStart.valueOf()
 	}
 
 	get allDay() {
@@ -42,16 +54,17 @@ export class EntrySegment {
 	}
 
 	get id() {
-		return `${this.entry.id}-${this.date?.dayStart.valueOf() ?? 0}`
+		// A draft has no entry id yet; 'draft' keeps the per-day key (and DOM anchor/transition names) readable.
+		return `${this.entry.id ?? 'draft'}-${this.dayValue ?? 0}`
+	}
+
+	/** Whether this segment renders on the day identified by `dayValue` (epoch-ms of its midnight). */
+	fallsOn(dayValue: number) {
+		return this.date ? this.dayValue === dayValue : this.entry.start?.dayStart.valueOf() === dayValue
 	}
 
 	fallsOnDay(date: DateTime) {
-		const dayStart = date.dayStart
-		if (this.date) {
-			return this.date.dayStart.equals(dayStart)
-		}
-		const start = this.entry.start
-		return !!start && !start.isBefore(dayStart) && start.isBefore(dayStart.add({ days: 1 }))
+		return this.fallsOn(date.dayStart.valueOf())
 	}
 
 	/** Whether this segment overlaps another in time — drives the same-day side-by-side clustering. */

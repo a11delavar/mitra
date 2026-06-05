@@ -4,6 +4,8 @@ import { observeResize } from '@3mo/resize-observer'
 import { Entry } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
+import { DraftController } from './DraftController.js'
+import { DragToCreateController } from './DragToCreateController.js'
 
 @component('mitra-days')
 export class Days extends Component {
@@ -13,7 +15,10 @@ export class Days extends Component {
 
 	private readonly dates = new CalendarDatesController(this)
 	private get days(): Array<DateTime> { return this.dates.days }
-	private get segments() { return EntrySegments.of(this.entries, this.days) }
+
+	protected readonly dragToCreate = new DragToCreateController(this)
+	private readonly draft = new DraftController(this)
+	private get segments() { return EntrySegments.of(this.draft.merge(this.entries), this.days) }
 
 	// The all-day lane sticks below the (sticky) day headers, so it needs the header row's height. The
 	// time-column header cell stretches to that row, so the `observeResize` directive on it keeps
@@ -134,7 +139,8 @@ export class Days extends Component {
 					grid-row: 2;
 					position: sticky;
 					inset-inline-start: 0;
-					top: var(--header-height, 2.75rem);
+					/* +1px for the grid gap between the header row and this one. */
+					top: calc(var(--header-height, 2.75rem) + 1px);
 					z-index: 120;
 					background-color: var(--color-background);
 					border-inline-end: var(--border);
@@ -145,14 +151,18 @@ export class Days extends Component {
 					grid-column: 2 / -1;
 					grid-row: 2;
 					position: sticky;
-					top: var(--header-height, 2.75rem);
+					top: calc(var(--header-height, 2.75rem) + 1px);
 					z-index: 90;
 					display: grid;
 					grid-template-columns: subgrid;
 					grid-auto-rows: 1.375rem;
 					grid-auto-flow: row dense; /* bars self-place columns by date; dense packing assigns lanes */
 					gap: 1px 1px;
+					/* A bit of empty space below the bars stays reserved as a drag-to-create placeholder, so the
+					   lane is grabbable even when full; min height keeps an empty lane draggable too. */
 					padding-block: 2px;
+					padding-block-end: 1.5rem;
+					min-block-size: 2.75rem;
 					align-content: start;
 					background-color: var(--color-background);
 					border-bottom: var(--border);
@@ -308,20 +318,19 @@ export class Days extends Component {
 		if (!first || !last) {
 			return html.nothing
 		}
+		// The lane always renders (even with no all-day events) so it stays a drag target for creating one.
 		const runs = this.segments.runsIn(first, last, entry => !!entry.allDay)
-		if (!runs.length) {
-			return html.nothing
-		}
-		// Built once per render so each bar's column is an O(1) lookup rather than a findIndex.
+		// Built once per render so each bar's column is an O(1) numeric lookup (segments cache their dayValue).
+		const lastValue = last.dayStart.valueOf()
 		const columnByDay = new Map(this.days.map((day, index) => [day.dayStart.valueOf(), index]))
-		const columnOf = (date: DateTime) => columnByDay.get(date.dayStart.valueOf()) ?? 0
+		const columnOf = (dayValue?: number) => columnByDay.get(dayValue ?? -1) ?? 0
 		return html`
 			<div class="all-day-corner"></div>
 			<div class="all-day">
 				${runs.map(segment => {
-			const startColumn = columnOf(segment.date!)
-			const clippedRight = segment.runEnd.date!.isAfter(last)
-			const endColumn = columnOf(clippedRight ? last : segment.runEnd.date!)
+			const startColumn = columnOf(segment.dayValue)
+			const clippedRight = segment.runEnd.dayValue! > lastValue
+			const endColumn = clippedRight ? this.days.length - 1 : columnOf(segment.runEnd.dayValue)
 			return html`
 						<mitra-entry-segment
 							style="grid-column: ${startColumn + 1} / span ${endColumn - startColumn + 1};"
@@ -342,7 +351,8 @@ export class Days extends Component {
 
 		const today = new DateTime()
 		const reference = this.days[0] || today
-		const todayIndex = this.days.findIndex(d => d.dayStart.equals(today.dayStart))
+		const todayValue = today.dayStart.valueOf()
+		const todayIndex = this.days.findIndex(d => d.dayStart.valueOf() === todayValue)
 		const currentMinute = today.hour * 60 + today.minute
 		const currentTimeString = today.format({ hour: '2-digit', minute: '2-digit', hour12: false })
 
@@ -385,7 +395,7 @@ export class Days extends Component {
 	}
 
 	private get dateTemplate() {
-		const today = new DateTime()
+		const todayValue = new DateTime().dayStart.valueOf()
 		return html`
 			${repeat(this.days, day => day.dayStart.toISOString(), (day, index) => html`
 				<mitra-day
@@ -393,7 +403,7 @@ export class Days extends Component {
 					style="grid-column: ${index + 2};"
 					.date=${day}
 					.entries=${this.segments.timedOn(day)}
-					?today=${day.dayStart.equals(today.dayStart)}
+					?today=${day.dayStart.valueOf() === todayValue}
 				></mitra-day>
 			`)}
 		`

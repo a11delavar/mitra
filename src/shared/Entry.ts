@@ -17,7 +17,10 @@ export interface EntryData {
 @entity()
 @unique({ properties: ['sourceId', 'uri'] })
 export class Entry {
-	@primaryKey() id: string = crypto.randomUUID()
+	// No default: the backend assigns the id on create. A locally-created entry (a drag draft) has no id
+	// until then — `persisted` (below) is the single, intrinsic source of "is this still a draft". The
+	// explicit `type` is required because, without a default value, MikroORM can't infer the column type.
+	@primaryKey({ type: 'string' }) id?: string
 	@manyToOne(() => Source, { mapToPk: true, deleteRule: 'cascade' }) sourceId!: string
 	@property({ type: 'string', nullable: true }) uri?: string
 
@@ -30,6 +33,8 @@ export class Entry {
 	@property({ type: 'datetime', nullable: true }) start?: DateTime
 	@property({ type: 'datetime', nullable: true }) end?: DateTime
 	@property({ type: 'boolean', nullable: true }) done?: boolean
+
+	@property({ type: 'boolean' }) allDay = false
 
 	@property({ type: 'json', nullable: true }) data?: EntryData
 
@@ -51,10 +56,10 @@ export class Entry {
 		Object.assign(this, init)
 	}
 
-	get allDay() {
-		return this.start && this.end
-			&& this.start.hour === 0 && this.start.minute === 0
-			&& this.end.hour === 0 && this.end.minute === 0
+	/** Whether the backend has assigned this entry an id. A locally-created draft has none until it's
+	 * saved, so `!persisted` *is* "this is a draft" — no separate flag or side store to keep in sync. */
+	get persisted() {
+		return this.id !== undefined
 	}
 
 	get multiDay() {

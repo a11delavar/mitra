@@ -11,7 +11,7 @@ import { eventsRouter } from './events.js'
 import { entriesRouter } from './entries.js'
 import { integrationsRouter } from './integrations.js'
 import { sourcesRouter } from './sources.js'
-import { mountDevFixture } from './devFixture.js'
+import { seedDev } from './Dev.js'
 
 const logger = createLogger('API')
 const PORT = 3000
@@ -28,11 +28,11 @@ const modelConstructor = new ModelValueConstructor()
 app.use(express.json({ reviver: (_key, value) => modelConstructor.shallConstruct(value) ? modelConstructor.construct(value) : value }))
 app.use(authMiddleware)
 
-// Dev-only: a hardcoded sample integration + entries so the calendar renders without a real account.
-// Mounted before the API routers so it only shadows their GETs (see devFixture.ts).
+// Dev-only: seed a persisted sample integration + entries (a real local calendar) so the app renders
+// without a real account — and so hiding sources / editing / deleting all work via the normal routes.
 if (process.env.MITRA_DEV === 'true') {
-	mountDevFixture(app)
-	logger.info('Dev sample fixture mounted (sample integration + entries)')
+	await seedDev(orm)
+	logger.info('Dev sample integration seeded')
 }
 
 app.use('/api/events', eventsRouter)

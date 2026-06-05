@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { orm } from './orm.js'
 import { syncEmitter } from './syncEmitter.js'
-import { Integration, Source, Entry } from '../shared/index.js'
+import { Entry, Integration, Source } from '../shared/index.js'
 
 export const entriesRouter = Router()
 
@@ -30,6 +30,39 @@ entriesRouter.get('/', async (req, res) => {
 	return res.json(entries)
 })
 
+entriesRouter.post('/', async (req, res) => {
+	const em = orm.em.fork()
+	
+	const body = req.body as Partial<Entry>
+	const targetSourceId = body.sourceId
+	if (!targetSourceId) {
+		return res.status(400).json({ error: 'Missing sourceId' })
+	}
+
+	const targetSource = await em.findOneOrFail(Source, { id: targetSourceId })
+	const targetIntegration = await em.findOneOrFail(Integration, { id: targetSource.integrationId })
+
+	const incoming = new Entry({
+		// The backend owns ids: clients post a draft with none, and we assign it here (the provider's
+		// createEntry persists this very object, so this covers both Dev and CalDAV).
+		id: crypto.randomUUID(),
+		sourceId: targetSource.id,
+		type: body.type!,
+		heading: body.heading ?? '',
+		description: body.description ?? '',
+		color: body.color ?? null,
+		start: body.start ? new Date(body.start) as DateTime : undefined,
+		end: body.end ? new Date(body.end) as DateTime : undefined,
+		allDay: body.allDay ?? false,
+		done: body.done,
+	})
+
+	const created = await targetIntegration.createEntry(em, incoming)
+	await em.flush()
+	syncEmitter.emit('updated')
+	return res.status(201).json(created)
+})
+
 entriesRouter.put('/:id', async (req, res) => {
 	const em = orm.em.fork()
 	const existing = await em.findOneOrFail(Entry, { id: req.params.id })
@@ -56,6 +89,7 @@ entriesRouter.put('/:id', async (req, res) => {
 		color: body.color !== undefined ? body.color : existing.color,
 		start: body.start ? new Date(body.start) as DateTime : existing.start,
 		end: body.end ? new Date(body.end) as DateTime : existing.end,
+		allDay: body.allDay ?? existing.allDay,
 		done: body.done ?? existing.done,
 	})
 

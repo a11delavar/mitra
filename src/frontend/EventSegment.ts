@@ -2,32 +2,33 @@ import { component, html, property, Component, css, eventListener, state, bind, 
 import { EntrySegment } from './EntrySegment.js'
 import { colorContrast } from './components/colorContrast.js'
 import { getSource } from './Api.js'
+import { DraftController } from './DraftController.js'
 
 @component('mitra-entry-segment')
 export class EntrySegmentComponent extends Component {
 	@queryConnectedInstances() private static readonly instances: Set<EntrySegmentComponent>
 
-	@property({
-		type: Object,
-		updated(this: EntrySegmentComponent) {
-			if (this.segment) {
-				this.style.viewTransitionName = `entry-${this.segment.id}`
-				this.style.anchorName = this.anchorName
-			}
-		}
-	}) segment?: EntrySegment
+	readonly draft = new DraftController(this)
+
+	@property({ type: Object }) segment?: EntrySegment
 
 	private get anchorName() {
 		return `--mitra-entry-segment-${this.segment?.id}`
 	}
 
 	@state({
-		updated(this: EntrySegmentComponent) {
+		updated(this: EntrySegmentComponent, open: boolean, wasOpen: boolean) {
+			// Highlight every day-segment of the same (possibly multi-day) entry while its editor is open.
 			EntrySegmentComponent.instances.forEach(i => {
 				if (i.segment?.entry.id === this.segment?.entry.id) {
-					i.selected = this.open
+					i.selected = open
 				}
 			})
+			// Closing an untitled, never-saved draft discards it — it was only a local placeholder.
+			const entry = this.segment?.entry
+			if (wasOpen && !open && entry && !entry.persisted && !entry.heading?.trim()) {
+				this.draft.discard()
+			}
 		}
 	}) open = false
 
@@ -37,6 +38,28 @@ export class EntrySegmentComponent extends Component {
 	protected async handleClick(e: MouseEvent) {
 		e.stopPropagation()
 		this.open = true
+	}
+
+	// Reflect the entry's draft-ness (no id yet) onto the host for the dashed CSS, and pop the freshly-
+	// dropped draft's editor open once — only on its run-start segment, so a multi-day draft (sliced into
+	// several day-segments) opens a single editor. Runs every update since the draft store, not a property
+	// of this component, drives it. (Closing a draft is handled by the `open` state's callback.)
+	protected override updated(changed: Map<PropertyKey, unknown>) {
+		super.updated?.(changed)
+		const entry = this.segment?.entry
+		if (!entry) {
+			return
+		}
+		// Track the segment's id on the host (its anchor + view-transition identity) on every update, not
+		// only when `segment` changes — so they re-sync when a draft is assigned its id in place on save,
+		// keeping the open editor's `position-anchor` matched.
+		this.style.viewTransitionName = `entry-${this.segment!.id}`
+		this.style.anchorName = this.anchorName
+		this.toggleAttribute('data-draft', !entry.persisted)
+		if (this.draft.shouldAutoOpen(entry) && !this.segment!.hasPrevious) {
+			this.draft.consumeAutoOpen()
+			this.open = true
+		}
 	}
 
 	static override get styles() {
@@ -68,8 +91,8 @@ export class EntrySegmentComponent extends Component {
 				overflow: hidden;
 				transition: background-color 0.15s ease, color 0.15s ease;
 
-				&:has([popover]:popover-open),
-				&[selected] {
+				&:not([data-draft]):has([popover]:popover-open),
+				&:not([data-draft])[selected] {
 					background-color: var(--mitra-entry-segment-color);
 					color: ${colorContrast('var(--mitra-entry-segment-color)')};
 				}
@@ -81,17 +104,21 @@ export class EntrySegmentComponent extends Component {
 					padding: 0 0.375rem;
 				}
 
+				&[data-draft] {
+					border: 2px dashed var(--mitra-entry-segment-color);
+					background-color: color-mix(in srgb, var(--mitra-entry-segment-color) 15%, transparent);
+					color: var(--mitra-entry-segment-color);
+				}
+
 				&[has-next] {
 					border-end-start-radius: 0;
 					border-end-end-radius: 0;
-					border-bottom: 2px dashed ${colorContrast('var(--mitra-entry-segment-color)')};
 					padding-bottom: 0;
 
 					@container (max-height: 450px) {
 						border-start-end-radius: 0;
 						border-end-end-radius: 0;
 						border-bottom: none;
-						border-inline-end: 2px dashed ${colorContrast('var(--mitra-entry-segment-color)')};
 						margin-inline-end: -0.25rem;
 						padding-inline-end: 0.5rem;
 					}
@@ -100,14 +127,12 @@ export class EntrySegmentComponent extends Component {
 				&[has-previous] {
 					border-start-start-radius: 0;
 					border-start-end-radius: 0;
-					border-top: 2px dashed ${colorContrast('var(--mitra-entry-segment-color)')};
 					padding-top: 0;
 
 					@container (max-height: 450px) {
 						border-start-start-radius: 0;
 						border-end-start-radius: 0;
 						border-top: none;
-						border-inline-start: 2px dashed ${colorContrast('var(--mitra-entry-segment-color)')};
 						margin-inline-start: -0.25rem;
 						padding-inline-start: 0.5rem;
 					}
@@ -176,7 +201,7 @@ export class EntrySegmentComponent extends Component {
 					<span class="end">${this.segment.entry.end?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
 				</div>
 			`}
-			<div class="heading">${this.segment.entry.heading}</div>
+			<div class="heading">${this.segment.entry.heading || (this.segment.entry.persisted ? '' : 'Draft')}</div>
 			${!this.open ? html.nothing : html`
 				<mitra-entry-details popover ?open=${bind(this, 'open')}
 					style="position-anchor: ${this.anchorName}"

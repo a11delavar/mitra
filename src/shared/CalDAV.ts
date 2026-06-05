@@ -71,6 +71,16 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		})
 	}
 
+	/** Build a DTSTART/DTEND value. All-day entries are written date-only (`VALUE=DATE`) — that's what
+	 * makes a real all-day event (not a 00:00→00:00 timed one); `DTEND` stays the exclusive next day. */
+	private toICALTime(date: DateTime, allDay: boolean) {
+		if (!allDay) {
+			return ICAL.Time.fromJSDate(date as unknown as Date, true)
+		}
+		const local = ICAL.Time.fromJSDate(date as unknown as Date, false)
+		return ICAL.Time.fromData({ year: local.year, month: local.month, day: local.day, isDate: true })
+	}
+
 	protected override async syncSourceEntries(em: EntityManager, source: Source): Promise<boolean> {
 		const client = await this.getClient()
 		const remoteCalendar = { url: source.uri }
@@ -149,7 +159,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			const normalizedObjUrl = source.normalizeUri(obj.url)
 			let entry = existingEntries.find(e => source.matchesUri(e.uri, obj.url))
 			if (!entry) {
-				entry = new Entry({ sourceId: source.id, uri: normalizedObjUrl })
+				entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: normalizedObjUrl })
 				em.persist(entry)
 				existingEntries.push(entry)
 			}
@@ -159,7 +169,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			}
 
 			entry.type = entryType
-			entry.color = component.getFirstPropertyValue('color')?.toString() || undefined
+			entry.color = component.getFirstPropertyValue('color')?.toString() || null
 			entry.data ??= {}
 			entry.data.raw = obj.data
 			entry.data.etag = obj.etag
@@ -170,6 +180,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				entry.description = event.description || ''
 				entry.start = (event.startDate?.toJSDate() as any) || undefined
 				entry.end = (event.endDate ? event.endDate.toJSDate() as any : event.startDate?.toJSDate() as any) || undefined
+				// A date-only DTSTART (`VALUE=DATE`) is the iCalendar marker for an all-day event.
+				entry.allDay = event.startDate?.isDate ?? false
 			} else {
 				const value = (name: string) => component.getFirstPropertyValue(name) as any
 				entry.heading = value('summary')?.toString() || 'Untitled Task'
@@ -177,6 +189,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				entry.done = value('status')?.toString() === 'COMPLETED' || Number(value('percent-complete') ?? 0) >= 100
 				entry.start = value('dtstart')?.toJSDate?.() as any || undefined
 				entry.end = value('due')?.toJSDate?.() as any || undefined
+				entry.allDay = !!value('dtstart')?.isDate
 			}
 
 			changed = true
@@ -192,7 +205,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			throw new Error('Entry must have a URL and raw data to be updated via CalDAV')
 		}
 
-		const keys: Array<keyof Entry> = (['heading', 'description', 'color', 'start', 'end', 'done'] as const)
+		const keys: Array<keyof Entry> = (['heading', 'description', 'color', 'start', 'end', 'done', 'allDay'] as const)
 			.filter(key => !Object[equals](existing[key], incoming[key]))
 
 		if (keys.length === 0) {
@@ -228,14 +241,20 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			existing.color = incoming.color
 		}
 
-		if (keys.includes('start')) {
-			component.updatePropertyWithValue('dtstart', ICAL.Time.fromJSDate(incoming.start!, true))
+		// All-day toggling changes whether DTSTART/DTEND are date-only, so a change to `allDay` also
+		// rewrites both date properties (even if the instants themselves didn't change).
+		if (keys.includes('start') || keys.includes('allDay')) {
+			component.updatePropertyWithValue('dtstart', this.toICALTime(incoming.start!, incoming.allDay))
 			existing.start = incoming.start
 		}
 
-		if (keys.includes('end')) {
-			component.updatePropertyWithValue('dtend', ICAL.Time.fromJSDate(incoming.end!, true))
+		if (keys.includes('end') || keys.includes('allDay')) {
+			component.updatePropertyWithValue('dtend', this.toICALTime(incoming.end!, incoming.allDay))
 			existing.end = incoming.end
+		}
+
+		if (keys.includes('allDay')) {
+			existing.allDay = incoming.allDay
 		}
 
 		existing.data.raw = comp.toString()
@@ -273,8 +292,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		vevent.updatePropertyWithValue('dtstamp', ICAL.Time.now())
 		vevent.updatePropertyWithValue('summary', entry.heading)
 		!entry.description ? void 0 : vevent.updatePropertyWithValue('description', entry.description)
-		!entry.start ? void 0 : vevent.updatePropertyWithValue('dtstart', ICAL.Time.fromJSDate(entry.start, true))
-		!entry.end ? void 0 : vevent.updatePropertyWithValue('dtend', ICAL.Time.fromJSDate(entry.end, true))
+		!entry.start ? void 0 : vevent.updatePropertyWithValue('dtstart', this.toICALTime(entry.start, entry.allDay))
+		!entry.end ? void 0 : vevent.updatePropertyWithValue('dtend', this.toICALTime(entry.end, entry.allDay))
 		!entry.color ? void 0 : vevent.updatePropertyWithValue('color', entry.color)
 
 		comp.addSubcomponent(vevent)
@@ -292,7 +311,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		entry.uri = new URL(filename, source.collectionUri).href
 		entry.data ??= {}
 		entry.data.raw = iCalString
-		entry.color = entry.color || undefined
+		entry.color = entry.color || null
 		const etag = response.headers?.get('etag') || response.headers?.get('Etag') || response.headers?.get('ETag')
 		if (etag) {
 			entry.data.etag = etag
