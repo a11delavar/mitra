@@ -90,7 +90,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			syncLevel: 1,
 			syncToken: source.syncState?.syncToken || undefined
 		})
-		console.log(result, source.uri);
 
 		const newSyncToken = result[0]?.raw?.multistatus?.syncToken || source.syncState?.syncToken
 
