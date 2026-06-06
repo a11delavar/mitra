@@ -243,9 +243,7 @@ export class EntryDetailsComponent extends Component {
 
 						&.source {
 							> .dot {
-								width: 11px;
-								height: 11px;
-								border-radius: var(--border-radius);
+								font-size: 0.8rem;
 								flex-shrink: 0;
 								margin-inline-start: 2px;
 							}
@@ -329,7 +327,7 @@ export class EntryDetailsComponent extends Component {
 	private get sourceTemplate() {
 		return !this.source?.name ? html.nothing : html`
 			<li class="source">
-				<span class="dot" style="background: ${this.source.color}"></span>
+				<mitra-icon class="dot" icon="square" fill style="color: ${this.source.color}"></mitra-icon>
 				<div class="content">${this.source.name}</div>
 			</li>
 		`

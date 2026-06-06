@@ -1,6 +1,6 @@
 import { Api, HttpError, apiError, apiAuthenticator, type ApiAuthenticator } from '@a11d/api'
 import { type DateTime } from '@3mo/date-time'
-import type { Entry, Integration, Source } from 'shared'
+import type { Entry, Integration, Source, User } from 'shared'
 
 /**
  * Surface the server's error message on failed responses. Without a registered
@@ -37,6 +37,19 @@ export class CookieAuthenticator implements ApiAuthenticator {
 }
 
 let integrations = new Array<Integration>()
+let currentUser: User | undefined
+
+export async function fetchUser() {
+	return currentUser = await Api.get<User>('/user')
+}
+
+export function getDefaultSourceId() {
+	return currentUser?.defaultSourceId
+}
+
+export async function setDefaultSource(sourceId: string | undefined) {
+	return currentUser = await Api.put<User>('/user/default-source', { sourceId: sourceId ?? null })
+}
 
 export function fetchEvents(start: DateTime, end: DateTime) {
 	return Api.get<Array<Entry>>(`/entries?start=${start.toISOString()}&end=${end.toISOString()}`)

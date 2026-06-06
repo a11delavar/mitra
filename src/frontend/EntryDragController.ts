@@ -1,7 +1,7 @@
 import { Controller, type Component } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { Entry, EntryType, SourceType, type Source } from 'shared'
-import { getIntegrations, updateEvent } from './Api.js'
+import { getDefaultSourceId, getIntegrations, updateEvent } from './Api.js'
 import { DraftController } from './DraftController.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
 import { SNAP_MINUTES, placeAllDay, placeTimed, resizePlacement, snapToGrid } from './entryPlacement.js'
@@ -86,14 +86,9 @@ export class EntryDragController extends Controller {
 		this.element.removeEventListener('pointerdown', this.onPointerDown)
 	}
 
-	/** The source new entries land in. In development we prefer the dev sample calendar, so dragging
-	 * doesn't accidentally create on a real (and slow-to-write) CalDAV account. */
 	private get defaultSource(): Source | undefined {
-		const integrations = getIntegrations()
-		const visibleEvent = (source: Source) => source.enabled && !source.hidden && source.type === SourceType.Event
-		const devSources = [...(integrations.find(integration => integration.type === 'dev')?.sources ?? [])]
-		return devSources.find(visibleEvent)
-			?? integrations.flatMap(integration => [...integration.sources]).find(visibleEvent)
+		const visibleSources = getIntegrations().flatMap(i => [...i.sources]).filter(s => s.visible)
+		return visibleSources.find(s => s.id === getDefaultSourceId()) ?? visibleSources[0]
 	}
 
 	/** The create mode a pointerdown starts on empty space, or `undefined` if it shouldn't start one. Month
@@ -165,7 +160,9 @@ export class EntryDragController extends Controller {
 	private buildCreate(anchor: DragPoint, current: DragPoint): Entry {
 		const drag = this.drag!
 		// No id: it's a draft until the backend assigns one on create (see Entry.persisted / DraftController).
-		const base = { sourceId: drag.source!.id, type: EntryType.Event, heading: '' }
+		// Type follows the target calendar: a task source makes a task (a VTODO on CalDAV), else an event.
+		const type = drag.source!.type === SourceType.Task ? EntryType.Task : EntryType.Event
+		const base = { sourceId: drag.source!.id, type, heading: '' }
 		if (drag.mode === 'allday') {
 			const { start, end } = placeAllDay(anchor.date, current.date)
 			return new Entry({ ...base, start, end, allDay: true })

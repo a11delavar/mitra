@@ -11,6 +11,7 @@ import { eventsRouter } from './events.js'
 import { entriesRouter } from './entries.js'
 import { integrationsRouter } from './integrations.js'
 import { sourcesRouter } from './sources.js'
+import { userRouter } from './user.js'
 import { seedDev } from './Dev.js'
 
 const logger = createLogger('API')
@@ -39,6 +40,7 @@ app.use('/api/events', eventsRouter)
 app.use('/api/entries', entriesRouter)
 app.use('/api/integrations', integrationsRouter)
 app.use('/api/sources', sourcesRouter)
+app.use('/api/user', userRouter)
 
 // Serve the bundled frontend, falling back to index.html for client-side routes.
 const frontendDistPath = path.resolve(import.meta.dirname, '../../dist')

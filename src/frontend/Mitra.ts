@@ -1,6 +1,6 @@
 import { component, css } from '@a11d/lit'
 import { Application, application } from '@a11d/lit-application'
-import { fetchIntegrations } from './Api.js'
+import { fetchIntegrations, fetchUser } from './Api.js'
 import { Month } from './Month.js'
 import { Days } from './Days.js'
 import { Day } from './Day.js'
@@ -21,7 +21,7 @@ import { Markdown } from './Markdown.js'
 @component('mitra-application')
 export class Mitra extends Application {
 	protected override async initialized() {
-		await fetchIntegrations()
+		await Promise.all([fetchIntegrations(), fetchUser()])
 		await super.initialized()
 	}
 

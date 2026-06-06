@@ -184,6 +184,11 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			const normalizedObjUrl = CalDAV.resolveMemberUrl(source.uri, obj.url)
 			let entry = existingEntries.find(e => CalDAV.memberUrlsMatch(source.uri, e.uri, obj.url))
 			if (!entry) {
+				// A sibling source of the same calendar (events + tasks share one URL) may already own this
+				// member — don't re-file it here as a cross-source duplicate.
+				if (await em.findOne(Entry, { uri: normalizedObjUrl })) {
+					continue
+				}
 				entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: normalizedObjUrl })
 				em.persist(entry)
 				existingEntries.push(entry)
@@ -243,6 +248,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		if (!component) {
 			throw new Error('No vevent or vtodo found in entry rawData')
 		}
+		const isTask = component.name === 'vtodo'
 
 		if (keys.includes('heading')) {
 			component.updatePropertyWithValue('summary', incoming.heading)
@@ -268,14 +274,21 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 		// All-day toggling changes whether DTSTART/DTEND are date-only, so a change to `allDay` also
 		// rewrites both date properties (even if the instants themselves didn't change).
-		if (keys.includes('start') || keys.includes('allDay')) {
-			component.updatePropertyWithValue('dtstart', this.toICALTime(incoming.start!, incoming.allDay))
+		if ((keys.includes('start') || keys.includes('allDay')) && incoming.start) {
+			component.updatePropertyWithValue('dtstart', this.toICALTime(incoming.start, incoming.allDay))
 			existing.start = incoming.start
 		}
 
-		if (keys.includes('end') || keys.includes('allDay')) {
-			component.updatePropertyWithValue('dtend', this.toICALTime(incoming.end!, incoming.allDay))
+		// A VTODO's end is DUE (RFC 5545 §3.8.2.3), a VEVENT's is DTEND — matching how sync reads each back.
+		if ((keys.includes('end') || keys.includes('allDay')) && incoming.end) {
+			component.updatePropertyWithValue(isTask ? 'due' : 'dtend', this.toICALTime(incoming.end, incoming.allDay))
 			existing.end = incoming.end
+		}
+
+		if (isTask && keys.includes('done')) {
+			component.updatePropertyWithValue('status', incoming.done ? 'COMPLETED' : 'NEEDS-ACTION')
+			component.updatePropertyWithValue('percent-complete', incoming.done ? 100 : 0)
+			existing.done = incoming.done
 		}
 
 		if (keys.includes('allDay')) {
@@ -312,16 +325,24 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		comp.updatePropertyWithValue('prodid', '-//calendar//EN')
 		comp.updatePropertyWithValue('version', '2.0')
 
-		const vevent = new ICAL.Component('vevent')
-		vevent.updatePropertyWithValue('uid', uid)
-		vevent.updatePropertyWithValue('dtstamp', ICAL.Time.now())
-		vevent.updatePropertyWithValue('summary', entry.heading)
-		!entry.description ? void 0 : vevent.updatePropertyWithValue('description', entry.description)
-		!entry.start ? void 0 : vevent.updatePropertyWithValue('dtstart', this.toICALTime(entry.start, entry.allDay))
-		!entry.end ? void 0 : vevent.updatePropertyWithValue('dtend', this.toICALTime(entry.end, entry.allDay))
-		!entry.color ? void 0 : vevent.updatePropertyWithValue('color', entry.color)
+		// A task is a VTODO (its end is DUE, completion is STATUS); anything else a VEVENT (end is DTEND).
+		// Writing the matching component is what keeps the sibling source (events + tasks share one
+		// calendar URL) from ingesting it as a duplicate.
+		const isTask = entry.type === EntryType.Task
+		const component = new ICAL.Component(isTask ? 'vtodo' : 'vevent')
+		component.updatePropertyWithValue('uid', uid)
+		component.updatePropertyWithValue('dtstamp', ICAL.Time.now())
+		component.updatePropertyWithValue('summary', entry.heading)
+		!entry.description ? void 0 : component.updatePropertyWithValue('description', entry.description)
+		!entry.start ? void 0 : component.updatePropertyWithValue('dtstart', this.toICALTime(entry.start, entry.allDay))
+		!entry.end ? void 0 : component.updatePropertyWithValue(isTask ? 'due' : 'dtend', this.toICALTime(entry.end, entry.allDay))
+		!entry.color ? void 0 : component.updatePropertyWithValue('color', entry.color)
+		if (isTask) {
+			component.updatePropertyWithValue('status', entry.done ? 'COMPLETED' : 'NEEDS-ACTION')
+			component.updatePropertyWithValue('percent-complete', entry.done ? 100 : 0)
+		}
 
-		comp.addSubcomponent(vevent)
+		comp.addSubcomponent(component)
 
 		const iCalString = comp.toString()
 
@@ -332,7 +353,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			iCalString,
 		})
 
-		entry.type = EntryType.Event
 		entry.uri = CalDAV.resolveMemberUrl(source.uri, filename)
 		entry.data ??= {}
 		entry.data.raw = iCalString

@@ -23,6 +23,10 @@ export class Source {
 	@property({ type: 'boolean' }) hidden = false
 	@property({ type: 'boolean' }) enabled = false
 
+	get visible() {
+		return this.enabled && !this.hidden
+	}
+
 	@property({ type: 'json', nullable: true }) syncState?: Record<string, any>
 
 	get key() {

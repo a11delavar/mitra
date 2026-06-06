@@ -1,5 +1,5 @@
 import { Component, component, html, css, property, event } from '@a11d/lit'
-import { getIntegrations, toggleSourceVisibility, updateSourceColor, deleteIntegration, fetchIntegrations } from './Api.js'
+import { getIntegrations, toggleSourceVisibility, updateSourceColor, deleteIntegration, fetchIntegrations, getDefaultSourceId, setDefaultSource } from './Api.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { SourceType, type Source } from 'shared'
 import { outlineStyles } from './components/outlineStyles.js'
@@ -151,22 +151,63 @@ export class Sidebar extends Component {
 
 							&:hover {
 								background-color: color-mix(in srgb, var(--color-text) 5%, transparent);
+								.actions mitra-icon-button { opacity: 1; }
 							}
 
-							button.color {
-								width: 0.6rem;
-								height: 0.6rem;
-								border-radius: calc(var(--border-radius) - 2px);
+							/* Keep the actions visible while this row's menu popover is open, so the 3-dot
+							   doesn't fade out from under its own menu when the pointer leaves the row. */
+							&:has(.source-menu:popover-open) .actions mitra-icon-button {
+								opacity: 1;
+							}
+
+							&[data-hidden] {
+								.marker, .type-icon { opacity: 0.4; }
+								.name { color: var(--color-text-muted); }
+								/* A hidden source always shows its eye toggle, so it can be brought back. */
+								.actions .eye-icon { opacity: 1; }
+							}
+
+							/* Leading marker: a filled square in the source's colour, or a star when it's the default
+							   (both square/star icons). Clicking it toggles default. */
+							.marker {
+								all: unset;
 								flex-shrink: 0;
-								border: none;
-								padding: 0;
+								display: inline-flex;
+								align-items: center;
+								justify-content: center;
 								cursor: pointer;
+								font-size: 0.85rem;
+								border-radius: var(--border-radius);
 								transition: transform 0.1s;
+
 								&:hover {
-									transform: scale(1.2);
+									transform: scale(1.15);
+								}
+
+								${outlineStyles};
+							}
+
+							.source-menu {
+								/* Only lay it out when open: an unconditional display on a popover element beats the
+								   UA's hide-when-closed rule (author origin wins) and would show it always. */
+								&:popover-open {
+									display: flex;
+									flex-direction: column;
+									gap: 0.5rem;
+								}
+
+								.menu-row {
+									display: flex;
+									align-items: center;
+									gap: 0.5rem;
+
+									> mitra-icon {
+										font-size: 0.9rem;
+										color: var(--color-text-muted);
+									}
 								}
 							}
-							
+
 							[popover] {
 								background: color-mix(in srgb, var(--color-surface) 90%, transparent);
 								backdrop-filter: blur(10px);
@@ -200,11 +241,14 @@ export class Sidebar extends Component {
 								align-items: center;
 								gap: 0.25rem;
 
-								.eye-icon {
+								/* On hover-capable devices, action icons stay out of the way until the row is hovered
+								   (revealed by &:hover; the default star and a hidden source's eye are forced visible
+								   separately). Touch devices have no hover, so they show them always. */
+								mitra-icon-button {
 									transition: opacity 0.15s ease;
 
-									&.hidden {
-										opacity: 0.5;
+									@media (hover: hover) {
+										opacity: 0;
 									}
 								}
 							}
@@ -229,6 +273,15 @@ export class Sidebar extends Component {
 	private async toggleVisibility(source: Source) {
 		await toggleSourceVisibility(source.id, !source.hidden)
 		source.hidden = !source.hidden
+		this.requestUpdate()
+	}
+
+	private isDefault(source: Source) {
+		return getDefaultSourceId() === source.id
+	}
+
+	private async toggleDefault(source: Source) {
+		await setDefaultSource(this.isDefault(source) ? undefined : source.id)
 		this.requestUpdate()
 	}
 
@@ -273,21 +326,17 @@ export class Sidebar extends Component {
 						</header>
 						<div class="sources">
 							${i.sources.filter(source => source.enabled).map(source => html`
-								<div class="source">
-									<button class="color" style="background-color: ${source.color || 'var(--color-text-muted)'}; anchor-name: --source-color-${source.id}"
-										@click=${(e: Event) => ((e.currentTarget as HTMLElement).nextElementSibling as HTMLElement)?.togglePopover()}
-									></button>
-									<div popover id="source-color-${source.id}" style="position-anchor: --source-color-${source.id}; margin-inline: 0.25rem;">
-										<mitra-color-picker .value=${source.color} @change=${(e: CustomEvent) => this.setSourceColor(source, e.detail, (e.currentTarget as HTMLElement).parentElement!)}></mitra-color-picker>
-									</div>
+								<div class="source" ?data-hidden=${source.hidden}>
+									<button class="marker" @click=${() => this.toggleDefault(source)}
+										title=${this.isDefault(source) ? 'Default for new entries — click to unset' : 'Set as the default for new entries'}>
+										<mitra-icon icon=${this.isDefault(source) ? 'star' : 'square'} fill style="color: ${source.color || 'var(--color-text-muted)'}"></mitra-icon>
+									</button>
 									<mitra-icon
 										class="type-icon"
 										icon=${source.type === SourceType.Task ? 'list-todo' : 'calendar'}
 										title=${source.type === SourceType.Task ? 'Tasks' : 'Events'}
 									></mitra-icon>
-									<div class="name">
-										${source.name}
-									</div>
+									<div class="name">${source.name}</div>
 									${this.getActionsTemplate(source)}
 								</div>
 							`)}
@@ -306,11 +355,24 @@ export class Sidebar extends Component {
 		return html`
 			<div class="actions">
 				<mitra-icon-button
-					class="eye-icon ${source.hidden ? 'hidden' : ''}"
+					class="eye-icon"
 					icon=${source.hidden ? 'eye-off' : 'eye'}
-					label=${source.hidden ? 'Show source' : 'Hide source'}
+					label=${source.hidden ? 'Show calendar' : 'Hide calendar'}
 					@click=${() => this.toggleVisibility(source)}
 				></mitra-icon-button>
+				<mitra-icon-button
+					class="menu-icon"
+					icon="more-horizontal"
+					label="Calendar options"
+					style="anchor-name: --source-menu-${source.id}"
+					@click=${(e: Event) => ((e.currentTarget as HTMLElement).nextElementSibling as HTMLElement)?.togglePopover()}
+				></mitra-icon-button>
+				<div popover id="source-menu-${source.id}" class="source-menu" style="position-anchor: --source-menu-${source.id}; margin-inline: 0.25rem;">
+					<div class="menu-row">
+						<mitra-icon icon="palette"></mitra-icon>
+						<mitra-color-picker .value=${source.color} @change=${(e: CustomEvent) => this.setSourceColor(source, e.detail, (e.currentTarget as HTMLElement).closest('[popover]')!)}></mitra-color-picker>
+					</div>
+				</div>
 			</div>
 		`
 	}
