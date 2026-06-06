@@ -15,6 +15,7 @@ import { buttonStyles } from './components/button.css.js'
 import { selectStyles } from './components/select.css.js'
 import { inputStyles } from './components/input.css.js'
 import { menuStyles } from './components/menu.css.js'
+import { TaskStatusComponent } from './components/TaskStatus.js'
 import { Markdown } from './Markdown.js'
 
 @application()
@@ -58,6 +59,7 @@ export class Mitra extends Application {
 			${EntrySegmentComponent.styles}
 			${EntryDetailsComponent.styles}
 			${DialogIntegration.styles}
+			${TaskStatusComponent.styles}
 		`
 	}
 }

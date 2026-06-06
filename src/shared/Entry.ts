@@ -8,6 +8,13 @@ export enum EntryType {
 	Task = 'task',
 }
 
+export enum TaskStatus {
+	ToDo = 'todo',
+	Doing = 'doing',
+	Done = 'done',
+	Cancelled = 'cancelled',
+}
+
 export interface EntryData {
 	raw?: string
 	etag?: string
@@ -32,7 +39,11 @@ export class Entry {
 
 	@property({ type: 'datetime', nullable: true }) start?: DateTime
 	@property({ type: 'datetime', nullable: true }) end?: DateTime
-	@property({ type: 'boolean', nullable: true }) done?: boolean
+
+	@enumType({ items: () => TaskStatus, nullable: true }) status?: TaskStatus
+
+	get done() { return this.status === TaskStatus.Done }
+	set done(value) { this.status = value ? TaskStatus.Done : TaskStatus.ToDo }
 
 	@property({ type: 'boolean' }) allDay = false
 
@@ -65,4 +76,5 @@ export class Entry {
 	get multiDay() {
 		return !!this.start && !!this.end && !this.start.dayStart.equals(this.end.dayStart)
 	}
+
 }

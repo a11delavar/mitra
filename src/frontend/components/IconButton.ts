@@ -22,14 +22,15 @@ export class IconButton extends Component {
 					box-sizing: border-box;
 					padding: 0.25rem;
 					border-radius: var(--border-radius);
-					color: var(--color-text-muted);
+					color: currentColor;
+					opacity: 0.9;
 					font-size: inherit;
 					cursor: pointer;
 					transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 					border: 1px solid transparent;
 
 					&:hover {
-						color: var(--color-text);
+						opacity: 1;
 						background: color-mix(in srgb, var(--color-text) 8%, transparent);
 					}
 
@@ -37,7 +38,7 @@ export class IconButton extends Component {
 
 					&:focus-visible {
 						outline: none;
-						color: var(--color-text);
+						opacity: 1;
 						background: color-mix(in srgb, var(--color-text) 8%, transparent);
 						box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 45%, transparent);
 						border: 1px solid var(--color-accent);

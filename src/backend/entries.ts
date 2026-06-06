@@ -51,10 +51,10 @@ entriesRouter.post('/', async (req, res) => {
 		heading: body.heading ?? '',
 		description: body.description ?? '',
 		color: body.color ?? null,
-		start: body.start ? new Date(body.start) as DateTime : undefined,
-		end: body.end ? new Date(body.end) as DateTime : undefined,
+		start: body.start ? new DateTime(body.start) : undefined,
+		end: body.end ? new DateTime(body.end) : undefined,
 		allDay: body.allDay ?? false,
-		done: body.done,
+		status: body.status,
 	})
 
 	const created = await targetIntegration.createEntry(em, incoming)
@@ -87,10 +87,10 @@ entriesRouter.put('/:id', async (req, res) => {
 		heading: body.heading ?? existing.heading,
 		description: body.description ?? existing.description,
 		color: body.color !== undefined ? body.color : existing.color,
-		start: body.start ? new Date(body.start) as DateTime : existing.start,
-		end: body.end ? new Date(body.end) as DateTime : existing.end,
+		start: body.start ? new DateTime(body.start) : existing.start,
+		end: body.end ? new DateTime(body.end) : existing.end,
 		allDay: body.allDay ?? existing.allDay,
-		done: body.done ?? existing.done,
+		status: body.status ?? existing.status,
 	})
 
 	// Moving an entry between integrations is a delete-then-create; otherwise an in-place update.

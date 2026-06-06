@@ -1,4 +1,5 @@
 import { component, html, property, state, Component, css, eventListener, event, Binder } from '@a11d/lit'
+import { EntryType, TaskStatus } from 'shared'
 import type { EntrySegment } from './EntrySegment.js'
 import { getSource, updateEvent, deleteEvent, createEvent } from './Api.js'
 import { DraftController } from './DraftController.js'
@@ -65,6 +66,14 @@ export class EntryDetailsComponent extends Component {
 			await this.creating // if a create is mid-flight, let it land first (a no-op once settled)
 			await updateEvent(entry)
 		}
+	}
+
+	// The task checkbox/menu mutated `entry.status`: persist it like any other field, re-render the title
+	// (strikethrough), and notify the grid so its segment updates too.
+	private readonly handleStatusChange = () => {
+		this.handleChange().catch(() => void 0)
+		this.requestUpdate()
+		this.change.dispatch()
 	}
 
 	private readonly handleDelete = async () => {
@@ -167,7 +176,12 @@ export class EntryDetailsComponent extends Component {
 					display: flex;
 					align-items: center;
 					gap: 0.25rem;
-					padding: 0.5rem 0.5rem 0.5rem 0.875rem;
+					padding: 0.5rem 0.5rem 0.5rem 0.6rem;
+
+					> mitra-task-status {
+						font-size: 0.9375rem;
+						margin-inline-end: 0.125rem;
+					}
 
 					> .title {
 						flex: 1;
@@ -175,6 +189,11 @@ export class EntryDetailsComponent extends Component {
 						font-weight: 600;
 						color: var(--color-text);
 						line-height: 1.3;
+
+						&[data-struck] {
+							text-decoration: line-through;
+							color: var(--color-text-muted);
+						}
 					}
 				}
 
@@ -281,11 +300,16 @@ export class EntryDetailsComponent extends Component {
 	protected override get template() {
 		return !this.segment ? html.nothing : html`
 			<header class="header">
-				<input class="title subtle" placeholder="Title" ${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
+				${this.segment.entry.type !== EntryType.Task ? html.nothing : html`
+					<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
+				`}
+				<input class="title subtle" placeholder="Title"
+					?data-struck=${this.segment.entry.status === TaskStatus.Done || this.segment.entry.status === TaskStatus.Cancelled}
+					${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
 				<mitra-icon-button
 					label="Options"
 					icon="more-horizontal"
-					style="anchor-name: --entry-menu-${this.segment.entry.id}"
+					style="anchor-name: --entry-menu-${this.segment.entry.id}; color: var(--color-text-muted)"
 					@click=${this.toggleMenu}
 				></mitra-icon-button>
 				<menu popover id="entry-menu-${this.segment.entry.id}" style="position-anchor: --entry-menu-${this.segment.entry.id}">
@@ -294,7 +318,10 @@ export class EntryDetailsComponent extends Component {
 						Delete
 					</button>
 				</menu>
-				<mitra-icon-button class="close" icon="x" label="Close" @click=${this.handleClose}></mitra-icon-button>
+				<mitra-icon-button class="close" icon="x" label="Close"
+					style="color: var(--color-text-muted)"
+					@click=${this.handleClose}
+				></mitra-icon-button>
 			</header>
 			<ul>
 				${this.segment.allDay ? html.nothing : html`

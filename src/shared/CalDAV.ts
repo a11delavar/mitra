@@ -6,7 +6,7 @@ import { model } from './model.js'
 import { entity } from './orm.js'
 import { Source, SourceType } from './Source.js'
 import { Integration } from './Integration.js'
-import { Entry, EntryType } from './Entry.js'
+import { Entry, EntryType, TaskStatus } from './Entry.js'
 import { Color } from './Color.js'
 
 export interface CalDAVCredentials {
@@ -75,10 +75,44 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	 * makes a real all-day event (not a 00:00→00:00 timed one); `DTEND` stays the exclusive next day. */
 	private toICALTime(date: DateTime, allDay: boolean) {
 		if (!allDay) {
-			return ICAL.Time.fromJSDate(date as unknown as Date, true)
+			return ICAL.Time.fromJSDate(date, true)
 		}
-		const local = ICAL.Time.fromJSDate(date as unknown as Date, false)
+		const local = ICAL.Time.fromJSDate(date, false)
 		return ICAL.Time.fromData({ year: local.year, month: local.month, day: local.day, isDate: true })
+	}
+
+	/** mitra TaskStatus → CalDAV VTODO STATUS (RFC 5545 §3.8.1.11). */
+	private static readonly statusToICal = new Map<TaskStatus, string>([
+		[TaskStatus.ToDo, 'NEEDS-ACTION'],
+		[TaskStatus.Doing, 'IN-PROCESS'],
+		[TaskStatus.Done, 'COMPLETED'],
+		[TaskStatus.Cancelled, 'CANCELLED'],
+	])
+
+	/** CalDAV VTODO STATUS → mitra TaskStatus. A missing/unknown STATUS falls back to PERCENT-COMPLETE
+	 * (>= 100 means done), then to ToDo — so a VTODO with no status is shown as ToDo, never mutated. */
+	private static statusFromICal(status: string | undefined, percentComplete: number): TaskStatus {
+		switch (status?.toUpperCase()) {
+			case 'COMPLETED': return TaskStatus.Done
+			case 'IN-PROCESS': return TaskStatus.Doing
+			case 'CANCELLED': return TaskStatus.Cancelled
+			case 'NEEDS-ACTION': return TaskStatus.ToDo
+			default: return percentComplete >= 100 ? TaskStatus.Done : TaskStatus.ToDo
+		}
+	}
+
+	/** Write a task's three coupled completion properties consistently: STATUS, PERCENT-COMPLETE, and the
+	 * COMPLETED instant (stamped/cleared server-side — there's no UI for it). Manual percent comes later
+	 * with sub-tasks; for now it tracks completion (100/0). */
+	private writeTaskStatus(component: ICAL.Component, status: TaskStatus | undefined) {
+		const effective = status ?? TaskStatus.ToDo
+		component.updatePropertyWithValue('status', CalDAV.statusToICal.get(effective))
+		component.updatePropertyWithValue('percent-complete', effective === TaskStatus.Done ? 100 : 0)
+		if (effective === TaskStatus.Done) {
+			component.updatePropertyWithValue('completed', ICAL.Time.now())
+		} else {
+			component.removeProperty('completed')
+		}
 	}
 
 	static collectionUrl(sourceUri: string): string {
@@ -216,7 +250,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				const value = (name: string) => component.getFirstPropertyValue(name) as any
 				entry.heading = value('summary')?.toString() || 'Untitled Task'
 				entry.description = value('description')?.toString() || ''
-				entry.done = value('status')?.toString() === 'COMPLETED' || Number(value('percent-complete') ?? 0) >= 100
+				entry.status = CalDAV.statusFromICal(value('status')?.toString(), Number(value('percent-complete') ?? 0))
 				entry.start = value('dtstart')?.toJSDate?.() as any || undefined
 				entry.end = value('due')?.toJSDate?.() as any || undefined
 				entry.allDay = !!value('dtstart')?.isDate
@@ -235,7 +269,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			throw new Error('Entry must have a URL and raw data to be updated via CalDAV')
 		}
 
-		const keys: Array<keyof Entry> = (['heading', 'description', 'color', 'start', 'end', 'done', 'allDay'] as const)
+		const keys: Array<keyof Entry> = (['heading', 'description', 'color', 'start', 'end', 'status', 'allDay'] as const)
 			.filter(key => !Object[equals](existing[key], incoming[key]))
 
 		if (keys.length === 0) {
@@ -285,10 +319,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			existing.end = incoming.end
 		}
 
-		if (isTask && keys.includes('done')) {
-			component.updatePropertyWithValue('status', incoming.done ? 'COMPLETED' : 'NEEDS-ACTION')
-			component.updatePropertyWithValue('percent-complete', incoming.done ? 100 : 0)
-			existing.done = incoming.done
+		if (isTask && keys.includes('status')) {
+			this.writeTaskStatus(component, incoming.status)
+			existing.status = incoming.status
 		}
 
 		if (keys.includes('allDay')) {
@@ -338,8 +371,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		!entry.end ? void 0 : component.updatePropertyWithValue(isTask ? 'due' : 'dtend', this.toICALTime(entry.end, entry.allDay))
 		!entry.color ? void 0 : component.updatePropertyWithValue('color', entry.color)
 		if (isTask) {
-			component.updatePropertyWithValue('status', entry.done ? 'COMPLETED' : 'NEEDS-ACTION')
-			component.updatePropertyWithValue('percent-complete', entry.done ? 100 : 0)
+			this.writeTaskStatus(component, entry.status)
 		}
 
 		comp.addSubcomponent(component)

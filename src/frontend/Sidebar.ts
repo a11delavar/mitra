@@ -356,6 +356,7 @@ export class Sidebar extends Component {
 			<div class="actions">
 				<mitra-icon-button
 					class="eye-icon"
+					style='color: var(--color-text-muted)'
 					icon=${source.hidden ? 'eye-off' : 'eye'}
 					label=${source.hidden ? 'Show calendar' : 'Hide calendar'}
 					@click=${() => this.toggleVisibility(source)}
@@ -364,7 +365,7 @@ export class Sidebar extends Component {
 					class="menu-icon"
 					icon="more-horizontal"
 					label="Calendar options"
-					style="anchor-name: --source-menu-${source.id}"
+					style="anchor-name: --source-menu-${source.id}; color: var(--color-text-muted)"
 					@click=${(e: Event) => ((e.currentTarget as HTMLElement).nextElementSibling as HTMLElement)?.togglePopover()}
 				></mitra-icon-button>
 				<div popover id="source-menu-${source.id}" class="source-menu" style="position-anchor: --source-menu-${source.id}; margin-inline: 0.25rem;">

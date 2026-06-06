@@ -1,6 +1,6 @@
 import { type EntityManager, type MikroORM } from '@mikro-orm/sqlite'
 import { DateTime } from '@3mo/date-time'
-import { model, entity, Integration, Source, SourceType, Entry, EntryType, User, Color } from '../shared/index.js'
+import { model, entity, Integration, Source, SourceType, Entry, EntryType, TaskStatus, User, Color } from '../shared/index.js'
 
 /**
  * A dev-only, self-contained calendar with no external backend: its sources and entries live only in
@@ -50,7 +50,7 @@ export class Dev extends Integration {
 		existing.start = incoming.start
 		existing.end = incoming.end
 		existing.allDay = incoming.allDay
-		existing.done = incoming.done
+		existing.status = incoming.status
 		return Promise.resolve()
 	}
 
@@ -153,12 +153,12 @@ export async function seedDev(orm: MikroORM) {
 	holiday({ heading: 'Public Holiday', start: allDayStart(4), end: allDayStart(5), allDay: true })     // Fri (overlaps Family Visit)
 	personalEvent({ heading: 'Berlin Trip', start: allDayStart(5), end: allDayStart(10), allDay: true }) // Sat → next week
 
-	// Tasks, mid-day (some done)
-	task({ heading: 'Submit expense report', done: true, start: at(0, 11), end: at(0, 11, 30) })
-	task({ heading: 'Review PR #312', start: at(1, 13), end: at(1, 13, 30) })
-	task({ heading: 'Update roadmap doc', start: at(2, 14), end: at(2, 14, 30) })
-	task({ heading: 'Prepare demo slides', start: at(3, 12), end: at(3, 13) })
-	task({ heading: 'Send weekly update', done: true, start: at(4, 11, 30), end: at(4, 12) })
+	// Tasks, mid-day — one per status so the checkbox/menu states are all visible in dev.
+	task({ heading: 'Submit expense report', status: TaskStatus.Done, start: at(0, 11), end: at(0, 11, 30) })
+	task({ heading: 'Review PR #312', status: TaskStatus.Doing, start: at(1, 13), end: at(1, 13, 30) })
+	task({ heading: 'Update roadmap doc', status: TaskStatus.ToDo, start: at(2, 14), end: at(2, 14, 30) })
+	task({ heading: 'Prepare demo slides', status: TaskStatus.Cancelled, start: at(3, 12), end: at(3, 13) })
+	task({ heading: 'Send weekly update', status: TaskStatus.Done, start: at(4, 11, 30), end: at(4, 12) })
 
 	await em.flush()
 }

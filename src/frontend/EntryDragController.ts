@@ -243,8 +243,10 @@ export class EntryDragController extends Controller {
 			return
 		}
 		const target = e.target as HTMLElement
-		if (target.closest('mitra-entry-details')) {
-			return // interactions inside an open editor popover are never grid gestures
+		if (target.closest('mitra-entry-details') || target.closest('mitra-task-status')) {
+			// Interactions inside the editor popover, or on a task's status checkbox/menu, are never grid
+			// gestures — otherwise a tap on the checkbox would also register as a tap-to-open on the segment.
+			return
 		}
 		const cells = this.snapshotCells()
 		const common = { pointerId: e.pointerId, origin: { x: e.clientX, y: e.clientY }, point: { x: e.clientX, y: e.clientY }, cells, moved: false }

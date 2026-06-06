@@ -1,7 +1,8 @@
-import { component, html, property, Component, css, state, bind, queryConnectedInstances, eventListener } from '@a11d/lit'
+import { component, html, property, Component, css, state, bind, queryConnectedInstances, eventListener, unsafeCSS } from '@a11d/lit'
+import { EntryType, TaskStatus } from 'shared'
 import { type EntrySegment } from './EntrySegment.js'
 import { colorContrast } from './components/colorContrast.js'
-import { getSource } from './Api.js'
+import { getSource, updateEvent } from './Api.js'
 import { DraftController } from './DraftController.js'
 
 @component('mitra-entry-segment')
@@ -45,6 +46,14 @@ export class EntrySegmentComponent extends Component {
 		this.open = true
 	}
 
+	private readonly handleStatusChange = () => {
+		this.requestUpdate()
+		const entry = this.segment?.entry
+		if (entry?.persisted) {
+			updateEvent(entry).catch(() => void 0)
+		}
+	}
+
 	// Reflect the entry's draft-ness (no id yet) onto the host for the dashed CSS, and pop the freshly-
 	// dropped draft's editor open once — only on its run-start segment, so a multi-day draft (sliced into
 	// several day-segments) opens a single editor. Runs every update since the draft store, not a property
@@ -62,6 +71,11 @@ export class EntrySegmentComponent extends Component {
 		this.style.anchorName = this.anchorName
 		this.toggleAttribute('data-draft', !entry.persisted)
 		this.toggleAttribute('dragging', this.draft.isDragging(entry))
+		if (entry.type === EntryType.Task) {
+			this.setAttribute('data-status', entry.status ?? 'todo')
+		} else {
+			this.removeAttribute('data-status')
+		}
 		if (this.draft.shouldAutoOpen(entry) && !this.segment!.hasPrevious) {
 			this.draft.consumeAutoOpen()
 			this.open = true
@@ -82,7 +96,6 @@ export class EntrySegmentComponent extends Component {
 				font-size: 0.7rem;
 				margin-top: 1px;
 				min-height: 0;
-				cursor: pointer;
 
 				/* Collision Overlap Logic */
 				--overlap-s: var(--overlap-slot, 0);
@@ -191,10 +204,17 @@ export class EntrySegmentComponent extends Component {
 				}
 
 				& > .heading {
+					display: flex;
+					align-items: center;
+					gap: 0.25rem;
 					font-weight: 600;
 					white-space: normal;
 					word-break: break-word;
 					line-height: 1.1;
+
+					/* The title text shrinks/wraps within the row; the checkbox keeps its size. */
+					> .label { min-width: 0; }
+					> mitra-task-status { font-size: 0.95rem; }
 
 					@container (max-height: 45px) {
 						flex: initial;
@@ -210,6 +230,13 @@ export class EntrySegmentComponent extends Component {
 
 					@container (max-height: 12px) {
 						display: none;
+					}
+				}
+
+				&[data-status=${unsafeCSS(TaskStatus.Done)}], &[data-status=${unsafeCSS(TaskStatus.Cancelled)}] {
+					& > .heading > .label {
+						opacity: 0.6;
+						text-decoration: line-through;
 					}
 				}
 
@@ -253,7 +280,12 @@ export class EntrySegmentComponent extends Component {
 					<span class="end">${this.segment.entry.end?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
 				</div>
 			`}
-			<div class="heading">${this.segment.entry.heading || (this.segment.entry.persisted ? '' : 'Draft')}</div>
+			<div class="heading">
+				${this.segment.entry.type !== EntryType.Task ? html.nothing : html`
+					<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
+				`}
+				<span class="label">${this.segment.entry.heading || (this.segment.entry.persisted ? '' : 'Draft')}</span>
+			</div>
 			${!this.resize || !this.segment.entry.persisted ? html.nothing : html`
 				<div class="resize-start"></div>
 				<div class="resize-end"></div>
