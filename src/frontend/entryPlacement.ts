@@ -1,8 +1,5 @@
 import type { DateTime } from '@3mo/date-time'
-import type { Entry } from 'shared'
-
-/** The granularity timed gestures (create / move / resize) snap to. A single knob today; a user setting later. */
-export const SNAP_MINUTES = 15
+import { type Entry, SNAP_MINUTES } from 'shared'
 
 export interface Span {
 	readonly start: DateTime

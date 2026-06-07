@@ -12,11 +12,13 @@ import { DialogIntegration } from './DialogIntegration.js'
 import { colorContrast } from './components/colorContrast.js'
 import { IconButton } from './components/IconButton.js'
 import { buttonStyles } from './components/button.css.js'
+import { switchStyles } from './components/switch.css.js'
 import { selectStyles } from './components/select.css.js'
 import { inputStyles } from './components/input.css.js'
 import { menuStyles } from './components/menu.css.js'
 import { TaskStatusComponent } from './components/TaskStatus.js'
 import { Markdown } from './Markdown.js'
+import { EntryDetailsWhen } from './EntryDetailsWhen.js'
 
 @application()
 @component('mitra-application')
@@ -45,6 +47,7 @@ export class Mitra extends Application {
 			}
 
 			${buttonStyles}
+			${switchStyles}
 			${selectStyles}
 			${inputStyles}
 			${menuStyles}
@@ -58,6 +61,7 @@ export class Mitra extends Application {
 			${Day.styles}
 			${EntrySegmentComponent.styles}
 			${EntryDetailsComponent.styles}
+			${EntryDetailsWhen.styles}
 			${DialogIntegration.styles}
 			${TaskStatusComponent.styles}
 		`

@@ -36,11 +36,11 @@ export class EntryDetailsComponent extends Component {
 	@eventListener('toggle')
 	protected handleToggle(e: ToggleEvent) {
 		if (e.newState === 'open') {
-			requestAnimationFrame(() => {
-				const title = this.querySelector<HTMLInputElement>('.title')
-				title?.focus()
-				title?.select()
-			})
+			// Only grab focus for a fresh, untitled entry (e.g. a just-dropped draft); don't steal it when
+			// reopening one that already has a title.
+			if (!this.segment?.entry.heading?.trim()) {
+				requestAnimationFrame(() => this.querySelector<HTMLInputElement>('.title')?.focus())
+			}
 		}
 	}
 
@@ -71,6 +71,14 @@ export class EntryDetailsComponent extends Component {
 	// The task checkbox/menu mutated `entry.status`: persist it like any other field, re-render the title
 	// (strikethrough), and notify the grid so its segment updates too.
 	private readonly handleStatusChange = () => {
+		this.handleChange().catch(() => void 0)
+		this.requestUpdate()
+		this.change.dispatch()
+	}
+
+	// The <mitra-entry-details-when> editor mutated the entry's span in place: persist it, re-render, and
+	// notify the grid so its segment moves too.
+	private readonly handleWhenChange = () => {
 		this.handleChange().catch(() => void 0)
 		this.requestUpdate()
 		this.change.dispatch()
@@ -108,6 +116,13 @@ export class EntryDetailsComponent extends Component {
 			mitra-entry-details {
 				display: contents;
 				cursor: default;
+
+				/* Tint the toggle switch and the text selection with the entry's (or its source's) colour. */
+				--color-accent: var(--mitra-entry-segment-color);
+
+				& ::selection {
+					background-color: color-mix(in srgb, var(--mitra-entry-segment-color) 40%, transparent);
+				}
 
 				&:popover-open {
 					display: flex;
@@ -172,45 +187,23 @@ export class EntryDetailsComponent extends Component {
 					}
 				}
 
-				> .header {
-					display: flex;
-					align-items: center;
-					gap: 0.25rem;
-					padding: 0.5rem 0.5rem 0.5rem 0.6rem;
-
-					> mitra-task-status {
-						font-size: 0.9375rem;
-						margin-inline-end: 0.125rem;
-					}
-
-					> .title {
-						flex: 1;
-						font-size: 0.9375rem;
-						font-weight: 600;
-						color: var(--color-text);
-						line-height: 1.3;
-
-						&[data-struck] {
-							text-decoration: line-through;
-							color: var(--color-text-muted);
-						}
-					}
-				}
-
 				> ul {
 					list-style: none;
 					margin: 0;
 					padding: 0.5rem 1rem 1rem;
 					display: grid;
+					/* Just two columns for the whole popover: a leading glyph (icon / checkbox / switch /
+					   colour-square) and its content. Every row subgrids it so the glyphs line up. The
+					   date/time editor does its own start/→/end alignment within the content column. */
 					grid-template-columns: auto minmax(0, 1fr);
-					gap: 1rem;
+					row-gap: 1rem;
+					column-gap: 0.5rem;
 
 					> li {
 						display: grid;
 						grid-template-columns: subgrid;
-						grid-column: -1 / 1;
+						grid-column: 1 / -1;
 						align-items: center;
-						gap: 0.625rem;
 
 						> mitra-icon {
 							font-size: 0.87rem;
@@ -219,10 +212,40 @@ export class EntryDetailsComponent extends Component {
 						}
 
 						> .content {
+							grid-column: 2 / -1;
 							display: flex;
 							align-items: center;
 							flex-wrap: wrap;
 							opacity: 0.85;
+						}
+
+						/* Title row: the task checkbox sits in the gutter (lined up with the icons below); the
+						   title + the options/close controls fill the content columns — or the whole row when
+						   there's no checkbox (events). */
+						&.title-row {
+							> mitra-task-status { font-size: 0.95rem; }
+
+							> .title-bar {
+								grid-column: 2 / -1;
+								display: flex;
+								align-items: center;
+								gap: 0.25rem;
+
+								> .title {
+									flex: 1;
+									font-size: 0.9375rem;
+									font-weight: 600;
+									color: var(--color-text);
+									line-height: 1.3;
+
+									&[data-struck] {
+										text-decoration: line-through;
+										color: var(--color-text-muted);
+									}
+								}
+							}
+
+							&:not(:has(mitra-task-status)) > .title-bar { grid-column: 1 / -1; }
 						}
 
 						&.description {
@@ -233,6 +256,10 @@ export class EntryDetailsComponent extends Component {
 
 							> mitra-icon {
 								margin-block-start: 2px;
+							}
+
+							> textarea, > .rendered {
+								grid-column: 2 / -1;
 							}
 
 							> textarea {
@@ -275,23 +302,6 @@ export class EntryDetailsComponent extends Component {
 						}
 					}
 
-					.arrow {
-						margin-inline: 0.125rem;
-					}
-
-					.duration {
-						color: var(--color-text-muted);
-						margin-inline-start: 0.375rem;
-					}
-
-					.tag {
-						display: inline-flex;
-						align-items: center;
-						background: rgba(59, 130, 246, 0.12);
-						border-radius: var(--border-radius);
-						padding: 0.05rem 0.375rem;
-						margin-inline-start: 0.375rem;
-					}
 				}
 			}
 		`
@@ -299,50 +309,35 @@ export class EntryDetailsComponent extends Component {
 
 	protected override get template() {
 		return !this.segment ? html.nothing : html`
-			<header class="header">
-				${this.segment.entry.type !== EntryType.Task ? html.nothing : html`
-					<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
-				`}
-				<input class="title subtle" placeholder="Title"
-					?data-struck=${this.segment.entry.status === TaskStatus.Done || this.segment.entry.status === TaskStatus.Cancelled}
-					${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
-				<mitra-icon-button
-					label="Options"
-					icon="more-horizontal"
-					style="anchor-name: --entry-menu-${this.segment.entry.id}; color: var(--color-text-muted)"
-					@click=${this.toggleMenu}
-				></mitra-icon-button>
-				<menu popover id="entry-menu-${this.segment.entry.id}" style="position-anchor: --entry-menu-${this.segment.entry.id}">
-					<button class="danger" @click=${this.handleDelete}>
-						<mitra-icon icon="trash-2"></mitra-icon>
-						Delete
-					</button>
-				</menu>
-				<mitra-icon-button class="close" icon="x" label="Close"
-					style="color: var(--color-text-muted)"
-					@click=${this.handleClose}
-				></mitra-icon-button>
-			</header>
 			<ul>
-				${this.segment.allDay ? html.nothing : html`
-					<li class="time">
-						<mitra-icon icon="clock"></mitra-icon>
-						<div class="content">
-							${this.segment.entry.start?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}
-							<span class="arrow">→</span>
-							${this.segment.entry.end?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}
-							<span class="duration">${this.segment.entry.duration}</span>
-						</div>
-					</li>
-				`}
+				<li class="title-row">
+					${this.segment.entry.type !== EntryType.Task ? html.nothing : html`
+						<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
+					`}
+					<div class="title-bar">
+						<input class="title subtle" placeholder="Title"
+							?data-struck=${this.segment.entry.status === TaskStatus.Done || this.segment.entry.status === TaskStatus.Cancelled}
+							${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
+						<mitra-icon-button
+							label="Options"
+							icon="more-horizontal"
+							style="anchor-name: --entry-menu-${this.segment.entry.id}; color: var(--color-text-muted)"
+							@click=${this.toggleMenu}
+						></mitra-icon-button>
+						<menu popover id="entry-menu-${this.segment.entry.id}" style="position-anchor: --entry-menu-${this.segment.entry.id}">
+							<button class="danger" @click=${this.handleDelete}>
+								<mitra-icon icon="trash-2"></mitra-icon>
+								Delete
+							</button>
+						</menu>
+						<mitra-icon-button class="close" icon="x" label="Close"
+							style="color: var(--color-text-muted)"
+							@click=${this.handleClose}
+						></mitra-icon-button>
+					</div>
+				</li>
 				${!this.segment.entry.start ? html.nothing : html`
-					<li class="date">
-						<mitra-icon icon="calendar-days"></mitra-icon>
-						<div class="content">
-							${this.segment.entry.start.format({ weekday: 'long', month: 'long', day: 'numeric' })}
-							${this.segment.entry.allDay ? html`<span class="tag">All day</span>` : html.nothing}
-						</div>
-					</li>
+					<mitra-entry-details-when .entry=${this.segment.entry} @change=${this.handleWhenChange}></mitra-entry-details-when>
 				`}
 				${this.sourceTemplate}
 				${this.colorTemplate}

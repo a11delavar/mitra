@@ -1,10 +1,10 @@
 import { Controller, type Component } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { Entry, EntryType, SourceType, type Source } from 'shared'
+import { Entry, EntryType, SourceType, SNAP_MINUTES, type Source } from 'shared'
 import { getDefaultSourceId, getIntegrations, updateEvent } from './Api.js'
 import { DraftController } from './DraftController.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
-import { SNAP_MINUTES, placeAllDay, placeTimed, resizePlacement, snapToGrid } from './entryPlacement.js'
+import { placeAllDay, placeTimed, resizePlacement, snapToGrid } from './entryPlacement.js'
 
 /** Whether a gesture works in minutes (the week's timed grid) or whole days (the all-day lane / month). */
 type Mode = 'timed' | 'allday'

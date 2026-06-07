@@ -115,7 +115,9 @@ describe('EntrySegments', () => {
 	describe('laneRank', () => {
 		it('ranks multi-day spans top, then all-day, then timed, then undated', () => {
 			assert.equal(EntrySegments.laneRank(new Entry({ start: base, end: base.add({ days: 2 }) })), 0)
-			assert.equal(EntrySegments.laneRank(new Entry({ start: base, end: base, allDay: true })), 1)
+			// A real single-day all-day entry is stored end = start + 1 day (exclusive); it must rank as
+			// all-day (1), not as a multi-day span (0).
+			assert.equal(EntrySegments.laneRank(new Entry({ start: base, end: base.add({ days: 1 }), allDay: true })), 1)
 			assert.equal(EntrySegments.laneRank(new Entry({ start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })), 2)
 			assert.equal(EntrySegments.laneRank(new Entry({})), 3)
 		})
