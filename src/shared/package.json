@@ -1,5 +1,5 @@
 {
-	"name": "mitra-shared",
+	"version": "0.1.0",
 	"type": "module",
 	"dependencies": {
 		"@3mo/date-time": "x",
