@@ -147,6 +147,78 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
+	/**
+	 * Expand a recurring master's raw .ics into the occurrence date-ranges that intersect [windowStart,
+	 * windowEnd], applying its EXDATEs. Occurrences are bounded to the window (a never-ending series stays
+	 * finite); `maxIterations` is a safety cap against pathological rules. Each occurrence inherits the
+	 * master's duration (DTEND/DUE − DTSTART). Works for VEVENT and VTODO (anchored on DTSTART, else DUE).
+	 * `ICAL.Recur` has no `between()` in 2.x, so we iterate from the anchor and stop past the window.
+	 */
+	/** The recurrence fields off a parsed VEVENT/VTODO: a master's RRULE, the shared UID, and a
+	 * RECURRENCE-ID when the component is a single-occurrence override. */
+	static recurrenceProps(component: ICAL.Component): { uid?: string, rrule?: string, recurrenceId?: Date } {
+		return {
+			uid: component.getFirstPropertyValue('uid')?.toString() || undefined,
+			rrule: component.getFirstPropertyValue('rrule')?.toString() || undefined,
+			recurrenceId: (component.getFirstPropertyValue('recurrence-id') as { toJSDate?(): Date } | null)?.toJSDate?.() || undefined,
+		}
+	}
+
+	/** Same, parsed straight from a raw .ics — used to backfill entries synced before recurrence support. */
+	static parseRecurrence(raw: string): { uid?: string, rrule?: string, recurrenceId?: Date } {
+		const top = new ICAL.Component(ICAL.parse(raw))
+		const component = top.getFirstSubcomponent('vevent') ?? top.getFirstSubcomponent('vtodo')
+		return component ? CalDAV.recurrenceProps(component) : {}
+	}
+
+	static expandRecurrence(raw: string, windowStart: Date, windowEnd: Date, maxIterations = 100_000): Array<{ start: Date, end: Date }> {
+		const component = new ICAL.Component(ICAL.parse(raw))
+		const v = component.getFirstSubcomponent('vevent') ?? component.getFirstSubcomponent('vtodo')
+		const rrule = v?.getFirstPropertyValue('rrule') as { iterator(t: unknown): { next(): { toJSDate(): Date } | null } } | null
+		const anchor = (v?.getFirstPropertyValue('dtstart') ?? v?.getFirstPropertyValue('due')) as { toJSDate(): Date } | null
+		if (!v || !rrule || !anchor) {
+			return []
+		}
+
+		const endProp = (v.getFirstPropertyValue('dtend') ?? v.getFirstPropertyValue('due')) as { toJSDate(): Date } | null
+		const durationMs = endProp ? endProp.toJSDate().getTime() - anchor.toJSDate().getTime() : 0
+
+		const exdates = new Set<number>()
+		for (const prop of v.getAllProperties('exdate')) {
+			for (const value of prop.getValues()) {
+				exdates.add((value as { toJSDate(): Date }).toJSDate().getTime())
+			}
+		}
+
+		const occurrences: Array<{ start: Date, end: Date }> = []
+		const iterator = rrule.iterator(anchor)
+		const windowStartMs = windowStart.getTime()
+		const windowEndMs = windowEnd.getTime()
+		// Termination is the window break below (occurrences ascend past windowEnd). `maxIterations` is only a
+		// backstop for a pathological/non-advancing rule, so it's generous: a far-future window must still be
+		// reachable for a dense series (a daily one needs one iteration per day from the anchor to the window).
+		let previousMs = -Infinity
+		for (let i = 0; i < maxIterations; i++) {
+			const time = iterator.next()
+			if (!time) {
+				break
+			}
+			const startMs = time.toJSDate().getTime()
+			if (startMs <= previousMs) {
+				break // a non-advancing iterator (malformed rule) — don't spin
+			}
+			previousMs = startMs
+			if (startMs > windowEndMs) {
+				break // occurrences ascend; nothing further can intersect the window
+			}
+			if (startMs + durationMs < windowStartMs || exdates.has(startMs)) {
+				continue
+			}
+			occurrences.push({ start: new Date(startMs), end: new Date(startMs + durationMs) })
+		}
+		return occurrences
+	}
+
 	protected override async syncSourceEntries(em: EntityManager, source: Source): Promise<boolean> {
 		const client = await this.getClient()
 		const remoteCalendar = { url: source.uri }
@@ -256,7 +328,26 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				entry.allDay = !!value('dtstart')?.isDate
 			}
 
+			// Recurrence: a master carries an RRULE; a single edited occurrence is its own member carrying a
+			// RECURRENCE-ID and the master's UID. Capture all three; occurrences are expanded later, on read.
+			const recurrence = CalDAV.recurrenceProps(component)
+			entry.uid = recurrence.uid
+			entry.rrule = recurrence.rrule
+			entry.recurrenceId = recurrence.recurrenceId as any
+
 			changed = true
+		}
+
+		// Link each override row (a single edited occurrence) back to its series master by shared UID. Done
+		// after the loop since members arrive in any order; idempotent (only fills an unset link).
+		for (const entry of existingEntries) {
+			if (entry.recurrenceId && entry.uid && !entry.recurrenceMasterId) {
+				const master = existingEntries.find(other => other.rrule && !other.recurrenceId && other.uid === entry.uid)
+				if (master) {
+					entry.recurrenceMasterId = master.id
+					changed = true
+				}
+			}
 		}
 
 		source.syncState = { syncToken: newSyncToken }

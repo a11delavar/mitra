@@ -255,7 +255,9 @@ export class EntryDragController extends Controller {
 		const segment = target.closest('mitra-entry-segment') as EntrySegmentComponent | null
 		const entry = segment?.segment?.entry
 		if (segment) {
-			if (!entry?.persisted) {
+			// A draft is owned by the create flow; a recurring occurrence isn't independently movable in v1
+			// (dragging it would shift the whole series). Both still tap-to-open via the segment's click.
+			if (!entry?.persisted || entry.isRecurring) {
 				return
 			}
 			const mode = this.editMode(entry)

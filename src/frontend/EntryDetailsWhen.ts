@@ -134,6 +134,10 @@ export class EntryDetailsWhen extends Component {
 				> .switch { grid-column: 1; margin-block-start: 0.3rem; }
 				> .allday-label { grid-column: 2; margin-block-start: 0.3rem; color: var(--color-text-muted); }
 
+				/* Recurring occurrences replace the all-day toggle with a read-only "Repeats …" summary. */
+				> .repeat-summary { grid-column: 2; color: var(--color-text-muted); }
+				input:disabled { color: var(--color-text-muted); cursor: default; opacity: 1; }
+
 				/* The dates and times rows are each the SAME 3-column grid inside the content column, so their
 				   start/→/end line up across the two rows — all within the component, not the popover grid. */
 				.dates, .times {
@@ -190,32 +194,68 @@ export class EntryDetailsWhen extends Component {
 		if (!entry?.start) {
 			return html.nothing
 		}
-		const showEnd = entry.multiDay || this.endDateShown
+		// A recurring occurrence is read-only here (v1): its times come from the series, and editing the
+		// schedule isn't supported yet. The all-day row is replaced by a "Repeats …" summary.
+		const recurring = entry.isRecurring
+		const showEnd = entry.multiDay || (!recurring && this.endDateShown)
 		return html`
 			<li class="when">
 				<mitra-icon icon=${entry.allDay ? 'calendar-days' : 'clock'}></mitra-icon>
 				<div class="dates">
-					<input type="date" aria-label="Start date" .value=${this.dateValue(entry.start)} @click=${this.openPicker} @change=${this.handleStartDateChange}>
-					${!showEnd ? html`
-						<button class="add-end" @click=${this.addEndDate}>+ end date</button>
-					` : html`
+					<input type="date" aria-label="Start date" ?disabled=${recurring} .value=${this.dateValue(entry.start)} @click=${this.openPicker} @change=${this.handleStartDateChange}>
+					${showEnd ? html`
 						<span class="arrow">→</span>
-						<input type="date" class="end-date" aria-label="End date" .value=${this.dateValue(entry.inclusiveEnd)} @click=${this.openPicker} @change=${this.handleEndDateChange}>
+						<input type="date" class="end-date" aria-label="End date" ?disabled=${recurring} .value=${this.dateValue(entry.inclusiveEnd)} @click=${this.openPicker} @change=${this.handleEndDateChange}>
+					` : recurring ? html.nothing : html`
+						<button class="add-end" @click=${this.addEndDate}>+ end date</button>
 					`}
 				</div>
 				${entry.allDay ? html.nothing : html`
 					<span class="duration">${entry.duration}</span>
 					<div class="times">
-						<input type="time" aria-label="Start time" .value=${this.timeValue(entry.start)} @click=${this.openPicker} @change=${this.handleStartTimeChange}>
+						<input type="time" aria-label="Start time" ?disabled=${recurring} .value=${this.timeValue(entry.start)} @click=${this.openPicker} @change=${this.handleStartTimeChange}>
 						<span class="arrow">→</span>
-						<input type="time" aria-label="End time" .value=${this.timeValue(entry.effectiveEnd)} @click=${this.openPicker} @change=${this.handleEndTimeChange}>
+						<input type="time" aria-label="End time" ?disabled=${recurring} .value=${this.timeValue(entry.effectiveEnd)} @click=${this.openPicker} @change=${this.handleEndTimeChange}>
 					</div>
 				`}
-				<button class="switch" role="switch" aria-checked=${entry.allDay} aria-label="All day" @click=${this.toggleAllDay}></button>
-				<span class="allday-label">All day</span>
+				${recurring ? html`
+					<mitra-icon icon="repeat"></mitra-icon>
+					<span class="repeat-summary">${recurrenceSummary(entry.rrule)}</span>
+				` : html`
+					<button class="switch" role="switch" aria-checked=${entry.allDay} aria-label="All day" @click=${this.toggleAllDay}></button>
+					<span class="allday-label">All day</span>
+				`}
 			</li>
 		`
 	}
+}
+
+const WEEKDAYS: Record<string, string> = { MO: 'Mon', TU: 'Tue', WE: 'Wed', TH: 'Thu', FR: 'Fri', SA: 'Sat', SU: 'Sun' }
+const FREQ_ADVERB: Record<string, string> = { DAILY: 'daily', WEEKLY: 'weekly', MONTHLY: 'monthly', YEARLY: 'yearly' }
+const FREQ_UNIT: Record<string, string> = { DAILY: 'day', WEEKLY: 'week', MONTHLY: 'month', YEARLY: 'year' }
+
+/** Best-effort, human summary of an RRULE for the read-only badge — e.g. "Repeats weekly on Mon, Wed, Fri"
+ * or "Repeats every 2 weeks". Falls back to a plain "Repeats" for rules it can't pretty-print. */
+function recurrenceSummary(rrule?: string): string {
+	if (!rrule) {
+		return 'Repeats'
+	}
+	const parts: Record<string, string> = {}
+	for (const part of rrule.split(';')) {
+		const [key, value] = part.split('=')
+		if (key) {
+			parts[key] = value ?? ''
+		}
+	}
+	const freq = parts.FREQ ?? ''
+	const unit = FREQ_UNIT[freq]
+	if (!unit) {
+		return 'Repeats'
+	}
+	const interval = Number(parts.INTERVAL ?? 1)
+	const cadence = interval > 1 ? `every ${interval} ${unit}s` : FREQ_ADVERB[freq]
+	const days = parts.BYDAY ? parts.BYDAY.split(',').map(d => WEEKDAYS[d.replace(/^[+-]?\d+/, '')] ?? d).join(', ') : ''
+	return `Repeats ${cadence}${days ? ` on ${days}` : ''}`
 }
 
 declare global {

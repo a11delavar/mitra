@@ -53,6 +53,16 @@ export class Entry {
 
 	@property({ type: 'json', nullable: true }) data?: EntryData
 
+	// --- Recurrence (RFC 5545) ------------------------------------------------------------------------
+	// A recurring series is a single MASTER row carrying the RRULE; its occurrences are expanded on read,
+	// never stored. A single edited occurrence arrives from CalDAV as its own override row (it has a
+	// RECURRENCE-ID), linked back to its master by the shared iCal UID. Expanded occurrences are synthetic
+	// (non-persisted) Entry objects that carry `recurrenceMasterId` so edits route to the series.
+	@property({ type: 'string', nullable: true }) uid?: string
+	@property({ type: 'string', nullable: true }) rrule?: string
+	@property({ type: 'string', nullable: true }) recurrenceMasterId?: string
+	@property({ type: 'datetime', nullable: true }) recurrenceId?: DateTime
+
 	get duration() {
 		if (!this.start || !this.end) {
 			return undefined
@@ -75,6 +85,12 @@ export class Entry {
 	 * saved, so `!persisted` *is* "this is a draft" — no separate flag or side store to keep in sync. */
 	get persisted() {
 		return this.id !== undefined
+	}
+
+	/** True for a rendered occurrence (an expanded instance or a synced override) of a recurring series.
+	 * Such entries edit/delete the whole series (via the master) and aren't independently movable in v1. */
+	get isRecurring() {
+		return !!this.recurrenceMasterId
 	}
 
 	get multiDay() {

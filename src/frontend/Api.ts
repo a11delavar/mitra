@@ -96,6 +96,15 @@ export function deleteIntegration(id: string) {
 }
 
 export function updateEvent(entry: Entry) {
+	// A recurring occurrence has no row of its own; v1 edits apply to the whole series via the master, and
+	// only the series-wide fields are sent — the master keeps its own schedule (start/end/rrule).
+	if (entry.recurrenceMasterId) {
+		return Api.put<Entry>(`/entries/${entry.recurrenceMasterId}`, {
+			heading: entry.heading,
+			description: entry.description,
+			color: entry.color,
+		})
+	}
 	return Api.put<Entry>(`/entries/${entry.id}`, entry)
 }
 

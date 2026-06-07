@@ -87,11 +87,12 @@ export class EntryDetailsComponent extends Component {
 	private readonly handleDelete = async () => {
 		const entry = this.segment!.entry
 		this.hidePopover()
-		// A never-saved draft is only local; otherwise delete on the server (discard clears any optimistic copy).
+		// A never-saved draft is only local; otherwise delete on the server (discard clears any optimistic
+		// copy). Deleting a recurring occurrence deletes the whole series (its master) in v1.
 		if (!entry.persisted) {
 			DraftController.discard()
 		} else {
-			await deleteEvent(entry.id!)
+			await deleteEvent(entry.recurrenceMasterId ?? entry.id!)
 			DraftController.discard()
 		}
 	}

@@ -286,7 +286,7 @@ export class EntrySegmentComponent extends Component {
 				`}
 				<span class="label">${this.segment.entry.heading || (this.segment.entry.persisted ? '' : 'Draft')}</span>
 			</div>
-			${!this.resize || !this.segment.entry.persisted ? html.nothing : html`
+			${!this.resize || !this.segment.entry.persisted || this.segment.entry.isRecurring ? html.nothing : html`
 				<div class="resize-start"></div>
 				<div class="resize-end"></div>
 			`}

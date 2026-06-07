@@ -22,3 +22,37 @@ export const orm = await MikroORM.init({
 })
 
 await orm.schema.update()
+
+// Backfill recurrence fields for entries synced before recurrence support: their raw .ics already carries
+// the RRULE / RECURRENCE-ID, but those columns are new (NULL) and the sync's etag-skip won't re-read an
+// unchanged member. Parse only the candidates (raw mentions a recurrence property, columns still unset),
+// then link overrides to their masters by UID. Idempotent — once populated, later boots are no-ops.
+{
+	const em = orm.em.fork()
+	const entries = await em.find(Entry, {})
+	let backfilled = false
+	for (const entry of entries) {
+		if (entry.rrule || entry.recurrenceId || !entry.data?.raw) {
+			continue
+		}
+		if (!entry.data.raw.includes('RRULE') && !entry.data.raw.includes('RECURRENCE-ID')) {
+			continue
+		}
+		const recurrence = CalDAV.parseRecurrence(entry.data.raw)
+		entry.uid = recurrence.uid
+		entry.rrule = recurrence.rrule
+		entry.recurrenceId = recurrence.recurrenceId as unknown as DateTime
+		backfilled = true
+	}
+	if (backfilled) {
+		for (const entry of entries) {
+			if (entry.recurrenceId && entry.uid && !entry.recurrenceMasterId) {
+				const master = entries.find(m => m.rrule && !m.recurrenceId && m.uid === entry.uid && m.sourceId === entry.sourceId)
+				if (master) {
+					entry.recurrenceMasterId = master.id
+				}
+			}
+		}
+		await em.flush()
+	}
+}
