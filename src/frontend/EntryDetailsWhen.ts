@@ -16,6 +16,8 @@ export class EntryDetailsWhen extends Component {
 		updated(this: EntryDetailsWhen) { this.endDateShown = false }
 	}) entry!: Entry
 
+	override role = 'listitem'
+
 	/** Fired after a span edit mutates the entry in place; the host persists and refreshes. */
 	@event() readonly change!: EventDispatcher
 
@@ -112,36 +114,29 @@ export class EntryDetailsWhen extends Component {
 	static override get styles() {
 		return css`
 			mitra-entry-details-when {
-				/* Keep the rows as grid items of the popover's <ul>, so the leading icon/switch column lines
-				   up with the source/colour rows below. */
-				display: contents;
-			}
-
-			mitra-entry-details-when > .when {
 				display: grid;
-				grid-template-columns: subgrid;   /* the popover's two columns: leading glyph | content */
+				grid-template-columns: subgrid; /* the popover's two columns: leading glyph | content */
 				grid-column: 1 / -1;
 				align-items: center;
-				row-gap: 0.25rem;
+				row-gap: 0.75rem;
 				/* Closes the date/time/all-day group with a divider, like the description row. */
 				padding-block-end: 0.75rem;
 				border-block-end: 1px solid rgba(255, 255, 255, 0.06);
 
-				/* Leading column — one glyph per row (clock, duration, switch), auto-flowed so they line up
-				   with the popover's other row icons. */
+				/* Leading column — one glyph per row (clock, duration, switch), auto-flowed so they line up with the popover's other row icons. */
 				> mitra-icon { grid-column: 1; font-size: 0.87rem; color: var(--color-text-muted); flex-shrink: 0; }
 				> .duration { grid-column: 1; font-size: 0.7rem; white-space: nowrap; color: var(--color-text-muted); }
-				> .switch { grid-column: 1; margin-block-start: 0.3rem; }
-				> .allday-label { grid-column: 2; margin-block-start: 0.3rem; color: var(--color-text-muted); }
+				> .switch { grid-column: 1; }
+				> .allday-label { grid-column: 2; color: var(--color-text-muted); }
 
-				/* The dates and times rows are each the SAME 3-column grid inside the content column, so their
-				   start/→/end line up across the two rows — all within the component, not the popover grid. */
+				/* The dates and times rows are each the SAME 3-column grid inside the content column, so their start/→/end line up across the two rows — all within the component, not the popover grid. */
 				.dates, .times {
 					grid-column: 2;
 					display: grid;
 					grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
 					align-items: center;
 					column-gap: 0.5rem;
+					height: 1.5rem;
 				}
 
 				.arrow { color: var(--color-text-muted); justify-self: center; }
@@ -157,63 +152,37 @@ export class EntryDetailsWhen extends Component {
 					&:hover { background: color-mix(in srgb, var(--color-text) 6%, transparent); color: var(--color-text); }
 				}
 
-				/* Fields read as plain text — transparent until hovered/focused, filling their column so
-				   start/end line up. The negative inline margin pulls the text flush with the content-column
-				   edge so it aligns with the title/source text. They open the picker on click (hence the
-				   pointer + full opacity, overriding the read-only dimming). */
-				input {
-					width: 100%;
-					min-width: 0;
-					height: auto;
-					font: inherit;
-					color: inherit;
-					opacity: 1;
-					cursor: pointer;
-					background: transparent;
-					border: 1px solid transparent;
-					border-radius: var(--border-radius);
-					margin-inline-start: -0.25rem;
-					padding: 0.125rem 0.25rem;
-					transition: background 0.15s ease;
-
-					&:hover { background: color-mix(in srgb, var(--color-text) 6%, transparent); }
-					&:focus, &:focus-visible { background: color-mix(in srgb, var(--color-text) 10%, transparent); outline: none; }
-
-					&::-webkit-calendar-picker-indicator { display: none; }
+				input::-webkit-calendar-picker-indicator {
+					display: none;
 				}
 			}
 		`
 	}
 
 	protected override get template() {
-		const entry = this.entry
-		if (!entry?.start) {
-			return html.nothing
-		}
-		const showEnd = entry.multiDay || this.endDateShown
-		return html`
-			<li class="when">
-				<mitra-icon icon=${entry.allDay ? 'calendar-days' : 'clock'}></mitra-icon>
-				<div class="dates">
-					<input type="date" aria-label="Start date" .value=${this.dateValue(entry.start)} @click=${this.openPicker} @change=${this.handleStartDateChange}>
-					${!showEnd ? html`
-						<button class="add-end" @click=${this.addEndDate}>+ end date</button>
-					` : html`
-						<span class="arrow">→</span>
-						<input type="date" class="end-date" aria-label="End date" .value=${this.dateValue(entry.inclusiveEnd)} @click=${this.openPicker} @change=${this.handleEndDateChange}>
-					`}
-				</div>
-				${entry.allDay ? html.nothing : html`
-					<span class="duration">${entry.duration}</span>
-					<div class="times">
-						<input type="time" aria-label="Start time" .value=${this.timeValue(entry.start)} @click=${this.openPicker} @change=${this.handleStartTimeChange}>
-						<span class="arrow">→</span>
-						<input type="time" aria-label="End time" .value=${this.timeValue(entry.effectiveEnd)} @click=${this.openPicker} @change=${this.handleEndTimeChange}>
-					</div>
+		return !this.entry?.start ? html.nothing : html`
+			<mitra-icon icon=${this.entry.allDay ? 'calendar-days' : 'clock'}></mitra-icon>
+			<div class="dates">
+				<input type="date" class="subtle" aria-label="Start date" .value=${this.dateValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartDateChange}>
+				${!this.entry.multiDay && !this.endDateShown ? html`
+					<button class="add-end" @click=${this.addEndDate}>+ end date</button>
+				` : html`
+					<span class="arrow">→</span>
+					<input type="date" class="subtle end-date" aria-label="End date" .value=${this.dateValue(this.entry.inclusiveEnd)} @click=${this.openPicker} @change=${this.handleEndDateChange}>
 				`}
-				<button class="switch" role="switch" aria-checked=${entry.allDay} aria-label="All day" @click=${this.toggleAllDay}></button>
-				<span class="allday-label">All day</span>
-			</li>
+			</div>
+			<button class="switch" role="switch" aria-label="All day" title=${this.entry.allDay ? 'Include time' : 'Switch to all-day'}
+				aria-checked=${!this.entry.allDay} @click=${this.toggleAllDay}
+			></button>
+			<div class="times">
+				${this.entry.allDay ? html`
+					<span class="allday-label">All day</span>
+				` : html`
+					<input type="time" class="subtle" aria-label="Start time" .value=${this.timeValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartTimeChange}>
+					<span class="arrow">→</span>
+					<input type="time" class="subtle" aria-label="End time" .value=${this.timeValue(this.entry.effectiveEnd)} @click=${this.openPicker} @change=${this.handleEndTimeChange}>
+				`}
+			</div>
 		`
 	}
 }
