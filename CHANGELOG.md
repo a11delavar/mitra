@@ -2,6 +2,20 @@
 
 All notable changes to Mitra are documented here.
 
+## [0.2.0] - 2026-07-05
+
+
+### ✨ Features
+- Recurring Entries ([f87731e](https://github.com/a11delavar/mitra/commit/f87731e4595d446fa076d4d8874f3a0626862a29))
+- Re-import entries from the source ([26e5918](https://github.com/a11delavar/mitra/commit/26e5918c78c172f940f67edc11fdad979bad26b6))
+- Ability to migrate entries between sources ([34f23f9](https://github.com/a11delavar/mitra/commit/34f23f906461267aa09f50743a31222c04dbf160))
+- Drag entries between the all-day lane and the time grid ([7d01df1](https://github.com/a11delavar/mitra/commit/7d01df1898a08d9cce1c97ca531965368b1e682f))
+- Preview where an entry lands while dragging ([9f88a89](https://github.com/a11delavar/mitra/commit/9f88a8938a9ed7abb7449e7d3ef20b5ad2d77b63))
+- Simplify the all-day switch ([dd2de08](https://github.com/a11delavar/mitra/commit/dd2de08bfa70cba659e8fe0dbe744e3055925889))
+
+### 🔧 Chores
+- Update dependencies ([86b3e8d](https://github.com/a11delavar/mitra/commit/86b3e8d19bbc79206fbfa62ca2322c980218454b))
+
 ## [0.1.0] - 2026-06-07
 
 
