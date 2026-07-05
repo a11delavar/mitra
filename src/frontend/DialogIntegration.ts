@@ -15,7 +15,16 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string }, 
 	private readonly fetchSources = new Task(this, {
 		autoRun: false,
 		args: () => [this.entity] as const,
-		task: async ([entity]) => this.entity.sources = await discoverSources(entity) as any,
+		task: async ([entity]) => {
+			const sources = await discoverSources(entity)
+			// A fresh add pre-selects everything found — the common case is "import my account", so
+			// unticking is the exception, not ticking every box. An edit (or its Refresh) keeps the
+			// persisted activation state instead.
+			if (!this.isEdit) {
+				sources.forEach(source => source.enabled = true)
+			}
+			return this.entity.sources = sources as any
+		},
 	})
 
 	protected override createRenderRoot() { return this }

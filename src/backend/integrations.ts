@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { orm } from './orm.js'
 import { syncEmitter } from './syncEmitter.js'
-import { Integration, CalDAV } from '../shared/index.js'
+import { Integration, CalDAV, Source } from '../shared/index.js'
 
 export const integrationsRouter = Router()
 
@@ -36,6 +36,19 @@ integrationsRouter.put('/:id', async (req, res) => {
 	await integration.applyAndSync(em, req.body as Integration)
 	syncEmitter.emit('updated')
 	return res.json(await em.findOneOrFail(Integration, { id: integration.id }, { populate: ['sources'] }))
+})
+
+// Full re-import of every enabled source (see Integration.resyncSource) — the integration-wide
+// counterpart of POST /sources/:id/resync.
+integrationsRouter.post('/:id/resync', async (req, res) => {
+	const em = orm.em.fork()
+	const integration = await em.findOneOrFail(Integration, { id: req.params.id })
+	for (const source of await em.find(Source, { integrationId: integration.id, enabled: true })) {
+		await integration.resyncSource(em, source)
+	}
+	await em.flush()
+	syncEmitter.emit('updated')
+	return res.status(204).end()
 })
 
 integrationsRouter.delete('/:id', async (req, res) => {

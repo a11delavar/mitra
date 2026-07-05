@@ -38,6 +38,12 @@ export class Dev extends Integration {
 		return Promise.resolve(false)
 	}
 
+	/** Dev sources have no external counterpart to re-import from — the local rows ARE the source,
+	 * so a wipe-and-resync would just be deletion. */
+	override resyncSource(): Promise<void> {
+		return Promise.resolve()
+	}
+
 	override createEntry(em: EntityManager, entry: Entry): Promise<Entry> {
 		em.persist(entry)
 		return Promise.resolve(entry)

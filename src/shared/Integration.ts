@@ -1,7 +1,7 @@
 import { entity, primaryKey, property, manyToOne, oneToMany, unique, Collection } from './orm.js'
 import { User } from './User.js'
 import { Source } from './Source.js'
-import type { Entry } from './Entry.js'
+import { Entry } from './Entry.js'
 import type { EntityManager } from '@mikro-orm/core'
 
 @entity({ abstract: true, discriminatorColumn: 'type' })
@@ -91,6 +91,23 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	async sync(em: EntityManager): Promise<boolean> {
 		await this.getSources(em)
 		return this.syncEntries(em)
+	}
+
+	/**
+	 * Full re-import of one source: wipes its locally cached entries and its incremental-sync
+	 * bookkeeping, then syncs from scratch, rebuilding the local cache to exactly mirror the
+	 * provider. The remote source is never touched — this is a cache rebuild, not a data
+	 * operation — which is what makes it a safe recovery hatch for a locally-corrupted or
+	 * out-of-shape cache (a user-triggered "re-import", or a programmatic one after a breaking
+	 * schema change). Integrations whose sources have no external counterpart override this to
+	 * a no-op: with nothing to re-import from, wiping would be plain deletion.
+	 */
+	async resyncSource(em: EntityManager, source: Source): Promise<void> {
+		const entries = await em.find(Entry, { sourceId: source.id })
+		entries.forEach(entry => em.remove(entry))
+		source.syncState = undefined
+		await em.flush()
+		await this.syncSourceEntries(em, source)
 	}
 
 	/**

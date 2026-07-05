@@ -83,6 +83,14 @@ export function updateSourceColor(id: string, color: string) {
 	return Api.put(`/sources/${id}/color`, { color })
 }
 
+export function resyncSource(id: string) {
+	return Api.post(`/sources/${id}/resync`)
+}
+
+export function resyncIntegration(id: string) {
+	return Api.post(`/integrations/${id}/resync`)
+}
+
 export function discoverSources(integration: Integration) {
 	return Api.post<Array<Source>>('/integrations/sources', integration)
 }

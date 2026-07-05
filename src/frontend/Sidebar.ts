@@ -1,5 +1,5 @@
 import { Component, component, html, css, property, event } from '@a11d/lit'
-import { getIntegrations, toggleSourceVisibility, updateSourceColor, deleteIntegration, fetchIntegrations, getDefaultSourceId, setDefaultSource } from './Api.js'
+import { getIntegrations, toggleSourceVisibility, updateSourceColor, deleteIntegration, fetchIntegrations, getDefaultSourceId, setDefaultSource, resyncSource, resyncIntegration } from './Api.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { SourceType, type Source } from 'shared'
 import { outlineStyles } from './components/outlineStyles.js'
@@ -135,6 +135,13 @@ export class Sidebar extends Component {
 							overflow: hidden;
 							text-overflow: ellipsis;
 						}
+
+						/* Same placement as the source rows' ⋯ menu: to the end of the trigger, top-aligned,
+						   flipping above only when there's no room below. */
+						menu[popover] {
+							position-area: inline-end span-block-end;
+							position-try-fallbacks: flip-block;
+						}
 					}
 
 					.sources {
@@ -193,18 +200,43 @@ export class Sidebar extends Component {
 								&:popover-open {
 									display: flex;
 									flex-direction: column;
-									gap: 0.5rem;
+									gap: 0.125rem;
+								}
+
+								&[popover] {
+									position-area: inline-end span-block-end;
+									position-try-fallbacks: flip-block;
 								}
 
 								.menu-row {
 									display: flex;
 									align-items: center;
-									gap: 0.5rem;
+									gap: 0.625rem;
+									padding: 0.375rem 0.5rem;
 
 									> mitra-icon {
 										font-size: 0.9rem;
 										color: var(--color-text-muted);
 									}
+								}
+
+								button.menu-row {
+									all: unset;
+									display: flex;
+									align-items: center;
+									gap: 0.625rem;
+									padding: 0.375rem 0.5rem;
+									border-radius: var(--border-radius);
+									font-size: 0.8125rem;
+									font-weight: 500;
+									color: var(--color-text);
+									cursor: pointer;
+
+									&:hover {
+										background: color-mix(in srgb, var(--color-text) 8%, transparent);
+									}
+
+									${outlineStyles};
 								}
 							}
 
@@ -318,6 +350,12 @@ export class Sidebar extends Component {
 									<mitra-icon icon="pencil"></mitra-icon>
 									Edit
 								</button>
+								<button
+									title="Delete the locally cached entries of every enabled source and import everything again"
+									@click=${(e: Event) => { this.closeMenu(e); resyncIntegration(i.id).catch(() => void 0) }}>
+									<mitra-icon icon="refresh-cw"></mitra-icon>
+									Re-import entries
+								</button>
 								<button class="danger" @click=${(e: Event) => { this.closeMenu(e); this.removeIntegration(i.id) }}>
 									<mitra-icon icon="trash-2"></mitra-icon>
 									Delete
@@ -368,11 +406,17 @@ export class Sidebar extends Component {
 					style="anchor-name: --source-menu-${source.id}; color: var(--color-text-muted)"
 					@click=${(e: Event) => ((e.currentTarget as HTMLElement).nextElementSibling as HTMLElement)?.togglePopover()}
 				></mitra-icon-button>
-				<div popover id="source-menu-${source.id}" class="source-menu" style="position-anchor: --source-menu-${source.id}; margin-inline: 0.25rem;">
+				<div popover id="source-menu-${source.id}" class="source-menu" style="position-anchor: --source-menu-${source.id}">
 					<div class="menu-row">
 						<mitra-icon icon="palette"></mitra-icon>
 						<mitra-color-picker .value=${source.color} @change=${(e: CustomEvent) => this.setSourceColor(source, e.detail, (e.currentTarget as HTMLElement).closest('[popover]')!)}></mitra-color-picker>
 					</div>
+					<button class="menu-row"
+						title="Delete the locally cached entries and import everything from the source again"
+						@click=${(e: Event) => { this.closeMenu(e); resyncSource(source.id).catch(() => void 0) }}>
+						<mitra-icon icon="refresh-cw"></mitra-icon>
+						Re-import entries
+					</button>
 				</div>
 			</div>
 		`
