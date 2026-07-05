@@ -174,6 +174,17 @@ describe('Entry', () => {
 			assert.equal(e.editEquals(incoming), true)
 		})
 
+		it('adoptSpan takes over start, end, and all-day — nothing else', () => {
+			const e = new Entry({ id: 'a', heading: 'Mine', start: at(0, 9), end: at(0, 10), allDay: false })
+			const other = new Entry({ id: 'b', heading: 'Other', start: day, end: day.add({ hours: 24 }), allDay: true })
+			e.adoptSpan(other)
+			assert.equal(e.start!.valueOf(), day.valueOf())
+			assert.equal(e.end!.valueOf(), day.add({ hours: 24 }).valueOf())
+			assert.equal(e.allDay, true)
+			assert.equal(e.id, 'a')
+			assert.equal(e.heading, 'Mine')
+		})
+
 		it('assign clears fields the incoming entry lacks', () => {
 			const e = new Entry({ id: 'a', sourceId: 's', type: EntryType.Task, heading: 'Task', status: TaskStatus.Done, color: '#ff0000' })
 			e.assign(new Entry({ id: 'a', sourceId: 's', type: EntryType.Task, heading: 'Task', color: null }))

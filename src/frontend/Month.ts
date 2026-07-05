@@ -1,4 +1,4 @@
-import { Component, component, html, property, css, type PropertyValues, repeat, event, ifDefined } from '@a11d/lit'
+import { Component, component, html, property, css, type PropertyValues, repeat, event, ifDefined, styleMap } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { type Entry } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
@@ -177,7 +177,7 @@ export class Month extends Component {
 				`)}
 				${repeat(bars, bar => bar.segment.id, bar => html`
 					<mitra-entry-segment
-						style="grid-column: ${bar.startColumn + 1} / span ${bar.span}; grid-row: ${bar.slot + 2};"
+						style=${styleMap({ gridColumn: `${bar.startColumn + 1} / span ${bar.span}`, gridRow: `${bar.slot + 2}` })}
 						resize=${ifDefined(bar.segment.entry.allDay ? 'inline' : undefined)}
 						?has-previous=${bar.segment.hasPrevious}
 						?has-next=${bar.clippedRight}

@@ -171,6 +171,15 @@ export class Entry {
 		}
 	}
 
+	/** Adopt another entry's span — the three fields that place it in time. What a gesture hands over
+	 * on release: a drag may not just have shifted the span but flipped its all-day-ness (a move between
+	 * the timed grid and the all-day lane), so the flag travels with the times. */
+	adoptSpan(other: Entry) {
+		this.start = other.start
+		this.end = other.end
+		this.allDay = other.allDay
+	}
+
 	/** Flip all-day: ON snaps to the day bounds it currently covers; OFF restores a default 09:00–10:00
 	 * slot on the start day (an all-day entry has no clock time to restore). */
 	setAllDay(allDay: boolean) {

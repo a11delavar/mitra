@@ -44,6 +44,7 @@ interface Drag {
 	readonly pointerId: number
 	readonly origin: { x: number, y: number }
 	readonly cells: ReadonlyArray<Cell>
+	readonly laneBottom?: number                 // week only — the all-day strip's lower edge: a move above it previews all-day, below it timed
 	point: { x: number, y: number }
 	moved: boolean
 	frame?: number
@@ -62,7 +63,9 @@ interface Drag {
  *   click does nothing in the week, and quick-creates a single day in the month.
  * - **move** — on a persisted entry's body: translate it (preserving duration) by the drag delta. Timed
  *   in the week shifts by minutes+days; everything else (all-day, or anything in the month) by whole days,
- *   so a timed entry moved in the month keeps its clock time. A plain tap opens the editor.
+ *   so a timed entry moved in the month keeps its clock time. In the week, the move may also cross between
+ *   the timed grid and the all-day lane — the entry converts (via {@link Entry.setAllDay}) to whichever
+ *   zone the pointer is in. A plain tap opens the editor.
  * - **resize** — on a persisted entry's `.resize-start`/`.resize-end` handle: drag that edge while the
  *   other stays fixed (reusing {@link resizePlacement}, so dragging an edge past the other flips it).
  *
@@ -106,8 +109,9 @@ export class EntryDragController extends Controller {
 		return target.closest('.all-day') ? 'allday' : target.closest('.entries') ? 'timed' : undefined
 	}
 
-	/** Move/resize work in minutes only for a timed entry in the week; the all-day lane and the whole month
-	 * are day-granular (a timed entry moved in the month therefore shifts by days and keeps its time). */
+	/** The zone a move/resize *starts* in: minutes only for a timed entry in the week; the all-day lane
+	 * and the whole month are day-granular (a timed entry moved in the month therefore shifts by days and
+	 * keeps its time). A week *move* may leave this zone per frame — see {@link buildAt}. */
 	private editMode(entry: Entry): Mode {
 		return this.grid === 'month' || entry.allDay ? 'allday' : 'timed'
 	}
@@ -177,13 +181,22 @@ export class EntryDragController extends Controller {
 		return new Entry({ ...base, start, end, allDay: false })
 	}
 
-	/** Translate the dragged entry by the gesture delta, preserving its duration. Computed from `before`
-	 * (the span at pointer-down) — the live entry mutates per frame, so it can't be the reference. */
-	private buildMove(current: DragPoint): Entry | undefined {
+	/** Translate the dragged entry by the gesture delta, preserving its duration — or, when a week move
+	 * crosses between the timed grid and the all-day lane, convert it through the same domain flip the
+	 * editor's all-day switch uses ({@link Entry.setAllDay}), placed at the pointer. Every frame is
+	 * computed from `before` (the span at pointer-down), so frames are stateless: crossing over and
+	 * back restores the original span exactly. */
+	private buildMove(current: DragPoint, mode: Mode): Entry | undefined {
 		const drag = this.drag!
 		const before = drag.before!
 		if (!before.start || !before.end) {
 			return undefined
+		}
+		if (drag.laneBottom !== undefined && (mode === 'allday') !== before.allDay) {
+			const converted = before.clone()
+			converted.setAllDay(mode === 'allday')
+			converted.moveStart(mode === 'allday' ? current.date.dayStart : current.date.dayStart.add({ minutes: current.minute }))
+			return converted
 		}
 		if (drag.mode === 'allday') {
 			const days = Math.round((current.date.dayStart.valueOf() - drag.anchor.date.dayStart.valueOf()) / 86_400_000)
@@ -208,16 +221,21 @@ export class EntryDragController extends Controller {
 		return new Entry({ ...before, start, end })
 	}
 
-	/** The entry a frame should render for the current gesture, resolved against the cached geometry. */
+	/** The entry a frame should render for the current gesture, resolved against the cached geometry.
+	 * A move's zone follows the pointer between the week's all-day lane and its timed grid (converting
+	 * the entry accordingly); create and resize stay in the zone they started in. */
 	private buildAt(point: { x: number, y: number }): Entry | undefined {
 		const drag = this.drag!
-		const current = this.pointAt(drag.cells, point.x, point.y, drag.mode)
+		const mode: Mode = drag.kind === 'move' && drag.laneBottom !== undefined
+			? (point.y <= drag.laneBottom ? 'allday' : 'timed')
+			: drag.mode
+		const current = this.pointAt(drag.cells, point.x, point.y, mode)
 		if (!current) {
 			return undefined
 		}
 		switch (drag.kind) {
 			case 'create': return this.buildCreate(drag.anchor, current)
-			case 'move': return this.buildMove(current)
+			case 'move': return this.buildMove(current, mode)
 			case 'resize': return this.buildResize(current)
 		}
 	}
@@ -255,7 +273,11 @@ export class EntryDragController extends Controller {
 			return
 		}
 		const cells = this.snapshotCells()
-		const common = { pointerId: e.pointerId, origin: { x: e.clientX, y: e.clientY }, point: { x: e.clientX, y: e.clientY }, cells, moved: false }
+		// The all-day strip's box (week only) marks the boundary a move crosses to convert between timed
+		// and all-day. Sticky below the headers, so — like the cells — it can't move while the pointer is
+		// captured; snapshotting it keeps every frame free of DOM reads.
+		const laneBottom = this.element.querySelector('.all-day')?.getBoundingClientRect().bottom
+		const common = { pointerId: e.pointerId, origin: { x: e.clientX, y: e.clientY }, point: { x: e.clientX, y: e.clientY }, cells, laneBottom, moved: false }
 
 		// Move / resize an existing entry — persisted ones only (a draft is owned by the create flow + editor).
 		const segment = target.closest('mitra-entry-segment') as EntrySegmentComponent | null
@@ -328,21 +350,18 @@ export class EntryDragController extends Controller {
 		switch (drag.kind) {
 			case 'create': {
 				const draft = drag.gestureDraft ??= built
-				draft.start = built.start
-				draft.end = built.end
+				draft.adoptSpan(built)
 				EntryStore.upsertDraft(draft)
 				break
 			}
 			case 'move': {
 				const preview = drag.preview ??= new Entry({ ...built, id: undefined })
-				preview.start = built.start
-				preview.end = built.end
+				preview.adoptSpan(built) // including all-day-ness — the zone the pointer is in decides it
 				EntryStore.setPreview(preview)
 				break
 			}
 			case 'resize': {
-				drag.entry!.start = built.start
-				drag.entry!.end = built.end
+				drag.entry!.adoptSpan(built)
 				EntryStore.notify()
 				break
 			}
@@ -364,8 +383,7 @@ export class EntryDragController extends Controller {
 			this.teardown(e.pointerId)
 			if (built) {
 				const draft = drag.gestureDraft ?? built
-				draft.start = built.start
-				draft.end = built.end
+				draft.adoptSpan(built)
 				EntryStore.upsertDraft(draft)
 			}
 			create ? EntryStore.openDraft() : EntryStore.discardDraft()
@@ -380,8 +398,7 @@ export class EntryDragController extends Controller {
 			EntryStore.setPreview(undefined) // a move's ghost has served its purpose — the entry takes over
 			EntryStore.setDragging(undefined)
 			if (built) {
-				entry.start = built.start
-				entry.end = built.end
+				entry.adoptSpan(built)
 				EntryStore.notify()
 			}
 			// The entry already renders at its new span; on failure it snaps back to the canonical state.
@@ -415,8 +432,7 @@ export class EntryDragController extends Controller {
 				break
 			case 'resize':
 				EntryStore.setDragging(undefined)
-				drag.entry!.start = drag.before!.start
-				drag.entry!.end = drag.before!.end
+				drag.entry!.adoptSpan(drag.before!)
 				EntryStore.notify()
 				break
 		}

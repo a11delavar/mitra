@@ -1,4 +1,4 @@
-import { Component, component, html, property, css, repeat } from '@a11d/lit'
+import { Component, component, html, property, css, repeat, styleMap } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
 import type { EntrySegment } from './EntrySegment.js'
 import './EventSegment.js'
@@ -146,7 +146,12 @@ export class Day extends Component {
 			<div class="entries">
 				${repeat(this.entries, segment => segment.id, segment => html`
 					<mitra-entry-segment
-						style="grid-row: ${segment.startMinute} / ${segment.endMinute}; --overlap-slot: ${segment.overlap?.slot ?? 0}; --overlap-total: ${segment.overlap?.total ?? 1}; --overlap-span: ${segment.overlap?.span ?? 1};"
+						style=${styleMap({
+							gridRow: `${segment.startMinute} / ${segment.endMinute}`,
+							'--overlap-slot': `${segment.overlap?.slot ?? 0}`,
+							'--overlap-total': `${segment.overlap?.total ?? 1}`,
+							'--overlap-span': `${segment.overlap?.span ?? 1}`,
+						})}
 						resize="block"
 						?has-previous=${segment.hasPrevious}
 						?has-next=${segment.hasNext}

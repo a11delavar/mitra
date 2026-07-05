@@ -1,4 +1,4 @@
-import { Component, component, html, property, css, repeat, type PropertyValues, eventListener, queryAsync, ifDefined } from '@a11d/lit'
+import { Component, component, html, property, css, repeat, type PropertyValues, eventListener, queryAsync, ifDefined, styleMap } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { observeResize } from '@3mo/resize-observer'
 import { type Entry } from 'shared'
@@ -331,7 +331,7 @@ export class Days extends Component {
 					const endColumn = clippedRight ? this.days.length - 1 : columnOf(segment.runEnd.dayValue)
 					return html`
 						<mitra-entry-segment
-							style="grid-column: ${startColumn + 1} / span ${endColumn - startColumn + 1};"
+							style=${styleMap({ gridColumn: `${startColumn + 1} / span ${endColumn - startColumn + 1}` })}
 							resize="inline"
 							?has-previous=${segment.hasPrevious}
 							?has-next=${clippedRight}
