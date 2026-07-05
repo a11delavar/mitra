@@ -101,7 +101,10 @@ export class TaskStatusComponent extends Component {
 	}
 
 	protected override get template() {
-		return !this.entry || this.entry.type !== EntryType.Task ? html.nothing : html`
+		if (!this.entry || this.entry.type !== EntryType.Task) {
+			return html.nothing
+		}
+		return html`
 			<mitra-icon-button aria-label=${label.get(this.status)!}
 				title="${label.get(this.status)} — click to toggle, Alt-click for options"
 				style="anchor-name: ${this.anchor}"

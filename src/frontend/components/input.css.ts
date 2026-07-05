@@ -2,7 +2,7 @@ import { css } from '@a11d/lit'
 import { outlineStyles } from './outlineStyles.js'
 
 export const inputStyles = css`
-	:is(input:not([type=checkbox]), textarea) {
+	:is(input:not([type=checkbox], [type=radio]), textarea) {
 		appearance: none;
 		box-sizing: border-box;
 		font-weight: 400;
@@ -57,6 +57,44 @@ export const inputStyles = css`
 		field-sizing: content;
 		resize: none;
 		line-height: 1.4;
+	}
+
+	/* The radio counterpart of the checkbox below: same surfaces and accent, but a circle with a dot. */
+	input[type=radio] {
+		appearance: none;
+		box-sizing: border-box;
+		flex-shrink: 0;
+		inline-size: 1.125rem;
+		block-size: 1.125rem;
+		margin: 0;
+		padding: 0;
+		border-radius: 50%;
+		background: color-mix(in srgb, var(--color-text) 6%, transparent);
+		display: inline-grid;
+		place-content: center;
+		cursor: pointer;
+		outline: none;
+		transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+
+		&::before {
+			content: "";
+			inline-size: 0.5rem;
+			block-size: 0.5rem;
+			border-radius: 50%;
+			transform: scale(0);
+			transition: transform 0.12s cubic-bezier(0.2, 0.9, 0.3, 1.4);
+			background-color: var(--color-accent-text);
+		}
+
+		&:checked {
+			background: var(--color-accent);
+
+			&::before {
+				transform: scale(1);
+			}
+		}
+
+		${outlineStyles};
 	}
 
 	input[type=checkbox] {

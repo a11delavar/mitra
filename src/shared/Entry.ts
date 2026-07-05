@@ -1,8 +1,9 @@
 import { type DateTime } from '@3mo/date-time'
 import { equals } from '@a11d/equals'
 import { model } from './model.js'
-import { entity, primaryKey, property, enum as enumType, unique, manyToOne } from './orm.js'
+import { entity, primaryKey, property, enum as enumType, unique, manyToOne, embedded } from './orm.js'
 import { Source, SourceType } from './Source.js'
+import { Recurrence } from './Recurrence.js'
 
 export enum EntryType {
 	Event = 'event',
@@ -54,6 +55,26 @@ export class Entry {
 
 	@property({ type: 'json', nullable: true }) data?: EntryData
 
+	// --- Recurrence (RFC 5545) ------------------------------------------------------------------------
+	// A recurring series is a single MASTER row carrying the `recurrence` rule (a value object → recurrence_*
+	// columns); its occurrences are expanded on read, never stored. A single edited occurrence is its own
+	// OVERRIDE row (it has a `recurrenceId` but no `recurrence` rule of its own), linked to its master by the
+	// shared iCal UID. Expanded occurrences are synthetic (non-persisted) Entry objects that carry
+	// `recurrenceMasterId` so edits route to the series. `exdates` holds excluded occurrence epoch-ms (the
+	// non-.ics integrations' EXDATE; CalDAV keeps its EXDATEs inside data.raw). `recurrence` is tri-state on
+	// the wire: an object sets the rule, `null` removes it deliberately, absent/undefined leaves it alone —
+	// JSON drops undefined keys, so only an explicit null can express "remove" in a full-entry PUT.
+	@property({ type: 'string', nullable: true }) uid?: string
+	@embedded(() => Recurrence, { prefix: 'recurrence_', nullable: true }) recurrence?: Recurrence | null
+	@property({ type: 'json', nullable: true }) exdates?: Array<number>
+	@property({ type: 'string', nullable: true }) recurrenceMasterId?: string
+	@property({ type: 'datetime', nullable: true }) recurrenceId?: DateTime
+	/** The series anchor (the master's own start), carried on expanded occurrences so rule editing from
+	 * ANY occurrence derives its suggestions from the date the rule actually iterates from — a rule that
+	 * doesn't match its anchor silently loses the occurrences before its first match. Deliberately not a
+	 * column: it's derived render-state on synthetic occurrences, never persisted. */
+	seriesStart?: DateTime
+
 	get duration() {
 		if (!this.start || !this.end) {
 			return undefined
@@ -78,12 +99,28 @@ export class Entry {
 		return this.id !== undefined
 	}
 
+	/** True for a rendered occurrence (an expanded instance or a synced override) of a recurring series.
+	 * Such entries edit/delete the whole series (via the master) and aren't independently movable in v1. */
+	get isRecurring() {
+		return !!this.recurrenceMasterId
+	}
+
+	/** True when the entry belongs to a recurring series — either the master that carries the rule
+	 * (`recurrence`) or one of its occurrences (`isRecurring`). Such entries aren't independently
+	 * drag/resize-movable; their schedule is read-only in the editor (the rule itself stays editable). */
+	get partOfSeries() {
+		return !!this.recurrence || this.isRecurring
+	}
+
 	/** Whether another entry carries the same user-editable content — the surface an edit changes and a
 	 * save round-trips. Identity and sync bookkeeping (`id`, `uri`, `data`) are deliberately excluded, so
 	 * a local working copy compares equal to its server counterpart exactly when there's nothing left to
 	 * persist. DateTimes compare by value via `Object[equals]`. */
 	editEquals(other: Entry) {
-		const editable = ['sourceId', 'type', 'heading', 'description', 'color', 'start', 'end', 'allDay', 'status'] as const
+		// `recurrence` counts as editable content (the Repeat field mutates it); `Object[equals]` compares
+		// the value objects structurally. The series *link* fields (uid, recurrenceMasterId, recurrenceId,
+		// exdates) are sync bookkeeping like `uri`/`data`, so they stay excluded.
+		const editable = ['sourceId', 'type', 'heading', 'description', 'color', 'start', 'end', 'allDay', 'status', 'recurrence'] as const
 		return editable.every(key => Object[equals](this[key], other[key]))
 	}
 
@@ -111,6 +148,12 @@ export class Entry {
 			status: values.status,
 			allDay: values.allDay,
 			data: values.data,
+			uid: values.uid,
+			recurrence: values.recurrence,
+			exdates: values.exdates,
+			recurrenceMasterId: values.recurrenceMasterId,
+			recurrenceId: values.recurrenceId,
+			seriesStart: values.seriesStart,
 		})
 	}
 

@@ -151,4 +151,12 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * Deletes `entry` from the external source and removes it locally.
 	 */
 	abstract deleteEntry(em: EntityManager, entry: Entry): Promise<void>
+
+	/**
+	 * Excludes a single occurrence of a recurring `master` (RFC 5545 EXDATE) — the primitive behind
+	 * "delete this occurrence" and behind detaching an edited one. CalDAV writes an EXDATE into the
+	 * master's .ics; the local Dev calendar records the excluded instant in the master's `exdates`
+	 * column (which the occurrence expansion honours). Does not flush.
+	 */
+	abstract excludeOccurrence(em: EntityManager, master: Entry, recurrenceId: Date): Promise<void>
 }

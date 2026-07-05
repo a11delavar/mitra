@@ -266,9 +266,8 @@ export class EntryDetailsComponent extends Component {
 
 								/* The picker wears the popover's tinted glass, border, and shadow (it inherits the
 								   segment colour var), so the two read as one plane. It prefers opening beside
-								   the row — right, then left — and only falls back to a regular dropdown below/
-								   above it when neither side fits. Explicit areas, not flip tactics: Chrome
-								   doesn't (yet) apply \`flip-inline\` to \`position-area\`, it silently skips. */
+								   the row and flips inline/block when the space runs out — the same strategy as
+								   the details popover itself. */
 								&::picker(select) {
 									background: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
 									border: var(--border);

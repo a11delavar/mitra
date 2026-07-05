@@ -2,6 +2,7 @@ import { beforeEach, describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Entry, EntryType, TaskStatus } from '../shared/Entry.js'
+import { Recurrence, type RecurrenceScope } from '../shared/Recurrence.js'
 import { EntryStore } from './EntryStore.js'
 import { ApiError } from './Api.js'
 
@@ -15,7 +16,7 @@ describe('EntryStore', () => {
 
 	/** A controllable fake transport: resolves/rejects on demand, records calls. */
 	const fake = () => {
-		const calls = { create: 0, update: 0, delete: new Array<string>() }
+		const calls = { create: 0, update: 0, delete: new Array<string>(), occurrenceEdits: new Array<RecurrenceScope>(), occurrenceDeletes: new Array<RecurrenceScope>() }
 		const settlers = new Array<{ resolve: (saved: Entry) => void, reject: (error: unknown) => void }>()
 		const request = (entry: Entry) => new Promise<Entry>((resolve, reject) => {
 			// Capture what was sent; by default the server echoes it back (possibly normalized by the settler).
@@ -28,9 +29,15 @@ describe('EntryStore', () => {
 				create: (entry: Entry) => (calls.create++, request(entry)),
 				update: (entry: Entry) => (calls.update++, request(entry)),
 				delete: (id: string) => (calls.delete.push(id), Promise.resolve()),
+				editOccurrence: (entry: Entry, scope: RecurrenceScope) => (calls.occurrenceEdits.push(scope), request(entry)),
+				deleteOccurrence: (_entry: Entry, scope: RecurrenceScope) => (calls.occurrenceDeletes.push(scope), Promise.resolve()),
 			},
-			/** Settle the oldest pending request. */
-			respond(saved?: Entry) {
+			/** Settle the oldest pending request — waiting for one to appear first, since a commit may
+			 * await other things (e.g. the scope resolver) before it issues the request. */
+			async respond(saved?: Entry) {
+				while (!settlers.length) {
+					await new Promise<void>(resolve => setTimeout(resolve))
+				}
 				settlers.shift()!.resolve(saved as Entry)
 				return settled()
 			},
@@ -47,10 +54,12 @@ describe('EntryStore', () => {
 	}
 
 	const originalPersistence = EntryStore.persistence
+	const originalResolveScope = EntryStore.resolveScope
 
 	beforeEach(() => {
 		EntryStore.reset()
 		EntryStore.persistence = originalPersistence
+		EntryStore.resolveScope = originalResolveScope
 	})
 
 	describe('entries (merged view)', () => {
@@ -356,6 +365,126 @@ describe('EntryStore', () => {
 			EntryStore.setPreview(ghost)
 			assert.deepEqual([...EntryStore.entries], [source, ghost])
 			assert.equal(EntryStore.isDragSource(source), true)
+		})
+	})
+
+	describe('recurring series', () => {
+		const occurrence = (init?: Partial<Entry>) => entry({
+			id: 'master__1000', recurrenceMasterId: 'master', recurrenceId: at(9), heading: 'Standup', ...init,
+		})
+
+		it('commits with the resolved scope; \'all\' confirms the sent state without adopting the master', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			EntryStore.resolveScope = () => Promise.resolve('all')
+			const working = occurrence()
+			EntryStore.applyServerEntries([working])
+			working.heading = 'Renamed series'
+			const commit = EntryStore.commit(working)
+			// The edit routes to the MASTER; the response is the master — different id, different span.
+			await transport.respond(entry({ id: 'master', heading: 'Renamed series', start: at(1), end: at(2) }))
+			await commit
+			assert.deepEqual(transport.calls.occurrenceEdits, ['all'])
+			assert.equal(working.id, 'master__1000') // identity untouched — no rekey onto the master
+			assert.equal(working.start!.valueOf(), at(9).valueOf()) // span untouched — nothing adopted
+			assert.equal(EntryStore.isDirty(working), false) // its own sent state became its canonical
+		})
+
+		it('\'this\' detaches: the instance adopts the standalone\'s identity and leaves the series', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			EntryStore.resolveScope = () => Promise.resolve('this')
+			const working = occurrence()
+			EntryStore.applyServerEntries([working])
+			working.moveStart(at(14))
+			const commit = EntryStore.commit(working)
+			await transport.respond(entry({ id: 'detached', recurrenceMasterId: undefined, start: at(14), end: at(15) }))
+			await commit
+			assert.deepEqual(transport.calls.occurrenceEdits, ['this'])
+			assert.equal(working.id, 'detached') // same instance, new real identity
+			assert.equal(working.recurrenceMasterId, undefined) // no longer part of the series
+			assert.equal(working.recurrence, undefined)
+			assert.deepEqual([...EntryStore.entries], [working])
+			assert.equal(EntryStore.isDirty(working), false)
+		})
+
+		it('cancelling the scope dialog reverts the edit and saves nothing', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			EntryStore.resolveScope = () => Promise.resolve(undefined)
+			const working = occurrence()
+			EntryStore.applyServerEntries([working])
+			working.heading = 'Should not stick'
+			await EntryStore.commit(working)
+			assert.equal(working.heading, 'Standup') // snapped back to the series' state
+			assert.deepEqual(transport.calls.occurrenceEdits, [])
+			assert.equal(EntryStore.isDirty(working), false)
+		})
+
+		it('a rule-only edit bypasses the scope dialog and routes straight to the master', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			EntryStore.resolveScope = () => Promise.reject(new Error('must not be asked'))
+			const working = occurrence({ recurrence: new Recurrence({ freq: 'DAILY' }) })
+			EntryStore.applyServerEntries([working])
+			working.recurrence = null // remove the rule — series-wide by definition
+			const commit = EntryStore.commit(working)
+			await transport.respond(entry({ id: 'master' }))
+			await commit
+			assert.equal(transport.calls.update, 1) // the plain update path (updateEvent routes to the master)
+			assert.deepEqual(transport.calls.occurrenceEdits, [])
+			assert.equal(EntryStore.isDirty(working), false)
+		})
+
+		it('scoped deletes drop the right local instances: \'this\'', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			EntryStore.resolveScope = () => Promise.resolve('this')
+			const first = occurrence()
+			const second = occurrence({ id: 'master__2000', recurrenceId: at(11), start: at(11), end: at(12) })
+			EntryStore.applyServerEntries([first, second])
+			await EntryStore.delete(first)
+			assert.deepEqual([...EntryStore.entries], [second]) // only the deleted instance dropped
+			assert.deepEqual(transport.calls.occurrenceDeletes, ['this'])
+			assert.deepEqual(transport.calls.delete, [])
+		})
+
+		it('scoped deletes drop the right local instances: \'following\'', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			EntryStore.resolveScope = () => Promise.resolve('following')
+			const earlier = occurrence({ id: 'master__500', recurrenceId: at(7), start: at(7), end: at(8) })
+			const target = occurrence()
+			const later = occurrence({ id: 'master__2000', recurrenceId: at(11), start: at(11), end: at(12) })
+			EntryStore.applyServerEntries([earlier, target, later])
+			await EntryStore.delete(target)
+			assert.deepEqual([...EntryStore.entries], [earlier]) // this one and everything after it dropped
+			assert.deepEqual(transport.calls.occurrenceDeletes, ['following'])
+		})
+
+		it('scoped deletes drop the right local instances: \'all\'', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			EntryStore.resolveScope = () => Promise.resolve('all')
+			const first = occurrence()
+			const second = occurrence({ id: 'master__2000', recurrenceId: at(11), start: at(11), end: at(12) })
+			const unrelated = entry({ id: 'other' })
+			EntryStore.applyServerEntries([first, second, unrelated])
+			await EntryStore.delete(first)
+			assert.deepEqual([...EntryStore.entries], [unrelated]) // every occurrence gone at once
+			assert.deepEqual(transport.calls.delete, ['master']) // and the server call targets the master
+		})
+
+		it('cancelling a scoped delete leaves everything untouched', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			EntryStore.resolveScope = () => Promise.resolve(undefined)
+			const working = occurrence()
+			EntryStore.applyServerEntries([working])
+			await EntryStore.delete(working)
+			assert.deepEqual([...EntryStore.entries], [working])
+			assert.deepEqual(transport.calls.occurrenceDeletes, [])
+			assert.deepEqual(transport.calls.delete, [])
 		})
 	})
 

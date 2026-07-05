@@ -17,8 +17,14 @@ import { selectStyles } from './components/select.css.js'
 import { inputStyles } from './components/input.css.js'
 import { menuStyles } from './components/menu.css.js'
 import { TaskStatusComponent } from './components/TaskStatus.js'
+import { RepeatField } from './components/RepeatField.js'
+import { DialogRecurrenceScope } from './components/DialogRecurrenceScope.js'
 import { Markdown } from './Markdown.js'
 import { EntryDetailsWhen } from './EntryDetailsWhen.js'
+import { EntryStore } from './EntryStore.js'
+
+// How far a series edit/delete reaches is the user's call — the store asks through this dialog.
+EntryStore.resolveScope = (entry, intent) => new DialogRecurrenceScope({ entry, intent }).confirm()
 
 @application()
 @component('mitra-application')
@@ -63,7 +69,9 @@ export class Mitra extends Application {
 			${EntryDetailsComponent.styles}
 			${EntryDetailsWhen.styles}
 			${DialogIntegration.styles}
+			${DialogRecurrenceScope.styles}
 			${TaskStatusComponent.styles}
+			${RepeatField.styles}
 		`
 	}
 }

@@ -1,7 +1,7 @@
 import { Controller } from '@a11d/lit'
 import { type ReactiveControllerHost } from 'lit'
-import type { Entry } from 'shared'
-import { ApiError, createEvent, deleteEvent, updateEvent } from './Api.js'
+import { Recurrence, type Entry, type RecurrenceScope } from 'shared'
+import { ApiError, createEvent, deleteEvent, deleteOccurrence, editOccurrence, updateEvent } from './Api.js'
 
 /**
  * The frontend's single source of truth for entries, layered so the UI never waits for the network:
@@ -44,7 +44,7 @@ export class EntryStore extends Controller {
 	private static dragging?: Entry
 
 	/** The transport — a boundary, not state; swappable in tests. */
-	static persistence = { create: createEvent, update: updateEvent, delete: deleteEvent }
+	static persistence = { create: createEvent, update: updateEvent, delete: deleteEvent, editOccurrence, deleteOccurrence }
 
 	/** The ghost is only *shown* while it previews an actual change. Back over the entry's own slot it
 	 * edit-equals its source (it's a clone differing only in span), releasing would change nothing —
@@ -89,11 +89,26 @@ export class EntryStore extends Controller {
 	// --- Persist ---------------------------------------------------------------------------------------
 
 	/**
+	 * How far a series edit/delete should reach — injected by the app as the scope dialog; resolving
+	 * `undefined` means the user cancelled (the edit reverts / the delete doesn't happen). The default
+	 * applies series-wide, so headless contexts (tests) behave without wiring.
+	 */
+	static resolveScope: (entry: Entry, intent: 'edit' | 'delete') => Promise<RecurrenceScope | undefined> =
+		() => Promise.resolve('all')
+
+	/**
 	 * Save the entry's local changes — the *only* path from an edit to the server. Returns the entry's
 	 * running save chain if it already has one; the chain re-checks dirtiness after every response, so
 	 * "queue another save" is never remembered anywhere — it's re-derived. A failed round leaves the
 	 * entry dirty (the edit is kept, the next change retries) and rejects, except a PUT 404, which means
 	 * the entry was deleted externally — then the local copy is dropped rather than resurrected.
+	 *
+	 * A dirty series occurrence first resolves a {@link resolveScope scope}: 'this' detaches it into a
+	 * standalone entry (the instance adopts the new identity in place), 'following' splits the series,
+	 * 'all' shifts/edits the whole series — for the latter two the response is a master, not this
+	 * synthetic instance, so what was sent becomes its canonical and the sync echo re-shapes the series
+	 * around it. Rule edits are exempt: a rule is series-wide by definition, so they go straight to the
+	 * master without a dialog.
 	 */
 	static commit(entry: Entry): Promise<void> {
 		const pending = this.inflight.get(entry)
@@ -107,6 +122,12 @@ export class EntryStore extends Controller {
 			try {
 				while (this.tracks(entry) && this.isDirty(entry)) {
 					const sent = entry.clone() // what this round is saving, to detect mid-flight edits
+					if (entry.recurrenceMasterId && !this.ruleChanged(entry)) {
+						if (!await this.commitOccurrence(entry, sent)) {
+							break
+						}
+						continue
+					}
 					const saved = entry.persisted ? await EntryStore.persistence.update(entry) : await EntryStore.persistence.create(entry)
 					if (!entry.persisted) {
 						// The draft graduates in place — same instance, now persisted. Adopted into the identity
@@ -115,7 +136,7 @@ export class EntryStore extends Controller {
 						entry.id = saved.id
 						this.draft = this.draft === entry ? undefined : this.draft
 						this.workingById.set(entry.id!, entry)
-					} else if (saved.id !== undefined && saved.id !== entry.id) {
+					} else if (!entry.recurrenceMasterId && saved.id !== undefined && saved.id !== entry.id) {
 						// A migration to another source re-created the entry over there — same instance, new
 						// identity. Rekey unconditionally (id is identity, not content — a mid-flight edit
 						// must PUT against the new id on its next round).
@@ -129,10 +150,17 @@ export class EntryStore extends Controller {
 					if (!this.tracks(entry)) {
 						break // deleted while the request was in flight — stop; the queued delete finishes the job
 					}
-					this.canonicalById.set(entry.id!, saved.clone())
-					if (entry.editEquals(sent)) {
-						entry.assign(saved) // untouched during the flight → adopt the server-normalized values
-					} // else: still dirty against the new canonical — the loop saves again
+					if (entry.recurrenceMasterId) {
+						// A rule edit routed to the MASTER, and `saved` IS the master — nothing may be adopted
+						// onto this synthetic instance. What was sent is what the series now carries here, so
+						// confirm it as this occurrence's canonical; the expansion echoes it back.
+						this.canonicalById.set(entry.id!, sent)
+					} else {
+						this.canonicalById.set(entry.id!, saved.clone())
+						if (entry.editEquals(sent)) {
+							entry.assign(saved) // untouched during the flight → adopt the server-normalized values
+						} // else: still dirty against the new canonical — the loop saves again
+					}
 					this.notify()
 				}
 			} catch (error) {
@@ -149,16 +177,107 @@ export class EntryStore extends Controller {
 		return run
 	}
 
+	/** Whether the entry's rule differs from its canonical — a rule edit is series-wide by definition,
+	 * so it bypasses the scope dialog and routes straight to the master. */
+	private static ruleChanged(entry: Entry) {
+		return !Recurrence.equal(entry.recurrence, this.canonicalById.get(entry.id!)?.recurrence)
+	}
+
+	/** One scoped save round for a dirty occurrence. Returns false when the commit chain should stop
+	 * (cancelled, or the entry was deleted mid-flight). */
+	private static async commitOccurrence(entry: Entry, sent: Entry): Promise<boolean> {
+		const scope = await EntryStore.resolveScope(entry, 'edit')
+		if (!this.tracks(entry)) {
+			return false
+		}
+		if (!scope) {
+			this.revert(entry) // cancelled — snap back to the series' state
+			return false
+		}
+		const saved = await EntryStore.persistence.editOccurrence(entry, scope)
+		if (!this.tracks(entry)) {
+			return false
+		}
+		if (scope === 'this') {
+			// Detached into a standalone entry: same instance, new (real) identity — and no longer part
+			// of the series, whatever happened mid-flight (the link fields are identity, not content).
+			if (this.workingById.get(entry.id!) === entry) {
+				this.workingById.delete(entry.id!)
+				this.canonicalById.delete(entry.id!)
+			}
+			entry.id = saved.id
+			entry.recurrenceMasterId = undefined
+			entry.recurrenceId = undefined
+			entry.recurrence = undefined
+			entry.seriesStart = undefined
+			entry.uid = saved.uid
+			this.workingById.set(entry.id!, entry)
+			this.canonicalById.set(entry.id!, saved.clone())
+			if (entry.editEquals(sent)) {
+				entry.assign(saved)
+			}
+		} else {
+			// 'all' / 'following': the response is a master (the series' or the continuation's), not this
+			// synthetic instance. What was sent is what the series now shows here — confirm it as this
+			// occurrence's canonical; the sync echo re-shapes the rest of the series.
+			this.canonicalById.set(entry.id!, sent)
+		}
+		this.notify()
+		return true
+	}
+
 	/** Delete: gone from the view immediately; the server call waits for any in-flight save (a pending
-	 * create has to land first — the delete needs the id it produces). */
+	 * create has to land first — the delete needs the id it produces). Deleting a series occurrence
+	 * first resolves a {@link resolveScope scope} — this one, this and following, or the whole series —
+	 * and the matching local instances drop at once rather than on the sync echo. */
 	static async delete(entry: Entry) {
 		const pending = this.inflight.get(entry)
+		if (entry.recurrenceMasterId) {
+			const scope = await EntryStore.resolveScope(entry, 'delete')
+			if (!scope) {
+				return // cancelled — nothing happens
+			}
+			this.dropScoped(entry, scope)
+			await pending?.catch(() => void 0)
+			this.drop(entry)
+			if (scope === 'all') {
+				await EntryStore.persistence.delete(entry.recurrenceMasterId)
+			} else {
+				await EntryStore.persistence.deleteOccurrence(entry, scope)
+			}
+			return
+		}
+		// A master row (rare — the series itself, before the echo replaces it with occurrences) deletes
+		// the whole series, taking its local occurrences along.
+		if (entry.recurrence && entry.id !== undefined) {
+			for (const sibling of [...this.workingById.values()]) {
+				if (sibling !== entry && sibling.recurrenceMasterId === entry.id) {
+					this.drop(sibling)
+				}
+			}
+		}
 		this.drop(entry)
 		await pending?.catch(() => void 0) // its failure is its own — the delete proceeds on what exists
 		this.drop(entry) // a create that landed mid-delete graduated the entry back in — drop it again
 		if (entry.persisted) {
 			await EntryStore.persistence.delete(entry.id!)
 		}
+	}
+
+	/** The local half of a scoped series delete: this instance, plus — per scope — its siblings from
+	 * the same series (all of them, or the ones at/after this occurrence's original start). */
+	private static dropScoped(entry: Entry, scope: RecurrenceScope) {
+		const masterId = entry.recurrenceMasterId!
+		const cutoff = entry.recurrenceId?.valueOf() ?? -Infinity
+		for (const sibling of [...this.workingById.values()]) {
+			if (sibling === entry || sibling.recurrenceMasterId !== masterId) {
+				continue
+			}
+			if (scope === 'all' || (scope === 'following' && (sibling.recurrenceId?.valueOf() ?? -Infinity) >= cutoff)) {
+				this.drop(sibling)
+			}
+		}
+		this.drop(entry)
 	}
 
 	/** Undo local changes: a draft is dropped (it only ever existed locally); a persisted entry snaps

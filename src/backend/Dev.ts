@@ -44,6 +44,12 @@ export class Dev extends Integration {
 		return Promise.resolve()
 	}
 
+	override excludeOccurrence(_em: EntityManager, master: Entry, recurrenceId: Date): Promise<void> {
+		// No .ics — record the excluded instant in the column the occurrence expansion filters on.
+		master.exdates = [...(master.exdates ?? []), recurrenceId.getTime()]
+		return Promise.resolve()
+	}
+
 	override createEntry(em: EntityManager, entry: Entry): Promise<Entry> {
 		em.persist(entry)
 		return Promise.resolve(entry)
@@ -57,6 +63,9 @@ export class Dev extends Integration {
 		existing.end = incoming.end
 		existing.allDay = incoming.allDay
 		existing.status = incoming.status
+		// Recurrence is column-only for Dev (no .ics); the GET path expands `recurrence` via
+		// expandRecurrenceFields. (uid/recurrenceId aren't edited through the UI and Dev has no sync/overrides.)
+		existing.recurrence = incoming.recurrence
 		return Promise.resolve()
 	}
 

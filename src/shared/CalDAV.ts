@@ -7,6 +7,7 @@ import { entity } from './orm.js'
 import { Source, SourceType } from './Source.js'
 import { Integration } from './Integration.js'
 import { Entry, EntryType, TaskStatus } from './Entry.js'
+import { Recurrence } from './Recurrence.js'
 import { Color } from './Color.js'
 
 export interface CalDAVCredentials {
@@ -147,6 +148,17 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
+	/** The recurrence info off a parsed VEVENT/VTODO: the master's rule (as a `Recurrence` value object), the
+	 * shared UID, and a RECURRENCE-ID when the component is a single-occurrence override. */
+	static recurrenceProps(component: ICAL.Component): { uid?: string, recurrence?: Recurrence, recurrenceId?: Date } {
+		const rrule = component.getFirstPropertyValue('rrule')?.toString() || undefined
+		return {
+			uid: component.getFirstPropertyValue('uid')?.toString() || undefined,
+			recurrence: Recurrence.fromRRule(rrule),
+			recurrenceId: (component.getFirstPropertyValue('recurrence-id') as { toJSDate?(): Date } | null)?.toJSDate?.() || undefined,
+		}
+	}
+
 	protected override async syncSourceEntries(em: EntityManager, source: Source): Promise<boolean> {
 		const client = await this.getClient()
 		const remoteCalendar = { url: source.uri }
@@ -256,7 +268,26 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				entry.allDay = !!value('dtstart')?.isDate
 			}
 
+			// Recurrence: a master carries an RRULE; a single edited occurrence is its own member carrying a
+			// RECURRENCE-ID and the master's UID. Capture all three; occurrences are expanded later, on read.
+			const recurrence = CalDAV.recurrenceProps(component)
+			entry.uid = recurrence.uid
+			entry.recurrence = recurrence.recurrence
+			entry.recurrenceId = recurrence.recurrenceId as any
+
 			changed = true
+		}
+
+		// Link each override row (a single edited occurrence) back to its series master by shared UID. Done
+		// after the loop since members arrive in any order; idempotent (only fills an unset link).
+		for (const entry of existingEntries) {
+			if (entry.recurrenceId && entry.uid && !entry.recurrenceMasterId) {
+				const master = existingEntries.find(other => other.recurrence && !other.recurrenceId && other.uid === entry.uid)
+				if (master) {
+					entry.recurrenceMasterId = master.id
+					changed = true
+				}
+			}
 		}
 
 		source.syncState = { syncToken: newSyncToken }
@@ -272,7 +303,10 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		const keys: Array<keyof Entry> = (['heading', 'description', 'color', 'start', 'end', 'status', 'allDay'] as const)
 			.filter(key => !Object[equals](existing[key], incoming[key]))
 
-		if (keys.length === 0) {
+		// The recurrence rule is a value object, diffed via its own (absence-safe) structural equality.
+		const recurrenceChanged = !Recurrence.equal(existing.recurrence, incoming.recurrence)
+
+		if (keys.length === 0 && !recurrenceChanged) {
 			return
 		}
 
@@ -324,6 +358,20 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			existing.status = incoming.status
 		}
 
+		// Recurrence rule edits are series-wide: set/replace the master's RRULE, or drop it (and the EXDATEs it
+		// governed) to collapse the series back to a single entry. Keep the local recurrence/uid columns in step
+		// so the next GET expansion sees the change before a re-sync, and so overrides can still link by UID.
+		if (recurrenceChanged) {
+			if (incoming.recurrence) {
+				component.updatePropertyWithValue('rrule', ICAL.Recur.fromString(incoming.recurrence.toRRule(incoming.allDay)))
+				existing.uid ||= component.getFirstPropertyValue('uid')?.toString() || undefined
+			} else {
+				component.removeAllProperties('rrule')
+				component.removeAllProperties('exdate')
+			}
+			existing.recurrence = incoming.recurrence
+		}
+
 		if (keys.includes('allDay')) {
 			existing.allDay = incoming.allDay
 		}
@@ -338,6 +386,13 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				etag: existing.data.etag || undefined,
 			}
 		})
+
+		// tsdav returns the raw fetch Response and does NOT throw on a non-2xx. The If-Match send means a 412
+		// (the object changed underneath us) must abort before the route flushes, or the local row diverges
+		// from the server. Throwing here skips the flush (per-request forked em), reverting the in-memory edit.
+		if (response.ok === false) {
+			throw new Error(`CalDAV update failed: ${response.status} ${response.statusText}`)
+		}
 
 		const etag = response.headers?.get('etag') || response.headers?.get('Etag') || response.headers?.get('ETag')
 		if (etag) {
@@ -370,6 +425,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		!entry.start ? void 0 : component.updatePropertyWithValue('dtstart', this.toICALTime(entry.start, entry.allDay))
 		!entry.end ? void 0 : component.updatePropertyWithValue(isTask ? 'due' : 'dtend', this.toICALTime(entry.end, entry.allDay))
 		!entry.color ? void 0 : component.updatePropertyWithValue('color', entry.color)
+		!entry.recurrence ? void 0 : component.updatePropertyWithValue('rrule', ICAL.Recur.fromString(entry.recurrence.toRRule(entry.allDay)))
 		if (isTask) {
 			this.writeTaskStatus(component, entry.status)
 		}
@@ -385,7 +441,14 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			iCalString,
 		})
 
+		// Abort before persisting locally if the server rejected the create (tsdav doesn't throw on non-2xx),
+		// so we never keep a row pointing at an object the server never stored.
+		if (response.ok === false) {
+			throw new Error(`CalDAV create failed: ${response.status} ${response.statusText}`)
+		}
+
 		entry.uri = CalDAV.resolveMemberUrl(source.uri, filename)
+		entry.uid = uid // mirror the .ics UID onto the row, so a later edited occurrence can link back as an override
 		entry.data ??= {}
 		entry.data.raw = iCalString
 		entry.color = entry.color || null
@@ -409,5 +472,33 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			})
 		}
 		em.remove(entry)
+	}
+
+	async excludeOccurrence(_em: EntityManager, master: Entry, recurrenceId: Date): Promise<void> {
+		if (!master.uri || !master.data?.raw) {
+			throw new Error('Master must have a URL and raw data to exclude an occurrence via CalDAV')
+		}
+
+		const comp = new ICAL.Component(ICAL.parse(master.data.raw))
+		const component = comp.getFirstSubcomponent('vevent') ?? comp.getFirstSubcomponent('vtodo')
+		if (!component) {
+			throw new Error('No vevent or vtodo found in master rawData')
+		}
+
+		// One EXDATE per excluded instant (matched by ms during expansion); value type follows DTSTART.
+		component.addPropertyWithValue('exdate', this.toICALTime(recurrenceId as unknown as DateTime, master.allDay))
+		master.data.raw = comp.toString()
+
+		const client = await this.getClient()
+		const response = await client.updateCalendarObject({
+			calendarObject: { url: master.uri, data: master.data.raw, etag: master.data.etag || undefined }
+		})
+		if (response.ok === false) {
+			throw new Error(`CalDAV exclude failed: ${response.status} ${response.statusText}`)
+		}
+		const etag = response.headers?.get('etag') || response.headers?.get('Etag') || response.headers?.get('ETag')
+		if (etag) {
+			master.data.etag = etag
+		}
 	}
 }

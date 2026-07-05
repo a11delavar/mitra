@@ -280,6 +280,7 @@ export class EntryDragController extends Controller {
 		const common = { pointerId: e.pointerId, origin: { x: e.clientX, y: e.clientY }, point: { x: e.clientX, y: e.clientY }, cells, laneBottom, moved: false }
 
 		// Move / resize an existing entry — persisted ones only (a draft is owned by the create flow + editor).
+		// A series occurrence drags like any entry: the drop's commit resolves the edit's scope.
 		const segment = target.closest('mitra-entry-segment') as EntrySegmentComponent | null
 		const entry = segment?.segment?.entry
 		if (segment) {

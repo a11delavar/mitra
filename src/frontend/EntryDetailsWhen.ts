@@ -155,12 +155,16 @@ export class EntryDetailsWhen extends Component {
 				input::-webkit-calendar-picker-indicator {
 					display: none;
 				}
+
 			}
 		`
 	}
 
 	protected override get template() {
-		return !this.entry?.start ? html.nothing : html`
+		if (!this.entry?.start) {
+			return html.nothing
+		}
+		return html`
 			<mitra-icon icon=${this.entry.allDay ? 'calendar-days' : 'clock'}></mitra-icon>
 			<div class="dates">
 				<input type="date" class="subtle" aria-label="Start date" .value=${this.dateValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartDateChange}>
@@ -183,6 +187,8 @@ export class EntryDetailsWhen extends Component {
 					<input type="time" class="subtle" aria-label="End time" .value=${this.timeValue(this.entry.effectiveEnd)} @click=${this.openPicker} @change=${this.handleEndTimeChange}>
 				`}
 			</div>
+			<mitra-icon icon="repeat"></mitra-icon>
+			<mitra-repeat-field .entry=${this.entry} @change=${() => this.commit()}></mitra-repeat-field>
 		`
 	}
 }

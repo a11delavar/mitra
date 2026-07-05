@@ -1,6 +1,6 @@
 import { Api, HttpError, apiError, apiAuthenticator, type ApiAuthenticator } from '@a11d/api'
 import { type DateTime } from '@3mo/date-time'
-import type { Entry, Integration, Source, User } from 'shared'
+import type { Entry, Integration, RecurrenceScope, Source, User } from 'shared'
 
 /**
  * Surface the server's error message on failed responses. Without a registered
@@ -108,9 +108,48 @@ export function deleteIntegration(id: string) {
 }
 
 export function updateEvent(entry: Entry) {
-	return Api.put<Entry>(`/entries/${entry.id}`, entry)
+	// A series occurrence (or synced override) has no row of its own: its edit applies series-wide via
+	// the MASTER, sending only the series-wide content fields so the master keeps its own schedule.
+	// `recurrence` rides along only when the occurrence actually carries a value — an object (possibly
+	// edited via the Repeat field) or an explicit `null` (remove the rule). A synced override row has
+	// none of its own, and omitting the field there keeps a benign rename from wiping the master's rule.
+	if (entry.recurrenceMasterId) {
+		return Api.put<Entry>(`/entries/${entry.recurrenceMasterId}`, {
+			heading: entry.heading,
+			description: entry.description,
+			color: entry.color,
+			...(entry.recurrence !== undefined ? { recurrence: entry.recurrence } : {}),
+		})
+	}
+	// The full entry, with an absent rule sent as an explicit `null`: JSON drops undefined keys and the
+	// backend treats absence as "keep the rule" — only a null can express its removal.
+	return Api.put<Entry>(`/entries/${entry.id}`, { ...entry, recurrence: entry.recurrence ?? null })
 }
 
 export function deleteEvent(id: string) {
 	return Api.delete(`/entries/${id}`)
+}
+
+/** Apply an occurrence's edited fields to its series with a scope (this / following / all). Targets the
+ * MASTER; `recurrenceId` names the occurrence being edited. The response is the resulting entry: the
+ * master ('all'), the continuation series' master ('following'), or the detached standalone ('this'). */
+export function editOccurrence(occurrence: Entry, scope: RecurrenceScope) {
+	return Api.put<Entry>(`/entries/${occurrence.recurrenceMasterId}`, {
+		scope,
+		recurrenceId: occurrence.recurrenceId,
+		heading: occurrence.heading,
+		description: occurrence.description,
+		color: occurrence.color,
+		start: occurrence.start,
+		end: occurrence.end,
+		allDay: occurrence.allDay,
+		status: occurrence.status,
+	})
+}
+
+/** Delete an occurrence from its series with a scope (this / following) — DELETE carries no body, so
+ * the scope + occurrence start go as query params. ('all' deletes the master via deleteEvent.) */
+export function deleteOccurrence(occurrence: Entry, scope: RecurrenceScope) {
+	const query = new URLSearchParams({ scope, recurrenceId: occurrence.recurrenceId!.toISOString() })
+	return Api.delete(`/entries/${occurrence.recurrenceMasterId}?${query}`)
 }

@@ -15,7 +15,7 @@ export const menuStyles = css`
 		border-radius: 8px;
 		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 		position-area: bottom span-left;
-		position-try-fallbacks: top span-left;
+		position-try-fallbacks: flip-block;
 
 		&:popover-open {
 			display: flex;
@@ -50,6 +50,15 @@ export const menuStyles = css`
 
 			&.danger {
 				color: #ff6b6b;
+			}
+
+			&:disabled {
+				opacity: 0.4;
+				cursor: not-allowed;
+
+				&:hover {
+					background: transparent;
+				}
 			}
 		}
 	}
