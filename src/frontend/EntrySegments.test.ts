@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Entry } from '../shared/Entry.js'
 import { EntrySegments } from './EntrySegments.js'
+import { EntryStore } from './EntryStore.js'
 
 describe('EntrySegments', () => {
 	const base = new DateTime().dayStart
@@ -33,6 +34,50 @@ describe('EntrySegments', () => {
 			const entry = new Entry({ start: base, end: base.add({ days: 2 }) })
 			assert.equal(EntrySegments.for(entry)[0], EntrySegments.for(entry)[0])
 		})
+
+		it('keeps the same instances after a content-only change', () => {
+			const entry = new Entry({ heading: 'Old', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
+			const before = EntrySegments.for(entry)
+			entry.heading = 'New'
+			assert.equal(EntrySegments.for(entry)[0], before[0])
+		})
+
+		it('re-slices after an in-place span change', () => {
+			const entry = new Entry({ start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
+			const before = EntrySegments.for(entry)
+			entry.moveStart(base.add({ hours: 14 }))
+			const after = EntrySegments.for(entry)
+			assert.notEqual(after[0], before[0])
+			assert.equal(after[0]!.startMinute, 14 * 60 + 1)
+			assert.equal(after[0]!.endMinute, 15 * 60 + 1)
+		})
+
+		it('re-slices to more segments when a span grows across days', () => {
+			const entry = new Entry({ start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
+			assert.equal(EntrySegments.for(entry).length, 1)
+			entry.setEnd(base.add({ days: 1, hours: 10 }))
+			assert.equal(EntrySegments.for(entry).length, 2)
+		})
+
+		it('keys a create draft and a move ghost distinctly', () => {
+			// The two possible id-less entries can coexist — their keyed renders must not collide.
+			const draft = new Entry({})
+			const ghost = new Entry({})
+			EntryStore.setPreview(ghost)
+			try {
+				assert.notEqual(EntrySegments.for(draft)[0]!.id, EntrySegments.for(ghost)[0]!.id)
+			} finally {
+				EntryStore.setPreview(undefined)
+			}
+		})
+
+		it('re-slices after an in-place all-day flip', () => {
+			const entry = new Entry({ start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
+			const before = EntrySegments.for(entry)
+			entry.setAllDay(true)
+			assert.notEqual(EntrySegments.for(entry)[0], before[0])
+			assert.equal(EntrySegments.for(entry)[0]!.allDay, true)
+		})
 	})
 
 	describe('of', () => {
@@ -41,6 +86,22 @@ describe('EntrySegments', () => {
 			const entries = [new Entry({ start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })]
 			assert.equal(EntrySegments.of(entries, days), EntrySegments.of(entries, days))
 			assert.notEqual(EntrySegments.of(entries, days), EntrySegments.of([...entries], days))
+		})
+	})
+
+	describe('timedOn with a move ghost', () => {
+		it('renders the ghost without folding the entry it previews', () => {
+			const source = new Entry({ id: 'a', heading: 'A', start: base.add({ hours: 9 }), end: base.add({ hours: 11 }) })
+			const ghost = new Entry({ heading: 'A', start: base.add({ hours: 10 }), end: base.add({ hours: 12 }) })
+			EntryStore.setPreview(ghost)
+			try {
+				const segments = EntrySegments.of([source, ghost], [base]).timedOn(base)
+				assert.equal(segments.length, 2) // both render...
+				assert.deepEqual(segments.find(s => s.entry === source)!.overlap, { slot: 0, total: 1, span: 1 }) // ...but the source keeps full width
+				assert.equal(segments.find(s => s.entry === ghost)!.overlap, undefined) // the ghost floats, unpacked
+			} finally {
+				EntryStore.setPreview(undefined)
+			}
 		})
 	})
 

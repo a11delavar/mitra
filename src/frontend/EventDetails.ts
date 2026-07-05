@@ -1,8 +1,8 @@
 import { component, html, property, state, Component, css, eventListener, event, Binder } from '@a11d/lit'
 import { EntryType, TaskStatus } from 'shared'
 import type { EntrySegment } from './EntrySegment.js'
-import { getSource, updateEvent, deleteEvent, createEvent } from './Api.js'
-import { DraftController } from './DraftController.js'
+import { getSource } from './Api.js'
+import { EntryStore } from './EntryStore.js'
 
 @component('mitra-entry-details')
 export class EntryDetailsComponent extends Component {
@@ -18,8 +18,11 @@ export class EntryDetailsComponent extends Component {
 		}
 	}) open = false
 
-	@event() readonly change!: EventDispatcher
 	@property({ type: Object }) segment?: EntrySegment
+
+	// Subscribe to the store: external changes adopted onto the open entry re-render the popover too.
+	// (Adoption only happens while the entry is clean, so a re-render can't fight in-progress typing.)
+	readonly store = new EntryStore(this)
 
 	private get source() {
 		return this.segment?.entry.sourceId ? getSource(this.segment.entry.sourceId) : undefined
@@ -44,56 +47,28 @@ export class EntryDetailsComponent extends Component {
 		}
 	}
 
-	// The in-flight create request, kept so a follow-up edit waits for it to land before issuing an update.
-	private creating?: Promise<unknown>
-
-	private readonly handleChange = async () => {
-		const entry = this.segment!.entry
-		if (!entry.persisted) {
-			// An untitled draft isn't committed yet; once a create is in flight, ignore further changes
-			// (the binder keeps the entry's fields up to date) until it lands and the entry gets its id.
-			if (this.creating || !entry.heading?.trim()) {
-				return
-			}
-			try {
-				const created = await (this.creating = createEvent(entry))
-				DraftController.confirmCreated(entry, created.id!) // now persisted; reconcile() drops it on echo
-			} catch (error) {
-				this.creating = undefined // create failed — let the user retry (it's still a dashed draft)
-				throw error
-			}
-		} else {
-			await this.creating // if a create is mid-flight, let it land first (a no-op once settled)
-			await updateEvent(entry)
-		}
+	// The binder mutated the entry in place; committing it (and everything else — coalescing, the
+	// create/update sequencing, adopting the response) is the store's concern, not this component's.
+	private readonly handleChange = () => {
+		return EntryStore.commit(this.segment!.entry)
 	}
 
-	// The task checkbox/menu mutated `entry.status`: persist it like any other field, re-render the title
-	// (strikethrough), and notify the grid so its segment updates too.
+	// The task checkbox/menu mutated `entry.status`: render it everywhere this frame, then persist.
 	private readonly handleStatusChange = () => {
+		EntryStore.notify()
 		this.handleChange().catch(() => void 0)
-		this.requestUpdate()
-		this.change.dispatch()
 	}
 
-	// The <mitra-entry-details-when> editor mutated the entry's span in place: persist it, re-render, and
-	// notify the grid so its segment moves too.
+	// The <mitra-entry-details-when> editor mutated the entry's span in place: render, then persist.
 	private readonly handleWhenChange = () => {
+		EntryStore.notify()
 		this.handleChange().catch(() => void 0)
-		this.requestUpdate()
-		this.change.dispatch()
 	}
 
-	private readonly handleDelete = async () => {
+	private readonly handleDelete = () => {
 		const entry = this.segment!.entry
 		this.hidePopover()
-		// A never-saved draft is only local; otherwise delete on the server (discard clears any optimistic copy).
-		if (!entry.persisted) {
-			DraftController.discard()
-		} else {
-			await deleteEvent(entry.id!)
-			DraftController.discard()
-		}
+		return EntryStore.delete(entry)
 	}
 
 	private readonly handleClose = (e: Event) => {
@@ -108,7 +83,7 @@ export class EntryDetailsComponent extends Component {
 	private readonly binder = new Binder(this, 'segment')
 
 	private bind = (keyPath: KeyPath.Of<EntrySegment>, event = 'change') => {
-		return this.binder.bind({ keyPath, event, sourceUpdated: () => this.change.dispatch() })
+		return this.binder.bind({ keyPath, event, sourceUpdated: () => EntryStore.notify() })
 	}
 
 	static override get styles() {
@@ -382,8 +357,8 @@ export class EntryDetailsComponent extends Component {
 		}
 
 		this.segment.entry.color = color ?? null
-		this.handleChange()
-		this.requestUpdate()
+		EntryStore.notify()
+		this.handleChange().catch(() => void 0)
 	}
 
 	@state() private editingDescription = false

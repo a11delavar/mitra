@@ -1,8 +1,8 @@
 import { Controller, type Component } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { Entry, EntryType, SourceType, SNAP_MINUTES, type Source } from 'shared'
-import { getDefaultSourceId, getIntegrations, updateEvent } from './Api.js'
-import { DraftController } from './DraftController.js'
+import { getDefaultSourceId, getIntegrations } from './Api.js'
+import { EntryStore } from './EntryStore.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
 import { placeAllDay, placeTimed, resizePlacement, snapToGrid } from './entryPlacement.js'
 
@@ -37,7 +37,8 @@ interface Drag {
 	readonly mode: Mode
 	readonly anchor: DragPoint                  // the pointer-down point (create: first corner; move: grab point)
 	readonly source?: Source                    // create only — the calendar a new entry lands in
-	readonly entry?: Entry                       // move/resize only — the original persisted entry
+	readonly entry?: Entry                       // move/resize only — the live working entry (resize mutates it per frame; move only at release)
+	readonly before?: Entry                      // move/resize only — the span at pointer-down: the frames' fixed reference, and a cancelled resize's restore point
 	readonly edge?: 'start' | 'end'              // resize only — which edge is being dragged
 	readonly grabbedSegment?: EntrySegmentComponent // move only — opened on a plain tap (no drag)
 	readonly pointerId: number
@@ -46,6 +47,8 @@ interface Drag {
 	point: { x: number, y: number }
 	moved: boolean
 	frame?: number
+	gestureDraft?: Entry                         // create only — the one draft instance the gesture mutates per frame
+	preview?: Entry                              // move only — the one dashed ghost instance the gesture mutates per frame
 }
 
 /**
@@ -63,8 +66,11 @@ interface Drag {
  * - **resize** — on a persisted entry's `.resize-start`/`.resize-end` handle: drag that edge while the
  *   other stays fixed (reusing {@link resizePlacement}, so dragging an edge past the other flips it).
  *
- * The in-progress entry is pushed to {@link DraftController} so it renders through the normal segment
- * pipeline; create opens the draft's editor on release, move/resize persist via `updateEvent`.
+ * A create's in-progress entry is pushed to the {@link EntryStore} as the draft. A *move* never touches
+ * the entry until release: the original stays dimmed in place (the drag *source*) while a dashed, id-less
+ * ghost — the store's *preview*, sharing the draft's not-yet-persisted look because that's literally what
+ * it is — tracks the pointer. A *resize* stretches the entry itself live. Create opens the draft's editor
+ * on release; move/resize commit through the store, which reverts to the canonical server state on failure.
  */
 export class EntryDragController extends Controller {
 	/** The granularity timed gestures snap to. */
@@ -159,7 +165,7 @@ export class EntryDragController extends Controller {
 
 	private buildCreate(anchor: DragPoint, current: DragPoint): Entry {
 		const drag = this.drag!
-		// No id: it's a draft until the backend assigns one on create (see Entry.persisted / DraftController).
+		// No id: it's a draft until the backend assigns one on create (see Entry.persisted / EntryStore).
 		// Type follows the target calendar: a task source makes a task (a VTODO on CalDAV), else an event.
 		const type = drag.source!.type === SourceType.Task ? EntryType.Task : EntryType.Event
 		const base = { sourceId: drag.source!.id, type, heading: '' }
@@ -171,35 +177,35 @@ export class EntryDragController extends Controller {
 		return new Entry({ ...base, start, end, allDay: false })
 	}
 
-	/** Translate the dragged entry by the gesture delta, preserving its duration. A clone (never a mutation
-	 * of the authoritative entry) so a cancelled gesture leaves the original untouched. */
+	/** Translate the dragged entry by the gesture delta, preserving its duration. Computed from `before`
+	 * (the span at pointer-down) — the live entry mutates per frame, so it can't be the reference. */
 	private buildMove(current: DragPoint): Entry | undefined {
 		const drag = this.drag!
-		const entry = drag.entry!
-		if (!entry.start || !entry.end) {
+		const before = drag.before!
+		if (!before.start || !before.end) {
 			return undefined
 		}
 		if (drag.mode === 'allday') {
 			const days = Math.round((current.date.dayStart.valueOf() - drag.anchor.date.dayStart.valueOf()) / 86_400_000)
-			return new Entry({ ...entry, start: entry.start.add({ days }), end: entry.end.add({ days }) })
+			return new Entry({ ...before, start: before.start.add({ days }), end: before.end.add({ days }) })
 		}
 		const grabMs = drag.anchor.date.dayStart.add({ minutes: drag.anchor.minute }).valueOf()
 		const currentMs = current.date.dayStart.add({ minutes: current.minute }).valueOf()
 		// Snap the moved start onto the grid (the user's choice), then shift both ends by that to keep duration.
-		const shift = snapToGrid(entry.start.valueOf() + (currentMs - grabMs)) - entry.start.valueOf()
-		return new Entry({ ...entry, start: entry.start.add({ milliseconds: shift }), end: entry.end.add({ milliseconds: shift }) })
+		const shift = snapToGrid(before.start.valueOf() + (currentMs - grabMs)) - before.start.valueOf()
+		return new Entry({ ...before, start: before.start.add({ milliseconds: shift }), end: before.end.add({ milliseconds: shift }) })
 	}
 
 	/** Drag one edge of the entry to the current point, keeping the other fixed (and flipping past it). */
 	private buildResize(current: DragPoint): Entry | undefined {
 		const drag = this.drag!
-		const entry = drag.entry!
-		if (!entry.start || !entry.end) {
+		const before = drag.before!
+		if (!before.start || !before.end) {
 			return undefined
 		}
-		const dragged = entry.allDay ? current.date : current.date.dayStart.add({ minutes: current.minute })
-		const { start, end } = resizePlacement(entry, drag.edge!, dragged)
-		return new Entry({ ...entry, start, end })
+		const dragged = before.allDay ? current.date : current.date.dayStart.add({ minutes: current.minute })
+		const { start, end } = resizePlacement(before, drag.edge!, dragged)
+		return new Entry({ ...before, start, end })
 	}
 
 	/** The entry a frame should render for the current gesture, resolved against the cached geometry. */
@@ -265,7 +271,7 @@ export class EntryDragController extends Controller {
 			}
 			const edge = target.closest('.resize-start') ? 'start' : target.closest('.resize-end') ? 'end' : undefined
 			const kind: Kind = edge ? 'resize' : 'move'
-			this.begin({ ...common, kind, mode, anchor, entry, edge, grabbedSegment: kind === 'move' ? segment : undefined }, e)
+			this.begin({ ...common, kind, mode, anchor, entry, before: entry.clone(), edge, grabbedSegment: kind === 'move' ? segment : undefined }, e)
 			return
 		}
 
@@ -305,12 +311,41 @@ export class EntryDragController extends Controller {
 			}
 			drag.moved = true
 			if (drag.kind !== 'create') {
-				DraftController.setDragging(true) // float the entry above its cluster while it's dragged
+				EntryStore.setDragging(drag.entry) // float the entry above its cluster while it's dragged
 			}
 		}
-		const draft = this.buildAt(drag.point)
-		if (draft) {
-			DraftController.upsertDraft(draft)
+		const built = this.buildAt(drag.point)
+		if (built) {
+			this.apply(built)
+		}
+	}
+
+	/** Render a frame's result. Create and move both drive a single gesture-local, id-less instance (the
+	 * draft / the ghost) so keyed renders reuse its DOM across frames; only a resize manipulates the real
+	 * entry live — a move leaves the original untouched (dimmed in place) until release. */
+	private apply(built: Entry) {
+		const drag = this.drag!
+		switch (drag.kind) {
+			case 'create': {
+				const draft = drag.gestureDraft ??= built
+				draft.start = built.start
+				draft.end = built.end
+				EntryStore.upsertDraft(draft)
+				break
+			}
+			case 'move': {
+				const preview = drag.preview ??= new Entry({ ...built, id: undefined })
+				preview.start = built.start
+				preview.end = built.end
+				EntryStore.setPreview(preview)
+				break
+			}
+			case 'resize': {
+				drag.entry!.start = built.start
+				drag.entry!.end = built.end
+				EntryStore.notify()
+				break
+			}
 		}
 	}
 
@@ -325,42 +360,65 @@ export class EntryDragController extends Controller {
 			// (where clicking a cell is the add affordance) and creates nothing in the week. The last
 			// coalesced frame may not have run, so resolve the release position here (before teardown).
 			const create = drag.moved || this.grid === 'month'
-			const draft = !create ? undefined : drag.moved ? this.buildAt(drag.point) : this.buildCreate(drag.anchor, drag.anchor)
+			const built = !create ? undefined : drag.moved ? this.buildAt(drag.point) : this.buildCreate(drag.anchor, drag.anchor)
 			this.teardown(e.pointerId)
-			if (draft) {
-				DraftController.upsertDraft(draft)
+			if (built) {
+				const draft = drag.gestureDraft ?? built
+				draft.start = built.start
+				draft.end = built.end
+				EntryStore.upsertDraft(draft)
 			}
-			create ? DraftController.openDraft() : DraftController.discard()
+			create ? EntryStore.openDraft() : EntryStore.discardDraft()
 			return
 		}
 
-		// Move / resize: persist a real drag; a plain tap on a body opens the editor (handles never open).
+		// Move / resize: commit a real drag; a plain tap on a body opens the editor (handles never open).
 		if (drag.moved) {
-			const draft = this.buildAt(drag.point)
+			const built = this.buildAt(drag.point)
+			const entry = drag.entry!
 			this.teardown(e.pointerId)
-			DraftController.setDragging(false)
-			if (draft) {
-				DraftController.upsertDraft(draft) // keep the optimistic position until the server echoes it
-				updateEvent(draft).catch(() => DraftController.discard(draft)) // on failure, revert *this* draft
+			EntryStore.setPreview(undefined) // a move's ghost has served its purpose — the entry takes over
+			EntryStore.setDragging(undefined)
+			if (built) {
+				entry.start = built.start
+				entry.end = built.end
+				EntryStore.notify()
 			}
+			// The entry already renders at its new span; on failure it snaps back to the canonical state.
+			EntryStore.commit(entry).catch(() => EntryStore.revert(entry))
 		} else {
 			const segment = drag.kind === 'move' ? drag.grabbedSegment : undefined
 			this.teardown(e.pointerId)
-			DraftController.setDragging(false)
+			EntryStore.setDragging(undefined)
 			if (segment) {
 				segment.open = true
 			}
 		}
 	}
 
-	/** A browser-interrupted gesture (touch hand-off, OS/context-menu gesture): tear down and drop the
-	 * optimistic overlay — nothing is persisted on cancel, so the entry reverts to its server state. */
+	/** A browser-interrupted gesture (touch hand-off, OS/context-menu gesture): tear down and undo what
+	 * the gesture did — a create's draft and a move's ghost are simply dropped (a moved entry was never
+	 * touched); only a live resize has to restore the pointer-down span. */
 	private readonly onPointerCancel = (e: PointerEvent) => {
 		const drag = this.drag
 		if (!drag || e.pointerId !== drag.pointerId) {
 			return
 		}
 		this.teardown(e.pointerId)
-		DraftController.discard()
+		switch (drag.kind) {
+			case 'create':
+				EntryStore.discardDraft()
+				break
+			case 'move':
+				EntryStore.setPreview(undefined)
+				EntryStore.setDragging(undefined)
+				break
+			case 'resize':
+				EntryStore.setDragging(undefined)
+				drag.entry!.start = drag.before!.start
+				drag.entry!.end = drag.before!.end
+				EntryStore.notify()
+				break
+		}
 	}
 }

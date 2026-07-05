@@ -1,6 +1,7 @@
 import { type DateTime } from '@3mo/date-time'
 import type { Entry } from 'shared'
 import { EntrySegment } from './EntrySegment.js'
+import { EntryStore } from './EntryStore.js'
 
 /** An event placed in a month-grid week: a column-spanning bar at its packed slot (row). */
 export interface MonthBar {
@@ -31,16 +32,25 @@ export interface MonthWeek {
  *   per week, the month grid — the view turns each into a column span from the segment's own dates.
  */
 export class EntrySegments {
-	private static readonly perEntry = new WeakMap<Entry, ReadonlyArray<EntrySegment>>()
+	private static readonly perEntry = new WeakMap<Entry, { readonly spanKey: string, readonly segments: ReadonlyArray<EntrySegment> }>()
 
-	/** An entry's per-day slices, linked previous↔next, memoised so instances are stable across renders. */
+	/** The slice-relevant projection of an entry's span. Entry instances are stable and mutated in place
+	 * (see `EntryStore`), so the memo can't key on identity alone — it re-validates against this. */
+	private static spanKey(entry: Entry) {
+		return `${entry.start?.valueOf()}:${entry.end?.valueOf()}:${!!entry.allDay}`
+	}
+
+	/** An entry's per-day slices, linked previous↔next, memoised so instances are stable across renders —
+	 * and re-sliced the moment the entry's span drifts, so an in-place edit renders instantly. Content
+	 * changes (heading, color, status) keep the same segments; they read those live off the entry. */
 	static for(entry: Entry): ReadonlyArray<EntrySegment> {
-		let segments = EntrySegments.perEntry.get(entry)
-		if (!segments) {
-			segments = EntrySegments.slice(entry)
-			EntrySegments.perEntry.set(entry, segments)
+		const spanKey = EntrySegments.spanKey(entry)
+		let memo = EntrySegments.perEntry.get(entry)
+		if (memo?.spanKey !== spanKey) {
+			memo = { spanKey, segments: EntrySegments.slice(entry) }
+			EntrySegments.perEntry.set(entry, memo)
 		}
-		return segments
+		return memo.segments
 	}
 
 	private static slice(entry: Entry): ReadonlyArray<EntrySegment> {
@@ -89,12 +99,16 @@ export class EntrySegments {
 	}
 
 	private readonly timedCache = new Map<number, ReadonlyArray<EntrySegment>>()
-	/** This day's timed (non-all-day) segments, clustered into side-by-side columns. */
+	/** This day's timed (non-all-day) segments, clustered into side-by-side columns. A move's ghost
+	 * renders in the day but stays invisible to the packing: it and the entry it previews are the same
+	 * thing, so nothing may fold aside to make room for it — it floats above instead. */
 	timedOn(date: DateTime): ReadonlyArray<EntrySegment> {
 		const key = date.dayStart.valueOf() // one Temporal op per day; the filter below is pure integer math
 		let segments = this.timedCache.get(key)
 		if (!segments) {
-			segments = EntrySegments.cluster(this.timedSegments.filter(segment => segment.fallsOn(key)))
+			const day = this.timedSegments.filter(segment => segment.fallsOn(key))
+			const isOverlay = (segment: EntrySegment) => EntryStore.isPreview(segment.entry)
+			segments = [...EntrySegments.cluster(day.filter(segment => !isOverlay(segment))), ...day.filter(isOverlay)]
 			this.timedCache.set(key, segments)
 		}
 		return segments
@@ -176,6 +190,9 @@ export class EntrySegments {
 		}
 		const datesByEntry = new Map<Entry, ReadonlyArray<number>>()
 		for (const entry of this.entries) {
+			if (EntryStore.isPreview(entry)) {
+				continue // a move's ghost overlays slot 0 (see monthWeek's fallback) — it mustn't shift lanes
+			}
 			const dates = EntrySegments.for(entry).map(s => s.dayValue).filter((v): v is number => v !== undefined)
 			if (dates.length) {
 				datesByEntry.set(entry, dates)

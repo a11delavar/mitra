@@ -5,7 +5,7 @@ import { DateTime } from '@3mo/date-time'
 import { MediaQueryController } from '@3mo/media-query-observer'
 import { fetchEvents } from './Api.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
-import { DraftController } from './DraftController.js'
+import { EntryStore } from './EntryStore.js'
 
 class FetcherController extends Controller {
 	// `withCredentials` so the session cookie rides along behind a cookie-based auth proxy (e.g. Traefik OIDC).
@@ -22,22 +22,23 @@ class FetcherController extends Controller {
 			const end = this.host.navigatingDate.monthEnd.add({ months: 1 })
 			return fetchEvents(start, end)
 		},
-		onComplete: entries => DraftController.reconcile(entries),
+		onComplete: entries => EntryStore.applyServerEntries(entries),
 	})
-
-	get value() {
-		return this.task.value || []
-	}
 
 	override hostConnected() {
 		this.task.run()
 		this.eventSource.onmessage = (event) => {
 			if (event.data === 'updated') {
-				document.startViewTransition(async () => {
+				const transition = document.startViewTransition(async () => {
 					await this.task.run()
 					await this.host.updateComplete
 					await Promise.all(this.host.eventSegments.map(e => e.updateComplete))
 				})
+				// Back-to-back ticks (every save echoes one) abort the previous tick's transition — fine,
+				// but don't let the abandoned transition's rejections surface as unhandled exceptions.
+				transition.updateCallbackDone.catch(() => void 0)
+				transition.ready.catch(() => void 0)
+				transition.finished.catch(() => void 0)
 			}
 		}
 	}
@@ -63,7 +64,18 @@ export class PageCalendar extends PageComponent {
 			return
 		}
 
-		const transition = (fn: () => Promise<void>) => !document.startViewTransition ? fn() : document.startViewTransition(fn)
+		const transition = (fn: () => Promise<void>) => {
+			if (!document.startViewTransition) {
+				void fn()
+				return
+			}
+			const viewTransition = document.startViewTransition(fn)
+			// An SSE tick's transition (or a rapid second switch) can abort this one — fine, but don't
+			// let the abandoned transition's rejections surface as unhandled exceptions.
+			viewTransition.updateCallbackDone.catch(() => void 0)
+			viewTransition.ready.catch(() => void 0)
+			viewTransition.finished.catch(() => void 0)
+		}
 
 		transition(async () => {
 			this.view = value
@@ -72,7 +84,8 @@ export class PageCalendar extends PageComponent {
 		})
 	}
 
-	private readonly fetcher = new FetcherController(this)
+	readonly fetcher = new FetcherController(this)
+	readonly store = new EntryStore(this)
 
 	@eventListener({ target: window, type: 'keydown' })
 	protected handleKeyDown(e: KeyboardEvent) {
@@ -151,7 +164,6 @@ export class PageCalendar extends PageComponent {
 	protected override createRenderRoot() { return this }
 
 	protected override get template() {
-		const entries = this.fetcher.value
 		return html`
 			<lit-page heading='Mitra'>
 				<mitra-sidebar ?open=${bind(this, 'sidebarOpen')}></mitra-sidebar>
@@ -173,13 +185,13 @@ export class PageCalendar extends PageComponent {
 					</header>
 					${this.view === 'week' ? html`
 						<mitra-days
-							.entries=${entries}
+							.entries=${this.store.entries}
 							.navigatingDate=${this.navigatingDate}
 							@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
 						></mitra-days>
 					` : html`
 						<mitra-month
-							.entries=${entries}
+							.entries=${this.store.entries}
 							.navigatingDate=${this.navigatingDate}
 							@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
 							@switchToWeek=${() => this.setView('week')}

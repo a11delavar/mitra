@@ -3,7 +3,6 @@ import { DateTime } from '@3mo/date-time'
 import { type Entry } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
-import { DraftController } from './DraftController.js'
 import { EntryDragController } from './EntryDragController.js'
 
 @component('mitra-month')
@@ -18,11 +17,10 @@ export class Month extends Component {
 
 	private readonly buffer = new CalendarDatesController(this)
 	protected readonly entryDrag = new EntryDragController(this, 'month')
-	private readonly draft = new DraftController(this)
 
 	private get bufferNavigatingDate(): DateTime { return this.buffer.navigatingDate }
 	private get days(): Array<DateTime> { return this.buffer.days }
-	private get segments() { return EntrySegments.of(this.draft.merge(this.entries), this.days) }
+	private get segments() { return EntrySegments.of(this.entries, this.days) }
 
 	protected override initialized() {
 		this.buffer.navigatingDate = this.navigatingDate
@@ -177,7 +175,7 @@ export class Month extends Component {
 						?data-with-background=${day.month === this.bufferNavigatingDate.month}>
 					</mitra-day>
 				`)}
-				${bars.map(bar => html`
+				${repeat(bars, bar => bar.segment.id, bar => html`
 					<mitra-entry-segment
 						style="grid-column: ${bar.startColumn + 1} / span ${bar.span}; grid-row: ${bar.slot + 2};"
 						resize=${ifDefined(bar.segment.entry.allDay ? 'inline' : undefined)}

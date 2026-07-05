@@ -1,5 +1,6 @@
 import type { DateTime } from '@3mo/date-time'
 import type { Entry } from 'shared'
+import { EntryStore } from './EntryStore.js'
 
 /** Side-by-side placement among timed events sharing a day — the one datum CSS grid can't derive,
  * because each box's fractional width depends on the local cluster size. Filled in by `EntrySegments`. */
@@ -54,8 +55,10 @@ export class EntrySegment {
 	}
 
 	get id() {
-		// A draft has no entry id yet; 'draft' keeps the per-day key (and DOM anchor/transition names) readable.
-		return `${this.entry.id ?? 'draft'}-${this.dayValue ?? 0}`
+		// An id-less entry is one of exactly two local things — the create draft or a move's ghost —
+		// and only ever one of each exists, so naming the kind is all the disambiguation keyed renders
+		// (and DOM anchor/transition names) need.
+		return `${this.entry.id ?? (EntryStore.isPreview(this.entry) ? 'preview' : 'draft')}-${this.dayValue ?? 0}`
 	}
 
 	/** Whether this segment renders on the day identified by `dayValue` (epoch-ms of its midnight). */

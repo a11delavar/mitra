@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { Entry } from './Entry.js'
+import { Entry, EntryType, TaskStatus } from './Entry.js'
 
 describe('Entry', () => {
 	const day = new DateTime().dayStart
@@ -99,6 +99,86 @@ describe('Entry', () => {
 			assert.equal(e.end!.valueOf(), day.add({ days: 3 }).valueOf())
 			e.setEnd(day.subtract({ days: 1 })) // before start → single day
 			assert.equal(e.end!.valueOf(), day.add({ days: 1 }).valueOf())
+		})
+	})
+
+	describe('editEquals', () => {
+		const base = () => new Entry({
+			id: 'a', sourceId: 's', type: EntryType.Event, heading: 'Standup', description: '', color: null,
+			start: at(0, 9), end: at(0, 10), allDay: false,
+		})
+
+		it('is true for a clone', () => {
+			const e = base()
+			assert.equal(e.editEquals(e.clone()), true)
+		})
+
+		it('is false after a content edit', () => {
+			for (const edit of [
+				(e: Entry) => e.heading = 'Renamed',
+				(e: Entry) => e.description = 'Notes',
+				(e: Entry) => e.color = '#ff0000',
+				(e: Entry) => e.moveStart(at(1, 9)),
+				(e: Entry) => e.setEnd(at(0, 11)),
+				(e: Entry) => e.setAllDay(true),
+				(e: Entry) => e.status = TaskStatus.Done,
+			]) {
+				const e = base()
+				edit(e)
+				assert.equal(e.editEquals(base()), false)
+			}
+		})
+
+		it('ignores identity and sync bookkeeping (id, uri, data)', () => {
+			const local = base()
+			const server = new Entry({ ...base(), id: 'b', uri: '/dav/entry.ics', data: { etag: '"1"' } })
+			assert.equal(local.editEquals(server), true)
+		})
+
+		it('compares DateTimes by value, not identity', () => {
+			const a = new Entry({ ...base(), start: at(0, 9), end: at(0, 10) })
+			const b = new Entry({ ...base(), start: day.add({ hours: 9 }), end: day.add({ hours: 10 }) })
+			assert.equal(a.editEquals(b), true)
+		})
+
+		it('treats a set and an unset optional field as different', () => {
+			assert.equal(base().editEquals(new Entry({ ...base(), status: TaskStatus.ToDo })), false)
+			assert.equal(base().editEquals(new Entry({ ...base(), start: undefined, end: undefined })), false)
+		})
+
+		it('treats both-unset optional fields as equal', () => {
+			const a = new Entry({ sourceId: 's', type: EntryType.Task, heading: 'Task' })
+			const b = new Entry({ sourceId: 's', type: EntryType.Task, heading: 'Task' })
+			assert.equal(a.editEquals(b), true)
+		})
+	})
+
+	describe('clone / assign', () => {
+		it('clone is a detached value copy', () => {
+			const e = new Entry({ id: 'a', sourceId: 's', type: EntryType.Event, heading: 'Standup', start: at(0, 9), end: at(0, 10) })
+			const snapshot = e.clone()
+			e.heading = 'Renamed'
+			e.moveStart(at(1, 9))
+			assert.equal(snapshot.heading, 'Standup')
+			assert.equal(snapshot.start!.valueOf(), at(0, 9).valueOf())
+			assert.notEqual(snapshot, e)
+		})
+
+		it('assign adopts values in place, preserving identity', () => {
+			const e = new Entry({ id: 'a', sourceId: 's', type: EntryType.Event, heading: 'Old', start: at(0, 9), end: at(0, 10) })
+			const incoming = new Entry({ id: 'a', sourceId: 's', type: EntryType.Event, heading: 'New', start: at(1, 9), end: at(1, 10) })
+			const result = e.assign(incoming)
+			assert.equal(result, e)
+			assert.equal(e.heading, 'New')
+			assert.equal(e.start!.valueOf(), at(1, 9).valueOf())
+			assert.equal(e.editEquals(incoming), true)
+		})
+
+		it('assign clears fields the incoming entry lacks', () => {
+			const e = new Entry({ id: 'a', sourceId: 's', type: EntryType.Task, heading: 'Task', status: TaskStatus.Done, color: '#ff0000' })
+			e.assign(new Entry({ id: 'a', sourceId: 's', type: EntryType.Task, heading: 'Task', color: null }))
+			assert.equal(e.status, undefined)
+			assert.equal(e.color, null)
 		})
 	})
 

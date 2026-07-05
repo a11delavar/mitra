@@ -4,7 +4,6 @@ import { observeResize } from '@3mo/resize-observer'
 import { type Entry } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
-import { DraftController } from './DraftController.js'
 import { EntryDragController } from './EntryDragController.js'
 
 @component('mitra-days')
@@ -17,8 +16,7 @@ export class Days extends Component {
 	private get days(): Array<DateTime> { return this.dates.days }
 
 	protected readonly entryDrag = new EntryDragController(this)
-	private readonly draft = new DraftController(this)
-	private get segments() { return EntrySegments.of(this.draft.merge(this.entries), this.days) }
+	private get segments() { return EntrySegments.of(this.entries, this.days) }
 
 	// The all-day lane sticks below the (sticky) day headers, so it needs the header row's height. The
 	// time-column header cell stretches to that row, so the `observeResize` directive on it keeps
@@ -327,18 +325,18 @@ export class Days extends Component {
 		return html`
 			<div class="all-day-corner"></div>
 			<div class="all-day">
-				${runs.map(segment => {
-			const startColumn = columnOf(segment.dayValue)
-			const clippedRight = segment.runEnd.dayValue! > lastValue
-			const endColumn = clippedRight ? this.days.length - 1 : columnOf(segment.runEnd.dayValue)
-			return html`
-				<mitra-entry-segment
-					style="grid-column: ${startColumn + 1} / span ${endColumn - startColumn + 1};"
-					resize="inline"
-					?has-previous=${segment.hasPrevious}
-					?has-next=${clippedRight}
-					.segment=${segment}
-				></mitra-entry-segment>
+				${repeat(runs, segment => segment.id, segment => {
+					const startColumn = columnOf(segment.dayValue)
+					const clippedRight = segment.runEnd.dayValue! > lastValue
+					const endColumn = clippedRight ? this.days.length - 1 : columnOf(segment.runEnd.dayValue)
+					return html`
+						<mitra-entry-segment
+							style="grid-column: ${startColumn + 1} / span ${endColumn - startColumn + 1};"
+							resize="inline"
+							?has-previous=${segment.hasPrevious}
+							?has-next=${clippedRight}
+							.segment=${segment}
+						></mitra-entry-segment>
 					`
 				})}
 			</div>

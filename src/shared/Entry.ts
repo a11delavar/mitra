@@ -1,4 +1,5 @@
 import { type DateTime } from '@3mo/date-time'
+import { equals } from '@a11d/equals'
 import { model } from './model.js'
 import { entity, primaryKey, property, enum as enumType, unique, manyToOne } from './orm.js'
 import { Source } from './Source.js'
@@ -75,6 +76,42 @@ export class Entry {
 	 * saved, so `!persisted` *is* "this is a draft" — no separate flag or side store to keep in sync. */
 	get persisted() {
 		return this.id !== undefined
+	}
+
+	/** Whether another entry carries the same user-editable content — the surface an edit changes and a
+	 * save round-trips. Identity and sync bookkeeping (`id`, `uri`, `data`) are deliberately excluded, so
+	 * a local working copy compares equal to its server counterpart exactly when there's nothing left to
+	 * persist. DateTimes compare by value via `Object[equals]`. */
+	editEquals(other: Entry) {
+		const editable = ['sourceId', 'type', 'heading', 'description', 'color', 'start', 'end', 'allDay', 'status'] as const
+		return editable.every(key => Object[equals](this[key], other[key]))
+	}
+
+	/** A value snapshot of this entry. Shallow — DateTimes are immutable and `data` is never mutated on
+	 * the client, so sharing them is safe. */
+	clone() {
+		return new Entry({ ...this })
+	}
+
+	/** Adopt another entry's values onto THIS instance — in place, so identity (and everything keyed on
+	 * it: open editors, segment memos, view-transition names) survives a server refresh. Every field is
+	 * assigned explicitly so values the other entry *lacks* (e.g. a status cleared on the server) are
+	 * cleared here too, rather than lingering. */
+	assign(values: Entry) {
+		return Object.assign(this, {
+			id: values.id,
+			sourceId: values.sourceId,
+			uri: values.uri,
+			type: values.type,
+			heading: values.heading,
+			description: values.description,
+			color: values.color,
+			start: values.start,
+			end: values.end,
+			status: values.status,
+			allDay: values.allDay,
+			data: values.data,
+		})
 	}
 
 	get multiDay() {

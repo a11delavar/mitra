@@ -10,6 +10,10 @@ import type { Entry, Integration, Source, User } from 'shared'
  */
 @apiError()
 export class ApiError extends HttpError {
+	get status() {
+		return this.response.status
+	}
+
 	override async throw(): Promise<never> {
 		const body = await this.response.json().catch(() => undefined) as { error?: string } | undefined
 		this.message = body?.error || this.response.statusText || `Request failed (${this.response.status})`

@@ -2,14 +2,14 @@ import { component, html, property, Component, css, state, bind, queryConnectedI
 import { EntryType, TaskStatus } from 'shared'
 import { type EntrySegment } from './EntrySegment.js'
 import { colorContrast } from './components/colorContrast.js'
-import { getSource, updateEvent } from './Api.js'
-import { DraftController } from './DraftController.js'
+import { getSource } from './Api.js'
+import { EntryStore } from './EntryStore.js'
 
 @component('mitra-entry-segment')
 export class EntrySegmentComponent extends Component {
 	@queryConnectedInstances() private static readonly instances: Set<EntrySegmentComponent>
 
-	readonly draft = new DraftController(this)
+	readonly store = new EntryStore(this)
 
 	@property({ type: Object }) segment?: EntrySegment
 
@@ -28,7 +28,7 @@ export class EntrySegmentComponent extends Component {
 			// Closing an untitled, never-saved draft discards it — it was only a local placeholder.
 			const entry = this.segment?.entry
 			if (wasOpen && !open && entry && !entry.persisted && !entry.heading?.trim()) {
-				this.draft.discard()
+				EntryStore.discardDraft()
 			}
 		}
 	}) open = false
@@ -46,11 +46,12 @@ export class EntrySegmentComponent extends Component {
 		this.open = true
 	}
 
+	// The checkbox mutated `entry.status` in place: render it everywhere this frame, then persist.
 	private readonly handleStatusChange = () => {
-		this.requestUpdate()
+		EntryStore.notify()
 		const entry = this.segment?.entry
 		if (entry?.persisted) {
-			updateEvent(entry).catch(() => void 0)
+			EntryStore.commit(entry).catch(() => void 0)
 		}
 	}
 
@@ -70,14 +71,16 @@ export class EntrySegmentComponent extends Component {
 		this.style.viewTransitionName = `entry-${this.segment!.id}`
 		this.style.anchorName = this.anchorName
 		this.toggleAttribute('data-draft', !entry.persisted)
-		this.toggleAttribute('dragging', this.draft.isDragging(entry))
+		// A live resize and a move's ghost float above their cluster; a move's origin dims in place.
+		this.toggleAttribute('dragging', this.store.isDragging(entry) || this.store.isPreview(entry))
+		this.toggleAttribute('drag-source', this.store.isDragSource(entry))
 		if (entry.type === EntryType.Task) {
 			this.setAttribute('data-status', entry.status ?? 'todo')
 		} else {
 			this.removeAttribute('data-status')
 		}
-		if (this.draft.shouldAutoOpen(entry) && !this.segment!.hasPrevious) {
-			this.draft.consumeAutoOpen()
+		if (this.store.shouldAutoOpen(entry) && !this.segment!.hasPrevious) {
+			this.store.consumeAutoOpen()
 			this.open = true
 		}
 	}
@@ -111,14 +114,20 @@ export class EntrySegmentComponent extends Component {
 				overflow: hidden;
 				transition: background-color 0.15s ease, color 0.15s ease;
 
-				/* While actively dragged (move/resize), float full-width above the cluster instead of
-				   re-flowing with it each frame. Overriding the derived vars (not the inline --overlap-slot
-				   etc.) wins on specificity, so no !important is needed. */
+				/* While actively manipulated (a live resize, or a move's dashed ghost), float full-width above
+				   the cluster instead of re-flowing with it each frame. Overriding the derived vars (not the
+				   inline --overlap-slot etc.) wins on specificity, so no !important is needed. */
 				&[dragging] {
 					z-index: 9999;
 					--overlap-s: 0;
 					--overlap-t: 1;
 					--overlap-sp: 1;
+				}
+
+				/* The origin of an in-progress move: stays in place, dimmed, as the reference the user is
+				   dragging away from — the dashed ghost is what tracks the pointer. */
+				&[drag-source] {
+					opacity: 0.4;
 				}
 
 				/* Resize handles: 0.25rem strips at the run's real edges, hidden where the edge is clipped or
@@ -295,7 +304,6 @@ export class EntrySegmentComponent extends Component {
 					style="position-anchor: ${this.anchorName}"
 					.segment=${this.segment}
 					@click=${(e: Event) => e.stopPropagation()}
-					@change=${() => this.requestUpdate()}
 				></mitra-entry-details>
 			`}
 		`
