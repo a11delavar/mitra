@@ -4,6 +4,9 @@ import fs from 'fs'
 
 export const distDir = 'dist'
 
+/** Injected into every bundle (backend, frontend, tests) — see the file's comment. */
+export const inject = ['scripts/injectTemporalPolyfill.ts']
+
 /**
  * Backend bundle. Dual CJS/ESM deps are resolved to their ESM `module` build (the `mainFields` order)
  * so the `@3mo/*` interop works; native bindings, DB drivers and `tsdav` stay external (loaded natively
@@ -19,6 +22,7 @@ export const backendOptions: BuildOptions = {
 	mainFields: ['module', 'main'],
 	banner: { js: 'import { createRequire as __nodeCreateRequire } from \'node:module\'; const require = __nodeCreateRequire(import.meta.url);' },
 	external: ['better-sqlite3', 'sqlite3', 'libsql', '@libsql/client', 'mariadb', 'mysql', 'mysql2', 'pg', 'oracledb', 'tedious', 'tsdav'],
+	inject,
 }
 
 /** Frontend bundle — fully self-contained (no externals), code-split into `dist/`. */
@@ -29,6 +33,7 @@ export const frontendOptions: BuildOptions = {
 	format: 'esm',
 	legalComments: 'none',
 	outdir: distDir,
+	inject,
 }
 
 /** The single-page shell that boots the bundled frontend. */

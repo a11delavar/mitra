@@ -24,6 +24,10 @@
 		"src/*"
 	],
 	"dependencies": {
+		"temporal-polyfill": "0.2.x",
 		"tsdav": "^2.2.2"
+	},
+	"engines": {
+		"node": ">=26"
 	}
 }
