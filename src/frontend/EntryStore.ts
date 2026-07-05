@@ -115,6 +115,16 @@ export class EntryStore extends Controller {
 						entry.id = saved.id
 						this.draft = this.draft === entry ? undefined : this.draft
 						this.workingById.set(entry.id!, entry)
+					} else if (saved.id !== undefined && saved.id !== entry.id) {
+						// A migration to another source re-created the entry over there — same instance, new
+						// identity. Rekey unconditionally (id is identity, not content — a mid-flight edit
+						// must PUT against the new id on its next round).
+						if (this.workingById.get(entry.id!) === entry) {
+							this.workingById.delete(entry.id!)
+							this.canonicalById.delete(entry.id!)
+						}
+						entry.id = saved.id
+						this.workingById.set(entry.id!, entry)
 					}
 					if (!this.tracks(entry)) {
 						break // deleted while the request was in flight — stop; the queued delete finishes the job

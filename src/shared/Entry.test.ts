@@ -2,6 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Entry, EntryType, TaskStatus } from './Entry.js'
+import { Source, SourceType } from './Source.js'
 
 describe('Entry', () => {
 	const day = new DateTime().dayStart
@@ -150,6 +151,36 @@ describe('Entry', () => {
 			const a = new Entry({ sourceId: 's', type: EntryType.Task, heading: 'Task' })
 			const b = new Entry({ sourceId: 's', type: EntryType.Task, heading: 'Task' })
 			assert.equal(a.editEquals(b), true)
+		})
+	})
+
+	describe('migrateTo', () => {
+		const calendar = new Source({ id: 'cal', type: SourceType.Event, name: 'Calendar' })
+		const taskList = new Source({ id: 'tasks', type: SourceType.Task, name: 'Tasks' })
+
+		it('follows the target source: a task list holds tasks, a calendar events', () => {
+			const e = new Entry({ id: 'a', sourceId: 'cal', type: EntryType.Event, heading: 'Meeting' })
+			e.migrateTo(taskList)
+			assert.equal(e.sourceId, 'tasks')
+			assert.equal(e.type, EntryType.Task)
+		})
+
+		it('keeps a status only where it makes sense — on a task', () => {
+			const task = new Entry({ id: 'a', sourceId: 'tasks', type: EntryType.Task, heading: 'Todo', status: TaskStatus.Done })
+			task.migrateTo(calendar)
+			assert.equal(task.type, EntryType.Event)
+			assert.equal(task.status, undefined)
+			const event = new Entry({ id: 'b', sourceId: 'cal', type: EntryType.Event, heading: 'Meeting' })
+			event.migrateTo(taskList)
+			assert.equal(event.status, undefined) // becomes a task with no status yet — that's "to do"
+		})
+
+		it('leaves identity and link fields to the backend', () => {
+			const e = new Entry({ id: 'a', uri: '/dav/a.ics', data: { etag: '"1"' }, sourceId: 'cal', type: EntryType.Event, heading: 'Meeting' })
+			e.migrateTo(taskList)
+			assert.equal(e.id, 'a')
+			assert.equal(e.uri, '/dav/a.ics')
+			assert.deepEqual(e.data, { etag: '"1"' })
 		})
 	})
 

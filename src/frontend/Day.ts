@@ -144,7 +144,10 @@ export class Day extends Component {
 			</div>
 
 			<div class="entries">
-				${repeat(this.entries, segment => segment.id, segment => html`
+				${/* Keyed on the entry INSTANCE — the store keeps it stable while ids change under it
+				    (draft graduation, cross-source migration), so the element (and an open editor
+				    popover inside it) survives those. */ ''}
+				${repeat(this.entries, segment => segment.entry, segment => html`
 					<mitra-entry-segment
 						style=${styleMap({
 							gridRow: `${segment.startMinute} / ${segment.endMinute}`,

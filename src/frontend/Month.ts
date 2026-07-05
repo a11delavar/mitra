@@ -175,7 +175,7 @@ export class Month extends Component {
 						?data-with-background=${day.month === this.bufferNavigatingDate.month}>
 					</mitra-day>
 				`)}
-				${repeat(bars, bar => bar.segment.id, bar => html`
+				${repeat(bars, bar => bar.segment.entry, bar => html`
 					<mitra-entry-segment
 						style=${styleMap({ gridColumn: `${bar.startColumn + 1} / span ${bar.span}`, gridRow: `${bar.slot + 2}` })}
 						resize=${ifDefined(bar.segment.entry.allDay ? 'inline' : undefined)}

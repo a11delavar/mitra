@@ -2,7 +2,7 @@ import { type DateTime } from '@3mo/date-time'
 import { equals } from '@a11d/equals'
 import { model } from './model.js'
 import { entity, primaryKey, property, enum as enumType, unique, manyToOne } from './orm.js'
-import { Source } from './Source.js'
+import { Source, SourceType } from './Source.js'
 
 export enum EntryType {
 	Event = 'event',
@@ -168,6 +168,18 @@ export class Entry {
 		} else {
 			const start = this.start!
 			this.end = end.valueOf() <= start.valueOf() ? start.add({ minutes: SNAP_MINUTES }) : end
+		}
+	}
+
+	/** Move to another source. The entry's shape follows the target intrinsically: a task list holds
+	 * tasks and a calendar holds events, and a status only makes sense on a task. The identity and
+	 * link fields (`id`, `uri`, `data`) are deliberately untouched — a cross-source migration
+	 * re-creates the entry over there, and the backend owns those. */
+	migrateTo(source: Source) {
+		this.sourceId = source.id
+		this.type = source.type === SourceType.Task ? EntryType.Task : EntryType.Event
+		if (this.type === EntryType.Event) {
+			this.status = undefined
 		}
 	}
 

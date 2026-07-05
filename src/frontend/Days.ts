@@ -325,7 +325,7 @@ export class Days extends Component {
 		return html`
 			<div class="all-day-corner"></div>
 			<div class="all-day">
-				${repeat(runs, segment => segment.id, segment => {
+				${repeat(runs, segment => segment.entry, segment => {
 					const startColumn = columnOf(segment.dayValue)
 					const clippedRight = segment.runEnd.dayValue! > lastValue
 					const endColumn = clippedRight ? this.days.length - 1 : columnOf(segment.runEnd.dayValue)

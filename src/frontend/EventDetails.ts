@@ -1,7 +1,7 @@
 import { component, html, property, state, Component, css, eventListener, event, Binder } from '@a11d/lit'
-import { EntryType, TaskStatus } from 'shared'
+import { EntryType, TaskStatus, SourceType } from 'shared'
 import type { EntrySegment } from './EntrySegment.js'
-import { getSource } from './Api.js'
+import { getIntegrations, getSource } from './Api.js'
 import { EntryStore } from './EntryStore.js'
 
 @component('mitra-entry-details')
@@ -126,11 +126,7 @@ export class EntryDetailsComponent extends Component {
 				backdrop-filter: blur(10px);
 				border: var(--border);
 				border-radius: 0.5rem;
-				box-shadow:
-					0 0 0 1px rgba(80, 140, 255, 0.06),
-					0 8px 32px rgba(0, 0, 0, 0.5),
-					0 24px 64px rgba(0, 0, 0, 0.35),
-					inset 0 1px 0 rgba(255, 255, 255, 0.05);
+				box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48),0px 4px 12px -1px rgba(0,0,0,0.24);
 				color: var(--color-text);
 				font-family: 'Inter', sans-serif;
 				font-size: 0.75rem;
@@ -263,10 +259,47 @@ export class EntryDetailsComponent extends Component {
 						}
 
 						&.source {
-							> .dot {
-								font-size: 0.8rem;
-								flex-shrink: 0;
-								margin-inline-start: 2px;
+							/* The whole row is a \`subtle\` select, Notion-style: it reads as plain text — the
+							   selected option's own dot/type/name via <selectedcontent> — until hovered. */
+							> select {
+								grid-column: 1 / -1;
+
+								/* The picker wears the popover's tinted glass, border, and shadow (it inherits the
+								   segment colour var), so the two read as one plane. It prefers opening beside
+								   the row — right, then left — and only falls back to a regular dropdown below/
+								   above it when neither side fits. Explicit areas, not flip tactics: Chrome
+								   doesn't (yet) apply \`flip-inline\` to \`position-area\`, it silently skips. */
+								&::picker(select) {
+									background: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
+									border: var(--border);
+									box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48),0px 4px 12px -1px rgba(0,0,0,0.24);
+									position-area: inline-end span-all;
+									position-try-fallbacks: flip-inline, flip-block, flip-inline flip-block;
+									margin-inline: 0.875rem;
+								}
+
+								selectedcontent {
+									display: flex;
+									align-items: center;
+									gap: 0.5rem;
+
+									.dot { font-size: 0.8rem; margin-inline-start: 2px; }
+									.type { font-size: 0.87rem; color: var(--color-text-muted); }
+								}
+
+								optgroup > legend {
+									font-size: 0.6875rem;
+									font-weight: 600;
+									color: var(--color-text-muted);
+									padding: 0.375rem 0.625rem 0.125rem;
+								}
+
+								option {
+									gap: 0.5rem;
+									border-radius: var(--border-radius);
+									.type { font-size: 0.87rem; color: var(--color-text-muted); }
+									.name { flex: 1; }
+								}
 							}
 						}
 
@@ -322,10 +355,43 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	private get sourceTemplate() {
+		// Migrate the entry to the picked source: its shape follows the target (see Entry.migrateTo) and
+		// the usual commit persists it — the backend re-creates it over there and the store adopts the
+		// re-created identity from the response. A draft simply changes what it will be created in.
+		const handleSourceChange = (e: Event) => {
+			const sourceId = (e.target as HTMLSelectElement).value
+			const source = getIntegrations().flatMap(integration => [...integration.sources]).find(source => source.id === sourceId)
+			const entry = this.segment!.entry
+			if (!source || source.id === entry.sourceId) {
+				return
+			}
+			entry.migrateTo(source)
+			EntryStore.notify()
+			this.handleChange().catch(() => void 0)
+		}
+		const entry = this.segment!.entry
 		return !this.source?.name ? html.nothing : html`
 			<li class="source">
-				<mitra-icon class="dot" icon="square" fill style="color: ${this.source.color}"></mitra-icon>
-				<div class="content">${this.source.name}</div>
+				<select class="subtle" @change=${handleSourceChange}>
+					<button>
+						<selectedcontent></selectedcontent>
+					</button>
+					${getIntegrations().map(integration => {
+						const sources = [...integration.sources].filter(source => source.visible || source.id === entry.sourceId)
+						return !sources.length ? html.nothing : html`
+							<optgroup label=${integration.credentials?.username || integration.type}>
+								<legend>${integration.credentials?.username || integration.type}</legend>
+								${sources.map(source => html`
+									<option value=${source.id} ?selected=${source.id === entry.sourceId}>
+										<mitra-icon class="dot" icon="square" fill style="color: ${source.color || 'var(--color-text-muted)'}"></mitra-icon>
+										<mitra-icon class="type" icon=${source.type === SourceType.Task ? 'list-todo' : 'calendar'}></mitra-icon>
+										<span class="name">${source.name}</span>
+									</option>
+								`)}
+							</optgroup>
+						`
+					})}
+				</select>
 			</li>
 		`
 	}

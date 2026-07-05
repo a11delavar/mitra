@@ -40,6 +40,37 @@ export const selectStyles = css`
 			rotate: 180deg;
 		}
 
+		/* Subtle: looks like plain text (inheriting its surroundings) until you interact with it — the
+		   picker chevron only appears while hovered, open, or focused. The select.css.ts counterpart of
+		   input.css.ts's \`input.subtle\`. */
+		&.subtle {
+			appearance: base-select;
+			display: flex;
+			align-items: center;
+			background: transparent;
+			border: none;
+			font: inherit;
+			color: var(--color-text);
+			margin: -2px -4px;
+			padding: 2px 4px;
+			border-radius: var(--border-radius);
+			cursor: pointer;
+
+			&::picker-icon {
+				margin-inline-start: auto;
+				opacity: 0;
+				transition: opacity 0.15s ease, rotate 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+			}
+
+			&:is(:hover, :open, :focus-visible) {
+				background: color-mix(in srgb, var(--color-text) 6%, transparent);
+
+				&::picker-icon {
+					opacity: 1;
+				}
+			}
+		}
+
 		& > button {
 			display: contents;
 			& > selectedcontent {

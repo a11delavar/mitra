@@ -93,10 +93,23 @@ entriesRouter.put('/:id', async (req, res) => {
 		status: body.status ?? existing.status,
 	})
 
-	// Moving an entry between integrations is a delete-then-create; otherwise an in-place update.
-	if (currentIntegration.id !== targetIntegration.id) {
-		await currentIntegration.deleteEntry(em, existing)
+	// Moving an entry between *sources* re-creates it at the target — providers update entries in
+	// place and don't move them between their calendars/lists, so this holds within one integration
+	// too. There is no cross-provider transaction, so the *order* is the safety: create first, delete
+	// after — a failed create leaves everything untouched, and a failed delete is compensated by
+	// removing the just-created copy. If even the compensation fails, the user is left with a
+	// duplicate — recoverable, unlike the loss a delete-first order risks.
+	if (currentSource.id !== targetSource.id) {
+		incoming.id = crypto.randomUUID() // the backend owns ids — the migrated copy is a new entry
+		incoming.migrateTo(targetSource) // the entry's shape (type/status) follows the target
 		const created = await targetIntegration.createEntry(em, incoming)
+		try {
+			await currentIntegration.deleteEntry(em, existing)
+		} catch (error) {
+			await targetIntegration.deleteEntry(em, created).catch(() => void 0) // a duplicate beats a loss
+			await em.flush().catch(() => void 0)
+			throw error
+		}
 		await em.flush()
 		syncEmitter.emit('updated')
 		return res.json(created)

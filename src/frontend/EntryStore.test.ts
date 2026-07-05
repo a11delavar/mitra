@@ -237,6 +237,22 @@ describe('EntryStore', () => {
 			assert.equal(EntryStore.isDirty(working), true) // the next change retries
 		})
 
+		it('rekeys the identity map when a migration re-creates the entry under a new id', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			const working = entry()
+			EntryStore.applyServerEntries([working])
+			working.sourceId = 'another-source' // a migration — the backend re-creates and returns a new id
+			const commit = EntryStore.commit(working)
+			await transport.respond(entry({ id: 'migrated', sourceId: 'another-source' }))
+			await commit
+			assert.equal(working.id, 'migrated') // same instance, new identity
+			assert.deepEqual([...EntryStore.entries], [working])
+			assert.equal(EntryStore.isDirty(working), false)
+			EntryStore.applyServerEntries([entry({ id: 'migrated', sourceId: 'another-source' })])
+			assert.deepEqual([...EntryStore.entries], [working]) // adopted under the new id; the old one is fully forgotten
+		})
+
 		it('drops the local copy when the server says the entry is gone (PUT 404)', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
