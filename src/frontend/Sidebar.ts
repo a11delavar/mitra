@@ -3,11 +3,25 @@ import { getIntegrations, toggleSourceVisibility, updateSourceColor, deleteInteg
 import { DialogIntegration } from './DialogIntegration.js'
 import { SourceType, type Source } from 'shared'
 import { outlineStyles } from './components/outlineStyles.js'
+import { canInstall, promptInstall, onInstallAvailabilityChange } from './pwa.js'
 
 @component('mitra-sidebar')
 export class Sidebar extends Component {
 	@event() openChange!: EventDispatcher<boolean>
 	@property({ type: Boolean, reflect: true }) open = false
+
+	// The install button appears/disappears with the browser's installability signal (see pwa.ts).
+	private unsubscribeInstallAvailability?: () => void
+
+	protected override connected() {
+		super.connected()
+		this.unsubscribeInstallAvailability = onInstallAvailabilityChange(() => this.requestUpdate())
+	}
+
+	protected override disconnected() {
+		super.disconnected()
+		this.unsubscribeInstallAvailability?.()
+	}
 
 	static override get styles() {
 		return css`
@@ -89,6 +103,12 @@ export class Sidebar extends Component {
 				.add-integration {
 					all: unset;
 					margin-top: auto;
+
+					/* The install button rides directly below Add Integration — only one of them may
+					   carry the push-to-bottom margin. */
+					&.install {
+						margin-top: -1rem;
+					}
 					display: flex;
 					align-items: center;
 					justify-content: center;
@@ -385,6 +405,14 @@ export class Sidebar extends Component {
 					<mitra-icon icon="plus"></mitra-icon>
 					Add Integration
 				</button>
+				${!canInstall() ? html.nothing : html`
+					<button class="add-integration install"
+						title="Install mitra as an app — it gets its own window, and notifications appear under its own name and icon"
+						@click=${() => promptInstall()}>
+						<mitra-icon icon="monitor-down"></mitra-icon>
+						Install App
+					</button>
+				`}
 			</nav>
 		`
 	}

@@ -80,7 +80,11 @@ export class ReminderScheduler {
 				await sendToAll({
 					title: entry.heading || 'Untitled',
 					// Relative wording on purpose: the server may run in another timezone than the reader.
-					body: [minutes === 0 ? 'Starts now' : `Starts in ${reminderSpan(minutes)}`, entry.location].filter(Boolean).join(' · '),
+					// Emoji as separators — a notification body has no other typography to structure it with.
+					body: [
+						`⏰ ${minutes === 0 ? 'Starts now' : `Starts in ${reminderSpan(minutes)}`}`,
+						!entry.location ? undefined : `📍 ${entry.location}`,
+					].filter(Boolean).join(' '),
 					tag: `${entry.id}|${minutes}`,
 					timestamp: (entry.start as unknown as Date).getTime(),
 					url: '/',
