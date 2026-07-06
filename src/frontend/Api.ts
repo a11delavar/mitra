@@ -69,7 +69,9 @@ export function fetchEvents(start: DateTime, end: DateTime) {
 }
 
 export function createEvent(entry: Entry) {
-	return Api.post<Entry>('/entries', entry)
+	// Stamp the zone the times were authored in — recurrence must expand at THIS zone's wall clock
+	// ("every Monday 09:00 Berlin" survives DST), and the future zone selector edits this field.
+	return Api.post<Entry>('/entries', { ...entry, timeZone: entry.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone })
 }
 
 export async function fetchIntegrations() {
@@ -128,6 +130,7 @@ export function updateEvent(entry: Entry) {
 			description: entry.description,
 			location: entry.location,
 			color: entry.color,
+			timeZone: entry.timeZone ?? null,
 			reminders: entry.reminders ?? null,
 			...(entry.recurrence !== undefined ? { recurrence: entry.recurrence } : {}),
 		})
@@ -178,6 +181,7 @@ export function editOccurrence(occurrence: Entry, scope: RecurrenceScope) {
 		start: occurrence.start,
 		end: occurrence.end,
 		allDay: occurrence.allDay,
+		timeZone: occurrence.timeZone ?? null,
 		status: occurrence.status,
 		reminders: occurrence.reminders ?? null,
 	})

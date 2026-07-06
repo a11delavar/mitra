@@ -1,6 +1,7 @@
 import { type EntityManager } from '@mikro-orm/core'
 import { type DateTime } from '@3mo/date-time'
 import ICAL from 'ical.js'
+import { Temporal } from 'temporal-polyfill'
 import { Entry, type Integration, type RecurrenceScope } from '../shared/index.js'
 
 /**
@@ -26,12 +27,33 @@ import { Entry, type Integration, type RecurrenceScope } from '../shared/index.j
  * series-wide edits. (Inbound overrides authored by other clients still render via their synced override rows.)
  */
 
+// --- Wall-clock ↔ instant, in an entry's own zone -----------------------------------------------------
+// A series repeats at a WALL-CLOCK time in its `timeZone` ("every Monday 09:00 Berlin"): the rule must
+// iterate wall times (09:00 stays 09:00 across a DST flip) while everything downstream needs instants.
+// Temporal does the zone math; ical.js only ever sees FLOATING times.
+
+/** The instant's wall-clock reading in `zone`, as a floating ical.js time — the anchor the iterator sees. */
+function wallAnchor(instant: Date, zone: string): ICAL.Time {
+	const zoned = Temporal.Instant.fromEpochMilliseconds(instant.getTime()).toZonedDateTimeISO(zone)
+	return ICAL.Time.fromData({ year: zoned.year, month: zoned.month, day: zoned.day, hour: zoned.hour, minute: zoned.minute, second: zoned.second })
+}
+
+/** A yielded wall time back to an absolute instant in `zone`. `compatible` resolves DST gaps/overlaps
+ * the way calendars conventionally do (spring-forward jumps ahead, fall-back takes the first). */
+function wallToInstantMs(time: ICAL.Time, zone: string): number {
+	return Temporal.PlainDateTime.from({ year: time.year, month: time.month, day: time.day, hour: time.hour, minute: time.minute, second: time.second })
+		.toZonedDateTime(zone, { disambiguation: 'compatible' }).epochMilliseconds
+}
+
 /**
  * The occurrences of ONE recurring series — the iterable materialization of its rule. Constructed from
  * whatever the master actually stores ({@link Occurrences.of}): its raw .ics when the integration keeps
- * one (the .ics carries the authoritative anchor and EXDATEs), else the recurrence columns plus the
+ * one (the .ics carries the authoritative rule and EXDATEs), else the recurrence columns plus the
  * `exdates` column. A window then materializes the intersecting date-ranges via {@link within} — a
  * never-ending series stays finite because the window bounds it.
+ *
+ * With a `zone`, iteration is wall-clock in that zone (anchored on the master's start read in it), so
+ * a 09:00 series stays 09:00 through DST; without one, the legacy instant/server-local behavior holds.
  */
 export class Occurrences {
 	private constructor(
@@ -39,37 +61,42 @@ export class Occurrences {
 		private readonly anchor: ICAL.Time,
 		private readonly durationMs: number,
 		private readonly exdates: ReadonlySet<number>,
+		private readonly zone?: string,
 	) { }
 
 	/** The series' occurrences off a master entry, however it stores its rule; `undefined` when the
-	 * entry isn't an expandable master (no rule, no start, or a malformed stored rule). */
+	 * entry isn't an expandable master (no rule, no start, or a malformed stored rule). The master's
+	 * `timeZone` (stamped at creation, or synced from a TZID) makes the iteration wall-clock in it. */
 	static of(master: Entry): Occurrences | undefined {
+		const zone = !master.timeZone || !master.start ? undefined : { id: master.timeZone, start: master.start as Date }
 		if (master.data?.raw) {
-			return Occurrences.fromICS(master.data.raw)
+			return Occurrences.fromICS(master.data.raw, zone)
 		}
 		return !master.recurrence || !master.start ? undefined : Occurrences.fromRule(
 			master.recurrence.toRRule(master.allDay),
 			master.start as Date,
 			master.end as Date | undefined,
 			master.exdates ?? [],
+			zone?.id,
 		)
 	}
 
 	/**
 	 * From a raw .ics: applies its EXDATEs and inherits the master's duration (DTEND/DUE − DTSTART).
-	 * Works for VEVENT and VTODO (anchored on DTSTART, else DUE).
+	 * Works for VEVENT and VTODO (anchored on DTSTART, else DUE). With a `zone`, the anchor is the
+	 * master's start read in it — the stored DTSTART may be UTC-written, whose wall clock would drift.
 	 */
-	static fromICS(raw: string): Occurrences | undefined {
+	static fromICS(raw: string, zone?: { id: string, start: Date }): Occurrences | undefined {
 		const component = new ICAL.Component(ICAL.parse(raw))
 		const v = component.getFirstSubcomponent('vevent') ?? component.getFirstSubcomponent('vtodo')
 		const rrule = v?.getFirstPropertyValue('rrule') as ICAL.Recur | null
-		const anchor = (v?.getFirstPropertyValue('dtstart') ?? v?.getFirstPropertyValue('due')) as ICAL.Time | null
-		if (!v || !rrule || !anchor) {
+		const dtstart = (v?.getFirstPropertyValue('dtstart') ?? v?.getFirstPropertyValue('due')) as ICAL.Time | null
+		if (!v || !rrule || !dtstart) {
 			return undefined
 		}
 
 		const endProp = (v.getFirstPropertyValue('dtend') ?? v.getFirstPropertyValue('due')) as { toJSDate(): Date } | null
-		const durationMs = endProp ? endProp.toJSDate().getTime() - anchor.toJSDate().getTime() : 0
+		const durationMs = endProp ? endProp.toJSDate().getTime() - dtstart.toJSDate().getTime() : 0
 
 		const exdates = new Set<number>()
 		for (const prop of v.getAllProperties('exdate')) {
@@ -78,7 +105,8 @@ export class Occurrences {
 			}
 		}
 
-		return new Occurrences(rrule, anchor, durationMs, exdates)
+		const anchor = !zone ? dtstart : wallAnchor(zone.start, zone.id)
+		return new Occurrences(rrule, anchor, durationMs, exdates, zone?.id)
 	}
 
 	/**
@@ -86,19 +114,19 @@ export class Occurrences {
 	 * that don't persist one (e.g. the local `Dev` calendar) expand this way; `exdates` carries that
 	 * calendar's exclusions (its EXDATE equivalent).
 	 */
-	static fromRule(rrule: string, start: Date, end: Date | undefined, exdates: ReadonlyArray<number> = []): Occurrences | undefined {
+	static fromRule(rrule: string, start: Date, end: Date | undefined, exdates: ReadonlyArray<number> = [], zone?: string): Occurrences | undefined {
 		let rule: ICAL.Recur
 		let anchor: ICAL.Time
 		try {
 			rule = ICAL.Recur.fromString(rrule)
-			anchor = ICAL.Time.fromJSDate(start, false)
+			anchor = zone ? wallAnchor(start, zone) : ICAL.Time.fromJSDate(start, false)
 		} catch {
 			return undefined // malformed rule — render nothing rather than throw on a read
 		}
 		if (!rule.freq) {
 			return undefined
 		}
-		return new Occurrences(rule, anchor, end ? end.getTime() - start.getTime() : 0, new Set(exdates))
+		return new Occurrences(rule, anchor, end ? end.getTime() - start.getTime() : 0, new Set(exdates), zone)
 	}
 
 	/** The occurrence date-ranges intersecting [windowStart, windowEnd]. The rule's occurrences ascend
@@ -116,7 +144,8 @@ export class Occurrences {
 			if (!time) {
 				break
 			}
-			const startMs = time.toJSDate().getTime()
+			// A wall time in the series' zone becomes an instant THERE; zoneless stays as it was.
+			const startMs = this.zone ? wallToInstantMs(time, this.zone) : time.toJSDate().getTime()
 			if (startMs <= previousMs) {
 				break // a non-advancing iterator (malformed rule) — don't spin
 			}
@@ -162,6 +191,7 @@ export async function expandedOccurrences(em: EntityManager, sourceIds: Readonly
 				color: master.color,
 				status: master.status,
 				allDay: master.allDay,
+				timeZone: master.timeZone,
 				reminders: master.reminders,
 				start: occurrence.start as DateTime,
 				end: occurrence.end as DateTime,
@@ -194,6 +224,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 			color: edited.color ?? null,
 			status: edited.status,
 			allDay: edited.allDay,
+			timeZone: edited.timeZone,
 			reminders: edited.reminders,
 			start: shiftBy(master.start, delta),
 			end: shiftBy(master.end, delta),
@@ -219,6 +250,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 			color: master.color ?? null,
 			status: master.status,
 			allDay: master.allDay,
+			timeZone: master.timeZone,
 			reminders: master.reminders,
 			start: master.start,
 			end: master.end,
@@ -239,6 +271,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 			color: edited.color ?? null,
 			status: edited.status,
 			allDay: edited.allDay,
+			timeZone: edited.timeZone,
 			reminders: edited.reminders,
 			start: edited.start,
 			end: edited.end,
@@ -259,6 +292,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 		color: edited.color ?? null,
 		status: edited.status,
 		allDay: edited.allDay,
+		timeZone: edited.timeZone,
 		reminders: edited.reminders,
 		start: edited.start,
 		end: edited.end,
@@ -283,6 +317,7 @@ export async function deleteOccurrence(em: EntityManager, integration: Integrati
 			color: master.color ?? null,
 			status: master.status,
 			allDay: master.allDay,
+			timeZone: master.timeZone,
 			reminders: master.reminders,
 			start: master.start,
 			end: master.end,

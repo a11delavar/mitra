@@ -56,6 +56,16 @@ export class Entry {
 
 	@property({ type: 'boolean' }) allDay = false
 
+	// The IANA zone the entry's times were AUTHORED in (stamped with the browser's zone at creation).
+	// start/end stay absolute instants — this is not display metadata but recurrence semantics: a series
+	// repeats at a WALL-CLOCK time in this zone ("every Monday 09:00 Berlin"), so expansion must know
+	// which zone's 09:00 survives a DST flip (see backend/occurrences.ts).
+	// Nullable because absence is a real domain state, not a hydration artifact: synced entries whose
+	// DTSTART is UTC/floating (no TZID) declared no authoring zone, rows predating this field never had
+	// one, and the server must not invent one (its own zone is arbitrary — a UTC container). Only the
+	// CHOICE of empty value (`null`, not undefined) follows the hydration convention, like `recurrence`.
+	@property({ type: 'string', nullable: true }) timeZone?: string | null
+
 	@property({ type: 'json', nullable: true }) data?: EntryData
 
 	// Reminders, as MINUTES BEFORE START (0 = at start) — the flat value of RFC 5545's VALARM
@@ -129,7 +139,7 @@ export class Entry {
 		// `recurrence` counts as editable content (the Repeat field mutates it); `Object[equals]` compares
 		// the value objects structurally. The series *link* fields (uid, recurrenceMasterId, recurrenceId,
 		// exdates) are sync bookkeeping like `uri`/`data`, so they stay excluded.
-		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'allDay', 'status', 'recurrence', 'reminders'] as const
+		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'allDay', 'timeZone', 'status', 'recurrence', 'reminders'] as const
 		return editable.every(key => Object[equals](this[key], other[key]))
 	}
 
@@ -157,6 +167,7 @@ export class Entry {
 			end: values.end,
 			status: values.status,
 			allDay: values.allDay,
+			timeZone: values.timeZone,
 			reminders: values.reminders,
 			data: values.data,
 			uid: values.uid,

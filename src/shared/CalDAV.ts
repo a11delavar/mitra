@@ -312,6 +312,10 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 			entry.reminders = CalDAV.remindersFrom(component)
 
+			// The zone the entry's times were authored in (recurrence expands wall-clock in it — see
+			// backend/occurrences.ts). A UTC or floating DTSTART carries no TZID; that's a legitimate none.
+			entry.timeZone = component.getFirstProperty('dtstart')?.getParameter('tzid')?.toString() || null
+
 			// Recurrence: a master carries an RRULE; a single edited occurrence is its own member carrying a
 			// RECURRENCE-ID and the master's UID. Capture all three; occurrences are expanded later, on read.
 			const recurrence = CalDAV.recurrenceProps(component)
@@ -344,7 +348,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			throw new Error('Entry must have a URL and raw data to be updated via CalDAV')
 		}
 
-		const keys: Array<keyof Entry> = (['heading', 'description', 'location', 'color', 'start', 'end', 'status', 'allDay', 'reminders'] as const)
+		const keys: Array<keyof Entry> = (['heading', 'description', 'location', 'color', 'start', 'end', 'status', 'allDay', 'timeZone', 'reminders'] as const)
 			.filter(key => !Object[equals](existing[key], incoming[key]))
 
 		// The recurrence rule is a value object, diffed via its own (absence-safe) structural equality.
@@ -414,6 +418,14 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		if (keys.includes('reminders')) {
 			this.writeReminders(component, incoming.reminders)
 			existing.reminders = incoming.reminders
+		}
+
+		// Column-only for now: our expansion honors it (see backend/occurrences.ts), while the .ics keeps
+		// its UTC DTSTART. Writing `DTSTART;TZID=…` — which is what lets OTHER clients expand the series
+		// DST-correctly too — needs the matching VTIMEZONE component (RFC 5545 requires it per TZID) and
+		// is its own follow-up.
+		if (keys.includes('timeZone')) {
+			existing.timeZone = incoming.timeZone
 		}
 
 		// Recurrence rule edits are series-wide: set/replace the master's RRULE, or drop it (and the EXDATEs it

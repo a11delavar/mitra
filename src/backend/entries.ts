@@ -69,6 +69,7 @@ entriesRouter.post('/', async (req, res) => {
 		start: body.start ? new DateTime(body.start) : undefined,
 		end: body.end ? new DateTime(body.end) : undefined,
 		allDay: body.allDay ?? false,
+		timeZone: body.timeZone ?? null,
 		status: body.status,
 		recurrence: incomingRecurrence,
 		reminders: body.reminders ?? undefined,
@@ -118,6 +119,7 @@ entriesRouter.put('/:id', async (req, res) => {
 			start: body.start ? new DateTime(body.start) : existing.start,
 			end: body.end ? new DateTime(body.end) : existing.end,
 			allDay: body.allDay ?? existing.allDay,
+			timeZone: body.timeZone === undefined ? existing.timeZone : body.timeZone,
 			status: body.status ?? existing.status,
 			reminders: body.reminders === undefined ? existing.reminders : body.reminders,
 		})
@@ -137,6 +139,7 @@ entriesRouter.put('/:id', async (req, res) => {
 		start: body.start ? new DateTime(body.start) : existing.start,
 		end: body.end ? new DateTime(body.end) : existing.end,
 		allDay: body.allDay ?? existing.allDay,
+		timeZone: body.timeZone === undefined ? existing.timeZone : body.timeZone,
 		status: body.status ?? existing.status,
 		recurrence: incomingRecurrence,
 		// Like `recurrence`, tri-state on the wire: an array sets, `null` clears, absent keeps.

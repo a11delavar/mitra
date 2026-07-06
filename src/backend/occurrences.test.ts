@@ -91,6 +91,48 @@ describe('Occurrences', () => {
 			assert.equal(Occurrences.fromRule('FREQ=BOGUS', at('2026-06-01T09:00:00Z'), undefined), undefined)
 		})
 	})
+
+	describe('zone-aware expansion (the entry\'s timeZone)', () => {
+		const at = (iso: string) => new Date(iso)
+		// Mon Jul 6 2026, 09:00 in Berlin (CEST, UTC+2) — the wall time the series repeats at.
+		const berlinNineAm = at('2026-07-06T07:00:00Z')
+
+		it('keeps the wall clock across a DST flip — 09:00 Berlin stays 09:00', () => {
+			// Berlin leaves DST on Oct 25 2026: the UTC instant must shift from 07:00Z to 08:00Z.
+			const occ = Occurrences.fromRule('FREQ=WEEKLY', berlinNineAm, undefined, [], 'Europe/Berlin')!
+				.within(at('2026-10-19T00:00:00Z'), at('2026-10-27T23:59:59Z'))
+			assert.deepEqual(occ.map(o => o.start.toISOString()), [
+				'2026-10-19T07:00:00.000Z', // still CEST: 09:00 = 07:00Z
+				'2026-10-26T08:00:00.000Z', // now CET: 09:00 = 08:00Z
+			])
+		})
+
+		// (No test pins the ZONELESS path's spacing across a DST flip on purpose: it iterates the
+		// SERVER's wall clock, so the result depends on where the server runs — the very
+		// non-determinism the entry's own timeZone exists to remove.)
+
+		it('overrides a UTC-written .ics anchor with the master\'s start read in its zone', () => {
+			// Our own CalDAV creates store DTSTART in UTC; with the master's timeZone the expansion must
+			// still be wall-clock Berlin (other clients keep reading the raw UTC until TZID is written).
+			const raw = [
+				'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//test//EN',
+				'BEGIN:VEVENT', 'UID:z1', 'DTSTAMP:20260101T000000Z',
+				'DTSTART:20260706T070000Z', 'DTEND:20260706T080000Z', 'RRULE:FREQ=WEEKLY',
+				'END:VEVENT', 'END:VCALENDAR',
+			].join('\r\n')
+			const occ = Occurrences.fromICS(raw, { id: 'Europe/Berlin', start: berlinNineAm })!
+				.within(at('2026-10-19T00:00:00Z'), at('2026-10-27T23:59:59Z'))
+			assert.equal(occ[1]!.start.toISOString(), '2026-10-26T08:00:00.000Z')
+			assert.equal(occ[1]!.end.getTime() - occ[1]!.start.getTime(), 60 * 60 * 1000) // duration kept
+		})
+
+		it('half-hour zones expand at their own wall clock', () => {
+			// 09:00 Tehran (UTC+3:30, no DST since 2022) = 05:30Z, year-round.
+			const occ = Occurrences.fromRule('FREQ=WEEKLY', at('2026-07-06T05:30:00Z'), undefined, [], 'Asia/Tehran')!
+				.within(at('2026-12-01T00:00:00Z'), at('2026-12-08T23:59:59Z'))
+			assert.equal(occ[0]!.start.toISOString(), '2026-12-07T05:30:00.000Z')
+		})
+	})
 })
 
 describe('scoped occurrence edits', () => {

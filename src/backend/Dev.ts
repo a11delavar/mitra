@@ -63,6 +63,7 @@ export class Dev extends Integration {
 		existing.start = incoming.start
 		existing.end = incoming.end
 		existing.allDay = incoming.allDay
+		existing.timeZone = incoming.timeZone
 		existing.status = incoming.status
 		existing.reminders = incoming.reminders
 		// Recurrence is column-only for Dev (no .ics); the GET path expands `recurrence` via

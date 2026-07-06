@@ -120,6 +120,7 @@ describe('Entry', () => {
 				(e: Entry) => e.description = 'Notes',
 				(e: Entry) => e.location = 'Berlin, Germany',
 				(e: Entry) => e.reminders = [30],
+				(e: Entry) => e.timeZone = 'Asia/Tehran',
 				(e: Entry) => e.color = '#ff0000',
 				(e: Entry) => e.moveStart(at(1, 9)),
 				(e: Entry) => e.setEnd(at(0, 11)),

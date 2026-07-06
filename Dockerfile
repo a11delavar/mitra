@@ -22,6 +22,7 @@ RUN npm ci
 
 # Build (esbuild reads tsconfig.json for the `shared` path alias).
 COPY tsconfig.json ./
+COPY assets ./assets
 COPY scripts ./scripts
 COPY src ./src
 RUN npm run build
