@@ -1,10 +1,11 @@
-import { Component, component, html, property, css, repeat, type PropertyValues, eventListener, queryAsync, ifDefined, styleMap } from '@a11d/lit'
+import { Component, component, html, property, css, repeat, type PropertyValues, eventListener, queryAsync, styleMap } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { observeResize } from '@3mo/resize-observer'
-import { type Entry } from 'shared'
+import { type Entry, type UserTimeZone } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { EntryDragController } from './EntryDragController.js'
+import { getTimeZones } from './Api.js'
 
 @component('mitra-days')
 export class Days extends Component {
@@ -12,20 +13,37 @@ export class Days extends Component {
 	@property({ type: Array }) entries = new Array<Entry>()
 	@property({ type: Boolean, reflect: true }) hideTime = false
 
-	private readonly dates = new CalendarDatesController(this)
+	private readonly dates: CalendarDatesController = new CalendarDatesController(this)
 	private get days(): Array<DateTime> { return this.dates.days }
 
 	protected readonly entryDrag = new EntryDragController(this)
 	// Segments over the RENDER WINDOW, not the whole buffer — offscreen days need no slicing.
 	private get segments() { return EntrySegments.of(this.entries, this.dates.window.days) }
 
-	// The all-day lane sticks below the (sticky) day headers, so it needs the header row's height. The
-	// time-column header cell stretches to that row, so the `observeResize` directive on it keeps
-	// `--header-height` in sync — firing only when it actually resizes (e.g. on font load), not per render.
-	private readonly updateHeaderHeight = ([entry]: ResizeObserverEntry[]) => {
-		const height = entry?.borderBoxSize?.[0]?.blockSize ?? (entry?.target as HTMLElement | undefined)?.offsetHeight
+	/** The time-axis columns: the user's additional zones first, the system zone (`undefined` — it
+	 * anchors the grid) last, adjacent to the days. */
+	private get timeZoneColumns(): Array<UserTimeZone | undefined> {
+		return [...getTimeZones(), undefined]
+	}
+
+	// The measured width of the (content-sized) time axis, for the scroll math — the snapport excludes
+	// the sticky axis, and with auto-sized zone columns the width is only known after layout.
+	private timeAxisWidth = 60
+
+	// The all-day lane sticks below the (sticky) day headers, so it needs the header row's height; the
+	// scroll-padding and the scroll→date math need the axis column's laid-out width. The time-column
+	// header cell stretches to both, so the `observeResize` directive on it keeps `--header-height` and
+	// `--time-axis-width` in sync — firing only when it actually resizes, not per render.
+	private readonly updateHeaderSize = ([entry]: ResizeObserverEntry[]) => {
+		const target = entry?.target as HTMLElement | undefined
+		const height = entry?.borderBoxSize?.[0]?.blockSize ?? target?.offsetHeight
 		if (height) {
 			this.style.setProperty('--header-height', `${height}px`)
+		}
+		const width = entry?.borderBoxSize?.[0]?.inlineSize ?? target?.offsetWidth
+		if (width) {
+			this.timeAxisWidth = width
+			this.style.setProperty('--time-axis-width', `${width}px`)
 		}
 	}
 
@@ -66,12 +84,17 @@ export class Days extends Component {
 			this.dates.scrollToDate(this.navigatingDate)
 		}
 		this.style.setProperty('--_days-length', this.days.length.toString())
+		this.style.setProperty('--_tz-count', this.timeZoneColumns.length.toString())
+		if (this.hideTime) {
+			// No axis to measure — let the [hideTime] rule's 0px win over a stale inline measurement.
+			this.style.removeProperty('--time-axis-width')
+		}
 	}
 
 	@eventListener('scroll')
 	protected handleScroll(e: Event) {
 		const target = e.target as HTMLElement
-		const timeAxisWidth = 60 // ~3.75rem
+		const timeAxisWidth = this.hideTime ? 0 : this.timeAxisWidth // measured (see updateHeaderSize)
 		const colWidth = (target.scrollWidth - timeAxisWidth) / this.days.length
 
 		// The browser centers the element within the "snapport", which excludes the time axis.
@@ -94,11 +117,17 @@ export class Days extends Component {
 			mitra-days {
 				display: grid;
 				grid-template-rows: auto auto minmax(var(--grid-min-height), 1fr);
-				grid-template-columns: var(--time-axis-width) repeat(var(--_days-length), minmax(10rem, 1fr));
+				/* ONE grid owns every column: an auto track for the "+" affordance, one content-sized
+				   track per displayed time zone (the header labels and the axis hours adopt these same
+				   tracks via subgrid, so they align by construction), then the day columns. The day
+				   tracks are addressed with NEGATIVE line numbers throughout, so nothing depends on how
+				   many zone tracks precede them. --time-axis-width mirrors the axis' laid-out width
+				   (measured, see updateHeaderSize) for the scroll padding and the scroll→date math. */
+				grid-template-columns: auto repeat(var(--_tz-count, 1), auto) repeat(var(--_days-length), minmax(10rem, 1fr));
 				gap: 1px;
 				height: 100%;
 				min-height: 0;
-				--time-axis-width: 3.75rem;
+				--time-axis-width: calc(var(--_tz-count, 1) * 3.75rem); /* pre-measurement approximation */
 				container-type: inline-size;
 				overflow: auto;
 				scroll-padding-inline-start: var(--time-axis-width);
@@ -134,7 +163,7 @@ export class Days extends Component {
 				/* All-day lane: a horizontal strip below the headers where all-day events render as
 				   column-spanning bars. Sticky below the (also-sticky) headers so it stays in view. */
 				.all-day-corner {
-					grid-column: 1;
+					grid-column: 1 / calc(-1 * var(--_days-length) - 1);
 					grid-row: 2;
 					position: sticky;
 					inset-inline-start: 0;
@@ -147,7 +176,7 @@ export class Days extends Component {
 				}
 
 				.all-day {
-					grid-column: 2 / -1;
+					grid-column: calc(-1 * var(--_days-length) - 1) / -1;
 					grid-row: 2;
 					position: sticky;
 					top: calc(var(--header-height, 2.75rem) + 1px);
@@ -186,8 +215,12 @@ export class Days extends Component {
 					display: contents;
 
 					.timezone {
-						grid-column: 1;
+						grid-column: 1 / calc(-1 * var(--_days-length) - 1);
 						grid-row: 1;
+						/* The zone labels sit on the parent's own zone tracks (through the header
+						   component's nested subgrid), exactly like the axis hours below them. */
+						display: grid;
+						grid-template-columns: subgrid;
 						position: sticky;
 						top: 0;
 						inset-inline-start: 0;
@@ -195,18 +228,16 @@ export class Days extends Component {
 						background-color: var(--color-background);
 						border-bottom: var(--border);
 						border-inline-end: var(--border);
-						padding: 0.5rem 0;
-						text-align: center;
-						color: var(--color-text-muted);
-						font-size: 0.65rem;
-						font-weight: 600;
+						padding: 0.375rem 0;
 					}
 
 					.axis {
-						grid-column: 1;
+						grid-column: 1 / calc(-1 * var(--_days-length) - 1);
 						grid-row: 3;
 						display: grid;
 						grid-template-rows: repeat(1440, var(--minute-height));
+						/* The same parent tracks as the header labels — aligned by construction. */
+						grid-template-columns: subgrid;
 						border-inline-end: var(--border);
 						position: sticky;
 						inset-inline-start: 0;
@@ -214,7 +245,7 @@ export class Days extends Component {
 						background-color: var(--color-background);
 
 						.now {
-							grid-column: 1;
+							grid-column: -2;
 							justify-self: end;
 							align-self: start;
 							transform: translateY(-50%);
@@ -235,11 +266,16 @@ export class Days extends Component {
 							text-align: end;
 							padding-inline-end: 0.5rem;
 							transform: translateY(-50%);
+
+							/* An additional zone's hours read as secondary next to the system column's. */
+							&[data-foreign] {
+								opacity: 0.55;
+							}
 						}
 					}
 
 					.overlays {
-						grid-column: 2 / -1;
+						grid-column: calc(-1 * var(--_days-length) - 1) / -1;
 						grid-row: 3;
 						display: grid;
 						grid-template-rows: repeat(1440, var(--minute-height));
@@ -352,28 +388,33 @@ export class Days extends Component {
 		}
 
 		const today = new DateTime()
-		const reference = this.days[0] || today
+		// The navigating date, not the buffer start: an additional zone's offset must be the one in
+		// effect for the VIEWED week (DST!), and the buffer start can be a year and a half away.
+		const reference = this.dates.navigatingDate
 		const todayValue = today.dayStart.valueOf()
 		const todayIndex = this.days.findIndex(d => d.dayStart.valueOf() === todayValue)
 		const currentMinute = today.hour * 60 + today.minute
 		const currentTimeString = today.format({ hour: '2-digit', minute: '2-digit', hour12: false })
+		const zones = this.timeZoneColumns
 
 		return html`
 			<div class="time">
-				<div class="timezone" ${observeResize(this.updateHeaderHeight)} title=${ifDefined(today.formatToParts({ timeZoneName: 'long' }).find(x => x.type === 'timeZoneName')?.value)}>
-					${today.formatToParts({ timeZoneName: 'shortGeneric' }).find(x => x.type === 'timeZoneName')?.value}
+				<div class="timezone" ${observeResize(this.updateHeaderSize)}>
+					<mitra-time-zone-header @change=${() => this.requestUpdate()}></mitra-time-zone-header>
 				</div>
 
 				<div class="axis">
-					${Array.from({ length: reference.hoursInDay }).map((_, i) => {
-						const isCloseToNow = todayIndex !== -1 && Math.abs(i * 60 - currentMinute) < 15
-						const timeText = (i === 0 || !reference || isCloseToNow) ? '' : reference.with({ hour: i, minute: 0, second: 0, millisecond: 0 }).format({ hour: '2-digit', minute: '2-digit', hour12: false })
+					${zones.map((zone, column) => Array.from({ length: reference.hoursInDay }).map((_, i) => {
+						// Blank the label the now-chip is about to overlay — only in its (the system) column.
+						const isCloseToNow = !zone && todayIndex !== -1 && Math.abs(i * 60 - currentMinute) < 15
+						const timeText = (i === 0 || isCloseToNow) ? '' : reference.with({ hour: i, minute: 0, second: 0, millisecond: 0 })
+							.format({ hour: '2-digit', minute: '2-digit', hour12: false, ...(!zone ? {} : { timeZone: zone.id }) })
 						return html`
-							<div class="hour" style="grid-row: ${i * 60 + 1};">
+							<div class="hour" style="grid-row: ${i * 60 + 1}; grid-column: ${column + 2};" ?data-foreign=${!!zone}>
 								${timeText}
 							</div>
 						`
-					})}
+					}))}
 					${todayIndex === -1 ? html.nothing : html`
 						<div class="now" style="grid-row: ${currentMinute + 1};">${currentTimeString}</div>
 					`}
@@ -401,11 +442,13 @@ export class Days extends Component {
 		// Only the window gets real day trees; every other buffer day is just its (empty) grid track —
 		// the columns are placed explicitly, so scroll geometry doesn't depend on what's rendered.
 		const { days, offset } = this.dates.window
+		// Day tracks start after the "+" track and the zone tracks (see the grid-template comment).
+		const firstDayColumn = this.timeZoneColumns.length + 2
 		return html`
 			${repeat(days, day => day.dayStart.toISOString(), (day, index) => html`
 				<mitra-day
 					data-date=${day.dayStart.toISOString()}
-					style="grid-column: ${offset + index + 2};"
+					style="grid-column: ${firstDayColumn + offset + index};"
 					.date=${day}
 					.entries=${this.segments.timedOn(day)}
 					?today=${day.dayStart.valueOf() === todayValue}

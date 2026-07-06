@@ -20,6 +20,7 @@ import { TaskStatusComponent } from './components/TaskStatus.js'
 import { RepeatField } from './components/RepeatField.js'
 import { LocationField } from './components/LocationField.js'
 import { RemindersField } from './components/RemindersField.js'
+import { TimeZoneHeader, DialogTimeZoneRename } from './components/TimeZoneHeader.js'
 import { syncPushSubscription } from './push.js'
 import { DialogRecurrenceScope } from './components/DialogRecurrenceScope.js'
 import { Markdown } from './Markdown.js'
@@ -80,6 +81,8 @@ export class Mitra extends Application {
 			${RepeatField.styles}
 			${LocationField.styles}
 			${RemindersField.styles}
+			${TimeZoneHeader.styles}
+			${DialogTimeZoneRename.styles}
 		`
 	}
 }

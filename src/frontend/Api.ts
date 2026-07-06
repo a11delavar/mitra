@@ -1,6 +1,6 @@
 import { Api, HttpError, apiError, apiAuthenticator, type ApiAuthenticator } from '@a11d/api'
 import { type DateTime } from '@3mo/date-time'
-import type { Entry, Integration, RecurrenceScope, Source, User } from 'shared'
+import type { Entry, Integration, RecurrenceScope, Source, User, UserTimeZone } from 'shared'
 
 /**
  * Surface the server's error message on failed responses. Without a registered
@@ -53,6 +53,15 @@ export function getDefaultSourceId() {
 
 export async function setDefaultSource(sourceId: string | undefined) {
 	return currentUser = await Api.put<User>('/user/default-source', { sourceId: sourceId ?? null })
+}
+
+/** The user's ADDITIONAL display time zones (the system zone is implicit — it anchors the grid). */
+export function getTimeZones(): Array<UserTimeZone> {
+	return currentUser?.timeZones ?? []
+}
+
+export async function setTimeZones(timeZones: Array<UserTimeZone>) {
+	return currentUser = await Api.put<User>('/user/time-zones', { timeZones })
 }
 
 export function fetchEvents(start: DateTime, end: DateTime) {
