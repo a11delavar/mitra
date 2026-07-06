@@ -18,6 +18,7 @@
 		"@typescript/native-preview": "latest",
 		"esbuild": "x",
 		"eslint": "9.x",
+		"favicons": "7.x",
 		"git-cliff": "2.x",
 		"tsx": "4.x"
 	},

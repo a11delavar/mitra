@@ -3,7 +3,7 @@ import { backendOptions, frontendOptions, serviceWorkerOptions, writeIndexHtml }
 
 // One-shot production build (no watch, no dev server). Used by the Docker image and CI.
 await esbuild.build({ ...backendOptions, sourcemap: false })
-writeIndexHtml()
+await writeIndexHtml()
 await esbuild.build({ ...frontendOptions, minify: true, sourcemap: false })
 await esbuild.build({ ...serviceWorkerOptions, minify: true, sourcemap: false })
 

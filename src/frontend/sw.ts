@@ -61,8 +61,8 @@ worker.addEventListener('push', event => {
 		// replacement (e.g. a snoozed re-send) alert again rather than swap silently.
 		tag: payload.tag,
 		renotify: true,
-		icon: '/icon-192.png',
-		badge: '/icon-192.png',
+		icon: '/android-chrome-192x192.png',
+		badge: '/android-chrome-192x192.png',
 		// The event's start, not the delivery instant — "when is it" beats "when did this arrive".
 		timestamp: payload.timestamp,
 		// A reminder is a commitment, not a toast: stay on screen until acted upon.

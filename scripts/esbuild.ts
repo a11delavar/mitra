@@ -1,7 +1,7 @@
 import type { BuildOptions } from 'esbuild'
 import { join } from 'path'
 import fs from 'fs'
-import { iconPng } from './icon.ts'
+import favicons from 'favicons'
 
 export const distDir = 'dist'
 
@@ -47,22 +47,54 @@ export const serviceWorkerOptions: BuildOptions = {
 	legalComments: 'none',
 }
 
-/** The single-page shell that boots the bundled frontend, plus the PWA statics: the web app manifest
- * (installability — which is also what makes push notifications attribute to "Mitra" instead of the
- * browser, and what iOS requires for push at all) and the generated icons (scripts/icon.ts). */
-export function writeIndexHtml() {
+/** The single-page shell that boots the bundled frontend, plus the PWA statics — every icon, the web
+ * app manifest (installability: what lets push notifications attribute to "Mitra" instead of the
+ * browser, and what iOS requires for push at all), and the <head> links referencing them — all derived
+ * from the ONE logo file, `assets/mitra.svg`. Replacing that file and rebuilding rebrands everything. */
+export async function writeIndexHtml() {
 	fs.mkdirSync(distDir, { recursive: true })
+
+	const generated = await favicons('assets/mitra.svg', {
+		appName: 'Mitra',
+		appShortName: 'Mitra',
+		appDescription: 'Your calendar and your tasks, in one place.',
+		start_url: '/',
+		display: 'standalone',
+		theme_color: '#121314',
+		background: '#121314',
+		// Only the icons something actually consumes: install + notifications (Android/Chromium),
+		// the iOS home screen, and the browser tab. No maskable variant on purpose: the provisional
+		// logo is a transparent glyph, and a transparent maskable renders as a blob on a white disc.
+		icons: {
+			android: ['android-chrome-192x192.png', 'android-chrome-512x512.png'],
+			appleIcon: ['apple-touch-icon.png'],
+			favicons: ['favicon.ico', 'favicon-32x32.png'],
+			appleStartup: false,
+			windows: false,
+			yandex: false,
+		},
+	})
+	for (const { name, contents } of [...generated.images, ...generated.files]) {
+		fs.writeFileSync(join(distDir, name), contents)
+	}
+
+	// The manifest must be fetched WITH credentials: browsers omit cookies on manifest requests by
+	// default (per spec), so behind a cookie-auth proxy (e.g. Traefik OIDC) the request 302s to the
+	// login page and installability silently dies — no manifest, no install prompt, no "Install App".
+	// The apple-touch-icon link is appended by hand — favicons drops it when the icon set is filtered.
+	const head = [
+		...generated.html,
+		'<link rel="apple-touch-icon" href="/apple-touch-icon.png">',
+	].join('\n\t').replace('rel="manifest"', 'rel="manifest" crossorigin="use-credentials"')
+
 	fs.writeFileSync(join(distDir, 'index.html'), `
 <!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta name="theme-color" content="#121314">
 	<title>Mitra</title>
-	<link rel="manifest" href="/manifest.webmanifest">
-	<link rel="icon" type="image/png" href="/icon-192.png">
-	<link rel="apple-touch-icon" href="/icon-192.png">
+	${head}
 	<script type="module" src="/index.js"></script>
 	<script></script>
 </head>
@@ -70,22 +102,4 @@ export function writeIndexHtml() {
 </body>
 </html>
 `.trim())
-	fs.writeFileSync(join(distDir, 'manifest.webmanifest'), JSON.stringify({
-		name: 'Mitra',
-		short_name: 'Mitra',
-		description: 'Your calendar and your tasks, in one place.',
-		start_url: '/',
-		display: 'standalone',
-		background_color: '#121314',
-		theme_color: '#121314',
-		// No `maskable` variant on purpose: the provisional icon is a transparent glyph (see
-		// scripts/icon.ts), and a transparent maskable renders as a blob on a white disc on Android.
-		// Re-add one alongside a designed, full-bleed icon.
-		icons: [
-			{ src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-			{ src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-		],
-	}, undefined, '\t'))
-	fs.writeFileSync(join(distDir, 'icon-192.png'), iconPng(192))
-	fs.writeFileSync(join(distDir, 'icon-512.png'), iconPng(512))
 }

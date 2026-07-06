@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/mitra.svg" alt="Mitra" width="128" />
+
 # Mitra
 
 **Your calendar and your tasks, in one place.**

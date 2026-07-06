@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mitra logo v15b: Unified deboss, optimised for small sizes (larger punches, tighter padding) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+	<defs>
+		<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0%" stop-color="#f2c474"/>
+			<stop offset="40%" stop-color="#e3a042"/>
+			<stop offset="100%" stop-color="#ba6622"/>
+		</linearGradient>
+
+		<linearGradient id="top-glow" x1="0" y1="0" x2="0" y2="0.35">
+			<stop offset="0%" stop-color="#ffffff" stop-opacity="0.5"/>
+			<stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+		</linearGradient>
+
+		<radialGradient id="vig" cx="0.5" cy="0.45" r="0.75">
+			<stop offset="60%" stop-color="#000" stop-opacity="0"/>
+			<stop offset="100%" stop-color="#3a1805" stop-opacity="0.2"/>
+		</radialGradient>
+
+		<linearGradient id="hole-inner" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0%" stop-color="#602808"/>
+			<stop offset="100%" stop-color="#b05b18"/>
+		</linearGradient>
+
+		<filter id="deboss" x="-20%" y="-20%" width="140%" height="140%">
+			<feOffset in="SourceAlpha" dx="0" dy="2" result="rim-offset"/>
+			<feGaussianBlur in="rim-offset" stdDeviation="0.8" result="rim-blur"/>
+			<feFlood flood-color="#ffffff" flood-opacity="0.35" result="rim-color"/>
+			<feComposite operator="in" in="rim-color" in2="rim-blur" result="rim-glow"/>
+
+			<feOffset in="SourceAlpha" dx="0" dy="4" result="inner-offset"/>
+			<feGaussianBlur in="inner-offset" stdDeviation="2.5" result="inner-blur"/>
+			<feComposite operator="out" in="SourceAlpha" in2="inner-blur" result="inner-inverse"/>
+			<feFlood flood-color="#2a0a00" flood-opacity="0.75" result="inner-color"/>
+			<feComposite operator="in" in="inner-color" in2="inner-inverse" result="inner-shadow"/>
+
+			<feMerge>
+				<feMergeNode in="rim-glow"/>
+				<feMergeNode in="SourceGraphic"/>
+				<feMergeNode in="inner-shadow"/>
+			</feMerge>
+		</filter>
+
+		<!-- Tighter padding: fills more of the 512 viewBox -->
+		<clipPath id="clip">
+			<rect x="6" y="6" width="500" height="500" rx="110"/>
+		</clipPath>
+	</defs>
+
+	<g clip-path="url(#clip)">
+		<rect x="6" y="6" width="500" height="500" fill="url(#bg)"/>
+		<rect x="6" y="6" width="500" height="500" fill="url(#top-glow)"/>
+		<rect x="6" y="6" width="500" height="500" fill="url(#vig)"/>
+
+		<!-- Bigger punches (r=20) so they read at 24×24px taskbar -->
+		<circle cx="176" cy="80" r="20" fill="url(#hole-inner)" filter="url(#deboss)"/>
+		<circle cx="336" cy="80" r="20" fill="url(#hole-inner)" filter="url(#deboss)"/>
+
+		<!-- Bigger debossed checkmark -->
+		<path d="M 130 275 L 225 370 L 395 170"
+			fill="none" stroke="url(#hole-inner)" stroke-width="58"
+			stroke-linecap="round" stroke-linejoin="round"
+			filter="url(#deboss)"/>
+	</g>
+</svg>

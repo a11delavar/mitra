@@ -14,7 +14,7 @@ await backendContext.rebuild()
 await backendContext.watch()
 spawn('node', ['--watch', 'out/server/server.mjs'], { stdio: 'inherit', shell: true, env: { ...process.env, MITRA_DEV: 'true' } })
 
-writeIndexHtml()
+await writeIndexHtml()
 
 const ctx = await esbuild.context({ ...frontendOptions, sourcemap: 'inline' })
 await ctx.watch()
