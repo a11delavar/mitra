@@ -28,7 +28,7 @@ export function systemZoneId(): string {
 // (it changes when the device travels), so its label is browser state too — no second source of truth
 // about which zone anchors the grid. Keyed by zone id, so a "DE" stays bound to Europe/Berlin rather
 // than to whatever zone the device happens to be in.
-const SYSTEM_LABELS_KEY = 'mitra-time-zone-labels'
+const SYSTEM_LABELS_KEY = 'Mitra.TimeZones.Labels'
 
 function systemZoneLabel(): string | undefined {
 	try {

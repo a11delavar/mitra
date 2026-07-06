@@ -53,9 +53,25 @@ class FetcherController extends Controller {
 export class PageCalendar extends PageComponent {
 	@state() navigatingDate = new DateTime()
 	@state() view: 'week' | 'month' = 'week'
-	@state() sidebarOpen?: boolean
+	@state() sidebarOpen = PageCalendar.preferredSidebarOpen
 
-	readonly mediaController = new MediaQueryController(this, '(min-width: 800px)', matches => this.sidebarOpen = matches)
+	readonly mediaController = new MediaQueryController(this, '(min-width: 800px)', () => this.sidebarOpen = PageCalendar.preferredSidebarOpen)
+
+	/** On desktop the sidebar opens unless the user collapsed it (remembered per browser); on mobile
+	 * it's an overlay and always starts closed. Evaluated eagerly for the initial render — the media
+	 * controller below only fires on breakpoint CHANGES, never on load. */
+	private static get preferredSidebarOpen() {
+		return window.matchMedia('(min-width: 800px)').matches && localStorage.getItem('Mitra.SidebarCollapsed') !== 'true'
+	}
+
+	private readonly toggleSidebar = () => {
+		this.sidebarOpen = !this.sidebarOpen
+		// Only a desktop toggle expresses a lasting preference — closing the mobile overlay is just
+		// dismissing it, and must not collapse the sidebar on the next desktop visit.
+		if (this.mediaController.matches) {
+			localStorage.setItem('Mitra.SidebarCollapsed', String(!this.sidebarOpen))
+		}
+	}
 
 	@queryAll('mitra-entry-segment') readonly eventSegments!: Array<EntrySegmentComponent>
 
@@ -169,7 +185,7 @@ export class PageCalendar extends PageComponent {
 				<mitra-sidebar ?open=${bind(this, 'sidebarOpen')}></mitra-sidebar>
 				<main>
 					<header>
-						<mitra-icon-button class="toggle" icon="panel-left" label="Toggle sidebar" @click=${() => this.sidebarOpen = !this.sidebarOpen}></mitra-icon-button>
+						<mitra-icon-button class="toggle" icon="panel-left" label="Toggle sidebar" @click=${this.toggleSidebar}></mitra-icon-button>
 						<h1>${this.navigatingDate.format({ month: 'long', year: 'numeric' })}</h1>
 						<div style="flex: 1"></div>
 						<select .value=${this.view} @change=${(e: Event) => this.setView((e.target as HTMLSelectElement).value as 'week' | 'month')}>
