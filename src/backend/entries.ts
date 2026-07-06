@@ -71,6 +71,7 @@ entriesRouter.post('/', async (req, res) => {
 		allDay: body.allDay ?? false,
 		status: body.status,
 		recurrence: incomingRecurrence,
+		reminders: body.reminders ?? undefined,
 	})
 
 	const created = await targetIntegration.createEntry(em, incoming)
@@ -118,6 +119,7 @@ entriesRouter.put('/:id', async (req, res) => {
 			end: body.end ? new DateTime(body.end) : existing.end,
 			allDay: body.allDay ?? existing.allDay,
 			status: body.status ?? existing.status,
+			reminders: body.reminders === undefined ? existing.reminders : body.reminders,
 		})
 		const result = await editOccurrence(em, currentIntegration, existing, new Date(body.recurrenceId), edited, body.scope)
 		await em.flush()
@@ -137,6 +139,8 @@ entriesRouter.put('/:id', async (req, res) => {
 		allDay: body.allDay ?? existing.allDay,
 		status: body.status ?? existing.status,
 		recurrence: incomingRecurrence,
+		// Like `recurrence`, tri-state on the wire: an array sets, `null` clears, absent keeps.
+		reminders: body.reminders === undefined ? existing.reminders : body.reminders,
 	})
 
 	// Moving an entry between *sources* re-creates it at the target — providers update entries in

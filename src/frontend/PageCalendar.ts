@@ -165,7 +165,7 @@ export class PageCalendar extends PageComponent {
 
 	protected override get template() {
 		return html`
-			<lit-page heading='Mitra'>
+			<lit-page>
 				<mitra-sidebar ?open=${bind(this, 'sidebarOpen')}></mitra-sidebar>
 				<main>
 					<header>

@@ -13,12 +13,15 @@ import { integrationsRouter } from './integrations.js'
 import { sourcesRouter } from './sources.js'
 import { userRouter } from './user.js'
 import { locationsRouter } from './locations.js'
+import { pushRouter } from './push.js'
+import { ReminderScheduler } from './ReminderScheduler.js'
 import { seedDev } from './Dev.js'
 
 const logger = createLogger('API')
 const PORT = 3000
 
 new Synchronizer(orm).start()
+new ReminderScheduler(orm).start()
 
 const app = express()
 app.use(cors())
@@ -43,6 +46,7 @@ app.use('/api/integrations', integrationsRouter)
 app.use('/api/sources', sourcesRouter)
 app.use('/api/user', userRouter)
 app.use('/api/locations', locationsRouter)
+app.use('/api/push', pushRouter)
 
 // Serve the bundled frontend, falling back to index.html for client-side routes.
 const frontendDistPath = path.resolve(import.meta.dirname, '../../dist')

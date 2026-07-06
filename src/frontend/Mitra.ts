@@ -19,6 +19,8 @@ import { menuStyles } from './components/menu.css.js'
 import { TaskStatusComponent } from './components/TaskStatus.js'
 import { RepeatField } from './components/RepeatField.js'
 import { LocationField } from './components/LocationField.js'
+import { RemindersField } from './components/RemindersField.js'
+import { syncPushSubscription } from './push.js'
 import { DialogRecurrenceScope } from './components/DialogRecurrenceScope.js'
 import { Markdown } from './Markdown.js'
 import { EntryDetailsWhen } from './EntryDetailsWhen.js'
@@ -32,6 +34,9 @@ EntryStore.resolveScope = (entry, intent) => new DialogRecurrenceScope({ entry, 
 export class Mitra extends Application {
 	protected override async initialized() {
 		await Promise.all([fetchIntegrations(), fetchUser()])
+		// Where notification permission was granted before, quietly refresh the push subscription so a
+		// push-service-side endpoint rotation never silently mutes reminders. Never prompts.
+		syncPushSubscription()
 		await super.initialized()
 	}
 
@@ -74,6 +79,7 @@ export class Mitra extends Application {
 			${TaskStatusComponent.styles}
 			${RepeatField.styles}
 			${LocationField.styles}
+			${RemindersField.styles}
 		`
 	}
 }

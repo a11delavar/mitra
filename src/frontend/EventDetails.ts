@@ -268,7 +268,7 @@ export class EntryDetailsComponent extends Component {
 						}
 
 						&.source {
-							/* The whole row is a \`subtle\` select, Notion-style: it reads as plain text — the
+							/* The whole row is a \`subtle\` select: it reads as plain text — the
 							   selected option's own dot/type/name via <selectedcontent> — until hovered. */
 							> select {
 								grid-column: 1 / -1;
@@ -325,6 +325,15 @@ export class EntryDetailsComponent extends Component {
 								margin-block-start: 3px;
 							}
 						}
+
+						/* Several reminder rows stack — keep the bell on the first one. */
+						&.reminders {
+							align-items: start;
+
+							> mitra-icon {
+								margin-block-start: 3px;
+							}
+						}
 					}
 
 				}
@@ -370,6 +379,7 @@ export class EntryDetailsComponent extends Component {
 				<hr>
 				${this.sourceTemplate}
 				${this.colorTemplate}
+				${this.remindersTemplate}
 			</ul>
 		`
 	}
@@ -456,6 +466,16 @@ export class EntryDetailsComponent extends Component {
 		this.segment.entry.color = color ?? null
 		EntryStore.notify()
 		this.handleChange().catch(() => void 0)
+	}
+
+	private get remindersTemplate() {
+		// Reminders anchor to the start time — an undated entry has nothing to remind about.
+		return !this.segment!.entry.start ? html.nothing : html`
+			<li class="reminders">
+				<mitra-icon icon="bell"></mitra-icon>
+				<mitra-reminders-field .entry=${this.segment!.entry} @change=${this.handleChange}></mitra-reminders-field>
+			</li>
+		`
 	}
 
 	@state() private editingDescription = false

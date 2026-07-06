@@ -159,6 +159,46 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
+	/** The entry's reminders (minutes before start) off its VALARMs. Only what mitra manages maps to our
+	 * model: EMAIL alarms are another channel entirely (out of scope — parsing them while only DISPLAY
+	 * ones are written back would make them undeletable), and absolute (`VALUE=DATE-TIME`), end-relative
+	 * (`RELATED=END`) and after-start triggers are left where they are — present in the raw .ics,
+	 * invisible here. */
+	static remindersFrom(component: ICAL.Component): Array<number> | null {
+		const minutes = component.getAllSubcomponents('valarm').flatMap(alarm => {
+			const trigger = alarm.getFirstProperty('trigger')
+			const duration = trigger?.getFirstValue() as { toSeconds?(): number } | null
+			if (
+				alarm.getFirstPropertyValue('action')?.toString().toUpperCase() === 'EMAIL'
+				|| !trigger || typeof duration?.toSeconds !== 'function'
+				|| trigger.getParameter('related')?.toString().toUpperCase() === 'END'
+			) {
+				return []
+			}
+			const seconds = duration.toSeconds()
+			return seconds > 0 ? [] : [Math.round(-seconds / 60)]
+		})
+		// `null`, not undefined, for "none" — the canonical no-reminders value everywhere (see Entry).
+		return minutes.length ? [...new Set(minutes)].sort((a, b) => a - b) : null
+	}
+
+	/** Replace the component's DISPLAY alarms with one per reminder. DISPLAY only — an EMAIL alarm
+	 * another client authored is its own channel, not ours to rewrite. */
+	private writeReminders(component: ICAL.Component, reminders: Array<number> | undefined | null) {
+		for (const alarm of component.getAllSubcomponents('valarm')) {
+			if (alarm.getFirstPropertyValue('action')?.toString().toUpperCase() !== 'EMAIL') {
+				component.removeSubcomponent(alarm)
+			}
+		}
+		for (const minutes of reminders ?? []) {
+			const alarm = new ICAL.Component('valarm')
+			alarm.updatePropertyWithValue('action', 'DISPLAY')
+			alarm.updatePropertyWithValue('description', 'Reminder')
+			alarm.updatePropertyWithValue('trigger', ICAL.Duration.fromSeconds(-minutes * 60))
+			component.addSubcomponent(alarm)
+		}
+	}
+
 	protected override async syncSourceEntries(em: EntityManager, source: Source): Promise<boolean> {
 		const client = await this.getClient()
 		const remoteCalendar = { url: source.uri }
@@ -270,6 +310,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				entry.allDay = !!value('dtstart')?.isDate
 			}
 
+			entry.reminders = CalDAV.remindersFrom(component)
+
 			// Recurrence: a master carries an RRULE; a single edited occurrence is its own member carrying a
 			// RECURRENCE-ID and the master's UID. Capture all three; occurrences are expanded later, on read.
 			const recurrence = CalDAV.recurrenceProps(component)
@@ -302,7 +344,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			throw new Error('Entry must have a URL and raw data to be updated via CalDAV')
 		}
 
-		const keys: Array<keyof Entry> = (['heading', 'description', 'location', 'color', 'start', 'end', 'status', 'allDay'] as const)
+		const keys: Array<keyof Entry> = (['heading', 'description', 'location', 'color', 'start', 'end', 'status', 'allDay', 'reminders'] as const)
 			.filter(key => !Object[equals](existing[key], incoming[key]))
 
 		// The recurrence rule is a value object, diffed via its own (absence-safe) structural equality.
@@ -367,6 +409,11 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		if (isTask && keys.includes('status')) {
 			this.writeTaskStatus(component, incoming.status)
 			existing.status = incoming.status
+		}
+
+		if (keys.includes('reminders')) {
+			this.writeReminders(component, incoming.reminders)
+			existing.reminders = incoming.reminders
 		}
 
 		// Recurrence rule edits are series-wide: set/replace the master's RRULE, or drop it (and the EXDATEs it
@@ -441,6 +488,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		if (isTask) {
 			this.writeTaskStatus(component, entry.status)
 		}
+		this.writeReminders(component, entry.reminders)
 
 		comp.addSubcomponent(component)
 

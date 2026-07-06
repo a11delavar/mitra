@@ -58,6 +58,12 @@ export class Entry {
 
 	@property({ type: 'json', nullable: true }) data?: EntryData
 
+	// Reminders, as MINUTES BEFORE START (0 = at start) — the flat value of RFC 5545's VALARM
+	// subcomponents with a relative TRIGGER (-PT30M ↔ 30). Multiple allowed,
+	// kept ascending and deduplicated by the editor. "None" is `null` on both sides of the wire (like
+	// `recurrence`: MikroORM hydrates the empty column as null, and editEquals must see one value).
+	@property({ type: 'json', nullable: true }) reminders?: Array<number> | null
+
 	// --- Recurrence (RFC 5545) ------------------------------------------------------------------------
 	// A recurring series is a single MASTER row carrying the `recurrence` rule (a value object → recurrence_*
 	// columns); its occurrences are expanded on read, never stored. A single edited occurrence is its own
@@ -123,7 +129,7 @@ export class Entry {
 		// `recurrence` counts as editable content (the Repeat field mutates it); `Object[equals]` compares
 		// the value objects structurally. The series *link* fields (uid, recurrenceMasterId, recurrenceId,
 		// exdates) are sync bookkeeping like `uri`/`data`, so they stay excluded.
-		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'allDay', 'status', 'recurrence'] as const
+		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'allDay', 'status', 'recurrence', 'reminders'] as const
 		return editable.every(key => Object[equals](this[key], other[key]))
 	}
 
@@ -151,6 +157,7 @@ export class Entry {
 			end: values.end,
 			status: values.status,
 			allDay: values.allDay,
+			reminders: values.reminders,
 			data: values.data,
 			uid: values.uid,
 			recurrence: values.recurrence,

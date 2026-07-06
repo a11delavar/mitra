@@ -64,6 +64,7 @@ export class Dev extends Integration {
 		existing.end = incoming.end
 		existing.allDay = incoming.allDay
 		existing.status = incoming.status
+		existing.reminders = incoming.reminders
 		// Recurrence is column-only for Dev (no .ics); the GET path expands `recurrence` via
 		// expandRecurrenceFields. (uid/recurrenceId aren't edited through the UI and Dev has no sync/overrides.)
 		existing.recurrence = incoming.recurrence

@@ -119,6 +119,7 @@ describe('Entry', () => {
 				(e: Entry) => e.heading = 'Renamed',
 				(e: Entry) => e.description = 'Notes',
 				(e: Entry) => e.location = 'Berlin, Germany',
+				(e: Entry) => e.reminders = [30],
 				(e: Entry) => e.color = '#ff0000',
 				(e: Entry) => e.moveStart(at(1, 9)),
 				(e: Entry) => e.setEnd(at(0, 11)),
@@ -152,6 +153,11 @@ describe('Entry', () => {
 			const a = new Entry({ sourceId: 's', type: EntryType.Task, heading: 'Task' })
 			const b = new Entry({ sourceId: 's', type: EntryType.Task, heading: 'Task' })
 			assert.equal(a.editEquals(b), true)
+		})
+
+		it('compares reminders by value', () => {
+			assert.equal(new Entry({ ...base(), reminders: [10, 30] }).editEquals(new Entry({ ...base(), reminders: [10, 30] })), true)
+			assert.equal(new Entry({ ...base(), reminders: [10, 30] }).editEquals(new Entry({ ...base(), reminders: [10] })), false)
 		})
 	})
 

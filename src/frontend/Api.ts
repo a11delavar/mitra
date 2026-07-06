@@ -119,12 +119,13 @@ export function updateEvent(entry: Entry) {
 			description: entry.description,
 			location: entry.location,
 			color: entry.color,
+			reminders: entry.reminders ?? null,
 			...(entry.recurrence !== undefined ? { recurrence: entry.recurrence } : {}),
 		})
 	}
-	// The full entry, with an absent rule sent as an explicit `null`: JSON drops undefined keys and the
-	// backend treats absence as "keep the rule" — only a null can express its removal.
-	return Api.put<Entry>(`/entries/${entry.id}`, { ...entry, recurrence: entry.recurrence ?? null })
+	// The full entry, with absent tri-state fields sent as an explicit `null`: JSON drops undefined keys
+	// and the backend treats absence as "keep" — only a null can express a removal.
+	return Api.put<Entry>(`/entries/${entry.id}`, { ...entry, recurrence: entry.recurrence ?? null, reminders: entry.reminders ?? null })
 }
 
 export function deleteEvent(id: string) {
@@ -169,6 +170,7 @@ export function editOccurrence(occurrence: Entry, scope: RecurrenceScope) {
 		end: occurrence.end,
 		allDay: occurrence.allDay,
 		status: occurrence.status,
+		reminders: occurrence.reminders ?? null,
 	})
 }
 

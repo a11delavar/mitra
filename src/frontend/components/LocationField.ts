@@ -93,7 +93,6 @@ export class LocationField extends Component {
 
 	private readonly handleFocus = () => {
 		requestPosition()
-		// Show the recently used locations right away, Notion-style — no keystroke needed.
 		this.search(this.entry.location.trim())
 	}
 

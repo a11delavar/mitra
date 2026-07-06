@@ -39,7 +39,7 @@ locationsRouter.get('/', async (req, res) => {
 	const query = q?.trim() ?? ''
 
 	// Recently used locations lead the list — an empty/short query (the field was just focused) shows
-	// them alone, Notion-style; once typing, they narrow along with the geocoder's results.
+	// them alone; once typing, they narrow along with the geocoder's results.
 	const recents = await recentLocations(query)
 	if (query.length < 2) {
 		return res.json(recents)

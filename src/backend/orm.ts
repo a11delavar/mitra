@@ -2,12 +2,13 @@ import dotenv from 'dotenv'
 import { MikroORM, UnderscoreNamingStrategy } from '@mikro-orm/sqlite'
 import { User, Integration, CalDAV, Source, Entry, Recurrence } from '../shared/index.js'
 import { Dev } from './Dev.js'
+import { NotificationSubscription } from './NotificationSubscription.js'
 
 dotenv.config({ path: `${import.meta.dirname}/.env` })
 
 /** The shared ORM instance, initialized once at startup. Routes fork an `em` per request. */
 export const orm = await MikroORM.init({
-	entities: [User, Integration, CalDAV, Dev, Source, Entry, Recurrence],
+	entities: [User, Integration, CalDAV, Dev, Source, Entry, Recurrence, NotificationSubscription],
 	dbName: `${import.meta.dirname}/../../data/database.sqlite`,
 	namingStrategy: class extends UnderscoreNamingStrategy {
 		override joinColumnName(propertyName: string) {
