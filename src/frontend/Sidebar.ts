@@ -410,7 +410,7 @@ export class Sidebar extends Component {
 						title="Install mitra as an app — it gets its own window, and notifications appear under its own name and icon"
 						@click=${() => promptInstall()}>
 						<mitra-icon icon="monitor-down"></mitra-icon>
-						Install App
+						Install as an App
 					</button>
 				`}
 			</nav>

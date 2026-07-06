@@ -16,7 +16,8 @@ export class Days extends Component {
 	private get days(): Array<DateTime> { return this.dates.days }
 
 	protected readonly entryDrag = new EntryDragController(this)
-	private get segments() { return EntrySegments.of(this.entries, this.days) }
+	// Segments over the RENDER WINDOW, not the whole buffer — offscreen days need no slicing.
+	private get segments() { return EntrySegments.of(this.entries, this.dates.window.days) }
 
 	// The all-day lane sticks below the (sticky) day headers, so it needs the header row's height. The
 	// time-column header cell stretches to that row, so the `observeResize` directive on it keeps
@@ -311,8 +312,10 @@ export class Days extends Component {
 	}
 
 	private get allDayTemplate() {
-		const first = this.days[0]
-		const last = this.days.at(-1)
+		// Bars render (and clip) against the window — a run's parts beyond it are offscreen by definition.
+		const { days, offset } = this.dates.window
+		const first = days[0]
+		const last = days.at(-1)
 		if (!first || !last) {
 			return html.nothing
 		}
@@ -320,7 +323,7 @@ export class Days extends Component {
 		const runs = this.segments.runsIn(first, last, entry => !!entry.allDay)
 		// Built once per render so each bar's column is an O(1) numeric lookup (segments cache their dayValue).
 		const lastValue = last.dayStart.valueOf()
-		const columnByDay = new Map(this.days.map((day, index) => [day.dayStart.valueOf(), index]))
+		const columnByDay = new Map(days.map((day, index) => [day.dayStart.valueOf(), offset + index]))
 		const columnOf = (dayValue?: number) => columnByDay.get(dayValue ?? -1) ?? 0
 		return html`
 			<div class="all-day-corner"></div>
@@ -328,7 +331,7 @@ export class Days extends Component {
 				${repeat(runs, segment => segment.entry, segment => {
 					const startColumn = columnOf(segment.dayValue)
 					const clippedRight = segment.runEnd.dayValue! > lastValue
-					const endColumn = clippedRight ? this.days.length - 1 : columnOf(segment.runEnd.dayValue)
+					const endColumn = clippedRight ? offset + days.length - 1 : columnOf(segment.runEnd.dayValue)
 					return html`
 						<mitra-entry-segment
 							style=${styleMap({ gridColumn: `${startColumn + 1} / span ${endColumn - startColumn + 1}` })}
@@ -395,11 +398,14 @@ export class Days extends Component {
 
 	private get dateTemplate() {
 		const todayValue = new DateTime().dayStart.valueOf()
+		// Only the window gets real day trees; every other buffer day is just its (empty) grid track —
+		// the columns are placed explicitly, so scroll geometry doesn't depend on what's rendered.
+		const { days, offset } = this.dates.window
 		return html`
-			${repeat(this.days, day => day.dayStart.toISOString(), (day, index) => html`
+			${repeat(days, day => day.dayStart.toISOString(), (day, index) => html`
 				<mitra-day
 					data-date=${day.dayStart.toISOString()}
-					style="grid-column: ${index + 2};"
+					style="grid-column: ${offset + index + 2};"
 					.date=${day}
 					.entries=${this.segments.timedOn(day)}
 					?today=${day.dayStart.valueOf() === todayValue}

@@ -29,7 +29,17 @@ export class CalendarDatesController extends Controller {
 	private _navigatingDate = new DateTime().dayStart
 	private _days = new Array<DateTime>()
 
-	constructor(protected override readonly host: Component) {
+	/**
+	 * @param rendering The render-window shape (see {@link window}): `radiusDays` days each side of the
+	 * navigating date get real content; the window recenters only after drifting `shiftDays` from its
+	 * center (hysteresis — one re-render per `shiftDays` of scrolling, not one per day). The radius must
+	 * comfortably exceed the widest viewport's half plus the shift, so unrendered tracks never scroll
+	 * into view between recenters.
+	 */
+	constructor(
+		protected override readonly host: Component,
+		private readonly rendering: { radiusDays: number, shiftDays: number } = { radiusDays: 35, shiftDays: 7 },
+	) {
 		super(host)
 	}
 
@@ -56,11 +66,40 @@ export class CalendarDatesController extends Controller {
 		if (isOutOfBounds) {
 			const start = value.add({ days: - (WEEKS_BACK_ON_REGEN * DAYS_IN_WEEK) }).weekStart
 			this._days = [...CalendarDatesController.generate(start, BUFFER_DAYS, 'days')]
+			this._window = undefined
+			this.host.requestUpdate()
+		} else if (this._window && Math.abs(value.dayStart.valueOf() - this._window.centerValue) >= this.rendering.shiftDays * 86_400_000) {
+			// Drifted far enough from the rendered window's center: recenter it on the next render.
+			this._window = undefined
 			this.host.requestUpdate()
 		}
 	}
 
 	get days() { return this._days }
+
+	private _window?: { days: ReadonlyArray<DateTime>, offset: number, centerValue: number }
+
+	/**
+	 * The days to actually RENDER — a slice of {@link days} around the navigating date. The full buffer
+	 * only provides scroll geometry: both views place children at explicit grid positions, so the days
+	 * outside the window are simply empty tracks (cheap), while the expensive subgridded day trees exist
+	 * for ~{@link rendering}.radiusDays×2 days instead of the whole 3-year buffer. The slice's identity
+	 * is stable between recenters, so per-`days` memos (e.g. `EntrySegments.of`) keep hitting.
+	 */
+	get window(): { days: ReadonlyArray<DateTime>, offset: number } {
+		if (!this._window) {
+			const first = this._days[0]
+			// Consecutive local days: the index is the (DST-tolerant, hence rounded) day distance.
+			const center = !first ? 0 : Math.round((this._navigatingDate.dayStart.valueOf() - first.valueOf()) / 86_400_000)
+			const start = Math.max(0, center - this.rendering.radiusDays)
+			this._window = {
+				days: this._days.slice(start, Math.min(this._days.length, center + this.rendering.radiusDays + 1)),
+				offset: start,
+				centerValue: this._navigatingDate.dayStart.valueOf(),
+			}
+		}
+		return this._window
+	}
 
 	scrollToDate(date: DateTime) {
 		this.host.updateComplete.then(() => {

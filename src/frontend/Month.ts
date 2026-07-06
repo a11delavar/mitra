@@ -15,12 +15,14 @@ export class Month extends Component {
 
 	private static readonly MAX_SLOTS = 4
 
-	private readonly buffer = new CalendarDatesController(this)
+	// A taller render window than the day view's default: month rows are short, so a tall viewport
+	// shows many weeks — the radius must stay comfortably ahead of it (see CalendarDatesController.window).
+	private readonly buffer: CalendarDatesController = new CalendarDatesController(this, { radiusDays: 77, shiftDays: 14 })
 	protected readonly entryDrag = new EntryDragController(this, 'month')
 
 	private get bufferNavigatingDate(): DateTime { return this.buffer.navigatingDate }
 	private get days(): Array<DateTime> { return this.buffer.days }
-	private get segments() { return EntrySegments.of(this.entries, this.days) }
+	private get segments(): EntrySegments { return EntrySegments.of(this.entries, this.buffer.window.days) }
 
 	protected override initialized() {
 		this.buffer.navigatingDate = this.navigatingDate
@@ -152,20 +154,28 @@ export class Month extends Component {
 			weeks.push(this.days.slice(i, i + daysInWeek))
 		}
 
+		// Only the weeks intersecting the render window get real content, each placed at its explicit
+		// row; the trailing spacer forces the implicit grid to its full week count, so the scrollbar
+		// (and the scroll-position→date math above) never depends on what's rendered.
+		const { days: windowDays, offset } = this.buffer.window
+		const firstWeek = Math.floor(offset / daysInWeek)
+		const lastWeek = windowDays.length ? Math.floor((offset + windowDays.length - 1) / daysInWeek) : firstWeek
+
 		return html`
 			<div class="headers">
 				${this.weekDays.map(weekday => html`<div class="weekday">${weekday}</div>`)}
 			</div>
 			<div class="days" @scroll=${this.handleScroll} style="grid-auto-rows: minmax(8.5rem, 1fr); --max-slots: ${Month.MAX_SLOTS};">
-				${repeat(weeks, week => week[0]!.dayStart.toISOString(), week => this.weekTemplate(week, today))}
+				${repeat(weeks.slice(firstWeek, lastWeek + 1), week => week[0]!.dayStart.toISOString(), (week, index) => this.weekTemplate(week, today, firstWeek + index))}
+				${!weeks.length ? html.nothing : html`<div style="grid-row: ${weeks.length};"></div>`}
 			</div>
 		`
 	}
 
-	private weekTemplate(week: Array<DateTime>, today: DateTime) {
+	private weekTemplate(week: Array<DateTime>, today: DateTime, row: number) {
 		const { bars, hiddenByColumn } = this.segments.monthWeek(week, Month.MAX_SLOTS)
 		return html`
-			<div class="week">
+			<div class="week" style="grid-row: ${row + 1};">
 				${week.map((day, col) => html`
 					<mitra-day
 						data-date=${day.dayStart.toISOString()}
