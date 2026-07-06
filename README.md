@@ -47,6 +47,8 @@ docker compose up -d   # → http://localhost:3000
 
 Everything you create lives in the `mitra-data` volume — back that up and you've backed up everything. To pin or track a specific version instead of `latest`, see the [available tags](https://github.com/a11delavar/mitra/pkgs/container/mitra).
 
+Location autocomplete works out of the box — it's powered by [Photon](https://photon.komoot.io), a free, open-source geocoder (no API key, no signup), queried through your own server so your searches never leave it from the browser. If you'd rather not rely on komoot's public instance, [host Photon yourself](https://github.com/komoot/photon) and point Mitra at it with the `MITRA_PHOTON_URL` environment variable.
+
 ## Contributing
 
 Issues and pull requests are welcome — Mitra is built in the open.

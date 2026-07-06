@@ -41,6 +41,9 @@ export class Entry {
 
 	@property({ type: 'string' }) heading = ''
 	@property({ type: 'string' }) description = ''
+	// A plain string, per RFC 5545: LOCATION is a TEXT property. Free text is always valid; the
+	// editor's autocomplete merely helps produce a nicely formatted one.
+	@property({ type: 'string' }) location = ''
 	@property({ type: 'string', nullable: true }) color: string | null = null
 
 	@property({ type: 'datetime', nullable: true }) start?: DateTime
@@ -120,7 +123,7 @@ export class Entry {
 		// `recurrence` counts as editable content (the Repeat field mutates it); `Object[equals]` compares
 		// the value objects structurally. The series *link* fields (uid, recurrenceMasterId, recurrenceId,
 		// exdates) are sync bookkeeping like `uri`/`data`, so they stay excluded.
-		const editable = ['sourceId', 'type', 'heading', 'description', 'color', 'start', 'end', 'allDay', 'status', 'recurrence'] as const
+		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'allDay', 'status', 'recurrence'] as const
 		return editable.every(key => Object[equals](this[key], other[key]))
 	}
 
@@ -142,6 +145,7 @@ export class Entry {
 			type: values.type,
 			heading: values.heading,
 			description: values.description,
+			location: values.location,
 			color: values.color,
 			start: values.start,
 			end: values.end,

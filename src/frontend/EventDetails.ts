@@ -170,6 +170,16 @@ export class EntryDetailsComponent extends Component {
 					row-gap: 1rem;
 					column-gap: 0.5rem;
 
+					> hr {
+						margin: 0;
+						background: rgba(255, 255, 255, 0.06);
+						width: 100%;
+						height: 1px;
+						outline: none;
+						border: none;
+						grid-column: -1 / 1;
+					}
+
 					> li {
 						display: grid;
 						grid-template-columns: subgrid;
@@ -221,9 +231,6 @@ export class EntryDetailsComponent extends Component {
 
 						&.description {
 							align-items: start;
-							border-block-start: 1px solid rgba(255, 255, 255, 0.06);
-							padding-block-start: 0.6875rem;
-							margin-block-start: 0.375rem;
 
 							> mitra-icon {
 								margin-block-start: 2px;
@@ -242,8 +249,8 @@ export class EntryDetailsComponent extends Component {
 							> .rendered {
 								width: 100%;
 								/* Match the .subtle textarea's box so toggling doesn't shift layout. */
-								margin: -2px -4px;
-								padding: 2px 4px;
+								margin: -4px -4px;
+								padding: 4px 4px;
 								border-radius: var(--border-radius);
 								cursor: text;
 
@@ -254,6 +261,8 @@ export class EntryDetailsComponent extends Component {
 
 							.placeholder {
 								color: var(--color-text-muted);
+								opacity: 0.8;
+								font-size: 0.8rem;
 								line-height: 1.1rem;
 							}
 						}
@@ -307,6 +316,15 @@ export class EntryDetailsComponent extends Component {
 								gap: 0.375rem;
 							}
 						}
+
+						/* A long location wraps over several lines — keep the pin on the first one. */
+						&.location {
+							align-items: start;
+
+							> mitra-icon {
+								margin-block-start: 3px;
+							}
+						}
 					}
 
 				}
@@ -345,10 +363,13 @@ export class EntryDetailsComponent extends Component {
 				</li>
 				${!this.segment.entry.start ? html.nothing : html`
 					<mitra-entry-details-when .entry=${this.segment.entry} @change=${this.handleWhenChange}></mitra-entry-details-when>
+					<hr>
 				`}
+				${this.locationTemplate}
+				${this.descriptionTemplate}
+				<hr>
 				${this.sourceTemplate}
 				${this.colorTemplate}
-				${this.descriptionTemplate}
 			</ul>
 		`
 	}
@@ -391,6 +412,17 @@ export class EntryDetailsComponent extends Component {
 						`
 					})}
 				</select>
+			</li>
+		`
+	}
+
+	private get locationTemplate() {
+		// The field mutates `entry.location` in place; both its typed commits (the input's bubbling
+		// `change`) and picked suggestions (the component's own `change`) land here and persist.
+		return html`
+			<li class="location">
+				<mitra-icon icon="map-pin"></mitra-icon>
+				<mitra-location-field .entry=${this.segment!.entry} @change=${this.handleChange}></mitra-location-field>
 			</li>
 		`
 	}
@@ -445,7 +477,7 @@ export class EntryDetailsComponent extends Component {
 			<li class="description">
 				<mitra-icon icon="align-left"></mitra-icon>
 				${this.editingDescription ? html`
-					<textarea class="subtle" rows="1" placeholder="Add a description"
+					<textarea class="subtle" rows="1" placeholder="Description"
 						${this.bind('entry.description', 'input')}
 						@change=${this.handleChange}
 						@blur=${() => this.editingDescription = false}
@@ -453,7 +485,7 @@ export class EntryDetailsComponent extends Component {
 				` : html`
 					<div class="rendered" @click=${editDescription}>
 						${!this.segment!.entry.description ? html`
-							<div class="placeholder">Add a description</div>
+							<div class="placeholder">Description</div>
 							` : html`
 								<mitra-markdown .value=${this.segment!.entry.description}></mitra-markdown>
 						`}

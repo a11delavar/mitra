@@ -115,13 +115,13 @@ describe('scoped occurrence edits', () => {
 
 	const em = {} as never
 	const master = () => new Entry({
-		id: 'm', sourceId: 's', type: EntryType.Event, heading: 'Standup', uid: 'u1',
+		id: 'm', sourceId: 's', type: EntryType.Event, heading: 'Standup', uid: 'u1', location: 'Room A',
 		start: D('2026-06-01T09:00:00Z'), end: D('2026-06-01T10:00:00Z'),
 		recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['MO'] }),
 	})
 	const recurrenceId = new Date('2026-06-08T09:00:00Z') // the second Monday
 	const edited = () => new Entry({
-		sourceId: 's', type: EntryType.Event, heading: 'Edited',
+		sourceId: 's', type: EntryType.Event, heading: 'Edited', location: 'Room B',
 		start: D('2026-06-08T10:00:00Z'), end: D('2026-06-08T11:00:00Z'), // moved one hour later
 	})
 
@@ -133,6 +133,7 @@ describe('scoped occurrence edits', () => {
 		assert.equal(calls.updates.length, 1)
 		const { incoming } = calls.updates[0]!
 		assert.equal(incoming.heading, 'Edited')
+		assert.equal(incoming.location, 'Room B')
 		assert.equal((incoming.start as unknown as Date).toISOString(), '2026-06-01T10:00:00.000Z') // anchor shifted +1h
 		assert.equal(incoming.recurrence, m.recurrence) // the rule itself is untouched
 	})
@@ -170,10 +171,12 @@ describe('scoped occurrence edits', () => {
 		const truncatedRule = calls.updates[0]!.incoming.recurrence!
 		assert.ok(truncatedRule.until)
 		assert.ok(truncatedRule.until!.valueOf() < recurrenceId.getTime())
+		assert.equal(calls.updates[0]!.incoming.location, 'Room A') // the old half keeps the master's content
 		// New half: a fresh series at the edited occurrence, continuing the original cadence.
 		assert.equal(calls.creates.length, 1)
 		assert.equal(result, calls.creates[0])
 		assert.equal(result.heading, 'Edited')
+		assert.equal(result.location, 'Room B')
 		assert.equal((result.start as unknown as Date).toISOString(), '2026-06-08T10:00:00.000Z')
 		assert.equal(result.recurrence!.freq, 'WEEKLY')
 		assert.notEqual(result.id, m.id)

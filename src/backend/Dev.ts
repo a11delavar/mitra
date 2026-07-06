@@ -58,6 +58,7 @@ export class Dev extends Integration {
 	override updateEntry(_em: EntityManager, existing: Entry, incoming: Entry): Promise<void> {
 		existing.heading = incoming.heading
 		existing.description = incoming.description
+		existing.location = incoming.location
 		existing.color = incoming.color
 		existing.start = incoming.start
 		existing.end = incoming.end

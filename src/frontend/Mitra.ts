@@ -18,6 +18,7 @@ import { inputStyles } from './components/input.css.js'
 import { menuStyles } from './components/menu.css.js'
 import { TaskStatusComponent } from './components/TaskStatus.js'
 import { RepeatField } from './components/RepeatField.js'
+import { LocationField } from './components/LocationField.js'
 import { DialogRecurrenceScope } from './components/DialogRecurrenceScope.js'
 import { Markdown } from './Markdown.js'
 import { EntryDetailsWhen } from './EntryDetailsWhen.js'
@@ -72,6 +73,7 @@ export class Mitra extends Application {
 			${DialogRecurrenceScope.styles}
 			${TaskStatusComponent.styles}
 			${RepeatField.styles}
+			${LocationField.styles}
 		`
 	}
 }

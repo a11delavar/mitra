@@ -117,6 +117,7 @@ export function updateEvent(entry: Entry) {
 		return Api.put<Entry>(`/entries/${entry.recurrenceMasterId}`, {
 			heading: entry.heading,
 			description: entry.description,
+			location: entry.location,
 			color: entry.color,
 			...(entry.recurrence !== undefined ? { recurrence: entry.recurrence } : {}),
 		})
@@ -130,6 +131,29 @@ export function deleteEvent(id: string) {
 	return Api.delete(`/entries/${id}`)
 }
 
+export interface LocationSuggestion {
+	name: string
+	detail: string
+	/** The kind of place where the geocoder's OSM tag names one, as the raw tag value (`restaurant`,
+	 * `fast_food`, …). Display-only disambiguation for ambiguous names — the frontend owns turning it
+	 * into a (localizable) label and an icon; never part of the committed location string. */
+	type?: string
+	/** A recently used location from the user's own entries, listed before the geocoder's results. */
+	recent?: boolean
+}
+
+/** Location autocomplete via the backend's geocoder proxy (see backend/locations.ts). The UI language
+ * rides along so results are labelled in it where the geocoder supports it; the user's position (when
+ * granted) biases the geocoder towards nearby places. */
+export function searchLocations(query: string, position?: { lat: number, lon: number }) {
+	const params = new URLSearchParams({ q: query, lang: navigator.language.split('-')[0] ?? 'en' })
+	if (position) {
+		params.set('lat', String(position.lat))
+		params.set('lon', String(position.lon))
+	}
+	return Api.get<Array<LocationSuggestion>>(`/locations?${params}`)
+}
+
 /** Apply an occurrence's edited fields to its series with a scope (this / following / all). Targets the
  * MASTER; `recurrenceId` names the occurrence being edited. The response is the resulting entry: the
  * master ('all'), the continuation series' master ('following'), or the detached standalone ('this'). */
@@ -139,6 +163,7 @@ export function editOccurrence(occurrence: Entry, scope: RecurrenceScope) {
 		recurrenceId: occurrence.recurrenceId,
 		heading: occurrence.heading,
 		description: occurrence.description,
+		location: occurrence.location,
 		color: occurrence.color,
 		start: occurrence.start,
 		end: occurrence.end,

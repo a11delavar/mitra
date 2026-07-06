@@ -119,9 +119,6 @@ export class EntryDetailsWhen extends Component {
 				grid-column: 1 / -1;
 				align-items: center;
 				row-gap: 0.75rem;
-				/* Closes the date/time/all-day group with a divider, like the description row. */
-				padding-block-end: 0.75rem;
-				border-block-end: 1px solid rgba(255, 255, 255, 0.06);
 
 				/* Leading column — one glyph per row (clock, duration, switch), auto-flowed so they line up with the popover's other row icons. */
 				> mitra-icon { grid-column: 1; font-size: 0.87rem; color: var(--color-text-muted); flex-shrink: 0; }

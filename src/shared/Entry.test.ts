@@ -118,6 +118,7 @@ describe('Entry', () => {
 			for (const edit of [
 				(e: Entry) => e.heading = 'Renamed',
 				(e: Entry) => e.description = 'Notes',
+				(e: Entry) => e.location = 'Berlin, Germany',
 				(e: Entry) => e.color = '#ff0000',
 				(e: Entry) => e.moveStart(at(1, 9)),
 				(e: Entry) => e.setEnd(at(0, 11)),

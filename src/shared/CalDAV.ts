@@ -254,6 +254,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				const event = new ICAL.Event(component)
 				entry.heading = event.summary || 'Untitled Event'
 				entry.description = event.description || ''
+				entry.location = event.location || ''
 				entry.start = (event.startDate?.toJSDate() as any) || undefined
 				entry.end = (event.endDate ? event.endDate.toJSDate() as any : event.startDate?.toJSDate() as any) || undefined
 				// A date-only DTSTART (`VALUE=DATE`) is the iCalendar marker for an all-day event.
@@ -262,6 +263,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				const value = (name: string) => component.getFirstPropertyValue(name) as any
 				entry.heading = value('summary')?.toString() || 'Untitled Task'
 				entry.description = value('description')?.toString() || ''
+				entry.location = value('location')?.toString() || ''
 				entry.status = CalDAV.statusFromICal(value('status')?.toString(), Number(value('percent-complete') ?? 0))
 				entry.start = value('dtstart')?.toJSDate?.() as any || undefined
 				entry.end = value('due')?.toJSDate?.() as any || undefined
@@ -300,7 +302,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			throw new Error('Entry must have a URL and raw data to be updated via CalDAV')
 		}
 
-		const keys: Array<keyof Entry> = (['heading', 'description', 'color', 'start', 'end', 'status', 'allDay'] as const)
+		const keys: Array<keyof Entry> = (['heading', 'description', 'location', 'color', 'start', 'end', 'status', 'allDay'] as const)
 			.filter(key => !Object[equals](existing[key], incoming[key]))
 
 		// The recurrence rule is a value object, diffed via its own (absence-safe) structural equality.
@@ -329,6 +331,15 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			// value is authoritative — otherwise other viewers keep showing the stale HTML.
 			component.getFirstProperty('description')?.removeParameter('altrep')
 			existing.description = incoming.description
+		}
+
+		if (keys.includes('location')) {
+			if (incoming.location) {
+				component.updatePropertyWithValue('location', incoming.location)
+			} else {
+				component.removeProperty('location')
+			}
+			existing.location = incoming.location
 		}
 
 		if (keys.includes('color')) {
@@ -422,6 +433,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		component.updatePropertyWithValue('dtstamp', ICAL.Time.now())
 		component.updatePropertyWithValue('summary', entry.heading)
 		!entry.description ? void 0 : component.updatePropertyWithValue('description', entry.description)
+		!entry.location ? void 0 : component.updatePropertyWithValue('location', entry.location)
 		!entry.start ? void 0 : component.updatePropertyWithValue('dtstart', this.toICALTime(entry.start, entry.allDay))
 		!entry.end ? void 0 : component.updatePropertyWithValue(isTask ? 'due' : 'dtend', this.toICALTime(entry.end, entry.allDay))
 		!entry.color ? void 0 : component.updatePropertyWithValue('color', entry.color)
