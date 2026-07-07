@@ -105,36 +105,36 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string }, 
 	protected override get template() {
 		const { bind } = this.binder
 		return html`
-			<mitra-dialog heading=${this.isEdit ? 'Edit integration' : 'Add integration'} primaryButtonText="Save"
+			<mitra-dialog heading=${this.isEdit ? t('Edit integration') : t('Add integration')} primaryButtonText=${t('Save')}
 				?primaryButtonDisabled=${!this.entity.sources.length || this.fetchSources.status === TaskStatus.PENDING}
 			>
 				<form class="content" @submit=${(e: Event) => e.preventDefault()}>
 					<label>
-						Server URL
+						${t('Server URL')}
 						<input ${bind({ keyPath: 'uri', event: 'input' })} ?readonly=${this.isEdit} placeholder="https://caldav.example.com" autocomplete="off">
 					</label>
 					<label>
-						Username
+						${t('Username')}
 						<input ${bind({ keyPath: 'credentials.username', event: 'input' })} ?readonly=${this.isEdit} autocomplete="off">
 					</label>
 					<label>
-						Password
-						<input type="password" ${bind({ keyPath: 'credentials.password', event: 'input' })} placeholder=${this.isEdit ? 'unchanged' : ''} autocomplete="off">
+						${t('Password')}
+						<input type="password" ${bind({ keyPath: 'credentials.password', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : ''} autocomplete="off">
 					</label>
 
 					${this.fetchSources.render({
 						initial: () => html`
 							<button class="connect" @click=${() => this.fetchSources.run()} ?disabled=${!this.entity.uri || !this.entity.credentials.username}>
-								${this.entity.sources.length ? 'Refresh' : 'Connect'}
+								${this.entity.sources.length ? t('Refresh') : t('Connect')}
 							</button>
 						`,
 						error: (e: unknown) => html`<p class="error">${(e as Error).message}</p>`,
-						pending: () => html`<button class="connect" disabled>Connecting…</button>`,
+						pending: () => html`<button class="connect" disabled>${t('Connecting…')}</button>`,
 					})}
 
 					${!this.entity.sources.length ? html.nothing : html`
 						<div class="sources">
-							<span class="sources-title">Sources</span>
+							<span class="sources-title">${t('Sources')}</span>
 							${this.entity.sources.map(source => html`
 								<label class="source">
 									<input type="checkbox" .checked=${source.enabled} @change=${() => { source.toggleEnabled(); this.requestUpdate() }}>

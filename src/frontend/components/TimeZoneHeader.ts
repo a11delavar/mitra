@@ -324,7 +324,7 @@ export class TimeZoneHeader extends Component {
 
 	protected override get template() {
 		return html`
-			<mitra-icon-button class="add" icon="plus" label="Add time zone"
+			<mitra-icon-button class="add" icon="plus" label=${t('Add time zone')}
 				style="anchor-name: ${this.anchor}-add"
 				@click=${() => this.picker?.togglePopover()}
 			></mitra-icon-button>
@@ -335,11 +335,11 @@ export class TimeZoneHeader extends Component {
 				<menu popover style="position-anchor: ${this.anchor}-${index}">
 					<button @click=${(e: Event) => { (e.currentTarget as HTMLElement).closest<HTMLElement>('[popover]')?.hidePopover(); this.rename(zone).catch(() => void 0) }}>
 						<mitra-icon icon="pencil"></mitra-icon>
-						Rename
+						${t('Rename')}
 					</button>
 					<button class="danger" @click=${(e: Event) => { (e.currentTarget as HTMLElement).closest<HTMLElement>('[popover]')?.hidePopover(); this.removeZone(zone) }}>
 						<mitra-icon icon="x"></mitra-icon>
-						Remove
+						${t('Remove')}
 					</button>
 				</menu>
 			`)}
@@ -349,11 +349,11 @@ export class TimeZoneHeader extends Component {
 			<menu popover style="position-anchor: ${this.anchor}-system">
 				<button @click=${(e: Event) => { (e.currentTarget as HTMLElement).closest<HTMLElement>('[popover]')?.hidePopover(); this.renameSystem().catch(() => void 0) }}>
 					<mitra-icon icon="pencil"></mitra-icon>
-					Rename
+					${t('Rename')}
 				</button>
 			</menu>
 			<div class="picker" popover style="position-anchor: ${this.anchor}-add" @toggle=${this.handlePickerToggle}>
-				<input placeholder="Time zone" autocomplete="off" spellcheck="false"
+				<input placeholder=${t('Time zone')} autocomplete="off" spellcheck="false"
 					@input=${this.handlePickerInput}
 					@keydown=${this.handlePickerKeydown}>
 				<div class="rows">
@@ -392,11 +392,11 @@ export class DialogTimeZoneRename extends DialogComponent<{ readonly zone: UserT
 
 	protected override get template() {
 		return html`
-			<mitra-dialog heading="Rename time zone" primaryButtonText="Save" primaryOnEnter>
+			<mitra-dialog heading=${t('Rename time zone')} primaryButtonText=${t('Save')} primaryOnEnter>
 				<div>
 					<input placeholder=${zoneNamePart(this.parameters.zone.id, 'short')} maxlength="24"
 						.value=${this.label} @input=${(e: Event) => this.label = (e.target as HTMLInputElement).value}>
-					<span class="hint">Shown above the time axis. Leave empty to use the automatic name.</span>
+					<span class="hint">${t('Shown above the time axis. Leave empty to use the automatic name.')}</span>
 				</div>
 			</mitra-dialog>
 		`

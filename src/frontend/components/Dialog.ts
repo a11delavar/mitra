@@ -118,7 +118,7 @@ export class Dialog extends Component {
 				<div class="panel">
 					<header class="header">
 						<h2>${this.heading}</h2>
-						<mitra-icon-button icon="x" label="Close" @click=${() => this.handleAction(DialogActionKey.Cancellation)}></mitra-icon-button>
+						<mitra-icon-button icon="x" label=${t('Close')} @click=${() => this.handleAction(DialogActionKey.Cancellation)}></mitra-icon-button>
 					</header>
 					<slot></slot>
 					<footer class="footer" ?data-empty=${!this.primaryButtonText && !this.hasFooter}>

@@ -10,11 +10,13 @@ import { type Entry, type RecurrenceScope } from 'shared'
  */
 @component('mitra-dialog-recurrence-scope')
 export class DialogRecurrenceScope extends DialogComponent<{ readonly entry: Entry, readonly intent: 'edit' | 'delete' }, RecurrenceScope | undefined> {
-	private static readonly options: ReadonlyArray<{ scope: RecurrenceScope, label: string }> = [
-		{ scope: 'this', label: 'This entry' },
-		{ scope: 'following', label: 'This and following entries' },
-		{ scope: 'all', label: 'All entries' },
-	]
+	private static get options(): ReadonlyArray<{ scope: RecurrenceScope, label: string }> {
+		return [
+			{ scope: 'this', label: t('This entry') },
+			{ scope: 'following', label: t('This and following entries') },
+			{ scope: 'all', label: t('All entries') },
+		]
+	}
 
 	@state() private scope: RecurrenceScope = 'this'
 
@@ -43,7 +45,7 @@ export class DialogRecurrenceScope extends DialogComponent<{ readonly entry: Ent
 
 	protected override get template() {
 		return html`
-			<mitra-dialog heading="${this.parameters.intent === 'delete' ? 'Delete' : 'Edit'} repeating entry" primaryButtonText="OK" primaryOnEnter>
+			<mitra-dialog heading=${this.parameters.intent === 'delete' ? t('Delete repeating entry') : t('Edit repeating entry')} primaryButtonText=${t('OK')} primaryOnEnter>
 				<div class="scopes">
 					${DialogRecurrenceScope.options.map(option => html`
 						<label>

@@ -2,12 +2,23 @@ import { Component, component, html, css, property, state, event } from '@a11d/l
 import { type DateTime } from '@3mo/date-time'
 import { Recurrence, WEEKDAY_CODES, type Entry, type Frequency, type RecurrencePreset } from 'shared'
 
-const FREQ_OPTIONS: ReadonlyArray<{ value: Frequency, label: string }> = [
-	{ value: 'DAILY', label: 'day' },
-	{ value: 'WEEKLY', label: 'week' },
-	{ value: 'MONTHLY', label: 'month' },
-	{ value: 'YEARLY', label: 'year' },
+const FREQ_OPTIONS: ReadonlyArray<{ value: Frequency }> = [
+	{ value: 'DAILY' },
+	{ value: 'WEEKLY' },
+	{ value: 'MONTHLY' },
+	{ value: 'YEARLY' },
 ]
+
+// The frequency unit as it reads in the "Every N …" select, pluralized by the current interval so
+// "Every 1 week" / "Every 2 weeks" agree. The count drives the plural, hence pluralityNumber.
+function freqLabel(value: Frequency, count: number): string {
+	switch (value) {
+		case 'DAILY': return t('${count:pluralityNumber} days', { count })
+		case 'WEEKLY': return t('${count:pluralityNumber} weeks', { count })
+		case 'MONTHLY': return t('${count:pluralityNumber} months', { count })
+		case 'YEARLY': return t('${count:pluralityNumber} years', { count })
+	}
+}
 
 type MenuItem = RecurrencePreset & { checked: boolean }
 type MonthlyOption = { key: string, label: string }
@@ -50,7 +61,7 @@ export class RepeatField extends Component {
 	private get dialog() { return this.querySelector<HTMLDialogElement>('dialog') }
 
 	private get currentLabel(): string {
-		return this.entry.recurrence ? this.entry.recurrence.describe(this.start) : 'Does not repeat'
+		return this.entry.recurrence ? this.entry.recurrence.describe(this.start) : t('Does not repeat')
 	}
 
 	private commit(recurrence?: Recurrence) {
@@ -72,7 +83,7 @@ export class RepeatField extends Component {
 		if (this.entry.recurrence && !selectedId) {
 			items.push({ id: 'current', label: this.currentLabel, recurrence: this.entry.recurrence, checked: true })
 		}
-		items.push({ id: 'custom', label: 'Custom…', checked: false })
+		items.push({ id: 'custom', label: t('Custom…'), checked: false })
 		return items
 	}
 
@@ -182,11 +193,11 @@ export class RepeatField extends Component {
 		// BYMONTHDAY=15 while the start is the 25th).
 		const monthday = this.draft!.bymonthday ?? this.start.day
 		const options: Array<MonthlyOption> = [
-			{ key: 'monthday', label: `the ${Recurrence.ordinal(monthday)}` },
-			{ key: `${weekOfMonth}${wd}`, label: `the ${Recurrence.ordinal(weekOfMonth)} ${label}` },
+			{ key: 'monthday', label: t('the ${ordinal}', { ordinal: Recurrence.ordinal(monthday) }) },
+			{ key: `${weekOfMonth}${wd}`, label: t('the ${ordinal} ${weekday}', { ordinal: Recurrence.ordinal(weekOfMonth), weekday: label }) },
 		]
 		if (this.start.day + 7 > this.start.daysInMonth) {
-			options.push({ key: `-1${wd}`, label: `the last ${label}` })
+			options.push({ key: `-1${wd}`, label: t('the last ${weekday}', { weekday: label }) })
 		}
 		// Surface a loaded BYDAY ordinal that the start date doesn't derive (e.g. an external "2nd Tue"), so the
 		// segmented control reflects the actual rule instead of showing nothing selected.
@@ -198,8 +209,10 @@ export class RepeatField extends Component {
 	}
 
 	private monthlyByDayLabel(code: string): string {
-		const ord = code.startsWith('-1') ? 'last' : Recurrence.ordinal(Number(/^-?\d+/.exec(code)?.[0] ?? '1'))
-		return `the ${ord} ${Recurrence.weekdayLabel(code)}`
+		const weekday = Recurrence.weekdayLabel(code)
+		return code.startsWith('-1')
+			? t('the last ${weekday}', { weekday })
+			: t('the ${ordinal} ${weekday}', { ordinal: Recurrence.ordinal(Number(/^-?\d+/.exec(code)?.[0] ?? '1')), weekday })
 	}
 
 	private get monthlyMode(): string {
@@ -445,17 +458,17 @@ export class RepeatField extends Component {
 				${!draft ? html.nothing : html`
 					<div class="repeat-dialog">
 						<header>
-							<h3>Repeat</h3>
-							<mitra-icon-button icon="x" label="Close" style="color: var(--color-text-muted)" @click=${this.cancelDialog}></mitra-icon-button>
+							<h3>${t('Repeat')}</h3>
+							<mitra-icon-button icon="x" label=${t('Close')} style="color: var(--color-text-muted)" @click=${this.cancelDialog}></mitra-icon-button>
 						</header>
 						<div class="every">
-							<label>Every</label>
-							<input class="interval" type="number" min="1" aria-label="Interval" .value=${String(draft.every)} @change=${this.onInterval}>
+							<label>${t('Every')}</label>
+							<input class="interval" type="number" min="1" aria-label=${t('Interval')} .value=${String(draft.every)} @change=${this.onInterval}>
 							<select .value=${draft.freq} @change=${this.onFreq}>
 								<button>
 									<selectedcontent></selectedcontent>
 								</button>
-								${FREQ_OPTIONS.map(option => html`<option value=${option.value}>${option.label}</option>`)}
+								${FREQ_OPTIONS.map(option => html`<option value=${option.value}>${freqLabel(option.value, draft.every)}</option>`)}
 							</select>
 						</div>
 
@@ -478,30 +491,30 @@ export class RepeatField extends Component {
 						`}
 
 						<div class="ends">
-							<div class="ends-label">Ends</div>
+							<div class="ends-label">${t('Ends')}</div>
 							<label>
 								<input type="radio" name="ends-${this.anchor}" .checked=${!draft.until && !draft.count} @change=${this.setEnds('never')}>
-								<span>Never</span>
+								<span>${t('Never')}</span>
 							</label>
 							<label>
 								<input type="radio" name="ends-${this.anchor}" .checked=${!!draft.until} @change=${this.setEnds('until')}>
-								<span>On</span>
-								<input type="date" aria-label="End date" ?disabled=${!draft.until}
+								<span>${t('On')}</span>
+								<input type="date" aria-label=${t('End date')} ?disabled=${!draft.until}
 									.value=${this.dateValue(this.draftUntil)} @change=${this.onUntil}>
 							</label>
 							<label>
 								<input type="radio" name="ends-${this.anchor}" .checked=${!!draft.count} @change=${this.setEnds('count')}>
-								<span>After</span>
+								<span>${t('After')}</span>
 								<span class="after-times">
-									<input type="number" min="1" aria-label="Occurrences" ?disabled=${!draft.count}
+									<input type="number" min="1" aria-label=${t('Occurrences')} ?disabled=${!draft.count}
 										.value=${String(this.draftCount)} @change=${this.onCount}>
-									times
+									${t('times')}
 								</span>
 							</label>
 						</div>
 
 						<div class="dialog-actions">
-							<button type="button" class="primary" @click=${this.confirmDialog}>Done</button>
+							<button type="button" class="primary" @click=${this.confirmDialog}>${t('Done')}</button>
 						</div>
 					</div>
 				`}

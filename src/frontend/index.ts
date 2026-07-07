@@ -1,6 +1,10 @@
 import '@a11d/lit-application-native'
 import '@3mo/date-time'
 import '@3mo/date-time-value-constructor'
+// After the @3mo packages: they register their own `de` dictionary (e.g. Week→"KW"), and the dictionary
+// merge lets the last writer win — so the app's own translations must be registered last to override
+// library defaults. No component calls `t()` at module-eval time, so this later position is safe.
+import './i18n/index.js'
 import './components/Icon.js'
 import './components/IconButton.js'
 import './components/TaskStatus.js'

@@ -10,12 +10,16 @@ const icon = new Map<TaskStatus, string>([
 	[TaskStatus.Cancelled, 'square-x'],
 ])
 
-const label = new Map<TaskStatus, string>([
-	[TaskStatus.ToDo, 'To Do'],
-	[TaskStatus.Doing, 'Doing'],
-	[TaskStatus.Done, 'Done'],
-	[TaskStatus.Cancelled, 'Cancelled'],
-])
+// Resolved per render (not once at module load): `t` must be called at render time so the label follows
+// a language switch, and so it never runs before the global `t` is assigned.
+function label(status: TaskStatus): string {
+	switch (status) {
+		case TaskStatus.ToDo: return t('To Do')
+		case TaskStatus.Doing: return t('Doing')
+		case TaskStatus.Done: return t('Done')
+		case TaskStatus.Cancelled: return t('Cancelled')
+	}
+}
 
 /**
  * A task's completion control, reused in the grid segment and the entry popover. A plain click is the
@@ -105,8 +109,8 @@ export class TaskStatusComponent extends Component {
 			return html.nothing
 		}
 		return html`
-			<mitra-icon-button aria-label=${label.get(this.status)!}
-				title="${label.get(this.status)} — click to toggle, Alt-click for options"
+			<mitra-icon-button aria-label=${label(this.status)}
+				title=${t('${status} — click to toggle, Alt-click for options', { status: label(this.status) })}
 				style="anchor-name: ${this.anchor}"
 				@click=${this.onToggle}
 				@contextmenu=${this.onContextMenu} icon=${icon.get(this.status)!}
@@ -115,7 +119,7 @@ export class TaskStatusComponent extends Component {
 				${order.map(status => html`
 					<button aria-current=${status === this.status} @click=${this.pick(status)}>
 						<mitra-icon icon=${icon.get(status)!}></mitra-icon>
-						${label.get(status)}
+						${label(status)}
 					</button>
 				`)}
 			</menu>

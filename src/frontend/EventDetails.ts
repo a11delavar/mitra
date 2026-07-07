@@ -349,11 +349,11 @@ export class EntryDetailsComponent extends Component {
 						<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
 					`}
 					<div class="title-bar">
-						<input class="title subtle" placeholder="Title"
+						<input class="title subtle" placeholder=${t('Title')}
 							?data-struck=${this.segment.entry.status === TaskStatus.Done || this.segment.entry.status === TaskStatus.Cancelled}
 							${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
 						<mitra-icon-button
-							label="Options"
+							label=${t('Options')}
 							icon="more-horizontal"
 							style="anchor-name: --entry-menu-${this.segment.entry.id}; color: var(--color-text-muted)"
 							@click=${this.toggleMenu}
@@ -361,10 +361,10 @@ export class EntryDetailsComponent extends Component {
 						<menu popover id="entry-menu-${this.segment.entry.id}" style="position-anchor: --entry-menu-${this.segment.entry.id}">
 							<button class="danger" @click=${this.handleDelete}>
 								<mitra-icon icon="trash-2"></mitra-icon>
-								Delete
+								${t('Delete')}
 							</button>
 						</menu>
-						<mitra-icon-button class="close" icon="x" label="Close"
+						<mitra-icon-button class="close" icon="x" label=${t('Close')}
 							style="color: var(--color-text-muted)"
 							@click=${this.handleClose}
 						></mitra-icon-button>
@@ -446,7 +446,7 @@ export class EntryDetailsComponent extends Component {
 					<mitra-color-picker
 						.value=${activeColor}
 						.resetValue=${this.source?.color}
-						resetLabel="Reset to calendar color"
+						resetLabel=${t('Reset to calendar color')}
 						@change=${(e: CustomEvent<string | null>) => this.setColor(e.detail)}
 					></mitra-color-picker>
 				</div>
@@ -497,7 +497,7 @@ export class EntryDetailsComponent extends Component {
 			<li class="description">
 				<mitra-icon icon="align-left"></mitra-icon>
 				${this.editingDescription ? html`
-					<textarea class="subtle" rows="1" placeholder="Description"
+					<textarea class="subtle" rows="1" placeholder=${t('Description')}
 						${this.bind('entry.description', 'input')}
 						@change=${this.handleChange}
 						@blur=${() => this.editingDescription = false}
@@ -505,7 +505,7 @@ export class EntryDetailsComponent extends Component {
 				` : html`
 					<div class="rendered" @click=${editDescription}>
 						${!this.segment!.entry.description ? html`
-							<div class="placeholder">Description</div>
+							<div class="placeholder">${t('Description')}</div>
 							` : html`
 								<mitra-markdown .value=${this.segment!.entry.description}></mitra-markdown>
 						`}

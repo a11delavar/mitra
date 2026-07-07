@@ -8,7 +8,7 @@ export class ColorPickerComponent extends Component {
 	@property({ type: String, bindingDefault: true }) value?: string
 
 	@property({ type: String }) resetValue?: string
-	@property({ type: String }) resetLabel = 'Reset to default color'
+	@property({ type: String }) resetLabel = t('Reset to default color')
 
 	static override get styles() {
 		return css`

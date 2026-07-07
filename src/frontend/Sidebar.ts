@@ -409,21 +409,21 @@ export class Sidebar extends Component {
 					<div class="integration">
 						<header>
 							<span class="title">${i.credentials?.username || i.type}</span>
-							<mitra-icon-button icon="more-horizontal" label="Integration options" style="anchor-name: --anchor-${i.id}" @click=${this.toggleMenu}></mitra-icon-button>
+							<mitra-icon-button icon="more-horizontal" label=${t('Integration options')} style="anchor-name: --anchor-${i.id}" @click=${this.toggleMenu}></mitra-icon-button>
 							<menu popover id="menu-${i.id}" style="position-anchor: --anchor-${i.id}">
 								<button @click=${(e: Event) => { this.closeMenu(e); this.openDialog(i.id) }}>
 									<mitra-icon icon="pencil"></mitra-icon>
-									Edit
+									${t('Edit')}
 								</button>
 								<button
-									title="Delete the locally cached entries of every enabled source and import everything again"
+									title=${t('Delete the locally cached entries of every enabled source and import everything again')}
 									@click=${(e: Event) => { this.closeMenu(e); resyncIntegration(i.id).catch(() => void 0) }}>
 									<mitra-icon icon="refresh-cw"></mitra-icon>
-									Re-import entries
+									${t('Re-import entries')}
 								</button>
 								<button class="danger" @click=${(e: Event) => { this.closeMenu(e); this.removeIntegration(i.id) }}>
 									<mitra-icon icon="trash-2"></mitra-icon>
-									Delete
+									${t('Delete')}
 								</button>
 							</menu>
 						</header>
@@ -431,13 +431,13 @@ export class Sidebar extends Component {
 							${i.sources.filter(source => source.enabled).map(source => html`
 								<div class="source" ?data-hidden=${source.hidden}>
 									<button class="marker" @click=${() => this.toggleDefault(source)}
-										title=${this.isDefault(source) ? 'Default for new entries — click to unset' : 'Set as the default for new entries'}>
+										title=${this.isDefault(source) ? t('Default for new entries — click to unset') : t('Set as the default for new entries')}>
 										<mitra-icon icon=${this.isDefault(source) ? 'star' : 'square'} fill style="color: ${source.color || 'var(--color-text-muted)'}"></mitra-icon>
 									</button>
 									<mitra-icon
 										class="type-icon"
 										icon=${source.type === SourceType.Task ? 'list-todo' : 'calendar'}
-										title=${source.type === SourceType.Task ? 'Tasks' : 'Events'}
+										title=${source.type === SourceType.Task ? t('Tasks') : t('Events')}
 									></mitra-icon>
 									<div class="name">${source.name}</div>
 									${this.getActionsTemplate(source)}
@@ -448,14 +448,14 @@ export class Sidebar extends Component {
 				`)}
 				<button class="add-integration" @click=${() => this.openDialog('')}>
 					<mitra-icon icon="plus"></mitra-icon>
-					Add Integration
+					${t('Add Integration')}
 				</button>
 				${!canInstall() ? html.nothing : html`
 					<button class="add-integration install"
-						title="Install mitra as an app — it gets its own window, and notifications appear under its own name and icon"
+						title=${t('Install mitra as an app — it gets its own window, and notifications appear under its own name and icon')}
 						@click=${() => promptInstall()}>
 						<mitra-icon icon="monitor-down"></mitra-icon>
-						Install as an App
+						${t('Install as an App')}
 					</button>
 				`}
 				${this.accountTemplate}
@@ -475,10 +475,10 @@ export class Sidebar extends Component {
 					? html`<img class="avatar" src=${identity.picture} alt="" referrerpolicy="no-referrer" @error=${() => this.profilePictureBroken = true}>`
 					: html`<mitra-icon icon="circle-user"></mitra-icon>`}
 				<div class="who">
-					<div class="name">${identity.name || identity.email || 'Account'}</div>
+					<div class="name">${identity.name || identity.email || t('Account')}</div>
 					${!identity.email || identity.email === identity.name ? html.nothing : html`<div class="email">${identity.email}</div>`}
 				</div>
-				<mitra-icon-button icon="log-out" label="Sign out" style="color: var(--color-text-muted)"
+				<mitra-icon-button icon="log-out" label=${t('Sign out')} style="color: var(--color-text-muted)"
 					@click=${() => location.assign('/auth/logout')}></mitra-icon-button>
 			</div>
 		`
@@ -491,13 +491,13 @@ export class Sidebar extends Component {
 					class="eye-icon"
 					style='color: var(--color-text-muted)'
 					icon=${source.hidden ? 'eye-off' : 'eye'}
-					label=${source.hidden ? 'Show calendar' : 'Hide calendar'}
+					label=${source.hidden ? t('Show calendar') : t('Hide calendar')}
 					@click=${() => this.toggleVisibility(source)}
 				></mitra-icon-button>
 				<mitra-icon-button
 					class="menu-icon"
 					icon="more-horizontal"
-					label="Calendar options"
+					label=${t('Calendar options')}
 					style="anchor-name: --source-menu-${source.id}; color: var(--color-text-muted)"
 					@click=${(e: Event) => ((e.currentTarget as HTMLElement).nextElementSibling as HTMLElement)?.togglePopover()}
 				></mitra-icon-button>
@@ -507,10 +507,10 @@ export class Sidebar extends Component {
 						<mitra-color-picker .value=${source.color} @change=${(e: CustomEvent) => this.setSourceColor(source, e.detail, (e.currentTarget as HTMLElement).closest('[popover]')!)}></mitra-color-picker>
 					</div>
 					<button class="menu-row"
-						title="Delete the locally cached entries and import everything from the source again"
+						title=${t('Delete the locally cached entries and import everything from the source again')}
 						@click=${(e: Event) => { this.closeMenu(e); resyncSource(source.id).catch(() => void 0) }}>
 						<mitra-icon icon="refresh-cw"></mitra-icon>
-						Re-import entries
+						${t('Re-import entries')}
 					</button>
 				</div>
 			</div>

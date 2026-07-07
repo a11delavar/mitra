@@ -44,8 +44,10 @@ function resolveLevel(raw: string | undefined): number {
 	return Number.isFinite(numeric) ? numeric : def
 }
 
-/** The active level as a consola number (`3` = info). Compare against with {@link logEnabled}. */
-export const logLevel = resolveLevel(process.env.MITRA_LOG_LEVEL)
+/** The active level as a consola number (`3` = info). Compare against with {@link logEnabled}.
+ * `Logger.ts` is shared code: `process` doesn't exist in the browser bundle (the frontend pulls this in
+ * transitively via the shared models), so read the env var defensively — the frontend just gets `info`. */
+export const logLevel = resolveLevel(globalThis.process?.env?.MITRA_LOG_LEVEL)
 
 /** The active level's name, for advertising the current tier at boot (e.g. `info`). */
 export const logLevelName = [...levelsByName.entries()].find(([, value]) => value === logLevel)?.[0] ?? String(logLevel)

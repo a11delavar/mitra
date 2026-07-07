@@ -1,0 +1,7 @@
+{
+	"${count:pluralityNumber} days": ["${count:pluralityNumber} day", "${count:pluralityNumber} days"],
+	"${count:pluralityNumber} hours": ["${count:pluralityNumber} hour", "${count:pluralityNumber} hours"],
+	"${count:pluralityNumber} months": ["${count:pluralityNumber} month", "${count:pluralityNumber} months"],
+	"${count:pluralityNumber} weeks": ["${count:pluralityNumber} week", "${count:pluralityNumber} weeks"],
+	"${count:pluralityNumber} years": ["${count:pluralityNumber} year", "${count:pluralityNumber} years"]
+}

@@ -164,24 +164,24 @@ export class EntryDetailsWhen extends Component {
 		return html`
 			<mitra-icon icon=${this.entry.allDay ? 'calendar-days' : 'clock'}></mitra-icon>
 			<div class="dates">
-				<input type="date" class="subtle" aria-label="Start date" .value=${this.dateValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartDateChange}>
+				<input type="date" class="subtle" aria-label=${t('Start date')} .value=${this.dateValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartDateChange}>
 				${!this.entry.multiDay && !this.endDateShown ? html`
-					<button class="add-end" @click=${this.addEndDate}>+ end date</button>
+					<button class="add-end" @click=${this.addEndDate}>${t('+ end date')}</button>
 				` : html`
 					<span class="arrow">→</span>
-					<input type="date" class="subtle end-date" aria-label="End date" .value=${this.dateValue(this.entry.inclusiveEnd)} @click=${this.openPicker} @change=${this.handleEndDateChange}>
+					<input type="date" class="subtle end-date" aria-label=${t('End date')} .value=${this.dateValue(this.entry.inclusiveEnd)} @click=${this.openPicker} @change=${this.handleEndDateChange}>
 				`}
 			</div>
-			<button class="switch" role="switch" aria-label="All day" title=${this.entry.allDay ? 'Include time' : 'Switch to all-day'}
+			<button class="switch" role="switch" aria-label=${t('All day')} title=${this.entry.allDay ? t('Include time') : t('Switch to all-day')}
 				aria-checked=${!this.entry.allDay} @click=${this.toggleAllDay}
 			></button>
 			<div class="times">
 				${this.entry.allDay ? html`
-					<span class="allday-label">All day</span>
+					<span class="allday-label">${t('All day')}</span>
 				` : html`
-					<input type="time" class="subtle" aria-label="Start time" .value=${this.timeValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartTimeChange}>
+					<input type="time" class="subtle" aria-label=${t('Start time')} .value=${this.timeValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartTimeChange}>
 					<span class="arrow">→</span>
-					<input type="time" class="subtle" aria-label="End time" .value=${this.timeValue(this.entry.effectiveEnd)} @click=${this.openPicker} @change=${this.handleEndTimeChange}>
+					<input type="time" class="subtle" aria-label=${t('End time')} .value=${this.timeValue(this.entry.effectiveEnd)} @click=${this.openPicker} @change=${this.handleEndTimeChange}>
 				`}
 			</div>
 			<mitra-icon icon="repeat"></mitra-icon>

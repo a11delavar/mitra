@@ -259,7 +259,7 @@ export class LocationField extends Component {
 
 	protected override get template() {
 		return html`
-			<textarea class="subtle" rows="1" placeholder="Location" autocomplete="off" spellcheck="false"
+			<textarea class="subtle" rows="1" placeholder=${t('Location')} autocomplete="off" spellcheck="false"
 				style="anchor-name: ${this.anchor}"
 				.value=${this.entry?.location ?? ''}
 				@focus=${this.handleFocus}
@@ -268,7 +268,7 @@ export class LocationField extends Component {
 				@blur=${() => this.close()}></textarea>
 			<a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(this.entry?.location ?? '')}"
 				?data-empty=${!this.entry?.location}
-				target="_blank" rel="noopener noreferrer" title="Open in Google Maps" aria-label="Open in Google Maps">
+				target="_blank" rel="noopener noreferrer" title=${t('Open in Google Maps')} aria-label=${t('Open in Google Maps')}>
 				<mitra-icon icon="map"></mitra-icon>
 			</a>
 			<!-- A MANUAL popover: light dismiss would race the opening click — the recents query is local-DB

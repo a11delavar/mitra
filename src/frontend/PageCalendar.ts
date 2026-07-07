@@ -113,14 +113,14 @@ export class PageCalendar extends PageComponent {
 	 * only lists and dispatches. Rebuilt per render so view-dependent labels stay current. */
 	private get commands(): Array<Command> {
 		return [
-			{ heading: 'Create Entry', icon: 'plus', keywords: 'new event task add', execute: () => this.createEntry() },
-			{ heading: 'Go to Today', icon: 'calendar-check', shortcut: 'T', keywords: 'now current date jump', execute: () => this.navigatingDate = new DateTime() },
-			{ heading: 'Week View', icon: 'columns-3', shortcut: 'W', keywords: 'switch', execute: () => this.setView('week') },
-			{ heading: 'Month View', icon: 'calendar-days', shortcut: 'M', keywords: 'switch grid', execute: () => this.setView('month') },
-			{ heading: this.view === 'week' ? 'Next Week' : 'Next Month', icon: 'arrow-right', keywords: 'forward later', execute: () => this.navigatingDate = this.navigatingDate.add(this.view === 'week' ? { weeks: 1 } : { months: 1 }) },
-			{ heading: this.view === 'week' ? 'Previous Week' : 'Previous Month', icon: 'arrow-left', keywords: 'back earlier', execute: () => this.navigatingDate = this.navigatingDate.subtract(this.view === 'week' ? { weeks: 1 } : { months: 1 }) },
-			{ heading: 'Toggle Sidebar', icon: 'panel-left', keywords: 'collapse expand calendars', execute: this.toggleSidebar },
-			{ heading: 'Add Integration', icon: 'plug', keywords: 'connect caldav account calendar', execute: () => new DialogIntegration({ id: '' }).confirm() },
+			{ heading: t('Create Entry'), icon: 'plus', keywords: t('new event task add'), execute: () => this.createEntry() },
+			{ heading: t('Go to Today'), icon: 'calendar-check', shortcut: 'T', keywords: t('now current date jump'), execute: () => this.navigatingDate = new DateTime() },
+			{ heading: t('Week View'), icon: 'columns-3', shortcut: 'W', keywords: t('switch'), execute: () => this.setView('week') },
+			{ heading: t('Month View'), icon: 'calendar-days', shortcut: 'M', keywords: t('switch grid'), execute: () => this.setView('month') },
+			{ heading: this.view === 'week' ? t('Next Week') : t('Next Month'), icon: 'arrow-right', keywords: t('forward later'), execute: () => this.navigatingDate = this.navigatingDate.add(this.view === 'week' ? { weeks: 1 } : { months: 1 }) },
+			{ heading: this.view === 'week' ? t('Previous Week') : t('Previous Month'), icon: 'arrow-left', keywords: t('back earlier'), execute: () => this.navigatingDate = this.navigatingDate.subtract(this.view === 'week' ? { weeks: 1 } : { months: 1 }) },
+			{ heading: t('Toggle Sidebar'), icon: 'panel-left', keywords: t('collapse expand calendars'), execute: this.toggleSidebar },
+			{ heading: t('Add Integration'), icon: 'plug', keywords: t('connect caldav account calendar'), execute: () => new DialogIntegration({ id: '' }).confirm() },
 		]
 	}
 
@@ -258,12 +258,12 @@ export class PageCalendar extends PageComponent {
 				<mitra-sidebar ?open=${bind(this, 'sidebarOpen')}></mitra-sidebar>
 				<main>
 					<header>
-						<mitra-icon-button class="toggle" icon="panel-left" label="Toggle sidebar" @click=${this.toggleSidebar}></mitra-icon-button>
+						<mitra-icon-button class="toggle" icon="panel-left" label=${t('Toggle sidebar')} @click=${this.toggleSidebar}></mitra-icon-button>
 						<h1>${this.navigatingDate.format({ month: 'long', year: 'numeric' })}</h1>
 						<div style="flex: 1"></div>
-						<button class="search" title="Search or run a command (${CommandPalette.hotkey})" @click=${() => this.palette.show()}>
+						<button class="search" title=${t('Search or run a command (${hotkey})', { hotkey: CommandPalette.hotkey })} @click=${() => this.palette.show()}>
 							<mitra-icon icon="search"></mitra-icon>
-							<span>Search or run a command…</span>
+							<span>${t('Search or run a command…')}</span>
 							<kbd>${CommandPalette.hotkey}</kbd>
 						</button>
 						<div style="flex: 1"></div>
@@ -271,11 +271,11 @@ export class PageCalendar extends PageComponent {
 							<button>
 								<selectedcontent></selectedcontent>
 							</button>
-							<option value="month">Month <kbd>M</kbd></option>
-							<option value="week">Week <kbd>W</kbd></option>
+							<option value="month">${t('Month')} <kbd>M</kbd></option>
+							<option value="week">${t('Week')} <kbd>W</kbd></option>
 						</select>
 						<button @click=${() => this.navigatingDate = new DateTime()}>
-							Today <kbd>T</kbd>
+							${t('Today')} <kbd>T</kbd>
 						</button>
 					</header>
 					${this.view === 'week' ? html`

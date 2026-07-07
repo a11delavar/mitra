@@ -318,7 +318,7 @@ export class CommandPalette extends Component {
 			<dialog closedby="any" @keydown=${(e: KeyboardEvent) => this.handleKeyDown(e)}>
 				<header>
 					<mitra-icon icon="search"></mitra-icon>
-					<input type="search" autofocus placeholder="Search entries or run a command…"
+					<input type="search" autofocus placeholder=${t('Search entries or run a command…')}
 						.value=${this.searchTerm}
 						@input=${(e: Event) => this.handleInput((e.target as HTMLInputElement).value)}
 					>
@@ -326,7 +326,7 @@ export class CommandPalette extends Component {
 				</header>
 				<menu>
 					${!commands.length ? html.nothing : html`
-						<li class="group">Commands</li>
+						<li class="group">${t('Commands')}</li>
 						${commands.map((command, index) => html`
 							<li>
 								<button ?data-selected=${index === this.selectedIndex}
@@ -341,7 +341,7 @@ export class CommandPalette extends Component {
 						`)}
 					`}
 					${!entries.length ? html.nothing : html`
-						<li class="group">Entries</li>
+						<li class="group">${t('Entries')}</li>
 						${entries.map((entry, entryIndex) => {
 							const index = commands.length + entryIndex
 							return html`
@@ -351,7 +351,7 @@ export class CommandPalette extends Component {
 										@click=${() => this.select(entry)}
 									>
 										<span class="swatch" style=${`background: ${entry.color ?? getSource(entry.sourceId)?.color ?? 'var(--color-accent)'}`}></span>
-										<span class="heading">${entry.heading || 'Untitled'}</span>
+										<span class="heading">${entry.heading || t('Untitled')}</span>
 										<span class="when">${CommandPalette.when(entry)}</span>
 									</button>
 								</li>
@@ -359,13 +359,13 @@ export class CommandPalette extends Component {
 						})}
 					`}
 					${commands.length || entries.length ? html.nothing : html`
-						<li class="empty">No matches</li>
+						<li class="empty">${t('No matches')}</li>
 					`}
 				</menu>
 				<footer>
-					<span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
-					<span><kbd>↵</kbd> select</span>
-					<span><kbd>esc</kbd> close</span>
+					<span><kbd>↑</kbd><kbd>↓</kbd> ${t('navigate')}</span>
+					<span><kbd>↵</kbd> ${t('select')}</span>
+					<span><kbd>esc</kbd> ${t('close')}</span>
 				</footer>
 			</dialog>
 		`

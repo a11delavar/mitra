@@ -8,6 +8,8 @@
 		"test": "node ./scripts/test.ts && node --test \"out_test/**/*.js\"",
 		"lint": "eslint .",
 		"build": "node ./scripts/build.ts",
+		"i18n:generate": "node ./scripts/i18n.ts",
+		"i18n:analyze": "node ./scripts/i18n.ts --analyze",
 		"changelog": "git-cliff -o CHANGELOG.md"
 	},
 	"devDependencies": {

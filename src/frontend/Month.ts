@@ -195,7 +195,7 @@ export class Month extends Component {
 					></mitra-entry-segment>
 				`)}
 				${hiddenByColumn.map((count, col) => !count ? html.nothing : html`
-					<div class="more" style="grid-column: ${col + 1};" @click=${() => { this.navigate.dispatch(week[col]!); this.switchToWeek.dispatch() }}>+${count} more</div>
+					<div class="more" style="grid-column: ${col + 1};" @click=${() => { this.navigate.dispatch(week[col]!); this.switchToWeek.dispatch() }}>${t('+${count:number} more', { count })}</div>
 				`)}
 			</div>
 		`

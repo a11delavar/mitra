@@ -299,7 +299,7 @@ export class EntrySegmentComponent extends Component {
 				${this.segment.entry.type !== EntryType.Task ? html.nothing : html`
 					<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
 				`}
-				<span class="label">${this.segment.entry.heading || (this.segment.entry.persisted ? '' : 'Draft')}</span>
+				<span class="label">${this.segment.entry.heading || (this.segment.entry.persisted ? '' : t('Draft'))}</span>
 			</div>
 			${!this.resize || !this.segment.entry.persisted ? html.nothing : html`
 				<div class="resize-start"></div>

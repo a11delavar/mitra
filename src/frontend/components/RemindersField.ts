@@ -6,21 +6,35 @@ type CustomUnit = 'minutes' | 'hours' | 'days' | 'weeks'
 
 const UNIT_MINUTES: Record<CustomUnit, number> = { minutes: 1, hours: 60, days: 24 * 60, weeks: 7 * 24 * 60 }
 
+// The unit words for the custom dialog's select. Static t() per case so the scanner sees each key.
+function unitLabel(unit: CustomUnit): string {
+	switch (unit) {
+		case 'minutes': return t('minutes')
+		case 'hours': return t('hours')
+		case 'days': return t('days')
+		case 'weeks': return t('weeks')
+	}
+}
+
 /** "30 min", "1 hour", "2 days" — the span part of a reminder's label. English for now; the single
  * seam where localized wording plugs in later (mirrors the backend's own reminderSpan). */
 function reminderSpanLabel(minutes: number): string {
 	const unit = ([['week', UNIT_MINUTES.weeks], ['day', UNIT_MINUTES.days], ['hour', UNIT_MINUTES.hours]] as const)
 		.find(([, factor]) => minutes >= factor && minutes % factor === 0)
 	if (!unit) {
-		return `${minutes} min`
+		return t('${count:number} min', { count: minutes })
 	}
 	const count = minutes / unit[1]
-	return `${count} ${unit[0]}${count === 1 ? '' : 's'}`
+	switch (unit[0]) {
+		case 'week': return t('${count:pluralityNumber} weeks', { count })
+		case 'day': return t('${count:pluralityNumber} days', { count })
+		case 'hour': return t('${count:pluralityNumber} hours', { count })
+	}
 }
 
 /** The full one-line label, for the preset menu. */
 function reminderLabel(minutes: number): string {
-	return minutes === 0 ? 'At start of event' : `${reminderSpanLabel(minutes)} before`
+	return minutes === 0 ? t('At start of event') : t('${span} before', { span: reminderSpanLabel(minutes) })
 }
 
 /**
@@ -271,27 +285,27 @@ export class RemindersField extends Component {
 	protected override get template() {
 		return !this.entry?.start ? html.nothing : html`
 			${!this.reminders.length ? html`
-				<button type="button" class="empty" style="anchor-name: ${this.anchor}" @click=${this.toggleMenu}>Reminders</button>
+				<button type="button" class="empty" style="anchor-name: ${this.anchor}" @click=${this.toggleMenu}>${t('Reminders')}</button>
 			` : html`
 				${this.reminders.map(minutes => html`
 					<div class="reminder">
 						<span>
 							${minutes === 0
-								? html`At start <span class="detail">of event at ${this.fireLabel(minutes)}</span>`
-								: html`${reminderSpanLabel(minutes)} <span class="detail">before at ${this.fireLabel(minutes)}</span>`}
+								? html`${t('At start')} <span class="detail">${t('of event at ${time}', { time: this.fireLabel(minutes) })}</span>`
+								: html`${reminderSpanLabel(minutes)} <span class="detail">${t('before at ${time}', { time: this.fireLabel(minutes) })}</span>`}
 						</span>
-						<mitra-icon-button icon="x" label="Remove reminder"
+						<mitra-icon-button icon="x" label=${t('Remove reminder')}
 							@click=${() => this.commit(this.reminders.filter(other => other !== minutes))}
 						></mitra-icon-button>
 					</div>
 				`)}
-				<button type="button" class="add" style="anchor-name: ${this.anchor}" @click=${this.toggleMenu}>Add reminder</button>
+				<button type="button" class="add" style="anchor-name: ${this.anchor}" @click=${this.toggleMenu}>${t('Add reminder')}</button>
 			`}
 			<menu popover style="position-anchor: ${this.anchor}">
 				${RemindersField.presets.filter(minutes => !this.reminders.includes(minutes)).map(minutes => html`
 					<button type="button" @click=${() => this.add(minutes)}>${reminderLabel(minutes)}</button>
 				`)}
-				<button type="button" class="custom" @click=${this.openCustomDialog}>Custom…</button>
+				<button type="button" class="custom" @click=${this.openCustomDialog}>${t('Custom…')}</button>
 			</menu>
 			${this.dialogTemplate}
 		`
@@ -305,22 +319,22 @@ export class RemindersField extends Component {
 				${!draft ? html.nothing : html`
 					<div class="reminder-dialog">
 						<header>
-							<h3>Reminder</h3>
-							<mitra-icon-button icon="x" label="Close" style="color: var(--color-text-muted)" @click=${this.cancelDialog}></mitra-icon-button>
+							<h3>${t('Reminder')}</h3>
+							<mitra-icon-button icon="x" label=${t('Close')} style="color: var(--color-text-muted)" @click=${this.cancelDialog}></mitra-icon-button>
 						</header>
 						<div class="before">
-							<input class="count" type="number" min="1" aria-label="Amount" .value=${String(draft.count)}
+							<input class="count" type="number" min="1" aria-label=${t('Amount')} .value=${String(draft.count)}
 								@change=${(e: Event) => this.draft = { ...draft, count: Math.max(1, Math.trunc(Number((e.target as HTMLInputElement).value)) || 1) }}>
 							<select @change=${(e: Event) => this.draft = { ...draft, unit: (e.target as HTMLSelectElement).value as CustomUnit }}>
 								<button>
 									<selectedcontent></selectedcontent>
 								</button>
-								${(Object.keys(UNIT_MINUTES) as Array<CustomUnit>).map(unit => html`<option value=${unit}>${unit}</option>`)}
+								${(Object.keys(UNIT_MINUTES) as Array<CustomUnit>).map(unit => html`<option value=${unit}>${unitLabel(unit)}</option>`)}
 							</select>
-							<span>before</span>
+							<span>${t('before')}</span>
 						</div>
 						<div class="dialog-actions">
-							<button type="button" class="primary" @click=${this.confirmDialog}>Done</button>
+							<button type="button" class="primary" @click=${this.confirmDialog}>${t('Done')}</button>
 						</div>
 					</div>
 				`}
