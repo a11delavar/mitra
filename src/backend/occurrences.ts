@@ -210,11 +210,38 @@ export async function expandedOccurrences(em: EntityManager, sourceIds: Readonly
 const shiftBy = (value: DateTime | undefined, deltaMs: number) =>
 	value === undefined ? undefined : new Date(value.getTime() + deltaMs) as DateTime
 
+/** A master's excluded instants (epoch-ms), from wherever it stores them — the raw .ics EXDATEs when
+ * the integration keeps one (the same authority the expansion reads), else the `exdates` column. */
+function exdatesOf(master: Entry): Array<number> {
+	if (master.data?.raw) {
+		const component = new ICAL.Component(ICAL.parse(master.data.raw))
+		const v = component.getFirstSubcomponent('vevent') ?? component.getFirstSubcomponent('vtodo')
+		return !v ? [] : v.getAllProperties('exdate').flatMap(prop => prop.getValues().map(value => (value as { toJSDate(): Date }).toJSDate().getTime()))
+	}
+	return master.exdates ?? []
+}
+
+/** Shift excluded instants the way the series' own occurrences shift when an edit moves the anchor
+ * `from` → `to`: in the master's wall-clock zone when it has one (a 09:00 exclusion stays a 09:00
+ * exclusion across a DST flip, mirroring `within`), else by the plain instant delta. Exclusions are
+ * matched by instant, so one left behind by a series-wide move matches nothing afterwards — and the
+ * detached occurrence it stood for reappears at the shifted slot, doubled next to its detached copy. */
+function shiftExdates(exdates: Array<number>, zone: string | null | undefined, from: Date, to: Date): Array<number> {
+	if (!zone) {
+		const delta = to.getTime() - from.getTime()
+		return exdates.map(ms => ms + delta)
+	}
+	const wall = (ms: number) => Temporal.Instant.fromEpochMilliseconds(ms).toZonedDateTimeISO(zone).toPlainDateTime()
+	const delta = wall(from.getTime()).until(wall(to.getTime()))
+	return exdates.map(ms => wall(ms).add(delta).toZonedDateTime(zone, { disambiguation: 'compatible' }).epochMilliseconds)
+}
+
 /** Apply an occurrence edit (`edited`, carrying the new field values) to `master` at `recurrenceId`. */
 export async function editOccurrence(em: EntityManager, integration: Integration, master: Entry, recurrenceId: Date, edited: Entry, scope: RecurrenceScope): Promise<Entry> {
 	if (scope === 'all') {
 		const editedStart = new Date(edited.start?.getTime() ?? recurrenceId.getTime())
 		const delta = editedStart.getTime() - recurrenceId.getTime()
+		const exdates = exdatesOf(master)
 		const incoming = new Entry({
 			sourceId: master.sourceId,
 			type: master.type,
@@ -231,6 +258,8 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 			// The rule follows the shift (a weekly-Monday series moved a day later becomes weekly-Tuesday);
 			// a rule left mismatching its shifted anchor would silently lose the anchor's own occurrence.
 			recurrence: master.recurrence!.rebased(recurrenceId, editedStart),
+			// The exclusions follow it too (see shiftExdates); absent means "keep" to the integration.
+			exdates: exdates.length ? shiftExdates(exdates, master.timeZone, recurrenceId, editedStart) : undefined,
 			uid: master.uid,
 		})
 		await integration.updateEntry(em, master, incoming)
@@ -261,6 +290,10 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 		// New half: a fresh series (new UID) starting at the edit, continuing the original cadence — with
 		// the rule rebased onto the edit's day, so the new anchor (possibly dragged to another weekday)
 		// still matches it and renders as the continuation's first occurrence.
+		const continuationStart = new Date(edited.start?.getTime() ?? recurrenceId.getTime())
+		// The continuation half also inherits its half of the exclusions (shifted like its occurrences) —
+		// created without them, a previously detached occurrence past the split would render doubled.
+		const carried = exdatesOf(master).filter(ms => ms >= recurrenceId.getTime())
 		const continuation = new Entry({
 			id: crypto.randomUUID(),
 			sourceId: master.sourceId,
@@ -275,7 +308,8 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 			reminders: edited.reminders,
 			start: edited.start,
 			end: edited.end,
-			recurrence: rule.asContinuation().rebased(recurrenceId, new Date(edited.start?.getTime() ?? recurrenceId.getTime())),
+			recurrence: rule.asContinuation().rebased(recurrenceId, continuationStart),
+			exdates: carried.length ? shiftExdates(carried, master.timeZone, recurrenceId, continuationStart) : undefined,
 		})
 		return integration.createEntry(em, continuation)
 	}

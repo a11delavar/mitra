@@ -108,7 +108,8 @@ export class EntryStore extends Controller {
 	 * 'all' shifts/edits the whole series — for the latter two the response is a master, not this
 	 * synthetic instance, so what was sent becomes its canonical and the sync echo re-shapes the series
 	 * around it. Rule edits are exempt: a rule is series-wide by definition, so they go straight to the
-	 * master without a dialog.
+	 * master without a dialog. A status-only change is exempt the other way around: completing a task
+	 * belongs to the single occurrence by nature, so it commits with scope 'this' without asking.
 	 */
 	static commit(entry: Entry): Promise<void> {
 		const pending = this.inflight.get(entry)
@@ -183,10 +184,27 @@ export class EntryStore extends Controller {
 		return !Recurrence.equal(entry.recurrence, this.canonicalById.get(entry.id!)?.recurrence)
 	}
 
+	/** Whether the entry's ONLY change against its canonical is the task status. A status belongs to the
+	 * single occurrence by nature — completing this Tuesday's task says nothing about the rest of the
+	 * series — so asking for a scope makes no sense and the edit commits as 'this'. Of the editable
+	 * fields it's the sole one like that: the rule is the opposite extreme (series-wide, see
+	 * {@link ruleChanged}); everything else — heading, schedule, colour, reminders… — is genuinely
+	 * ambiguous and keeps the dialog. A status change *mixed* with other edits keeps it too: the whole
+	 * edit takes one scope, and the rest of it is ambiguous. */
+	private static statusOnlyChanged(entry: Entry) {
+		const canonical = this.canonicalById.get(entry.id!)
+		if (!canonical || entry.status === canonical.status) {
+			return false
+		}
+		const probe = entry.clone()
+		probe.status = canonical.status
+		return probe.editEquals(canonical)
+	}
+
 	/** One scoped save round for a dirty occurrence. Returns false when the commit chain should stop
 	 * (cancelled, or the entry was deleted mid-flight). */
 	private static async commitOccurrence(entry: Entry, sent: Entry): Promise<boolean> {
-		const scope = await EntryStore.resolveScope(entry, 'edit')
+		const scope = this.statusOnlyChanged(entry) ? 'this' : await EntryStore.resolveScope(entry, 'edit')
 		if (!this.tracks(entry)) {
 			return false
 		}

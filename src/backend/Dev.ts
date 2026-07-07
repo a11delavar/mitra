@@ -69,6 +69,11 @@ export class Dev extends Integration {
 		// Recurrence is column-only for Dev (no .ics); the GET path expands `recurrence` via
 		// expandRecurrenceFields. (uid/recurrenceId aren't edited through the UI and Dev has no sync/overrides.)
 		existing.recurrence = incoming.recurrence
+		// Absent = keep: only a scoped series edit carries exclusions (shifted along with the series —
+		// see occurrences.ts); a plain content edit stays silent about them.
+		if (incoming.exdates !== undefined) {
+			existing.exdates = incoming.exdates
+		}
 		return Promise.resolve()
 	}
 

@@ -224,6 +224,70 @@ describe('scoped occurrence edits', () => {
 		assert.notEqual(result.id, m.id)
 	})
 
+	it('\'all\' shifts the exclusions along with the series; none leaves them untouched', async () => {
+		{
+			// A detached third Monday: its exclusion must land at the shifted instant, or the series
+			// regenerates that slot right next to the detached copy.
+			const { calls, integration } = stub()
+			const m = master()
+			m.exdates = [new Date('2026-06-15T09:00:00Z').getTime()]
+			await editOccurrence(em, integration, m, recurrenceId, edited(), 'all')
+			assert.deepEqual(calls.updates[0]!.incoming.exdates, [new Date('2026-06-15T10:00:00Z').getTime()])
+		}
+		{
+			const { calls, integration } = stub()
+			await editOccurrence(em, integration, master(), recurrenceId, edited(), 'all')
+			assert.equal(calls.updates[0]!.incoming.exdates, undefined) // absent = keep, not "clear"
+		}
+	})
+
+	it('\'all\' reads the exclusions from the raw .ics when the master keeps one', async () => {
+		const { calls, integration } = stub()
+		const m = master()
+		m.data = {
+			raw: [
+				'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//test//EN',
+				'BEGIN:VEVENT', 'UID:u1', 'DTSTAMP:20260101T000000Z',
+				'DTSTART:20260601T090000Z', 'DTEND:20260601T100000Z',
+				'RRULE:FREQ=WEEKLY;BYDAY=MO', 'EXDATE:20260615T090000Z',
+				'END:VEVENT', 'END:VCALENDAR',
+			].join('\r\n'),
+		}
+		await editOccurrence(em, integration, m, recurrenceId, edited(), 'all')
+		assert.deepEqual(calls.updates[0]!.incoming.exdates, [new Date('2026-06-15T10:00:00Z').getTime()])
+	})
+
+	it('\'all\' shifts the exclusions wall-clock in the master\'s zone, like the occurrences themselves', async () => {
+		// A Friday 09:00 Berlin series dragged one week later, across the Oct 25 DST end: the instant
+		// delta is 7d + 1h, but every occurrence — and so every exclusion — moves exactly 7 wall days.
+		const { calls, integration } = stub()
+		const m = master()
+		m.timeZone = 'Europe/Berlin'
+		m.start = D('2026-10-23T07:00:00Z') // 09:00 CEST
+		m.end = D('2026-10-23T08:00:00Z')
+		m.recurrence = new Recurrence({ freq: 'WEEKLY', byday: ['FR'] })
+		m.exdates = [new Date('2026-11-06T08:00:00Z').getTime()] // 09:00 CET
+		const moved = new Entry({
+			sourceId: 's', type: EntryType.Event, heading: 'Standup',
+			start: D('2026-10-30T08:00:00Z'), end: D('2026-10-30T09:00:00Z'), // 09:00 CET, one week later
+		})
+		await editOccurrence(em, integration, m, new Date('2026-10-23T07:00:00Z'), moved, 'all')
+		// 09:00 Berlin stays 09:00 Berlin — an instant shift (+7d1h) would beach it at 10:00.
+		assert.deepEqual(calls.updates[0]!.incoming.exdates, [new Date('2026-11-13T08:00:00Z').getTime()])
+	})
+
+	it('\'following\' carries only the exclusions at/after the split onto the continuation, shifted', async () => {
+		const { calls, integration } = stub()
+		const m = master()
+		m.exdates = [
+			new Date('2026-06-01T09:00:00Z').getTime(), // before the split — stays the old half's
+			new Date('2026-06-15T09:00:00Z').getTime(), // after it — the continuation's, at +1h
+		]
+		const result = await editOccurrence(em, integration, m, recurrenceId, edited(), 'following')
+		assert.equal(calls.updates[0]!.incoming.exdates, undefined) // the old half keeps its own untouched
+		assert.deepEqual(result.exdates, [new Date('2026-06-15T10:00:00Z').getTime()])
+	})
+
 	it('\'this\' excludes the occurrence and detaches it as a standalone entry', async () => {
 		const { calls, integration } = stub()
 		const result = await editOccurrence(em, integration, master(), recurrenceId, edited(), 'this')

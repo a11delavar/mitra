@@ -141,6 +141,9 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * Applies the desired state of `incoming` onto the persisted `existing` entry and
 	 * pushes the change to the external source. The integration owns the strategy: it
 	 * may diff `existing` against `incoming` for efficiency, or rewrite wholesale.
+	 * `incoming.exdates` is tri-state: an array replaces the stored exclusions wholesale
+	 * (a scoped series edit shifts them along with the series — see backend/occurrences.ts),
+	 * absent (undefined) keeps them untouched.
 	 * @param em The entity manager to use for database operations.
 	 * @param existing The currently persisted entry (managed).
 	 * @param incoming A transient entry carrying the edited field values.

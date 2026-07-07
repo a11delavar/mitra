@@ -436,6 +436,36 @@ describe('EntryStore', () => {
 			assert.equal(EntryStore.isDirty(working), false)
 		})
 
+		it('a status-only change bypasses the scope dialog and commits as \'this\'', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			EntryStore.resolveScope = () => Promise.reject(new Error('must not be asked'))
+			const working = occurrence({ type: EntryType.Task, status: TaskStatus.ToDo })
+			EntryStore.applyServerEntries([working])
+			working.status = TaskStatus.Done
+			const commit = EntryStore.commit(working)
+			await transport.respond(entry({ id: 'detached', type: EntryType.Task, status: TaskStatus.Done }))
+			await commit
+			assert.deepEqual(transport.calls.occurrenceEdits, ['this'])
+			assert.equal(working.recurrenceMasterId, undefined) // detached — the completion is this occurrence's own
+			assert.equal(working.status, TaskStatus.Done)
+			assert.equal(EntryStore.isDirty(working), false)
+		})
+
+		it('a status change mixed with other edits still asks for a scope', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			EntryStore.resolveScope = () => Promise.resolve('all')
+			const working = occurrence({ type: EntryType.Task, status: TaskStatus.ToDo })
+			EntryStore.applyServerEntries([working])
+			working.status = TaskStatus.Done
+			working.heading = 'Renamed series'
+			const commit = EntryStore.commit(working)
+			await transport.respond(entry({ id: 'master', type: EntryType.Task, status: TaskStatus.Done, heading: 'Renamed series' }))
+			await commit
+			assert.deepEqual(transport.calls.occurrenceEdits, ['all']) // the whole edit takes the asked scope
+		})
+
 		it('scoped deletes drop the right local instances: \'this\'', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence

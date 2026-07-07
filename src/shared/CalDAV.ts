@@ -354,7 +354,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		// The recurrence rule is a value object, diffed via its own (absence-safe) structural equality.
 		const recurrenceChanged = !Recurrence.equal(existing.recurrence, incoming.recurrence)
 
-		if (keys.length === 0 && !recurrenceChanged) {
+		if (keys.length === 0 && !recurrenceChanged && incoming.exdates === undefined) {
 			return
 		}
 
@@ -442,6 +442,16 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			existing.recurrence = incoming.recurrence
 		}
 
+		// Exclusions ride along only when the edit actually carries them — a scoped series edit shifting
+		// them with the series (see backend/occurrences.ts); absent means keep, like `recurrence` on the
+		// wire. Rewritten wholesale: the instants ARE the identity, so there's nothing to diff per-item.
+		if (incoming.exdates !== undefined) {
+			component.removeAllProperties('exdate')
+			for (const ms of incoming.exdates) {
+				component.addPropertyWithValue('exdate', this.toICALTime(new Date(ms) as unknown as DateTime, incoming.allDay))
+			}
+		}
+
 		if (keys.includes('allDay')) {
 			existing.allDay = incoming.allDay
 		}
@@ -497,6 +507,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		!entry.end ? void 0 : component.updatePropertyWithValue(isTask ? 'due' : 'dtend', this.toICALTime(entry.end, entry.allDay))
 		!entry.color ? void 0 : component.updatePropertyWithValue('color', entry.color)
 		!entry.recurrence ? void 0 : component.updatePropertyWithValue('rrule', ICAL.Recur.fromString(entry.recurrence.toRRule(entry.allDay)))
+		// The continuation of a split series carries its half of the exclusions (see backend/occurrences.ts).
+		entry.exdates?.forEach(ms => component.addPropertyWithValue('exdate', this.toICALTime(new Date(ms) as unknown as DateTime, entry.allDay)))
 		if (isTask) {
 			this.writeTaskStatus(component, entry.status)
 		}
