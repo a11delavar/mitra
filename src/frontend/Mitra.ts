@@ -52,7 +52,7 @@ export class Mitra extends Application {
 				--color-surface: color-mix(in srgb, light-dark(#ffffff, #191a1b), var(--color-accent) 5%);
 				--color-text: color-mix(in srgb, light-dark(black, white), var(--color-accent) 2.5%);
 				--color-text-muted: color-mix(in srgb, var(--color-text), var(--color-background) 45%);
-				--color-accent: #eb5a5a;
+				--color-accent: light-dark(black, white);
 				--color-accent-text: ${colorContrast('var(--color-accent)')};
 				--color-border: var(--color-background);
 				--border: 1px solid var(--color-border);
