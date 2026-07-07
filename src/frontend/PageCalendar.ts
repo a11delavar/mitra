@@ -1,11 +1,15 @@
-import { component, html, state, css, eventListener, Controller, bind, queryAll } from '@a11d/lit'
+import { component, html, state, css, eventListener, Controller, bind, query, queryAll } from '@a11d/lit'
 import { PageComponent, route } from '@a11d/lit-application'
 import { Task } from '@lit/task'
 import { DateTime } from '@3mo/date-time'
 import { MediaQueryController } from '@3mo/media-query-observer'
-import { fetchEvents } from './Api.js'
+import { Entry, EntryType, SourceType } from 'shared'
+import { fetchEvents, getPrimarySource } from './Api.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
 import { EntryStore } from './EntryStore.js'
+import { CommandPalette } from './CommandPalette.js'
+import { type Command } from './Command.js'
+import { DialogIntegration } from './DialogIntegration.js'
 
 class FetcherController extends Controller {
 	// `withCredentials` so the session cookie rides along behind a cookie-based auth proxy (e.g. Traefik OIDC).
@@ -103,6 +107,47 @@ export class PageCalendar extends PageComponent {
 	readonly fetcher = new FetcherController(this)
 	readonly store = new EntryStore(this)
 
+	@query('mitra-command-palette') private readonly palette!: CommandPalette
+
+	/** The page's palette commands — behavior stays here, where the state it drives lives; the palette
+	 * only lists and dispatches. Rebuilt per render so view-dependent labels stay current. */
+	private get commands(): Array<Command> {
+		return [
+			{ heading: 'Create Entry', icon: 'plus', keywords: 'new event task add', execute: () => this.createEntry() },
+			{ heading: 'Go to Today', icon: 'calendar-check', shortcut: 'T', keywords: 'now current date jump', execute: () => this.navigatingDate = new DateTime() },
+			{ heading: 'Week View', icon: 'columns-3', shortcut: 'W', keywords: 'switch', execute: () => this.setView('week') },
+			{ heading: 'Month View', icon: 'calendar-days', shortcut: 'M', keywords: 'switch grid', execute: () => this.setView('month') },
+			{ heading: this.view === 'week' ? 'Next Week' : 'Next Month', icon: 'arrow-right', keywords: 'forward later', execute: () => this.navigatingDate = this.navigatingDate.add(this.view === 'week' ? { weeks: 1 } : { months: 1 }) },
+			{ heading: this.view === 'week' ? 'Previous Week' : 'Previous Month', icon: 'arrow-left', keywords: 'back earlier', execute: () => this.navigatingDate = this.navigatingDate.subtract(this.view === 'week' ? { weeks: 1 } : { months: 1 }) },
+			{ heading: 'Toggle Sidebar', icon: 'panel-left', keywords: 'collapse expand calendars', execute: this.toggleSidebar },
+			{ heading: 'Add Integration', icon: 'plug', keywords: 'connect caldav account calendar', execute: () => new DialogIntegration({ id: '' }).confirm() },
+		]
+	}
+
+	/** The palette's Create Entry: a blank one-hour draft at the next full hour today, on the primary
+	 * source — the same target a create gesture picks — navigated into view with its editor open.
+	 * Always lands in the week view: the timed grid renders every draft, whereas a crowded month cell
+	 * folds it into "+N more" and the editor could never open. */
+	private createEntry() {
+		const source = getPrimarySource()
+		if (!source) {
+			return
+		}
+		const now = new DateTime()
+		const start = now.dayStart.add({ hours: now.hour + 1 })
+		this.setView('week')
+		this.navigatingDate = now
+		EntryStore.upsertDraft(new Entry({
+			sourceId: source.id,
+			type: source.type === SourceType.Task ? EntryType.Task : EntryType.Event,
+			heading: '',
+			start,
+			end: start.add({ hours: 1 }),
+			allDay: false,
+		}))
+		EntryStore.openDraft()
+	}
+
 	@eventListener({ target: window, type: 'keydown' })
 	protected handleKeyDown(e: KeyboardEvent) {
 		if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
@@ -149,6 +194,7 @@ export class PageCalendar extends PageComponent {
 					min-height: 0;
 
 					> header {
+						container-type: inline-size;
 						display: flex;
 						align-items: center;
 						gap: 0.75rem;
@@ -165,6 +211,32 @@ export class PageCalendar extends PageComponent {
 
 						.toggle {
 							font-size: 20px;
+						}
+
+						/* The fake search box: just a button dressed as an input — the real one lives in the palette. */
+						.search {
+							flex: 1;
+							max-width: 21rem;
+							justify-content: flex-start;
+							border-radius: 8px;
+							font-weight: 400;
+							color: var(--color-text-muted);
+
+							span {
+								flex: 1;
+								text-align: start;
+								white-space: nowrap;
+								overflow: hidden;
+							}
+
+							/* Collapses to a bare icon button when the header runs out of room. */
+							@container (max-width: 40rem) {
+								flex: none;
+
+								span, kbd {
+									display: none;
+								}
+							}
 						}
 					}
 
@@ -187,6 +259,12 @@ export class PageCalendar extends PageComponent {
 					<header>
 						<mitra-icon-button class="toggle" icon="panel-left" label="Toggle sidebar" @click=${this.toggleSidebar}></mitra-icon-button>
 						<h1>${this.navigatingDate.format({ month: 'long', year: 'numeric' })}</h1>
+						<div style="flex: 1"></div>
+						<button class="search" title="Search or run a command (${CommandPalette.hotkey})" @click=${() => this.palette.show()}>
+							<mitra-icon icon="search"></mitra-icon>
+							<span>Search or run a command…</span>
+							<kbd>${CommandPalette.hotkey}</kbd>
+						</button>
 						<div style="flex: 1"></div>
 						<select .value=${this.view} @change=${(e: Event) => this.setView((e.target as HTMLSelectElement).value as 'week' | 'month')}>
 							<button>
@@ -214,6 +292,10 @@ export class PageCalendar extends PageComponent {
 						></mitra-month>
 					`}
 				</main>
+				<mitra-command-palette
+					.commands=${this.commands}
+					@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
+				></mitra-command-palette>
 			</lit-page>
 		`
 	}

@@ -79,6 +79,18 @@ export function fetchEvents(start: DateTime, end: DateTime) {
 	return Api.get<Array<Entry>>(`/entries?start=${start.toISOString()}&end=${end.toISOString()}`)
 }
 
+/** Text search over the WHOLE entry store (heading/description/location, every visible source) —
+ * the command palette's data source; unwindowed, unlike {@link fetchEvents}. */
+export function searchEntries(query: string) {
+	return Api.get<Array<Entry>>(`/entries/search?q=${encodeURIComponent(query)}`)
+}
+
+/** The source a create targets: the user's default when visible, else the first visible one. */
+export function getPrimarySource(): Source | undefined {
+	const visibleSources = integrations.flatMap(i => [...i.sources]).filter(s => s.visible)
+	return visibleSources.find(s => s.id === getDefaultSourceId()) ?? visibleSources[0]
+}
+
 export function createEvent(entry: Entry) {
 	// Stamp the zone the times were authored in — recurrence must expand at THIS zone's wall clock
 	// ("every Monday 09:00 Berlin" survives DST), and the future zone selector edits this field.

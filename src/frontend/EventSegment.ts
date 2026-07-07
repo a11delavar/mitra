@@ -83,6 +83,12 @@ export class EntrySegmentComponent extends Component {
 			this.store.consumeAutoOpen()
 			this.open = true
 		}
+		// The command palette navigated to a picked entry and asked for its editor — open it on the
+		// run-start segment only (so a multi-day entry opens one editor), consuming the request.
+		if (this.store.shouldOpen(entry) && !this.segment!.hasPrevious) {
+			this.store.consumeOpen()
+			this.open = true
+		}
 	}
 
 	static override get styles() {

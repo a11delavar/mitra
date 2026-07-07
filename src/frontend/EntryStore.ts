@@ -402,6 +402,27 @@ export class EntryStore extends Controller {
 		this.autoOpen = false
 	}
 
+	/** The id of a persisted entry whose editor should pop open once its segment renders — set by the
+	 * command palette after it navigates to the entry. Kept until consumed, so it survives the async
+	 * refetch the navigation triggers. */
+	private static openEntryId?: string
+
+	/** Request that the entry with this id open its editor when it next renders (see {@link openDraft}
+	 * for the draft counterpart). A recurring master matches its rendered occurrences too, so picking a
+	 * series from the palette opens the occurrence the navigation lands on. */
+	static requestOpen(id: string) {
+		this.openEntryId = id
+		this.notify()
+	}
+
+	static shouldOpen(entry: Entry) {
+		return this.openEntryId !== undefined && (entry.id === this.openEntryId || entry.recurrenceMasterId === this.openEntryId)
+	}
+
+	static consumeOpen() {
+		this.openEntryId = undefined
+	}
+
 	/** The persisted entry an active move/resize gesture targets. A *move* additionally shows a
 	 * {@link setPreview preview} ghost; a *resize* manipulates the entry itself live — the presence of
 	 * the preview is what tells the two apart, no mode flag needed. */
@@ -446,6 +467,7 @@ export class EntryStore extends Controller {
 		this.preview = undefined
 		this.merged = undefined
 		this.autoOpen = false
+		this.openEntryId = undefined
 		this.dragging = undefined
 	}
 
@@ -457,6 +479,14 @@ export class EntryStore extends Controller {
 
 	shouldAutoOpen(entry: Entry) {
 		return EntryStore.shouldAutoOpen(entry)
+	}
+
+	shouldOpen(entry: Entry) {
+		return EntryStore.shouldOpen(entry)
+	}
+
+	consumeOpen() {
+		EntryStore.consumeOpen()
 	}
 
 	isDragging(entry: Entry) {

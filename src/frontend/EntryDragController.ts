@@ -1,7 +1,7 @@
 import { Controller, type Component } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { Entry, EntryType, SourceType, SNAP_MINUTES, type Source } from 'shared'
-import { getDefaultSourceId, getIntegrations } from './Api.js'
+import { getPrimarySource } from './Api.js'
 import { EntryStore } from './EntryStore.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
 import { placeAllDay, placeTimed, resizePlacement, snapToGrid } from './entryPlacement.js'
@@ -93,11 +93,6 @@ export class EntryDragController extends Controller {
 
 	override hostDisconnected() {
 		this.element.removeEventListener('pointerdown', this.onPointerDown)
-	}
-
-	private get defaultSource(): Source | undefined {
-		const visibleSources = getIntegrations().flatMap(i => [...i.sources]).filter(s => s.visible)
-		return visibleSources.find(s => s.id === getDefaultSourceId()) ?? visibleSources[0]
 	}
 
 	/** The create mode a pointerdown starts on empty space, or `undefined` if it shouldn't start one. Month
@@ -300,7 +295,7 @@ export class EntryDragController extends Controller {
 
 		// Create on empty grid / lane / cell.
 		const mode = this.createModeAt(target)
-		const source = mode ? this.defaultSource : undefined
+		const source = mode ? getPrimarySource() : undefined
 		if (!mode || !source) {
 			return
 		}

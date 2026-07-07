@@ -38,6 +38,31 @@ entriesRouter.get('/', async (req, res) => {
 	return res.json([...rows, ...occurrences])
 })
 
+// Text search over the WHOLE store (the command palette's data source, unwindowed unlike the GET
+// above): heading/description/location on every visible source's entries. Recurring masters match
+// as themselves — one row stands in for its series.
+entriesRouter.get('/search', async (req, res) => {
+	const { q } = req.query as { q?: string }
+	if (!q?.trim()) {
+		return res.json([])
+	}
+
+	const em = orm.em.fork()
+	const visibleSources = await em.find(Source, { enabled: true, hidden: false })
+
+	const term = `%${q.trim()}%`
+	const entries = await em.find(Entry, {
+		sourceId: { $in: visibleSources.map(source => source.id) },
+		$or: [
+			{ heading: { $like: term } },
+			{ description: { $like: term } },
+			{ location: { $like: term } },
+		],
+	}, { orderBy: { start: 'desc' }, limit: 20 })
+
+	return res.json(entries)
+})
+
 entriesRouter.post('/', async (req, res) => {
 	const em = orm.em.fork()
 
