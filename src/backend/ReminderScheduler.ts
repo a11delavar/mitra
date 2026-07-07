@@ -1,9 +1,9 @@
 import { type MikroORM } from '@mikro-orm/sqlite'
 import fs from 'fs'
-import { Entry, Source, createLogger } from '../shared/index.js'
+import { Entry, Integration, Source, createLogger } from '../shared/index.js'
 import { expandedOccurrences } from './occurrences.js'
 import { dueReminders, reminderSpan } from './reminderDomain.js'
-import { sendToAll } from './push.js'
+import { sendTo } from './push.js'
 
 /**
  * The reminder clock: something has to compute "it is now 30 minutes before that event" while every
@@ -69,15 +69,26 @@ export class ReminderScheduler {
 			const rows = await em.find(Entry, { reminders: { $ne: null }, recurrence: { freq: null } })
 			const masters = await em.find(Entry, { reminders: { $ne: null }, recurrence: { freq: { $ne: null } } })
 			const horizon = Math.max(0, ...masters.flatMap(master => master.reminders ?? [])) * MINUTE
-			const sources = masters.length ? await em.find(Source, { enabled: true }) : []
+			const sources = await em.find(Source, {})
+			const enabledSourceIds = sources.filter(source => source.enabled).map(source => source.id)
 			const occurrences = masters.length
-				? (await expandedOccurrences(em, sources.map(source => source.id), watermark, new Date(now.getTime() + horizon)))
+				? (await expandedOccurrences(em, enabledSourceIds, watermark, new Date(now.getTime() + horizon)))
 					.filter(occurrence => occurrence.reminders?.length)
 				: []
 
+			// The scheduler ticks for EVERY user; each reminder routes to its entry's owner
+			// (entry → source → integration → user).
+			const integrations = await em.find(Integration, {})
+			const userByIntegration = new Map(integrations.map(integration => [integration.id, integration.userId]))
+			const userBySource = new Map(sources.map(source => [source.id, userByIntegration.get(source.integrationId)]))
+
 			for (const { entry, minutes } of dueReminders([...rows, ...occurrences], watermark, now)) {
+				const userId = userBySource.get(entry.sourceId)
+				if (!userId) {
+					continue
+				}
 				this.logger.info(`Reminder: "${entry.heading}" starts ${minutes ? `in ${reminderSpan(minutes)}` : 'now'}`)
-				await sendToAll({
+				await sendTo(userId, {
 					title: entry.heading || 'Untitled',
 					// Relative wording on purpose: the server may run in another timezone than the reader.
 					// Emoji as separators — a notification body has no other typography to structure it with.

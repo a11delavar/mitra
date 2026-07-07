@@ -1,11 +1,11 @@
 import { Router } from 'express'
 import { orm } from './orm.js'
-import { Source, User, type UserTimeZone } from '../shared/index.js'
+import { User, type UserTimeZone } from '../shared/index.js'
 
 export const userRouter = Router()
 
 userRouter.get('/', (req, res) => {
-	return res.json((req as any).user as User)
+	return res.json(req.user)
 })
 
 /** An id names a real zone iff Intl can format in it — authoritative on this very runtime. */
@@ -31,11 +31,11 @@ userRouter.put('/time-zones', async (req, res) => {
 		...(typeof zone.label === 'string' && zone.label.trim() ? { label: zone.label.trim().slice(0, 24) } : {}),
 	}))
 	const em = orm.em.fork()
-	const user = await em.findOneOrFail(User, { id: ((req as any).user as User).id })
+	const user = await em.findOneOrFail(User, { id: req.user.id })
 	user.timeZones = timeZones.length ? timeZones : undefined
 	await em.flush()
-	// Keep the auth singleton (attached to every request) in sync so a follow-up GET reflects the change.
-	;((req as any).user as User).timeZones = user.timeZones
+	// Keep the request's user (a different entity manager's instance) in sync so a follow-up GET reflects the change.
+	req.user.timeZones = user.timeZones
 	return res.json(user)
 })
 
@@ -43,12 +43,12 @@ userRouter.put('/default-source', async (req, res) => {
 	const sourceId = (req.body.sourceId ?? null) as string | null
 	const em = orm.em.fork()
 	if (sourceId !== null) {
-		await em.findOneOrFail(Source, { id: sourceId })
+		await req.user.source(em, sourceId) // 404s a source that isn't the user's own
 	}
-	const user = await em.findOneOrFail(User, { id: ((req as any).user as User).id })
+	const user = await em.findOneOrFail(User, { id: req.user.id })
 	user.defaultSourceId = sourceId ?? undefined
 	await em.flush()
-	// Keep the auth singleton (attached to every request) in sync so a follow-up GET reflects the change.
-	;((req as any).user as User).defaultSourceId = user.defaultSourceId
+	// Keep the request's user (a different entity manager's instance) in sync so a follow-up GET reflects the change.
+	req.user.defaultSourceId = user.defaultSourceId
 	return res.json(user)
 })

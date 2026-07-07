@@ -49,6 +49,32 @@ docker compose up -d   # → http://localhost:3000
 
 Everything you create lives in the `mitra-data` volume — back that up and you've backed up everything. To pin or track a specific version instead of `latest`, see the [available tags](https://github.com/a11delavar/mitra/pkgs/container/mitra).
 
+## Multi-user & sign-in (OIDC)
+
+Out of the box mitra is single-user with no login — fine when only you can reach it. To share one deployment with family or a team, connect it to any OpenID Connect provider (Pocket ID, Authelia, Authentik, Keycloak, Google, …) and every person signs in with their existing account and gets their own calendars:
+
+```yaml
+services:
+  mitra:
+    image: ghcr.io/a11delavar/mitra:latest
+    environment:
+      MITRA_URL: 'https://mitra.example.com'                       # the URL users reach mitra at
+      MITRA_OIDC_ISSUER: 'https://auth.example.com'                # your provider's issuer URL
+      MITRA_OIDC_CLIENT_ID: 'mitra'
+      MITRA_OIDC_CLIENT_SECRET: '…'                                # omit for a public client (PKCE is always on)
+      # MITRA_OIDC_SCOPES: 'openid profile email'                  # the default
+```
+
+Register `https://mitra.example.com/auth/callback` as the redirect URI at your provider — that's all the provider needs to know.
+
+A few things worth knowing:
+
+- **Sign-in happens on the server** (Authorization Code flow with PKCE). Your browser only ever holds an opaque session cookie — no tokens in web storage.
+- **Accounts create themselves**: anyone your provider authenticates gets a mitra account on first sign-in. Control who may in your provider (e.g. by group or app assignment).
+- **Turning OIDC on is a fresh start.** Multi-user gives every identity — including the first — a brand-new empty account; the calendars you added while the deployment was single-user don't carry over. After your first sign-in, just re-add your integrations.
+
+
+### Location Autocomplete
 Location autocomplete works out of the box — it's powered by [Photon](https://photon.komoot.io), a free, open-source geocoder (no API key, no signup), queried through your own server so your searches never leave it from the browser. If you'd rather not rely on komoot's public instance, [host Photon yourself](https://github.com/komoot/photon) and point Mitra at it with the `MITRA_PHOTON_URL` environment variable.
 
 ## Contributing

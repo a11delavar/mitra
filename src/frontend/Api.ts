@@ -15,6 +15,11 @@ export class ApiError extends HttpError {
 	}
 
 	override async throw(): Promise<never> {
+		// The session expired mid-use (multi-user mode): bounce through the backend's sign-in and land
+		// back here. Initial navigations never reach this — the server redirects the app shell itself.
+		if (this.status === 401) {
+			location.assign(`/auth/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`)
+		}
 		const body = await this.response.json().catch(() => undefined) as { error?: string } | undefined
 		this.message = body?.error || this.response.statusText || `Request failed (${this.response.status})`
 		throw this
@@ -45,6 +50,12 @@ let currentUser: User | undefined
 
 export async function fetchUser() {
 	return currentUser = await Api.get<User>('/user')
+}
+
+/** The signed-in user. An `identity` marks OIDC (multi-user mode) — that's what the sidebar keys the
+ * account section and sign-out on; the single-user default has none. */
+export function getUser() {
+	return currentUser
 }
 
 export function getDefaultSourceId() {

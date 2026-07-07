@@ -13,11 +13,10 @@ entriesRouter.get('/', async (req, res) => {
 		return res.status(400).json({ error: 'Missing start or end date parameters' })
 	}
 
-	// Entries are global to the integration for now; in a multi-user setup we would filter by user.id.
 	const [startDate, endDate] = [new Date(start), new Date(end)]
 
 	const em = orm.em.fork()
-	const visibleSources = await em.find(Source, { enabled: true, hidden: false })
+	const visibleSources = await req.user.sources(em, { enabled: true, hidden: false })
 	const visibleSourceIds = visibleSources.map(source => source.id)
 
 	// Plain rows: non-recurring entries + recurrence overrides (a single edited occurrence) that fall in the
@@ -53,7 +52,7 @@ entriesRouter.post('/', async (req, res) => {
 		return res.status(400).json({ error: 'Invalid recurrence rule' })
 	}
 
-	const targetSource = await em.findOneOrFail(Source, { id: targetSourceId })
+	const targetSource = await req.user.source(em, targetSourceId)
 	const targetIntegration = await em.findOneOrFail(Integration, { id: targetSource.integrationId })
 
 	const incoming = new Entry({
@@ -77,13 +76,13 @@ entriesRouter.post('/', async (req, res) => {
 
 	const created = await targetIntegration.createEntry(em, incoming)
 	await em.flush()
-	syncEmitter.emit('updated')
+	syncEmitter.emit('updated', req.user.id)
 	return res.status(201).json(created)
 })
 
 entriesRouter.put('/:id', async (req, res) => {
 	const em = orm.em.fork()
-	const existing = await em.findOneOrFail(Entry, { id: req.params.id })
+	const existing = await req.user.entry(em, req.params.id)
 
 	// The client sends the full edited entry; the backend diffs as needed.
 	const body = req.body as Partial<Entry> & { sourceId?: string, scope?: RecurrenceScope, recurrenceId?: string }
@@ -95,12 +94,11 @@ entriesRouter.put('/:id', async (req, res) => {
 		return res.status(400).json({ error: 'Invalid recurrence rule' })
 	}
 
-	// Resolve the current and target sources (and their integrations) by id.
+	// Resolve the current and target sources (and their integrations) by id. The current one is owned
+	// transitively (the entry lookup above proved it); a DIFFERENT target must prove its own ownership.
 	const targetSourceId = body.sourceId ?? existing.sourceId
-	const [currentSource, targetSource] = await Promise.all([
-		em.findOneOrFail(Source, { id: existing.sourceId }),
-		em.findOneOrFail(Source, { id: targetSourceId }),
-	])
+	const currentSource = await em.findOneOrFail(Source, { id: existing.sourceId })
+	const targetSource = targetSourceId === existing.sourceId ? currentSource : await req.user.source(em, targetSourceId)
 	const [currentIntegration, targetIntegration] = await Promise.all([
 		em.findOneOrFail(Integration, { id: currentSource.integrationId }),
 		em.findOneOrFail(Integration, { id: targetSource.integrationId }),
@@ -125,7 +123,7 @@ entriesRouter.put('/:id', async (req, res) => {
 		})
 		const result = await editOccurrence(em, currentIntegration, existing, new Date(body.recurrenceId), edited, body.scope)
 		await em.flush()
-		syncEmitter.emit('updated')
+		syncEmitter.emit('updated', req.user.id)
 		return res.json(result)
 	}
 
@@ -164,19 +162,19 @@ entriesRouter.put('/:id', async (req, res) => {
 			throw error
 		}
 		await em.flush()
-		syncEmitter.emit('updated')
+		syncEmitter.emit('updated', req.user.id)
 		return res.json(created)
 	}
 
 	await targetIntegration.updateEntry(em, existing, incoming)
 	await em.flush()
-	syncEmitter.emit('updated')
+	syncEmitter.emit('updated', req.user.id)
 	return res.json(existing)
 })
 
 entriesRouter.delete('/:id', async (req, res) => {
 	const em = orm.em.fork()
-	const entry = await em.findOneOrFail(Entry, { id: req.params.id })
+	const entry = await req.user.entry(em, req.params.id)
 	const source = await em.findOneOrFail(Source, { id: entry.sourceId })
 	const integration = await em.findOneOrFail(Integration, { id: source.integrationId })
 
@@ -187,13 +185,13 @@ entriesRouter.delete('/:id', async (req, res) => {
 	if (scope && scope !== 'all' && recurrenceId) {
 		await deleteOccurrence(em, integration, entry, new Date(recurrenceId), scope)
 		await em.flush()
-		syncEmitter.emit('updated')
+		syncEmitter.emit('updated', req.user.id)
 		return res.status(204).end()
 	}
 
 	// Removes it from the external source and locally.
 	await integration.deleteEntry(em, entry)
 	await em.flush()
-	syncEmitter.emit('updated')
+	syncEmitter.emit('updated', req.user.id)
 	return res.status(204).end()
 })

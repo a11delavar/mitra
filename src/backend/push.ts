@@ -48,10 +48,10 @@ export interface PushPayload {
 	url?: string
 }
 
-/** Send a notification to every registered browser, pruning subscriptions the push service reports gone. */
-export async function sendToAll(payload: PushPayload): Promise<void> {
+/** Send a notification to every browser the user registered, pruning subscriptions the push service reports gone. */
+export async function sendTo(userId: string, payload: PushPayload): Promise<void> {
 	const em = orm.em.fork()
-	const subscriptions = await em.find(NotificationSubscription, {})
+	const subscriptions = await em.find(NotificationSubscription, { userId })
 	await Promise.all(subscriptions.map(async subscription => {
 		try {
 			await webpush.sendNotification(
@@ -83,6 +83,9 @@ pushRouter.post('/subscription', async (req, res) => {
 	const em = orm.em.fork()
 	const existing = await em.findOne(NotificationSubscription, { endpoint: body.endpoint })
 	const subscription = existing ?? new NotificationSubscription({ id: crypto.randomUUID(), endpoint: body.endpoint })
+	// A browser belongs to whoever is signed in on it: re-registration (which the frontend performs on
+	// every boot) reassigns the endpoint, so reminders never chase a previous user of a shared browser.
+	subscription.userId = req.user.id
 	subscription.keys = { p256dh: body.keys.p256dh, auth: body.keys.auth }
 	em.persist(subscription)
 	await em.flush()
@@ -101,7 +104,8 @@ pushRouter.post('/snooze', (req, res) => {
 		return res.status(400).json({ error: 'Missing notification payload' })
 	}
 	logger.info(`Snoozing "${payload.title}" for ${SNOOZE_MINUTES} minutes`)
-	setTimeout(() => sendToAll({
+	const userId = req.user.id
+	setTimeout(() => sendTo(userId, {
 		title: payload.title!,
 		body: payload.body ?? '',
 		tag: payload.tag!,
@@ -111,6 +115,9 @@ pushRouter.post('/snooze', (req, res) => {
 	return res.status(202).end()
 })
 
+// Deliberately keyed by endpoint alone, not by owner: push services mint endpoints per browser
+// profile, so knowing one IS possession of that browser — and an unsubscribe must work even after
+// another user signed in on it and took the row over.
 pushRouter.delete('/subscription', async (req, res) => {
 	const { endpoint } = req.query as { endpoint?: string }
 	if (!endpoint) {

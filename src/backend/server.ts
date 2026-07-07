@@ -5,7 +5,7 @@ import { NotFoundError } from '@mikro-orm/sqlite'
 import { ModelValueConstructor } from '@a11d/api-model-value-constructor'
 import { createLogger } from '../shared/index.js'
 import { orm } from './orm.js'
-import { authMiddleware } from './auth.js'
+import { authMiddleware, authRouter, oidc } from './auth.js'
 import { Synchronizer } from './Synchronizer.js'
 import { eventsRouter } from './events.js'
 import { entriesRouter } from './entries.js'
@@ -18,7 +18,9 @@ import { ReminderScheduler } from './ReminderScheduler.js'
 import { seedDev } from './Dev.js'
 
 const logger = createLogger('API')
-const PORT = Number(process.env.PORT) || 3000
+// 3000 is the container-internal convention (compose maps it); MITRA_PORT covers bare-metal setups
+// where 3000 is already someone else's.
+const PORT = Number(process.env.MITRA_PORT) || 3000
 
 new Synchronizer(orm).start()
 new ReminderScheduler(orm).start()
@@ -31,6 +33,12 @@ app.use(cors())
 // receive real entities, with their methods and getters, instead of inert plain objects.
 const modelConstructor = new ModelValueConstructor()
 app.use(express.json({ reviver: (_key, value) => modelConstructor.shallConstruct(value) ? modelConstructor.construct(value) : value }))
+// The sign-in/out endpoints live OUTSIDE the auth wall (they are how one gets past it) and exist
+// only in multi-user mode — without OIDC there is nothing to sign into.
+if (oidc) {
+	app.use('/auth', authRouter)
+	logger.info(`Multi-user mode: OIDC against ${oidc.issuer} (redirect URI ${oidc.redirectUri})`)
+}
 app.use(authMiddleware)
 
 // Dev-only: seed a persisted sample integration + entries (a real local calendar) so the app renders

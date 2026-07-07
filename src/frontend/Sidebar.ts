@@ -1,5 +1,5 @@
-import { Component, component, html, css, property, event } from '@a11d/lit'
-import { getIntegrations, toggleSourceVisibility, updateSourceColor, deleteIntegration, fetchIntegrations, getDefaultSourceId, setDefaultSource, resyncSource, resyncIntegration } from './Api.js'
+import { Component, component, html, css, property, state, event } from '@a11d/lit'
+import { getIntegrations, getUser, toggleSourceVisibility, updateSourceColor, deleteIntegration, fetchIntegrations, getDefaultSourceId, setDefaultSource, resyncSource, resyncIntegration } from './Api.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { SourceType, type Source } from 'shared'
 import { outlineStyles } from './components/outlineStyles.js'
@@ -96,6 +96,51 @@ export class Sidebar extends Component {
 
 						&[data-open] {
 							transform: translateX(0);
+						}
+					}
+				}
+
+				.account {
+					display: flex;
+					align-items: center;
+					gap: 0.625rem;
+					margin-top: -1rem;
+					padding: 1rem 0.5rem 0;
+					border-top: 1px solid var(--color-surface);
+
+					> mitra-icon {
+						font-size: 1.25rem;
+						color: var(--color-text-muted);
+						flex-shrink: 0;
+					}
+
+					.avatar {
+						width: 1.75rem;
+						height: 1.75rem;
+						flex-shrink: 0;
+						border-radius: 50%;
+						object-fit: cover;
+					}
+
+					.who {
+						flex: 1;
+						min-width: 0;
+
+						.name {
+							font-size: 0.8125rem;
+							font-weight: 600;
+							color: var(--color-text);
+							white-space: nowrap;
+							overflow: hidden;
+							text-overflow: ellipsis;
+						}
+
+						.email {
+							font-size: 0.6875rem;
+							color: var(--color-text-muted);
+							white-space: nowrap;
+							overflow: hidden;
+							text-overflow: ellipsis;
 						}
 					}
 				}
@@ -413,7 +458,29 @@ export class Sidebar extends Component {
 						Install as an App
 					</button>
 				`}
+				${this.accountTemplate}
 			</nav>
+		`
+	}
+
+	// A provider photo that fails to load (link rotated, endpoint needs auth) falls back to the icon.
+	@state() private profilePictureBroken = false
+
+	/** Who is signed in + sign-out — only in multi-user (OIDC) mode, marked by the user carrying an identity. */
+	private get accountTemplate() {
+		const identity = getUser()?.identity
+		return !identity ? html.nothing : html`
+			<div class="account">
+				${identity.picture && !this.profilePictureBroken
+					? html`<img class="avatar" src=${identity.picture} alt="" referrerpolicy="no-referrer" @error=${() => this.profilePictureBroken = true}>`
+					: html`<mitra-icon icon="circle-user"></mitra-icon>`}
+				<div class="who">
+					<div class="name">${identity.name || identity.email || 'Account'}</div>
+					${!identity.email || identity.email === identity.name ? html.nothing : html`<div class="email">${identity.email}</div>`}
+				</div>
+				<mitra-icon-button icon="log-out" label="Sign out" style="color: var(--color-text-muted)"
+					@click=${() => location.assign('/auth/logout')}></mitra-icon-button>
+			</div>
 		`
 	}
 

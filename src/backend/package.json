@@ -15,6 +15,7 @@
 		"dotenv": "x",
 		"express": "x",
 		"ical.js": "x",
+		"openid-client": "6.x",
 		"tsdav": "x",
 		"@3mo/date-time": "0.10.x",
 		"@3mo/resize-observer": "x"

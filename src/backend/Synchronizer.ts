@@ -28,17 +28,18 @@ export class Synchronizer {
 			const em = this.orm.em.fork()
 			const integrations = await em.find(Integration, {})
 
-			let hasChanges = false
+			// The daemon syncs EVERY user's integrations; ticks go out per affected owner.
+			const changedUsers = new Set<string>()
 			for (const integration of integrations) {
 				this.logger.debug(`Syncing ${integration.toString()}`)
 				if (await integration.sync(em)) {
-					hasChanges = true
+					changedUsers.add(integration.userId)
 				}
 			}
 
 			await em.flush()
-			if (hasChanges) {
-				syncEmitter.emit('updated')
+			for (const userId of changedUsers) {
+				syncEmitter.emit('updated', userId)
 			}
 		} catch (error) {
 			this.logger.error('Sync failed:', error)
