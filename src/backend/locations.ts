@@ -67,7 +67,9 @@ locationsRouter.get('/', async (req, res) => {
 		}
 		const body = await response.json() as { features?: Array<PhotonFeature> }
 		const seen = new Set(recents.map(full))
-		return res.json([...recents, ...suggestions(body.features ?? []).filter(suggestion => !seen.has(full(suggestion)))])
+		const geocoded = suggestions(body.features ?? []).filter(suggestion => !seen.has(full(suggestion)))
+		logger.debug(`Geocoded "${query}" via Photon → ${geocoded.length} suggestion(s) (+${recents.length} recent)`)
+		return res.json([...recents, ...geocoded])
 	} catch (error) {
 		// Degrade to what we have: recents (and free text) beat a broken location field — the value the
 		// user is typing is valid as-is either way.

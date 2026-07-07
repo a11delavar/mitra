@@ -77,6 +77,19 @@ A few things worth knowing:
 ### Location Autocomplete
 Location autocomplete works out of the box — it's powered by [Photon](https://photon.komoot.io), a free, open-source geocoder (no API key, no signup), queried through your own server so your searches never leave it from the browser. If you'd rather not rely on komoot's public instance, [host Photon yourself](https://github.com/komoot/photon) and point Mitra at it with the `MITRA_PHOTON_URL` environment variable.
 
+### Logging
+Mitra logs to stdout (so `docker logs` / `docker compose logs` shows everything). A healthy server is quiet by design — startup, sign-ins, connected integrations, remote changes it pulled, and reminders as they fire. Turn the verbosity up with `MITRA_LOG_LEVEL` when you need to diagnose something:
+
+| `MITRA_LOG_LEVEL` | What you get |
+| --- | --- |
+| `error` | Failures only |
+| `warn` | …plus handled degradations (an undelivered push, a geocoder timeout, a failed OIDC discovery) |
+| `info` *(default)* | …plus lifecycle milestones — the healthy-server heartbeat |
+| `debug` | …plus **every request** (`method /path → status (ms)`), each sync tick, session events, entry edits, and CalDAV round-trips |
+| `trace` | …plus the firehose: SQL and raw `.ics` payloads |
+
+Each level includes everything quieter than it. Set it in your compose `environment:` block (e.g. `MITRA_LOG_LEVEL: debug`). Secrets — passwords and tokens — are never logged, at any level.
+
 ## Contributing
 
 Issues and pull requests are welcome — Mitra is built in the open.

@@ -9,6 +9,9 @@ import { Integration } from './Integration.js'
 import { Entry, EntryType, TaskStatus } from './Entry.js'
 import { Recurrence } from './Recurrence.js'
 import { Color } from './Color.js'
+import { createLogger } from './Logger.js'
+
+const logger = createLogger('CalDAV')
 
 export interface CalDAVCredentials {
 	username: string
@@ -54,6 +57,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	protected override async fetchSources() {
 		const client = await this.getClient()
 		const calendars = await client.fetchCalendars()
+		logger.debug(`Discovered ${calendars.length} calendar(s) at ${this.uri}`)
 		return calendars.flatMap(cal => {
 			const name = typeof cal.displayName === 'string' ? cal.displayName : 'Untitled'
 			const color = typeof cal.calendarColor === 'string' ? cal.calendarColor : Color.get(cal.url || name).value
@@ -340,6 +344,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 		source.syncState = { syncToken: newSyncToken }
 
+		logger.debug(`Synced "${source.name}": ${changedObjects.length} fetched, ${deletedUrls.length} deleted${changed ? '' : ' (no local changes)'}`)
 		return changed
 	}
 
@@ -473,6 +478,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		if (response.ok === false) {
 			throw new Error(`CalDAV update failed: ${response.status} ${response.statusText}`)
 		}
+		logger.debug(`Updated ${existing.uri} — changed: ${keys.length ? keys.join(', ') : 'recurrence/exdates'}`)
+		logger.verbose(existing.data.raw)
 
 		const etag = response.headers?.get('etag') || response.headers?.get('Etag') || response.headers?.get('ETag')
 		if (etag) {
@@ -530,6 +537,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		if (response.ok === false) {
 			throw new Error(`CalDAV create failed: ${response.status} ${response.statusText}`)
 		}
+		logger.debug(`Created ${isTask ? 'VTODO' : 'VEVENT'} ${CalDAV.resolveMemberUrl(source.uri, filename)}`)
+		logger.verbose(iCalString)
 
 		entry.uri = CalDAV.resolveMemberUrl(source.uri, filename)
 		entry.uid = uid // mirror the .ics UID onto the row, so a later edited occurrence can link back as an override
@@ -554,6 +563,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 					etag: entry.data?.etag || undefined,
 				}
 			})
+			logger.debug(`Deleted ${entry.uri}`)
 		}
 		em.remove(entry)
 	}

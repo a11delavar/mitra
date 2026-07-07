@@ -1,5 +1,7 @@
 import * as client from 'openid-client'
-import type { IdentityClaims } from '../shared/index.js'
+import { createLogger, type IdentityClaims } from '../shared/index.js'
+
+const logger = createLogger('OIDC')
 
 export interface OidcOptions {
 	issuer: string
@@ -77,8 +79,14 @@ export class Oidc {
 			this.options.clientSecret ? undefined : client.None(),
 			// An http issuer is allowed deliberately: a LAN self-host or compose-internal IdP has no TLS.
 			new URL(this.options.issuer).protocol === 'http:' ? { execute: [client.allowInsecureRequests] } : undefined,
-		).catch(error => {
+		).then(configuration => {
+			logger.debug(`Discovered OIDC metadata for ${this.options.issuer}`)
+			return configuration
+		}).catch(error => {
 			this.configuration = undefined
+			// Common and operationally important (IdP down / wrong issuer / DNS) — surface it at info level,
+			// since it's retried on the next sign-in rather than crashing the server.
+			logger.warn(`OIDC discovery failed for ${this.options.issuer}: ${error instanceof Error ? error.message : error}`)
 			throw error
 		})
 	}

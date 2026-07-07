@@ -28,6 +28,7 @@ async function findOrSeedDefaultUser(): Promise<User> {
 	const user = User.default
 	orm.em.persist(user)
 	await orm.em.flush()
+	logger.debug('Seeded the single-user default account')
 	return user
 }
 
@@ -36,7 +37,10 @@ const defaultUser = oidc && process.env.MITRA_DEV !== 'true'
 	: await findOrSeedDefaultUser()
 
 // Expired sessions self-delete when touched; this sweeps the ones whose browsers never came back.
-await orm.em.nativeDelete(Session, { expiresAt: { $lt: new Date() } })
+const sweptSessions = await orm.em.nativeDelete(Session, { expiresAt: { $lt: new Date() } })
+if (sweptSessions) {
+	logger.debug(`Swept ${sweptSessions} expired session(s) at boot`)
+}
 
 /** Parse one cookie out of the raw header — the app has exactly two cookies, not worth a dependency. */
 function cookie(req: Request, name: string): string | undefined {
@@ -78,6 +82,7 @@ const session: RequestHandler = async (req, res, next) => {
 					found.renew()
 					await em.flush()
 					setSessionCookie(res, token)
+					logger.debug(`Renewed session for user ${user.id}`)
 				}
 				req.user = user
 				return next()
@@ -86,6 +91,7 @@ const session: RequestHandler = async (req, res, next) => {
 		if (found) {
 			em.remove(found)
 			await em.flush()
+			logger.debug('Cleared an expired or orphaned session')
 		}
 		res.clearCookie(Session.cookie, { path: '/' })
 	}
@@ -130,6 +136,7 @@ authRouter.get('/callback', async (req, res) => {
 		return res.redirect('/auth/login') // expired or cold callback — restart the dance
 	}
 	res.clearCookie(transitCookie, { path: '/auth' })
+	logger.debug('OIDC callback received; exchanging authorization code')
 	const transit = JSON.parse(Buffer.from(raw, 'base64url').toString()) as Transit
 	// The exchange validates the callback against the registered redirect URI — reconstruct the
 	// "current URL" off the configured base too, since behind the reverse proxy the request's own
@@ -156,6 +163,7 @@ authRouter.get('/logout', async (req, res) => {
 			idToken = session.idToken
 			em.remove(session)
 			await em.flush()
+			logger.info(`Signed out user ${session.userId}`)
 		}
 	}
 	res.clearCookie(Session.cookie, { path: '/' })

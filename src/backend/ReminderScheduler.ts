@@ -82,7 +82,10 @@ export class ReminderScheduler {
 			const userByIntegration = new Map(integrations.map(integration => [integration.id, integration.userId]))
 			const userBySource = new Map(sources.map(source => [source.id, userByIntegration.get(source.integrationId)]))
 
-			for (const { entry, minutes } of dueReminders([...rows, ...occurrences], watermark, now)) {
+			const due = dueReminders([...rows, ...occurrences], watermark, now)
+			this.logger.debug(`Tick: window (${watermark.toISOString()}, ${now.toISOString()}] — scanned ${rows.length} plain + ${occurrences.length} occurrence(s), ${due.length} due`)
+
+			for (const { entry, minutes } of due) {
 				const userId = userBySource.get(entry.sourceId)
 				if (!userId) {
 					continue

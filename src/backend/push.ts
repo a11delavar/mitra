@@ -59,6 +59,7 @@ export async function sendTo(userId: string, payload: PushPayload): Promise<void
 		logger.warn(`"${payload.title}" not delivered: user ${userId} has no push subscriptions on this instance.`)
 		return
 	}
+	logger.debug(`Delivering "${payload.title}" to ${subscriptions.length} subscription(s) for user ${userId}`)
 	await Promise.all(subscriptions.map(async subscription => {
 		try {
 			await webpush.sendNotification(

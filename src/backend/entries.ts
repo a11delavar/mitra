@@ -1,8 +1,10 @@
 import { Router } from 'express'
 import { orm } from './orm.js'
 import { syncEmitter } from './syncEmitter.js'
-import { Entry, Integration, Recurrence, Source, type RecurrenceScope } from '../shared/index.js'
+import { Entry, Integration, Recurrence, Source, createLogger, type RecurrenceScope } from '../shared/index.js'
 import { editOccurrence, deleteOccurrence, expandedOccurrences } from './occurrences.js'
+
+const logger = createLogger('Entries')
 
 export const entriesRouter = Router()
 
@@ -102,6 +104,7 @@ entriesRouter.post('/', async (req, res) => {
 	const created = await targetIntegration.createEntry(em, incoming)
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
+	logger.debug(`Created ${created.type} "${created.heading}" (${created.id}) in source ${targetSource.id}`)
 	return res.status(201).json(created)
 })
 
@@ -149,6 +152,7 @@ entriesRouter.put('/:id', async (req, res) => {
 		const result = await editOccurrence(em, currentIntegration, existing, new Date(body.recurrenceId), edited, body.scope)
 		await em.flush()
 		syncEmitter.emit('updated', req.user.id)
+		logger.debug(`Edited occurrence of series ${existing.id} (scope '${body.scope}')`)
 		return res.json(result)
 	}
 
@@ -188,12 +192,14 @@ entriesRouter.put('/:id', async (req, res) => {
 		}
 		await em.flush()
 		syncEmitter.emit('updated', req.user.id)
+		logger.debug(`Migrated entry ${existing.id} → source ${targetSource.id} (new id ${created.id})`)
 		return res.json(created)
 	}
 
 	await targetIntegration.updateEntry(em, existing, incoming)
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
+	logger.debug(`Updated entry ${existing.id} "${incoming.heading}"`)
 	return res.json(existing)
 })
 
@@ -211,6 +217,7 @@ entriesRouter.delete('/:id', async (req, res) => {
 		await deleteOccurrence(em, integration, entry, new Date(recurrenceId), scope)
 		await em.flush()
 		syncEmitter.emit('updated', req.user.id)
+		logger.debug(`Deleted occurrence of series ${entry.id} (scope '${scope}')`)
 		return res.status(204).end()
 	}
 
@@ -218,5 +225,6 @@ entriesRouter.delete('/:id', async (req, res) => {
 	await integration.deleteEntry(em, entry)
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
+	logger.debug(`Deleted entry ${entry.id} "${entry.heading}"`)
 	return res.status(204).end()
 })

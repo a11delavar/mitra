@@ -1,7 +1,9 @@
 import { Router } from 'express'
 import { orm } from './orm.js'
 import { syncEmitter } from './syncEmitter.js'
-import { Integration } from '../shared/index.js'
+import { Integration, createLogger } from '../shared/index.js'
+
+const logger = createLogger('Sources')
 
 export const sourcesRouter = Router()
 
@@ -13,6 +15,7 @@ sourcesRouter.put('/:id/visibility', async (req, res) => {
 	await em.flush()
 
 	syncEmitter.emit('updated', req.user.id)
+	logger.debug(`Source ${source.id} ${source.hidden ? 'hidden' : 'shown'}`)
 	return res.json(source)
 })
 
@@ -26,6 +29,7 @@ sourcesRouter.post('/:id/resync', async (req, res) => {
 	await em.flush()
 
 	syncEmitter.emit('updated', req.user.id)
+	logger.info(`Re-imported source "${source.name}" (${source.id})`)
 	return res.status(204).end()
 })
 
@@ -37,5 +41,6 @@ sourcesRouter.put('/:id/color', async (req, res) => {
 	await em.flush()
 
 	syncEmitter.emit('updated', req.user.id)
+	logger.debug(`Source ${source.id} recoloured to ${source.color}`)
 	return res.json(source)
 })

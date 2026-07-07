@@ -1,7 +1,9 @@
 import { Router } from 'express'
 import { orm } from './orm.js'
 import { syncEmitter } from './syncEmitter.js'
-import { Integration, CalDAV, Source } from '../shared/index.js'
+import { Integration, CalDAV, Source, createLogger } from '../shared/index.js'
+
+const logger = createLogger('Integrations')
 
 export const integrationsRouter = Router()
 
@@ -27,7 +29,10 @@ integrationsRouter.post('/', async (req, res) => {
 	em.persist(integration)
 	await integration.applyAndSync(em, req.body as Integration)
 	syncEmitter.emit('updated', req.user.id)
-	return res.status(201).json(await em.findOneOrFail(Integration, { id: integration.id }, { populate: ['sources'] }))
+	const saved = await em.findOneOrFail(Integration, { id: integration.id }, { populate: ['sources'] })
+	const enabled = saved.sources.getItems().filter(source => source.enabled).length
+	logger.info(`Connected ${integration.type} integration with ${enabled} source(s) enabled`)
+	return res.status(201).json(saved)
 })
 
 integrationsRouter.put('/:id', async (req, res) => {
@@ -35,6 +40,7 @@ integrationsRouter.put('/:id', async (req, res) => {
 	const integration = await req.user.integration(em, req.params.id)
 	await integration.applyAndSync(em, req.body as Integration)
 	syncEmitter.emit('updated', req.user.id)
+	logger.debug(`Updated integration ${integration.id}`)
 	return res.json(await em.findOneOrFail(Integration, { id: integration.id }, { populate: ['sources'] }))
 })
 
@@ -43,11 +49,13 @@ integrationsRouter.put('/:id', async (req, res) => {
 integrationsRouter.post('/:id/resync', async (req, res) => {
 	const em = orm.em.fork()
 	const integration = await req.user.integration(em, req.params.id)
-	for (const source of await em.find(Source, { integrationId: integration.id, enabled: true })) {
+	const sources = await em.find(Source, { integrationId: integration.id, enabled: true })
+	for (const source of sources) {
 		await integration.resyncSource(em, source)
 	}
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
+	logger.info(`Re-imported integration ${integration.id} (${sources.length} source(s))`)
 	return res.status(204).end()
 })
 
@@ -58,5 +66,6 @@ integrationsRouter.delete('/:id', async (req, res) => {
 	// Sources and their entries are removed by the ON DELETE CASCADE foreign keys.
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
+	logger.info(`Disconnected integration ${integration.id}`)
 	return res.status(204).end()
 })
