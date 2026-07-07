@@ -61,7 +61,9 @@ worker.addEventListener('push', event => {
 		// replacement (e.g. a snoozed re-send) alert again rather than swap silently.
 		tag: payload.tag,
 		renotify: true,
-		icon: '/android-chrome-192x192.png',
+		// No `icon`: an installed PWA already brands the notification header with the app icon, so a large
+		// body image of the same logo is pure duplication. `badge` is a different slot — the monochrome
+		// glyph some platforms (Android's status bar) show instead — so it stays.
 		badge: '/android-chrome-192x192.png',
 		// The event's start, not the delivery instant — "when is it" beats "when did this arrive".
 		timestamp: payload.timestamp,

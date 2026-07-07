@@ -52,6 +52,13 @@ export interface PushPayload {
 export async function sendTo(userId: string, payload: PushPayload): Promise<void> {
 	const em = orm.em.fork()
 	const subscriptions = await em.find(NotificationSubscription, { userId })
+	if (subscriptions.length === 0) {
+		// A reminder (or snooze) fired but this instance has no one to deliver it to — the usual cause of
+		// "the log says it fired but I got nothing". Subscriptions are per-instance: the browser must have
+		// granted permission and subscribed against THIS deployment's origin, not just some other instance.
+		logger.warn(`"${payload.title}" not delivered: user ${userId} has no push subscriptions on this instance.`)
+		return
+	}
 	await Promise.all(subscriptions.map(async subscription => {
 		try {
 			await webpush.sendNotification(
@@ -62,6 +69,9 @@ export async function sendTo(userId: string, payload: PushPayload): Promise<void
 			const status = (error as { statusCode?: number }).statusCode
 			if (status === 404 || status === 410) {
 				em.remove(subscription) // revoked/expired — the push service says this endpoint is gone
+				// Log it: a silently vanishing subscription is why a browser can stop getting reminders
+				// with no error, so leave a trace of when and why the row went away.
+				logger.info(`Pruned a gone push subscription for user ${userId} (${subscription.endpoint.slice(0, 48)}…).`)
 			} else {
 				logger.warn(`Push to ${subscription.endpoint.slice(0, 48)}… failed:`, error instanceof Error ? error.message : error)
 			}

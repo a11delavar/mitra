@@ -3,7 +3,7 @@ import { PageComponent, route } from '@a11d/lit-application'
 import { Task } from '@lit/task'
 import { DateTime } from '@3mo/date-time'
 import { MediaQueryController } from '@3mo/media-query-observer'
-import { Entry, EntryType, SourceType } from 'shared'
+import { Entry, EntryType, SourceType, DEFAULT_REMINDER_MINUTES } from 'shared'
 import { fetchEvents, getPrimarySource } from './Api.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
 import { EntryStore } from './EntryStore.js'
@@ -144,6 +144,7 @@ export class PageCalendar extends PageComponent {
 			start,
 			end: start.add({ hours: 1 }),
 			allDay: false,
+			reminders: [DEFAULT_REMINDER_MINUTES], // a timed draft — same default as a create gesture
 		}))
 		EntryStore.openDraft()
 	}

@@ -26,6 +26,13 @@ export interface EntryData {
  * A single knob today; a user setting later. */
 export const SNAP_MINUTES = 15
 
+/** A newly-created TIMED entry starts with a reminder this many minutes before — the convention other
+ * calendars default to, so an event you jot down still nudges you without a manual step. All-day entries
+ * get none: "30 min before" a midnight start fires at 23:30 the night before, which is nobody's intent.
+ * A default, not a decree — it renders as a normal removable row in the editor. A single knob today; a
+ * user setting later, like {@link SNAP_MINUTES}. */
+export const DEFAULT_REMINDER_MINUTES = 30
+
 @model('Entry')
 @entity()
 @unique({ properties: ['sourceId', 'uri'] })
