@@ -271,8 +271,11 @@ export class PageCalendar extends PageComponent {
 							<button>
 								<selectedcontent></selectedcontent>
 							</button>
-							<option value="month">${t('Month')} <kbd>M</kbd></option>
-							<option value="week">${t('Week')} <kbd>W</kbd></option>
+							${/* Options built via .map, NOT inline <option> literals: an inline option carrying a lit marker is
+							   present when lit sets the template's innerHTML, and Chrome 150 clones it into <selectedcontent>
+							   right then — duplicating the marker and corrupting lit's part indices. Mapped options aren't
+							   in the template at prep time, so nothing is cloned then. (Do not inline these.) */''}
+							${[{ value: 'month', label: t('Month'), key: 'M' }, { value: 'week', label: t('Week'), key: 'W' }].map(o => html`<option value=${o.value} ?selected=${o.value === this.view}>${o.label}<kbd>${o.key}</kbd></option>`)}
 						</select>
 						<button @click=${() => this.navigatingDate = new DateTime()}>
 							${t('Today')} <kbd>T</kbd>
