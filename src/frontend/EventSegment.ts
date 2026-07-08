@@ -167,7 +167,7 @@ export class EntrySegmentComponent extends Component {
 				&[has-next] > .resize-end { display: none; }
 
 				/* Too short for top+bottom handles plus a grab band — resize from the editor instead. */
-				@container (max-height: 24px) {
+				@container (max-height: 1.5rem) {
 					&[resize=block] > .resize-start, &[resize=block] > .resize-end { display: none; }
 				}
 
@@ -231,7 +231,7 @@ export class EntrySegmentComponent extends Component {
 					> .label { min-width: 0; }
 					> mitra-task-status { font-size: 0.95rem; }
 
-					@container (max-height: 45px) {
+					@container (max-height: 2rem) {
 						flex: initial;
 						white-space: normal;
 						overflow: visible;
@@ -239,11 +239,11 @@ export class EntrySegmentComponent extends Component {
 						min-width: 0;
 					}
 
-					@container (max-height: 20px) {
+					@container (max-height: 1rem) {
 						white-space: nowrap;
 					}
 
-					@container (max-height: 12px) {
+					@container (max-height: 0.5rem) {
 						display: none;
 					}
 				}
@@ -261,15 +261,48 @@ export class EntrySegmentComponent extends Component {
 					white-space: nowrap;
 					text-overflow: ellipsis;
 					overflow: hidden;
+					flex-shrink: 0;
 
-					@container (max-height: 45px) {
+					@container (max-height: 2rem) {
 						display: none;
-						flex-shrink: 0;
 					}
 
 					& > .separator, & > .end {
-						@container (max-height: 45px) {
+						@container (max-height: 2rem) {
 							display: none;
+						}
+					}
+				}
+
+				/* The location is the optional third row: shown only once the block is tall enough to seat a
+				   third line beneath the time + heading (which themselves appear from 45px). Below that the
+				   query hides it, so short blocks — and the compact month cells — keep just time + heading. */
+				& > .location {
+					display: none;
+					align-items: center;
+					gap: 0.2rem;
+					opacity: 0.75;
+					font-size: 0.65rem;
+					line-height: 1.1;
+					min-width: 0;
+
+					> mitra-icon {
+						font-size: 0.75rem;
+						flex-shrink: 0;
+					}
+
+					@container (min-height: 3rem) {
+						display: flex;
+						> .label {
+							text-overflow: ellipsis;
+							overflow: hidden;
+						}
+					}
+
+					@container (max-height: 4.5rem) {
+						> .label {
+							min-width: 0;
+							white-space: nowrap;
 						}
 					}
 				}
@@ -301,6 +334,11 @@ export class EntrySegmentComponent extends Component {
 				`}
 				<span class="label">${this.segment.entry.heading || (this.segment.entry.persisted ? '' : t('Draft'))}</span>
 			</div>
+			${this.segment.allDay || !this.segment.entry.location ? html.nothing : html`
+				<div class="location">
+					<span class="label">${this.segment.entry.location}</span>
+				</div>
+			`}
 			${!this.resize || !this.segment.entry.persisted ? html.nothing : html`
 				<div class="resize-start"></div>
 				<div class="resize-end"></div>
