@@ -117,7 +117,8 @@ export class Day extends Component {
 				.entries {
 					grid-row: 2;
 					display: grid;
-					grid-template-rows: repeat(1440, var(--minute-height));
+					/* fr, not a repeated length — see the .axis rule in Days.ts for why. */
+					grid-template-rows: repeat(1440, minmax(0, 1fr));
 					grid-template-columns: 1fr;
 					position: relative;
 					container-type: inline-size;

@@ -263,6 +263,12 @@ export class EntryDragController extends Controller {
 		if (e.button !== 0) {
 			return
 		}
+		// A second pointer while a gesture is in flight means multi-touch (a pinch-zoom) — abandon the
+		// single-pointer drag so it neither fights the zoom nor leaves a stray draft behind.
+		if (this.drag && e.pointerId !== this.drag.pointerId) {
+			this.onPointerCancel(new PointerEvent('pointercancel', { pointerId: this.drag.pointerId }))
+			return
+		}
 		const target = e.target as HTMLElement
 		if (target.closest('mitra-entry-details') || target.closest('mitra-task-status')) {
 			// Interactions inside the editor popover, or on a task's status checkbox/menu, are never grid

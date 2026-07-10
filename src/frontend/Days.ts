@@ -5,6 +5,7 @@ import { type Entry, type UserTimeZone } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { EntryDragController } from './EntryDragController.js'
+import { DayDensityController } from './DayDensityController.js'
 import { getTimeZones } from './Api.js'
 
 @component('mitra-days')
@@ -17,6 +18,7 @@ export class Days extends Component {
 	private get days(): Array<DateTime> { return this.dates.days }
 
 	protected readonly entryDrag = new EntryDragController(this)
+	protected readonly density = new DayDensityController(this)
 	// Segments over the RENDER WINDOW, not the whole buffer — offscreen days need no slicing.
 	private get segments() { return EntrySegments.of(this.entries, this.dates.window.days) }
 
@@ -116,7 +118,12 @@ export class Days extends Component {
 		return css`
 			mitra-days {
 				display: grid;
-				grid-template-rows: auto auto minmax(var(--grid-min-height), 1fr);
+				/* The timed row is FIXED to --grid-min-height (owned by DayDensityController: whole-day-fit
+				   height × zoom, ≥ the viewport since zoom ≥ 1, so it always fills). The minute grids inside
+				   (.axis, .overlays, mitra-day .entries) use fr tracks, so their 1440 rows sum to exactly
+				   this row whatever it is — no gap below, no overflow. Not minmax(…, 1fr): a flexing row can
+				   grow past what anything inside was sized against. */
+				grid-template-rows: auto auto var(--grid-min-height);
 				/* ONE grid owns every column: an auto track for the "+" affordance, one content-sized
 				   track per displayed time zone (the header labels and the axis hours adopt these same
 				   tracks via subgrid, so they align by construction), then the day columns. The day
@@ -130,11 +137,14 @@ export class Days extends Component {
 				--time-axis-width: calc(var(--_tz-count, 1) * 3.75rem); /* pre-measurement approximation */
 				container-type: inline-size;
 				overflow: auto;
+				/* Single-finger pan still scrolls the grid; two-finger pinch-zoom is disabled here so the
+				   DayDensityController can own it (see its touch handlers). */
+				touch-action: pan-x pan-y;
 				scroll-padding-inline-start: var(--time-axis-width);
 				scrollbar-width: none; /* Firefox */
-				--minute-min-height: 0.75px;
-				--minute-height: max(var(--minute-min-height), calc(100% / 1440));
-				--grid-min-height: calc(1440 * var(--minute-min-height));
+				/* Pre-JS fallback; DayDensityController overrides it once it measures (see above). 100% makes
+				   the fixed row fill the container so nothing collapses before any JS runs. */
+				--grid-min-height: 100%;
 
 				&::-webkit-scrollbar {
 					display: none; /* Chrome/Safari */
@@ -235,7 +245,13 @@ export class Days extends Component {
 						grid-column: 1 / calc(-1 * var(--_days-length) - 1);
 						grid-row: 3;
 						display: grid;
-						grid-template-rows: repeat(1440, var(--minute-height));
+						/* One fr track per minute — NEVER a repeated px/percentage length. Chromium quantizes
+						   each track to 1/64px, so 1440 × a quantized per-minute height drifts up to ~22px
+						   from the row and JUMPS in 22.5px steps whenever the zoom crosses a quantization
+						   boundary (a gap below 23:00 that shifts as the density changes). fr is the one
+						   sizing mode where the browser distributes the remainder so the tracks sum to the
+						   container exactly. minmax(0, 1fr) so content can't inflate a minute row. */
+						grid-template-rows: repeat(1440, minmax(0, 1fr));
 						/* The same parent tracks as the header labels — aligned by construction. */
 						grid-template-columns: subgrid;
 						border-inline-end: var(--border);
@@ -278,7 +294,8 @@ export class Days extends Component {
 						grid-column: calc(-1 * var(--_days-length) - 1) / -1;
 						grid-row: 3;
 						display: grid;
-						grid-template-rows: repeat(1440, var(--minute-height));
+						/* fr, not a repeated length — see .axis for why. */
+						grid-template-rows: repeat(1440, minmax(0, 1fr));
 						grid-template-columns: subgrid;
 
 						.hour {
