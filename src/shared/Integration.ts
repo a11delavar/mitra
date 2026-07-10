@@ -119,7 +119,9 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		this.merge(incoming)
 		const sources = await this.getSources(em)
 
-		const enabledKeys = new Set([...(incoming.sources ?? [])].filter(source => source.enabled).map(source => source.key))
+		// `incoming` is a client DTO, not a rehydrated entity (`@a11d/api` structure-clones the body, so
+		// its sources are plain objects with no `key` getter) — key them via the static, not `source.key`.
+		const enabledKeys = new Set([...(incoming.sources ?? [])].filter(source => source.enabled).map(source => Source.keyOf(source)))
 		for (const source of sources) {
 			source.enabled = enabledKeys.has(source.key)
 		}

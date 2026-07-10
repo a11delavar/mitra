@@ -155,4 +155,35 @@ describe('CalDAV all-day serialization', () => {
 			assert.match(master.data!.raw!, /EXDATE;VALUE=DATE:20260608/)
 		})
 	})
+
+	describe('fetchObjects (resilient multiget)', () => {
+		const dav = () => new CalDAV({ credentials: { username: 'u', password: 'p' } })
+		const call = (client: unknown, urls: Array<string>) => (dav() as unknown as { fetchObjects(c: unknown, cal: { url: string }, u: Array<string>): Promise<Array<{ url: string }>> }).fetchObjects(client, { url: 'https://cal/' }, urls)
+
+		it('returns the batch result untouched when the multiget succeeds (one request, fast path)', async () => {
+			let calls = 0
+			const client = { fetchCalendarObjects: ({ objectUrls }: { objectUrls: Array<string> }) => { calls++; return Promise.resolve(objectUrls.map(url => ({ url }))) } }
+			const objects = await call(client, ['a', 'b', 'c'])
+			assert.deepEqual(objects.map(o => o.url), ['a', 'b', 'c'])
+			assert.equal(calls, 1) // no per-object fallback when the batch is fine
+		})
+
+		it('falls back to per-object fetches and skips the gone one when the batch multiget throws', async () => {
+			// Mirrors tsdav: a batch with any per-href 404 throws wholesale; the gone href throws on its own too.
+			const gone = 'b'
+			const client = {
+				fetchCalendarObjects: ({ objectUrls }: { objectUrls: Array<string> }) => {
+					if (objectUrls.length > 1) {
+						return Promise.reject(new Error('Collection query failed: 404 Not Found'))
+					}
+					if (objectUrls[0] === gone) {
+						return Promise.reject(new Error('Collection query failed: 404 Not Found'))
+					}
+					return Promise.resolve([{ url: objectUrls[0] }])
+				},
+			}
+			const objects = await call(client, ['a', 'b', 'c'])
+			assert.deepEqual(objects.map(o => o.url), ['a', 'c']) // 'b' dropped, sync still completes
+		})
+	})
 })

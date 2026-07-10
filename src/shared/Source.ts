@@ -29,8 +29,15 @@ export class Source {
 
 	@property({ type: 'json', nullable: true }) syncState?: Record<string, any>
 
+	/** The identity of a source within its integration: its component type + collection URL. A static
+	 * so it works on a plain DTO too — an incoming request body arrives structure-cloned by `@a11d/api`
+	 * (no class, so no `key` getter), and `applyAndSync` must still match those against managed rows. */
+	static keyOf(source: { type: SourceType | string, uri: string }): string {
+		return `${source.type}#${source.uri}`
+	}
+
 	get key() {
-		return `${this.type}#${this.uri}`
+		return Source.keyOf(this)
 	}
 
 	toggleEnabled() {

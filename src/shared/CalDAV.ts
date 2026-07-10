@@ -206,6 +206,40 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
+	/** Fetch the changed members' iCalendar bodies, tolerant of ones that vanish between the
+	 * sync-collection listing and this multiget. tsdav's `fetchCalendarObjects` runs a single
+	 * `calendar-multiget` REPORT and throws if ANY member response is ≥ 400 — so one stale href (Google
+	 * reports a since-deleted or momentarily-unresolvable member with a per-href 404, especially on an
+	 * incremental delta) would abort the whole source's sync. Worse, the abort happens before the caller
+	 * flushes the advanced sync token, so the very same delta is retried forever. We therefore try the
+	 * batch first (the fast path, one request) and, only if it throws, fall back to fetching each object
+	 * on its own and dropping the ones that are gone — the sync then completes and the token advances. */
+	private async fetchObjects(
+		client: Awaited<ReturnType<typeof createDAVClient>>,
+		calendar: { url: string },
+		objectUrls: Array<string>,
+	): Promise<Awaited<ReturnType<typeof client.fetchCalendarObjects>>> {
+		try {
+			return await client.fetchCalendarObjects({ calendar, objectUrls })
+		} catch (error) {
+			logger.warn(`Multiget of ${objectUrls.length} object(s) from ${calendar.url} failed (${error instanceof Error ? error.message : error}); refetching individually and skipping any that are gone`)
+			const objects: Awaited<ReturnType<typeof client.fetchCalendarObjects>> = []
+			let skipped = 0
+			for (const url of objectUrls) {
+				try {
+					objects.push(...await client.fetchCalendarObjects({ calendar, objectUrls: [url] }))
+				} catch {
+					// Gone between listing and fetch (or otherwise unfetchable) — skip it. A later full
+					// resync (or a subsequent sync-collection that reports it as removed) reconciles it.
+					skipped++
+					logger.debug(`Skipped unfetchable object ${url}`)
+				}
+			}
+			logger.debug(`Refetch recovered ${objects.length} object(s), skipped ${skipped}`)
+			return objects
+		}
+	}
+
 	protected override async syncSourceEntries(em: EntityManager, source: Source): Promise<boolean> {
 		const client = await this.getClient()
 		const remoteCalendar = { url: source.uri }
@@ -227,8 +261,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		// to full URLs here so the changed set is fetchable and both sets compare against stored uris.
 		const { changedUrls, deletedUrls } = CalDAV.partitionMemberResponses(source.uri, result)
 
-		const changedObjects: Awaited<ReturnType<typeof client.fetchCalendarObjects>> = changedUrls.length
-			? await client.fetchCalendarObjects({ calendar: remoteCalendar, objectUrls: changedUrls })
+		const changedObjects = changedUrls.length
+			? await this.fetchObjects(client, remoteCalendar, changedUrls)
 			: []
 
 		// On a full sync (no prior token) every current member is listed, so any local entry that's
