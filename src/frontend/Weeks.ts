@@ -5,8 +5,10 @@ import { EntrySegments } from './EntrySegments.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { EntryDragController } from './EntryDragController.js'
 
-@component('mitra-month')
-export class Month extends Component {
+/** The month view's grid: a vertically-scrolling strip of week rows — named, like `Days` (the week
+ * view's strip of day columns), after the unit it strips. */
+@component('mitra-weeks')
+export class Weeks extends Component {
 	@event({ bubbles: true, composed: true }) readonly navigate!: EventDispatcher<DateTime>
 	@event({ bubbles: true, composed: true }) readonly switchToWeek!: EventDispatcher
 
@@ -56,7 +58,7 @@ export class Month extends Component {
 
 	static override get styles() {
 		return css`
-			mitra-month {
+			mitra-weeks {
 				display: flex;
 				flex-direction: column;
 				background-color: var(--color-border);
@@ -165,7 +167,7 @@ export class Month extends Component {
 			<div class="headers">
 				${this.weekDays.map(weekday => html`<div class="weekday">${weekday}</div>`)}
 			</div>
-			<div class="days" @scroll=${this.handleScroll} style="grid-auto-rows: minmax(8.5rem, 1fr); --max-slots: ${Month.MAX_SLOTS};">
+			<div class="days" @scroll=${this.handleScroll} style="grid-auto-rows: minmax(8.5rem, 1fr); --max-slots: ${Weeks.MAX_SLOTS};">
 				${repeat(weeks.slice(firstWeek, lastWeek + 1), week => week[0]!.dayStart.toISOString(), (week, index) => this.weekTemplate(week, today, firstWeek + index))}
 				${!weeks.length ? html.nothing : html`<div style="grid-row: ${weeks.length};"></div>`}
 			</div>
@@ -173,7 +175,7 @@ export class Month extends Component {
 	}
 
 	private weekTemplate(week: Array<DateTime>, today: DateTime, row: number) {
-		const { bars, hiddenByColumn } = this.segments.monthWeek(week, Month.MAX_SLOTS)
+		const { bars, hiddenByColumn } = this.segments.monthWeek(week, Weeks.MAX_SLOTS)
 		return html`
 			<div class="week" style="grid-row: ${row + 1};">
 				${week.map((day, col) => html`
@@ -204,6 +206,6 @@ export class Month extends Component {
 
 declare global {
 	interface HTMLElementTagNameMap {
-		'mitra-month': Month
+		'mitra-weeks': Weeks
 	}
 }

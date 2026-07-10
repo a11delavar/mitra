@@ -53,7 +53,7 @@ interface Drag {
 }
 
 /**
- * The single drag gesture controller for a calendar grid, attached to the *container* (`Days`/`Month`),
+ * The single drag gesture controller for a calendar grid, attached to the *container* (`Days`/`Weeks`),
  * never per-`Day`, so a gesture can span day cells. One controller serves three gestures that share all
  * the geometry (cell snapshot, hit-testing, minute mapping, rAF coalescing, pointer capture) and differ
  * only in what pointer-down starts, how a frame builds the entry, and what release does:

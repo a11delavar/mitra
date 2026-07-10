@@ -1,7 +1,7 @@
 import { component, css } from '@a11d/lit'
 import { Application, application } from '@a11d/lit-application'
 import { fetchIntegrations, fetchUser } from './Api.js'
-import { Month } from './Month.js'
+import { Weeks } from './Weeks.js'
 import { Days } from './Days.js'
 import { Day } from './Day.js'
 import { EntrySegmentComponent } from './EventSegment.js'
@@ -71,7 +71,7 @@ export class Mitra extends Application {
 			${PageCalendar.styles}
 			${CommandPalette.styles}
 			${Sidebar.styles}
-			${Month.styles}
+			${Weeks.styles}
 			${Days.styles}
 			${Day.styles}
 			${EntrySegmentComponent.styles}

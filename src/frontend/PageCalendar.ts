@@ -241,7 +241,7 @@ export class PageCalendar extends PageComponent {
 						}
 					}
 
-					mitra-month, mitra-days {
+					mitra-weeks, mitra-days {
 						flex: 1;
 						min-height: 0;
 					}
@@ -288,12 +288,12 @@ export class PageCalendar extends PageComponent {
 							@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
 						></mitra-days>
 					` : html`
-						<mitra-month
+						<mitra-weeks
 							.entries=${this.store.entries}
 							.navigatingDate=${this.navigatingDate}
 							@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
 							@switchToWeek=${() => this.setView('week')}
-						></mitra-month>
+						></mitra-weeks>
 					`}
 				</main>
 				<mitra-command-palette
