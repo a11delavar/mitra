@@ -2,6 +2,42 @@
 
 All notable changes to Mitra are documented here.
 
+## [0.3.0] - 2026-07-10
+
+### ✨ Features
+- Redesign Logo ([d559574](https://github.com/a11delavar/mitra/commit/d55957428f92ebb2fb63921ca1beb0b6bd83081b))
+- Add inline renaming of sources ([6b670e8](https://github.com/a11delavar/mitra/commit/6b670e82bd1958983f6d4de2e3ee8817dacc6d7e))
+- Add vertical density zoom to the week view ([24a590c](https://github.com/a11delavar/mitra/commit/24a590c05ec85398646a59ddd136fe810f046138))
+- Add inline location on the entries ([55f75e7](https://github.com/a11delavar/mitra/commit/55f75e706adc4f9aad7265970c6f8621c0953fb6))
+- Add i18n infrastructure with german translations ([bfab7a7](https://github.com/a11delavar/mitra/commit/bfab7a771a4f18437be9cb62766a693edb538de2))
+- Tiered and configurable logging ([24caf88](https://github.com/a11delavar/mitra/commit/24caf88ded894dd8dcc7d79fdb88c0a59077f91e))
+- Add a default 30min reminder for new entries ([ae5fed6](https://github.com/a11delavar/mitra/commit/ae5fed6bceb4d04cbf241c3c0c80c79887a33038))
+- Command Palette ([7df7313](https://github.com/a11delavar/mitra/commit/7df731327e1151ecc3bb6098a410360631dd6f15))
+- Multi user support via OIDC ([177c95f](https://github.com/a11delavar/mitra/commit/177c95f7d84dcf994ec567b97c9c1e3ca59c125d))
+- Remember the sidebar state ([02d60a9](https://github.com/a11delavar/mitra/commit/02d60a9baf55df08a6658f488a0e6cd13809affd))
+- Support additional time-zones ([b16248e](https://github.com/a11delavar/mitra/commit/b16248eea372b250e7cae17c19cfa430a73f5cab))
+- Add "Install as an App" button ([d9d9e05](https://github.com/a11delavar/mitra/commit/d9d9e05033e956ec7c8faf9af709945d0cc4cd5d))
+- Reminders with push notifications ([c2c8854](https://github.com/a11delavar/mitra/commit/c2c8854c51537186b142818a084d1b06c600e29d))
+- Location selector with support for recent and approximate locations ([adc486c](https://github.com/a11delavar/mitra/commit/adc486c47ef31fb4180c2ac86234f038f57efb35))
+
+### ⚡ Performance
+- Improve virtualization performance ([37e42ed](https://github.com/a11delavar/mitra/commit/37e42ed0a8ac5152c946a27e67ad6f7fd316eb43))
+
+### 🐛 Bug Fixes
+- Harden CalDAV sync against missing objects ([21ce421](https://github.com/a11delavar/mitra/commit/21ce421f1adaac7e991d6f09d18b5811b5de0b0e))
+- Fix timezone handling for recurring all-day entries ([71c5f21](https://github.com/a11delavar/mitra/commit/71c5f21db5894aa95082382cea51ed8a13306802))
+- Fix view selector not working on Chromium +150 ([74b63aa](https://github.com/a11delavar/mitra/commit/74b63aa9cb443491c77e47f3b06709f4b2c59a97))
+- Task status changes on a repeating occurrence apply to just that entry ([b8e744e](https://github.com/a11delavar/mitra/commit/b8e744ecbb6237e11c28b633ea8d4373a012071a))
+- Repeating entries keep their wall-clock time across DST changes ([0e001bc](https://github.com/a11delavar/mitra/commit/0e001bc7c331cb35f12f2eada2cc326fb4b4aa91))
+
+### 🔧 Chores
+- Black & white accent color ([c0448cf](https://github.com/a11delavar/mitra/commit/c0448cfef5bb29e62b3ceb91aef3338141ff4a92))
+
+### 🧹 Refactors
+- Rename technical name of month view to weeks view ([daf1d4f](https://github.com/a11delavar/mitra/commit/daf1d4f1c93c13ff96d1e9ef1708431773436f4b))
+- Derive all app icons from one SVG logo ([8bde2d2](https://github.com/a11delavar/mitra/commit/8bde2d2fd2884240e80caeaa2c131ba86e3ea4d3))
+
+
 ## [0.2.0] - 2026-07-05
 
 
@@ -15,7 +51,6 @@ All notable changes to Mitra are documented here.
 
 ### 🔧 Chores
 - Update dependencies ([86b3e8d](https://github.com/a11delavar/mitra/commit/86b3e8d19bbc79206fbfa62ca2322c980218454b))
-
 ## [0.1.0] - 2026-06-07
 
 
