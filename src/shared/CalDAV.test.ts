@@ -1,6 +1,10 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { CalDAV } from './CalDAV.js'
+import { Entry, EntryType } from './Entry.js'
+
+type DateTime = import('@3mo/date-time').DateTime
+const D = (iso: string) => new Date(iso) as unknown as DateTime
 
 describe('CalDAV member URLs', () => {
 	const collection = 'https://example.com/123/calendars/xyz/'
@@ -79,6 +83,76 @@ describe('CalDAV member URLs', () => {
 			])
 			assert.deepEqual(changedUrls, [])
 			assert.deepEqual(deletedUrls, ['https://example.com/cal/a.ics'])
+		})
+	})
+})
+
+describe('CalDAV all-day serialization', () => {
+	describe('toICALTime', () => {
+		it('writes an all-day DATE as the instant\'s calendar day in the ENTRY\'s zone, not the server\'s', () => {
+			// All-day instants are the user's local midnights: Berlin midnight of Jun 2 is Jun 1 in UTC —
+			// a UTC container reading its own calendar would write every all-day date one day early.
+			const berlin = CalDAV.toICALTime(D('2026-06-01T22:00:00Z'), true, 'Europe/Berlin')
+			assert.deepEqual([berlin.year, berlin.month, berlin.day, berlin.isDate], [2026, 6, 2, true])
+			// Half-hour zones too: Tehran midnight of Jun 2 = 20:30Z the previous day.
+			const tehran = CalDAV.toICALTime(D('2026-06-01T20:30:00Z'), true, 'Asia/Tehran')
+			assert.deepEqual([tehran.year, tehran.month, tehran.day, tehran.isDate], [2026, 6, 2, true])
+		})
+
+		it('falls back to the runtime\'s local calendar without a zone (the legacy zoneless path)', () => {
+			// A locally-constructed midnight reads as its own date in every runtime zone.
+			const time = CalDAV.toICALTime(new Date(2026, 5, 2) as unknown as DateTime, true, null)
+			assert.deepEqual([time.year, time.month, time.day, time.isDate], [2026, 6, 2, true])
+		})
+
+		it('keeps a timed value an absolute UTC instant — the zone is all-day day-boundary semantics only', () => {
+			const time = CalDAV.toICALTime(D('2026-06-01T22:00:00Z'), false, 'Europe/Berlin')
+			assert.equal(time.isDate, false)
+			assert.equal(time.toJSDate().toISOString(), '2026-06-01T22:00:00.000Z')
+		})
+	})
+
+	describe('through the write paths (stubbed client)', () => {
+		const raw = [
+			'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//test//EN',
+			'BEGIN:VEVENT', 'UID:u1', 'DTSTAMP:20260101T000000Z',
+			'DTSTART:20260602T090000Z', 'DTEND:20260602T100000Z',
+			'END:VEVENT', 'END:VCALENDAR',
+		].join('\r\n')
+
+		const stubbed = () => {
+			const dav = new CalDAV({ credentials: { username: 'u', password: 'p' } })
+			const client = {
+				updateCalendarObject: () => Promise.resolve({ ok: true, headers: { get: () => null } }),
+			}
+			;(dav as unknown as { client: unknown }).client = Promise.resolve(client)
+			return dav
+		}
+
+		it('updateEntry writes VALUE=DATE properties carrying the entry-zone dates, wherever the server runs', async () => {
+			const existing = new Entry({
+				id: 'e1', sourceId: 's', type: EntryType.Event, heading: 'Trip', uri: 'https://example.com/cal/e1.ics',
+				start: D('2026-06-02T09:00:00Z'), end: D('2026-06-02T10:00:00Z'), allDay: false,
+				timeZone: 'Europe/Berlin', data: { raw },
+			})
+			const incoming = new Entry({
+				sourceId: 's', type: EntryType.Event, heading: 'Trip', allDay: true, timeZone: 'Europe/Berlin',
+				start: D('2026-06-01T22:00:00Z'), end: D('2026-06-02T22:00:00Z'), // all-day Jun 2, Berlin midnights
+				exdates: [new Date('2026-06-07T22:00:00Z').getTime()], // an excluded all-day Jun 8
+			})
+			await stubbed().updateEntry({} as never, existing, incoming)
+			assert.match(existing.data!.raw!, /DTSTART;VALUE=DATE:20260602/)
+			assert.match(existing.data!.raw!, /DTEND;VALUE=DATE:20260603/) // the exclusive next day
+			assert.match(existing.data!.raw!, /EXDATE;VALUE=DATE:20260608/)
+		})
+
+		it('excludeOccurrence writes the occurrence\'s DATE in the master\'s zone', async () => {
+			const master = new Entry({
+				id: 'm', sourceId: 's', type: EntryType.Event, heading: 'Trip', uri: 'https://example.com/cal/m.ics',
+				allDay: true, timeZone: 'Europe/Berlin', data: { raw },
+			})
+			await stubbed().excludeOccurrence({} as never, master, new Date('2026-06-07T22:00:00Z')) // all-day Jun 8 Berlin
+			assert.match(master.data!.raw!, /EXDATE;VALUE=DATE:20260608/)
 		})
 	})
 })

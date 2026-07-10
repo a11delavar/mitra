@@ -1,5 +1,6 @@
 export * from '@a11d/equals'
 export * from './model.js'
+export * from './calendarDate.js'
 export * from './orm.js'
 export * from './Entry.js'
 export * from './Recurrence.js'

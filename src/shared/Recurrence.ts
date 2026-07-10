@@ -1,6 +1,7 @@
 import { DateTime } from '@3mo/date-time'
 import { model } from './model.js'
 import { embeddable, property } from './orm.js'
+import { calendarDateOf } from './calendarDate.js'
 
 /**
  * The recurrence rule of a series, as an intrinsic DDD value object — the rule parts (FREQ/INTERVAL/BYDAY/
@@ -318,12 +319,17 @@ export class Recurrence {
 	 * what "move ALL entries of a weekly-Monday series one day later" means: it becomes a Tuesday
 	 * series. A time-only move (same calendar day) changes nothing.
 	 */
-	rebased(from: Date, to: Date): Recurrence {
-		// The delta counts LOCAL calendar days — the app's day semantics throughout (all-day spans snap
-		// to local midnight, .ics DATE values are written from local components). UTC flooring would
-		// read a plain timed→all-day conversion as "one day earlier" in any zone ahead of UTC (local
-		// midnight is the previous UTC day) and rotate the weekdays for a move that never happened.
-		const day = (value: Date) => Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()) / DAY_MS
+	rebased(from: Date, to: Date, zone?: string | null): Recurrence {
+		// The delta counts CALENDAR days in the series' own `zone` when the caller has one (the backend
+		// passes the master's timeZone — the zone its occurrences and exclusions shift in), else local
+		// days. UTC flooring would read a plain timed→all-day conversion as "one day earlier" in any
+		// zone ahead of UTC (local midnight is the previous UTC day) and rotate the weekdays for a move
+		// that never happened — and without the explicit zone, a server running elsewhere (a UTC
+		// container) makes the same misreading of the user's midnights.
+		const day = (value: Date) => {
+			const { year, month, day } = calendarDateOf(value, zone)
+			return Date.UTC(year, month - 1, day) / DAY_MS
+		}
 		const deltaDays = day(to) - day(from)
 		if (deltaDays === 0) {
 			return this
@@ -337,7 +343,8 @@ export class Recurrence {
 			})
 		}
 		if (this.bymonthday) {
-			patch.bymonthday = to.getUTCDate()
+			// Read in the same calendar as the delta — the UTC date of a zone's midnight is the day before.
+			patch.bymonthday = calendarDateOf(to, zone).day
 		}
 		return this.with(patch)
 	}

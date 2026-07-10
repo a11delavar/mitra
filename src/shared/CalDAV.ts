@@ -8,6 +8,7 @@ import { Source, SourceType } from './Source.js'
 import { Integration } from './Integration.js'
 import { Entry, EntryType, TaskStatus } from './Entry.js'
 import { Recurrence } from './Recurrence.js'
+import { calendarDateOf } from './calendarDate.js'
 import { Color } from './Color.js'
 import { createLogger } from './Logger.js'
 
@@ -76,14 +77,16 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		})
 	}
 
-	/** Build a DTSTART/DTEND value. All-day entries are written date-only (`VALUE=DATE`) — that's what
-	 * makes a real all-day event (not a 00:00→00:00 timed one); `DTEND` stays the exclusive next day. */
-	private toICALTime(date: DateTime, allDay: boolean) {
+	/** Build a DTSTART/DTEND/DUE/EXDATE value. All-day entries are written date-only (`VALUE=DATE`) —
+	 * that's what makes a real all-day event (not a 00:00→00:00 timed one); `DTEND` stays the exclusive
+	 * next day. The DATE is the instant's calendar day in the ENTRY's zone: all-day instants are the
+	 * user's local midnights, which the server's own calendar (a UTC container, say) would read as the
+	 * day before and write every all-day date one off. */
+	static toICALTime(date: DateTime, allDay: boolean, zone: string | null | undefined) {
 		if (!allDay) {
 			return ICAL.Time.fromJSDate(date, true)
 		}
-		const local = ICAL.Time.fromJSDate(date, false)
-		return ICAL.Time.fromData({ year: local.year, month: local.month, day: local.day, isDate: true })
+		return ICAL.Time.fromData({ ...calendarDateOf(date, zone), isDate: true })
 	}
 
 	/** mitra TaskStatus → CalDAV VTODO STATUS (RFC 5545 §3.8.1.11). */
@@ -405,13 +408,13 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		// All-day toggling changes whether DTSTART/DTEND are date-only, so a change to `allDay` also
 		// rewrites both date properties (even if the instants themselves didn't change).
 		if ((keys.includes('start') || keys.includes('allDay')) && incoming.start) {
-			component.updatePropertyWithValue('dtstart', this.toICALTime(incoming.start, incoming.allDay))
+			component.updatePropertyWithValue('dtstart', CalDAV.toICALTime(incoming.start, incoming.allDay, incoming.timeZone))
 			existing.start = incoming.start
 		}
 
 		// A VTODO's end is DUE (RFC 5545 §3.8.2.3), a VEVENT's is DTEND — matching how sync reads each back.
 		if ((keys.includes('end') || keys.includes('allDay')) && incoming.end) {
-			component.updatePropertyWithValue(isTask ? 'due' : 'dtend', this.toICALTime(incoming.end, incoming.allDay))
+			component.updatePropertyWithValue(isTask ? 'due' : 'dtend', CalDAV.toICALTime(incoming.end, incoming.allDay, incoming.timeZone))
 			existing.end = incoming.end
 		}
 
@@ -453,7 +456,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		if (incoming.exdates !== undefined) {
 			component.removeAllProperties('exdate')
 			for (const ms of incoming.exdates) {
-				component.addPropertyWithValue('exdate', this.toICALTime(new Date(ms) as unknown as DateTime, incoming.allDay))
+				component.addPropertyWithValue('exdate', CalDAV.toICALTime(new Date(ms) as unknown as DateTime, incoming.allDay, incoming.timeZone))
 			}
 		}
 
@@ -510,12 +513,12 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		component.updatePropertyWithValue('summary', entry.heading)
 		!entry.description ? void 0 : component.updatePropertyWithValue('description', entry.description)
 		!entry.location ? void 0 : component.updatePropertyWithValue('location', entry.location)
-		!entry.start ? void 0 : component.updatePropertyWithValue('dtstart', this.toICALTime(entry.start, entry.allDay))
-		!entry.end ? void 0 : component.updatePropertyWithValue(isTask ? 'due' : 'dtend', this.toICALTime(entry.end, entry.allDay))
+		!entry.start ? void 0 : component.updatePropertyWithValue('dtstart', CalDAV.toICALTime(entry.start, entry.allDay, entry.timeZone))
+		!entry.end ? void 0 : component.updatePropertyWithValue(isTask ? 'due' : 'dtend', CalDAV.toICALTime(entry.end, entry.allDay, entry.timeZone))
 		!entry.color ? void 0 : component.updatePropertyWithValue('color', entry.color)
 		!entry.recurrence ? void 0 : component.updatePropertyWithValue('rrule', ICAL.Recur.fromString(entry.recurrence.toRRule(entry.allDay)))
 		// The continuation of a split series carries its half of the exclusions (see backend/occurrences.ts).
-		entry.exdates?.forEach(ms => component.addPropertyWithValue('exdate', this.toICALTime(new Date(ms) as unknown as DateTime, entry.allDay)))
+		entry.exdates?.forEach(ms => component.addPropertyWithValue('exdate', CalDAV.toICALTime(new Date(ms) as unknown as DateTime, entry.allDay, entry.timeZone)))
 		if (isTask) {
 			this.writeTaskStatus(component, entry.status)
 		}
@@ -580,7 +583,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 
 		// One EXDATE per excluded instant (matched by ms during expansion); value type follows DTSTART.
-		component.addPropertyWithValue('exdate', this.toICALTime(recurrenceId as unknown as DateTime, master.allDay))
+		component.addPropertyWithValue('exdate', CalDAV.toICALTime(recurrenceId as unknown as DateTime, master.allDay, master.timeZone))
 		master.data.raw = comp.toString()
 
 		const client = await this.getClient()

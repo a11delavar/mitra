@@ -227,6 +227,22 @@ describe('Recurrence', () => {
 			const daily = new Recurrence({ freq: 'DAILY', interval: 2 })
 			assert.equal(daily.rebased(monday, tuesday).equals(daily), true)
 		})
+
+		it('counts the delta in the given zone, so the server\'s own zone stops mattering', () => {
+			const rule = new Recurrence({ freq: 'WEEKLY', byday: ['FR'] })
+			// 02:00 Berlin (00:00Z) snapping to Berlin midnight (22:00Z the previous UTC day): the same
+			// Berlin day, whatever calendar the server itself lives in.
+			assert.equal(rule.rebased(new Date('2026-07-10T00:00:00Z'), new Date('2026-07-09T22:00:00Z'), 'Europe/Berlin'), rule)
+			// And one real Berlin day rotates exactly one weekday.
+			assert.deepEqual(rule.rebased(new Date('2026-07-09T22:00:00Z'), new Date('2026-07-10T22:00:00Z'), 'Europe/Berlin').byday, ['SA'])
+		})
+
+		it('a month-day follows the anchor read in the given zone', () => {
+			// Jul 10 22:00Z is already Jul 11 in Berlin — the month-day must be 11, not UTC's 10.
+			const moved = new Recurrence({ freq: 'MONTHLY', bymonthday: 10 })
+				.rebased(new Date('2026-07-09T22:00:00Z'), new Date('2026-07-10T22:00:00Z'), 'Europe/Berlin')
+			assert.equal(moved.bymonthday, 11)
+		})
 	})
 
 	describe('describe', () => {
