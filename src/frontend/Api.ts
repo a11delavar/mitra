@@ -117,6 +117,10 @@ export function updateSourceColor(id: string, color: string) {
 	return Api.put(`/sources/${id}/color`, { color })
 }
 
+export function renameSource(id: string, name: string) {
+	return Api.put<Source>(`/sources/${id}/name`, { name })
+}
+
 export function resyncSource(id: string) {
 	return Api.post(`/sources/${id}/resync`)
 }

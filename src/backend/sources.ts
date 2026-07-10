@@ -44,3 +44,21 @@ sourcesRouter.put('/:id/color', async (req, res) => {
 	logger.debug(`Source ${source.id} recoloured to ${source.color}`)
 	return res.json(source)
 })
+
+sourcesRouter.put('/:id/name', async (req, res) => {
+	const em = orm.em.fork()
+	const source = await req.user.source(em, req.params.id)
+
+	// A blank name would leave an unlabelled row with nothing to grab for a future rename; reject it.
+	const name = String(req.body.name ?? '').trim()
+	if (!name) {
+		return res.status(400).json({ error: 'A name is required' })
+	}
+
+	source.name = name
+	await em.flush()
+
+	syncEmitter.emit('updated', req.user.id)
+	logger.debug(`Source ${source.id} renamed to "${source.name}"`)
+	return res.json(source)
+})

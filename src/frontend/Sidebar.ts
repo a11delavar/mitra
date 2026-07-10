@@ -1,5 +1,5 @@
 import { Component, component, html, css, property, state, event } from '@a11d/lit'
-import { getIntegrations, getUser, toggleSourceVisibility, updateSourceColor, deleteIntegration, fetchIntegrations, getDefaultSourceId, setDefaultSource, resyncSource, resyncIntegration } from './Api.js'
+import { getIntegrations, getUser, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, setDefaultSource, resyncSource, resyncIntegration } from './Api.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { SourceType, type Source } from 'shared'
 import { outlineStyles } from './components/outlineStyles.js'
@@ -331,6 +331,16 @@ export class Sidebar extends Component {
 								text-overflow: ellipsis;
 								font-size: 0.8125rem;
 								color: var(--color-text);
+
+								/* Inline rename: the same label becomes an editable field in place. Let it scroll
+								   rather than ellipsis-clip while typing, and give it a field-like outline. */
+								&[contenteditable=plaintext-only] {
+									cursor: text;
+									text-overflow: clip;
+									outline: 1px solid var(--color-accent, var(--color-text-muted));
+									outline-offset: 2px;
+									border-radius: 2px;
+								}
 							}
 
 							.actions {
@@ -371,6 +381,59 @@ export class Sidebar extends Component {
 		await toggleSourceVisibility(source.id, !source.hidden)
 		source.hidden = !source.hidden
 		this.requestUpdate()
+	}
+
+	/** The source whose name row is currently in inline-edit mode (double-click or ⋯ → Rename). */
+	@state() private renamingId?: string
+
+	/** Enter the name row's inline edit, then select its whole text so a rename is a single overtype. */
+	private async startRename(source: Source) {
+		this.renamingId = source.id
+		await this.updateComplete
+		const el = this.querySelector<HTMLElement>(`.name[data-rename-id="${source.id}"]`)
+		if (!el) {
+			return
+		}
+		el.focus()
+		getSelection()?.selectAllChildren(el)
+		// Launched from the ⋯ menu, close it now — AFTER moving focus to the field, so the popover's
+		// focus-restore doesn't yank focus back to its trigger (which would blur → commit → exit).
+		const menu = this.querySelector<HTMLElement>(`#source-menu-${source.id}`)
+		if (menu?.matches(':popover-open')) {
+			menu.hidePopover()
+		}
+	}
+
+	private handleRenameKeydown(e: KeyboardEvent, source: Source) {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			(e.target as HTMLElement).blur() // → commit
+		} else if (e.key === 'Escape') {
+			e.preventDefault()
+			this.cancelRename(source, e.target as HTMLElement)
+		}
+	}
+
+	/** Persist the edited name (on blur, whether via Enter or clicking away). Guarded so the blur that
+	 * follows a cancel — which has already cleared the flag — is a no-op rather than a re-save. */
+	private async commitRename(source: Source, el: HTMLElement) {
+		if (this.renamingId !== source.id) {
+			return
+		}
+		this.renamingId = undefined
+		const name = (el.textContent ?? '').trim()
+		if (name && name !== source.name) {
+			await renameSource(source.id, name)
+			source.name = name
+		}
+		this.requestUpdate()
+	}
+
+	private cancelRename(source: Source, el: HTMLElement) {
+		this.renamingId = undefined
+		// Lit won't reset text the user typed into the contenteditable (its recorded value is unchanged),
+		// so restore the original label ourselves before the blur-triggered commit sees it.
+		el.textContent = source.name
 	}
 
 	private isDefault(source: Source) {
@@ -439,7 +502,7 @@ export class Sidebar extends Component {
 										icon=${source.type === SourceType.Task ? 'list-todo' : 'calendar'}
 										title=${source.type === SourceType.Task ? t('Tasks') : t('Events')}
 									></mitra-icon>
-									<div class="name">${source.name}</div>
+									${this.getNameTemplate(source)}
 									${this.getActionsTemplate(source)}
 								</div>
 							`)}
@@ -484,6 +547,22 @@ export class Sidebar extends Component {
 		`
 	}
 
+	// The source's label doubles as its inline rename field: `contenteditable` is toggled on by
+	// renamingId (via double-click or ⋯ → Rename). Enter/blur commit, Escape reverts.
+	private getNameTemplate(source: Source) {
+		return html`
+			<div
+				class="name"
+				data-rename-id=${source.id}
+				title=${t('Double-click to rename')}
+				contenteditable=${this.renamingId === source.id ? 'plaintext-only' : 'false'}
+				@dblclick=${() => this.startRename(source)}
+				@keydown=${(e: KeyboardEvent) => this.handleRenameKeydown(e, source)}
+				@blur=${(e: Event) => this.commitRename(source, e.target as HTMLElement)}
+			>${source.name}</div>
+		`
+	}
+
 	private getActionsTemplate(source: Source) {
 		return html`
 			<div class="actions">
@@ -502,6 +581,10 @@ export class Sidebar extends Component {
 					@click=${(e: Event) => ((e.currentTarget as HTMLElement).nextElementSibling as HTMLElement)?.togglePopover()}
 				></mitra-icon-button>
 				<div popover id="source-menu-${source.id}" class="source-menu" style="position-anchor: --source-menu-${source.id}">
+					<button class="menu-row" @click=${() => this.startRename(source)}>
+						<mitra-icon icon="pencil"></mitra-icon>
+						${t('Rename')}
+					</button>
 					<div class="menu-row">
 						<mitra-icon icon="palette"></mitra-icon>
 						<mitra-color-picker .value=${source.color} @change=${(e: CustomEvent) => this.setSourceColor(source, e.detail, (e.currentTarget as HTMLElement).closest('[popover]')!)}></mitra-color-picker>

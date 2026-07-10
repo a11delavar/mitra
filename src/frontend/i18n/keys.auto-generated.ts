@@ -52,6 +52,7 @@ declare global {
 		"Does not repeat": unknown
 		"Doing": unknown
 		"Done": unknown
+		"Double-click to rename": unknown
 		"Draft": unknown
 		"Edit": unknown
 		"Edit integration": unknown
