@@ -116,6 +116,7 @@ declare global {
 		"Start date": unknown
 		"Start time": unknown
 		"switch": unknown
+		"switch gantt roadmap plan": unknown
 		"switch grid": unknown
 		"Switch to all-day": unknown
 		"Tasks": unknown
@@ -125,6 +126,8 @@ declare global {
 		"This and following entries": unknown
 		"This entry": unknown
 		"Time zone": unknown
+		"Timeline": unknown
+		"Timeline View": unknown
 		"times": unknown
 		"Title": unknown
 		"To Do": unknown

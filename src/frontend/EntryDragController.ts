@@ -53,8 +53,9 @@ interface Drag {
 }
 
 /**
- * The single drag gesture controller for a calendar grid, attached to the *container* (`Days`/`Weeks`),
- * never per-`Day`, so a gesture can span day cells. One controller serves three gestures that share all
+ * The single drag gesture controller for a calendar grid, attached to the *container*
+ * (`Days`/`Weeks`/`Timeline`), never per-`Day`, so a gesture can span day cells. One controller serves
+ * three gestures that share all
  * the geometry (cell snapshot, hit-testing, minute mapping, rAF coalescing, pointer capture) and differ
  * only in what pointer-down starts, how a frame builds the entry, and what release does:
  *
@@ -82,7 +83,7 @@ export class EntryDragController extends Controller {
 	private readonly element: Component
 	private drag?: Drag
 
-	constructor(host: Component, private readonly grid: 'week' | 'month' = 'week') {
+	constructor(host: Component, private readonly grid: 'week' | 'month' | 'timeline' = 'week') {
 		super(host)
 		this.element = host
 	}
@@ -96,8 +97,12 @@ export class EntryDragController extends Controller {
 	}
 
 	/** The create mode a pointerdown starts on empty space, or `undefined` if it shouldn't start one. Month
-	 * is all-day only (its day cells render an empty `.entries` grid, so the week's zone detection can't be used). */
+	 * is all-day only (its day cells render an empty `.entries` grid, so the week's zone detection can't be
+	 * used); the timeline's whole canvas below the axis header is one day-granular create surface. */
 	private createModeAt(target: HTMLElement): Mode | undefined {
+		if (this.grid === 'timeline') {
+			return target.closest('.header') ? undefined : 'allday'
+		}
 		if (this.grid === 'month') {
 			return target.closest('mitra-day') ? 'allday' : undefined
 		}
@@ -105,29 +110,33 @@ export class EntryDragController extends Controller {
 	}
 
 	/** The zone a move/resize *starts* in: minutes only for a timed entry in the week; the all-day lane
-	 * and the whole month are day-granular (a timed entry moved in the month therefore shifts by days and
-	 * keeps its time). A week *move* may leave this zone per frame — see {@link buildAt}. */
+	 * and the whole month/timeline are day-granular (a timed entry moved there therefore shifts by days
+	 * and keeps its time). A week *move* may leave this zone per frame — see {@link buildAt}. */
 	private editMode(entry: Entry): Mode {
-		return this.grid === 'month' || entry.allDay ? 'allday' : 'timed'
+		return this.grid !== 'week' || entry.allDay ? 'allday' : 'timed'
 	}
 
-	/** Snapshot every day cell's box (and its timed-grid box) once, so moves need no DOM reads. */
+	/** Snapshot every day cell's box (and its timed-grid box) once, so moves need no DOM reads. The
+	 * timeline has no day trees — its backdrop cells are the day geometry (and, being day-granular
+	 * throughout, it never maps Y to a minute, so the cell box doubles as the "grid" box). */
 	private snapshotCells(): Array<Cell> {
-		return [...this.element.querySelectorAll<HTMLElement>('mitra-day')].map(element => {
+		const cells = this.element.querySelectorAll<HTMLElement>(this.grid === 'timeline' ? '.backdrop .day' : 'mitra-day')
+		return [...cells].map(element => {
 			const rect = element.getBoundingClientRect()
-			const grid = element.querySelector<HTMLElement>('.entries')?.getBoundingClientRect() ?? rect
+			const grid = this.grid === 'timeline' ? rect : element.querySelector<HTMLElement>('.entries')?.getBoundingClientRect() ?? rect
 			return { date: new DateTime(element.dataset.date!), left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, gridTop: grid.top, gridHeight: grid.height }
 		})
 	}
 
-	/** The day cell at a pointer position. In the week (a single row) this is a horizontal lookup clamped
-	 * to the first/last column (correct in both LTR and RTL); in the month (a 2-D grid) it's the cell
-	 * containing the point, else the nearest by edge distance so a stray drag still resolves to a day. */
+	/** The day cell at a pointer position. In the week and the timeline (a single row) this is a
+	 * horizontal lookup clamped to the first/last column (correct in both LTR and RTL); in the month
+	 * (a 2-D grid) it's the cell containing the point, else the nearest by edge distance so a stray
+	 * drag still resolves to a day. */
 	private cellAt(cells: ReadonlyArray<Cell>, x: number, y: number): Cell | undefined {
 		if (!cells.length) {
 			return undefined
 		}
-		if (this.grid === 'week') {
+		if (this.grid !== 'month') {
 			return cells.find(cell => x >= cell.left && x <= cell.right)
 				?? (x < cells[0]!.left ? cells[0]! : cells[cells.length - 1]!)
 		}
@@ -380,9 +389,10 @@ export class EntryDragController extends Controller {
 
 		if (drag.kind === 'create') {
 			// A real drag creates the spanning entry; a plain click quick-creates a single day in the month
-			// (where clicking a cell is the add affordance) and creates nothing in the week. The last
-			// coalesced frame may not have run, so resolve the release position here (before teardown).
-			const create = drag.moved || this.grid === 'month'
+			// and the timeline (where clicking empty canvas is the add affordance) and creates nothing in
+			// the week. The last coalesced frame may not have run, so resolve the release position here
+			// (before teardown).
+			const create = drag.moved || this.grid !== 'week'
 			const built = !create ? undefined : drag.moved ? this.buildAt(drag.point) : this.buildCreate(drag.anchor, drag.anchor)
 			this.teardown(e.pointerId)
 			if (built) {
