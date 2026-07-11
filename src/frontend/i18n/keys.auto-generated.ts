@@ -26,6 +26,8 @@ declare global {
 		"All day": unknown
 		"All entries": unknown
 		"Amount": unknown
+		"App-Specific Password": unknown
+		"Apple ID": unknown
 		"At start": unknown
 		"At start of event": unknown
 		"back earlier": unknown
