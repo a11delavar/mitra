@@ -48,6 +48,11 @@ export class CookieAuthenticator implements ApiAuthenticator {
 let integrations = new Array<Integration>()
 let currentUser: User | undefined
 
+/** The browser's IANA zone, sent as `?tz=` with every entry read/write: the backend stores all-day
+ * bounds as zone-less calendar dates and projects them into THIS zone, so all-day entries cover the
+ * same dates — midnight to midnight — wherever the server runs and whoever is looking. */
+const tz = () => encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)
+
 export async function fetchUser() {
 	return currentUser = await Api.get<User>('/user')
 }
@@ -76,13 +81,13 @@ export async function setTimeZones(timeZones: Array<UserTimeZone>) {
 }
 
 export function fetchEvents(start: DateTime, end: DateTime) {
-	return Api.get<Array<Entry>>(`/entries?start=${start.toISOString()}&end=${end.toISOString()}`)
+	return Api.get<Array<Entry>>(`/entries?start=${start.toISOString()}&end=${end.toISOString()}&tz=${tz()}`)
 }
 
 /** Text search over the WHOLE entry store (heading/description/location, every visible source) —
  * the command palette's data source; unwindowed, unlike {@link fetchEvents}. */
 export function searchEntries(query: string) {
-	return Api.get<Array<Entry>>(`/entries/search?q=${encodeURIComponent(query)}`)
+	return Api.get<Array<Entry>>(`/entries/search?q=${encodeURIComponent(query)}&tz=${tz()}`)
 }
 
 /** The source a create targets: the user's default when visible, else the first visible one. */
@@ -94,7 +99,7 @@ export function getPrimarySource(): Source | undefined {
 export function createEvent(entry: Entry) {
 	// Stamp the zone the times were authored in — recurrence must expand at THIS zone's wall clock
 	// ("every Monday 09:00 Berlin" survives DST), and the future zone selector edits this field.
-	return Api.post<Entry>('/entries', { ...entry, timeZone: entry.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone })
+	return Api.post<Entry>(`/entries?tz=${tz()}`, { ...entry, timeZone: entry.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone })
 }
 
 export async function fetchIntegrations() {
@@ -163,7 +168,7 @@ export function updateEvent(entry: Entry) {
 	// edited via the Repeat field) or an explicit `null` (remove the rule). A synced override row has
 	// none of its own, and omitting the field there keeps a benign rename from wiping the master's rule.
 	if (entry.recurrenceMasterId) {
-		return Api.put<Entry>(`/entries/${entry.recurrenceMasterId}`, {
+		return Api.put<Entry>(`/entries/${entry.recurrenceMasterId}?tz=${tz()}`, {
 			heading: entry.heading,
 			description: entry.description,
 			location: entry.location,
@@ -175,7 +180,7 @@ export function updateEvent(entry: Entry) {
 	}
 	// The full entry, with absent tri-state fields sent as an explicit `null`: JSON drops undefined keys
 	// and the backend treats absence as "keep" — only a null can express a removal.
-	return Api.put<Entry>(`/entries/${entry.id}`, { ...entry, recurrence: entry.recurrence ?? null, reminders: entry.reminders ?? null })
+	return Api.put<Entry>(`/entries/${entry.id}?tz=${tz()}`, { ...entry, recurrence: entry.recurrence ?? null, reminders: entry.reminders ?? null })
 }
 
 export function deleteEvent(id: string) {
@@ -209,7 +214,7 @@ export function searchLocations(query: string, position?: { lat: number, lon: nu
  * MASTER; `recurrenceId` names the occurrence being edited. The response is the resulting entry: the
  * master ('all'), the continuation series' master ('following'), or the detached standalone ('this'). */
 export function editOccurrence(occurrence: Entry, scope: RecurrenceScope) {
-	return Api.put<Entry>(`/entries/${occurrence.recurrenceMasterId}`, {
+	return Api.put<Entry>(`/entries/${occurrence.recurrenceMasterId}?tz=${tz()}`, {
 		scope,
 		recurrenceId: occurrence.recurrenceId,
 		heading: occurrence.heading,
@@ -228,6 +233,6 @@ export function editOccurrence(occurrence: Entry, scope: RecurrenceScope) {
 /** Delete an occurrence from its series with a scope (this / following) — DELETE carries no body, so
  * the scope + occurrence start go as query params. ('all' deletes the master via deleteEvent.) */
 export function deleteOccurrence(occurrence: Entry, scope: RecurrenceScope) {
-	const query = new URLSearchParams({ scope, recurrenceId: occurrence.recurrenceId!.toISOString() })
+	const query = new URLSearchParams({ scope, recurrenceId: occurrence.recurrenceId!.toISOString(), tz: Intl.DateTimeFormat().resolvedOptions().timeZone })
 	return Api.delete(`/entries/${occurrence.recurrenceMasterId}?${query}`)
 }

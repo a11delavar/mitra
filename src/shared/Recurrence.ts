@@ -29,8 +29,6 @@ const FREQUENCIES: ReadonlyArray<Frequency> = ['DAILY', 'WEEKLY', 'MONTHLY', 'YE
 export const WEEKDAY_CODES = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'] as const
 const WEEKDAY_SET: ReadonlySet<string> = new Set(['MO', 'TU', 'WE', 'TH', 'FR'])
 const FREQ_UNIT: Record<Frequency, string> = { DAILY: 'day', WEEKLY: 'week', MONTHLY: 'month', YEARLY: 'year' }
-const DAY_MS = 86_400_000
-
 function pad(value: number, width = 2) {
 	return String(value).padStart(width, '0')
 }
@@ -47,25 +45,25 @@ function language(): string {
 	}
 }
 
-/** Weekday/month names come from Intl, not hardcoded tables: a reference UTC week (2024-01-01 was a
- * Monday) indexed by the RFC weekday order, formatted at noon so no timezone can shift the day. */
+/** Weekday/month names come from Intl, not hardcoded tables: a reference week (2024-01-01 was a
+ * Monday) indexed by the RFC weekday order. Formatted as zone-less `PlainDate`s, so no timezone can
+ * shift the day (the reason this once needed a noon-UTC trick on `Date`). */
 function weekdayName(index: number): string {
-	return new Date(Date.UTC(2024, 0, 1 + index, 12)).toLocaleDateString(language(), { weekday: 'short' })
+	return Temporal.PlainDate.from({ year: 2024, month: 1, day: 1 + index }).toLocaleString(language(), { weekday: 'short' })
 }
 
-function monthDayName(year: number, month: number, day: number): string {
-	return new Date(Date.UTC(year, month - 1, day, 12)).toLocaleDateString(language(), { month: 'short', day: 'numeric' })
+function monthDayName(date: Temporal.PlainDate): string {
+	return date.toLocaleString(language(), { month: 'short', day: 'numeric' })
 }
 
 function asConjunction(items: ReadonlyArray<string>): string {
 	return new Intl.ListFormat(language(), { style: 'long', type: 'conjunction' }).format(items)
 }
 
-// UNTIL is a calendar day, stored as UTC midnight and read back via getUTC* — tz-stable, and (unlike Temporal
-// `.year`/`.month`/`.day`) works whether `until` is a frontend DateTime or the backend's plain Date.
-function untilParts(until: DateTime) {
-	const date = until as unknown as Date
-	return { year: date.getUTCFullYear(), month: date.getUTCMonth() + 1, day: date.getUTCDate() }
+// UNTIL is a calendar day, stored as UTC midnight — its date is the instant's UTC reading, whether
+// `until` arrives as a frontend DateTime or the backend's plain Date.
+function untilParts(until: DateTime): Temporal.PlainDate {
+	return calendarDateOf(until as unknown as Date, 'UTC')
 }
 
 // RFC 5545 UNTIL must match DTSTART's value type: a DATE for all-day, else an end-of-day UTC DATE-TIME so the
@@ -149,7 +147,7 @@ export class Recurrence {
 		if (!other) {
 			return false
 		}
-		const day = (value?: DateTime) => value ? Math.floor(value.valueOf() / DAY_MS) : null
+		const day = (value?: DateTime) => value ? untilParts(value).toString() : null
 		return this.freq === other.freq
 			&& this.every === other.every
 			&& (this.bymonthday ?? null) === (other.bymonthday ?? null)
@@ -195,8 +193,7 @@ export class Recurrence {
 			return `${base}, ${this.count} times`
 		}
 		if (this.until) {
-			const { year, month, day } = untilParts(this.until)
-			return `${base} until ${monthDayName(year, month, day)}`
+			return `${base} until ${monthDayName(untilParts(this.until))}`
 		}
 		return base
 	}
@@ -308,8 +305,8 @@ export class Recurrence {
 	/** The UTC calendar day immediately before an instant — the UNTIL that ends a series just before a given
 	 * occurrence (its end-of-day-UTC excludes that occurrence while including the prior one, for ≥daily rules). */
 	static dayBefore(instant: Date): DateTime {
-		const previous = new Date(instant.getTime() - DAY_MS)
-		return Recurrence.untilFromDay(previous.getUTCFullYear(), previous.getUTCMonth() + 1, previous.getUTCDate())
+		const previous = calendarDateOf(instant, 'UTC').subtract({ days: 1 })
+		return Recurrence.untilFromDay(previous.year, previous.month, previous.day)
 	}
 
 	/**
@@ -326,11 +323,8 @@ export class Recurrence {
 		// zone ahead of UTC (local midnight is the previous UTC day) and rotate the weekdays for a move
 		// that never happened — and without the explicit zone, a server running elsewhere (a UTC
 		// container) makes the same misreading of the user's midnights.
-		const day = (value: Date) => {
-			const { year, month, day } = calendarDateOf(value, zone)
-			return Date.UTC(year, month - 1, day) / DAY_MS
-		}
-		const deltaDays = day(to) - day(from)
+		const day = (value: Date) => calendarDateOf(value, zone)
+		const deltaDays = day(to).since(day(from)).days
 		if (deltaDays === 0) {
 			return this
 		}

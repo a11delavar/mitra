@@ -1,6 +1,6 @@
 import { type EntityManager, type MikroORM } from '@mikro-orm/sqlite'
 import { DateTime } from '@3mo/date-time'
-import { model, entity, Integration, Source, SourceType, Entry, EntryType, TaskStatus, User, Color } from '../shared/index.js'
+import { model, entity, Integration, Source, SourceType, Entry, EntryType, TaskStatus, User, Color, normalizeAllDay } from '../shared/index.js'
 
 /**
  * A dev-only, self-contained calendar with no external backend: its sources and entries live only in
@@ -127,7 +127,9 @@ export async function seedDev(orm: MikroORM) {
 
 	const weekStart = new DateTime().weekStart.dayStart
 	const at = (day: number, hour: number, minute = 0) => weekStart.add({ days: day }).with({ hour, minute })
-	const allDayStart = (day: number) => weekStart.add({ days: day }) // midnight → genuinely all-day
+	// All-day bounds are canonical UTC-midnight date encodings (see calendarDate.ts) — seed them so,
+	// rather than as server-local midnights the boot backfill would only normalize on the NEXT start.
+	const allDayStart = (day: number) => normalizeAllDay(weekStart.add({ days: day })) as unknown as DateTime
 
 	// Entries carry no colour of their own — they inherit their calendar's colour.
 	const on = (source: Source) => (init: Partial<Entry>) => {

@@ -1,7 +1,6 @@
 import { type EntityManager } from '@mikro-orm/core'
 import { type DateTime } from '@3mo/date-time'
 import ICAL from 'ical.js'
-import { Temporal } from 'temporal-polyfill'
 import { Entry, type Integration, type RecurrenceScope } from '../shared/index.js'
 
 /**
@@ -54,6 +53,14 @@ function exdateMs(value: ICAL.Time, zone: string | null | undefined): number {
 	return value.isDate && zone ? wallToInstantMs(value, zone) : value.toJSDate().getTime()
 }
 
+/** The zone a series' day math happens in. An ALL-DAY series is a sequence of DATES — its bounds are
+ * canonical UTC-midnight encodings (see calendarDate.ts) — so its rule iterates, shifts and excludes
+ * in UTC (pure date arithmetic, no DST drift); a timed series repeats at a wall-clock time in its own
+ * `timeZone`. */
+function dayMathZoneOf(master: Pick<Entry, 'allDay' | 'timeZone'>): string | null | undefined {
+	return master.allDay ? 'UTC' : master.timeZone
+}
+
 /**
  * The occurrences of ONE recurring series — the iterable materialization of its rule. Constructed from
  * whatever the master actually stores ({@link Occurrences.of}): its raw .ics when the integration keeps
@@ -77,7 +84,7 @@ export class Occurrences {
 	 * entry isn't an expandable master (no rule, no start, or a malformed stored rule). The master's
 	 * `timeZone` (stamped at creation, or synced from a TZID) makes the iteration wall-clock in it. */
 	static of(master: Entry): Occurrences | undefined {
-		const zone = !master.timeZone || !master.start ? undefined : { id: master.timeZone, start: master.start as Date }
+		const zone = !dayMathZoneOf(master) || !master.start ? undefined : { id: dayMathZoneOf(master)!, start: master.start as Date }
 		if (master.data?.raw) {
 			return Occurrences.fromICS(master.data.raw, zone)
 		}
@@ -256,7 +263,7 @@ function exdatesOf(master: Entry): Array<number> {
 	if (master.data?.raw) {
 		const component = new ICAL.Component(ICAL.parse(master.data.raw))
 		const v = component.getFirstSubcomponent('vevent') ?? component.getFirstSubcomponent('vtodo')
-		return !v ? [] : v.getAllProperties('exdate').flatMap(prop => prop.getValues().map(value => exdateMs(value as ICAL.Time, master.timeZone)))
+		return !v ? [] : v.getAllProperties('exdate').flatMap(prop => prop.getValues().map(value => exdateMs(value as ICAL.Time, dayMathZoneOf(master))))
 	}
 	return master.exdates ?? []
 }
@@ -277,7 +284,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 		// shiftMs}), so a drag expressed at THIS occurrence can't beach the anchor — and with it every
 		// occurrence — an hour off across a DST flip the anchor straddles but the occurrence doesn't.
 		const start = master.start === undefined ? undefined
-			: new Date(shiftMs(master.start.getTime(), master.timeZone, recurrenceId, editedStart)) as DateTime
+			: new Date(shiftMs(master.start.getTime(), dayMathZoneOf(master), recurrenceId, editedStart)) as DateTime
 		// The span adopts the edit's DURATION rather than shifting the stored end by the start's delta —
 		// that would carry the master's old length over the edit, silently dropping a resize and turning
 		// an all-day ↔ timed conversion into a day-long timed entry (or a few-hours "all-day" one).
@@ -298,9 +305,9 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 			end: start === undefined || durationMs === undefined ? undefined : new Date(start.getTime() + durationMs) as DateTime,
 			// The rule follows the shift (a weekly-Monday series moved a day later becomes weekly-Tuesday);
 			// a rule left mismatching its shifted anchor would silently lose the anchor's own occurrence.
-			recurrence: master.recurrence!.rebased(recurrenceId, editedStart, master.timeZone),
+			recurrence: master.recurrence!.rebased(recurrenceId, editedStart, dayMathZoneOf(master)),
 			// The exclusions follow it too (see shiftExdates); absent means "keep" to the integration.
-			exdates: exdates.length ? shiftExdates(exdates, master.timeZone, recurrenceId, editedStart) : undefined,
+			exdates: exdates.length ? shiftExdates(exdates, dayMathZoneOf(master), recurrenceId, editedStart) : undefined,
 			uid: master.uid,
 		})
 		await integration.updateEntry(em, master, incoming)
@@ -351,8 +358,8 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 			reminders: edited.reminders,
 			start: edited.start,
 			end: edited.end,
-			recurrence: rule.asContinuation(consumed).rebased(recurrenceId, continuationStart, master.timeZone),
-			exdates: carried.length ? shiftExdates(carried, master.timeZone, recurrenceId, continuationStart) : undefined,
+			recurrence: rule.asContinuation(consumed).rebased(recurrenceId, continuationStart, dayMathZoneOf(master)),
+			exdates: carried.length ? shiftExdates(carried, dayMathZoneOf(master), recurrenceId, continuationStart) : undefined,
 		})
 		return integration.createEntry(em, continuation)
 	}

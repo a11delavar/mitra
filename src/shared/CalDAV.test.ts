@@ -92,24 +92,15 @@ describe('CalDAV member URLs', () => {
 
 describe('CalDAV all-day serialization', () => {
 	describe('toICALTime', () => {
-		it('writes an all-day DATE as the instant\'s calendar day in the ENTRY\'s zone, not the server\'s', () => {
-			// All-day instants are the user's local midnights: Berlin midnight of Jun 2 is Jun 1 in UTC —
-			// a UTC container reading its own calendar would write every all-day date one day early.
-			const berlin = CalDAV.toICALTime(D('2026-06-01T22:00:00Z'), true, 'Europe/Berlin')
-			assert.deepEqual([berlin.year, berlin.month, berlin.day, berlin.isDate], [2026, 6, 2, true])
-			// Half-hour zones too: Tehran midnight of Jun 2 = 20:30Z the previous day.
-			const tehran = CalDAV.toICALTime(D('2026-06-01T20:30:00Z'), true, 'Asia/Tehran')
-			assert.deepEqual([tehran.year, tehran.month, tehran.day, tehran.isDate], [2026, 6, 2, true])
-		})
-
-		it('falls back to the runtime\'s local calendar without a zone (the legacy zoneless path)', () => {
-			// A locally-constructed midnight reads as its own date in every runtime zone.
-			const time = CalDAV.toICALTime(new Date(2026, 5, 2) as unknown as DateTime, true, null)
+		it('writes an all-day DATE as the canonical UTC-midnight encoding\'s calendar day, on any server', () => {
+			// All-day bounds are DATES stored as UTC midnights (see calendarDate.ts) — the value's own
+			// UTC calendar day is the date, whatever zone the server (a Docker container, say) runs in.
+			const time = CalDAV.toICALTime(D('2026-06-02T00:00:00Z'), true)
 			assert.deepEqual([time.year, time.month, time.day, time.isDate], [2026, 6, 2, true])
 		})
 
-		it('keeps a timed value an absolute UTC instant — the zone is all-day day-boundary semantics only', () => {
-			const time = CalDAV.toICALTime(D('2026-06-01T22:00:00Z'), false, 'Europe/Berlin')
+		it('keeps a timed value an absolute UTC instant', () => {
+			const time = CalDAV.toICALTime(D('2026-06-01T22:00:00Z'), false)
 			assert.equal(time.isDate, false)
 			assert.equal(time.toJSDate().toISOString(), '2026-06-01T22:00:00.000Z')
 		})
@@ -149,16 +140,18 @@ describe('CalDAV all-day serialization', () => {
 			return dav
 		}
 
-		it('updateEntry writes VALUE=DATE properties carrying the entry-zone dates, wherever the server runs', async () => {
+		it('updateEntry writes VALUE=DATE properties carrying the canonical UTC dates, wherever the server runs', async () => {
 			const existing = new Entry({
 				id: 'e1', sourceId: 's', type: EntryType.Event, heading: 'Trip', uri: 'https://example.com/cal/e1.ics',
 				start: D('2026-06-02T09:00:00Z'), end: D('2026-06-02T10:00:00Z'), allDay: false,
 				timeZone: 'Europe/Berlin', data: { raw },
 			})
+			// All-day bounds reach the integration as canonical UTC-midnight date encodings — the routes
+			// normalize the viewer's local midnights before the write (see backend/entries.ts).
 			const incoming = new Entry({
 				sourceId: 's', type: EntryType.Event, heading: 'Trip', allDay: true, timeZone: 'Europe/Berlin',
-				start: D('2026-06-01T22:00:00Z'), end: D('2026-06-02T22:00:00Z'), // all-day Jun 2, Berlin midnights
-				exdates: [new Date('2026-06-07T22:00:00Z').getTime()], // an excluded all-day Jun 8
+				start: D('2026-06-02T00:00:00Z'), end: D('2026-06-03T00:00:00Z'), // all-day Jun 2
+				exdates: [new Date('2026-06-08T00:00:00Z').getTime()], // an excluded all-day Jun 8
 			})
 			await stubbed().updateEntry(emStub() as never, existing, incoming)
 			assert.match(existing.data!.raw!, /DTSTART;VALUE=DATE:20260602/)
@@ -198,12 +191,12 @@ describe('CalDAV all-day serialization', () => {
 			assert.equal(overrideComponent.getFirstPropertyValue('summary')?.toString(), 'Late Gym')
 		})
 
-		it('excludeOccurrence writes the occurrence\'s DATE in the master\'s zone', async () => {
+		it('excludeOccurrence writes the occurrence\'s canonical DATE', async () => {
 			const master = new Entry({
 				id: 'm', sourceId: 's', type: EntryType.Event, heading: 'Trip', uri: 'https://example.com/cal/m.ics',
 				allDay: true, timeZone: 'Europe/Berlin', data: { raw },
 			})
-			await stubbed().excludeOccurrence(emStub() as never, master, new Date('2026-06-07T22:00:00Z')) // all-day Jun 8 Berlin
+			await stubbed().excludeOccurrence(emStub() as never, master, new Date('2026-06-08T00:00:00Z')) // all-day Jun 8
 			assert.match(master.data!.raw!, /EXDATE;VALUE=DATE:20260608/)
 		})
 
@@ -406,6 +399,23 @@ describe('CalDAV all-day serialization', () => {
 			assert.equal(entry!.recurrenceId, undefined)
 			assert.equal(entry!.recurrenceMasterId, undefined)
 			assert.equal(entry!.start?.valueOf(), new Date('2026-07-06T09:00:00Z').getTime())
+		})
+
+		it('ingests all-day DATE values as canonical UTC midnights — never the server\'s local midnight', async () => {
+			// The production bug: date-only values read via toJSDate() land on the SERVER's midnight
+			// (2h off in a UTC container viewed from Berlin), so all-day bars spilled into the next day
+			// and sequential multi-day events overlapped. The date's own y/m/d IS the value.
+			const allDayRaw = [
+				'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//test//EN',
+				'BEGIN:VEVENT', 'UID:u8', 'DTSTAMP:20260101T000000Z', 'SUMMARY:Exam Preparation',
+				'DTSTART;VALUE=DATE:20260712', 'DTEND;VALUE=DATE:20260718',
+				'END:VEVENT', 'END:VCALENDAR',
+			].join('\r\n')
+			const { em } = await sync([], allDayRaw)
+			const [entry] = em.persisted
+			assert.equal(entry!.allDay, true)
+			assert.equal(entry!.start?.valueOf(), Date.UTC(2026, 6, 12)) // structural: read off y/m/d, no zone involved
+			assert.equal(entry!.end?.valueOf(), Date.UTC(2026, 6, 18))
 		})
 
 		it('ingests one row per component: the master AND the overridden occurrence, linked by UID', async () => {

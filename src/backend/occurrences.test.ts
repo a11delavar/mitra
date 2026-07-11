@@ -424,16 +424,16 @@ describe('scoped occurrence edits', () => {
 		assert.deepEqual(calls.updates[0]!.incoming.exdates, [new Date('2026-11-13T08:00:00Z').getTime()])
 	})
 
-	it('\'all\' reads DATE exclusions at the master\'s zone\'s midnight before shifting them', async () => {
-		// The raw .ics of an all-day Tehran series excludes the all-day Jun 15 (a Tehran-midnight
-		// instant, 20:30Z the previous day). Read at the server's own midnight instead, the shifted
-		// exclusion lands hours off every occurrence and excludes nothing.
+	it('\'all\' reads DATE exclusions as canonical UTC dates before shifting them (whatever the master\'s zone)', async () => {
+		// All-day bounds are DATES encoded as UTC midnights (see calendarDate.ts) — the series' own
+		// `timeZone` (Tehran here) governs only TIMED wall-clock math, never all-day day arithmetic:
+		// read at any other midnight, the shifted exclusion lands hours off and excludes nothing.
 		const { calls, integration } = stub()
 		const m = master()
 		m.timeZone = 'Asia/Tehran'
 		m.allDay = true
-		m.start = D('2026-05-31T20:30:00Z') // all-day Mon Jun 1 (Tehran)
-		m.end = D('2026-06-01T20:30:00Z')
+		m.start = D('2026-06-01T00:00:00Z') // all-day Mon Jun 1
+		m.end = D('2026-06-02T00:00:00Z')
 		m.data = {
 			raw: [
 				'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//test//EN',
@@ -443,14 +443,14 @@ describe('scoped occurrence edits', () => {
 				'END:VEVENT', 'END:VCALENDAR',
 			].join('\r\n'),
 		}
-		// The all-day Jun 8 occurrence dragged one day later: Jun 8 → Jun 9 Tehran midnights.
+		// The all-day Jun 8 occurrence dragged one day later: Jun 8 → Jun 9.
 		const moved = new Entry({
 			sourceId: 's', type: EntryType.Event, heading: 'Standup', allDay: true,
-			start: D('2026-06-08T20:30:00Z'), end: D('2026-06-09T20:30:00Z'),
+			start: D('2026-06-09T00:00:00Z'), end: D('2026-06-10T00:00:00Z'),
 		})
-		await editOccurrence(em, integration, m, new Date('2026-06-07T20:30:00Z'), moved, 'all')
-		// The exclusion follows by one wall day: all-day Jun 15 → all-day Jun 16 (both Tehran midnights).
-		assert.deepEqual(calls.updates[0]!.incoming.exdates, [new Date('2026-06-15T20:30:00Z').getTime()])
+		await editOccurrence(em, integration, m, new Date('2026-06-08T00:00:00Z'), moved, 'all')
+		// The exclusion follows by one day: all-day Jun 15 → all-day Jun 16 (both canonical UTC dates).
+		assert.deepEqual(calls.updates[0]!.incoming.exdates, [new Date('2026-06-16T00:00:00Z').getTime()])
 	})
 
 	it('\'following\' carries only the exclusions at/after the split onto the continuation, shifted', async () => {

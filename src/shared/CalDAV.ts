@@ -8,7 +8,7 @@ import { Source, SourceType } from './Source.js'
 import { Integration } from './Integration.js'
 import { Entry, EntryType, TaskStatus } from './Entry.js'
 import { Recurrence } from './Recurrence.js'
-import { calendarDateOf } from './calendarDate.js'
+import { calendarDateOf, midnightOf } from './calendarDate.js'
 import { Color } from './Color.js'
 import { createLogger } from './Logger.js'
 
@@ -90,14 +90,27 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 	/** Build a DTSTART/DTEND/DUE/EXDATE value. All-day entries are written date-only (`VALUE=DATE`) —
 	 * that's what makes a real all-day event (not a 00:00→00:00 timed one); `DTEND` stays the exclusive
-	 * next day. The DATE is the instant's calendar day in the ENTRY's zone: all-day instants are the
-	 * user's local midnights, which the server's own calendar (a UTC container, say) would read as the
-	 * day before and write every all-day date one off. */
-	static toICALTime(date: DateTime, allDay: boolean, zone: string | null | undefined) {
+	 * next day. All-day bounds are CANONICAL date encodings — UTC midnights (see calendarDate.ts) — so
+	 * the DATE is simply the instant's UTC calendar day, whatever zone the server runs in. */
+	static toICALTime(date: Date, allDay: boolean) {
 		if (!allDay) {
 			return ICAL.Time.fromJSDate(date, true)
 		}
-		return ICAL.Time.fromData({ ...calendarDateOf(date, zone), isDate: true })
+		// Explicit fields, not a spread — a PlainDate's fields are prototype getters (spread to {}).
+		const { year, month, day } = calendarDateOf(date, 'UTC')
+		return ICAL.Time.fromData({ year, month, day, isDate: true })
+	}
+
+	/** The stored instant of an iCalendar time: a date-only value (all-day) becomes its canonical
+	 * UTC-midnight date encoding — read off the value's own y/m/d fields, NEVER `toJSDate()`, which
+	 * lands on the SERVER's local midnight and shifts all-day bounds by the container's zone offset. */
+	private static instantFrom(time: { isDate?: boolean, year: number, month: number, day: number, toJSDate(): Date } | null | undefined): Date | undefined {
+		if (!time) {
+			return undefined
+		}
+		return time.isDate
+			? midnightOf(Temporal.PlainDate.from({ year: time.year, month: time.month, day: time.day }), 'UTC')
+			: time.toJSDate()
 	}
 
 	/** mitra TaskStatus → CalDAV VTODO STATUS (RFC 5545 §3.8.1.11). */
@@ -194,12 +207,12 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	 */
 	private static writeDate(
 		comp: ICAL.Component, component: ICAL.Component, name: string,
-		date: DateTime, allDay: boolean, zone: string | null | undefined,
+		date: Date, allDay: boolean,
 		options?: { tzid?: string, append?: boolean },
 	): void {
 		const tzid = options?.tzid ?? component.getFirstProperty(name)?.getParameter('tzid')?.toString()
 		const timezone = allDay ? undefined : CalDAV.timezoneIn(comp, tzid)
-		const time = timezone ? ICAL.Time.fromJSDate(date, true).convertToZone(timezone) : CalDAV.toICALTime(date, allDay, zone)
+		const time = timezone ? ICAL.Time.fromJSDate(date, true).convertToZone(timezone) : CalDAV.toICALTime(date, allDay)
 		const property = options?.append ? component.addPropertyWithValue(name, time) : component.updatePropertyWithValue(name, time)
 		if (timezone) {
 			property.setParameter('tzid', timezone.tzid)
@@ -231,7 +244,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return {
 			uid: component.getFirstPropertyValue('uid')?.toString() || undefined,
 			recurrence: Recurrence.fromRRule(rrule),
-			recurrenceId: (component.getFirstPropertyValue('recurrence-id') as { toJSDate?(): Date } | null)?.toJSDate?.() || undefined,
+			recurrenceId: CalDAV.instantFrom(component.getFirstPropertyValue('recurrence-id') as ICAL.Time | null) || undefined,
 		}
 	}
 
@@ -425,8 +438,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 					entry.heading = event.summary || 'Untitled Event'
 					entry.description = event.description || ''
 					entry.location = event.location || ''
-					entry.start = (event.startDate?.toJSDate() as any) || undefined
-					entry.end = (event.endDate ? event.endDate.toJSDate() as any : event.startDate?.toJSDate() as any) || undefined
+					entry.start = CalDAV.instantFrom(event.startDate) as any || undefined
+					entry.end = CalDAV.instantFrom(event.endDate ?? event.startDate) as any || undefined
 					// A date-only DTSTART (`VALUE=DATE`) is the iCalendar marker for an all-day event.
 					entry.allDay = event.startDate?.isDate ?? false
 				} else {
@@ -435,8 +448,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 					entry.description = value('description')?.toString() || ''
 					entry.location = value('location')?.toString() || ''
 					entry.status = CalDAV.statusFromICal(value('status')?.toString(), Number(value('percent-complete') ?? 0))
-					entry.start = value('dtstart')?.toJSDate?.() as any || undefined
-					entry.end = value('due')?.toJSDate?.() as any || undefined
+					entry.start = CalDAV.instantFrom(value('dtstart')) as any || undefined
+					entry.end = CalDAV.instantFrom(value('due')) as any || undefined
 					entry.allDay = !!value('dtstart')?.isDate
 				}
 
@@ -597,7 +610,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				for (const sub of [...comp.getAllSubcomponents('vevent'), ...comp.getAllSubcomponents('vtodo')]) {
 					const rid = CalDAV.recurrenceProps(sub).recurrenceId
 					if (rid) {
-						CalDAV.writeDate(comp, sub, 'recurrence-id', new Date(rid.getTime() + overrideShift) as unknown as DateTime, false, existing.timeZone)
+						CalDAV.writeDate(comp, sub, 'recurrence-id', new Date(rid.getTime() + overrideShift), false)
 					}
 				}
 			}
@@ -605,7 +618,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			// All-day toggling changes whether DTSTART/DTEND are date-only, so a change to `allDay` also
 			// rewrites both date properties (even if the instants themselves didn't change).
 			if ((keys.includes('start') || keys.includes('allDay')) && incoming.start) {
-				CalDAV.writeDate(comp, component, 'dtstart', incoming.start, incoming.allDay, incoming.timeZone)
+				CalDAV.writeDate(comp, component, 'dtstart', incoming.start, incoming.allDay)
 			}
 
 			// A VTODO's end is DUE (RFC 5545 §3.8.2.3), a VEVENT's is DTEND — matching how sync reads each back.
@@ -613,7 +626,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				const name = isTask ? 'due' : 'dtend'
 				// A fresh DTEND/DUE has no authored form of its own yet — it follows DTSTART's.
 				const tzid = (component.getFirstProperty(name) ?? component.getFirstProperty('dtstart'))?.getParameter('tzid')?.toString()
-				CalDAV.writeDate(comp, component, name, incoming.end, incoming.allDay, incoming.timeZone, { tzid })
+				CalDAV.writeDate(comp, component, name, incoming.end, incoming.allDay, { tzid })
 			}
 
 			if (isTask && keys.includes('status')) {
@@ -647,7 +660,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				const exdateTzid = component.getFirstProperty('dtstart')?.getParameter('tzid')?.toString()
 				component.removeAllProperties('exdate')
 				for (const ms of incoming.exdates) {
-					CalDAV.writeDate(comp, component, 'exdate', new Date(ms) as unknown as DateTime, incoming.allDay, incoming.timeZone, { tzid: exdateTzid, append: true })
+					CalDAV.writeDate(comp, component, 'exdate', new Date(ms), incoming.allDay, { tzid: exdateTzid, append: true })
 				}
 			}
 
@@ -710,12 +723,12 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		component.updatePropertyWithValue('summary', entry.heading)
 		!entry.description ? void 0 : component.updatePropertyWithValue('description', entry.description)
 		!entry.location ? void 0 : component.updatePropertyWithValue('location', entry.location)
-		!entry.start ? void 0 : component.updatePropertyWithValue('dtstart', CalDAV.toICALTime(entry.start, entry.allDay, entry.timeZone))
-		!entry.end ? void 0 : component.updatePropertyWithValue(isTask ? 'due' : 'dtend', CalDAV.toICALTime(entry.end, entry.allDay, entry.timeZone))
+		!entry.start ? void 0 : component.updatePropertyWithValue('dtstart', CalDAV.toICALTime(entry.start, entry.allDay))
+		!entry.end ? void 0 : component.updatePropertyWithValue(isTask ? 'due' : 'dtend', CalDAV.toICALTime(entry.end, entry.allDay))
 		!entry.color ? void 0 : component.updatePropertyWithValue('color', entry.color)
 		!entry.recurrence ? void 0 : component.updatePropertyWithValue('rrule', ICAL.Recur.fromString(entry.recurrence.toRRule(entry.allDay)))
 		// The continuation of a split series carries its half of the exclusions (see backend/occurrences.ts).
-		entry.exdates?.forEach(ms => component.addPropertyWithValue('exdate', CalDAV.toICALTime(new Date(ms) as unknown as DateTime, entry.allDay, entry.timeZone)))
+		entry.exdates?.forEach(ms => component.addPropertyWithValue('exdate', CalDAV.toICALTime(new Date(ms), entry.allDay)))
 		if (isTask) {
 			this.writeTaskStatus(component, entry.status)
 		}
@@ -803,7 +816,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 			// One EXDATE per excluded instant (matched by ms during expansion); value type AND authored
 			// zone form follow DTSTART (RFC 5545 matches instances by it).
-			CalDAV.writeDate(comp, component, 'exdate', recurrenceId as unknown as DateTime, master.allDay, master.timeZone,
+			CalDAV.writeDate(comp, component, 'exdate', recurrenceId, master.allDay,
 				{ tzid: component.getFirstProperty('dtstart')?.getParameter('tzid')?.toString(), append: true })
 
 			// The instant may already carry an override component (an externally edited occurrence, bundled
