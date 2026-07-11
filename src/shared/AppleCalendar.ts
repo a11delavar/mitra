@@ -1,6 +1,6 @@
 import { model } from './model.js'
-import { entity } from './orm.js'
 import { CalDAV } from './CalDAV.js'
+import { integration } from './Integration.js'
 
 /**
  * Apple Calendar (iCloud) integration.
@@ -9,7 +9,7 @@ import { CalDAV } from './CalDAV.js'
  * and tailor the terminology.
  */
 @model('AppleCalendar')
-@entity({ discriminatorValue: 'apple' })
+@integration('apple')
 export class AppleCalendar extends CalDAV {
 	static readonly serverUrl = 'https://caldav.icloud.com/'
 

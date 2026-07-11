@@ -1,7 +1,7 @@
 import { type createDAVClient } from 'tsdav'
 import { model } from './model.js'
-import { entity } from './orm.js'
 import { CalDAV } from './CalDAV.js'
+import { integration } from './Integration.js'
 
 export interface GoogleCalendarCredentials {
 	/** The Google account's email — the integration's label (what the sidebar shows as its title). */
@@ -24,7 +24,7 @@ export interface GoogleCalendarCredentials {
  * frontend uses this class purely as an API model.
  */
 @model('GoogleCalendar')
-@entity({ discriminatorValue: 'google' })
+@integration('google')
 export class GoogleCalendar extends CalDAV {
 	/** Google's CalDAV v2 root; account discovery resolves the per-account home from here. */
 	static readonly serverUrl = 'https://apidata.googleusercontent.com/caldav/v2/'
