@@ -64,6 +64,18 @@ CalDAV accounts connect straight from the app — just add an integration and en
 
 That's it — *Add Integration → Google Calendar → Continue with Google* now walks through Google's consent screen, and the account's calendars sync like any other CalDAV source. The grant can be revoked anytime from your [Google account's security settings](https://myaccount.google.com/permissions), or by deleting the integration in mitra.
 
+## Apple Calendar
+
+Apple Calendar accounts (iCloud) can be connected natively. However, Apple requires you to use an **App-Specific Password** rather than your main Apple ID password.
+
+1. Go to [appleid.apple.com](https://appleid.apple.com/) and sign in.
+2. Under **Sign-In and Security**, select **App-Specific Passwords**.
+3. Generate a new password (you can name it "Mitra").
+4. In Mitra, select *Add Integration → Apple Calendar* and enter your Apple ID and the generated App-Specific Password.
+
+> [!NOTE]
+> Due to changes in iOS 13+, upgraded Apple Reminders are completely siloed by Apple and are no longer accessible via standard CalDAV. Tasks created in your Apple integration within Mitra will sync to other Mitra instances, but will not appear in the native Apple Reminders app. Your calendar events, however, will sync perfectly!
+
 ## Multi-user & sign-in (OIDC)
 
 Out of the box mitra is single-user with no login — fine when only you can reach it. To share one deployment with family or a team, connect it to any OpenID Connect provider (Pocket ID, Authelia, Authentik, Keycloak, Google, …) and every person signs in with their existing account and gets their own calendars:
