@@ -3,9 +3,8 @@ import { equals } from '@a11d/equals'
 import { createDAVClient } from 'tsdav'
 import ICAL from 'ical.js'
 import { model } from './model.js'
-import { entity } from './orm.js'
 import { Source, SourceType } from './Source.js'
-import { Integration } from './Integration.js'
+import { Integration, integration } from './Integration.js'
 import { Entry, EntryType, TaskStatus } from './Entry.js'
 import { Recurrence } from './Recurrence.js'
 import { calendarDateOf, midnightOf } from './calendarDate.js'
@@ -21,7 +20,7 @@ export interface CalDAVCredentials {
 }
 
 @model('CalDAV')
-@entity({ discriminatorValue: 'caldav' })
+@integration('caldav')
 export class CalDAV extends Integration<CalDAVCredentials> {
 	constructor(init?: Partial<CalDAV>) {
 		super()

@@ -194,3 +194,36 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 */
 	abstract excludeOccurrence(em: EntityManager, master: Entry, recurrenceId: Date): Promise<void>
 }
+
+/** Constructs an {@link Integration} subclass from a `Partial` of its own shape. */
+type IntegrationConstructor = new (init?: any) => Integration
+
+// Discriminator `type` → concrete subclass, populated by @integrationType at class-definition time.
+// One declaration serves both the MikroORM discriminator and the API's need to instantiate the right
+// subclass from a client-supplied `type`, so the type string lives in exactly one place per provider.
+const integrationClasses = new Map<string, IntegrationConstructor>()
+
+/**
+ * Declares a concrete {@link Integration} subclass's discriminator `type`: sets the MikroORM
+ * discriminator value AND registers the type→class mapping {@link integrationClassFor} resolves. Use in
+ * place of a bare `@entity({ discriminatorValue })` — the two always travelled together, and keeping
+ * them apart let the string drift and forced the API layer to hand-roll its own type→class dispatch.
+ * Internal-only integrations a client can't create (e.g. Dev) keep the plain `@entity` and stay out of
+ * the registry, so a stray `type` on the wire can never instantiate one.
+ */
+export function integration(type: string) {
+	return (target: IntegrationConstructor) => {
+		entity({ discriminatorValue: type })(target as any)
+		integrationClasses.set(type, target)
+	}
+}
+
+/** The concrete {@link Integration} subclass a client-supplied discriminator `type` maps to. Throws on
+ * an unknown (or internal-only) type rather than silently defaulting to one particular provider. */
+export function integrationClassFor(type: string | undefined): IntegrationConstructor {
+	const target = type ? integrationClasses.get(type) : undefined
+	if (!target) {
+		throw new Error(`Unknown integration type: ${type ?? '(none)'}`)
+	}
+	return target
+}

@@ -4,7 +4,7 @@ import { Task, TaskStatus } from '@lit/task'
 import { CalDAV, Source, SourceType, type Integration } from 'shared'
 import { discoverSources, createIntegration, updateIntegration, getIntegrations, fetchIntegrations, fetchGoogleAvailability, connectGoogle } from './Api.js'
 
-type Provider = 'caldav' | 'google'
+type Provider = 'caldav' | 'google' | 'apple'
 
 @component('mitra-dialog-integration')
 export class DialogIntegration extends DialogComponent<{ readonly id: string, readonly preselectSources?: boolean }, Integration> {
@@ -59,7 +59,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 				if (this.parameters.preselectSources) {
 					[...this.entity.sources].forEach(source => source.enabled = true)
 				}
-				this.provider = integration.type === 'google' ? 'google' : 'caldav'
+				this.provider = integration.type === 'google' ? 'google' : integration.type === 'apple' ? 'apple' : 'caldav'
 			}
 		}
 	}
@@ -130,6 +130,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 	private static readonly providers: Array<{ value: Provider, label: string }> = [
 		{ value: 'caldav', label: 'CalDAV' },
 		{ value: 'google', label: 'Google Calendar' },
+		{ value: 'apple', label: 'Apple Calendar' },
 	]
 
 	protected override get template() {
@@ -149,7 +150,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 						</label>
 					`}
 
-					${this.provider === 'google' ? this.googleTemplate : this.caldavTemplate}
+					${this.provider === 'google' ? this.googleTemplate : this.provider === 'apple' ? this.appleTemplate : this.caldavTemplate}
 
 					${!this.entity.sources.length ? html.nothing : html`
 						<div class="sources">
@@ -165,6 +166,21 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 					`}
 				</form>
 			</mitra-dialog>
+		`
+	}
+
+	private get appleTemplate() {
+		const { bind } = this.binder
+		return html`
+			<label>
+				${t('Apple ID')}
+				<input ${bind({ keyPath: 'credentials.username', event: 'input' })} ?readonly=${this.isEdit} autocomplete="off" placeholder="email@icloud.com">
+			</label>
+			<label>
+				${t('App-Specific Password')}
+				<input type="password" ${bind({ keyPath: 'credentials.password', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : ''} autocomplete="off">
+			</label>
+			${this.fetchSourcesTemplate}
 		`
 	}
 
@@ -212,7 +228,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 	private get fetchSourcesTemplate() {
 		return this.fetchSources.render({
 			initial: () => html`
-				<button class="connect" @click=${() => this.fetchSources.run()} ?disabled=${!this.entity.uri || !this.entity.credentials.username}>
+				<button class="connect" @click=${() => { this.entity.type = this.provider; this.fetchSources.run() }} ?disabled=${(this.provider !== 'apple' && !this.entity.uri) || !this.entity.credentials.username}>
 					${this.entity.sources.length ? t('Refresh') : t('Connect')}
 				</button>
 			`,
@@ -222,6 +238,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 	}
 
 	protected override async primaryAction() {
+		this.entity.type = this.provider
 		const integration = this.isEdit ? await updateIntegration(this.entity) : await createIntegration(this.entity)
 		await fetchIntegrations()
 		return integration
