@@ -13,23 +13,14 @@ import { CalDAV } from './CalDAV.js'
 export class AppleCalendar extends CalDAV {
 	static readonly serverUrl = 'https://caldav.icloud.com/'
 
-	constructor(init?: Partial<AppleCalendar>) {
-		super()
-		Object.assign(this, init)
-		// Ensure the URI is always the Apple one
-		this.uri = AppleCalendar.serverUrl
-	}
+	override uri = AppleCalendar.serverUrl
 
 	override toString() {
 		return `Apple Calendar integration for "${this.credentials.username}"`
 	}
 
 	override merge(incoming: this) {
-		// Enforce the Apple Server URL even if the client somehow sends one
+		super.merge(incoming)
 		this.uri = AppleCalendar.serverUrl
-		this.credentials = {
-			username: incoming.credentials.username,
-			password: incoming.credentials.password || this.credentials.password,
-		}
 	}
 }
