@@ -317,10 +317,15 @@ describe('Recurrence', () => {
 			assert.match(new Recurrence({ freq: 'WEEKLY', byday: ['TH'] }).endingBefore(at('2026-06-25T09:00:00Z')).toRRule(), /UNTIL=20260624T235959Z$/)
 		})
 
-		it('asContinuation keeps UNTIL but drops COUNT', () => {
+		it('asContinuation keeps UNTIL and carries the REMAINING count', () => {
 			const until = Recurrence.untilFromDay(2026, 12, 31)
 			assert.match(new Recurrence({ freq: 'WEEKLY', byday: ['MO'], until }).asContinuation().toRRule(), /UNTIL=20261231T235959Z$/)
-			assert.equal(new Recurrence({ freq: 'DAILY', count: 10 }).asContinuation().count, undefined)
+			// A "10 times" series split after its first occurrence continues "9 times" — never forever.
+			assert.equal(new Recurrence({ freq: 'DAILY', count: 10 }).asContinuation(1).count, 9)
+			assert.equal(new Recurrence({ freq: 'DAILY', count: 10 }).asContinuation(9).count, 1)
+			// An unbounded rule stays unbounded, and a count never collapses below one occurrence.
+			assert.equal(new Recurrence({ freq: 'DAILY' }).asContinuation(3).count, undefined)
+			assert.equal(new Recurrence({ freq: 'DAILY', count: 2 }).asContinuation(5).count, 1)
 		})
 	})
 })

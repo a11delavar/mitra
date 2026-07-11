@@ -142,6 +142,29 @@ export class Occurrences {
 	 * from the anchor, so iteration stops once past the window; `maxIterations` is only a backstop for
 	 * a pathological/non-advancing rule and is generous — a far-future window must still be reachable
 	 * for a dense series (a daily one needs one iteration per day from the anchor to the window). */
+	/** How many RULE-GENERATED occurrences fall strictly before `instant` — the COUNT bookkeeping of a
+	 * "this and following" split. Deliberately blind to EXDATEs: RFC 5545's COUNT bounds the rule's
+	 * generation BEFORE exclusions prune the set, so an excluded instance still consumes count. */
+	generatedBefore(instant: Date, maxIterations = 100_000): number {
+		const iterator = this.rule.iterator(this.anchor)
+		const boundMs = instant.getTime()
+		let generated = 0
+		let previousMs = -Infinity
+		for (let i = 0; i < maxIterations; i++) {
+			const time = iterator.next()
+			if (!time) {
+				break
+			}
+			const startMs = this.zone ? wallToInstantMs(time, this.zone) : time.toJSDate().getTime()
+			if (startMs <= previousMs || startMs >= boundMs) {
+				break // non-advancing (malformed) or past the split — occurrences ascend
+			}
+			previousMs = startMs
+			generated++
+		}
+		return generated
+	}
+
 	within(windowStart: Date, windowEnd: Date, maxIterations = 100_000): Array<{ start: Date, end: Date }> {
 		const occurrences = new Array<{ start: Date, end: Date }>()
 		const iterator = this.rule.iterator(this.anchor)
@@ -285,8 +308,10 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 	}
 
 	if (scope === 'following') {
-		// Capture the rule before truncating the master (updateEntry mutates master.recurrence in place).
+		// Capture the rule — and the count its old half consumes — BEFORE truncating the master
+		// (updateEntry mutates master.recurrence, and the raw .ics this counting reads, in place).
 		const rule = master.recurrence!
+		const consumed = rule.count ? Occurrences.of(master)?.generatedBefore(recurrenceId) ?? 0 : 0
 		// Old half: same details, rule truncated to end before this occurrence.
 		const truncated = new Entry({
 			sourceId: master.sourceId,
@@ -326,7 +351,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 			reminders: edited.reminders,
 			start: edited.start,
 			end: edited.end,
-			recurrence: rule.asContinuation().rebased(recurrenceId, continuationStart, master.timeZone),
+			recurrence: rule.asContinuation(consumed).rebased(recurrenceId, continuationStart, master.timeZone),
 			exdates: carried.length ? shiftExdates(carried, master.timeZone, recurrenceId, continuationStart) : undefined,
 		})
 		return integration.createEntry(em, continuation)

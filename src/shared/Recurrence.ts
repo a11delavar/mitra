@@ -355,10 +355,11 @@ export class Recurrence {
 		return this.with({ until: Recurrence.dayBefore(recurrenceId), count: undefined })
 	}
 
-	/** This rule as a fresh series starting at a split point: keeps UNTIL, drops COUNT. (Known limitation: a
-	 * COUNT-bounded series loses its bound on the "following" half — most series are open-ended or UNTIL-bound.) */
-	asContinuation(): Recurrence {
-		return this.with({ count: undefined })
+	/** This rule as a fresh series starting at a split point: keeps UNTIL; a COUNT-bounded rule carries
+	 * the REMAINING count — the original minus `consumed`, the occurrences the old half kept — so a
+	 * "10 times" series split after its first occurrence continues "9 times", never forever. */
+	asContinuation(consumed = 0): Recurrence {
+		return this.with({ count: this.count ? Math.max(1, this.count - consumed) : undefined })
 	}
 
 	private static parseUntil(value: string): DateTime | undefined {

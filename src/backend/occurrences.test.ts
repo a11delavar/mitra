@@ -238,6 +238,27 @@ describe('scoped occurrence edits', () => {
 		assert.notEqual(result.id, m.id)
 	})
 
+	it('\'following\' on a COUNT-bounded series carries the REMAINING count onto the continuation', async () => {
+		// A daily "10 times" series split at its SECOND occurrence: the old half keeps occurrence #1,
+		// so the continuation repeats 9 more times — it must never become a never-ending series.
+		const { calls, integration } = stub()
+		const m = new Entry({
+			id: 'm', sourceId: 's', type: EntryType.Event, heading: 'Standup', uid: 'u1',
+			start: D('2026-06-01T09:00:00Z'), end: D('2026-06-01T10:00:00Z'),
+			recurrence: new Recurrence({ freq: 'DAILY', count: 10 }),
+		})
+		const moved = new Entry({
+			sourceId: 's', type: EntryType.Event, heading: 'Standup',
+			start: D('2026-06-02T10:00:00Z'), end: D('2026-06-02T11:00:00Z'), // the Jun 2 occurrence, one hour later
+		})
+		const result = await editOccurrence(em, integration, m, new Date('2026-06-02T09:00:00Z'), moved, 'following')
+		assert.equal(result.recurrence!.count, 9)
+		assert.equal(result.recurrence!.until, undefined)
+		// The old half is UNTIL-bounded before the split, its COUNT cleared (UNTIL alone bounds it).
+		assert.equal(calls.updates[0]!.incoming.recurrence!.count, undefined)
+		assert.ok(calls.updates[0]!.incoming.recurrence!.until!.valueOf() < new Date('2026-06-02T09:00:00Z').getTime())
+	})
+
 	it('\'all\' adopts the edit\'s duration — a resized occurrence resizes the whole series', async () => {
 		const { calls, integration } = stub()
 		const resized = new Entry({
