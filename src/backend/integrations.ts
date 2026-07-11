@@ -3,7 +3,7 @@ import { orm } from './orm.js'
 import { syncEmitter } from './syncEmitter.js'
 import { cookie } from './auth.js'
 import { GoogleOAuth } from './GoogleOAuth.js'
-import { Integration, CalDAV, GoogleCalendar, Source, createLogger } from '../shared/index.js'
+import { Integration, CalDAV, GoogleCalendar, AppleCalendar, Source, createLogger } from '../shared/index.js'
 
 const logger = createLogger('Integrations')
 
@@ -90,16 +90,19 @@ integrationsRouter.get('/google/callback', async (req, res) => {
 integrationsRouter.post('/sources', async (req, res) => {
 	const incoming = req.body as Integration
 	const em = orm.em.fork()
-	const integration: Integration = await em.findOne(Integration, { id: incoming.id, userId: req.user.id }) ?? new CalDAV({ userId: req.user.id })
+	const IntegrationClass = incoming.type === 'apple' ? AppleCalendar : CalDAV
+	const integration: Integration = await em.findOne(Integration, { id: incoming.id, userId: req.user.id }) ?? new IntegrationClass({ userId: req.user.id })
 	integration.merge(incoming)
 	return res.json(await integration.getSources(em))
 })
 
 integrationsRouter.post('/', async (req, res) => {
+	const incoming = req.body as Integration
 	const em = orm.em.fork()
-	const integration: Integration = new CalDAV({ userId: req.user.id })
+	const IntegrationClass = incoming.type === 'apple' ? AppleCalendar : CalDAV
+	const integration: Integration = new IntegrationClass({ userId: req.user.id })
 	em.persist(integration)
-	await integration.applyAndSync(em, req.body as Integration)
+	await integration.applyAndSync(em, incoming)
 	syncEmitter.emit('updated', req.user.id)
 	const saved = await em.findOneOrFail(Integration, { id: integration.id }, { populate: ['sources'] })
 	const enabled = saved.sources.getItems().filter(source => source.enabled).length
