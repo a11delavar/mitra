@@ -19,6 +19,13 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	@oneToMany(() => Source, source => source.integrationId) sources = new Collection<Source>(this)
 
 	/**
+	 * The minimum time between background sync polls, in milliseconds — 0 means every synchronizer
+	 * cycle. Rate-limited providers (e.g. Google) override this to poll more politely; the
+	 * {@link Synchronizer} paces each integration accordingly (and backs off further on failures).
+	 */
+	get syncInterval() { return 0 }
+
+	/**
 	 * Fetches the account's remote sources (e.g. calendars, task lists) as transient
 	 * (unpersisted) entities. Internal — callers use {@link getSources}, which reconciles
 	 * these against the database.
@@ -34,6 +41,28 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * CalDAV keeps the stored password when `incoming` carries a blank one.
 	 */
 	abstract merge(incoming: this): void
+
+	/**
+	 * A transient copy for the client-side edit form — the mirror image of {@link merge}: same
+	 * identity and uri, credentials as the form should see them (see {@link editableCredentials}),
+	 * and sources as a plain array (never a live ORM Collection) so the copy stays
+	 * JSON-serializable when sent to the API — a Collection holds a circular owner reference.
+	 */
+	editableCopy(): this {
+		const constructor = this.constructor as new (init?: Partial<Integration>) => this
+		return new constructor({
+			id: this.id,
+			uri: this.uri,
+			credentials: this.editableCredentials,
+			sources: [...this.sources].map(source => new Source({ uri: source.uri, type: source.type, name: source.name, enabled: source.enabled })) as any,
+		})
+	}
+
+	/** The credentials as the edit form should see them: identifying fields kept, secrets blanked —
+	 * `merge` treats a blank secret as "keep the stored one", so the form round-trips safely. */
+	protected get editableCredentials(): TCredentials {
+		return { ...this.credentials }
+	}
 
 	/**
 	 * Reconciles the persisted source rows against the provider's current sources (via

@@ -35,11 +35,33 @@ EntryStore.resolveScope = (entry, intent) => new DialogRecurrenceScope({ entry, 
 @component('mitra-application')
 export class Mitra extends Application {
 	protected override async initialized() {
+		// Consumed BEFORE the router's first render: the routed page adopts the URL's query into its
+		// parameters and re-pushes it on navigation, which would resurrect an already-stripped param.
+		const pendingIntegrationId = Mitra.consumePendingIntegrationParameter()
 		await Promise.all([fetchIntegrations(), fetchUser()])
 		// Where notification permission was granted before, quietly refresh the push subscription so a
 		// push-service-side endpoint rotation never silently mutes reminders. Never prompts.
 		syncPushSubscription()
 		await super.initialized()
+		if (pendingIntegrationId) {
+			// Fresh from the OAuth consent flow — tick every discovered source by default (fresh-add UX).
+			await new DialogIntegration({ id: pendingIntegrationId, preselectSources: true }).confirm()
+			// The sidebar renders off the module-level integrations cache — nudge it like its own dialogs do.
+			document.querySelector('mitra-sidebar')?.requestUpdate()
+		}
+	}
+
+	/** Returning from Google's consent screen lands on `/?integration=<id>` (see the backend's
+	 * google/callback) — that integration's source picker is opened so the user finishes the setup.
+	 * The parameter is stripped immediately so a reload doesn't reopen the dialog. */
+	private static consumePendingIntegrationParameter(): string | null {
+		const parameters = new URLSearchParams(location.search)
+		const id = parameters.get('integration')
+		if (id) {
+			parameters.delete('integration')
+			history.replaceState(null, '', `${location.pathname}${parameters.size ? `?${parameters}` : ''}`)
+		}
+		return id
 	}
 
 	static override get styles() {

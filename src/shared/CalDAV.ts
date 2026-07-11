@@ -16,7 +16,8 @@ const logger = createLogger('CalDAV')
 
 export interface CalDAVCredentials {
 	username: string
-	password: string
+	/** The Basic-auth secret. Optional so credential shapes without one (see GoogleCalendar) stay assignable. */
+	password?: string
 }
 
 @model('CalDAV')
@@ -40,11 +41,16 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
+	protected override get editableCredentials(): CalDAVCredentials {
+		return { username: this.credentials.username, password: '' }
+	}
+
 	private client?: ReturnType<typeof createDAVClient>
 
-	// Memoized so a multi-step operation (discover + sync entries) shares one account discovery.
-	private getClient(): ReturnType<typeof createDAVClient> {
-		return this.client ??= createDAVClient({
+	/** The tsdav client configuration — the one thing a differently-authenticated provider
+	 * (see GoogleCalendar's OAuth) swaps out; everything else about the protocol is shared. */
+	protected get clientParameters(): Parameters<typeof createDAVClient>[0] {
+		return {
 			defaultAccountType: 'caldav',
 			authMethod: 'Basic',
 			serverUrl: this.uri ?? '',
@@ -52,7 +58,12 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				username: this.credentials.username,
 				password: this.credentials.password,
 			},
-		})
+		}
+	}
+
+	// Memoized so a multi-step operation (discover + sync entries) shares one account discovery.
+	private getClient(): ReturnType<typeof createDAVClient> {
+		return this.client ??= createDAVClient(this.clientParameters)
 	}
 
 	protected override async fetchSources() {
@@ -152,6 +163,64 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return {
 			changedUrls: members.filter(m => m.status !== 404).map(m => m.url),
 			deletedUrls: members.filter(m => m.status === 404).map(m => m.url),
+		}
+	}
+
+	/** A stored recurrence-id as epoch ms (occurrence instants are compared by ms throughout), or
+	 * undefined for none — tolerant of the column surfacing as a Date or a raw ms number. */
+	static instantOf(recurrenceId: Date | number | null | undefined): number | undefined {
+		return recurrenceId === null || recurrenceId === undefined ? undefined : new Date(recurrenceId).getTime()
+	}
+
+	/** A TZID resolved against the resource's own VTIMEZONEs — a zoned resource always carries the
+	 * definitions of every TZID it uses (RFC 5545 §3.6.5). */
+	private static timezoneIn(comp: ICAL.Component, tzid: string | undefined): ICAL.Timezone | undefined {
+		if (!tzid) {
+			return undefined
+		}
+		const vtimezone = comp.getAllSubcomponents('vtimezone')
+			.find(candidate => candidate.getFirstPropertyValue('tzid')?.toString() === tzid)
+		return vtimezone ? new ICAL.Timezone(vtimezone) : undefined
+	}
+
+	/**
+	 * Rewrite (or `append`) a date property PRESERVING the form the resource authored it in: a timed
+	 * property that carried a TZID keeps it, with the new instant written as that zone's WALL CLOCK;
+	 * anything else goes through {@link toICALTime} (all-day `VALUE=DATE`, timed UTC) with any stale
+	 * TZID parameter dropped. Writing the UTC form into a TZID property — the old behavior — let the
+	 * zone reinterpret the UTC wall clock, shifting the series by the zone offset on zoned servers
+	 * like Google. `tzid` overrides which authored zone to follow (e.g. DTSTART's for a fresh EXDATE);
+	 * it defaults to the property's own current parameter.
+	 */
+	private static writeDate(
+		comp: ICAL.Component, component: ICAL.Component, name: string,
+		date: DateTime, allDay: boolean, zone: string | null | undefined,
+		options?: { tzid?: string, append?: boolean },
+	): void {
+		const tzid = options?.tzid ?? component.getFirstProperty(name)?.getParameter('tzid')?.toString()
+		const timezone = allDay ? undefined : CalDAV.timezoneIn(comp, tzid)
+		const time = timezone ? ICAL.Time.fromJSDate(date, true).convertToZone(timezone) : CalDAV.toICALTime(date, allDay, zone)
+		const property = options?.append ? component.addPropertyWithValue(name, time) : component.updatePropertyWithValue(name, time)
+		if (timezone) {
+			property.setParameter('tzid', timezone.tzid)
+		} else {
+			property.removeParameter('tzid')
+		}
+	}
+
+	/** The subcomponent a ROW represents within its resource: an override row owns the component
+	 * carrying its RECURRENCE-ID, a master (or plain) row the one without — a series and its
+	 * single-occurrence overrides share one resource (RFC 4791: one UID per resource). */
+	protected static componentFor(entry: Entry, comp: ICAL.Component): ICAL.Component | undefined {
+		return [...comp.getAllSubcomponents('vevent'), ...comp.getAllSubcomponents('vtodo')]
+			.find(component => CalDAV.recurrenceProps(component).recurrenceId?.getTime() === CalDAV.instantOf(entry.recurrenceId))
+	}
+
+	/** Mirror a successful resource write onto the resource's OTHER rows (a master and its overrides
+	 * each carry their own copy of `raw`/`etag`), so none is left holding a stale If-Match etag. */
+	private static async syncResourceRows(em: EntityManager, written: Entry): Promise<void> {
+		for (const sibling of await em.find(Entry, { sourceId: written.sourceId, uri: written.uri, id: { $ne: written.id } })) {
+			sibling.data = { ...sibling.data, raw: written.data?.raw, etag: written.data?.etag }
 		}
 	}
 
@@ -285,16 +354,21 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		// background sync would notify clients every cycle (clobbering in-progress edits).
 		let changed = false
 
-		// 1. Handle deletions
+		// 1. Handle deletions — a deleted resource takes ALL its rows (a series' master + overrides).
 		for (const url of deletedUrls) {
-			const entry = existingEntries.find(e => CalDAV.memberUrlsMatch(source.uri, e.uri, url))
-			if (entry) {
+			for (const entry of existingEntries.filter(e => CalDAV.memberUrlsMatch(source.uri, e.uri, url))) {
 				em.remove(entry)
 				changed = true
 			}
 		}
 
-		// 2. Handle changes/additions — keep only the component this source represents, skipping the
+		// The sibling source (events + tasks share one collection URL) belongs to the SAME integration —
+		// scoped so another user's (or account's) identical member URLs never block ingestion here.
+		const siblingSourceIds = (await em.find(Source, { integrationId: source.integrationId }))
+			.map(sibling => sibling.id)
+			.filter(id => id !== source.id)
+
+		// 2. Handle changes/additions — keep only the components this source represents, skipping the
 		// sibling's (and components we don't model, e.g. VJOURNAL) so we never persist an entry
 		// without the required `uri`, which would otherwise abort the whole sync's flush.
 		for (const obj of changedObjects) {
@@ -302,69 +376,90 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				continue
 			}
 
+			// A resource holds ONE scheduling entity (RFC 4791: one UID per resource) but possibly MANY
+			// components: the series master plus one override VEVENT per edited occurrence — that's how
+			// Google (and every compliant server) ships single-occurrence edits. Each component becomes
+			// its own row, identified within the resource by its RECURRENCE-ID (the master has none).
 			const comp = new ICAL.Component(ICAL.parse(obj.data))
-			const component = comp.getFirstSubcomponent(entryType === EntryType.Task ? 'vtodo' : 'vevent')
-			if (!component) {
+			const components = comp.getAllSubcomponents(entryType === EntryType.Task ? 'vtodo' : 'vevent')
+			if (!components.length) {
 				continue
 			}
 
 			const normalizedObjUrl = CalDAV.resolveMemberUrl(source.uri, obj.url)
-			let entry = existingEntries.find(e => CalDAV.memberUrlsMatch(source.uri, e.uri, obj.url))
-			if (!entry) {
-				// A sibling source of the same calendar (events + tasks share one URL) may already own this
-				// member — don't re-file it here as a cross-source duplicate.
-				if (await em.findOne(Entry, { uri: normalizedObjUrl })) {
-					continue
-				}
-				entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: normalizedObjUrl })
-				em.persist(entry)
-				existingEntries.push(entry)
-			}
+			const rows = existingEntries.filter(e => CalDAV.memberUrlsMatch(source.uri, e.uri, obj.url))
 
-			if (entry.data?.etag === obj.etag) {
+			// The etag is per-resource: unchanged means every row is already in step.
+			if (rows.length && rows.every(row => row.data?.etag === obj.etag)) {
 				continue
 			}
 
-			entry.type = entryType
-			entry.color = component.getFirstPropertyValue('color')?.toString() || null
-			entry.data ??= {}
-			entry.data.raw = obj.data
-			entry.data.etag = obj.etag
-
-			if (entryType === EntryType.Event) {
-				const event = new ICAL.Event(component)
-				entry.heading = event.summary || 'Untitled Event'
-				entry.description = event.description || ''
-				entry.location = event.location || ''
-				entry.start = (event.startDate?.toJSDate() as any) || undefined
-				entry.end = (event.endDate ? event.endDate.toJSDate() as any : event.startDate?.toJSDate() as any) || undefined
-				// A date-only DTSTART (`VALUE=DATE`) is the iCalendar marker for an all-day event.
-				entry.allDay = event.startDate?.isDate ?? false
-			} else {
-				const value = (name: string) => component.getFirstPropertyValue(name) as any
-				entry.heading = value('summary')?.toString() || 'Untitled Task'
-				entry.description = value('description')?.toString() || ''
-				entry.location = value('location')?.toString() || ''
-				entry.status = CalDAV.statusFromICal(value('status')?.toString(), Number(value('percent-complete') ?? 0))
-				entry.start = value('dtstart')?.toJSDate?.() as any || undefined
-				entry.end = value('due')?.toJSDate?.() as any || undefined
-				entry.allDay = !!value('dtstart')?.isDate
+			// A sibling source of the same calendar may already own this member — don't re-file it
+			// here as a cross-source duplicate.
+			if (!rows.length && siblingSourceIds.length && await em.findOne(Entry, { uri: normalizedObjUrl, sourceId: { $in: siblingSourceIds } })) {
+				continue
 			}
 
-			entry.reminders = CalDAV.remindersFrom(component)
+			const kept = new Set<Entry>()
+			for (const component of components) {
+				// Recurrence: a master carries an RRULE; a single edited occurrence is its own component
+				// carrying a RECURRENCE-ID and the shared UID. Occurrences are expanded later, on read.
+				const recurrence = CalDAV.recurrenceProps(component)
+				let entry = rows.find(row => CalDAV.instantOf(row.recurrenceId) === recurrence.recurrenceId?.getTime())
+				if (!entry) {
+					entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: normalizedObjUrl })
+					em.persist(entry)
+					existingEntries.push(entry)
+					rows.push(entry)
+				}
+				kept.add(entry)
 
-			// The zone the entry's times were authored in (recurrence expands wall-clock in it — see
-			// backend/occurrences.ts). A UTC or floating DTSTART carries no TZID; that's a legitimate none.
-			entry.timeZone = component.getFirstProperty('dtstart')?.getParameter('tzid')?.toString() || null
+				entry.type = entryType
+				entry.color = component.getFirstPropertyValue('color')?.toString() || null
+				entry.data ??= {}
+				entry.data.raw = obj.data
+				entry.data.etag = obj.etag
 
-			// Recurrence: a master carries an RRULE; a single edited occurrence is its own member carrying a
-			// RECURRENCE-ID and the master's UID. Capture all three; occurrences are expanded later, on read.
-			const recurrence = CalDAV.recurrenceProps(component)
-			entry.uid = recurrence.uid
-			entry.recurrence = recurrence.recurrence
-			entry.recurrenceId = recurrence.recurrenceId as any
+				if (entryType === EntryType.Event) {
+					const event = new ICAL.Event(component)
+					entry.heading = event.summary || 'Untitled Event'
+					entry.description = event.description || ''
+					entry.location = event.location || ''
+					entry.start = (event.startDate?.toJSDate() as any) || undefined
+					entry.end = (event.endDate ? event.endDate.toJSDate() as any : event.startDate?.toJSDate() as any) || undefined
+					// A date-only DTSTART (`VALUE=DATE`) is the iCalendar marker for an all-day event.
+					entry.allDay = event.startDate?.isDate ?? false
+				} else {
+					const value = (name: string) => component.getFirstPropertyValue(name) as any
+					entry.heading = value('summary')?.toString() || 'Untitled Task'
+					entry.description = value('description')?.toString() || ''
+					entry.location = value('location')?.toString() || ''
+					entry.status = CalDAV.statusFromICal(value('status')?.toString(), Number(value('percent-complete') ?? 0))
+					entry.start = value('dtstart')?.toJSDate?.() as any || undefined
+					entry.end = value('due')?.toJSDate?.() as any || undefined
+					entry.allDay = !!value('dtstart')?.isDate
+				}
 
-			changed = true
+				entry.reminders = CalDAV.remindersFrom(component)
+
+				// The zone the entry's times were authored in (recurrence expands wall-clock in it — see
+				// backend/occurrences.ts). A UTC or floating DTSTART carries no TZID; that's a legitimate none.
+				entry.timeZone = component.getFirstProperty('dtstart')?.getParameter('tzid')?.toString() || null
+
+				entry.uid = recurrence.uid
+				entry.recurrence = recurrence.recurrence
+				entry.recurrenceId = recurrence.recurrenceId as any
+
+				changed = true
+			}
+
+			// An override component that vanished (the occurrence was reverted to the series) loses its row.
+			for (const row of rows) {
+				if (!kept.has(row)) {
+					em.remove(row)
+					changed = true
+				}
+			}
 		}
 
 		// Link each override row (a single edited occurrence) back to its series master by shared UID. Done
@@ -385,7 +480,51 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return changed
 	}
 
-	async updateEntry(_em: EntityManager, existing: Entry, incoming: Entry): Promise<void> {
+	/** The freshest copy of the entry's resource — the base for a concurrency retry. */
+	private async refetchResource(entry: Entry): Promise<{ raw: string, etag?: string } | undefined> {
+		const client = await this.getClient()
+		const objects = await client.fetchCalendarObjects({ calendar: { url: new URL('.', entry.uri).href }, objectUrls: [entry.uri!] })
+		return objects[0]?.data ? { raw: objects[0].data, etag: objects[0].etag || undefined } : undefined
+	}
+
+	/**
+	 * PUT the resource with the edit `applyTo` produces from a raw .ics, retrying ONCE on a 412 by
+	 * re-applying the same edit onto the refetched current resource. Google acknowledges a write and
+	 * then re-normalizes the resource asynchronously, bumping the etag AGAIN — so a second edit
+	 * within a sync cycle carries a stale If-Match and would fail spuriously. The refresh keeps the
+	 * guard's meaning for real conflicts: another client's concurrent change simply becomes the base
+	 * the field edit re-applies onto (the same merge any edit performs), and a second 412 propagates
+	 * — something is actively racing us. On success the entry's `raw`/`etag` are updated in place;
+	 * a non-2xx throws BEFORE the route flushes, so the in-memory edit reverts (per-request fork).
+	 */
+	private async writeResource(entry: Entry, applyTo: (raw: string) => string): Promise<void> {
+		const client = await this.getClient()
+		let data = applyTo(entry.data!.raw!)
+		let response = await client.updateCalendarObject({
+			calendarObject: { url: entry.uri!, data, etag: entry.data!.etag || undefined }
+		})
+		if (response.status === 412) {
+			const fresh = await this.refetchResource(entry)
+			if (fresh) {
+				logger.debug(`Etag of ${entry.uri} was stale (the server re-normalized the resource) — re-applying the edit onto the refreshed copy`)
+				data = applyTo(fresh.raw)
+				response = await client.updateCalendarObject({
+					calendarObject: { url: entry.uri!, data, etag: fresh.etag }
+				})
+			}
+		}
+		// tsdav returns the raw fetch Response and does NOT throw on a non-2xx.
+		if (response.ok === false) {
+			throw new Error(`CalDAV update failed: ${response.status} ${response.statusText}`)
+		}
+		entry.data!.raw = data
+		const etag = response.headers?.get('etag') || response.headers?.get('Etag') || response.headers?.get('ETag')
+		if (etag) {
+			entry.data!.etag = etag
+		}
+	}
+
+	async updateEntry(em: EntityManager, existing: Entry, incoming: Entry): Promise<void> {
 		if (!existing.uri || !existing.data?.raw) {
 			throw new Error('Entry must have a URL and raw data to be updated via CalDAV')
 		}
@@ -400,128 +539,152 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			return
 		}
 
-		const comp = new ICAL.Component(ICAL.parse(existing.data?.raw))
+		// A series-wide time shift moves every occurrence instant — including the ones the resource's
+		// bundled override components are anchored to (shifted below): computed up front, BEFORE the
+		// field mutations overwrite `existing.start`, and because `applyTo` may run twice (412 retry).
+		const overrideShift = keys.includes('start') && existing.recurrence && existing.start && incoming.start
+			? incoming.start.getTime() - existing.start.getTime()
+			: undefined
 
-		const component = comp.getFirstSubcomponent('vevent') ?? comp.getFirstSubcomponent('vtodo')
-		if (!component) {
-			throw new Error('No vevent or vtodo found in entry rawData')
-		}
-		const isTask = component.name === 'vtodo'
+		// The whole edit as a pure raw → raw transformation, so a concurrency retry can re-apply it
+		// onto a refreshed resource. The `existing.*` field assignments are idempotent.
+		const applyTo = (raw: string): string => {
+			const comp = new ICAL.Component(ICAL.parse(raw))
 
-		if (keys.includes('heading')) {
-			component.updatePropertyWithValue('summary', incoming.heading)
-			existing.heading = incoming.heading
-		}
-
-		if (keys.includes('description')) {
-			component.updatePropertyWithValue('description', incoming.description)
-			// Drop any HTML alternative (ALTREP) a prior client wrote, so our plain (markdown)
-			// value is authoritative — otherwise other viewers keep showing the stale HTML.
-			component.getFirstProperty('description')?.removeParameter('altrep')
-			existing.description = incoming.description
-		}
-
-		if (keys.includes('location')) {
-			if (incoming.location) {
-				component.updatePropertyWithValue('location', incoming.location)
-			} else {
-				component.removeProperty('location')
+			// Never the FIRST component: the resource may bundle the series master with override
+			// components (see syncSourceEntries) — this row's edit must land on ITS component.
+			const component = CalDAV.componentFor(existing, comp)
+			if (!component) {
+				throw new Error('No vevent or vtodo found in entry rawData')
 			}
-			existing.location = incoming.location
-		}
+			const isTask = component.name === 'vtodo'
 
-		if (keys.includes('color')) {
-			if (incoming.color) {
-				component.updatePropertyWithValue('color', incoming.color)
-			} else {
-				component.removeProperty('color')
+			if (keys.includes('heading')) {
+				component.updatePropertyWithValue('summary', incoming.heading)
+				existing.heading = incoming.heading
 			}
-			existing.color = incoming.color
+
+			if (keys.includes('description')) {
+				component.updatePropertyWithValue('description', incoming.description)
+				// Drop any HTML alternative (ALTREP) a prior client wrote, so our plain (markdown)
+				// value is authoritative — otherwise other viewers keep showing the stale HTML.
+				component.getFirstProperty('description')?.removeParameter('altrep')
+				existing.description = incoming.description
+			}
+
+			if (keys.includes('location')) {
+				if (incoming.location) {
+					component.updatePropertyWithValue('location', incoming.location)
+				} else {
+					component.removeProperty('location')
+				}
+				existing.location = incoming.location
+			}
+
+			if (keys.includes('color')) {
+				if (incoming.color) {
+					component.updatePropertyWithValue('color', incoming.color)
+				} else {
+					component.removeProperty('color')
+				}
+				existing.color = incoming.color
+			}
+
+			// Shift the bundled override components' RECURRENCE-IDs along with the series, or they
+			// orphan and the expansion renders BOTH the shifted occurrence and the override. The
+			// overrides' OWN times stay put — a custom-timed exception keeps its custom time.
+			if (overrideShift !== undefined) {
+				for (const sub of [...comp.getAllSubcomponents('vevent'), ...comp.getAllSubcomponents('vtodo')]) {
+					const rid = CalDAV.recurrenceProps(sub).recurrenceId
+					if (rid) {
+						CalDAV.writeDate(comp, sub, 'recurrence-id', new Date(rid.getTime() + overrideShift) as unknown as DateTime, false, existing.timeZone)
+					}
+				}
+			}
+
+			// All-day toggling changes whether DTSTART/DTEND are date-only, so a change to `allDay` also
+			// rewrites both date properties (even if the instants themselves didn't change).
+			if ((keys.includes('start') || keys.includes('allDay')) && incoming.start) {
+				CalDAV.writeDate(comp, component, 'dtstart', incoming.start, incoming.allDay, incoming.timeZone)
+			}
+
+			// A VTODO's end is DUE (RFC 5545 §3.8.2.3), a VEVENT's is DTEND — matching how sync reads each back.
+			if ((keys.includes('end') || keys.includes('allDay')) && incoming.end) {
+				const name = isTask ? 'due' : 'dtend'
+				// A fresh DTEND/DUE has no authored form of its own yet — it follows DTSTART's.
+				const tzid = (component.getFirstProperty(name) ?? component.getFirstProperty('dtstart'))?.getParameter('tzid')?.toString()
+				CalDAV.writeDate(comp, component, name, incoming.end, incoming.allDay, incoming.timeZone, { tzid })
+			}
+
+			if (isTask && keys.includes('status')) {
+				this.writeTaskStatus(component, incoming.status)
+				existing.status = incoming.status
+			}
+
+			if (keys.includes('reminders')) {
+				this.writeReminders(component, incoming.reminders)
+				existing.reminders = incoming.reminders
+			}
+
+			// Recurrence rule edits are series-wide: set/replace the master's RRULE, or drop it (and the EXDATEs it
+			// governed) to collapse the series back to a single entry. Keep the local recurrence/uid columns in step
+			// so the next GET expansion sees the change before a re-sync, and so overrides can still link by UID.
+			if (recurrenceChanged) {
+				if (incoming.recurrence) {
+					component.updatePropertyWithValue('rrule', ICAL.Recur.fromString(incoming.recurrence.toRRule(incoming.allDay)))
+					existing.uid ||= component.getFirstPropertyValue('uid')?.toString() || undefined
+				} else {
+					component.removeAllProperties('rrule')
+					component.removeAllProperties('exdate')
+				}
+			}
+
+			// Exclusions ride along only when the edit actually carries them — a scoped series edit shifting
+			// them with the series (see backend/occurrences.ts); absent means keep, like `recurrence` on the
+			// wire. Rewritten wholesale: the instants ARE the identity, so there's nothing to diff per-item.
+			if (incoming.exdates !== undefined) {
+				// EXDATEs follow DTSTART's authored form (RFC 5545 matches instances by it).
+				const exdateTzid = component.getFirstProperty('dtstart')?.getParameter('tzid')?.toString()
+				component.removeAllProperties('exdate')
+				for (const ms of incoming.exdates) {
+					CalDAV.writeDate(comp, component, 'exdate', new Date(ms) as unknown as DateTime, incoming.allDay, incoming.timeZone, { tzid: exdateTzid, append: true })
+				}
+			}
+
+			return comp.toString()
 		}
 
-		// All-day toggling changes whether DTSTART/DTEND are date-only, so a change to `allDay` also
-		// rewrites both date properties (even if the instants themselves didn't change).
-		if ((keys.includes('start') || keys.includes('allDay')) && incoming.start) {
-			component.updatePropertyWithValue('dtstart', CalDAV.toICALTime(incoming.start, incoming.allDay, incoming.timeZone))
+		await this.writeResource(existing, applyTo)
+
+		// Mirror the committed edit onto the row's own columns (the schedule fields weren't set inside
+		// `applyTo` — a retry recomputes from them) and shift the override ROWS with the series, once.
+		if (keys.includes('start') && incoming.start) {
 			existing.start = incoming.start
 		}
-
-		// A VTODO's end is DUE (RFC 5545 §3.8.2.3), a VEVENT's is DTEND — matching how sync reads each back.
-		if ((keys.includes('end') || keys.includes('allDay')) && incoming.end) {
-			component.updatePropertyWithValue(isTask ? 'due' : 'dtend', CalDAV.toICALTime(incoming.end, incoming.allDay, incoming.timeZone))
+		if (keys.includes('end') && incoming.end) {
 			existing.end = incoming.end
 		}
-
-		if (isTask && keys.includes('status')) {
-			this.writeTaskStatus(component, incoming.status)
-			existing.status = incoming.status
-		}
-
-		if (keys.includes('reminders')) {
-			this.writeReminders(component, incoming.reminders)
-			existing.reminders = incoming.reminders
-		}
-
-		// Column-only for now: our expansion honors it (see backend/occurrences.ts), while the .ics keeps
-		// its UTC DTSTART. Writing `DTSTART;TZID=…` — which is what lets OTHER clients expand the series
-		// DST-correctly too — needs the matching VTIMEZONE component (RFC 5545 requires it per TZID) and
-		// is its own follow-up.
-		if (keys.includes('timeZone')) {
-			existing.timeZone = incoming.timeZone
-		}
-
-		// Recurrence rule edits are series-wide: set/replace the master's RRULE, or drop it (and the EXDATEs it
-		// governed) to collapse the series back to a single entry. Keep the local recurrence/uid columns in step
-		// so the next GET expansion sees the change before a re-sync, and so overrides can still link by UID.
-		if (recurrenceChanged) {
-			if (incoming.recurrence) {
-				component.updatePropertyWithValue('rrule', ICAL.Recur.fromString(incoming.recurrence.toRRule(incoming.allDay)))
-				existing.uid ||= component.getFirstPropertyValue('uid')?.toString() || undefined
-			} else {
-				component.removeAllProperties('rrule')
-				component.removeAllProperties('exdate')
-			}
-			existing.recurrence = incoming.recurrence
-		}
-
-		// Exclusions ride along only when the edit actually carries them — a scoped series edit shifting
-		// them with the series (see backend/occurrences.ts); absent means keep, like `recurrence` on the
-		// wire. Rewritten wholesale: the instants ARE the identity, so there's nothing to diff per-item.
-		if (incoming.exdates !== undefined) {
-			component.removeAllProperties('exdate')
-			for (const ms of incoming.exdates) {
-				component.addPropertyWithValue('exdate', CalDAV.toICALTime(new Date(ms) as unknown as DateTime, incoming.allDay, incoming.timeZone))
-			}
-		}
-
 		if (keys.includes('allDay')) {
 			existing.allDay = incoming.allDay
 		}
-
-		existing.data.raw = comp.toString()
-
-		const client = await this.getClient()
-		const response = await client.updateCalendarObject({
-			calendarObject: {
-				url: existing.uri,
-				data: existing.data.raw,
-				etag: existing.data.etag || undefined,
-			}
-		})
-
-		// tsdav returns the raw fetch Response and does NOT throw on a non-2xx. The If-Match send means a 412
-		// (the object changed underneath us) must abort before the route flushes, or the local row diverges
-		// from the server. Throwing here skips the flush (per-request forked em), reverting the in-memory edit.
-		if (response.ok === false) {
-			throw new Error(`CalDAV update failed: ${response.status} ${response.statusText}`)
+		if (keys.includes('timeZone')) {
+			existing.timeZone = incoming.timeZone
 		}
+		if (recurrenceChanged) {
+			existing.recurrence = incoming.recurrence
+		}
+		if (overrideShift !== undefined) {
+			for (const override of await em.find(Entry, { recurrenceMasterId: existing.id })) {
+				const instant = CalDAV.instantOf(override.recurrenceId)
+				if (instant !== undefined) {
+					override.recurrenceId = new Date(instant + overrideShift) as any
+				}
+			}
+		}
+
 		logger.debug(`Updated ${existing.uri} — changed: ${keys.length ? keys.join(', ') : 'recurrence/exdates'}`)
 		logger.verbose(existing.data.raw)
-
-		const etag = response.headers?.get('etag') || response.headers?.get('Etag') || response.headers?.get('ETag')
-		if (etag) {
-			existing.data.etag = etag
-		}
+		await CalDAV.syncResourceRows(em, existing)
 	}
 
 	async createEntry(em: EntityManager, entry: Entry): Promise<Entry> {
@@ -592,44 +755,76 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	}
 
 	async deleteEntry(em: EntityManager, entry: Entry): Promise<void> {
+		// An override row SHARES its resource with the series master — deleting the resource would
+		// delete the whole series. Deleting the override is "delete this occurrence": route it through
+		// the master's exclusion (which also strips the override component and this row).
+		if (entry.recurrenceId && entry.recurrenceMasterId) {
+			const master = await em.findOne(Entry, { id: entry.recurrenceMasterId })
+			if (master) {
+				return this.excludeOccurrence(em, master, new Date(entry.recurrenceId))
+			}
+		}
 		if (entry.uri) {
 			const client = await this.getClient()
-			await client.deleteCalendarObject({
+			let response = await client.deleteCalendarObject({
 				calendarObject: {
 					url: entry.uri,
 					etag: entry.data?.etag || undefined,
 				}
 			})
+			// The same stale-etag story as writeResource: refresh the etag once and retry.
+			if (response.status === 412) {
+				const fresh = await this.refetchResource(entry)
+				response = await client.deleteCalendarObject({
+					calendarObject: { url: entry.uri, etag: fresh?.etag }
+				})
+			}
+			// A 404 means the resource is already gone — exactly what a delete wants.
+			if (response.ok === false && response.status !== 404) {
+				throw new Error(`CalDAV delete failed: ${response.status} ${response.statusText}`)
+			}
 			logger.debug(`Deleted ${entry.uri}`)
 		}
 		em.remove(entry)
 	}
 
-	async excludeOccurrence(_em: EntityManager, master: Entry, recurrenceId: Date): Promise<void> {
+	async excludeOccurrence(em: EntityManager, master: Entry, recurrenceId: Date): Promise<void> {
 		if (!master.uri || !master.data?.raw) {
 			throw new Error('Master must have a URL and raw data to exclude an occurrence via CalDAV')
 		}
 
-		const comp = new ICAL.Component(ICAL.parse(master.data.raw))
-		const component = comp.getFirstSubcomponent('vevent') ?? comp.getFirstSubcomponent('vtodo')
-		if (!component) {
-			throw new Error('No vevent or vtodo found in master rawData')
+		// A pure raw → raw transformation, so the 412 retry can re-apply it (see writeResource).
+		const applyTo = (raw: string): string => {
+			const comp = new ICAL.Component(ICAL.parse(raw))
+			const component = CalDAV.componentFor(master, comp)
+			if (!component) {
+				throw new Error('No vevent or vtodo found in master rawData')
+			}
+
+			// One EXDATE per excluded instant (matched by ms during expansion); value type AND authored
+			// zone form follow DTSTART (RFC 5545 matches instances by it).
+			CalDAV.writeDate(comp, component, 'exdate', recurrenceId as unknown as DateTime, master.allDay, master.timeZone,
+				{ tzid: component.getFirstProperty('dtstart')?.getParameter('tzid')?.toString(), append: true })
+
+			// The instant may already carry an override component (an externally edited occurrence, bundled
+			// in the same resource): EXDATE only prunes the recurrence SET — the override would keep the
+			// instance alive on other clients — so it goes too, along with its local row (below).
+			for (const sub of [...comp.getAllSubcomponents('vevent'), ...comp.getAllSubcomponents('vtodo')]) {
+				if (CalDAV.recurrenceProps(sub).recurrenceId?.getTime() === recurrenceId.getTime()) {
+					comp.removeSubcomponent(sub)
+				}
+			}
+
+			return comp.toString()
 		}
 
-		// One EXDATE per excluded instant (matched by ms during expansion); value type follows DTSTART.
-		component.addPropertyWithValue('exdate', CalDAV.toICALTime(recurrenceId as unknown as DateTime, master.allDay, master.timeZone))
-		master.data.raw = comp.toString()
+		await this.writeResource(master, applyTo)
 
-		const client = await this.getClient()
-		const response = await client.updateCalendarObject({
-			calendarObject: { url: master.uri, data: master.data.raw, etag: master.data.etag || undefined }
-		})
-		if (response.ok === false) {
-			throw new Error(`CalDAV exclude failed: ${response.status} ${response.statusText}`)
+		for (const override of await em.find(Entry, { recurrenceMasterId: master.id })) {
+			if (CalDAV.instantOf(override.recurrenceId) === recurrenceId.getTime()) {
+				em.remove(override)
+			}
 		}
-		const etag = response.headers?.get('etag') || response.headers?.get('Etag') || response.headers?.get('ETag')
-		if (etag) {
-			master.data.etag = etag
-		}
+		await CalDAV.syncResourceRows(em, master)
 	}
 }

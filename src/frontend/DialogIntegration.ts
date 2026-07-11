@@ -2,13 +2,16 @@ import { component, html, css, state, Binder } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { Task, TaskStatus } from '@lit/task'
 import { CalDAV, Source, SourceType, type Integration } from 'shared'
-import { discoverSources, createIntegration, updateIntegration, getIntegrations, fetchIntegrations } from './Api.js'
+import { discoverSources, createIntegration, updateIntegration, getIntegrations, fetchIntegrations, fetchGoogleAvailability, connectGoogle } from './Api.js'
+
+type Provider = 'caldav' | 'google'
 
 @component('mitra-dialog-integration')
-export class DialogIntegration extends DialogComponent<{ readonly id: string }, Integration> {
-	// `sources` is kept as a plain array (never a live ORM Collection) so the entity stays
-	// JSON-serializable when sent to the API — a Collection holds a circular owner reference.
-	@state() private entity = new CalDAV({ uri: '', credentials: { username: '', password: '' }, sources: [] as any })
+export class DialogIntegration extends DialogComponent<{ readonly id: string, readonly preselectSources?: boolean }, Integration> {
+	@state() private entity: Integration = new CalDAV({ uri: '', credentials: { username: '', password: '' }, sources: [] as any })
+
+	/** Which provider's panel the dialog shows — selectable on add, derived from the entity on edit. */
+	@state() private provider: Provider = 'caldav'
 
 	private readonly binder = new Binder(this, 'entity')
 
@@ -27,6 +30,13 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string }, 
 		},
 	})
 
+	/** Whether the deployment can connect Google accounts — gates the provider's add panel. */
+	private readonly googleAvailability = new Task(this, {
+		autoRun: !this.isEdit, // only the add panel offers connecting a new account
+		args: () => [] as const,
+		task: () => fetchGoogleAvailability(),
+	})
+
 	protected override createRenderRoot() { return this }
 
 	private get isEdit() { return !!this.parameters.id }
@@ -35,12 +45,21 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string }, 
 		if (this.isEdit) {
 			const integration = getIntegrations().find(i => i.id === this.parameters.id)
 			if (integration) {
-				this.entity = new CalDAV({
+				// A provider the client doesn't model (e.g. the backend-only Dev) arrives as a plain
+				// '@type'-less DTO without methods — fall back to a generic CalDAV-shaped copy for it.
+				this.entity = integration.editableCopy?.() ?? new CalDAV({
 					id: this.parameters.id,
 					uri: integration.uri ?? '',
 					credentials: { username: integration.credentials?.username ?? '', password: '' },
 					sources: [...integration.sources].map(source => new Source({ uri: source.uri, type: source.type, name: source.name, enabled: source.enabled })) as any,
 				})
+				// Fresh from an OAuth connect (preselectSources): tick everything, like a fresh add — the
+				// account was just authorized to import it. The sources are still persisted disabled
+				// server-side (opt-in data flow); saving is what enables the ticked ones.
+				if (this.parameters.preselectSources) {
+					[...this.entity.sources].forEach(source => source.enabled = true)
+				}
+				this.provider = integration.type === 'google' ? 'google' : 'caldav'
 			}
 		}
 	}
@@ -64,6 +83,12 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string }, 
 
 					.connect {
 						align-self: flex-start;
+					}
+
+					.hint {
+						margin: 0;
+						font-size: 0.8125rem;
+						color: var(--color-text-muted);
 					}
 
 					.error {
@@ -102,35 +127,29 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string }, 
 		`
 	}
 
+	private static readonly providers: Array<{ value: Provider, label: string }> = [
+		{ value: 'caldav', label: 'CalDAV' },
+		{ value: 'google', label: 'Google Calendar' },
+	]
+
 	protected override get template() {
-		const { bind } = this.binder
 		return html`
 			<mitra-dialog heading=${this.isEdit ? t('Edit integration') : t('Add integration')} primaryButtonText=${t('Save')}
 				?primaryButtonDisabled=${!this.entity.sources.length || this.fetchSources.status === TaskStatus.PENDING}
 			>
 				<form class="content" @submit=${(e: Event) => e.preventDefault()}>
-					<label>
-						${t('Server URL')}
-						<input ${bind({ keyPath: 'uri', event: 'input' })} ?readonly=${this.isEdit} placeholder="https://caldav.example.com" autocomplete="off">
-					</label>
-					<label>
-						${t('Username')}
-						<input ${bind({ keyPath: 'credentials.username', event: 'input' })} ?readonly=${this.isEdit} autocomplete="off">
-					</label>
-					<label>
-						${t('Password')}
-						<input type="password" ${bind({ keyPath: 'credentials.password', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : ''} autocomplete="off">
-					</label>
+					${this.isEdit ? html.nothing : html`
+						<label>
+							${t('Provider')}
+							<select @change=${(e: Event) => this.provider = (e.target as HTMLSelectElement).value as Provider}>
+								${DialogIntegration.providers.map(provider => html`
+									<option value=${provider.value} ?selected=${this.provider === provider.value}>${provider.label}</option>
+								`)}
+							</select>
+						</label>
+					`}
 
-					${this.fetchSources.render({
-						initial: () => html`
-							<button class="connect" @click=${() => this.fetchSources.run()} ?disabled=${!this.entity.uri || !this.entity.credentials.username}>
-								${this.entity.sources.length ? t('Refresh') : t('Connect')}
-							</button>
-						`,
-						error: (e: unknown) => html`<p class="error">${(e as Error).message}</p>`,
-						pending: () => html`<button class="connect" disabled>${t('Connecting…')}</button>`,
-					})}
+					${this.provider === 'google' ? this.googleTemplate : this.caldavTemplate}
 
 					${!this.entity.sources.length ? html.nothing : html`
 						<div class="sources">
@@ -147,6 +166,59 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string }, 
 				</form>
 			</mitra-dialog>
 		`
+	}
+
+	private get caldavTemplate() {
+		const { bind } = this.binder
+		return html`
+			<label>
+				${t('Server URL')}
+				<input ${bind({ keyPath: 'uri', event: 'input' })} ?readonly=${this.isEdit} placeholder="https://caldav.example.com" autocomplete="off">
+			</label>
+			<label>
+				${t('Username')}
+				<input ${bind({ keyPath: 'credentials.username', event: 'input' })} ?readonly=${this.isEdit} autocomplete="off">
+			</label>
+			<label>
+				${t('Password')}
+				<input type="password" ${bind({ keyPath: 'credentials.password', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : ''} autocomplete="off">
+			</label>
+			${this.fetchSourcesTemplate}
+		`
+	}
+
+	/** Add: hand off to Google's consent screen (the callback lands back here with the source picker
+	 * open — see Mitra.initialized). Edit: the grant isn't form-editable, so only the account label
+	 * and a sources Refresh show. */
+	private get googleTemplate() {
+		return this.isEdit ? html`
+			<label>
+				${t('Google account')}
+				<input readonly .value=${this.entity.credentials.username} autocomplete="off">
+			</label>
+			${this.fetchSourcesTemplate}
+		` : this.googleAvailability.render({
+			pending: () => html`<button class="connect" disabled>${t('Continue with Google')}</button>`,
+			error: (e: unknown) => html`<p class="error">${(e as Error).message}</p>`,
+			complete: ({ configured }) => configured ? html`
+				<p class="hint">${t('Google.ConsentHint')}</p>
+				<button class="connect" @click=${() => connectGoogle()}>${t('Continue with Google')}</button>
+			` : html`
+				<p class="hint">${t('Google.ConfigurationHint')}</p>
+			`,
+		})
+	}
+
+	private get fetchSourcesTemplate() {
+		return this.fetchSources.render({
+			initial: () => html`
+				<button class="connect" @click=${() => this.fetchSources.run()} ?disabled=${!this.entity.uri || !this.entity.credentials.username}>
+					${this.entity.sources.length ? t('Refresh') : t('Connect')}
+				</button>
+			`,
+			error: (e: unknown) => html`<p class="error">${(e as Error).message}</p>`,
+			pending: () => html`<button class="connect" disabled>${t('Connecting…')}</button>`,
+		})
 	}
 
 	protected override async primaryAction() {

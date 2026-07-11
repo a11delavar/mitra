@@ -35,7 +35,11 @@ export const DEFAULT_REMINDER_MINUTES = 30
 
 @model('Entry')
 @entity()
-@unique({ properties: ['sourceId', 'uri'] })
+// A resource (uri) may hold SEVERAL rows: the series master plus one per single-occurrence override
+// (they share the .ics — see CalDAV.syncSourceEntries), so the row identity within a source is
+// (uri, recurrenceId). SQLite treats NULLs as distinct, so masters (NULL recurrenceId) pass; their
+// one-per-resource invariant is upheld by the sync logic, not the index.
+@unique({ properties: ['sourceId', 'uri', 'recurrenceId'] })
 export class Entry {
 	// No default: the backend assigns the id on create. A locally-created entry (a drag draft) has no id
 	// until then — `persisted` (below) is the single, intrinsic source of "is this still a draft". The

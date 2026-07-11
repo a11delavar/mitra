@@ -40,6 +40,7 @@ declare global {
 		"Connect": unknown
 		"connect caldav account calendar": unknown
 		"Connecting…": unknown
+		"Continue with Google": unknown
 		"Create Entry": unknown
 		"Custom…": unknown
 		"days": unknown
@@ -65,6 +66,9 @@ declare global {
 		"Every": unknown
 		"forward later": unknown
 		"Go to Today": unknown
+		"Google account": unknown
+		"Google.ConfigurationHint": unknown
+		"Google.ConsentHint": unknown
 		"Hide calendar": unknown
 		"hours": unknown
 		"Include time": unknown
@@ -92,6 +96,7 @@ declare global {
 		"Password": unknown
 		"Previous Month": unknown
 		"Previous Week": unknown
+		"Provider": unknown
 		"Re-import entries": unknown
 		"Refresh": unknown
 		"Reminder": unknown

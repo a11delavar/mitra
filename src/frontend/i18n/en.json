@@ -3,5 +3,7 @@
 	"${count:pluralityNumber} hours": ["${count:pluralityNumber} hour", "${count:pluralityNumber} hours"],
 	"${count:pluralityNumber} months": ["${count:pluralityNumber} month", "${count:pluralityNumber} months"],
 	"${count:pluralityNumber} weeks": ["${count:pluralityNumber} week", "${count:pluralityNumber} weeks"],
-	"${count:pluralityNumber} years": ["${count:pluralityNumber} year", "${count:pluralityNumber} years"]
+	"${count:pluralityNumber} years": ["${count:pluralityNumber} year", "${count:pluralityNumber} years"],
+	"Google.ConsentHint": "You will be redirected to Google to grant access to your calendars, then choose here which of them to show.",
+	"Google.ConfigurationHint": "Google Calendar is not configured on this server — set the MITRA_GOOGLE_CLIENT_ID and MITRA_GOOGLE_CLIENT_SECRET environment variables (see the README)."
 }

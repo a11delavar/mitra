@@ -42,8 +42,8 @@ if (sweptSessions) {
 	logger.debug(`Swept ${sweptSessions} expired session(s) at boot`)
 }
 
-/** Parse one cookie out of the raw header — the app has exactly two cookies, not worth a dependency. */
-function cookie(req: Request, name: string): string | undefined {
+/** Parse one cookie out of the raw header — the app has only a handful, not worth a dependency. */
+export function cookie(req: Request, name: string): string | undefined {
 	for (const pair of req.headers.cookie?.split(';') ?? []) {
 		const separator = pair.indexOf('=')
 		if (pair.slice(0, separator).trim() === name) {

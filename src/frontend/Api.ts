@@ -133,6 +133,17 @@ export function discoverSources(integration: Integration) {
 	return Api.post<Array<Source>>('/integrations/sources', integration)
 }
 
+/** Whether this deployment can connect Google accounts (MITRA_GOOGLE_CLIENT_ID configured). */
+export function fetchGoogleAvailability() {
+	return Api.get<{ configured: boolean }>('/integrations/google')
+}
+
+/** Starts the Google consent flow — a full-page navigation: Google redirects back into the app with
+ * the new integration's source picker open (see Mitra.openPendingIntegration). */
+export function connectGoogle() {
+	location.assign('/api/integrations/google/connect')
+}
+
 export function createIntegration(integration: Integration) {
 	return Api.post<Integration>('/integrations', integration)
 }

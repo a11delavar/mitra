@@ -23,7 +23,7 @@ Most tools make you choose: a *calendar* for your time, or a *to-do app* for you
 ## Features
 
 - 🗓️ **Events and tasks together** — one timeline, week and month views, create anything by dragging (timed, multi-day, or all-day).
-- 🔗 **Brings in calendars you already use** — your CalDAV accounts (events *and* tasks) sync in the background, with more integrations on the way.
+- 🔗 **Brings in calendars you already use** — your CalDAV accounts (events *and* tasks) and Google Calendar sync in the background, with more integrations on the way.
 - 🎨 **Yours to look at** — per-calendar colours, light and dark themes, and full right-to-left support.
 - 🏠 **Self-hosted & private** — everything lives in one small container with a database you own and can back up in seconds.
 
@@ -39,6 +39,11 @@ services:
       - '3000:3000'
     volumes:
       - mitra-data:/app/data
+    environment:
+      MITRA_URL: 'https://mitra.example.com'
+      # Google Calendar (optional)
+	  MITRA_GOOGLE_CLIENT_ID: '….apps.googleusercontent.com'
+      MITRA_GOOGLE_CLIENT_SECRET: '…'
 volumes:
   mitra-data:
 ```
@@ -48,6 +53,16 @@ docker compose up -d   # → http://localhost:3000
 ```
 
 Everything you create lives in the `mitra-data` volume — back that up and you've backed up everything. To pin or track a specific version instead of `latest`, see the [available tags](https://github.com/a11delavar/mitra/pkgs/container/mitra).
+
+## Google Calendar
+
+CalDAV accounts connect straight from the app — just add an integration and enter the server URL and credentials. Google Calendar speaks CalDAV too, but Google requires OAuth instead of a password, so it needs a one-time setup of your deployment:
+
+1. Create a project in the [Google Cloud console](https://console.cloud.google.com) and enable the **CalDAV API** in *APIs & Services*.
+2. Configure the OAuth consent screen and add yourself (and anyone else who'll connect an account) as a **test user** — or publish the app. While the consent screen stays in *Testing*, Google expires each grant after 7 days and you'll have to reconnect; published apps keep it indefinitely.
+3. Create an OAuth client of type web application with the redirect URI `https://mitra.example.com/api/integrations/google/callback` — your `MITRA_URL` plus `/api/integrations/google/callback`.
+
+That's it — *Add Integration → Google Calendar → Continue with Google* now walks through Google's consent screen, and the account's calendars sync like any other CalDAV source. The grant can be revoked anytime from your [Google account's security settings](https://myaccount.google.com/permissions), or by deleting the integration in mitra.
 
 ## Multi-user & sign-in (OIDC)
 
