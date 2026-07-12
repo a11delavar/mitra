@@ -2,91 +2,7 @@ import { Component, component, html, css, state, event, repeat } from '@a11d/lit
 import { DialogComponent } from '@a11d/lit-application'
 import { type UserTimeZone } from 'shared'
 import { getTimeZones, setTimeZones } from '../Api.js'
-
-// --- Zone presentation (shared with the day grid's time axis) --------------------------------------
-
-/** One `timeZoneName` part off Intl, in the UI language; `zoneId` undefined = the system zone. */
-export function zoneNamePart(zoneId: string | undefined, style: 'short' | 'long' | 'longOffset'): string {
-	return new Intl.DateTimeFormat(Localizer.languages.current, { ...(!zoneId ? {} : { timeZone: zoneId }), timeZoneName: style })
-		.formatToParts(new Date())
-		.find(part => part.type === 'timeZoneName')?.value ?? ''
-}
-
-/** The compact column label: the user's custom name, else Intl's `short` name — a real abbreviation
- * ("PDT") where the zone has one, a localized offset ("GMT+2") where it doesn't. The generic names
- * ("Germany Time") don't fit a 3.75rem column. */
-export function shortZoneLabel(zone?: UserTimeZone): string {
-	return (zone ? zone.label : systemZoneLabel()) || zoneNamePart(zone?.id, 'short')
-}
-
-/** The zone the browser runs in — the grid's anchor; never offered (or storable) as an addition. */
-export function systemZoneId(): string {
-	return new Intl.DateTimeFormat().resolvedOptions().timeZone
-}
-
-// Renames of the SYSTEM zone live in localStorage, not the database: the system zone is browser state
-// (it changes when the device travels), so its label is browser state too — no second source of truth
-// about which zone anchors the grid. Keyed by zone id, so a "DE" stays bound to Europe/Berlin rather
-// than to whatever zone the device happens to be in.
-const SYSTEM_LABELS_KEY = 'Mitra.TimeZones.Labels'
-
-function systemZoneLabel(): string | undefined {
-	try {
-		return (JSON.parse(localStorage.getItem(SYSTEM_LABELS_KEY) ?? '{}') as Record<string, string>)[systemZoneId()] || undefined
-	} catch {
-		return undefined
-	}
-}
-
-function setSystemZoneLabel(label: string | undefined) {
-	try {
-		const labels = JSON.parse(localStorage.getItem(SYSTEM_LABELS_KEY) ?? '{}') as Record<string, string>
-		if (label) {
-			labels[systemZoneId()] = label
-		} else {
-			delete labels[systemZoneId()]
-		}
-		localStorage.setItem(SYSTEM_LABELS_KEY, JSON.stringify(labels))
-	} catch {
-		// Storage unavailable — the rename just doesn't stick.
-	}
-}
-
-/** The full name for tooltips ("Central European Summer Time"). */
-export function longZoneName(zoneId?: string): string {
-	return zoneNamePart(zoneId, 'long')
-}
-
-// --- Picker data ------------------------------------------------------------------------------------
-
-interface ZoneRow {
-	readonly id: string
-	readonly offset: string
-	readonly offsetMinutes: number
-	readonly name: string
-	readonly city: string
-}
-
-let zoneRows: ReadonlyArray<ZoneRow> | undefined
-
-/** Every IANA zone the runtime knows, presentable and sorted by offset — built lazily on first picker
- * open (~400 zones × two Intl formatters is one-time work worth deferring off the boot path). */
-function allZoneRows(): ReadonlyArray<ZoneRow> {
-	return zoneRows ??= Intl.supportedValuesOf('timeZone')
-		.map(id => {
-			const offset = zoneNamePart(id, 'longOffset') // "GMT+02:00"; plain "GMT" for UTC
-			const match = /GMT([+-])(\d{2}):(\d{2})/.exec(offset)
-			const offsetMinutes = !match ? 0 : (match[1] === '-' ? -1 : 1) * (Number(match[2]) * 60 + Number(match[3]))
-			return {
-				id,
-				offset,
-				offsetMinutes,
-				name: zoneNamePart(id, 'long'),
-				city: id.split('/').at(-1)!.replaceAll('_', ' '),
-			}
-		})
-		.sort((a, b) => a.offsetMinutes - b.offsetMinutes || a.city.localeCompare(b.city))
-}
+import { type TimeZonePicker, zoneNamePart, shortZoneLabel, longZoneName, systemZoneId, systemZoneLabel, setSystemZoneLabel } from './TimeZonePicker.js'
 
 /**
  * The day grid's time-axis header: one compact label per displayed zone — the user's additional zones
@@ -104,25 +20,9 @@ export class TimeZoneHeader extends Component {
 	/** Fired after the zone list changed (added/renamed/removed). */
 	@event() readonly change!: EventDispatcher
 
-	@state() private query = ''
-	@state() private activeIndex = -1
-
 	protected override createRenderRoot() { return this }
 
-	private get picker() { return this.querySelector<HTMLElement>('.picker') }
-
-	private get filteredRows(): ReadonlyArray<ZoneRow> {
-		// Neither the already-added zones nor the system zone (always shown anyway) are offerable —
-		// duplicate columns would only mislead.
-		const taken = new Set([...getTimeZones().map(zone => zone.id), systemZoneId()])
-		const rows = allZoneRows().filter(row => !taken.has(row.id))
-		const query = this.query.trim().toLowerCase()
-		return !query ? rows : rows.filter(row =>
-			row.city.toLowerCase().includes(query)
-			|| row.name.toLowerCase().includes(query)
-			|| row.offset.toLowerCase().includes(query)
-			|| row.id.toLowerCase().includes(query))
-	}
+	private get picker() { return this.querySelector<TimeZonePicker>('mitra-time-zone-picker') }
 
 	private async commit(timeZones: Array<UserTimeZone>) {
 		await setTimeZones(timeZones)
@@ -131,7 +31,6 @@ export class TimeZoneHeader extends Component {
 	}
 
 	private readonly add = (id: string) => {
-		this.picker?.hidePopover()
 		if (id === systemZoneId() || getTimeZones().some(zone => zone.id === id)) {
 			return // already a column
 		}
@@ -157,40 +56,6 @@ export class TimeZoneHeader extends Component {
 		}
 		setSystemZoneLabel(label || undefined)
 		this.requestUpdate()
-	}
-
-	private readonly handlePickerToggle = (e: Event) => {
-		if ((e as ToggleEvent).newState === 'open') {
-			this.query = ''
-			this.activeIndex = -1
-			const input = this.querySelector<HTMLInputElement>('.picker input')
-			input?.focus()
-			if (input) {
-				input.value = ''
-			}
-		}
-	}
-
-	private readonly handlePickerInput = (e: Event) => {
-		this.query = (e.target as HTMLInputElement).value
-		this.activeIndex = -1
-	}
-
-	private readonly handlePickerKeydown = (e: KeyboardEvent) => {
-		const rows = this.filteredRows
-		if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-			e.preventDefault()
-			const delta = e.key === 'ArrowDown' ? 1 : -1
-			this.activeIndex = rows.length ? (this.activeIndex + delta + rows.length) % rows.length : -1
-			this.updateComplete.then(() => this.querySelector('.picker .rows [data-active]')?.scrollIntoView({ block: 'nearest' }))
-		} else if (e.key === 'Enter') {
-			// The highlighted row, or — straight after typing — the top match.
-			e.preventDefault()
-			const row = rows[this.activeIndex] ?? rows[0]
-			if (row) {
-				this.add(row.id)
-			}
-		}
 	}
 
 	private readonly toggleMenu = (e: Event) => {
@@ -245,79 +110,6 @@ export class TimeZoneHeader extends Component {
 					position-area: block-end span-inline-end;
 					position-try-fallbacks: flip-block, flip-inline;
 				}
-
-				/* The zone picker: search-as-you-type over every IANA zone, in the popover glass. */
-				> .picker {
-					margin: 0.25rem 0 0;
-					padding: 0;
-					max-inline-size: calc(100dvw - 0.75rem); /* never wider than the viewport */
-					background: color-mix(in srgb, var(--color-surface) 95%, transparent);
-					backdrop-filter: blur(10px);
-					border: var(--border);
-					border-radius: 8px;
-					box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48), 0px 4px 12px -1px rgba(0,0,0,0.24);
-					position-area: block-end span-inline-end;
-					position-try-fallbacks: flip-block, flip-inline;
-
-					&:popover-open {
-						display: flex;
-						flex-direction: column;
-						gap: 0.375rem;
-					}
-
-					> input {
-						flex-shrink: 0;
-						padding-block: 0.4rem;
-						margin-block: 0.4rem;
-						margin-inline: 0.24rem;
-					}
-
-					> .rows {
-						overflow-y: overlay;
-						max-height: min(24rem, 50dvh);
-						display: flex;
-						flex-direction: column;
-						gap: 1px;
-
-						> button {
-							all: unset;
-							box-sizing: border-box;
-							display: flex;
-							align-items: baseline;
-							gap: 0.5rem;
-							padding: 0.375rem 0.5rem;
-							border-radius: var(--border-radius);
-							font-size: 0.8125rem;
-							cursor: pointer;
-
-							/* The keyboard-active row shares the hover surface. */
-							&:hover, &[data-active] {
-								background: color-mix(in srgb, var(--color-text) 8%, transparent);
-							}
-
-							> .offset {
-								flex-shrink: 0;
-								inline-size: 5.25rem;
-								color: var(--color-text-muted);
-								font-variant-numeric: tabular-nums;
-							}
-
-							> .name {
-								font-weight: 500;
-								white-space: nowrap;
-								overflow: hidden;
-								text-overflow: ellipsis;
-							}
-
-							> .city {
-								color: var(--color-text-muted);
-								white-space: nowrap;
-								overflow: hidden;
-								text-overflow: ellipsis;
-							}
-						}
-					}
-				}
 			}
 		`
 	}
@@ -352,20 +144,10 @@ export class TimeZoneHeader extends Component {
 					${t('Rename')}
 				</button>
 			</menu>
-			<div class="picker" popover style="position-anchor: ${this.anchor}-add" @toggle=${this.handlePickerToggle}>
-				<input placeholder=${t('Time zone')} autocomplete="off" spellcheck="false"
-					@input=${this.handlePickerInput}
-					@keydown=${this.handlePickerKeydown}>
-				<div class="rows">
-					${repeat(this.filteredRows, row => row.id, (row, index) => html`
-						<button type="button" ?data-active=${index === this.activeIndex} @click=${() => this.add(row.id)}>
-							<span class="offset">${row.offset}</span>
-							<span class="name">${row.name}</span>
-							<span class="city">– ${row.city}</span>
-						</button>
-					`)}
-				</div>
-			</div>
+			<mitra-time-zone-picker style="position-anchor: ${this.anchor}-add"
+				.exclude=${new Set([...getTimeZones().map(zone => zone.id), systemZoneId()])}
+				@pick=${(e: CustomEvent<string>) => this.add(e.detail)}
+			></mitra-time-zone-picker>
 		`
 	}
 }

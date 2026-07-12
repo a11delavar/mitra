@@ -23,6 +23,7 @@ import { RepeatField } from './components/RepeatField.js'
 import { LocationField } from './components/LocationField.js'
 import { RemindersField } from './components/RemindersField.js'
 import { TimeZoneHeader, DialogTimeZoneRename } from './components/TimeZoneHeader.js'
+import { TimeZonePicker } from './components/TimeZonePicker.js'
 import { syncPushSubscription } from './push.js'
 import { DialogRecurrenceScope } from './components/DialogRecurrenceScope.js'
 import { Markdown } from './Markdown.js'
@@ -109,6 +110,7 @@ export class Mitra extends Application {
 			${RemindersField.styles}
 			${TimeZoneHeader.styles}
 			${DialogTimeZoneRename.styles}
+			${TimeZonePicker.styles}
 		`
 	}
 }

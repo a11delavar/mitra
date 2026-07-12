@@ -99,8 +99,9 @@ declare global {
 		"Password": unknown
 		"Previous Month": unknown
 		"Previous Week": unknown
-		"Provider": unknown
 		"Previous Year": unknown
+		"Primary time zone — switch to ${city} time to change the zone": unknown
+		"Provider": unknown
 		"Re-import entries": unknown
 		"Refresh": unknown
 		"Reminder": unknown
@@ -120,6 +121,8 @@ declare global {
 		"Server URL": unknown
 		"Set as the default for new entries": unknown
 		"Show calendar": unknown
+		"Showing ${city} time — switch to the primary time zone": unknown
+		"Showing the primary time zone — switch to ${city} time": unknown
 		"Shown above the time axis. Leave empty to use the automatic name.": unknown
 		"Sign out": unknown
 		"Sources": unknown
@@ -144,6 +147,7 @@ declare global {
 		"unchanged": unknown
 		"Untitled": unknown
 		"Username": unknown
+		"Wall clock — no time zone": unknown
 		"Week": unknown
 		"Week View": unknown
 		"weeks": unknown

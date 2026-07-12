@@ -53,16 +53,22 @@ export class EntryDetailsComponent extends Component {
 		return EntryStore.commit(this.segment!.entry)
 	}
 
+	// A failed save must not go down silently: the entry stays dirty (the commit loop retries on the
+	// next change), but the user deserves at least a console trace of WHY their edit didn't stick.
+	private readonly reportSaveError = (error: unknown) => {
+		console.error('Persisting the entry failed — the edit is kept locally and retried on the next change:', error)
+	}
+
 	// The task checkbox/menu mutated `entry.status`: render it everywhere this frame, then persist.
 	private readonly handleStatusChange = () => {
 		EntryStore.notify()
-		this.handleChange().catch(() => void 0)
+		this.handleChange().catch(this.reportSaveError)
 	}
 
 	// The <mitra-entry-details-when> editor mutated the entry's span in place: render, then persist.
 	private readonly handleWhenChange = () => {
 		EntryStore.notify()
-		this.handleChange().catch(() => void 0)
+		this.handleChange().catch(this.reportSaveError)
 	}
 
 	private readonly handleDelete = () => {
@@ -118,7 +124,9 @@ export class EntryDetailsComponent extends Component {
 				position-try-order: most-block-size;
 				position-try-fallbacks: flip-inline, flip-block, flip-block flip-inline;
 
-				width: 300px;
+				/* Wide enough for the times row to carry the inline zone chip ("GMT+3:30") next to the
+				   end time without cramping the inputs. */
+				width: 360px;
 				max-height: 80dvh;
 				overflow-y: auto;
 
@@ -271,7 +279,9 @@ export class EntryDetailsComponent extends Component {
 							/* The whole row is a \`subtle\` select: it reads as plain text — the
 							   selected option's own dot/type/name via <selectedcontent> — until hovered. */
 							> select {
-								grid-column: 1 / -1;
+								display: grid;
+								grid-template-columns: subgrid;
+								grid-column: -1 / 1;
 
 								/* The picker wears the popover's tinted glass, border, and shadow (it inherits the
 								   segment colour var), so the two read as one plane. It prefers opening beside
@@ -286,13 +296,26 @@ export class EntryDetailsComponent extends Component {
 									margin-inline: 0.875rem;
 								}
 
+								&::picker-icon {
+									grid-row: 1;
+									grid-column: -1;
+								}
+
 								selectedcontent {
 									display: flex;
 									align-items: center;
 									gap: 0.5rem;
+									display: grid;
+									grid-template-columns: subgrid;
+									grid-column: -1 / 1;
 
 									.dot { font-size: 0.8rem; margin-inline-start: 2px; }
 									.type { font-size: 0.87rem; color: var(--color-text-muted); }
+									div {
+										display: flex;
+										gap: 0.25rem;
+										align-items: center;
+									}
 								}
 
 								optgroup > legend {
@@ -414,8 +437,10 @@ export class EntryDetailsComponent extends Component {
 								${sources.map(source => html`
 									<option value=${source.id} ?selected=${source.id === entry.sourceId}>
 										<mitra-icon class="dot" icon="square" fill style="color: ${source.color || 'var(--color-text-muted)'}"></mitra-icon>
-										<mitra-icon class="type" icon=${source.type === SourceType.Task ? 'list-todo' : 'calendar'}></mitra-icon>
-										<span class="name">${source.name}</span>
+										<div>
+											<mitra-icon class="type" icon=${source.type === SourceType.Task ? 'list-todo' : 'calendar'}></mitra-icon>
+											<span class="name">${source.name}</span>
+										</div>
 									</option>
 								`)}
 							</optgroup>
