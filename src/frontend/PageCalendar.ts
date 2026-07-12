@@ -20,10 +20,21 @@ class FetcherController extends Controller {
 	}
 
 	readonly task = new Task(this.host, {
-		args: () => [this.host.navigatingDate.month, this.host.navigatingDate.year] as const,
+		args: () => {
+			// The year strip scrolls far and fast, and every refetch mints a new entry array that re-renders
+			// the whole strip. So refetch only when crossing a 6-month BUCKET — the wide ±16-month fetch
+			// below keeps the render window covered with margin, so scrolling within a bucket needs no new
+			// data. Day-based views refetch per month (their windows are only weeks wide).
+			const monthIndex = this.host.navigatingDate.year * 12 + this.host.navigatingDate.month
+			const yearView = this.host.view === 'year'
+			return [yearView, yearView ? Math.floor(monthIndex / 6) : monthIndex] as const
+		},
 		task: () => {
-			const start = this.host.navigatingDate.monthStart.subtract({ months: 1 })
-			const end = this.host.navigatingDate.monthEnd.add({ months: 1 })
+			// ±16 months for the year strip (≥ its ~8-month render radius plus the 6-month bucket, so the
+			// loaded range never gaps between refetches); ±1 month elsewhere.
+			const months = this.host.view === 'year' ? 16 : 1
+			const start = this.host.navigatingDate.monthStart.subtract({ months })
+			const end = this.host.navigatingDate.monthEnd.add({ months })
 			return fetchEvents(start, end)
 		},
 		onComplete: entries => EntryStore.applyServerEntries(entries),
@@ -52,11 +63,13 @@ class FetcherController extends Controller {
 	}
 }
 
+export type CalendarView = 'week' | 'month' | 'year'
+
 @component('mitra-page-calendar')
 @route('/')
 export class PageCalendar extends PageComponent {
 	@state() navigatingDate = new DateTime()
-	@state() view: 'week' | 'month' = 'week'
+	@state() view: CalendarView = 'week'
 	@state() sidebarOpen = PageCalendar.preferredSidebarOpen
 
 	readonly mediaController = new MediaQueryController(this, '(min-width: 800px)', () => this.sidebarOpen = PageCalendar.preferredSidebarOpen)
@@ -79,7 +92,7 @@ export class PageCalendar extends PageComponent {
 
 	@queryAll('mitra-entry-segment') readonly eventSegments!: Array<EntrySegmentComponent>
 
-	private setView(value: 'week' | 'month') {
+	private setView(value: CalendarView) {
 		if (this.view === value) {
 			return
 		}
@@ -117,11 +130,17 @@ export class PageCalendar extends PageComponent {
 			{ heading: t('Go to Today'), icon: 'calendar-check', shortcut: 'T', keywords: t('now current date jump'), execute: () => this.navigatingDate = new DateTime() },
 			{ heading: t('Week View'), icon: 'columns-3', shortcut: 'W', keywords: t('switch'), execute: () => this.setView('week') },
 			{ heading: t('Month View'), icon: 'calendar-days', shortcut: 'M', keywords: t('switch grid'), execute: () => this.setView('month') },
-			{ heading: this.view === 'week' ? t('Next Week') : t('Next Month'), icon: 'arrow-right', keywords: t('forward later'), execute: () => this.navigatingDate = this.navigatingDate.add(this.view === 'week' ? { weeks: 1 } : { months: 1 }) },
-			{ heading: this.view === 'week' ? t('Previous Week') : t('Previous Month'), icon: 'arrow-left', keywords: t('back earlier'), execute: () => this.navigatingDate = this.navigatingDate.subtract(this.view === 'week' ? { weeks: 1 } : { months: 1 }) },
+			{ heading: t('Year View'), icon: 'rows-3', shortcut: 'Y', keywords: t('switch grid'), execute: () => this.setView('year') },
+			{ heading: this.view === 'week' ? t('Next Week') : this.view === 'month' ? t('Next Month') : t('Next Year'), icon: 'arrow-right', keywords: t('forward later'), execute: () => this.navigatingDate = this.navigatingDate.add(this.navigationStep) },
+			{ heading: this.view === 'week' ? t('Previous Week') : this.view === 'month' ? t('Previous Month') : t('Previous Year'), icon: 'arrow-left', keywords: t('back earlier'), execute: () => this.navigatingDate = this.navigatingDate.subtract(this.navigationStep) },
 			{ heading: t('Toggle Sidebar'), icon: 'panel-left', keywords: t('collapse expand calendars'), execute: this.toggleSidebar },
 			{ heading: t('Add Integration'), icon: 'plug', keywords: t('connect caldav account calendar'), execute: () => new DialogIntegration({ id: '' }).confirm() },
 		]
+	}
+
+	/** How far one "next"/"previous" hop moves: one of whatever the current view shows. */
+	private get navigationStep() {
+		return this.view === 'week' ? { weeks: 1 } : this.view === 'month' ? { months: 1 } : { years: 1 }
 	}
 
 	/** The palette's Create Entry: a blank one-hour draft at the next full hour today, on the primary
@@ -161,6 +180,9 @@ export class PageCalendar extends PageComponent {
 				break
 			case 'm':
 				this.setView('month')
+				break
+			case 'y':
+				this.setView('year')
 				break
 			case 't':
 				this.navigatingDate = new DateTime()
@@ -241,7 +263,7 @@ export class PageCalendar extends PageComponent {
 						}
 					}
 
-					mitra-weeks, mitra-days {
+					mitra-weeks, mitra-months, mitra-days {
 						flex: 1;
 						min-height: 0;
 					}
@@ -259,7 +281,7 @@ export class PageCalendar extends PageComponent {
 				<main>
 					<header>
 						<mitra-icon-button class="toggle" icon="panel-left" label=${t('Toggle sidebar')} @click=${this.toggleSidebar}></mitra-icon-button>
-						<h1>${this.navigatingDate.format({ month: 'long', year: 'numeric' })}</h1>
+						<h1>${this.navigatingDate.format(this.view === 'year' ? { year: 'numeric' } : { month: 'long', year: 'numeric' })}</h1>
 						<div style="flex: 1"></div>
 						<button class="search" title=${t('Search or run a command (${hotkey})', { hotkey: CommandPalette.hotkey })} @click=${() => this.palette.show()}>
 							<mitra-icon icon="search"></mitra-icon>
@@ -267,7 +289,7 @@ export class PageCalendar extends PageComponent {
 							<kbd>${CommandPalette.hotkey}</kbd>
 						</button>
 						<div style="flex: 1"></div>
-						<select .value=${this.view} @change=${(e: Event) => this.setView((e.target as HTMLSelectElement).value as 'week' | 'month')}>
+						<select .value=${this.view} @change=${(e: Event) => this.setView((e.target as HTMLSelectElement).value as CalendarView)}>
 							<button>
 								<selectedcontent></selectedcontent>
 							</button>
@@ -275,7 +297,7 @@ export class PageCalendar extends PageComponent {
 							   present when lit sets the template's innerHTML, and Chrome 150 clones it into <selectedcontent>
 							   right then — duplicating the marker and corrupting lit's part indices. Mapped options aren't
 							   in the template at prep time, so nothing is cloned then. (Do not inline these.) */''}
-							${[{ value: 'month', label: t('Month'), key: 'M' }, { value: 'week', label: t('Week'), key: 'W' }].map(o => html`<option value=${o.value} ?selected=${o.value === this.view}>${o.label}<kbd>${o.key}</kbd></option>`)}
+							${[{ value: 'year', label: t('Year'), key: 'Y' }, { value: 'month', label: t('Month'), key: 'M' }, { value: 'week', label: t('Week'), key: 'W' }].map(o => html`<option value=${o.value} ?selected=${o.value === this.view}>${o.label}<kbd>${o.key}</kbd></option>`)}
 						</select>
 						<button @click=${() => this.navigatingDate = new DateTime()}>
 							${t('Today')} <kbd>T</kbd>
@@ -287,13 +309,20 @@ export class PageCalendar extends PageComponent {
 							.navigatingDate=${this.navigatingDate}
 							@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
 						></mitra-days>
-					` : html`
+					` : this.view === 'month' ? html`
 						<mitra-weeks
 							.entries=${this.store.entries}
 							.navigatingDate=${this.navigatingDate}
 							@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
 							@switchToWeek=${() => this.setView('week')}
 						></mitra-weeks>
+					` : html`
+						<mitra-months
+							.entries=${this.store.entries}
+							.navigatingDate=${this.navigatingDate}
+							@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
+							@switchToMonth=${() => this.setView('month')}
+						></mitra-months>
 					`}
 				</main>
 				<mitra-command-palette

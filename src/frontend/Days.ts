@@ -178,7 +178,7 @@ export class Days extends Component {
 					position: sticky;
 					inset-inline-start: 0;
 					/* +1px for the grid gap between the header row and this one. */
-					top: calc(var(--header-height, 2.75rem) + 1px);
+					top: var(--header-height, 2.75rem);
 					z-index: 120;
 					background-color: var(--color-background);
 					border-inline-end: var(--border);
@@ -189,7 +189,7 @@ export class Days extends Component {
 					grid-column: calc(-1 * var(--_days-length) - 1) / -1;
 					grid-row: 2;
 					position: sticky;
-					top: calc(var(--header-height, 2.75rem) + 1px);
+					top: var(--header-height, 2.75rem);
 					z-index: 90;
 					display: grid;
 					grid-template-columns: subgrid;

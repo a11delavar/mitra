@@ -79,6 +79,7 @@
 	"new event task add": "neu termin aufgabe hinzufügen erstellen",
 	"Next Month": "Nächster Monat",
 	"Next Week": "Nächste Woche",
+	"Next Year": "Nächstes Jahr",
 	"No matches": "Keine Treffer",
 	"now current date jump": "jetzt aktuelles datum springen heute",
 	"Occurrences": "Vorkommen",
@@ -91,6 +92,7 @@
 	"Previous Month": "Vorheriger Monat",
 	"Previous Week": "Vorherige Woche",
 	"Provider": "Anbieter",
+	"Previous Year": "Vorheriges Jahr",
 	"Re-import entries": "Einträge neu importieren",
 	"Refresh": "Aktualisieren",
 	"Reminder": "Erinnerung",
@@ -136,5 +138,7 @@
 	"Username": "Benutzername",
 	"Week": "Woche",
 	"Week View": "Wochenansicht",
-	"weeks": "Wochen"
+	"weeks": "Wochen",
+	"Year": "Jahr",
+	"Year View": "Jahresansicht"
 }

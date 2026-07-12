@@ -52,6 +52,10 @@ export class Day extends Component {
 						z-index: 10;
 					}
 
+					/* The year strip collapses this cell to a bare centred numeral — driven by the parent
+					   (mitra-months), NOT a container query: a year cell can't be told apart from a narrow
+					   (mobile) month cell by its own size alone. See Months.ts. */
+
 					.weekday {
 						font-size: 0.7rem;
 						font-weight: 600;

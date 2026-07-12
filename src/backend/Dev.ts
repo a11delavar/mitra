@@ -1,6 +1,6 @@
 import { type EntityManager, type MikroORM } from '@mikro-orm/sqlite'
 import { DateTime } from '@3mo/date-time'
-import { model, entity, Integration, Source, SourceType, Entry, EntryType, TaskStatus, User, Color, normalizeAllDay } from '../shared/index.js'
+import { model, entity, Integration, Source, SourceType, Entry, EntryType, TaskStatus, User, Color, normalizeAllDay, Recurrence } from '../shared/index.js'
 
 /**
  * A dev-only, self-contained calendar with no external backend: its sources and entries live only in
@@ -84,6 +84,9 @@ export class Dev extends Integration {
 }
 
 const INTEGRATION_ID = 'dev-sample-integration'
+/** The sample's shape version, carried in the integration's uri: bumping it makes existing dev
+ * databases wipe and re-seed the sample in the new shape (real integrations are never touched). */
+const SAMPLE_URI = 'mitra://sample@2'
 
 /**
  * Dev-only: seeds the persisted {@link Dev} sample integration with a few single-colour calendars —
@@ -96,22 +99,23 @@ export async function seedDev(orm: MikroORM) {
 
 	// Detect the current sample by a raw read (don't hydrate — an earlier build used a different
 	// integration `type`, whose discriminator this code no longer maps).
-	const rows = await em.getConnection().execute('select type from integration where id = ?', [INTEGRATION_ID]) as Array<{ type: string }>
-	const existingType = rows[0]?.type
-	if (existingType === 'dev') {
+	const rows = await em.getConnection().execute('select type, uri from integration where id = ?', [INTEGRATION_ID]) as Array<{ type: string, uri: string }>
+	const existing = rows[0]
+	if (existing?.type === 'dev' && existing.uri === SAMPLE_URI) {
 		return // up-to-date sample already present — keep it (and any edits made to it)
 	}
-	if (existingType) {
-		// A stale sample from an earlier build (before the all-day flag / the Local→Dev rename): remove it
-		// and its children so it re-seeds in the current shape. Real integrations are untouched. Children
-		// are deleted explicitly (sample ids are fixed) in case FK cascade isn't enforced.
+	if (existing) {
+		// A stale sample from an earlier build (a different `type`, or an older {@link SAMPLE_URI}
+		// version): remove it and its children so it re-seeds in the current shape. Real integrations
+		// are untouched. Children are deleted explicitly (sample ids are fixed) in case FK cascade
+		// isn't enforced.
 		await em.nativeDelete(Entry, { sourceId: { $like: 'dev-sample-%' } })
 		await em.nativeDelete(Source, { integrationId: INTEGRATION_ID })
 		await em.getConnection().execute('delete from integration where id = ?', [INTEGRATION_ID])
 	}
 
 	const user = await em.findOneOrFail(User, { username: User.default.username })
-	const integration = new Dev({ id: INTEGRATION_ID, userId: user.id, uri: 'mitra://sample' })
+	const integration = new Dev({ id: INTEGRATION_ID, userId: user.id, uri: SAMPLE_URI })
 	em.persist(integration)
 
 	const calendar = (slug: string, type: SourceType, name: string, color: string) => {
@@ -184,6 +188,44 @@ export async function seedDev(orm: MikroORM) {
 	task({ heading: 'Update roadmap doc', status: TaskStatus.ToDo, start: at(2, 14), end: at(2, 14, 30) })
 	task({ heading: 'Prepare demo slides', status: TaskStatus.Cancelled, start: at(3, 12), end: at(3, 13) })
 	task({ heading: 'Send weekly update', status: TaskStatus.Done, start: at(4, 11, 30), end: at(4, 12) })
+
+	// — The rest of the year, so the year view has a story to tell: multi-day/multi-week arcs, quarterly
+	// milestones, seasonal holidays and a couple of yearly-recurring days, anchored to the current year.
+	// All-day ends are exclusive next midnight, so `end: date(m, d)` means "through the day before d".
+	const yearStart = new DateTime().yearStart.dayStart
+	const date = (month: number, day: number) => yearStart.with({ month, day })
+
+	// Personal arcs
+	personalEvent({ heading: 'Ski Trip', start: date(2, 8), end: date(2, 16), allDay: true })
+	personalEvent({ heading: 'Family Reunion', start: date(5, 23), end: date(5, 26), allDay: true })
+	personalEvent({ heading: 'Summer Vacation, Italy', start: date(8, 3), end: date(8, 18), allDay: true, location: 'Tuscany' })
+	personalEvent({ heading: 'House Renovation', start: date(9, 14), end: date(10, 25), allDay: true })
+	personalEvent({ heading: 'City Marathon', start: date(10, 11).with({ hour: 9 }), end: date(10, 11).with({ hour: 14 }) })
+	personalEvent({ heading: 'Mom’s Birthday', start: date(3, 11), end: date(3, 12), allDay: true, recurrence: new Recurrence({ freq: 'YEARLY' }) })
+	personalEvent({ heading: 'Anniversary', start: date(6, 21), end: date(6, 22), allDay: true, recurrence: new Recurrence({ freq: 'YEARLY' }) })
+
+	// Work milestones & phases
+	event({ heading: 'Q1 Planning', start: date(1, 8), end: date(1, 11), allDay: true })
+	event({ heading: 'Q2 Planning', start: date(4, 7), end: date(4, 10), allDay: true })
+	event({ heading: 'Q3 Planning', start: date(7, 7), end: date(7, 10), allDay: true })
+	event({ heading: 'Q4 Planning', start: date(10, 6), end: date(10, 9), allDay: true })
+	event({ heading: 'Team Offsite', start: date(5, 12), end: date(5, 15), allDay: true })
+	event({ heading: 'Annual Conference', start: date(9, 22), end: date(9, 26), allDay: true, location: 'Convention Center' })
+	event({ heading: 'Code Freeze', start: date(11, 10), end: date(11, 18), allDay: true })
+	event({ heading: 'v2.0 Launch', start: date(11, 18), end: date(11, 19), allDay: true })
+	event({ heading: 'Performance Reviews', start: date(12, 1), end: date(12, 6), allDay: true })
+
+	// Holidays through the year
+	holiday({ heading: 'New Year’s Day', start: date(1, 1), end: date(1, 2), allDay: true })
+	holiday({ heading: 'Spring Holiday', start: date(4, 18), end: date(4, 22), allDay: true })
+	holiday({ heading: 'National Day', start: date(10, 3), end: date(10, 4), allDay: true })
+	holiday({ heading: 'Christmas', start: date(12, 24), end: date(12, 27), allDay: true })
+	holiday({ heading: 'New Year’s Eve', start: date(12, 31), end: date(12, 31).add({ days: 1 }), allDay: true })
+
+	// Year-scale tasks
+	task({ heading: 'File tax return', status: TaskStatus.ToDo, start: date(4, 10), end: date(4, 11), allDay: true })
+	task({ heading: 'Book vacation flights', status: TaskStatus.Done, start: date(5, 5), end: date(5, 6), allDay: true })
+	task({ heading: 'Renew passport', status: TaskStatus.ToDo, start: date(8, 25), end: date(8, 26), allDay: true })
 
 	await em.flush()
 }

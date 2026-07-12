@@ -2,6 +2,37 @@ import { Controller, type Component } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { MemoizeExpiring as memoizeExpiring } from 'typescript-memoize'
 
+/**
+ * One calendar month of the buffer — the row unit of the year strip. A thin value object over the
+ * month's consecutive days; every fact reads straight off the (memoising, stable) `DateTime` instances,
+ * so there's nothing to precompute or cache. Buffer days carry the buffer's generation clock time, hence
+ * the `.dayStart` on every epoch/ISO key.
+ */
+export class CalendarMonth {
+	constructor(readonly days: ReadonlyArray<DateTime>) { }
+
+	/** The month's first/last buffered day (day 1 … month end, unless clipped at the buffer's edge). */
+	get first() { return this.days[0]! }
+	get last() { return this.days[this.days.length - 1]! }
+
+	/** 1-based month number — for month-dependent formatting (a year on the January label). */
+	get number() { return this.first.month }
+
+	/** Day-start epoch-ms of the first/last day — the same-day comparison keys. */
+	get firstValue() { return this.first.dayStart.valueOf() }
+	get lastValue() { return this.last.dayStart.valueOf() }
+
+	/** The 0-based weekday column its first day sits in, so weekdays align vertically across rows: the
+	 * day-1 weekday offset, plus its day-of-month for a buffer-edge partial month. */
+	get firstColumn() { return this.first.monthStart.dayOfWeek - 1 + this.first.day - 1 }
+
+	/** Whether the month touches the `[from, to]` day-start-epoch-ms render window. */
+	intersects(from: number, to: number) { return this.firstValue <= to && this.lastValue >= from }
+
+	/** The 0-based day-slot column of the day at `dayValue` (day-start epoch-ms) within this month. */
+	columnOf(dayValue: number) { return this.firstColumn + Math.round((dayValue - this.firstValue) / 86_400_000) }
+}
+
 export class CalendarDatesController extends Controller {
 	@memoizeExpiring(60_000)
 	static get today() { return new DateTime().dayStart }
@@ -34,11 +65,19 @@ export class CalendarDatesController extends Controller {
 	 * navigating date get real content; the window recenters only after drifting `shiftDays` from its
 	 * center (hysteresis — one re-render per `shiftDays` of scrolling, not one per day). The radius must
 	 * comfortably exceed the widest viewport's half plus the shift, so unrendered tracks never scroll
-	 * into view between recenters.
+	 * into view between recenters. `triggerWeeks` is the buffer's regeneration margin: entering the last
+	 * `triggerWeeks` of the buffer regenerates it around the new date. Scroll-driven navigation reads the
+	 * viewport's CENTER, which can never get closer to the buffer's edge than half the viewport's span —
+	 * so a view whose viewport spans months (the year strip) must widen this margin beyond that half, or
+	 * the scrollbar clamps before the trigger is ever reached and the strip dead-ends. `bufferWeeks` is
+	 * the total span the buffer holds: regeneration (which re-anchors the scroll — a visible "jump")
+	 * fires every ~`bufferWeeks/2 − triggerWeeks` weeks of continuous scrolling, so a view that scrolls
+	 * far and fast (the year strip) wants this large. It's cheap: only the render window is populated,
+	 * the rest of the buffer is empty grid tracks.
 	 */
 	constructor(
 		protected override readonly host: Component,
-		private readonly rendering: { radiusDays: number, shiftDays: number } = { radiusDays: 35, shiftDays: 7 },
+		private readonly rendering: { radiusDays: number, shiftDays: number, triggerWeeks?: number, bufferWeeks?: number } = { radiusDays: 35, shiftDays: 7 },
 	) {
 		super(host)
 	}
@@ -46,10 +85,10 @@ export class CalendarDatesController extends Controller {
 	get navigatingDate() { return this._navigatingDate }
 	set navigatingDate(value: DateTime) {
 		const DAYS_IN_WEEK = value.daysInWeek
-		const BUFFER_WEEKS = 156 // 3 Years (52 * 3)
+		const BUFFER_WEEKS = this.rendering.bufferWeeks ?? 156 // default: 3 years (52 * 3)
 		const BUFFER_DAYS = BUFFER_WEEKS * DAYS_IN_WEEK
-		const WEEKS_OFFSET_TRIGGER = 26 // Trigger regeneration when within 6 months of the edge
-		const WEEKS_BACK_ON_REGEN = 78 // Center the view back in the middle of the 3 years
+		const WEEKS_OFFSET_TRIGGER = this.rendering.triggerWeeks ?? 26 // Trigger regeneration within this margin of the edge
+		const WEEKS_BACK_ON_REGEN = Math.floor(BUFFER_WEEKS / 2) // Center the view back in the middle of the buffer
 
 		const daysOffset = WEEKS_OFFSET_TRIGGER * DAYS_IN_WEEK
 
@@ -76,6 +115,29 @@ export class CalendarDatesController extends Controller {
 	}
 
 	get days() { return this._days }
+
+	private _months?: { readonly days: ReadonlyArray<DateTime>, readonly months: ReadonlyArray<CalendarMonth> }
+
+	/** The buffer's days grouped into consecutive {@link CalendarMonth} rows — the year strip's row
+	 * structure. Memoised on the buffer's identity (which only changes on regeneration), so scrolling —
+	 * which reads this on every `scroll` event — never re-groups or re-allocates. The grouping itself is
+	 * cheap (the buffer's `DateTime` instances memoise their own accessors); it's the per-read allocation
+	 * of a fresh array of {@link CalendarMonth}s that this avoids, and that matters at scroll frequency. */
+	get months(): ReadonlyArray<CalendarMonth> {
+		if (this._months?.days !== this._days) {
+			const grouped = new Array<Array<DateTime>>()
+			for (const day of this._days) {
+				const current = grouped.at(-1)
+				if (current && day.month === current[0]!.month) {
+					current.push(day)
+				} else {
+					grouped.push([day])
+				}
+			}
+			this._months = { days: this._days, months: grouped.map(days => new CalendarMonth(days)) }
+		}
+		return this._months.months
+	}
 
 	private _window?: { days: ReadonlyArray<DateTime>, offset: number, centerValue: number }
 

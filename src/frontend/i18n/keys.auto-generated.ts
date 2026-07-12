@@ -87,6 +87,7 @@ declare global {
 		"new event task add": unknown
 		"Next Month": unknown
 		"Next Week": unknown
+		"Next Year": unknown
 		"No matches": unknown
 		"now current date jump": unknown
 		"Occurrences": unknown
@@ -99,6 +100,7 @@ declare global {
 		"Previous Month": unknown
 		"Previous Week": unknown
 		"Provider": unknown
+		"Previous Year": unknown
 		"Re-import entries": unknown
 		"Refresh": unknown
 		"Reminder": unknown
@@ -145,5 +147,7 @@ declare global {
 		"Week": unknown
 		"Week View": unknown
 		"weeks": unknown
+		"Year": unknown
+		"Year View": unknown
 	}
 }

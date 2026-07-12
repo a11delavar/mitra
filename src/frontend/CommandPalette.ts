@@ -126,7 +126,14 @@ export class CommandPalette extends Component {
 	}
 
 	protected override updated() {
-		this.querySelector('menu [data-selected]')?.scrollIntoView({ block: 'nearest' })
+		// Keep the highlighted result in view as the user arrows/types — but ONLY while open. The palette
+		// stays mounted (a closed <dialog>) and re-renders whenever its `commands` prop changes, which the
+		// page hands it fresh on every render; calling scrollIntoView there forces a synchronous
+		// whole-document layout (reflowing the entire calendar) for nothing. The guard makes a closed
+		// palette's update a no-op — no layout thrash during calendar scrolling.
+		if (this.dialog?.open) {
+			this.querySelector('menu [data-selected]')?.scrollIntoView({ block: 'nearest' })
+		}
 	}
 
 	private static when(entry: Entry) {
