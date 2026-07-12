@@ -2,7 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import ICAL from 'ical.js'
 import { CalDAV } from './CalDAV.js'
-import { Entry, EntryType } from './Entry.js'
+import { Entry, EntryType, FLOATING_TIME_ZONE } from './Entry.js'
 import { Source, SourceType } from './Source.js'
 import { Recurrence } from './Recurrence.js'
 
@@ -478,5 +478,252 @@ describe('CalDAV all-day serialization', () => {
 			const objects = await call(client, ['a', 'b', 'c'])
 			assert.deepEqual(objects.map(o => o.url), ['a', 'c']) // 'b' dropped, sync still completes
 		})
+	})
+})
+
+// Mitra's own contributions on top of main's authored-zone preservation: PERSISTING a user-picked
+// zone the resource doesn't already carry (generating its VTIMEZONE), and not corrupting another
+// client's FLOATING times. Driven through the public write path with a stubbed DAV client.
+describe('CalDAV zone authoring (VTIMEZONE generation)', () => {
+	const stubbed = () => {
+		const dav = new CalDAV({ credentials: { username: 'u', password: 'p' } })
+		;(dav as unknown as { client: unknown }).client = Promise.resolve({
+			updateCalendarObject: () => Promise.resolve({ ok: true, headers: { get: () => null } }),
+		})
+		return dav
+	}
+	const em = { find: () => Promise.resolve([]) } as never
+
+	// A UTC-authored resource — no VTIMEZONE, DTSTART in `Z` form — the shape every plain server stores.
+	const utcRaw = [
+		'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//test//EN',
+		'BEGIN:VEVENT', 'UID:u1', 'DTSTAMP:20260101T000000Z', 'SUMMARY:Test',
+		'DTSTART:20260704T070000Z', 'DTEND:20260704T080000Z',
+		'END:VEVENT', 'END:VCALENDAR',
+	].join('\r\n')
+
+	const row = (raw: string, timeZone: string | null) => new Entry({
+		id: 'e1', sourceId: 's', type: EntryType.Event, heading: 'Test', uri: 'https://example.com/cal/e1.ics',
+		start: D('2026-07-04T07:00:00Z'), end: D('2026-07-04T08:00:00Z'), allDay: false, timeZone, data: { raw },
+	})
+
+	it('picking a zone the resource lacks writes TZID local time AND embeds the generated VTIMEZONE', async () => {
+		const existing = row(utcRaw, null)
+		// Same instants, newly authored in Berlin (07:00Z = 09:00 CEST) — only the zone changed.
+		const incoming = new Entry({ ...existing, timeZone: 'Europe/Berlin' } as Partial<Entry>)
+		await stubbed().updateEntry(em, existing, incoming)
+		assert.match(existing.data!.raw!, /DTSTART;TZID=Europe\/Berlin:20260704T090000/)
+		assert.match(existing.data!.raw!, /DTEND;TZID=Europe\/Berlin:20260704T100000/)
+		assert.match(existing.data!.raw!, /BEGIN:VTIMEZONE\r\nTZID:Europe\/Berlin/)
+		assert.doesNotMatch(existing.data!.raw!, /DTSTART[^:]*:20260704T070000Z/) // the UTC form is gone
+	})
+
+	it('re-zoning drops the previous, now-unreferenced VTIMEZONE', async () => {
+		// Start already authored in Berlin (with its VTIMEZONE), then re-zone to Tehran.
+		const berlin = row(utcRaw, null)
+		await stubbed().updateEntry(em, berlin, new Entry({ ...berlin, timeZone: 'Europe/Berlin' } as Partial<Entry>))
+		const existing = row(berlin.data!.raw!, 'Europe/Berlin')
+		const incoming = new Entry({ ...existing, timeZone: 'Asia/Tehran' } as Partial<Entry>)
+		await stubbed().updateEntry(em, existing, incoming)
+		assert.match(existing.data!.raw!, /BEGIN:VTIMEZONE\r\nTZID:Asia\/Tehran/)
+		assert.doesNotMatch(existing.data!.raw!, /TZID:Europe\/Berlin/) // pruned — no property references it
+	})
+
+	it('authoring \'UTC\' explicitly writes the plain Z form — RFC 5545 forbids a TZID naming UTC', async () => {
+		// It then syncs back as timeZone null, which expands identically (fixed UTC instants — see
+		// occurrences.test.ts): the round trip is lossless in behavior, and other clients see the
+		// conventional form instead of a degenerate TZID=UTC + VTIMEZONE.
+		const existing = row(utcRaw, null)
+		await stubbed().updateEntry(em, existing, new Entry({ ...existing, timeZone: 'UTC' } as Partial<Entry>))
+		assert.match(existing.data!.raw!, /DTSTART:20260704T070000Z/)
+		assert.doesNotMatch(existing.data!.raw!, /TZID/)
+		assert.doesNotMatch(existing.data!.raw!, /VTIMEZONE/)
+	})
+
+	it('clearing a zone (back to UTC) restores the plain Z form and drops the VTIMEZONE', async () => {
+		const berlin = row(utcRaw, null)
+		await stubbed().updateEntry(em, berlin, new Entry({ ...berlin, timeZone: 'Europe/Berlin' } as Partial<Entry>))
+		const existing = row(berlin.data!.raw!, 'Europe/Berlin')
+		await stubbed().updateEntry(em, existing, new Entry({ ...existing, timeZone: null } as Partial<Entry>))
+		assert.match(existing.data!.raw!, /DTSTART:20260704T070000Z/)
+		assert.doesNotMatch(existing.data!.raw!, /VTIMEZONE/)
+	})
+})
+
+describe('CalDAV floating times', () => {
+	// The read helpers are the crux of floating correctness (as-if-UTC, deterministic on any server),
+	// so they're pinned directly — private-static access on purpose, mirroring how the write path reverses.
+	const Private = CalDAV as unknown as { instantFrom(time: unknown): Date | undefined, isFloating(value: unknown): boolean }
+
+	const parseDtstart = (line: string) => {
+		const raw = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//t//EN', 'BEGIN:VEVENT', 'UID:u', line, 'END:VEVENT', 'END:VCALENDAR'].join('\r\n')
+		return new ICAL.Component(ICAL.parse(raw)).getFirstSubcomponent('vevent')!.getFirstPropertyValue('dtstart')
+	}
+
+	it('reads a bare local DTSTART as a FLOATING as-if-UTC instant', () => {
+		const dtstart = parseDtstart('DTSTART:20260704T090000') // no Z, no TZID
+		assert.equal(Private.isFloating(dtstart), true)
+		assert.equal(Private.instantFrom(dtstart)!.toISOString(), '2026-07-04T09:00:00.000Z')
+	})
+
+	it('does not mistake a UTC or date-only value for floating', () => {
+		assert.equal(Private.isFloating(parseDtstart('DTSTART:20260704T090000Z')), false)
+		assert.equal(Private.isFloating(parseDtstart('DTSTART;VALUE=DATE:20260704')), false)
+	})
+
+	it('writes a floating entry as a bare local time — neither TZID nor Z — round-tripping the wall clock', async () => {
+		const stubbed = () => {
+			const dav = new CalDAV({ credentials: { username: 'u', password: 'p' } })
+			;(dav as unknown as { client: unknown }).client = Promise.resolve({
+				updateCalendarObject: () => Promise.resolve({ ok: true, headers: { get: () => null } }),
+			})
+			return dav
+		}
+		const utcRaw = [
+			'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//test//EN',
+			'BEGIN:VEVENT', 'UID:u1', 'DTSTAMP:20260101T000000Z', 'SUMMARY:Pill',
+			'DTSTART:20260704T090000Z', 'DTEND:20260704T091500Z',
+			'END:VEVENT', 'END:VCALENDAR',
+		].join('\r\n')
+		const existing = new Entry({
+			id: 'e1', sourceId: 's', type: EntryType.Event, heading: 'Pill', uri: 'https://example.com/cal/e1.ics',
+			start: D('2026-07-04T09:00:00Z'), end: D('2026-07-04T09:15:00Z'), allDay: false, timeZone: null, data: { raw: utcRaw },
+		})
+		const incoming = new Entry({ ...existing, timeZone: FLOATING_TIME_ZONE } as Partial<Entry>)
+		await stubbed().updateEntry({ find: () => Promise.resolve([]) } as never, existing, incoming)
+		assert.match(existing.data!.raw!, /DTSTART:20260704T090000\r\n/) // bare local — no Z
+		assert.doesNotMatch(existing.data!.raw!, /DTSTART[^\r\n]*TZID/)
+		assert.doesNotMatch(existing.data!.raw!, /VTIMEZONE/)
+		assert.equal(Private.instantFrom(parseDtstart('DTSTART:20260704T090000'))!.toISOString(), '2026-07-04T09:00:00.000Z')
+	})
+})
+
+describe('CalDAV series created in mitra survive DST (the reported bug)', () => {
+	// The report: a recurring event CREATED in mitra rendered 10:00 all summer, then an hour earlier
+	// (09:00) from late October, while the same series authored in Google held 10:00. mitra wrote a bare
+	// UTC DTSTART with no TZID, so the next sync read its authoring zone back as null (see
+	// syncSourceEntries) and the expansion fell to the fixed-UTC path that drifts an hour across the flip.
+	// Authoring TZID + a generated VTIMEZONE keeps the zone through the create → sync round trip, so the
+	// expansion stays on the wall-clock path (proven DST-safe in occurrences.test.ts).
+	const source = () => new Source({ id: 's', integrationId: 'i', uri: 'https://example.com/cal/', type: SourceType.Event, name: 'Cal' })
+
+	const stubbedCreate = () => {
+		const dav = new CalDAV({ credentials: { username: 'u', password: 'p' } })
+		;(dav as unknown as { client: unknown }).client = Promise.resolve({
+			createCalendarObject: () => Promise.resolve({ ok: true, headers: { get: () => null } }),
+		})
+		return { dav, em: { findOne: () => Promise.resolve(source()), persist() { } } as never }
+	}
+
+	const syncBack = async (raw: string, uri: string) => {
+		const src = source()
+		const dav = new CalDAV({ credentials: { username: 'u', password: 'p' } })
+		;(dav as unknown as { client: unknown }).client = Promise.resolve({
+			syncCollection: () => Promise.resolve([{ href: uri, status: 200, raw: { multistatus: { syncToken: 't1' } } }]),
+			fetchCalendarObjects: () => Promise.resolve([{ url: uri, etag: 'e1', data: raw }]),
+		})
+		const persisted = new Array<Entry>()
+		const em = {
+			find: (Type: unknown) => Promise.resolve(Type === Source ? [src] : []),
+			findOne: () => Promise.resolve(null),
+			persist(entry: Entry) { persisted.push(entry) },
+			remove() { },
+		}
+		await (dav as unknown as { syncSourceEntries(em: unknown, source: Source): Promise<boolean> }).syncSourceEntries(em, src)
+		return persisted
+	}
+
+	it('a weekly 10:00 Berlin series keeps its zone across create → sync, so it can no longer drift to 09:00', async () => {
+		// Sunday 2026-10-11, 10:00–10:30 Berlin (CEST = 08:00Z), weekly across the Oct 25 DST end.
+		const entry = new Entry({
+			sourceId: 's', type: EntryType.Event, heading: 'Test via Mitra', timeZone: 'Europe/Berlin',
+			start: D('2026-10-11T08:00:00Z'), end: D('2026-10-11T08:30:00Z'),
+			recurrence: new Recurrence({ freq: 'WEEKLY' }),
+		})
+		const { dav, em } = stubbedCreate()
+		await dav.createEntry(em, entry)
+		// Authored zoned — never the bare-UTC anchor that caused the drift.
+		assert.match(entry.data!.raw!, /DTSTART;TZID=Europe\/Berlin:20261011T100000/)
+		assert.match(entry.data!.raw!, /BEGIN:VTIMEZONE\r\nTZID:Europe\/Berlin/)
+		assert.doesNotMatch(entry.data!.raw!, /DTSTART[^:]*:\d{8}T\d{6}Z/)
+
+		// The read back: sync no longer wipes the zone to null — the whole bug in one assertion.
+		const [master] = await syncBack(entry.data!.raw!, entry.uri!)
+		assert.equal(master!.timeZone, 'Europe/Berlin')
+		assert.equal(master!.start?.valueOf(), new Date('2026-10-11T08:00:00Z').getTime()) // 10:00 Berlin, exact, on any server
+		assert.equal(master!.recurrence?.freq, 'WEEKLY')
+	})
+})
+
+describe('CalDAV zoned reads resolve through Temporal, not the resource', () => {
+	// ical.js keeps a TZID property's wall-clock FIELDS literal and only uses an embedded VTIMEZONE to
+	// convert them — absent one, it silently degrades to "floating" and the instant becomes whatever
+	// the server's local clock says. Temporal is the zone authority, so the sync decodes TZID values
+	// itself ({@link CalDAV.instantFrom}) and the resource's VTIMEZONE is merely a courtesy for OTHER
+	// clients — never a correctness dependency of our own pipeline.
+	const uri = 'https://example.com/cal/z.ics'
+	const source = () => new Source({ id: 's', integrationId: 'i', uri: 'https://example.com/cal/', type: SourceType.Event, name: 'Cal' })
+
+	const sync = async (raw: string, existing: Array<Entry> = [], etag = 'e1', syncToken?: string) => {
+		const src = source()
+		src.syncState = syncToken ? { syncToken } : undefined
+		const dav = new CalDAV({ credentials: { username: 'u', password: 'p' } })
+		;(dav as unknown as { client: unknown }).client = Promise.resolve({
+			syncCollection: () => Promise.resolve([{ href: uri, status: 200, raw: { multistatus: { syncToken: 't2' } } }]),
+			fetchCalendarObjects: () => Promise.resolve([{ url: uri, etag, data: raw }]),
+		})
+		const persisted = new Array<Entry>()
+		const em = {
+			find: (Type: unknown) => Promise.resolve(Type === Source ? [src] : [...existing]),
+			findOne: () => Promise.resolve(null),
+			persist(entry: Entry) { persisted.push(entry) },
+			remove() { },
+		}
+		await (dav as unknown as { syncSourceEntries(em: unknown, source: Source): Promise<boolean> }).syncSourceEntries(em, src)
+		return persisted
+	}
+
+	const vevent = (props: Array<string>, extra: Array<string> = []) => [
+		'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//test//EN', ...extra,
+		'BEGIN:VEVENT', 'UID:u1', 'DTSTAMP:20260101T000000Z', 'SUMMARY:Zoned', ...props, 'END:VEVENT',
+		'END:VCALENDAR',
+	].join('\r\n')
+
+	it('a TZID resolves correctly even when the resource OMITS its VTIMEZONE (RFC 7809 servers)', async () => {
+		// Before: ical.js read this as floating → the instant depended on the container's TZ.
+		const raw = vevent(['DTSTART;TZID=Europe/Berlin:20261011T100000', 'DTEND;TZID=Europe/Berlin:20261011T103000', 'RRULE:FREQ=WEEKLY'])
+		const [entry] = await sync(raw)
+		assert.equal(entry!.start?.valueOf(), new Date('2026-10-11T08:00:00Z').getTime()) // 10:00 CEST, on any server
+		assert.equal(entry!.end?.valueOf(), new Date('2026-10-11T08:30:00Z').getTime())
+		assert.equal(entry!.timeZone, 'Europe/Berlin')
+	})
+
+	it('a non-IANA TZID (a Microsoft zone name) keeps ical.js\' VTIMEZONE resolution and is NOT stored as the zone', async () => {
+		// Temporal can't resolve it, so storing it would throw on every expansion; the resolved instants
+		// stand and the series expands fixed — deterministic, if unadjusted across DST.
+		const vtimezone = [
+			'BEGIN:VTIMEZONE', 'TZID:W. Europe Standard Time',
+			'BEGIN:STANDARD', 'TZOFFSETFROM:+0200', 'TZOFFSETTO:+0200', 'DTSTART:19700101T000000', 'END:STANDARD',
+			'END:VTIMEZONE',
+		]
+		const raw = vevent(['DTSTART;TZID=W. Europe Standard Time:20260704T100000', 'RRULE:FREQ=WEEKLY'], vtimezone)
+		const [entry] = await sync(raw)
+		assert.equal(entry!.start?.valueOf(), new Date('2026-07-04T08:00:00Z').getTime()) // resolved via the embedded +02:00
+		assert.equal(entry!.timeZone, null) // sanitized — never handed to Temporal/Intl later
+	})
+
+	it('an unchanged etag skips re-ingestion entirely, so the row keeps its stamped zone (the Radicale case)', async () => {
+		// Radicale returns a stable etag for the resource mitra just PUT, so the next sync's etag check
+		// short-circuits and the create-stamped timeZone survives — which is why the original drift never
+		// reproduced against a local Radicale: the wipe needed a server that re-normalizes the resource
+		// (bumping the etag) the way Google does, forcing the re-read.
+		const raw = vevent(['DTSTART:20261011T080000Z', 'RRULE:FREQ=WEEKLY']) // the OLD bare-UTC form, pre-fix
+		const row = new Entry({
+			id: 'r1', sourceId: 's', type: EntryType.Event, heading: 'Zoned', uri,
+			start: D('2026-10-11T08:00:00Z'), timeZone: 'Europe/Berlin', data: { raw, etag: 'e1' },
+		})
+		const persisted = await sync(raw, [row], 'e1', 't1')
+		assert.equal(persisted.length, 0) // nothing re-ingested
+		assert.equal(row.timeZone, 'Europe/Berlin') // the stamped zone survives — no drift locally
 	})
 })

@@ -121,9 +121,47 @@ describe('Occurrences', () => {
 			])
 		})
 
-		// (No test pins the ZONELESS path's spacing across a DST flip on purpose: it iterates the
-		// SERVER's wall clock, so the result depends on where the server runs — the very
-		// non-determinism the entry's own timeZone exists to remove.)
+		it('a series with NO authoring zone recurs at FIXED UTC instants across a DST flip, on any server', () => {
+			// RFC 5545 §3.8.5.3: a UTC-form DTSTART recurs at fixed UTC instants — no DST adjustment.
+			// (This replaced a server-local legacy path whose spacing depended on the container's TZ and
+			// was deliberately untestable; the whole suite now runs identically under any TZ env.)
+			const occ = Occurrences.fromRule('FREQ=WEEKLY', at('2026-10-19T07:00:00Z'), undefined)!
+				.within(at('2026-10-19T00:00:00Z'), at('2026-10-27T23:59:59Z'))
+			assert.deepEqual(occ.map(o => o.start.toISOString()), [
+				'2026-10-19T07:00:00.000Z',
+				'2026-10-26T07:00:00.000Z', // still 07:00Z — Berlin renders 09:00→08:00, as UTC anchoring means
+			])
+		})
+
+		it('an explicit \'UTC\' zone and no zone expand identically — the round trip through a plain-Z .ics is lossless', () => {
+			// A timed entry authored with timeZone 'UTC' serializes as a bare-Z DTSTART (no TZID), which
+			// syncs back as timeZone null: both must mean the same fixed-instant expansion.
+			const window = [at('2026-10-19T00:00:00Z'), at('2026-10-27T23:59:59Z')] as const
+			const explicit = Occurrences.fromRule('FREQ=WEEKLY', at('2026-10-19T07:00:00Z'), undefined, [], 'UTC')!.within(...window)
+			const none = Occurrences.fromRule('FREQ=WEEKLY', at('2026-10-19T07:00:00Z'), undefined)!.within(...window)
+			assert.deepEqual(explicit.map(o => o.start.toISOString()), none.map(o => o.start.toISOString()))
+		})
+
+		it('a FLOATING master expands at its as-if-UTC instants — the marker never reaches Temporal', () => {
+			const master = new Entry({
+				id: 'f', sourceId: 's', type: EntryType.Event, heading: 'Pill', timeZone: 'floating',
+				start: at('2026-10-19T09:00:00Z') as never, end: at('2026-10-19T09:15:00Z') as never, // 09:00 wall, encoded as-if-UTC
+				recurrence: new Recurrence({ freq: 'WEEKLY' }),
+			})
+			const occ = Occurrences.of(master)!.within(at('2026-10-19T00:00:00Z'), at('2026-10-27T23:59:59Z'))
+			assert.deepEqual(occ.map(o => o.start.toISOString()), ['2026-10-19T09:00:00.000Z', '2026-10-26T09:00:00.000Z'])
+		})
+
+		it('an unresolvable stored zone (a pre-sanitization Microsoft name) falls back to fixed UTC instead of throwing', () => {
+			const master = new Entry({
+				id: 'w', sourceId: 's', type: EntryType.Event, heading: 'Sync', timeZone: 'W. Europe Standard Time',
+				start: at('2026-10-19T07:00:00Z') as never, end: at('2026-10-19T08:00:00Z') as never,
+				recurrence: new Recurrence({ freq: 'WEEKLY' }),
+			})
+			const occ = Occurrences.of(master)!.within(at('2026-10-19T00:00:00Z'), at('2026-10-27T23:59:59Z'))
+			assert.equal(occ.length, 2) // a crashed read would render the whole window empty (500)
+			assert.equal(occ[0]!.start.toISOString(), '2026-10-19T07:00:00.000Z')
+		})
 
 		it('overrides a UTC-written .ics anchor with the master\'s start read in its zone', () => {
 			// Our own CalDAV creates store DTSTART in UTC; with the master's timeZone the expansion must

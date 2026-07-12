@@ -3,9 +3,10 @@ import { equals } from '@a11d/equals'
 import { createDAVClient } from 'tsdav'
 import ICAL from 'ical.js'
 import { model } from './model.js'
+import { buildVTimezone } from './vtimezone.js'
 import { Source, SourceType } from './Source.js'
 import { Integration, integration } from './Integration.js'
-import { Entry, EntryType, TaskStatus } from './Entry.js'
+import { Entry, EntryType, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
 import { Recurrence } from './Recurrence.js'
 import { calendarDateOf, midnightOf } from './calendarDate.js'
 import { Color } from './Color.js'
@@ -100,16 +101,51 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return ICAL.Time.fromData({ year, month, day, isDate: true })
 	}
 
-	/** The stored instant of an iCalendar time: a date-only value (all-day) becomes its canonical
-	 * UTC-midnight date encoding — read off the value's own y/m/d fields, NEVER `toJSDate()`, which
-	 * lands on the SERVER's local midnight and shifts all-day bounds by the container's zone offset. */
-	private static instantFrom(time: { isDate?: boolean, year: number, month: number, day: number, toJSDate(): Date } | null | undefined): Date | undefined {
+	/** Whether a parsed timed value is an RFC 5545 FLOATING time — a bare local date-time that came
+	 * with neither a `Z` suffix nor a TZID, which ical.js models as its zone-less "local" zone. */
+	private static isFloating(value: unknown): boolean {
+		return value instanceof ICAL.Time && !value.isDate && value.zone === ICAL.Timezone.localTimezone
+	}
+
+	/** Whether Temporal can resolve a TZID as an IANA zone — what decides if it's stored as an entry's
+	 * `timeZone` and used for wall-clock math (an unresolvable id would throw on every expansion). */
+	static resolvableZone(tzid: string | null | undefined): tzid is string {
+		try {
+			return !!tzid && !!Temporal.Instant.fromEpochMilliseconds(0).toZonedDateTimeISO(tzid)
+		} catch {
+			return false
+		}
+	}
+
+	/**
+	 * The stored instant of an iCalendar time — the ONE decoder every read goes through, with Temporal
+	 * (not the resource) as the zone authority:
+	 * - a date-only value (all-day) is its canonical UTC-midnight date encoding, read off the value's
+	 *   own y/m/d fields — NEVER `toJSDate()`, which lands on the SERVER's local midnight;
+	 * - a value whose property carried a `tzid` is that zone's wall clock (ical.js keeps the literal
+	 *   fields whether or not it resolved the TZID), converted by Temporal — so a zoned time reads
+	 *   correctly even when the resource omits its VTIMEZONE (RFC 7809 timezones-by-reference servers),
+	 *   with a non-IANA TZID (a Microsoft zone name, say) falling through to the value's own resolution;
+	 * - a FLOATING value reads off its own fields as-if-UTC — deterministic wherever the server runs,
+	 *   and the exact reverse of how the write path emits it, so a floating wall clock round-trips;
+	 * - anything else (`Z`-suffixed, or VTIMEZONE-resolved under a non-IANA TZID) via `toJSDate()`.
+	 */
+	static instantFrom(time: { isDate?: boolean, year: number, month: number, day: number, hour?: number, minute?: number, second?: number, toJSDate(): Date } | null | undefined, tzid?: string): Date | undefined {
 		if (!time) {
 			return undefined
 		}
-		return time.isDate
-			? midnightOf(Temporal.PlainDate.from({ year: time.year, month: time.month, day: time.day }), 'UTC')
-			: time.toJSDate()
+		if (time.isDate) {
+			return midnightOf(Temporal.PlainDate.from({ year: time.year, month: time.month, day: time.day }), 'UTC')
+		}
+		if (CalDAV.resolvableZone(tzid)) {
+			return new Date(Temporal.PlainDateTime
+				.from({ year: time.year, month: time.month, day: time.day, hour: time.hour ?? 0, minute: time.minute ?? 0, second: time.second ?? 0 })
+				.toZonedDateTime(tzid, { disambiguation: 'compatible' }).epochMilliseconds)
+		}
+		if (CalDAV.isFloating(time)) {
+			return new Date(Date.UTC(time.year, time.month - 1, time.day, time.hour ?? 0, time.minute ?? 0, time.second ?? 0))
+		}
+		return time.toJSDate()
 	}
 
 	/** mitra TaskStatus → CalDAV VTODO STATUS (RFC 5545 §3.8.1.11). */
@@ -185,33 +221,80 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	}
 
 	/** A TZID resolved against the resource's own VTIMEZONEs — a zoned resource always carries the
-	 * definitions of every TZID it uses (RFC 5545 §3.6.5). */
-	private static timezoneIn(comp: ICAL.Component, tzid: string | undefined): ICAL.Timezone | undefined {
+	 * definitions of every TZID it uses (RFC 5545 §3.6.5). When `generate` is set (WE are authoring a
+	 * user-picked zone the resource doesn't carry yet), the definition is built off the runtime's zone
+	 * data ({@link buildVTimezone}) and embedded; a zone the runtime can't resolve yields undefined, so
+	 * the caller writes UTC rather than a TZID with no matching definition. */
+	private static timezoneIn(comp: ICAL.Component, tzid: string | undefined, generate = false, aroundYear = 0): ICAL.Timezone | undefined {
 		if (!tzid) {
 			return undefined
 		}
-		const vtimezone = comp.getAllSubcomponents('vtimezone')
+		const existing = comp.getAllSubcomponents('vtimezone')
 			.find(candidate => candidate.getFirstPropertyValue('tzid')?.toString() === tzid)
-		return vtimezone ? new ICAL.Timezone(vtimezone) : undefined
+		if (existing) {
+			return new ICAL.Timezone(existing)
+		}
+		if (!generate) {
+			return undefined
+		}
+		try {
+			const vtimezone = buildVTimezone(tzid, aroundYear)
+			comp.addSubcomponent(vtimezone)
+			return new ICAL.Timezone(vtimezone)
+		} catch {
+			return undefined // not a resolvable IANA zone — fall back to a UTC write
+		}
+	}
+
+	/** A FLOATING (zone-less) ICAL.Time off an as-if-UTC instant — its UTC wall clock becomes the bare
+	 * local value, the reverse of how {@link instantFrom} reads floating times back. */
+	private static floatingTime(date: Date): ICAL.Time {
+		return ICAL.Time.fromData({
+			year: date.getUTCFullYear(), month: date.getUTCMonth() + 1, day: date.getUTCDate(),
+			hour: date.getUTCHours(), minute: date.getUTCMinutes(), second: date.getUTCSeconds(),
+		})
+	}
+
+	/** Drop VTIMEZONEs no property's TZID references anymore — a re-zoned entry leaves its old one behind. */
+	private static pruneTimezones(comp: ICAL.Component): void {
+		const used = new Set(comp.getAllSubcomponents()
+			.filter(candidate => candidate.name !== 'vtimezone')
+			.flatMap(candidate => candidate.getAllProperties().map(property => property.getParameter('tzid')?.toString()))
+			.filter((id): id is string => !!id))
+		for (const vtimezone of comp.getAllSubcomponents('vtimezone')) {
+			if (!used.has(vtimezone.getFirstPropertyValue('tzid')?.toString() ?? '')) {
+				comp.removeSubcomponent(vtimezone)
+			}
+		}
 	}
 
 	/**
-	 * Rewrite (or `append`) a date property PRESERVING the form the resource authored it in: a timed
-	 * property that carried a TZID keeps it, with the new instant written as that zone's WALL CLOCK;
-	 * anything else goes through {@link toICALTime} (all-day `VALUE=DATE`, timed UTC) with any stale
-	 * TZID parameter dropped. Writing the UTC form into a TZID property — the old behavior — let the
+	 * Rewrite (or `append`) a date property in the entry's authoring `zone` (Entry.timeZone): an IANA
+	 * id writes the instant as that zone's WALL CLOCK under a TZID, EMBEDDING the matching VTIMEZONE
+	 * when the resource doesn't carry it yet ({@link timezoneIn}); FLOATING writes a bare local time
+	 * (neither TZID nor `Z`); null or 'UTC' (the same fixed-instant semantics — RFC 5545 §3.3.5 says a
+	 * UTC time is written in its `Z` form, never under a TZID) and all-day go through
+	 * {@link toICALTime}. Omitting `zone` entirely PRESERVES the property's own authored form — its
+	 * current TZID, resolved only against embedded definitions, never fabricated — for rewrites that
+	 * don't re-author the zone. Writing the UTC form into a TZID property — the old behavior — let the
 	 * zone reinterpret the UTC wall clock, shifting the series by the zone offset on zoned servers
-	 * like Google. `tzid` overrides which authored zone to follow (e.g. DTSTART's for a fresh EXDATE);
-	 * it defaults to the property's own current parameter.
+	 * like Google.
 	 */
 	private static writeDate(
 		comp: ICAL.Component, component: ICAL.Component, name: string,
 		date: Date, allDay: boolean,
-		options?: { tzid?: string, append?: boolean },
+		options?: { zone?: string | null, append?: boolean },
 	): void {
-		const tzid = options?.tzid ?? component.getFirstProperty(name)?.getParameter('tzid')?.toString()
-		const timezone = allDay ? undefined : CalDAV.timezoneIn(comp, tzid)
-		const time = timezone ? ICAL.Time.fromJSDate(date, true).convertToZone(timezone) : CalDAV.toICALTime(date, allDay)
+		const authored = options !== undefined && 'zone' in options
+		const zone = authored ? options!.zone ?? null : component.getFirstProperty(name)?.getParameter('tzid')?.toString() ?? null
+		const timezone = allDay || !zone || zone === FLOATING_TIME_ZONE || zone === 'UTC'
+			? undefined
+			: CalDAV.timezoneIn(comp, zone, authored, date.getUTCFullYear())
+		const time = timezone
+			? ICAL.Time.fromJSDate(date, true).convertToZone(timezone)
+			: authored && !allDay && options!.zone === FLOATING_TIME_ZONE
+				? CalDAV.floatingTime(date)
+				: CalDAV.toICALTime(date, allDay)
 		const property = options?.append ? component.addPropertyWithValue(name, time) : component.updatePropertyWithValue(name, time)
 		if (timezone) {
 			property.setParameter('tzid', timezone.tzid)
@@ -243,7 +326,10 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return {
 			uid: component.getFirstPropertyValue('uid')?.toString() || undefined,
 			recurrence: Recurrence.fromRRule(rrule),
-			recurrenceId: CalDAV.instantFrom(component.getFirstPropertyValue('recurrence-id') as ICAL.Time | null) || undefined,
+			recurrenceId: CalDAV.instantFrom(
+				component.getFirstPropertyValue('recurrence-id') as ICAL.Time | null,
+				component.getFirstProperty('recurrence-id')?.getParameter('tzid')?.toString(),
+			) || undefined,
 		}
 	}
 
@@ -432,13 +518,16 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				entry.data.raw = obj.data
 				entry.data.etag = obj.etag
 
+				// Each property's own TZID rides into the decode ({@link instantFrom}), so a zoned value
+				// resolves through Temporal — VTIMEZONE or not; an end without its own form follows the start's.
+				const tzidOf = (name: string) => component.getFirstProperty(name)?.getParameter('tzid')?.toString()
 				if (entryType === EntryType.Event) {
 					const event = new ICAL.Event(component)
 					entry.heading = event.summary || 'Untitled Event'
 					entry.description = event.description || ''
 					entry.location = event.location || ''
-					entry.start = CalDAV.instantFrom(event.startDate) as any || undefined
-					entry.end = CalDAV.instantFrom(event.endDate ?? event.startDate) as any || undefined
+					entry.start = CalDAV.instantFrom(event.startDate, tzidOf('dtstart')) as any || undefined
+					entry.end = CalDAV.instantFrom(event.endDate ?? event.startDate, tzidOf('dtend') ?? tzidOf('dtstart')) as any || undefined
 					// A date-only DTSTART (`VALUE=DATE`) is the iCalendar marker for an all-day event.
 					entry.allDay = event.startDate?.isDate ?? false
 				} else {
@@ -447,16 +536,24 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 					entry.description = value('description')?.toString() || ''
 					entry.location = value('location')?.toString() || ''
 					entry.status = CalDAV.statusFromICal(value('status')?.toString(), Number(value('percent-complete') ?? 0))
-					entry.start = CalDAV.instantFrom(value('dtstart')) as any || undefined
-					entry.end = CalDAV.instantFrom(value('due')) as any || undefined
+					entry.start = CalDAV.instantFrom(value('dtstart'), tzidOf('dtstart')) as any || undefined
+					entry.end = CalDAV.instantFrom(value('due'), tzidOf('due') ?? tzidOf('dtstart')) as any || undefined
 					entry.allDay = !!value('dtstart')?.isDate
 				}
 
 				entry.reminders = CalDAV.remindersFrom(component)
 
 				// The zone the entry's times were authored in (recurrence expands wall-clock in it — see
-				// backend/occurrences.ts). A UTC or floating DTSTART carries no TZID; that's a legitimate none.
-				entry.timeZone = component.getFirstProperty('dtstart')?.getParameter('tzid')?.toString() || null
+				// backend/occurrences.ts): DTSTART's TZID where a client wrote one. A UTC DTSTART carries no
+				// TZID — a legitimate none; a bare local DTSTART (neither TZID nor `Z`) is a FLOATING time,
+				// kept under its reserved marker so an edit writes it back as floating rather than silently
+				// pinning another client's wall clock to UTC.
+				// Only a Temporal-resolvable id is stored — a non-IANA TZID (a Microsoft zone name, say)
+				// would throw on every wall-clock expansion; left null, the series expands at its stored
+				// fixed instants instead (deterministic, and exactly what the resolved instants encode).
+				const dtstartTzid = tzidOf('dtstart')
+				entry.timeZone = CalDAV.resolvableZone(dtstartTzid) ? dtstartTzid
+					: CalDAV.isFloating(component.getFirstPropertyValue('dtstart')) ? FLOATING_TIME_ZONE : null
 
 				entry.uid = recurrence.uid
 				entry.recurrence = recurrence.recurrence
@@ -609,23 +706,24 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				for (const sub of [...comp.getAllSubcomponents('vevent'), ...comp.getAllSubcomponents('vtodo')]) {
 					const rid = CalDAV.recurrenceProps(sub).recurrenceId
 					if (rid) {
-						CalDAV.writeDate(comp, sub, 'recurrence-id', new Date(rid.getTime() + overrideShift), false)
+						// The RECURRENCE-ID must match the series' authored form (the master's zone).
+						CalDAV.writeDate(comp, sub, 'recurrence-id', new Date(rid.getTime() + overrideShift), false, { zone: incoming.timeZone })
 					}
 				}
 			}
 
-			// All-day toggling changes whether DTSTART/DTEND are date-only, so a change to `allDay` also
-			// rewrites both date properties (even if the instants themselves didn't change).
-			if ((keys.includes('start') || keys.includes('allDay')) && incoming.start) {
-				CalDAV.writeDate(comp, component, 'dtstart', incoming.start, incoming.allDay)
+			// All-day toggling flips DTSTART/DTEND between date-only and timed, and a zone change rewrites
+			// their TZID + local representation — so a change to `allDay` OR `timeZone` rewrites both date
+			// properties too (even where the instants themselves didn't move). Both follow the entry's
+			// authoring zone, so DTEND automatically matches DTSTART's form.
+			const spanChanged = keys.includes('start') || keys.includes('end') || keys.includes('allDay') || keys.includes('timeZone')
+			if (spanChanged && incoming.start) {
+				CalDAV.writeDate(comp, component, 'dtstart', incoming.start, incoming.allDay, { zone: incoming.timeZone })
 			}
 
 			// A VTODO's end is DUE (RFC 5545 §3.8.2.3), a VEVENT's is DTEND — matching how sync reads each back.
-			if ((keys.includes('end') || keys.includes('allDay')) && incoming.end) {
-				const name = isTask ? 'due' : 'dtend'
-				// A fresh DTEND/DUE has no authored form of its own yet — it follows DTSTART's.
-				const tzid = (component.getFirstProperty(name) ?? component.getFirstProperty('dtstart'))?.getParameter('tzid')?.toString()
-				CalDAV.writeDate(comp, component, name, incoming.end, incoming.allDay, { tzid })
+			if (spanChanged && incoming.end) {
+				CalDAV.writeDate(comp, component, isTask ? 'due' : 'dtend', incoming.end, incoming.allDay, { zone: incoming.timeZone })
 			}
 
 			if (isTask && keys.includes('status')) {
@@ -655,14 +753,15 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			// them with the series (see backend/occurrences.ts); absent means keep, like `recurrence` on the
 			// wire. Rewritten wholesale: the instants ARE the identity, so there's nothing to diff per-item.
 			if (incoming.exdates !== undefined) {
-				// EXDATEs follow DTSTART's authored form (RFC 5545 matches instances by it).
-				const exdateTzid = component.getFirstProperty('dtstart')?.getParameter('tzid')?.toString()
+				// EXDATEs follow DTSTART's authored form — the entry's zone (RFC 5545 matches instances by it).
 				component.removeAllProperties('exdate')
 				for (const ms of incoming.exdates) {
-					CalDAV.writeDate(comp, component, 'exdate', new Date(ms), incoming.allDay, { tzid: exdateTzid, append: true })
+					CalDAV.writeDate(comp, component, 'exdate', new Date(ms), incoming.allDay, { zone: incoming.timeZone, append: true })
 				}
 			}
 
+			// A re-zone leaves its previous VTIMEZONE unreferenced — drop any that no property points at.
+			CalDAV.pruneTimezones(comp)
 			return comp.toString()
 		}
 
@@ -722,12 +821,14 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		component.updatePropertyWithValue('summary', entry.heading)
 		!entry.description ? void 0 : component.updatePropertyWithValue('description', entry.description)
 		!entry.location ? void 0 : component.updatePropertyWithValue('location', entry.location)
-		!entry.start ? void 0 : component.updatePropertyWithValue('dtstart', CalDAV.toICALTime(entry.start, entry.allDay))
-		!entry.end ? void 0 : component.updatePropertyWithValue(isTask ? 'due' : 'dtend', CalDAV.toICALTime(entry.end, entry.allDay))
+		// The span in the entry's authoring zone: local time + TZID (with the VTIMEZONE embedded on
+		// `comp`) for an IANA zone, bare local for FLOATING, UTC / date-only otherwise (see writeDate).
+		!entry.start ? void 0 : CalDAV.writeDate(comp, component, 'dtstart', entry.start, entry.allDay, { zone: entry.timeZone })
+		!entry.end ? void 0 : CalDAV.writeDate(comp, component, isTask ? 'due' : 'dtend', entry.end, entry.allDay, { zone: entry.timeZone })
 		!entry.color ? void 0 : component.updatePropertyWithValue('color', entry.color)
 		!entry.recurrence ? void 0 : component.updatePropertyWithValue('rrule', ICAL.Recur.fromString(entry.recurrence.toRRule(entry.allDay)))
 		// The continuation of a split series carries its half of the exclusions (see backend/occurrences.ts).
-		entry.exdates?.forEach(ms => component.addPropertyWithValue('exdate', CalDAV.toICALTime(new Date(ms), entry.allDay)))
+		entry.exdates?.forEach(ms => CalDAV.writeDate(comp, component, 'exdate', new Date(ms), entry.allDay, { zone: entry.timeZone, append: true }))
 		if (isTask) {
 			this.writeTaskStatus(component, entry.status)
 		}
@@ -814,9 +915,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			}
 
 			// One EXDATE per excluded instant (matched by ms during expansion); value type AND authored
-			// zone form follow DTSTART (RFC 5545 matches instances by it).
-			CalDAV.writeDate(comp, component, 'exdate', recurrenceId, master.allDay,
-				{ tzid: component.getFirstProperty('dtstart')?.getParameter('tzid')?.toString(), append: true })
+			// zone form follow DTSTART — the master's zone (RFC 5545 matches instances by it).
+			CalDAV.writeDate(comp, component, 'exdate', recurrenceId, master.allDay, { zone: master.timeZone, append: true })
 
 			// The instant may already carry an override component (an externally edited occurrence, bundled
 			// in the same resource): EXDATE only prunes the recurrence SET — the override would keep the

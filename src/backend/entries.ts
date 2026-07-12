@@ -1,7 +1,7 @@
 import { Router, type Request } from 'express'
 import { orm } from './orm.js'
 import { syncEmitter } from './syncEmitter.js'
-import { Entry, Integration, Recurrence, Source, normalizeAllDay, projectAllDay, createLogger, type RecurrenceScope } from '../shared/index.js'
+import { Entry, FLOATING_TIME_ZONE, Integration, Recurrence, Source, normalizeAllDay, projectAllDay, createLogger, type RecurrenceScope } from '../shared/index.js'
 import { editOccurrence, deleteOccurrence, expandedOccurrences } from './occurrences.js'
 
 const logger = createLogger('Entries')
@@ -14,6 +14,11 @@ const logger = createLogger('Entries')
 
 /** The viewer's zone riding on the request; absent (a bare API client) falls back per call site. */
 const viewerZone = (req: Request) => typeof req.query.tz === 'string' && req.query.tz ? req.query.tz : undefined
+
+/** The zone all-day midnights normalize in: the viewer's, else the entry's own — but never the
+ * FLOATING marker, which is not a real zone and would throw inside Intl/Temporal (see Entry.timeZone). */
+const dayZone = (req: Request, timeZone: string | null | undefined) =>
+	viewerZone(req) ?? (timeZone && timeZone !== FLOATING_TIME_ZONE ? timeZone : undefined)
 
 /** An all-day entry's canonical dates projected into the viewer's zone — mutated AFTER any flush,
  * right before serialization; the request-scoped fork is then discarded, so nothing is written back. */
@@ -125,7 +130,7 @@ entriesRouter.post('/', async (req, res) => {
 
 	// The client sent its own zone's midnights — re-encode them as the canonical dates.
 	if (incoming.allDay) {
-		const zone = viewerZone(req) ?? incoming.timeZone
+		const zone = dayZone(req, incoming.timeZone)
 		incoming.start = incoming.start ? normalizeAllDay(incoming.start, zone) as never : incoming.start
 		incoming.end = incoming.end ? normalizeAllDay(incoming.end, zone) as never : incoming.end
 	}
@@ -179,13 +184,13 @@ entriesRouter.put('/:id', async (req, res) => {
 			reminders: body.reminders === undefined ? existing.reminders : body.reminders,
 		})
 		if (edited.allDay) {
-			const zone = viewerZone(req) ?? edited.timeZone
+			const zone = dayZone(req, edited.timeZone)
 			edited.start = edited.start ? normalizeAllDay(edited.start, zone) as never : edited.start
 			edited.end = edited.end ? normalizeAllDay(edited.end, zone) as never : edited.end
 		}
 		// The occurrence identifier came from projected (viewer-zone) data — normalize it likewise.
 		const occurrenceId = existing.allDay
-			? normalizeAllDay(new Date(body.recurrenceId), viewerZone(req) ?? existing.timeZone)
+			? normalizeAllDay(new Date(body.recurrenceId), dayZone(req, existing.timeZone))
 			: new Date(body.recurrenceId)
 		const result = await editOccurrence(em, currentIntegration, existing, occurrenceId, edited, body.scope)
 		await em.flush()
@@ -213,7 +218,7 @@ entriesRouter.put('/:id', async (req, res) => {
 
 	// The client sent its own zone's midnights — re-encode them as the canonical dates.
 	if (incoming.allDay) {
-		const zone = viewerZone(req) ?? incoming.timeZone
+		const zone = dayZone(req, incoming.timeZone)
 		incoming.start = incoming.start ? normalizeAllDay(incoming.start, zone) as never : incoming.start
 		incoming.end = incoming.end ? normalizeAllDay(incoming.end, zone) as never : incoming.end
 	}
@@ -260,7 +265,7 @@ entriesRouter.delete('/:id', async (req, res) => {
 	const { scope, recurrenceId } = req.query as { scope?: RecurrenceScope, recurrenceId?: string }
 	if (scope && scope !== 'all' && recurrenceId) {
 		// The occurrence identifier came from projected (viewer-zone) data — normalize it likewise.
-		const occurrenceId = entry.allDay ? normalizeAllDay(new Date(recurrenceId), viewerZone(req) ?? entry.timeZone) : new Date(recurrenceId)
+		const occurrenceId = entry.allDay ? normalizeAllDay(new Date(recurrenceId), dayZone(req, entry.timeZone)) : new Date(recurrenceId)
 		await deleteOccurrence(em, integration, entry, occurrenceId, scope)
 		await em.flush()
 		syncEmitter.emit('updated', req.user.id)

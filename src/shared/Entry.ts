@@ -1,4 +1,4 @@
-import { type DateTime } from '@3mo/date-time'
+import { DateTime } from '@3mo/date-time'
 import { equals } from '@a11d/equals'
 import { model } from './model.js'
 import { entity, primaryKey, property, enum as enumType, unique, manyToOne, embedded } from './orm.js'
@@ -25,6 +25,12 @@ export interface EntryData {
 /** The granularity timed edits and gestures snap to, and the minimum duration an edit leaves behind.
  * A single knob today; a user setting later. */
 export const SNAP_MINUTES = 15
+
+/** The reserved `Entry.timeZone` value for RFC 5545 FLOATING times ("09:00 wherever the observer
+ * is") — deliberately not an IANA id, so every consumer that treats the field as a zone must handle
+ * it explicitly. Never handed to Intl/Temporal: the wall clock of a floating entry is encoded
+ * as-if-UTC in its instants, so 'UTC' is the zone to read/write those fields in. */
+export const FLOATING_TIME_ZONE = 'floating'
 
 /** A newly-created TIMED entry starts with a reminder this many minutes before — the convention other
  * calendars default to, so an event you jot down still nudges you without a manual step. All-day entries
@@ -72,9 +78,14 @@ export class Entry {
 	// repeats at a WALL-CLOCK time in this zone ("every Monday 09:00 Berlin"), so expansion must know
 	// which zone's 09:00 survives a DST flip (see backend/occurrences.ts).
 	// Nullable because absence is a real domain state, not a hydration artifact: synced entries whose
-	// DTSTART is UTC/floating (no TZID) declared no authoring zone, rows predating this field never had
-	// one, and the server must not invent one (its own zone is arbitrary — a UTC container). Only the
-	// CHOICE of empty value (`null`, not undefined) follows the hydration convention, like `recurrence`.
+	// DTSTART is UTC (no TZID) declared no authoring zone, rows predating this field never had one, and
+	// the server must not invent one (its own zone is arbitrary — a UTC container). Only the CHOICE of
+	// empty value (`null`, not undefined) follows the hydration convention, like `recurrence`.
+	// The reserved value FLOATING_TIME_ZONE mirrors RFC 5545's third time form — a bare local time with
+	// neither TZID nor `Z`, meaning "this wall clock wherever the observer is" ("take pill at 09:00").
+	// Mitra doesn't author or fully render floating times yet, but it must never corrupt one another
+	// client wrote: such entries keep the marker, encode their wall clock as-if-UTC in start/end, and
+	// round-trip back to a bare local DTSTART (see CalDAV.ts). Rendering them per-viewer is future work.
 	@property({ type: 'string', nullable: true }) timeZone?: string | null
 
 	@property({ type: 'json', nullable: true }) data?: EntryData
@@ -266,6 +277,33 @@ export class Entry {
 		this.start = other.start
 		this.end = other.end
 		this.allDay = other.allDay
+	}
+
+	/** Re-zone the entry: the WALL-CLOCK readings stay, the instants move — picking Tehran for a
+	 * 14:00-Berlin entry makes it 14:00 Tehran. That's the conventional meaning of changing an entry's
+	 * zone everywhere (Google, Notion); the other reading — same instant, new label — is a view concern
+	 * (the time axis' zone columns), not an edit. All-day spans are floating days and don't shift.
+	 * Frontend-only, like the other timing methods: the wall clock is read in the zone the times were
+	 * authored in, defaulting to the browser's. */
+	setTimeZone(zone: string) {
+		if (!this.allDay) {
+			// A floating entry's wall clock is encoded as-if-UTC; re-zoning it pins that wall clock to
+			// the picked zone (a deliberate edit away from floating — the marker is replaced below).
+			const from = this.timeZone === FLOATING_TIME_ZONE ? 'UTC'
+				: this.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+			// A REAL DateTime (the global, like `Localizer`) — a plain Date cast would blow up on the
+			// first `.dayStart` downstream.
+			const rezoned = (value: DateTime | undefined) => value === undefined ? undefined : new DateTime(
+				Temporal.Instant.fromEpochMilliseconds(value.valueOf())
+					.toZonedDateTimeISO(from)
+					.toPlainDateTime()
+					.toZonedDateTime(zone, { disambiguation: 'compatible' })
+					.epochMilliseconds
+			)
+			this.start = rezoned(this.start)
+			this.end = rezoned(this.end)
+		}
+		this.timeZone = zone
 	}
 
 	/** Flip all-day: ON snaps to the day bounds it currently covers; OFF restores a default 09:00–10:00

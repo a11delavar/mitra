@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { Entry, EntryType, TaskStatus } from './Entry.js'
+import { Entry, EntryType, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
 import { Source, SourceType } from './Source.js'
 
 describe('Entry', () => {
@@ -229,6 +229,49 @@ describe('Entry', () => {
 			e.assign(new Entry({ id: 'a', sourceId: 's', type: EntryType.Task, heading: 'Task', color: null }))
 			assert.equal(e.status, undefined)
 			assert.equal(e.color, null)
+		})
+	})
+
+	describe('setTimeZone', () => {
+		it('keeps the wall clock and moves the instant', () => {
+			// 14:00 Berlin (CEST, UTC+2) → picked Tehran (UTC+3:30): stays 14:00 on the wall, so the
+			// instant moves from 12:00Z to 10:30Z.
+			const e = new Entry({
+				start: new Date('2026-07-06T12:00:00Z') as unknown as DateTime,
+				end: new Date('2026-07-06T13:00:00Z') as unknown as DateTime,
+				timeZone: 'Europe/Berlin',
+			})
+			e.setTimeZone('Asia/Tehran')
+			assert.equal(e.timeZone, 'Asia/Tehran')
+			assert.equal(new Date(e.start!.valueOf()).toISOString(), '2026-07-06T10:30:00.000Z')
+			assert.equal(new Date(e.end!.valueOf()).toISOString(), '2026-07-06T11:30:00.000Z')
+			// The re-zoned values must be REAL DateTimes — the editor reads DateTime getters right after.
+			assert.equal(e.multiDay, false)
+			assert.ok(e.start instanceof DateTime)
+		})
+
+		it('leaves an all-day span alone — floating days have no wall clock to keep', () => {
+			const e = new Entry({
+				start: new Date('2026-07-06T00:00:00Z') as unknown as DateTime,
+				end: new Date('2026-07-07T00:00:00Z') as unknown as DateTime,
+				allDay: true,
+				timeZone: 'Europe/Berlin',
+			})
+			e.setTimeZone('Asia/Tehran')
+			assert.equal(e.timeZone, 'Asia/Tehran')
+			assert.equal(new Date(e.start!.valueOf()).toISOString(), '2026-07-06T00:00:00.000Z')
+		})
+
+		it('pins a FLOATING entry\'s as-if-UTC wall clock to the picked zone', () => {
+			const e = new Entry({
+				start: new Date('2026-07-06T09:00:00Z') as unknown as DateTime, // floating 09:00, encoded as-if-UTC
+				end: new Date('2026-07-06T09:30:00Z') as unknown as DateTime,
+				timeZone: FLOATING_TIME_ZONE,
+			})
+			e.setTimeZone('Asia/Tehran')
+			assert.equal(e.timeZone, 'Asia/Tehran')
+			// The 09:00 wall clock survives, now anchored: 09:00 Tehran = 05:30Z.
+			assert.equal(new Date(e.start!.valueOf()).toISOString(), '2026-07-06T05:30:00.000Z')
 		})
 	})
 

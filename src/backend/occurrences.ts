@@ -1,7 +1,7 @@
 import { type EntityManager } from '@mikro-orm/core'
 import { type DateTime } from '@3mo/date-time'
 import ICAL from 'ical.js'
-import { Entry, type Integration, type RecurrenceScope } from '../shared/index.js'
+import { CalDAV, Entry, FLOATING_TIME_ZONE, type Integration, type RecurrenceScope } from '../shared/index.js'
 
 /**
  * The occurrence domain of recurring series — everything between a stored MASTER row and its rendered
@@ -45,20 +45,24 @@ function wallToInstantMs(time: ICAL.Time, zone: string): number {
 		.toZonedDateTime(zone, { disambiguation: 'compatible' }).epochMilliseconds
 }
 
-/** An EXDATE value as the instant it excludes. A DATE (all-day) exclusion is that calendar day's
- * midnight in the series' zone — the instants `within` produces; `toJSDate()` would read it at the
- * SERVER's midnight and never match. A DATE-TIME carries its own instant; without a zone, a DATE
- * falls back to server-local midnight, pairing with the zoneless legacy expansion. */
-function exdateMs(value: ICAL.Time, zone: string | null | undefined): number {
-	return value.isDate && zone ? wallToInstantMs(value, zone) : value.toJSDate().getTime()
+/** An EXDATE value as the instant it excludes — decoded the same way the sync stores instants
+ * ({@link CalDAV.instantFrom}, honoring the property's own TZID via Temporal), so exclusions always
+ * land on the very instants `within` produces. A DATE (all-day) exclusion is that calendar day's
+ * midnight in the series' day-math zone. */
+function exdateMs(value: ICAL.Time, tzid: string | undefined, zone: string): number {
+	return value.isDate ? wallToInstantMs(value, zone) : CalDAV.instantFrom(value, tzid)!.getTime()
 }
 
-/** The zone a series' day math happens in. An ALL-DAY series is a sequence of DATES — its bounds are
- * canonical UTC-midnight encodings (see calendarDate.ts) — so its rule iterates, shifts and excludes
- * in UTC (pure date arithmetic, no DST drift); a timed series repeats at a wall-clock time in its own
- * `timeZone`. */
-function dayMathZoneOf(master: Pick<Entry, 'allDay' | 'timeZone'>): string | null | undefined {
-	return master.allDay ? 'UTC' : master.timeZone
+/** The zone a series' day math happens in — ALWAYS a real zone, so nothing about expansion, shifting
+ * or excluding ever depends on where the container runs. An ALL-DAY series is a sequence of DATES —
+ * canonical UTC-midnight encodings (see calendarDate.ts) — so it iterates in UTC (pure date
+ * arithmetic, no DST drift). A timed series repeats at a wall-clock time in its own `timeZone`. One
+ * with NO authoring zone (a UTC-form DTSTART — which RFC 5545 §3.8.5.3 defines as recurring at fixed
+ * UTC instants) or a FLOATING one (wall clock encoded as-if-UTC, see Entry.timeZone) reads its wall
+ * clock in UTC, so both also iterate there — the same fixed-instant math on every server. (Formerly
+ * these fell to a server-local legacy path, whose expansion silently depended on the container's TZ.) */
+function dayMathZoneOf(master: Pick<Entry, 'allDay' | 'timeZone'>): string {
+	return master.allDay || !master.timeZone || master.timeZone === FLOATING_TIME_ZONE ? 'UTC' : master.timeZone
 }
 
 /**
@@ -68,8 +72,9 @@ function dayMathZoneOf(master: Pick<Entry, 'allDay' | 'timeZone'>): string | nul
  * `exdates` column. A window then materializes the intersecting date-ranges via {@link within} — a
  * never-ending series stays finite because the window bounds it.
  *
- * With a `zone`, iteration is wall-clock in that zone (anchored on the master's start read in it), so
- * a 09:00 series stays 09:00 through DST; without one, the legacy instant/server-local behavior holds.
+ * Iteration is ALWAYS wall-clock in the series' day-math zone ({@link dayMathZoneOf}), anchored on the
+ * master's start read in it — a 09:00-Berlin series stays 09:00 through DST, and a zone-less (UTC-form)
+ * one repeats at fixed UTC instants, on any server.
  */
 export class Occurrences {
 	private constructor(
@@ -77,30 +82,38 @@ export class Occurrences {
 		private readonly anchor: ICAL.Time,
 		private readonly durationMs: number,
 		private readonly exdates: ReadonlySet<number>,
-		private readonly zone?: string,
+		private readonly zone: string,
 	) { }
 
 	/** The series' occurrences off a master entry, however it stores its rule; `undefined` when the
 	 * entry isn't an expandable master (no rule, no start, or a malformed stored rule). The master's
-	 * `timeZone` (stamped at creation, or synced from a TZID) makes the iteration wall-clock in it. */
+	 * `timeZone` (stamped at creation, or synced from a TZID) makes the iteration wall-clock in it;
+	 * none (and the floating marker, which must never reach Temporal/Intl) means UTC — see
+	 * {@link dayMathZoneOf}. */
 	static of(master: Entry): Occurrences | undefined {
-		const zone = !dayMathZoneOf(master) || !master.start ? undefined : { id: dayMathZoneOf(master)!, start: master.start as Date }
+		if (!master.start) {
+			return undefined // no anchor to expand from
+		}
+		const zone = { id: dayMathZoneOf(master), start: master.start as Date }
 		if (master.data?.raw) {
 			return Occurrences.fromICS(master.data.raw, zone)
 		}
-		return !master.recurrence || !master.start ? undefined : Occurrences.fromRule(
+		return !master.recurrence ? undefined : Occurrences.fromRule(
 			master.recurrence.toRRule(master.allDay),
 			master.start as Date,
 			master.end as Date | undefined,
 			master.exdates ?? [],
-			zone?.id,
+			zone.id,
 		)
 	}
 
 	/**
 	 * From a raw .ics: applies its EXDATEs and inherits the master's duration (DTEND/DUE − DTSTART).
 	 * Works for VEVENT and VTODO (anchored on DTSTART, else DUE). With a `zone`, the anchor is the
-	 * master's start read in it — the stored DTSTART may be UTC-written, whose wall clock would drift.
+	 * master's start read in it — the stored DTSTART may be UTC-written, whose wall clock would drift;
+	 * without one (a direct call), the anchor is the DTSTART's own instant read in UTC. All property
+	 * values decode via {@link CalDAV.instantFrom}, so a TZID resolves through Temporal whether or not
+	 * the resource embeds its VTIMEZONE.
 	 */
 	static fromICS(raw: string, zone?: { id: string, start: Date }): Occurrences | undefined {
 		const component = new ICAL.Component(ICAL.parse(raw))
@@ -111,18 +124,34 @@ export class Occurrences {
 			return undefined
 		}
 
-		const endProp = (v.getFirstPropertyValue('dtend') ?? v.getFirstPropertyValue('due')) as { toJSDate(): Date } | null
-		const durationMs = endProp ? endProp.toJSDate().getTime() - dtstart.toJSDate().getTime() : 0
+		const tzidOf = (name: string) => v.getFirstProperty(name)?.getParameter('tzid')?.toString()
+		const startInstant = CalDAV.instantFrom(dtstart, v.getFirstProperty('dtstart') ? tzidOf('dtstart') : tzidOf('due'))!
+		const endProp = (v.getFirstPropertyValue('dtend') ?? v.getFirstPropertyValue('due')) as ICAL.Time | null
+		const endInstant = !endProp ? undefined : CalDAV.instantFrom(endProp, tzidOf('dtend') ?? tzidOf('due') ?? tzidOf('dtstart'))
+		const durationMs = endInstant ? endInstant.getTime() - startInstant.getTime() : 0
+
+		const [anchorInstant, anchorZone] = Occurrences.anchorOf(zone?.start ?? startInstant, zone?.id ?? 'UTC')
 
 		const exdates = new Set<number>()
 		for (const prop of v.getAllProperties('exdate')) {
 			for (const value of prop.getValues()) {
-				exdates.add(exdateMs(value as ICAL.Time, zone?.id))
+				exdates.add(exdateMs(value as ICAL.Time, prop.getParameter('tzid')?.toString(), anchorZone))
 			}
 		}
 
-		const anchor = !zone ? dtstart : wallAnchor(zone.start, zone.id)
-		return new Occurrences(rrule, anchor, durationMs, exdates, zone?.id)
+		return new Occurrences(rrule, wallAnchor(anchorInstant, anchorZone), durationMs, exdates, anchorZone)
+	}
+
+	/** The anchor instant with a zone that actually resolves: a stored `timeZone` that Temporal can't
+	 * read (a Microsoft zone name synced before ids were sanitized, say) falls back to UTC — fixed
+	 * instants beat a crashed read for every series in the window. */
+	private static anchorOf(instant: Date, zone: string): [Date, string] {
+		try {
+			Temporal.Instant.fromEpochMilliseconds(0).toZonedDateTimeISO(zone)
+			return [instant, zone]
+		} catch {
+			return [instant, 'UTC']
+		}
 	}
 
 	/**
@@ -130,19 +159,18 @@ export class Occurrences {
 	 * that don't persist one (e.g. the local `Dev` calendar) expand this way; `exdates` carries that
 	 * calendar's exclusions (its EXDATE equivalent).
 	 */
-	static fromRule(rrule: string, start: Date, end: Date | undefined, exdates: ReadonlyArray<number> = [], zone?: string): Occurrences | undefined {
+	static fromRule(rrule: string, start: Date, end: Date | undefined, exdates: ReadonlyArray<number> = [], zone = 'UTC'): Occurrences | undefined {
 		let rule: ICAL.Recur
-		let anchor: ICAL.Time
 		try {
 			rule = ICAL.Recur.fromString(rrule)
-			anchor = zone ? wallAnchor(start, zone) : ICAL.Time.fromJSDate(start, false)
 		} catch {
 			return undefined // malformed rule — render nothing rather than throw on a read
 		}
 		if (!rule.freq) {
 			return undefined
 		}
-		return new Occurrences(rule, anchor, end ? end.getTime() - start.getTime() : 0, new Set(exdates), zone)
+		const [anchorInstant, anchorZone] = Occurrences.anchorOf(start, zone)
+		return new Occurrences(rule, wallAnchor(anchorInstant, anchorZone), end ? end.getTime() - start.getTime() : 0, new Set(exdates), anchorZone)
 	}
 
 	/** The occurrence date-ranges intersecting [windowStart, windowEnd]. The rule's occurrences ascend
@@ -162,7 +190,7 @@ export class Occurrences {
 			if (!time) {
 				break
 			}
-			const startMs = this.zone ? wallToInstantMs(time, this.zone) : time.toJSDate().getTime()
+			const startMs = wallToInstantMs(time, this.zone)
 			if (startMs <= previousMs || startMs >= boundMs) {
 				break // non-advancing (malformed) or past the split — occurrences ascend
 			}
@@ -183,8 +211,8 @@ export class Occurrences {
 			if (!time) {
 				break
 			}
-			// A wall time in the series' zone becomes an instant THERE; zoneless stays as it was.
-			const startMs = this.zone ? wallToInstantMs(time, this.zone) : time.toJSDate().getTime()
+			// A wall time in the series' zone becomes an instant THERE (UTC ⇒ the fixed-instant case).
+			const startMs = wallToInstantMs(time, this.zone)
 			if (startMs <= previousMs) {
 				break // a non-advancing iterator (malformed rule) — don't spin
 			}
@@ -246,12 +274,10 @@ export async function expandedOccurrences(em: EntityManager, sourceIds: Readonly
 // --- Write side: scoped edits -----------------------------------------------------------------------
 
 /** Shift one instant the way the series' occurrences shift when an edit moves the anchor `from` → `to`:
- * in the master's wall-clock zone when it has one (a 09:00 stays a 09:00 across a DST flip, mirroring
- * `within`), else by the plain instant delta. */
-function shiftMs(ms: number, zone: string | null | undefined, from: Date, to: Date): number {
-	if (!zone) {
-		return ms + (to.getTime() - from.getTime())
-	}
+ * in the master's wall-clock zone, mirroring `within` — a 09:00 stays a 09:00 across a DST flip. For a
+ * zone-less series ({@link dayMathZoneOf} ⇒ UTC, which has no DST) this reduces to the plain instant
+ * delta, exactly as such fixed-instant series move. */
+function shiftMs(ms: number, zone: string, from: Date, to: Date): number {
 	const wall = (value: number) => Temporal.Instant.fromEpochMilliseconds(value).toZonedDateTimeISO(zone).toPlainDateTime()
 	const delta = wall(from.getTime()).until(wall(to.getTime()))
 	return wall(ms).add(delta).toZonedDateTime(zone, { disambiguation: 'compatible' }).epochMilliseconds
@@ -263,7 +289,7 @@ function exdatesOf(master: Entry): Array<number> {
 	if (master.data?.raw) {
 		const component = new ICAL.Component(ICAL.parse(master.data.raw))
 		const v = component.getFirstSubcomponent('vevent') ?? component.getFirstSubcomponent('vtodo')
-		return !v ? [] : v.getAllProperties('exdate').flatMap(prop => prop.getValues().map(value => exdateMs(value as ICAL.Time, dayMathZoneOf(master))))
+		return !v ? [] : v.getAllProperties('exdate').flatMap(prop => prop.getValues().map(value => exdateMs(value as ICAL.Time, prop.getParameter('tzid')?.toString(), dayMathZoneOf(master))))
 	}
 	return master.exdates ?? []
 }
@@ -271,7 +297,7 @@ function exdatesOf(master: Entry): Array<number> {
 /** The exclusions shift exactly like the occurrences they stand for ({@link shiftMs}) — matched by
  * instant, one left behind by a series-wide move matches nothing afterwards, and the detached
  * occurrence it stood for reappears at the shifted slot, doubled next to its detached copy. */
-function shiftExdates(exdates: Array<number>, zone: string | null | undefined, from: Date, to: Date): Array<number> {
+function shiftExdates(exdates: Array<number>, zone: string, from: Date, to: Date): Array<number> {
 	return exdates.map(ms => shiftMs(ms, zone, from, to))
 }
 
