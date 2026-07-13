@@ -372,6 +372,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 		const carried = exdatesOf(master).filter(ms => ms >= recurrenceId.getTime())
 		const continuation = new Entry({
 			id: crypto.randomUUID(),
+			uid: crypto.randomUUID(), // a fresh series is a fresh identity — relatable from birth (Dev has no .ics to mint one from)
 			sourceId: master.sourceId,
 			type: master.type,
 			heading: edited.heading,
@@ -394,6 +395,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 	await integration.excludeOccurrence(em, master, recurrenceId)
 	const standalone = new Entry({
 		id: crypto.randomUUID(),
+		uid: crypto.randomUUID(), // detached = its own identity, deliberately NOT the master's (one UID per series)
 		sourceId: master.sourceId,
 		type: master.type,
 		heading: edited.heading,

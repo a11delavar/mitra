@@ -2,20 +2,50 @@
 	"+ end date": "+ Enddatum",
 	"+${count:number} more": "+${count:number} weitere",
 	"${count:number} min": "${count:number} Min.",
-	"${count:pluralityNumber} days": ["${count:pluralityNumber} Tag", "${count:pluralityNumber} Tage"],
-	"${count:pluralityNumber} hours": ["${count:pluralityNumber} Stunde", "${count:pluralityNumber} Stunden"],
-	"${count:pluralityNumber} months": ["${count:pluralityNumber} Monat", "${count:pluralityNumber} Monate"],
-	"${count:pluralityNumber} weeks": ["${count:pluralityNumber} Woche", "${count:pluralityNumber} Wochen"],
-	"${count:pluralityNumber} years": ["${count:pluralityNumber} Jahr", "${count:pluralityNumber} Jahre"],
+	"${count:pluralityNumber} days": [
+		"${count:pluralityNumber} Tag",
+		"${count:pluralityNumber} Tage"
+	],
+	"${count:pluralityNumber} hours": [
+		"${count:pluralityNumber} Stunde",
+		"${count:pluralityNumber} Stunden"
+	],
+	"${count:pluralityNumber} months": [
+		"${count:pluralityNumber} Monat",
+		"${count:pluralityNumber} Monate"
+	],
+	"${count:pluralityNumber} weeks": [
+		"${count:pluralityNumber} Woche",
+		"${count:pluralityNumber} Wochen"
+	],
+	"${count:pluralityNumber} years": [
+		"${count:pluralityNumber} Jahr",
+		"${count:pluralityNumber} Jahre"
+	],
 	"${span} before": "${span} vorher",
 	"${status} — click to toggle, Alt-click for options": "${status} — zum Umschalten klicken, Alt-Klick für Optionen",
 	"Account": "Konto",
 	"Add integration": "Integration hinzufügen",
 	"Add Integration": "Integration hinzufügen",
+	"Add relationship": "Beziehung hinzufügen",
 	"Add reminder": "Erinnerung hinzufügen",
 	"Add time zone": "Zeitzone hinzufügen",
+	"Blocks": "Blockiert",
+	"Finishes after": "Endet nach",
+	"Finishes after start of": "Endet nach Beginn von",
+	"Has subtask": "Hat Teilaufgabe",
+	"Parent of": "Übergeordnet zu",
+	"Related to": "Verknüpft mit",
+	"Relationship type": "Beziehungstyp",
+	"Relationships": "Beziehungen",
+	"Remove relationship": "Beziehung entfernen",
+	"Search entries…": "Einträge suchen…",
 	"Showing ${city} time — switch to the primary time zone": "${city}-Zeit — zur primären Zeitzone wechseln",
 	"Showing the primary time zone — switch to ${city} time": "Primäre Zeitzone — zur ${city}-Zeit wechseln",
+	"Starts after": "Beginnt nach",
+	"Subtask of": "Teilaufgabe von",
+	"This relationship is not possible": "Diese Beziehung ist nicht möglich",
+	"Unknown entry": "Unbekannter Eintrag",
 	"Wall clock — no time zone": "Wanduhrzeit — keine Zeitzone",
 	"Primary time zone — switch to ${city} time to change the zone": "Primäre Zeitzone — zur ${city}-Zeit wechseln, um die Zeitzone zu ändern",
 	"After": "Nach",

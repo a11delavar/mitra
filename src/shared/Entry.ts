@@ -4,6 +4,7 @@ import { model } from './model.js'
 import { entity, primaryKey, property, enum as enumType, unique, manyToOne, embedded } from './orm.js'
 import { Source, SourceType } from './Source.js'
 import { Recurrence } from './Recurrence.js'
+import { Relation } from './Relation.js'
 
 export enum EntryType {
 	Event = 'event',
@@ -116,6 +117,30 @@ export class Entry {
 	 * column: it's derived render-state on synthetic occurrences, never persisted. */
 	seriesStart?: DateTime
 
+	// --- Relationships ---------------------------------------------------------------------------------
+	// The entry's OUTGOING relationships ("subtask of X", "after Y" — see shared/Relation.ts for the
+	// vocabulary and the one-stored-direction rule). Deliberately NOT a column (like `seriesStart`):
+	// the queryable store is the EntryRelation table, materialized onto this field by every read path
+	// and reconciled from it on every write. Tri-state on the wire like `recurrence`: an array sets,
+	// `null` clears, absent/undefined keeps — and `undefined` after an integration's sync means "this
+	// integration has no native relation store; leave the table alone". `null` is the canonical "none".
+	// Targets are UIDs of series MASTERS. The array is always REPLACED, never mutated in place —
+	// `clone()` is shallow, so canonical snapshots share it (the reminders discipline).
+	relations?: Array<Relation> | null
+
+	/** Adds an outgoing relationship (normalized, deduplicated) — self-references are meaningless and
+	 * ignored. Replaces the array, so a shared snapshot can't observe the edit. */
+	relateTo(type: string, targetUid: string) {
+		if (targetUid && targetUid !== this.uid) {
+			this.relations = Relation.normalize([...(this.relations ?? []), new Relation({ type, targetUid })])
+		}
+	}
+
+	/** Removes an outgoing relationship by value; an emptied list collapses to the canonical `null`. */
+	unrelate(relation: Relation) {
+		this.relations = Relation.normalize((this.relations ?? []).filter(candidate => !Relation.equal(candidate, relation)))
+	}
+
 	get duration() {
 		if (!this.start || !this.end) {
 			return undefined
@@ -163,6 +188,9 @@ export class Entry {
 		// exdates) are sync bookkeeping like `uri`/`data`, so they stay excluded.
 		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'allDay', 'timeZone', 'status', 'recurrence', 'reminders'] as const
 		return editable.every(key => Object[equals](this[key], other[key]))
+			// Relations compare by their own value semantics (normalization makes ordering/absence
+			// canonical), not raw structural equality — a wire round-trip must read as clean.
+			&& Relation.listEquals(this.relations ?? null, other.relations ?? null)
 	}
 
 	/** A value snapshot of this entry. Shallow — DateTimes are immutable and `data` is never mutated on
@@ -191,6 +219,7 @@ export class Entry {
 			allDay: values.allDay,
 			timeZone: values.timeZone,
 			reminders: values.reminders,
+			relations: values.relations,
 			data: values.data,
 			uid: values.uid,
 			recurrence: values.recurrence,

@@ -8,6 +8,7 @@ import { Source, SourceType } from './Source.js'
 import { Integration, integration } from './Integration.js'
 import { Entry, EntryType, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
 import { Recurrence } from './Recurrence.js'
+import { Relation, RelationType } from './Relation.js'
 import { calendarDateOf, midnightOf } from './calendarDate.js'
 import { Color } from './Color.js'
 import { createLogger } from './Logger.js'
@@ -356,6 +357,52 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return minutes.length ? [...new Set(minutes)].sort((a, b) => a - b) : null
 	}
 
+	/** The entry's outgoing relationships off its RELATED-TO properties (RFC 5545 §3.8.4.5) — the
+	 * CalDAV mapping of the neutral vocabulary is the identity function (see shared/Relation.ts).
+	 * EVERY RELTYPE is kept verbatim — a missing one means PARENT (RFC 5545 §3.2.15), foreign
+	 * directions/`X-` extensions stay opaque — plus the RFC 9253 GAP duration, so a wholesale
+	 * rewrite ({@link writeRelations}) can never lose another client's data. `null` for "none". */
+	static relationsFrom(component: ICAL.Component): Array<Relation> | null {
+		return Relation.normalize(component.getAllProperties('related-to').map(property => new Relation({
+			type: property.getParameter('reltype')?.toString() || RelationType.Parent,
+			targetUid: property.getFirstValue()?.toString() ?? '',
+			gap: property.getParameter('gap')?.toString() || null,
+		})))
+	}
+
+	/** Bring the component's RELATED-TO lines in line with `relations` by DIFF, never wholesale:
+	 * a line whose parsed (type, target, gap) triple the list still contains is left VERBATIM —
+	 * the model doesn't carry parameters beyond RELTYPE/GAP (VALUE=URI, X-…, LANGUAGE), so
+	 * rewriting an untouched line would destroy another client's data. Only lines the user
+	 * actually removed disappear; added ones are appended with an explicit RELTYPE (even the
+	 * default PARENT, so each line is self-describing) plus GAP when set. */
+	private writeRelations(component: ICAL.Component, relations: Array<Relation> | undefined | null) {
+		// The identity triple, normalized exactly like relationsFrom → Relation.normalize reads it,
+		// so a parsed line and its model counterpart always produce the same key.
+		const keyOf = (relation: Pick<Relation, 'type' | 'targetUid' | 'gap'>) => `${relation.type} ${relation.targetUid} ${relation.gap ?? ''}`
+		const desired = new Map((relations ?? []).map(relation => [keyOf(relation), relation]))
+		const kept = new Set<string>()
+		for (const property of component.getAllProperties('related-to')) {
+			const key = keyOf({
+				type: property.getParameter('reltype')?.toString().trim().toUpperCase() || RelationType.Parent,
+				targetUid: property.getFirstValue()?.toString().trim() ?? '',
+				gap: property.getParameter('gap')?.toString().trim() || null,
+			})
+			if (desired.has(key) && !kept.has(key)) {
+				kept.add(key) // untouched — foreign parameters and all
+			} else {
+				component.removeProperty(property) // removed by the user (or a duplicate of a kept line)
+			}
+		}
+		for (const [key, relation] of desired) {
+			if (!kept.has(key)) {
+				const property = component.addPropertyWithValue('related-to', relation.targetUid)
+				property.setParameter('reltype', relation.type)
+				!relation.gap ? void 0 : property.setParameter('gap', relation.gap)
+			}
+		}
+	}
+
 	/** Replace the component's DISPLAY alarms with one per reminder. DISPLAY only — an EMAIL alarm
 	 * another client authored is its own channel, not ours to rewrite. */
 	private writeReminders(component: ICAL.Component, reminders: Array<number> | undefined | null) {
@@ -542,6 +589,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				}
 
 				entry.reminders = CalDAV.remindersFrom(component)
+				// A DEFINITE value (array or null): RELATED-TO is native here, so the parse is
+				// authoritative and the reconciliation below mirrors it into the relation store.
+				entry.relations = CalDAV.relationsFrom(component)
 
 				// The zone the entry's times were authored in (recurrence expands wall-clock in it — see
 				// backend/occurrences.ts): DTSTART's TZID where a client wrote one. A UTC DTSTART carries no
@@ -582,6 +632,10 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				}
 			}
 		}
+
+		// Mirror the re-parsed entries' relationships into the queryable store (entries untouched
+		// this cycle carry `undefined` and are skipped; a removed entry's rows cascade with it).
+		await this.reconcileRelations(em, existingEntries)
 
 		source.syncState = { syncToken: newSyncToken }
 
@@ -644,7 +698,11 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		// The recurrence rule is a value object, diffed via its own (absence-safe) structural equality.
 		const recurrenceChanged = !Recurrence.equal(existing.recurrence, incoming.recurrence)
 
-		if (keys.length === 0 && !recurrenceChanged && incoming.exdates === undefined) {
+		// Relations are tri-state like `recurrence` (undefined = keep) and compare by their own value
+		// semantics; the caller populated `existing.relations` from the store (see entries.ts PUT).
+		const relationsChanged = incoming.relations !== undefined && !Relation.listEquals(existing.relations ?? null, incoming.relations)
+
+		if (keys.length === 0 && !recurrenceChanged && incoming.exdates === undefined && !relationsChanged) {
 			return
 		}
 
@@ -736,6 +794,12 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				existing.reminders = incoming.reminders
 			}
 
+			// Wholesale and idempotent (the 412 retry may run this twice) — losslessness comes from
+			// the model carrying every parsed RELTYPE opaquely, see writeRelations.
+			if (relationsChanged) {
+				this.writeRelations(component, incoming.relations)
+			}
+
 			// Recurrence rule edits are series-wide: set/replace the master's RRULE, or drop it (and the EXDATEs it
 			// governed) to collapse the series back to a single entry. Keep the local recurrence/uid columns in step
 			// so the next GET expansion sees the change before a re-sync, and so overrides can still link by UID.
@@ -784,6 +848,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		if (recurrenceChanged) {
 			existing.recurrence = incoming.recurrence
 		}
+		if (relationsChanged) {
+			existing.relations = incoming.relations ?? null
+		}
 		if (overrideShift !== undefined) {
 			for (const override of await em.find(Entry, { recurrenceMasterId: existing.id })) {
 				const instant = CalDAV.instantOf(override.recurrenceId)
@@ -804,7 +871,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			throw new Error('A target source with a URL is required to create an entry via CalDAV')
 		}
 
-		const uid = crypto.randomUUID()
+		// A cross-source migration re-creates the entry but keeps its identity: the carried uid keeps
+		// every relationship pointing AT it (and its own outgoing lines) resolvable after the move.
+		const uid = entry.uid || crypto.randomUUID()
 		const filename = `${uid}.ics`
 
 		const comp = new ICAL.Component(['vcalendar', [], []])
@@ -833,6 +902,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			this.writeTaskStatus(component, entry.status)
 		}
 		this.writeReminders(component, entry.reminders)
+		this.writeRelations(component, entry.relations)
 
 		comp.addSubcomponent(component)
 

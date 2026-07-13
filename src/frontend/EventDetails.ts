@@ -357,6 +357,15 @@ export class EntryDetailsComponent extends Component {
 								margin-block-start: 3px;
 							}
 						}
+
+						/* Several relationship rows stack — keep the link glyph on the first one. */
+						&.relations {
+							align-items: start;
+
+							> mitra-icon {
+								margin-block-start: 3px;
+							}
+						}
 					}
 
 				}
@@ -403,6 +412,7 @@ export class EntryDetailsComponent extends Component {
 				${this.sourceTemplate}
 				${this.colorTemplate}
 				${this.remindersTemplate}
+				${this.relationsTemplate}
 			</ul>
 		`
 	}
@@ -499,6 +509,17 @@ export class EntryDetailsComponent extends Component {
 			<li class="reminders">
 				<mitra-icon icon="bell"></mitra-icon>
 				<mitra-reminders-field .entry=${this.segment!.entry} @change=${this.handleChange}></mitra-reminders-field>
+			</li>
+		`
+	}
+
+	private get relationsTemplate() {
+		// The field replaces `entry.relations` in place and fires `change`; a draft renders nothing
+		// (no identity to relate yet) — the row appears the moment the entry persists.
+		return !this.segment!.entry.persisted && !this.segment!.entry.recurrenceMasterId ? html.nothing : html`
+			<li class="relations">
+				<mitra-icon icon="link"></mitra-icon>
+				<mitra-relations-field .entry=${this.segment!.entry} @change=${() => this.handleChange().catch(() => void 0)}></mitra-relations-field>
 			</li>
 		`
 	}

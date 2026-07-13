@@ -1,6 +1,6 @@
 import { Api, HttpError, apiError, apiAuthenticator, type ApiAuthenticator } from '@a11d/api'
 import { type DateTime } from '@3mo/date-time'
-import type { Entry, Integration, RecurrenceScope, Source, User, UserTimeZone } from 'shared'
+import type { Entry, Integration, Relation, RecurrenceScope, Source, User, UserTimeZone } from 'shared'
 
 /**
  * Surface the server's error message on failed responses. Without a registered
@@ -90,6 +90,25 @@ export function searchEntries(query: string) {
 	return Api.get<Array<Entry>>(`/entries/search?q=${encodeURIComponent(query)}&tz=${tz()}`)
 }
 
+/** The relations row's display data for one entry: its outgoing links with resolved target entries
+ * (absent = unresolvable — deleted or foreign; still listed and removable) and the DERIVED incoming
+ * ones ("has subtask", "blocks") with their owning entries. Occurrences resolve their master's id
+ * before calling — relationships are series-level. */
+export interface EntryRelationsView {
+	outgoing: Array<{ type: string, gap: string | null, targetUid: string, entry?: Entry }>
+	incoming: Array<{ type: string, gap: string | null, entry: Entry }>
+}
+
+export function getEntryRelations(id: string) {
+	return Api.get<EntryRelationsView>(`/entries/${id}/relations?tz=${tz()}`)
+}
+
+/** A relations-ONLY update — the incoming-line removal path, editing the OTHER entry's outgoing
+ * list. Legal as a partial body: the PUT treats absent fields as "keep", so nothing else moves. */
+export function updateRelations(id: string, relations: Array<Relation> | null) {
+	return Api.put<Entry>(`/entries/${id}?tz=${tz()}`, { relations })
+}
+
 /** The source a create targets: the user's default when visible, else the first visible one. */
 export function getPrimarySource(): Source | undefined {
 	const visibleSources = integrations.flatMap(i => [...i.sources]).filter(s => s.visible)
@@ -176,11 +195,14 @@ export function updateEvent(entry: Entry) {
 			timeZone: entry.timeZone ?? null,
 			reminders: entry.reminders ?? null,
 			...(entry.recurrence !== undefined ? { recurrence: entry.recurrence } : {}),
+			// Same guard as `recurrence`: relations ride along only when the occurrence carries a
+			// definite value — a stale/partial instance must not wipe the master's links on a rename.
+			...(entry.relations !== undefined ? { relations: entry.relations ?? null } : {}),
 		})
 	}
 	// The full entry, with absent tri-state fields sent as an explicit `null`: JSON drops undefined keys
 	// and the backend treats absence as "keep" — only a null can express a removal.
-	return Api.put<Entry>(`/entries/${entry.id}?tz=${tz()}`, { ...entry, recurrence: entry.recurrence ?? null, reminders: entry.reminders ?? null })
+	return Api.put<Entry>(`/entries/${entry.id}?tz=${tz()}`, { ...entry, recurrence: entry.recurrence ?? null, reminders: entry.reminders ?? null, relations: entry.relations ?? null })
 }
 
 export function deleteEvent(id: string) {

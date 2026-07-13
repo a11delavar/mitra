@@ -1,8 +1,9 @@
 import { Router, type Request } from 'express'
 import { orm } from './orm.js'
 import { syncEmitter } from './syncEmitter.js'
-import { Entry, FLOATING_TIME_ZONE, Integration, Recurrence, Source, normalizeAllDay, projectAllDay, createLogger, type RecurrenceScope } from '../shared/index.js'
+import { Entry, EntryRelation, FLOATING_TIME_ZONE, Integration, Recurrence, Source, normalizeAllDay, projectAllDay, createLogger, type RecurrenceScope } from '../shared/index.js'
 import { editOccurrence, deleteOccurrence, expandedOccurrences } from './occurrences.js'
+import { attachRelations, parseIncomingRelations, assertRelationsValid, resolveRelationsView, INVALID_RELATIONS } from './relations.js'
 
 const logger = createLogger('Entries')
 
@@ -64,7 +65,9 @@ entriesRouter.get('/', async (req, res) => {
 	// The rendered instances of every recurring master intersecting the window (see occurrences.ts).
 	const occurrences = await expandedOccurrences(em, visibleSourceIds, startDate, endDate)
 
-	return res.json([...rows, ...occurrences].map(entry => projectedForViewer(entry, viewerZone(req))))
+	const entries = [...rows, ...occurrences]
+	await attachRelations(em, entries)
+	return res.json(entries.map(entry => projectedForViewer(entry, viewerZone(req))))
 })
 
 // Text search over the WHOLE store (the command palette's data source, unwindowed unlike the GET
@@ -89,7 +92,17 @@ entriesRouter.get('/search', async (req, res) => {
 		],
 	}, { orderBy: { start: 'desc' }, limit: 20 })
 
+	await attachRelations(em, entries)
 	return res.json(entries.map(entry => projectedForViewer(entry, viewerZone(req))))
+})
+
+// The editor's relations row, resolved for display: this entry's outgoing links with their target
+// entries, plus the DERIVED incoming ones — who points at this uid ("has subtask", "blocks") — with
+// their owners. Derived on read from the relation store, never stored twice (see shared/Relation.ts).
+entriesRouter.get('/:id/relations', async (req, res) => {
+	const em = orm.em.fork()
+	const entry = await req.user.entry(em, req.params.id)
+	return res.json(await resolveRelationsView(em, req.user, entry, related => projectedForViewer(related, viewerZone(req))))
 })
 
 entriesRouter.post('/', async (req, res) => {
@@ -106,6 +119,11 @@ entriesRouter.post('/', async (req, res) => {
 		return res.status(400).json({ error: 'Invalid recurrence rule' })
 	}
 
+	const relations = parseIncomingRelations(body.relations)
+	if (relations === INVALID_RELATIONS) {
+		return res.status(400).json({ error: 'Invalid relations' })
+	}
+
 	const targetSource = await req.user.source(em, targetSourceId)
 	const targetIntegration = await em.findOneOrFail(Integration, { id: targetSource.integrationId })
 
@@ -113,6 +131,9 @@ entriesRouter.post('/', async (req, res) => {
 		// The backend owns ids: clients post a draft with none, and we assign it here (the provider's
 		// createEntry persists this very object, so this covers both Dev and CalDAV).
 		id: crypto.randomUUID(),
+		// … and uids: every entry gets one at birth so it is relatable (relationships target uids —
+		// see shared/Relation.ts). CalDAV's createEntry adopts this very value as the .ics UID.
+		uid: crypto.randomUUID(),
 		sourceId: targetSource.id,
 		type: body.type!,
 		heading: body.heading ?? '',
@@ -126,7 +147,14 @@ entriesRouter.post('/', async (req, res) => {
 		status: body.status,
 		recurrence: incomingRecurrence,
 		reminders: body.reminders ?? undefined,
+		relations: relations ?? null,
 	})
+
+	// Validate BEFORE the integration write — a 400 must leave the external store untouched.
+	const relationsError = await assertRelationsValid(em, req.user, incoming, relations ?? null)
+	if (relationsError) {
+		return res.status(400).json({ error: relationsError })
+	}
 
 	// The client sent its own zone's midnights — re-encode them as the canonical dates.
 	if (incoming.allDay) {
@@ -136,6 +164,8 @@ entriesRouter.post('/', async (req, res) => {
 	}
 
 	const created = await targetIntegration.createEntry(em, incoming)
+	// Mirror into the relation store within the same flush — atomic with the entry itself.
+	await EntryRelation.reconcile(em, created.id!, created.relations ?? null)
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
 	logger.debug(`Created ${created.type} "${created.heading}" (${created.id}) in source ${targetSource.id}`)
@@ -145,9 +175,24 @@ entriesRouter.post('/', async (req, res) => {
 entriesRouter.put('/:id', async (req, res) => {
 	const em = orm.em.fork()
 	const existing = await req.user.entry(em, req.params.id)
+	// The stored relations, up front: the provider's diff and the response BOTH need a definite value.
+	await EntryRelation.loadFor(em, [existing])
 
 	// The client sends the full edited entry; the backend diffs as needed.
 	const body = req.body as Partial<Entry> & { sourceId?: string, scope?: RecurrenceScope, recurrenceId?: string }
+
+	// Tri-state like `recurrence`: an array sets, `null` clears, absent keeps. Validated BEFORE any
+	// integration write — a 400 must leave the external store untouched.
+	const relations = parseIncomingRelations(body.relations)
+	if (relations === INVALID_RELATIONS) {
+		return res.status(400).json({ error: 'Invalid relations' })
+	}
+	if (relations !== undefined) {
+		const relationsError = await assertRelationsValid(em, req.user, existing, relations)
+		if (relationsError) {
+			return res.status(400).json({ error: relationsError })
+		}
+	}
 
 	// `null` removes the repeat (collapse the series); an object sets it; absent (undefined) keeps it.
 	// Only a rule the request actually carries is validated — the stored one isn't this request's doing.
@@ -185,15 +230,19 @@ entriesRouter.put('/:id', async (req, res) => {
 		})
 		if (edited.allDay) {
 			const zone = dayZone(req, edited.timeZone)
-			edited.start = edited.start ? normalizeAllDay(edited.start, zone) as never : edited.start
-			edited.end = edited.end ? normalizeAllDay(edited.end, zone) as never : edited.end
+			// Only body-carried dates are viewer-zone midnights; fallbacks are already canonical.
+			edited.start = body.start && edited.start ? normalizeAllDay(edited.start, zone) as never : edited.start
+			edited.end = body.end && edited.end ? normalizeAllDay(edited.end, zone) as never : edited.end
 		}
 		// The occurrence identifier came from projected (viewer-zone) data — normalize it likewise.
 		const occurrenceId = existing.allDay
 			? normalizeAllDay(new Date(body.recurrenceId), dayZone(req, existing.timeZone))
 			: new Date(body.recurrenceId)
+		// Scoped occurrence edits are deliberately relation-SILENT (v1): relationships are
+		// series-level, and a detached/continuation entry starts with none of its own.
 		const result = await editOccurrence(em, currentIntegration, existing, occurrenceId, edited, body.scope)
 		await em.flush()
+		await attachRelations(em, [result])
 		syncEmitter.emit('updated', req.user.id)
 		logger.debug(`Edited occurrence of series ${existing.id} (scope '${body.scope}')`)
 		return res.json(projectedForViewer(result, viewerZone(req)))
@@ -214,13 +263,19 @@ entriesRouter.put('/:id', async (req, res) => {
 		recurrence: incomingRecurrence,
 		// Like `recurrence`, tri-state on the wire: an array sets, `null` clears, absent keeps.
 		reminders: body.reminders === undefined ? existing.reminders : body.reminders,
+		// Stays tri-state INTO the provider (undefined = keep) — CalDAV diffs it, Dev ignores it.
+		relations,
 	})
 
-	// The client sent its own zone's midnights — re-encode them as the canonical dates.
+	// The client sent its own zone's midnights — re-encode them as the canonical dates. ONLY what
+	// the body actually carried: an absent field fell back to the STORED value above, which is
+	// already canonical — re-normalizing it in the viewer's zone would shift the entry a day for
+	// every viewer behind UTC (a partial body — a relations-only update, an occurrence-routed
+	// master edit — carries no dates at all).
 	if (incoming.allDay) {
 		const zone = dayZone(req, incoming.timeZone)
-		incoming.start = incoming.start ? normalizeAllDay(incoming.start, zone) as never : incoming.start
-		incoming.end = incoming.end ? normalizeAllDay(incoming.end, zone) as never : incoming.end
+		incoming.start = body.start && incoming.start ? normalizeAllDay(incoming.start, zone) as never : incoming.start
+		incoming.end = body.end && incoming.end ? normalizeAllDay(incoming.end, zone) as never : incoming.end
 	}
 
 	// Moving an entry between *sources* re-creates it at the target — providers update entries in
@@ -231,6 +286,17 @@ entriesRouter.put('/:id', async (req, res) => {
 	// duplicate — recoverable, unlike the loss a delete-first order risks.
 	if (currentSource.id !== targetSource.id) {
 		incoming.id = crypto.randomUUID() // the backend owns ids — the migrated copy is a new entry
+		// The uid is the entry's durable IDENTITY and survives the move (real calendar moves work the
+		// same way): its own outgoing links and every link pointing AT it stay resolvable. EXCEPT
+		// within one collection — an event↔task flip between the SIBLING sources of one CalDAV
+		// calendar (they share the URL): the old resource still exists while the copy is created
+		// (create-first is the safety ordering), and a second resource with the same UID in one
+		// collection is illegal (RFC 4791 §5.3.2.1) — carrying it would make the flip always fail.
+		// A sibling flip therefore mints a fresh identity, as every migration did before uids carried.
+		incoming.uid = currentSource.uri && currentSource.uri === targetSource.uri ? crypto.randomUUID() : existing.uid
+		// Relations ride along: the edit's own value, else the stored ones — the migrated copy must
+		// not silently shed its links (the old entry's rows cascade away with its deletion below).
+		incoming.relations = relations !== undefined ? relations : existing.relations ?? null
 		incoming.migrateTo(targetSource) // the entry's shape (type/status) follows the target
 		const created = await targetIntegration.createEntry(em, incoming)
 		try {
@@ -240,6 +306,7 @@ entriesRouter.put('/:id', async (req, res) => {
 			await em.flush().catch(() => void 0)
 			throw error
 		}
+		await EntryRelation.reconcile(em, created.id!, created.relations ?? null)
 		await em.flush()
 		syncEmitter.emit('updated', req.user.id)
 		logger.debug(`Migrated entry ${existing.id} → source ${targetSource.id} (new id ${created.id})`)
@@ -247,6 +314,13 @@ entriesRouter.put('/:id', async (req, res) => {
 	}
 
 	await targetIntegration.updateEntry(em, existing, incoming)
+	// Mirror the definite edit into the relation store, atomically with the entry's flush. The
+	// external write above happened first on purpose: its failure throws before anything commits
+	// locally; a failed flush AFTER it is healed by the next sync re-parsing the resource.
+	if (relations !== undefined) {
+		await EntryRelation.reconcile(em, existing.id!, relations)
+		existing.relations = relations
+	}
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
 	logger.debug(`Updated entry ${existing.id} "${incoming.heading}"`)
