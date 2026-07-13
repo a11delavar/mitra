@@ -7,18 +7,17 @@ import { type EntrySegmentComponent } from './EventSegment.js'
 import { EntryStore } from './EntryStore.js'
 
 /**
- * One drawable relation edge: which visual it wears and the GRID PLACEMENT that pins it — the same
- * minute-row/day-column tracks the chips themselves are placed on, so it lives in content space and
- * scrolls/zooms/re-lays-out with them natively. JS decides topology (which pairs, which orientation)
- * from data; pixels are entirely the grid's job — no measurement, no per-frame work.
+ * One drawable relation edge: which chips it spans (as anchor() references), which visual it wears,
+ * and the composed inset styles. JS decides topology (which pairs, which orientation) from data;
+ * pixels are entirely CSS anchor positioning's job — no measurement, no per-frame work.
  *
- * Deliberately NOT CSS anchor positioning: anchor() resolves the anchor's scrollport-relative
- * position and compensates for scroll assuming the positioned element does NOT scroll with the
- * content (the popover model, e.g. the entry editor). For an overlay INSIDE the scrolled grid that
- * compensation double-counts and the connector drifts by exactly the scroll delta — and re-parenting
- * outside the scroller fails the anchor-acceptability rule (the anchor must be a descendant of the
- * positioned element's containing block, or the containing block must be the ICB, which would paint
- * above the sticky lanes). Grid placement has none of these failure modes.
+ * The anchor() usage is only sound because of the CANVAS topology (see Days.ts): the connectors'
+ * containing block is a POSITIONED wrapper that co-scrolls with — and CONTAINS — the chips, so no
+ * scroll container sits between an anchor and the containing block. Anchored against the scroller
+ * itself instead, Chromium snapshots the anchor's scrollport-relative position and live-compensates
+ * for scroll as if the connector did NOT scroll with the content (the popover model — measured: used
+ * inset frozen at −3112.97px while the box drifted by exactly the scroll delta). And hoisting the
+ * layer outside fails anchor ACCEPTABILITY (anchors must be descendants of the containing block).
  */
 interface ConnectorEdge {
 	readonly key: string
@@ -50,14 +49,17 @@ const PATHS: Record<string, string> = {
 }
 
 /**
- * The relationship connectors of the week view: thin always-visible arrows between related entry
+ * The relationship connectors of a calendar view: thin always-visible arrows between related entry
  * chips — smooth S-curves with an arrowhead for dependencies (predecessor → dependent), sharp hairline
- * elbows for hierarchy (parent → subtask). The host is a grid item over the TIMED region sharing the
- * day tracks via subgrid and the chips' own 1440 fr minute rows; each connector is a grid item placed
- * by (minute, buffer-day-column) — data the renderer already has — with sub-column ports expressed as
- * span-fraction margins. Vertical geometry is thus EXACTLY the chips' (same tracks); horizontal ports
- * are column-derived (center/edges), which matches the chips except when overlap-clustering narrows
- * them — an accepted approximation.
+ * elbows for hierarchy (parent → subtask). Each connector is an absolutely-positioned box whose insets
+ * reference the two chips' existing `anchor-name`s (published by EventSegment for its editor popover),
+ * so its geometry — including overlap-narrowed chip widths and CSS-auto-packed lanes JS never sees —
+ * tracks the REAL chip boxes with zero measurement. VIEW-AGNOSTIC by design: the host mounts as the
+ * LAST child of a view's CANVAS (a positioned wrapper that co-scrolls with and contains the chips —
+ * see Days.ts; the tree-order rule requires anchors to precede the positioned elements) and is itself
+ * `display: contents`, so the connectors' containing block IS the canvas. Any view — the upcoming
+ * timeline/Gantt, month, the all-day lane — gains connectors by providing that one wrapper and its
+ * own orientation strategy.
  *
  * Topology comes from data only: visible entries' `relations` (both families, whichever side stored
  * the pointer — see shared/Relation.ts edge helpers), deduplicated per (kind, uid-pair) with the
@@ -67,10 +69,10 @@ const PATHS: Record<string, string> = {
  * above this layer).
  *
  * Hovering an entry chip emphasizes its connectors (stronger ink, lifted above chips); at rest they
- * sit ABOVE the day surface but BELOW every chip. The host must NOT be positioned or z-indexed (it
- * would become a stacking context and trap the connectors' z-index away from the chips' — which is
- * also why `div.entries` must not be a container; see Day.ts): connectors are z 1 vs the chips' z 2,
- * with the host as the LAST child out-painting the z 1 hour lines by tree order.
+ * sit ABOVE the day surface but BELOW every chip. Neither the host nor the canvas may be z-indexed
+ * (a stacking context would trap the connectors' z-index away from the chips' — which is also why
+ * `div.entries` must not be a container; see Day.ts): connectors are z 1 vs the chips' z 2, with the
+ * canvas as the LAST z-1-bearing subtree out-painting the z 1 hour lines by tree order.
  */
 @component('mitra-entry-connections')
 export class EntryConnections extends Component {
@@ -204,56 +206,56 @@ export class EntryConnections extends Component {
 				if (!fromSeg || !toSeg || fromSeg === toSeg) {
 					continue
 				}
-				edges.push(EntryConnections.edge(kind, from, to, fromSeg, toSeg, columnByDay))
+				edges.push(EntryConnections.edge(kind, from, to, fromSeg, toSeg))
 			}
 		}
 		return edges
 	}
 
-	/** Composes the orientation class + the grid placement for one edge. Rows are the chips' own
-	 * minute lines (all days share one 1440-minute scale, so minutes compare across columns and the
-	 * vertical ports are EXACT); columns are buffer day tracks, with sub-column ports as fractions of
-	 * the spanned width (`--_span` columns — the day tracks are equal-width, so 100%/span is a column).
-	 * Reversed minute pairs are fine: grid swaps inverted lines, and the orientation class already
-	 * carries the direction for the ink. */
-	private static edge(kind: ConnectorEdge['kind'], from: Entry, to: Entry, fromSeg: EntrySegment, toSeg: EntrySegment, columnByDay: ReadonlyMap<number, number>): ConnectorEdge {
-		const fromColumn = columnByDay.get(fromSeg.dayValue!)!
-		const toColumn = columnByDay.get(toSeg.dayValue!)!
+	/** Composes the orientation class + the anchor()-referencing insets for one edge. The spanned box
+	 * loses which corner is which endpoint, so the classifier (data, not pixels: day column + minute)
+	 * decides which anchor edge feeds which inset — six orientations per kind. All days share one
+	 * 1440-minute vertical scale, so minutes compare across columns. */
+	private static edge(kind: ConnectorEdge['kind'], from: Entry, to: Entry, fromSeg: EntrySegment, toSeg: EntrySegment): ConnectorEdge {
+		const A = `--mitra-entry-segment-${fromSeg.id}`
+		const B = `--mitra-entry-segment-${toSeg.id}`
+		const dayDelta = toSeg.dayValue! - fromSeg.dayValue!
 		const head = 'var(--mitra-connection-head)'
 		// Below when the target starts after the source ends; on vertical overlap, by midpoints.
 		const down = toSeg.startMinute >= fromSeg.endMinute
 			|| (toSeg.endMinute > fromSeg.startMinute && toSeg.startMinute + toSeg.endMinute >= fromSeg.startMinute + fromSeg.endMinute)
+		const vertical = down
+			? `top: anchor(${A} bottom); bottom: anchor(${B} top);`
+			: `top: anchor(${B} bottom); bottom: anchor(${A} top);`
 		let orientation: string
 		let style: string
-		if (fromColumn === toColumn) {
-			orientation = down ? 'down' : 'up'
-			const rows = down ? `${fromSeg.endMinute} / ${toSeg.startMinute}` : `${toSeg.endMinute} / ${fromSeg.startMinute}`
-			style = kind === 'dependency'
-				// A fixed-width bow just left of the chips, the arrowhead hanging in its trailing gap.
-				? `grid-row: ${rows}; grid-column: ${fromColumn + 1}; justify-self: start; inline-size: 0.75rem; margin-inline-start: calc(-0.75rem - ${head});`
-				// The tree tick: a hairline dropping through the gap between parent and subtask.
-				: `grid-row: ${rows}; grid-column: ${fromColumn + 1}; justify-self: start; inline-size: 2px; margin-inline-start: 0.5rem;`
-		} else {
-			const rightward = toColumn > fromColumn
-			orientation = `${rightward ? 'right' : 'left'}-${down ? 'down' : 'up'}`
-			const columns = rightward ? `${fromColumn + 1} / ${toColumn + 2}` : `${toColumn + 1} / ${fromColumn + 2}`
-			const span = Math.abs(toColumn - fromColumn) + 1
-			if (kind === 'dependency') {
-				const rows = down ? `${fromSeg.endMinute} / ${toSeg.startMinute}` : `${toSeg.endMinute} / ${fromSeg.startMinute}`
-				// From the source column's CENTER to the target chip's near edge, one head short.
-				const margins = rightward
-					? `margin-inline-start: calc(100% / (2 * var(--_span))); margin-inline-end: calc(100% / var(--_span) + ${head});`
-					: `margin-inline-end: calc(100% / (2 * var(--_span))); margin-inline-start: calc(100% / var(--_span) + ${head});`
-				style = `grid-row: ${rows}; grid-column: ${columns}; --_span: ${span}; ${margins}`
+		if (kind === 'dependency') {
+			if (dayDelta === 0) {
+				// Same column: a fixed-width bow beside the chips, the arrowhead hanging in its gap.
+				orientation = down ? 'down' : 'up'
+				style = `${vertical} left: calc(anchor(${B} left) - 0.75rem - ${head}); inline-size: 0.75rem;`
 			} else {
-				// The elbow: drop from just inside the parent's leading edge to the subtask's mid-height,
-				// then across into its near edge.
-				const toMid = Math.round((toSeg.startMinute + toSeg.endMinute) / 2)
-				const rows = down ? `${fromSeg.endMinute} / ${toMid}` : `${toMid} / ${fromSeg.startMinute}`
-				const margins = rightward
-					? 'margin-inline-start: 0.5rem; margin-inline-end: calc(100% / var(--_span) + 2px);'
-					: 'margin-inline-end: calc(100% / var(--_span) - 0.5rem); margin-inline-start: calc(100% / var(--_span) + 2px);'
-				style = `grid-row: ${rows}; grid-column: ${columns}; --_span: ${span}; ${margins}`
+				orientation = `${dayDelta > 0 ? 'right' : 'left'}-${down ? 'down' : 'up'}`
+				// From the source chip's horizontal CENTER to the target chip's near edge, one head short.
+				style = dayDelta > 0
+					? `${vertical} left: anchor(${A} 50%); right: calc(anchor(${B} left) + ${head});`
+					: `${vertical} right: anchor(${A} 50%); left: calc(anchor(${B} right) + ${head});`
+			}
+		} else {
+			// The elbow: drop from just inside the parent's leading edge to the subtask's mid-height,
+			// then across into its near edge — the Notion tree line, unrolled.
+			const drop = `calc(anchor(${A} left) + 0.5rem)`
+			if (dayDelta === 0) {
+				orientation = down ? 'down' : 'up'
+				style = `${vertical} left: calc(${drop} - 1px); inline-size: 2px;`
+			} else {
+				orientation = `${dayDelta > 0 ? 'right' : 'left'}-${down ? 'down' : 'up'}`
+				const verticalToMid = down
+					? `top: anchor(${A} bottom); bottom: anchor(${B} 50%);`
+					: `top: anchor(${B} 50%); bottom: anchor(${A} top);`
+				style = dayDelta > 0
+					? `${verticalToMid} left: ${drop}; right: calc(anchor(${B} left) + 2px);`
+					: `${verticalToMid} right: calc(anchor(${A} left) - 0.5rem); left: calc(anchor(${B} right) + 2px);`
 			}
 		}
 		return { key: `${kind}:${fromSeg.id}:${toSeg.id}`, kind, orientation, fromEntryId: from.id!, toEntryId: to.id!, style }
@@ -262,17 +264,11 @@ export class EntryConnections extends Component {
 	static override get styles() {
 		return css`
 			mitra-entry-connections {
-				/* The timed region, on the SAME tracks as the chips: the day columns via subgrid, the
-				   1440 fr minute rows (see the .axis rule in Days.ts for why fr). Content space — it
-				   scrolls, zooms and re-lays-out with the chips by construction. Deliberately NOT
-				   positioned/z-indexed: a stacking context here would trap the connectors' z-index
-				   away from the chips' (z 2). */
-				grid-row: 3;
-				grid-column: calc(-1 * var(--_days-length) - 1) / -1;
-				display: grid;
-				grid-template-rows: repeat(1440, minmax(0, 1fr));
-				grid-template-columns: subgrid;
-				pointer-events: none;
+				/* Boxless: the connectors are absolutely positioned children whose containing block is
+				   the view's CANVAS (the positioned, co-scrolling wrapper around the chips — Days.ts),
+				   which is what makes their anchor() references track the real chip boxes with no
+				   scroll compensation in play. */
+				display: contents;
 
 				/* The connector ink: neutral on purpose — endpoints can wear different colors, and the
 				   lines must whisper ("noticed only if you look; once seen, cannot unsee"). A future
@@ -283,13 +279,11 @@ export class EntryConnections extends Component {
 				--mitra-connection-head: 5px;
 
 				> .connection {
-					position: relative;
+					position: absolute;
 					pointer-events: none;
-					min-block-size: 0;
-					min-inline-size: 0;
-					/* Above the day surface and hour lines (z 1 too, but this layer is the LAST child),
-					   below every chip (z 2) — the "threads behind the fabric" reading. Emphasis lifts
-					   above the chips. */
+					/* Above the day surface and hour lines (z 1 too, but the canvas subtree paints
+					   later), below every chip (z 2) — the "threads behind the fabric" reading.
+					   Emphasis lifts above the chips. */
 					z-index: 1;
 					--_ink: var(--mitra-connection-ink);
 					--_stroke: 1.5;
