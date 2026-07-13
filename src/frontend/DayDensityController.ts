@@ -48,6 +48,11 @@ export class DayDensityController extends DensityController {
 		this.resizeObserver.disconnect()
 	}
 
+	/** Below this, a measured `available` is treated as a transient degenerate reading and ignored —
+	 * a viewport briefly shrunk to ≤ the timed row's offset (e.g. mid-resize) would otherwise clamp the
+	 * grid to a 1px row that then sticks until the next host resize or reload. */
+	private static readonly minAvailable = 100
+
 	/** The height a whole day fits into: the viewport minus everything laid out above the timed row —
 	 * measured from the row's actual position rather than by summing the heights of what's above it. */
 	private measure() {
@@ -57,7 +62,13 @@ export class DayDensityController extends DensityController {
 			return
 		}
 		const top = row.getBoundingClientRect().top - this.host.getBoundingClientRect().top + this.host.scrollTop
-		this.available = Math.max(1, this.host.clientHeight - top)
+		const available = this.host.clientHeight - top
+		// A transiently tiny viewport yields a degenerate (or negative) height — keep the last good value
+		// so the grid doesn't collapse; a real resize back up remeasures on the next ResizeObserver tick.
+		if (available < DayDensityController.minAvailable) {
+			return
+		}
+		this.available = available
 	}
 
 	/** The content offset (px from the scroll top) at which the timed row begins = everything above it. */
