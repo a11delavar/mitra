@@ -77,7 +77,7 @@ entriesRouter.get('/search', async (req, res) => {
 	}
 
 	const em = orm.em.fork()
-	const visibleSources = await em.find(Source, { enabled: true, hidden: false })
+	const visibleSources = await req.user.sources(em, { enabled: true, hidden: false })
 
 	const term = `%${q.trim()}%`
 	const entries = await em.find(Entry, {

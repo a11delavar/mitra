@@ -15,7 +15,9 @@ await esbuild.build({
 	format: 'esm',
 	// Prefer each dependency's ESM build so default-import interop matches what the app's bundler sees.
 	mainFields: ['module', 'main'],
-	external: ['tsdav'],
+	// `better-sqlite3` is a native module (it dynamically `require`s `fs`/bindings) and can't be
+	// bundled — kept external, as the app build does, so tests may spin up a real in-memory ORM.
+	external: ['tsdav', 'better-sqlite3'],
 	sourcemap: 'inline',
 	inject,
 })
