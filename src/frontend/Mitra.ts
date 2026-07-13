@@ -6,6 +6,7 @@ import { Months } from './Months.js'
 import { Days } from './Days.js'
 import { Day } from './Day.js'
 import { EntrySegmentComponent } from './EventSegment.js'
+import { EntryConnections } from './EntryConnections.js'
 import { PageCalendar } from './PageCalendar.js'
 import { CommandPalette } from './CommandPalette.js'
 import { Sidebar } from './Sidebar.js'
@@ -101,6 +102,7 @@ export class Mitra extends Application {
 			${Days.styles}
 			${Day.styles}
 			${EntrySegmentComponent.styles}
+			${EntryConnections.styles}
 			${EntryDetailsComponent.styles}
 			${EntryDetailsWhen.styles}
 			${DialogIntegration.styles}

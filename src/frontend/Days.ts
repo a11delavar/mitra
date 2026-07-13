@@ -3,6 +3,7 @@ import { DateTime } from '@3mo/date-time'
 import { observeResize } from '@3mo/resize-observer'
 import { type Entry, type UserTimeZone } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
+import { EntryConnections } from './EntryConnections.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { EntryDragController } from './EntryDragController.js'
 import { DayDensityController } from './DayDensityController.js'
@@ -361,6 +362,15 @@ export class Days extends Component {
 			${this.timeTemplate}
 			${this.allDayTemplate}
 			${this.dateTemplate}
+			${this.connectionsTemplate}
+		`
+	}
+
+	private get connectionsTemplate() {
+		// LAST child on purpose: same z-index (1) as the hour lines, so tree order paints the
+		// connectors above them — while the chips (z 2) stay above the connectors (see EntryConnections).
+		return !EntryConnections.isEnabledFor('week') ? html.nothing : html`
+			<mitra-entry-connections .entries=${this.entries} .range=${this.dates.window}></mitra-entry-connections>
 		`
 	}
 

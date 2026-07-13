@@ -120,6 +120,6 @@ describe('Relation', () => {
 	})
 
 	it('the UI-authorable subset stays canonical-direction-only', () => {
-		assert.deepEqual([...AUTHORABLE_RELATION_TYPES], [RelationType.Parent, RelationType.FinishToStart])
+		assert.deepEqual([...AUTHORABLE_RELATION_TYPES], [RelationType.FinishToStart, RelationType.Parent])
 	})
 })

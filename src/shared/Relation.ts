@@ -30,12 +30,13 @@ export const RelationType = {
 export type RelationType = typeof RelationType[keyof typeof RelationType]
 
 /**
- * The relation types the editor OFFERS when authoring: "Subtask of" (hierarchy) and "After"
- * (dependency). Everything else — SIBLING, the exotic temporal variants, `X-` extensions, unknown
- * foreign values — still round-trips losslessly ({@link Relation.type} is an open string) and
- * renders read-only; offering another type later is extending this list plus its labels.
+ * The relation types the editor OFFERS when authoring, in UI order: "Blocked by" (dependency,
+ * the default) and "Subtask of" (hierarchy). Everything else — SIBLING, the exotic temporal
+ * variants, `X-` extensions, unknown foreign values — still round-trips losslessly
+ * ({@link Relation.type} is an open string) and renders read-only; offering another type later
+ * is extending this list plus its labels.
  */
-export const AUTHORABLE_RELATION_TYPES: ReadonlyArray<string> = [RelationType.Parent, RelationType.FinishToStart]
+export const AUTHORABLE_RELATION_TYPES: ReadonlyArray<string> = [RelationType.FinishToStart, RelationType.Parent]
 
 /**
  * One outgoing relationship of an entry: `this entry —type→ targetUid`. A pure value object —

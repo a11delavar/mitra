@@ -125,7 +125,11 @@ export class Day extends Component {
 					grid-template-rows: repeat(1440, minmax(0, 1fr));
 					grid-template-columns: 1fr;
 					position: relative;
-					container-type: inline-size;
+					/* Deliberately NOT a container/stacking context: the chips' z-index must resolve in
+					   the view's own context so the connections layer (z 1, see EntryConnections) can sit
+					   between the day surface and the chips (z 2). Every @container query the chips use
+					   is height-based and answered by the chip's own size container — an inline-size
+					   container here served nothing and trapped the z-order. */
 					padding-inline: 1px;
 
 					mitra-entry-segment {
