@@ -1,7 +1,8 @@
 import { Component, component, html, property, css, type PropertyValues, repeat, event, ifDefined, styleMap } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { type Entry } from 'shared'
-import { EntrySegments } from './EntrySegments.js'
+import { EntrySegments, type MonthWeek } from './EntrySegments.js'
+import { EntryConnections } from './EntryConnections.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { EntryDragController } from './EntryDragController.js'
 
@@ -80,9 +81,6 @@ export class Weeks extends Component {
 				}
 
 				.days {
-					display: grid;
-					grid-template-columns: repeat(7, 1fr);
-					gap: 1px;
 					flex: 1;
 					min-height: 0;
 					overflow-y: auto;
@@ -91,6 +89,18 @@ export class Weeks extends Component {
 					&::-webkit-scrollbar {
 						display: none;
 					}
+				}
+
+				/* The month grid, wrapped in the POSITIONED, co-scrolling canvas that makes the bars
+				   anchorable by the connections layer (the same pattern as the week view's canvas —
+				   see Days.ts; the scroller itself must NOT be the containing block). Not a stacking
+				   context: the bars' z 2 and the connectors' z 1 interleave in the view's context. */
+				.canvas {
+					display: grid;
+					grid-template-columns: repeat(7, 1fr);
+					gap: 1px;
+					min-block-size: 100%;
+					position: relative;
 				}
 
 				.week {
@@ -163,19 +173,35 @@ export class Weeks extends Component {
 		const firstWeek = Math.floor(offset / daysInWeek)
 		const lastWeek = windowDays.length ? Math.floor((offset + windowDays.length - 1) / daysInWeek) : firstWeek
 
+		// Week layouts computed once per render: the bars feed both the rows and the connections layer
+		// (which must see exactly the RENDERED bars — "+N more" overflow excluded, so no edge can
+		// reference an anchor that doesn't exist).
+		const rendered = weeks.slice(firstWeek, lastWeek + 1).map((week, index) => ({
+			week,
+			row: firstWeek + index,
+			...this.segments.monthWeek(week, Weeks.MAX_SLOTS) as MonthWeek,
+		}))
+
 		return html`
 			<div class="headers">
 				${this.weekDays.map(weekday => html`<div class="weekday">${weekday}</div>`)}
 			</div>
-			<div class="days" @scroll=${this.handleScroll} style="grid-auto-rows: minmax(8.5rem, 1fr); --max-slots: ${Weeks.MAX_SLOTS};">
-				${repeat(weeks.slice(firstWeek, lastWeek + 1), week => week[0]!.dayStart.toISOString(), (week, index) => this.weekTemplate(week, today, firstWeek + index))}
-				${!weeks.length ? html.nothing : html`<div style="grid-row: ${weeks.length};"></div>`}
+			<div class="days" @scroll=${this.handleScroll}>
+				<div class="canvas" style="grid-auto-rows: minmax(8.5rem, 1fr); --max-slots: ${Weeks.MAX_SLOTS};">
+					${repeat(rendered, item => item.week[0]!.dayStart.toISOString(), item => this.weekTemplate(item, today))}
+					${!weeks.length ? html.nothing : html`<div style="grid-row: ${weeks.length};"></div>`}
+					${!EntryConnections.isEnabledFor('month') ? html.nothing : html`
+						<mitra-entry-connections
+							.segments=${rendered.flatMap(item => item.bars.map(bar => bar.segment))}
+							.verticalRank=${new Map(rendered.flatMap(item => item.bars.map(bar => [bar.segment, item.row * 100 + bar.slot] as const)))}
+						></mitra-entry-connections>
+					`}
+				</div>
 			</div>
 		`
 	}
 
-	private weekTemplate(week: Array<DateTime>, today: DateTime, row: number) {
-		const { bars, hiddenByColumn } = this.segments.monthWeek(week, Weeks.MAX_SLOTS)
+	private weekTemplate({ week, row, bars, hiddenByColumn }: { week: Array<DateTime>, row: number, bars: MonthWeek['bars'], hiddenByColumn: MonthWeek['hiddenByColumn'] }, today: DateTime) {
 		return html`
 			<div class="week" style="grid-row: ${row + 1};">
 				${week.map((day, col) => html`
