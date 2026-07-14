@@ -536,6 +536,9 @@ export class Days extends Component {
 					position: sticky;
 					top: var(--header-height, 2.75rem);
 					z-index: 90;
+					/* The lane's bars sit at z 1 (EventSegment's overlap base) — its connectors go
+					   BELOW them (they'd otherwise out-paint the bars by tree order). */
+					--mitra-connection-z: 0;
 					display: grid;
 					grid-template-columns: subgrid;
 					/* One 1.375rem track per occupied lane plus a trailing empty one — the drag-to-create
@@ -784,7 +787,7 @@ export class Days extends Component {
 		// order — and same z-index (1) as the hour lines, so tree order paints the connectors above
 		// them while the chips (z 2) stay above the connectors (see EntryConnections).
 		return !EntryConnections.isEnabledFor('week') ? html.nothing : html`
-			<mitra-entry-connections .entries=${this.entries} .range=${this.dates.window}></mitra-entry-connections>
+			<mitra-entry-connections .segments=${this.dates.window.days.flatMap(day => this.segments.timedOn(day))}></mitra-entry-connections>
 		`
 	}
 
@@ -819,26 +822,39 @@ export class Days extends Component {
 		const lastValue = last.dayStart.valueOf()
 		const columnByDay = new Map(days.map((day, index) => [day.dayStart.valueOf(), offset + index]))
 		const columnOf = (dayValue?: number) => columnByDay.get(dayValue ?? -1) ?? 0
+		const bars = runs.map(segment => {
+			const startColumn = columnOf(segment.dayValue)
+			const clippedRight = segment.runEnd.dayValue! > lastValue
+			const endColumn = clippedRight ? offset + days.length - 1 : columnOf(segment.runEnd.dayValue)
+			return { segment, startColumn, endColumn, clippedRight }
+		})
 		return html`
 			${/* data-chrome (here and below): the grid's frame — kept above the entries a view transition
 			   animates, see calendarTransition.ts. */''}
 			<div class="all-day-corner" data-chrome></div>
 			<div class="all-day">
 				${days.map((_, index) => html`<div class="day" style="grid-column: ${offset + index + 1};"></div>`)}
-				${repeat(runs, segment => segment.entry, segment => {
-					const startColumn = columnOf(segment.dayValue)
-					const clippedRight = segment.runEnd.dayValue! > lastValue
-					const endColumn = clippedRight ? offset + days.length - 1 : columnOf(segment.runEnd.dayValue)
-					return html`
-						<mitra-entry-segment
-							style=${styleMap({ gridColumn: `${startColumn + 1} / span ${endColumn - startColumn + 1}`, gridRow: `${laneOf(segment.entry) + 1}` })}
-							resize="inline"
-							?has-previous=${segment.hasPrevious}
-							?has-next=${clippedRight}
-							.segment=${segment}
-						></mitra-entry-segment>
-					`
-				})}
+				${repeat(bars, bar => bar.segment.entry, bar => html`
+					<mitra-entry-segment
+						style=${styleMap({ gridColumn: `${bar.startColumn + 1} / span ${bar.endColumn - bar.startColumn + 1}`, gridRow: `${laneOf(bar.segment.entry) + 1}` })}
+						resize="inline"
+						?has-previous=${bar.segment.hasPrevious}
+						?has-next=${bar.clippedRight}
+						.segment=${bar.segment}
+					></mitra-entry-segment>
+				`)}
+				${/* The lane is position: sticky — already a positioned, co-moving canvas: when it
+				    sticks, the connectors translate WITH the bars, so within-lane edges stay glued.
+				    Cross-realm (timed ↔ all-day) edges don't exist by construction: each layer only
+				    sees its own canvas's chips. The ranks are the bars' ACTUAL lanes (the same
+				    `laneOf` the grid rows are placed from) — the lanes are assigned here now, so
+				    there is nothing left for laneRanks' first-fit to simulate. */ ''}
+				${!EntryConnections.isEnabledFor('week') ? html.nothing : html`
+					<mitra-entry-connections
+						.segments=${runs}
+						.verticalRank=${new Map(runs.map(segment => [segment, laneOf(segment.entry)]))}
+					></mitra-entry-connections>
+				`}
 			</div>
 		`
 	}
