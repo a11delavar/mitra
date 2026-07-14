@@ -2,7 +2,7 @@ import { entity, primaryKey, property, manyToOne, oneToMany, unique, Collection 
 import { User } from './User.js'
 import { Source } from './Source.js'
 import { Entry } from './Entry.js'
-import type { EntityManager } from '@mikro-orm/core'
+import { FlushMode, type EntityManager } from '@mikro-orm/core'
 
 @entity({ abstract: true, discriminatorColumn: 'type' })
 @unique({ properties: ['userId', 'uri'] })
@@ -24,6 +24,20 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * {@link Synchronizer} paces each integration accordingly (and backs off further on failures).
 	 */
 	get syncInterval() { return 0 }
+
+	/**
+	 * What the provider's data model can represent. The editor hides the fields a provider can't
+	 * hold (see Notion) — an input whose value silently vanishes on save is a lie, and mapping it
+	 * anyway would approximate semantics the provider doesn't have. Everything defaults to true;
+	 * `cancelledStatus` refers to the fourth task status (to-do/doing/done are universal), and
+	 * `timeZone` to authoring an entry in a named IANA zone (Notion's date property can't hold one —
+	 * its API normalizes any time_zone to a fixed offset and returns time_zone:null).
+	 * A getter on the class (not serialized state): the frontend's API reviver rehydrates
+	 * integrations into these very classes, so both sides read the same declaration.
+	 */
+	get capabilities() {
+		return { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, timeZone: true }
+	}
 
 	/**
 	 * Fetches the account's remote sources (e.g. calendars, task lists) as transient
@@ -73,9 +87,28 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * It mutates the entity manager but does **not** flush, so the caller decides whether the
 	 * reconciliation is committed: the editor calls this to preview/refresh the list and simply
 	 * discards the (forked) manager, while {@link sync} and {@link applyAndSync} flush to persist.
+	 *
+	 * `checkDuplicate` guards against connecting an already-connected account — only meaningful when
+	 * ADDING (or previewing an add), so {@link applyAndSync} passes it; the background {@link sync}
+	 * does not, keeping the extra query off the every-cycle hot path (an already-persisted
+	 * integration can never find a duplicate of itself anyway — the DB `(userId, uri)` unique index
+	 * already holds).
 	 */
-	async getSources(em: EntityManager): Promise<Array<Source>> {
+	async getSources(em: EntityManager, options?: { checkDuplicate?: boolean }): Promise<Array<Source>> {
 		const remote = await this.fetchSources()
+
+		// Providers that derive their identity during discovery (Notion's bot user, Apple's fixed
+		// server) can collide with an already-connected account only NOW, when `uri` is known.
+		// Failing here turns what would otherwise be a raw UNIQUE-constraint crash into an
+		// actionable message. The deferred flush mode matters: this very entity may be a pending
+		// insert, and the default smart flush would slam it into the unique index by running this query.
+		if (options?.checkDuplicate && this.uri) {
+			const duplicate = await em.findOne(Integration, { userId: this.userId, uri: this.uri, id: { $ne: this.id } }, { flushMode: FlushMode.COMMIT })
+			if (duplicate) {
+				throw new Error('This account is already connected — edit the existing integration instead of adding it again')
+			}
+		}
+
 		const existing = await em.find(Source, { integrationId: this.id })
 		const existingByKey = new Map(existing.map(source => [source.key, source]))
 		const remoteKeys = new Set(remote.map(source => source.key))
@@ -146,7 +179,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 */
 	async applyAndSync(em: EntityManager, incoming: this): Promise<void> {
 		this.merge(incoming)
-		const sources = await this.getSources(em)
+		const sources = await this.getSources(em, { checkDuplicate: true }) // checkDuplicate: reject re-connecting an already-connected account
 
 		// `incoming` is a client DTO, not a rehydrated entity (`@a11d/api` structure-clones the body, so
 		// its sources are plain objects with no `key` getter) — key them via the static, not `source.key`.

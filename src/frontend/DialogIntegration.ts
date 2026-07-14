@@ -1,10 +1,10 @@
 import { component, html, css, state, Binder } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { Task, TaskStatus } from '@lit/task'
-import { CalDAV, Source, SourceType, type Integration } from 'shared'
+import { CalDAV, Notion, Source, SourceType, type Integration } from 'shared'
 import { discoverSources, createIntegration, updateIntegration, getIntegrations, fetchIntegrations, fetchGoogleAvailability, connectGoogle } from './Api.js'
 
-type Provider = 'caldav' | 'google' | 'apple'
+type Provider = 'caldav' | 'google' | 'apple' | 'notion'
 
 @component('mitra-dialog-integration')
 export class DialogIntegration extends DialogComponent<{ readonly id: string, readonly preselectSources?: boolean }, Integration> {
@@ -20,11 +20,28 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 		args: () => [this.entity] as const,
 		task: async ([entity]) => {
 			const sources = await discoverSources(entity)
+			// The provider may have been switched while this discovery was in flight — a stale result
+			// must not land on the now-different entity (it would show one provider's sources under
+			// another's panel). `entity` is the one this run started for; bail if it's been replaced.
+			if (this.entity !== entity) {
+				return this.entity.sources
+			}
 			// A fresh add pre-selects everything found — the common case is "import my account", so
 			// unticking is the exception, not ticking every box. An edit (or its Refresh) keeps the
-			// persisted activation state instead.
+			// persisted activation state instead. Notion is the deliberate exception: its sources are
+			// VIEWS, and a database's views mostly overlap (All / Board / This week show the same
+			// tasks), so ticking them all would render every task once per view — pre-select one view
+			// per database and let overlaps be an explicit choice. Keyed on the source URI, not the
+			// dialog's current provider, so it's correct regardless of a concurrent provider switch.
 			if (!this.isEdit) {
-				sources.forEach(source => source.enabled = true)
+				const seenDataSources = new Set<string>()
+				for (const source of sources) {
+					const dataSourceId = source.uri?.startsWith(Notion.uriPrefix) ? Notion.idsOf(source).dataSourceId : undefined
+					source.enabled = !dataSourceId || !seenDataSources.has(dataSourceId)
+					if (dataSourceId) {
+						seenDataSources.add(dataSourceId)
+					}
+				}
 			}
 			return this.entity.sources = sources as any
 		},
@@ -40,6 +57,16 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 	protected override createRenderRoot() { return this }
 
 	private get isEdit() { return !!this.parameters.id }
+
+	/** Switch the add panel to another provider. A fresh entity of the matching shape comes with it,
+	 * so sources discovered for the previous provider don't linger (and can't be saved by mistake) —
+	 * the panels bind different credential keyPaths, and each provider's `type` must be its own. */
+	private switchProvider(provider: Provider) {
+		this.provider = provider
+		this.entity = provider === 'notion'
+			? new Notion({ credentials: { username: '', token: '' }, sources: [] as any })
+			: new CalDAV({ uri: '', credentials: { username: '', password: '' }, sources: [] as any })
+	}
 
 	protected override connected() {
 		if (this.isEdit) {
@@ -59,7 +86,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 				if (this.parameters.preselectSources) {
 					[...this.entity.sources].forEach(source => source.enabled = true)
 				}
-				this.provider = integration.type === 'google' ? 'google' : integration.type === 'apple' ? 'apple' : 'caldav'
+				this.provider = (['google', 'apple', 'notion'] as const).find(provider => provider === integration.type) ?? 'caldav'
 			}
 		}
 	}
@@ -131,6 +158,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 		{ value: 'caldav', label: 'CalDAV' },
 		{ value: 'google', label: 'Google Calendar' },
 		{ value: 'apple', label: 'Apple Calendar' },
+		{ value: 'notion', label: 'Notion' },
 	]
 
 	protected override get template() {
@@ -142,7 +170,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 					${this.isEdit ? html.nothing : html`
 						<label>
 							${t('Provider')}
-							<select @change=${(e: Event) => this.provider = (e.target as HTMLSelectElement).value as Provider}>
+							<select @change=${(e: Event) => this.switchProvider((e.target as HTMLSelectElement).value as Provider)}>
 								${DialogIntegration.providers.map(provider => html`
 									<option value=${provider.value} ?selected=${this.provider === provider.value}>${provider.label}</option>
 								`)}
@@ -150,7 +178,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 						</label>
 					`}
 
-					${this.provider === 'google' ? this.googleTemplate : this.provider === 'apple' ? this.appleTemplate : this.caldavTemplate}
+					${this.provider === 'google' ? this.googleTemplate : this.provider === 'apple' ? this.appleTemplate : this.provider === 'notion' ? this.notionTemplate : this.caldavTemplate}
 
 					${!this.entity.sources.length ? html.nothing : html`
 						<div class="sources">
@@ -225,14 +253,57 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 		})
 	}
 
+	/** What Connect needs before it can try: the fields the provider's discovery authenticates
+	 * with. An edit may leave secrets blank (the server keeps the stored ones). */
+	private get connectDisabled(): boolean {
+		switch (this.provider) {
+			case 'notion': return !this.entity.credentials.token && !this.isEdit
+			case 'apple': return !this.entity.credentials.username
+			default: return !this.entity.uri || !this.entity.credentials.username
+		}
+	}
+
+	/** Add: paste an internal-connection / personal-access token (no deployment config, unlike
+	 * Google's OAuth). Edit: the workspace label is discovery-derived and read-only; a re-pasted
+	 * token rotates the grant, a blank one keeps the stored secret. */
+	private get notionTemplate() {
+		const { bind } = this.binder
+		return html`
+			${this.isEdit ? html`
+				<label>
+					${t('Workspace')}
+					<input readonly .value=${this.entity.credentials.username ?? ''} autocomplete="off">
+				</label>
+			` : html`
+				<p class="hint">${t('Notion.TokenHint')}</p>
+			`}
+			<label>
+				${t('Integration Token')}
+				<input type="password" ${bind({ keyPath: 'credentials.token', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : 'ntn_…'} autocomplete="off">
+			</label>
+			${this.fetchSourcesTemplate}
+		`
+	}
+
+	/** The Connect/Refresh control. Rendered in both the INITIAL and COMPLETE task states (and after an
+	 * error) so discovery is always re-runnable — in particular after a provider switch, which replaces
+	 * the entity but leaves the task's last status COMPLETE. */
+	private get connectButton() {
+		return html`
+			<button class="connect" @click=${() => { this.entity.type = this.provider; this.fetchSources.run() }} ?disabled=${this.connectDisabled}>
+				${this.entity.sources.length ? t('Refresh') : t('Connect')}
+			</button>
+		`
+	}
+
 	private get fetchSourcesTemplate() {
 		return this.fetchSources.render({
-			initial: () => html`
-				<button class="connect" @click=${() => { this.entity.type = this.provider; this.fetchSources.run() }} ?disabled=${(this.provider !== 'apple' && !this.entity.uri) || !this.entity.credentials.username}>
-					${this.entity.sources.length ? t('Refresh') : t('Connect')}
-				</button>
+			initial: () => this.connectButton,
+			complete: () => this.connectButton,
+			error: (e: unknown) => html`
+				${this.connectButton}
+				<p class="error">${(e as Error).message}</p>
 			`,
-			error: (e: unknown) => html`<p class="error">${(e as Error).message}</p>`,
 			pending: () => html`<button class="connect" disabled>${t('Connecting…')}</button>`,
 		})
 	}

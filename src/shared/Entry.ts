@@ -20,6 +20,12 @@ export enum TaskStatus {
 export interface EntryData {
 	raw?: string
 	etag?: string
+	/** The entry's counterpart at the provider as a user-facing link (e.g. a Notion page URL). */
+	url?: string
+	/** When mitra last WROTE this entry to its provider, in local epoch-ms (our own clock, never the
+	 * provider's). Lets a sync spare a just-written row from deletion while the remote index catches
+	 * up, without differencing two independent clocks. Set by the Notion write paths; see Notion.ts. */
+	localWriteAt?: number
 }
 
 /** The granularity timed edits and gestures snap to, and the minimum duration an edit leaves behind.

@@ -1,7 +1,7 @@
 import { Controller, type Component } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { Entry, EntryType, SourceType, SNAP_MINUTES, DEFAULT_REMINDER_MINUTES, type Source } from 'shared'
-import { getPrimarySource } from './Api.js'
+import { getPrimarySource, getCapabilities } from './Api.js'
 import { EntryStore } from './EntryStore.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
 import { placeAllDay, placeTimed, resizePlacement, snapToGrid } from './entryPlacement.js'
@@ -175,9 +175,11 @@ export class EntryDragController extends Controller {
 			return new Entry({ ...base, start, end, allDay: true })
 		}
 		const { start, end } = placeTimed(anchor.date.dayStart.add({ minutes: anchor.minute }), current.date.dayStart.add({ minutes: current.minute }))
-		// A timed draft gets the default reminder; the gesture only ever adopts its span afterwards
-		// (see `apply`), so this seed survives to the editor and the save.
-		return new Entry({ ...base, start, end, allDay: false, reminders: [DEFAULT_REMINDER_MINUTES] })
+		// A timed draft gets the default reminder — unless the target provider can't hold reminders
+		// at all (e.g. Notion), where seeding one would just be silently dropped on save. The gesture
+		// only ever adopts its span afterwards (see `apply`), so this seed survives to the editor.
+		const reminders = getCapabilities(drag.source!.id).reminders ? [DEFAULT_REMINDER_MINUTES] : undefined
+		return new Entry({ ...base, start, end, allDay: false, reminders })
 	}
 
 	/** Translate the dragged entry by the gesture delta, preserving its duration — or, when a week move

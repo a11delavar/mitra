@@ -67,6 +67,8 @@
 	"Google account": "Google-Konto",
 	"Google.ConfigurationHint": "Google Kalender ist auf diesem Server nicht konfiguriert — setze die Umgebungsvariablen MITRA_GOOGLE_CLIENT_ID und MITRA_GOOGLE_CLIENT_SECRET (siehe README).",
 	"Google.ConsentHint": "Du wirst zu Google weitergeleitet, um den Zugriff auf deine Kalender zu gewähren, und wählst anschließend hier aus, welche davon angezeigt werden.",
+	"Integration Token": "Integrations-Token",
+	"Notion.TokenHint": "Erstelle eine Integration unter notion.so/profile/integrations, teile deine Aufgaben-Datenbanken mit ihr (··· → Verbindungen) und füge hier ihr Secret ein. Eine Datenbank braucht eine Status- und eine Datums-Eigenschaft — ihre Ansichten werden zu Quellen.",
 	"Hide calendar": "Kalender ausblenden",
 	"hours": "Stunden",
 	"Include time": "Uhrzeit einbeziehen",
@@ -143,6 +145,7 @@
 	"Week": "Woche",
 	"Week View": "Wochenansicht",
 	"weeks": "Wochen",
+	"Workspace": "Workspace",
 	"Year": "Jahr",
 	"Year View": "Jahresansicht"
 }

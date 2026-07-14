@@ -3,6 +3,8 @@ import { DateTime } from '@3mo/date-time'
 import { Temporal } from 'temporal-polyfill'
 import { FLOATING_TIME_ZONE, type Entry } from 'shared'
 import { type TimeZonePicker, longZoneName, systemZoneId, zoneCity, zoneNamePart } from './components/TimeZonePicker.js'
+import { getCapabilities } from './Api.js'
+import { EntryStore } from './EntryStore.js'
 
 /**
  * The date / time / all-day editor for an entry, split out of the (long) entry-details popover. It renders
@@ -26,6 +28,12 @@ export class EntryDetailsWhen extends Component {
 
 	/** Fired after a span edit mutates the entry in place; the host persists and refreshes. */
 	@event() readonly change!: EventDispatcher
+
+	// Subscribe to the store so a re-render fires when the entry mutates in place — notably a source
+	// migration, which changes `entry.sourceId` (and thus the provider's capabilities) on the SAME
+	// instance, so the incoming `@property` reference is unchanged and lit wouldn't otherwise re-render.
+	// That's what keeps the repeat field correctly shown/hidden after the entry moves to another source.
+	readonly store = new EntryStore(this)
 
 	// Reveals the end-date field for a single-day entry without changing its dates (see addEndDate); reset
 	// when a different entry is shown so it reflects that entry, not the previous one.
@@ -368,7 +376,7 @@ export class EntryDetailsWhen extends Component {
 						<input type="time" class="subtle" aria-label=${t('End time')} .value=${this.timeValue(this.entry.effectiveEnd)} @click=${this.openPicker} @change=${this.handleEndTimeChange}>
 					`}
 			</div>
-			${this.entry.allDay ? html.nothing : html`
+			${this.entry.allDay || !getCapabilities(this.entry.sourceId).timeZone ? html.nothing : html`
 				<mitra-icon icon="globe"></mitra-icon>
 				<div class="zone-row">
 					<button class="zone-label" ?disabled=${this.zoneReadonly}
@@ -386,13 +394,15 @@ export class EntryDetailsWhen extends Component {
 						></mitra-icon-button>
 						`}
 				</div>
-				`}
-			<mitra-time-zone-picker style="position-anchor: ${this.anchor}"
-				.selected=${this.entry.timeZone && this.entry.timeZone !== FLOATING_TIME_ZONE ? this.entry.timeZone : undefined}
-				@pick=${this.handleZonePick}
-			></mitra-time-zone-picker>
-			<mitra-icon icon="repeat"></mitra-icon>
-			<mitra-repeat-field .entry=${this.entry} @change=${() => this.commit()}></mitra-repeat-field>
+				<mitra-time-zone-picker style="position-anchor: ${this.anchor}"
+					.selected=${this.entry.timeZone && this.entry.timeZone !== FLOATING_TIME_ZONE ? this.entry.timeZone : undefined}
+					@pick=${this.handleZonePick}
+				></mitra-time-zone-picker>
+			`}
+			${!getCapabilities(this.entry.sourceId).recurrence ? html.nothing : html`
+				<mitra-icon icon="repeat"></mitra-icon>
+				<mitra-repeat-field .entry=${this.entry} @change=${() => this.commit()}></mitra-repeat-field>
+			`}
 		`
 	}
 }

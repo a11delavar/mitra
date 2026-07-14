@@ -4,7 +4,7 @@ import { Task } from '@lit/task'
 import { DateTime } from '@3mo/date-time'
 import { MediaQueryController } from '@3mo/media-query-observer'
 import { Entry, EntryType, SourceType, DEFAULT_REMINDER_MINUTES } from 'shared'
-import { fetchEvents, getPrimarySource } from './Api.js'
+import { fetchEvents, getPrimarySource, getCapabilities } from './Api.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
 import { EntryStore } from './EntryStore.js'
 import { CommandPalette } from './CommandPalette.js'
@@ -163,7 +163,8 @@ export class PageCalendar extends PageComponent {
 			start,
 			end: start.add({ hours: 1 }),
 			allDay: false,
-			reminders: [DEFAULT_REMINDER_MINUTES], // a timed draft — same default as a create gesture
+			// A timed draft — same default as a create gesture, same capability guard (see EntryDragController).
+			reminders: getCapabilities(source.id).reminders ? [DEFAULT_REMINDER_MINUTES] : undefined,
 		}))
 		EntryStore.openDraft()
 	}

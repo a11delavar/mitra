@@ -1,5 +1,7 @@
 import { Component, component, html, css, property, event } from '@a11d/lit'
 import { type Entry, EntryType, TaskStatus } from 'shared'
+import { getCapabilities } from '../Api.js'
+import { EntryStore } from '../EntryStore.js'
 
 const order = [TaskStatus.ToDo, TaskStatus.Doing, TaskStatus.Done, TaskStatus.Cancelled] as const
 
@@ -37,6 +39,12 @@ export class TaskStatusComponent extends Component {
 
 	/** Fired after the entry's status is mutated in place, so the host can persist and re-render. */
 	@event() readonly change!: EventDispatcher
+
+	// Subscribe to the store so a re-render fires when the entry mutates in place. A source migration
+	// changes `entry.sourceId` on the SAME instance, so the `@property` reference is unchanged and lit
+	// wouldn't re-render on its own — this keeps the Cancelled option out of the menu once the entry
+	// moves to a provider (e.g. Notion) that can't represent it.
+	readonly store = new EntryStore(this)
 
 	protected override createRenderRoot() { return this }
 
@@ -116,7 +124,7 @@ export class TaskStatusComponent extends Component {
 				@contextmenu=${this.onContextMenu} icon=${icon.get(this.status)!}
 			></mitra-icon-button>
 			<menu popover style="position-anchor: ${this.anchor}">
-				${order.map(status => html`
+				${order.filter(status => status !== TaskStatus.Cancelled || getCapabilities(this.entry.sourceId).cancelledStatus).map(status => html`
 					<button aria-current=${status === this.status} @click=${this.pick(status)}>
 						<mitra-icon icon=${icon.get(status)!}></mitra-icon>
 						${label(status)}

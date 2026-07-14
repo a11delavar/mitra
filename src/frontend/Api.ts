@@ -114,6 +114,21 @@ export function getSource(id: string) {
 	return integrations.flatMap(i => [...i.sources]).find(s => s.id === id)
 }
 
+export function getIntegrationFor(sourceId: string) {
+	return integrations.find(i => [...i.sources].some(s => s.id === sourceId))
+}
+
+/**
+ * What the provider behind a source can represent (see Integration.capabilities) — what the editor
+ * keys hiding unsupported fields on. Defaults to everything: a provider the client doesn't model
+ * (e.g. the backend-only Dev integration) arrives as a plain DTO without the getter, and full
+ * capability is the right reading for it.
+ */
+export function getCapabilities(sourceId: string): Integration['capabilities'] {
+	return getIntegrationFor(sourceId)?.capabilities
+		?? { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, timeZone: true }
+}
+
 export function toggleSourceVisibility(id: string, hidden: boolean) {
 	return Api.put(`/sources/${id}/visibility`, { hidden })
 }

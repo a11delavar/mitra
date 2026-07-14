@@ -77,6 +77,7 @@ declare global {
 		"Install as an App": unknown
 		"Install mitra as an app — it gets its own window, and notifications appear under its own name and icon": unknown
 		"Integration options": unknown
+		"Integration Token": unknown
 		"Interval": unknown
 		"Location": unknown
 		"minutes": unknown
@@ -89,6 +90,7 @@ declare global {
 		"Next Week": unknown
 		"Next Year": unknown
 		"No matches": unknown
+		"Notion.TokenHint": unknown
 		"now current date jump": unknown
 		"Occurrences": unknown
 		"of event at ${time}": unknown
@@ -151,6 +153,7 @@ declare global {
 		"Week": unknown
 		"Week View": unknown
 		"weeks": unknown
+		"Workspace": unknown
 		"Year": unknown
 		"Year View": unknown
 	}

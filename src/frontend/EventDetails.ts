@@ -1,7 +1,7 @@
 import { component, html, property, state, Component, css, eventListener, event, Binder } from '@a11d/lit'
-import { EntryType, TaskStatus, SourceType } from 'shared'
+import { EntryType, TaskStatus, SourceType, type Integration } from 'shared'
 import type { EntrySegment } from './EntrySegment.js'
-import { getIntegrations, getSource } from './Api.js'
+import { getIntegrations, getSource, getCapabilities } from './Api.js'
 import { EntryStore } from './EntryStore.js'
 
 @component('mitra-entry-details')
@@ -26,6 +26,11 @@ export class EntryDetailsComponent extends Component {
 
 	private get source() {
 		return this.segment?.entry.sourceId ? getSource(this.segment.entry.sourceId) : undefined
+	}
+
+	/** What the entry's provider can hold — fields it can't are hidden, not silently dropped. */
+	private get capabilities() {
+		return getCapabilities(this.segment!.entry.sourceId)
 	}
 
 	protected override createRenderRoot() { return this }
@@ -397,9 +402,11 @@ export class EntryDetailsComponent extends Component {
 					<mitra-entry-details-when .entry=${this.segment.entry} @change=${this.handleWhenChange}></mitra-entry-details-when>
 					<hr>
 				`}
-				${this.locationTemplate}
-				${this.descriptionTemplate}
-				<hr>
+				${!this.capabilities.location && !this.capabilities.description ? html.nothing : html`
+					${this.locationTemplate}
+					${this.descriptionTemplate}
+					<hr>
+				`}
 				${this.sourceTemplate}
 				${this.colorTemplate}
 				${this.remindersTemplate}
@@ -420,9 +427,18 @@ export class EntryDetailsComponent extends Component {
 			}
 			entry.migrateTo(source)
 			EntryStore.notify()
-			this.handleChange().catch(() => void 0)
+			this.handleChange().catch(this.reportSaveError)
 		}
 		const entry = this.segment!.entry
+		// Whether a target integration can hold this entry's current content — the same capabilities that
+		// hide editor fields also decide where an entry may move. Offering an impossible target would
+		// collapse a series' rule or drop a Cancelled status (the backend rejects both), so it's excluded
+		// rather than shown and left to fail. The entry's own source is always kept (it's the selection).
+		const canHold = (integration: Integration) => {
+			const capabilities = integration.capabilities ?? { recurrence: true, cancelledStatus: true }
+			return (!entry.partOfSeries || capabilities.recurrence)
+				&& (entry.status !== TaskStatus.Cancelled || capabilities.cancelledStatus)
+		}
 		return !this.source?.name ? html.nothing : html`
 			<li class="source">
 				<select class="subtle" @change=${handleSourceChange}>
@@ -430,7 +446,8 @@ export class EntryDetailsComponent extends Component {
 						<selectedcontent></selectedcontent>
 					</button>
 					${getIntegrations().map(integration => {
-						const sources = [...integration.sources].filter(source => source.visible || source.id === entry.sourceId)
+						const sources = [...integration.sources].filter(source =>
+							source.id === entry.sourceId || (source.visible && canHold(integration)))
 						return !sources.length ? html.nothing : html`
 							<optgroup label=${integration.credentials?.username || integration.type}>
 								<legend>${integration.credentials?.username || integration.type}</legend>
@@ -454,7 +471,7 @@ export class EntryDetailsComponent extends Component {
 	private get locationTemplate() {
 		// The field mutates `entry.location` in place; both its typed commits (the input's bubbling
 		// `change`) and picked suggestions (the component's own `change`) land here and persist.
-		return html`
+		return !this.capabilities.location ? html.nothing : html`
 			<li class="location">
 				<mitra-icon icon="map-pin"></mitra-icon>
 				<mitra-location-field .entry=${this.segment!.entry} @change=${this.handleChange}></mitra-location-field>
@@ -495,7 +512,7 @@ export class EntryDetailsComponent extends Component {
 
 	private get remindersTemplate() {
 		// Reminders anchor to the start time — an undated entry has nothing to remind about.
-		return !this.segment!.entry.start ? html.nothing : html`
+		return !this.segment!.entry.start || !this.capabilities.reminders ? html.nothing : html`
 			<li class="reminders">
 				<mitra-icon icon="bell"></mitra-icon>
 				<mitra-reminders-field .entry=${this.segment!.entry} @change=${this.handleChange}></mitra-reminders-field>
@@ -518,7 +535,7 @@ export class EntryDetailsComponent extends Component {
 				textarea?.setSelectionRange(textarea.value.length, textarea.value.length)
 			})
 		}
-		return html`
+		return !this.capabilities.description ? html.nothing : html`
 			<li class="description">
 				<mitra-icon icon="align-left"></mitra-icon>
 				${this.editingDescription ? html`

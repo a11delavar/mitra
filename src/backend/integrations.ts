@@ -93,7 +93,8 @@ integrationsRouter.post('/sources', async (req, res) => {
 	const integration: Integration = await em.findOne(Integration, { id: incoming.id, userId: req.user.id })
 		?? new (integrationClassFor(incoming.type))({ userId: req.user.id })
 	integration.merge(incoming)
-	return res.json(await integration.getSources(em))
+	// checkDuplicate: surface an already-connected account in the dialog's Connect step, before Save.
+	return res.json(await integration.getSources(em, { checkDuplicate: true }))
 })
 
 integrationsRouter.post('/', async (req, res) => {

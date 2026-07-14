@@ -554,7 +554,7 @@ export class Sidebar extends Component {
 			<div
 				class="name"
 				data-rename-id=${source.id}
-				title=${t('Double-click to rename')}
+				title=${`${source.name} — ${t('Double-click to rename')}`}
 				contenteditable=${this.renamingId === source.id ? 'plaintext-only' : 'false'}
 				@dblclick=${() => this.startRename(source)}
 				@keydown=${(e: KeyboardEvent) => this.handleRenameKeydown(e, source)}
