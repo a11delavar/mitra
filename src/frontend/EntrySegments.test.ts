@@ -19,6 +19,29 @@ describe('EntrySegments', () => {
 			assert.equal(segments[0]!.allDay, false)
 		})
 
+		it('gives a zero-duration timed entry a minimum visible slab (end == start)', () => {
+			// A synced task pinned to an instant (e.g. Notion "20:00" with no due time). Without a floor it
+			// renders as a 1px sliver; the grid needs end > start to show anything.
+			const at = base.add({ hours: 20 })
+			const [segment] = EntrySegments.for(new Entry({ start: at, end: at }))
+			assert.equal(segment!.startMinute, 20 * 60 + 1)
+			assert.equal(segment!.endMinute, 20 * 60 + 1 + 15)
+		})
+
+		it('gives a timed entry with no end a minimum visible slab below its start', () => {
+			// The dangerous case: a bare `endMinute` of 2 sits *above* a late start, so CSS grid swaps the
+			// reversed lines and paints a near-full-day block. It must fall below the start instead.
+			const [segment] = EntrySegments.for(new Entry({ start: base.add({ hours: 20 }) }))
+			assert.equal(segment!.startMinute, 20 * 60 + 1)
+			assert.ok(segment!.endMinute > segment!.startMinute, 'end must fall below start, never invert')
+			assert.equal(segment!.endMinute, 20 * 60 + 1 + 15)
+		})
+
+		it('clamps the minimum slab to the grid bottom for a near-midnight start', () => {
+			const [segment] = EntrySegments.for(new Entry({ start: base.add({ hours: 23, minutes: 55 }), end: base.add({ hours: 23, minutes: 55 }) }))
+			assert.equal(segment!.endMinute, 1441) // 1436 + 15 would overflow the 1440-track grid
+		})
+
 		it('links a multi-day entry and clamps the interior pieces to the day edges', () => {
 			const segments = EntrySegments.for(new Entry({ start: base.add({ hours: 22 }), end: base.add({ hours: 50 }) }))
 			assert.equal(segments.length, 3)

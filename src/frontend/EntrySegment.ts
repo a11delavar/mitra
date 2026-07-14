@@ -1,5 +1,5 @@
 import type { DateTime } from '@3mo/date-time'
-import type { Entry } from 'shared'
+import { type Entry, SNAP_MINUTES } from 'shared'
 import { EntryStore } from './EntryStore.js'
 
 /** Side-by-side placement among timed events sharing a day — the one datum CSS grid can't derive,
@@ -36,7 +36,16 @@ export class EntrySegment {
 
 	private _endMinute?: number
 	get endMinute() {
-		return this._endMinute ??= this.next ? 1441 : this.entry.end ? this.entry.end.hour * 60 + this.entry.end.minute + 1 : 2
+		if (this._endMinute === undefined) {
+			// A continuation runs to the day's bottom (line 1441); otherwise the entry's own end. A timed
+			// entry with no end, or a zero/negative-duration one (a synced task pinned to an instant — e.g. a
+			// Notion "20:00" with no due time), would otherwise collapse to a 1px sliver or, once its end
+			// precedes its start, make CSS grid swap the reversed lines and paint a near-full-day block. Floor
+			// it to a snap-minute slab below the start (clamped to the grid's last line).
+			const end = this.next ? 1441 : this.entry.end ? this.entry.end.hour * 60 + this.entry.end.minute + 1 : undefined
+			this._endMinute = end !== undefined && end > this.startMinute ? end : Math.min(this.startMinute + SNAP_MINUTES, 1441)
+		}
+		return this._endMinute
 	}
 
 	/** Epoch-ms of this segment's day (midnight), or `undefined` when undated — the cheap key for every
