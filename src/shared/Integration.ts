@@ -2,6 +2,8 @@ import { entity, primaryKey, property, manyToOne, oneToMany, unique, Collection 
 import { User } from './User.js'
 import { Source } from './Source.js'
 import { Entry } from './Entry.js'
+import { EntryRelation } from './EntryRelation.js'
+import type { Relation } from './Relation.js'
 import type { EntityManager } from '@mikro-orm/core'
 
 @entity({ abstract: true, discriminatorColumn: 'type' })
@@ -24,6 +26,19 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * {@link Synchronizer} paces each integration accordingly (and backs off further on failures).
 	 */
 	get syncInterval() { return 0 }
+
+	/**
+	 * Relationships (`Entry.relations`, see `shared/Relation.ts`) cross this interface as plain
+	 * value objects in the integration-neutral vocabulary — an integration NEVER sees or owns the
+	 * relation table (`EntryRelation`; the routes and sync reconcile it). A provider participates
+	 * exactly as much as its native format allows:
+	 * - **Native link store** (CalDAV's `RELATED-TO`; a future Notion/GitHub mapping): parse native
+	 *   links into a DEFINITE `entry.relations` (array or `null`) in {@link syncSourceEntries} —
+	 *   that value is authoritative and overwrites the local mirror — and write
+	 *   `entry.relations`/`incoming.relations` natively in {@link createEntry}/{@link updateEntry}.
+	 * - **No native store** (Dev): touch nothing. Leave `entry.relations` `undefined` on sync (the
+	 *   mirror is then the sole store) and ignore the field on writes.
+	 */
 
 	/**
 	 * Fetches the account's remote sources (e.g. calendars, task lists) as transient
@@ -96,6 +111,24 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 			match.name = source.name
 			return match
 		})
+	}
+
+	/**
+	 * Mirrors the entries' native-parsed relationships into the {@link EntryRelation} store — the
+	 * provider-agnostic half of the relations seam (see the class doc): a sync that ingested native
+	 * links calls this with its entries, and only the ones carrying a DEFINITE `relations` value
+	 * (array or `null`) are reconciled; entries left `undefined` — untouched this cycle, or owned by
+	 * an integration with no native link store — keep their rows exactly as they are. Does not
+	 * flush; the mirror commits with the sync's own flush.
+	 */
+	protected async reconcileRelations(em: EntityManager, entries: Iterable<Entry>): Promise<void> {
+		const byEntryId = new Map<string, Array<Relation> | null>()
+		for (const entry of entries) {
+			if (entry.id && entry.relations !== undefined) {
+				byEntryId.set(entry.id, entry.relations)
+			}
+		}
+		await EntryRelation.reconcileAll(em, byEntryId)
 	}
 
 	/**
@@ -174,7 +207,9 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * may diff `existing` against `incoming` for efficiency, or rewrite wholesale.
 	 * `incoming.exdates` is tri-state: an array replaces the stored exclusions wholesale
 	 * (a scoped series edit shifts them along with the series — see backend/occurrences.ts),
-	 * absent (undefined) keeps them untouched.
+	 * absent (undefined) keeps them untouched. `incoming.relations` is tri-state the same way
+	 * (array sets, `null` clears, undefined keeps); callers populate `existing.relations` from
+	 * the store beforehand so a diffing provider can compare.
 	 * @param em The entity manager to use for database operations.
 	 * @param existing The currently persisted entry (managed).
 	 * @param incoming A transient entry carrying the edited field values.

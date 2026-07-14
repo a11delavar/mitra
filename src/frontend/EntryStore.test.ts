@@ -16,7 +16,7 @@ describe('EntryStore', () => {
 
 	/** A controllable fake transport: resolves/rejects on demand, records calls. */
 	const fake = () => {
-		const calls = { create: 0, update: 0, delete: new Array<string>(), occurrenceEdits: new Array<RecurrenceScope>(), occurrenceDeletes: new Array<RecurrenceScope>() }
+		const calls = { create: 0, update: 0, delete: new Array<string>(), occurrenceEdits: new Array<RecurrenceScope>(), occurrenceDeletes: new Array<RecurrenceScope>(), relationUpdates: new Array<string>() }
 		const settlers = new Array<{ resolve: (saved: Entry) => void, reject: (error: unknown) => void }>()
 		const request = (entry: Entry) => new Promise<Entry>((resolve, reject) => {
 			// Capture what was sent; by default the server echoes it back (possibly normalized by the settler).
@@ -31,6 +31,7 @@ describe('EntryStore', () => {
 				delete: (id: string) => (calls.delete.push(id), Promise.resolve()),
 				editOccurrence: (entry: Entry, scope: RecurrenceScope) => (calls.occurrenceEdits.push(scope), request(entry)),
 				deleteOccurrence: (_entry: Entry, scope: RecurrenceScope) => (calls.occurrenceDeletes.push(scope), Promise.resolve()),
+				updateRelations: (id: string, relations: Entry['relations']) => (calls.relationUpdates.push(id), request(new Entry({ id, relations }))),
 			},
 			/** Settle the oldest pending request — waiting for one to appear first, since a commit may
 			 * await other things (e.g. the scope resolver) before it issues the request. */
@@ -515,6 +516,58 @@ describe('EntryStore', () => {
 			assert.deepEqual([...EntryStore.entries], [working])
 			assert.deepEqual(transport.calls.occurrenceDeletes, [])
 			assert.deepEqual(transport.calls.delete, [])
+		})
+	})
+
+	describe('relations round-trip', () => {
+		const occurrence = (init?: Partial<Entry>) => entry({
+			id: 'master__1000', recurrenceMasterId: 'master', recurrenceId: at(9), uid: 'series-uid', relations: null, ...init,
+		})
+
+		it('a relations edit follows the derive-commit cycle — dirty on edit, clean after the echo', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			const working = entry({ uid: 'self', relations: null })
+			EntryStore.applyServerEntries([working])
+			assert.equal(EntryStore.isDirty(working), false)
+			working.relateTo('FINISHTOSTART', 'other-uid')
+			assert.equal(EntryStore.isDirty(working), true)
+			const commit = EntryStore.commit(working)
+			await transport.respond()
+			await commit
+			assert.equal(EntryStore.isDirty(working), false)
+			assert.equal(transport.calls.update, 1)
+		})
+
+		it('a normalization-only difference is not dirt — another order off the wire reads as clean', () => {
+			const working = entry({ uid: 'self', relations: null })
+			EntryStore.applyServerEntries([working])
+			working.relateTo('PARENT', 'p')
+			working.relateTo('FINISHTOSTART', 'q')
+			EntryStore.applyServerEntries([entry({
+				uid: 'self',
+				relations: [{ type: 'FINISHTOSTART', targetUid: 'q', gap: null }, { type: 'PARENT', targetUid: 'p', gap: null }] as never,
+			})])
+			assert.equal(EntryStore.isDirty(working), false)
+		})
+
+		it('a relations-only edit on an occurrence bypasses the scope dialog and PUTs JUST relations to the master', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			EntryStore.resolveScope = () => Promise.reject(new Error('must not be asked'))
+			const working = occurrence()
+			EntryStore.applyServerEntries([working])
+			working.relateTo('PARENT', 'parent-uid') // series-wide by definition — like a rule edit
+			const commit = EntryStore.commit(working)
+			await transport.respond()
+			await commit
+			assert.deepEqual(transport.calls.occurrenceEdits, [])
+			// The relations-ONLY partial route: never the full master payload, so a synced override's
+			// own content (an externally renamed occurrence) can't stomp the series' on this gesture.
+			assert.equal(transport.calls.update, 0)
+			assert.deepEqual(transport.calls.relationUpdates, ['master'])
+			assert.equal(working.id, 'master__1000') // identity untouched — no rekey onto the master
+			assert.equal(EntryStore.isDirty(working), false) // its own sent state became its canonical
 		})
 	})
 

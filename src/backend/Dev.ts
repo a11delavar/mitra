@@ -1,6 +1,6 @@
 import { type EntityManager, type MikroORM } from '@mikro-orm/sqlite'
 import { DateTime } from '@3mo/date-time'
-import { model, entity, Integration, Source, SourceType, Entry, EntryType, TaskStatus, User, Color, normalizeAllDay, Recurrence } from '../shared/index.js'
+import { model, entity, Integration, Source, SourceType, Entry, EntryType, TaskStatus, User, Color, normalizeAllDay, Recurrence, EntryRelation, RelationType } from '../shared/index.js'
 
 /**
  * A dev-only, self-contained calendar with no external backend: its sources and entries live only in
@@ -66,6 +66,8 @@ export class Dev extends Integration {
 		existing.timeZone = incoming.timeZone
 		existing.status = incoming.status
 		existing.reminders = incoming.reminders
+		// Relations are deliberately NOT copied: Dev has no native link store, so the EntryRelation
+		// table is the sole store and the route reconciles it (see Integration's relations contract).
 		// Recurrence is column-only for Dev (no .ics); the GET path expands `recurrence` via
 		// expandRecurrenceFields. (uid/recurrenceId aren't edited through the UI and Dev has no sync/overrides.)
 		existing.recurrence = incoming.recurrence
@@ -86,7 +88,7 @@ export class Dev extends Integration {
 const INTEGRATION_ID = 'dev-sample-integration'
 /** The sample's shape version, carried in the integration's uri: bumping it makes existing dev
  * databases wipe and re-seed the sample in the new shape (real integrations are never touched). */
-const SAMPLE_URI = 'mitra://sample@2'
+const SAMPLE_URI = 'mitra://sample@3'
 
 /**
  * Dev-only: seeds the persisted {@link Dev} sample integration with a few single-colour calendars —
@@ -135,9 +137,10 @@ export async function seedDev(orm: MikroORM) {
 	// rather than as server-local midnights the boot backfill would only normalize on the NEXT start.
 	const allDayStart = (day: number) => normalizeAllDay(weekStart.add({ days: day })) as unknown as DateTime
 
-	// Entries carry no colour of their own — they inherit their calendar's colour.
+	// Entries carry no colour of their own — they inherit their calendar's colour. Every entry gets a
+	// uid: relationships target uids (shared/Relation.ts), so a uid-less row couldn't be linked to.
 	const on = (source: Source) => (init: Partial<Entry>) => {
-		const entry = new Entry({ id: crypto.randomUUID(), ...init, sourceId: source.id, type: source.type === SourceType.Task ? EntryType.Task : EntryType.Event })
+		const entry = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), ...init, sourceId: source.id, type: source.type === SourceType.Task ? EntryType.Task : EntryType.Event })
 		em.persist(entry)
 		return entry
 	}
@@ -162,7 +165,7 @@ export async function seedDev(orm: MikroORM) {
 	// Work — Thursday (Standup overlaps Focus Block)
 	event({ heading: 'Focus Block', start: at(3, 9), end: at(3, 12) })
 	event({ heading: 'Standup', start: at(3, 9), end: at(3, 9, 15) })
-	event({ heading: 'Product Demo', start: at(3, 14), end: at(3, 15) })
+	const productDemo = event({ heading: 'Product Demo', start: at(3, 14), end: at(3, 15) })
 	// Work — Friday
 	event({ heading: 'Standup', start: at(4, 9), end: at(4, 9, 15) })
 	event({ heading: 'Sprint Retro', start: at(4, 15), end: at(4, 16) })
@@ -184,10 +187,17 @@ export async function seedDev(orm: MikroORM) {
 
 	// Tasks, mid-day — one per status so the checkbox/menu states are all visible in dev.
 	task({ heading: 'Submit expense report', status: TaskStatus.Done, start: at(0, 11), end: at(0, 11, 30) })
-	task({ heading: 'Review PR #312', status: TaskStatus.Doing, start: at(1, 13), end: at(1, 13, 30) })
+	const reviewPr = task({ heading: 'Review PR #312', status: TaskStatus.Doing, start: at(1, 13), end: at(1, 13, 30) })
 	task({ heading: 'Update roadmap doc', status: TaskStatus.ToDo, start: at(2, 14), end: at(2, 14, 30) })
-	task({ heading: 'Prepare demo slides', status: TaskStatus.Cancelled, start: at(3, 12), end: at(3, 13) })
-	task({ heading: 'Send weekly update', status: TaskStatus.Done, start: at(4, 11, 30), end: at(4, 12) })
+	const demoSlides = task({ heading: 'Prepare demo slides', status: TaskStatus.Cancelled, start: at(3, 12), end: at(3, 13) })
+	const weeklyUpdate = task({ heading: 'Send weekly update', status: TaskStatus.Done, start: at(4, 11, 30), end: at(4, 12) })
+
+	// Relationships showcase — the EntryRelation table IS Dev's native store, so seed rows directly:
+	// a task that's a subtask of an EVENT (mixed task↔event links are first-class), and a task that
+	// waits for another ("Send weekly update" after "Review PR #312").
+	const relate = (entry: Entry, type: string, target: Entry) => em.persist(new EntryRelation({ entryId: entry.id!, type, targetUid: target.uid! }))
+	relate(demoSlides, RelationType.Parent, productDemo)
+	relate(weeklyUpdate, RelationType.FinishToStart, reviewPr)
 
 	// — The rest of the year, so the year view has a story to tell: multi-day/multi-week arcs, quarterly
 	// milestones, seasonal holidays and a couple of yearly-recurring days, anchored to the current year.

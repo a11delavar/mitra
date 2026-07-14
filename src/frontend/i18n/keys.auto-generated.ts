@@ -20,6 +20,7 @@ declare global {
 		"Account": unknown
 		"Add integration": unknown
 		"Add Integration": unknown
+		"Add relationship": unknown
 		"Add reminder": unknown
 		"Add time zone": unknown
 		"After": unknown
@@ -33,6 +34,7 @@ declare global {
 		"back earlier": unknown
 		"before": unknown
 		"before at ${time}": unknown
+		"Blocks": unknown
 		"Calendar options": unknown
 		"Cancelled": unknown
 		"close": unknown
@@ -66,11 +68,14 @@ declare global {
 		"Entries": unknown
 		"Events": unknown
 		"Every": unknown
+		"Finishes after": unknown
+		"Finishes after start of": unknown
 		"forward later": unknown
 		"Go to Today": unknown
 		"Google account": unknown
 		"Google.ConfigurationHint": unknown
 		"Google.ConsentHint": unknown
+		"Has subtask": unknown
 		"Hide calendar": unknown
 		"hours": unknown
 		"Include time": unknown
@@ -96,6 +101,7 @@ declare global {
 		"On": unknown
 		"Open in Google Maps": unknown
 		"Options": unknown
+		"Parent of": unknown
 		"Password": unknown
 		"Previous Month": unknown
 		"Previous Week": unknown
@@ -104,9 +110,13 @@ declare global {
 		"Provider": unknown
 		"Re-import entries": unknown
 		"Refresh": unknown
+		"Related to": unknown
+		"Relationship type": unknown
+		"Relationships": unknown
 		"Reminder": unknown
 		"Reminders": unknown
 		"Remove": unknown
+		"Remove relationship": unknown
 		"Remove reminder": unknown
 		"Rename": unknown
 		"Rename time zone": unknown
@@ -115,6 +125,7 @@ declare global {
 		"Reset to default color": unknown
 		"Save": unknown
 		"Search entries or run a command…": unknown
+		"Search entries…": unknown
 		"Search or run a command (${hotkey})": unknown
 		"Search or run a command…": unknown
 		"select": unknown
@@ -128,6 +139,8 @@ declare global {
 		"Sources": unknown
 		"Start date": unknown
 		"Start time": unknown
+		"Starts after": unknown
+		"Subtask of": unknown
 		"switch": unknown
 		"switch grid": unknown
 		"Switch to all-day": unknown
@@ -137,6 +150,7 @@ declare global {
 		"the last ${weekday}": unknown
 		"This and following entries": unknown
 		"This entry": unknown
+		"This relationship is not possible": unknown
 		"Time zone": unknown
 		"times": unknown
 		"Title": unknown
@@ -145,6 +159,7 @@ declare global {
 		"Toggle sidebar": unknown
 		"Toggle Sidebar": unknown
 		"unchanged": unknown
+		"Unknown entry": unknown
 		"Untitled": unknown
 		"Username": unknown
 		"Wall clock — no time zone": unknown

@@ -3,6 +3,7 @@ import { DateTime } from '@3mo/date-time'
 import { observeResize } from '@3mo/resize-observer'
 import { type Entry, type UserTimeZone } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
+import { EntryConnections } from './EntryConnections.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { EntryDragController } from './EntryDragController.js'
 import { DayDensityController } from './DayDensityController.js'
@@ -154,6 +155,24 @@ export class Days extends Component {
 					--time-axis-width: 0px;
 				}
 
+				/* The day columns' shared frame: a POSITIONED, co-scrolling containing block over the
+				   day tracks (subgrid keeps them the same tracks). This is what makes the chips
+				   anchorable by the in-content connections layer — CSS anchor positioning requires
+				   the anchors to be DESCENDANTS of the positioned element's containing block, and NO
+				   scroll container may sit between them, or the anchored boxes get scroll-compensated
+				   as if they didn't scroll with the content (see EntryConnections). Deliberately NOT
+				   a stacking context (no z-index): the chips' z 2 and the connectors' z 1/3 must
+				   interleave with the hour lines in the view's own context. Any view that wants
+				   connectors replicates this pattern: one positioned canvas around its chips. */
+				> .canvas {
+					grid-row: 1 / -1;
+					grid-column: calc(-1 * var(--_days-length) - 1) / -1;
+					display: grid;
+					grid-template-rows: subgrid;
+					grid-template-columns: subgrid;
+					position: relative;
+				}
+
 				mitra-day {
 					grid-row: 1 / -1;
 					grid-template-rows: subgrid;
@@ -191,6 +210,9 @@ export class Days extends Component {
 					position: sticky;
 					top: var(--header-height, 2.75rem);
 					z-index: 90;
+					/* The lane's bars sit at z 1 (EventSegment's overlap base) — its connectors go
+					   BELOW them (they'd otherwise out-paint the bars by tree order). */
+					--mitra-connection-z: 0;
 					display: grid;
 					grid-template-columns: subgrid;
 					grid-auto-rows: 1.375rem;
@@ -360,7 +382,19 @@ export class Days extends Component {
 		return html`
 			${this.timeTemplate}
 			${this.allDayTemplate}
-			${this.dateTemplate}
+			<div class="canvas">
+				${this.dateTemplate}
+				${this.connectionsTemplate}
+			</div>
+		`
+	}
+
+	private get connectionsTemplate() {
+		// LAST child of the canvas on purpose: an anchor must precede the positioned element in tree
+		// order — and same z-index (1) as the hour lines, so tree order paints the connectors above
+		// them while the chips (z 2) stay above the connectors (see EntryConnections).
+		return !EntryConnections.isEnabledFor('week') ? html.nothing : html`
+			<mitra-entry-connections .segments=${this.dates.window.days.flatMap(day => this.segments.timedOn(day))}></mitra-entry-connections>
 		`
 	}
 
@@ -378,23 +412,34 @@ export class Days extends Component {
 		const lastValue = last.dayStart.valueOf()
 		const columnByDay = new Map(days.map((day, index) => [day.dayStart.valueOf(), offset + index]))
 		const columnOf = (dayValue?: number) => columnByDay.get(dayValue ?? -1) ?? 0
+		const bars = runs.map(segment => {
+			const startColumn = columnOf(segment.dayValue)
+			const clippedRight = segment.runEnd.dayValue! > lastValue
+			const endColumn = clippedRight ? offset + days.length - 1 : columnOf(segment.runEnd.dayValue)
+			return { segment, startColumn, endColumn, clippedRight }
+		})
 		return html`
 			<div class="all-day-corner"></div>
 			<div class="all-day">
-				${repeat(runs, segment => segment.entry, segment => {
-					const startColumn = columnOf(segment.dayValue)
-					const clippedRight = segment.runEnd.dayValue! > lastValue
-					const endColumn = clippedRight ? offset + days.length - 1 : columnOf(segment.runEnd.dayValue)
-					return html`
-						<mitra-entry-segment
-							style=${styleMap({ gridColumn: `${startColumn + 1} / span ${endColumn - startColumn + 1}` })}
-							resize="inline"
-							?has-previous=${segment.hasPrevious}
-							?has-next=${clippedRight}
-							.segment=${segment}
-						></mitra-entry-segment>
-					`
-				})}
+				${repeat(bars, bar => bar.segment.entry, bar => html`
+					<mitra-entry-segment
+						style=${styleMap({ gridColumn: `${bar.startColumn + 1} / span ${bar.endColumn - bar.startColumn + 1}` })}
+						resize="inline"
+						?has-previous=${bar.segment.hasPrevious}
+						?has-next=${bar.clippedRight}
+						.segment=${bar.segment}
+					></mitra-entry-segment>
+				`)}
+				${/* The lane is position: sticky — already a positioned, co-moving canvas: when it
+				    sticks, the connectors translate WITH the bars, so within-lane edges stay glued.
+				    Cross-realm (timed ↔ all-day) edges don't exist by construction: each layer only
+				    sees its own canvas's chips. */ ''}
+				${!EntryConnections.isEnabledFor('week') ? html.nothing : html`
+					<mitra-entry-connections
+						.segments=${runs}
+						.verticalRank=${EntryConnections.laneRanks(bars.map(bar => ({ segment: bar.segment, start: bar.startColumn, end: bar.endColumn })))}
+					></mitra-entry-connections>
+				`}
 			</div>
 		`
 	}
@@ -459,13 +504,13 @@ export class Days extends Component {
 		// Only the window gets real day trees; every other buffer day is just its (empty) grid track —
 		// the columns are placed explicitly, so scroll geometry doesn't depend on what's rendered.
 		const { days, offset } = this.dates.window
-		// Day tracks start after the "+" track and the zone tracks (see the grid-template comment).
-		const firstDayColumn = this.timeZoneColumns.length + 2
+		// Columns are canvas-relative: the canvas subgrids exactly the day tracks, so the buffer day
+		// at index i sits on its column line i+1.
 		return html`
 			${repeat(days, day => day.dayStart.toISOString(), (day, index) => html`
 				<mitra-day
 					data-date=${day.dayStart.toISOString()}
-					style="grid-column: ${firstDayColumn + offset + index};"
+					style="grid-column: ${offset + index + 1};"
 					.date=${day}
 					.entries=${this.segments.timedOn(day)}
 					?today=${day.dayStart.valueOf() === todayValue}

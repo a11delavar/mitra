@@ -1,7 +1,7 @@
 import { Controller } from '@a11d/lit'
 import { type ReactiveControllerHost } from 'lit'
-import { Recurrence, type Entry, type RecurrenceScope } from 'shared'
-import { ApiError, createEvent, deleteEvent, deleteOccurrence, editOccurrence, updateEvent } from './Api.js'
+import { Recurrence, Relation, type Entry, type RecurrenceScope } from 'shared'
+import { ApiError, createEvent, deleteEvent, deleteOccurrence, editOccurrence, updateEvent, updateRelations } from './Api.js'
 
 /**
  * The frontend's single source of truth for entries, layered so the UI never waits for the network:
@@ -44,7 +44,7 @@ export class EntryStore extends Controller {
 	private static dragging?: Entry
 
 	/** The transport — a boundary, not state; swappable in tests. */
-	static persistence = { create: createEvent, update: updateEvent, delete: deleteEvent, editOccurrence, deleteOccurrence }
+	static persistence = { create: createEvent, update: updateEvent, delete: deleteEvent, editOccurrence, deleteOccurrence, updateRelations }
 
 	/** The ghost is only *shown* while it previews an actual change. Back over the entry's own slot it
 	 * edit-equals its source (it's a clone differing only in span), releasing would change nothing —
@@ -123,7 +123,21 @@ export class EntryStore extends Controller {
 			try {
 				while (this.tracks(entry) && this.isDirty(entry)) {
 					const sent = entry.clone() // what this round is saving, to detect mid-flight edits
-					if (entry.recurrenceMasterId && !this.ruleChanged(entry)) {
+					// A relations-ONLY edit on an occurrence PUTs just the relations to the master —
+					// never the occurrence's other content: a synced override's own heading (an
+					// externally renamed occurrence) must not stomp the series' on an unrelated
+					// relationship gesture. (Mixed relations+content edits still take the generic
+					// master route below — the same series-wide semantics scope 'all' applies.)
+					if (entry.recurrenceMasterId && this.onlyRelationsChanged(entry)) {
+						await EntryStore.persistence.updateRelations(entry.recurrenceMasterId, entry.relations ?? null)
+						if (!this.tracks(entry)) {
+							break
+						}
+						this.canonicalById.set(entry.id!, sent)
+						this.notify()
+						continue
+					}
+					if (entry.recurrenceMasterId && !this.ruleChanged(entry) && !this.relationsChanged(entry)) {
 						if (!await this.commitOccurrence(entry, sent)) {
 							break
 						}
@@ -182,6 +196,54 @@ export class EntryStore extends Controller {
 	 * so it bypasses the scope dialog and routes straight to the master. */
 	private static ruleChanged(entry: Entry) {
 		return !Recurrence.equal(entry.recurrence, this.canonicalById.get(entry.id!)?.recurrence)
+	}
+
+	/** Whether the entry's relations differ from its canonical — like a rule edit, a relation edit is
+	 * series-wide by definition (relationships live on the master, see shared/Relation.ts), so it
+	 * bypasses the scope dialog and routes straight to the master. */
+	private static relationsChanged(entry: Entry) {
+		return !Relation.listEquals(entry.relations ?? null, this.canonicalById.get(entry.id!)?.relations ?? null)
+	}
+
+	/** Whether the entry's ONLY change against its canonical is its relations (the statusOnlyChanged
+	 * probe pattern) — the case the commit loop turns into a relations-only master PUT. */
+	private static onlyRelationsChanged(entry: Entry) {
+		const canonical = this.canonicalById.get(entry.id!)
+		if (!canonical || !this.relationsChanged(entry)) {
+			return false
+		}
+		const probe = entry.clone()
+		probe.relations = canonical.relations
+		return probe.editEquals(canonical)
+	}
+
+	/** The last server-confirmed relations of a tracked entry — what a terminal (400) rejection
+	 * reverts to (a captured pre-edit array could itself be stale when several edits share one save
+	 * chain); `undefined` when the entry isn't tracked. */
+	static canonicalRelations(entry: Entry): Array<Relation> | null | undefined {
+		const canonical = entry.id === undefined ? undefined : this.canonicalById.get(entry.id)
+		return canonical ? canonical.relations ?? null : undefined
+	}
+
+	/** Adopt a relations-only server result onto the tracked copies of that entry — the
+	 * incoming-line removal edits ANOTHER entry than the open editor's, and if that other entry's
+	 * working copy happens to be dirty, leaving its old relations in place would resurrect the
+	 * removed link with its next full PUT. */
+	static adoptRelations(saved: Entry) {
+		if (saved.id === undefined) {
+			return
+		}
+		const working = this.workingById.get(saved.id)
+		const canonical = this.canonicalById.get(saved.id)
+		if (working) {
+			working.relations = saved.relations ?? null
+		}
+		if (canonical) {
+			canonical.relations = saved.relations ?? null
+		}
+		if (working || canonical) {
+			this.notify()
+		}
 	}
 
 	/** Whether the entry's ONLY change against its canonical is the task status. A status belongs to the
