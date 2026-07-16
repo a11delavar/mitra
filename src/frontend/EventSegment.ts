@@ -219,20 +219,27 @@ export class EntrySegmentComponent extends Component {
 				}
 
 				& > .heading {
-					display: flex;
-					align-items: center;
-					gap: 0.25rem;
+					/* flow-root (not flex) so the title's lines flow around a floated checkbox — the first
+					   line sits beside it, the rest wrap into the full width beneath it — and the block still
+					   contains the float, keeping short single-line tasks from overflowing the checkbox. */
+					display: flow-root;
 					font-weight: 600;
 					white-space: normal;
 					word-break: break-word;
 					line-height: 1.1;
 
-					/* The title text shrinks/wraps within the row; the checkbox keeps its size. */
-					> .label { min-width: 0; }
-					> mitra-task-status { font-size: 0.95rem; }
+					> mitra-task-status {
+						float: inline-start;
+						margin-inline-end: 0.25rem;
+						font-size: 0.95rem;
+						/* A box one line tall (the inherited 0.7rem font at line-height 1.1) with its glyph
+						   centered, so the control seats on the heading's first line and only that line is
+						   indented — the remaining lines clear it and use the full width. */
+						height: calc(0.7rem * 1.1);
+						align-items: center;
+					}
 
 					@container (max-height: 2rem) {
-						flex: initial;
 						white-space: normal;
 						overflow: visible;
 						text-overflow: clip;
