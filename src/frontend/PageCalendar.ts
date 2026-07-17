@@ -122,12 +122,15 @@ export class PageCalendar extends PageComponent {
 
 	@query('mitra-command-palette') private readonly palette!: CommandPalette
 
+	@query('input.goto-date') private readonly gotoDateInput!: HTMLInputElement
+
 	/** The page's palette commands — behavior stays here, where the state it drives lives; the palette
 	 * only lists and dispatches. Rebuilt per render so view-dependent labels stay current. */
 	private get commands(): Array<Command> {
 		return [
 			{ heading: t('Create Entry'), icon: 'plus', keywords: t('new event task add'), execute: () => this.createEntry() },
 			{ heading: t('Go to Today'), icon: 'calendar-check', shortcut: 'T', keywords: t('now current date jump'), execute: () => this.navigatingDate = new DateTime() },
+			{ heading: t('Go to Date…'), icon: 'calendar-search', keywords: t('jump navigate pick specific day month year'), execute: () => this.goToDate() },
 			{ heading: t('Week View'), icon: 'columns-3', shortcut: 'W', keywords: t('switch'), execute: () => this.setView('week') },
 			{ heading: t('Month View'), icon: 'calendar-days', shortcut: 'M', keywords: t('switch grid'), execute: () => this.setView('month') },
 			{ heading: t('Year View'), icon: 'rows-3', shortcut: 'Y', keywords: t('switch grid'), execute: () => this.setView('year') },
@@ -167,6 +170,29 @@ export class PageCalendar extends PageComponent {
 			reminders: getCapabilities(source.id).reminders ? [DEFAULT_REMINDER_MINUTES] : undefined,
 		}))
 		EntryStore.openDraft()
+	}
+
+	/** The palette's Go to Date: reveal a native date picker seeded to the current position; picking a day
+	 * navigates the calendar there. The input stays rendered (not `display: none`) so `showPicker()` can open
+	 * it while the palette's click/Enter still carries the transient activation the API requires. */
+	private goToDate() {
+		const input = this.gotoDateInput
+		const date = this.navigatingDate
+		input.value = `${String(date.year).padStart(4, '0')}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`
+		try {
+			input.showPicker()
+		} catch {
+			// showPicker is unsupported or blocked here — the (visually hidden) field still accepts typed input.
+			input.focus()
+		}
+	}
+
+	private handleGoToDate(e: Event) {
+		const value = (e.target as HTMLInputElement).value
+		if (value) {
+			// Local midnight (the `T` suffix), matching the local `new DateTime()` used everywhere else for navigation.
+			this.navigatingDate = new DateTime(`${value}T00:00:00`)
+		}
 	}
 
 	@eventListener({ target: window, type: 'keydown' })
@@ -269,6 +295,20 @@ export class PageCalendar extends PageComponent {
 						min-height: 0;
 					}
 				}
+
+				/* Anchors the native date picker near the header (where the palette was); kept rendered, not
+				   display:none, so showPicker() works — see goToDate. */
+				input.goto-date {
+					position: fixed;
+					inset-block-start: 3.5rem;
+					inset-inline-start: 50%;
+					inline-size: 1px;
+					block-size: 1px;
+					padding: 0;
+					border: none;
+					opacity: 0;
+					pointer-events: none;
+				}
 			}
 		`
 	}
@@ -330,6 +370,8 @@ export class PageCalendar extends PageComponent {
 					.commands=${this.commands}
 					@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
 				></mitra-command-palette>
+				${/* Visually hidden but rendered, so the Go to Date command can open its native picker (see goToDate). */''}
+				<input class="goto-date" type="date" aria-hidden="true" tabindex="-1" @change=${(e: Event) => this.handleGoToDate(e)}>
 			</lit-page>
 		`
 	}
