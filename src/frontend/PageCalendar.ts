@@ -197,7 +197,14 @@ export class PageCalendar extends PageComponent {
 
 	@eventListener({ target: window, type: 'keydown' })
 	protected handleKeyDown(e: KeyboardEvent) {
-		if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+		// Never hijack a keystroke meant for a text field — a single-letter view shortcut ('m' → month)
+		// would otherwise fire mid-typing. Covers native fields AND contenteditable (the sidebar's
+		// inline source-rename is a `contenteditable` div, not an <input>). Also stand down for shortcut
+		// chords (Ctrl/Cmd/Alt) and IME composition, which aren't ours to consume.
+		const target = e.target
+		const editable = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
+			|| target instanceof HTMLSelectElement || (target instanceof HTMLElement && target.isContentEditable)
+		if (editable || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) {
 			return
 		}
 

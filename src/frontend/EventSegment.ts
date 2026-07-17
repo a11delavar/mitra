@@ -332,11 +332,26 @@ export class EntrySegmentComponent extends Component {
 					}
 				}
 
-				/* Reserve room at the trailing edge of the first line so the badge never overlaps it — the time
-				   (or the title, in the row layouts where it fills the line) truncates before the badge instead. */
-				&:has(> .recurring) > .time,
-				&:has(> .recurring) > .heading {
+				/* Reserve room at the trailing edge of the badge's line so it never overlaps the text —
+				   but only on the element that actually reaches that edge. In the default STACKED layout
+				   that's the time (or the heading when there's no time), each a full-width block with the
+				   badge over its first line. In the ROW layouts (all-day lane, month bars) the heading
+				   fills the line and the time merely leads it, so reserving on the time would just gap it
+				   away from the heading (a visible padding after the start time) — reserve on the heading. */
+				&:has(> .recurring) > .time {
 					padding-inline-end: 1.35rem;
+				}
+				&:has(> .recurring):not(:has(> .time)) > .heading {
+					padding-inline-end: 1.35rem;
+				}
+
+				@container (max-height: 450px) {
+					&:has(> .recurring) > .time {
+						padding-inline-end: 0;
+					}
+					&:has(> .recurring) > .heading {
+						padding-inline-end: 1.35rem;
+					}
 				}
 			}
 		`
