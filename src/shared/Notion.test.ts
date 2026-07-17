@@ -386,11 +386,17 @@ describe('Notion page reads (applyPage)', () => {
 			reminders: [30],
 		})
 		Notion.applyPage(entry, page(), schema())
-		assert.equal(entry.description, '')
+		assert.equal(entry.description, '', 'a page object carries no body — without a fetched description there is none')
 		assert.equal(entry.location, '')
 		assert.equal(entry.color, null)
 		assert.equal(entry.reminders, null)
 		assert.equal(entry.recurrence, null)
+	})
+
+	it('applies the separately-fetched body markdown as the description', () => {
+		const entry = new Entry({ id: 'e1', sourceId: 's1' })
+		Notion.applyPage(entry, page(), schema(), { description: 'A **bold** plan' })
+		assert.equal(entry.description, 'A **bold** plan')
 	})
 
 	it('labels an untitled page rather than syncing an empty heading', () => {
@@ -412,7 +418,8 @@ describe('Notion integration model', () => {
 	it('declares what Notion cannot represent — the editor hides these fields', () => {
 		// timeZone:false — Notion's date property can't hold a named IANA zone (its API resolves any
 		// time_zone to a fixed offset and returns time_zone:null), so the zone picker/lens is hidden.
-		assert.deepEqual(account().capabilities, { recurrence: false, reminders: false, location: false, description: false, cancelledStatus: false, timeZone: false })
+		// description:true — the page body maps to markdown (NotionMarkdown).
+		assert.deepEqual(account().capabilities, { recurrence: false, reminders: false, location: false, description: true, cancelledStatus: false, timeZone: false })
 	})
 
 	it('keeps the stored token when the edit form leaves it blank, and never takes a client label', () => {

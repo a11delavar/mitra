@@ -9,10 +9,25 @@ export const NOTION_VERSION = '2026-03-11'
 
 // --- Wire shapes (only the fields mitra reads — Notion objects carry many more) ---------------------
 
-/** A rich text run. Reading only ever concatenates `plain_text`; writing sends bare text runs. */
+/** A rich text run's style flags. Absent means false; `underline` has no markdown form and is read
+ * as plain text. */
+export interface NotionAnnotations {
+	bold?: boolean
+	italic?: boolean
+	strikethrough?: boolean
+	underline?: boolean
+	code?: boolean
+}
+
+/** A rich text run. Property reads concatenate `plain_text`; body reads (see NotionMarkdown) also
+ * honour `annotations` and `href` — mentions (page/user/date) carry their readable label as
+ * `plain_text` and their target as `href`, so they degrade to links. Writes send bare text runs. */
 export interface NotionRichText {
+	type?: string
 	plain_text?: string
-	text?: { content: string }
+	href?: string | null
+	annotations?: NotionAnnotations
+	text?: { content: string, link?: { url: string } | null }
 }
 
 /** A date property value. `start`/`end` are ISO 8601 — date-only ("2026-07-14") marks an all-day
@@ -52,6 +67,50 @@ export interface NotionPage {
 	in_trash?: boolean
 	url?: string
 	properties: Record<string, NotionPropertyValue>
+}
+
+/**
+ * The type-keyed content payload of a block — one shape for every type mitra converts (only the
+ * fields it reads/writes). `children` is where nesting lives on BOTH directions: a write payload
+ * nests inline here (Notion's own shape), and the recursive body read (Notion.fetchBodyBlocks)
+ * attaches fetched children here too, so converter code walks one tree.
+ */
+export interface NotionBlockContent {
+	rich_text?: Array<NotionRichText>
+	/** to_do */
+	checked?: boolean
+	/** code */
+	language?: string
+	/** callout — e.g. 'red_background' */
+	color?: string
+	/** table */
+	table_width?: number
+	has_column_header?: boolean
+	/** table_row */
+	cells?: Array<Array<NotionRichText>>
+	children?: Array<NotionBlock>
+}
+
+/** A page-body block. Only the types NotionMarkdown converts are keyed; any other `type` is opaque
+ * content mitra never renders nor touches. */
+export interface NotionBlock {
+	object?: 'block'
+	id?: string
+	type: string
+	has_children?: boolean
+	paragraph?: NotionBlockContent
+	heading_1?: NotionBlockContent
+	heading_2?: NotionBlockContent
+	heading_3?: NotionBlockContent
+	bulleted_list_item?: NotionBlockContent
+	numbered_list_item?: NotionBlockContent
+	to_do?: NotionBlockContent
+	quote?: NotionBlockContent
+	callout?: NotionBlockContent
+	code?: NotionBlockContent
+	divider?: Record<string, never>
+	table?: NotionBlockContent
+	table_row?: NotionBlockContent
 }
 
 /** A data source's schema property (the config side of {@link NotionPropertyValue}). The status
@@ -166,7 +225,7 @@ export class NotionClient {
 		private readonly fetchImplementation: typeof fetch = fetch,
 	) { }
 
-	private async request<T>(method: 'GET' | 'POST' | 'PATCH', path: string, body?: unknown, isRetry = false): Promise<T> {
+	private async request<T>(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown, isRetry = false): Promise<T> {
 		const response = await this.fetchImplementation(new URL(path, NotionClient.baseUrl), {
 			method,
 			headers: {
@@ -296,10 +355,29 @@ export class NotionClient {
 		return this.request('GET', `pages/${pageId}`)
 	}
 
-	createPage(dataSourceId: string, properties: Record<string, NotionPropertyValue>): Promise<NotionPage> {
+	/** One level of a block's children (a page is a block — its children are the page body). Deeper
+	 * levels are separate fetches; `has_children` marks where. */
+	blockChildren(blockId: string): Promise<Array<NotionBlock>> {
+		return this.paginate(cursor =>
+			this.request('GET', `blocks/${blockId}/children?page_size=100${cursor ? `&start_cursor=${encodeURIComponent(cursor)}` : ''}`))
+	}
+
+	/** Appends blocks after a parent's existing children. Notion caps one request at 100 blocks and
+	 * two levels of payload nesting — callers chunk/clamp (see Notion.replaceBody / NotionMarkdown). */
+	appendBlockChildren(blockId: string, children: Array<NotionBlock>): Promise<void> {
+		return this.request('PATCH', `blocks/${blockId}/children`, { children }).then(() => undefined)
+	}
+
+	/** Like pages, block DELETE is a move to trash — recoverable in Notion, not a hard delete. */
+	deleteBlock(blockId: string): Promise<void> {
+		return this.request('DELETE', `blocks/${blockId}`).then(() => undefined)
+	}
+
+	createPage(dataSourceId: string, properties: Record<string, NotionPropertyValue>, children?: Array<NotionBlock>): Promise<NotionPage> {
 		return this.request('POST', 'pages', {
 			parent: { type: 'data_source_id', data_source_id: dataSourceId },
 			properties,
+			...(children?.length ? { children } : {}),
 		})
 	}
 

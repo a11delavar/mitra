@@ -2,7 +2,7 @@ import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { MikroORM, UnderscoreNamingStrategy, type EntityManager } from '@mikro-orm/sqlite'
 import { User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Source, SourceType, Entry, EntryType, TaskStatus, Recurrence } from '../shared/index.js'
-import { type NotionClient, type NotionDataSource, type NotionPage } from '../shared/NotionClient.js'
+import { type NotionBlock, type NotionClient, type NotionDataSource, type NotionPage } from '../shared/NotionClient.js'
 import { Dev } from './Dev.js'
 import { NotificationSubscription } from './NotificationSubscription.js'
 import { Session } from './Session.js'
@@ -73,6 +73,8 @@ interface StubState {
 	members?: { ids: Array<string>, complete: boolean }
 	delta?: Array<NotionPage>
 	byId?: Record<string, NotionPage>
+	/** Page-body blocks by parent block id — what blockChildren serves (default: empty bodies). */
+	bodies?: Record<string, Array<NotionBlock>>
 	updateEcho?: NotionPage
 	createEcho?: NotionPage
 	trashError?: Error
@@ -86,6 +88,9 @@ function stubClient(state: StubState) {
 		updates: new Array<{ pageId: string, properties: Record<string, unknown> }>(),
 		trashed: new Array<string>(),
 		individuallyFetched: new Array<string>(),
+		deletedBlocks: new Array<string>(),
+		appended: new Array<{ blockId: string, children: Array<NotionBlock> }>(),
+		createChildren: new Array<NotionBlock>(),
 	}
 	const client = {
 		me: () => Promise.resolve({ object: 'user', id: 'bot-1', bot: { workspace_name: 'Acme' } }),
@@ -103,8 +108,18 @@ function stubClient(state: StubState) {
 			const found = state.byId?.[id]
 			return found ? Promise.resolve(found) : Promise.reject(new Error(`no page ${id}`))
 		},
-		createPage: (_dataSourceId: string, properties: Record<string, unknown>) => {
+		blockChildren: (blockId: string) => Promise.resolve(state.bodies?.[blockId] ?? []),
+		appendBlockChildren: (blockId: string, children: Array<NotionBlock>) => {
+			calls.appended.push({ blockId, children })
+			return Promise.resolve()
+		},
+		deleteBlock: (blockId: string) => {
+			calls.deletedBlocks.push(blockId)
+			return Promise.resolve()
+		},
+		createPage: (_dataSourceId: string, properties: Record<string, unknown>, children?: Array<NotionBlock>) => {
 			calls.updates.push({ pageId: '(create)', properties })
+			calls.createChildren.push(...(children ?? []))
 			return Promise.resolve(state.createEcho ?? page('page-created', { editedAt: new Date().toISOString() }))
 		},
 		updatePage: (pageId: string, properties: Record<string, unknown>) => {
@@ -318,6 +333,39 @@ describe('Notion sync', () => {
 		assert.equal((await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p-old' })).heading, 'Slid into view')
 	})
 
+	it('reads the page body into the markdown description', async () => {
+		const em = orm.em.fork()
+		const { integration, source } = await seed(em, {
+			members: { ids: ['p1'], complete: true },
+			delta: [page('p1', { title: 'With notes' })],
+			bodies: {
+				p1: [
+					{ object: 'block', id: 'b1', type: 'paragraph', paragraph: { rich_text: [{ plain_text: 'Call ' }, { plain_text: 'them', annotations: { bold: true } }] } },
+					{ object: 'block', id: 'b2', type: 'embed' }, // not expressible in markdown — invisible
+				],
+			},
+		})
+		await sync(integration, em, source)
+		const entry = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })
+		assert.equal(entry.description, 'Call **them**')
+	})
+
+	it('reports a body-only remote edit as a change (the stamp may not even move)', async () => {
+		const em = orm.em.fork()
+		const { integration, source, state } = await seed(em, {
+			members: { ids: ['p1'], complete: true },
+			delta: [page('p1')],
+			bodies: { p1: [{ object: 'block', id: 'b1', type: 'paragraph', paragraph: { rich_text: [{ plain_text: 'v1' }] } }] },
+		})
+		await sync(integration, em, source)
+		await em.flush()
+
+		// Same properties, same edit stamp — only the body differs (minute-rounded stamps can hide this).
+		state.bodies = { p1: [{ object: 'block', id: 'b1', type: 'paragraph', paragraph: { rich_text: [{ plain_text: 'v2' }] } }] }
+		assert.equal(await sync(integration, em, source), true)
+		assert.equal((await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })).description, 'v2')
+	})
+
 	it('never materializes a trashed page the delta still carries', async () => {
 		const em = orm.em.fork()
 		const { integration, source } = await seed(em, {
@@ -407,6 +455,49 @@ describe('Notion entry CRUD', () => {
 		assert.equal(created.uri, 'page-new')
 		const create = calls.updates.find(u => u.pageId === '(create)')!
 		assert.ok(create.properties['Name'], 'the task is created without the filter pre-fill rather than failing')
+	})
+
+	it('sends the description as the created page\'s body', async () => {
+		const em = orm.em.fork()
+		const { integration, source, calls } = await seed(em, {
+			createEcho: page('page-new', { title: 'Prepare talk', editedAt: '2026-07-14T12:00:00.000Z' }),
+		})
+		const entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Prepare talk', description: '- [ ] draft slides' })
+		await integration.createEntry(em, entry)
+		assert.deepEqual(calls.createChildren.map(block => block.type), ['to_do'])
+		assert.equal(calls.createChildren[0]!.to_do?.rich_text?.[0]?.text?.content, 'draft slides')
+		// The stored description is the write's own normalized markdown, so the next sync stays silent.
+		assert.equal(entry.description, '- [ ] draft slides')
+	})
+
+	it('replaces only the blocks the description showed — collaborative content it could not render survives', async () => {
+		const em = orm.em.fork()
+		const { integration, source, sibling, calls } = await seed(em, {
+			byId: { p1: page('p1', { editedAt: '2026-07-14T12:00:00.000Z' }) },
+			bodies: {
+				p1: [
+					{ object: 'block', id: 'b-para', type: 'paragraph', paragraph: { rich_text: [{ plain_text: 'Old notes' }] } },
+					{ object: 'block', id: 'b-image', type: 'image' }, // was invisible in the editor — must survive
+					{ object: 'block', id: 'b-subpage', type: 'child_page', has_children: true }, // a whole sub-page — must survive
+				],
+			},
+		})
+		const existing = new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: 'p1', type: EntryType.Task, heading: 'Task p1', status: TaskStatus.ToDo, description: 'Old notes' })
+		const twin = new Entry({ id: crypto.randomUUID(), sourceId: sibling.id, uri: 'p1', type: EntryType.Task, heading: 'Task p1', status: TaskStatus.ToDo, description: 'Old notes' })
+		em.persist([existing, twin])
+		await em.flush()
+
+		const incoming = existing.clone()
+		incoming.description = '# New plan'
+		await integration.updateEntry(em, existing, incoming)
+		await em.flush()
+
+		assert.deepEqual(calls.deletedBlocks, ['b-para'], 'only the replaceable block goes — image and sub-page stay')
+		assert.equal(calls.appended.length, 1)
+		assert.deepEqual(calls.appended[0]!.children.map(block => block.type), ['heading_1'])
+		assert.equal(calls.updates.length, 0, 'a description-only edit writes no page properties')
+		assert.equal(existing.description, '# New plan')
+		assert.equal(twin.description, '# New plan', 'the sibling view\'s row of the same page mirrors the body write')
 	})
 
 	it('rejects creating a recurring task', async () => {

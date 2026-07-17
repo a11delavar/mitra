@@ -56,6 +56,29 @@ describe('NotionClient.views resilience', () => {
 	})
 })
 
+describe('NotionClient block endpoints', () => {
+	it('drains a paginated body listing', async () => {
+		const client = new NotionClient('tok', fakeFetch({
+			'GET blocks/page-1/children?page_size=100': { object: 'list', has_more: true, next_cursor: 'c2',
+				results: [{ object: 'block', id: 'b1', type: 'paragraph' }] },
+			'GET blocks/page-1/children?page_size=100&start_cursor=c2': { object: 'list', has_more: false,
+				results: [{ object: 'block', id: 'b2', type: 'divider' }] },
+		}))
+		assert.deepEqual((await client.blockChildren('page-1')).map(block => block.id), ['b1', 'b2'])
+	})
+
+	it('trashes a block over DELETE and appends children over PATCH', async () => {
+		const calls: Array<string> = []
+		const client = new NotionClient('tok', fakeFetch({
+			'DELETE blocks/b1': { object: 'block', id: 'b1' },
+			'PATCH blocks/page-1/children': { object: 'list', results: [] },
+		}, calls))
+		await client.deleteBlock('b1')
+		await client.appendBlockChildren('page-1', [{ type: 'divider', divider: {} }])
+		assert.deepEqual(calls, ['DELETE blocks/b1', 'PATCH blocks/page-1/children'])
+	})
+})
+
 describe('NotionClient error surfacing', () => {
 	it('lifts Notion\'s code and message into the thrown error', async () => {
 		const client = new NotionClient('bad', fakeFetch({

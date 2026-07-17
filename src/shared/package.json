@@ -8,6 +8,7 @@
 		"@a11d/api-model-value-constructor": "1.x",
 		"@mikro-orm/core": "7.x",
 		"@mikro-orm/decorators": "7.x",
-		"consola": "^3.x"
+		"consola": "^3.x",
+		"marked": "18.x"
 	}
 }

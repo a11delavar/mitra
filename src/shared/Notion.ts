@@ -7,7 +7,8 @@ import { Entry, EntryType, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
 import { calendarDateOf, midnightOf } from './calendarDate.js'
 import { Color } from './Color.js'
 import { createLogger } from './Logger.js'
-import { NotionClient, NotionRequestError, type NotionDataSource, type NotionDate, type NotionPage, type NotionPropertyCondition, type NotionPropertyValue, type NotionRichText, type NotionView, type NotionViewFilter } from './NotionClient.js'
+import { NotionClient, NotionRequestError, type NotionBlock, type NotionDataSource, type NotionDate, type NotionPage, type NotionPropertyCondition, type NotionPropertyValue, type NotionRichText, type NotionView, type NotionViewFilter } from './NotionClient.js'
+import { NotionMarkdown } from './NotionMarkdown.js'
 
 const logger = createLogger('Notion')
 
@@ -48,13 +49,15 @@ export interface NotionSchemaIndex {
  *   semantics, it just asks the view for its members.
  * - Pages map to task entries: title ↔ heading, status option ↔ task status via the schema's
  *   option groups, the date property ↔ start/end (date-only values are all-day, zoned date-times
- *   keep their IANA zone).
+ *   keep their IANA zone), and the page BODY ↔ the markdown description ({@link NotionMarkdown}):
+ *   the block types markdown can express round-trip faithfully, while collaborative content it
+ *   can't (images, embeds, sub-pages, deep nesting) stays invisible AND untouched — a description
+ *   edit only ever replaces the blocks the description showed (see {@link replaceBody}).
  * - NOT expressible in Notion, deliberately absent rather than approximated: recurrence (the API
  *   has no repeat concept — writes carrying a rule are rejected so a series is never silently
  *   collapsed), the cancelled status (Notion's groups are to-do/in-progress/complete), reminders,
- *   location, and description (a page's body is collaborative block content — wholesale rewriting
- *   it from a plain-text field would be destructive). See {@link capabilities}, which the editor
- *   uses to hide those fields for entries living here.
+ *   and location. See {@link capabilities}, which the editor uses to hide those fields for
+ *   entries living here.
  * - Dependencies (sub-tasks, blocked-by) are not modelled YET; when they are, a re-import
  *   (the existing {@link Integration.resyncSource} hatch) rebuilds entries from Notion, so
  *   already-connected sources pick the new fields up without migration ceremony.
@@ -103,12 +106,13 @@ export class Notion extends Integration<NotionCredentials> {
 	}
 
 	/** Nothing Notion models can hold these — the editor hides the fields (and the write mapping
-	 * rejects recurrence/cancelled) instead of silently dropping edits. `timeZone: false` because
+	 * rejects recurrence/cancelled) instead of silently dropping edits. `description: true`: the
+	 * page body maps to markdown (see {@link NotionMarkdown}). `timeZone: false` because
 	 * Notion's date property can't store a named IANA zone: its API resolves any `time_zone` to a
 	 * fixed offset and returns `time_zone: null`, so a per-entry authoring zone would silently vanish
 	 * on save (the times still show correctly in the viewer's zone — that's a view concern). */
 	override get capabilities() {
-		return { recurrence: false, reminders: false, location: false, description: false, cancelledStatus: false, timeZone: false }
+		return { recurrence: false, reminders: false, location: false, description: true, cancelledStatus: false, timeZone: false }
 	}
 
 	/** Notion allows ~3 requests/second per connection and a sync touches several endpoints —
@@ -303,12 +307,25 @@ export class Notion extends Integration<NotionCredentials> {
 			if (page.in_trash) {
 				continue // trashed between the membership listing and this read — next cycle's set difference removes it
 			}
+			// The page body IS the description (see NotionMarkdown) — fetched per applied page. Always
+			// when the delta serves it: a body edit within the stamp's minute-rounding would otherwise
+			// be skippable forever, the same reasoning as applying properties above. Gone-page races
+			// keep the stored description, like the individual fetch above.
+			let description = entry?.description ?? ''
+			try {
+				description = NotionMarkdown.toMarkdown(await this.fetchBodyBlocks(page.id))
+			} catch (error) {
+				if (!(error instanceof NotionRequestError) || (error.status !== 404 && error.status !== 403)) {
+					throw error
+				}
+				logger.debug(`Keeping the stored description of ${page.id}: ${error.message}`)
+			}
 			const before = entry?.clone()
 			const target = entry ?? new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: page.id })
 			if (!entry) {
 				em.persist(target)
 			}
-			Notion.applyPage(target, page, schema)
+			Notion.applyPage(target, page, schema, { description })
 			if (!before || !before.editEquals(target)) {
 				changed = true
 			}
@@ -348,8 +365,14 @@ export class Notion extends Integration<NotionCredentials> {
 			return {} as Record<string, NotionPropertyValue>
 		})
 		const properties = { ...filterDefaults, ...Notion.propertiesFrom(entry, schema) }
-		const page = await this.getClient().createPage(dataSourceId, properties)
-		Notion.applyPage(entry, page, schema, true)
+		const blocks = entry.description ? NotionMarkdown.toBlocks(entry.description) : []
+		const page = await this.getClient().createPage(dataSourceId, properties, blocks.slice(0, Notion.maxBlocksPerWrite))
+		for (let index = Notion.maxBlocksPerWrite; index < blocks.length; index += Notion.maxBlocksPerWrite) {
+			await this.getClient().appendBlockChildren(page.id, blocks.slice(index, index + Notion.maxBlocksPerWrite))
+		}
+		// The stored description is the markdown as the block mapping will read it back — so the next
+		// sync's body fetch compares equal and stays silent.
+		Notion.applyPage(entry, page, schema, { description: NotionMarkdown.toMarkdown(blocks), localWrite: true })
 		em.persist(entry)
 		return entry
 	}
@@ -365,20 +388,26 @@ export class Notion extends Integration<NotionCredentials> {
 		// untouched field can never clobber a fresher remote value (Notion has no etag guard).
 		const headingChanged = existing.heading !== incoming.heading
 		const statusChanged = existing.status !== incoming.status
+		const descriptionChanged = (existing.description ?? '') !== (incoming.description ?? '')
 		const spanChanged = (['start', 'end', 'allDay', 'timeZone'] as const).some(key => !Object[equals](existing[key], incoming[key]))
-		if (!headingChanged && !statusChanged && !spanChanged) {
+		if (!headingChanged && !statusChanged && !spanChanged && !descriptionChanged) {
 			return
 		}
 		const source = await em.findOneOrFail(Source, { id: existing.sourceId })
 		const schema = await this.schemaFor(source)
+		// Body first, page echo after: block writes bump last_edited_time, and the echo below must
+		// carry the newest stamp so the next delta's re-serve compares clean.
+		const description = descriptionChanged ? await this.replaceBody(existing.uri, incoming.description ?? '') : existing.description
 		const properties = Notion.propertiesFrom(incoming, schema, {
 			heading: headingChanged,
 			status: statusChanged,
 			span: spanChanged,
 		})
-		const page = await this.getClient().updatePage(existing.uri, properties)
-		Notion.applyPage(existing, page, schema, true)
-		await this.syncSiblingRows(em, existing, page, schema)
+		const page = Object.keys(properties).length
+			? await this.getClient().updatePage(existing.uri, properties)
+			: await this.getClient().page(existing.uri) // a description-only edit — no property to write, just the fresh stamp
+		Notion.applyPage(existing, page, schema, { description, localWrite: true })
+		await this.syncSiblingRows(em, existing, page, schema, description)
 	}
 
 	/**
@@ -387,9 +416,9 @@ export class Notion extends Integration<NotionCredentials> {
 	 * edit through one view leaves its twin stale for up to a sync interval — the CalDAV counterpart
 	 * is syncResourceRows. Scoped to this integration's sources, mirroring CalDAV's sibling scoping.
 	 */
-	private async syncSiblingRows(em: EntityManager, written: Entry, page: NotionPage, schema: NotionSchemaIndex): Promise<void> {
+	private async syncSiblingRows(em: EntityManager, written: Entry, page: NotionPage, schema: NotionSchemaIndex, description: string | undefined): Promise<void> {
 		for (const sibling of await this.siblingRows(em, written)) {
-			Notion.applyPage(sibling, page, schema, true)
+			Notion.applyPage(sibling, page, schema, { description, localWrite: true })
 		}
 	}
 
@@ -419,6 +448,54 @@ export class Notion extends Integration<NotionCredentials> {
 	/** Unreachable by construction: no Notion entry ever carries a recurrence rule. */
 	override excludeOccurrence(): Promise<void> {
 		return Promise.reject(new Error('Notion does not support recurring tasks'))
+	}
+
+	// --- Page body ↔ description ----------------------------------------------------------------------
+
+	/** Notion caps one children write at 100 blocks — longer bodies append in chunks. */
+	private static readonly maxBlocksPerWrite = 100
+
+	/**
+	 * The page body as a tree: one listing per container level, descending only into the types whose
+	 * children carry convertible content and exactly as deep as a write payload may nest — so
+	 * whatever this read renders, {@link replaceBody} can faithfully re-author. A deeper (or
+	 * unsupported) branch stays unfetched, which marks its parent opaque (preserved, invisible)
+	 * via {@link NotionMarkdown.isReplaceable}.
+	 */
+	private async fetchBodyBlocks(blockId: string, depth = 0): Promise<Array<NotionBlock>> {
+		const blocks = await this.getClient().blockChildren(blockId)
+		for (const block of blocks) {
+			if (block.id && block.has_children && depth < NotionMarkdown.maxNestingDepth && NotionMarkdown.containerTypes.has(block.type)) {
+				const content = NotionMarkdown.contentOf(block)
+				if (content) {
+					content.children = await this.fetchBodyBlocks(block.id, depth + 1)
+				}
+			}
+		}
+		return blocks
+	}
+
+	/**
+	 * Re-authors the page body from `markdown` and returns the description the page now holds (the
+	 * markdown normalized through the block mapping, which is what the next sync's read yields).
+	 * Deliberately NOT a wholesale rewrite: only the blocks the description actually showed
+	 * ({@link NotionMarkdown.isReplaceable}) are deleted — an image, embed, sub-page or
+	 * deeper-than-readable branch was invisible in the editor and survives untouched, with the new
+	 * content appended after it. Block deletes are trash moves, recoverable in Notion — together
+	 * that's what makes a collaborative page body safe to edit from a plain markdown field.
+	 */
+	private async replaceBody(pageId: string, markdown: string): Promise<string> {
+		const client = this.getClient()
+		const blocks = NotionMarkdown.toBlocks(markdown)
+		for (const block of await this.fetchBodyBlocks(pageId)) {
+			if (block.id && NotionMarkdown.isReplaceable(block)) {
+				await client.deleteBlock(block.id)
+			}
+		}
+		for (let index = 0; index < blocks.length; index += Notion.maxBlocksPerWrite) {
+			await client.appendBlockChildren(pageId, blocks.slice(index, index + Notion.maxBlocksPerWrite))
+		}
+		return NotionMarkdown.toMarkdown(blocks)
 	}
 
 	// --- Mapping (pure, static — the tested surface) ------------------------------------------------
@@ -674,11 +751,14 @@ export class Notion extends Integration<NotionCredentials> {
 	 * goes through. Every mapped field is assigned so a re-import rebuilds rows exactly; fields
 	 * Notion cannot hold are cleared, never left over from a previous life (e.g. a migrated entry).
 	 *
+	 * `description` is the page BODY's markdown — a page object doesn't carry its body, so callers
+	 * hand in what their separate body fetch (or their own write) produced; absent means empty.
+	 *
 	 * `localWrite` stamps `data.localWriteAt` with OUR clock — set by the create/update paths (a page
 	 * we just wrote), never by a plain sync read: it's the freshness signal the deletion guard reads,
 	 * and keeping it on our own clock is what makes that guard immune to server↔Notion clock skew.
 	 */
-	static applyPage(entry: Entry, page: NotionPage, schema: NotionSchemaIndex, localWrite = false): void {
+	static applyPage(entry: Entry, page: NotionPage, schema: NotionSchemaIndex, options?: { description?: string, localWrite?: boolean }): void {
 		entry.type = EntryType.Task
 		entry.uri = page.id
 		entry.heading = Notion.plainText(page.properties[schema.titleProperty]?.title) || 'Untitled Task'
@@ -689,8 +769,8 @@ export class Notion extends Integration<NotionCredentials> {
 		entry.end = span.end
 		entry.allDay = span.allDay
 		entry.timeZone = span.timeZone
+		entry.description = options?.description ?? ''
 		// Unrepresentable in Notion — kept explicitly empty (see the class doc).
-		entry.description = ''
 		entry.location = ''
 		entry.color = null
 		entry.reminders = null
@@ -698,6 +778,6 @@ export class Notion extends Integration<NotionCredentials> {
 		// `etag`-equivalent: the page's own edit stamp, what the sync's skip check compares. The url
 		// is kept for a future "open in Notion" affordance. `localWriteAt` (our clock) is recorded only
 		// when WE authored this write, so the deletion guard can spare a just-created row.
-		entry.data = { etag: page.last_edited_time, url: page.url, ...(localWrite ? { localWriteAt: Date.now() } : {}) }
+		entry.data = { etag: page.last_edited_time, url: page.url, ...(options?.localWrite ? { localWriteAt: Date.now() } : {}) }
 	}
 }
