@@ -132,6 +132,25 @@ export class Day extends Component {
 						grid-column: 1 / -1;
 						z-index: 2;
 						position: relative;
+
+						/* Chips share this one z-plane on purpose: paint order is DOM order, which timedOn
+						   keeps sorted by start — so a chip always covers what began BEFORE it (a cascading
+						   chip covers its base; a fresh block covers the poking tail of a long earlier chip),
+						   never the other way around. Elevating cascades by inset instead would let a long
+						   tail bury a later short block wholesale. */
+
+						/* A partially covered chip surfaces while selected (its editor is open; set on click,
+						   see EventSegment). Lives here, not in EventSegment.ts: the flat z-index above
+						   outweighs any selector written there ((0,1,2) vs (0,1,1)), so its exception must too. */
+						&[selected] {
+							z-index: 99;
+						}
+
+						/* The same specificity trap would pin an actively dragged chip (or a move's ghost) at
+						   the flat level, beneath later-starting chips — restate its elevation where it wins. */
+						&[dragging] {
+							z-index: 9999;
+						}
 					}
 				}
 			}
@@ -159,7 +178,9 @@ export class Day extends Component {
 							'--overlap-slot': `${segment.overlap?.slot ?? 0}`,
 							'--overlap-total': `${segment.overlap?.total ?? 1}`,
 							'--overlap-span': `${segment.overlap?.span ?? 1}`,
+							'--overlap-inset': `${segment.overlap?.inset ?? 0}`,
 						})}
+						?data-overlay=${(segment.overlap?.inset ?? 0) > 0}
 						resize="block"
 						?has-previous=${segment.hasPrevious}
 						?has-next=${segment.hasNext}

@@ -25,7 +25,8 @@ export interface MonthWeek {
  * set of entries over a window of days it answers three things the views ask for:
  *
  * - `for(entry)` — the entry's per-day segments, linked and memoised (stable identity across renders).
- * - `timedOn(day)` — that day's timed segments, clustered so overlapping ones get side-by-side columns.
+ * - `timedOn(day)` — that day's timed segments, laid out by the group/level cascade model (see
+ *   `cluster`): near-simultaneous starts split side-by-side, later starts ride on top.
  *   This is the *one* genuinely cross-segment computation; everything else a segment derives itself.
  * - `runsIn(from, to, accept)` — one representative segment per matching entry whose run touches the
  *   window, sorted for CSS `grid-auto-flow: dense` to pack into lanes. Used for the all-day lane and,
@@ -224,53 +225,129 @@ export class EntrySegments {
 		return this._monthSlots = slots
 	}
 
-	// — the one per-day cross-segment computation: side-by-side columns for overlapping timed events —
+	// — the one per-day cross-segment computation: how overlapping timed events share the width —
 
+	/** Minutes a group's base must have been running before a newcomer may cascade over it; closer
+	 * starts split side-by-side instead. THE columns-vs-cascade dial of this layout family (compare
+	 * `minimumStartDifference` in react-big-calendar's Google-style algorithm). */
+	static readonly overlayHeadroomMinutes = 45
+
+	/** Minutes a cascading chip must start after an intersecting chip of its own tier to cover it;
+	 * closer starts share the tier side-by-side ("leaves") — smaller than the base headroom because
+	 * a chip's covered header is compact where a base block's title may wrap over several lines. */
+	static readonly overlayCascadeGapMinutes = 30
+
+	/** Rendered cascade depth is capped — beyond this the per-level indents eat the chip width. */
+	private static readonly maxInset = 4
+
+	/**
+	 * The group/level model — the container–row–leaf cascade of Google/Notion Calendar. The START
+	 * of a segment decides its fate, never its extent:
+	 *
+	 * - A segment starting at/after everything before it has ended ANCHORS a new full-width group.
+	 * - A segment starting while the group's base runs either joins the base side-by-side (a MATE,
+	 *   crisp columns — when no base mate has been running for `overlayHeadroomMinutes` yet), or
+	 *   CASCADES as a row above the longest-running such mate. A row's tail may poke past the group;
+	 *   it does NOT extend the group's span, so a later segment anchors a fresh full-width group
+	 *   that paints ABOVE the tail — paint order is start order (DOM order, see Day.ts) — and the
+	 *   tail slides underneath it instead of burying it.
+	 * - Rows sit one level deeper than the deepest row they intersect — of ANY group, so a foreign
+	 *   tail can never tie on depth — except a row starting within `overlayCascadeGapMinutes` of a
+	 *   row it covers shares that row's level side-by-side instead of burying its header.
+	 *
+	 * Multi-day continuations would anchor a group spanning the whole day and swallow everything;
+	 * they render as a full-height backdrop layer instead (columns among themselves), with the
+	 * day's own chips grouped independently above them.
+	 */
 	private static cluster(segments: ReadonlyArray<EntrySegment>): ReadonlyArray<EntrySegment> {
 		const sorted = [...segments].sort((a, b) => a.startMinute !== b.startMinute
 			? a.startMinute - b.startMinute
 			: (b.endMinute - b.startMinute) - (a.endMinute - a.startMinute))
+		const backdrop = sorted.filter(segment => segment.allDay)
+		const chips = sorted.filter(segment => !segment.allDay)
+		EntrySegments.columns(backdrop, 0)
 
-		const clusters = new Array<Array<EntrySegment>>()
-		let current = new Array<EntrySegment>()
-		let clusterEnd = -1
-		for (const segment of sorted) {
-			if (current.length === 0 || segment.startMinute < clusterEnd) {
-				current.push(segment)
-				clusterEnd = Math.max(clusterEnd, segment.endMinute)
+		interface Row { readonly segment: EntrySegment, readonly level: number, readonly host: EntrySegment }
+		interface Group { readonly mates: Array<EntrySegment>, readonly rows: Array<Row>, end: number }
+		const groups = new Array<Group>()
+		const rows = new Array<Row>() // across groups — a foreign tail must stack, never tie
+		let group: Group | undefined
+		for (const segment of chips) {
+			if (!group || segment.startMinute >= group.end) {
+				group = { mates: [segment], rows: [], end: segment.endMinute }
+				groups.push(group)
+				continue
+			}
+			// The still-running mates past their headroom. The group's span guarantees some mate is
+			// still running (end = max of mate ends > this start, and every mate started earlier),
+			// so only the headroom can disqualify them all — folding the newcomer into the mates.
+			const hosts = group.mates.filter(mate => mate.endMinute > segment.startMinute
+				&& mate.startMinute + EntrySegments.overlayHeadroomMinutes <= segment.startMinute)
+			// A row it would cover too soon after that row's own start (its header would vanish):
+			// share that row's level side-by-side instead — or, over a split base, fold to the mates.
+			const collided = group.rows.find(row => row.segment.overlaps(segment)
+				&& row.segment.startMinute + EntrySegments.overlayCascadeGapMinutes > segment.startMinute)
+			if (!hosts.length || (collided && group.mates.length > 1)) {
+				group.mates.push(segment)
+				group.end = Math.max(group.end, segment.endMinute)
+				continue
+			}
+			const host = hosts.reduce((a, b) => b.endMinute >= a.endMinute ? b : a)
+			const level = collided?.level ?? 1 + Math.max(0, ...rows.filter(row => row.segment.overlaps(segment)).map(row => row.level))
+			const row: Row = { segment, level, host }
+			group.rows.push(row)
+			rows.push(row)
+		}
+
+		for (const g of groups) {
+			EntrySegments.columns(g.mates, 0)
+			if (g.mates.length === 1) {
+				const levels = new Map<number, Array<EntrySegment>>()
+				for (const row of g.rows) {
+					const members = levels.get(row.level)
+					if (members) {
+						members.push(row.segment)
+					} else {
+						levels.set(row.level, [row.segment])
+					}
+				}
+				for (const [level, members] of levels) {
+					EntrySegments.columns(members, Math.min(level, EntrySegments.maxInset))
+				}
 			} else {
-				clusters.push(current)
-				current = [segment]
-				clusterEnd = segment.endMinute
+				// Rows over a split base ride their host mate's column instead of a level of their own.
+				for (const row of g.rows) {
+					row.segment.overlap = { ...row.host.overlap!, inset: Math.min(row.level, EntrySegments.maxInset) }
+				}
 			}
 		}
-		if (current.length) {
-			clusters.push(current)
-		}
+		return [...backdrop, ...chips] // backdrop first — the day's own chips paint above it
+	}
 
-		for (const cluster of clusters) {
-			const columns = new Array<Array<EntrySegment>>()
-			const slotOf = new Map<EntrySegment, number>()
-			for (const segment of cluster) {
-				const column = columns.find(c => c.at(-1)!.endMinute <= segment.startMinute)
-				if (column) {
-					column.push(segment)
-					slotOf.set(segment, columns.indexOf(column))
-				} else {
-					slotOf.set(segment, columns.length)
-					columns.push([segment])
-				}
-			}
-			const total = columns.length
-			for (const segment of cluster) {
-				const slot = slotOf.get(segment)!
-				let span = 1
-				while (slot + span < total && !columns[slot + span]!.some(other => other.overlaps(segment))) {
-					span++
-				}
-				segment.overlap = { slot, total, span }
+	/** The greedy side-by-side pass shared by every tier — group mates, cascade levels, and the
+	 * backdrop: first-fit columns, then each member widens rightward through columns that stay free
+	 * for its whole span. Members must arrive sorted by start. */
+	private static columns(segments: ReadonlyArray<EntrySegment>, inset: number): void {
+		const columns = new Array<Array<EntrySegment>>()
+		const slotOf = new Map<EntrySegment, number>()
+		for (const segment of segments) {
+			const column = columns.find(c => c.at(-1)!.endMinute <= segment.startMinute)
+			if (column) {
+				column.push(segment)
+				slotOf.set(segment, columns.indexOf(column))
+			} else {
+				slotOf.set(segment, columns.length)
+				columns.push([segment])
 			}
 		}
-		return sorted
+		const total = columns.length
+		for (const segment of segments) {
+			const slot = slotOf.get(segment)!
+			let span = 1
+			while (slot + span < total && !columns[slot + span]!.some(other => other.overlaps(segment))) {
+				span++
+			}
+			segment.overlap = { slot, total, span, inset }
+		}
 	}
 }

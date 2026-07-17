@@ -110,15 +110,25 @@ export class EntrySegmentComponent extends Component {
 				--overlap-s: var(--overlap-slot, 0);
 				--overlap-t: var(--overlap-total, 1);
 				--overlap-sp: var(--overlap-span, 1);
+				/* A contained, late-enough-starting segment floats above its host (see EntrySegments'
+				   overlay pre-pass): indented one step per nesting level within the host's own column,
+				   flush with its trailing edge, so the host keeps its full width and readable title. */
+				--overlap-i: var(--overlap-inset, 0);
+				--overlap-indent: calc(var(--overlap-i) * 0.75rem);
 
-				margin-inline-start: calc((var(--overlap-s) / var(--overlap-t)) * 100%);
-				width: min(calc((var(--overlap-sp) / var(--overlap-t)) * 100% + 0.25rem), calc(100% - (var(--overlap-s) / var(--overlap-t)) * 100%));
-				z-index: calc(var(--overlap-s) + 1);
+				margin-inline-start: calc((var(--overlap-s) / var(--overlap-t)) * 100% + var(--overlap-indent));
+				width: min(calc((var(--overlap-sp) / var(--overlap-t)) * 100% + 0.25rem - var(--overlap-indent)), calc(100% - (var(--overlap-s) / var(--overlap-t)) * 100% - var(--overlap-indent)));
+				z-index: calc(var(--overlap-s) + 1 + var(--overlap-i));
 				box-sizing: border-box;
 				container-type: size;
 				position: relative;
 				overflow: hidden;
 				transition: background-color 0.15s ease, color 0.15s ease;
+
+				/* A floating chip needs an edge against its same-coloured host beneath. */
+				&[data-overlay] {
+					box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+				}
 
 				/* While actively manipulated (a live resize, or a move's dashed ghost), float full-width above
 				   the cluster instead of re-flowing with it each frame. Overriding the derived vars (not the
@@ -128,6 +138,7 @@ export class EntrySegmentComponent extends Component {
 					--overlap-s: 0;
 					--overlap-t: 1;
 					--overlap-sp: 1;
+					--overlap-i: 0;
 				}
 
 				/* The origin of an in-progress move: stays in place, dimmed, as the reference the user is

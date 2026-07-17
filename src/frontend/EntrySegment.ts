@@ -8,6 +8,9 @@ export interface TimedOverlap {
 	readonly slot: number
 	readonly total: number
 	readonly span: number
+	/** Floating depth: 0 sits in its column; n > 0 floats above its host, indented n steps from
+	 * the host's leading edge (see the overlay pre-pass in `EntrySegments.cluster`). */
+	readonly inset: number
 }
 
 /**
