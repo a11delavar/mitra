@@ -48,6 +48,12 @@ VOLUME /app/data
 
 EXPOSE 3000
 
+# Liveness/readiness for orchestrators and `docker ps`. slim images ship no curl, so probe with
+# Node's built-in http (node -e runs CommonJS, so require() is fine). Honors MITRA_PORT, defaulting
+# to the container-internal 3000. start-period covers ORM init + schema sync at boot.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+	CMD node -e "const p=process.env.MITRA_PORT||3000;require('http').get('http://127.0.0.1:'+p+'/api/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+
 # Links the image to its repo on GHCR (README, permissions) and stamps metadata.
 LABEL org.opencontainers.image.source="https://github.com/a11delavar/mitra"
 LABEL org.opencontainers.image.description="Mitra — an open, self-hostable calendar & task planner that unifies your events, to-dos, and the calendars you already use."

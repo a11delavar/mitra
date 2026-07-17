@@ -14,6 +14,7 @@ import { sourcesRouter } from './sources.js'
 import { userRouter } from './user.js'
 import { locationsRouter } from './locations.js'
 import { pushRouter } from './push.js'
+import { healthRouter } from './health.js'
 import { ReminderScheduler } from './ReminderScheduler.js'
 import { seedDev } from './Dev.js'
 
@@ -31,12 +32,15 @@ app.use(cors())
 // One line per request at debug — the single most useful thing when "nothing is logging": every call as
 // `METHOD /path → status (ms)`, tagged with the user once auth has resolved it (logged at finish, so
 // req.user is populated by then). The app's own surface (/api, /auth) logs at debug; static-asset serving
-// is left to trace so debug stays about the API. Errors get their own detailed line via the handler below.
+// and the health probe are left to trace so debug stays about real API traffic. Errors get their own
+// detailed line via the handler below.
 app.use((req, res, next) => {
 	const startedAt = performance.now()
 	// Classify NOW, not at finish: a mounted router strips `req.path` to its own mount-relative value by
 	// the time `finish` fires, so `/api/user` would otherwise read as `/` and miss the /api test.
-	const appRoute = req.path.startsWith('/api') || req.path.startsWith('/auth')
+	// The health probe is excluded: an orchestrator hits it every few seconds, and that heartbeat would
+	// drown out the actual requests debug exists to show.
+	const appRoute = (req.path.startsWith('/api') || req.path.startsWith('/auth')) && req.path !== '/api/health'
 	res.on('finish', () => {
 		const line = `${req.method} ${req.originalUrl} → ${res.statusCode} (${Math.round(performance.now() - startedAt)}ms)`
 		const tagged = req.user ? `${line} · user ${req.user.id}` : line
@@ -62,6 +66,11 @@ if (oidc) {
 } else {
 	logger.info('Single-user mode: no authentication (set MITRA_OIDC_ISSUER to enable multi-user sign-in)')
 }
+// The one /api route that is PUBLIC: mounted before the auth wall so orchestrators/load balancers can
+// probe it with no credentials (in OIDC mode the wall would otherwise 401 an unauthenticated /api call).
+// It lives under /api — rather than a top-level /health — to leave the root path namespace entirely to
+// the SPA's client-side routes (/entry/xxx, a future /health page, …).
+app.use('/api/health', healthRouter)
 app.use(authMiddleware)
 
 // Dev-only: seed a persisted sample integration + entries (a real local calendar) so the app renders

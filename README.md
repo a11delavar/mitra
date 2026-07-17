@@ -135,6 +135,25 @@ Mitra logs to stdout (so `docker logs` / `docker compose logs` shows everything)
 
 Each level includes everything quieter than it. Set it in your compose `environment:` block (e.g. `MITRA_LOG_LEVEL: debug`). Secrets — passwords and tokens — are never logged, at any level.
 
+### Health check
+Mitra exposes a single, unauthenticated health endpoint at **`GET /api/health`** — for orchestrators, load balancers, and uptime monitors to ask "is this instance serving?". It checks the one thing the app can't run without, the database, and answers:
+
+| Response | Meaning |
+| --- | --- |
+| `200` `{"status":"ok"}` | Serving — the database is reachable |
+| `503` `{"status":"error"}` | Not serving — the database is unreachable (or the check timed out) |
+
+The reply is deliberately bare: no version, build, or dependency details that would help an unauthorized caller fingerprint your deployment. It sends `Cache-Control: no-store`, so probes always hit live state.
+
+The container image already ships a Docker `HEALTHCHECK` pointed at this endpoint, so `docker ps` and `docker inspect` report real health with **nothing to configure** — a fresh container shows `starting`, then `healthy` once the database is up. To watch it directly:
+
+```sh
+curl -f http://localhost:3000/api/health   # exits non-zero unless the instance is healthy
+docker inspect --format '{{.State.Health.Status}}' mitra
+```
+
+For Kubernetes, point both a liveness and a readiness probe at `GET /api/health`.
+
 ## Contributing
 
 Issues and pull requests are welcome — Mitra is built in the open.
