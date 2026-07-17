@@ -211,12 +211,27 @@ export class Days extends Component {
 						align-items: center !important;
 						gap: 0.375rem !important;
 						padding: 0 0.375rem !important;
+						/* clip, not hidden: hidden makes the bar a scroll container, which would capture the
+						   sticky heading below and turn it into a no-op. clip crops identically without one. */
+						overflow: clip !important;
 
 						> .heading {
-							flex: 1 !important;
+							/* Shrink-to-fit, not flex: 1 — the sticky heading needs slack inside the bar to
+							   slide through; shrink still caps a long title at the bar's width, ellipsing as
+							   before (the heading's own overflow keeps its automatic minimum size at 0). */
+							flex: 0 1 auto !important;
 							white-space: nowrap !important;
 							overflow: hidden !important;
 							text-overflow: ellipsis !important;
+							/* A multi-day bar scrolled partly behind the time axis keeps its title in view:
+							   sticky against the horizontal scroller (mitra-days), offset just past the sticky
+							   axis, and constrained to the bar's own box — so the title rides the scroll until
+							   the bar's trailing edge pushes it out. The measured --time-axis-width keeps the
+							   offset correct for any number of zone columns (and 0px under [hideTime]); the
+							   0.375rem matches the bar's inline padding, so sticking begins seamlessly the
+							   moment the bar's edge passes under the axis. */
+							position: sticky;
+							inset-inline-start: calc(var(--time-axis-width, 0px) + 0.375rem);
 						}
 					}
 				}
