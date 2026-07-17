@@ -19,6 +19,12 @@ export class Source {
 	@enumType(() => SourceType) type!: SourceType
 
 	@property({ type: 'string' }) name!: string
+	/** The provider's own name for this source as of the last reconcile — NOT what's shown (`name`
+	 * is). It lets {@link Integration.getSources} tell a REMOTE rename (the provider's name changed)
+	 * apart from a LOCAL one (the user renamed via PUT /sources/:id/name), so a user's custom name
+	 * survives a background sync instead of being reset to the provider's every cycle. Null for a
+	 * source never reconciled against a provider (e.g. a local-only Dev source). */
+	@property({ type: 'string', nullable: true }) remoteName?: string | null
 	@property({ type: 'string', nullable: true }) color?: string
 	@property({ type: 'boolean' }) hidden = false
 	@property({ type: 'boolean' }) enabled = false

@@ -80,6 +80,9 @@ interface StubState {
 	trashError?: Error
 	viewFilter?: unknown
 	viewQuickFilters?: unknown
+	/** Overrides the discovered view list (keep the ids stable to keep source keys stable — change a
+	 * `name` to simulate a REMOTE rename). */
+	views?: Array<{ object: string, id: string, name: string, type: string }>
 }
 
 /** The endpoints the code under test touches, recording writes for assertions. */
@@ -95,7 +98,7 @@ function stubClient(state: StubState) {
 	const client = {
 		me: () => Promise.resolve({ object: 'user', id: 'bot-1', bot: { workspace_name: 'Acme' } }),
 		searchDataSources: () => Promise.resolve([dataSource()]),
-		views: () => Promise.resolve([
+		views: () => Promise.resolve(state.views ?? [
 			{ object: 'view', id: 'view-1', name: 'All', type: 'table' },
 			{ object: 'view', id: 'view-2', name: 'Board', type: 'board' },
 		]),
@@ -585,5 +588,70 @@ describe('Notion connect identity', () => {
 			() => second.applyAndSync(em, { credentials: { token: 'ntn_other' }, sources: [] } as any),
 			/already connected/,
 		)
+	})
+})
+
+// The reconciliation logic under test lives in the base Integration.getSources — Notion is just a
+// convenient concrete provider to drive it through (its fetchSources derives each source's name from
+// the database title + view name).
+describe('Integration source reconciliation (name preservation)', () => {
+	let orm: MikroORM
+
+	before(async () => { orm = await inMemoryOrm() })
+	after(async () => { await orm.close(true) })
+
+	it('keeps a user\'s local rename across a background sync cycle', async () => {
+		const em = orm.em.fork()
+		const { integration, source } = await seed(em, {})
+
+		// The first reconcile records the provider's name as the baseline.
+		await integration.getSources(em)
+		await em.flush()
+		assert.equal(source.remoteName, 'Tasks · All')
+
+		// The user renames the source (PUT /sources/:id/name simply sets source.name).
+		source.name = 'My custom name'
+		await em.flush()
+
+		// A later background sync reconciles again — the custom name must survive, not reset.
+		await integration.getSources(em)
+		await em.flush()
+		assert.equal(source.name, 'My custom name', 'a local rename is not clobbered by a sync cycle')
+	})
+
+	it('preserves a rename made before the remoteName baseline existed (the upgrade case)', async () => {
+		const em = orm.em.fork()
+		const { integration, source } = await seed(em, {})
+
+		// A row that predates the remoteName column: renamed locally, baseline still null.
+		source.name = 'My custom name'
+		source.remoteName = null
+		await em.flush()
+
+		// The first reconcile after upgrade must NOT reset it — it records the baseline silently.
+		await integration.getSources(em)
+		await em.flush()
+		assert.equal(source.name, 'My custom name', 'a pre-existing rename is not reset on the first reconcile')
+		assert.equal(source.remoteName, 'Tasks · All', 'the provider name is captured as the baseline for next time')
+	})
+
+	it('still adopts a rename made at the provider (a local custom name yields to it)', async () => {
+		const em = orm.em.fork()
+		const { integration, source, state } = await seed(em, {})
+		await integration.getSources(em)
+		await em.flush()
+
+		source.name = 'My custom name' // renamed locally...
+		await em.flush()
+
+		// ...but now the VIEW itself is renamed in Notion (same id → same source key, new composite name).
+		state.views = [
+			{ object: 'view', id: 'view-1', name: 'Active', type: 'table' },
+			{ object: 'view', id: 'view-2', name: 'Board', type: 'board' },
+		]
+		await integration.getSources(em)
+		await em.flush()
+		assert.equal(source.name, 'Tasks · Active', 'a provider rename propagates through')
+		assert.equal(source.remoteName, 'Tasks · Active')
 	})
 })

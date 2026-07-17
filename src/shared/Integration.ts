@@ -80,9 +80,10 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 
 	/**
 	 * Reconciles the persisted source rows against the provider's current sources (via
-	 * {@link fetchSources}) and returns the up-to-date list: matching rows are kept — with
-	 * their activation state and id intact — and renamed, new sources are added (deactivated),
-	 * and ones that vanished remotely are removed (their entries cascade away).
+	 * {@link fetchSources}) and returns the up-to-date list: matching rows are kept — with their
+	 * activation state, id, and any LOCAL rename intact (a provider rename still propagates; see the
+	 * `remoteName` handling below), new sources are added (deactivated), and ones that vanished
+	 * remotely are removed (their entries cascade away).
 	 *
 	 * It mutates the entity manager but does **not** flush, so the caller decides whether the
 	 * reconciliation is committed: the editor calls this to preview/refresh the list and simply
@@ -123,10 +124,27 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 			const match = existingByKey.get(source.key)
 			if (!match) {
 				source.integrationId = this.id
+				// Record the provider's name so a later reconcile can tell a REMOTE rename apart from a
+				// LOCAL one (see below).
+				source.remoteName = source.name
 				em.persist(source)
 				return source
 			}
-			match.name = source.name
+			// Follow a REMOTE rename, but never clobber a LOCAL one. `remoteName` is the provider's name
+			// as of the last reconcile.
+			if (match.remoteName === null || match.remoteName === undefined) {
+				// Baseline unknown — a row that predates this column, so we can't tell an intentional
+				// local name from a stale one. Record the provider's name as the baseline WITHOUT
+				// touching the displayed name, so an existing rename is preserved (erring toward what
+				// the user currently sees). From here on the comparison below governs.
+				match.remoteName = source.name
+			} else if (source.name !== match.remoteName) {
+				// The provider's name changed since the last reconcile — a remote rename. Adopt it (a
+				// local custom name yields to it); an unchanged provider name leaves the row's current
+				// name alone, which may be one the user set via PUT /sources/:id/name.
+				match.name = source.name
+				match.remoteName = source.name
+			}
 			return match
 		})
 	}
