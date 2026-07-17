@@ -313,6 +313,31 @@ export class EntrySegmentComponent extends Component {
 						}
 					}
 				}
+
+				/* The recurring badge: entries belonging to a repeating series carry a small repeat glyph — the
+				   same one the editor's Repeat field uses — as a muted, non-interactive mark in the entry's own
+				   colour. Pinned to the top-right corner so it sits on the first line: aligned with the time (or
+				   the title, when there's no time) in a stacked chip, and vertically centred in the short single-
+				   line bars of the all-day lane and month grid. */
+				& > .recurring {
+					position: absolute;
+					inset-block-start: 0.25rem;
+					inset-inline-end: 0.375rem;
+					font-size: 0.85rem;
+					opacity: 0.6;
+					pointer-events: none;
+
+					@container (max-height: 0.5rem) {
+						display: none;
+					}
+				}
+
+				/* Reserve room at the trailing edge of the first line so the badge never overlaps it — the time
+				   (or the title, in the row layouts where it fills the line) truncates before the badge instead. */
+				&:has(> .recurring) > .time,
+				&:has(> .recurring) > .heading {
+					padding-inline-end: 1.35rem;
+				}
 			}
 		`
 	}
@@ -345,6 +370,9 @@ export class EntrySegmentComponent extends Component {
 				<div class="location">
 					<span class="label">${this.segment.entry.location}</span>
 				</div>
+			`}
+			${!this.segment.entry.partOfSeries ? html.nothing : html`
+				<mitra-icon class="recurring" icon="repeat" title=${t('Repeats')}></mitra-icon>
 			`}
 			${!this.resize || !this.segment.entry.persisted ? html.nothing : html`
 				<div class="resize-start"></div>

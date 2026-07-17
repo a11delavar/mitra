@@ -67,6 +67,7 @@ declare global {
 		"Events": unknown
 		"Every": unknown
 		"forward later": unknown
+		"Go to Date…": unknown
 		"Go to Today": unknown
 		"Google account": unknown
 		"Google.ConfigurationHint": unknown
@@ -79,6 +80,7 @@ declare global {
 		"Integration options": unknown
 		"Integration Token": unknown
 		"Interval": unknown
+		"jump navigate pick specific day month year": unknown
 		"Location": unknown
 		"minutes": unknown
 		"Month": unknown
@@ -113,6 +115,7 @@ declare global {
 		"Rename": unknown
 		"Rename time zone": unknown
 		"Repeat": unknown
+		"Repeats": unknown
 		"Reset to calendar color": unknown
 		"Reset to default color": unknown
 		"Save": unknown
