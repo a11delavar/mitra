@@ -15,6 +15,7 @@ import { userRouter } from './user.js'
 import { locationsRouter } from './locations.js'
 import { pushRouter } from './push.js'
 import { healthRouter } from './health.js'
+import { metaRouter } from './meta.js'
 import { ReminderScheduler } from './ReminderScheduler.js'
 import { seedDev } from './Dev.js'
 
@@ -85,6 +86,7 @@ app.use('/api/entries', entriesRouter)
 app.use('/api/integrations', integrationsRouter)
 app.use('/api/sources', sourcesRouter)
 app.use('/api/user', userRouter)
+app.use('/api/meta', metaRouter)
 app.use('/api/locations', locationsRouter)
 app.use('/api/push', pushRouter)
 
@@ -109,7 +111,7 @@ const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
 app.use(errorHandler)
 
 app.listen(PORT, () => {
-	logger.info(`Backend API running on http://localhost:${PORT}`)
+	logger.info(`Mitra ${mitra.version} — backend API running on http://localhost:${PORT}`)
 	// Advertise the active tier so operators know what they're seeing — and discover the knob to turn up.
 	logger.info(`Log level: ${logLevelName} (set MITRA_LOG_LEVEL=debug for per-request detail, trace for SQL)`)
 })

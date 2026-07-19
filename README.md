@@ -41,6 +41,7 @@ services:
       - mitra-data:/app/data
     environment:
       MITRA_URL: 'https://mitra.example.com'
+      # MITRA_NAME: 'My Calendar'                             # name your instance (default: Mitra)
       # Google Calendar (optional)
 	  MITRA_GOOGLE_CLIENT_ID: '….apps.googleusercontent.com'
       MITRA_GOOGLE_CLIENT_SECRET: '…'
@@ -53,6 +54,8 @@ docker compose up -d   # → http://localhost:3000
 ```
 
 Everything you create lives in the `mitra-data` volume — back that up and you've backed up everything. To pin or track a specific version instead of `latest`, see the [available tags](https://github.com/a11delavar/mitra/pkgs/container/mitra).
+
+Want it to feel like your own? Set `MITRA_NAME` (e.g. `'My Calendar'`) and the sidebar and browser tab call the instance that instead of Mitra. The name of the *installed* app (and its icons) is baked into the build, so that part stays Mitra. Wherever it's called, clicking the name opens the About dialog — the running version and its commit.
 
 ## Google Calendar
 

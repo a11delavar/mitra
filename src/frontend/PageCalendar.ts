@@ -9,6 +9,7 @@ import type { EntrySegmentComponent } from './EventSegment.js'
 import { EntryStore } from './EntryStore.js'
 import { CommandPalette } from './CommandPalette.js'
 import { type Command } from './Command.js'
+import { DialogAbout } from './DialogAbout.js'
 import { DialogIntegration } from './DialogIntegration.js'
 
 class FetcherController extends Controller {
@@ -138,6 +139,9 @@ export class PageCalendar extends PageComponent {
 			{ heading: this.view === 'week' ? t('Previous Week') : this.view === 'month' ? t('Previous Month') : t('Previous Year'), icon: 'arrow-left', keywords: t('back earlier'), execute: () => this.navigatingDate = this.navigatingDate.subtract(this.navigationStep) },
 			{ heading: t('Toggle Sidebar'), icon: 'panel-left', keywords: t('collapse expand calendars'), execute: this.toggleSidebar },
 			{ heading: t('Add Integration'), icon: 'plug', keywords: t('connect caldav account calendar'), execute: () => new DialogIntegration({ id: '' }).confirm() },
+			// The version string itself is a keyword, so typing what the sidebar's brand row shows finds these.
+			{ heading: t('About'), icon: 'info', keywords: `${t('version build info release commit')} ${mitra.version}`, execute: () => new DialogAbout().confirm() },
+			{ heading: t('Copy Version'), icon: 'copy', keywords: `${t('about build info release commit')} ${mitra.version}`, execute: () => navigator.clipboard.writeText(`Mitra ${mitra.version}`) },
 		]
 	}
 

@@ -48,6 +48,30 @@ export class CookieAuthenticator implements ApiAuthenticator {
 let integrations = new Array<Integration>()
 let currentUser: User | undefined
 
+/** What the server says about itself (see backend/meta.ts) — the brand row's name, the About
+ * dialog's facts. A plain DTO, not a domain model. */
+export interface InstanceMeta {
+	/** The instance's display name — `MITRA_NAME`, defaulting to Mitra. */
+	name: string
+	/** The SERVER's version — normally the same string the frontend has baked in on `mitra.version`,
+	 * differing only when a stale service-worker cache serves an older bundle. */
+	version: string
+	commit: string
+	/** The server's Node.js runtime version. */
+	node: string
+}
+
+let meta: InstanceMeta | undefined
+
+/** Fetched once at boot alongside the user; a failure costs the branding and About facts, never the app. */
+export async function fetchMeta() {
+	return meta = await Api.get<InstanceMeta>('/meta').catch(() => undefined)
+}
+
+export function getMeta() {
+	return meta
+}
+
 /** The browser's IANA zone, sent as `?tz=` with every entry read/write: the backend stores all-day
  * bounds as zone-less calendar dates and projects them into THIS zone, so all-day entries cover the
  * same dates — midnight to midnight — wherever the server runs and whoever is looking. */

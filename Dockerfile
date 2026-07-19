@@ -20,6 +20,12 @@ COPY src/frontend/package.json src/frontend/
 COPY src/shared/package.json src/shared/
 RUN npm ci
 
+# The version string + commit hash baked into the bundles (see scripts/esbuild.ts). The build context
+# has no .git, so CI computes them and passes them through; an argless local build falls back to `dev`.
+ARG MITRA_VERSION
+ARG MITRA_COMMIT
+ENV MITRA_VERSION=$MITRA_VERSION MITRA_COMMIT=$MITRA_COMMIT
+
 # Build (esbuild reads tsconfig.json for the `shared` path alias).
 COPY tsconfig.json ./
 COPY assets ./assets

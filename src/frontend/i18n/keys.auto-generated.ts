@@ -17,6 +17,8 @@ declare global {
 		"${count:pluralityNumber} years": unknown
 		"${span} before": unknown
 		"${status} — click to toggle, Alt-click for options": unknown
+		"About": unknown
+		"about build info release commit": unknown
 		"Account": unknown
 		"Add integration": unknown
 		"Add Integration": unknown
@@ -39,10 +41,13 @@ declare global {
 		"Close": unknown
 		"collapse expand calendars": unknown
 		"Commands": unknown
+		"Commit": unknown
 		"Connect": unknown
 		"connect caldav account calendar": unknown
 		"Connecting…": unknown
 		"Continue with Google": unknown
+		"Copy": unknown
+		"Copy Version": unknown
 		"Create Entry": unknown
 		"Custom…": unknown
 		"days": unknown
@@ -116,6 +121,7 @@ declare global {
 		"Rename time zone": unknown
 		"Repeat": unknown
 		"Repeats": unknown
+		"Repository": unknown
 		"Reset to calendar color": unknown
 		"Reset to default color": unknown
 		"Save": unknown
@@ -152,6 +158,7 @@ declare global {
 		"unchanged": unknown
 		"Untitled": unknown
 		"Username": unknown
+		"version build info release commit": unknown
 		"Wall clock — no time zone": unknown
 		"Week": unknown
 		"Week View": unknown

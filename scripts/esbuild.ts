@@ -1,9 +1,43 @@
 import type { BuildOptions } from 'esbuild'
 import { join } from 'path'
 import fs from 'fs'
+import { execSync } from 'child_process'
 import favicons from 'favicons'
 
 export const distDir = 'dist'
+
+/**
+ * The build's version identity, baked into every bundle on the `mitra` object (declared in
+ * src/mitra.d.ts). Resolution order: the MITRA_VERSION env var (Docker builds — the image context has
+ * no .git, so CI computes the string and threads it through a build ARG) → `git describe` (local builds
+ * and dev: the tag when exactly on one, `v0.3.0-14-ga1b2c3d[-dirty]` otherwise, a bare hash before the
+ * first tag) → `dev` (no git, no env — e.g. a source tarball).
+ */
+function resolveVersion() {
+	if (process.env.MITRA_VERSION) {
+		return process.env.MITRA_VERSION
+	}
+	try {
+		return execSync('git describe --tags --dirty --always', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+	} catch {
+		return 'dev'
+	}
+}
+
+/** The exact commit, resolved like the version. Baked separately because `git describe` on a tagged
+ * commit is just the tag — release builds would otherwise not know their hash (the About dialog links it). */
+function resolveCommit() {
+	if (process.env.MITRA_COMMIT) {
+		return process.env.MITRA_COMMIT
+	}
+	try {
+		return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+	} catch {
+		return ''
+	}
+}
+
+export const define = { mitra: JSON.stringify({ version: resolveVersion(), commit: resolveCommit() }) }
 
 /** Injected into every bundle (backend, frontend, tests) — see the file's comment. */
 export const inject = ['scripts/injectTemporalPolyfill.ts']
@@ -24,6 +58,7 @@ export const backendOptions: BuildOptions = {
 	banner: { js: 'import { createRequire as __nodeCreateRequire } from \'node:module\'; const require = __nodeCreateRequire(import.meta.url);' },
 	external: ['better-sqlite3', 'sqlite3', 'libsql', '@libsql/client', 'mariadb', 'mysql', 'mysql2', 'pg', 'oracledb', 'tedious', 'tsdav', 'web-push'],
 	inject,
+	define,
 }
 
 /** Frontend bundle — fully self-contained (no externals), code-split into `dist/`. */
@@ -35,6 +70,7 @@ export const frontendOptions: BuildOptions = {
 	legalComments: 'none',
 	outdir: distDir,
 	inject,
+	define,
 }
 
 /** The service worker (push notifications) — its own tiny classic-script bundle: a worker registered

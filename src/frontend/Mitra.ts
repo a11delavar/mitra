@@ -1,6 +1,6 @@
 import { component, css } from '@a11d/lit'
 import { Application, application } from '@a11d/lit-application'
-import { fetchIntegrations, fetchUser } from './Api.js'
+import { fetchIntegrations, fetchMeta, fetchUser, getMeta } from './Api.js'
 import { Weeks } from './Weeks.js'
 import { Months } from './Months.js'
 import { Days } from './Days.js'
@@ -10,6 +10,7 @@ import { PageCalendar } from './PageCalendar.js'
 import { CommandPalette } from './CommandPalette.js'
 import { Sidebar } from './Sidebar.js'
 import { EntryDetailsComponent } from './EventDetails.js'
+import { DialogAbout } from './DialogAbout.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { colorContrast } from './components/colorContrast.js'
 import { IconButton } from './components/IconButton.js'
@@ -40,7 +41,10 @@ export class Mitra extends Application {
 		// Consumed BEFORE the router's first render: the routed page adopts the URL's query into its
 		// parameters and re-pushes it on navigation, which would resurrect an already-stripped param.
 		const pendingIntegrationId = Mitra.consumePendingIntegrationParameter()
-		await Promise.all([fetchIntegrations(), fetchUser()])
+		await Promise.all([fetchIntegrations(), fetchUser(), fetchMeta()])
+		// The framework only re-derives the tab title when a page heading changes — stamp the initial
+		// one now that the instance's name (see documentTitle) has arrived.
+		document.title = this.documentTitle
 		// Where notification permission was granted before, quietly refresh the push subscription so a
 		// push-service-side endpoint rotation never silently mutes reminders. Never prompts.
 		syncPushSubscription()
@@ -51,6 +55,13 @@ export class Mitra extends Application {
 			// The sidebar renders off the module-level integrations cache — nudge it like its own dialogs do.
 			document.querySelector('mitra-sidebar')?.requestUpdate()
 		}
+	}
+
+	/** The tab title, rebuilt by the base Application on every page-heading change. Overridden so a
+	 * renamed instance (MITRA_NAME) carries its name here too — the base formula would fall back to
+	 * the manifest's short name, which is baked at build time and intentionally stays Mitra. */
+	protected override get documentTitle() {
+		return [this.pageHeading, getMeta()?.name || 'Mitra'].filter(Boolean).join(' | ')
 	}
 
 	/** Returning from Google's consent screen lands on `/?integration=<id>` (see the backend's
@@ -102,6 +113,7 @@ export class Mitra extends Application {
 			${EntrySegmentComponent.styles}
 			${EntryDetailsComponent.styles}
 			${EntryDetailsWhen.styles}
+			${DialogAbout.styles}
 			${DialogIntegration.styles}
 			${DialogRecurrenceScope.styles}
 			${TaskStatusComponent.styles}

@@ -28,6 +28,18 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Full history so `git describe` below can reach the nearest tag.
+          fetch-depth: 0
+
+      # The version string baked into the app (see scripts/esbuild.ts): the tag itself on tag builds,
+      # `v0.3.0-14-ga1b2c3d` on main/PR builds — passed into the image as a build ARG since the
+      # Docker context carries no .git to compute it from.
+      - name: Compute version string
+        id: version
+        run: |
+          echo "version=$(git describe --tags --always)" >> "$GITHUB_OUTPUT"
+          echo "commit=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Compute image tags & labels
         id: meta
@@ -64,5 +76,8 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            MITRA_VERSION=${{ steps.version.outputs.version }}
+            MITRA_COMMIT=${{ steps.version.outputs.commit }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

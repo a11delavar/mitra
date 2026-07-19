@@ -1,6 +1,6 @@
 import esbuild from 'esbuild'
 import { glob } from 'node:fs/promises'
-import { inject } from './esbuild.ts'
+import { define, inject } from './esbuild.ts'
 
 const entryPoints = new Array<string>()
 for await (const file of glob('src/**/*.test.ts')) {
@@ -20,4 +20,5 @@ await esbuild.build({
 	external: ['tsdav', 'better-sqlite3'],
 	sourcemap: 'inline',
 	inject,
+	define,
 })

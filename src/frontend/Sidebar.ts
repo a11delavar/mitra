@@ -1,5 +1,6 @@
 import { Component, component, html, css, property, state, event } from '@a11d/lit'
-import { getIntegrations, getUser, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, setDefaultSource, resyncSource, resyncIntegration } from './Api.js'
+import { getIntegrations, getMeta, getUser, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, setDefaultSource, resyncSource, resyncIntegration } from './Api.js'
+import { DialogAbout } from './DialogAbout.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { SourceType, type Source } from 'shared'
 import { outlineStyles } from './components/outlineStyles.js'
@@ -73,6 +74,8 @@ export class Sidebar extends Component {
 					}
 				}
 
+				/* Three regions: the brand row and the footer never move; only the integrations between
+				   them scroll. The nav itself must not scroll, or the brand would ride away with it. */
 				nav {
 					display: flex;
 					flex-direction: column;
@@ -80,8 +83,8 @@ export class Sidebar extends Component {
 					height: 100%;
 					border-inline-end: 1px solid var(--color-surface);
 					padding: 1.5rem 1rem;
-					gap: 2rem;
-					overflow-y: auto;
+					gap: 1rem;
+					overflow: hidden;
 					box-sizing: border-box;
 					font-family: 'Inter', sans-serif;
 					background-color: transparent;
@@ -104,7 +107,6 @@ export class Sidebar extends Component {
 					display: flex;
 					align-items: center;
 					gap: 0.625rem;
-					margin-top: -1rem;
 					padding: 1rem 0.5rem 0;
 					border-top: 1px solid var(--color-surface);
 
@@ -145,15 +147,98 @@ export class Sidebar extends Component {
 					}
 				}
 
+				/* The brand row: the one place the app names itself (MITRA_NAME can rename it). The mark is
+				   the favicons-generated PNG, so replacing assets/mitra.svg rebrands this too. The version
+				   whisper rides at its end, ellipsized when it's a long git-describe string; clicking the
+				   row opens the About dialog. Sized to the main header's row (0.75rem padding + content =
+				   3.5rem) and pulled up against the nav's own padding, so logo and page title share a line. */
+				.brand {
+					all: unset;
+					box-sizing: border-box;
+					display: flex;
+					align-items: center;
+					gap: 0.625rem;
+					height: 3.5rem;
+					flex-shrink: 0;
+					margin-top: -1.5rem;
+					padding-inline: 0.5rem;
+					cursor: pointer;
+					border-radius: var(--border-radius);
+
+					/* The global button skin's hover/active box is far too loud for a brand mark — the only
+					   affordance is the version whisper waking up. */
+					&:not(:disabled) {
+						&:hover, &:active {
+							background: none;
+							box-shadow: none;
+						}
+
+						&:hover .version {
+							opacity: 1;
+						}
+					}
+
+					img {
+						width: 1.375rem;
+						height: 1.375rem;
+					}
+
+					.name {
+						font-size: 0.9375rem;
+						font-weight: 600;
+						color: var(--color-text);
+						white-space: nowrap;
+						overflow: hidden;
+						text-overflow: ellipsis;
+					}
+
+					.version {
+						margin-inline-start: auto;
+						min-width: 0;
+						flex-shrink: 10; /* the long describe strings give way before the name does */
+						overflow: hidden;
+						white-space: nowrap;
+						text-overflow: ellipsis;
+						font-size: 0.625rem;
+						letter-spacing: 0.02em;
+						color: var(--color-text-muted);
+						opacity: 0.7;
+					}
+
+					${outlineStyles};
+				}
+
+				/* The scrolling middle: takes whatever height the brand row and footer leave over. The
+				   scrollbar rides the sidebar's edge (the negative margin reclaims the nav's padding, the
+				   padding gives it back to the content) as a thin, trackless thumb — barely-there until
+				   the list is hovered. */
+				.integrations {
+					flex: 1;
+					min-height: 0;
+					overflow-y: auto;
+					display: flex;
+					flex-direction: column;
+					gap: 2rem;
+					margin-inline-end: -1rem;
+					padding-inline-end: 1rem;
+					scrollbar-width: thin;
+					scrollbar-color: color-mix(in srgb, var(--color-text) 8%, transparent) transparent;
+
+					&:hover {
+						scrollbar-color: color-mix(in srgb, var(--color-text) 22%, transparent) transparent;
+					}
+				}
+
+				/* Pinned below the scroll region — always visible, however long the source list grows. */
+				.footer {
+					flex-shrink: 0;
+					display: flex;
+					flex-direction: column;
+					gap: 1rem;
+				}
+
 				.add-integration {
 					all: unset;
-					margin-top: auto;
-
-					/* The install button rides directly below Add Integration — only one of them may
-					   carry the push-to-bottom margin. */
-					&.install {
-						margin-top: -1rem;
-					}
 					display: flex;
 					align-items: center;
 					justify-content: center;
@@ -464,64 +549,81 @@ export class Sidebar extends Component {
 		this.requestUpdate()
 	}
 
+	/** What the brand row admits about the build: a bare `dev` when the build is main past the last tag
+	 * (the rolling `dev` image — and a git-less local fallback), otherwise the version as it is — the
+	 * tag on a release, the whole describe string for anything murkier: dirty trees, pre-release tags,
+	 * tagless clones. */
+	private get versionLabel() {
+		return mitra.version === 'dev' || /^v\d.*-\d+-g[0-9a-f]+$/.test(mitra.version) ? 'dev' : mitra.version
+	}
+
 	protected override get template() {
 		return html`
 			<div class="backdrop" ?data-open=${this.open} @click=${() => this.openChange.dispatch(false)}></div>
 			<nav ?data-open=${this.open}>
-				${getIntegrations().map(i => html`
-					<div class="integration">
-						<header>
-							<span class="title">${i.credentials?.username || i.type}</span>
-							<mitra-icon-button icon="more-horizontal" label=${t('Integration options')} style="anchor-name: --anchor-${i.id}" @click=${this.toggleMenu}></mitra-icon-button>
-							<menu popover id="menu-${i.id}" style="position-anchor: --anchor-${i.id}">
-								<button @click=${(e: Event) => { this.closeMenu(e); this.openDialog(i.id) }}>
-									<mitra-icon icon="pencil"></mitra-icon>
-									${t('Edit')}
-								</button>
-								<button
-									title=${t('Delete the locally cached entries of every enabled source and import everything again')}
-									@click=${(e: Event) => { this.closeMenu(e); resyncIntegration(i.id).catch(() => void 0) }}>
-									<mitra-icon icon="refresh-cw"></mitra-icon>
-									${t('Re-import entries')}
-								</button>
-								<button class="danger" @click=${(e: Event) => { this.closeMenu(e); this.removeIntegration(i.id) }}>
-									<mitra-icon icon="trash-2"></mitra-icon>
-									${t('Delete')}
-								</button>
-							</menu>
-						</header>
-						<div class="sources">
-							${i.sources.filter(source => source.enabled).map(source => html`
-								<div class="source" ?data-hidden=${source.hidden}>
-									<button class="marker" @click=${() => this.toggleDefault(source)}
-										title=${this.isDefault(source) ? t('Default for new entries — click to unset') : t('Set as the default for new entries')}>
-										<mitra-icon icon=${this.isDefault(source) ? 'star' : 'square'} fill style="color: ${source.color || 'var(--color-text-muted)'}"></mitra-icon>
-									</button>
-									<mitra-icon
-										class="type-icon"
-										icon=${source.type === SourceType.Task ? 'list-todo' : 'calendar'}
-										title=${source.type === SourceType.Task ? t('Tasks') : t('Events')}
-									></mitra-icon>
-									${this.getNameTemplate(source)}
-									${this.getActionsTemplate(source)}
-								</div>
-							`)}
-						</div>
-					</div>
-				`)}
-				<button class="add-integration" @click=${() => this.openDialog('')}>
-					<mitra-icon icon="plus"></mitra-icon>
-					${t('Add Integration')}
+				<button class="brand" title=${`Mitra ${mitra.version}`} @click=${() => new DialogAbout().confirm()}>
+					<img src="/android-chrome-192x192.png" alt="">
+					<span class="name">${getMeta()?.name ?? 'Mitra'}</span>
+					<span class="version">${this.versionLabel}</span>
 				</button>
-				${!canInstall() ? html.nothing : html`
-					<button class="add-integration install"
-						title=${t('Install mitra as an app — it gets its own window, and notifications appear under its own name and icon')}
-						@click=${() => promptInstall()}>
-						<mitra-icon icon="monitor-down"></mitra-icon>
-						${t('Install as an App')}
+				<div class="integrations">
+					${getIntegrations().map(i => html`
+						<div class="integration">
+							<header>
+								<span class="title">${i.credentials?.username || i.type}</span>
+								<mitra-icon-button icon="more-horizontal" label=${t('Integration options')} style="anchor-name: --anchor-${i.id}" @click=${this.toggleMenu}></mitra-icon-button>
+								<menu popover id="menu-${i.id}" style="position-anchor: --anchor-${i.id}">
+									<button @click=${(e: Event) => { this.closeMenu(e); this.openDialog(i.id) }}>
+										<mitra-icon icon="pencil"></mitra-icon>
+										${t('Edit')}
+									</button>
+									<button
+										title=${t('Delete the locally cached entries of every enabled source and import everything again')}
+										@click=${(e: Event) => { this.closeMenu(e); resyncIntegration(i.id).catch(() => void 0) }}>
+										<mitra-icon icon="refresh-cw"></mitra-icon>
+										${t('Re-import entries')}
+									</button>
+									<button class="danger" @click=${(e: Event) => { this.closeMenu(e); this.removeIntegration(i.id) }}>
+										<mitra-icon icon="trash-2"></mitra-icon>
+										${t('Delete')}
+									</button>
+								</menu>
+							</header>
+							<div class="sources">
+								${i.sources.filter(source => source.enabled).map(source => html`
+									<div class="source" ?data-hidden=${source.hidden}>
+										<button class="marker" @click=${() => this.toggleDefault(source)}
+											title=${this.isDefault(source) ? t('Default for new entries — click to unset') : t('Set as the default for new entries')}>
+											<mitra-icon icon=${this.isDefault(source) ? 'star' : 'square'} fill style="color: ${source.color || 'var(--color-text-muted)'}"></mitra-icon>
+										</button>
+										<mitra-icon
+											class="type-icon"
+											icon=${source.type === SourceType.Task ? 'list-todo' : 'calendar'}
+											title=${source.type === SourceType.Task ? t('Tasks') : t('Events')}
+										></mitra-icon>
+										${this.getNameTemplate(source)}
+										${this.getActionsTemplate(source)}
+									</div>
+							`)}
+							</div>
+						</div>
+				`)}
+				</div>
+				<div class="footer">
+					<button class="add-integration" @click=${() => this.openDialog('')}>
+						<mitra-icon icon="plus"></mitra-icon>
+						${t('Add Integration')}
 					</button>
-				`}
-				${this.accountTemplate}
+					${!canInstall() ? html.nothing : html`
+						<button class="add-integration"
+							title=${t('Install mitra as an app — it gets its own window, and notifications appear under its own name and icon')}
+							@click=${() => promptInstall()}>
+							<mitra-icon icon="monitor-down"></mitra-icon>
+							${t('Install as an App')}
+						</button>
+					`}
+					${this.accountTemplate}
+				</div>
 			</nav>
 		`
 	}
