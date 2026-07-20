@@ -53,6 +53,15 @@ function exdateMs(value: ICAL.Time, tzid: string | undefined, zone: string): num
 	return value.isDate ? wallToInstantMs(value, zone) : CalDAV.instantFrom(value, tzid)!.getTime()
 }
 
+/** The series MASTER among a parsed resource's components — the one WITHOUT a RECURRENCE-ID. A
+ * resource bundles the master with its single-occurrence overrides (RFC 4791: one UID per resource)
+ * in NO guaranteed document order — an override authored first would otherwise be mistaken for the
+ * master, and the series (its RRULE and EXDATEs live on the real master) would silently not expand. */
+function masterComponentOf(component: ICAL.Component): ICAL.Component | undefined {
+	const subcomponents = [...component.getAllSubcomponents('vevent'), ...component.getAllSubcomponents('vtodo')]
+	return subcomponents.find(sub => !sub.getFirstProperty('recurrence-id')) ?? subcomponents[0]
+}
+
 /** The zone a series' day math happens in — ALWAYS a real zone, so nothing about expansion, shifting
  * or excluding ever depends on where the container runs. An ALL-DAY series is a sequence of DATES —
  * canonical UTC-midnight encodings (see calendarDate.ts) — so it iterates in UTC (pure date
@@ -117,7 +126,7 @@ export class Occurrences {
 	 */
 	static fromICS(raw: string, zone?: { id: string, start: Date }): Occurrences | undefined {
 		const component = new ICAL.Component(ICAL.parse(raw))
-		const v = component.getFirstSubcomponent('vevent') ?? component.getFirstSubcomponent('vtodo')
+		const v = masterComponentOf(component)
 		const rrule = v?.getFirstPropertyValue('rrule') as ICAL.Recur | null
 		const dtstart = (v?.getFirstPropertyValue('dtstart') ?? v?.getFirstPropertyValue('due')) as ICAL.Time | null
 		if (!v || !rrule || !dtstart) {
@@ -288,7 +297,7 @@ function shiftMs(ms: number, zone: string, from: Date, to: Date): number {
 function exdatesOf(master: Entry): Array<number> {
 	if (master.data?.raw) {
 		const component = new ICAL.Component(ICAL.parse(master.data.raw))
-		const v = component.getFirstSubcomponent('vevent') ?? component.getFirstSubcomponent('vtodo')
+		const v = masterComponentOf(component)
 		return !v ? [] : v.getAllProperties('exdate').flatMap(prop => prop.getValues().map(value => exdateMs(value as ICAL.Time, prop.getParameter('tzid')?.toString(), dayMathZoneOf(master))))
 	}
 	return master.exdates ?? []

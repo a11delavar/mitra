@@ -64,6 +64,27 @@ describe('Occurrences', () => {
 			assert.equal(Occurrences.fromICS(raw), undefined)
 		})
 
+		it('expands off the MASTER even when a bundled override precedes it in document order', () => {
+			// A resource bundles the master with its RECURRENCE-ID overrides in no guaranteed order —
+			// read the first VEVENT blindly and an override-first resource loses its RRULE (and EXDATEs):
+			// the whole series silently stops expanding.
+			const raw = calendar([
+				'BEGIN:VEVENT', 'UID:e1', 'DTSTAMP:20260101T000000Z',
+				'RECURRENCE-ID:20260602T090000Z', 'DTSTART:20260602T120000Z', 'DTEND:20260602T123000Z',
+				'END:VEVENT',
+				'BEGIN:VEVENT', 'UID:e1', 'DTSTAMP:20260101T000000Z',
+				'DTSTART:20260601T090000Z', 'DTEND:20260601T093000Z', 'RRULE:FREQ=DAILY', 'EXDATE:20260603T090000Z',
+				'END:VEVENT',
+			])
+			const occ = Occurrences.fromICS(raw)!.within(at('2026-06-01T00:00:00Z'), at('2026-06-05T23:59:59Z'))
+			assert.deepEqual(occ.map(o => o.start.toISOString()), [
+				'2026-06-01T09:00:00.000Z',
+				'2026-06-02T09:00:00.000Z', // the rule instance — the override row replaces it at render time
+				'2026-06-04T09:00:00.000Z', // Jun 3 is EXDATE'd on the master
+				'2026-06-05T09:00:00.000Z',
+			])
+		})
+
 		it('resolves DATE exdates at the series\' zone\'s midnight — the instant the expansion produces', () => {
 			// An all-day Tehran (UTC+3:30) series: occurrences are Tehran-midnight instants (20:30Z the
 			// previous day). Its EXDATE;VALUE=DATE:20260608 must exclude THAT instant — read at the

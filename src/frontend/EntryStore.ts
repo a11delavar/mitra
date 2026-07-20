@@ -247,7 +247,10 @@ export class EntryStore extends Controller {
 	/** Delete: gone from the view immediately; the server call waits for any in-flight save (a pending
 	 * create has to land first — the delete needs the id it produces). Deleting a series occurrence
 	 * first resolves a {@link resolveScope scope} — this one, this and following, or the whole series —
-	 * and the matching local instances drop at once rather than on the sync echo. */
+	 * and the matching local instances drop at once rather than on the sync echo. A FAILED server call
+	 * reinstates what was optimistically dropped (a 404 stays dropped — the server has it gone already)
+	 * and rethrows: an entry that silently stays hidden until the next reload would masquerade as a
+	 * successful delete while the server still holds it. */
 	static async delete(entry: Entry) {
 		const pending = this.inflight.get(entry)
 		if (entry.recurrenceMasterId) {
@@ -255,47 +258,87 @@ export class EntryStore extends Controller {
 			if (!scope) {
 				return // cancelled — nothing happens
 			}
-			this.dropScoped(entry, scope)
+			const restore = this.dropScoped(entry, scope)
 			await pending?.catch(() => void 0)
 			this.drop(entry)
-			if (scope === 'all') {
-				await EntryStore.persistence.delete(entry.recurrenceMasterId)
-			} else {
-				await EntryStore.persistence.deleteOccurrence(entry, scope)
+			try {
+				if (scope === 'all') {
+					await EntryStore.persistence.delete(entry.recurrenceMasterId)
+				} else {
+					await EntryStore.persistence.deleteOccurrence(entry, scope)
+				}
+			} catch (error) {
+				if (!(error instanceof ApiError && error.status === 404)) {
+					restore()
+				}
+				throw error
 			}
 			return
 		}
 		// A master row (rare — the series itself, before the echo replaces it with occurrences) deletes
 		// the whole series, taking its local occurrences along.
+		const dropped: Array<{ entry: Entry, canonical?: Entry }> = []
 		if (entry.recurrence && entry.id !== undefined) {
 			for (const sibling of [...this.workingById.values()]) {
 				if (sibling !== entry && sibling.recurrenceMasterId === entry.id) {
-					this.drop(sibling)
+					dropped.push(this.captureAndDrop(sibling))
 				}
 			}
 		}
-		this.drop(entry)
+		dropped.push(this.captureAndDrop(entry))
 		await pending?.catch(() => void 0) // its failure is its own — the delete proceeds on what exists
 		this.drop(entry) // a create that landed mid-delete graduated the entry back in — drop it again
 		if (entry.persisted) {
-			await EntryStore.persistence.delete(entry.id!)
+			try {
+				await EntryStore.persistence.delete(entry.id!)
+			} catch (error) {
+				if (!(error instanceof ApiError && error.status === 404)) {
+					this.reinstate(dropped)
+				}
+				throw error
+			}
 		}
 	}
 
 	/** The local half of a scoped series delete: this instance, plus — per scope — its siblings from
-	 * the same series (all of them, or the ones at/after this occurrence's original start). */
-	private static dropScoped(entry: Entry, scope: RecurrenceScope) {
+	 * the same series (all of them, or the ones at/after this occurrence's original start). Returns
+	 * the undo that reinstates the dropped instances, for when the server half fails. */
+	private static dropScoped(entry: Entry, scope: RecurrenceScope): () => void {
 		const masterId = entry.recurrenceMasterId!
 		const cutoff = entry.recurrenceId?.valueOf() ?? -Infinity
+		const dropped: Array<{ entry: Entry, canonical?: Entry }> = []
 		for (const sibling of [...this.workingById.values()]) {
 			if (sibling === entry || sibling.recurrenceMasterId !== masterId) {
 				continue
 			}
 			if (scope === 'all' || (scope === 'following' && (sibling.recurrenceId?.valueOf() ?? -Infinity) >= cutoff)) {
-				this.drop(sibling)
+				dropped.push(this.captureAndDrop(sibling))
 			}
 		}
+		dropped.push(this.captureAndDrop(entry))
+		return () => this.reinstate(dropped)
+	}
+
+	/** Drop an instance while keeping what {@link reinstate} needs to undo it: the instance itself and
+	 * its canonical snapshot (so a rolled-back dirty entry stays dirty rather than becoming its own
+	 * canonical). */
+	private static captureAndDrop(entry: Entry): { entry: Entry, canonical?: Entry } {
+		const canonical = entry.id !== undefined ? this.canonicalById.get(entry.id) : undefined
 		this.drop(entry)
+		return { entry, canonical }
+	}
+
+	/** Put optimistically dropped instances back — the rollback of a delete whose server call failed.
+	 * An id something else claimed meanwhile (a sync echo re-adding the entry) keeps the newer
+	 * instance. */
+	private static reinstate(dropped: ReadonlyArray<{ entry: Entry, canonical?: Entry }>) {
+		for (const { entry, canonical } of dropped) {
+			if (entry.id !== undefined && !this.workingById.has(entry.id)) {
+				this.workingById.set(entry.id, entry)
+				this.canonicalById.set(entry.id, canonical ?? entry.clone())
+			}
+		}
+		this.notify()
 	}
 
 	/** Undo local changes: a draft is dropped (it only ever existed locally); a persisted entry snaps

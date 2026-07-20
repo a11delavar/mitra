@@ -589,6 +589,14 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return changed
 	}
 
+	/** A failed write as a throwable error carrying the server's own explanation — servers put the
+	 * REASON in the response body (Radicale, e.g., names the exact parse/validation complaint there),
+	 * and "412 Precondition Failed" alone leaves a production log with nothing to act on. */
+	private static async writeError(operation: string, response: { status: number, statusText: string, text?: () => Promise<string> }): Promise<Error> {
+		const detail = (await response.text?.().catch(() => ''))?.trim().slice(0, 500)
+		return new Error(`CalDAV ${operation} failed: ${response.status} ${response.statusText}${detail ? ` — ${detail}` : ''}`)
+	}
+
 	/** The freshest copy of the entry's resource — the base for a concurrency retry. */
 	private async refetchResource(entry: Entry): Promise<{ raw: string, etag?: string } | undefined> {
 		const client = await this.getClient()
@@ -624,7 +632,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 		// tsdav returns the raw fetch Response and does NOT throw on a non-2xx.
 		if (response.ok === false) {
-			throw new Error(`CalDAV update failed: ${response.status} ${response.statusText}`)
+			throw await CalDAV.writeError('update', response)
 		}
 		entry.data!.raw = data
 		const etag = response.headers?.get('etag') || response.headers?.get('Etag') || response.headers?.get('ETag')
@@ -848,7 +856,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		// Abort before persisting locally if the server rejected the create (tsdav doesn't throw on non-2xx),
 		// so we never keep a row pointing at an object the server never stored.
 		if (response.ok === false) {
-			throw new Error(`CalDAV create failed: ${response.status} ${response.statusText}`)
+			throw await CalDAV.writeError('create', response)
 		}
 		logger.debug(`Created ${isTask ? 'VTODO' : 'VEVENT'} ${CalDAV.resolveMemberUrl(source.uri, filename)}`)
 		logger.verbose(iCalString)
@@ -894,7 +902,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			}
 			// A 404 means the resource is already gone — exactly what a delete wants.
 			if (response.ok === false && response.status !== 404) {
-				throw new Error(`CalDAV delete failed: ${response.status} ${response.statusText}`)
+				throw await CalDAV.writeError('delete', response)
 			}
 			logger.debug(`Deleted ${entry.uri}`)
 		}

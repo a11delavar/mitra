@@ -516,6 +516,49 @@ describe('EntryStore', () => {
 			assert.deepEqual(transport.calls.occurrenceDeletes, [])
 			assert.deepEqual(transport.calls.delete, [])
 		})
+
+		it('a failed scoped delete reinstates the dropped instances and rethrows', async () => {
+			const transport = fake()
+			EntryStore.persistence = { ...transport.persistence, deleteOccurrence: () => Promise.reject(new Error('CalDAV update failed: 400 Bad Request')) }
+			EntryStore.resolveScope = () => Promise.resolve('this')
+			const target = occurrence()
+			const sibling = occurrence({ id: 'master__2000', recurrenceId: at(11), start: at(11), end: at(12) })
+			EntryStore.applyServerEntries([target, sibling])
+			await assert.rejects(EntryStore.delete(target), /400/)
+			// Back in the view immediately — a failure must not masquerade as a delete until the next reload.
+			assert.deepEqual(new Set(EntryStore.entries), new Set([target, sibling]))
+			assert.equal(EntryStore.isDirty(target), false) // reinstated with its canonical intact
+		})
+
+		it('a failed whole-series delete reinstates every dropped instance', async () => {
+			const transport = fake()
+			EntryStore.persistence = { ...transport.persistence, delete: () => Promise.reject(new Error('boom')) }
+			EntryStore.resolveScope = () => Promise.resolve('all')
+			const first = occurrence()
+			const second = occurrence({ id: 'master__2000', recurrenceId: at(11), start: at(11), end: at(12) })
+			EntryStore.applyServerEntries([first, second])
+			await assert.rejects(EntryStore.delete(first), /boom/)
+			assert.deepEqual(new Set(EntryStore.entries), new Set([first, second]))
+		})
+
+		it('a scoped delete rejected with 404 stays dropped — the series is gone server-side already', async () => {
+			const transport = fake()
+			EntryStore.persistence = { ...transport.persistence, deleteOccurrence: () => Promise.reject(Object.assign(Object.create(ApiError.prototype), { response: { status: 404 } })) }
+			EntryStore.resolveScope = () => Promise.resolve('this')
+			const target = occurrence()
+			EntryStore.applyServerEntries([target])
+			await assert.rejects(EntryStore.delete(target))
+			assert.deepEqual([...EntryStore.entries], [])
+		})
+
+		it('a failed plain delete reinstates the entry', async () => {
+			const transport = fake()
+			EntryStore.persistence = { ...transport.persistence, delete: () => Promise.reject(new Error('boom')) }
+			const working = entry()
+			EntryStore.applyServerEntries([working])
+			await assert.rejects(EntryStore.delete(working), /boom/)
+			assert.deepEqual([...EntryStore.entries], [working])
+		})
 	})
 
 	describe('status round-trip', () => {

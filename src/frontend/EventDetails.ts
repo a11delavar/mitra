@@ -76,10 +76,13 @@ export class EntryDetailsComponent extends Component {
 		this.handleChange().catch(this.reportSaveError)
 	}
 
+	// A failed delete reinstates the entry in the store (see EntryStore.delete) — so unlike a save,
+	// the user SEES the failure; the console then carries the server's reason.
 	private readonly handleDelete = () => {
 		const entry = this.segment!.entry
 		this.hidePopover()
-		return EntryStore.delete(entry)
+		return EntryStore.delete(entry).catch(error =>
+			console.error('Deleting the entry failed — it was restored in the view:', error))
 	}
 
 	private readonly handleClose = (e: Event) => {
