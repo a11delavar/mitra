@@ -41,6 +41,16 @@ jobs:
           echo "version=$(git describe --tags --always)" >> "$GITHUB_OUTPUT"
           echo "commit=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
+      # The committed CHANGELOG.md only covers releases, but a `dev` image built from main carries
+      # commits past the last tag that no section describes. Generate the `[Unreleased]` section into
+      # the build context here — the checkout above has full history, and git-cliff ships as a
+      # standalone binary via npm, so no `npm ci` is needed. Mutates only the CI workspace; nothing is
+      # committed. Tag builds skip this: the release flow guarantees the top section IS the release
+      # (release.yml warns when it's missing).
+      - name: Prepend unreleased notes (dev builds)
+        if: github.ref == 'refs/heads/main'
+        run: npx --yes git-cliff@2 --unreleased --prepend CHANGELOG.md
+
       - name: Compute image tags & labels
         id: meta
         uses: docker/metadata-action@v6

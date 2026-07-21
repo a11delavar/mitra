@@ -39,6 +39,23 @@ userRouter.put('/time-zones', async (req, res) => {
 	return res.json(user)
 })
 
+/** Records the version whose release notes the user has now seen — clears the What's-New dot until
+ * the instance moves past it again. The value is the frontend's own version string (a tag or a
+ * describe string), only sanity-checked here, never interpreted. */
+userRouter.put('/seen-version', async (req, res) => {
+	const version = req.body.version
+	if (typeof version !== 'string' || !version.trim() || version.length > 64) {
+		return res.status(400).json({ error: 'Invalid version' })
+	}
+	const em = orm.em.fork()
+	const user = await em.findOneOrFail(User, { id: req.user.id })
+	user.lastSeenVersion = version
+	await em.flush()
+	// Keep the request's user (a different entity manager's instance) in sync so a follow-up GET reflects the change.
+	req.user.lastSeenVersion = user.lastSeenVersion
+	return res.json(user)
+})
+
 userRouter.put('/default-source', async (req, res) => {
 	const sourceId = (req.body.sourceId ?? null) as string | null
 	const em = orm.em.fork()

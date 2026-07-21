@@ -37,6 +37,7 @@ declare global {
 		"before at ${time}": unknown
 		"Calendar options": unknown
 		"Cancelled": unknown
+		"changelog release notes news updates version": unknown
 		"close": unknown
 		"Close": unknown
 		"collapse expand calendars": unknown
@@ -98,6 +99,7 @@ declare global {
 		"Next Week": unknown
 		"Next Year": unknown
 		"No matches": unknown
+		"No release notes available": unknown
 		"Notion.TokenHint": unknown
 		"now current date jump": unknown
 		"Occurrences": unknown
@@ -158,14 +160,17 @@ declare global {
 		"Toggle sidebar": unknown
 		"Toggle Sidebar": unknown
 		"unchanged": unknown
+		"Unreleased": unknown
 		"Untitled": unknown
 		"Update available: ${version}": unknown
 		"Username": unknown
 		"version build info release commit": unknown
+		"View on GitHub": unknown
 		"Wall clock — no time zone": unknown
 		"Week": unknown
 		"Week View": unknown
 		"weeks": unknown
+		"What's New": unknown
 		"Workspace": unknown
 		"Year": unknown
 		"Year View": unknown

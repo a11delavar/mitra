@@ -97,6 +97,29 @@ export function isBundleStale() {
 	return !!meta && meta.version !== mitra.version
 }
 
+/** One version's section of the changelog shipped INSIDE this build (see backend/changelog.ts) —
+ * the What's-New dialog's data. A plain DTO. */
+export interface ChangelogSection {
+	/** `0.3.0`, or `unreleased` for the section a dev image carries above the tags. */
+	version: string
+	/** The release date (`2026-07-10`); the unreleased section has none. */
+	date?: string
+	/** The section's body, verbatim markdown. */
+	markdown: string
+}
+
+/** What changed in the version you're RUNNING — readable offline; what an update would bring is the
+ * (online) update indicator's concern, not this endpoint's. */
+export function fetchChangelog() {
+	return Api.get<Array<ChangelogSection>>('/meta/changelog')
+}
+
+/** Records the version whose release notes the user has seen — the What's-New dot stays dark until
+ * the instance moves past it again. */
+export async function setSeenVersion(version: string) {
+	return currentUser = await Api.put<User>('/user/seen-version', { version })
+}
+
 /** The browser's IANA zone, sent as `?tz=` with every entry read/write: the backend stores all-day
  * bounds as zone-less calendar dates and projects them into THIS zone, so all-day entries cover the
  * same dates — midnight to midnight — wherever the server runs and whoever is looking. */

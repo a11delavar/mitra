@@ -1,6 +1,6 @@
 import { component, css } from '@a11d/lit'
 import { Application, application } from '@a11d/lit-application'
-import { fetchIntegrations, fetchMeta, fetchUser, getMeta } from './Api.js'
+import { fetchIntegrations, fetchMeta, fetchUser, getMeta, getUser } from './Api.js'
 import { Weeks } from './Weeks.js'
 import { Months } from './Months.js'
 import { Days } from './Days.js'
@@ -11,6 +11,7 @@ import { CommandPalette } from './CommandPalette.js'
 import { Sidebar } from './Sidebar.js'
 import { EntryDetailsComponent } from './EventDetails.js'
 import { DialogAbout } from './DialogAbout.js'
+import { DialogWhatsNew, markChangesSeen } from './DialogWhatsNew.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { colorContrast } from './components/colorContrast.js'
 import { IconButton } from './components/IconButton.js'
@@ -48,6 +49,12 @@ export class Mitra extends Application {
 		// Where notification permission was granted before, quietly refresh the push subscription so a
 		// push-service-side endpoint rotation never silently mutes reminders. Never prompts.
 		syncPushSubscription()
+		// A user with no recorded notes-version yet (fresh install / first sign-in): record the running
+		// version silently, so the sidebar's news dot only ever means "the instance moved since you last
+		// looked", never "welcome". Nothing opens by itself — news waits until asked.
+		if (getUser() && !getUser()?.lastSeenVersion) {
+			markChangesSeen()
+		}
 		await super.initialized()
 		if (pendingIntegrationId) {
 			// Fresh from the OAuth consent flow — tick every discovered source by default (fresh-add UX).
@@ -114,6 +121,7 @@ export class Mitra extends Application {
 			${EntryDetailsComponent.styles}
 			${EntryDetailsWhen.styles}
 			${DialogAbout.styles}
+			${DialogWhatsNew.styles}
 			${DialogIntegration.styles}
 			${DialogRecurrenceScope.styles}
 			${TaskStatusComponent.styles}

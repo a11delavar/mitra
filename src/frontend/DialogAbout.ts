@@ -1,6 +1,7 @@
 import { component, html, css } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { getMeta, isBundleStale } from './Api.js'
+import { DialogWhatsNew } from './DialogWhatsNew.js'
 
 /** Where the project lives — every link in the dialog (commit, releases) hangs off this. */
 const repository = 'https://github.com/a11delavar/mitra'
@@ -123,6 +124,26 @@ export class DialogAbout extends DialogComponent {
 						text-decoration-color: currentColor;
 					}
 				}
+
+				/* The footer's quiet counterweight to the Copy button — a link into the What's-New
+				   dialog, so About stays a glanceable identity card instead of growing a scroll region. */
+				button.whats-new {
+					all: unset;
+					margin-inline-end: auto;
+					align-self: center;
+					cursor: pointer;
+					font-size: 0.8125rem;
+					color: var(--color-text-muted);
+					text-decoration: underline;
+					text-underline-offset: 3px;
+					text-decoration-color: color-mix(in srgb, currentColor 30%, transparent);
+					transition: color 0.15s ease, text-decoration-color 0.15s ease;
+
+					&:hover {
+						color: var(--color-text);
+						text-decoration-color: currentColor;
+					}
+				}
 			}
 		`
 	}
@@ -148,6 +169,7 @@ export class DialogAbout extends DialogComponent {
 					<span class="label">${t('Repository')}</span>
 					<span class="value"><a href=${repository} target="_blank" rel="noreferrer">a11delavar/mitra</a></span>
 				</div>
+				<button slot="footer" class="whats-new" @click=${() => new DialogWhatsNew().confirm()}>${t('What\'s New')}</button>
 			</mitra-dialog>
 		`
 	}

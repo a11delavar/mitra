@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { updateChecker } from './updates.js'
+import { getChangelog } from './changelog.js'
 
 export const metaRouter = Router()
 
@@ -23,4 +24,13 @@ metaRouter.get('/', (_req, res) => {
 		// (one poll per instance, see updates.ts), the browser merely renders this cached verdict.
 		...(updateChecker.update ? { update: updateChecker.update } : {}),
 	})
+})
+
+/** The changelog shipped inside this build, newest-first — the What's-New dialog's data. Authed like
+ * the rest of /meta (release notes reveal the version). `?limit=` caps the sections; the default is
+ * all of them — the file stays small for years to come. */
+metaRouter.get('/changelog', async (req, res) => {
+	const sections = await getChangelog()
+	const limit = Number(req.query.limit) || undefined
+	return res.json(limit ? sections.slice(0, limit) : sections)
 })

@@ -30,6 +30,11 @@ export class User {
 
 	@property({ type: 'json', nullable: true }) timeZones?: Array<UserTimeZone>
 
+	/** The app version whose release notes this user last saw (What's-New dialog) — the sidebar's news
+	 * dot lights when the running version differs. Null until first recorded, so a fresh user starts
+	 * dark: the dot means "the instance moved since you last looked", never "welcome". */
+	@property({ type: 'string', nullable: true }) lastSeenVersion?: string
+
 	constructor(init?: Partial<User>) {
 		Object.assign(this, init)
 	}

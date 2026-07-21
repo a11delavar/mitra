@@ -16,6 +16,9 @@ data
 .vscode
 .idea
 *.md
+# …except the changelog — it's a runtime asset now (the What's-New dialog serves it; see
+# src/backend/changelog.ts), copied into the image by the Dockerfile.
+!CHANGELOG.md
 
 # Misc
 .DS_Store

@@ -1,6 +1,7 @@
 import { Component, component, html, css, property, state, event, eventListener } from '@a11d/lit'
 import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, setDefaultSource, resyncSource, resyncIntegration } from './Api.js'
 import { DialogAbout } from './DialogAbout.js'
+import { hasUnseenChanges } from './DialogWhatsNew.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { SourceType, type Source } from 'shared'
 import { outlineStyles } from './components/outlineStyles.js'
@@ -234,6 +235,17 @@ export class Sidebar extends Component {
 						letter-spacing: 0.02em;
 						color: var(--color-text-muted);
 						opacity: 0.7;
+					}
+
+					/* The news dot: the instance moved since this user last opened What's New. Quiet by
+					   design — no toast, no auto-opened dialog; it goes out when What's New is opened
+					   (About → What's New, or the palette command). */
+					.news-dot {
+						flex-shrink: 0;
+						width: 6px;
+						height: 6px;
+						border-radius: 50%;
+						background: var(--color-accent);
 					}
 
 					${outlineStyles};
@@ -610,6 +622,7 @@ export class Sidebar extends Component {
 					</span>
 					<span class="name">${getMeta()?.name ?? 'Mitra'}</span>
 					<span class="version">${this.versionLabel}</span>
+					${this.updateHint || !hasUnseenChanges() ? html.nothing : html`<span class="news-dot" title=${t('What\'s New')}></span>`}
 				</button>
 				<div class="integrations">
 					${getIntegrations().map(i => html`
