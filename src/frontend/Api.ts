@@ -59,17 +59,42 @@ export interface InstanceMeta {
 	commit: string
 	/** The server's Node.js runtime version. */
 	node: string
+	/** Present when the server's update checker (backend/updates.ts) found something newer than the
+	 * running build — a release tag, or for `:dev` images the state of main (`commits` then says how
+	 * far ahead). `url` is where a human goes to read about it. */
+	update?: { version: string, url: string, commits?: number }
 }
 
 let meta: InstanceMeta | undefined
+let metaFetchedAt = 0
+
+/** Matches the server's own check cadence — refreshing faster learns nothing new. */
+const metaMaxAge = 6 * 60 * 60 * 1000
 
 /** Fetched once at boot alongside the user; a failure costs the branding and About facts, never the app. */
 export async function fetchMeta() {
+	metaFetchedAt = Date.now()
 	return meta = await Api.get<InstanceMeta>('/meta').catch(() => undefined)
+}
+
+/** A tab left open for days would never learn of an update from the boot-time fetch alone — callers
+ * (the sidebar, on becoming visible) nudge this instead of running timers in hidden tabs. */
+export async function refreshMetaIfStale() {
+	if (Date.now() - metaFetchedAt > metaMaxAge) {
+		await fetchMeta()
+	}
+	return meta
 }
 
 export function getMeta() {
 	return meta
+}
+
+/** This tab runs an older bundle than the server — the server was updated underneath it, and a
+ * plain reload IS the update. (The same mismatch DialogAbout papers over by preferring the server's
+ * version for display.) */
+export function isBundleStale() {
+	return !!meta && meta.version !== mitra.version
 }
 
 /** The browser's IANA zone, sent as `?tz=` with every entry read/write: the backend stores all-day

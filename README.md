@@ -42,6 +42,7 @@ services:
     environment:
       MITRA_URL: 'https://mitra.example.com'
       # MITRA_NAME: 'My Calendar'                             # name your instance (default: Mitra)
+      # MITRA_UPDATE_CHECK: 'off'                             # disable the update indicator's GitHub check
       # Google Calendar (optional)
 	  MITRA_GOOGLE_CLIENT_ID: '….apps.googleusercontent.com'
       MITRA_GOOGLE_CLIENT_SECRET: '…'
@@ -56,6 +57,12 @@ docker compose up -d   # → http://localhost:3000
 Everything you create lives in the `mitra-data` volume — back that up and you've backed up everything. To pin or track a specific version instead of `latest`, see the [available tags](https://github.com/a11delavar/mitra/pkgs/container/mitra).
 
 Want it to feel like your own? Set `MITRA_NAME` (e.g. `'My Calendar'`) and the sidebar and browser tab call the instance that instead of Mitra. The name of the *installed* app (and its icons) is baked into the build, so that part stays Mitra. Wherever it's called, clicking the name opens the About dialog — the running version and its commit.
+
+### Update checks
+
+When a newer build than the one you're running exists, a small dot appears on the logo mark and the About dialog links to it — the newest release for tagged versions, or main's newest commits for the rolling `:dev` image. Mitra only *indicates*; pulling the new image stays your deployment's job (`docker compose pull`, watchtower, …).
+
+The server (never the browser) asks github.com a few times a day whether something newer exists. The request carries nothing about your instance beyond the request itself (your IP and the running version in the user agent) — no telemetry, no identifiers, no counts. Set `MITRA_UPDATE_CHECK: 'off'` to disable it entirely; air-gapped instances that simply can't reach GitHub stay quiet on their own.
 
 ## Google Calendar
 

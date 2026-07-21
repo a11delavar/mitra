@@ -16,6 +16,7 @@ import { locationsRouter } from './locations.js'
 import { pushRouter } from './push.js'
 import { healthRouter } from './health.js'
 import { metaRouter } from './meta.js'
+import { updateChecker } from './updates.js'
 import { ReminderScheduler } from './ReminderScheduler.js'
 import { seedDev } from './Dev.js'
 
@@ -26,6 +27,7 @@ const PORT = Number(process.env.MITRA_PORT) || 3000
 
 new Synchronizer(orm).start()
 new ReminderScheduler(orm).start()
+updateChecker.start()
 
 const app = express()
 app.use(cors())

@@ -92,6 +92,7 @@ declare global {
 		"Month View": unknown
 		"navigate": unknown
 		"Never": unknown
+		"New dev build — ${count:pluralityNumber} commits ahead": unknown
 		"new event task add": unknown
 		"Next Month": unknown
 		"Next Week": unknown
@@ -113,6 +114,7 @@ declare global {
 		"Provider": unknown
 		"Re-import entries": unknown
 		"Refresh": unknown
+		"Reload to finish updating": unknown
 		"Reminder": unknown
 		"Reminders": unknown
 		"Remove": unknown
@@ -157,6 +159,7 @@ declare global {
 		"Toggle Sidebar": unknown
 		"unchanged": unknown
 		"Untitled": unknown
+		"Update available: ${version}": unknown
 		"Username": unknown
 		"version build info release commit": unknown
 		"Wall clock — no time zone": unknown

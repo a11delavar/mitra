@@ -1,6 +1,6 @@
 import { component, html, css } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
-import { getMeta } from './Api.js'
+import { getMeta, isBundleStale } from './Api.js'
 
 /** Where the project lives — every link in the dialog (commit, releases) hangs off this. */
 const repository = 'https://github.com/a11delavar/mitra'
@@ -65,6 +65,29 @@ export class DialogAbout extends DialogComponent {
 					}
 				}
 
+				/* The actionable face of the sidebar's update dot: one accent-tinted row between the
+				   identity and the facts — a link to the release/compare page, or a reload button. */
+				.update {
+					all: unset;
+					box-sizing: border-box;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					gap: 0.375rem;
+					width: 100%;
+					margin-bottom: 1.125rem;
+					padding: 0.5rem 0.75rem;
+					border-radius: var(--border-radius);
+					font-size: 0.8125rem;
+					color: var(--color-text);
+					cursor: pointer;
+					background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+
+					&:hover {
+						background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+					}
+				}
+
 				.facts {
 					display: grid;
 					grid-template-columns: auto 1fr;
@@ -114,6 +137,7 @@ export class DialogAbout extends DialogComponent {
 						${!this.releaseUrl ? this.version : html`<a href=${this.releaseUrl} target="_blank" rel="noreferrer">${this.version}</a>`}
 					</span>
 				</div>
+				${this.updateTemplate}
 				<div class="facts">
 					<span class="label">${t('Commit')}</span>
 					<span class="value">
@@ -125,6 +149,25 @@ export class DialogAbout extends DialogComponent {
 					<span class="value"><a href=${repository} target="_blank" rel="noreferrer">a11delavar/mitra</a></span>
 				</div>
 			</mitra-dialog>
+		`
+	}
+
+	/** The detail behind the sidebar's update dot. The stale tab wins — this very tab runs an older
+	 * bundle than the server, so one reload IS the update (and usually clears the rest). Otherwise
+	 * the pending update links where its story lives: the release page (whose body is the changelog
+	 * section, per release.yml), or the compare view for dev builds. */
+	private get updateTemplate() {
+		if (isBundleStale()) {
+			return html`<button class="update" @click=${() => location.reload()}>${t('Reload to finish updating')}</button>`
+		}
+		const update = this.meta?.update
+		return !update ? '' : html`
+			<a class="update" href=${update.url} target="_blank" rel="noreferrer">
+				${update.commits
+					? t('New dev build — ${count:pluralityNumber} commits ahead', { count: update.commits })
+					: t('Update available: ${version}', { version: update.version })}
+				→
+			</a>
 		`
 	}
 

@@ -1,5 +1,5 @@
-import { Component, component, html, css, property, state, event } from '@a11d/lit'
-import { getIntegrations, getMeta, getUser, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, setDefaultSource, resyncSource, resyncIntegration } from './Api.js'
+import { Component, component, html, css, property, state, event, eventListener } from '@a11d/lit'
+import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, setDefaultSource, resyncSource, resyncIntegration } from './Api.js'
 import { DialogAbout } from './DialogAbout.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { SourceType, type Source } from 'shared'
@@ -22,6 +22,17 @@ export class Sidebar extends Component {
 	protected override disconnected() {
 		super.disconnected()
 		this.unsubscribeInstallAvailability?.()
+	}
+
+	/** A tab left open for days still learns of updates: returning to it re-fetches the meta once its
+	 * boot-time copy has aged past the server's own check cadence (see refreshMetaIfStale) — no timers
+	 * tick while the tab is hidden. */
+	@eventListener({ target: document, type: 'visibilitychange' })
+	protected async refreshMeta() {
+		if (document.visibilityState === 'visible') {
+			await refreshMetaIfStale()
+			this.requestUpdate()
+		}
 	}
 
 	static override get styles() {
@@ -181,6 +192,26 @@ export class Sidebar extends Component {
 					img {
 						width: 1.375rem;
 						height: 1.375rem;
+					}
+
+					/* The update badge: a quiet accent dot on the mark's corner — no text, no animation;
+					   the row's title whispers what it means, the About dialog carries the detail. */
+					.mark {
+						position: relative;
+						display: inline-flex;
+						flex-shrink: 0;
+
+						.dot {
+							position: absolute;
+							top: -2px;
+							right: -3px;
+							width: 6px;
+							height: 6px;
+							border-radius: 50%;
+							background: var(--color-accent);
+							/* ringed with the sidebar's background so it reads on the mark's own pixels */
+							box-shadow: 0 0 0 2px var(--color-background);
+						}
 					}
 
 					.name {
@@ -557,12 +588,26 @@ export class Sidebar extends Component {
 		return mitra.version === 'dev' || /^v\d.*-\d+-g[0-9a-f]+$/.test(mitra.version) ? 'dev' : mitra.version
 	}
 
+	/** What the dot on the brand mark means right now, worded for the row's title. The stale-tab case
+	 * wins over a pending server-side update: a reload delivers it in one click — and usually clears
+	 * the other signal along the way. */
+	private get updateHint() {
+		if (isBundleStale()) {
+			return t('Reload to finish updating')
+		}
+		const update = getMeta()?.update
+		return !update ? undefined : t('Update available: ${version}', { version: update.version })
+	}
+
 	protected override get template() {
 		return html`
 			<div class="backdrop" ?data-open=${this.open} @click=${() => this.openChange.dispatch(false)}></div>
 			<nav ?data-open=${this.open}>
-				<button class="brand" title=${`Mitra ${mitra.version}`} @click=${() => new DialogAbout().confirm()}>
-					<img src="/android-chrome-192x192.png" alt="">
+				<button class="brand" title=${[`Mitra ${mitra.version}`, this.updateHint].filter(Boolean).join(' — ')} @click=${() => new DialogAbout().confirm()}>
+					<span class="mark">
+						<img src="/android-chrome-192x192.png" alt="">
+						${!this.updateHint ? '' : html`<span class="dot"></span>`}
+					</span>
 					<span class="name">${getMeta()?.name ?? 'Mitra'}</span>
 					<span class="version">${this.versionLabel}</span>
 				</button>

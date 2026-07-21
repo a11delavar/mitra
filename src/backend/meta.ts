@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { updateChecker } from './updates.js'
 
 export const metaRouter = Router()
 
@@ -18,5 +19,8 @@ metaRouter.get('/', (_req, res) => {
 		version: mitra.version,
 		commit: mitra.commit,
 		node: process.version,
+		// Present only when the update checker has found something newer — the SERVER polls GitHub
+		// (one poll per instance, see updates.ts), the browser merely renders this cached verdict.
+		...(updateChecker.update ? { update: updateChecker.update } : {}),
 	})
 })

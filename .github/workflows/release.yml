@@ -29,6 +29,17 @@ jobs:
             echo "No CHANGELOG.md section found — run 'npm run changelog -- --tag ${{ github.ref_name }}' before tagging." > RELEASE_NOTES.md
           fi
 
+      # The update-check manifest: instances on the release channel resolve it via
+      # `releases/latest/download/mitra.json` (see src/backend/updates.ts). Shipping it as a release
+      # asset — rather than letting checkers hit the API — makes GitHub count every check in the
+      # asset's public `download_count`: the project's only ambient adoption signal (per release,
+      # ≈ active stable instances × 4 checks/day), with zero infrastructure and nothing sent beyond
+      # the request itself.
+      - name: Write update-check manifest
+        run: |
+          printf '{"version":"%s","url":"https://github.com/%s/releases/tag/%s"}\n' \
+            "${{ github.ref_name }}" "${{ github.repository }}" "${{ github.ref_name }}" > mitra.json
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -38,4 +49,5 @@ jobs:
           gh release create "${{ github.ref_name }}" \
             --title "${{ github.ref_name }}" \
             --notes-file RELEASE_NOTES.md \
-            $prerelease
+            $prerelease \
+            mitra.json
