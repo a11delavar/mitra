@@ -27,6 +27,7 @@ import { RemindersField } from './components/RemindersField.js'
 import { TimeZoneHeader, DialogTimeZoneRename } from './components/TimeZoneHeader.js'
 import { TimeZonePicker } from './components/TimeZonePicker.js'
 import { syncPushSubscription } from './push.js'
+import { syncThemeColor } from './pwa.js'
 import { DialogRecurrenceScope } from './components/DialogRecurrenceScope.js'
 import { Markdown } from './Markdown.js'
 import { EntryDetailsWhen } from './EntryDetailsWhen.js'
@@ -49,6 +50,8 @@ export class Mitra extends Application {
 		// Where notification permission was granted before, quietly refresh the push subscription so a
 		// push-service-side endpoint rotation never silently mutes reminders. Never prompts.
 		syncPushSubscription()
+		// Match the WCO title-bar strip (behind the window buttons) to the header, in both themes.
+		syncThemeColor()
 		// A user with no recorded notes-version yet (fresh install / first sign-in): record the running
 		// version silently, so the sidebar's news dot only ever means "the instance moved since you last
 		// looked", never "welcome". Nothing opens by itself — news waits until asked.

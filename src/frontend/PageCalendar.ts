@@ -70,6 +70,11 @@ export type CalendarView = 'week' | 'month' | 'year'
 @component('mitra-page-calendar')
 @route('/')
 export class PageCalendar extends PageComponent {
+	/** Without customizable-select support the classic picker renders an option's text verbatim, so a
+	 * <kbd> hint would fuse into the label ("YearY") — the hints are only rendered where they draw as
+	 * chips. A render-time gate, not CSS: the classic picker is OS-drawn and ignores author styles. */
+	private static readonly customizableSelectsSupported = CSS.supports('appearance', 'base-select')
+
 	@state() navigatingDate = new DateTime()
 	@state() view: CalendarView = 'week'
 	@state() sidebarOpen = PageCalendar.preferredSidebarOpen
@@ -263,42 +268,138 @@ export class PageCalendar extends PageComponent {
 						gap: 0.75rem;
 						padding: 0.75rem 1.25rem;
 
+						/* Window Controls Overlay: the manifest's display_override removes the OS title bar and
+						   hands that strip to us, so nothing is draggable until we say so. Make the header the
+						   drag handle, while every control inside opts back out (a drag region eats clicks).
+
+						   The overlaid buttons sit at the top-inline-END on Windows/Linux and the top-inline-START
+						   on macOS (the traffic lights). env(titlebar-area-*) already encodes which — no OS
+						   sniffing: the trailing gap is the viewport minus the safe area's far edge (the Windows
+						   button cluster; ~0 on macOS), so this inset clears them exactly where they exist. */
+						@media (display-mode: window-controls-overlay) {
+							-webkit-app-region: drag;
+							box-sizing: border-box;
+							min-height: env(titlebar-area-height, auto);
+							padding-inline-end: calc(1.25rem + (100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw)));
+
+							button, select {
+								-webkit-app-region: no-drag;
+							}
+						}
+
+						/* On a cramped header the shortcut hints are noise — every kbd goes (the search's, the
+						   Today chip's, and the view options' — the select picker is still a DOM descendant, so
+						   the container query reaches it). */
+						@container (max-width: 40rem) {
+							kbd {
+								display: none;
+							}
+						}
+
+						/* Two equal columns flank the search, so it stays truly centered — and keeps its size —
+						   however wide the month label renders while scrolling. Once the header runs out of
+						   room, the trailing column stops flexing so the leading one grows into the freed
+						   center, carrying the (by then icon-sized) search over to the controls on the right. */
+						.leading, .trailing {
+							flex: 1 0 0;
+							min-width: 0;
+							display: flex;
+							align-items: center;
+							gap: 0.75rem;
+						}
+
+						.trailing {
+							justify-content: flex-end;
+						}
+
 						h1 {
 							padding: 0;
 							margin: 0;
-							font-size: 1.375rem;
-							font-weight: 600;
+							font-size: 1.125rem;
+							font-weight: 700;
 							letter-spacing: -0.01em;
 							color: var(--color-text);
+							white-space: nowrap;
 						}
 
 						.toggle {
 							font-size: 20px;
 						}
 
-						/* The fake search box: just a button dressed as an input — the real one lives in the palette. */
+						/* Sheds its label on a cramped header, leaving a jump-to-today icon. */
+						.today {
+							mitra-icon {
+								display: none;
+								font-size: 1rem;
+							}
+
+							@container (max-width: 40rem) {
+								mitra-icon {
+									display: inline-flex;
+								}
+
+								span {
+									display: none;
+								}
+							}
+						}
+
+						/* The view select likewise: label out, glyph in. (The classic, OS-drawn select ignores
+						   both the in-button icon and these rules — it just keeps showing the option text.) */
+						select {
+							> button > mitra-icon {
+								display: none;
+								font-size: 1rem;
+							}
+
+							@container (max-width: 40rem) {
+								> button > mitra-icon {
+									display: inline-flex;
+								}
+
+								> button > selectedcontent {
+									display: none;
+								}
+							}
+						}
+
+						/* The fake search box: just a button dressed as an input — the real one lives in the palette.
+						   Fixed width and unshrinkable, so scrolling from a short month into a long one (July →
+						   September) never resizes it — the flanking columns absorb the label's growth, not this. */
 						.search {
-							flex: 1;
-							max-width: 21rem;
+							width: 18rem;
+							flex-shrink: 0;
 							justify-content: flex-start;
 							border-radius: 8px;
 							font-weight: 400;
-							color: var(--color-text-muted);
 
+							/* Muted on the placeholder text only, so the icon reads at the same weight as the
+							   view and Today icons beside it — the three collapse to matching glyphs. */
 							span {
 								flex: 1;
 								text-align: start;
 								white-space: nowrap;
 								overflow: hidden;
+								color: var(--color-text-muted);
 							}
 
-							/* Collapses to a bare icon button when the header runs out of room. */
-							@container (max-width: 40rem) {
-								flex: none;
+							/* Collapses to a bare icon only when even the widest month ("September") could no
+							   longer sit beside the full box — kept this late so the palette stays full as long
+							   as it possibly can. */
+							@container (max-width: 44rem) {
+								width: auto;
 
 								span, kbd {
 									display: none;
 								}
+							}
+						}
+
+						/* Once the search has collapsed, freeze the trailing column at its content width so the
+						   leading one grows into the center — carrying the search icon over to the controls. */
+						@container (max-width: 44rem) {
+							.trailing {
+								flex: none;
 							}
 						}
 					}
@@ -306,6 +407,16 @@ export class PageCalendar extends PageComponent {
 					mitra-weeks, mitra-months, mitra-days {
 						flex: 1;
 						min-height: 0;
+					}
+				}
+
+				/* Leading inset only while the sidebar is collapsed — then the header owns the top-leading
+				   corner and must clear macOS's traffic lights (titlebar-area-x ≈ their width; 0 elsewhere).
+				   With the sidebar open it owns that corner itself (see Sidebar), and insetting the header
+				   too would shove its title needlessly over. */
+				mitra-sidebar:not([open]) + main > header {
+					@media (display-mode: window-controls-overlay) {
+						padding-inline-start: calc(1.25rem + env(titlebar-area-x, 0px));
 					}
 				}
 
@@ -323,6 +434,7 @@ export class PageCalendar extends PageComponent {
 					pointer-events: none;
 				}
 			}
+
 		`
 	}
 
@@ -334,28 +446,32 @@ export class PageCalendar extends PageComponent {
 				<mitra-sidebar ?open=${bind(this, 'sidebarOpen')}></mitra-sidebar>
 				<main>
 					<header>
-						<mitra-icon-button class="toggle" icon="panel-left" label=${t('Toggle sidebar')} @click=${this.toggleSidebar}></mitra-icon-button>
-						<h1>${this.navigatingDate.format(this.view === 'year' ? { year: 'numeric' } : { month: 'long', year: 'numeric' })}</h1>
-						<div style="flex: 1"></div>
+						<div class="leading">
+							<mitra-icon-button class="toggle" icon="panel-left" label=${t('Toggle sidebar')} @click=${this.toggleSidebar}></mitra-icon-button>
+							<h1>${this.navigatingDate.format(this.view === 'year' ? { year: 'numeric' } : { month: 'long', year: 'numeric' })}</h1>
+						</div>
 						<button class="search" title=${t('Search or run a command (${hotkey})', { hotkey: CommandPalette.hotkey })} @click=${() => this.palette.show()}>
 							<mitra-icon icon="search"></mitra-icon>
 							<span>${t('Search or run a command…')}</span>
 							<kbd>${CommandPalette.hotkey}</kbd>
 						</button>
-						<div style="flex: 1"></div>
-						<select .value=${this.view} @change=${(e: Event) => this.setView((e.target as HTMLSelectElement).value as CalendarView)}>
-							<button>
-								<selectedcontent></selectedcontent>
+						<div class="trailing">
+							<select title=${t('View')} .value=${this.view} @change=${(e: Event) => this.setView((e.target as HTMLSelectElement).value as CalendarView)}>
+								<button>
+									<mitra-icon icon="calendar-cog"></mitra-icon>
+									<selectedcontent></selectedcontent>
+								</button>
+								${/* Options built via .map, NOT inline <option> literals: an inline option carrying a lit marker is
+								   present when lit sets the template's innerHTML, and Chrome 150 clones it into <selectedcontent>
+								   right then — duplicating the marker and corrupting lit's part indices. Mapped options aren't
+								   in the template at prep time, so nothing is cloned then. (Do not inline these.) */''}
+								${[{ value: 'year', label: t('Year'), key: 'Y' }, { value: 'month', label: t('Month'), key: 'M' }, { value: 'week', label: t('Week'), key: 'W' }].map(o => html`<option value=${o.value} ?selected=${o.value === this.view}>${o.label}${PageCalendar.customizableSelectsSupported ? html`<kbd>${o.key}</kbd>` : html.nothing}</option>`)}
+							</select>
+							<button class="today" @click=${() => this.navigatingDate = new DateTime()}>
+								<mitra-icon icon="calendar-1"></mitra-icon>
+								<span>${t('Today')}</span> <kbd>T</kbd>
 							</button>
-							${/* Options built via .map, NOT inline <option> literals: an inline option carrying a lit marker is
-							   present when lit sets the template's innerHTML, and Chrome 150 clones it into <selectedcontent>
-							   right then — duplicating the marker and corrupting lit's part indices. Mapped options aren't
-							   in the template at prep time, so nothing is cloned then. (Do not inline these.) */''}
-							${[{ value: 'year', label: t('Year'), key: 'Y' }, { value: 'month', label: t('Month'), key: 'M' }, { value: 'week', label: t('Week'), key: 'W' }].map(o => html`<option value=${o.value} ?selected=${o.value === this.view}>${o.label}<kbd>${o.key}</kbd></option>`)}
-						</select>
-						<button @click=${() => this.navigatingDate = new DateTime()}>
-							${t('Today')} <kbd>T</kbd>
-						</button>
+						</div>
 					</header>
 					${this.view === 'week' ? html`
 						<mitra-days

@@ -97,7 +97,7 @@ export async function writeIndexHtml() {
 		start_url: '/',
 		display: 'standalone',
 		theme_color: '#121314',
-		background: '#121314',
+		background: '#ffffff',
 		// Only the icons something actually consumes: install + notifications (Android/Chromium),
 		// the iOS home screen, and the browser tab. No maskable variant on purpose: the provisional
 		// logo is a transparent glyph, and a transparent maskable renders as a blob on a white disc.
@@ -111,6 +111,15 @@ export async function writeIndexHtml() {
 		},
 	})
 	for (const { name, contents } of [...generated.images, ...generated.files]) {
+		// `favicons` has no option for `display_override`, so patch it into the generated manifest:
+		// browsers that support Window Controls Overlay drop the title bar and let the app paint into
+		// it, while others fall back to plain `display: standalone`.
+		if (name === 'manifest.webmanifest') {
+			const manifest = JSON.parse(contents.toString())
+			manifest.display_override = ['window-controls-overlay']
+			fs.writeFileSync(join(distDir, name), JSON.stringify(manifest, null, 2))
+			continue
+		}
 		fs.writeFileSync(join(distDir, name), contents)
 	}
 

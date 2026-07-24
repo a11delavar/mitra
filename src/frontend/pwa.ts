@@ -44,3 +44,29 @@ export function onInstallAvailabilityChange(listener: () => void): () => void {
 	listeners.add(listener)
 	return () => listeners.delete(listener)
 }
+
+/**
+ * Keep `<meta name="theme-color">` matched to the header's background. That colour is all a web app can
+ * control about the Window Controls Overlay: Chromium paints the strip behind the min/maximize/close
+ * buttons with it (and picks light vs. dark glyphs from its luminance), so matching it to the header
+ * makes those buttons blend in instead of sitting on a seam. The manifest ships a static dark value;
+ * this resolves the live `--color-background` (a `light-dark()`/`color-mix()` expression the meta tag
+ * can't hold literally) and re-resolves it whenever the OS theme flips.
+ */
+export function syncThemeColor(): void {
+	const meta = document.querySelector('meta[name="theme-color"]')
+	if (!meta) {
+		return
+	}
+	const apply = () => {
+		// A throwaway probe inherits :root's custom properties; its computed backgroundColor is the fully
+		// resolved rgb() the meta tag needs (reading the property directly yields the raw expression).
+		const probe = document.createElement('div')
+		probe.style.cssText = 'display: none; background-color: var(--color-background)'
+		document.documentElement.appendChild(probe)
+		meta.setAttribute('content', getComputedStyle(probe).backgroundColor)
+		probe.remove()
+	}
+	apply()
+	matchMedia('(prefers-color-scheme: dark)').addEventListener('change', apply)
+}

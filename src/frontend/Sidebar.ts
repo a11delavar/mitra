@@ -113,6 +113,23 @@ export class Sidebar extends Component {
 							transform: translateX(0);
 						}
 					}
+
+					/* Window Controls Overlay (see PageCalendar's header): with the OS title bar gone, the
+					   sidebar's dead space becomes the window-drag handle. On macOS the window buttons overlay
+					   its top-leading corner, so the first row also drops below the button band — the clamp is
+					   the band height where the buttons are actually on the leading side (titlebar-area-x ≈
+					   their width) and collapses to 0 on Windows/Linux (x = 0), wasting no space there. */
+					@media (display-mode: window-controls-overlay) {
+						padding-top: calc(1.5rem + min(env(titlebar-area-x, 0px), env(titlebar-area-height, 0px)));
+						-webkit-app-region: drag;
+
+						/* A drag region swallows the clicks that land on it, so every control opts back out.
+						   The brand row is the deliberate exception — it stays draggable so the logo moves the
+						   window; only its version whisper opts out (see .version) to keep About reachable. */
+						button:not(.brand), mitra-icon-button, mitra-color-picker, [contenteditable], [popover] {
+							-webkit-app-region: no-drag;
+						}
+					}
 				}
 
 				.account {
@@ -185,7 +202,7 @@ export class Sidebar extends Component {
 							box-shadow: none;
 						}
 
-						&:hover .version {
+						&:hover .version .label {
 							opacity: 1;
 						}
 					}
@@ -228,24 +245,50 @@ export class Sidebar extends Component {
 						margin-inline-start: auto;
 						min-width: 0;
 						flex-shrink: 10; /* the long describe strings give way before the name does */
-						overflow: hidden;
-						white-space: nowrap;
-						text-overflow: ellipsis;
+						display: inline-flex;
+						align-items: center;
+						gap: 0.25rem;
 						font-size: 0.625rem;
 						letter-spacing: 0.02em;
 						color: var(--color-text-muted);
-						opacity: 0.7;
-					}
 
-					/* The news dot: the instance moved since this user last opened What's New. Quiet by
-					   design — no toast, no auto-opened dialog; it goes out when What's New is opened
-					   (About → What's New, or the palette command). */
-					.news-dot {
-						flex-shrink: 0;
-						width: 6px;
-						height: 6px;
-						border-radius: 50%;
-						background: var(--color-accent);
+						/* Dimmed on the text only — the news dot inside must keep its full accent. */
+						.label {
+							overflow: hidden;
+							white-space: nowrap;
+							text-overflow: ellipsis;
+							opacity: 0.7;
+						}
+
+						/* The news dot: the instance moved since this user last opened What's New. Quiet by
+						   design — no toast, no auto-opened dialog; it goes out when What's New is opened
+						   (About → What's New, or the palette command). */
+						.news-dot {
+							flex-shrink: 0;
+							width: 6px;
+							height: 6px;
+							border-radius: 50%;
+							background: var(--color-accent);
+						}
+
+						/* Under Window Controls Overlay the brand row drags the window, making this whisper
+						   the row's only click-through to About — so it opts out of the drag region and gets
+						   a real hit area with a hover affordance. */
+						@media (display-mode: window-controls-overlay) {
+							-webkit-app-region: no-drag;
+							cursor: pointer;
+							padding: 0.125rem 0.375rem;
+							margin-inline-end: -0.375rem;
+							border-radius: var(--border-radius);
+
+							&:hover {
+								background: color-mix(in srgb, var(--color-text) 8%, transparent);
+
+								.label {
+									opacity: 1;
+								}
+							}
+						}
 					}
 
 					${outlineStyles};
@@ -491,6 +534,7 @@ export class Sidebar extends Component {
 					}
 				}
 			}
+
 		`
 	}
 
@@ -621,8 +665,10 @@ export class Sidebar extends Component {
 						${!this.updateHint ? '' : html`<span class="dot"></span>`}
 					</span>
 					<span class="name">${getMeta()?.name ?? 'Mitra'}</span>
-					<span class="version">${this.versionLabel}</span>
-					${this.updateHint || !hasUnseenChanges() ? html.nothing : html`<span class="news-dot" title=${t('What\'s New')}></span>`}
+					<span class="version">
+						<span class="label">${this.versionLabel}</span>
+						${this.updateHint || !hasUnseenChanges() ? html.nothing : html`<span class="news-dot" title=${t('What\'s New')}></span>`}
+					</span>
 				</button>
 				<div class="integrations">
 					${getIntegrations().map(i => html`
