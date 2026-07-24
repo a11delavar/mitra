@@ -1,4 +1,4 @@
-import { Component, component, html, css, property, state, event } from '@a11d/lit'
+import { Component, component, html, css, property, state, event, query } from '@a11d/lit'
 import { type Entry } from 'shared'
 import { searchLocations, type LocationSuggestion } from '../Api.js'
 
@@ -88,8 +88,8 @@ export class LocationField extends Component {
 
 	protected override createRenderRoot() { return this }
 
-	private get field() { return this.querySelector('textarea') }
-	private get menu() { return this.querySelector<HTMLElement>('menu[popover]') }
+	@query('textarea') private readonly field?: HTMLTextAreaElement
+	@query('menu[popover]') private readonly menu?: HTMLElement
 
 	private readonly handleFocus = () => {
 		requestPosition()

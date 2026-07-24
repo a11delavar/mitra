@@ -27,6 +27,7 @@ export class CommandPalette extends Component {
 	@state() private selectedIndex = 0
 
 	@query('dialog') private readonly dialog!: HTMLDialogElement
+	@query('menu [data-selected]') private readonly selectedResult?: HTMLElement
 
 	protected override createRenderRoot() { return this }
 
@@ -132,7 +133,7 @@ export class CommandPalette extends Component {
 		// whole-document layout (reflowing the entire calendar) for nothing. The guard makes a closed
 		// palette's update a no-op — no layout thrash during calendar scrolling.
 		if (this.dialog?.open) {
-			this.querySelector('menu [data-selected]')?.scrollIntoView({ block: 'nearest' })
+			this.selectedResult?.scrollIntoView({ block: 'nearest' })
 		}
 	}
 

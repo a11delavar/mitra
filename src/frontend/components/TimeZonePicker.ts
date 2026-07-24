@@ -1,4 +1,4 @@
-import { Component, component, html, css, property, state, event, eventListener, repeat } from '@a11d/lit'
+import { Component, component, html, css, property, state, event, eventListener, repeat, query } from '@a11d/lit'
 import { type UserTimeZone } from 'shared'
 
 // --- Zone presentation (shared by the axis header, the picker, and the entry editor) ----------------
@@ -112,6 +112,9 @@ export class TimeZonePicker extends Component {
 	@state() private query = ''
 	@state() private activeIndex = -1
 
+	@query('input') private readonly searchInput?: HTMLInputElement
+	@query('.rows [data-active]') private readonly activeRow?: HTMLElement
+
 	protected override createRenderRoot() { return this }
 
 	protected override connected() {
@@ -141,12 +144,12 @@ export class TimeZonePicker extends Component {
 			// Open highlighted on the current zone in its natural position, and CENTER it in view — so the
 			// user sees it selected among its offset-neighbours (Enter re-picks it). Typing resets to -1.
 			this.activeIndex = this.filteredRows.findIndex(row => row.id === this.selected)
-			const input = this.querySelector('input')
+			const input = this.searchInput
 			input?.focus()
 			if (input) {
 				input.value = ''
 			}
-			this.updateComplete.then(() => this.querySelector('.rows [data-active]')?.scrollIntoView({ block: 'center' }))
+			this.updateComplete.then(() => this.activeRow?.scrollIntoView({ block: 'center' }))
 		}
 	}
 
@@ -166,7 +169,7 @@ export class TimeZonePicker extends Component {
 			e.preventDefault()
 			const delta = e.key === 'ArrowDown' ? 1 : -1
 			this.activeIndex = rows.length ? (this.activeIndex + delta + rows.length) % rows.length : -1
-			this.updateComplete.then(() => this.querySelector('.rows [data-active]')?.scrollIntoView({ block: 'nearest' }))
+			this.updateComplete.then(() => this.activeRow?.scrollIntoView({ block: 'nearest' }))
 		} else if (e.key === 'Enter') {
 			// The highlighted row, or — straight after typing — the top match.
 			e.preventDefault()

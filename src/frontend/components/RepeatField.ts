@@ -1,4 +1,4 @@
-import { Component, component, html, css, property, state, event } from '@a11d/lit'
+import { Component, component, html, css, property, state, event, query } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
 import { Recurrence, WEEKDAY_CODES, type Entry, type Frequency, type RecurrencePreset } from 'shared'
 
@@ -58,7 +58,11 @@ export class RepeatField extends Component {
 	 * and defaults derived from a later occurrence would write a rule that no longer matches the anchor,
 	 * silently dropping every occurrence before the new rule's first match. */
 	private get start(): DateTime { return this.entry.seriesStart ?? this.entry.start! }
-	private get dialog() { return this.querySelector<HTMLDialogElement>('dialog') }
+
+	@query('dialog') private readonly dialog?: HTMLDialogElement
+	// The preset dropdown (the first select) and the Custom dialog's frequency select.
+	@query('select') private readonly presetSelect?: HTMLSelectElement
+	@query('dialog select') private readonly freqSelect?: HTMLSelectElement
 
 	private get currentLabel(): string {
 		return this.entry.recurrence ? this.entry.recurrence.describe(this.start) : t('Does not repeat')
@@ -105,9 +109,8 @@ export class RepeatField extends Component {
 	/** Keep the select's own (dirty-flagged) value on the checked item — after a "Custom…" pick, a dialog
 	 * cancel, or an external change re-render, the attribute alone doesn't move it back. */
 	private syncSelect() {
-		const select = this.querySelector('select')
-		if (select) {
-			select.value = this.menuItems.find(item => item.checked)?.id ?? 'none'
+		if (this.presetSelect) {
+			this.presetSelect.value = this.menuItems.find(item => item.checked)?.id ?? 'none'
 		}
 	}
 
@@ -116,9 +119,8 @@ export class RepeatField extends Component {
 		// The Custom dialog's frequency select suffers the same value-before-options timing on its first
 		// render — without this it can display "day" while the rule (and the visible weekday chips) are
 		// weekly.
-		const freq = this.querySelector<HTMLSelectElement>('dialog select')
-		if (freq && this.draft) {
-			freq.value = this.draft.freq
+		if (this.freqSelect && this.draft) {
+			this.freqSelect.value = this.draft.freq
 		}
 	}
 

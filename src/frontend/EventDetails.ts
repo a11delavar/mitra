@@ -1,4 +1,4 @@
-import { component, html, property, state, Component, css, eventListener, event, Binder } from '@a11d/lit'
+import { component, html, property, state, Component, css, eventListener, event, Binder, query } from '@a11d/lit'
 import { EntryType, TaskStatus, SourceType, type Integration } from 'shared'
 import type { EntrySegment } from './EntrySegment.js'
 import { getIntegrations, getSource, getCapabilities } from './Api.js'
@@ -35,6 +35,9 @@ export class EntryDetailsComponent extends Component {
 
 	protected override createRenderRoot() { return this }
 
+	@query('.title') private readonly titleInput?: HTMLInputElement
+	@query('.description textarea') private readonly descriptionTextarea?: HTMLTextAreaElement
+
 	@eventListener('beforetoggle')
 	handleBeforeToggle(e: ToggleEvent) {
 		this.open = e.newState === 'open'
@@ -47,7 +50,7 @@ export class EntryDetailsComponent extends Component {
 			// Only grab focus for a fresh, untitled entry (e.g. a just-dropped draft); don't steal it when
 			// reopening one that already has a title.
 			if (!this.segment?.entry.heading?.trim()) {
-				requestAnimationFrame(() => this.querySelector<HTMLInputElement>('.title')?.focus())
+				requestAnimationFrame(() => this.titleInput?.focus())
 			}
 		}
 	}
@@ -533,7 +536,7 @@ export class EntryDetailsComponent extends Component {
 			}
 			this.editingDescription = true
 			this.updateComplete.then(() => {
-				const textarea = this.querySelector<HTMLTextAreaElement>('.description textarea')
+				const textarea = this.descriptionTextarea
 				textarea?.focus()
 				textarea?.setSelectionRange(textarea.value.length, textarea.value.length)
 			})

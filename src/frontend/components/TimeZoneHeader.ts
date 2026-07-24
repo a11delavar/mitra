@@ -1,4 +1,4 @@
-import { Component, component, html, css, state, event, repeat } from '@a11d/lit'
+import { Component, component, html, css, state, event, repeat, query } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { type UserTimeZone } from 'shared'
 import { getTimeZones, setTimeZones } from '../Api.js'
@@ -22,7 +22,7 @@ export class TimeZoneHeader extends Component {
 
 	protected override createRenderRoot() { return this }
 
-	private get picker() { return this.querySelector<TimeZonePicker>('mitra-time-zone-picker') }
+	@query('mitra-time-zone-picker') private readonly picker?: TimeZonePicker
 
 	private async commit(timeZones: Array<UserTimeZone>) {
 		await setTimeZones(timeZones)

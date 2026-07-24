@@ -1,4 +1,4 @@
-import { Component, component, html, css, property, state, event } from '@a11d/lit'
+import { Component, component, html, css, property, state, event, query } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { Temporal } from 'temporal-polyfill'
 import { FLOATING_TIME_ZONE, type Entry } from 'shared'
@@ -146,7 +146,8 @@ export class EntryDetailsWhen extends Component {
 	// moves the instants (Entry.setTimeZone) — the "show this instant elsewhere" reading lives in the
 	// time axis' zone columns, not here.
 
-	private get zonePicker() { return this.querySelector<TimeZonePicker>('mitra-time-zone-picker') }
+	@query('mitra-time-zone-picker') private readonly zonePicker?: TimeZonePicker
+	@query('.end-date') private readonly endDateInput?: HTMLInputElement
 
 	/** The entry was authored in another (real) zone than the browser's — the chip expands then.
 	 * FLOATING is deliberately not "foreign": it's no zone at all (and no IANA id to label the chip
@@ -224,7 +225,7 @@ export class EntryDetailsWhen extends Component {
 		await this.updateComplete
 		await new Promise(resolve => setTimeout(resolve, 100))
 		try {
-			this.querySelector<HTMLInputElement>('.end-date')?.showPicker()
+			this.endDateInput?.showPicker()
 		} catch {
 			// Couldn't auto-open (no transient activation / unsupported) — the revealed field still works.
 		}

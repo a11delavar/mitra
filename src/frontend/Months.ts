@@ -1,4 +1,4 @@
-import { Component, component, html, property, css, repeat, guard, type PropertyValues, eventListener, event, styleMap, ifDefined } from '@a11d/lit'
+import { Component, component, html, property, css, repeat, guard, type PropertyValues, eventListener, event, styleMap, ifDefined, query } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { type Entry } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
@@ -41,6 +41,11 @@ export class Months extends Component {
 	protected readonly entryDrag = new EntryDragController(this, 'year')
 	protected readonly density = new MonthsDensityController(this)
 
+	// The sticky corner (its height is the header offset) and any rendered day cell (its height is one
+	// month row) — measured live in the scroll handler.
+	@query('.corner') private readonly corner?: HTMLElement
+	@query('mitra-day') private readonly dayCell?: HTMLElement
+
 	private get segments(): EntrySegments { return EntrySegments.of(this.entries, this.buffer.window.days) }
 
 	/** Day-slot columns: a full month of 31 plus the widest weekday offset. */
@@ -82,11 +87,11 @@ export class Months extends Component {
 		if (!months.length || this.density.active) {
 			return
 		}
-		const headerHeight = this.querySelector('.corner')?.clientHeight ?? 0
+		const headerHeight = this.corner?.clientHeight ?? 0
 		// Measure the row pitch from a rendered cell (its height is exactly one month row) plus the 1px grid
 		// gap, rather than deriving it from scrollHeight/count: Firefox miscomputes this tall grid's
 		// scrollHeight (≈ the viewport), which would map any scroll onto the entire buffer — a decade a nudge.
-		const cell = this.querySelector<HTMLElement>('mitra-day')
+		const cell = this.dayCell
 		const rowHeight = cell ? cell.getBoundingClientRect().height + 1 : (target.scrollHeight - headerHeight) / months.length
 		const centerRow = Math.floor((target.scrollTop + target.clientHeight / 2 - headerHeight) / rowHeight)
 		const month = months[Math.max(0, Math.min(centerRow, months.length - 1))]

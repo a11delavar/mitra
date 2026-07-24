@@ -1,4 +1,4 @@
-import { Component, component, html, css, property, state, event } from '@a11d/lit'
+import { Component, component, html, css, property, state, event, query } from '@a11d/lit'
 import { type Entry } from 'shared'
 import { enablePushNotifications } from '../push.js'
 
@@ -70,8 +70,10 @@ export class RemindersField extends Component {
 
 	protected override createRenderRoot() { return this }
 
-	private get menu() { return this.querySelector<HTMLElement>('menu[popover]') }
-	private get dialog() { return this.querySelector('dialog') }
+	@query('menu[popover]') private readonly menu?: HTMLElement
+	@query('dialog') private readonly dialog?: HTMLDialogElement
+	// The custom dialog's unit select.
+	@query('dialog select') private readonly unitSelect?: HTMLSelectElement
 
 	private get reminders(): Array<number> {
 		return this.entry.reminders ?? []
@@ -135,9 +137,8 @@ export class RemindersField extends Component {
 
 	protected override updated() {
 		// The dialog's unit select suffers the value-before-options timing on its first render.
-		const unit = this.querySelector<HTMLSelectElement>('dialog select')
-		if (unit && this.draft) {
-			unit.value = this.draft.unit
+		if (this.unitSelect && this.draft) {
+			this.unitSelect.value = this.draft.unit
 		}
 	}
 

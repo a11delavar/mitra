@@ -1,4 +1,4 @@
-import { Component, component, html, css, property, event } from '@a11d/lit'
+import { Component, component, html, css, property, event, query } from '@a11d/lit'
 import { type Entry, EntryType, TaskStatus } from 'shared'
 import { getCapabilities } from '../Api.js'
 import { EntryStore } from '../EntryStore.js'
@@ -52,9 +52,7 @@ export class TaskStatusComponent extends Component {
 		return this.entry?.status ?? TaskStatus.ToDo
 	}
 
-	private get menu() {
-		return this.querySelector<HTMLElement>('menu[popover]')
-	}
+	@query('menu[popover]') private readonly menu?: HTMLElement
 
 	private commit(status: TaskStatus) {
 		if (this.entry.status === status) {
