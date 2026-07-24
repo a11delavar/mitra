@@ -7,12 +7,8 @@
 services:
   mitra:
     image: ghcr.io/a11delavar/mitra:latest
-    container_name: mitra
     restart: unless-stopped
     ports:
       - '3000:3000'
     volumes:
-      - mitra-data:/app/data
-
-volumes:
-  mitra-data:
+      - ~/mitra:/app/data
