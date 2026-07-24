@@ -10,11 +10,28 @@ export class EntryDetailsComponent extends Component {
 	@property({
 		type: Boolean,
 		updated(this: EntryDetailsComponent) {
-			if (this.open) {
-				this.showPopover()
-			} else {
-				this.hidePopover()
-			}
+			// Reconcile the native popover to `open` on the next frame — never synchronously here — for two
+			// reasons that both otherwise close the popover the instant it opens:
+			//   1. Tap-to-open ends with a trusted `click` that (since Chromium 135) is delivered to the grid
+			//      container holding pointer capture — i.e. OUTSIDE this popover. Showing synchronously lets
+			//      the (experimental, soon-to-ship) click-based popover light-dismiss use that click to close
+			//      us the instant we opened, so a real click reads as "nothing happens".
+			//   2. `handleBeforeToggle` mirrors browser-driven toggles back into `open` (through the two-way
+			//      bind + `openChange`); calling show/hidePopover from inside that `beforetoggle` dispatch is
+			//      the re-entrancy the platform warns about ("beforetoggle … triggered another popover to be
+			//      shown").
+			// Deferring past the current task, then reconciling against the popover's real state, avoids both.
+			requestAnimationFrame(() => {
+				if (!this.isConnected) {
+					return
+				}
+				const isOpen = this.matches(':popover-open')
+				if (this.open && !isOpen) {
+					this.showPopover()
+				} else if (!this.open && isOpen) {
+					this.hidePopover()
+				}
+			})
 		}
 	}) open = false
 

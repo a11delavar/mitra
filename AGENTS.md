@@ -131,6 +131,7 @@ When writing code for this project, you must adhere to the following architectur
 ## Conventions
 
 - **Commits:** single-line `type: Capitalized phrase`. The type is load-bearing — `CHANGELOG.md` is generated from commit subjects (git-cliff, `cliff.toml`), so it decides the changelog section: `feat:`→Features, `fix:`→Bug Fixes, `perf:`→Performance, `refactor:`→Refactors, `docs:`→Documentation, `test:`→Tests, **`ci:`/`build:`/`infra:`→Infrastructure**, `chore:`→Chores, anything else→Other. `release:` commits are excluded. Commit ONLY when explicitly asked.
+- **The commit subject IS the release note** — it lands verbatim in `CHANGELOG.md`, so write it for end users, not for the diff: state the visible change or benefit in plain language and avoid implementation detail (component/file names, and internal mechanics/jargon like *popover*, *pointer capture*, *light-dismiss*). Prefer the effect the user sees ("Keep the entry editor opening reliably when clicking an entry") over the cause ("Defer showPopover past the captured-pointer click"). `refactor:`/`chore:`/`ci:` subjects are the exception — they have no user-facing effect, so describe the internal change plainly.
 - Indent with **tabs**.
 - **License:** the project is **AGPL-3.0-only** (`LICENSE`, `package.json`, image label). Keep new workspace manifests consistent.
 - Public repo: keep secrets/credentials and personal identifiers out of committed files; leave the git author config unchanged.
