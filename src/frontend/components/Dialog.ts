@@ -58,7 +58,11 @@ export class Dialog extends Component {
 				border-radius: 14px;
 				padding: 1.25rem;
 				min-width: 360px;
-				max-width: min(420px, 92vw);
+				/* A dialog needing more room than the default sets --mitra-dialog-width on its host
+				   (it inherits through the shadow boundary) — an explicit width, not just a cap, so
+				   intrinsically-sized content (e.g. an auto-fill grid) gets a definite size to fill. */
+				width: var(--mitra-dialog-width, auto);
+				max-width: var(--mitra-dialog-width, min(420px, 92vw));
 				box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
 				font-family: 'Inter', sans-serif;
 
@@ -68,7 +72,9 @@ export class Dialog extends Component {
 
 				/* Modern entry animation: @starting-style supplies the "from" state as the
 				   native dialog moves into the top layer. Closing is instant (the host is
-				   removed synchronously), so no exit transition is defined. */
+				   removed synchronously), so no exit transition is defined. Width is deliberately
+				   NOT transitioned — a multi-step dialog resizes instantly between steps (animating
+				   it fought the intrinsic width and left the dialog stuck at its min-width). */
 				@media (prefers-reduced-motion: no-preference) {
 					transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
 
@@ -89,10 +95,10 @@ export class Dialog extends Component {
 			.header {
 				display: flex;
 				align-items: center;
-				justify-content: space-between;
-				gap: 1rem;
+				gap: 0.75rem;
 
 				h2 {
+					flex: 1;
 					margin: 0;
 					font-size: 1.0625rem;
 					font-weight: 650;
@@ -117,6 +123,7 @@ export class Dialog extends Component {
 			<dialog part="dialog" @cancel=${(e: Event) => e.preventDefault()}>
 				<div class="panel">
 					<header class="header">
+						<slot name="leading"></slot>
 						<h2>${this.heading}</h2>
 						<mitra-icon-button icon="x" label=${t('Close')} @click=${() => this.handleAction(DialogActionKey.Cancellation)}></mitra-icon-button>
 					</header>

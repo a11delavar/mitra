@@ -13,3 +13,9 @@ declare const mitra: {
 	/** The short commit hash — empty when the build had neither git nor the MITRA_COMMIT env var. */
 	readonly commit: string
 }
+
+/** SVG assets import as their raw markup string (esbuild's `text` loader, see scripts/esbuild.ts). */
+declare module '*.svg' {
+	const content: string
+	export default content
+}

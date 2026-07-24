@@ -32,6 +32,7 @@ declare global {
 		"Apple ID": unknown
 		"At start": unknown
 		"At start of event": unknown
+		"Back": unknown
 		"back earlier": unknown
 		"before": unknown
 		"before at ${time}": unknown
@@ -98,6 +99,7 @@ declare global {
 		"Next Month": unknown
 		"Next Week": unknown
 		"Next Year": unknown
+		"Nextcloud, Fastmail, Radicale — any CalDAV server": unknown
 		"No matches": unknown
 		"No release notes available": unknown
 		"Notion.TokenHint": unknown
@@ -113,7 +115,6 @@ declare global {
 		"Previous Week": unknown
 		"Previous Year": unknown
 		"Primary time zone — switch to ${city} time to change the zone": unknown
-		"Provider": unknown
 		"Re-import entries": unknown
 		"Refresh": unknown
 		"Reload to finish updating": unknown
@@ -149,7 +150,10 @@ declare global {
 		"Tasks": unknown
 		"the ${ordinal}": unknown
 		"the ${ordinal} ${weekday}": unknown
+		"The calendars of your Google account": unknown
+		"The calendars of your iCloud account": unknown
 		"the last ${weekday}": unknown
+		"The task databases of your workspace": unknown
 		"This and following entries": unknown
 		"This entry": unknown
 		"Time zone": unknown
@@ -165,6 +169,7 @@ declare global {
 		"Update available: ${version}": unknown
 		"Username": unknown
 		"version build info release commit": unknown
+		"View": unknown
 		"View on GitHub": unknown
 		"Wall clock — no time zone": unknown
 		"Week": unknown

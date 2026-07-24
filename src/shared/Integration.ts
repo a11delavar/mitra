@@ -18,6 +18,19 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 
 	@oneToMany(() => Source, source => source.integrationId) sources = new Collection<Source>(this)
 
+	constructor() {
+		// Stamp the STI discriminator eagerly: MikroORM only back-populates `type` on load, so without
+		// this a freshly constructed instance would neither know nor serialize its own type, and every
+		// consumer (the add dialog, POST bodies, logs) would have to remember to set it by hand. The
+		// value is the `type` static @integration stamps on the class — `new.target` is the concrete
+		// subclass being constructed. Unregistered internal-only subclasses (e.g. Dev) have no such
+		// static and stay unstamped here; the ORM writes their discriminator on persist as always.
+		const type = (new.target as { type?: string }).type
+		if (type) {
+			this.type = type
+		}
+	}
+
 	/**
 	 * The minimum time between background sync polls, in milliseconds — 0 means every synchronizer
 	 * cycle. Rate-limited providers (e.g. Google) override this to poll more politely; the
@@ -37,6 +50,17 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 */
 	get capabilities() {
 		return { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, timeZone: true }
+	}
+
+	/**
+	 * Whether the fields entered so far carry enough to attempt source discovery — the add dialog's
+	 * Connect button gate. Which inputs a connection needs is the provider's own knowledge, so it lives
+	 * here rather than in the dialog: the base needs a server URL and a username (CalDAV's shape),
+	 * {@link AppleCalendar} only a username (its URL is fixed), Notion only its token. An EDIT never
+	 * consults this — the stored secrets stay server-side, so a refresh is always allowed.
+	 */
+	get canConnect(): boolean {
+		return !!this.uri && !!this.credentials.username
 	}
 
 	/**
@@ -249,32 +273,59 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 /** Constructs an {@link Integration} subclass from a `Partial` of its own shape. */
 type IntegrationConstructor = new (init?: any) => Integration
 
-// Discriminator `type` → concrete subclass, populated by @integrationType at class-definition time.
-// One declaration serves both the MikroORM discriminator and the API's need to instantiate the right
-// subclass from a client-supplied `type`, so the type string lives in exactly one place per provider.
-const integrationClasses = new Map<string, IntegrationConstructor>()
+/**
+ * A connectable integration subclass: its constructor plus the presentation metadata the add dialog's
+ * type-select step renders from. Each concrete provider declares these as statics, so a provider owns
+ * its own identity in one place — its class — and adding one is a new class (plus its logo asset), not
+ * an edit to a list somewhere else. The domain classes double as the frontend's API models (see
+ * AGENTS.md), so this stays plain data: no lit templates or `t()` (which would drag the view layer /
+ * a frontend-only global into shared/backend code) — the logo is an asset key, the description English
+ * source text the dialog localizes at render.
+ */
+export interface IntegrationClass extends IntegrationConstructor {
+	/** The discriminator `type`, stamped by {@link integration}; also what a fresh instance self-stamps. */
+	readonly type: string
+	/** The service name — its tile title and the details-step heading. A brand name; not localized. */
+	readonly label: string
+	/** Names the tile's logo asset (resolved to the inlined SVG by the dialog's logo map). */
+	readonly logo: string
+	/** One line on what connecting brings in — English source text, localized at render. */
+	readonly description: string
+}
+
+// The connectable subclasses, keyed by discriminator `type`, in registration (= display) order. ONE map
+// serves everything: {@link integrationClassFor}'s type→class dispatch (API + backend), {@link
+// integrationClasses}' tile list (add dialog), and — via the `type` static @integration stamps onto the
+// class — a fresh instance's discriminator self-stamp. Internal-only subclasses (e.g. Dev) keep the
+// plain `@entity` and stay out, so a stray `type` on the wire can never instantiate one.
+const registeredIntegrations = new Map<string, IntegrationClass>()
 
 /**
  * Declares a concrete {@link Integration} subclass's discriminator `type`: sets the MikroORM
- * discriminator value AND registers the type→class mapping {@link integrationClassFor} resolves. Use in
- * place of a bare `@entity({ discriminatorValue })` — the two always travelled together, and keeping
- * them apart let the string drift and forced the API layer to hand-roll its own type→class dispatch.
- * Internal-only integrations a client can't create (e.g. Dev) keep the plain `@entity` and stay out of
- * the registry, so a stray `type` on the wire can never instantiate one.
+ * discriminator value, stamps the class with a `type` static (so instances self-stamp and the constructor
+ * needs no per-class wiring), and registers it. Use in place of a bare `@entity({ discriminatorValue })`
+ * — they always travelled together, and keeping them apart let the string drift and forced the API layer
+ * to hand-roll its own type→class dispatch.
  */
 export function integration(type: string) {
 	return (target: IntegrationConstructor) => {
 		entity({ discriminatorValue: type })(target as any)
-		integrationClasses.set(type, target)
+		Object.defineProperty(target, 'type', { value: type })
+		registeredIntegrations.set(type, target as unknown as IntegrationClass)
 	}
 }
 
 /** The concrete {@link Integration} subclass a client-supplied discriminator `type` maps to. Throws on
  * an unknown (or internal-only) type rather than silently defaulting to one particular provider. */
-export function integrationClassFor(type: string | undefined): IntegrationConstructor {
-	const target = type ? integrationClasses.get(type) : undefined
+export function integrationClassFor(type: string | undefined): IntegrationClass {
+	const target = type ? registeredIntegrations.get(type) : undefined
 	if (!target) {
 		throw new Error(`Unknown integration type: ${type ?? '(none)'}`)
 	}
 	return target
+}
+
+/** The connectable integration classes in display order — the source for the add dialog's tiles. */
+export function integrationClasses(): Array<IntegrationClass> {
+	return [...registeredIntegrations.values()]
 }

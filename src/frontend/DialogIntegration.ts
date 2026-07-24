@@ -1,38 +1,72 @@
-import { component, html, css, state, Binder } from '@a11d/lit'
+import { component, html, css, state, Binder, unsafeHTML } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
-import { Task, TaskStatus } from '@lit/task'
-import { CalDAV, Notion, Source, SourceType, type Integration } from 'shared'
+import { CalDAV, Notion, Source, SourceType, integrationClasses, type Integration, type IntegrationClass } from 'shared'
 import { discoverSources, createIntegration, updateIntegration, getIntegrations, fetchIntegrations, fetchGoogleAvailability, connectGoogle } from './Api.js'
+import caldavLogo from '../../assets/integrations/caldav.svg'
+import googleLogo from '../../assets/integrations/google.svg'
+import appleLogo from '../../assets/integrations/apple.svg'
+import notionLogo from '../../assets/integrations/notion.svg'
 
-type Provider = 'caldav' | 'google' | 'apple' | 'notion'
+/** Resolves an integration class's `logo` name (see IntegrationClass) to its inlined SVG markup. The
+ * marks render inline (`unsafeHTML`), not via `<img>`, so the monochrome ones inherit `currentColor`
+ * and theme with the surface while Google keeps its own gradient. */
+const logos: Record<string, string> = {
+	caldav: caldavLogo,
+	google: googleLogo,
+	apple: appleLogo,
+	notion: notionLogo,
+}
 
 @component('mitra-dialog-integration')
-export class DialogIntegration extends DialogComponent<{ readonly id: string, readonly preselectSources?: boolean }, Integration> {
-	@state() private entity: Integration = new CalDAV({ uri: '', credentials: { username: '', password: '' }, sources: [] as any })
+export class DialogIntegration extends DialogComponent<{ readonly id?: string, readonly preselectSources?: boolean }, Integration> {
+	/** The integration being configured. Unset while the add flow is still on the type-select step —
+	 * picking a type constructs a fresh entity of its final class, and going back simply discards it,
+	 * so no in-between-types conversion ever happens. */
+	@state() private entity?: Integration
 
-	/** Which provider's panel the dialog shows — selectable on add, derived from the entity on edit. */
-	@state() private provider: Provider = 'caldav'
+	@state() private discovering = false
+	@state() private discoveryError?: string
+
+	/** Whether the deployment can connect Google accounts — gates the provider's add panel.
+	 * Unset while the check is in flight; only the add flow offers connecting a new account. */
+	@state() private googleAvailability?: { configured: boolean } | { error: string }
 
 	private readonly binder = new Binder(this, 'entity')
 
-	private readonly fetchSources = new Task(this, {
-		autoRun: false,
-		args: () => [this.entity] as const,
-		task: async ([entity]) => {
+	protected override createRenderRoot() { return this }
+
+	private get isEdit() { return !!this.parameters.id }
+
+	/** The class behind the current entity — its `label` titles the details step. */
+	private get integrationClass(): IntegrationClass | undefined {
+		return integrationClasses().find(integrationClass => integrationClass.type === this.entity?.type)
+	}
+
+	private selectType(integrationClass: IntegrationClass) {
+		this.entity = new integrationClass({ sources: [] as any })
+		// A discovery still in flight for a previously picked type must not bleed into this one.
+		this.discovering = false
+		this.discoveryError = undefined
+	}
+
+	/** Runs source discovery for the current entity — the Connect/Refresh action. */
+	private async discover() {
+		const entity = this.entity!
+		this.discovering = true
+		this.discoveryError = undefined
+		try {
 			const sources = await discoverSources(entity)
-			// The provider may have been switched while this discovery was in flight — a stale result
-			// must not land on the now-different entity (it would show one provider's sources under
-			// another's panel). `entity` is the one this run started for; bail if it's been replaced.
+			// The user may have gone back (and picked another type) while this discovery was in
+			// flight — a stale result must not land on the now-different entity.
 			if (this.entity !== entity) {
-				return this.entity.sources
+				return
 			}
 			// A fresh add pre-selects everything found — the common case is "import my account", so
 			// unticking is the exception, not ticking every box. An edit (or its Refresh) keeps the
 			// persisted activation state instead. Notion is the deliberate exception: its sources are
 			// VIEWS, and a database's views mostly overlap (All / Board / This week show the same
 			// tasks), so ticking them all would render every task once per view — pre-select one view
-			// per database and let overlaps be an explicit choice. Keyed on the source URI, not the
-			// dialog's current provider, so it's correct regardless of a concurrent provider switch.
+			// per database and let overlaps be an explicit choice.
 			if (!this.isEdit) {
 				const seenDataSources = new Set<string>()
 				for (const source of sources) {
@@ -43,50 +77,40 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 					}
 				}
 			}
-			return this.entity.sources = sources as any
-		},
-	})
-
-	/** Whether the deployment can connect Google accounts — gates the provider's add panel. */
-	private readonly googleAvailability = new Task(this, {
-		autoRun: !this.isEdit, // only the add panel offers connecting a new account
-		args: () => [] as const,
-		task: () => fetchGoogleAvailability(),
-	})
-
-	protected override createRenderRoot() { return this }
-
-	private get isEdit() { return !!this.parameters.id }
-
-	/** Switch the add panel to another provider. A fresh entity of the matching shape comes with it,
-	 * so sources discovered for the previous provider don't linger (and can't be saved by mistake) —
-	 * the panels bind different credential keyPaths, and each provider's `type` must be its own. */
-	private switchProvider(provider: Provider) {
-		this.provider = provider
-		this.entity = provider === 'notion'
-			? new Notion({ credentials: { username: '', token: '' }, sources: [] as any })
-			: new CalDAV({ uri: '', credentials: { username: '', password: '' }, sources: [] as any })
+			entity.sources = sources as any
+		} catch (error) {
+			if (this.entity === entity) {
+				this.discoveryError = error instanceof Error ? error.message : String(error)
+			}
+		} finally {
+			if (this.entity === entity) {
+				this.discovering = false
+			}
+		}
 	}
 
 	protected override connected() {
-		if (this.isEdit) {
-			const integration = getIntegrations().find(i => i.id === this.parameters.id)
-			if (integration) {
-				// A provider the client doesn't model (e.g. the backend-only Dev) arrives as a plain
-				// '@type'-less DTO without methods — fall back to a generic CalDAV-shaped copy for it.
-				this.entity = integration.editableCopy?.() ?? new CalDAV({
-					id: this.parameters.id,
-					uri: integration.uri ?? '',
-					credentials: { username: integration.credentials?.username ?? '', password: '' },
-					sources: [...integration.sources].map(source => new Source({ uri: source.uri, type: source.type, name: source.name, enabled: source.enabled })) as any,
-				})
-				// Fresh from an OAuth connect (preselectSources): tick everything, like a fresh add — the
-				// account was just authorized to import it. The sources are still persisted disabled
-				// server-side (opt-in data flow); saving is what enables the ticked ones.
-				if (this.parameters.preselectSources) {
-					[...this.entity.sources].forEach(source => source.enabled = true)
-				}
-				this.provider = (['google', 'apple', 'notion'] as const).find(provider => provider === integration.type) ?? 'caldav'
+		if (!this.isEdit) {
+			fetchGoogleAvailability()
+				.then(availability => this.googleAvailability = availability)
+				.catch((error: Error) => this.googleAvailability = { error: error.message })
+			return
+		}
+		const integration = getIntegrations().find(integration => integration.id === this.parameters.id)
+		if (integration) {
+			// A provider the client doesn't model (e.g. the backend-only Dev) arrives as a plain
+			// '@type'-less DTO without methods — fall back to a generic CalDAV-shaped copy for it.
+			this.entity = integration.editableCopy?.() ?? new CalDAV({
+				id: this.parameters.id,
+				uri: integration.uri ?? '',
+				credentials: { username: integration.credentials?.username ?? '', password: '' },
+				sources: [...integration.sources].map(source => new Source({ uri: source.uri, type: source.type, name: source.name, enabled: source.enabled })) as any,
+			})
+			// Fresh from an OAuth connect (preselectSources): tick everything, like a fresh add — the
+			// account was just authorized to import it. The sources are still persisted disabled
+			// server-side (opt-in data flow); saving is what enables the ticked ones.
+			if (this.parameters.preselectSources) {
+				[...this.entity.sources].forEach(source => source.enabled = true)
 			}
 		}
 	}
@@ -94,6 +118,58 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 	static override get styles() {
 		return css`
 			mitra-dialog-integration {
+				/* The type-select grid earns more room than the default form dialog width. */
+				&:has(.types) {
+					--mitra-dialog-width: min(36rem, 92vw);
+				}
+
+				.types {
+					display: grid;
+					grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+					gap: 0.625rem;
+					/* Built for a growing catalog: the grid scrolls before the dialog outgrows the screen. */
+					max-height: min(24rem, 60vh);
+					overflow-y: auto;
+
+					.type {
+						height: auto;
+						flex-direction: column;
+						align-items: flex-start;
+						justify-content: flex-start;
+						gap: 0.125rem;
+						padding: 0.875rem;
+						text-align: start;
+						background: transparent;
+						user-select: none;
+
+						&:not(:disabled):hover {
+							border-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
+						}
+
+						.logo {
+							display: inline-flex;
+							font-size: 1.75rem;
+							margin-block-end: 0.625rem;
+
+							svg {
+								width: 1em;
+								height: 1em;
+							}
+						}
+
+						.name {
+							font-size: 0.875rem;
+							font-weight: 600;
+						}
+
+						.description {
+							font-size: 0.75rem;
+							font-weight: 400;
+							color: var(--color-text-muted);
+						}
+					}
+				}
+
 				.content {
 					display: flex;
 					flex-direction: column;
@@ -154,47 +230,69 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 		`
 	}
 
-	private static readonly providers: Array<{ value: Provider, label: string }> = [
-		{ value: 'caldav', label: 'CalDAV' },
-		{ value: 'google', label: 'Google Calendar' },
-		{ value: 'apple', label: 'Apple Calendar' },
-		{ value: 'notion', label: 'Notion' },
-	]
-
 	protected override get template() {
 		return html`
-			<mitra-dialog heading=${this.isEdit ? t('Edit integration') : t('Add integration')} primaryButtonText=${t('Save')}
-				?primaryButtonDisabled=${!this.entity.sources.length || this.fetchSources.status === TaskStatus.PENDING}
+			<mitra-dialog
+				heading=${this.isEdit ? t('Edit integration') : this.integrationClass?.label ?? t('Add integration')}
+				primaryButtonText=${!this.entity ? html.nothing : t('Save')}
+				?primaryButtonDisabled=${!this.entity?.sources.length || this.discovering}
 			>
-				<form class="content" @submit=${(e: Event) => e.preventDefault()}>
-					${this.isEdit ? html.nothing : html`
-						<label>
-							${t('Provider')}
-							<select @change=${(e: Event) => this.switchProvider((e.target as HTMLSelectElement).value as Provider)}>
-								${DialogIntegration.providers.map(provider => html`
-									<option value=${provider.value} ?selected=${this.provider === provider.value}>${provider.label}</option>
-								`)}
-							</select>
-						</label>
-					`}
-
-					${this.provider === 'google' ? this.googleTemplate : this.provider === 'apple' ? this.appleTemplate : this.provider === 'notion' ? this.notionTemplate : this.caldavTemplate}
-
-					${!this.entity.sources.length ? html.nothing : html`
-						<div class="sources">
-							<span class="sources-title">${t('Sources')}</span>
-							${this.entity.sources.map(source => html`
-								<label class="source">
-									<input type="checkbox" .checked=${source.enabled} @change=${() => { source.toggleEnabled(); this.requestUpdate() }}>
-									<mitra-icon class="type-icon" icon=${source.type === SourceType.Task ? 'list-todo' : 'calendar'}></mitra-icon>
-									${source.name}
-								</label>
-							`)}
-						</div>
-					`}
-				</form>
+				${this.isEdit || !this.entity ? html.nothing : html`
+					<mitra-icon-button slot="leading" icon="arrow-left" label=${t('Back')}
+						@click=${() => this.entity = undefined}
+					></mitra-icon-button>
+				`}
+				${!this.entity ? this.typesTemplate : this.detailsTemplate}
 			</mitra-dialog>
 		`
+	}
+
+	/** The type-select step: one tile per connectable service, built from the shared registry so a new
+	 * provider's class appears here on its own — the dialog only maps its `logo` name to an asset. */
+	private get typesTemplate() {
+		return html`
+			<div class="types">
+				${integrationClasses().map(integrationClass => html`
+					<button class="type" @click=${() => this.selectType(integrationClass)}>
+						<span class="logo">${unsafeHTML(logos[integrationClass.logo] ?? '')}</span>
+						<span class="name">${integrationClass.label}</span>
+						<span class="description">${t(integrationClass.description)}</span>
+					</button>
+				`)}
+			</div>
+		`
+	}
+
+	private get detailsTemplate() {
+		const entity = this.entity!
+		return html`
+			<form class="content" @submit=${(e: Event) => e.preventDefault()}>
+				${this.panelTemplate}
+
+				${!entity.sources.length ? html.nothing : html`
+					<div class="sources">
+						<span class="sources-title">${t('Sources')}</span>
+						${entity.sources.map(source => html`
+							<label class="source">
+								<input type="checkbox" .checked=${source.enabled} @change=${() => { source.toggleEnabled(); this.requestUpdate() }}>
+								<mitra-icon class="type-icon" icon=${source.type === SourceType.Task ? 'list-todo' : 'calendar'}></mitra-icon>
+								${source.name}
+							</label>
+						`)}
+					</div>
+				`}
+			</form>
+		`
+	}
+
+	private get panelTemplate() {
+		switch (this.entity!.type) {
+			case 'google': return this.googleTemplate
+			case 'apple': return this.appleTemplate
+			case 'notion': return this.notionTemplate
+			// Also the fallback for provider types the client doesn't model (see the edit fallback above).
+			default: return this.caldavTemplate
+		}
 	}
 
 	private get appleTemplate() {
@@ -208,7 +306,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 				${t('App-Specific Password')}
 				<input type="password" ${bind({ keyPath: 'credentials.password', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : ''} autocomplete="off">
 			</label>
-			${this.fetchSourcesTemplate}
+			${this.connectTemplate}
 		`
 	}
 
@@ -227,7 +325,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 				${t('Password')}
 				<input type="password" ${bind({ keyPath: 'credentials.password', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : ''} autocomplete="off">
 			</label>
-			${this.fetchSourcesTemplate}
+			${this.connectTemplate}
 		`
 	}
 
@@ -235,32 +333,26 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 	 * open — see Mitra.initialized). Edit: the grant isn't form-editable, so only the account label
 	 * and a sources Refresh show. */
 	private get googleTemplate() {
-		return this.isEdit ? html`
-			<label>
-				${t('Google account')}
-				<input readonly .value=${this.entity.credentials.username} autocomplete="off">
-			</label>
-			${this.fetchSourcesTemplate}
-		` : this.googleAvailability.render({
-			pending: () => html`<button class="connect" disabled>${t('Continue with Google')}</button>`,
-			error: (e: unknown) => html`<p class="error">${(e as Error).message}</p>`,
-			complete: ({ configured }) => configured ? html`
-				<p class="hint">${t('Google.ConsentHint')}</p>
-				<button class="connect" @click=${() => connectGoogle()}>${t('Continue with Google')}</button>
-			` : html`
-				<p class="hint">${t('Google.ConfigurationHint')}</p>
-			`,
-		})
-	}
-
-	/** What Connect needs before it can try: the fields the provider's discovery authenticates
-	 * with. An edit may leave secrets blank (the server keeps the stored ones). */
-	private get connectDisabled(): boolean {
-		switch (this.provider) {
-			case 'notion': return !this.entity.credentials.token && !this.isEdit
-			case 'apple': return !this.entity.credentials.username
-			default: return !this.entity.uri || !this.entity.credentials.username
+		if (this.isEdit) {
+			return html`
+				<label>
+					${t('Google account')}
+					<input readonly .value=${this.entity!.credentials.username} autocomplete="off">
+				</label>
+				${this.connectTemplate}
+			`
 		}
+		const availability = this.googleAvailability
+		return !availability ? html`
+			<button class="connect" disabled>${t('Continue with Google')}</button>
+		` : 'error' in availability ? html`
+			<p class="error">${availability.error}</p>
+		` : !availability.configured ? html`
+			<p class="hint">${t('Google.ConfigurationHint')}</p>
+		` : html`
+			<p class="hint">${t('Google.ConsentHint')}</p>
+			<button class="connect" @click=${() => connectGoogle()}>${t('Continue with Google')}</button>
+		`
 	}
 
 	/** Add: paste an internal-connection / personal-access token (no deployment config, unlike
@@ -272,7 +364,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 			${this.isEdit ? html`
 				<label>
 					${t('Workspace')}
-					<input readonly .value=${this.entity.credentials.username ?? ''} autocomplete="off">
+					<input readonly .value=${this.entity!.credentials.username ?? ''} autocomplete="off">
 				</label>
 			` : html`
 				<p class="hint">${t('Notion.TokenHint')}</p>
@@ -281,36 +373,31 @@ export class DialogIntegration extends DialogComponent<{ readonly id: string, re
 				${t('Integration Token')}
 				<input type="password" ${bind({ keyPath: 'credentials.token', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : 'ntn_…'} autocomplete="off">
 			</label>
-			${this.fetchSourcesTemplate}
+			${this.connectTemplate}
 		`
 	}
 
-	/** The Connect/Refresh control. Rendered in both the INITIAL and COMPLETE task states (and after an
-	 * error) so discovery is always re-runnable — in particular after a provider switch, which replaces
-	 * the entity but leaves the task's last status COMPLETE. */
-	private get connectButton() {
-		return html`
-			<button class="connect" @click=${() => { this.entity.type = this.provider; this.fetchSources.run() }} ?disabled=${this.connectDisabled}>
-				${this.entity.sources.length ? t('Refresh') : t('Connect')}
+	/** Whether Connect is blocked. The domain part — which fields a connection needs — lives on the
+	 * entity ({@link Integration.canConnect}); the dialog only adds the edit policy: an edit can always
+	 * refresh, since the server still holds the secrets the form leaves blank. */
+	private get connectDisabled(): boolean {
+		return !this.isEdit && !this.entity!.canConnect
+	}
+
+	/** The Connect/Refresh control — always re-runnable, in particular after an error. */
+	private get connectTemplate() {
+		return this.discovering ? html`
+			<button class="connect" disabled>${t('Connecting…')}</button>
+		` : html`
+			<button class="connect" @click=${() => this.discover()} ?disabled=${this.connectDisabled}>
+				${this.entity!.sources.length ? t('Refresh') : t('Connect')}
 			</button>
+			${!this.discoveryError ? html.nothing : html`<p class="error">${this.discoveryError}</p>`}
 		`
-	}
-
-	private get fetchSourcesTemplate() {
-		return this.fetchSources.render({
-			initial: () => this.connectButton,
-			complete: () => this.connectButton,
-			error: (e: unknown) => html`
-				${this.connectButton}
-				<p class="error">${(e as Error).message}</p>
-			`,
-			pending: () => html`<button class="connect" disabled>${t('Connecting…')}</button>`,
-		})
 	}
 
 	protected override async primaryAction() {
-		this.entity.type = this.provider
-		const integration = this.isEdit ? await updateIntegration(this.entity) : await createIntegration(this.entity)
+		const integration = this.isEdit ? await updateIntegration(this.entity!) : await createIntegration(this.entity!)
 		await fetchIntegrations()
 		return integration
 	}

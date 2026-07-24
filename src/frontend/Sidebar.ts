@@ -625,7 +625,7 @@ export class Sidebar extends Component {
 		(e.currentTarget as HTMLElement).parentElement?.querySelector<HTMLElement>('menu[popover]')?.togglePopover()
 	}
 
-	private async openDialog(id: string) {
+	private async openDialog(id?: string) {
 		await new DialogIntegration({ id }).confirm()
 		this.requestUpdate()
 	}
@@ -714,7 +714,7 @@ export class Sidebar extends Component {
 				`)}
 				</div>
 				<div class="footer">
-					<button class="add-integration" @click=${() => this.openDialog('')}>
+					<button class="add-integration" @click=${() => this.openDialog()}>
 						<mitra-icon icon="plus"></mitra-icon>
 						${t('Add Integration')}
 					</button>

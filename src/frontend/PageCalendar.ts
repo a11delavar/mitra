@@ -144,7 +144,7 @@ export class PageCalendar extends PageComponent {
 			{ heading: this.view === 'week' ? t('Next Week') : this.view === 'month' ? t('Next Month') : t('Next Year'), icon: 'arrow-right', keywords: t('forward later'), execute: () => this.navigatingDate = this.navigatingDate.add(this.navigationStep) },
 			{ heading: this.view === 'week' ? t('Previous Week') : this.view === 'month' ? t('Previous Month') : t('Previous Year'), icon: 'arrow-left', keywords: t('back earlier'), execute: () => this.navigatingDate = this.navigatingDate.subtract(this.navigationStep) },
 			{ heading: t('Toggle Sidebar'), icon: 'panel-left', keywords: t('collapse expand calendars'), execute: this.toggleSidebar },
-			{ heading: t('Add Integration'), icon: 'plug', keywords: t('connect caldav account calendar'), execute: () => new DialogIntegration({ id: '' }).confirm() },
+			{ heading: t('Add Integration'), icon: 'plug', keywords: t('connect caldav account calendar'), execute: () => new DialogIntegration({}).confirm() },
 			// The version string itself is a keyword, so typing what the sidebar's brand row shows finds these.
 			{ heading: t('About'), icon: 'info', keywords: `${t('version build info release commit')} ${mitra.version}`, execute: () => new DialogAbout().confirm() },
 			{ heading: t('What\'s New'), icon: 'sparkles', keywords: `${t('changelog release notes news updates version')} ${mitra.version}`, execute: () => new DialogWhatsNew().confirm() },

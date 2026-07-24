@@ -61,7 +61,10 @@ export const backendOptions: BuildOptions = {
 	define,
 }
 
-/** Frontend bundle — fully self-contained (no externals), code-split into `dist/`. */
+/** Frontend bundle — fully self-contained (no externals), code-split into `dist/`. `.svg` files
+ * import as their markup string (the `text` loader), so brand logos live as editable files under
+ * `assets/` and get inlined into the bundle — rendered with `unsafeHTML`, they keep `currentColor`
+ * theming that an `<img>` couldn't. */
 export const frontendOptions: BuildOptions = {
 	entryPoints: ['./src/frontend/index.ts'],
 	bundle: true,
@@ -69,6 +72,7 @@ export const frontendOptions: BuildOptions = {
 	format: 'esm',
 	legalComments: 'none',
 	outdir: distDir,
+	loader: { '.svg': 'text' },
 	inject,
 	define,
 }

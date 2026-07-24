@@ -26,6 +26,10 @@ export interface GoogleCalendarCredentials {
 @model('GoogleCalendar')
 @integration('google')
 export class GoogleCalendar extends CalDAV {
+	static override readonly label: string = 'Google Calendar'
+	static override readonly logo: string = 'google'
+	static override readonly description: string = 'The calendars of your Google account'
+
 	/** Google's CalDAV v2 root; account discovery resolves the per-account home from here. */
 	static readonly serverUrl = 'https://apidata.googleusercontent.com/caldav/v2/'
 	static readonly tokenUrl = 'https://oauth2.googleapis.com/token'
@@ -41,11 +45,12 @@ export class GoogleCalendar extends CalDAV {
 
 	constructor(init?: Partial<GoogleCalendar>) {
 		super()
+		// This provider's own blank credential shape (CalDAV's super seeded its username/password one).
+		this.credentials = { username: '', refreshToken: '' }
 		Object.assign(this, init)
 	}
 
-	// A fixed label, not `this.type`: MikroORM doesn't back-populate the STI discriminator onto a
-	// freshly-constructed instance until it's reloaded, so `this.type` reads `undefined` right after create.
+	// A human label, not the bare `this.type` discriminator ('google').
 	override toString() {
 		return `Google Calendar integration for "${this.credentials.username}"`
 	}

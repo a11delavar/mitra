@@ -71,6 +71,10 @@ export interface NotionSchemaIndex {
 @model('Notion')
 @integration('notion')
 export class Notion extends Integration<NotionCredentials> {
+	static readonly label: string = 'Notion'
+	static readonly logo: string = 'notion'
+	static readonly description: string = 'The task databases of your workspace'
+
 	static readonly uriPrefix = 'notion://'
 
 	/** View types that hold plain task rows. Forms collect input, charts/maps/dashboards render
@@ -97,6 +101,8 @@ export class Notion extends Integration<NotionCredentials> {
 
 	constructor(init?: Partial<Notion>) {
 		super()
+		// This provider's own blank credential shape — see CalDAV's constructor for the why (bind/undefined).
+		this.credentials = { username: '', token: '' }
 		Object.assign(this, init)
 	}
 
@@ -113,6 +119,11 @@ export class Notion extends Integration<NotionCredentials> {
 	 * on save (the times still show correctly in the viewer's zone — that's a view concern). */
 	override get capabilities() {
 		return { recurrence: false, reminders: false, location: false, description: true, cancelledStatus: false, timeZone: false }
+	}
+
+	// The workspace identity derives from the token (its bot user), so the token is all a connect needs.
+	override get canConnect() {
+		return !!this.credentials.token
 	}
 
 	/** Notion allows ~3 requests/second per connection and a sync touches several endpoints —

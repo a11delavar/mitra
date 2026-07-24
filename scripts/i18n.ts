@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const frontendDir = path.resolve(here, '../src/frontend')
+const sharedDir = path.resolve(here, '../src/shared')
 const keysFile = path.join(frontendDir, 'i18n/keys.auto-generated.ts')
 const dePath = path.join(frontendDir, 'i18n/de.json')
 
@@ -41,6 +42,12 @@ function sourceFiles(dir: string): Array<string> {
 // Dynamic keys (template literals, variables) can't be indexed statically and are simply not collected.
 const callPattern = /\bt\(\s*(['"])((?:\\.|(?!\1)[^\\])*)\1/g
 
+// The add dialog's integration tiles localize each provider's `description` static (declared on the
+// class in src/shared) via `t(class.description)` — a dynamic key `callPattern` can't see. Collect those
+// string literals directly so their translations stay tracked like any other key. Keyed on the field
+// name, so only `description` counts (a brand `label` is rendered verbatim, never translated).
+const descriptionPattern = /\bstatic\s+(?:(?:readonly|override)\s+)*description\s*(?::\s*string\s*)?=\s*(['"])((?:\\.|(?!\1)[^\\])*)\1/g
+
 /** Turn a matched literal's raw body into the actual key (unescape the quote style and backslashes). */
 function unescape(raw: string, quote: string): string {
 	return raw.replace(/\\(['"\\])/g, (_, char) => char === quote || char === '\\' ? char : `\\${char}`)
@@ -50,6 +57,12 @@ const keys = new Set<string>()
 for (const file of sourceFiles(frontendDir)) {
 	const source = fs.readFileSync(file, 'utf8')
 	for (const [, quote, raw] of source.matchAll(callPattern)) {
+		keys.add(unescape(raw, quote!))
+	}
+}
+for (const file of sourceFiles(sharedDir)) {
+	const source = fs.readFileSync(file, 'utf8')
+	for (const [, quote, raw] of source.matchAll(descriptionPattern)) {
 		keys.add(unescape(raw, quote!))
 	}
 }

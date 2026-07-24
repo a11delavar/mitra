@@ -23,8 +23,19 @@ export interface CalDAVCredentials {
 @model('CalDAV')
 @integration('caldav')
 export class CalDAV extends Integration<CalDAVCredentials> {
+	// Typed `string` (not the inferred literal) so subclasses can override with their own values —
+	// a narrowed literal type would reject an override on the static side.
+	static readonly label: string = 'CalDAV'
+	static readonly logo: string = 'caldav'
+	static readonly description: string = 'Nextcloud, Fastmail, Radicale — any CalDAV server'
+
 	constructor(init?: Partial<CalDAV>) {
 		super()
+		// The blank credential shape is the provider's own knowledge, so it seeds it here. Empty strings,
+		// not undefined: the edit form binds these keyPaths straight to `input.value`, and an undefined
+		// there renders as the literal text "undefined". `init` (a stored/edited copy) overwrites them.
+		this.uri = ''
+		this.credentials = { username: '', password: '' }
 		Object.assign(this, init)
 	}
 
