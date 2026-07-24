@@ -118,12 +118,26 @@ export class Days extends Component {
 		return css`
 			mitra-days {
 				display: grid;
-				/* The timed row is FIXED to --grid-min-height (owned by DayDensityController: whole-day-fit
-				   height × zoom, ≥ the viewport since zoom ≥ 1, so it always fills). The minute grids inside
-				   (.axis, .overlays, mitra-day .entries) use fr tracks, so their 1440 rows sum to exactly
-				   this row whatever it is — no gap below, no overflow. Not minmax(…, 1fr): a flexing row can
-				   grow past what anything inside was sized against. */
-				grid-template-rows: auto auto var(--grid-min-height);
+				/* EVERY row is DEFINITE — none may be intrinsic. The row-spanning mitra-day subgrids hand an
+				   intrinsic row an unbounded growth limit, so any free space in the container would silently
+				   pour into it (a window grown while the timed row lagged once wedged half the viewport of
+				   blank into the header row — and stayed, because the remeasure then read the bloated layout
+				   back). Definite rows leave free space nowhere to go.
+				   - The header row is the 2.75rem the sticky offsets below already assume.
+				   - The all-day row derives from the same --_all-day-rows the lane's own tracks use (per lane
+				     1.375rem + 1px gap; + 4px for the lane's padding − last gap + bottom border); the min()
+				     caps a pileup at 5½ lanes — past MAX_VISIBLE_LANES the lane scrolls within itself instead
+				     (see [data-all-day-overflow]), the half-cut lane at the fold being the hint.
+				   - The timed row is the whole-day-fit height (100% minus the rows and gaps above) times the
+				     zoom (≥ 1, so the grid always fills; DayDensityController owns --_week-zoom). A pure CSS
+				     formula, deliberately not a JS-measured px: percentages re-resolve atomically in the same
+				     layout pass on any resize, immune to observer lag and to the stale-measurement lock-in
+				     above. The minute grids inside (.axis, .overlays, mitra-day .entries) use fr tracks, so
+				     their 1440 rows sum to exactly this row whatever it is — no gap below, no overflow. Not
+				     minmax(…, 1fr): a flexing row can grow past what anything inside was sized against. */
+				--_all-day-lane-height: min(calc(var(--_all-day-rows, 1) * (1.375rem + 1px) + 4px), calc(5.5 * (1.375rem + 1px) + 4px));
+				--grid-min-height: calc(var(--_week-zoom, 1) * (100% - 2.75rem - var(--_all-day-lane-height) - 2px));
+				grid-template-rows: 2.75rem var(--_all-day-lane-height) var(--grid-min-height);
 				/* ONE grid owns every column: an auto track for the "+" affordance, one content-sized
 				   track per displayed time zone (the header labels and the axis hours adopt these same
 				   tracks via subgrid, so they align by construction), then the day columns. The day
@@ -142,9 +156,6 @@ export class Days extends Component {
 				touch-action: pan-x pan-y;
 				scroll-padding-inline-start: var(--time-axis-width);
 				scrollbar-width: none; /* Firefox */
-				/* Pre-JS fallback; DayDensityController overrides it once it measures (see above). 100% makes
-				   the fixed row fill the container so nothing collapses before any JS runs. */
-				--grid-min-height: 100%;
 
 				&::-webkit-scrollbar {
 					display: none; /* Chrome/Safari */
@@ -193,17 +204,27 @@ export class Days extends Component {
 					z-index: 90;
 					display: grid;
 					grid-template-columns: subgrid;
-					grid-auto-rows: 1.375rem;
-					grid-auto-flow: row dense; /* bars self-place columns by date; dense packing assigns lanes */
-					gap: 1px 1px;
-					/* A bit of empty space below the bars stays reserved as a drag-to-create placeholder, so the
-					   lane is grabbable even when full; min height keeps an empty lane draggable too. */
-					padding-block: 2px;
-					padding-block-end: 1.5rem;
-					min-block-size: 2.75rem;
+					/* One 1.375rem track per occupied lane plus a trailing empty one — the drag-to-create
+					   target, and where a move's ghost previews (bars sit at their computed allDaySlots lane,
+					   see allDayTemplate). EXPLICIT tracks, never auto-flow rows behind a min-block-size: the
+					   parent rows fill the container exactly, so there is never free space to grow an
+					   intrinsic lane row past its BASE size — for which a specified min-block-size REPLACES
+					   the content-derived minimum, freezing the lane at that min while further bars overflow
+					   it onto the timed grid. Explicit tracks (mirrored by the definite parent row derived
+					   from the same --_all-day-rows) keep the lane and its row in lockstep with the bars. */
+					grid-template-rows: repeat(var(--_all-day-rows, 1), 1.375rem);
+					gap: 1px;
 					align-content: start;
 					background-color: var(--color-background);
 					border-bottom: var(--border);
+
+					/* The day columns' surface, continued: one cell per rendered day spanning every lane, so
+					   the lane reads as part of its day column and the 1px gutters between the cells continue
+					   the grid's day separators up through the strip. */
+					> .day {
+						grid-row: 1 / -1;
+						background-color: var(--color-surface);
+					}
 
 					mitra-entry-segment {
 						margin-top: 0 !important;
@@ -233,6 +254,21 @@ export class Days extends Component {
 							position: sticky;
 							inset-inline-start: calc(var(--time-axis-width, 0px) + 0.375rem);
 						}
+					}
+				}
+
+				/* A pileup past MAX_VISIBLE_LANES scrolls within the lane (whose row the grid-template-rows
+				   min() above has capped). Gated by an attribute (set alongside --_all-day-rows) rather
+				   than an unconditional overflow: a scroll container captures the bar titles' inline
+				   stickiness above, so the common fully-visible lane must not become one — the sliding
+				   titles pause only during the rare pileup, where reachability matters more. */
+				&[data-all-day-overflow] .all-day {
+					overflow-y: auto;
+					overscroll-behavior: contain;
+					scrollbar-width: none;
+
+					&::-webkit-scrollbar {
+						display: none;
 					}
 				}
 
@@ -379,6 +415,10 @@ export class Days extends Component {
 		`
 	}
 
+	/** Occupied lanes before the strip stops growing and scrolls within itself instead — in sync with
+	 * the grid-template-rows min() cap (5½ = these + the empty lane + the half-cut scroll hint). */
+	private static readonly MAX_VISIBLE_LANES = 4
+
 	private get allDayTemplate() {
 		// Bars render (and clip) against the window — a run's parts beyond it are offscreen by definition.
 		const { days, offset } = this.dates.window
@@ -389,6 +429,12 @@ export class Days extends Component {
 		}
 		// The lane always renders (even with no all-day events) so it stays a drag target for creating one.
 		const runs = this.segments.runsIn(first, last, entry => !!entry.allDay)
+		const slots = this.segments.allDaySlots
+		// The lanes the window's bars occupy, driving the strip's explicit row tracks (+1 trailing empty
+		// lane — the create target). A move's ghost holds no packed slot; it rides that empty lane.
+		const laneCount = runs.reduce((count, segment) => Math.max(count, (slots.get(segment.entry) ?? -1) + 1), 0)
+		this.style.setProperty('--_all-day-rows', `${laneCount + 1}`)
+		this.toggleAttribute('data-all-day-overflow', laneCount > Days.MAX_VISIBLE_LANES)
 		// Built once per render so each bar's column is an O(1) numeric lookup (segments cache their dayValue).
 		const lastValue = last.dayStart.valueOf()
 		const columnByDay = new Map(days.map((day, index) => [day.dayStart.valueOf(), offset + index]))
@@ -396,13 +442,14 @@ export class Days extends Component {
 		return html`
 			<div class="all-day-corner"></div>
 			<div class="all-day">
+				${days.map((_, index) => html`<div class="day" style="grid-column: ${offset + index + 1};"></div>`)}
 				${repeat(runs, segment => segment.entry, segment => {
 					const startColumn = columnOf(segment.dayValue)
 					const clippedRight = segment.runEnd.dayValue! > lastValue
 					const endColumn = clippedRight ? offset + days.length - 1 : columnOf(segment.runEnd.dayValue)
 					return html`
 						<mitra-entry-segment
-							style=${styleMap({ gridColumn: `${startColumn + 1} / span ${endColumn - startColumn + 1}` })}
+							style=${styleMap({ gridColumn: `${startColumn + 1} / span ${endColumn - startColumn + 1}`, gridRow: `${(slots.get(segment.entry) ?? laneCount) + 1}` })}
 							resize="inline"
 							?has-previous=${segment.hasPrevious}
 							?has-next=${clippedRight}

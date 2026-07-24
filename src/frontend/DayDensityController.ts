@@ -5,19 +5,21 @@ import { DensityController } from './DensityController.js'
  * Vertical density (zoom) of the week view's day grid — the gesture mechanics live in
  * {@link DensityController}; this owns what the zoom means there.
  *
- * The controller drives a single host inline property, `--grid-min-height`: the timed row's fixed height
- * = `available` (the measured height a whole day fits into) × zoom. The 1440 minute rows inside (.axis,
- * .overlays, mitra-day .entries) use fr tracks, so they sum to exactly this row whatever it is (see the
- * .axis rule in Days.ts for why they must never be a repeated length) — nothing else needs to be kept in
- * sync. Zoom is thus a pure multiplier over "the whole day fits":
+ * The controller drives a single host inline property, `--_week-zoom`: a bare multiplier over "the
+ * whole day fits". The timed row's height is a pure CSS formula on it — zoom × (100% minus the header
+ * and all-day rows, see the grid-template-rows rule in Days.ts) — so this controller measures NOTHING
+ * to size the grid: a window resize re-resolves the row in the same layout pass, with no observer lag
+ * and no way for a stale measurement to lock the layout in (which a px-valued row once did — the
+ * remeasure read its own bloat back). Zoom is thus:
  *   zoom 1 → the viewport-fit height: the entire 24h fits, nothing scrolls
  *   zoom 3 → 8h fill the viewport (24 / 3), the rest scrolls
  *
- * Pinning keeps the fraction of the day under the pointer at its screen Y while the density changes —
- * everything in that per-frame path is arithmetic on cached values, no layout reads.
+ * Layout IS still read for pinning — keeping the fraction of the day under the pointer at its screen Y
+ * while the density changes — but only once per gesture ({@link captureAnchor}); the per-frame path is
+ * arithmetic on those cached values.
  */
 export class DayDensityController extends DensityController {
-	/** The timed viewport's height in px — what a whole day fits into (zoom 1). 0 until first measured. */
+	/** The timed viewport's height in px — what a whole day fits into (zoom 1). Captured per gesture. */
 	private available = 0
 	/** What to hold still while the density changes: a fraction of the day (0–1), kept at a screen Y. */
 	private anchor?: { fraction: number, clientY: number, hostTop: number }
@@ -26,31 +28,9 @@ export class DayDensityController extends DensityController {
 		super(host, { storageKey: 'Mitra.WeekZoom', min: 1, max: 3, rail: '.axis, .timezone' })
 	}
 
-	private readonly resizeObserver = new ResizeObserver(() => {
-		this.measure()
-		this.apply()
-	})
-
-	override hostConnected() {
-		super.hostConnected()
-		this.resizeObserver.observe(this.host)
-	}
-
-	// The rows above the timed area (zone header + all-day lane) can change height as data loads, and the
-	// now-indicator re-renders every minute — remeasure so a whole day keeps fitting exactly at zoom 1.
-	override hostUpdated() {
-		this.measure()
-		this.apply()
-	}
-
-	override hostDisconnected() {
-		super.hostDisconnected()
-		this.resizeObserver.disconnect()
-	}
-
 	/** Below this, a measured `available` is treated as a transient degenerate reading and ignored —
-	 * a viewport briefly shrunk to ≤ the timed row's offset (e.g. mid-resize) would otherwise clamp the
-	 * grid to a 1px row that then sticks until the next host resize or reload. */
+	 * a viewport briefly shrunk to ≤ the timed row's offset (e.g. mid-resize) would otherwise anchor
+	 * the gesture's pinning math to garbage. */
 	private static readonly minAvailable = 100
 
 	/** The height a whole day fits into: the viewport minus everything laid out above the timed row —
@@ -63,8 +43,7 @@ export class DayDensityController extends DensityController {
 		}
 		const top = row.getBoundingClientRect().top - this.host.getBoundingClientRect().top + this.host.scrollTop
 		const available = this.host.clientHeight - top
-		// A transiently tiny viewport yields a degenerate (or negative) height — keep the last good value
-		// so the grid doesn't collapse; a real resize back up remeasures on the next ResizeObserver tick.
+		// A transiently tiny viewport yields a degenerate (or negative) height — keep the last good value.
 		if (available < DayDensityController.minAvailable) {
 			return
 		}
@@ -77,16 +56,16 @@ export class DayDensityController extends DensityController {
 	}
 
 	protected apply() {
-		if (!this.available) {
-			return // not measured yet — leave the CSS fallback (whole day fits) in place
-		}
-		// Since zoom ≥ 1 keeps this ≥ the viewport-fit height, the fixed row always fills the viewport.
-		this.host.style.setProperty('--grid-min-height', `${this.available * this.zoom}px`)
+		this.host.style.setProperty('--_week-zoom', `${this.zoom}`)
 	}
 
 	/** Remember which fraction of the day sits under `clientY`, so we can keep it there as zoom changes.
-	 * The host's top is cached along, so re-pinning every animation frame reads no layout. */
+	 * Measures here — once per gesture — so re-pinning every animation frame reads no layout. */
 	protected captureAnchor(clientY: number) {
+		this.measure()
+		if (!this.available) {
+			return
+		}
 		const hostTop = this.host.getBoundingClientRect().top
 		const contentY = this.host.scrollTop + clientY - hostTop
 		const fraction = Math.min(1, Math.max(0, (contentY - this.timedTop) / (this.available * this.zoom)))

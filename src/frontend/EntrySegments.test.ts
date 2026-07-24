@@ -417,4 +417,40 @@ describe('EntrySegments', () => {
 			assert.equal(slots.get(late), 0) // date-disjoint from the trip → reuses the top row
 		})
 	})
+
+	describe('allDaySlots', () => {
+		it('bumps overlapping all-day runs into distinct lanes and reuses lanes across disjoint ones', () => {
+			const conference = new Entry({ heading: 'Conference', start: base, end: base.add({ days: 3 }), allDay: true })
+			const visit = new Entry({ heading: 'Visit', start: base.add({ days: 2 }), end: base.add({ days: 4 }), allDay: true })
+			const later = new Entry({ heading: 'Later', start: base.add({ days: 5 }), end: base.add({ days: 6 }), allDay: true })
+
+			const slots = EntrySegments.of([conference, visit, later], [base]).allDaySlots
+			assert.equal(slots.get(conference), 0)
+			assert.equal(slots.get(visit), 1) // overlaps the conference on day 2 → next lane
+			assert.equal(slots.get(later), 0) // date-disjoint → reuses the top lane
+		})
+
+		it('never lets a timed entry occupy a lane', () => {
+			// Unlike monthSlots — the month grid stacks timed chips into the same rows, the lane doesn't.
+			const meeting = new Entry({ heading: 'Meeting', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
+			const holiday = new Entry({ heading: 'Holiday', start: base, end: base.add({ days: 1 }), allDay: true })
+
+			const slots = EntrySegments.of([meeting, holiday], [base]).allDaySlots
+			assert.equal(slots.get(holiday), 0)
+			assert.equal(slots.has(meeting), false)
+		})
+
+		it('excludes a move ghost so it never shifts the packed lanes', () => {
+			const holiday = new Entry({ heading: 'Holiday', start: base, end: base.add({ days: 1 }), allDay: true })
+			const ghost = new Entry({ heading: 'Holiday', start: base, end: base.add({ days: 1 }), allDay: true })
+			EntryStore.setPreview(ghost)
+			try {
+				const slots = EntrySegments.of([holiday, ghost], [base]).allDaySlots
+				assert.equal(slots.get(holiday), 0)
+				assert.equal(slots.has(ghost), false)
+			} finally {
+				EntryStore.setPreview(undefined)
+			}
+		})
+	})
 })

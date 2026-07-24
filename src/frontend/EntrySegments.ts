@@ -29,8 +29,8 @@ export interface MonthWeek {
  *   `cluster`): near-simultaneous starts split side-by-side, later starts ride on top.
  *   This is the *one* genuinely cross-segment computation; everything else a segment derives itself.
  * - `runsIn(from, to, accept)` — one representative segment per matching entry whose run touches the
- *   window, sorted for CSS `grid-auto-flow: dense` to pack into lanes. Used for the all-day lane and,
- *   per week, the month grid — the view turns each into a column span from the segment's own dates.
+ *   window. Used for the all-day lane and, per week, the month grid — the view turns each into a
+ *   column span from the segment's own dates, at the lane its `monthSlots`/`allDaySlots` packing gives.
  */
 export class EntrySegments {
 	private static readonly perEntry = new WeakMap<Entry, { readonly spanKey: string, readonly segments: ReadonlyArray<EntrySegment> }>()
@@ -116,7 +116,7 @@ export class EntrySegments {
 	}
 
 	/** One segment per accepted entry whose run touches [from, to] — its first slice in range — sorted
-	 * (earliest, then longest run first) so DOM order drives `grid-auto-flow: dense` lane packing. */
+	 * (earliest, then longest run first) so DOM — and thus paint — order stays deterministic. */
 	runsIn(from: DateTime, to: DateTime, accept: (entry: Entry) => boolean): ReadonlyArray<EntrySegment> {
 		const fromValue = from.dayStart.valueOf()
 		const toValue = to.dayStart.valueOf()
@@ -186,11 +186,21 @@ export class EntrySegments {
 	 * than CSS auto-flow because its "+N more" overflow has to know exactly which events fall past the cap. */
 	private _monthSlots?: ReadonlyMap<Entry, number>
 	get monthSlots(): ReadonlyMap<Entry, number> {
-		if (this._monthSlots) {
-			return this._monthSlots
-		}
+		return this._monthSlots ??= this.slots(this.entries)
+	}
+
+	/** The week all-day lane's packing: the same greedy rows over only the all-day entries — a timed
+	 * entry never occupies a lane there, so packing around it would punch holes in the strip. Computed
+	 * (not CSS `dense` auto-flow) because the lane needs its row COUNT for explicit tracks — see the
+	 * `.all-day` rule in Days.ts for why auto-flow rows can't size that row. */
+	private _allDaySlots?: ReadonlyMap<Entry, number>
+	get allDaySlots(): ReadonlyMap<Entry, number> {
+		return this._allDaySlots ??= this.slots(this.entries.filter(entry => !!entry.allDay))
+	}
+
+	private slots(entries: ReadonlyArray<Entry>): ReadonlyMap<Entry, number> {
 		const datesByEntry = new Map<Entry, ReadonlyArray<number>>()
-		for (const entry of this.entries) {
+		for (const entry of entries) {
 			if (EntryStore.isPreview(entry)) {
 				continue // a move's ghost overlays slot 0 (see monthWeek's fallback) — it mustn't shift lanes
 			}
@@ -222,7 +232,7 @@ export class EntrySegments {
 			dates.forEach(date => rows[slot]!.add(date))
 			slots.set(entry, slot)
 		}
-		return this._monthSlots = slots
+		return slots
 	}
 
 	// — the one per-day cross-segment computation: how overlapping timed events share the width —
