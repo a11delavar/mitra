@@ -3,7 +3,8 @@ import configs from '@a11d/eslint-config/eslint.config.mjs'
 export default [
 	...configs,
 	{
-		ignores: ['dist', 'out', 'out_test'],
+		// `website` is the standalone docs site (its own package and conventions), not app code.
+		ignores: ['dist', 'out', 'out_test', 'website'],
 	},
 	{
 		rules: {

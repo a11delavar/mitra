@@ -83,5 +83,5 @@ Set `MITRA_PORT` only when you need the process itself to bind a different port 
 ## What's next
 
 - Turn to the **[Environment variables reference](../reference/environment-variables.md)** for the exhaustive list.
-- Connect the calendars your users care about under **[Integrations](../integrations/index.md)**.
+- Connect the calendars your users care about under **[Integrations](../integrations/README.md)**.
 - Share the deployment with others via **[Multi-user & sign-in](../guides/multi-user.md)**.

@@ -1,0 +1,59 @@
+# Builds the docs site (website/, a rendering of ./docs) and deploys it to GitHub Pages.
+# The site/base are passed in here, so moving to another host later is a change to these two
+# values — nothing in the committed site config assumes GitHub Pages.
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'website/**'
+      - 'assets/mitra.svg'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+# Let the deploy job publish to Pages via OIDC.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; a newer push supersedes an in-flight one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - name: Install
+        working-directory: website
+        run: npm ci
+      - name: Build
+        working-directory: website
+        env:
+          # GitHub Pages serves a project site under /<repo>/. Swap these two for a future host.
+          MITRA_DOCS_SITE: https://a11delavar.github.io
+          MITRA_DOCS_BASE: /mitra
+        run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: website/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

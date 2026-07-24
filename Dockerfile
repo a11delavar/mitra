@@ -66,7 +66,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 
 # Links the image to its repo on GHCR (README, permissions) and stamps metadata.
 LABEL org.opencontainers.image.source="https://github.com/a11delavar/mitra"
-LABEL org.opencontainers.image.description="Mitra — an open, self-hostable calendar & task planner that unifies your events, to-dos, and the calendars you already use."
+LABEL org.opencontainers.image.description="Mitra — one calendar to plan your events and tasks, self-hostable and synced with the calendars you already use."
 LABEL org.opencontainers.image.licenses="AGPL-3.0-only"
 
 CMD ["node", "out/server/server.mjs"]

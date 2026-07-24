@@ -4,11 +4,12 @@
 
 # Mitra
 
-**Your calendar and your tasks, in one place.**
+**One calendar to plan your events and tasks.**
 
 [![CI](https://github.com/a11delavar/mitra/actions/workflows/qa.yml/badge.svg)](https://github.com/a11delavar/mitra/actions/workflows/qa.yml)
-[![License: AGPL v3](https://img.shields.io/badge/license-AGPL%20v3-blue.svg)](./LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/license-AGPL%20v3-white.svg)](./LICENSE)
 [![Image: ghcr.io](https://img.shields.io/badge/image-ghcr.io%2Fa11delavar%2Fmitra-2496ED?logo=docker&logoColor=white)](https://github.com/a11delavar/mitra/pkgs/container/mitra)
+[![Docs](https://img.shields.io/badge/docs-online-f97316?logo=markdown&logoColor=white)](https://a11delavar.github.io/mitra/)
 
 </div>
 
@@ -50,9 +51,7 @@ docker compose up -d   # → http://localhost:3000
 
 Out of the box Mitra runs single-user with no login. Everything you create lives in the `~/mitra` directory — back that up and you've backed up everything.
 
-## Documentation
-
-Everything about setting up and operating an instance lives in **[`docs/`](./docs/index.md)** — [installation](./docs/getting-started/installation.md) and [configuration](./docs/getting-started/configuration.md), the [integrations](./docs/integrations/index.md) (CalDAV, Google Calendar, Apple Calendar, Notion), [multi-user sign-in](./docs/guides/multi-user.md), [reminders](./docs/guides/notifications.md), [backups](./docs/guides/backups.md), and the complete [environment-variable reference](./docs/reference/environment-variables.md).
+From here, the **[documentation](https://a11delavar.github.io/mitra/)** covers configuration, connecting your calendars (CalDAV, Google, Apple, Notion), multi-user sign-in, and everything else — or browse it as Markdown in [`docs/`](./docs).
 
 ## Contributing
 

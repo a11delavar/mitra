@@ -1,12 +1,12 @@
 ---
 title: Documentation
-description: Self-hosted documentation for Mitra — the open calendar and task planner that unifies your events, to-dos, and the calendars you already use.
+description: Mitra — one calendar to plan your events and tasks, self-hosted and synced with the calendars you already use.
 sidebar:
   order: 0
   label: Overview
 ---
 
-**Mitra puts your calendar and your tasks in one place.** It's a self-hosted, private planner where your to-dos sit on the same timeline as your events — and it plugs into the accounts you already have (CalDAV, Google Calendar, Apple Calendar, Notion) instead of replacing them.
+**One calendar to plan your events and tasks.** Mitra is a self-hosted, private planner where your tasks sit on the same timeline as your events — and it plugs into the accounts you already have (CalDAV, Google Calendar, Apple Calendar, Notion) instead of replacing them.
 
 > [!NOTE]
 > Mitra is early and moving fast. Expect rough edges and breaking changes before `1.0`.
