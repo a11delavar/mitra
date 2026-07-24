@@ -45,13 +45,11 @@ Mitra is now serving on [http://localhost:3000](http://localhost:3000). Out of t
 
 ## The data directory
 
-Everything you create lives under **`/app/data`** inside the container — the SQLite database and a couple of small state files:
+Everything you create lives under **`/app/data`** inside the container, in a single SQLite database:
 
 | Path | What it holds |
 | --- | --- |
-| `/app/data/database.sqlite` | The database — integrations, sources, entries, users, sessions. |
-| `/app/data/vapid.json` | The push-notification keypair, generated on first boot. |
-| `/app/data/reminders.json` | The reminder scheduler's watermark (so reminders fire exactly once). |
+| `/app/data/database.sqlite` | The whole instance — integrations, sources, entries, users, sessions, the push-notification keypair, and the reminder scheduler's watermark. |
 
 Mount a directory there and you've persisted the whole instance. **Back up that one directory and you've backed up everything** — see [Backups](../guides/backups.md).
 
@@ -88,7 +86,7 @@ For anything beyond a LAN, put Mitra behind a reverse proxy (Caddy, Traefik, ngi
 - **[OIDC sign-in](../guides/multi-user.md)** — session cookies are marked `Secure` when `MITRA_URL` is `https://`, and most identity providers require an `https` redirect URI.
 - **[Google Calendar](../integrations/google-calendar.md)** — Google requires an `https` OAuth redirect URI.
 
-Mitra listens on plain HTTP inside the container; let the proxy handle TLS. 
+Mitra listens on plain HTTP inside the container; let the proxy handle TLS.
 
 If you use **[Traefik](https://traefik.io/)**, you can route traffic directly via Docker labels in your `compose.yaml`:
 

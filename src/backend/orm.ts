@@ -4,6 +4,7 @@ import { User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Not
 import { Dev } from './Dev.js'
 import { NotificationSubscription } from './NotificationSubscription.js'
 import { Session } from './Session.js'
+import { State } from './State.js'
 
 dotenv.config({ path: `${import.meta.dirname}/.env` })
 
@@ -11,7 +12,7 @@ const dbLogger = createLogger('Database')
 
 /** The shared ORM instance, initialized once at startup. Routes fork an `em` per request. */
 export const orm = await MikroORM.init({
-	entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Dev, Source, Entry, Recurrence, NotificationSubscription, Session],
+	entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Dev, Source, Entry, Recurrence, NotificationSubscription, Session, State],
 	dbName: `${import.meta.dirname}/../../data/database.sqlite`,
 	// SQL is the firehose — wired only when the operator asked for `trace`, and routed there. Left off
 	// otherwise, so a normal boot emits no query noise.

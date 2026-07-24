@@ -1,9 +1,9 @@
 import { type MikroORM } from '@mikro-orm/sqlite'
-import fs from 'fs'
 import { Entry, Integration, Source, createLogger } from '../shared/index.js'
 import { expandedOccurrences } from './occurrences.js'
 import { dueReminders, reminderSpan } from './reminderDomain.js'
 import { sendTo } from './push.js'
+import { readState, writeState } from './State.js'
 
 /**
  * The reminder clock: something has to compute "it is now 30 minutes before that event" while every
@@ -27,7 +27,10 @@ export class ReminderScheduler {
 	private readonly logger = createLogger('Reminders')
 
 	private static readonly interval = 60_000
-	private readonly watermarkPath = `${import.meta.dirname}/../../data/reminders.json`
+	// The watermark lives INSIDE the database (the `reminder.watermark` state row) rather than in a loose
+	// data/reminders.json, so a restored database.sqlite carries its own exactly-once watermark — the copy
+	// is internally consistent with the entries it's about to fire reminders for.
+	private static readonly watermarkStateKey = 'reminder.watermark'
 
 	private ticking = false
 
@@ -39,16 +42,13 @@ export class ReminderScheduler {
 		setInterval(() => this.tick(), ReminderScheduler.interval)
 	}
 
-	private get watermark(): Date | undefined {
-		try {
-			return new Date(JSON.parse(fs.readFileSync(this.watermarkPath, 'utf8')).watermark as string)
-		} catch {
-			return undefined
-		}
+	private async readWatermark(): Promise<Date | undefined> {
+		const iso = await readState<string>(ReminderScheduler.watermarkStateKey)
+		return iso ? new Date(iso) : undefined
 	}
 
-	private set watermark(value: Date) {
-		fs.writeFileSync(this.watermarkPath, JSON.stringify({ watermark: value.toISOString() }, undefined, '\t'))
+	private writeWatermark(value: Date) {
+		return writeState(ReminderScheduler.watermarkStateKey, value.toISOString())
 	}
 
 	private async tick() {
@@ -58,7 +58,7 @@ export class ReminderScheduler {
 		this.ticking = true
 		try {
 			const now = new Date()
-			const persisted = this.watermark?.getTime() ?? now.getTime()
+			const persisted = (await this.readWatermark())?.getTime() ?? now.getTime()
 			const watermark = new Date(Math.max(persisted, now.getTime() - CLAMP))
 
 			const em = this.orm.em.fork()
@@ -105,7 +105,7 @@ export class ReminderScheduler {
 				})
 			}
 
-			this.watermark = now
+			await this.writeWatermark(now)
 		} catch (error) {
 			this.logger.error('Reminder tick failed:', error)
 		} finally {

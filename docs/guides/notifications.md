@@ -11,10 +11,10 @@ Mitra can notify you before an event starts — even with no tab open — using 
 
 - **HTTPS.** Browsers only register the service worker and grant notification permission in a **secure context** — that means the site is served over `https://` (or `http://localhost` for local testing). A remote instance behind a [reverse proxy with TLS](../getting-started/installation.md#running-behind-a-reverse-proxy) satisfies this; plain `http://` at a LAN IP does not.
 - **On iPhone and iPad: install Mitra first.** iOS and iPadOS (16.4+) only deliver Web Push to web apps **added to the Home Screen** — see [Installing Mitra as an app](#installing-mitra-as-an-app). Once installed, reminders arrive like any other app's notifications.
-- **Nothing else.** The signing keypair (VAPID) is generated automatically on first boot and lives in the data directory. Keep that directory ([you're backing it up anyway](backups.md)) and reminders keep working across restarts and updates.
+- **Nothing else.** The signing keypair (VAPID) is generated automatically on first boot and is stored **inside the database** (`database.sqlite`). Keep the data directory ([you're backing it up anyway](backups.md)) and reminders keep working across restarts and updates.
 
 > [!CAUTION]
-> The generated keypair **must survive restarts** — push subscriptions are bound to it, so deleting or regenerating the data directory's `vapid.json` silently invalidates every browser's subscription. Treat the data directory as one indivisible unit and this never comes up.
+> The generated keypair **must survive restarts** — push subscriptions are bound to it, so replacing the database with one that never held it (or wiping the data directory) silently invalidates every browser's subscription. Because the keypair lives inside `database.sqlite`, any backup of that file already carries it, and a restore stays consistent — treat the data directory as one indivisible unit and this never comes up.
 
 ## Adding reminders (for users)
 

@@ -1,9 +1,9 @@
 import { Router } from 'express'
-import fs from 'fs'
 import webpush from 'web-push'
 import { createLogger } from '../shared/index.js'
 import { orm } from './orm.js'
 import { NotificationSubscription } from './NotificationSubscription.js'
+import { readState, writeState } from './State.js'
 
 const logger = createLogger('Push')
 
@@ -18,22 +18,25 @@ const logger = createLogger('Push')
  * revoked permission or the browser expired the endpoint) are pruned on send.
  */
 
-// The keypair lives next to the database: it must survive restarts (subscriptions are bound to the
-// public key — rotating it silently invalidates every one of them) and belongs to this deployment.
-const vapidPath = `${import.meta.dirname}/../../data/vapid.json`
 
-function vapidKeys(): { publicKey: string, privateKey: string } {
-	try {
-		return JSON.parse(fs.readFileSync(vapidPath, 'utf8')) as { publicKey: string, privateKey: string }
-	} catch {
-		const keys = webpush.generateVAPIDKeys()
-		fs.writeFileSync(vapidPath, JSON.stringify(keys, undefined, '\t'))
-		logger.info('Generated a new VAPID keypair for push notifications')
-		return keys
+interface VapidKeys { publicKey: string, privateKey: string }
+
+async function vapidKeys(): Promise<VapidKeys> {
+	// The keypair lives INSIDE the database (the `vapid` state row): it must survive restarts (subscriptions
+	// are bound to the public key — rotating it silently invalidates every one of them), and holding it in the
+	// database rather than a side file means any point-in-time copy of database.sqlite carries its own keypair.
+	const key = 'vapid'
+	const existing = await readState<VapidKeys>(key)
+	if (existing) {
+		return existing
 	}
+	const keys = webpush.generateVAPIDKeys()
+	await writeState(key, keys)
+	logger.info('Generated a new VAPID keypair for push notifications')
+	return keys
 }
 
-const vapid = vapidKeys()
+const vapid = await vapidKeys()
 // The subject identifies the sender to push services (their abuse contact); a mailto is customary.
 webpush.setVapidDetails(process.env.MITRA_VAPID_SUBJECT || 'mailto:mitra@localhost', vapid.publicKey, vapid.privateKey)
 
