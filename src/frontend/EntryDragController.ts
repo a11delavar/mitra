@@ -12,6 +12,16 @@ type Mode = 'timed' | 'allday'
 /** What a gesture does: place a new entry, translate an existing one, or drag one of its edges. */
 type Kind = 'create' | 'move' | 'resize'
 
+/** Touch only: how long (ms) a finger must stay pressed — within {@link TOUCH_HOLD_TOLERANCE} — before a
+ * grid gesture begins, so a plain swipe scrolls instead of creating. ~half a second matches the OS long-press. */
+const TOUCH_HOLD_MS = 500
+
+/** Movement (px) tolerated during the hold before the press is read as a scroll and the gesture is released. */
+const TOUCH_HOLD_TOLERANCE = 10
+
+/** Haptic pulse (ms) fired the instant the hold lands, where the Vibration API exists (absent on iOS Safari). */
+const TOUCH_HOLD_FEEDBACK_MS = 15
+
 /** A day cell snapshotted once per drag (it can't move while the pointer is captured): its box, for
  * hit-testing the pointer to a day, and its timed-grid (`.entries`) box, for mapping Y to a minute in the
  * week view. Snapshotting up front makes each move pure arithmetic — no `getBoundingClientRect` per frame. */
@@ -47,6 +57,8 @@ interface Drag {
 	readonly laneBottom?: number                 // week only — the all-day strip's lower edge: a move above it previews all-day, below it timed
 	point: { x: number, y: number }
 	moved: boolean
+	armed: boolean                               // touch only — waiting for the press-and-hold; listening but not yet captured (see requiresHold)
+	holdTimer?: ReturnType<typeof setTimeout>    // touch only — the pending long-press timer, live only while armed
 	frame?: number
 	gestureDraft?: Entry                         // create only — the one draft instance the gesture mutates per frame
 	preview?: Entry                              // move only — the one dashed ghost instance the gesture mutates per frame
@@ -93,6 +105,17 @@ export class EntryDragController extends Controller {
 
 	override hostDisconnected() {
 		this.element.removeEventListener('pointerdown', this.onPointerDown)
+	}
+
+	/** Whether a pointer of this type must press-and-hold before a grid drag begins. Touch and pen do: a
+	 * finger can't hover and a swipe is how you scroll, so an immediate drag can't tell "scroll the grid"
+	 * from "create/move an entry" — the hold makes the intent explicit while a plain swipe keeps scrolling.
+	 * Mouse points precisely and doesn't scroll by dragging on the grid, so it starts immediately.
+	 * NOTE (pen): the hold arms the same as touch, but the native-pan veto in {@link onTouchMove} is
+	 * touch-event-only — pen emits none — so if a pen can pan the grid (Windows Ink), a committed pen drag
+	 * can still be seized by a native pan and `pointercancel`led. Testing whether that actually bites. */
+	private requiresHold(pointerType: string): boolean {
+		return pointerType === 'touch' || pointerType === 'pen'
 	}
 
 	/** The create mode a pointerdown starts on empty space, or `undefined` if it shouldn't start one. Month
@@ -241,12 +264,66 @@ export class EntryDragController extends Controller {
 		}
 	}
 
-	private begin(drag: Drag, e: PointerEvent) {
+	/** Start (or, on touch, arm) a gesture. Mouse and pen capture the pointer immediately — there's no
+	 * scroll to disambiguate. Touch instead *arms*: it listens but doesn't capture, waiting for a
+	 * press-and-hold (see {@link activate}) so a plain swipe still scrolls the grid. Either way the
+	 * move/up/cancel handlers bind now; capture and any draft wait until the gesture actually commits. */
+	private begin(drag: Drag) {
 		this.drag = drag
-		this.element.setPointerCapture(e.pointerId)
 		this.element.addEventListener('pointermove', this.onPointerMove)
 		this.element.addEventListener('pointerup', this.onPointerUp)
 		this.element.addEventListener('pointercancel', this.onPointerCancel)
+		// Non-passive so it can veto the grid's own `touch-action: pan-x pan-y` while a touch drag runs —
+		// see onTouchMove. Bound for every gesture; it's inert unless a committed touch drag is in flight.
+		this.element.addEventListener('touchmove', this.onTouchMove, { passive: false })
+		if (drag.armed) {
+			drag.holdTimer = setTimeout(() => this.activate(true), TOUCH_HOLD_MS)
+		} else {
+			this.activate(false)
+		}
+	}
+
+	/** Commit an armed/starting gesture to the pointer: capture it, so from here the drag owns every move
+	 * and the browser stops scrolling. `fromHold` is the touch path — the press-and-hold just landed, so
+	 * confirm it at once with a haptic pulse (where supported) and immediate feedback: a create drops its
+	 * draft at the press point, a move/resize lifts the entry. Mouse/pen (`fromHold` false) capture silently
+	 * and let the dead-zone in {@link processFrame} decide when the drag has really started. */
+	private activate(fromHold: boolean) {
+		const drag = this.drag!
+		drag.armed = false
+		if (drag.holdTimer !== undefined) {
+			clearTimeout(drag.holdTimer)
+			drag.holdTimer = undefined
+		}
+		this.element.setPointerCapture(drag.pointerId)
+		if (!fromHold) {
+			return
+		}
+		// Vibrate only once the frame has a user activation — otherwise Chrome blocks the call and logs an
+		// intervention warning (notably under DevTools touch emulation, which never grants one). It's harmless
+		// regardless — vibrate returns false, never throws, so it can't interrupt the gesture — but gating it
+		// keeps the console clean. A missing API means iOS Safari (no Vibration API); the draft appearing is
+		// the feedback that always works.
+		if (typeof navigator.vibrate === 'function' && (navigator.userActivation?.hasBeenActive ?? true)) {
+			navigator.vibrate(TOUCH_HOLD_FEEDBACK_MS)
+		}
+		if (drag.kind === 'create') {
+			drag.moved = true // the hold *is* the create intent — a release without dragging still makes an entry
+			const built = this.buildAt(drag.point)
+			if (built) {
+				this.apply(built)
+			}
+		} else {
+			EntryStore.setDragging(drag.entry) // float it above its cluster; a real drag still governs the commit
+		}
+	}
+
+	/** Release an armed touch gesture whose hold never landed — the finger scrolled away or lifted first.
+	 * Nothing was captured, drafted, or committed while armed, so this is a bare teardown. */
+	private abort() {
+		if (this.drag) {
+			this.teardown(this.drag.pointerId)
+		}
 	}
 
 	/** End the gesture: release capture (if still held), unbind, cancel any pending frame, go idle. */
@@ -257,6 +334,10 @@ export class EntryDragController extends Controller {
 		this.element.removeEventListener('pointermove', this.onPointerMove)
 		this.element.removeEventListener('pointerup', this.onPointerUp)
 		this.element.removeEventListener('pointercancel', this.onPointerCancel)
+		this.element.removeEventListener('touchmove', this.onTouchMove)
+		if (this.drag?.holdTimer !== undefined) {
+			clearTimeout(this.drag.holdTimer)
+		}
 		if (this.drag?.frame !== undefined) {
 			cancelAnimationFrame(this.drag.frame)
 		}
@@ -284,7 +365,7 @@ export class EntryDragController extends Controller {
 		// and all-day. Sticky below the headers, so — like the cells — it can't move while the pointer is
 		// captured; snapshotting it keeps every frame free of DOM reads.
 		const laneBottom = this.element.querySelector('.all-day')?.getBoundingClientRect().bottom
-		const common = { pointerId: e.pointerId, origin: { x: e.clientX, y: e.clientY }, point: { x: e.clientX, y: e.clientY }, cells, laneBottom, moved: false }
+		const common = { pointerId: e.pointerId, origin: { x: e.clientX, y: e.clientY }, point: { x: e.clientX, y: e.clientY }, cells, laneBottom, moved: false, armed: this.requiresHold(e.pointerType) }
 
 		// Move / resize an existing entry — persisted ones only (a draft is owned by the create flow + editor).
 		// A series occurrence drags like any entry: the drop's commit resolves the edit's scope.
@@ -301,7 +382,7 @@ export class EntryDragController extends Controller {
 			}
 			const edge = target.closest('.resize-start') ? 'start' : target.closest('.resize-end') ? 'end' : undefined
 			const kind: Kind = edge ? 'resize' : 'move'
-			this.begin({ ...common, kind, mode, anchor, entry, before: entry.clone(), edge, grabbedSegment: kind === 'move' ? segment : undefined }, e)
+			this.begin({ ...common, kind, mode, anchor, entry, before: entry.clone(), edge, grabbedSegment: kind === 'move' ? segment : undefined })
 			return
 		}
 
@@ -315,7 +396,7 @@ export class EntryDragController extends Controller {
 		if (!anchor) {
 			return
 		}
-		this.begin({ ...common, kind: 'create', mode, anchor, source }, e)
+		this.begin({ ...common, kind: 'create', mode, anchor, source })
 	}
 
 	// Coalesce: record the latest position and process at most once per frame (pointermove fires far more
@@ -325,8 +406,29 @@ export class EntryDragController extends Controller {
 		if (!drag || e.pointerId !== drag.pointerId) {
 			return
 		}
+		if (drag.armed) {
+			// Still waiting for the hold: a finger that travels past the tolerance is scrolling, not pressing,
+			// so release the gesture and let the browser pan (we never captured or preventDefaulted).
+			if (Math.hypot(e.clientX - drag.origin.x, e.clientY - drag.origin.y) > TOUCH_HOLD_TOLERANCE) {
+				this.abort()
+			}
+			return
+		}
 		drag.point = { x: e.clientX, y: e.clientY }
 		drag.frame ??= requestAnimationFrame(this.processFrame)
+	}
+
+	/** Touch only: once a gesture has committed — its press-and-hold landed and it captured the pointer —
+	 * stop the grid (whose `touch-action: pan-x pan-y` lets a single finger pan it) from scrolling out from
+	 * under the drag. Pointer capture alone does NOT: a captured touch still drives the container's native
+	 * pan, which seizes the touch mid-drag and fires `pointercancel`, silently dropping the create/move.
+	 * Vetoing the default here (the listener is non-passive) keeps the finger on the gesture instead. While
+	 * still `armed` we let it through, so a plain swipe before the hold keeps scrolling; mouse/pen never
+	 * emit touch events, so this is a no-op for them. */
+	private readonly onTouchMove = (e: TouchEvent) => {
+		if (this.drag && !this.drag.armed) {
+			e.preventDefault()
+		}
 	}
 
 	private readonly processFrame = () => {
@@ -382,19 +484,33 @@ export class EntryDragController extends Controller {
 			return
 		}
 
+		if (drag.armed) {
+			// Lifted before the hold landed — never a drag, so this is a plain tap. Drop the pending hold and
+			// fall through to the unmoved-release logic below, which yields each kind's tap outcome: a move
+			// opens its segment's editor; a create makes nothing (creation needs a drag — see below).
+			drag.armed = false
+			if (drag.holdTimer !== undefined) {
+				clearTimeout(drag.holdTimer)
+				drag.holdTimer = undefined
+			}
+		}
+
 		if (drag.kind === 'create') {
-			// A real drag creates the spanning entry; a plain click quick-creates a single day in the
-			// month/year (where clicking a cell is the add affordance) and creates nothing in the week.
-			// The last coalesced frame may not have run, so resolve the release position here (before teardown).
-			const create = drag.moved || this.grid !== 'week'
-			const built = !create ? undefined : drag.moved ? this.buildAt(drag.point) : this.buildCreate(drag.anchor, drag.anchor)
+			// Creating an entry always takes a drag, in every view — a plain click/tap on empty space makes
+			// nothing (it would otherwise spawn stray entries just from clicking around, most visibly in the
+			// month/year where a whole day cell is easy to hit). A touch hold counts as that drag: it forces
+			// `moved` when it lands (see activate), so press-and-hold still creates. The last coalesced frame
+			// may not have run, so resolve the release position here (before teardown).
+			const built = drag.moved ? this.buildAt(drag.point) : undefined
 			this.teardown(e.pointerId)
 			if (built) {
 				const draft = drag.gestureDraft ?? built
 				draft.adoptSpan(built)
 				EntryStore.upsertDraft(draft)
+				EntryStore.openDraft()
+			} else {
+				EntryStore.discardDraft()
 			}
-			create ? EntryStore.openDraft() : EntryStore.discardDraft()
 			return
 		}
 
@@ -427,6 +543,10 @@ export class EntryDragController extends Controller {
 	private readonly onPointerCancel = (e: PointerEvent) => {
 		const drag = this.drag
 		if (!drag || e.pointerId !== drag.pointerId) {
+			return
+		}
+		if (drag.armed) {
+			this.teardown(e.pointerId) // scroll / touch hand-off before the hold: nothing was drafted to undo
 			return
 		}
 		this.teardown(e.pointerId)
