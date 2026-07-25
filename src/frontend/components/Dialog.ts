@@ -46,17 +46,24 @@ export class Dialog extends Component {
 
 			:host {
 				display: contents;
+				--color-background: light-dark(
+					var(--color-background-seed),
+					color-mix(in srgb, var(--color-background-seed), white 4.5%)
+				);
 			}
 
 			dialog {
 				margin: auto;
 				outline: none;
-				background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+				background: var(--color-background);
 				backdrop-filter: blur(12px);
 				color: var(--color-text);
 				border: var(--border);
 				border-radius: 14px;
-				padding: 1.25rem;
+				/* A token, so slotted content can bleed to the dialog's edge (e.g. a scroll region
+				   whose scrollbar should ride the dialog border) with a matching negative margin. */
+				--mitra-dialog-padding: 1.25rem;
+				padding: var(--mitra-dialog-padding);
 				min-width: 360px;
 				/* A dialog needing more room than the default sets --mitra-dialog-width on its host
 				   (it inherits through the shadow boundary) — an explicit width, not just a cap, so
@@ -90,6 +97,8 @@ export class Dialog extends Component {
 				flex-direction: column;
 				gap: 1.125rem;
 				width: 100%;
+				/* Positioning context for the headingless close button below. */
+				position: relative;
 			}
 
 			.header {
@@ -103,6 +112,21 @@ export class Dialog extends Component {
 					font-size: 1.0625rem;
 					font-weight: 650;
 					letter-spacing: -0.01em;
+				}
+
+				/* A dialog opened with no heading (its content is its own header — the About dialog does
+				   this): the title bar leaves the flow so the panel content becomes the visual top, and the
+				   close button stays, floating over the content's top-right corner. */
+				&[data-headingless] {
+					position: absolute;
+					inset-block-start: 0;
+					inset-inline-end: 0;
+					margin: 0;
+					z-index: 1;
+
+					h2 {
+						display: none;
+					}
 				}
 			}
 
@@ -122,7 +146,7 @@ export class Dialog extends Component {
 		return html`
 			<dialog part="dialog" @cancel=${(e: Event) => e.preventDefault()}>
 				<div class="panel">
-					<header class="header">
+					<header class="header" ?data-headingless=${!this.heading}>
 						<slot name="leading"></slot>
 						<h2>${this.heading}</h2>
 						<mitra-icon-button icon="x" label=${t('Close')} @click=${() => this.handleAction(DialogActionKey.Cancellation)}></mitra-icon-button>

@@ -10,8 +10,7 @@ import { PageCalendar } from './PageCalendar.js'
 import { CommandPalette } from './CommandPalette.js'
 import { Sidebar } from './Sidebar.js'
 import { EntryDetailsComponent } from './EventDetails.js'
-import { DialogAbout } from './DialogAbout.js'
-import { DialogWhatsNew, markChangesSeen } from './DialogWhatsNew.js'
+import { DialogAbout, markChangesSeen } from './DialogAbout.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { colorContrast } from './components/colorContrast.js'
 import { IconButton } from './components/IconButton.js'
@@ -94,7 +93,8 @@ export class Mitra extends Application {
 			:root {
 				color-scheme: light dark;
 				user-select: none;
-				--color-background: color-mix(in srgb, light-dark(#f1f3f4, #121314), var(--color-accent) 2.5%);
+				--color-background-seed: color-mix(in srgb, light-dark(#f1f3f4, #121314), var(--color-accent) 2.5%);
+				--color-background: var(--color-background-seed);
 				--color-surface: color-mix(in srgb, light-dark(#ffffff, #191a1b), var(--color-accent) 5%);
 				--color-text: color-mix(in srgb, light-dark(black, white), var(--color-accent) 2.5%);
 				--color-text-muted: color-mix(in srgb, var(--color-text), var(--color-background) 45%);
@@ -124,7 +124,6 @@ export class Mitra extends Application {
 			${EntryDetailsComponent.styles}
 			${EntryDetailsWhen.styles}
 			${DialogAbout.styles}
-			${DialogWhatsNew.styles}
 			${DialogIntegration.styles}
 			${DialogRecurrenceScope.styles}
 			${TaskStatusComponent.styles}

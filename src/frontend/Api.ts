@@ -1,6 +1,6 @@
 import { Api, HttpError, apiError, apiAuthenticator, type ApiAuthenticator } from '@a11d/api'
 import { type DateTime } from '@3mo/date-time'
-import type { Entry, Integration, RecurrenceScope, Source, User, UserTimeZone } from 'shared'
+import type { ChangelogSection, Entry, Integration, RecurrenceScope, Source, User, UserTimeZone } from 'shared'
 
 /**
  * Surface the server's error message on failed responses. Without a registered
@@ -59,6 +59,9 @@ export interface InstanceMeta {
 	commit: string
 	/** The server's Node.js runtime version. */
 	node: string
+	/** The running build's release page on GitHub — present only when the build is exactly a tag.
+	 * Resolved server-side so the frontend links it without inspecting the version string. */
+	releaseUrl?: string
 	/** Present when the server's update checker (backend/updates.ts) found something newer than the
 	 * running build — a release tag, or for `:dev` images the state of main (`commits` then says how
 	 * far ahead). `url` is where a human goes to read about it. */
@@ -97,19 +100,9 @@ export function isBundleStale() {
 	return !!meta && meta.version !== mitra.version
 }
 
-/** One version's section of the changelog shipped INSIDE this build (see backend/changelog.ts) —
- * the What's-New dialog's data. A plain DTO. */
-export interface ChangelogSection {
-	/** `0.3.0`, or `unreleased` for the section a dev image carries above the tags. */
-	version: string
-	/** The release date (`2026-07-10`); the unreleased section has none. */
-	date?: string
-	/** The section's body, verbatim markdown. */
-	markdown: string
-}
-
 /** What changed in the version you're RUNNING — readable offline; what an update would bring is the
- * (online) update indicator's concern, not this endpoint's. */
+ * (online) update indicator's concern, not this endpoint's. The shape lives in shared (see
+ * shared/Changelog.ts); the server parses CHANGELOG.md into it. */
 export function fetchChangelog() {
 	return Api.get<Array<ChangelogSection>>('/meta/changelog')
 }

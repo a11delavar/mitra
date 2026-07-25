@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { updateChecker } from './updates.js'
-import { getChangelog } from './changelog.js'
+import { getChangelog, runningReleaseUrl } from './changelog.js'
 
 export const metaRouter = Router()
 
@@ -20,6 +20,9 @@ metaRouter.get('/', (_req, res) => {
 		version: mitra.version,
 		commit: mitra.commit,
 		node: process.version,
+		// The running build's release page on GitHub, when it is a tag — the About header links its
+		// version there. Resolved here so the frontend never turns a version string into a URL.
+		...(runningReleaseUrl() ? { releaseUrl: runningReleaseUrl() } : {}),
 		// Present only when the update checker has found something newer — the SERVER polls GitHub
 		// (one poll per instance, see updates.ts), the browser merely renders this cached verdict.
 		...(updateChecker.update ? { update: updateChecker.update } : {}),

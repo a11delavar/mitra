@@ -1,7 +1,6 @@
 import { Component, component, html, css, property, state, event, eventListener } from '@a11d/lit'
 import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, setDefaultSource, resyncSource, resyncIntegration } from './Api.js'
-import { DialogAbout } from './DialogAbout.js'
-import { hasUnseenChanges } from './DialogWhatsNew.js'
+import { DialogAbout, hasUnseenChanges } from './DialogAbout.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { SourceType, type Source } from 'shared'
 import { outlineStyles } from './components/outlineStyles.js'

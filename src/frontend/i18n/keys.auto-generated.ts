@@ -90,6 +90,7 @@ declare global {
 		"jump navigate pick specific day month year": unknown
 		"Location": unknown
 		"minutes": unknown
+		"modified": unknown
 		"Month": unknown
 		"Month View": unknown
 		"navigate": unknown
