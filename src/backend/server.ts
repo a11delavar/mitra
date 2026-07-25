@@ -6,7 +6,7 @@ import { ModelValueConstructor } from '@a11d/api-model-value-constructor'
 import { createLogger, logLevelName } from '../shared/index.js'
 import { orm } from './orm.js'
 import { authMiddleware, authRouter, oidc } from './auth.js'
-import { Synchronizer } from './Synchronizer.js'
+import { synchronizer } from './Synchronizer.js'
 import { eventsRouter } from './events.js'
 import { entriesRouter } from './entries.js'
 import { integrationsRouter } from './integrations.js'
@@ -25,7 +25,7 @@ const logger = createLogger('API')
 // where 3000 is already someone else's.
 const PORT = Number(process.env.MITRA_PORT) || 3000
 
-new Synchronizer(orm).start()
+synchronizer.start()
 new ReminderScheduler(orm).start()
 updateChecker.start()
 

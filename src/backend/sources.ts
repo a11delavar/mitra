@@ -19,13 +19,14 @@ sourcesRouter.put('/:id/visibility', async (req, res) => {
 	return res.json(source)
 })
 
-// Full re-import: rebuild the source's local cache from the provider (see Integration.resyncSource).
-sourcesRouter.post('/:id/resync', async (req, res) => {
+// Full re-import: rebuild the source's local cache from the provider (see Integration.reimportSource).
+// Distinct from the background SYNC, which only pulls deltas and needs no endpoint of its own.
+sourcesRouter.post('/:id/reimport', async (req, res) => {
 	const em = orm.em.fork()
 	const source = await req.user.source(em, req.params.id)
 	const integration = await em.findOneOrFail(Integration, { id: source.integrationId })
 
-	await integration.resyncSource(em, source)
+	await integration.reimportSource(em, source)
 	await em.flush()
 
 	syncEmitter.emit('updated', req.user.id)

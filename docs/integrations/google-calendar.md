@@ -71,7 +71,7 @@ A user can disconnect at any time:
 
 The refresh token Google issues **never leaves the server** — the browser only ever runs the consent redirect. Mitra stores the token next to the account and uses it to mint short-lived access tokens for CalDAV requests. Reconnecting the same Google account renews the grant in place rather than creating a duplicate.
 
-Because Google's CalDAV shares the Google Calendar API quotas, Mitra paces Google syncs to about once a minute — comfortably within the limits even with many connected accounts.
+Because Google's CalDAV shares the Google Calendar API quotas, Mitra paces Google syncs to at most about once a minute — and to every few minutes while nobody has the app open — comfortably within the limits even with many connected accounts.
 
 ## Troubleshooting
 

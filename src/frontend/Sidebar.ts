@@ -1,5 +1,5 @@
 import { Component, component, html, css, property, state, event, eventListener } from '@a11d/lit'
-import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, setDefaultSource, resyncSource, resyncIntegration } from './Api.js'
+import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, setDefaultSource, reimportSource, reimportIntegration } from './Api.js'
 import { DialogAbout, hasUnseenChanges } from './DialogAbout.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { SourceType, type Source } from 'shared'
@@ -680,10 +680,12 @@ export class Sidebar extends Component {
 										<mitra-icon icon="pencil"></mitra-icon>
 										${t('Edit')}
 									</button>
+									${/* Re-import only — there is deliberately no "sync now" here: syncing runs itself,
+									   and offering to trigger it would imply what's on screen might be stale. */''}
 									<button
 										title=${t('Delete the locally cached entries of every enabled source and import everything again')}
-										@click=${(e: Event) => { this.closeMenu(e); resyncIntegration(i.id).catch(() => void 0) }}>
-										<mitra-icon icon="refresh-cw"></mitra-icon>
+										@click=${(e: Event) => { this.closeMenu(e); reimportIntegration(i.id).catch(() => void 0) }}>
+										<mitra-icon icon="hard-drive-download"></mitra-icon>
 										${t('Re-import entries')}
 									</button>
 									<button class="danger" @click=${(e: Event) => { this.closeMenu(e); this.removeIntegration(i.id) }}>
@@ -796,8 +798,8 @@ export class Sidebar extends Component {
 					</div>
 					<button class="menu-row"
 						title=${t('Delete the locally cached entries and import everything from the source again')}
-						@click=${(e: Event) => { this.closeMenu(e); resyncSource(source.id).catch(() => void 0) }}>
-						<mitra-icon icon="refresh-cw"></mitra-icon>
+						@click=${(e: Event) => { this.closeMenu(e); reimportSource(source.id).catch(() => void 0) }}>
+						<mitra-icon icon="hard-drive-download"></mitra-icon>
 						${t('Re-import entries')}
 					</button>
 				</div>

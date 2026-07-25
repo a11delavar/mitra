@@ -439,7 +439,6 @@ export class PageCalendar extends PageComponent {
 					pointer-events: none;
 				}
 			}
-
 		`
 	}
 

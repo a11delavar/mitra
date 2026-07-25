@@ -26,6 +26,10 @@ export class Dev extends Integration {
 		this.uri = incoming.uri || this.uri
 	}
 
+	/** Local-only: the rows in our database ARE the data, so there is no remote to poll — the
+	 * background daemon and manual refreshes skip this integration entirely. */
+	override get syncInterval() { return Infinity }
+
 	override sync(): Promise<boolean> {
 		return Promise.resolve(false)
 	}
@@ -39,8 +43,8 @@ export class Dev extends Integration {
 	}
 
 	/** Dev sources have no external counterpart to re-import from — the local rows ARE the source,
-	 * so a wipe-and-resync would just be deletion. */
-	override resyncSource(): Promise<void> {
+	 * so a wipe-and-rebuild would just be deletion. */
+	override reimportSource(): Promise<void> {
 		return Promise.resolve()
 	}
 

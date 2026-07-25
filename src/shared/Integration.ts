@@ -33,8 +33,12 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 
 	/**
 	 * The minimum time between background sync polls, in milliseconds — 0 means every synchronizer
-	 * cycle. Rate-limited providers (e.g. Google) override this to poll more politely; the
-	 * {@link Synchronizer} paces each integration accordingly (and backs off further on failures).
+	 * cycle, `Infinity` means never: the integration is local-only (Dev today; an Obsidian-style
+	 * provider tomorrow), its rows live solely in our database, so both the background daemon and
+	 * a manual refresh skip it — there is no remote to fetch from. Rate-limited providers (e.g.
+	 * Google) override this to poll more politely; the SyncPacer paces each integration
+	 * accordingly (fast while the owner has a client connected, slow otherwise, and backing off
+	 * further on failures).
 	 */
 	get syncInterval() { return 0 }
 
@@ -205,8 +209,13 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * out-of-shape cache (a user-triggered "re-import", or a programmatic one after a breaking
 	 * schema change). Integrations whose sources have no external counterpart override this to
 	 * a no-op: with nothing to re-import from, wiping would be plain deletion.
+	 *
+	 * Deliberately NOT called "resync": {@link sync} is the incremental pull that runs constantly,
+	 * and "sync again" is exactly what that already is. The two are different operations — one
+	 * fetches deltas, the other throws the cache away — so they get different words, in the code
+	 * as in the UI.
 	 */
-	async resyncSource(em: EntityManager, source: Source): Promise<void> {
+	async reimportSource(em: EntityManager, source: Source): Promise<void> {
 		const entries = await em.find(Entry, { sourceId: source.id })
 		entries.forEach(entry => em.remove(entry))
 		source.syncState = undefined

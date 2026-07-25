@@ -73,7 +73,7 @@ Deleting a task in Mitra moves the Notion page to Notion's **trash** (recoverabl
 
 ## Syncing and rate limits
 
-Notion is polled about once a minute to stay within its API rate limits. Deletions are reconciled carefully so that view-indexing lag on Notion's side never makes a just-created task briefly disappear.
+Notion is polled at most about once a minute to stay within its API rate limits — and only every few minutes while nobody has the app open. Deletions are reconciled carefully so that view-indexing lag on Notion's side never makes a just-created task briefly disappear.
 
 ## Troubleshooting
 

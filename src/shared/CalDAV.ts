@@ -407,8 +407,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				try {
 					objects.push(...await client.fetchCalendarObjects({ calendar, objectUrls: [url] }))
 				} catch {
-					// Gone between listing and fetch (or otherwise unfetchable) — skip it. A later full
-					// resync (or a subsequent sync-collection that reports it as removed) reconciles it.
+					// Gone between listing and fetch (or otherwise unfetchable) — skip it. A later
+					// re-import (or a subsequent sync-collection that reports it as removed) reconciles it.
 					skipped++
 					logger.debug(`Skipped unfetchable object ${url}`)
 				}

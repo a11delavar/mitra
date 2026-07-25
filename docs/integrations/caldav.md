@@ -40,7 +40,7 @@ Point Mitra at the provider's CalDAV base URL; it discovers the individual calen
 - **Recurring events.** Full RFC 5545 recurrence — a repeating series is one entry, expanded across the views. Editing an occurrence edits the series (per-occurrence editing where the server supports it).
 - **All-day and multi-day** entries, locations, descriptions, colors, and reminders, subject to what your server stores.
 
-Enabled sources are polled about every 10 seconds, so changes made elsewhere show up almost immediately.
+While you have the app open, enabled sources are polled about every 10 seconds, so changes made elsewhere show up almost immediately. While nobody's looking, polling relaxes to every few minutes to keep your server's logs quiet — and opening or reloading the app syncs right away, so you never wait on a poll.
 
 ## Editing and renaming
 
@@ -51,5 +51,5 @@ Enabled sources are polled about every 10 seconds, so changes made elsewhere sho
 ## Troubleshooting
 
 - **Nothing appears after connecting.** Discovered sources start **disabled** by design — open the source picker and enable the ones you want.
-- **A calendar looks out of date after a code update.** Use **Re-import entries** on the source to force a full re-sync (Mitra normally only fetches deltas).
+- **A calendar looks out of date after a code update.** Use **Re-import entries** on the source: it drops Mitra's local copy and fetches everything again (a normal sync only pulls deltas, so unchanged entries are never re-read).
 - **Connection fails.** Double-check the Server URL includes the scheme (`https://`) and points at the CalDAV endpoint, not the web UI. Watch the [logs](../guides/logging.md) at `debug` level to see the CalDAV round-trips.

@@ -206,12 +206,17 @@ export function renameSource(id: string, name: string) {
 	return Api.put<Source>(`/sources/${id}/name`, { name })
 }
 
-export function resyncSource(id: string) {
-	return Api.post(`/sources/${id}/resync`)
+/**
+ * Re-import: throw the local cache away and rebuild it from the provider. NOT a sync — that one
+ * pulls deltas continuously in the background and has no client-side trigger at all (an opening
+ * or reloading page syncs by itself, via the event stream's presence).
+ */
+export function reimportSource(id: string) {
+	return Api.post(`/sources/${id}/reimport`)
 }
 
-export function resyncIntegration(id: string) {
-	return Api.post(`/integrations/${id}/resync`)
+export function reimportIntegration(id: string) {
+	return Api.post(`/integrations/${id}/reimport`)
 }
 
 export function discoverSources(integration: Integration) {

@@ -27,7 +27,7 @@ Each level includes everything quieter than it:
 | `error` | Failures only. |
 | `warn` | …plus handled degradations (an undelivered push, a geocoder timeout, a failed OIDC discovery). |
 | `info` *(default)* | …plus lifecycle milestones — the healthy-server heartbeat (boot, sign-ins, connected integrations, remote changes pulled, reminders firing). |
-| `debug` | …plus **every request** (`method /path → status (ms)`), each sync tick, session events, entry edits, and CalDAV round-trips. |
+| `debug` | …plus **every request** (`method /path → status (ms)`), each sync tick, sync pace transitions (a client connecting or disconnecting switches that user's polling between fast and relaxed), session events, entry edits, and CalDAV round-trips. |
 | `trace` | …plus the firehose: SQL and raw `.ics` payloads. |
 
 At boot, Mitra prints the active level so you know what you're looking at.
@@ -37,7 +37,7 @@ At boot, Mitra prints the active level so you know what you're looking at.
 
 ## Which level to use
 
-- **Something isn't syncing?** `debug` shows each sync tick and the CalDAV/Notion round-trips.
+- **Something isn't syncing?** `debug` shows each sync tick, when polling switches between its fast (app open) and relaxed (nobody connected) pace, and the CalDAV/Notion round-trips.
 - **Reminders not arriving?** `info` already logs each reminder as it fires; `debug` shows the delivery attempts and any pruned subscriptions.
 - **A 500 error?** `error` logs it with a stack trace; the default `info` includes `error` already.
 - **Deep protocol debugging?** `trace` dumps SQL and the raw `.ics` payloads — verbose, use briefly.

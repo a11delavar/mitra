@@ -59,7 +59,7 @@ export interface NotionSchemaIndex {
  *   and location. See {@link capabilities}, which the editor uses to hide those fields for
  *   entries living here.
  * - Dependencies (sub-tasks, blocked-by) are not modelled YET; when they are, a re-import
- *   (the existing {@link Integration.resyncSource} hatch) rebuilds entries from Notion, so
+ *   (the existing {@link Integration.reimportSource} hatch) rebuilds entries from Notion, so
  *   already-connected sources pick the new fields up without migration ceremony.
  *
  * Auth is a pasted token (internal connection or PAT): unlike Google's OAuth — which only works

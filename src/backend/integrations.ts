@@ -119,14 +119,16 @@ integrationsRouter.put('/:id', async (req, res) => {
 	return res.json(await em.findOneOrFail(Integration, { id: integration.id }, { populate: ['sources'] }))
 })
 
-// Full re-import of every enabled source (see Integration.resyncSource) — the integration-wide
-// counterpart of POST /sources/:id/resync.
-integrationsRouter.post('/:id/resync', async (req, res) => {
+// Full re-import of every enabled source (see Integration.reimportSource) — the integration-wide
+// counterpart of POST /sources/:id/reimport. There is deliberately no manual SYNC endpoint beside
+// it: syncing is the daemon's job, triggered by presence (an opening/reloading client syncs its
+// user's integrations immediately), so the app never needs to ask.
+integrationsRouter.post('/:id/reimport', async (req, res) => {
 	const em = orm.em.fork()
 	const integration = await req.user.integration(em, req.params.id)
 	const sources = await em.find(Source, { integrationId: integration.id, enabled: true })
 	for (const source of sources) {
-		await integration.resyncSource(em, source)
+		await integration.reimportSource(em, source)
 	}
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
