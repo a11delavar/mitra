@@ -120,7 +120,7 @@ export class Months extends Component {
 				gap: 1px;
 				height: 100%;
 				min-height: 0;
-				background-color: var(--color-border);
+				background-color: var(--color-background);
 				overflow: auto;
 				/* Rows are placed at explicit tracks and re-anchored programmatically (zoom pinning,
 				   scrollToDate) — the browser's own anchoring would fight both whenever the rendered

@@ -58,10 +58,25 @@ export class Weeks extends Component {
 
 	static override get styles() {
 		return css`
+			/* Registered so the 100cqb (and the rem-based ideal) they carry are ABSOLUTIZED to px at
+			   computed-value time — see the twin registrations in Days.ts for why this is what makes
+			   the row math work outside Chromium. */
+			@property --_weeks-strip-height {
+				syntax: '<length>';
+				inherits: false;
+				initial-value: 0px;
+			}
+
+			@property --_ideal-week-height {
+				syntax: '<length>';
+				inherits: false;
+				initial-value: 136px;
+			}
+
 			mitra-weeks {
 				display: flex;
 				flex-direction: column;
-				background-color: var(--color-border);
+				background-color: var(--color-background);
 				flex: 1;
 				min-height: 0;
 
@@ -79,13 +94,35 @@ export class Weeks extends Component {
 					color: var(--color-text-muted);
 				}
 
+				/* The scroller's size container: the row math below needs the viewport height as 100cqb,
+				   an element can't query itself, and mitra-weeks' own height includes the weekday headers —
+				   this wrapper is height-identical to the scroller by construction. Size containment is
+				   inert on it: a flex: 1 (basis-0) item never consults its contents for its size. */
+				& > .body {
+					flex: 1;
+					min-height: 0;
+					container-type: size;
+				}
+
 				.days {
 					display: grid;
 					grid-template-columns: repeat(7, 1fr);
+					/* Week rows fit the viewport WHOLE, the vertical twin of the week view's day columns
+					   (see Days.ts for the mechanics — the atan2() length-ratio and the ±1px gap pay-off):
+					   as many ideal-height (8.5rem) rows as fit, never fewer than 2, each stretched to an
+					   exact share so no fractional week shows at the fold. The outer max() guards degenerate
+					   viewports — below ~2 ideal rows it reverts to the old fixed minimum (rows overflow and
+					   scroll with partial weeks rather than crushing the day cells' content). */
+					--_weeks-strip-height: 100cqb;
+					--_ideal-week-height: 8.5rem;
+					--_visible-weeks: max(2, round(down, tan(atan2(var(--_weeks-strip-height), var(--_ideal-week-height))), 1));
+					grid-auto-rows: max(var(--_ideal-week-height), calc((var(--_weeks-strip-height) + 1px) / var(--_visible-weeks) - 1px));
 					gap: 1px;
-					flex: 1;
-					min-height: 0;
+					height: 100%;
 					overflow-y: auto;
+					/* Rest positions align a week row's top to the scrollport, so a settled view always
+					   frames whole weeks — block-only, and mandatory does not brake a fling (see Days.ts). */
+					scroll-snap-type: block mandatory;
 					scrollbar-width: none;
 					overflow-anchor: auto;
 					&::-webkit-scrollbar {
@@ -99,6 +136,7 @@ export class Weeks extends Component {
 					grid-template-columns: subgrid;
 					grid-template-rows: 1.75rem repeat(var(--max-slots), 1.375rem) 1fr;
 					row-gap: 0.125rem;
+					scroll-snap-align: start;
 
 					mitra-day {
 						grid-row: 1 / -1;
@@ -167,9 +205,11 @@ export class Weeks extends Component {
 			<div class="headers">
 				${this.weekDays.map(weekday => html`<div class="weekday">${weekday}</div>`)}
 			</div>
-			<div class="days" @scroll=${this.handleScroll} style="grid-auto-rows: minmax(8.5rem, 1fr); --max-slots: ${Weeks.MAX_SLOTS};">
-				${repeat(weeks.slice(firstWeek, lastWeek + 1), week => week[0]!.dayStart.toISOString(), (week, index) => this.weekTemplate(week, today, firstWeek + index))}
-				${!weeks.length ? html.nothing : html`<div style="grid-row: ${weeks.length};"></div>`}
+			<div class="body">
+				<div class="days" @scroll=${this.handleScroll} style="--max-slots: ${Weeks.MAX_SLOTS};">
+					${repeat(weeks.slice(firstWeek, lastWeek + 1), week => week[0]!.dayStart.toISOString(), (week, index) => this.weekTemplate(week, today, firstWeek + index))}
+					${!weeks.length ? html.nothing : html`<div style="grid-row: ${weeks.length};"></div>`}
+				</div>
 			</div>
 		`
 	}

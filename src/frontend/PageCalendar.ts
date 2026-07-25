@@ -259,6 +259,12 @@ export class PageCalendar extends PageComponent {
 					flex: 1;
 					min-width: 0;
 					min-height: 0;
+					/* The week view sizes its day columns off this container's 100cqi (see the
+					   grid-template-columns math in Days.ts): the strip and this column are width-identical,
+					   and container units — unlike percentages, which never resolve early enough for the
+					   length-ratio math there — are plain px by computed-value time. Containment is inert on
+					   main itself: a flex: 1 (basis-0) item never consults its contents for its inline size. */
+					container-type: inline-size;
 
 					> header {
 						container-type: inline-size;

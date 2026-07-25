@@ -116,35 +116,104 @@ export class Days extends Component {
 
 	static override get styles() {
 		return css`
+			/* These three feed the atan2() in the integer-fit math below, and are registered so their
+			   values are ABSOLUTIZED to px at computed-value time: Firefox rejects atan2() arguments in
+			   anything but absolute units — raw container units void it, and so do rem (both verified,
+			   FF 152) — while a registered <length> computes eagerly per spec. The registrations are
+			   what make the math cross-browser; without them the whole track list goes invalid at
+			   computed-value time and the grid collapses to auto-placed implicit columns. */
+			@property --_days-strip-width {
+				syntax: '<length>';
+				inherits: false;
+				initial-value: 0px;
+			}
+
+			/* Inherited (like any unregistered custom property would be): the all-day bar titles' sticky
+			   offset reads it from inside the strip. */
+			@property --time-axis-width {
+				syntax: '<length>';
+				inherits: true;
+				initial-value: 0px;
+			}
+
+			/* The initial-value must be computationally independent, so it can't be the 10rem itself —
+			   the declaration on mitra-days carries that; this 160px only covers unregistered edge cases. */
+			@property --_ideal-day-width {
+				syntax: '<length>';
+				inherits: false;
+				initial-value: 160px;
+			}
+
 			mitra-days {
 				display: grid;
-				/* EVERY row is DEFINITE — none may be intrinsic. The row-spanning mitra-day subgrids hand an
-				   intrinsic row an unbounded growth limit, so any free space in the container would silently
-				   pour into it (a window grown while the timed row lagged once wedged half the viewport of
-				   blank into the header row — and stayed, because the remeasure then read the bloated layout
-				   back). Definite rows leave free space nowhere to go.
-				   - The header row is the 2.75rem the sticky offsets below already assume.
-				   - The all-day row derives from the same --_all-day-rows the lane's own tracks use (per lane
-				     1.375rem + 1px gap; + 4px for the lane's padding − last gap + bottom border); the min()
-				     caps a pileup at 5½ lanes — past MAX_VISIBLE_LANES the lane scrolls within itself instead
-				     (see [data-all-day-overflow]), the half-cut lane at the fold being the hint.
+				/* FREE SPACE MAY NEVER REACH A ROW — that, not definiteness, is the invariant. The
+				   row-spanning mitra-day subgrids hand an intrinsic row an unbounded growth limit, so under
+				   the default align-content (stretch) any leftover in the container pours into the header
+				   row — and STAYS there, because --header-height then measures the bloated row and the timed
+				   row's formula shrinks to match, making the bloat self-consistent (a window grown while the
+				   timed row lagged once wedged half the viewport of blank into the header row, and it never
+				   came back). align-content: start below is what forbids it: leftover collects after the
+				   last row, where nothing measures it, so the header always reports its CONTENT height and
+				   the formula converges on the next frame instead of locking in.
+				   - The header row is auto, hugging the taller of the zone header and the day labels rather
+				     than a magic length they have to be centred in. --header-height mirrors its laid-out
+				     height — measured off .timezone, which stretches to the row, so what comes back is the
+				     row (see updateHeaderSize) — and feeds both the sticky offsets below and the timed row.
+				   - The all-day row is EXACTLY the lane's own tracks: n × 1.375rem plus the n−1 gaps between
+				     them, i.e. n × (1.375rem + 1px) − 1px. The lane then overhangs that row by 1px (see the
+				     margin-block-end on .all-day) so it owns the gutter below it in both scroll states; a row
+				     sized to include that pixel would stack it on top of the grid gap and the strip would sit
+				     2px clear of the timed grid at scroll-top but 1px when stuck. The min() caps a pileup at
+				     5½ lanes — past MAX_VISIBLE_LANES the lane scrolls within itself instead (see
+				     [data-all-day-overflow]), the half-cut lane at the fold being the hint.
 				   - The timed row is the whole-day-fit height (100% minus the rows and gaps above) times the
-				     zoom (≥ 1, so the grid always fills; DayDensityController owns --_week-zoom). A pure CSS
-				     formula, deliberately not a JS-measured px: percentages re-resolve atomically in the same
-				     layout pass on any resize, immune to observer lag and to the stale-measurement lock-in
-				     above. The minute grids inside (.axis, .overlays, mitra-day .entries) use fr tracks, so
-				     their 1440 rows sum to exactly this row whatever it is — no gap below, no overflow. Not
+				     zoom (≥ 1, so the grid always fills; DayDensityController owns --_week-zoom). Still a CSS
+				     formula and not a JS-measured px: the 100% re-resolves atomically in the same layout pass
+				     on any resize, so only the header term can ever lag, and only by the one frame the
+				     observer takes — it is a function of the header's CONTENT, which a resize barely moves.
+				     The minute grids inside (.axis, .overlays, mitra-day .entries) use fr tracks, so their
+				     1440 rows sum to exactly this row whatever it is — no gap below, no overflow. Not
 				     minmax(…, 1fr): a flexing row can grow past what anything inside was sized against. */
-				--_all-day-lane-height: min(calc(var(--_all-day-rows, 1) * (1.375rem + 1px) + 4px), calc(5.5 * (1.375rem + 1px) + 4px));
-				--grid-min-height: calc(var(--_week-zoom, 1) * (100% - 2.75rem - var(--_all-day-lane-height) - 2px));
-				grid-template-rows: 2.75rem var(--_all-day-lane-height) var(--grid-min-height);
+				--_all-day-lane-height: min(calc(var(--_all-day-rows, 1) * (1.375rem + 1px) - 1px), calc(5.5 * (1.375rem + 1px) - 1px));
+				--grid-min-height: calc(var(--_week-zoom, 1) * (100% - var(--header-height, 2.75rem) - var(--_all-day-lane-height) - 2px));
+				grid-template-rows: auto var(--_all-day-lane-height) var(--grid-min-height);
+				/* LOAD-BEARING, not cosmetic — see the free-space invariant above: this is what keeps the
+				   auto header row out of the stretch that would bloat it beyond its content and lock in. */
+				align-content: start;
 				/* ONE grid owns every column: an auto track for the "+" affordance, one content-sized
 				   track per displayed time zone (the header labels and the axis hours adopt these same
 				   tracks via subgrid, so they align by construction), then the day columns. The day
 				   tracks are addressed with NEGATIVE line numbers throughout, so nothing depends on how
 				   many zone tracks precede them. --time-axis-width mirrors the axis' laid-out width
-				   (measured, see updateHeaderSize) for the scroll padding and the scroll→date math. */
-				grid-template-columns: auto repeat(var(--_tz-count, 1), auto) repeat(var(--_days-length), minmax(10rem, 1fr));
+				   (measured, see updateHeaderSize) for the scroll padding and the scroll→date math.
+
+				   The day columns fit the viewport WHOLE: as many ideal-width (10rem) days as fit after
+				   the sticky axis — never fewer than 3, so a phone still shows a multi-day span — each
+				   then widened to an exact share of the leftover, so no fractional day ever shows and a
+				   settled strip reads as a static N-column grid that happens to scroll. 100cqi is the
+				   page's main column (PageCalendar declares the container; it and this scroller are
+				   width-identical) — NOT 100%: a percentage never resolves early enough for any of this
+				   math. The count divides the two lengths via tan(atan2(y, x)) — the one length-ratio
+				   CSS evaluates EVERYWHERE (calc()'s typed division is Chromium-only and would void the
+				   whole track list in Firefox at computed-value time, taking the layout with it) — fed
+				   through the registered --_days-strip-width above so the container unit reaches atan2()
+				   as plain px. The +1px/−1px pair pays for the 1px gaps: N visible days carry only N−1
+				   visible gaps — the gap ahead of the snapped first day hides under the sticky axis, the
+				   one after the last day is past the viewport edge.
+
+				   The 4rem floor is LOAD-BEARING, not taste: the formula consumes the MEASURED axis width,
+				   so day tracks computed from a bad transient reading could collapse to 0 — and 1092
+				   collapsed tracks leave the grid free space, which stretches the auto zone tracks, which
+				   makes the axis MEASURE as the whole strip, which keeps the days collapsed: a stale-
+				   measurement lock-in (Firefox's first ResizeObserver delivery hit exactly this). Any
+				   positive floor forbids the loop's premise — the buffer always overflows the container,
+				   so the zone tracks can never absorb free space and the axis always measures its natural
+				   width. */
+				--_days-strip-width: 100cqi;
+				--_ideal-day-width: 10rem;
+				--_visible-days: max(3, round(down, tan(atan2(var(--_days-strip-width) - var(--time-axis-width), var(--_ideal-day-width))), 1));
+				--_day-width: max(4rem, calc((var(--_days-strip-width) - var(--time-axis-width) + 1px) / var(--_visible-days) - 1px));
+				grid-template-columns: auto repeat(var(--_tz-count, 1), auto) repeat(var(--_days-length, 1), var(--_day-width));
 				gap: 1px;
 				height: 100%;
 				min-height: 0;
@@ -154,6 +223,12 @@ export class Days extends Component {
 				/* Single-finger pan still scrolls the grid; two-finger pinch-zoom is disabled here so the
 				   DayDensityController can own it (see its touch handlers). */
 				touch-action: pan-x pan-y;
+				/* Rest positions align a day's start edge to the snapport (which the padding below starts
+				   past the sticky axis) — with the integer-fit columns above, a settled viewport therefore
+				   always frames whole days. Inline-only, so vertical scrolling is untouched; and mandatory
+				   does NOT brake a fling — engines pick the snap position nearest the fling's natural
+				   endpoint (only scroll-snap-stop: always would cut momentum, so it stays unset). */
+				scroll-snap-type: inline mandatory;
 				scroll-padding-inline-start: var(--time-axis-width);
 				scrollbar-width: none; /* Firefox */
 
@@ -177,7 +252,6 @@ export class Days extends Component {
 
 					& > .header {
 						background-color: var(--color-background);
-						border-bottom: var(--border);
 					}
 				}
 
@@ -192,8 +266,10 @@ export class Days extends Component {
 					top: var(--header-height, 2.75rem);
 					z-index: 120;
 					background-color: var(--color-background);
-					border-inline-end: var(--border);
-					border-bottom: var(--border);
+					border-block: var(--border);
+					/* Overhangs the row by the grid gap below it, exactly like .all-day — otherwise the
+					   corner's bottom border would part company with the day columns' gutter at scroll-top. */
+					margin-block-end: -1px;
 				}
 
 				.all-day {
@@ -216,7 +292,12 @@ export class Days extends Component {
 					gap: 1px;
 					align-content: start;
 					background-color: var(--color-background);
-					border-bottom: var(--border);
+					/* The strip is 1px TALLER than its row (same trick as mitra-day > .header's margin-inline),
+					   so its own box covers the grid gap below and that last pixel of lane background is the
+					   only thing between the bars and the timed grid. The lane is sticky: the row gap scrolls
+					   away under it once it sticks, so a gutter drawn by the GRID is 1px at scroll-top and 0px
+					   when stuck. Drawn by the LANE it travels with it — the same 1px either way. */
+					margin-block-end: -1px;
 
 					/* The day columns' surface, continued: one cell per rendered day spanning every lane, so
 					   the lane reads as part of its day column and the 1px gutters between the cells continue
@@ -287,8 +368,6 @@ export class Days extends Component {
 						inset-inline-start: 0;
 						z-index: 200;
 						background-color: var(--color-background);
-						border-bottom: var(--border);
-						border-inline-end: var(--border);
 						padding: 0.375rem 0;
 					}
 
@@ -305,7 +384,6 @@ export class Days extends Component {
 						grid-template-rows: repeat(1440, minmax(0, 1fr));
 						/* The same parent tracks as the header labels — aligned by construction. */
 						grid-template-columns: subgrid;
-						border-inline-end: var(--border);
 						position: sticky;
 						inset-inline-start: 0;
 						z-index: 110;
@@ -342,6 +420,7 @@ export class Days extends Component {
 					}
 
 					.overlays {
+						--border: 1px solid var(--color-background);
 						grid-column: calc(-1 * var(--_days-length) - 1) / -1;
 						grid-row: 3;
 						display: grid;

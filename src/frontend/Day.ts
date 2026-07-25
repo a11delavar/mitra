@@ -35,7 +35,7 @@ export class Day extends Component {
 					z-index: 100;
 					display: flex;
 					flex-direction: row;
-					align-items: baseline;
+					align-items: center;
 					justify-content: center;
 					padding: 0.5rem 0.25rem;
 					gap: 0.375rem;
