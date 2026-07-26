@@ -42,6 +42,24 @@ describe('EntrySegments', () => {
 			assert.equal(segment!.endMinute, 1441) // 1436 + 15 would overflow the 1440-track grid
 		})
 
+		it('runs an entry ending at the next midnight to the day\'s bottom, not a minimum slab', () => {
+			// Producible by dragging/resizing to a day's bottom edge (the gesture clamps to minute 1440).
+			// `slice` keeps it a single-day segment, so `end.hour` reads 0 — above the start, which would
+			// otherwise floor it to a 15-minute sliver instead of the full afternoon.
+			const segments = EntrySegments.for(new Entry({ start: base.add({ hours: 13 }), end: base.add({ days: 1 }) }))
+			assert.equal(segments.length, 1)
+			assert.equal(segments[0]!.startMinute, 13 * 60 + 1)
+			assert.equal(segments[0]!.endMinute, 1441)
+		})
+
+		it('runs the last day of a multi-day entry ending at midnight to its bottom', () => {
+			// Same exclusive end, one day further out: the final slice has no `next` either.
+			const segments = EntrySegments.for(new Entry({ start: base.add({ hours: 13 }), end: base.add({ days: 2 }) }))
+			assert.equal(segments.length, 2)
+			assert.equal(segments[1]!.startMinute, 1)
+			assert.equal(segments[1]!.endMinute, 1441)
+		})
+
 		it('links a multi-day entry and clamps the interior pieces to the day edges', () => {
 			const segments = EntrySegments.for(new Entry({ start: base.add({ hours: 22 }), end: base.add({ hours: 50 }) }))
 			assert.equal(segments.length, 3)

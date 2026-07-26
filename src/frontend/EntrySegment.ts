@@ -29,9 +29,14 @@ export class EntrySegment {
 	get hasPrevious() { return !!this.previous }
 	get hasNext() { return !!this.next }
 
-	// Cached numeric projections. Every `@3mo/date-time` field/`dayStart` accessor rebuilds a Temporal
-	// object, so we derive these once. Segments are memoised globally by `EntrySegments.for`, so the cost
-	// is paid once per segment — then same-day checks and clustering are pure integer math each render.
+	// Cached numeric projections. Every `@3mo/date-time` field/`dayStart` accessor builds a Temporal object
+	// on first read (they memoise per instance thereafter), so we derive these once. Segments are memoised
+	// globally by `EntrySegments.for`, so the cost is paid once per segment — then same-day checks and
+	// clustering are pure integer math each render.
+
+	// `previous` is a sound proxy for "the start lies before this day" — every run begins on the day its
+	// start falls in, so the first segment is the one without a `previous`. Its mirror on the end edge is
+	// NOT sound; see `endsPastDay`.
 	private _startMinute?: number
 	get startMinute() {
 		return this._startMinute ??= this.previous ? 1 : this.entry.start ? this.entry.start.hour * 60 + this.entry.start.minute + 1 : 1
@@ -40,13 +45,23 @@ export class EntrySegment {
 	private _endMinute?: number
 	get endMinute() {
 		if (this._endMinute === undefined) {
-			// A continuation runs to the day's bottom (line 1441); otherwise the entry's own end. A timed
-			// entry with no end, or a zero/negative-duration one (a synced task pinned to an instant — e.g. a
-			// Notion "20:00" with no due time), would otherwise collapse to a 1px sliver or, once its end
-			// precedes its start, make CSS grid swap the reversed lines and paint a near-full-day block. Floor
-			// it to a snap-minute slab below the start (clamped to the grid's last line).
-			const end = this.next ? 1441 : this.entry.end ? this.entry.end.hour * 60 + this.entry.end.minute + 1 : undefined
-			this._endMinute = end !== undefined && end > this.startMinute ? end : Math.min(this.startMinute + SNAP_MINUTES, 1441)
+			// Whether the entry's end falls beyond this segment's day, so the segment's bottom edge is the day's and
+			// not the entry's own time. Free in practice: `dayStart` memoises on the `DateTime` instance the entry
+			// holds, and `EntrySegments.slice` has already read the very same one to slice the run.
+			const endsPastDay = this.dayValue !== undefined && !!this.entry.end && this.entry.end.dayStart.valueOf() > this.dayValue
+			// The entry's own end — unless it lies past this segment's day, which clips the segment to the day's
+			// bottom (line 1441). Note what that question is NOT: "does a `next` segment exist". `next` only
+			// implies it, and misses the case that matters — an end at this day's own EXCLUSIVE midnight (the
+			// 13:00 → 24:00 of a drag to the day's bottom edge), where `EntrySegments.slice` deliberately makes
+			// no segment for the empty day the end merely touches, yet `end.hour` reads 0: a line ABOVE the
+			// start. Comparing the days answers it outright, for interior and last days alike.
+			//
+			// A timed entry with no end, or a zero/negative-duration one (a synced task pinned to an instant —
+			// e.g. a Notion "20:00" with no due time), would collapse to a 1px sliver or, once its end precedes
+			// its start, make CSS grid swap the reversed lines and paint a near-full-day block. Floor those to a
+			// snap-minute slab below the start (clamped to the grid's last line).
+			const line = endsPastDay ? 1441 : this.entry.end ? this.entry.end.hour * 60 + this.entry.end.minute + 1 : undefined
+			this._endMinute = line !== undefined && line > this.startMinute ? line : Math.min(this.startMinute + SNAP_MINUTES, 1441)
 		}
 		return this._endMinute
 	}
