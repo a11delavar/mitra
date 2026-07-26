@@ -24,6 +24,11 @@ export class EntrySegment {
 	next?: EntrySegment
 	overlap?: TimedOverlap
 
+	/** Paints over an earlier box it shares both time and columns with — filled by the cohort's
+	 * cluster pass alongside `overlap`. Drives the floating (glass) treatment, so whatever covers
+	 * is see-through instead of burying what it covers. */
+	covers = false
+
 	constructor(readonly entry: Entry, readonly date?: DateTime) { }
 
 	get hasPrevious() { return !!this.previous }

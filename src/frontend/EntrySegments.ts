@@ -265,17 +265,19 @@ export class EntrySegments {
 	 *   tail can never tie on depth — except a row starting within `overlayCascadeGapMinutes` of a
 	 *   row it covers shares that row's level side-by-side instead of burying its header.
 	 *
-	 * Multi-day continuations would anchor a group spanning the whole day and swallow everything;
-	 * they render as a full-height backdrop layer instead (columns among themselves), with the
-	 * day's own chips grouped independently above them.
+	 * A multi-day slice is NO different from any other segment here — it simply runs to (or from)
+	 * midnight, so it anchors the day's first group and everything starting later cascades over it,
+	 * exactly as over any long block. Its own label stays reachable because labels are sticky (see
+	 * the timed grid's rule in Day.ts), not because the layout treats it specially.
+	 *
+	 * A final pass derives the one treatment fact a box can't know alone: `covers` — whether it
+	 * paints over anything beneath it. That, and not the inset depth, is what earns the floating
+	 * (glass) look, so the invariant holds everywhere: whatever covers must not hide.
 	 */
 	private static cluster(segments: ReadonlyArray<EntrySegment>): ReadonlyArray<EntrySegment> {
-		const sorted = [...segments].sort((a, b) => a.startMinute !== b.startMinute
+		const chips = [...segments].sort((a, b) => a.startMinute !== b.startMinute
 			? a.startMinute - b.startMinute
 			: (b.endMinute - b.startMinute) - (a.endMinute - a.startMinute))
-		const backdrop = sorted.filter(segment => segment.allDay)
-		const chips = sorted.filter(segment => !segment.allDay)
-		EntrySegments.columns(backdrop, 0)
 
 		interface Row { readonly segment: EntrySegment, readonly level: number, readonly host: EntrySegment }
 		interface Group { readonly mates: Array<EntrySegment>, readonly rows: Array<Row>, end: number }
@@ -331,11 +333,29 @@ export class EntrySegments {
 				}
 			}
 		}
-		return [...backdrop, ...chips] // backdrop first — the day's own chips paint above it
+
+		// Painted-over check against everything beneath (earlier in paint order): rows over their base,
+		// leaves over a poking tail, and fresh anchors over a foreign tail all land here — the floating
+		// treatment keys on covering, not on how the box came to cover. Side-by-side mates share no
+		// columns, so they stay flat.
+		chips.forEach((chip, index) => {
+			chip.covers = chips.slice(0, index).some(other => other.overlaps(chip) && EntrySegments.intersectsInline(other, chip))
+		})
+
+		return chips
 	}
 
-	/** The greedy side-by-side pass shared by every tier — group mates, cascade levels, and the
-	 * backdrop: first-fit columns, then each member widens rightward through columns that stay free
+	/** Whether two laid-out segments' inline (column) extents intersect, as fractions of the day's
+	 * width. Insets stay within their host's column, so they never change the answer. */
+	private static intersectsInline(a: EntrySegment, b: EntrySegment): boolean {
+		const aOverlap = a.overlap!
+		const bOverlap = b.overlap!
+		return Math.max(aOverlap.slot / aOverlap.total, bOverlap.slot / bOverlap.total)
+			< Math.min((aOverlap.slot + aOverlap.span) / aOverlap.total, (bOverlap.slot + bOverlap.span) / bOverlap.total)
+	}
+
+	/** The greedy side-by-side pass shared by every tier — group mates and cascade levels:
+	 * first-fit columns, then each member widens rightward through columns that stay free
 	 * for its whole span. Members must arrive sorted by start. */
 	private static columns(segments: ReadonlyArray<EntrySegment>, inset: number): void {
 		const columns = new Array<Array<EntrySegment>>()

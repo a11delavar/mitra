@@ -136,6 +136,11 @@ export class Day extends Component {
 					position: relative;
 					container-type: inline-size;
 					padding-inline: 1px;
+					/* Every block stops short of the trailing edge by this much, leaving a strip of raw day
+					   at every minute — a permanent drag-to-create target even on a day that is visually
+					   full (the Notion affordance). The drag controller treats any bare .entries surface
+					   as a create, so reserving the strip is all it takes. */
+					--_edge-gutter: 0.5rem;
 
 					mitra-entry-segment {
 						grid-column: 1 / -1;
@@ -159,6 +164,32 @@ export class Day extends Component {
 						   the flat level, beneath later-starting chips — restate its elevation where it wins. */
 						&[dragging] {
 							z-index: 9999;
+						}
+
+						/* STICKY LABEL. A block scrolled past its own top keeps its identity: the heading
+						   rides down with the viewport, bounded by the block's box, so a multi-day run
+						   (whose slice starts at midnight) or any tall event stays named wherever you are
+						   in the day. Lives here, not in EventSegment.ts: only the timed grid scrolls in
+						   the block axis — the all-day lane's bars are one line tall and stick in the
+						   INLINE axis instead (see Days.ts), and the month/year cells render their bars
+						   outside .entries entirely, so neither is touched by this rule.
+
+						   The HEADING alone, never the time row with it: two sticky siblings each clamp
+						   independently to the box, so on the last line of a short block's travel they
+						   collapse onto each other and the two texts garble. The heading is the identity;
+						   the time is what the grid position already says. */
+						> .heading {
+							position: sticky;
+							/* Clear of the sticky day headers and the all-day lane above them. */
+							inset-block-start: calc(var(--header-height, 2.75rem) + var(--_all-day-lane-height, 1.375rem) + 0.25rem);
+						}
+
+						/* The location is the one row a travelling heading can reach, so only then does it
+						   need to carry the block's own background to occlude it instead of ghosting over
+						   it — and only then, because on a covering (glass) block that background
+						   composites twice and would otherwise tint the label band on every chip. */
+						&:has(> .location) > .heading {
+							background-color: inherit;
 						}
 					}
 				}
@@ -189,7 +220,7 @@ export class Day extends Component {
 							'--overlap-span': `${segment.overlap?.span ?? 1}`,
 							'--overlap-inset': `${segment.overlap?.inset ?? 0}`,
 						})}
-						?data-overlay=${(segment.overlap?.inset ?? 0) > 0}
+						?data-covers=${segment.covers}
 						resize="block"
 						?has-previous=${segment.hasPrevious}
 						?has-next=${segment.hasNext}

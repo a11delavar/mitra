@@ -118,17 +118,28 @@ export class EntrySegmentComponent extends Component {
 				--overlap-indent: calc(var(--overlap-i) * 0.75rem);
 
 				margin-inline-start: calc((var(--overlap-s) / var(--overlap-t)) * 100% + var(--overlap-indent));
-				width: min(calc((var(--overlap-sp) / var(--overlap-t)) * 100% + 0.25rem - var(--overlap-indent)), calc(100% - (var(--overlap-s) / var(--overlap-t)) * 100% - var(--overlap-indent)));
+				/* The second term also reserves the day's create-gutter (see .entries in Day.ts) — every
+				   box's trailing edge stops short of the column edge, keeping a drag-to-create strip. */
+				width: min(calc((var(--overlap-sp) / var(--overlap-t)) * 100% + 0.25rem - var(--overlap-indent)), calc(100% - (var(--overlap-s) / var(--overlap-t)) * 100% - var(--overlap-indent) - var(--_edge-gutter, 0px)));
 				z-index: calc(var(--overlap-s) + 1 + var(--overlap-i));
 				box-sizing: border-box;
 				container-type: size;
 				position: relative;
-				overflow: hidden;
+				/* clip, not hidden: hidden makes the block a scroll container, which would capture the
+				   sticky labels inside it (see Day.ts) and turn them into no-ops. clip crops identically
+				   without creating one — the same trick the all-day lane's bars use in Days.ts. */
+				overflow: clip;
 				transition: background-color 0.15s ease, color 0.15s ease;
 
-				/* A floating chip needs an edge against its same-coloured host beneath. */
-				&[data-overlay] {
-					box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+				/* Covering must not hide: any box painting over another (a cascade row over its base, a
+				   fresh block over a poking tail) becomes translucent glass — the covered surface shows
+				   through, blurred and dimmed, so depth is legible from the content itself rather than
+				   from a drawn edge. The same frosted language the app's popovers and menus speak. The
+				   shadow only grounds it; there is deliberately no ring, hairline, or outline. */
+				&[data-covers] {
+					background-color: color-mix(in srgb, var(--mitra-entry-segment-color) 38%, color-mix(in srgb, var(--color-background) 55%, transparent));
+					backdrop-filter: blur(6px) saturate(130%);
+					box-shadow: 0 2px 8px rgb(0 0 0 / 0.18);
 				}
 
 				/* While actively manipulated (a live resize, or a move's dashed ghost), float full-width above

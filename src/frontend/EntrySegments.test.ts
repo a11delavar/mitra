@@ -298,15 +298,72 @@ describe('EntrySegments', () => {
 			assert.deepEqual(overlap('R'), { slot: 1, total: 2, span: 1, inset: 1 }) // both cover it; M ends later
 		})
 
-		it('renders multi-day continuations as a full-width backdrop with the day\'s chips grouped above', () => {
+		it('treats a multi-day slice as an ordinary block — the day\'s chips cascade over it', () => {
+			// No special tier: the slice simply runs from midnight, so it anchors the day's first group
+			// and later starts ride on top exactly as they would over any long block.
 			const overnight = new Entry({ heading: 'Overnight', start: base.subtract({ hours: 2 }), end: base.add({ hours: 2 }) })
 			const meeting = new Entry({ heading: 'Meeting', start: base.add({ hours: 1 }), end: base.add({ hours: 2 }) })
 
 			const bars = EntrySegments.of([overnight, meeting], [base]).timedOn(base)
+			const slice = bars.find(s => s.entry === overnight)!
+			const chip = bars.find(s => s.entry === meeting)!
 
-			assert.deepEqual(bars.find(s => s.entry === overnight)!.overlap, { slot: 0, total: 1, span: 1, inset: 0 })
-			assert.deepEqual(bars.find(s => s.entry === meeting)!.overlap, { slot: 0, total: 1, span: 1, inset: 0 })
-			assert.equal(bars[0]!.entry, overnight) // backdrop first in DOM — the chip paints above it
+			assert.deepEqual(slice.overlap, { slot: 0, total: 1, span: 1, inset: 0 }) // keeps its full width
+			assert.deepEqual(chip.overlap, { slot: 0, total: 1, span: 1, inset: 1 }) // cascades on top
+			assert.equal(bars[0]!.entry, overnight) // earlier start paints first
+			assert.equal(chip.covers, true)
+			assert.equal(slice.covers, false)
+		})
+
+		it('splits a multi-day run side-by-side with a chip sharing its start', () => {
+			// The screenshot case: the run starts 13:00 and so does the task. Neither can cascade (no
+			// headroom), so they split the width — both stay fully readable, no burying.
+			const run = new Entry({ heading: 'Off-site', start: base.add({ hours: 13 }), end: base.add({ days: 2, hours: 13 }) })
+			const review = new Entry({ heading: 'Review', start: base.add({ hours: 13 }), end: base.add({ hours: 13, minutes: 45 }) })
+
+			const bars = EntrySegments.of([run, review], [base]).timedOn(base)
+			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
+
+			assert.deepEqual(overlap('Off-site'), { slot: 0, total: 2, span: 1, inset: 0 })
+			assert.deepEqual(overlap('Review'), { slot: 1, total: 2, span: 1, inset: 0 })
+			assert.deepEqual(bars.map(s => s.covers), [false, false]) // mates cover nothing
+		})
+
+		it('splits two overlapping multi-day runs into columns like any other pair', () => {
+			const first = new Entry({ heading: 'First', start: base.subtract({ hours: 2 }), end: base.add({ hours: 26 }) })
+			const second = new Entry({ heading: 'Second', start: base.subtract({ hours: 1 }), end: base.add({ hours: 25 }) })
+
+			const bars = EntrySegments.of([first, second], [base]).timedOn(base)
+			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
+
+			// Both slices span the whole day (midnight to midnight), so they share the same start and
+			// split the width rather than one swallowing the other.
+			assert.deepEqual(overlap('First'), { slot: 0, total: 2, span: 1, inset: 0 })
+			assert.deepEqual(overlap('Second'), { slot: 1, total: 2, span: 1, inset: 0 })
+		})
+
+		it('marks whatever paints over another box as covering — and side-by-side mates as not', () => {
+			// The poke-tail scenario: Pills cascades over Block (covers), Gym cascades over Pills
+			// (covers), and Cards — a fresh full-width anchor — paints over Gym's poking tail, so it
+			// covers too, even at inset 0: the floating treatment keys on covering, not insets.
+			const block = new Entry({ heading: 'Block', start: base.with({ hour: 17 }), end: base.with({ hour: 21 }) })
+			const pills = new Entry({ heading: 'Pills', start: base.with({ hour: 19, minute: 30 }), end: base.with({ hour: 20, minute: 45 }) })
+			const gym = new Entry({ heading: 'Gym', start: base.with({ hour: 20, minute: 15 }), end: base.with({ hour: 21, minute: 15 }) })
+			const cards = new Entry({ heading: 'Cards', start: base.with({ hour: 21 }), end: base.with({ hour: 22 }) })
+
+			const bars = EntrySegments.of([block, pills, gym, cards], [base]).timedOn(base)
+			const covers = (heading: string) => bars.find(s => s.entry.heading === heading)!.covers
+
+			assert.equal(covers('Block'), false)
+			assert.equal(covers('Pills'), true)
+			assert.equal(covers('Gym'), true)
+			assert.equal(covers('Cards'), true) // fresh anchor, inset 0 — but it paints over Gym's tail
+
+			// Mates in crisp side-by-side columns cover nothing — they stay flat.
+			const a = new Entry({ heading: 'A', start: base.add({ hours: 9 }), end: base.add({ hours: 11 }) })
+			const b = new Entry({ heading: 'B', start: base.add({ hours: 9, minutes: 30 }), end: base.add({ hours: 11, minutes: 30 }) })
+			const mates = EntrySegments.of([a, b], [base]).timedOn(base)
+			assert.deepEqual(mates.map(s => s.covers), [false, false])
 		})
 
 		it('nests a float on a float one inset step deeper', () => {
