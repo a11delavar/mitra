@@ -298,8 +298,10 @@ export class Months extends Component {
 		// every other buffer month is just its (empty) grid track, so the scrollbar geometry — and the
 		// scroll-position→date math above — never depends on what's rendered.
 		return html`
-			<div class="corner"></div>
-			<div class="weekdays">
+			${/* data-chrome (here and on the month rail): the grid's frame — kept above the entries a
+			   view transition animates, see calendarTransition.ts. */''}
+			<div class="corner" data-chrome></div>
+			<div class="weekdays" data-chrome>
 				${Array.from({ length: this.columns }, (_, column) => {
 					const day = week[column % week.length]!
 					return html`
@@ -325,7 +327,7 @@ export class Months extends Component {
 		// The rail navigates to the month's MIDDLE, not its first day: the month view centers the target's
 		// week, and day 1 often sits in a week that still belongs to the previous month.
 		return html`
-			<div class="label" style="grid-row: ${row};" @click=${() => { this.navigate.dispatch(month.first.monthStart.add({ days: 14 })); this.switchToMonth.dispatch() }}>
+			<div class="label" data-chrome style="grid-row: ${row};" @click=${() => { this.navigate.dispatch(month.first.monthStart.add({ days: 14 })); this.switchToMonth.dispatch() }}>
 				${month.first.format({ month: 'short', ...(month.number === 1 ? { year: 'numeric' as const } : {}) })}
 			</div>
 			${month.days.map((day, index) => html`

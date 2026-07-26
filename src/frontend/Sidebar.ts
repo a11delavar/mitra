@@ -8,7 +8,9 @@ import { canInstall, promptInstall, onInstallAvailabilityChange } from './pwa.js
 
 @component('mitra-sidebar')
 export class Sidebar extends Component {
-	@event() openChange!: EventDispatcher<boolean>
+	@event() readonly openChange!: EventDispatcher<boolean>
+	/** A source was hidden or shown — the calendar listens to refetch through its view transition. */
+	@event() readonly sourcesChange!: EventDispatcher
 	@property({ type: Boolean, reflect: true }) open = false
 
 	// The install button appears/disappears with the browser's installability signal (see pwa.ts).
@@ -597,6 +599,7 @@ export class Sidebar extends Component {
 		await toggleSourceVisibility(source.id, !source.hidden)
 		source.hidden = !source.hidden
 		this.requestUpdate()
+		this.sourcesChange.dispatch()
 	}
 
 	/** The source whose name row is currently in inline-edit mode (double-click or ⋯ → Rename). */

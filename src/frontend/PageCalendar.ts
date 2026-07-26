@@ -4,6 +4,7 @@ import { Task } from '@lit/task'
 import { DateTime } from '@3mo/date-time'
 import { MediaQueryController } from '@3mo/media-query-observer'
 import { fetchEvents } from './Api.js'
+import { transitionCalendar, type CalendarTransitionType } from './calendarTransition.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
 import { EntryStore } from './EntryStore.js'
 import { CommandPalette } from './CommandPalette.js'
@@ -42,16 +43,11 @@ class FetcherController extends Controller {
 		this.task.run()
 		this.eventSource.onmessage = (event) => {
 			if (event.data === 'updated') {
-				const transition = document.startViewTransition(async () => {
-					await this.task.run()
-					await this.host.updateComplete
-					await Promise.all(this.host.eventSegments.map(e => e.updateComplete))
-				})
-				// Back-to-back ticks (every save echoes one) abort the previous tick's transition — fine,
-				// but don't let the abandoned transition's rejections surface as unhandled exceptions.
-				transition.updateCallbackDone.catch(() => void 0)
-				transition.ready.catch(() => void 0)
-				transition.finished.catch(() => void 0)
+				// In place, deliberately WITHOUT a view transition: the store adopts server values onto
+				// the same working instances, so a background tick (every save echoes one) repaints
+				// same-frame — animating it morphed the grid on every edit and snapped any running
+				// view-switch transition to its end. Only navigation animates (see calendarTransition.ts).
+				void this.task.run()
 			}
 		}
 	}
@@ -95,26 +91,22 @@ export class PageCalendar extends PageComponent {
 
 	@queryAll('mitra-entry-segment') readonly eventSegments!: Array<EntrySegmentComponent>
 
+	/** The scoped view transition's stage — persistent across view swaps (see the template). */
+	@query('.calendar') private readonly calendar!: HTMLElement
+
 	setView(value: CalendarView) {
 		if (this.view === value) {
 			return
 		}
+		this.transition('view-switch', () => { this.view = value })
+	}
 
-		const transition = (fn: () => Promise<void>) => {
-			if (!document.startViewTransition) {
-				void fn()
-				return
-			}
-			const viewTransition = document.startViewTransition(fn)
-			// An SSE tick's transition (or a rapid second switch) can abort this one — fine, but don't
-			// let the abandoned transition's rejections surface as unhandled exceptions.
-			viewTransition.updateCallbackDone.catch(() => void 0)
-			viewTransition.ready.catch(() => void 0)
-			viewTransition.finished.catch(() => void 0)
-		}
-
-		transition(async () => {
-			this.view = value
+	/** Run a navigation-shaped change through the calendar's scoped view transition (see
+	 * calendarTransition.ts) — settling every segment's render first, so the new-state capture
+	 * snapshots the finished layout, never a mid-update frame. */
+	private transition(type: CalendarTransitionType, change: () => unknown) {
+		transitionCalendar(this.calendar, type, async () => {
+			await change()
 			await this.updateComplete
 			await Promise.all(this.eventSegments.map(e => e.updateComplete))
 		})
@@ -202,6 +194,12 @@ export class PageCalendar extends PageComponent {
 		return css`
 			lit-page {
 				display: contents;
+			}
+
+			/* A running transition's pseudo tree wins hit-testing by default, deadening the calendar
+			   for the animation's duration — let clicks fall through to the live DOM instead. */
+			::view-transition {
+				pointer-events: none;
 			}
 
 			mitra-page-calendar {
@@ -371,9 +369,24 @@ export class PageCalendar extends PageComponent {
 						}
 					}
 
-					mitra-weeks, mitra-months, mitra-days {
+					/* The view transition's scope (see calendarTransition.ts): contained, so the browser
+					   needn't force containment at capture time (a reflow), and clipped, so morphing
+					   snapshots stay inside the calendar — header and sidebar sit outside the scope and
+					   stay live. Deliberately NOT a query container: the week view's 100cqi math
+					   (see Days.ts) must keep resolving against main. */
+					.calendar {
 						flex: 1;
+						min-width: 0;
 						min-height: 0;
+						display: flex;
+						flex-direction: column;
+						contain: layout;
+						overflow: clip;
+
+						mitra-weeks, mitra-months, mitra-days {
+							flex: 1;
+							min-height: 0;
+						}
 					}
 				}
 
@@ -409,7 +422,9 @@ export class PageCalendar extends PageComponent {
 	protected override get template() {
 		return html`
 			<lit-page>
-				<mitra-sidebar ?open=${bind(this, 'sidebarOpen')}></mitra-sidebar>
+				${/* Hiding/showing a source refetches (visibility filters server-side) through the calendar's
+				   transition, so survivors glide into the freed space; the SSE echo then applies as a no-op. */''}
+				<mitra-sidebar ?open=${bind(this, 'sidebarOpen')} @sourcesChange=${() => this.transition('source-toggle', () => this.fetcher.task.run())}></mitra-sidebar>
 				<main>
 					<header>
 						<div class="leading">
@@ -439,27 +454,31 @@ export class PageCalendar extends PageComponent {
 							</button>
 						</div>
 					</header>
-					${this.view === 'week' ? html`
-						<mitra-days
-							.entries=${this.store.entries}
-							.navigatingDate=${this.navigatingDate}
-							@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
-						></mitra-days>
-					` : this.view === 'month' ? html`
-						<mitra-weeks
-							.entries=${this.store.entries}
-							.navigatingDate=${this.navigatingDate}
-							@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
-							@switchToWeek=${() => this.setView('week')}
-						></mitra-weeks>
-					` : html`
-						<mitra-months
-							.entries=${this.store.entries}
-							.navigatingDate=${this.navigatingDate}
-							@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
-							@switchToMonth=${() => this.setView('month')}
-						></mitra-months>
-					`}
+					${/* The scoped view transition's stage (see calendarTransition.ts): a PERSISTENT element —
+					   the scope must survive the update it animates, while the views inside swap out. */''}
+					<div class="calendar">
+						${this.view === 'week' ? html`
+							<mitra-days
+								.entries=${this.store.entries}
+								.navigatingDate=${this.navigatingDate}
+								@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
+							></mitra-days>
+						` : this.view === 'month' ? html`
+							<mitra-weeks
+								.entries=${this.store.entries}
+								.navigatingDate=${this.navigatingDate}
+								@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
+								@switchToWeek=${() => this.setView('week')}
+							></mitra-weeks>
+						` : html`
+							<mitra-months
+								.entries=${this.store.entries}
+								.navigatingDate=${this.navigatingDate}
+								@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
+								@switchToMonth=${() => this.setView('month')}
+							></mitra-months>
+						`}
+					</div>
 				</main>
 				<mitra-command-palette
 					.commands=${this.commands}

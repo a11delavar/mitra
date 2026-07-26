@@ -9,6 +9,12 @@ export class Day extends Component {
 	@property({ type: Array }) entries: ReadonlyArray<EntrySegment> = []
 	@property({ type: Boolean, reflect: true }) today = false
 
+	/** Set by the week view, where this header titles a whole column and sticks to the top of the
+	 * scroller — part of the grid's frame, so a view transition names it and keeps it above the
+	 * entries it animates (see calendarTransition.ts). The month and year grids print the same header
+	 * as a numeral inside the cell, where entries legitimately pass over it. */
+	@property({ type: Boolean, attribute: 'column-header' }) columnHeader = false
+
 	static override get styles() {
 		return css`
 			mitra-day {
@@ -93,6 +99,9 @@ export class Day extends Component {
 							padding: 0 0.35rem;
 							font-weight: 700;
 							box-sizing: border-box;
+							/* The pill flies between views as its own group. It sits inside the (also named)
+							   column header in the week view, but a scoped transition nests descendant groups
+							   under their ancestor rather than double-drawing them, so it leaves no ghost. */
 							view-transition-name: today-badge;
 
 							@container (max-height: 450px) {
@@ -161,7 +170,7 @@ export class Day extends Component {
 
 	protected override get template() {
 		return html`
-			<div class="header">
+			<div class="header" ?data-chrome=${this.columnHeader}>
 				${this.date.formatToParts({ weekday: 'long', month: this.date.day === 1 ? 'short' : undefined, day: 'numeric' }).filter(part => part.type !== 'literal').map(part => html`
 					<span class="${part.type}" ?data-today=${this.today}>${part.value}</span>
 				`)}

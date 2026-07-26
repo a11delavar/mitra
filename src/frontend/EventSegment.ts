@@ -65,10 +65,11 @@ export class EntrySegmentComponent extends Component {
 		if (!entry) {
 			return
 		}
-		// Track the segment's id on the host (its anchor + view-transition identity) on every update, not
-		// only when `segment` changes — so they re-sync when a draft is assigned its id in place on save,
-		// keeping the open editor's `position-anchor` matched.
-		this.style.viewTransitionName = `entry-${this.segment!.id}`
+		// Track the segment's id on the host (its anchor identity) on every update, not only when
+		// `segment` changes — so it re-syncs when a draft is assigned its id in place on save, keeping
+		// the open editor's `position-anchor` matched. (No view-transition-name here: a permanent name
+		// on every segment made every transition capture the whole rendered range — names are assigned
+		// just-in-time, viewport-bounded, by calendarTransition.ts, and only for a transition's lifetime.)
 		this.style.anchorName = this.anchorName
 		this.toggleAttribute('data-draft', !entry.persisted)
 		// A live resize and a move's ghost float above their cluster; a move's origin dims in place.

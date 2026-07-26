@@ -202,7 +202,9 @@ export class Weeks extends Component {
 		const lastWeek = windowDays.length ? Math.floor((offset + windowDays.length - 1) / daysInWeek) : firstWeek
 
 		return html`
-			<div class="headers">
+			${/* data-chrome: part of the grid's frame — kept above the entries a view transition
+			   animates, see calendarTransition.ts. */''}
+			<div class="headers" data-chrome>
 				${this.weekDays.map(weekday => html`<div class="weekday">${weekday}</div>`)}
 			</div>
 			<div class="body">

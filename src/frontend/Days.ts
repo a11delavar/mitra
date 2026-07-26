@@ -625,7 +625,9 @@ export class Days extends Component {
 		const columnByDay = new Map(days.map((day, index) => [day.dayStart.valueOf(), offset + index]))
 		const columnOf = (dayValue?: number) => columnByDay.get(dayValue ?? -1) ?? 0
 		return html`
-			<div class="all-day-corner"></div>
+			${/* data-chrome (here and below): the grid's frame — kept above the entries a view transition
+			   animates, see calendarTransition.ts. */''}
+			<div class="all-day-corner" data-chrome></div>
 			<div class="all-day">
 				${days.map((_, index) => html`<div class="day" style="grid-column: ${offset + index + 1};"></div>`)}
 				${repeat(runs, segment => segment.entry, segment => {
@@ -663,14 +665,14 @@ export class Days extends Component {
 
 		return html`
 			<div class="time">
-				<div class="timezone" ${observeResize(this.updateHeaderSize)}>
+				<div class="timezone" data-chrome ${observeResize(this.updateHeaderSize)}>
 					<mitra-time-zone-header ?folded=${this.zoneLane.folded}
 						@change=${() => this.requestUpdate()}
 						@fold=${(e: CustomEvent<boolean>) => this.zoneLane.setFolded(e.detail)}
 					></mitra-time-zone-header>
 				</div>
 
-				<div class="axis">
+				<div class="axis" data-chrome>
 					${zones.map((zone, column) => Array.from({ length: reference.hoursInDay }).map((_, i) => {
 						// Blank the label the now-chip is about to overlay — only in its (the system) column.
 						const isCloseToNow = !zone && todayIndex !== -1 && Math.abs(i * 60 - currentMinute) < 15
@@ -713,8 +715,12 @@ export class Days extends Component {
 		const firstDayColumn = this.timeZoneColumns.length + 2
 		return html`
 			${repeat(days, day => day.dayStart.toISOString(), (day, index) => html`
+				${/* Its header titles the column here (sticky at the top of the scroller), rather than
+				   printing a numeral inside the cell as the month and year grids do — so it belongs to
+				   the frame a view transition must keep above the entries. */''}
 				<mitra-day
 					data-date=${day.dayStart.toISOString()}
+					column-header
 					style="grid-column: ${firstDayColumn + offset + index};"
 					.date=${day}
 					.entries=${this.segments.timedOn(day)}
