@@ -105,6 +105,29 @@ export class EntryDetailsComponent extends Component {
 			console.error('Deleting the entry failed — it was restored in the view:', error))
 	}
 
+	/** Apple keyboards have no forward-delete key: their ⌫ "delete" reports `Backspace` (⌦ only exists
+	 * on full-size boards, or as fn+⌫) — so the menu's hint shows the glyph Mac users actually press. */
+	private static readonly appleKeyboard = /Mac|iPhone|iPad/.test(navigator.platform)
+
+	// Delete (and Backspace — the only "delete" an Apple keyboard has, and what Apple Calendar itself
+	// uses) deletes the entry while its editor is open: the keyboard twin of the menu's Delete button.
+	// Guarded like PageCalendar's view shortcuts: a keystroke inside a text field (title, description,
+	// the source select…), a chord, or an IME composition is theirs, not ours.
+	@eventListener({ target: window, type: 'keydown' })
+	protected handleWindowKeyDown(e: KeyboardEvent) {
+		if (e.key !== 'Delete' && e.key !== 'Backspace') {
+			return
+		}
+		const target = e.target
+		const editable = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
+			|| target instanceof HTMLSelectElement || (target instanceof HTMLElement && target.isContentEditable)
+		if (!this.open || editable || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) {
+			return
+		}
+		e.preventDefault()
+		this.handleDelete()
+	}
+
 	private readonly handleClose = (e: Event) => {
 		e.stopPropagation()
 		this.hidePopover()
@@ -413,6 +436,7 @@ export class EntryDetailsComponent extends Component {
 							<button class="danger" @click=${this.handleDelete}>
 								<mitra-icon icon="trash-2"></mitra-icon>
 								${t('Delete')}
+								<kbd>${EntryDetailsComponent.appleKeyboard ? '⌫' : 'Del'}</kbd>
 							</button>
 						</menu>
 						<mitra-icon-button class="close" icon="x" label=${t('Close')}

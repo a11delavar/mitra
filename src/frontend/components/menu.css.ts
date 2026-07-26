@@ -41,6 +41,11 @@ export const menuStyles = css`
 				font-size: 15px;
 			}
 
+			/* A shortcut hint (the pill comes from the global button kbd styles) sits at the trailing edge. */
+			kbd {
+				margin-inline-start: auto;
+			}
+
 			&:hover,
 			&:focus-visible {
 				background: color-mix(in srgb, var(--color-text) 8%, transparent);
