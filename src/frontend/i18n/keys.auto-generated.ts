@@ -41,7 +41,9 @@ declare global {
 		"Calendar options": unknown
 		"Cancelled": unknown
 		"changelog release notes news updates version": unknown
+		"Choose a task status": unknown
 		"Choose your sources": unknown
+		"click": unknown
 		"close": unknown
 		"Close": unknown
 		"collapse expand calendars": unknown
@@ -61,16 +63,20 @@ declare global {
 		"days": unknown
 		"Default for new entries — click to unset": unknown
 		"Default for new entries, as the first one shown": unknown
+		"Del": unknown
 		"Delete": unknown
+		"Delete just this entry of a series": unknown
 		"Delete repeating entry": unknown
 		"Delete the locally cached entries and import everything from the source again": unknown
 		"Delete the locally cached entries of every enabled source and import everything again": unknown
+		"Delete the open entry": unknown
 		"Description": unknown
 		"Does not repeat": unknown
 		"Doing": unknown
 		"Done": unknown
 		"Double-click to rename": unknown
 		"Draft": unknown
+		"drag": unknown
 		"Edit": unknown
 		"Edit integration": unknown
 		"Edit repeating entry": unknown
@@ -80,12 +86,15 @@ declare global {
 		"Entries": unknown
 		"Events": unknown
 		"Every": unknown
+		"Forward": unknown
 		"forward later": unknown
+		"General": unknown
 		"Go to Date…": unknown
 		"Go to Today": unknown
 		"Google account": unknown
 		"Google.ConfigurationHint": unknown
 		"Google.ConsentHint": unknown
+		"help keys hotkeys cheat sheet": unknown
 		"Hide calendar": unknown
 		"Hide the other time zones": unknown
 		"hours": unknown
@@ -96,12 +105,15 @@ declare global {
 		"Integration Token": unknown
 		"Interval": unknown
 		"jump navigate pick specific day month year": unknown
+		"Keyboard Shortcuts": unknown
 		"Location": unknown
 		"minutes": unknown
 		"modified": unknown
 		"Month": unknown
 		"Month View": unknown
+		"Move or resize just this entry of a series": unknown
 		"navigate": unknown
+		"Navigation": unknown
 		"Never": unknown
 		"New dev build — ${count:pluralityNumber} commits ahead": unknown
 		"new event task add": unknown
@@ -120,6 +132,7 @@ declare global {
 		"One calendar to plan your events and tasks.": unknown
 		"Open in Google Maps": unknown
 		"Options": unknown
+		"or": unknown
 		"Password": unknown
 		"Pick the calendars and task lists to show — recolor, rename or hide them in the sidebar anytime.": unknown
 		"Plan your days": unknown
@@ -142,6 +155,7 @@ declare global {
 		"Reset to calendar color": unknown
 		"Reset to default color": unknown
 		"Save": unknown
+		"scroll": unknown
 		"Search entries or run a command…": unknown
 		"Search or run a command (${hotkey})": unknown
 		"Search or run a command…": unknown
@@ -185,6 +199,7 @@ declare global {
 		"version build info release commit": unknown
 		"View": unknown
 		"View on GitHub": unknown
+		"Views": unknown
 		"Wall clock — no time zone": unknown
 		"Week": unknown
 		"Week View": unknown
@@ -194,5 +209,6 @@ declare global {
 		"Workspace": unknown
 		"Year": unknown
 		"Year View": unknown
+		"Zoom the view": unknown
 	}
 }

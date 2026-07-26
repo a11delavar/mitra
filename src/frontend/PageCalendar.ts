@@ -3,14 +3,11 @@ import { PageComponent, route } from '@a11d/lit-application'
 import { Task } from '@lit/task'
 import { DateTime } from '@3mo/date-time'
 import { MediaQueryController } from '@3mo/media-query-observer'
-import { Entry, EntryType, SourceType, DEFAULT_REMINDER_MINUTES } from 'shared'
-import { fetchEvents, getPrimarySource, getCapabilities } from './Api.js'
+import { fetchEvents } from './Api.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
 import { EntryStore } from './EntryStore.js'
 import { CommandPalette } from './CommandPalette.js'
-import { type Command } from './Command.js'
-import { DialogAbout } from './DialogAbout.js'
-import { DialogIntegration } from './DialogIntegration.js'
+import { commands } from './commands/index.js'
 
 class FetcherController extends Controller {
 	// `withCredentials` so the session cookie rides along behind a cookie-based auth proxy (e.g. Traefik OIDC).
@@ -87,7 +84,7 @@ export class PageCalendar extends PageComponent {
 		return window.matchMedia('(min-width: 800px)').matches && localStorage.getItem('Mitra.SidebarCollapsed') !== 'true'
 	}
 
-	private readonly toggleSidebar = () => {
+	readonly toggleSidebar = () => {
 		this.sidebarOpen = !this.sidebarOpen
 		// Only a desktop toggle expresses a lasting preference — closing the mobile overlay is just
 		// dismissing it, and must not collapse the sidebar on the next desktop visit.
@@ -98,7 +95,7 @@ export class PageCalendar extends PageComponent {
 
 	@queryAll('mitra-entry-segment') readonly eventSegments!: Array<EntrySegmentComponent>
 
-	private setView(value: CalendarView) {
+	setView(value: CalendarView) {
 		if (this.view === value) {
 			return
 		}
@@ -130,62 +127,22 @@ export class PageCalendar extends PageComponent {
 
 	@query('input.goto-date') private readonly gotoDateInput!: HTMLInputElement
 
-	/** The page's palette commands — behavior stays here, where the state it drives lives; the palette
-	 * only lists and dispatches. Rebuilt per render so view-dependent labels stay current. */
-	private get commands(): Array<Command> {
-		return [
-			{ heading: t('Create Entry'), icon: 'plus', keywords: t('new event task add'), execute: () => this.createEntry() },
-			{ heading: t('Go to Today'), icon: 'calendar-check', shortcut: 'T', keywords: t('now current date jump'), execute: () => this.navigatingDate = new DateTime() },
-			{ heading: t('Go to Date…'), icon: 'calendar-search', keywords: t('jump navigate pick specific day month year'), execute: () => this.goToDate() },
-			{ heading: t('Week View'), icon: 'columns-3', shortcut: 'W', keywords: t('switch'), execute: () => this.setView('week') },
-			{ heading: t('Month View'), icon: 'calendar-days', shortcut: 'M', keywords: t('switch grid'), execute: () => this.setView('month') },
-			{ heading: t('Year View'), icon: 'rows-3', shortcut: 'Y', keywords: t('switch grid'), execute: () => this.setView('year') },
-			{ heading: this.view === 'week' ? t('Next Week') : this.view === 'month' ? t('Next Month') : t('Next Year'), icon: 'arrow-right', keywords: t('forward later'), execute: () => this.navigatingDate = this.navigatingDate.add(this.navigationStep) },
-			{ heading: this.view === 'week' ? t('Previous Week') : this.view === 'month' ? t('Previous Month') : t('Previous Year'), icon: 'arrow-left', keywords: t('back earlier'), execute: () => this.navigatingDate = this.navigatingDate.subtract(this.navigationStep) },
-			{ heading: t('Toggle Sidebar'), icon: 'panel-left', keywords: t('collapse expand calendars'), execute: this.toggleSidebar },
-			{ heading: t('Add Integration'), icon: 'plug', keywords: t('connect caldav account calendar'), execute: () => new DialogIntegration({}).confirm() },
-			// The version string itself is a keyword, so typing what the sidebar's brand row shows finds these.
-			{ heading: t('About'), icon: 'info', keywords: `${t('version build info release commit')} ${mitra.version}`, execute: () => new DialogAbout().confirm() },
-			{ heading: t('What\'s New'), icon: 'sparkles', keywords: `${t('changelog release notes news updates version')} ${mitra.version}`, execute: () => new DialogAbout().confirm() },
-			{ heading: t('Copy Version'), icon: 'copy', keywords: `${t('about build info release commit')} ${mitra.version}`, execute: () => navigator.clipboard.writeText(`Mitra ${mitra.version}`) },
-		]
-	}
+	/** The page's palette commands — instantiated once from the registry (see commands/): each class
+	 * owns its facts as getters, so view-dependent headings and the active language stay current on
+	 * a stable list. The palette only lists and dispatches; the keydown interceptor below matches
+	 * against these same instances. */
+	readonly commands = commands().map(constructor => new constructor())
 
 	/** How far one "next"/"previous" hop moves: one of whatever the current view shows. */
-	private get navigationStep() {
+	get navigationStep() {
 		return this.view === 'week' ? { weeks: 1 } : this.view === 'month' ? { months: 1 } : { years: 1 }
 	}
 
-	/** The palette's Create Entry: a blank one-hour draft at the next full hour today, on the primary
-	 * source — the same target a create gesture picks — navigated into view with its editor open.
-	 * Always lands in the week view: the timed grid renders every draft, whereas a crowded month cell
-	 * folds it into "+N more" and the editor could never open. */
-	private createEntry() {
-		const source = getPrimarySource()
-		if (!source) {
-			return
-		}
-		const now = new DateTime()
-		const start = now.dayStart.add({ hours: now.hour + 1 })
-		this.setView('week')
-		this.navigatingDate = now
-		EntryStore.upsertDraft(new Entry({
-			sourceId: source.id,
-			type: source.type === SourceType.Task ? EntryType.Task : EntryType.Event,
-			heading: '',
-			start,
-			end: start.add({ hours: 1 }),
-			allDay: false,
-			// A timed draft — same default as a create gesture, same capability guard (see EntryDragController).
-			reminders: getCapabilities(source.id).reminders ? [DEFAULT_REMINDER_MINUTES] : undefined,
-		}))
-		EntryStore.openDraft()
-	}
-
-	/** The palette's Go to Date: reveal a native date picker seeded to the current position; picking a day
-	 * navigates the calendar there. The input stays rendered (not `display: none`) so `showPicker()` can open
-	 * it while the palette's click/Enter still carries the transient activation the API requires. */
-	private goToDate() {
+	/** The Go to Date command's surface: reveal a native date picker seeded to the current position;
+	 * picking a day navigates the calendar there. Stays on the page (not the command class) because
+	 * it drives the page's own hidden input — rendered, not `display: none`, so `showPicker()` can
+	 * open it while the palette's click/Enter still carries the transient activation the API requires. */
+	goToDate() {
 		const input = this.gotoDateInput
 		const date = this.navigatingDate
 		input.value = `${String(date.year).padStart(4, '0')}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`
@@ -218,21 +175,26 @@ export class PageCalendar extends PageComponent {
 			return
 		}
 
-		switch (e.key.toLowerCase()) {
-			case 'w':
-				this.setView('week')
-				break
-			case 'm':
-				this.setView('month')
-				break
-			case 'y':
-				this.setView('year')
-				break
-			case 't':
-				this.navigatingDate = new DateTime()
-				break
-			default:
-				break
+		// A modal dialog owns the keyboard while open — everything behind it is inert, so the focused
+		// target always sits inside the dialog's composed path. Without this, pressing "m" in, say, the
+		// shortcuts sheet would switch the calendar's view behind the dialog.
+		if (e.composedPath().some(node => node instanceof HTMLDialogElement)) {
+			return
+		}
+
+		// "/" is the page's search affordance (the header's fake search box as a key), not a command —
+		// opening the palette from inside the palette makes no sense, so it isn't listed there.
+		if (e.key === '/') {
+			e.preventDefault()
+			this.palette.show()
+			return
+		}
+
+		// One interceptor for every keyed command: first registered match wins (see commands/).
+		const command = this.commands.find(command => command.matches(e))
+		if (command) {
+			e.preventDefault()
+			command.dispatch()
 		}
 	}
 
@@ -507,5 +469,11 @@ export class PageCalendar extends PageComponent {
 				<input class="goto-date" type="date" aria-hidden="true" tabindex="-1" @change=${(e: Event) => this.handleGoToDate(e)}>
 			</lit-page>
 		`
+	}
+}
+
+declare global {
+	interface HTMLElementTagNameMap {
+		'mitra-page-calendar': PageCalendar
 	}
 }

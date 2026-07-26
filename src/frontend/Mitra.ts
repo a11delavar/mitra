@@ -13,6 +13,7 @@ import { EntryDetailsComponent } from './EventDetails.js'
 import { DialogAbout, markChangesSeen } from './DialogAbout.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { DialogWelcome } from './DialogWelcome.js'
+import { DialogKeyboardShortcuts } from './DialogKeyboardShortcuts.js'
 import { colorContrast } from './components/colorContrast.js'
 import { IconButton } from './components/IconButton.js'
 import { buttonStyles } from './components/button.css.js'
@@ -40,6 +41,21 @@ EntryStore.resolveScope = (entry, intent) => new DialogRecurrenceScope({ entry, 
 @application()
 @component('mitra-application')
 export class Mitra extends Application {
+	/** The framework's document-resolved application (see queryInstanceElement), narrowed to Mitra —
+	 * the root every context-less collaborator (the command classes) reaches app state through. The
+	 * `@application()` decorator appends the instance at module evaluation, so any code that can ask
+	 * for it is running in a document that already has it. */
+	static override get instance() {
+		return Application.instance as Mitra
+	}
+
+	/** The calendar page — the app's one route and the surface commands drive. Pages render into the
+	 * application's light DOM, so a tag query resolves it; only the very first render (before the
+	 * router mounts a page) has none, and nothing reachable by then asks. */
+	get calendar() {
+		return this.querySelector('mitra-page-calendar')!
+	}
+
 	protected override async initialized() {
 		// Consumed BEFORE the router's first render: the routed page adopts the URL's query into its
 		// parameters and re-pushes it on navigation, which would resurrect an already-stripped param.
@@ -135,6 +151,7 @@ export class Mitra extends Application {
 			${DialogAbout.styles}
 			${DialogIntegration.styles}
 			${DialogWelcome.styles}
+			${DialogKeyboardShortcuts.styles}
 			${DialogRecurrenceScope.styles}
 			${TaskStatusComponent.styles}
 			${SourceIcon.styles}

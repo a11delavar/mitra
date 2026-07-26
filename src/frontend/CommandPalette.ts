@@ -3,20 +3,21 @@ import { type DateTime } from '@3mo/date-time'
 import { type Entry } from 'shared'
 import { getSource, searchEntries } from './Api.js'
 import { EntryStore } from './EntryStore.js'
-import { commandMatches, type Command } from './Command.js'
+import { commandMatches, Command } from './commands/Command.js'
 
 /**
- * The command palette: a top-layer search box (Ctrl/Cmd+P, or the header's search trigger) over the
+ * The command palette: a top-layer search box ("/", Ctrl/Cmd+P or +K, or the header's search trigger) over the
  * page's {@link Command}s and the ENTIRE entry store — entries are searched on the backend, so
  * matches aren't limited to the window the calendar happens to have fetched. Picking an entry
  * dispatches `navigate` with its start; picking a command executes it.
  */
 @component('mitra-command-palette')
 export class CommandPalette extends Component {
-	/** The platform-conventional label for the open shortcut (the Mac's ⌘ symbol, Ctrl elsewhere). */
-	static get hotkey() {
-		return navigator.userAgent.includes('Mac') ? '⌘ P' : 'Ctrl P'
-	}
+	/** What the prominent UI teaches — a bare "/": one key, no chord, and nothing to spell differently
+	 * per platform. The chords ({@link hotkeys}) are equally supported and equally documented in the
+	 * shortcut sheet; they just aren't what a header search box should be shouting. (The page owns the
+	 * "/" keystroke itself — opening the palette from inside the palette is meaningless.) */
+	static readonly hotkey = '/'
 
 	@property({ type: Array }) commands = new Array<Command>()
 
@@ -39,9 +40,15 @@ export class CommandPalette extends Component {
 		this.dialog.showModal()
 	}
 
+	/** Both chords open it, on equal footing: **P** (the editor lineage — VS Code's Quick Open) and **K**
+	 * (what most other palettes bound). Neither is prominent in the UI, which teaches "/" instead
+	 * ({@link hotkey}), but both are listed in the shortcut sheet and the docs — a shortcut nobody can
+	 * discover may as well not exist. */
+	private static readonly hotkeys = ['p', 'k']
+
 	@eventListener({ target: window, type: 'keydown' })
 	protected handleWindowKeyDown(e: KeyboardEvent) {
-		if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'p') {
+		if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && CommandPalette.hotkeys.includes(e.key.toLowerCase())) {
 			e.preventDefault()
 			if (this.dialog.open) {
 				this.dialog.close()
@@ -85,8 +92,8 @@ export class CommandPalette extends Component {
 
 	private select(result: Command | Entry) {
 		this.dialog.close()
-		if ('execute' in result) {
-			result.execute()
+		if (result instanceof Command) {
+			result.dispatch()
 		} else if (result.start) {
 			// Navigate the calendar to the entry, then ask its segment to open once it renders.
 			this.navigate.dispatch(result.start)
