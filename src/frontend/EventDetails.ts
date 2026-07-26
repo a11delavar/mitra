@@ -3,6 +3,7 @@ import { EntryType, TaskStatus, type Integration, type RecurrenceScope } from 's
 import type { EntrySegment } from './EntrySegment.js'
 import { getIntegrations, getSource, getCapabilities } from './Api.js'
 import { EntryStore } from './EntryStore.js'
+import { closeSheet } from './components/sheet.js'
 
 @component('mitra-entry-details')
 export class EntryDetailsComponent extends Component {
@@ -151,9 +152,13 @@ export class EntryDetailsComponent extends Component {
 		this.handleDelete(EntryDetailsComponent.presetScope(e))
 	}
 
+	// As a bottom sheet this slides out rather than vanishing; closeSheet reports when it took over
+	// (and hides the popover itself once the slide lands), leaving the anchored popover to close flat.
 	private readonly handleClose = (e: Event) => {
 		e.stopPropagation()
-		this.hidePopover()
+		if (!closeSheet(this)) {
+			this.hidePopover()
+		}
 	}
 
 	private readonly toggleMenu = (e: Event) => {
@@ -169,7 +174,15 @@ export class EntryDetailsComponent extends Component {
 	static override get styles() {
 		return css`
 			mitra-entry-details {
-				display: contents;
+				/* Closed means GONE, which needs saying explicitly: an author display declaration beats
+				   the UA rule that hides a non-open popover no matter how weak the selector, and this
+				   element sits in the DOM while still closed for one frame every single time it opens
+				   (lit renders it, then EntryDetailsComponent defers showPopover by a frame — see the
+				   note there). The old value was "contents", which generates no box for the host but
+				   still lays its CHILD out in the page flow; harmless while the host carried the
+				   visuals, but now that the sheet contract moved surface, radius and shadow onto that
+				   child it flashed a stray glass panel into the calendar on every open. */
+				display: none;
 				cursor: default;
 
 				/* Tint the toggle switch and the text selection with the entry's (or its source's) colour. */
@@ -188,27 +201,23 @@ export class EntryDetailsComponent extends Component {
 				margin: 0;
 				outline: none;
 				padding: 0;
-				overflow: hidden;
 
 				position: fixed;
 				margin-inline: 0.25rem;
-				container-type: anchored;
 				position-area: inline-end span-all;
 				position-visibility: anchors-visible;
-				position-try-order: most-block-size;
-				position-try-fallbacks: flip-inline, flip-block, flip-block flip-inline;
+				/* --sheet (see components/sheet.ts) is the terminal fallback: pinned to the viewport it
+				   always fits, so the popover becomes a draggable bottom sheet exactly when every anchored
+				   placement above overflowed — a phone, or a desktop window squeezed just as tight. The
+				   former 'position-try-order: most-block-size' had to go for it: ordered by block size,
+				   the viewport-tall sheet would sort to the front and win everywhere. */
+				position-try-fallbacks: flip-inline, flip-block, flip-block flip-inline, --sheet;
 
 				/* Wide enough for the times row to carry the inline zone chip ("GMT+3:30") next to the
 				   end time without cramping the inputs. */
 				width: 360px;
 				max-height: 80dvh;
-				overflow-y: auto;
 
-				background: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
-				backdrop-filter: blur(10px);
-				border: var(--border);
-				border-radius: 0.5rem;
-				box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48),0px 4px 12px -1px rgba(0,0,0,0.24);
 				color: var(--color-text);
 				font-family: 'Inter', sans-serif;
 				font-size: 0.75rem;
@@ -217,33 +226,22 @@ export class EntryDetailsComponent extends Component {
 					background: transparent;
 				}
 
-				@media (max-width: 600px) {
-					inset-area: none;
-					position-area: none;
-
-					inset-block-start: auto;
-					inset-block-end: 0;
-					inset-inline: 0;
-					width: 100%;
-					max-width: none;
-					max-height: 90dvh;
-					margin: 0;
-					border-radius: 20px 20px 0 0;
-					border: none;
-					border-block-start: var(--border);
-
-					transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1), opacity 0.3s ease;
-
-					@starting-style {
-						transform: translateY(100%);
-						opacity: 0;
-					}
-				}
-
 				> ul {
 					list-style: none;
 					margin: 0;
 					padding: 0.5rem 1rem 1rem;
+
+					/* The popover itself is the sheet contract's transparent frame (see components/sheet.ts):
+					   the list is its single child and carries ALL the chrome — in anchored mode too, where
+					   it also caps itself (inherit = the frame's 80dvh) and scrolls inside, so the border and
+					   radius no longer scroll away with long content. */
+					max-height: inherit;
+					overflow-y: auto;
+					background: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
+					backdrop-filter: blur(10px);
+					border: var(--border);
+					border-radius: 0.5rem;
+					box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48),0px 4px 12px -1px rgba(0,0,0,0.24);
 					display: grid;
 					/* Just two columns for the whole popover: a leading glyph (icon / checkbox / switch /
 					   colour-square) and its content. Every row subgrids it so the glyphs line up. The
@@ -439,6 +437,20 @@ export class EntryDetailsComponent extends Component {
 						}
 					}
 
+				}
+
+				/* Sheet mode — the --sheet fallback landed (see components/sheet.ts for the mechanics). */
+				@container anchored(fallback: --sheet) {
+					& > ul {
+						/* The home-indicator region on gesture phones must not clip the last row. */
+						padding-block-end: max(1rem, env(safe-area-inset-bottom));
+
+						/* The shared grab handle is the list's ::before, which grid auto-placement would drop
+						   into the icon gutter — span it across the editor's rows so it centres on the sheet. */
+						&::before {
+							grid-column: 1 / -1;
+						}
+					}
 				}
 			}
 		`

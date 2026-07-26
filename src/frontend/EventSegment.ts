@@ -436,7 +436,7 @@ export class EntrySegmentComponent extends Component {
 				<div class="resize-end"></div>
 			`}
 			${!this.open ? html.nothing : html`
-				<mitra-entry-details popover ?open=${bind(this, 'open')}
+				<mitra-entry-details popover data-sheet ?open=${bind(this, 'open')}
 					style="position-anchor: ${this.anchorName}"
 					.segment=${this.segment}
 					@click=${(e: Event) => e.stopPropagation()}

@@ -21,6 +21,7 @@ import { switchStyles } from './components/switch.css.js'
 import { selectStyles } from './components/select.css.js'
 import { inputStyles } from './components/input.css.js'
 import { menuStyles } from './components/menu.css.js'
+import { sheetStyles, initializeSheetGestures } from './components/sheet.js'
 import { TaskStatusComponent } from './components/TaskStatus.js'
 import { SourceIcon } from './components/SourceIcon.js'
 import { RepeatField } from './components/RepeatField.js'
@@ -57,6 +58,9 @@ export class Mitra extends Application {
 	}
 
 	protected override async initialized() {
+		// The sheet popovers' swipe-to-dismiss/tap-to-dismiss/slide-in intents, delegated once for
+		// every current and future sheet in the app (see components/sheet.ts).
+		initializeSheetGestures()
 		// Consumed BEFORE the router's first render: the routed page adopts the URL's query into its
 		// parameters and re-pushes it on navigation, which would resurrect an already-stripped param.
 		const pendingIntegrationId = Mitra.consumePendingIntegrationParameter()
@@ -135,6 +139,7 @@ export class Mitra extends Application {
 			${selectStyles}
 			${inputStyles}
 			${menuStyles}
+			${sheetStyles}
 
 			${IconButton.styles}
 			${Markdown.styles}
