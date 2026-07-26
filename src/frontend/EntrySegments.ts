@@ -169,8 +169,12 @@ export class EntrySegments {
 			if (startColumn < 0 || endColumn < 0) {
 				continue
 			}
-			const slot = this.monthSlots.get(segment.entry) ?? 0
-			if (slot >= lastSlot) {
+			const packed = this.monthSlots.get(segment.entry) ?? 0
+			// A gesture's own ghost is never overflow: it is the drag's only feedback, so past the cap it
+			// rides the last visible slot instead of vanishing into a "+N more" it can't be counted in.
+			const isGhost = EntryStore.isPreview(segment.entry)
+			const slot = isGhost ? Math.max(0, Math.min(packed, lastSlot - 1)) : packed
+			if (!isGhost && slot >= lastSlot) {
 				for (let column = startColumn; column <= endColumn; column++) {
 					hiddenByColumn[column] = (hiddenByColumn[column] ?? 0) + 1
 				}
@@ -200,14 +204,14 @@ export class EntrySegments {
 
 	private slots(entries: ReadonlyArray<Entry>): ReadonlyMap<Entry, number> {
 		const datesByEntry = new Map<Entry, ReadonlyArray<number>>()
+		const previewDates = new Map<Entry, ReadonlyArray<number>>()
 		for (const entry of entries) {
-			if (EntryStore.isPreview(entry)) {
-				continue // a move's ghost overlays slot 0 (see monthWeek's fallback) — it mustn't shift lanes
-			}
 			const dates = EntrySegments.for(entry).map(s => s.dayValue).filter((v): v is number => v !== undefined)
-			if (dates.length) {
-				datesByEntry.set(entry, dates)
+			if (!dates.length) {
+				continue
 			}
+			// A move's ghost is packed last (below) — it mustn't shift the lanes it is dragged over.
+			(EntryStore.isPreview(entry) ? previewDates : datesByEntry).set(entry, dates)
 		}
 
 		const ordered = [...datesByEntry.keys()].sort((a, b) => {
@@ -231,6 +235,19 @@ export class EntrySegments {
 			}
 			dates.forEach(date => rows[slot]!.add(date))
 			slots.set(entry, slot)
+		}
+
+		// The ghosts, over the settled rows: a move's ghost previews where the entry LANDS, so it takes
+		// the very slot the packing would give it — not a row of its own below everything, which would
+		// both bury it and make the bar jump on release. The cells its own SOURCE holds count as free:
+		// they vacate on release, so a bar dragged along its own row keeps that row (the source's slot
+		// can only hold the source on those dates — rows are shared by date-disjoint entries).
+		const source = EntryStore.dragSource
+		const vacatingSlot = source ? slots.get(source) : undefined
+		const vacating = new Set(source ? datesByEntry.get(source) ?? [] : [])
+		for (const [preview, dates] of previewDates) {
+			const index = rows.findIndex((row, slot) => dates.every(date => !row.has(date) || (slot === vacatingSlot && vacating.has(date))))
+			slots.set(preview, index === -1 ? rows.length : index)
 		}
 		return slots
 	}

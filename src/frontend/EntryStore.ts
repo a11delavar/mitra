@@ -530,14 +530,21 @@ export class EntryStore extends Controller {
 		return this.dragging === entry && this.preview === undefined
 	}
 
-	/** Whether `entry` is the origin of an in-progress move that would actually move it — render it
-	 * dimmed in place, as the reference the user is dragging away from. */
+	/** The origin of an in-progress move that would actually move it — rendered dimmed in place, as the
+	 * reference the user is dragging away from. Its slot is what the ghost is vacating, so the packing
+	 * lets the ghost reuse those very cells (see `EntrySegments.slots`). */
+	static get dragSource(): Entry | undefined {
+		return this.shownPreview === undefined ? undefined : this.dragging
+	}
+
+	/** Whether `entry` is that origin. */
 	static isDragSource(entry: Entry) {
-		return this.dragging === entry && this.shownPreview !== undefined
+		return this.dragSource === entry
 	}
 
 	/** Whether `entry` is the move gesture's shown ghost — float it above the cluster it passes over,
-	 * and leave it out of the packing (`EntrySegments`): it and its source are the same entry. */
+	 * and let it claim a lane only after the real bars have theirs (`EntrySegments`): it and its source
+	 * are the same entry, so nothing may fold aside to make room for it. */
 	static isPreview(entry: Entry) {
 		return this.shownPreview !== undefined && this.shownPreview === entry
 	}

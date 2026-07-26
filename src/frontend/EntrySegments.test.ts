@@ -8,6 +8,21 @@ import { EntryStore } from './EntryStore.js'
 describe('EntrySegments', () => {
 	const base = new DateTime().dayStart
 
+	/** Lay something out as if `ghost` were the live move preview of `source` (the store decides both). */
+	const duringMove = <T>(source: Entry | undefined, ghost: Entry, act: () => T): T => {
+		EntryStore.setDragging(source)
+		EntryStore.setPreview(ghost)
+		try {
+			return act()
+		} finally {
+			EntryStore.setPreview(undefined)
+			EntryStore.setDragging(undefined)
+		}
+	}
+
+	const allDay = (heading: string, from: number, days = 1) =>
+		new Entry({ heading, start: base.add({ days: from }), end: base.add({ days: from + days }), allDay: true })
+
 	describe('for (slicing + links)', () => {
 		it('makes one unlinked segment for a single-day timed entry', () => {
 			const segments = EntrySegments.for(new Entry({ start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) }))
@@ -515,17 +530,52 @@ describe('EntrySegments', () => {
 			assert.equal(slots.has(meeting), false)
 		})
 
-		it('excludes a move ghost so it never shifts the packed lanes', () => {
-			const holiday = new Entry({ heading: 'Holiday', start: base, end: base.add({ days: 1 }), allDay: true })
-			const ghost = new Entry({ heading: 'Holiday', start: base, end: base.add({ days: 1 }), allDay: true })
-			EntryStore.setPreview(ghost)
-			try {
-				const slots = EntrySegments.of([holiday, ghost], [base]).allDaySlots
-				assert.equal(slots.get(holiday), 0)
-				assert.equal(slots.has(ghost), false)
-			} finally {
-				EntryStore.setPreview(undefined)
-			}
+		it('puts a move ghost in the free lane it will land in, without shifting the packed ones', () => {
+			// The reported bug: the ghost used to hold no lane at all and rode the trailing empty one, so it
+			// sank below every bar — buried, and jumping up a lane on release.
+			const banner = allDay('Banner', 0, 8)
+			const task = allDay('Task', 0)
+			const ghost = allDay('Task', 3) // dragged three days along, out from under the banner's lane
+
+			const slots = duringMove(task, ghost, () => EntrySegments.of([banner, task, ghost], [base]).allDaySlots)
+			assert.equal(slots.get(banner), 0)
+			assert.equal(slots.get(task), 1) // the packed lanes stay exactly where they were
+			assert.equal(slots.get(ghost), 1) // lane 0 is the banner's on day 3; lane 1 is free there
+		})
+
+		it('lets a move ghost reuse the cells its own source is vacating', () => {
+			const banner = allDay('Banner', 0, 8)
+			const trip = allDay('Trip', 1, 3)
+			const ghost = allDay('Trip', 2, 3) // nudged one day on: days 2–3 are still its source's own cells
+
+			const slots = duringMove(trip, ghost, () => EntrySegments.of([banner, trip, ghost], [base]).allDaySlots)
+			assert.equal(slots.get(ghost), 1) // stays in its own lane instead of stacking below it
+		})
+
+		it('falls back to a fresh lane when a move ghost fits in none', () => {
+			const banner = allDay('Banner', 0, 8)
+			const task = allDay('Task', 0)
+			const other = allDay('Other', 3) // date-disjoint from the task → shares its lane
+			const ghost = allDay('Task', 3) // right onto the other entry: no lane left on day 3
+
+			const slots = duringMove(task, ghost, () => EntrySegments.of([banner, task, other, ghost], [base]).allDaySlots)
+			assert.equal(slots.get(other), 1)
+			assert.equal(slots.get(ghost), 2) // the lane below the packed ones — the strip's trailing empty lane
+		})
+	})
+
+	describe('monthWeek (move ghost)', () => {
+		const week = Array.from({ length: 7 }, (_, i) => base.add({ days: i }))
+
+		it('keeps a move ghost visible past the slot cap instead of counting it as overflow', () => {
+			// The ghost is the drag's only feedback — it may never disappear into a "+N more" it isn't in.
+			const trip = new Entry({ heading: 'Trip', start: base, end: base.add({ days: 3 }) })
+			const ghost = new Entry({ heading: 'Ghost', start: base.add({ days: 1 }), end: base.add({ days: 2 }) })
+
+			const { bars, hiddenByColumn } = duringMove(undefined, ghost, () => EntrySegments.of([trip, ghost], week).monthWeek(week, 2))
+			assert.deepEqual(bars.map(bar => bar.segment.entry.heading), ['Trip', 'Ghost'])
+			assert.equal(bars.find(bar => bar.segment.entry === ghost)!.slot, 0) // clamped to the last visible slot
+			assert.deepEqual([...hiddenByColumn], [0, 0, 0, 0, 0, 0, 0])
 		})
 	})
 })

@@ -3,6 +3,7 @@ import { DateTime } from '@3mo/date-time'
 import { observeResize } from '@3mo/resize-observer'
 import { type Entry, type UserTimeZone } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
+import { EntryStore } from './EntryStore.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { EntryDragController } from './EntryDragController.js'
 import { DayDensityController } from './DayDensityController.js'
@@ -366,8 +367,9 @@ export class Days extends Component {
 					display: grid;
 					grid-template-columns: subgrid;
 					/* One 1.375rem track per occupied lane plus a trailing empty one — the drag-to-create
-					   target, and where a move's ghost previews (bars sit at their computed allDaySlots lane,
-					   see allDayTemplate). EXPLICIT tracks, never auto-flow rows behind a min-block-size: the
+					   target, and the fallback row of a ghost that fits in no lane (bars, ghost included,
+					   sit at their computed allDaySlots lane; see allDayTemplate). EXPLICIT tracks, never
+					   auto-flow rows behind a min-block-size: the
 					   parent rows fill the container exactly, so there is never free space to grow an
 					   intrinsic lane row past its BASE size — for which a specified min-block-size REPLACES
 					   the content-derived minimum, freezing the lane at that min while further bars overflow
@@ -615,9 +617,12 @@ export class Days extends Component {
 		// The lane always renders (even with no all-day events) so it stays a drag target for creating one.
 		const runs = this.segments.runsIn(first, last, entry => !!entry.allDay)
 		const slots = this.segments.allDaySlots
-		// The lanes the window's bars occupy, driving the strip's explicit row tracks (+1 trailing empty
-		// lane — the create target). A move's ghost holds no packed slot; it rides that empty lane.
-		const laneCount = runs.reduce((count, segment) => Math.max(count, (slots.get(segment.entry) ?? -1) + 1), 0)
+		// The lanes the window's REAL bars occupy, driving the strip's explicit row tracks (+1 trailing
+		// empty lane — the create target). A move's ghost sits at the lane it will land in (see
+		// EntrySegments.slots) but never grows the strip: on release its source's lane frees up, so a
+		// ghost with nowhere to fit rides the trailing empty lane instead of spawning a track of its own.
+		const laneCount = runs.reduce((count, segment) => EntryStore.isPreview(segment.entry) ? count : Math.max(count, (slots.get(segment.entry) ?? -1) + 1), 0)
+		const laneOf = (entry: Entry) => Math.min(slots.get(entry) ?? laneCount, laneCount)
 		this.style.setProperty('--_all-day-rows', `${laneCount + 1}`)
 		this.toggleAttribute('data-all-day-overflow', laneCount > Days.MAX_VISIBLE_LANES)
 		// Built once per render so each bar's column is an O(1) numeric lookup (segments cache their dayValue).
@@ -636,7 +641,7 @@ export class Days extends Component {
 					const endColumn = clippedRight ? offset + days.length - 1 : columnOf(segment.runEnd.dayValue)
 					return html`
 						<mitra-entry-segment
-							style=${styleMap({ gridColumn: `${startColumn + 1} / span ${endColumn - startColumn + 1}`, gridRow: `${(slots.get(segment.entry) ?? laneCount) + 1}` })}
+							style=${styleMap({ gridColumn: `${startColumn + 1} / span ${endColumn - startColumn + 1}`, gridRow: `${laneOf(segment.entry) + 1}` })}
 							resize="inline"
 							?has-previous=${segment.hasPrevious}
 							?has-next=${clippedRight}
