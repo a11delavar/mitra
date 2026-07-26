@@ -6,6 +6,7 @@ import { EntrySegments } from './EntrySegments.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { EntryDragController } from './EntryDragController.js'
 import { DayDensityController } from './DayDensityController.js'
+import { TimeZoneLaneController } from './TimeZoneLaneController.js'
 import { getTimeZones } from './Api.js'
 
 @component('mitra-days')
@@ -19,6 +20,7 @@ export class Days extends Component {
 
 	protected readonly entryDrag = new EntryDragController(this)
 	protected readonly density = new DayDensityController(this)
+	protected readonly zoneLane: TimeZoneLaneController = new TimeZoneLaneController(this)
 	// Segments over the RENDER WINDOW, not the whole buffer — offscreen days need no slicing.
 	private get segments() { return EntrySegments.of(this.entries, this.dates.window.days) }
 
@@ -87,6 +89,8 @@ export class Days extends Component {
 		}
 		this.style.setProperty('--_days-length', this.days.length.toString())
 		this.style.setProperty('--_tz-count', this.timeZoneColumns.length.toString())
+		// Whether there is a lane to fold at all — the rail only claims inline drags when there is.
+		this.toggleAttribute('data-alternative-zones', this.timeZoneColumns.length > 1)
 		if (this.hideTime) {
 			// No axis to measure — let the [hideTime] rule's 0px win over a stale inline measurement.
 			this.style.removeProperty('--time-axis-width')
@@ -144,6 +148,43 @@ export class Days extends Component {
 				initial-value: 160px;
 			}
 
+			/* The width of ONE alternative time-zone column, and what it is when the lane is out.
+			   --zone-width is registered so it can be TRANSITIONED (and dragged to any interpolated px
+			   value) — the grid tracks then glide open instead of snapping — and both inherit so the
+			   labels and hour cells sitting in those tracks can fade and clip themselves against them.
+			   TimeZoneLaneController reads --zone-lane-width back to clamp its drag, so the open width
+			   stays a styling decision authored in one place. Same registration rationale as the lengths
+			   above: an atan2() argument must absolutize to px, and 3.25rem would not. */
+			@property --zone-width {
+				syntax: '<length>';
+				inherits: true;
+				initial-value: 0px;
+			}
+
+			@property --zone-lane-width {
+				syntax: '<length>';
+				inherits: true;
+				initial-value: 52px;
+			}
+
+			/* 1 while the viewport is too narrow to carry the alternative zones. This is the DEFAULT the
+			   lane follows until the user folds or unfolds deliberately — kept here, with every other
+			   breakpoint, and read back by TimeZoneLaneController rather than duplicated in JS. */
+			@property --_auto-fold {
+				syntax: '<number>';
+				inherits: false;
+				initial-value: 0;
+			}
+
+			/* mitra-days declares its own inline-size container, so this resolves against its ANCESTOR —
+			   PageCalendar's main, which is width-identical to the strip. 40rem is the same threshold the
+			   header's search box collapses at. */
+			@container (max-width: 40rem) {
+				mitra-days {
+					--_auto-fold: 1;
+				}
+			}
+
 			mitra-days {
 				display: grid;
 				/* FREE SPACE MAY NEVER REACH A ROW — that, not definiteness, is the invariant. The
@@ -180,12 +221,22 @@ export class Days extends Component {
 				/* LOAD-BEARING, not cosmetic — see the free-space invariant above: this is what keeps the
 				   auto header row out of the stretch that would bloat it beyond its content and lock in. */
 				align-content: start;
-				/* ONE grid owns every column: an auto track for the "+" affordance, one content-sized
-				   track per displayed time zone (the header labels and the axis hours adopt these same
-				   tracks via subgrid, so they align by construction), then the day columns. The day
-				   tracks are addressed with NEGATIVE line numbers throughout, so nothing depends on how
-				   many zone tracks precede them. --time-axis-width mirrors the axis' laid-out width
-				   (measured, see updateHeaderSize) for the scroll padding and the scroll→date math.
+				/* ONE grid owns every column: an auto track for the leading affordances, one track per
+				   displayed time zone (the header labels and the axis hours adopt these same tracks via
+				   subgrid, so they align by construction), then the day columns. The day tracks are
+				   addressed with NEGATIVE line numbers throughout, so nothing depends on how many zone
+				   tracks precede them. --time-axis-width mirrors the axis' laid-out width (measured, see
+				   updateHeaderSize) for the scroll padding and the scroll→date math.
+
+				   Every zone track is plain auto — the fold does NOT resize tracks. It clamps the CELLS
+				   inside the alternative zones' columns (max-inline-size: var(--zone-width), see the
+				   [data-foreign] rule below), which the auto tracks then follow down to zero and back.
+				   Sizing the tracks directly was the wrong lever twice over: a fixed length padded a
+				   short label like "IR" out to the full column width, and fit-content() collapsed the
+				   open track to its minimum — grid only grows a track past its base size by distributing
+				   FREE space, and the day buffer always overflows, so there is never any. Clamping the
+				   cells keeps the base size itself content-derived (min-content == max-content for
+				   unbreakable HH:MM text), which is the whole reason auto tracks hug their content here.
 
 				   The day columns fit the viewport WHOLE: as many ideal-width (10rem) days as fit after
 				   the sticky axis — never fewer than 3, so a phone still shows a multi-day span — each
@@ -217,7 +268,39 @@ export class Days extends Component {
 				gap: 1px;
 				height: 100%;
 				min-height: 0;
-				--time-axis-width: calc(var(--_tz-count, 1) * 3.75rem); /* pre-measurement approximation */
+				/* How far an alternative zone's cells may open — a CEILING, not a width: the auto track
+				   still hugs whatever the label and the hour actually need, so this only has to clear the
+				   widest compact label a zone can carry (Intl's "GMT+3:30", for zones with no abbreviation)
+				   and nothing is ever clipped when open. It doubles as the rail drag's clamp. */
+				--zone-lane-width: 4rem;
+				--zone-width: var(--zone-lane-width);
+				/* The one property the fold animates — the cells, the tracks they size, the axis width and
+				   everything measured off it all follow from it. Suspended mid-drag, where the pointer
+				   already sets it per frame. Deliberately gentle and not front-loaded: a column stops
+				   growing once it reaches its content width, well short of the ceiling, so a snappy curve
+				   would spend the whole visible part of the motion in its first few frames. */
+				transition: --zone-width 0.3s cubic-bezier(0.3, 0, 0.4, 1);
+				/* Pre-measurement approximation: the anchor column plus one foldable one per alternative. */
+				--time-axis-width: calc(3.75rem + (var(--_tz-count, 1) - 1) * var(--zone-width));
+
+				/* An inline drag on the rail folds the alternative zones away or pulls them back out, so
+				   the browser must not pan the strip from there — vertical scrolling stays native. Only
+				   while there IS a lane to fold; otherwise the rail pans like any other column. */
+				&[data-alternative-zones] :is(.timezone, .axis) {
+					touch-action: pan-y;
+				}
+
+				&[data-zones-folded] {
+					--zone-width: 0px;
+				}
+
+				/* The lane changes width without animating: while a pointer drives it per frame, and for the
+				   one adoption of the container query's verdict on load — which is where the strip STARTS,
+				   not a change to it. */
+				&[data-zones-immediate] {
+					transition: none;
+				}
+
 				container-type: inline-size;
 				overflow: auto;
 				/* Single-finger pan still scrolls the grid; two-finger pinch-zoom is disabled here so the
@@ -238,6 +321,8 @@ export class Days extends Component {
 
 				&[hideTime] {
 					--time-axis-width: 0px;
+					/* No axis at all, so the zone tracks carry nothing — they must not reserve their width. */
+					--zone-width: 0px;
 				}
 
 				mitra-day {
@@ -356,6 +441,12 @@ export class Days extends Component {
 				& > .time {
 					display: contents;
 
+					/* Together the rail: the sticky chrome the density wheel and the fold drag both act on,
+					   so neither gesture may start by selecting an hour label. */
+					.timezone, .axis {
+						user-select: none;
+					}
+
 					.timezone {
 						grid-column: 1 / calc(-1 * var(--_days-length) - 1);
 						grid-row: 1;
@@ -412,9 +503,24 @@ export class Days extends Component {
 							padding-inline-end: 0.5rem;
 							transform: translateY(-50%);
 
-							/* An additional zone's hours read as secondary next to the system column's. */
+							/* An additional zone's hours read as secondary next to the system column's — and
+							   fade out with their column as it folds, rather than being clipped mid-glyph.
+							   tan(atan2(y, x)) is y/x, the one length ratio every engine evaluates (see the
+							   day-fit math above), which is also why both operands are registered lengths. */
 							&[data-foreign] {
-								opacity: 0.55;
+								opacity: calc(0.55 * clamp(0, tan(atan2(var(--zone-width), var(--zone-lane-width))), 1));
+								/* THIS is what folds — the cell, not its track (see the track list above). A
+								   definite max-inline-size clamps the cell's min-content contribution as well as
+								   its max-content one, which is what lets the auto track follow it all the way
+								   down to zero and back up to exactly the content width. Clipped, because the
+								   label has to be croppable on the way; the padding folds with it, since padding
+								   alone would hold the column 0.5rem open; and border-box, so the ceiling means
+								   the WHOLE cell — on content-box the padding sits outside it and every
+								   part-open column reads 0.5rem too wide. */
+								box-sizing: border-box;
+								max-inline-size: var(--zone-width);
+								overflow: clip;
+								padding-inline-end: min(0.5rem, var(--zone-width));
 							}
 						}
 					}
@@ -558,7 +664,10 @@ export class Days extends Component {
 		return html`
 			<div class="time">
 				<div class="timezone" ${observeResize(this.updateHeaderSize)}>
-					<mitra-time-zone-header @change=${() => this.requestUpdate()}></mitra-time-zone-header>
+					<mitra-time-zone-header ?folded=${this.zoneLane.folded}
+						@change=${() => this.requestUpdate()}
+						@fold=${(e: CustomEvent<boolean>) => this.zoneLane.setFolded(e.detail)}
+					></mitra-time-zone-header>
 				</div>
 
 				<div class="axis">

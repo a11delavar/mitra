@@ -1,4 +1,4 @@
-import { Component, component, html, css, state, event, repeat, query } from '@a11d/lit'
+import { Component, component, html, css, state, property, event, repeat, query } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { type UserTimeZone } from 'shared'
 import { getTimeZones, setTimeZones } from '../Api.js'
@@ -10,6 +10,10 @@ import { type TimeZonePicker, zoneNamePart, shortZoneLabel, longZoneName, system
  * the affordances around them: a hover-revealed "+" opening a searchable picker over every IANA zone,
  * and a per-zone menu to rename (a custom short label like "DE") or remove. Mutations persist via the
  * user settings API and fire `change`, so the host re-renders its axis columns.
+ *
+ * The additional zones' columns FOLD (the host owns the state and the gesture — see
+ * TimeZoneLaneController); this contributes the chevron that asks for it, and clips its own labels
+ * against `--zone-width` so they can shrink away with the tracks they sit in.
  */
 @component('mitra-time-zone-header')
 export class TimeZoneHeader extends Component {
@@ -17,8 +21,14 @@ export class TimeZoneHeader extends Component {
 	private static count = 0
 	private readonly anchor = `--time-zone-${TimeZoneHeader.count++}`
 
+	/** Whether the additional zones' columns are currently tucked away (the host's fold state). */
+	@property({ type: Boolean, reflect: true }) folded = false
+
 	/** Fired after the zone list changed (added/renamed/removed). */
 	@event() readonly change!: EventDispatcher
+
+	/** Asks the host for a fold state: `true` tucks the additional zones away, `false` brings them out. */
+	@event() readonly fold!: EventDispatcher<boolean>
 
 	protected override createRenderRoot() { return this }
 
@@ -34,6 +44,9 @@ export class TimeZoneHeader extends Component {
 		if (id === systemZoneId() || getTimeZones().some(zone => zone.id === id)) {
 			return // already a column
 		}
+		// A zone added into a folded lane would land in a column nobody can see, so the lane comes out
+		// with it — the new column is the whole point of the interaction.
+		this.fold.dispatch(false)
 		this.commit([...getTimeZones(), { id }]).catch(() => void 0)
 	}
 
@@ -66,24 +79,78 @@ export class TimeZoneHeader extends Component {
 		return css`
 			mitra-time-zone-header {
 				/* The header adopts the day grid's OWN tracks (through the .timezone cell's subgrid):
-				   the "+" affordance on the leading track, one label per zone track — the exact tracks
+				   the affordances on the leading track, one label per zone track — the exact tracks
 				   the axis hours below sit on, so alignment is the grid's job, not a coincidence. */
 				grid-column: 1 / -1;
 				display: grid;
 				grid-template-columns: subgrid;
 				align-items: center;
 
-				> .add {
+				> .actions {
 					justify-self: center;
+					/* The positioning context for the fold chevron, which hangs BELOW this cell rather than
+					   beside the "+". The leading track therefore stays exactly as wide as the "+" alone —
+					   it is sticky chrome, so a second in-flow icon would cost the day columns that width
+					   for the entire life of the view, in the very state (unfolded) where a fold button
+					   matters least. */
+					position: relative;
+					display: flex;
+					align-items: center;
 					color: var(--color-text-muted);
 					font-size: 0.7rem;
-					opacity: 0;
-					transition: opacity 0.15s ease;
+
+					> .add {
+						opacity: 0;
+						transition: opacity 0.15s ease;
+					}
+
+					/* Out of flow, in the empty all-day corner directly under the "+", and revealed with it.
+					   Hover and keyboard focus are its only triggers; touch has neither, and that's the
+					   deliberate trade — there the rail drag IS the affordance, and it's the folded lane
+					   (which needs no button to advertise itself) a phone starts in.
+
+					   The block padding keeps its box FLUSH against the "+" so travelling down to it never
+					   leaves the header and blinks the reveal off, while the glyph itself lands clear of the
+					   all-day lane's top border. pointer-events follow the reveal: an invisible toggle
+					   sitting over the corner would otherwise swallow clicks aimed at the grid.
+
+					   The chevron points where the lane is about to go: toward the days while the other
+					   zones are tucked away, back at the axis once they are out. Flipped in RTL, where
+					   inline-end is the other way — 180° on top of that mirror is a plain vertical flip,
+					   which a chevron is symmetric under, so the two compose correctly. */
+					> .fold {
+						position: absolute;
+						inset-inline: 0;
+						top: 100%;
+						justify-content: center;
+						padding-block-start: 0.5rem;
+						opacity: 0;
+						pointer-events: none;
+						transition: opacity 0.15s ease;
+
+						mitra-icon {
+							transition: rotate 0.24s cubic-bezier(0.2, 0, 0, 1);
+						}
+					}
 				}
 
-				&:hover > .add,
-				> .add:focus-within {
+				&:hover > .actions > .add,
+				&:focus-within > .actions > .add {
 					opacity: 1;
+				}
+
+				&:hover > .actions > .fold,
+				&:focus-within > .actions > .fold {
+					opacity: 1;
+					pointer-events: auto;
+				}
+
+				&:dir(rtl) > .actions > .fold mitra-icon {
+					scale: -1 1;
+				}
+
+				&:not([folded]) > .actions > .fold mitra-icon {
+					rotate: 180deg;
 				}
 
 				> .zone {
@@ -104,6 +171,28 @@ export class TimeZoneHeader extends Component {
 						background: color-mix(in srgb, var(--color-text) 8%, transparent);
 						color: var(--color-text);
 					}
+
+					/* An additional zone's label is one of the two cells that FOLD their column (the axis
+					   hours below are the other — see the [data-foreign] rule in Days.ts, which explains
+					   why a definite max-inline-size is what lets the auto track follow). Clipped and
+					   un-padded so it can reach zero, and faded by the same width ratio. The anchor zone's
+					   label — the one without this attribute — never folds, so it keeps the plain 100% cap
+					   above and takes exactly the width it needs. */
+					&[data-alternative] {
+						max-inline-size: var(--zone-width);
+						overflow: clip;
+						/* Halved against the ceiling because there are TWO of them: padding is never reduced
+						   to honour a max-inline-size, so a plain min(0.25rem, ceiling) would hold the last
+						   few pixels of the fold open at 0.5rem. */
+						padding-inline: min(0.25rem, calc(var(--zone-width) / 2));
+						opacity: clamp(0, tan(atan2(var(--zone-width), var(--zone-lane-width))), 1);
+					}
+				}
+
+				/* Tucked away, an alternative zone's chip is a zero-width invisible button — it must stop
+				   answering the pointer too (the template drops it out of the tab order to match). */
+				&[folded] > .zone[data-alternative] {
+					pointer-events: none;
 				}
 
 				menu[popover] {
@@ -115,13 +204,22 @@ export class TimeZoneHeader extends Component {
 	}
 
 	protected override get template() {
+		const zones = getTimeZones()
 		return html`
-			<mitra-icon-button class="add" icon="plus" label=${t('Add time zone')}
-				style="anchor-name: ${this.anchor}-add"
-				@click=${() => this.picker?.togglePopover()}
-			></mitra-icon-button>
-			${repeat(getTimeZones(), zone => zone.id, (zone, index) => html`
-				<button class="zone" style="anchor-name: ${this.anchor}-${index}" title=${longZoneName(zone.id)} @click=${this.toggleMenu}>
+			<div class="actions">
+				${zones.length === 0 ? html.nothing : html`
+					<mitra-icon-button class="fold" icon="chevrons-right"
+						label=${this.folded ? t('Show the other time zones') : t('Hide the other time zones')}
+						@click=${() => this.fold.dispatch(!this.folded)}
+					></mitra-icon-button>
+				`}
+				<mitra-icon-button class="add" icon="plus" label=${t('Add time zone')}
+					style="anchor-name: ${this.anchor}-add"
+					@click=${() => this.picker?.togglePopover()}
+				></mitra-icon-button>
+			</div>
+			${repeat(zones, zone => zone.id, (zone, index) => html`
+				<button class="zone" data-alternative tabindex=${this.folded ? -1 : 0} style="anchor-name: ${this.anchor}-${index}" title=${longZoneName(zone.id)} @click=${this.toggleMenu}>
 					${shortZoneLabel(zone)}
 				</button>
 				<menu popover style="position-anchor: ${this.anchor}-${index}">
@@ -145,7 +243,7 @@ export class TimeZoneHeader extends Component {
 				</button>
 			</menu>
 			<mitra-time-zone-picker style="position-anchor: ${this.anchor}-add"
-				.exclude=${new Set([...getTimeZones().map(zone => zone.id), systemZoneId()])}
+				.exclude=${new Set([...zones.map(zone => zone.id), systemZoneId()])}
 				@pick=${(e: CustomEvent<string>) => this.add(e.detail)}
 			></mitra-time-zone-picker>
 		`

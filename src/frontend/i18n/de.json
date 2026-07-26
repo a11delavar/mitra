@@ -15,6 +15,8 @@
 	"Add reminder": "Erinnerung hinzufügen",
 	"Add your first integration": "Erste Integration hinzufügen",
 	"Add time zone": "Zeitzone hinzufügen",
+	"Show the other time zones": "Weitere Zeitzonen einblenden",
+	"Hide the other time zones": "Weitere Zeitzonen ausblenden",
 	"Showing ${city} time — switch to the primary time zone": "${city}-Zeit — zur primären Zeitzone wechseln",
 	"Showing the primary time zone — switch to ${city} time": "Primäre Zeitzone — zur ${city}-Zeit wechseln",
 	"Wall clock — no time zone": "Wanduhrzeit — keine Zeitzone",

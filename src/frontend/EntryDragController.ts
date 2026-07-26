@@ -5,6 +5,7 @@ import { getPrimarySource, getCapabilities } from './Api.js'
 import { EntryStore } from './EntryStore.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
 import { placeAllDay, placeTimed, resizePlacement, snapToGrid } from './entryPlacement.js'
+import { haptic } from './haptics.js'
 
 /** Whether a gesture works in minutes (the week's timed grid) or whole days (the all-day lane / month). */
 type Mode = 'timed' | 'allday'
@@ -299,14 +300,8 @@ export class EntryDragController extends Controller {
 		if (!fromHold) {
 			return
 		}
-		// Vibrate only once the frame has a user activation — otherwise Chrome blocks the call and logs an
-		// intervention warning (notably under DevTools touch emulation, which never grants one). It's harmless
-		// regardless — vibrate returns false, never throws, so it can't interrupt the gesture — but gating it
-		// keeps the console clean. A missing API means iOS Safari (no Vibration API); the draft appearing is
-		// the feedback that always works.
-		if (typeof navigator.vibrate === 'function' && (navigator.userActivation?.hasBeenActive ?? true)) {
-			navigator.vibrate(TOUCH_HOLD_FEEDBACK_MS)
-		}
+		// The draft appearing is the feedback that always works — see haptics.ts for why the buzz can't be.
+		haptic(TOUCH_HOLD_FEEDBACK_MS)
 		if (drag.kind === 'create') {
 			drag.moved = true // the hold *is* the create intent — a release without dragging still makes an entry
 			const built = this.buildAt(drag.point)

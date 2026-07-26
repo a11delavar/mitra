@@ -86,6 +86,7 @@ declare global {
 		"Google.ConfigurationHint": unknown
 		"Google.ConsentHint": unknown
 		"Hide calendar": unknown
+		"Hide the other time zones": unknown
 		"hours": unknown
 		"Include time": unknown
 		"Install as an App": unknown
@@ -147,6 +148,7 @@ declare global {
 		"Server URL": unknown
 		"Set as the default for new entries": unknown
 		"Show calendar": unknown
+		"Show the other time zones": unknown
 		"Showing ${city} time — switch to the primary time zone": unknown
 		"Showing the primary time zone — switch to ${city} time": unknown
 		"Shown above the time axis. Leave empty to use the automatic name.": unknown
