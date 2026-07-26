@@ -248,6 +248,16 @@ export class EntrySegmentComponent extends Component {
 						   indented — the remaining lines clear it and use the full width. */
 						height: calc(0.7rem * 1.1);
 						align-items: center;
+
+						/* A single-line bar only a few characters wide — the year grid's day cells, a phone's
+						   month bars — has nothing left for the title once the control takes its ~1.2rem. The
+						   title wins there: it is what identifies the entry, Done/Cancelled still read from the
+						   strike-through, and the control itself is one tap away in the editor. Both axes,
+						   because it's only the SHORT bars that pay the control's full width: in a tall block
+						   the title wraps past the float, so it costs one line's indent, not the line. */
+						@container (max-width: 3.5rem) and (max-height: 2rem) {
+							display: none;
+						}
 					}
 
 					@container (max-height: 2rem) {
@@ -362,6 +372,26 @@ export class EntrySegmentComponent extends Component {
 					}
 					&:has(> .recurring) > .heading {
 						padding-inline-end: 1.35rem;
+					}
+				}
+
+				/* Too narrow to spare that gutter: at a few characters wide — the year grid's single-day cells,
+				   a phone's month bars — 1.35rem of reserved trailing edge IS the title (or the whole start
+				   time). The badge is decoration and the text is the entry, so it sheds one tier BEFORE the
+				   checkbox above; the wide multi-day bars of those very same views keep it. Width alone, unlike
+				   the checkbox: the gutter is charged to the first line however tall the block gets, and in a
+				   narrow column that line is the one carrying the time. Comes last, so it out-orders the
+				   reservations above at equal specificity — and every declaration is addressed to a CHILD, not
+				   to this element: no element is its own query container, so a bare declaration in here would
+				   be answering some ANCESTOR's width (the trap the views work around with their row overrides). */
+				@container (max-width: 6rem) {
+					& > .recurring {
+						display: none;
+					}
+
+					&:has(> .recurring) > .time,
+					&:has(> .recurring) > .heading {
+						padding-inline-end: 0;
 					}
 				}
 			}
