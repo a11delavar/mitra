@@ -46,6 +46,18 @@ export const menuStyles = css`
 				margin-inline-start: auto;
 			}
 
+			/* A gesture beside the key chip ("drag") — a word, not a key, so it wears no pill. Same
+			   vocabulary (and the same class) as the keyboard cheat sheet's rows. */
+			.word {
+				font-size: 0.6875rem;
+				color: var(--color-text-muted);
+			}
+
+			/* The gesture belongs to the chip before it, so the pair moves to the trailing edge together. */
+			kbd:has(+ .word) {
+				margin-inline-end: -0.25rem;
+			}
+
 			&:hover,
 			&:focus-visible {
 				background: color-mix(in srgb, var(--color-text) 8%, transparent);

@@ -77,6 +77,8 @@ declare global {
 		"Double-click to rename": unknown
 		"Draft": unknown
 		"drag": unknown
+		"Duplicate": unknown
+		"Duplicate an entry": unknown
 		"Edit": unknown
 		"Edit integration": unknown
 		"Edit repeating entry": unknown

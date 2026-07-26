@@ -177,6 +177,27 @@ export class Entry {
 		return new Entry({ ...this })
 	}
 
+	/** A standalone copy carrying only the user-editable content — no identity (`id`, `uri`, `uid`),
+	 * no sync bookkeeping (`data` — its raw .ics could smuggle the source's RRULE back in), and no
+	 * series membership: duplicating always yields a SINGLE entry, so a master sheds its rule and an
+	 * occurrence sheds its link — the copy is based on that very occurrence, not the series. */
+	duplicate() {
+		return new Entry({
+			sourceId: this.sourceId,
+			type: this.type,
+			heading: this.heading,
+			description: this.description,
+			location: this.location,
+			color: this.color,
+			start: this.start,
+			end: this.end,
+			allDay: this.allDay,
+			timeZone: this.timeZone,
+			status: this.status,
+			reminders: this.reminders ? [...this.reminders] : this.reminders,
+		})
+	}
+
 	/** Adopt another entry's values onto THIS instance — in place, so identity (and everything keyed on
 	 * it: open editors, segment memos, view-transition names) survives a server refresh. Every field is
 	 * assigned explicitly so values the other entry *lacks* (e.g. a status cleared on the server) are

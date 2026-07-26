@@ -331,6 +331,92 @@ describe('EntryStore', () => {
 		})
 	})
 
+	describe('duplicate (Alt-drag)', () => {
+		it('shows the copy at the drop span immediately and adopts the created identity', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			const original = entry({ description: 'Notes', color: '#ff0000', reminders: [30] })
+			EntryStore.applyServerEntries([original])
+			const span = entry({ id: undefined, start: at(14), end: at(15) })
+			const duplication = EntryStore.duplicate(original, span)
+			const copy = EntryStore.entries.find(e => e !== original)!
+			assert.equal(copy.persisted, false) // dashed while the create is in flight
+			assert.equal(copy.heading, 'Standup')
+			assert.equal(copy.description, 'Notes')
+			assert.deepEqual(copy.reminders, [30])
+			assert.equal(copy.start!.valueOf(), at(14).valueOf()) // placed where it was dropped...
+			assert.equal(original.start!.valueOf(), at(9).valueOf()) // ...while the original stays put
+			assert.equal(EntryStore.isDirty(original), false)
+			await transport.respond(new Entry({ ...copy.clone(), id: 'copy' }))
+			await duplication
+			assert.equal(transport.calls.create, 1)
+			assert.equal(copy.id, 'copy') // same instance, now a working entry
+			assert.deepEqual([...EntryStore.entries], [original, copy])
+			assert.equal(EntryStore.isDirty(copy), false)
+		})
+
+		it('copies a series occurrence into a standalone single entry', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			const occurrence = entry({
+				id: 'master__1000', uid: 'uid', recurrenceMasterId: 'master', recurrenceId: at(9),
+				seriesStart: at(9), recurrence: new Recurrence({ freq: 'DAILY' }),
+			})
+			EntryStore.applyServerEntries([occurrence])
+			const duplication = EntryStore.duplicate(occurrence, entry({ id: undefined, start: at(14), end: at(15) }))
+			const copy = EntryStore.entries.find(e => e !== occurrence)!
+			assert.equal(copy.heading, 'Standup') // based on this very occurrence...
+			assert.equal(copy.recurrence, undefined) // ...but a single entry: no rule...
+			assert.equal(copy.recurrenceMasterId, undefined) // ...and no series link
+			assert.equal(copy.recurrenceId, undefined)
+			assert.equal(copy.uid, undefined)
+			assert.equal(copy.seriesStart, undefined)
+			await transport.respond(new Entry({ ...copy.clone(), id: 'copy' }))
+			await duplication
+			assert.equal(transport.calls.create, 1) // a plain create — no scope arises
+			assert.deepEqual(transport.calls.occurrenceEdits, [])
+		})
+
+		it('lands on the original\'s own slot when no span is given (the editor\'s menu item)', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			const original = entry()
+			EntryStore.applyServerEntries([original])
+			const duplication = EntryStore.duplicate(original)
+			const shown = EntryStore.entries.find(e => e !== original)!
+			assert.equal(shown.start!.valueOf(), original.start!.valueOf())
+			assert.equal(shown.end!.valueOf(), original.end!.valueOf())
+			await transport.respond(new Entry({ ...shown.clone(), id: 'copy' }))
+			const copy = await duplication
+			assert.equal(copy, shown) // resolves with the copy, so the caller can open its editor
+			assert.equal(copy.id, 'copy')
+		})
+
+		it('saves without a heading — the untitled-draft guard does not apply', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			const untitled = entry({ heading: '' })
+			EntryStore.applyServerEntries([untitled])
+			const duplication = EntryStore.duplicate(untitled, entry({ id: undefined, start: at(14), end: at(15) }))
+			const copy = EntryStore.entries.find(e => e !== untitled)!
+			await transport.respond(new Entry({ ...copy.clone(), id: 'copy' }))
+			await duplication
+			assert.equal(transport.calls.create, 1)
+		})
+
+		it('drops the copy when the create fails', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			const original = entry()
+			EntryStore.applyServerEntries([original])
+			const rejection = assert.rejects(EntryStore.duplicate(original, entry({ id: undefined, start: at(14), end: at(15) })))
+			assert.equal(EntryStore.entries.length, 2)
+			await transport.fail(new Error('offline'))
+			await rejection
+			assert.deepEqual([...EntryStore.entries], [original]) // back to what the server holds
+		})
+	})
+
 	describe('move preview', () => {
 		it('renders the ghost alongside the untouched source and derives the gesture states', () => {
 			const source = entry()

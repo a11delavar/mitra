@@ -32,6 +32,7 @@ Press <kbd>?</kbd> anywhere in the calendar to open the built-in cheat sheet —
 | Delete the open entry | <kbd>Delete</kbd> or <kbd>Backspace</kbd> |
 | Delete just this entry of a series | <kbd>Ctrl</kbd> <kbd>Delete</kbd> |
 | Move or resize just this entry of a series | hold <kbd>Ctrl</kbd> while dropping |
+| Duplicate an entry | hold <kbd>Alt</kbd> while dropping |
 | Choose a task status | <kbd>Alt</kbd> + click the checkbox |
 | Zoom the view | <kbd>Ctrl</kbd> + scroll |
 
@@ -44,6 +45,6 @@ Press <kbd>?</kbd> anywhere in the calendar to open the built-in cheat sheet —
 | Close or go back | <kbd>Esc</kbd> |
 
 > [!NOTE]
-> On a Mac, <kbd>Ctrl</kbd> reads as <kbd>⌘</kbd> throughout, and <kbd>⌫</kbd> stands in for <kbd>Delete</kbd> (<kbd>Backspace</kbd> deletes as well everywhere).
+> On a Mac, <kbd>Ctrl</kbd> reads as <kbd>⌘</kbd> and <kbd>Alt</kbd> as <kbd>⌥</kbd> throughout, and <kbd>⌫</kbd> stands in for <kbd>Delete</kbd> (<kbd>Backspace</kbd> deletes as well everywhere).
 
 The three ways into the palette are interchangeable — the header's search box shows <kbd>/</kbd> because it is the shortest thing to teach, not because the chords are second-class. Single-letter shortcuts never fire while you type in a text field, and every shortcut is also discoverable in the palette itself, where commands show their key hints.

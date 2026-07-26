@@ -107,14 +107,29 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	/** The scope a modifier chord presets: Ctrl (⌘ on a Mac) means "this entry only, don't ask" — on a
-	 * non-recurring entry it's simply ignored downstream. Alt stays free (reserved for duplication). */
+	 * non-recurring entry it's simply ignored downstream. Alt is the duplicate modifier, never a scope. */
 	private static presetScope(e: MouseEvent | KeyboardEvent): RecurrenceScope | undefined {
 		return e.ctrlKey || e.metaKey ? 'this' : undefined
+	}
+
+	/** Duplicate this entry — the pointer twin of Alt-drag, for when you're already in the editor. With
+	 * no drop position to place it, the copy takes this entry's own slot and opens for editing (a
+	 * duplicate exists to be changed, and it sits right on top of its original until it is). A series
+	 * occurrence copies into a single standalone entry, like the gesture — see EntryStore.duplicate. */
+	private readonly handleDuplicate = () => {
+		const entry = this.segment!.entry
+		this.hidePopover()
+		return EntryStore.duplicate(entry)
+			.then(copy => EntryStore.requestOpen(copy.id!))
+			.catch(error => console.error('Duplicating the entry failed — nothing was added:', error))
 	}
 
 	/** Apple keyboards have no forward-delete key: their ⌫ "delete" reports `Backspace` (⌦ only exists
 	 * on full-size boards, or as fn+⌫) — so the menu's hint shows the glyph Mac users actually press. */
 	private static readonly appleKeyboard = /Mac|iPhone|iPad/.test(navigator.platform)
+
+	/** Alt as the board prints it — ⌥ on Apple's, like the cheat sheet's own label. */
+	private static get altKey() { return EntryDetailsComponent.appleKeyboard ? '⌥' : 'Alt' }
 
 	// Delete (and Backspace — the only "delete" an Apple keyboard has, and what Apple Calendar itself
 	// uses) deletes the entry while its editor is open: the keyboard twin of the menu's Delete button.
@@ -447,6 +462,19 @@ export class EntryDetailsComponent extends Component {
 							@click=${this.toggleMenu}
 						></mitra-icon-button>
 						<menu popover id="entry-menu-${this.segment.entry.id}" style="position-anchor: --entry-menu-${this.segment.entry.id}">
+							${/* The pointer twin of Alt-drag (see EntryDragController), which is what the hint
+							    advertises: no drop position here, so the copy lands on this entry's own slot and
+							    opens for editing — the change you duplicated it to make comes next. Offered on a
+							    saved entry only, the same bar the gesture sets: a draft is not yet a thing to
+							    copy, and duplicating one would persist the copy while the original stayed local. */''}
+							${!this.segment.entry.persisted ? html.nothing : html`
+								<button @click=${this.handleDuplicate}>
+									<mitra-icon icon="copy"></mitra-icon>
+									${t('Duplicate')}
+									<kbd>${EntryDetailsComponent.altKey}</kbd>
+									<span class="word">${t('drag')}</span>
+								</button>
+							`}
 							<button class="danger" @click=${(e: MouseEvent) => this.handleDelete(EntryDetailsComponent.presetScope(e))}>
 								<mitra-icon icon="trash-2"></mitra-icon>
 								${t('Delete')}

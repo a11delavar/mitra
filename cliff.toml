@@ -26,6 +26,7 @@ conventional_commits = true
 filter_unconventional = false
 commit_parsers = [
 	{ message = "^release", skip = true },
+	{ message = "^followup", skip = true },
 	{ message = "^feat", group = "✨ Features" },
 	{ message = "^fix", group = "🐛 Bug Fixes" },
 	{ message = "^perf", group = "⚡ Performance" },

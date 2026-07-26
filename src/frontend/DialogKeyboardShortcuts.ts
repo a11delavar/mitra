@@ -52,6 +52,7 @@ export class DialogKeyboardShortcuts extends DialogComponent {
 					{ action: t('Delete the open entry'), keys: keys(deleteKey) },
 					{ action: t('Delete just this entry of a series'), keys: keys(modifier, deleteKey) },
 					{ action: t('Move or resize just this entry of a series'), keys: html`${keys(modifier)}${word(t('drag'))}` },
+					{ action: t('Duplicate an entry'), keys: html`${keys(alt)}${word(t('drag'))}` },
 					{ action: t('Choose a task status'), keys: html`${keys(alt)}${word(t('click'))}` },
 					{ action: t('Zoom the view'), keys: html`${keys(modifier)}${word(t('scroll'))}` },
 				],

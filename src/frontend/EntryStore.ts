@@ -37,6 +37,10 @@ export class EntryStore extends Controller {
 	 * Having no id, it renders dashed through the same rule as a draft — dashed *means* "the server
 	 * doesn't have this yet", which is exactly what a mid-gesture position is. */
 	private static preview?: Entry
+	/** Alt-drag duplicates whose create is still in flight (see {@link duplicate}) — rendered like
+	 * drafts (id-less ⇒ dashed) until the server assigns them an identity. A set: nothing stops the
+	 * user from dropping the next copy before the last one landed. */
+	private static readonly duplicates = new Set<Entry>()
 	private static readonly inflight = new Map<Entry, Promise<void>>()
 
 	private static merged?: ReadonlyArray<Entry>
@@ -59,6 +63,7 @@ export class EntryStore extends Controller {
 	static get entries(): ReadonlyArray<Entry> {
 		return this.merged ??= [
 			...this.workingById.values(),
+			...this.duplicates,
 			...(this.draft ? [this.draft] : []),
 			...(this.shownPreview ? [this.shownPreview] : []),
 		]
@@ -248,6 +253,35 @@ export class EntryStore extends Controller {
 		}
 		this.notify()
 		return true
+	}
+
+	/** Duplicate the entry: a standalone content copy ({@link Entry.duplicate} — duplicating a series
+	 * occurrence deliberately yields a single entry based on that very occurrence), shown at once and
+	 * persisted. `span` places it — an Alt-drag passes the drop's span (see EntryDragController); the
+	 * editor's menu item passes nothing, so the copy lands on the original's own slot, where it renders
+	 * beside it in the cluster. Until the create lands the copy has no id, so it renders dashed like a
+	 * draft — which it isn't: it doesn't occupy the draft slot (no editor pops open, and an unrelated
+	 * {@link discardDraft} can't destroy it) and it saves without a heading (the guard in
+	 * {@link commit} keeps *empty* drafts local; a duplicate's content is whatever the source entry
+	 * had). It can't be edited or deleted mid-flight — only persisted entries take gestures — so the
+	 * create needs none of the commit chain's coalescing. A failed create drops the copy: like a
+	 * failed move, the grid snaps back to what the server holds. Resolves with the copy, so a caller
+	 * can act on the identity the create assigned it (the menu opens its editor). */
+	static async duplicate(entry: Entry, span: Entry = entry): Promise<Entry> {
+		const duplicate = entry.duplicate()
+		duplicate.adoptSpan(span)
+		this.duplicates.add(duplicate)
+		this.notify()
+		try {
+			const saved = await EntryStore.persistence.create(duplicate)
+			duplicate.assign(saved)
+			this.workingById.set(duplicate.id!, duplicate)
+			this.canonicalById.set(duplicate.id!, saved.clone())
+			return duplicate
+		} finally {
+			this.duplicates.delete(duplicate)
+			this.notify()
+		}
 	}
 
 	/** Delete: gone from the view immediately; the server call waits for any in-flight save (a pending
@@ -513,6 +547,7 @@ export class EntryStore extends Controller {
 		this.workingById.clear()
 		this.canonicalById.clear()
 		this.inflight.clear()
+		this.duplicates.clear()
 		this.draft = undefined
 		this.preview = undefined
 		this.merged = undefined

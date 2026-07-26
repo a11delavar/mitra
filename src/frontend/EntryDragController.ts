@@ -513,6 +513,20 @@ export class EntryDragController extends Controller {
 		if (drag.moved) {
 			const built = this.buildAt(drag.point)
 			const entry = drag.entry!
+			// Alt (⌥ on a Mac) held at the drop turns a move into a DUPLICATE — Explorer's copy-drag: the
+			// original stays untouched and a standalone copy of it lands at the drop span. Standalone even
+			// for a series occurrence: the copy is a single entry based on that very occurrence, so no
+			// scope arises and Ctrl has nothing to add.
+			if (drag.kind === 'move' && e.altKey) {
+				this.teardown(e.pointerId)
+				EntryStore.setPreview(undefined) // the ghost has served its purpose — the copy takes over
+				EntryStore.setDragging(undefined)
+				if (built) {
+					// On failure the store already dropped the copy — the grid is back as it was; see duplicate.
+					EntryStore.duplicate(entry, built).catch(() => void 0)
+				}
+				return
+			}
 			// Ctrl (⌘ on a Mac) held at the drop scopes a series edit to this occurrence alone — no scope
 			// dialog, the keyboard twin of Ctrl+Delete in the editor. Like Explorer's copy-drag, the
 			// modifier's state at the RELEASE decides, so it can be pressed (or reconsidered) mid-drag.
