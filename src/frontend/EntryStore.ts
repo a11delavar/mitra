@@ -110,8 +110,12 @@ export class EntryStore extends Controller {
 	 * around it. Rule edits are exempt: a rule is series-wide by definition, so they go straight to the
 	 * master without a dialog. A status-only change is exempt the other way around: completing a task
 	 * belongs to the single occurrence by nature, so it commits with scope 'this' without asking.
+	 *
+	 * A gesture that already knows the scope (Ctrl held at a drop, see EntryDragController) passes it as
+	 * `scope` and no dialog shows; it spends itself on the first scoped round of the chain this call
+	 * starts — a chain already in flight keeps its own course (its dialog, if any, is already up).
 	 */
-	static commit(entry: Entry): Promise<void> {
+	static commit(entry: Entry, scope?: RecurrenceScope): Promise<void> {
 		const pending = this.inflight.get(entry)
 		if (pending) {
 			return pending
@@ -124,7 +128,9 @@ export class EntryStore extends Controller {
 				while (this.tracks(entry) && this.isDirty(entry)) {
 					const sent = entry.clone() // what this round is saving, to detect mid-flight edits
 					if (entry.recurrenceMasterId && !this.ruleChanged(entry)) {
-						if (!await this.commitOccurrence(entry, sent)) {
+						const preset = scope
+						scope = undefined // one round only — an edit made mid-flight is a new decision
+						if (!await this.commitOccurrence(entry, sent, preset)) {
 							break
 						}
 						continue
@@ -203,8 +209,8 @@ export class EntryStore extends Controller {
 
 	/** One scoped save round for a dirty occurrence. Returns false when the commit chain should stop
 	 * (cancelled, or the entry was deleted mid-flight). */
-	private static async commitOccurrence(entry: Entry, sent: Entry): Promise<boolean> {
-		const scope = this.statusOnlyChanged(entry) ? 'this' : await EntryStore.resolveScope(entry, 'edit')
+	private static async commitOccurrence(entry: Entry, sent: Entry, preset?: RecurrenceScope): Promise<boolean> {
+		const scope = preset ?? (this.statusOnlyChanged(entry) ? 'this' : await EntryStore.resolveScope(entry, 'edit'))
 		if (!this.tracks(entry)) {
 			return false
 		}
@@ -247,14 +253,15 @@ export class EntryStore extends Controller {
 	/** Delete: gone from the view immediately; the server call waits for any in-flight save (a pending
 	 * create has to land first — the delete needs the id it produces). Deleting a series occurrence
 	 * first resolves a {@link resolveScope scope} — this one, this and following, or the whole series —
-	 * and the matching local instances drop at once rather than on the sync echo. A FAILED server call
-	 * reinstates what was optimistically dropped (a 404 stays dropped — the server has it gone already)
-	 * and rethrows: an entry that silently stays hidden until the next reload would masquerade as a
-	 * successful delete while the server still holds it. */
-	static async delete(entry: Entry) {
+	 * and the matching local instances drop at once rather than on the sync echo; a caller that already
+	 * knows the scope (Ctrl+Delete, see EntryDetailsComponent) passes it and no dialog shows. A FAILED
+	 * server call reinstates what was optimistically dropped (a 404 stays dropped — the server has it
+	 * gone already) and rethrows: an entry that silently stays hidden until the next reload would
+	 * masquerade as a successful delete while the server still holds it. */
+	static async delete(entry: Entry, scope?: RecurrenceScope) {
 		const pending = this.inflight.get(entry)
 		if (entry.recurrenceMasterId) {
-			const scope = await EntryStore.resolveScope(entry, 'delete')
+			scope ??= await EntryStore.resolveScope(entry, 'delete')
 			if (!scope) {
 				return // cancelled — nothing happens
 			}

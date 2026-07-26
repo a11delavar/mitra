@@ -1,5 +1,5 @@
 import { component, html, property, state, Component, css, eventListener, event, Binder, query } from '@a11d/lit'
-import { EntryType, TaskStatus, SourceType, type Integration } from 'shared'
+import { EntryType, TaskStatus, SourceType, type Integration, type RecurrenceScope } from 'shared'
 import type { EntrySegment } from './EntrySegment.js'
 import { getIntegrations, getSource, getCapabilities } from './Api.js'
 import { EntryStore } from './EntryStore.js'
@@ -97,12 +97,19 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	// A failed delete reinstates the entry in the store (see EntryStore.delete) — so unlike a save,
-	// the user SEES the failure; the console then carries the server's reason.
-	private readonly handleDelete = () => {
+	// the user SEES the failure; the console then carries the server's reason. A preset scope (the
+	// Ctrl chord/click below) skips the recurrence dialog and deletes this occurrence alone.
+	private readonly handleDelete = (scope?: RecurrenceScope) => {
 		const entry = this.segment!.entry
 		this.hidePopover()
-		return EntryStore.delete(entry).catch(error =>
+		return EntryStore.delete(entry, scope).catch(error =>
 			console.error('Deleting the entry failed — it was restored in the view:', error))
+	}
+
+	/** The scope a modifier chord presets: Ctrl (⌘ on a Mac) means "this entry only, don't ask" — on a
+	 * non-recurring entry it's simply ignored downstream. Alt stays free (reserved for duplication). */
+	private static presetScope(e: MouseEvent | KeyboardEvent): RecurrenceScope | undefined {
+		return e.ctrlKey || e.metaKey ? 'this' : undefined
 	}
 
 	/** Apple keyboards have no forward-delete key: their ⌫ "delete" reports `Backspace` (⌦ only exists
@@ -111,8 +118,9 @@ export class EntryDetailsComponent extends Component {
 
 	// Delete (and Backspace — the only "delete" an Apple keyboard has, and what Apple Calendar itself
 	// uses) deletes the entry while its editor is open: the keyboard twin of the menu's Delete button.
-	// Guarded like PageCalendar's view shortcuts: a keystroke inside a text field (title, description,
-	// the source select…), a chord, or an IME composition is theirs, not ours.
+	// With Ctrl (⌘) held it presets the scope: a series occurrence deletes alone, no dialog. Guarded
+	// like PageCalendar's view shortcuts: a keystroke inside a text field (title, description, the
+	// source select…), an Alt chord, or an IME composition is theirs, not ours.
 	@eventListener({ target: window, type: 'keydown' })
 	protected handleWindowKeyDown(e: KeyboardEvent) {
 		if (e.key !== 'Delete' && e.key !== 'Backspace') {
@@ -121,11 +129,11 @@ export class EntryDetailsComponent extends Component {
 		const target = e.target
 		const editable = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
 			|| target instanceof HTMLSelectElement || (target instanceof HTMLElement && target.isContentEditable)
-		if (!this.open || editable || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) {
+		if (!this.open || editable || e.altKey || e.isComposing) {
 			return
 		}
 		e.preventDefault()
-		this.handleDelete()
+		this.handleDelete(EntryDetailsComponent.presetScope(e))
 	}
 
 	private readonly handleClose = (e: Event) => {
@@ -433,7 +441,7 @@ export class EntryDetailsComponent extends Component {
 							@click=${this.toggleMenu}
 						></mitra-icon-button>
 						<menu popover id="entry-menu-${this.segment.entry.id}" style="position-anchor: --entry-menu-${this.segment.entry.id}">
-							<button class="danger" @click=${this.handleDelete}>
+							<button class="danger" @click=${(e: MouseEvent) => this.handleDelete(EntryDetailsComponent.presetScope(e))}>
 								<mitra-icon icon="trash-2"></mitra-icon>
 								${t('Delete')}
 								<kbd>${EntryDetailsComponent.appleKeyboard ? '⌫' : 'Del'}</kbd>

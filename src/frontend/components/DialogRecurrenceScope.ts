@@ -18,6 +18,12 @@ export class DialogRecurrenceScope extends DialogComponent<{ readonly entry: Ent
 		]
 	}
 
+	/** The platform-conventional label for the bypass modifier (the Mac's ⌘ symbol; elsewhere the Ctrl
+	 * key, whose printed label is itself localized — a German board says "Strg"). */
+	private static get modifier() {
+		return navigator.userAgent.includes('Mac') ? '⌘' : t('Ctrl')
+	}
+
 	@state() private scope: RecurrenceScope = 'this'
 
 	protected override createRenderRoot() { return this }
@@ -39,6 +45,20 @@ export class DialogRecurrenceScope extends DialogComponent<{ readonly entry: Ent
 						cursor: pointer;
 					}
 				}
+
+				.hint {
+					margin-block: 1rem 0;
+					font-size: 0.75rem;
+					color: var(--color-text-muted);
+					text-wrap: balance;
+				}
+
+				/* No modifier keys without a keyboard — on a touch device the tip is just noise. */
+				@media (pointer: coarse) {
+					.hint {
+						display: none;
+					}
+				}
 			}
 		`
 	}
@@ -55,6 +75,7 @@ export class DialogRecurrenceScope extends DialogComponent<{ readonly entry: Ent
 						</label>
 					`)}
 				</div>
+				<p class="hint">${t('Tip: hold ${modifier} to skip this dialog and apply to this entry only', { modifier: DialogRecurrenceScope.modifier })}</p>
 			</mitra-dialog>
 		`
 	}

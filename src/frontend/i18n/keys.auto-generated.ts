@@ -51,6 +51,7 @@ declare global {
 		"Copy": unknown
 		"Copy Version": unknown
 		"Create Entry": unknown
+		"Ctrl": unknown
 		"Custom…": unknown
 		"days": unknown
 		"Default for new entries — click to unset": unknown
@@ -159,6 +160,7 @@ declare global {
 		"This entry": unknown
 		"Time zone": unknown
 		"times": unknown
+		"Tip: hold ${modifier} to skip this dialog and apply to this entry only": unknown
 		"Title": unknown
 		"To Do": unknown
 		"Today": unknown

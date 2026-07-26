@@ -466,6 +466,35 @@ describe('EntryStore', () => {
 			assert.deepEqual(transport.calls.occurrenceEdits, ['all']) // the whole edit takes the asked scope
 		})
 
+		it('a preset scope (Ctrl-drop) commits without asking and detaches like a chosen \'this\'', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			EntryStore.resolveScope = () => Promise.reject(new Error('must not be asked'))
+			const working = occurrence()
+			EntryStore.applyServerEntries([working])
+			working.moveStart(at(14))
+			const commit = EntryStore.commit(working, 'this')
+			await transport.respond(entry({ id: 'detached', recurrenceMasterId: undefined, start: at(14), end: at(15) }))
+			await commit
+			assert.deepEqual(transport.calls.occurrenceEdits, ['this'])
+			assert.equal(working.id, 'detached')
+			assert.equal(working.recurrenceMasterId, undefined)
+			assert.equal(EntryStore.isDirty(working), false)
+		})
+
+		it('a preset scope (Ctrl+Delete) deletes the occurrence without asking', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			EntryStore.resolveScope = () => Promise.reject(new Error('must not be asked'))
+			const target = occurrence()
+			const sibling = occurrence({ id: 'master__2000', recurrenceId: at(11), start: at(11), end: at(12) })
+			EntryStore.applyServerEntries([target, sibling])
+			await EntryStore.delete(target, 'this')
+			assert.deepEqual([...EntryStore.entries], [sibling])
+			assert.deepEqual(transport.calls.occurrenceDeletes, ['this'])
+			assert.deepEqual(transport.calls.delete, [])
+		})
+
 		it('scoped deletes drop the right local instances: \'this\'', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence

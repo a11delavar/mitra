@@ -518,6 +518,10 @@ export class EntryDragController extends Controller {
 		if (drag.moved) {
 			const built = this.buildAt(drag.point)
 			const entry = drag.entry!
+			// Ctrl (⌘ on a Mac) held at the drop scopes a series edit to this occurrence alone — no scope
+			// dialog, the keyboard twin of Ctrl+Delete in the editor. Like Explorer's copy-drag, the
+			// modifier's state at the RELEASE decides, so it can be pressed (or reconsidered) mid-drag.
+			const scope = e.ctrlKey || e.metaKey ? 'this' as const : undefined
 			this.teardown(e.pointerId)
 			EntryStore.setPreview(undefined) // a move's ghost has served its purpose — the entry takes over
 			EntryStore.setDragging(undefined)
@@ -526,7 +530,7 @@ export class EntryDragController extends Controller {
 				EntryStore.notify()
 			}
 			// The entry already renders at its new span; on failure it snaps back to the canonical state.
-			EntryStore.commit(entry).catch(() => EntryStore.revert(entry))
+			EntryStore.commit(entry, scope).catch(() => EntryStore.revert(entry))
 		} else {
 			const segment = drag.kind === 'move' ? drag.grabbedSegment : undefined
 			this.teardown(e.pointerId)
