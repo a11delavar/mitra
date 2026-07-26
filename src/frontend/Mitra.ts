@@ -21,6 +21,7 @@ import { selectStyles } from './components/select.css.js'
 import { inputStyles } from './components/input.css.js'
 import { menuStyles } from './components/menu.css.js'
 import { TaskStatusComponent } from './components/TaskStatus.js'
+import { SourceIcon } from './components/SourceIcon.js'
 import { RepeatField } from './components/RepeatField.js'
 import { LocationField } from './components/LocationField.js'
 import { RemindersField } from './components/RemindersField.js'
@@ -136,6 +137,7 @@ export class Mitra extends Application {
 			${DialogWelcome.styles}
 			${DialogRecurrenceScope.styles}
 			${TaskStatusComponent.styles}
+			${SourceIcon.styles}
 			${RepeatField.styles}
 			${LocationField.styles}
 			${RemindersField.styles}

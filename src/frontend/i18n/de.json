@@ -58,6 +58,7 @@
 	"Custom…": "Benutzerdefiniert…",
 	"days": "Tage",
 	"Default for new entries — click to unset": "Standard für neue Einträge — zum Aufheben klicken",
+	"Default for new entries, as the first one shown": "Standard für neue Einträge, als erste angezeigte Quelle",
 	"Delete": "Löschen",
 	"Delete repeating entry": "Wiederkehrenden Eintrag löschen",
 	"Delete the locally cached entries and import everything from the source again": "Die lokal zwischengespeicherten Einträge löschen und alles erneut aus der Quelle importieren",

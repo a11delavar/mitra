@@ -1,5 +1,5 @@
 import { component, html, property, state, Component, css, eventListener, event, Binder, query } from '@a11d/lit'
-import { EntryType, TaskStatus, SourceType, type Integration, type RecurrenceScope } from 'shared'
+import { EntryType, TaskStatus, type Integration, type RecurrenceScope } from 'shared'
 import type { EntrySegment } from './EntrySegment.js'
 import { getIntegrations, getSource, getCapabilities } from './Api.js'
 import { EntryStore } from './EntryStore.js'
@@ -335,11 +335,23 @@ export class EntryDetailsComponent extends Component {
 						}
 
 						&.source {
+							/* The icon sits in the gutter over the select, which spans the whole row: it must not
+							   swallow the clicks that open the picker. Sized to the gutter's other glyphs — the
+							   clock, the globe, the palette — rather than to the roomier option list's. */
+							> mitra-source-icon {
+								grid-area: 1 / 1;
+								pointer-events: none;
+								font-size: 0.875rem;
+							}
+
 							/* The whole row is a \`subtle\` select: it reads as plain text — the
 							   selected option's own dot/type/name via <selectedcontent> — until hovered. */
 							> select {
 								display: grid;
 								grid-template-columns: subgrid;
+								/* Row 1 explicitly: the mark above shares the gutter cell with it, and two
+								   auto-placed items both wanting column 1 would land on separate lines. */
+								grid-row: 1;
 								grid-column: -1 / 1;
 
 								/* The picker wears the popover's tinted glass, border, and shadow (it inherits the
@@ -360,20 +372,15 @@ export class EntryDetailsComponent extends Component {
 									grid-column: -1;
 								}
 
+								/* Only the name: it sits in the content column, so the closed picker reads as plain
+								   text on the same rails as every other row. The icon it also cloned out of the
+								   chosen option is dropped — the row draws its own (see the template). */
 								selectedcontent {
-									display: flex;
+									grid-column: 2;
 									align-items: center;
-									gap: 0.5rem;
-									display: grid;
-									grid-template-columns: subgrid;
-									grid-column: -1 / 1;
 
-									.dot { font-size: 0.8rem; margin-inline-start: 2px; }
-									.type { font-size: 0.87rem; color: var(--color-text-muted); }
-									div {
-										display: flex;
-										gap: 0.25rem;
-										align-items: center;
+									mitra-source-icon {
+										display: none;
 									}
 								}
 
@@ -387,7 +394,6 @@ export class EntryDetailsComponent extends Component {
 								option {
 									gap: 0.5rem;
 									border-radius: var(--border-radius);
-									.type { font-size: 0.87rem; color: var(--color-text-muted); }
 									.name { flex: 1; }
 								}
 							}
@@ -496,6 +502,12 @@ export class EntryDetailsComponent extends Component {
 		}
 		return !this.source?.name ? html.nothing : html`
 			<li class="source">
+				${/* The row's own icon, in the icon gutter with the clock, globe and palette — the source's
+				    kind in the source's colour, which is also where the popover gets its own tint from. It is
+				    rendered HERE rather than left to <selectedcontent> below: that draws the chosen option by
+				    cloning it, and the clone (carrying no properties, and taken before the icon has even
+				    rendered once) would always come out a colourless calendar. */''}
+				<mitra-source-icon .source=${this.source}></mitra-source-icon>
 				<select class="subtle" @change=${handleSourceChange}>
 					<button>
 						<selectedcontent></selectedcontent>
@@ -506,13 +518,13 @@ export class EntryDetailsComponent extends Component {
 						return !sources.length ? html.nothing : html`
 							<optgroup label=${integration.credentials?.username || integration.type}>
 								<legend>${integration.credentials?.username || integration.type}</legend>
+								${/* The shared source icon (see SourceIcon) — one coloured kind glyph, never filled
+								    here: the picker already says which option is the current one. It sits in the
+								    row's icon gutter, on the same rail as the clock, globe and palette above. */''}
 								${sources.map(source => html`
 									<option value=${source.id} ?selected=${source.id === entry.sourceId}>
-										<mitra-icon class="dot" icon="square" fill style="color: ${source.color || 'var(--color-text-muted)'}"></mitra-icon>
-										<div>
-											<mitra-icon class="type" icon=${source.type === SourceType.Task ? 'list-todo' : 'calendar'}></mitra-icon>
-											<span class="name">${source.name}</span>
-										</div>
+										<mitra-source-icon .source=${source}></mitra-source-icon>
+										<span class="name">${source.name}</span>
 									</option>
 								`)}
 							</optgroup>

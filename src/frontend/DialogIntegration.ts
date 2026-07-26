@@ -1,6 +1,6 @@
 import { component, html, css, state, Binder, unsafeHTML } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
-import { CalDAV, Notion, Source, SourceType, integrationClasses, type Integration, type IntegrationClass } from 'shared'
+import { CalDAV, Notion, Source, integrationClasses, type Integration, type IntegrationClass } from 'shared'
 import { discoverSources, createIntegration, updateIntegration, getIntegrations, fetchIntegrations, fetchGoogleAvailability, connectGoogle } from './Api.js'
 import caldavLogo from '../../assets/integrations/caldav.svg'
 import googleLogo from '../../assets/integrations/google.svg'
@@ -220,9 +220,8 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 						color: var(--color-text);
 						cursor: pointer;
 
-						.type-icon {
+						mitra-source-icon {
 							font-size: 16px;
-							color: var(--color-text-muted);
 						}
 					}
 				}
@@ -275,7 +274,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 						${entity.sources.map(source => html`
 							<label class="source">
 								<input type="checkbox" .checked=${source.enabled} @change=${() => { source.toggleEnabled(); this.requestUpdate() }}>
-								<mitra-icon class="type-icon" icon=${source.type === SourceType.Task ? 'list-todo' : 'calendar'}></mitra-icon>
+								<mitra-source-icon .source=${source}></mitra-source-icon>
 								${source.name}
 							</label>
 						`)}

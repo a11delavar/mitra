@@ -1,5 +1,5 @@
 import { Component, component, html, css, property, state, event, eventListener } from '@a11d/lit'
-import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, setDefaultSource, reimportSource, reimportIntegration } from './Api.js'
+import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, getPrimarySource, setDefaultSource, reimportSource, reimportIntegration } from './Api.js'
 import { DialogAbout, hasUnseenChanges } from './DialogAbout.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { SourceType, type Source } from 'shared'
@@ -37,7 +37,30 @@ export class Sidebar extends Component {
 
 	static override get styles() {
 		return css`
+			/* Animated by the scroll-driven fade below — a custom property only interpolates once it's
+			   registered with a type. */
+			@property --sidebar-fade {
+				syntax: '<length>';
+				inherits: false;
+				initial-value: 0px;
+			}
+
+			/* How far the list's bottom edge dissolves while there's more below it. Idle (and so absent)
+			   whenever the list fits: a scroll() timeline on a non-scrollable box is inactive, which
+			   leaves --sidebar-fade at its 0px initial value. */
+			@keyframes sidebar-scroll-fade {
+				from { --sidebar-fade: 1.25rem; }
+				to { --sidebar-fade: 0px; }
+			}
+
 			mitra-sidebar {
+				/* Only the three lengths that two distant rules must agree on live here — the source list's
+				   columns are laid out by ONE grid the rows subscribe to (see .integrations), not by an
+				   arithmetic of per-element paddings. */
+				--sidebar-width: 16rem;
+				--sidebar-inset: 0.5rem;
+				--sidebar-scrollbar-width: 0.5rem;
+
 				display: flex;
 				flex-direction: column;
 				transition: margin-inline-start 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
@@ -53,7 +76,7 @@ export class Sidebar extends Component {
 				}
 
 				&:not([open]) {
-					margin-inline-start: -280px;
+					margin-inline-start: calc(-1 * var(--sidebar-width));
 					opacity: 0;
 					pointer-events: none;
 					@media (max-width: 800px) {
@@ -90,10 +113,12 @@ export class Sidebar extends Component {
 				nav {
 					display: flex;
 					flex-direction: column;
-					width: 280px;
+					width: var(--sidebar-width);
 					height: 100%;
-					border-inline-end: 1px solid var(--color-surface);
-					padding: 1.5rem 1rem;
+					/* Mixed from the text colour, not --color-surface: surface is LIGHTER than the background
+					   in light mode, so that border read as a bevel — or as nothing at all. */
+					border-inline-end: 1px solid color-mix(in srgb, var(--color-text) 9%, transparent);
+					padding: 1.5rem var(--sidebar-inset) var(--sidebar-inset);
 					gap: 1rem;
 					overflow: hidden;
 					box-sizing: border-box;
@@ -131,25 +156,39 @@ export class Sidebar extends Component {
 					}
 				}
 
+				/* Who's signed in, closing the column. */
 				.account {
 					display: flex;
 					align-items: center;
-					gap: 0.625rem;
-					padding: 1rem 0.5rem 0;
-					border-top: 1px solid var(--color-surface);
+					gap: 0.5rem;
+					margin-block-start: 0.5rem;
+					padding: 0.75rem 0.5rem 0;
+					border-top: 1px solid color-mix(in srgb, var(--color-text) 9%, transparent);
 
-					> mitra-icon {
-						font-size: 1.25rem;
-						color: var(--color-text-muted);
+					/* A provider photo and its absence must occupy the same box, or the name's rail would
+					   depend on whether the identity happens to carry a picture. */
+					.avatar, .avatar-fallback {
+						inline-size: 2rem;
+						block-size: 2rem;
 						flex-shrink: 0;
+						border-radius: 50%;
 					}
 
 					.avatar {
-						width: 1.75rem;
-						height: 1.75rem;
-						flex-shrink: 0;
-						border-radius: 50%;
 						object-fit: cover;
+					}
+
+					.avatar-fallback {
+						display: inline-flex;
+						align-items: center;
+						justify-content: center;
+						background: color-mix(in srgb, var(--color-text) 8%, transparent);
+						color: var(--color-text-muted);
+						font-size: 0.9375rem;
+					}
+
+					> mitra-icon-button {
+						color: var(--color-text-muted);
 					}
 
 					.who {
@@ -191,7 +230,7 @@ export class Sidebar extends Component {
 					margin-top: -1.5rem;
 					padding-inline: 0.5rem;
 					cursor: pointer;
-					border-radius: var(--border-radius);
+					border-radius: 0.375rem;
 
 					/* The global button skin's hover/active box is far too loud for a brand mark — the only
 					   affordance is the version whisper waking up. */
@@ -293,25 +332,190 @@ export class Sidebar extends Component {
 					${outlineStyles};
 				}
 
-				/* The scrolling middle: takes whatever height the brand row and footer leave over. The
-				   scrollbar rides the sidebar's edge (the negative margin reclaims the nav's padding, the
-				   padding gives it back to the content) as a thin, trackless thumb — barely-there until
-				   the list is hovered. */
+				/* The scrolling middle: takes whatever height the brand row and footer leave over.
+
+				   It is also THE grid. One set of columns — marker | name | actions, between two zero-width
+				   edge tracks — is declared here, and every account heading and every source row subscribes
+				   to it through subgrid. A heading's ⋯ and a row's ⋯ then sit in the same track instead of
+				   being talked into the same place by matching paddings. The edge tracks are what inset a
+				   row's content from its own hover chip: padding cannot do that job here, because padding on
+				   a subgrid item shifts its tracks off the parent's — the very misalignment this prevents.
+
+				   The thumb rides the nav's own inline padding, clear of the content: the negative margin
+				   lets the box reach the divider, scrollbar-gutter: stable reserves the thumb's lane whether
+				   or not it is showing, and the padding left over is the exact complement of it. Without the
+				   reserved gutter a classic scrollbar eats into the CONTENT box, so the whole list used to
+				   jump inward by the thumb's width the moment one more source made it overflow. The lane is
+				   sized here rather than left to scrollbar-width: thin, whose width is the UA's to pick (and
+				   which draws stepper arrows on Windows). */
 				.integrations {
 					flex: 1;
 					min-height: 0;
 					overflow-y: auto;
-					display: flex;
-					flex-direction: column;
-					gap: 2rem;
-					margin-inline-end: -1rem;
-					padding-inline-end: 1rem;
-					scrollbar-width: thin;
-					scrollbar-color: color-mix(in srgb, var(--color-text) 8%, transparent) transparent;
+					display: grid;
+					grid-template-columns: 0 auto 1fr auto 0;
+					align-content: start;
+					column-gap: 0.5rem;
+					row-gap: 1.5rem;
+					margin-inline-end: calc(-1 * var(--sidebar-inset));
+					padding-inline-end: calc(var(--sidebar-inset) - var(--sidebar-scrollbar-width));
+					scrollbar-gutter: stable;
+					/* Dissolves the bottom edge while there's more list below, so a row is never sliced flat
+					   against the footer. */
+					mask-image: linear-gradient(to bottom, #000 calc(100% - var(--sidebar-fade)), transparent);
+					animation: sidebar-scroll-fade linear both;
+					animation-timeline: scroll(self);
+					animation-range: calc(100% - 1.25rem) 100%;
+
+					&::-webkit-scrollbar {
+						width: var(--sidebar-scrollbar-width);
+					}
+
+					/* No track, and no stepper arrows — the thumb alone. */
+					&::-webkit-scrollbar-track {
+						background: transparent;
+					}
+
+					&::-webkit-scrollbar-button {
+						display: none;
+					}
+
+					&::-webkit-scrollbar-thumb {
+						border-radius: 999px;
+						background: color-mix(in srgb, var(--color-text) 12%, transparent);
+					}
+
+					&:hover::-webkit-scrollbar-thumb {
+						background: color-mix(in srgb, var(--color-text) 26%, transparent);
+					}
+
+					/* Firefox has no ::-webkit-scrollbar to size, so it keeps the standard thin thumb — its
+					   gutter is then the UA's thin width, a pixel or two off the padding above. */
+					@supports not selector(::-webkit-scrollbar-thumb) {
+						scrollbar-width: thin;
+						scrollbar-color: color-mix(in srgb, var(--color-text) 12%, transparent) transparent;
+					}
+				}
+
+				/* Each level down to the row hands the same columns on, unchanged. */
+				.integration, .integration > header, .sources, .source {
+					grid-column: 1 / -1;
+					display: grid;
+					grid-template-columns: subgrid;
+					align-items: center;
+				}
+
+				.integration { row-gap: 0.5rem; }
+				.sources { row-gap: 0.125rem; }
+
+				/* The account a group of sources came from. */
+				.integration > header {
+					font-size: 0.75rem;
+					font-weight: 600;
+					color: var(--color-text-muted);
+
+					.title {
+						grid-column: 2 / 4;
+						min-width: 0;
+						white-space: nowrap;
+						overflow: hidden;
+						text-overflow: ellipsis;
+					}
+
+					> mitra-icon-button {
+						grid-column: 4;
+						justify-self: end;
+					}
+				}
+
+				.source {
+					min-height: 1.75rem;
+					border-radius: 0.375rem;
 
 					&:hover {
-						scrollbar-color: color-mix(in srgb, var(--color-text) 22%, transparent) transparent;
+						background-color: color-mix(in srgb, var(--color-text) 6%, transparent);
+						.actions mitra-icon-button { opacity: 1; }
 					}
+
+					/* Keep the actions visible while this row's menu popover is open, so the 3-dot doesn't
+					   fade out from under its own menu when the pointer leaves the row. Ditto while anything
+					   in the row holds focus — tabbing into a transparent button used to park the focus ring
+					   on something invisible. */
+					&:focus-within .actions mitra-icon-button,
+					&:has(menu:popover-open) .actions mitra-icon-button {
+						opacity: 1;
+					}
+
+					/* A hidden source recedes, and keeps its eye showing so it can be brought back. The eye is
+					   the LAST action for exactly that reason: being the only one left on an unhovered row,
+					   anywhere else would leave it floating short of the trailing edge. */
+					&[data-hidden] {
+						.marker { opacity: 0.4; }
+						.name { color: var(--color-text-muted); }
+						.actions .eye-icon { opacity: 1; }
+					}
+
+					/* The leading marker is the shared source icon (see SourceIcon) — the glyph, the colour, the
+					   filled state and its geometry all belong to it. This is only what makes it clickable:
+					   clicking toggles whether the source is the default for new entries. */
+					.marker {
+						/* The all: unset comes first — it resets grid-column too, so placing the marker above
+						   it would put the icon back in the edge track. */
+						all: unset;
+						grid-column: 2;
+						display: inline-flex;
+						border-radius: 0.375rem;
+						cursor: pointer;
+						${outlineStyles};
+					}
+
+					.name {
+						grid-column: 3;
+						min-width: 0;
+						white-space: nowrap;
+						overflow: hidden;
+						text-overflow: ellipsis;
+						font-size: 0.8125rem;
+						color: var(--color-text);
+
+						/* Inline rename: the same label becomes an editable field in place. Let it scroll rather
+						   than ellipsis-clip while typing, and give it a field-like outline. */
+						&[contenteditable=plaintext-only] {
+							cursor: text;
+							text-overflow: clip;
+							outline: 1px solid var(--color-accent, var(--color-text-muted));
+							outline-offset: 2px;
+							border-radius: 2px;
+						}
+					}
+
+					.actions {
+						grid-column: 4;
+						display: flex;
+						align-items: center;
+						gap: 0.125rem;
+
+						mitra-icon-button {
+							color: var(--color-text-muted);
+							transition: opacity 0.15s ease;
+
+							@media (hover: hover) {
+								opacity: 0;
+							}
+						}
+					}
+				}
+
+				/* Every glyph the sidebar's own buttons carry is one size. */
+				mitra-icon-button {
+					font-size: 0.875rem;
+				}
+
+				/* An icon button's glyph sits 5px inside its own box (0.25rem padding + 1px border); the
+				   trailing ones bleed that back out, so it is the GLYPHS that land on the trailing edge —
+				   aligning the boxes instead leaves every icon a few pixels short of the text above it. */
+				.integration > header > mitra-icon-button, .actions, .account > mitra-icon-button {
+					margin-inline-end: -0.3125rem;
 				}
 
 				/* Pinned below the scroll region — always visible, however long the source list grows. */
@@ -319,16 +523,20 @@ export class Sidebar extends Component {
 					flex-shrink: 0;
 					display: flex;
 					flex-direction: column;
-					gap: 1rem;
+					gap: 0.375rem;
 				}
 
+				/* Sized to a source row rather than to its own padding, which is where the footer's height
+				   went: two of these plus a 1rem gap used to cost as much as three source rows. */
 				.add-integration {
 					all: unset;
+					box-sizing: border-box;
 					display: flex;
 					align-items: center;
 					justify-content: center;
 					gap: 0.5rem;
-					padding: 0.5rem 0.75rem;
+					height: 1.75rem;
+					padding-inline: 0.75rem;
 					border: 1px dashed color-mix(in srgb, var(--color-text) 15%, transparent);
 					border-radius: var(--border-radius);
 					color: var(--color-text-muted);
@@ -337,7 +545,7 @@ export class Sidebar extends Component {
 					cursor: pointer;
 					transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
 
-					mitra-icon { font-size: 16px; }
+					mitra-icon { font-size: 0.875rem; }
 
 					&:hover {
 						color: var(--color-text);
@@ -348,187 +556,24 @@ export class Sidebar extends Component {
 					${outlineStyles};
 				}
 
-				.integration {
-					display: flex;
-					flex-direction: column;
-					gap: 0.5rem;
+				/* Both menus in here open off the sidebar's inline end — a 280px column has no room to drop
+				   one below its trigger — and both wear the app's shared menu skin (see menu.css), which the
+				   source menu used to re-implement at slightly different paddings, radii and shadow: two
+				   visibly different menus hanging off two ⋯ buttons a row apart. */
+				menu[popover] {
+					margin: 0;
+					position-area: inline-end span-block-end;
+					position-try-fallbacks: flip-block;
 
-					header {
+					/* The colour picker is the one menu row that isn't a button; match the shared skin's. */
+					.color-row {
 						display: flex;
 						align-items: center;
-						gap: 0.25rem;
-						font-size: 0.75rem;
-						font-weight: 600;
-						color: var(--color-text-muted);
-						margin-bottom: 0.25rem;
-						padding-inline-start: 0.5rem;
-						padding-inline-end: 0.3rem;
+						gap: 0.5rem;
+						padding: 0.4rem 0.625rem;
 
-						.title {
-							flex: 1;
-							white-space: nowrap;
-							overflow: hidden;
-							text-overflow: ellipsis;
-						}
-
-						/* Same placement as the source rows' ⋯ menu: to the end of the trigger, top-aligned,
-						   flipping above only when there's no room below. */
-						menu[popover] {
-							position-area: inline-end span-block-end;
-							position-try-fallbacks: flip-block;
-						}
-					}
-
-					.sources {
-						display: flex;
-						flex-direction: column;
-						gap: 2px;
-
-						.source {
-							display: flex;
-							align-items: center;
-							gap: 0.5rem;
-							padding: 0.125rem 0.5rem;
-							border-radius: var(--border-radius);
-
-							&:hover {
-								background-color: color-mix(in srgb, var(--color-text) 5%, transparent);
-								.actions mitra-icon-button { opacity: 1; }
-							}
-
-							/* Keep the actions visible while this row's menu popover is open, so the 3-dot
-							   doesn't fade out from under its own menu when the pointer leaves the row. */
-							&:has(.source-menu:popover-open) .actions mitra-icon-button {
-								opacity: 1;
-							}
-
-							&[data-hidden] {
-								.marker, .type-icon { opacity: 0.4; }
-								.name { color: var(--color-text-muted); }
-								/* A hidden source always shows its eye toggle, so it can be brought back. */
-								.actions .eye-icon { opacity: 1; }
-							}
-
-							/* Leading marker: a filled square in the source's colour, or a star when it's the default
-							   (both square/star icons). Clicking it toggles default. */
-							.marker {
-								all: unset;
-								flex-shrink: 0;
-								display: inline-flex;
-								align-items: center;
-								justify-content: center;
-								cursor: pointer;
-								font-size: 0.85rem;
-								border-radius: var(--border-radius);
-								transition: transform 0.1s;
-
-								&:hover {
-									transform: scale(1.15);
-								}
-
-								${outlineStyles};
-							}
-
-							.source-menu {
-								/* Only lay it out when open: an unconditional display on a popover element beats the
-								   UA's hide-when-closed rule (author origin wins) and would show it always. */
-								&:popover-open {
-									display: flex;
-									flex-direction: column;
-									gap: 0.125rem;
-								}
-
-								&[popover] {
-									position-area: inline-end span-block-end;
-									position-try-fallbacks: flip-block;
-								}
-
-								.menu-row {
-									display: flex;
-									align-items: center;
-									gap: 0.625rem;
-									padding: 0.375rem 0.5rem;
-
-									> mitra-icon {
-										font-size: 0.9rem;
-										color: var(--color-text-muted);
-									}
-								}
-
-								button.menu-row {
-									all: unset;
-									display: flex;
-									align-items: center;
-									gap: 0.625rem;
-									padding: 0.375rem 0.5rem;
-									border-radius: var(--border-radius);
-									font-size: 0.8125rem;
-									font-weight: 500;
-									color: var(--color-text);
-									cursor: pointer;
-
-									&:hover {
-										background: color-mix(in srgb, var(--color-text) 8%, transparent);
-									}
-
-									${outlineStyles};
-								}
-							}
-
-							[popover] {
-								background: color-mix(in srgb, var(--color-surface) 90%, transparent);
-								backdrop-filter: blur(10px);
-								border: var(--border);
-								border-radius: 0.5rem;
-								padding: 0.5rem;
-								box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-								position-area: inline-end span-all;
-								position-try-options: flip-inline;
-								margin: 0;
-								overflow: visible;
-							}
-
-							.type-icon {
-								font-size: 14px;
-								color: var(--color-text-muted);
-								flex-shrink: 0;
-							}
-
-							.name {
-								flex: 1;
-								white-space: nowrap;
-								overflow: hidden;
-								text-overflow: ellipsis;
-								font-size: 0.8125rem;
-								color: var(--color-text);
-
-								/* Inline rename: the same label becomes an editable field in place. Let it scroll
-								   rather than ellipsis-clip while typing, and give it a field-like outline. */
-								&[contenteditable=plaintext-only] {
-									cursor: text;
-									text-overflow: clip;
-									outline: 1px solid var(--color-accent, var(--color-text-muted));
-									outline-offset: 2px;
-									border-radius: 2px;
-								}
-							}
-
-							.actions {
-								display: flex;
-								align-items: center;
-								gap: 0.25rem;
-
-								/* On hover-capable devices, action icons stay out of the way until the row is hovered
-								   (revealed by &:hover; the default star and a hidden source's eye are forced visible
-								   separately). Touch devices have no hover, so they show them always. */
-								mitra-icon-button {
-									transition: opacity 0.15s ease;
-
-									@media (hover: hover) {
-										opacity: 0;
-									}
-								}
-							}
+						> mitra-icon {
+							font-size: 15px;
 						}
 					}
 				}
@@ -607,12 +652,35 @@ export class Sidebar extends Component {
 		el.textContent = source.name
 	}
 
+	/** Whether this is the source a new entry will actually land in — asked of the same function the
+	 * create paths ask (getPrimarySource), not re-derived from the stored preference. There often ISN'T
+	 * one stored: the default then falls back to the first visible source, and a stored default that has
+	 * since been hidden falls back the same way. Reading `defaultSourceId` alone left the marker silent
+	 * in the first case and lit on a hidden row that creates no longer target in the second. */
 	private isDefault(source: Source) {
-		return getDefaultSourceId() === source.id
+		return getPrimarySource()?.id === source.id
 	}
 
+	/** What the marker promises, worded for the three states it can actually be in — a lit marker that
+	 * holds the default only by fallback must not offer to unset something that was never set. */
+	private defaultHint(source: Source) {
+		if (!this.isDefault(source)) {
+			return t('Set as the default for new entries')
+		}
+		return getDefaultSourceId() === source.id
+			? t('Default for new entries — click to unset')
+			: t('Default for new entries, as the first one shown')
+	}
+
+	/** Only a STORED preference can be cleared: clicking the source that already holds the default by
+	 * fallback has nothing to undo (clearing it would re-elect the same row), so it stands down rather
+	 * than round-tripping to the server for no visible change. */
 	private async toggleDefault(source: Source) {
-		await setDefaultSource(this.isDefault(source) ? undefined : source.id)
+		const stored = getDefaultSourceId() === source.id
+		if (this.isDefault(source) && !stored) {
+			return
+		}
+		await setDefaultSource(stored ? undefined : source.id)
 		this.requestUpdate()
 	}
 
@@ -697,15 +765,16 @@ export class Sidebar extends Component {
 							<div class="sources">
 								${i.sources.filter(source => source.enabled).map(source => html`
 									<div class="source" ?data-hidden=${source.hidden}>
-										<button class="marker" @click=${() => this.toggleDefault(source)}
-											title=${this.isDefault(source) ? t('Default for new entries — click to unset') : t('Set as the default for new entries')}>
-											<mitra-icon icon=${this.isDefault(source) ? 'star' : 'square'} fill style="color: ${source.color || 'var(--color-text-muted)'}"></mitra-icon>
+										${/* The shared source icon (see SourceIcon), filled here for the source new entries
+										    land in — which is what clicking it toggles. */''}
+										<button class="marker"
+											@click=${() => this.toggleDefault(source)}
+											title=${[
+										source.type === SourceType.Task ? t('Tasks') : t('Events'),
+										this.defaultHint(source),
+									].join(' — ')}>
+											<mitra-source-icon .source=${source} ?selected=${this.isDefault(source)}></mitra-source-icon>
 										</button>
-										<mitra-icon
-											class="type-icon"
-											icon=${source.type === SourceType.Task ? 'list-todo' : 'calendar'}
-											title=${source.type === SourceType.Task ? t('Tasks') : t('Events')}
-										></mitra-icon>
 										${this.getNameTemplate(source)}
 										${this.getActionsTemplate(source)}
 									</div>
@@ -741,14 +810,18 @@ export class Sidebar extends Component {
 		const identity = getUser()?.identity
 		return !identity ? html.nothing : html`
 			<div class="account">
-				${identity.picture && !this.profilePictureBroken
-					? html`<img class="avatar" src=${identity.picture} alt="" referrerpolicy="no-referrer" @error=${() => this.profilePictureBroken = true}>`
-					: html`<mitra-icon icon="circle-user"></mitra-icon>`}
+				${identity.picture && !this.profilePictureBroken ? html`
+					<img class="avatar" src=${identity.picture} alt="" referrerpolicy="no-referrer" @error=${() => this.profilePictureBroken = true}>
+				` : html`
+					<span class="avatar-fallback">
+						<mitra-icon icon="user"></mitra-icon>
+					</span>
+				`}
 				<div class="who">
 					<div class="name">${identity.name || identity.email || t('Account')}</div>
 					${!identity.email || identity.email === identity.name ? html.nothing : html`<div class="email">${identity.email}</div>`}
 				</div>
-				<mitra-icon-button icon="log-out" label=${t('Sign out')} style="color: var(--color-text-muted)"
+				<mitra-icon-button icon="log-out" label=${t('Sign out')}
 					@click=${() => location.assign('/auth/logout')}></mitra-icon-button>
 			</div>
 		`
@@ -772,37 +845,38 @@ export class Sidebar extends Component {
 
 	private getActionsTemplate(source: Source) {
 		return html`
-			<div class="actions">
+			${/* The ⋯ leads and the eye trails, against convention: the eye is the one that stays on show for
+			    a hidden source, and only in the last slot does it sit on the trailing edge rather than floating
+			    in the gap the (invisible) ⋯ would have filled. The menu anchors to the whole group rather than
+			    to its own trigger, so it opens clear of the eye now sitting beside it. */''}
+			<div class="actions" style="anchor-name: --source-menu-${source.id}">
 				<mitra-icon-button
-					class="eye-icon"
-					style='color: var(--color-text-muted)'
-					icon=${source.hidden ? 'eye-off' : 'eye'}
-					label=${source.hidden ? t('Show calendar') : t('Hide calendar')}
-					@click=${() => this.toggleVisibility(source)}
-				></mitra-icon-button>
-				<mitra-icon-button
-					class="menu-icon"
 					icon="more-horizontal"
 					label=${t('Calendar options')}
-					style="anchor-name: --source-menu-${source.id}; color: var(--color-text-muted)"
 					@click=${(e: Event) => ((e.currentTarget as HTMLElement).nextElementSibling as HTMLElement)?.togglePopover()}
 				></mitra-icon-button>
-				<div popover id="source-menu-${source.id}" class="source-menu" style="position-anchor: --source-menu-${source.id}">
-					<button class="menu-row" @click=${() => this.startRename(source)}>
+				<menu popover id="source-menu-${source.id}" style="position-anchor: --source-menu-${source.id}">
+					<button @click=${() => this.startRename(source)}>
 						<mitra-icon icon="pencil"></mitra-icon>
 						${t('Rename')}
 					</button>
-					<div class="menu-row">
+					<div class="color-row">
 						<mitra-icon icon="palette"></mitra-icon>
 						<mitra-color-picker .value=${source.color} @change=${(e: CustomEvent) => this.setSourceColor(source, e.detail, (e.currentTarget as HTMLElement).closest('[popover]')!)}></mitra-color-picker>
 					</div>
-					<button class="menu-row"
+					<button
 						title=${t('Delete the locally cached entries and import everything from the source again')}
 						@click=${(e: Event) => { this.closeMenu(e); reimportSource(source.id).catch(() => void 0) }}>
 						<mitra-icon icon="hard-drive-download"></mitra-icon>
 						${t('Re-import entries')}
 					</button>
-				</div>
+				</menu>
+				<mitra-icon-button
+					class="eye-icon"
+					icon=${source.hidden ? 'eye-off' : 'eye'}
+					label=${source.hidden ? t('Show calendar') : t('Hide calendar')}
+					@click=${() => this.toggleVisibility(source)}
+				></mitra-icon-button>
 			</div>
 		`
 	}

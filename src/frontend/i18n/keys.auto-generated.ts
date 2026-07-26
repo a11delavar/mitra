@@ -60,6 +60,7 @@ declare global {
 		"Custom…": unknown
 		"days": unknown
 		"Default for new entries — click to unset": unknown
+		"Default for new entries, as the first one shown": unknown
 		"Delete": unknown
 		"Delete repeating entry": unknown
 		"Delete the locally cached entries and import everything from the source again": unknown
