@@ -1,6 +1,6 @@
 import { component, css } from '@a11d/lit'
 import { Application, application } from '@a11d/lit-application'
-import { fetchIntegrations, fetchMeta, fetchUser, getMeta, getUser } from './Api.js'
+import { fetchIntegrations, fetchMeta, fetchUser, getIntegrations, getMeta, getUser } from './Api.js'
 import { Weeks } from './Weeks.js'
 import { Months } from './Months.js'
 import { Days } from './Days.js'
@@ -12,6 +12,7 @@ import { Sidebar } from './Sidebar.js'
 import { EntryDetailsComponent } from './EventDetails.js'
 import { DialogAbout, markChangesSeen } from './DialogAbout.js'
 import { DialogIntegration } from './DialogIntegration.js'
+import { DialogWelcome } from './DialogWelcome.js'
 import { colorContrast } from './components/colorContrast.js'
 import { IconButton } from './components/IconButton.js'
 import { buttonStyles } from './components/button.css.js'
@@ -63,6 +64,13 @@ export class Mitra extends Application {
 			await new DialogIntegration({ id: pendingIntegrationId, preselectSources: true }).confirm()
 			// The sidebar renders off the module-level integrations cache — nudge it like its own dialogs do.
 			document.querySelector('mitra-sidebar')?.requestUpdate()
+		} else if (!getIntegrations().length) {
+			// Nothing connected yet — the calendar behind is an empty grid, so greet and lead the way in.
+			// Dismissing is respected for this visit only: an empty boot asks again, a connected one never.
+			if (await new DialogWelcome().confirm()) {
+				await new DialogIntegration({}).confirm()
+				document.querySelector('mitra-sidebar')?.requestUpdate()
+			}
 		}
 	}
 
@@ -125,6 +133,7 @@ export class Mitra extends Application {
 			${EntryDetailsWhen.styles}
 			${DialogAbout.styles}
 			${DialogIntegration.styles}
+			${DialogWelcome.styles}
 			${DialogRecurrenceScope.styles}
 			${TaskStatusComponent.styles}
 			${RepeatField.styles}

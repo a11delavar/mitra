@@ -24,6 +24,7 @@ declare global {
 		"Add Integration": unknown
 		"Add reminder": unknown
 		"Add time zone": unknown
+		"Add your first integration": unknown
 		"After": unknown
 		"All day": unknown
 		"All entries": unknown
@@ -36,20 +37,24 @@ declare global {
 		"back earlier": unknown
 		"before": unknown
 		"before at ${time}": unknown
+		"CalDAV, Google, Apple or Notion — Mitra syncs in both directions.": unknown
 		"Calendar options": unknown
 		"Cancelled": unknown
 		"changelog release notes news updates version": unknown
+		"Choose your sources": unknown
 		"close": unknown
 		"Close": unknown
 		"collapse expand calendars": unknown
 		"Commands": unknown
 		"Commit": unknown
 		"Connect": unknown
+		"Connect an account": unknown
 		"connect caldav account calendar": unknown
 		"Connecting…": unknown
 		"Continue with Google": unknown
 		"Copy": unknown
 		"Copy Version": unknown
+		"Create and move entries right on the grid — every change syncs back to its source.": unknown
 		"Create Entry": unknown
 		"Ctrl": unknown
 		"Custom…": unknown
@@ -110,9 +115,12 @@ declare global {
 		"of event at ${time}": unknown
 		"OK": unknown
 		"On": unknown
+		"One calendar to plan your events and tasks.": unknown
 		"Open in Google Maps": unknown
 		"Options": unknown
 		"Password": unknown
+		"Pick the calendars and task lists to show — recolor, rename or hide them in the sidebar anytime.": unknown
+		"Plan your days": unknown
 		"Previous Month": unknown
 		"Previous Week": unknown
 		"Previous Year": unknown
@@ -178,6 +186,7 @@ declare global {
 		"Week": unknown
 		"Week View": unknown
 		"weeks": unknown
+		"Welcome to ${name}": unknown
 		"What's New": unknown
 		"Workspace": unknown
 		"Year": unknown
