@@ -173,6 +173,30 @@ export class EntryDetailsComponent extends Component {
 
 	static override get styles() {
 		return css`
+			/* Block-direction placements for anchors too wide to sit beside: a multi-day all-day bar
+			   can span the whole week, so no window is wide enough to fit the popover on either inline
+			   side of it — without these it fell straight through to the bottom sheet on a full-size
+			   desktop. Inset-based rather than 'position-area: block-end span-all' on purpose: the
+			   position-area grid tracks follow the ANCHOR, and the week strip keeps buffer days in the
+			   DOM, so a wide segment's grid — and with it the containing block that fallbacks are
+			   overflow-tested against — reaches past the viewport, and the popover got parked partly
+			   off-screen (verified). Zero inline insets pin that containing block to the real viewport
+			   instead; anchor-center then centres on the anchor but shifts as far as needed to stay
+			   inside it. */
+			@position-try --below {
+				position-area: none;
+				inset-block: calc(anchor(end) + 0.25rem) auto;
+				inset-inline: 0;
+				justify-self: anchor-center;
+			}
+
+			@position-try --above {
+				position-area: none;
+				inset-block: auto calc(anchor(start) + 0.25rem);
+				inset-inline: 0;
+				justify-self: anchor-center;
+			}
+
 			mitra-entry-details {
 				/* Closed means GONE, which needs saying explicitly: an author display declaration beats
 				   the UA rule that hides a non-open popover no matter how weak the selector, and this
@@ -206,12 +230,24 @@ export class EntryDetailsComponent extends Component {
 				margin-inline: 0.25rem;
 				position-area: inline-end span-all;
 				position-visibility: anchors-visible;
-				/* --sheet (see components/sheet.ts) is the terminal fallback: pinned to the viewport it
-				   always fits, so the popover becomes a draggable bottom sheet exactly when every anchored
-				   placement above overflowed — a phone, or a desktop window squeezed just as tight. The
-				   former 'position-try-order: most-block-size' had to go for it: ordered by block size,
-				   the viewport-tall sheet would sort to the front and win everywhere. */
-				position-try-fallbacks: flip-inline, flip-block, flip-block flip-inline, --sheet;
+				/* The ladder: beside the anchor (right, then left — flip-block is pointless here, the
+				   block axis is already span-all), then below/above it for anchors too wide to have a
+				   beside (see the @position-try rules), and --sheet (see components/sheet.ts) as the
+				   terminal fallback: pinned to the viewport it always fits, so the popover becomes a
+				   draggable bottom sheet exactly when every anchored placement above overflowed. The
+				   former 'position-try-order: most-block-size' had to go for it: ordered by block
+				   size, the viewport-tall sheet would sort to the front and win everywhere. */
+				position-try-fallbacks: flip-inline, --sheet;
+
+				/* The below/above rungs exist only where a floating popover has breathing room. On a
+				   phone they would often FIT (any entry with a viewport-height of space under it), and
+				   every placement that fits wins over the sheet — so listing them unconditionally
+				   trades the consistent sheet-on-mobile experience for a popover lottery decided by
+				   scroll position. The sheet itself stays fallback-triggered, not breakpointed: a
+				   desktop window squeezed too tight for every rung still gets it. */
+				@media (width >= 40rem) {
+					position-try-fallbacks: flip-inline, --below, --above, --sheet;
+				}
 
 				/* Wide enough for the times row to carry the inline zone chip ("GMT+3:30") next to the
 				   end time without cramping the inputs. */

@@ -123,10 +123,16 @@ export const sheetStyles = css`
 			flex: none;
 			box-sizing: border-box;
 			inline-size: 100%;
+			/* Reaching this fallback on a WIDE viewport means the window is merely too short for any
+			   anchored placement — a full-width sheet there reads as a page-wide banner, so past phone
+			   width the body caps itself and centres, becoming a bottom card instead. On phones the cap
+			   never engages and nothing changes. */
+			max-inline-size: 30rem;
 			max-block-size: calc(100dvb - 2.5rem);
 			overflow-y: auto;
 			scroll-snap-align: end;
 			margin: 0;
+			margin-inline: auto;
 			border: none;
 			border-block-start: var(--border);
 			border-radius: 0;
