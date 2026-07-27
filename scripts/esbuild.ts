@@ -121,6 +121,12 @@ export async function writeIndexHtml() {
 		if (name === 'manifest.webmanifest') {
 			const manifest = JSON.parse(contents.toString())
 			manifest.display_override = ['window-controls-overlay']
+			// `favicons` defaults `orientation` to "any", which is NOT the same as leaving it out: Chromium
+			// bakes the manifest's orientation into the installed WebAPK's `android:screenOrientation`, and
+			// "any" lands on a sensor-family value that follows the accelerometer even when the phone's
+			// auto-rotate is locked. Omitting the member sends "" instead — Android's `unspecified` — which
+			// is what respects the user's rotation lock. Mitra wants both orientations, so: no member.
+			delete manifest.orientation
 			fs.writeFileSync(join(distDir, name), JSON.stringify(manifest, null, 2))
 			continue
 		}
