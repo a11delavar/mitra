@@ -119,6 +119,34 @@ export class Mitra extends Application {
 		return css`
 			${super.styles}
 
+			/* Mitra is a fixed shell — the calendar page is 'position: absolute; inset: 0', i.e. exactly the
+			   initial containing block, and every scroller in the app lives INSIDE it. So the document must
+			   be exactly the viewport too: 'height: 100%' resolves against that same ICB, and the
+			   'min-height' the framework sets above (100dvh) is overridden to nothing.
+
+			   Dropping that min-height is the fix for a real bug, not tidying. 100dvh is the browser's
+			   DYNAMIC viewport reading, and wherever it disagrees with the ICB by even a few pixels — which
+			   Android's system-bar and virtual-keyboard transitions do — the document ends up that much
+			   taller than the viewport. That is a scroll range on the ROOT scroller, invisible (there is
+			   nothing down there to see) until a pan that runs past the end of the week grid CHAINS into
+			   it: the whole shell then scrolls up, the header slides out of view, the canvas shows through
+			   the strip it left at the bottom — and nothing scrolls it back, because no gesture inside the
+			   app ever reaches the root scroller (reported from mobile; reproduced with a forced 56px
+			   range, which is exactly what one hidden system bar's worth of disagreement looks like).
+			   With height: 100% the document can never exceed the ICB, so that range cannot exist at all.
+
+			   The root's own overscroll is then turned off for its own sake: an app shell that cannot
+			   scroll has no pull-to-refresh to offer either. */
+			html, body, [application] {
+				height: 100%;
+				min-height: 0;
+			}
+
+			html {
+				overflow: hidden;
+				overscroll-behavior: none;
+			}
+
 			:root {
 				color-scheme: light dark;
 				user-select: none;

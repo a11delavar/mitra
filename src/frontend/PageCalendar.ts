@@ -211,7 +211,14 @@ export class PageCalendar extends PageComponent {
 				flex-direction: row;
 				position: absolute;
 				inset: 0;
-				overflow: hidden;
+				/* clip, not hidden — the shell must never be a SCROLL container. Nothing here is meant to
+				   scroll (the views own their scrollers), but 'hidden' still leaves a scrollable box whose
+				   offset only code can reach: let the header outgrow a short viewport once and any
+				   scrollIntoView inside (every navigation runs one, see CalendarDatesController) could
+				   park the header out of sight, with no gesture able to bring it back. Same reason the
+				   document itself is pinned to the viewport in Mitra's root styles; 'clip' cannot hold an
+				   offset at all, and crops identically. */
+				overflow: clip;
 
 				main {
 					display: flex;

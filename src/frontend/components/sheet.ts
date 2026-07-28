@@ -27,6 +27,15 @@ export const sheetStyles = css`
 	   Adopters must NOT combine this with 'position-try-order: most-block-size': that would sort
 	   the viewport-tall sheet to the front and pick it everywhere. */
 	@position-try --sheet {
+		/* Cut the anchor relationship entirely, not just the placement: with a default anchor still
+		   attached, Chrome scroll-COMPENSATES the pinned box — the sheet follows its anchor's scroller
+		   by the offset change since open, so any reflow that re-clamps that scroller (the on-screen
+		   keyboard resizing the viewport re-clamps the week grid) shoved the sheet that many pixels
+		   off the bottom (verified: a 300px shrink displaced it by exactly the grid's offset delta).
+		   A sheet is the one placement that anchors to NOTHING, so it must not ride along — and with
+		   no anchor, the adopters' 'position-visibility: anchors-visible' has nothing to hide either,
+		   so a sheet can't vanish when its segment reflows out of view. */
+		position-anchor: none;
 		position-area: none;
 		inset: 0;
 		margin: 0;

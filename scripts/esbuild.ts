@@ -142,12 +142,18 @@ export async function writeIndexHtml() {
 		'<link rel="apple-touch-icon" href="/apple-touch-icon.png">',
 	].join('\n\t').replace('rel="manifest"', 'rel="manifest" crossorigin="use-credentials"')
 
+	// interactive-widget picks the on-screen keyboard's policy, and the default (resizes-visual) is
+	// wrong for an app whose layout is viewport-bound CSS: the keyboard then resizes NOTHING — it pans
+	// the visual viewport instead — so every dv* unit keeps meaning the full screen and the bottom
+	// sheet (sized in dvb, see components/sheet.ts) lays out as if the keyboard weren't there, typing
+	// under it. resizes-content shrinks the layout viewport itself: the dv* units follow, the sheet
+	// clears the keyboard, and there is no pan to slide the header off — all without a line of script.
 	fs.writeFileSync(join(distDir, 'index.html'), `
 <!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 	<title>Mitra</title>
 	${head}
 	<script type="module" src="/index.js"></script>
