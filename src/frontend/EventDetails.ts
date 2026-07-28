@@ -226,6 +226,14 @@ export class EntryDetailsComponent extends Component {
 				outline: none;
 				padding: 0;
 
+				/* The sheet contract's frame properties (see components/sheet.ts): the editor's outer
+				   shape and its depth belong to the FRAME, because the frame's scroll-container clip
+				   crops anything the list paints outside its own border box — which is every pixel of
+				   a drop shadow, and the corners. The list keeps a matching radius of its own so its
+				   border and glass are shaped too (sheet mode replaces that with top-only rounding). */
+				--sheet-frame-radius: 0.5rem;
+				--sheet-frame-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48), 0px 4px 12px -1px rgba(0,0,0,0.24);
+
 				position: fixed;
 				margin-inline: 0.25rem;
 				position-area: inline-end span-all;
@@ -276,8 +284,7 @@ export class EntryDetailsComponent extends Component {
 					background: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
 					backdrop-filter: blur(10px);
 					border: var(--border);
-					border-radius: 0.5rem;
-					box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48),0px 4px 12px -1px rgba(0,0,0,0.24);
+					border-radius: var(--sheet-frame-radius);
 					display: grid;
 					/* Just two columns for the whole popover: a leading glyph (icon / checkbox / switch /
 					   colour-square) and its content. Every row subgrids it so the glyphs line up. The

@@ -50,14 +50,33 @@ export const sheetStyles = css`
 		container-type: anchored;
 
 		/* Track mechanics are self-properties — a container query cannot set them on the container
-		   itself — so they are unconditional. Harmless in anchored mode: without the spacer the
-		   single child cannot overflow the frame, so there is no scroll range and both the snapping
-		   and the timeline below sit inert. */
+		   itself — so they are unconditional. Inert in anchored mode as far as SCROLLING goes: without
+		   the spacer the single child cannot overflow the frame, so there is no scroll range and both
+		   the snapping and the timeline below sit idle. */
 		overflow-x: hidden;
 		overflow-y: auto;
 		scroll-snap-type: block mandatory;
 		scrollbar-width: none;
 		overscroll-behavior: contain;
+
+		/* …but the clip that comes with a scroll container is NOT inert, and it silently cost the
+		   anchored editor its depth: descendants are cropped to a SQUARE padding box, so the body's
+		   rounded corners were sliced off and its drop shadow — painted outside its border box —
+		   was discarded whole. Only anchored mode suffers, and for a telling reason: there the frame
+		   and the body share one box exactly, while a sheet's frame is the entire viewport, so a
+		   sheet's shadow falls inside it and survives.
+		   The frame cannot be styled per mode (a container query never matches its own container), so
+		   rather than removing the clip we make it a NO-OP: the frame takes the body's own outer shape,
+		   and the depth moves here — an element's own shadow is never subject to its own overflow.
+		   Adopters declare both through these properties; a body with square corners needs neither.
+		   Being mode-agnostic, the radius rounds the TRACK's corners in sheet mode too. Three of the
+		   four sit on transparent spacer, and the pair along the screen's bottom edge shave the sheet
+		   body by that same radius — measured at 8× and deliberately accepted: a few pixels, inside
+		   the far larger corner radius of the device's own screen. The shadow needs no such caveat; on
+		   a viewport-sized frame it falls outside the viewport. (A sheet's own upward shadow lives on
+		   the body and always worked: there the frame is the whole screen, so it has room to land.) */
+		border-radius: var(--sheet-frame-radius, 0);
+		box-shadow: var(--sheet-frame-shadow, none);
 
 		/* Makes the slide-up on open an animation: the track opens resting at its closed stop and the
 		   gesture module assigns the open offset, which this turns into a scroll. So entry and drag
