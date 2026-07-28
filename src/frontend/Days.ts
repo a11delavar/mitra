@@ -35,6 +35,10 @@ export class Days extends Component {
 	// the sticky axis, and with auto-sized zone columns the width is only known after layout.
 	private timeAxisWidth = 60
 
+	/** Whether the axis has been measured even once, i.e. whether the strip is laid out from a real
+	 * width or still from the CSS approximation (see the `--time-axis-width` declaration). */
+	private axisMeasured = false
+
 	// The all-day lane sticks below the (sticky) day headers, so it needs the header row's height; the
 	// scroll-padding and the scroll→date math need the axis column's laid-out width. The time-column
 	// header cell stretches to both, so the `observeResize` directive on it keeps `--header-height` and
@@ -49,6 +53,20 @@ export class Days extends Component {
 		if (width) {
 			this.timeAxisWidth = width
 			this.style.setProperty('--time-axis-width', `${width}px`)
+			// The day tracks are a FUNCTION of this width — it decides how many whole days fit beside the
+			// axis (see --_visible-days) — so the first real measurement re-fits every column under a strip
+			// that `initialized` already anchored against the approximation's wider, fewer columns. Scroll
+			// anchoring and the mandatory snap then settle it up to a day off the day it was told to frame,
+			// and `handleScroll` reads that slip back as navigation: an arrival in this view walked the
+			// calendar a day back, and with it a month whenever the day crossed one. So re-anchor, once.
+			// Only the FIRST measurement: every later one is a viewport resize or the zone lane folding —
+			// gestures the user is driving, which must not yank the strip.
+			if (!this.axisMeasured) {
+				this.axisMeasured = true
+				this.anchor(this.dates.navigatingDate)
+			}
+			// The axis width decides which days are on screen, so the lane's depth is a function of it too.
+			this.updateLaneHeight()
 		}
 	}
 
@@ -56,6 +74,8 @@ export class Days extends Component {
 
 	protected override connected() {
 		super.connected()
+		// Until the first geometry-backed lane height lands, adopting one is not a change worth animating.
+		this.toggleAttribute('data-lane-immediate', true)
 		this.scheduleTimeUpdate()
 	}
 
@@ -78,45 +98,148 @@ export class Days extends Component {
 
 	protected override async initialized() {
 		this.dates.navigatingDate = this.navigatingDate
-		this.dates.scrollToDate(this.navigatingDate)
+		this.anchor(this.navigatingDate)
 		const now = await this.nowElement
 		now?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+	}
+
+	/**
+	 * Frame `date` as the strip's centre day — deliberately the exact INVERSE of {@link handleScroll}'s
+	 * reading, so an arrival and the reading its own scroll event triggers can never disagree.
+	 *
+	 * `scrollIntoView({ inline: 'center' })` cannot promise that. With an EVEN number of visible days the
+	 * centred box straddles two columns, which is no snap position at all: the mandatory snap breaks the
+	 * tie whichever way it likes, and the reading then answers a day off the day we asked to frame —
+	 * which `handleScroll` commits as navigation, and as a MONTH hop whenever that day ends a month.
+	 * Deriving the position instead also reaches days outside the render window, which the element
+	 * lookup in `CalendarDatesController.scrollToDate` silently skipped.
+	 */
+	private anchor(date: DateTime) {
+		void this.updateComplete.then(() => {
+			const first = this.days[0]
+			const timeAxisWidth = this.hideTime ? 0 : this.timeAxisWidth
+			const columnWidth = (this.scrollWidth - timeAxisWidth) / this.days.length
+			if (!first || !(columnWidth > 0)) {
+				return
+			}
+			// Consecutive local days, so the (DST-tolerant, hence rounded) day distance IS the index.
+			const index = Math.round((date.dayStart.valueOf() - first.dayStart.valueOf()) / 86_400_000)
+			// The column that must sit at the snapport's start for `index` to read back as its centre.
+			const leadingColumn = index - Math.floor((this.clientWidth - timeAxisWidth) / 2 / columnWidth)
+			const distance = Math.max(0, Math.min(leadingColumn * columnWidth, this.scrollWidth - this.clientWidth))
+			// Negated in RTL, where scrollLeft counts backwards — the mirror of handleScroll's Math.abs().
+			this.scrollLeft = getComputedStyle(this).direction === 'rtl' ? -distance : distance
+			// The day's own cell still owns the BLOCK axis, exactly as scrollToDate left it; by now it is
+			// centred inline, so `nearest` has nothing to do there and leaves the position above alone.
+			this.renderRoot.querySelector(`[data-date="${date.dayStart.toISOString()}"]`)?.scrollIntoView({ block: 'center', inline: 'nearest' })
+		})
 	}
 
 	protected override updated(props: PropertyValues<this>) {
 		if (props.has('navigatingDate') && !this.navigatingDate.dayStart.equals(this.dates.navigatingDate.dayStart)) {
 			this.dates.navigatingDate = this.navigatingDate
-			this.dates.scrollToDate(this.navigatingDate)
+			this.anchor(this.navigatingDate)
 		}
 		this.style.setProperty('--_days-length', this.days.length.toString())
 		this.style.setProperty('--_tz-count', this.timeZoneColumns.length.toString())
 		// Whether there is a lane to fold at all — the rail only claims inline drags when there is.
 		this.toggleAttribute('data-alternative-zones', this.timeZoneColumns.length > 1)
 		if (this.hideTime) {
-			// No axis to measure — let the [hideTime] rule's 0px win over a stale inline measurement.
+			// No axis to measure — let the [hideTime] rule's 0px win over a stale inline measurement. And
+			// with no axis there is no ResizeObserver to release the lane's transition gate, so this view
+			// simply keeps snapping; the alternative is a gate nothing ever drops.
 			this.style.removeProperty('--time-axis-width')
+		}
+		// The lane answers to what is ON SCREEN, so a save or an SSE tick can change its height with no
+		// scroll at all; scrolling itself goes through handleScroll.
+		this.updateLaneHeight()
+	}
+
+	/** The window's all-day bars as (lane, day-range) triples — the placement {@link allDayTemplate}
+	 * gave them, kept so {@link updateLaneHeight} can ask which lanes the visible days actually reach
+	 * without re-packing anything. */
+	private allDayPlacements = new Array<{ lane: number, start: number, end: number }>()
+
+	/**
+	 * Size the lane to the days ON SCREEN — the deepest lane any visible bar sits in, plus the trailing
+	 * empty one. The packing itself stays window-wide (see {@link allDayTemplate}), which is the whole
+	 * point: a bar's lane never changes as you scroll, so nothing ever jumps vertically — only the lane's
+	 * own height follows, and only when the set of visible bars reaches a different depth.
+	 *
+	 * Sizing off the ±35-day render window instead, as this once did, meant a pileup weeks away from
+	 * anything on screen set the height: measured against the sample calendar the lane stood 10 rows tall
+	 * everywhere while the median week needed 1, and 6 of 1087 scroll positions actually wanted all 10.
+	 */
+	private updateLaneHeight() {
+		const timeAxisWidth = this.hideTime ? 0 : this.timeAxisWidth
+		const columnWidth = (this.scrollWidth - timeAxisWidth) / this.days.length
+		// Pre-layout there is no viewport to ask about — the lane holds its opening lane until there is one.
+		if (!(columnWidth > 0)) {
+			return
+		}
+		// The same whole-column reading as handleScroll (see there — the snap is what makes it exact).
+		const leadingColumn = Math.round(Math.abs(this.scrollLeft) / columnWidth)
+		const trailingColumn = leadingColumn + Math.ceil((this.clientWidth - timeAxisWidth) / columnWidth)
+		const clamp = (index: number) => Math.min(Math.max(0, index), this.days.length - 1)
+		// An empty buffer leaves an empty range (first > last), which no placement can intersect.
+		const first = this.days[clamp(leadingColumn)]?.dayStart.valueOf() ?? 0
+		const last = this.days[clamp(trailingColumn)]?.dayStart.valueOf() ?? -1
+		let deepest = -1
+		for (const placement of this.allDayPlacements) {
+			if (placement.start <= last && placement.end >= first) {
+				deepest = Math.max(deepest, placement.lane)
+			}
+		}
+		// +2 for the lane the deepest bar occupies and the trailing empty one (the drag-to-create target);
+		// a viewport with no bars at all is just that empty lane.
+		this.style.setProperty('--_all-day-rows', `${deepest + 2}`)
+		// Release the transition gate on the first height derived from SETTLED geometry and from bars that
+		// have actually arrived — that height is where the lane opens, not a change to animate. Both halves
+		// are load-bearing (each was removed once as redundant, and each put the animation back):
+		//  - the axis measurement, because the day columns are a function of it, so a depth read from the
+		//    approximation is about to change again on its own — that one slid the lane open on every view
+		//    switch;
+		//  - a non-empty placement list, because on a cold load the strip renders before the entry fetch
+		//    resolves, so the first height is a bare empty lane and the real one arrives with the data —
+		//    releasing before then slid the lane open on every page load.
+		// A calendar with no all-day entries at all therefore keeps snapping, which is what it should do:
+		// there is only ever the one empty lane to show.
+		if ((this.axisMeasured || this.hideTime) && this.allDayPlacements.length && this.hasAttribute('data-lane-immediate')) {
+			requestAnimationFrame(() => this.removeAttribute('data-lane-immediate'))
 		}
 	}
 
 	@eventListener('scroll')
 	protected handleScroll(e: Event) {
+		// Nothing read out of a strip fitted from the axis APPROXIMATION may be committed: it holds a
+		// different number of day columns than the measured layout one frame later, so the date under the
+		// viewport's centre is about to change — and `updateHeaderSize` re-anchors the strip the moment it
+		// does. Answering now would fix the arrival at a position the re-fit was going to move.
+		if (!this.axisMeasured && !this.hideTime) {
+			return
+		}
+
 		const target = e.target as HTMLElement
 		const timeAxisWidth = this.hideTime ? 0 : this.timeAxisWidth // measured (see updateHeaderSize)
 		const colWidth = (target.scrollWidth - timeAxisWidth) / this.days.length
 
-		// The browser centers the element within the "snapport", which excludes the time axis.
-		// So we must calculate the center pixel of the snapport, not the whole client area.
-		// Math.abs() is required because in RTL, scrollLeft is negative.
-		const scrollDistance = Math.abs(target.scrollLeft)
-		const snapportCenterOffset = timeAxisWidth + (target.clientWidth - timeAxisWidth) / 2
-		const centerPixel = scrollDistance + snapportCenterOffset
-
-		const centerCol = Math.floor((centerPixel - timeAxisWidth) / colWidth)
+		// Counted from the column at the snapport's START — which the mandatory snap makes a whole column,
+		// so rounding to it absorbs the sub-pixel difference between this AVERAGED pitch and the real,
+		// 1/64px-quantised column positions. Reading the centre PIXEL's column instead put the answer on a
+		// knife edge: the half-snapport spans a whole number of columns whenever an EVEN number of days
+		// fits, so the centre lands exactly on a column boundary and that sub-pixel noise alone decided
+		// which side of the floor() it fell — one day either way, per arrival, walking a month at every
+		// month boundary. Math.abs() because in RTL scrollLeft counts backwards.
+		// This is `anchor`'s exact inverse; the two must stay that way (see the note there).
+		const leadingCol = Math.round(Math.abs(target.scrollLeft) / colWidth)
+		const centerCol = leadingCol + Math.floor((target.clientWidth - timeAxisWidth) / 2 / colWidth)
 		const centerDate = this.days[Math.min(Math.max(0, centerCol), this.days.length - 1)]
 
 		if (centerDate && !centerDate.dayStart.equals(this.dates.navigatingDate.dayStart)) {
 			this.dates.navigatingDate = centerDate
 		}
+
+		this.updateLaneHeight()
 	}
 
 	static override get styles() {
@@ -147,6 +270,18 @@ export class Days extends Component {
 				syntax: '<length>';
 				inherits: false;
 				initial-value: 160px;
+			}
+
+			/* Registered for the same reason --zone-width is: a registered <length> can be TRANSITIONED,
+			   so when the lane's depth changes (see updateLaneHeight) the height — and the timed row
+			   derived from it, and the sticky label offset Day.ts reads off it — glide open instead of
+			   snapping. Inherits, because Day.ts reads it from inside a day column. The initial-value
+			   must be computationally independent, so it is 22px rather than the 1.375rem it mirrors;
+			   that value only ever applies outside mitra-days, where nothing would have inherited. */
+			@property --_all-day-lane-height {
+				syntax: '<length>';
+				inherits: true;
+				initial-value: 22px;
 			}
 
 			/* The width of ONE alternative time-zone column, and what it is when the lane is out.
@@ -205,9 +340,9 @@ export class Days extends Component {
 				     them, i.e. n × (1.375rem + 1px) − 1px. The lane then overhangs that row by 1px (see the
 				     margin-block-end on .all-day) so it owns the gutter below it in both scroll states; a row
 				     sized to include that pixel would stack it on top of the grid gap and the strip would sit
-				     2px clear of the timed grid at scroll-top but 1px when stuck. The min() caps a pileup at
-				     5½ lanes — past MAX_VISIBLE_LANES the lane scrolls within itself instead (see
-				     [data-all-day-overflow]), the half-cut lane at the fold being the hint.
+				     2px clear of the timed grid at scroll-top but 1px when stuck. UNCAPPED, deliberately: the
+				     lane is always exactly as tall as the bars on screen need (see updateLaneHeight), which
+				     is what lets it never scroll and never crop — and it may never scroll, see .all-day.
 				   - The timed row is the whole-day-fit height (100% minus the rows and gaps above) times the
 				     zoom (≥ 1, so the grid always fills; DayDensityController owns --_week-zoom). Still a CSS
 				     formula and not a JS-measured px: the 100% re-resolves atomically in the same layout pass
@@ -216,8 +351,10 @@ export class Days extends Component {
 				     The minute grids inside (.axis, .overlays, mitra-day .entries) use fr tracks, so their
 				     1440 rows sum to exactly this row whatever it is — no gap below, no overflow. Not
 				     minmax(…, 1fr): a flexing row can grow past what anything inside was sized against. */
-				--_all-day-lane-height: min(calc(var(--_all-day-rows, 1) * (1.375rem + 1px) - 1px), calc(5.5 * (1.375rem + 1px) - 1px));
-				--grid-min-height: calc(var(--_week-zoom, 1) * (100% - var(--header-height, 2.75rem) - var(--_all-day-lane-height) - 2px));
+				--_all-day-lane-height: calc(var(--_all-day-rows, 1) * (1.375rem + 1px) - 1px);
+				/* max(0px, …) because the lane is uncapped: a viewport buried under bars can claim the whole
+				   strip, and a NEGATIVE track would void the track list and collapse the grid outright. */
+				--grid-min-height: max(0px, calc(var(--_week-zoom, 1) * (100% - var(--header-height, 2.75rem) - var(--_all-day-lane-height) - 2px)));
 				grid-template-rows: auto var(--_all-day-lane-height) var(--grid-min-height);
 				/* LOAD-BEARING, not cosmetic — see the free-space invariant above: this is what keeps the
 				   auto header row out of the stretch that would bloat it beyond its content and lock in. */
@@ -280,7 +417,23 @@ export class Days extends Component {
 				   already sets it per frame. Deliberately gentle and not front-loaded: a column stops
 				   growing once it reaches its content width, well short of the ceiling, so a snappy curve
 				   would spend the whole visible part of the motion in its first few frames. */
-				transition: --zone-width 0.3s cubic-bezier(0.3, 0, 0.4, 1);
+				/* The lane's depth is the second thing here worth animating: crossing into a dense stretch
+				   changes its height (and the timed row's, which is derived from it) and a snap there reads
+				   as the grid glitching mid-scroll. Quick and eased-out, because it rides a scroll gesture —
+				   it must be over before the next column settles, not still travelling. */
+				--_lane-height-duration: 0.18s;
+				transition: --zone-width 0.3s cubic-bezier(0.3, 0, 0.4, 1), --_all-day-lane-height var(--_lane-height-duration) ease-out;
+
+				/* The lane's FIRST height is where it starts, not a change to it: the depth is derived from
+				   the strip's geometry, which isn't known until the first layout, so the opening value is
+				   always the registered 22px placeholder. Left to transition, the lane visibly slid open on
+				   every mount and view switch — and raced the view transition doing it. Dropped one frame
+				   after the first geometry-backed height lands (see updateLaneHeight), so only real changes
+				   animate. Its own property rather than transition:none, which would take the zone fold's
+				   animation with it. */
+				&[data-lane-immediate] {
+					--_lane-height-duration: 0s;
+				}
 				/* Pre-measurement approximation: the anchor column plus one foldable one per alternative. */
 				--time-axis-width: calc(3.75rem + (var(--_tz-count, 1) - 1) * var(--zone-width));
 
@@ -375,14 +528,31 @@ export class Days extends Component {
 					   the content-derived minimum, freezing the lane at that min while further bars overflow
 					   it onto the timed grid. Explicit tracks (mirrored by the definite parent row derived
 					   from the same --_all-day-rows) keep the lane and its row in lockstep with the bars. */
-					grid-template-rows: repeat(var(--_all-day-rows, 1), 1.375rem);
+					/* The WINDOW's lanes, not the visible ones the box is sized to (--_all-day-rows): the box
+					   height is animated and its track count cannot be, so deriving both from the same count
+					   made them disagree for the length of every transition — the box shrank ahead of the
+					   tracks, leaving a band of bare lane background below the last day cell, and grew behind
+					   them, letting the deepest bars paint over the gutter and into the timed grid. Sized to
+					   the window the content is always at least as tall as the box (the visible days are a
+					   subset of the window's, so its lanes are too), so the overflow below is the only state
+					   there is and clipping it is enough. Only ever whole lanes are clipped, and only lanes
+					   no visible bar occupies. */
+					grid-template-rows: repeat(var(--_all-day-window-rows, 1), 1.375rem);
+					/* Safe — clip is not a scroll container, so the bar titles above still stick against
+					   mitra-days (an auto/scroll here would capture them; see the invariant below). */
+					overflow-y: clip;
+					/* The gutter between the lane and the timed grid. It used to be the last pixel of the
+					   lane's own background showing past the tracks; now that the cells always reach the
+					   box's edge, the box has to draw it — and clipping happens inside the border, so it
+					   survives every frame of the animation. */
+					border-block-end: 1px solid var(--color-background);
 					gap: 1px;
 					align-content: start;
 					background-color: var(--color-background);
 					/* The strip is 1px TALLER than its row (same trick as mitra-day > .header's margin-inline),
-					   so its own box covers the grid gap below and that last pixel of lane background is the
-					   only thing between the bars and the timed grid. The lane is sticky: the row gap scrolls
-					   away under it once it sticks, so a gutter drawn by the GRID is 1px at scroll-top and 0px
+					   so its own box covers the grid gap below and the border-block-end above is the only
+					   thing between the bars and the timed grid. The lane is sticky: the row gap scrolls away
+					   under it once it sticks, so a gutter drawn by the GRID is 1px at scroll-top and 0px
 					   when stuck. Drawn by the LANE it travels with it — the same 1px either way. */
 					margin-block-end: -1px;
 
@@ -422,21 +592,6 @@ export class Days extends Component {
 							position: sticky;
 							inset-inline-start: calc(var(--time-axis-width, 0px) + 0.375rem);
 						}
-					}
-				}
-
-				/* A pileup past MAX_VISIBLE_LANES scrolls within the lane (whose row the grid-template-rows
-				   min() above has capped). Gated by an attribute (set alongside --_all-day-rows) rather
-				   than an unconditional overflow: a scroll container captures the bar titles' inline
-				   stickiness above, so the common fully-visible lane must not become one — the sliding
-				   titles pause only during the rare pileup, where reachability matters more. */
-				&[data-all-day-overflow] .all-day {
-					overflow-y: auto;
-					overscroll-behavior: contain;
-					scrollbar-width: none;
-
-					&::-webkit-scrollbar {
-						display: none;
 					}
 				}
 
@@ -602,10 +757,6 @@ export class Days extends Component {
 		`
 	}
 
-	/** Occupied lanes before the strip stops growing and scrolls within itself instead — in sync with
-	 * the grid-template-rows min() cap (5½ = these + the empty lane + the half-cut scroll hint). */
-	private static readonly MAX_VISIBLE_LANES = 4
-
 	private get allDayTemplate() {
 		// Bars render (and clip) against the window — a run's parts beyond it are offscreen by definition.
 		const { days, offset } = this.dates.window
@@ -617,14 +768,22 @@ export class Days extends Component {
 		// The lane always renders (even with no all-day events) so it stays a drag target for creating one.
 		const runs = this.segments.runsIn(first, last, entry => !!entry.allDay)
 		const slots = this.segments.allDaySlots
-		// The lanes the window's REAL bars occupy, driving the strip's explicit row tracks (+1 trailing
-		// empty lane — the create target). A move's ghost sits at the lane it will land in (see
-		// EntrySegments.slots) but never grows the strip: on release its source's lane frees up, so a
-		// ghost with nowhere to fit rides the trailing empty lane instead of spawning a track of its own.
+		// The lanes the window's REAL bars occupy. Packed over the WHOLE window, not the visible days, so a
+		// bar's lane is a fact about the bar and never changes as you scroll — nothing jumps vertically;
+		// only the lane's HEIGHT follows the viewport (see updateLaneHeight). A move's ghost sits at the
+		// lane it will land in (see EntrySegments.slots) but never claims a lane of its own: on release its
+		// source's lane frees up, so a ghost that fits nowhere rides the trailing empty lane instead.
 		const laneCount = runs.reduce((count, segment) => EntryStore.isPreview(segment.entry) ? count : Math.max(count, (slots.get(segment.entry) ?? -1) + 1), 0)
 		const laneOf = (entry: Entry) => Math.min(slots.get(entry) ?? laneCount, laneCount)
-		this.style.setProperty('--_all-day-rows', `${laneCount + 1}`)
-		this.toggleAttribute('data-all-day-overflow', laneCount > Days.MAX_VISIBLE_LANES)
+		// What updateLaneHeight reads back to size the lane — the real bars only, so a mid-drag ghost can't
+		// grow the lane under the pointer dragging it.
+		this.allDayPlacements = runs
+			.filter(segment => !EntryStore.isPreview(segment.entry))
+			.map(segment => ({ lane: laneOf(segment.entry), start: segment.dayValue!, end: segment.runEnd.dayValue! }))
+		// The lane's TRACKS (see the .all-day rule) — every lane the window holds, so the content the
+		// animated box slides over is stable and always taller than it.
+		this.style.setProperty('--_all-day-window-rows', `${laneCount + 1}`)
+		this.updateLaneHeight()
 		// Built once per render so each bar's column is an O(1) numeric lookup (segments cache their dayValue).
 		const lastValue = last.dayStart.valueOf()
 		const columnByDay = new Map(days.map((day, index) => [day.dayStart.valueOf(), offset + index]))

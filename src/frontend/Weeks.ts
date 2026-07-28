@@ -45,9 +45,24 @@ export class Weeks extends Component {
 
 		const rowHeight = target.scrollHeight / rowCount
 		const centerRow = Math.floor((target.scrollTop + target.clientHeight / 2) / rowHeight)
-		const centerDate = this.days[Math.min(centerRow * daysInWeek, this.days.length - 1)]
+		const row = this.days.slice(centerRow * daysInWeek, (centerRow + 1) * daysInWeek)
+		const centerDate = row[0] ?? this.days.at(-1)
+		if (!centerDate) {
+			return
+		}
 
-		if (centerDate && !centerDate.monthStart.equals(this.buffer.navigatingDate.monthStart)) {
+		// A row that straddles two months belongs to both, and the date we already hold is what says
+		// WHICH — so when it sits in the centred row there is nothing to re-derive. Without this, the
+		// row's first day answers instead, and its month is the earlier one: every arrival in this view
+		// re-anchors the scroll (see `initialized`/`updated`), whose scroll event lands here, so
+		// switching in on any week that starts in the previous month reported that month and threw the
+		// day away — a keyboard hop to the month view silently walked a month back.
+		const held = this.buffer.navigatingDate.dayStart.valueOf()
+		if (row.some(day => day.dayStart.valueOf() === held)) {
+			return
+		}
+
+		if (!centerDate.monthStart.equals(this.buffer.navigatingDate.monthStart)) {
 			this.buffer.navigatingDate = centerDate
 		}
 	}
