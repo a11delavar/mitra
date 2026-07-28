@@ -6,7 +6,7 @@ import { NotificationSubscription } from './NotificationSubscription.js'
 import { Session } from './Session.js'
 import { State } from './State.js'
 
-dotenv.config({ path: `${import.meta.dirname}/.env` })
+dotenv.config({ path: `${import.meta.dirname}/.env`, quiet: true })
 
 const dbLogger = createLogger('Database')
 
