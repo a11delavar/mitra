@@ -1,6 +1,6 @@
 import { Api, HttpError, apiError, apiAuthenticator, type ApiAuthenticator } from '@a11d/api'
 import { type DateTime } from '@3mo/date-time'
-import type { ChangelogSection, Entry, Integration, RecurrenceScope, Source, User, UserTimeZone } from 'shared'
+import { applyOrder, byOrder, type ChangelogSection, type Entry, type Integration, type RecurrenceScope, type Source, type User, type UserTimeZone } from 'shared'
 
 /**
  * Surface the server's error message on failed responses. Without a registered
@@ -168,7 +168,14 @@ export function createEvent(entry: Entry) {
 }
 
 export async function fetchIntegrations() {
-	return integrations = await Api.get<Array<Integration>>('/integrations')
+	const fetched = await Api.get<Array<Integration>>('/integrations')
+	// Display order is ONE comparator (shared/order.ts byOrder) applied at this boundary: the server
+	// responds in natural (insertion) order, and the STABLE sort floats manually placed rows over it
+	// while keeping the never-ordered rest exactly as it always was.
+	for (const integration of fetched) {
+		integration.sources = [...integration.sources].sort(byOrder) as unknown as Integration['sources']
+	}
+	return integrations = fetched.sort(byOrder)
 }
 
 export function getIntegrations() {
@@ -181,6 +188,18 @@ export function getSource(id: string) {
 
 export function getIntegrationFor(sourceId: string) {
 	return integrations.find(i => [...i.sources].some(s => s.id === sourceId))
+}
+
+/**
+ * An account's imported sources — the rows the sidebar shows, in display order.
+ *
+ * A FUNCTION here rather than a getter on `Integration`, for the same reason `getCapabilities` is
+ * one: a provider the client doesn't model arrives as a plain DTO with NO prototype, so it carries
+ * no getters at all. The backend-only Dev integration is exactly that — and since the dev sample
+ * data is Dev, a getter would work against every real provider and break only in development.
+ */
+export function getEnabledSources(integration: Integration) {
+	return [...integration.sources].filter(source => source.enabled)
 }
 
 /**
@@ -204,6 +223,24 @@ export function updateSourceColor(id: string, color: string) {
 
 export function renameSource(id: string, name: string) {
 	return Api.put<Source>(`/sources/${id}/name`, { name })
+}
+
+/** Persist a new source order within `integration` — `ids` is its visible rows in their new order.
+ * The local store is re-sorted first with the very rule the server writes (see shared/order.ts),
+ * so the sidebar reflects the change without a refetch, like rename/recolour. */
+export function reorderSources(integration: Integration, ids: Array<string>) {
+	const sources = [...integration.sources]
+	applyOrder(sources, ids)
+	integration.sources = sources.sort(byOrder) as unknown as Integration['sources']
+	return Api.put('/sources/order', { ids })
+}
+
+/** Persist a new account order — all of the user's integrations in their new order, applied to the
+ * local store first (mirrors {@link reorderSources}). */
+export function reorderIntegrations(ids: Array<string>) {
+	applyOrder(integrations, ids)
+	integrations.sort(byOrder)
+	return Api.put('/integrations/order', { ids })
 }
 
 /**

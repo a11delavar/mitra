@@ -26,6 +26,13 @@ Mitra brings in the calendars and task databases you already use and syncs them 
 - **[Apple Calendar (iCloud)](integrations/apple-calendar.md)** — connect with an app-specific password.
 - **[Notion](integrations/notion.md)** — turn Notion database views into two-way task sources.
 
+## Use Mitra
+
+Day-to-day behaviour, whichever accounts you connected.
+
+- **[Calendars & task lists](guides/calendars.md)** — choose what gets imported, then rename, recolor, reorder and hide it; and pick where new entries land.
+- **[Keyboard shortcuts](guides/keyboard-shortcuts.md)** — drive the views, navigation and entries from the keyboard.
+
 ## Administer your instance
 
 - **[Multi-user & sign-in (OIDC)](guides/multi-user.md)** — share one deployment with family or a team.

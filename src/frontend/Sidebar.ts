@@ -1,8 +1,9 @@
-import { Component, component, html, css, property, state, event, eventListener } from '@a11d/lit'
-import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, getPrimarySource, setDefaultSource, reimportSource, reimportIntegration } from './Api.js'
+import { Component, component, html, css, property, state, event, eventListener, unsafeCSS } from '@a11d/lit'
+import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, getPrimarySource, setDefaultSource, reimportSource, reimportIntegration, reorderSources, reorderIntegrations, getEnabledSources } from './Api.js'
 import { DialogAbout, hasUnseenChanges } from './DialogAbout.js'
 import { DialogIntegration } from './DialogIntegration.js'
-import { SourceType, type Source } from 'shared'
+import { SourceType, type Integration, type Source } from 'shared'
+import { ReorderabilityController, ReorderabilityState } from '@3mo/reorderability'
 import { outlineStyles } from './components/outlineStyles.js'
 import { canInstall, promptInstall, onInstallAvailabilityChange } from './pwa.js'
 
@@ -12,6 +13,61 @@ export class Sidebar extends Component {
 	/** A source was hidden or shown — the calendar listens to refetch through its view transition. */
 	@event() readonly sourcesChange!: EventDispatcher
 	@property({ type: Boolean, reflect: true }) open = false
+
+	/**
+	 * Drag-to-reorder (@3mo/reorderability), which the ⋯ menus' Move up/down mirror. Grouping is ONE
+	 * CONTROLLER PER LIST — a controller only ever sees the items registered with it, so the accounts
+	 * reorder among themselves and each account's sources among their own siblings, and a drag can
+	 * never carry a row into another account (which is exactly the current feature's promise).
+	 *
+	 * The `handle` is what disambiguates the two nesting levels: a `.source` sits INSIDE a
+	 * `.integration`, so a press on a row is in the path of both controllers' items — the accounts
+	 * controller only grabs from the heading's own `.title`, so it stands down for a row (and for the
+	 * heading's ⋯ and its menu, which stay plain buttons).
+	 */
+	private readonly integrationsReorder = new ReorderabilityController(this, {
+		handleReorder: (source, destination) => {
+			const ids = getIntegrations().map(integration => integration.id)
+			this.commitOrder(ids, source, destination, () => reorderIntegrations(ids))
+		},
+	})
+
+	/** One per account, created on that account's first render. Safe to create late: the controller
+	 * registers itself as its own event listener, so it survives being constructed after the host has
+	 * connected (a bound-handler field would not — see the package). A disconnected account's
+	 * controller is deliberately NOT disposed: its items deregister themselves with the rows lit
+	 * drops, so it resolves no item and returns — and an id is a UUID, never handed out twice. */
+	private readonly sourcesReorder = new Map<string, ReorderabilityController>()
+
+	private sourcesReorderOf(integration: Integration) {
+		let controller = this.sourcesReorder.get(integration.id)
+		if (!controller) {
+			controller = new ReorderabilityController(this, {
+				handleReorder: (source, destination) => {
+					const ids = getEnabledSources(integration).map(source => source.id)
+					this.commitOrder(ids, source, destination, () => reorderSources(integration, ids))
+				},
+			})
+			this.sourcesReorder.set(integration.id, controller)
+		}
+		return controller
+	}
+
+	/** The one commit path for both the drag and the ⋯ menu: move `ids` and write them wholesale.
+	 * Optimistic — the Api reorder functions re-sort the local store before the request — so this
+	 * re-renders at once and falls back to the server's truth if the write fails. */
+	private commitOrder(ids: Array<string>, from: number, to: number, commit: () => Promise<unknown>) {
+		if (from === to || from < 0 || to < 0 || to >= ids.length) {
+			return
+		}
+		ids.splice(to, 0, ...ids.splice(from, 1))
+		const request = commit()
+		this.requestUpdate()
+		request.catch(async () => {
+			await fetchIntegrations()
+			this.requestUpdate()
+		})
+	}
 
 	// The install button appears/disappears with the browser's installability signal (see pwa.ts).
 	private unsubscribeInstallAvailability?: () => void
@@ -425,7 +481,22 @@ export class Sidebar extends Component {
 				.integration { row-gap: 0.5rem; }
 				.sources { row-gap: 0.125rem; }
 
-				/* The account a group of sources came from. */
+				/* Reordering (@3mo/reorderability): while a drag is in flight THIS element carries
+				   [data-reordering] and the grabbed item [data-reorderability=dragging] — the siblings
+				   glide aside, the grabbed one rides the pointer raw (its transform is driven per frame).
+				   Everything is transforms only, so the subgrid tracks the alignment rests on are never
+				   touched; the attributes and transforms clear together on release, and the store's
+				   re-sorted render lands in the same task, so the settled order paints exactly once,
+				   transition-free — which is why this transition is scoped to the attribute. */
+				&[data-reordering] {
+					.source:not([data-reorderability=${unsafeCSS(ReorderabilityState.Dragging)}]),
+					.integration:not([data-reorderability=${unsafeCSS(ReorderabilityState.Dragging)}]) {
+						transition: transform 0.15s ease;
+					}
+				}
+
+				/* The account a group of sources came from. Its title is the block's drag handle, hence
+				   the grab cursor and no text selection there (the ⋯ beside it stays a plain button). */
 				.integration > header {
 					font-size: 0.75rem;
 					font-weight: 600;
@@ -437,6 +508,8 @@ export class Sidebar extends Component {
 						white-space: nowrap;
 						overflow: hidden;
 						text-overflow: ellipsis;
+						cursor: grab;
+						user-select: none;
 					}
 
 					> mitra-icon-button {
@@ -448,6 +521,11 @@ export class Sidebar extends Component {
 				.source {
 					min-height: 1.75rem;
 					border-radius: 0.375rem;
+					/* The whole row is its own drag handle — a mouse drag must never start a text
+					   selection, and the grab cursor is the affordance; the row's own controls keep their
+					   pointer cursors, and the rename field restores text behaviour below. */
+					cursor: grab;
+					user-select: none;
 
 					&:hover {
 						background-color: color-mix(in srgb, var(--color-text) 6%, transparent);
@@ -499,6 +577,7 @@ export class Sidebar extends Component {
 						   than ellipsis-clip while typing, and give it a field-like outline. */
 						&[contenteditable=plaintext-only] {
 							cursor: text;
+							user-select: text;
 							text-overflow: clip;
 							outline: 1px solid var(--color-accent, var(--color-text-muted));
 							outline-offset: 2px;
@@ -521,6 +600,16 @@ export class Sidebar extends Component {
 							}
 						}
 					}
+				}
+
+				/* The grabbed row/block lifts above its gliding siblings on an opaque backing — after the
+				   hover rule, so the lift's backing wins over the row's own hover chip while it's carried. */
+				.source[data-reorderability=${unsafeCSS(ReorderabilityState.Dragging)}], .integration[data-reorderability=${unsafeCSS(ReorderabilityState.Dragging)}] {
+					z-index: 5;
+					background-color: var(--color-background);
+					border-radius: 0.375rem;
+					box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.25);
+					cursor: grabbing;
 				}
 
 				/* Every glyph the sidebar's own buttons carry is one size. */
@@ -721,6 +810,22 @@ export class Sidebar extends Component {
 		this.requestUpdate()
 	}
 
+	/** Shift a source one slot within its integration — the ⋯ menu's keyboard/touch-reachable twin of
+	 * the drag, committing through the very same path. Reordering is what elects the fallback default
+	 * ("the first one shown"), so moving a source to the top doubles as picking the default when none
+	 * is stored. */
+	private moveSource(integration: Integration, source: Source, delta: number) {
+		const ids = getEnabledSources(integration).map(source => source.id)
+		const index = ids.indexOf(source.id)
+		this.commitOrder(ids, index, index + delta, () => reorderSources(integration, ids))
+	}
+
+	private moveIntegration(id: string, delta: number) {
+		const ids = getIntegrations().map(integration => integration.id)
+		const index = ids.indexOf(id)
+		this.commitOrder(ids, index, index + delta, () => reorderIntegrations(ids))
+	}
+
 	/** What the brand row admits about the build: a bare `dev` when the build is main past the last tag
 	 * (the rolling `dev` image — and a git-less local fallback), otherwise the version as it is — the
 	 * tag on a release, the whole describe string for anything murkier: dirty trees, pre-release tags,
@@ -756,8 +861,8 @@ export class Sidebar extends Component {
 					</span>
 				</button>
 				<div class="integrations">
-					${getIntegrations().map(i => html`
-						<div class="integration">
+					${getIntegrations().map((i, index, integrations) => html`
+						<div class="integration" ${this.integrationsReorder.item({ index, handle: '.title' })}>
 							<header>
 								<span class="title">${i.credentials?.username || i.type}</span>
 								<mitra-icon-button icon="more-horizontal" label=${t('Integration options')} style="anchor-name: --anchor-${i.id}" @click=${this.toggleMenu}></mitra-icon-button>
@@ -765,6 +870,15 @@ export class Sidebar extends Component {
 									<button @click=${(e: Event) => { this.closeMenu(e); this.openDialog(i.id) }}>
 										<mitra-icon icon="pencil"></mitra-icon>
 										${t('Edit')}
+									</button>
+									${/* The drag reorder's accessible, discoverable twin (see SidebarReorderController). */''}
+									<button ?disabled=${index === 0} @click=${(e: Event) => { this.closeMenu(e); this.moveIntegration(i.id, -1) }}>
+										<mitra-icon icon="arrow-up"></mitra-icon>
+										${t('Move up')}
+									</button>
+									<button ?disabled=${index === integrations.length - 1} @click=${(e: Event) => { this.closeMenu(e); this.moveIntegration(i.id, 1) }}>
+										<mitra-icon icon="arrow-down"></mitra-icon>
+										${t('Move down')}
 									</button>
 									${/* Re-import only — there is deliberately no "sync now" here: syncing runs itself,
 									   and offering to trigger it would imply what's on screen might be stale. */''}
@@ -781,8 +895,8 @@ export class Sidebar extends Component {
 								</menu>
 							</header>
 							<div class="sources">
-								${i.sources.filter(source => source.enabled).map(source => html`
-									<div class="source" ?data-hidden=${source.hidden}>
+								${getEnabledSources(i).map((source, sourceIndex, sources) => html`
+									<div class="source" ${this.sourcesReorderOf(i).item({ index: sourceIndex })} ?data-hidden=${source.hidden}>
 										${/* The shared source icon (see SourceIcon), filled here for the source new entries
 										    land in — which is what clicking it toggles. */''}
 										<button class="marker"
@@ -794,7 +908,7 @@ export class Sidebar extends Component {
 											<mitra-source-icon .source=${source} ?selected=${this.isDefault(source)}></mitra-source-icon>
 										</button>
 										${this.getNameTemplate(source)}
-										${this.getActionsTemplate(source)}
+										${this.getActionsTemplate(i, source, sourceIndex, sources.length)}
 									</div>
 							`)}
 							</div>
@@ -861,7 +975,7 @@ export class Sidebar extends Component {
 		`
 	}
 
-	private getActionsTemplate(source: Source) {
+	private getActionsTemplate(integration: Integration, source: Source, index: number, count: number) {
 		return html`
 			${/* The ⋯ leads and the eye trails, against convention: the eye is the one that stays on show for
 			    a hidden source, and only in the last slot does it sit on the trailing edge rather than floating
@@ -882,6 +996,15 @@ export class Sidebar extends Component {
 						<mitra-icon icon="palette"></mitra-icon>
 						<mitra-color-picker .value=${source.color} @change=${(e: CustomEvent) => this.setSourceColor(source, e.detail, (e.currentTarget as HTMLElement).closest('[popover]')!)}></mitra-color-picker>
 					</div>
+					${/* The drag reorder's accessible, discoverable twin (see SidebarReorderController). */''}
+					<button ?disabled=${index === 0} @click=${(e: Event) => { this.closeMenu(e); this.moveSource(integration, source, -1) }}>
+						<mitra-icon icon="arrow-up"></mitra-icon>
+						${t('Move up')}
+					</button>
+					<button ?disabled=${index === count - 1} @click=${(e: Event) => { this.closeMenu(e); this.moveSource(integration, source, 1) }}>
+						<mitra-icon icon="arrow-down"></mitra-icon>
+						${t('Move down')}
+					</button>
 					<button
 						title=${t('Delete the locally cached entries and import everything from the source again')}
 						@click=${(e: Event) => { this.closeMenu(e); reimportSource(source.id).catch(() => void 0) }}>

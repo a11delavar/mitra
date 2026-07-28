@@ -16,6 +16,11 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	@property({ type: 'string' }) type!: string
 	@property({ type: 'json' }) credentials: TCredentials = {} as TCredentials
 
+	/** Manual sidebar position among the user's integrations (see PUT /integrations/order and
+	 * shared/order.ts). Sorted `asc nulls last`: null = never placed by hand — connection order,
+	 * after every numbered one. */
+	@property({ type: 'number', nullable: true }) order?: number | null
+
 	@oneToMany(() => Source, source => source.integrationId) sources = new Collection<Source>(this)
 
 	constructor() {

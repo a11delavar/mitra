@@ -2,7 +2,7 @@
 title: Multi-user & sign-in (OIDC)
 description: Share one Mitra deployment with family or a team by connecting it to any OpenID Connect provider — everyone signs in with their existing account.
 sidebar:
-  order: 1
+  order: 2
 ---
 
 Out of the box Mitra is **single-user with no login** — fine when only you can reach it. To share one deployment with family or a team, connect it to any **OpenID Connect (OIDC)** provider. Everyone then signs in with their existing account and gets their own private calendars.

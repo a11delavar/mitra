@@ -113,7 +113,9 @@ declare global {
 		"modified": unknown
 		"Month": unknown
 		"Month View": unknown
+		"Move down": unknown
 		"Move or resize just this entry of a series": unknown
+		"Move up": unknown
 		"navigate": unknown
 		"Navigation": unknown
 		"Never": unknown

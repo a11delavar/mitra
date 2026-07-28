@@ -3,16 +3,42 @@ import { orm } from './orm.js'
 import { syncEmitter } from './syncEmitter.js'
 import { cookie } from './auth.js'
 import { GoogleOAuth } from './GoogleOAuth.js'
-import { Integration, GoogleCalendar, Source, createLogger, integrationClassFor } from '../shared/index.js'
+import { Integration, GoogleCalendar, Source, applyOrder, createLogger, integrationClassFor } from '../shared/index.js'
 
 const logger = createLogger('Integrations')
 
 export const integrationsRouter = Router()
 
+// Deliberately NO orderBy: the response stays in natural (insertion) order and the client applies
+// the display comparator itself (`byOrder` at the fetchIntegrations boundary, see shared/order.ts).
+// A SQL `order asc nulls last` was tried and reverted — SQLite's tie order under an ORDER BY is
+// arbitrary, so the never-ordered rows (every pre-feature sidebar) could reshuffle; the client's
+// STABLE sort keeps them exactly as they always were.
 integrationsRouter.get('/', async (req, res) => {
 	const em = orm.em.fork()
 	const integrations = await em.find(Integration, { userId: req.user.id }, { populate: ['sources'] })
 	return res.json(integrations)
+})
+
+// The sidebar's manual account order — the integration-level counterpart of PUT /sources/order:
+// listed integrations take their index, an unlisted one drops back to null (see shared/order.ts).
+// Registered before PUT /:id, which would otherwise read "order" as an id.
+integrationsRouter.put('/order', async (req, res) => {
+	const ids = req.body.ids as Array<string>
+	if (!Array.isArray(ids) || !ids.length || ids.some(id => typeof id !== 'string') || new Set(ids).size !== ids.length) {
+		return res.status(400).json({ error: 'A list of unique integration ids is required' })
+	}
+	const em = orm.em.fork()
+	const integrations = await req.user.integrations(em)
+	const owned = new Set(integrations.map(integration => integration.id))
+	if (ids.some(id => !owned.has(id))) {
+		return res.status(404).json({ error: 'Unknown integration' })
+	}
+	applyOrder(integrations, ids)
+	await em.flush()
+	syncEmitter.emit('updated', req.user.id)
+	logger.debug(`Reordered ${ids.length} integration(s)`)
+	return res.status(204).end()
 })
 
 /** Google Calendar's OAuth consent flow (see GoogleOAuth.ts). Configured deployment-wide via env. */

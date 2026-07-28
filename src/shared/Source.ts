@@ -28,6 +28,11 @@ export class Source {
 	@property({ type: 'string', nullable: true }) color?: string
 	@property({ type: 'boolean' }) hidden = false
 	@property({ type: 'boolean' }) enabled = false
+	/** Manual sidebar position among the integration's sources (see PUT /sources/order and
+	 * shared/order.ts). Sorted `asc nulls last`: null means "never placed by hand" — after every
+	 * numbered row, in discovery order — so a newly found, newly enabled or re-appearing source
+	 * appends at the end instead of reshuffling a hand-ordered list. */
+	@property({ type: 'number', nullable: true }) order?: number | null
 
 	get visible() {
 		return this.enabled && !this.hidden

@@ -42,14 +42,13 @@ Point Mitra at the provider's CalDAV base URL; it discovers the individual calen
 
 While you have the app open, enabled sources are polled about every 10 seconds, so changes made elsewhere show up almost immediately. While nobody's looking, polling relaxes to every few minutes to keep your server's logs quiet — and opening or reloading the app syncs right away, so you never wait on a poll.
 
-## Editing and renaming
+## Editing
 
 - Edits, moves, resizes, and deletes you make in Mitra are written back to the server.
-- You can **rename a source** locally in Mitra (right-click it in the sidebar). Background syncs won't overwrite your custom name — only a genuine rename on the server side is adopted.
-- You can also recolor a source; the color is yours to keep once set.
+- Renaming, recoloring, reordering and hiding a calendar are Mitra's own view of it and work the same for every provider — see **[Calendars & task lists](../guides/calendars.md)**. Your rename survives background syncs; only a genuine rename on the server side is adopted.
 
 ## Troubleshooting
 
 - **Nothing appears after connecting.** Discovered sources start **disabled** by design — open the source picker and enable the ones you want.
-- **A calendar looks out of date after a code update.** Use **Re-import entries** on the source: it drops Mitra's local copy and fetches everything again (a normal sync only pulls deltas, so unchanged entries are never re-read).
+- **A calendar looks out of date after a code update.** Use [**Re-import entries**](../guides/calendars.md#re-import-a-source) on the source: it drops Mitra's local copy and fetches everything again (a normal sync only pulls deltas, so unchanged entries are never re-read).
 - **Connection fails.** Double-check the Server URL includes the scheme (`https://`) and points at the CalDAV endpoint, not the web UI. Watch the [logs](../guides/logging.md) at `debug` level to see the CalDAV round-trips.
