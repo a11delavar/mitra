@@ -98,7 +98,13 @@ export class EntrySegmentComponent extends Component {
 				display: flex;
 				flex-direction: column;
 				gap: 0.125rem;
-				padding: 0.125rem 0.25rem 0;
+				/* Equal on BOTH axes, so whatever leads the first line — a task's mark especially — is inset
+				   the same from the top edge as from the inline-start one. Reached by tightening the inline
+				   padding rather than growing the block padding: the short blocks a zoomed-out week produces
+				   have no vertical room to give, and the 3px accent edge already provides the inline gutter.
+				   (It also used to carry no bottom padding at all, which reads as a deliberate top-anchor only
+				   while the content fills the box — on a short block it just hung the title off the ceiling.) */
+				padding: 0.125rem;
 				background-color: color-mix(in srgb, var(--mitra-entry-segment-color) 25%, var(--color-background));
 				border-inline-start: 3px solid var(--mitra-entry-segment-color);
 				border-radius: var(--border-radius);
@@ -254,7 +260,17 @@ export class EntrySegmentComponent extends Component {
 					> mitra-task-status {
 						float: inline-start;
 						margin-inline-end: 0.25rem;
-						font-size: 0.95rem;
+						/* The mark has to FIT the box below, and at 0.95rem it did not: 16px centred in a 12.31px
+						   box overflowed it by 1.84px at each end. That overflow was the whole trouble — in a
+						   stacked block it left the mark 0.16px off the top edge while its inline-start gap was
+						   8px, so the block looked padded down one side only; in a month bar it made the mark
+						   read as cut off, and oversized beside 0.7rem text. Sized to the line it sits inside
+						   its own box, and the block's (now equal) padding is what spaces it. */
+						/* On the icon BUTTON, which carries its own 1rem (see IconButton) — a font-size on this
+						   host would leave the mark at that size and overflowing. */
+						> mitra-icon-button {
+							font-size: 0.75rem;
+						}
 						/* A box one line tall (the inherited 0.7rem font at line-height 1.1) with its glyph
 						   centered, so the control seats on the heading's first line and only that line is
 						   indented — the remaining lines clear it and use the full width. */
@@ -277,6 +293,10 @@ export class EntrySegmentComponent extends Component {
 						overflow: visible;
 						text-overflow: clip;
 						min-width: 0;
+						/* One line in a box with room to spare: centre it rather than hanging it from the top
+						   edge. Resolves to 0 the moment the content is taller than the box, so a clipped
+						   title still clips from its start. */
+						margin-block: auto;
 					}
 
 					@container (max-height: 1rem) {
@@ -295,15 +315,27 @@ export class EntrySegmentComponent extends Component {
 					}
 				}
 
-				& > .time {
+				& > .heading > .time {
 					opacity: 0.75;
 					font-size: 0.65rem;
 					white-space: nowrap;
-					text-overflow: ellipsis;
-					overflow: hidden;
-					flex-shrink: 0;
+					/* Its own line above the title while there is height for two rows — the default, and what
+					   every roomy block shows. */
+					display: block;
 
+					/* Out of height for a second row: the time falls back to LEADING the title on the one line
+					   there is, sharing its line box (so both sit on one baseline, whatever their sizes). */
 					@container (max-height: 2rem) {
+						display: inline;
+						margin-inline-end: 0.25rem;
+					}
+
+					/* THE decision about whether an entry can carry its time at all, made once here from the
+					   entry's OWN box — never from which view it is in. Neither the height to stack it nor the
+					   width to inline it means it goes: the title identifies the entry, the time does not, and
+					   on a phone's month bar there is barely room for the title alone. Both dimensions in one
+					   query, so no view has to re-decide this with an override of its own. */
+					@container (max-height: 2rem) and (max-width: 7rem) {
 						display: none;
 					}
 
@@ -365,25 +397,22 @@ export class EntrySegmentComponent extends Component {
 					}
 				}
 
-				/* Reserve room at the trailing edge of the badge's line so it never overlaps the text —
-				   but only on the element that actually reaches that edge. In the default STACKED layout
-				   that's the time (or the heading when there's no time), each a full-width block with the
-				   badge over its first line. In the ROW layouts (all-day lane, month bars) the heading
-				   fills the line and the time merely leads it, so reserving on the time would just gap it
-				   away from the heading (a visible padding after the start time) — reserve on the heading. */
-				&:has(> .recurring) > .time {
-					padding-inline-end: 1.35rem;
-				}
-				&:has(> .recurring):not(:has(> .time)) > .heading {
+				/* Reserve room at the trailing edge of the badge's line so it never overlaps the text — on
+				   whichever element actually reaches that edge. While the time is STACKED it is a full-width
+				   block carrying the badge's line, so it takes the reservation and the title below keeps its
+				   full width; once the time is inline (or gone), the heading's own first line is that line.
+				   Both are addressed as children, so each reads the entry's own box. */
+				&:has(> .recurring) > .heading > .time {
 					padding-inline-end: 1.35rem;
 				}
 
-				@container (max-height: 450px) {
-					&:has(> .recurring) > .time {
-						padding-inline-end: 0;
-					}
+				@container (max-height: 2rem) {
 					&:has(> .recurring) > .heading {
 						padding-inline-end: 1.35rem;
+
+						> .time {
+							padding-inline-end: 0;
+						}
 					}
 				}
 
@@ -401,8 +430,8 @@ export class EntrySegmentComponent extends Component {
 						display: none;
 					}
 
-					&:has(> .recurring) > .time,
-					&:has(> .recurring) > .heading {
+					&:has(> .recurring) > .heading,
+					&:has(> .recurring) > .heading > .time {
 						padding-inline-end: 0;
 					}
 				}
@@ -420,17 +449,22 @@ export class EntrySegmentComponent extends Component {
 			this.segment.entry.color ?? getSource(this.segment.entry.sourceId)?.color ?? ''
 		)
 
+		/* The time lives INSIDE the heading, ahead of the title — one element, so the two can share a
+		single line box when the block is too short to stack them. Laying them out as siblings
+		instead meant centring two different font sizes independently, which aligns their boxes but
+		never their baselines. It also puts the task's checkbox (the heading's leading float) ahead
+		of the time, where the affordance belongs. */
 		return html`
-			${this.segment.allDay ? html.nothing : html`
-				<div class="time">
-					<span class="start">${this.segment.entry.start?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-					<span class="separator">-</span>
-					<span class="end">${this.segment.entry.end?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-				</div>
-			`}
 			<div class="heading">
 				${this.segment.entry.type !== EntryType.Task ? html.nothing : html`
 					<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
+				`}
+				${this.segment.allDay ? html.nothing : html`
+					<span class="time">
+						<span class="start">${this.segment.entry.start?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+						<span class="separator">-</span>
+						<span class="end">${this.segment.entry.end?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+					</span>
 				`}
 				<span class="label">${this.segment.entry.heading || (this.segment.entry.persisted ? '' : t('Draft'))}</span>
 			</div>

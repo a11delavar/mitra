@@ -342,7 +342,7 @@ export class PageCalendar extends PageComponent {
 							width: 18rem;
 							flex-shrink: 0;
 							justify-content: flex-start;
-							border-radius: 8px;
+							border-radius: calc(2 * var(--border-radius));
 							font-weight: 400;
 
 							/* Muted on the placeholder text only, so the icon reads at the same weight as the
@@ -360,6 +360,7 @@ export class PageCalendar extends PageComponent {
 							   as it possibly can. */
 							@container (max-width: 44rem) {
 								width: auto;
+								border-radius: var(--border-radius);
 
 								span, kbd {
 									display: none;

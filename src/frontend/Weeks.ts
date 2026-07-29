@@ -88,6 +88,24 @@ export class Weeks extends Component {
 				initial-value: 136px;
 			}
 
+			@property --_weeks-strip-width {
+				syntax: '<length>';
+				inherits: false;
+				initial-value: 0px;
+			}
+
+			/* Registered as a NUMBER above all so it inherits COMPUTED: an unregistered property hands
+			   its raw tokens down, and the 100cqi inside would re-resolve against whatever container is
+			   nearest to the element using it — a day cell and every bar are size containers of their
+			   own, so each would answer with its own width instead of the strip's. Registered, the ratio
+			   is a finished number by the time it leaves .days, and plain inheritance carries it into
+			   every cell, bar and numeral below. */
+			@property --_month-density {
+				syntax: '<number>';
+				inherits: true;
+				initial-value: 1;
+			}
+
 			mitra-weeks {
 				display: flex;
 				flex-direction: column;
@@ -109,10 +127,11 @@ export class Weeks extends Component {
 					color: var(--color-text-muted);
 				}
 
-				/* The scroller's size container: the row math below needs the viewport height as 100cqb,
-				   an element can't query itself, and mitra-weeks' own height includes the weekday headers —
-				   this wrapper is height-identical to the scroller by construction. Size containment is
-				   inert on it: a flex: 1 (basis-0) item never consults its contents for its size. */
+				/* The scroller's size container: the row math below needs the viewport height as 100cqb
+				   (and the density ramp the strip width as 100cqi), an element can't query itself, and
+				   mitra-weeks' own height includes the weekday headers — this wrapper is height-identical
+				   to the scroller by construction. Size containment is inert on it: a flex: 1 (basis-0)
+				   item never consults its contents for its size. */
 				& > .body {
 					flex: 1;
 					min-height: 0;
@@ -131,6 +150,16 @@ export class Weeks extends Component {
 					--_weeks-strip-height: 100cqb;
 					--_ideal-week-height: 8.5rem;
 					--_visible-weeks: max(2, round(down, tan(atan2(var(--_weeks-strip-height), var(--_ideal-week-height))), 1));
+
+					/* The grid's density, as a CONTINUOUS function of the strip's width rather than a
+					   breakpoint: 0 at phone width (≤24rem) up to 1 at a comfortable desktop (≥56rem),
+					   linear in between — tan(atan2()) turns the two lengths into a plain ratio, the same
+					   trick as the row count above. Every compact↔comfortable pair below interpolates
+					   through this one number, so a ~3.3rem day cell isn't wearing desktop-sized furniture
+					   (which used to spend a third of the cell before any entry drew), a split-screen
+					   window sits naturally in between, and there is no cliff to tune. */
+					--_month-density: clamp(0, calc(tan(atan2(var(--_weeks-strip-width) - 24rem, 1px)) / tan(atan2(56rem - 24rem, 1px))), 1);
+					--_weeks-strip-width: 100cqi;
 					grid-auto-rows: max(var(--_ideal-week-height), calc((var(--_weeks-strip-height) + 1px) / var(--_visible-weeks) - 1px));
 					gap: 1px;
 					height: 100%;
@@ -149,7 +178,11 @@ export class Weeks extends Component {
 					grid-column: 1 / -1;
 					display: grid;
 					grid-template-columns: subgrid;
-					grid-template-rows: 1.75rem repeat(var(--max-slots), 1.375rem) 1fr;
+					/* Numeral track 1.375→1.75rem and bar rows 1.125→1.375rem along the density ramp. */
+					grid-template-rows:
+						calc(1.375rem + 0.375rem * var(--_month-density))
+						repeat(var(--max-slots), calc(1.125rem + 0.25rem * var(--_month-density)))
+						1fr;
 					row-gap: 0.125rem;
 					scroll-snap-align: start;
 
@@ -164,13 +197,15 @@ export class Weeks extends Component {
 						margin-top: 0 !important;
 						flex-direction: row !important;
 						align-items: center !important;
-						gap: 0.375rem !important;
-						padding: 0 0.375rem !important;
+						/* The bar's own chrome rides the density ramp too — at ~3.3rem per day cell, the
+						   desktop paddings and the 3px accent edge were a quarter of the cell. */
+						gap: calc(0.25rem + 0.125rem * var(--_month-density)) !important;
+						padding: 0 calc(0.25rem + 0.125rem * var(--_month-density)) !important;
+						border-inline-start-width: calc(2px + 1px * var(--_month-density));
 
-						> .time {
-							display: block !important;
-							.separator, .end { display: none !important; }
-						}
+					/* Nothing to say about the time here any more: whether a bar can carry it, and whether it
+						   leads the title or sits above it, both fall out of the bar's OWN box in EventSegment —
+						   a month bar is short, so its time inlines and drops its end. */
 
 						> .heading {
 							flex: 1 !important;
@@ -183,15 +218,30 @@ export class Weeks extends Component {
 					> .more {
 						grid-row: calc(var(--max-slots) + 1);
 						z-index: 2;
-						font-size: 0.7rem;
+						font-size: calc(0.65rem + 0.05rem * var(--_month-density));
 						font-weight: 500;
 						color: var(--color-text-muted);
 						cursor: pointer;
-						padding: 0 0.375rem;
+						padding: 0 calc(0.25rem + 0.125rem * var(--_month-density));
 						align-self: center;
 
 						&:hover {
 							color: var(--color-text);
+						}
+					}
+
+					/* The cell's numeral rides the same ramp — reachable from HERE because the density is
+					   an inherited computed number (see its registration): a container query or cq unit
+					   written against the numeral would answer the CELL, its nearest container. And it
+					   deliberately does not live in Day.ts, where a year cell (the same size as a phone's
+					   month cell) would be indistinguishable — the .week scope says which view this is. */
+					mitra-day .header .day {
+						font-size: calc(0.75rem + 0.125rem * var(--_month-density));
+
+						&[data-today] {
+							min-width: calc(1.25rem + 0.25rem * var(--_month-density));
+							min-height: calc(1.25rem + 0.25rem * var(--_month-density));
+							padding: calc(0.1rem + 0.1rem * var(--_month-density)) calc(0.3rem + 0.1rem * var(--_month-density));
 						}
 					}
 				}
