@@ -2,9 +2,10 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import ICAL from 'ical.js'
 import { CalDAV } from './CalDAV.js'
-import { Entry, EntryType, FLOATING_TIME_ZONE } from './Entry.js'
+import { Entry, EntryType, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
 import { Source, SourceType } from './Source.js'
 import { Recurrence } from './Recurrence.js'
+import { ParticipantRole, ParticipantStatus } from './Participant.js'
 
 type DateTime = import('@3mo/date-time').DateTime
 const D = (iso: string) => new Date(iso) as unknown as DateTime
@@ -61,6 +62,139 @@ describe('CalDAV member URLs', () => {
 
 		it('does not match when either side is missing', () => {
 			assert.equal(CalDAV.memberUrlsMatch(collection, null, '/123/calendars/xyz/abc.ics'), false)
+		})
+	})
+
+	describe('participants (ATTENDEE / ORGANIZER)', () => {
+		const vevent = (lines: ReadonlyArray<string>) => new ICAL.Component(ICAL.parse([
+			'BEGIN:VCALENDAR', 'VERSION:2.0', 'BEGIN:VEVENT', 'UID:x', 'DTSTART:20260101T090000Z',
+			...lines,
+			'END:VEVENT', 'END:VCALENDAR',
+		].join('\r\n'))).getFirstSubcomponent('vevent')!
+
+		it('parses the organizer and attendees with their names, roles and replies', () => {
+			const component = vevent([
+				'ORGANIZER;CN=Organizer:mailto:Organizer@Example.com',
+				'ATTENDEE;CN=Optional Attendee;ROLE=OPT-PARTICIPANT;PARTSTAT=TENTATIVE:mailto:optional@example.com',
+				'ATTENDEE:mailto:pending@example.com',
+			])
+			assert.deepEqual([...CalDAV.participantsFrom(component, ['me@example.com'])!], [
+				{ email: 'organizer@example.com', name: 'Organizer', organizer: true, role: ParticipantRole.Required, status: ParticipantStatus.Accepted },
+				{ email: 'optional@example.com', name: 'Optional Attendee', role: ParticipantRole.Optional, status: ParticipantStatus.Tentative },
+				{ email: 'pending@example.com', role: ParticipantRole.Required, status: ParticipantStatus.NeedsAction },
+			])
+		})
+
+		it('merges the organizer with its own ATTENDEE — one row whose actual reply wins', () => {
+			const component = vevent([
+				'ORGANIZER:mailto:me@example.com',
+				'ATTENDEE;PARTSTAT=TENTATIVE:mailto:me@example.com',
+			])
+			assert.deepEqual([...CalDAV.participantsFrom(component, ['me@example.com'])!], [
+				{ email: 'me@example.com', organizer: true, role: ParticipantRole.Required, status: ParticipantStatus.Tentative, self: true },
+			])
+		})
+
+		it('stamps `self` on the account\'s own addresses', () => {
+			const component = vevent(['ATTENDEE:mailto:Me@Example.com', 'ATTENDEE:mailto:other@example.com'])
+			assert.deepEqual(CalDAV.participantsFrom(component, ['me@example.com'])!.map(participant => !!participant.self), [true, false])
+		})
+
+		it('skips rooms and resources — bookable things, not people', () => {
+			const component = vevent([
+				'ATTENDEE;CUTYPE=ROOM:mailto:room@example.com',
+				'ATTENDEE;CUTYPE=RESOURCE:mailto:projector@example.com',
+				'ATTENDEE;CUTYPE=INDIVIDUAL:mailto:attendee@example.com',
+			])
+			assert.deepEqual(CalDAV.participantsFrom(component)!.map(participant => participant.email), ['attendee@example.com'])
+		})
+
+		it('is null without any — the canonical no-participants value', () => {
+			assert.equal(CalDAV.participantsFrom(vevent([])), null)
+		})
+
+		it('round-trips through writeParticipants', () => {
+			const component = vevent([])
+			const participants = [
+				{ email: 'me@example.com', name: 'Own Account', organizer: true, role: ParticipantRole.Required, status: ParticipantStatus.Accepted },
+				{ email: 'optional@example.com', role: ParticipantRole.Optional, status: ParticipantStatus.NeedsAction },
+			]
+			CalDAV.writeParticipants(component, participants)
+			assert.deepEqual([...CalDAV.participantsFrom(component, ['me@example.com'])!], [
+				{ ...participants[0], self: true },
+				participants[1],
+			])
+			// A pending invitee is asked to reply.
+			assert.equal(component.getAllProperties('attendee')[1]!.getParameter('rsvp')?.toString().toUpperCase(), 'TRUE')
+		})
+
+		it('keeps an existing ORGANIZER property rather than duplicating or rewriting it', () => {
+			const component = vevent(['ORGANIZER;CN=Organizer:mailto:organizer@example.com'])
+			CalDAV.writeParticipants(component, [
+				{ email: 'organizer@example.com', organizer: true },
+				{ email: 'invitee@example.com' },
+			])
+			assert.equal(component.getAllProperties('organizer').length, 1)
+			assert.equal(component.getFirstProperty('organizer')?.getParameter('cn')?.toString(), 'Organizer')
+		})
+
+		it('clearing the list also retires the ORGANIZER — back to a plain private entry', () => {
+			const component = vevent(['ORGANIZER:mailto:me@example.com', 'ATTENDEE:mailto:attendee@example.com'])
+			CalDAV.writeParticipants(component, null)
+			assert.equal(component.getFirstProperty('organizer'), null)
+			assert.equal(component.getAllProperties('attendee').length, 0)
+		})
+
+		it('leaves scheduling to the server — no SCHEDULE-AGENT on what we write (RFC 6638 default)', () => {
+			const component = vevent([])
+			CalDAV.writeParticipants(component, [{ email: 'attendee@example.com' }])
+			assert.equal(component.getFirstProperty('attendee')?.getParameter('schedule-agent'), undefined)
+		})
+
+		// Every ROLE and PARTSTAT the mapping knows, both ways: one bidirectional table now serves the
+		// read and the write, so a row transposed by mistake would silently mean two different things
+		// on the way out and the way back in.
+		it('round-trips every role and reply status through ROLE / PARTSTAT', () => {
+			const roles = [ParticipantRole.Chair, ParticipantRole.Required, ParticipantRole.Optional, ParticipantRole.NonParticipant]
+			const statuses = [
+				ParticipantStatus.NeedsAction, ParticipantStatus.Accepted,
+				ParticipantStatus.Declined, ParticipantStatus.Tentative, ParticipantStatus.Delegated,
+			]
+			for (const role of roles) {
+				for (const status of statuses) {
+					const component = vevent([])
+					CalDAV.writeParticipants(component, [{ email: 'attendee@example.com', role, status }])
+					const [read] = CalDAV.participantsFrom(component)!
+					assert.deepEqual({ role: read!.role, status: read!.status }, { role, status })
+				}
+			}
+		})
+
+		it('writes the tokens RFC 5545 names, not our own enum values', () => {
+			const component = vevent([])
+			CalDAV.writeParticipants(component, [{ email: 'a@example.com', role: ParticipantRole.Optional, status: ParticipantStatus.Declined }])
+			const attendee = component.getFirstProperty('attendee')
+			assert.equal(attendee?.getParameter('role')?.toString(), 'OPT-PARTICIPANT')
+			assert.equal(attendee?.getParameter('partstat')?.toString(), 'DECLINED')
+		})
+	})
+
+	describe('task status mapping', () => {
+		// The same bidirectional table now answers both directions, so the four pairings are asserted
+		// once here rather than restated as a switch.
+		it('reads every VTODO STATUS the spec defines', () => {
+			assert.equal(CalDAV.statusFromICal('NEEDS-ACTION', 0), TaskStatus.ToDo)
+			assert.equal(CalDAV.statusFromICal('IN-PROCESS', 0), TaskStatus.Doing)
+			assert.equal(CalDAV.statusFromICal('COMPLETED', 0), TaskStatus.Done)
+			assert.equal(CalDAV.statusFromICal('CANCELLED', 0), TaskStatus.Cancelled)
+			assert.equal(CalDAV.statusFromICal('completed', 0), TaskStatus.Done) // case-insensitive
+		})
+
+		it('falls back to PERCENT-COMPLETE, then to ToDo, when STATUS is missing or unknown', () => {
+			assert.equal(CalDAV.statusFromICal(undefined, 0), TaskStatus.ToDo)
+			assert.equal(CalDAV.statusFromICal(undefined, 100), TaskStatus.Done)
+			assert.equal(CalDAV.statusFromICal('X-SOMETHING-ELSE', 100), TaskStatus.Done)
+			assert.equal(CalDAV.statusFromICal('X-SOMETHING-ELSE', 0), TaskStatus.ToDo)
 		})
 	})
 

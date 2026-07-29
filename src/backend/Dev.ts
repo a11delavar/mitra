@@ -1,6 +1,6 @@
 import { type EntityManager, type MikroORM } from '@mikro-orm/sqlite'
 import { DateTime } from '@3mo/date-time'
-import { model, entity, Integration, Source, SourceType, Entry, EntryType, TaskStatus, User, Color, normalizeAllDay, Recurrence } from '../shared/index.js'
+import { model, entity, Integration, Source, SourceType, Entry, EntryType, TaskStatus, User, Color, normalizeAllDay, Recurrence, ParticipantRole, ParticipantStatus } from '../shared/index.js'
 
 /**
  * A dev-only, self-contained calendar with no external backend: its sources and entries live only in
@@ -70,6 +70,7 @@ export class Dev extends Integration {
 		existing.timeZone = incoming.timeZone
 		existing.status = incoming.status
 		existing.reminders = incoming.reminders
+		existing.participants = incoming.participants
 		// Recurrence is column-only for Dev (no .ics); the GET path expands `recurrence` via
 		// expandRecurrenceFields. (uid/recurrenceId aren't edited through the UI and Dev has no sync/overrides.)
 		existing.recurrence = incoming.recurrence
@@ -90,7 +91,7 @@ export class Dev extends Integration {
 const INTEGRATION_ID = 'dev-sample-integration'
 /** The sample's shape version, carried in the integration's uri: bumping it makes existing dev
  * databases wipe and re-seed the sample in the new shape (real integrations are never touched). */
-const SAMPLE_URI = 'mitra://sample@2'
+const SAMPLE_URI = 'mitra://sample@3'
 
 /**
  * Dev-only: seeds the persisted {@link Dev} sample integration with a few single-colour calendars —
@@ -119,7 +120,10 @@ export async function seedDev(orm: MikroORM) {
 	}
 
 	const user = await em.findOneOrFail(User, { username: User.default.username })
-	const integration = new Dev({ id: INTEGRATION_ID, userId: user.id, uri: SAMPLE_URI })
+	// The sample account's own address — what stamps `self` on seeded participants (a real CalDAV
+	// account discovers its addresses from the principal, see CalDAV.discoverAddresses).
+	const me = 'me@example.com'
+	const integration = new Dev({ id: INTEGRATION_ID, userId: user.id, uri: SAMPLE_URI, addresses: [me] })
 	em.persist(integration)
 
 	const calendar = (slug: string, type: SourceType, name: string, color: string) => {
@@ -153,12 +157,32 @@ export async function seedDev(orm: MikroORM) {
 	// Work — Monday
 	event({ heading: 'Standup', start: at(0, 9), end: at(0, 9, 15) })
 	event({ heading: '1:1 with Sarah', start: at(0, 9, 30), end: at(0, 10) })
-	event({ heading: 'Sprint Planning', start: at(0, 10), end: at(0, 11, 30) })
+	// Organized by the sample account itself, so the participant batch actions are enabled (iTIP
+	// reserves list changes for the organizer) — with every reply status represented.
+	event({
+		heading: 'Sprint Planning', start: at(0, 10), end: at(0, 11, 30),
+		participants: [
+			{ email: me, organizer: true, self: true, role: ParticipantRole.Required, status: ParticipantStatus.Accepted },
+			{ email: 'accepted@example.com', role: ParticipantRole.Required, status: ParticipantStatus.Accepted },
+			{ email: 'pending@example.com', role: ParticipantRole.Required, status: ParticipantStatus.NeedsAction },
+			{ email: 'tentative@example.com', role: ParticipantRole.Optional, status: ParticipantStatus.Tentative },
+			{ email: 'pending-too@example.com', role: ParticipantRole.Required, status: ParticipantStatus.NeedsAction },
+			{ email: 'declined@example.com', role: ParticipantRole.Optional, status: ParticipantStatus.Declined },
+		],
+	})
 	event({ heading: 'Design Review', start: at(0, 14), end: at(0, 15) })
 	// Work — Tuesday (Deep Work / Client Call overlap)
 	event({ heading: 'Standup', start: at(1, 9), end: at(1, 9, 15) })
 	event({ heading: 'Deep Work', start: at(1, 10), end: at(1, 12) })
-	event({ heading: 'Client Call', start: at(1, 11), end: at(1, 11, 30) })
+	// Organized by someone else: the account is a mere attendee, so batch actions are disabled.
+	event({
+		heading: 'Client Call', start: at(1, 11), end: at(1, 11, 30),
+		participants: [
+			{ email: 'organizer@example.com', organizer: true, role: ParticipantRole.Chair, status: ParticipantStatus.Accepted },
+			{ email: me, self: true, role: ParticipantRole.Required, status: ParticipantStatus.NeedsAction },
+			{ email: 'optional@example.com', role: ParticipantRole.Optional, status: ParticipantStatus.Accepted },
+		],
+	})
 	// Work — Wednesday
 	event({ heading: 'Standup', start: at(2, 9), end: at(2, 9, 15) })
 	event({ heading: 'Architecture Sync', start: at(2, 11), end: at(2, 12) })

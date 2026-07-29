@@ -30,6 +30,7 @@ import { SourceIcon } from './components/SourceIcon.js'
 import { RepeatField } from './components/RepeatField.js'
 import { LocationField } from './components/LocationField.js'
 import { RemindersField } from './components/RemindersField.js'
+import { ParticipantsField } from './components/ParticipantsField.js'
 import { TimeZoneHeader, DialogTimeZoneRename } from './components/TimeZoneHeader.js'
 import { TimeZonePicker } from './components/TimeZonePicker.js'
 import { syncPushSubscription } from './push.js'
@@ -114,8 +115,26 @@ export class Mitra extends Application {
 	private static trackFocusModality() {
 		const set = (modality: 'keyboard' | 'pointer') => document.documentElement.dataset.focusModality = modality
 		set('pointer')
-		addEventListener('keydown', () => set('keyboard'), { capture: true, passive: true })
+		// TYPING IS NOT NAVIGATING. A keystroke means "I'm driving by keyboard, show me where focus is"
+		// everywhere except inside something you type into: there the caret already says where you are,
+		// and ringing the field you clicked into the moment you type in it is pure noise. Tab is the
+		// exception even there — it's the key that MOVES focus, so the field it lands on must ring.
+		addEventListener('keydown', event => {
+			if (event.key === 'Tab' || !Mitra.isTextEntry(event.composedPath()[0] ?? event.target)) {
+				set('keyboard')
+			}
+		}, { capture: true, passive: true })
 		addEventListener('pointerdown', () => set('pointer'), { capture: true, passive: true })
+	}
+
+	/** Whether a keystroke landed in something the user types INTO, so it is text rather than a command.
+	 * Read off the composed path, not `document.activeElement`, which reports the HOST for a control
+	 * inside a shadow root (the dialogs) and would call every field in one a command surface. */
+	private static isTextEntry(target: EventTarget | null | undefined) {
+		return target instanceof HTMLTextAreaElement
+			|| (target instanceof HTMLElement && target.isContentEditable)
+			|| (target instanceof HTMLInputElement
+				&& !['checkbox', 'radio', 'button', 'submit', 'reset', 'range', 'color', 'file', 'image'].includes(target.type))
 	}
 
 	/** Returning from Google's consent screen lands on `/?integration=<id>` (see the backend's
@@ -215,6 +234,7 @@ export class Mitra extends Application {
 			${RepeatField.styles}
 			${LocationField.styles}
 			${RemindersField.styles}
+			${ParticipantsField.styles}
 			${TimeZoneHeader.styles}
 			${DialogTimeZoneRename.styles}
 			${TimeZonePicker.styles}

@@ -522,8 +522,9 @@ export class EntryDetailsComponent extends Component {
 					<mitra-entry-details-when .entry=${this.segment.entry} @change=${this.handleWhenChange}></mitra-entry-details-when>
 					<hr>
 				`}
-				${!this.capabilities.location && !this.capabilities.description ? html.nothing : html`
+				${!this.capabilities.location && !this.capabilities.description && !this.capabilities.participants ? html.nothing : html`
 					${this.locationTemplate}
+					${this.participantsTemplate}
 					${this.descriptionTemplate}
 					<hr>
 				`}
@@ -601,6 +602,17 @@ export class EntryDetailsComponent extends Component {
 			<li class="location field">
 				<mitra-icon icon="map-pin"></mitra-icon>
 				<mitra-location-field .entry=${this.segment!.entry} @change=${this.handleChange}></mitra-location-field>
+			</li>
+		`
+	}
+
+	private get participantsTemplate() {
+		// The field replaces `entry.participants` and fires `change`; the usual commit persists it (the
+		// backend rejects a non-organizer's list change per iTIP — the field disables those paths anyway).
+		return !this.capabilities.participants ? html.nothing : html`
+			<li class="participants field">
+				<mitra-icon icon="users"></mitra-icon>
+				<mitra-participants-field .entry=${this.segment!.entry} @change=${this.handleChange}></mitra-participants-field>
 			</li>
 		`
 	}

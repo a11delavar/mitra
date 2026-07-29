@@ -1,7 +1,7 @@
 import { Router, type Request } from 'express'
 import { orm } from './orm.js'
 import { syncEmitter } from './syncEmitter.js'
-import { Entry, FLOATING_TIME_ZONE, Integration, Recurrence, Source, normalizeAllDay, projectAllDay, createLogger, type RecurrenceScope } from '../shared/index.js'
+import { equals, Entry, FLOATING_TIME_ZONE, Integration, Participants, Recurrence, Source, normalizeAllDay, projectAllDay, createLogger, type RecurrenceScope } from '../shared/index.js'
 import { editOccurrence, deleteOccurrence, expandedOccurrences } from './occurrences.js'
 
 const logger = createLogger('Entries')
@@ -109,6 +109,12 @@ entriesRouter.post('/', async (req, res) => {
 	const targetSource = await req.user.source(em, targetSourceId)
 	const targetIntegration = await em.findOneOrFail(Integration, { id: targetSource.integrationId })
 
+	// Loud, not silent (the Notion-recurrence philosophy): a provider that can't hold invitees
+	// rejects them rather than quietly dropping the list — the editor hides the field anyway.
+	if (body.participants?.length && !targetIntegration.capabilities.participants) {
+		return res.status(400).json({ error: 'This calendar does not support participants' })
+	}
+
 	const incoming = new Entry({
 		// The backend owns ids: clients post a draft with none, and we assign it here (the provider's
 		// createEntry persists this very object, so this covers both Dev and CalDAV).
@@ -126,6 +132,7 @@ entriesRouter.post('/', async (req, res) => {
 		status: body.status,
 		recurrence: incomingRecurrence,
 		reminders: body.reminders ?? undefined,
+		participants: Participants.normalize(body.participants),
 	})
 
 	// The client sent its own zone's midnights — re-encode them as the canonical dates.
@@ -156,6 +163,15 @@ entriesRouter.put('/:id', async (req, res) => {
 		return res.status(400).json({ error: 'Invalid recurrence rule' })
 	}
 
+	// Same tri-state as `recurrence`/`reminders`: an array sets, `null` clears, absent keeps. Actually
+	// CHANGING the list is the organizer's prerogative — iTIP (RFC 5546) limits everyone else to
+	// replying with their own status — so a non-organizer's edit that touches it is rejected, while
+	// their content edits (which echo the stored list back unchanged) pass through.
+	const incomingParticipants = body.participants === undefined ? existing.participants ?? null : Participants.normalize(body.participants)
+	if (!Object[equals](incomingParticipants, existing.participants ?? null) && !existing.canManageParticipants) {
+		return res.status(403).json({ error: 'Only the organizer can modify participants' })
+	}
+
 	// Resolve the current and target sources (and their integrations) by id. The current one is owned
 	// transitively (the entry lookup above proved it); a DIFFERENT target must prove its own ownership.
 	const targetSourceId = body.sourceId ?? existing.sourceId
@@ -165,6 +181,12 @@ entriesRouter.put('/:id', async (req, res) => {
 		em.findOneOrFail(Integration, { id: currentSource.integrationId }),
 		em.findOneOrFail(Integration, { id: targetSource.integrationId }),
 	])
+
+	// The TARGET provider must be able to hold the invitees — which also covers migrating a
+	// group-scheduled entry onto e.g. Notion: loud, not a silently-dropped list (remove them first).
+	if (incomingParticipants?.length && !targetIntegration.capabilities.participants) {
+		return res.status(400).json({ error: 'This calendar does not support participants — remove them before moving the entry' })
+	}
 
 	// A scoped occurrence edit (this / following / all): `:id` is the series MASTER, `recurrenceId` the
 	// occurrence's original start, and the body carries the edited fields. Handled by the occurrence service.
@@ -182,6 +204,7 @@ entriesRouter.put('/:id', async (req, res) => {
 			timeZone: body.timeZone === undefined ? existing.timeZone : body.timeZone,
 			status: body.status ?? existing.status,
 			reminders: body.reminders === undefined ? existing.reminders : body.reminders,
+			participants: incomingParticipants,
 		})
 		if (edited.allDay) {
 			const zone = dayZone(req, edited.timeZone)
@@ -214,6 +237,7 @@ entriesRouter.put('/:id', async (req, res) => {
 		recurrence: incomingRecurrence,
 		// Like `recurrence`, tri-state on the wire: an array sets, `null` clears, absent keeps.
 		reminders: body.reminders === undefined ? existing.reminders : body.reminders,
+		participants: incomingParticipants,
 	})
 
 	// The client sent its own zone's midnights — re-encode them as the canonical dates.

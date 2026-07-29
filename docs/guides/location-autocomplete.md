@@ -2,7 +2,7 @@
 title: Location autocomplete
 description: The keyless, privacy-preserving geocoder behind Mitra's location field — and how to point it at your own Photon instance.
 sidebar:
-  order: 4
+  order: 5
 ---
 
 The entry editor's **location** field autocompletes as you type. It works out of the box with **no API key and no signup**, powered by [Photon](https://photon.komoot.io) — a free, open-source, OpenStreetMap-based geocoder built for search-as-you-type.

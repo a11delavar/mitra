@@ -116,9 +116,12 @@ export class Notion extends Integration<NotionCredentials> {
 	 * page body maps to markdown (see {@link NotionMarkdown}). `timeZone: false` because
 	 * Notion's date property can't store a named IANA zone: its API resolves any `time_zone` to a
 	 * fixed offset and returns `time_zone: null`, so a per-entry authoring zone would silently vanish
-	 * on save (the times still show correctly in the viewer's zone — that's a view concern). */
+	 * on save (the times still show correctly in the viewer's zone — that's a view concern).
+	 * `participants: false`: a page has no invitees — Notion's people property is workspace
+	 * membership, not RFC 5545 group-scheduling, and mapping one onto the other would fake RSVP
+	 * semantics the provider doesn't have. */
 	override get capabilities() {
-		return { recurrence: false, reminders: false, location: false, description: true, cancelledStatus: false, timeZone: false }
+		return { recurrence: false, reminders: false, location: false, description: true, cancelledStatus: false, timeZone: false, participants: false }
 	}
 
 	// The workspace identity derives from the token (its bot user), so the token is all a connect needs.

@@ -210,7 +210,7 @@ export function getEnabledSources(integration: Integration) {
  */
 export function getCapabilities(sourceId: string): Integration['capabilities'] {
 	return getIntegrationFor(sourceId)?.capabilities
-		?? { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, timeZone: true }
+		?? { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, timeZone: true, participants: true }
 }
 
 export function toggleSourceVisibility(id: string, hidden: boolean) {
@@ -297,12 +297,13 @@ export function updateEvent(entry: Entry) {
 			color: entry.color,
 			timeZone: entry.timeZone ?? null,
 			reminders: entry.reminders ?? null,
+			participants: entry.participants ?? null,
 			...(entry.recurrence !== undefined ? { recurrence: entry.recurrence } : {}),
 		})
 	}
 	// The full entry, with absent tri-state fields sent as an explicit `null`: JSON drops undefined keys
 	// and the backend treats absence as "keep" — only a null can express a removal.
-	return Api.put<Entry>(`/entries/${entry.id}?tz=${tz()}`, { ...entry, recurrence: entry.recurrence ?? null, reminders: entry.reminders ?? null })
+	return Api.put<Entry>(`/entries/${entry.id}?tz=${tz()}`, { ...entry, recurrence: entry.recurrence ?? null, reminders: entry.reminders ?? null, participants: entry.participants ?? null })
 }
 
 export function deleteEvent(id: string) {
@@ -349,6 +350,7 @@ export function editOccurrence(occurrence: Entry, scope: RecurrenceScope) {
 		timeZone: occurrence.timeZone ?? null,
 		status: occurrence.status,
 		reminders: occurrence.reminders ?? null,
+		participants: occurrence.participants ?? null,
 	})
 }
 

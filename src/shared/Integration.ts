@@ -21,6 +21,11 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * after every numbered one. */
 	@property({ type: 'number', nullable: true }) order?: number | null
 
+	/** The account's own calendar-user addresses (lowercase e-mails) — what identifies "me" among an
+	 * entry's participants. CalDAV discovers them from the principal's calendar-user-address-set
+	 * (RFC 6638) during sync, falling back to an e-mail-shaped username. */
+	@property({ type: 'json', nullable: true }) addresses?: Array<string>
+
 	@oneToMany(() => Source, source => source.integrationId) sources = new Collection<Source>(this)
 
 	constructor() {
@@ -51,14 +56,16 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * What the provider's data model can represent. The editor hides the fields a provider can't
 	 * hold (see Notion) — an input whose value silently vanishes on save is a lie, and mapping it
 	 * anyway would approximate semantics the provider doesn't have. Everything defaults to true;
-	 * `cancelledStatus` refers to the fourth task status (to-do/doing/done are universal), and
+	 * `cancelledStatus` refers to the fourth task status (to-do/doing/done are universal),
 	 * `timeZone` to authoring an entry in a named IANA zone (Notion's date property can't hold one —
-	 * its API normalizes any time_zone to a fixed offset and returns time_zone:null).
+	 * its API normalizes any time_zone to a fixed offset and returns time_zone:null), and
+	 * `participants` to group-scheduling (RFC 5545 ATTENDEE/ORGANIZER — a page/database has no
+	 * invitees, so Notion turns it off).
 	 * A getter on the class (not serialized state): the frontend's API reviver rehydrates
 	 * integrations into these very classes, so both sides read the same declaration.
 	 */
 	get capabilities() {
-		return { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, timeZone: true }
+		return { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, timeZone: true, participants: true }
 	}
 
 	/**

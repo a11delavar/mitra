@@ -32,6 +32,7 @@ Day-to-day behaviour, whichever accounts you connected.
 
 - **[Calendars & task lists](guides/calendars.md)** — choose what gets imported, then rename, recolor, reorder and hide it; and pick where new entries land.
 - **[Keyboard shortcuts](guides/keyboard-shortcuts.md)** — drive the views, navigation and entries from the keyboard.
+- **[Participants & invitations](guides/participants.md)** — invite people to an entry and follow their replies.
 
 ## Administer your instance
 

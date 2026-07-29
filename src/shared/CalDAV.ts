@@ -1,5 +1,6 @@
 import { type EntityManager } from '@mikro-orm/sqlite'
 import { equals } from '@a11d/equals'
+import '@a11d/bidirectional-map' // registers the global BidirectionalMap the iCalendar mappings below use
 import { createDAVClient } from 'tsdav'
 import ICAL from 'ical.js'
 import { model } from './model.js'
@@ -9,6 +10,7 @@ import { Integration, integration } from './Integration.js'
 import { Entry, EntryType, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
 import { Recurrence } from './Recurrence.js'
 import { calendarDateOf, midnightOf } from './calendarDate.js'
+import { Participants, ParticipantRole, ParticipantStatus, type Participant } from './Participant.js'
 import { Color } from './Color.js'
 import { createLogger } from './Logger.js'
 
@@ -45,6 +47,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 	override merge(incoming: CalDAV) {
 		this.uri = incoming.uri || this.uri
+		if (incoming.credentials.username !== this.credentials.username) {
+			this.addresses = undefined // another account — its own addresses get re-discovered on sync
+		}
 		this.credentials = {
 			username: incoming.credentials.username,
 			// A blank incoming password keeps the stored secret — the edit form leaves it empty.
@@ -77,8 +82,39 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return this.client ??= createDAVClient(this.clientParameters)
 	}
 
+	/**
+	 * The account's own calendar-user addresses off the principal's `calendar-user-address-set`
+	 * (RFC 6638) — what identifies "me" among an entry's participants and lets scheduling servers
+	 * accept an ORGANIZER we write. Sticky once found; falls back to an e-mail-shaped username on
+	 * servers without scheduling support (their PROPFIND lacks the property).
+	 */
+	private async discoverAddresses(): Promise<void> {
+		if (this.addresses?.length) {
+			return
+		}
+		let addresses = new Array<string>()
+		try {
+			const client = await this.getClient()
+			// tsdav injects the client's discovered account (principal URL included); passing our own
+			// would clobber it — hence the empty params object the bound type doesn't know is complete.
+			const fetch = client.fetchCalendarUserAddresses as unknown as (params: object) => Promise<Array<string>>
+			addresses = await fetch({})
+		} catch {
+			// No scheduling support (or the PROPFIND failed) — fall through to the username.
+		}
+		const emails = addresses
+			.filter(address => /^mailto:/i.test(address))
+			.map(address => address.replace(/^mailto:/i, '').trim().toLowerCase())
+			.filter(address => address.includes('@'))
+		if (!emails.length && this.credentials.username.includes('@')) {
+			emails.push(this.credentials.username.trim().toLowerCase())
+		}
+		this.addresses = emails.length ? [...new Set(emails)] : undefined
+	}
+
 	protected override async fetchSources() {
 		const client = await this.getClient()
+		await this.discoverAddresses()
 		const calendars = await client.fetchCalendars()
 		logger.debug(`Discovered ${calendars.length} calendar(s) at ${this.uri}`)
 		return calendars.flatMap(cal => {
@@ -159,8 +195,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return time.toJSDate()
 	}
 
-	/** mitra TaskStatus → CalDAV VTODO STATUS (RFC 5545 §3.8.1.11). */
-	private static readonly statusToICal = new Map<TaskStatus, string>([
+	/** mitra TaskStatus ↔ CalDAV VTODO STATUS (RFC 5545 §3.8.1.11). */
+	private static readonly icalTaskStatus = new BidirectionalMap<TaskStatus, string>([
 		[TaskStatus.ToDo, 'NEEDS-ACTION'],
 		[TaskStatus.Doing, 'IN-PROCESS'],
 		[TaskStatus.Done, 'COMPLETED'],
@@ -168,15 +204,11 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	])
 
 	/** CalDAV VTODO STATUS → mitra TaskStatus. A missing/unknown STATUS falls back to PERCENT-COMPLETE
-	 * (>= 100 means done), then to ToDo — so a VTODO with no status is shown as ToDo, never mutated. */
-	private static statusFromICal(status: string | undefined, percentComplete: number): TaskStatus {
-		switch (status?.toUpperCase()) {
-			case 'COMPLETED': return TaskStatus.Done
-			case 'IN-PROCESS': return TaskStatus.Doing
-			case 'CANCELLED': return TaskStatus.Cancelled
-			case 'NEEDS-ACTION': return TaskStatus.ToDo
-			default: return percentComplete >= 100 ? TaskStatus.Done : TaskStatus.ToDo
-		}
+	 * (>= 100 means done), then to ToDo — so a VTODO with no status is shown as ToDo, never mutated.
+	 * A pure static like the participant mappings, so it is unit-testable on its own. */
+	static statusFromICal(status: string | undefined, percentComplete: number): TaskStatus {
+		return CalDAV.icalTaskStatus.getKey(status?.toUpperCase() ?? '')
+			?? (percentComplete >= 100 ? TaskStatus.Done : TaskStatus.ToDo)
 	}
 
 	/** Write a task's three coupled completion properties consistently: STATUS, PERCENT-COMPLETE, and the
@@ -184,7 +216,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	 * with sub-tasks; for now it tracks completion (100/0). */
 	private writeTaskStatus(component: ICAL.Component, status: TaskStatus | undefined) {
 		const effective = status ?? TaskStatus.ToDo
-		component.updatePropertyWithValue('status', CalDAV.statusToICal.get(effective))
+		component.updatePropertyWithValue('status', CalDAV.icalTaskStatus.get(effective))
 		component.updatePropertyWithValue('percent-complete', effective === TaskStatus.Done ? 100 : 0)
 		if (effective === TaskStatus.Done) {
 			component.updatePropertyWithValue('completed', ICAL.Time.now())
@@ -365,6 +397,112 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		})
 		// `null`, not undefined, for "none" — the canonical no-reminders value everywhere (see Entry).
 		return minutes.length ? [...new Set(minutes)].sort((a, b) => a - b) : null
+	}
+
+	// --- Participants (RFC 5545 ATTENDEE / ORGANIZER) ---------------------------------------------------
+
+	/** mitra ParticipantRole ↔ ATTENDEE;ROLE (RFC 5545 §3.2.16). */
+	private static readonly icalRole = new BidirectionalMap<ParticipantRole, string>([
+		[ParticipantRole.Chair, 'CHAIR'],
+		[ParticipantRole.Required, 'REQ-PARTICIPANT'],
+		[ParticipantRole.Optional, 'OPT-PARTICIPANT'],
+		[ParticipantRole.NonParticipant, 'NON-PARTICIPANT'],
+	])
+
+	/** mitra ParticipantStatus ↔ ATTENDEE;PARTSTAT (RFC 5545 §3.2.12). */
+	private static readonly icalPartStat = new BidirectionalMap<ParticipantStatus, string>([
+		[ParticipantStatus.NeedsAction, 'NEEDS-ACTION'],
+		[ParticipantStatus.Accepted, 'ACCEPTED'],
+		[ParticipantStatus.Declined, 'DECLINED'],
+		[ParticipantStatus.Tentative, 'TENTATIVE'],
+		[ParticipantStatus.Delegated, 'DELEGATED'],
+	])
+
+	/** The e-mail of a CAL-ADDRESS value (`mailto:a@b`, scheme case-insensitive). Non-mailto addresses
+	 * (urn:uuid resources etc.) pass through as-is and get dropped by the e-mail normalization. */
+	private static calAddressEmail(value: string | null | undefined): string | undefined {
+		return value?.toString().trim().replace(/^mailto:/i, '') || undefined
+	}
+
+	/**
+	 * The entry's participants off its ATTENDEE/ORGANIZER properties, normalized (see Participant.ts).
+	 * The organizer joins the list (`organizer: true`) — merged with its own ATTENDEE when it is also
+	 * one (Google-style .ics) — and `addresses` (the account's own, see {@link discoverAddresses})
+	 * stamp `self`. Rooms and resources (CUTYPE) aren't people and are skipped.
+	 */
+	static participantsFrom(component: ICAL.Component, addresses?: ReadonlyArray<string> | null): Participants | null {
+		const own = new Set((addresses ?? []).map(address => address.toLowerCase()))
+		const self = (email: string) => own.has(email.toLowerCase()) || undefined
+		const raw = new Array<Partial<Participant>>()
+		const organizerProperty = component.getFirstProperty('organizer')
+		const organizerEmail = CalDAV.calAddressEmail(organizerProperty?.getFirstValue()?.toString())
+		if (organizerEmail) {
+			raw.push({
+				email: organizerEmail,
+				name: organizerProperty?.getParameter('cn')?.toString(),
+				organizer: true,
+				// ORGANIZER carries no PARTSTAT — authoring the event counts as a yes (an ATTENDEE of the
+				// same address, when present, overrides this with its actual reply).
+				status: ParticipantStatus.Accepted,
+				self: self(organizerEmail),
+			})
+		}
+		for (const property of component.getAllProperties('attendee')) {
+			const email = CalDAV.calAddressEmail(property.getFirstValue()?.toString())
+			const kind = property.getParameter('cutype')?.toString().toUpperCase()
+			if (!email || kind === 'ROOM' || kind === 'RESOURCE') {
+				continue
+			}
+			raw.push({
+				email,
+				name: property.getParameter('cn')?.toString(),
+				role: CalDAV.icalRole.getKey(property.getParameter('role')?.toString().toUpperCase() ?? ''),
+				status: CalDAV.icalPartStat.getKey(property.getParameter('partstat')?.toString().toUpperCase() ?? ''),
+				self: self(email),
+			})
+		}
+		return Participants.normalize(raw)
+	}
+
+	/**
+	 * Write the participant list back: the ATTENDEE properties are wholly ours (rewritten from the
+	 * list, organizer included — RSVP requested while a reply is pending), while ORGANIZER only ever
+	 * *appears* with the list's organizer (the entry became group-scheduled) or *disappears* with the
+	 * last participant — an existing one is never rewritten, since iTIP (RFC 5546) reserves list
+	 * changes for the organizer themselves and the route rejects everyone else's before this runs.
+	 *
+	 * Notifying the invitees is deliberately NOT ours: a scheduling server (RFC 6638) is the
+	 * scheduling agent for every ATTENDEE we write, and mails the invitations and cancellations out
+	 * itself. We only ever say WHO is invited.
+	 */
+	static writeParticipants(component: ICAL.Component, raw: ReadonlyArray<Participant> | null) {
+		component.removeAllProperties('attendee')
+		// Whatever the caller holds re-enters the domain here, so the written properties are always
+		// the canonical reading of the list (dedupe, ≤ 1 organizer, explicit defaults).
+		const participants = Participants.normalize(raw)
+		if (!participants) {
+			component.removeAllProperties('organizer')
+			return
+		}
+		const organizer = participants.organizer
+		if (organizer && !component.getFirstProperty('organizer')) {
+			const property = component.addPropertyWithValue('organizer', `mailto:${organizer.email}`)
+			if (organizer.name) {
+				property.setParameter('cn', organizer.name)
+			}
+		}
+		for (const participant of participants) {
+			const property = component.addPropertyWithValue('attendee', `mailto:${participant.email}`)
+			if (participant.name) {
+				property.setParameter('cn', participant.name)
+			}
+			property.setParameter('role', CalDAV.icalRole.get(participant.role ?? ParticipantRole.Required)!)
+			const status = participant.status ?? ParticipantStatus.NeedsAction
+			property.setParameter('partstat', CalDAV.icalPartStat.get(status)!)
+			if (status === ParticipantStatus.NeedsAction) {
+				property.setParameter('rsvp', 'TRUE')
+			}
+		}
 	}
 
 	/** Replace the component's DISPLAY alarms with one per reminder. DISPLAY only — an EMAIL alarm
@@ -553,6 +691,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				}
 
 				entry.reminders = CalDAV.remindersFrom(component)
+				entry.participants = CalDAV.participantsFrom(component, this.addresses)
 
 				// The zone the entry's times were authored in (recurrence expands wall-clock in it — see
 				// backend/occurrences.ts): DTSTART's TZID where a client wrote one. A UTC DTSTART carries no
@@ -657,7 +796,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			throw new Error('Entry must have a URL and raw data to be updated via CalDAV')
 		}
 
-		const keys: Array<keyof Entry> = (['heading', 'description', 'location', 'color', 'start', 'end', 'status', 'allDay', 'timeZone', 'reminders'] as const)
+		const keys: Array<keyof Entry> = (['heading', 'description', 'location', 'color', 'start', 'end', 'status', 'allDay', 'timeZone', 'reminders', 'participants'] as const)
 			.filter(key => !Object[equals](existing[key], incoming[key]))
 
 		// The recurrence rule is a value object, diffed via its own (absence-safe) structural equality.
@@ -753,6 +892,13 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			if (keys.includes('reminders')) {
 				this.writeReminders(component, incoming.reminders)
 				existing.reminders = incoming.reminders
+			}
+
+			// iTIP list changes are the organizer's (the route rejects everyone else before this runs);
+			// the ATTENDEEs are rewritten wholesale, ORGANIZER only added/removed (see writeParticipants).
+			if (keys.includes('participants')) {
+				CalDAV.writeParticipants(component, incoming.participants ?? null)
+				existing.participants = incoming.participants
 			}
 
 			// Recurrence rule edits are series-wide: set/replace the master's RRULE, or drop it (and the EXDATEs it
@@ -852,6 +998,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			this.writeTaskStatus(component, entry.status)
 		}
 		this.writeReminders(component, entry.reminders)
+		if (entry.participants?.length) {
+			CalDAV.writeParticipants(component, entry.participants)
+		}
 
 		comp.addSubcomponent(component)
 
@@ -902,7 +1051,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				calendarObject: {
 					url: entry.uri,
 					etag: entry.data?.etag || undefined,
-				}
+				},
 			})
 			// The same stale-etag story as writeResource: refresh the etag once and retry.
 			if (response.status === 412) {

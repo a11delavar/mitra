@@ -28,6 +28,7 @@
 		"src/*"
 	],
 	"dependencies": {
+		"@a11d/bidirectional-map": "0.1.x",
 		"temporal-polyfill": "0.2.x",
 		"tsdav": "2.x",
 		"web-push": "3.x"

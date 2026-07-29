@@ -2,6 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Entry, EntryType, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
+import { ParticipantRole } from './Participant.js'
 import { Source, SourceType } from './Source.js'
 
 describe('Entry', () => {
@@ -43,6 +44,73 @@ describe('Entry', () => {
 	})
 
 	const at = (d: number, hour: number, minute = 0) => day.add({ days: d }).with({ hour, minute })
+
+	describe('participants', () => {
+		const invited = () => new Entry({
+			participants: [
+				{ email: 'organizer@example.com', organizer: true },
+				{ email: 'me@example.com', self: true },
+			],
+		})
+
+		it('surfaces the organizer from the list', () => {
+			assert.equal(invited().organizer?.email, 'organizer@example.com')
+			assert.equal(new Entry({}).organizer, undefined)
+		})
+
+		it('is manageable without an organizer (one\'s own entry) or as the organizer — iTIP (RFC 5546)', () => {
+			assert.equal(new Entry({}).canManageParticipants, true)
+			assert.equal(new Entry({ participants: [{ email: 'a@example.com' }] }).canManageParticipants, true)
+			assert.equal(new Entry({ participants: [{ email: 'me@example.com', organizer: true, self: true }] }).canManageParticipants, true)
+			assert.equal(invited().canManageParticipants, false) // someone else's meeting
+		})
+
+		it('counts as editable content — editEquals compares the lists structurally', () => {
+			const a = invited()
+			const b = invited()
+			assert.equal(a.editEquals(b), true) // same content, different array instances
+			b.participants = [...b.participants!, { email: 'late@example.com' }]
+			assert.equal(a.editEquals(b), false)
+		})
+
+		it('invite adds pending required invitees and enlists the account as the organizer', () => {
+			const entry = new Entry({})
+			assert.equal(entry.invite([' Invitee@Example.com ', 'invitee@example.com', 'junk'], 'me@example.com'), true)
+			assert.deepEqual(entry.participants!.map(participant => [participant.email, !!participant.organizer, participant.status]), [
+				['me@example.com', true, 'accepted'],
+				['invitee@example.com', false, 'needs-action'],
+			])
+		})
+
+		it('invite skips the already-invited and reports whether anything changed', () => {
+			const entry = invited()
+			assert.equal(entry.invite(['ME@example.com'], 'me@example.com'), false)
+			assert.equal(entry.invite(['second@example.com']), true)
+			assert.equal(entry.organizer?.email, 'organizer@example.com') // the foreign organizer stays
+		})
+
+		it('invite replaces the list — the previous array (a clone may share it) is untouched', () => {
+			const entry = invited()
+			const before = entry.participants
+			entry.invite(['second@example.com'])
+			assert.equal(before!.length, 2)
+			assert.notEqual(entry.participants, before)
+		})
+
+		it('markAllParticipants changes every invitee but never the organizer', () => {
+			const entry = invited()
+			entry.markAllParticipants(ParticipantRole.Optional)
+			assert.deepEqual(entry.participants!.map(participant => participant.role), [ParticipantRole.Required, ParticipantRole.Optional])
+		})
+
+		it('clearParticipants returns the entry to a plain private one', () => {
+			const entry = invited()
+			entry.clearParticipants()
+			assert.equal(entry.participants, null)
+			assert.equal(entry.hasParticipants, false)
+			assert.equal(entry.canManageParticipants, true)
+		})
+	})
 
 	describe('effectiveEnd / inclusiveEnd', () => {
 		it('returns the stored end when it is after the start', () => {

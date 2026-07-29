@@ -26,6 +26,7 @@ Most tools make you choose: a *calendar* for your time, or a *to-do app* for you
 - 🗓️ **Events and tasks together** — one timeline, week and month views, create anything by dragging (timed, multi-day, or all-day).
 - 🔗 **Brings in calendars you already use** — your CalDAV accounts (events *and* tasks), Google Calendar, Apple Calendar and Notion task databases sync in the background, with more integrations on the way.
 - 🔔 **Reminders that reach you** — per-entry reminders delivered as push notifications, even with no tab open.
+- 👥 **Invite people** — put a guest list on any entry and watch the replies land; your calendar account sends the invitations.
 - 🎨 **Yours to look at** — per-calendar colours, light and dark themes, and full right-to-left support.
 - 🏠 **Self-hosted & private** — everything lives in one small container with a database you own and can back up in seconds.
 

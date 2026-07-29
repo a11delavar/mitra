@@ -4,6 +4,7 @@ import { model } from './model.js'
 import { entity, primaryKey, property, enum as enumType, unique, manyToOne, embedded } from './orm.js'
 import { Source, SourceType } from './Source.js'
 import { Recurrence } from './Recurrence.js'
+import { Participants, type ParticipantRole, type Participant } from './Participant.js'
 
 export enum EntryType {
 	Event = 'event',
@@ -102,6 +103,58 @@ export class Entry {
 	// `recurrence`: MikroORM hydrates the empty column as null, and editEquals must see one value).
 	@property({ type: 'json', nullable: true }) reminders?: Array<number> | null
 
+	// --- Participants (RFC 5545 ATTENDEE / ORGANIZER) ---------------------------------------------------
+	// The invitee list — one JSON column of `Participant` value records, like `reminders`, with the same
+	// tri-state wire convention (array sets, `null` clears, absent keeps) and the same replace-don't-
+	// mutate rule (clones share the array). The organizer is IN the list (`organizer: true`); `self`
+	// marks the account's own address, stamped at sync/seed time. The mutations below are the entry's
+	// own behavior — the editor wires straight to them, keeping all the list rules here (like the
+	// timing methods) — and each assigns a NEW normalized list, never edits the held one.
+	@property({ type: 'json', nullable: true }) participants?: Array<Participant> | null
+
+	/** The list as its domain collection ({@link Participants}) — hydrated/wire arrays are plain, so
+	 * behavior re-enters the domain here (normalization is idempotent, the lists are small). */
+	get participantList(): Participants | null {
+		return Participants.normalize(this.participants)
+	}
+
+	get organizer(): Participant | undefined {
+		return this.participants?.find(participant => participant.organizer)
+	}
+
+	get hasParticipants() {
+		return !!this.participants?.length
+	}
+
+	/** Whether the account may modify the participant list — iTIP (RFC 5546) reserves that for the
+	 * ORGANIZER; the rule itself lives on the collection ({@link Participants.manageable}). */
+	get canManageParticipants() {
+		return this.participantList?.manageable ?? true
+	}
+
+	/** Invite `emails` — the list rules (dedupe, pending-required defaults, enlisting the account as
+	 * organizer on the first invite) live on the collection ({@link Participants.inviting}).
+	 * @returns whether anything was actually added. */
+	invite(emails: ReadonlyArray<string>, ownAddress?: string): boolean {
+		const invited = (this.participantList ?? new Participants()).inviting(emails, ownAddress)
+		if (!invited) {
+			return false
+		}
+		this.participants = invited
+		return true
+	}
+
+	/** Set every invitee's attendance to `role` ({@link Participants.marked} — organizer untouched). */
+	markAllParticipants(role: ParticipantRole) {
+		this.participants = this.participantList?.marked(role) ?? null
+	}
+
+	/** Remove every participant — back to a plain private entry (the organizer included; without
+	 * invitees there is nothing to organize). */
+	clearParticipants() {
+		this.participants = null
+	}
+
 	// --- Recurrence (RFC 5545) ------------------------------------------------------------------------
 	// A recurring series is a single MASTER row carrying the `recurrence` rule (a value object → recurrence_*
 	// columns); its occurrences are expanded on read, never stored. A single edited occurrence is its own
@@ -167,7 +220,7 @@ export class Entry {
 		// `recurrence` counts as editable content (the Repeat field mutates it); `Object[equals]` compares
 		// the value objects structurally. The series *link* fields (uid, recurrenceMasterId, recurrenceId,
 		// exdates) are sync bookkeeping like `uri`/`data`, so they stay excluded.
-		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'allDay', 'timeZone', 'status', 'recurrence', 'reminders'] as const
+		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'allDay', 'timeZone', 'status', 'recurrence', 'reminders', 'participants'] as const
 		return editable.every(key => Object[equals](this[key], other[key]))
 	}
 
@@ -218,6 +271,7 @@ export class Entry {
 			allDay: values.allDay,
 			timeZone: values.timeZone,
 			reminders: values.reminders,
+			participants: values.participants,
 			data: values.data,
 			uid: values.uid,
 			recurrence: values.recurrence,

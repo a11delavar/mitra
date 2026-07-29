@@ -7,12 +7,12 @@ export {}
 
 declare global {
 	interface LocalizableStringKeys {
-		"+ end date": unknown
 		"+${count:number} more": unknown
 		"${count:number} min": unknown
 		"${count:pluralityNumber} days": unknown
 		"${count:pluralityNumber} hours": unknown
 		"${count:pluralityNumber} months": unknown
+		"${count:pluralityNumber} participants": unknown
 		"${count:pluralityNumber} weeks": unknown
 		"${count:pluralityNumber} years": unknown
 		"${span} before": unknown
@@ -22,6 +22,8 @@ declare global {
 		"Account": unknown
 		"Add integration": unknown
 		"Add Integration": unknown
+		"Add participant": unknown
+		"Add participants": unknown
 		"Add reminder": unknown
 		"Add time zone": unknown
 		"Add your first integration": unknown
@@ -31,6 +33,7 @@ declare global {
 		"Amount": unknown
 		"App-Specific Password": unknown
 		"Apple ID": unknown
+		"Ask everyone to attend": unknown
 		"At start": unknown
 		"At start of event": unknown
 		"Back": unknown
@@ -55,6 +58,7 @@ declare global {
 		"Connecting…": unknown
 		"Continue with Google": unknown
 		"Copy": unknown
+		"Copy participants' emails": unknown
 		"Copy Version": unknown
 		"Create and move entries right on the grid — every change syncs back to its source.": unknown
 		"Create Entry": unknown
@@ -82,6 +86,7 @@ declare global {
 		"Edit": unknown
 		"Edit integration": unknown
 		"Edit repeating entry": unknown
+		"Email participants": unknown
 		"End date": unknown
 		"End time": unknown
 		"Ends": unknown
@@ -109,6 +114,9 @@ declare global {
 		"jump navigate pick specific day month year": unknown
 		"Keyboard Shortcuts": unknown
 		"Location": unknown
+		"Make attendance optional for everyone": unknown
+		"Mark all optional": unknown
+		"Mark all required": unknown
 		"minutes": unknown
 		"modified": unknown
 		"Month": unknown
@@ -134,9 +142,13 @@ declare global {
 		"OK": unknown
 		"On": unknown
 		"One calendar to plan your events and tasks.": unknown
+		"Only the organizer can change participants": unknown
 		"Open in Google Maps": unknown
+		"Optional": unknown
 		"Options": unknown
 		"or": unknown
+		"Organizer": unknown
+		"Participant options": unknown
 		"Password": unknown
 		"Pick the calendars and task lists to show — recolor, rename or hide them in the sidebar anytime.": unknown
 		"Plan your days": unknown
@@ -150,6 +162,8 @@ declare global {
 		"Reminder": unknown
 		"Reminders": unknown
 		"Remove": unknown
+		"Remove all": unknown
+		"Remove every participant": unknown
 		"Remove reminder": unknown
 		"Rename": unknown
 		"Rename time zone": unknown
@@ -163,6 +177,7 @@ declare global {
 		"Search entries or run a command…": unknown
 		"Search or run a command (${hotkey})": unknown
 		"Search or run a command…": unknown
+		"See all ${count:number} participants": unknown
 		"select": unknown
 		"Server URL": unknown
 		"Set as the default for new entries": unknown
