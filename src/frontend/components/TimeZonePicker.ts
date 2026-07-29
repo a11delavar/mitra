@@ -1,5 +1,7 @@
 import { Component, component, html, css, property, state, event, eventListener, repeat, query } from '@a11d/lit'
 import { type UserTimeZone } from 'shared'
+import { pickerRow, pickerRowChosen } from './pickerRow.css.js'
+import { activated } from './activated.css.js'
 
 // --- Zone presentation (shared by the axis header, the picker, and the entry editor) ----------------
 
@@ -229,19 +231,15 @@ export class TimeZonePicker extends Component {
 
 					> button {
 						all: unset;
-						box-sizing: border-box;
-						display: flex;
-						align-items: baseline;
-						gap: 0.5rem;
-						padding: 0.375rem 0.5rem;
-						border-radius: var(--border-radius);
-						font-size: 0.8125rem;
-						cursor: pointer;
+						/* The shared option row (pickerRow.css.ts) — literally the same row a select's picker
+						   gives its options, so the two lists cannot drift apart again. Only the columns a
+						   ZONE is made of are local. */
+						${pickerRow}
 
-						/* The keyboard-active row shares the hover surface. */
-						&:hover,
+						/* The keyboard-active row is the hovered row as far as the eye is concerned. */
 						&[data-active] {
-							background: color-mix(in srgb, var(--color-text) 8%, transparent);
+							${activated};
+							color: var(--color-text);
 						}
 
 						> .offset {
@@ -265,16 +263,14 @@ export class TimeZonePicker extends Component {
 							text-overflow: ellipsis;
 						}
 
-						/* The caller's current zone, pinned near the top and check-marked. */
+						/* The caller's current zone wears the shared chosen state: tinted, firmer, and ticked
+						   in the leading gutter. */
 						&[data-selected] {
-							background: color-mix(in srgb, var(--color-accent) 12%, transparent);
-						}
+							${pickerRowChosen};
 
-						> .check {
-							margin-inline-start: auto;
-							flex-shrink: 0;
-							color: var(--color-accent);
-							font-size: 0.9rem;
+							&::before {
+								color: var(--color-accent);
+							}
 						}
 
 						/* Tags the browser's own zone, hoisted to the top as the "reset to default" pick. */
@@ -286,9 +282,6 @@ export class TimeZonePicker extends Component {
 							text-transform: uppercase;
 							letter-spacing: 0.04em;
 						}
-
-						/* When both a check and the primary tag trail, the check owns the auto-margin; the tag follows it. */
-						> .check ~ .primary { margin-inline-start: 0.375rem; }
 					}
 				}
 			}
@@ -306,7 +299,6 @@ export class TimeZonePicker extends Component {
 						<span class="offset">${row.offset}</span>
 						<span class="name">${row.name}</span>
 						<span class="city">– ${row.city}</span>
-						${row.id !== this.selected ? html.nothing : html`<mitra-icon class="check" icon="check"></mitra-icon>`}
 						${row.id !== systemZoneId() ? html.nothing : html`<span class="primary">primary</span>`}
 					</button>
 				`)}

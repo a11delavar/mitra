@@ -119,7 +119,11 @@ export class DialogKeyboardShortcuts extends DialogComponent {
 							flex-shrink: 0;
 						}
 
+						/* Hints are hidden on a touch screen everywhere else in the app (kbd.css.ts) — this
+						   sheet is the one place they ARE the content, so both re-declare display and
+						   opt back in. Bigger and firmer here than a hint decorating a control, too. */
 						.word {
+							display: inline;
 							font-size: 0.6875rem;
 							color: var(--color-text-muted);
 						}
@@ -129,13 +133,9 @@ export class DialogKeyboardShortcuts extends DialogComponent {
 							align-items: center;
 							justify-content: center;
 							min-width: 1.375rem;
-							font-family: inherit;
 							font-size: 0.6875rem;
-							font-weight: 600;
 							color: color-mix(in srgb, var(--color-text) 65%, transparent);
-							background: color-mix(in srgb, var(--color-text) 4%, transparent);
-							border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
-							border-radius: 4px;
+							border-color: color-mix(in srgb, var(--color-text) 10%, transparent);
 							padding: 0.125rem 0.3125rem;
 						}
 					}

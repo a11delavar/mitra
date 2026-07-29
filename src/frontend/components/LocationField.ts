@@ -48,15 +48,16 @@ function placeLabel(type: string): string {
 }
 
 /**
- * The "Location" control for the entry editor, Google Calendar-style: ONE always-editable `subtle`
- * field — a single-line-behaving textarea, so `field-sizing` lets a long address wrap and grow — with
+ * The "Location" control for the entry editor, Google Calendar-style: ONE always-editable field —
+ * a single-line-behaving textarea, so `field-sizing` lets a long address wrap and grow — with
  * a trailing map link opening the address in Google Maps once one is set. (One mode on purpose: a
  * separate rendered/editing state can flip underneath mid-typing; a plain field can't.)
  *
- * Typing live-queries suggestions into an anchored menu: recently used locations from the user's own
- * entries first (shown on focus even before typing), then geocoder results (via the backend's Photon
- * proxy, biased towards the user's position when granted). The menu prefers opening beside the row —
- * the same placement strategy and tinted glass as the source and repeat pickers.
+ * Typing live-queries suggestions into a menu anchored to the FIELD (see field.css.ts — the field's
+ * scoped `--field` anchor, so this component needs no anchor token of its own): recently used
+ * locations from the user's own entries first (shown on focus even before typing), then geocoder
+ * results (via the backend's Photon proxy, biased towards the user's position when granted). The menu
+ * prefers opening beside the row — the same placement strategy and tinted glass as the other pickers.
  *
  * The value is and stays a plain string (RFC 5545 LOCATION is TEXT), so free text is always valid;
  * picking a suggestion merely fills in a nicely formatted one. Mutates `entry.location` in place and
@@ -64,10 +65,6 @@ function placeLabel(type: string): string {
  */
 @component('mitra-location-field')
 export class LocationField extends Component {
-	// Per-instance anchor token so two open editors' suggestion menus never collide.
-	private static count = 0
-	private readonly anchor = `--location-${LocationField.count++}`
-
 	@property({
 		type: Object,
 		// The popover got reused for another entry while suggestions were open: they belong to the
@@ -167,7 +164,6 @@ export class LocationField extends Component {
 				grid-column: 2;
 				min-width: 0;
 				display: flex;
-				align-items: center;
 				gap: 0.25rem;
 
 				/* The global textarea's field-sizing makes the field grow as a long address wraps. */
@@ -180,6 +176,7 @@ export class LocationField extends Component {
 				   the field doesn't shift the moment the first character makes it appear. */
 				> a {
 					display: inline-flex;
+					align-self: center;
 					padding: 2px;
 					border-radius: var(--border-radius);
 					color: var(--color-text-muted);
@@ -259,13 +256,13 @@ export class LocationField extends Component {
 
 	protected override get template() {
 		return html`
-			<textarea class="subtle" rows="1" placeholder=${t('Location')} autocomplete="off" spellcheck="false"
-				style="anchor-name: ${this.anchor}"
+			<textarea rows="1" placeholder=${t('Location')} autocomplete="off" spellcheck="false"
 				.value=${this.entry?.location ?? ''}
 				@focus=${this.handleFocus}
 				@input=${this.handleInput}
 				@keydown=${this.handleKeydown}
-				@blur=${() => this.close()}></textarea>
+				@blur=${() => this.close()}
+			></textarea>
 			<a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(this.entry?.location ?? '')}"
 				?data-empty=${!this.entry?.location}
 				target="_blank" rel="noopener noreferrer" title=${t('Open in Google Maps')} aria-label=${t('Open in Google Maps')}>
@@ -275,7 +272,7 @@ export class LocationField extends Component {
 				fast, so on an empty field the menu can open between pointerdown (focus) and pointerup, and
 				the completing click would instantly dismiss it (a flash). Its lifecycle is fully owned here
 				anyway: blur, Escape, and picking close it. -->
-			<menu popover="manual" style="position-anchor: ${this.anchor}">
+			<menu popover="manual">
 				${this.suggestions.map((suggestion, index) => html`
 					<button type="button" ?data-active=${index === this.activeIndex}
 						@pointerdown=${(e: Event) => e.preventDefault()}

@@ -273,7 +273,7 @@ export class EntryDetailsComponent extends Component {
 				> ul {
 					list-style: none;
 					margin: 0;
-					padding: 0.5rem 1rem 1rem;
+					padding: 0.5rem 1rem 0.75rem;
 
 					/* The popover itself is the sheet contract's transparent frame (see components/sheet.ts):
 					   the list is its single child and carries ALL the chrome — in anchored mode too, where
@@ -290,11 +290,12 @@ export class EntryDetailsComponent extends Component {
 					   colour-square) and its content. Every row subgrids it so the glyphs line up. The
 					   date/time editor does its own start/→/end alignment within the content column. */
 					grid-template-columns: auto minmax(0, 1fr);
-					row-gap: 1rem;
+					/* The field boxes carry the vertical air now — the gap only separates their borders. */
+					row-gap: 0.125rem;
 					column-gap: 0.5rem;
 
 					> hr {
-						margin: 0;
+						margin: 0.5rem 0;
 						background: rgba(255, 255, 255, 0.06);
 						width: 100%;
 						height: 1px;
@@ -313,6 +314,13 @@ export class EntryDetailsComponent extends Component {
 							font-size: 0.87rem;
 							color: var(--color-text-muted);
 							flex-shrink: 0;
+						}
+
+						/* A field row IS the field (see field.css.ts): the box reaches half a rem beyond
+						   the columns on both sides — the net-zero margin/padding pair keeps the grid
+						   alignment — so the hover border wraps the glyph and the content as ONE control. */
+						&.field {
+							margin-inline: -0.5rem;
 						}
 
 						> .content {
@@ -337,6 +345,10 @@ export class EntryDetailsComponent extends Component {
 
 								> .title {
 									flex: 1;
+									/* The title is a field of its own (the checkbox/options stay outside its
+									   box); the leading net-zero pair keeps its text on the popover's rhythm
+									   line while the border reaches out like every other field's. */
+									margin-inline-start: -0.5rem;
 									font-size: 0.9375rem;
 									font-weight: 600;
 									color: var(--color-text);
@@ -353,42 +365,23 @@ export class EntryDetailsComponent extends Component {
 						}
 
 						&.description {
-							align-items: start;
-
-							> mitra-icon {
-								margin-block-start: 2px;
-							}
-
+							/* The same box and metrics for BOTH faces of the field (the editing textarea
+							   and the rendered markdown), so toggling between them never shifts the layout. */
 							> textarea, > .rendered {
 								grid-column: 2 / -1;
-							}
-
-							> textarea {
 								width: 100%;
-								font: inherit;
-								line-height: 1.4;
 							}
 
 							> .rendered {
-								width: 100%;
-								/* Match the .subtle textarea's box so toggling doesn't shift layout. */
-								margin: -4px -4px;
-								padding: 4px 4px;
-								border-radius: var(--border-radius);
 								cursor: text;
+								padding-block: calc((var(--control-height) - 2px - 1lh) / 2);
 
-								&:hover {
-									background: color-mix(in srgb, var(--color-text) 6%, transparent);
+								mitra-markdown {
+									line-height: inherit;
 								}
 							}
 
-							.placeholder {
-								color: var(--color-text-muted);
-								opacity: 0.8;
-								font-size: 0.8rem;
-								line-height: 1.1rem;
 							}
-						}
 
 						&.source {
 							/* The icon sits in the gutter over the select, which spans the whole row: it must not
@@ -400,8 +393,9 @@ export class EntryDetailsComponent extends Component {
 								font-size: 0.875rem;
 							}
 
-							/* The whole row is a \`subtle\` select: it reads as plain text — the
-							   selected option's own dot/type/name via <selectedcontent> — until hovered. */
+							/* The whole row is one select: it reads as plain text — the selected option's
+							   own dot/type/name via <selectedcontent> — and the row's field box carries
+							   the hover/active feedback. */
 							> select {
 								display: grid;
 								grid-template-columns: subgrid;
@@ -449,7 +443,6 @@ export class EntryDetailsComponent extends Component {
 
 								option {
 									gap: 0.5rem;
-									border-radius: var(--border-radius);
 									.name { flex: 1; }
 								}
 							}
@@ -461,23 +454,6 @@ export class EntryDetailsComponent extends Component {
 							}
 						}
 
-						/* A long location wraps over several lines — keep the pin on the first one. */
-						&.location {
-							align-items: start;
-
-							> mitra-icon {
-								margin-block-start: 3px;
-							}
-						}
-
-						/* Several reminder rows stack — keep the bell on the first one. */
-						&.reminders {
-							align-items: start;
-
-							> mitra-icon {
-								margin-block-start: 3px;
-							}
-						}
 					}
 
 				}
@@ -507,7 +483,7 @@ export class EntryDetailsComponent extends Component {
 						<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
 					`}
 					<div class="title-bar">
-						<input class="title subtle" placeholder=${t('Title')}
+						<input class="title field" placeholder=${t('Title')}
 							?data-struck=${this.segment.entry.status === TaskStatus.Done || this.segment.entry.status === TaskStatus.Cancelled}
 							${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
 						<mitra-icon-button
@@ -584,14 +560,14 @@ export class EntryDetailsComponent extends Component {
 				&& (entry.status !== TaskStatus.Cancelled || capabilities.cancelledStatus)
 		}
 		return !this.source?.name ? html.nothing : html`
-			<li class="source">
+			<li class="source field">
 				${/* The row's own icon, in the icon gutter with the clock, globe and palette — the source's
 				    kind in the source's colour, which is also where the popover gets its own tint from. It is
 				    rendered HERE rather than left to <selectedcontent> below: that draws the chosen option by
 				    cloning it, and the clone (carrying no properties, and taken before the icon has even
 				    rendered once) would always come out a colourless calendar. */''}
 				<mitra-source-icon .source=${this.source}></mitra-source-icon>
-				<select class="subtle" @change=${handleSourceChange}>
+				<select @change=${handleSourceChange}>
 					<button>
 						<selectedcontent></selectedcontent>
 					</button>
@@ -622,7 +598,7 @@ export class EntryDetailsComponent extends Component {
 		// The field mutates `entry.location` in place; both its typed commits (the input's bubbling
 		// `change`) and picked suggestions (the component's own `change`) land here and persist.
 		return !this.capabilities.location ? html.nothing : html`
-			<li class="location">
+			<li class="location field">
 				<mitra-icon icon="map-pin"></mitra-icon>
 				<mitra-location-field .entry=${this.segment!.entry} @change=${this.handleChange}></mitra-location-field>
 			</li>
@@ -632,7 +608,7 @@ export class EntryDetailsComponent extends Component {
 	private get colorTemplate() {
 		const activeColor = this.segment?.entry.color || this.source?.color
 		return !this.segment?.entry ? html.nothing : html`
-			<li class="color">
+			<li class="color field">
 				<mitra-icon icon="palette"></mitra-icon>
 				<div class="content">
 					<mitra-color-picker
@@ -663,7 +639,7 @@ export class EntryDetailsComponent extends Component {
 	private get remindersTemplate() {
 		// Reminders anchor to the start time — an undated entry has nothing to remind about.
 		return !this.segment!.entry.start || !this.capabilities.reminders ? html.nothing : html`
-			<li class="reminders">
+			<li class="reminders field">
 				<mitra-icon icon="bell"></mitra-icon>
 				<mitra-reminders-field .entry=${this.segment!.entry} @change=${this.handleChange}></mitra-reminders-field>
 			</li>
@@ -686,16 +662,21 @@ export class EntryDetailsComponent extends Component {
 			})
 		}
 		return !this.capabilities.description ? html.nothing : html`
-			<li class="description">
+			<li class="description field">
 				<mitra-icon icon="align-left"></mitra-icon>
 				${this.editingDescription ? html`
-					<textarea class="subtle" rows="1" placeholder=${t('Description')}
+					<textarea rows="1" placeholder=${t('Description')}
 						${this.bind('entry.description', 'input')}
 						@change=${this.handleChange}
 						@blur=${() => this.editingDescription = false}
 					></textarea>
 				` : html`
-					<div class="rendered" @click=${editDescription}>
+					<!-- Focusable, and focus IS the switch into edit mode: the rendered face is a view of the
+						same field, so reaching it by keyboard has to put the caret in it like clicking does —
+						otherwise Description was the one row Tab passed through with nothing to show. A click
+						on a link focuses the ANCHOR, not this div, so links still just follow (the guard in
+						editDescription covers the bubbled click). -->
+					<div class="rendered" tabindex="0" @focus=${editDescription} @click=${editDescription}>
 						${!this.segment!.entry.description ? html`
 							<div class="placeholder">${t('Description')}</div>
 							` : html`

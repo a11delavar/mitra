@@ -24,17 +24,13 @@ type MenuItem = RecurrencePreset & { checked: boolean }
 type MonthlyOption = { key: string, label: string }
 
 /**
- * The "Repeat" control for the entry editor: a \`subtle\` select of presets derived from the series
- * anchor date (like the source row's selector), and a "Custom…" dialog for the full interval / weekday /
+ * The "Repeat" control for the entry editor: a select of presets derived from the series anchor
+ * date (like the source row's selector), and a "Custom…" dialog for the full interval / weekday /
  * ends editor. It mutates `entry.recurrence` (a `Recurrence` value object) in place and fires `change`;
  * the host persists. Rule changes are always series-wide.
  */
 @component('mitra-repeat-field')
 export class RepeatField extends Component {
-	// Per-instance token so the dialog's radio groups of two open editors never collide.
-	private static count = 0
-	private readonly anchor = `--repeat-${RepeatField.count++}`
-
 	@property({
 		type: Object,
 		// If the shown entry changes while the Custom dialog is open (e.g. the popover is reused for another
@@ -277,9 +273,11 @@ export class RepeatField extends Component {
 			mitra-repeat-field {
 				grid-column: 2;
 				min-width: 0;
+				display: flex;
 
-				/* The same \`subtle\` select as the popover's source row: it reads as plain text until hovered,
-				   and its picker wears the popover's tinted glass, opening beside the row before below/above. */
+				/* The same bare in-field select as the popover's source row — the field box around it
+				   carries the hover/active feedback; its picker wears the popover's tinted glass,
+				   opening beside the row before below/above. */
 				> select {
 					width: 100%;
 
@@ -437,7 +435,9 @@ export class RepeatField extends Component {
 
 	protected override get template() {
 		return !this.entry?.start ? html.nothing : html`
-			<select class="subtle" @change=${this.handleSelect}>
+			<!-- No rule means nothing is chosen here, so "Does not repeat" reads as a placeholder rather
+				than as a value (field.css.ts owns what that looks like). -->
+			<select ?data-placeholder=${!this.entry.recurrence} @change=${this.handleSelect}>
 				<button>
 					<selectedcontent></selectedcontent>
 				</button>
@@ -492,20 +492,24 @@ export class RepeatField extends Component {
 							</div>
 						`}
 
-						<div class="ends">
+						<!-- A real <form>, so the radios' group is scoped to it: two editors open at once
+							can both use the plain name "ends" without joining one group (a radio group is
+							per form owner). Submission is never wanted — Enter in the date/number field
+							would otherwise implicitly submit and navigate. -->
+						<form class="ends" @submit=${(e: Event) => e.preventDefault()}>
 							<div class="ends-label">${t('Ends')}</div>
 							<label>
-								<input type="radio" name="ends-${this.anchor}" .checked=${!draft.until && !draft.count} @change=${this.setEnds('never')}>
+								<input type="radio" name="ends" .checked=${!draft.until && !draft.count} @change=${this.setEnds('never')}>
 								<span>${t('Never')}</span>
 							</label>
 							<label>
-								<input type="radio" name="ends-${this.anchor}" .checked=${!!draft.until} @change=${this.setEnds('until')}>
+								<input type="radio" name="ends" .checked=${!!draft.until} @change=${this.setEnds('until')}>
 								<span>${t('On')}</span>
 								<input type="date" aria-label=${t('End date')} ?disabled=${!draft.until}
 									.value=${this.dateValue(this.draftUntil)} @change=${this.onUntil}>
 							</label>
 							<label>
-								<input type="radio" name="ends-${this.anchor}" .checked=${!!draft.count} @change=${this.setEnds('count')}>
+								<input type="radio" name="ends" .checked=${!!draft.count} @change=${this.setEnds('count')}>
 								<span>${t('After')}</span>
 								<span class="after-times">
 									<input type="number" min="1" aria-label=${t('Occurrences')} ?disabled=${!draft.count}
@@ -513,7 +517,7 @@ export class RepeatField extends Component {
 									${t('times')}
 								</span>
 							</label>
-						</div>
+						</form>
 
 						<div class="dialog-actions">
 							<button type="button" class="primary" @click=${this.confirmDialog}>${t('Done')}</button>

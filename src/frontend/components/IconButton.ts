@@ -1,5 +1,6 @@
 import { Component, component, html, css, property, ifDefined } from '@a11d/lit'
-import { outlineStyles } from './outlineStyles.js'
+import { focusRing } from './focusRing.css.js'
+import { activated } from './activated.css.js'
 
 @component('mitra-icon-button')
 export class IconButton extends Component {
@@ -14,12 +15,26 @@ export class IconButton extends Component {
 				display: inline-flex;
 				font-size: 1rem;
 
+				/* On a touch screen an icon button is a TARGET, not just a glyph, so it takes a floor size
+				   there — its natural box is ~26px, which is nothing to hit with a finger. Zero on a precise
+				   pointer, where the glyph's own box is target enough, and zero wherever an icon button is
+				   embedded in dense content a square that size would burst (see the task checkbox inside a
+				   grid segment, which opts out). Deliberately smaller than the shared control height
+				   (controlHeight.css.ts) — mix that in and read var(--control-height) here to make icon
+				   buttons exactly as tall as every other control on touch. */
+				--icon-button-size: 0;
+				@media (pointer: coarse) {
+					--icon-button-size: 2rem;
+				}
+
 				> button {
 					all: unset;
 					display: flex;
 					align-items: center;
 					justify-content: center;
 					box-sizing: border-box;
+					min-inline-size: var(--icon-button-size);
+					min-block-size: var(--icon-button-size);
 					padding: 0.25rem;
 					border-radius: var(--border-radius);
 					color: currentColor;
@@ -31,18 +46,17 @@ export class IconButton extends Component {
 
 					&:hover {
 						opacity: 1;
-						background: color-mix(in srgb, var(--color-text) 8%, transparent);
+						${activated};
 					}
 
-					${outlineStyles}
-
+					/* The shared ring (focusRing.css.ts) plus this button's own hover surface, so a
+					   keyboard-focused icon button reads exactly like a focused field. */
 					&:focus-visible {
-						outline: none;
 						opacity: 1;
-						background: color-mix(in srgb, var(--color-text) 8%, transparent);
-						box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 45%, transparent);
-						border: 1px solid var(--color-accent);
+						${activated};
 					}
+
+					${focusRing};
 				}
 			}
 		`

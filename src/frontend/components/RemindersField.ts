@@ -39,7 +39,8 @@ function reminderLabel(minutes: number): string {
 
 /**
  * The "Reminders" control for the entry editor — simplicity with control: a muted
- * placeholder (or the list of active reminders, each removable) plus an anchored preset menu whose
+ * placeholder (or the list of active reminders, each removable) plus a preset menu anchored to the
+ * FIELD (see field.css.ts) whose
  * last item opens the full custom editor (any count of minutes/hours/days/weeks before). Reminders are
  * MINUTES BEFORE START on the entry (see Entry.reminders), multiple allowed, deduplicated, ascending.
  *
@@ -50,10 +51,6 @@ function reminderLabel(minutes: number): string {
  */
 @component('mitra-reminders-field')
 export class RemindersField extends Component {
-	// Per-instance anchor token so two open editors' menus never collide.
-	private static count = 0
-	private readonly anchor = `--reminders-${RemindersField.count++}`
-
 	private static readonly presets = [0, 5, 10, 30, 60, 24 * 60]
 
 	@property({
@@ -147,46 +144,29 @@ export class RemindersField extends Component {
 			mitra-reminders-field {
 				grid-column: 2;
 				min-width: 0;
-				display: flex;
-				flex-direction: column;
-				align-items: start;
-				gap: 0.125rem;
+				/* The reminders stack in the first column; the add button holds the END of the first line,
+				   so it stays put as the list below it grows. */
+				display: grid;
+				grid-template-columns: minmax(0, 1fr) auto;
+				align-items: center;
+				row-gap: 0.125rem;
+				padding-block: 0.25rem;
 
-				/* The subtle-field box (margin/padding pair) stretched over the whole row, so the buttons
-				   line up with — and click like — the other full-width fields. The full-width anchor is
-				   also what places the preset menu beside the popover, like the source/repeat pickers. */
-				> .empty, > .add {
-					all: unset;
-					box-sizing: border-box;
-					align-self: stretch;
-					border-radius: var(--border-radius);
-					margin-inline: -4px;
-					padding: 2px 4px;
-					cursor: pointer;
-					color: var(--color-text-muted);
-
-					&:hover {
-						background: color-mix(in srgb, var(--color-text) 6%, transparent);
-					}
-				}
+				> :is(.placeholder, .reminder) { grid-column: 1; }
 
 				> .add {
-					font-size: 0.6875rem;
+					grid-column: 2;
+					grid-row: 1;
+					color: var(--color-text-muted);
+					font-size: 0.8rem;
+					/* Swallow the button's own padding so it never stretches the row past a line's height. */
+					margin-block: -0.25rem;
 				}
 
 				> .reminder {
-					align-self: stretch;
 					display: flex;
 					align-items: center;
 					gap: 0.25rem;
-					/* The same subtle box as the sibling buttons, so every row shares one left edge. */
-					border-radius: var(--border-radius);
-					margin-inline: -4px;
-					padding: 2px 4px;
-
-					&:hover {
-						background: color-mix(in srgb, var(--color-text) 6%, transparent);
-					}
 
 					> span {
 						flex: 1;
@@ -286,23 +266,24 @@ export class RemindersField extends Component {
 	protected override get template() {
 		return !this.entry?.start ? html.nothing : html`
 			${!this.reminders.length ? html`
-				<button type="button" class="empty" style="anchor-name: ${this.anchor}" @click=${this.toggleMenu}>${t('Reminders')}</button>
-			` : html`
-				${this.reminders.map(minutes => html`
-					<div class="reminder">
-						<span>
-							${minutes === 0
-								? html`${t('At start')} <span class="detail">${t('of event at ${time}', { time: this.fireLabel(minutes) })}</span>`
-								: html`${reminderSpanLabel(minutes)} <span class="detail">${t('before at ${time}', { time: this.fireLabel(minutes) })}</span>`}
-						</span>
-						<mitra-icon-button icon="x" label=${t('Remove reminder')}
-							@click=${() => this.commit(this.reminders.filter(other => other !== minutes))}
-						></mitra-icon-button>
-					</div>
-				`)}
-				<button type="button" class="add" style="anchor-name: ${this.anchor}" @click=${this.toggleMenu}>${t('Add reminder')}</button>
-			`}
-			<menu popover style="position-anchor: ${this.anchor}">
+				<span class="placeholder">${t('Reminders')}</span>
+			` : this.reminders.map(minutes => html`
+				<div class="reminder">
+					<span>
+						${minutes === 0
+							? html`${t('At start')} <span class="detail">${t('of event at ${time}', { time: this.fireLabel(minutes) })}</span>`
+							: html`${reminderSpanLabel(minutes)} <span class="detail">${t('before at ${time}', { time: this.fireLabel(minutes) })}</span>`}
+					</span>
+					<mitra-icon-button icon="x" label=${t('Remove reminder')}
+						@click=${() => this.commit(this.reminders.filter(other => other !== minutes))}
+					></mitra-icon-button>
+				</div>
+			`)}
+			<!-- The one control that adds a reminder, whether there are none yet or several: a plain icon
+				button at the row's end. (It used to be a full-width button wearing the placeholder text,
+				which read as an input rather than as something to press.) -->
+			<mitra-icon-button class="add" icon="plus" label=${t('Add reminder')} @click=${this.toggleMenu}></mitra-icon-button>
+			<menu popover>
 				${RemindersField.presets.filter(minutes => !this.reminders.includes(minutes)).map(minutes => html`
 					<button type="button" @click=${() => this.add(minutes)}>${reminderLabel(minutes)}</button>
 				`)}

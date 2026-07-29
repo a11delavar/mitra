@@ -1,59 +1,51 @@
 import { css } from '@a11d/lit'
-import { outlineStyles } from './outlineStyles.js'
+import { focusRing } from './focusRing.css.js'
+import { controlHeight } from './controlHeight.css.js'
 
 export const inputStyles = css`
 	:is(input:not([type=checkbox], [type=radio]), textarea) {
 		appearance: none;
 		box-sizing: border-box;
-		font-weight: 400;
-		height: 2rem;
 		font-family: inherit;
-		font-size: 0.8125rem;
-		font-weight: 500;
-		background: color-mix(in srgb, var(--color-text) 5%, transparent);
 		color: var(--color-text);
-		border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
-		border-radius: 6px;
-		padding: 0.375rem 0.75rem;
 		min-width: 0;
 		max-width: 100%;
 		outline: none;
-		transition: all 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
 
-		&:read-only {
-			opacity: 0.55;
-			cursor: not-allowed;
-		}
+		/* Standalone (dialog forms, search rows): the control is its own box. Inside a \`.field\` the
+		   FIELD is the box and the control stays bare (see field.css.ts) — except in a nested
+		   <dialog>, which is its own surface again. :where keeps the guard specificity-free so
+		   per-site overrides keep winning like they always did. */
+		&:where(:not(.field, .field *), dialog *) {
+			${controlHeight};
+			height: var(--control-height);
+			font-size: 0.8125rem;
+			font-weight: 500;
+			background: color-mix(in srgb, var(--color-text) 5%, transparent);
+			border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+			border-radius: 6px;
+			padding: 0.375rem 0.75rem;
+			transition: all 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
 
-		&:hover {
-			background: color-mix(in srgb, var(--color-text) 8%, transparent);
-		}
-
-		${outlineStyles};
-
-		/* Subtle: looks like plain text (inheriting its surroundings) until you interact with it. */
-		&.subtle {
-			height: auto;
-			background: transparent;
-			border-color: transparent;
-			border-radius: var(--border-radius);
-			margin: -2px -4px;
-			padding: 2px 4px;
-
-			&:hover {
-				background: color-mix(in srgb, var(--color-text) 6%, transparent);
+			&:read-only {
+				opacity: 0.55;
+				cursor: not-allowed;
 			}
 
-			&:focus-visible {
-				background: color-mix(in srgb, var(--color-text) 10%, transparent);
-				border-color: transparent;
-				box-shadow: none;
+			&:hover {
+				background: color-mix(in srgb, var(--color-text) 8%, transparent);
+			}
+
+			${focusRing};
+
+			&:is(textarea) {
+				height: auto;
+				min-height: var(--control-height);
 			}
 		}
 	}
 
 	textarea {
-		height: auto;
 		field-sizing: content;
 		resize: none;
 		line-height: 1.4;
@@ -94,7 +86,7 @@ export const inputStyles = css`
 			}
 		}
 
-		${outlineStyles};
+		${focusRing};
 	}
 
 	input[type=checkbox] {
@@ -135,6 +127,6 @@ export const inputStyles = css`
 			}
 		}
 
-		${outlineStyles};
+		${focusRing};
 	}
 `

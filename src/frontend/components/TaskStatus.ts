@@ -31,10 +31,6 @@ function label(status: TaskStatus): string {
  */
 @component('mitra-task-status')
 export class TaskStatusComponent extends Component {
-	// A per-instance anchor name, so the grid copy and the popover copy of the same task never collide.
-	private static count = 0
-	private readonly anchor = `--task-status-${TaskStatusComponent.count++}`
-
 	@property({ type: Object }) entry!: Entry
 
 	/** Fired after the entry's status is mutated in place, so the host can persist and re-render. */
@@ -94,6 +90,16 @@ export class TaskStatusComponent extends Component {
 				display: inline-flex;
 				flex-shrink: 0;
 
+				/* The host IS the menu's anchor, and anchor-scope confines the name to this instance —
+				   so the grid copy and the popover copy of the same task share one name without
+				   colliding, and no per-instance token is needed. */
+				anchor-name: --task-status;
+				anchor-scope: --task-status;
+
+				> menu[popover] {
+					position-anchor: --task-status;
+				}
+
 				& > mitra-icon-button {
 					transition: color 0.15s ease, transform 0.1s ease;
 
@@ -101,6 +107,13 @@ export class TaskStatusComponent extends Component {
 					&:active { transform: scale(0.9); }
 
 					> button { padding: 0; }
+				}
+
+				/* In a grid bar the checkbox has to stay glyph-sized — a segment can be a couple of rems
+				   tall, so the touch target every other icon button grows to would burst it. The copy in
+				   the editor keeps that growth. */
+				mitra-entry-segment & {
+					--icon-button-size: 0;
 				}
 			}
 
@@ -117,11 +130,10 @@ export class TaskStatusComponent extends Component {
 		return html`
 			<mitra-icon-button aria-label=${label(this.status)}
 				title=${t('${status} — click to toggle, Alt-click for options', { status: label(this.status) })}
-				style="anchor-name: ${this.anchor}"
 				@click=${this.onToggle}
 				@contextmenu=${this.onContextMenu} icon=${icon.get(this.status)!}
 			></mitra-icon-button>
-			<menu popover style="position-anchor: ${this.anchor}">
+			<menu popover>
 				${order.filter(status => status !== TaskStatus.Cancelled || getCapabilities(this.entry.sourceId).cancelledStatus).map(status => html`
 					<button aria-current=${status === this.status} @click=${this.pick(status)}>
 						<mitra-icon icon=${icon.get(status)!}></mitra-icon>

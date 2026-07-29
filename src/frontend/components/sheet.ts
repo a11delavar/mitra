@@ -57,7 +57,12 @@ export const sheetStyles = css`
 		overflow-y: auto;
 		scroll-snap-type: block mandatory;
 		scrollbar-width: none;
-		overscroll-behavior: contain;
+		/* none, not contain: both stop the drag from CHAINING into whatever scrolls behind, but
+		   contain still permits the platform's own overscroll effect on this scroller — and since the
+		   track IS the whole viewport, Android's stretch then grabs the entire screen, which reads as the
+		   page itself lurching (only when DRAGGED past a stop; sliding it out programmatically never
+		   overscrolls, which is exactly why tap-to-dismiss looked clean and a drag did not). */
+		overscroll-behavior: none;
 
 		/* …but the clip that comes with a scroll container is NOT inert, and it silently cost the
 		   anchored editor its depth: descendants are cropped to a SQUARE padding box, so the body's
@@ -69,13 +74,19 @@ export const sheetStyles = css`
 		   rather than removing the clip we make it a NO-OP: the frame takes the body's own outer shape,
 		   and the depth moves here — an element's own shadow is never subject to its own overflow.
 		   Adopters declare both through these properties; a body with square corners needs neither.
-		   Being mode-agnostic, the radius rounds the TRACK's corners in sheet mode too. Three of the
-		   four sit on transparent spacer, and the pair along the screen's bottom edge shave the sheet
-		   body by that same radius — measured at 8× and deliberately accepted: a few pixels, inside
-		   the far larger corner radius of the device's own screen. The shadow needs no such caveat; on
-		   a viewport-sized frame it falls outside the viewport. (A sheet's own upward shadow lives on
-		   the body and always worked: there the frame is the whole screen, so it has room to land.) */
-		border-radius: var(--sheet-frame-radius, 0);
+
+		   Only the BLOCK-START corners are rounded, and that asymmetry is the whole trick: the radius has
+		   to be mode-agnostic (a container query never matches its own container), so in sheet mode it
+		   rounds the TRACK — whose bottom edge is the screen's. Rounding there clipped an arc out of the
+		   sheet body's own bottom corners, letting the dim show through them. Left square, they clip
+		   nothing in either mode: a square corner encloses MORE than a rounded one, so an anchored body's
+		   own rounded corners sit safely inside it. The only cost is that the frame's shadow keeps square
+		   bottom corners under a 48px blur — the difference is a fraction of the blur radius. The shadow
+		   needs no caveat in sheet mode at all; on a viewport-sized frame it falls outside the viewport.
+		   (A sheet's own upward shadow lives on the body and always worked: there the frame is the whole
+		   screen, so it has room to land.) */
+		border-start-start-radius: var(--sheet-frame-radius, 0);
+		border-start-end-radius: var(--sheet-frame-radius, 0);
 		box-shadow: var(--sheet-frame-shadow, none);
 
 		/* Makes the slide-up on open an animation: the track opens resting at its closed stop and the
@@ -176,7 +187,9 @@ export const sheetStyles = css`
 			inline-size: 2.25rem;
 			block-size: 0.25rem;
 			border-radius: 0.125rem;
-			margin-block: 0.375rem 0.125rem;
+			/* Nothing below it: the handle belongs to the sheet's top edge, and the body's own first row
+			   brings its own spacing — a gap here only pushed the content down twice over. */
+			margin-block: 0.375rem 0;
 			margin-inline: auto;
 			background: color-mix(in srgb, var(--color-text) 25%, transparent);
 		}

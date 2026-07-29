@@ -1,5 +1,7 @@
 import { css } from '@a11d/lit'
-import { outlineStyles } from './outlineStyles.js'
+import { focusRing } from './focusRing.css.js'
+import { activated } from './activated.css.js'
+import { controlHeight } from './controlHeight.css.js'
 
 /** Popover dropdown menu, anchored via CSS anchor positioning (the anchor link is set per-instance). */
 export const menuStyles = css`
@@ -25,6 +27,11 @@ export const menuStyles = css`
 
 		button {
 			all: unset;
+			${controlHeight};
+			/* A row is a target like any other control, so it stands the shared height (min-, so a wrapped
+			   label still grows) — and gets taller on touch along with everything else. */
+			box-sizing: border-box;
+			min-height: var(--control-height);
 			display: flex;
 			align-items: center;
 			gap: 0.5rem;
@@ -41,16 +48,10 @@ export const menuStyles = css`
 				font-size: 15px;
 			}
 
-			/* A shortcut hint (the pill comes from the global button kbd styles) sits at the trailing edge. */
+			/* A shortcut hint (the chip itself comes from kbd.css.ts, which also hides it on a touch
+			   screen) sits at the trailing edge. */
 			kbd {
 				margin-inline-start: auto;
-			}
-
-			/* A gesture beside the key chip ("drag") — a word, not a key, so it wears no pill. Same
-			   vocabulary (and the same class) as the keyboard cheat sheet's rows. */
-			.word {
-				font-size: 0.6875rem;
-				color: var(--color-text-muted);
 			}
 
 			/* The gesture belongs to the chip before it, so the pair moves to the trailing edge together. */
@@ -60,10 +61,10 @@ export const menuStyles = css`
 
 			&:hover,
 			&:focus-visible {
-				background: color-mix(in srgb, var(--color-text) 8%, transparent);
+				${activated};
 			}
 
-			${outlineStyles};
+			${focusRing};
 
 			&.danger {
 				color: #ff6b6b;

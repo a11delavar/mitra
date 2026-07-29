@@ -5,20 +5,17 @@ import { FLOATING_TIME_ZONE, type Entry } from 'shared'
 import { type TimeZonePicker, longZoneName, systemZoneId, zoneCity, zoneNamePart } from './components/TimeZonePicker.js'
 import { getCapabilities } from './Api.js'
 import { EntryStore } from './EntryStore.js'
+import { controlHeight } from './components/controlHeight.css.js'
 
 /**
- * The date / time / all-day editor for an entry, split out of the (long) entry-details popover. It renders
- * one `<li>` that shares the popover's column grid (`display: contents` keeps it a grid item of the parent
- * `<ul>`, so its leading icon/switch line up with the other rows). Each input is wired straight to an
- * `Entry` span method — editing the start moves, the end resizes — then it fires `change` for the host to
- * persist. The native fields read as plain text; the picker glyph is hidden and surfaced on click.
+ * The date / time / all-day editor for an entry, split out of the (long) entry-details popover. It
+ * subgrids the popover's column grid, and each of its lines is a `.field` row (see field.css.ts) whose
+ * leading glyph/switch lines up with the other rows'. Each input is wired straight to an `Entry` span
+ * method — editing the start moves, the end resizes — then it fires `change` for the host to persist.
+ * The native fields read as plain text; the picker glyph is hidden and surfaced on click.
  */
 @component('mitra-entry-details-when')
 export class EntryDetailsWhen extends Component {
-	// Per-instance anchor token so two open editors' zone pickers never collide.
-	private static count = 0
-	private readonly anchor = `--when-zone-${EntryDetailsWhen.count++}`
-
 	@property({
 		type: Object,
 		updated(this: EntryDetailsWhen) { this.endDateShown = false; this.showEventZone = false }
@@ -175,6 +172,15 @@ export class EntryDetailsWhen extends Component {
 		return `${zoneNamePart(shown, 'shortOffset')} ${zoneCity(shown)}`
 	}
 
+	/** Whether the label is showing nothing more than the viewer's OWN primary zone — a default rather
+	 * than a choice, so it reads placeholder-like (see field.css.ts). True when the entry names no zone,
+	 * when it names one that IS the viewer's (picking "Berlin" in Berlin changes nothing you can see),
+	 * and in the localized lens of a foreign entry, where the times are shown in your zone anyway. A
+	 * FLOATING entry is excluded: "no time zone" is a deliberate authoring decision, not a default. */
+	private get zoneIsPrimary(): boolean {
+		return this.entry.timeZone !== FLOATING_TIME_ZONE && !(this.foreignZone && this.showEventZone)
+	}
+
 	/** The label tooltip: the shown zone's full name — or, when read-only, why it can't be changed here. */
 	private get zoneTitle(): string {
 		if (this.zoneReadonly) {
@@ -237,71 +243,99 @@ export class EntryDetailsWhen extends Component {
 				display: grid;
 				grid-template-columns: subgrid; /* the popover's two columns: leading glyph | content */
 				grid-column: 1 / -1;
-				align-items: center;
-				row-gap: 0.75rem;
+				row-gap: 0.125rem;
 
-				/* Leading column — one glyph per row (clock, duration, switch), auto-flowed so they line up with the popover's other row icons. */
-				> mitra-icon { grid-column: 1; font-size: 0.87rem; color: var(--color-text-muted); flex-shrink: 0; }
-				> .duration { grid-column: 1; font-size: 0.7rem; white-space: nowrap; color: var(--color-text-muted); }
-				> .switch { grid-column: 1; }
-				> .allday-label { grid-column: 2; color: var(--color-text-muted); }
+				/* A line spanning the popover's two columns. A line holding ONE control is itself the
+				   field (glyph inside, bleeding like the host's field rows — see EventDetails); the date
+				   and time lines hold TWO, so there the glyph/switch stays outside in the gutter and each
+				   input is its own field (see .dates/.times below). */
+				> .row {
+					grid-column: 1 / -1;
+					display: grid;
+					grid-template-columns: subgrid;
+					/* A line stands the shared control height even when it holds no control at all: with the
+					switch flipped to all-day the times line is one bare label, and without this it
+					collapsed to that label's line box — half the height of every row around it. */
+					${controlHeight};
+					min-height: var(--control-height);
 
-				/* The dates and times rows are each the SAME 3-column grid inside the content column, so their start/→/end line up across the two rows — all within the component, not the popover grid. */
+					&.field { margin-inline: -0.5rem; }
+					&:not(.field) { align-items: center; }
+
+					> mitra-icon { grid-column: 1; font-size: 0.87rem; color: var(--color-text-muted); flex-shrink: 0; }
+					> .switch { grid-column: 1; align-self: center; }
+
+					/* Hovered, or active for any reason — including its own picker being open, which the
+					   shared .field:has(:popover-open) rule already covers now that the picker lives
+					   inside the row. */
+					&:is(:hover, :focus-within, :has(:popover-open)) .chevron {
+						opacity: 1;
+					}
+				}
+
+				/* A start and an end, side by side in the content column — the SAME two tracks on both
+				   lines, so the dates and the times align with each other. Each is its own field: they
+				   are two inputs, and one box around the pair would claim otherwise. The end field wears
+				   the arrow (or, while there is no end date, the plus) as its leading glyph, exactly the
+				   way every other field wears one. */
 				.dates, .times {
 					grid-column: 2;
 					display: grid;
-					grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-					align-items: center;
-					column-gap: 0.5rem;
-					height: 1.5rem;
+					grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+					column-gap: 0.25rem;
+
+					> .field {
+						/* Tighter than a full-row field's, so the pair's borders stay clear of the gutter glyph
+						   while the start value still sits exactly on the popover's content line. Declared on
+						   the fields THEMSELVES: .field sets its own default, which would out-cascade a value
+						   inherited from this container. */
+						--field-padding-inline: 0.25rem;
+
+						/* Net-zero against the padding above (start), and the same trailing bleed every
+						   other field has (end) — so the pair spans exactly the row the others do. */
+						&:first-child { margin-inline-start: calc(-1 * var(--field-padding-inline)); }
+						&:last-child { margin-inline-end: -0.5rem; }
+
+						display: flex;
+						align-items: center;
+						gap: 0.5rem;
+
+						> input { flex: 1; min-width: 0; }
+					}
 				}
 
-				/* The dedicated time-zone row (its own line under the times, since flipping the display
+				/* The dedicated time-zone line (its own row under the times, since flipping the display
 				   zone can shift the DATE — an entry that crosses midnight in one zone but not another).
 				   It holds the zone label (opens the picker) and, for a foreign-zone entry, the lens
 				   toggle that flips the date/time rows between the viewer's zone and the entry's own. */
-				> .zone-row {
+				.zone {
 					grid-column: 2;
 					display: flex;
-					align-items: center;
 					gap: 0.25rem;
 					min-inline-size: 0;
-					font-size: 0.75rem;
 
-					/* The label is styled to MATCH the popover's subtle selects (Repeat / Source — see
-					   select.css.ts) exactly, so the zone reads as one more select of the same family:
-					   plain text at rest, filling the row, with a hover/focus background and a chevron
-					   (same size, muted fill, right-aligned) that surfaces only on interaction. */
+					/* The zone reads like the popover's selects (Repeat / Source): plain text filling the
+					   row, with a chevron (same size, muted fill, right-aligned) that surfaces — like a
+					   select's picker icon — while the FIELD is hovered or active. */
 					> .zone-label {
 						all: unset;
 						flex: 1 1 auto; /* fill the row like the Repeat select, so the whole width is the target */
 						display: flex;
 						align-items: center;
 						min-inline-size: 0;
-						margin: -2px -4px;
-						padding: 2px 4px;
-						border-radius: var(--border-radius);
-						color: var(--color-text);
 						cursor: pointer;
 
 						> .text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 						/* The select's ::picker-icon: 1.125rem, muted fill, pushed to the row's end. */
 						> .chevron { margin-inline-start: auto; font-size: 1.125rem; color: color-mix(in srgb, var(--color-text) 60%, transparent); opacity: 0; transition: opacity 0.15s ease; }
 
-						&:is(:hover, :focus-visible) {
-							background: color-mix(in srgb, var(--color-text) 6%, transparent);
-							outline: none;
-							> .chevron { opacity: 1; }
-						}
-
 						/* The localized (your-time) lens: the zone can't be changed here (see zoneReadonly).
-						   Read as static muted text — no chevron, no hover, no pointer — so it's clearly not
-						   a dropdown until the user switches back to the entry's own zone. */
+						   Read as static muted text — no chevron, no pointer — so it's clearly not a
+						   dropdown until the user switches back to the entry's own zone. */
 						&:disabled {
 							cursor: default;
 							color: var(--color-text-muted);
 							> .chevron { display: none; }
-							&:is(:hover, :focus-visible) { background: transparent; }
 						}
 					}
 
@@ -310,6 +344,7 @@ export class EntryDetailsWhen extends Component {
 					   when they read in the entry's own (foreign) zone. */
 					> .lens {
 						flex-shrink: 0;
+						align-self: center;
 						font-size: 0.85rem;
 						color: var(--color-text-muted);
 
@@ -319,8 +354,9 @@ export class EntryDetailsWhen extends Component {
 
 				/* This popover's instance of the zone picker wears the details popover's tinted glass and
 				   opens beside it — the same strategy as the source/repeat pickers, so nested surfaces
-				   read as one plane. */
-				> mitra-time-zone-picker {
+				   read as one plane. It sits INSIDE its field row, which is what anchors it (see
+				   field.css.ts) and what makes the row read as active while it's open. */
+				mitra-time-zone-picker {
 					background: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
 					box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48), 0px 4px 12px -1px rgba(0,0,0,0.24);
 					position-area: inline-end span-all;
@@ -329,17 +365,12 @@ export class EntryDetailsWhen extends Component {
 					margin-inline: 0.875rem;
 				}
 
-				.arrow { color: var(--color-text-muted); justify-self: center; }
-
+				/* The stand-in for an end date nobody has set: a field indistinguishable from its sibling,
+				   but with a plus for a glyph and a placeholder for text — so an entry with one date reads
+				   as a start plus an empty end, not as a single mystery input. It is a BUTTON, so it also
+				   depends on button.css standing down inside a field; all:unset alone lost that fight. */
 				.add-end {
-					all: unset;
-					grid-column: 2 / -1;
-					color: var(--color-text-muted);
 					cursor: pointer;
-					padding: 0.125rem 0.25rem;
-					border-radius: var(--border-radius);
-
-					&:hover { background: color-mix(in srgb, var(--color-text) 6%, transparent); color: var(--color-text); }
 				}
 
 				input::-webkit-calendar-picker-indicator {
@@ -355,54 +386,76 @@ export class EntryDetailsWhen extends Component {
 			return html.nothing
 		}
 		return html`
-			<mitra-icon icon=${this.entry.allDay ? 'calendar-days' : 'clock'}></mitra-icon>
-			<div class="dates">
-				<input type="date" class="subtle" aria-label=${t('Start date')} .value=${this.dateValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartDateChange}>
-				${!this.displayMultiDay && !this.endDateShown ? html`
-					<button class="add-end" @click=${this.addEndDate}>${t('+ end date')}</button>
-				` : html`
-					<span class="arrow">→</span>
-					<input type="date" class="subtle end-date" aria-label=${t('End date')} .value=${this.dateValue(this.entry.inclusiveEnd)} @click=${this.openPicker} @change=${this.handleEndDateChange}>
-				`}
-			</div>
-			<button class="switch" role="switch" aria-label=${t('All day')} title=${this.entry.allDay ? t('Include time') : t('Switch to all-day')}
-				aria-checked=${!this.entry.allDay} @click=${this.toggleAllDay}
-			></button>
-			<div class="times">
-				${this.entry.allDay ? html`
-					<span class="allday-label">${t('All day')}</span>
+			<div class="row">
+				<mitra-icon icon=${this.entry.allDay ? 'calendar-days' : 'clock'}></mitra-icon>
+				<div class="dates">
+					<input type="date" class="field" aria-label=${t('Start date')} .value=${this.dateValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartDateChange}>
+					${!this.displayMultiDay && !this.endDateShown ? html`
+						<button class="field add-end" @click=${this.addEndDate}>
+							<mitra-icon icon="plus"></mitra-icon>
+							<span class="placeholder">${t('End date')}</span>
+						</button>
 					` : html`
-						<input type="time" class="subtle" aria-label=${t('Start time')} .value=${this.timeValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartTimeChange}>
-						<span class="arrow">→</span>
-						<input type="time" class="subtle" aria-label=${t('End time')} .value=${this.timeValue(this.entry.effectiveEnd)} @click=${this.openPicker} @change=${this.handleEndTimeChange}>
+						<div class="field">
+							<mitra-icon icon="arrow-right"></mitra-icon>
+							<input type="date" class="end-date" aria-label=${t('End date')} .value=${this.dateValue(this.entry.inclusiveEnd)} @click=${this.openPicker} @change=${this.handleEndDateChange}>
+						</div>
 					`}
+				</div>
 			</div>
-			${this.entry.allDay || !getCapabilities(this.entry.sourceId).timeZone ? html.nothing : html`
-				<mitra-icon icon="globe"></mitra-icon>
-				<div class="zone-row">
-					<button class="zone-label" ?disabled=${this.zoneReadonly}
-						title=${this.zoneTitle} aria-label=${this.zoneTitle}
-						style="anchor-name: ${this.anchor}"
-						@click=${() => this.zonePicker?.togglePopover()}
-					>
-						<span class="text">${this.zoneLabel}</span>
-						<mitra-icon class="chevron" icon="chevron-down"></mitra-icon>
-					</button>
-					${!this.foreignZone ? html.nothing : html`
-						<mitra-icon-button class="lens" ?data-localized=${!this.showEventZone}
-							icon=${this.showEventZone ? 'earth' : 'house'}
-							label=${this.lensTitle} @click=${this.toggleLens}
-						></mitra-icon-button>
+			<div class="row">
+				<button class="switch" role="switch" aria-label=${t('All day')} title=${this.entry.allDay ? t('Include time') : t('Switch to all-day')}
+					aria-checked=${!this.entry.allDay} @click=${this.toggleAllDay}
+				></button>
+				<div class="times">
+					${this.entry.allDay ? html`
+						<span class="allday-label">${t('All day')}</span>
+						` : html`
+							<input type="time" class="field" aria-label=${t('Start time')} .value=${this.timeValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartTimeChange}>
+							<div class="field">
+								<mitra-icon icon="arrow-right"></mitra-icon>
+								<input type="time" aria-label=${t('End time')} .value=${this.timeValue(this.entry.effectiveEnd)} @click=${this.openPicker} @change=${this.handleEndTimeChange}>
+							</div>
 						`}
 				</div>
-				<mitra-time-zone-picker style="position-anchor: ${this.anchor}"
-					.selected=${this.entry.timeZone && this.entry.timeZone !== FLOATING_TIME_ZONE ? this.entry.timeZone : undefined}
-					@pick=${this.handleZonePick}
-				></mitra-time-zone-picker>
+			</div>
+			${this.entry.allDay || !getCapabilities(this.entry.sourceId).timeZone ? html.nothing : html`
+				<div class="row field">
+					<mitra-icon icon="globe"></mitra-icon>
+					<div class="zone">
+						<!-- Showing just the viewer's own zone is a default, not a choice — placeholder-like,
+							like an unset Repeat (see zoneIsPrimary). -->
+						<button class="zone-label" ?disabled=${this.zoneReadonly}
+							?data-placeholder=${this.zoneIsPrimary}
+							title=${this.zoneTitle} aria-label=${this.zoneTitle}
+							@click=${() => this.zonePicker?.togglePopover()}
+						>
+							<span class="text">${this.zoneLabel}</span>
+							<mitra-icon class="chevron" icon="chevron-down"></mitra-icon>
+						</button>
+						${!this.foreignZone ? html.nothing : html`
+							<mitra-icon-button class="lens" ?data-localized=${!this.showEventZone}
+								icon=${this.showEventZone ? 'earth' : 'house'}
+								label=${this.lensTitle} @click=${this.toggleLens}
+							></mitra-icon-button>
+							`}
+					</div>
+					<!-- Inside the row, not beside it: the field is what anchors it (field.css.ts), and the
+						containment makes the row read as active while the picker is open. -->
+					<!-- The picker opens ticked on the zone actually in force, which for an entry that names
+						none is the viewer's own — the same zone the label shows. Leaving it unselected made
+						the list open with nothing marked while the row read "GMT+2 Berlin". -->
+					<mitra-time-zone-picker
+						.selected=${this.entry.timeZone && this.entry.timeZone !== FLOATING_TIME_ZONE ? this.entry.timeZone : systemZoneId()}
+						@pick=${this.handleZonePick}
+					></mitra-time-zone-picker>
+				</div>
 			`}
 			${!getCapabilities(this.entry.sourceId).recurrence ? html.nothing : html`
-				<mitra-icon icon="repeat"></mitra-icon>
-				<mitra-repeat-field .entry=${this.entry} @change=${() => this.commit()}></mitra-repeat-field>
+				<div class="row field">
+					<mitra-icon icon="repeat"></mitra-icon>
+					<mitra-repeat-field .entry=${this.entry} @change=${() => this.commit()}></mitra-repeat-field>
+				</div>
 			`}
 		`
 	}

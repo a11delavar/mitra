@@ -4,7 +4,7 @@ import { DialogAbout, hasUnseenChanges } from './DialogAbout.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { SourceType, type Integration, type Source } from 'shared'
 import { ReorderabilityController, ReorderabilityState } from '@3mo/reorderability'
-import { outlineStyles } from './components/outlineStyles.js'
+import { focusRing } from './components/focusRing.css.js'
 import { canInstall, promptInstall, onInstallAvailabilityChange } from './pwa.js'
 
 @component('mitra-sidebar')
@@ -235,7 +235,7 @@ export class Sidebar extends Component {
 					align-items: center;
 					gap: 0.5rem;
 					margin-block-start: 0.5rem;
-					padding: 0.75rem 0.5rem 0;
+					padding: 0.75rem 0.25rem 0.25rem;
 					border-top: 1px solid color-mix(in srgb, var(--color-text) 9%, transparent);
 
 					/* A provider photo and its absence must occupy the same box, or the name's rail would
@@ -402,7 +402,7 @@ export class Sidebar extends Component {
 						}
 					}
 
-					${outlineStyles};
+					${focusRing};
 				}
 
 				/* The scrolling middle: takes whatever height the brand row and footer leave over.
@@ -561,7 +561,7 @@ export class Sidebar extends Component {
 						display: inline-flex;
 						border-radius: 0.375rem;
 						cursor: pointer;
-						${outlineStyles};
+						${focusRing};
 					}
 
 					.name {
@@ -635,31 +635,9 @@ export class Sidebar extends Component {
 				/* Sized to a source row rather than to its own padding, which is where the footer's height
 				   went: two of these plus a 1rem gap used to cost as much as three source rows. */
 				.add-integration {
-					all: unset;
-					box-sizing: border-box;
-					display: flex;
-					align-items: center;
-					justify-content: center;
-					gap: 0.5rem;
-					height: 1.75rem;
-					padding-inline: 0.75rem;
-					border: 1px dashed color-mix(in srgb, var(--color-text) 15%, transparent);
-					border-radius: var(--border-radius);
 					color: var(--color-text-muted);
-					font-size: 0.8125rem;
-					font-weight: 500;
-					cursor: pointer;
-					transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
-
+					background: transparent;
 					mitra-icon { font-size: 0.875rem; }
-
-					&:hover {
-						color: var(--color-text);
-						background: color-mix(in srgb, var(--color-text) 6%, transparent);
-						border-color: color-mix(in srgb, var(--color-text) 25%, transparent);
-					}
-
-					${outlineStyles};
 				}
 
 				/* Both menus in here open off the sidebar's inline end — a 280px column has no room to drop

@@ -1,5 +1,5 @@
 import { css } from '@a11d/lit'
-import { outlineStyles } from './outlineStyles.js'
+import { focusRing } from './focusRing.css.js'
 
 export const switchStyles = css`
 	.switch {
@@ -36,6 +36,6 @@ export const switchStyles = css`
 			}
 		}
 
-		${outlineStyles};
+		${focusRing};
 	}
 `

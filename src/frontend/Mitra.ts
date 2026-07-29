@@ -20,6 +20,9 @@ import { buttonStyles } from './components/button.css.js'
 import { switchStyles } from './components/switch.css.js'
 import { selectStyles } from './components/select.css.js'
 import { inputStyles } from './components/input.css.js'
+import { fieldStyles } from './components/field.css.js'
+import { focusRingStyles } from './components/focusRing.css.js'
+import { kbdStyles } from './components/kbd.css.js'
 import { menuStyles } from './components/menu.css.js'
 import { sheetStyles, initializeSheetGestures } from './components/sheet.js'
 import { TaskStatusComponent } from './components/TaskStatus.js'
@@ -61,6 +64,7 @@ export class Mitra extends Application {
 		// The sheet popovers' swipe-to-dismiss/tap-to-dismiss/slide-in intents, delegated once for
 		// every current and future sheet in the app (see components/sheet.ts).
 		initializeSheetGestures()
+		Mitra.trackFocusModality()
 		// Consumed BEFORE the router's first render: the routed page adopts the URL's query into its
 		// parameters and re-pushes it on navigation, which would resurrect an already-stripped param.
 		const pendingIntegrationId = Mitra.consumePendingIntegrationParameter()
@@ -100,6 +104,18 @@ export class Mitra extends Application {
 	 * the manifest's short name, which is baked at build time and intentionally stays Mitra. */
 	protected override get documentTitle() {
 		return [this.pageHeading, getMeta()?.name || 'Mitra'].filter(Boolean).join(' | ')
+	}
+
+	/** Which input device the user is currently driving the app with — the app's one genuinely global
+	 * piece of style state, because the focus ring shows only for a keyboard and every ringed surface
+	 * (including ones inside a shadow root) has to see it; `focusRing.css.ts` explains why it travels as
+	 * a custom property. Listeners are CAPTURING and passive so no handler that stops propagation can
+	 * hide the modality from us, and so this never costs a gesture anything. */
+	private static trackFocusModality() {
+		const set = (modality: 'keyboard' | 'pointer') => document.documentElement.dataset.focusModality = modality
+		set('pointer')
+		addEventListener('keydown', () => set('keyboard'), { capture: true, passive: true })
+		addEventListener('pointerdown', () => set('pointer'), { capture: true, passive: true })
 	}
 
 	/** Returning from Google's consent screen lands on `/?integration=<id>` (see the backend's
@@ -150,6 +166,11 @@ export class Mitra extends Application {
 			:root {
 				color-scheme: light dark;
 				user-select: none;
+				/* Android paints a translucent slab of the system accent over whatever was tapped — a box the
+				   size of the CONTROL, in a colour that is nobody's brand, landing on top of the hover and
+				   activated surfaces the app already draws. Declared once here because the property
+				   INHERITS: one line reaches every button, menu row, field and segment in the app. */
+				-webkit-tap-highlight-color: transparent;
 				--color-background-seed: color-mix(in srgb, light-dark(#f1f3f4, #121314), var(--color-accent) 2.5%);
 				--color-background: var(--color-background-seed);
 				--color-surface: color-mix(in srgb, light-dark(#ffffff, #191a1b), var(--color-accent) 5%);
@@ -166,7 +187,10 @@ export class Mitra extends Application {
 			${switchStyles}
 			${selectStyles}
 			${inputStyles}
+			${fieldStyles}
+			${focusRingStyles}
 			${menuStyles}
+			${kbdStyles}
 			${sheetStyles}
 
 			${IconButton.styles}
