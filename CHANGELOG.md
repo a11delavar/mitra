@@ -2,7 +2,82 @@
 
 All notable changes to Mitra are documented here.
 
+## [0.4.0] - 2026-07-29
+
+
+### ✨ Features
+- Participants ([8c9440a](https://github.com/a11delavar/mitra/commit/8c9440aeaeb5ce44443dcc4c774a7de5ccce279c))
+- More responsive UI in the month view ([5ff4e75](https://github.com/a11delavar/mitra/commit/5ff4e754c94164cbb91d91df5ff37110dcba4ea2))
+- Enhance and unify entry popover elements ([c6b8f89](https://github.com/a11delavar/mitra/commit/c6b8f8950cd70b8fcc4cfb9fc78a404eab539932))
+- Reorder integrations and sources ([196f398](https://github.com/a11delavar/mitra/commit/196f398b854de187a150a73a63142527945e797f))
+- Stop overlapping entries from hiding each other and keep their titles in view ([ba64325](https://github.com/a11delavar/mitra/commit/ba643250ee7e5f3fe8ef0de6c08ba4d55bb14cfe))
+- Entry popover is now a proper bottom sheet on mobile ([8592c97](https://github.com/a11delavar/mitra/commit/8592c9710233900cb28f4752eb29e6881ba03b45))
+- Added ability to duplicate an entry via menu and keyboard shortcut ([e2c90b4](https://github.com/a11delavar/mitra/commit/e2c90b4aef15bd9e5640469197527a624558f50e))
+- Keyboard shortcuts dialog ([e437452](https://github.com/a11delavar/mitra/commit/e4374525c4d39afadd04ad416ac12cc77e6dee30))
+- Show each calendar as one colored icon and even out the sidebar's spacing ([a974481](https://github.com/a11delavar/mitra/commit/a97448199628a5e7b6956f0bdedcb3ff08416753))
+- Tuck the non-primary time-zones away and swipe them back into view ([501d8cf](https://github.com/a11delavar/mitra/commit/501d8cf6bf147f7e0125c6b554d3e1bb410847f3))
+- Welcome new users with a short guide when nothing is connected yet ([de3c6ea](https://github.com/a11delavar/mitra/commit/de3c6ea5bcc90f213c791fcb9557a9aa26561142))
+- Hold Ctrl to change or delete just one entry of a repetition ([b2c7eec](https://github.com/a11delavar/mitra/commit/b2c7eec58620962d8e00e34b3bf74e5f53c4dc4e))
+- Delete the selected entry by pressing Delete or Backspace ([e4b6ab0](https://github.com/a11delavar/mitra/commit/e4b6ab020720768dad7a4180b49df56f5d66fb38))
+- Sync faster while the app is open, gentler when idle ([7a1e160](https://github.com/a11delavar/mitra/commit/7a1e16036c464f706461d93106f39221df8a2435))
+- Fit whole days and weeks into the view and snap scrolling to them ([e4e5f41](https://github.com/a11delavar/mitra/commit/e4e5f4138e4971ef74cce937cb90bff3565e84b6))
+- Create and rearrange entries with touch and pen ([3919478](https://github.com/a11delavar/mitra/commit/3919478de1de3875827dabab015ea0a884f981be))
+- Redesign integration dialog as a two-step flow ([8609482](https://github.com/a11delavar/mitra/commit/8609482dff0d370bb74c57540e3bec53d0af9766))
+- Grow the all-day lane to fit its events ([dbfe125](https://github.com/a11delavar/mitra/commit/dbfe12527bbac57fad1e8f530e62b50e31363715))
+- Blend the installed app into the window title bar ([95366db](https://github.com/a11delavar/mitra/commit/95366dbf6c70cb4b120c62703b4f5ab1ab3d1c66))
+- Release notes ([971c8b8](https://github.com/a11delavar/mitra/commit/971c8b8800688d7628707be7f8a9832a929bf317))
+- Update indicator ([b278da8](https://github.com/a11delavar/mitra/commit/b278da8830ef56da03ac9bba2aaf52469beccbdc))
+- Added the application logo and version to the sidebar ([17018ba](https://github.com/a11delavar/mitra/commit/17018ba9cdf972afa3e842a620f85b56cc97be7b))
+- Keep all-day bar titles visible while scrolled behind the time axis ([15421cf](https://github.com/a11delavar/mitra/commit/15421cf7034cc99d27ac8bde51c223d6792345f7))
+- Float short contained events over their host instead of splitting width ([dbac407](https://github.com/a11delavar/mitra/commit/dbac4077101fab17c1fc397a55da2137d23b66ea))
+- Add an icon to recurring entries ([25cb60e](https://github.com/a11delavar/mitra/commit/25cb60e8cd0eed985ee0b55ddc574c25e9147af9))
+- Health endpoint ([55ff11c](https://github.com/a11delavar/mitra/commit/55ff11cd01ac239f17e815a1a9bdf224f272cae2))
+- Add "Go to date" command ([8c0c06a](https://github.com/a11delavar/mitra/commit/8c0c06a5a988548d94d1790a5f39ffff9db92657))
+- Notion integration ([49e863d](https://github.com/a11delavar/mitra/commit/49e863d171a52dd64cd812dca4eb08c53553f751))
+- Entry time-zone selector ([8e55f79](https://github.com/a11delavar/mitra/commit/8e55f79bcdd4505e84dd032425c830c54fe23ae0))
+- Year view ([cf3d6fd](https://github.com/a11delavar/mitra/commit/cf3d6fdc68ffce2d4f62624aeeef87fc59ba6071))
+- Apple Calendar integration (#2) ([d1da646](https://github.com/a11delavar/mitra/commit/d1da64651188c739da37cc1aaf0c5e9c6c59ee41))
+- Google Calendar integration ([df27876](https://github.com/a11delavar/mitra/commit/df27876362b3ea1f02a47ab3b71b5023f52a7152))
+
+### ⚡ Performance
+- Switch between calendar views smoothly, even with hundreds of entries ([2e9a53d](https://github.com/a11delavar/mitra/commit/2e9a53da3309e9439e5c19d1857e817d1bf37f12))
+
+### 🐛 Bug Fixes
+- Keep the all-day bar titles sliding, and let the lane fit its entries ([e179c98](https://github.com/a11delavar/mitra/commit/e179c982f701e21e54c841f07064af6355dcae37))
+- Let the on-screen keyboard shrink the layout ([47b5fd6](https://github.com/a11delavar/mitra/commit/47b5fd605cab640cb50731757809854145ed05ec))
+- Prevent the PWA rotating the screen unless auto-rotate is enabled ([33f857f](https://github.com/a11delavar/mitra/commit/33f857fe8861d95441f7100600dd43c9d18a02ff))
+- Show a dragged all-day entry in the free row it lands in, not below every other one ([ba3dcc8](https://github.com/a11delavar/mitra/commit/ba3dcc8e4aa3ed611c07299c1fdadd78db5cac4b))
+- Fix dragging entries to midnight not working ([08d47c4](https://github.com/a11delavar/mitra/commit/08d47c469d8bc5f295b0bcc878cc2386333060a8))
+- Hide task status and recurring icon in the yearly view ([f528f91](https://github.com/a11delavar/mitra/commit/f528f914402aceab9f65d1af77bd738eacf1f3e4))
+- Keep the entry editor opening reliably when clicking an entry ([c8dd17e](https://github.com/a11delavar/mitra/commit/c8dd17ee121a7bebcd1b4d314dc9cf3a5de054d9))
+- Keep occurrence deletions resilient on CalDAV backends ([7eee03b](https://github.com/a11delavar/mitra/commit/7eee03be3f948c7f024756103f54499dbe1bbf01))
+- Fix switching views when renaming sources ([bb6c807](https://github.com/a11delavar/mitra/commit/bb6c80775b40c87c273ca3a5dc414392329357f1))
+- Preserve locally renamed sources' name ([7bfd8ee](https://github.com/a11delavar/mitra/commit/7bfd8ee9115b3f2a5945225f449b5296750f87be))
+- Flow wrapping task title around the checkbox to use full width ([ea9cf53](https://github.com/a11delavar/mitra/commit/ea9cf536624a61770a0a29bd9aeab5755b7f60bb))
+- Give a minimum visible height to zero/no-duration timed entries ([4a8724c](https://github.com/a11delavar/mitra/commit/4a8724c4556130c560f34fc0335510c8f14c75f2))
+- Guard DayDensityController against transient tiny-viewport collapse ([a7f369e](https://github.com/a11delavar/mitra/commit/a7f369e7567d70b3f00433aa91f007b7074de377))
+- Scope entry search to the requesting user's sources ([bc37f2d](https://github.com/a11delavar/mitra/commit/bc37f2d15e66b32aeba2f833eda30dcd65d3044f))
+- Preserve recurring events' wall-clock time across DST transitions ([876f7fc](https://github.com/a11delavar/mitra/commit/876f7fc2099d33a02733d18f4e5e71bab22830ad))
+- Make all-day events render on the same dates in every timezone ([1c5264d](https://github.com/a11delavar/mitra/commit/1c5264dc7f3541e0213a8278f5adc26458d5b728))
+- Preserve occurrence count when splitting a series with "this and following" ([961cfcd](https://github.com/a11delavar/mitra/commit/961cfcd86b993244292d69731b3a1442669a32aa))
+
+### 📝 Documentation
+- Add documentation website ([9a89672](https://github.com/a11delavar/mitra/commit/9a89672e76ef2ed9f3aa01bc2b40aa07a12c77fb))
+- Add documentation for existing features ([2119315](https://github.com/a11delavar/mitra/commit/21193153690ed74237560bf69d71d588bbd277b2))
+
+### 🔧 Chores
+- No .env injection log ([96b9a19](https://github.com/a11delavar/mitra/commit/96b9a19d075a6155453f3a587ebaada7e57e6851))
+- Enhance bottom sheet fallback trigger ([474ea6b](https://github.com/a11delavar/mitra/commit/474ea6b1a0cda8210e7c1d3e4db12f4a2db6499f))
+- Add support for Notion page content ([0c7446e](https://github.com/a11delavar/mitra/commit/0c7446e581b218268500e663687a5da79208baba))
+
+### 🧹 Refactors
+- Move JSON state files into the database ([35ed9c1](https://github.com/a11delavar/mitra/commit/35ed9c106fbc3e308ae8ea5cc67cccc36276b99b))
+- Simplify element queries ([d154811](https://github.com/a11delavar/mitra/commit/d1548113fe58e3e73e09adb59e1f66a59ee4c85e))
 ## [0.3.0] - 2026-07-10
+
+
+### ⚡ Performance
+- Improve virtualization performance ([37e42ed](https://github.com/a11delavar/mitra/commit/37e42ed0a8ac5152c946a27e67ad6f7fd316eb43))
 
 ### ✨ Features
 - Redesign Logo ([d559574](https://github.com/a11delavar/mitra/commit/d55957428f92ebb2fb63921ca1beb0b6bd83081b))
@@ -20,9 +95,6 @@ All notable changes to Mitra are documented here.
 - Reminders with push notifications ([c2c8854](https://github.com/a11delavar/mitra/commit/c2c8854c51537186b142818a084d1b06c600e29d))
 - Location selector with support for recent and approximate locations ([adc486c](https://github.com/a11delavar/mitra/commit/adc486c47ef31fb4180c2ac86234f038f57efb35))
 
-### ⚡ Performance
-- Improve virtualization performance ([37e42ed](https://github.com/a11delavar/mitra/commit/37e42ed0a8ac5152c946a27e67ad6f7fd316eb43))
-
 ### 🐛 Bug Fixes
 - Harden CalDAV sync against missing objects ([21ce421](https://github.com/a11delavar/mitra/commit/21ce421f1adaac7e991d6f09d18b5811b5de0b0e))
 - Fix timezone handling for recurring all-day entries ([71c5f21](https://github.com/a11delavar/mitra/commit/71c5f21db5894aa95082382cea51ed8a13306802))
@@ -36,8 +108,6 @@ All notable changes to Mitra are documented here.
 ### 🧹 Refactors
 - Rename technical name of month view to weeks view ([daf1d4f](https://github.com/a11delavar/mitra/commit/daf1d4f1c93c13ff96d1e9ef1708431773436f4b))
 - Derive all app icons from one SVG logo ([8bde2d2](https://github.com/a11delavar/mitra/commit/8bde2d2fd2884240e80caeaa2c131ba86e3ea4d3))
-
-
 ## [0.2.0] - 2026-07-05
 
 
