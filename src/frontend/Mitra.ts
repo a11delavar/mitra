@@ -6,6 +6,7 @@ import { Months } from './Months.js'
 import { Days } from './Days.js'
 import { Day } from './Day.js'
 import { EntrySegmentComponent } from './EventSegment.js'
+import { EntryConnections } from './EntryConnections.js'
 import { PageCalendar } from './PageCalendar.js'
 import { CommandPalette } from './CommandPalette.js'
 import { Sidebar } from './Sidebar.js'
@@ -31,6 +32,7 @@ import { RepeatField } from './components/RepeatField.js'
 import { LocationField } from './components/LocationField.js'
 import { RemindersField } from './components/RemindersField.js'
 import { ParticipantsField } from './components/ParticipantsField.js'
+import { RelationsField } from './components/RelationsField.js'
 import { TimeZoneHeader, DialogTimeZoneRename } from './components/TimeZoneHeader.js'
 import { TimeZonePicker } from './components/TimeZonePicker.js'
 import { syncPushSubscription } from './push.js'
@@ -222,6 +224,7 @@ export class Mitra extends Application {
 			${Days.styles}
 			${Day.styles}
 			${EntrySegmentComponent.styles}
+			${EntryConnections.styles}
 			${EntryDetailsComponent.styles}
 			${EntryDetailsWhen.styles}
 			${DialogAbout.styles}
@@ -235,6 +238,7 @@ export class Mitra extends Application {
 			${LocationField.styles}
 			${RemindersField.styles}
 			${ParticipantsField.styles}
+			${RelationsField.styles}
 			${TimeZoneHeader.styles}
 			${DialogTimeZoneRename.styles}
 			${TimeZonePicker.styles}
