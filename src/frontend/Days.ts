@@ -464,7 +464,8 @@ export class Days extends Component {
 				   past the sticky axis) — with the integer-fit columns above, a settled viewport therefore
 				   always frames whole days. Inline-only, so vertical scrolling is untouched; and mandatory
 				   does NOT brake a fling — engines pick the snap position nearest the fling's natural
-				   endpoint (only scroll-snap-stop: always would cut momentum, so it stays unset). */
+				   endpoint (only scroll-snap-stop: always would cut momentum, so it stays unset). Whether
+				   there is anything to snap TO is the scrolling device's call, on the days below. */
 				scroll-snap-type: inline mandatory;
 				scroll-padding-inline-start: var(--time-axis-width);
 				scrollbar-width: none; /* Firefox */
@@ -482,7 +483,7 @@ export class Days extends Component {
 				mitra-day {
 					grid-row: 1 / -1;
 					grid-template-rows: subgrid;
-					scroll-snap-align: start;
+					scroll-snap-align: var(--scroll-snap-align);
 
 					.entries {
 						background-color: var(--color-surface);

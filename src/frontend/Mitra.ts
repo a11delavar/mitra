@@ -39,6 +39,7 @@ import { DialogRecurrenceScope } from './components/DialogRecurrenceScope.js'
 import { Markdown } from './Markdown.js'
 import { EntryDetailsWhen } from './EntryDetailsWhen.js'
 import { EntryStore } from './EntryStore.js'
+import { ScrollDeviceController } from './ScrollDeviceController.js'
 
 // How far a series edit/delete reaches is the user's call — the store asks through this dialog.
 EntryStore.resolveScope = (entry, intent) => new DialogRecurrenceScope({ entry, intent }).confirm()
@@ -46,6 +47,8 @@ EntryStore.resolveScope = (entry, intent) => new DialogRecurrenceScope({ entry, 
 @application()
 @component('mitra-application')
 export class Mitra extends Application {
+	protected readonly scrollDevice = new ScrollDeviceController(this)
+
 	/** The framework's document-resolved application (see queryInstanceElement), narrowed to Mitra —
 	 * the root every context-less collaborator (the command classes) reaches app state through. The
 	 * `@application()` decorator appends the instance at module evaluation, so any code that can ask
@@ -211,6 +214,8 @@ export class Mitra extends Application {
 			${menuStyles}
 			${kbdStyles}
 			${sheetStyles}
+
+			${ScrollDeviceController.styles}
 
 			${IconButton.styles}
 			${Markdown.styles}

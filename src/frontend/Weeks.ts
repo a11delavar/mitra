@@ -165,7 +165,8 @@ export class Weeks extends Component {
 					height: 100%;
 					overflow-y: auto;
 					/* Rest positions align a week row's top to the scrollport, so a settled view always
-					   frames whole weeks — block-only, and mandatory does not brake a fling (see Days.ts). */
+					   frames whole weeks — block-only, and mandatory does not brake a fling (see Days.ts).
+					   Whether there is anything to snap to is the scrolling device's call, on .week below. */
 					scroll-snap-type: block mandatory;
 					scrollbar-width: none;
 					overflow-anchor: auto;
@@ -184,7 +185,7 @@ export class Weeks extends Component {
 						repeat(var(--max-slots), calc(1.125rem + 0.25rem * var(--_month-density)))
 						1fr;
 					row-gap: 0.125rem;
-					scroll-snap-align: start;
+					scroll-snap-align: var(--scroll-snap-align);
 
 					mitra-day {
 						grid-row: 1 / -1;
