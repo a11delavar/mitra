@@ -144,7 +144,7 @@ declare global {
 		"of event at ${time}": unknown
 		"OK": unknown
 		"On": unknown
-		"One calendar to plan your events and tasks.": unknown
+		"One calendar to plan your events and tasks": unknown
 		"Only the organizer can change participants": unknown
 		"Open in Google Maps": unknown
 		"Optional": unknown

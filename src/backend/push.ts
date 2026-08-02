@@ -3,7 +3,7 @@ import webpush from 'web-push'
 import { createLogger } from '../shared/index.js'
 import { orm } from './orm.js'
 import { NotificationSubscription } from './NotificationSubscription.js'
-import { readState, writeState } from './State.js'
+import { State } from './State.js'
 
 const logger = createLogger('Push')
 
@@ -26,12 +26,12 @@ async function vapidKeys(): Promise<VapidKeys> {
 	// are bound to the public key — rotating it silently invalidates every one of them), and holding it in the
 	// database rather than a side file means any point-in-time copy of database.sqlite carries its own keypair.
 	const key = 'vapid'
-	const existing = await readState<VapidKeys>(key)
+	const existing = await State.read<VapidKeys>(orm.em.fork(), key)
 	if (existing) {
 		return existing
 	}
 	const keys = webpush.generateVAPIDKeys()
-	await writeState(key, keys)
+	await State.write(orm.em.fork(), key, keys)
 	logger.info('Generated a new VAPID keypair for push notifications')
 	return keys
 }

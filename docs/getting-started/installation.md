@@ -76,7 +76,7 @@ docker compose pull
 docker compose up -d
 ```
 
-Your data lives in the directory, so pulling a new image and recreating the container keeps everything. Tools like [Watchtower](https://containrrr.dev/watchtower/) can automate this if you like.
+Your data lives in the directory, so pulling a new image and recreating the container keeps everything. Database schema upgrades are automatic: on boot, Mitra applies any pending migrations to your existing `database.sqlite` — updating never involves manual database steps. Tools like [Watchtower](https://containrrr.dev/watchtower/) can automate this if you like.
 
 ## Running behind a reverse proxy
 

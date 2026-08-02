@@ -4,7 +4,7 @@
 
 # Mitra
 
-**One calendar to plan your events and tasks.**
+**One calendar to plan your events and tasks**
 
 [![CI](https://github.com/a11delavar/mitra/actions/workflows/qa.yml/badge.svg)](https://github.com/a11delavar/mitra/actions/workflows/qa.yml)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPL%20v3-white.svg)](./LICENSE)

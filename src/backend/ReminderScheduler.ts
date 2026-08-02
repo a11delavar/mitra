@@ -3,7 +3,7 @@ import { Entry, Integration, Source, createLogger } from '../shared/index.js'
 import { expandedOccurrences } from './occurrences.js'
 import { dueReminders, reminderSpan } from './reminderDomain.js'
 import { sendTo } from './push.js'
-import { readState, writeState } from './State.js'
+import { State } from './State.js'
 
 /**
  * The reminder clock: something has to compute "it is now 30 minutes before that event" while every
@@ -43,12 +43,12 @@ export class ReminderScheduler {
 	}
 
 	private async readWatermark(): Promise<Date | undefined> {
-		const iso = await readState<string>(ReminderScheduler.watermarkStateKey)
+		const iso = await State.read<string>(this.orm.em.fork(), ReminderScheduler.watermarkStateKey)
 		return iso ? new Date(iso) : undefined
 	}
 
 	private writeWatermark(value: Date) {
-		return writeState(ReminderScheduler.watermarkStateKey, value.toISOString())
+		return State.write(this.orm.em.fork(), ReminderScheduler.watermarkStateKey, value.toISOString())
 	}
 
 	private async tick() {

@@ -137,7 +137,7 @@ export class DialogWelcome extends DialogComponent<void, boolean | undefined> {
 					<header class="hero">
 						<img src="/android-chrome-192x192.png" alt="">
 						<h2>${t('Welcome to ${name}', { name: getMeta()?.name || 'Mitra' })}</h2>
-						<p>${t('One calendar to plan your events and tasks.')}</p>
+						<p>${t('One calendar to plan your events and tasks')}</p>
 					</header>
 					<ol class="steps">
 						${DialogWelcome.steps.map(step => html`

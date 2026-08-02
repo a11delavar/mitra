@@ -8,6 +8,9 @@
 		"test": "node ./scripts/test.ts && node --test \"out_test/**/*.js\"",
 		"lint": "eslint .",
 		"build": "node ./scripts/build.ts",
+		"db:migration:create": "node ./scripts/db.ts create",
+		"db:migration:up": "node ./scripts/db.ts up",
+		"db:migration:down": "node ./scripts/db.ts down",
 		"i18n:generate": "node ./scripts/i18n.ts",
 		"i18n:analyze": "node ./scripts/i18n.ts --analyze",
 		"changelog": "git-cliff -o CHANGELOG.md"

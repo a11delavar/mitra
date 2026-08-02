@@ -1,0 +1,12 @@
+import { type Migration } from '@mikro-orm/migrations'
+import { type Constructor } from '@mikro-orm/core'
+
+import { Migration20260802210039_Initial } from './Migration20260802210039_Initial.js'
+/**
+ * Every migration the app ships, oldest first. The backend bundles into a single file, so migrations
+ * are imported explicitly rather than discovered on disk — `npm run db:migration:create` generates a
+ * new migration and appends it here.
+ */
+export const migrations: Array<Constructor<Migration>> = [
+	Migration20260802210039_Initial,
+]

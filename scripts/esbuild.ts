@@ -97,7 +97,7 @@ export async function writeIndexHtml() {
 	const generated = await favicons('assets/mitra.svg', {
 		appName: 'Mitra',
 		appShortName: 'Mitra',
-		appDescription: 'One calendar to plan your events and tasks.',
+		appDescription: 'One calendar to plan your events and tasks',
 		start_url: '/',
 		display: 'standalone',
 		theme_color: '#121314',
