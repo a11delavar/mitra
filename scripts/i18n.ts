@@ -18,7 +18,7 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 const frontendDir = path.resolve(here, '../src/frontend')
 const sharedDir = path.resolve(here, '../src/shared')
 const keysFile = path.join(frontendDir, 'i18n/keys.auto-generated.ts')
-const dicts = ['de.json', 'fr.json', 'es.json', 'pt.json']
+const dicts = ['de.json', 'fr.json', 'es.json', 'pt.json', 'it.json']
 
 const analyzeOnly = process.argv.includes('--analyze')
 
