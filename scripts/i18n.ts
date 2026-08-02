@@ -18,7 +18,7 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 const frontendDir = path.resolve(here, '../src/frontend')
 const sharedDir = path.resolve(here, '../src/shared')
 const keysFile = path.join(frontendDir, 'i18n/keys.auto-generated.ts')
-const dePath = path.join(frontendDir, 'i18n/de.json')
+const dicts = ['de.json', 'fr.json']
 
 const analyzeOnly = process.argv.includes('--analyze')
 
@@ -87,23 +87,30 @@ ${lines}
 	console.log(`Wrote ${sortedKeys.length} keys to ${path.relative(process.cwd(), keysFile)}`)
 }
 
-// Analyze German coverage against the collected keys.
-const de = JSON.parse(fs.readFileSync(dePath, 'utf8')) as Record<string, unknown>
-const missing = sortedKeys.filter(key => !(key in de))
-const unused = Object.keys(de).filter(key => !keys.has(key)).sort((a, b) => a.localeCompare(b))
+// Analyze coverage against the collected keys.
+let hasError = false
+for (const dict of dicts) {
+	const dictPath = path.join(frontendDir, 'i18n', dict)
+	const parsed = JSON.parse(fs.readFileSync(dictPath, 'utf8')) as Record<string, unknown>
+	const missing = sortedKeys.filter(key => !(key in parsed))
+	const unused = Object.keys(parsed).filter(key => !keys.has(key)).sort((a, b) => a.localeCompare(b))
 
-if (missing.length) {
-	console.log(`\n⚠ ${missing.length} key(s) with no German translation (will fall back to English):`)
-	missing.forEach(key => console.log(`  + ${JSON.stringify(key)}`))
-}
-if (unused.length) {
-	console.log(`\n⚠ ${unused.length} de.json key(s) no longer used in the code:`)
-	unused.forEach(key => console.log(`  - ${JSON.stringify(key)}`))
-}
-if (!missing.length && !unused.length) {
-	console.log(`\n✓ de.json is in sync with the code (${sortedKeys.length} keys).`)
+	if (missing.length) {
+		console.log(`\n⚠ ${missing.length} key(s) in ${dict} with no translation (will fall back to English):`)
+		missing.forEach(key => console.log(`  + ${JSON.stringify(key)}`))
+	}
+	if (unused.length) {
+		console.log(`\n⚠ ${unused.length} ${dict} key(s) no longer used in the code:`)
+		unused.forEach(key => console.log(`  - ${JSON.stringify(key)}`))
+	}
+	if (!missing.length && !unused.length) {
+		console.log(`\n✓ ${dict} is in sync with the code (${sortedKeys.length} keys).`)
+	}
+	if (missing.length || unused.length) {
+		hasError = true
+	}
 }
 
-if (analyzeOnly && (missing.length || unused.length)) {
+if (analyzeOnly && hasError) {
 	process.exit(1)
 }

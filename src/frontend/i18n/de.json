@@ -1,5 +1,4 @@
 {
-	"+ end date": "+ Enddatum",
 	"+${count:number} more": "+${count:number} weitere",
 	"${count:number} min": "${count:number} Min.",
 	"${count:pluralityNumber} days": ["${count:pluralityNumber} Tag", "${count:pluralityNumber} Tage"],
