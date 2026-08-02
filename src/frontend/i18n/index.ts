@@ -3,6 +3,7 @@ import en from './en.json' with { type: 'json' }
 import de from './de.json' with { type: 'json' }
 import fr from './fr.json' with { type: 'json' }
 import es from './es.json' with { type: 'json' }
+import pt from './pt.json' with { type: 'json' }
 
 // The global `t` is assigned as a side effect of @3mo/localization's LocalizableString module. Some
 // components call `t(…)` at MODULE-EVALUATION time (e.g. a status→label map), so that assignment must
@@ -28,4 +29,4 @@ if (typeof globalThis.t !== 'function') {
  * `t('…')` call and rewrites `keys.auto-generated.ts` (autocomplete) — run it after adding or removing a
  * string. `npm run i18n:analyze` reports keys missing from, or unused in, the dictionaries.
  */
-Localizer.dictionaries.add({ en, de, fr, es })
+Localizer.dictionaries.add({ en, de, fr, es, pt })
