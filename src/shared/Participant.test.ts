@@ -129,6 +129,41 @@ describe('Participants', () => {
 		})
 	})
 
+	describe('withRole / invitee / without', () => {
+		const list = () => Participants.normalize([
+			{ email: 'organizer@example.com', organizer: true },
+			{ email: 'a@example.com' },
+			{ email: 'b@example.com', role: ParticipantRole.Optional },
+		])!
+
+		it('marks one invitee and leaves the rest of the list alone', () => {
+			assert.deepEqual(list().withRole('A@example.com', ParticipantRole.Optional)!.map(participant => participant.role), [
+				ParticipantRole.Required, ParticipantRole.Optional, ParticipantRole.Optional,
+			])
+		})
+
+		it('is null when the role already holds, the address is unknown, or the target is the organizer', () => {
+			assert.equal(list().withRole('b@example.com', ParticipantRole.Optional), null)
+			assert.equal(list().withRole('nobody@example.com', ParticipantRole.Optional), null)
+			assert.equal(list().withRole('organizer@example.com', ParticipantRole.Optional), null)
+		})
+
+		it('exposes only invitees as removable — never the organizer', () => {
+			assert.equal(list().invitee('a@example.com')?.email, 'a@example.com')
+			assert.equal(list().invitee('organizer@example.com'), undefined)
+			assert.equal(list().invitee('nobody@example.com'), undefined)
+		})
+
+		it('drops one invitee', () => {
+			assert.deepEqual(list().without('a@example.com')!.map(participant => participant.email), ['organizer@example.com', 'b@example.com'])
+		})
+
+		it('clears the list once the last invitee goes — a lone organizer has nothing to organize', () => {
+			const alone = Participants.normalize([{ email: 'organizer@example.com', organizer: true }, { email: 'a@example.com' }])!
+			assert.equal(alone.without('a@example.com'), null)
+		})
+	})
+
 	describe('organizerFirst / initialOf', () => {
 		it('lists the organizer first, everyone else in stored order', () => {
 			const participants = Participants.normalize([

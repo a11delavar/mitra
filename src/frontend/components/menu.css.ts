@@ -25,7 +25,9 @@ export const menuStyles = css`
 			gap: 2px;
 		}
 
-		button {
+		/* A row may be a LINK where the action is a navigation the platform owns (a mailto), so it
+		   keeps the anchor's own affordances instead of a click handler faking them. */
+		:is(button, a) {
 			all: unset;
 			${controlHeight};
 			/* A row is a target like any other control, so it stands the shared height (min-, so a wrapped

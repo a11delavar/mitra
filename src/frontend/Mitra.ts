@@ -14,7 +14,7 @@ import { DialogAbout, markChangesSeen } from './DialogAbout.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { DialogWelcome } from './DialogWelcome.js'
 import { DialogKeyboardShortcuts } from './DialogKeyboardShortcuts.js'
-import { colorContrast } from './components/colorContrast.js'
+import { contrastColor } from './components/contrastColor.js'
 import { IconButton } from './components/IconButton.js'
 import { buttonStyles } from './components/button.css.js'
 import { switchStyles } from './components/switch.css.js'
@@ -196,7 +196,7 @@ export class Mitra extends Application {
 				--color-text: color-mix(in srgb, light-dark(black, white), var(--color-accent) 2.5%);
 				--color-text-muted: color-mix(in srgb, var(--color-text), var(--color-background) 45%);
 				--color-accent: light-dark(black, white);
-				--color-accent-text: ${colorContrast('var(--color-accent)')};
+				--color-accent-text: ${contrastColor('var(--color-accent)')};
 				--color-border: var(--color-surface);
 				--border: 1px solid var(--color-border);
 				--border-radius: 4px;

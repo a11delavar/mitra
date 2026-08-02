@@ -149,6 +149,29 @@ export class Entry {
 		this.participants = this.participantList?.marked(role) ?? null
 	}
 
+	/** Set ONE invitee's attendance to `role` ({@link Participants.withRole}).
+	 * @returns whether anything actually changed. */
+	setParticipantRole(email: string, role: ParticipantRole): boolean {
+		const marked = this.participantList?.withRole(email, role)
+		if (!marked) {
+			return false
+		}
+		this.participants = marked
+		return true
+	}
+
+	/** Uninvite ONE participant ({@link Participants.without} — which clears the list once the last
+	 * invitee goes, and refuses the organizer).
+	 * @returns whether anything actually changed. */
+	removeParticipant(email: string): boolean {
+		const list = this.participantList
+		if (!list?.invitee(email)) {
+			return false
+		}
+		this.participants = list.without(email)
+		return true
+	}
+
 	/** Remove every participant — back to a plain private entry (the organizer included; without
 	 * invitees there is nothing to organize). */
 	clearParticipants() {

@@ -1,7 +1,7 @@
 import { component, html, property, Component, css, state, bind, queryConnectedInstances, eventListener, unsafeCSS } from '@a11d/lit'
 import { EntryType, TaskStatus } from 'shared'
 import { type EntrySegment } from './EntrySegment.js'
-import { colorContrast } from './components/colorContrast.js'
+import { contrastColor } from './components/contrastColor.js'
 import { getSource } from './Api.js'
 import { EntryStore } from './EntryStore.js'
 
@@ -203,7 +203,7 @@ export class EntrySegmentComponent extends Component {
 				&:not([data-draft]):has([popover]:popover-open),
 				&:not([data-draft])[selected] {
 					background-color: var(--mitra-entry-segment-color);
-					color: ${colorContrast('var(--mitra-entry-segment-color)')};
+					color: ${contrastColor('var(--mitra-entry-segment-color)')};
 				}
 
 				@container (max-height: 450px) {

@@ -160,6 +160,31 @@ export class Participants extends Array<Participant> {
 		return Participants.normalize(this.map(participant => participant.organizer ? participant : { ...participant, role }))
 	}
 
+	/** This list with one invitee marked `role`, the single-person counterpart of {@link marked} (and
+	 * bound by the same iTIP rule: the organizer is not an invitee, so marking them is a no-op).
+	 * `null` when nothing would change, so callers can tell a real change from one. */
+	withRole(email: string, role: ParticipantRole): Participants | null {
+		const target = email.trim().toLowerCase()
+		const affected = this.find(participant => participant.email === target && !participant.organizer && participant.role !== role)
+		return !affected ? null : Participants.normalize(this.map(participant => participant === affected ? { ...participant, role } : participant))
+	}
+
+	/** The person on this list at `email` who may be uninvited or re-marked — the ORGANIZER never is
+	 * (iTIP makes them the list's owner, not one of its invitees; {@link marked} skips them too). */
+	invitee(email: string): Participant | undefined {
+		const target = email.trim().toLowerCase()
+		return this.find(participant => participant.email === target && !participant.organizer)
+	}
+
+	/** This list without one invitee. Uninviting the LAST one clears the list outright — organizer
+	 * included, because a lone organizer has nothing to organize: the entry is private again, exactly
+	 * where "Remove all" ({@link Entry.clearParticipants}) leaves it. */
+	without(email: string): Participants | null {
+		const removed = this.invitee(email)
+		const remaining = this.filter(participant => participant !== removed)
+		return Participants.normalize(remaining.some(participant => !participant.organizer) ? remaining : [])
+	}
+
 	/** How the invitees stand: everything not an explicit yes/no/maybe — needs-action and delegated
 	 * alike — is still "awaiting" a reply. */
 	get counts() {

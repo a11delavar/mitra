@@ -290,6 +290,12 @@ export class EntryDetailsComponent extends Component {
 					   colour-square) and its content. Every row subgrids it so the glyphs line up. The
 					   date/time editor does its own start/→/end alignment within the content column. */
 					grid-template-columns: auto minmax(0, 1fr);
+					/* Rows size to their content and NOTHING may talk them out of it. A row left at the
+					   default auto keeps an auto maximum, which a capped grid is free to clamp once the
+					   list outgrows its 80dvh: the tallest row (a long participant list) was squeezed by
+					   exactly the overflow while its content kept its real height, so the add box ended up
+					   drawn over "Description". The cap has to produce a SCROLL, never a shorter row. */
+					grid-auto-rows: min-content;
 					/* The field boxes carry the vertical air now — the gap only separates their borders. */
 					row-gap: 0.125rem;
 					column-gap: 0.5rem;

@@ -21,6 +21,11 @@ export class Icon extends Component {
 			svg {
 				width: 100%;
 				height: 100%;
+				/* The knob for a heavier glyph, e.g. an icon shrunk into a badge, where lucide's
+				   hairline disappears. It has to be a real CSS rule: the stroke width lucide puts
+				   on the <svg> is a presentation attribute, which an inherited value would lose to
+				   but any author rule beats. */
+				stroke-width: var(--mitra-icon-stroke-width, 2);
 			}
 		`
 	}
@@ -48,7 +53,6 @@ export class Icon extends Component {
 		// Ensure it inherits the color and stroke width correctly
 		svgElement.setAttribute('fill', this.fill ? 'currentColor' : 'none')
 		svgElement.setAttribute('stroke', 'currentColor')
-		svgElement.setAttribute('stroke-width', '2')
 		svgElement.setAttribute('stroke-linecap', 'round')
 		svgElement.setAttribute('stroke-linejoin', 'round')
 

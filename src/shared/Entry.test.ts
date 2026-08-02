@@ -103,6 +103,30 @@ describe('Entry', () => {
 			assert.deepEqual(entry.participants!.map(participant => participant.role), [ParticipantRole.Required, ParticipantRole.Optional])
 		})
 
+		it('setParticipantRole changes one invitee and reports whether anything changed', () => {
+			const entry = invited()
+			assert.equal(entry.setParticipantRole('ME@example.com', ParticipantRole.Optional), true)
+			assert.deepEqual(entry.participants!.map(participant => participant.role), [ParticipantRole.Required, ParticipantRole.Optional])
+			assert.equal(entry.setParticipantRole('me@example.com', ParticipantRole.Optional), false) // already optional
+			assert.equal(entry.setParticipantRole('organizer@example.com', ParticipantRole.Optional), false) // not an invitee
+		})
+
+		it('removeParticipant uninvites one, refuses the organizer, and clears the list with the last invitee', () => {
+			const entry = new Entry({
+				participants: [
+					{ email: 'organizer@example.com', organizer: true },
+					{ email: 'a@example.com' },
+					{ email: 'b@example.com' },
+				],
+			})
+			assert.equal(entry.removeParticipant('organizer@example.com'), false)
+			assert.equal(entry.removeParticipant('A@example.com'), true)
+			assert.deepEqual(entry.participants!.map(participant => participant.email), ['organizer@example.com', 'b@example.com'])
+			assert.equal(entry.removeParticipant('b@example.com'), true)
+			assert.equal(entry.participants, null) // a lone organizer has nothing to organize
+			assert.equal(entry.removeParticipant('b@example.com'), false)
+		})
+
 		it('clearParticipants returns the entry to a plain private one', () => {
 			const entry = invited()
 			entry.clearParticipants()

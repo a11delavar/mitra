@@ -9,6 +9,7 @@ declare global {
 	interface LocalizableStringKeys {
 		"+${count:number} more": unknown
 		"${count:number} min": unknown
+		"${count:number} more": unknown
 		"${count:pluralityNumber} days": unknown
 		"${count:pluralityNumber} hours": unknown
 		"${count:pluralityNumber} months": unknown
@@ -34,6 +35,7 @@ declare global {
 		"App-Specific Password": unknown
 		"Apple ID": unknown
 		"Ask everyone to attend": unknown
+		"Ask this participant to attend": unknown
 		"At start": unknown
 		"At start of event": unknown
 		"Back": unknown
@@ -114,6 +116,7 @@ declare global {
 		"jump navigate pick specific day month year": unknown
 		"Keyboard Shortcuts": unknown
 		"Location": unknown
+		"Make attendance optional": unknown
 		"Make attendance optional for everyone": unknown
 		"Mark all optional": unknown
 		"Mark all required": unknown
@@ -164,6 +167,7 @@ declare global {
 		"Remove": unknown
 		"Remove all": unknown
 		"Remove every participant": unknown
+		"Remove participant": unknown
 		"Remove reminder": unknown
 		"Rename": unknown
 		"Rename time zone": unknown
@@ -177,11 +181,11 @@ declare global {
 		"Search entries or run a command…": unknown
 		"Search or run a command (${hotkey})": unknown
 		"Search or run a command…": unknown
-		"See all ${count:number} participants": unknown
 		"select": unknown
 		"Server URL": unknown
 		"Set as the default for new entries": unknown
 		"Show calendar": unknown
+		"Show fewer participants": unknown
 		"Show the other time zones": unknown
 		"Showing ${city} time — switch to the primary time zone": unknown
 		"Showing the primary time zone — switch to ${city} time": unknown

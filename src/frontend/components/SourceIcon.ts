@@ -1,6 +1,6 @@
 import { Component, component, html, css, property } from '@a11d/lit'
 import { SourceType, type Source } from 'shared'
-import { colorContrast } from './colorContrast.js'
+import { contrastColor } from './contrastColor.js'
 
 /**
  * The one icon that stands for a source, wherever a source is named: its KIND — events or tasks — drawn
@@ -46,7 +46,7 @@ export class SourceIcon extends Component {
 
 				&[selected] {
 					background: var(--mitra-source-icon-color);
-					color: ${colorContrast('var(--mitra-source-icon-color)')};
+					color: ${contrastColor('var(--mitra-source-icon-color)')};
 
 					mitra-icon {
 						transform: scale(0.9);

@@ -86,10 +86,13 @@ export const fieldStyles = css`
 		}
 
 		/* Whatever the field opens hangs off the FIELD box (see the note above) — menus, suggestion
-		   lists, the zone picker, and a select's own picker alike. */
+		   lists, the zone picker, and a select's own picker alike. A field that stands MANY rows tall
+		   is the exception the rule can't cover (its box is nowhere near the control that opened the
+		   popover), so it may name another anchor through --field-anchor rather than fight this
+		   declaration on specificity. */
 		[popover],
 		select::picker(select) {
-			position-anchor: --field;
+			position-anchor: var(--field-anchor, --field);
 		}
 
 		:is(input, textarea, select):not(dialog *) {
