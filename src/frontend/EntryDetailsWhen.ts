@@ -357,7 +357,7 @@ export class EntryDetailsWhen extends Component {
 				   read as one plane. It sits INSIDE its field row, which is what anchors it (see
 				   field.css.ts) and what makes the row read as active while it's open. */
 				mitra-time-zone-picker {
-					background: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
+					background: var(--mitra-entry-surface);
 					box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48), 0px 4px 12px -1px rgba(0,0,0,0.24);
 					position-area: inline-end span-all;
 					position-try-fallbacks: flip-inline, flip-block, flip-inline flip-block;

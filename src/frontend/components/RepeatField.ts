@@ -294,7 +294,7 @@ export class RepeatField extends Component {
 					/* The same picker strategy as the source selector: the popover's tinted glass, opening
 					   beside the row and flipping inline/block when the space runs out. */
 					&::picker(select) {
-						background: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
+						background: var(--mitra-entry-surface);
 						border: var(--border);
 						box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48), 0px 4px 12px -1px rgba(0,0,0,0.24);
 						position-area: inline-end span-all;

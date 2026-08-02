@@ -209,9 +209,9 @@ export class EntryDetailsComponent extends Component {
 				display: none;
 				cursor: default;
 
-				/* Tint the toggle switch and the text selection with the entry's (or its source's) colour. */
-				--color-accent: var(--mitra-entry-segment-color);
-
+				/* The entry's colour tints the toggle switch, the pickers' chosen rows and the text
+				   selection — inherited from the segment this editor renders inside, which declares it for
+				   every surface the entry opens (see EntrySegment), not just for this one. */
 				& ::selection {
 					background-color: color-mix(in srgb, var(--mitra-entry-segment-color) 40%, transparent);
 				}
@@ -281,7 +281,7 @@ export class EntryDetailsComponent extends Component {
 					   radius no longer scroll away with long content. */
 					max-height: inherit;
 					overflow-y: auto;
-					background: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
+					background: var(--mitra-entry-surface);
 					backdrop-filter: blur(10px);
 					border: var(--border);
 					border-radius: var(--sheet-frame-radius);
@@ -415,7 +415,7 @@ export class EntryDetailsComponent extends Component {
 								   the row and flips inline/block when the space runs out — the same strategy as
 								   the details popover itself. */
 								&::picker(select) {
-									background: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
+									background: var(--mitra-entry-surface);
 									border: var(--border);
 									box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48),0px 4px 12px -1px rgba(0,0,0,0.24);
 									position-area: inline-end span-all;

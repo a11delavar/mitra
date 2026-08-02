@@ -41,7 +41,9 @@ export class IconButton extends Component {
 					opacity: 0.9;
 					font-size: inherit;
 					cursor: pointer;
-					transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+					/* Opacity is in the list because hover CHANGES it (below) — it was the one property the
+					   button animated to and then snapped to. */
+					transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 					border: 1px solid transparent;
 
 					&:hover {

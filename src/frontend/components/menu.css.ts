@@ -2,6 +2,7 @@ import { css } from '@a11d/lit'
 import { focusRing } from './focusRing.css.js'
 import { activated } from './activated.css.js'
 import { controlHeight } from './controlHeight.css.js'
+import { pickerRow, pickerRowChosen } from './pickerRow.css.js'
 
 /** Popover dropdown menu, anchored via CSS anchor positioning (the anchor link is set per-instance). */
 export const menuStyles = css`
@@ -80,6 +81,36 @@ export const menuStyles = css`
 					background: transparent;
 				}
 			}
+		}
+	}
+
+	/* A menu whose rows are OPTIONS, not actions: one of them is the current state and the rest are what
+	   you can switch it to. Same container — it is still a menu — but the rows become the app's shared
+	   option row (pickerRow.css.ts), the very row a select's picker and the time-zone picker give theirs,
+	   so a list of options that happens to live in a menu does not read as a different kind of list than
+	   one that lives in a picker.
+
+	   No flag says so: a menu holding a row that declares itself aria-current IS a list of options — that
+	   attribute is the same fact pickerRowChosen keys on, so the markup already carries it and there is
+	   nothing extra for a caller to remember. Reset with all: unset first, because the action-row rules
+	   above are on these same buttons and their control height would leave the rows standing taller than
+	   every other list in the app. */
+	menu[popover]:has([aria-current]) :is(button, a) {
+		all: unset;
+		/* A menu is a FLOATING surface: it must read the same wherever it is anchored. But it renders in
+		   the light DOM of whatever opened it — a task status menu opens inside an entry chip's heading,
+		   which is bold and tightly led — and all: unset resolves every inherited property to exactly
+		   that. So the row states its own text metrics. The line-height is not only cosmetic: the shared
+		   row's height is one lh plus its breathing room, so inheriting the chip's 1.1 quietly made these
+		   rows shorter than the same row in a picker. */
+		/* 500 is what BOTH neighbours resolve to: the action rows above declare it, and a select's option
+		   inherits it from the field it drops out of. */
+		font-weight: 500;
+		line-height: normal;
+		${pickerRow}
+
+		&[aria-current='true'] {
+			${pickerRowChosen}
 		}
 	}
 `

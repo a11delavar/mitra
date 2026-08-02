@@ -202,7 +202,7 @@ export class LocationField extends Component {
 					max-inline-size: 280px;
 					max-height: 60dvh;
 					overflow-y: auto;
-					background: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
+					background: var(--mitra-entry-surface);
 					border: var(--border);
 					box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48), 0px 4px 12px -1px rgba(0,0,0,0.24);
 					position-area: inline-end span-all;

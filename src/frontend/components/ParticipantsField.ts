@@ -449,7 +449,7 @@ export class ParticipantsField extends Component {
 				   the one-line pickers use, and the reason it appeared to detach from its button here. */
 				> menu[popover] {
 					--field-anchor: --participants-menu;
-					background: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
+					background: var(--mitra-entry-surface);
 					border: var(--border);
 					box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48), 0px 4px 12px -1px rgba(0,0,0,0.24);
 				}

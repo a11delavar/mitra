@@ -98,27 +98,38 @@ export class TaskStatusComponent extends Component {
 
 				> menu[popover] {
 					position-anchor: --task-status;
+					/* The entry's tinted glass, like every other surface it opens (see EntrySegment) — the
+					   plain menu surface underneath is the app's neutral one and read as a foreign panel
+					   floating over the entry. Addressed as a child so it simply out-specifies menu.css.ts;
+					   no !important needed. */
+					background: var(--mitra-entry-surface);
 				}
 
 				& > mitra-icon-button {
-					transition: color 0.15s ease, transform 0.1s ease;
+					transition: transform 0.1s ease;
 
-					&:hover { color: var(--color-text); }
 					&:active { transform: scale(0.9); }
 
-					> button { padding: 0; }
+					> button {
+						padding: 0;
+
+						/* Nothing drawn behind the mark, and no colour jump: hovering just brings it up to
+						   full strength (IconButton's own hover opacity, faded there). The shared activated
+						   surface every other icon button wears is mixed from the app's TEXT colour and knows
+						   nothing about the chip it sits on — a foreign grey square behind a square glyph,
+						   invisible on a pale entry and muddy on a saturated one. It stays for :focus-visible,
+						   where it is not decoration but half of how a keyboard user finds the control. */
+						&:hover:not(:focus-visible) { background: none; }
+					}
 				}
 
-				/* In a grid bar the checkbox has to stay glyph-sized — a segment can be a couple of rems
-				   tall, so the touch target every other icon button grows to would burst it. The copy in
-				   the editor keeps that growth. */
-				mitra-entry-segment & {
-					--icon-button-size: 0;
-				}
-			}
-
-			menu[popover] button[aria-current="true"] {
-				background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+				/* In a grid bar this control is sized by the line it sits on, and it opts out of the touch
+				   floor every other icon button grows to (a bar can be a single line tall, which that floor
+				   would burst) — both decided by the segment, on the BUTTON itself: see the header line in
+				   EntrySegment. Not here, and not on this host: IconButton declares the floor on the button
+				   element, and an element's own declaration beats anything it inherits, so an opt-out set
+				   here would read as applied and quietly lose on every coarse pointer. This copy — the
+				   editor's — keeps the growth. */
 			}
 		`
 	}

@@ -105,6 +105,19 @@ export class EntrySegmentComponent extends Component {
 				   (It also used to carry no bottom padding at all, which reads as a deliberate top-anchor only
 				   while the content fills the box — on a short block it just hung the title off the ceiling.) */
 				padding: 0.125rem;
+				/* An entry's own colour IS the accent for everything that entry owns: the chosen row and tick
+				   of a status menu opened on the chip, and — since the editor renders inside this element
+				   and inherits it — its switches, fields and text selection too. It lived on the editor
+				   alone, which is why the SAME menu came up in the entry's colour when opened there and in
+				   ambient grey when alt-clicked on the chip. One declaration, on the element that owns the
+				   entry's identity, so every surface the entry opens is accented the same however it opened. */
+				--color-accent: var(--mitra-entry-segment-color);
+				/* The tinted glass EVERY surface an entry opens is made of — the editor, its field pickers,
+				   the time-zone picker, a status menu — so that nested surfaces read as one plane, which is
+				   what those places each said in a comment while re-typing this same formula (eight copies
+				   of it). One definition here, where the entry's colour is; a surface just uses it, and a
+				   NEW surface gets it right by default instead of having to remember the recipe. */
+				--mitra-entry-surface: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
 				background-color: color-mix(in srgb, var(--mitra-entry-segment-color) 25%, var(--color-background));
 				border-inline-start: 3px solid var(--mitra-entry-segment-color);
 				border-radius: var(--border-radius);
@@ -248,55 +261,113 @@ export class EntrySegmentComponent extends Component {
 				}
 
 				& > .heading {
-					/* flow-root (not flex) so the title's lines flow around a floated checkbox — the first
-					   line sits beside it, the rest wrap into the full width beneath it — and the block still
-					   contains the float, keeping short single-line tasks from overflowing the checkbox. */
-					display: flow-root;
 					font-weight: 600;
 					white-space: normal;
 					word-break: break-word;
 					line-height: 1.1;
 
-					> mitra-task-status {
-						float: inline-start;
-						margin-inline-end: 0.25rem;
-						/* The mark has to FIT the box below, and at 0.95rem it did not: 16px centred in a 12.31px
-						   box overflowed it by 1.84px at each end. That overflow was the whole trouble — in a
-						   stacked block it left the mark 0.16px off the top edge while its inline-start gap was
-						   8px, so the block looked padded down one side only; in a month bar it made the mark
-						   read as cut off, and oversized beside 0.7rem text. Sized to the line it sits inside
-						   its own box, and the block's (now equal) padding is what spaces it. */
-						/* On the icon BUTTON, which carries its own 1rem (see IconButton) — a font-size on this
-						   host would leave the mark at that size and overflowing. */
-						> mitra-icon-button {
-							font-size: 0.75rem;
-						}
-						/* A box one line tall (the inherited 0.7rem font at line-height 1.1) with its glyph
-						   centered, so the control seats on the heading's first line and only that line is
-						   indented — the remaining lines clear it and use the full width. */
-						height: calc(0.7rem * 1.1);
-						align-items: center;
+					/* Two plain rows: the header strip (the task mark and the time, ordinary flex items that
+					   can neither overlap a sibling nor bend any line's height) and the title at full width
+					   beneath it. Nothing here floats: a float's box and the line beside it must agree on
+					   their height to the pixel or the float overhangs into the title — that coupling is what
+					   this strip replaces. */
+					display: flex;
+					flex-direction: column;
 
-						/* A single-line bar only a few characters wide — the year grid's day cells, a phone's
-						   month bars — has nothing left for the title once the control takes its ~1.2rem. The
-						   title wins there: it is what identifies the entry, Done/Cancelled still read from the
-						   strike-through, and the control itself is one tap away in the editor. Both axes,
-						   because it's only the SHORT bars that pay the control's full width: in a tall block
-						   the title wraps past the float, so it costs one line's indent, not the line. */
-						@container (max-width: 3.5rem) and (max-height: 2rem) {
-							display: none;
+					/* The mark's box and its glyph: one text line by default, a larger target once the chip
+					   has height to spend, larger again for a finger (IconButton's full 2rem floor would
+					   burst all but the tallest chips, so this is its stand-in here). */
+					--header-line: calc(0.7rem * 1.1);
+					--header-mark: 0.75rem;
+					@container (min-height: 2.5rem) {
+						--header-line: 1rem;
+						--header-mark: 0.875rem;
+
+						@media (pointer: coarse) {
+							--header-line: 1.25rem;
+							--header-mark: 1rem;
 						}
 					}
 
+					> .header {
+						display: flex;
+						align-items: center;
+						min-width: 0;
+
+						> mitra-task-status {
+							flex-shrink: 0;
+							block-size: var(--header-line);
+							inline-size: var(--header-line);
+							margin-inline-end: 0.25rem;
+							align-items: center;
+							justify-content: center;
+
+							> mitra-icon-button {
+								font-size: var(--header-mark);
+								block-size: 100%;
+								inline-size: 100%;
+								/* IconButton's coarse-pointer floor (2rem) must be waived on the BUTTON, where
+								   IconButton declares it — an element's own declaration beats anything inherited,
+								   so an opt-out on an ancestor reads as applied yet never wins. Only the segment's
+								   own mark is waived, never the editor's copy, which renders inside this element's
+								   popover. */
+								--icon-button-size: 0;
+							}
+
+							/* A single-line bar only a few characters wide — the year grid's day cells, a phone's
+							   month bars — has nothing left for the title once the control takes its ~1.2rem. The
+							   title wins there: it is what identifies the entry, Done/Cancelled still read from
+							   the strike-through, and the control itself is one tap away in the editor. */
+							@container (max-width: 3.5rem) and (max-height: 2rem) {
+								display: none;
+							}
+						}
+
+						> .time {
+							opacity: 0.75;
+							font-size: 0.65rem;
+							white-space: nowrap;
+							margin-inline-end: 0.25rem;
+							/* Longer than the strip is wide: clipped in place like the title beneath it — never
+							   wrapped, dropped under the mark, or overflowed across the chip's edge. Applies in
+							   the strip only (a flex item is a box; the inline fallback below isn't one). */
+							overflow: clip;
+
+							/* THE decision about whether an entry can carry its time at all, made once here from
+							   the entry's OWN box — never from which view it is in. Neither the height to stack
+							   it nor the width to inline it means it goes: the title identifies the entry, the
+							   time does not, and on a phone's month bar there is barely room for the title
+							   alone. Both dimensions in one query, so no view has to re-decide this. */
+							@container (max-height: 2rem) and (max-width: 7rem) {
+								display: none;
+							}
+
+							> .separator, > .end {
+								@container (max-height: 2rem) {
+									display: none;
+								}
+							}
+						}
+					}
+
+					> .label {
+						min-width: 0;
+					}
+
+					/* Out of height for two rows: one plain line of inline content — mark, time, title on a
+					   shared baseline. Dissolving the strip (contents) rather than restyling it keeps this
+					   mode what it always was, a simple text line: the views' own heading-level nowrap and
+					   ellipsis overrides (month bars, the all-day lane's sticky titles) act on it directly. */
 					@container (max-height: 2rem) {
-						white-space: normal;
-						overflow: visible;
-						text-overflow: clip;
+						display: block;
 						min-width: 0;
 						/* One line in a box with room to spare: centre it rather than hanging it from the top
-						   edge. Resolves to 0 the moment the content is taller than the box, so a clipped
-						   title still clips from its start. */
+						   edge. Resolves to 0 the moment the content is taller than the box. */
 						margin-block: auto;
+
+						> .header {
+							display: contents;
+						}
 					}
 
 					@container (max-height: 1rem) {
@@ -312,37 +383,6 @@ export class EntrySegmentComponent extends Component {
 					& > .heading > .label {
 						opacity: 0.6;
 						text-decoration: line-through;
-					}
-				}
-
-				& > .heading > .time {
-					opacity: 0.75;
-					font-size: 0.65rem;
-					white-space: nowrap;
-					/* Its own line above the title while there is height for two rows — the default, and what
-					   every roomy block shows. */
-					display: block;
-
-					/* Out of height for a second row: the time falls back to LEADING the title on the one line
-					   there is, sharing its line box (so both sit on one baseline, whatever their sizes). */
-					@container (max-height: 2rem) {
-						display: inline;
-						margin-inline-end: 0.25rem;
-					}
-
-					/* THE decision about whether an entry can carry its time at all, made once here from the
-					   entry's OWN box — never from which view it is in. Neither the height to stack it nor the
-					   width to inline it means it goes: the title identifies the entry, the time does not, and
-					   on a phone's month bar there is barely room for the title alone. Both dimensions in one
-					   query, so no view has to re-decide this with an override of its own. */
-					@container (max-height: 2rem) and (max-width: 7rem) {
-						display: none;
-					}
-
-					& > .separator, & > .end {
-						@container (max-height: 2rem) {
-							display: none;
-						}
 					}
 				}
 
@@ -398,21 +438,16 @@ export class EntrySegmentComponent extends Component {
 				}
 
 				/* Reserve room at the trailing edge of the badge's line so it never overlaps the text — on
-				   whichever element actually reaches that edge. While the time is STACKED it is a full-width
-				   block carrying the badge's line, so it takes the reservation and the title below keeps its
-				   full width; once the time is inline (or gone), the heading's own first line is that line.
-				   Both are addressed as children, so each reads the entry's own box. */
-				&:has(> .recurring) > .heading > .time {
+				   the header strip while there is one, on the heading itself once the strip has dissolved
+				   into it. The two rules coexist without a toggle: a display: contents box pays no padding,
+				   so the strip's reservation simply stops applying in the single-line mode. */
+				&:has(> .recurring) > .heading > .header {
 					padding-inline-end: 1.35rem;
 				}
 
 				@container (max-height: 2rem) {
 					&:has(> .recurring) > .heading {
 						padding-inline-end: 1.35rem;
-
-						> .time {
-							padding-inline-end: 0;
-						}
 					}
 				}
 
@@ -431,7 +466,7 @@ export class EntrySegmentComponent extends Component {
 					}
 
 					&:has(> .recurring) > .heading,
-					&:has(> .recurring) > .heading > .time {
+					&:has(> .recurring) > .heading > .header {
 						padding-inline-end: 0;
 					}
 				}
@@ -449,22 +484,25 @@ export class EntrySegmentComponent extends Component {
 			this.segment.entry.color ?? getSource(this.segment.entry.sourceId)?.color ?? ''
 		)
 
-		/* The time lives INSIDE the heading, ahead of the title — one element, so the two can share a
-		single line box when the block is too short to stack them. Laying them out as siblings
-		instead meant centring two different font sizes independently, which aligns their boxes but
-		never their baselines. It also puts the task's checkbox (the heading's leading float) ahead
-		of the time, where the affordance belongs. */
+		/* The task's mark and the time share the header strip; the title follows as the second row.
+		All inside the heading, so the short single-line bars can dissolve the strip and lay the
+		three out as one text line (see the heading's compact tier). Rendered only when it has
+		content — an all-day event has neither mark nor time, and its title is the first line. */
 		return html`
 			<div class="heading">
-				${this.segment.entry.type !== EntryType.Task ? html.nothing : html`
-					<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
-				`}
-				${this.segment.allDay ? html.nothing : html`
-					<span class="time">
-						<span class="start">${this.segment.entry.start?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-						<span class="separator">-</span>
-						<span class="end">${this.segment.entry.end?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-					</span>
+				${this.segment.entry.type !== EntryType.Task && this.segment.allDay ? html.nothing : html`
+					<div class="header">
+						${this.segment.entry.type !== EntryType.Task ? html.nothing : html`
+							<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
+						`}
+						${this.segment.allDay ? html.nothing : html`
+							<span class="time">
+								<span class="start">${this.segment.entry.start?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+								<span class="separator">-</span>
+								<span class="end">${this.segment.entry.end?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+							</span>
+						`}
+					</div>
 				`}
 				<span class="label">${this.segment.entry.heading || (this.segment.entry.persisted ? '' : t('Draft'))}</span>
 			</div>
