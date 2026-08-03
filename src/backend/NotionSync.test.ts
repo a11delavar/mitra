@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { MikroORM, UnderscoreNamingStrategy, type EntityManager } from '@mikro-orm/sqlite'
-import { User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Source, SourceType, Entry, EntryType, TaskStatus, Recurrence } from '../shared/index.js'
+import { User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Source, Entry, EntryType, TaskStatus, Recurrence } from '../shared/index.js'
 import { type NotionBlock, type NotionClient, type NotionDataSource, type NotionPage } from '../shared/NotionClient.js'
 import { Dev } from './Dev.js'
 import { NotificationSubscription } from './NotificationSubscription.js'
@@ -145,8 +145,8 @@ function stubClient(state: StubState) {
 async function seed(em: EntityManager, state: StubState) {
 	const user = new User({ username: `alice-${crypto.randomUUID()}` })
 	const integration = new Notion({ userId: user.id, uri: 'notion://bot-1', credentials: { username: 'Acme', token: 'ntn_secret' } })
-	const source = new Source({ integrationId: integration.id, uri: 'notion://ds-1/view-1', type: SourceType.Task, name: 'Tasks · All', enabled: true, hidden: false })
-	const sibling = new Source({ integrationId: integration.id, uri: 'notion://ds-1/view-2', type: SourceType.Task, name: 'Tasks · Board', enabled: false, hidden: false })
+	const source = new Source({ integrationId: integration.id, uri: 'notion://ds-1/view-1', entryTypes: [EntryType.Task], name: 'Tasks · All', enabled: true, hidden: false })
+	const sibling = new Source({ integrationId: integration.id, uri: 'notion://ds-1/view-2', entryTypes: [EntryType.Task], name: 'Tasks · Board', enabled: false, hidden: false })
 	em.persist([user, integration, source, sibling])
 	await em.flush()
 	const { client, calls } = stubClient(state)
@@ -633,6 +633,33 @@ describe('Integration source reconciliation (name preservation)', () => {
 		await em.flush()
 		assert.equal(source.name, 'My custom name', 'a pre-existing rename is not reset on the first reconcile')
 		assert.equal(source.remoteName, 'Tasks · All', 'the provider name is captured as the baseline for next time')
+	})
+
+	// A source's identity is its URI ALONE now that one collection is one source (Source.keyOf), and the
+	// incoming sources arrive structure-cloned — plain objects with no class, no getters (see AGENTS.md).
+	// Both halves are load-bearing: mismatched keys silently disable every source on save.
+	it('enables the ticked sources of a plain, uri-keyed request body', async () => {
+		const em = orm.em.fork()
+		const { integration, source, sibling } = await seed(em, {})
+		const body = { credentials: { token: '' }, sources: [
+			{ uri: sibling.uri, enabled: true }, // the wire carries data only — no entryTypes, no key getter
+			{ uri: source.uri, enabled: false },
+		] }
+		await integration.applyAndSync(em, structuredClone(body) as never)
+		assert.equal(sibling.enabled, true, 'the ticked source is matched by uri and enabled')
+		assert.equal(source.enabled, false, 'the unticked one is turned off')
+		// And the types stay the provider's answer, never the (type-less) request body's.
+		assert.deepEqual([...sibling.entryTypes], [EntryType.Task])
+	})
+
+	it('refreshes the entry types a source declares from the provider on every reconcile', async () => {
+		const em = orm.em.fork()
+		const { integration, source } = await seed(em, {})
+		source.entryTypes = [EntryType.Event] // as if the collection's component set had been different before
+		await em.flush()
+		await integration.getSources(em)
+		await em.flush()
+		assert.deepEqual([...source.entryTypes], [EntryType.Task], 'what a source can hold is provider truth, unlike its name')
 	})
 
 	it('still adopts a rename made at the provider (a local custom name yields to it)', async () => {

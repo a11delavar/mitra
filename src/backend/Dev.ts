@@ -1,6 +1,6 @@
 import { type EntityManager, type MikroORM } from '@mikro-orm/sqlite'
 import { DateTime } from '@3mo/date-time'
-import { model, entity, Integration, Source, SourceType, Entry, EntryType, TaskStatus, User, Color, normalizeAllDay, Recurrence, ParticipantRole, ParticipantStatus } from '../shared/index.js'
+import { model, entity, Integration, Source, Entry, EntryType, TaskStatus, User, Color, normalizeAllDay, Recurrence, ParticipantRole, ParticipantStatus } from '../shared/index.js'
 
 /**
  * A dev-only, self-contained calendar with no external backend: its sources and entries live only in
@@ -91,11 +91,11 @@ export class Dev extends Integration {
 const INTEGRATION_ID = 'dev-sample-integration'
 /** The sample's shape version, carried in the integration's uri: bumping it makes existing dev
  * databases wipe and re-seed the sample in the new shape (real integrations are never touched). */
-const SAMPLE_URI = 'mitra://sample@3'
+const SAMPLE_URI = 'mitra://sample@4'
 
 /**
  * Dev-only: seeds the persisted {@link Dev} sample integration with a few single-colour calendars —
- * Work, Personal, Holidays (events) and Tasks — whose entries set NO colour of their own, so they
+ * Work, Holidays (events), Tasks, and Personal (both types) — whose entries set NO colour of their own, so they
  * inherit their calendar's colour. Idempotent and additive: seeds once (keyed by a stable id) and never
  * deletes, so re-running dev keeps any edits and the user can simply remove the integration when done.
  */
@@ -126,16 +126,19 @@ export async function seedDev(orm: MikroORM) {
 	const integration = new Dev({ id: INTEGRATION_ID, userId: user.id, uri: SAMPLE_URI, addresses: [me] })
 	em.persist(integration)
 
-	const calendar = (slug: string, type: SourceType, name: string, color: string) => {
-		const source = new Source({ id: `dev-sample-${slug}`, integrationId: integration.id, uri: `mitra://sample/${slug}`, type, name, color, enabled: true, hidden: false })
+	const calendar = (slug: string, types: Array<EntryType>, name: string, color: string) => {
+		const source = new Source({ id: `dev-sample-${slug}`, integrationId: integration.id, uri: `mitra://sample/${slug}`, entryTypes: types, name, color, enabled: true, hidden: false })
 		em.persist(source)
 		return source
 	}
 
-	const work = calendar('work', SourceType.Event, 'Work', Color.Blue)
-	const personal = calendar('personal', SourceType.Event, 'Personal', Color.Green)
-	const holidays = calendar('holidays', SourceType.Event, 'Holidays', Color.Red)
-	const tasks = calendar('tasks', SourceType.Task, 'Tasks', Color.Purple)
+	const work = calendar('work', [EntryType.Event], 'Work', Color.Blue)
+	// Personal accepts BOTH types, like a real CalDAV collection that declares no component set — the
+	// sample's stand-in for the multi-type case (it's what makes the editor's event ⇄ task switch
+	// reachable in development).
+	const personal = calendar('personal', [EntryType.Event, EntryType.Task], 'Personal', Color.Green)
+	const holidays = calendar('holidays', [EntryType.Event], 'Holidays', Color.Red)
+	const tasks = calendar('tasks', [EntryType.Task], 'Tasks', Color.Purple)
 
 	const weekStart = new DateTime().weekStart.dayStart
 	const at = (day: number, hour: number, minute = 0) => weekStart.add({ days: day }).with({ hour, minute })
@@ -145,7 +148,7 @@ export async function seedDev(orm: MikroORM) {
 
 	// Entries carry no colour of their own — they inherit their calendar's colour.
 	const on = (source: Source) => (init: Partial<Entry>) => {
-		const entry = new Entry({ id: crypto.randomUUID(), ...init, sourceId: source.id, type: source.type === SourceType.Task ? EntryType.Task : EntryType.Event })
+		const entry = new Entry({ id: crypto.randomUUID(), type: source.defaultEntryType, ...init, sourceId: source.id })
 		em.persist(entry)
 		return entry
 	}

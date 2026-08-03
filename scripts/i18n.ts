@@ -60,9 +60,16 @@ for (const file of sourceFiles(frontendDir)) {
 		keys.add(unescape(raw, quote!))
 	}
 }
+// `src/shared` carries user-facing text too: the provider `description` statics the add dialog
+// localizes, and the odd domain value object that formats ITSELF for the UI (see EntryType.format —
+// frontend-only by contract, since `t()` is a frontend global). Both are collected so their keys stay
+// tracked like any other.
 for (const file of sourceFiles(sharedDir)) {
 	const source = fs.readFileSync(file, 'utf8')
 	for (const [, quote, raw] of source.matchAll(descriptionPattern)) {
+		keys.add(unescape(raw, quote!))
+	}
+	for (const [, quote, raw] of source.matchAll(callPattern)) {
 		keys.add(unescape(raw, quote!))
 	}
 }

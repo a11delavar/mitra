@@ -20,6 +20,27 @@ export const menuStyles = css`
 		position-area: bottom span-left;
 		position-try-fallbacks: flip-block;
 
+		/* KNOWN GAP — a menu opened from inside a bottom SHEET lands above its button instead of below,
+		   with the whole sheet body free underneath. Debugged; the cause is two layers deep:
+		     1. A sheet is a scroll TRACK whose one-viewport spacer sits above its body (see
+		        components/sheet.ts), so every anchor inside it has a LAYOUT position a viewport-plus below
+		        its visual one — measured on the participants menu: anchor layout top 1080, track scrollTop
+		        641, visual top 440, in a 760px viewport. position-area makes the anchor's LAYOUT box the
+		        popover's containing block, so "bottom" is a region entirely below the viewport; the box
+		        overflows it and flip-block picks "top" (the computed position-area reads "span-left top").
+		        The anchor's scroll adjustment is applied afterwards, carrying the menu far above the button.
+		        Dropping the fallback does not help — a degenerate region end-aligns the box (measured 274
+		        for a 198px menu). Writing the placement with anchor() INSETS does fix it (measured 476
+		        against an anchor bottom of 472): insets are plain lengths on a viewport-sized containing
+		        block, never a region that can degenerate.
+		     2. That placement cannot be applied from inside @container anchored(fallback: --sheet): the
+		        query's answer depends on the very placement those properties would change, so Chromium
+		        ignores position-affecting declarations there. Verified — a custom property set in that
+		        block lands while position-area / inset / position-try-fallbacks in the same block do not.
+		   So the fix wants the sheet mode as plain STATE (an attribute stamped by the code that already
+		   drives the track) for this rule to key off. Left as one documented gap rather than worked around
+		   per component: every menu and every select picker inside a sheet shares it. */
+
 		&:popover-open {
 			display: flex;
 			flex-direction: column;
@@ -55,11 +76,9 @@ export const menuStyles = css`
 			   screen) sits at the trailing edge. */
 			kbd {
 				margin-inline-start: auto;
-			}
-
-			/* The gesture belongs to the chip before it, so the pair moves to the trailing edge together. */
-			kbd:has(+ .word) {
-				margin-inline-end: -0.25rem;
+				&:has(+ .word) {
+					margin-inline-end: -0.25rem;
+				}
 			}
 
 			&:hover,

@@ -1,6 +1,6 @@
 import { component, html, css, state, Binder, unsafeHTML } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
-import { CalDAV, Notion, Source, integrationClasses, type Integration, type IntegrationClass } from 'shared'
+import { CalDAV, EntryType, Notion, Source, integrationClasses, type Integration, type IntegrationClass } from 'shared'
 import { discoverSources, createIntegration, updateIntegration, getIntegrations, fetchIntegrations, fetchGoogleAvailability, connectGoogle } from './Api.js'
 import caldavLogo from '../../assets/integrations/caldav.svg'
 import googleLogo from '../../assets/integrations/google.svg'
@@ -104,7 +104,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 				id: this.parameters.id,
 				uri: integration.uri ?? '',
 				credentials: { username: integration.credentials?.username ?? '', password: '' },
-				sources: [...integration.sources].map(source => new Source({ uri: source.uri, type: source.type, name: source.name, enabled: source.enabled })) as any,
+				sources: [...integration.sources].map(source => new Source({ uri: source.uri, entryTypes: source.entryTypes, name: source.name, enabled: source.enabled })) as any,
 			})
 			// Fresh from an OAuth connect (preselectSources): tick everything, like a fresh add — the
 			// account was just authorized to import it. The sources are still persisted disabled
@@ -223,6 +223,20 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 						mitra-source-icon {
 							font-size: 16px;
 						}
+
+						/* Name and what the collection holds on one line — the types are a caption, so they
+						   never compete with the name for the row. */
+						.name {
+							display: flex;
+							align-items: baseline;
+							gap: 0.5rem;
+							min-width: 0;
+
+							.types {
+								font-size: 0.75rem;
+								color: var(--color-text-muted);
+							}
+						}
 					}
 				}
 			}
@@ -271,11 +285,17 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 				${!entity.sources.length ? html.nothing : html`
 					<div class="sources">
 						<span class="sources-title">${t('Sources')}</span>
+						${/* One checkbox per COLLECTION, never a per-type pair for the same URL: what a source
+						    can hold is a subtitle (see Source.entryTypes), and enabling it imports every type
+						    it carries. */''}
 						${entity.sources.map(source => html`
 							<label class="source">
 								<input type="checkbox" .checked=${source.enabled} @change=${() => { source.toggleEnabled(); this.requestUpdate() }}>
 								<mitra-source-icon .source=${source}></mitra-source-icon>
-								${source.name}
+								<span class="name">
+									${source.name}
+									<span class="types">${(source.entryTypes.length ? source.entryTypes : EntryType.all).map(type => type.formatPlural()).join(' · ')}</span>
+								</span>
 							</label>
 						`)}
 					</div>

@@ -1,5 +1,5 @@
 import { Component, component, html, css, property, event, query } from '@a11d/lit'
-import { type Entry, EntryType, TaskStatus } from 'shared'
+import { type Entry, TaskStatus } from 'shared'
 import { getCapabilities } from '../Api.js'
 import { EntryStore } from '../EntryStore.js'
 
@@ -135,10 +135,7 @@ export class TaskStatusComponent extends Component {
 	}
 
 	protected override get template() {
-		if (!this.entry || this.entry.type !== EntryType.Task) {
-			return html.nothing
-		}
-		return html`
+		return !this.entry?.type.isTask ? html.nothing : html`
 			<mitra-icon-button aria-label=${label(this.status)}
 				title=${t('${status} — click to toggle, Alt-click for options', { status: label(this.status) })}
 				@click=${this.onToggle}

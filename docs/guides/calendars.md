@@ -7,9 +7,11 @@ sidebar:
 
 Every calendar and task list Mitra imports from a connected account is a **source**, and the sidebar groups them under the account they came from. Everything on this page works the same whichever provider the account is — [CalDAV](../integrations/caldav.md), [Google Calendar](../integrations/google-calendar.md), [Apple Calendar](../integrations/apple-calendar.md) or [Notion](../integrations/notion.md).
 
+**One calendar is one row.** Most calendar servers let a single calendar hold both events and tasks, and Mitra shows it once either way — what a source can hold is a property of it, not a second row beside it. Which of the two a given entry *is* belongs to the entry (see [where new entries land](#where-new-entries-land)).
+
 ## Choose what gets imported
 
-When you connect an account, Mitra discovers its calendars and lists but leaves them **off**. You pick the ones you want in the source picker — the account's **⋯ → Edit**. Enabling a source is what makes Mitra sync it and keep a local copy; nothing heavy happens for the ones you leave alone.
+When you connect an account, Mitra discovers its calendars and lists but leaves them **off**. You pick the ones you want in the source picker — the account's **⋯ → Edit**; each one notes what it holds ("Events · Tasks"). Enabling a source is what makes Mitra sync it and keep a local copy, events and tasks alike; nothing heavy happens for the ones you leave alone.
 
 ## Hide without unsyncing
 
@@ -40,7 +42,9 @@ A source only ever moves **within its own account** — dragging one at another 
 
 The source with the **filled icon** is where a new entry goes when you create one without saying otherwise. Click any source's icon to make it the default; click the current default's icon to clear it.
 
-With no default set, Mitra uses **the first source shown** — so moving a source to the top of the list is itself a way to choose it. Note that a task list makes tasks and a calendar makes events: the kind of the entry follows the source it lands in.
+With no default set, Mitra uses **the first source shown** — so moving a source to the top of the list is itself a way to choose it.
+
+New entries are **events**, unless the target can only hold tasks (a Notion view), in which case they're tasks. Where the calendar holds both, a brand-new entry's editor offers an **Event / Task** switch, so a task you meant to jot down is one click away. The switch is only there while the entry is still new. A saved entry stays what it is: to change it, either make the other one and delete this one, or move it (the editor's source row) to a calendar that holds only events or only tasks — moving converts it.
 
 ## Re-import a source
 

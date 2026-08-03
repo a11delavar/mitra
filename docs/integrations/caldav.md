@@ -14,7 +14,7 @@ CalDAV is the open standard most calendar servers speak, and it's Mitra's most d
    - **Server URL** — your CalDAV endpoint, e.g. `https://caldav.example.com`.
    - **Username** — usually your account name or email.
    - **Password** — your account password (or an app password, if your provider issues them).
-3. Save. Mitra discovers the calendars and task lists on the account and lists them, **disabled**, in a source picker.
+3. Save. Mitra discovers the calendars on the account and lists them, **disabled**, in a source picker — each with a note of what it holds ("Events · Tasks"), since a CalDAV calendar may accept both.
 4. Enable the sources you want on your timeline.
 
 That's it — enabled sources sync in the background from then on.
@@ -36,7 +36,7 @@ Point Mitra at the provider's CalDAV base URL; it discovers the individual calen
 
 ## What syncs
 
-- **Events and tasks.** Calendar collections become event sources; task collections (VTODO) become task lists. Both sync two-way.
+- **Events and tasks.** A collection is **one** source in Mitra, holding whichever component types the server says it accepts — most accept both `VEVENT` and `VTODO`, and both sync two-way. A collection restricted to one of them offers only that one when you create an entry.
 - **Recurring events.** Full RFC 5545 recurrence — a repeating series is one entry, expanded across the views. Editing an occurrence edits the series (per-occurrence editing where the server supports it).
 - **All-day and multi-day** entries, locations, descriptions, colors, and reminders, subject to what your server stores.
 
@@ -50,5 +50,6 @@ While you have the app open, enabled sources are polled about every 10 seconds, 
 ## Troubleshooting
 
 - **Nothing appears after connecting.** Discovered sources start **disabled** by design — open the source picker and enable the ones you want.
+- **A calendar shows up twice after an update.** Mitra used to list a calendar that holds both events and tasks as two rows, and accounts connected before the change keep those old rows. Delete the integration and add it again: one row per calendar, holding both.
 - **A calendar looks out of date after a code update.** Use [**Re-import entries**](../guides/calendars.md#re-import-a-source) on the source: it drops Mitra's local copy and fetches everything again (a normal sync only pulls deltas, so unchanged entries are never re-read).
 - **Connection fails.** Double-check the Server URL includes the scheme (`https://`) and points at the CalDAV endpoint, not the web UI. Watch the [logs](../guides/logging.md) at `debug` level to see the CalDAV round-trips.

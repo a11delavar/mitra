@@ -171,7 +171,6 @@ export class ParticipantsField extends Component {
 				> header {
 					display: flex;
 					align-items: center;
-					gap: 0.25rem;
 
 					> .count {
 						flex: 1;
@@ -276,7 +275,6 @@ export class ParticipantsField extends Component {
 					> .actions {
 						display: flex;
 						align-items: center;
-						gap: 0.25rem;
 						opacity: 0;
 						transition: opacity 0.15s ease;
 					}

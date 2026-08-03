@@ -108,7 +108,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 			id: this.id,
 			uri: this.uri,
 			credentials: this.editableCredentials,
-			sources: [...this.sources].map(source => new Source({ uri: source.uri, type: source.type, name: source.name, enabled: source.enabled })) as any,
+			sources: [...this.sources].map(source => new Source({ uri: source.uri, entryTypes: source.entryTypes, name: source.name, enabled: source.enabled })) as any,
 		})
 	}
 
@@ -169,6 +169,12 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 				source.remoteName = source.name
 				em.persist(source)
 				return source
+			}
+			// The entry types a source accepts are provider truth, never user-edited (unlike `name`), so
+			// they simply refresh: a collection whose supported-component-set changed server-side (tasks
+			// enabled on a calendar) offers that type from the next reconcile on.
+			if (source.entryTypes.length) {
+				match.entryTypes = source.entryTypes
 			}
 			// Follow a REMOTE rename, but never clobber a LOCAL one. `remoteName` is the provider's name
 			// as of the last reconcile.

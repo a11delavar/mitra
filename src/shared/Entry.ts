@@ -2,14 +2,10 @@ import { DateTime } from '@3mo/date-time'
 import { equals } from '@a11d/equals'
 import { model } from './model.js'
 import { entity, primaryKey, property, enum as enumType, unique, manyToOne, embedded } from './orm.js'
-import { Source, SourceType } from './Source.js'
+import { EntryType, EntryTypeMapper, type EntryTypeValue } from './EntryType.js'
+import { Source } from './Source.js'
 import { Recurrence } from './Recurrence.js'
 import { Participants, type ParticipantRole, type Participant } from './Participant.js'
-
-export enum EntryType {
-	Event = 'event',
-	Task = 'task',
-}
 
 export enum TaskStatus {
 	ToDo = 'todo',
@@ -61,7 +57,23 @@ export class Entry {
 	@manyToOne(() => Source, { mapToPk: true, deleteRule: 'cascade' }) sourceId!: string
 	@property({ type: 'string', nullable: true }) uri?: string
 
-	@enumType(() => EntryType) type!: EntryType
+	/**
+	 * Setting the type is the CONVERSION, not a plain field write: a status only makes sense on a task,
+	 * so becoming an event drops it; becoming a task leaves it unset, which *is* "to do". That's why the
+	 * editor's draft switch and {@link migrateTo} both just assign here.
+	 *
+	 * It also accepts the wire form, which is what makes the value object survive the trip: the
+	 * frontend's API reviver assigns the raw `"task"` off the JSON onto this property, and it lands as
+	 * the instance (see {@link EntryType.parse}). An unmodelled type throws rather than becoming an event.
+	 */
+	@property({ type: EntryTypeMapper, fieldName: 'type' }) private _type!: EntryType
+	get type(): EntryType { return this._type }
+	set type(value: EntryType | EntryTypeValue) {
+		this._type = EntryType.parse(value)
+		if (!this._type.isTask) {
+			this.status = undefined
+		}
+	}
 
 	@property({ type: 'string' }) heading = ''
 	@property({ type: 'string' }) description = ''
@@ -253,6 +265,20 @@ export class Entry {
 		return new Entry({ ...this })
 	}
 
+	/**
+	 * The wire shape. Everything is a plain own field and rides along by itself; the ONE thing a spread
+	 * can't see is the accessor pair — `{...this}` copies the backing `_type`, not `type` — so the type
+	 * is re-exposed under its own name, as its plain value.
+	 *
+	 * That value (rather than the {@link EntryType} instance) is deliberate, because this method serves
+	 * BOTH directions: the backend's responses stringify through it, and the client's requests are built
+	 * from it (see `Api.createEvent`) — and `@a11d/api` structure-clones a request body, which strips a
+	 * class instance down to its fields. A string survives that; an object would arrive as `{value:…}`.
+	 */
+	toJSON() {
+		return { ...this as Entry, _type: undefined, type: this._type?.toJSON() }
+	}
+
 	/** A standalone copy carrying only the user-editable content — no identity (`id`, `uri`, `uid`),
 	 * no sync bookkeeping (`data` — its raw .ics could smuggle the source's RRULE back in), and no
 	 * series membership: duplicating always yields a SINGLE entry, so a master sheds its rule and an
@@ -362,15 +388,15 @@ export class Entry {
 		}
 	}
 
-	/** Move to another source. The entry's shape follows the target intrinsically: a task list holds
-	 * tasks and a calendar holds events, and a status only makes sense on a task. The identity and
-	 * link fields (`id`, `uri`, `data`) are deliberately untouched — a cross-source migration
-	 * re-creates the entry over there, and the backend owns those. */
+	/** Move to another source. The entry KEEPS its type wherever the target can hold it — a source
+	 * supports types, it doesn't dictate one (see {@link Source.entryTypes}) — and only converts when it
+	 * can't: a task moved onto an events-only calendar becomes an event, a note dropped into a Notion
+	 * task view becomes a task. The identity and link fields (`id`, `uri`, `data`) are deliberately
+	 * untouched — a cross-source migration re-creates the entry over there, and the backend owns those. */
 	migrateTo(source: Source) {
 		this.sourceId = source.id
-		this.type = source.type === SourceType.Task ? EntryType.Task : EntryType.Event
-		if (this.type === EntryType.Event) {
-			this.status = undefined
+		if (!source.supportsEntryType(this.type)) {
+			this.type = source.defaultEntryType // the setter owns the conversion (a status goes with the task)
 		}
 	}
 

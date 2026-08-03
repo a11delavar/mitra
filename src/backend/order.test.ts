@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { MikroORM, UnderscoreNamingStrategy, type EntityManager } from '@mikro-orm/sqlite'
-import { User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Source, SourceType, Entry, Recurrence, applyOrder, byOrder } from '../shared/index.js'
+import { User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Source, Entry, EntryType, Recurrence, applyOrder, byOrder } from '../shared/index.js'
 import { Dev } from './Dev.js'
 import { NotificationSubscription } from './NotificationSubscription.js'
 import { Session } from './Session.js'
@@ -38,7 +38,7 @@ async function inMemoryOrm() {
 async function seedUser(em: EntityManager, username: string, names: Array<string>) {
 	const user = new User({ username })
 	const integration = new Dev({ userId: user.id, uri: `dev://${username}` })
-	const sources = names.map(name => new Source({ integrationId: integration.id, uri: `${username}/${name}`, type: SourceType.Event, name, enabled: true }))
+	const sources = names.map(name => new Source({ integrationId: integration.id, uri: `${username}/${name}`, entryTypes: [EntryType.Event], name, enabled: true }))
 	em.persist([user, integration, ...sources])
 	await em.flush()
 	return { user, integration, sources }

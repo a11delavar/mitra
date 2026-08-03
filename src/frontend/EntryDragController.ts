@@ -1,6 +1,6 @@
 import { Controller, type Component } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { Entry, EntryType, SourceType, SNAP_MINUTES, DEFAULT_REMINDER_MINUTES, type Source } from 'shared'
+import { Entry, SNAP_MINUTES, DEFAULT_REMINDER_MINUTES, type Source } from 'shared'
 import { getPrimarySource, getCapabilities } from './Api.js'
 import { EntryStore } from './EntryStore.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
@@ -191,9 +191,10 @@ export class EntryDragController extends Controller {
 	private buildCreate(anchor: DragPoint, current: DragPoint): Entry {
 		const drag = this.drag!
 		// No id: it's a draft until the backend assigns one on create (see Entry.persisted / EntryStore).
-		// Type follows the target calendar: a task source makes a task (a VTODO on CalDAV), else an event.
-		const type = drag.source!.type === SourceType.Task ? EntryType.Task : EntryType.Event
-		const base = { sourceId: drag.source!.id, type, heading: '' }
+		// A drag makes an EVENT wherever the target can hold one — mitra is calendar-first, and a
+		// collection that also accepts tasks is still a calendar; only a tasks-only source (a Notion view)
+		// makes a task. The editor's type switch is how a draft becomes the other one (see Source.defaultEntryType).
+		const base = { sourceId: drag.source!.id, type: drag.source!.defaultEntryType, heading: '' }
 		if (drag.mode === 'allday') {
 			const { start, end } = placeAllDay(anchor.date, current.date)
 			return new Entry({ ...base, start, end, allDay: true })

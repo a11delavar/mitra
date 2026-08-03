@@ -1,12 +1,13 @@
 import { describe, it, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { GoogleCalendar } from './GoogleCalendar.js'
-import { Source, SourceType } from './Source.js'
+import { Source } from './Source.js'
+import { EntryType } from './EntryType.js'
 
 const account = () => new GoogleCalendar({
 	uri: GoogleCalendar.uriFor('someone@gmail.com'),
 	credentials: { username: 'someone@gmail.com', refreshToken: 'grant-1' },
-	sources: [new Source({ uri: 'https://g/cal/events/', type: SourceType.Event, name: 'Personal', enabled: true })] as any,
+	sources: [new Source({ uri: 'https://g/cal/events/', entryTypes: [EntryType.Event], name: 'Personal', enabled: true })] as any,
 })
 
 describe('GoogleCalendar', () => {

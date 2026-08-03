@@ -1,8 +1,9 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { Notion } from './Notion.js'
-import { Entry, EntryType, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
-import { Source, SourceType } from './Source.js'
+import { Entry, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
+import { EntryType } from './EntryType.js'
+import { Source } from './Source.js'
 import { type NotionDataSource, type NotionPage } from './NotionClient.js'
 
 type DateTime = import('@3mo/date-time').DateTime
@@ -412,7 +413,7 @@ describe('Notion integration model', () => {
 	const account = () => new Notion({
 		uri: 'notion://bot-1',
 		credentials: { username: 'Acme Workspace', token: 'ntn_secret' },
-		sources: [new Source({ uri: 'notion://ds-1/view-1', type: SourceType.Task, name: 'Tasks · All', enabled: true })] as any,
+		sources: [new Source({ uri: 'notion://ds-1/view-1', entryTypes: [EntryType.Task], name: 'Tasks · All', enabled: true })] as any,
 	})
 
 	it('declares what Notion cannot represent — the editor hides these fields', () => {

@@ -414,11 +414,8 @@
           "default": null,
           "comment": null,
           "collation": null,
-          "enumItems": [
-            "event",
-            "task"
-          ],
-          "mappedType": "enum"
+          "enumItems": [],
+          "mappedType": "text"
         },
         "uid": {
           "name": "uid",
@@ -495,12 +492,6 @@
           "expression": "`status` in ('todo', 'doing', 'done', 'cancelled')",
           "definition": "check (`status` in ('todo', 'doing', 'done', 'cancelled'))",
           "columnName": "status"
-        },
-        {
-          "name": "entry_type_check",
-          "expression": "`type` in ('event', 'task')",
-          "definition": "check (`type` in ('event', 'task'))",
-          "columnName": "type"
         }
       ],
       "triggers": [],
@@ -980,6 +971,23 @@
           "enumItems": [],
           "mappedType": "integer"
         },
+        "entry_types": {
+          "name": "entry_types",
+          "type": "json",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "json"
+        },
         "hidden": {
           "name": "hidden",
           "type": "integer",
@@ -1099,26 +1107,6 @@
           "enumItems": [],
           "mappedType": "json"
         },
-        "type": {
-          "name": "type",
-          "type": "text",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": null,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "collation": null,
-          "enumItems": [
-            "event",
-            "task"
-          ],
-          "mappedType": "enum"
-        },
         "uri": {
           "name": "uri",
           "type": "text",
@@ -1159,14 +1147,7 @@
           "unique": false
         }
       ],
-      "checks": [
-        {
-          "name": "source_type_check",
-          "expression": "`type` in ('event', 'task')",
-          "definition": "check (`type` in ('event', 'task'))",
-          "columnName": "type"
-        }
-      ],
+      "checks": [],
       "triggers": [],
       "foreignKeys": {
         "source_integration_id_foreign": {
