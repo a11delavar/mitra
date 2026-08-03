@@ -1,61 +1,13 @@
-import { component, html, state, css, eventListener, Controller, bind, query, queryAll } from '@a11d/lit'
+import { component, html, state, css, eventListener, bind, query, queryAll } from '@a11d/lit'
 import { PageComponent, route } from '@a11d/lit-application'
-import { Task } from '@lit/task'
 import { DateTime } from '@3mo/date-time'
 import { MediaQueryController } from '@3mo/media-query-observer'
-import { fetchEvents } from './Api.js'
 import { transitionCalendar, type CalendarTransitionType } from './calendarTransition.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
 import { EntryStore } from './EntryStore.js'
+import { EntryFetcherController } from './EntryFetcherController.js'
 import { CommandPalette } from './CommandPalette.js'
 import { commands } from './commands/index.js'
-
-class FetcherController extends Controller {
-	// `withCredentials` so the session cookie rides along behind a cookie-based auth proxy (e.g. Traefik OIDC).
-	private readonly eventSource = new EventSource('/api/events', { withCredentials: true })
-
-	constructor(override readonly host: PageCalendar) {
-		super(host)
-	}
-
-	readonly task = new Task(this.host, {
-		args: () => {
-			// The year strip scrolls far and fast, and every refetch mints a new entry array that re-renders
-			// the whole strip. So refetch only when crossing a 6-month BUCKET — the wide ±16-month fetch
-			// below keeps the render window covered with margin, so scrolling within a bucket needs no new
-			// data. Day-based views refetch per month (their windows are only weeks wide).
-			const monthIndex = this.host.navigatingDate.year * 12 + this.host.navigatingDate.month
-			const yearView = this.host.view === 'year'
-			return [yearView, yearView ? Math.floor(monthIndex / 6) : monthIndex] as const
-		},
-		task: () => {
-			// ±16 months for the year strip (≥ its ~8-month render radius plus the 6-month bucket, so the
-			// loaded range never gaps between refetches); ±1 month elsewhere.
-			const months = this.host.view === 'year' ? 16 : 1
-			const start = this.host.navigatingDate.monthStart.subtract({ months })
-			const end = this.host.navigatingDate.monthEnd.add({ months })
-			return fetchEvents(start, end)
-		},
-		onComplete: entries => EntryStore.applyServerEntries(entries),
-	})
-
-	override hostConnected() {
-		this.task.run()
-		this.eventSource.onmessage = (event) => {
-			if (event.data === 'updated') {
-				// In place, deliberately WITHOUT a view transition: the store adopts server values onto
-				// the same working instances, so a background tick (every save echoes one) repaints
-				// same-frame — animating it morphed the grid on every edit and snapped any running
-				// view-switch transition to its end. Only navigation animates (see calendarTransition.ts).
-				void this.task.run()
-			}
-		}
-	}
-
-	override hostDisconnected() {
-		this.eventSource?.close()
-	}
-}
 
 export type CalendarView = 'week' | 'month' | 'year'
 
@@ -112,7 +64,7 @@ export class PageCalendar extends PageComponent {
 		})
 	}
 
-	readonly fetcher = new FetcherController(this)
+	readonly fetcher = new EntryFetcherController(this)
 	readonly store = new EntryStore(this)
 
 	@query('mitra-command-palette') private readonly palette!: CommandPalette
