@@ -490,7 +490,7 @@ export class EntrySegmentComponent extends Component {
 		content — an all-day event has neither mark nor time, and its title is the first line. */
 		return html`
 			<div class="heading">
-				${this.segment.entry.type !== EntryType.Task && this.segment.allDay ? html.nothing : html`
+				${!this.segment.entry.type.isTask && this.segment.allDay ? html.nothing : html`
 					<div class="header">
 						${!this.segment.entry.type.isTask ? html.nothing : html`
 							<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>

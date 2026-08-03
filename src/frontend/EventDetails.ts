@@ -1,5 +1,5 @@
 import { component, html, property, state, Component, css, eventListener, event, Binder, query } from '@a11d/lit'
-import { EntryType, TaskStatus, type Integration, type RecurrenceScope } from 'shared'
+import { EntryType, TaskStatus, type EntryTypeValue, type Integration, type RecurrenceScope } from 'shared'
 import type { EntrySegment } from './EntrySegment.js'
 import { getIntegrations, getSource, getCapabilities } from './Api.js'
 import { EntryStore } from './EntryStore.js'
@@ -270,39 +270,146 @@ export class EntryDetailsComponent extends Component {
 					background: transparent;
 				}
 
-				> ul {
-					list-style: none;
-					margin: 0;
-					padding: 0.5rem 1rem 0.75rem;
+				/* The popover itself is the sheet contract's transparent frame (see components/sheet.ts):
+				   the editor is its single child and carries ALL the chrome — in anchored mode too, where
+				   it also caps itself (inherit = the frame's 80dvh), so the border and radius never scroll
+				   away with long content. A column of exactly two: the toolbar, then the list, which ALONE
+				   scrolls — a toolbar outside the scroller stays locked in place in both modes.
 
-					/* The popover itself is the sheet contract's transparent frame (see components/sheet.ts):
-					   the list is its single child and carries ALL the chrome — in anchored mode too, where
-					   it also caps itself (inherit = the frame's 80dvh) and scrolls inside, so the border and
-					   radius no longer scroll away with long content. */
+				   The two align by construction, not by subgrid (a scroll container can't subgrid): each
+				   declares the same columns — a FIXED-length glyph gutter (two auto gutters would size to
+				   their own differing contents) and the content — behind the same inline padding. */
+				> .editor {
+					--gutter: 1.5rem;
+					--inset: 1rem 0.5rem;
 					max-height: inherit;
-					overflow-y: auto;
+					display: flex;
+					flex-direction: column;
 					background: var(--mitra-entry-surface);
 					backdrop-filter: blur(10px);
 					border: var(--border);
 					border-radius: var(--sheet-frame-radius);
-					display: grid;
-					/* Just two columns for the whole popover: a leading glyph (icon / checkbox / switch /
-					   colour-square) and its content. Every row subgrids it so the glyphs line up. The
-					   date/time editor does its own start/→/end alignment within the content column. */
-					grid-template-columns: auto minmax(0, 1fr);
-					/* Rows size to their content and NOTHING may talk them out of it. A row left at the
-					   default auto keeps an auto maximum, which a capped grid is free to clamp once the
-					   list outgrows its 80dvh: the tallest row (a long participant list) was squeezed by
-					   exactly the overflow while its content kept its real height, so the add box ended up
-					   drawn over "Description". The cap has to produce a SCROLL, never a shorter row. */
-					grid-auto-rows: min-content;
-					/* The field boxes carry the vertical air now — the gap only separates their borders. */
-					row-gap: 0.125rem;
-					column-gap: 0.5rem;
+					/* Rounds the toolbar into the frame; top-layer popovers inside are unaffected by clip. */
+					overflow: clip;
+
+					/* The toolbar: the colour dot in the glyph gutter, everything else on the content
+					   column — quiet text, no boxes at rest, a hairline running edge to edge below. */
+					> header {
+						flex-shrink: 0;
+						display: grid;
+						grid-template-columns: var(--gutter) minmax(0, 1fr);
+						column-gap: 0.5rem;
+						align-items: center;
+						padding-block: 0.4375rem 0.375rem;
+						padding-inline: var(--inset);
+						border-block-end: 1px solid color-mix(in srgb, var(--color-text) 6%, transparent);
+						font-size: 0.75rem;
+
+						/* Everything but the dot rides the content column as one flex bar. The bleed is the
+						   fields' usual net-zero pair (capped at the end, where the inset is only 0.5rem),
+						   so the source name starts exactly on the content column. No gap: each control
+						   carries its own padding already. */
+						> .bar {
+							grid-column: 2;
+							display: flex;
+							align-items: center;
+							margin-inline: -0.4375rem -0.25rem;
+						}
+
+						> .bar > .spacer { flex: 1; }
+
+						mitra-icon-button {
+							font-size: 0.8125rem;
+						}
+
+						/* The chips ARE fields (field.css.ts) — rest/hover/open/focus states, chevron reveal
+						   and picker anchoring all come from there, the picker's surface and option rows from
+						   selectStyles/pickerRow. Only the tighter box is the toolbar's own. */
+						:is(.entry-type, .source).field {
+							--control-height: 1.5rem;
+							--field-padding-inline: 0.4375rem;
+						}
+
+						/* A picker row leaves its columns to the caller (pickerRow.css.ts): the name takes
+						   the slack, or space-between pushes it off its own icon to the row's far edge. */
+						.source > select option > .name {
+							flex: 1;
+						}
+
+						/* The name ellipsizes so a verbose calendar can't squeeze the strip; the icon the
+						   clone carries is dropped — the dot in front marks the source (the picker's own
+						   options keep theirs). */
+						.source > select selectedcontent {
+							display: block;
+							max-width: 10rem;
+							overflow: hidden;
+							text-overflow: ellipsis;
+							white-space: nowrap;
+
+							mitra-source-icon {
+								display: none;
+							}
+						}
+
+						/* The effective colour as one swatch-sized dot in the glyph gutter — it doubles as
+						   the source's mark (the chip beside it deliberately has no icon). */
+						> .color {
+							grid-column: 1;
+							display: inline-flex;
+							align-items: center;
+
+							> .dot {
+								width: 0.875rem;
+								height: 0.875rem;
+								border-radius: var(--border-radius);
+								border: none;
+								cursor: pointer;
+								padding: 0;
+								transition: transform 0.1s;
+
+								&:hover {
+									transform: scale(1.15);
+								}
+							}
+
+							/* The palette is a <menu popover>, so surface and placement come from menu.css.ts;
+							   it holds swatches instead of rows, hence the one padding it does ask for. */
+							> menu[popover] {
+								padding: 0.5rem;
+								flex-direction: row;
+							}
+						}
+					}
+
+					> ul {
+						list-style: none;
+						margin: 0;
+						/* padding-inline stated explicitly: the UA's default 40px list indent must not
+						   survive, and the value is the toolbar's own — one rail for both boxes' columns. */
+						padding-block: 0.375rem 0.75rem;
+						padding-inline: var(--inset);
+						overflow-y: auto;
+						/* A flex child's automatic minimum is its content — without this the list refuses
+						   to shrink and the cap above never produces the scroll. */
+						min-height: 0;
+						display: grid;
+						/* The toolbar's columns (see .editor above): a leading glyph (icon / checkbox /
+						   switch) and its content. Every row subgrids them so the glyphs line up; the
+						   date/time editor does its own start/→/end alignment within the content column. */
+						grid-template-columns: var(--gutter) minmax(0, 1fr);
+						/* Rows size to their content and NOTHING may talk them out of it. A row left at the
+						   default auto keeps an auto maximum, which a capped grid is free to clamp once the
+						   list outgrows its 80dvh: the tallest row (a long participant list) was squeezed by
+						   exactly the overflow while its content kept its real height, so the add box ended up
+						   drawn over "Description". The cap has to produce a SCROLL, never a shorter row. */
+						grid-auto-rows: min-content;
+						/* The field boxes carry the vertical air now — the gap only separates their borders. */
+						row-gap: 0.125rem;
+						column-gap: 0.5rem;
 
 					> hr {
 						margin: 0.5rem 0;
-						background: rgba(255, 255, 255, 0.06);
+						background: color-mix(in srgb, var(--color-text) 6%, transparent);
 						width: 100%;
 						height: 1px;
 						outline: none;
@@ -322,11 +429,12 @@ export class EntryDetailsComponent extends Component {
 							flex-shrink: 0;
 						}
 
-						/* A field row IS the field (see field.css.ts): the box reaches half a rem beyond
-						   the columns on both sides — the net-zero margin/padding pair keeps the grid
-						   alignment — so the hover border wraps the glyph and the content as ONE control. */
+						/* A field row IS the field (see field.css.ts): the box reaches beyond the columns —
+						   the net-zero margin/padding pair keeps the grid alignment — so the hover border
+						   wraps the glyph and the content as ONE control. Capped at the trailing side, where
+						   the full bleed would sit flush against the popover's tighter 0.5rem end inset. */
 						&.field {
-							margin-inline: -0.5rem;
+							margin-inline: -0.5rem -0.25rem;
 						}
 
 						> .content {
@@ -338,36 +446,26 @@ export class EntryDetailsComponent extends Component {
 						}
 
 						/* Title row: the task checkbox sits in the gutter (lined up with the icons below); the
-						   title + the options/close controls fill the content columns — or the whole row when
-						   there's no checkbox (events). */
+						   title fills the content columns — or the whole row when there's no checkbox (events). */
 						&.title-row {
 							> mitra-task-status { font-size: 0.95rem; }
 
-							> .title-bar {
+							> .title {
 								grid-column: 2 / -1;
-								display: flex;
-								align-items: center;
-								gap: 0.25rem;
+								/* The title is a field of its own (the checkbox stays outside its box); the
+								   leading net-zero pair keeps its text on the popover's rhythm line while the
+								   border reaches out like every other field's. */
+								margin-inline-start: -0.5rem;
+								font-size: 0.9375rem;
+								font-weight: 600;
+								color: var(--color-text);
+								line-height: 1.3;
 
-								> .title {
-									flex: 1;
-									/* The title is a field of its own (the checkbox/options stay outside its
-									   box); the leading net-zero pair keeps its text on the popover's rhythm
-									   line while the border reaches out like every other field's. */
-									margin-inline-start: -0.5rem;
-									font-size: 0.9375rem;
-									font-weight: 600;
-									color: var(--color-text);
-									line-height: 1.3;
-
-									&[data-struck] {
-										text-decoration: line-through;
-										color: var(--color-text-muted);
-									}
+								&[data-struck] {
+									text-decoration: line-through;
+									color: var(--color-text-muted);
 								}
 							}
-
-							&:not(:has(mitra-task-status)) > .title-bar { grid-column: 1 / -1; }
 						}
 
 						&.description {
@@ -415,7 +513,7 @@ export class EntryDetailsComponent extends Component {
 								   the row and flips inline/block when the space runs out — the same strategy as
 								   the details popover itself. */
 								&::picker(select) {
-									background: var(--mitra-entry-surface);
+									background: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
 									border: var(--border);
 									box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48),0px 4px 12px -1px rgba(0,0,0,0.24);
 									position-area: inline-end span-all;
@@ -466,15 +564,9 @@ export class EntryDetailsComponent extends Component {
 
 				/* Sheet mode — the --sheet fallback landed (see components/sheet.ts for the mechanics). */
 				@container anchored(fallback: --sheet) {
-					& > ul {
+					& > .editor > ul {
 						/* The home-indicator region on gesture phones must not clip the last row. */
 						padding-block-end: max(1rem, env(safe-area-inset-bottom));
-
-						/* The shared grab handle is the list's ::before, which grid auto-placement would drop
-						   into the icon gutter — span it across the editor's rows so it centres on the sheet. */
-						&::before {
-							grid-column: 1 / -1;
-						}
 					}
 				}
 			}
@@ -483,15 +575,17 @@ export class EntryDetailsComponent extends Component {
 
 	protected override get template() {
 		return !this.segment ? html.nothing : html`
-			<ul>
-				<li class="title-row">
-					${this.segment.entry.type !== EntryType.Task ? html.nothing : html`
-						<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
-					`}
-					<div class="title-bar">
-						<input class="title field" placeholder=${t('Title')}
-							?data-struck=${this.segment.entry.status === TaskStatus.Done || this.segment.entry.status === TaskStatus.Cancelled}
-							${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
+			<div class="editor">
+				${/* The toolbar: what the entry IS (its type — a switch only while that's still a choice),
+				    where it LIVES (source + its effective colour), and the window chrome. It sits OUTSIDE
+				    the scrolling list, so it stays locked in place — in the anchored popover and as the
+				    bottom sheet's persistent chrome alike. */''}
+				<header>
+					${this.colorTemplate}
+					<span class="bar">
+						${this.sourceTemplate}
+						<span class="spacer"></span>
+						${this.entryTypeTemplate}
 						<mitra-icon-button
 							label=${t('Options')}
 							icon="more-horizontal"
@@ -500,10 +594,10 @@ export class EntryDetailsComponent extends Component {
 						></mitra-icon-button>
 						<menu popover id="entry-menu-${this.segment.entry.id}" style="position-anchor: --entry-menu-${this.segment.entry.id}">
 							${/* The pointer twin of Alt-drag (see EntryDragController), which is what the hint
-							    advertises: no drop position here, so the copy lands on this entry's own slot and
-							    opens for editing — the change you duplicated it to make comes next. Offered on a
-							    saved entry only, the same bar the gesture sets: a draft is not yet a thing to
-							    copy, and duplicating one would persist the copy while the original stayed local. */''}
+						    advertises: no drop position here, so the copy lands on this entry's own slot and
+						    opens for editing — the change you duplicated it to make comes next. Offered on a
+						    saved entry only, the same bar the gesture sets: a draft is not yet a thing to
+						    copy, and duplicating one would persist the copy while the original stayed local. */''}
 							${!this.segment.entry.persisted ? html.nothing : html`
 								<button @click=${this.handleDuplicate}>
 									<mitra-icon icon="copy"></mitra-icon>
@@ -511,7 +605,7 @@ export class EntryDetailsComponent extends Component {
 									<kbd>${EntryDetailsComponent.altKey}</kbd>
 									<span class="word">${t('drag')}</span>
 								</button>
-							`}
+						`}
 							<button class="danger" @click=${(e: MouseEvent) => this.handleDelete(EntryDetailsComponent.presetScope(e))}>
 								<mitra-icon icon="trash-2"></mitra-icon>
 								${t('Delete')}
@@ -522,22 +616,72 @@ export class EntryDetailsComponent extends Component {
 							style="color: var(--color-text-muted)"
 							@click=${this.handleClose}
 						></mitra-icon-button>
-					</div>
-				</li>
-				${!this.segment.entry.start ? html.nothing : html`
-					<mitra-entry-details-when .entry=${this.segment.entry} @change=${this.handleWhenChange}></mitra-entry-details-when>
-					<hr>
+					</span>
+				</header>
+				<ul>
+					<li class="title-row">
+						${!this.segment.entry.type.isTask ? html.nothing : html`
+							<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
+					`}
+						<input class="title field" placeholder=${t('Title')}
+							?data-struck=${this.segment.entry.status === TaskStatus.Done || this.segment.entry.status === TaskStatus.Cancelled}
+							${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
+					</li>
+					${!this.segment.entry.start ? html.nothing : html`
+						<mitra-entry-details-when .entry=${this.segment.entry} @change=${this.handleWhenChange}></mitra-entry-details-when>
+						<hr>
 				`}
-				${!this.capabilities.location && !this.capabilities.description && !this.capabilities.participants ? html.nothing : html`
-					${this.locationTemplate}
-					${this.participantsTemplate}
-					${this.descriptionTemplate}
-					<hr>
+					${!this.capabilities.location && !this.capabilities.description && !this.capabilities.participants ? html.nothing : html`
+						${this.locationTemplate}
+						${this.participantsTemplate}
+						${this.descriptionTemplate}
+						<hr>
 				`}
-				${this.sourceTemplate}
-				${this.colorTemplate}
-				${this.remindersTemplate}
-			</ul>
+					${this.remindersTemplate}
+				</ul>
+			</div>
+		`
+	}
+
+	/**
+	 * The type switch: event ⇄ task, on any entry whose source can hold both (see `Source.entryTypes`).
+	 * Absent otherwise — a source that holds ONE type has nothing to choose (a Notion view holds tasks,
+	 * an events-only collection holds events), and the word alone would only restate what the checkbox
+	 * and the fields already say. A SAVED entry converts by re-creation: on CalDAV a task is a VTODO and
+	 * an event a VEVENT with no mixing within one resource (RFC 4791 §4.1), so the backend routes the
+	 * change through the same create-first/delete-after path a between-sources migration takes, and the
+	 * store adopts the re-created identity from the response. A series stays out (occurrence routing
+	 * doesn't compose with re-creation) — matching the backend's own rejection.
+	 */
+	private get entryTypeTemplate() {
+		const entry = this.segment!.entry
+		const source = this.source
+		const switchable = !!source?.supportsEntryType(EntryType.Event) && !!source.supportsEntryType(EntryType.Task) && !entry.partOfSeries
+		if (!switchable) {
+			return html.nothing
+		}
+		// The domain owns what flipping MEANS (assigning the type IS the conversion — a status exists only
+		// on a task, see Entry's `type` setter, which also parses the select's raw value); the chip renders
+		// it and commits through the usual path.
+		const handleTypeChange = (e: Event) => {
+			entry.type = (e.target as HTMLSelectElement).value as EntryTypeValue
+			EntryStore.notify()
+			this.handleChange().catch(this.reportSaveError)
+		}
+		return html`
+			<span class="entry-type field">
+				<select @change=${handleTypeChange}>
+					<button>
+						<selectedcontent></selectedcontent>
+					</button>
+					${/* Mapped, never inline <option> literals: an inline option carrying a lit marker is present
+					    when lit sets the template's innerHTML, and Chromium clones it into <selectedcontent> right
+					    then — duplicating the marker and corrupting lit's part indices (see PageCalendar). */''}
+					${EntryType.all.map(type => html`
+						<option value=${type.value} ?selected=${type === entry.type}>${type.format()}</option>
+					`)}
+				</select>
+			</span>
 		`
 	}
 
@@ -567,13 +711,9 @@ export class EntryDetailsComponent extends Component {
 				&& (entry.status !== TaskStatus.Cancelled || capabilities.cancelledStatus)
 		}
 		return !this.source?.name ? html.nothing : html`
-			<li class="source field">
-				${/* The row's own icon, in the icon gutter with the clock, globe and palette — the source's
-				    kind in the source's colour, which is also where the popover gets its own tint from. It is
-				    rendered HERE rather than left to <selectedcontent> below: that draws the chosen option by
-				    cloning it, and the clone (carrying no properties, and taken before the icon has even
-				    rendered once) would always come out a colourless calendar. */''}
-				<mitra-source-icon .source=${this.source}></mitra-source-icon>
+			<span class="source field">
+				${/* No icon on the chip — the colour dot in front already marks the source, and the name
+				    alone reads cleaner. The picker's options keep theirs (see below). */''}
 				<select @change=${handleSourceChange}>
 					<button>
 						<selectedcontent></selectedcontent>
@@ -584,7 +724,7 @@ export class EntryDetailsComponent extends Component {
 						return !sources.length ? html.nothing : html`
 							<optgroup label=${integration.credentials?.username || integration.type}>
 								<legend>${integration.credentials?.username || integration.type}</legend>
-								${/* The shared source icon (see SourceIcon) — one coloured kind glyph, never filled
+								${/* The shared source icon (see SourceIcon) — one coloured glyph, never filled
 								    here: the picker already says which option is the current one. It sits in the
 								    row's icon gutter, on the same rail as the clock, globe and palette above. */''}
 								${sources.map(source => html`
@@ -597,7 +737,7 @@ export class EntryDetailsComponent extends Component {
 						`
 					})}
 				</select>
-			</li>
+			</span>
 		`
 	}
 
@@ -623,20 +763,32 @@ export class EntryDetailsComponent extends Component {
 		`
 	}
 
+	// The picker mutated nothing itself — adopt the picked colour and put the palette away (a pick is
+	// a completed errand, unlike a menu of actions).
+	private readonly handleColorChange = (e: CustomEvent<string | null>) => {
+		this.setColor(e.detail)
+		;((e.target as HTMLElement).closest('[popover]') as HTMLElement | null)?.hidePopover()
+	}
+
+	/** The entry's EFFECTIVE colour (its own, else the source's) as a swatch-sized dot; the full
+	 * palette folds into the popover it opens. A native button, so `popovertarget` gives the toggle
+	 * and the implicit anchor for free. */
 	private get colorTemplate() {
-		const activeColor = this.segment?.entry.color || this.source?.color
-		return !this.segment?.entry ? html.nothing : html`
-			<li class="color field">
-				<mitra-icon icon="palette"></mitra-icon>
-				<div class="content">
+		const entry = this.segment?.entry
+		const activeColor = entry?.color || this.source?.color
+		return !entry ? html.nothing : html`
+			<span class="color">
+				<button class="dot" popovertarget="entry-color-${entry.id}" title=${t('Color')}
+					style="anchor-name: --entry-color-${entry.id}; background: ${activeColor ?? 'var(--color-text-muted)'}"></button>
+				<menu popover id="entry-color-${entry.id}" style="position-anchor: --entry-color-${entry.id}">
 					<mitra-color-picker
 						.value=${activeColor}
 						.resetValue=${this.source?.color}
 						resetLabel=${t('Reset to calendar color')}
-						@change=${(e: CustomEvent<string | null>) => this.setColor(e.detail)}
+						@change=${this.handleColorChange}
 					></mitra-color-picker>
-				</div>
-			</li>
+				</menu>
+			</span>
 		`
 	}
 

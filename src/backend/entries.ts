@@ -1,7 +1,7 @@
 import { Router, type Request } from 'express'
 import { orm } from './orm.js'
 import { syncEmitter } from './syncEmitter.js'
-import { equals, Entry, FLOATING_TIME_ZONE, Integration, Participants, Recurrence, Source, normalizeAllDay, projectAllDay, createLogger, type RecurrenceScope } from '../shared/index.js'
+import { equals, Entry, EntryType, FLOATING_TIME_ZONE, Integration, Participants, Recurrence, Source, normalizeAllDay, projectAllDay, createLogger, type RecurrenceScope } from '../shared/index.js'
 import { editOccurrence, deleteOccurrence, expandedOccurrences } from './occurrences.js'
 
 const logger = createLogger('Entries')
@@ -115,12 +115,24 @@ entriesRouter.post('/', async (req, res) => {
 		return res.status(400).json({ error: 'This calendar does not support participants' })
 	}
 
+	// The type is the ENTRY's (a source declares which types it can hold, it doesn't dictate one — see
+	// Source.entryTypes), but the target has to be able to hold it: an events-only collection would
+	// reject the VTODO at the server, so say so here instead. A body naming no type takes the source's
+	// default; one naming a type mitra doesn't model is a 400, not a 500 (hence tryParse).
+	const type = body.type ? EntryType.tryParse(body.type) : targetSource.defaultEntryType
+	if (!type) {
+		return res.status(400).json({ error: `Unknown entry type: ${String(body.type)}` })
+	}
+	if (!targetSource.supportsEntryType(type)) {
+		return res.status(400).json({ error: `This calendar cannot hold ${type.isTask ? 'tasks' : 'events'}` })
+	}
+
 	const incoming = new Entry({
 		// The backend owns ids: clients post a draft with none, and we assign it here (the provider's
 		// createEntry persists this very object, so this covers both Dev and CalDAV).
 		id: crypto.randomUUID(),
 		sourceId: targetSource.id,
-		type: body.type!,
+		type,
 		heading: body.heading ?? '',
 		description: body.description ?? '',
 		location: body.location ?? '',
@@ -188,6 +200,25 @@ entriesRouter.put('/:id', async (req, res) => {
 		return res.status(400).json({ error: 'This calendar does not support participants — remove them before moving the entry' })
 	}
 
+	// The entry's TYPE rides the full-entry payload (see Api.updateEvent), and changing it is a
+	// CONVERSION: on CalDAV a task is a VTODO and an event a VEVENT, and RFC 4791 §4.1 allows no mixed
+	// components in one resource — so a converted entry is RE-CREATED below, through the very same
+	// create-first/delete-after path a between-sources migration takes (which is also what converts
+	// implicitly when the target can't hold the type). A series stays out: occurrence routing and the
+	// scope dialog don't compose with re-creation, and the editor doesn't offer it either.
+	const incomingType = body.type === undefined ? existing.type : EntryType.tryParse(body.type)
+	if (!incomingType) {
+		return res.status(400).json({ error: `Unknown entry type '${String(body.type)}'` })
+	}
+	if (incomingType !== existing.type) {
+		if (existing.partOfSeries) {
+			return res.status(400).json({ error: 'A recurring entry cannot change its type' })
+		}
+		if (!targetSource.supportsEntryType(incomingType)) {
+			return res.status(400).json({ error: 'The picked calendar cannot hold this entry type' })
+		}
+	}
+
 	// A scoped occurrence edit (this / following / all): `:id` is the series MASTER, `recurrenceId` the
 	// occurrence's original start, and the body carries the edited fields. Handled by the occurrence service.
 	if (body.scope && body.recurrenceId) {
@@ -224,7 +255,7 @@ entriesRouter.put('/:id', async (req, res) => {
 
 	const incoming = new Entry({
 		sourceId: targetSource.id,
-		type: existing.type,
+		type: incomingType,
 		heading: body.heading ?? existing.heading,
 		description: body.description ?? existing.description,
 		location: body.location ?? existing.location,
@@ -233,7 +264,9 @@ entriesRouter.put('/:id', async (req, res) => {
 		end: body.end ? new DateTime(body.end) : existing.end,
 		allDay: body.allDay ?? existing.allDay,
 		timeZone: body.timeZone === undefined ? existing.timeZone : body.timeZone,
-		status: body.status ?? existing.status,
+		// Gated on the INCOMING type, not left to the type setter: the constructor assigns fields in
+		// literal order, so a later `status` would quietly resurrect the one the conversion just dropped.
+		status: incomingType.isTask ? body.status ?? existing.status : undefined,
 		recurrence: incomingRecurrence,
 		// Like `recurrence`, tri-state on the wire: an array sets, `null` clears, absent keeps.
 		reminders: body.reminders === undefined ? existing.reminders : body.reminders,
@@ -247,14 +280,15 @@ entriesRouter.put('/:id', async (req, res) => {
 		incoming.end = incoming.end ? normalizeAllDay(incoming.end, zone) as never : incoming.end
 	}
 
-	// Moving an entry between *sources* re-creates it at the target — providers update entries in
-	// place and don't move them between their calendars/lists, so this holds within one integration
-	// too. There is no cross-provider transaction, so the *order* is the safety: create first, delete
+	// Moving an entry between *sources* — or CONVERTING its type in place (a VTODO can't become a
+	// VEVENT within its resource, see the type validation above) — re-creates it: providers update
+	// entries in place and neither move them between their calendars/lists nor rewrite their component
+	// type. There is no cross-provider transaction, so the *order* is the safety: create first, delete
 	// after — a failed create leaves everything untouched, and a failed delete is compensated by
 	// removing the just-created copy. If even the compensation fails, the user is left with a
 	// duplicate — recoverable, unlike the loss a delete-first order risks.
-	if (currentSource.id !== targetSource.id) {
-		incoming.id = crypto.randomUUID() // the backend owns ids — the migrated copy is a new entry
+	if (currentSource.id !== targetSource.id || incoming.type !== existing.type) {
+		incoming.id = crypto.randomUUID() // the backend owns ids — the re-created copy is a new entry
 		incoming.migrateTo(targetSource) // the entry's shape (type/status) follows the target
 		const created = await targetIntegration.createEntry(em, incoming)
 		try {
@@ -266,7 +300,7 @@ entriesRouter.put('/:id', async (req, res) => {
 		}
 		await em.flush()
 		syncEmitter.emit('updated', req.user.id)
-		logger.debug(`Migrated entry ${existing.id} → source ${targetSource.id} (new id ${created.id})`)
+		logger.debug(`Re-created entry ${existing.id} as ${created.type} in source ${targetSource.id} (new id ${created.id})`)
 		return res.json(projectedForViewer(created, viewerZone(req)))
 	}
 

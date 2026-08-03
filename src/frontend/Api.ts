@@ -164,7 +164,9 @@ export function getPrimarySource(): Source | undefined {
 export function createEvent(entry: Entry) {
 	// Stamp the zone the times were authored in — recurrence must expand at THIS zone's wall clock
 	// ("every Monday 09:00 Berlin" survives DST), and the future zone selector edits this field.
-	return Api.post<Entry>(`/entries?tz=${tz()}`, { ...entry, timeZone: entry.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone })
+	// `toJSON()`, not a spread: the entry's TYPE lives behind an accessor and a spread would send the
+	// backing field instead (see Entry.toJSON).
+	return Api.post<Entry>(`/entries?tz=${tz()}`, { ...entry.toJSON(), timeZone: entry.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone })
 }
 
 export async function fetchIntegrations() {
@@ -301,9 +303,10 @@ export function updateEvent(entry: Entry) {
 			...(entry.recurrence !== undefined ? { recurrence: entry.recurrence } : {}),
 		})
 	}
-	// The full entry, with absent tri-state fields sent as an explicit `null`: JSON drops undefined keys
-	// and the backend treats absence as "keep" — only a null can express a removal.
-	return Api.put<Entry>(`/entries/${entry.id}?tz=${tz()}`, { ...entry, recurrence: entry.recurrence ?? null, reminders: entry.reminders ?? null, participants: entry.participants ?? null })
+	// The full entry (via toJSON, like createEvent — the type sits behind an accessor), with absent
+	// tri-state fields sent as an explicit `null`: JSON drops undefined keys and the backend treats
+	// absence as "keep" — only a null can express a removal.
+	return Api.put<Entry>(`/entries/${entry.id}?tz=${tz()}`, { ...entry.toJSON(), recurrence: entry.recurrence ?? null, reminders: entry.reminders ?? null, participants: entry.participants ?? null })
 }
 
 export function deleteEvent(id: string) {
