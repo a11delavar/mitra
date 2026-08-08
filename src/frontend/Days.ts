@@ -5,6 +5,7 @@ import { type Entry, type UserTimeZone } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
 import { EntryStore } from './EntryStore.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
+import { CalendarScrollController } from './CalendarScrollController.js'
 import { EntryDragController } from './EntryDragController.js'
 import { DayDensityController } from './DayDensityController.js'
 import { TimeZoneLaneController } from './TimeZoneLaneController.js'
@@ -18,6 +19,56 @@ export class Days extends Component {
 
 	private readonly dates: CalendarDatesController = new CalendarDatesController(this)
 	private get days(): Array<DateTime> { return this.dates.days }
+
+	/** The one set of numbers both directions of the scroll↔date contract share, so they stay exact
+	 * inverses by construction: the (averaged) day-column pitch, and how many whole columns sit
+	 * between the snapport's start and its centre — counted from the column at the snapport's START,
+	 * which the mandatory snap makes a whole column, so rounding to it absorbs the sub-pixel
+	 * difference between this averaged pitch and the real, 1/64px-quantised column positions.
+	 * Reading the centre PIXEL's column instead put the answer on a knife edge: the half-snapport
+	 * spans a whole number of columns whenever an EVEN number of days fits, so the centre lands
+	 * exactly on a column boundary and that sub-pixel noise alone decided which side of the floor()
+	 * it fell — one day either way, per arrival, walking a month at every month boundary. */
+	private get metrics() {
+		const timeAxisWidth = this.hideTime ? 0 : this.timeAxisWidth // measured (see updateHeaderSize)
+		const columnWidth = (this.scrollWidth - timeAxisWidth) / this.days.length
+		const centerColumns = Math.floor((this.clientWidth - timeAxisWidth) / 2 / columnWidth)
+		return { columnWidth, centerColumns }
+	}
+
+	private readonly scrolling: CalendarScrollController = new CalendarScrollController(this, this.dates, {
+		axis: 'inline',
+		scroller: () => this,
+		// Nothing read out of a strip fitted from the axis APPROXIMATION may be committed: it holds a
+		// different number of day columns than the measured layout one frame later, so the date under
+		// the viewport's centre is about to change — and `updateHeaderSize` re-anchors the strip the
+		// moment it does. Answering earlier would fix an arrival at a position the re-fit was going
+		// to move.
+		ready: () => this.axisMeasured || this.hideTime,
+		offsetOf: date => {
+			const first = this.days[0]
+			const { columnWidth, centerColumns } = this.metrics
+			if (!first || !(columnWidth > 0)) {
+				return undefined
+			}
+			// Consecutive local days, so the (DST-tolerant, hence rounded) day distance IS the index.
+			const index = Math.round((date.dayStart.valueOf() - first.dayStart.valueOf()) / 86_400_000)
+			// The column that must sit at the snapport's start for `index` to read back as its centre.
+			return (index - centerColumns) * columnWidth
+		},
+		dateAt: offset => {
+			const { columnWidth, centerColumns } = this.metrics
+			if (!(columnWidth > 0)) {
+				return undefined
+			}
+			const centerColumn = Math.round(offset / columnWidth) + centerColumns
+			return this.days[Math.min(Math.max(0, centerColumn), this.days.length - 1)]
+		},
+		equivalent: (a, b) => a.dayStart.equals(b.dayStart),
+		// The day's own cell owns the BLOCK axis on arrivals; by then it is centred inline, so
+		// `nearest` has nothing to do there and leaves the anchored position alone.
+		arrived: date => this.renderRoot.querySelector(`[data-date="${date.dayStart.toISOString()}"]`)?.scrollIntoView({ block: 'center', inline: 'nearest' }),
+	})
 
 	protected readonly entryDrag = new EntryDragController(this)
 	protected readonly density = new DayDensityController(this)
@@ -53,18 +104,18 @@ export class Days extends Component {
 		if (width) {
 			this.timeAxisWidth = width
 			this.style.setProperty('--time-axis-width', `${width}px`)
-			// The day tracks are a FUNCTION of this width — it decides how many whole days fit beside the
-			// axis (see --_visible-days) — so the first real measurement re-fits every column under a strip
-			// that `initialized` already anchored against the approximation's wider, fewer columns. Scroll
-			// anchoring and the mandatory snap then settle it up to a day off the day it was told to frame,
-			// and `handleScroll` reads that slip back as navigation: an arrival in this view walked the
-			// calendar a day back, and with it a month whenever the day crossed one. So re-anchor, once.
-			// Only the FIRST measurement: every later one is a viewport resize or the zone lane folding —
-			// gestures the user is driving, which must not yank the strip.
-			if (!this.axisMeasured) {
-				this.axisMeasured = true
-				this.anchor(this.dates.navigatingDate)
-			}
+			// The day tracks are a FUNCTION of this width — it decides how many whole days fit beside
+			// the axis (see --_visible-days) — so every measurement re-fits every column under a strip
+			// anchored against the previous width: the first real one under `initialized`'s CSS
+			// approximation, every later one under a viewport resize or the zone lane folding. In all
+			// of these the pixel offset stops meaning the date it did, so re-anchor to the held date —
+			// which holds the strip STILL on its dates while the columns re-fit around it (re-anchoring
+			// only ever yanks when the anchor math isn't the reading's exact inverse; see the scroll
+			// controller). Anchoring here rather than only relying on the controller's own resize
+			// observer, because the axis can change width without the host box moving (the fold), and
+			// an offset that stays valid fires no scroll event to catch it either.
+			this.axisMeasured = true
+			void this.scrolling.anchor()
 			// The axis width decides which days are on screen, so the lane's depth is a function of it too.
 			this.updateLaneHeight()
 		}
@@ -98,47 +149,21 @@ export class Days extends Component {
 
 	protected override async initialized() {
 		this.dates.navigatingDate = this.navigatingDate
-		this.anchor(this.navigatingDate)
+		// Inline only (not `navigate`, whose arrival hook block-centres the day's cell) — the block
+		// axis belongs to the now-line below, and an instant block-centre after it would cancel the
+		// smooth scroll mid-flight.
+		void this.scrolling.anchor()
 		const now = await this.nowElement
 		now?.scrollIntoView({ block: 'center', behavior: 'smooth' })
 	}
 
-	/**
-	 * Frame `date` as the strip's centre day — deliberately the exact INVERSE of {@link handleScroll}'s
-	 * reading, so an arrival and the reading its own scroll event triggers can never disagree.
-	 *
-	 * `scrollIntoView({ inline: 'center' })` cannot promise that. With an EVEN number of visible days the
-	 * centred box straddles two columns, which is no snap position at all: the mandatory snap breaks the
-	 * tie whichever way it likes, and the reading then answers a day off the day we asked to frame —
-	 * which `handleScroll` commits as navigation, and as a MONTH hop whenever that day ends a month.
-	 * Deriving the position instead also reaches days outside the render window, which the element
-	 * lookup in `CalendarDatesController.scrollToDate` silently skipped.
-	 */
-	private anchor(date: DateTime) {
-		void this.updateComplete.then(() => {
-			const first = this.days[0]
-			const timeAxisWidth = this.hideTime ? 0 : this.timeAxisWidth
-			const columnWidth = (this.scrollWidth - timeAxisWidth) / this.days.length
-			if (!first || !(columnWidth > 0)) {
-				return
-			}
-			// Consecutive local days, so the (DST-tolerant, hence rounded) day distance IS the index.
-			const index = Math.round((date.dayStart.valueOf() - first.dayStart.valueOf()) / 86_400_000)
-			// The column that must sit at the snapport's start for `index` to read back as its centre.
-			const leadingColumn = index - Math.floor((this.clientWidth - timeAxisWidth) / 2 / columnWidth)
-			const distance = Math.max(0, Math.min(leadingColumn * columnWidth, this.scrollWidth - this.clientWidth))
-			// Negated in RTL, where scrollLeft counts backwards — the mirror of handleScroll's Math.abs().
-			this.scrollLeft = getComputedStyle(this).direction === 'rtl' ? -distance : distance
-			// The day's own cell still owns the BLOCK axis, exactly as scrollToDate left it; by now it is
-			// centred inline, so `nearest` has nothing to do there and leaves the position above alone.
-			this.renderRoot.querySelector(`[data-date="${date.dayStart.toISOString()}"]`)?.scrollIntoView({ block: 'center', inline: 'nearest' })
-		})
-	}
-
 	protected override updated(props: PropertyValues<this>) {
 		if (props.has('navigatingDate') && !this.navigatingDate.dayStart.equals(this.dates.navigatingDate.dayStart)) {
-			this.dates.navigatingDate = this.navigatingDate
-			this.anchor(this.navigatingDate)
+			this.scrolling.navigate(this.navigatingDate)
+		}
+		if (props.has('hideTime')) {
+			// The axis vanished or returned: the columns re-fit with no axis measurement to catch it.
+			void this.scrolling.anchor()
 		}
 		this.style.setProperty('--_days-length', this.days.length.toString())
 		this.style.setProperty('--_tz-count', this.timeZoneColumns.length.toString())
@@ -209,36 +234,10 @@ export class Days extends Component {
 		}
 	}
 
+	// Navigation itself is read by the scroll controller; the lane's depth is this view's own
+	// per-scroll concern (which days are on screen decides how tall the all-day strip must be).
 	@eventListener('scroll')
-	protected handleScroll(e: Event) {
-		// Nothing read out of a strip fitted from the axis APPROXIMATION may be committed: it holds a
-		// different number of day columns than the measured layout one frame later, so the date under the
-		// viewport's centre is about to change — and `updateHeaderSize` re-anchors the strip the moment it
-		// does. Answering now would fix the arrival at a position the re-fit was going to move.
-		if (!this.axisMeasured && !this.hideTime) {
-			return
-		}
-
-		const target = e.target as HTMLElement
-		const timeAxisWidth = this.hideTime ? 0 : this.timeAxisWidth // measured (see updateHeaderSize)
-		const colWidth = (target.scrollWidth - timeAxisWidth) / this.days.length
-
-		// Counted from the column at the snapport's START — which the mandatory snap makes a whole column,
-		// so rounding to it absorbs the sub-pixel difference between this AVERAGED pitch and the real,
-		// 1/64px-quantised column positions. Reading the centre PIXEL's column instead put the answer on a
-		// knife edge: the half-snapport spans a whole number of columns whenever an EVEN number of days
-		// fits, so the centre lands exactly on a column boundary and that sub-pixel noise alone decided
-		// which side of the floor() it fell — one day either way, per arrival, walking a month at every
-		// month boundary. Math.abs() because in RTL scrollLeft counts backwards.
-		// This is `anchor`'s exact inverse; the two must stay that way (see the note there).
-		const leadingCol = Math.round(Math.abs(target.scrollLeft) / colWidth)
-		const centerCol = leadingCol + Math.floor((target.clientWidth - timeAxisWidth) / 2 / colWidth)
-		const centerDate = this.days[Math.min(Math.max(0, centerCol), this.days.length - 1)]
-
-		if (centerDate && !centerDate.dayStart.equals(this.dates.navigatingDate.dayStart)) {
-			this.dates.navigatingDate = centerDate
-		}
-
+	protected handleScroll() {
 		this.updateLaneHeight()
 	}
 

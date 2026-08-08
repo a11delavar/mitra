@@ -1,8 +1,9 @@
-import { Component, component, html, property, css, type PropertyValues, repeat, event, ifDefined, styleMap } from '@a11d/lit'
+import { Component, component, html, property, css, type PropertyValues, repeat, event, ifDefined, styleMap, query } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { type Entry } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
+import { CalendarScrollController } from './CalendarScrollController.js'
 import { EntryDragController } from './EntryDragController.js'
 
 /** The month view's grid: a vertically-scrolling strip of week rows — named, like `Days` (the week
@@ -26,44 +27,59 @@ export class Weeks extends Component {
 	private get days(): Array<DateTime> { return this.buffer.days }
 	private get segments(): EntrySegments { return EntrySegments.of(this.entries, this.buffer.window.days) }
 
+	@query('.days') private readonly daysElement?: HTMLElement
+
+	/** The shared numbers of the scroll↔date contract — the (averaged, gap-inclusive) week-row pitch
+	 * and how many whole rows sit between the scrollport's start and its centre. Counted from the row
+	 * at the scrollport's START, like the week view's columns: the mandatory snap makes it a whole
+	 * row, so rounding to it is stable, where the centre PIXEL's row sat on a knife edge whenever an
+	 * even number of rows fit. */
+	private get metrics() {
+		const scroller = this.daysElement
+		const daysInWeek = this.navigatingDate.daysInWeek
+		const rowCount = this.days.length / daysInWeek
+		const pitch = !scroller || !rowCount ? 0 : scroller.scrollHeight / rowCount
+		const centerRows = !scroller || !(pitch > 0) ? 0 : Math.floor(scroller.clientHeight / 2 / pitch)
+		return { daysInWeek, rowCount, pitch, centerRows }
+	}
+
+	private readonly scrolling: CalendarScrollController = new CalendarScrollController(this, this.buffer, {
+		axis: 'block',
+		scroller: () => this.daysElement ?? null,
+		ready: () => this.days.length > 0,
+		offsetOf: date => {
+			const first = this.days[0]
+			const { daysInWeek, pitch, centerRows } = this.metrics
+			if (!first || !(pitch > 0)) {
+				return undefined
+			}
+			// Consecutive local days, so the (DST-tolerant, hence rounded) day distance IS the index.
+			const index = Math.round((date.dayStart.valueOf() - first.dayStart.valueOf()) / 86_400_000)
+			return (Math.floor(index / daysInWeek) - centerRows) * pitch
+		},
+		dateAt: offset => {
+			const { daysInWeek, rowCount, pitch, centerRows } = this.metrics
+			if (!(pitch > 0)) {
+				return undefined
+			}
+			const centerRow = Math.round(offset / pitch) + centerRows
+			return this.days[Math.min(Math.max(0, centerRow), rowCount - 1) * daysInWeek]
+		},
+		// A row that straddles two months belongs to both, and the date already held is what says
+		// WHICH — a reading answering the held date's own week (or month) has nothing to re-derive.
+		// Without the week half, switching in on any week that starts in the previous month reported
+		// that month and threw the day away — a keyboard hop to the month view silently walked a
+		// month back.
+		equivalent: (a, b) => a.weekStart.dayStart.equals(b.weekStart.dayStart) || a.monthStart.dayStart.equals(b.monthStart.dayStart),
+	})
+
 	protected override initialized() {
-		this.buffer.navigatingDate = this.navigatingDate
-		this.buffer.scrollToDate(this.navigatingDate)
+		this.scrolling.navigate(this.navigatingDate)
 	}
 
 	protected override updated(props: PropertyValues<this>) {
 		if (props.has('navigatingDate') && !this.navigatingDate.dayStart.equals(this.buffer.navigatingDate.dayStart)) {
-			this.buffer.navigatingDate = this.navigatingDate
-			this.buffer.scrollToDate(this.navigatingDate)
-		}
-	}
-
-	private handleScroll(e: Event) {
-		const target = e.target as HTMLElement
-		const daysInWeek = this.navigatingDate.daysInWeek
-		const rowCount = this.days.length / daysInWeek
-
-		const rowHeight = target.scrollHeight / rowCount
-		const centerRow = Math.floor((target.scrollTop + target.clientHeight / 2) / rowHeight)
-		const row = this.days.slice(centerRow * daysInWeek, (centerRow + 1) * daysInWeek)
-		const centerDate = row[0] ?? this.days.at(-1)
-		if (!centerDate) {
-			return
-		}
-
-		// A row that straddles two months belongs to both, and the date we already hold is what says
-		// WHICH — so when it sits in the centred row there is nothing to re-derive. Without this, the
-		// row's first day answers instead, and its month is the earlier one: every arrival in this view
-		// re-anchors the scroll (see `initialized`/`updated`), whose scroll event lands here, so
-		// switching in on any week that starts in the previous month reported that month and threw the
-		// day away — a keyboard hop to the month view silently walked a month back.
-		const held = this.buffer.navigatingDate.dayStart.valueOf()
-		if (row.some(day => day.dayStart.valueOf() === held)) {
-			return
-		}
-
-		if (!centerDate.monthStart.equals(this.buffer.navigatingDate.monthStart)) {
-			this.buffer.navigatingDate = centerDate
+			this.scrolling.navigate(this.navigatingDate)
 		}
 	}
 
@@ -274,7 +290,7 @@ export class Weeks extends Component {
 				${this.weekDays.map(weekday => html`<div class="weekday">${weekday}</div>`)}
 			</div>
 			<div class="body">
-				<div class="days" @scroll=${this.handleScroll} style="--max-slots: ${Weeks.MAX_SLOTS};">
+				<div class="days" style="--max-slots: ${Weeks.MAX_SLOTS};">
 					${repeat(weeks.slice(firstWeek, lastWeek + 1), week => week[0]!.dayStart.toISOString(), (week, index) => this.weekTemplate(week, today, firstWeek + index))}
 					${!weeks.length ? html.nothing : html`<div style="grid-row: ${weeks.length};"></div>`}
 				</div>

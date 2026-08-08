@@ -162,11 +162,4 @@ export class CalendarDatesController extends Controller {
 		}
 		return this._window
 	}
-
-	scrollToDate(date: DateTime) {
-		this.host.updateComplete.then(() => {
-			const dayEl = this.host.renderRoot.querySelector(`[data-date="${date.dayStart.toISOString()}"]`)
-			if (dayEl) dayEl.scrollIntoView({ block: 'center', inline: 'center' })
-		})
-	}
 }

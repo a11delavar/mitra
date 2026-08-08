@@ -1,8 +1,9 @@
-import { Component, component, html, property, css, repeat, guard, type PropertyValues, eventListener, event, styleMap, ifDefined, query } from '@a11d/lit'
+import { Component, component, html, property, css, repeat, guard, type PropertyValues, event, styleMap, ifDefined, query } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { type Entry } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
 import { CalendarDatesController, type CalendarMonth } from './CalendarDatesController.js'
+import { CalendarScrollController } from './CalendarScrollController.js'
 import { EntryDragController } from './EntryDragController.js'
 import { MonthsDensityController } from './MonthsDensityController.js'
 
@@ -51,60 +52,62 @@ export class Months extends Component {
 	/** Day-slot columns: a full month of 31 plus the widest weekday offset. */
 	private get columns() { return 31 + this.navigatingDate.daysInWeek - 1 }
 
-	protected override initialized() {
-		this.buffer.navigatingDate = this.navigatingDate
-		this.buffer.scrollToDate(this.navigatingDate)
+	/** The shared numbers of the scroll↔date contract. The row pitch is measured from a rendered cell
+	 * (its height is exactly one month row) plus the 1px grid gap, rather than derived from
+	 * scrollHeight/count: Firefox miscomputes this tall grid's scrollHeight (≈ the viewport), which
+	 * would map any scroll onto the entire buffer — a decade a nudge. The sticky header row offsets
+	 * the content, so it takes part in both directions. */
+	private get metrics() {
+		const headerHeight = this.corner?.clientHeight ?? 0
+		const cell = this.dayCell
+		const pitch = cell ? cell.getBoundingClientRect().height + 1 : (this.scrollHeight - headerHeight) / (this.buffer.months.length || 1)
+		return { headerHeight, pitch }
 	}
 
-	/** Set while the user is actively scrolling (cleared a beat after the last scroll event). It gates the
-	 * `updated()` re-anchor below: during scroll, our incoming `navigatingDate` is just the page echoing
-	 * back what our own scroll set — and it LAGS the buffer, so re-anchoring to it would reset the buffer
-	 * to a stale month and `scrollIntoView` the view backwards, fighting the scroll (and looping). */
-	private scrollIdle?: ReturnType<typeof setTimeout>
-
-	protected override updated(props: PropertyValues<this>) {
-		// Re-anchor only for EXTERNAL navigation (Today, palette, prev/next) — never mid-scroll, when
-		// `navigatingDate` is the buffer's own echo coming back through the page (see `scrollIdle`).
-		if (props.has('navigatingDate') && this.scrollIdle === undefined && !this.navigatingDate.dayStart.equals(this.buffer.navigatingDate.dayStart)) {
-			this.buffer.navigatingDate = this.navigatingDate
-			this.buffer.scrollToDate(this.navigatingDate)
-		}
-		this.style.setProperty('--_months-count', this.buffer.months.length.toString())
-		this.style.setProperty('--_columns-count', this.columns.toString())
-	}
-
-	@eventListener('scroll')
-	protected handleScroll(e: Event) {
-		// Mark the view as actively scrolling for a short window past the last event (see `scrollIdle`).
-		clearTimeout(this.scrollIdle)
-		this.scrollIdle = setTimeout(() => this.scrollIdle = undefined, 150)
-
-		const target = e.target as HTMLElement
-		const months = this.buffer.months
+	private readonly scrolling: CalendarScrollController = new CalendarScrollController(this, this.buffer, {
+		axis: 'block',
+		scroller: () => this,
+		ready: () => this.buffer.months.length > 0,
 		// A zoom gesture's per-frame pinning scrolls too — resolving those frames would walk the
 		// navigating date (and its fetch window) through every intermediate month; the density
 		// controller re-dispatches one scroll once the gesture settles.
-		if (!months.length || this.density.active) {
-			return
-		}
-		const headerHeight = this.corner?.clientHeight ?? 0
-		// Measure the row pitch from a rendered cell (its height is exactly one month row) plus the 1px grid
-		// gap, rather than deriving it from scrollHeight/count: Firefox miscomputes this tall grid's
-		// scrollHeight (≈ the viewport), which would map any scroll onto the entire buffer — a decade a nudge.
-		const cell = this.dayCell
-		const rowHeight = cell ? cell.getBoundingClientRect().height + 1 : (target.scrollHeight - headerHeight) / months.length
-		const centerRow = Math.floor((target.scrollTop + target.clientHeight / 2 - headerHeight) / rowHeight)
-		const month = months[Math.max(0, Math.min(centerRow, months.length - 1))]
-
-		if (month && !month.first.monthStart.equals(this.buffer.navigatingDate.monthStart)) {
-			const days = this.buffer.days
-			this.buffer.navigatingDate = month.first
-			if (this.buffer.days !== days) {
-				// The buffer regenerated around the new date: every row shifted under the unchanged
-				// scroll offset, so re-anchor it to the month it meant.
-				this.buffer.scrollToDate(this.buffer.navigatingDate)
+		suspended: () => this.density.active,
+		offsetOf: date => {
+			const first = this.buffer.months[0]
+			const { headerHeight, pitch } = this.metrics
+			if (!first || !(pitch > 0)) {
+				return undefined
 			}
+			// Rows are consecutive calendar months, so the month distance IS the row index.
+			const row = (date.year - first.first.year) * 12 + date.month - first.first.month
+			// The row's centre at the (header-offset) viewport's centre — the exact inverse of dateAt's
+			// floor()ed centre-pixel reading, which no snap ever adjusts here (this strip doesn't snap).
+			return headerHeight + (row + 0.5) * pitch - this.clientHeight / 2
+		},
+		dateAt: offset => {
+			const months = this.buffer.months
+			const { headerHeight, pitch } = this.metrics
+			if (!months.length || !(pitch > 0)) {
+				return undefined
+			}
+			const centerRow = Math.floor((offset + this.clientHeight / 2 - headerHeight) / pitch)
+			return months[Math.max(0, Math.min(centerRow, months.length - 1))]?.first
+		},
+		equivalent: (a, b) => a.monthStart.dayStart.equals(b.monthStart.dayStart),
+	})
+
+	protected override initialized() {
+		this.scrolling.navigate(this.navigatingDate)
+	}
+
+	protected override updated(props: PropertyValues<this>) {
+		// Re-anchor only for EXTERNAL navigation (Today, palette, prev/next) — a scroll-committed
+		// month echoes back through the page equal to what the buffer already holds, so it stops here.
+		if (props.has('navigatingDate') && !this.navigatingDate.dayStart.equals(this.buffer.navigatingDate.dayStart)) {
+			this.scrolling.navigate(this.navigatingDate)
 		}
+		this.style.setProperty('--_months-count', this.buffer.months.length.toString())
+		this.style.setProperty('--_columns-count', this.columns.toString())
 	}
 
 	static override get styles() {
@@ -122,9 +125,9 @@ export class Months extends Component {
 				min-height: 0;
 				background-color: var(--color-background);
 				overflow: auto;
-				/* Rows are placed at explicit tracks and re-anchored programmatically (zoom pinning,
-				   scrollToDate) — the browser's own anchoring would fight both whenever the rendered
-				   window swaps rows above the viewport. */
+				/* Rows are placed at explicit tracks and re-anchored programmatically (zoom pinning, the
+				   scroll controller's date anchoring) — the browser's own anchoring would fight both
+				   whenever the rendered window swaps rows above the viewport. */
 				overflow-anchor: none;
 				/* Single-finger pan scrolls; two-finger pinch is claimed by the MonthsDensityController. */
 				touch-action: pan-x pan-y;
