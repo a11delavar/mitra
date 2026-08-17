@@ -7,7 +7,7 @@ import { DialogKeyboardShortcuts } from '../DialogKeyboardShortcuts.js'
 export class ToggleSidebar extends Command {
 	heading = t('Toggle Sidebar')
 	icon = 'panel-left'
-	keywords = t('collapse expand calendars')
+	keywords = t('ToggleSidebar.Keywords')
 	group = undefined
 	keys = []
 	execute() { this.calendar.toggleSidebar() }
@@ -17,7 +17,7 @@ export class ToggleSidebar extends Command {
 export class KeyboardShortcuts extends Command {
 	heading = t('Keyboard Shortcuts')
 	icon = 'keyboard'
-	keywords = t('help keys hotkeys cheat sheet')
+	keywords = t('KeyboardShortcuts.Keywords')
 	keys = ['?']
 	group = 'general'
 	execute() { return new DialogKeyboardShortcuts().confirm() }
@@ -27,7 +27,7 @@ export class KeyboardShortcuts extends Command {
 export class AddIntegration extends Command {
 	heading = t('Add Integration')
 	icon = 'plug'
-	keywords = t('connect caldav account calendar')
+	keywords = t('AddIntegration.Keywords')
 	group = undefined
 	keys = []
 	execute() { return new DialogIntegration({}).confirm() }
@@ -39,7 +39,7 @@ export class AddIntegration extends Command {
 export class About extends Command {
 	heading = t('About')
 	icon = 'info'
-	keywords = `${t('version build info release commit')} ${mitra.version}`
+	keywords = `${t('About.Keywords')} ${mitra.version}`
 	group = undefined
 	keys = []
 	execute() { return new DialogAbout().confirm() }
@@ -49,7 +49,7 @@ export class About extends Command {
 export class WhatsNew extends Command {
 	heading = t('What\'s New')
 	icon = 'sparkles'
-	keywords = `${t('changelog release notes news updates version')} ${mitra.version}`
+	keywords = `${t('WhatsNew.Keywords')} ${mitra.version}`
 	group = undefined
 	keys = []
 	execute() { return new DialogAbout().confirm() }
@@ -59,7 +59,7 @@ export class WhatsNew extends Command {
 export class CopyVersion extends Command {
 	heading = t('Copy Version')
 	icon = 'copy'
-	keywords = `${t('about build info release commit')} ${mitra.version}`
+	keywords = `${t('CopyVersion.Keywords')} ${mitra.version}`
 	group = undefined
 	keys = []
 	execute() { return navigator.clipboard.writeText(`Mitra ${mitra.version}`) }

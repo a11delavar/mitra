@@ -62,6 +62,8 @@ export class DialogKeyboardShortcuts extends DialogComponent {
 				shortcuts: [
 					{ action: t('Search or run a command…'), keys: html`${keys('/')}${word(t('or'))}${keys(modifier, 'P')}${word(t('or'))}${keys(modifier, 'K')}` },
 					...of('general'),
+					// The sidebar eye's Alt+click (see Sidebar.toggleSolo) — a pointer gesture, so hand-written.
+					{ action: t('Show only one calendar, or bring the rest back'), keys: html`${keys(alt)}${word(t('click'))}` },
 					{ action: t('Close'), keys: keys('Esc') },
 				],
 			},

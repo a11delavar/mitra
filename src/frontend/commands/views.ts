@@ -4,7 +4,7 @@ import { command, Command } from './Command.js'
 export class WeekView extends Command {
 	heading = t('Week View')
 	icon = 'columns-3'
-	keywords = t('switch')
+	keywords = t('WeekView.Keywords')
 	keys = ['w']
 	group = 'views'
 	execute() { this.calendar.setView('week') }
@@ -14,7 +14,7 @@ export class WeekView extends Command {
 export class MonthView extends Command {
 	heading = t('Month View')
 	icon = 'calendar-days'
-	keywords = t('switch grid')
+	keywords = t('MonthView.Keywords')
 	keys = ['m']
 	group = 'views'
 	execute() { this.calendar.setView('month') }
@@ -24,7 +24,7 @@ export class MonthView extends Command {
 export class YearView extends Command {
 	heading = t('Year View')
 	icon = 'rows-3'
-	keywords = t('switch grid')
+	keywords = t('YearView.Keywords')
 	keys = ['y']
 	group = 'views'
 	execute() { this.calendar.setView('year') }

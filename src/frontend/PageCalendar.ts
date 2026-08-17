@@ -7,7 +7,8 @@ import type { EntrySegmentComponent } from './EventSegment.js'
 import { EntryStore } from './EntryStore.js'
 import { EntryFetcherController } from './EntryFetcherController.js'
 import { CommandPalette } from './CommandPalette.js'
-import { commands } from './commands/index.js'
+import { commands, sourceCommands } from './commands/index.js'
+import type { Sidebar } from './Sidebar.js'
 
 export type CalendarView = 'week' | 'month' | 'year'
 
@@ -69,6 +70,8 @@ export class PageCalendar extends PageComponent {
 
 	@query('mitra-command-palette') private readonly palette!: CommandPalette
 
+	@query('mitra-sidebar') private readonly sidebar?: Sidebar
+
 	@query('input.goto-date') private readonly gotoDateInput!: HTMLInputElement
 
 	/** The page's palette commands — instantiated once from the registry (see commands/): each class
@@ -76,6 +79,25 @@ export class PageCalendar extends PageComponent {
 	 * a stable list. The palette only lists and dispatches; the keydown interceptor below matches
 	 * against these same instances. */
 	readonly commands = commands().map(constructor => new constructor())
+
+	/** Those plus one verb per calendar, which can't be a stable list — calendars come and go while the
+	 * page lives — so they're built from the store per render (see commands/sources.ts). Keyless, so
+	 * the interceptor above stays on the registry's instances.
+	 *
+	 * They lead rather than trail: appended, the way out of a solo landed sixteenth in a list that
+	 * scrolls at ten. The per-calendar solos cost the head of the list nothing, since they wait for
+	 * something to be typed (see Command.listedWithoutQuery). */
+	private get paletteCommands() {
+		return [...sourceCommands(), ...this.commands]
+	}
+
+	/** Follows any change to which sources are on show. Visibility filters server-side, so the entries
+	 * are re-read; the sidebar is re-rendered from here because a palette command changes its state
+	 * without the sidebar being the one that did it. */
+	readonly sourcesChanged = () => {
+		this.sidebar?.requestUpdate()
+		this.transition('source-toggle', () => this.fetcher.task.run())
+	}
 
 	/** How far one "next"/"previous" hop moves: one of whatever the current view shows. */
 	get navigationStep() {
@@ -385,7 +407,7 @@ export class PageCalendar extends PageComponent {
 			<lit-page>
 				${/* Hiding/showing a source refetches (visibility filters server-side) through the calendar's
 				   transition, so survivors glide into the freed space; the SSE echo then applies as a no-op. */''}
-				<mitra-sidebar ?open=${bind(this, 'sidebarOpen')} @sourcesChange=${() => this.transition('source-toggle', () => this.fetcher.task.run())}></mitra-sidebar>
+				<mitra-sidebar ?open=${bind(this, 'sidebarOpen')} @sourcesChange=${this.sourcesChanged}></mitra-sidebar>
 				<main>
 					<header>
 						<div class="leading">
@@ -442,7 +464,7 @@ export class PageCalendar extends PageComponent {
 					</div>
 				</main>
 				<mitra-command-palette
-					.commands=${this.commands}
+					.commands=${this.paletteCommands}
 					@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
 				></mitra-command-palette>
 				${/* Visually hidden but rendered, so the Go to Date command can open its native picker (see goToDate). */''}

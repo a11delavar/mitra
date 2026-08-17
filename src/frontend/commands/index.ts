@@ -6,3 +6,5 @@ import './views.js'
 import './navigation.js'
 import './app.js'
 export * from './Command.js'
+// Not part of the registry — one verb per calendar, built from the store per render (see sources.ts).
+export * from './sources.js'

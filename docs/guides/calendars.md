@@ -20,6 +20,14 @@ The **eye** on a source row hides it from the calendar. That's a view preference
 > [!NOTE]
 > Hiding a calendar doesn't mute it — its [reminders](notifications.md) still fire. To stop a source entirely, turn it off in the source picker instead.
 
+## Focus on one calendar
+
+To clear everything else out of the way, use a source's **⋯ → Only show this calendar** — or **Alt+click its eye**. Every other calendar hides, and Mitra remembers what you had showing.
+
+The same item then reads **Show previously visible calendars**, and brings them back. Anything that was already hidden before you focused stays hidden; a calendar you connected in the meantime comes back visible, since it wasn't part of what you put away.
+
+The offer waits until you use it, so showing a calendar by hand in the meantime doesn't cost you the way back to the rest. Both are in the [command palette](keyboard-shortcuts.md) too — search a calendar's name to focus it.
+
 ## Rename
 
 Double-click a source's name, or use its **⋯ → Rename**. The name is yours: background syncs won't overwrite it. Mitra only adopts the provider's name again if it actually changes at the provider — so a rename on the server side still reaches you, while your own wording survives every sync in between.

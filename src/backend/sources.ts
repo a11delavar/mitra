@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { orm } from './orm.js'
 import { syncEmitter } from './syncEmitter.js'
-import { Integration, Source, applyOrder, createLogger } from '../shared/index.js'
+import { Integration, Source, User, applyOrder, createLogger } from '../shared/index.js'
 
 const logger = createLogger('Sources')
 
@@ -40,6 +40,47 @@ sourcesRouter.put('/:id/visibility', async (req, res) => {
 	syncEmitter.emit('updated', req.user.id)
 	logger.debug(`Source ${source.id} ${source.hidden ? 'hidden' : 'shown'}`)
 	return res.json(source)
+})
+
+/** "Only show this calendar" (the rule is User.showOnly's). One request for the whole batch, so a
+ * failure can't leave the calendar half-hidden. */
+sourcesRouter.put('/:id/solo', async (req, res) => {
+	const em = orm.em.fork()
+	const source = await req.user.source(em, req.params.id)
+	// Soloing a disabled source would hide everything and reveal nothing.
+	if (!source.enabled) {
+		return res.status(400).json({ error: 'A disabled source cannot be the only one shown' })
+	}
+	const user = await em.findOneOrFail(User, { id: req.user.id })
+	user.showOnly(await req.user.sources(em, { enabled: true }), source.id)
+	await em.flush()
+
+	// Keep the request's user (a different entity manager's instance) in sync so a follow-up GET reflects the change.
+	req.user.previouslyHiddenSourceIds = user.previouslyHiddenSourceIds
+	syncEmitter.emit('updated', req.user.id)
+	logger.debug(`Source ${source.id} is now the only one shown`)
+	return res.json(user)
+})
+
+/** The way back out of a solo (see User.restorePreviousVisibility). */
+sourcesRouter.put('/restore-visibility', async (req, res) => {
+	const em = orm.em.fork()
+	const user = await em.findOneOrFail(User, { id: req.user.id })
+	// Nothing to restore is a no-op, not an error — "not in a solo" is what the caller asked for. Keeps
+	// a second tab with a stale record from getting a button that throws instead of the current truth.
+	// (Presence, not length: an empty record still means soloed.)
+	if (!user.previouslyHiddenSourceIds) {
+		return res.json(user)
+	}
+
+	user.restorePreviousVisibility(await req.user.sources(em, { enabled: true }))
+	await em.flush()
+
+	// Keep the request's user (a different entity manager's instance) in sync so a follow-up GET reflects the change.
+	req.user.previouslyHiddenSourceIds = undefined
+	syncEmitter.emit('updated', req.user.id)
+	logger.debug('Restored the visibility from before the solo')
+	return res.json(user)
 })
 
 // Full re-import: rebuild the source's local cache from the provider (see Integration.reimportSource).

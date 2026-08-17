@@ -1359,6 +1359,23 @@
           "enumItems": [],
           "mappedType": "text"
         },
+        "previously_hidden_source_ids": {
+          "name": "previously_hidden_source_ids",
+          "type": "json",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "json"
+        },
         "time_zones": {
           "name": "time_zones",
           "type": "json",

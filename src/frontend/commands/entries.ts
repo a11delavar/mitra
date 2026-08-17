@@ -8,7 +8,7 @@ import { command, Command } from './Command.js'
 export class CreateEntry extends Command {
 	heading = t('Create Entry')
 	icon = 'plus'
-	keywords = t('new event task add')
+	keywords = t('CreateEntry.Keywords')
 	keys = ['c']
 	group = 'entries'
 

@@ -78,7 +78,8 @@ export class CommandPalette extends Component {
 	}
 
 	private get matchingCommands() {
-		return this.commands.filter(command => commandMatches(command, this.searchTerm))
+		const queried = !!this.searchTerm.trim()
+		return this.commands.filter(command => (queried || command.listedWithoutQuery) && commandMatches(command, this.searchTerm))
 	}
 
 	/** Entries only join the list once there is something to search for — an empty palette is a command menu. */

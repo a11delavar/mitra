@@ -19,7 +19,7 @@ declare global {
 		"${span} before": unknown
 		"${status} — click to toggle, Alt-click for options": unknown
 		"About": unknown
-		"about build info release commit": unknown
+		"About.Keywords": unknown
 		"Account": unknown
 		"Add integration": unknown
 		"Add Integration": unknown
@@ -28,9 +28,12 @@ declare global {
 		"Add reminder": unknown
 		"Add time zone": unknown
 		"Add your first integration": unknown
+		"AddIntegration.Keywords": unknown
 		"After": unknown
 		"All day": unknown
 		"All entries": unknown
+		"Alt+click to show only this one": unknown
+		"Alt+click to show the previously visible ones": unknown
 		"Amount": unknown
 		"App-Specific Password": unknown
 		"Apple ID": unknown
@@ -39,32 +42,30 @@ declare global {
 		"At start": unknown
 		"At start of event": unknown
 		"Back": unknown
-		"back earlier": unknown
 		"before": unknown
 		"before at ${time}": unknown
 		"CalDAV, Google, Apple or Notion — Mitra syncs in both directions.": unknown
 		"Calendar options": unknown
 		"Cancelled": unknown
-		"changelog release notes news updates version": unknown
 		"Choose a task status": unknown
 		"Choose your sources": unknown
 		"click": unknown
 		"close": unknown
 		"Close": unknown
-		"collapse expand calendars": unknown
 		"Color": unknown
 		"Commands": unknown
 		"Commit": unknown
 		"Connect": unknown
 		"Connect an account": unknown
-		"connect caldav account calendar": unknown
 		"Connecting…": unknown
 		"Continue with Google": unknown
 		"Copy": unknown
 		"Copy participants' emails": unknown
 		"Copy Version": unknown
+		"CopyVersion.Keywords": unknown
 		"Create and move entries right on the grid — every change syncs back to its source.": unknown
 		"Create Entry": unknown
+		"CreateEntry.Keywords": unknown
 		"Ctrl": unknown
 		"Custom…": unknown
 		"days": unknown
@@ -98,14 +99,14 @@ declare global {
 		"Events": unknown
 		"Every": unknown
 		"Forward": unknown
-		"forward later": unknown
 		"General": unknown
 		"Go to Date…": unknown
 		"Go to Today": unknown
 		"Google account": unknown
 		"Google.ConfigurationHint": unknown
 		"Google.ConsentHint": unknown
-		"help keys hotkeys cheat sheet": unknown
+		"GoToDate.Keywords": unknown
+		"GoToToday.Keywords": unknown
 		"Hide calendar": unknown
 		"Hide the other time zones": unknown
 		"hours": unknown
@@ -115,8 +116,8 @@ declare global {
 		"Integration options": unknown
 		"Integration Token": unknown
 		"Interval": unknown
-		"jump navigate pick specific day month year": unknown
 		"Keyboard Shortcuts": unknown
+		"KeyboardShortcuts.Keywords": unknown
 		"Location": unknown
 		"Make attendance optional": unknown
 		"Make attendance optional for everyone": unknown
@@ -126,6 +127,7 @@ declare global {
 		"modified": unknown
 		"Month": unknown
 		"Month View": unknown
+		"MonthView.Keywords": unknown
 		"Move down": unknown
 		"Move or resize just this entry of a series": unknown
 		"Move up": unknown
@@ -133,20 +135,21 @@ declare global {
 		"Navigation": unknown
 		"Never": unknown
 		"New dev build — ${count:pluralityNumber} commits ahead": unknown
-		"new event task add": unknown
 		"Next Month": unknown
 		"Next Week": unknown
 		"Next Year": unknown
 		"Nextcloud, Fastmail, Radicale — any CalDAV server": unknown
+		"NextPeriod.Keywords": unknown
 		"No matches": unknown
 		"No release notes available": unknown
 		"Notion.TokenHint": unknown
-		"now current date jump": unknown
 		"Occurrences": unknown
 		"of event at ${time}": unknown
 		"OK": unknown
 		"On": unknown
 		"One calendar to plan your events and tasks": unknown
+		"Only Show ${name}": unknown
+		"Only show this calendar": unknown
 		"Only the organizer can change participants": unknown
 		"Open in Google Maps": unknown
 		"Optional": unknown
@@ -160,6 +163,7 @@ declare global {
 		"Previous Month": unknown
 		"Previous Week": unknown
 		"Previous Year": unknown
+		"PreviousPeriod.Keywords": unknown
 		"Primary time zone — switch to ${city} time to change the zone": unknown
 		"Re-import entries": unknown
 		"Refresh": unknown
@@ -188,16 +192,19 @@ declare global {
 		"Set as the default for new entries": unknown
 		"Show calendar": unknown
 		"Show fewer participants": unknown
+		"Show only one calendar, or bring the rest back": unknown
+		"Show previously visible calendars": unknown
+		"Show Previously Visible Calendars": unknown
 		"Show the other time zones": unknown
 		"Showing ${city} time — switch to the primary time zone": unknown
 		"Showing the primary time zone — switch to ${city} time": unknown
 		"Shown above the time axis. Leave empty to use the automatic name.": unknown
+		"ShowOnlySource.Keywords": unknown
+		"ShowPreviouslyVisibleSources.Keywords": unknown
 		"Sign out": unknown
 		"Sources": unknown
 		"Start date": unknown
 		"Start time": unknown
-		"switch": unknown
-		"switch grid": unknown
 		"Switch to all-day": unknown
 		"Task": unknown
 		"Tasks": unknown
@@ -217,12 +224,12 @@ declare global {
 		"Today": unknown
 		"Toggle sidebar": unknown
 		"Toggle Sidebar": unknown
+		"ToggleSidebar.Keywords": unknown
 		"unchanged": unknown
 		"Unreleased": unknown
 		"Untitled": unknown
 		"Update available: ${version}": unknown
 		"Username": unknown
-		"version build info release commit": unknown
 		"View": unknown
 		"View on GitHub": unknown
 		"Views": unknown
@@ -230,11 +237,14 @@ declare global {
 		"Week": unknown
 		"Week View": unknown
 		"weeks": unknown
+		"WeekView.Keywords": unknown
 		"Welcome to ${name}": unknown
 		"What's New": unknown
+		"WhatsNew.Keywords": unknown
 		"Workspace": unknown
 		"Year": unknown
 		"Year View": unknown
+		"YearView.Keywords": unknown
 		"Zoom the view": unknown
 	}
 }

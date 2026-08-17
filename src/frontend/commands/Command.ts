@@ -80,6 +80,11 @@ export abstract class Command {
 	/** The sheet's label — the palette heading unless that is view-dependent ("Next Week" → "Forward"). */
 	get shortcutLabel() { return this.heading }
 
+	/** Whether it shows in the palette before anything is typed. False for the per-calendar verbs (see
+	 * commands/sources.ts) for the same reason entries are held back — there's one per calendar, and an
+	 * empty palette should read as a curated menu. */
+	get listedWithoutQuery() { return true }
+
 	/** The palette's kbd hint beside the heading. */
 	get shortcut() { return !this.keys?.length ? undefined : Command.keyLabel(this.keys[0]!) }
 

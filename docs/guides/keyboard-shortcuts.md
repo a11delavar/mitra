@@ -42,6 +42,7 @@ Press <kbd>?</kbd> anywhere in the calendar to open the built-in cheat sheet —
 | --- | --- |
 | Search entries or run a command | <kbd>/</kbd> or <kbd>Ctrl</kbd> <kbd>P</kbd> or <kbd>Ctrl</kbd> <kbd>K</kbd> |
 | Keyboard shortcuts | <kbd>?</kbd> |
+| [Show only one calendar](calendars.md#focus-on-one-calendar), or bring the rest back | <kbd>Alt</kbd> + click its eye in the sidebar |
 | Close or go back | <kbd>Esc</kbd> |
 
 > [!NOTE]

@@ -5,6 +5,7 @@ import { EntryType, Source, User } from '../shared/index.js'
 import { ormConfig } from './ormConfig.js'
 import { migrate } from './migrations/migrate.js'
 import { migrations } from './migrations/index.js'
+import { Migration20260802230147_MergeSourceTypes } from './migrations/Migration20260802230147_MergeSourceTypes.js'
 
 // The production boot path (see orm.ts): fresh installs build their schema by running the shipped
 // migrations, instances predating migrations get baselined instead of crashing on `create table`,
@@ -153,7 +154,9 @@ describe('migrate', () => {
 			await sql('insert into entry (id, source_id, uri, type) values (\'e1\', \'s1\', \'https://example/cal/1.ics\', \'event\')')
 			await sql('insert into entry (id, source_id, uri, type) values (\'e2\', \'s1\', \'https://example/cal/2.ics\', \'task\')')
 
-			await orm.migrator.down()
+			// Named, not a bare `down()`: that reverts whatever is LAST, so this stopped testing the split
+			// the day a migration was appended after the merge.
+			await orm.migrator.down({ migrations: [Migration20260802230147_MergeSourceTypes.name] })
 
 			const sources = await sql('select id, uri, type from source order by type') as Array<{ id: string, uri: string, type: string }>
 			assert.equal(sources.length, 2, 'a both-types collection becomes an event/task sibling pair again')

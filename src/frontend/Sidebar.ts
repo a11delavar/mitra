@@ -1,5 +1,5 @@
 import { Component, component, html, css, property, state, event, eventListener, unsafeCSS } from '@a11d/lit'
-import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, getPrimarySource, setDefaultSource, reimportSource, reimportIntegration, reorderSources, reorderIntegrations, getEnabledSources } from './Api.js'
+import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, getPrimarySource, setDefaultSource, reimportSource, reimportIntegration, reorderSources, reorderIntegrations, getEnabledSources, getVisibleSources, soloSource, restoreSourceVisibility, canRestoreSourceVisibility } from './Api.js'
 import { DialogAbout, hasUnseenChanges } from './DialogAbout.js'
 import { DialogIntegration } from './DialogIntegration.js'
 import { type Integration, type Source } from 'shared'
@@ -680,8 +680,32 @@ export class Sidebar extends Component {
 	private async toggleVisibility(source: Source) {
 		await toggleSourceVisibility(source.id, !source.hidden)
 		source.hidden = !source.hidden
+		this.visibilityChanged()
+	}
+
+	/**
+	 * "Only show this calendar" and its way back, as one gesture — the Alt+click and the ⋯ item both
+	 * land here. Leave a solo if there is one, enter one otherwise; which row asked doesn't matter,
+	 * since a solo is a state of the whole list.
+	 *
+	 * Hiding or showing a calendar by hand meanwhile does NOT spend the record — the way back stays
+	 * parked until it's used.
+	 */
+	private async toggleSolo(source: Source) {
+		await (canRestoreSourceVisibility() ? restoreSourceVisibility() : soloSource(source.id))
+		this.visibilityChanged()
+	}
+
+	/** Re-render the rows, and let the page refetch through its transition (see PageCalendar). */
+	private visibilityChanged() {
 		this.requestUpdate()
 		this.sourcesChange.dispatch()
+	}
+
+	/** Nothing to solo down to when this row is already all that's on show. */
+	private isOnlyVisible(source: Source) {
+		const visible = getVisibleSources()
+		return visible.length === 1 && visible[0]?.id === source.id
 	}
 
 	/** The source whose name row is currently in inline-edit mode (double-click or ⋯ → Rename). */
@@ -971,6 +995,19 @@ export class Sidebar extends Component {
 						<mitra-icon icon="palette"></mitra-icon>
 						<mitra-color-picker .value=${source.color} @change=${(e: CustomEvent) => this.setSourceColor(source, e.detail, (e.currentTarget as HTMLElement).closest('[popover]')!)}></mitra-color-picker>
 					</div>
+					${/* The Alt+click gesture's reachable twin, as Move up/down is the drag's. One item rather
+					    than two — there is only ever one solo, so the state decides which way it points. */''}
+					${canRestoreSourceVisibility() ? html`
+						<button @click=${(e: Event) => { this.closeMenu(e); this.toggleSolo(source) }}>
+							<mitra-icon icon="eye"></mitra-icon>
+							${t('Show previously visible calendars')}
+						</button>
+					` : html`
+						<button ?disabled=${this.isOnlyVisible(source)} @click=${(e: Event) => { this.closeMenu(e); this.toggleSolo(source) }}>
+							<mitra-icon icon="scan-eye"></mitra-icon>
+							${t('Only show this calendar')}
+						</button>
+					`}
 					${/* The drag reorder's accessible, discoverable twin (see SidebarReorderController). */''}
 					<button ?disabled=${index === 0} @click=${(e: Event) => { this.closeMenu(e); this.moveSource(integration, source, -1) }}>
 						<mitra-icon icon="arrow-up"></mitra-icon>
@@ -987,11 +1024,13 @@ export class Sidebar extends Component {
 						${t('Re-import entries')}
 					</button>
 				</menu>
+				${/* Alt+click solos and un-solos, the way Alt+drag duplicates. Named in the tooltip rather
+				    than left to be found, like the name row's "Double-click to rename". */''}
 				<mitra-icon-button
 					class="eye-icon"
 					icon=${source.hidden ? 'eye-off' : 'eye'}
-					label=${source.hidden ? t('Show calendar') : t('Hide calendar')}
-					@click=${() => this.toggleVisibility(source)}
+					label=${`${source.hidden ? t('Show calendar') : t('Hide calendar')} — ${canRestoreSourceVisibility() ? t('Alt+click to show the previously visible ones') : t('Alt+click to show only this one')}`}
+					@click=${(e: MouseEvent) => e.altKey ? this.toggleSolo(source) : this.toggleVisibility(source)}
 				></mitra-icon-button>
 			</div>
 		`

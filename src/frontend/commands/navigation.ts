@@ -11,7 +11,7 @@ function rtl() {
 export class GoToToday extends Command {
 	heading = t('Go to Today')
 	icon = 'calendar-check'
-	keywords = t('now current date jump')
+	keywords = t('GoToToday.Keywords')
 	keys = ['t']
 	group = 'navigation'
 	execute() { this.calendar.navigatingDate = new DateTime() }
@@ -28,7 +28,7 @@ export class NextPeriod extends Command {
 		}
 	}
 	icon = 'arrow-right'
-	keywords = t('forward later')
+	keywords = t('NextPeriod.Keywords')
 	/** The key that means "forward" — a getter, because it follows TIME rather than the layout: an RTL
 	 * calendar runs right-to-left, so the future is the LEFT arrow there. Everything derived from
 	 * `keys` (the interceptor's match, the palette's hint, the sheet's chip) flips with it. */
@@ -52,7 +52,7 @@ export class PreviousPeriod extends Command {
 		}
 	}
 	icon = 'arrow-left'
-	keywords = t('back earlier')
+	keywords = t('PreviousPeriod.Keywords')
 	get keys() { return [rtl() ? 'ArrowRight' : 'ArrowLeft'] }
 	group = 'navigation'
 	override get shortcutLabel() { return t('Back') }
@@ -66,7 +66,7 @@ export class PreviousPeriod extends Command {
 export class GoToDate extends Command {
 	heading = t('Go to Date…')
 	icon = 'calendar-search'
-	keywords = t('jump navigate pick specific day month year')
+	keywords = t('GoToDate.Keywords')
 	keys = ['g']
 	group = 'navigation'
 	execute() { this.calendar.goToDate() }

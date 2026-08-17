@@ -155,9 +155,14 @@ export function searchEntries(query: string) {
 	return Api.get<Array<Entry>>(`/entries/search?q=${encodeURIComponent(query)}&tz=${tz()}`)
 }
 
+/** Every source on show right now, across accounts and in display order. */
+export function getVisibleSources(): Array<Source> {
+	return integrations.flatMap(i => [...i.sources]).filter(s => s.visible)
+}
+
 /** The source a create targets: the user's default when visible, else the first visible one. */
 export function getPrimarySource(): Source | undefined {
-	const visibleSources = integrations.flatMap(i => [...i.sources]).filter(s => s.visible)
+	const visibleSources = getVisibleSources()
 	return visibleSources.find(s => s.id === getDefaultSourceId()) ?? visibleSources[0]
 }
 
@@ -220,6 +225,27 @@ export function getCapabilities(sourceId: string): Integration['capabilities'] {
 
 export function toggleSourceVisibility(id: string, hidden: boolean) {
 	return Api.put(`/sources/${id}/visibility`, { hidden })
+}
+
+/** "Only show this calendar". Refetches instead of updating the store optimistically like rename or
+ * recolour do — a solo rewrites every row at once, and re-deriving the server's rule here is how the
+ * sidebar and the calendar would drift apart. */
+export async function soloSource(id: string) {
+	currentUser = await Api.put<User>(`/sources/${id}/solo`)
+	await fetchIntegrations()
+}
+
+/** The way back out. Safe to call with nothing to restore — the server just answers with the current
+ * truth, which re-syncs a tab whose record another tab already spent. */
+export async function restoreSourceVisibility() {
+	currentUser = await Api.put<User>('/sources/restore-visibility')
+	await fetchIntegrations()
+}
+
+/** Whether there is a solo to leave. Tests the record itself, never its length — an empty one still
+ * means soloed (see User.previouslyHiddenSourceIds). */
+export function canRestoreSourceVisibility() {
+	return !!currentUser?.previouslyHiddenSourceIds
 }
 
 export function updateSourceColor(id: string, color: string) {

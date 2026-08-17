@@ -35,6 +35,16 @@ export class User {
 	 * dark: the dot means "the instance moved since you last looked", never "welcome". */
 	@property({ type: 'string', nullable: true }) lastSeenVersion?: string
 
+	/**
+	 * What to come back to after "Only show this calendar" — the sources that were HIDDEN when the solo
+	 * began, not the ones that were visible. Storing the complement means a source that appears mid-solo
+	 * comes back shown, instead of being hidden by a record taken before it existed.
+	 *
+	 * Presence marks the solo, not content: `[]` is the usual case (nothing was hidden) and still means
+	 * "soloed", `undefined` means not. So test the array itself, never its length.
+	 */
+	@property({ type: 'json', nullable: true }) previouslyHiddenSourceIds?: Array<string>
+
 	constructor(init?: Partial<User>) {
 		Object.assign(this, init)
 	}
@@ -54,6 +64,34 @@ export class User {
 		const user = new User({ username: claims.sub, identity: Identity.fromClaims(issuer, claims) })
 		em.persist(user)
 		return user
+	}
+
+	/**
+	 * "Only show this calendar" (PUT /sources/:id/solo). `sources` are the ENABLED ones — the rows the
+	 * sidebar shows; a disabled source is nobody's business here.
+	 *
+	 * Two cases record nothing. Soloing while already soloed keeps the FIRST record, so hopping between
+	 * calendars still comes back to the visibility the user arranged. And soloing the only calendar
+	 * that's on show records nothing at all — there's nothing to come back from.
+	 */
+	showOnly(sources: ReadonlyArray<Source>, sourceId: string): void {
+		const visible = sources.filter(source => source.visible)
+		if (!this.previouslyHiddenSourceIds && visible.length === 1 && visible[0]!.id === sourceId) {
+			return
+		}
+		this.previouslyHiddenSourceIds ??= sources.filter(source => source.hidden).map(source => source.id)
+		for (const source of sources) {
+			source.hidden = source.id !== sourceId
+		}
+	}
+
+	/** Back out of a solo: hide the recorded sources again, show everything else, spend the record. */
+	restorePreviousVisibility(sources: ReadonlyArray<Source>): void {
+		const previouslyHidden = new Set(this.previouslyHiddenSourceIds)
+		this.previouslyHiddenSourceIds = undefined
+		for (const source of sources) {
+			source.hidden = previouslyHidden.has(source.id)
+		}
 	}
 
 	// Ownership-scoped lookups: routes resolve every entity through these, so a foreign id — however
