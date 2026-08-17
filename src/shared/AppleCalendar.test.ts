@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { AppleCalendar } from './AppleCalendar.js'
+import { revive, wireOf } from './wire.testing.js'
 
 describe('AppleCalendar', () => {
 	it('initializes the uri to the iCloud CalDAV endpoint', () => {
@@ -41,6 +42,17 @@ describe('AppleCalendar', () => {
 				credentials: { username: 'apple@icloud.com', password: 'abc' }
 			})
 			assert.equal(calendar.toString(), 'Apple Calendar integration for "apple@icloud.com"')
+		})
+	})
+
+	describe('crossing the API', () => {
+		// This provider IS a CalDAV, which is exactly the risk: tagged as the class it extends, iCloud
+		// would come back as plain CalDAV — URI field shown, fixed endpoint editable.
+		it('tags itself as itself, not as the provider it extends', () => {
+			const calendar = new AppleCalendar({ credentials: { username: 'apple@icloud.com', password: 'abc' }, sources: [] as never })
+
+			assert.equal(wireOf(calendar)['@type'], 'AppleCalendar')
+			assert.ok(revive(wireOf(calendar)) instanceof AppleCalendar)
 		})
 	})
 })

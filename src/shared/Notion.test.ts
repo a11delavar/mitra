@@ -1,9 +1,11 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { Notion } from './Notion.js'
-import { Entry, EntryType, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
-import { Source, SourceType } from './Source.js'
+import { Entry, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
+import { EntryType } from './EntryType.js'
+import { Source } from './Source.js'
 import { type NotionDataSource, type NotionPage } from './NotionClient.js'
+import { asBrowser, wireOf } from './wire.testing.js'
 
 type DateTime = import('@3mo/date-time').DateTime
 const D = (iso: string) => new Date(iso) as unknown as DateTime
@@ -412,7 +414,7 @@ describe('Notion integration model', () => {
 	const account = () => new Notion({
 		uri: 'notion://bot-1',
 		credentials: { username: 'Acme Workspace', token: 'ntn_secret' },
-		sources: [new Source({ uri: 'notion://ds-1/view-1', type: SourceType.Task, name: 'Tasks · All', enabled: true })] as any,
+		sources: [new Source({ uri: 'notion://ds-1/view-1', entryTypes: [EntryType.Task], name: 'Tasks · All', enabled: true })] as any,
 	})
 
 	it('declares what Notion cannot represent — the editor hides these fields', () => {
@@ -435,14 +437,35 @@ describe('Notion integration model', () => {
 		assert.equal(integration.credentials.token, 'ntn_rotated')
 	})
 
-	it('serves the workspace label but never the token', () => {
-		const json = JSON.parse(JSON.stringify(account()))
-		assert.equal(json['@type'], 'Notion')
-		assert.deepEqual(json.credentials, { username: 'Acme Workspace' })
+	describe('crossing the API', () => {
+		it('answers with the workspace label but never the token', () => {
+			const json = wireOf(account())
+
+			assert.equal(json['@type'], 'Notion')
+			assert.deepEqual(json.credentials, { username: 'Acme Workspace', token: '' })
+		})
+
+		// The other direction of the same rule, and the reason it is a rule about direction: the connect
+		// dialog posts the very instance the user pasted the token into, and it has to arrive.
+		it('delivers the token when it is the browser asking', () => {
+			assert.equal(asBrowser(() => wireOf(account())).credentials.token, 'ntn_secret')
+		})
+
+		it('never carries a live connection', () => {
+			const integration = account()
+			integration['getClient']() // reaching for it is what creates it
+
+			assert.equal('client' in wireOf(integration), false)
+			assert.equal('dataSources' in wireOf(integration), false)
+		})
 	})
 
-	it('is a polymorphic editable copy with the token blanked', () => {
-		const copy = account().editableCopy()
+	it('is a polymorphic editable copy carrying the credentials as held', () => {
+		// As the client holds them — the token already withheld by the server that answered (see the
+		// `@converter` on `credentials`), and blank is exactly what `merge` reads as "keep the stored one".
+		const held = new Notion({ ...account(), credentials: { username: 'Acme Workspace', token: '' } })
+		const copy = held.editableCopy()
+
 		assert.ok(copy instanceof Notion)
 		assert.deepEqual(copy.credentials, { username: 'Acme Workspace', token: '' })
 		assert.ok(Array.isArray(copy.sources))

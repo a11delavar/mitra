@@ -5,6 +5,10 @@ import { pickerRow, pickerRowChosen } from './pickerRow.css.js'
 export const selectStyles = css`
 	::picker(select) {
 		appearance: base-select;
+
+		/* A picker opened inside a bottom SHEET flips above its button and can be clamped to a scrolling
+		   sliver — the same known gap the menus have, from the same cause and with the same fix pending;
+		   the debugging and the measurements live in menu.css.ts. */
 		background: color-mix(in srgb, color-mix(in srgb, var(--color-background) 80%, var(--color-surface)) 95%, transparent);
 		backdrop-filter: blur(10px);
 		border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);

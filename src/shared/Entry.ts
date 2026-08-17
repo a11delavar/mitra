@@ -1,15 +1,12 @@
 import { DateTime } from '@3mo/date-time'
+import { converter } from '@a11d/converter'
 import { equals } from '@a11d/equals'
 import { model } from './model.js'
 import { entity, primaryKey, property, enum as enumType, unique, manyToOne, embedded } from './orm.js'
-import { Source, SourceType } from './Source.js'
+import { EntryType, type EntryTypeValue } from './EntryType.js'
+import { Source } from './Source.js'
 import { Recurrence } from './Recurrence.js'
 import { Participants, type ParticipantRole, type Participant } from './Participant.js'
-
-export enum EntryType {
-	Event = 'event',
-	Task = 'task',
-}
 
 export enum TaskStatus {
 	ToDo = 'todo',
@@ -61,7 +58,28 @@ export class Entry {
 	@manyToOne(() => Source, { mapToPk: true, deleteRule: 'cascade' }) sourceId!: string
 	@property({ type: 'string', nullable: true }) uri?: string
 
-	@enumType(() => EntryType) type!: EntryType
+	/**
+	 * Setting the type is the CONVERSION, not a plain field write: a status only makes sense on a task,
+	 * so becoming an event drops it; becoming a task leaves it unset, which *is* "to do". That's why the
+	 * editor's draft switch and {@link migrateTo} both just assign here.
+	 *
+	 * It also accepts the wire form (see {@link EntryType.parse}), so assigning a raw `"task"` lands as
+	 * the instance. An unmodelled type throws rather than becoming an event.
+	 *
+	 * Crossing the API is NOT that assignment though: {@link EntryType.converter} maps this member onto
+	 * the key `type` in both directions, so a response reproduces exactly what the server holds instead
+	 * of re-running the conversion rule above on the way in.
+	 */
+	@property({ type: EntryType.Mapper, fieldName: 'type' })
+	@converter({ type: EntryType.converter })
+	private _type!: EntryType
+	get type(): EntryType { return this._type }
+	set type(value: EntryType | EntryTypeValue) {
+		this._type = EntryType.parse(value)
+		if (!this._type.isTask) {
+			this.status = undefined
+		}
+	}
 
 	@property({ type: 'string' }) heading = ''
 	@property({ type: 'string' }) description = ''
@@ -362,15 +380,15 @@ export class Entry {
 		}
 	}
 
-	/** Move to another source. The entry's shape follows the target intrinsically: a task list holds
-	 * tasks and a calendar holds events, and a status only makes sense on a task. The identity and
-	 * link fields (`id`, `uri`, `data`) are deliberately untouched — a cross-source migration
-	 * re-creates the entry over there, and the backend owns those. */
+	/** Move to another source. The entry KEEPS its type wherever the target can hold it — a source
+	 * supports types, it doesn't dictate one (see {@link Source.entryTypes}) — and only converts when it
+	 * can't: a task moved onto an events-only calendar becomes an event, a note dropped into a Notion
+	 * task view becomes a task. The identity and link fields (`id`, `uri`, `data`) are deliberately
+	 * untouched — a cross-source migration re-creates the entry over there, and the backend owns those. */
 	migrateTo(source: Source) {
 		this.sourceId = source.id
-		this.type = source.type === SourceType.Task ? EntryType.Task : EntryType.Event
-		if (this.type === EntryType.Event) {
-			this.status = undefined
+		if (!source.supportsEntryType(this.type)) {
+			this.type = source.defaultEntryType // the setter owns the conversion (a status goes with the task)
 		}
 	}
 

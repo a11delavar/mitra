@@ -1,11 +1,8 @@
+import { converter } from '@a11d/converter'
 import { model } from './model.js'
-import { entity, primaryKey, property, enum as enumType, manyToOne } from './orm.js'
+import { entity, primaryKey, property, manyToOne } from './orm.js'
 import { Integration } from './Integration.js'
-
-export enum SourceType {
-	Event = 'event',
-	Task = 'task',
-}
+import { EntryType, EntryTypes } from './EntryType.js'
 
 @model('Source')
 @entity()
@@ -16,7 +13,21 @@ export class Source {
 
 	@property({ type: 'string' }) uri!: string
 
-	@enumType(() => SourceType) type!: SourceType
+	/** The entry types this source can hold — the provider's own answer, discovered per source rather
+	 * than hardcoded per integration: a CalDAV collection declares its `supported-calendar-component-set`
+	 * (a VEVENT-only work calendar must not offer tasks), Notion views hold tasks only. A source is NOT
+	 * a type — one collection is one row, whatever it can carry; the type of a given entry lives on
+	 * {@link Entry.type}, where it is authoritative. Per RFC 4791 §5.2.3 an absent/empty component set
+	 * means "accepts everything", which is also how {@link supportsEntryType} reads an empty list.
+	 *
+	 * NULLABLE for one reason: `orm.schema.update()` adds this column to an existing database, where
+	 * every row already exists — a NOT NULL column with no default fails that ALTER outright and the
+	 * server never boots (verified). {@link EntryTypes.Mapper} reads such a row back as the empty list,
+	 * which is the same "the provider never said" the RFC's absent component set means, and the next
+	 * reconcile fills it in from the provider. */
+	@property({ type: EntryTypes.Mapper, fieldName: 'entry_types', nullable: true })
+	@converter(EntryTypes.converter)
+	entryTypes: EntryTypes = EntryTypes.of(EntryType.Event, EntryType.Task)
 
 	@property({ type: 'string' }) name!: string
 	/** The provider's own name for this source as of the last reconcile — NOT what's shown (`name`
@@ -40,15 +51,18 @@ export class Source {
 
 	@property({ type: 'json', nullable: true }) syncState?: Record<string, any>
 
-	/** The identity of a source within its integration: its component type + collection URL. A static
-	 * so it works on a plain DTO too — an incoming request body arrives structure-cloned by `@a11d/api`
-	 * (no class, so no `key` getter), and `applyAndSync` must still match those against managed rows. */
-	static keyOf(source: { type: SourceType | string, uri: string }): string {
-		return `${source.type}#${source.uri}`
+	/** Whether an entry of this type can live here. Tolerant of a missing/empty list — an unknown
+	 * component set accepts everything (RFC 4791 §5.2.3), which is also the right reading for a row
+	 * written before this column existed. */
+	supportsEntryType(type: EntryType): boolean {
+		return !this.entryTypes?.length || this.entryTypes.includes(type)
 	}
 
-	get key() {
-		return Source.keyOf(this)
+	/** The type a new entry takes here. Mitra is calendar-first, so an event wherever the source can
+	 * hold one; a source that cannot (a Notion task view) makes its own type instead. What the create
+	 * gestures, the palette's Create Entry and a cross-source migration all default to. */
+	get defaultEntryType(): EntryType {
+		return this.supportsEntryType(EntryType.Event) ? EntryType.Event : this.entryTypes?.[0] ?? EntryType.Event
 	}
 
 	toggleEnabled() {
@@ -60,6 +74,6 @@ export class Source {
 	}
 
 	toString() {
-		return `${this.type} source "${this.name}"`
+		return `source "${this.name}"`
 	}
 }

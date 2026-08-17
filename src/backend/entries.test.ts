@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { MikroORM, UnderscoreNamingStrategy, type EntityManager } from '@mikro-orm/sqlite'
-import { User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Source, SourceType, Entry, EntryType, Recurrence } from '../shared/index.js'
+import { User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Source, Entry, EntryType, Recurrence } from '../shared/index.js'
 import { Dev } from './Dev.js'
 import { NotificationSubscription } from './NotificationSubscription.js'
 import { Session } from './Session.js'
@@ -38,7 +38,7 @@ async function inMemoryOrm() {
 async function seedUser(em: EntityManager, username: string, term: string, source: Partial<Source> = {}) {
 	const user = new User({ username })
 	const integration = new Dev({ userId: user.id, uri: `dev://${username}` })
-	const src = new Source({ integrationId: integration.id, uri: `${username}/calendar`, type: SourceType.Event, name: username, enabled: true, hidden: false, ...source })
+	const src = new Source({ integrationId: integration.id, uri: `${username}/calendar`, entryTypes: [EntryType.Event], name: username, enabled: true, hidden: false, ...source })
 	const entry = new Entry({ id: crypto.randomUUID(), sourceId: src.id, type: EntryType.Event, heading: `${term} (${username})` })
 	em.persist([user, integration, src, entry])
 	await em.flush()
@@ -81,7 +81,7 @@ describe('entries ownership scoping', () => {
 			const em = orm.em.fork()
 			const { user, integration, source: visibleSource } = await seedUser(em, 'carol', 'standup')
 			// A second source of hers that must be filtered out: disabled AND hidden.
-			const hidden = new Source({ integrationId: integration.id, uri: 'carol/hidden', type: SourceType.Event, name: 'hidden', enabled: false, hidden: true })
+			const hidden = new Source({ integrationId: integration.id, uri: 'carol/hidden', entryTypes: [EntryType.Event], name: 'hidden', enabled: false, hidden: true })
 			em.persist(hidden)
 			await em.flush()
 

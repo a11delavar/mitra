@@ -52,6 +52,7 @@ declare global {
 		"close": unknown
 		"Close": unknown
 		"collapse expand calendars": unknown
+		"Color": unknown
 		"Commands": unknown
 		"Commit": unknown
 		"Connect": unknown
@@ -93,6 +94,7 @@ declare global {
 		"End time": unknown
 		"Ends": unknown
 		"Entries": unknown
+		"Event": unknown
 		"Events": unknown
 		"Every": unknown
 		"Forward": unknown
@@ -197,6 +199,7 @@ declare global {
 		"switch": unknown
 		"switch grid": unknown
 		"Switch to all-day": unknown
+		"Task": unknown
 		"Tasks": unknown
 		"the ${ordinal}": unknown
 		"the ${ordinal} ${weekday}": unknown

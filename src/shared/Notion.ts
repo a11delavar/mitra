@@ -1,9 +1,11 @@
 import { type EntityManager } from '@mikro-orm/sqlite'
+import { converter } from '@a11d/converter'
 import { equals } from '@a11d/equals'
 import { model } from './model.js'
-import { Integration, integration } from './Integration.js'
-import { Source, SourceType } from './Source.js'
-import { Entry, EntryType, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
+import { Integration, integration, withheld } from './Integration.js'
+import { Source } from './Source.js'
+import { Entry, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
+import { EntryType } from './EntryType.js'
 import { calendarDateOf, midnightOf } from './calendarDate.js'
 import { Color } from './Color.js'
 import { createLogger } from './Logger.js'
@@ -44,7 +46,7 @@ export interface NotionSchemaIndex {
  * scheduling is a page in a database — so this integration models exactly what Notion can express:
  *
  * - Every view of every shared task database (one with a status AND a date property) becomes a
- *   selectable {@link SourceType.Task} source. Views are the right grain because Notion evaluates
+ *   selectable source holding {@link EntryType.Task} alone. Views are the right grain because Notion evaluates
  *   their filters server-side ("My tasks", "This sprint") — mitra never re-implements filter
  *   semantics, it just asks the view for its members.
  * - Pages map to task entries: title ↔ heading, status option ↔ task status via the schema's
@@ -97,7 +99,8 @@ export class Notion extends Integration<NotionCredentials> {
 		return { dataSourceId, viewId }
 	}
 
-	declare credentials: NotionCredentials
+	/** The integration token authorizes the workspace; the label identifies it. */
+	@converter(withheld<NotionCredentials>('token')) override credentials!: NotionCredentials
 
 	constructor(init?: Partial<Notion>) {
 		super()
@@ -142,16 +145,8 @@ export class Notion extends Integration<NotionCredentials> {
 		}
 	}
 
-	protected override get editableCredentials(): NotionCredentials {
-		return { username: this.credentials.username, token: '' }
-	}
-
-	/** The token is a server-side secret: the API (and the edit dialog) only ever see the label. */
-	toJSON() {
-		return { ...this, client: undefined, dataSources: undefined, credentials: { username: this.credentials.username } }
-	}
-
-	private client?: NotionClient
+	/** Transient, like {@link CalDAV.client}: `out: {}` keeps a live connection out of the wire. */
+	@converter({ out: {} }) private client?: NotionClient
 
 	/** A seam for tests: subclasses stub the client instead of the network. */
 	protected createClient(): NotionClient {
@@ -165,7 +160,7 @@ export class Notion extends Integration<NotionCredentials> {
 	/** Data source schemas, memoized for the life of this instance — one instance serves one sync
 	 * cycle (or one request), so sibling views of a database share a single schema fetch and the
 	 * cache can never go stale across cycles. */
-	private dataSources?: Map<string, Promise<NotionDataSource>>
+	@converter({ out: {} }) private dataSources?: Map<string, Promise<NotionDataSource>>
 
 	private dataSource(dataSourceId: string): Promise<NotionDataSource> {
 		this.dataSources ??= new Map()
@@ -221,7 +216,8 @@ export class Notion extends Integration<NotionCredentials> {
 				const uri = Notion.sourceUri(found.id, view.id)
 				sources.push(new Source({
 					uri,
-					type: SourceType.Task,
+					// A Notion page is a task and nothing else — the one-type case of {@link Source.entryTypes}.
+					entryTypes: [EntryType.Task],
 					name: view.name ? `${title} · ${view.name}` : title,
 					color: Color.get(uri).value,
 					enabled: false,

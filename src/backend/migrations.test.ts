@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { MikroORM } from '@mikro-orm/sqlite'
-import { User } from '../shared/index.js'
+import { EntryType, Source, User } from '../shared/index.js'
 import { ormConfig } from './ormConfig.js'
 import { migrate } from './migrations/migrate.js'
 import { migrations } from './migrations/index.js'
@@ -84,6 +84,86 @@ describe('migrate', () => {
 			await migrate(orm)
 
 			assert.deepEqual(await orm.migrator.getStorage().getExecutedMigrations(), executed)
+		} finally {
+			await orm.close()
+		}
+	})
+
+	it('replays the source-type merge when baselining the previous release\'s schema', async () => {
+		const orm = await inMemoryOrm()
+		try {
+			// A real pre-migrations instance: the last pre-migrations release's schema — exactly what the
+			// initial migration creates — with live data and no migrations log. The initial migration's SQL
+			// is executed directly rather than via the migrator, which would create (and cache) the log table.
+			const sql = (query: string) => orm.em.getConnection().execute(query)
+			const initial = new (migrations[0]!)(orm.em.getDriver() as never, orm.config)
+			await initial.up()
+			for (const query of initial.getQueries()) {
+				await sql(query as string)
+			}
+
+			await sql('insert into user (id, username) values (\'u1\', \'someone\')')
+			await sql('insert into integration (id, user_id, uri, type, credentials) values (\'i1\', \'u1\', \'caldav://example\', \'caldav\', \'{}\')')
+			// An event/task sibling pair for one collection (the old CalDAV discovery shape) — the enabled
+			// event row must survive and inherit the pair — plus a single-type source that must stay untouched.
+			await sql('insert into source (id, integration_id, uri, type, name, enabled, hidden, sync_state) values (\'s-event\', \'i1\', \'https://example/cal\', \'event\', \'Calendar\', 1, 0, \'{"token":"e"}\')')
+			await sql('insert into source (id, integration_id, uri, type, name, enabled, hidden, sync_state) values (\'s-task\', \'i1\', \'https://example/cal\', \'task\', \'Calendar\', 0, 1, \'{"token":"t"}\')')
+			await sql('insert into source (id, integration_id, uri, type, name, enabled, hidden, sync_state) values (\'s-solo\', \'i1\', \'https://example/todos\', \'task\', \'Todos\', 1, 0, \'{"token":"solo"}\')')
+			await sql('insert into entry (id, source_id, uri, type) values (\'e1\', \'s-event\', \'https://example/cal/1.ics\', \'event\')')
+			await sql('insert into entry (id, source_id, uri, type) values (\'e2\', \'s-task\', \'https://example/cal/2.ics\', \'task\')')
+			await sql('insert into entry (id, source_id, uri, type) values (\'e3\', \'s-solo\', \'https://example/todos/3.ics\', \'task\')')
+
+			await migrate(orm)
+
+			const sources = await orm.em.fork().find(Source, {}, { orderBy: { id: 'asc' } })
+			assert.deepEqual(sources.map(source => source.id), ['s-event', 's-solo'], 'the task sibling merges into the surviving event row')
+
+			const merged = sources[0]!
+			assert.deepEqual([...merged.entryTypes], [EntryType.Event, EntryType.Task])
+			assert.equal(merged.enabled, true, 'either sibling on show means the collection is')
+			assert.equal(merged.hidden, false)
+			assert.equal(merged.syncState ?? null, null, 'merged sibling tokens are void — the next sync re-lists')
+
+			const solo = sources[1]!
+			assert.deepEqual([...solo.entryTypes], [EntryType.Task])
+			assert.deepEqual(solo.syncState, { token: 'solo' }, 'an unmerged source keeps its token')
+
+			const entries = await sql('select id, source_id from entry order by id') as Array<{ id: string, source_id: string }>
+			assert.deepEqual(entries, [
+				{ id: 'e1', source_id: 's-event' },
+				{ id: 'e2', source_id: 's-event' },
+				{ id: 'e3', source_id: 's-solo' },
+			], 'the sibling\'s entries re-point; nothing is lost')
+
+			assert.deepEqual(await orm.migrator.getStorage().executed(), migrations.map(migration => migration.name))
+			assert.deepEqual(await orm.migrator.getPending(), [])
+		} finally {
+			await orm.close()
+		}
+	})
+
+	it('splits merged collections back apart on migration down', async () => {
+		const orm = await inMemoryOrm()
+		try {
+			await migrate(orm)
+			const sql = (query: string) => orm.em.getConnection().execute(query)
+			await sql('insert into user (id, username) values (\'u1\', \'someone\')')
+			await sql('insert into integration (id, user_id, uri, type, credentials) values (\'i1\', \'u1\', \'caldav://example\', \'caldav\', \'{}\')')
+			await sql('insert into source (id, integration_id, uri, entry_types, name, enabled, hidden) values (\'s1\', \'i1\', \'https://example/cal\', \'["event","task"]\', \'Calendar\', 1, 0)')
+			await sql('insert into entry (id, source_id, uri, type) values (\'e1\', \'s1\', \'https://example/cal/1.ics\', \'event\')')
+			await sql('insert into entry (id, source_id, uri, type) values (\'e2\', \'s1\', \'https://example/cal/2.ics\', \'task\')')
+
+			await orm.migrator.down()
+
+			const sources = await sql('select id, uri, type from source order by type') as Array<{ id: string, uri: string, type: string }>
+			assert.equal(sources.length, 2, 'a both-types collection becomes an event/task sibling pair again')
+			assert.deepEqual(sources.map(source => source.type), ['event', 'task'])
+			assert.equal(sources[0]!.id, 's1', 'the merged row stays the event source')
+			assert.equal(sources[1]!.uri, 'https://example/cal')
+
+			const entries = await sql('select id, source_id from entry order by id') as Array<{ id: string, source_id: string }>
+			assert.equal(entries[0]!.source_id, 's1')
+			assert.equal(entries[1]!.source_id, sources[1]!.id, 'task entries move to the re-created task sibling')
 		} finally {
 			await orm.close()
 		}

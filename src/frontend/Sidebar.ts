@@ -2,7 +2,7 @@ import { Component, component, html, css, property, state, event, eventListener,
 import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, getPrimarySource, setDefaultSource, reimportSource, reimportIntegration, reorderSources, reorderIntegrations, getEnabledSources } from './Api.js'
 import { DialogAbout, hasUnseenChanges } from './DialogAbout.js'
 import { DialogIntegration } from './DialogIntegration.js'
-import { SourceType, type Integration, type Source } from 'shared'
+import { type Integration, type Source } from 'shared'
 import { ReorderabilityController, ReorderabilityState } from '@3mo/reorderability'
 import { focusRing } from './components/focusRing.css.js'
 import { canInstall, promptInstall, onInstallAvailabilityChange } from './pwa.js'
@@ -879,10 +879,7 @@ export class Sidebar extends Component {
 										    land in — which is what clicking it toggles. */''}
 										<button class="marker"
 											@click=${() => this.toggleDefault(source)}
-											title=${[
-										source.type === SourceType.Task ? t('Tasks') : t('Events'),
-										this.defaultHint(source),
-									].join(' — ')}>
+											title=${this.defaultHint(source)}>
 											<mitra-source-icon .source=${source} ?selected=${this.isDefault(source)}></mitra-source-icon>
 										</button>
 										${this.getNameTemplate(source)}

@@ -1,9 +1,11 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { Entry, EntryType, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
+import { Entry, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
+import { EntryType } from './EntryType.js'
 import { ParticipantRole } from './Participant.js'
-import { Source, SourceType } from './Source.js'
+import { Source } from './Source.js'
+import { revive, wireOf } from './wire.testing.js'
 
 describe('Entry', () => {
 	const day = new DateTime().dayStart
@@ -255,14 +257,23 @@ describe('Entry', () => {
 	})
 
 	describe('migrateTo', () => {
-		const calendar = new Source({ id: 'cal', type: SourceType.Event, name: 'Calendar' })
-		const taskList = new Source({ id: 'tasks', type: SourceType.Task, name: 'Tasks' })
+		const calendar = new Source({ id: 'cal', entryTypes: [EntryType.Event], name: 'Calendar' })
+		const taskList = new Source({ id: 'tasks', entryTypes: [EntryType.Task], name: 'Tasks' })
+		const both = new Source({ id: 'both', entryTypes: [EntryType.Event, EntryType.Task], name: 'Everything' })
 
-		it('follows the target source: a task list holds tasks, a calendar events', () => {
+		it('converts only where the target cannot hold the entry\'s type', () => {
 			const e = new Entry({ id: 'a', sourceId: 'cal', type: EntryType.Event, heading: 'Meeting' })
 			e.migrateTo(taskList)
 			assert.equal(e.sourceId, 'tasks')
 			assert.equal(e.type, EntryType.Task)
+		})
+
+		it('keeps the type on a source that supports both — a source holds types, it doesn\'t dictate one', () => {
+			const task = new Entry({ id: 'a', sourceId: 'tasks', type: EntryType.Task, heading: 'Todo', status: TaskStatus.Done })
+			task.migrateTo(both)
+			assert.equal(task.sourceId, 'both')
+			assert.equal(task.type, EntryType.Task)
+			assert.equal(task.status, TaskStatus.Done) // still a task, so its status stands
 		})
 
 		it('keeps a status only where it makes sense — on a task', () => {
@@ -281,6 +292,52 @@ describe('Entry', () => {
 			assert.equal(e.id, 'a')
 			assert.equal(e.uri, '/dav/a.ics')
 			assert.deepEqual(e.data, { etag: '"1"' })
+		})
+	})
+
+	// What the editor's draft type switch drives (a source holding both types — see Source.entryTypes).
+	describe('the type setter', () => {
+		it('drops the status when becoming an event — only a task has one', () => {
+			const task = new Entry({ sourceId: 's', type: EntryType.Task, heading: 'Draft', status: TaskStatus.Doing })
+			task.type = EntryType.Event
+			assert.equal(task.type, EntryType.Event)
+			assert.equal(task.status, undefined)
+		})
+
+		it('becoming a task leaves the status unset — which is "to do"', () => {
+			const event = new Entry({ sourceId: 's', type: EntryType.Event, heading: 'Draft' })
+			event.type = EntryType.Task
+			assert.equal(event.type, EntryType.Task)
+			assert.equal(event.status, undefined)
+		})
+
+		it('keeps everything else — the span and content survive the flip both ways', () => {
+			const draft = new Entry({ sourceId: 's', type: EntryType.Event, heading: 'Draft', start: at(0, 9), end: at(0, 10), reminders: [30] })
+			draft.type = EntryType.Task
+			draft.type = EntryType.Event
+			assert.equal(draft.start!.valueOf(), at(0, 9).valueOf())
+			assert.equal(draft.end!.valueOf(), at(0, 10).valueOf())
+			assert.deepEqual(draft.reminders, [30])
+		})
+	})
+
+	// The type lives behind an accessor, so a plain spread would send the backing `_type` — the member's
+	// `@converter` is what maps it onto `type`, and the API's request builder (which structure-clones,
+	// stripping every prototype) is the harshest path it takes.
+	describe('crossing the API', () => {
+		const entry = new Entry({ id: 'e1', sourceId: 's1', type: EntryType.Task, heading: 'Chore', status: TaskStatus.Doing })
+
+		it('sends the type under its public name, as a plain value', () => {
+			assert.equal(wireOf(entry).type, 'task')
+			assert.equal('_type' in wireOf(entry), false)
+		})
+
+		it('comes back as the value-object SINGLETON, so `===` and `isTask` hold', () => {
+			const revived = revive<Entry>(wireOf(entry))
+
+			assert.ok(revived instanceof Entry)
+			assert.equal(revived.type, EntryType.Task)
+			assert.equal(revived.status, TaskStatus.Doing)
 		})
 	})
 

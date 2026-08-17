@@ -2,10 +2,12 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import ICAL from 'ical.js'
 import { CalDAV } from './CalDAV.js'
-import { Entry, EntryType, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
-import { Source, SourceType } from './Source.js'
+import { Entry, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
+import { EntryType } from './EntryType.js'
+import { Source } from './Source.js'
 import { Recurrence } from './Recurrence.js'
 import { ParticipantRole, ParticipantStatus } from './Participant.js'
+import { asBrowser, wireOf } from './wire.testing.js'
 
 type DateTime = import('@3mo/date-time').DateTime
 const D = (iso: string) => new Date(iso) as unknown as DateTime
@@ -496,7 +498,7 @@ describe('CalDAV all-day serialization', () => {
 		].join('\r\n')
 
 		const sync = async (existing: Array<Entry>, data: string, etag = 'e1') => {
-			const source = new Source({ id: 'src1', integrationId: 'i1', uri: 'https://example.com/cal/', type: SourceType.Event, name: 'Cal' })
+			const source = new Source({ id: 'src1', integrationId: 'i1', uri: 'https://example.com/cal/', entryTypes: [EntryType.Event], name: 'Cal' })
 			const dav = new CalDAV({ credentials: { username: 'u', password: 'p' } })
 			const client = {
 				syncCollection: () => Promise.resolve([{ href: '/cal/gym.ics', status: 200, raw: { multistatus: { syncToken: 't2' } } }]),
@@ -575,8 +577,10 @@ describe('CalDAV all-day serialization', () => {
 	})
 
 	describe('editableCopy', () => {
-		it('keeps the identity but blanks the password — merge reads blank as "keep the stored one"', () => {
-			const copy = new CalDAV({ uri: 'https://dav/', credentials: { username: 'u', password: 'secret' }, sources: [] as any }).editableCopy()
+		// Built from what the CLIENT holds, which is what the server answered with — the password already
+		// blank (see the `@converter` on `credentials`), which `merge` then reads as "keep the stored one".
+		it('keeps the identity and the credentials as held', () => {
+			const copy = new CalDAV({ uri: 'https://dav/', credentials: { username: 'u', password: '' }, sources: [] as any }).editableCopy()
 			assert.ok(copy instanceof CalDAV)
 			assert.equal(copy.uri, 'https://dav/')
 			assert.deepEqual(copy.credentials, { username: 'u', password: '' })
@@ -612,6 +616,135 @@ describe('CalDAV all-day serialization', () => {
 			const objects = await call(client, ['a', 'b', 'c'])
 			assert.deepEqual(objects.map(o => o.url), ['a', 'c']) // 'b' dropped, sync still completes
 		})
+	})
+})
+
+// A collection is ONE source carrying the entry types it accepts — never an event/task sibling pair for
+// the same URL. What the server declares in `supported-calendar-component-set` becomes `Source.entryTypes`.
+describe('CalDAV credentials on the wire', () => {
+	const account = () => new CalDAV({ uri: 'https://example', credentials: { username: 'someone', password: 'typed' }, sources: [] as never })
+
+	it('answers with the account but a blank password — the browser only ever needs the label', () => {
+		assert.deepEqual(wireOf(account()).credentials, { username: 'someone', password: '' })
+	})
+
+	// The other direction: the connect and edit dialogs post what the user typed, and `merge` reads the
+	// blank above as "keep the stored one" — which is what lets a password round-trip it never held.
+	it('delivers the password when it is the browser asking', () => {
+		assert.deepEqual(asBrowser(() => wireOf(account())).credentials, { username: 'someone', password: 'typed' })
+	})
+
+	it('never carries a live connection', () => {
+		assert.equal('client' in wireOf(account()), false)
+	})
+})
+
+describe('CalDAV source discovery (entry types per collection)', () => {
+	const discover = (calendars: Array<{ url: string, displayName?: string, components?: Array<string> }>) => {
+		const dav = new CalDAV({ uri: 'https://dav/', credentials: { username: 'u', password: 'p' } })
+		;(dav as unknown as { client: unknown }).client = Promise.resolve({
+			fetchCalendars: () => Promise.resolve(calendars),
+			fetchCalendarUserAddresses: () => Promise.resolve([]),
+		})
+		return (dav as unknown as { fetchSources(): Promise<Array<Source>> }).fetchSources()
+	}
+
+	it('gives a collection that accepts both types ONE source holding both', async () => {
+		const sources = await discover([{ url: 'https://dav/cal/', displayName: 'Home', components: ['VEVENT', 'VTODO'] }])
+		assert.equal(sources.length, 1) // the pair this used to produce is exactly what's gone
+		assert.deepEqual(sources[0]!.entryTypes, [EntryType.Event, EntryType.Task])
+		assert.equal(sources[0]!.name, 'Home')
+	})
+
+	it('narrows the types to what the collection declares', async () => {
+		const [events] = await discover([{ url: 'https://dav/work/', components: ['VEVENT'] }])
+		assert.deepEqual(events!.entryTypes, [EntryType.Event])
+		const [tasks] = await discover([{ url: 'https://dav/todo/', components: ['VTODO'] }])
+		assert.deepEqual(tasks!.entryTypes, [EntryType.Task])
+	})
+
+	// RFC 4791 §5.2.3: an absent or empty component set means the collection accepts everything.
+	it('reads an absent or empty component set as both types', async () => {
+		for (const components of [undefined, []]) {
+			const [source] = await discover([{ url: 'https://dav/any/', components }])
+			assert.deepEqual(source!.entryTypes, [EntryType.Event, EntryType.Task])
+		}
+	})
+
+	it('drops a collection holding nothing mitra models', async () => {
+		const sources = await discover([
+			{ url: 'https://dav/journal/', components: ['VJOURNAL'] },
+			{ url: 'https://dav/cal/', components: ['VEVENT'] },
+		])
+		assert.deepEqual(sources.map(source => source.uri), ['https://dav/cal/'])
+	})
+})
+
+// One collection, one source, ONE sync pass — events and tasks arrive together. Before this it took
+// two sources watching the same URL, two sync tokens, and a cross-source guard to stop each from
+// re-ingesting the other's members; all of that is what this test replaces.
+describe('CalDAV sync ingests every type the collection holds', () => {
+	const resource = (uid: string, body: Array<string>) => [
+		'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//test//EN',
+		...body.slice(0, 1), `UID:${uid}`, 'DTSTAMP:20260101T000000Z', ...body.slice(1),
+		'END:VCALENDAR',
+	].join('\r\n')
+
+	const eventRaw = resource('u-event', [
+		'BEGIN:VEVENT', 'SUMMARY:Standup', 'DTSTART:20260706T090000Z', 'DTEND:20260706T091500Z', 'END:VEVENT',
+	])
+	const taskRaw = resource('u-task', [
+		'BEGIN:VTODO', 'SUMMARY:Buy milk', 'DTSTART:20260706T170000Z', 'DUE:20260706T180000Z',
+		'STATUS:NEEDS-ACTION', 'END:VTODO',
+	])
+
+	const sync = async () => {
+		const source = new Source({ id: 'src1', integrationId: 'i1', uri: 'https://example.com/cal/', entryTypes: [EntryType.Event, EntryType.Task], name: 'Home' })
+		const dav = new CalDAV({ credentials: { username: 'u', password: 'p' } })
+		let syncCollectionCalls = 0
+		;(dav as unknown as { client: unknown }).client = Promise.resolve({
+			syncCollection: () => {
+				syncCollectionCalls++
+				return Promise.resolve([
+					{ href: '/cal/standup.ics', status: 200, raw: { multistatus: { syncToken: 't2' } } },
+					{ href: '/cal/milk.ics', status: 200 },
+				])
+			},
+			fetchCalendarObjects: () => Promise.resolve([
+				{ url: 'https://example.com/cal/standup.ics', etag: 'e1', data: eventRaw },
+				{ url: 'https://example.com/cal/milk.ics', etag: 'e2', data: taskRaw },
+			]),
+		})
+		const em = {
+			persisted: new Array<Entry>(),
+			removed: new Array<Entry>(),
+			find: () => Promise.resolve([]),
+			findOne: () => Promise.resolve(null),
+			persist(entry: Entry) { this.persisted.push(entry) },
+			remove(entry: Entry) { this.removed.push(entry) },
+		}
+		const changed = await (dav as unknown as { syncSourceEntries(em: unknown, source: Source): Promise<boolean> }).syncSourceEntries(em, source)
+		return { em, changed, source, syncCollectionCalls }
+	}
+
+	it('files a VEVENT and a VTODO of the same collection as two rows of the right types', async () => {
+		const { em, changed } = await sync()
+		assert.equal(changed, true)
+		assert.deepEqual(em.persisted.map(entry => [entry.heading, entry.type]), [
+			['Standup', EntryType.Event],
+			['Buy milk', EntryType.Task],
+		])
+		// The task's own mapping still applies: DUE is its end, STATUS its state.
+		const task = em.persisted.find(entry => entry.type === EntryType.Task)!
+		assert.equal(task.end?.valueOf(), new Date('2026-07-06T18:00:00Z').getTime())
+		assert.equal(task.status, TaskStatus.ToDo)
+		assert.equal(em.removed.length, 0) // neither is a stranger to this source anymore
+	})
+
+	it('walks the collection once and keeps ONE sync token', async () => {
+		const { source, syncCollectionCalls } = await sync()
+		assert.equal(syncCollectionCalls, 1)
+		assert.deepEqual(source.syncState, { syncToken: 't2' })
 	})
 })
 
@@ -739,7 +872,7 @@ describe('CalDAV series created in mitra survive DST (the reported bug)', () => 
 	// syncSourceEntries) and the expansion fell to the fixed-UTC path that drifts an hour across the flip.
 	// Authoring TZID + a generated VTIMEZONE keeps the zone through the create → sync round trip, so the
 	// expansion stays on the wall-clock path (proven DST-safe in occurrences.test.ts).
-	const source = () => new Source({ id: 's', integrationId: 'i', uri: 'https://example.com/cal/', type: SourceType.Event, name: 'Cal' })
+	const source = () => new Source({ id: 's', integrationId: 'i', uri: 'https://example.com/cal/', entryTypes: [EntryType.Event], name: 'Cal' })
 
 	const stubbedCreate = () => {
 		const dav = new CalDAV({ credentials: { username: 'u', password: 'p' } })
@@ -796,7 +929,7 @@ describe('CalDAV zoned reads resolve through Temporal, not the resource', () => 
 	// itself ({@link CalDAV.instantFrom}) and the resource's VTIMEZONE is merely a courtesy for OTHER
 	// clients — never a correctness dependency of our own pipeline.
 	const uri = 'https://example.com/cal/z.ics'
-	const source = () => new Source({ id: 's', integrationId: 'i', uri: 'https://example.com/cal/', type: SourceType.Event, name: 'Cal' })
+	const source = () => new Source({ id: 's', integrationId: 'i', uri: 'https://example.com/cal/', entryTypes: [EntryType.Event], name: 'Cal' })
 
 	const sync = async (raw: string, existing: Array<Entry> = [], etag = 'e1', syncToken?: string) => {
 		const src = source()

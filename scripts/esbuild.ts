@@ -37,7 +37,18 @@ function resolveCommit() {
 	}
 }
 
-export const define = { mitra: JSON.stringify({ version: resolveVersion(), commit: resolveCommit() }) }
+const identity = { version: resolveVersion(), commit: resolveCommit() }
+
+/**
+ * The `mitra` object each bundle is built with. `runtime` is the one field that differs between them,
+ * and it is a BUILD fact rather than something detected at run time: which of these bundles you are is
+ * decided here and nowhere else, so nothing a process can be made to contain — a stray `window` global,
+ * a shimming dependency — can change the answer.
+ */
+const defineFor = (runtime: 'server' | 'browser') => ({ mitra: JSON.stringify({ ...identity, runtime }) })
+
+/** Node is the server: the backend bundle, the migrations CLI, and the test bundles all run there. */
+export const define = defineFor('server')
 
 /** Injected into every bundle (backend, frontend, tests) — see the file's comment. */
 export const inject = ['scripts/injectTemporalPolyfill.ts']
@@ -74,7 +85,7 @@ export const frontendOptions: BuildOptions = {
 	outdir: distDir,
 	loader: { '.svg': 'text' },
 	inject,
-	define,
+	define: defineFor('browser'),
 }
 
 /** The service worker (push notifications) — its own tiny classic-script bundle: a worker registered
@@ -85,6 +96,9 @@ export const serviceWorkerOptions: BuildOptions = {
 	bundle: true,
 	format: 'iife',
 	legalComments: 'none',
+	// It needs no polyfills, but it IS a browser: should shared code ever reach it, it must not mistake
+	// itself for the server.
+	define: defineFor('browser'),
 }
 
 /** The single-page shell that boots the bundled frontend, plus the PWA statics — every icon, the web

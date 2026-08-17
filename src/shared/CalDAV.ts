@@ -1,13 +1,15 @@
 import { type EntityManager } from '@mikro-orm/sqlite'
+import { converter } from '@a11d/converter'
 import { equals } from '@a11d/equals'
 import '@a11d/bidirectional-map' // registers the global BidirectionalMap the iCalendar mappings below use
 import { createDAVClient } from 'tsdav'
 import ICAL from 'ical.js'
 import { model } from './model.js'
 import { buildVTimezone } from './vtimezone.js'
-import { Source, SourceType } from './Source.js'
-import { Integration, integration } from './Integration.js'
-import { Entry, EntryType, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
+import { Source } from './Source.js'
+import { Integration, integration, withheld } from './Integration.js'
+import { Entry, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
+import { EntryType } from './EntryType.js'
 import { Recurrence } from './Recurrence.js'
 import { calendarDateOf, midnightOf } from './calendarDate.js'
 import { Participants, ParticipantRole, ParticipantStatus, type Participant } from './Participant.js'
@@ -30,6 +32,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	static readonly label: string = 'CalDAV'
 	static readonly logo: string = 'caldav'
 	static readonly description: string = 'Nextcloud, Fastmail, Radicale — any CalDAV server'
+
+	/** The password authorizes the account; the username identifies it. */
+	@converter(withheld<CalDAVCredentials>('password')) override credentials!: CalDAVCredentials
 
 	constructor(init?: Partial<CalDAV>) {
 		super()
@@ -57,11 +62,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
-	protected override get editableCredentials(): CalDAVCredentials {
-		return { username: this.credentials.username, password: '' }
-	}
-
-	private client?: ReturnType<typeof createDAVClient>
+	/** Transient: a live connection, not state. `out: {}` is how a member says "never serialized" — the
+	 * API's shape is the domain's, and a socket is not part of it. */
+	@converter({ out: {} }) private client?: ReturnType<typeof createDAVClient>
 
 	/** The tsdav client configuration — the one thing a differently-authenticated provider
 	 * (see GoogleCalendar's OAuth) swaps out; everything else about the protocol is shared. */
@@ -117,22 +120,23 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		await this.discoverAddresses()
 		const calendars = await client.fetchCalendars()
 		logger.debug(`Discovered ${calendars.length} calendar(s) at ${this.uri}`)
-		return calendars.flatMap(cal => {
+		// ONE source per collection, carrying the TYPES it accepts — never an event/task sibling pair for
+		// the same URL (which cost two sync passes, two tokens and a cross-source duplicate guard, all to
+		// re-split what the server keeps together).
+		return calendars.map(cal => {
 			const name = typeof cal.displayName === 'string' ? cal.displayName : 'Untitled'
 			const color = typeof cal.calendarColor === 'string' ? cal.calendarColor : Color.get(cal.url || name).value
 			// Per RFC 4791 §5.2.3 an absent/empty supported-calendar-component-set means the
 			// collection accepts every component type — so an empty list supports both.
 			const components = cal.components ?? []
 			const supports = (component: string) => components.length === 0 || components.includes(component)
-			const sources: Array<Source> = []
-			if (supports('VEVENT')) {
-				sources.push(new Source({ uri: cal.url, type: SourceType.Event, name, color, enabled: false }))
-			}
-			if (supports('VTODO')) {
-				sources.push(new Source({ uri: cal.url, type: SourceType.Task, name, color, enabled: false }))
-			}
-			return sources
-		})
+			const types = [
+				...supports('VEVENT') ? [EntryType.Event] : [],
+				...supports('VTODO') ? [EntryType.Task] : [],
+			]
+			return new Source({ uri: cal.url, entryTypes: types, name, color, enabled: false })
+		// A collection that accepts neither (a VJOURNAL-only one) holds nothing mitra models — drop it.
+		}).filter(source => source.entryTypes.length > 0)
 	}
 
 	/** Build a DTSTART/DTEND/DUE/EXDATE value. All-day entries are written date-only (`VALUE=DATE`) —
@@ -593,10 +597,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			}
 		}
 
-		// This source surfaces only one of the collection's component types; the sibling source
-		// (sharing the same calendar URL) owns the other.
-		const entryType = source.type === SourceType.Task ? EntryType.Task : EntryType.Event
-
 		// Report whether any actual entry changed. The sync-token bookkeeping must NOT count, or the
 		// background sync would notify clients every cycle (clobbering in-progress edits).
 		let changed = false
@@ -609,15 +609,10 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			}
 		}
 
-		// The sibling source (events + tasks share one collection URL) belongs to the SAME integration —
-		// scoped so another user's (or account's) identical member URLs never block ingestion here.
-		const siblingSourceIds = (await em.find(Source, { integrationId: source.integrationId }))
-			.map(sibling => sibling.id)
-			.filter(id => id !== source.id)
-
-		// 2. Handle changes/additions — keep only the components this source represents, skipping the
-		// sibling's (and components we don't model, e.g. VJOURNAL) so we never persist an entry
-		// without the required `uri`, which would otherwise abort the whole sync's flush.
+		// 2. Handle changes/additions — every component the collection can hold lands in this one source
+		// (its `entryTypes` only says what may be CREATED here); components we don't model (VJOURNAL &
+		// co) are skipped, so we never persist an entry without the required `uri`, which would otherwise
+		// abort the whole sync's flush.
 		for (const obj of changedObjects) {
 			if (!obj.data) {
 				continue
@@ -627,8 +622,11 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			// components: the series master plus one override VEVENT per edited occurrence — that's how
 			// Google (and every compliant server) ships single-occurrence edits. Each component becomes
 			// its own row, identified within the resource by its RECURRENCE-ID (the master has none).
+			// Both modelled types are read; RFC 4791 §4.1 forbids MIXING component types within one
+			// resource, so a resource's rows are always single-type and the (source, uri, recurrenceId)
+			// identity below stays unambiguous.
 			const comp = new ICAL.Component(ICAL.parse(obj.data))
-			const components = comp.getAllSubcomponents(entryType === EntryType.Task ? 'vtodo' : 'vevent')
+			const components = ['vevent', 'vtodo'].flatMap(name => comp.getAllSubcomponents(name))
 			if (!components.length) {
 				continue
 			}
@@ -641,14 +639,10 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				continue
 			}
 
-			// A sibling source of the same calendar may already own this member — don't re-file it
-			// here as a cross-source duplicate.
-			if (!rows.length && siblingSourceIds.length && await em.findOne(Entry, { uri: normalizedObjUrl, sourceId: { $in: siblingSourceIds } })) {
-				continue
-			}
-
 			const kept = new Set<Entry>()
 			for (const component of components) {
+				// The component IS the type — VTODO or VEVENT, per resource (see above).
+				const entryType = component.name === 'vtodo' ? EntryType.Task : EntryType.Event
 				// Recurrence: a master carries an RRULE; a single edited occurrence is its own component
 				// carrying a RECURRENCE-ID and the shared UID. Occurrences are expanded later, on read.
 				const recurrence = CalDAV.recurrenceProps(component)
@@ -670,7 +664,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				// Each property's own TZID rides into the decode ({@link instantFrom}), so a zoned value
 				// resolves through Temporal — VTIMEZONE or not; an end without its own form follows the start's.
 				const tzidOf = (name: string) => component.getFirstProperty(name)?.getParameter('tzid')?.toString()
-				if (entryType === EntryType.Event) {
+				if (entryType.isEvent) {
 					const event = new ICAL.Event(component)
 					entry.heading = event.summary || 'Untitled Event'
 					entry.description = event.description || ''
@@ -977,9 +971,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		comp.updatePropertyWithValue('version', '2.0')
 
 		// A task is a VTODO (its end is DUE, completion is STATUS); anything else a VEVENT (end is DTEND).
-		// Writing the matching component is what keeps the sibling source (events + tasks share one
-		// calendar URL) from ingesting it as a duplicate.
-		const isTask = entry.type === EntryType.Task
+		// The ENTRY's type decides, not the collection's — one collection may accept both (see
+		// Source.entryTypes), and the route rejects a type the collection can't hold before we get here.
+		const isTask = entry.type.isTask
 		const component = new ICAL.Component(isTask ? 'vtodo' : 'vevent')
 		component.updatePropertyWithValue('uid', uid)
 		component.updatePropertyWithValue('dtstamp', ICAL.Time.now())

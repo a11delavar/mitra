@@ -8,26 +8,41 @@ const logger = createLogger('Database')
  * Brings the database up to the current schema by applying pending migrations — the non-dev
  * counterpart of the `orm.schema.update()` sync that dev boots use (see orm.ts).
  *
- * Instances that predate migrations have the tables but no migrations log. Those are baselined once:
- * a final schema sync brings whatever release they were on — even one several versions behind — up to
- * the current entities, and every shipped migration is recorded as executed. From then on, only
- * migrations touch the schema.
+ * Instances that predate migrations have the tables but no migrations log. Their schema was built by
+ * a release's `schema.update()`, and the initial migration IS that schema (generated from the last
+ * pre-migrations entities) — so it is recorded as applied without running, and every migration after
+ * it replays for real. That replay is the point: later migrations carry DATA transformations (merging
+ * source-type sibling rows, say) that a wholesale schema sync would silently skip.
+ *
+ * Only a schema too old for that replay (a straggler several releases behind, missing columns the
+ * migrations touch) falls back to one final schema sync with everything recorded as applied: the
+ * instance boots and the schema is right, but the skipped transformations may leave artifacts —
+ * re-importing the affected integrations is the recovery, per the project's standing convention.
  */
 export async function migrate(orm: MikroORM) {
-	if (await isPreMigrationsDatabase(orm)) {
-		await orm.schema.update()
-		const storage = orm.migrator.getStorage()
-		for (const migration of migrations) {
-			await storage.logMigration({ name: migration.name })
-		}
-		logger.info(`Baselined pre-migrations database: schema synchronized, ${migrations.length} migration(s) recorded as already applied`)
+	const legacy = await isPreMigrationsDatabase(orm)
+	if (legacy) {
+		await orm.migrator.getStorage().logMigration({ name: migrations[0]!.name })
+		logger.info('Baselined pre-migrations database: initial migration recorded as already applied')
 	}
 
-	const applied = await orm.migrator.up()
-	if (applied.length > 0) {
-		logger.info(`Applied ${applied.length} migration(s): ${applied.map(migration => migration.name).join(', ')}`)
-	} else {
-		logger.debug('Database schema is up to date')
+	try {
+		const applied = await orm.migrator.up()
+		if (applied.length > 0) {
+			logger.info(`Applied ${applied.length} migration(s): ${applied.map(migration => migration.name).join(', ')}`)
+		} else {
+			logger.debug('Database schema is up to date')
+		}
+	} catch (error) {
+		if (!legacy) {
+			throw error // a failing migration on a migrated instance is a bug to surface, never to paper over
+		}
+		logger.warn(`Replaying migrations on this pre-migrations database failed (${error instanceof Error ? error.message : error}) — its schema predates the initial migration. Falling back to a wholesale schema sync; if sources look duplicated or stale afterwards, re-import the affected integrations.`)
+		await orm.schema.update()
+		const storage = orm.migrator.getStorage()
+		for (const migration of migrations.slice(1)) {
+			await storage.logMigration({ name: migration.name })
+		}
 	}
 }
 

@@ -1,5 +1,5 @@
 import { component, html, property, Component, css, state, bind, queryConnectedInstances, eventListener, unsafeCSS } from '@a11d/lit'
-import { EntryType, TaskStatus } from 'shared'
+import { TaskStatus } from 'shared'
 import { type EntrySegment } from './EntrySegment.js'
 import { contrastColor } from './components/contrastColor.js'
 import { getSource } from './Api.js'
@@ -75,7 +75,7 @@ export class EntrySegmentComponent extends Component {
 		// A live resize and a move's ghost float above their cluster; a move's origin dims in place.
 		this.toggleAttribute('dragging', this.store.isDragging(entry) || this.store.isPreview(entry))
 		this.toggleAttribute('drag-source', this.store.isDragSource(entry))
-		if (entry.type === EntryType.Task) {
+		if (entry.type.isTask) {
 			this.setAttribute('data-status', entry.status ?? 'todo')
 		} else {
 			this.removeAttribute('data-status')
@@ -490,9 +490,9 @@ export class EntrySegmentComponent extends Component {
 		content — an all-day event has neither mark nor time, and its title is the first line. */
 		return html`
 			<div class="heading">
-				${this.segment.entry.type !== EntryType.Task && this.segment.allDay ? html.nothing : html`
+				${!this.segment.entry.type.isTask && this.segment.allDay ? html.nothing : html`
 					<div class="header">
-						${this.segment.entry.type !== EntryType.Task ? html.nothing : html`
+						${!this.segment.entry.type.isTask ? html.nothing : html`
 							<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
 						`}
 						${this.segment.allDay ? html.nothing : html`

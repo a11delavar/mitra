@@ -1,7 +1,8 @@
 import { type createDAVClient } from 'tsdav'
+import { converter } from '@a11d/converter'
 import { model } from './model.js'
 import { CalDAV } from './CalDAV.js'
-import { integration } from './Integration.js'
+import { integration, withheld } from './Integration.js'
 
 export interface GoogleCalendarCredentials {
 	/** The Google account's email — the integration's label (what the sidebar shows as its title). */
@@ -41,7 +42,8 @@ export class GoogleCalendar extends CalDAV {
 		return new URL(`${encodeURIComponent(email)}/`, GoogleCalendar.serverUrl).href
 	}
 
-	declare credentials: GoogleCalendarCredentials
+	/** The OAuth grant authorizes the account; the e-mail identifies it. */
+	@converter(withheld<GoogleCalendarCredentials>('refreshToken')) override credentials!: GoogleCalendarCredentials
 
 	constructor(init?: Partial<GoogleCalendar>) {
 		super()
@@ -58,10 +60,6 @@ export class GoogleCalendar extends CalDAV {
 	/** Nothing is form-editable: the account and its grant come exclusively from the OAuth consent
 	 * flow (a reconnect goes through it again), so an "edit" only re-selects sources. */
 	override merge(_incoming: this) { }
-
-	protected override get editableCredentials(): GoogleCalendarCredentials {
-		return { username: this.credentials.username, refreshToken: '' }
-	}
 
 	/** Google enforces per-user API quotas (403/429 beyond them). The incremental sync-token REPORTs
 	 * are cheap, but the synchronizer's every-cycle cadence would still poll needlessly hard — and each
@@ -91,9 +89,4 @@ export class GoogleCalendar extends CalDAV {
 		}
 	}
 
-	/** The refresh token is a server-side secret: what the API serves (and the dialog round-trips)
-	 * carries only the account label. `merge` ignores incoming credentials anyway. */
-	toJSON() {
-		return { ...this, client: undefined, credentials: { username: this.credentials.username } }
-	}
 }

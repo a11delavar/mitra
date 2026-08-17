@@ -1,17 +1,17 @@
 import { Component, component, html, css, property } from '@a11d/lit'
-import { SourceType, type Source } from 'shared'
+import { EntryType, type Source } from 'shared'
 import { contrastColor } from './contrastColor.js'
 
 /**
- * The one icon that stands for a source, wherever a source is named: its KIND — events or tasks — drawn
- * in the source's own colour. There is deliberately no separate colour chip beside it. Two icons for one
+ * The one icon that stands for a source, wherever a source is named: what it can HOLD — a calendar, or
+ * a list for a tasks-only source — drawn in the source's own colour. There is deliberately no separate colour chip beside it. Two icons for one
  * thing made them compete for the same rail, pushed every label deep to the right, and — because each
  * place that named a source paired them its own way — had already drifted into two different-looking
  * versions of the same idea. Anything that names a source uses THIS, so that can't happen again.
  *
  * One place can't: `<selectedcontent>`, which draws a customizable `<select>`'s chosen option by CLONING
  * that option's DOM — and a clone carries no JS properties, so an icon inside an `<option>` renders
- * kindless and colourless there. Whoever needs a closed picker to show the icon renders its own instead
+ * blank and colourless there. Whoever needs a closed picker to show the icon renders its own instead
  * of relying on the clone (see the entry popover's source row).
  */
 @component('mitra-source-icon')
@@ -60,7 +60,20 @@ export class SourceIcon extends Component {
 		// The colour reaches CSS as a custom property so the glyph and the outline read from one value,
 		// rather than each caller styling the icon itself.
 		this.style.setProperty('--mitra-source-icon-color', this.source?.color ?? '')
-		return html`<mitra-icon icon=${this.source?.type === SourceType.Task ? 'list-todo' : 'calendar'}></mitra-icon>`
+		const getIcon = () => {
+			switch (true) {
+				case this.source?.supportsEntryType(EntryType.Event) && this.source?.supportsEntryType(EntryType.Task):
+					return 'calendar-check'
+				case this.source?.supportsEntryType(EntryType.Task):
+					return 'list-todo'
+				default:
+					return 'calendar'
+			}
+		}
+		// A calendar wherever the source can hold events — including one that holds tasks TOO, which is
+		// the common CalDAV collection: the glyph says what the row is, and "a calendar you can also put
+		// tasks in" is a calendar. The list glyph is reserved for a source that can hold NOTHING else.
+		return html`<mitra-icon icon=${getIcon()}></mitra-icon>`
 	}
 }
 

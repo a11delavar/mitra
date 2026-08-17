@@ -1,12 +1,14 @@
 import { describe, it, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { GoogleCalendar } from './GoogleCalendar.js'
-import { Source, SourceType } from './Source.js'
+import { Source } from './Source.js'
+import { EntryType } from './EntryType.js'
+import { asBrowser, wireOf } from './wire.testing.js'
 
 const account = () => new GoogleCalendar({
 	uri: GoogleCalendar.uriFor('someone@gmail.com'),
 	credentials: { username: 'someone@gmail.com', refreshToken: 'grant-1' },
-	sources: [new Source({ uri: 'https://g/cal/events/', type: SourceType.Event, name: 'Personal', enabled: true })] as any,
+	sources: [new Source({ uri: 'https://g/cal/events/', entryTypes: [EntryType.Event], name: 'Personal', enabled: true })] as any,
 })
 
 describe('GoogleCalendar', () => {
@@ -25,11 +27,23 @@ describe('GoogleCalendar', () => {
 		})
 	})
 
-	describe('toJSON', () => {
-		it('serves the account label but never the refresh token', () => {
-			const json = JSON.parse(JSON.stringify(account()))
+	describe('crossing the API', () => {
+		it('answers with the account label but never the refresh token', () => {
+			const json = wireOf(account())
+
 			assert.equal(json['@type'], 'GoogleCalendar')
-			assert.deepEqual(json.credentials, { username: 'someone@gmail.com' })
+			assert.deepEqual(json.credentials, { username: 'someone@gmail.com', refreshToken: '' })
+		})
+
+		// Withholding is a rule about DIRECTION, not about the field: a request still carries whatever the
+		// sender holds. Moot for Google in practice — the consent flow lands on the backend, so a browser
+		// never has a grant to send — but the mechanism is the same one Notion's connect depends on.
+		it('withholds nothing when it is the browser asking', () => {
+			assert.equal(asBrowser(() => wireOf(account())).credentials.refreshToken, 'grant-1')
+		})
+
+		it('keeps a live connection off the wire', () => {
+			assert.equal('client' in wireOf(account()), false)
 		})
 	})
 
@@ -40,8 +54,12 @@ describe('GoogleCalendar', () => {
 	})
 
 	describe('editableCopy', () => {
-		it('is a polymorphic copy for the edit form: same provider class, grant blanked, sources plain', () => {
-			const copy = account().editableCopy()
+		it('is a polymorphic copy for the edit form: same provider class, credentials as held, sources plain', () => {
+			// As the client holds it — the grant already withheld by the server that answered (see the
+			// `@converter` on `credentials`); this copy only has to preserve it.
+			const held = new GoogleCalendar({ ...account(), credentials: { username: 'someone@gmail.com', refreshToken: '' } })
+			const copy = held.editableCopy()
+
 			assert.ok(copy instanceof GoogleCalendar) // the dialog round-trips the right '@type' without knowing providers
 			assert.equal(copy.uri, GoogleCalendar.uriFor('someone@gmail.com'))
 			assert.deepEqual(copy.credentials, { username: 'someone@gmail.com', refreshToken: '' })

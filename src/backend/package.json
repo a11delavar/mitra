@@ -7,8 +7,8 @@
 	"type": "module",
 	"dependencies": {
 		"@3mo/date-time": "0.10.x",
-		"@a11d/api": "0.4.x",
-		"@a11d/api-model-value-constructor": "x",
+		"@a11d/api": "0.5.x",
+		"@a11d/api-model-value-constructor": "1.2.x",
 		"@mikro-orm/core": "x",
 		"@mikro-orm/migrations": "x",
 		"@mikro-orm/reflection": "x",

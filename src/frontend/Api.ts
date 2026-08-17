@@ -162,9 +162,14 @@ export function getPrimarySource(): Source | undefined {
 }
 
 export function createEvent(entry: Entry) {
-	// Stamp the zone the times were authored in — recurrence must expand at THIS zone's wall clock
-	// ("every Monday 09:00 Berlin" survives DST), and the future zone selector edits this field.
-	return Api.post<Entry>(`/entries?tz=${tz()}`, { ...entry, timeZone: entry.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone })
+	// The entry travels as ITSELF — `@a11d/api` deconstructs it on the way out, which is what maps the
+	// members behind accessors onto their wire names (see Entry._type). A spread here would flatten it
+	// into a plain object first and send the backing fields.
+	return Api.post<Entry>(`/entries?tz=${tz()}`, Object.assign(entry.clone(), {
+		// Stamp the zone the times were authored in — recurrence must expand at THIS zone's wall clock
+		// ("every Monday 09:00 Berlin" survives DST), and the future zone selector edits this field.
+		timeZone: entry.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+	}))
 }
 
 export async function fetchIntegrations() {
@@ -301,9 +306,14 @@ export function updateEvent(entry: Entry) {
 			...(entry.recurrence !== undefined ? { recurrence: entry.recurrence } : {}),
 		})
 	}
-	// The full entry, with absent tri-state fields sent as an explicit `null`: JSON drops undefined keys
-	// and the backend treats absence as "keep" — only a null can express a removal.
-	return Api.put<Entry>(`/entries/${entry.id}?tz=${tz()}`, { ...entry, recurrence: entry.recurrence ?? null, reminders: entry.reminders ?? null, participants: entry.participants ?? null })
+	// The full entry as itself (like createEvent), with absent tri-state fields sent as an explicit
+	// `null`: JSON drops undefined keys and the backend treats absence as "keep" — only a null can
+	// express a removal.
+	return Api.put<Entry>(`/entries/${entry.id}?tz=${tz()}`, Object.assign(entry.clone(), {
+		recurrence: entry.recurrence ?? null,
+		reminders: entry.reminders ?? null,
+		participants: entry.participants ?? null,
+	}))
 }
 
 export function deleteEvent(id: string) {

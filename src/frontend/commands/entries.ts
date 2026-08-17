@@ -1,5 +1,5 @@
 import { DateTime } from '@3mo/date-time'
-import { Entry, EntryType, SourceType, DEFAULT_REMINDER_MINUTES } from 'shared'
+import { Entry, DEFAULT_REMINDER_MINUTES } from 'shared'
 import { getPrimarySource, getCapabilities } from '../Api.js'
 import { EntryStore } from '../EntryStore.js'
 import { command, Command } from './Command.js'
@@ -28,7 +28,8 @@ export class CreateEntry extends Command {
 		calendar.navigatingDate = now
 		EntryStore.upsertDraft(new Entry({
 			sourceId: source.id,
-			type: source.type === SourceType.Task ? EntryType.Task : EntryType.Event,
+			// An event unless the target can only hold tasks — the same rule the create gestures follow.
+			type: source.defaultEntryType,
 			heading: '',
 			start,
 			end: start.add({ hours: 1 }),

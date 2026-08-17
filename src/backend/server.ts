@@ -55,10 +55,11 @@ app.use((req, res, next) => {
 	})
 	next()
 })
-// Rehydrate `@type`-tagged JSON (written by the shared models' `toJSON`) back into domain instances,
-// mirroring how `@a11d/api` revives responses on the client. The reviver runs depth-first, so nested
-// models (e.g. a source within an integration) are reconstructed before their parent — routes then
-// receive real entities, with their methods and getters, instead of inert plain objects.
+// Rehydrate `@type`-tagged JSON back into domain instances, mirroring how `@a11d/api` revives
+// responses on the client — the inbound half of the boundary, whose outbound half every model carries
+// itself (see shared/model.ts). The reviver runs depth-first, so nested models (e.g. a source within
+// an integration) are reconstructed before their parent — routes then receive real entities, with
+// their methods and getters, instead of inert plain objects.
 const modelConstructor = new ModelValueConstructor()
 app.use(express.json({ reviver: (_key, value) => modelConstructor.shallConstruct(value) ? modelConstructor.construct(value) : value }))
 // The sign-in/out endpoints live OUTSIDE the auth wall (they are how one gets past it) and exist

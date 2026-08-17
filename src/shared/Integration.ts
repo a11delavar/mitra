@@ -1,8 +1,37 @@
+import { type Converter } from '@a11d/converter'
 import { entity, primaryKey, property, manyToOne, oneToMany, unique, Collection } from './orm.js'
 import { User } from './User.js'
 import { Source } from './Source.js'
 import { Entry } from './Entry.js'
 import { FlushMode, type EntityManager } from '@mikro-orm/core'
+
+/**
+ * Converter options for a provider's own `credentials`, naming the fields that AUTHORIZE the account
+ * rather than identify it — a CalDAV password, a Notion token, a Google refresh token. Each provider
+ * applies this to its own declaration, so one whose shape looks nothing like the others simply names
+ * its own fields, and one with no secret at all declares nothing.
+ *
+ * Only a RESPONSE withholds them; a REQUEST carries them untouched. Deconstruction happens whenever a
+ * value leaves a runtime and cannot tell the two apart — but it never has to, because each runtime only
+ * sends one way: the browser asks, the server answers. That is what lets a connect deliver the very
+ * secret it exists to deliver, while nothing authorizing ever comes back out.
+ *
+ * Which end this is comes from the BUILD (`mitra.runtime`, baked per bundle in scripts/esbuild.ts), not
+ * from anything detected at run time: sniffing for a `window` would answer the same in practice, but it
+ * asks what the process CONTAINS — and a process can be made to contain anything — where this asks what
+ * the bundle IS, settled before it ever runs.
+ *
+ * Blanked rather than dropped: that is the shape {@link Integration.merge} reads as "keep the stored
+ * one", and the shape the edit form binds to.
+ */
+export function withheld<TCredentials extends Record<string, any>>(...secrets: Array<keyof TCredentials & string>): Converter<TCredentials, TCredentials> {
+	return {
+		deconstruct: credentials => mitra.runtime !== 'server' ? credentials : {
+			...credentials,
+			...Object.fromEntries(secrets.map(secret => [secret, ''])),
+		},
+	}
+}
 
 @entity({ abstract: true, discriminatorColumn: 'type' })
 @unique({ properties: ['userId', 'uri'] })
@@ -14,6 +43,8 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	@property({ type: 'string', nullable: true }) uri?: string
 
 	@property({ type: 'string' }) type!: string
+
+	/** A provider whose credentials carry a secret redeclares this with its own {@link withheld}. */
 	@property({ type: 'json' }) credentials: TCredentials = {} as TCredentials
 
 	/** Manual sidebar position among the user's integrations (see PUT /integrations/order and
@@ -97,9 +128,9 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	abstract merge(incoming: this): void
 
 	/**
-	 * A transient copy for the client-side edit form — the mirror image of {@link merge}: same
-	 * identity and uri, credentials as the form should see them (see {@link editableCredentials}),
-	 * and sources as a plain array (never a live ORM Collection) so the copy stays
+	 * A transient copy for the client-side edit form — the mirror image of {@link merge}: same identity
+	 * and uri, the credentials as held (already stripped of secrets by the server that sent them — see
+	 * {@link withheld}), and sources as a plain array (never a live ORM Collection) so the copy stays
 	 * JSON-serializable when sent to the API — a Collection holds a circular owner reference.
 	 */
 	editableCopy(): this {
@@ -107,15 +138,9 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		return new constructor({
 			id: this.id,
 			uri: this.uri,
-			credentials: this.editableCredentials,
-			sources: [...this.sources].map(source => new Source({ uri: source.uri, type: source.type, name: source.name, enabled: source.enabled })) as any,
+			credentials: { ...this.credentials },
+			sources: [...this.sources].map(source => new Source({ uri: source.uri, entryTypes: source.entryTypes, name: source.name, enabled: source.enabled })) as any,
 		})
-	}
-
-	/** The credentials as the edit form should see them: identifying fields kept, secrets blanked —
-	 * `merge` treats a blank secret as "keep the stored one", so the form round-trips safely. */
-	protected get editableCredentials(): TCredentials {
-		return { ...this.credentials }
 	}
 
 	/**
@@ -151,17 +176,17 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		}
 
 		const existing = await em.find(Source, { integrationId: this.id })
-		const existingByKey = new Map(existing.map(source => [source.key, source]))
-		const remoteKeys = new Set(remote.map(source => source.key))
+		const existingByKey = new Map(existing.map(source => [source.uri, source]))
+		const remoteKeys = new Set(remote.map(source => source.uri))
 
 		for (const source of existing) {
-			if (!remoteKeys.has(source.key)) {
+			if (!remoteKeys.has(source.uri)) {
 				em.remove(source)
 			}
 		}
 
 		return remote.map(source => {
-			const match = existingByKey.get(source.key)
+			const match = existingByKey.get(source.uri)
 			if (!match) {
 				source.integrationId = this.id
 				// Record the provider's name so a later reconcile can tell a REMOTE rename apart from a
@@ -169,6 +194,12 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 				source.remoteName = source.name
 				em.persist(source)
 				return source
+			}
+			// The entry types a source accepts are provider truth, never user-edited (unlike `name`), so
+			// they simply refresh: a collection whose supported-component-set changed server-side (tasks
+			// enabled on a calendar) offers that type from the next reconcile on.
+			if (source.entryTypes.length) {
+				match.entryTypes = source.entryTypes
 			}
 			// Follow a REMOTE rename, but never clobber a LOCAL one. `remoteName` is the provider's name
 			// as of the last reconcile.
@@ -246,9 +277,9 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 
 		// `incoming` is a client DTO, not a rehydrated entity (`@a11d/api` structure-clones the body, so
 		// its sources are plain objects with no `key` getter) — key them via the static, not `source.key`.
-		const enabledKeys = new Set([...(incoming.sources ?? [])].filter(source => source.enabled).map(source => Source.keyOf(source)))
+		const enabledKeys = new Set([...(incoming.sources ?? [])].filter(source => source.enabled).map(source => source.uri))
 		for (const source of sources) {
-			source.enabled = enabledKeys.has(source.key)
+			source.enabled = enabledKeys.has(source.uri)
 		}
 		await em.flush()
 
