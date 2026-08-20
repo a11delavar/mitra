@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { Entry, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
+import { Entry, TaskStatus, Transparency, Visibility, FLOATING_TIME_ZONE } from './Entry.js'
 import { EntryType } from './EntryType.js'
 import { ParticipantRole } from './Participant.js'
 import { Source } from './Source.js'
@@ -250,6 +250,14 @@ describe('Entry', () => {
 			assert.equal(a.editEquals(b), true)
 		})
 
+		it('counts the free/busy contribution and the visibility as editable content', () => {
+			assert.equal(base().editEquals(new Entry({ ...base(), transparency: Transparency.Free })), false)
+			assert.equal(base().editEquals(new Entry({ ...base(), visibility: Visibility.Private })), false)
+			// An entry that names no CLASS and one explicitly reset to the calendar's default are the
+			// same entry — `null` IS the unset value here, so a save must not see a change (see Entry).
+			assert.equal(base().editEquals(new Entry({ ...base(), visibility: null })), true)
+		})
+
 		it('compares reminders by value', () => {
 			assert.equal(new Entry({ ...base(), reminders: [10, 30] }).editEquals(new Entry({ ...base(), reminders: [10, 30] })), true)
 			assert.equal(new Entry({ ...base(), reminders: [10, 30] }).editEquals(new Entry({ ...base(), reminders: [10] })), false)
@@ -309,6 +317,22 @@ describe('Entry', () => {
 			event.type = EntryType.Task
 			assert.equal(event.type, EntryType.Task)
 			assert.equal(event.status, undefined)
+		})
+
+		it('drops the free/busy contribution when becoming a task — the mirror image of the status', () => {
+			const event = new Entry({ sourceId: 's', type: EntryType.Event, heading: 'Draft', transparency: Transparency.Free })
+			event.type = EntryType.Task
+			// `null`, never `undefined`: the empty value has to be the one the database hydrates, or a
+			// synced row would compare unequal to itself (see Entry.transparency).
+			assert.equal(event.transparency, null)
+		})
+
+		it('keeps the visibility across the flip both ways — CLASS is valid on a task too', () => {
+			const event = new Entry({ sourceId: 's', type: EntryType.Event, heading: 'Draft', visibility: Visibility.Private })
+			event.type = EntryType.Task
+			assert.equal(event.visibility, Visibility.Private)
+			event.type = EntryType.Event
+			assert.equal(event.visibility, Visibility.Private)
 		})
 
 		it('keeps everything else — the span and content survive the flip both ways', () => {

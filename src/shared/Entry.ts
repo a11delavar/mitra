@@ -15,6 +15,35 @@ export enum TaskStatus {
 	Cancelled = 'cancelled',
 }
 
+/**
+ * Whether an event's time counts as busy when someone asks whether you are available — RFC 5545's
+ * TRANSP (§3.8.2.7), where OPAQUE (busy) is the default and TRANSPARENT (free) is the "I'm blocking
+ * this out, but don't let it stop anyone booking me" case. EVENT-ONLY, exactly as {@link TaskStatus}
+ * is task-only: a VTODO has no TRANSP, and free-busy generation considers events alone. Distinct from
+ * {@link Visibility}, which is about who may READ the entry, not about what it does to your calendar.
+ */
+export enum Transparency {
+	Busy = 'busy',
+	Free = 'free',
+}
+
+/**
+ * Who may see the entry's details on a shared calendar — RFC 5545's CLASS (§3.8.1.3). Unlike
+ * {@link Transparency} this is NOT event-only: CLASS is equally valid on a VTODO, so it survives a
+ * type flip.
+ *
+ * `null` is a real, user-pickable value ("Default visibility"): the RFC leaves an absent CLASS to
+ * default to PUBLIC, and the calendar's own sharing settings decide in practice — which is what
+ * Google's `visibility: default` and Notion Calendar's "Default visibility" both mean. So absence is
+ * "let the calendar decide", NOT "public", and it is spelled `null` (like `color`) so it survives a
+ * JSON round-trip, where an undefined key would read as "leave alone".
+ */
+export enum Visibility {
+	Public = 'public',
+	Private = 'private',
+	Confidential = 'confidential',
+}
+
 export interface EntryData {
 	raw?: string
 	etag?: string
@@ -76,7 +105,12 @@ export class Entry {
 	get type(): EntryType { return this._type }
 	set type(value: EntryType | EntryTypeValue) {
 		this._type = EntryType.parse(value)
-		if (!this._type.isTask) {
+		// Each kind sheds what only the other kind can hold: a status exists only on a task, a
+		// free/busy contribution only on an event (RFC 5545 gives VTODO no TRANSP). `visibility` is
+		// deliberately absent from both arms — CLASS is valid on either component, so it travels along.
+		if (this._type.isTask) {
+			this.transparency = null
+		} else {
 			this.status = undefined
 		}
 	}
@@ -95,6 +129,22 @@ export class Entry {
 
 	get done() { return this.status === TaskStatus.Done }
 	set done(value) { this.status = value ? TaskStatus.Done : TaskStatus.ToDo }
+
+	/** The event's free/busy contribution ({@link Transparency}) — cleared by the `type` setter when the
+	 * entry becomes a task, the mirror of `status`. `null` means the RFC's OPAQUE default (busy), which
+	 * is why nothing has to express "unset" from the client: the editor offers Busy and Free, and
+	 * picking Busy on an entry that carries no TRANSP is simply no change at all.
+	 *
+	 * Empty is `null` rather than `undefined` (unlike `status`, and like `color`/`reminders`) because
+	 * the two must not both occur: MikroORM hydrates the empty column as `null`, so a setter that wrote
+	 * `undefined` would make a freshly synced row compare unequal to its own stored self and every
+	 * `editEquals` consumer would see a phantom edit. */
+	@enumType({ items: () => Transparency, nullable: true }) transparency: Transparency | null = null
+
+	/** The access classification ({@link Visibility}) — `null` is the real value "let the calendar
+	 * decide", not a missing one, so the column and the wire both carry it. Kept across a type flip:
+	 * CLASS is as valid on a task as on an event. */
+	@enumType({ items: () => Visibility, nullable: true }) visibility: Visibility | null = null
 
 	@property({ type: 'boolean' }) allDay = false
 
@@ -261,7 +311,7 @@ export class Entry {
 		// `recurrence` counts as editable content (the Repeat field mutates it); `Object[equals]` compares
 		// the value objects structurally. The series *link* fields (uid, recurrenceMasterId, recurrenceId,
 		// exdates) are sync bookkeeping like `uri`/`data`, so they stay excluded.
-		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'allDay', 'timeZone', 'status', 'recurrence', 'reminders', 'participants'] as const
+		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'allDay', 'timeZone', 'status', 'transparency', 'visibility', 'recurrence', 'reminders', 'participants'] as const
 		return editable.every(key => Object[equals](this[key], other[key]))
 	}
 
@@ -288,6 +338,8 @@ export class Entry {
 			allDay: this.allDay,
 			timeZone: this.timeZone,
 			status: this.status,
+			transparency: this.transparency,
+			visibility: this.visibility,
 			reminders: this.reminders ? [...this.reminders] : this.reminders,
 		})
 	}
@@ -309,6 +361,8 @@ export class Entry {
 			start: values.start,
 			end: values.end,
 			status: values.status,
+			transparency: values.transparency,
+			visibility: values.visibility,
 			allDay: values.allDay,
 			timeZone: values.timeZone,
 			reminders: values.reminders,

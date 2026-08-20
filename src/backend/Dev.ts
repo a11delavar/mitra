@@ -69,6 +69,8 @@ export class Dev extends Integration {
 		existing.allDay = incoming.allDay
 		existing.timeZone = incoming.timeZone
 		existing.status = incoming.status
+		existing.transparency = incoming.transparency
+		existing.visibility = incoming.visibility
 		existing.reminders = incoming.reminders
 		existing.participants = incoming.participants
 		// Recurrence is column-only for Dev (no .ics); the GET path expands `recurrence` via

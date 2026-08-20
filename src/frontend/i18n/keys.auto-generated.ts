@@ -44,6 +44,7 @@ declare global {
 		"Back": unknown
 		"before": unknown
 		"before at ${time}": unknown
+		"Busy": unknown
 		"CalDAV, Google, Apple or Notion — Mitra syncs in both directions.": unknown
 		"Calendar options": unknown
 		"Cancelled": unknown
@@ -55,6 +56,7 @@ declare global {
 		"Color": unknown
 		"Commands": unknown
 		"Commit": unknown
+		"Confidential": unknown
 		"Connect": unknown
 		"Connect an account": unknown
 		"Connecting…": unknown
@@ -71,6 +73,7 @@ declare global {
 		"days": unknown
 		"Default for new entries — click to unset": unknown
 		"Default for new entries, as the first one shown": unknown
+		"Default visibility": unknown
 		"Del": unknown
 		"Delete": unknown
 		"Delete just this entry of a series": unknown
@@ -99,6 +102,7 @@ declare global {
 		"Events": unknown
 		"Every": unknown
 		"Forward": unknown
+		"Free": unknown
 		"General": unknown
 		"Go to Date…": unknown
 		"Go to Today": unknown
@@ -165,6 +169,8 @@ declare global {
 		"Previous Year": unknown
 		"PreviousPeriod.Keywords": unknown
 		"Primary time zone — switch to ${city} time to change the zone": unknown
+		"Private": unknown
+		"Public": unknown
 		"Re-import entries": unknown
 		"Refresh": unknown
 		"Reload to finish updating": unknown
@@ -190,6 +196,7 @@ declare global {
 		"select": unknown
 		"Server URL": unknown
 		"Set as the default for new entries": unknown
+		"Show as busy or free": unknown
 		"Show calendar": unknown
 		"Show fewer participants": unknown
 		"Show only one calendar, or bring the rest back": unknown
@@ -233,6 +240,7 @@ declare global {
 		"View": unknown
 		"View on GitHub": unknown
 		"Views": unknown
+		"Visibility": unknown
 		"Wall clock — no time zone": unknown
 		"Week": unknown
 		"Week View": unknown

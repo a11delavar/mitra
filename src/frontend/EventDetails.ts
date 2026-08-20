@@ -1,5 +1,5 @@
 import { component, html, property, state, Component, css, eventListener, event, Binder, query } from '@a11d/lit'
-import { EntryType, TaskStatus, type EntryTypeValue, type Integration, type RecurrenceScope } from 'shared'
+import { EntryType, TaskStatus, Transparency, type EntryTypeValue, type Integration, type RecurrenceScope } from 'shared'
 import type { EntrySegment } from './EntrySegment.js'
 import { getIntegrations, getSource, getCapabilities } from './Api.js'
 import { EntryStore } from './EntryStore.js'
@@ -85,14 +85,11 @@ export class EntryDetailsComponent extends Component {
 		console.error('Persisting the entry failed — the edit is kept locally and retried on the next change:', error)
 	}
 
-	// The task checkbox/menu mutated `entry.status`: render it everywhere this frame, then persist.
-	private readonly handleStatusChange = () => {
-		EntryStore.notify()
-		this.handleChange().catch(this.reportSaveError)
-	}
-
-	// The <mitra-entry-details-when> editor mutated the entry's span in place: render, then persist.
-	private readonly handleWhenChange = () => {
+	// A child mutated the entry IN PLACE and said so — the task checkbox/menu its status, the
+	// <mitra-entry-details-when> editor its span, the <mitra-entry-details-sharing> row its TRANSP and
+	// CLASS. The response is the same for all three: render the new value everywhere this frame (the
+	// object is shared, so nothing else would notice), then persist.
+	private readonly handleInPlaceEdit = () => {
 		EntryStore.notify()
 		this.handleChange().catch(this.reportSaveError)
 	}
@@ -620,14 +617,14 @@ export class EntryDetailsComponent extends Component {
 				<ul>
 					<li class="title-row">
 						${!this.segment.entry.type.isTask ? html.nothing : html`
-							<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
+							<mitra-task-status .entry=${this.segment.entry} @change=${this.handleInPlaceEdit}></mitra-task-status>
 					`}
 						<input class="title field" placeholder=${t('Title')}
 							?data-struck=${this.segment.entry.status === TaskStatus.Done || this.segment.entry.status === TaskStatus.Cancelled}
 							${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
 					</li>
 					${!this.segment.entry.start ? html.nothing : html`
-						<mitra-entry-details-when .entry=${this.segment.entry} @change=${this.handleWhenChange}></mitra-entry-details-when>
+						<mitra-entry-details-when .entry=${this.segment.entry} @change=${this.handleInPlaceEdit}></mitra-entry-details-when>
 						<hr>
 				`}
 					${!this.capabilities.location && !this.capabilities.description && !this.capabilities.participants ? html.nothing : html`
@@ -636,6 +633,7 @@ export class EntryDetailsComponent extends Component {
 						${this.descriptionTemplate}
 						<hr>
 				`}
+					<mitra-entry-details-sharing .entry=${this.segment.entry} @change=${this.handleInPlaceEdit}></mitra-entry-details-sharing>
 					${this.remindersTemplate}
 				</ul>
 			</div>
@@ -705,9 +703,11 @@ export class EntryDetailsComponent extends Component {
 		// collapse a series' rule or drop a Cancelled status (the backend rejects both), so it's excluded
 		// rather than shown and left to fail. The entry's own source is always kept (it's the selection).
 		const canHold = (integration: Integration) => {
-			const capabilities = integration.capabilities ?? { recurrence: true, cancelledStatus: true }
+			const capabilities = integration.capabilities ?? { recurrence: true, cancelledStatus: true, transparency: true, visibility: true }
 			return (!entry.partOfSeries || capabilities.recurrence)
 				&& (entry.status !== TaskStatus.Cancelled || capabilities.cancelledStatus)
+				&& (entry.transparency !== Transparency.Free || capabilities.transparency)
+				&& (!entry.visibility || capabilities.visibility)
 		}
 		return !this.source?.name ? html.nothing : html`
 			<span class="source field">

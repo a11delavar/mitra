@@ -38,6 +38,7 @@ import { syncThemeColor } from './pwa.js'
 import { DialogRecurrenceScope } from './components/DialogRecurrenceScope.js'
 import { Markdown } from './Markdown.js'
 import { EntryDetailsWhen } from './EntryDetailsWhen.js'
+import { EntryDetailsSharing } from './EntryDetailsSharing.js'
 import { EntryStore } from './EntryStore.js'
 import { ScrollDeviceController } from './ScrollDeviceController.js'
 
@@ -229,6 +230,7 @@ export class Mitra extends Application {
 			${EntrySegmentComponent.styles}
 			${EntryDetailsComponent.styles}
 			${EntryDetailsWhen.styles}
+			${EntryDetailsSharing.styles}
 			${DialogAbout.styles}
 			${DialogIntegration.styles}
 			${DialogWelcome.styles}

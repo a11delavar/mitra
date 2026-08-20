@@ -2,7 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import ICAL from 'ical.js'
 import { CalDAV } from './CalDAV.js'
-import { Entry, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
+import { Entry, TaskStatus, Transparency, Visibility, FLOATING_TIME_ZONE } from './Entry.js'
 import { EntryType } from './EntryType.js'
 import { Source } from './Source.js'
 import { Recurrence } from './Recurrence.js'
@@ -225,6 +225,175 @@ describe('CalDAV member URLs', () => {
 		})
 	})
 })
+
+describe('CalDAV free/busy and access class (TRANSP / CLASS)', () => {
+	const stubbed = () => {
+		const dav = new CalDAV({ credentials: { username: 'u', password: 'p' } })
+		;(dav as unknown as { client: unknown }).client = Promise.resolve({
+			createCalendarObject: () => Promise.resolve({ ok: true, headers: { get: () => null } }),
+			updateCalendarObject: () => Promise.resolve({ ok: true, headers: { get: () => null } }),
+		})
+		return dav
+	}
+
+	const em = () => ({
+		find: () => Promise.resolve([]),
+		findOne: () => Promise.resolve(new Source({ id: 's', integrationId: 'i', uri: 'https://example.com/cal/', entryTypes: [EntryType.Event], name: 'Cal' })),
+		persist() { },
+		remove() { },
+	}) as never
+
+	const resource = (...extra: Array<string>) => [
+		'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//test//EN',
+		'BEGIN:VEVENT', 'UID:u1', 'DTSTAMP:20260101T000000Z',
+		'DTSTART:20260602T090000Z', 'DTEND:20260602T100000Z', 'SUMMARY:Standup',
+		...extra, 'END:VEVENT', 'END:VCALENDAR',
+	].join('\r\n')
+
+	const event = (raw: string, fields?: Partial<Entry>) => new Entry({
+		id: 'e1', sourceId: 's', type: EntryType.Event, heading: 'Standup', uri: 'https://example.com/cal/e1.ics',
+		start: D('2026-06-02T09:00:00Z'), end: D('2026-06-02T10:00:00Z'), allDay: false, data: { raw },
+		...fields,
+	})
+
+	describe('the mappings', () => {
+		it('reads TRANSP case-insensitively and leaves anything else UNSET', () => {
+			assert.equal(CalDAV.transparencyFromICal('OPAQUE'), Transparency.Busy)
+			assert.equal(CalDAV.transparencyFromICal('TRANSPARENT'), Transparency.Free)
+			assert.equal(CalDAV.transparencyFromICal('transparent'), Transparency.Free)
+			// Absent is NOT filled in with the OPAQUE default: both read "Busy", and keeping the absence
+			// is what stops an unrelated edit from adding a TRANSP the resource never carried.
+			assert.equal(CalDAV.transparencyFromICal(undefined), null)
+			assert.equal(CalDAV.transparencyFromICal('X-WHATEVER'), null)
+		})
+
+		it('reads CLASS case-insensitively, with anything else meaning the calendar default', () => {
+			assert.equal(CalDAV.visibilityFromICal('PUBLIC'), Visibility.Public)
+			assert.equal(CalDAV.visibilityFromICal('PRIVATE'), Visibility.Private)
+			assert.equal(CalDAV.visibilityFromICal('confidential'), Visibility.Confidential)
+			assert.equal(CalDAV.visibilityFromICal(undefined), null)
+			assert.equal(CalDAV.visibilityFromICal('X-MY-OWN-CLASS'), null) // CLASS permits extensions
+		})
+	})
+
+	describe('reading a synced resource', () => {
+		const sync = async (raw: string, types: Array<EntryType>) => {
+			const source = new Source({ id: 's', integrationId: 'i1', uri: 'https://example.com/cal/', entryTypes: types, name: 'Home' })
+			const dav = new CalDAV({ credentials: { username: 'u', password: 'p' } })
+			;(dav as unknown as { client: unknown }).client = Promise.resolve({
+				syncCollection: () => Promise.resolve([{ href: '/cal/a.ics', status: 200, raw: { multistatus: { syncToken: 't1' } } }]),
+				fetchCalendarObjects: () => Promise.resolve([{ url: 'https://example.com/cal/a.ics', etag: 'e1', data: raw }]),
+			})
+			const persisted = new Array<Entry>()
+			await (dav as unknown as { syncSourceEntries(em: unknown, source: Source): Promise<boolean> }).syncSourceEntries({
+				find: () => Promise.resolve([]),
+				findOne: () => Promise.resolve(null),
+				persist(entry: Entry) { persisted.push(entry) },
+				remove() { },
+			}, source)
+			return persisted[0]!
+		}
+
+		it('lands an event TRANSP and CLASS on the row', async () => {
+			const entry = await sync(resource('TRANSP:TRANSPARENT', 'CLASS:PRIVATE'), [EntryType.Event])
+			assert.equal(entry.transparency, Transparency.Free)
+			assert.equal(entry.visibility, Visibility.Private)
+		})
+
+		it('leaves an event that names neither unset — absence is the OPAQUE / calendar-default reading', async () => {
+			const entry = await sync(resource(), [EntryType.Event])
+			assert.equal(entry.transparency, null)
+			assert.equal(entry.visibility, null)
+		})
+
+		it('gives a VTODO its CLASS but no free/busy contribution — RFC 5545 gives VTODO no TRANSP', async () => {
+			const raw = [
+				'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//test//EN',
+				'BEGIN:VTODO', 'UID:t1', 'DTSTAMP:20260101T000000Z', 'SUMMARY:Buy milk',
+				'DTSTART:20260602T090000Z', 'DUE:20260602T100000Z', 'STATUS:NEEDS-ACTION',
+				'CLASS:CONFIDENTIAL', 'END:VTODO', 'END:VCALENDAR',
+			].join('\r\n')
+			const entry = await sync(raw, [EntryType.Task])
+			assert.equal(entry.type, EntryType.Task)
+			assert.equal(entry.visibility, Visibility.Confidential)
+			assert.equal(entry.transparency, null)
+		})
+	})
+
+	describe('writing an edit', () => {
+		it('marks an event free, and back to busy explicitly', async () => {
+			const existing = event(resource())
+			await stubbed().updateEntry(em(), existing, event(resource(), { transparency: Transparency.Free }))
+			assert.match(existing.data!.raw!, /TRANSP:TRANSPARENT/)
+			assert.equal(existing.transparency, Transparency.Free)
+
+			await stubbed().updateEntry(em(), existing, event(existing.data!.raw!, { transparency: Transparency.Busy }))
+			assert.match(existing.data!.raw!, /TRANSP:OPAQUE/)
+			assert.doesNotMatch(existing.data!.raw!, /TRANSP:TRANSPARENT/)
+		})
+
+		it('sets CLASS, and DROPS the line when the visibility goes back to the calendar default', async () => {
+			const existing = event(resource('CLASS:PRIVATE'), { visibility: Visibility.Private })
+			await stubbed().updateEntry(em(), existing, event(resource('CLASS:PRIVATE'), { visibility: Visibility.Confidential }))
+			assert.match(existing.data!.raw!, /CLASS:CONFIDENTIAL/)
+
+			// "Default visibility" is the ABSENCE of CLASS, not PUBLIC — a weaker statement than either.
+			await stubbed().updateEntry(em(), existing, event(existing.data!.raw!, { visibility: null }))
+			assert.doesNotMatch(existing.data!.raw!, /CLASS:/)
+			assert.equal(existing.visibility, null)
+		})
+
+		it('adds neither line to a resource whose only edit was its heading (diff-write losslessness)', async () => {
+			const existing = event(resource())
+			await stubbed().updateEntry(em(), existing, event(resource(), { heading: 'Renamed' }))
+			assert.match(existing.data!.raw!, /SUMMARY:Renamed/)
+			assert.doesNotMatch(existing.data!.raw!, /TRANSP:/)
+			assert.doesNotMatch(existing.data!.raw!, /CLASS:/)
+		})
+
+		it('leaves a task resource free of TRANSP even when the rows disagree', async () => {
+			const raw = [
+				'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//test//EN',
+				'BEGIN:VTODO', 'UID:t1', 'DTSTAMP:20260101T000000Z', 'SUMMARY:Buy milk',
+				'DTSTART:20260602T090000Z', 'DUE:20260602T100000Z', 'END:VTODO', 'END:VCALENDAR',
+			].join('\r\n')
+			const existing = new Entry({
+				id: 't1', sourceId: 's', type: EntryType.Task, heading: 'Buy milk', uri: 'https://example.com/cal/t1.ics',
+				start: D('2026-06-02T09:00:00Z'), end: D('2026-06-02T10:00:00Z'), data: { raw },
+			})
+			const incoming = new Entry({ ...existing, heading: 'Buy oat milk' } as Partial<Entry>)
+			// The model would never hold this on a task (see Entry's type setter); the write must ignore
+			// it regardless — TRANSP has no meaning inside a VTODO.
+			incoming.transparency = Transparency.Free
+			await stubbed().updateEntry(em(), existing, incoming)
+			assert.doesNotMatch(existing.data!.raw!, /TRANSP/)
+		})
+	})
+
+	describe('creating an entry', () => {
+		const created = async (fields: Partial<Entry>) => {
+			const entry = new Entry({
+				sourceId: 's', type: EntryType.Event, heading: 'Standup',
+				start: D('2026-06-02T09:00:00Z'), end: D('2026-06-02T10:00:00Z'), ...fields,
+			})
+			await stubbed().createEntry(em(), entry)
+			return entry.data!.raw!
+		}
+
+		it('writes neither line for an ordinary busy, default-visibility event', async () => {
+			const raw = await created({})
+			assert.doesNotMatch(raw, /TRANSP:/)
+			assert.doesNotMatch(raw, /CLASS:/)
+		})
+
+		it('writes both when the entry actually names them', async () => {
+			const raw = await created({ transparency: Transparency.Free, visibility: Visibility.Private })
+			assert.match(raw, /TRANSP:TRANSPARENT/)
+			assert.match(raw, /CLASS:PRIVATE/)
+		})
+	})
+})
+
 
 describe('CalDAV all-day serialization', () => {
 	describe('toICALTime', () => {

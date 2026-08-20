@@ -8,7 +8,7 @@ import { model } from './model.js'
 import { buildVTimezone } from './vtimezone.js'
 import { Source } from './Source.js'
 import { Integration, integration, withheld } from './Integration.js'
-import { Entry, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
+import { Entry, TaskStatus, Transparency, Visibility, FLOATING_TIME_ZONE } from './Entry.js'
 import { EntryType } from './EntryType.js'
 import { Recurrence } from './Recurrence.js'
 import { calendarDateOf, midnightOf } from './calendarDate.js'
@@ -226,6 +226,54 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			component.updatePropertyWithValue('completed', ICAL.Time.now())
 		} else {
 			component.removeProperty('completed')
+		}
+	}
+
+	/** mitra {@link Transparency} ↔ iCalendar TRANSP (RFC 5545 §3.8.2.7). */
+	private static readonly icalTransparency = new BidirectionalMap<Transparency, string>([
+		[Transparency.Busy, 'OPAQUE'],
+		[Transparency.Free, 'TRANSPARENT'],
+	])
+
+	/** mitra {@link Visibility} ↔ iCalendar CLASS (RFC 5545 §3.8.1.3). */
+	private static readonly icalVisibility = new BidirectionalMap<Visibility, string>([
+		[Visibility.Public, 'PUBLIC'],
+		[Visibility.Private, 'PRIVATE'],
+		[Visibility.Confidential, 'CONFIDENTIAL'],
+	])
+
+	/** iCalendar TRANSP → mitra {@link Transparency}. A missing value stays `null` rather than being
+	 * filled in with the OPAQUE default: both read as "Busy" in the editor, and keeping the absence
+	 * means a later edit of some other field never quietly adds a TRANSP the resource never had. An
+	 * unknown word is treated as absent — the RFC allows only these two. A pure static, like the
+	 * task-status and participant mappings, so it is unit-testable on its own. */
+	static transparencyFromICal(transparency: string | undefined): Transparency | null {
+		return CalDAV.icalTransparency.getKey(transparency?.toUpperCase() ?? '') ?? null
+	}
+
+	/** iCalendar CLASS → mitra {@link Visibility}. Absent (or a value outside the three the RFC names —
+	 * CLASS permits private extensions) is `null`: "whatever the calendar defaults to". */
+	static visibilityFromICal(visibility: string | undefined): Visibility | null {
+		return CalDAV.icalVisibility.getKey(visibility?.toUpperCase() ?? '') ?? null
+	}
+
+	/** Write (or drop) TRANSP. Only ever called for a VEVENT — RFC 5545 gives VTODO no such property. */
+	private static writeTransparency(component: ICAL.Component, transparency: Transparency | null | undefined) {
+		if (transparency) {
+			component.updatePropertyWithValue('transp', CalDAV.icalTransparency.get(transparency)!)
+		} else {
+			component.removeProperty('transp')
+		}
+	}
+
+	/** Write (or drop) CLASS. "Default visibility" is the ABSENCE of the property, which is what the
+	 * calendar's own sharing settings then decide — so picking it removes the line rather than writing
+	 * PUBLIC, which would be a different (and stronger) statement. */
+	private static writeVisibility(component: ICAL.Component, visibility: Visibility | null | undefined) {
+		if (visibility) {
+			component.updatePropertyWithValue('class', CalDAV.icalVisibility.get(visibility)!)
+		} else {
+			component.removeProperty('class')
 		}
 	}
 
@@ -673,6 +721,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 					entry.end = CalDAV.instantFrom(event.endDate ?? event.startDate, tzidOf('dtend') ?? tzidOf('dtstart')) as any || undefined
 					// A date-only DTSTART (`VALUE=DATE`) is the iCalendar marker for an all-day event.
 					entry.allDay = event.startDate?.isDate ?? false
+					// Free/busy is the event's alone (see Entry.transparency); a VTODO has no TRANSP.
+					entry.transparency = CalDAV.transparencyFromICal(component.getFirstPropertyValue('transp')?.toString())
 				} else {
 					const value = (name: string) => component.getFirstPropertyValue(name) as any
 					entry.heading = value('summary')?.toString() || 'Untitled Task'
@@ -683,6 +733,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 					entry.end = CalDAV.instantFrom(value('due'), tzidOf('due') ?? tzidOf('dtstart')) as any || undefined
 					entry.allDay = !!value('dtstart')?.isDate
 				}
+
+				// CLASS rides on both component kinds, so it is read outside the branches above.
+				entry.visibility = CalDAV.visibilityFromICal(component.getFirstPropertyValue('class')?.toString())
 
 				entry.reminders = CalDAV.remindersFrom(component)
 				entry.participants = CalDAV.participantsFrom(component, this.addresses)
@@ -790,7 +843,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			throw new Error('Entry must have a URL and raw data to be updated via CalDAV')
 		}
 
-		const keys: Array<keyof Entry> = (['heading', 'description', 'location', 'color', 'start', 'end', 'status', 'allDay', 'timeZone', 'reminders', 'participants'] as const)
+		const keys: Array<keyof Entry> = (['heading', 'description', 'location', 'color', 'start', 'end', 'status', 'transparency', 'visibility', 'allDay', 'timeZone', 'reminders', 'participants'] as const)
 			.filter(key => !Object[equals](existing[key], incoming[key]))
 
 		// The recurrence rule is a value object, diffed via its own (absence-safe) structural equality.
@@ -881,6 +934,18 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			if (isTask && keys.includes('status')) {
 				this.writeTaskStatus(component, incoming.status)
 				existing.status = incoming.status
+			}
+
+			// Event-only, guarded like `status` is task-only: the two are mirror images (see Entry's
+			// `type` setter), and a type flip never reaches here anyway — it re-creates the resource.
+			if (!isTask && keys.includes('transparency')) {
+				CalDAV.writeTransparency(component, incoming.transparency)
+				existing.transparency = incoming.transparency
+			}
+
+			if (keys.includes('visibility')) {
+				CalDAV.writeVisibility(component, incoming.visibility)
+				existing.visibility = incoming.visibility
 			}
 
 			if (keys.includes('reminders')) {
@@ -990,7 +1055,12 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		entry.exdates?.forEach(ms => CalDAV.writeDate(comp, component, 'exdate', new Date(ms), entry.allDay, { zone: entry.timeZone, append: true }))
 		if (isTask) {
 			this.writeTaskStatus(component, entry.status)
+		} else if (entry.transparency) {
+			// Only when the entry actually names one: an absent TRANSP already means OPAQUE, so writing
+			// it for a plain busy event would be a line that says nothing (see writeTransparency).
+			CalDAV.writeTransparency(component, entry.transparency)
 		}
+		!entry.visibility ? void 0 : CalDAV.writeVisibility(component, entry.visibility)
 		this.writeReminders(component, entry.reminders)
 		if (entry.participants?.length) {
 			CalDAV.writeParticipants(component, entry.participants)

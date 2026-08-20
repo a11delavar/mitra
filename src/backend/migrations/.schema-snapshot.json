@@ -400,6 +400,26 @@
           "enumItems": [],
           "mappedType": "text"
         },
+        "transparency": {
+          "name": "transparency",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "busy",
+            "free"
+          ],
+          "mappedType": "enum"
+        },
         "type": {
           "name": "type",
           "type": "text",
@@ -450,6 +470,27 @@
           "collation": null,
           "enumItems": [],
           "mappedType": "text"
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "public",
+            "private",
+            "confidential"
+          ],
+          "mappedType": "enum"
         }
       },
       "indexes": [
@@ -492,6 +533,18 @@
           "expression": "`status` in ('todo', 'doing', 'done', 'cancelled')",
           "definition": "check (`status` in ('todo', 'doing', 'done', 'cancelled'))",
           "columnName": "status"
+        },
+        {
+          "name": "entry_transparency_check",
+          "expression": "`transparency` in ('busy', 'free')",
+          "definition": "check (`transparency` in ('busy', 'free'))",
+          "columnName": "transparency"
+        },
+        {
+          "name": "entry_visibility_check",
+          "expression": "`visibility` in ('public', 'private', 'confidential')",
+          "definition": "check (`visibility` in ('public', 'private', 'confidential'))",
+          "columnName": "visibility"
         }
       ],
       "triggers": [],

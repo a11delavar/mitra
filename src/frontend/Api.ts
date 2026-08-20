@@ -220,7 +220,7 @@ export function getEnabledSources(integration: Integration) {
  */
 export function getCapabilities(sourceId: string): Integration['capabilities'] {
 	return getIntegrationFor(sourceId)?.capabilities
-		?? { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, timeZone: true, participants: true }
+		?? { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, timeZone: true, participants: true, transparency: true, visibility: true }
 }
 
 export function toggleSourceVisibility(id: string, hidden: boolean) {
@@ -327,6 +327,11 @@ export function updateEvent(entry: Entry) {
 			location: entry.location,
 			color: entry.color,
 			timeZone: entry.timeZone ?? null,
+			// Free/busy has no "unset" to express (the editor offers Busy and Free), so an undefined
+			// value simply drops out of the JSON and the backend keeps the series'. `visibility` DOES —
+			// its `null` is the pickable "calendar default" — so it always rides along.
+			transparency: entry.transparency ?? null,
+			visibility: entry.visibility ?? null,
 			reminders: entry.reminders ?? null,
 			participants: entry.participants ?? null,
 			...(entry.recurrence !== undefined ? { recurrence: entry.recurrence } : {}),

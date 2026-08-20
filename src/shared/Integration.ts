@@ -89,14 +89,17 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * anyway would approximate semantics the provider doesn't have. Everything defaults to true;
 	 * `cancelledStatus` refers to the fourth task status (to-do/doing/done are universal),
 	 * `timeZone` to authoring an entry in a named IANA zone (Notion's date property can't hold one —
-	 * its API normalizes any time_zone to a fixed offset and returns time_zone:null), and
+	 * its API normalizes any time_zone to a fixed offset and returns time_zone:null),
 	 * `participants` to group-scheduling (RFC 5545 ATTENDEE/ORGANIZER — a page/database has no
-	 * invitees, so Notion turns it off).
+	 * invitees, so Notion turns it off), `transparency` to whether an event's time counts as busy
+	 * (RFC 5545 TRANSP) and `visibility` to its access classification (RFC 5545 CLASS). The last two
+	 * are separate flags rather than one "sharing" flag because they are separate facts: a provider
+	 * could perfectly well model one and not the other.
 	 * A getter on the class (not serialized state): the frontend's API reviver rehydrates
 	 * integrations into these very classes, so both sides read the same declaration.
 	 */
 	get capabilities() {
-		return { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, timeZone: true, participants: true }
+		return { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, timeZone: true, participants: true, transparency: true, visibility: true }
 	}
 
 	/**

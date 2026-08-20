@@ -76,6 +76,26 @@ describe('migrate', () => {
 		}
 	})
 
+	it('replays cleanly onto a database born on the CURRENT entities (a dev schema.update build)', async () => {
+		const orm = await inMemoryOrm()
+		try {
+			// Dev boots build their schema from today's entities, so a dev database that later boots in
+			// production already HAS whatever the newer migrations create. `migrate` catches a failed
+			// replay and falls back to a wholesale sync, which still satisfies the baselining test above —
+			// so the replay is exercised directly here, where a failure can't be papered over. Every
+			// migration after the initial one must therefore introspect and no-op on the new shape.
+			await orm.schema.update()
+			await orm.migrator.getStorage().logMigration({ name: migrations[0]!.name })
+
+			await orm.migrator.up()
+
+			assert.deepEqual(await orm.migrator.getPending(), [])
+			assert.deepEqual(await orm.migrator.getStorage().executed(), migrations.map(migration => migration.name))
+		} finally {
+			await orm.close()
+		}
+	})
+
 	it('is a no-op on an already migrated database', async () => {
 		const orm = await inMemoryOrm()
 		try {

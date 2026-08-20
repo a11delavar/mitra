@@ -1,7 +1,7 @@
 import { Router, type Request } from 'express'
 import { orm } from './orm.js'
 import { syncEmitter } from './syncEmitter.js'
-import { equals, Entry, EntryType, FLOATING_TIME_ZONE, Integration, Participants, Recurrence, Source, normalizeAllDay, projectAllDay, createLogger, type RecurrenceScope } from '../shared/index.js'
+import { equals, Entry, EntryType, FLOATING_TIME_ZONE, Integration, Participants, Recurrence, Source, Transparency, normalizeAllDay, projectAllDay, createLogger, type RecurrenceScope } from '../shared/index.js'
 import { editOccurrence, deleteOccurrence, expandedOccurrences } from './occurrences.js'
 
 const logger = createLogger('Entries')
@@ -115,6 +115,17 @@ entriesRouter.post('/', async (req, res) => {
 		return res.status(400).json({ error: 'This calendar does not support participants' })
 	}
 
+	// Same rule for the two "how others see this" fields, but only for a value that actually says
+	// something: OPAQUE is what an absent TRANSP already means, so a busy entry loses nothing on a
+	// provider without the concept — only "free" does. Every non-default visibility counts, since
+	// even an explicit PUBLIC differs from "whatever the calendar decides".
+	if (body.transparency === Transparency.Free && !targetIntegration.capabilities.transparency) {
+		return res.status(400).json({ error: 'This calendar cannot mark an entry as free' })
+	}
+	if (body.visibility && !targetIntegration.capabilities.visibility) {
+		return res.status(400).json({ error: 'This calendar does not support visibility' })
+	}
+
 	// The type is the ENTRY's (a source declares which types it can hold, it doesn't dictate one — see
 	// Source.entryTypes), but the target has to be able to hold it: an events-only collection would
 	// reject the VTODO at the server, so say so here instead. A body naming no type takes the source's
@@ -142,6 +153,10 @@ entriesRouter.post('/', async (req, res) => {
 		allDay: body.allDay ?? false,
 		timeZone: body.timeZone ?? null,
 		status: body.status,
+		// Gated on the incoming type for the same reason `status` is (see the note above): free/busy is
+		// event-only, so a task must not carry one in past the constructor's literal-order assignment.
+		transparency: type.isTask ? null : body.transparency ?? null,
+		visibility: body.visibility ?? null,
 		recurrence: incomingRecurrence,
 		reminders: body.reminders ?? undefined,
 		participants: Participants.normalize(body.participants),
@@ -200,6 +215,16 @@ entriesRouter.put('/:id', async (req, res) => {
 		return res.status(400).json({ error: 'This calendar does not support participants — remove them before moving the entry' })
 	}
 
+	// Tri-state like `color`: a value sets, an explicit `null` resets to the calendar's default, absent
+	// keeps. Free/busy needs no such dance — the editor offers only Busy and Free, so it is never cleared.
+	const incomingVisibility = body.visibility === undefined ? existing.visibility : body.visibility
+	if (body.transparency === Transparency.Free && !targetIntegration.capabilities.transparency) {
+		return res.status(400).json({ error: 'This calendar cannot mark an entry as free — set it back to busy before moving the entry' })
+	}
+	if (incomingVisibility && !targetIntegration.capabilities.visibility) {
+		return res.status(400).json({ error: 'This calendar does not support visibility — reset it to the default before moving the entry' })
+	}
+
 	// The entry's TYPE rides the full-entry payload (see Api.updateEvent), and changing it is a
 	// CONVERSION: on CalDAV a task is a VTODO and an event a VEVENT, and RFC 4791 §4.1 allows no mixed
 	// components in one resource — so a converted entry is RE-CREATED below, through the very same
@@ -234,6 +259,8 @@ entriesRouter.put('/:id', async (req, res) => {
 			allDay: body.allDay ?? existing.allDay,
 			timeZone: body.timeZone === undefined ? existing.timeZone : body.timeZone,
 			status: body.status ?? existing.status,
+			transparency: existing.type.isTask ? null : body.transparency ?? existing.transparency,
+			visibility: incomingVisibility,
 			reminders: body.reminders === undefined ? existing.reminders : body.reminders,
 			participants: incomingParticipants,
 		})
@@ -267,6 +294,9 @@ entriesRouter.put('/:id', async (req, res) => {
 		// Gated on the INCOMING type, not left to the type setter: the constructor assigns fields in
 		// literal order, so a later `status` would quietly resurrect the one the conversion just dropped.
 		status: incomingType.isTask ? body.status ?? existing.status : undefined,
+		// The event-only mirror of `status`, gated on the incoming type for the same reason.
+		transparency: incomingType.isTask ? null : body.transparency ?? existing.transparency,
+		visibility: incomingVisibility,
 		recurrence: incomingRecurrence,
 		// Like `recurrence`, tri-state on the wire: an array sets, `null` clears, absent keeps.
 		reminders: body.reminders === undefined ? existing.reminders : body.reminders,
