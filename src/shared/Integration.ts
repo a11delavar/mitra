@@ -276,7 +276,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		const sources = await this.getSources(em, { checkDuplicate: true }) // checkDuplicate: reject re-connecting an already-connected account
 
 		// `incoming` is a client DTO, not a rehydrated entity (`@a11d/api` structure-clones the body, so
-		// its sources are plain objects with no `key` getter) — key them via the static, not `source.key`.
+		// its sources are plain objects with no getters) — match them by the plain `uri` field, a source's identity.
 		const enabledKeys = new Set([...(incoming.sources ?? [])].filter(source => source.enabled).map(source => source.uri))
 		for (const source of sources) {
 			source.enabled = enabledKeys.has(source.uri)

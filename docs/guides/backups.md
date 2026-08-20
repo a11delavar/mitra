@@ -7,6 +7,9 @@ sidebar:
 
 Mitra keeps its entire state in **one directory**: `/app/data` inside the container — the `~/mitra` folder on the host with the recommended compose file. Back up that directory and you've backed up the whole instance. There's no external database to dump, no separate config store, and no individual files to cherry-pick: **the data directory is the backup unit**, whole and opaque.
 
+> [!CAUTION]
+> Mitra's database is **primary data, not a cache of your calendars**. Your user accounts and sign-in sessions, connected-integration credentials, every per-calendar setting (colors, order, visibility, the default calendar), your preferences — and, for some integrations, links between entries — exist **nowhere else**. Your calendar providers hold your events and tasks, but they cannot rebuild a Mitra instance. Only a backup can.
+
 ## Backing up
 
 Use whatever backup tool you already trust — [restic](https://restic.net/), [Borg](https://www.borgbackup.org/), `rsync`, a filesystem or VM snapshot, or a plain archive — and point it at the data directory. Mitra doesn't care how the copy is made.

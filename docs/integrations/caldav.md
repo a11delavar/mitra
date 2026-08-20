@@ -50,6 +50,5 @@ While you have the app open, enabled sources are polled about every 10 seconds, 
 ## Troubleshooting
 
 - **Nothing appears after connecting.** Discovered sources start **disabled** by design — open the source picker and enable the ones you want.
-- **A calendar shows up twice after an update.** Mitra used to list a calendar that holds both events and tasks as two rows, and accounts connected before the change keep those old rows. Delete the integration and add it again: one row per calendar, holding both.
 - **A calendar looks out of date after a code update.** Use [**Re-import entries**](../guides/calendars.md#re-import-a-source) on the source: it drops Mitra's local copy and fetches everything again (a normal sync only pulls deltas, so unchanged entries are never re-read).
 - **Connection fails.** Double-check the Server URL includes the scheme (`https://`) and points at the CalDAV endpoint, not the web UI. Watch the [logs](../guides/logging.md) at `debug` level to see the CalDAV round-trips.
