@@ -1,6 +1,6 @@
 import { Api, HttpError, apiError, apiAuthenticator, type ApiAuthenticator } from '@a11d/api'
 import { type DateTime } from '@3mo/date-time'
-import { applyOrder, byOrder, type ChangelogSection, type Entry, type Integration, type RecurrenceScope, type Source, type User, type UserTimeZone } from 'shared'
+import { applyOrder, byOrder, type ChangelogSection, type Entry, type Integration, type Relation, type RecurrenceScope, type Source, type User, type UserTimeZone } from 'shared'
 
 /**
  * Surface the server's error message on failed responses. Without a registered
@@ -158,6 +158,26 @@ export function searchEntries(query: string) {
 /** Every source on show right now, across accounts and in display order. */
 export function getVisibleSources(): Array<Source> {
 	return integrations.flatMap(i => [...i.sources]).filter(s => s.visible)
+}
+
+/** The relations row's display data for one entry: its outgoing links with resolved target entries
+ * (absent = unresolvable — deleted or foreign; still listed and removable) and the DERIVED incoming
+ * ones ("has subtask", "blocks") with their owning entries. Occurrences resolve their master's id
+ * before calling — relationships are series-level. */
+export interface EntryRelationsView {
+	outgoing: Array<{ type: string, gap: string | null, targetUid: string, entry?: Entry }>
+	incoming: Array<{ type: string, gap: string | null, entry: Entry }>
+}
+
+export function getEntryRelations(id: string) {
+	return Api.get<EntryRelationsView>(`/entries/${id}/relations?tz=${tz()}`)
+}
+
+/** THE write path for relationships (see RelationsField) — always a relations-only partial PUT to
+ * the series master; the backend treats absent fields as "keep", so nothing else moves. Full entry
+ * PUTs deliberately never carry relations. */
+export function updateRelations(id: string, relations: Array<Relation> | null) {
+	return Api.put<Entry>(`/entries/${id}?tz=${tz()}`, { relations })
 }
 
 /** The source a create targets: the user's default when visible, else the first visible one. */

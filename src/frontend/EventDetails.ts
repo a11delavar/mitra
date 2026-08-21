@@ -635,6 +635,12 @@ export class EntryDetailsComponent extends Component {
 				`}
 					<mitra-entry-details-sharing .entry=${this.segment.entry} @change=${this.handleInPlaceEdit}></mitra-entry-details-sharing>
 					${this.remindersTemplate}
+					${/* Relationships close the popover as their own group: they connect to OTHER entries
+					   (everything above describes THIS one) and their rows grow, so the variable-height
+					   block sits last, behind a separator. The field owns its persistence — see
+					   RelationsField; a draft's list rides the create. */''}
+					<hr>
+					<mitra-relations-field .entry=${this.segment!.entry}></mitra-relations-field>
 				</ul>
 			</div>
 		`

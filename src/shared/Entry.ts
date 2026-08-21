@@ -7,6 +7,8 @@ import { EntryType, type EntryTypeValue } from './EntryType.js'
 import { Source } from './Source.js'
 import { Recurrence } from './Recurrence.js'
 import { Participants, type ParticipantRole, type Participant } from './Participant.js'
+import { Relation } from './Relation.js'
+import { type RelationType } from './RelationType.js'
 
 export enum TaskStatus {
 	ToDo = 'todo',
@@ -266,6 +268,27 @@ export class Entry {
 	 * column: it's derived render-state on synthetic occurrences, never persisted. */
 	seriesStart?: DateTime
 
+	// --- Relationships ---------------------------------------------------------------------------------
+	// The entry's OUTGOING relationships. NOT a column: the EntryRelation table is the queryable
+	// store, materialized onto this field on reads and reconciled from it on writes. Tri-state like
+	// `recurrence` (array sets, `null` clears, absent keeps — and `undefined` after sync means "no
+	// native store here, leave the table alone"). Always REPLACED, never mutated in place: `clone()`
+	// is shallow, so canonical snapshots share the array.
+	relations?: Array<Relation> | null
+
+	/** Adds an outgoing relationship (normalized, deduplicated) — self-references are meaningless and
+	 * ignored. Replaces the array, so a shared snapshot can't observe the edit. */
+	relateTo(type: RelationType | string, targetUid: string) {
+		if (targetUid && targetUid !== this.uid) {
+			this.relations = Relation.normalize([...(this.relations ?? []), { type, targetUid }])
+		}
+	}
+
+	/** Removes an outgoing relationship by value; an emptied list collapses to the canonical `null`. */
+	unrelate(relation: Relation) {
+		this.relations = Relation.normalize((this.relations ?? []).filter(candidate => !Relation.equal(candidate, relation)))
+	}
+
 	get duration() {
 		if (!this.start || !this.end) {
 			return undefined
@@ -312,6 +335,8 @@ export class Entry {
 		// the value objects structurally. The series *link* fields (uid, recurrenceMasterId, recurrenceId,
 		// exdates) are sync bookkeeping like `uri`/`data`, so they stay excluded.
 		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'allDay', 'timeZone', 'status', 'transparency', 'visibility', 'recurrence', 'reminders', 'participants'] as const
+		// Relations are deliberately absent: they have their own write path (a relations-only PUT to
+		// the series master — see RelationsField) and must never mark an entry dirty here.
 		return editable.every(key => Object[equals](this[key], other[key]))
 	}
 
@@ -367,6 +392,7 @@ export class Entry {
 			timeZone: values.timeZone,
 			reminders: values.reminders,
 			participants: values.participants,
+			relations: values.relations,
 			data: values.data,
 			uid: values.uid,
 			recurrence: values.recurrence,

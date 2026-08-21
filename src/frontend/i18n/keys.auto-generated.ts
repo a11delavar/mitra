@@ -25,6 +25,7 @@ declare global {
 		"Add Integration": unknown
 		"Add participant": unknown
 		"Add participants": unknown
+		"Add relationship": unknown
 		"Add reminder": unknown
 		"Add time zone": unknown
 		"Add your first integration": unknown
@@ -44,6 +45,8 @@ declare global {
 		"Back": unknown
 		"before": unknown
 		"before at ${time}": unknown
+		"Blocked by": unknown
+		"Blocks": unknown
 		"Busy": unknown
 		"CalDAV, Google, Apple or Notion — Mitra syncs in both directions.": unknown
 		"Calendar options": unknown
@@ -145,6 +148,7 @@ declare global {
 		"Nextcloud, Fastmail, Radicale — any CalDAV server": unknown
 		"NextPeriod.Keywords": unknown
 		"No matches": unknown
+		"No matching entries": unknown
 		"No release notes available": unknown
 		"Notion.TokenHint": unknown
 		"Occurrences": unknown
@@ -173,6 +177,7 @@ declare global {
 		"Public": unknown
 		"Re-import entries": unknown
 		"Refresh": unknown
+		"Related to": unknown
 		"Reload to finish updating": unknown
 		"Reminder": unknown
 		"Reminders": unknown
@@ -180,6 +185,7 @@ declare global {
 		"Remove all": unknown
 		"Remove every participant": unknown
 		"Remove participant": unknown
+		"Remove relationship": unknown
 		"Remove reminder": unknown
 		"Rename": unknown
 		"Rename time zone": unknown
@@ -191,6 +197,8 @@ declare global {
 		"Save": unknown
 		"scroll": unknown
 		"Search entries or run a command…": unknown
+		"Search entries…": unknown
+		"Search for an event or task to link": unknown
 		"Search or run a command (${hotkey})": unknown
 		"Search or run a command…": unknown
 		"select": unknown
@@ -212,6 +220,8 @@ declare global {
 		"Sources": unknown
 		"Start date": unknown
 		"Start time": unknown
+		"Subtask of": unknown
+		"Subtasks": unknown
 		"Switch to all-day": unknown
 		"Task": unknown
 		"Tasks": unknown
@@ -223,6 +233,7 @@ declare global {
 		"The task databases of your workspace": unknown
 		"This and following entries": unknown
 		"This entry": unknown
+		"This relationship is not possible": unknown
 		"Time zone": unknown
 		"times": unknown
 		"Tip: hold ${modifier} to skip this dialog and apply to this entry only": unknown
@@ -233,6 +244,7 @@ declare global {
 		"Toggle Sidebar": unknown
 		"ToggleSidebar.Keywords": unknown
 		"unchanged": unknown
+		"Unknown entry": unknown
 		"Unreleased": unknown
 		"Untitled": unknown
 		"Update available: ${version}": unknown

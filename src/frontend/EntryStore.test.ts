@@ -677,6 +677,27 @@ describe('EntryStore', () => {
 		})
 	})
 
+	describe('relations', () => {
+		it('do NOT participate in dirty-tracking — the field persists them through its own PUT', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			const working = entry({ uid: 'self', relations: null })
+			EntryStore.applyServerEntries([working])
+			working.relateTo('FINISHTOSTART', 'other-uid')
+			assert.equal(EntryStore.isDirty(working), false)
+			await EntryStore.commit(working) // resolves without a request — nothing is dirty
+			assert.equal(transport.calls.update, 0)
+		})
+
+		it('adoptRelations refreshes tracked copies, so views re-render the saved truth', () => {
+			const working = entry({ uid: 'self', relations: null })
+			EntryStore.applyServerEntries([working])
+			EntryStore.adoptRelations(entry({ uid: 'self', relations: [{ type: 'PARENT', targetUid: 'p', gap: null }] as never }))
+			assert.equal(working.relations?.length, 1)
+			assert.equal(EntryStore.isDirty(working), false)
+		})
+	})
+
 	describe('status round-trip', () => {
 		it('a task status edit follows the same derive-commit cycle', async () => {
 			const transport = fake()

@@ -195,6 +195,27 @@ export class EntryStore extends Controller {
 		return !Recurrence.equal(entry.recurrence, this.canonicalById.get(entry.id!)?.recurrence)
 	}
 
+	/** Adopt a relations-only server result onto the tracked copies of that entry — the
+	 * incoming-line removal edits ANOTHER entry than the open editor's, and if that other entry's
+	 * working copy happens to be dirty, leaving its old relations in place would resurrect the
+	 * removed link with its next full PUT. */
+	static adoptRelations(saved: Entry) {
+		if (saved.id === undefined) {
+			return
+		}
+		const working = this.workingById.get(saved.id)
+		const canonical = this.canonicalById.get(saved.id)
+		if (working) {
+			working.relations = saved.relations ?? null
+		}
+		if (canonical) {
+			canonical.relations = saved.relations ?? null
+		}
+		if (working || canonical) {
+			this.notify()
+		}
+	}
+
 	/** Whether the entry's ONLY change against its canonical is the task status. A status belongs to the
 	 * single occurrence by nature — completing this Tuesday's task says nothing about the rest of the
 	 * series — so asking for a scope makes no sense and the edit commits as 'this'. Of the editable

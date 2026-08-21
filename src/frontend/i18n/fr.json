@@ -245,5 +245,17 @@
 	"What's New": "Nouveautés",
 	"Workspace": "Espace de travail",
 	"Year": "Année",
-	"Year View": "Vue année"
+	"Year View": "Vue année",
+	"Add relationship": "Ajouter une relation",
+	"Blocked by": "Bloqué par",
+	"Blocks": "Bloque",
+	"No matching entries": "Aucune entrée correspondante",
+	"Related to": "Lié à",
+	"Remove relationship": "Supprimer la relation",
+	"Search entries…": "Rechercher des entrées…",
+	"Search for an event or task to link": "Rechercher un événement ou une tâche à lier",
+	"Subtask of": "Sous-tâche de",
+	"Subtasks": "Sous-tâches",
+	"This relationship is not possible": "Cette relation n'est pas possible",
+	"Unknown entry": "Entrée inconnue"
 }

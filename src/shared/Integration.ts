@@ -3,6 +3,8 @@ import { entity, primaryKey, property, manyToOne, oneToMany, unique, Collection 
 import { User } from './User.js'
 import { Source } from './Source.js'
 import { Entry } from './Entry.js'
+import { EntryRelation } from './EntryRelation.js'
+import type { Relation } from './Relation.js'
 import { FlushMode, type EntityManager } from '@mikro-orm/core'
 
 /**
@@ -224,6 +226,24 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	}
 
 	/**
+	 * Mirrors native-parsed relationships into the {@link EntryRelation} store. The provider contract:
+	 * an integration with a NATIVE link store (CalDAV's `RELATED-TO`) parses a definite
+	 * `entry.relations` (array or `null`) in {@link syncSourceEntries} and writes it natively in
+	 * {@link createEntry}/{@link updateEntry}; one without leaves the field `undefined` on sync and
+	 * ignores it on writes — those rows stay untouched, the table itself being the store. Does not
+	 * flush; the mirror commits with the sync's own flush.
+	 */
+	protected async reconcileRelations(em: EntityManager, entries: Iterable<Entry>): Promise<void> {
+		const byEntryId = new Map<string, Array<Relation> | null>()
+		for (const entry of entries) {
+			if (entry.id && entry.relations !== undefined) {
+				byEntryId.set(entry.id, entry.relations)
+			}
+		}
+		await EntryRelation.reconcileAll(em, byEntryId)
+	}
+
+	/**
 	 * Syncs entries for every currently enabled source.
 	 * @returns whether any entry changed.
 	 */
@@ -304,7 +324,9 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * may diff `existing` against `incoming` for efficiency, or rewrite wholesale.
 	 * `incoming.exdates` is tri-state: an array replaces the stored exclusions wholesale
 	 * (a scoped series edit shifts them along with the series — see backend/occurrences.ts),
-	 * absent (undefined) keeps them untouched.
+	 * absent (undefined) keeps them untouched. `incoming.relations` is tri-state the same way
+	 * (array sets, `null` clears, undefined keeps); callers populate `existing.relations` from
+	 * the store beforehand so a diffing provider can compare.
 	 * @param em The entity manager to use for database operations.
 	 * @param existing The currently persisted entry (managed).
 	 * @param incoming A transient entry carrying the edited field values.

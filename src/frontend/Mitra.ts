@@ -31,6 +31,7 @@ import { RepeatField } from './components/RepeatField.js'
 import { LocationField } from './components/LocationField.js'
 import { RemindersField } from './components/RemindersField.js'
 import { ParticipantsField } from './components/ParticipantsField.js'
+import { RelationsField } from './components/RelationsField.js'
 import { TimeZoneHeader, DialogTimeZoneRename } from './components/TimeZoneHeader.js'
 import { TimeZonePicker } from './components/TimeZonePicker.js'
 import { syncPushSubscription } from './push.js'
@@ -242,6 +243,7 @@ export class Mitra extends Application {
 			${LocationField.styles}
 			${RemindersField.styles}
 			${ParticipantsField.styles}
+			${RelationsField.styles}
 			${TimeZoneHeader.styles}
 			${DialogTimeZoneRename.styles}
 			${TimeZonePicker.styles}

@@ -1,6 +1,6 @@
 import { UnderscoreNamingStrategy, defineConfig } from '@mikro-orm/sqlite'
 import { Migrator } from '@mikro-orm/migrations'
-import { User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Source, Entry, Recurrence } from '../shared/index.js'
+import { User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Source, Entry, Recurrence, EntryRelation } from '../shared/index.js'
 import { Dev } from './Dev.js'
 import { NotificationSubscription } from './NotificationSubscription.js'
 import { Session } from './Session.js'
@@ -18,7 +18,7 @@ import { migrations } from './migrations/index.js'
  */
 export function ormConfig(dbName: string) {
 	return defineConfig({
-		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Dev, Source, Entry, Recurrence, NotificationSubscription, Session, State],
+		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Dev, Source, Entry, Recurrence, EntryRelation, NotificationSubscription, Session, State],
 		dbName,
 		extensions: [Migrator],
 		migrations: {
