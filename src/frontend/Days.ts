@@ -4,6 +4,7 @@ import { observeResize } from '@3mo/resize-observer'
 import { type Entry, type UserTimeZone } from 'shared'
 import { EntrySegments } from './EntrySegments.js'
 import { EntryStore } from './EntryStore.js'
+import { EntryConnections } from './EntryConnections.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { CalendarScrollController } from './CalendarScrollController.js'
 import { EntryDragController } from './EntryDragController.js'
@@ -479,6 +480,24 @@ export class Days extends Component {
 					--zone-width: 0px;
 				}
 
+				/* The day columns' shared frame: a POSITIONED, co-scrolling containing block over the
+				   day tracks (subgrid keeps them the same tracks). This is what makes the chips
+				   anchorable by the in-content connections layer — CSS anchor positioning requires
+				   the anchors to be DESCENDANTS of the positioned element's containing block, and NO
+				   scroll container may sit between them, or the anchored boxes get scroll-compensated
+				   as if they didn't scroll with the content (see EntryConnections). Deliberately NOT
+				   a stacking context (no z-index): the chips' z 2 and the connectors' z 1/3 must
+				   interleave with the hour lines in the view's own context. Any view that wants
+				   connectors replicates this pattern: one positioned canvas around its chips. */
+				> .canvas {
+					grid-row: 1 / -1;
+					grid-column: calc(-1 * var(--_days-length) - 1) / -1;
+					display: grid;
+					grid-template-rows: subgrid;
+					grid-template-columns: subgrid;
+					position: relative;
+				}
+
 				mitra-day {
 					grid-row: 1 / -1;
 					grid-template-rows: subgrid;
@@ -517,6 +536,9 @@ export class Days extends Component {
 					position: sticky;
 					top: var(--header-height, 2.75rem);
 					z-index: 90;
+					/* The lane's bars sit at z 1 (EventSegment's overlap base) — its connectors go
+					   BELOW them (they'd otherwise out-paint the bars by tree order). */
+					--mitra-connection-z: 0;
 					display: grid;
 					grid-template-columns: subgrid;
 					/* One 1.375rem track per occupied lane plus a trailing empty one — the drag-to-create
@@ -753,7 +775,19 @@ export class Days extends Component {
 		return html`
 			${this.timeTemplate}
 			${this.allDayTemplate}
-			${this.dateTemplate}
+			<div class="canvas">
+				${this.dateTemplate}
+				${this.connectionsTemplate}
+			</div>
+		`
+	}
+
+	private get connectionsTemplate() {
+		// LAST child of the canvas on purpose: an anchor must precede the positioned element in tree
+		// order — and same z-index (1) as the hour lines, so tree order paints the connectors above
+		// them while the chips (z 2) stay above the connectors (see EntryConnections).
+		return !EntryConnections.isEnabledFor('week') ? html.nothing : html`
+			<mitra-entry-connections .segments=${this.dates.window.days.flatMap(day => this.segments.timedOn(day))}></mitra-entry-connections>
 		`
 	}
 
@@ -788,26 +822,41 @@ export class Days extends Component {
 		const lastValue = last.dayStart.valueOf()
 		const columnByDay = new Map(days.map((day, index) => [day.dayStart.valueOf(), offset + index]))
 		const columnOf = (dayValue?: number) => columnByDay.get(dayValue ?? -1) ?? 0
+		const bars = runs.map(segment => {
+			const startColumn = columnOf(segment.dayValue)
+			const clippedRight = segment.runEnd.dayValue! > lastValue
+			const endColumn = clippedRight ? offset + days.length - 1 : columnOf(segment.runEnd.dayValue)
+			return { segment, startColumn, endColumn, clippedRight }
+		})
 		return html`
 			${/* data-chrome (here and below): the grid's frame — kept above the entries a view transition
 			   animates, see calendarTransition.ts. */''}
 			<div class="all-day-corner" data-chrome></div>
 			<div class="all-day">
 				${days.map((_, index) => html`<div class="day" style="grid-column: ${offset + index + 1};"></div>`)}
-				${repeat(runs, segment => segment.entry, segment => {
-					const startColumn = columnOf(segment.dayValue)
-					const clippedRight = segment.runEnd.dayValue! > lastValue
-					const endColumn = clippedRight ? offset + days.length - 1 : columnOf(segment.runEnd.dayValue)
-					return html`
-						<mitra-entry-segment
-							style=${styleMap({ gridColumn: `${startColumn + 1} / span ${endColumn - startColumn + 1}`, gridRow: `${laneOf(segment.entry) + 1}` })}
-							resize="inline"
-							?has-previous=${segment.hasPrevious}
-							?has-next=${clippedRight}
-							.segment=${segment}
-						></mitra-entry-segment>
-					`
-				})}
+				${repeat(bars, bar => bar.segment.entry, bar => html`
+					<mitra-entry-segment
+						style=${styleMap({ gridColumn: `${bar.startColumn + 1} / span ${bar.endColumn - bar.startColumn + 1}`, gridRow: `${laneOf(bar.segment.entry) + 1}` })}
+						resize="inline"
+						?has-previous=${bar.segment.hasPrevious}
+						?has-next=${bar.clippedRight}
+						.segment=${bar.segment}
+					></mitra-entry-segment>
+				`)}
+				${/* The lane is position: sticky — already a positioned, co-moving canvas: when it
+				    sticks, the connectors translate WITH the bars, so within-lane edges stay glued.
+				    This is also exactly why cross-realm (timed ↔ all-day) edges can't be drawn by
+				    either layer: anchor() resolves a sticky element to its UNSTUCK position, so a line
+				    spanning both frames detaches by the scroll delta (measured: 749px off after a 750px
+				    scroll). The ranks are the bars' ACTUAL lanes (the same `laneOf` the grid rows are
+				    placed from) — the lanes are assigned here now, so there is nothing left for
+				    laneRanks' first-fit to simulate. */ ''}
+				${!EntryConnections.isEnabledFor('week') ? html.nothing : html`
+					<mitra-entry-connections
+						.segments=${runs}
+						.verticalRank=${new Map(runs.map(segment => [segment, laneOf(segment.entry)]))}
+					></mitra-entry-connections>
+				`}
 			</div>
 		`
 	}
@@ -875,8 +924,8 @@ export class Days extends Component {
 		// Only the window gets real day trees; every other buffer day is just its (empty) grid track —
 		// the columns are placed explicitly, so scroll geometry doesn't depend on what's rendered.
 		const { days, offset } = this.dates.window
-		// Day tracks start after the "+" track and the zone tracks (see the grid-template comment).
-		const firstDayColumn = this.timeZoneColumns.length + 2
+		// Columns are canvas-relative: the canvas subgrids exactly the day tracks, so the buffer day
+		// at index i sits on its column line i+1.
 		return html`
 			${repeat(days, day => day.dayStart.toISOString(), (day, index) => html`
 				${/* Its header titles the column here (sticky at the top of the scroller), rather than
@@ -885,7 +934,7 @@ export class Days extends Component {
 				<mitra-day
 					data-date=${day.dayStart.toISOString()}
 					column-header
-					style="grid-column: ${firstDayColumn + offset + index};"
+					style="grid-column: ${offset + index + 1};"
 					.date=${day}
 					.entries=${this.segments.timedOn(day)}
 					?today=${day.dayStart.valueOf() === todayValue}
