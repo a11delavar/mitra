@@ -93,182 +93,321 @@ export class Dev extends Integration {
 }
 
 const INTEGRATION_ID = 'dev-sample-integration'
-/** The sample's shape version, carried in the integration's uri: bumping it makes existing dev
- * databases wipe and re-seed the sample in the new shape (real integrations are never touched). */
-const SAMPLE_URI = 'mitra://sample@5'
 
 /**
- * Dev-only: seeds the persisted {@link Dev} sample integration with a few single-colour calendars —
- * Work, Holidays (events), Tasks, and Personal (both types) — whose entries set NO colour of their own, so they
- * inherit their calendar's colour. Idempotent and additive: seeds once (keyed by a stable id) and never
- * deletes, so re-running dev keeps any edits and the user can simply remove the integration when done.
+ * Dev-only: seeds the persisted {@link Dev} sample integration with realistic events.
+ * It uses the current date in the URI to ensure the fixture is recreated once a day, staying
+ * anchored to the current date while preserving edits made during a single day's dev session.
  */
 export async function seedDev(orm: MikroORM) {
 	const em = orm.em.fork()
 
-	// Detect the current sample by a raw read (don't hydrate — an earlier build used a different
-	// integration `type`, whose discriminator this code no longer maps).
+	const today = new DateTime()
+	const todayStr = `${today.year}-${today.month}-${today.day}`
+	const SAMPLE_URI = `mitra://sample/realistic@${todayStr}`
+
+	// Realistic fixture check
 	const rows = await em.getConnection().execute('select type, uri from integration where id = ?', [INTEGRATION_ID]) as Array<{ type: string, uri: string }>
 	const existing = rows[0]
-	if (existing?.type === 'dev' && existing.uri === SAMPLE_URI) {
-		return // up-to-date sample already present — keep it (and any edits made to it)
-	}
-	if (existing) {
-		// A stale sample from an earlier build (a different `type`, or an older {@link SAMPLE_URI}
-		// version): remove it and its children so it re-seeds in the current shape. Real integrations
-		// are untouched. Children are deleted explicitly (sample ids are fixed) in case FK cascade
-		// isn't enforced.
-		await em.nativeDelete(Entry, { sourceId: { $like: 'dev-sample-%' } })
-		await em.nativeDelete(Source, { integrationId: INTEGRATION_ID })
-		await em.getConnection().execute('delete from integration where id = ?', [INTEGRATION_ID])
-	}
 
 	const user = await em.findOneOrFail(User, { username: User.default.username })
-	// The sample account's own address — what stamps `self` on seeded participants (a real CalDAV
-	// account discovers its addresses from the principal, see CalDAV.discoverAddresses).
 	const me = 'me@example.com'
-	const integration = new Dev({ id: INTEGRATION_ID, userId: user.id, uri: SAMPLE_URI, addresses: [me] })
-	em.persist(integration)
 
-	const calendar = (slug: string, types: Array<EntryType>, name: string, color: string) => {
-		const source = new Source({ id: `dev-sample-${slug}`, integrationId: integration.id, uri: `mitra://sample/${slug}`, entryTypes: types, name, color, enabled: true, hidden: false })
-		em.persist(source)
-		return source
+	if (existing?.type !== 'dev' || existing.uri !== SAMPLE_URI) {
+		if (existing) {
+			await em.nativeDelete(Entry, { sourceId: { $like: 'dev-sample-%' } })
+			await em.nativeDelete(Source, { integrationId: INTEGRATION_ID })
+			await em.getConnection().execute('delete from integration where id = ?', [INTEGRATION_ID])
+		}
+
+		// Clean up any other dev integrations if they exist
+		for (const otherId of ['dev-realistic-integration', 'dev-edge-cases-integration']) {
+			const otherRows = await em.getConnection().execute('select id from integration where id = ?', [otherId])
+			if (otherRows.length > 0) {
+				await em.nativeDelete(Entry, { sourceId: { $like: `${otherId.replace('-integration', '')}-%` } })
+				await em.nativeDelete(Source, { integrationId: otherId })
+				await em.getConnection().execute('delete from integration where id = ?', [otherId])
+			}
+		}
+
+		const integration = new Dev({
+			id: INTEGRATION_ID,
+			userId: user.id,
+			uri: SAMPLE_URI,
+			addresses: [me],
+			credentials: { username: me }
+		})
+		em.persist(integration)
+
+		const calendar = (slug: string, types: Array<EntryType>, name: string, color: string) => {
+			const source = new Source({ id: `dev-sample-${slug}`, integrationId: integration.id, uri: `mitra://sample/${slug}`, entryTypes: types, name, color, enabled: true, hidden: false })
+			em.persist(source)
+			return source
+		}
+
+		const personal = calendar('personal', [EntryType.Event, EntryType.Task], 'Personal', Color.Green)
+		const hobbies = calendar('hobbies', [EntryType.Event, EntryType.Task], 'Hobbies', Color.Purple)
+		const university = calendar('university', [EntryType.Event, EntryType.Task], 'University', Color.Yellow)
+		const work = calendar('work', [EntryType.Event, EntryType.Task], 'Work', Color.Blue)
+		const upkeep = calendar('upkeep', [EntryType.Event, EntryType.Task], 'Upkeep', Color.Grey)
+
+		const todayStart = today.dayStart
+		const thisWeekMonday = todayStart.weekStart.dayStart
+		const nextWeekMonday = thisWeekMonday.add({ days: 7 })
+		const lastWeekMonday = thisWeekMonday.subtract({ days: 7 })
+		const pastStart = todayStart.subtract({ years: 2 }).weekStart.dayStart // 2 years ago base
+
+		const at = (base: DateTime, dayOffset: number, hour: number, minute = 0) => base.add({ days: dayOffset }).with({ hour, minute })
+		const allDayStart = (base: DateTime, dayOffset: number) => normalizeAllDay(base.add({ days: dayOffset })) as unknown as DateTime
+
+		const on = (source: Source) => (init: Partial<Entry>) => {
+			const entry = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: source.defaultEntryType, ...init, sourceId: source.id })
+			em.persist(entry)
+			return entry
+		}
+
+		const workEvent = on(work)
+		const workTask = (init: Partial<Entry>) => on(work)({ type: EntryType.Task, ...init })
+		const personalEvent = on(personal)
+		const hobbyEvent = on(hobbies)
+		const upkeepTask = (init: Partial<Entry>) => on(upkeep)({ type: EntryType.Task, ...init })
+		const upkeepEvent = on(upkeep)
+		const uniEvent = on(university)
+		// @ts-ignore - used in commented out subtasks
+		const uniTask = (init: Partial<Entry>) => on(university)({ type: EntryType.Task, ...init })
+
+		// @ts-ignore - used in commented out subtasks
+		const relate = (entry: Entry, type: RelationType, target: Entry) => em.persist(new EntryRelation({ entryId: entry.id!, type, targetUid: target.uid! }))
+
+		// ---- Work (Blue) ----
+
+		const examWeek1Exdate = at(nextWeekMonday, 0, 14).getTime()
+		const examWeek2Exdate = at(nextWeekMonday, 7, 14).getTime()
+
+		workEvent({
+			heading: 'Weekly Team Sync',
+			start: at(pastStart, 0, 14), // Starting 2 years ago
+			end: at(pastStart, 0, 15),
+			recurrence: new Recurrence({ freq: 'WEEKLY' }),
+			exdates: [examWeek1Exdate, examWeek2Exdate],
+			participants: [
+				{ email: me, organizer: true, self: true, role: ParticipantRole.Required, status: ParticipantStatus.Accepted },
+				{ email: 'colleague1@company.com', role: ParticipantRole.Required, status: ParticipantStatus.Accepted },
+				{ email: 'colleague2@company.com', role: ParticipantRole.Required, status: ParticipantStatus.Tentative },
+			],
+		})
+
+		const q3Planning = workEvent({
+			heading: 'Q3 Planning Strategy',
+			start: at(thisWeekMonday, 21, 10), // Monday after exam phase
+			end: at(thisWeekMonday, 21, 16)
+		})
+
+		const prepQ3 = workTask({
+			heading: 'Prepare Q3 Presentation',
+			status: TaskStatus.Doing,
+			start: at(thisWeekMonday, 4, 10), // This Friday
+			end: at(thisWeekMonday, 4, 14)
+		})
+		relate(q3Planning, RelationType.FinishToStart, prepQ3)
+
+		// DB Migration Project (Mon, Wed, Fri of last week)
+		const writeMigScript = workTask({ heading: 'Write Migration Script', status: TaskStatus.Done, start: at(lastWeekMonday, 0, 9), end: at(lastWeekMonday, 0, 15) })
+		const testMig = workTask({ heading: 'Test Database Migration', status: TaskStatus.Done, start: at(lastWeekMonday, 2, 9), end: at(lastWeekMonday, 2, 14) })
+		const execMig = workEvent({ heading: 'Execute Database Migration', start: at(lastWeekMonday, 4, 9), end: at(lastWeekMonday, 4, 11) })
+		relate(testMig, RelationType.FinishToStart, writeMigScript)
+		relate(execMig, RelationType.FinishToStart, testMig)
+
+		// Long tasks (Mon, Wed, Fri only)
+		workTask({ heading: 'Draft New System Architecture', status: TaskStatus.ToDo, start: at(thisWeekMonday, 0, 9), end: at(thisWeekMonday, 0, 15) }) // Mon
+		workTask({ heading: 'Finalize Budget Report', status: TaskStatus.ToDo, start: at(thisWeekMonday, 2, 10), end: at(thisWeekMonday, 2, 14) }) // Wed
+
+		workTask({
+			heading: 'Submit Expense Report',
+			start: at(pastStart, 4, 16),
+			end: at(pastStart, 4, 16, 30),
+			status: TaskStatus.ToDo,
+			recurrence: new Recurrence({ freq: 'MONTHLY', bymonthday: 1 })
+		})
+
+		// ---- Personal (Green) ----
+
+		personalEvent({
+			heading: 'Dentist Appointment',
+			start: at(nextWeekMonday, 2, 16),
+			end: at(nextWeekMonday, 2, 17)
+		})
+
+		personalEvent({
+			heading: 'Dinner with friends',
+			start: at(nextWeekMonday, 4, 19),
+			end: at(nextWeekMonday, 4, 22),
+			location: 'City Center'
+		})
+
+		// ---- Upkeep (Grey) ----
+
+		const hikeGroceryExdate = at(thisWeekMonday, 5, 10).getTime() // Exclude the Saturday of the hike
+
+		upkeepTask({
+			heading: '🛒 Grocery Shopping',
+			start: at(pastStart, 5, 10),
+			end: at(pastStart, 5, 11),
+			status: TaskStatus.ToDo,
+			recurrence: new Recurrence({ freq: 'WEEKLY' }),
+			exdates: [hikeGroceryExdate]
+		})
+
+		// Rescheduled Grocery Shopping for the hike week
+		upkeepTask({
+			heading: '🛒 Grocery Shopping',
+			start: at(thisWeekMonday, 5, 16), // Saturday afternoon after the hike
+			end: at(thisWeekMonday, 5, 17),
+			status: TaskStatus.ToDo
+		})
+
+		upkeepTask({
+			heading: 'Deep Clean Apartment',
+			start: at(pastStart, 5, 20),
+			end: at(pastStart, 5, 22),
+			status: TaskStatus.ToDo,
+			recurrence: new Recurrence({ freq: 'MONTHLY', bymonthday: 1 })
+		})
+
+		upkeepEvent({
+			heading: 'Car Inspection',
+			start: at(pastStart, 1, 9),
+			end: at(pastStart, 1, 10),
+			recurrence: new Recurrence({ freq: 'YEARLY' })
+		})
+
+		upkeepTask({
+			heading: 'Water Plants',
+			start: at(pastStart, 2, 18),
+			end: at(pastStart, 2, 18, 15),
+			status: TaskStatus.ToDo,
+			recurrence: new Recurrence({ freq: 'WEEKLY' })
+		})
+
+		// ---- Hobbies (Purple) ----
+
+		hobbyEvent({
+			heading: '🏐 Volleyball Practice',
+			start: at(pastStart, 1, 18, 30),
+			end: at(pastStart, 1, 20),
+			recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['TU', 'TH'] })
+		})
+
+		hobbyEvent({
+			heading: '💪 Gym',
+			start: at(pastStart, 0, 7, 0),
+			end: at(pastStart, 0, 8, 0),
+			recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['MO', 'WE'] })
+		})
+
+		hobbyEvent({
+			heading: 'Weekend Hike in the Mountains',
+			start: at(thisWeekMonday, 5, 8),
+			end: at(thisWeekMonday, 5, 15),
+			location: 'Mountains'
+		})
+
+		const month1Start = todayStart.add({ months: 1 }).weekStart.dayStart
+		hobbyEvent({
+			heading: 'Summer Vacation',
+			start: allDayStart(month1Start, 0),
+			end: allDayStart(month1Start, 14),
+			allDay: true,
+			location: 'Beach Resort'
+		})
+
+		personalEvent({
+			heading: '✈️ Flight to Beach Resort',
+			start: at(month1Start, 0, 10),
+			end: at(month1Start, 0, 13),
+			location: 'Airport'
+		})
+
+		personalEvent({
+			heading: '✈️ Flight back home',
+			start: at(month1Start, 13, 14),
+			end: at(month1Start, 13, 17),
+			location: 'Airport'
+		})
+
+		const month2Start = todayStart.add({ months: 2 }).weekStart.dayStart
+		hobbyEvent({
+			heading: 'Photography Workshop',
+			start: allDayStart(month2Start, 5),
+			end: allDayStart(month2Start, 7),
+			allDay: true
+		})
+
+		// ---- University (Yellow) ----
+
+		// Exam Phase: Yearly recurring (matches this year's nextWeekMonday)
+		const pastNextWeek = nextWeekMonday.subtract({ years: 2 })
+		uniEvent({
+			heading: 'Exam Phase',
+			start: allDayStart(pastNextWeek, 0),
+			end: allDayStart(pastNextWeek, 14),
+			allDay: true,
+			recurrence: new Recurrence({ freq: 'YEARLY' })
+		})
+
+		const algoExam = uniEvent({
+			heading: 'Exam: Data Structures & Algorithms',
+			start: at(nextWeekMonday, 3, 10), // Thursday next week
+			end: at(nextWeekMonday, 3, 12)
+		})
+
+		const algoPrep1 = uniTask({ heading: 'DA: Study Graphs and Trees', status: TaskStatus.Done, start: at(nextWeekMonday, 0, 10), end: at(nextWeekMonday, 0, 14) })
+		const algoPrep2 = uniTask({ heading: 'DA: Study Dynamic Programming', status: TaskStatus.Doing, start: at(nextWeekMonday, 1, 10), end: at(nextWeekMonday, 1, 14) })
+		const algoPrep3 = uniTask({ heading: 'DA: Solve Practice Exam', status: TaskStatus.ToDo, start: at(nextWeekMonday, 2, 10), end: at(nextWeekMonday, 2, 14) })
+
+		// Dependencies for Algo
+		relate(algoPrep3, RelationType.FinishToStart, algoPrep1)
+		relate(algoPrep3, RelationType.FinishToStart, algoPrep2)
+		relate(algoExam, RelationType.FinishToStart, algoPrep3)
+
+		const mlExam = uniEvent({
+			heading: 'Exam: Machine Learning',
+			start: at(nextWeekMonday, 8, 14), // Next next Tuesday
+			end: at(nextWeekMonday, 8, 16)
+		})
+
+		const mlPrep1 = uniTask({ heading: 'ML: Review Linear Algebra', status: TaskStatus.ToDo, start: at(nextWeekMonday, 4, 10), end: at(nextWeekMonday, 4, 14) })
+		const mlPrep2 = uniTask({ heading: 'ML: Study Neural Networks', status: TaskStatus.ToDo, start: at(nextWeekMonday, 6, 10), end: at(nextWeekMonday, 6, 14) })
+		const mlPrep3 = uniTask({ heading: 'ML: Implement Backpropagation', status: TaskStatus.ToDo, start: at(nextWeekMonday, 7, 10), end: at(nextWeekMonday, 7, 14) })
+
+		// Dependencies for ML
+		relate(mlPrep2, RelationType.FinishToStart, mlPrep1)
+		relate(mlPrep3, RelationType.FinishToStart, mlPrep2)
+		relate(mlExam, RelationType.FinishToStart, mlPrep3)
+
+		// Exam Period: 6 months from now
+		const month6Start = todayStart.add({ months: 6 }).weekStart.dayStart
+
+		const pastMonth6Start = month6Start.subtract({ years: 2 })
+		uniEvent({
+			heading: 'Exam Phase',
+			start: allDayStart(pastMonth6Start, 0),
+			end: allDayStart(pastMonth6Start, 14),
+			allDay: true,
+			recurrence: new Recurrence({ freq: 'YEARLY' })
+		})
+
+		const advCalcExam = uniEvent({
+			heading: 'Exam: Advanced Calculus',
+			start: at(month6Start, 2, 9),
+			end: at(month6Start, 2, 12)
+		})
+
+		const calcPrep1 = uniTask({ heading: 'AC: Review Integrals', status: TaskStatus.ToDo, start: at(month6Start, 0, 10), end: at(month6Start, 0, 14) })
+		const calcPrep2 = uniTask({ heading: 'AC: Study Multivariable Calculus', status: TaskStatus.ToDo, start: at(month6Start, 1, 10), end: at(month6Start, 1, 14) })
+		relate(calcPrep2, RelationType.FinishToStart, calcPrep1)
+		relate(advCalcExam, RelationType.FinishToStart, calcPrep2)
 	}
-
-	const work = calendar('work', [EntryType.Event], 'Work', Color.Blue)
-	// Personal accepts BOTH types, like a real CalDAV collection that declares no component set — the
-	// sample's stand-in for the multi-type case (it's what makes the editor's event ⇄ task switch
-	// reachable in development).
-	const personal = calendar('personal', [EntryType.Event, EntryType.Task], 'Personal', Color.Green)
-	const holidays = calendar('holidays', [EntryType.Event], 'Holidays', Color.Red)
-	const tasks = calendar('tasks', [EntryType.Task], 'Tasks', Color.Purple)
-
-	const weekStart = new DateTime().weekStart.dayStart
-	const at = (day: number, hour: number, minute = 0) => weekStart.add({ days: day }).with({ hour, minute })
-	// All-day bounds are canonical UTC-midnight date encodings (see calendarDate.ts) — seed them so,
-	// rather than as server-local midnights the boot backfill would only normalize on the NEXT start.
-	const allDayStart = (day: number) => normalizeAllDay(weekStart.add({ days: day })) as unknown as DateTime
-
-	// Entries carry no colour of their own — they inherit their calendar's colour. Every entry gets a
-	// uid: relationships target uids (shared/Relation.ts), so a uid-less row couldn't be linked to.
-	const on = (source: Source) => (init: Partial<Entry>) => {
-		const entry = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: source.defaultEntryType, ...init, sourceId: source.id })
-		em.persist(entry)
-		return entry
-	}
-	const event = on(work)
-	const personalEvent = on(personal)
-	const holiday = on(holidays)
-	const task = on(tasks)
-
-	// Work — Monday
-	event({ heading: 'Standup', start: at(0, 9), end: at(0, 9, 15) })
-	event({ heading: '1:1 with Sarah', start: at(0, 9, 30), end: at(0, 10) })
-	// Organized by the sample account itself, so the participant batch actions are enabled (iTIP
-	// reserves list changes for the organizer) — with every reply status represented.
-	event({
-		heading: 'Sprint Planning', start: at(0, 10), end: at(0, 11, 30),
-		participants: [
-			{ email: me, organizer: true, self: true, role: ParticipantRole.Required, status: ParticipantStatus.Accepted },
-			{ email: 'accepted@example.com', role: ParticipantRole.Required, status: ParticipantStatus.Accepted },
-			{ email: 'pending@example.com', role: ParticipantRole.Required, status: ParticipantStatus.NeedsAction },
-			{ email: 'tentative@example.com', role: ParticipantRole.Optional, status: ParticipantStatus.Tentative },
-			{ email: 'pending-too@example.com', role: ParticipantRole.Required, status: ParticipantStatus.NeedsAction },
-			{ email: 'declined@example.com', role: ParticipantRole.Optional, status: ParticipantStatus.Declined },
-		],
-	})
-	event({ heading: 'Design Review', start: at(0, 14), end: at(0, 15) })
-	// Work — Tuesday (Deep Work / Client Call overlap)
-	event({ heading: 'Standup', start: at(1, 9), end: at(1, 9, 15) })
-	event({ heading: 'Deep Work', start: at(1, 10), end: at(1, 12) })
-	// Organized by someone else: the account is a mere attendee, so batch actions are disabled.
-	event({
-		heading: 'Client Call', start: at(1, 11), end: at(1, 11, 30),
-		participants: [
-			{ email: 'organizer@example.com', organizer: true, role: ParticipantRole.Chair, status: ParticipantStatus.Accepted },
-			{ email: me, self: true, role: ParticipantRole.Required, status: ParticipantStatus.NeedsAction },
-			{ email: 'optional@example.com', role: ParticipantRole.Optional, status: ParticipantStatus.Accepted },
-		],
-	})
-	// Work — Wednesday
-	event({ heading: 'Standup', start: at(2, 9), end: at(2, 9, 15) })
-	event({ heading: 'Architecture Sync', start: at(2, 11), end: at(2, 12) })
-	event({ heading: 'Interview: Frontend', start: at(2, 15), end: at(2, 16) })
-	// Work — Thursday (Standup overlaps Focus Block)
-	event({ heading: 'Focus Block', start: at(3, 9), end: at(3, 12) })
-	event({ heading: 'Standup', start: at(3, 9), end: at(3, 9, 15) })
-	const productDemo = event({ heading: 'Product Demo', start: at(3, 14), end: at(3, 15) })
-	// Work — Friday
-	event({ heading: 'Standup', start: at(4, 9), end: at(4, 9, 15) })
-	event({ heading: 'Sprint Retro', start: at(4, 15), end: at(4, 16) })
-
-	// Personal
-	personalEvent({ heading: 'Gym', start: at(1, 18), end: at(1, 19) })
-	personalEvent({ heading: 'Lunch w/ Alex', start: at(2, 12, 30), end: at(2, 13, 30) })
-	personalEvent({ heading: 'Happy Hour', start: at(4, 17), end: at(4, 18, 30) })
-
-	// A multi-day *timed* event (Tue afternoon → Thu morning): the timed grid shows a run spanning
-	// columns, clamped at the day edges.
-	event({ heading: 'Offsite', start: at(1, 13), end: at(3, 11) })
-
-	// Overlapping all-day events, so the all-day lane shows several stacked lanes:
-	event({ heading: 'Conference', start: allDayStart(1), end: allDayStart(4), allDay: true })          // Tue–Thu
-	personalEvent({ heading: 'Family Visit', start: allDayStart(2), end: allDayStart(5), allDay: true }) // Wed–Fri (overlaps Conference)
-	holiday({ heading: 'Public Holiday', start: allDayStart(4), end: allDayStart(5), allDay: true })     // Fri (overlaps Family Visit)
-	personalEvent({ heading: 'Berlin Trip', start: allDayStart(5), end: allDayStart(10), allDay: true }) // Sat → next week
-
-	// Tasks, mid-day — one per status so the checkbox/menu states are all visible in dev.
-	task({ heading: 'Submit expense report', status: TaskStatus.Done, start: at(0, 11), end: at(0, 11, 30) })
-	const reviewPr = task({ heading: 'Review PR #312', status: TaskStatus.Doing, start: at(1, 13), end: at(1, 13, 30) })
-	task({ heading: 'Update roadmap doc', status: TaskStatus.ToDo, start: at(2, 14), end: at(2, 14, 30) })
-	const demoSlides = task({ heading: 'Prepare demo slides', status: TaskStatus.Cancelled, start: at(3, 12), end: at(3, 13) })
-	const weeklyUpdate = task({ heading: 'Send weekly update', status: TaskStatus.Done, start: at(4, 11, 30), end: at(4, 12) })
-
-	// Relationships showcase — the EntryRelation table IS Dev's native store, so seed rows directly:
-	// a task that's a subtask of an EVENT (mixed task↔event links are first-class), and a task that
-	// waits for another ("Send weekly update" after "Review PR #312").
-	const relate = (entry: Entry, type: RelationType, target: Entry) => em.persist(new EntryRelation({ entryId: entry.id!, type, targetUid: target.uid! }))
-	relate(demoSlides, RelationType.Parent, productDemo)
-	relate(weeklyUpdate, RelationType.FinishToStart, reviewPr)
-
-	// — The rest of the year, so the year view has a story to tell: multi-day/multi-week arcs, quarterly
-	// milestones, seasonal holidays and a couple of yearly-recurring days, anchored to the current year.
-	// All-day ends are exclusive next midnight, so `end: date(m, d)` means "through the day before d".
-	const yearStart = new DateTime().yearStart.dayStart
-	const date = (month: number, day: number) => yearStart.with({ month, day })
-
-	// Personal arcs
-	personalEvent({ heading: 'Ski Trip', start: date(2, 8), end: date(2, 16), allDay: true })
-	personalEvent({ heading: 'Family Reunion', start: date(5, 23), end: date(5, 26), allDay: true })
-	personalEvent({ heading: 'Summer Vacation, Italy', start: date(8, 3), end: date(8, 18), allDay: true, location: 'Tuscany' })
-	personalEvent({ heading: 'House Renovation', start: date(9, 14), end: date(10, 25), allDay: true })
-	personalEvent({ heading: 'City Marathon', start: date(10, 11).with({ hour: 9 }), end: date(10, 11).with({ hour: 14 }) })
-	personalEvent({ heading: 'Mom’s Birthday', start: date(3, 11), end: date(3, 12), allDay: true, recurrence: new Recurrence({ freq: 'YEARLY' }) })
-	personalEvent({ heading: 'Anniversary', start: date(6, 21), end: date(6, 22), allDay: true, recurrence: new Recurrence({ freq: 'YEARLY' }) })
-
-	// Work milestones & phases
-	event({ heading: 'Q1 Planning', start: date(1, 8), end: date(1, 11), allDay: true })
-	event({ heading: 'Q2 Planning', start: date(4, 7), end: date(4, 10), allDay: true })
-	event({ heading: 'Q3 Planning', start: date(7, 7), end: date(7, 10), allDay: true })
-	event({ heading: 'Q4 Planning', start: date(10, 6), end: date(10, 9), allDay: true })
-	event({ heading: 'Team Offsite', start: date(5, 12), end: date(5, 15), allDay: true })
-	event({ heading: 'Annual Conference', start: date(9, 22), end: date(9, 26), allDay: true, location: 'Convention Center' })
-	event({ heading: 'Code Freeze', start: date(11, 10), end: date(11, 18), allDay: true })
-	event({ heading: 'v2.0 Launch', start: date(11, 18), end: date(11, 19), allDay: true })
-	event({ heading: 'Performance Reviews', start: date(12, 1), end: date(12, 6), allDay: true })
-
-	// Holidays through the year
-	holiday({ heading: 'New Year’s Day', start: date(1, 1), end: date(1, 2), allDay: true })
-	holiday({ heading: 'Spring Holiday', start: date(4, 18), end: date(4, 22), allDay: true })
-	holiday({ heading: 'National Day', start: date(10, 3), end: date(10, 4), allDay: true })
-	holiday({ heading: 'Christmas', start: date(12, 24), end: date(12, 27), allDay: true })
-	holiday({ heading: 'New Year’s Eve', start: date(12, 31), end: date(12, 31).add({ days: 1 }), allDay: true })
-
-	// Year-scale tasks
-	task({ heading: 'File tax return', status: TaskStatus.ToDo, start: date(4, 10), end: date(4, 11), allDay: true })
-	task({ heading: 'Book vacation flights', status: TaskStatus.Done, start: date(5, 5), end: date(5, 6), allDay: true })
-	task({ heading: 'Renew passport', status: TaskStatus.ToDo, start: date(8, 25), end: date(8, 26), allDay: true })
 
 	await em.flush()
 }
