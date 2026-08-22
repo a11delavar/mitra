@@ -368,6 +368,29 @@ describe('CalDAV free/busy and access class (TRANSP / CLASS)', () => {
 			await stubbed().updateEntry(em(), existing, incoming)
 			assert.doesNotMatch(existing.data!.raw!, /TRANSP/)
 		})
+
+		it('unscheduling a task REMOVES its DTSTART and DUE, and clears the row with them', async () => {
+			// The one edit that has to DELETE a date line rather than rewrite it. Legal because a VTODO's
+			// date properties are both optional (RFC 5545 §3.6.2).
+			const raw = [
+				'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//test//EN',
+				'BEGIN:VTODO', 'UID:t1', 'DTSTAMP:20260101T000000Z', 'SUMMARY:Buy milk',
+				'DTSTART:20260602T090000Z', 'DUE:20260602T100000Z', 'END:VTODO', 'END:VCALENDAR',
+			].join('\r\n')
+			const existing = new Entry({
+				id: 't1', sourceId: 's', type: EntryType.Task, heading: 'Buy milk', uri: 'https://example.com/cal/t1.ics',
+				start: D('2026-06-02T09:00:00Z'), end: D('2026-06-02T10:00:00Z'), data: { raw },
+			})
+			const incoming = new Entry({ ...existing, start: undefined, end: undefined } as Partial<Entry>)
+
+			await stubbed().updateEntry(em(), existing, incoming)
+
+			assert.doesNotMatch(existing.data!.raw!, /DTSTART/)
+			assert.doesNotMatch(existing.data!.raw!, /DUE/)
+			assert.match(existing.data!.raw!, /SUMMARY:Buy milk/) // nothing else was touched
+			assert.equal(existing.start, undefined)
+			assert.equal(existing.end, undefined)
+		})
 	})
 
 	describe('creating an entry', () => {

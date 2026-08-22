@@ -5,6 +5,8 @@ import { DialogIntegration } from './DialogIntegration.js'
 import { type Integration, type Source } from 'shared'
 import { ReorderabilityController, ReorderabilityState } from '@3mo/reorderability'
 import { focusRing } from './components/focusRing.css.js'
+import { EntryStore } from './EntryStore.js'
+import { Unscheduled } from './Unscheduled.js'
 import { canInstall, promptInstall, onInstallAvailabilityChange } from './pwa.js'
 
 @component('mitra-sidebar')
@@ -13,6 +15,23 @@ export class Sidebar extends Component {
 	/** A source was hidden or shown — the calendar listens to refetch through its view transition. */
 	@event() readonly sourcesChange!: EventDispatcher
 	@property({ type: Boolean, reflect: true }) open = false
+
+	/** Tabs rather than stacked sections: each mode wants the column's whole height, and tabs cost
+	 * nothing at any width, where a pane beside the calendar would. */
+	@state() private tab: 'calendars' | 'planning' = (localStorage.getItem('Mitra.SidebarTab') as 'planning' | null) ?? 'calendars'
+
+	/** Subscribes the sidebar to the store, so the tab's badge follows a task being scheduled or
+	 * dropped back with no wiring to `mitra-unscheduled`. */
+	readonly store = new EntryStore(this)
+
+	private get unscheduledCount() {
+		return this.store.entries.filter(entry => !entry.scheduled).length
+	}
+
+	private setTab(tab: 'calendars' | 'planning') {
+		this.tab = tab
+		localStorage.setItem('Mitra.SidebarTab', tab)
+	}
 
 	/**
 	 * Drag-to-reorder (@3mo/reorderability), which the ⋯ menus' Move up/down mirror. Grouping is ONE
@@ -421,6 +440,25 @@ export class Sidebar extends Component {
 				   jump inward by the thumb's width the moment one more source made it overflow. The lane is
 				   sized here rather than left to scrollbar-width: thin, whose width is the UA's to pick (and
 				   which draws stepper arrows on Windows). */
+				/* The tabs take the column between the brand and the footer; each panel then gives its
+				   list the height and pins its action to the foot. Without this the panels are only as
+				   tall as their content and both buttons end up floating mid-column. */
+				mitra-tabs {
+					flex: 1;
+					min-height: 0;
+				}
+
+				mitra-tab-panel > .integrations,
+				mitra-tab-panel > mitra-unscheduled {
+					flex: 1;
+					min-height: 0;
+				}
+
+				mitra-tab-panel > .action {
+					flex-shrink: 0;
+					margin-block-start: 0.5rem;
+				}
+
 				.integrations {
 					flex: 1;
 					min-height: 0;
@@ -634,7 +672,7 @@ export class Sidebar extends Component {
 
 				/* Sized to a source row rather than to its own padding, which is where the footer's height
 				   went: two of these plus a 1rem gap used to cost as much as three source rows. */
-				.add-integration {
+				.action {
 					color: var(--color-text-muted);
 					background: transparent;
 					mitra-icon { font-size: 0.875rem; }
@@ -847,6 +885,82 @@ export class Sidebar extends Component {
 		return !update ? undefined : t('Update available: ${version}', { version: update.version })
 	}
 
+	private get calendarsTemplate() {
+		return html`
+			<div class="integrations">
+				${getIntegrations().map((i, index, integrations) => html`
+					<div class="integration" ${this.integrationsReorder.item({ index, handle: '.title' })}>
+						<header>
+							<span class="title">${i.credentials?.username || i.type}</span>
+							<mitra-icon-button icon="more-horizontal" label=${t('Integration options')} style="anchor-name: --anchor-${i.id}" @click=${this.toggleMenu}></mitra-icon-button>
+							<menu popover id="menu-${i.id}" style="position-anchor: --anchor-${i.id}">
+								<button @click=${(e: Event) => { this.closeMenu(e); this.openDialog(i.id) }}>
+									<mitra-icon icon="pencil"></mitra-icon>
+									${t('Edit')}
+								</button>
+								${/* The drag reorder's accessible, discoverable twin (see SidebarReorderController). */''}
+								<button ?disabled=${index === 0} @click=${(e: Event) => { this.closeMenu(e); this.moveIntegration(i.id, -1) }}>
+									<mitra-icon icon="arrow-up"></mitra-icon>
+									${t('Move up')}
+								</button>
+								<button ?disabled=${index === integrations.length - 1} @click=${(e: Event) => { this.closeMenu(e); this.moveIntegration(i.id, 1) }}>
+									<mitra-icon icon="arrow-down"></mitra-icon>
+									${t('Move down')}
+								</button>
+								${/* Re-import only — there is deliberately no "sync now" here: syncing runs itself,
+								   and offering to trigger it would imply what's on screen might be stale. */''}
+								<button
+									title=${t('Delete the locally cached entries of every enabled source and import everything again')}
+									@click=${(e: Event) => { this.closeMenu(e); reimportIntegration(i.id).catch(() => void 0) }}>
+									<mitra-icon icon="hard-drive-download"></mitra-icon>
+									${t('Re-import entries')}
+								</button>
+								<button class="danger" @click=${(e: Event) => { this.closeMenu(e); this.removeIntegration(i.id) }}>
+									<mitra-icon icon="trash-2"></mitra-icon>
+									${t('Delete')}
+								</button>
+							</menu>
+						</header>
+						<div class="sources">
+							${getEnabledSources(i).map((source, sourceIndex, sources) => html`
+								<div class="source" ${this.sourcesReorderOf(i).item({ index: sourceIndex })} ?data-hidden=${source.hidden}>
+									${/* The shared source icon (see SourceIcon), filled here for the source new entries
+									    land in — which is what clicking it toggles. */''}
+									<button class="marker"
+										@click=${() => this.toggleDefault(source)}
+										title=${this.defaultHint(source)}>
+										<mitra-source-icon .source=${source} ?selected=${this.isDefault(source)}></mitra-source-icon>
+									</button>
+									${this.getNameTemplate(source)}
+									${this.getActionsTemplate(i, source, sourceIndex, sources.length)}
+								</div>
+						`)}
+						</div>
+					</div>
+			`)}
+			</div>
+			${/* Belongs to THIS mode, not to the column: adding an account says nothing in Planning. */''}
+			<button class="action" @click=${() => this.openDialog()}>
+				<mitra-icon icon="plus"></mitra-icon>
+				${t('Add Integration')}
+			</button>
+		`
+	}
+
+	/** The button is this mode's primary verb, in the same shape and place Calendars puts "Add
+	 * Integration" — jotting a task down is a central act, not a glyph tucked into a heading. */
+	private get planningTemplate() {
+		return html`
+			<mitra-unscheduled></mitra-unscheduled>
+			${!Unscheduled.canAdd ? html.nothing : html`
+				<button class="action" @click=${() => Unscheduled.add()}>
+					<mitra-icon icon="plus"></mitra-icon>
+					${t('Add Task')}
+				</button>
+			`}
+		`
+	}
+
 	protected override get template() {
 		return html`
 			<div class="backdrop" ?data-open=${this.open} @click=${() => this.openChange.dispatch(false)}></div>
@@ -862,65 +976,19 @@ export class Sidebar extends Component {
 						${this.updateHint || !hasUnseenChanges() ? html.nothing : html`<span class="news-dot" title=${t('What\'s New')}></span>`}
 					</span>
 				</button>
-				<div class="integrations">
-					${getIntegrations().map((i, index, integrations) => html`
-						<div class="integration" ${this.integrationsReorder.item({ index, handle: '.title' })}>
-							<header>
-								<span class="title">${i.credentials?.username || i.type}</span>
-								<mitra-icon-button icon="more-horizontal" label=${t('Integration options')} style="anchor-name: --anchor-${i.id}" @click=${this.toggleMenu}></mitra-icon-button>
-								<menu popover id="menu-${i.id}" style="position-anchor: --anchor-${i.id}">
-									<button @click=${(e: Event) => { this.closeMenu(e); this.openDialog(i.id) }}>
-										<mitra-icon icon="pencil"></mitra-icon>
-										${t('Edit')}
-									</button>
-									${/* The drag reorder's accessible, discoverable twin (see SidebarReorderController). */''}
-									<button ?disabled=${index === 0} @click=${(e: Event) => { this.closeMenu(e); this.moveIntegration(i.id, -1) }}>
-										<mitra-icon icon="arrow-up"></mitra-icon>
-										${t('Move up')}
-									</button>
-									<button ?disabled=${index === integrations.length - 1} @click=${(e: Event) => { this.closeMenu(e); this.moveIntegration(i.id, 1) }}>
-										<mitra-icon icon="arrow-down"></mitra-icon>
-										${t('Move down')}
-									</button>
-									${/* Re-import only — there is deliberately no "sync now" here: syncing runs itself,
-									   and offering to trigger it would imply what's on screen might be stale. */''}
-									<button
-										title=${t('Delete the locally cached entries of every enabled source and import everything again')}
-										@click=${(e: Event) => { this.closeMenu(e); reimportIntegration(i.id).catch(() => void 0) }}>
-										<mitra-icon icon="hard-drive-download"></mitra-icon>
-										${t('Re-import entries')}
-									</button>
-									<button class="danger" @click=${(e: Event) => { this.closeMenu(e); this.removeIntegration(i.id) }}>
-										<mitra-icon icon="trash-2"></mitra-icon>
-										${t('Delete')}
-									</button>
-								</menu>
-							</header>
-							<div class="sources">
-								${getEnabledSources(i).map((source, sourceIndex, sources) => html`
-									<div class="source" ${this.sourcesReorderOf(i).item({ index: sourceIndex })} ?data-hidden=${source.hidden}>
-										${/* The shared source icon (see SourceIcon), filled here for the source new entries
-										    land in — which is what clicking it toggles. */''}
-										<button class="marker"
-											@click=${() => this.toggleDefault(source)}
-											title=${this.defaultHint(source)}>
-											<mitra-source-icon .source=${source} ?selected=${this.isDefault(source)}></mitra-source-icon>
-										</button>
-										${this.getNameTemplate(source)}
-										${this.getActionsTemplate(i, source, sourceIndex, sources.length)}
-									</div>
-							`)}
-							</div>
-						</div>
-				`)}
-				</div>
+				${/* The column's two modes. Rendered as a tablist so the roles say what the shape says. */''}
+				<mitra-tabs .selected=${this.tab} @selectedChange=${(e: CustomEvent<string>) => this.setTab(e.detail as 'calendars' | 'planning')}>
+					<mitra-tab name="calendars" icon="calendar-days">${t('Calendars')}</mitra-tab>
+					<mitra-tab-panel name="calendars">${this.calendarsTemplate}</mitra-tab-panel>
+
+					${/* The one thing a tab costs is not seeing the other list — so the number comes along. */''}
+					<mitra-tab name="planning" icon="list-todo" .badge=${this.unscheduledCount}>${t('Planning')}</mitra-tab>
+					<mitra-tab-panel name="planning">${this.planningTemplate}</mitra-tab-panel>
+				</mitra-tabs>
+				${/* What is left here is app-level and true in either mode. */''}
 				<div class="footer">
-					<button class="add-integration" @click=${() => this.openDialog()}>
-						<mitra-icon icon="plus"></mitra-icon>
-						${t('Add Integration')}
-					</button>
 					${!canInstall() ? html.nothing : html`
-						<button class="add-integration"
+						<button class="action"
 							title=${t('Install mitra as an app — it gets its own window, and notifications appear under its own name and icon')}
 							@click=${() => promptInstall()}>
 							<mitra-icon icon="monitor-down"></mitra-icon>

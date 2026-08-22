@@ -2,7 +2,7 @@
 title: Updates
 description: How Mitra's update indicator works, what it sends to GitHub, and how to disable the check entirely.
 sidebar:
-  order: 7
+  order: 8
 ---
 
 Mitra tells you when a newer build than the one you're running exists — but it only **indicates**. Pulling the new image stays your deployment's job (see [Updating](../getting-started/installation.md#updating)).

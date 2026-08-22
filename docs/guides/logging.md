@@ -2,7 +2,7 @@
 title: Logging
 description: Tune Mitra's log verbosity with MITRA_LOG_LEVEL to diagnose problems — and understand what each level shows.
 sidebar:
-  order: 6
+  order: 7
 ---
 
 Mitra logs to **stdout**, so `docker logs` / `docker compose logs` shows everything. A healthy server is **quiet by design** — at the default level it prints only lifecycle milestones. Turn the verbosity up when you need to diagnose something.

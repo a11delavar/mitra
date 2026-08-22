@@ -448,6 +448,49 @@ describe('Entry', () => {
 		})
 	})
 
+	describe('scheduling', () => {
+		const task = (fields = {}) => new Entry({ type: EntryType.Task, heading: 'Write the report', ...fields })
+
+		it('an entry with no start is unscheduled — the calendar cannot place it', () => {
+			assert.equal(task().scheduled, false)
+			assert.equal(task({ start: at(0, 9), end: at(0, 10) }).scheduled, true)
+		})
+
+		it('only the START counts: a bare due date already belongs to a day', () => {
+			assert.equal(task({ end: at(0, 17) }).scheduled, false)
+			assert.equal(task({ start: at(0, 9) }).scheduled, true)
+		})
+
+		it('only a task may lose its dates again — an undated event has no iCalendar form', () => {
+			assert.equal(task().unschedulable, true)
+			assert.equal(new Entry({ type: EntryType.Event }).unschedulable, false)
+		})
+
+		it('scheduleAt gives a timed drop the default duration', () => {
+			const e = task()
+			e.scheduleAt(at(1, 14, 30), false)
+			assert.equal(e.allDay, false)
+			assert.equal(e.start!.valueOf(), at(1, 14, 30).valueOf())
+			assert.equal(e.end!.valueOf(), at(1, 15, 30).valueOf())
+		})
+
+		it('scheduleAt covers exactly one day for an all-day drop (exclusive next midnight)', () => {
+			const e = task()
+			e.scheduleAt(at(2, 14, 30), true)
+			assert.equal(e.allDay, true)
+			assert.equal(e.start!.valueOf(), day.add({ days: 2 }).valueOf())
+			assert.equal(e.end!.valueOf(), day.add({ days: 3 }).valueOf())
+		})
+
+		it('unschedule is its inverse — the entry leaves the calendar and the section takes it', () => {
+			const e = task({ start: at(0, 9), end: at(0, 10) })
+			e.unschedule()
+			assert.equal(e.start, undefined)
+			assert.equal(e.end, undefined)
+			assert.equal(e.scheduled, false)
+		})
+	})
+
 	describe('setAllDay', () => {
 		it('snaps a timed entry to the day(s) it covers', () => {
 			const e = new Entry({ start: at(0, 9), end: at(0, 10) })

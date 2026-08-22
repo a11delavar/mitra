@@ -407,6 +407,15 @@ export async function seedDev(orm: MikroORM) {
 		const calcPrep2 = uniTask({ heading: 'AC: Study Multivariable Calculus', status: TaskStatus.ToDo, start: at(month6Start, 1, 10), end: at(month6Start, 1, 14) })
 		relate(calcPrep2, RelationType.FinishToStart, calcPrep1)
 		relate(advCalcExam, RelationType.FinishToStart, calcPrep2)
+
+		// ---- Unscheduled (no dates at all) ----
+		// Across calendars and statuses, so the section renders with more than one colour and mark.
+		workTask({ heading: 'Draft the hiring plan' })
+		workTask({ heading: 'Reply to the vendor quote', status: TaskStatus.Doing })
+		personalEvent({ type: EntryType.Task, heading: 'Renew the passport' })
+		upkeepTask({ heading: 'Descale the coffee machine' })
+		upkeepTask({ heading: 'Replace the bathroom bulb', status: TaskStatus.Done })
+		uniTask({ heading: 'Pick a thesis topic' })
 	}
 
 	await em.flush()

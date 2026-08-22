@@ -986,14 +986,26 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			// their TZID + local representation — so a change to `allDay` OR `timeZone` rewrites both date
 			// properties too (even where the instants themselves didn't move). Both follow the entry's
 			// authoring zone, so DTEND automatically matches DTSTART's form.
+			// A cleared value REMOVES the property — that is how a task is unscheduled (a VTODO's date
+			// properties are both optional, RFC 5545 §3.6.2). An event can't reach this: DTSTART is
+			// REQUIRED of a VEVENT, and `Entry.unschedulable` keeps the gesture away from one.
 			const spanChanged = keys.includes('start') || keys.includes('end') || keys.includes('allDay') || keys.includes('timeZone')
-			if (spanChanged && incoming.start) {
-				CalDAV.writeDate(comp, component, 'dtstart', incoming.start, incoming.allDay, { zone: incoming.timeZone })
+			if (spanChanged) {
+				if (incoming.start) {
+					CalDAV.writeDate(comp, component, 'dtstart', incoming.start, incoming.allDay, { zone: incoming.timeZone })
+				} else {
+					component.removeAllProperties('dtstart')
+				}
 			}
 
 			// A VTODO's end is DUE (RFC 5545 §3.8.2.3), a VEVENT's is DTEND — matching how sync reads each back.
-			if (spanChanged && incoming.end) {
-				CalDAV.writeDate(comp, component, isTask ? 'due' : 'dtend', incoming.end, incoming.allDay, { zone: incoming.timeZone })
+			if (spanChanged) {
+				const name = isTask ? 'due' : 'dtend'
+				if (incoming.end) {
+					CalDAV.writeDate(comp, component, name, incoming.end, incoming.allDay, { zone: incoming.timeZone })
+				} else {
+					component.removeAllProperties(name)
+				}
 			}
 
 			if (isTask && keys.includes('status')) {
@@ -1064,10 +1076,12 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 		// Mirror the committed edit onto the row's own columns (the schedule fields weren't set inside
 		// `applyTo` — a retry recomputes from them) and shift the override ROWS with the series, once.
-		if (keys.includes('start') && incoming.start) {
+		// Unconditional where the key changed: a CLEARED date is a value too, and a truthiness guard left
+		// the row claiming a day the resource no longer does.
+		if (keys.includes('start')) {
 			existing.start = incoming.start
 		}
-		if (keys.includes('end') && incoming.end) {
+		if (keys.includes('end')) {
 			existing.end = incoming.end
 		}
 		if (keys.includes('allDay')) {

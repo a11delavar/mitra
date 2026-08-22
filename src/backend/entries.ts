@@ -16,6 +16,12 @@ const logger = createLogger('Entries')
 /** The viewer's zone riding on the request; absent (a bare API client) falls back per call site. */
 const viewerZone = (req: Request) => typeof req.query.tz === 'string' && req.query.tz ? req.query.tz : undefined
 
+/** Tri-state, the shape `recurrence`/`reminders` use: a value sets, an explicit `null` clears (the
+ * entry leaves the calendar), absence keeps. JSON drops undefined keys, so absence is all a partial
+ * body can express. */
+const incomingDate = (value: unknown, stored: Entry['start']): Entry['start'] =>
+	value === undefined ? stored : value === null ? undefined : new DateTime(value as string)
+
 /** The zone all-day midnights normalize in: the viewer's, else the entry's own — but never the
  * FLOATING marker, which is not a real zone and would throw inside Intl/Temporal (see Entry.timeZone). */
 const dayZone = (req: Request, timeZone: string | null | undefined) =>
@@ -59,6 +65,10 @@ entriesRouter.get('/', async (req, res) => {
 			{ start: { $gte: startDate, $lte: endDate } },
 			{ end: { $gte: startDate, $lte: endDate } },
 			{ start: { $lte: startDate }, end: { $gte: endDate } },
+			// Undated rows belong to no window, so EVERY window carries them — that is what keeps the
+			// unscheduled section on one fetch and one reconcile pass with the grid, rather than a second
+			// feed `applyServerEntries` would have to be taught to spare. They render nowhere in the grid.
+			{ start: null },
 		],
 	})
 
@@ -336,8 +346,9 @@ entriesRouter.put('/:id', async (req, res) => {
 		description: body.description ?? existing.description,
 		location: body.location ?? existing.location,
 		color: body.color !== undefined ? body.color : existing.color,
-		start: body.start ? new DateTime(body.start) : existing.start,
-		end: body.end ? new DateTime(body.end) : existing.end,
+		// Tri-state (see incomingDate): an explicit `null` unschedules the entry.
+		start: incomingDate(body.start, existing.start),
+		end: incomingDate(body.end, existing.end),
 		allDay: body.allDay ?? existing.allDay,
 		timeZone: body.timeZone === undefined ? existing.timeZone : body.timeZone,
 		// Gated on the INCOMING type, not left to the type setter: the constructor assigns fields in
@@ -363,6 +374,13 @@ entriesRouter.put('/:id', async (req, res) => {
 		const zone = dayZone(req, incoming.timeZone)
 		incoming.start = body.start && incoming.start ? normalizeAllDay(incoming.start, zone) as never : incoming.start
 		incoming.end = body.end && incoming.end ? normalizeAllDay(incoming.end, zone) as never : incoming.end
+	}
+
+	// DTSTART is REQUIRED of a VEVENT (RFC 5545 §3.6.1), so an undated event has no form to write back.
+	// Keyed on the request actually TAKING a date away: every full PUT carries `start: null` for a row
+	// that is already undated, and that edit must still pass.
+	if (body.start === null && existing.start && !incomingType.isTask) {
+		return res.status(400).json({ error: 'An event must have a date' })
 	}
 
 	// Moving an entry between *sources* — or CONVERTING its type in place (a VTODO can't become a

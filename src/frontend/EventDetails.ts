@@ -661,7 +661,9 @@ export class EntryDetailsComponent extends Component {
 							${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
 					</li>
 				`,
-				!entry.start ? html.nothing : html`
+				// Rendered for an UNDATED entry too, where it shows just the way in (see EntryDetailsWhen).
+				// Withholding it left an unscheduled task with no way to be given a date at all.
+				html`
 					<mitra-entry-details-when .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-entry-details-when>
 				`,
 			],

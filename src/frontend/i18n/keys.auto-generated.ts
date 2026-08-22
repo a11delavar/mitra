@@ -27,6 +27,7 @@ declare global {
 		"Add participants": unknown
 		"Add relationship": unknown
 		"Add reminder": unknown
+		"Add Task": unknown
 		"Add time zone": unknown
 		"Add your first integration": unknown
 		"AddIntegration.Keywords": unknown
@@ -50,6 +51,7 @@ declare global {
 		"Busy": unknown
 		"CalDAV, Google, Apple or Notion — Mitra syncs in both directions.": unknown
 		"Calendar options": unknown
+		"Calendars": unknown
 		"Cancelled": unknown
 		"Choose a task status": unknown
 		"Choose your sources": unknown
@@ -73,6 +75,7 @@ declare global {
 		"CreateEntry.Keywords": unknown
 		"Ctrl": unknown
 		"Custom…": unknown
+		"Date": unknown
 		"days": unknown
 		"Default for new entries — click to unset": unknown
 		"Default for new entries, as the first one shown": unknown
@@ -168,6 +171,7 @@ declare global {
 		"Password": unknown
 		"Pick the calendars and task lists to show — recolor, rename or hide them in the sidebar anytime.": unknown
 		"Plan your days": unknown
+		"Planning": unknown
 		"Previous Month": unknown
 		"Previous Week": unknown
 		"Previous Year": unknown
@@ -187,6 +191,9 @@ declare global {
 		"Remove participant": unknown
 		"Remove relationship": unknown
 		"Remove reminder": unknown
+		"Remove the date": unknown
+		"Remove the date — the task moves to Unscheduled": unknown
+		"Remove the end date": unknown
 		"Rename": unknown
 		"Rename time zone": unknown
 		"Repeat": unknown
@@ -225,6 +232,7 @@ declare global {
 		"Switch to all-day": unknown
 		"Task": unknown
 		"Tasks": unknown
+		"Tasks without a date land here — drag one onto the calendar to schedule it": unknown
 		"the ${ordinal}": unknown
 		"the ${ordinal} ${weekday}": unknown
 		"The calendars of your Google account": unknown
@@ -246,6 +254,7 @@ declare global {
 		"unchanged": unknown
 		"Unknown entry": unknown
 		"Unreleased": unknown
+		"Unscheduled": unknown
 		"Untitled": unknown
 		"Update available: ${version}": unknown
 		"Username": unknown

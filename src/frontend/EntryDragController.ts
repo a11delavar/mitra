@@ -54,9 +54,13 @@ interface Drag {
 	readonly edge?: 'start' | 'end'              // resize only — which edge is being dragged
 	readonly grabbedSegment?: EntrySegmentComponent // move only — opened on a plain tap (no drag)
 	readonly pointerId: number
+	/** Captures the pointer and carries the listeners — the grid, or the section a drag started in. */
+	readonly surface: HTMLElement
 	readonly origin: { x: number, y: number }
 	readonly cells: ReadonlyArray<Cell>
 	readonly laneBottom?: number                 // week only — the all-day strip's lower edge: a move above it previews all-day, below it timed
+	/** The one drop target outside the grid; absent when the section isn't on screen. */
+	readonly unscheduledBox?: DOMRect
 	point: { x: number, y: number }
 	moved: boolean
 	armed: boolean                               // touch only — waiting for the press-and-hold; listening but not yet captured (see requiresHold)
@@ -80,8 +84,15 @@ interface Drag {
  *   so a timed entry moved in the month keeps its clock time. In the week, the move may also cross between
  *   the timed grid and the all-day lane — the entry converts (via {@link Entry.setAllDay}) to whichever
  *   zone the pointer is in. A plain tap opens the editor.
+ *
  * - **resize** — on a persisted entry's `.resize-start`/`.resize-end` handle: drag that edge while the
  *   other stays fixed (reusing {@link resizePlacement}, so dragging an edge past the other flips it).
+ *
+ * A move reaches ONE surface outside the grid, the **unscheduled section**, in both directions — and
+ * as the same gesture rather than a mode of its own, because "unscheduled" is simply the placement
+ * that has no span. A drag out of the section starts where the section is, so it hands the gesture
+ * over through {@link beginExternal} and lends its own pointer capture; everything downstream is the
+ * move path untouched. An EVENT is never offered it (see {@link Entry.unschedulable}).
  *
  * A create's in-progress entry is pushed to the {@link EntryStore} as the draft. A *move* never touches
  * the entry until release: the original stays dimmed in place (the drag *source*) while a dashed, id-less
@@ -93,6 +104,50 @@ export class EntryDragController extends Controller {
 	/** The granularity timed gestures snap to. */
 	static readonly snapMinutes = SNAP_MINUTES
 
+	/** One view is mounted at a time, and during a view transition's frames the LAST connected is the
+	 * incoming one. */
+	private static readonly grids = new Set<EntryDragController>()
+
+	/**
+	 * Take over a move whose pointer-down landed outside the grid. `surface` captures the pointer,
+	 * which also keeps the trailing click off the row's own segment (a captured pointer retargets it)
+	 * — so a real drag can't open the editor of the task it just scheduled, while a plain tap still
+	 * does through the ordinary tap-to-open release path.
+	 */
+	static beginExternal(entry: Entry, segment: EntrySegmentComponent, surface: HTMLElement, e: PointerEvent) {
+		const controller = [...this.grids].filter(controller => controller.element.isConnected).at(-1)
+		controller?.beginExternal(entry, segment, surface, e)
+	}
+
+	/** Found by TAG, not through a layout the calendar knows about: where planning surfaces live is the
+	 * shell's business, and this only needs the box. */
+	private static unscheduledBox() {
+		const section = document.querySelector('mitra-unscheduled')
+		const box = section && EntryDragController.visibleBox(section)
+		return box && box.width > 0 && box.height > 0 ? box : undefined
+	}
+
+	/** The box intersected with every clipping ancestor's. Without this, a panel scrolled out of the
+	 * sidebar's tab carousel reports a rectangle sitting over the calendar — and half the grid would
+	 * silently become an unschedule drop zone. */
+	private static visibleBox(element: Element) {
+		let box = element.getBoundingClientRect()
+		// Composed, not light-tree: `parentElement` stops at a shadow boundary, and a host may be the
+		// thing doing the clipping (mitra-tabs' carousel is inside its shadow root).
+		const up = (node: Element): Element | undefined => node.parentElement ?? (node.getRootNode() as ShadowRoot).host
+		for (let ancestor = up(element); ancestor && box.width > 0 && box.height > 0; ancestor = up(ancestor)) {
+			const style = getComputedStyle(ancestor)
+			if (style.overflowX === 'visible' && style.overflowY === 'visible') {
+				continue
+			}
+			const clip = ancestor.getBoundingClientRect()
+			const left = Math.max(box.left, clip.left)
+			const top = Math.max(box.top, clip.top)
+			box = new DOMRect(left, top, Math.min(box.right, clip.right) - left, Math.min(box.bottom, clip.bottom) - top)
+		}
+		return box
+	}
+
 	private readonly element: Component
 	private drag?: Drag
 
@@ -102,11 +157,48 @@ export class EntryDragController extends Controller {
 	}
 
 	override hostConnected() {
+		EntryDragController.grids.add(this)
 		this.element.addEventListener('pointerdown', this.onPointerDown)
 	}
 
 	override hostDisconnected() {
+		EntryDragController.grids.delete(this)
 		this.element.removeEventListener('pointerdown', this.onPointerDown)
+	}
+
+	private beginExternal(entry: Entry, segment: EntrySegmentComponent, surface: HTMLElement, e: PointerEvent) {
+		if (this.drag || !entry.persisted) {
+			return
+		}
+		const cells = this.snapshotCells()
+		if (!cells.length) {
+			return // nothing on screen to place it on
+		}
+		const mode = this.editMode(entry)
+		const anchor = this.pointAt(cells, e.clientX, e.clientY, mode)
+		if (!anchor) {
+			return
+		}
+		this.begin({
+			...this.commonAt(e, cells, surface),
+			kind: 'move', mode, anchor, entry, before: entry.clone(), grabbedSegment: segment,
+		})
+	}
+
+	/** Snapshotted at pointer-down, so every frame stays free of DOM reads: the two boxes outside the
+	 * day cells a frame may land in, plus what the drag captures and listens on. */
+	private commonAt(e: PointerEvent, cells: ReadonlyArray<Cell>, surface: HTMLElement) {
+		return {
+			pointerId: e.pointerId,
+			surface,
+			origin: { x: e.clientX, y: e.clientY },
+			point: { x: e.clientX, y: e.clientY },
+			cells,
+			laneBottom: this.element.querySelector('.all-day')?.getBoundingClientRect().bottom,
+			unscheduledBox: EntryDragController.unscheduledBox(),
+			moved: false,
+			armed: this.requiresHold(e.pointerType),
+		}
 	}
 
 	/** Whether a pointer of this type must press-and-hold before a grid drag begins. Touch and pen do: a
@@ -216,8 +308,11 @@ export class EntryDragController extends Controller {
 	private buildMove(current: DragPoint, mode: Mode): Entry | undefined {
 		const drag = this.drag!
 		const before = drag.before!
+		// No span to translate: placing it IS giving it one, so the length comes from the domain default.
 		if (!before.start || !before.end) {
-			return undefined
+			const placed = before.clone()
+			placed.scheduleAt(mode === 'allday' ? current.date : current.date.dayStart.add({ minutes: current.minute }), mode === 'allday')
+			return placed
 		}
 		if (drag.laneBottom !== undefined && (mode === 'allday') !== before.allDay) {
 			const converted = before.clone()
@@ -234,6 +329,11 @@ export class EntryDragController extends Controller {
 		// Snap the moved start onto the grid (the user's choice), then shift both ends by that to keep duration.
 		const shift = snapToGrid(before.start.valueOf() + (currentMs - grabMs)) - before.start.valueOf()
 		return new Entry({ ...before, start: before.start.add({ milliseconds: shift }), end: before.end.add({ milliseconds: shift }) })
+	}
+
+	private overUnscheduled(point: { x: number, y: number }) {
+		const box = this.drag!.unscheduledBox
+		return !!box && point.x >= box.left && point.x <= box.right && point.y >= box.top && point.y <= box.bottom
 	}
 
 	/** Drag one edge of the entry to the current point, keeping the other fixed (and flipping past it). */
@@ -253,6 +353,16 @@ export class EntryDragController extends Controller {
 	 * the entry accordingly); create and resize stay in the zone they started in. */
 	private buildAt(point: { x: number, y: number }): Entry | undefined {
 		const drag = this.drag!
+		// Asked BEFORE any cell lookup: `cellAt` resolves every position to some nearest day, so a
+		// pointer parked over the section would otherwise read as a day underneath it.
+		if (drag.kind === 'move' && this.overUnscheduled(point)) {
+			if (!drag.entry!.unschedulable) {
+				return undefined
+			}
+			const cleared = drag.before!.clone()
+			cleared.unschedule()
+			return cleared
+		}
 		const mode: Mode = drag.kind === 'move' && drag.laneBottom !== undefined
 			? (point.y <= drag.laneBottom ? 'allday' : 'timed')
 			: drag.mode
@@ -273,12 +383,11 @@ export class EntryDragController extends Controller {
 	 * move/up/cancel handlers bind now; capture and any draft wait until the gesture actually commits. */
 	private begin(drag: Drag) {
 		this.drag = drag
-		this.element.addEventListener('pointermove', this.onPointerMove)
-		this.element.addEventListener('pointerup', this.onPointerUp)
-		this.element.addEventListener('pointercancel', this.onPointerCancel)
-		// Non-passive so it can veto the grid's own `touch-action: pan-x pan-y` while a touch drag runs —
-		// see onTouchMove. Bound for every gesture; it's inert unless a committed touch drag is in flight.
-		this.element.addEventListener('touchmove', this.onTouchMove, { passive: false })
+		drag.surface.addEventListener('pointermove', this.onPointerMove)
+		drag.surface.addEventListener('pointerup', this.onPointerUp)
+		drag.surface.addEventListener('pointercancel', this.onPointerCancel)
+		// Non-passive so it can veto the surface's own panning while a touch drag runs (see onTouchMove).
+		drag.surface.addEventListener('touchmove', this.onTouchMove, { passive: false })
 		if (drag.armed) {
 			drag.holdTimer = setTimeout(() => this.activate(true), TOUCH_HOLD_MS)
 		} else {
@@ -298,7 +407,7 @@ export class EntryDragController extends Controller {
 			clearTimeout(drag.holdTimer)
 			drag.holdTimer = undefined
 		}
-		this.element.setPointerCapture(drag.pointerId)
+		drag.surface.setPointerCapture(drag.pointerId)
 		if (!fromHold) {
 			return
 		}
@@ -325,13 +434,14 @@ export class EntryDragController extends Controller {
 
 	/** End the gesture: release capture (if still held), unbind, cancel any pending frame, go idle. */
 	private teardown(pointerId: number) {
-		if (this.element.hasPointerCapture(pointerId)) {
-			this.element.releasePointerCapture(pointerId)
+		const surface = this.drag?.surface ?? this.element
+		if (surface.hasPointerCapture(pointerId)) {
+			surface.releasePointerCapture(pointerId)
 		}
-		this.element.removeEventListener('pointermove', this.onPointerMove)
-		this.element.removeEventListener('pointerup', this.onPointerUp)
-		this.element.removeEventListener('pointercancel', this.onPointerCancel)
-		this.element.removeEventListener('touchmove', this.onTouchMove)
+		surface.removeEventListener('pointermove', this.onPointerMove)
+		surface.removeEventListener('pointerup', this.onPointerUp)
+		surface.removeEventListener('pointercancel', this.onPointerCancel)
+		surface.removeEventListener('touchmove', this.onTouchMove)
 		if (this.drag?.holdTimer !== undefined) {
 			clearTimeout(this.drag.holdTimer)
 		}
@@ -358,11 +468,8 @@ export class EntryDragController extends Controller {
 			return
 		}
 		const cells = this.snapshotCells()
-		// The all-day strip's box (week only) marks the boundary a move crosses to convert between timed
-		// and all-day. Sticky below the headers, so — like the cells — it can't move while the pointer is
-		// captured; snapshotting it keeps every frame free of DOM reads.
-		const laneBottom = this.element.querySelector('.all-day')?.getBoundingClientRect().bottom
-		const common = { pointerId: e.pointerId, origin: { x: e.clientX, y: e.clientY }, point: { x: e.clientX, y: e.clientY }, cells, laneBottom, moved: false, armed: this.requiresHold(e.pointerType) }
+		// Snapshotted up front, like the cells, so every frame stays free of DOM reads — see commonAt.
+		const common = this.commonAt(e, cells, this.element)
 
 		// Move / resize an existing entry — persisted ones only (a draft is owned by the create flow + editor).
 		// A series occurrence drags like any entry: the drop's commit resolves the edit's scope.

@@ -363,6 +363,9 @@ export function updateEvent(entry: Entry) {
 		recurrence: entry.recurrence ?? null,
 		reminders: entry.reminders ?? null,
 		participants: entry.participants ?? null,
+		// Tri-state for the same reason: "no dates" only reaches the server as an explicit null.
+		start: entry.start ?? null,
+		end: entry.end ?? null,
 	}))
 }
 

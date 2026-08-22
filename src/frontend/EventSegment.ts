@@ -271,19 +271,22 @@ export class EntrySegmentComponent extends Component {
 					display: flex;
 					flex-direction: column;
 
-					/* The mark's box and its glyph: one text line by default, a larger target once the chip
-					   has height to spend, larger again for a finger (IconButton's full 2rem floor would
-					   burst all but the tallest chips, so this is its stand-in here). */
-					--header-line: calc(0.7rem * 1.1);
-					--header-mark: 0.75rem;
-					@container (min-height: 2.5rem) {
-						--header-line: 1rem;
-						--header-mark: 0.875rem;
+					/* The mark's box and glyph (IconButton's 2rem floor would burst all but the tallest
+					   chips, so this stands in for it). Roomy by default and cramped as the exception,
+					   because a container with no definite height answers every height query FALSE — so
+					   a min-height tier could never apply in the unscheduled list, the one place with
+					   room to spare. */
+					--header-line: 1rem;
+					--header-mark: 0.875rem;
 
-						@media (pointer: coarse) {
-							--header-line: 1.25rem;
-							--header-mark: 1rem;
-						}
+					@media (pointer: coarse) {
+						--header-line: 1.25rem;
+						--header-mark: 1rem;
+					}
+
+					@container (height < 2.5rem) {
+						--header-line: calc(0.7rem * 1.1);
+						--header-mark: 0.75rem;
 					}
 
 					> .header {
@@ -298,6 +301,10 @@ export class EntrySegmentComponent extends Component {
 							margin-inline-end: 0.25rem;
 							align-items: center;
 							justify-content: center;
+							/* An inline-flex box holding no text baselines on its BOTTOM edge, so it sat ON
+							   the title's baseline and hung the whole line low. Inert while the mark is a
+							   flex item. */
+							vertical-align: middle;
 
 							> mitra-icon-button {
 								font-size: var(--header-mark);
@@ -376,6 +383,18 @@ export class EntrySegmentComponent extends Component {
 					}
 				}
 
+				/* The strip exists to seat the time ABOVE the title; with no time there is no second row
+				   to make, so it dissolves into one line. The short-block tier's shape, reached for the
+				   other reason — not "no room" but "no second thing". */
+				&:not(:has(> .heading > .header > .time)) > .heading {
+					display: block;
+					min-width: 0;
+
+					> .header {
+						display: contents;
+					}
+				}
+
 				&[data-status=${unsafeCSS(TaskStatus.Done)}], &[data-status=${unsafeCSS(TaskStatus.Cancelled)}] {
 					& > .heading > .label {
 						opacity: 0.6;
@@ -383,11 +402,11 @@ export class EntrySegmentComponent extends Component {
 					}
 				}
 
-				/* The location is the optional third row: shown only once the block is tall enough to seat a
-				   third line beneath the time + heading (which themselves appear from 45px). Below that the
-				   query hides it, so short blocks — and the compact month cells — keep just time + heading. */
+				/* Dropped once the block runs out of height for a third line. An opt-DOWN for the same
+				   reason the mark's size above is: where the chip's height is free, every height query
+				   reads false and this row should still be there. */
 				& > .location {
-					display: none;
+					display: flex;
 					align-items: center;
 					gap: 0.2rem;
 					opacity: 0.75;
@@ -400,12 +419,13 @@ export class EntrySegmentComponent extends Component {
 						flex-shrink: 0;
 					}
 
-					@container (min-height: 3rem) {
-						display: flex;
-						> .label {
-							text-overflow: ellipsis;
-							overflow: hidden;
-						}
+					> .label {
+						text-overflow: ellipsis;
+						overflow: hidden;
+					}
+
+					@container (height < 3rem) {
+						display: none;
 					}
 
 					@container (max-height: 4.5rem) {
@@ -481,18 +501,18 @@ export class EntrySegmentComponent extends Component {
 			this.segment.entry.color ?? getSource(this.segment.entry.sourceId)?.color ?? ''
 		)
 
-		/* The task's mark and the time share the header strip; the title follows as the second row.
-		All inside the heading, so the short single-line bars can dissolve the strip and lay the
-		three out as one text line (see the heading's compact tier). Rendered only when it has
-		content — an all-day event has neither mark nor time, and its title is the first line. */
+		/* The mark and the time share the header strip, the title follows as the second row — all inside
+		the heading, so the compact tier can dissolve the strip into one text line. Rendered only when
+		it has content: an all-day event has neither, and neither has an unscheduled task. */
+		const showsTime = !this.segment.allDay && this.segment.entry.scheduled
 		return html`
 			<div class="heading">
-				${!this.segment.entry.type.isTask && this.segment.allDay ? html.nothing : html`
+				${!this.segment.entry.type.isTask && !showsTime ? html.nothing : html`
 					<div class="header">
 						${!this.segment.entry.type.isTask ? html.nothing : html`
 							<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
 						`}
-						${this.segment.allDay ? html.nothing : html`
+						${!showsTime ? html.nothing : html`
 							<span class="time">
 								<span class="start">${this.segment.entry.start?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
 								<span class="separator">-</span>

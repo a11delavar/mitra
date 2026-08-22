@@ -58,6 +58,21 @@ function searchEntries(em: EntityManager, sourceIds: Array<string>, q: string) {
 	}, { orderBy: { start: 'desc' }, limit: 20 })
 }
 
+/** Mirrors the entry query GET /entries runs, including the undated arm. Recurring masters are
+ * excluded there and expanded separately (see occurrences.ts). */
+function windowedEntries(em: EntityManager, sourceIds: Array<string>, start: Date, end: Date) {
+	return em.find(Entry, {
+		sourceId: { $in: sourceIds },
+		recurrence: { freq: null },
+		$or: [
+			{ start: { $gte: start, $lte: end } },
+			{ end: { $gte: start, $lte: end } },
+			{ start: { $lte: start }, end: { $gte: end } },
+			{ start: null },
+		],
+	})
+}
+
 describe('entries ownership scoping', () => {
 	let orm: MikroORM
 
@@ -115,5 +130,63 @@ describe('entries ownership scoping', () => {
 			// Both users' entries come back — the very leak the scoping fix closes.
 			assert.deepEqual(new Set(leaked.map(entry => entry.id)), new Set([alice.entry.id, bob.entry.id]))
 		})
+	})
+})
+
+describe('GET /entries carries the undated rows in every window', () => {
+	let orm: MikroORM
+
+	before(async () => { orm = await inMemoryOrm() })
+	after(async () => { await orm.close(true) })
+
+	/** An undated task belongs to no window, so only every window carrying it keeps the section on one
+	 * fetch and one reconcile pass with the grid. */
+	it('returns a task with no dates whichever window is asked for', async () => {
+		const em = orm.em.fork()
+		const { user, source } = await seedUser(em, 'undated', 'anything')
+		const undated = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Write the report' })
+		em.persist(undated)
+		await em.flush()
+
+		const sourceIds = (await user.sources(em, { enabled: true, hidden: false })).map(s => s.id)
+		const june = await windowedEntries(em, sourceIds, new Date('2026-06-01T00:00:00Z'), new Date('2026-06-30T00:00:00Z'))
+		const december = await windowedEntries(em, sourceIds, new Date('2026-12-01T00:00:00Z'), new Date('2026-12-31T00:00:00Z'))
+
+		assert.ok(june.some(entry => entry.id === undated.id))
+		assert.ok(december.some(entry => entry.id === undated.id))
+	})
+
+	it('still windows the DATED ones — the undated arm widens nothing else', async () => {
+		const em = orm.em.fork()
+		const { user, source } = await seedUser(em, 'windowed', 'anything')
+		const dated = new Entry({
+			id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Ship it',
+			start: new Date('2026-06-15T09:00:00Z') as never, end: new Date('2026-06-15T10:00:00Z') as never,
+		})
+		em.persist(dated)
+		await em.flush()
+
+		const sourceIds = (await user.sources(em, { enabled: true, hidden: false })).map(s => s.id)
+		const june = await windowedEntries(em, sourceIds, new Date('2026-06-01T00:00:00Z'), new Date('2026-06-30T00:00:00Z'))
+		const december = await windowedEntries(em, sourceIds, new Date('2026-12-01T00:00:00Z'), new Date('2026-12-31T00:00:00Z'))
+
+		assert.ok(june.some(entry => entry.id === dated.id))
+		assert.ok(!december.some(entry => entry.id === dated.id))
+	})
+
+	it('scopes the undated rows to the requesting user like everything else', async () => {
+		const em = orm.em.fork()
+		const alice = await seedUser(em, 'undated-alice', 'anything')
+		const bob = await seedUser(em, 'undated-bob', 'anything')
+		const hers = new Entry({ id: crypto.randomUUID(), sourceId: alice.source.id, type: EntryType.Task, heading: 'Hers' })
+		const his = new Entry({ id: crypto.randomUUID(), sourceId: bob.source.id, type: EntryType.Task, heading: 'His' })
+		em.persist([hers, his])
+		await em.flush()
+
+		const sourceIds = (await alice.user.sources(em, { enabled: true, hidden: false })).map(s => s.id)
+		const window = await windowedEntries(em, sourceIds, new Date('2026-06-01T00:00:00Z'), new Date('2026-06-30T00:00:00Z'))
+
+		assert.ok(window.some(entry => entry.id === hers.id))
+		assert.ok(!window.some(entry => entry.id === his.id))
 	})
 })

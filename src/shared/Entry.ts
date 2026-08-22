@@ -74,6 +74,10 @@ export const FLOATING_TIME_ZONE = 'floating'
  * user setting later, like {@link SNAP_MINUTES}. */
 export const DEFAULT_REMINDER_MINUTES = 30
 
+/** How long an entry is when a placement doesn't say: a task dropped on the timed grid, and all-day
+ * turned off. One knob, because those are the same question asked twice. */
+export const DEFAULT_DURATION_MINUTES = 60
+
 @model('Entry')
 @entity()
 // A resource (uri) may hold SEVERAL rows: the series master plus one per single-occurrence override
@@ -313,6 +317,27 @@ export class Entry {
 		return this.id !== undefined
 	}
 
+	/**
+	 * Whether the entry sits anywhere on the calendar. Undated rows are real — a Notion page with an
+	 * empty date property, a VTODO with neither DTSTART nor DUE — and no window of days can contain
+	 * one, so the grid cannot show them at all; the unscheduled section is the complement that does.
+	 *
+	 * Only the START counts: a bare due date already belongs to a day.
+	 */
+	get scheduled() {
+		return !!this.start
+	}
+
+	/**
+	 * Whether the entry may LOSE its dates again. A VTODO's date properties are both optional and
+	 * Notion's is nullable, but DTSTART is REQUIRED of a VEVENT (RFC 5545 §3.6.1) — an undated event
+	 * has no iCalendar form. The unscheduled section still RENDERS whatever undated rows a provider
+	 * hands us: an entry no surface shows is one the user cannot fix.
+	 */
+	get unschedulable() {
+		return this.type.isTask
+	}
+
 	/** True for a rendered occurrence (an expanded instance or a synced override) of a recurring series.
 	 * Such entries edit/delete the whole series (via the master) and aren't independently movable in v1. */
 	get isRecurring() {
@@ -447,6 +472,20 @@ export class Entry {
 		}
 	}
 
+	/** Give an entry with no span a place in time. Distinct from {@link moveStart}, which SHIFTS one:
+	 * there is no duration to preserve here, so this is where the length comes from. */
+	scheduleAt(start: DateTime, allDay: boolean) {
+		this.allDay = allDay
+		this.start = allDay ? start.dayStart : start
+		this.end = allDay ? start.dayStart.add({ days: 1 }) : this.start.add({ minutes: DEFAULT_DURATION_MINUTES })
+	}
+
+	/** The inverse of {@link scheduleAt}. Only a task can hold this state (see {@link unschedulable}). */
+	unschedule() {
+		this.start = undefined
+		this.end = undefined
+	}
+
 	/** Resize the end, keeping the start. For all-day, `end` is the inclusive last day (clamped to at least
 	 * the start day); for timed, an end at/under the start snaps to a one-snap-minute minimum. */
 	setEnd(end: DateTime) {
@@ -523,7 +562,7 @@ export class Entry {
 		} else {
 			const at = this.start.dayStart.with({ hour: 9 })
 			this.start = at
-			this.end = at.add({ hours: 1 })
+			this.end = at.add({ minutes: DEFAULT_DURATION_MINUTES })
 		}
 		this.allDay = allDay
 	}

@@ -18,7 +18,7 @@ import { controlHeight } from './components/controlHeight.css.js'
 export class EntryDetailsWhen extends Component {
 	@property({
 		type: Object,
-		updated(this: EntryDetailsWhen) { this.endDateShown = false; this.showEventZone = false }
+		updated(this: EntryDetailsWhen) { this.endDateShown = false; this.dateShown = false; this.showEventZone = false }
 	}) entry!: Entry
 
 	override role = 'listitem'
@@ -35,6 +35,10 @@ export class EntryDetailsWhen extends Component {
 	// Reveals the end-date field for a single-day entry without changing its dates (see addEndDate); reset
 	// when a different entry is shown so it reflects that entry, not the previous one.
 	@state() private endDateShown = false
+
+	// The same, one step earlier: an EMPTY date field for an entry with no date, where picking one is
+	// what schedules it (see addDate).
+	@state() private dateShown = false
 
 	// The display LENS for a foreign-zone entry (see `zone`): false shows/edits the times in the viewer's
 	// own zone (so the editor agrees with the grid — the default), true in the entry's authoring zone.
@@ -107,8 +111,14 @@ export class EntryDetailsWhen extends Component {
 	// move/resize/all-day rules live on the model.
 	private readonly handleStartDateChange = (e: Event) => {
 		const value = (e.target as HTMLInputElement).value
-		if (!value || !this.entry.start) return
-		this.entry.moveStart(this.withDate(value, this.entry.start))
+		if (!value) return
+		if (!this.entry.start) {
+			// Picking a date SCHEDULES the entry rather than moving a span that isn't there. All-day,
+			// because a date is all the user said — the switch on the next line adds a time.
+			this.entry.scheduleAt(new DateTime(`${value}T00:00:00`), true)
+		} else {
+			this.entry.moveStart(this.withDate(value, this.entry.start))
+		}
 		this.commit()
 	}
 
@@ -145,6 +155,7 @@ export class EntryDetailsWhen extends Component {
 
 	@query('mitra-time-zone-picker') private readonly zonePicker?: TimeZonePicker
 	@query('.end-date') private readonly endDateInput?: HTMLInputElement
+	@query('.start-date') private readonly startDateInput?: HTMLInputElement
 
 	/** The entry was authored in another (real) zone than the browser's — the chip expands then.
 	 * FLOATING is deliberately not "foreign": it's no zone at all (and no IANA id to label the chip
@@ -235,6 +246,39 @@ export class EntryDetailsWhen extends Component {
 		} catch {
 			// Couldn't auto-open (no transient activation / unsupported) — the revealed field still works.
 		}
+	}
+
+	/** `addEndDate`'s shape one step earlier — and the only way to schedule a task on a phone, where
+	 * the sidebar holding it covers the calendar and there is nothing to drag onto. */
+	private readonly addDate = async () => {
+		this.dateShown = true
+		await this.updateComplete
+		await new Promise(resolve => setTimeout(resolve, 100))
+		try {
+			this.startDateInput?.showPicker()
+		} catch {
+			// Couldn't auto-open — the revealed field still accepts a typed date.
+		}
+	}
+
+	/** The editor's twin of dropping the entry on the unscheduled section. */
+	private readonly clearDate = () => {
+		this.entry.unschedule()
+		this.dateShown = false
+		this.commit()
+	}
+
+	/** The entry ends on the day it starts. A timed span keeps its end's CLOCK time and moves only the
+	 * date, so collapsing a two-day 14:00→16:00 leaves 14:00→16:00 rather than a snap-minute stub. */
+	private readonly clearEndDate = () => {
+		this.entry.setEnd(this.entry.allDay ? this.entry.start! : this.withDate(this.dateValue(this.entry.start!), this.entry.effectiveEnd))
+		this.endDateShown = false
+		this.commit()
+	}
+
+	/** Only a task has an undated form, and a series occurrence is identified by its date. */
+	private get clearable() {
+		return this.entry.unschedulable && !this.entry.partOfSeries
 	}
 
 	static override get styles() {
@@ -373,6 +417,32 @@ export class EntryDetailsWhen extends Component {
 					cursor: pointer;
 				}
 
+				/* One rule read twice — "clear this field" — where the start's clears everything downstream,
+				   because an end without a start is not a thing. Revealed on the row like the zone
+				   chevron: a field you are not touching shouldn't wear a delete button. */
+				.clear {
+					flex-shrink: 0;
+					align-self: center;
+					font-size: 0.85rem;
+					color: var(--color-text-muted);
+					opacity: 0;
+					transition: opacity 0.15s ease;
+					margin-inline-end: -0.25rem;
+				}
+
+				.dates > .field:hover > .clear,
+				.dates > .field:focus-within > .clear,
+				.clear:focus-visible {
+					opacity: 1;
+				}
+
+				/* A finger cannot hover, so there is nothing to reveal it with. */
+				@media (pointer: coarse) {
+					.clear {
+						opacity: 1;
+					}
+				}
+
 				input::-webkit-calendar-picker-indicator {
 					display: none;
 				}
@@ -382,14 +452,41 @@ export class EntryDetailsWhen extends Component {
 	}
 
 	protected override get template() {
-		if (!this.entry?.start) {
+		if (!this.entry) {
 			return html.nothing
+		}
+		if (!this.entry.start) {
+			// The end, the all-day switch, the zone and the repeat rule are all statements ABOUT a date,
+			// so an undated entry gets the way in and nothing more — through the same placeholder button
+			// the missing end date uses, so the two absences read alike.
+			return html`
+				<div class="row">
+					<mitra-icon icon="calendar-plus"></mitra-icon>
+					<div class="dates">
+						${this.dateShown ? html`
+							<div class="field">
+								<input type="date" class="start-date" aria-label=${t('Date')} .value=${''} @click=${this.openPicker} @change=${this.handleStartDateChange}>
+							</div>
+						` : html`
+							<button class="field add-end" @click=${this.addDate}>
+								<mitra-icon icon="plus"></mitra-icon>
+								<span class="placeholder">${t('Date')}</span>
+							</button>
+						`}
+					</div>
+				</div>
+			`
 		}
 		return html`
 			<div class="row">
 				<mitra-icon icon=${this.entry.allDay ? 'calendar-days' : 'clock'}></mitra-icon>
 				<div class="dates">
-					<input type="date" class="field" aria-label=${t('Start date')} .value=${this.dateValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartDateChange}>
+					<div class="field">
+						<input type="date" class="start-date" aria-label=${t('Start date')} .value=${this.dateValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartDateChange}>
+						${!this.clearable ? html.nothing : html`
+							<mitra-icon-button class="clear" icon="x" label=${t('Remove the date')} title=${t('Remove the date — the task moves to Unscheduled')} @click=${this.clearDate}></mitra-icon-button>
+						`}
+					</div>
 					${!this.displayMultiDay && !this.endDateShown ? html`
 						<button class="field add-end" @click=${this.addEndDate}>
 							<mitra-icon icon="plus"></mitra-icon>
@@ -399,6 +496,7 @@ export class EntryDetailsWhen extends Component {
 						<div class="field">
 							<mitra-icon icon="arrow-right"></mitra-icon>
 							<input type="date" class="end-date" aria-label=${t('End date')} .value=${this.dateValue(this.entry.inclusiveEnd)} @click=${this.openPicker} @change=${this.handleEndDateChange}>
+							<mitra-icon-button class="clear" icon="x" label=${t('Remove the end date')} @click=${this.clearEndDate}></mitra-icon-button>
 						</div>
 					`}
 				</div>
