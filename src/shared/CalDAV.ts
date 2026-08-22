@@ -217,13 +217,27 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			?? (percentComplete >= 100 ? TaskStatus.Done : TaskStatus.ToDo)
 	}
 
-	/** Write a task's three coupled completion properties consistently: STATUS, PERCENT-COMPLETE, and the
-	 * COMPLETED instant (stamped/cleared server-side — there's no UI for it). Manual percent comes later
-	 * with sub-tasks; for now it tracks completion (100/0). */
-	private writeTaskStatus(component: ICAL.Component, status: TaskStatus | undefined) {
+	/**
+	 * Computes PERCENT-COMPLETE for iCalendar (RFC 5545 §3.8.1.8).
+	 * Completed tasks are pinned to 100; unstated values (null/undefined) return undefined to omit the property.
+	 */
+	static percentCompleteForICal(status: TaskStatus | undefined, percentComplete: number | null | undefined): number | undefined {
+		if ((status ?? TaskStatus.ToDo) === TaskStatus.Done) {
+			return 100
+		}
+		return percentComplete === null || percentComplete === undefined ? undefined : Math.min(100, Math.max(0, Math.round(percentComplete)))
+	}
+
+	/** Writes STATUS, PERCENT-COMPLETE, and COMPLETED instant on a VTODO. */
+	private writeTaskStatus(component: ICAL.Component, status: TaskStatus | undefined, percentComplete: number | null | undefined) {
 		const effective = status ?? TaskStatus.ToDo
 		component.updatePropertyWithValue('status', CalDAV.icalTaskStatus.get(effective))
-		component.updatePropertyWithValue('percent-complete', effective === TaskStatus.Done ? 100 : 0)
+		const percent = CalDAV.percentCompleteForICal(effective, percentComplete)
+		if (percent === undefined) {
+			component.removeProperty('percent-complete')
+		} else {
+			component.updatePropertyWithValue('percent-complete', percent)
+		}
 		if (effective === TaskStatus.Done) {
 			component.updatePropertyWithValue('completed', ICAL.Time.now())
 		} else {
@@ -778,7 +792,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 					entry.heading = value('summary')?.toString() || 'Untitled Task'
 					entry.description = value('description')?.toString() || ''
 					entry.location = value('location')?.toString() || ''
-					entry.status = CalDAV.statusFromICal(value('status')?.toString(), Number(value('percent-complete') ?? 0))
+					const percent = value('percent-complete')
+					entry.status = CalDAV.statusFromICal(value('status')?.toString(), Number(percent ?? 0))
+					entry.percentComplete = percent === null || percent === undefined ? null : Math.min(100, Math.max(0, Math.round(Number(percent))))
 					entry.start = CalDAV.instantFrom(value('dtstart'), tzidOf('dtstart')) as any || undefined
 					entry.end = CalDAV.instantFrom(value('due'), tzidOf('due') ?? tzidOf('dtstart')) as any || undefined
 					entry.allDay = !!value('dtstart')?.isDate
@@ -901,7 +917,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			throw new Error('Entry must have a URL and raw data to be updated via CalDAV')
 		}
 
-		const keys: Array<keyof Entry> = (['heading', 'description', 'location', 'color', 'start', 'end', 'status', 'transparency', 'visibility', 'allDay', 'timeZone', 'reminders', 'participants'] as const)
+		const keys: Array<keyof Entry> = (['heading', 'description', 'location', 'color', 'start', 'end', 'status', 'percentComplete', 'transparency', 'visibility', 'allDay', 'timeZone', 'reminders', 'participants'] as const)
 			.filter(key => !Object[equals](existing[key], incoming[key]))
 
 		// The recurrence rule is a value object, diffed via its own (absence-safe) structural equality.
@@ -1008,9 +1024,11 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				}
 			}
 
-			if (isTask && keys.includes('status')) {
-				this.writeTaskStatus(component, incoming.status)
+			// STATUS and PERCENT-COMPLETE are written together to keep completed coupling consistent.
+			if (isTask && (keys.includes('status') || keys.includes('percentComplete'))) {
+				this.writeTaskStatus(component, incoming.status, incoming.percentComplete)
 				existing.status = incoming.status
+				existing.percentComplete = incoming.percentComplete
 			}
 
 			// Event-only, guarded like `status` is task-only: the two are mirror images (see Entry's
@@ -1144,7 +1162,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		// The continuation of a split series carries its half of the exclusions (see backend/occurrences.ts).
 		entry.exdates?.forEach(ms => CalDAV.writeDate(comp, component, 'exdate', new Date(ms), entry.allDay, { zone: entry.timeZone, append: true }))
 		if (isTask) {
-			this.writeTaskStatus(component, entry.status)
+			this.writeTaskStatus(component, entry.status, entry.percentComplete)
 		} else if (entry.transparency) {
 			// Only when the entry actually names one: an absent TRANSP already means OPAQUE, so writing
 			// it for a plain busy event would be a line that says nothing (see writeTransparency).

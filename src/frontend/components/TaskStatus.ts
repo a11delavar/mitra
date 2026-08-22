@@ -12,8 +12,6 @@ const icon = new Map<TaskStatus, string>([
 	[TaskStatus.Cancelled, 'square-x'],
 ])
 
-// Resolved per render (not once at module load): `t` must be called at render time so the label follows
-// a language switch, and so it never runs before the global `t` is assigned.
 function label(status: TaskStatus): string {
 	switch (status) {
 		case TaskStatus.ToDo: return t('To Do')
@@ -24,28 +22,31 @@ function label(status: TaskStatus): string {
 }
 
 /**
- * A task's completion control, reused in the grid segment and the entry popover. A plain click is the
- * fast path — it toggles To Do ⇄ Done. Alt-click (or right-click) opens an anchored menu of all four
- * statuses for precise selection. It mutates `entry.status` in place and fires `change`; the host decides
- * how to persist (the segment updates immediately, the popover routes through its draft/create flow).
+ * Task completion and status control.
+ * Renders an interactive checkbox icon with anchored status and progress menu.
  */
 @component('mitra-task-status')
 export class TaskStatusComponent extends Component {
 	@property({ type: Object }) entry!: Entry
 
-	/** Fired after the entry's status is mutated in place, so the host can persist and re-render. */
+	/** Fired after the entry's status or progress is mutated in place, so the host can persist and re-render. */
 	@event() readonly change!: EventDispatcher
 
-	// Subscribe to the store so a re-render fires when the entry mutates in place. A source migration
-	// changes `entry.sourceId` on the SAME instance, so the `@property` reference is unchanged and lit
-	// wouldn't re-render on its own — this keeps the Cancelled option out of the menu once the entry
-	// moves to a provider (e.g. Notion) that can't represent it.
 	readonly store = new EntryStore(this)
 
 	protected override createRenderRoot() { return this }
 
 	private get status() {
 		return this.entry?.status ?? TaskStatus.ToDo
+	}
+
+	private get progress() {
+		return this.status === TaskStatus.Done ? 1 : this.entry?.progress
+	}
+
+	private get progressLabel() {
+		const progress = this.progress
+		return progress === undefined ? undefined : t('${percent}% complete', { percent: String(Math.round(progress * 100)) })
 	}
 
 	@query('menu[popover]') private readonly menu?: HTMLElement
@@ -56,7 +57,34 @@ export class TaskStatusComponent extends Component {
 			return
 		}
 		this.entry.status = status
+		if (status === TaskStatus.Done) {
+			this.entry.percentComplete = 100
+		}
 		this.menu?.hidePopover()
+		this.requestUpdate()
+		this.change.dispatch()
+	}
+
+	private readonly clearPercent = (e: Event) => {
+		e.stopPropagation()
+		this.entry.percentComplete = null
+		if (this.entry.status === TaskStatus.Done) {
+			this.entry.status = TaskStatus.ToDo
+		}
+		this.requestUpdate()
+		this.change.dispatch()
+	}
+
+	private readonly handleSliderInput = (e: Event) => {
+		e.stopPropagation()
+		const input = e.target as HTMLInputElement
+		const val = Number(input.value)
+		this.entry.percentComplete = val
+		if (val === 100 && this.entry.status !== TaskStatus.Done) {
+			this.entry.status = TaskStatus.Done
+		} else if (val < 100 && this.entry.status === TaskStatus.Done) {
+			this.entry.status = val > 0 ? TaskStatus.Doing : TaskStatus.ToDo
+		}
 		this.requestUpdate()
 		this.change.dispatch()
 	}
@@ -73,7 +101,6 @@ export class TaskStatusComponent extends Component {
 	}
 
 	private readonly onContextMenu = (e: MouseEvent) => {
-		// Right-click is the conventional "more options" affordance for the same menu.
 		e.preventDefault()
 		e.stopPropagation()
 		this.menu?.togglePopover()
@@ -86,61 +113,280 @@ export class TaskStatusComponent extends Component {
 
 	static override get styles() {
 		return css`
+			@keyframes dial-orbit {
+				from {
+					stroke-dashoffset: 0;
+				}
+				to {
+					stroke-dashoffset: -100;
+				}
+			}
+
 			mitra-task-status {
 				display: inline-flex;
 				flex-shrink: 0;
+				position: relative;
 
-				/* The host IS the menu's anchor, and anchor-scope confines the name to this instance —
-				   so the grid copy and the popover copy of the same task share one name without
-				   colliding, and no per-instance token is needed. */
 				anchor-name: --task-status;
 				anchor-scope: --task-status;
 
-				> menu[popover] {
-					position-anchor: --task-status;
-					/* The entry's tinted glass, like every other surface it opens (see EntrySegment) — the
-					   plain menu surface underneath is the app's neutral one and read as a foreign panel
-					   floating over the entry. Addressed as a child so it simply out-specifies menu.css.ts;
-					   no !important needed. */
-					background: var(--mitra-entry-surface);
-				}
+				> button.status-button {
+					all: unset;
+					display: inline-flex;
+					align-items: center;
+					justify-content: center;
+					inline-size: 100%;
+					block-size: 100%;
+					cursor: pointer;
+					color: inherit;
+					box-sizing: border-box;
 
-				& > mitra-icon-button {
-					transition: transform 0.1s ease;
+					svg, mitra-icon {
+						inline-size: 100%;
+						block-size: 100%;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						font-size: inherit;
+					}
 
-					&:active { transform: scale(0.9); }
+					svg {
+						.progress-track {
+							opacity: 0.6;
+						}
 
-					> button {
-						padding: 0;
-
-						/* Nothing drawn behind the mark, and no colour jump: hovering just brings it up to
-						   full strength (IconButton's own hover opacity, faded there). The shared activated
-						   surface every other icon button wears is mixed from the app's TEXT colour and knows
-						   nothing about the chip it sits on — a foreign grey square behind a square glyph,
-						   invisible on a pale entry and muddy on a saturated one. It stays for :focus-visible,
-						   where it is not decoration but half of how a keyboard user finds the control. */
-						&:hover:not(:focus-visible) { background: none; }
+						.progress-stroke {
+							stroke-dashoffset: 0;
+						}
 					}
 				}
 
-				/* In a grid bar this control is sized by the line it sits on, and it opts out of the touch
-				   floor every other icon button grows to (a bar can be a single line tall, which that floor
-				   would burst) — both decided by the segment, on the BUTTON itself: see the header line in
-				   EntrySegment. Not here, and not on this host: IconButton declares the floor on the button
-				   element, and an element's own declaration beats anything it inherits, so an opt-out set
-				   here would read as applied and quietly lose on every coarse pointer. This copy — the
-				   editor's — keeps the growth. */
+				&[data-status='doing'] > button.status-button svg .progress-stroke {
+					animation: dial-orbit 11s linear infinite;
+
+					@media (prefers-reduced-motion: reduce) {
+						animation: none;
+					}
+				}
+
+				> menu[popover] {
+					position-anchor: --task-status;
+					background: var(--mitra-entry-surface);
+					padding: 0.375rem;
+					min-inline-size: 185px;
+
+					.progress-section {
+						margin-block-start: 0.375rem;
+						padding-block-start: 0.375rem;
+						border-block-start: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+						display: flex;
+						flex-direction: column;
+						gap: 0.375rem;
+						padding-inline: 0.375rem;
+
+						.progress-header {
+							display: flex;
+							align-items: center;
+							justify-content: space-between;
+							font-size: 0.75rem;
+							color: var(--color-text-muted);
+							min-block-size: 1.25rem;
+
+							.value-group {
+								display: flex;
+								align-items: center;
+								gap: 0.25rem;
+								min-block-size: 1.25rem;
+
+								.clear {
+									all: unset;
+									display: inline-flex;
+									align-items: center;
+									justify-content: center;
+									cursor: pointer;
+									color: var(--color-text-muted);
+									border-radius: 4px;
+									padding: 0.125rem;
+
+									&:hover {
+										color: var(--color-text);
+										background: color-mix(in srgb, var(--color-text) 10%, transparent);
+									}
+
+									mitra-icon {
+										font-size: 0.75rem;
+									}
+								}
+							}
+
+							.value {
+								font-variant-numeric: tabular-nums;
+								font-weight: 600;
+								color: var(--color-text);
+
+								&.none {
+									font-weight: 400;
+									color: var(--color-text-muted);
+								}
+							}
+						}
+
+						input.progress-slider {
+							-webkit-appearance: none;
+							appearance: none;
+							inline-size: 100%;
+							block-size: 1.25rem;
+							background: transparent;
+							border: none;
+							border-radius: 0;
+							box-shadow: none;
+							cursor: pointer;
+							margin: 0;
+							padding: 0;
+							outline: none;
+
+							&::-webkit-slider-runnable-track {
+								block-size: 0.25rem;
+								border-radius: 9999px;
+								background: linear-gradient(
+									to right,
+									var(--color-accent) 0%,
+									var(--color-accent) var(--slider-percent, 0%),
+									color-mix(in srgb, var(--color-text) 15%, transparent) var(--slider-percent, 0%),
+									color-mix(in srgb, var(--color-text) 15%, transparent) 100%
+								);
+							}
+
+							&::-moz-range-track {
+								block-size: 0.25rem;
+								border-radius: 9999px;
+								background: linear-gradient(
+									to right,
+									var(--color-accent) 0%,
+									var(--color-accent) var(--slider-percent, 0%),
+									color-mix(in srgb, var(--color-text) 15%, transparent) var(--slider-percent, 0%),
+									color-mix(in srgb, var(--color-text) 15%, transparent) 100%
+								);
+							}
+
+							&::-webkit-slider-thumb {
+								-webkit-appearance: none;
+								appearance: none;
+								margin-block-start: -0.375rem;
+								inline-size: 1rem;
+								block-size: 1rem;
+								border-radius: 50%;
+								background: var(--color-accent);
+								box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+								border: 2px solid var(--color-surface);
+								cursor: grab;
+								transition: transform 0.1s ease;
+
+								&:hover {
+									transform: scale(1.15);
+								}
+
+								&:active {
+									cursor: grabbing;
+									transform: scale(1.25);
+								}
+							}
+
+							&::-moz-range-thumb {
+								inline-size: 1rem;
+								block-size: 1rem;
+								border-radius: 50%;
+								background: var(--color-accent);
+								box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+								border: 2px solid var(--color-surface);
+								cursor: grab;
+								transition: transform 0.1s ease;
+
+								&:hover {
+									transform: scale(1.15);
+								}
+
+								&:active {
+									cursor: grabbing;
+									transform: scale(1.25);
+								}
+							}
+						}
+					}
+				}
+
+				& > :is(button, mitra-icon-button) {
+					> button {
+						padding: 0;
+						&:hover:not(:focus-visible) { background: none; }
+					}
+				}
 			}
 		`
 	}
 
+	private get progressSectionTemplate() {
+		if (!getCapabilities(this.entry.sourceId).percentComplete) {
+			return html.nothing
+		}
+
+		const progress = this.progress
+		const value = progress === undefined ? 0 : Math.round(progress * 100)
+		return html`
+			<div class="progress-section custom">
+				<div class="progress-header">
+					<span>${t('Progress')}</span>
+					${progress === undefined ? html`
+						<span class="value none">${t('None')}</span>
+					` : html`
+						<div class="value-group">
+							<span class="value">${value}%</span>
+							<button class="clear" aria-label=${t('Clear custom progress')} @click=${this.clearPercent}>
+								<mitra-icon icon="x"></mitra-icon>
+							</button>
+						</div>
+					`}
+				</div>
+				<input class="progress-slider" type="range" min="0" max="100" step="5"
+					style="--slider-percent: ${value}%;"
+					.value=${String(value)}
+					@input=${this.handleSliderInput}
+					@click=${(e: Event) => e.stopPropagation()}>
+			</div>
+		`
+	}
+
 	protected override get template() {
-		return !this.entry?.type.isTask ? html.nothing : html`
-			<mitra-icon-button aria-label=${label(this.status)}
-				title=${t('${status} — click to toggle, Alt-click for options', { status: label(this.status) })}
+		if (!this.entry?.type.isTask) {
+			return html.nothing
+		}
+
+		this.setAttribute('data-status', this.status)
+
+		const readout = this.progressLabel
+		const name = readout ? `${label(this.status)} — ${readout}` : label(this.status)
+		const progress = this.progress
+		const showsProgressDial = this.status === TaskStatus.Doing || (progress !== undefined && progress > 0 && progress < 1 && this.status !== TaskStatus.Done && this.status !== TaskStatus.Cancelled)
+		const percent = progress !== undefined ? Math.round(progress * 100) : 50
+
+		return html`
+			<button class="status-button" aria-label=${name}
+				title=${t('${status} — click to toggle, Alt-click for options', { status: name })}
 				@click=${this.onToggle}
-				@contextmenu=${this.onContextMenu} icon=${icon.get(this.status)!}
-			></mitra-icon-button>
+				@contextmenu=${this.onContextMenu}>
+				${showsProgressDial ? html`
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<rect class="progress-track" x="3" y="3" width="18" height="18" rx="2"/>
+						<rect class="progress-stroke" x="3" y="3" width="18" height="18" rx="2"
+							pathLength="100"
+							stroke-dasharray="${percent} ${100 - percent}"
+							transform="rotate(-90 12 12)"/>
+						<line x1="8" y1="12" x2="16" y2="12" stroke-width="2"/>
+					</svg>
+				` : html`
+					<mitra-icon icon=${icon.get(this.status)!}></mitra-icon>
+				`}
+			</button>
 			<menu popover>
 				${order.filter(status => status !== TaskStatus.Cancelled || getCapabilities(this.entry.sourceId).cancelledStatus).map(status => html`
 					<button aria-current=${status === this.status} @click=${this.pick(status)}>
@@ -148,6 +394,7 @@ export class TaskStatusComponent extends Component {
 						${label(status)}
 					</button>
 				`)}
+				${this.progressSectionTemplate}
 			</menu>
 		`
 	}

@@ -116,7 +116,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * once, so a capability added to the class can never be forgotten at that fallback and read as
 	 * unsupported. */
 	static get fullCapabilities() {
-		return { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, timeZone: true, participants: true, transparency: true, visibility: true, relations: true }
+		return { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, percentComplete: true, timeZone: true, participants: true, transparency: true, visibility: true, relations: true }
 	}
 
 	/**

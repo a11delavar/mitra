@@ -266,5 +266,9 @@
 	"What's New": "Neuigkeiten",
 	"Workspace": "Workspace",
 	"Year": "Jahr",
-	"Year View": "Jahresansicht"
+	"Year View": "Jahresansicht",
+	"${percent}% complete": "${percent} % abgeschlossen",
+	"Clear custom progress": "Fortschritt zurücksetzen",
+	"None": "Keine",
+	"Progress": "Fortschritt"
 }

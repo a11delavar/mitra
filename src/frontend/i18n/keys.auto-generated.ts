@@ -16,6 +16,7 @@ declare global {
 		"${count:pluralityNumber} participants": unknown
 		"${count:pluralityNumber} weeks": unknown
 		"${count:pluralityNumber} years": unknown
+		"${percent}% complete": unknown
 		"${span} before": unknown
 		"${status} — click to toggle, Alt-click for options": unknown
 		"About": unknown
@@ -55,6 +56,7 @@ declare global {
 		"Cancelled": unknown
 		"Choose a task status": unknown
 		"Choose your sources": unknown
+		"Clear custom progress": unknown
 		"click": unknown
 		"close": unknown
 		"Close": unknown
@@ -153,6 +155,7 @@ declare global {
 		"No matches": unknown
 		"No matching entries": unknown
 		"No release notes available": unknown
+		"None": unknown
 		"Notion.TokenHint": unknown
 		"Occurrences": unknown
 		"of event at ${time}": unknown
@@ -178,6 +181,7 @@ declare global {
 		"PreviousPeriod.Keywords": unknown
 		"Primary time zone — switch to ${city} time to change the zone": unknown
 		"Private": unknown
+		"Progress": unknown
 		"Public": unknown
 		"Re-import entries": unknown
 		"Refresh": unknown

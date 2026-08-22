@@ -69,6 +69,7 @@ export class Dev extends Integration {
 		existing.allDay = incoming.allDay
 		existing.timeZone = incoming.timeZone
 		existing.status = incoming.status
+		existing.percentComplete = incoming.percentComplete
 		existing.transparency = incoming.transparency
 		existing.visibility = incoming.visibility
 		existing.reminders = incoming.reminders

@@ -55,7 +55,7 @@ export class GoogleCalendar extends CalDAV {
 	 * {@link Integration.capabilities}).
 	 */
 	override get capabilities() {
-		return { ...super.capabilities, relations: false }
+		return { ...super.capabilities, relations: false, percentComplete: false }
 	}
 
 	/** The OAuth grant authorizes the account; the e-mail identifies it. */

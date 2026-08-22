@@ -306,15 +306,10 @@ export class EntrySegmentComponent extends Component {
 							   flex item. */
 							vertical-align: middle;
 
-							> mitra-icon-button {
+							> :is(button, mitra-icon-button) {
 								font-size: var(--header-mark);
 								block-size: 100%;
 								inline-size: 100%;
-								/* IconButton's coarse-pointer floor (2rem) must be waived on the BUTTON, where
-								   IconButton declares it — an element's own declaration beats anything inherited,
-								   so an opt-out on an ancestor reads as applied yet never wins. Only the segment's
-								   own mark is waived, never the editor's copy, which renders inside this element's
-								   popover. */
 								--icon-button-size: 0;
 							}
 

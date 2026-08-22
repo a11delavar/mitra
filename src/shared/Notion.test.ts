@@ -595,7 +595,7 @@ describe('Notion integration model', () => {
 		// time_zone to a fixed offset and returns time_zone:null), so the zone picker/lens is hidden.
 		// description:true — the page body maps to markdown (NotionMarkdown).
 		// participants:false — a page has no invitees (people ≠ RFC 5545 group-scheduling).
-		assert.deepEqual(account().capabilities, { recurrence: false, reminders: false, location: false, description: true, cancelledStatus: false, timeZone: false, participants: false, transparency: false, visibility: false, relations: true })
+		assert.deepEqual(account().capabilities, { recurrence: false, reminders: false, location: false, description: true, cancelledStatus: false, percentComplete: false, timeZone: false, participants: false, transparency: false, visibility: false, relations: true })
 	})
 
 	it('keeps the stored token when the edit form leaves it blank, and never takes a client label', () => {

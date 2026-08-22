@@ -118,6 +118,7 @@ export class Entry {
 			this.transparency = null
 		} else {
 			this.status = undefined
+			this.percentComplete = null
 		}
 	}
 
@@ -132,6 +133,17 @@ export class Entry {
 	@property({ type: 'datetime', nullable: true }) end?: DateTime
 
 	@enumType({ items: () => TaskStatus, nullable: true }) status?: TaskStatus
+
+	/**
+	 * Task PERCENT-COMPLETE (RFC 5545 §3.8.1.8), 0-100.
+	 * `null` represents absence ("no percentage stated") to match DB nullability and avoid dirty diffs.
+	 */
+	@property({ type: 'number', nullable: true }) percentComplete: number | null = null
+
+	/** Progress fraction (0-1) derived from authored percentComplete. */
+	get progress(): number | undefined {
+		return this.percentComplete === null || this.percentComplete === undefined ? undefined : this.percentComplete / 100
+	}
 
 	get done() { return this.status === TaskStatus.Done }
 	set done(value) { this.status = value ? TaskStatus.Done : TaskStatus.ToDo }
@@ -375,7 +387,7 @@ export class Entry {
 		// `recurrence` counts as editable content (the Repeat field mutates it); `Object[equals]` compares
 		// the value objects structurally. The series *link* fields (uid, recurrenceMasterId, recurrenceId,
 		// exdates) are sync bookkeeping like `uri`/`data`, so they stay excluded.
-		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'allDay', 'timeZone', 'status', 'transparency', 'visibility', 'recurrence', 'reminders', 'participants'] as const
+		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'allDay', 'timeZone', 'status', 'percentComplete', 'transparency', 'visibility', 'recurrence', 'reminders', 'participants'] as const
 		// Relations are deliberately absent: they have their own write path (a relations-only PUT to
 		// the series master — see RelationsField) and must never mark an entry dirty here.
 		return editable.every(key => Object[equals](this[key], other[key]))
@@ -404,6 +416,7 @@ export class Entry {
 			allDay: this.allDay,
 			timeZone: this.timeZone,
 			status: this.status,
+			percentComplete: this.percentComplete,
 			transparency: this.transparency,
 			visibility: this.visibility,
 			reminders: this.reminders ? [...this.reminders] : this.reminders,
@@ -427,6 +440,7 @@ export class Entry {
 			start: values.start,
 			end: values.end,
 			status: values.status,
+			percentComplete: values.percentComplete,
 			transparency: values.transparency,
 			visibility: values.visibility,
 			allDay: values.allDay,
