@@ -58,6 +58,10 @@ export interface NotionPropertyValue {
 	select?: { name: string } | null
 	multi_select?: Array<{ name: string }>
 	relation?: Array<{ id: string }>
+	/** Set on a relation value Notion truncated at 25 ids — the rest live behind
+	 * {@link NotionClient.pageRelation}. A wholesale property write must never be derived from a
+	 * truncated list: it would delete the ids it never saw. */
+	has_more?: boolean
 }
 
 export interface NotionPage {
@@ -123,6 +127,16 @@ export interface NotionSchemaProperty {
 		options: Array<NotionStatusOption>
 		groups: Array<{ id: string, name: string, option_ids: Array<string> }>
 	}
+	/** A relation property's config: WHICH container it points at (verified against a real
+	 * workspace: both ids are served, `data_source_id` being the current spelling), and whether
+	 * Notion keeps a synced twin property on the other side (`dual_property` — "Parent Task" ↔
+	 * "Sub Tasks"), which is one relationship exposed as two properties. */
+	relation?: {
+		data_source_id?: string
+		database_id?: string
+		type?: string
+		dual_property?: { synced_property_id?: string, synced_property_name?: string }
+	}
 }
 
 /** A data source — the queryable unit holding schema and rows; a database is just its container. */
@@ -130,6 +144,9 @@ export interface NotionDataSource {
 	object: 'data_source'
 	id: string
 	title?: Array<NotionRichText>
+	/** The database containing this data source — what a relation property naming a `database_id`
+	 * points at when it points back here. */
+	parent?: { database_id?: string }
 	properties: Record<string, NotionSchemaProperty>
 }
 
@@ -353,6 +370,21 @@ export class NotionClient {
 
 	page(pageId: string): Promise<NotionPage> {
 		return this.request('GET', `pages/${pageId}`)
+	}
+
+	/**
+	 * The COMPLETE id list of one relation property of one page — a page object truncates a relation
+	 * value at 25 ids and flags `has_more`, and this endpoint pages through the rest.
+	 *
+	 * `propertyId` goes into the path VERBATIM: schema property ids arrive percent-encoded
+	 * (`%5CHMd`), and that is the form the endpoint expects. Encoding it again is the one dangerous
+	 * mistake here — verified live: a double-encoded id answers `200` with an EMPTY list rather
+	 * than the `400 validation_error` a truly unknown id gets.
+	 */
+	async pageRelation(pageId: string, propertyId: string): Promise<Array<{ id: string }>> {
+		const items = await this.paginate<{ type?: string, relation?: { id?: string } }>(cursor =>
+			this.request('GET', `pages/${pageId}/properties/${propertyId}?page_size=100${cursor ? `&start_cursor=${encodeURIComponent(cursor)}` : ''}`))
+		return items.flatMap(item => item.relation?.id ? [{ id: item.relation.id }] : [])
 	}
 
 	/** One level of a block's children (a page is a block — its children are the page body). Deeper

@@ -42,6 +42,22 @@ export class GoogleCalendar extends CalDAV {
 		return new URL(`${encodeURIComponent(email)}/`, GoogleCalendar.serverUrl).href
 	}
 
+	/**
+	 * The one place the inherited CalDAV engine is not enough. Google's CalDAV v2 is a FAÇADE over
+	 * Google's own event model, which has no concept of one event relating to another, so it
+	 * regenerates the `.ics` without the `RELATED-TO` mitra wrote — the same regeneration that drops
+	 * `X-` properties. Accepting a write and returning it missing is not a store, and the sync's
+	 * DEFINITE parse read that absence as a removal: reported and reproduced in the app as a link
+	 * vanishing seconds after it was saved.
+	 *
+	 * So it is declared where every unsupported fact is declared, and it gates the same two things:
+	 * the editor offers no way to author one here, and the sync claims no authority (see
+	 * {@link Integration.capabilities}).
+	 */
+	override get capabilities() {
+		return { ...super.capabilities, relations: false }
+	}
+
 	/** The OAuth grant authorizes the account; the e-mail identifies it. */
 	@converter(withheld<GoogleCalendarCredentials>('refreshToken')) override credentials!: GoogleCalendarCredentials
 

@@ -1,9 +1,10 @@
-import { component, html, property, state, Component, css, eventListener, event, Binder, query } from '@a11d/lit'
+import { component, html, join, property, state, Component, css, eventListener, event, Binder, query } from '@a11d/lit'
 import { EntryType, TaskStatus, Transparency, type EntryTypeValue, type Integration, type RecurrenceScope } from 'shared'
 import type { EntrySegment } from './EntrySegment.js'
 import { getIntegrations, getSource, getCapabilities } from './Api.js'
 import { EntryStore } from './EntryStore.js'
 import { closeSheet } from './components/sheet.js'
+import { EntryDetailsSharing } from './EntryDetailsSharing.js'
 
 @component('mitra-entry-details')
 export class EntryDetailsComponent extends Component {
@@ -412,6 +413,15 @@ export class EntryDetailsComponent extends Component {
 							outline: none;
 							border: none;
 							grid-column: -1 / 1;
+
+							/* The groups already drop their own separator when they render nothing, with one
+							   exception the template cannot answer in time: the relations block learns what
+							   points at this entry ASYNCHRONOUSLY, so on a provider that cannot author them it
+							   starts empty and may fill in a moment later. It publishes that answer as an
+							   attribute, and the separator follows it live. */
+							&:has(+ mitra-relations-field[data-empty]) {
+								display: none;
+							}
 						}
 
 						> li {
@@ -615,35 +625,58 @@ export class EntryDetailsComponent extends Component {
 					</span>
 				</header>
 				<ul>
-					<li class="title-row">
-						${!this.segment.entry.type.isTask ? html.nothing : html`
-							<mitra-task-status .entry=${this.segment.entry} @change=${this.handleInPlaceEdit}></mitra-task-status>
-					`}
-						<input class="title field" placeholder=${t('Title')}
-							?data-struck=${this.segment.entry.status === TaskStatus.Done || this.segment.entry.status === TaskStatus.Cancelled}
-							${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
-					</li>
-					${!this.segment.entry.start ? html.nothing : html`
-						<mitra-entry-details-when .entry=${this.segment.entry} @change=${this.handleInPlaceEdit}></mitra-entry-details-when>
-						<hr>
-				`}
-					${!this.capabilities.location && !this.capabilities.description && !this.capabilities.participants ? html.nothing : html`
-						${this.locationTemplate}
-						${this.participantsTemplate}
-						${this.descriptionTemplate}
-						<hr>
-				`}
-					<mitra-entry-details-sharing .entry=${this.segment.entry} @change=${this.handleInPlaceEdit}></mitra-entry-details-sharing>
-					${this.remindersTemplate}
-					${/* Relationships close the popover as their own group: they connect to OTHER entries
-					   (everything above describes THIS one) and their rows grow, so the variable-height
-					   block sits last, behind a separator. The field owns its persistence — see
-					   RelationsField; a draft's list rides the create. */''}
-					<hr>
-					<mitra-relations-field .entry=${this.segment!.entry}></mitra-relations-field>
+					${join(this.groups, html`<hr>`)}
 				</ul>
 			</div>
 		`
+	}
+
+	/**
+	 * The popover's rows in GROUPS, empty ones dropped — a separator then rides strictly BETWEEN what
+	 * remains ({@link join}), so it cannot double up, lead, or trail. That matters because what a row
+	 * has to say is the PROVIDER's answer, not this template's: a Notion task has no free/busy, no
+	 * visibility and no reminders, so its whole third group vanishes — and used to leave its neighbour's
+	 * separator sitting against the next one.
+	 *
+	 * Emptiness is each row's OWN answer (`html.nothing`, which every row template already returns when
+	 * its capability is off) — never re-derived here, or the two would drift. The one row that cannot
+	 * answer as a template is the sharing element, which decides inside itself; it exposes the same
+	 * question as {@link EntryDetailsSharing.applies}.
+	 *
+	 * The order is the argument: everything up to reminders describes THIS entry, so relationships —
+	 * which connect it to OTHERS, and whose rows grow — close the popover as their own group.
+	 */
+	private get groups() {
+		const entry = this.segment!.entry
+		const groups = [
+			[
+				html`
+					<li class="title-row">
+						${!entry.type.isTask ? html.nothing : html`
+							<mitra-task-status .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-task-status>
+						`}
+						<input class="title field" placeholder=${t('Title')}
+							?data-struck=${entry.status === TaskStatus.Done || entry.status === TaskStatus.Cancelled}
+							${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
+					</li>
+				`,
+				!entry.start ? html.nothing : html`
+					<mitra-entry-details-when .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-entry-details-when>
+				`,
+			],
+			[this.locationTemplate, this.participantsTemplate, this.descriptionTemplate],
+			[
+				!EntryDetailsSharing.applies(entry) ? html.nothing : html`
+					<mitra-entry-details-sharing .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-entry-details-sharing>
+				`,
+				this.remindersTemplate,
+			],
+			// The field owns its persistence — see RelationsField; a draft's list rides the create.
+			[html`<mitra-relations-field .entry=${entry}></mitra-relations-field>`],
+		]
+		return groups
+			.map(rows => rows.filter(row => row !== html.nothing))
+			.filter(rows => rows.length > 0)
 	}
 
 	/**

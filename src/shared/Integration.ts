@@ -96,12 +96,27 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * invitees, so Notion turns it off), `transparency` to whether an event's time counts as busy
 	 * (RFC 5545 TRANSP) and `visibility` to its access classification (RFC 5545 CLASS). The last two
 	 * are separate flags rather than one "sharing" flag because they are separate facts: a provider
-	 * could perfectly well model one and not the other.
+	 * could perfectly well model one and not the other. `relations` is whether the provider has a
+	 * NATIVE link store — and the test is the round trip, not the vocabulary: Google's CalDAV accepts
+	 * a `RELATED-TO` and hands back an `.ics` without it, which is not a store. It gates the same two
+	 * things every capability does: the editor offers no way to author one, and the sync claims no
+	 * authority over them (`entry.relations` stays `undefined`, so the rows survive — see
+	 * shared/EntryRelation.ts). Lines pointing at such an entry from elsewhere still render on it:
+	 * they live on the OTHER entry, which is a different provider's fact, and hiding them would deny
+	 * a relationship the calendar is already drawing.
 	 * A getter on the class (not serialized state): the frontend's API reviver rehydrates
 	 * integrations into these very classes, so both sides read the same declaration.
 	 */
 	get capabilities() {
-		return { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, timeZone: true, participants: true, transparency: true, visibility: true }
+		return Integration.fullCapabilities
+	}
+
+	/** Everything supported: the base answer, and the right reading for a provider the CLIENT doesn't
+	 * model (a plain DTO arrives without the getter — see the frontend's getCapabilities). Declared
+	 * once, so a capability added to the class can never be forgotten at that fallback and read as
+	 * unsupported. */
+	static get fullCapabilities() {
+		return { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, timeZone: true, participants: true, transparency: true, visibility: true, relations: true }
 	}
 
 	/**

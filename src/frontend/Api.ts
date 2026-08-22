@@ -1,6 +1,6 @@
 import { Api, HttpError, apiError, apiAuthenticator, type ApiAuthenticator } from '@a11d/api'
 import { type DateTime } from '@3mo/date-time'
-import { applyOrder, byOrder, type ChangelogSection, type Entry, type Integration, type Relation, type RecurrenceScope, type Source, type User, type UserTimeZone } from 'shared'
+import { applyOrder, byOrder, Integration, type ChangelogSection, type Entry, type Relation, type RecurrenceScope, type Source, type User, type UserTimeZone } from 'shared'
 
 /**
  * Surface the server's error message on failed responses. Without a registered
@@ -239,8 +239,7 @@ export function getEnabledSources(integration: Integration) {
  * capability is the right reading for it.
  */
 export function getCapabilities(sourceId: string): Integration['capabilities'] {
-	return getIntegrationFor(sourceId)?.capabilities
-		?? { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, timeZone: true, participants: true, transparency: true, visibility: true }
+	return getIntegrationFor(sourceId)?.capabilities ?? Integration.fullCapabilities
 }
 
 export function toggleSourceVisibility(id: string, hidden: boolean) {

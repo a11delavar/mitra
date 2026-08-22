@@ -789,9 +789,10 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 				entry.reminders = CalDAV.remindersFrom(component)
 				entry.participants = CalDAV.participantsFrom(component, this.addresses)
-				// A DEFINITE value (array or null): RELATED-TO is native here, so the parse is
-				// authoritative and the reconciliation below mirrors it into the relation store.
-				entry.relations = CalDAV.relationsFrom(component)
+				// A DEFINITE value (array or null) where RELATED-TO is a real store, so the parse is
+				// authoritative and the reconciliation below mirrors it into the relation store. Where the
+				// server hands the line back missing, `undefined` leaves the rows alone (see capabilities).
+				entry.relations = this.capabilities.relations ? CalDAV.relationsFrom(component) : undefined
 
 				// The zone the entry's times were authored in (recurrence expands wall-clock in it — see
 				// backend/occurrences.ts): DTSTART's TZID where a client wrote one. A UTC DTSTART carries no
@@ -908,7 +909,10 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 		// Relations are tri-state like `recurrence` (undefined = keep) and compare by their own value
 		// semantics; the caller populated `existing.relations` from the store (see entries.ts PUT).
-		const relationsChanged = incoming.relations !== undefined && !Relation.listEquals(existing.relations ?? null, incoming.relations)
+		// A server that discards RELATED-TO gets no line and no PUT for one: the route's own reconcile
+		// is what persists the edit there, and writing a line the next read won't return would only
+		// make the resource churn.
+		const relationsChanged = this.capabilities.relations && incoming.relations !== undefined && !Relation.listEquals(existing.relations ?? null, incoming.relations)
 
 		if (keys.length === 0 && !recurrenceChanged && incoming.exdates === undefined && !relationsChanged) {
 			return
@@ -1137,7 +1141,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		if (entry.participants?.length) {
 			CalDAV.writeParticipants(component, entry.participants)
 		}
-		this.writeRelations(component, entry.relations)
+		if (this.capabilities.relations) {
+			this.writeRelations(component, entry.relations)
+		}
 
 		comp.addSubcomponent(component)
 

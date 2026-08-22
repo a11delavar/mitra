@@ -61,7 +61,18 @@ export class EntryDetailsSharing extends Component {
 
 	/** Free/busy is an EVENT's contribution to a free/busy answer; RFC 5545 gives VTODO no TRANSP. */
 	private get showsTransparency() {
-		return !this.entry.type.isTask && this.capabilities.transparency
+		return EntryDetailsSharing.showsTransparency(this.entry)
+	}
+
+	private static showsTransparency(entry: Entry) {
+		return !entry.type.isTask && getCapabilities(entry.sourceId).transparency
+	}
+
+	/** Whether this row has anything to say about `entry` — asked by the HOST before it places the
+	 * element, so an empty row never takes a separator with it (see EventDetails' groups). The
+	 * template below guards on this same answer rather than a copy of it. */
+	static applies(entry: Entry) {
+		return EntryDetailsSharing.showsTransparency(entry) || !!getCapabilities(entry.sourceId).visibility
 	}
 
 	private commit() {
@@ -149,7 +160,7 @@ export class EntryDetailsSharing extends Component {
 	}
 
 	protected override get template() {
-		if (!this.showsTransparency && !this.capabilities.visibility) {
+		if (!EntryDetailsSharing.applies(this.entry)) {
 			return html.nothing
 		}
 		// An entry carrying no TRANSP is busy — that IS the RFC's default, so the select shows Busy and

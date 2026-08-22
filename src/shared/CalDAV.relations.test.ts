@@ -2,6 +2,10 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import ICAL from 'ical.js'
 import { CalDAV } from './CalDAV.js'
+import { GoogleCalendar } from './GoogleCalendar.js'
+import { Entry } from './Entry.js'
+import { EntryType } from './EntryType.js'
+import { Source } from './Source.js'
 import { Relation } from './Relation.js'
 import { RelationType } from './RelationType.js'
 
@@ -158,5 +162,116 @@ describe('CalDAV relations round-trip', () => {
 			'END:VCALENDAR',
 		].join('\r\n'))).getFirstSubcomponent('vevent')!
 		assert.equal(CalDAV.relationsFrom(doubled)?.length, 1)
+	})
+})
+
+/**
+ * WHO owns a relationship when the server is only pretending to be an iCalendar store. Google's
+ * CalDAV v2 regenerates the `.ics` from Google's own event model, which has no relationship concept,
+ * so a `RELATED-TO` mitra writes is gone by the next read — and a DEFINITE parse of that read would
+ * mean "the user removed it" and wipe the row. Reported and reproduced in the app: a link saved on a
+ * Google event disappeared on the very next sync, seconds later.
+ *
+ * `capabilities.relations` is the whole seam — declared where every other unsupported fact is, so one
+ * flag gates both halves: the editor authors none, and the sync claims none.
+ */
+describe('CalDAV relations: who is authoritative (capabilities.relations)', () => {
+	const withRelation = [
+		'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//test//EN',
+		'BEGIN:VEVENT', 'UID:u1', 'DTSTAMP:20260101T000000Z', 'SUMMARY:Kickoff',
+		'DTSTART:20260602T090000Z', 'DTEND:20260602T100000Z',
+		'RELATED-TO;RELTYPE=FINISHTOSTART:blocker-uid',
+		'END:VEVENT', 'END:VCALENDAR',
+	].join('\r\n')
+
+	const source = () => new Source({ id: 'src1', integrationId: 'i1', uri: 'https://example.com/cal/', entryTypes: [EntryType.Event], name: 'Cal' })
+
+	const sync = async (integration: CalDAV, raw = withRelation) => {
+		const src = source()
+		;(integration as unknown as { client: unknown }).client = Promise.resolve({
+			syncCollection: () => Promise.resolve([{ href: '/cal/a.ics', status: 200, raw: { multistatus: { syncToken: 't1' } } }]),
+			fetchCalendarObjects: () => Promise.resolve([{ url: 'https://example.com/cal/a.ics', etag: 'e1', data: raw }]),
+		})
+		const persisted = new Array<unknown>()
+		const em = {
+			find: (Type: unknown) => Promise.resolve(Type === Source ? [src] : []),
+			findOne: () => Promise.resolve(null),
+			persist(row: unknown) { persisted.push(row) },
+			remove() { },
+		}
+		await (integration as unknown as { syncSourceEntries(em: unknown, source: Source): Promise<boolean> }).syncSourceEntries(em, src)
+		return { entry: persisted.find((row): row is Entry => row instanceof Entry)!, persisted }
+	}
+
+	const google = () => new GoogleCalendar({ credentials: { username: 'someone@gmail.com', refreshToken: 'grant-1' } })
+
+	it('parses a DEFINITE value on a real iCalendar store — what the resource says IS the truth there', async () => {
+		const { entry } = await sync(new CalDAV({ credentials: { username: 'u', password: 'p' } }))
+		assert.deepEqual(entry.relations?.map(relation => [relation.type.value, relation.targetUid]), [['FINISHTOSTART', 'blocker-uid']])
+	})
+
+	it('leaves the value UNDEFINED on Google, so the stored rows are never wiped by a read that lost them', async () => {
+		const { entry, persisted } = await sync(google())
+		assert.equal(entry.relations, undefined)
+		// Nothing mirrored either: `undefined` means the table is the store and this sync has no
+		// opinion about it (see Integration.reconcileRelations).
+		assert.equal(persisted.length, 1)
+	})
+
+	it('still ingests everything else from the resource — only the relationship changes hands', async () => {
+		const { entry } = await sync(google())
+		assert.equal(entry.heading, 'Kickoff')
+		assert.equal(entry.uid, 'u1')
+	})
+
+	describe('writes', () => {
+		const existing = () => new Entry({
+			id: 'e1', sourceId: 's', type: EntryType.Event, heading: 'Kickoff', uri: 'https://example.com/cal/a.ics',
+			start: new Date('2026-06-02T09:00:00Z') as never, end: new Date('2026-06-02T10:00:00Z') as never,
+			data: { raw: withRelation },
+		})
+
+		const stub = (integration: CalDAV) => {
+			const writes = new Array<unknown>()
+			;(integration as unknown as { client: unknown }).client = Promise.resolve({
+				updateCalendarObject: (payload: unknown) => { writes.push(payload); return Promise.resolve({ ok: true, headers: { get: () => null } }) },
+				createCalendarObject: (payload: unknown) => { writes.push(payload); return Promise.resolve({ ok: true, headers: { get: () => null } }) },
+			})
+			return writes
+		}
+
+		const em = () => ({ find: () => Promise.resolve([]), findOne: () => Promise.resolve(source()), persist() { }, remove() { } }) as never
+
+		it('writes the line on a real store', async () => {
+			const dav = new CalDAV({ credentials: { username: 'u', password: 'p' } })
+			stub(dav)
+			const entry = existing()
+			const incoming = entry.clone()
+			incoming.relations = Relation.normalize([{ type: RelationType.Parent, targetUid: 'parent-uid' }])
+			await dav.updateEntry(em(), entry, incoming)
+			assert.match(entry.data!.raw!, /RELATED-TO;RELTYPE=PARENT:parent-uid/)
+		})
+
+		it('sends NOTHING to Google for a relations-only edit — a line the next read discards is pure churn', async () => {
+			const integration = google()
+			const writes = stub(integration)
+			const entry = existing()
+			const incoming = entry.clone()
+			incoming.relations = Relation.normalize([{ type: RelationType.Parent, targetUid: 'parent-uid' }])
+			await integration.updateEntry(em(), entry, incoming)
+			assert.equal(writes.length, 0)
+			// The route's own reconcile is what persists this edit — see backend/entries.ts.
+			assert.doesNotMatch(entry.data!.raw!, /parent-uid/)
+		})
+
+		it('creates a Google event without a RELATED-TO, keeping the link in mitra alone', async () => {
+			const integration = google()
+			stub(integration)
+			const entry = new Entry({ sourceId: 's', type: EntryType.Event, heading: 'New', start: new Date('2026-06-02T09:00:00Z') as never })
+			entry.relations = Relation.normalize([{ type: RelationType.Parent, targetUid: 'parent-uid' }])
+			await integration.createEntry(em(), entry)
+			assert.doesNotMatch(entry.data!.raw!, /RELATED-TO/)
+			assert.match(entry.data!.raw!, /SUMMARY:New/)
+		})
 	})
 })

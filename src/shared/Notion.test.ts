@@ -4,6 +4,8 @@ import { Notion } from './Notion.js'
 import { Entry, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
 import { EntryType } from './EntryType.js'
 import { Source } from './Source.js'
+import { Relation } from './Relation.js'
+import { RelationType } from './RelationType.js'
 import { type NotionDataSource, type NotionPage } from './NotionClient.js'
 import { asBrowser, wireOf } from './wire.testing.js'
 
@@ -40,8 +42,27 @@ const dataSource = (overrides?: Partial<NotionDataSource>): NotionDataSource => 
 		// A non-mapped select the way a "University" view filters on it (referenced by id in filters).
 		'Area': { id: 'area%3F', name: 'Area', type: 'select' },
 		'Pinned': { id: 'pin', name: 'Pinned', type: 'checkbox' },
+		// The relation properties verbatim from a real task database: two two-way self-references
+		// (each a pair of synced twins, ids percent-encoded as Notion serves them) and one pointing
+		// at ANOTHER database, which relates a task to something that is not an entry.
+		'Parent Task': relationProperty('uXhq', 'Parent Task', 'Sub Tasks'),
+		'Sub Tasks': relationProperty('VrqI', 'Sub Tasks', 'Parent Task'),
+		'Blocked by': relationProperty('%5CHMd', 'Blocked by', 'Blocking'),
+		'Blocking': relationProperty('%40n~I', 'Blocking', 'Blocked by'),
+		'Project': { id: 'proj', name: 'Project', type: 'relation', relation: { data_source_id: 'ds-projects', database_id: 'db-projects', type: 'dual_property', dual_property: { synced_property_name: 'Tasks' } } },
 	},
 	...overrides,
+})
+
+/** A self-referencing relation property of the fixture database, with its synced twin. */
+const relationProperty = (id: string, name: string, twin?: string) => ({
+	id, name, type: 'relation',
+	relation: {
+		data_source_id: 'ds-1',
+		database_id: 'db-1',
+		type: twin ? 'dual_property' : 'single_property',
+		...(twin ? { dual_property: { synced_property_name: twin } } : {}),
+	},
 })
 
 const schema = () => Notion.schemaIndexOf(dataSource())!
@@ -125,6 +146,158 @@ describe('Notion.schemaIndexOf', () => {
 		delete source.properties['Due']
 		delete source.properties['Created']
 		assert.equal(Notion.schemaIndexOf(source), undefined)
+	})
+})
+
+describe('Notion relation properties (relationPropertiesOf)', () => {
+	const namesAndTypes = (source: NotionDataSource) => Notion.relationPropertiesOf(source).map(property => [property.name, property.type.value])
+
+	it('maps the end mitra STORES of each two-way relationship, and drops the synced twin', () => {
+		// One Notion relationship is two synced properties; mitra stores one direction and derives the
+		// reverse, so mapping both would double every edge — and leave the write path two places to go.
+		assert.deepEqual(namesAndTypes(dataSource()), [
+			['Parent Task', 'PARENT'],
+			['Blocked by', 'FINISHTOSTART'],
+		])
+	})
+
+	it('addresses a property by its percent-encoded schema id — what the property-item endpoint wants', () => {
+		assert.equal(Notion.relationPropertiesOf(dataSource()).find(property => property.type === RelationType.FinishToStart)?.id, '%5CHMd')
+	})
+
+	it('ignores a relation into ANOTHER database — a task\'s "Project" is not a relationship between entries', () => {
+		assert.equal(namesAndTypes(dataSource()).some(([name]) => name === 'Project'), false)
+	})
+
+	it('reads a lone "Sub Tasks" as the foreign CHILD direction, kept verbatim and interpreted on read', () => {
+		const source = dataSource()
+		delete source.properties['Parent Task']
+		source.properties['Sub Tasks'] = relationProperty('VrqI', 'Sub Tasks') as never
+		assert.deepEqual(namesAndTypes(source).find(([name]) => name === 'Sub Tasks'), ['Sub Tasks', 'CHILD'])
+	})
+
+	it('maps a lone "Blocking" to NOTHING — that end has no RELTYPE to be stored as', () => {
+		// All four RFC 9253 temporal types are authored on the dependent, so the "blocks" direction is
+		// the other page's line to own. Inventing one here would misstate who waits for whom.
+		const source = dataSource()
+		delete source.properties['Blocked by']
+		source.properties['Blocking'] = relationProperty('%40n~I', 'Blocking') as never
+		assert.deepEqual(namesAndTypes(source).some(([name]) => name === 'Blocking'), false)
+	})
+
+	it('carries an unconventionally-named self-relation as an opaque X- type instead of guessing a family', () => {
+		const source = dataSource()
+		source.properties['Linked Tasks'] = relationProperty('lnk', 'Linked Tasks') as never
+		assert.deepEqual(namesAndTypes(source).find(([name]) => name === 'Linked Tasks'), ['Linked Tasks', 'X-NOTION-LINKED-TASKS'])
+	})
+
+	it('keeps ONE property per type, so a write always knows where a line goes', () => {
+		const source = dataSource()
+		source.properties['Parent Item'] = relationProperty('par2', 'Parent Item') as never
+		assert.equal(namesAndTypes(source).filter(([, type]) => type === 'PARENT').length, 1)
+	})
+
+	it('finds nothing in a database whose relations are all foreign', () => {
+		const source = dataSource()
+		for (const name of ['Parent Task', 'Sub Tasks', 'Blocked by', 'Blocking']) {
+			delete source.properties[name]
+		}
+		assert.deepEqual(Notion.relationPropertiesOf(source), [])
+		assert.deepEqual(Notion.schemaIndexOf(source)!.relationProperties, [])
+	})
+})
+
+describe('Notion relation reads (relationsFrom)', () => {
+	const related = (init: { parent?: Array<string>, blockedBy?: Array<string>, blocking?: Array<string> }) => page({
+		properties: {
+			...page().properties,
+			'Parent Task': { type: 'relation', relation: (init.parent ?? []).map(id => ({ id })) },
+			'Blocked by': { type: 'relation', relation: (init.blockedBy ?? []).map(id => ({ id })) },
+			'Blocking': { type: 'relation', relation: (init.blocking ?? []).map(id => ({ id })) },
+		},
+	})
+
+	it('reads each mapped property as lines of its type, targeting the related PAGE IDS', () => {
+		// Page ids are uids here (see applyPage) — that is what makes a Notion relation a mitra one.
+		assert.deepEqual(Notion.relationsFrom(related({ parent: ['page-parent'], blockedBy: ['page-blocker'] }), schema())?.map(relation => [relation.type.value, relation.targetUid]), [
+			['FINISHTOSTART', 'page-blocker'],
+			['PARENT', 'page-parent'],
+		])
+	})
+
+	it('ignores the synced twin — the same relationship read from its other end would double the edge', () => {
+		assert.equal(Notion.relationsFrom(related({ blocking: ['page-dependent'] }), schema()), null)
+	})
+
+	it('reads a page with no relations as the canonical "none"', () => {
+		assert.equal(Notion.relationsFrom(page(), schema()), null)
+	})
+
+	it('drops a page relating to ITSELF — a self-reference is meaningless, not an edge', () => {
+		assert.equal(Notion.relationsFrom(related({ parent: ['page-1'] }), schema()), null)
+	})
+
+	it('carries the retained (mitra-owned) lines alongside Notion\'s own', () => {
+		const retained = [new Relation({ type: RelationType.Parent, targetUid: 'caldav-uid' })]
+		assert.deepEqual(Notion.relationsFrom(related({ blockedBy: ['page-blocker'] }), schema(), retained)?.map(relation => relation.targetUid), ['page-blocker', 'caldav-uid'])
+	})
+})
+
+describe('Notion relation ownership (retainedRelations)', () => {
+	const isPage = (uid: string) => uid.startsWith('page-')
+	const relations = [
+		new Relation({ type: RelationType.Parent, targetUid: 'page-parent' }),
+		new Relation({ type: RelationType.FinishToStart, targetUid: 'caldav-uid' }),
+		new Relation({ type: RelationType.of('X-DUPLICATE-OF'), targetUid: 'page-twin' }),
+	]
+
+	it('keeps what Notion cannot express — a cross-provider target and a type no property carries', () => {
+		assert.deepEqual(Notion.retainedRelations(relations, schema(), isPage).map(relation => relation.targetUid), ['caldav-uid', 'page-twin'])
+	})
+
+	it('claims nothing for Notion in a database without relation properties', () => {
+		const source = dataSource()
+		for (const name of ['Parent Task', 'Sub Tasks', 'Blocked by', 'Blocking']) {
+			delete source.properties[name]
+		}
+		assert.equal(Notion.retainedRelations(relations, Notion.schemaIndexOf(source)!, isPage).length, 3)
+	})
+})
+
+describe('Notion relation writes (relationPropertiesFrom / changedRelationProperties)', () => {
+	const isPage = (uid: string) => uid.startsWith('page-')
+	const parentOf = (uid: string) => new Relation({ type: RelationType.Parent, targetUid: uid })
+
+	it('writes each property\'s COMPLETE list — a relation property is stored wholesale', () => {
+		const properties = Notion.relationPropertiesFrom([parentOf('page-a'), parentOf('page-b')], schema(), isPage)
+		assert.deepEqual(properties['Parent Task'], { relation: [{ id: 'page-a' }, { id: 'page-b' }] })
+		assert.deepEqual(properties['Blocked by'], { relation: [] })
+	})
+
+	it('never smuggles a line Notion cannot hold into a property', () => {
+		assert.deepEqual(Notion.relationPropertiesFrom([parentOf('caldav-uid')], schema(), isPage)['Parent Task'], { relation: [] })
+	})
+
+	it('scopes an update to the properties whose list actually changed', () => {
+		const changed = Notion.changedRelationProperties([parentOf('page-a')], [parentOf('page-a'), new Relation({ type: RelationType.FinishToStart, targetUid: 'page-b' })], schema(), isPage)
+		assert.deepEqual(Object.keys(changed), ['Blocked by'])
+		assert.deepEqual(changed['Blocked by'], { relation: [{ id: 'page-b' }] })
+	})
+
+	it('writes an EMPTY list to clear the last line of its kind', () => {
+		const changed = Notion.changedRelationProperties([parentOf('page-a')], null, schema(), isPage)
+		assert.deepEqual(changed, { 'Parent Task': { relation: [] } })
+	})
+
+	it('writes nothing when only an unwritable (mitra-owned) line changed', () => {
+		assert.deepEqual(Notion.changedRelationProperties(null, [parentOf('caldav-uid')], schema(), isPage), {})
+	})
+
+	it('round-trips: writing a list and reading the echo back yields the same relations', () => {
+		const relations = [parentOf('page-parent'), new Relation({ type: RelationType.FinishToStart, targetUid: 'page-blocker' })]
+		const written = Notion.relationPropertiesFrom(relations, schema(), isPage)
+		const echo = page({ properties: { ...page().properties, ...written } })
+		assert.equal(Relation.listEquals(Notion.relationsFrom(echo, schema()), relations), true)
 	})
 })
 
@@ -422,7 +595,7 @@ describe('Notion integration model', () => {
 		// time_zone to a fixed offset and returns time_zone:null), so the zone picker/lens is hidden.
 		// description:true — the page body maps to markdown (NotionMarkdown).
 		// participants:false — a page has no invitees (people ≠ RFC 5545 group-scheduling).
-		assert.deepEqual(account().capabilities, { recurrence: false, reminders: false, location: false, description: true, cancelledStatus: false, timeZone: false, participants: false, transparency: false, visibility: false })
+		assert.deepEqual(account().capabilities, { recurrence: false, reminders: false, location: false, description: true, cancelledStatus: false, timeZone: false, participants: false, transparency: false, visibility: false, relations: true })
 	})
 
 	it('keeps the stored token when the edit form leaves it blank, and never takes a client label', () => {

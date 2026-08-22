@@ -1,8 +1,8 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { MikroORM, UnderscoreNamingStrategy, type EntityManager } from '@mikro-orm/sqlite'
-import { User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Source, Entry, EntryType, TaskStatus, Recurrence } from '../shared/index.js'
-import { type NotionBlock, type NotionClient, type NotionDataSource, type NotionPage } from '../shared/NotionClient.js'
+import { User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Source, Entry, EntryRelation, EntryType, TaskStatus, Recurrence, Relation, RelationType } from '../shared/index.js'
+import { NotionRequestError, type NotionBlock, type NotionClient, type NotionDataSource, type NotionPage } from '../shared/NotionClient.js'
 import { Dev } from './Dev.js'
 import { NotificationSubscription } from './NotificationSubscription.js'
 import { Session } from './Session.js'
@@ -14,7 +14,7 @@ import { Session } from './Session.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
-		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Dev, Source, Entry, Recurrence, NotificationSubscription, Session],
+		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Dev, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
 		dbName: ':memory:',
 		namingStrategy: class extends UnderscoreNamingStrategy {
 			override joinColumnName(propertyName: string) {
@@ -53,10 +53,15 @@ const dataSource = (): NotionDataSource => ({
 		},
 		'Due': { id: 'due', name: 'Due', type: 'date' },
 		'Area': { id: 'area', name: 'Area', type: 'select' },
+		// The two-way self-references a real task database carries, each a pair of synced twins.
+		'Parent Task': { id: 'uXhq', name: 'Parent Task', type: 'relation', relation: { data_source_id: 'ds-1', type: 'dual_property', dual_property: { synced_property_name: 'Sub Tasks' } } },
+		'Sub Tasks': { id: 'VrqI', name: 'Sub Tasks', type: 'relation', relation: { data_source_id: 'ds-1', type: 'dual_property', dual_property: { synced_property_name: 'Parent Task' } } },
+		'Blocked by': { id: '%5CHMd', name: 'Blocked by', type: 'relation', relation: { data_source_id: 'ds-1', type: 'dual_property', dual_property: { synced_property_name: 'Blocking' } } },
+		'Blocking': { id: '%40n~I', name: 'Blocking', type: 'relation', relation: { data_source_id: 'ds-1', type: 'dual_property', dual_property: { synced_property_name: 'Blocked by' } } },
 	},
 })
 
-const page = (id: string, init?: { title?: string, status?: string, date?: string | null, editedAt?: string, inTrash?: boolean }): NotionPage => ({
+const page = (id: string, init?: { title?: string, status?: string, date?: string | null, editedAt?: string, inTrash?: boolean, parent?: Array<string>, blockedBy?: Array<string>, truncated?: boolean }): NotionPage => ({
 	object: 'page',
 	id,
 	last_edited_time: init?.editedAt ?? '2026-07-10T10:00:00.000Z',
@@ -66,6 +71,8 @@ const page = (id: string, init?: { title?: string, status?: string, date?: strin
 		'Name': { type: 'title', title: [{ plain_text: init?.title ?? `Task ${id}` }] },
 		'Status': { type: 'status', status: { id: init?.status ?? 'o-todo', name: '' } },
 		'Due': { type: 'date', date: init?.date === null ? null : { start: init?.date ?? '2026-07-15', end: null, time_zone: null } },
+		'Parent Task': { id: 'uXhq', type: 'relation', relation: (init?.parent ?? []).map(target => ({ id: target })) },
+		'Blocked by': { id: '%5CHMd', type: 'relation', relation: (init?.blockedBy ?? []).map(target => ({ id: target })), has_more: init?.truncated },
 	},
 })
 
@@ -83,6 +90,9 @@ interface StubState {
 	/** Overrides the discovered view list (keep the ids stable to keep source keys stable — change a
 	 * `name` to simulate a REMOTE rename). */
 	views?: Array<{ object: string, id: string, name: string, type: string }>
+	/** What the property-item endpoint serves for a relation value Notion truncated at 25 ids. */
+	fullRelation?: Array<string>
+	relationError?: Error
 }
 
 /** The endpoints the code under test touches, recording writes for assertions. */
@@ -94,6 +104,7 @@ function stubClient(state: StubState) {
 		deletedBlocks: new Array<string>(),
 		appended: new Array<{ blockId: string, children: Array<NotionBlock> }>(),
 		createChildren: new Array<NotionBlock>(),
+		relationDrains: new Array<{ pageId: string, propertyId: string }>(),
 	}
 	const client = {
 		me: () => Promise.resolve({ object: 'user', id: 'bot-1', bot: { workspace_name: 'Acme' } }),
@@ -110,6 +121,10 @@ function stubClient(state: StubState) {
 			calls.individuallyFetched.push(id)
 			const found = state.byId?.[id]
 			return found ? Promise.resolve(found) : Promise.reject(new Error(`no page ${id}`))
+		},
+		pageRelation: (pageId: string, propertyId: string) => {
+			calls.relationDrains.push({ pageId, propertyId })
+			return state.relationError ? Promise.reject(state.relationError) : Promise.resolve((state.fullRelation ?? []).map(id => ({ id })))
 		},
 		blockChildren: (blockId: string) => Promise.resolve(state.bodies?.[blockId] ?? []),
 		appendBlockChildren: (blockId: string, children: Array<NotionBlock>) => {
@@ -568,6 +583,246 @@ describe('Notion entry CRUD', () => {
 		await integration.deleteEntry(em, existing)
 		await em.flush()
 		assert.equal(await em.count(Entry, { uri: 'p1', sourceId: source.id }), 0)
+	})
+})
+
+// Relationships against the real pipeline: Notion is authoritative for the links its own relation
+// properties hold, and ONLY those — the per-fact authority rule (see AGENTS.md "Data authority").
+describe('Notion relationships', () => {
+	let orm: MikroORM
+
+	before(async () => { orm = await inMemoryOrm() })
+	after(async () => { await orm.close(true) })
+
+	const rowsOf = (em: EntityManager, entry: Entry) => em.find(EntryRelation, { entryId: entry.id }, { orderBy: { targetUid: 'asc' } })
+
+	it('parses the mapped relation properties into rows, with the PAGE ID as the entry\'s uid', async () => {
+		const em = orm.em.fork()
+		const { integration, source } = await seed(em, {
+			members: { ids: ['p-95', 'p-94'], complete: true },
+			delta: [
+				page('p-95', { title: 'Reach 95.5 kg', parent: ['p-goal'] }),
+				page('p-94', { title: 'Reach 94 kg', parent: ['p-goal'], blockedBy: ['p-95'] }),
+			],
+		})
+
+		await sync(integration, em, source)
+		await em.flush()
+
+		const dependent = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p-94' })
+		// The page id IS the uid — that is what makes "Blocked by: Reach 95.5 kg" a mitra relation.
+		assert.equal(dependent.uid, 'p-94')
+		assert.deepEqual((await rowsOf(em, dependent)).map(row => [row.type.value, row.targetUid]), [
+			['FINISHTOSTART', 'p-95'],
+			['PARENT', 'p-goal'],
+		])
+		// The predecessor owns no line of its own: the reverse reading is derived, never stored.
+		assert.deepEqual((await rowsOf(em, await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p-95' }))).map(row => row.type.value), ['PARENT'])
+	})
+
+	it('reports a relation-only remote change — it sits outside editEquals, so the sync compares it itself', async () => {
+		const em = orm.em.fork()
+		const { integration, source, state } = await seed(em, {
+			members: { ids: ['p1'], complete: true },
+			delta: [page('p1')],
+		})
+		await sync(integration, em, source)
+		await em.flush()
+
+		state.delta = [page('p1', { parent: ['p-goal'], editedAt: '2026-07-12T08:00:00.000Z' })]
+		assert.equal(await sync(integration, em, source), true)
+		await em.flush()
+		assert.deepEqual((await rowsOf(em, await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' }))).map(row => row.targetUid), ['p-goal'])
+	})
+
+	it('drops a row for a link removed in Notion, and KEEPS the mitra-owned one Notion cannot hold', async () => {
+		const em = orm.em.fork()
+		const { integration, source, state } = await seed(em, {
+			members: { ids: ['p1', 'p2'], complete: true },
+			delta: [page('p1', { blockedBy: ['p2'] }), page('p2')],
+		})
+		await sync(integration, em, source)
+		await em.flush()
+
+		// A link the user authored in mitra to an entry living in ANOTHER provider: no Notion relation
+		// property can point there, so mitra's table is its only home and the sync must not wipe it.
+		const entry = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })
+		em.persist(new EntryRelation({ entryId: entry.id!, type: RelationType.Parent, targetUid: 'caldav-uid' }))
+		await em.flush()
+
+		state.delta = [page('p1', { editedAt: '2026-07-12T08:00:00.000Z' })] // the "Blocked by" was cleared in Notion
+		await sync(integration, em, source)
+		await em.flush()
+
+		assert.deepEqual((await rowsOf(em, entry)).map(row => row.targetUid), ['caldav-uid'])
+	})
+
+	it('completes a truncated relation value before parsing it — the 25-id cap must never look like a removal', async () => {
+		const em = orm.em.fork()
+		const { integration, source, calls } = await seed(em, {
+			members: { ids: ['p1'], complete: true },
+			delta: [page('p1', { blockedBy: ['p2'], truncated: true })],
+			fullRelation: ['p2', 'p3'],
+		})
+
+		await sync(integration, em, source)
+		await em.flush()
+
+		assert.deepEqual(calls.relationDrains, [{ pageId: 'p1', propertyId: '%5CHMd' }])
+		assert.deepEqual((await rowsOf(em, await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' }))).map(row => row.targetUid), ['p2', 'p3'])
+	})
+
+	it('leaves the rows untouched when a truncated value cannot be read at all', async () => {
+		const em = orm.em.fork()
+		const { integration, source, state } = await seed(em, {
+			members: { ids: ['p1'], complete: true },
+			delta: [page('p1', { blockedBy: ['p2'] })],
+		})
+		await sync(integration, em, source)
+		await em.flush()
+
+		// Claiming the truncated list would delete the ids mitra never saw — from the table now, and
+		// from Notion on the next write. So the parse abstains instead (the tri-state's `undefined`).
+		state.delta = [page('p1', { blockedBy: ['p2'], truncated: true, editedAt: '2026-07-12T08:00:00.000Z' })]
+		state.relationError = new NotionRequestError(404, 'object_not_found', 'page not found')
+		await sync(integration, em, source)
+		await em.flush()
+
+		assert.deepEqual((await rowsOf(em, await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' }))).map(row => row.targetUid), ['p2'])
+	})
+
+	it('writes an added relation into its own property, and rewrites no other', async () => {
+		const em = orm.em.fork()
+		const { integration, source, calls } = await seed(em, {
+			members: { ids: ['p1', 'p2'], complete: true },
+			delta: [page('p1', { parent: ['p-goal'] }), page('p2')],
+			updateEcho: page('p1', { parent: ['p-goal'], blockedBy: ['p2'], editedAt: '2026-07-14T12:00:00.000Z' }),
+		})
+		await sync(integration, em, source)
+		await em.flush()
+
+		const existing = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })
+		await EntryRelation.loadFor(em, [existing]) // what the PUT route does before handing the edit over
+		const incoming = existing.clone()
+		incoming.relations = Relation.normalize([...existing.relations ?? [], { type: RelationType.FinishToStart, targetUid: 'p2' }])
+		await integration.updateEntry(em, existing, incoming)
+		await em.flush()
+
+		assert.equal(calls.updates.length, 1)
+		// The untouched "Parent Task" is never rewritten — a value mitra never saw cannot be clobbered.
+		assert.deepEqual(calls.updates[0]!.properties, { 'Blocked by': { relation: [{ id: 'p2' }] } })
+		assert.equal(Relation.listEquals(existing.relations, incoming.relations), true)
+	})
+
+	it('clears a property with an empty list when the last line of its kind goes', async () => {
+		const em = orm.em.fork()
+		const { integration, source, calls } = await seed(em, {
+			members: { ids: ['p1', 'p2'], complete: true },
+			delta: [page('p1', { blockedBy: ['p2'] }), page('p2')],
+			updateEcho: page('p1', { editedAt: '2026-07-14T12:00:00.000Z' }),
+		})
+		await sync(integration, em, source)
+		await em.flush()
+
+		const existing = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })
+		await EntryRelation.loadFor(em, [existing])
+		const incoming = existing.clone()
+		incoming.relations = null
+		await integration.updateEntry(em, existing, incoming)
+		await em.flush()
+
+		assert.deepEqual(calls.updates[0]!.properties, { 'Blocked by': { relation: [] } })
+	})
+
+	it('never sends a link Notion cannot hold — it stays in the table alone', async () => {
+		const em = orm.em.fork()
+		const { integration, source, calls } = await seed(em, {
+			members: { ids: ['p1'], complete: true },
+			delta: [page('p1')],
+			updateEcho: page('p1', { editedAt: '2026-07-14T12:00:00.000Z' }),
+		})
+		await sync(integration, em, source)
+		await em.flush()
+
+		const existing = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })
+		await EntryRelation.loadFor(em, [existing])
+		const incoming = existing.clone()
+		incoming.relations = Relation.normalize([{ type: RelationType.Parent, targetUid: 'caldav-uid' }])
+		await integration.updateEntry(em, existing, incoming)
+
+		// Nothing mapped changed, so nothing was written — Notion would reject the id anyway, and the
+		// relation table (which the route reconciles) is where that link genuinely lives.
+		assert.equal(calls.updates.length, 0)
+	})
+
+	it('creates a page with the draft\'s relations already set', async () => {
+		const em = orm.em.fork()
+		const { integration, source, calls } = await seed(em, {
+			members: { ids: ['p2'], complete: true },
+			delta: [page('p2')],
+			createEcho: page('p-created', { parent: ['p2'], editedAt: '2026-07-14T12:00:00.000Z' }),
+		})
+		await sync(integration, em, source)
+		await em.flush()
+
+		const draft = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'New task', status: TaskStatus.ToDo })
+		draft.relations = Relation.normalize([{ type: RelationType.Parent, targetUid: 'p2' }])
+		const created = await integration.createEntry(em, draft)
+		await em.flush()
+
+		assert.deepEqual(calls.updates[0]!.properties['Parent Task'], { relation: [{ id: 'p2' }] })
+		// The echo is the created page: its id becomes the uid, and its relations the entry's.
+		assert.equal(created.uid, 'p-created')
+		assert.deepEqual(created.relations?.map(relation => relation.targetUid), ['p2'])
+	})
+
+	it('re-points what pointed at an entry MOVED into Notion — Notion assigns the uid, so nothing may orphan', async () => {
+		const em = orm.em.fork()
+		const { integration, source } = await seed(em, {
+			createEcho: page('p-created', { editedAt: '2026-07-14T12:00:00.000Z' }),
+		})
+		// The moved entry keeps its old uid across the move (see entries.ts), and another entry points
+		// at it — a pointer that would dangle the moment Notion hands out a new identity.
+		const moved = new Entry({ id: crypto.randomUUID(), uid: 'travelling-uid', sourceId: source.id, type: EntryType.Task, heading: 'Moved', status: TaskStatus.ToDo })
+		const pointer = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Points at it' })
+		em.persist([moved, pointer])
+		em.persist(new EntryRelation({ entryId: pointer.id!, type: RelationType.FinishToStart, targetUid: 'travelling-uid' }))
+		await em.flush()
+
+		await integration.createEntry(em, moved)
+		await em.flush()
+
+		assert.equal(moved.uid, 'p-created')
+		assert.deepEqual((await rowsOf(em, pointer)).map(row => row.targetUid), ['p-created'])
+	})
+
+	it('mirrors a relation write onto the sibling view\'s row, keeping that row\'s own mitra-owned link', async () => {
+		const em = orm.em.fork()
+		const { integration, source, sibling, state } = await seed(em, {
+			members: { ids: ['p1', 'p2'], complete: true },
+			delta: [page('p1'), page('p2')],
+			updateEcho: page('p1', { blockedBy: ['p2'], editedAt: '2026-07-14T12:00:00.000Z' }),
+		})
+		await sync(integration, em, source)
+		await em.flush()
+		sibling.enabled = true
+		state.members = { ids: ['p1', 'p2'], complete: true }
+		state.delta = [page('p1'), page('p2')]
+		await sync(integration, em, sibling)
+		await em.flush()
+
+		const twin = await em.findOneOrFail(Entry, { sourceId: sibling.id, uri: 'p1' })
+		em.persist(new EntryRelation({ entryId: twin.id!, type: RelationType.Parent, targetUid: 'caldav-uid' }))
+		await em.flush()
+
+		const existing = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })
+		await EntryRelation.loadFor(em, [existing])
+		const incoming = existing.clone()
+		incoming.relations = Relation.normalize([{ type: RelationType.FinishToStart, targetUid: 'p2' }])
+		await integration.updateEntry(em, existing, incoming)
+		await em.flush()
+
+		assert.deepEqual((await rowsOf(em, twin)).map(row => row.targetUid), ['caldav-uid', 'p2'])
 	})
 })
 

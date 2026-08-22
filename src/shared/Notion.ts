@@ -8,6 +8,9 @@ import { Entry, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
 import { EntryType } from './EntryType.js'
 import { calendarDateOf, midnightOf } from './calendarDate.js'
 import { Color } from './Color.js'
+import { Relation } from './Relation.js'
+import { RelationType } from './RelationType.js'
+import { EntryRelation } from './EntryRelation.js'
 import { createLogger } from './Logger.js'
 import { NotionClient, NotionRequestError, type NotionBlock, type NotionDataSource, type NotionDate, type NotionPage, type NotionPropertyCondition, type NotionPropertyValue, type NotionRichText, type NotionView, type NotionViewFilter } from './NotionClient.js'
 import { NotionMarkdown } from './NotionMarkdown.js'
@@ -39,6 +42,22 @@ export interface NotionSchemaIndex {
 	/** Task status → the option id to write (each group's first option). A status without any
 	 * option in its group is unwritable and absent here. */
 	optionByStatus: ReadonlyMap<TaskStatus, string>
+	/** The relation properties that carry entry↔entry links, one per RELTYPE mitra stores — see
+	 * {@link Notion.relationPropertiesOf}. Empty when the database has none. */
+	relationProperties: ReadonlyArray<NotionRelationProperty>
+}
+
+/**
+ * One self-referencing relation property and the RELTYPE its ids mean. The mapping is a BIJECTION
+ * by construction (one property per type): the read needs property → type, and the write needs
+ * type → property, since Notion stores a relation property wholesale.
+ */
+export interface NotionRelationProperty {
+	/** How a page's property map is keyed — by NAME, like every other mapped property. */
+	name: string
+	/** The percent-encoded schema id, which is what {@link NotionClient.pageRelation} addresses. */
+	id: string
+	type: RelationType
 }
 
 /**
@@ -60,9 +79,14 @@ export interface NotionSchemaIndex {
  *   collapsed), the cancelled status (Notion's groups are to-do/in-progress/complete), reminders,
  *   and location. See {@link capabilities}, which the editor uses to hide those fields for
  *   entries living here.
- * - Dependencies (sub-tasks, blocked-by) are not modelled YET; when they are, a re-import
- *   (the existing {@link Integration.reimportSource} hatch) rebuilds entries from Notion, so
- *   already-connected sources pick the new fields up without migration ceremony.
+ * - Relationships map onto the database's own SELF-REFERENCING relation properties, resolved by
+ *   name like the status/date ones ({@link relationPropertiesOf}) — "Parent Task" is a `PARENT`
+ *   line, "Blocked by" a `FINISHTOSTART` one — which makes Notion authoritative for them the way
+ *   `RELATED-TO` makes CalDAV. The entry's `uid` IS the page id ({@link applyPage}), so a relation
+ *   value needs no translation. Notion is authoritative only where its schema can actually hold the
+ *   fact: a link whose target is not a page of this data source (a CalDAV event, say) has no Notion
+ *   word, so it stays mitra-owned in the relation table and the parse carries it along untouched
+ *   — the same "replace only what it shows" discipline the page body follows.
  *
  * Auth is a pasted token (internal connection or PAT): unlike Google's OAuth — which only works
  * once a deployment operator registers a client and configures env vars — a token connects on any
@@ -120,13 +144,15 @@ export class Notion extends Integration<NotionCredentials> {
 	 * Notion's date property can't store a named IANA zone: its API resolves any `time_zone` to a
 	 * fixed offset and returns `time_zone: null`, so a per-entry authoring zone would silently vanish
 	 * on save (the times still show correctly in the viewer's zone — that's a view concern).
+	 * `relations: true`: a self-referencing relation property IS a native link store, and it keeps what
+	 * mitra writes (only for targets in the same database — see {@link retainedRelations}).
 	 * `participants: false`: a page has no invitees — Notion's people property is workspace
 	 * membership, not RFC 5545 group-scheduling, and mapping one onto the other would fake RSVP
 	 * semantics the provider doesn't have. `transparency`/`visibility`: a Notion page contributes to
 	 * no free/busy answer and has no per-page access class — sharing is a workspace/page permission,
 	 * which is a different thing wearing a similar word. */
 	override get capabilities() {
-		return { recurrence: false, reminders: false, location: false, description: true, cancelledStatus: false, timeZone: false, participants: false, transparency: false, visibility: false }
+		return { recurrence: false, reminders: false, location: false, description: true, cancelledStatus: false, timeZone: false, participants: false, transparency: false, visibility: false, relations: true }
 	}
 
 	// The workspace identity derives from the token (its bot user), so the token is all a connect needs.
@@ -265,6 +291,13 @@ export class Notion extends Integration<NotionCredentials> {
 		const existing = await em.find(Entry, { sourceId: source.id })
 		const existingByUri = new Map(existing.map(entry => [entry.uri, entry]))
 
+		// Relationships: the stored rows up front (the parse below must know which of them Notion
+		// cannot hold), and the page ids this data source is authoritative for.
+		await EntryRelation.loadFor(em, existing)
+		const pageIds = await this.dataSourcePageIds(em, dataSourceId, memberIds)
+		const isPage = (uid: string) => pageIds.has(uid)
+		const applied: Array<Entry> = []
+
 		let changed = false
 
 		// 1. Deletions: the source mirrors the view, so a row absent from the membership is gone —
@@ -337,11 +370,19 @@ export class Notion extends Integration<NotionCredentials> {
 			if (!entry) {
 				em.persist(target)
 			}
-			Notion.applyPage(target, page, schema, { description })
-			if (!before || !before.editEquals(target)) {
+			Notion.applyPage(target, page, schema, { description, ...await this.relationsOf(page, schema, target.relations, isPage) })
+			applied.push(target)
+			// Relationships are deliberately outside `editEquals` (they have their own write path), so
+			// a remote relation edit is compared here or it would never reach a client. An abstaining
+			// parse (`undefined`) changed nothing and must not tick.
+			if (!before || !before.editEquals(target) || (target.relations !== undefined && !Relation.listEquals(before.relations, target.relations))) {
 				changed = true
 			}
 		}
+
+		// Mirror the parsed relationships into the queryable store. Only the pages applied this cycle:
+		// an entry left untouched still carries the rows loadFor read, and a removed one's cascade.
+		await this.reconcileRelations(em, applied)
 
 		// The watermark advances to the newest edit actually seen — never to "now", whose clock is
 		// ours, not Notion's. Bookkeeping only: it must not count as a change (see Integration).
@@ -352,6 +393,54 @@ export class Notion extends Integration<NotionCredentials> {
 
 		logger.debug(`Synced "${source.name}": ${memberIds.size} member(s), ${editedPages.size} edited${changed ? '' : ' (no local changes)'}`)
 		return changed
+	}
+
+	/**
+	 * The page ids of this data source mitra knows: the view's current members plus every row of
+	 * every source mirroring the same data source. This is the ownership test behind a relationship —
+	 * a target among them is one a relation property CAN hold, so Notion is authoritative for that
+	 * edge; anything else is mitra's alone ({@link retainedRelations}).
+	 *
+	 * A page of this database that no enabled view mirrors reads as mitra-owned, so a line pointing
+	 * at it lingers locally until that page syncs. That is the conservative direction on purpose: a
+	 * stale local pointer, never a relationship silently dropped.
+	 */
+	private async dataSourcePageIds(em: EntityManager, dataSourceId: string, memberIds: Iterable<string> = []): Promise<Set<string>> {
+		const sourceIds = (await em.find(Source, { integrationId: this.id }))
+			.filter(source => source.uri.startsWith(`${Notion.uriPrefix}${dataSourceId}/`))
+			.map(source => source.id)
+		const entries = sourceIds.length ? await em.find(Entry, { sourceId: { $in: sourceIds } }) : []
+		return new Set([...memberIds, ...entries.flatMap(entry => entry.uri ? [entry.uri] : [])])
+	}
+
+	/**
+	 * The DEFINITE relationships a page decodes to, as an {@link applyPage} option bag — Notion's own
+	 * lines plus the stored ones it cannot hold. Notion truncates a relation value at 25 ids, so a
+	 * flagged one is COMPLETED first (on the page object itself, which is also what a wholesale
+	 * property write would be derived from).
+	 *
+	 * When that completion is refused (the page went private or vanished mid-cycle) the answer is
+	 * `{ relations: undefined }` — the tri-state's "no authority here", leaving the stored rows
+	 * exactly as they are. Claiming the truncated list instead would delete the ids mitra never saw,
+	 * from the table now and from Notion on the next write.
+	 */
+	private async relationsOf(page: NotionPage, schema: NotionSchemaIndex, stored: ReadonlyArray<Relation> | null | undefined, isPage: (uid: string) => boolean): Promise<{ relations: Array<Relation> | null | undefined }> {
+		for (const property of schema.relationProperties) {
+			const value = page.properties[property.name]
+			if (value?.has_more) {
+				try {
+					value.relation = await this.getClient().pageRelation(page.id, property.id)
+					value.has_more = false
+				} catch (error) {
+					if (error instanceof NotionRequestError && (error.status === 404 || error.status === 403)) {
+						logger.debug(`Leaving the relationships of ${page.id} untouched — "${property.name}" is truncated and unreadable: ${error.message}`)
+						return { relations: undefined }
+					}
+					throw error
+				}
+			}
+		}
+		return { relations: Notion.relationsFrom(page, schema, Notion.retainedRelations(stored, schema, isPage)) }
 	}
 
 	// --- Entry CRUD ---------------------------------------------------------------------------------
@@ -376,7 +465,12 @@ export class Notion extends Integration<NotionCredentials> {
 			logger.warn(`Could not read the filter of view ${viewId} to pre-fill a new task — creating without it: ${error instanceof Error ? error.message : error}`)
 			return {} as Record<string, NotionPropertyValue>
 		})
-		const properties = { ...filterDefaults, ...Notion.propertiesFrom(entry, schema) }
+		// Relationships ride the create: a draft authors them, and `changedRelationProperties` against
+		// "nothing yet" yields exactly the properties with targets — so an empty one never overrides a
+		// filter default (a view may well filter on the very relation property being mapped).
+		const pageIds = schema.relationProperties.length ? await this.dataSourcePageIds(em, dataSourceId) : new Set<string>()
+		const isPage = (uid: string) => pageIds.has(uid)
+		const properties = { ...filterDefaults, ...Notion.propertiesFrom(entry, schema), ...Notion.changedRelationProperties(null, entry.relations, schema, isPage) }
 		const blocks = entry.description ? NotionMarkdown.toBlocks(entry.description) : []
 		const page = await this.getClient().createPage(dataSourceId, properties, blocks.slice(0, Notion.maxBlocksPerWrite))
 		for (let index = Notion.maxBlocksPerWrite; index < blocks.length; index += Notion.maxBlocksPerWrite) {
@@ -384,9 +478,24 @@ export class Notion extends Integration<NotionCredentials> {
 		}
 		// The stored description is the markdown as the block mapping will read it back — so the next
 		// sync's body fetch compares equal and stays silent.
-		Notion.applyPage(entry, page, schema, { description: NotionMarkdown.toMarkdown(blocks), localWrite: true })
+		const previousUid = entry.uid
+		Notion.applyPage(entry, page, schema, { description: NotionMarkdown.toMarkdown(blocks), localWrite: true, ...await this.relationsOf(page, schema, entry.relations, isPage) })
 		em.persist(entry)
+		await Notion.repointRelations(em, previousUid, entry.uid!)
 		return entry
+	}
+
+	/** Notion assigns the id that becomes this entry's uid ({@link applyPage}), so an entry MOVED into
+	 * a Notion source cannot keep the uid it arrived with — the one case where "a migration carries
+	 * the uid" cannot hold. Re-point what pointed AT the old one, so a move orphans no relationship.
+	 * A plain create is a no-op: nothing can already point at a uid minted moments ago. */
+	private static async repointRelations(em: EntityManager, previousUid: string | undefined, uid: string): Promise<void> {
+		if (!previousUid || previousUid === uid) {
+			return
+		}
+		for (const row of await em.find(EntryRelation, { targetUid: previousUid })) {
+			row.targetUid = uid
+		}
 	}
 
 	override async updateEntry(em: EntityManager, existing: Entry, incoming: Entry): Promise<void> {
@@ -402,24 +511,41 @@ export class Notion extends Integration<NotionCredentials> {
 		const statusChanged = existing.status !== incoming.status
 		const descriptionChanged = (existing.description ?? '') !== (incoming.description ?? '')
 		const spanChanged = (['start', 'end', 'allDay', 'timeZone'] as const).some(key => !Object[equals](existing[key], incoming[key]))
-		if (!headingChanged && !statusChanged && !spanChanged && !descriptionChanged) {
+		// Relations are tri-state like CalDAV's (undefined = keep) and compare by their own value
+		// semantics; the caller populated `existing.relations` from the store (see entries.ts PUT).
+		const relationsChanged = incoming.relations !== undefined && !Relation.listEquals(existing.relations ?? null, incoming.relations)
+		if (!headingChanged && !statusChanged && !spanChanged && !descriptionChanged && !relationsChanged) {
 			return
 		}
 		const source = await em.findOneOrFail(Source, { id: existing.sourceId })
 		const schema = await this.schemaFor(source)
+		const desiredRelations = relationsChanged ? incoming.relations ?? null : existing.relations
+		const pageIds = schema.relationProperties.length
+			? await this.dataSourcePageIds(em, Notion.idsOf(source).dataSourceId)
+			: new Set<string>()
+		const isPage = (uid: string) => pageIds.has(uid)
 		// Body first, page echo after: block writes bump last_edited_time, and the echo below must
 		// carry the newest stamp so the next delta's re-serve compares clean.
 		const description = descriptionChanged ? await this.replaceBody(existing.uri, incoming.description ?? '') : existing.description
-		const properties = Notion.propertiesFrom(incoming, schema, {
-			heading: headingChanged,
-			status: statusChanged,
-			span: spanChanged,
-		})
+		const properties = {
+			...Notion.propertiesFrom(incoming, schema, {
+				heading: headingChanged,
+				status: statusChanged,
+				span: spanChanged,
+			}),
+			...(relationsChanged ? Notion.changedRelationProperties(existing.relations, incoming.relations, schema, isPage) : {}),
+		}
+		if (!Object.keys(properties).length && !descriptionChanged) {
+			// Nothing Notion can hold actually changed — an edit to a mitra-owned relationship alone, say.
+			// The relation table (which the route reconciles) is where that edit lives; there is no page
+			// write to make and therefore no echo to read back.
+			return
+		}
 		const page = Object.keys(properties).length
 			? await this.getClient().updatePage(existing.uri, properties)
 			: await this.getClient().page(existing.uri) // a description-only edit — no property to write, just the fresh stamp
-		Notion.applyPage(existing, page, schema, { description, localWrite: true })
-		await this.syncSiblingRows(em, existing, page, schema, description)
+		Notion.applyPage(existing, page, schema, { description, localWrite: true, ...await this.relationsOf(page, schema, desiredRelations, isPage) })
+		await this.syncSiblingRows(em, existing, page, schema, description, isPage)
 	}
 
 	/**
@@ -428,9 +554,14 @@ export class Notion extends Integration<NotionCredentials> {
 	 * edit through one view leaves its twin stale for up to a sync interval — the CalDAV counterpart
 	 * is syncResourceRows. Scoped to this integration's sources, mirroring CalDAV's sibling scoping.
 	 */
-	private async syncSiblingRows(em: EntityManager, written: Entry, page: NotionPage, schema: NotionSchemaIndex, description: string | undefined): Promise<void> {
-		for (const sibling of await this.siblingRows(em, written)) {
-			Notion.applyPage(sibling, page, schema, { description, localWrite: true })
+	private async syncSiblingRows(em: EntityManager, written: Entry, page: NotionPage, schema: NotionSchemaIndex, description: string | undefined, isPage: (uid: string) => boolean): Promise<void> {
+		const siblings = await this.siblingRows(em, written)
+		// Each twin's OWN stored rows: a link mitra owns (one Notion cannot hold) was authored on one
+		// row, so the page echo must not be read as authority over the others' — see relationsOf.
+		await EntryRelation.loadFor(em, siblings)
+		for (const sibling of siblings) {
+			Notion.applyPage(sibling, page, schema, { description, localWrite: true, ...await this.relationsOf(page, schema, sibling.relations, isPage) })
+			await EntryRelation.reconcile(em, sibling.id!, sibling.relations ?? null)
 		}
 	}
 
@@ -570,7 +701,141 @@ export class Notion extends Integration<NotionCredentials> {
 			}
 		})
 
-		return { titleProperty: title.name, statusProperty: status.name, dateProperty: date.name, statusByOption, optionByStatus }
+		return { titleProperty: title.name, statusProperty: status.name, dateProperty: date.name, statusByOption, optionByStatus, relationProperties: Notion.relationPropertiesOf(dataSource) }
+	}
+
+	/**
+	 * What each relation property NAME means, in the vocabulary of {@link RelationType}. The names
+	 * are the ones Notion's own task templates and its built-in sub-item feature create (verified
+	 * against a real workspace: "Parent Task"/"Sub Tasks", "Blocked by"/"Blocking"), matched whole so
+	 * a mirror twin can never be mistaken for its canonical end.
+	 *
+	 * An `undefined` type marks a name that is RECOGNIZED but unstorable: all four RFC 9253 temporal
+	 * types are authored on the DEPENDENT, so "Blocking" — the end naming what waits on THIS page —
+	 * has no RELTYPE to be written as. That edge belongs to the other page, and where the "Blocked
+	 * by" twin exists it already carries the same relationship in the direction mitra stores.
+	 */
+	private static readonly relationTypesByName: ReadonlyArray<readonly [RegExp, RelationType | undefined]> = [
+		[/^parent[\s-]?(task|item|page|project)?s?$/i, RelationType.Parent],
+		[/^sub[\s-]?(task|item|page)s?$|^child(ren)?$/i, RelationType.Child],
+		[/^blocked[\s-]?by$|^depends?[\s-]?on$|^waiting[\s-]?on$|^predecessors?$/i, RelationType.FinishToStart],
+		[/^block(s|ing)$|^successors?$|^dependents?$/i, undefined],
+	]
+
+	/** The RELTYPE a relation property's name means — a conventional one from
+	 * {@link relationTypesByName}, else an opaque `X-NOTION-…` type built from the name itself. An
+	 * unrecognized Notion relation is a link with no direction semantics: reading it as PARENT or
+	 * FINISHTOSTART would borrow a word that means something else, and SIBLING is already taken (it
+	 * means "shares a parent") — so the open vocabulary carries it as itself, round-tripping
+	 * losslessly and rendering read-only under its own section. `undefined` = not mapped at all. */
+	private static relationTypeOf(name: string): RelationType | undefined {
+		for (const [pattern, type] of Notion.relationTypesByName) {
+			if (pattern.test(name.trim())) {
+				return type
+			}
+		}
+		const slug = name.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '')
+		return slug ? RelationType.of(`X-NOTION-${slug}`) : undefined
+	}
+
+	/**
+	 * The relation properties that relate one task to another, and what each one means. Three rules,
+	 * each of them a claim about what Notion genuinely stores:
+	 *
+	 * - SELF-REFERENCING only. A relation into another database ("Area", "Project") relates a task to
+	 *   something that is not an entry — not a relationship in mitra's sense, so it is left alone
+	 *   (it is also how a filtered view pins its rows — see {@link deriveFilterDefaults}).
+	 * - ONE END of a two-way relationship. Notion exposes a `dual_property` relation as two synced
+	 *   properties; mitra stores one direction and derives the reverse, so only the end it stores is
+	 *   mapped — "Parent Task" over its "Sub Tasks" twin, "Blocked by" over "Blocking". Where the
+	 *   twins are equally uninterpreted the schema's own order breaks the tie. A lone inverse
+	 *   ("Blocking" with no "Blocked by") maps to nothing: its edge points the way mitra cannot
+	 *   store, and inventing a direction for it would be a lie about who waits for whom.
+	 * - ONE property per type, so the write direction knows where a line goes: a second property
+	 *   claiming a type already taken is skipped rather than silently merged into the first.
+	 */
+	static relationPropertiesOf(dataSource: NotionDataSource): Array<NotionRelationProperty> {
+		const candidates = Object.values(dataSource.properties ?? {})
+			.filter(property => property.type === 'relation' && (property.relation?.data_source_id === dataSource.id
+				|| (!!property.relation?.database_id && property.relation.database_id === dataSource.parent?.database_id)))
+			.map(property => ({ property, type: Notion.relationTypeOf(property.name) }))
+
+		// Lower wins a twin pair: the end mitra stores, then a foreign direction it can still read,
+		// then an uninterpreted link, then the end it cannot store at all.
+		const rank = (type: RelationType | undefined) => type === undefined ? 3
+			: type === RelationType.Parent || type === RelationType.FinishToStart ? 0
+				: type === RelationType.Child ? 1 : 2
+
+		const properties: Array<NotionRelationProperty> = []
+		for (const [index, candidate] of candidates.entries()) {
+			const twinName = candidate.property.relation?.dual_property?.synced_property_name
+			const twin = twinName === undefined ? undefined : candidates.find(other => other.property.name === twinName)
+			const twinWins = !!twin && (rank(twin.type) < rank(candidate.type)
+				|| (rank(twin.type) === rank(candidate.type) && candidates.indexOf(twin) < index))
+			if (candidate.type && !twinWins && !properties.some(mapped => mapped.type === candidate.type)) {
+				properties.push({ name: candidate.property.name, id: candidate.property.id, type: candidate.type })
+			}
+		}
+		return properties
+	}
+
+	// --- Relationships ------------------------------------------------------------------------------
+
+	/**
+	 * The page's outgoing relationships: one line per id in each mapped relation property, plus
+	 * `retained` — the stored lines Notion cannot hold (see {@link retainedRelations}), which the
+	 * caller passes so this stays the ONE definite value a read path assigns. Notion has no lead/lag
+	 * concept, so `gap` is never set. A page relating to ITSELF is dropped: mitra reads a
+	 * self-reference as meaningless ({@link Entry.relateTo} does too), not as an edge to draw.
+	 *
+	 * The page's values must be COMPLETE before this reads them — Notion truncates a relation at 25
+	 * ids (see {@link NotionClient.pageRelation} and the caller that fills them in).
+	 */
+	static relationsFrom(page: NotionPage, schema: NotionSchemaIndex, retained: ReadonlyArray<Relation> = []): Array<Relation> | null {
+		return Relation.normalize([
+			...schema.relationProperties.flatMap(property => (page.properties[property.name]?.relation ?? [])
+				.filter(reference => reference.id !== page.id)
+				.map(reference => ({ type: property.type, targetUid: reference.id }))),
+			...retained,
+		])
+	}
+
+	/**
+	 * The stored relationships Notion's schema genuinely cannot express — a type no mapped property
+	 * carries, or a target that is not a page of this data source (a link to a CalDAV event, or to a
+	 * task in a different Notion database). Per the per-fact authority rule those stay MITRA-owned:
+	 * the relation table is their only home, so a parse claiming Notion as their authority would wipe
+	 * them on the next sync, and a write smuggling them into a relation property would be rejected by
+	 * Notion anyway.
+	 */
+	static retainedRelations(stored: ReadonlyArray<Relation> | null | undefined, schema: NotionSchemaIndex, isPage: (uid: string) => boolean): Array<Relation> {
+		return (stored ?? []).filter(relation => !isPage(relation.targetUid)
+			|| !schema.relationProperties.some(property => property.type === RelationType.of(relation.type)))
+	}
+
+	/** Every mapped relation property as the COMPLETE list of targets carrying its type — Notion
+	 * writes a relation property wholesale, so a partial list would delete the rest. A property with
+	 * no targets is present as an empty list: that is how the last line of its kind is removed. */
+	static relationPropertiesFrom(relations: ReadonlyArray<Relation> | null | undefined, schema: NotionSchemaIndex, isPage: (uid: string) => boolean): Record<string, NotionPropertyValue> {
+		const properties: Record<string, NotionPropertyValue> = {}
+		for (const property of schema.relationProperties) {
+			properties[property.name] = {
+				relation: (relations ?? [])
+					.filter(relation => RelationType.of(relation.type) === property.type && isPage(relation.targetUid))
+					.map(relation => ({ id: relation.targetUid })),
+			}
+		}
+		return properties
+	}
+
+	/** The relation properties an edit actually changed — {@link propertiesFrom}'s diff discipline,
+	 * computed rather than flagged (one relation edit touches one property among several). A property
+	 * whose list is unchanged is never rewritten, so a value mitra never saw stays intact. */
+	static changedRelationProperties(existing: ReadonlyArray<Relation> | null | undefined, incoming: ReadonlyArray<Relation> | null | undefined, schema: NotionSchemaIndex, isPage: (uid: string) => boolean): Record<string, NotionPropertyValue> {
+		const ids = (value: NotionPropertyValue | undefined) => (value?.relation ?? []).map(reference => reference.id).join(' ')
+		const before = Notion.relationPropertiesFrom(existing, schema, isPage)
+		const after = Notion.relationPropertiesFrom(incoming, schema, isPage)
+		return Object.fromEntries(Object.entries(after).filter(([name, value]) => ids(value) !== ids(before[name])))
 	}
 
 	/**
@@ -769,10 +1034,21 @@ export class Notion extends Integration<NotionCredentials> {
 	 * `localWrite` stamps `data.localWriteAt` with OUR clock — set by the create/update paths (a page
 	 * we just wrote), never by a plain sync read: it's the freshness signal the deletion guard reads,
 	 * and keeping it on our own clock is what makes that guard immune to server↔Notion clock skew.
+	 *
+	 * `relations` likewise comes from the caller, which alone knows the lines Notion cannot hold
+	 * ({@link retainedRelations}) and whether a truncated value could be completed. PRESENT-BUT-
+	 * UNDEFINED is meaningful, and distinct from an absent key: it leaves the relation table alone
+	 * (the tri-state seam's "no authority here"), whereas an absent key takes the page at face value.
 	 */
-	static applyPage(entry: Entry, page: NotionPage, schema: NotionSchemaIndex, options?: { description?: string, localWrite?: boolean }): void {
+	static applyPage(entry: Entry, page: NotionPage, schema: NotionSchemaIndex, options?: { description?: string, localWrite?: boolean, relations?: Array<Relation> | null }): void {
 		entry.type = EntryType.Task
 		entry.uri = page.id
+		// The page id IS the uid: a Notion relation value names a page, mitra's names a uid, and this
+		// is what makes them the same word — so a related page no enabled view mirrors dangles (as
+		// the model intends) instead of being untranslatable. The cost is that an entry MOVED into
+		// Notion cannot keep its uid; createEntry re-points what pointed at the old one.
+		entry.uid = page.id
+		entry.relations = options && 'relations' in options ? options.relations : Notion.relationsFrom(page, schema)
 		entry.heading = Notion.plainText(page.properties[schema.titleProperty]?.title) || 'Untitled Task'
 		const option = page.properties[schema.statusProperty]?.status
 		entry.status = (option?.id ? schema.statusByOption.get(option.id) : undefined) ?? TaskStatus.ToDo

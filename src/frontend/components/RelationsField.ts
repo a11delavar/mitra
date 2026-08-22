@@ -1,6 +1,6 @@
 import { Component, component, html, css, property, state } from '@a11d/lit'
 import { RelationType, type RelationSection, EntryType, type Entry, type Relation } from 'shared'
-import { getEntryRelations, searchEntries, updateRelations, type EntryRelationsView } from '../Api.js'
+import { getCapabilities, getEntryRelations, searchEntries, updateRelations, type EntryRelationsView } from '../Api.js'
 import { EntryStore } from '../EntryStore.js'
 import { controlHeight } from './controlHeight.css.js'
 
@@ -146,9 +146,14 @@ export class RelationsField extends Component {
 				remove: () => { this.removeIncoming(item).catch(() => void 0) },
 			})
 		}
-		return [...new Set([...bySection.keys(), ...AUTHORABLE_BY_SECTION.keys()])]
+		// A provider with no native link store authors none: its rows-that-exist-to-create-one are gone,
+		// like Location on a Notion task (see Integration.capabilities). What already points HERE still
+		// renders — that line lives on the other entry, whose provider does hold it, and the calendar
+		// is drawing its arrow to this chip either way.
+		const authorable = getCapabilities(this.entry.sourceId).relations ? AUTHORABLE_BY_SECTION : new Map<RelationSection, RelationType>()
+		return [...new Set([...bySection.keys(), ...authorable.keys()])]
 			.sort((a, b) => a.rank - b.rank)
-			.map(section => ({ section, lines: bySection.get(section) ?? [], addType: AUTHORABLE_BY_SECTION.get(section) }))
+			.map(section => ({ section, lines: bySection.get(section) ?? [], addType: authorable.get(section) }))
 	}
 
 	// --- Owned lines ------------------------------------------------------------------------------------
@@ -495,6 +500,13 @@ export class RelationsField extends Component {
 				}
 			}
 		`
+	}
+
+	/** Whether this block has anything to place, published for the popover's separator to follow (see
+	 * EventDetails' `hr`). An attribute rather than something the host decides: what points AT this
+	 * entry arrives with the view fetch, so the answer can change after the host has rendered. */
+	protected override updated() {
+		this.toggleAttribute('data-empty', !this.sections.length)
 	}
 
 	protected override get template() {
