@@ -9,6 +9,7 @@ import { EntryFetcherController } from './EntryFetcherController.js'
 import { CommandPalette } from './CommandPalette.js'
 import { commands, sourceCommands } from './commands/index.js'
 import type { Sidebar } from './Sidebar.js'
+import { windowDragHandle } from './components/windowDrag.css.js'
 
 export type CalendarView = 'week' | 'month' | 'year'
 
@@ -216,21 +217,25 @@ export class PageCalendar extends PageComponent {
 						padding: 0.75rem 1.25rem;
 
 						/* Window Controls Overlay: the manifest's display_override removes the OS title bar and
-						   hands that strip to us, so nothing is draggable until we say so. Make the header the
-						   drag handle, while every control inside opts back out (a drag region eats clicks).
+						   hands that strip to us, so nothing is draggable until we say so. The header is that
+						   handle — its padding, its gaps, and the stretch either side of the title — while
+						   everything in it stays the app's (windowDrag.css.ts).
 
 						   The overlaid buttons sit at the top-inline-END on Windows/Linux and the top-inline-START
 						   on macOS (the traffic lights). env(titlebar-area-*) already encodes which — no OS
 						   sniffing: the trailing gap is the viewport minus the safe area's far edge (the Windows
 						   button cluster; ~0 on macOS), so this inset clears them exactly where they exist. */
 						@media (display-mode: window-controls-overlay) {
-							-webkit-app-region: drag;
 							box-sizing: border-box;
 							min-height: env(titlebar-area-height, auto);
 							padding-inline-end: calc(1.25rem + (100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw)));
+							${windowDragHandle};
 
-							button, select {
-								-webkit-app-region: no-drag;
+							/* The flanking columns are pure layout and the month label is pure text — inert
+							   forever, so they carry the window rather than punching two holes in it. Their
+							   controls are handed back by the handle above and stay live. */
+							.leading, .trailing, h1 {
+								-webkit-app-region: drag;
 							}
 						}
 

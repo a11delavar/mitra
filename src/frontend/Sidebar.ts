@@ -5,6 +5,7 @@ import { DialogIntegration } from './DialogIntegration.js'
 import { type Integration, type Source } from 'shared'
 import { ReorderabilityController, ReorderabilityState } from '@3mo/reorderability'
 import { focusRing } from './components/focusRing.css.js'
+import { windowDragHandle } from './components/windowDrag.css.js'
 import { EntryStore } from './EntryStore.js'
 import { Unscheduled } from './Unscheduled.js'
 import { canInstall, promptInstall, onInstallAvailabilityChange } from './pwa.js'
@@ -222,28 +223,17 @@ export class Sidebar extends Component {
 					   their width) and collapses to 0 on Windows/Linux (x = 0), wasting no space there. */
 					@media (display-mode: window-controls-overlay) {
 						padding-top: calc(1.5rem + min(env(titlebar-area-x, 0px), env(titlebar-area-height, 0px)));
-						-webkit-app-region: drag;
 
-						/* Nothing that SCROLLS may be a drag surface, so the list is carved out of the region
-						   wholesale rather than control by control. A drag region hands the pointer to the
-						   window manager — the wheel with it — and opting only the controls out left the lane
-						   scrolling while over a row and going dead in the 1.5rem between rows: the more
-						   integrations you connect, the more of the list stops scrolling, which is the worst
-						   possible way for this to scale. What stays draggable is the chrome that cannot
-						   scroll — the brand row, the padding around it, the footer — so the sidebar still
-						   carries the window, and its top strip still joins the header's into one handle. */
-						.integrations {
-							-webkit-app-region: no-drag;
-						}
+						/* The column carries the window; everything in it stays the app's (windowDrag.css.ts).
+						   This is what keeps the tabs clickable and swipeable and the whole planning list live
+						   — and what keeps the NEXT thing added here live without anyone remembering to. */
+						${windowDragHandle};
 
-						/* A drag region swallows the clicks that land on it, so every control opts back out.
-						   The brand row is the deliberate exception — it stays draggable so the logo moves the
-						   window; only its version whisper opts out (see .version) to keep About reachable.
-						   Kept broader than the chrome outside the lane strictly needs: a popover is in the
-						   top layer, so it can paint over ANY drag region (the page header's included), and a
-						   no-drag rect there is what keeps its dead space from dragging the window. */
-						button:not(.brand), mitra-icon-button, mitra-color-picker, [contenteditable], [popover] {
-							-webkit-app-region: no-drag;
+						/* The one part of the column that is inert on purpose: the brand mark carries the
+						   window, so the logo moves it. Its version whisper does not — it stays live (see
+						   .version), which is what keeps About reachable from a row that drags. */
+						.brand, .brand :is(.mark, img, .name) {
+							-webkit-app-region: drag;
 						}
 					}
 				}
@@ -402,10 +392,9 @@ export class Sidebar extends Component {
 						}
 
 						/* Under Window Controls Overlay the brand row drags the window, making this whisper
-						   the row's only click-through to About — so it opts out of the drag region and gets
-						   a real hit area with a hover affordance. */
+						   the row's only click-through to About — it is already live (the handle hands every
+						   element back), so all it needs here is a real hit area and a hover affordance. */
 						@media (display-mode: window-controls-overlay) {
-							-webkit-app-region: no-drag;
 							cursor: pointer;
 							padding: 0.125rem 0.375rem;
 							margin-inline-end: -0.375rem;

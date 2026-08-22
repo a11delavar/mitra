@@ -77,6 +77,13 @@ export class Dialog extends Component {
 					background: rgba(0, 0, 0, 0.45);
 				}
 
+				/* The app's own copy of the top-layer rule (windowDrag.css.ts): every other overlay is
+				   in the light DOM and reached by the global one, this <dialog> is not. Without it a
+				   dialog tall enough to reach the header would be dead where the two overlap. */
+				@media (display-mode: window-controls-overlay) {
+					-webkit-app-region: no-drag;
+				}
+
 				/* Modern entry animation: @starting-style supplies the "from" state as the
 				   native dialog moves into the top layer. Closing is instant (the host is
 				   removed synchronously), so no exit transition is defined. Width is deliberately

@@ -27,6 +27,7 @@ import { focusRingStyles } from './components/focusRing.css.js'
 import { kbdStyles } from './components/kbd.css.js'
 import { menuStyles } from './components/menu.css.js'
 import { sheetStyles, initializeSheetGestures } from './components/sheet.js'
+import { windowDragStyles } from './components/windowDrag.css.js'
 import { TaskStatusComponent } from './components/TaskStatus.js'
 import { SourceIcon } from './components/SourceIcon.js'
 import { RepeatField } from './components/RepeatField.js'
@@ -222,6 +223,7 @@ export class Mitra extends Application {
 			${menuStyles}
 			${kbdStyles}
 			${sheetStyles}
+			${windowDragStyles}
 
 			${ScrollDeviceController.styles}
 
