@@ -44,7 +44,6 @@ export class EntryStore extends Controller {
 	private static readonly inflight = new Map<Entry, Promise<void>>()
 
 	private static merged?: ReadonlyArray<Entry>
-	private static autoOpen = false
 	private static dragging?: Entry
 
 	/** The transport — a boundary, not state; swappable in tests. */
@@ -420,7 +419,6 @@ export class EntryStore extends Controller {
 	private static drop(entry: Entry) {
 		if (this.draft === entry) {
 			this.draft = undefined
-			this.autoOpen = false
 		}
 		if (entry.id !== undefined && this.workingById.get(entry.id) === entry) {
 			this.workingById.delete(entry.id)
@@ -486,46 +484,10 @@ export class EntryStore extends Controller {
 		if (this.draft?.heading?.trim()) {
 			return
 		}
-		if (this.draft || this.autoOpen) {
+		if (this.draft) {
 			this.draft = undefined
-			this.autoOpen = false
 			this.notify()
 		}
-	}
-
-	/** Flag that the dropped draft's editor should pop open (consumed once it does). Create only. */
-	static openDraft() {
-		this.autoOpen = true
-		this.notify()
-	}
-
-	static shouldAutoOpen(entry: Entry) {
-		return this.autoOpen && this.draft === entry
-	}
-
-	static consumeAutoOpen() {
-		this.autoOpen = false
-	}
-
-	/** The id of a persisted entry whose editor should pop open once its segment renders — set by the
-	 * command palette after it navigates to the entry. Kept until consumed, so it survives the async
-	 * refetch the navigation triggers. */
-	private static openEntryId?: string
-
-	/** Request that the entry with this id open its editor when it next renders (see {@link openDraft}
-	 * for the draft counterpart). A recurring master matches its rendered occurrences too, so picking a
-	 * series from the palette opens the occurrence the navigation lands on. */
-	static requestOpen(id: string) {
-		this.openEntryId = id
-		this.notify()
-	}
-
-	static shouldOpen(entry: Entry) {
-		return this.openEntryId !== undefined && (entry.id === this.openEntryId || entry.recurrenceMasterId === this.openEntryId)
-	}
-
-	static consumeOpen() {
-		this.openEntryId = undefined
 	}
 
 	/** The persisted entry an active move/resize gesture targets. A *move* additionally shows a
@@ -579,8 +541,6 @@ export class EntryStore extends Controller {
 		this.draft = undefined
 		this.preview = undefined
 		this.merged = undefined
-		this.autoOpen = false
-		this.openEntryId = undefined
 		this.dragging = undefined
 	}
 
@@ -588,18 +548,6 @@ export class EntryStore extends Controller {
 	// controller is a live dependency, not just a registration side-effect.
 	get entries() {
 		return EntryStore.entries
-	}
-
-	shouldAutoOpen(entry: Entry) {
-		return EntryStore.shouldAutoOpen(entry)
-	}
-
-	shouldOpen(entry: Entry) {
-		return EntryStore.shouldOpen(entry)
-	}
-
-	consumeOpen() {
-		EntryStore.consumeOpen()
 	}
 
 	isDragging(entry: Entry) {
@@ -612,10 +560,6 @@ export class EntryStore extends Controller {
 
 	isPreview(entry: Entry) {
 		return EntryStore.isPreview(entry)
-	}
-
-	consumeAutoOpen() {
-		EntryStore.consumeAutoOpen()
 	}
 
 	override hostConnected() {

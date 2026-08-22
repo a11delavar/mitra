@@ -2,6 +2,7 @@ import { DateTime } from '@3mo/date-time'
 import { Entry, DEFAULT_REMINDER_MINUTES } from 'shared'
 import { getPrimarySource, getCapabilities } from '../Api.js'
 import { EntryStore } from '../EntryStore.js'
+import { EntryEditorIntent } from '../EntryEditorIntent.js'
 import { command, Command } from './Command.js'
 
 @command()
@@ -26,7 +27,7 @@ export class CreateEntry extends Command {
 		const start = now.dayStart.add({ hours: now.hour + 1 })
 		calendar.setView('week')
 		calendar.navigatingDate = now
-		EntryStore.upsertDraft(new Entry({
+		const draft = new Entry({
 			sourceId: source.id,
 			// An event unless the target can only hold tasks — the same rule the create gestures follow.
 			type: source.defaultEntryType,
@@ -36,7 +37,8 @@ export class CreateEntry extends Command {
 			allDay: false,
 			// A timed draft — same default as a create gesture, same capability guard (see EntryDragController).
 			reminders: getCapabilities(source.id).reminders ? [DEFAULT_REMINDER_MINUTES] : undefined,
-		}))
-		EntryStore.openDraft()
+		})
+		EntryStore.upsertDraft(draft)
+		EntryEditorIntent.openDraft(draft)
 	}
 }

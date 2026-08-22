@@ -2,6 +2,7 @@ import { Controller, eventListener } from '@a11d/lit'
 import { Task } from '@lit/task'
 import { fetchEvents } from './Api.js'
 import { EntryStore } from './EntryStore.js'
+import { EntryEditorIntent } from './EntryEditorIntent.js'
 import type { PageCalendar } from './PageCalendar.js'
 
 /** Fetches the entries the calendar shows and keeps them fresh: a refetch per navigation bucket
@@ -41,6 +42,7 @@ export class EntryFetcherController extends Controller {
 		onComplete: entries => {
 			this.lastContact = Date.now()
 			EntryStore.applyServerEntries(entries)
+			EntryEditorIntent.settle(entries)
 		},
 	})
 

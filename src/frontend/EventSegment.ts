@@ -4,6 +4,7 @@ import { type EntrySegment } from './EntrySegment.js'
 import { contrastColor } from './components/contrastColor.js'
 import { getSource } from './Api.js'
 import { EntryStore } from './EntryStore.js'
+import { EntryEditorIntent } from './EntryEditorIntent.js'
 
 @component('mitra-entry-segment')
 export class EntrySegmentComponent extends Component {
@@ -80,14 +81,10 @@ export class EntrySegmentComponent extends Component {
 		} else {
 			this.removeAttribute('data-status')
 		}
-		if (this.store.shouldAutoOpen(entry) && !this.segment!.hasPrevious) {
-			this.store.consumeAutoOpen()
-			this.open = true
-		}
-		// The command palette navigated to a picked entry and asked for its editor — open it on the
-		// run-start segment only (so a multi-day entry opens one editor), consuming the request.
-		if (this.store.shouldOpen(entry) && !this.segment!.hasPrevious) {
-			this.store.consumeOpen()
+		// A freshly dropped draft, or an entry the palette navigated to, asked for its editor — open it
+		// on the run-start segment only, so a multi-day entry opens one editor, and consume the request.
+		if (EntryEditorIntent.shouldOpen(entry) && !this.segment!.hasPrevious) {
+			EntryEditorIntent.consume()
 			this.open = true
 		}
 	}

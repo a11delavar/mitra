@@ -3,6 +3,7 @@ import { DateTime } from '@3mo/date-time'
 import { Entry, SNAP_MINUTES, DEFAULT_REMINDER_MINUTES, type Source } from 'shared'
 import { getPrimarySource, getCapabilities } from './Api.js'
 import { EntryStore } from './EntryStore.js'
+import { EntryEditorIntent } from './EntryEditorIntent.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
 import { placeAllDay, placeTimed, resizePlacement, snapToGrid } from './entryPlacement.js'
 import { haptic } from './haptics.js'
@@ -503,7 +504,7 @@ export class EntryDragController extends Controller {
 				const draft = drag.gestureDraft ?? built
 				draft.adoptSpan(built)
 				EntryStore.upsertDraft(draft)
-				EntryStore.openDraft()
+				EntryEditorIntent.openDraft(draft)
 			} else {
 				EntryStore.discardDraft()
 			}

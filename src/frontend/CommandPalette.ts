@@ -2,7 +2,7 @@ import { Component, component, html, css, property, state, query, event, eventLi
 import { type DateTime } from '@3mo/date-time'
 import { type Entry } from 'shared'
 import { getSource, searchEntries } from './Api.js'
-import { EntryStore } from './EntryStore.js'
+import { EntryEditorIntent } from './EntryEditorIntent.js'
 import { commandMatches, Command } from './commands/Command.js'
 
 /**
@@ -99,7 +99,7 @@ export class CommandPalette extends Component {
 			// Navigate the calendar to the entry, then ask its segment to open once it renders.
 			this.navigate.dispatch(result.start)
 			if (result.id) {
-				EntryStore.requestOpen(result.id)
+				EntryEditorIntent.requestOpen(result.id)
 			}
 		}
 	}

@@ -3,6 +3,7 @@ import { EntryType, TaskStatus, Transparency, type EntryTypeValue, type Integrat
 import type { EntrySegment } from './EntrySegment.js'
 import { getIntegrations, getSource, getCapabilities } from './Api.js'
 import { EntryStore } from './EntryStore.js'
+import { EntryEditorIntent } from './EntryEditorIntent.js'
 import { closeSheet } from './components/sheet.js'
 import { EntryDetailsSharing } from './EntryDetailsSharing.js'
 
@@ -119,7 +120,7 @@ export class EntryDetailsComponent extends Component {
 		const entry = this.segment!.entry
 		this.hidePopover()
 		return EntryStore.duplicate(entry)
-			.then(copy => EntryStore.requestOpen(copy.id!))
+			.then(copy => EntryEditorIntent.requestOpen(copy.id!))
 			.catch(error => console.error('Duplicating the entry failed — nothing was added:', error))
 	}
 
