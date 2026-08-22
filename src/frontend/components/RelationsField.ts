@@ -1,10 +1,12 @@
 import { Component, component, html, css, property, state, event } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
-import { RelationType, Relation, type RelationSection, EntryType, type Entry } from 'shared'
+import { RelationType, Relation, RelationSection, EntryType, TaskStatus, type Entry } from 'shared'
 import { EntryEditorIntent } from '../EntryEditorIntent.js'
-import { getCapabilities, getEntryRelations, searchEntries, updateRelations, type EntryRelationsView } from '../Api.js'
+import { getCapabilities, getEntryRelations, getSource, searchEntries, updateEvent, updateRelations, type EntryRelationsView } from '../Api.js'
 import { EntryStore } from '../EntryStore.js'
+import { offerFollowUps } from '../Hierarchy.js'
 import { controlHeight } from './controlHeight.css.js'
+import './TaskStatus.js'
 
 /** The authorable families keyed by the section their lines land in. These sections render ALWAYS —
  * each is its own row with its own add action (the empty row IS the entry point), and each opens
@@ -14,6 +16,7 @@ const AUTHORABLE_BY_SECTION = new Map(RelationType.authorable.map(type => [type.
 /** One rendered line: what to show and how to undo it (an outgoing removal edits this entry, a
  * derived one edits the OTHER entry — the line doesn't care which). */
 interface Line {
+	readonly target?: Entry
 	readonly heading?: string
 	/** This line's dependency is already broken by the two entries' times — see {@link Entry.violates}. */
 	readonly violated?: boolean
@@ -136,6 +139,7 @@ export class RelationsField extends Component {
 		for (const relation of this.relations) {
 			const target = this.resolvedByUid.get(relation.targetUid)
 			add(RelationType.of(relation.type).section, {
+				target,
 				heading: target?.heading,
 				// A just-picked target is resolved locally, so only a line the view hasn't spoken for
 				// is still pending — and only until the FIRST view lands.
@@ -155,6 +159,7 @@ export class RelationsField extends Component {
 				continue
 			}
 			add(type.inverseSection, {
+				target: item.entry,
 				heading: item.entry.heading,
 				// Mirrored: the pointer lives on the OTHER entry, so the coupling is that entry's to break.
 				violated: item.entry.violates(new Relation({ type, targetUid: this.entry.uid, gap: item.gap }), this.entry),
@@ -237,6 +242,28 @@ export class RelationsField extends Component {
 			this.error = error instanceof Error ? error.message : String(error)
 		}
 		await this.fetchView()
+	}
+
+	/** Updates status on the store's tracked instance if present, falling back to direct API write for untracked entries. */
+	private async handleTargetStatusChange(target: Entry) {
+		EntryStore.notify()
+		if (!target.persisted) {
+			this.requestUpdate()
+			return
+		}
+		const tracked = EntryStore.entries.find(entry => entry.id === target.id)
+		if (tracked && tracked !== target) {
+			tracked.status = target.status
+			tracked.percentComplete = target.percentComplete
+			EntryStore.notify()
+		}
+		const saved = tracked ?? target
+		await (tracked ? EntryStore.commit(tracked) : updateEvent(target)).catch(() => void 0)
+		// Direct API writes bypass EntryStore.onTaskClosed, so trigger follow-up offers explicitly.
+		if (saved.closed) {
+			offerFollowUps(saved).catch(() => void 0)
+		}
+		this.requestUpdate()
 	}
 
 	// --- Picker -----------------------------------------------------------------------------------------
@@ -395,6 +422,15 @@ export class RelationsField extends Component {
 						white-space: nowrap;
 					}
 
+					> .tally {
+						grid-column: 3;
+						grid-row: 1;
+						color: var(--color-text-muted);
+						font-variant-numeric: tabular-nums;
+						font-size: 0.8rem;
+						white-space: nowrap;
+					}
+
 					> .add {
 						grid-column: 3;
 						grid-row: 1;
@@ -408,8 +444,26 @@ export class RelationsField extends Component {
 						grid-column: 2;
 						display: flex;
 						align-items: center;
-						gap: 0.25rem;
+						gap: 0.375rem;
 						min-width: 0;
+
+						> mitra-task-status {
+							font-size: 0.85rem;
+							inline-size: 0.85rem;
+							block-size: 0.85rem;
+							flex-shrink: 0;
+						}
+
+						> mitra-icon.glyph {
+							font-size: 0.8rem;
+							inline-size: 0.85rem;
+							block-size: 0.85rem;
+							display: flex;
+							align-items: center;
+							justify-content: center;
+							flex-shrink: 0;
+							color: var(--color-text-muted);
+						}
 
 						> .heading {
 							flex: 1;
@@ -422,6 +476,11 @@ export class RelationsField extends Component {
 								color: var(--color-text-muted);
 								font-style: italic;
 							}
+						}
+
+						&[data-struck] > .heading {
+							text-decoration: line-through;
+							color: var(--color-text-muted);
 						}
 
 						> mitra-icon-button {
@@ -451,6 +510,13 @@ export class RelationsField extends Component {
 							&:hover,
 							&:focus-visible {
 								text-decoration: underline;
+							}
+						}
+
+						&[data-struck] > button.heading {
+							&:hover,
+							&:focus-visible {
+								text-decoration: line-through underline;
 							}
 						}
 
@@ -489,29 +555,29 @@ export class RelationsField extends Component {
 						display: flex;
 						flex-direction: column;
 						gap: 0;
+						height: 180px;
 					}
 
 					/* The search reads as a plain row of the popover (no box, no focus ring — the caret
 					   and the filtering are feedback enough), separated by a hairline. */
 					> input.search {
-						flex-shrink: 0;
-						background: transparent;
 						border: none;
+						border-bottom: var(--border);
 						border-radius: 0;
-						border-block-end: 1px solid rgba(255, 255, 255, 0.06);
-						padding: 0.4rem 0.625rem;
+						background: transparent;
+						padding: 0.375rem 0.5rem;
+						font-size: 0.8125rem;
+						color: var(--color-text);
+						outline: none;
 
-						&:hover,
-						&:focus-visible {
-							background: transparent;
-							border-color: transparent;
-							border-block-end-color: rgba(255, 255, 255, 0.06);
-							box-shadow: none;
+						&::placeholder {
+							color: var(--color-text-muted);
 						}
 					}
 
 					> .results {
-						block-size: 13.5rem; /* FIXED — the popover must not resize while searching */
+						flex: 1;
+						min-height: 0;
 						overflow-y: auto;
 						display: flex;
 						flex-direction: column;
@@ -545,6 +611,11 @@ export class RelationsField extends Component {
 								}
 							}
 
+							&[data-struck] > .text {
+								text-decoration: line-through;
+								color: var(--color-text-muted);
+							}
+
 							&[data-active] {
 								background: color-mix(in srgb, var(--color-text) 8%, transparent);
 							}
@@ -565,10 +636,7 @@ export class RelationsField extends Component {
 	protected override get template() {
 		// Drafts author relations too — the list rides the create. Only the view fetch (resolved
 		// names, incoming lines) waits for identity; nothing can point at a draft yet anyway.
-		if (!this.entry) {
-			return html.nothing
-		}
-		return html`
+		return !this.entry ? html.nothing : html`
 			${this.sections.map(section => this.sectionTemplate(section))}
 			${!this.error ? html.nothing : html`<span class="error">${this.error}</span>`}
 		`
@@ -577,18 +645,38 @@ export class RelationsField extends Component {
 	private sectionTemplate({ section, lines, addType }: { section: RelationSection, lines: Array<Line>, addType?: RelationType }) {
 		// A derived/read-only family exists only through its lines — there is nothing to author from
 		// this side, so an empty one has no row at all (and no add button when it does).
-		if (!lines.length && !addType) {
-			return html.nothing
-		}
-		return html`
+		return !lines.length && !addType ? html.nothing : html`
 			<div class="row field" data-section=${section.value}>
 				<mitra-icon icon=${section.icon}></mitra-icon>
 				<div class="lines">
 					<span class="kind">${section.format()}</span>
+					${section !== RelationSection.Subtasks || !this.entry.subtasks?.total ? html.nothing : html`
+						<span class="tally" title=${t('${done} of ${total:pluralityNumber} subtasks done', { done: this.entry.subtasks.done.format(), total: this.entry.subtasks.total })}>
+							${this.entry.subtasks.done.format()}/${this.entry.subtasks.total.format()}
+						</span>
+					`}
 					${lines.map(line => {
 						const heading = line.heading ?? html`<span class="unresolved">${line.pending ? '…' : t('Unknown entry')}</span>`
+						const target = line.target
+						const isTask = target?.type.isTask ?? false
+						const isDone = isTask && (target?.done || target?.status === TaskStatus.Done || target?.status === TaskStatus.Cancelled)
+						const color = target ? (target.color || getSource(target.sourceId)?.color) : undefined
+
 						return html`
-							<span class="relation" ?data-violated=${line.violated}>
+							<span class="relation"
+								data-status=${target?.status ?? (isTask ? 'todo' : 'none')}
+								?data-struck=${isDone}
+								?data-violated=${line.violated}
+							>
+								${!target ? html.nothing : isTask ? html`
+									<mitra-task-status
+										style=${color ? `color: ${color};` : ''}
+										.entry=${target}
+										@change=${() => this.handleTargetStatusChange(target)}
+									></mitra-task-status>
+								` : html`
+									<mitra-icon class="glyph" icon="calendar" style=${color ? `color: ${color};` : ''}></mitra-icon>
+								`}
 								${!line.open
 									? html`<span class="heading">${heading}</span>`
 									: html`<button type="button" class="heading" @click=${line.open}>${heading}</button>`}
@@ -625,17 +713,23 @@ export class RelationsField extends Component {
 					     wrong kind if it ever showed. */''}
 					${this.pendingType !== type || !this.suggestions.length ? html`
 						<span class="hint">${this.searchedQuery ? t('No matching entries') : t('Search for an event or task to link')}</span>
-					` : this.suggestions.map((candidate, index) => html`
-						<button type="button" ?data-active=${index === this.activeIndex}
-							@pointerdown=${(e: Event) => e.preventDefault()}
-							@click=${() => this.pick(candidate)}>
-							<mitra-icon class="glyph" icon=${candidate.type === EntryType.Task ? 'list-todo' : 'calendar'}></mitra-icon>
-							<span class="text">
-								${candidate.heading}
-								${!candidate.start ? html.nothing : html`<span class="when"> · ${candidate.start.format({ month: 'short', day: 'numeric' })}</span>`}
-							</span>
-						</button>
-					`)}
+					` : this.suggestions.map((candidate, index) => {
+						const color = candidate.color || getSource(candidate.sourceId)?.color
+						const isDone = candidate.type === EntryType.Task && candidate.done
+						return html`
+							<button type="button" ?data-active=${index === this.activeIndex} ?data-struck=${isDone}
+								@pointerdown=${(e: Event) => e.preventDefault()}
+								@click=${() => this.pick(candidate)}>
+								<mitra-icon class="glyph" icon=${candidate.type === EntryType.Task ? 'list-todo' : 'calendar'}
+									style=${color ? `color: ${color};` : ''}
+								></mitra-icon>
+								<span class="text">
+									${candidate.heading}
+									${!candidate.start ? html.nothing : html`<span class="when"> · ${candidate.start.format({ month: 'short', day: 'numeric' })}</span>`}
+								</span>
+							</button>
+						`
+					})}
 				</div>
 			</menu>
 		`

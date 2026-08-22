@@ -1,8 +1,9 @@
 import { component, html, join, property, state, Component, css, eventListener, event, Binder, query } from '@a11d/lit'
-import { EntryType, TaskStatus, Transparency, type EntryTypeValue, type Integration, type RecurrenceScope } from 'shared'
+import { EntryType, TaskStatus, Transparency, type EntryTypeValue, type Integration } from 'shared'
 import type { EntrySegment } from './EntrySegment.js'
 import { getIntegrations, getSource, getCapabilities } from './Api.js'
 import { EntryStore } from './EntryStore.js'
+import * as Hierarchy from './Hierarchy.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 import { closeSheet } from './components/sheet.js'
 import { EntryDetailsSharing } from './EntryDetailsSharing.js'
@@ -96,20 +97,21 @@ export class EntryDetailsComponent extends Component {
 		this.handleChange().catch(this.reportSaveError)
 	}
 
-	// A failed delete reinstates the entry in the store (see EntryStore.delete) — so unlike a save,
-	// the user SEES the failure; the console then carries the server's reason. A preset scope (the
-	// Ctrl chord/click below) skips the recurrence dialog and deletes this occurrence alone.
-	private readonly handleDelete = (scope?: RecurrenceScope) => {
+	// Handles scoped delete across series and hierarchy axes; bypass skips dialog confirmation.
+	private readonly handleDelete = async (bypass: boolean) => {
 		const entry = this.segment!.entry
+		const scope = await Hierarchy.resolveScope(entry, 'delete', bypass)
+		if (!scope) {
+			return // cancelled — nothing happens
+		}
 		this.hidePopover()
-		return EntryStore.delete(entry, scope).catch(error =>
+		return Hierarchy.deleteScoped(entry, scope).catch(error =>
 			console.error('Deleting the entry failed — it was restored in the view:', error))
 	}
 
-	/** The scope a modifier chord presets: Ctrl (⌘ on a Mac) means "this entry only, don't ask" — on a
-	 * non-recurring entry it's simply ignored downstream. Alt is the duplicate modifier, never a scope. */
-	private static presetScope(e: MouseEvent | KeyboardEvent): RecurrenceScope | undefined {
-		return e.ctrlKey || e.metaKey ? 'this' : undefined
+	/** Ctrl (⌘ on Mac) bypasses the scope dialog for single-entry operations. */
+	private static bypassesScope(e: MouseEvent | KeyboardEvent): boolean {
+		return e.ctrlKey || e.metaKey
 	}
 
 	/** Duplicate this entry — the pointer twin of Alt-drag, for when you're already in the editor. With
@@ -148,7 +150,7 @@ export class EntryDetailsComponent extends Component {
 			return
 		}
 		e.preventDefault()
-		this.handleDelete(EntryDetailsComponent.presetScope(e))
+		void this.handleDelete(EntryDetailsComponent.bypassesScope(e))
 	}
 
 	// As a bottom sheet this slides out rather than vanishing; closeSheet reports when it took over
@@ -613,7 +615,7 @@ export class EntryDetailsComponent extends Component {
 									<span class="word">${t('drag')}</span>
 								</button>
 						`}
-							<button class="danger" @click=${(e: MouseEvent) => this.handleDelete(EntryDetailsComponent.presetScope(e))}>
+							<button class="danger" @click=${(e: MouseEvent) => void this.handleDelete(EntryDetailsComponent.bypassesScope(e))}>
 								<mitra-icon icon="trash-2"></mitra-icon>
 								${t('Delete')}
 								<kbd>${EntryDetailsComponent.appleKeyboard ? '⌫' : 'Del'}</kbd>

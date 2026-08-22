@@ -18,6 +18,18 @@ export enum TaskStatus {
 }
 
 /**
+ * Direct subtask progress rollup derived from relations per read.
+ * `total` excludes cancelled tasks; `children` counts all direct children; `descendants` counts full subtree.
+ */
+export interface EntryRollup {
+	readonly done: number
+	readonly total: number
+	readonly progress: number
+	readonly children: number
+	readonly descendants: number
+}
+
+/**
  * Whether an event's time counts as busy when someone asks whether you are available — RFC 5545's
  * TRANSP (§3.8.2.7), where OPAQUE (busy) is the default and TRANSPARENT (free) is the "I'm blocking
  * this out, but don't let it stop anyone booking me" case. EVENT-ONLY, exactly as {@link TaskStatus}
@@ -140,13 +152,27 @@ export class Entry {
 	 */
 	@property({ type: 'number', nullable: true }) percentComplete: number | null = null
 
-	/** Progress fraction (0-1) derived from authored percentComplete. */
+	/** Derived subtask rollup attached on read; excluded from persistence and dirty diffs. */
+	subtasks?: EntryRollup
+
+	/** Progress fraction (0-1) derived from subtasks rollup when present, else authored percentComplete. */
 	get progress(): number | undefined {
+		if (this.subtasks?.total) {
+			return this.subtasks.progress
+		}
 		return this.percentComplete === null || this.percentComplete === undefined ? undefined : this.percentComplete / 100
+	}
+
+	/** Whether progress is derived from subtasks rather than authored. */
+	get progressIsDerived() {
+		return !!this.subtasks?.total
 	}
 
 	get done() { return this.status === TaskStatus.Done }
 	set done(value) { this.status = value ? TaskStatus.Done : TaskStatus.ToDo }
+
+	/** Whether the task outcome is decided (Done or Cancelled). An event is never closed. */
+	get closed() { return this.status === TaskStatus.Done || this.status === TaskStatus.Cancelled }
 
 	/** The event's free/busy contribution ({@link Transparency}) — cleared by the `type` setter when the
 	 * entry becomes a task, the mirror of `status`. `null` means the RFC's OPAQUE default (busy), which
@@ -455,6 +481,7 @@ export class Entry {
 			recurrenceMasterId: values.recurrenceMasterId,
 			recurrenceId: values.recurrenceId,
 			seriesStart: values.seriesStart,
+			subtasks: values.subtasks,
 		})
 	}
 

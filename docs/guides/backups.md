@@ -2,7 +2,7 @@
 title: Backups
 description: Everything a Mitra instance owns lives in one directory — back that up with whatever tool you already trust.
 sidebar:
-  order: 10
+  order: 11
 ---
 
 Mitra keeps its entire state in **one directory**: `/app/data` inside the container — the `~/mitra` folder on the host with the recommended compose file. Back up that directory and you've backed up the whole instance. There's no external database to dump, no separate config store, and no individual files to cherry-pick: **the data directory is the backup unit**, whole and opaque.

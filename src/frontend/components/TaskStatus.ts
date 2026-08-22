@@ -2,6 +2,7 @@ import { Component, component, html, css, property, event, query } from '@a11d/l
 import { type Entry, TaskStatus } from 'shared'
 import { getCapabilities } from '../Api.js'
 import { EntryStore } from '../EntryStore.js'
+import { offerToCloseSubtasksOf } from '../Hierarchy.js'
 
 const order = [TaskStatus.ToDo, TaskStatus.Doing, TaskStatus.Done, TaskStatus.Cancelled] as const
 
@@ -37,7 +38,15 @@ export class TaskStatusComponent extends Component {
 	protected override createRenderRoot() { return this }
 
 	private get status() {
-		return this.entry?.status ?? TaskStatus.ToDo
+		const status = this.entry?.status ?? TaskStatus.ToDo
+		if (status === TaskStatus.Done || status === TaskStatus.Cancelled) {
+			return status
+		}
+		const progress = this.entry?.progress
+		if (progress !== undefined && progress > 0 && progress < 1) {
+			return TaskStatus.Doing
+		}
+		return status
 	}
 
 	private get progress() {
@@ -45,6 +54,10 @@ export class TaskStatusComponent extends Component {
 	}
 
 	private get progressLabel() {
+		const rollup = this.entry?.subtasks
+		if (rollup?.total) {
+			return t('${done} of ${total:pluralityNumber} subtasks done', { done: String(rollup.done), total: rollup.total })
+		}
 		const progress = this.progress
 		return progress === undefined ? undefined : t('${percent}% complete', { percent: String(Math.round(progress * 100)) })
 	}
@@ -63,6 +76,13 @@ export class TaskStatusComponent extends Component {
 		this.menu?.hidePopover()
 		this.requestUpdate()
 		this.change.dispatch()
+	}
+
+	/** Opens leftover subtask closure prompt from the menu. */
+	private readonly closeOutSubtasks = (e: Event) => {
+		e.stopPropagation()
+		this.menu?.hidePopover()
+		void offerToCloseSubtasksOf(this.entry).catch(() => void 0)
 	}
 
 	private readonly clearPercent = (e: Event) => {
@@ -312,6 +332,57 @@ export class TaskStatusComponent extends Component {
 								}
 							}
 						}
+
+						&.subtasks {
+							.progress-bar {
+								block-size: 0.25rem;
+								border-radius: 9999px;
+								background: linear-gradient(
+									to right,
+									var(--color-accent) 0%,
+									var(--color-accent) var(--slider-percent, 0%),
+									color-mix(in srgb, var(--color-text) 15%, transparent) var(--slider-percent, 0%),
+									color-mix(in srgb, var(--color-text) 15%, transparent) 100%
+								);
+								margin-block: 0.125rem;
+							}
+
+							.progress-summary {
+								display: flex;
+								align-items: center;
+								gap: 0.375rem;
+								padding-block-start: 0.125rem;
+								font-size: 0.75rem;
+								color: var(--color-text-muted);
+
+								mitra-icon {
+									font-size: 0.8125rem;
+								}
+
+								&.leftover {
+									all: unset;
+									display: flex;
+									align-items: center;
+									gap: 0.375rem;
+									padding: 0.1875rem 0.25rem;
+									margin-inline: -0.25rem;
+									border-radius: 4px;
+									cursor: pointer;
+									font-size: 0.75rem;
+									color: var(--color-text-muted);
+									box-sizing: border-box;
+
+									&:hover, &:focus-visible {
+										color: var(--color-text);
+										background: color-mix(in srgb, var(--color-text) 10%, transparent);
+									}
+
+									> .go {
+										margin-inline-start: auto;
+									}
+								}
+							}
+						}
 					}
 				}
 
@@ -326,6 +397,36 @@ export class TaskStatusComponent extends Component {
 	}
 
 	private get progressSectionTemplate() {
+		const rollup = this.entry.subtasks
+		if (rollup?.total) {
+			// RFC 5545 §3.8.1.8: a completed task reads 100%.
+			const value = Math.round((this.progress ?? rollup.progress) * 100)
+			const leftover = this.entry.closed && rollup.done < rollup.total
+			const summary = t('${done} of ${total:pluralityNumber} subtasks done', { done: String(rollup.done), total: rollup.total })
+			return html`
+				<div class="progress-section subtasks">
+					<div class="progress-header">
+						<span>${t('Progress')}</span>
+						<span class="value">${value}%</span>
+					</div>
+					<div class="progress-bar" style="--slider-percent: ${value}%;"></div>
+					${!leftover ? html`
+						<div class="progress-summary">
+							<mitra-icon icon="chart-pie"></mitra-icon>
+							<span>${summary}</span>
+						</div>
+					` : html`
+						<button class="progress-summary leftover" title=${t('Close out the subtasks that are still open')}
+							@click=${this.closeOutSubtasks}>
+							<mitra-icon icon="chart-pie"></mitra-icon>
+							<span>${summary}</span>
+							<mitra-icon class="go" icon="chevron-right"></mitra-icon>
+						</button>
+					`}
+				</div>
+			`
+		}
+
 		if (!getCapabilities(this.entry.sourceId).percentComplete) {
 			return html.nothing
 		}

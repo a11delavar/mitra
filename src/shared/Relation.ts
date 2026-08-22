@@ -41,9 +41,10 @@ export class Relation {
 	 * not a throw, and `undefined` is taken (it means "absent, keep"). */
 	static readonly invalid: unique symbol = Symbol('invalid relations')
 
-	/** The tri-state `relations` field off a WIRE body: `undefined` keeps, `null` clears, an array
-	 * sets ({@link normalize}d). Bodies are untrusted plain JSON — items are shape-checked, and
-	 * anything unusable answers {@link invalid} rather than being silently dropped. */
+	/**
+	 * Parses wire relations: `undefined` keeps, `null` clears, array sets ({@link normalize}d).
+	 * Accepts both wire strings and already-revived {@link RelationType} instances from `@model` payloads.
+	 */
 	static parse(value: unknown): Array<Relation> | null | undefined | typeof Relation.invalid {
 		if (value === undefined || value === null) {
 			return value as null | undefined
@@ -56,7 +57,8 @@ export class Relation {
 				return false
 			}
 			const { type, targetUid, gap } = item as Record<'type' | 'targetUid' | 'gap', unknown>
-			return typeof type === 'string' && !!type.trim()
+			const namesAType = type instanceof RelationType || (typeof type === 'string' && !!type.trim())
+			return namesAType
 				&& typeof targetUid === 'string' && !!targetUid.trim()
 				&& (gap === null || gap === undefined || typeof gap === 'string')
 		}

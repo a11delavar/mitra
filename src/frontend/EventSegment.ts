@@ -78,8 +78,18 @@ export class EntrySegmentComponent extends Component {
 		this.toggleAttribute('drag-source', this.store.isDragSource(entry))
 		if (entry.type.isTask) {
 			this.setAttribute('data-status', entry.status ?? 'todo')
+			const progress = entry.progress
+			if (progress !== undefined) {
+				this.setAttribute('data-progress', '')
+				this.style.setProperty('--mitra-entry-progress', `${Math.round(progress * 100)}%`)
+			} else {
+				this.removeAttribute('data-progress')
+				this.style.removeProperty('--mitra-entry-progress')
+			}
 		} else {
 			this.removeAttribute('data-status')
+			this.removeAttribute('data-progress')
+			this.style.removeProperty('--mitra-entry-progress')
 		}
 		// A freshly dropped draft, or an entry the palette navigated to, asked for its editor — open it
 		// on the run-start segment only, so a multi-day entry opens one editor, and consume the request.
@@ -115,7 +125,8 @@ export class EntrySegmentComponent extends Component {
 				   of it). One definition here, where the entry's colour is; a surface just uses it, and a
 				   NEW surface gets it right by default instead of having to remember the recipe. */
 				--mitra-entry-surface: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
-				background-color: color-mix(in srgb, var(--mitra-entry-segment-color) 25%, var(--color-background));
+				--segment-bg: color-mix(in srgb, var(--mitra-entry-segment-color) 25%, var(--color-background));
+				background-color: var(--segment-bg);
 				border-inline-start: 3px solid var(--mitra-entry-segment-color);
 				border-radius: var(--border-radius);
 				color: color-mix(in srgb, var(--mitra-entry-segment-color) 60%, var(--color-text));
@@ -145,6 +156,7 @@ export class EntrySegmentComponent extends Component {
 				   sticky labels inside it (see Day.ts) and turn them into no-ops. clip crops identically
 				   without creating one — the same trick the all-day lane's bars use in Days.ts. */
 				overflow: clip;
+				overflow-clip-margin: border-box;
 				transition: background-color 0.15s ease, color 0.15s ease;
 
 				/* Covering must not hide: any box painting over another (a cascade row over its base, a
@@ -153,7 +165,8 @@ export class EntrySegmentComponent extends Component {
 				   from a drawn edge. The same frosted language the app's popovers and menus speak. The
 				   shadow only grounds it; there is deliberately no ring, hairline, or outline. */
 				&[data-covers] {
-					background-color: color-mix(in srgb, var(--mitra-entry-segment-color) 38%, color-mix(in srgb, var(--color-background) 55%, transparent));
+					--segment-bg: color-mix(in srgb, var(--mitra-entry-segment-color) 38%, color-mix(in srgb, var(--color-background) 55%, transparent));
+					background-color: var(--segment-bg);
 					backdrop-filter: blur(6px) saturate(130%);
 					box-shadow: 0 2px 8px rgb(0 0 0 / 0.18);
 				}
@@ -212,7 +225,8 @@ export class EntrySegmentComponent extends Component {
 
 				&:not([data-draft]):has([popover]:popover-open),
 				&:not([data-draft])[selected] {
-					background-color: var(--mitra-entry-segment-color);
+					--segment-bg: var(--mitra-entry-segment-color);
+					background-color: var(--segment-bg);
 					color: ${contrastColor('var(--mitra-entry-segment-color)')};
 				}
 
@@ -272,21 +286,14 @@ export class EntrySegmentComponent extends Component {
 					flex-direction: column;
 
 					/* The mark's box and glyph (IconButton's 2rem floor would burst all but the tallest
-					   chips, so this stands in for it). Roomy by default and cramped as the exception,
-					   because a container with no definite height answers every height query FALSE — so
-					   a min-height tier could never apply in the unscheduled list, the one place with
-					   room to spare. */
-					--header-line: 1rem;
-					--header-mark: 0.875rem;
+					   chips, so this stands in for it). In timed segments with time text, 0.8125rem balances
+					   with the time header. In single-line/all-day bars, 0.875rem balances with the title. */
+					--header-line: 0.8125rem;
+					--header-mark: 0.8125rem;
 
 					@media (pointer: coarse) {
-						--header-line: 1.25rem;
-						--header-mark: 1rem;
-					}
-
-					@container (height < 2.5rem) {
-						--header-line: calc(0.7rem * 1.1);
-						--header-mark: 0.75rem;
+						--header-line: 0.9375rem;
+						--header-mark: 0.9375rem;
 					}
 
 					> .header {
@@ -360,12 +367,18 @@ export class EntrySegmentComponent extends Component {
 					@container (max-height: 2rem) {
 						display: block;
 						min-width: 0;
+						--header-line: 0.875rem;
+						--header-mark: 0.875rem;
 						/* One line in a box with room to spare: centre it rather than hanging it from the top
 						   edge. Resolves to 0 the moment the content is taller than the box. */
 						margin-block: auto;
 
 						> .header {
 							display: contents;
+
+							> mitra-task-status {
+								vertical-align: -0.125em;
+							}
 						}
 					}
 
@@ -384,9 +397,15 @@ export class EntrySegmentComponent extends Component {
 				&:not(:has(> .heading > .header > .time)) > .heading {
 					display: block;
 					min-width: 0;
+					--header-line: 0.875rem;
+					--header-mark: 0.875rem;
 
 					> .header {
 						display: contents;
+
+						> mitra-task-status {
+							vertical-align: -0.125em;
+						}
 					}
 				}
 

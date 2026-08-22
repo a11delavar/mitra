@@ -3,7 +3,7 @@ import { focusRing } from './focusRing.css.js'
 import { controlHeight } from './controlHeight.css.js'
 
 export const inputStyles = css`
-	:is(input:not([type=checkbox], [type=radio]), textarea) {
+	:is(input:not([type=checkbox], [type=radio], [type=range]), textarea) {
 		appearance: none;
 		box-sizing: border-box;
 		font-family: inherit;

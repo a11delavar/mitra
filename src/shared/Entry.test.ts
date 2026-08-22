@@ -553,4 +553,26 @@ describe('Entry', () => {
 			assert.equal(verdict(dependent(RelationType.FinishToStart, 10, 12), new Entry({ id: 'p', sourceId: 's', type: EntryType.Task, uid: 'predecessor' })), false)
 		})
 	})
+
+
+	describe('closed', () => {
+		// "No longer outstanding" is one idea with two spellings, and the rollup already draws the line
+		// there: a cancelled child leaves the denominator rather than pinning its parent below 100%
+		// unfinishably. Stated once so the counting rule and the follow-up offers cannot drift apart.
+		it('covers both decided outcomes, and only those', () => {
+			assert.equal(new Entry({ type: EntryType.Task, status: TaskStatus.Done }).closed, true)
+			assert.equal(new Entry({ type: EntryType.Task, status: TaskStatus.Cancelled }).closed, true)
+			assert.equal(new Entry({ type: EntryType.Task, status: TaskStatus.Doing }).closed, false)
+			assert.equal(new Entry({ type: EntryType.Task, status: TaskStatus.ToDo }).closed, false)
+			assert.equal(new Entry({ type: EntryType.Task }).closed, false)
+		})
+
+		// An event has no status to decide — the type setter sheds it (RFC 5545 gives VEVENT no STATUS
+		// mitra models), so a closed event is not a thing that can exist.
+		it('is never true for an event', () => {
+			const entry = new Entry({ type: EntryType.Task, status: TaskStatus.Done })
+			entry.type = EntryType.Event
+			assert.equal(entry.closed, false)
+		})
+	})
 })

@@ -46,6 +46,18 @@ describe('Relation', () => {
 			assert.ok(Array.isArray(parsed))
 			assert.deepEqual(parsed.map(relation => [relation.type, relation.targetUid]), [[RelationType.Parent, 'x']])
 		})
+
+		it('accepts an already-revived instance, not just the plain wire shape', () => {
+			const revived = new Relation({ type: RelationType.Parent, targetUid: 'parent' })
+			const parsed = Relation.parse([revived])
+			assert.ok(Array.isArray(parsed))
+			assert.deepEqual(parsed.map(relation => [relation.type, relation.targetUid]), [[RelationType.Parent, 'parent']])
+		})
+
+		it('still rejects an item whose type is neither a string nor a RelationType', () => {
+			assert.equal(Relation.parse([{ type: { value: 'PARENT' }, targetUid: 'x' }]), Relation.invalid)
+			assert.equal(Relation.parse([{ type: '   ', targetUid: 'x' }]), Relation.invalid)
+		})
 	})
 
 	describe('listEquals', () => {

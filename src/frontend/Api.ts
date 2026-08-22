@@ -173,6 +173,16 @@ export function getEntryRelations(id: string) {
 	return Api.get<EntryRelationsView>(`/entries/${id}/relations?tz=${tz()}`)
 }
 
+/** Hierarchy around one entry: direct parents with rollups and full subtree descendants. */
+export interface EntryHierarchyView {
+	parents: Array<Entry>
+	descendants: Array<Entry>
+}
+
+export function getEntryHierarchy(id: string) {
+	return Api.get<EntryHierarchyView>(`/entries/${id}/hierarchy?tz=${tz()}`)
+}
+
 /** THE write path for relationships (see RelationsField) — always a relations-only partial PUT to
  * the series master; the backend treats absent fields as "keep", so nothing else moves. Full entry
  * PUTs deliberately never carry relations. */

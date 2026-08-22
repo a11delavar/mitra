@@ -3,6 +3,7 @@ import { DateTime } from '@3mo/date-time'
 import { Entry, SNAP_MINUTES, DEFAULT_REMINDER_MINUTES, type Source } from 'shared'
 import { getPrimarySource, getCapabilities } from './Api.js'
 import { EntryStore } from './EntryStore.js'
+import * as Hierarchy from './Hierarchy.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
 import { placeAllDay, placeTimed, resizePlacement, snapToGrid } from './entryPlacement.js'
@@ -636,10 +637,10 @@ export class EntryDragController extends Controller {
 				}
 				return
 			}
-			// Ctrl (⌘ on a Mac) held at the drop scopes a series edit to this occurrence alone — no scope
-			// dialog, the keyboard twin of Ctrl+Delete in the editor. Like Explorer's copy-drag, the
-			// modifier's state at the RELEASE decides, so it can be pressed (or reconsidered) mid-drag.
-			const scope = e.ctrlKey || e.metaKey ? 'this' as const : undefined
+			// Ctrl/⌘ held at release bypasses the scope dialog for single-entry move.
+			const bypass = e.ctrlKey || e.metaKey
+			const delta = built?.start && entry.start ? built.start.valueOf() - entry.start.valueOf() : 0
+			const isMove = drag.kind === 'move'
 			this.teardown(e.pointerId)
 			EntryStore.setPreview(undefined) // a move's ghost has served its purpose — the entry takes over
 			EntryStore.setDragging(undefined)
@@ -647,8 +648,14 @@ export class EntryDragController extends Controller {
 				entry.adoptSpan(built)
 				EntryStore.notify()
 			}
-			// The entry already renders at its new span; on failure it snaps back to the canonical state.
-			EntryStore.commit(entry, scope).catch(() => EntryStore.revert(entry))
+			void Hierarchy.resolveScope(entry, isMove ? 'move' : 'edit', bypass, isMove && delta !== 0).then(scope => {
+				if (!scope) {
+					return EntryStore.revert(entry)
+				}
+				return EntryStore.commit(entry, scope.recurrence)
+					.then(() => scope.subtasks && delta !== 0 ? Hierarchy.shiftSubtree(entry, delta) : undefined)
+					.catch(() => EntryStore.revert(entry))
+			})
 		} else {
 			const segment = drag.kind === 'move' ? drag.grabbedSegment : undefined
 			this.teardown(e.pointerId)

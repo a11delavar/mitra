@@ -7,6 +7,7 @@ export {}
 
 declare global {
 	interface LocalizableStringKeys {
+		"\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks are still open.": unknown
 		"+${count:number} more": unknown
 		"${count:number} min": unknown
 		"${count:number} more": unknown
@@ -16,6 +17,7 @@ declare global {
 		"${count:pluralityNumber} participants": unknown
 		"${count:pluralityNumber} weeks": unknown
 		"${count:pluralityNumber} years": unknown
+		"${done} of ${total:pluralityNumber} subtasks done": unknown
 		"${percent}% complete": unknown
 		"${span} before": unknown
 		"${status} — click to toggle, Alt-click for options": unknown
@@ -35,11 +37,15 @@ declare global {
 		"After": unknown
 		"All day": unknown
 		"All entries": unknown
+		"All subtasks done": unknown
+		"Also delete its ${count:pluralityNumber} subtasks": unknown
+		"Also move its ${count:pluralityNumber} subtasks by the same amount": unknown
 		"Alt+click to show only this one": unknown
 		"Alt+click to show the previously visible ones": unknown
 		"Amount": unknown
 		"App-Specific Password": unknown
 		"Apple ID": unknown
+		"Apply to its ${count:pluralityNumber} subtasks too": unknown
 		"Ask everyone to attend": unknown
 		"Ask this participant to attend": unknown
 		"At start": unknown
@@ -53,6 +59,7 @@ declare global {
 		"CalDAV, Google, Apple or Notion — Mitra syncs in both directions.": unknown
 		"Calendar options": unknown
 		"Calendars": unknown
+		"Cancel the ${count:pluralityNumber} remaining subtasks": unknown
 		"Cancelled": unknown
 		"Choose a task status": unknown
 		"Choose your sources": unknown
@@ -60,6 +67,7 @@ declare global {
 		"click": unknown
 		"close": unknown
 		"Close": unknown
+		"Close out the subtasks that are still open": unknown
 		"Color": unknown
 		"Commands": unknown
 		"Commit": unknown
@@ -84,6 +92,7 @@ declare global {
 		"Default visibility": unknown
 		"Del": unknown
 		"Delete": unknown
+		"Delete entry": unknown
 		"Delete just this entry of a series": unknown
 		"Delete repeating entry": unknown
 		"Delete the locally cached entries and import everything from the source again": unknown
@@ -99,6 +108,7 @@ declare global {
 		"Duplicate": unknown
 		"Duplicate an entry": unknown
 		"Edit": unknown
+		"Edit entry": unknown
 		"Edit integration": unknown
 		"Edit repeating entry": unknown
 		"Email participants": unknown
@@ -109,6 +119,7 @@ declare global {
 		"Event": unknown
 		"Events": unknown
 		"Every": unknown
+		"Every subtask of \"${heading}\" is done. Mark it as done too?": unknown
 		"Forward": unknown
 		"Free": unknown
 		"General": unknown
@@ -135,13 +146,17 @@ declare global {
 		"Make attendance optional for everyone": unknown
 		"Mark all optional": unknown
 		"Mark all required": unknown
+		"Mark as done": unknown
+		"Mark the ${count:pluralityNumber} remaining subtasks as done": unknown
 		"minutes": unknown
 		"modified": unknown
 		"Month": unknown
 		"Month View": unknown
 		"MonthView.Keywords": unknown
 		"Move down": unknown
+		"Move entry": unknown
 		"Move or resize just this entry of a series": unknown
+		"Move repeating entry": unknown
 		"Move up": unknown
 		"navigate": unknown
 		"Navigation": unknown
@@ -233,6 +248,7 @@ declare global {
 		"Start time": unknown
 		"Subtask of": unknown
 		"Subtasks": unknown
+		"Subtasks still open": unknown
 		"Switch to all-day": unknown
 		"Task": unknown
 		"Tasks": unknown

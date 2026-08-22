@@ -56,11 +56,13 @@ describe('EntryStore', () => {
 
 	const originalPersistence = EntryStore.persistence
 	const originalResolveScope = EntryStore.resolveScope
+	const originalOnTaskClosed = EntryStore.onTaskClosed
 
 	beforeEach(() => {
 		EntryStore.reset()
 		EntryStore.persistence = originalPersistence
 		EntryStore.resolveScope = originalResolveScope
+		EntryStore.onTaskClosed = originalOnTaskClosed
 	})
 
 	describe('entries (merged view)', () => {
@@ -710,6 +712,86 @@ describe('EntryStore', () => {
 			await transport.respond()
 			await commit
 			assert.equal(EntryStore.isDirty(working), false)
+		})
+	})
+
+	describe('onTaskClosed', () => {
+		// Fires only on transition to closed, after successful server persistence.
+		const task = (init?: Partial<Entry>) => entry({ type: EntryType.Task, status: TaskStatus.ToDo, ...init })
+
+		/** Records the entries the hook announced. */
+		const watch = () => {
+			const closed = new Array<Entry>()
+			EntryStore.onTaskClosed = entry => void closed.push(entry)
+			return closed
+		}
+
+		it('fires once when a task crosses into Done, after the response lands', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			const closed = watch()
+			const working = task()
+			EntryStore.applyServerEntries([working])
+			working.status = TaskStatus.Done
+			const commit = EntryStore.commit(working)
+			assert.deepEqual(closed, []) // nothing announced while the write is still in flight
+			await transport.respond()
+			await commit
+			assert.deepEqual(closed, [working])
+		})
+
+		// Cancelled tasks are excluded from the open set and fire onTaskClosed too.
+		it('fires for Cancelled too', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			const closed = watch()
+			const working = task()
+			EntryStore.applyServerEntries([working])
+			working.status = TaskStatus.Cancelled
+			const commit = EntryStore.commit(working)
+			await transport.respond()
+			await commit
+			assert.deepEqual(closed, [working])
+		})
+
+		it('stays silent when an already-closed task is saved again', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			const closed = watch()
+			const working = task({ status: TaskStatus.Done })
+			EntryStore.applyServerEntries([working])
+			working.heading = 'Renamed'
+			const commit = EntryStore.commit(working)
+			await transport.respond()
+			await commit
+			assert.deepEqual(closed, [])
+		})
+
+		it('stays silent when the save fails — the transition never reached the server', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			const closed = watch()
+			const working = task()
+			EntryStore.applyServerEntries([working])
+			working.status = TaskStatus.Done
+			const commit = EntryStore.commit(working).catch(() => void 0)
+			await transport.fail(new Error('nope'))
+			await commit
+			assert.deepEqual(closed, [])
+		})
+
+		// Only a task has an outcome to decide; an event's status is shed by the type setter.
+		it('stays silent for an event', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			const closed = watch()
+			const working = entry()
+			EntryStore.applyServerEntries([working])
+			working.heading = 'Renamed'
+			const commit = EntryStore.commit(working)
+			await transport.respond()
+			await commit
+			assert.deepEqual(closed, [])
 		})
 	})
 })

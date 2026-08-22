@@ -4,6 +4,7 @@ import { syncEmitter } from './syncEmitter.js'
 import { equals, Entry, EntryRelation, EntryType, FLOATING_TIME_ZONE, Integration, Participants, Recurrence, Relation, Source, Transparency, normalizeAllDay, projectAllDay, createLogger, type RecurrenceScope } from '../shared/index.js'
 import { editOccurrence, deleteOccurrence, expandedOccurrences } from './occurrences.js'
 import { assertRelationsValid, resolveRelationsView } from './relations.js'
+import { attachRollups, resolveHierarchyView } from './hierarchy.js'
 
 const logger = createLogger('Entries')
 
@@ -21,6 +22,11 @@ const viewerZone = (req: Request) => typeof req.query.tz === 'string' && req.que
  * body can express. */
 const incomingDate = (value: unknown, stored: Entry['start']): Entry['start'] =>
 	value === undefined ? stored : value === null ? undefined : new DateTime(value as string)
+
+/** RFC 5545 bounds PERCENT-COMPLETE to a positive integer 0-100 (§3.8.1.8), and the wire is
+ * untrusted: anything unusable reads as "no percentage stated" rather than becoming a NaN column. */
+const incomingPercent = (value: unknown): number | null =>
+	typeof value === 'number' && Number.isFinite(value) ? Math.min(100, Math.max(0, Math.round(value))) : null
 
 /** The zone all-day midnights normalize in: the viewer's, else the entry's own — but never the
  * FLOATING marker, which is not a real zone and would throw inside Intl/Temporal (see Entry.timeZone). */
@@ -77,6 +83,7 @@ entriesRouter.get('/', async (req, res) => {
 
 	const entries = [...rows, ...occurrences]
 	await EntryRelation.attach(em, entries)
+	await attachRollups(em, req.user, entries)
 	return res.json(entries.map(entry => projectedForViewer(entry, viewerZone(req))))
 })
 
@@ -103,6 +110,7 @@ entriesRouter.get('/search', async (req, res) => {
 	}, { orderBy: { start: 'desc' }, limit: 20 })
 
 	await EntryRelation.attach(em, entries)
+	await attachRollups(em, req.user, entries)
 	return res.json(entries.map(entry => projectedForViewer(entry, viewerZone(req))))
 })
 
@@ -113,6 +121,13 @@ entriesRouter.get('/:id/relations', async (req, res) => {
 	const em = orm.em.fork()
 	const entry = await req.user.entry(em, req.params.id)
 	return res.json(await resolveRelationsView(em, req.user, entry, related => projectedForViewer(related, viewerZone(req))))
+})
+
+// Resolves direct parents with rollups and the entire subtree beneath this entry.
+entriesRouter.get('/:id/hierarchy', async (req, res) => {
+	const em = orm.em.fork()
+	const entry = await req.user.entry(em, req.params.id)
+	return res.json(await resolveHierarchyView(em, req.user, entry, related => projectedForViewer(related, viewerZone(req))))
 })
 
 entriesRouter.post('/', async (req, res) => {
@@ -153,6 +168,9 @@ entriesRouter.post('/', async (req, res) => {
 	if (body.visibility && !targetIntegration.capabilities.visibility) {
 		return res.status(400).json({ error: 'This calendar does not support visibility' })
 	}
+	if (incomingPercent(body.percentComplete) !== null && !targetIntegration.capabilities.percentComplete) {
+		return res.status(400).json({ error: 'This calendar does not support task progress' })
+	}
 
 	// The type is the ENTRY's (a source declares which types it can hold, it doesn't dictate one — see
 	// Source.entryTypes), but the target has to be able to hold it: an events-only collection would
@@ -184,6 +202,8 @@ entriesRouter.post('/', async (req, res) => {
 		allDay: body.allDay ?? false,
 		timeZone: body.timeZone ?? null,
 		status: body.status,
+		// PERCENT-COMPLETE is VTODO-only, gated to prevent literal-order constructor overwrite.
+		percentComplete: type.isTask ? incomingPercent(body.percentComplete) : null,
 		// Gated on the incoming type for the same reason `status` is (see the note above): free/busy is
 		// event-only, so a task must not carry one in past the constructor's literal-order assignment.
 		transparency: type.isTask ? null : body.transparency ?? null,
@@ -213,6 +233,7 @@ entriesRouter.post('/', async (req, res) => {
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
 	logger.debug(`Created ${created.type} "${created.heading}" (${created.id}) in source ${targetSource.id}`)
+	await attachRollups(em, req.user, [created])
 	return res.status(201).json(projectedForViewer(created, viewerZone(req)))
 })
 
@@ -279,6 +300,10 @@ entriesRouter.put('/:id', async (req, res) => {
 	if (incomingVisibility && !targetIntegration.capabilities.visibility) {
 		return res.status(400).json({ error: 'This calendar does not support visibility — reset it to the default before moving the entry' })
 	}
+	const incomingPercentComplete = body.percentComplete === undefined ? existing.percentComplete : incomingPercent(body.percentComplete)
+	if (incomingPercentComplete !== null && !targetIntegration.capabilities.percentComplete) {
+		return res.status(400).json({ error: 'This calendar does not support task progress — clear it before moving the entry' })
+	}
 
 	// The entry's TYPE rides the full-entry payload (see Api.updateEvent), and changing it is a
 	// CONVERSION: on CalDAV a task is a VTODO and an event a VEVENT, and RFC 4791 §4.1 allows no mixed
@@ -314,6 +339,7 @@ entriesRouter.put('/:id', async (req, res) => {
 			allDay: body.allDay ?? existing.allDay,
 			timeZone: body.timeZone === undefined ? existing.timeZone : body.timeZone,
 			status: body.status ?? existing.status,
+			percentComplete: body.percentComplete === undefined ? existing.percentComplete : incomingPercent(body.percentComplete),
 			transparency: existing.type.isTask ? null : body.transparency ?? existing.transparency,
 			visibility: incomingVisibility,
 			reminders: body.reminders === undefined ? existing.reminders : body.reminders,
@@ -334,6 +360,7 @@ entriesRouter.put('/:id', async (req, res) => {
 		const result = await editOccurrence(em, currentIntegration, existing, occurrenceId, edited, body.scope)
 		await em.flush()
 		await EntryRelation.attach(em, [result])
+		await attachRollups(em, req.user, [result])
 		syncEmitter.emit('updated', req.user.id)
 		logger.debug(`Edited occurrence of series ${existing.id} (scope '${body.scope}')`)
 		return res.json(projectedForViewer(result, viewerZone(req)))
@@ -351,9 +378,8 @@ entriesRouter.put('/:id', async (req, res) => {
 		end: incomingDate(body.end, existing.end),
 		allDay: body.allDay ?? existing.allDay,
 		timeZone: body.timeZone === undefined ? existing.timeZone : body.timeZone,
-		// Gated on the INCOMING type, not left to the type setter: the constructor assigns fields in
-		// literal order, so a later `status` would quietly resurrect the one the conversion just dropped.
 		status: incomingType.isTask ? body.status ?? existing.status : undefined,
+		percentComplete: incomingType.isTask ? incomingPercentComplete : null,
 		// The event-only mirror of `status`, gated on the incoming type for the same reason.
 		transparency: incomingType.isTask ? null : body.transparency ?? existing.transparency,
 		visibility: incomingVisibility,
@@ -418,6 +444,7 @@ entriesRouter.put('/:id', async (req, res) => {
 		await em.flush()
 		syncEmitter.emit('updated', req.user.id)
 		logger.debug(`Re-created entry ${existing.id} as ${created.type} in source ${targetSource.id} (new id ${created.id})`)
+		await attachRollups(em, req.user, [created])
 		return res.json(projectedForViewer(created, viewerZone(req)))
 	}
 
@@ -432,6 +459,8 @@ entriesRouter.put('/:id', async (req, res) => {
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
 	logger.debug(`Updated entry ${existing.id} "${incoming.heading}"`)
+	// Attach rollup so client adoption on save does not strip the parent's rollup state.
+	await attachRollups(em, req.user, [existing])
 	return res.json(projectedForViewer(existing, viewerZone(req)))
 })
 

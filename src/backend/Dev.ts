@@ -177,7 +177,6 @@ export async function seedDev(orm: MikroORM) {
 		// @ts-ignore - used in commented out subtasks
 		const uniTask = (init: Partial<Entry>) => on(university)({ type: EntryType.Task, ...init })
 
-		// @ts-ignore - used in commented out subtasks
 		const relate = (entry: Entry, type: RelationType, target: Entry) => em.persist(new EntryRelation({ entryId: entry.id!, type, targetUid: target.uid! }))
 
 		// ---- Work (Blue) ----
@@ -218,6 +217,19 @@ export async function seedDev(orm: MikroORM) {
 		const execMig = workEvent({ heading: 'Execute Database Migration', start: at(lastWeekMonday, 4, 9), end: at(lastWeekMonday, 4, 11) })
 		relate(testMig, RelationType.FinishToStart, writeMigScript)
 		relate(execMig, RelationType.FinishToStart, testMig)
+
+		// Project parent with 2 of 3 subtasks done to exercise the progress rollup ring and last-child prompt.
+		const migrationProject = workTask({
+			heading: 'Database Migration',
+			status: TaskStatus.Doing,
+			start: at(lastWeekMonday, 0, 0),
+			end: at(lastWeekMonday, 7, 12),
+			allDay: true,
+		})
+		const migrationSignOff = workTask({ heading: 'Sign Off Migration Rollback Plan', status: TaskStatus.ToDo, start: at(thisWeekMonday, -2, 11), end: at(thisWeekMonday, -2, 12) })
+		relate(writeMigScript, RelationType.Parent, migrationProject)
+		relate(testMig, RelationType.Parent, migrationProject)
+		relate(migrationSignOff, RelationType.Parent, migrationProject)
 
 		// Long tasks (Mon, Wed, Fri only)
 		workTask({ heading: 'Draft New System Architecture', status: TaskStatus.ToDo, start: at(thisWeekMonday, 0, 9), end: at(thisWeekMonday, 0, 15) }) // Mon

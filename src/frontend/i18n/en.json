@@ -24,5 +24,12 @@
 	"WhatsNew.Keywords": "changelog release notes news updates version",
 	"CopyVersion.Keywords": "about build info release commit",
 	"MonthView.Keywords": "switch grid",
-	"YearView.Keywords": "switch grid"
+	"YearView.Keywords": "switch grid",
+	"${done} of ${total:pluralityNumber} subtasks done": ["${done} of ${total:pluralityNumber} subtask done", "${done} of ${total:pluralityNumber} subtasks done"],
+	"Also delete its ${count:pluralityNumber} subtasks": ["Also delete its ${count:pluralityNumber} subtask", "Also delete its ${count:pluralityNumber} subtasks"],
+	"Also move its ${count:pluralityNumber} subtasks by the same amount": ["Also move its ${count:pluralityNumber} subtask by the same amount", "Also move its ${count:pluralityNumber} subtasks by the same amount"],
+	"Apply to its ${count:pluralityNumber} subtasks too": ["Apply to its ${count:pluralityNumber} subtask too", "Apply to its ${count:pluralityNumber} subtasks too"],
+	"\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks are still open.": ["\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks is still open.", "\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks are still open."],
+	"Cancel the ${count:pluralityNumber} remaining subtasks": ["Cancel the ${count:pluralityNumber} remaining subtask", "Cancel the ${count:pluralityNumber} remaining subtasks"],
+	"Mark the ${count:pluralityNumber} remaining subtasks as done": ["Mark the ${count:pluralityNumber} remaining subtask as done", "Mark the ${count:pluralityNumber} remaining subtasks as done"]
 }

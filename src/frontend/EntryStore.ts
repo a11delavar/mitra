@@ -101,6 +101,12 @@ export class EntryStore extends Controller {
 		() => Promise.resolve('all')
 
 	/**
+	 * Injected callback fired after a local task transitions into Done or Cancelled.
+	 * Runs post-write so follow-up offers (see {@link Hierarchy}) query fresh server state without racing in-flight edits.
+	 */
+	static onTaskClosed: (entry: Entry) => void = () => void 0
+
+	/**
 	 * Save the entry's local changes — the *only* path from an edit to the server. Returns the entry's
 	 * running save chain if it already has one; the chain re-checks dirtiness after every response, so
 	 * "queue another save" is never remembered anywhere — it's re-derived. A failed round leaves the
@@ -127,6 +133,8 @@ export class EntryStore extends Controller {
 		if (!entry.persisted && !entry.heading?.trim()) {
 			return Promise.resolve() // an untitled draft isn't committed yet
 		}
+		// Only transition into done/cancelled fires post-save offers; re-saving an already-closed task is a no-op.
+		const wasClosed = entry.persisted && (this.canonicalById.get(entry.id!)?.closed ?? false)
 		const run = (async () => {
 			try {
 				while (this.tracks(entry) && this.isDirty(entry)) {
@@ -182,6 +190,10 @@ export class EntryStore extends Controller {
 			} finally {
 				this.inflight.delete(entry)
 				this.notify()
+			}
+			// Successful transition into closed state; runs outside finally so failed saves never prompt.
+			if (!wasClosed && entry.type.isTask && entry.closed && this.tracks(entry)) {
+				this.onTaskClosed(entry)
 			}
 		})()
 		this.inflight.set(entry, run)

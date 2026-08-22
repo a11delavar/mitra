@@ -39,15 +39,18 @@ import { TimeZoneHeader, DialogTimeZoneRename } from './components/TimeZoneHeade
 import { TimeZonePicker } from './components/TimeZonePicker.js'
 import { syncPushSubscription } from './push.js'
 import { syncThemeColor } from './pwa.js'
-import { DialogRecurrenceScope } from './components/DialogRecurrenceScope.js'
+import { DialogEntryScope } from './components/DialogEntryScope.js'
+import { DialogCompleteParent } from './components/DialogCompleteParent.js'
+import { DialogCloseSubtasks } from './components/DialogCloseSubtasks.js'
 import { Markdown } from './Markdown.js'
 import { EntryDetailsWhen } from './EntryDetailsWhen.js'
 import { EntryDetailsSharing } from './EntryDetailsSharing.js'
 import { EntryStore } from './EntryStore.js'
 import { ScrollDeviceController } from './ScrollDeviceController.js'
+import { installHierarchyPrompts, resolveRecurrenceScope } from './Hierarchy.js'
 
-// How far a series edit/delete reaches is the user's call — the store asks through this dialog.
-EntryStore.resolveScope = (entry, intent) => new DialogRecurrenceScope({ entry, intent }).confirm()
+EntryStore.resolveScope = resolveRecurrenceScope
+installHierarchyPrompts()
 
 @application()
 @component('mitra-application')
@@ -246,7 +249,9 @@ export class Mitra extends Application {
 			${DialogIntegration.styles}
 			${DialogWelcome.styles}
 			${DialogKeyboardShortcuts.styles}
-			${DialogRecurrenceScope.styles}
+			${DialogEntryScope.styles}
+			${DialogCompleteParent.styles}
+			${DialogCloseSubtasks.styles}
 			${TaskStatusComponent.styles}
 			${SourceIcon.styles}
 			${RepeatField.styles}

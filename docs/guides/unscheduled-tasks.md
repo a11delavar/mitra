@@ -13,7 +13,7 @@ Mitra keeps those in the sidebar's **Planning** tab, under **Unscheduled**. It i
 
 Open the sidebar and switch to **Planning**. Alongside the tab buttons you can **swipe sideways** — a two-finger swipe on a trackpad, or a finger swipe on a touch screen — to move between Calendars and Planning.
 
-Each task appears as the same chip the calendar draws: its calendar's colour, its status mark, and its title. Completed and cancelled ones sink to the bottom of the list. The number beside the heading is how many there are.
+Each task appears as the same chip the calendar draws: its [calendar's colour](calendars.md#recolor), its status mark (including [progress rollups](relationships/hierarchy.md#progress-rollups)), and its title. Completed and cancelled ones sink to the bottom of the list. The number beside the heading is how many there are.
 
 Clicking a task opens its editor, exactly as clicking it on the calendar would.
 
