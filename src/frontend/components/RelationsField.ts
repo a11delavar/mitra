@@ -1,5 +1,7 @@
-import { Component, component, html, css, property, state } from '@a11d/lit'
-import { RelationType, type RelationSection, EntryType, type Entry, type Relation } from 'shared'
+import { Component, component, html, css, property, state, event } from '@a11d/lit'
+import { type DateTime } from '@3mo/date-time'
+import { RelationType, Relation, type RelationSection, EntryType, type Entry } from 'shared'
+import { EntryEditorIntent } from '../EntryEditorIntent.js'
 import { getCapabilities, getEntryRelations, searchEntries, updateRelations, type EntryRelationsView } from '../Api.js'
 import { EntryStore } from '../EntryStore.js'
 import { controlHeight } from './controlHeight.css.js'
@@ -13,11 +15,15 @@ const AUTHORABLE_BY_SECTION = new Map(RelationType.authorable.map(type => [type.
  * derived one edits the OTHER entry — the line doesn't care which). */
 interface Line {
 	readonly heading?: string
+	/** This line's dependency is already broken by the two entries' times — see {@link Entry.violates}. */
+	readonly violated?: boolean
 	/** No heading YET — the resolver hasn't answered. Distinct from a heading-less line, which is a
 	 * genuinely dangling pointer: an owned line knows only its target's uid until the view lands, so
 	 * without this every editor open would flash "Unknown entry" over links that are perfectly fine. */
 	readonly pending?: boolean
 	readonly remove: () => void
+	/** Absent where there is nothing to go to: a pointer still resolving, or a dangling one. */
+	readonly open?: () => void
 }
 
 /**
@@ -58,6 +64,10 @@ export class RelationsField extends Component {
 		// previous one — close, clear, refetch.
 		updated(this: RelationsField) { this.closePicker(); this.error = undefined; this.view = undefined; this.fetchView().catch(() => void 0) },
 	}) entry!: Entry
+
+	/** The palette's contract: the calendar navigates to the date, and the intent opens the editor once
+	 * the segment renders there. Bubbles composed, so it reaches the page from inside a popover. */
+	@event({ bubbles: true, composed: true }) readonly navigate!: EventDispatcher<DateTime>
 
 	@state() private view?: EntryRelationsView
 	@state() private suggestions = new Array<Entry>()
@@ -124,11 +134,14 @@ export class RelationsField extends Component {
 			bySection.set(section, lines)
 		}
 		for (const relation of this.relations) {
+			const target = this.resolvedByUid.get(relation.targetUid)
 			add(RelationType.of(relation.type).section, {
-				heading: this.resolvedByUid.get(relation.targetUid)?.heading,
+				heading: target?.heading,
 				// A just-picked target is resolved locally, so only a line the view hasn't spoken for
 				// is still pending — and only until the FIRST view lands.
 				pending: !this.view,
+				violated: !!target && this.entry.violates(relation, target),
+				open: target && this.opener(target),
 				remove: () => this.removeOutgoing(relation),
 			})
 		}
@@ -143,6 +156,9 @@ export class RelationsField extends Component {
 			}
 			add(type.inverseSection, {
 				heading: item.entry.heading,
+				// Mirrored: the pointer lives on the OTHER entry, so the coupling is that entry's to break.
+				violated: item.entry.violates(new Relation({ type, targetUid: this.entry.uid, gap: item.gap }), this.entry),
+				open: this.opener(item.entry),
 				remove: () => { this.removeIncoming(item).catch(() => void 0) },
 			})
 		}
@@ -154,6 +170,20 @@ export class RelationsField extends Component {
 		return [...new Set([...bySection.keys(), ...authorable.keys()])]
 			.sort((a, b) => a.rank - b.rank)
 			.map(section => ({ section, lines: bySection.get(section) ?? [], addType: authorable.get(section) }))
+	}
+
+	/** Walking the graph: a named line leads to that entry's editor, the same way the palette leads to
+	 * a picked result — navigate, then let the intent open the segment the navigation renders. An entry
+	 * with no date has nowhere to navigate TO, so it gets the intent alone (the Planning panel renders
+	 * it). Closing first is what makes this a MOVE rather than a stack of popovers. */
+	private opener(target: Entry) {
+		return !target.id ? undefined : () => {
+			this.closest('mitra-entry-details')?.hidePopover()
+			if (target.start) {
+				this.navigate.dispatch(target.start)
+			}
+			EntryEditorIntent.requestOpen(target.id!)
+		}
 	}
 
 	// --- Owned lines ------------------------------------------------------------------------------------
@@ -406,6 +436,29 @@ export class RelationsField extends Component {
 						> mitra-icon-button:focus-visible {
 							opacity: 1;
 						}
+
+						/* A line that leads somewhere is a button, and a button inside a field row takes none of the
+						   standalone button chrome (button.css.ts) — so it only has to shed the UA's own. */
+						> button.heading {
+							background: none;
+							border: none;
+							padding: 0;
+							font: inherit;
+							color: inherit;
+							text-align: start;
+							cursor: pointer;
+
+							&:hover,
+							&:focus-visible {
+								text-decoration: underline;
+							}
+						}
+
+						/* A broken dependency, in the app's one status colour — the same signal the calendar's
+						   connector wears, on the line that owns it rather than over the whole field. */
+						&[data-violated] > .heading {
+							color: var(--color-error);
+						}
 					}
 				}
 
@@ -532,16 +585,19 @@ export class RelationsField extends Component {
 				<mitra-icon icon=${section.icon}></mitra-icon>
 				<div class="lines">
 					<span class="kind">${section.format()}</span>
-					${lines.map(line => html`
-						<span class="relation">
-							<span class="heading">${line.heading ?? (line.pending
-								? html`<span class="unresolved">…</span>`
-								: html`<span class="unresolved">${t('Unknown entry')}</span>`)}</span>
-							<mitra-icon-button icon="x" label=${t('Remove relationship')}
-								@click=${() => line.remove()}
-							></mitra-icon-button>
-						</span>
-					`)}
+					${lines.map(line => {
+						const heading = line.heading ?? html`<span class="unresolved">${line.pending ? '…' : t('Unknown entry')}</span>`
+						return html`
+							<span class="relation" ?data-violated=${line.violated}>
+								${!line.open
+									? html`<span class="heading">${heading}</span>`
+									: html`<button type="button" class="heading" @click=${line.open}>${heading}</button>`}
+								<mitra-icon-button icon="x" label=${t('Remove relationship')}
+									@click=${() => line.remove()}
+								></mitra-icon-button>
+							</span>
+						`
+					})}
 					${!addType ? html.nothing : html`
 						<mitra-icon-button class="add" icon="plus" label=${t('Add relationship')}
 							@click=${() => this.togglePicker(addType)}

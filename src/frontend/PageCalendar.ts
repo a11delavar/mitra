@@ -406,8 +406,12 @@ export class PageCalendar extends PageComponent {
 		return html`
 			<lit-page>
 				${/* Hiding/showing a source refetches (visibility filters server-side) through the calendar's
-				   transition, so survivors glide into the freed space; the SSE echo then applies as a no-op. */''}
-				<mitra-sidebar ?open=${bind(this, 'sidebarOpen')} @sourcesChange=${this.sourcesChanged}></mitra-sidebar>
+				   transition, so survivors glide into the freed space; the SSE echo then applies as a no-op.
+				   It navigates like the views do: the Planning panel's chips carry the same editor, whose
+				   relation lines can lead to a dated entry. */''}
+				<mitra-sidebar ?open=${bind(this, 'sidebarOpen')} @sourcesChange=${this.sourcesChanged}
+					@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
+				></mitra-sidebar>
 				<main>
 					<header>
 						<div class="leading">

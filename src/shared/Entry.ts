@@ -8,7 +8,7 @@ import { Source } from './Source.js'
 import { Recurrence } from './Recurrence.js'
 import { Participants, type ParticipantRole, type Participant } from './Participant.js'
 import { Relation } from './Relation.js'
-import { type RelationType } from './RelationType.js'
+import { RelationType } from './RelationType.js'
 
 export enum TaskStatus {
 	ToDo = 'todo',
@@ -291,6 +291,22 @@ export class Entry {
 	/** Removes an outgoing relationship by value; an emptied list collapses to the canonical `null`. */
 	unrelate(relation: Relation) {
 		this.relations = Relation.normalize((this.relations ?? []).filter(candidate => !Relation.equal(candidate, relation)))
+	}
+
+	/** Whether an outgoing dependency of this entry is BROKEN — the boundary it couples falling before
+	 * the predecessor's. Anything undecidable (no coupling, an unread lead/lag gap, a missing
+	 * boundary) is NOT a violation. */
+	violates(relation: Relation, predecessor: Entry) {
+		const coupling = RelationType.of(relation.type).coupling
+		const dependent = coupling && this.boundaryOf(coupling.dependent)
+		const against = coupling && predecessor.boundaryOf(coupling.predecessor)
+		return !!dependent && !!against && !relation.gap && dependent.valueOf() < against.valueOf()
+	}
+
+	/** The instant a coupling compares against; an entry without an end IS its own end. All-day ends
+	 * are stored exclusive, so back-to-back all-day spans compare as satisfied. */
+	private boundaryOf(which: 'start' | 'end') {
+		return which === 'start' ? this.start : this.end ?? this.start
 	}
 
 	get duration() {

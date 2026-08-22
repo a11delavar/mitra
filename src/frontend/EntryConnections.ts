@@ -5,65 +5,47 @@ import { type EntrySegmentComponent } from './EventSegment.js'
 import { getSource } from './Api.js'
 import { EntryStore } from './EntryStore.js'
 
-/**
- * One drawable relation edge: which chips it spans, and the PIECES that draw it. JS decides topology
- * (which pairs, which route) from data; pixels are entirely CSS anchor positioning's job — no
- * measurement, no per-frame work.
- *
- * The anchor() usage is only sound because of the CANVAS topology (see Days.ts): the pieces'
- * containing block is a POSITIONED wrapper that co-scrolls with — and CONTAINS — the chips, so no
- * scroll container sits between an anchor and the containing block. Anchored against the scroller
- * itself instead, Chromium snapshots the anchor's scrollport-relative position and live-compensates
- * for scroll as if the piece did NOT scroll with the content (the popover model — measured: used
- * inset frozen at −3112.97px while the box drifted by exactly the scroll delta). And hoisting the
- * layer outside fails anchor ACCEPTABILITY (anchors must be descendants of the containing block).
- */
+/** One drawable relation edge: the chips it spans and the PIECES that draw it. JS decides topology
+ * from data alone; pixels are CSS anchor positioning's job — which is only sound because of the
+ * CANVAS pattern (see AGENTS.md, and Days.ts for the wrapper itself). */
 interface ConnectorEdge {
 	readonly key: string
 	readonly kind: 'dependency' | 'subtask'
 	readonly fromEntryId: string
 	readonly toEntryId: string
 	readonly pieces: ReadonlyArray<ConnectorPiece>
+	/** The coupling this edge draws is already broken by its endpoints — see {@link Entry.violates}. */
+	readonly violated: boolean
 	/** The endpoints' presented colors — the hover gradient's stops (dependencies only). */
 	readonly fromColor?: string
 	readonly toColor?: string
 }
 
 /** One anchored box carrying one primitive stroke — a stretched GLYPH where the ink curves, a rounded
- * ELBOW ring where it turns. A simple edge is a single piece; a loop is three, tiled so
- * consecutive boxes name the same anchor() expression for the edge they share, which is what makes
- * the joints hold under any layout without a single measurement. */
+ * ELBOW ring where it turns. Consecutive pieces name the SAME anchor() expression for the edge they
+ * share, which is what holds a multi-piece route's joints without a single measurement. */
 interface ConnectorPiece {
 	/** The anchor()-referencing insets that place the box. */
 	readonly style: string
 	/** GLYPH pieces: the {@link PATHS} key of the stroke stretched across the box. */
 	readonly path?: string
 	/** ELBOW pieces: the padding + radius longhands that draw the ink instead of a glyph. A stretched
-	 * quarter curve is only round in proportion — in a box 14px wide and 300px tall it reads as a right
-	 * angle — so a route that TURNS draws its ink as a ring around the box, whose corner radius is a
-	 * length and therefore stays itself at every size. Logical longhands, so RTL needs no second set. */
+	 * quarter curve is round only in PROPORTION — in a box 14px wide and 300px tall it reads as a right
+	 * angle — so a turn draws a ring whose corner radius is a length and holds its shape at any size. */
 	readonly ink?: string
 	/** The class hanging the arrowhead off this piece's path END; absent = a joint piece. */
 	readonly head?: 'head-end-down' | 'head-end-up' | 'head-end-flat' | 'head-down'
 	/** The direction the ink travels through this box, for the hover gradient. */
 	readonly gradient?: string
-	/** This piece's slice of the source→target fade, in percent. Consecutive pieces meet at the same
-	 * mixed color, which is what makes one gradient read as continuous across several boxes; a single
-	 * piece spans the whole 0→100. */
+	/** This piece's slice of the source→target fade, in percent: consecutive pieces meet at the same
+	 * mixed colour, which is what makes one gradient read as continuous across several boxes. */
 	readonly fade?: readonly [number, number]
 }
 
-/** The normalized ink strokes, stretched to each piece's anchored box (preserveAspectRatio="none" +
- * non-scaling-stroke keeps the stroke width constant at ANY aspect ratio). Every dependency path ends
- * on a horizontal or vertical tangent, so the fixed-rotation arrowhead always matches the arrival
- * angle. These are baked into a MASK data-uri (see maskFor): the ink is a masked CSS background, NOT
- * an SVG stroke — SVG paint-servers (a gradient stroke/fill) silently fail to render inside a
- * CSS-anchor-positioned element (a Chromium bug; solid strokes and CSS backgrounds/masks are immune),
- * and the hover ink is a source→target CSS gradient.
- *
- * Authored in physical LTR space; in RTL every box is PLACED at the mirrored position (the router
- * swaps its inline words) and the glyph inside is mirrored by the `mirror` class — one solution,
- * reflected, rather than a second set of paths. */
+/** The normalized ink strokes, stretched to each piece's box and baked into a mask data-uri (see
+ * maskFor). Every dependency path ends on an axis-aligned tangent, so the fixed-rotation arrowhead
+ * always matches the arrival angle. Authored in physical LTR: RTL places the box at the mirrored
+ * position and the `mirror` class reflects the glyph inside it. */
 const PATHS: Record<string, string> = {
 	// Forward single pieces: S-curves corner to corner, a straight line for level ports.
 	'dependency:s-down': 'M 0 0 C 50 0 50 100 100 100',
@@ -103,15 +85,14 @@ const LANE = '0.5rem'
  * the leg it ends is 6px or 600px long. */
 const CORNER = '0.375rem'
 
-/** Constant device stroke width per kind (dependencies read a touch heavier than the subtask
- * hairline). Fixed across rest/hover — emphasis is carried by color and z-lift, not thickness — so a
- * piece needs only ONE mask. */
-const STROKE_WIDTH: Record<'dependency' | 'subtask', number> = { dependency: 1.75, subtask: 1.25 }
+/** A one-device-pixel vein for both kinds: a hairline reads as more precise on a grid this dense than
+ * a heavier pale stroke does. Constant across rest, hover and violation alike — weight carries no
+ * meaning here (see the styles), so a piece needs only ONE mask. */
+const STROKE_WIDTH: Record<'dependency' | 'subtask', number> = { dependency: 1, subtask: 1 }
 
-/** The stroke shape as a mask-image `url()`: a white stroke of the normalized path, stretched with the
- * box (`preserveAspectRatio="none"`) at constant device width (`non-scaling-stroke`). The masked
- * element's CSS background (solid at rest, a gradient on hover) shows through only along the stroke —
- * an SVG paint-server can't be used here (it fails inside anchor-positioned elements; see PATHS). */
+/** The stroke shape as a mask-image `url()`: the path stroked white, stretched with the box at
+ * constant device width, masking a CSS background that is solid at rest and a gradient on hover. An
+ * SVG paint-server can't be used instead — it fails inside anchor-positioned elements (see PATHS). */
 function maskFor(path: string): string {
 	const kind = path.startsWith('subtask') ? 'subtask' : 'dependency'
 	const caps = kind === 'dependency' ? 'stroke-linecap="round"' : 'stroke-linecap="butt" stroke-linejoin="miter"'
@@ -122,42 +103,15 @@ function maskFor(path: string): string {
 }
 
 /**
- * The relationship connectors of a calendar view: thin always-visible arrows between related entry
- * chips — smooth S-curves with an arrowhead for dependencies, sharp hairline elbows (no arrowhead)
- * for hierarchy. Each connector is one or more absolutely-positioned PIECES whose insets reference
- * the two chips' existing `anchor-name`s (published by EventSegment for its editor popover), so the
- * geometry — including overlap-narrowed chip widths and CSS-auto-packed lanes JS never sees — tracks
- * the REAL chip boxes with zero measurement.
+ * The relationship connectors of a calendar view: always-visible arrows between related entry chips,
+ * routed from data and placed entirely by anchor() against the chips' own `anchor-name`s — no
+ * measurement, no per-frame work. Architecture, platform rules and the ink's channels: AGENTS.md.
  *
- * PORTS follow the boundary the relation couples: a dependency leaves the source's END edge and
- * arrives at the target's START edge — the inline pair (end-center → start-center) across columns,
- * the block pair (bottom-center → top-center) within one. ROUTING is pure geometry, never validity:
- * an edge that happens to run backward in time (the target's start behind the source's end) draws
- * exactly as faithfully as a valid one, as a three-piece LOOP — out of the end port, around the pair
- * on a clearance lane (below when the target sits below or level, above when it sits above), back
- * into the start port. A subtask elbow drops from the parent's bottom inline-start (indented) into
- * the child's inline-start center.
- *
- * VIEW-AGNOSTIC by design: a view passes exactly the SEGMENTS it rendered inside one CANVAS (a
- * positioned wrapper that co-scrolls with and contains those chips — the week grid's `div.canvas`,
- * the sticky all-day lane, the month grid's `div.canvas`) and mounts this layer as the canvas's LAST
- * child (anchors must precede the positioned elements in tree order). Bar-shaped views additionally
- * pass `verticalRank` (their JS-known lane/slot order); the timed grid defaults to minute math.
- *
- * Topology comes from data only: the segments' entries' `relations` (both families, whichever side
- * stored the pointer — see RelationType's edge readings), deduplicated per (kind, uid-pair) with the
- * temporally NEAREST pair chosen when a uid resolves to several rows. Edges leave each canvas's
- * realm implicitly: only chips rendered IN this canvas participate.
- *
- * RTL: the router thinks in logical inline terms and swaps its physical words per the layer's
- * resolved direction (read once per render — data, not layout), while the `mirror` class reflects
- * the LTR-authored glyphs, gradients and arrowheads inside each box.
- *
- * Hovering an entry chip emphasizes its connectors — stronger ink, lifted above chips, and a
- * dependency's stroke becomes a source-color → target-color gradient carried across all of its
- * pieces (each paints its own slice of the fade, so the boxes meet at one colour). Neither this
- * host, the canvas, nor `div.entries` (Day.ts) may be a stacking context: the pieces' z-index
- * (--mitra-connection-z, default 1) must interleave with the chips' in the view's own context.
+ * A view passes the SEGMENTS it rendered inside one CANVAS (plus `verticalRank` where its lanes are
+ * JS-known) and mounts this layer as that canvas's LAST child, since anchors must precede the
+ * positioned elements in tree order; only chips rendered IN that canvas can take part. Neither this
+ * host, the canvas, nor `div.entries` (Day.ts) may be a stacking context, or `--mitra-connection-z`
+ * can no longer interleave the pieces with the chips.
  */
 @component('mitra-entry-connections')
 export class EntryConnections extends Component {
@@ -171,9 +125,8 @@ export class EntryConnections extends Component {
 		EntryStore.notify()
 	}
 
-	/** First-fit lane simulation mirroring CSS `grid-auto-flow: row dense` for the given bars in
-	 * their RENDER ORDER (each an inclusive [start, end] column span) — for views whose lanes pack
-	 * purely in CSS, so their lane order is re-derived for the vertical classifier. */
+	/** First-fit lane simulation mirroring CSS `grid-auto-flow: row dense` over the bars in their RENDER
+	 * order — for views that pack lanes purely in CSS, so the vertical classifier can still rank them. */
 	static laneRanks(bars: ReadonlyArray<{ segment: EntrySegment, start: number, end: number }>): ReadonlyMap<EntrySegment, number> {
 		const lanes = new Array<Array<{ start: number, end: number }>>()
 		const ranks = new Map<EntrySegment, number>()
@@ -315,29 +268,25 @@ export class EntryConnections extends Component {
 				if (!fromSeg || !toSeg || fromSeg === toSeg) {
 					continue
 				}
-				edges.push(this.edge(kind, from, to, fromSeg, toSeg))
+				// Validity is the endpoints' business, never the route's: routing stays validity-agnostic and
+				// a broken coupling changes only the INK.
+				edges.push(this.edge(kind, from, to, fromSeg, toSeg, kind === 'dependency' && to.violates(relation, from)))
 			}
 		}
 		return edges
 	}
 
 	/**
-	 * ROUTES one edge into its pieces, from data alone — day column for the inline axis, `rankOf`
-	 * for the block axis, never pixels. The routing is purely geometric and validity-agnostic:
-	 *
-	 * - Target column strictly after the source's run: a single forward piece (S-curve, or a
-	 *   straight line when the ports are level).
-	 * - Same column with the target's rank below: the block-port drop — source bottom-center
-	 *   straight into target top-center.
-	 * - Everything else — target behind, level-behind, above in the same column, or bar runs
-	 *   overlapping so the side ports have no clear water: a three-piece LOOP around the pair.
+	 * ROUTES one edge into its pieces from data alone — day column for the inline axis, `rankOf` for the
+	 * block axis, never pixels — and purely geometrically: an edge running backward in time draws as
+	 * faithfully as a valid one. Forward across columns is one piece, the same column with the target
+	 * below is the block-port drop, and everything else is a three-piece LOOP around the pair.
 	 */
-	private edge(kind: ConnectorEdge['kind'], from: Entry, to: Entry, fromSeg: EntrySegment, toSeg: EntrySegment): ConnectorEdge {
+	private edge(kind: ConnectorEdge['kind'], from: Entry, to: Entry, fromSeg: EntrySegment, toSeg: EntrySegment, violated: boolean): ConnectorEdge {
 		const A = `--mitra-entry-segment-${fromSeg.id}`
 		const B = `--mitra-entry-segment-${toSeg.id}`
-		// The physical words for the logical inline sides, per the layer's resolved direction — read
-		// from computed style (data, not geometry), so the router thinks in reading order and RTL is
-		// the same solution mirrored (the `mirror` class reflects the glyphs to match).
+		// The physical words for the logical inline sides, read from computed style (data, not geometry):
+		// the router thinks in reading order, and RTL is the same solution mirrored.
 		const rtl = getComputedStyle(this).direction === 'rtl'
 		const [start, end] = rtl ? ['right', 'left'] : ['left', 'right']
 		const dayDelta = toSeg.dayValue! - fromSeg.dayValue!
@@ -407,19 +356,15 @@ export class EntryConnections extends Component {
 			pieces = [{ path, style }]
 		}
 		return {
-			key: `${kind}:${fromSeg.id}:${toSeg.id}`, kind, fromEntryId: from.id!, toEntryId: to.id!, pieces,
+			key: `${kind}:${fromSeg.id}:${toSeg.id}`, kind, fromEntryId: from.id!, toEntryId: to.id!, pieces, violated,
 			...(kind !== 'dependency' ? {} : { fromColor: EntryConnections.colorOf(from), toColor: EntryConnections.colorOf(to) }),
 		}
 	}
 
-	/** The backward loop, lane BELOW the pair: out of the source's end port, down, back under both
-	 * chips, up into the target's start port — four turns in three bordered boxes.
-	 *
-	 * The boxes tile at coordinates, not at pixels: consecutive pieces name the SAME anchor()
-	 * expression for the edge they share, so a joint is exact under any layout and never measured. The
-	 * seam sits one corner-radius past the target's centre line, where the ink is running straight, so
-	 * the joins land between turns rather than inside one. The lane's ordinate is a min()/max() over
-	 * both chips' anchors — one lane clears both whatever their heights. */
+	/** The backward loop, lane BELOW the pair: out of the source's end port, down, back under both chips,
+	 * up into the target's start port — four turns in three boxes. The seam sits one corner-radius past
+	 * the target's centre line, where the ink runs straight, so a joint never lands inside a turn; the
+	 * lane's ordinate is a min()/max() over both anchors, so one lane clears both whatever their heights. */
 	private static loopBelow(A: string, B: string, start: string, end: string, head: string, rtl: boolean): Array<ConnectorPiece> {
 		const w = STROKE_WIDTH.dependency
 		// Where the out-leg hands over to the U — a corner's worth below the target's centre, so the
@@ -488,21 +433,18 @@ export class EntryConnections extends Component {
 	static override get styles() {
 		return css`
 			mitra-entry-connections {
-				/* Boxless, and so is each connection wrapper: the PIECES are the absolutely positioned
-				   boxes, and their containing block is the view's CANVAS (the positioned, co-scrolling
-				   wrapper around the chips — Days.ts), which is what makes their anchor() references
-				   track the real chip boxes with no scroll compensation in play. */
+				/* Boxless, and so is each connection: the PIECES are the positioned boxes, and their containing
+				   block is the view's canvas — see the class comment. */
 				display: contents;
 
-				/* The connector ink: neutral on purpose — endpoints can wear different colors, and the
-				   lines must whisper ("noticed only if you look; once seen, cannot unsee"). Hover
-				   emphasis is where color enters: a single-piece dependency's ink becomes a
-				   source→target gradient (the per-piece --_grad-dir with the edge's --_from/--_to).
-				   The ink is a MASKED CSS background, not an SVG stroke — an SVG paint-server gradient
-				   won't render inside an anchor-positioned element (a Chromium bug). */
-				--mitra-connection-ink: color-mix(in srgb, var(--color-text) 34%, transparent);
-				--mitra-connection-ink-faint: color-mix(in srgb, var(--color-text) 26%, transparent);
+				/* One channel per question — shape says the family, hue the state, alpha and the z-lift the
+				   attention, the gradient nothing but the hover payload, and width nothing at all (AGENTS.md).
+				   The ink is a MASKED CSS background, not an SVG stroke: a paint-server gradient will not render
+				   inside an anchor-positioned element (a Chromium bug). */
+				--mitra-connection-ink: color-mix(in srgb, var(--color-text) 45%, transparent);
+				--mitra-connection-ink-faint: color-mix(in srgb, var(--color-text) 34%, transparent);
 				--mitra-connection-ink-emphasis: color-mix(in srgb, var(--color-text) 85%, transparent);
+				--mitra-connection-ink-violation: color-mix(in srgb, var(--color-error) 65%, transparent);
 				--mitra-connection-head: 5px;
 
 				> .connection {
@@ -511,22 +453,17 @@ export class EntryConnections extends Component {
 					> .piece {
 						position: absolute;
 						pointer-events: none;
-						/* Interleaves with the view's chips in ITS stacking context: default above the
-						   surface/hour lines (z 1, canvas painted last) and below chips (z 2); a bar
-						   view whose bars sit at z 1 lowers this to 0. Emphasis lifts above. */
+						/* Interleaves with the chips in the VIEW's stacking context: above the surface (z 1), below
+						   the chips (z 2), lowered to 0 by a bar view whose bars sit at z 1. Emphasis lifts above. */
 						z-index: var(--mitra-connection-z, 1);
 
-						/* The floor that keeps a degenerate span visible at all: whenever two anchored
-						   edges resolve to the same ordinate the box is 0px tall and the stretched ink
-						   has no area to paint into. Dependencies route those cases exactly (the flat
-						   box, the loop's fixed-height lane); this catches every other shape, e.g. a
-						   subtask elbow whose parent's bottom lands on its child's centre, where the
-						   chip heights the span depends on aren't knowable from data. */
+						/* The floor that keeps a degenerate span visible: two anchored edges resolving to the same
+						   ordinate leave a 0px box with no area for the stretched ink. Dependencies route those
+						   cases exactly; this catches the shapes whose chip heights data cannot know. */
 						min-block-size: 3px;
 
-						/* In RTL the router places every box at the mirrored position; a glyph's
-						   LTR-authored path, gradient and arrowhead are reflected to match. Elbows need
-						   no reflection — they are drawn in logical properties — only their head does. */
+						/* The router places the box at the mirrored position; the LTR-authored glyph inside is
+						   reflected to match. Elbows are drawn in logical properties, so only their head turns. */
 						&.glyph.mirror {
 							scale: -1 1;
 						}
@@ -545,12 +482,9 @@ export class EntryConnections extends Component {
 							mask: var(--_mask) no-repeat center / 100% 100%;
 						}
 
-						/* An elbow's line is a PADDING ring: the background covers the padding box and the
-						   content box is masked back out, so paint survives only on the sides the piece
-						   gave padding to — rounded by border-radius, which is a length and therefore
-						   holds its shape however far the box is stretched. Padding, not border, because
-						   Blink floors border-width to whole pixels (1.75px would render at 1px) while
-						   padding keeps the fraction; the unpadded sides stay at 0 and draw nothing. */
+						/* An elbow's line is a PADDING ring: the background covers the padding box, the content box
+						   is masked back out, and border-radius (a length) keeps the corner's shape however far the
+						   box stretches. Padding, not border: Blink floors border-width to whole pixels. */
 						&.elbow > .ink {
 							padding: 0;
 							-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -572,21 +506,16 @@ export class EntryConnections extends Component {
 						}
 					}
 
-					/* An emphasized dependency fades source-color → target-color along the ROUTE, not
-					   along each box: a piece paints only its own slice of the fade (--_f0..--_f1), so
-					   the colour a box ends on is the colour its successor starts from and the seams
-					   disappear. A single-piece route spans the whole 0→100 and this reduces to the
-					   plain two-stop gradient it always was. */
-					&.dependency[data-emphasized] > .piece > .ink {
+					/* The fade spans the ROUTE, not each box: a piece paints only its own slice (--_f0..--_f1), so
+					   the colour a box ends on is the colour its successor starts from and the seams disappear. */
+					&.dependency[data-emphasized]:not([data-violated]) > .piece > .ink {
 						background: linear-gradient(var(--_grad-dir, to right),
 							color-mix(in srgb, var(--_to) var(--_f0, 0%), var(--_from)),
 							color-mix(in srgb, var(--_to) var(--_f1, 100%), var(--_from)));
 					}
 
-					/* The dependency arrowhead: a CSS triangle hung in the head-sized gap the route
-					   left before the target's port, on the FINAL piece only, at that piece's path end.
-					   Fixed rotation is safe: every path ends on an axis-aligned tangent. On emphasis
-					   it adopts the arrival color — the target's. */
+					/* The arrowhead hangs in the head-sized gap the route left before the target's port, on the
+					   FINAL piece only. Fixed rotation is safe: every path ends on an axis-aligned tangent. */
 					> .piece:is(.head-end-down, .head-end-up, .head-end-flat, .head-down)::after {
 						content: '';
 						position: absolute;
@@ -594,8 +523,21 @@ export class EntryConnections extends Component {
 						transition: background 0.15s ease;
 					}
 
-					&[data-emphasized] > .piece::after {
+					&[data-emphasized]:not([data-violated]) > .piece::after {
 						background: var(--_to, var(--mitra-connection-ink-emphasis));
+					}
+
+					/* A broken coupling keeps the neutral ink's whisper and changes only its hue, so a wholly
+					   violated chain colours the canvas without alarming it. Declared after the emphasis rules it
+					   overrides — it ties with them on specificity. */
+					&[data-violated] > .piece > .ink,
+					&[data-violated] > .piece::after {
+						background: var(--mitra-connection-ink-violation);
+					}
+
+					&[data-violated][data-emphasized] > .piece > .ink,
+					&[data-violated][data-emphasized] > .piece::after {
+						background: var(--color-error);
 					}
 
 					> .piece:is(.head-end-down, .head-end-up, .head-end-flat)::after {
@@ -647,7 +589,7 @@ export class EntryConnections extends Component {
 				const emphasized = !!this.hoveredEntryId && (edge.fromEntryId === this.hoveredEntryId || edge.toEntryId === this.hoveredEntryId)
 				const colors = edge.kind !== 'dependency' ? '' : ` --_from: ${edge.fromColor}; --_to: ${edge.toColor};`
 				return html`
-					<div class="connection ${edge.kind}" ?data-emphasized=${emphasized}>
+					<div class="connection ${edge.kind}" ?data-emphasized=${emphasized} ?data-violated=${edge.violated}>
 						${edge.pieces.map(piece => html`
 							<div class="piece ${piece.path ? 'glyph' : 'elbow'} ${piece.head ?? ''} ${rtl ? 'mirror' : ''}"
 								style="${piece.style}${piece.gradient ? ` --_grad-dir: ${piece.gradient};` : ''}${piece.fade ? ` --_f0: ${piece.fade[0]}%; --_f1: ${piece.fade[1]}%;` : ''}${colors}"

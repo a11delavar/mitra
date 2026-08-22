@@ -202,6 +202,10 @@ export class Mitra extends Application {
 				--color-surface: color-mix(in srgb, light-dark(#ffffff, #191a1b), var(--color-accent) 5%);
 				--color-text: color-mix(in srgb, light-dark(black, white), var(--color-accent) 2.5%);
 				--color-text-muted: color-mix(in srgb, var(--color-text), var(--color-background) 45%);
+				/* The app's one semantic status colour, for something it knows is wrong (today: a dependency
+				   whose entries break it). The only hue in an otherwise monochrome palette, which is what lets
+				   it whisper and still be seen. */
+				--color-error: light-dark(#d1453b, #e5675e);
 				--color-accent: light-dark(black, white);
 				--color-accent-text: ${contrastColor('var(--color-accent)')};
 				--color-border: var(--color-surface);

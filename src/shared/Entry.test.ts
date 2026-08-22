@@ -5,6 +5,8 @@ import { Entry, TaskStatus, Transparency, Visibility, FLOATING_TIME_ZONE } from 
 import { EntryType } from './EntryType.js'
 import { ParticipantRole } from './Participant.js'
 import { Source } from './Source.js'
+import { Relation } from './Relation.js'
+import { RelationType } from './RelationType.js'
 import { revive, wireOf } from './wire.testing.js'
 
 describe('Entry', () => {
@@ -506,6 +508,49 @@ describe('Entry', () => {
 			assert.equal(e.allDay, false)
 			assert.equal(e.start!.valueOf(), at(0, 9).valueOf())
 			assert.equal(e.end!.valueOf(), at(0, 10).valueOf())
+		})
+	})
+
+	describe('violates', () => {
+		const dependent = (type: RelationType, start: number, end: number, gap: string | null = null) => {
+			const entry = new Entry({ id: 'd', sourceId: 's', type: EntryType.Task, uid: 'dependent', start: at(0, start), end: at(0, end) })
+			entry.relations = Relation.normalize([{ type, targetUid: 'predecessor', gap }])
+			return entry
+		}
+		const predecessor = (start: number, end: number) => new Entry({ id: 'p', sourceId: 's', type: EntryType.Task, uid: 'predecessor', start: at(0, start), end: at(0, end) })
+		const verdict = (subject: Entry, against: Entry) => subject.violates(subject.relations![0]!, against)
+
+		it('FINISHTOSTART breaks when the dependent starts before the predecessor ends; back-to-back is fine', () => {
+			assert.equal(verdict(dependent(RelationType.FinishToStart, 10, 12), predecessor(9, 11)), true)
+			assert.equal(verdict(dependent(RelationType.FinishToStart, 11, 13), predecessor(9, 11)), false)
+		})
+
+		it('each coupling reads its OWN pair of boundaries', () => {
+			assert.equal(verdict(dependent(RelationType.FinishToFinish, 8, 10), predecessor(9, 11)), true)
+			assert.equal(verdict(dependent(RelationType.StartToStart, 8, 12), predecessor(9, 11)), true)
+			assert.equal(verdict(dependent(RelationType.StartToFinish, 7, 8), predecessor(9, 11)), true)
+			assert.equal(verdict(dependent(RelationType.StartToFinish, 7, 12), predecessor(9, 11)), false)
+		})
+
+		it('an end-less entry is its own end, so a same-instant handover holds', () => {
+			const bare = new Entry({ id: 'p', sourceId: 's', type: EntryType.Task, uid: 'predecessor', start: at(0, 11) })
+			assert.equal(verdict(dependent(RelationType.FinishToStart, 11, 13), bare), false)
+			assert.equal(verdict(dependent(RelationType.FinishToStart, 10, 13), bare), true)
+		})
+
+		it('an all-day end is exclusive, so the very next day is a satisfied start', () => {
+			const allDay = (from: number, days: number) => new Entry({ id: 'p', sourceId: 's', type: EntryType.Task, uid: 'predecessor', allDay: true, start: day.add({ days: from }), end: day.add({ days: from + days }) })
+			const next = new Entry({ id: 'd', sourceId: 's', type: EntryType.Task, uid: 'dependent', allDay: true, start: day.add({ days: 1 }), end: day.add({ days: 2 }) })
+			next.relations = Relation.normalize([{ type: RelationType.FinishToStart, targetUid: 'predecessor' }])
+			assert.equal(verdict(next, allDay(0, 1)), false)
+			assert.equal(verdict(next, allDay(0, 2)), true)
+		})
+
+		it('anything undecidable is NOT a violation — another family, an unread gap, a missing boundary', () => {
+			assert.equal(verdict(dependent(RelationType.Parent, 10, 12), predecessor(9, 11)), false)
+			assert.equal(verdict(dependent(RelationType.of('X-WAITS-FOR'), 10, 12), predecessor(9, 11)), false)
+			assert.equal(verdict(dependent(RelationType.FinishToStart, 10, 12, 'PT1H'), predecessor(9, 11)), false)
+			assert.equal(verdict(dependent(RelationType.FinishToStart, 10, 12), new Entry({ id: 'p', sourceId: 's', type: EntryType.Task, uid: 'predecessor' })), false)
 		})
 	})
 })

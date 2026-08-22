@@ -185,6 +185,24 @@ export class RelationType {
 		return this.family === 'dependency' ? { dependent: ownerUid, predecessor: targetUid } : undefined
 	}
 
+	/** WHICH boundaries a temporal type couples — the dependent's may never fall before the
+	 * predecessor's. The verdict over two entries is {@link Entry.violates}; shift propagation will
+	 * read the same pair to know what to move. */
+	get coupling(): { predecessor: 'start' | 'end', dependent: 'start' | 'end' } | undefined {
+		switch (this) {
+			case RelationType.FinishToStart:
+				return { predecessor: 'end', dependent: 'start' }
+			case RelationType.FinishToFinish:
+				return { predecessor: 'end', dependent: 'end' }
+			case RelationType.StartToStart:
+				return { predecessor: 'start', dependent: 'start' }
+			case RelationType.StartToFinish:
+				return { predecessor: 'start', dependent: 'end' }
+			default:
+				return undefined
+		}
+	}
+
 	/** Carries ONE type across the API as its value, coming back as the instance. */
 	static readonly converter: Converter<string | undefined, RelationType | undefined> = {
 		construct: value => value === undefined ? undefined : RelationType.of(value),

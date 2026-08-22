@@ -160,6 +160,13 @@ describe('Relation', () => {
 		})
 	})
 
+	it('a temporal type knows which boundaries it couples; nothing else couples any', () => {
+		assert.deepEqual(RelationType.FinishToStart.coupling, { predecessor: 'end', dependent: 'start' })
+		assert.deepEqual(RelationType.StartToFinish.coupling, { predecessor: 'start', dependent: 'end' })
+		assert.equal(RelationType.Parent.coupling, undefined)
+		assert.equal(RelationType.of('X-WAITS-FOR').coupling, undefined)
+	})
+
 	it('the UI-authorable subset stays canonical-direction-only', () => {
 		assert.deepEqual([...RelationType.authorable], [RelationType.FinishToStart, RelationType.Parent])
 		assert.ok(RelationType.Parent.isAuthorable && RelationType.FinishToStart.isAuthorable)
