@@ -1,21 +1,21 @@
 import type { Entry } from './Entry.js'
 
-/** The mutation is a function so the applier can run it on whichever instance it actually writes — the
- * live one the UI renders when present, the planned copy otherwise. */
+/** Mutates an entry instance as planned. */
 export interface PlannedWrite {
 	readonly entry: Entry
 	readonly mutate: (entry: Entry) => void
+	/** Descriptive effect or offset distinguishing mutation variants on the same entry. */
+	readonly effect?: string
 }
 
-/** Why an entry touched by a plan was skipped. Reported explicitly so unapplied indirect changes are never silent. */
+/** Why an entry touched by a plan was skipped. */
 export interface SkippedEntry {
 	readonly entry: Entry
 	readonly reason: 'undated' | 'repeats' | 'unresolvable'
 }
 
 /**
- * A proposed set of indirect entry changes derived from the relationship graph. Value object: deriving
- * writes nothing, letting callers derive and compare plans via {@link equals} to avoid redundant dialog choices.
+ * Proposed set of entry changes derived from the relationship graph.
  */
 export class EntryPlan {
 	static readonly empty = new EntryPlan([], [], [])
@@ -43,9 +43,19 @@ export class EntryPlan {
 		return [...this.deletions, ...this.writes.map(write => write.entry)]
 	}
 
-	/** Compares target entry IDs and application order. Mutations are compared by target entry rather than callback identity. */
+	/** Returns this plan excluding entries already covered by another plan. */
+	excluding(other: EntryPlan): EntryPlan {
+		const covered = new Set(other.entries)
+		return EntryPlan.of({
+			writes: this.writes.filter(write => !covered.has(write.entry)),
+			deletions: this.deletions.filter(entry => !covered.has(entry)),
+			skipped: this.skipped,
+		})
+	}
+
+	/** Checks if two plans perform the same operations on the same entries. */
 	equals(other: EntryPlan): boolean {
-		const shape = (plan: EntryPlan) => `${plan.deletions.map(entry => entry.id).join()}|${plan.writes.map(write => write.entry.id).join()}`
+		const shape = (plan: EntryPlan) => `${plan.deletions.map(entry => entry.id).join()}|${plan.writes.map(write => `${write.entry.id}:${write.effect ?? ''}`).join()}`
 		return shape(this) === shape(other)
 	}
 }

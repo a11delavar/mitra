@@ -288,5 +288,9 @@
 	"Move entry": "Sposta voce",
 	"Move repeating entry": "Sposta voce ricorrente",
 	"This relationship is not possible": "Questa relazione non è possibile",
-	"Unknown entry": "Voce sconosciuta"
+	"Unknown entry": "Voce sconosciuta",
+	"Keep the chain intact": "Mantieni la catena intatta",
+	"Move dependent entries too?": "Spostare anche le voci dipendenti?",
+	"Move them all by the same amount": "Spostale tutte della stessa quantità",
+	"${count:pluralityNumber} entries": "${count:pluralityNumber} voci"
 }

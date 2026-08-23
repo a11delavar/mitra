@@ -1,6 +1,6 @@
 import { Controller, type Component } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { Entry, SNAP_MINUTES, DEFAULT_REMINDER_MINUTES, type Source } from 'shared'
+import { Entry, EntryChange, EntryPlan, SNAP_MINUTES, DEFAULT_REMINDER_MINUTES, type Source } from 'shared'
 import { getPrimarySource, getCapabilities } from './Api.js'
 import { EntryStore } from './EntryStore.js'
 import * as Hierarchy from './Hierarchy.js'
@@ -648,12 +648,15 @@ export class EntryDragController extends Controller {
 				entry.adoptSpan(built)
 				EntryStore.notify()
 			}
-			void Hierarchy.resolveScope(entry, isMove ? 'move' : 'edit', bypass, isMove && delta !== 0).then(scope => {
+			// Track initial span to derive translation delta for dependency shift strategies.
+			const change = EntryChange.of(entry, drag.before)
+			void Hierarchy.resolveScope(entry, isMove ? 'move' : 'edit', bypass, isMove && delta !== 0, change).then(scope => {
 				if (!scope) {
 					return EntryStore.revert(entry)
 				}
 				return EntryStore.commit(entry, scope.recurrence)
-					.then(() => scope.subtasks && delta !== 0 ? Hierarchy.shiftSubtree(entry, delta) : undefined)
+					.then(() => scope.subtasks && delta !== 0 ? Hierarchy.shiftSubtree(entry, delta) : EntryPlan.empty)
+					.then(subtree => scope.shift ? Hierarchy.shiftDependents(change, scope.shift, subtree) : undefined)
 					.catch(() => EntryStore.revert(entry))
 			})
 		} else {

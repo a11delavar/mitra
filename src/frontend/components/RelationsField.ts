@@ -73,6 +73,10 @@ export class RelationsField extends Component {
 	 * the segment renders there. Bubbles composed, so it reaches the page from inside a popover. */
 	@event({ bubbles: true, composed: true }) readonly navigate!: EventDispatcher<DateTime>
 
+	/** Subscribed, because everything this renders is derived: the entry's own lines, and the headings
+	 * the graph resolves for them. Without it a removal stayed on screen until some other state changed. */
+	readonly store = new EntryStore(this)
+
 	@state() private suggestions = new Array<Entry>()
 	@state() private activeIndex = -1
 	@state() private pendingType: RelationType = RelationType.authorable[0]!

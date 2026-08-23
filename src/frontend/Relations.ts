@@ -1,4 +1,4 @@
-import { type Entry, type EntryRollup, RelationGraph } from 'shared'
+import { type Entry, type EntryChange, type EntryPlan, type EntryRollup, RelationGraph, ShiftStrategy } from 'shared'
 import { getRelationClosure } from './Api.js'
 import { EntryStore } from './EntryStore.js'
 
@@ -63,5 +63,19 @@ export class Relations {
 
 	static descendantsOf(entry: Entry | undefined): Array<Entry> {
 		return entry?.uid ? this.graph.descendantsOf(entry.uid) : []
+	}
+
+	/**
+	 * Evaluates distinct shift options for downstream entries, deduplicating equivalent plans.
+	 */
+	static shiftOptionsFor(change: EntryChange): Array<{ strategy: ShiftStrategy, plan: EntryPlan }> {
+		const options = new Array<{ strategy: ShiftStrategy, plan: EntryPlan }>()
+		for (const strategy of ShiftStrategy.all) {
+			const plan = strategy.plan(this.graph, change)
+			if (!options.some(option => option.plan.equals(plan))) {
+				options.push({ strategy, plan })
+			}
+		}
+		return options.length > 1 ? options : []
 	}
 }

@@ -288,5 +288,9 @@
 	"Move entry": "Déplacer l’entrée",
 	"Move repeating entry": "Déplacer l’entrée récurrente",
 	"This relationship is not possible": "Cette relation n'est pas possible",
-	"Unknown entry": "Entrée inconnue"
+	"Unknown entry": "Entrée inconnue",
+	"Keep the chain intact": "Garder la chaîne intacte",
+	"Move dependent entries too?": "Déplacer aussi les entrées dépendantes ?",
+	"Move them all by the same amount": "Toutes les déplacer du même écart",
+	"${count:pluralityNumber} entries": "${count:pluralityNumber} entrées"
 }

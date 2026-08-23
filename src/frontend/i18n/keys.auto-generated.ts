@@ -12,6 +12,7 @@ declare global {
 		"${count:number} min": unknown
 		"${count:number} more": unknown
 		"${count:pluralityNumber} days": unknown
+		"${count:pluralityNumber} entries": unknown
 		"${count:pluralityNumber} hours": unknown
 		"${count:pluralityNumber} months": unknown
 		"${count:pluralityNumber} participants": unknown
@@ -138,6 +139,7 @@ declare global {
 		"Integration options": unknown
 		"Integration Token": unknown
 		"Interval": unknown
+		"Keep the chain intact": unknown
 		"Keyboard Shortcuts": unknown
 		"KeyboardShortcuts.Keywords": unknown
 		"Location": unknown
@@ -153,11 +155,13 @@ declare global {
 		"Month": unknown
 		"Month View": unknown
 		"MonthView.Keywords": unknown
+		"Move dependent entries too?": unknown
 		"Move down": unknown
 		"Move entry": unknown
 		"Move or resize just this entry of a series": unknown
 		"Move repeating entry": unknown
 		"Move subtasks too?": unknown
+		"Move them all by the same amount": unknown
 		"Move up": unknown
 		"navigate": unknown
 		"Navigation": unknown

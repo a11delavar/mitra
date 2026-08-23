@@ -34,9 +34,32 @@ export class RelationEdge {
 		readonly from: string,
 		readonly to: string,
 		readonly type: RelationType,
-		/** RFC 9253 lead/lag duration string. */
+		/** RFC 9253 lead/lag ISO-8601 duration string. */
 		readonly gap: string | null,
 	) { }
+
+	/** Parsed lead/lag duration (positive = lag, negative = lead); null when absent or invalid. */
+	get lag(): Temporal.Duration | null {
+		if (this.gap === null) {
+			return null
+		}
+		try {
+			return Temporal.Duration.from(this.gap)
+		} catch {
+			return null
+		}
+	}
+
+	/** Earliest valid dependent boundary given the predecessor boundary and lag offset. */
+	requiredBoundaryOf(predecessor: RelationEndpoint): DateTime | undefined {
+		const coupling = this.coupling
+		const boundary = coupling && predecessor.boundaryOf(coupling.from)
+		if (!boundary) {
+			return undefined
+		}
+		const lag = this.lag
+		return this.gap !== null && !lag ? undefined : lag ? boundary.add(lag) : boundary
+	}
 
 	/** Direction-normalized pair identity, used to deduplicate edges gathered from both endpoints. */
 	get key() {
@@ -49,8 +72,7 @@ export class RelationEdge {
 		return !coupling ? undefined : { from: coupling.predecessor, to: coupling.dependent }
 	}
 
-	/** Selects the occurrence pair connecting recurring series. Pairs satisfying the coupling are
-	 * preferred over closer pairs that violate it. Nearness serves as tie-breaker. */
+	/** Selects the occurrence pair connecting recurring series. */
 	bestPair<T extends RelationEndpoint & { start?: { valueOf(): number } }>(fromCandidates: ReadonlyArray<T>, toCandidates: ReadonlyArray<T>): { from: T, to: T } | undefined {
 		let best: { from: T, to: T } | undefined
 		let bestScore: readonly [number, number] = [Infinity, Infinity]
@@ -69,15 +91,11 @@ export class RelationEdge {
 		return best
 	}
 
-	/** Checks if the dependent boundary occurs before the predecessor boundary. Undecidable cases
-	 * (hierarchy, missing boundaries, unparsed lead/lag gaps) evaluate to false. */
+	/** Checks if the dependent boundary violates {@link requiredBoundaryOf}. */
 	violatedBy(from: RelationEndpoint, to: RelationEndpoint) {
 		const coupling = this.coupling
-		if (!coupling || this.gap) {
-			return false
-		}
-		const required = from.boundaryOf(coupling.from)
-		const actual = to.boundaryOf(coupling.to)
+		const required = this.requiredBoundaryOf(from)
+		const actual = coupling && to.boundaryOf(coupling.to)
 		return !!required && !!actual && actual.valueOf() < required.valueOf()
 	}
 }

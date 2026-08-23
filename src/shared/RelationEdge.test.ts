@@ -1,9 +1,14 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { DateTime } from '@3mo/date-time'
 import { RelationEdge } from './RelationEdge.js'
 import { RelationType } from './RelationType.js'
 
 describe('RelationEdge', () => {
+	// Real instants, not stand-ins with a valueOf: a gap is added to the boundary, so the boundary has
+	// to be something a duration can be added to.
+	const hourOf = (hour: number) => new DateTime(Date.UTC(2026, 7, 23, hour))
+
 	const edge = (ownerUid: string, type: RelationType | string, targetUid: string, gap: string | null = null) =>
 		RelationEdge.of(ownerUid, { type, targetUid, gap })
 
@@ -46,7 +51,7 @@ describe('RelationEdge', () => {
 	})
 
 	describe('bestPair — which occurrences connect', () => {
-		const at = (hour: number) => ({ start: { valueOf: () => hour }, boundaryOf: (which: 'start' | 'end') => ({ valueOf: () => which === 'start' ? hour : hour + 1 }) as never })
+		const at = (hour: number) => ({ start: hourOf(hour), boundaryOf: (which: 'start' | 'end') => hourOf(which === 'start' ? hour : hour + 1) })
 
 		it('prefers a SATISFIED pair over a nearer one that would read as broken', () => {
 			// Gym on Monday and Wednesday blocks a Tuesday session. Wednesday's is nearer in absolute
@@ -79,8 +84,7 @@ describe('RelationEdge', () => {
 	})
 
 	describe('violatedBy', () => {
-		const at = (hour: number) => ({ valueOf: () => hour })
-		const entry = (start: number, end: number) => ({ boundaryOf: (which: 'start' | 'end') => (which === 'start' ? at(start) : at(end)) as never })
+		const entry = (start: number, end: number) => ({ boundaryOf: (which: 'start' | 'end') => hourOf(which === 'start' ? start : end) })
 
 		it('reads the coupled pair of boundaries, and treats a handover at the same instant as satisfied', () => {
 			const finishToStart = edge('d', RelationType.FinishToStart, 'p')!
@@ -88,8 +92,16 @@ describe('RelationEdge', () => {
 			assert.equal(finishToStart.violatedBy(entry(9, 11), entry(11, 13)), false)
 		})
 
-		it('withholds a verdict where the gap is still an unread duration — see dependency-propagation.md §5', () => {
-			assert.equal(edge('d', RelationType.FinishToStart, 'p', 'PT1H')!.violatedBy(entry(9, 11), entry(10, 12)), false)
+		it('shifts the boundary it compares against by the lead/lag gap', () => {
+			// Lag: the dependent may not start until an hour after the predecessor ends.
+			assert.equal(edge('d', RelationType.FinishToStart, 'p', 'PT1H')!.violatedBy(entry(9, 11), entry(11, 13)), true)
+			assert.equal(edge('d', RelationType.FinishToStart, 'p', 'PT1H')!.violatedBy(entry(9, 11), entry(12, 14)), false)
+			// Lead: the pair is allowed to overlap by an hour.
+			assert.equal(edge('d', RelationType.FinishToStart, 'p', '-PT1H')!.violatedBy(entry(9, 11), entry(10, 12)), false)
+		})
+
+		it('withholds a verdict on a gap it cannot read, rather than guessing at zero', () => {
+			assert.equal(edge('d', RelationType.FinishToStart, 'p', 'not a duration')!.violatedBy(entry(9, 11), entry(10, 12)), false)
 		})
 
 		it('never judges hierarchy: it couples no boundaries at all', () => {

@@ -591,10 +591,18 @@ describe('Entry', () => {
 			assert.equal(verdict(next, allDay(0, 2)), true)
 		})
 
-		it('anything undecidable is NOT a violation — another family, an unread gap, a missing boundary', () => {
+		it('reads the lead/lag GAP into the boundary it compares against', () => {
+			// A lag pushes the required start later: an hour after the predecessor ends.
+			assert.equal(verdict(dependent(RelationType.FinishToStart, 11, 13, 'PT1H'), predecessor(9, 11)), true)
+			assert.equal(verdict(dependent(RelationType.FinishToStart, 12, 14, 'PT1H'), predecessor(9, 11)), false)
+			// A lead lets the pair overlap by that much.
+			assert.equal(verdict(dependent(RelationType.FinishToStart, 10, 12, '-PT1H'), predecessor(9, 11)), false)
+		})
+
+		it('anything undecidable is NOT a violation — another family, an unreadable gap, a missing boundary', () => {
 			assert.equal(verdict(dependent(RelationType.Parent, 10, 12), predecessor(9, 11)), false)
 			assert.equal(verdict(dependent(RelationType.of('X-WAITS-FOR'), 10, 12), predecessor(9, 11)), false)
-			assert.equal(verdict(dependent(RelationType.FinishToStart, 10, 12, 'PT1H'), predecessor(9, 11)), false)
+			assert.equal(verdict(dependent(RelationType.FinishToStart, 10, 12, 'not a duration'), predecessor(9, 11)), false)
 			assert.equal(verdict(dependent(RelationType.FinishToStart, 10, 12), new Entry({ id: 'p', sourceId: 's', type: EntryType.Task, uid: 'predecessor' })), false)
 		})
 	})

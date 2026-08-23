@@ -76,6 +76,8 @@ export class RelationGraph {
 	descendantsOf(uid: string) { return this.resolve(this.walk(this.step(uid, 'hierarchy', 'down'), 'hierarchy', 'down', uid)) }
 	ancestorsOf(uid: string) { return this.resolve(this.walk(this.step(uid, 'hierarchy', 'up'), 'hierarchy', 'up', uid)) }
 	downstreamOf(uid: string) { return this.resolve(this.walk(this.step(uid, 'dependency', 'down'), 'dependency', 'down', uid)) }
+	/** Everything this entry waits for, transitively. */
+	upstreamOf(uid: string) { return this.resolve(this.walk(this.step(uid, 'dependency', 'up'), 'dependency', 'up', uid)) }
 
 	/** Checks if walking upwards from candidate seeds reaches target, detecting directed cycles. */
 	reaches(family: 'hierarchy' | 'dependency', seeds: Iterable<string>, target: string): boolean {

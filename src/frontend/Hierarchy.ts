@@ -1,4 +1,4 @@
-import { type Entry, EntryPlan, type PlannedWrite, type RecurrenceScope, type SkippedEntry, TaskStatus } from 'shared'
+import { type Entry, type EntryChange, EntryPlan, type PlannedWrite, type RecurrenceScope, type ShiftStrategy, type SkippedEntry, TaskStatus } from 'shared'
 import { EntryStore } from './EntryStore.js'
 import { Relations } from './Relations.js'
 import { DialogEntryScope, type EntryScope } from './components/DialogEntryScope.js'
@@ -13,15 +13,25 @@ export function subtreeSize(entry: Entry): number {
 	return Relations.descendantsOf(entry).length
 }
 
-/** Resolves gesture scope across recurrence and hierarchy axes. Bypass (Ctrl/⌘) defaults to narrowest. */
-export function resolveScope(entry: Entry, intent: 'edit' | 'move' | 'delete', bypass = false, hasSubtaskAction = true): Promise<EntryScope | undefined> {
+/**
+ * Resolves gesture scope across recurrence, hierarchy, and dependency axes.
+ */
+export function resolveScope(entry: Entry, intent: 'edit' | 'move' | 'delete', bypass = false, hasSubtaskAction = true, change?: EntryChange): Promise<EntryScope | undefined> {
 	const series = !!entry.recurrenceMasterId
 	const subtasks = hasSubtaskAction && (intent === 'delete' || intent === 'move') ? subtreeSize(entry) : 0
-	if (bypass || (!series && !subtasks)) {
+	const shifts = change && intent !== 'delete' ? Relations.shiftOptionsFor(change) : []
+	if (bypass || (!series && !subtasks && shifts.length < 2)) {
 		return Promise.resolve({ recurrence: series ? 'this' as const : undefined, subtasks: false })
 	}
-	// Dialog rejection (dismissal) is caught and mapped to undefined so cancelled gestures revert cleanly.
-	return new DialogEntryScope({ entry, intent, series, subtasks }).confirm().catch(() => undefined)
+	return new DialogEntryScope({ entry, intent, series, subtasks, shifts }).confirm().catch(() => undefined)
+}
+
+/**
+ * Applies shift strategy to downstream entries, excluding entries already modified.
+ */
+export function shiftDependents(change: EntryChange, strategy: ShiftStrategy, already = EntryPlan.empty) {
+	const plan = strategy.plan(Relations.graph, change).excluding(already)
+	return plan.isEmpty ? Promise.resolve(undefined) : EntryStore.applyPlan(plan)
 }
 
 // --- Follow-up offers ---------------------------------------------------------------------------------
@@ -115,10 +125,11 @@ export async function deleteScoped(entry: Entry, scope: EntryScope) {
 	return EntryStore.delete(entry, scope.recurrence)
 }
 
-/** Shifts dated subtree entries by time delta. Undated subtasks are recorded as skipped. */
-export function shiftSubtree(entry: Entry, deltaMs: number) {
+/** Shifts dated subtree entries by time delta. Undated subtasks are recorded as skipped. Answers the
+ * plan it applied, so a following consequence of the same gesture can leave those entries alone. */
+export async function shiftSubtree(entry: Entry, deltaMs: number): Promise<EntryPlan> {
 	if (!deltaMs) {
-		return Promise.resolve(undefined)
+		return EntryPlan.empty
 	}
 	const writes = new Array<PlannedWrite>()
 	const skipped = new Array<SkippedEntry>()
@@ -135,7 +146,9 @@ export function shiftSubtree(entry: Entry, deltaMs: number) {
 			},
 		})
 	}
-	return EntryStore.applyPlan(EntryPlan.of({ writes, skipped }))
+	const plan = EntryPlan.of({ writes, skipped })
+	await EntryStore.applyPlan(plan)
+	return plan
 }
 
 /** Injects hierarchy follow-up prompts into EntryStore task completion lifecycle. */
