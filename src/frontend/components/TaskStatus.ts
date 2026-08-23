@@ -6,7 +6,8 @@ import { offerToCloseSubtasksOf } from '../Hierarchy.js'
 
 const order = [TaskStatus.ToDo, TaskStatus.Doing, TaskStatus.Done, TaskStatus.Cancelled] as const
 
-const icon = new Map<TaskStatus, string>([
+/** The app's status glyphs, also worn by the dialogs that offer a status as a choice. */
+export const taskStatusIcon = new Map<TaskStatus, string>([
 	[TaskStatus.ToDo, 'square'],
 	[TaskStatus.Doing, 'square-minus'],
 	[TaskStatus.Done, 'square-check-big'],
@@ -485,13 +486,13 @@ export class TaskStatusComponent extends Component {
 						<line x1="8" y1="12" x2="16" y2="12" stroke-width="2"/>
 					</svg>
 				` : html`
-					<mitra-icon icon=${icon.get(this.status)!}></mitra-icon>
+					<mitra-icon icon=${taskStatusIcon.get(this.status)!}></mitra-icon>
 				`}
 			</button>
 			<menu popover>
 				${order.filter(status => status !== TaskStatus.Cancelled || getCapabilities(this.entry.sourceId).cancelledStatus).map(status => html`
 					<button aria-current=${status === this.status} @click=${this.pick(status)}>
-						<mitra-icon icon=${icon.get(status)!}></mitra-icon>
+						<mitra-icon icon=${taskStatusIcon.get(status)!}></mitra-icon>
 						${label(status)}
 					</button>
 				`)}

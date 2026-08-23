@@ -38,14 +38,12 @@ declare global {
 		"All day": unknown
 		"All entries": unknown
 		"All subtasks done": unknown
-		"Also delete its ${count:pluralityNumber} subtasks": unknown
-		"Also move its ${count:pluralityNumber} subtasks by the same amount": unknown
 		"Alt+click to show only this one": unknown
 		"Alt+click to show the previously visible ones": unknown
 		"Amount": unknown
 		"App-Specific Password": unknown
 		"Apple ID": unknown
-		"Apply to its ${count:pluralityNumber} subtasks too": unknown
+		"Apply to subtasks too?": unknown
 		"Ask everyone to attend": unknown
 		"Ask this participant to attend": unknown
 		"At start": unknown
@@ -59,7 +57,6 @@ declare global {
 		"CalDAV, Google, Apple or Notion — Mitra syncs in both directions.": unknown
 		"Calendar options": unknown
 		"Calendars": unknown
-		"Cancel the ${count:pluralityNumber} remaining subtasks": unknown
 		"Cancelled": unknown
 		"Choose a task status": unknown
 		"Choose your sources": unknown
@@ -95,6 +92,7 @@ declare global {
 		"Delete entry": unknown
 		"Delete just this entry of a series": unknown
 		"Delete repeating entry": unknown
+		"Delete subtasks too?": unknown
 		"Delete the locally cached entries and import everything from the source again": unknown
 		"Delete the locally cached entries of every enabled source and import everything again": unknown
 		"Delete the open entry": unknown
@@ -146,8 +144,8 @@ declare global {
 		"Make attendance optional for everyone": unknown
 		"Mark all optional": unknown
 		"Mark all required": unknown
+		"Mark as cancelled": unknown
 		"Mark as done": unknown
-		"Mark the ${count:pluralityNumber} remaining subtasks as done": unknown
 		"minutes": unknown
 		"modified": unknown
 		"Month": unknown
@@ -157,6 +155,7 @@ declare global {
 		"Move entry": unknown
 		"Move or resize just this entry of a series": unknown
 		"Move repeating entry": unknown
+		"Move subtasks too?": unknown
 		"Move up": unknown
 		"navigate": unknown
 		"Navigation": unknown
@@ -174,12 +173,12 @@ declare global {
 		"Notion.TokenHint": unknown
 		"Occurrences": unknown
 		"of event at ${time}": unknown
-		"OK": unknown
 		"On": unknown
 		"One calendar to plan your events and tasks": unknown
 		"Only Show ${name}": unknown
 		"Only show this calendar": unknown
 		"Only the organizer can change participants": unknown
+		"Only this entry": unknown
 		"Open in Google Maps": unknown
 		"Optional": unknown
 		"Options": unknown
@@ -260,6 +259,7 @@ declare global {
 		"the last ${weekday}": unknown
 		"The task databases of your workspace": unknown
 		"This and following entries": unknown
+		"This and its ${count:pluralityNumber} subtasks": unknown
 		"This entry": unknown
 		"This relationship is not possible": unknown
 		"Time zone": unknown

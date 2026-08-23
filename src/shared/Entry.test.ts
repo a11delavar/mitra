@@ -154,6 +154,22 @@ describe('Entry', () => {
 		})
 	})
 
+	describe('isSeriesStart', () => {
+		const occurrence = (values: Partial<Entry>) => new Entry({ recurrenceMasterId: 'master', ...values } as Entry)
+
+		it('is true for the occurrence sitting on the series anchor', () => {
+			assert.equal(occurrence({ recurrenceId: at(0, 9), seriesStart: at(0, 9) }).isSeriesStart, true)
+		})
+
+		it('is false for any later occurrence', () => {
+			assert.equal(occurrence({ recurrenceId: at(3, 9), seriesStart: at(0, 9) }).isSeriesStart, false)
+		})
+
+		it('is false without an anchor — a synced override carries none', () => {
+			assert.equal(occurrence({ recurrenceId: at(0, 9) }).isSeriesStart, false)
+		})
+	})
+
 	describe('moveStart', () => {
 		it('moves a timed entry, preserving its duration', () => {
 			const e = new Entry({ start: at(0, 9), end: at(0, 10) })

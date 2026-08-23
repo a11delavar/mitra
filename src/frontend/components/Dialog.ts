@@ -64,7 +64,12 @@ export class Dialog extends Component {
 				   whose scrollbar should ride the dialog border) with a matching negative margin. */
 				--mitra-dialog-padding: 1.25rem;
 				padding: var(--mitra-dialog-padding);
-				min-width: 360px;
+				/* Every width here is the width of the WHOLE dialog, padding and border included — the way
+				   the rest of the app's controls measure themselves. On content-box the padding was added
+				   on top, which is how a 375px phone got a 402px dialog with its close button off the
+				   screen: a min-width outweighs a max-width, so the 92vw cap could never save it. */
+				box-sizing: border-box;
+				min-width: min(360px, 92vw);
 				/* A dialog needing more room than the default sets --mitra-dialog-width on its host
 				   (it inherits through the shadow boundary) — an explicit width, not just a cap, so
 				   intrinsically-sized content (e.g. an auto-fill grid) gets a definite size to fill. */

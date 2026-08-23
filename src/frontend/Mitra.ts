@@ -27,6 +27,7 @@ import { focusRingStyles } from './components/focusRing.css.js'
 import { kbdStyles } from './components/kbd.css.js'
 import { menuStyles } from './components/menu.css.js'
 import { sheetStyles, initializeSheetGestures } from './components/sheet.js'
+import { Choices, Choice } from './components/Choices.js'
 import { windowDragStyles } from './components/windowDrag.css.js'
 import { TaskStatusComponent } from './components/TaskStatus.js'
 import { SourceIcon } from './components/SourceIcon.js'
@@ -231,6 +232,8 @@ export class Mitra extends Application {
 			${ScrollDeviceController.styles}
 
 			${IconButton.styles}
+			${Choices.styles}
+			${Choice.styles}
 			${Markdown.styles}
 			${PageCalendar.styles}
 			${CommandPalette.styles}

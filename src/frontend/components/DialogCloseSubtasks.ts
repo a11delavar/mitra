@@ -1,6 +1,7 @@
-import { component, html, css, state } from '@a11d/lit'
+import { component, html, css } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { type Entry, TaskStatus } from 'shared'
+import { taskStatusIcon } from './TaskStatus.js'
 
 /** What to do with the leftovers; `undefined` (cancelling the dialog) leaves them exactly as they are. */
 export type SubtaskClosure = TaskStatus.Done | TaskStatus.Cancelled
@@ -11,46 +12,28 @@ export type SubtaskClosure = TaskStatus.Done | TaskStatus.Cancelled
  */
 @component('mitra-dialog-close-subtasks')
 export class DialogCloseSubtasks extends DialogComponent<{ readonly entry: Entry, readonly outstanding: number }, SubtaskClosure | undefined> {
-	/** Defaults to the parent's closed state (Done or Cancelled). */
-	@state() private closure: SubtaskClosure = TaskStatus.Cancelled
-
 	protected override createRenderRoot() { return this }
 
-	override connected() {
-		this.closure = this.parameters.entry.status === TaskStatus.Cancelled ? TaskStatus.Cancelled : TaskStatus.Done
+	/** The parent's own closed state leads, since it is the likelier answer — and leading means it is
+	 * the card that takes focus, not a preselected radio. */
+	private get options(): ReadonlyArray<SubtaskClosure> {
+		return this.parameters.entry.status === TaskStatus.Cancelled
+			? [TaskStatus.Cancelled, TaskStatus.Done]
+			: [TaskStatus.Done, TaskStatus.Cancelled]
 	}
 
-	private get options(): ReadonlyArray<{ closure: SubtaskClosure, label: string }> {
-		const count = this.parameters.outstanding
-		return [
-			{ closure: TaskStatus.Done, label: t('Mark the ${count:pluralityNumber} remaining subtasks as done', { count }) },
-			{ closure: TaskStatus.Cancelled, label: t('Cancel the ${count:pluralityNumber} remaining subtasks', { count }) },
-		]
+	private label(closure: SubtaskClosure) {
+		return closure === TaskStatus.Done ? t('Mark as done') : t('Mark as cancelled')
 	}
 
 	static override get styles() {
 		return css`
 			mitra-dialog-close-subtasks {
 				p {
-					margin: 0 0 0.875rem;
+					margin: 0;
 					font-size: 0.875rem;
 					color: var(--color-text);
 					text-wrap: pretty;
-				}
-
-				.closures {
-					display: flex;
-					flex-direction: column;
-					gap: 0.75rem;
-
-					label {
-						display: flex;
-						align-items: center;
-						gap: 0.625rem;
-						font-size: 0.875rem;
-						color: var(--color-text);
-						cursor: pointer;
-					}
 				}
 			}
 		`
@@ -58,26 +41,18 @@ export class DialogCloseSubtasks extends DialogComponent<{ readonly entry: Entry
 
 	protected override get template() {
 		return html`
-			<mitra-dialog heading=${t('Subtasks still open')} primaryButtonText=${t('OK')} primaryOnEnter>
+			<mitra-dialog heading=${t('Subtasks still open')}>
 				<p>${t('"${heading}" is closed, but ${count:pluralityNumber} of its subtasks are still open.', {
 					heading: this.parameters.entry.heading,
 					count: this.parameters.outstanding,
 				})}</p>
-				<div class="closures">
-					${this.options.map(option => html`
-						<label>
-							<input type="radio" name="subtask-closure" .checked=${this.closure === option.closure}
-								@change=${() => this.closure = option.closure}>
-							<span>${option.label}</span>
-						</label>
+				<mitra-choices>
+					${this.options.map((closure, index) => html`
+						<mitra-choice ?autofocus=${index === 0} icon=${taskStatusIcon.get(closure)!} @click=${() => this.close(closure)}>${this.label(closure)}</mitra-choice>
 					`)}
-				</div>
+				</mitra-choices>
 			</mitra-dialog>
 		`
-	}
-
-	protected override primaryAction() {
-		return this.closure
 	}
 }
 

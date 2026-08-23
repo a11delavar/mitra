@@ -18,14 +18,19 @@ export function subtreeSize(entry: Entry): number {
 	return entry.subtasks?.descendants ?? 0
 }
 
-/** Resolves gesture scope across recurrence and hierarchy axes. Bypass (Ctrl/⌘) defaults to narrowest. */
+/**
+ * Resolves gesture scope across recurrence and hierarchy axes. Bypass (Ctrl/⌘) defaults to narrowest.
+ * Dismissing the dialog REJECTS it, while every caller here reads "cancelled" as a resolved `undefined`
+ * (see EntryStore.resolveScope) — so the dismissal is translated here rather than at each call site,
+ * where a stray rejection would leave the optimistic edit standing and never save it.
+ */
 export function resolveScope(entry: Entry, intent: 'edit' | 'move' | 'delete', bypass = false, hasSubtaskAction = true): Promise<EntryScope | undefined> {
 	const series = !!entry.recurrenceMasterId
 	const subtasks = hasSubtaskAction && (intent === 'delete' || intent === 'move') ? subtreeSize(entry) : 0
 	if (bypass || (!series && !subtasks)) {
 		return Promise.resolve({ recurrence: series ? 'this' as const : undefined, subtasks: false })
 	}
-	return new DialogEntryScope({ entry, intent, series, subtasks }).confirm()
+	return new DialogEntryScope({ entry, intent, series, subtasks }).confirm().catch(() => undefined)
 }
 
 /** Fetches subtree entries from the server after a confirmed scoped gesture. */
@@ -195,5 +200,6 @@ export function installHierarchyPrompts() {
 export function resolveRecurrenceScope(entry: Entry, intent: 'edit' | 'delete'): Promise<RecurrenceScope | undefined> {
 	return new DialogEntryScope({ entry, intent, series: true, subtasks: 0 })
 		.confirm()
+		.catch(() => undefined) // dismissed — see resolveScope
 		.then(scope => scope?.recurrence)
 }

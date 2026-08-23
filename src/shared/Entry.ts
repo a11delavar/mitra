@@ -398,6 +398,13 @@ export class Entry {
 		return !!this.recurrenceMasterId
 	}
 
+	/** True for the occurrence the series starts on — the one where "this and following" would reach
+	 * the whole series and is therefore not worth offering. Both instants come from the expansion
+	 * (see occurrences.ts), so a synced override, which carries no anchor, answers false. */
+	get isSeriesStart() {
+		return !!this.recurrenceId && !!this.seriesStart && this.recurrenceId.equals(this.seriesStart)
+	}
+
 	/** True when the entry belongs to a recurring series — either the master that carries the rule
 	 * (`recurrence`) or one of its occurrences (`isRecurring`). Such entries aren't independently
 	 * drag/resize-movable; their schedule is read-only in the editor (the rule itself stays editable). */

@@ -17,28 +17,43 @@ export interface EntryScopeParameters {
 	readonly subtasks: number
 }
 
-/** Combined scope dialog for recurring series and hierarchy subtrees. */
+/**
+ * Combined scope dialog for recurring series and hierarchy subtrees. Each axis is a question of its own
+ * and gets a screen of its own: picking a card answers it and then either asks the next one or closes.
+ */
 @component('mitra-dialog-entry-scope')
 export class DialogEntryScope extends DialogComponent<EntryScopeParameters, EntryScope | undefined> {
-	private static get options(): ReadonlyArray<{ scope: RecurrenceScope, label: string }> {
-		return [
-			{ scope: 'this', label: t('This entry') },
-			{ scope: 'following', label: t('This and following entries') },
-			{ scope: 'all', label: t('All entries') },
-		]
-	}
-
 	/** Platform-conventional label for the bypass modifier key. */
 	private static get modifier() {
 		return navigator.userAgent.includes('Mac') ? '⌘' : t('Ctrl')
 	}
 
-	@state() private scope: RecurrenceScope = 'this'
-	@state() private subtasks = false
+	@state() private recurrence: RecurrenceScope = 'this'
+	@state() private step = 0
 
 	protected override createRenderRoot() { return this }
 
+	/** The questions this gesture actually raises, in the order they are asked. */
+	private get questions() {
+		return [
+			...this.parameters.series ? ['recurrence' as const] : [],
+			...this.parameters.subtasks ? ['subtasks' as const] : [],
+		]
+	}
+
+	private get question() { return this.questions[this.step] }
+
+	/** The entry's own glyph, which stands for "this one alone" on both screens. */
+	private get entryIcon() { return this.parameters.entry.type.isTask ? 'calendar-check' : 'calendar' }
+
 	private get heading() {
+		if (this.question === 'subtasks') {
+			switch (this.parameters.intent) {
+				case 'delete': return t('Delete subtasks too?')
+				case 'move': return t('Move subtasks too?')
+				default: return t('Apply to subtasks too?')
+			}
+		}
 		switch (this.parameters.intent) {
 			case 'delete':
 				return this.parameters.series ? t('Delete repeating entry') : t('Delete entry')
@@ -49,47 +64,27 @@ export class DialogEntryScope extends DialogComponent<EntryScopeParameters, Entr
 		}
 	}
 
-	private get subtaskLabel() {
-		const count = this.parameters.subtasks
-		switch (this.parameters.intent) {
-			case 'delete':
-				return t('Also delete its ${count:pluralityNumber} subtasks', { count })
-			case 'move':
-				return t('Also move its ${count:pluralityNumber} subtasks by the same amount', { count })
-			default:
-				return t('Apply to its ${count:pluralityNumber} subtasks too', { count })
+	private chooseRecurrence(recurrence: RecurrenceScope) {
+		this.recurrence = recurrence
+		if (this.questions.length > 1) {
+			this.step++
+		} else {
+			this.close({ recurrence, subtasks: false })
 		}
+	}
+
+	private chooseSubtasks(subtasks: boolean) {
+		this.close({ recurrence: this.parameters.series ? this.recurrence : undefined, subtasks })
 	}
 
 	static override get styles() {
 		return css`
 			mitra-dialog-entry-scope {
-				.scopes {
-					display: flex;
-					flex-direction: column;
-					gap: 0.75rem;
-
-					label {
-						display: flex;
-						align-items: center;
-						gap: 0.625rem;
-						font-size: 0.875rem;
-						color: var(--color-text);
-						cursor: pointer;
-					}
-				}
-
-				.subtasks {
-					margin-block-start: 0.75rem;
-
-					&:not(:first-child) {
-						padding-block-start: 0.75rem;
-						border-block-start: 1px solid var(--color-border);
-					}
-				}
+				/* One width for every question, so answering the first one doesn't resize the dialog. */
+				--mitra-dialog-width: min(28rem, 92vw);
 
 				.hint {
-					margin-block: 1rem 0;
+					margin: 0;
 					font-size: 0.75rem;
 					color: var(--color-text-muted);
 					text-wrap: balance;
@@ -106,34 +101,41 @@ export class DialogEntryScope extends DialogComponent<EntryScopeParameters, Entr
 
 	protected override get template() {
 		return html`
-			<mitra-dialog heading=${this.heading} primaryButtonText=${t('OK')} primaryOnEnter>
-				${!this.parameters.series ? html.nothing : html`
-					<div class="scopes">
-						${DialogEntryScope.options.map(option => html`
-							<label>
-								<input type="radio" name="recurrence-scope" .checked=${this.scope === option.scope}
-									@change=${() => this.scope = option.scope}>
-								<span>${option.label}</span>
-							</label>
-						`)}
-					</div>
+			<mitra-dialog heading=${this.heading}>
+				${this.step === 0 ? html.nothing : html`
+					<mitra-icon-button slot="leading" icon="arrow-left" label=${t('Back')}
+						@click=${() => this.step--}
+					></mitra-icon-button>
 				`}
-				${!this.parameters.subtasks ? html.nothing : html`
-					<div class="scopes subtasks">
-						<label>
-							<input type="checkbox" .checked=${this.subtasks}
-								@change=${(e: Event) => this.subtasks = (e.target as HTMLInputElement).checked}>
-							<span>${this.subtaskLabel}</span>
-						</label>
-					</div>
+				${this.question === 'subtasks' ? this.subtasksChoices : this.recurrenceChoices}
+				${this.step > 0 ? html.nothing : html`
+					<p class="hint">${t('Tip: hold ${modifier} to skip this dialog and apply to this entry only', { modifier: DialogEntryScope.modifier })}</p>
 				`}
-				<p class="hint">${t('Tip: hold ${modifier} to skip this dialog and apply to this entry only', { modifier: DialogEntryScope.modifier })}</p>
 			</mitra-dialog>
 		`
 	}
 
-	protected override primaryAction(): EntryScope {
-		return { recurrence: this.parameters.series ? this.scope : undefined, subtasks: this.subtasks }
+	/** On the series' first occurrence "this and following" IS the whole series, so it isn't offered. */
+	private get recurrenceChoices() {
+		return html`
+			<mitra-choices>
+				<mitra-choice autofocus icon=${this.entryIcon} @click=${() => this.chooseRecurrence('this')}>${t('This entry')}</mitra-choice>
+				${this.parameters.entry.isSeriesStart ? html.nothing : html`
+					<mitra-choice icon="chevrons-right" @click=${() => this.chooseRecurrence('following')}>${t('This and following entries')}</mitra-choice>
+				`}
+				<mitra-choice icon="repeat" @click=${() => this.chooseRecurrence('all')}>${t('All entries')}</mitra-choice>
+			</mitra-choices>
+		`
+	}
+
+	private get subtasksChoices() {
+		const count = this.parameters.subtasks
+		return html`
+			<mitra-choices>
+				<mitra-choice autofocus icon=${this.entryIcon} @click=${() => this.chooseSubtasks(false)}>${t('Only this entry')}</mitra-choice>
+				<mitra-choice icon="list-tree" @click=${() => this.chooseSubtasks(true)}>${t('This and its ${count:pluralityNumber} subtasks', { count })}</mitra-choice>
+			</mitra-choices>
+		`
 	}
 }
 
