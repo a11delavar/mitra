@@ -1,6 +1,6 @@
 import { Controller } from '@a11d/lit'
 import { type ReactiveControllerHost } from 'lit'
-import { Recurrence, type Entry, type RecurrenceScope } from 'shared'
+import { Recurrence, type Entry, type EntryPlan, type SkippedEntry, type RecurrenceScope } from 'shared'
 import { ApiError, createEvent, deleteEvent, deleteOccurrence, editOccurrence, updateEvent } from './Api.js'
 
 /**
@@ -412,6 +412,35 @@ export class EntryStore extends Controller {
 			}
 		}
 		this.notify()
+	}
+
+	/** Resolves to the tracked working copy if available to avoid writing to stale closure entries. */
+	private static live(entry: Entry) {
+		return (entry.id !== undefined ? this.workingById.get(entry.id) : undefined) ?? entry
+	}
+
+	/** Applies an {@link EntryPlan}, executing deletions deepest-first followed by writes. Collects failed entries. */
+	static async applyPlan(plan: EntryPlan): Promise<{ failed: Array<Entry>, skipped: ReadonlyArray<SkippedEntry> }> {
+		const failed = new Array<Entry>()
+		for (const entry of plan.deletions) {
+			const target = this.live(entry)
+			const write = target === entry && !this.tracks(target) ? EntryStore.persistence.delete(target.id!) : this.delete(target, 'all')
+			await write.catch(() => void failed.push(entry))
+		}
+		for (const { entry, mutate } of plan.writes) {
+			const target = this.live(entry)
+			mutate(target)
+			this.notify()
+			if (this.tracks(target)) {
+				await this.commit(target, 'all').catch(() => { this.revert(target); failed.push(entry) })
+			} else {
+				await EntryStore.persistence.update(target).catch(() => void failed.push(entry))
+			}
+		}
+		if (plan.count) {
+			this.notify()
+		}
+		return { failed, skipped: plan.skipped }
 	}
 
 	/** Undo local changes: a draft is dropped (it only ever existed locally); a persisted entry snaps

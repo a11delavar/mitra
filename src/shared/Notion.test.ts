@@ -5,6 +5,7 @@ import { Entry, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
 import { EntryType } from './EntryType.js'
 import { Source } from './Source.js'
 import { Relation } from './Relation.js'
+import { EntryRelations } from './EntryRelations.js'
 import { RelationType } from './RelationType.js'
 import { type NotionDataSource, type NotionPage } from './NotionClient.js'
 import { asBrowser, wireOf } from './wire.testing.js'
@@ -297,7 +298,7 @@ describe('Notion relation writes (relationPropertiesFrom / changedRelationProper
 		const relations = [parentOf('page-parent'), new Relation({ type: RelationType.FinishToStart, targetUid: 'page-blocker' })]
 		const written = Notion.relationPropertiesFrom(relations, schema(), isPage)
 		const echo = page({ properties: { ...page().properties, ...written } })
-		assert.equal(Relation.listEquals(Notion.relationsFrom(echo, schema()), relations), true)
+		assert.equal(EntryRelations.of(undefined, Notion.relationsFrom(echo, schema())).equals(EntryRelations.of(undefined, relations)), true)
 	})
 })
 

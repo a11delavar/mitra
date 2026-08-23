@@ -2,13 +2,14 @@ import { type EntityManager } from '@mikro-orm/sqlite'
 import { converter } from '@a11d/converter'
 import { equals } from '@a11d/equals'
 import { model } from './model.js'
+import { EntryRelations } from './EntryRelations.js'
 import { Integration, integration, withheld } from './Integration.js'
 import { Source } from './Source.js'
 import { Entry, TaskStatus, FLOATING_TIME_ZONE } from './Entry.js'
 import { EntryType } from './EntryType.js'
 import { calendarDateOf, midnightOf } from './calendarDate.js'
 import { Color } from './Color.js'
-import { Relation } from './Relation.js'
+import { type Relation } from './Relation.js'
 import { RelationType } from './RelationType.js'
 import { EntryRelation } from './EntryRelation.js'
 import { createLogger } from './Logger.js'
@@ -375,7 +376,7 @@ export class Notion extends Integration<NotionCredentials> {
 			// Relationships are deliberately outside `editEquals` (they have their own write path), so
 			// a remote relation edit is compared here or it would never reach a client. An abstaining
 			// parse (`undefined`) changed nothing and must not tick.
-			if (!before || !before.editEquals(target) || (target.relations !== undefined && !Relation.listEquals(before.relations, target.relations))) {
+			if (!before || !before.editEquals(target) || (target.relations !== undefined && before.relationList.writesDiffer(target.relationList))) {
 				changed = true
 			}
 		}
@@ -440,7 +441,8 @@ export class Notion extends Integration<NotionCredentials> {
 				}
 			}
 		}
-		return { relations: Notion.relationsFrom(page, schema, Notion.retainedRelations(stored, schema, isPage)) }
+		// Retains only owned relations to prevent round-tripping derived links into Notion relation properties.
+		return { relations: Notion.relationsFrom(page, schema, Notion.retainedRelations(EntryRelations.of(undefined, stored).writes, schema, isPage)) }
 	}
 
 	// --- Entry CRUD ---------------------------------------------------------------------------------
@@ -470,7 +472,7 @@ export class Notion extends Integration<NotionCredentials> {
 		// filter default (a view may well filter on the very relation property being mapped).
 		const pageIds = schema.relationProperties.length ? await this.dataSourcePageIds(em, dataSourceId) : new Set<string>()
 		const isPage = (uid: string) => pageIds.has(uid)
-		const properties = { ...filterDefaults, ...Notion.propertiesFrom(entry, schema), ...Notion.changedRelationProperties(null, entry.relations, schema, isPage) }
+		const properties = { ...filterDefaults, ...Notion.propertiesFrom(entry, schema), ...Notion.changedRelationProperties(null, entry.relationList.writes, schema, isPage) }
 		const blocks = entry.description ? NotionMarkdown.toBlocks(entry.description) : []
 		const page = await this.getClient().createPage(dataSourceId, properties, blocks.slice(0, Notion.maxBlocksPerWrite))
 		for (let index = Notion.maxBlocksPerWrite; index < blocks.length; index += Notion.maxBlocksPerWrite) {
@@ -513,13 +515,13 @@ export class Notion extends Integration<NotionCredentials> {
 		const spanChanged = (['start', 'end', 'allDay', 'timeZone'] as const).some(key => !Object[equals](existing[key], incoming[key]))
 		// Relations are tri-state like CalDAV's (undefined = keep) and compare by their own value
 		// semantics; the caller populated `existing.relations` from the store (see entries.ts PUT).
-		const relationsChanged = incoming.relations !== undefined && !Relation.listEquals(existing.relations ?? null, incoming.relations)
+		const relationsChanged = incoming.relations !== undefined && existing.relationList.writesDiffer(incoming.relationList)
 		if (!headingChanged && !statusChanged && !spanChanged && !descriptionChanged && !relationsChanged) {
 			return
 		}
 		const source = await em.findOneOrFail(Source, { id: existing.sourceId })
 		const schema = await this.schemaFor(source)
-		const desiredRelations = relationsChanged ? incoming.relations ?? null : existing.relations
+		const desiredRelations = EntryRelations.of(undefined, relationsChanged ? incoming.relations ?? null : existing.relations).writes
 		const pageIds = schema.relationProperties.length
 			? await this.dataSourcePageIds(em, Notion.idsOf(source).dataSourceId)
 			: new Set<string>()
@@ -792,12 +794,12 @@ export class Notion extends Integration<NotionCredentials> {
 	 * ids (see {@link NotionClient.pageRelation} and the caller that fills them in).
 	 */
 	static relationsFrom(page: NotionPage, schema: NotionSchemaIndex, retained: ReadonlyArray<Relation> = []): Array<Relation> | null {
-		return Relation.normalize([
+		return EntryRelations.of(undefined, [
 			...schema.relationProperties.flatMap(property => (page.properties[property.name]?.relation ?? [])
 				.filter(reference => reference.id !== page.id)
 				.map(reference => ({ type: property.type, targetUid: reference.id }))),
 			...retained,
-		])
+		]).value
 	}
 
 	/**

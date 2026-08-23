@@ -1,19 +1,59 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { Relation } from './Relation.js'
+import { EntryRelations } from './EntryRelations.js'
 import { RelationSection, RelationType } from './RelationType.js'
 import { Entry } from './Entry.js'
 import { EntryType } from './EntryType.js'
 
 describe('Relation', () => {
+	describe('from — the one coercion point', () => {
+		it('canonicalizes as it coerces: trimmed UPPERCASE type, blank gap as null, absent direction as outgoing', () => {
+			const relation = Relation.from({ type: ' finishtostart ', targetUid: ' target ', gap: '  ' })!
+			assert.equal(relation.type, RelationType.FinishToStart)
+			assert.equal(relation.targetUid, 'target')
+			assert.equal(relation.gap, null)
+			assert.equal(relation.direction, 'outgoing')
+			assert.equal(relation.isOutgoing, true)
+		})
+
+		it('answers undefined for a shape that states nothing, which a collection then drops', () => {
+			assert.equal(Relation.from({ type: '', targetUid: 'x' }), undefined)
+			assert.equal(Relation.from({ type: RelationType.Parent, targetUid: ' ' }), undefined)
+		})
+
+		it('gives back a real instance even from a DTO the reviver left plain — behaviour, not a shape', () => {
+			const plain = JSON.parse(JSON.stringify(new Relation({ type: RelationType.Parent, targetUid: 'p' }))) as unknown
+			const relation = Relation.from(plain as never)!
+			assert.equal(relation instanceof Relation, true)
+			assert.equal(relation.key, new Relation({ type: RelationType.Parent, targetUid: 'p' }).key)
+		})
+	})
+
+	describe('key and equals', () => {
+		it('separates the two readings of one edge — direction is part of a line identity', () => {
+			const owned = Relation.from({ type: RelationType.Parent, targetUid: 'p' })!
+			const derived = Relation.from({ type: RelationType.Parent, targetUid: 'p', direction: 'incoming' })!
+			assert.notEqual(owned.key, derived.key)
+			assert.equal(owned.equals(derived), false)
+		})
+
+		it('compares by value across spellings, and is false against nothing', () => {
+			const relation = Relation.from({ type: RelationType.Parent, targetUid: 'p' })!
+			assert.equal(relation.equals({ type: 'parent', targetUid: 'p' }), true)
+			assert.equal(relation.equals({ type: 'parent', targetUid: 'p', gap: 'PT1H' }), false)
+			assert.equal(relation.equals(null), false)
+		})
+	})
+
 	describe('normalize', () => {
 		it('uppercases types, trims, dedupes by the full (type, target, gap) triple and sorts', () => {
-			const normalized = Relation.normalize([
+			const normalized = EntryRelations.of(undefined, [
 				{ type: 'parent', targetUid: ' b ' },
 				{ type: 'FINISHTOSTART', targetUid: 'a' },
 				{ type: 'PARENT', targetUid: 'b' }, // true duplicate of the first — dropped
 				{ type: 'PARENT', targetUid: 'b', gap: 'PT1D' }, // same pair, DIFFERENT gap — a distinct relationship
-			])
+			]).value
 			assert.deepEqual(normalized?.map(relation => [relation.type, relation.targetUid, relation.gap]), [
 				[RelationType.FinishToStart, 'a', null],
 				[RelationType.Parent, 'b', null],
@@ -22,41 +62,75 @@ describe('Relation', () => {
 		})
 
 		it('collapses none to null — empty array, all-junk input, and nullish all mean the same', () => {
-			assert.equal(Relation.normalize([]), null)
-			assert.equal(Relation.normalize(null), null)
-			assert.equal(Relation.normalize(undefined), null)
-			assert.equal(Relation.normalize([{ type: '', targetUid: 'x' }, { type: 'PARENT', targetUid: ' ' }]), null)
+			assert.equal(EntryRelations.of(undefined, []).value, null)
+			assert.equal(EntryRelations.of(undefined, null).value, null)
+			assert.equal(EntryRelations.of(undefined, undefined).value, null)
+			assert.equal(EntryRelations.of(undefined, [{ type: '', targetUid: 'x' }, { type: 'PARENT', targetUid: ' ' }]).value, null)
 		})
 
 		it('keeps gap as an opaque string, normalizing absence to null', () => {
-			const normalized = Relation.normalize([{ type: 'FINISHTOSTART', targetUid: 'a', gap: ' PT30M ' }])
+			const normalized = EntryRelations.of(undefined, [{ type: 'FINISHTOSTART', targetUid: 'a', gap: ' PT30M ' }]).value
 			assert.equal(normalized![0]!.gap, 'PT30M')
-			assert.equal(Relation.normalize([{ type: 'PARENT', targetUid: 'b' }])![0]!.gap, null)
+			assert.equal(EntryRelations.of(undefined, [{ type: 'PARENT', targetUid: 'b' }]).value![0]!.gap, null)
 		})
 	})
 
 	describe('parse (the wire boundary)', () => {
-		it('keeps the tri-state and rejects junk as Relation.invalid, never silently', () => {
-			assert.equal(Relation.parse(undefined), undefined)
-			assert.equal(Relation.parse(null), null)
-			assert.equal(Relation.parse('nonsense'), Relation.invalid)
-			assert.equal(Relation.parse([{ type: 'PARENT' }]), Relation.invalid) // no target
-			assert.equal(Relation.parse([{ type: 'PARENT', targetUid: 'x', gap: 5 }]), Relation.invalid)
-			const parsed = Relation.parse([{ type: 'parent', targetUid: ' x ' }])
+		it('keeps the tri-state and rejects junk as EntryRelations.invalid, never silently', () => {
+			assert.equal(EntryRelations.parse(undefined), undefined)
+			assert.equal(EntryRelations.parse(null), null)
+			assert.equal(EntryRelations.parse('nonsense'), EntryRelations.invalid)
+			assert.equal(EntryRelations.parse([{ type: 'PARENT' }]), EntryRelations.invalid) // no target
+			assert.equal(EntryRelations.parse([{ type: 'PARENT', targetUid: 'x', gap: 5 }]), EntryRelations.invalid)
+			const parsed = EntryRelations.parse([{ type: 'parent', targetUid: ' x ' }])
 			assert.ok(Array.isArray(parsed))
 			assert.deepEqual(parsed.map(relation => [relation.type, relation.targetUid]), [[RelationType.Parent, 'x']])
 		})
 
 		it('accepts an already-revived instance, not just the plain wire shape', () => {
 			const revived = new Relation({ type: RelationType.Parent, targetUid: 'parent' })
-			const parsed = Relation.parse([revived])
+			const parsed = EntryRelations.parse([revived])
 			assert.ok(Array.isArray(parsed))
 			assert.deepEqual(parsed.map(relation => [relation.type, relation.targetUid]), [[RelationType.Parent, 'parent']])
 		})
 
 		it('still rejects an item whose type is neither a string nor a RelationType', () => {
-			assert.equal(Relation.parse([{ type: { value: 'PARENT' }, targetUid: 'x' }]), Relation.invalid)
-			assert.equal(Relation.parse([{ type: '   ', targetUid: 'x' }]), Relation.invalid)
+			assert.equal(EntryRelations.parse([{ type: { value: 'PARENT' }, targetUid: 'x' }]), EntryRelations.invalid)
+			assert.equal(EntryRelations.parse([{ type: '   ', targetUid: 'x' }]), EntryRelations.invalid)
+		})
+	})
+
+	describe('writes — what may be persisted', () => {
+		it('is the OWNED half alone, canonical null for none', () => {
+			const bag = EntryRelations.of('self', [
+				{ type: RelationType.Parent, targetUid: 'p' },
+				{ type: RelationType.FinishToStart, targetUid: 'd', direction: 'incoming' },
+			])
+			assert.deepEqual(bag.writes?.map(relation => relation.targetUid), ['p'])
+			assert.equal(EntryRelations.of('self', [{ type: RelationType.Parent, targetUid: 'p', direction: 'incoming' }]).writes, null)
+		})
+
+		it('parse keeps only what the client may store — a derived line it PUTs back is dropped', () => {
+			const parsed = EntryRelations.parse([
+				{ type: 'PARENT', targetUid: 'p' },
+				{ type: 'PARENT', targetUid: 'c', direction: 'incoming' },
+			])
+			assert.deepEqual((parsed as Array<Relation>).map(relation => relation.targetUid), ['p'])
+		})
+
+		it('parse rejects a direction that is neither, rather than coercing it into the wrong row', () => {
+			assert.equal(EntryRelations.parse([{ type: 'PARENT', targetUid: 'p', direction: 'sideways' }]), EntryRelations.invalid)
+		})
+
+		it('writesDiffer ignores the derived half entirely — else every entry goes dirty on every sync', () => {
+			const stored = EntryRelations.of('self', [{ type: RelationType.Parent, targetUid: 'p' }])
+			const served = EntryRelations.of('self', [
+				{ type: RelationType.Parent, targetUid: 'p' },
+				{ type: RelationType.Parent, targetUid: 'c', direction: 'incoming' },
+			])
+			assert.equal(stored.writesDiffer(served), false)
+			assert.equal(stored.equals(served), false)
+			assert.equal(stored.writesDiffer(EntryRelations.of('self', [{ type: RelationType.Parent, targetUid: 'other' }])), true)
 		})
 	})
 
@@ -64,20 +138,17 @@ describe('Relation', () => {
 		it('is order-insensitive and representation-tolerant (plain DTOs compare like instances)', () => {
 			const a = [{ type: RelationType.Parent, targetUid: 'x' }, { type: RelationType.FinishToStart, targetUid: 'y' }]
 			const b = [{ type: 'finishtostart', targetUid: 'y' }, { type: 'PARENT', targetUid: 'x', gap: null }]
-			assert.equal(Relation.listEquals(a, b), true)
+			assert.equal(EntryRelations.of(undefined, a).equals(EntryRelations.of(undefined, b)), true)
 		})
 
 		it('treats null, undefined and empty as the same none', () => {
-			assert.equal(Relation.listEquals(null, undefined), true)
-			assert.equal(Relation.listEquals([], null), true)
-			assert.equal(Relation.listEquals([{ type: 'PARENT', targetUid: 'x' }], null), false)
+			assert.equal(EntryRelations.of(undefined, null).equals(EntryRelations.of(undefined, undefined)), true)
+			assert.equal(EntryRelations.of(undefined, []).equals(EntryRelations.of(undefined, null)), true)
+			assert.equal(EntryRelations.of(undefined, [{ type: 'PARENT', targetUid: 'x' }]).equals(EntryRelations.of(undefined, null)), false)
 		})
 
 		it('distinguishes gap values — a lead/lag change is a real change', () => {
-			assert.equal(Relation.listEquals(
-				[{ type: 'FINISHTOSTART', targetUid: 'a', gap: 'PT1D' }],
-				[{ type: 'FINISHTOSTART', targetUid: 'a' }],
-			), false)
+			assert.equal(EntryRelations.of(undefined, [{ type: 'FINISHTOSTART', targetUid: 'a', gap: 'PT1D' }]).equals(EntryRelations.of(undefined, [{ type: 'FINISHTOSTART', targetUid: 'a' }])), false)
 		})
 	})
 

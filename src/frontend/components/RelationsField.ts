@@ -1,10 +1,11 @@
 import { Component, component, html, css, property, state, event } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
-import { RelationType, Relation, RelationSection, EntryType, TaskStatus, type Entry } from 'shared'
+import { RelationType, type Relation, RelationSection, type RelationLine, EntryType, TaskStatus, type Entry } from 'shared'
 import { EntryEditorIntent } from '../EntryEditorIntent.js'
-import { getCapabilities, getEntryRelations, getSource, searchEntries, updateEvent, updateRelations, type EntryRelationsView } from '../Api.js'
+import { getCapabilities, getSource, searchEntries, updateEvent, updateRelations } from '../Api.js'
 import { EntryStore } from '../EntryStore.js'
 import { offerFollowUps } from '../Hierarchy.js'
+import { Relations } from '../Relations.js'
 import { controlHeight } from './controlHeight.css.js'
 import './TaskStatus.js'
 
@@ -65,14 +66,13 @@ export class RelationsField extends Component {
 		type: Object,
 		// The popover got reused for another entry: the picker and the fetched view belong to the
 		// previous one — close, clear, refetch.
-		updated(this: RelationsField) { this.closePicker(); this.error = undefined; this.view = undefined; this.fetchView().catch(() => void 0) },
+		updated(this: RelationsField) { this.closePicker(); this.error = undefined },
 	}) entry!: Entry
 
 	/** The palette's contract: the calendar navigates to the date, and the intent opens the editor once
 	 * the segment renders there. Bubbles composed, so it reaches the page from inside a popover. */
 	@event({ bubbles: true, composed: true }) readonly navigate!: EventDispatcher<DateTime>
 
-	@state() private view?: EntryRelationsView
 	@state() private suggestions = new Array<Entry>()
 	@state() private activeIndex = -1
 	@state() private pendingType: RelationType = RelationType.authorable[0]!
@@ -82,8 +82,7 @@ export class RelationsField extends Component {
 	/** A terminal save rejection (self-reference/cycle → 400) surfaced inline; cleared on interaction. */
 	@state() private error?: string
 
-	// Responses may resolve out of order; only the latest issued request's may land (both fetches).
-	private viewSequence = 0
+	// Responses may resolve out of order; only the latest issued request's may land.
 	private searchSequence = 0
 	private debounceTimer?: ReturnType<typeof setTimeout>
 
@@ -104,83 +103,49 @@ export class RelationsField extends Component {
 		return this.entry.relations ?? []
 	}
 
-	override connected() {
-		this.fetchView().catch(() => void 0)
+	/** The entry's relationships as the domain sees them — BOTH directions, already bucketed and
+	 * silenced. Read paths attach the derived half, so there is nothing to fetch: an occurrence
+	 * carries its master's list, and the closure names every entry a line can point at. */
+	private get relationList() {
+		return this.entry.relationList
 	}
 
-	private async fetchView() {
-		const id = this.targetId
-		if (!id) {
-			return // a draft — nothing persisted to relate yet
-		}
-		const sequence = ++this.viewSequence
-		const view = await getEntryRelations(id)
-		if (sequence !== this.viewSequence || !this.isConnected) {
-			return
-		}
-		for (const outgoing of view.outgoing) {
-			if (outgoing.entry) {
-				this.resolvedByUid.set(outgoing.targetUid, outgoing.entry)
-			}
-		}
-		this.view = view
+	/** The entries a line's endpoints name — this entry itself, a resolved target, or the owner of a
+	 * derived line — so a coupling can be judged from either side by the same expression. */
+	private entryOf(uid: string): Entry | undefined {
+		return uid === this.entry.uid ? this.entry : Relations.entryOf(uid) ?? this.resolvedByUid.get(uid)
 	}
 
-	/** Every line, bucketed into its section, sections in fixed order (uninterpreted types trail in
-	 * encounter order): owned lines first within a section, then the derived ones. The authorable
-	 * sections are present even with no lines — their rows carry the add actions. */
+	/** Renders sections for display, including empty authorable sections supported by the source provider. */
 	private get sections(): Array<{ section: RelationSection, lines: Array<Line>, addType?: RelationType }> {
-		const bySection = new Map<RelationSection, Array<Line>>()
-		const add = (section: RelationSection, line: Line) => {
-			const lines = bySection.get(section) ?? []
-			lines.push(line)
-			bySection.set(section, lines)
-		}
-		for (const relation of this.relations) {
-			const target = this.resolvedByUid.get(relation.targetUid)
-			add(RelationType.of(relation.type).section, {
-				target,
-				heading: target?.heading,
-				// A just-picked target is resolved locally, so only a line the view hasn't spoken for
-				// is still pending — and only until the FIRST view lands.
-				pending: !this.view,
-				violated: !!target && this.entry.violates(relation, target),
-				open: target && this.opener(target),
-				remove: () => this.removeOutgoing(relation),
-			})
-		}
-		// A pair a foreign client authored redundantly from BOTH sides (our PARENT→B plus B's own
-		// CHILD→us) reads identically twice — the owned line already says it, so its derived echo
-		// stays silent (and removal edits the pointer we own).
-		const owned = new Set(this.relations.map(relation => `${RelationType.of(relation.type).section.value} ${relation.targetUid}`))
-		for (const item of this.view?.incoming ?? []) {
-			const type = RelationType.of(item.type)
-			if (item.entry.uid && owned.has(`${type.inverseSection.value} ${item.entry.uid}`)) {
-				continue
-			}
-			add(type.inverseSection, {
-				target: item.entry,
-				heading: item.entry.heading,
-				// Mirrored: the pointer lives on the OTHER entry, so the coupling is that entry's to break.
-				violated: item.entry.violates(new Relation({ type, targetUid: this.entry.uid, gap: item.gap }), this.entry),
-				open: this.opener(item.entry),
-				remove: () => { this.removeIncoming(item).catch(() => void 0) },
-			})
-		}
-		// A provider with no native link store authors none: its rows-that-exist-to-create-one are gone,
-		// like Location on a Notion task (see Integration.capabilities). What already points HERE still
-		// renders — that line lives on the other entry, whose provider does hold it, and the calendar
-		// is drawing its arrow to this chip either way.
+		const list = this.relationList
+		const bySection = new Map(list.sections.map(({ section, lines }) => [section, lines.map(line => this.lineOf(line))]))
+		// Providers without native link storage omit authoring actions, but incoming links remain visible.
 		const authorable = getCapabilities(this.entry.sourceId).relations ? AUTHORABLE_BY_SECTION : new Map<RelationSection, RelationType>()
 		return [...new Set([...bySection.keys(), ...authorable.keys()])]
 			.sort((a, b) => a.rank - b.rank)
 			.map(section => ({ section, lines: bySection.get(section) ?? [], addType: authorable.get(section) }))
 	}
 
-	/** Walking the graph: a named line leads to that entry's editor, the same way the palette leads to
-	 * a picked result — navigate, then let the intent open the segment the navigation renders. An entry
-	 * with no date has nowhere to navigate TO, so it gets the intent alone (the Planning panel renders
-	 * it). Closing first is what makes this a MOVE rather than a stack of popovers. */
+	private lineOf(line: RelationLine): Line {
+		const other = this.entryOf(line.otherUid)
+		const from = line.edge && this.entryOf(line.edge.from)
+		const to = line.edge && this.entryOf(line.edge.to)
+		return {
+			target: other,
+			heading: other?.heading,
+			// Shows pending placeholder until relation closure lands to distinguish unloaded from dangling links.
+			pending: !Relations.loaded,
+			violated: !!line.edge && !!from && !!to && line.edge.violatedBy(from, to),
+			open: other && this.opener(other),
+			// Removals update this entry for outgoing lines, or the owning entry for incoming lines.
+			remove: line.direction === 'outgoing'
+				? () => this.removeOutgoing(line.relation)
+				: () => { this.removeIncoming(line).catch(() => void 0) },
+		}
+	}
+
+	/** Navigates to a related entry in the calendar, or triggers editor directly for undated entries. */
 	private opener(target: Entry) {
 		return !target.id ? undefined : () => {
 			this.closest('mitra-entry-details')?.hidePopover()
@@ -193,10 +158,7 @@ export class RelationsField extends Component {
 
 	// --- Owned lines ------------------------------------------------------------------------------------
 
-	/** Persist the new outgoing list. Relations have their OWN write path — a relations-only PUT to
-	 * the series master, never the entry commit pipeline: they are series-level, server-validated
-	 * facts, so a rejection (a cycle's 400) is terminal and reverts rather than retrying. A DRAFT
-	 * only keeps the list on the entry — it rides the create once the draft graduates. */
+	/** Persists relations via partial update to the series master. */
 	private commit(mutate: () => void) {
 		this.error = undefined
 		const before = this.entry.relations ?? null
@@ -215,33 +177,26 @@ export class RelationsField extends Component {
 			})
 	}
 
-	// Named to dodge `HTMLElement.remove` — a private member of the same name breaks the element's
-	// structural compatibility with HTMLElement and with it the component decorators.
+	// Named to avoid conflicts with HTMLElement.prototype.remove.
 	private removeOutgoing(relation: Relation) {
 		this.commit(() => this.entry.unrelate(relation))
-		this.fetchView().catch(() => void 0)
 	}
 
 	// --- Derived lines ----------------------------------------------------------------------------------
 
-	private async removeIncoming(item: EntryRelationsView['incoming'][number]) {
-		// The pointer lives on the OTHER entry: filter this edge out of its outgoing list and PUT it
-		// back — a relations-only partial update; nothing else about that entry moves.
-		const owner = item.entry
-		if (!owner.id || !this.entry.uid) {
+	private async removeIncoming(line: RelationLine) {
+		// Removes the reference from the remote owning entry and updates its tracked store copy.
+		const owner = Relations.entryOf(line.ownerUid)
+		if (!owner?.id || !this.entry.uid) {
 			return
 		}
 		this.error = undefined
-		const remaining = (owner.relations ?? []).filter(relation => !(RelationType.of(relation.type) === RelationType.of(item.type) && relation.targetUid === this.entry.uid))
+		const remaining = (owner.relationList.writes ?? []).filter(relation => !(RelationType.of(relation.type) === line.type && relation.targetUid === this.entry.uid))
 		try {
-			const saved = await updateRelations(owner.id, remaining.length ? remaining : null)
-			// The other entry may be tracked (and even dirty) in the store — adopt the result onto
-			// its copies, or its next full PUT would resurrect the link just removed.
-			EntryStore.adoptRelations(saved)
+			EntryStore.adoptRelations(await updateRelations(owner.id, remaining.length ? [...remaining] : null))
 		} catch (error) {
 			this.error = error instanceof Error ? error.message : String(error)
 		}
-		await this.fetchView()
 	}
 
 	/** Updates status on the store's tracked instance if present, falling back to direct API write for untracked entries. */
@@ -626,9 +581,11 @@ export class RelationsField extends Component {
 		`
 	}
 
-	/** Whether this block has anything to place, published for the popover's separator to follow (see
-	 * EventDetails' `hr`). An attribute rather than something the host decides: what points AT this
-	 * entry arrives with the view fetch, so the answer can change after the host has rendered. */
+	private get rollup() {
+		return Relations.rollupOf(this.entry)
+	}
+
+	/** Synchronizes data-empty attribute with rendered sections for popover separator styling. */
 	protected override updated() {
 		this.toggleAttribute('data-empty', !this.sections.length)
 	}
@@ -650,9 +607,9 @@ export class RelationsField extends Component {
 				<mitra-icon icon=${section.icon}></mitra-icon>
 				<div class="lines">
 					<span class="kind">${section.format()}</span>
-					${section !== RelationSection.Subtasks || !this.entry.subtasks?.total ? html.nothing : html`
-						<span class="tally" title=${t('${done} of ${total:pluralityNumber} subtasks done', { done: this.entry.subtasks.done.format(), total: this.entry.subtasks.total })}>
-							${this.entry.subtasks.done.format()}/${this.entry.subtasks.total.format()}
+					${section !== RelationSection.Subtasks || !this.rollup?.total ? html.nothing : html`
+						<span class="tally" title=${t('${done} of ${total:pluralityNumber} subtasks done', { done: this.rollup.done.format(), total: this.rollup.total })}>
+							${this.rollup.done.format()}/${this.rollup.total.format()}
 						</span>
 					`}
 					${lines.map(line => {

@@ -4,6 +4,7 @@ import { equals } from '@a11d/equals'
 import '@a11d/bidirectional-map' // registers the global BidirectionalMap the iCalendar mappings below use
 import { createDAVClient } from 'tsdav'
 import ICAL from 'ical.js'
+import { EntryRelations } from './EntryRelations.js'
 import { model } from './model.js'
 import { buildVTimezone } from './vtimezone.js'
 import { Source } from './Source.js'
@@ -11,7 +12,7 @@ import { Integration, integration, withheld } from './Integration.js'
 import { Entry, TaskStatus, Transparency, Visibility, FLOATING_TIME_ZONE } from './Entry.js'
 import { EntryType } from './EntryType.js'
 import { Recurrence } from './Recurrence.js'
-import { Relation } from './Relation.js'
+import { Relation, type RelationInit } from './Relation.js'
 import { RelationType } from './RelationType.js'
 import { calendarDateOf, midnightOf } from './calendarDate.js'
 import { Participants, ParticipantRole, ParticipantStatus, type Participant } from './Participant.js'
@@ -575,29 +576,21 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 	// --- Relationships (RFC 5545 RELATED-TO) -------------------------------------------------------------
 
-	/** The entry's outgoing relationships off its RELATED-TO properties (RFC 5545 §3.8.4.5) — the
-	 * CalDAV mapping of the neutral vocabulary is the identity function (see shared/Relation.ts).
-	 * EVERY RELTYPE is kept verbatim — a missing one means PARENT (RFC 5545 §3.2.15), foreign
-	 * directions/`X-` extensions stay opaque — plus the RFC 9253 GAP duration, so a wholesale
-	 * rewrite ({@link writeRelations}) can never lose another client's data. `null` for "none". */
+	/** Parses RELATED-TO properties (RFC 5545 §3.8.4.5) into canonical relations, preserving RELTYPE and RFC 9253 GAP. */
 	static relationsFrom(component: ICAL.Component): Array<Relation> | null {
-		return Relation.normalize(component.getAllProperties('related-to').map(property => ({
+		return EntryRelations.of(undefined, component.getAllProperties('related-to').map(property => ({
 			type: property.getParameter('reltype')?.toString() || RelationType.Parent,
 			targetUid: property.getFirstValue()?.toString() ?? '',
 			gap: property.getParameter('gap')?.toString() || null,
-		})))
+		}))).value
 	}
 
-	/** Bring the component's RELATED-TO lines in line with `relations` by DIFF, never wholesale:
-	 * a line whose parsed (type, target, gap) triple the list still contains is left VERBATIM —
-	 * the model doesn't carry parameters beyond RELTYPE/GAP (VALUE=URI, X-…, LANGUAGE), so
-	 * rewriting an untouched line would destroy another client's data. Only lines the user
-	 * actually removed disappear; added ones are appended with an explicit RELTYPE (even the
-	 * default PARENT, so each line is self-describing) plus GAP when set. */
-	private writeRelations(component: ICAL.Component, relations: Array<Relation> | undefined | null) {
-		// The identity triple, normalized exactly like relationsFrom → Relation.normalize reads it,
-		// so a parsed line and its model counterpart always produce the same key.
-		const keyOf = (relation: { type: RelationType | string, targetUid: string, gap: string | null }) => `${RelationType.of(relation.type).value} ${relation.targetUid} ${relation.gap ?? ''}`
+	/** Diffs RELATED-TO properties against desired relations. Untouched properties preserve unparsed parameters (VALUE, LANGUAGE, X-*). */
+	private writeRelations(component: ICAL.Component, lines: Array<Relation> | undefined | null) {
+		// Writes only owned relations so derived incoming lines are never persisted into external resources.
+		const relations = lines === undefined ? undefined : EntryRelations.of(undefined, lines).writes
+		// Matches properties using canonical relation keys.
+		const keyOf = (init: RelationInit) => Relation.from(init)?.key ?? ''
 		const desired = new Map((relations ?? []).map(relation => [keyOf(relation), relation]))
 		const kept = new Set<string>()
 		for (const property of component.getAllProperties('related-to')) {
@@ -928,7 +921,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		// A server that discards RELATED-TO gets no line and no PUT for one: the route's own reconcile
 		// is what persists the edit there, and writing a line the next read won't return would only
 		// make the resource churn.
-		const relationsChanged = this.capabilities.relations && incoming.relations !== undefined && !Relation.listEquals(existing.relations ?? null, incoming.relations)
+		const relationsChanged = this.capabilities.relations && incoming.relations !== undefined && existing.relationList.writesDiffer(incoming.relationList)
 
 		if (keys.length === 0 && !recurrenceChanged && incoming.exdates === undefined && !relationsChanged) {
 			return

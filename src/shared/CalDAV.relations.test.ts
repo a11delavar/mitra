@@ -6,7 +6,7 @@ import { GoogleCalendar } from './GoogleCalendar.js'
 import { Entry } from './Entry.js'
 import { EntryType } from './EntryType.js'
 import { Source } from './Source.js'
-import { Relation } from './Relation.js'
+import { EntryRelations } from './EntryRelations.js'
 import { RelationType } from './RelationType.js'
 
 // The losslessness contract behind the DIFF-based write (see CalDAV.writeRelations): a line the
@@ -47,7 +47,7 @@ describe('CalDAV relations round-trip', () => {
 
 		;(new CalDAV() as any).writeRelations(subject, parsed)
 		const reparsed = CalDAV.relationsFrom(subject)
-		assert.equal(Relation.listEquals(parsed, reparsed), true)
+		assert.equal(EntryRelations.of(undefined, parsed).equals(EntryRelations.of(undefined, reparsed)), true)
 		const serialized = subject.toString()
 		assert.match(serialized, /RELATED-TO;RELTYPE=CHILD:child-uid/)
 		assert.match(serialized, /RELATED-TO;RELTYPE=FINISHTOSTART;GAP=PT1D:predecessor-uid|RELATED-TO;GAP=PT1D;RELTYPE=FINISHTOSTART:predecessor-uid/)
@@ -68,7 +68,7 @@ describe('CalDAV relations round-trip', () => {
 			'END:VCALENDAR',
 		].join('\r\n'))).getFirstSubcomponent('vevent')!
 		const parsed = CalDAV.relationsFrom(withForeignParams)!
-		const edited = Relation.normalize([...parsed, { type: RelationType.Parent, targetUid: 'new-parent' }])
+		const edited = EntryRelations.of(undefined, [...parsed, { type: RelationType.Parent, targetUid: 'new-parent' }]).value
 
 		;(new CalDAV() as any).writeRelations(withForeignParams, edited)
 		const serialized = withForeignParams.toString()
@@ -88,7 +88,7 @@ describe('CalDAV relations round-trip', () => {
 		assert.doesNotMatch(serialized, /child-uid/)
 		assert.match(serialized, /RELATED-TO:bare-parent-uid/)
 		assert.match(serialized, /RELATED-TO;RELTYPE=X-DUPLICATE-OF:duplicate-uid/)
-		assert.equal(Relation.listEquals(CalDAV.relationsFrom(subject), remaining), true)
+		assert.equal(EntryRelations.of(undefined, CalDAV.relationsFrom(subject)).equals(EntryRelations.of(undefined, remaining)), true)
 	})
 
 	it('a foreign lowercase reltype normalizes into the same identity, so the diff still matches it', () => {
@@ -247,7 +247,7 @@ describe('CalDAV relations: who is authoritative (capabilities.relations)', () =
 			stub(dav)
 			const entry = existing()
 			const incoming = entry.clone()
-			incoming.relations = Relation.normalize([{ type: RelationType.Parent, targetUid: 'parent-uid' }])
+			incoming.relations = EntryRelations.of(undefined, [{ type: RelationType.Parent, targetUid: 'parent-uid' }]).value
 			await dav.updateEntry(em(), entry, incoming)
 			assert.match(entry.data!.raw!, /RELATED-TO;RELTYPE=PARENT:parent-uid/)
 		})
@@ -257,7 +257,7 @@ describe('CalDAV relations: who is authoritative (capabilities.relations)', () =
 			const writes = stub(integration)
 			const entry = existing()
 			const incoming = entry.clone()
-			incoming.relations = Relation.normalize([{ type: RelationType.Parent, targetUid: 'parent-uid' }])
+			incoming.relations = EntryRelations.of(undefined, [{ type: RelationType.Parent, targetUid: 'parent-uid' }]).value
 			await integration.updateEntry(em(), entry, incoming)
 			assert.equal(writes.length, 0)
 			// The route's own reconcile is what persists this edit — see backend/entries.ts.
@@ -268,7 +268,7 @@ describe('CalDAV relations: who is authoritative (capabilities.relations)', () =
 			const integration = google()
 			stub(integration)
 			const entry = new Entry({ sourceId: 's', type: EntryType.Event, heading: 'New', start: new Date('2026-06-02T09:00:00Z') as never })
-			entry.relations = Relation.normalize([{ type: RelationType.Parent, targetUid: 'parent-uid' }])
+			entry.relations = EntryRelations.of(undefined, [{ type: RelationType.Parent, targetUid: 'parent-uid' }]).value
 			await integration.createEntry(em(), entry)
 			assert.doesNotMatch(entry.data!.raw!, /RELATED-TO/)
 			assert.match(entry.data!.raw!, /SUMMARY:New/)

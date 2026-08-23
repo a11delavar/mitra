@@ -1,5 +1,5 @@
 import { Component, component, html, css, property, state, repeat } from '@a11d/lit'
-import { RelationType, type Entry } from 'shared'
+import { RelationGraph, type Entry } from 'shared'
 import { type EntrySegment } from './EntrySegment.js'
 import { type EntrySegmentComponent } from './EventSegment.js'
 import { getSource } from './Api.js'
@@ -204,74 +204,22 @@ export class EntryConnections extends Component {
 		}
 
 		const edges = new Array<ConnectorEdge>()
-		const seen = new Set<string>()
-		for (const owner of byEntry.keys()) {
-			for (const relation of owner.relations ?? []) {
-				const family = RelationType.of(relation.type).family
-				if (!family) {
-					continue
-				}
-				// One edge per (family, uid-pair): every occurrence of a recurring owner materializes
-				// the master's relations, and both hierarchy directions can be foreign-authored.
-				const pairKey = `${family}:${owner.uid}:${relation.targetUid}`
-				if (seen.has(pairKey)) {
-					continue
-				}
-				const targets = byUid.get(relation.targetUid)
-				if (!targets?.length) {
-					continue
-				}
-				seen.add(pairKey)
-				// A uid can resolve to several rows (a recurring series) — connect the temporally
-				// nearest owner/target pair, not every combination.
-				const owners = byUid.get(owner.uid!) ?? [owner]
-				let bestOwner: Entry | undefined
-				let bestTarget: Entry | undefined
-				let bestDelta = Infinity
-				for (const o of owners) {
-					for (const t of targets) {
-						if (o === t) {
-							continue
-						}
-						const delta = Math.abs((o.start?.valueOf() ?? 0) - (t.start?.valueOf() ?? 0))
-						if (delta < bestDelta) {
-							bestDelta = delta
-							bestOwner = o
-							bestTarget = t
-						}
-					}
-				}
-				if (!bestOwner || !bestTarget) {
-					continue
-				}
-				// The edge's visual direction: dependencies flow predecessor → dependent, hierarchy
-				// parent → subtask — whichever side stored the pointer.
-				let from: Entry
-				let to: Entry
-				let kind: ConnectorEdge['kind']
-				if (family === 'dependency') {
-					kind = 'dependency'
-					from = bestTarget
-					to = bestOwner
-				} else {
-					kind = 'subtask'
-					const edge = RelationType.of(relation.type).hierarchyEdge(bestOwner.uid!, relation.targetUid)
-					if (!edge) {
-						continue
-					}
-					from = edge.parent === bestOwner.uid ? bestOwner : bestTarget
-					to = from === bestOwner ? bestTarget : bestOwner
-				}
-				// The arrow leaves the run's LAST chip in this canvas and arrives at the FIRST.
-				const fromSeg = byEntry.get(from)?.at(-1)
-				const toSeg = byEntry.get(to)?.[0]
-				if (!fromSeg || !toSeg || fromSeg === toSeg) {
-					continue
-				}
-				// Validity is the endpoints' business, never the route's: routing stays validity-agnostic and
-				// a broken coupling changes only the INK.
-				edges.push(this.edge(kind, from, to, fromSeg, toSeg, kind === 'dependency' && to.violates(relation, from)))
+		// Edges are gathered from RelationGraph, deduplicated and matched to the appropriate occurrence pair.
+		for (const edge of RelationGraph.of([...byEntry.keys()]).edges) {
+			const pair = edge.bestPair(byUid.get(edge.from) ?? [], byUid.get(edge.to) ?? [])
+			if (!pair) {
+				continue
 			}
+			const { from, to } = pair
+			const kind: ConnectorEdge['kind'] = edge.family === 'dependency' ? 'dependency' : 'subtask'
+			// Arrows leave the run's last chip in this canvas and arrive at the first.
+			const fromSeg = byEntry.get(from)?.at(-1)
+			const toSeg = byEntry.get(to)?.[0]
+			if (!fromSeg || !toSeg || fromSeg === toSeg) {
+				continue
+			}
+			// Routing remains purely geometric; broken couplings change only ink styling.
+			edges.push(this.edge(kind, from, to, fromSeg, toSeg, edge.violatedBy(from, to)))
 		}
 		return edges
 	}

@@ -2,9 +2,12 @@ import { component, html, css } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { type Entry } from 'shared'
 
-/** Dialog prompting whether to mark a parent task completed when its final subtask finishes. */
+/**
+ * Prompts whether to mark completed parent tasks when their final subtasks finish.
+ * Multi-level chains are batched into a single prompt. `parents` is ordered deepest-first.
+ */
 @component('mitra-dialog-complete-parent')
-export class DialogCompleteParent extends DialogComponent<{ readonly parent: Entry }, boolean | undefined> {
+export class DialogCompleteParent extends DialogComponent<{ readonly parents: ReadonlyArray<Entry> }, boolean | undefined> {
 	protected override createRenderRoot() { return this }
 
 	static override get styles() {
@@ -20,10 +23,16 @@ export class DialogCompleteParent extends DialogComponent<{ readonly parent: Ent
 		`
 	}
 
+	private get nearest() { return this.parameters.parents[0]! }
+	private get above() { return this.parameters.parents.length - 1 }
+
 	protected override get template() {
 		return html`
-			<mitra-dialog heading=${t('All subtasks done')} primaryButtonText=${t('Mark as done')} primaryOnEnter>
-				<p>${t('Every subtask of "${heading}" is done. Mark it as done too?', { heading: this.parameters.parent.heading })}</p>
+			<mitra-dialog heading=${t('All subtasks done')} primaryButtonText=${this.above ? t('Mark all as done') : t('Mark as done')} primaryOnEnter>
+				<p>${this.above
+					? t('Every subtask of "${heading}" is done, which completes ${count:pluralityNumber} more tasks above it. Mark them all as done?', { heading: this.nearest.heading, count: this.above })
+					: t('Every subtask of "${heading}" is done. Mark it as done too?', { heading: this.nearest.heading })
+					}</p>
 			</mitra-dialog>
 		`
 	}

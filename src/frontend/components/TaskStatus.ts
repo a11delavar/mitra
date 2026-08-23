@@ -2,7 +2,8 @@ import { Component, component, html, css, property, event, query } from '@a11d/l
 import { type Entry, TaskStatus } from 'shared'
 import { getCapabilities } from '../Api.js'
 import { EntryStore } from '../EntryStore.js'
-import { offerToCloseSubtasksOf } from '../Hierarchy.js'
+import { offerToCloseSubtasks } from '../Hierarchy.js'
+import { Relations } from '../Relations.js'
 
 const order = [TaskStatus.ToDo, TaskStatus.Doing, TaskStatus.Done, TaskStatus.Cancelled] as const
 
@@ -43,7 +44,7 @@ export class TaskStatusComponent extends Component {
 		if (status === TaskStatus.Done || status === TaskStatus.Cancelled) {
 			return status
 		}
-		const progress = this.entry?.progress
+		const progress = Relations.progressOf(this.entry)
 		if (progress !== undefined && progress > 0 && progress < 1) {
 			return TaskStatus.Doing
 		}
@@ -51,11 +52,11 @@ export class TaskStatusComponent extends Component {
 	}
 
 	private get progress() {
-		return this.status === TaskStatus.Done ? 1 : this.entry?.progress
+		return this.status === TaskStatus.Done ? 1 : Relations.progressOf(this.entry)
 	}
 
 	private get progressLabel() {
-		const rollup = this.entry?.subtasks
+		const rollup = Relations.rollupOf(this.entry)
 		if (rollup?.total) {
 			return t('${done} of ${total:pluralityNumber} subtasks done', { done: String(rollup.done), total: rollup.total })
 		}
@@ -83,7 +84,7 @@ export class TaskStatusComponent extends Component {
 	private readonly closeOutSubtasks = (e: Event) => {
 		e.stopPropagation()
 		this.menu?.hidePopover()
-		void offerToCloseSubtasksOf(this.entry).catch(() => void 0)
+		void offerToCloseSubtasks(this.entry).catch(() => void 0)
 	}
 
 	private readonly clearPercent = (e: Event) => {
@@ -398,7 +399,7 @@ export class TaskStatusComponent extends Component {
 	}
 
 	private get progressSectionTemplate() {
-		const rollup = this.entry.subtasks
+		const rollup = Relations.rollupOf(this.entry)
 		if (rollup?.total) {
 			// RFC 5545 §3.8.1.8: a completed task reads 100%.
 			const value = Math.round((this.progress ?? rollup.progress) * 100)

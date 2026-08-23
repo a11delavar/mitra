@@ -160,27 +160,9 @@ export function getVisibleSources(): Array<Source> {
 	return integrations.flatMap(i => [...i.sources]).filter(s => s.visible)
 }
 
-/** The relations row's display data for one entry: its outgoing links with resolved target entries
- * (absent = unresolvable — deleted or foreign; still listed and removable) and the DERIVED incoming
- * ones ("has subtask", "blocks") with their owning entries. Occurrences resolve their master's id
- * before calling — relationships are series-level. */
-export interface EntryRelationsView {
-	outgoing: Array<{ type: string, gap: string | null, targetUid: string, entry?: Entry }>
-	incoming: Array<{ type: string, gap: string | null, entry: Entry }>
-}
-
-export function getEntryRelations(id: string) {
-	return Api.get<EntryRelationsView>(`/entries/${id}/relations?tz=${tz()}`)
-}
-
-/** Hierarchy around one entry: direct parents with rollups and full subtree descendants. */
-export interface EntryHierarchyView {
-	parents: Array<Entry>
-	descendants: Array<Entry>
-}
-
-export function getEntryHierarchy(id: string) {
-	return Api.get<EntryHierarchyView>(`/entries/${id}/hierarchy?tz=${tz()}`)
+/** Fetches all entries referenced in the user's relationship graph for client-side graph calculations. */
+export function getRelationClosure() {
+	return Api.get<Array<Entry>>(`/entries/relations/closure?tz=${tz()}`)
 }
 
 /** THE write path for relationships (see RelationsField) — always a relations-only partial PUT to

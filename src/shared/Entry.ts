@@ -7,8 +7,10 @@ import { EntryType, type EntryTypeValue } from './EntryType.js'
 import { Source } from './Source.js'
 import { Recurrence } from './Recurrence.js'
 import { Participants, type ParticipantRole, type Participant } from './Participant.js'
-import { Relation } from './Relation.js'
-import { RelationType } from './RelationType.js'
+import { type Relation } from './Relation.js'
+import { type RelationType } from './RelationType.js'
+import { RelationEdge } from './RelationEdge.js'
+import { EntryRelations } from './EntryRelations.js'
 
 export enum TaskStatus {
 	ToDo = 'todo',
@@ -152,20 +154,9 @@ export class Entry {
 	 */
 	@property({ type: 'number', nullable: true }) percentComplete: number | null = null
 
-	/** Derived subtask rollup attached on read; excluded from persistence and dirty diffs. */
-	subtasks?: EntryRollup
-
-	/** Progress fraction (0-1) derived from subtasks rollup when present, else authored percentComplete. */
+	/** Authored progress fraction (0-1) derived from percentComplete. Parent subtask rollups belong to {@link RelationGraph}. */
 	get progress(): number | undefined {
-		if (this.subtasks?.total) {
-			return this.subtasks.progress
-		}
 		return this.percentComplete === null || this.percentComplete === undefined ? undefined : this.percentComplete / 100
-	}
-
-	/** Whether progress is derived from subtasks rather than authored. */
-	get progressIsDerived() {
-		return !!this.subtasks?.total
 	}
 
 	get done() { return this.status === TaskStatus.Done }
@@ -311,39 +302,32 @@ export class Entry {
 	seriesStart?: DateTime
 
 	// --- Relationships ---------------------------------------------------------------------------------
-	// The entry's OUTGOING relationships. NOT a column: the EntryRelation table is the queryable
-	// store, materialized onto this field on reads and reconciled from it on writes. Tri-state like
-	// `recurrence` (array sets, `null` clears, absent keeps — and `undefined` after sync means "no
-	// native store here, leave the table alone"). Always REPLACED, never mutated in place: `clone()`
-	// is shallow, so canonical snapshots share the array.
+	// The entry's OUTGOING relationships. Stored in EntryRelation table and materialized onto this field.
+	// Tri-state: array sets, null clears, undefined keeps. Always replaced, never mutated in place.
 	relations?: Array<Relation> | null
 
-	/** Adds an outgoing relationship (normalized, deduplicated) — self-references are meaningless and
-	 * ignored. Replaces the array, so a shared snapshot can't observe the edit. */
+	/** Collection wrapper providing grouping, filtering, and edge helpers for this entry's relations. */
+	get relationList() {
+		return EntryRelations.of(this.uid, this.relations)
+	}
+
+	/** Adds an outgoing relationship (normalized, deduplicated). Replaces array to keep snapshots immutable. */
 	relateTo(type: RelationType | string, targetUid: string) {
-		if (targetUid && targetUid !== this.uid) {
-			this.relations = Relation.normalize([...(this.relations ?? []), { type, targetUid }])
-		}
+		this.relations = this.relationList.adding(type, targetUid).value
 	}
 
-	/** Removes an outgoing relationship by value; an emptied list collapses to the canonical `null`. */
+	/** Removes an outgoing relationship by value; an emptied list collapses to null. */
 	unrelate(relation: Relation) {
-		this.relations = Relation.normalize((this.relations ?? []).filter(candidate => !Relation.equal(candidate, relation)))
+		this.relations = this.relationList.without(relation).value
 	}
 
-	/** Whether an outgoing dependency of this entry is BROKEN — the boundary it couples falling before
-	 * the predecessor's. Anything undecidable (no coupling, an unread lead/lag gap, a missing
-	 * boundary) is NOT a violation. */
+	/** Evaluates whether an outgoing dependency is violated relative to predecessor. */
 	violates(relation: Relation, predecessor: Entry) {
-		const coupling = RelationType.of(relation.type).coupling
-		const dependent = coupling && this.boundaryOf(coupling.dependent)
-		const against = coupling && predecessor.boundaryOf(coupling.predecessor)
-		return !!dependent && !!against && !relation.gap && dependent.valueOf() < against.valueOf()
+		return RelationEdge.of(this.uid ?? '', relation)?.violatedBy(predecessor, this) ?? false
 	}
 
-	/** The instant a coupling compares against; an entry without an end IS its own end. All-day ends
-	 * are stored exclusive, so back-to-back all-day spans compare as satisfied. */
-	private boundaryOf(which: 'start' | 'end') {
+	/** The boundary instant for dependency comparisons. All-day ends are stored exclusive. */
+	boundaryOf(which: 'start' | 'end') {
 		return which === 'start' ? this.start : this.end ?? this.start
 	}
 
@@ -453,6 +437,8 @@ export class Entry {
 			transparency: this.transparency,
 			visibility: this.visibility,
 			reminders: this.reminders ? [...this.reminders] : this.reminders,
+			// Copies inherit owned relations; derived incoming links belong to other entries and are omitted.
+			relations: this.relationList.writes,
 		})
 	}
 
@@ -488,7 +474,6 @@ export class Entry {
 			recurrenceMasterId: values.recurrenceMasterId,
 			recurrenceId: values.recurrenceId,
 			seriesStart: values.seriesStart,
-			subtasks: values.subtasks,
 		})
 	}
 

@@ -2,6 +2,7 @@ import { Controller, eventListener } from '@a11d/lit'
 import { Task } from '@lit/task'
 import { fetchEvents } from './Api.js'
 import { EntryStore } from './EntryStore.js'
+import { Relations } from './Relations.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 import type { PageCalendar } from './PageCalendar.js'
 
@@ -43,6 +44,8 @@ export class EntryFetcherController extends Controller {
 			this.lastContact = Date.now()
 			EntryStore.applyServerEntries(entries)
 			EntryEditorIntent.settle(entries)
+			// Refetches relation closure to keep out-of-window linked entries fresh.
+			void Relations.refresh().catch(() => void 0)
 		},
 	})
 

@@ -117,6 +117,7 @@ declare global {
 		"Event": unknown
 		"Events": unknown
 		"Every": unknown
+		"Every subtask of \"${heading}\" is done, which completes ${count:pluralityNumber} more tasks above it. Mark them all as done?": unknown
 		"Every subtask of \"${heading}\" is done. Mark it as done too?": unknown
 		"Forward": unknown
 		"Free": unknown
@@ -142,6 +143,7 @@ declare global {
 		"Location": unknown
 		"Make attendance optional": unknown
 		"Make attendance optional for everyone": unknown
+		"Mark all as done": unknown
 		"Mark all optional": unknown
 		"Mark all required": unknown
 		"Mark as cancelled": unknown

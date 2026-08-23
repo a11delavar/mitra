@@ -1,10 +1,9 @@
 import { Router, type Request } from 'express'
 import { orm } from './orm.js'
 import { syncEmitter } from './syncEmitter.js'
-import { equals, Entry, EntryRelation, EntryType, FLOATING_TIME_ZONE, Integration, Participants, Recurrence, Relation, Source, Transparency, normalizeAllDay, projectAllDay, createLogger, type RecurrenceScope } from '../shared/index.js'
+import { equals, Entry, EntryRelation, EntryType, FLOATING_TIME_ZONE, Integration, Participants, Recurrence, EntryRelations, Source, Transparency, normalizeAllDay, projectAllDay, createLogger, type RecurrenceScope } from '../shared/index.js'
 import { editOccurrence, deleteOccurrence, expandedOccurrences } from './occurrences.js'
-import { assertRelationsValid, resolveRelationsView } from './relations.js'
-import { attachRollups, resolveHierarchyView } from './hierarchy.js'
+import { assertRelationsValid, attachRelations, relationClosure } from './relations.js'
 
 const logger = createLogger('Entries')
 
@@ -82,8 +81,7 @@ entriesRouter.get('/', async (req, res) => {
 	const occurrences = await expandedOccurrences(em, visibleSourceIds, startDate, endDate)
 
 	const entries = [...rows, ...occurrences]
-	await EntryRelation.attach(em, entries)
-	await attachRollups(em, req.user, entries)
+	await attachRelations(em, req.user, entries)
 	return res.json(entries.map(entry => projectedForViewer(entry, viewerZone(req))))
 })
 
@@ -109,25 +107,15 @@ entriesRouter.get('/search', async (req, res) => {
 		],
 	}, { orderBy: { start: 'desc' }, limit: 20 })
 
-	await EntryRelation.attach(em, entries)
-	await attachRollups(em, req.user, entries)
+	await attachRelations(em, req.user, entries)
 	return res.json(entries.map(entry => projectedForViewer(entry, viewerZone(req))))
 })
 
-// The editor's relations row, resolved for display: this entry's outgoing links with their target
-// entries, plus the DERIVED incoming ones — who points at this uid ("has subtask", "blocks") — with
-// their owners. Derived on read from the relation store, never stored twice (see shared/Relation.ts).
-entriesRouter.get('/:id/relations', async (req, res) => {
+// Returns all entries referenced by the user's relationship graph to support client-side graph queries.
+entriesRouter.get('/relations/closure', async (req, res) => {
 	const em = orm.em.fork()
-	const entry = await req.user.entry(em, req.params.id)
-	return res.json(await resolveRelationsView(em, req.user, entry, related => projectedForViewer(related, viewerZone(req))))
-})
-
-// Resolves direct parents with rollups and the entire subtree beneath this entry.
-entriesRouter.get('/:id/hierarchy', async (req, res) => {
-	const em = orm.em.fork()
-	const entry = await req.user.entry(em, req.params.id)
-	return res.json(await resolveHierarchyView(em, req.user, entry, related => projectedForViewer(related, viewerZone(req))))
+	const entries = await relationClosure(em, req.user)
+	return res.json(entries.map(entry => projectedForViewer(entry, viewerZone(req))))
 })
 
 entriesRouter.post('/', async (req, res) => {
@@ -144,8 +132,8 @@ entriesRouter.post('/', async (req, res) => {
 		return res.status(400).json({ error: 'Invalid recurrence rule' })
 	}
 
-	const relations = Relation.parse(body.relations)
-	if (relations === Relation.invalid) {
+	const relations = EntryRelations.parse(body.relations)
+	if (relations === EntryRelations.invalid) {
 		return res.status(400).json({ error: 'Invalid relations' })
 	}
 
@@ -233,7 +221,6 @@ entriesRouter.post('/', async (req, res) => {
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
 	logger.debug(`Created ${created.type} "${created.heading}" (${created.id}) in source ${targetSource.id}`)
-	await attachRollups(em, req.user, [created])
 	return res.status(201).json(projectedForViewer(created, viewerZone(req)))
 })
 
@@ -248,8 +235,8 @@ entriesRouter.put('/:id', async (req, res) => {
 
 	// Tri-state like `recurrence`: an array sets, `null` clears, absent keeps. Validated BEFORE any
 	// integration write — a 400 must leave the external store untouched.
-	const relations = Relation.parse(body.relations)
-	if (relations === Relation.invalid) {
+	const relations = EntryRelations.parse(body.relations)
+	if (relations === EntryRelations.invalid) {
 		return res.status(400).json({ error: 'Invalid relations' })
 	}
 	if (relations !== undefined) {
@@ -359,8 +346,7 @@ entriesRouter.put('/:id', async (req, res) => {
 		// series-level, and a detached/continuation entry starts with none of its own.
 		const result = await editOccurrence(em, currentIntegration, existing, occurrenceId, edited, body.scope)
 		await em.flush()
-		await EntryRelation.attach(em, [result])
-		await attachRollups(em, req.user, [result])
+		await attachRelations(em, req.user, [result])
 		syncEmitter.emit('updated', req.user.id)
 		logger.debug(`Edited occurrence of series ${existing.id} (scope '${body.scope}')`)
 		return res.json(projectedForViewer(result, viewerZone(req)))
@@ -444,7 +430,6 @@ entriesRouter.put('/:id', async (req, res) => {
 		await em.flush()
 		syncEmitter.emit('updated', req.user.id)
 		logger.debug(`Re-created entry ${existing.id} as ${created.type} in source ${targetSource.id} (new id ${created.id})`)
-		await attachRollups(em, req.user, [created])
 		return res.json(projectedForViewer(created, viewerZone(req)))
 	}
 
@@ -460,7 +445,6 @@ entriesRouter.put('/:id', async (req, res) => {
 	syncEmitter.emit('updated', req.user.id)
 	logger.debug(`Updated entry ${existing.id} "${incoming.heading}"`)
 	// Attach rollup so client adoption on save does not strip the parent's rollup state.
-	await attachRollups(em, req.user, [existing])
 	return res.json(projectedForViewer(existing, viewerZone(req)))
 })
 

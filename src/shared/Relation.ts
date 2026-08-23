@@ -2,101 +2,60 @@ import { model } from './model.js'
 import { converter } from '@a11d/converter'
 import { RelationType } from './RelationType.js'
 
-/** What a boundary may hand {@link Relation.normalize}: an instance, a plain wire DTO, or an
- * initializer typed with a {@link RelationType}. */
+/** Input shape accepted by {@link Relation.from} and {@link EntryRelations.of}. */
 export interface RelationInit {
 	type?: string | RelationType
 	targetUid?: string
 	gap?: string | null
+	direction?: RelationDirection
 }
 
+/** Ownership direction: outgoing persists with the entry; incoming is derived at read time. */
+export type RelationDirection = 'outgoing' | 'incoming'
+
 /**
- * One outgoing relationship of an entry: `this entry —type→ targetUid`. A pure value object;
- * {@link EntryRelation} materializes these as rows, {@link RelationType} carries the vocabulary's
- * behaviour. `type` is the instance domain-side; {@link RelationType.converter} carries it across
- * the API as its plain value, and boundaries may still hand strings — normalize canonicalizes.
- *
- * Targets are entry `uid`s, never backend ids: durable across re-imports and migrations, and exactly
- * what `RELATED-TO` stores. They may DANGLE — pointers, not foreign keys.
- *
- * ONE stored direction: `PARENT` on the child, `FINISHTOSTART` on the dependent; the reverse reading
- * is derived by query, never written (a second pointer inevitably desyncs across clients). For a
- * recurring series the owner is the MASTER — occurrences present their master's relationships.
+ * Perspectival relationship line as read by one entry. `outgoing` indicates the entry owns the row;
+ * `incoming` indicates the target entry owns it. Targets are entry UIDs and may dangle.
+ * Collection-level logic (parsing, diffing, write-filtering) lives on {@link EntryRelations}.
  */
 @model('Relation')
 export class Relation {
 	@converter({ type: RelationType.converter })
 	type!: RelationType
 	targetUid!: string
-	/** RFC 9253 `GAP` lead/lag duration, round-tripped as an opaque ISO-8601 duration string.
-	 * Always `null` (never `undefined`) when absent, so serialized and constructed instances
-	 * compare structurally equal. */
+	/** RFC 9253 GAP lead/lag duration string. Always null when absent so serialized and constructed instances match. */
 	gap: string | null = null
+	/** Direction perspective. Temporal types lack reverse RFC equivalents, so reverse readings are
+	 * modeled as incoming lines of the same relation type rather than distinct inverted types. */
+	direction: RelationDirection = 'outgoing'
 
 	constructor(init?: Partial<Relation>) {
 		Object.assign(this, init)
 	}
 
-	/** What a structurally unusable wire value parses to — a request boundary owes the client a 400,
-	 * not a throw, and `undefined` is taken (it means "absent, keep"). */
-	static readonly invalid: unique symbol = Symbol('invalid relations')
-
-	/**
-	 * Parses wire relations: `undefined` keeps, `null` clears, array sets ({@link normalize}d).
-	 * Accepts both wire strings and already-revived {@link RelationType} instances from `@model` payloads.
-	 */
-	static parse(value: unknown): Array<Relation> | null | undefined | typeof Relation.invalid {
-		if (value === undefined || value === null) {
-			return value as null | undefined
-		}
-		if (!Array.isArray(value)) {
-			return Relation.invalid
-		}
-		const usable = (item: unknown): item is Relation => {
-			if (typeof item !== 'object' || item === null) {
-				return false
-			}
-			const { type, targetUid, gap } = item as Record<'type' | 'targetUid' | 'gap', unknown>
-			const namesAType = type instanceof RelationType || (typeof type === 'string' && !!type.trim())
-			return namesAType
-				&& typeof targetUid === 'string' && !!targetUid.trim()
-				&& (gap === null || gap === undefined || typeof gap === 'string')
-		}
-		return value.every(usable) ? Relation.normalize(value) : Relation.invalid
+	/** Factory normalizing raw inputs into canonical Relation instances. Returns undefined if invalid. */
+	static from(init: RelationInit): Relation | undefined {
+		const raw = init.type === undefined || init.type === null ? '' : String(init.type).trim()
+		const targetUid = init.targetUid?.trim()
+		return !raw || !targetUid ? undefined : new Relation({
+			type: RelationType.of(raw),
+			targetUid,
+			gap: init.gap?.trim() || null,
+			direction: init.direction ?? 'outgoing',
+		})
 	}
 
-	/** Canonical form of a list — trimmed UPPERCASE types, deduplicated by the full (type, target,
-	 * gap) triple, sorted, `null` for "none" — so every producer yields ONE representation and value
-	 * comparison never sees phantom differences. Drops structurally unusable items. */
-	static normalize(relations: Iterable<RelationInit> | null | undefined): Array<Relation> | null {
-		const byKey = new Map<string, Relation>()
-		for (const item of relations ?? []) {
-			const raw = item.type === undefined || item.type === null ? '' : String(item.type).trim()
-			const targetUid = item.targetUid?.trim()
-			if (!raw || !targetUid) {
-				continue
-			}
-			const type = RelationType.of(raw)
-			const gap = item.gap?.trim() || null
-			const key = `${type.value} ${targetUid} ${gap ?? ''}`
-			if (!byKey.has(key)) {
-				byKey.set(key, new Relation({ type, targetUid, gap }))
-			}
-		}
-		return byKey.size ? [...byKey.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, relation]) => relation) : null
+	get isOutgoing() {
+		return this.direction === 'outgoing'
 	}
 
-	/** Field-wise value equality, tolerant of plain DTOs on either side. */
-	static equal(a: Partial<Relation> | null | undefined, b: Partial<Relation> | null | undefined): boolean {
-		return !a || !b ? !a === !b : String(a.type) === String(b.type) && a.targetUid === b.targetUid && (a.gap ?? null) === (b.gap ?? null)
+	/** Canonical key identifying the line within an entry's relation bag. */
+	get key(): string {
+		return `${this.direction} ${this.type.value} ${this.targetUid} ${this.gap ?? ''}`
 	}
 
-	/** Value equality of two lists in any representation — both are normalized first, and
-	 * `null`/`undefined`/empty all mean the same "none". */
-	static listEquals(a: Iterable<RelationInit> | null | undefined, b: Iterable<RelationInit> | null | undefined): boolean {
-		const left = Relation.normalize(a)
-		const right = Relation.normalize(b)
-		return left === null || right === null ? left === right
-			: left.length === right.length && left.every((relation, index) => Relation.equal(relation, right[index]))
+	equals(other: RelationInit | null | undefined): boolean {
+		const coerced = other && Relation.from(other)
+		return !!coerced && coerced.key === this.key
 	}
 }
