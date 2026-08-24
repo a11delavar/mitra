@@ -6,117 +6,98 @@ import { type EntrySegmentComponent } from '../../entries/client/EventSegment.js
 import { getSource } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
 
-/** One drawable relation edge: the chips it spans and the PIECES that draw it. JS decides topology
- * from data alone; pixels are CSS anchor positioning's job — which is only sound because of the
- * CANVAS pattern (see AGENTS.md, and Days.ts for the wrapper itself). */
+/** Grid placement in view-specific units (deltas and order only). */
+export interface SegmentPlacement {
+	/** First column in logical reading order. */
+	readonly start: number
+	/** Last column in logical reading order. */
+	readonly end: number
+	/** Vertical order (lane index, month row*100 + slot, or minute midpoint). */
+	readonly rank: number
+	/** Scroll/paint frame: 'lane' marks chips in the sticky all-day strip for cross-realm routing. */
+	readonly frame?: 'lane'
+}
+
 interface ConnectorEdge {
 	readonly key: string
 	readonly kind: 'dependency' | 'subtask'
 	readonly fromEntryId: string
 	readonly toEntryId: string
 	readonly pieces: ReadonlyArray<ConnectorPiece>
-	/** The coupling this edge draws is already broken by its endpoints — see {@link Entry.violates}. */
 	readonly violated: boolean
-	/** The endpoints' presented colors — the hover gradient's stops (dependencies only). */
+	/** Spans sticky all-day lane and timed grid (animates lane-shift correction). */
+	readonly cross?: boolean
 	readonly fromColor?: string
 	readonly toColor?: string
 }
 
-/** One anchored box carrying one primitive stroke — a stretched GLYPH where the ink curves, a rounded
- * ELBOW ring where it turns. Consecutive pieces name the SAME anchor() expression for the edge they
- * share, which is what holds a multi-piece route's joints without a single measurement. */
 interface ConnectorPiece {
-	/** The anchor()-referencing insets that place the box. */
 	readonly style: string
-	/** GLYPH pieces: the {@link PATHS} key of the stroke stretched across the box. */
 	readonly path?: string
-	/** ELBOW pieces: the padding + radius longhands that draw the ink instead of a glyph. A stretched
-	 * quarter curve is round only in PROPORTION — in a box 14px wide and 300px tall it reads as a right
-	 * angle — so a turn draws a ring whose corner radius is a length and holds its shape at any size. */
 	readonly ink?: string
-	/** The class hanging the arrowhead off this piece's path END; absent = a joint piece. */
-	readonly head?: 'head-end-down' | 'head-end-up' | 'head-end-flat' | 'head-down'
-	/** The direction the ink travels through this box, for the hover gradient. */
+	readonly head?: 'head-end-down' | 'head-end-up' | 'head-end-flat' | 'head-down' | 'head-up' | 'head-drop-end' | 'head-rise-end'
+	/** In-lane duplicate piece painting at z 91 above the sticky lane's background. */
+	readonly inLane?: boolean
+	/** Toggles the mirror class relative to direction for heads entering the target's end port. */
+	readonly flip?: boolean
 	readonly gradient?: string
-	/** This piece's slice of the source→target fade, in percent: consecutive pieces meet at the same
-	 * mixed colour, which is what makes one gradient read as continuous across several boxes. */
 	readonly fade?: readonly [number, number]
 }
 
-/** The normalized ink strokes, stretched to each piece's box and baked into a mask data-uri (see
- * maskFor). Every dependency path ends on an axis-aligned tangent, so the fixed-rotation arrowhead
- * always matches the arrival angle. Authored in physical LTR: RTL places the box at the mirrored
- * position and the `mirror` class reflects the glyph inside it. */
+/** Normalized ink strokes stretched across mask data-URIs. Masked curves antialias inherently;
+ * straight runs use painted geometry to ensure crisp 1px strokes (see AGENTS.md). */
 const PATHS: Record<string, string> = {
-	// Forward single pieces: S-curves corner to corner, a straight line for level ports.
+	// Side-port to side-port horizontal-tangent S-curves.
 	'dependency:s-down': 'M 0 0 C 50 0 50 100 100 100',
 	'dependency:s-up': 'M 0 100 C 50 100 50 0 100 0',
-	'dependency:flat': 'M 0 50 H 100',
-	// The same-column forward drop: source block-end straight into the target block-start.
-	'dependency:drop': 'M 50 0 V 100',
-	'subtask:right-down': 'M 0 0 V 100 H 100',
-	'subtask:right-up': 'M 0 100 V 0 H 100',
-	'subtask:left-down': 'M 100 0 V 100 H 0',
-	'subtask:left-up': 'M 100 100 V 0 H 0',
-	'subtask:down': 'M 50 0 V 100',
-	'subtask:up': 'M 50 100 V 0',
+	// Vertical-tangent twins for tall, adjacent-column boxes between block ports.
+	'dependency:s-tall-down': 'M 0 0 C 0 50 100 50 100 100',
+	'dependency:s-tall-up': 'M 0 100 C 0 50 100 50 100 0',
 }
 
-/** The hover gradient's CSS direction per single-piece path — from the SOURCE end to the TARGET end,
- * so the ink fades source-color → target-color (physical LTR; the `mirror` class reflects it). */
 const GRADIENT_DIRECTIONS: Record<string, string> = {
 	'dependency:s-down': 'to bottom right',
 	'dependency:s-up': 'to top right',
-	'dependency:flat': 'to right',
-	'dependency:drop': 'to bottom',
+	'dependency:s-tall-down': 'to bottom right',
+	'dependency:s-tall-up': 'to top right',
 }
 
-/** The block size a straight run's box is given, centred on its line — a line along a box EDGE would
- * live in a 0px box and the stretched ink would have no area to paint into. */
-const FLAT_BLOCK_SIZE = 8
+/** Rank delta threshold (~2h apart) above which adjacent columns use vertical S-curves. */
+const TALL_RANK_DELTA = 240
 
-/** How far a loop reaches past a port before turning (its horizontal clearance). Must exceed CORNER —
- * it has to hold a rounded corner and still leave straight run on both sides of it. */
+/** Horizontal clearance past a port before turning. */
 const STUB = '0.875rem'
 
-/** How far a loop's lane clears the chips it wraps around. */
+/** Loop clearance around chips. */
 const LANE = '0.5rem'
 
-/** The radius every turn is rounded by. A length, not a proportion, so a corner looks the same whether
- * the leg it ends is 6px or 600px long. */
-const CORNER = '0.375rem'
+/** Turn radius for elbow joints. */
+const CORNER = '0.5rem'
 
-/** A one-device-pixel vein for both kinds: a hairline reads as more precise on a grid this dense than
- * a heavier pale stroke does. Constant across rest, hover and violation alike — weight carries no
- * meaning here (see the styles), so a piece needs only ONE mask. */
-const STROKE_WIDTH: Record<'dependency' | 'subtask', number> = { dependency: 1, subtask: 1 }
+/** Integer pixel width to prevent subpixel rasterization snapping discrepancies. */
+const STROKE_WIDTH = 1
 
-/** The stroke shape as a mask-image `url()`: the path stroked white, stretched with the box at
- * constant device width, masking a CSS background that is solid at rest and a gradient on hover. An
- * SVG paint-server can't be used instead — it fails inside anchor-positioned elements (see PATHS). */
+/** Optical weight multiplier for antialiased mask curves. */
+const CURVE_STROKE = 1.1
+
+/** Gap reserved before port for the arrowhead. */
+const HEAD_GAP = 'calc(var(--mitra-connection-head) - 1px)'
+
+const LANE_ANCHOR = '--mitra-all-day-lane'
+
+/** Lane stuck displacement mapped from scroll-driven animation. */
+const SHIFT = 'var(--_lane-shift)'
+
 function maskFor(path: string): string {
-	const kind = path.startsWith('subtask') ? 'subtask' : 'dependency'
-	const caps = kind === 'dependency' ? 'stroke-linecap="round"' : 'stroke-linecap="butt" stroke-linejoin="miter"'
-	// Double quotes inside the SVG so encodeURIComponent escapes them (%22) — the returned url() is
-	// wrapped in SINGLE quotes and lands in an HTML style="…" attribute, which mustn't see raw quotes.
-	const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${PATHS[path] ?? ''}" fill="none" stroke="white" stroke-width="${STROKE_WIDTH[kind]}" vector-effect="non-scaling-stroke" ${caps}/></svg>`
+	const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${PATHS[path] ?? ''}" fill="none" stroke="white" stroke-width="${CURVE_STROKE}" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg>`
 	return `url('data:image/svg+xml,${encodeURIComponent(svg)}')`
 }
 
 /**
- * The relationship connectors of a calendar view: always-visible arrows between related entry chips,
- * routed from data and placed entirely by anchor() against the chips' own `anchor-name`s — no
- * measurement, no per-frame work. Architecture, platform rules and the ink's channels: AGENTS.md.
- *
- * A view passes the SEGMENTS it rendered inside one CANVAS (plus `verticalRank` where its lanes are
- * JS-known) and mounts this layer as that canvas's LAST child, since anchors must precede the
- * positioned elements in tree order; only chips rendered IN that canvas can take part. Neither this
- * host, the canvas, nor `div.entries` (Day.ts) may be a stacking context, or `--mitra-connection-z`
- * can no longer interleave the pieces with the chips.
+ * Calendar relationship connector layer placed by CSS anchor positioning (see AGENTS.md).
  */
 @component('mitra-entry-connections')
 export class EntryConnections extends Component {
-	/** Per-view opt-out, persisted; every wired view defaults ON — relationships are meant to be seen. */
 	static isEnabledFor(view: 'week' | 'month') {
 		return localStorage.getItem(`Mitra.Connections.${view}`) !== 'false'
 	}
@@ -126,22 +107,8 @@ export class EntryConnections extends Component {
 		EntryStore.notify()
 	}
 
-	/** First-fit lane simulation mirroring CSS `grid-auto-flow: row dense` over the bars in their RENDER
-	 * order — for views that pack lanes purely in CSS, so the vertical classifier can still rank them. */
-	static laneRanks(bars: ReadonlyArray<{ segment: EntrySegment, start: number, end: number }>): ReadonlyMap<EntrySegment, number> {
-		const lanes = new Array<Array<{ start: number, end: number }>>()
-		const ranks = new Map<EntrySegment, number>()
-		for (const bar of bars) {
-			let lane = lanes.findIndex(occupied => occupied.every(other => bar.end < other.start || bar.start > other.end))
-			if (lane === -1) {
-				lane = lanes.length
-				lanes.push([])
-			}
-			lanes[lane]!.push(bar)
-			ranks.set(bar.segment, lane)
-		}
-		return ranks
-	}
+	/** True if the platform supports scroll-driven animation timelines for cross-realm shifts. */
+	private static readonly canShift = typeof CSS !== 'undefined' && CSS.supports('animation-timeline', '--probe')
 
 	// Re-renders on store notifications, so a relation edit redraws immediately.
 	readonly store = new EntryStore(this)
@@ -150,8 +117,9 @@ export class EntryConnections extends Component {
 	 * entries participate and which slices carry the ports. */
 	@property({ type: Array }) segments: ReadonlyArray<EntrySegment> = []
 
-	/** Bar views' vertical order (month week×slot, simulated all-day lanes); absent = timed minutes. */
-	@property({ type: Object }) verticalRank?: ReadonlyMap<EntrySegment, number>
+	/** Per-segment grid placement (see {@link SegmentPlacement}); a missing entry reads as the week's
+	 * timed grid — day columns, minute rank, the canvas frame. */
+	@property({ type: Object }) placement?: ReadonlyMap<EntrySegment, SegmentPlacement>
 
 	/** The entry whose chips the pointer is over — its connectors emphasize. Event-driven, not per-frame. */
 	@state() private hoveredEntryId?: string
@@ -179,13 +147,15 @@ export class EntryConnections extends Component {
 		this.scrollHost?.removeEventListener('pointerover', this.handlePointerOver)
 	}
 
-	/** A bar's/chip's vertical center order — lane rank where provided, minute midpoint otherwise. */
-	private rankOf(segment: EntrySegment): number {
-		return this.verticalRank?.get(segment) ?? segment.startMinute + segment.endMinute
+	private placementOf(segment: EntrySegment): SegmentPlacement {
+		return this.placement?.get(segment) ?? {
+			start: Math.round(segment.dayValue! / 86_400_000),
+			end: Math.round((segment.runEnd.dayValue ?? segment.dayValue!) / 86_400_000),
+			rank: segment.startMinute + segment.endMinute,
+		}
 	}
 
 	private get connectorEdges(): Array<ConnectorEdge> {
-		// Anchor-bearing chips only: persisted (the anchor-name embeds the id), uid-addressable, real.
 		const segments = this.segments.filter(segment =>
 			segment.entry.persisted && !!segment.entry.uid && segment.dayValue !== undefined && !EntryStore.isPreview(segment.entry))
 		const byEntry = new Map<Entry, Array<EntrySegment>>()
@@ -205,7 +175,6 @@ export class EntryConnections extends Component {
 		}
 
 		const edges = new Array<ConnectorEdge>()
-		// Edges are gathered from RelationGraph, deduplicated and matched to the appropriate occurrence pair.
 		for (const edge of RelationGraph.of([...byEntry.keys()]).edges) {
 			const pair = edge.bestPair(byUid.get(edge.from) ?? [], byUid.get(edge.to) ?? [])
 			if (!pair) {
@@ -213,132 +182,131 @@ export class EntryConnections extends Component {
 			}
 			const { from, to } = pair
 			const kind: ConnectorEdge['kind'] = edge.family === 'dependency' ? 'dependency' : 'subtask'
-			// Arrows leave the run's last chip in this canvas and arrive at the first.
 			const fromSeg = byEntry.get(from)?.at(-1)
 			const toSeg = byEntry.get(to)?.[0]
 			if (!fromSeg || !toSeg || fromSeg === toSeg) {
 				continue
 			}
-			// Routing remains purely geometric; broken couplings change only ink styling.
+			const laneEnds = Number(this.placementOf(fromSeg).frame === 'lane') + Number(this.placementOf(toSeg).frame === 'lane')
+			if (laneEnds === 2 || (laneEnds === 1 && !EntryConnections.canShift)) {
+				continue
+			}
 			edges.push(this.edge(kind, from, to, fromSeg, toSeg, edge.violatedBy(from, to)))
 		}
 		return edges
 	}
 
-	/**
-	 * ROUTES one edge into its pieces from data alone — day column for the inline axis, `rankOf` for the
-	 * block axis, never pixels — and purely geometrically: an edge running backward in time draws as
-	 * faithfully as a valid one. Forward across columns is one piece, the same column with the target
-	 * below is the block-port drop, and everything else is a three-piece LOOP around the pair.
-	 */
+	/** Routes one edge into anchor-positioned piece boxes based on grid placement. */
 	private edge(kind: ConnectorEdge['kind'], from: Entry, to: Entry, fromSeg: EntrySegment, toSeg: EntrySegment, violated: boolean): ConnectorEdge {
 		const A = `--mitra-entry-segment-${fromSeg.id}`
 		const B = `--mitra-entry-segment-${toSeg.id}`
-		// The physical words for the logical inline sides, read from computed style (data, not geometry):
-		// the router thinks in reading order, and RTL is the same solution mirrored.
 		const rtl = getComputedStyle(this).direction === 'rtl'
 		const [start, end] = rtl ? ['right', 'left'] : ['left', 'right']
-		const dayDelta = toSeg.dayValue! - fromSeg.dayValue!
-		const head = 'var(--mitra-connection-head)'
-		const down = this.rankOf(toSeg) >= this.rankOf(fromSeg)
-		// Side ports need clear water between the columns: a multi-day BAR whose span reaches the
-		// other endpoint's column has none, whatever the day delta says.
-		const overlapping = dayDelta > 0
-			? toSeg.dayValue! <= (fromSeg.runEnd.dayValue ?? fromSeg.dayValue!)
-			: dayDelta < 0 ? (toSeg.runEnd.dayValue ?? toSeg.dayValue!) >= fromSeg.dayValue! : true
+		const a = this.placementOf(fromSeg)
+		const b = this.placementOf(toSeg)
+		const columnDelta = b.start - a.start
+		const down = b.rank >= a.rank
+		const cross = (a.frame === 'lane') !== (b.frame === 'lane')
+		const overlapping = columnDelta > 0
+			? b.start <= a.end
+			: columnDelta < 0 ? b.end >= a.start : true
 
 		let pieces: Array<ConnectorPiece>
-		if (kind === 'dependency') {
-			const flat = this.rankOf(toSeg) === this.rankOf(fromSeg)
-			if (dayDelta > 0 && !overlapping) {
-				// Forward: one piece, end-center → start-center. A level pair rides a fixed-height box
-				// (edge-to-edge insets would resolve to a 0px box and the ink would have no area).
-				const vertical = flat
-					? `top: calc(anchor(${A} 50%) - ${FLAT_BLOCK_SIZE / 2}px); block-size: ${FLAT_BLOCK_SIZE}px;`
-					: down
-						? `top: anchor(${A} 50%); bottom: anchor(${B} 50%);`
-						: `top: anchor(${B} 50%); bottom: anchor(${A} 50%);`
-				const path = flat ? 'dependency:flat' : down ? 'dependency:s-down' : 'dependency:s-up'
+		if (cross) {
+			pieces = kind === 'dependency'
+				? this.crossDependency(A, B, a, b, start, end, rtl)
+				: this.crossSubtask(A, B, a, b, start, end)
+		} else if (kind === 'dependency') {
+			const w = STROKE_WIDTH
+			const flat = b.rank === a.rank
+			if (columnDelta > 0 && !overlapping) {
+				if (flat) {
+					pieces = [{
+						style: `top: calc(anchor(${A} 50%) - ${w / 2}px); block-size: ${w}px; ${start}: anchor(${A} ${end}); ${end}: calc(anchor(${B} ${start}) + ${HEAD_GAP});`,
+						ink: `padding-block-start: ${w}px;`,
+						head: 'head-end-flat',
+						gradient: rtl ? 'to left' : 'to right',
+					}]
+				} else if (columnDelta === 1 && Math.abs(b.rank - a.rank) >= TALL_RANK_DELTA) {
+					const path = down ? 'dependency:s-tall-down' : 'dependency:s-tall-up'
+					pieces = [{
+						path,
+						style: `${down
+							? `top: anchor(${A} bottom); bottom: calc(anchor(${B} top) + ${HEAD_GAP});`
+							: `top: calc(anchor(${B} bottom) + ${HEAD_GAP}); bottom: anchor(${A} top);`} ${start}: anchor(${A} 50%); ${end}: anchor(${B} 50%);`,
+						head: down ? 'head-drop-end' : 'head-rise-end',
+						gradient: GRADIENT_DIRECTIONS[path],
+					}]
+				} else {
+					const path = down ? 'dependency:s-down' : 'dependency:s-up'
+					pieces = [{
+						path,
+						style: `${down
+							? `top: anchor(${A} 50%); bottom: anchor(${B} 50%);`
+							: `top: anchor(${B} 50%); bottom: anchor(${A} 50%);`} ${start}: anchor(${A} ${end}); ${end}: calc(anchor(${B} ${start}) + ${HEAD_GAP});`,
+						head: down ? 'head-end-down' : 'head-end-up',
+						gradient: GRADIENT_DIRECTIONS[path],
+					}]
+				}
+			} else if (columnDelta === 0 && !flat && down) {
 				pieces = [{
-					path,
-					style: `${vertical} ${start}: anchor(${A} ${end}); ${end}: calc(anchor(${B} ${start}) + ${head});`,
-					head: flat ? 'head-end-flat' : down ? 'head-end-down' : 'head-end-up',
-					gradient: GRADIENT_DIRECTIONS[path],
-				}]
-			} else if (dayDelta === 0 && !flat && down) {
-				// Same column, target below: the block ports — end edge is the BOTTOM here, so the
-				// arrow drops from the source's bottom-center straight into the target's top-center.
-				pieces = [{
-					path: 'dependency:drop',
-					style: `top: anchor(${A} bottom); bottom: calc(anchor(${B} top) + ${head}); ${start}: calc(anchor(${A} 50%) - ${FLAT_BLOCK_SIZE / 2}px); inline-size: ${FLAT_BLOCK_SIZE}px;`,
+					style: `top: anchor(${A} bottom); bottom: calc(anchor(${B} top) + ${HEAD_GAP}); ${start}: calc(anchor(${A} 50%) - ${w / 2}px); inline-size: ${w}px;`,
+					ink: `padding-inline-start: ${w}px;`,
 					head: 'head-down',
-					gradient: GRADIENT_DIRECTIONS['dependency:drop'],
+					gradient: 'to bottom',
 				}]
 			} else {
-				// The loop: out of the end port, around the pair on a clearance lane, back into the
-				// start port. Below when the target sits below or LEVEL (the tie, so the same edge
-				// always routes the same way), above when it sits above.
-				pieces = down ? EntryConnections.loopBelow(A, B, start, end, head, rtl) : EntryConnections.loopAbove(A, B, start, end, head, rtl)
+				pieces = down ? EntryConnections.loopBelow(A, B, start, end, rtl) : EntryConnections.loopAbove(A, B, start, end, rtl)
 			}
 		} else {
-			// The elbow: drop from the parent's bottom inline-start (indented) into the child's
-			// inline-start center — the Notion tree line, unrolled.
+			const w = STROKE_WIDTH
 			const drop = `calc(anchor(${A} ${start}) + 0.5rem)`
-			let path: string
-			let style: string
 			if (overlapping) {
-				// Same column: a bare tick through the gap between the two chips.
-				path = `subtask:${down ? 'down' : 'up'}`
 				const vertical = down
 					? `top: anchor(${A} bottom); bottom: anchor(${B} top);`
 					: `top: anchor(${B} bottom); bottom: anchor(${A} top);`
-				style = `${vertical} ${start}: calc(${drop} - 1px); inline-size: 2px;`
+				pieces = [{
+					style: `${vertical} ${start}: calc(${drop} - ${w / 2}px); inline-size: ${w}px;`,
+					ink: `padding-inline-start: ${w}px;`,
+				}]
 			} else {
-				path = `subtask:${dayDelta > 0 ? 'right' : 'left'}-${down ? 'down' : 'up'}`
+				const later = columnDelta > 0
 				const vertical = down
 					? `top: anchor(${A} bottom); bottom: anchor(${B} 50%);`
 					: `top: anchor(${B} 50%); bottom: anchor(${A} top);`
-				style = dayDelta > 0
-					? `${vertical} ${start}: ${drop}; ${end}: calc(anchor(${B} ${start}) + 2px);`
-					: `${vertical} ${end}: calc(anchor(${A} ${start}) - 0.5rem); ${start}: calc(anchor(${B} ${end}) + 2px);`
+				const inline = later
+					? `${start}: calc(${drop} - ${w / 2}px); ${end}: calc(anchor(${B} ${start}) + 2px);`
+					: `${end}: calc(anchor(${A} ${start}) - 0.5rem - ${w / 2}px); ${start}: calc(anchor(${B} ${end}) + 2px);`
+				pieces = [{
+					style: `${vertical} ${inline}`,
+					ink: `padding-inline-${later ? 'start' : 'end'}: ${w}px; padding-block-${down ? 'end' : 'start'}: ${w}px;`,
+				}]
 			}
-			pieces = [{ path, style }]
 		}
 		return {
-			key: `${kind}:${fromSeg.id}:${toSeg.id}`, kind, fromEntryId: from.id!, toEntryId: to.id!, pieces, violated,
+			key: `${kind}:${fromSeg.id}:${toSeg.id}`, kind, fromEntryId: from.id!, toEntryId: to.id!, pieces, violated, cross,
 			...(kind !== 'dependency' ? {} : { fromColor: EntryConnections.colorOf(from), toColor: EntryConnections.colorOf(to) }),
 		}
 	}
 
-	/** The backward loop, lane BELOW the pair: out of the source's end port, down, back under both chips,
-	 * up into the target's start port — four turns in three boxes. The seam sits one corner-radius past
-	 * the target's centre line, where the ink runs straight, so a joint never lands inside a turn; the
-	 * lane's ordinate is a min()/max() over both anchors, so one lane clears both whatever their heights. */
-	private static loopBelow(A: string, B: string, start: string, end: string, head: string, rtl: boolean): Array<ConnectorPiece> {
-		const w = STROKE_WIDTH.dependency
-		// Where the out-leg hands over to the U — a corner's worth below the target's centre, so the
-		// U's own corner has straight run to start from.
+	private static loopBelow(A: string, B: string, start: string, end: string, rtl: boolean): Array<ConnectorPiece> {
+		const w = STROKE_WIDTH
 		const seam = `anchor(${B} 50%)`
 		return [
 			{
-				// Out of the end port, round, and down. The turn is the box's start-end corner.
 				style: `top: anchor(${A} 50%); bottom: calc(${seam} - ${CORNER}); ${start}: anchor(${A} ${end}); inline-size: ${STUB};`,
 				ink: `padding-block-start: ${w}px; padding-inline-end: ${w}px; border-start-end-radius: ${CORNER};`,
 				gradient: rtl ? 'to bottom left' : 'to bottom right',
 				fade: [0, 25],
 			},
 			{
-				// The U under the pair: down the end side, round, back along the lane, round, up the
-				// start side. Three borders and the two bottom radii ARE the shape.
 				style: `top: calc(${seam} + ${CORNER}); bottom: calc(min(anchor(${A} bottom), anchor(${B} bottom)) - ${LANE}); ${start}: calc(anchor(${B} ${start}) - ${STUB}); ${end}: calc(anchor(${A} ${end}) - ${STUB});`,
 				ink: `padding-inline-start: ${w}px; padding-inline-end: ${w}px; padding-block-end: ${w}px; border-end-start-radius: ${CORNER}; border-end-end-radius: ${CORNER};`,
 				gradient: rtl ? 'to right' : 'to left',
 				fade: [25, 75],
 			},
 			{
-				// The last turn, straight into the start port. Exactly one corner tall, so the radius
-				// consumes the box and the ink leaves it running level with the target's centre.
-				style: `top: ${seam}; block-size: ${CORNER}; ${start}: calc(anchor(${B} ${start}) - ${STUB}); ${end}: calc(anchor(${B} ${start}) + ${head});`,
+				style: `top: ${seam}; block-size: ${CORNER}; ${start}: calc(anchor(${B} ${start}) - ${STUB}); ${end}: calc(anchor(${B} ${start}) + ${HEAD_GAP});`,
 				ink: `padding-block-start: ${w}px; padding-inline-start: ${w}px; border-start-start-radius: ${CORNER};`,
 				head: 'head-end-up',
 				gradient: rtl ? 'to top left' : 'to top right',
@@ -347,9 +315,8 @@ export class EntryConnections extends Component {
 		]
 	}
 
-	/** {@link loopBelow}, reflected over the pair: the same three boxes with their block edges swapped. */
-	private static loopAbove(A: string, B: string, start: string, end: string, head: string, rtl: boolean): Array<ConnectorPiece> {
-		const w = STROKE_WIDTH.dependency
+	private static loopAbove(A: string, B: string, start: string, end: string, rtl: boolean): Array<ConnectorPiece> {
+		const w = STROKE_WIDTH
 		const seam = `anchor(${B} 50%)`
 		return [
 			{
@@ -365,12 +332,113 @@ export class EntryConnections extends Component {
 				fade: [25, 75],
 			},
 			{
-				style: `bottom: ${seam}; block-size: ${CORNER}; ${start}: calc(anchor(${B} ${start}) - ${STUB}); ${end}: calc(anchor(${B} ${start}) + ${head});`,
+				style: `bottom: ${seam}; block-size: ${CORNER}; ${start}: calc(anchor(${B} ${start}) - ${STUB}); ${end}: calc(anchor(${B} ${start}) + ${HEAD_GAP});`,
 				ink: `padding-block-end: ${w}px; padding-inline-start: ${w}px; border-end-start-radius: ${CORNER};`,
 				head: 'head-end-down',
 				gradient: rtl ? 'to bottom left' : 'to bottom right',
 				fade: [75, 100],
 			},
+		]
+	}
+
+	/** Cross-realm dependency between sticky all-day lane and timed grid (see AGENTS.md). */
+	private crossDependency(A: string, B: string, a: SegmentPlacement, b: SegmentPlacement, start: string, end: string, rtl: boolean): Array<ConnectorPiece> {
+		const w = STROKE_WIDTH
+		const downward = a.frame === 'lane'
+		const [L, T] = downward ? [A, B] : [B, A]
+		const [l, t] = downward ? [a, b] : [b, a]
+		const laneBottom = `calc(anchor(${LANE_ANCHOR} bottom) - ${SHIFT})`
+		const strip = `padding-inline-start: ${w}px;`
+		const barBottom = `calc(anchor(${L} bottom) + ${SHIFT}${downward ? '' : ` + ${HEAD_GAP}`})`
+
+		if (t.start >= l.start && t.start <= l.end) {
+			const x = `${start}: calc(anchor(${T} 50%) - ${w / 2}px); inline-size: ${w}px;`
+			return [
+				downward
+					? { style: `top: ${barBottom}; bottom: ${laneBottom}; ${x}`, ink: strip, inLane: true, gradient: 'to bottom', fade: [0, 0] }
+					: { style: `top: ${barBottom}; bottom: ${laneBottom}; ${x}`, ink: strip, inLane: true, head: 'head-up', gradient: 'to top', fade: [100, 100] },
+				downward
+					? { style: `top: ${barBottom}; bottom: calc(anchor(${T} top) + ${HEAD_GAP}); ${x}`, ink: strip, head: 'head-down', gradient: 'to bottom' }
+					: { style: `top: ${barBottom}; bottom: anchor(${T} top); ${x}`, ink: strip, gradient: 'to top' },
+			]
+		}
+
+		const chipAfter = t.start > l.end
+		const legX = chipAfter
+			? `${start}: calc(anchor(${L} ${end}) - ${STUB}); inline-size: ${w}px;`
+			: `${end}: calc(anchor(${L} ${start}) - ${STUB}); inline-size: ${w}px;`
+		const port = (edge: string) => downward ? `calc(${edge} + ${HEAD_GAP})` : edge
+		const turn = chipAfter
+			? `${start}: calc(anchor(${L} ${end}) - ${STUB}); ${end}: ${port(`anchor(${T} ${start})`)};`
+			: `${end}: calc(anchor(${L} ${start}) - ${STUB}); ${start}: ${port(`anchor(${T} ${end})`)};`
+		return [
+			{
+				style: `top: ${barBottom}; bottom: ${laneBottom}; ${legX}`,
+				ink: strip, inLane: true,
+				...(downward ? { gradient: 'to bottom', fade: [0, 0] as const } : { head: 'head-up' as const, gradient: 'to top', fade: [100, 100] as const }),
+			},
+			{
+				style: `top: ${barBottom}; bottom: calc(anchor(${T} 50%) + ${CORNER}); ${legX}`,
+				ink: strip,
+				gradient: downward ? 'to bottom' : 'to top', fade: downward ? [0, 60] : [40, 100],
+			},
+			{
+				style: `top: calc(anchor(${T} 50%) - ${CORNER}); block-size: ${CORNER}; ${turn}`,
+				ink: `padding-inline-${chipAfter ? 'start' : 'end'}: ${w}px; padding-block-end: ${w}px; border-end-${chipAfter ? 'start' : 'end'}-radius: ${CORNER};`,
+				...(downward ? { head: 'head-end-down' as const, flip: !chipAfter } : {}),
+				gradient: (chipAfter === downward) !== rtl ? 'to right' : 'to left', fade: downward ? [60, 100] : [0, 40],
+			},
+		]
+	}
+
+	/** Cross-realm subtask elbow between sticky all-day lane and timed grid. */
+	private crossSubtask(A: string, B: string, a: SegmentPlacement, b: SegmentPlacement, start: string, end: string): Array<ConnectorPiece> {
+		const w = STROKE_WIDTH
+		const downward = a.frame === 'lane'
+		const [L, T] = downward ? [A, B] : [B, A]
+		const [l, t] = downward ? [a, b] : [b, a]
+		const laneBottom = `calc(anchor(${LANE_ANCHOR} bottom) - ${SHIFT})`
+		const barBottom = `calc(anchor(${L} bottom) + ${SHIFT})`
+		const strip = `padding-inline-start: ${w}px;`
+
+		if (t.start >= l.start && t.start <= l.end) {
+			const x = `${start}: calc(anchor(${T} 50%) - ${w / 2}px); inline-size: ${w}px;`
+			return [
+				{ style: `top: ${barBottom}; bottom: ${laneBottom}; ${x}`, ink: strip, inLane: true },
+				{ style: `top: ${barBottom}; bottom: anchor(${T} top); ${x}`, ink: strip },
+			]
+		}
+
+		if (downward) {
+			const later = t.start > l.start
+			const legX = later
+				? `${start}: calc(anchor(${L} ${start}) + 0.5rem);`
+				: `${end}: calc(anchor(${L} ${start}) - 0.5rem - ${w}px);`
+			return [
+				{ style: `top: ${barBottom}; bottom: ${laneBottom}; ${legX} inline-size: ${w}px;`, ink: strip, inLane: true },
+				{
+					style: `top: ${barBottom}; bottom: anchor(${T} 50%); ${legX} ${later
+						? `${end}: calc(anchor(${T} ${start}) + 2px);`
+						: `${start}: calc(anchor(${T} ${end}) + 2px);`}`,
+					ink: `padding-inline-${later ? 'start' : 'end'}: ${w}px; padding-block-end: ${w}px;`,
+				},
+			]
+		}
+		const later = l.start > t.end
+		const jogTop = `calc(anchor(${LANE_ANCHOR} bottom) + ${SHIFT} + ${LANE})`
+		const jogBottom = `calc(anchor(${LANE_ANCHOR} bottom) - ${SHIFT} - ${LANE} - ${w}px)`
+		const legX = later
+			? `${start}: calc(anchor(${L} ${start}) + 0.5rem); inline-size: ${w}px;`
+			: `${start}: calc(anchor(${L} ${end}) - 0.5rem); inline-size: ${w}px;`
+		return [
+			{
+				style: `top: ${jogTop}; bottom: anchor(${T} top); ${later
+					? `${start}: calc(anchor(${T} ${start}) + 0.5rem); ${end}: calc(anchor(${L} ${start}) - 0.5rem - ${w}px);`
+					: `${end}: calc(anchor(${T} ${start}) - 0.5rem - ${w}px); ${start}: calc(anchor(${L} ${end}) - 0.5rem);`}`,
+				ink: `padding-inline-${later ? 'start' : 'end'}: ${w}px; padding-block-start: ${w}px;`,
+			},
+			{ style: `top: ${barBottom}; bottom: ${jogBottom}; ${legX}`, ink: strip },
+			{ style: `top: ${barBottom}; bottom: ${laneBottom}; ${legX}`, ink: strip, inLane: true },
 		]
 	}
 
@@ -381,20 +449,44 @@ export class EntryConnections extends Component {
 
 	static override get styles() {
 		return css`
+			/* The scroller's block scroll offset as a LENGTH, for the cross-realm pieces: a scroll-driven
+			   animation (see .lane-shifted) sweeps this from -1px to (scroll range - 1px) — the -1px is the
+			   grid gap the lane travels before it sticks, so max(0px, …) is exactly its stuck displacement.
+			   Registered (top-level — a nested @property is silently dropped) so keyframes can interpolate
+			   it; non-inheriting, since every piece animates its own. */
+			@property --_scroll-shift {
+				syntax: '<length>';
+				inherits: false;
+				initial-value: 0px;
+			}
+
+			/* --mitra-days-scroll-range mirrors the week scroller's (scrollHeight - clientHeight), kept by
+			   a ResizeObserver on its canvas (see Days.ts) — the ONE number JS maintains; every per-frame
+			   value is the timeline's. */
+			@keyframes mitra-lane-shift {
+				from {
+					--_scroll-shift: -1px;
+				}
+
+				to {
+					--_scroll-shift: calc(var(--mitra-days-scroll-range, 1px) - 1px);
+				}
+			}
+
 			mitra-entry-connections {
-				/* Boxless, and so is each connection: the PIECES are the positioned boxes, and their containing
-				   block is the view's canvas — see the class comment. */
 				display: contents;
 
-				/* One channel per question — shape says the family, hue the state, alpha and the z-lift the
-				   attention, the gradient nothing but the hover payload, and width nothing at all (AGENTS.md).
-				   The ink is a MASKED CSS background, not an SVG stroke: a paint-server gradient will not render
-				   inside an anchor-positioned element (a Chromium bug). */
+				/* One rest ink for both families (AGENTS.md). Legible by shape: dependencies curve and have arrowheads. */
 				--mitra-connection-ink: color-mix(in srgb, var(--color-text) 45%, transparent);
-				--mitra-connection-ink-faint: color-mix(in srgb, var(--color-text) 34%, transparent);
 				--mitra-connection-ink-emphasis: color-mix(in srgb, var(--color-text) 85%, transparent);
 				--mitra-connection-ink-violation: color-mix(in srgb, var(--color-error) 65%, transparent);
-				--mitra-connection-head: 5px;
+
+				/* Opaque inks for filled arrowhead triangles to avoid transparent bleed. */
+				--mitra-connection-head-ink: color-mix(in srgb, var(--color-text) 45%, var(--color-surface));
+				--mitra-connection-head-ink-violation: color-mix(in srgb, var(--color-error) 65%, var(--color-surface));
+				--mitra-connection-head: 10px;
+				--_head-span: calc(var(--mitra-connection-head) + 1px);
+				--_head-gap: calc(var(--mitra-connection-head) - 1px);
 
 				> .connection {
 					display: contents;
@@ -402,19 +494,29 @@ export class EntryConnections extends Component {
 					> .piece {
 						position: absolute;
 						pointer-events: none;
-						/* Interleaves with the chips in the VIEW's stacking context: above the surface (z 1), below
-						   the chips (z 2), lowered to 0 by a bar view whose bars sit at z 1. Emphasis lifts above. */
 						z-index: var(--mitra-connection-z, 1);
 
-						/* The floor that keeps a degenerate span visible: two anchored edges resolving to the same
-						   ordinate leave a 0px box with no area for the stretched ink. Dependencies route those
-						   cases exactly; this catches the shapes whose chip heights data cannot know. */
-						min-block-size: 3px;
+						/* Keeps degenerate spans visible for stretched ink glyphs. */
+						&.glyph {
+							min-block-size: 3px;
+						}
 
-						/* The router places the box at the mirrored position; the LTR-authored glyph inside is
-						   reflected to match. Elbows are drawn in logical properties, so only their head turns. */
 						&.glyph.mirror {
 							scale: -1 1;
+						}
+
+						/* Lane-shift displacement via scroll-driven animation. */
+						&.lane-shifted {
+							--_lane-shift: max(0px, var(--_scroll-shift));
+							animation-name: mitra-lane-shift;
+							animation-duration: auto;
+							animation-timing-function: linear;
+							animation-timeline: --mitra-days-scroll;
+						}
+
+						/* In-lane twin painting above sticky lane background. */
+						&.in-lane {
+							z-index: var(--mitra-connection-z-lane, 91);
 						}
 
 						> .ink {
@@ -424,16 +526,12 @@ export class EntryConnections extends Component {
 							transition: background 0.15s ease;
 						}
 
-						/* A glyph's line: the background clipped to the stroke shape by --_mask (a
-						   per-piece data-uri; see maskFor). */
 						&.glyph > .ink {
 							-webkit-mask: var(--_mask) no-repeat center / 100% 100%;
 							mask: var(--_mask) no-repeat center / 100% 100%;
 						}
 
-						/* An elbow's line is a PADDING ring: the background covers the padding box, the content box
-						   is masked back out, and border-radius (a length) keeps the corner's shape however far the
-						   box stretches. Padding, not border: Blink floors border-width to whole pixels. */
+						/* Elbow ring using padding box masked with content box exclusion. */
 						&.elbow > .ink {
 							padding: 0;
 							-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -441,10 +539,6 @@ export class EntryConnections extends Component {
 							-webkit-mask-composite: xor;
 							mask-composite: exclude;
 						}
-					}
-
-					&.subtask > .piece > .ink {
-						background: var(--mitra-connection-ink-faint);
 					}
 
 					&[data-emphasized] > .piece {
@@ -455,33 +549,35 @@ export class EntryConnections extends Component {
 						}
 					}
 
-					/* The fade spans the ROUTE, not each box: a piece paints only its own slice (--_f0..--_f1), so
-					   the colour a box ends on is the colour its successor starts from and the seams disappear. */
+					&[data-emphasized] > .piece.in-lane {
+						z-index: var(--mitra-connection-z-lane-emphasis, 92);
+					}
+
+					/* Continuous gradient across piece slices. */
 					&.dependency[data-emphasized]:not([data-violated]) > .piece > .ink {
 						background: linear-gradient(var(--_grad-dir, to right),
 							color-mix(in srgb, var(--_to) var(--_f0, 0%), var(--_from)),
 							color-mix(in srgb, var(--_to) var(--_f1, 100%), var(--_from)));
 					}
 
-					/* The arrowhead hangs in the head-sized gap the route left before the target's port, on the
-					   FINAL piece only. Fixed rotation is safe: every path ends on an axis-aligned tangent. */
-					> .piece:is(.head-end-down, .head-end-up, .head-end-flat, .head-down)::after {
+					/* Arrowhead triangle hung off final piece end. */
+					> .piece:is(.head-end-down, .head-end-up, .head-end-flat, .head-down, .head-up, .head-drop-end, .head-rise-end)::after {
 						content: '';
 						position: absolute;
-						background: var(--mitra-connection-ink);
+						background: var(--mitra-connection-head-ink);
 						transition: background 0.15s ease;
 					}
 
 					&[data-emphasized]:not([data-violated]) > .piece::after {
-						background: var(--_to, var(--mitra-connection-ink-emphasis));
+						background: var(--_to, color-mix(in srgb, var(--color-text) 85%, var(--color-surface)));
 					}
 
-					/* A broken coupling keeps the neutral ink's whisper and changes only its hue, so a wholly
-					   violated chain colours the canvas without alarming it. Declared after the emphasis rules it
-					   overrides — it ties with them on specificity. */
-					&[data-violated] > .piece > .ink,
-					&[data-violated] > .piece::after {
+					&[data-violated] > .piece > .ink {
 						background: var(--mitra-connection-ink-violation);
+					}
+
+					&[data-violated] > .piece::after {
+						background: var(--mitra-connection-head-ink-violation);
 					}
 
 					&[data-violated][data-emphasized] > .piece > .ink,
@@ -489,42 +585,55 @@ export class EntryConnections extends Component {
 						background: var(--color-error);
 					}
 
+					/* Inline-axis arrowheads */
 					> .piece:is(.head-end-down, .head-end-up, .head-end-flat)::after {
 						inline-size: var(--mitra-connection-head);
-						block-size: calc(var(--mitra-connection-head) + 2px);
+						block-size: var(--_head-span);
 						clip-path: polygon(0 0, 100% 50%, 0 100%);
-						right: calc(-1 * var(--mitra-connection-head));
+						right: calc(-1 * var(--_head-gap));
 					}
 
-					/* An elbow isn't reflected as a whole, so in RTL its head moves and turns on its own. */
 					> .piece.elbow.mirror::after {
 						right: auto;
-						left: calc(-1 * var(--mitra-connection-head));
+						left: calc(-1 * var(--_head-gap));
 						clip-path: polygon(100% 0, 0 50%, 100% 100%);
 					}
 
 					> .piece.head-end-down::after {
-						bottom: calc((var(--mitra-connection-head) + 2px) / -2);
+						bottom: calc(-0.5 * var(--_head-span));
 					}
 
 					> .piece.head-end-up::after {
-						top: calc((var(--mitra-connection-head) + 2px) / -2);
+						top: calc(-0.5 * var(--_head-span));
 					}
 
-					/* A flat path ends at the box's MIDDLE, not a corner, so its head centres on it. */
 					> .piece.head-end-flat::after {
 						top: 50%;
 						translate: 0 -50%;
 					}
 
-					/* The drop's head points down, centred under the vertical line. */
-					> .piece.head-down::after {
-						inline-size: calc(var(--mitra-connection-head) + 2px);
+					/* Block-axis arrowheads */
+					> .piece:is(.head-down, .head-drop-end)::after {
+						inline-size: var(--_head-span);
 						block-size: var(--mitra-connection-head);
-						clip-path: polygon(0 0, 100% 0, 50% 100%);
-						bottom: calc(-1 * var(--mitra-connection-head));
+						clip-path: polygon(0 0, 50% 100%, 100% 0);
+						bottom: calc(-1 * var(--_head-gap));
+					}
+
+					> .piece:is(.head-up, .head-rise-end)::after {
+						inline-size: var(--_head-span);
+						block-size: var(--mitra-connection-head);
+						clip-path: polygon(0 100%, 50% 0, 100% 100%);
+						top: calc(-1 * var(--_head-gap));
+					}
+
+					> .piece:is(.head-down, .head-up)::after {
 						left: 50%;
 						translate: -50% 0;
+					}
+
+					> .piece:is(.head-drop-end, .head-rise-end)::after {
+						right: calc(-0.5 * var(--_head-span));
 					}
 				}
 			}
@@ -540,7 +649,7 @@ export class EntryConnections extends Component {
 				return html`
 					<div class="connection ${edge.kind}" ?data-emphasized=${emphasized} ?data-violated=${edge.violated}>
 						${edge.pieces.map(piece => html`
-							<div class="piece ${piece.path ? 'glyph' : 'elbow'} ${piece.head ?? ''} ${rtl ? 'mirror' : ''}"
+							<div class="piece ${piece.path ? 'glyph' : 'elbow'} ${piece.head ?? ''} ${rtl !== !!piece.flip ? 'mirror' : ''} ${piece.inLane ? 'in-lane' : ''} ${edge.cross ? 'lane-shifted' : ''}"
 								style="${piece.style}${piece.gradient ? ` --_grad-dir: ${piece.gradient};` : ''}${piece.fade ? ` --_f0: ${piece.fade[0]}%; --_f1: ${piece.fade[1]}%;` : ''}${colors}"
 							>
 								<div class="ink" style="${piece.path ? `--_mask: ${maskFor(piece.path)};` : piece.ink ?? ''}"></div>

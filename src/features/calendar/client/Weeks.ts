@@ -343,10 +343,15 @@ export class Weeks extends Component {
 					<div class="canvas" style="--max-slots: ${Weeks.MAX_SLOTS};">
 						${repeat(rendered, item => item.week[0]!.dayStart.toISOString(), item => this.weekTemplate(item, today))}
 						${!weeks.length ? html.nothing : html`<div style="grid-row: ${weeks.length};"></div>`}
+						${/* Grid placement: month wraps, so columns are week indices and rank is row-major (row * 100 + slot). */ ''}
 						${!EntryConnections.isEnabledFor('month') ? html.nothing : html`
 							<mitra-entry-connections
 								.segments=${rendered.flatMap(item => item.bars.map(bar => bar.segment))}
-								.verticalRank=${new Map(rendered.flatMap(item => item.bars.map(bar => [bar.segment, item.row * 100 + bar.slot] as const)))}
+								.placement=${new Map(rendered.flatMap(item => item.bars.map(bar => [bar.segment, {
+									start: bar.startColumn,
+									end: bar.startColumn + bar.span - 1,
+									rank: item.row * 100 + bar.slot,
+								}] as const)))}
 							></mitra-entry-connections>
 						`}
 					</div>

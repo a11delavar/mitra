@@ -4,8 +4,9 @@ import { observeResize } from '@3mo/resize-observer'
 import { type UserTimeZone } from '../../identity/User.js'
 import { type Entry } from '../../entries/Entry.js'
 import { EntrySegments } from '../../entries/client/EntrySegments.js'
+import { type EntrySegment } from '../../entries/client/EntrySegment.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
-import { EntryConnections } from '../../relations/client/EntryConnections.js'
+import { EntryConnections, type SegmentPlacement } from '../../relations/client/EntryConnections.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { CalendarScrollController } from './CalendarScrollController.js'
 import { EntryDragController } from '../../entries/client/EntryDragController.js'
@@ -458,6 +459,10 @@ export class Days extends Component {
 
 				container-type: inline-size;
 				overflow: auto;
+				/* The block scroll offset as a named timeline: the connectors' cross-realm pieces animate
+				   their lane-shift correction off it (see EntryConnections) — the lane is sticky, and
+				   anchor() resolves sticky elements at their unstuck positions. */
+				scroll-timeline: --mitra-days-scroll block;
 				/* Single-finger pan still scrolls the grid; two-finger pinch-zoom is disabled here so the
 				   DayDensityController can own it (see its touch handlers). */
 				touch-action: pan-x pan-y;
@@ -537,6 +542,9 @@ export class Days extends Component {
 					position: sticky;
 					top: var(--header-height, 2.75rem);
 					z-index: 90;
+					/* The realm boundary, as an anchor: every cross-realm route's in-lane piece ends at this
+					   element's (shift-corrected) bottom edge — see EntryConnections. */
+					anchor-name: --mitra-all-day-lane;
 					/* The lane's bars sit at z 1 (EventSegment's overlap base) — its connectors go
 					   BELOW them (they'd otherwise out-paint the bars by tree order). */
 					--mitra-connection-z: 0;
@@ -773,22 +781,45 @@ export class Days extends Component {
 	protected override createRenderRoot() { return this }
 
 	protected override get template() {
+		// The all-day lane is inside .canvas so its bars can anchor canvas-level cross-realm connectors.
+		// The corner stays outside because it spans the axis columns.
 		return html`
 			${this.timeTemplate}
-			${this.allDayTemplate}
-			<div class="canvas">
+			<div class="all-day-corner" data-chrome></div>
+			<div class="canvas" ${observeResize(this.updateScrollRange)}>
+				${this.allDayTemplate}
 				${this.dateTemplate}
 				${this.connectionsTemplate}
 			</div>
 		`
 	}
 
+	/** How far below the timed frame's ranks a lane bar sorts. The canvas layer ranks timed chips by
+	 * MINUTE MIDPOINT (0…1440), so any offset past that ceiling orders every lane bar above them. */
+	private static readonly laneRankFloor = 1e12
+
+	/** Lane bars stashed by allDayTemplate so connectionsTemplate can pass both realms to the canvas layer. */
+	private laneSegments: ReadonlyArray<EntrySegment> = []
+	private lanePlacement: ReadonlyMap<EntrySegment, SegmentPlacement> = new Map()
+
+	/** Block scroll range for connectors' scroll-driven lane-shift animation (maintained via ResizeObserver). */
+	private lastScrollRange = -1
+	private readonly updateScrollRange = () => {
+		const range = Math.max(0, this.scrollHeight - this.clientHeight)
+		if (range !== this.lastScrollRange) {
+			this.lastScrollRange = range
+			this.style.setProperty('--mitra-days-scroll-range', `${range}px`)
+		}
+	}
+
 	private get connectionsTemplate() {
-		// LAST child of the canvas on purpose: an anchor must precede the positioned element in tree
-		// order — and same z-index (1) as the hour lines, so tree order paints the connectors above
-		// them while the chips (z 2) stay above the connectors (see EntryConnections).
+		// Rendered last so anchors precede connectors in tree order. Receives both realms to draw
+		// timed↔timed and cross-realm edges; lane↔lane edges are drawn by the lane's own layer.
 		return !EntryConnections.isEnabledFor('week') ? html.nothing : html`
-			<mitra-entry-connections .segments=${this.dates.window.days.flatMap(day => this.segments.timedOn(day))}></mitra-entry-connections>
+			<mitra-entry-connections
+				.segments=${[...this.laneSegments, ...this.dates.window.days.flatMap(day => this.segments.timedOn(day))]}
+				.placement=${this.lanePlacement}
+			></mitra-entry-connections>
 		`
 	}
 
@@ -797,6 +828,8 @@ export class Days extends Component {
 		const { days, offset } = this.dates.window
 		const first = days[0]
 		const last = days.at(-1)
+		this.laneSegments = []
+		this.lanePlacement = new Map()
 		if (!first || !last) {
 			return html.nothing
 		}
@@ -829,10 +862,20 @@ export class Days extends Component {
 			const endColumn = clippedRight ? offset + days.length - 1 : columnOf(segment.runEnd.dayValue)
 			return { segment, startColumn, endColumn, clippedRight }
 		})
+		// Where each bar sits in the units connectors route by: day columns, ranked by the lane it was
+		// just placed in — the very same `laneOf` the grid rows use, so a line can never point at a lane
+		// its bar is not in.
+		const placements = new Map(runs.map(segment => [segment, {
+			start: Math.round(segment.dayValue! / 86_400_000),
+			end: Math.round(Math.min(segment.runEnd.dayValue ?? segment.dayValue!, lastValue) / 86_400_000),
+			rank: laneOf(segment.entry),
+		}]))
+		// The canvas layer ranks timed chips by minute midpoint, so a lane bar takes a rank below every
+		// one of them: the lane sits above the timed grid, and rank is what orders the routing.
+		this.laneSegments = runs
+		this.lanePlacement = new Map([...placements].map(([segment, placement]) =>
+			[segment, { ...placement, rank: placement.rank - Days.laneRankFloor, frame: 'lane' as const }]))
 		return html`
-			${/* data-chrome (here and below): the grid's frame — kept above the entries a view transition
-			   animates, see calendarTransition.ts. */''}
-			<div class="all-day-corner" data-chrome></div>
 			<div class="all-day">
 				${days.map((_, index) => html`<div class="day" style="grid-column: ${offset + index + 1};"></div>`)}
 				${repeat(bars, bar => bar.segment.entry, bar => html`
@@ -844,19 +887,13 @@ export class Days extends Component {
 						.segment=${bar.segment}
 					></mitra-entry-segment>
 				`)}
-				${/* The lane is position: sticky — already a positioned, co-moving canvas: when it
-				    sticks, the connectors translate WITH the bars, so within-lane edges stay glued.
-				    This is also exactly why cross-realm (timed ↔ all-day) edges can't be drawn by
-				    either layer: anchor() resolves a sticky element to its UNSTUCK position, so a line
-				    spanning both frames detaches by the scroll delta (measured: 749px off after a 750px
-				    scroll). The ranks are the bars' ACTUAL lanes (the same `laneOf` the grid rows are
-				    placed from) — the lanes are assigned here now, so there is nothing left for
-				    laneRanks' first-fit to simulate. */ ''}
+				${/* Lane-internal connections layer: the lane is position: sticky — already a positioned,
+				    co-moving canvas — so when it sticks these connectors translate WITH the bars and
+				    within-lane edges stay glued. Cross-realm edges cannot be drawn here for that very
+				    reason (anchor() resolves a sticky element at its UNSTUCK position), which is why the
+				    same bars are handed up to the canvas layer as well. */ ''}
 				${!EntryConnections.isEnabledFor('week') ? html.nothing : html`
-					<mitra-entry-connections
-						.segments=${runs}
-						.verticalRank=${new Map(runs.map(segment => [segment, laneOf(segment.entry)]))}
-					></mitra-entry-connections>
+					<mitra-entry-connections .segments=${runs} .placement=${placements}></mitra-entry-connections>
 				`}
 			</div>
 		`

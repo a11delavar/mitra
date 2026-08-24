@@ -4,7 +4,7 @@ export default [
 	...configs,
 	{
 		// `website` is the standalone docs site (its own package and conventions), not app code.
-		ignores: ['dist', 'out', 'out_test', 'website'],
+		ignores: ['dist', 'out', 'out_test', 'website', '.*'],
 	},
 	{
 		rules: {

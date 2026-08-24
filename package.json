@@ -6,7 +6,7 @@
 	"scripts": {
 		"start": "node ./scripts/dev.ts",
 		"test": "node ./scripts/test.ts && node --test \"out_test/**/*.js\"",
-		"lint": "eslint .",
+		"lint": "eslint \"**/*.ts\"",
 		"build": "node ./scripts/build.ts",
 		"db:migration:create": "node ./scripts/db.ts create",
 		"db:migration:up": "node ./scripts/db.ts up",
