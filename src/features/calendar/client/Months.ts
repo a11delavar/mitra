@@ -6,6 +6,7 @@ import { CalendarDatesController, type CalendarMonth } from './CalendarDatesCont
 import { CalendarScrollController } from './CalendarScrollController.js'
 import { EntryDragController } from '../../entries/client/EntryDragController.js'
 import { MonthsDensityController } from './MonthsDensityController.js'
+import { Routines } from '../../recurrence/client/Routines.js'
 
 /**
  * The months strip — the year view's grid, and the vertical sibling of {@link Days}: one row per month
@@ -47,7 +48,10 @@ export class Months extends Component {
 	@query('.corner') private readonly corner?: HTMLElement
 	@query('mitra-day') private readonly dayCell?: HTMLElement
 
-	private get segments(): EntrySegments { return EntrySegments.of(this.entries, this.buffer.window.days) }
+	private get routines(): Routines { return Routines.of(this.entries, this.buffer.window.days, 'month') }
+
+	// Built from kept entries so collapsed series claim no bar lanes.
+	private get segments(): EntrySegments { return EntrySegments.of(this.routines.kept, this.buffer.window.days) }
 
 	/** Day-slot columns: a full month of 31 plus the widest weekday offset. */
 	private get columns() { return 31 + this.navigatingDate.daysInWeek - 1 }
@@ -283,6 +287,20 @@ export class Months extends Component {
 							}
 						}
 					}
+
+					/* Spans all columns so dense flow places it below the bars. */
+					> .routines {
+						grid-column: 1 / -1;
+						grid-row: auto / span 2;
+						display: grid;
+						grid-template-columns: subgrid;
+						grid-auto-rows: 0.125rem;
+						grid-auto-flow: row dense;
+						/* Matches the hairline height and EventSegment pointer-band pitch (2px mark + 2px gap). */
+						gap: 2px;
+						/* start: align-content center pushes top marks out through the container edge. */
+						align-content: start;
+					}
 				}
 			}
 		`
@@ -354,6 +372,7 @@ export class Months extends Component {
 			.map(segment => ({ segment, rank: EntrySegments.laneRank(segment.entry) }))
 			.sort((a, b) => a.rank - b.rank)
 			.map(ranked => ranked.segment)
+		const runs = this.routines.runsIn(month.first, month.last)
 		return html`
 			<div class="entries" style="grid-row: ${row};">
 				${repeat(segments, segment => segment.entry, segment => {
@@ -370,6 +389,22 @@ export class Months extends Component {
 						></mitra-entry-segment>
 					`
 				})}
+				${!runs.length ? html.nothing : html`
+					<div class="routines">
+						${repeat(runs, run => run.segment.id, run => {
+							const columns = run.days.map(day => month.columnOf(day))
+							const startColumn = columns[0]!
+							return html`
+								<mitra-entry-segment
+									style=${styleMap({ gridColumn: `${startColumn + 1} / span ${columns.at(-1)! - startColumn + 1}` })}
+									.segment=${run.segment}
+									.routine=${run}
+									.ticks=${columns.map(column => column - startColumn + 1)}
+								></mitra-entry-segment>
+							`
+						})}
+					</div>
+				`}
 			</div>
 		`
 	}

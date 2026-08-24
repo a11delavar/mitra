@@ -160,6 +160,32 @@ describe('Recurrence', () => {
 		})
 	})
 
+	describe('strideDays', () => {
+		it('is the frequency unit times the interval', () => {
+			assert.equal(new Recurrence({ freq: 'DAILY' }).strideDays, 1)
+			assert.equal(new Recurrence({ freq: 'DAILY', interval: 2 }).strideDays, 2)
+			assert.equal(new Recurrence({ freq: 'WEEKLY' }).strideDays, 7)
+			assert.equal(new Recurrence({ freq: 'WEEKLY', interval: 2 }).strideDays, 14)
+			assert.equal(Math.round(new Recurrence({ freq: 'MONTHLY' }).strideDays), 30)
+			assert.equal(Math.round(new Recurrence({ freq: 'YEARLY' }).strideDays), 365)
+		})
+
+		it('divides the weekly stride by the BYDAY list', () => {
+			assert.equal(new Recurrence({ freq: 'WEEKLY', byday: ['MO'] }).strideDays, 7)
+			assert.equal(new Recurrence({ freq: 'WEEKLY', byday: ['MO', 'WE'] }).strideDays, 3.5)
+			assert.equal(new Recurrence({ freq: 'WEEKLY', byday: ['MO', 'TU', 'WE', 'TH', 'FR'] }).strideDays, 1.4)
+			assert.equal(new Recurrence({ freq: 'WEEKLY', byday: ['MO', 'WE'], interval: 2 }).strideDays, 7)
+		})
+
+		it('does not divide a MONTHLY stride by its BYDAY ("the 2nd Tuesday" is still monthly)', () => {
+			assert.equal(Math.round(new Recurrence({ freq: 'MONTHLY', byday: ['2TU'] }).strideDays), 30)
+		})
+
+		it('is Infinity for a rule with no modelled frequency', () => {
+			assert.equal(new Recurrence().strideDays, Infinity)
+		})
+	})
+
 	describe('valid', () => {
 		it('accepts well-formed rules', () => {
 			assert.equal(new Recurrence({ freq: 'WEEKLY', byday: ['MO', 'WE'] }).valid, true)

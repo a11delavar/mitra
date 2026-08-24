@@ -1,6 +1,7 @@
 import { component, html, property, Component, css, state, bind, queryConnectedInstances, eventListener, unsafeCSS } from '@a11d/lit'
 import { TaskStatus } from '../Entry.js'
 import { type EntrySegment } from './EntrySegment.js'
+import { type RoutineRun } from '../../recurrence/client/Routines.js'
 import { contrastColor } from '../../../design/contrastColor.js'
 import { getSource } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
@@ -35,6 +36,12 @@ export class EntrySegmentComponent extends Component {
 	}) open = false
 
 	@property({ type: Boolean, reflect: true }) selected = false
+
+	/** When set, renders as hairline marks across its active days instead of a bar (see AGENTS.md "Routines"). */
+	@property({ type: Object }) routine?: RoutineRun
+
+	/** 1-based day columns within this element's span where marks should render. */
+	@property({ type: Array }) ticks?: ReadonlyArray<number>
 
 	/** The axis this segment can be resized along — `block` (timed grid, top/bottom handles) or `inline`
 	 * (all-day lane / month bar, leading/trailing handles). Unset means not resizable. Set by the view; the
@@ -73,6 +80,9 @@ export class EntrySegmentComponent extends Component {
 		// just-in-time, viewport-bounded, by calendarTransition.ts, and only for a transition's lifetime.)
 		this.style.anchorName = this.anchorName
 		this.toggleAttribute('data-draft', !entry.persisted)
+		this.toggleAttribute('data-routine', !!this.routine)
+		// Title on host: inner nodes of a 2px element are impractical hover targets.
+		this.title = !this.routine ? '' : [entry.heading, entry.recurrence?.describe(entry.seriesStart)].filter(Boolean).join(' · ')
 		// A live resize and a move's ghost float above their cluster; a move's origin dims in place.
 		this.toggleAttribute('dragging', this.store.isDragging(entry) || this.store.isPreview(entry))
 		this.toggleAttribute('drag-source', this.store.isDragSource(entry))
@@ -482,6 +492,46 @@ export class EntrySegmentComponent extends Component {
 					}
 				}
 
+				/* Subgrid of the row's day columns so each mark aligns with its day without JS positioning. */
+				&[data-routine] {
+					display: grid;
+					grid-template-columns: subgrid;
+					align-items: center;
+					background: none;
+					border-inline-start: none;
+					border-radius: 0;
+					block-size: 0.125rem;
+					align-self: center;
+					inline-size: auto;
+					margin-inline: 0;
+					padding: 0;
+					margin-top: 0;
+					/* Avoid clipping the expanded pointer target below. */
+					overflow: visible;
+
+					> .heading, > .location, > .recurring, > .resize-start, > .resize-end {
+						display: none;
+					}
+
+					> .mark {
+						block-size: 100%;
+						border-radius: 999px;
+						background-color: color-mix(in srgb, var(--mitra-entry-segment-color) 60%, transparent);
+					}
+
+					/* Tap target expands ±1px to match the 4px track pitch (2px mark + 2px gap) without overlapping adjacent routines. */
+					&::after {
+						content: '';
+						position: absolute;
+						inset-block: -1px;
+						inset-inline: 0;
+					}
+
+					&:is(:hover, [selected]) > .mark {
+						background-color: var(--mitra-entry-segment-color);
+					}
+				}
+
 				/* Too narrow to spare that gutter: at a few characters wide — the year grid's single-day cells,
 				   a phone's month bars — 1.35rem of reserved trailing edge IS the title (or the whole start
 				   time). The badge is decoration and the text is the entry, so it sheds one tier BEFORE the
@@ -519,6 +569,12 @@ export class EntrySegmentComponent extends Component {
 		the heading, so the compact tier can dissolve the strip into one text line. Rendered only when
 		it has content: an all-day event has neither, and neither has an unscheduled task. */
 		const showsTime = !this.segment.allDay && this.segment.entry.scheduled
+		if (this.routine) {
+			return html`
+				${this.ticks?.map(column => html`<i class="mark" style="grid-column: ${column};"></i>`)}
+				${this.detailsTemplate}
+			`
+		}
 		return html`
 			<div class="heading">
 				${!this.segment.entry.type.isTask && !showsTime ? html.nothing : html`
@@ -549,13 +605,17 @@ export class EntrySegmentComponent extends Component {
 				<div class="resize-start"></div>
 				<div class="resize-end"></div>
 			`}
-			${!this.open ? html.nothing : html`
-				<mitra-entry-details popover data-sheet ?open=${bind(this, 'open')}
-					style="position-anchor: ${this.anchorName}"
-					.segment=${this.segment}
-					@click=${(e: Event) => e.stopPropagation()}
-				></mitra-entry-details>
-			`}
+			${this.detailsTemplate}
+		`
+	}
+
+	private get detailsTemplate() {
+		return !this.open ? html.nothing : html`
+			<mitra-entry-details popover data-sheet ?open=${bind(this, 'open')}
+				style="position-anchor: ${this.anchorName}"
+				.segment=${this.segment}
+				@click=${(e: Event) => e.stopPropagation()}
+			></mitra-entry-details>
 		`
 	}
 }

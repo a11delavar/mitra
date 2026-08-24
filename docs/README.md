@@ -32,6 +32,7 @@ Day-to-day behaviour, whichever accounts you connected.
 
 - **[Calendars & task lists](guides/calendars.md)** — choose what gets imported, then rename, recolor, reorder and hide it; and pick where new entries land.
 - **[Unscheduled tasks](guides/unscheduled-tasks.md)** — where tasks with no date live, and how to drag them onto the calendar (and back off it).
+- **[Routines](guides/routines.md)** — how daily habits and routines display as compact day marks in month and year views.
 - **[Relationships](guides/relationships/README.md)** — link tasks and events across calendars, organize subtasks, and track dependencies.
 - **[Keyboard shortcuts](guides/keyboard-shortcuts.md)** — drive the views, navigation and entries from the keyboard.
 - **[Participants & invitations](guides/participants.md)** — invite people to an entry and follow their replies.

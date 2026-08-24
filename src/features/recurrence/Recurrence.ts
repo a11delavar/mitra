@@ -29,6 +29,8 @@ const FREQUENCIES: ReadonlyArray<Frequency> = ['DAILY', 'WEEKLY', 'MONTHLY', 'YE
 export const WEEKDAY_CODES = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'] as const
 const WEEKDAY_SET: ReadonlySet<string> = new Set(['MO', 'TU', 'WE', 'TH', 'FR'])
 const FREQ_UNIT: Record<Frequency, string> = { DAILY: 'day', WEEKLY: 'week', MONTHLY: 'month', YEARLY: 'year' }
+/** Mean length of one FREQ unit in days (Gregorian averages, see {@link Recurrence.strideDays}). */
+const DAYS_PER_FREQUENCY: Record<Frequency, number> = { DAILY: 1, WEEKLY: 7, MONTHLY: 30.436875, YEARLY: 365.2425 }
 function pad(value: number, width = 2) {
 	return String(value).padStart(width, '0')
 }
@@ -96,6 +98,17 @@ export class Recurrence {
 	/** The effective interval (≥ 1); `undefined`/0/1 all mean "every 1". */
 	get every(): number {
 		return this.interval && this.interval > 1 ? this.interval : 1
+	}
+
+	/** Mean days between occurrences (Gregorian averages; a BYDAY list divides the weekly stride).
+	 * `Infinity` when no frequency is modelled. */
+	get strideDays(): number {
+		const unit = DAYS_PER_FREQUENCY[this.freq]
+		if (!unit) {
+			return Infinity
+		}
+		const perUnit = this.freq === 'WEEKLY' ? Math.max(1, this.byday?.length ?? 1) : 1
+		return unit * this.every / perUnit
 	}
 
 	/** An immutable edit: a new `Recurrence` with `patch` applied (drives the Custom dialog). */

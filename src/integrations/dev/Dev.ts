@@ -433,6 +433,68 @@ export async function seedDev(orm: MikroORM) {
 		relate(calcPrep2, RelationType.FinishToStart, calcPrep1)
 		relate(advCalcExam, RelationType.FinishToStart, calcPrep2)
 
+		// ---- Routines (density collapse samples, see features/recurrence/client/Routines.ts) ----
+		// Daily (collapses in month and year)
+		personalEvent({
+			heading: '💊 Morning Meds',
+			start: at(pastStart, 0, 7, 30),
+			end: at(pastStart, 0, 7, 35),
+			recurrence: new Recurrence({ freq: 'DAILY' })
+		})
+
+		// Weekdays (collapses in month and year)
+		workEvent({
+			heading: 'Standup',
+			start: at(pastStart, 0, 9, 15),
+			end: at(pastStart, 0, 9, 30),
+			recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['MO', 'TU', 'WE', 'TH', 'FR'] })
+		})
+
+		// Every 2 days (collapses in month and year)
+		hobbyEvent({
+			heading: '🏊 Swim',
+			start: at(pastStart, 3, 6, 0),
+			end: at(pastStart, 3, 7, 0),
+			recurrence: new Recurrence({ freq: 'DAILY', interval: 2 })
+		})
+
+		// Detached occurrences ("this entry only": matches by title and stays marks)
+		hobbyEvent({ heading: '🏊 Swim', start: at(thisWeekMonday, 1, 21), end: at(thisWeekMonday, 1, 22) })
+		hobbyEvent({ heading: '🏊 Swim', start: at(thisWeekMonday, 3, 21), end: at(thisWeekMonday, 3, 22) })
+
+		// Biweekly (bars in month, marks in year)
+		personalEvent({
+			heading: 'Therapy',
+			start: at(pastStart, 4, 17),
+			end: at(pastStart, 4, 18),
+			recurrence: new Recurrence({ freq: 'WEEKLY', interval: 2, byday: ['FR'] })
+		})
+
+		// Ended routine (marks stop at until date)
+		personalEvent({
+			heading: '📓 Journal',
+			start: at(pastStart, 6, 22),
+			end: at(pastStart, 6, 22, 15),
+			recurrence: new Recurrence({ freq: 'DAILY', until: Recurrence.untilFromDay(todayStart.subtract({ months: 4 }).year, todayStart.subtract({ months: 4 }).month, todayStart.subtract({ months: 4 }).day) })
+		})
+
+		// Short burst (<= 5 instances: bars in both views)
+		workTask({
+			heading: 'Month-end Accounting',
+			start: at(thisWeekMonday, 7, 9),
+			end: at(thisWeekMonday, 7, 12),
+			status: TaskStatus.ToDo,
+			recurrence: new Recurrence({ freq: 'DAILY', count: 5 })
+		})
+
+		// Long burst (> rows threshold: collapses)
+		uniEvent({
+			heading: 'Language Course',
+			start: at(nextWeekMonday, 14, 19),
+			end: at(nextWeekMonday, 14, 20, 30),
+			recurrence: new Recurrence({ freq: 'DAILY', count: 21 })
+		})
+
 		// ---- Unscheduled (no dates at all) ----
 		// Across calendars and statuses, so the section renders with more than one colour and mark.
 		workTask({ heading: 'Draft the hiring plan' })

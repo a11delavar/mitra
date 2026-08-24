@@ -6,6 +6,7 @@ import { EntryConnections } from '../../relations/client/EntryConnections.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { CalendarScrollController } from './CalendarScrollController.js'
 import { EntryDragController } from '../../entries/client/EntryDragController.js'
+import { Routines, type RoutineRun } from '../../recurrence/client/Routines.js'
 
 /** The month view's grid: a vertically-scrolling strip of week rows — named, like `Days` (the week
  * view's strip of day columns), after the unit it strips. */
@@ -26,7 +27,10 @@ export class Weeks extends Component {
 
 	private get bufferNavigatingDate(): DateTime { return this.buffer.navigatingDate }
 	private get days(): Array<DateTime> { return this.buffer.days }
-	private get segments(): EntrySegments { return EntrySegments.of(this.entries, this.buffer.window.days) }
+	private get routines(): Routines { return Routines.of(this.entries, this.buffer.window.days, 'week') }
+
+	// Built from kept entries so collapsed series claim no slots and do not trigger "+N more" overflow.
+	private get segments(): EntrySegments { return EntrySegments.of(this.routines.kept, this.buffer.window.days) }
 
 	@query('.days') private readonly daysElement?: HTMLElement
 
@@ -245,6 +249,24 @@ export class Weeks extends Component {
 						}
 					}
 
+					/* pointer-events: none allows day-cell drag-to-create through the empty space between marks. */
+					> .routines {
+						grid-column: 1 / -1;
+						display: grid;
+						grid-template-columns: subgrid;
+						grid-auto-rows: 0.125rem;
+						grid-auto-flow: row dense;
+						gap: 2px;
+						align-content: start;
+						padding-block-start: 0.125rem;
+						overflow: clip;
+						pointer-events: none;
+
+						> mitra-entry-segment {
+							pointer-events: auto;
+						}
+					}
+
 					> .more {
 						grid-row: calc(var(--max-slots) + 1);
 						z-index: 2;
@@ -302,6 +324,7 @@ export class Weeks extends Component {
 		const rendered = weeks.slice(firstWeek, lastWeek + 1).map((week, index) => ({
 			week,
 			row: firstWeek + index,
+			runs: this.routines.runsIn(week[0]!, week[week.length - 1]!),
 			...this.segments.monthWeek(week, Weeks.MAX_SLOTS) as MonthWeek,
 		}))
 
@@ -332,7 +355,14 @@ export class Weeks extends Component {
 		`
 	}
 
-	private weekTemplate({ week, row, bars, hiddenByColumn }: { week: Array<DateTime>, row: number, bars: MonthWeek['bars'], hiddenByColumn: MonthWeek['hiddenByColumn'] }, today: DateTime) {
+	private weekTemplate({ week, row, bars, hiddenByColumn, runs }: { week: Array<DateTime>, row: number, bars: MonthWeek['bars'], hiddenByColumn: MonthWeek['hiddenByColumn'], runs: ReadonlyArray<RoutineRun> }, today: DateTime) {
+		const columnByDay = new Map(week.map((day, index) => [day.dayStart.valueOf(), index]))
+		const columnOf = (dayValue: number) => columnByDay.get(dayValue) ?? 0
+		// Slot s renders at row s + 2. Places routines in the first unused slot row; overflowing weeks
+		// place them after MAX_SLOTS (+N more) into the bottom remainder.
+		const routineRow = hiddenByColumn.some(Boolean)
+			? Weeks.MAX_SLOTS + 2
+			: bars.reduce((lanes, bar) => Math.max(lanes, bar.slot + 1), 0) + 2
 		return html`
 			<div class="week" style="grid-row: ${row + 1};">
 				${week.map((day, col) => html`
@@ -356,6 +386,22 @@ export class Weeks extends Component {
 				${hiddenByColumn.map((count, col) => !count ? html.nothing : html`
 					<div class="more" style="grid-column: ${col + 1};" @click=${() => { this.navigate.dispatch(week[col]!); this.switchToWeek.dispatch() }}>${t('+${count:number} more', { count })}</div>
 				`)}
+				${!runs.length ? html.nothing : html`
+					<div class="routines" style="grid-row: ${routineRow} / -1;">
+						${repeat(runs, run => run.segment.id, run => {
+							const columns = run.days.map(columnOf)
+							const startColumn = columns[0]!
+							return html`
+								<mitra-entry-segment
+									style=${styleMap({ gridColumn: `${startColumn + 1} / span ${columns.at(-1)! - startColumn + 1}` })}
+									.segment=${run.segment}
+									.routine=${run}
+									.ticks=${columns.map(column => column - startColumn + 1)}
+								></mitra-entry-segment>
+							`
+						})}
+					</div>
+				`}
 			</div>
 		`
 	}
