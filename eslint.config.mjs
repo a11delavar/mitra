@@ -25,4 +25,38 @@ export default [
 			'no-console': 'off',
 		},
 	},
+	{
+		files: ['src/**/client/**', 'src/design/**', 'src/app/client.ts', 'src/app/Mitra.ts', 'src/app/Sidebar.ts'],
+		rules: {
+			'no-restricted-imports': ['error', {
+				patterns: [{
+					group: ['**/server/**', '*/server/*'],
+					message: 'Client code must not import server code.'
+				}]
+			}]
+		}
+	},
+	{
+		files: ['src/**/server/**', 'src/app/server.ts'],
+		rules: {
+			'no-restricted-imports': ['error', {
+				patterns: [{
+					group: ['**/client/**', '*/client/*'],
+					message: 'Server code must not import client code.'
+				}]
+			}]
+		}
+	},
+	{
+		files: ['src/features/*/*.ts', 'src/integrations/*.ts'],
+		ignores: ['src/features/*/*.test.ts', 'src/integrations/*.test.ts'],
+		rules: {
+			'no-restricted-imports': ['error', {
+				patterns: [{
+					group: ['**/client/**', '*/client/*', '**/server/**', '*/server/*'],
+					message: 'Isomorphic domain models must not import client or server code.'
+				}]
+			}]
+		}
+	}
 ]

@@ -12,12 +12,9 @@ RUN apt-get update \
 	&& apt-get install -y --no-install-recommends python3 make g++ \
 	&& rm -rf /var/lib/apt/lists/*
 
-# Install with the lockfile first, copying only manifests so this layer caches
-# until dependencies actually change. Workspace manifests are needed for the graph.
+# Install with the lockfile first, copying only the manifest so this layer caches
+# until dependencies actually change.
 COPY package.json package-lock.json ./
-COPY src/backend/package.json src/backend/
-COPY src/frontend/package.json src/frontend/
-COPY src/shared/package.json src/shared/
 RUN npm ci
 
 # The version string + commit hash baked into the bundles (see scripts/esbuild.ts). The build context
@@ -26,7 +23,7 @@ ARG MITRA_VERSION
 ARG MITRA_COMMIT
 ENV MITRA_VERSION=$MITRA_VERSION MITRA_COMMIT=$MITRA_COMMIT
 
-# Build (esbuild reads tsconfig.json for the `shared` path alias).
+# Build.
 COPY tsconfig.json ./
 COPY assets ./assets
 COPY scripts ./scripts

@@ -1,5 +1,6 @@
 import * as esbuild from 'esbuild'
-import { backendOptions, frontendOptions, serviceWorkerOptions, writeIndexHtml } from './esbuild.ts'
+import { backendOptions, frontendOptions, serviceWorkerOptions } from './esbuild.ts'
+import { writeIndexHtml } from './indexHtml.ts'
 
 // One-shot production build (no watch, no dev server). Used by the Docker image and CI.
 await esbuild.build({ ...backendOptions, sourcemap: false })

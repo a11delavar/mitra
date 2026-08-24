@@ -3,33 +3,35 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 /**
- * i18n tooling for the frontend. Two modes:
+ * i18n tooling. Two modes:
  *
- *   node scripts/i18n.ts            — regenerate src/frontend/i18n/keys.auto-generated.ts from every
- *                                     `t('…')` call, then print an analysis.
+ *   node scripts/i18n.ts            — regenerate src/infrastructure/i18n/keys.auto-generated.ts from
+ *                                     every `t('…')` call under src/, then print an analysis.
  *   node scripts/i18n.ts --analyze  — analysis only (no writes); exits non-zero if any key is missing a
  *                                     German translation or any de.json key is unused. Suitable for CI.
  *
  * "Keys" are the natural-English first argument of `t(…)`; English needs no dictionary (a key with no
- * entry renders as itself), so only the translation files (de.json) are checked for drift.
+ * entry renders as itself), so only the translation files (de.json) are checked for drift. `t()` is a
+ * frontend-only global, so scanning the whole tree (rather than picking a "frontend" subtree by name)
+ * costs nothing extra — a backend-only file simply never matches.
  */
 
 const here = path.dirname(fileURLToPath(import.meta.url))
-const frontendDir = path.resolve(here, '../src/frontend')
-const sharedDir = path.resolve(here, '../src/shared')
-const keysFile = path.join(frontendDir, 'i18n/keys.auto-generated.ts')
+const srcDir = path.resolve(here, '../src')
+const i18nDir = path.resolve(srcDir, 'infrastructure/i18n')
+const keysFile = path.join(i18nDir, 'keys.auto-generated.ts')
 const dicts = ['de.json', 'fr.json', 'es.json', 'pt.json', 'it.json']
 
 const analyzeOnly = process.argv.includes('--analyze')
 
-/** Every non-test .ts under the frontend, except the generated keys file itself. */
+/** Every non-test .ts under `dir`, except the i18n folder itself. */
 function sourceFiles(dir: string): Array<string> {
 	return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
 		const full = path.join(dir, entry.name)
 		if (entry.isDirectory()) {
 			// The i18n folder is infra (this script's own output + dictionaries), not scannable UI — and
 			// its doc comments literally contain `t('…')`, which would otherwise be collected as a key.
-			return entry.name === 'i18n' ? [] : sourceFiles(full)
+			return full === i18nDir ? [] : sourceFiles(full)
 		}
 		if (!entry.name.endsWith('.ts') || entry.name.endsWith('.test.ts')) {
 			return []
@@ -54,22 +56,14 @@ function unescape(raw: string, quote: string): string {
 }
 
 const keys = new Set<string>()
-for (const file of sourceFiles(frontendDir)) {
+for (const file of sourceFiles(srcDir)) {
 	const source = fs.readFileSync(file, 'utf8')
 	for (const [, quote, raw] of source.matchAll(callPattern)) {
 		keys.add(unescape(raw, quote!))
 	}
-}
-// `src/shared` carries user-facing text too: the provider `description` statics the add dialog
-// localizes, and the odd domain value object that formats ITSELF for the UI (see EntryType.format —
-// frontend-only by contract, since `t()` is a frontend global). Both are collected so their keys stay
-// tracked like any other.
-for (const file of sourceFiles(sharedDir)) {
-	const source = fs.readFileSync(file, 'utf8')
+	// A provider's `description` static (see Integration.ts) is what the add dialog localizes via
+	// `t(class.description)` — a dynamic key `callPattern` can't see, so it's collected by shape instead.
 	for (const [, quote, raw] of source.matchAll(descriptionPattern)) {
-		keys.add(unescape(raw, quote!))
-	}
-	for (const [, quote, raw] of source.matchAll(callPattern)) {
 		keys.add(unescape(raw, quote!))
 	}
 }
@@ -97,7 +91,7 @@ ${lines}
 // Analyze coverage against the collected keys.
 let hasError = false
 for (const dict of dicts) {
-	const dictPath = path.join(frontendDir, 'i18n', dict)
+	const dictPath = path.join(i18nDir, dict)
 	const parsed = JSON.parse(fs.readFileSync(dictPath, 'utf8')) as Record<string, unknown>
 	const missing = sortedKeys.filter(key => !(key in parsed))
 	const unused = Object.keys(parsed).filter(key => !keys.has(key)).sort((a, b) => a.localeCompare(b))

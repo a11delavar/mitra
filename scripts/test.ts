@@ -17,8 +17,11 @@ await esbuild.build({
 	mainFields: ['module', 'main'],
 	// `better-sqlite3` is a native module (it dynamically `require`s `fs`/bindings) and can't be
 	// bundled — kept external, as the app build does, so tests may spin up a real in-memory ORM.
-	external: ['tsdav', 'better-sqlite3'],
+	// `esbuild` is external for the same reason (its JS wrapper spawns a platform binary): the
+	// bundle-invariant tests in src/app/bundles.test.ts run esbuild itself to inspect the real graph.
+	external: ['tsdav', 'better-sqlite3', 'esbuild'],
 	sourcemap: 'inline',
 	inject,
 	define,
 })
+

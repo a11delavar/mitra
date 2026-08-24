@@ -1,0 +1,380 @@
+import { Component, component, html, css, property, state, query, event, eventListener } from '@a11d/lit'
+import { type DateTime } from '@3mo/date-time'
+import { type Entry } from '../../entries/Entry.js'
+import { getSource, searchEntries } from '../../../infrastructure/http/Api.js'
+import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
+import { commandMatches, Command } from '../Command.js'
+
+/**
+ * The command palette: a top-layer search box ("/", Ctrl/Cmd+P or +K, or the header's search trigger) over the
+ * page's {@link Command}s and the ENTIRE entry store — entries are searched on the backend, so
+ * matches aren't limited to the window the calendar happens to have fetched. Picking an entry
+ * dispatches `navigate` with its start; picking a command executes it.
+ */
+@component('mitra-command-palette')
+export class CommandPalette extends Component {
+	/** What the prominent UI teaches — a bare "/": one key, no chord, and nothing to spell differently
+	 * per platform. The chords ({@link hotkeys}) are equally supported and equally documented in the
+	 * shortcut sheet; they just aren't what a header search box should be shouting. (The page owns the
+	 * "/" keystroke itself — opening the palette from inside the palette is meaningless.) */
+	static readonly hotkey = '/'
+
+	@property({ type: Array }) commands = new Array<Command>()
+
+	@event() readonly navigate!: EventDispatcher<DateTime>
+
+	@state() private searchTerm = ''
+	@state() private entries = new Array<Entry>()
+	@state() private selectedIndex = 0
+
+	@query('dialog') private readonly dialog!: HTMLDialogElement
+	@query('menu [data-selected]') private readonly selectedResult?: HTMLElement
+
+	protected override createRenderRoot() { return this }
+
+	show() {
+		this.searchTerm = ''
+		this.entries = []
+		this.selectedIndex = 0
+		this.searchToken++
+		this.dialog.showModal()
+	}
+
+	/** Both chords open it, on equal footing: **P** (the editor lineage — VS Code's Quick Open) and **K**
+	 * (what most other palettes bound). Neither is prominent in the UI, which teaches "/" instead
+	 * ({@link hotkey}), but both are listed in the shortcut sheet and the docs — a shortcut nobody can
+	 * discover may as well not exist. */
+	private static readonly hotkeys = ['p', 'k']
+
+	@eventListener({ target: window, type: 'keydown' })
+	protected handleWindowKeyDown(e: KeyboardEvent) {
+		if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && CommandPalette.hotkeys.includes(e.key.toLowerCase())) {
+			e.preventDefault()
+			if (this.dialog.open) {
+				this.dialog.close()
+			} else {
+				this.show()
+			}
+		}
+	}
+
+	/** Monotonic token: debounces keystrokes and discards stale responses — only the latest search lands. */
+	private searchToken = 0
+
+	private async search(term: string) {
+		const token = ++this.searchToken
+		if (!term.trim()) {
+			this.entries = []
+			return
+		}
+		await new Promise(resolve => setTimeout(resolve, 200))
+		if (token !== this.searchToken) {
+			return
+		}
+		const entries = await searchEntries(term.trim()).catch(() => new Array<Entry>())
+		if (token === this.searchToken) {
+			this.entries = entries
+		}
+	}
+
+	private get matchingCommands() {
+		const queried = !!this.searchTerm.trim()
+		return this.commands.filter(command => (queried || command.listedWithoutQuery) && commandMatches(command, this.searchTerm))
+	}
+
+	/** Entries only join the list once there is something to search for — an empty palette is a command menu. */
+	private get matchingEntries() {
+		return this.searchTerm.trim() ? this.entries : new Array<Entry>()
+	}
+
+	private get results(): Array<Command | Entry> {
+		return [...this.matchingCommands, ...this.matchingEntries]
+	}
+
+	private select(result: Command | Entry) {
+		this.dialog.close()
+		if (result instanceof Command) {
+			result.dispatch()
+		} else if (result.start) {
+			// Navigate the calendar to the entry, then ask its segment to open once it renders.
+			this.navigate.dispatch(result.start)
+			if (result.id) {
+				EntryEditorIntent.requestOpen(result.id)
+			}
+		}
+	}
+
+	private handleInput(term: string) {
+		this.searchTerm = term
+		this.selectedIndex = 0
+		void this.search(term)
+	}
+
+	private handleKeyDown(e: KeyboardEvent) {
+		const count = this.results.length
+		switch (e.key) {
+			case 'ArrowDown':
+				e.preventDefault()
+				this.selectedIndex = count ? (this.selectedIndex + 1) % count : 0
+				break
+			case 'ArrowUp':
+				e.preventDefault()
+				this.selectedIndex = count ? (this.selectedIndex - 1 + count) % count : 0
+				break
+			case 'Enter': {
+				e.preventDefault()
+				const selected = this.results[this.selectedIndex]
+				if (selected) {
+					this.select(selected)
+				}
+				break
+			}
+			default:
+				break
+		}
+	}
+
+	protected override updated() {
+		// Keep the highlighted result in view as the user arrows/types — but ONLY while open. The palette
+		// stays mounted (a closed <dialog>) and re-renders whenever its `commands` prop changes, which the
+		// page hands it fresh on every render; calling scrollIntoView there forces a synchronous
+		// whole-document layout (reflowing the entire calendar) for nothing. The guard makes a closed
+		// palette's update a no-op — no layout thrash during calendar scrolling.
+		if (this.dialog?.open) {
+			this.selectedResult?.scrollIntoView({ block: 'nearest' })
+		}
+	}
+
+	private static when(entry: Entry) {
+		return !entry.start ? '' : entry.allDay
+			? entry.start.format({ dateStyle: 'medium' })
+			: entry.start.format({ dateStyle: 'medium', timeStyle: 'short' })
+	}
+
+	static override get styles() {
+		return css`
+			mitra-command-palette {
+				display: contents;
+
+				dialog {
+					margin: 12vh auto auto;
+					width: min(37.5rem, 92vw);
+					padding: 0;
+					outline: none;
+					background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+					backdrop-filter: blur(16px);
+					color: var(--color-text);
+					border: var(--border);
+					border-radius: 14px;
+					box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+					font-family: 'Inter', sans-serif;
+
+					&::backdrop {
+						background: rgba(0, 0, 0, 0.25);
+					}
+
+					@media (prefers-reduced-motion: no-preference) {
+						transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
+
+						@starting-style {
+							opacity: 0;
+							transform: scale(0.97) translateY(-8px);
+						}
+					}
+
+					> header {
+						display: flex;
+						align-items: center;
+						gap: 0.625rem;
+						padding: 0.875rem 1rem;
+						border-block-end: var(--border);
+
+						> mitra-icon {
+							font-size: 1rem;
+							color: var(--color-text-muted);
+						}
+
+						input[type=search] {
+							flex: 1;
+							height: auto;
+							padding: 0;
+							font-size: 0.9375rem;
+							font-weight: 450;
+							background: none;
+							border: none;
+							border-radius: 0;
+
+							&::-webkit-search-cancel-button {
+								display: none;
+							}
+
+							&:hover,
+							&:focus-visible {
+								background: none;
+								border: none;
+								box-shadow: none;
+							}
+						}
+					}
+
+					> menu {
+						margin: 0;
+						padding: 0.375rem;
+						max-height: min(50vh, 24rem);
+						overflow: auto;
+						overscroll-behavior: contain;
+						display: flex;
+						flex-direction: column;
+						gap: 1px;
+						list-style: none;
+
+						li {
+							display: contents;
+						}
+
+						.group {
+							display: block;
+							padding: 0.5rem 0.625rem 0.25rem;
+							font-size: 0.6875rem;
+							font-weight: 600;
+							letter-spacing: 0.04em;
+							text-transform: uppercase;
+							color: var(--color-text-muted);
+						}
+
+						.empty {
+							display: block;
+							padding: 1.5rem;
+							text-align: center;
+							font-size: 0.8125rem;
+							color: var(--color-text-muted);
+						}
+
+						button {
+							all: unset;
+							display: flex;
+							align-items: center;
+							gap: 0.625rem;
+							padding: 0.5rem 0.625rem;
+							border-radius: 8px;
+							font-size: 0.8125rem;
+							font-weight: 500;
+							cursor: pointer;
+
+							&[data-selected] {
+								background: color-mix(in srgb, var(--color-text) 8%, transparent);
+							}
+
+							mitra-icon {
+								font-size: 1rem;
+								color: var(--color-text-muted);
+							}
+
+							.swatch {
+								inline-size: 0.625rem;
+								block-size: 0.625rem;
+								margin-inline: 3px;
+								border-radius: 50%;
+								flex-shrink: 0;
+							}
+
+							.heading {
+								flex: 1;
+								white-space: nowrap;
+								overflow: hidden;
+								text-overflow: ellipsis;
+							}
+
+							.when {
+								font-size: 0.75rem;
+								color: var(--color-text-muted);
+								white-space: nowrap;
+							}
+						}
+					}
+
+					> footer {
+						display: flex;
+						gap: 1rem;
+						padding: 0.5rem 1rem;
+						border-block-start: var(--border);
+						font-size: 0.6875rem;
+						color: var(--color-text-muted);
+
+						span {
+							display: inline-flex;
+							align-items: center;
+							gap: 0.25rem;
+						}
+					}
+				}
+			}
+		`
+	}
+
+	protected override get template() {
+		const commands = this.matchingCommands
+		const entries = this.matchingEntries
+		return html`
+			<dialog closedby="any" @keydown=${(e: KeyboardEvent) => this.handleKeyDown(e)}>
+				<header>
+					<mitra-icon icon="search"></mitra-icon>
+					<input type="search" autofocus placeholder=${t('Search entries or run a command…')}
+						.value=${this.searchTerm}
+						@input=${(e: Event) => this.handleInput((e.target as HTMLInputElement).value)}
+					>
+					<kbd>esc</kbd>
+				</header>
+				<menu>
+					${!commands.length ? html.nothing : html`
+						<li class="group">${t('Commands')}</li>
+						${commands.map((command, index) => html`
+							<li>
+								<button ?data-selected=${index === this.selectedIndex}
+									@pointerenter=${() => this.selectedIndex = index}
+									@click=${() => this.select(command)}
+								>
+									<mitra-icon icon=${command.icon}></mitra-icon>
+									<span class="heading">${command.heading}</span>
+									${!command.shortcut ? html.nothing : html`<kbd>${command.shortcut}</kbd>`}
+								</button>
+							</li>
+						`)}
+					`}
+					${!entries.length ? html.nothing : html`
+						<li class="group">${t('Entries')}</li>
+						${entries.map((entry, entryIndex) => {
+							const index = commands.length + entryIndex
+							return html`
+								<li>
+									<button ?data-selected=${index === this.selectedIndex}
+										@pointerenter=${() => this.selectedIndex = index}
+										@click=${() => this.select(entry)}
+									>
+										<span class="swatch" style=${`background: ${entry.color ?? getSource(entry.sourceId)?.color ?? 'var(--color-accent)'}`}></span>
+										<span class="heading">${entry.heading || t('Untitled')}</span>
+										<span class="when">${CommandPalette.when(entry)}</span>
+									</button>
+								</li>
+							`
+						})}
+					`}
+					${commands.length || entries.length ? html.nothing : html`
+						<li class="empty">${t('No matches')}</li>
+					`}
+				</menu>
+				<footer>
+					<span><kbd>↑</kbd><kbd>↓</kbd> ${t('navigate')}</span>
+					<span><kbd>↵</kbd> ${t('select')}</span>
+					<span><kbd>esc</kbd> ${t('close')}</span>
+				</footer>
+			</dialog>
+		`
+	}
+}
+
+declare global {
+	interface HTMLElementTagNameMap {
+		'mitra-command-palette': CommandPalette
+	}
+}

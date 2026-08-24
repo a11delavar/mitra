@@ -12,9 +12,10 @@ declare const mitra: {
 	readonly version: string
 	/** The short commit hash — empty when the build had neither git nor the MITRA_COMMIT env var. */
 	readonly commit: string
-	/** Which bundle this is. Shared code runs in both, and a few rules differ by end — see
-	 * `shared/wire.ts`. A build fact, not a detected one: nothing at run time can change what a bundle
-	 * was built as. */
+	/** Which bundle this is. Isomorphic code runs in both, and a few rules differ by end — see
+	 * `withheld()` in `integrations/Integration.ts`, which withholds a provider's secrets from a
+	 * response but not from a request. A build fact, not a detected one: nothing at run time can
+	 * change what a bundle was built as. */
 	readonly runtime: 'server' | 'browser'
 }
 
