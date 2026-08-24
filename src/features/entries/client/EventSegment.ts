@@ -3,7 +3,7 @@ import { TaskStatus } from '../Entry.js'
 import { type EntrySegment } from './EntrySegment.js'
 import { type RoutineRun } from '../../recurrence/client/Routines.js'
 import { contrastColor } from '../../../design/contrastColor.js'
-import { getSource } from '../../../infrastructure/http/Api.js'
+import { getSource, getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 
@@ -601,7 +601,7 @@ export class EntrySegmentComponent extends Component {
 			${!this.segment.entry.partOfSeries ? html.nothing : html`
 				<mitra-icon class="recurring" icon="repeat" title=${t('Repeats')}></mitra-icon>
 			`}
-			${!this.resize || !this.segment.entry.persisted ? html.nothing : html`
+			${!this.resize || !this.segment.entry.persisted || !getCapabilities(this.segment.entry.sourceId).editEntries ? html.nothing : html`
 				<div class="resize-start"></div>
 				<div class="resize-end"></div>
 			`}

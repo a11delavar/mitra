@@ -171,7 +171,7 @@ export class EntryDragController extends Controller {
 	}
 
 	private beginExternal(entry: Entry, segment: EntrySegmentComponent, surface: HTMLElement, e: PointerEvent) {
-		if (this.drag || !entry.persisted) {
+		if (this.drag || !entry.persisted || !getCapabilities(entry.sourceId).editEntries) {
 			return
 		}
 		const cells = this.snapshotCells()
@@ -480,7 +480,9 @@ export class EntryDragController extends Controller {
 		const segment = target.closest('mitra-entry-segment') as EntrySegmentComponent | null
 		const entry = segment?.segment?.entry
 		if (segment) {
-			if (!entry?.persisted) {
+			// A tap still has to open the editor of an entry whose provider mitra may only read, so the
+			// bar is on beginning a drag, not on handling the pointer at all.
+			if (!entry?.persisted || !getCapabilities(entry.sourceId).editEntries) {
 				return
 			}
 			const mode = this.editMode(entry)
@@ -497,7 +499,7 @@ export class EntryDragController extends Controller {
 		// Create on empty grid / lane / cell.
 		const mode = this.createModeAt(target)
 		const source = mode ? getPrimarySource() : undefined
-		if (!mode || !source) {
+		if (!mode || !source || !getCapabilities(source.id).createEntries) {
 			return
 		}
 		const anchor = this.pointAt(cells, e.clientX, e.clientY, mode)
@@ -630,7 +632,7 @@ export class EntryDragController extends Controller {
 			// original stays untouched and a standalone copy of it lands at the drop span. Standalone even
 			// for a series occurrence: the copy is a single entry based on that very occurrence, so no
 			// scope arises and Ctrl has nothing to add.
-			if (drag.kind === 'move' && e.altKey) {
+			if (drag.kind === 'move' && e.altKey && getCapabilities(entry.sourceId).createEntries) {
 				this.teardown(e.pointerId)
 				EntryStore.setPreview(undefined) // the ghost has served its purpose — the copy takes over
 				EntryStore.setDragging(undefined)

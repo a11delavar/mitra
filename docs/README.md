@@ -25,6 +25,7 @@ Mitra brings in the calendars and task databases you already use and syncs them 
 - **[Google Calendar](integrations/google-calendar.md)** — needs a one-time OAuth setup of your deployment.
 - **[Apple Calendar (iCloud)](integrations/apple-calendar.md)** — connect with an app-specific password.
 - **[Notion](integrations/notion.md)** — turn Notion database views into two-way task sources.
+- **[Tempo](integrations/tempo.md)** — sync Jira worklogs two-way and track time alongside your events.
 
 ## Use Mitra
 

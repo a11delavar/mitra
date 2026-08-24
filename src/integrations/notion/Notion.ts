@@ -153,7 +153,12 @@ export class Notion extends Integration<NotionCredentials> {
 	 * no free/busy answer and has no per-page access class — sharing is a workspace/page permission,
 	 * which is a different thing wearing a similar word. */
 	override get capabilities() {
-		return { recurrence: false, reminders: false, location: false, description: true, cancelledStatus: false, percentComplete: false, timeZone: false, participants: false, transparency: false, visibility: false, relations: true }
+		return {
+			...Integration.fullCapabilities,
+			recurrence: false, reminders: false, location: false, cancelledStatus: false,
+			percentComplete: false, timeZone: false, participants: false, transparency: false,
+			visibility: false,
+		}
 	}
 
 	// The workspace identity derives from the token (its bot user), so the token is all a connect needs.

@@ -33,13 +33,14 @@ describe('the server bundle', () => {
 })
 
 describe('the browser bundle', () => {
-	// The reason the CalDAV sync engine is a separate server-side collaborator rather than methods on
-	// the CalDAV class: that class is also the frontend's API model, so anything it imports is shipped
+	// The reason a sync engine is a separate server-side collaborator rather than methods on the
+	// provider class: that class is also the frontend's API model, so anything it imports is shipped
 	// to every visitor. One convenient import back onto it would silently undo the split — the app
-	// would still work, just heavier, which is precisely the kind of regression nobody notices.
+	// would still work, just heavier, which is precisely the kind of regression nobody notices. For
+	// Tempo the stake is higher than weight: its clients hold two API credentials.
 	it('carries no sync engine, nor the protocol client only an engine talks to', async () => {
 		const inputs = await inputsOf(frontendOptions)
-		for (const forbidden of ['CalDAVSyncEngine', 'node_modules/tsdav']) {
+		for (const forbidden of ['CalDAVSyncEngine', 'node_modules/tsdav', 'TempoSyncEngine', 'TempoClient', 'JiraClient']) {
 			assert.ok(
 				!inputs.some(input => input.includes(forbidden)),
 				`${forbidden} must not reach the browser bundle`,

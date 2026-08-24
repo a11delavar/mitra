@@ -76,6 +76,23 @@ export function withheld<TCredentials extends Record<string, any>>(...secrets: A
 	}
 }
 
+/**
+ * Serializes every mutating sync path of ONE integration, keyed by its id — a process-wide chain, not
+ * per instance, since each caller works with its own entity-manager fork and therefore its own object.
+ *
+ * Without it, the daemon’s cycle and a request that syncs (connect, edit, re-import) run at the same
+ * time, each reading "no rows yet" from its own uncommitted fork and then inserting the same sources
+ * and entries — the duplicate-import bug. Neither database constraint catches that: `source` has no
+ * unique index at all, and `entry`’s (source_id, uri, recurrence_id) is defeated by SQLite treating
+ * NULLs as distinct, which every non-recurring row has.
+ *
+ * Applied at the OUTERMOST operations only ({@link Integration.sync}, {@link applyAndSync}, {@link
+ * reimportSource}), each of which flushes before releasing: a lock spanning less than the commit would
+ * let the next holder read the state the previous one had not written yet. The nested steps
+ * (`getSources`, `syncEntries`) stay unlocked, so nothing ever waits on a lock it already holds.
+ */
+const syncChains = new Map<string, Promise<unknown>>()
+
 @entity({ abstract: true, discriminatorColumn: 'type' })
 @unique({ properties: ['userId', 'uri'] })
 export abstract class Integration<TCredentials extends Record<string, any> = any> {
@@ -145,6 +162,18 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * features/relations/EntryRelation.ts). Lines pointing at such an entry from elsewhere still render on it:
 	 * they live on the OTHER entry, which is a different provider's fact, and hiding them would deny
 	 * a relationship the calendar is already drawing.
+	 * `createEntries`/`editEntries`/`deleteEntries`/`renameEntries` are a different axis from the rest:
+	 * not what the provider's model can HOLD but what it lets us WRITE, so a source can be read-only
+	 * without any field being unsupported. They gate the gestures rather than a field — drag, resize,
+	 * the create gutter, Duplicate and Delete — with the matching 400s on the entries route as the
+	 * authority. `renameEntries` is the odd one and earns its place: a Tempo worklog's title is its
+	 * JIRA ISSUE's summary, a neighbouring record's fact, so the title is shown (it is the most useful
+	 * thing about the entry) but not editable — which is a different answer from hiding the field, and
+	 * the reason this is a capability rather than an absent one. A DRAFT's title stays editable
+	 * regardless: before an entry exists, its title is what says which issue to book against.
+	 * `allDay` belongs to the first axis after all: a provider that only stores durations (a worklog is
+	 * seconds on a day) has no way to mean "all day".
+	 *
 	 * A getter on the class (not serialized state): the frontend's API reviver rehydrates
 	 * integrations into these very classes, so both sides read the same declaration.
 	 */
@@ -157,7 +186,29 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * once, so a capability added to the class can never be forgotten at that fallback and read as
 	 * unsupported. */
 	static get fullCapabilities() {
-		return { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, percentComplete: true, timeZone: true, participants: true, transparency: true, visibility: true, relations: true }
+		return { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, percentComplete: true, timeZone: true, participants: true, transparency: true, visibility: true, relations: true, allDay: true, createEntries: true, editEntries: true, deleteEntries: true, renameEntries: true }
+	}
+
+	/**
+	 * The entry's counterpart at the provider, as something to open — the ⋯ menu's "Open in …". The URL
+	 * itself is per-entry data ({@link EntryData.url}, written by the sync), so this only names WHERE it
+	 * leads: not always the provider itself, since a Tempo worklog's counterpart is a Jira issue.
+	 * Plain data like the presentation statics, for the same reason — the menu localizes at render.
+	 */
+	externalLink(entry: Entry): { url: string, label: string } | undefined {
+		const url = Integration.externalUrlOf(entry)
+		return !url ? undefined : { url, label: (this.constructor as IntegrationClass).label }
+	}
+
+	/** Provider-supplied, so scheme-checked here rather than at each call site: `javascript:`/`data:`
+	 * would make a synced field an execution vector. Declared once for the same reason {@link
+	 * fullCapabilities} is — the frontend's fallback for a provider it doesn't model reads it too. */
+	static externalUrlOf(entry: Entry): string | undefined {
+		try {
+			return new URL(entry.data?.url ?? '').protocol === 'https:' ? entry.data!.url : undefined
+		} catch {
+			return undefined
+		}
 	}
 
 	/**
@@ -327,9 +378,30 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * @returns whether any entry changed. Source bookkeeping (e.g. sync tokens) is deliberately
 	 * not reported, so idle polls don't notify clients.
 	 */
-	async sync(em: EntityManager): Promise<boolean> {
-		await this.getSources(em)
-		return this.syncEntries(em)
+	sync(em: EntityManager): Promise<boolean> {
+		return Integration.exclusively(this.id, async () => {
+			await this.getSources(em)
+			const changed = await this.syncEntries(em)
+			// Inside the lock: the next holder must be able to READ what this cycle pulled, or it will
+			// insert it all over again. The daemon's own trailing flush is then a no-op.
+			await em.flush()
+			return changed
+		})
+	}
+
+	/** Runs `work` alone among this integration's sync paths — see {@link syncChains}. */
+	static exclusively<T>(id: string, work: () => Promise<T>): Promise<T> {
+		// Chained onto the predecessor's SETTLEMENT, not its success: one failed sync must not wedge
+		// every later one behind a rejected promise.
+		const run = (syncChains.get(id) ?? Promise.resolve()).then(work, work)
+		const settled = run.catch(() => undefined)
+		syncChains.set(id, settled)
+		void settled.then(() => {
+			if (syncChains.get(id) === settled) {
+				syncChains.delete(id)
+			}
+		})
+		return run
 	}
 
 	/**
@@ -347,11 +419,14 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * as in the UI.
 	 */
 	async reimportSource(em: EntityManager, source: Source): Promise<void> {
-		const entries = await em.find(Entry, { sourceId: source.id })
-		entries.forEach(entry => em.remove(entry))
-		source.syncState = undefined
-		await em.flush()
-		await this.syncSourceEntries(em, source)
+		await Integration.exclusively(this.id, async () => {
+			const entries = await em.find(Entry, { sourceId: source.id })
+			entries.forEach(entry => em.remove(entry))
+			source.syncState = undefined
+			await em.flush()
+			await this.syncSourceEntries(em, source)
+			await em.flush()
+		})
 	}
 
 	/**
@@ -359,7 +434,11 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * credentials (preserving anything the client omitted), reconciles the available sources, activates
 	 * the ones selected in `incoming` (matched by url), then syncs entries for the active sources.
 	 */
-	async applyAndSync(em: EntityManager, incoming: this): Promise<void> {
+	applyAndSync(em: EntityManager, incoming: this): Promise<void> {
+		return Integration.exclusively(this.id, () => this.applyAndSyncExclusively(em, incoming))
+	}
+
+	private async applyAndSyncExclusively(em: EntityManager, incoming: this): Promise<void> {
 		this.merge(incoming)
 		const sources = await this.getSources(em, { checkDuplicate: true }) // checkDuplicate: reject re-connecting an already-connected account
 

@@ -7,7 +7,7 @@ import { Integration } from '../../integrations/Integration.js'
 import { Identity } from '../../features/identity/Identity.js'
 import { EntryRelation } from '../../features/relations/EntryRelation.js'
 import { Entry } from '../../features/entries/Entry.js'
-import { CalDAV, GoogleCalendar, AppleCalendar, Notion } from '../../integrations/registerIntegrations.js'
+import { CalDAV, GoogleCalendar, AppleCalendar, Notion, Tempo } from '../../integrations/registerIntegrations.js'
 import { Dev } from '../../integrations/dev/Dev.js'
 import { NotificationSubscription } from '../../features/reminders/NotificationSubscription.js'
 import { Session } from '../../features/identity/server/Session.js'
@@ -25,7 +25,7 @@ import { migrations } from './migrations/index.js'
  */
 export function ormConfig(dbName: string) {
 	return defineConfig({
-		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Dev, Source, Entry, Recurrence, EntryRelation, NotificationSubscription, Session, State],
+		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Tempo, Dev, Source, Entry, Recurrence, EntryRelation, NotificationSubscription, Session, State],
 		dbName,
 		extensions: [Migrator],
 		migrations: {

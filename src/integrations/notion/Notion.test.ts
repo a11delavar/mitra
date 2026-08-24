@@ -597,7 +597,14 @@ describe('Notion integration model', () => {
 		// description:true — the page body maps to markdown (NotionMarkdown).
 		// participants:false — a page has no invitees (people ≠ RFC 5545 group-scheduling).
 		// percentComplete:false — Notion models status groups only, without percent-complete property.
-		assert.deepEqual(account().capabilities, { recurrence: false, reminders: false, location: false, description: true, cancelledStatus: false, percentComplete: false, timeZone: false, participants: false, transparency: false, visibility: false, relations: true })
+		// Asserted as the DEVIATIONS from the full set rather than as a snapshot of it: a capability
+		// added to Integration is supported here until Notion says otherwise, and a whole-object
+		// comparison would fail on every such addition without Notion having changed at all.
+		const capabilities = account().capabilities
+		const unsupported = Object.entries(capabilities).filter(([, supported]) => !supported).map(([key]) => key)
+		assert.deepEqual(unsupported.sort(), ['cancelledStatus', 'location', 'participants', 'percentComplete', 'recurrence', 'reminders', 'timeZone', 'transparency', 'visibility'])
+		assert.equal(capabilities.description, true)
+		assert.equal(capabilities.relations, true)
 	})
 
 	it('keeps the stored token when the edit form leaves it blank, and never takes a client label', () => {

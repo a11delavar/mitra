@@ -1,6 +1,6 @@
 ---
 title: Integrations
-description: Connect the calendars and task databases you already use — CalDAV, Google Calendar, Apple Calendar, and Notion — and sync them two-way in the background.
+description: Connect the calendars and task databases you already use — CalDAV, Google Calendar, Apple Calendar, Notion, and Tempo — and sync them two-way in the background.
 sidebar:
   order: 0
   label: Overview
@@ -16,6 +16,7 @@ Mitra doesn't replace the accounts you already have — it **brings them in**. C
 | **[Google Calendar](google-calendar.md)** | Google calendars (via CalDAV + OAuth) | One-time OAuth setup |
 | **[Apple Calendar](apple-calendar.md)** | iCloud calendars (and Mitra-side tasks) | None — app-specific password |
 | **[Notion](notion.md)** | Task database **views**, two-way | None — paste an integration token |
+| **[Tempo](tempo.md)** | Jira worklogs — the hours you book, two-way | None — paste two API tokens |
 
 More integrations are on the way.
 
@@ -38,6 +39,7 @@ In the app, open the sidebar and choose **Add Integration**, then pick the provi
 - [Connect Google Calendar →](google-calendar.md)
 - [Connect Apple Calendar →](apple-calendar.md)
 - [Connect Notion →](notion.md)
+- [Connect Tempo →](tempo.md)
 
 > [!TIP]
 > Reconnecting the same account (same server/URL and username) is an **in-place** update — Mitra recognises it and refreshes the connection rather than creating a duplicate.

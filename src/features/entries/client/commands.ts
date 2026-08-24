@@ -20,7 +20,7 @@ export class CreateEntry extends Command {
 	override execute() {
 		const { calendar } = this
 		const source = getPrimarySource()
-		if (!source) {
+		if (!source || !getCapabilities(source.id).createEntries) {
 			return
 		}
 		const now = new DateTime()

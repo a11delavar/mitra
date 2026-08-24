@@ -9,6 +9,7 @@ import caldavLogo from '../caldav/logo.svg'
 import googleLogo from '../google/logo.svg'
 import appleLogo from '../apple/logo.svg'
 import notionLogo from '../notion/logo.svg'
+import tempoLogo from '../tempo/logo.svg'
 
 /** Resolves an integration class's `logo` name (see IntegrationClass) to its inlined SVG markup. The
  * marks render inline (`unsafeHTML`), not via `<img>`, so the monochrome ones inherit `currentColor`
@@ -18,6 +19,7 @@ const logos: Record<string, string> = {
 	google: googleLogo,
 	apple: appleLogo,
 	notion: notionLogo,
+	tempo: tempoLogo,
 }
 
 @component('mitra-dialog-integration')
@@ -312,6 +314,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 			case 'google': return this.googleTemplate
 			case 'apple': return this.appleTemplate
 			case 'notion': return this.notionTemplate
+			case 'tempo': return this.tempoTemplate
 			// Also the fallback for provider types the client doesn't model (see the edit fallback above).
 			default: return this.caldavTemplate
 		}
@@ -394,6 +397,37 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 			<label>
 				${t('Integration Token')}
 				<input type="password" ${bind({ keyPath: 'credentials.token', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : 'ntn_…'} autocomplete="off">
+			</label>
+			${this.connectTemplate}
+		`
+	}
+
+	private get tempoTemplate() {
+		const { bind } = this.binder
+		return html`
+			${this.isEdit ? html`
+				<label>
+					${t('Atlassian Account')}
+					<input readonly .value=${this.entity!.credentials.username ?? ''} autocomplete="off">
+				</label>
+			` : html`
+				<p class="hint">${t('Tempo.TokenHint')}</p>
+			`}
+			<label>
+				${t('Site URL')}
+				<input ${bind({ keyPath: 'credentials.site', event: 'input' })} ?readonly=${this.isEdit} placeholder="https://example.atlassian.net" autocomplete="off">
+			</label>
+			<label>
+				${t('Tempo API Token')}
+				<input type="password" ${bind({ keyPath: 'credentials.token', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : ''} autocomplete="off">
+			</label>
+			<label>
+				${t('Atlassian Account E-mail')}
+				<input ${bind({ keyPath: 'credentials.jiraEmail', event: 'input' })} autocomplete="off" placeholder="email@example.com">
+			</label>
+			<label>
+				${t('Atlassian API Token')}
+				<input type="password" ${bind({ keyPath: 'credentials.jiraToken', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : ''} autocomplete="off">
 			</label>
 			${this.connectTemplate}
 		`

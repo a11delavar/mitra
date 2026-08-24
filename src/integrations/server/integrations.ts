@@ -106,9 +106,13 @@ integrationsRouter.get('/google/callback', async (req, res) => {
 	// Discover the account's calendars now (persisted disabled, per the opt-in data flow), so the
 	// picker dialog opens populated. A discovery failure (e.g. the CalDAV API not enabled in the
 	// cloud project) still keeps the connected account — the dialog's Refresh surfaces the error.
-	await integration.getSources(em).catch(error =>
+	// Exclusively, and flushing inside: this discovery persists rows, so a daemon cycle running
+	// alongside it would reconcile the same account from a fork that cannot see them yet.
+	await Integration.exclusively(integration.id, async () => {
+		await integration!.getSources(em)
+		await em.flush()
+	}).catch(error =>
 		logger.warn(`Connected ${integration.toString()}, but calendar discovery failed: ${error instanceof Error ? error.message : error}`))
-	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
 	logger.info(`Connected ${integration.toString()}`)
 	return res.redirect(`/?integration=${integration.id}`)

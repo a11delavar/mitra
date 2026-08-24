@@ -241,6 +241,16 @@ export function getCapabilities(sourceId: string): Integration['capabilities'] {
 	return getIntegrationFor(sourceId)?.capabilities ?? Integration.fullCapabilities
 }
 
+/**
+ * Where an entry can be opened outside mitra, if anywhere (see Integration.externalLink). A provider
+ * the client doesn't model arrives without the method, like the capabilities above — it still gets
+ * the link, just unlabelled, since the URL is the entry's own data either way.
+ */
+export function getExternalLink(entry: Entry): { url: string, label?: string } | undefined {
+	const url = Integration.externalUrlOf(entry)
+	return getIntegrationFor(entry.sourceId)?.externalLink?.(entry) ?? (url ? { url } : undefined)
+}
+
 export function toggleSourceVisibility(id: string, hidden: boolean) {
 	return Api.put(`/sources/${id}/visibility`, { hidden })
 }

@@ -12,8 +12,11 @@
  */
 import { registerEngine } from '../Integration.js'
 import { CalDAVSyncEngine } from '../caldav/server/CalDAVSyncEngine.js'
+import { TempoSyncEngine } from '../tempo/server/TempoSyncEngine.js'
 
 const caldav = new CalDAVSyncEngine()
 registerEngine('caldav', caldav)
 registerEngine('apple', caldav)
 registerEngine('google', caldav)
+
+registerEngine('tempo', new TempoSyncEngine())

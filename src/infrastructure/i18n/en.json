@@ -9,6 +9,7 @@
 	"Google.ConsentHint": "You will be redirected to Google to grant access to your calendars, then choose here which of them to show.",
 	"Google.ConfigurationHint": "Google Calendar is not configured on this server — set the MITRA_GOOGLE_CLIENT_ID and MITRA_GOOGLE_CLIENT_SECRET environment variables (see the README).",
 	"Notion.TokenHint": "Create an integration at notion.so/profile/integrations, share your task databases with it (··· → Connections), then paste its secret here. A database needs a Status and a Date property — its views become sources.",
+	"Tempo.TokenHint": "Create an API token in Tempo (Settings → Data Access → API integration) and an Atlassian API token at id.atlassian.com. Tempo holds the hours, Jira names the issues — both are needed.",
 	"ShowOnlySource.Keywords": "calendar source solo focus hide others only visible",
 	"ShowPreviouslyVisibleSources.Keywords": "calendar source restore unsolo back all visible again",
 	"WeekView.Keywords": "switch",

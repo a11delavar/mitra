@@ -4,6 +4,7 @@ import { CalDAV } from '../caldav/CalDAV.js'
 import { GoogleCalendar } from '../google/GoogleCalendar.js'
 import { AppleCalendar } from '../apple/AppleCalendar.js'
 import { Notion } from '../notion/Notion.js'
+import { Tempo } from '../tempo/Tempo.js'
 import { Dev } from '../dev/Dev.js'
 import './registerEngines.js'
 
@@ -25,9 +26,10 @@ const resolvesAnEngine = async (integration: { updateEntry(em: never, a: never, 
 
 describe('sync engine registry', () => {
 	it('covers every provider whose class delegates its sync/CRUD to an engine', async () => {
-		// All three speak the CalDAV protocol — Apple and Google are manifest-only subclasses, so one
-		// engine serves them, but each discriminator still needs its own registry entry.
-		for (const integration of [new CalDAV(), new GoogleCalendar(), new AppleCalendar()]) {
+		// The first three speak the CalDAV protocol — Apple and Google are manifest-only subclasses, so
+		// one engine serves them, but each discriminator still needs its own registry entry. Tempo has
+		// its own engine, for two API clients that must stay off the browser bundle.
+		for (const integration of [new CalDAV(), new GoogleCalendar(), new AppleCalendar(), new Tempo()]) {
 			assert.equal(await resolvesAnEngine(integration), true, `${integration.type} has no registered engine`)
 		}
 	})

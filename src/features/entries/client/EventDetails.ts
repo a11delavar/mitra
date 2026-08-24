@@ -3,7 +3,7 @@ import { type Integration } from '../../../integrations/Integration.js'
 import { EntryType, type EntryTypeValue } from '../EntryType.js'
 import { TaskStatus, Transparency } from '../Entry.js'
 import type { EntrySegment } from './EntrySegment.js'
-import { getIntegrations, getSource, getCapabilities } from '../../../infrastructure/http/Api.js'
+import { getIntegrations, getSource, getCapabilities, getExternalLink } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
 import * as Hierarchy from '../../relations/client/Hierarchy.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
@@ -148,7 +148,7 @@ export class EntryDetailsComponent extends Component {
 		const target = e.target
 		const editable = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
 			|| target instanceof HTMLSelectElement || (target instanceof HTMLElement && target.isContentEditable)
-		if (!this.open || editable || e.altKey || e.isComposing) {
+		if (!this.open || editable || e.altKey || e.isComposing || !this.capabilities.deleteEntries) {
 			return
 		}
 		e.preventDefault()
@@ -162,6 +162,16 @@ export class EntryDetailsComponent extends Component {
 		if (!closeSheet(this)) {
 			this.hidePopover()
 		}
+	}
+
+	private get externalLinkTemplate() {
+		const link = getExternalLink(this.segment!.entry)
+		return !link ? html.nothing : html`
+			<button @click=${() => window.open(link.url, '_blank', 'noopener,noreferrer')}>
+				<mitra-icon icon="external-link"></mitra-icon>
+				${link.label ? t('Open in ${provider}', { provider: link.label }) : t('Open link')}
+			</button>
+		`
 	}
 
 	private readonly toggleMenu = (e: Event) => {
@@ -609,7 +619,8 @@ export class EntryDetailsComponent extends Component {
 						    opens for editing — the change you duplicated it to make comes next. Offered on a
 						    saved entry only, the same bar the gesture sets: a draft is not yet a thing to
 						    copy, and duplicating one would persist the copy while the original stayed local. */''}
-							${!this.segment.entry.persisted ? html.nothing : html`
+							${this.externalLinkTemplate}
+							${!this.segment.entry.persisted || !this.capabilities.createEntries ? html.nothing : html`
 								<button @click=${this.handleDuplicate}>
 									<mitra-icon icon="copy"></mitra-icon>
 									${t('Duplicate')}
@@ -617,11 +628,13 @@ export class EntryDetailsComponent extends Component {
 									<span class="word">${t('drag')}</span>
 								</button>
 						`}
-							<button class="danger" @click=${(e: MouseEvent) => void this.handleDelete(EntryDetailsComponent.bypassesScope(e))}>
-								<mitra-icon icon="trash-2"></mitra-icon>
-								${t('Delete')}
-								<kbd>${EntryDetailsComponent.appleKeyboard ? '⌫' : 'Del'}</kbd>
-							</button>
+							${!this.capabilities.deleteEntries ? html.nothing : html`
+								<button class="danger" @click=${(e: MouseEvent) => void this.handleDelete(EntryDetailsComponent.bypassesScope(e))}>
+									<mitra-icon icon="trash-2"></mitra-icon>
+									${t('Delete')}
+									<kbd>${EntryDetailsComponent.appleKeyboard ? '⌫' : 'Del'}</kbd>
+								</button>
+							`}
 						</menu>
 						<mitra-icon-button class="close" icon="x" label=${t('Close')}
 							style="color: var(--color-text-muted)"
@@ -660,7 +673,12 @@ export class EntryDetailsComponent extends Component {
 						${!entry.type.isTask ? html.nothing : html`
 							<mitra-task-status .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-task-status>
 						`}
+						${/* A provider mitra may only read still SHOWS its title — an input that silently discards
+						     what you type is the lie these gates exist to avoid. A title the provider owns (a Tempo
+						     worklog's, which is its Jira issue's summary) is read-only for the same reason, but
+						     only once the entry exists: on a draft the title is still what says WHAT to book. */''}
 						<input class="title field" placeholder=${t('Title')}
+							?readonly=${!this.capabilities.editEntries || (entry.persisted && !this.capabilities.renameEntries)}
 							?data-struck=${entry.status === TaskStatus.Done || entry.status === TaskStatus.Cancelled}
 							${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
 					</li>

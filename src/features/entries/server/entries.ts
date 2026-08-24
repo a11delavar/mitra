@@ -150,6 +150,12 @@ entriesRouter.post('/', async (req, res) => {
 	const targetSource = await req.user.source(em, targetSourceId)
 	const targetIntegration = await em.findOneOrFail(Integration, { id: targetSource.integrationId })
 
+	// Whether the provider accepts writes at all, before asking what it can hold. The frontend already
+	// withholds the gestures; this is the authority, and the only thing a crafted request meets.
+	if (!targetIntegration.capabilities.createEntries) {
+		return res.status(400).json({ error: 'This calendar cannot be written to from mitra' })
+	}
+
 	// Loud, not silent (the Notion-recurrence philosophy): a provider that can't hold invitees
 	// rejects them rather than quietly dropping the list — the editor hides the field anyway.
 	if (body.participants?.length && !targetIntegration.capabilities.participants) {
@@ -281,6 +287,20 @@ entriesRouter.put('/:id', async (req, res) => {
 		em.findOneOrFail(Integration, { id: currentSource.integrationId }),
 		em.findOneOrFail(Integration, { id: targetSource.integrationId }),
 	])
+
+	// Both ends have a say: the edit is written to the target, but leaving a source deletes the entry
+	// there, so a move off a read-only provider is refused as well as an edit in place.
+	if (!currentIntegration.capabilities.editEntries) {
+		return res.status(400).json({ error: 'This calendar cannot be edited from mitra' })
+	}
+	// The title belongs to a record next door (a worklog's is its Jira issue's summary), so an edit to
+	// it would be dropped by the very next sync — loud beats silent, like the field refusals below.
+	if (body.heading !== undefined && body.heading !== existing.heading && !currentIntegration.capabilities.renameEntries) {
+		return res.status(400).json({ error: 'Entries in this calendar take their title from the provider and cannot be renamed' })
+	}
+	if (targetSource.id !== currentSource.id && !targetIntegration.capabilities.createEntries) {
+		return res.status(400).json({ error: 'This calendar cannot be written to from mitra' })
+	}
 
 	// The TARGET provider must be able to hold the invitees — which also covers migrating a
 	// group-scheduled entry onto e.g. Notion: loud, not a silently-dropped list (remove them first).
@@ -463,6 +483,10 @@ entriesRouter.delete('/:id', async (req, res) => {
 	const entry = await req.user.entry(em, req.params.id)
 	const source = await em.findOneOrFail(Source, { id: entry.sourceId })
 	const integration = await em.findOneOrFail(Integration, { id: source.integrationId })
+
+	if (!integration.capabilities.deleteEntries) {
+		return res.status(400).json({ error: 'Entries in this calendar cannot be deleted from mitra' })
+	}
 
 	// A scoped occurrence delete (this / following): `:id` is the series MASTER, `recurrenceId` the
 	// occurrence's original start (query params, since DELETE carries no body). 'all' falls through to

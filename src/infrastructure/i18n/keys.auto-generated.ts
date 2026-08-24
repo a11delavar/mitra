@@ -49,6 +49,9 @@ declare global {
 		"Ask this participant to attend": unknown
 		"At start": unknown
 		"At start of event": unknown
+		"Atlassian Account": unknown
+		"Atlassian Account E-mail": unknown
+		"Atlassian API Token": unknown
 		"Back": unknown
 		"before": unknown
 		"before at ${time}": unknown
@@ -185,7 +188,9 @@ declare global {
 		"Only show this calendar": unknown
 		"Only the organizer can change participants": unknown
 		"Only this entry": unknown
+		"Open in ${provider}": unknown
 		"Open in Google Maps": unknown
+		"Open link": unknown
 		"Optional": unknown
 		"Options": unknown
 		"or": unknown
@@ -248,6 +253,7 @@ declare global {
 		"ShowOnlySource.Keywords": unknown
 		"ShowPreviouslyVisibleSources.Keywords": unknown
 		"Sign out": unknown
+		"Site URL": unknown
 		"Sources": unknown
 		"Start date": unknown
 		"Start time": unknown
@@ -258,10 +264,13 @@ declare global {
 		"Task": unknown
 		"Tasks": unknown
 		"Tasks without a date land here — drag one onto the calendar to schedule it": unknown
+		"Tempo API Token": unknown
+		"Tempo.TokenHint": unknown
 		"the ${ordinal}": unknown
 		"the ${ordinal} ${weekday}": unknown
 		"The calendars of your Google account": unknown
 		"The calendars of your iCloud account": unknown
+		"The hours you book on Jira issues": unknown
 		"the last ${weekday}": unknown
 		"The task databases of your workspace": unknown
 		"This and following entries": unknown

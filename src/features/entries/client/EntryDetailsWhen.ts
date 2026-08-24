@@ -502,8 +502,11 @@ export class EntryDetailsWhen extends Component {
 				</div>
 			</div>
 			<div class="row">
+				${/* A provider that stores durations rather than days (a Tempo worklog) cannot mean "all day",
+				     so the switch goes rather than offering a state the save would have to refuse. */''}
 				<button class="switch" role="switch" aria-label=${t('All day')} title=${this.entry.allDay ? t('Include time') : t('Switch to all-day')}
 					aria-checked=${!this.entry.allDay} @click=${this.toggleAllDay}
+					?hidden=${!getCapabilities(this.entry.sourceId).allDay}
 				></button>
 				<div class="times">
 					${this.entry.allDay ? html`
