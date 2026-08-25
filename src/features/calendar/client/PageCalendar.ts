@@ -1,4 +1,4 @@
-import { component, html, state, css, eventListener, bind, query, queryAll } from '@a11d/lit'
+import { component, html, state, css, eventListener, bind, query, queryAll, choose } from '@a11d/lit'
 import { PageComponent, route } from '@a11d/lit-application'
 import { DateTime } from '@3mo/date-time'
 import { MediaQueryController } from '@3mo/media-query-observer'
@@ -11,7 +11,7 @@ import { commands, sourceCommands } from '../../../app/commands.js'
 import type { Sidebar } from '../../../app/Sidebar.js'
 import { windowDragHandle } from '../../../design/windowDrag.css.js'
 
-export type CalendarView = 'week' | 'month' | 'year'
+export type CalendarView = 'week' | 'month' | 'year' | 'timeline'
 
 @component('mitra-page-calendar')
 @route('/')
@@ -102,7 +102,7 @@ export class PageCalendar extends PageComponent {
 
 	/** How far one "next"/"previous" hop moves: one of whatever the current view shows. */
 	get navigationStep() {
-		return this.view === 'week' ? { weeks: 1 } : this.view === 'month' ? { months: 1 } : { years: 1 }
+		return this.view === 'week' ? { weeks: 1 } : this.view === 'year' ? { years: 1 } : { months: 1 }
 	}
 
 	/** The Go to Date command's surface: reveal a native date picker seeded to the current position;
@@ -371,7 +371,7 @@ export class PageCalendar extends PageComponent {
 						contain: layout;
 						overflow: clip;
 
-						mitra-weeks, mitra-months, mitra-days {
+						mitra-weeks, mitra-months, mitra-days, mitra-timeline {
 							flex: 1;
 							min-height: 0;
 						}
@@ -438,7 +438,7 @@ export class PageCalendar extends PageComponent {
 								   present when lit sets the template's innerHTML, and Chrome 150 clones it into <selectedcontent>
 								   right then — duplicating the marker and corrupting lit's part indices. Mapped options aren't
 								   in the template at prep time, so nothing is cloned then. (Do not inline these.) */''}
-								${[{ value: 'year', label: t('Year'), key: 'Y' }, { value: 'month', label: t('Month'), key: 'M' }, { value: 'week', label: t('Week'), key: 'W' }].map(o => html`<option value=${o.value} ?selected=${o.value === this.view}>${o.label}${PageCalendar.customizableSelectsSupported ? html`<kbd>${o.key}</kbd>` : html.nothing}</option>`)}
+								${[{ value: 'year', label: t('Year'), key: 'Y' }, { value: 'month', label: t('Month'), key: 'M' }, { value: 'week', label: t('Week'), key: 'W' }, { value: 'timeline', label: t('Timeline'), key: 'L' }].map(o => html`<option value=${o.value} ?selected=${o.value === this.view}>${o.label}${PageCalendar.customizableSelectsSupported ? html`<kbd>${o.key}</kbd>` : html.nothing}</option>`)}
 							</select>
 							<button class="today" @click=${() => this.navigatingDate = new DateTime()}>
 								<mitra-icon icon="calendar-1"></mitra-icon>
@@ -449,27 +449,38 @@ export class PageCalendar extends PageComponent {
 					${/* The scoped view transition's stage (see calendarTransition.ts): a PERSISTENT element —
 					   the scope must survive the update it animates, while the views inside swap out. */''}
 					<div class="calendar">
-						${this.view === 'week' ? html`
-							<mitra-days
-								.entries=${this.store.entries}
-								.navigatingDate=${this.navigatingDate}
-								@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
-							></mitra-days>
-						` : this.view === 'month' ? html`
-							<mitra-weeks
-								.entries=${this.store.entries}
-								.navigatingDate=${this.navigatingDate}
-								@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
-								@switchToWeek=${() => this.setView('week')}
-							></mitra-weeks>
-						` : html`
-							<mitra-months
-								.entries=${this.store.entries}
-								.navigatingDate=${this.navigatingDate}
-								@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
-								@switchToMonth=${() => this.setView('month')}
-							></mitra-months>
-						`}
+						${choose(this.view, [
+							['week', () => html`
+								<mitra-days
+									.entries=${this.store.entries}
+									.navigatingDate=${this.navigatingDate}
+									@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
+								></mitra-days>
+							`],
+							['month', () => html`
+								<mitra-weeks
+									.entries=${this.store.entries}
+									.navigatingDate=${this.navigatingDate}
+									@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
+									@switchToWeek=${() => this.setView('week')}
+								></mitra-weeks>
+							`],
+							['year', () => html`
+								<mitra-months
+									.entries=${this.store.entries}
+									.navigatingDate=${this.navigatingDate}
+									@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
+									@switchToMonth=${() => this.setView('month')}
+								></mitra-months>
+							`],
+							['timeline', () => html`
+								<mitra-timeline
+									.entries=${this.store.entries}
+									.navigatingDate=${this.navigatingDate}
+									@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
+								></mitra-timeline>
+							`]
+						])}
 					</div>
 				</main>
 				<mitra-command-palette

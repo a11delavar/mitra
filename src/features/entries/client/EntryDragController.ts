@@ -4,6 +4,7 @@ import { type Source } from '../../sources/Source.js'
 import { EntryPlan } from '../../relations/EntryPlan.js'
 import { EntryChange } from '../EntryChange.js'
 import { Entry, SNAP_MINUTES, DEFAULT_REMINDER_MINUTES } from '../Entry.js'
+import { EntryType } from '../EntryType.js'
 import { getPrimarySource, getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
 import * as Hierarchy from '../../relations/client/Hierarchy.js'
@@ -75,8 +76,9 @@ interface Drag {
 }
 
 /**
- * The single drag gesture controller for a calendar grid, attached to the *container* (`Days`/`Weeks`),
- * never per-`Day`, so a gesture can span day cells. One controller serves three gestures that share all
+ * The single drag gesture controller for a calendar grid, attached to the *container*
+ * (`Days`/`Weeks`/`Timeline`), never per-`Day`, so a gesture can span day cells. One controller serves
+ * three gestures that share all
  * the geometry (cell snapshot, hit-testing, minute mapping, rAF coalescing, pointer capture) and differ
  * only in what pointer-down starts, how a frame builds the entry, and what release does:
  *
@@ -155,7 +157,7 @@ export class EntryDragController extends Controller {
 	private readonly element: Component
 	private drag?: Drag
 
-	constructor(host: Component, private readonly grid: 'week' | 'month' | 'year' = 'week') {
+	constructor(host: Component, private readonly grid: 'week' | 'month' | 'year' | 'timeline' = 'week') {
 		super(host)
 		this.element = host
 	}
@@ -218,39 +220,54 @@ export class EntryDragController extends Controller {
 
 	/** The create mode a pointerdown starts on empty space, or `undefined` if it shouldn't start one. Month
 	 * and year are all-day only: any day cell is a create surface there, while the week splits into the
-	 * all-day lane and the timed grid. */
+	 * all-day lane and the timed grid. The timeline's canvas is NOT one: every row there belongs to the
+	 * one task it shows, so only its trailing `.create` row makes anything. */
 	private createModeAt(target: HTMLElement): Mode | undefined {
+		if (this.grid === 'timeline') {
+			return target.closest('.create') ? 'allday' : undefined
+		}
 		if (this.grid !== 'week') {
 			return target.closest('mitra-day') ? 'allday' : undefined
 		}
 		return target.closest('.all-day') ? 'allday' : target.closest('.entries') ? 'timed' : undefined
 	}
 
+	/** What a create on this grid makes — and therefore which calendar it can land in. Every grid but
+	 * the timeline draws both kinds and lets the target decide (see {@link buildCreate}); the timeline
+	 * shows tasks only, so a task is what its row creates. */
+	private get createType(): EntryType | undefined {
+		return this.grid === 'timeline' ? EntryType.Task : undefined
+	}
+
 	/** The zone a move/resize *starts* in: minutes only for a timed entry in the week; the all-day lane
-	 * and the whole month/year are day-granular (a timed entry moved there therefore shifts by days and
-	 * keeps its time). A week *move* may leave this zone per frame — see {@link buildAt}. */
+	 * and the whole month/year/timeline are day-granular (a timed entry moved there therefore shifts by
+	 * days and keeps its time). A week *move* may leave this zone per frame — see {@link buildAt}. */
 	private editMode(entry: Entry): Mode {
 		return this.grid !== 'week' || entry.allDay ? 'allday' : 'timed'
 	}
 
 	/** Snapshot every day cell's box (and its timed-grid box) once, so moves need no DOM reads. Every view
-	 * renders its cells as `mitra-day` (each carrying the `data-date` read below). */
+	 * renders its cells as `mitra-day` (each carrying the `data-date` read below) — except the timeline,
+	 * which has no day trees: its backdrop cells are the day geometry (and, being day-granular
+	 * throughout, it never maps Y to a minute, so the cell box doubles as the "grid" box). */
 	private snapshotCells(): Array<Cell> {
-		return [...this.element.querySelectorAll<HTMLElement>('mitra-day')].map(element => {
+		const cells = this.element.querySelectorAll<HTMLElement>(this.grid === 'timeline' ? '.backdrop .day' : 'mitra-day')
+		return [...cells].map(element => {
 			const rect = element.getBoundingClientRect()
-			const grid = element.querySelector<HTMLElement>('.entries')?.getBoundingClientRect() ?? rect
+			const grid = this.grid === 'timeline' ? rect : element.querySelector<HTMLElement>('.entries')?.getBoundingClientRect() ?? rect
 			return { date: new DateTime(element.dataset.date!), left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, gridTop: grid.top, gridHeight: grid.height }
 		})
 	}
 
-	/** The day cell at a pointer position. In the week (a single row) this is a horizontal lookup clamped
-	 * to the first/last column (correct in both LTR and RTL); in the month/year (2-D grids) it's the cell
-	 * containing the point, else the nearest by edge distance so a stray drag still resolves to a day. */
+	/** The day cell at a pointer position. In the week and the timeline (single rows) this is a
+	 * horizontal lookup clamped to the first/last column (correct in both LTR and RTL); in the
+	 * month/year (2-D grids) it's the cell containing the point, else the nearest by edge distance so
+	 * a stray drag still resolves to a day. */
 	private cellAt(cells: ReadonlyArray<Cell>, x: number, y: number): Cell | undefined {
 		if (!cells.length) {
 			return undefined
 		}
-		if (this.grid === 'week') {
+		if (this.grid === 'week' || this.grid === 'timeline') {
 			return cells.find(cell => x >= cell.left && x <= cell.right)
 				?? (x < cells[0]!.left ? cells[0]! : cells[cells.length - 1]!)
 		}
@@ -290,8 +307,9 @@ export class EntryDragController extends Controller {
 		// No id: it's a draft until the backend assigns one on create (see Entry.persisted / EntryStore).
 		// A drag makes an EVENT wherever the target can hold one — mitra is calendar-first, and a
 		// collection that also accepts tasks is still a calendar; only a tasks-only source (a Notion view)
-		// makes a task. The editor's type switch is how a draft becomes the other one (see Source.defaultEntryType).
-		const base = { sourceId: drag.source!.id, type: drag.source!.defaultEntryType, heading: '' }
+		// makes a task, or a grid that shows nothing else (see createType). The editor's type switch is how
+		// a draft becomes the other one (see Source.defaultEntryType).
+		const base = { sourceId: drag.source!.id, type: this.createType ?? drag.source!.defaultEntryType, heading: '' }
 		if (drag.mode === 'allday') {
 			const { start, end } = placeAllDay(anchor.date, current.date)
 			return new Entry({ ...base, start, end, allDay: true })
@@ -498,7 +516,7 @@ export class EntryDragController extends Controller {
 
 		// Create on empty grid / lane / cell.
 		const mode = this.createModeAt(target)
-		const source = mode ? getPrimarySource() : undefined
+		const source = mode ? getPrimarySource(this.createType) : undefined
 		if (!mode || !source || !getCapabilities(source.id).createEntries) {
 			return
 		}

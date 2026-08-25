@@ -2,7 +2,7 @@ import { Component, component, html, css, repeat } from '@a11d/lit'
 import { type Source } from '../../sources/Source.js'
 import { EntryType } from '../../entries/EntryType.js'
 import { Entry, TaskStatus } from '../../entries/Entry.js'
-import { getPrimarySource, getVisibleSources } from '../../../infrastructure/http/Api.js'
+import { getPrimarySource } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
 import { EntrySegments } from '../../entries/client/EntrySegments.js'
@@ -44,8 +44,7 @@ export class Unscheduled extends Component {
 
 	/** The calendar new entries go to when it can hold tasks, else the first visible one that can. */
 	private static get target(): Source | undefined {
-		const primary = getPrimarySource()
-		return primary?.supportsEntryType(EntryType.Task) ? primary : getVisibleSources().find(source => source.supportsEntryType(EntryType.Task))
+		return getPrimarySource(EntryType.Task)
 	}
 
 	/** What the shell gates its Add Task button on. */

@@ -4,6 +4,7 @@ import { fetchIntegrations, fetchMeta, fetchUser, getIntegrations, getMeta, getU
 import { Weeks } from '../features/calendar/client/Weeks.js'
 import { Months } from '../features/calendar/client/Months.js'
 import { Days } from '../features/calendar/client/Days.js'
+import { Timeline } from '../features/calendar/client/Timeline.js'
 import { Day } from '../features/calendar/client/Day.js'
 import { EntrySegmentComponent } from '../features/entries/client/EventSegment.js'
 import { EntryConnections } from '../features/relations/client/EntryConnections.js'
@@ -242,6 +243,7 @@ export class Mitra extends Application {
 			${Weeks.styles}
 			${Months.styles}
 			${Days.styles}
+			${Timeline.styles}
 			${Day.styles}
 			${EntrySegmentComponent.styles}
 			${EntryConnections.styles}

@@ -495,6 +495,22 @@ export async function seedDev(orm: MikroORM) {
 			recurrence: new Recurrence({ freq: 'DAILY', count: 21 })
 		})
 
+		// ---- Worked-through history ----
+		// A plan you actually keep leaves almost nothing open behind you: the timeline reads top-down as
+		// work still owed, so past weeks must be overwhelmingly Done with the odd Cancelled — anything
+		// else turns the view into a graveyard of rows nobody will ever tick.
+		const past = (weeks: number, dayOffset: number, hour: number, minute = 0) => at(thisWeekMonday.subtract({ days: weeks * 7 }), dayOffset, hour, minute)
+		workTask({ heading: 'Close the Q2 books', status: TaskStatus.Done, start: past(1, 1, 9), end: past(1, 1, 12) })
+		workTask({ heading: 'Review the security audit', status: TaskStatus.Done, start: past(2, 3, 14), end: past(2, 3, 16) })
+		workTask({ heading: 'Rewrite the onboarding doc', status: TaskStatus.Done, start: past(3, 0, 10), end: past(3, 0, 15) })
+		workTask({ heading: 'Migrate the staging cluster', status: TaskStatus.Cancelled, start: past(3, 4, 9), end: past(3, 4, 17) })
+		uniTask({ heading: 'DA: Read chapters 1-4', status: TaskStatus.Done, start: past(2, 1, 18), end: past(2, 1, 21) })
+		uniTask({ heading: 'ML: Set up the lab environment', status: TaskStatus.Done, start: past(4, 2, 17), end: past(4, 2, 19) })
+		upkeepTask({ heading: 'Service the bike', status: TaskStatus.Done, start: past(5, 5, 11), end: past(5, 5, 13) })
+		upkeepTask({ heading: 'File the tax receipts', status: TaskStatus.Done, start: past(6, 6, 15), end: past(6, 6, 18) })
+		personalEvent({ type: EntryType.Task, heading: 'Book the dentist', status: TaskStatus.Done, start: past(2, 2, 12), end: past(2, 2, 12, 30) })
+		personalEvent({ type: EntryType.Task, heading: 'Return the parcel', status: TaskStatus.Cancelled, start: past(4, 4, 16), end: past(4, 4, 17) })
+
 		// ---- Unscheduled (no dates at all) ----
 		// Across calendars and statuses, so the section renders with more than one colour and mark.
 		workTask({ heading: 'Draft the hiring plan' })

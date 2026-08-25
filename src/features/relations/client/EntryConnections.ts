@@ -98,11 +98,11 @@ function maskFor(path: string): string {
  */
 @component('mitra-entry-connections')
 export class EntryConnections extends Component {
-	static isEnabledFor(view: 'week' | 'month') {
+	static isEnabledFor(view: 'week' | 'month' | 'timeline') {
 		return localStorage.getItem(`Mitra.Connections.${view}`) !== 'false'
 	}
 
-	static setEnabledFor(view: 'week' | 'month', enabled: boolean) {
+	static setEnabledFor(view: 'week' | 'month' | 'timeline', enabled: boolean) {
 		localStorage.setItem(`Mitra.Connections.${view}`, String(enabled))
 		EntryStore.notify()
 	}
@@ -137,7 +137,7 @@ export class EntryConnections extends Component {
 	override connected() {
 		// The layer itself is pointer-events: none — hover intent is read off the surrounding view;
 		// the scroller is the natural delegate (covers every canvas within it).
-		this.scrollHost = (this.parentElement?.closest('mitra-days, mitra-weeks') ?? this.parentElement) as HTMLElement | null
+		this.scrollHost = (this.parentElement?.closest('mitra-days, mitra-weeks, mitra-timeline') ?? this.parentElement) as HTMLElement | null
 		this.scrollHost?.addEventListener('pointerover', this.handlePointerOver)
 	}
 
@@ -261,7 +261,13 @@ export class EntryConnections extends Component {
 		} else {
 			const w = STROKE_WIDTH
 			const drop = `calc(anchor(${A} ${start}) + 0.5rem)`
-			if (overlapping) {
+			// The plain vertical drop hangs off the PARENT's leading edge, so it only reaches the child
+			// when the child's own columns contain that edge. Merely overlapping spans is not enough: a
+			// child starting inside its parent's run left the drop ending in empty space — a hairline stub
+			// connecting nothing (visible in the month view too, where the rows are close enough to read
+			// it as a speck).
+			const dropsOnChild = b.start <= a.start && b.end >= a.start
+			if (dropsOnChild) {
 				const vertical = down
 					? `top: anchor(${A} bottom); bottom: anchor(${B} top);`
 					: `top: anchor(${B} bottom); bottom: anchor(${A} top);`

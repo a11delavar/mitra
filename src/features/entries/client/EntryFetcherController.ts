@@ -1,4 +1,5 @@
 import { Controller, eventListener } from '@a11d/lit'
+import { DateTime } from '@3mo/date-time'
 import { Task } from '@lit/task'
 import { fetchEvents } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
@@ -12,6 +13,11 @@ export class EntryFetcherController extends Controller {
 	/** Quiet longer than this and a wake refetches. Every save echoes a tick, so an alive session
 	 * never crosses it — only a genuine absence (sleep, offline) does. */
 	private static readonly staleAfter = 60_000
+
+	/** The timeline's planning horizon each side of today — far enough that scrolling a season either
+	 * way stays inside the one fetch, and near enough that a recurring series doesn't expand into
+	 * thousands of occurrences nobody will look at. */
+	private static readonly timelineMonths = 6
 
 	private eventSource?: EventSource
 
@@ -30,9 +36,19 @@ export class EntryFetcherController extends Controller {
 			// data. Day-based views refetch per month (their windows are only weeks wide).
 			const monthIndex = this.host.navigatingDate.year * 12 + this.host.navigatingDate.month
 			const yearView = this.host.view === 'year'
-			return [yearView, yearView ? Math.floor(monthIndex / 6) : monthIndex] as const
+			// The timeline is NOT keyed on where the reader has scrolled. Its rows are a list of open work,
+			// one per task, so a task that came and went with the fetch window would drag every row below
+			// it up under their eyes as they panned (see Timeline.ts). Its range is anchored on TODAY and
+			// the key is constant, which makes the row list a fact about the plan instead of about the
+			// scroll position.
+			const timelineView = this.host.view === 'timeline'
+			return [yearView, timelineView, timelineView ? 0 : yearView ? Math.floor(monthIndex / 6) : monthIndex] as const
 		},
 		task: () => {
+			if (this.host.view === 'timeline') {
+				const today = new DateTime()
+				return fetchEvents(today.monthStart.subtract({ months: EntryFetcherController.timelineMonths }), today.monthEnd.add({ months: EntryFetcherController.timelineMonths }))
+			}
 			// ±16 months for the year strip (≥ its ~8-month render radius plus the 6-month bucket, so the
 			// loaded range never gaps between refetches); ±1 month elsewhere.
 			const months = this.host.view === 'year' ? 16 : 1

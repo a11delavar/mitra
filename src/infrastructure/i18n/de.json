@@ -1,12 +1,30 @@
 {
 	"+${count:number} more": "+${count:number} weitere",
 	"${count:number} min": "${count:number} Min.",
-	"${count:pluralityNumber} days": ["${count:pluralityNumber} Tag", "${count:pluralityNumber} Tage"],
-	"${count:pluralityNumber} hours": ["${count:pluralityNumber} Stunde", "${count:pluralityNumber} Stunden"],
-	"${count:pluralityNumber} months": ["${count:pluralityNumber} Monat", "${count:pluralityNumber} Monate"],
-	"${count:pluralityNumber} participants": ["${count:pluralityNumber} Teilnehmer", "${count:pluralityNumber} Teilnehmer"],
-	"${count:pluralityNumber} weeks": ["${count:pluralityNumber} Woche", "${count:pluralityNumber} Wochen"],
-	"${count:pluralityNumber} years": ["${count:pluralityNumber} Jahr", "${count:pluralityNumber} Jahre"],
+	"${count:pluralityNumber} days": [
+		"${count:pluralityNumber} Tag",
+		"${count:pluralityNumber} Tage"
+	],
+	"${count:pluralityNumber} hours": [
+		"${count:pluralityNumber} Stunde",
+		"${count:pluralityNumber} Stunden"
+	],
+	"${count:pluralityNumber} months": [
+		"${count:pluralityNumber} Monat",
+		"${count:pluralityNumber} Monate"
+	],
+	"${count:pluralityNumber} participants": [
+		"${count:pluralityNumber} Teilnehmer",
+		"${count:pluralityNumber} Teilnehmer"
+	],
+	"${count:pluralityNumber} weeks": [
+		"${count:pluralityNumber} Woche",
+		"${count:pluralityNumber} Wochen"
+	],
+	"${count:pluralityNumber} years": [
+		"${count:pluralityNumber} Jahr",
+		"${count:pluralityNumber} Jahre"
+	],
 	"${span} before": "${span} vorher",
 	"${status} — click to toggle, Alt-click for options": "${status} — zum Umschalten klicken, Alt-Klick für Optionen",
 	"Account": "Konto",
@@ -200,7 +218,10 @@
 	"View": "Ansicht",
 	"navigate": "navigieren",
 	"Never": "Nie",
-	"New dev build — ${count:pluralityNumber} commits ahead": ["Neuer Dev-Build — ${count:pluralityNumber} Commit voraus", "Neuer Dev-Build — ${count:pluralityNumber} Commits voraus"],
+	"New dev build — ${count:pluralityNumber} commits ahead": [
+		"Neuer Dev-Build — ${count:pluralityNumber} Commit voraus",
+		"Neuer Dev-Build — ${count:pluralityNumber} Commits voraus"
+	],
 	"CreateEntry.Keywords": "neu termin aufgabe hinzufügen erstellen",
 	"Next Month": "Nächster Monat",
 	"Next Week": "Nächste Woche",
@@ -272,6 +293,11 @@
 	"This and following entries": "Dieser und folgende Einträge",
 	"This entry": "Dieser Eintrag",
 	"Time zone": "Zeitzone",
+	"Timeline": "Zeitleiste",
+	"Timeline View": "Zeitleistenansicht",
+	"New task": "Neue Aufgabe",
+	"Go to entry": "Zum Eintrag springen",
+	"Nothing planned yet — draw a task on the row below": "Noch nichts geplant – zieh eine Aufgabe in die Zeile unten",
 	"times": "Mal",
 	"Tip: hold ${modifier} to skip this dialog and apply to this entry only": "Tipp: Halte ${modifier} gedrückt, um diesen Dialog zu überspringen und nur diesen Eintrag zu ändern",
 	"Title": "Titel",
@@ -298,6 +324,7 @@
 	"Workspace": "Workspace",
 	"Year": "Jahr",
 	"Year View": "Jahresansicht",
+	"TimelineView.Keywords": "wechseln gantt roadmap zeitleiste planen",
 	"Keep the chain intact": "Die Kette zusammenhalten",
 	"Move dependent entries too?": "Abhängige Einträge mitverschieben?",
 	"Move them all by the same amount": "Alle um denselben Betrag verschieben",

@@ -29,3 +29,13 @@ export class YearView extends Command {
 	group = 'views'
 	execute() { this.calendar.setView('year') }
 }
+
+@command()
+export class TimelineView extends Command {
+	heading = t('Timeline View')
+	icon = 'chart-gantt'
+	keywords = t('TimelineView.Keywords')
+	keys = ['l']
+	group = 'views'
+	execute() { this.calendar.setView('timeline') }
+}

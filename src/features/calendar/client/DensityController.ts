@@ -27,10 +27,20 @@ export abstract class DensityController extends Controller {
 			readonly max: number
 			/** The sticky chrome a PLAIN wheel zooms over — ctrl+wheel zooms anywhere. */
 			readonly rail: string
+			/** Where the zoom starts before the user ever sets one. Defaults to `min`. */
+			readonly initial?: number
+			/** The axis the anchor is pinned along. The zoom STEP is always the wheel's Y — a pinch
+			 * reports one whichever way the view runs. */
+			readonly axis?: 'block' | 'inline'
 		},
 	) {
 		super(host)
-		this.zoom = this.target = this.clamp(Number(localStorage.getItem(options.storageKey)) || options.min)
+		this.zoom = this.target = this.clamp(Number(localStorage.getItem(options.storageKey)) || options.initial || options.min)
+	}
+
+	/** The pointer coordinate along {@link options}.axis. */
+	private pointerOf(point: { clientX: number, clientY: number }) {
+		return this.options.axis === 'inline' ? point.clientX : point.clientY
 	}
 
 	private clamp(zoom: number) {
@@ -64,12 +74,12 @@ export abstract class DensityController extends Controller {
 	/** Write the current {@link zoom} out (typically a host CSS custom property). */
 	protected abstract apply(): void
 
-	/** Remember what sits under `clientY`, so {@link pin} can hold it there as the density changes —
+	/** Remember what sits under `pointer`, so {@link pin} can hold it there as the density changes —
 	 * caching along whatever layout it needs. */
-	protected abstract captureAnchor(clientY: number): void
+	protected abstract captureAnchor(pointer: number): void
 
 	/** Follow the anchor to a drifted pointer position (a two-finger pinch's centre moves). */
-	protected abstract driftAnchor(clientY: number): void
+	protected abstract driftAnchor(pointer: number): void
 
 	/** After the density changed from `previous` to {@link zoom}, scroll the anchor back under its
 	 * pointer position. */
@@ -104,7 +114,7 @@ export abstract class DensityController extends Controller {
 			return
 		}
 		e.preventDefault()
-		this.captureAnchor(e.clientY)
+		this.captureAnchor(this.pointerOf(e))
 		// Exponential so each notch is a proportional step. Scrolling up (deltaY < 0) magnifies.
 		this.setTarget(this.target * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)))
 	}
@@ -116,7 +126,7 @@ export abstract class DensityController extends Controller {
 		}
 		e.preventDefault() // claim the two-finger gesture (browser pinch-zoom is off via touch-action)
 		this.pinch = { startDistance: DensityController.distance(e.touches), startZoom: this.zoom }
-		this.captureAnchor(DensityController.midpointY(e.touches))
+		this.captureAnchor(this.midpoint(e.touches))
 	}
 
 	@eventListener('touchmove', { passive: false })
@@ -125,7 +135,7 @@ export abstract class DensityController extends Controller {
 			return
 		}
 		e.preventDefault()
-		this.driftAnchor(DensityController.midpointY(e.touches)) // the pinch centre may drift
+		this.driftAnchor(this.midpoint(e.touches)) // the pinch centre may drift
 		// A pinch is continuous, so it drives zoom directly (no easing) for a 1:1 feel.
 		const previous = this.zoom
 		this.zoom = this.target = this.clamp(this.pinch.startZoom * (DensityController.distance(e.touches) / this.pinch.startDistance))
@@ -146,7 +156,7 @@ export abstract class DensityController extends Controller {
 		return Math.hypot(touches[0]!.clientX - touches[1]!.clientX, touches[0]!.clientY - touches[1]!.clientY)
 	}
 
-	private static midpointY(touches: TouchList) {
-		return (touches[0]!.clientY + touches[1]!.clientY) / 2
+	private midpoint(touches: TouchList) {
+		return (this.pointerOf(touches[0]!) + this.pointerOf(touches[1]!)) / 2
 	}
 }

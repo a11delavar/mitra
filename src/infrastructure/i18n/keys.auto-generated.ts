@@ -127,6 +127,7 @@ declare global {
 		"Free": unknown
 		"General": unknown
 		"Go to Date…": unknown
+		"Go to entry": unknown
 		"Go to Today": unknown
 		"Google account": unknown
 		"Google.ConfigurationHint": unknown
@@ -170,6 +171,7 @@ declare global {
 		"Navigation": unknown
 		"Never": unknown
 		"New dev build — ${count:pluralityNumber} commits ahead": unknown
+		"New task": unknown
 		"Next Month": unknown
 		"Next Week": unknown
 		"Next Year": unknown
@@ -179,6 +181,7 @@ declare global {
 		"No matching entries": unknown
 		"No release notes available": unknown
 		"None": unknown
+		"Nothing planned yet — draw a task on the row below": unknown
 		"Notion.TokenHint": unknown
 		"Occurrences": unknown
 		"of event at ${time}": unknown
@@ -278,6 +281,9 @@ declare global {
 		"This entry": unknown
 		"This relationship is not possible": unknown
 		"Time zone": unknown
+		"Timeline": unknown
+		"Timeline View": unknown
+		"TimelineView.Keywords": unknown
 		"times": unknown
 		"Tip: hold ${modifier} to skip this dialog and apply to this entry only": unknown
 		"Title": unknown

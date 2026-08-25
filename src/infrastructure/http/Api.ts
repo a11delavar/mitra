@@ -6,6 +6,7 @@ import { type Relation } from '../../features/relations/Relation.js'
 import { type RecurrenceScope } from '../../features/recurrence/Recurrence.js'
 import { applyOrder, byOrder } from '../model/order.js'
 import { Integration } from '../../integrations/Integration.js'
+import { type EntryType } from '../../features/entries/EntryType.js'
 import { type Entry } from '../../features/entries/Entry.js'
 import { type ChangelogSection } from '../../features/about/Changelog.js'
 
@@ -179,9 +180,11 @@ export function updateRelations(id: string, relations: Array<Relation> | null) {
 	return Api.put<Entry>(`/entries/${id}?tz=${tz()}`, { relations })
 }
 
-/** The source a create targets: the user's default when visible, else the first visible one. */
-export function getPrimarySource(): Source | undefined {
-	const visibleSources = getVisibleSources()
+/** The source a create targets: the user's default when visible, else the first visible one. Passing
+ * the kind being created narrows it to the sources that can hold one — a surface that only makes
+ * tasks (the timeline, the unscheduled section) must not land them in an events-only calendar. */
+export function getPrimarySource(type?: EntryType): Source | undefined {
+	const visibleSources = getVisibleSources().filter(s => !type || s.supportsEntryType(type))
 	return visibleSources.find(s => s.id === getDefaultSourceId()) ?? visibleSources[0]
 }
 
