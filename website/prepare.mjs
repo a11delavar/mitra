@@ -17,12 +17,16 @@ if (!fs.existsSync(docsLink)) {
 	fs.symlinkSync(path.join(repoRoot, 'docs'), docsLink, process.platform === 'win32' ? 'junction' : 'dir')
 }
 
-// 2 · The logo. The repo has exactly one (../assets/mitra.svg); copy it into the two places the site
-//     consumes it (the sidebar mark and the favicon). Both copies are git-ignored — generated, never
-//     committed — so the mark has a single source.
-const logo = fs.readFileSync(path.join(repoRoot, 'assets/mitra.svg'))
-for (const dest of ['src/assets/mitra.svg', 'public/favicon.svg']) {
-	const full = path.join(here, dest)
-	fs.mkdirSync(path.dirname(full), { recursive: true })
-	fs.writeFileSync(full, logo)
+// 2 · Assets & Logo. Copy ../assets into the places the site consumes them (the sidebar mark,
+//     favicon, and static/content assets for markdown references).
+const assetsDir = path.join(repoRoot, 'assets')
+if (fs.existsSync(assetsDir)) {
+	for (const dest of ['public/assets', 'src/assets', 'src/content/assets']) {
+		const target = path.join(here, dest)
+		fs.mkdirSync(target, { recursive: true })
+		fs.cpSync(assetsDir, target, { recursive: true })
+	}
 }
+
+const logo = fs.readFileSync(path.join(repoRoot, 'assets/mitra.svg'))
+fs.writeFileSync(path.join(here, 'public/favicon.svg'), logo)

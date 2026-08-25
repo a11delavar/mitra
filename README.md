@@ -11,6 +11,11 @@
 [![Image: ghcr.io](https://img.shields.io/badge/image-ghcr.io%2Fa11delavar%2Fmitra-2496ED?logo=docker&logoColor=white)](https://github.com/a11delavar/mitra/pkgs/container/mitra)
 [![Docs](https://img.shields.io/badge/docs-online-f97316?logo=markdown&logoColor=white)](https://a11delavar.github.io/mitra/)
 
+<br />
+<br />
+
+<img src="assets/screenshot.png" alt="Mitra Screenshot" />
+
 </div>
 
 > [!WARNING]

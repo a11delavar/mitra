@@ -9,7 +9,7 @@ on:
     paths:
       - 'docs/**'
       - 'website/**'
-      - 'assets/mitra.svg'
+      - 'assets/**'
       - '.github/workflows/docs.yml'
   workflow_dispatch:
 

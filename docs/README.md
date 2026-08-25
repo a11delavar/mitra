@@ -8,6 +8,12 @@ sidebar:
 
 **One calendar to plan your events and tasks.** Mitra is a self-hosted, private planner where your tasks sit on the same timeline as your events — and it plugs into the accounts you already have (CalDAV, Google Calendar, Apple Calendar, Notion) instead of replacing them.
 
+<div align="center">
+
+![Mitra Screenshot](../assets/screenshot.png)
+
+</div>
+
 > [!NOTE]
 > Mitra is early and moving fast. Expect rough edges and breaking changes before `1.0`.
 
