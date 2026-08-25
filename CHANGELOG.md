@@ -2,8 +2,57 @@
 
 All notable changes to Mitra are documented here.
 
+## [0.5.0] - 2026-08-25
+
+
+### ✨ Features
+- Allow creating dependencies by dragging connector handles between entries ([6961227](https://github.com/a11delavar/mitra/commit/6961227adc42562dd14520275447f6b0bbe5847e))
+- Timeline view ([4b865db](https://github.com/a11delavar/mitra/commit/4b865db166fef2efa5032837f6e5dafff08b64b3))
+- Tempo integration ([1e1d501](https://github.com/a11delavar/mitra/commit/1e1d501aba7c4cfe0450c6928ebb9300d3ef26e9))
+- Connect dependencies and subtasks between all-day and timed entries in the week view ([0a99302](https://github.com/a11delavar/mitra/commit/0a99302432773d8cb4a2cc329ddf5e0bb1224d92))
+- Detect Routines and collapse them into compact marks in month and year views ([17f2d66](https://github.com/a11delavar/mitra/commit/17f2d6652126684081993bb6babc7b9b56f2e89c))
+- Propagate shifts across dependency chains when moving entries ([84c35b0](https://github.com/a11delavar/mitra/commit/84c35b0fd2ded702e2457809c57e9bf5a3a012a5))
+- Improve the design of choice dialogs ([5993b28](https://github.com/a11delavar/mitra/commit/5993b2868923684045b3157984fe715b9a070ab4))
+- Automatically calculate subtask progress and prompt to resolve related tasks ([9e095bb](https://github.com/a11delavar/mitra/commit/9e095bbb47b183d1cc708087d240ed330f3d8c25))
+- Allow setting task completion percentage with visual progress tracking ([38d8bc7](https://github.com/a11delavar/mitra/commit/38d8bc75e55416395477ef6775d1e77aebd00988))
+- Dependency violation surfacing ([f25161e](https://github.com/a11delavar/mitra/commit/f25161e9e997326ebe5320aef7e30a9d170ba142))
+- Show and schedule tasks that have no date ([907a5ea](https://github.com/a11delavar/mitra/commit/907a5ead17f416b8c1f8fa3356949743c3acbc0e))
+- Support Notion dependencies ([5e385d0](https://github.com/a11delavar/mitra/commit/5e385d084e87d2369ceb971c86a1583bdaab9ba4))
+- Draw the connections between related entries (#3) ([0e95d42](https://github.com/a11delavar/mitra/commit/0e95d423275cccfb2049966d18ad6322c609b310))
+- Entry Relationships ([104d0a3](https://github.com/a11delavar/mitra/commit/104d0a3eaf036fc356873208d9bdcd64d42af343))
+- Support `Transparency` and `Visibility` options ([cd08147](https://github.com/a11delavar/mitra/commit/cd08147366b7bb12a492db05f062e130a4dcb40c))
+- Only show one calendar, and a way back ([38220c3](https://github.com/a11delavar/mitra/commit/38220c3d88b0bb0ff636c99ddd770d6b6518b263))
+- Type agnostic Sources ([f40ff5c](https://github.com/a11delavar/mitra/commit/f40ff5ca180efa32fad8c2e335c72f07f7304791))
+- Automatic database migrations between updates ([bd9b1d1](https://github.com/a11delavar/mitra/commit/bd9b1d1fb7df4be1bcd9f6a31b8f5fe55f5accbf))
+- Italian translations ([ac41979](https://github.com/a11delavar/mitra/commit/ac4197979acc882476d2eae9017de4e7a3a237ee))
+- Portuguese translations ([5cf99b0](https://github.com/a11delavar/mitra/commit/5cf99b01568a146358ee70ca19e3ffea5b3e5562))
+- Spanish translations ([8ee0968](https://github.com/a11delavar/mitra/commit/8ee0968d8c2e42d07800c279241aa0705207b50c))
+- French translations ([7e800af](https://github.com/a11delavar/mitra/commit/7e800afb1af5659107af2a07dd9c4dcbae84ae38))
+- Enhance scroll snapping to apply only on certain scroll devices ([9baf39a](https://github.com/a11delavar/mitra/commit/9baf39a790d5944fb0ebf861538f8659286bf521))
+- Enhanced participants list with ability to manage each participant ([c3d2724](https://github.com/a11delavar/mitra/commit/c3d272417fa06ad0b64c9f73a6a82f87b02894fe))
+
+### 🐛 Bug Fixes
+- Keep the calendar on its dates when the window resizes ([5840212](https://github.com/a11delavar/mitra/commit/5840212a84901b224fda4079fbf374e4dd1f0906))
+- Refresh entries when a slept window wakes with a dead event stream ([307f7e8](https://github.com/a11delavar/mitra/commit/307f7e86a5bcd9d86d448c9958573f0795e4e61d))
+- Fix the inline task status checkbox not being interactable ([3707030](https://github.com/a11delavar/mitra/commit/3707030009259ffaded71837c198da4c1520cecf))
+
+### 📝 Documentation
+- Add documentation on data authority ([54ff1c4](https://github.com/a11delavar/mitra/commit/54ff1c4b4cbd7abd26e0c2447cd9e92d7c7fd52e))
+
+### 🔧 Chores
+- Add screenshot to the docs and the readme file ([838dcce](https://github.com/a11delavar/mitra/commit/838dccef6630d1feaa496604efea478a0fe2f2eb))
+- Improve window drag styles ([fd5e716](https://github.com/a11delavar/mitra/commit/fd5e7162b1ba9f55a77edcea949435953198e56a))
+- More realistic sample fixture ([396f08d](https://github.com/a11delavar/mitra/commit/396f08dab72b62fe040ce9a73b79619e43f2c5a7))
+
+### 🧹 Refactors
+- Slice codebase into vertical domain features and integrations ([d4d0b32](https://github.com/a11delavar/mitra/commit/d4d0b3249c7dfd27d4a5bba7dee6be80d290fd02))
+- Centralize relationship graph logic and rollup calculations ([3e22f4b](https://github.com/a11delavar/mitra/commit/3e22f4b2df2cfd0d53795d03a5af918c1860890c))
+- Extract editor intent tracking from entry store ([834c9aa](https://github.com/a11delavar/mitra/commit/834c9aa565248ea45311a0e929b39199a7f3236a))
 ## [0.4.0] - 2026-07-29
 
+
+### ⚡ Performance
+- Switch between calendar views smoothly, even with hundreds of entries ([2e9a53d](https://github.com/a11delavar/mitra/commit/2e9a53da3309e9439e5c19d1857e817d1bf37f12))
 
 ### ✨ Features
 - Participants ([8c9440a](https://github.com/a11delavar/mitra/commit/8c9440aeaeb5ce44443dcc4c774a7de5ccce279c))
@@ -38,9 +87,6 @@ All notable changes to Mitra are documented here.
 - Year view ([cf3d6fd](https://github.com/a11delavar/mitra/commit/cf3d6fdc68ffce2d4f62624aeeef87fc59ba6071))
 - Apple Calendar integration (#2) ([d1da646](https://github.com/a11delavar/mitra/commit/d1da64651188c739da37cc1aaf0c5e9c6c59ee41))
 - Google Calendar integration ([df27876](https://github.com/a11delavar/mitra/commit/df27876362b3ea1f02a47ab3b71b5023f52a7152))
-
-### ⚡ Performance
-- Switch between calendar views smoothly, even with hundreds of entries ([2e9a53d](https://github.com/a11delavar/mitra/commit/2e9a53da3309e9439e5c19d1857e817d1bf37f12))
 
 ### 🐛 Bug Fixes
 - Keep the all-day bar titles sliding, and let the lane fit its entries ([e179c98](https://github.com/a11delavar/mitra/commit/e179c982f701e21e54c841f07064af6355dcae37))

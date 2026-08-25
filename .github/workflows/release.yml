@@ -5,8 +5,7 @@ name: Release
 # hand). The release body is the file's top section — so anything you/AI add to it
 # is what gets published. Pre-release tags (`-rc`/`-beta`/`-alpha`) are marked as such.
 #
-# Cut a release with:  npm run changelog -- --tag v1.0.0  →  edit CHANGELOG.md
-#                      →  commit  →  git tag v1.0.0  →  git push origin main v1.0.0
+# Cut a release with:  npm run release [version]
 # (`docker.yml` builds the image off the same tag push, in parallel.)
 on:
   push:

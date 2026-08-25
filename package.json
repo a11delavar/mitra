@@ -1,7 +1,7 @@
 {
 	"name": "mitra",
 	"license": "AGPL-3.0-only",
-	"version": "0.4.0",
+	"version": "0.5.0",
 	"type": "module",
 	"scripts": {
 		"start": "node ./scripts/dev.ts",
@@ -13,7 +13,8 @@
 		"db:migration:down": "node ./scripts/db.ts down",
 		"i18n:generate": "node ./scripts/i18n.ts",
 		"i18n:analyze": "node ./scripts/i18n.ts --analyze",
-		"changelog": "git-cliff -o CHANGELOG.md"
+		"changelog": "git-cliff -o CHANGELOG.md",
+		"release": "node ./scripts/release.ts"
 	},
 	"devDependencies": {
 		"@a11d/eslint-config": "1.x",
