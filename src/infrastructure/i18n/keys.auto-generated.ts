@@ -107,6 +107,7 @@ declare global {
 		"Double-click to rename": unknown
 		"Draft": unknown
 		"drag": unknown
+		"Drag onto another entry to make it wait for this one": unknown
 		"Duplicate": unknown
 		"Duplicate an entry": unknown
 		"Edit": unknown
@@ -279,6 +280,7 @@ declare global {
 		"This and following entries": unknown
 		"This and its ${count:pluralityNumber} subtasks": unknown
 		"This entry": unknown
+		"This relationship could not be saved": unknown
 		"This relationship is not possible": unknown
 		"Time zone": unknown
 		"Timeline": unknown

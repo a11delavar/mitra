@@ -8,6 +8,11 @@ import { EntryType } from '../EntryType.js'
 import { getPrimarySource, getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
 import * as Hierarchy from '../../relations/client/Hierarchy.js'
+import { Relations } from '../../relations/client/Relations.js'
+import { RelationType } from '../../relations/RelationType.js'
+import { type ConnectionAim, type EntryConnections } from '../../relations/client/EntryConnections.js'
+import { DialogRelationFailed } from '../../relations/client/DialogRelationFailed.js'
+import { type EntrySegment } from './EntrySegment.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
 import { placeAllDay, placeTimed, resizePlacement, snapToGrid } from './entryPlacement.js'
@@ -16,8 +21,8 @@ import { haptic } from '../../../design/haptics.js'
 /** Whether a gesture works in minutes (the week's timed grid) or whole days (the all-day lane / month). */
 type Mode = 'timed' | 'allday'
 
-/** What a gesture does: place a new entry, translate an existing one, or drag one of its edges. */
-type Kind = 'create' | 'move' | 'resize'
+/** What a gesture does: place a new entry, translate an existing one, drag one of its edges, or connect a dependency. */
+type Kind = 'create' | 'move' | 'resize' | 'relate'
 
 /** Touch only: how long (ms) a finger must stay pressed — within {@link TOUCH_HOLD_TOLERANCE} — before a
  * grid gesture begins, so a plain swipe scrolls instead of creating. ~half a second matches the OS long-press. */
@@ -47,12 +52,22 @@ interface DragPoint {
 	readonly minute: number
 }
 
+interface Drawing {
+	readonly from: EntrySegment
+	readonly source: EntryConnections
+	readonly host?: EntryConnections
+	readonly layers: ReadonlyArray<EntryConnections>
+	hovered?: EntrySegmentComponent
+	target?: EntrySegmentComponent
+	shape?: string
+}
+
 /** Everything about one in-progress gesture, or `undefined` when idle — so "are we dragging" is a single
  * check and tearing down is a single assignment. `point`/`moved`/`frame` mutate as the gesture runs. */
 interface Drag {
 	readonly kind: Kind
 	readonly mode: Mode
-	readonly anchor: DragPoint                  // the pointer-down point (create: first corner; move: grab point)
+	readonly anchor?: DragPoint                 // the pointer-down point (create: first corner; move: grab point)
 	readonly source?: Source                    // create only — the calendar a new entry lands in
 	readonly entry?: Entry                       // move/resize only — the live working entry (resize mutates it per frame; move only at release)
 	readonly before?: Entry                      // move/resize only — the span at pointer-down: the frames' fixed reference, and a cancelled resize's restore point
@@ -73,6 +88,8 @@ interface Drag {
 	frame?: number
 	gestureDraft?: Entry                         // create only — the one draft instance the gesture mutates per frame
 	preview?: Entry                              // move only — the one dashed ghost instance the gesture mutates per frame
+	drawing?: Drawing                            // relate only
+	cancelled?: boolean                          // relate only: cancelled via Escape while capturing
 }
 
 /**
@@ -343,10 +360,10 @@ export class EntryDragController extends Controller {
 			return converted
 		}
 		if (drag.mode === 'allday') {
-			const days = Math.round((current.date.dayStart.valueOf() - drag.anchor.date.dayStart.valueOf()) / 86_400_000)
+			const days = Math.round((current.date.dayStart.valueOf() - drag.anchor!.date.dayStart.valueOf()) / 86_400_000)
 			return new Entry({ ...before, start: before.start.add({ days }), end: before.end.add({ days }) })
 		}
-		const grabMs = drag.anchor.date.dayStart.add({ minutes: drag.anchor.minute }).valueOf()
+		const grabMs = drag.anchor!.date.dayStart.add({ minutes: drag.anchor!.minute }).valueOf()
 		const currentMs = current.date.dayStart.add({ minutes: current.minute }).valueOf()
 		// Snap the moved start onto the grid (the user's choice), then shift both ends by that to keep duration.
 		const shift = snapToGrid(before.start.valueOf() + (currentMs - grabMs)) - before.start.valueOf()
@@ -393,9 +410,10 @@ export class EntryDragController extends Controller {
 			return undefined
 		}
 		switch (drag.kind) {
-			case 'create': return this.buildCreate(drag.anchor, current)
+			case 'create': return this.buildCreate(drag.anchor!, current)
 			case 'move': return this.buildMove(current, mode)
 			case 'resize': return this.buildResize(current)
+			case 'relate': return undefined
 		}
 	}
 
@@ -410,6 +428,10 @@ export class EntryDragController extends Controller {
 		drag.surface.addEventListener('pointercancel', this.onPointerCancel)
 		// Non-passive so it can veto the surface's own panning while a touch drag runs (see onTouchMove).
 		drag.surface.addEventListener('touchmove', this.onTouchMove, { passive: false })
+		if (drag.kind === 'relate') {
+			window.addEventListener('keydown', this.onKeyDown)
+			window.addEventListener('scroll', this.onScroll, { capture: true, passive: true })
+		}
 		if (drag.armed) {
 			drag.holdTimer = setTimeout(() => this.activate(true), TOUCH_HOLD_MS)
 		} else {
@@ -464,6 +486,8 @@ export class EntryDragController extends Controller {
 		surface.removeEventListener('pointerup', this.onPointerUp)
 		surface.removeEventListener('pointercancel', this.onPointerCancel)
 		surface.removeEventListener('touchmove', this.onTouchMove)
+		window.removeEventListener('keydown', this.onKeyDown)
+		window.removeEventListener('scroll', this.onScroll, { capture: true })
 		if (this.drag?.holdTimer !== undefined) {
 			clearTimeout(this.drag.holdTimer)
 		}
@@ -492,6 +516,22 @@ export class EntryDragController extends Controller {
 		const cells = this.snapshotCells()
 		// Snapshotted up front, like the cells, so every frame stays free of DOM reads — see commonAt.
 		const common = this.commonAt(e, cells, this.element)
+
+		// Connecting handle hit-test takes precedence over entry chip gestures.
+		const grip = target.closest('.connect') as (HTMLElement & { segment?: EntrySegment }) | null
+		if (grip) {
+			const from = grip.segment
+			const gripLayer = grip.closest('mitra-entry-connections') as EntryConnections | null
+			if (!from || !gripLayer || e.pointerType === 'touch' || !from.entry.relatable) {
+				return
+			}
+			const layers = [...this.element.querySelectorAll<EntryConnections>('mitra-entry-connections')]
+			this.begin({
+				...common, armed: false, kind: 'relate', mode: this.editMode(from.entry),
+				drawing: { from, source: gripLayer, layers, host: layers.find(layer => layer.draftHost) },
+			})
+			return
+		}
 
 		// Move / resize an existing entry — persisted ones only (a draft is owned by the create flow + editor).
 		// A series occurrence drags like any entry: the drop's commit resolves the edit's scope.
@@ -565,19 +605,106 @@ export class EntryDragController extends Controller {
 			return
 		}
 		drag.frame = undefined
+		if (drag.cancelled) {
+			return
+		}
 		if (!drag.moved) {
 			if (Math.hypot(drag.point.x - drag.origin.x, drag.point.y - drag.origin.y) <= 4) {
 				return // ignore an incidental click; only a real drag updates the draft
 			}
 			drag.moved = true
-			if (drag.kind !== 'create') {
+			if (drag.kind === 'move' || drag.kind === 'resize') {
 				EntryStore.setDragging(drag.entry) // float the entry above its cluster while it's dragged
 			}
+		}
+		if (drag.kind === 'relate') {
+			this.updateDraft()
+			return
 		}
 		const built = this.buildAt(drag.point)
 		if (built) {
 			this.apply(built)
 		}
+	}
+
+	/** Updates the in-flight relation draft and hit-tests potential target chips under the pointer. */
+	private updateDraft() {
+		const drag = this.drag!
+		const drawing = drag.drawing!
+		const { x, y } = drag.point
+		const source = drawing.from.entry
+		const chip = (document.elementFromPoint(x, y)?.closest('mitra-entry-segment') ?? undefined) as EntrySegmentComponent | undefined
+		const candidate = chip?.segment?.entry
+		const valid = !!candidate && Relations.canBlock(source, candidate)
+		if (chip !== drawing.hovered) {
+			drawing.hovered?.removeAttribute('data-connect')
+			drawing.hovered = chip
+		}
+		chip?.setAttribute('data-connect', valid ? 'target' : 'reject')
+		drawing.target = valid ? chip : undefined
+
+		const port = drawing.source.portBox
+		const rtl = getComputedStyle(this.element).direction === 'rtl'
+		const portX = port ? (rtl ? port.right : port.left) : x
+		const portY = port ? port.top + port.height / 2 : y
+		const to: EntrySegment | ConnectionAim = drawing.target?.segment ?? { forward: x >= portX, down: y >= portY }
+		const target = drawing.target?.segment?.entry
+		const violated = target
+			? target.violates({ type: RelationType.FinishToStart, targetUid: source.uid }, source)
+			: this.aimsBehind(x, y, source)
+		const origin = drawing.host?.originBox
+		if (origin) {
+			drawing.host!.style.setProperty('--_pointer-x', `${x - origin.left}px`)
+			drawing.host!.style.setProperty('--_pointer-y', `${y - origin.top}px`)
+		}
+		const shape = `${drawing.target?.segment?.id ?? ''} ${'entry' in to ? '' : `${to.forward}${to.down}`} ${violated}`
+		if (shape !== drawing.shape) {
+			for (const layer of drawing.layers) {
+				layer.draft = { from: drawing.from, to, violated }
+			}
+		}
+		drawing.shape = shape
+	}
+
+	/** Checks if the pointer position is before the source entry's end. */
+	private aimsBehind(x: number, y: number, source: Entry) {
+		const drag = this.drag!
+		const required = source.end ?? source.start
+		if (!required) {
+			return false
+		}
+		const mode: Mode = drag.laneBottom !== undefined && y > drag.laneBottom ? 'timed' : 'allday'
+		const point = this.pointAt(drag.cells, x, y, mode)
+		return !!point && point.date.dayStart.add({ minutes: point.minute }).valueOf() < required.valueOf()
+	}
+
+	private clearDraft(drawing: Drawing) {
+		drawing.hovered?.removeAttribute('data-connect')
+		drawing.hovered = undefined
+		drawing.target = undefined
+		for (const layer of drawing.layers) {
+			layer.draft = undefined
+			layer.style.removeProperty('--_pointer-x')
+			layer.style.removeProperty('--_pointer-y')
+		}
+		drawing.shape = undefined
+	}
+
+	private readonly onScroll = () => {
+		const drag = this.drag
+		if (drag?.kind === 'relate' && drag.moved && !drag.cancelled) {
+			drag.frame ??= requestAnimationFrame(this.processFrame)
+		}
+	}
+
+	private readonly onKeyDown = (e: KeyboardEvent) => {
+		const drag = this.drag
+		if (e.key !== 'Escape' || drag?.kind !== 'relate' || drag.cancelled) {
+			return
+		}
+		e.preventDefault()
+		drag.cancelled = true
+		this.clearDraft(drag.drawing!)
 	}
 
 	/** Render a frame's result. Create and move both drive a single gesture-local, id-less instance (the
@@ -621,6 +748,22 @@ export class EntryDragController extends Controller {
 				clearTimeout(drag.holdTimer)
 				drag.holdTimer = undefined
 			}
+		}
+
+		if (drag.kind === 'relate') {
+			const drawing = drag.drawing!
+			const source = drawing.from.entry
+			const target = drag.moved && !drag.cancelled ? drawing.target?.segment?.entry : undefined
+			this.teardown(e.pointerId)
+			this.clearDraft(drawing)
+			if (target) {
+				// Relations are authored on the dependent entry (target waits on source).
+				EntryStore.commitRelations(target, () => target.relateTo(RelationType.FinishToStart, source.uid!))
+					.catch((error: unknown) => new DialogRelationFailed({
+						message: error instanceof Error ? error.message : t('This relationship is not possible'),
+					}).confirm().catch(() => void 0))
+			}
+			return
 		}
 
 		if (drag.kind === 'create') {
@@ -706,6 +849,9 @@ export class EntryDragController extends Controller {
 		}
 		this.teardown(e.pointerId)
 		switch (drag.kind) {
+			case 'relate':
+				this.clearDraft(drag.drawing!)
+				break
 			case 'create':
 				EntryStore.discardDraft()
 				break

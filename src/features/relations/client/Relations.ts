@@ -3,7 +3,7 @@ import { RelationGraph } from '../RelationGraph.js'
 import { type EntryPlan } from '../EntryPlan.js'
 import { type EntryChange } from '../../entries/EntryChange.js'
 import { type Entry, type EntryRollup } from '../../entries/Entry.js'
-import { getRelationClosure } from '../../../infrastructure/http/Api.js'
+import { getCapabilities, getRelationClosure } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
 
 /**
@@ -67,6 +67,23 @@ export class Relations {
 
 	static descendantsOf(entry: Entry | undefined): Array<Entry> {
 		return entry?.uid ? this.graph.descendantsOf(entry.uid) : []
+	}
+
+	/**
+	 * Whether a finish-to-start dependency from predecessor to dependent can be created.
+	 */
+	static canBlock(predecessor: Entry, dependent: Entry): boolean {
+		if (!predecessor.relatable || !dependent.relatable || predecessor.uid === dependent.uid) {
+			return false
+		}
+		if (!getCapabilities(dependent.sourceId).relations) {
+			return false
+		}
+		const coupled = (from: Entry, to: Entry) => this.graph.edgesFrom(from.uid!).some(edge => edge.family === 'dependency' && edge.to === to.uid)
+		if (coupled(predecessor, dependent) || coupled(dependent, predecessor)) {
+			return false
+		}
+		return !this.graph.reaches('dependency', [predecessor.uid!], dependent.uid!)
 	}
 
 	/**

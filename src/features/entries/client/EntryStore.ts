@@ -3,7 +3,7 @@ import { type ReactiveControllerHost } from 'lit'
 import { Recurrence, type RecurrenceScope } from '../../recurrence/Recurrence.js'
 import { type EntryPlan, type SkippedEntry } from '../../relations/EntryPlan.js'
 import { type Entry } from '../Entry.js'
-import { ApiError, createEvent, deleteEvent, deleteOccurrence, editOccurrence, updateEvent } from '../../../infrastructure/http/Api.js'
+import { ApiError, createEvent, deleteEvent, deleteOccurrence, editOccurrence, updateEvent, updateRelations } from '../../../infrastructure/http/Api.js'
 
 /**
  * The frontend's single source of truth for entries, layered so the UI never waits for the network:
@@ -206,6 +206,27 @@ export class EntryStore extends Controller {
 	 * so it bypasses the scope dialog and routes straight to the master. */
 	private static ruleChanged(entry: Entry) {
 		return !Recurrence.equal(entry.recurrence, this.canonicalById.get(entry.id!)?.recurrence)
+	}
+
+	/**
+	 * Optimistically applies and persists a relation mutation to the entry's series master.
+	 * Restores prior relations on failure and rethrows.
+	 */
+	static async commitRelations(owner: Entry, mutate: () => void): Promise<void> {
+		const before = owner.relations ?? null
+		mutate()
+		this.notify()
+		const id = owner.recurrenceMasterId ?? owner.id
+		if (!id) {
+			return
+		}
+		try {
+			this.adoptRelations(await updateRelations(id, owner.relations ?? null))
+		} catch (error) {
+			owner.relations = before
+			this.notify()
+			throw error
+		}
 	}
 
 	/** Adopt a relations-only server result onto the tracked copies of that entry — the

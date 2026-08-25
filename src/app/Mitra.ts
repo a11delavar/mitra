@@ -44,6 +44,7 @@ import { syncThemeColor } from './pwa.js'
 import { DialogEntryScope } from '../features/entries/client/DialogEntryScope.js'
 import { DialogCompleteParent } from '../features/relations/client/DialogCompleteParent.js'
 import { DialogCloseSubtasks } from '../features/relations/client/DialogCloseSubtasks.js'
+import { DialogRelationFailed } from '../features/relations/client/DialogRelationFailed.js'
 import { Markdown } from '../design/Markdown.js'
 import { EntryDetailsWhen } from '../features/entries/client/EntryDetailsWhen.js'
 import { EntryDetailsSharing } from '../features/entries/client/EntryDetailsSharing.js'
@@ -257,6 +258,7 @@ export class Mitra extends Application {
 			${DialogEntryScope.styles}
 			${DialogCompleteParent.styles}
 			${DialogCloseSubtasks.styles}
+			${DialogRelationFailed.styles}
 			${TaskStatusComponent.styles}
 			${SourceIcon.styles}
 			${RepeatField.styles}

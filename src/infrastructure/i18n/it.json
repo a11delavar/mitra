@@ -302,6 +302,8 @@
 	"Mark as done": "Segna come completata",
 	"Move entry": "Sposta voce",
 	"Move repeating entry": "Sposta voce ricorrente",
+	"Drag onto another entry to make it wait for this one": "Trascina su un'altra voce per farla attendere questa",
+	"This relationship could not be saved": "Non è stato possibile salvare questa relazione",
 	"This relationship is not possible": "Questa relazione non è possibile",
 	"Unknown entry": "Voce sconosciuta",
 	"Keep the chain intact": "Mantieni la catena intatta",

@@ -166,23 +166,11 @@ export class RelationsField extends Component {
 
 	// --- Owned lines ------------------------------------------------------------------------------------
 
-	/** Persists relations via partial update to the series master. */
 	private commit(mutate: () => void) {
 		this.error = undefined
-		const before = this.entry.relations ?? null
-		mutate()
-		EntryStore.notify()
-		const id = this.targetId
-		if (!id) {
-			return
-		}
-		updateRelations(id, this.entry.relations ?? null)
-			.then(saved => EntryStore.adoptRelations(saved))
-			.catch((error: unknown) => {
-				this.entry.relations = before
-				this.error = error instanceof Error ? error.message : t('This relationship is not possible')
-				EntryStore.notify()
-			})
+		EntryStore.commitRelations(this.entry, mutate).catch((error: unknown) => {
+			this.error = error instanceof Error ? error.message : t('This relationship is not possible')
+		})
 	}
 
 	// Named to avoid conflicts with HTMLElement.prototype.remove.

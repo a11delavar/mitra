@@ -234,10 +234,15 @@ export class EntrySegmentComponent extends Component {
 				}
 
 				&:not([data-draft]):has([popover]:popover-open),
-				&:not([data-draft])[selected] {
+				&:not([data-draft])[selected],
+				&[data-connect=target] {
 					--segment-bg: var(--mitra-entry-segment-color);
 					background-color: var(--segment-bg);
 					color: ${contrastColor('var(--mitra-entry-segment-color)')};
+				}
+
+				&[data-connect=reject] {
+					cursor: not-allowed;
 				}
 
 				@container (max-height: 450px) {

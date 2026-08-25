@@ -345,7 +345,7 @@ export class Weeks extends Component {
 						${!weeks.length ? html.nothing : html`<div style="grid-row: ${weeks.length};"></div>`}
 						${/* Grid placement: month wraps, so columns are week indices and rank is row-major (row * 100 + slot). */ ''}
 						${!EntryConnections.isEnabledFor('month') ? html.nothing : html`
-							<mitra-entry-connections
+							<mitra-entry-connections draft-host
 								.segments=${rendered.flatMap(item => item.bars.map(bar => bar.segment))}
 								.placement=${new Map(rendered.flatMap(item => item.bars.map(bar => [bar.segment, {
 									start: bar.startColumn,

@@ -7,7 +7,7 @@ import { EntryType, type EntryTypeValue } from './EntryType.js'
 import { Source } from '../sources/Source.js'
 import { Recurrence } from '../recurrence/Recurrence.js'
 import { Participants, type ParticipantRole, type Participant } from '../participants/Participant.js'
-import { type Relation } from '../relations/Relation.js'
+import { type Relation, type RelationInit } from '../relations/Relation.js'
 import { type RelationType } from '../relations/RelationType.js'
 import { RelationEdge } from '../relations/RelationEdge.js'
 import { EntryRelations } from '../relations/EntryRelations.js'
@@ -322,7 +322,7 @@ export class Entry {
 	}
 
 	/** Evaluates whether an outgoing dependency is violated relative to predecessor. */
-	violates(relation: Relation, predecessor: Entry) {
+	violates(relation: Relation | RelationInit, predecessor: Entry) {
 		return RelationEdge.of(this.uid ?? '', relation)?.violatedBy(predecessor, this) ?? false
 	}
 
@@ -353,6 +353,11 @@ export class Entry {
 	 * saved, so `!persisted` *is* "this is a draft" — no separate flag or side store to keep in sync. */
 	get persisted() {
 		return this.id !== undefined
+	}
+
+	/** Whether the entry can participate in relationships (persisted with a uid). */
+	get relatable() {
+		return this.persisted && !!this.uid
 	}
 
 	/**

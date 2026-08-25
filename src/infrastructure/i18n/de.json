@@ -89,6 +89,8 @@
 	"Progress": "Fortschritt",
 	"Clear custom progress": "Fortschritt zurücksetzen",
 	"None": "Keine",
+	"Drag onto another entry to make it wait for this one": "Auf einen anderen Eintrag ziehen, damit dieser auf diesen wartet",
+	"This relationship could not be saved": "Diese Beziehung konnte nicht gespeichert werden",
 	"This relationship is not possible": "Diese Beziehung ist nicht möglich",
 	"Unknown entry": "Unbekannter Eintrag",
 	"Wall clock — no time zone": "Wanduhrzeit — keine Zeitzone",

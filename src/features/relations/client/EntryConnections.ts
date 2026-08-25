@@ -18,6 +18,19 @@ export interface SegmentPlacement {
 	readonly frame?: 'lane'
 }
 
+/** In-flight dependency draft being drawn by hand. */
+export interface ConnectionDraft {
+	readonly from: EntrySegment
+	readonly to: EntrySegment | ConnectionAim
+	readonly violated: boolean
+}
+
+/** Quadrant direction for an unsnapped connector draft relative to its origin port. */
+export interface ConnectionAim {
+	readonly forward: boolean
+	readonly down: boolean
+}
+
 interface ConnectorEdge {
 	readonly key: string
 	readonly kind: 'dependency' | 'subtask'
@@ -67,6 +80,9 @@ const TALL_RANK_DELTA = 240
 
 /** Horizontal clearance past a port before turning. */
 const STUB = '0.875rem'
+
+const HANDLE_REACH = '0.75rem'
+
 
 /** Loop clearance around chips. */
 const LANE = '0.5rem'
@@ -121,16 +137,27 @@ export class EntryConnections extends Component {
 	 * timed grid — day columns, minute rank, the canvas frame. */
 	@property({ type: Object }) placement?: ReadonlyMap<EntrySegment, SegmentPlacement>
 
-	/** The entry whose chips the pointer is over — its connectors emphasize. Event-driven, not per-frame. */
-	@state() private hoveredEntryId?: string
+	/** Whether this layer hosts unsnapped freeform curve rendering. */
+	@property({ type: Boolean, attribute: 'draft-host' }) draftHost = false
+
+	@property({ type: Object }) draft?: ConnectionDraft
+
+	@state() private hovered?: EntrySegment
+
+	private get hoveredEntryId() { return this.hovered?.entry.id }
 
 	protected override createRenderRoot() { return this }
 
 	private readonly handlePointerOver = (e: Event) => {
-		const chip = (e.target as Element | null)?.closest?.('mitra-entry-segment') as EntrySegmentComponent | null
-		const id = chip?.segment?.entry.id
-		if (id !== this.hoveredEntryId) {
-			this.hoveredEntryId = id
+		const target = (e.target as Element | null)
+		// Ignore pointer movements over connection layer elements.
+		if (target?.closest?.('mitra-entry-connections')) {
+			return
+		}
+		const chip = target?.closest?.('mitra-entry-segment') as EntrySegmentComponent | null
+		const segment = chip?.segment
+		if (segment !== this.hovered) {
+			this.hovered = segment
 		}
 	}
 
@@ -448,6 +475,102 @@ export class EntryConnections extends Component {
 		]
 	}
 
+	/** Bounding rect of the active connection handle. */
+	get portBox(): DOMRect | undefined {
+		return this.querySelector('.connection.handle > .piece')?.getBoundingClientRect()
+	}
+
+	/** Bounding rect of the parent container canvas. */
+	get originBox(): DOMRect | undefined {
+		return this.parentElement?.getBoundingClientRect()
+	}
+
+	private slicesOf(entry: Entry): Array<EntrySegment> {
+		return this.segments
+			.filter(segment => segment.entry === entry && segment.dayValue !== undefined)
+			.sort((a, b) => a.dayValue! - b.dayValue!)
+	}
+
+	private endSliceOf(entry: Entry): EntrySegment | undefined {
+		return this.slicesOf(entry).at(-1)
+	}
+
+	private paintsPortsOf(segment: EntrySegment) {
+		return this.placementOf(segment).frame !== 'lane'
+	}
+
+	private get handleSegment(): EntrySegment | undefined {
+		const entry = this.draft?.from.entry ?? this.hovered?.entry
+		if (!entry?.relatable || EntryStore.isDragging(entry)) {
+			return undefined
+		}
+		const end = this.endSliceOf(entry)
+		return end && this.paintsPortsOf(end) ? end : undefined
+	}
+
+	private handleTemplate(rtl: boolean) {
+		const segment = this.handleSegment
+		if (!segment) {
+			return html.nothing
+		}
+		const A = `--mitra-entry-segment-${segment.id}`
+		const [start, end] = rtl ? ['right', 'left'] : ['left', 'right']
+		const color = EntryConnections.colorOf(segment.entry)
+		return html`
+			<div class="connection dependency handle ${this.draft ? 'drawing' : ''}" data-emphasized style="--_from: ${color}; --_to: ${color};">
+				<div class="piece dot"
+					style="top: calc(anchor(${A} 50%) - ${STROKE_WIDTH / 2}px); block-size: ${STROKE_WIDTH}px; ${start}: anchor(${A} ${end}); inline-size: ${HANDLE_REACH};"
+				>
+					<div class="ink"></div>
+					<div class="connect" title=${t('Drag onto another entry to make it wait for this one')} .segment=${segment}></div>
+				</div>
+			</div>
+		`
+	}
+
+	private draftTemplate(rtl: boolean) {
+		const draft = this.draft
+		const from = draft && this.endSliceOf(draft.from.entry)
+		if (!draft || !from) {
+			return html.nothing
+		}
+		if (!('entry' in draft.to)) {
+			return this.paintsPortsOf(from) && this.draftHost ? this.freeformTemplate(from, draft.to, draft.violated, rtl) : html.nothing
+		}
+		const to = this.slicesOf(draft.to.entry)[0]
+		if (!to || to === from) {
+			return html.nothing
+		}
+		const laneEnds = Number(this.placementOf(from).frame === 'lane') + Number(this.placementOf(to).frame === 'lane')
+		if (laneEnds === 2 || (laneEnds === 1 && !EntryConnections.canShift)) {
+			return html.nothing
+		}
+		return this.edgeTemplate(this.edge('dependency', from.entry, to.entry, from, to, draft.violated), rtl, true, true)
+	}
+
+	/** Renders an unsnapped freeform curve from the source segment to the pointer position. */
+	private freeformTemplate(from: EntrySegment, aim: ConnectionAim, violated: boolean, rtl: boolean) {
+		const A = `--mitra-entry-segment-${from.id}`
+		const port = `anchor(${A} ${rtl ? 'left' : 'right'})`
+		const path = aim.down ? 'dependency:s-down' : 'dependency:s-up'
+		const inline = aim.forward
+			? `left: ${port}; right: calc(100% - var(--_pointer-x) + ${HEAD_GAP});`
+			: `right: ${port}; left: calc(var(--_pointer-x) + ${HEAD_GAP});`
+		const block = aim.down
+			? `top: anchor(${A} 50%); bottom: calc(100% - var(--_pointer-y));`
+			: `top: var(--_pointer-y); bottom: anchor(${A} 50%);`
+		const color = EntryConnections.colorOf(from.entry)
+		return html`
+			<div class="connection dependency draft" data-emphasized ?data-violated=${violated} style="--_from: ${color}; --_to: ${color};">
+				<div class="piece glyph freeform ${aim.down ? 'head-end-down' : 'head-end-up'} ${aim.forward ? '' : 'mirror'}"
+					style="${inline} ${block} --_grad-dir: ${GRADIENT_DIRECTIONS[path]};"
+				>
+					<div class="ink" style="--_mask: ${maskFor(path)};"></div>
+				</div>
+			</div>
+		`
+	}
+
 	/** The chip's presented color — its own, else its calendar's (the same resolution EventSegment uses). */
 	private static colorOf(entry: Entry): string {
 		return entry.color || getSource(entry.sourceId)?.color || 'var(--color-text)'
@@ -466,9 +589,18 @@ export class EntryConnections extends Component {
 				initial-value: 0px;
 			}
 
-			/* --mitra-days-scroll-range mirrors the week scroller's (scrollHeight - clientHeight), kept by
-			   a ResizeObserver on its canvas (see Days.ts) — the ONE number JS maintains; every per-frame
-			   value is the timeline's. */
+			@property --_pointer-x {
+				syntax: '<length>';
+				inherits: true;
+				initial-value: 0px;
+			}
+
+			@property --_pointer-y {
+				syntax: '<length>';
+				inherits: true;
+				initial-value: 0px;
+			}
+
 			@keyframes mitra-lane-shift {
 				from {
 					--_scroll-shift: -1px;
@@ -641,6 +773,37 @@ export class EntryConnections extends Component {
 					> .piece:is(.head-drop-end, .head-rise-end)::after {
 						right: calc(-0.5 * var(--_head-span));
 					}
+
+				}
+
+				> .connection.handle.drawing > .piece {
+					visibility: hidden;
+				}
+
+				> .connection.handle > .piece {
+					z-index: var(--mitra-connection-z-emphasis, 3);
+
+					> .ink {
+						inset: 50% auto auto 50%;
+						inline-size: 0.5rem;
+						block-size: 0.5rem;
+						translate: -50% -50%;
+						border-radius: 50%;
+					}
+
+					> .connect {
+						position: absolute;
+						inset-block: -0.625rem;
+						inset-inline: -0.75rem -0.5rem;
+						pointer-events: auto;
+						cursor: crosshair;
+					}
+				}
+
+				@media not ((hover: hover) and (pointer: fine)) {
+					> .connection.handle {
+						display: none;
+					}
 				}
 			}
 		`
@@ -648,22 +811,27 @@ export class EntryConnections extends Component {
 
 	protected override get template() {
 		const rtl = getComputedStyle(this).direction === 'rtl'
+		const hovered = this.hoveredEntryId
 		return html`
-			${repeat(this.connectorEdges, edge => edge.key, edge => {
-				const emphasized = !!this.hoveredEntryId && (edge.fromEntryId === this.hoveredEntryId || edge.toEntryId === this.hoveredEntryId)
-				const colors = edge.kind !== 'dependency' ? '' : ` --_from: ${edge.fromColor}; --_to: ${edge.toColor};`
-				return html`
-					<div class="connection ${edge.kind}" ?data-emphasized=${emphasized} ?data-violated=${edge.violated}>
-						${edge.pieces.map(piece => html`
-							<div class="piece ${piece.path ? 'glyph' : 'elbow'} ${piece.head ?? ''} ${rtl !== !!piece.flip ? 'mirror' : ''} ${piece.inLane ? 'in-lane' : ''} ${edge.cross ? 'lane-shifted' : ''}"
-								style="${piece.style}${piece.gradient ? ` --_grad-dir: ${piece.gradient};` : ''}${piece.fade ? ` --_f0: ${piece.fade[0]}%; --_f1: ${piece.fade[1]}%;` : ''}${colors}"
-							>
-								<div class="ink" style="${piece.path ? `--_mask: ${maskFor(piece.path)};` : piece.ink ?? ''}"></div>
-							</div>
-						`)}
+			${repeat(this.connectorEdges, edge => edge.key, edge =>
+				this.edgeTemplate(edge, rtl, !!hovered && (edge.fromEntryId === hovered || edge.toEntryId === hovered)))}
+			${this.handleTemplate(rtl)}
+			${this.draftTemplate(rtl)}
+		`
+	}
+
+	private edgeTemplate(edge: ConnectorEdge, rtl: boolean, emphasized: boolean, draft = false) {
+		const colors = edge.kind !== 'dependency' ? '' : ` --_from: ${edge.fromColor}; --_to: ${edge.toColor};`
+		return html`
+			<div class="connection ${edge.kind} ${draft ? 'draft' : ''}" ?data-emphasized=${emphasized} ?data-violated=${edge.violated}>
+				${edge.pieces.map(piece => html`
+					<div class="piece ${piece.path ? 'glyph' : 'elbow'} ${piece.head ?? ''} ${rtl !== !!piece.flip ? 'mirror' : ''} ${piece.inLane ? 'in-lane' : ''} ${edge.cross ? 'lane-shifted' : ''}"
+						style="${piece.style}${piece.gradient ? ` --_grad-dir: ${piece.gradient};` : ''}${piece.fade ? ` --_f0: ${piece.fade[0]}%; --_f1: ${piece.fade[1]}%;` : ''}${colors}"
+					>
+						<div class="ink" style="${piece.path ? `--_mask: ${maskFor(piece.path)};` : piece.ink ?? ''}"></div>
 					</div>
-				`
-			})}
+				`)}
+			</div>
 		`
 	}
 }

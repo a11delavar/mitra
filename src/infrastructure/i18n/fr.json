@@ -302,6 +302,8 @@
 	"Mark as done": "Marquer comme terminée",
 	"Move entry": "Déplacer l’entrée",
 	"Move repeating entry": "Déplacer l’entrée récurrente",
+	"Drag onto another entry to make it wait for this one": "Faites glisser sur une autre entrée pour qu'elle attende celle-ci",
+	"This relationship could not be saved": "Cette relation n'a pas pu être enregistrée",
 	"This relationship is not possible": "Cette relation n'est pas possible",
 	"Unknown entry": "Entrée inconnue",
 	"Keep the chain intact": "Garder la chaîne intacte",

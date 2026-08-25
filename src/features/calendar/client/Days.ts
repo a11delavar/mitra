@@ -815,8 +815,9 @@ export class Days extends Component {
 	private get connectionsTemplate() {
 		// Rendered last so anchors precede connectors in tree order. Receives both realms to draw
 		// timed↔timed and cross-realm edges; lane↔lane edges are drawn by the lane's own layer.
+		// draft-host: paints freeform drafts because it spans both realms.
 		return !EntryConnections.isEnabledFor('week') ? html.nothing : html`
-			<mitra-entry-connections
+			<mitra-entry-connections draft-host
 				.segments=${[...this.laneSegments, ...this.dates.window.days.flatMap(day => this.segments.timedOn(day))]}
 				.placement=${this.lanePlacement}
 			></mitra-entry-connections>
