@@ -84,6 +84,18 @@ describe('parseChangelog', () => {
 		assert.equal(sections[0]!.version, '0.1.0')
 		assert.equal(sections[0]!.categories[0]!.markdown, '- a change')
 	})
+
+	it('omits empty sections without categories', () => {
+		const sections = parseChangelog('## [Unreleased]\n\n## [0.1.0] - 2026-06-07\n### 🐛 Bug Fixes\n- a change')
+		assert.equal(sections.length, 1)
+		assert.equal(sections[0]!.version, '0.1.0')
+	})
+
+	it('omits sections whose categories have empty markdown', () => {
+		const sections = parseChangelog('## [Unreleased]\n### ✨ Features\n\n## [0.1.0] - 2026-06-07\n### 🐛 Bug Fixes\n- a change')
+		assert.equal(sections.length, 1)
+		assert.equal(sections[0]!.version, '0.1.0')
+	})
 })
 
 describe('annotateChangelog', () => {

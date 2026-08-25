@@ -25,7 +25,9 @@ export function parseChangelog(markdown: string): Array<ParsedSection> {
 			sections.at(-1)?.lines.push(line)
 		}
 	}
-	return sections.map(({ version, date, lines }) => ({ version, date, categories: parseCategories(lines) }))
+	return sections
+		.map(({ version, date, lines }) => ({ version, date, categories: parseCategories(lines) }))
+		.filter(section => section.categories.length > 0)
 }
 
 /**
@@ -43,7 +45,9 @@ function parseCategories(lines: Array<string>): Array<ChangelogCategory> {
 			categories.at(-1)?.lines.push(line)
 		}
 	}
-	return categories.map(({ type, title, lines }) => ({ type, title, markdown: lines.join('\n').trim() }))
+	return categories
+		.map(({ type, title, lines }) => ({ type, title, markdown: lines.join('\n').trim() }))
+		.filter(category => category.markdown.length > 0)
 }
 
 /** The slug the frontend styles and filters by: the heading with its leading emoji (and any other
