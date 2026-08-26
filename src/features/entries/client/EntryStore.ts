@@ -5,6 +5,10 @@ import { type EntryPlan, type SkippedEntry } from '../../relations/EntryPlan.js'
 import { type Entry } from '../Entry.js'
 import { ApiError, createEvent, deleteEvent, deleteOccurrence, editOccurrence, updateEvent, updateRelations } from '../../../infrastructure/http/Api.js'
 
+/** A refused save keeps the entry dirty and visually changed, so the reason must be readable somewhere. */
+export const reportSaveError = (error: unknown) =>
+	console.error('Persisting the entry failed — the edit is kept locally and retried on the next change:', error)
+
 /**
  * The frontend's single source of truth for entries, layered so the UI never waits for the network:
  *

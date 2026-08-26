@@ -7,7 +7,7 @@ import { type RelationLine } from '../EntryRelations.js'
 import { TaskStatus, type Entry } from '../../entries/Entry.js'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
 import { getCapabilities, getSource, searchEntries, updateEvent, updateRelations } from '../../../infrastructure/http/Api.js'
-import { EntryStore } from '../../entries/client/EntryStore.js'
+import { EntryStore, reportSaveError } from '../../entries/client/EntryStore.js'
 import { offerFollowUps } from './Hierarchy.js'
 import { Relations } from './Relations.js'
 import { controlHeight } from '../../../design/controlHeight.css.js'
@@ -209,7 +209,7 @@ export class RelationsField extends Component {
 			EntryStore.notify()
 		}
 		const saved = tracked ?? target
-		await (tracked ? EntryStore.commit(tracked) : updateEvent(target)).catch(() => void 0)
+		await (tracked ? EntryStore.commit(tracked) : updateEvent(target)).catch(reportSaveError)
 		// Direct API writes bypass EntryStore.onTaskClosed, so trigger follow-up offers explicitly.
 		if (saved.closed) {
 			offerFollowUps(saved).catch(() => void 0)

@@ -4,7 +4,7 @@ import { EntryType, type EntryTypeValue } from '../EntryType.js'
 import { TaskStatus, Transparency } from '../Entry.js'
 import type { EntrySegment } from './EntrySegment.js'
 import { getIntegrations, getSource, getCapabilities, getExternalLink } from '../../../infrastructure/http/Api.js'
-import { EntryStore } from './EntryStore.js'
+import { EntryStore, reportSaveError } from './EntryStore.js'
 import * as Hierarchy from '../../relations/client/Hierarchy.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 import { closeSheet } from '../../../design/sheet.js'
@@ -84,19 +84,13 @@ export class EntryDetailsComponent extends Component {
 		return EntryStore.commit(this.segment!.entry)
 	}
 
-	// A failed save must not go down silently: the entry stays dirty (the commit loop retries on the
-	// next change), but the user deserves at least a console trace of WHY their edit didn't stick.
-	private readonly reportSaveError = (error: unknown) => {
-		console.error('Persisting the entry failed — the edit is kept locally and retried on the next change:', error)
-	}
-
 	// A child mutated the entry IN PLACE and said so — the task checkbox/menu its status, the
 	// <mitra-entry-details-when> editor its span, the <mitra-entry-details-sharing> row its TRANSP and
 	// CLASS. The response is the same for all three: render the new value everywhere this frame (the
 	// object is shared, so nothing else would notice), then persist.
 	private readonly handleInPlaceEdit = () => {
 		EntryStore.notify()
-		this.handleChange().catch(this.reportSaveError)
+		this.handleChange().catch(reportSaveError)
 	}
 
 	// Handles scoped delete across series and hierarchy axes; bypass skips dialog confirmation.
@@ -727,7 +721,7 @@ export class EntryDetailsComponent extends Component {
 		const handleTypeChange = (e: Event) => {
 			entry.type = (e.target as HTMLSelectElement).value as EntryTypeValue
 			EntryStore.notify()
-			this.handleChange().catch(this.reportSaveError)
+			this.handleChange().catch(reportSaveError)
 		}
 		return html`
 			<span class="entry-type field">
@@ -759,7 +753,7 @@ export class EntryDetailsComponent extends Component {
 			}
 			entry.migrateTo(source)
 			EntryStore.notify()
-			this.handleChange().catch(this.reportSaveError)
+			this.handleChange().catch(reportSaveError)
 		}
 		const entry = this.segment!.entry
 		// Whether a target integration can hold this entry's current content — the same capabilities that

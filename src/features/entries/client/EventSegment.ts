@@ -4,7 +4,7 @@ import { type EntrySegment } from './EntrySegment.js'
 import { type RoutineRun } from '../../recurrence/client/Routines.js'
 import { contrastColor } from '../../../design/contrastColor.js'
 import { getSource, getCapabilities } from '../../../infrastructure/http/Api.js'
-import { EntryStore } from './EntryStore.js'
+import { EntryStore, reportSaveError } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 
 @component('mitra-entry-segment')
@@ -59,7 +59,7 @@ export class EntrySegmentComponent extends Component {
 		EntryStore.notify()
 		const entry = this.segment?.entry
 		if (entry?.persisted) {
-			EntryStore.commit(entry).catch(() => void 0)
+			EntryStore.commit(entry).catch(reportSaveError)
 		}
 	}
 

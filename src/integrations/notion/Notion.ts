@@ -1066,6 +1066,7 @@ export class Notion extends Integration<NotionCredentials> {
 		entry.timeZone = span.timeZone
 		entry.description = options?.description ?? ''
 		// Unrepresentable in Notion — kept explicitly empty (see the class doc).
+		entry.percentComplete = null
 		entry.location = ''
 		entry.color = null
 		entry.reminders = null

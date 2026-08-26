@@ -4,6 +4,7 @@ import { getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
 import { offerToCloseSubtasks } from '../../relations/client/Hierarchy.js'
 import { Relations } from '../../relations/client/Relations.js'
+import { closeTask } from './taskClosure.js'
 
 const order = [TaskStatus.ToDo, TaskStatus.Doing, TaskStatus.Done, TaskStatus.Cancelled] as const
 
@@ -71,10 +72,7 @@ export class TaskStatusComponent extends Component {
 			this.menu?.hidePopover()
 			return
 		}
-		this.entry.status = status
-		if (status === TaskStatus.Done) {
-			this.entry.percentComplete = 100
-		}
+		closeTask(this.entry, status)
 		this.menu?.hidePopover()
 		this.requestUpdate()
 		this.change.dispatch()

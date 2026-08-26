@@ -319,7 +319,7 @@ entriesRouter.put('/:id', async (req, res) => {
 	}
 	const incomingPercentComplete = body.percentComplete === undefined ? existing.percentComplete : incomingPercent(body.percentComplete)
 	if (incomingPercentComplete !== null && !targetIntegration.capabilities.percentComplete) {
-		return res.status(400).json({ error: 'This calendar does not support task progress — clear it before moving the entry' })
+		return res.status(400).json({ error: 'This calendar does not support task progress — clear it first' })
 	}
 
 	// The entry's TYPE rides the full-entry payload (see Api.updateEvent), and changing it is a
