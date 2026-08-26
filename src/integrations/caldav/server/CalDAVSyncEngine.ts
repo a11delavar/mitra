@@ -3,7 +3,7 @@ import { equals } from '@a11d/equals'
 import { createDAVClient } from 'tsdav'
 import ICAL from 'ical.js'
 import { Source } from '../../../features/sources/Source.js'
-import { Entry, FLOATING_TIME_ZONE } from '../../../features/entries/Entry.js'
+import { Entry } from '../../../features/entries/Entry.js'
 import { EntryType } from '../../../features/entries/EntryType.js'
 import { Recurrence } from '../../../features/recurrence/Recurrence.js'
 import { Color } from '../../../features/sources/Color.js'
@@ -74,7 +74,22 @@ export class CalDAVSyncEngine implements SyncEngine {
 		const integration = base as CalDAV
 		const client = await this.getClient(integration)
 		await this.discoverAddresses(integration)
-		const calendars = await client.fetchCalendars()
+		// Custom props REPLACE tsdav's defaults rather than extending them, so the whole set is restated
+		// with the privilege one appended; `projectedProps` is what carries it back out per calendar.
+		const calendars = await client.fetchCalendars({
+			props: {
+				'c:calendar-description': {},
+				'c:calendar-timezone': {},
+				'd:displayname': {},
+				'ca:calendar-color': {},
+				'cs:getctag': {},
+				'd:resourcetype': {},
+				'c:supported-calendar-component-set': {},
+				'd:sync-token': {},
+				'd:current-user-privilege-set': {},
+			},
+			projectedProps: { currentUserPrivilegeSet: true },
+		})
 		logger.debug(`Discovered ${calendars.length} calendar(s) at ${integration.uri}`)
 		// ONE source per collection, carrying the TYPES it accepts — never an event/task sibling pair for
 		// the same URL (which cost two sync passes, two tokens and a cross-source duplicate guard, all to
@@ -90,7 +105,8 @@ export class CalDAVSyncEngine implements SyncEngine {
 				...supports('VEVENT') ? [EntryType.Event] : [],
 				...supports('VTODO') ? [EntryType.Task] : [],
 			]
-			return new Source({ uri: cal.url, entryTypes: types, name, color, enabled: false })
+			const writable = CalDAV.writableFromPrivileges((cal as { projectedProps?: Record<string, unknown> }).projectedProps?.currentUserPrivilegeSet)
+			return new Source({ uri: cal.url, entryTypes: types, name, color, enabled: false, readOnly: writable === false ? true : null })
 		// A collection that accepts neither (a VJOURNAL-only one) holds nothing mitra models — drop it.
 		}).filter(source => source.entryTypes.length > 0)
 	}
@@ -211,12 +227,10 @@ export class CalDAVSyncEngine implements SyncEngine {
 
 			const kept = new Set<Entry>()
 			for (const component of components) {
-				// The component IS the type — VTODO or VEVENT, per resource (see above).
-				const entryType = component.name === 'vtodo' ? EntryType.Task : EntryType.Event
 				// Recurrence: a master carries an RRULE; a single edited occurrence is its own component
 				// carrying a RECURRENCE-ID and the shared UID. Occurrences are expanded later, on read.
-				const recurrence = CalDAV.recurrenceProps(component)
-				let entry = rows.find(row => CalDAV.instantOf(row.recurrenceId) === recurrence.recurrenceId?.getTime())
+				const recurrenceId = CalDAV.recurrenceProps(component).recurrenceId
+				let entry = rows.find(row => CalDAV.instantOf(row.recurrenceId) === recurrenceId?.getTime())
 				if (!entry) {
 					entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: normalizedObjUrl })
 					em.persist(entry)
@@ -225,65 +239,13 @@ export class CalDAVSyncEngine implements SyncEngine {
 				}
 				kept.add(entry)
 
-				entry.type = entryType
-				entry.color = component.getFirstPropertyValue('color')?.toString() || null
+				// Parsing relations makes them authoritative, so the reconcile below mirrors them; not
+				// parsing leaves the stored rows alone (see capabilities).
+				CalDAV.applyComponent(entry, component, integration)
+
 				entry.data ??= {}
 				entry.data.raw = obj.data
 				entry.data.etag = obj.etag
-
-				// Each property's own TZID rides into the decode ({@link CalDAV.instantFrom}), so a zoned
-				// value resolves through Temporal — VTIMEZONE or not; an end without its own form follows
-				// the start's.
-				const tzidOf = (name: string) => component.getFirstProperty(name)?.getParameter('tzid')?.toString()
-				if (entryType.isEvent) {
-					const event = new ICAL.Event(component)
-					entry.heading = event.summary || 'Untitled Event'
-					entry.description = event.description || ''
-					entry.location = event.location || ''
-					entry.start = CalDAV.instantFrom(event.startDate, tzidOf('dtstart')) as any || undefined
-					entry.end = CalDAV.instantFrom(event.endDate ?? event.startDate, tzidOf('dtend') ?? tzidOf('dtstart')) as any || undefined
-					// A date-only DTSTART (`VALUE=DATE`) is the iCalendar marker for an all-day event.
-					entry.allDay = event.startDate?.isDate ?? false
-					// Free/busy is the event's alone (see Entry.transparency); a VTODO has no TRANSP.
-					entry.transparency = CalDAV.transparencyFromICal(component.getFirstPropertyValue('transp')?.toString())
-				} else {
-					const value = (name: string) => component.getFirstPropertyValue(name) as any
-					entry.heading = value('summary')?.toString() || 'Untitled Task'
-					entry.description = value('description')?.toString() || ''
-					entry.location = value('location')?.toString() || ''
-					const percent = value('percent-complete')
-					entry.status = CalDAV.statusFromICal(value('status')?.toString(), Number(percent ?? 0))
-					entry.percentComplete = percent === null || percent === undefined ? null : Math.min(100, Math.max(0, Math.round(Number(percent))))
-					entry.start = CalDAV.instantFrom(value('dtstart'), tzidOf('dtstart')) as any || undefined
-					entry.end = CalDAV.instantFrom(value('due'), tzidOf('due') ?? tzidOf('dtstart')) as any || undefined
-					entry.allDay = !!value('dtstart')?.isDate
-				}
-
-				// CLASS rides on both component kinds, so it is read outside the branches above.
-				entry.visibility = CalDAV.visibilityFromICal(component.getFirstPropertyValue('class')?.toString())
-
-				entry.reminders = CalDAV.remindersFrom(component)
-				entry.participants = CalDAV.participantsFrom(component, integration.addresses)
-				// A DEFINITE value (array or null) where RELATED-TO is a real store, so the parse is
-				// authoritative and the reconciliation below mirrors it into the relation store. Where the
-				// server hands the line back missing, `undefined` leaves the rows alone (see capabilities).
-				entry.relations = integration.capabilities.relations ? CalDAV.relationsFrom(component) : undefined
-
-				// The zone the entry's times were authored in (recurrence expands wall-clock in it — see
-				// features/recurrence/server/occurrences.ts): DTSTART's TZID where a client wrote one. A UTC DTSTART carries no
-				// TZID — a legitimate none; a bare local DTSTART (neither TZID nor `Z`) is a FLOATING time,
-				// kept under its reserved marker so an edit writes it back as floating rather than silently
-				// pinning another client's wall clock to UTC.
-				// Only a Temporal-resolvable id is stored — a non-IANA TZID (a Microsoft zone name, say)
-				// would throw on every wall-clock expansion; left null, the series expands at its stored
-				// fixed instants instead (deterministic, and exactly what the resolved instants encode).
-				const dtstartTzid = tzidOf('dtstart')
-				entry.timeZone = CalDAV.resolvableZone(dtstartTzid) ? dtstartTzid
-					: CalDAV.isFloating(component.getFirstPropertyValue('dtstart')) ? FLOATING_TIME_ZONE : null
-
-				entry.uid = recurrence.uid
-				entry.recurrence = recurrence.recurrence
-				entry.recurrenceId = recurrence.recurrenceId as any
 
 				changed = true
 			}
@@ -297,16 +259,8 @@ export class CalDAVSyncEngine implements SyncEngine {
 			}
 		}
 
-		// Link each override row (a single edited occurrence) back to its series master by shared UID. Done
-		// after the loop since members arrive in any order; idempotent (only fills an unset link).
-		for (const entry of existingEntries) {
-			if (entry.recurrenceId && entry.uid && !entry.recurrenceMasterId) {
-				const master = existingEntries.find(other => other.recurrence && !other.recurrenceId && other.uid === entry.uid)
-				if (master) {
-					entry.recurrenceMasterId = master.id
-					changed = true
-				}
-			}
+		if (CalDAV.linkOverridesToMasters(existingEntries)) {
+			changed = true
 		}
 
 		// Mirror the re-parsed entries' relationships into the queryable store (entries untouched

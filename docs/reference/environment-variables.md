@@ -1,8 +1,6 @@
 ---
 title: Environment variables
 description: The complete reference for every environment variable Mitra reads at runtime — defaults, meaning, and links to the relevant guide.
-sidebar:
-  order: 1
 ---
 
 Mitra is configured entirely through environment variables (see [Configuration](../getting-started/configuration.md) for how to set them). This page is the complete reference. Every variable is **optional** — an unset variable falls back to the default shown.

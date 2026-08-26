@@ -26,6 +26,8 @@ const logger = createLogger('Entries')
 /** The viewer's zone riding on the request; absent (a bare API client) falls back per call site. */
 const viewerZone = (req: Request) => typeof req.query.tz === 'string' && req.query.tz ? req.query.tz : undefined
 
+// Write guards use integration.capabilitiesFor(source) to check per-calendar permissions.
+
 /** Tri-state, the shape `recurrence`/`reminders` use: a value sets, an explicit `null` clears (the
  * entry leaves the calendar), absence keeps. JSON drops undefined keys, so absence is all a partial
  * body can express. */
@@ -150,9 +152,7 @@ entriesRouter.post('/', async (req, res) => {
 	const targetSource = await req.user.source(em, targetSourceId)
 	const targetIntegration = await em.findOneOrFail(Integration, { id: targetSource.integrationId })
 
-	// Whether the provider accepts writes at all, before asking what it can hold. The frontend already
-	// withholds the gestures; this is the authority, and the only thing a crafted request meets.
-	if (!targetIntegration.capabilities.createEntries) {
+	if (!targetIntegration.capabilitiesFor(targetSource).createEntries) {
 		return res.status(400).json({ error: 'This calendar cannot be written to from mitra' })
 	}
 
@@ -289,16 +289,17 @@ entriesRouter.put('/:id', async (req, res) => {
 	])
 
 	// Both ends have a say: the edit is written to the target, but leaving a source deletes the entry
-	// there, so a move off a read-only provider is refused as well as an edit in place.
-	if (!currentIntegration.capabilities.editEntries) {
+	// there, so a move off a read-only calendar is refused as well as an edit in place.
+	const currentCapabilities = currentIntegration.capabilitiesFor(currentSource)
+	if (!currentCapabilities.editEntries) {
 		return res.status(400).json({ error: 'This calendar cannot be edited from mitra' })
 	}
 	// The title belongs to a record next door (a worklog's is its Jira issue's summary), so an edit to
 	// it would be dropped by the very next sync — loud beats silent, like the field refusals below.
-	if (body.heading !== undefined && body.heading !== existing.heading && !currentIntegration.capabilities.renameEntries) {
+	if (body.heading !== undefined && body.heading !== existing.heading && !currentCapabilities.renameEntries) {
 		return res.status(400).json({ error: 'Entries in this calendar take their title from the provider and cannot be renamed' })
 	}
-	if (targetSource.id !== currentSource.id && !targetIntegration.capabilities.createEntries) {
+	if (targetSource.id !== currentSource.id && !targetIntegration.capabilitiesFor(targetSource).createEntries) {
 		return res.status(400).json({ error: 'This calendar cannot be written to from mitra' })
 	}
 
@@ -484,7 +485,7 @@ entriesRouter.delete('/:id', async (req, res) => {
 	const source = await em.findOneOrFail(Source, { id: entry.sourceId })
 	const integration = await em.findOneOrFail(Integration, { id: source.integrationId })
 
-	if (!integration.capabilities.deleteEntries) {
+	if (!integration.capabilitiesFor(source).deleteEntries) {
 		return res.status(400).json({ error: 'Entries in this calendar cannot be deleted from mitra' })
 	}
 

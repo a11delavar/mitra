@@ -234,14 +234,9 @@ export function getEnabledSources(integration: Integration) {
 	return [...integration.sources].filter(source => source.enabled)
 }
 
-/**
- * What the provider behind a source can represent (see Integration.capabilities) — what the editor
- * keys hiding unsupported fields on. Defaults to everything: a provider the client doesn't model
- * (e.g. the backend-only Dev integration) arrives as a plain DTO without the getter, and full
- * capability is the right reading for it.
- */
+/** Returns effective capabilities for a source, combining provider capabilities with source-level permissions. */
 export function getCapabilities(sourceId: string): Integration['capabilities'] {
-	return getIntegrationFor(sourceId)?.capabilities ?? Integration.fullCapabilities
+	return Integration.capabilitiesIn(getIntegrationFor(sourceId)?.capabilities ?? Integration.fullCapabilities, getSource(sourceId))
 }
 
 /**

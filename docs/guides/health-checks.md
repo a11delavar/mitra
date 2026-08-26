@@ -1,8 +1,6 @@
 ---
 title: Health checks
 description: Mitra's unauthenticated health endpoint for orchestrators, load balancers, and uptime monitors — plus the built-in Docker health check.
-sidebar:
-  order: 10
 ---
 
 Mitra exposes a single, unauthenticated health endpoint for orchestrators, load balancers, and uptime monitors to ask "is this instance serving?".

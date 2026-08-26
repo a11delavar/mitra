@@ -1,8 +1,6 @@
 ---
 title: Installation
 description: Run a Mitra instance with Docker Compose — image tags, the data volume, updating, and running behind a reverse proxy.
-sidebar:
-  order: 1
 ---
 
 Mitra ships as a single, small container image published to [GitHub Container Registry](https://github.com/a11delavar/mitra/pkgs/container/mitra). Everything it needs — the web app, the API, and an embedded SQLite database — lives in that one image. There is no separate database server to run.

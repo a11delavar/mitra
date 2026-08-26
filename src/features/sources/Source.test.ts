@@ -1,6 +1,8 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { Source } from './Source.js'
+import { CalDAV } from '../../integrations/caldav/CalDAV.js'
+import { IcsSubscription } from '../../integrations/ics/IcsSubscription.js'
 import { EntryType } from '../entries/EntryType.js'
 import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
 
@@ -67,5 +69,36 @@ describe('Source entry types', () => {
 			assert.deepEqual(wireOf(unknowing).entryTypes, [])
 			assert.deepEqual([...revive<Source>(wireOf(unknowing)).entryTypes], [])
 		})
+	})
+})
+
+// Writing has two "no": what the provider can do, and what THIS calendar grants. They must compose
+// without either being able to promote the other.
+describe('Source.readOnly narrows what may be written to one calendar', () => {
+	const shared = new Source({ uri: 'https://dav/shared/', name: 'Shared with me', readOnly: true })
+	const own = new Source({ uri: 'https://dav/mine/', name: 'Mine' })
+
+	it('takes every write away from a read-only calendar, and nothing else', () => {
+		const capabilities = new CalDAV().capabilitiesFor(shared)
+
+		assert.deepEqual(
+			[capabilities.createEntries, capabilities.editEntries, capabilities.deleteEntries, capabilities.renameEntries],
+			[false, false, false, false],
+		)
+		// What the model can HOLD is unaffected by whether you may write here.
+		for (const field of ['recurrence', 'reminders', 'location', 'participants', 'timeZone', 'relations'] as const) {
+			assert.equal(capabilities[field], true, `${field} should be unaffected`)
+		}
+	})
+
+	it('leaves a calendar of your own exactly as the provider left it', () => {
+		assert.equal(new CalDAV().capabilitiesFor(own).editEntries, true)
+		// An unset flag is a row predating the column — writable, never a silent demotion.
+		assert.equal(new CalDAV().capabilitiesFor(new Source({ uri: 'u', name: 'n', readOnly: null })).editEntries, true)
+		assert.equal(new CalDAV().capabilitiesFor(undefined).editEntries, true)
+	})
+
+	it('cannot promote a provider that already refuses writes', () => {
+		assert.equal(new IcsSubscription().capabilitiesFor(own).editEntries, false)
 	})
 })

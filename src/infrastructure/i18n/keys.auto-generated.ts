@@ -42,6 +42,7 @@ declare global {
 		"Alt+click to show only this one": unknown
 		"Alt+click to show the previously visible ones": unknown
 		"Amount": unknown
+		"Any calendar link — webcal:// or .ics": unknown
 		"App-Specific Password": unknown
 		"Apple ID": unknown
 		"Apply to subtasks too?": unknown
@@ -59,7 +60,9 @@ declare global {
 		"Blocks": unknown
 		"Busy": unknown
 		"CalDAV, Google, Apple or Notion — Mitra syncs in both directions.": unknown
+		"Calendar": unknown
 		"Calendar options": unknown
+		"Calendar URL": unknown
 		"Calendars": unknown
 		"Cancelled": unknown
 		"Choose a task status": unknown
@@ -133,11 +136,13 @@ declare global {
 		"Google account": unknown
 		"Google.ConfigurationHint": unknown
 		"Google.ConsentHint": unknown
+		"Google.SharedCalendarsHint": unknown
 		"GoToDate.Keywords": unknown
 		"GoToToday.Keywords": unknown
 		"Hide calendar": unknown
 		"Hide the other time zones": unknown
 		"hours": unknown
+		"Ics.UrlHint": unknown
 		"Include time": unknown
 		"Install as an App": unknown
 		"Install mitra as an app — it gets its own window, and notifications appear under its own name and icon": unknown
@@ -178,6 +183,7 @@ declare global {
 		"Next Year": unknown
 		"Nextcloud, Fastmail, Radicale — any CalDAV server": unknown
 		"NextPeriod.Keywords": unknown
+		"No date": unknown
 		"No matches": unknown
 		"No matching entries": unknown
 		"No release notes available": unknown
@@ -201,6 +207,7 @@ declare global {
 		"Organizer": unknown
 		"Participant options": unknown
 		"Password": unknown
+		"Password (optional)": unknown
 		"Pick the calendars and task lists to show — recolor, rename or hide them in the sidebar anytime.": unknown
 		"Plan your days": unknown
 		"Planning": unknown
@@ -213,6 +220,7 @@ declare global {
 		"Progress": unknown
 		"Public": unknown
 		"Re-import entries": unknown
+		"read-only": unknown
 		"Refresh": unknown
 		"Related to": unknown
 		"Reload to finish updating": unknown
@@ -301,6 +309,7 @@ declare global {
 		"Untitled": unknown
 		"Update available: ${version}": unknown
 		"Username": unknown
+		"Username (optional)": unknown
 		"View": unknown
 		"View on GitHub": unknown
 		"Views": unknown

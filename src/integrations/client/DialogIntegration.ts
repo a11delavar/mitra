@@ -1,4 +1,4 @@
-import { component, html, css, state, Binder, unsafeHTML } from '@a11d/lit'
+import { component, html, css, state, Binder, unsafeHTML, ifDefined } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { Source } from '../../features/sources/Source.js'
 import { integrationClasses, type Integration, type IntegrationClass } from '../Integration.js'
@@ -8,6 +8,7 @@ import { discoverSources, createIntegration, updateIntegration, getIntegrations,
 import caldavLogo from '../caldav/logo.svg'
 import googleLogo from '../google/logo.svg'
 import appleLogo from '../apple/logo.svg'
+import icsLogo from '../ics/logo.svg'
 import notionLogo from '../notion/logo.svg'
 import tempoLogo from '../tempo/logo.svg'
 
@@ -18,6 +19,7 @@ const logos: Record<string, string> = {
 	caldav: caldavLogo,
 	google: googleLogo,
 	apple: appleLogo,
+	ics: icsLogo,
 	notion: notionLogo,
 	tempo: tempoLogo,
 }
@@ -296,10 +298,13 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 						${entity.sources.map(source => html`
 							<label class="source">
 								<input type="checkbox" .checked=${source.enabled} @change=${() => { source.toggleEnabled(); this.requestUpdate() }}>
-								<mitra-source-icon .source=${source}></mitra-source-icon>
+								<mitra-source-icon .source=${source} icon=${ifDefined(entity.sourceIcon)}></mitra-source-icon>
 								<span class="name">
 									${source.name}
-									<span class="types">${(source.entryTypes.length ? source.entryTypes : EntryType.all).map(type => type.formatPlural()).join(' · ')}</span>
+									<span class="types">${[
+										...(source.entryTypes.length ? source.entryTypes : EntryType.all).map(type => type.formatPlural()),
+										...source.readOnly ? [t('read-only')] : [],
+									].join(' · ')}</span>
 								</span>
 							</label>
 						`)}
@@ -313,6 +318,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 		switch (this.entity!.type) {
 			case 'google': return this.googleTemplate
 			case 'apple': return this.appleTemplate
+			case 'ics': return this.icsTemplate
 			case 'notion': return this.notionTemplate
 			case 'tempo': return this.tempoTemplate
 			// Also the fallback for provider types the client doesn't model (see the edit fallback above).
@@ -329,6 +335,31 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 			</label>
 			<label>
 				${t('App-Specific Password')}
+				<input type="password" ${bind({ keyPath: 'credentials.password', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : ''} autocomplete="off">
+			</label>
+			${this.connectTemplate}
+		`
+	}
+
+	private get icsTemplate() {
+		const { bind } = this.binder
+		return html`
+			${!this.isEdit ? html`<p class="hint">${t('Ics.UrlHint')}</p>` : html`
+				<label>
+					${t('Calendar')}
+					<input readonly .value=${this.entity!.credentials.username ?? ''} autocomplete="off">
+				</label>
+			`}
+			<label>
+				${t('Calendar URL')}
+				<input ${bind({ keyPath: 'uri', event: 'input' })} ?readonly=${this.isEdit} placeholder="https://example.com/calendar.ics" autocomplete="off">
+			</label>
+			<label>
+				${t('Username (optional)')}
+				<input ${bind({ keyPath: 'credentials.authUsername', event: 'input' })} autocomplete="off">
+			</label>
+			<label>
+				${t('Password (optional)')}
 				<input type="password" ${bind({ keyPath: 'credentials.password', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : ''} autocomplete="off">
 			</label>
 			${this.connectTemplate}
@@ -364,6 +395,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 					${t('Google account')}
 					<input readonly .value=${this.entity!.credentials.username} autocomplete="off">
 				</label>
+				${this.sharedCalendarsHint}
 				${this.connectTemplate}
 			`
 		}
@@ -376,7 +408,17 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 			<p class="hint">${t('Google.ConfigurationHint')}</p>
 		` : html`
 			<p class="hint">${t('Google.ConsentHint')}</p>
+			${this.sharedCalendarsHint}
 			<button class="connect" @click=${() => connectGoogle()}>${t('Continue with Google')}</button>
+		`
+	}
+
+	private get sharedCalendarsHint() {
+		return html`
+			<p class="hint">
+				${t('Google.SharedCalendarsHint')}
+				<a href="https://calendar.google.com/calendar/syncselect" target="_blank" rel="noopener noreferrer">calendar.google.com/calendar/syncselect</a>
+			</p>
 		`
 	}
 

@@ -1,8 +1,6 @@
 ---
 title: Calendars & task lists
 description: Choose which calendars and task lists Mitra imports, then rename, recolor, reorder and hide them in the sidebar — and pick where new entries land.
-sidebar:
-  order: 0
 ---
 
 Every calendar and task list Mitra imports from a connected account is a **source**, and the sidebar groups them under the account they came from. Everything on this page works the same whichever provider the account is — [CalDAV](../integrations/caldav.md), [Google Calendar](../integrations/google-calendar.md), [Apple Calendar](../integrations/apple-calendar.md) or [Notion](../integrations/notion.md).

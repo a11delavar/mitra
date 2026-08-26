@@ -1,8 +1,6 @@
 ---
 title: Reminders & notifications
 description: How Mitra delivers reminders through Web Push, what a self-hosted deployment needs for them to work, and installing Mitra as an app.
-sidebar:
-  order: 6
 ---
 
 Mitra can notify you before an event starts — even with no tab open — using **Web Push**. This is the self-hosted way to get OS-level notifications: no third-party push accounts, no external services to sign up for, and **nothing to configure** in the common case. Mitra generates its own signing keys on first boot.

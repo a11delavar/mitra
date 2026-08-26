@@ -1,8 +1,6 @@
 ---
 title: Notion
 description: Turn Notion database views into two-way task sources — connect a workspace, share your task databases, and each view becomes its own source on the calendar.
-sidebar:
-  order: 4
 ---
 
 Mitra connects to Notion as a **task** provider. The unit it syncs is a database **view**: connect a workspace and each view of your shared task databases — *All tasks*, *My tasks*, a sprint board — can be enabled as its own source. Notion evaluates the view's filters; Mitra shows the result on the calendar. Tasks sync **both ways**: title, status, and date edits made in Mitra land in Notion and vice versa.

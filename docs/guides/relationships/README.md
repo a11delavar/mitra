@@ -2,7 +2,6 @@
 title: Relationships
 description: Connect tasks and events across calendars with subtasks, parent hierarchies, visual dependencies, and schedule violation warnings.
 sidebar:
-  order: 0
   label: Overview
 ---
 

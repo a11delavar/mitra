@@ -1,8 +1,6 @@
 ---
 title: Dependencies
 description: Sequence tasks and events with dependency connections, visual calendar arrows, and schedule conflict warnings.
-sidebar:
-  order: 2
 ---
 
 Dependencies declare execution order: one task or event must finish before the next one can begin. Mitra visualizes these connections directly on your calendar grid and alerts you whenever a schedule conflict arises.

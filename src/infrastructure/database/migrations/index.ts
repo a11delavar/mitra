@@ -7,6 +7,7 @@ import { Migration20260817182359_SoloSourceVisibility } from './Migration2026081
 import { Migration20260820213906_EntryTransparencyAndVisibility } from './Migration20260820213906_EntryTransparencyAndVisibility.js'
 import { Migration20260821120000_EntryRelations } from './Migration20260821120000_EntryRelations.js'
 import { Migration20260822140000_EntryPercentComplete } from './Migration20260822140000_EntryPercentComplete.js'
+import { Migration20260826182337_AddSourceReadOnly } from './Migration20260826182337_AddSourceReadOnly.js'
 
 /**
  * Every migration the app ships, oldest first. The backend bundles into a single file, so migrations
@@ -20,4 +21,5 @@ export const migrations: Array<Constructor<Migration>> = [
 	Migration20260820213906_EntryTransparencyAndVisibility,
 	Migration20260821120000_EntryRelations,
 	Migration20260822140000_EntryPercentComplete,
+	Migration20260826182337_AddSourceReadOnly,
 ]

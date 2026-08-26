@@ -94,6 +94,10 @@ export class EntryDetailsWhen extends Component {
 	// The field looks like plain text (the native glyph is hidden), so a click surfaces the picker; typing
 	// still works for keyboard users.
 	private readonly openPicker = (e: Event) => {
+		// `showPicker()` throws on a readonly input.
+		if (!this.editable) {
+			return
+		}
 		try {
 			(e.currentTarget as HTMLInputElement).showPicker()
 		} catch {
@@ -169,7 +173,7 @@ export class EntryDetailsWhen extends Component {
 	 * are shown in YOUR zone, not the entry's, so re-picking would be ambiguous. The select goes
 	 * read-only until the user switches back to the entry's own zone (where an edit is unambiguous). */
 	private get zoneReadonly(): boolean {
-		return !!this.foreignZone && !this.showEventZone
+		return !this.editable || (!!this.foreignZone && !this.showEventZone)
 	}
 
 	/** The zone row's label — reflects the zone the times are CURRENTLY shown in (the lens): the entry's
@@ -192,10 +196,11 @@ export class EntryDetailsWhen extends Component {
 		return this.entry.timeZone !== FLOATING_TIME_ZONE && !(this.foreignZone && this.showEventZone)
 	}
 
-	/** The label tooltip: the shown zone's full name — or, when read-only, why it can't be changed here. */
+	/** The shown zone's full name — or, when the LENS is what withholds the picker, why it can't be changed
+	 * here. A wholly read-only entry says nothing extra: the zone is no special case there. */
 	private get zoneTitle(): string {
-		if (this.zoneReadonly) {
-			return t('Primary time zone — switch to ${city} time to change the zone', { city: zoneCity(this.foreignZone!) })
+		if (this.zoneReadonly && this.foreignZone && !this.showEventZone) {
+			return t('Primary time zone — switch to ${city} time to change the zone', { city: zoneCity(this.foreignZone) })
 		}
 		const zone = this.entry.timeZone ?? undefined
 		return !zone ? t('Time zone')
@@ -278,7 +283,11 @@ export class EntryDetailsWhen extends Component {
 
 	/** Only a task has an undated form, and a series occurrence is identified by its date. */
 	private get clearable() {
-		return this.entry.unschedulable && !this.entry.partOfSeries
+		return this.editable && this.entry.unschedulable && !this.entry.partOfSeries
+	}
+
+	private get editable() {
+		return getCapabilities(this.entry.sourceId).editEntries
 	}
 
 	static override get styles() {
@@ -463,7 +472,9 @@ export class EntryDetailsWhen extends Component {
 				<div class="row">
 					<mitra-icon icon="calendar-plus"></mitra-icon>
 					<div class="dates">
-						${this.dateShown ? html`
+						${!this.editable ? html`
+							<span class="allday-label">${t('No date')}</span>
+						` : this.dateShown ? html`
 							<div class="field">
 								<input type="date" class="start-date" aria-label=${t('Date')} .value=${''} @click=${this.openPicker} @change=${this.handleStartDateChange}>
 							</div>
@@ -482,21 +493,23 @@ export class EntryDetailsWhen extends Component {
 				<mitra-icon icon=${this.entry.allDay ? 'calendar-days' : 'clock'}></mitra-icon>
 				<div class="dates">
 					<div class="field">
-						<input type="date" class="start-date" aria-label=${t('Start date')} .value=${this.dateValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartDateChange}>
+						<input type="date" class="start-date" aria-label=${t('Start date')} ?readonly=${!this.editable} .value=${this.dateValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartDateChange}>
 						${!this.clearable ? html.nothing : html`
 							<mitra-icon-button class="clear" icon="x" label=${t('Remove the date')} title=${t('Remove the date — the task moves to Unscheduled')} @click=${this.clearDate}></mitra-icon-button>
 						`}
 					</div>
-					${!this.displayMultiDay && !this.endDateShown ? html`
+					${!this.displayMultiDay && !this.endDateShown ? (!this.editable ? html.nothing : html`
 						<button class="field add-end" @click=${this.addEndDate}>
 							<mitra-icon icon="plus"></mitra-icon>
 							<span class="placeholder">${t('End date')}</span>
 						</button>
-					` : html`
+					`) : html`
 						<div class="field">
 							<mitra-icon icon="arrow-right"></mitra-icon>
-							<input type="date" class="end-date" aria-label=${t('End date')} .value=${this.dateValue(this.entry.inclusiveEnd)} @click=${this.openPicker} @change=${this.handleEndDateChange}>
-							<mitra-icon-button class="clear" icon="x" label=${t('Remove the end date')} @click=${this.clearEndDate}></mitra-icon-button>
+							<input type="date" class="end-date" aria-label=${t('End date')} ?readonly=${!this.editable} .value=${this.dateValue(this.entry.inclusiveEnd)} @click=${this.openPicker} @change=${this.handleEndDateChange}>
+							${!this.editable ? html.nothing : html`
+								<mitra-icon-button class="clear" icon="x" label=${t('Remove the end date')} @click=${this.clearEndDate}></mitra-icon-button>
+							`}
 						</div>
 					`}
 				</div>
@@ -506,16 +519,16 @@ export class EntryDetailsWhen extends Component {
 				     so the switch goes rather than offering a state the save would have to refuse. */''}
 				<button class="switch" role="switch" aria-label=${t('All day')} title=${this.entry.allDay ? t('Include time') : t('Switch to all-day')}
 					aria-checked=${!this.entry.allDay} @click=${this.toggleAllDay}
-					?hidden=${!getCapabilities(this.entry.sourceId).allDay}
+					?hidden=${!this.editable || !getCapabilities(this.entry.sourceId).allDay}
 				></button>
 				<div class="times">
 					${this.entry.allDay ? html`
 						<span class="allday-label">${t('All day')}</span>
 						` : html`
-							<input type="time" class="field" aria-label=${t('Start time')} .value=${this.timeValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartTimeChange}>
+							<input type="time" class="field" aria-label=${t('Start time')} ?readonly=${!this.editable} .value=${this.timeValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartTimeChange}>
 							<div class="field">
 								<mitra-icon icon="arrow-right"></mitra-icon>
-								<input type="time" aria-label=${t('End time')} .value=${this.timeValue(this.entry.effectiveEnd)} @click=${this.openPicker} @change=${this.handleEndTimeChange}>
+								<input type="time" aria-label=${t('End time')} ?readonly=${!this.editable} .value=${this.timeValue(this.entry.effectiveEnd)} @click=${this.openPicker} @change=${this.handleEndTimeChange}>
 							</div>
 						`}
 				</div>

@@ -37,6 +37,11 @@ export class Source {
 	 * source never reconciled against a provider (e.g. a local-only Dev source). */
 	@property({ type: 'string', nullable: true }) remoteName?: string | null
 	@property({ type: 'string', nullable: true }) color?: string
+	/**
+	 * Whether this source is read-only (e.g. view-only shared calendars or feed subscriptions).
+	 * Null reads as writable.
+	 */
+	@property({ type: 'boolean', fieldName: 'read_only', nullable: true }) readOnly?: boolean | null
 	@property({ type: 'boolean' }) hidden = false
 	@property({ type: 'boolean' }) enabled = false
 	/** Manual sidebar position among the integration's sources (see PUT /sources/order and

@@ -8,6 +8,7 @@ import { model } from '../../infrastructure/model/model.js'
 import { buildVTimezone } from './vtimezone.js'
 import { Integration, integration, withheld } from '../Integration.js'
 import { Entry, TaskStatus, Transparency, Visibility, FLOATING_TIME_ZONE } from '../../features/entries/Entry.js'
+import { EntryType } from '../../features/entries/EntryType.js'
 import { Recurrence } from '../../features/recurrence/Recurrence.js'
 import { Relation, type RelationInit } from '../../features/relations/Relation.js'
 import { RelationType } from '../../features/relations/RelationType.js'
@@ -385,6 +386,98 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		for (const sibling of await em.find(Entry, { sourceId: written.sourceId, uri: written.uri, id: { $ne: written.id } })) {
 			sibling.data = { ...sibling.data, raw: written.data?.raw, etag: written.data?.etag }
 		}
+	}
+
+	/**
+	 * Reads one parsed VEVENT/VTODO onto an entry, taking what it needs off the `integration`.
+	 * Static rather than an instance method because a subscribed feed is not a CalDAV account: the two
+	 * providers sharing this have no common ancestor below `Integration`, which knows no iCalendar.
+	 */
+	static applyComponent(entry: Entry, component: ICAL.Component, integration: Integration): void {
+		// The component IS the type — RFC 4791 §4.1 forbids mixing them within one resource.
+		const entryType = component.name === 'vtodo' ? EntryType.Task : EntryType.Event
+		entry.type = entryType
+		entry.color = component.getFirstPropertyValue('color')?.toString() || null
+
+		const tzidOf = (name: string) => component.getFirstProperty(name)?.getParameter('tzid')?.toString()
+		if (entryType.isEvent) {
+			const event = new ICAL.Event(component)
+			entry.heading = event.summary || 'Untitled Event'
+			entry.description = event.description || ''
+			entry.location = event.location || ''
+			entry.start = CalDAV.instantFrom(event.startDate, tzidOf('dtstart')) as any || undefined
+			entry.end = CalDAV.instantFrom(event.endDate ?? event.startDate, tzidOf('dtend') ?? tzidOf('dtstart')) as any || undefined
+			entry.allDay = event.startDate?.isDate ?? false
+			entry.transparency = CalDAV.transparencyFromICal(component.getFirstPropertyValue('transp')?.toString())
+		} else {
+			const value = (name: string) => component.getFirstPropertyValue(name) as any
+			entry.heading = value('summary')?.toString() || 'Untitled Task'
+			entry.description = value('description')?.toString() || ''
+			entry.location = value('location')?.toString() || ''
+			const percent = value('percent-complete')
+			entry.status = CalDAV.statusFromICal(value('status')?.toString(), Number(percent ?? 0))
+			entry.percentComplete = percent === null || percent === undefined ? null : Math.min(100, Math.max(0, Math.round(Number(percent))))
+			entry.start = CalDAV.instantFrom(value('dtstart'), tzidOf('dtstart')) as any || undefined
+			entry.end = CalDAV.instantFrom(value('due'), tzidOf('due') ?? tzidOf('dtstart')) as any || undefined
+			entry.allDay = !!value('dtstart')?.isDate
+		}
+
+		entry.visibility = CalDAV.visibilityFromICal(component.getFirstPropertyValue('class')?.toString())
+
+		entry.reminders = CalDAV.remindersFrom(component)
+		entry.participants = CalDAV.participantsFrom(component, integration.addresses)
+		entry.relations = integration.capabilities.relations ? CalDAV.relationsFrom(component) : undefined
+
+		const dtstartTzid = tzidOf('dtstart')
+		entry.timeZone = CalDAV.resolvableZone(dtstartTzid) ? dtstartTzid
+			: CalDAV.isFloating(component.getFirstPropertyValue('dtstart')) ? FLOATING_TIME_ZONE : null
+
+		const recurrence = CalDAV.recurrenceProps(component)
+		entry.uid = recurrence.uid
+		entry.recurrence = recurrence.recurrence
+		entry.recurrenceId = recurrence.recurrenceId as any
+	}
+
+	/** Links each override row back to its series master by shared UID. */
+	static linkOverridesToMasters(entries: ReadonlyArray<Entry>): boolean {
+		let linked = false
+		for (const entry of entries) {
+			if (entry.recurrenceId && entry.uid && !entry.recurrenceMasterId) {
+				const master = entries.find(other => other.recurrence && !other.recurrenceId && other.uid === entry.uid)
+				if (master) {
+					entry.recurrenceMasterId = master.id
+					linked = true
+				}
+			}
+		}
+		return linked
+	}
+
+	/**
+	 * Determines if a collection is writable from WebDAV `current-user-privilege-set` (RFC 3744).
+	 * Returns `undefined` if missing (server does not implement ACL).
+	 */
+	static writableFromPrivileges(privilegeSet: unknown): boolean | undefined {
+		if (privilegeSet === null || privilegeSet === undefined) {
+			return undefined
+		}
+		const names = new Set<string>()
+		const walk = (node: unknown, depth: number) => {
+			if (depth > 8 || typeof node !== 'object' || node === null) {
+				return
+			}
+			for (const [key, value] of Object.entries(node)) {
+				names.add(key.replace(/^[^:]+:/, '').toLowerCase())
+				walk(value, depth + 1)
+			}
+		}
+		walk(privilegeSet, 0)
+		// An unrecognized shape is "we don't know", not a refusal.
+		if (!names.size) {
+			return undefined
+		}
+		// `write` is the aggregate, `write-content`/`bind` its halves (change a resource, add one).
+		return ['write', 'write-content', 'bind', 'all'].some(privilege => names.has(privilege))
 	}
 
 	/** The recurrence info off a parsed VEVENT/VTODO: the master's rule (as a `Recurrence` value object), the

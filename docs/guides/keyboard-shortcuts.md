@@ -1,8 +1,6 @@
 ---
 title: Keyboard shortcuts
 description: Drive Mitra from the keyboard — views, navigation, entries, and the command palette.
-sidebar:
-  order: 3
 ---
 
 Press <kbd>?</kbd> anywhere in the calendar to open the built-in cheat sheet — it always reflects exactly what your version supports. The vocabulary follows the de-facto web-calendar standard (Google Calendar, Notion Calendar, Proton Calendar), so muscle memory carries over.

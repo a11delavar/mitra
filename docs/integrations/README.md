@@ -1,8 +1,7 @@
 ---
 title: Integrations
-description: Connect the calendars and task databases you already use — CalDAV, Google Calendar, Apple Calendar, Notion, and Tempo — and sync them two-way in the background.
+description: Connect the calendars and task databases you already use — CalDAV, Google Calendar, Apple Calendar, calendar subscriptions, Notion, and Tempo — and sync them in the background.
 sidebar:
-  order: 0
   label: Overview
 ---
 
@@ -15,6 +14,7 @@ Mitra doesn't replace the accounts you already have — it **brings them in**. C
 | **[CalDAV](caldav.md)** | Events *and* tasks from any CalDAV server | None — connects from the app |
 | **[Google Calendar](google-calendar.md)** | Google calendars (via CalDAV + OAuth) | One-time OAuth setup |
 | **[Apple Calendar](apple-calendar.md)** | iCloud calendars (and Mitra-side tasks) | None — app-specific password |
+| **[Calendar Subscriptions](calendar-subscriptions.md)** | Any published calendar link (`webcal://` / `.ics`), read-only | None — paste a link |
 | **[Notion](notion.md)** | Task database **views**, two-way | None — paste an integration token |
 | **[Tempo](tempo.md)** | Jira worklogs — the hours you book, two-way | None — paste two API tokens |
 
@@ -26,6 +26,7 @@ More integrations are on the way.
 - **Fresh when you look.** Opening or reloading the app triggers an immediate sync, so what you see is current — no need to wait out a poll. That's also why there's no refresh button: syncing is the server's job, and reloading the page is already the gesture that forces it.
 - **Opt-in sources.** When you connect an account, Mitra discovers its calendars/lists but leaves them **disabled**. You pick which ones to actually sync from the source picker — nothing heavy happens until you enable a source.
 - **Two-way where the provider allows it.** Creating, editing, moving, and deleting entries in Mitra writes back to the origin. What each provider can represent differs (Notion tasks can't recur, for example) — Mitra hides fields a source can't store rather than letting your edits vanish.
+- **Read-only support.** Subscribed calendar feeds and calendars shared with view-only permissions are automatically detected as read-only. You can view all event details without risk of accidental changes, while still being able to customize their color, name, and visibility in your sidebar.
 - **Resilient by design.** One broken account doesn't stall the others; a failed source rests briefly and retries. Renames you make to a source in Mitra survive background syncs.
 
 > [!NOTE]
@@ -38,6 +39,7 @@ In the app, open the sidebar and choose **Add Integration**, then pick the provi
 - [Connect a CalDAV account →](caldav.md)
 - [Connect Google Calendar →](google-calendar.md)
 - [Connect Apple Calendar →](apple-calendar.md)
+- [Subscribe to a Calendar Feed →](calendar-subscriptions.md)
 - [Connect Notion →](notion.md)
 - [Connect Tempo →](tempo.md)
 

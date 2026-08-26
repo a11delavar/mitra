@@ -1,8 +1,6 @@
 ---
 title: Tempo
 description: Sync your Jira worklogs two-way — view booked hours on your calendar, and log, move, resize, or retitle time directly from Mitra.
-sidebar:
-  order: 5
 ---
 
 Mitra connects to [Tempo](https://www.tempo.io/), the time-tracking platform for Jira. The unit it syncs is the **worklog**: hours logged against Jira issues on a given day. Your worklogs appear as ordinary timed entries on the calendar, side-by-side with the meetings and tasks that produced them.

@@ -470,9 +470,13 @@ export class TaskStatusComponent extends Component {
 		const showsProgressDial = this.status === TaskStatus.Doing || (progress !== undefined && progress > 0 && progress < 1 && this.status !== TaskStatus.Done && this.status !== TaskStatus.Cancelled)
 		const percent = progress !== undefined ? Math.round(progress * 100) : 50
 
+		// Disabled, not withheld: the glyph IS the task's state, and a task with no visible status reads as
+		// no task at all. Only the click, the menu and the tooltip's invitation go.
+		const editable = getCapabilities(this.entry.sourceId).editEntries
+
 		return html`
-			<button class="status-button" aria-label=${name}
-				title=${t('${status} — click to toggle, Alt-click for options', { status: name })}
+			<button class="status-button" aria-label=${name} ?disabled=${!editable}
+				title=${editable ? t('${status} — click to toggle, Alt-click for options', { status: name }) : name}
 				@click=${this.onToggle}
 				@contextmenu=${this.onContextMenu}>
 				${showsProgressDial ? html`

@@ -1,8 +1,6 @@
 ---
 title: Routines
 description: How daily habits and frequent routines display as subtle day marks in month and year views.
-sidebar:
-  order: 2
 ---
 
 In the **Month** and **Year** views, frequent routines (such as daily habits, medications, or standups) display as **compact colored marks** under each day rather than full bars, keeping your overview clean.

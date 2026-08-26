@@ -2,7 +2,7 @@ import { Component, component, html, css, property, state, event, query } from '
 import { ParticipantRole, ParticipantStatus, Participants, type Participant } from '../Participant.js'
 import { type Entry } from '../../entries/Entry.js'
 import { Color } from '../../sources/Color.js'
-import { getIntegrationFor } from '../../../infrastructure/http/Api.js'
+import { getIntegrationFor, getCapabilities } from '../../../infrastructure/http/Api.js'
 import { contrastColor } from '../../../design/contrastColor.js'
 
 /**
@@ -61,8 +61,9 @@ export class ParticipantsField extends Component {
 		return this.participants?.organizerFirst ?? []
 	}
 
+	/** Whether the current user can manage participants (requires write access and organizer status). */
 	private get canManage() {
-		return this.entry.canManageParticipants
+		return getCapabilities(this.entry.sourceId).editEntries && this.entry.canManageParticipants
 	}
 
 	/** The account's own address for this entry's integration — who "I" am when inviting. */

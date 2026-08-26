@@ -1,8 +1,6 @@
 ---
 title: CalDAV
 description: Connect any CalDAV server — Nextcloud, Radicale, Fastmail, mailbox.org and more — for two-way sync of both events and tasks.
-sidebar:
-  order: 1
 ---
 
 CalDAV is the open standard most calendar servers speak, and it's Mitra's most direct integration. It connects **straight from the app** — no deployment configuration — and syncs both **events** and **tasks** (VTODO) two-way.
@@ -45,7 +43,8 @@ While you have the app open, enabled sources are polled about every 10 seconds, 
 ## Editing
 
 - Edits, moves, resizes, and deletes you make in Mitra are written back to the server.
-- Renaming, recoloring, reordering and hiding a calendar are Mitra's own view of it and work the same for every provider — see **[Calendars & task lists](../guides/calendars.md)**. Your rename survives background syncs; only a genuine rename on the server side is adopted.
+- **Read-only shared calendars.** Calendars shared with you with view-only permissions are automatically detected and marked **read-only**. They sync and display normally, while edit actions are disabled. Personal customizations (renaming, recoloring, reordering, and hiding) remain available.
+- Renaming, recoloring, reordering and hiding a calendar are Mitra's own view of it and work the same for every provider — see **[Calendars & task lists](../guides/calendars.md)**. Your rename survives background syncs; only a genuine rename on the server side is adopted. These stay available on a read-only calendar too.
 
 ## Troubleshooting
 

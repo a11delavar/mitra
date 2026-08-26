@@ -1,5 +1,6 @@
 import { Component, component, html, css, property, state, event, query } from '@a11d/lit'
 import { type Entry } from '../../entries/Entry.js'
+import { getCapabilities } from '../../../infrastructure/http/Api.js'
 import { enablePushNotifications } from './push.js'
 
 type CustomUnit = 'minutes' | 'hours' | 'days' | 'weeks'
@@ -264,6 +265,8 @@ export class RemindersField extends Component {
 	}
 
 	protected override get template() {
+		// The reminders still read; only the ways to change them go.
+		const editable = getCapabilities(this.entry.sourceId).editEntries
 		return !this.entry?.start ? html.nothing : html`
 			${!this.reminders.length ? html`
 				<span class="placeholder">${t('Reminders')}</span>
@@ -274,15 +277,19 @@ export class RemindersField extends Component {
 							? html`${t('At start')} <span class="detail">${t('of event at ${time}', { time: this.fireLabel(minutes) })}</span>`
 							: html`${reminderSpanLabel(minutes)} <span class="detail">${t('before at ${time}', { time: this.fireLabel(minutes) })}</span>`}
 					</span>
-					<mitra-icon-button icon="x" label=${t('Remove reminder')}
-						@click=${() => this.commit(this.reminders.filter(other => other !== minutes))}
-					></mitra-icon-button>
+					${!editable ? html.nothing : html`
+						<mitra-icon-button icon="x" label=${t('Remove reminder')}
+							@click=${() => this.commit(this.reminders.filter(other => other !== minutes))}
+						></mitra-icon-button>
+					`}
 				</div>
 			`)}
 			<!-- The one control that adds a reminder, whether there are none yet or several: a plain icon
 				button at the row's end. (It used to be a full-width button wearing the placeholder text,
 				which read as an input rather than as something to press.) -->
-			<mitra-icon-button class="add" icon="plus" label=${t('Add reminder')} @click=${this.toggleMenu}></mitra-icon-button>
+			${!editable ? html.nothing : html`
+				<mitra-icon-button class="add" icon="plus" label=${t('Add reminder')} @click=${this.toggleMenu}></mitra-icon-button>
+			`}
 			<menu popover>
 				${RemindersField.presets.filter(minutes => !this.reminders.includes(minutes)).map(minutes => html`
 					<button type="button" @click=${() => this.add(minutes)}>${reminderLabel(minutes)}</button>

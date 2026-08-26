@@ -171,7 +171,7 @@ export class EntryDetailsSharing extends Component {
 			<div class="choices">
 				${!this.showsTransparency ? html.nothing : html`
 					<span class="transparency field">
-						<select aria-label=${t('Show as busy or free')} title=${t('Show as busy or free')} @change=${this.handleTransparencyChange}>
+						<select aria-label=${t('Show as busy or free')} title=${t('Show as busy or free')} ?disabled=${!this.capabilities.editEntries} @change=${this.handleTransparencyChange}>
 							<button>
 								<selectedcontent></selectedcontent>
 							</button>
@@ -189,7 +189,7 @@ export class EntryDetailsSharing extends Component {
 					${/* No choice made yet, so the row reads as a placeholder rather than a value — the same
 					    voice an unset Repeat or a viewer's-own time zone speaks. */''}
 					<span class="visibility field">
-						<select ?data-placeholder=${!this.entry.visibility} aria-label=${t('Visibility')} title=${t('Visibility')} @change=${this.handleVisibilityChange}>
+						<select ?data-placeholder=${!this.entry.visibility} aria-label=${t('Visibility')} title=${t('Visibility')} ?disabled=${!this.capabilities.editEntries} @change=${this.handleVisibilityChange}>
 							<button>
 								<selectedcontent></selectedcontent>
 							</button>

@@ -24,7 +24,8 @@ import { FlushMode, type EntityManager } from '@mikro-orm/core'
  * that guarantees only instances of that type ever reach it).
  */
 export interface SyncEngine {
-	fetchSources(integration: Integration): Promise<Array<Source>>
+	/** Fetches remote sources, optionally passing existing persisted sources for conditional requests. */
+	fetchSources(integration: Integration, existing?: ReadonlyArray<Source>): Promise<Array<Source>>
 	syncSourceEntries(integration: Integration, em: EntityManager, source: Source): Promise<boolean>
 	createEntry(integration: Integration, em: EntityManager, entry: Entry): Promise<Entry>
 	updateEntry(integration: Integration, em: EntityManager, existing: Entry, incoming: Entry): Promise<void>
@@ -181,6 +182,22 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		return Integration.fullCapabilities
 	}
 
+	/** Optional icon override for this integration's sources (e.g. 'rss' for subscriptions). */
+	get sourceIcon(): string | undefined { return undefined }
+
+	/** Returns effective capabilities for a specific source, masking write capabilities if read-only. */
+	capabilitiesFor(source: Pick<Source, 'readOnly'> | undefined) {
+		return Integration.capabilitiesIn(this.capabilities, source)
+	}
+
+	/** Masks write operations in a capability set when the source is read-only. */
+	static capabilitiesIn(capabilities: Integration['capabilities'], source: Pick<Source, 'readOnly'> | undefined) {
+		return !source?.readOnly ? capabilities : {
+			...capabilities,
+			createEntries: false, editEntries: false, deleteEntries: false, renameEntries: false,
+		}
+	}
+
 	/** Everything supported: the base answer, and the right reading for a provider the CLIENT doesn't
 	 * model (a plain DTO arrives without the getter — see the frontend's getCapabilities). Declared
 	 * once, so a capability added to the class can never be forgotten at that fallback and read as
@@ -228,8 +245,8 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * these against the database. Delegates to the registered {@link SyncEngine} — a subclass with no
 	 * engine (Dev) overrides this directly instead.
 	 */
-	protected fetchSources(): Promise<Array<Source>> {
-		return engineFor(this).fetchSources(this)
+	protected fetchSources(existing?: ReadonlyArray<Source>): Promise<Array<Source>> {
+		return engineFor(this).fetchSources(this, existing)
 	}
 
 	/** Fetches and stores the entries of a single source. @returns whether any entry changed. Delegates
@@ -279,7 +296,10 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	 * already holds).
 	 */
 	async getSources(em: EntityManager, options?: { checkDuplicate?: boolean }): Promise<Array<Source>> {
-		const remote = await this.fetchSources()
+		// Pass existing sources so engines can use cached sync state for conditional requests.
+		const existing = await em.find(Source, { integrationId: this.id })
+
+		const remote = await this.fetchSources(existing)
 
 		// Providers that derive their identity during discovery (Notion's bot user, Apple's fixed
 		// server) can collide with an already-connected account only NOW, when `uri` is known.
@@ -293,7 +313,6 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 			}
 		}
 
-		const existing = await em.find(Source, { integrationId: this.id })
 		const existingByKey = new Map(existing.map(source => [source.uri, source]))
 		const remoteKeys = new Set(remote.map(source => source.uri))
 
@@ -319,6 +338,8 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 			if (source.entryTypes.length) {
 				match.entryTypes = source.entryTypes
 			}
+			// Provider truth too — a share upgraded to "make changes" becomes writable on the next reconcile.
+			match.readOnly = source.readOnly
 			// Follow a REMOTE rename, but never clobber a LOCAL one. `remoteName` is the provider's name
 			// as of the last reconcile.
 			if (match.remoteName === null || match.remoteName === undefined) {

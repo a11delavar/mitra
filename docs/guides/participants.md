@@ -1,8 +1,6 @@
 ---
 title: Participants & invitations
 description: Invite people to an entry and follow their replies — Mitra writes the guest list, and your calendar account sends the invitations.
-sidebar:
-  order: 4
 ---
 
 An entry can carry **participants** — the people invited to it. Mitra stores them the standard way (`ATTENDEE`/`ORGANIZER` in iCalendar), so the list is the same one every other calendar client connected to your account sees, and replies made in Apple Calendar, Thunderbird or a webmail show up here.

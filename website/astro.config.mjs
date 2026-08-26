@@ -81,10 +81,62 @@ export default defineConfig({
 			],
 			editLink: { baseUrl: 'https://github.com/a11delavar/mitra/edit/main/docs/' },
 			sidebar: [
-				{ label: 'Getting started', items: [{ autogenerate: { directory: 'getting-started' } }] },
-				{ label: 'Integrations', items: [{ autogenerate: { directory: 'integrations' } }] },
-				{ label: 'Guides', items: [{ autogenerate: { directory: 'guides' } }] },
-				{ label: 'Reference', items: [{ autogenerate: { directory: 'reference' } }] },
+				{
+					label: 'Getting Started',
+					items: [
+						{ slug: 'index', label: 'Overview' },
+						{ slug: 'getting-started/installation' },
+						{ slug: 'getting-started/configuration' },
+					],
+				},
+				{
+					label: 'Using Mitra',
+					items: [
+						{ slug: 'guides/calendars' },
+						{ slug: 'guides/unscheduled-tasks' },
+						{ slug: 'guides/routines' },
+						{ slug: 'guides/participants' },
+						{ slug: 'guides/notifications' },
+						{ slug: 'guides/location-autocomplete' },
+						{ slug: 'guides/keyboard-shortcuts' },
+					],
+				},
+				{
+					label: 'Relationships',
+					items: [
+						{ slug: 'guides/relationships', label: 'Overview' },
+						{ slug: 'guides/relationships/hierarchy', label: 'Hierarchy & Subtasks' },
+						{ slug: 'guides/relationships/dependencies' },
+					],
+				},
+				{
+					label: 'Integrations',
+					items: [
+						{ slug: 'integrations', label: 'Overview' },
+						{ slug: 'integrations/caldav' },
+						{ slug: 'integrations/google-calendar' },
+						{ slug: 'integrations/apple-calendar' },
+						{ slug: 'integrations/calendar-subscriptions' },
+						{ slug: 'integrations/notion' },
+						{ slug: 'integrations/tempo' },
+					],
+				},
+				{
+					label: 'Administration',
+					items: [
+						{ slug: 'guides/multi-user' },
+						{ slug: 'guides/backups' },
+						{ slug: 'guides/updates' },
+						{ slug: 'guides/health-checks' },
+						{ slug: 'guides/logging' },
+					],
+				},
+				{
+					label: 'Reference',
+					items: [
+						{ slug: 'reference/environment-variables' },
+					],
+				},
 			],
 			customCss: ['./src/styles/custom.css'],
 			plugins: [

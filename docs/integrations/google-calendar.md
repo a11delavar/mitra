@@ -1,8 +1,6 @@
 ---
 title: Google Calendar
 description: Enable Google Calendar for your deployment with a one-time OAuth setup, then let users connect their Google accounts from the app.
-sidebar:
-  order: 2
 ---
 
 Google Calendar speaks CalDAV too, but Google requires **OAuth** instead of a password. That means a **one-time setup of your deployment**: you register an OAuth client with Google and give Mitra its credentials. After that, users connect their Google accounts from within the app like any other source.
@@ -59,6 +57,21 @@ Notes:
 ## Step 3 — Connect an account
 
 In Mitra, choose **Add Integration → Google Calendar → Continue with Google**. Mitra walks the user through Google's consent screen, then returns to the app with the account's source picker open and every calendar pre-ticked. Enable the calendars you want and they sync like any other CalDAV source.
+
+## Calendars shared with you
+ 
+Calendars **you own** show up in the source picker immediately. Calendars **shared with you** (such as team or colleague calendars) may require enabling in your Google settings first.
+ 
+Google only exposes shared calendars to third-party sync apps when they are explicitly enabled in your Google account settings:
+ 
+1. Open **[calendar.google.com/calendar/syncselect](https://calendar.google.com/calendar/syncselect)** while signed into your Google account.
+2. Under **Shared Calendars**, check the box next to each calendar you want to sync.
+3. Click **Save**.
+4. In Mitra, open the integration's **⋯** menu → **Edit** → **Refresh**. The enabled shared calendars will now appear in your picker.
+ 
+### Read-only shared calendars
+ 
+If a calendar was shared with view-only access (*See all event details*), Mitra marks it as **read-only**. You can view all event details, but creating, editing, and deleting events is disabled. If the owner later upgrades your permissions to *Make changes to events*, Mitra automatically enables editing on the next sync.
 
 ## Revoking access
 

@@ -5,6 +5,12 @@ export const switchStyles = css`
 	.switch {
 		all: unset;
 		box-sizing: border-box;
+
+		/* The reset above sets display as an AUTHOR declaration, which beats the UA's rule for the hidden
+		   attribute — so a hidden switch stayed visible and clickable until this handed it back. */
+		&[hidden] {
+			display: none;
+		}
 		inline-size: 1.75rem;
 		block-size: 1rem;
 		flex-shrink: 0;

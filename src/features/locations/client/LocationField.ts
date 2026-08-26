@@ -1,6 +1,6 @@
 import { Component, component, html, css, property, state, event, query } from '@a11d/lit'
 import { type Entry } from '../../entries/Entry.js'
-import { searchLocations, type LocationSuggestion } from '../../../infrastructure/http/Api.js'
+import { searchLocations, getCapabilities, type LocationSuggestion } from '../../../infrastructure/http/Api.js'
 
 // The user's position, fetched once per session (on first use of a location field) to bias the
 // geocoder towards nearby places. Denied or unavailable simply means unbiased results — the field
@@ -257,6 +257,7 @@ export class LocationField extends Component {
 	protected override get template() {
 		return html`
 			<textarea rows="1" placeholder=${t('Location')} autocomplete="off" spellcheck="false"
+				?readonly=${!getCapabilities(this.entry?.sourceId ?? '').editEntries}
 				.value=${this.entry?.location ?? ''}
 				@focus=${this.handleFocus}
 				@input=${this.handleInput}

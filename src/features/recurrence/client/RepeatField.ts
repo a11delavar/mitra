@@ -2,6 +2,7 @@ import { Component, component, html, css, property, state, event, query } from '
 import { type DateTime } from '@3mo/date-time'
 import { Recurrence, WEEKDAY_CODES, type Frequency, type RecurrencePreset } from '../Recurrence.js'
 import { type Entry } from '../../entries/Entry.js'
+import { getCapabilities } from '../../../infrastructure/http/Api.js'
 const FREQ_OPTIONS: ReadonlyArray<{ value: Frequency }> = [
 	{ value: 'DAILY' },
 	{ value: 'WEEKLY' },
@@ -437,7 +438,9 @@ export class RepeatField extends Component {
 		return !this.entry?.start ? html.nothing : html`
 			<!-- No rule means nothing is chosen here, so "Does not repeat" reads as a placeholder rather
 				than as a value (field.css.ts owns what that looks like). -->
-			<select ?data-placeholder=${!this.entry.recurrence} @change=${this.handleSelect}>
+			<!-- The custom dialog opens from this select, so disabling it here closes the whole editor —
+				while the rule itself still reads out of the collapsed control. -->
+			<select ?data-placeholder=${!this.entry.recurrence} ?disabled=${!getCapabilities(this.entry.sourceId).editEntries} @change=${this.handleSelect}>
 				<button>
 					<selectedcontent></selectedcontent>
 				</button>

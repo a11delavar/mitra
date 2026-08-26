@@ -1,8 +1,6 @@
 ---
 title: Configuration
 description: How Mitra is configured — environment variables, naming your instance, setting the public URL, and what needs deployment setup versus what connects from the app.
-sidebar:
-  order: 2
 ---
 
 Mitra is configured entirely through **environment variables**. There is no config file to mount and no settings database to edit — you set variables on the container, and the instance reads them at boot.

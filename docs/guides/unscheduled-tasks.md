@@ -1,8 +1,6 @@
 ---
 title: Unscheduled tasks
 description: Find the tasks that have no date yet in the sidebar's Planning tab, and drag them onto the calendar to schedule them — or back off it to unschedule.
-sidebar:
-  order: 1
 ---
 
 A task does not have to have a date. A Notion page whose date property is empty, or a task on a calendar server saved without a start or a due date, is a perfectly ordinary task — it just has no place on a calendar grid, which is organised by day.

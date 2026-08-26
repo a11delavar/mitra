@@ -1,8 +1,6 @@
 ---
 title: Apple Calendar
 description: Connect an iCloud calendar to Mitra using an app-specific password — no deployment setup required.
-sidebar:
-  order: 3
 ---
 
 Apple Calendar (iCloud) connects natively — **no deployment configuration**. Apple requires an **app-specific password** rather than your main Apple ID password, which you generate in a minute.

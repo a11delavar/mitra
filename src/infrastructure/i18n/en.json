@@ -8,6 +8,8 @@
 	"New dev build — ${count:pluralityNumber} commits ahead": ["New dev build — ${count:pluralityNumber} commit ahead", "New dev build — ${count:pluralityNumber} commits ahead"],
 	"Google.ConsentHint": "You will be redirected to Google to grant access to your calendars, then choose here which of them to show.",
 	"Google.ConfigurationHint": "Google Calendar is not configured on this server — set the MITRA_GOOGLE_CLIENT_ID and MITRA_GOOGLE_CLIENT_SECRET environment variables (see the README).",
+	"Google.SharedCalendarsHint": "Calendars other people shared with you appear here only after you tick them at",
+	"Ics.UrlHint": "Paste a calendar link — a webcal:// address or one ending in .ics. Subscriptions are read-only: they show what the calendar publishes, and mitra never writes back to it.",
 	"Notion.TokenHint": "Create an integration at notion.so/profile/integrations, share your task databases with it (··· → Connections), then paste its secret here. A database needs a Status and a Date property — its views become sources.",
 	"Tempo.TokenHint": "Create an API token in Tempo (Settings → Data Access → API integration) and an Atlassian API token at id.atlassian.com. Tempo holds the hours, Jira names the issues — both are needed.",
 	"ShowOnlySource.Keywords": "calendar source solo focus hide others only visible",

@@ -1,5 +1,5 @@
 import { component, html, join, property, state, Component, css, eventListener, event, Binder, query } from '@a11d/lit'
-import { type Integration } from '../../../integrations/Integration.js'
+import { type Source } from '../../sources/Source.js'
 import { EntryType, type EntryTypeValue } from '../EntryType.js'
 import { TaskStatus, Transparency } from '../Entry.js'
 import type { EntrySegment } from './EntrySegment.js'
@@ -170,6 +170,12 @@ export class EntryDetailsComponent extends Component {
 
 	private readonly toggleMenu = (e: Event) => {
 		(e.currentTarget as HTMLElement).parentElement?.querySelector<HTMLElement>('menu[popover]')?.togglePopover()
+	}
+
+	private get hasMenu() {
+		return !!getExternalLink(this.segment!.entry)
+			|| (this.segment!.entry.persisted && this.capabilities.createEntries)
+			|| this.capabilities.deleteEntries
 	}
 
 	private readonly binder = new Binder(this, 'segment')
@@ -601,12 +607,14 @@ export class EntryDetailsComponent extends Component {
 						${this.sourceTemplate}
 						<span class="spacer"></span>
 						${this.entryTypeTemplate}
-						<mitra-icon-button
-							label=${t('Options')}
-							icon="more-horizontal"
-							style="anchor-name: --entry-menu-${this.segment.entry.id}; color: var(--color-text-muted)"
-							@click=${this.toggleMenu}
-						></mitra-icon-button>
+						${!this.hasMenu ? html.nothing : html`
+							<mitra-icon-button
+								label=${t('Options')}
+								icon="more-horizontal"
+								style="anchor-name: --entry-menu-${this.segment.entry.id}; color: var(--color-text-muted)"
+								@click=${this.toggleMenu}
+							></mitra-icon-button>
+						`}
 						<menu popover id="entry-menu-${this.segment.entry.id}" style="position-anchor: --entry-menu-${this.segment.entry.id}">
 							${/* The pointer twin of Alt-drag (see EntryDragController), which is what the hint
 						    advertises: no drop position here, so the copy lands on this entry's own slot and
@@ -667,10 +675,6 @@ export class EntryDetailsComponent extends Component {
 						${!entry.type.isTask ? html.nothing : html`
 							<mitra-task-status .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-task-status>
 						`}
-						${/* A provider mitra may only read still SHOWS its title — an input that silently discards
-						     what you type is the lie these gates exist to avoid. A title the provider owns (a Tempo
-						     worklog's, which is its Jira issue's summary) is read-only for the same reason, but
-						     only once the entry exists: on a draft the title is still what says WHAT to book. */''}
 						<input class="title field" placeholder=${t('Title')}
 							?readonly=${!this.capabilities.editEntries || (entry.persisted && !this.capabilities.renameEntries)}
 							?data-struck=${entry.status === TaskStatus.Done || entry.status === TaskStatus.Cancelled}
@@ -711,7 +715,8 @@ export class EntryDetailsComponent extends Component {
 	private get entryTypeTemplate() {
 		const entry = this.segment!.entry
 		const source = this.source
-		const switchable = !!source?.supportsEntryType(EntryType.Event) && !!source.supportsEntryType(EntryType.Task) && !entry.partOfSeries
+		// A conversion re-creates the entry, so it needs both halves of a write.
+		const switchable = this.capabilities.editEntries && !!source?.supportsEntryType(EntryType.Event) && !!source.supportsEntryType(EntryType.Task) && !entry.partOfSeries
 		if (!switchable) {
 			return html.nothing
 		}
@@ -760,30 +765,28 @@ export class EntryDetailsComponent extends Component {
 		// hide editor fields also decide where an entry may move. Offering an impossible target would
 		// collapse a series' rule or drop a Cancelled status (the backend rejects both), so it's excluded
 		// rather than shown and left to fail. The entry's own source is always kept (it's the selection).
-		const canHold = (integration: Integration) => {
-			const capabilities = integration.capabilities ?? { recurrence: true, cancelledStatus: true, transparency: true, visibility: true }
-			return (!entry.partOfSeries || capabilities.recurrence)
+		// Through `getCapabilities`, not the integration: it owns the plain-DTO fallback, and it is also
+		// where a read-only calendar loses its write flags.
+		const canHold = (target: Source) => {
+			const capabilities = getCapabilities(target.id)
+			return capabilities.createEntries
+				&& (!entry.partOfSeries || capabilities.recurrence)
 				&& (entry.status !== TaskStatus.Cancelled || capabilities.cancelledStatus)
 				&& (entry.transparency !== Transparency.Free || capabilities.transparency)
 				&& (!entry.visibility || capabilities.visibility)
 		}
 		return !this.source?.name ? html.nothing : html`
 			<span class="source field">
-				${/* No icon on the chip — the colour dot in front already marks the source, and the name
-				    alone reads cleaner. The picker's options keep theirs (see below). */''}
-				<select @change=${handleSourceChange}>
+				<select ?disabled=${!this.capabilities.editEntries} @change=${handleSourceChange}>
 					<button>
 						<selectedcontent></selectedcontent>
 					</button>
 					${getIntegrations().map(integration => {
 						const sources = [...integration.sources].filter(source =>
-							source.id === entry.sourceId || (source.visible && canHold(integration)))
+							source.id === entry.sourceId || (source.visible && canHold(source)))
 						return !sources.length ? html.nothing : html`
 							<optgroup label=${integration.credentials?.username || integration.type}>
 								<legend>${integration.credentials?.username || integration.type}</legend>
-								${/* The shared source icon (see SourceIcon) — one coloured glyph, never filled
-								    here: the picker already says which option is the current one. It sits in the
-								    row's icon gutter, on the same rail as the clock, globe and palette above. */''}
 								${sources.map(source => html`
 									<option value=${source.id} ?selected=${source.id === entry.sourceId}>
 										<mitra-source-icon .source=${source}></mitra-source-icon>
@@ -799,8 +802,6 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	private get locationTemplate() {
-		// The field mutates `entry.location` in place; both its typed commits (the input's bubbling
-		// `change`) and picked suggestions (the component's own `change`) land here and persist.
 		return !this.capabilities.location ? html.nothing : html`
 			<li class="location field">
 				<mitra-icon icon="map-pin"></mitra-icon>
@@ -810,8 +811,6 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	private get participantsTemplate() {
-		// The field replaces `entry.participants` and fires `change`; the usual commit persists it (the
-		// backend rejects a non-organizer's list change per iTIP — the field disables those paths anyway).
 		return !this.capabilities.participants ? html.nothing : html`
 			<li class="participants field">
 				<mitra-icon icon="users"></mitra-icon>
@@ -820,22 +819,17 @@ export class EntryDetailsComponent extends Component {
 		`
 	}
 
-	// The picker mutated nothing itself — adopt the picked colour and put the palette away (a pick is
-	// a completed errand, unlike a menu of actions).
 	private readonly handleColorChange = (e: CustomEvent<string | null>) => {
 		this.setColor(e.detail)
 		;((e.target as HTMLElement).closest('[popover]') as HTMLElement | null)?.hidePopover()
 	}
 
-	/** The entry's EFFECTIVE colour (its own, else the source's) as a swatch-sized dot; the full
-	 * palette folds into the popover it opens. A native button, so `popovertarget` gives the toggle
-	 * and the implicit anchor for free. */
 	private get colorTemplate() {
 		const entry = this.segment?.entry
 		const activeColor = entry?.color || this.source?.color
 		return !entry ? html.nothing : html`
 			<span class="color">
-				<button class="dot" popovertarget="entry-color-${entry.id}" title=${t('Color')}
+				<button class="dot" ?disabled=${!this.capabilities.editEntries} popovertarget="entry-color-${entry.id}" title=${t('Color')}
 					style="anchor-name: --entry-color-${entry.id}; background: ${activeColor ?? 'var(--color-text-muted)'}"></button>
 				<menu popover id="entry-color-${entry.id}" style="position-anchor: --entry-color-${entry.id}">
 					<mitra-color-picker
@@ -877,8 +871,9 @@ export class EntryDetailsComponent extends Component {
 
 	private get descriptionTemplate() {
 		const editDescription = (e: Event) => {
-			// A click on a link should follow it rather than switch into edit mode.
-			if (e.composedPath().some(node => node instanceof HTMLAnchorElement)) {
+			// A click on a link should follow it rather than switch into edit mode. A read-only entry never
+			// leaves the rendered face either: markdown stays selectable, a disabled textarea does not.
+			if (!this.capabilities.editEntries || e.composedPath().some(node => node instanceof HTMLAnchorElement)) {
 				return
 			}
 			this.editingDescription = true
@@ -903,7 +898,7 @@ export class EntryDetailsComponent extends Component {
 						otherwise Description was the one row Tab passed through with nothing to show. A click
 						on a link focuses the ANCHOR, not this div, so links still just follow (the guard in
 						editDescription covers the bubbled click). -->
-					<div class="rendered" tabindex="0" @focus=${editDescription} @click=${editDescription}>
+					<div class="rendered" tabindex=${this.capabilities.editEntries ? '0' : '-1'} @focus=${editDescription} @click=${editDescription}>
 						${!this.segment!.entry.description ? html`
 							<div class="placeholder">${t('Description')}</div>
 							` : html`
