@@ -111,15 +111,27 @@ export class CalDAVSyncEngine implements SyncEngine {
 		}).filter(source => source.entryTypes.length > 0)
 	}
 
-	/** Fetch the changed members' iCalendar bodies, tolerant of ones that vanish between the
-	 * sync-collection listing and this multiget. tsdav's `fetchCalendarObjects` runs a single
-	 * `calendar-multiget` REPORT and throws if ANY member response is ≥ 400 — so one stale href (Google
-	 * reports a since-deleted or momentarily-unresolvable member with a per-href 404, especially on an
-	 * incremental delta) would abort the whole source's sync. Worse, the abort happens before the caller
-	 * flushes the advanced sync token, so the very same delta is retried forever. We therefore try the
-	 * batch first (the fast path, one request) and, only if it throws, fall back to fetching each object
-	 * on its own and dropping the ones that are gone — the sync then completes and the token advances. */
+	/** Batch size for `calendar-multiget` REPORT requests. */
+	private static readonly multigetBatchSize = 100
+
+	/** Fetch the changed members' iCalendar bodies, a batch at a time. */
 	private async fetchObjects(
+		client: Awaited<ReturnType<typeof createDAVClient>>,
+		calendar: { url: string },
+		objectUrls: Array<string>,
+	): Promise<Awaited<ReturnType<typeof client.fetchCalendarObjects>>> {
+		const objects: Awaited<ReturnType<typeof client.fetchCalendarObjects>> = []
+		for (let start = 0; start < objectUrls.length; start += CalDAVSyncEngine.multigetBatchSize) {
+			objects.push(...await this.multiget(client, calendar, objectUrls.slice(start, start + CalDAVSyncEngine.multigetBatchSize)))
+		}
+		return objects
+	}
+
+	/**
+	 * Fetches a batch of calendar objects. If a member returns 404 (e.g. deleted during delta fetch),
+	 * falls back to fetching objects individually so the overall sync and token advancement succeed.
+	 */
+	private async multiget(
 		client: Awaited<ReturnType<typeof createDAVClient>>,
 		calendar: { url: string },
 		objectUrls: Array<string>,
@@ -134,8 +146,6 @@ export class CalDAVSyncEngine implements SyncEngine {
 				try {
 					objects.push(...await client.fetchCalendarObjects({ calendar, objectUrls: [url] }))
 				} catch {
-					// Gone between listing and fetch (or otherwise unfetchable) — skip it. A later
-					// re-import (or a subsequent sync-collection that reports it as removed) reconciles it.
 					skipped++
 					logger.debug(`Skipped unfetchable object ${url}`)
 				}
@@ -145,42 +155,93 @@ export class CalDAVSyncEngine implements SyncEngine {
 		}
 	}
 
+	/** Maximum chained `sync-collection` requests per pass to prevent infinite pagination loops. */
+	private static readonly maxListingRequests = 50
+
+	/**
+	 * Paginates through `sync-collection` responses to collect all changed and deleted member URLs.
+	 * `complete` indicates an untruncated listing, which is required before inferring remote deletions.
+	 */
+	private async listMembers(
+		client: Awaited<ReturnType<typeof createDAVClient>>,
+		source: Source,
+	): Promise<{ changedUrls: Array<string>, deletedUrls: Array<string>, syncToken?: string, complete: boolean }> {
+		const members = new Map<string, 'changed' | 'deleted'>()
+		let syncToken: string | undefined = source.syncState?.syncToken || undefined
+		let complete = false
+		let requests = 0
+		for (; requests < CalDAVSyncEngine.maxListingRequests; requests++) {
+			const result = await client.syncCollection({
+				url: source.uri,
+				props: { 'd:getetag': {} },
+				syncLevel: 1,
+				syncToken,
+			})
+			// Treat collection-level errors (>=400) as non-fatal aborts to preserve stored state and token.
+			const failure = result.find(r => (r.status ?? 200) >= 400 && r.status !== 507 && (!r.href || CalDAV.isCollectionHref(source.uri, r.href)))
+			if (failure) {
+				logger.warn(`Listing "${source.name}" answered ${failure.status} — keeping the stored entries and the stored sync token`)
+				break
+			}
+			const page = CalDAV.partitionMemberResponses(source.uri, result)
+			for (const url of page.changedUrls) {
+				members.set(url, 'changed')
+			}
+			for (const url of page.deletedUrls) {
+				members.set(url, 'deleted')
+			}
+			const returnedToken = result[0]?.raw?.multistatus?.syncToken
+			if (!page.truncated) {
+				complete = true
+				syncToken = returnedToken || syncToken
+				break
+			}
+			// Guard against servers truncating without advancing the sync token.
+			if (!returnedToken || returnedToken === syncToken) {
+				logger.warn(`"${source.name}" truncated its listing without advancing the sync token — ${members.size} member(s) this pass`)
+				break
+			}
+			syncToken = returnedToken
+			logger.debug(`"${source.name}" truncated the listing after request ${requests + 1} (${members.size} member(s) so far) — continuing with the advanced token`)
+		}
+		if (requests === CalDAVSyncEngine.maxListingRequests) {
+			logger.warn(`Stopped listing "${source.name}" after ${requests} sync-collection requests — ${members.size} member(s) this pass, the rest next cycle`)
+		}
+		return {
+			changedUrls: [...members].filter(([, state]) => state === 'changed').map(([url]) => url),
+			deletedUrls: [...members].filter(([, state]) => state === 'deleted').map(([url]) => url),
+			syncToken,
+			complete,
+		}
+	}
+
 	async syncSourceEntries(base: Integration, em: EntityManager, source: Source): Promise<boolean> {
 		const integration = base as CalDAV
 		const client = await this.getClient(integration)
 		const remoteCalendar = { url: source.uri }
-		const result = await client.syncCollection({
-			url: source.uri,
-			props: { 'd:getetag': {} },
-			syncLevel: 1,
-			syncToken: source.syncState?.syncToken || undefined
-		})
+		const priorToken = source.syncState?.syncToken
 
-		const newSyncToken = result[0]?.raw?.multistatus?.syncToken || source.syncState?.syncToken
+		const { changedUrls, deletedUrls, syncToken: newSyncToken, complete } = await this.listMembers(client, source)
 
 		// Existing entries are looked up by foreign key, never populated.
 		const existingEntries = await em.find(Entry, { sourceId: source.id })
-
-		// syncCollection returns one response per member href, of every component type (VEVENT, VTODO, …)
-		// — unlike fetchCalendarObjects({ calendar }), which only returns events. With no prior token it
-		// lists the whole collection; incrementally, just the changed/removed members. Hrefs are resolved
-		// to full URLs here so the changed set is fetchable and both sets compare against stored uris.
-		const { changedUrls, deletedUrls } = CalDAV.partitionMemberResponses(source.uri, result)
 
 		const changedObjects = changedUrls.length
 			? await this.fetchObjects(client, remoteCalendar, changedUrls)
 			: []
 
-		// On a full sync (no prior token) every current member is listed, so any local entry that's
-		// no longer present was removed remotely.
-		if (!source.syncState?.syncToken) {
+		// On a full sync without a prior token, missing local entries are deleted only if the listing is complete.
+		if (!priorToken && complete) {
 			const remoteUris = new Set(changedUrls) // already resolved to full URLs
+			const alreadyReported = new Set(deletedUrls)
 			for (const entry of existingEntries) {
 				const entryUrl = CalDAV.resolveMemberUrl(source.uri, entry.uri)
-				if (entryUrl && !remoteUris.has(entryUrl)) {
+				if (entryUrl && !remoteUris.has(entryUrl) && !alreadyReported.has(entryUrl)) {
 					deletedUrls.push(entryUrl)
 				}
 			}
+		} else if (!priorToken) {
+			logger.warn(`First listing of "${source.name}" came back incomplete — skipping remote-deletion detection this cycle`)
 		}
 
 		// Report whether any actual entry changed. The sync-token bookkeeping must NOT count, or the

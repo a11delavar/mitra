@@ -265,16 +265,26 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return !!a && !!b && CalDAV.resolveMemberUrl(sourceUri, a) === CalDAV.resolveMemberUrl(sourceUri, b)
 	}
 
-	static partitionMemberResponses(sourceUri: string, responses: ReadonlyArray<{ href?: string, status?: number }>): { changedUrls: Array<string>, deletedUrls: Array<string> } {
+	/** Checks if an href matches the collection URL, tolerating trailing slash differences. */
+	static isCollectionHref(sourceUri: string, href: string | null | undefined): boolean {
 		const collection = CalDAV.resolveMemberUrl(sourceUri, sourceUri)
+		const url = CalDAV.resolveMemberUrl(sourceUri, href)
+		return url === collection || url + '/' === collection || url === collection + '/'
+	}
+
+	/**
+	 * Splits `sync-collection` multistatus responses into changed and deleted member URLs
+	 * and detects if the response was truncated (RFC 6578 §3.6).
+	 */
+	static partitionMemberResponses(sourceUri: string, responses: ReadonlyArray<{ href?: string, status?: number, error?: Record<string, unknown> }>): { changedUrls: Array<string>, deletedUrls: Array<string>, truncated: boolean } {
+		const truncated = responses.some(r => r.status === 507 || !!r.error?.numberOfMatchesWithinLimits)
 		const members = responses
-			.filter(r => r.href)
+			.filter(r => r.href && !CalDAV.isCollectionHref(sourceUri, r.href))
 			.map(r => ({ url: CalDAV.resolveMemberUrl(sourceUri, r.href), status: r.status }))
-			// Drop the collection itself, tolerant of a trailing-slash difference between it and its href.
-			.filter(m => m.url !== collection && m.url + '/' !== collection && m.url !== collection + '/')
 		return {
-			changedUrls: members.filter(m => m.status !== 404).map(m => m.url),
+			changedUrls: members.filter(m => m.status !== 404 && m.status !== 507).map(m => m.url),
 			deletedUrls: members.filter(m => m.status === 404).map(m => m.url),
+			truncated,
 		}
 	}
 
