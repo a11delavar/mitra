@@ -373,9 +373,21 @@ entriesRouter.put('/:id', async (req, res) => {
 		const occurrenceId = existing.allDay
 			? normalizeAllDay(new Date(body.recurrenceId), dayZone(req, existing.timeZone))
 			: new Date(body.recurrenceId)
-		// Scoped occurrence edits are deliberately relation-SILENT (v1): relationships are
-		// series-level, and a detached/continuation entry starts with none of its own.
-		const result = await editOccurrence(em, currentIntegration, existing, occurrenceId, edited, body.scope)
+		// A scoped edit may also change the calendar; the new entity/series is created in the target source.
+		const movingTo = targetSource.id === currentSource.id ? undefined : { source: targetSource, integration: targetIntegration }
+		if (movingTo && !targetSource.supportsEntryType(existing.type)) {
+			return res.status(400).json({ error: 'The picked calendar cannot hold this entry type' })
+		}
+		// Only 'this' leaves the rule behind (it detaches a single entry); 'following' and 'all' require recurrence capability.
+		if (movingTo && body.scope !== 'this' && !targetIntegration.capabilities.recurrence) {
+			return res.status(400).json({ error: 'This calendar cannot hold a repeating entry' })
+		}
+		// Scoped occurrence edits are relation-silent unless moving the whole series ('all'), where relations survive re-creation.
+		const result = await editOccurrence(em, currentIntegration, existing, occurrenceId, edited, body.scope, movingTo)
+		if (movingTo && body.scope === 'all' && result.id !== existing.id) {
+			await EntryRelation.reconcile(em, result.id!, existing.relations ?? null)
+			result.relations = existing.relations ?? null
+		}
 		await em.flush()
 		await attachRelations(em, req.user, [result])
 		syncEmitter.emit('updated', req.user.id)

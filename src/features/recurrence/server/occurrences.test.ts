@@ -537,6 +537,55 @@ describe('scoped occurrence edits', () => {
 		assert.equal(result.recurrenceMasterId, undefined)
 	})
 
+	describe('a scoped edit that also changes the calendar', () => {
+		const target = () => {
+			const { calls, integration } = stub()
+			return { calls, target: { source: { id: 'other' } as never, integration } }
+		}
+
+		it('\'this\' detaches the occurrence INTO the other calendar', async () => {
+			const here = stub()
+			const there = target()
+			const result = await editOccurrence(em, here.integration, master(), recurrenceId, edited(), 'this', there.target)
+			assert.deepEqual(here.calls.excludes, [recurrenceId.getTime()], 'the occurrence still leaves the series here')
+			assert.equal(here.calls.creates.length, 0, 'and nothing is created here')
+			assert.equal(there.calls.creates.length, 1)
+			assert.equal(result.sourceId, 'other')
+		})
+
+		it('\'following\' starts the continuation there and leaves the old half where it is', async () => {
+			const here = stub()
+			const there = target()
+			const result = await editOccurrence(em, here.integration, master(), recurrenceId, edited(), 'following', there.target)
+			assert.equal(here.calls.updates.length, 1, 'the old half is truncated in place')
+			assert.equal(here.calls.updates[0]!.incoming.sourceId, 's')
+			assert.equal(there.calls.creates.length, 1)
+			assert.equal(result.sourceId, 'other')
+			assert.ok(result.recurrence, 'the continuation is still a series')
+		})
+
+		it('\'all\' re-creates the whole series there and only then deletes it here', async () => {
+			const here = stub()
+			const there = target()
+			const m = master()
+			const result = await editOccurrence(em, here.integration, m, recurrenceId, edited(), 'all', there.target)
+			assert.equal(there.calls.creates.length, 1)
+			assert.deepEqual(here.calls.deletes, [m], 'the original goes, and only after the copy landed')
+			assert.equal(result.sourceId, 'other')
+			assert.equal(result.uid, m.uid, 'the series keeps its identity, so every link to it still resolves')
+			assert.equal(result.heading, 'Edited', 'and the edit rode along with the move')
+			assert.ok(result.recurrence, 'the rule travels with it')
+		})
+
+		it('\'all\' takes the copy back when the original cannot be deleted — a duplicate beats a loss', async () => {
+			const here = stub()
+			const there = target()
+			here.integration.deleteEntry = () => Promise.reject(new Error('nope'))
+			await assert.rejects(() => editOccurrence(em, here.integration, master(), recurrenceId, edited(), 'all', there.target))
+			assert.equal(there.calls.deletes.length, 1, 'the copy is compensated')
+		})
+	})
+
 	it('scoped deletes: all → master, following → truncate, this → exclude', async () => {
 		{
 			const { calls, integration } = stub()

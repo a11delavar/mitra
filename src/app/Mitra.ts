@@ -16,6 +16,7 @@ import { EntryDetailsComponent } from '../features/entries/client/EventDetails.j
 import { DialogAbout, markChangesSeen } from '../features/about/client/DialogAbout.js'
 import { DialogIntegration } from '../integrations/client/DialogIntegration.js'
 import { DialogWelcome } from '../features/onboarding/client/DialogWelcome.js'
+import { DialogSourceMigration } from '../features/migration/client/DialogSourceMigration.js'
 import { DialogKeyboardShortcuts } from '../features/commands/client/DialogKeyboardShortcuts.js'
 import { contrastColor } from '../design/contrastColor.js'
 import { IconButton } from '../design/IconButton.js'
@@ -254,6 +255,7 @@ export class Mitra extends Application {
 			${DialogAbout.styles}
 			${DialogIntegration.styles}
 			${DialogWelcome.styles}
+			${DialogSourceMigration.styles}
 			${DialogKeyboardShortcuts.styles}
 			${DialogEntryScope.styles}
 			${DialogCompleteParent.styles}

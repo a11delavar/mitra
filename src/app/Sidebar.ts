@@ -1,7 +1,8 @@
 import { Component, component, html, css, property, state, event, eventListener, unsafeCSS } from '@a11d/lit'
-import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, getPrimarySource, setDefaultSource, reimportSource, reimportIntegration, reorderSources, reorderIntegrations, getEnabledSources, getVisibleSources, soloSource, restoreSourceVisibility, canRestoreSourceVisibility } from '../infrastructure/http/Api.js'
+import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, getPrimarySource, setDefaultSource, reimportSource, reimportIntegration, reorderSources, reorderIntegrations, getEnabledSources, getVisibleSources, soloSource, restoreSourceVisibility, canRestoreSourceVisibility, canCopyEntriesOut, canMoveEntriesOut } from '../infrastructure/http/Api.js'
 import { DialogAbout, hasUnseenChanges } from '../features/about/client/DialogAbout.js'
 import { DialogIntegration } from '../integrations/client/DialogIntegration.js'
+import { DialogSourceMigration } from '../features/migration/client/DialogSourceMigration.js'
 import { type Source } from '../features/sources/Source.js'
 import { type Integration } from '../integrations/Integration.js'
 import { ReorderabilityController, ReorderabilityState } from '@3mo/reorderability'
@@ -139,6 +140,8 @@ export class Sidebar extends Component {
 				--sidebar-width: 16rem;
 				--sidebar-inset: 0.5rem;
 				--sidebar-scrollbar-width: 0.5rem;
+				/* Source list column gap and row content inset, aligning headings across tabs. */
+				--sidebar-gap: 0.5rem;
 
 				display: flex;
 				flex-direction: column;
@@ -444,6 +447,11 @@ export class Sidebar extends Component {
 					min-height: 0;
 				}
 
+				/* Align unscheduled header with the account headings grid column. */
+				mitra-tab-panel > mitra-unscheduled > header {
+					padding-inline-start: var(--sidebar-gap);
+				}
+
 				mitra-tab-panel > .action {
 					flex-shrink: 0;
 					margin-block-start: 0.5rem;
@@ -456,7 +464,7 @@ export class Sidebar extends Component {
 					display: grid;
 					grid-template-columns: 0 auto 1fr auto 0;
 					align-content: start;
-					column-gap: 0.5rem;
+					column-gap: var(--sidebar-gap);
 					row-gap: 1.5rem;
 					margin-inline-end: calc(-1 * var(--sidebar-inset));
 					padding-inline-end: calc(var(--sidebar-inset) - var(--sidebar-scrollbar-width));
@@ -1075,6 +1083,15 @@ export class Sidebar extends Component {
 						<mitra-icon icon="arrow-down"></mitra-icon>
 						${t('Move down')}
 					</button>
+					${/* Read-only sources allow copy but not move (see canCopyEntriesOut / canMoveEntriesOut). */''}
+					${!canCopyEntriesOut(source) ? html.nothing : html`
+						<button
+							title=${canMoveEntriesOut(source) ? t('Move or copy every entry into another calendar') : t('Copy every entry into another calendar')}
+							@click=${(e: Event) => { this.closeMenu(e); new DialogSourceMigration({ source }).confirm().catch(() => void 0) }}>
+							<mitra-icon icon="folder-input"></mitra-icon>
+							${canMoveEntriesOut(source) ? t('Move entries to…') : t('Copy entries to…')}
+						</button>
+					`}
 					<button
 						title=${t('Delete the locally cached entries and import everything from the source again')}
 						@click=${(e: Event) => { this.closeMenu(e); reimportSource(source.id).catch(() => void 0) }}>

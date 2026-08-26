@@ -782,8 +782,9 @@ export class EntryDetailsComponent extends Component {
 						<selectedcontent></selectedcontent>
 					</button>
 					${getIntegrations().map(integration => {
+						// Filter by enabled, not visible: visibility is a view preference, not a destination restriction.
 						const sources = [...integration.sources].filter(source =>
-							source.id === entry.sourceId || (source.visible && canHold(source)))
+							source.id === entry.sourceId || (source.enabled && canHold(source)))
 						return !sources.length ? html.nothing : html`
 							<optgroup label=${integration.credentials?.username || integration.type}>
 								<legend>${integration.credentials?.username || integration.type}</legend>

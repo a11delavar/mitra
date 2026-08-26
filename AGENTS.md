@@ -69,6 +69,7 @@
   - Conversion is re-creation: PUT route creates new entry, deletes old entry, compensates on failure.
   - `status` is gated on incoming type. Recurring series cannot convert (returns 400).
 - **Opt-in Source Discovery**: Discovered external sources must be saved with `enabled: false`. Sync entries only when enabled.
+- **Enabled vs Visible**: a target an entry may LIVE in is `enabled` (`getEnabledSources()`); `visible` is a VIEW preference and must never remove a destination — a solo ("only show this calendar") once left the editor's source picker with nowhere to move to.
 - **Source Reconciliation**:
   - Preserves local renames (`PUT /sources/:id/name`).
   - `Source.remoteName` stores provider's baseline name. Reconcile updates displayed `name` only if remote name actually changed.
@@ -134,6 +135,20 @@
   - Multiget batch fallback: Tolerates 404s by falling back to individual fetches.
   - Date Writes (`CalDAV.writeDate`): Preserves authored form (TZID -> wall clock in VTIMEZONE; zoneless -> UTC). Series start shift shifts override `RECURRENCE-ID`s.
   - Concurrent Edits (412): Route all writes through `CalDAV.writeResource(entry, applyTo)`. Retries once on 412 with fresh ETag.
+
+## Bulk Migration (Move / Copy Entries Between Calendars)
+- **3-Phase Architecture** (`src/features/sources/server/SourceMigration.ts`):
+  1. **Copy**: Create all entries in target, collect old-uid -> new-uid map for target-minted IDs (e.g. Notion page IDs).
+  2. **Repoint**: Rewrite `EntryRelation.targetUid` across batch using map; relations pointing outside batch remain untouched.
+  3. **Delete**: Delete originals from origin (skipped if `keepOriginals: true`).
+- **Ordering & Safety**: No cross-provider transaction. Copy failure rolls back copies and aborts before delete; delete failure leaves recoverable duplicates (never loss).
+- **Copy vs Move** (`keepOriginals`): Skips phase 3 and mints fresh UIDs for copies. Phase 2 still runs, SCOPED: a move rewrites every row pointing at a departing UID; a copy rewrites only the copies' own rows, so a copied pair is a linked pair and the originals keep pointing at each other. A link whose target was not copied is left alone either way. Read-only origins permit copy but refuse move.
+- **Concurrency Locks**: `Integration.exclusivelyAcross(ids, work)` sorts and deduplicates integration IDs to avoid deadlock.
+- **Fidelity Preview** (`src/features/sources/MigrationPlan.ts`): Projected from `capabilitiesFor(target)`. `MigrationBlocker` (recurrence, occurrence override pinning, participants, transparency, visibility, percentComplete) vs `MigrationLoss` (reminders, location, description, timeZone, allDay, cancelledStatus, type). Wire plan transmits only non-clean verdicts; `cleanCount = total - verdicts.length`.
+- **Series Handling**: Refused if target lacks recurrence unless user explicitly selects `flatten: true` (writes `FLATTEN_HORIZON_DAYS = 366` single occurrences via `Occurrences.of(master)`).
+- **Data Boundary**: `data.raw` never travels (strips origin sync data/ETag). Exclusions travel as `exdates` column via `exdatesOf`.
+- **API Routes**: `POST /api/sources/:id/migrate/preview` and `POST /api/sources/:id/migrate` (`{ targetSourceId, entryIds?, keepOriginals?, flatten? }`). Returns 200 with `MigrationOutcome` report even on abort.
+- **UI** (`DialogSourceMigration.ts`): Driven by `@lit/task` `Task` states (target picker -> series decision cards -> preview report -> outcome report).
 
 ## Sources & Entry Types
 - **Type Declaration**: Sources declare supported types via `Source.entryTypes` array (`'event'`, `'task'`). Source identity is `uri` alone.
@@ -208,6 +223,7 @@
   - Occurrences expanded on read via `expandRecurrence`.
   - Edited exceptions sync as individual rows with `RECURRENCE-ID` and `recurrenceMasterId`.
   - Edits currently apply series-wide via dedicated recurrence API routes.
+  - A scoped edit may ALSO change the calendar, and the two compose (`editOccurrence`'s `movingTo`): 'this' detaches the occurrence INTO the target, 'following' starts the continuation there (the old half stays), 'all' re-creates the whole series there — same uid, rule and exclusions — and deletes it here, create-first. The client must send `sourceId` with the scoped PUT; without it the picker changed and nothing moved.
 - **Routines (Density Collapse)**:
   - Dense recurring series collapse into compact ribbons in month/year views.
   - Threshold calculated by `Recurrence.strideDays` (mean days between occurrences).
@@ -241,7 +257,7 @@
 
 ## Sidebar & Navigation
 - **Source Icon**: `<mitra-source-icon>` (`src/features/sources/client/SourceIcon.ts`) is the unified icon component.
-- **Sidebar Grid**: Single CSS grid (`.integrations`) aligns all source rows, headings, and gutters across providers.
+- **Sidebar Grid**: Single CSS grid (`.integrations`) aligns all source rows, headings, and gutters across providers. Its `--sidebar-gap` is both the column gap and (the first column being zero-wide) a row's content inset — the Planning tab's heading takes it too, so every heading in the sidebar rides one column. Anything listing sources elsewhere (the migration dialog) reproduces that relationship: heading text starts where the row icons do.
 - **Gutter**: Scroller uses `scrollbar-gutter: stable` to prevent layout shifts.
 - **Primary Source**: Always resolve via `getPrimarySource()` (default source or first visible), never raw ID.
 - **Ordering**: `Source.order` column (nullable integer).

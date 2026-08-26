@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { Router, type Request, type Response } from 'express'
 import { orm } from '../../../infrastructure/database/orm.js'
 import { syncEmitter } from '../../../infrastructure/realtime/syncEmitter.js'
 import { User } from '../../identity/User.js'
@@ -6,6 +6,7 @@ import { Source } from '../Source.js'
 import { applyOrder } from '../../../infrastructure/model/order.js'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
 import { Integration } from '../../../integrations/Integration.js'
+import { MigrationRefused, SourceMigration } from '../../migration/server/SourceMigration.js'
 const logger = createLogger('Sources')
 
 export const sourcesRouter = Router()
@@ -100,6 +101,30 @@ sourcesRouter.post('/:id/reimport', async (req, res) => {
 	logger.info(`Re-imported source "${source.name}" (${source.id})`)
 	return res.status(204).end()
 })
+
+// --- Source Migration (move / copy entries between sources) -------------------------------------
+
+/** Helper to execute migration work with MigrationRefused mapped to 400. */
+async function migration(req: Request<{ id: string }>, res: Response, work: (migration: SourceMigration) => Promise<unknown>) {
+	try {
+		return res.json(await work(await SourceMigration.of(orm.em.fork(), req.user, req.params.id, req.body ?? {})))
+	} catch (error) {
+		if (error instanceof MigrationRefused) {
+			return res.status(400).json({ error: error.message })
+		}
+		throw error
+	}
+}
+
+sourcesRouter.post('/:id/migrate/preview', (req, res) => migration(req, res, source => Promise.resolve(source.plan())))
+
+sourcesRouter.post('/:id/migrate', (req, res) => migration(req, res, async source => {
+	const outcome = await source.run()
+	syncEmitter.emit('updated', req.user.id)
+	logger.info(`Migrated entries from source ${req.params.id} to ${String(req.body?.targetSourceId)}: ${JSON.stringify(outcome)}`)
+	// Return 200 with outcome report even if aborted, rendered inline by client.
+	return outcome
+}))
 
 sourcesRouter.put('/:id/color', async (req, res) => {
 	const em = orm.em.fork()

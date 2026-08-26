@@ -3,6 +3,7 @@ import { type DateTime } from '@3mo/date-time'
 import ICAL from 'ical.js'
 import { type RecurrenceScope } from '../Recurrence.js'
 import { type Integration } from '../../../integrations/Integration.js'
+import { type Source } from '../../sources/Source.js'
 import { Entry, FLOATING_TIME_ZONE } from '../../entries/Entry.js'
 import { CalDAV } from '../../../integrations/caldav/CalDAV.js'
 
@@ -300,7 +301,7 @@ function shiftMs(ms: number, zone: string, from: Date, to: Date): number {
 
 /** A master's excluded instants (epoch-ms), from wherever it stores them — the raw .ics EXDATEs when
  * the integration keeps one (the same authority the expansion reads), else the `exdates` column. */
-function exdatesOf(master: Entry): Array<number> {
+export function exdatesOf(master: Entry): Array<number> {
 	if (master.data?.raw) {
 		const component = new ICAL.Component(ICAL.parse(master.data.raw))
 		const v = masterComponentOf(component)
@@ -316,8 +317,19 @@ function shiftExdates(exdates: Array<number>, zone: string, from: Date, to: Date
 	return exdates.map(ms => shiftMs(ms, zone, from, to))
 }
 
-/** Apply an occurrence edit (`edited`, carrying the new field values) to `master` at `recurrenceId`. */
-export async function editOccurrence(em: EntityManager, integration: Integration, master: Entry, recurrenceId: Date, edited: Entry, scope: RecurrenceScope): Promise<Entry> {
+/** Target destination when a scoped edit moves the resulting entry/series to another source. */
+export interface OccurrenceTarget {
+	readonly source: Source
+	readonly integration: Integration
+}
+
+/**
+ * Apply an occurrence edit to `master` at `recurrenceId`.
+ * If `movingTo` is specified, the created entry/series is created in the target source.
+ */
+export async function editOccurrence(em: EntityManager, integration: Integration, master: Entry, recurrenceId: Date, edited: Entry, scope: RecurrenceScope, movingTo?: OccurrenceTarget): Promise<Entry> {
+	const into = movingTo?.integration ?? integration
+	const intoSourceId = movingTo?.source.id ?? master.sourceId
 	if (scope === 'all') {
 		const editedStart = new Date(edited.start?.getTime() ?? recurrenceId.getTime())
 		const exdates = exdatesOf(master)
@@ -354,8 +366,20 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 			exdates: exdates.length ? shiftExdates(exdates, dayMathZoneOf(master), recurrenceId, editedStart) : undefined,
 			uid: master.uid,
 		})
-		await integration.updateEntry(em, master, incoming)
-		return master
+		if (!movingTo) {
+			await integration.updateEntry(em, master, incoming)
+			return master
+		}
+		// Moving full series across sources: recreate in target first (preserving UID, rule, exclusions), then delete original.
+		const moved = new Entry({ ...incoming, id: crypto.randomUUID(), sourceId: movingTo.source.id, uid: master.uid })
+		const created = await movingTo.integration.createEntry(em, moved)
+		try {
+			await integration.deleteEntry(em, master)
+		} catch (error) {
+			await movingTo.integration.deleteEntry(em, created).catch(() => void 0)
+			throw error
+		}
+		return created
 	}
 
 	if (scope === 'following') {
@@ -394,7 +418,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 		const continuation = new Entry({
 			id: crypto.randomUUID(),
 			uid: crypto.randomUUID(), // a fresh series is a fresh identity — relatable from birth (Dev has no .ics to mint one from)
-			sourceId: master.sourceId,
+			sourceId: intoSourceId,
 			type: master.type,
 			heading: edited.heading,
 			description: edited.description,
@@ -412,7 +436,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 			recurrence: rule.asContinuation(consumed).rebased(recurrenceId, continuationStart, dayMathZoneOf(master)),
 			exdates: carried.length ? shiftExdates(carried, dayMathZoneOf(master), recurrenceId, continuationStart) : undefined,
 		})
-		return integration.createEntry(em, continuation)
+		return into.createEntry(em, continuation)
 	}
 
 	// 'this' — detach this occurrence into a standalone entry.
@@ -420,7 +444,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 	const standalone = new Entry({
 		id: crypto.randomUUID(),
 		uid: crypto.randomUUID(), // detached = its own identity, deliberately NOT the master's (one UID per series)
-		sourceId: master.sourceId,
+		sourceId: intoSourceId,
 		type: master.type,
 		heading: edited.heading,
 		description: edited.description,
@@ -436,7 +460,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 		start: edited.start,
 		end: edited.end,
 	})
-	return integration.createEntry(em, standalone)
+	return into.createEntry(em, standalone)
 }
 
 /** Delete an occurrence at `recurrenceId` from `master` with the given scope. */

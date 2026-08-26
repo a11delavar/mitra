@@ -2,6 +2,7 @@ import { Api, HttpError, apiError, apiAuthenticator, type ApiAuthenticator } fro
 import { type DateTime } from '@3mo/date-time'
 import { type User, type UserTimeZone } from '../../features/identity/User.js'
 import { type Source } from '../../features/sources/Source.js'
+import { type MigrationOutcome, type MigrationPlan } from '../../features/migration/MigrationPlan.js'
 import { type Relation } from '../../features/relations/Relation.js'
 import { type RecurrenceScope } from '../../features/recurrence/Recurrence.js'
 import { applyOrder, byOrder } from '../model/order.js'
@@ -223,15 +224,12 @@ export function getIntegrationFor(sourceId: string) {
 }
 
 /**
- * An account's imported sources — the rows the sidebar shows, in display order.
- *
- * A FUNCTION here rather than a getter on `Integration`, for the same reason `getCapabilities` is
- * one: a provider the client doesn't model arrives as a plain DTO with NO prototype, so it carries
- * no getters at all. The backend-only Dev integration is exactly that — and since the dev sample
- * data is Dev, a getter would work against every real provider and break only in development.
+ * Enabled sources in display order (across all accounts or a single integration).
+ * Unlike visible sources, enabled sources include hidden calendars that can still hold entries.
  */
-export function getEnabledSources(integration: Integration) {
-	return [...integration.sources].filter(source => source.enabled)
+export function getEnabledSources(integration?: Integration) {
+	const sources = integration ? [...integration.sources] : integrations.flatMap(i => [...i.sources])
+	return sources.filter(source => source.enabled)
 }
 
 /** Returns effective capabilities for a source, combining provider capabilities with source-level permissions. */
@@ -247,6 +245,16 @@ export function getCapabilities(sourceId: string): Integration['capabilities'] {
 export function getExternalLink(entry: Entry): { url: string, label?: string } | undefined {
 	const url = Integration.externalUrlOf(entry)
 	return getIntegrationFor(entry.sourceId)?.externalLink?.(entry) ?? (url ? { url } : undefined)
+}
+
+/** True if at least one writable destination source exists for copying entries out. */
+export function canCopyEntriesOut(source: Source) {
+	return getEnabledSources().some(other => other.id !== source.id && getCapabilities(other.id).createEntries)
+}
+
+/** True if entries can be moved out (requires canCopyEntriesOut and deleteEntries permission on origin). */
+export function canMoveEntriesOut(source: Source) {
+	return canCopyEntriesOut(source) && getCapabilities(source.id).deleteEntries
 }
 
 export function toggleSourceVisibility(id: string, hidden: boolean) {
@@ -307,6 +315,16 @@ export function reorderIntegrations(ids: Array<string>) {
  */
 export function reimportSource(id: string) {
 	return Api.post(`/sources/${id}/reimport`)
+}
+
+/** Fetches fidelity preview for moving or copying entries to targetSourceId. */
+export function previewSourceMigration(sourceId: string, targetSourceId: string, keepOriginals: boolean) {
+	return Api.post<MigrationPlan>(`/sources/${sourceId}/migrate/preview`, { targetSourceId, keepOriginals })
+}
+
+/** Executes bulk source migration (move or copy). */
+export function migrateSourceEntries(sourceId: string, options: { targetSourceId: string, flatten: boolean, keepOriginals: boolean }) {
+	return Api.post<MigrationOutcome>(`/sources/${sourceId}/migrate`, options)
 }
 
 export function reimportIntegration(id: string) {
@@ -410,6 +428,8 @@ export function editOccurrence(occurrence: Entry, scope: RecurrenceScope) {
 	return Api.put<Entry>(`/entries/${occurrence.recurrenceMasterId}?tz=${tz()}`, {
 		scope,
 		recurrenceId: occurrence.recurrenceId,
+		// Pass sourceId so scoped occurrence edits can move the resulting entity/series to target source.
+		sourceId: occurrence.sourceId,
 		heading: occurrence.heading,
 		description: occurrence.description,
 		location: occurrence.location,

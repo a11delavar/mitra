@@ -426,6 +426,14 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	}
 
 	/**
+	 * Runs `work` holding exclusive locks across multiple integration IDs.
+	 * Locks are sorted and deduplicated to prevent deadlocks when chaining `exclusively`.
+	 */
+	static exclusivelyAcross<T>(ids: ReadonlyArray<string>, work: () => Promise<T>): Promise<T> {
+		return [...new Set(ids)].sort().reduceRight<() => Promise<T>>((inner, id) => () => Integration.exclusively(id, inner), work)()
+	}
+
+	/**
 	 * Full re-import of one source: wipes its locally cached entries and its incremental-sync
 	 * bookkeeping, then syncs from scratch, rebuilding the local cache to exactly mirror the
 	 * provider. The remote source is never touched — this is a cache rebuild, not a data

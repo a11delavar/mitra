@@ -52,6 +52,34 @@ With no default set, Mitra uses **the first source shown** — so moving a sourc
 
 New entries are **events**, unless the target can only hold tasks (a Notion view), in which case they're tasks. Where the calendar holds both, a brand-new entry's editor offers an **Event / Task** switch, so a task you meant to jot down is one click away. The switch is only there while the entry is still new. A saved entry stays what it is: to change it, either make the other one and delete this one, or move it (the editor's source row) to a calendar that holds only events or only tasks — moving converts it.
 
+## Move or copy every entry to another calendar
+
+**⋯ → Move entries to…** empties one calendar into another — the whole thing at once, rather than dragging entries across one by one. Pick the destination and Mitra shows you what the move would cost **before** anything happens:
+
+```
+19 of 21 entries move to Personal
+✓ 15 arrive with everything they carry
+– 4 lose their reminders
+⨯ 2 repeat and stay here
+```
+
+Every line comes from what the destination's provider can actually hold, so the report is different for a CalDAV calendar than for a Notion view. Entries the destination can't take — a repeating entry going to Notion, one with participants, one marked free — are **left where they are** and named, so nothing disappears quietly.
+
+**Copy instead** does the same thing without the second half: the originals stay, and the destination gets a copy of each. A read-only calendar (a [subscription](../integrations/calendar-subscriptions.md), a shared calendar you can't write to) offers only this — copying never touches the calendar it reads from — which is how you lift a few entries out of a feed and into your own calendar.
+
+Both are also in the [command palette](keyboard-shortcuts.md): search a calendar's name.
+
+> [!NOTE]
+> Entries are **copied first and deleted only once their copy has landed**. There is no transaction spanning two providers, so this ordering is the safety: if something goes wrong you may end up with a duplicate, never with a missing entry. A failure during the copying stops the whole thing and deletes nothing.
+
+Relationships between the moved entries survive the move — including into Notion, which assigns its own identity to every page. Links pointing at an entry from a calendar that stayed behind keep pointing at it: relationships across calendars are normal in Mitra.
+
+Repeating entries are the one case with a choice to make. If the destination can't repeat (Notion can't), Mitra asks whether to **leave them here** or **flatten them into single entries** — a year of occurrences written out one by one, no longer repeating. Flattening is never silent, and never the default.
+
+### Moving one entry, or one series
+
+To move a single entry, open it and pick another calendar in its **source row** — no need for the bulk verb. For a repeating entry Mitra asks the usual question first, and each answer moves what it says: **this entry** takes that one occurrence across on its own, **this and following** moves the rest of the series (the occurrences before it stay), and **all** takes the whole series over, rule and all.
+
 ## Re-import a source
 
 **⋯ → Re-import entries**, on a single source or on a whole account, throws away Mitra's local copy of the entries and fetches everything from the provider again. Your data at the provider is never touched — this only rebuilds Mitra's cache, so reach for it when a calendar looks wrong or stale after an update. Day to day you never need it: syncing runs on its own (see [how syncing works](../integrations/README.md#how-syncing-works)).

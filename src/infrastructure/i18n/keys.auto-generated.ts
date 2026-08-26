@@ -7,19 +7,45 @@ export {}
 
 declare global {
 	interface LocalizableStringKeys {
+		"\"${heading}\" could not be copied: ${message}": unknown
 		"\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks are still open.": unknown
 		"+${count:number} more": unknown
 		"${count:number} min": unknown
 		"${count:number} more": unknown
+		"${count:pluralityNumber} are marked as free": unknown
+		"${count:pluralityNumber} are now in both calendars": unknown
+		"${count:pluralityNumber} arrive with everything they carry": unknown
+		"${count:pluralityNumber} become ${type}": unknown
+		"${count:pluralityNumber} belong to a series with edited occurrences": unknown
+		"${count:pluralityNumber} carry a progress percentage": unknown
+		"${count:pluralityNumber} carry a visibility": unknown
+		"${count:pluralityNumber} copies could not be taken back and are now in both calendars.": unknown
 		"${count:pluralityNumber} days": unknown
 		"${count:pluralityNumber} entries": unknown
+		"${count:pluralityNumber} entries arrive, the flattened series included": unknown
+		"${count:pluralityNumber} entries copied to ${name}": unknown
+		"${count:pluralityNumber} entries moved to ${name}": unknown
+		"${count:pluralityNumber} have participants": unknown
 		"${count:pluralityNumber} hours": unknown
+		"${count:pluralityNumber} lose their cancelled status": unknown
+		"${count:pluralityNumber} lose their description": unknown
+		"${count:pluralityNumber} lose their location": unknown
+		"${count:pluralityNumber} lose their reminders": unknown
+		"${count:pluralityNumber} lose their time zone": unknown
 		"${count:pluralityNumber} months": unknown
+		"${count:pluralityNumber} of ${total:number} entries copy to ${name}": unknown
+		"${count:pluralityNumber} of ${total:number} entries move to ${name}": unknown
 		"${count:pluralityNumber} participants": unknown
+		"${count:pluralityNumber} repeat": unknown
+		"${count:pluralityNumber} stayed in ${name}": unknown
+		"${count:pluralityNumber} stop being all-day": unknown
 		"${count:pluralityNumber} weeks": unknown
 		"${count:pluralityNumber} years": unknown
 		"${done} of ${total:pluralityNumber} subtasks done": unknown
+		"${names} and ${count:pluralityNumber} more": unknown
 		"${percent}% complete": unknown
+		"${reason} and are left out": unknown
+		"${reason} and stay here": unknown
 		"${span} before": unknown
 		"${status} — click to toggle, Alt-click for options": unknown
 		"About": unknown
@@ -65,6 +91,8 @@ declare global {
 		"Calendar URL": unknown
 		"Calendars": unknown
 		"Cancelled": unknown
+		"Checking what would be copied…": unknown
+		"Checking what would move…": unknown
 		"Choose a task status": unknown
 		"Choose your sources": unknown
 		"Clear custom progress": unknown
@@ -80,9 +108,18 @@ declare global {
 		"Connect an account": unknown
 		"Connecting…": unknown
 		"Continue with Google": unknown
+		"Copied to ${name}": unknown
 		"Copy": unknown
+		"Copy ${count:pluralityNumber} entries": unknown
+		"Copy entries from ${name}…": unknown
+		"Copy entries to another calendar": unknown
+		"Copy entries to…": unknown
+		"Copy every entry into another calendar": unknown
+		"Copy instead": unknown
 		"Copy participants' emails": unknown
+		"Copy to ${name}": unknown
 		"Copy Version": unknown
+		"Copying…": unknown
 		"CopyVersion.Keywords": unknown
 		"Create and move entries right on the grid — every change syncs back to its source.": unknown
 		"Create Entry": unknown
@@ -125,8 +162,14 @@ declare global {
 		"Event": unknown
 		"Events": unknown
 		"Every": unknown
+		"Every entry in ${name} is copied — the ones the chosen calendar cannot take are left out. ${name} itself is read-only and stays exactly as it is.": unknown
+		"Every entry in ${name} moves — the ones the chosen calendar cannot take stay here.": unknown
+		"Every entry is copied first and only deleted here once its copy has landed — so a failure can leave a duplicate, never a hole.": unknown
+		"Every entry is still in ${name}. Nothing was deleted.": unknown
 		"Every subtask of \"${heading}\" is done, which completes ${count:pluralityNumber} more tasks above it. Mark them all as done?": unknown
 		"Every subtask of \"${heading}\" is done. Mark it as done too?": unknown
+		"Flatten into single entries": unknown
+		"Flattening writes out a year of occurrences as separate entries. They stop repeating, and links pointing at the series are left behind.": unknown
 		"Forward": unknown
 		"Free": unknown
 		"General": unknown
@@ -152,6 +195,8 @@ declare global {
 		"Keep the chain intact": unknown
 		"Keyboard Shortcuts": unknown
 		"KeyboardShortcuts.Keywords": unknown
+		"Leave the originals here and add a copy over there": unknown
+		"Leave them here": unknown
 		"Location": unknown
 		"Make attendance optional": unknown
 		"Make attendance optional for everyone": unknown
@@ -165,14 +210,23 @@ declare global {
 		"Month": unknown
 		"Month View": unknown
 		"MonthView.Keywords": unknown
+		"Move ${count:pluralityNumber} entries": unknown
 		"Move dependent entries too?": unknown
 		"Move down": unknown
+		"Move entries from ${name}…": unknown
+		"Move entries to another calendar": unknown
+		"Move entries to…": unknown
 		"Move entry": unknown
+		"Move or copy every entry into another calendar": unknown
 		"Move or resize just this entry of a series": unknown
 		"Move repeating entry": unknown
 		"Move subtasks too?": unknown
 		"Move them all by the same amount": unknown
+		"Move to ${name}": unknown
 		"Move up": unknown
+		"Moved to ${name}": unknown
+		"MoveSourceEntries.Keywords": unknown
+		"Moving…": unknown
 		"navigate": unknown
 		"Navigation": unknown
 		"Never": unknown
@@ -189,6 +243,8 @@ declare global {
 		"No release notes available": unknown
 		"None": unknown
 		"Nothing planned yet — draw a task on the row below": unknown
+		"Nothing was copied": unknown
+		"Nothing was moved": unknown
 		"Notion.TokenHint": unknown
 		"Occurrences": unknown
 		"of event at ${time}": unknown
@@ -238,6 +294,7 @@ declare global {
 		"Rename": unknown
 		"Rename time zone": unknown
 		"Repeat": unknown
+		"Repeating entries cannot repeat in ${name}": unknown
 		"Repeats": unknown
 		"Repository": unknown
 		"Reset to calendar color": unknown
@@ -285,6 +342,8 @@ declare global {
 		"The hours you book on Jira issues": unknown
 		"the last ${weekday}": unknown
 		"The task databases of your workspace": unknown
+		"Their copies landed but the originals could not be deleted — delete them here by hand.": unknown
+		"There is no other calendar these entries could move to.": unknown
 		"This and following entries": unknown
 		"This and its ${count:pluralityNumber} subtasks": unknown
 		"This entry": unknown
