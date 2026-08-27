@@ -19,15 +19,14 @@ export interface NotionAnnotations {
 	code?: boolean
 }
 
-/** A rich text run. Property reads concatenate `plain_text`; body reads (see NotionMarkdown) also
- * honour `annotations` and `href` — mentions (page/user/date) carry their readable label as
- * `plain_text` and their target as `href`, so they degrade to links. Writes send bare text runs. */
+/** A rich text run. Reads extract text via {@link NotionMarkdown.textOf}. Date mentions format `mention.date` directly. */
 export interface NotionRichText {
 	type?: string
 	plain_text?: string
 	href?: string | null
 	annotations?: NotionAnnotations
 	text?: { content: string, link?: { url: string } | null }
+	mention?: { type?: string, date?: NotionDate | null }
 }
 
 /** A date property value. `start`/`end` are ISO 8601 — date-only ("2026-07-14") marks an all-day
@@ -92,6 +91,9 @@ export interface NotionBlockContent {
 	has_column_header?: boolean
 	/** table_row */
 	cells?: Array<Array<NotionRichText>>
+	/** bookmark */
+	url?: string
+	caption?: Array<NotionRichText>
 	children?: Array<NotionBlock>
 }
 
@@ -115,6 +117,7 @@ export interface NotionBlock {
 	divider?: Record<string, never>
 	table?: NotionBlockContent
 	table_row?: NotionBlockContent
+	bookmark?: NotionBlockContent
 }
 
 /** A data source's schema property (the config side of {@link NotionPropertyValue}). The status

@@ -651,7 +651,7 @@ export class Notion extends Integration<NotionCredentials> {
 	// --- Mapping (pure, static — the tested surface) ------------------------------------------------
 
 	static plainText(richText: Array<NotionRichText> | undefined): string {
-		return (richText ?? []).map(run => run.plain_text ?? run.text?.content ?? '').join('')
+		return (richText ?? []).map(run => NotionMarkdown.textOf(run)).join('')
 	}
 
 	/** Notion's fixed status groups → task statuses. Group names are canonical in the API; the

@@ -115,6 +115,9 @@
     - Capabilities: No recurrence, reminders, location, cancelled status, or time zone.
     - Time Zone: Always `timeZone: null` (Notion API returns fixed offsets; dates paired with naive wall-clock).
     - Description: Bi-directional markdown body sync via `NotionMarkdown.ts` (using `marked`, max nesting depth 2). Replaces only `isReplaceable` blocks (preserves embeds, images, synced blocks).
+    - Rich text: Reads extract text via `NotionMarkdown.textOf`. Date mentions format `mention.date` (`YYYY-MM-DD HH:MM`, ranges joined by `→`).
+    - Bookmarks: Read as `[caption or url](url)`. Standalone link lines serialize back as `bookmark` blocks. Media/embed blocks remain untouched.
+    - Round-Trip: Empty paragraph padding and trailing spaces stripped so clean markdown round-trips without phantom diffs.
     - Filter Defaults: `Notion.deriveFilterDefaults` pre-fills view filter properties on task create. Tasks not matching view filter are not retained locally.
     - Relations: Maps self-referencing relations ("Parent Task" -> `PARENT`, "Blocked by" -> `FINISHTOSTART`, custom -> `X-NOTION-<NAME>`). Non-self relations ignored. Dual properties map only stored direction.
   - **ICS Feeds** (`integrations/ics/`, type `'ics'`):

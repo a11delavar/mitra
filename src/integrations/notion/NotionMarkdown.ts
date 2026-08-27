@@ -1,5 +1,5 @@
 import { Lexer, type Token, type Tokens } from 'marked'
-import { type NotionAnnotations, type NotionBlock, type NotionBlockContent, type NotionRichText } from './NotionClient.js'
+import { type NotionAnnotations, type NotionBlock, type NotionBlockContent, type NotionDate, type NotionRichText } from './NotionClient.js'
 
 /**
  * Notion page bodies ↔ mitra's markdown descriptions — what makes `description` a supported
@@ -19,7 +19,7 @@ import { type NotionAnnotations, type NotionBlock, type NotionBlockContent, type
  */
 export class NotionMarkdown {
 	/** Block types with a faithful markdown form — the ONLY types either direction touches. */
-	private static readonly convertibleTypes = new Set(['paragraph', 'heading_1', 'heading_2', 'heading_3', 'bulleted_list_item', 'numbered_list_item', 'to_do', 'quote', 'callout', 'code', 'divider', 'table', 'table_row'])
+	private static readonly convertibleTypes = new Set(['paragraph', 'heading_1', 'heading_2', 'heading_3', 'bulleted_list_item', 'numbered_list_item', 'to_do', 'quote', 'callout', 'code', 'divider', 'table', 'table_row', 'bookmark'])
 
 	/** The types whose children carry convertible content (nested list items, quote/callout bodies,
 	 * table rows) — the body reader descends into these. A paragraph's indented children have no
@@ -67,6 +67,18 @@ export class NotionMarkdown {
 		return (block as unknown as Record<string, NotionBlockContent | undefined>)[block.type]
 	}
 
+	/** Extracts text for a rich text run; formats date mentions directly from `mention.date`. */
+	static textOf(run: NotionRichText): string {
+		const date = run.mention?.type === 'date' ? run.mention.date : undefined
+		return date ? NotionMarkdown.dateLabel(date) : run.plain_text ?? run.text?.content ?? ''
+	}
+
+	/** Formats date mention span (`YYYY-MM-DD HH:MM → YYYY-MM-DD HH:MM`). */
+	private static dateLabel(date: NotionDate): string {
+		const stamp = (value: string) => value.includes('T') ? `${value.slice(0, 10)} ${value.slice(11, 16)}` : value
+		return [date.start, date.end].filter(Boolean).map(value => stamp(value!)).join(' → ')
+	}
+
 	/**
 	 * Whether a block — with every descendant — can be re-authored from its markdown form. Only
 	 * replaceable blocks are rendered into the description and deleted by a description write.
@@ -96,7 +108,7 @@ export class NotionMarkdown {
 		for (const block of blocks) {
 			number = block.type === 'numbered_list_item' && previousType === 'numbered_list_item' ? number + 1 : 1
 			const text = NotionMarkdown.blockToMarkdown(block, number)
-			if (text === undefined) {
+			if (!text) {
 				continue
 			}
 			// Consecutive same-type list items stay one list (single newline); anything else separates.
@@ -133,11 +145,15 @@ export class NotionMarkdown {
 				return NotionMarkdown.quoted(`[!${type}] ${inline}`.trimEnd() + (body ? `\n\n${body}` : ''))
 			}
 			case 'code': {
-				const text = (content.rich_text ?? []).map(run => run.plain_text ?? run.text?.content ?? '').join('')
+				const text = (content.rich_text ?? []).map(run => NotionMarkdown.textOf(run)).join('')
 				return `\`\`\`${content.language === 'plain text' ? '' : content.language ?? ''}\n${text}\n\`\`\``
 			}
 			case 'divider':
 				return '---'
+			case 'bookmark': {
+				const caption = NotionMarkdown.runsToMarkdown(content.caption)
+				return !content.url ? undefined : `[${caption || NotionMarkdown.escape(content.url)}](${content.url})`
+			}
 			case 'table': {
 				const rows = children.filter(row => row.type === 'table_row').map(row =>
 					(NotionMarkdown.contentOf(row)?.cells ?? []).map(cell =>
@@ -165,9 +181,10 @@ export class NotionMarkdown {
 		return text.split('\n').map(line => line ? `> ${line}` : '>').join('\n')
 	}
 
+	/** Drops invisible trailing spaces to ensure markdown round-trips cleanly across writes. */
 	private static runsToMarkdown(runs: Array<NotionRichText> | undefined): string {
 		return (runs ?? []).map(run => {
-			const content = run.plain_text ?? run.text?.content ?? ''
+			const content = NotionMarkdown.textOf(run)
 			const annotations = run.annotations ?? {}
 			const url = run.href ?? run.text?.link?.url ?? undefined
 			let text = annotations.code ? NotionMarkdown.codeSpan(content) : NotionMarkdown.escape(content)
@@ -183,7 +200,7 @@ export class NotionMarkdown {
 				}
 			}
 			return url ? `[${text}](${url})` : text
-		}).join('')
+		}).join('').replace(/ +$/gm, '').trim()
 	}
 
 	private static codeSpan(content: string): string {
@@ -217,9 +234,15 @@ export class NotionMarkdown {
 				case 'space':
 				case 'def':
 					break
-				case 'paragraph':
-					blocks.push({ type: 'paragraph', paragraph: { rich_text: NotionMarkdown.runsOf((token as Tokens.Paragraph).tokens) } })
+				case 'paragraph': {
+					// Standalone link lines write back as bookmark blocks to preserve card formatting.
+					const inline = (token as Tokens.Paragraph).tokens
+					const link = inline.length === 1 && inline[0]?.type === 'link' ? inline[0] as Tokens.Link : undefined
+					blocks.push(link
+						? { type: 'bookmark', bookmark: { url: link.href, caption: link.text === link.href ? [] : NotionMarkdown.runsOf(link.tokens) } }
+						: { type: 'paragraph', paragraph: { rich_text: NotionMarkdown.runsOf(inline) } })
 					break
+				}
 				case 'heading': {
 					// Notion has three heading levels — deeper markdown headings clamp to the smallest.
 					const level = Math.min((token as Tokens.Heading).depth, 3)

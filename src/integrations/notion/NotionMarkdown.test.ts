@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { NotionMarkdown } from './NotionMarkdown.js'
-import { type NotionBlock, type NotionRichText } from './NotionClient.js'
+import { type NotionBlock, type NotionDate, type NotionRichText } from './NotionClient.js'
 
 const text = (content: string, annotations?: NotionRichText['annotations'], href?: string): NotionRichText =>
 	({ plain_text: content, ...(annotations ? { annotations } : {}), ...(href ? { href } : {}) })
@@ -29,12 +29,28 @@ describe('NotionMarkdown.toMarkdown', () => {
 		assert.equal(NotionMarkdown.toMarkdown(blocks), 'Call **them** *now* or ~~never~~ via [the portal](https://example.com/portal)')
 	})
 
+	it('renders a date mention from the mention itself, not from the label Notion formatted', () => {
+		const mention = (date: NotionDate): NotionRichText =>
+			({ type: 'mention', mention: { type: 'date', date }, plain_text: 'Invalid Date' })
+		assert.equal(NotionMarkdown.toMarkdown([paragraph(mention({ start: '2023-11-03' }))]), '2023-11-03')
+		assert.equal(NotionMarkdown.toMarkdown([paragraph(mention({ start: '2023-11-03T15:00:00.000+01:00' }))]), '2023-11-03 15:00')
+		assert.equal(NotionMarkdown.toMarkdown([paragraph(mention({ start: '2023-11-03T15:00:00.000+01:00', end: '2023-11-04T09:30:00.000+01:00' }))]), '2023-11-03 15:00 → 2023-11-04 09:30')
+	})
+
+	it('keeps the label Notion sent for every other mention kind', () => {
+		const person: NotionRichText = { type: 'mention', mention: { type: 'user' }, plain_text: '@Team' }
+		const page: NotionRichText = { type: 'mention', mention: { type: 'page' }, plain_text: 'Roadmap', href: 'https://notion.so/roadmap' }
+		assert.equal(NotionMarkdown.toMarkdown([paragraph(person, text(' → '), page)]), '@Team → [Roadmap](https://notion.so/roadmap)')
+	})
+
 	it('renders code annotations without escaping their content', () => {
 		assert.equal(NotionMarkdown.toMarkdown([paragraph(text('run '), text('npm --*test*', { code: true }))]), 'run `npm --*test*`')
 	})
 
 	it('escapes characters that would re-tokenize as markup', () => {
 		assert.equal(NotionMarkdown.toMarkdown([paragraph(text('literal *stars* and [brackets]'))]), 'literal \\*stars\\* and \\[brackets\\]')
+		roundTrips('[https://x.y/a](https://x.y/a)')
+		roundTrips('[Tyres](https://x.y/a)')
 	})
 
 	it('guards line starts that would turn a plain paragraph into structure', () => {
@@ -97,6 +113,24 @@ describe('NotionMarkdown.toMarkdown', () => {
 			table: { table_width: 2, has_column_header: true, children: [row('Name', 'Due'), row('Report', 'Friday')] },
 		}]
 		assert.equal(NotionMarkdown.toMarkdown(blocks), '| Name | Due |\n| --- | --- |\n| Report | Friday |')
+	})
+
+	it('drops the empty paragraphs Notion pads a page with, and stray trailing spaces', () => {
+		const blocks = [
+			paragraph(),
+			{ type: 'heading_2', heading_2: { rich_text: [text('Reifen Kaufen')] } } as NotionBlock,
+			paragraph(text('eher Allseasonreifen! ')),
+			paragraph(),
+		]
+		assert.equal(NotionMarkdown.toMarkdown(blocks), '## Reifen Kaufen\n\neher Allseasonreifen!')
+	})
+
+	it('renders a bookmark as the link it is', () => {
+		const bookmark = (url: string, caption?: string): NotionBlock =>
+			({ type: 'bookmark', bookmark: { url, ...(caption ? { caption: [text(caption)] } : {}) } })
+		assert.equal(NotionMarkdown.toMarkdown([bookmark('https://x.y/a')]), '[https://x.y/a](https://x.y/a)')
+		assert.equal(NotionMarkdown.toMarkdown([bookmark('https://x.y/a', 'Tyres')]), '[Tyres](https://x.y/a)')
+		assert.equal(NotionMarkdown.toMarkdown([bookmark('')]), '')
 	})
 
 	it('skips blocks markdown cannot express — and whole branches hiding one', () => {
@@ -173,6 +207,14 @@ describe('NotionMarkdown.toBlocks', () => {
 	it('degrades an inline image to a link on its alt text (Notion has no inline image)', () => {
 		const [block] = NotionMarkdown.toBlocks('see ![the chart](https://example.com/chart.png)')
 		assert.deepEqual(block!.paragraph!.rich_text![1], { type: 'text', text: { content: 'the chart', link: { url: 'https://example.com/chart.png' } } })
+	})
+
+	it('writes a line that is only a link back as the bookmark it read from', () => {
+		const [bare] = NotionMarkdown.toBlocks('[https://x.y/a](https://x.y/a)')
+		assert.deepEqual(bare, { type: 'bookmark', bookmark: { url: 'https://x.y/a', caption: [] } })
+		const [captioned] = NotionMarkdown.toBlocks('[Tyres](https://x.y/a)')
+		assert.deepEqual(captioned!.bookmark!.caption, [{ type: 'text', text: { content: 'Tyres' } }])
+		assert.equal(NotionMarkdown.toBlocks('see [Tyres](https://x.y/a)')[0]!.type, 'paragraph')
 	})
 
 	it('parses tables into table blocks with row children', () => {
