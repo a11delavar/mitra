@@ -228,10 +228,10 @@
   - Edits currently apply series-wide via dedicated recurrence API routes.
   - A scoped edit may ALSO change the calendar, and the two compose (`editOccurrence`'s `movingTo`): 'this' detaches the occurrence INTO the target, 'following' starts the continuation there (the old half stays), 'all' re-creates the whole series there — same uid, rule and exclusions — and deletes it here, create-first. The client must send `sourceId` with the scoped PUT; without it the picker changed and nothing moved.
 - **Routines (Density Collapse)**:
-  - Dense recurring series collapse into compact ribbons in month/year views.
-  - Threshold calculated by `Recurrence.strideDays` (mean days between occurrences).
-  - Views separate routine segments from bars. Routines render 1 mark per active day (never spanning bars). Detached occurrences group by appearance.
-  - Ribbons use `mitra-entry-segment` with `.routine` modifier, sharing base lanes below bars.
+  - Dense cohorts collapse into compact ribbons in month/year views.
+  - Layer above recurrence: entries sharing appearance (`sourceId`, `heading`) pool into one routine (series, overrides, detached check-offs, all-day placeholders). Blank headings fall back to per-master.
+  - Gate: `min(member rule strideDays, median observed day gap) < rowUnitDays * slack` with >= 4 instances in window. Slack: week = 1.0 (weekly stays bars), month = 1.25 (collapses ~5-week cadences).
+  - Rendering: 1 ribbon mark per active day (never spanning bars). Modifies `mitra-entry-segment` with `.routine`.
 
 ## Participants (RFC 5545 / 5546 iTIP, RFC 6638)
 - **Storage & Capability**:

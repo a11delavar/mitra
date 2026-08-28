@@ -182,6 +182,7 @@ export async function seedDev(orm: MikroORM) {
 		const workEvent = on(work)
 		const workTask = (init: Partial<Entry>) => on(work)({ type: EntryType.Task, ...init })
 		const personalEvent = on(personal)
+		const personalTask = (init: Partial<Entry>) => on(personal)({ type: EntryType.Task, ...init })
 		const hobbyEvent = on(hobbies)
 		const upkeepTask = (init: Partial<Entry>) => on(upkeep)({ type: EntryType.Task, ...init })
 		const upkeepEvent = on(upkeep)
@@ -433,7 +434,7 @@ export async function seedDev(orm: MikroORM) {
 		relate(calcPrep2, RelationType.FinishToStart, calcPrep1)
 		relate(advCalcExam, RelationType.FinishToStart, calcPrep2)
 
-		// ---- Routines (density collapse samples, see features/recurrence/client/Routines.ts) ----
+		// ---- Routines (density collapse samples, see features/routines/client/Routines.ts) ----
 		// Daily (collapses in month and year)
 		personalEvent({
 			heading: '💊 Morning Meds',
@@ -458,9 +459,32 @@ export async function seedDev(orm: MikroORM) {
 			recurrence: new Recurrence({ freq: 'DAILY', interval: 2 })
 		})
 
-		// Detached occurrences ("this entry only": matches by title and stays marks)
+		// Detached occurrences ("this entry only": pools by appearance and stays marks)
 		hobbyEvent({ heading: '🏊 Swim', start: at(thisWeekMonday, 1, 21), end: at(thisWeekMonday, 1, 22) })
 		hobbyEvent({ heading: '🏊 Swim', start: at(thisWeekMonday, 3, 21), end: at(thisWeekMonday, 3, 22) })
+
+		// Morning + evening pills pooling by appearance; past occurrences detached as completed tasks.
+		// The morning dose is Notion-shaped: no end date on import means a full 24h span (10:00 → 10:00).
+		personalTask({ heading: '💊 Pills', status: TaskStatus.ToDo, start: todayStart.with({ hour: 10 }), end: todayStart.add({ days: 1 }).with({ hour: 10 }), recurrence: new Recurrence({ freq: 'DAILY' }) })
+		personalTask({ heading: '💊 Pills', status: TaskStatus.ToDo, start: todayStart.with({ hour: 20 }), end: todayStart.with({ hour: 20, minute: 5 }), recurrence: new Recurrence({ freq: 'DAILY' }) })
+		for (let day = 1; day <= 60; day++) {
+			const past = todayStart.subtract({ days: day })
+			personalTask({ heading: '💊 Pills', status: TaskStatus.Done, start: past.with({ hour: 10 }), end: past.add({ days: 1 }).with({ hour: 10 }) })
+			personalTask({ heading: '💊 Pills', status: TaskStatus.Done, start: past.with({ hour: 20 }), end: past.with({ hour: 20, minute: 5 }) })
+		}
+
+		// Three weekly series pooling into one routine.
+		hobbyEvent({ heading: '🏐 Volleyball', start: at(pastStart, 1, 19), end: at(pastStart, 1, 20, 30), recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['TU'] }) })
+		hobbyEvent({ heading: '🏐 Volleyball', start: at(pastStart, 3, 19), end: at(pastStart, 3, 20, 30), recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['TH'] }) })
+		hobbyEvent({ heading: '🏐 Volleyball', start: at(pastStart, 5, 15), end: at(pastStart, 5, 16, 30), recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['SA'] }) })
+
+		// Unruled ~5-weekly habit (marks in year view with slack factor, bars in month view).
+		for (let cut = 1; cut <= 10; cut++) {
+			const day = todayStart.subtract({ days: cut * 35 })
+			upkeepEvent({ heading: '💈 Haircut', start: day.with({ hour: 11 }), end: day.with({ hour: 11, minute: 45 }) })
+		}
+		// The next one is still an all-day placeholder — no appointment booked yet.
+		upkeepEvent({ heading: '💈 Haircut', allDay: true, start: allDayStart(todayStart, 0), end: allDayStart(todayStart, 1) })
 
 		// Biweekly (bars in month, marks in year)
 		personalEvent({
@@ -478,13 +502,13 @@ export async function seedDev(orm: MikroORM) {
 			recurrence: new Recurrence({ freq: 'DAILY', until: Recurrence.untilFromDay(todayStart.subtract({ months: 4 }).year, todayStart.subtract({ months: 4 }).month, todayStart.subtract({ months: 4 }).day) })
 		})
 
-		// Short burst (<= 5 instances: bars in both views)
+		// Too few to be a routine (< 4 instances: bars in both views)
 		workTask({
 			heading: 'Month-end Accounting',
 			start: at(thisWeekMonday, 7, 9),
 			end: at(thisWeekMonday, 7, 12),
 			status: TaskStatus.ToDo,
-			recurrence: new Recurrence({ freq: 'DAILY', count: 5 })
+			recurrence: new Recurrence({ freq: 'DAILY', count: 3 })
 		})
 
 		// Long burst (> rows threshold: collapses)

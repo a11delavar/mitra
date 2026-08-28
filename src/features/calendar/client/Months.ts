@@ -6,7 +6,7 @@ import { CalendarDatesController, type CalendarMonth } from './CalendarDatesCont
 import { CalendarScrollController } from './CalendarScrollController.js'
 import { EntryDragController } from '../../entries/client/EntryDragController.js'
 import { MonthsDensityController } from './MonthsDensityController.js'
-import { Routines } from '../../recurrence/client/Routines.js'
+import { Routines } from '../../routines/client/Routines.js'
 
 /**
  * The months strip — the year view's grid, and the vertical sibling of {@link Days}: one row per month

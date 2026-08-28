@@ -6,7 +6,7 @@ import { EntryConnections } from '../../relations/client/EntryConnections.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { CalendarScrollController } from './CalendarScrollController.js'
 import { EntryDragController } from '../../entries/client/EntryDragController.js'
-import { Routines, type RoutineRun } from '../../recurrence/client/Routines.js'
+import { Routines, type RoutineRun } from '../../routines/client/Routines.js'
 
 /** The month view's grid: a vertically-scrolling strip of week rows — named, like `Days` (the week
  * view's strip of day columns), after the unit it strips. */

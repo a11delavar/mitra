@@ -1,7 +1,7 @@
 import { component, html, property, Component, css, state, bind, queryConnectedInstances, eventListener, unsafeCSS } from '@a11d/lit'
 import { TaskStatus } from '../Entry.js'
 import { type EntrySegment } from './EntrySegment.js'
-import { type RoutineRun } from '../../recurrence/client/Routines.js'
+import { type RoutineRun } from '../../routines/client/Routines.js'
 import { contrastColor } from '../../../design/contrastColor.js'
 import { getSource, getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore, reportSaveError } from './EntryStore.js'
@@ -501,6 +501,8 @@ export class EntrySegmentComponent extends Component {
 				&[data-routine] {
 					display: grid;
 					grid-template-columns: subgrid;
+					/* A ribbon is one row: same-day marks overlap instead of spawning implicit rows. */
+					grid-template-rows: 100%;
 					align-items: center;
 					background: none;
 					border-inline-start: none;
@@ -521,6 +523,8 @@ export class EntrySegmentComponent extends Component {
 					> .mark {
 						block-size: 100%;
 						border-radius: 999px;
+						/* Inset keeps a daily routine's marks apart — touching marks read as a border line. */
+						margin-inline: 15%;
 						background-color: color-mix(in srgb, var(--mitra-entry-segment-color) 60%, transparent);
 					}
 

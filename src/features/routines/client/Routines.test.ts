@@ -1,9 +1,10 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { Entry } from '../../entries/Entry.js'
+import { Entry, TaskStatus } from '../../entries/Entry.js'
+import { EntryType } from '../../entries/EntryType.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
-import { Recurrence } from '../Recurrence.js'
+import { Recurrence } from '../../recurrence/Recurrence.js'
 import { Routines, type RoutineUnit } from './Routines.js'
 
 describe('Routines', () => {
@@ -46,7 +47,7 @@ describe('Routines', () => {
 	}
 
 	describe('collapses (the density rule)', () => {
-		it('never collapses an entry that belongs to no series', () => {
+		it('never collapses an entry that belongs to no routine', () => {
 			const plain = new Entry({ heading: 'Dentist', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
 			assert.equal(Routines.of([plain], days(500), 'month').collapses(plain), false)
 		})
@@ -55,15 +56,20 @@ describe('Routines', () => {
 			assert.deepEqual(collapsedIn('month', series('birthday', yearly(), cadence(yearly(), 2))), new Set())
 		})
 
-		it('keeps a monthly series in month units: one bar per row is the budget, not over it', () => {
-			assert.deepEqual(collapsedIn('month', series('rent', monthly(), cadence(monthly(), 16))), new Set())
+		it('collapses a monthly-ish series in month units — the year view orients, and the slack covers cadences just over the row', () => {
+			assert.deepEqual(collapsedIn('month', series('rent', monthly(), cadence(monthly(), 16))), new Set(['rent']))
+		})
+
+		it('keeps a quarterly series in month units — genuinely sparser than the slack', () => {
+			const rule = weekly(undefined, 13)
+			assert.deepEqual(collapsedIn('month', series('review', rule, cadence(rule, 6))), new Set())
 		})
 
 		it('collapses a weekly series in month units', () => {
 			assert.deepEqual(collapsedIn('month', series('sync', weekly(), cadence(weekly(), 60))), new Set(['sync']))
 		})
 
-		it('keeps that same weekly series in week units — one bar per week row', () => {
+		it('keeps that same weekly series in week units — one bar per week row, no slack in the working view', () => {
 			assert.deepEqual(collapsedIn('week', series('sync', weekly(), cadence(weekly(), 20))), new Set())
 		})
 
@@ -86,10 +92,10 @@ describe('Routines', () => {
 			assert.deepEqual(collapsedIn('week', series('volleyball', rule, offsets.slice(0, 20))), new Set(['volleyball']))
 		})
 
-		it('keeps a five-day burst in both units — dense, but too few to be wallpaper', () => {
+		it('collapses even a short daily burst — the burst exception was retired (2026-08-28)', () => {
 			const burst = series('accounting', daily(), [0, 1, 2, 3, 4])
-			assert.deepEqual(collapsedIn('month', burst), new Set())
-			assert.deepEqual(collapsedIn('week', burst), new Set())
+			assert.deepEqual(collapsedIn('month', burst), new Set(['accounting']))
+			assert.deepEqual(collapsedIn('week', burst), new Set(['accounting']))
 		})
 
 		it('collapses a three-week daily crunch in both units', () => {
@@ -98,11 +104,11 @@ describe('Routines', () => {
 			assert.deepEqual(collapsedIn('week', crunch), new Set(['crunch']))
 		})
 
-		it('holds the instance-count boundary: exactly one per row keeps, one more collapses', () => {
-			assert.deepEqual(collapsedIn('month', series('twelve', daily(), cadence(daily(), 12))), new Set())
-			assert.deepEqual(collapsedIn('month', series('thirteen', daily(), cadence(daily(), 13))), new Set(['thirteen']))
-			assert.deepEqual(collapsedIn('week', series('five', daily(), cadence(daily(), 5))), new Set())
-			assert.deepEqual(collapsedIn('week', series('six', daily(), cadence(daily(), 6))), new Set(['six']))
+		it('holds the evidence floor: three instances are an incident, four a routine', () => {
+			assert.deepEqual(collapsedIn('month', series('three', daily(), cadence(daily(), 3))), new Set())
+			assert.deepEqual(collapsedIn('month', series('four', daily(), cadence(daily(), 4))), new Set(['four']))
+			assert.deepEqual(collapsedIn('week', series('three', daily(), cadence(daily(), 3))), new Set())
+			assert.deepEqual(collapsedIn('week', series('four', daily(), cadence(daily(), 4))), new Set(['four']))
 		})
 
 		it('holds the cadence boundary: exactly one per row unit is not denser than the row', () => {
@@ -110,7 +116,7 @@ describe('Routines', () => {
 			assert.deepEqual(collapsedIn('week', series('twice', weekly(['MO', 'TH']), cadence(weekly(['MO', 'TH']), 20))), new Set(['twice']))
 		})
 
-		it('counts a synced override as an instance of its series, rule-less as it is', () => {
+		it('counts a synced override as an instance of its routine, rule-less as it is', () => {
 			const rule = daily(2)
 			const instances = series('gym', rule, cadence(rule, 13))
 			const override = new Entry({ id: 'gym-moved', heading: 'Gym', start: base.add({ days: 27, hours: 18 }), end: base.add({ days: 27, hours: 19 }), recurrenceMasterId: 'gym', recurrenceId: base.add({ days: 26, hours: 9 }) })
@@ -119,9 +125,9 @@ describe('Routines', () => {
 			assert.equal(cohort.collapses(instances[0]!), true)
 		})
 
-		it('judges every series on its own', () => {
+		it('judges every routine on its own', () => {
 			const dense = series('gym', daily(2), cadence(daily(2), 100))
-			const sparse = series('rent', monthly(), cadence(monthly(), 16))
+			const sparse = series('birthday', yearly(), cadence(yearly(), 2))
 			assert.deepEqual(collapsedIn('month', [...dense, ...sparse]), new Set(['gym']))
 		})
 
@@ -146,11 +152,11 @@ describe('Routines', () => {
 
 	describe('kept', () => {
 		it('hands back the very same array when nothing collapses', () => {
-			const entries = series('rent', monthly(), cadence(monthly(), 16))
+			const entries = series('birthday', yearly(), cadence(yearly(), 2))
 			assert.equal(Routines.of(entries, days(500), 'month').kept, entries)
 		})
 
-		it('drops the collapsed series\' instances and nothing else', () => {
+		it('drops the collapsed routine\'s instances and nothing else', () => {
 			const dense = series('gym', daily(2), cadence(daily(2), 100))
 			const plain = new Entry({ heading: 'Dentist', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
 			const kept = Routines.of([...dense, plain], days(500), 'month').kept
@@ -158,7 +164,7 @@ describe('Routines', () => {
 		})
 	})
 
-	describe('detached occurrences', () => {
+	describe('pooling (a routine sits a layer above recurrence)', () => {
 		const gym = (count = 100) => series('gym', daily(2), cadence(daily(2), count), 'Gym')
 
 		it('pulls a detached occurrence back into its routine', () => {
@@ -175,6 +181,80 @@ describe('Routines', () => {
 			assert.deepEqual(offsets, [48, 50, 51, 52, 54])
 		})
 
+		it('pools twin series wearing the same appearance into ONE routine — morning and evening pills are one habit', () => {
+			const morning = gym()
+			const twin = series('gym-evening', daily(2), cadence(daily(2), 100), 'Gym')
+			const loose = detached('Gym', 51)
+			const cohort = Routines.of([...morning, ...twin, loose], days(500), 'month')
+			assert.equal(cohort.collapses(loose), true)
+			assert.equal(cohort.collapses(twin[0]!), true)
+			assert.equal(cohort.collapses(morning[0]!), true)
+			assert.equal(cohort.runsIn(base, base.add({ days: 40 })).length, 1)
+		})
+
+		it('pools one habit split across several weekly series — Sat/Tue/Thu volleyball is one routine', () => {
+			const weeks = Array.from({ length: 10 }, (_, index) => index * 7)
+			const tuesday = series('volley-tu', weekly(['TU']), weeks.map(offset => offset + 1), 'Volleyball')
+			const thursday = series('volley-th', weekly(['TH']), weeks.map(offset => offset + 3), 'Volleyball')
+			const saturday = series('volley-sa', weekly(['SA']), weeks.map(offset => offset + 5), 'Volleyball')
+			// Each member alone is weekly (kept in week units); the pooled cadence is ~2 days (collapses).
+			assert.deepEqual(collapsedIn('week', [...tuesday, ...thursday, ...saturday]), new Set(['volley-tu', 'volley-th', 'volley-sa']))
+			assert.deepEqual(collapsedIn('month', [...tuesday, ...thursday, ...saturday]), new Set(['volley-tu', 'volley-th', 'volley-sa']))
+		})
+
+		it('weighs all members against the floor together, as one routine', () => {
+			const rule = daily(2)
+			const attached = series('gym', rule, cadence(rule, 3), 'Gym')
+			const checkedOff = Array.from({ length: 3 }, (_, index) => detached('Gym', 6 + index * 2))
+			assert.equal(Routines.of(attached, days(500), 'month').collapses(attached[0]!), false)
+			assert.equal(Routines.of(checkedOff, days(500), 'month').collapses(checkedOff[0]!), false)
+			const together = Routines.of([...attached, ...checkedOff], days(500), 'month')
+			assert.equal(together.collapses(attached[0]!), true)
+			assert.equal(together.collapses(checkedOff[0]!), true)
+		})
+
+		it('collapses a routine whose every occurrence in the window was checked off and detached', () => {
+			const pills = Array.from({ length: 30 }, (_, index) => detached('Pills', index, 'cal', { type: EntryType.Task, status: TaskStatus.Done }))
+			for (const unit of ['month', 'week'] as const) {
+				const cohort = Routines.of(pills, days(500), unit)
+				assert.equal(pills.every(entry => cohort.collapses(entry)), true)
+				assert.deepEqual(cohort.kept, [])
+			}
+		})
+
+		it('reads the cadence off the days when no occurrence carries a rule at all', () => {
+			const overrides = Array.from({ length: 20 }, (_, index) => new Entry({
+				id: `standup__${index}`,
+				sourceId: 'cal',
+				heading: 'Standup',
+				start: base.add({ days: index, hours: 9 }),
+				end: base.add({ days: index, hours: 10 }),
+				recurrenceMasterId: 'standup',
+			}))
+			assert.deepEqual(collapsedIn('month', overrides), new Set(['standup']))
+		})
+
+		it('collapses an unruled five-weekly habit in month units (the haircut) but keeps it in week units', () => {
+			const cuts = Array.from({ length: 10 }, (_, index) => detached('Haircut', index * 35))
+			const yearly = Routines.of(cuts, days(500), 'month')
+			assert.equal(cuts.every(entry => yearly.collapses(entry)), true)
+			const monthly = Routines.of(cuts, days(154), 'week')
+			assert.equal(cuts.some(entry => monthly.collapses(entry)), false)
+		})
+
+		it('leaves same-named one-offs alone when there is no density to speak of', () => {
+			const lunches = [0, 40, 95, 160].map(offset => detached('Lunch', offset))
+			const cohort = Routines.of(lunches, days(500), 'month')
+			assert.equal(lunches.some(entry => cohort.collapses(entry)), false)
+			assert.equal(cohort.kept, lunches)
+		})
+
+		it('leaves them alone when there are many but sparser than the slack', () => {
+			const reviews = Array.from({ length: 14 }, (_, index) => detached('Review', index * 45))
+			const cohort = Routines.of(reviews, days(500), 'month')
+			assert.equal(reviews.some(entry => cohort.collapses(entry)), false)
+		})
+
 		it('leaves a differently-named entry alone', () => {
 			const other = detached('Dentist', 51)
 			const cohort = Routines.of([...gym(), other], days(500), 'month')
@@ -187,9 +267,9 @@ describe('Routines', () => {
 			assert.equal(Routines.of([...gym(), elsewhere], days(500), 'month').collapses(elsewhere), false)
 		})
 
-		it('will not match an all-day entry to a timed routine', () => {
-			const allDayGym = detached('Gym', 51, 'cal', { allDay: true })
-			assert.equal(Routines.of([...gym(), allDayGym], days(500), 'month').collapses(allDayGym), false)
+		it('pools an all-day placeholder with its timed routine — an unscheduled appointment is the same habit', () => {
+			const placeholder = detached('Gym', 51, 'cal', { allDay: true })
+			assert.equal(Routines.of([...gym(), placeholder], days(500), 'month').collapses(placeholder), true)
 		})
 
 		it('matches regardless of case and surrounding space', () => {
@@ -197,21 +277,14 @@ describe('Routines', () => {
 			assert.equal(Routines.of([...gym(), loose], days(500), 'month').collapses(loose), true)
 		})
 
-		it('joins only a series that ALREADY collapses — a one-off cannot tip the threshold', () => {
-			const sparse = series('gym', daily(2), cadence(daily(2), 12), 'Gym')
-			const loose = detached('Gym', 51)
-			const cohort = Routines.of([...sparse, loose], days(500), 'month')
-			assert.equal(cohort.collapses(loose), false)
-			assert.equal(cohort.collapses(sparse[0]!), false)
-		})
-
-		it('never adopts an entry that belongs to another series, or a series master', () => {
+		it('never pools a series MASTER row — its occurrences arrive expanded', () => {
 			const otherSeries = series('standup', daily(), cadence(daily(), 40), 'Gym')
 			const master = new Entry({ id: 'm', sourceId: 'cal', heading: 'Gym', start: base.add({ days: 51, hours: 21 }), end: base.add({ days: 51, hours: 22 }), recurrence: daily(2) })
 			const cohort = Routines.of([...gym(), ...otherSeries, master], days(500), 'month')
 			assert.equal(cohort.collapses(master), false)
 			assert.equal(cohort.collapses(otherSeries[0]!), true)
-			assert.equal(cohort.runsIn(base, base.add({ days: 400 })).length, 2)
+			// The two same-appearance series pooled into one routine: one run, not two.
+			assert.equal(cohort.runsIn(base, base.add({ days: 400 })).length, 1)
 		})
 
 		it('ignores a blank heading rather than matching everything', () => {
@@ -220,7 +293,7 @@ describe('Routines', () => {
 			assert.equal(Routines.of([...blankSeries, blank], days(500), 'month').collapses(blank), false)
 		})
 
-		it('never adopts a move ghost', () => {
+		it('never pools a move ghost', () => {
 			const loose = detached('Gym', 51)
 			EntryStore.setPreview(loose)
 			try {
@@ -237,7 +310,7 @@ describe('Routines', () => {
 			assert.equal(Routines.of([...gym(), far], days(500), 'month').collapses(far), false)
 		})
 
-		it('adopts in the week unit too, and only where that unit collapses', () => {
+		it('pools in the week unit too, and only where that unit collapses', () => {
 			const looseDense = detached('Gym', 5)
 			assert.equal(Routines.of([...gym(60), looseDense], days(154), 'week').collapses(looseDense), true)
 			const weeklySeries = series('sync', weekly(), cadence(weekly(), 20), 'Sync')
@@ -250,15 +323,15 @@ describe('Routines', () => {
 		const gymRule = daily(2)
 		const gym = (count: number, from = 0) => series('gym', gymRule, cadence(gymRule, count, from), 'Gym')
 
-		it('yields nothing for a series this view keeps', () => {
-			const cohort = Routines.of(series('rent', monthly(), cadence(monthly(), 16)), days(500), 'month')
+		it('yields nothing for a routine this view keeps', () => {
+			const cohort = Routines.of(series('birthday', yearly(), cadence(yearly(), 2)), days(500), 'month')
 			assert.deepEqual(cohort.runsIn(base, base.add({ days: 60 })), [])
 		})
 
 		const dayOffsets = (run: { days: ReadonlyArray<number> }) =>
 			run.days.map(day => Math.round((day - base.dayStart.valueOf()) / 86_400_000))
 
-		it('yields one run per collapsed series, carrying every day it falls on in range', () => {
+		it('yields one run per collapsed routine, carrying every day it falls on in range', () => {
 			const cohort = Routines.of(gym(100), days(500), 'month')
 			const runs = cohort.runsIn(base.add({ days: 10 }), base.add({ days: 20 }))
 			assert.equal(runs.length, 1)
@@ -286,6 +359,16 @@ describe('Routines', () => {
 			assert.equal(runs[0]!.days.length, 19)
 			assert.equal(dayOffsets(runs[0]!).includes(10), false)
 			assert.deepEqual(dayOffsets(runs[0]!).slice(0, 7), [0, 2, 4, 6, 8, 12, 14])
+		})
+
+		it('marks a twice-daily routine once per day — a duplicate day collapses the ribbon', () => {
+			const twiceDaily = Array.from({ length: 20 }, (_, index) => index).flatMap(offset => [
+				detached('Pills', offset),
+				new Entry({ id: `pills-pm-${offset}`, sourceId: 'cal', heading: 'Pills', start: base.add({ days: offset, hours: 20 }), end: base.add({ days: offset, hours: 20, minutes: 5 }) }),
+			])
+			const runs = Routines.of(twiceDaily, days(500), 'month').runsIn(base, base.add({ days: 4 }))
+			assert.equal(runs.length, 1)
+			assert.deepEqual(dayOffsets(runs[0]!), [0, 1, 2, 3, 4])
 		})
 
 		it('yields a single-day run where only one instance falls in the row', () => {
