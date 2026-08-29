@@ -305,91 +305,119 @@ export class EntryDetailsComponent extends Component {
 					/* Rounds the toolbar into the frame; top-layer popovers inside are unaffected by clip. */
 					overflow: clip;
 
-					/* The toolbar: the colour dot in the glyph gutter, everything else on the content
-					   column — quiet text, no boxes at rest, a hairline running edge to edge below. */
+					/* The header: toolbar (source, type, chrome) and title row (task checkbox, heading).
+					   Sits outside the scroller with a bottom border separating it from the details list. */
 					> header {
 						flex-shrink: 0;
-						display: grid;
-						grid-template-columns: var(--gutter) minmax(0, 1fr);
-						column-gap: 0.5rem;
-						align-items: center;
+						display: flex;
+						flex-direction: column;
+						gap: 0.25rem;
 						padding-block: 0.4375rem 0.375rem;
 						padding-inline: var(--inset);
 						border-block-end: 1px solid color-mix(in srgb, var(--color-text) 6%, transparent);
 						font-size: 0.75rem;
 
-						/* Everything but the dot rides the content column as one flex bar. The bleed is the
-						   fields' usual net-zero pair (capped at the end, where the inset is only 0.5rem),
-						   so the source name starts exactly on the content column. No gap: each control
-						   carries its own padding already. */
-						> .bar {
-							grid-column: 2;
-							display: flex;
+						> .toolbar {
+							display: grid;
+							grid-template-columns: var(--gutter) minmax(0, 1fr);
+							column-gap: 0.5rem;
 							align-items: center;
-							margin-inline: -0.4375rem -0.25rem;
-						}
 
-						> .bar > .spacer { flex: 1; }
-
-						mitra-icon-button {
-							font-size: 0.8125rem;
-						}
-
-						/* The chips ARE fields (field.css.ts) — rest/hover/open/focus states, chevron reveal
-						   and picker anchoring all come from there, the picker's surface and option rows from
-						   selectStyles/pickerRow. Only the tighter box is the toolbar's own. */
-						:is(.entry-type, .source).field {
-							--control-height: 1.5rem;
-							--field-padding-inline: 0.4375rem;
-						}
-
-						/* A picker row leaves its columns to the caller (pickerRow.css.ts): the name takes
-						   the slack, or space-between pushes it off its own icon to the row's far edge. */
-						.source > select option > .name {
-							flex: 1;
-						}
-
-						/* The name ellipsizes so a verbose calendar can't squeeze the strip; the icon the
-						   clone carries is dropped — the dot in front marks the source (the picker's own
-						   options keep theirs). */
-						.source > select selectedcontent {
-							display: block;
-							max-width: 10rem;
-							overflow: hidden;
-							text-overflow: ellipsis;
-							white-space: nowrap;
-
-							mitra-source-icon {
-								display: none;
+							> .bar {
+								grid-column: 2;
+								display: flex;
+								align-items: center;
+								margin-inline: -0.4375rem -0.25rem;
 							}
-						}
 
-						/* The effective colour as one swatch-sized dot in the glyph gutter — it doubles as
-						   the source's mark (the chip beside it deliberately has no icon). */
-						> .color {
-							grid-column: 1;
-							display: inline-flex;
-							align-items: center;
+							> .bar > .spacer { flex: 1; }
 
-							> .dot {
-								width: 0.875rem;
-								height: 0.875rem;
-								border-radius: var(--border-radius);
-								border: none;
-								cursor: pointer;
-								padding: 0;
-								transition: transform 0.1s;
+							mitra-icon-button {
+								font-size: 0.8125rem;
+							}
 
-								&:hover {
-									transform: scale(1.15);
+							/* The chips ARE fields (field.css.ts) — rest/hover/open/focus states, chevron reveal
+							   and picker anchoring all come from there, the picker's surface and option rows from
+							   selectStyles/pickerRow. Only the tighter box is the toolbar's own. */
+							:is(.entry-type, .source).field {
+								--control-height: 1.5rem;
+								--field-padding-inline: 0.4375rem;
+							}
+
+							/* A picker row leaves its columns to the caller (pickerRow.css.ts): the name takes
+							   the slack, or space-between pushes it off its own icon to the row's far edge. */
+							.source > select option > .name {
+								flex: 1;
+							}
+
+							/* The name ellipsizes so a verbose calendar can't squeeze the strip; the icon the
+							   clone carries is dropped — the dot in front marks the source (the picker's own
+							   options keep theirs). */
+							.source > select selectedcontent {
+								display: block;
+								max-width: 10rem;
+								overflow: hidden;
+								text-overflow: ellipsis;
+								white-space: nowrap;
+
+								mitra-source-icon {
+									display: none;
 								}
 							}
 
-							/* The palette is a <menu popover>, so surface and placement come from menu.css.ts;
-							   it holds swatches instead of rows, hence the one padding it does ask for. */
-							> menu[popover] {
-								padding: 0.5rem;
-								flex-direction: row;
+							/* The effective colour as one swatch-sized dot in the glyph gutter — it doubles as
+							   the source's mark (the chip beside it deliberately has no icon). */
+							> .color {
+								grid-column: 1;
+								display: inline-flex;
+								align-items: center;
+
+								> .dot {
+									width: 0.875rem;
+									height: 0.875rem;
+									border-radius: var(--border-radius);
+									border: none;
+									cursor: pointer;
+									padding: 0;
+									transition: transform 0.1s;
+
+									&:hover {
+										transform: scale(1.15);
+									}
+								}
+
+								/* The palette is a <menu popover>, so surface and placement come from menu.css.ts;
+								   it holds swatches instead of rows, hence the one padding it does ask for. */
+								> menu[popover] {
+									padding: 0.5rem;
+									flex-direction: row;
+								}
+							}
+						}
+
+						> .title-row {
+							display: grid;
+							grid-template-columns: var(--gutter) minmax(0, 1fr);
+							column-gap: 0.5rem;
+							align-items: center;
+
+							> mitra-task-status {
+								grid-column: 1;
+								font-size: 0.95rem;
+							}
+
+							> .title {
+								grid-column: 2;
+								margin-inline-start: -0.5rem;
+								font-size: 0.9375rem;
+								font-weight: 600;
+								color: var(--color-text);
+								line-height: 1.3;
+
+								&[data-struck] {
+									text-decoration: line-through;
+									color: var(--color-text-muted);
+								}
 							}
 						}
 					}
@@ -465,29 +493,6 @@ export class EntryDetailsComponent extends Component {
 								align-items: center;
 								flex-wrap: wrap;
 								opacity: 0.85;
-							}
-
-							/* Title row: the task checkbox sits in the gutter (lined up with the icons below); the
-							title fills the content columns — or the whole row when there's no checkbox (events). */
-							&.title-row {
-								> mitra-task-status { font-size: 0.95rem; }
-
-								> .title {
-									grid-column: 2 / -1;
-									/* The title is a field of its own (the checkbox stays outside its box); the
-									leading net-zero pair keeps its text on the popover's rhythm line while the
-									border reaches out like every other field's. */
-									margin-inline-start: -0.5rem;
-									font-size: 0.9375rem;
-									font-weight: 600;
-									color: var(--color-text);
-									line-height: 1.3;
-
-									&[data-struck] {
-										text-decoration: line-through;
-										color: var(--color-text-muted);
-									}
-								}
 							}
 
 							&.description {
@@ -597,56 +602,65 @@ export class EntryDetailsComponent extends Component {
 	protected override get template() {
 		return !this.segment ? html.nothing : html`
 			<div class="editor">
-				${/* The toolbar: what the entry IS (its type — a switch only while that's still a choice),
-				    where it LIVES (source + its effective colour), and the window chrome. It sits OUTSIDE
-				    the scrolling list, so it stays locked in place — in the anchored popover and as the
-				    bottom sheet's persistent chrome alike. */''}
 				<header>
-					${this.colorTemplate}
-					<span class="bar">
-						${this.sourceTemplate}
-						<span class="spacer"></span>
-						${this.entryTypeTemplate}
-						${!this.hasMenu ? html.nothing : html`
-							<mitra-icon-button
-								label=${t('Options')}
-								icon="more-horizontal"
-								style="anchor-name: --entry-menu-${this.segment.entry.id}; color: var(--color-text-muted)"
-								@click=${this.toggleMenu}
-							></mitra-icon-button>
-						`}
-						<menu popover id="entry-menu-${this.segment.entry.id}" style="position-anchor: --entry-menu-${this.segment.entry.id}">
-							${/* The pointer twin of Alt-drag (see EntryDragController), which is what the hint
-						    advertises: no drop position here, so the copy lands on this entry's own slot and
-						    opens for editing — the change you duplicated it to make comes next. Offered on a
-						    saved entry only, the same bar the gesture sets: a draft is not yet a thing to
-						    copy, and duplicating one would persist the copy while the original stayed local. */''}
-							${this.externalLinkTemplate}
-							${!this.segment.entry.persisted || !this.capabilities.createEntries ? html.nothing : html`
-								<button @click=${this.handleDuplicate}>
-									<mitra-icon icon="copy"></mitra-icon>
-									${t('Duplicate')}
-									<kbd>${EntryDetailsComponent.altKey}</kbd>
-									<span class="word">${t('drag')}</span>
-								</button>
-						`}
-							${!this.capabilities.deleteEntries ? html.nothing : html`
-								<button class="danger" @click=${(e: MouseEvent) => void this.handleDelete(EntryDetailsComponent.bypassesScope(e))}>
-									<mitra-icon icon="trash-2"></mitra-icon>
-									${t('Delete')}
-									<kbd>${EntryDetailsComponent.appleKeyboard ? '⌫' : 'Del'}</kbd>
-								</button>
+					<div class="toolbar">
+						${this.colorTemplate}
+						<span class="bar">
+							${this.sourceTemplate}
+							<span class="spacer"></span>
+							${this.entryTypeTemplate}
+							${!this.hasMenu ? html.nothing : html`
+								<mitra-icon-button
+									label=${t('Options')}
+									icon="more-horizontal"
+									style="anchor-name: --entry-menu-${this.segment.entry.id}; color: var(--color-text-muted)"
+									@click=${this.toggleMenu}
+								></mitra-icon-button>
 							`}
-						</menu>
-						<mitra-icon-button class="close" icon="x" label=${t('Close')}
-							style="color: var(--color-text-muted)"
-							@click=${this.handleClose}
-						></mitra-icon-button>
-					</span>
+							<menu popover id="entry-menu-${this.segment.entry.id}" style="position-anchor: --entry-menu-${this.segment.entry.id}">
+								${this.externalLinkTemplate}
+								${!this.segment.entry.persisted || !this.capabilities.createEntries ? html.nothing : html`
+									<button @click=${this.handleDuplicate}>
+										<mitra-icon icon="copy"></mitra-icon>
+										${t('Duplicate')}
+										<kbd>${EntryDetailsComponent.altKey}</kbd>
+										<span class="word">${t('drag')}</span>
+									</button>
+								`}
+								${!this.capabilities.deleteEntries ? html.nothing : html`
+									<button class="danger" @click=${(e: MouseEvent) => void this.handleDelete(EntryDetailsComponent.bypassesScope(e))}>
+										<mitra-icon icon="trash-2"></mitra-icon>
+										${t('Delete')}
+										<kbd>${EntryDetailsComponent.appleKeyboard ? '⌫' : 'Del'}</kbd>
+									</button>
+								`}
+							</menu>
+							<mitra-icon-button class="close" icon="x" label=${t('Close')}
+								style="color: var(--color-text-muted)"
+								@click=${this.handleClose}
+							></mitra-icon-button>
+						</span>
+					</div>
+					${this.titleRowTemplate}
 				</header>
 				<ul>
 					${join(this.groups, html`<hr>`)}
 				</ul>
+			</div>
+		`
+	}
+
+	private get titleRowTemplate() {
+		const entry = this.segment!.entry
+		return html`
+			<div class="title-row">
+				${!entry.type.isTask ? html.nothing : html`
+					<mitra-task-status .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-task-status>
+				`}
+				<input class="title field" placeholder=${t('Title')}
+					?readonly=${!this.capabilities.editEntries || (entry.persisted && !this.capabilities.renameEntries)}
+					?data-struck=${entry.status === TaskStatus.Done || entry.status === TaskStatus.Cancelled}
+					${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
 			</div>
 		`
 	}
@@ -669,24 +683,8 @@ export class EntryDetailsComponent extends Component {
 	private get groups() {
 		const entry = this.segment!.entry
 		const groups = [
-			[
-				html`
-					<li class="title-row">
-						${!entry.type.isTask ? html.nothing : html`
-							<mitra-task-status .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-task-status>
-						`}
-						<input class="title field" placeholder=${t('Title')}
-							?readonly=${!this.capabilities.editEntries || (entry.persisted && !this.capabilities.renameEntries)}
-							?data-struck=${entry.status === TaskStatus.Done || entry.status === TaskStatus.Cancelled}
-							${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
-					</li>
-				`,
-				// Rendered for an UNDATED entry too, where it shows just the way in (see EntryDetailsWhen).
-				// Withholding it left an unscheduled task with no way to be given a date at all.
-				html`
-					<mitra-entry-details-when .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-entry-details-when>
-				`,
-			],
+			// Rendered for an UNDATED entry too, where it shows just the way in (see EntryDetailsWhen).
+			[html`<mitra-entry-details-when .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-entry-details-when>`],
 			[this.locationTemplate, this.participantsTemplate, this.descriptionTemplate],
 			[
 				!EntryDetailsSharing.applies(entry) ? html.nothing : html`
@@ -870,11 +868,17 @@ export class EntryDetailsComponent extends Component {
 
 	@state() private editingDescription = false
 
+	/** Handles interactive checklist box toggling in the rendered markdown description. */
+	private readonly handleChecklistToggle = (e: CustomEvent<{ index: number, checked: boolean }>) => {
+		const entry = this.segment!.entry
+		entry.description = entry.checklist.toggle(e.detail.index, e.detail.checked)
+		this.handleInPlaceEdit()
+	}
+
 	private get descriptionTemplate() {
 		const editDescription = (e: Event) => {
-			// A click on a link should follow it rather than switch into edit mode. A read-only entry never
-			// leaves the rendered face either: markdown stays selectable, a disabled textarea does not.
-			if (!this.capabilities.editEntries || e.composedPath().some(node => node instanceof HTMLAnchorElement)) {
+			// Ignore clicks on links (navigation) or checkboxes (handled by @check).
+			if (!this.capabilities.editEntries || e.composedPath().some(node => node instanceof HTMLAnchorElement || node instanceof HTMLInputElement)) {
 				return
 			}
 			this.editingDescription = true
@@ -903,7 +907,10 @@ export class EntryDetailsComponent extends Component {
 						${!this.segment!.entry.description ? html`
 							<div class="placeholder">${t('Description')}</div>
 							` : html`
-								<mitra-markdown .value=${this.segment!.entry.description}></mitra-markdown>
+								<mitra-markdown .value=${this.segment!.entry.description}
+									?interactive=${this.capabilities.editEntries}
+									@check=${this.handleChecklistToggle}
+								></mitra-markdown>
 						`}
 					</div>
 				`}

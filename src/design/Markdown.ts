@@ -1,7 +1,13 @@
-import { Component, component, css, html, property } from '@a11d/lit'
+import { Component, component, css, event, html, property } from '@a11d/lit'
 import { marked, Renderer, type Tokens } from 'marked'
 
 export class MarkdownRenderer extends Renderer {
+	/** Whether task-list checkboxes are interactive. */
+	interactive = false
+
+	/** Document-order checkbox counter for Checklist alignment. */
+	private checkboxes = 0
+
 	private static readonly calloutIcons = new Map<string, string>([
 		['note', 'info'],
 		['info', 'info'],
@@ -17,6 +23,24 @@ export class MarkdownRenderer extends Renderer {
 	override heading(token: Tokens.Heading) {
 		// Demote one level so embedded content never injects an <h1>.
 		return super.heading({ ...token, depth: Math.min(token.depth + 1, 6) })
+	}
+
+	/** Wraps task list item contents in .label to preserve single grid column layout. */
+	override listitem(token: Tokens.ListItem) {
+		const content = super.listitem(token)
+		const input = token.task ? content.match(/<input\b[^>]*>/)?.[0] : undefined
+		return !input ? content : content
+			.replace(input, '')
+			.replace('<li>', `<li class="task">${input}<div class="label">`)
+			.replace(/<\/li>\s*$/, '</div></li>\n')
+	}
+
+	override checkbox({ checked }: Tokens.Checkbox) {
+		const index = this.checkboxes++
+		const state = checked ? ' checked=""' : ''
+		return this.interactive
+			? `<input type="checkbox"${state} data-checkbox="${index}">`
+			: `<input type="checkbox"${state} disabled="">`
 	}
 
 	override link(token: Tokens.Link) {
@@ -46,6 +70,7 @@ export class MarkdownRenderer extends Renderer {
 	}
 
 	render(markdown: string) {
+		this.checkboxes = 0
 		// Rename every HTML tag to a `mitra-markdown-*` custom element. Unknown ones render inert
 		// (so raw/unsafe HTML is neutralized); defining a `mitra-markdown-x` element opts into it.
 		markdown = markdown
@@ -59,9 +84,25 @@ export class MarkdownRenderer extends Renderer {
 export class Markdown extends Component {
 	@property() value = ''
 
+	/** Enables interactive checkbox toggling. */
+	@property({ type: Boolean }) interactive = false
+
+	/** Dispatches checkbox index and target state on toggle. */
+	@event() readonly check!: EventDispatcher<{ index: number, checked: boolean }>
+
 	protected readonly renderer = new MarkdownRenderer()
 
 	protected override createRenderRoot() { return this }
+
+	private readonly handleChange = (e: Event) => {
+		const box = e.target as HTMLInputElement
+		const index = Number(box.dataset.checkbox)
+		if (box.type !== 'checkbox' || Number.isNaN(index)) {
+			return
+		}
+		e.stopPropagation()
+		this.check.dispatch({ index, checked: box.checked })
+	}
 
 	static override get styles() {
 		return css`
@@ -107,6 +148,40 @@ export class Markdown extends Component {
 
 				li {
 					margin: 0.2em 0;
+				}
+
+				li.task {
+					list-style: none;
+					display: grid;
+					grid-template-columns: auto minmax(0, 1fr);
+					gap: 0.5em;
+					align-items: start;
+					margin-inline-start: -1.4em;
+
+					> input[type=checkbox] {
+						inline-size: 1.1em;
+						block-size: 1.1em;
+						margin-block-start: calc((1lh - 1.1em) / 2);
+
+						&::before {
+							inline-size: 0.8em;
+							block-size: 0.8em;
+						}
+
+						&:disabled {
+							cursor: default;
+						}
+					}
+
+					> .label {
+						> :first-child { margin-block-start: 0; }
+						> :last-child { margin-block-end: 0; }
+					}
+
+					&:has(> input:checked) > .label {
+						color: var(--color-text-muted);
+						text-decoration: line-through;
+					}
 				}
 
 				blockquote {
@@ -204,7 +279,8 @@ export class Markdown extends Component {
 	}
 
 	protected override get template() {
-		return html`<main .innerHTML=${this.renderer.render(this.value)}></main>`
+		this.renderer.interactive = this.interactive
+		return html`<main @change=${this.handleChange} .innerHTML=${this.renderer.render(this.value)}></main>`
 	}
 }
 

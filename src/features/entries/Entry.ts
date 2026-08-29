@@ -11,6 +11,7 @@ import { type Relation, type RelationInit } from '../relations/Relation.js'
 import { type RelationType } from '../relations/RelationType.js'
 import { RelationEdge } from '../relations/RelationEdge.js'
 import { EntryRelations } from '../relations/EntryRelations.js'
+import { Checklist } from './Checklist.js'
 
 export enum TaskStatus {
 	ToDo = 'todo',
@@ -19,14 +20,22 @@ export enum TaskStatus {
 	Cancelled = 'cancelled',
 }
 
+/** Progress tally for a specific step category (subtasks or checklist items). */
+export interface EntryTally {
+	readonly done: number
+	readonly total: number
+}
+
 /**
- * Direct subtask progress rollup derived from relations per read.
- * `total` excludes cancelled tasks; `children` counts all direct children; `descendants` counts full subtree.
+ * Task progress rollup derived from subtasks and description checklist items.
+ * Total excludes cancelled subtasks; children and descendants count direct and full subtask trees.
  */
 export interface EntryRollup {
 	readonly done: number
 	readonly total: number
 	readonly progress: number
+	readonly subtasks: EntryTally
+	readonly checklist: EntryTally
 	readonly children: number
 	readonly descendants: number
 }
@@ -157,6 +166,11 @@ export class Entry {
 	/** Authored progress fraction (0-1) derived from percentComplete. Parent subtask rollups belong to {@link RelationGraph}. */
 	get progress(): number | undefined {
 		return this.percentComplete === null || this.percentComplete === undefined ? undefined : this.percentComplete / 100
+	}
+
+	/** Parsed description checklist items. */
+	get checklist(): Checklist {
+		return Checklist.of(this.description)
 	}
 
 	get done() { return this.status === TaskStatus.Done }

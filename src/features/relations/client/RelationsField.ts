@@ -603,9 +603,9 @@ export class RelationsField extends Component {
 				<mitra-icon icon=${section.icon}></mitra-icon>
 				<div class="lines">
 					<span class="kind">${section.format()}</span>
-					${section !== RelationSection.Subtasks || !this.rollup?.total ? html.nothing : html`
-						<span class="tally" title=${t('${done} of ${total:pluralityNumber} subtasks done', { done: this.rollup.done.format(), total: this.rollup.total })}>
-							${this.rollup.done.format()}/${this.rollup.total.format()}
+					${section !== RelationSection.Subtasks || !this.rollup?.subtasks.total ? html.nothing : html`
+						<span class="tally" title=${t('${done} of ${total:pluralityNumber} subtasks done', { done: this.rollup.subtasks.done.format(), total: this.rollup.subtasks.total })}>
+							${this.rollup.subtasks.done.format()}/${this.rollup.subtasks.total.format()}
 						</span>
 					`}
 					${lines.map(line => {

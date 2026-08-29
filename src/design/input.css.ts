@@ -94,13 +94,12 @@ export const inputStyles = css`
 		appearance: none;
 		box-sizing: border-box;
 		flex-shrink: 0;
-		width: 1.125rem;
-		height: 1.125rem;
+		inline-size: 1.125rem;
+		block-size: 1.125rem;
 		margin: 0;
 		padding: 0;
 		border-radius: var(--border-radius);
 		background: color-mix(in srgb, var(--color-text) 6%, transparent);
-		display: grid;
 		place-content: center;
 		cursor: pointer;
 		outline: none;
@@ -108,8 +107,8 @@ export const inputStyles = css`
 
 		&::before {
 			content: "";
-			width: 0.8rem;
-			height: 0.8rem;
+			inline-size: 0.8rem;
+			block-size: 0.8rem;
 			transform: scale(0);
 			transition: transform 0.12s cubic-bezier(0.2, 0.9, 0.3, 1.4);
 			background-color: var(--color-accent-text);

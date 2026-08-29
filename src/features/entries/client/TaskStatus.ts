@@ -1,5 +1,5 @@
 import { Component, component, html, css, property, event, query } from '@a11d/lit'
-import { type Entry, TaskStatus } from '../Entry.js'
+import { type Entry, type EntryRollup, TaskStatus } from '../Entry.js'
 import { getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
 import { offerToCloseSubtasks } from '../../relations/client/Hierarchy.js'
@@ -59,10 +59,22 @@ export class TaskStatusComponent extends Component {
 	private get progressLabel() {
 		const rollup = Relations.rollupOf(this.entry)
 		if (rollup?.total) {
-			return t('${done} of ${total:pluralityNumber} subtasks done', { done: String(rollup.done), total: rollup.total })
+			return TaskStatusComponent.summarize(rollup)
 		}
 		const progress = this.progress
 		return progress === undefined ? undefined : t('${percent}% complete', { percent: String(Math.round(progress * 100)) })
+	}
+
+	/** Formats progress summary label adapted by step type (subtasks, checklist items, or steps). */
+	private static summarize(rollup: EntryRollup) {
+		const done = String(rollup.done)
+		if (!rollup.checklist.total) {
+			return t('${done} of ${total:pluralityNumber} subtasks done', { done, total: rollup.total })
+		}
+		if (!rollup.subtasks.total) {
+			return t('${done} of ${total:pluralityNumber} checklist items done', { done, total: rollup.total })
+		}
+		return t('${done} of ${total:pluralityNumber} steps done', { done, total: rollup.total })
 	}
 
 	@query('menu[popover]') private readonly menu?: HTMLElement
@@ -401,8 +413,8 @@ export class TaskStatusComponent extends Component {
 		if (rollup?.total) {
 			// RFC 5545 §3.8.1.8: a completed task reads 100%.
 			const value = Math.round((this.progress ?? rollup.progress) * 100)
-			const leftover = this.entry.closed && rollup.done < rollup.total
-			const summary = t('${done} of ${total:pluralityNumber} subtasks done', { done: String(rollup.done), total: rollup.total })
+			const leftover = this.entry.closed && rollup.subtasks.done < rollup.subtasks.total
+			const summary = TaskStatusComponent.summarize(rollup)
 			return html`
 				<div class="progress-section subtasks">
 					<div class="progress-header">

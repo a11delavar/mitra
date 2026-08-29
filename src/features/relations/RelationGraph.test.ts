@@ -201,6 +201,37 @@ describe('RelationGraph', () => {
 			])
 			assert.equal(graph.rollupOf('a')!.total, 1)
 		})
+
+		describe('with a checklist in the description', () => {
+			const boxes = '- [x] one\n- [ ] two\n- [ ] three'
+
+			it('counts the boxes of an entry that parents nothing at all', () => {
+				const rollup = RelationGraph.of([entry('lonely', [], { description: boxes })]).rollupOf('lonely')
+				assert.deepEqual([rollup!.done, rollup!.total, rollup!.progress], [1, 3, 1 / 3])
+				assert.deepEqual([rollup!.subtasks.total, rollup!.checklist.total], [0, 3])
+			})
+
+			it('adds them to the subtasks rather than averaging the two sides', () => {
+				const graph = RelationGraph.of([
+					entry('parent', [], { description: boxes }),
+					childOf('a', { status: TaskStatus.Done }),
+					childOf('b'),
+				])
+				const rollup = graph.rollupOf('parent')
+				assert.deepEqual([rollup!.done, rollup!.total, rollup!.progress], [2, 5, 0.4])
+				assert.deepEqual([rollup!.subtasks, rollup!.checklist], [{ done: 1, total: 2 }, { done: 1, total: 3 }])
+			})
+
+			it('weights a subtask by its own boxes, the way it weights one by its own subtasks', () => {
+				const graph = RelationGraph.of([entry('parent'), childOf('a', { description: '- [x] one\n- [ ] two' })])
+				assert.equal(graph.rollupOf('parent')!.progress, 0.5)
+			})
+
+			it('leaves an event\'s boxes out — an event has no progress to state', () => {
+				const graph = RelationGraph.of([entry('e', [], { type: EntryType.Event, start: new DateTime(), description: boxes })])
+				assert.equal(graph.rollupOf('e'), undefined)
+			})
+		})
 	})
 
 	describe('ancestorsCompletedBy', () => {
@@ -254,6 +285,15 @@ describe('RelationGraph', () => {
 				entry('b', [{ type: RelationType.Parent, targetUid: 'a' }], done),
 			])
 			assert.equal(graph.ancestorsCompletedBy('a').length <= 2, true)
+		})
+
+		it('holds back an ancestor with a box of its own still open', () => {
+			const parentWith = (description: string) => RelationGraph.of([
+				entry('parent', [], { description }),
+				entry('child', [{ type: RelationType.Parent, targetUid: 'parent' }], done),
+			]).ancestorsCompletedBy('child').map(found => found.uid)
+			assert.deepEqual(parentWith('- [ ] Still to do'), [])
+			assert.deepEqual(parentWith('- [x] All ticked'), ['parent'])
 		})
 	})
 

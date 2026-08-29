@@ -293,6 +293,8 @@
 	"Subtask of": "Attività secondaria di",
 	"Subtasks": "Attività secondarie",
 	"${done} of ${total:pluralityNumber} subtasks done": ["${done} di ${total:pluralityNumber} attività secondaria completata", "${done} di ${total:pluralityNumber} attività secondarie completate"],
+	"${done} of ${total:pluralityNumber} checklist items done": ["${done} di ${total:pluralityNumber} voce dell'elenco completata", "${done} di ${total:pluralityNumber} voci dell'elenco completate"],
+	"${done} of ${total:pluralityNumber} steps done": ["${done} di ${total:pluralityNumber} passaggio completato", "${done} di ${total:pluralityNumber} passaggi completati"],
 	"All subtasks done": "Tutte le attività secondarie sono completate",
 	"\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks are still open.": ["«${heading}» è chiusa, ma ${count:pluralityNumber} delle sue attività secondarie è ancora aperta.", "«${heading}» è chiusa, ma ${count:pluralityNumber} delle sue attività secondarie sono ancora aperte."],
 	"Close out the subtasks that are still open": "Chiudi le attività secondarie ancora aperte",

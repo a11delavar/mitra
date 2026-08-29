@@ -30,6 +30,8 @@
 	"YearView.Keywords": "switch grid",
 	"TimelineView.Keywords": "switch gantt roadmap plan",
 	"${done} of ${total:pluralityNumber} subtasks done": ["${done} of ${total:pluralityNumber} subtask done", "${done} of ${total:pluralityNumber} subtasks done"],
+	"${done} of ${total:pluralityNumber} checklist items done": ["${done} of ${total:pluralityNumber} checklist item done", "${done} of ${total:pluralityNumber} checklist items done"],
+	"${done} of ${total:pluralityNumber} steps done": ["${done} of ${total:pluralityNumber} step done", "${done} of ${total:pluralityNumber} steps done"],
 	"This and its ${count:pluralityNumber} subtasks": ["This and its ${count:pluralityNumber} subtask", "This and its ${count:pluralityNumber} subtasks"],
 	"\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks are still open.": ["\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks is still open.", "\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks are still open."],
 	"Keep the chain intact": "Keep the chain intact",

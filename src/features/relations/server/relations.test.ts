@@ -88,7 +88,7 @@ describe('hierarchy rollup', () => {
 		await relate(second, RelationType.Parent, 'parent')
 
 		const graph = await closureGraph()
-		assert.deepEqual(graph.rollupOf('parent'), { done: 1, total: 2, progress: 0.5, children: 2, descendants: 2 })
+		assert.deepEqual(graph.rollupOf('parent'), { done: 1, total: 2, progress: 0.5, subtasks: { done: 1, total: 2 }, checklist: { done: 0, total: 0 }, children: 2, descendants: 2 })
 	})
 
 	it('counts a foreign-authored CHILD row the same as a PARENT one', async () => {
@@ -97,7 +97,7 @@ describe('hierarchy rollup', () => {
 		await relate(parent, RelationType.Child, 'a')
 
 		const graph = await closureGraph()
-		assert.deepEqual(graph.rollupOf('parent'), { done: 1, total: 1, progress: 1, children: 1, descendants: 1 })
+		assert.deepEqual(graph.rollupOf('parent'), { done: 1, total: 1, progress: 1, subtasks: { done: 1, total: 1 }, checklist: { done: 0, total: 0 }, children: 1, descendants: 1 })
 	})
 
 	it('deduplicates an edge authored redundantly from both sides', async () => {
@@ -107,7 +107,7 @@ describe('hierarchy rollup', () => {
 		await relate(parent, RelationType.Child, 'a')
 
 		const graph = await closureGraph()
-		assert.deepEqual(graph.rollupOf('parent'), { done: 0, total: 1, progress: 0, children: 1, descendants: 1 })
+		assert.deepEqual(graph.rollupOf('parent'), { done: 0, total: 1, progress: 0, subtasks: { done: 0, total: 1 }, checklist: { done: 0, total: 0 }, children: 1, descendants: 1 })
 	})
 
 	it('drops a cancelled child from the denominator but still counts it as a child', async () => {
@@ -118,7 +118,7 @@ describe('hierarchy rollup', () => {
 		await relate(cancelled, RelationType.Parent, 'parent')
 
 		const graph = await closureGraph()
-		assert.deepEqual(graph.rollupOf('parent'), { done: 1, total: 1, progress: 1, children: 2, descendants: 2 })
+		assert.deepEqual(graph.rollupOf('parent'), { done: 1, total: 1, progress: 1, subtasks: { done: 1, total: 1 }, checklist: { done: 0, total: 0 }, children: 2, descendants: 2 })
 	})
 
 	it('leaves an event child out of the progress counts', async () => {
@@ -129,7 +129,7 @@ describe('hierarchy rollup', () => {
 		await relate(subtask, RelationType.Parent, 'parent')
 
 		const graph = await closureGraph()
-		assert.deepEqual(graph.rollupOf('parent'), { done: 1, total: 1, progress: 1, children: 2, descendants: 2 })
+		assert.deepEqual(graph.rollupOf('parent'), { done: 1, total: 1, progress: 1, subtasks: { done: 1, total: 1 }, checklist: { done: 0, total: 0 }, children: 2, descendants: 2 })
 	})
 
 	it('leaves an entry that parents nothing without a rollup', async () => {
@@ -151,7 +151,7 @@ describe('hierarchy rollup', () => {
 		await relate(grandchild, RelationType.Parent, 'a')
 
 		const graph = await closureGraph()
-		assert.deepEqual(graph.rollupOf('parent'), { done: 1, total: 1, progress: 1, children: 1, descendants: 2 })
+		assert.deepEqual(graph.rollupOf('parent'), { done: 1, total: 1, progress: 1, subtasks: { done: 1, total: 1 }, checklist: { done: 0, total: 0 }, children: 1, descendants: 2 })
 	})
 
 	it('calculates weighted progress when subtasks have custom percentComplete', async () => {
@@ -215,7 +215,7 @@ describe('hierarchy rollup', () => {
 
 			const graph = await closureGraph()
 			assert.deepEqual(graph.parentsOf('a').map(found => found.uid), ['parent'])
-			assert.deepEqual(graph.rollupOf('parent'), { done: 1, total: 1, progress: 1, children: 1, descendants: 1 })
+			assert.deepEqual(graph.rollupOf('parent'), { done: 1, total: 1, progress: 1, subtasks: { done: 1, total: 1 }, checklist: { done: 0, total: 0 }, children: 1, descendants: 1 })
 		})
 
 		it('answers the whole subtree beneath the entry, and never the entry itself', async () => {

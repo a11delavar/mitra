@@ -293,6 +293,8 @@
 	"Subtask of": "Subtarefa de",
 	"Subtasks": "Subtarefas",
 	"${done} of ${total:pluralityNumber} subtasks done": ["${done} de ${total:pluralityNumber} subtarefa concluída", "${done} de ${total:pluralityNumber} subtarefas concluídas"],
+	"${done} of ${total:pluralityNumber} checklist items done": ["${done} de ${total:pluralityNumber} item da lista concluído", "${done} de ${total:pluralityNumber} itens da lista concluídos"],
+	"${done} of ${total:pluralityNumber} steps done": ["${done} de ${total:pluralityNumber} passo concluído", "${done} de ${total:pluralityNumber} passos concluídos"],
 	"All subtasks done": "Todas as subtarefas concluídas",
 	"\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks are still open.": ["«${heading}» está fechada, mas ${count:pluralityNumber} das suas subtarefas continua aberta.", "«${heading}» está fechada, mas ${count:pluralityNumber} das suas subtarefas continuam abertas."],
 	"Close out the subtasks that are still open": "Fechar as subtarefas que continuam abertas",

@@ -33,14 +33,16 @@ declare global {
 		"${count:pluralityNumber} lose their reminders": unknown
 		"${count:pluralityNumber} lose their time zone": unknown
 		"${count:pluralityNumber} months": unknown
-		"${count:pluralityNumber} of ${total:number} entries copy to ${name}": unknown
-		"${count:pluralityNumber} of ${total:number} entries move to ${name}": unknown
+		"${count:pluralityNumber} of ${total:number} entries are copied": unknown
+		"${count:pluralityNumber} of ${total:number} entries move": unknown
 		"${count:pluralityNumber} participants": unknown
 		"${count:pluralityNumber} repeat": unknown
 		"${count:pluralityNumber} stayed in ${name}": unknown
 		"${count:pluralityNumber} stop being all-day": unknown
 		"${count:pluralityNumber} weeks": unknown
 		"${count:pluralityNumber} years": unknown
+		"${done} of ${total:pluralityNumber} checklist items done": unknown
+		"${done} of ${total:pluralityNumber} steps done": unknown
 		"${done} of ${total:pluralityNumber} subtasks done": unknown
 		"${names} and ${count:pluralityNumber} more": unknown
 		"${percent}% complete": unknown
@@ -119,7 +121,7 @@ declare global {
 		"Copy participants' emails": unknown
 		"Copy to ${name}": unknown
 		"Copy Version": unknown
-		"Copying…": unknown
+		"Copying ${count:pluralityNumber} entries…": unknown
 		"CopyVersion.Keywords": unknown
 		"Create and move entries right on the grid — every change syncs back to its source.": unknown
 		"Create Entry": unknown
@@ -164,10 +166,10 @@ declare global {
 		"Every": unknown
 		"Every entry in ${name} is copied — the ones the chosen calendar cannot take are left out. ${name} itself is read-only and stays exactly as it is.": unknown
 		"Every entry in ${name} moves — the ones the chosen calendar cannot take stay here.": unknown
-		"Every entry is copied first and only deleted here once its copy has landed — so a failure can leave a duplicate, never a hole.": unknown
 		"Every entry is still in ${name}. Nothing was deleted.": unknown
 		"Every subtask of \"${heading}\" is done, which completes ${count:pluralityNumber} more tasks above it. Mark them all as done?": unknown
 		"Every subtask of \"${heading}\" is done. Mark it as done too?": unknown
+		"Everything travels intact": unknown
 		"Flatten into single entries": unknown
 		"Flattening writes out a year of occurrences as separate entries. They stop repeating, and links pointing at the series are left behind.": unknown
 		"Forward": unknown
@@ -226,7 +228,7 @@ declare global {
 		"Move up": unknown
 		"Moved to ${name}": unknown
 		"MoveSourceEntries.Keywords": unknown
-		"Moving…": unknown
+		"Moving ${count:pluralityNumber} entries…": unknown
 		"navigate": unknown
 		"Navigation": unknown
 		"Never": unknown
@@ -242,6 +244,7 @@ declare global {
 		"No matching entries": unknown
 		"No release notes available": unknown
 		"None": unknown
+		"Nothing is deleted here until its copy has landed": unknown
 		"Nothing planned yet — draw a task on the row below": unknown
 		"Nothing was copied": unknown
 		"Nothing was moved": unknown
@@ -341,6 +344,7 @@ declare global {
 		"The calendars of your iCloud account": unknown
 		"The hours you book on Jira issues": unknown
 		"the last ${weekday}": unknown
+		"The originals stay exactly where they are": unknown
 		"The task databases of your workspace": unknown
 		"Their copies landed but the originals could not be deleted — delete them here by hand.": unknown
 		"There is no other calendar these entries could move to.": unknown

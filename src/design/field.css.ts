@@ -95,7 +95,8 @@ export const fieldStyles = css`
 			position-anchor: var(--field-anchor, --field);
 		}
 
-		:is(input, textarea, select):not(dialog *) {
+		/* Preserves checkbox/radio boxes inside fields (e.g. description task lists). */
+		:is(input:not([type=checkbox], [type=radio]), textarea, select):not(dialog *) {
 			height: auto;
 			background: transparent;
 			border: none;

@@ -67,6 +67,8 @@
 	"Subtask of": "Teilaufgabe von",
 	"Subtasks": "Teilaufgaben",
 	"${done} of ${total:pluralityNumber} subtasks done": ["${done} von ${total:pluralityNumber} Teilaufgabe erledigt", "${done} von ${total:pluralityNumber} Teilaufgaben erledigt"],
+	"${done} of ${total:pluralityNumber} checklist items done": ["${done} von ${total:pluralityNumber} Checklistenpunkt erledigt", "${done} von ${total:pluralityNumber} Checklistenpunkten erledigt"],
+	"${done} of ${total:pluralityNumber} steps done": ["${done} von ${total:pluralityNumber} Schritt erledigt", "${done} von ${total:pluralityNumber} Schritten erledigt"],
 	"${percent}% complete": "${percent} % erledigt",
 	"All subtasks done": "Alle Teilaufgaben erledigt",
 	"\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks are still open.": ["„${heading}“ ist abgeschlossen, aber ${count:pluralityNumber} Teilaufgabe ist noch offen.", "„${heading}“ ist abgeschlossen, aber ${count:pluralityNumber} Teilaufgaben sind noch offen."],

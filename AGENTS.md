@@ -48,6 +48,7 @@
   - **Incompatible**: `position-try-order: most-block-size` is forbidden.
   - **Testing**: Test with CDP touch/mouse events, not bare `segment.open = true`.
 - **Forms**: Constructors seed empty strings (`""`), never `undefined`, for form-bound fields (`uri`, credentials). Form `merge` methods use `||`, not `??`.
+- **Fields vs Content Controls**: `.field` strips chrome from host inputs/textareas/selects, but preserves checkboxes/radios (nested content). `input[type=checkbox]` uses `inline-grid` (prevents whole-line block wrapping in prose).
 - **Comments & Architecture**:
   - Comments must explain non-obvious constraints, invariants, or platform traps (1-3 sentences). No line-by-line narration.
   - Update `AGENTS.md` immediately when new architectural decisions are made.
@@ -254,6 +255,17 @@
   - Persistence: Dedicated endpoint `POST /api/entries/:id/relations`; excluded from standard entry dirty checking.
   - Migrations: Rebuilding `entry` table requires holding `entry_relation` rows in a temp table.
   - Closure API: `GET /entries/relations/closure` returns graph for connected entries.
+- **Task Progress Rollup** (`RelationGraph.rollupOf`):
+  - Steps combine subtasks and GFM `- [ ]` description checklists (`Checklist`, `src/features/entries/Checklist.ts`, `Entry.checklist`). Additive with equal weight (3 boxes + 2 subtasks = denominator of 5).
+  - `EntryRollup` provides aggregated sums (`done`, `total`, `progress`) and segregated tallies (`subtasks`, `checklist`).
+  - Readout labels adapt by active step types: subtasks only, checklist only, or neutral "steps" when mixed.
+  - Checklists apply strictly to tasks; `ancestorsCompletedBy` requires all checklist items complete.
+  - Ticking a box mutates description text via `Checklist.toggle` in-place without touching `status` or `percentComplete`.
+  - Round-trips through CalDAV `DESCRIPTION` and Notion `to_do` blocks (`NotionMarkdown`).
+- **Markdown Task Lists** (`src/design/Markdown.ts`):
+  - `MarkdownRenderer.listitem` lifts checkbox and wraps remaining content in `.label` (keeps inline formatting within a single grid column).
+  - `mitra-markdown[interactive]` removes `disabled` and numbers checkboxes in document order (matching `Checklist` line indexing). Emits `check` event on toggle (avoids collision with native `toggle` event).
+  - Checkbox dimensions sized in `em` to match prose line-height.
 - **UI & Connector Arrows** (`EntryConnections.ts`):
   - SVG router routes by grid columns (not dates).
   - Realm separation: Lane layer draws lane<->lane edges; canvas layer draws timed<->timed and cross-realm edges (via scroll-driven CSS animation timeline / offset correction).

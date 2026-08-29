@@ -84,8 +84,10 @@ export class RelationGraph {
 		return this.walk([...new Set(seeds)], family, 'up').includes(target)
 	}
 
-	/** Computes subtask progress rollup, memoized per graph. Cancelled tasks are omitted from the
-	 * denominator, and progress is weighted recursively by child rollups or authored percentComplete. */
+	/**
+	 * Computes task progress rollup across subtasks and description checklist items.
+	 * Equal weighting per step; cancelled subtasks are excluded.
+	 */
 	rollupOf(uid: string | undefined, visiting = new Set<string>()): EntryRollup | undefined {
 		if (uid === undefined || visiting.has(uid)) {
 			return undefined
@@ -94,8 +96,10 @@ export class RelationGraph {
 			return this.rollups.get(uid)
 		}
 		visiting.add(uid)
+		const subject = this.entryOf(uid)
+		const checklist = subject?.type.isTask ? subject.checklist : undefined
 		const children = this.childrenOf(uid)
-		if (!children.length) {
+		if (!children.length && !checklist?.total) {
 			this.rollups.set(uid, undefined)
 			return undefined
 		}
@@ -111,10 +115,15 @@ export class RelationGraph {
 			}
 			return child.percentComplete === null || child.percentComplete === undefined ? sum : sum + child.percentComplete / 100
 		}, 0)
+		const ticked = checklist?.done ?? 0
+		const boxes = checklist?.total ?? 0
+		const total = tasks.length + boxes
 		const rollup: EntryRollup = {
-			done,
-			total: tasks.length,
-			progress: tasks.length ? progressSum / tasks.length : 0,
+			done: done + ticked,
+			total,
+			progress: total ? (progressSum + ticked) / total : 0,
+			subtasks: { done, total: tasks.length },
+			checklist: { done: ticked, total: boxes },
 			children: children.length,
 			descendants: this.descendantsOf(uid).length,
 		}
@@ -122,8 +131,10 @@ export class RelationGraph {
 		return rollup
 	}
 
-	/** Returns ancestors that become completed when completing this entry, ordered deepest-first.
-	 * An ancestor completes when all non-cancelled task children are closed or part of the chain. */
+	/**
+	 * Returns ancestors that become completed when completing this entry (deepest first).
+	 * Requires all non-cancelled task children closed and description checklist fully ticked.
+	 */
 	ancestorsCompletedBy(uid: string | undefined): Array<Entry> {
 		const subject = this.entryOf(uid)
 		if (!subject) {
@@ -141,6 +152,10 @@ export class RelationGraph {
 					}
 					const children = this.childrenOf(parent.uid!).filter(child => child.type.isTask && child.status !== TaskStatus.Cancelled)
 					if (!children.length || !children.every(child => child.closed || closing.has(child))) {
+						continue
+					}
+					const checklist = parent.checklist
+					if (checklist.done < checklist.total) {
 						continue
 					}
 					closing.add(parent)

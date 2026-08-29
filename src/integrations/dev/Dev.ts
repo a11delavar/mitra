@@ -271,6 +271,27 @@ export async function seedDev(orm: MikroORM) {
 			location: 'City Center'
 		})
 
+		const declutter = personalTask({
+			heading: 'Declutter the Flat',
+			status: TaskStatus.Doing,
+			start: at(thisWeekMonday, 5, 11),
+			end: at(thisWeekMonday, 5, 13),
+			description: [
+				'Room by room, **one box at a time**:',
+				'',
+				'- [x] Laundry',
+				'- [ ] Wardrobe',
+				'- [ ] Cables and electronics drawer',
+			].join('\n'),
+		})
+		const charityPickup = personalTask({
+			heading: 'Book the Charity Pickup',
+			status: TaskStatus.Done,
+			start: at(thisWeekMonday, 3, 17),
+			end: at(thisWeekMonday, 3, 17, 30),
+		})
+		relate(charityPickup, RelationType.Parent, declutter)
+
 		// ---- Upkeep (Grey) ----
 
 		const hikeGroceryExdate = at(thisWeekMonday, 5, 10).getTime() // Exclude the Saturday of the hike
