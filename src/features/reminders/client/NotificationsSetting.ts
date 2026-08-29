@@ -1,6 +1,7 @@
 import { html } from '@a11d/lit'
 import { Setting, setting, type SettingStorage } from '../../settings/client/Setting.js'
 import { enablePushNotifications, pushSupported } from './push.js'
+import './NotificationDevices.js'
 
 /** Browser notification permission setting. Uses browser permission state directly. */
 @setting()
@@ -38,6 +39,11 @@ export class NotificationsSetting extends Setting<boolean> {
 			heading: `${this.heading}: ${t('Toggle.On')}`,
 			apply: () => this.set(true),
 		}]
+	}
+
+	/** Displays registered devices and test push trigger once permission is granted. */
+	override get details() {
+		return Notification.permission !== 'granted' ? undefined : html`<mitra-notification-devices></mitra-notification-devices>`
 	}
 
 	override get control() {

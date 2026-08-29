@@ -132,6 +132,7 @@ declare global {
 		"Copy Version": unknown
 		"Copying ${count:pluralityNumber} entries…": unknown
 		"CopyVersion.Keywords": unknown
+		"Could not load your devices.": unknown
 		"Create and move entries right on the grid — every change syncs back to its source.": unknown
 		"Create Entry": unknown
 		"CreateEntry.Keywords": unknown
@@ -161,6 +162,7 @@ declare global {
 		"Delete the locally cached entries of every enabled source and import everything again": unknown
 		"Delete the open entry": unknown
 		"Description": unknown
+		"Devices": unknown
 		"Does not repeat": unknown
 		"Doing": unknown
 		"Done": unknown
@@ -217,6 +219,7 @@ declare global {
 		"KeyboardShortcuts.Keywords": unknown
 		"Language": unknown
 		"LanguageSetting.Keywords": unknown
+		"last seen ${when}": unknown
 		"Leave the originals here and add a copy over there": unknown
 		"Leave them here": unknown
 		"Light": unknown
@@ -253,6 +256,7 @@ declare global {
 		"Moving ${count:pluralityNumber} entries…": unknown
 		"navigate": unknown
 		"Navigation": unknown
+		"never": unknown
 		"Never": unknown
 		"New dev build — ${count:pluralityNumber} commits ahead": unknown
 		"New task": unknown
@@ -262,6 +266,7 @@ declare global {
 		"Nextcloud, Fastmail, Radicale — any CalDAV server": unknown
 		"NextPeriod.Keywords": unknown
 		"No date": unknown
+		"No device is registered for reminders yet.": unknown
 		"No matches": unknown
 		"No matching entries": unknown
 		"No release notes available": unknown
@@ -338,6 +343,7 @@ declare global {
 		"Search or run a command…": unknown
 		"Search settings…": unknown
 		"select": unknown
+		"Send test": unknown
 		"Server URL": unknown
 		"Set as the default for new entries": unknown
 		"Settings": unknown
@@ -360,6 +366,7 @@ declare global {
 		"Sources": unknown
 		"Start date": unknown
 		"Start time": unknown
+		"Stop notifying this device": unknown
 		"Subtask of": unknown
 		"Subtasks": unknown
 		"Subtasks still open": unknown
@@ -369,6 +376,7 @@ declare global {
 		"Tasks without a date land here — drag one onto the calendar to schedule it": unknown
 		"Tempo API Token": unknown
 		"Tempo.TokenHint": unknown
+		"Test notification sent.": unknown
 		"the ${ordinal}": unknown
 		"the ${ordinal} ${weekday}": unknown
 		"The calendars of your Google account": unknown
@@ -386,6 +394,7 @@ declare global {
 		"This and its ${count:pluralityNumber} subtasks": unknown
 		"This browser is blocking notifications — allow them in its site settings to get reminders here.": unknown
 		"This browser will show your reminders.": unknown
+		"this device": unknown
 		"This entry": unknown
 		"This relationship could not be saved": unknown
 		"This relationship is not possible": unknown
@@ -405,6 +414,7 @@ declare global {
 		"Toggle.On": unknown
 		"ToggleSidebar.Keywords": unknown
 		"unchanged": unknown
+		"Unknown device": unknown
 		"Unknown entry": unknown
 		"Unreleased": unknown
 		"Unscheduled": unknown

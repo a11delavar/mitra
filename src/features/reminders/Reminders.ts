@@ -1,43 +1,53 @@
-import { type Entry } from '../entries/Entry.js'
+import { FLOATING_TIME_ZONE, type Entry } from '../entries/Entry.js'
 /**
- * The pure reminder arithmetic, shared by the scheduler (ReminderScheduler.ts) and its tests — free of
- * the ORM/push machinery on purpose, so "what is due" stays a function of values.
- *
- * A reminder is MINUTES BEFORE START on its entry (see Entry.reminders); its fire time is simply
- * `start − minutes`. A tick fires everything in the half-open window `(watermark, now]` — exclusive at
- * the watermark (the previous tick owned that instant), inclusive at now.
+ * Pure reminder arithmetic for calculating due notification timestamps.
  */
 
 const MINUTE = 60_000
 
-/** The reminders due in `(watermark, now]` among `entries` (plain rows and expanded occurrences alike). */
-export function dueReminders(entries: ReadonlyArray<Entry>, watermark: Date, now: Date): Array<{ entry: Entry, minutes: number }> {
+export interface DueReminder {
+	entry: Entry
+	minutes: number
+	/** Target fire timestamp in epoch ms. */
+	fireAt: number
+	/** Observer-resolved anchor timestamp in epoch ms. */
+	anchor: number
+}
+
+/**
+ * Calculate the timestamp an entry's reminders count back from, resolving floating times against observer `zone`.
+ */
+export function anchorInstant(entry: Entry, zone?: string): number | undefined {
+	const anchor = entry.reminderAnchor
+	if (!anchor) {
+		return undefined
+	}
+	const epoch = (anchor as unknown as Date).getTime()
+	if (entry.allDay || entry.timeZone !== FLOATING_TIME_ZONE || !zone) {
+		return epoch
+	}
+	return Temporal.Instant.fromEpochMilliseconds(epoch)
+		.toZonedDateTimeISO('UTC')
+		.toPlainDateTime()
+		.toZonedDateTime(zone, { disambiguation: 'compatible' })
+		.epochMilliseconds
+}
+
+/**
+ * Find reminders due within `(watermark, until]`, resolving floating time zones via `zoneOf`.
+ */
+export function dueReminders(entries: ReadonlyArray<Entry>, watermark: Date, until: Date, zoneOf?: (entry: Entry) => string | undefined): Array<DueReminder> {
 	return entries.flatMap(entry => {
-		if (!entry.start || !entry.reminders?.length) {
+		if (!entry.reminders?.length) {
 			return []
 		}
-		const start = (entry.start as unknown as Date).getTime()
+		const anchor = anchorInstant(entry, zoneOf?.(entry))
+		if (anchor === undefined) {
+			return []
+		}
 		return entry.reminders
-			.filter(minutes => {
-				const fireAt = start - minutes * MINUTE
-				return fireAt > watermark.getTime() && fireAt <= now.getTime()
-			})
-			.map(minutes => ({ entry, minutes }))
+			.map(minutes => ({ entry, minutes, anchor, fireAt: anchor - minutes * MINUTE }))
+			.filter(({ fireAt }) => fireAt > watermark.getTime() && fireAt <= until.getTime())
 	})
 }
 
-/** "30 min", "1 hour", "2 days" — matching the units the editor offers. English for now, like the
- * editor's own labels; localization slots in here later. */
-export function reminderSpan(minutes: number): string {
-	const units = [
-		{ label: 'week', minutes: 7 * 24 * 60 },
-		{ label: 'day', minutes: 24 * 60 },
-		{ label: 'hour', minutes: 60 },
-	]
-	const unit = units.find(unit => minutes >= unit.minutes && minutes % unit.minutes === 0)
-	if (!unit) {
-		return `${minutes} min`
-	}
-	const count = minutes / unit.minutes
-	return `${count} ${unit.label}${count === 1 ? '' : 's'}`
-}

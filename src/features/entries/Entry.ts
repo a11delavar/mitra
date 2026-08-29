@@ -208,6 +208,18 @@ export class Entry {
 	// `recurrence`: MikroORM hydrates the empty column as null, and editEquals must see one value).
 	@property({ type: 'json', nullable: true }) reminders?: Array<number> | null
 
+	/**
+	 * Date-time anchor that reminders count back from (`start`, falling back to `end` for due-only tasks).
+	 */
+	get reminderAnchor(): DateTime | undefined {
+		return this.start ?? (this.type?.isTask ? this.end : undefined)
+	}
+
+	/** Whether reminder anchor is the task's due date rather than start. */
+	get remindersAnchorToEnd() {
+		return !this.start && !!this.reminderAnchor
+	}
+
 	// --- Participants (RFC 5545 ATTENDEE / ORGANIZER) ---------------------------------------------------
 	// The invitee list — one JSON column of `Participant` value records, like `reminders`, with the same
 	// tri-state wire convention (array sets, `null` clears, absent keeps) and the same replace-don't-
@@ -538,6 +550,7 @@ export class Entry {
 	unschedule() {
 		this.start = undefined
 		this.end = undefined
+		this.reminders = null
 	}
 
 	/** Resize the end, keeping the start. */

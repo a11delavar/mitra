@@ -1,4 +1,4 @@
-import { html } from '@a11d/lit'
+import { html, type HTMLTemplateResult } from '@a11d/lit'
 import { Localizer } from '@3mo/localization'
 import { termsMatch } from '../../commands/termsMatch.js'
 import { getSettings, setSettings } from '../../../infrastructure/http/Api.js'
@@ -145,7 +145,10 @@ export abstract class Setting<T> {
 	get verbs(): Array<SettingVerb> { return [] }
 
 	/** The control the row's trailing cell renders. */
-	abstract get control(): unknown
+	abstract get control(): HTMLTemplateResult
+
+	/** Optional full-width content rendered beneath the setting row. */
+	get details(): HTMLTemplateResult | undefined { return undefined }
 
 	/** Synchronizes rendered control state post-render (see ChoiceSetting.syncControl). */
 	syncControl(_row: HTMLElement): void { }

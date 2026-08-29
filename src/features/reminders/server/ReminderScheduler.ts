@@ -1,24 +1,18 @@
-import { type MikroORM } from '@mikro-orm/sqlite'
+import { type EntityManager, type MikroORM } from '@mikro-orm/sqlite'
 import { Source } from '../../sources/Source.js'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
 import { Integration } from '../../../integrations/Integration.js'
 import { Entry } from '../../entries/Entry.js'
 import { expandedOccurrences } from '../../recurrence/server/occurrences.js'
-import { dueReminders, reminderSpan } from '../Reminders.js'
+import { dueReminders, type DueReminder } from '../Reminders.js'
+import { ReminderNotification, reminderSpan } from '../ReminderNotification.js'
+import { NotificationSubscription } from '../NotificationSubscription.js'
 import { sendTo } from './push.js'
 import { State } from '../../../infrastructure/database/State.js'
 
 /**
- * The reminder clock: something has to compute "it is now 30 minutes before that event" while every
- * client sleeps — that is inherently the server's job (the whole point of push is that no tab is open).
- *
- * Each tick fires every reminder whose fire time falls inside `(watermark, now]` (see reminderDomain.ts),
- * then advances the persisted watermark. The watermark is what makes delivery exactly-once across
- * restarts: nothing before it re-fires, nothing between ticks is skipped. After a long downtime it is
- * clamped forward — a reminder for a meeting that started hours ago is noise, not a notification.
- *
- * Recurring series fire per occurrence: masters are expanded through the same {@link expandedOccurrences}
- * the calendar renders, so EXDATEs, overrides, and truncations all behave identically to what's on screen.
+ * Periodic reminder tick scheduler. Scans upcoming reminders in `(watermark, now + interval]` window,
+ * exact-schedules timers, and manages persistent watermark for crash-resilient exactly-once delivery.
  */
 
 const MINUTE = 60_000
@@ -26,16 +20,19 @@ const MINUTE = 60_000
 /** Missed-while-down grace: reminders older than this on boot are dropped, not replayed. */
 const CLAMP = 15 * MINUTE
 
+/** Maximum UTC offset slack for filtering stored floating entry wall-clock times. */
+const ZONE_SLACK = 14 * 60 * MINUTE
+
 export class ReminderScheduler {
 	private readonly logger = createLogger('Reminders')
 
 	private static readonly interval = 60_000
-	// The watermark lives INSIDE the database (the `reminder.watermark` state row) rather than in a loose
-	// data/reminders.json, so a restored database.sqlite carries its own exactly-once watermark — the copy
-	// is internally consistent with the entries it's about to fire reminders for.
 	private static readonly watermarkStateKey = 'reminder.watermark'
 
 	private ticking = false
+
+	/** In-flight timers keyed by `entryId|minutes|fireAt`. */
+	private readonly dispatched = new Map<string, number>()
 
 	constructor(private readonly orm: MikroORM) { }
 
@@ -63,56 +60,93 @@ export class ReminderScheduler {
 			const now = new Date()
 			const persisted = (await this.readWatermark())?.getTime() ?? now.getTime()
 			const watermark = new Date(Math.max(persisted, now.getTime() - CLAMP))
+			if (persisted < watermark.getTime()) {
+				this.logger.warn(`Skipped reminders due between ${new Date(persisted).toISOString()} and ${watermark.toISOString()} — too far behind to still be useful.`)
+			}
+			const until = new Date(now.getTime() + ReminderScheduler.interval)
 
 			const em = this.orm.em.fork()
-
-			// Plain rows and synced overrides carry their own reminders; recurring masters fire per
-			// occurrence, expanded far enough ahead that a long offset ("1 week before") is already in
-			// range. Hidden sources still fire — hiding is a view preference, not a mute.
-			const rows = await em.find(Entry, { reminders: { $ne: null }, recurrence: { freq: null } })
-			const masters = await em.find(Entry, { reminders: { $ne: null }, recurrence: { freq: { $ne: null } } })
-			const horizon = Math.max(0, ...masters.flatMap(master => master.reminders ?? [])) * MINUTE
 			const sources = await em.find(Source, {})
 			const enabledSourceIds = sources.filter(source => source.enabled).map(source => source.id)
+
+			const rows = await em.find(Entry, {
+				sourceId: { $in: enabledSourceIds },
+				reminders: { $ne: null },
+				recurrence: { freq: null },
+				// Bounds query to entries whose anchor falls inside/after the watermark window.
+				$or: [
+					{ start: { $gt: new Date(watermark.getTime() - ZONE_SLACK) } },
+					{ start: null, end: { $gt: new Date(watermark.getTime() - ZONE_SLACK) } },
+				],
+			})
+			const masters = await em.find(Entry, { sourceId: { $in: enabledSourceIds }, reminders: { $ne: null }, recurrence: { freq: { $ne: null } } })
+			const horizon = Math.max(0, ...masters.flatMap(master => master.reminders ?? [])) * MINUTE
 			const occurrences = masters.length
-				? (await expandedOccurrences(em, enabledSourceIds, watermark, new Date(now.getTime() + horizon)))
+				? (await expandedOccurrences(em, enabledSourceIds, watermark, new Date(until.getTime() + horizon)))
 					.filter(occurrence => occurrence.reminders?.length)
 				: []
 
-			// The scheduler ticks for EVERY user; each reminder routes to its entry's owner
-			// (entry → source → integration → user).
 			const integrations = await em.find(Integration, {})
 			const userByIntegration = new Map(integrations.map(integration => [integration.id, integration.userId]))
 			const userBySource = new Map(sources.map(source => [source.id, userByIntegration.get(source.integrationId)]))
+			const zoneByUser = await this.observerZones(em)
+			const userOf = (entry: Entry) => userBySource.get(entry.sourceId)
 
-			const due = dueReminders([...rows, ...occurrences], watermark, now)
-			this.logger.debug(`Tick: window (${watermark.toISOString()}, ${now.toISOString()}] — scanned ${rows.length} plain + ${occurrences.length} occurrence(s), ${due.length} due`)
+			const due = dueReminders([...rows, ...occurrences], watermark, until, entry => {
+				const userId = userOf(entry)
+				return userId ? zoneByUser.get(userId) : undefined
+			})
+			this.logger.debug(`Tick: window (${watermark.toISOString()}, ${until.toISOString()}] — scanned ${rows.length} plain + ${occurrences.length} occurrence(s), ${due.length} due`)
 
-			for (const { entry, minutes } of due) {
-				const userId = userBySource.get(entry.sourceId)
-				if (!userId) {
+			for (const reminder of due) {
+				const userId = userOf(reminder.entry)
+				const key = `${reminder.entry.id}|${reminder.minutes}|${reminder.fireAt}`
+				if (!userId || this.dispatched.has(key)) {
 					continue
 				}
-				this.logger.info(`Reminder: "${entry.heading}" starts ${minutes ? `in ${reminderSpan(minutes)}` : 'now'}`)
-				await sendTo(userId, {
-					title: entry.heading || 'Untitled',
-					// Relative wording on purpose: the server may run in another timezone than the reader.
-					// Emoji as separators — a notification body has no other typography to structure it with.
-					body: [
-						`⏰ ${minutes === 0 ? 'Starts now' : `Starts in ${reminderSpan(minutes)}`}`,
-						!entry.location ? undefined : `📍 ${entry.location}`,
-					].filter(Boolean).join(' '),
-					tag: `${entry.id}|${minutes}`,
-					timestamp: (entry.start as unknown as Date).getTime(),
-					url: '/',
-				})
+				this.dispatched.set(key, reminder.fireAt)
+				this.schedule(userId, reminder, now.getTime())
 			}
 
+			// Advance watermark only to `now` so unexecuted timers in `(now, until]` remain recoverable on crash.
 			await this.writeWatermark(now)
+			for (const [key, fireAt] of this.dispatched) {
+				if (fireAt <= now.getTime()) {
+					this.dispatched.delete(key)
+				}
+			}
 		} catch (error) {
 			this.logger.error('Reminder tick failed:', error)
 		} finally {
 			this.ticking = false
 		}
 	}
+
+	/** Schedule exact timer for reminder delivery. */
+	private schedule(userId: string, { entry, minutes, anchor, fireAt }: DueReminder, now: number) {
+		const payload = ReminderNotification.compose({
+			title: entry.heading || 'Untitled',
+			tag: `${entry.id}|${minutes}`,
+			timestamp: anchor,
+			url: '/',
+			reminder: { minutes, location: entry.location || undefined },
+		}, fireAt)
+		const send = () => {
+			this.logger.info(`Reminder: "${entry.heading}" ${minutes ? `in ${reminderSpan(minutes)}` : 'now'}`)
+			sendTo(userId, payload).catch(error => this.logger.warn('Reminder delivery failed:', error instanceof Error ? error.message : error))
+		}
+		const delay = fireAt - now
+		if (delay <= 0) {
+			send()
+		} else {
+			setTimeout(send, delay)
+		}
+	}
+
+	/** Resolve each user's latest observed device time zone. */
+	private async observerZones(em: EntityManager): Promise<Map<string, string>> {
+		const subscriptions = await em.find(NotificationSubscription, {}, { orderBy: { lastSeenAt: 'asc' } })
+		return new Map(subscriptions.filter(subscription => subscription.timeZone).map(subscription => [subscription.userId, subscription.timeZone!]))
+	}
 }
+

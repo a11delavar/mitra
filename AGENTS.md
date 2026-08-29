@@ -240,6 +240,7 @@
   - Server/client boundary: Server bundle excludes client settings (`bundles.test.ts` enforcement).
   - Storage strategies: `userStorage` (persisted on server `User.settings` JSON via `PUT /api/user/settings`) or `deviceStorage` (`localStorage`). Only deviations from code defaults are persisted (`undefined` removes record; `null` represents explicit "none").
   - `UserSettings` shared entity sanitizes JSON payload without importing UI setting definitions.
+  - `Setting.details`: Optional full-width slot beneath row for complex state (e.g. `<mitra-notification-devices>`). Setting classes return component tags when reactive lifecycles are needed.
 - **Palette & Dialog Bridge** (`src/features/settings/client/commands.ts`, `DialogSettings.ts`, `SettingRow.ts`):
   - Settings contribute action verbs or dialog shortcut commands to command palette (`settingCommands()`).
   - Searchable two-pane dialog (pages: `general`, `calendar`, `entries`, `notifications`, `administration`).
@@ -259,6 +260,23 @@
   - Layer above recurrence: entries sharing appearance (`sourceId`, `heading`) pool into one routine (series, overrides, detached check-offs, all-day placeholders). Blank headings fall back to per-master.
   - Gate: `min(member rule strideDays, median observed day gap) < rowUnitDays * slack` with >= 4 instances in window. Slack: week = 1.0 (weekly stays bars), month = 1.25 (collapses ~5-week cadences).
   - Rendering: 1 ribbon mark per active day (never spanning bars). Modifies `mitra-entry-segment` with `.routine`.
+
+## Reminders & Notifications (Web Push, RFC 8030)
+- **Anchor Semantics**:
+  - `Entry.reminders` count minutes before `Entry.reminderAnchor` (`start`, falling back to `end` for due-only tasks). `unschedule()` clears reminders.
+  - CalDAV TRIGGER `RELATED`: `START` by default, `END` for due-only tasks (`CalDAV.reminderAnchorOf`). Reads and writes share anchor mapping to preserve unmanaged alarms.
+- **Delivery Guarantees & Bundling**:
+  - Push headers set `TTL` (`anchor + 5 min` grace) and `urgency: 'high'` (bypasses Android Doze, prevents stale queue delivery).
+  - `ReminderNotification` (`src/features/reminders/ReminderNotification.ts`): Dependency-free model bundled into service worker (`scripts/esbuild.ts`).
+  - Service worker re-renders body on arrival via `bodyAt(Date.now())` (fallback to static body).
+- **Scheduler Engine** (`ReminderScheduler`):
+  - Ticks claim `(watermark, now + interval]` window and schedule exact timers (`setTimeout`).
+  - Persistent watermark (`reminder.watermark` state key) advances to `now` for crash recovery; in-memory `dispatched` map deduplicates.
+  - Query bounds: `start > watermark - ZONE_SLACK` (or `end` for due-only tasks).
+  - Observer time zone: `NotificationSubscription.timeZone` / `lastSeenAt` tracked per device to resolve floating wall-clock times (`Reminders.anchorInstant`).
+- **Device Management Surface**:
+  - Subscriptions listed under Settings → Notifications via `NotificationsSetting.details` rendering `<mitra-notification-devices>`.
+  - Push endpoints serve as device identifiers for active client highlighting and revocation.
 
 ## Participants (RFC 5545 / 5546 iTIP, RFC 6638)
 - **Storage & Capability**:
@@ -307,7 +325,7 @@
 ## Build, Test & CI/CD
 - **Runtime**: Node 25+ required (Temporal API).
 - **Type Checking**: Run `tsgo` (`node_modules/@typescript/native-preview-<platform>/lib/tsgo --noEmit`). esbuild does not typecheck.
-- **Linting**: `npm run lint` (`eslint .`, ESLint 9 flat config). Enforces tabs, single quotes, no semicolons, no trailing newlines (`eol-last: never`), `no-console` (except `warn`/`error`).
+- **Linting**: `npm run lint` (`eslint .`, ESLint 9 flat config). Enforces tabs, single quotes, no semicolons, a trailing newline (`eol-last`), `max-lines` 1000 per file (split like `CalDAV.<topic>.test.ts`), `no-console` (except `warn`/`error`).
 - **Tests**: `npm test` -> `scripts/test.ts` (esbuild bundles `src/**/*.test.ts` -> `out_test/`, runs `node:test`).
 - **Development**: `npm start` -> `scripts/dev.ts` (`tsgo --watch` + esbuild watch).
 - **Production Build**: `npm run build` -> `scripts/build.ts`. Shared esbuild config in `scripts/esbuild.ts`. Requires `data/` directory.
@@ -321,7 +339,7 @@
 
 ## Conventions
 - **Commit Messages**: Single-line `type: Capitalized phrase` (`feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `test:`, `ci:`, `build:`, `infra:`, `chore:`). Commit subject becomes the user-facing release note in `CHANGELOG.md`; state the end-user effect, not implementation mechanics.
-- **Formatting**: Indent with tabs. No semicolons. No trailing newlines.
+- **Formatting**: Indent with tabs. No semicolons. Files end with a single trailing newline.
 - **License**: AGPL-3.0-only (`LICENSE`, `package.json`).
 - **Privacy & Placeholders**: No real-world people names or initials in code, tests, or seeds. Use role-based placeholders (`organizer@example.com`, `me@example.com`).
 - **Architecture**: Domain-Driven Design and OOP. Business logic belongs on aggregate roots, value objects, and domain collections, not loose procedural helper functions.

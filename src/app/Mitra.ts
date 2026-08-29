@@ -20,6 +20,7 @@ import { DialogSourceMigration } from '../features/migration/client/DialogSource
 import { DialogKeyboardShortcuts } from '../features/commands/client/DialogKeyboardShortcuts.js'
 import { DialogSettings } from '../features/settings/client/DialogSettings.js'
 import { SettingRow } from '../features/settings/client/SettingRow.js'
+import { NotificationDevices } from '../features/reminders/client/NotificationDevices.js'
 import { contrastColor } from '../design/contrastColor.js'
 import { IconButton } from '../design/IconButton.js'
 import { buttonStyles } from '../design/button.css.js'
@@ -269,6 +270,7 @@ export class Mitra extends Application {
 			${DialogKeyboardShortcuts.styles}
 			${DialogSettings.styles}
 			${SettingRow.styles}
+			${NotificationDevices.styles}
 			${DialogEntryScope.styles}
 			${DialogCompleteParent.styles}
 			${DialogCloseSubtasks.styles}

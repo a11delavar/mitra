@@ -1,66 +1,78 @@
 ---
 title: Reminders & notifications
-description: How Mitra delivers reminders through Web Push, what a self-hosted deployment needs for them to work, and installing Mitra as an app.
+description: How Mitra delivers reminders through Web Push, configuration requirements, and device management.
 ---
 
-Mitra can notify you before an event starts — even with no tab open — using **Web Push**. This is the self-hosted way to get OS-level notifications: no third-party push accounts, no external services to sign up for, and **nothing to configure** in the common case. Mitra generates its own signing keys on first boot.
+Mitra notifies you before an event starts — even with no tab open — using standard **Web Push**. This provides self-hosted, OS-level notifications with no third-party accounts, push services, or external sign-ups required. Mitra generates its signing keypair automatically on first boot.
 
-## What you need
+## Requirements
 
-- **HTTPS.** Browsers only register the service worker and grant notification permission in a **secure context** — that means the site is served over `https://` (or `http://localhost` for local testing). A remote instance behind a [reverse proxy with TLS](../getting-started/installation.md#running-behind-a-reverse-proxy) satisfies this; plain `http://` at a LAN IP does not.
-- **On iPhone and iPad: install Mitra first.** iOS and iPadOS (16.4+) only deliver Web Push to web apps **added to the Home Screen** — see [Installing Mitra as an app](#installing-mitra-as-an-app). Once installed, reminders arrive like any other app's notifications.
-- **Nothing else.** The signing keypair (VAPID) is generated automatically on first boot and is stored **inside the database** (`database.sqlite`). Keep the data directory ([you're backing it up anyway](backups.md)) and reminders keep working across restarts and updates.
+- **HTTPS**: Browsers only register service workers and grant notification permissions in a **secure context** (`https://` or `http://localhost`). A remote deployment behind a [reverse proxy with TLS](../getting-started/installation.md#running-behind-a-reverse-proxy) satisfies this.
+- **iOS / iPadOS (16.4+)**: Web Push requires adding Mitra to the **Home Screen** first (see [Installing Mitra as an app](#installing-mitra-as-an-app)).
+- **Database Persistence**: The generated VAPID keypair is stored directly inside `database.sqlite`.
 
 > [!CAUTION]
-> The generated keypair **must survive restarts** — push subscriptions are bound to it, so replacing the database with one that never held it (or wiping the data directory) silently invalidates every browser's subscription. Because the keypair lives inside `database.sqlite`, any backup of that file already carries it, and a restore stays consistent — treat the data directory as one indivisible unit and this never comes up.
+> The signing keypair **must survive restarts**. Push subscriptions are cryptographically bound to it; restoring a database that lacks the keypair invalidates existing subscriptions. Always preserve the data directory during updates and [backups](backups.md).
 
-## Adding reminders (for users)
+## Adding reminders
 
-Reminders live on each entry in the editor. Mitra asks for notification permission **contextually** — the first time you add a reminder, which is exactly when the ask makes sense — not on app load.
+Reminders are configured per entry in the editor. Mitra requests browser notification permission **contextually** the first time you add a reminder.
 
-- **New timed events start with one reminder, 30 minutes before.** All-day entries start with none.
-- The preset menu offers: **At start of event**, **5 minutes**, **10 minutes**, **30 minutes**, **1 hour**, and **1 day** before.
-- **Custom…** lets you pick any amount in **minutes, hours, days, or weeks**.
-- You can add several reminders to one entry.
+- **Timed events**: Default to one reminder, 30 minutes before. All-day events default to none.
+- **Tasks**: Tasks with only a due date count back from the due time. Unscheduling a task clears its reminders.
+- **Presets**: Offers *At start of event*, *5 minutes*, *10 minutes*, *30 minutes*, *1 hour*, and *1 day* before.
+- **Custom offsets**: Specify custom durations in minutes, hours, days, or weeks.
+- Multiple reminders can be attached to a single entry.
 
-When a reminder fires, the notification stays until you act on it and offers two actions: **Snooze 10 min** and **Open**.
+When a reminder fires, the notification stays until dismissed and provides **Snooze 10 min** and **Open** actions.
 
 > [!NOTE]
-> If a browser denies or doesn't support notifications, the reminder still **persists** — Mitra just can't notify *that browser*. Other CalDAV clients connected to the same calendar will still alert as usual.
+> If a browser denies notification permission, the reminder still **persists** on the entry and syncs to connected CalDAV clients.
 
-## How delivery works
+## Delivery mechanics
 
-The **server** is what wakes up to fire a reminder — the whole point of push is that no tab needs to be open. A reminder is stored as *minutes before the entry's start*; the server checks every minute and delivers to every browser you've subscribed on this instance. Payloads are **end-to-end encrypted**, so the push services relaying them can't read their contents.
+The Mitra **server** schedules and delivers reminders in the background:
 
-A few behaviors worth knowing:
+- **Exact second timing**: The scheduler scans upcoming reminders once per minute and sleeps until the exact fire instant.
+- **Automatic expiration (TTL)**: Messages carry an expiration (`anchor + 5 min` grace). Offline devices drop expired alerts on reconnect instead of delivering stale notifications late.
+- **Dynamic text**: Notifications re-calculate elapsed time at delivery ("Starts in 12 min", "Starts now", "Started 5 min ago").
+- **Series & overrides**: Recurring series fire per occurrence, respecting exclusions and exceptions.
+- **Enabled vs. hidden**: Hidden sidebar calendars still deliver reminders; only *disabled* sources are muted.
+- **Downtime recovery**: Reminders fire exactly once across restarts. Overdue reminders from prolonged downtime are discarded to avoid alert storms.
 
-- **Recurring series fire per occurrence**, honoring exclusions and overrides exactly as they appear on the calendar.
-- **Hiding a calendar doesn't mute it.** Hiding a source in the sidebar is a view preference — its reminders still fire.
-- **Reminders fire exactly once**, even across server restarts. After longer downtime, reminders that are more than a few minutes overdue are dropped rather than replayed — a notification for a meeting that's long underway is noise, not a reminder.
+## Managing devices
 
-## Setting a push contact (optional)
+**Settings → Notifications** displays active push registrations for your account, showing device time zones, last-seen timestamps, and your current browser badge.
 
-Push services (Google's FCM, Mozilla, Apple) like to know who's sending, as an abuse contact. Mitra defaults to `mailto:mitra@localhost`. To set your own — a `mailto:` address is customary — use `MITRA_VAPID_SUBJECT`:
+- **Send test**: Sends an end-to-end push notification to verify delivery on the active device.
+- **Remove device**: Revokes subscriptions for devices you no longer use.
+
+> [!NOTE]
+> Push services rotate subscriptions periodically. Mitra refreshes registrations on app start, and the service worker auto-renews subscriptions in the background when rotations occur while the app is closed.
+
+## Configuration (optional)
+
+Push services accept an abuse contact subject (defaulting to `mailto:mitra@localhost`). You can customize this via `MITRA_VAPID_SUBJECT`:
 
 ```yaml
 environment:
   MITRA_VAPID_SUBJECT: 'mailto:admin@example.com'
 ```
 
-This is optional and only visible to the push services; it's not displayed anywhere in the app.
-
 ## Installing Mitra as an app
 
-Mitra ships a **web app manifest** and installs as a Progressive Web App (PWA) — add it to your home screen or desktop and it runs in its own standalone window. Most browsers show an "Install" option in the address bar or menu when you visit an HTTPS instance; on iOS/iPadOS use *Share → Add to Home Screen* (which is also [what enables notifications there](#what-you-need)).
+Mitra installs as a Progressive Web App (PWA) on desktop and mobile:
 
-The installed app's name and icons are **baked into the build** and stay "Mitra" even if you set a custom [`MITRA_NAME`](../getting-started/configuration.md#name-your-instance) — that variable rebrands what's rendered inside the running app, not the installed-app identity.
+- **Desktop**: Click "Install" in the browser address bar or menu.
+- **iOS / iPadOS**: Tap *Share → Add to Home Screen* to enable Web Push.
 
 > [!TIP]
-> Behind a cookie-authenticating reverse proxy, the install prompt sometimes vanishes because the browser can't fetch the manifest. Mitra already loads the manifest with credentials to avoid this, so installation works even in front of an auth proxy.
+> When running behind a cookie-authenticating reverse proxy, Mitra fetches the web app manifest with credentials so the install prompt functions properly.
 
 ## Troubleshooting
 
-- **The logs say a reminder fired, but nothing arrived.** Subscriptions are **per-instance**: a browser must have granted permission and subscribed against *this* deployment's address — permission granted on some other instance (or origin) doesn't carry over. Add a reminder from the browser in question once so it subscribes here.
-- **No permission prompt ever appears.** The instance isn't a secure context — check that you're on `https://` (or `http://localhost`). On iPhone/iPad, install Mitra to the Home Screen first.
-- **Notifications stopped after moving/recreating the data directory.** The signing keypair changed, which invalidated existing subscriptions — re-grant by adding a reminder again in each browser.
-- **Watching it happen.** At the default [log level](logging.md), each reminder logs as it fires; `debug` also shows the delivery attempts and any pruned (expired/revoked) subscriptions.
+- **Test delivery first**: Use **Settings → Notifications → Send test**. If it succeeds, delivery is operational.
+- **No reminders received**: Subscriptions are **per-instance** and **per-origin**. Ensure notification permission was granted on this specific deployment.
+- **Closed desktop browsers**: Chrome on Windows requires background app processing enabled to deliver push while closed (*Continue running background apps when Google Chrome is closed*). Alternatively, install Mitra in Edge or use Safari on macOS.
+- **Permission prompt missing**: Verify the instance is served over HTTPS. On iOS, install Mitra to the Home Screen first.
+- **Server logs**: Standard [logging](logging.md) records reminders as they fire; `debug` logs show delivery attempts and subscription pruning.

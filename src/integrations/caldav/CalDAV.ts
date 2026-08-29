@@ -504,19 +504,21 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
-	/** The entry's reminders (minutes before start) off its VALARMs. Only what mitra manages maps to our
-	 * model: EMAIL alarms are another channel entirely (out of scope — parsing them while only DISPLAY
-	 * ones are written back would make them undeletable), and absolute (`VALUE=DATE-TIME`), end-relative
-	 * (`RELATED=END`) and after-start triggers are left where they are — present in the raw .ics,
-	 * invisible here. */
+	/** Determine reminder anchor (`START` if DTSTART present, else `END`). */
+	private static reminderAnchorOf(component: ICAL.Component): 'START' | 'END' {
+		return component.getFirstProperty('dtstart') ? 'START' : 'END'
+	}
+
+	/** Extract reminder offsets in minutes before anchor from DISPLAY VALARM subcomponents. */
 	static remindersFrom(component: ICAL.Component): Array<number> | null {
+		const anchor = CalDAV.reminderAnchorOf(component)
 		const minutes = component.getAllSubcomponents('valarm').flatMap(alarm => {
 			const trigger = alarm.getFirstProperty('trigger')
 			const duration = trigger?.getFirstValue() as { toSeconds?(): number } | null
 			if (
 				alarm.getFirstPropertyValue('action')?.toString().toUpperCase() === 'EMAIL'
 				|| !trigger || typeof duration?.toSeconds !== 'function'
-				|| trigger.getParameter('related')?.toString().toUpperCase() === 'END'
+				|| (trigger.getParameter('related')?.toString().toUpperCase() || 'START') !== anchor
 			) {
 				return []
 			}
@@ -675,12 +677,12 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
-	/** Replace the component's DISPLAY alarms with one per reminder. DISPLAY only — an EMAIL alarm
-	 * another client authored is its own channel, not ours to rewrite. Static (no `this`) and public:
-	 * the sync engine calls it while writing a resource. */
+	/** Write DISPLAY VALARMs matching the component's reminder anchor. */
 	static writeReminders(component: ICAL.Component, reminders: Array<number> | undefined | null) {
+		const anchor = CalDAV.reminderAnchorOf(component)
 		for (const alarm of component.getAllSubcomponents('valarm')) {
-			if (alarm.getFirstPropertyValue('action')?.toString().toUpperCase() !== 'EMAIL') {
+			const related = alarm.getFirstProperty('trigger')?.getParameter('related')?.toString().toUpperCase() || 'START'
+			if (alarm.getFirstPropertyValue('action')?.toString().toUpperCase() !== 'EMAIL' && related === anchor) {
 				component.removeSubcomponent(alarm)
 			}
 		}
@@ -688,7 +690,10 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			const alarm = new ICAL.Component('valarm')
 			alarm.updatePropertyWithValue('action', 'DISPLAY')
 			alarm.updatePropertyWithValue('description', 'Reminder')
-			alarm.updatePropertyWithValue('trigger', ICAL.Duration.fromSeconds(-minutes * 60))
+			const trigger = alarm.updatePropertyWithValue('trigger', ICAL.Duration.fromSeconds(-minutes * 60))
+			if (anchor === 'END') {
+				trigger.setParameter('related', 'END')
+			}
 			component.addSubcomponent(alarm)
 		}
 	}

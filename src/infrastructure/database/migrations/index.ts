@@ -9,7 +9,7 @@ import { Migration20260821120000_EntryRelations } from './Migration2026082112000
 import { Migration20260822140000_EntryPercentComplete } from './Migration20260822140000_EntryPercentComplete.js'
 import { Migration20260826182337_AddSourceReadOnly } from './Migration20260826182337_AddSourceReadOnly.js'
 import { Migration20260828152137_UserSettings } from './Migration20260828152137_UserSettings.js'
-
+import { Migration20260829101122_AddNotificationSubscriptionDevice } from './Migration20260829101122_AddNotificationSubscriptionDevice.js'
 /**
  * Every migration the app ships, oldest first. The backend bundles into a single file, so migrations
  * are imported explicitly rather than discovered on disk — `npm run db:migration:create` generates a
@@ -24,4 +24,5 @@ export const migrations: Array<Constructor<Migration>> = [
 	Migration20260822140000_EntryPercentComplete,
 	Migration20260826182337_AddSourceReadOnly,
 	Migration20260828152137_UserSettings,
+	Migration20260829101122_AddNotificationSubscriptionDevice,
 ]

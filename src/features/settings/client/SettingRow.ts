@@ -103,6 +103,12 @@ export class SettingRow extends Component {
 					}
 				}
 
+				> .details {
+					grid-column: 1 / -1;
+					margin-block-start: 0.625rem;
+					margin-inline-start: calc(1.375rem + 0.875rem);
+				}
+
 				&[focused] {
 					--focus-ring-color: var(--color-accent);
 					${ring};
@@ -136,6 +142,7 @@ export class SettingRow extends Component {
 				${!this.setting.hint ? html.nothing : html`<span class="hint">${this.setting.hint}</span>`}
 			</div>
 			<div class="control">${this.setting.control}</div>
+			${this.setting.details === undefined ? html.nothing : html`<div class="details">${this.setting.details}</div>`}
 		`
 	}
 }
