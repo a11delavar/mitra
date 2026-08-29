@@ -254,27 +254,25 @@ export class EntryStore extends Controller {
 		}
 	}
 
-	/** Whether the entry's ONLY change against its canonical is the task status. A status belongs to the
-	 * single occurrence by nature — completing this Tuesday's task says nothing about the rest of the
-	 * series — so asking for a scope makes no sense and the edit commits as 'this'. Of the editable
-	 * fields it's the sole one like that: the rule is the opposite extreme (series-wide, see
-	 * {@link ruleChanged}); everything else — heading, schedule, colour, reminders… — is genuinely
-	 * ambiguous and keeps the dialog. A status change *mixed* with other edits keeps it too: the whole
-	 * edit takes one scope, and the rest of it is ambiguous. */
-	private static statusOnlyChanged(entry: Entry) {
+	/**
+	 * Whether the entry's only change against canonical is task progress/status.
+	 * Scoped edits to occurrence completion commit directly as 'this' without prompting for recurrence scope.
+	 */
+	private static completionOnlyChanged(entry: Entry) {
 		const canonical = this.canonicalById.get(entry.id!)
-		if (!canonical || entry.status === canonical.status) {
+		if (!canonical) {
 			return false
 		}
 		const probe = entry.clone()
 		probe.status = canonical.status
-		return probe.editEquals(canonical)
+		probe.percentComplete = canonical.percentComplete
+		return probe.editEquals(canonical) && !entry.editEquals(canonical)
 	}
 
 	/** One scoped save round for a dirty occurrence. Returns false when the commit chain should stop
 	 * (cancelled, or the entry was deleted mid-flight). */
 	private static async commitOccurrence(entry: Entry, sent: Entry, preset?: RecurrenceScope): Promise<boolean> {
-		const scope = preset ?? (this.statusOnlyChanged(entry) ? 'this' : await EntryStore.resolveScope(entry, 'edit'))
+		const scope = preset ?? (this.completionOnlyChanged(entry) ? 'this' : await EntryStore.resolveScope(entry, 'edit'))
 		if (!this.tracks(entry)) {
 			return false
 		}

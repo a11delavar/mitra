@@ -5,6 +5,8 @@ import { Entry, TaskStatus } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
 import { Recurrence, type RecurrenceScope } from '../../recurrence/Recurrence.js'
 import { EntryStore } from './EntryStore.js'
+import { closeTask } from './taskClosure.js'
+import { Integration } from '../../../integrations/Integration.js'
 import { ApiError } from '../../../infrastructure/http/Api.js'
 
 describe('EntryStore', () => {
@@ -538,6 +540,40 @@ describe('EntryStore', () => {
 			assert.deepEqual(transport.calls.occurrenceEdits, ['this'])
 			assert.equal(working.recurrenceMasterId, undefined) // detached — the completion is this occurrence's own
 			assert.equal(working.status, TaskStatus.Done)
+			assert.equal(EntryStore.isDirty(working), false)
+		})
+
+		it('ticking a task off bypasses the scope dialog even though the closure also writes progress', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			let asked = false
+			EntryStore.resolveScope = () => (asked = true, Promise.resolve('all' as const))
+			const working = occurrence({ type: EntryType.Task, status: TaskStatus.ToDo })
+			EntryStore.applyServerEntries([working])
+			closeTask(working, TaskStatus.Done, Integration.fullCapabilities)
+			const commit = EntryStore.commit(working)
+			await transport.respond(entry({ id: 'detached', type: EntryType.Task, status: TaskStatus.Done, percentComplete: 100 }))
+			await commit
+			assert.equal(asked, false)
+			assert.deepEqual(transport.calls.occurrenceEdits, ['this'])
+			assert.equal(working.recurrenceMasterId, undefined)
+			assert.equal(working.percentComplete, 100)
+			assert.equal(EntryStore.isDirty(working), false)
+		})
+
+		it('a progress-only change bypasses the scope dialog too — progress belongs to the occurrence', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			let asked = false
+			EntryStore.resolveScope = () => (asked = true, Promise.resolve('all' as const))
+			const working = occurrence({ type: EntryType.Task, status: TaskStatus.ToDo })
+			EntryStore.applyServerEntries([working])
+			working.percentComplete = 60
+			const commit = EntryStore.commit(working)
+			await transport.respond(entry({ id: 'detached', type: EntryType.Task, status: TaskStatus.ToDo, percentComplete: 60 }))
+			await commit
+			assert.equal(asked, false)
+			assert.deepEqual(transport.calls.occurrenceEdits, ['this'])
 			assert.equal(EntryStore.isDirty(working), false)
 		})
 

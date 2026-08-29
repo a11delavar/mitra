@@ -465,12 +465,12 @@ export async function seedDev(orm: MikroORM) {
 
 		// Morning + evening pills pooling by appearance; past occurrences detached as completed tasks.
 		// The morning dose is Notion-shaped: no end date on import means a full 24h span (10:00 → 10:00).
-		personalTask({ heading: '💊 Pills', status: TaskStatus.ToDo, start: todayStart.with({ hour: 10 }), end: todayStart.add({ days: 1 }).with({ hour: 10 }), recurrence: new Recurrence({ freq: 'DAILY' }) })
-		personalTask({ heading: '💊 Pills', status: TaskStatus.ToDo, start: todayStart.with({ hour: 20 }), end: todayStart.with({ hour: 20, minute: 5 }), recurrence: new Recurrence({ freq: 'DAILY' }) })
+		personalTask({ heading: '💊 Pills', status: TaskStatus.ToDo, start: todayStart.with({ hour: 10 }), end: todayStart.with({ hour: 10 }), recurrence: new Recurrence({ freq: 'DAILY' }) })
+		personalTask({ heading: '💊 Pills', status: TaskStatus.ToDo, start: todayStart.with({ hour: 20 }), end: todayStart.with({ hour: 20 }), recurrence: new Recurrence({ freq: 'DAILY' }) })
 		for (let day = 1; day <= 60; day++) {
 			const past = todayStart.subtract({ days: day })
-			personalTask({ heading: '💊 Pills', status: TaskStatus.Done, start: past.with({ hour: 10 }), end: past.add({ days: 1 }).with({ hour: 10 }) })
-			personalTask({ heading: '💊 Pills', status: TaskStatus.Done, start: past.with({ hour: 20 }), end: past.with({ hour: 20, minute: 5 }) })
+			personalTask({ heading: '💊 Pills', status: TaskStatus.Done, start: past.with({ hour: 10 }), end: past.with({ hour: 10 }) })
+			personalTask({ heading: '💊 Pills', status: TaskStatus.Done, start: past.with({ hour: 20 }), end: past.with({ hour: 20 }) })
 		}
 
 		// Three weekly series pooling into one routine.
