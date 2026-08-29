@@ -28,6 +28,8 @@
   - Natural English string keys by default: `t('Phrase')`.
   - Dotted symbolic keys (`Namespace.Name` in `en.json`) ONLY for long prose (`Notion.TokenHint`) and command palette search keyword blobs (`GoToDate.Keywords`).
   - All 6 locale dictionaries must be fully translated. Add keys in feature blocks beside related keys.
+  - Language switches live through `Localizer.languages.current` (no reload). `i18n/index.ts` re-registers `LocalizerController` on `PageComponent`/`DialogComponent`: lit snapshots a class's initializers at finalize time, so the framework's bases never got the one @3mo/localization installs.
+  - Check a natural key is not already taken with another sense before reusing it (`t('On')` is the date preposition — the toggle state is `Toggle.On`).
 - **Domain vs View Separation**:
   - Domain records in `src/features/*/` (`Entry`, `Source`, `Integration`) hold persistence/domain state only (e.g. `Entry.persisted`), never layout math.
   - Client layout lives in `src/features/entries/client/`: `EntrySegment` (per-day geometry from `(entry, date, links)`), `EntrySegments` (cross-segment calculations). UI components (`mitra-entry-segment`, `mitra-entry-details`) are view decorations.
@@ -211,7 +213,7 @@
   - Execution: Always run via `Command.dispatch()` to catch and absorb `DialogCancelledError`.
   - Non-Command Actions: Pointer gestures and editor-specific shortcuts stay in their own components.
 - **Command Palette** (`mitra-command-palette`):
-  - Pure view. Filters via `commandMatches` (all query terms match heading/keywords).
+  - Pure view. Filters via `commandMatches` → `termsMatch` (`src/features/commands/termsMatch.ts`, the app's ONE search rule — also the settings dialog's; kept out of `Command.ts` so searching doesn't drag in the app root).
   - Navigation: Native `<dialog closedby="any">`. Triggered by bare `/`, `Ctrl+P`, or `Ctrl+K`.
   - Search: Unwindowed backend `GET /entries/search?q=` (SQL LIKE, limit 20, 200ms debounce).
   - Selection: Emits `navigate` and requests editor open via `EntryEditorIntent.requestOpen(id)`.
@@ -220,6 +222,22 @@
   - `EntrySegment.updated` opens run-start segment (`!hasPrevious`) and consumes intent. `settle(entries)` clears unmatched intents.
 - **Keyboard Interceptor** (`PageCalendar.handleKeyDown`):
   - Must ignore inputs (`<input>`, `<textarea>`, `<select>`, `[contenteditable]`), IME composition, modifier chords, and open dialogs (`e.composedPath()` has `HTMLDialogElement`).
+- **Registry Instances**: `commandInstances()` caches one instance per class and rebuilds them when the language changes (facts are stringified at construction). Never `new` the registry per render.
+
+## Settings
+- **Architecture** (`src/features/settings/client/Setting.ts`):
+  - 1 class per preference co-located with target feature (`ThemeSetting`, `LanguageSetting`, `DefaultViewSetting`, etc.).
+  - `src/app/settings.ts` defines registration order only; `src/features/settings/` houses infrastructure and `UserSettings.ts`.
+  - Settings own defaults and options (e.g. `SnapSetting.choices`). Domain functions accept preferences as parameters.
+  - Server/client boundary: Server bundle excludes client settings (`bundles.test.ts` enforcement).
+  - Storage strategies: `userStorage` (persisted on server `User.settings` JSON via `PUT /api/user/settings`) or `deviceStorage` (`localStorage`). Only deviations from code defaults are persisted (`undefined` removes record; `null` represents explicit "none").
+  - `UserSettings` shared entity sanitizes JSON payload without importing UI setting definitions.
+- **Palette & Dialog Bridge** (`src/features/settings/client/commands.ts`, `DialogSettings.ts`, `SettingRow.ts`):
+  - Settings contribute action verbs or dialog shortcut commands to command palette (`settingCommands()`).
+  - Searchable two-pane dialog (pages: `general`, `calendar`, `entries`, `notifications`, `administration`).
+  - Native standalone controls; active palette focus marked with focus ring (`ring` from `focusRing.css.ts`, color declared locally). Search groups match sidebar section styling (0.75rem/600 muted).
+  - Scroll containers require explicit inline padding to prevent clipping focus rings at padding boxes.
+  - Entry points: sidebar footer (account gear in multi-user mode), command palette, and `Ctrl/⌘+,` chord (handled via window listener on `Sidebar`, documented in shortcut sheet).
 
 ## Recurrence & Routines (RFC 5545)
 - **Recurrence Model**:

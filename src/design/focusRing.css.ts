@@ -14,13 +14,18 @@ import { css, unsafeCSS } from '@a11d/lit'
  * The surface must have a border box to colour: everything that mixes this in declares
  * `border: 1px solid transparent` (or a real border) so the ring has somewhere to land.
  */
-export const focusRing = unsafeCSS`
+/** Focus ring CSS declarations without the `:focus-visible` gate. */
+export const ring = unsafeCSS(`
+	outline: none;
+	border-color: var(--focus-ring-color, transparent);
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--focus-ring-color, transparent) 45%, transparent);
+`)
+
+export const focusRing = unsafeCSS(`
 	&:is(:focus-visible, :has(:focus-visible)) {
-		outline: none;
-		border-color: var(--focus-ring-color, transparent);
-		box-shadow: 0 0 0 2px color-mix(in srgb, var(--focus-ring-color, transparent) 45%, transparent);
+		${ring}
 	}
-`
+`)
 
 /**
  * The one thing about the ring that genuinely cannot be local: WHETHER it shows. The ring is a keyboard

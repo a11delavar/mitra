@@ -99,6 +99,7 @@ export default defineConfig({
 						{ slug: 'guides/notifications' },
 						{ slug: 'guides/location-autocomplete' },
 						{ slug: 'guides/keyboard-shortcuts' },
+						{ slug: 'guides/settings' },
 					],
 				},
 				{

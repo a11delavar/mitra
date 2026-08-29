@@ -11,8 +11,11 @@ export const switchStyles = css`
 		&[hidden] {
 			display: none;
 		}
-		inline-size: 1.75rem;
-		block-size: 1rem;
+		/* One knob sizes the whole control, so a surface that needs a bigger target (the settings rows)
+		   raises this instead of restating the geometry. */
+		--switch-block-size: 1rem;
+		inline-size: calc(var(--switch-block-size) * 1.75);
+		block-size: var(--switch-block-size);
 		flex-shrink: 0;
 		justify-self: start;
 		position: relative;
@@ -26,8 +29,8 @@ export const switchStyles = css`
 			position: absolute;
 			inset-block-start: 2px;
 			inset-inline-start: 2px;
-			inline-size: calc(1rem - 4px);
-			block-size: calc(1rem - 4px);
+			inline-size: calc(var(--switch-block-size) - 4px);
+			block-size: calc(var(--switch-block-size) - 4px);
 			border-radius: 50%;
 			background: currentColor;
 			transition: translate 0.15s ease;
@@ -37,7 +40,7 @@ export const switchStyles = css`
 			background: var(--color-accent);
 
 			&::before {
-				translate: 0.75rem 0;
+				translate: calc(var(--switch-block-size) * 0.75) 0;
 				background: var(--color-accent-text);
 			}
 		}

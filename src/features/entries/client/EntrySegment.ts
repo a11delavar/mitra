@@ -1,5 +1,6 @@
 import type { DateTime } from '@3mo/date-time'
-import { type Entry, SNAP_MINUTES } from '../Entry.js'
+import { type Entry } from '../Entry.js'
+import { SnapSetting } from './SnapSetting.js'
 import { EntryStore } from './EntryStore.js'
 
 /** Side-by-side placement among timed events sharing a day — the one datum CSS grid can't derive,
@@ -66,7 +67,7 @@ export class EntrySegment {
 			// its start, make CSS grid swap the reversed lines and paint a near-full-day block. Floor those to a
 			// snap-minute slab below the start (clamped to the grid's last line).
 			const line = endsPastDay ? 1441 : this.entry.end ? this.entry.end.hour * 60 + this.entry.end.minute + 1 : undefined
-			this._endMinute = line !== undefined && line > this.startMinute ? line : Math.min(this.startMinute + SNAP_MINUTES, 1441)
+			this._endMinute = line !== undefined && line > this.startMinute ? line : Math.min(this.startMinute + SnapSetting.current, 1441)
 		}
 		return this._endMinute
 	}

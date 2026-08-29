@@ -80,26 +80,14 @@ export interface EntryData {
 	localWriteAt?: number
 }
 
-/** The granularity timed edits and gestures snap to, and the minimum duration an edit leaves behind.
- * A single knob today; a user setting later. */
-export const SNAP_MINUTES = 15
-
 /** The reserved `Entry.timeZone` value for RFC 5545 FLOATING times ("09:00 wherever the observer
  * is") — deliberately not an IANA id, so every consumer that treats the field as a zone must handle
  * it explicitly. Never handed to Intl/Temporal: the wall clock of a floating entry is encoded
  * as-if-UTC in its instants, so 'UTC' is the zone to read/write those fields in. */
 export const FLOATING_TIME_ZONE = 'floating'
 
-/** A newly-created TIMED entry starts with a reminder this many minutes before — the convention other
- * calendars default to, so an event you jot down still nudges you without a manual step. All-day entries
- * get none: "30 min before" a midnight start fires at 23:30 the night before, which is nobody's intent.
- * A default, not a decree — it renders as a normal removable row in the editor. A single knob today; a
- * user setting later, like {@link SNAP_MINUTES}. */
-export const DEFAULT_REMINDER_MINUTES = 30
-
-/** How long an entry is when a placement doesn't say: a task dropped on the timed grid, and all-day
- * turned off. One knob, because those are the same question asked twice. */
-export const DEFAULT_DURATION_MINUTES = 60
+/** Minimum duration in minutes an edit or resize may leave behind. */
+export const MINIMUM_DURATION_MINUTES = 15
 
 @model('Entry')
 @entity()
@@ -525,8 +513,7 @@ export class Entry {
 		return this.allDay ? this.effectiveEnd.subtract({ days: 1 }) : this.effectiveEnd
 	}
 
-	/** Move to a new start: a timed entry keeps its duration; an all-day entry shifts its whole span by
-	 * whole days, so it keeps its length. */
+	/** Move to a new start: a timed entry keeps its duration; an all-day entry shifts by whole days. */
 	moveStart(start: DateTime) {
 		if (this.allDay) {
 			const day = start.dayStart
@@ -534,18 +521,17 @@ export class Entry {
 			this.end = this.effectiveEnd.add({ days: deltaDays })
 			this.start = day
 		} else {
-			const duration = Math.max(this.effectiveEnd.valueOf() - this.start!.valueOf(), SNAP_MINUTES * 60_000)
+			const duration = Math.max(this.effectiveEnd.valueOf() - this.start!.valueOf(), MINIMUM_DURATION_MINUTES * 60_000)
 			this.start = start
 			this.end = start.add({ milliseconds: duration })
 		}
 	}
 
-	/** Give an entry with no span a place in time. Distinct from {@link moveStart}, which SHIFTS one:
-	 * there is no duration to preserve here, so this is where the length comes from. */
-	scheduleAt(start: DateTime, allDay: boolean) {
+	/** Schedules unscheduled entry with default or configured duration. */
+	scheduleAt(start: DateTime, allDay: boolean, durationMinutes: number) {
 		this.allDay = allDay
 		this.start = allDay ? start.dayStart : start
-		this.end = allDay ? start.dayStart.add({ days: 1 }) : this.start.add({ minutes: DEFAULT_DURATION_MINUTES })
+		this.end = allDay ? start.dayStart.add({ days: 1 }) : this.start.add({ minutes: durationMinutes })
 	}
 
 	/** The inverse of {@link scheduleAt}. Only a task can hold this state (see {@link unschedulable}). */
@@ -554,8 +540,7 @@ export class Entry {
 		this.end = undefined
 	}
 
-	/** Resize the end, keeping the start. For all-day, `end` is the inclusive last day (clamped to at least
-	 * the start day); for timed, an end at/under the start snaps to a one-snap-minute minimum. */
+	/** Resize the end, keeping the start. */
 	setEnd(end: DateTime) {
 		if (this.allDay) {
 			const startDay = this.start!.dayStart
@@ -563,45 +548,30 @@ export class Entry {
 			this.end = lastDay.add({ days: 1 })
 		} else {
 			const start = this.start!
-			this.end = end.valueOf() <= start.valueOf() ? start.add({ minutes: SNAP_MINUTES }) : end
+			this.end = end.valueOf() <= start.valueOf() ? start.add({ minutes: MINIMUM_DURATION_MINUTES }) : end
 		}
 	}
 
-	/** Move to another source. The entry KEEPS its type wherever the target can hold it — a source
-	 * supports types, it doesn't dictate one (see {@link Source.entryTypes}) — and only converts when it
-	 * can't: a task moved onto an events-only calendar becomes an event, a note dropped into a Notion
-	 * task view becomes a task. The identity and link fields (`id`, `uri`, `data`) are deliberately
-	 * untouched — a cross-source migration re-creates the entry over there, and the backend owns those. */
+	/** Move to another source. Converts entry type if target source does not support current type. */
 	migrateTo(source: Source) {
 		this.sourceId = source.id
 		if (!source.supportsEntryType(this.type)) {
-			this.type = source.defaultEntryType // the setter owns the conversion (a status goes with the task)
+			this.type = source.defaultEntryType
 		}
 	}
 
-	/** Adopt another entry's span — the three fields that place it in time. What a gesture hands over
-	 * on release: a drag may not just have shifted the span but flipped its all-day-ness (a move between
-	 * the timed grid and the all-day lane), so the flag travels with the times. */
+	/** Adopt another entry's start, end, and all-day state. */
 	adoptSpan(other: Entry) {
 		this.start = other.start
 		this.end = other.end
 		this.allDay = other.allDay
 	}
 
-	/** Re-zone the entry: the WALL-CLOCK readings stay, the instants move — picking Tehran for a
-	 * 14:00-Berlin entry makes it 14:00 Tehran. That's the conventional meaning of changing an entry's
-	 * zone everywhere (Google, Notion); the other reading — same instant, new label — is a view concern
-	 * (the time axis' zone columns), not an edit. All-day spans are floating days and don't shift.
-	 * Frontend-only, like the other timing methods: the wall clock is read in the zone the times were
-	 * authored in, defaulting to the browser's. */
+	/** Re-zones entry while keeping wall-clock time. */
 	setTimeZone(zone: string) {
 		if (!this.allDay) {
-			// A floating entry's wall clock is encoded as-if-UTC; re-zoning it pins that wall clock to
-			// the picked zone (a deliberate edit away from floating — the marker is replaced below).
 			const from = this.timeZone === FLOATING_TIME_ZONE ? 'UTC'
 				: this.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
-			// A REAL DateTime (the global, like `Localizer`) — a plain Date cast would blow up on the
-			// first `.dayStart` downstream.
 			const rezoned = (value: DateTime | undefined) => value === undefined ? undefined : new DateTime(
 				Temporal.Instant.fromEpochMilliseconds(value.valueOf())
 					.toZonedDateTimeISO(from)
@@ -615,9 +585,8 @@ export class Entry {
 		this.timeZone = zone
 	}
 
-	/** Flip all-day: ON snaps to the day bounds it currently covers; OFF restores a default 09:00–10:00
-	 * slot on the start day (an all-day entry has no clock time to restore). */
-	setAllDay(allDay: boolean) {
+	/** Sets all-day state, snapping to day bounds when enabled or defaulting to 09:00 with duration when disabled. */
+	setAllDay(allDay: boolean, durationMinutes: number) {
 		if (allDay === this.allDay || !this.start) {
 			this.allDay = allDay
 			return
@@ -630,7 +599,7 @@ export class Entry {
 		} else {
 			const at = this.start.dayStart.with({ hour: 9 })
 			this.start = at
-			this.end = at.add({ minutes: DEFAULT_DURATION_MINUTES })
+			this.end = at.add({ minutes: durationMinutes })
 		}
 		this.allDay = allDay
 	}

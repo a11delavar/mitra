@@ -1,5 +1,7 @@
 import { DialogCancelledError } from '@a11d/lit-application'
+import { Localizer } from '@3mo/localization'
 import { Mitra } from '../../app/Mitra.js'
+import { termsMatch } from './termsMatch.js'
 
 /** Where a keyed command appears in the shortcut sheet's grouping. */
 export type CommandGroup = 'views' | 'navigation' | 'entries' | 'general' | (string & {})
@@ -16,38 +18,19 @@ export function commands(): ReadonlyArray<CommandConstructor> {
 	return registeredCommands
 }
 
+let instances: Array<Command> | undefined
+
+// Rebuild cached command instances when language changes.
+Localizer.languages.change.subscribe(() => instances = undefined)
+
+/** The registry as live instances — one per verb. */
+export function commandInstances(): ReadonlyArray<Command> {
+	return instances ??= registeredCommands.map(constructor => new constructor())
+}
+
 /**
- * A user-invocable verb: one class per action, self-describing and self-executing. Each class owns
- * every fact about its action — the palette's heading/icon/keywords, the keys it answers to, its
- * shortcut-sheet group — so the command palette, the calendar page's keyboard interceptor and the
- * keyboard-shortcuts dialog are three views of ONE registry and none of them can drift.
- *
- * Context is resolved, not passed: commands are global verbs in a single-page app, so they reach
- * their surface through {@link Mitra.instance} (the framework's document-resolved application) at
- * execution time — a command can drill into as much page state as it needs without any wiring.
- *
- * Declare the facts as plain `readonly` **fields** — `t()` returns a lazily-stringified
- * `LocalizedString`, and while it does bind `Localizer.languages.current` at call time, Mitra
- * resolves the language once at boot (`?lang=` → localStorage → navigator; there is no in-app
- * switcher), so a field is exactly as correct as a getter and reads far better. Should a language
- * switcher ever land, the fix is re-instantiating the registry on change, not turning every fact
- * back into a getter.
- *
- * Reach for a **getter** only where the value depends on LIVE state — a view-dependent heading
- * ("Next Week" vs "Next Month"), or the direction-dependent arrow `keys`. Every fact is declared
- * `abstract readonly` precisely so either form satisfies it (a `declare`d field would reject the
- * getter — TS2611), and being abstract, each command must state all of them, `undefined` included:
- * a palette-only verb says so out loud rather than by omission.
- *
- * The members carrying a DEFAULT ({@link shortcutLabel}, {@link keyLabels}, {@link matches}) are real
- * accessors on this prototype, so an override must be an accessor too — the project compiles with
- * `useDefineForClassFields: false`, where a subclass field emits a constructor ASSIGNMENT that a
- * getter-only base property throws on. Prefer flipping `keys` over overriding those: derive, don't
- * duplicate.
- *
- * NOT commands, deliberately: pointer gestures (Ctrl+drag, Alt+click, Ctrl+scroll) and keys that
- * need their owner's state or guards (Ctrl+P inside text fields, Delete gated on the open editor).
- * Those stay with their owners and appear in the shortcuts dialog as hand-written vocabulary rows.
+ * A user-invocable verb: one class per action, self-describing and self-executing.
+ * Facts are declared as readonly fields (rebuilt on language change); live state uses getters.
  */
 export abstract class Command {
 	/** The keyboard glyph for a `KeyboardEvent.key` value — arrows draw as arrows, letters uppercase. */
@@ -109,17 +92,11 @@ export abstract class Command {
 		})
 	}
 
-	/** The calendar page every command drives, resolved through the application. Non-null by
-	 * construction: a command is only reachable from surfaces the page itself owns — its palette and
-	 * its keyboard interceptor — so the page is always there by the time one of these runs. (Nothing
-	 * may touch it during CONSTRUCTION though: the registry is instantiated in the page's own field
-	 * initializer, before the element is in the document.) */
+	/** Calendar page driven by commands, resolved via application instance. */
 	protected get calendar() { return Mitra.instance.calendar }
 }
 
-/** Whether the command matches the query: every whitespace-separated term must appear somewhere in
- * the heading or keywords, so "view week" matches as well as "week view". */
+/** Matches query against command heading and keywords using termsMatch. */
 export function commandMatches(command: Command, query: string) {
-	const haystack = `${command.heading} ${command.keywords ?? ''}`.toLowerCase()
-	return query.trim().toLowerCase().split(/\s+/).every(term => haystack.includes(term))
+	return termsMatch(query, `${command.heading} ${command.keywords ?? ''}`)
 }

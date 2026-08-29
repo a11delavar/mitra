@@ -24,19 +24,22 @@ const dicts = ['de.json', 'fr.json', 'es.json', 'pt.json', 'it.json']
 
 const analyzeOnly = process.argv.includes('--analyze')
 
-/** Every non-test .ts under `dir`, except the i18n folder itself. */
+/** This script's own two artefacts, which live in the i18n folder and must never be scanned: the doc
+ * comments of one and the key list of the other literally contain `t('…')`, which would be collected as
+ * keys. Everything ELSE in that folder is ordinary source (LanguageSetting) and is scanned normally. */
+const unscannable = ['index.ts', 'keys.auto-generated.ts']
+
+/** Every non-test .ts under `dir`, minus this script's own artefacts. */
 function sourceFiles(dir: string): Array<string> {
 	return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
 		const full = path.join(dir, entry.name)
 		if (entry.isDirectory()) {
-			// The i18n folder is infra (this script's own output + dictionaries), not scannable UI — and
-			// its doc comments literally contain `t('…')`, which would otherwise be collected as a key.
-			return full === i18nDir ? [] : sourceFiles(full)
+			return sourceFiles(full)
 		}
 		if (!entry.name.endsWith('.ts') || entry.name.endsWith('.test.ts')) {
 			return []
 		}
-		return [full]
+		return dir === i18nDir && unscannable.includes(entry.name) ? [] : [full]
 	})
 }
 

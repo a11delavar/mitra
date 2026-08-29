@@ -18,6 +18,8 @@ import { DialogIntegration } from '../integrations/client/DialogIntegration.js'
 import { DialogWelcome } from '../features/onboarding/client/DialogWelcome.js'
 import { DialogSourceMigration } from '../features/migration/client/DialogSourceMigration.js'
 import { DialogKeyboardShortcuts } from '../features/commands/client/DialogKeyboardShortcuts.js'
+import { DialogSettings } from '../features/settings/client/DialogSettings.js'
+import { SettingRow } from '../features/settings/client/SettingRow.js'
 import { contrastColor } from '../design/contrastColor.js'
 import { IconButton } from '../design/IconButton.js'
 import { buttonStyles } from '../design/button.css.js'
@@ -219,6 +221,14 @@ export class Mitra extends Application {
 				--color-border: var(--color-surface);
 				--border: 1px solid var(--color-border);
 				--border-radius: 4px;
+
+				&[data-theme=light] {
+					color-scheme: light;
+				}
+
+				&[data-theme=dark] {
+					color-scheme: dark;
+				}
 			}
 
 			${buttonStyles}
@@ -257,6 +267,8 @@ export class Mitra extends Application {
 			${DialogWelcome.styles}
 			${DialogSourceMigration.styles}
 			${DialogKeyboardShortcuts.styles}
+			${DialogSettings.styles}
+			${SettingRow.styles}
 			${DialogEntryScope.styles}
 			${DialogCompleteParent.styles}
 			${DialogCloseSubtasks.styles}

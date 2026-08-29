@@ -30,6 +30,18 @@ describe('the server bundle', () => {
 			'app/server.ts must (transitively) import integrations/server/registerEngines.js',
 		)
 	})
+
+	it('carries no settings UI, so the domain can never reach for a preference', async () => {
+		// Settings are browser classes (lit templates, the HTTP layer, localStorage). The shared domain
+		// runs here too, so the moment `Entry.ts` or `Reminders.ts` reads one — for a default, or for the
+		// list of values a picker offers — the whole browser stack lands in this bundle. That is why the
+		// domain keeps only its own invariants and takes preferences as PARAMETERS (see Entry.scheduleAt).
+		const inputs = await inputsOf(backendOptions)
+		assert.ok(
+			!inputs.some(input => input.includes('features/settings/client')),
+			'the server bundle must not reach any settings client code',
+		)
+	})
 })
 
 describe('the browser bundle', () => {

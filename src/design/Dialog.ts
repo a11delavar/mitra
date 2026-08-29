@@ -118,21 +118,24 @@ export class Dialog extends Component {
 				align-items: center;
 				gap: 0.75rem;
 
+				> mitra-icon-button {
+					--icon-button-size: 2rem;
+					font-size: 1.0625rem;
+				}
+
 				h2 {
 					flex: 1;
 					margin: 0;
-					font-size: 1.0625rem;
-					font-weight: 650;
-					letter-spacing: -0.01em;
+					font-size: 1rem;
+					font-weight: 600;
 				}
 
-				/* A dialog opened with no heading (its content is its own header — the About dialog does
-				   this): the title bar leaves the flow so the panel content becomes the visual top, and the
+				/* For dialogs where a whole-pane surface takes the content (e.g. the welcome dialog), the
 				   close button stays, floating over the content's top-right corner. */
 				&[data-headingless] {
 					position: absolute;
-					inset-block-start: 0;
-					inset-inline-end: 0;
+					inset-block-start: var(--mitra-dialog-header-inset, 0);
+					inset-inline-end: var(--mitra-dialog-header-inset, 0);
 					margin: 0;
 					z-index: 1;
 

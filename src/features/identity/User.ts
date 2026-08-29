@@ -5,6 +5,7 @@ import { Identity, type IdentityClaims } from './Identity.js'
 import { Source } from '../sources/Source.js'
 import { Integration } from '../../integrations/Integration.js'
 import { Entry } from '../entries/Entry.js'
+import { UserSettings } from '../settings/UserSettings.js'
 
 /** An ADDITIONAL time zone shown in the day grid's time axis: the IANA id plus an optional short
  * custom label ("DE"). The system time zone is not on this list — it anchors the grid itself and is
@@ -29,6 +30,9 @@ export class User {
 	@manyToOne(() => Source, { mapToPk: true, deleteRule: 'set null', nullable: true }) defaultSourceId?: string
 
 	@property({ type: 'json', nullable: true }) timeZones?: Array<UserTimeZone>
+
+	/** Persisted user preferences; NULL if unset. */
+	@property({ type: 'json', nullable: true }) settings?: UserSettings
 
 	/** The app version whose release notes this user last saw (What's-New dialog) — the sidebar's news
 	 * dot lights when the running version differs. Null until first recorded, so a fresh user starts
@@ -64,6 +68,11 @@ export class User {
 		const user = new User({ username: claims.sub, identity: Identity.fromClaims(issuer, claims) })
 		em.persist(user)
 		return user
+	}
+
+	/** Replaces stored settings with sanitized preferences bag. */
+	applySettings(settings: unknown): void {
+		this.settings = UserSettings.sanitize(settings)
 	}
 
 	/**

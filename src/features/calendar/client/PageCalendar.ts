@@ -7,11 +7,11 @@ import type { EntrySegmentComponent } from '../../entries/client/EventSegment.js
 import { EntryStore } from '../../entries/client/EntryStore.js'
 import { EntryFetcherController } from '../../entries/client/EntryFetcherController.js'
 import { CommandPalette } from '../../commands/client/CommandPalette.js'
-import { commands, sourceCommands } from '../../../app/commands.js'
+import { commandInstances, sourceCommands, settingCommands } from '../../../app/commands.js'
+import { type CalendarView } from '../CalendarView.js'
+import { DefaultViewSetting } from './DefaultViewSetting.js'
 import type { Sidebar } from '../../../app/Sidebar.js'
 import { windowDragHandle } from '../../../design/windowDrag.css.js'
-
-export type CalendarView = 'week' | 'month' | 'year' | 'timeline'
 
 @component('mitra-page-calendar')
 @route('/')
@@ -22,7 +22,7 @@ export class PageCalendar extends PageComponent {
 	private static readonly customizableSelectsSupported = CSS.supports('appearance', 'base-select')
 
 	@state() navigatingDate = new DateTime()
-	@state() view: CalendarView = 'week'
+	@state() view: CalendarView = DefaultViewSetting.current
 	@state() sidebarOpen = PageCalendar.preferredSidebarOpen
 
 	readonly mediaController = new MediaQueryController(this, '(min-width: 800px)', () => this.sidebarOpen = PageCalendar.preferredSidebarOpen)
@@ -75,11 +75,10 @@ export class PageCalendar extends PageComponent {
 
 	@query('input.goto-date') private readonly gotoDateInput!: HTMLInputElement
 
-	/** The page's palette commands — instantiated once from the registry (see commands/): each class
-	 * owns its facts as getters, so view-dependent headings and the active language stay current on
-	 * a stable list. The palette only lists and dispatches; the keydown interceptor below matches
+	/** The page's palette commands — the registry's own instances (see commands/), rebuilt only when the
+	 * language changes. The palette only lists and dispatches; the keydown interceptor below matches
 	 * against these same instances. */
-	readonly commands = commands().map(constructor => new constructor())
+	get commands() { return commandInstances() }
 
 	/** Those plus one verb per calendar, which can't be a stable list — calendars come and go while the
 	 * page lives — so they're built from the store per render (see commands/sources.ts). Keyless, so
@@ -89,7 +88,7 @@ export class PageCalendar extends PageComponent {
 	 * scrolls at ten. The per-calendar solos cost the head of the list nothing, since they wait for
 	 * something to be typed (see Command.listedWithoutQuery). */
 	private get paletteCommands() {
-		return [...sourceCommands(), ...this.commands]
+		return [...sourceCommands(), ...this.commands, ...settingCommands()]
 	}
 
 	/** Follows any change to which sources are on show. Visibility filters server-side, so the entries

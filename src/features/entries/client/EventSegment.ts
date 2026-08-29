@@ -523,8 +523,7 @@ export class EntrySegmentComponent extends Component {
 					> .mark {
 						block-size: 100%;
 						border-radius: 999px;
-						/* Inset keeps a daily routine's marks apart — touching marks read as a border line. */
-						margin-inline: 15%;
+						margin-inline: 2.5%;
 						background-color: color-mix(in srgb, var(--mitra-entry-segment-color) 60%, transparent);
 					}
 

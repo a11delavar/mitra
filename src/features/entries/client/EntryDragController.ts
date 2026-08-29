@@ -3,7 +3,10 @@ import { DateTime } from '@3mo/date-time'
 import { type Source } from '../../sources/Source.js'
 import { EntryPlan } from '../../relations/EntryPlan.js'
 import { EntryChange } from '../EntryChange.js'
-import { Entry, SNAP_MINUTES, DEFAULT_REMINDER_MINUTES } from '../Entry.js'
+import { Entry } from '../Entry.js'
+import { DefaultDurationSetting } from './DefaultDurationSetting.js'
+import { SnapSetting } from './SnapSetting.js'
+import { DefaultReminderSetting } from '../../reminders/client/DefaultReminderSetting.js'
 import { EntryType } from '../EntryType.js'
 import { getPrimarySource, getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
@@ -100,7 +103,8 @@ interface Drag {
  * only in what pointer-down starts, how a frame builds the entry, and what release does:
  *
  * - **create** — on empty grid / lane / cell: a new entry from anchor→current (week timed reads the
- *   1440-row grid snapped to {@link SNAP_MINUTES}; the all-day lane and month are day-granular). A plain
+ *   1440-row grid snapped to {@link EntryDragController.snapMinutes}; the all-day lane and month are
+ *   day-granular). A plain
  *   click does nothing in the week, and quick-creates a single day in the month.
  * - **move** — on a persisted entry's body: translate it (preserving duration) by the drag delta. Timed
  *   in the week shifts by minutes+days; everything else (all-day, or anything in the month) by whole days,
@@ -111,7 +115,7 @@ interface Drag {
  * - **resize** — on a persisted entry's `.resize-start`/`.resize-end` handle: drag that edge while the
  *   other stays fixed (reusing {@link resizePlacement}, so dragging an edge past the other flips it).
  *
- * A move reaches ONE surface outside the grid, the **unscheduled section**, in both directions — and
+ * A move reaches ONE surface outside the grid, the **unscheduled section**, in both directions — andc
  * as the same gesture rather than a mode of its own, because "unscheduled" is simply the placement
  * that has no span. A drag out of the section starts where the section is, so it hands the gesture
  * over through {@link beginExternal} and lends its own pointer capture; everything downstream is the
@@ -124,8 +128,8 @@ interface Drag {
  * on release; move/resize commit through the store, which reverts to the canonical server state on failure.
  */
 export class EntryDragController extends Controller {
-	/** The granularity timed gestures snap to. */
-	static readonly snapMinutes = SNAP_MINUTES
+	/** The granularity timed gestures snap to, resolved dynamically from user settings. */
+	static get snapMinutes() { return SnapSetting.current }
 
 	/** One view is mounted at a time, and during a view transition's frames the LAST connected is the
 	 * incoming one. */
@@ -331,11 +335,12 @@ export class EntryDragController extends Controller {
 			const { start, end } = placeAllDay(anchor.date, current.date)
 			return new Entry({ ...base, start, end, allDay: true })
 		}
-		const { start, end } = placeTimed(anchor.date.dayStart.add({ minutes: anchor.minute }), current.date.dayStart.add({ minutes: current.minute }))
-		// A timed draft gets the default reminder — unless the target provider can't hold reminders
-		// at all (e.g. Notion), where seeding one would just be silently dropped on save. The gesture
-		// only ever adopts its span afterwards (see `apply`), so this seed survives to the editor.
-		const reminders = getCapabilities(drag.source!.id).reminders ? [DEFAULT_REMINDER_MINUTES] : undefined
+		const { start, end } = placeTimed(anchor.date.dayStart.add({ minutes: anchor.minute }), current.date.dayStart.add({ minutes: current.minute }), EntryDragController.snapMinutes)
+		// A timed draft gets the default reminder — unless the user asked for none, or the target provider
+		// can't hold reminders at all (e.g. Notion), where seeding one would just be silently dropped on
+		// save. The gesture only ever adopts its span afterwards (see `apply`), so this seed survives to
+		// the editor.
+		const reminders = getCapabilities(drag.source!.id).reminders ? DefaultReminderSetting.reminders : undefined
 		return new Entry({ ...base, start, end, allDay: false, reminders })
 	}
 
@@ -350,12 +355,12 @@ export class EntryDragController extends Controller {
 		// No span to translate: placing it IS giving it one, so the length comes from the domain default.
 		if (!before.start || !before.end) {
 			const placed = before.clone()
-			placed.scheduleAt(mode === 'allday' ? current.date : current.date.dayStart.add({ minutes: current.minute }), mode === 'allday')
+			placed.scheduleAt(mode === 'allday' ? current.date : current.date.dayStart.add({ minutes: current.minute }), mode === 'allday', DefaultDurationSetting.current)
 			return placed
 		}
 		if (drag.laneBottom !== undefined && (mode === 'allday') !== before.allDay) {
 			const converted = before.clone()
-			converted.setAllDay(mode === 'allday')
+			converted.setAllDay(mode === 'allday', DefaultDurationSetting.current)
 			converted.moveStart(mode === 'allday' ? current.date.dayStart : current.date.dayStart.add({ minutes: current.minute }))
 			return converted
 		}
@@ -366,7 +371,7 @@ export class EntryDragController extends Controller {
 		const grabMs = drag.anchor!.date.dayStart.add({ minutes: drag.anchor!.minute }).valueOf()
 		const currentMs = current.date.dayStart.add({ minutes: current.minute }).valueOf()
 		// Snap the moved start onto the grid (the user's choice), then shift both ends by that to keep duration.
-		const shift = snapToGrid(before.start.valueOf() + (currentMs - grabMs)) - before.start.valueOf()
+		const shift = snapToGrid(before.start.valueOf() + (currentMs - grabMs), EntryDragController.snapMinutes) - before.start.valueOf()
 		return new Entry({ ...before, start: before.start.add({ milliseconds: shift }), end: before.end.add({ milliseconds: shift }) })
 	}
 
@@ -383,7 +388,7 @@ export class EntryDragController extends Controller {
 			return undefined
 		}
 		const dragged = before.allDay ? current.date : current.date.dayStart.add({ minutes: current.minute })
-		const { start, end } = resizePlacement(before, drag.edge!, dragged)
+		const { start, end } = resizePlacement(before, drag.edge!, dragged, EntryDragController.snapMinutes)
 		return new Entry({ ...before, start, end })
 	}
 

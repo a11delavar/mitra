@@ -236,7 +236,7 @@ describe('Entry', () => {
 				(e: Entry) => e.color = '#ff0000',
 				(e: Entry) => e.moveStart(at(1, 9)),
 				(e: Entry) => e.setEnd(at(0, 11)),
-				(e: Entry) => e.setAllDay(true),
+				(e: Entry) => e.setAllDay(true, 60),
 				(e: Entry) => e.status = TaskStatus.Done,
 			]) {
 				const e = base()
@@ -486,7 +486,7 @@ describe('Entry', () => {
 
 		it('scheduleAt gives a timed drop the default duration', () => {
 			const e = task()
-			e.scheduleAt(at(1, 14, 30), false)
+			e.scheduleAt(at(1, 14, 30), false, 60)
 			assert.equal(e.allDay, false)
 			assert.equal(e.start!.valueOf(), at(1, 14, 30).valueOf())
 			assert.equal(e.end!.valueOf(), at(1, 15, 30).valueOf())
@@ -494,7 +494,7 @@ describe('Entry', () => {
 
 		it('scheduleAt covers exactly one day for an all-day drop (exclusive next midnight)', () => {
 			const e = task()
-			e.scheduleAt(at(2, 14, 30), true)
+			e.scheduleAt(at(2, 14, 30), true, 60)
 			assert.equal(e.allDay, true)
 			assert.equal(e.start!.valueOf(), day.add({ days: 2 }).valueOf())
 			assert.equal(e.end!.valueOf(), day.add({ days: 3 }).valueOf())
@@ -512,7 +512,7 @@ describe('Entry', () => {
 	describe('setAllDay', () => {
 		it('snaps a timed entry to the day(s) it covers', () => {
 			const e = new Entry({ start: at(0, 9), end: at(0, 10) })
-			e.setAllDay(true)
+			e.setAllDay(true, 60)
 			assert.equal(e.allDay, true)
 			assert.equal(e.start!.valueOf(), day.valueOf())
 			assert.equal(e.end!.valueOf(), day.add({ days: 1 }).valueOf())
@@ -520,7 +520,7 @@ describe('Entry', () => {
 
 		it('restores a default 09:00–10:00 slot when turned off', () => {
 			const e = new Entry({ start: day, end: day.add({ days: 1 }), allDay: true })
-			e.setAllDay(false)
+			e.setAllDay(false, 60)
 			assert.equal(e.allDay, false)
 			assert.equal(e.start!.valueOf(), at(0, 9).valueOf())
 			assert.equal(e.end!.valueOf(), at(0, 10).valueOf())

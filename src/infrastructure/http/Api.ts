@@ -10,6 +10,7 @@ import { Integration } from '../../integrations/Integration.js'
 import { type EntryType } from '../../features/entries/EntryType.js'
 import { type Entry } from '../../features/entries/Entry.js'
 import { type ChangelogSection } from '../../features/about/Changelog.js'
+import { type UserSettings } from '../../features/settings/UserSettings.js'
 
 /**
  * Surface the server's error message on failed responses. Without a registered
@@ -137,8 +138,11 @@ export function getUser() {
 	return currentUser
 }
 
-export function getDefaultSourceId() {
-	return currentUser?.defaultSourceId
+/** The stored default calendar, or nothing. Normalized to `undefined`: an unset column arrives from the
+ * wire as `null`, and a caller distinguishing "never chose" from a chosen value (see Setting.value) would
+ * read that null as a choice. */
+export function getDefaultSourceId(): string | undefined {
+	return currentUser?.defaultSourceId ?? undefined
 }
 
 export async function setDefaultSource(sourceId: string | undefined) {
@@ -152,6 +156,17 @@ export function getTimeZones(): Array<UserTimeZone> {
 
 export async function setTimeZones(timeZones: Array<UserTimeZone>) {
 	return currentUser = await Api.put<User>('/user/time-zones', { timeZones })
+}
+
+/** The user's persisted preferences; unset keys default to codebase fallbacks. */
+export function getSettings(): UserSettings {
+	return currentUser?.settings ?? {}
+}
+
+/** Writes the WHOLE bag, like {@link setTimeZones} does with the zone list: an omitted key is how
+ * "back to the default" is said, so a merge on either side would make it unsayable. */
+export async function setSettings(settings: UserSettings) {
+	return currentUser = await Api.put<User>('/user/settings', { settings })
 }
 
 export function fetchEvents(start: DateTime, end: DateTime) {

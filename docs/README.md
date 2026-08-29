@@ -46,6 +46,7 @@ Day-to-day behaviour, whichever accounts you connected.
 - **[Reminders & notifications](guides/notifications.md)** — how push reminders work and what they need.
 - **[Location autocomplete](guides/location-autocomplete.md)** — the geocoder behind the location field.
 - **[Keyboard shortcuts](guides/keyboard-shortcuts.md)** — drive the views, navigation and entries from the keyboard.
+- **[Settings](guides/settings.md)** — theme, language, the view mitra opens on, and what a new entry starts out as; searchable, and mostly reachable from the command palette.
 
 ## Administer your instance
 

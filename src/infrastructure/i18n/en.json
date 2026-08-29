@@ -54,7 +54,6 @@
 	"${count:pluralityNumber} lose their reminders": ["${count:pluralityNumber} loses its reminders", "${count:pluralityNumber} lose their reminders"],
 	"${count:pluralityNumber} lose their time zone": ["${count:pluralityNumber} loses its time zone", "${count:pluralityNumber} lose their time zone"],
 	"${count:pluralityNumber} arrive with everything they carry": ["${count:pluralityNumber} arrives with everything it carries", "${count:pluralityNumber} arrive with everything they carry"],
-	"${count:pluralityNumber} of ${total:number} entries move to ${name}": ["${count:pluralityNumber} of ${total:number} entries moves to ${name}", "${count:pluralityNumber} of ${total:number} entries move to ${name}"],
 	"${count:pluralityNumber} repeat": ["${count:pluralityNumber} repeats", "${count:pluralityNumber} repeat"],
 	"${count:pluralityNumber} stayed in ${name}": ["${count:pluralityNumber} stayed in ${name}", "${count:pluralityNumber} stayed in ${name}"],
 	"${count:pluralityNumber} stop being all-day": ["${count:pluralityNumber} stops being all-day", "${count:pluralityNumber} stop being all-day"],
@@ -62,6 +61,17 @@
 	"Move ${count:pluralityNumber} entries": ["Move ${count:pluralityNumber} entry", "Move ${count:pluralityNumber} entries"],
 	"${count:pluralityNumber} entries copied to ${name}": ["${count:pluralityNumber} entry copied to ${name}", "${count:pluralityNumber} entries copied to ${name}"],
 	"MoveSourceEntries.Keywords": "move copy migrate transfer entries calendar source empty consolidate merge",
-	"${count:pluralityNumber} of ${total:number} entries copy to ${name}": ["${count:pluralityNumber} of ${total:number} entries copies to ${name}", "${count:pluralityNumber} of ${total:number} entries copy to ${name}"],
-	"Copy ${count:pluralityNumber} entries": ["Copy ${count:pluralityNumber} entry", "Copy ${count:pluralityNumber} entries"]
+	"Copy ${count:pluralityNumber} entries": ["Copy ${count:pluralityNumber} entry", "Copy ${count:pluralityNumber} entries"],
+	"ConnectorLines.Keywords": "connector lines arrows dependencies relations subtasks draw",
+	"DefaultDurationSetting.Keywords": "duration length default minutes hour long meeting",
+	"DefaultReminderSetting.Keywords": "reminder notification default minutes before alarm alert",
+	"DefaultSourceSetting.Keywords": "default calendar source target new entries created",
+	"DefaultViewSetting.Keywords": "view start startup default week month year timeline opens",
+	"LanguageSetting.Keywords": "language translation locale region english german french",
+	"NotificationsSetting.Keywords": "notifications push permission browser allow reminders alerts",
+	"OpenSettings.Keywords": "settings preferences options configure customize",
+	"SnapSetting.Keywords": "snap grid step granularity minutes drag resize",
+	"ThemeSetting.Keywords": "theme dark light mode colors appearance contrast",
+	"Toggle.Off": "Off",
+	"Toggle.On": "On"
 }

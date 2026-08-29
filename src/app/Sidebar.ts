@@ -1,6 +1,7 @@
 import { Component, component, html, css, property, state, event, eventListener, unsafeCSS } from '@a11d/lit'
 import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, getPrimarySource, setDefaultSource, reimportSource, reimportIntegration, reorderSources, reorderIntegrations, getEnabledSources, getVisibleSources, soloSource, restoreSourceVisibility, canRestoreSourceVisibility, canCopyEntriesOut, canMoveEntriesOut } from '../infrastructure/http/Api.js'
 import { DialogAbout, hasUnseenChanges } from '../features/about/client/DialogAbout.js'
+import { DialogSettings } from '../features/settings/client/DialogSettings.js'
 import { DialogIntegration } from '../integrations/client/DialogIntegration.js'
 import { DialogSourceMigration } from '../features/migration/client/DialogSourceMigration.js'
 import { type Source } from '../features/sources/Source.js'
@@ -242,14 +243,16 @@ export class Sidebar extends Component {
 					}
 				}
 
-				/* Who's signed in, closing the column. */
+				/* User account card footer in multi-user mode. */
 				.account {
 					display: flex;
 					align-items: center;
 					gap: 0.5rem;
 					margin-block-start: 0.5rem;
-					padding: 0.75rem 0.25rem 0.25rem;
-					border-top: 1px solid color-mix(in srgb, var(--color-text) 9%, transparent);
+					padding: 0.5rem 0.5rem 0.5rem 0.4375rem;
+					background: var(--color-surface);
+					border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+					border-radius: 0.5rem;
 
 					/* A provider photo and its absence must occupy the same box, or the name's rail would
 					   depend on whether the identity happens to carry a picture. */
@@ -277,6 +280,20 @@ export class Sidebar extends Component {
 						color: var(--color-text-muted);
 					}
 
+					/* The menu holding the rare action keeps to itself until the card is reached for — the
+					   same bargain a source row's ⋯ strikes with its eye. Focus and an open menu pin it, so
+					   it never fades out from under itself. */
+					.actions mitra-icon-button {
+						opacity: 0;
+						transition: opacity 0.15s ease;
+					}
+
+					&:hover .actions mitra-icon-button,
+					&:focus-within .actions mitra-icon-button,
+					&:has(menu:popover-open) .actions mitra-icon-button {
+						opacity: 1;
+					}
+
 					.who {
 						flex: 1;
 						min-width: 0;
@@ -291,8 +308,8 @@ export class Sidebar extends Component {
 						}
 
 						.email {
-							font-size: 0.6875rem;
-							color: var(--color-text-muted);
+							font-size: 0.75rem;
+							color: color-mix(in srgb, var(--color-text) 65%, transparent);
 							white-space: nowrap;
 							overflow: hidden;
 							text-overflow: ellipsis;
@@ -985,6 +1002,12 @@ export class Sidebar extends Component {
 				</mitra-tabs>
 				${/* What is left here is app-level and true in either mode. */''}
 				<div class="footer">
+					${getUser()?.identity ? html.nothing : html`
+						<button class="action" title=${t('Settings')} @click=${Sidebar.openSettings}>
+							<mitra-icon icon="settings"></mitra-icon>
+							${t('Settings')}
+						</button>
+					`}
 					${!canInstall() ? html.nothing : html`
 						<button class="action"
 							title=${t('Install mitra as an app — it gets its own window, and notifications appear under its own name and icon')}
@@ -997,6 +1020,17 @@ export class Sidebar extends Component {
 				</div>
 			</nav>
 		`
+	}
+
+	/** Opens the settings dialog — the footer's affordance and the chord below share it. */
+	private static readonly openSettings = () => void new DialogSettings({}).confirm().catch(() => undefined)
+
+	@eventListener({ target: window, type: 'keydown' })
+	protected handleSettingsHotkey(e: KeyboardEvent) {
+		if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key === ',' && !document.querySelector('mitra-dialog-settings')) {
+			e.preventDefault()
+			Sidebar.openSettings()
+		}
 	}
 
 	// A provider photo that fails to load (link rotated, endpoint needs auth) falls back to the icon.
@@ -1018,8 +1052,17 @@ export class Sidebar extends Component {
 					<div class="name">${identity.name || identity.email || t('Account')}</div>
 					${!identity.email || identity.email === identity.name ? html.nothing : html`<div class="email">${identity.email}</div>`}
 				</div>
-				<mitra-icon-button icon="log-out" label=${t('Sign out')}
-					@click=${() => location.assign('/auth/logout')}></mitra-icon-button>
+				<mitra-icon-button icon="settings" label=${t('Settings')} @click=${Sidebar.openSettings}></mitra-icon-button>
+				<span class="actions">
+					<mitra-icon-button icon="more-horizontal" label=${t('Account options')}
+						style="anchor-name: --account-menu" @click=${this.toggleMenu}></mitra-icon-button>
+					<menu popover id="account-menu" style="position-anchor: --account-menu">
+						<button @click=${(e: Event) => { this.closeMenu(e); location.assign('/auth/logout') }}>
+							<mitra-icon icon="log-out"></mitra-icon>
+							${t('Sign out')}
+						</button>
+					</menu>
+				</span>
 			</div>
 		`
 	}

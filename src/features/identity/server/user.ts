@@ -7,7 +7,7 @@ userRouter.get('/', (req, res) => {
 	return res.json(req.user)
 })
 
-/** An id names a real zone iff Intl can format in it — authoritative on this very runtime. */
+/** Validates time zone identifier via Intl.DateTimeFormat. */
 function isValidTimeZone(id: string): boolean {
 	try {
 		new Intl.DateTimeFormat(undefined, { timeZone: id })
@@ -38,9 +38,7 @@ userRouter.put('/time-zones', async (req, res) => {
 	return res.json(user)
 })
 
-/** Records the version whose release notes the user has now seen — clears the What's-New dot until
- * the instance moves past it again. The value is the frontend's own version string (a tag or a
- * describe string), only sanity-checked here, never interpreted. */
+/** Updates last seen release notes version for the current user. */
 userRouter.put('/seen-version', async (req, res) => {
 	const version = req.body.version
 	if (typeof version !== 'string' || !version.trim() || version.length > 64) {
@@ -52,6 +50,17 @@ userRouter.put('/seen-version', async (req, res) => {
 	await em.flush()
 	// Keep the request's user (a different entity manager's instance) in sync so a follow-up GET reflects the change.
 	req.user.lastSeenVersion = user.lastSeenVersion
+	return res.json(user)
+})
+
+/** Updates user settings JSON bag. */
+userRouter.put('/settings', async (req, res) => {
+	const em = orm.em.fork()
+	const user = await em.findOneOrFail(User, { id: req.user.id })
+	user.applySettings(req.body.settings)
+	await em.flush()
+	// Keep the request's user (a different entity manager's instance) in sync so a follow-up GET reflects the change.
+	req.user.settings = user.settings
 	return res.json(user)
 })
 

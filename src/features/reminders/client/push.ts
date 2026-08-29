@@ -18,7 +18,8 @@ function base64UrlToBytes(value: string): Uint8Array {
 	return Uint8Array.from(binary, character => character.charCodeAt(0))
 }
 
-function supported() {
+/** Whether the current browser supports Web Push notifications. */
+export function pushSupported() {
 	return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
 }
 
@@ -36,7 +37,7 @@ async function subscribe(): Promise<void> {
  * means denied/unsupported: reminders still persist (and other CalDAV clients still alert), mitra
  * itself just can't notify this browser. */
 export async function enablePushNotifications(): Promise<boolean> {
-	if (!supported()) {
+	if (!pushSupported()) {
 		return false
 	}
 	if (await Notification.requestPermission() !== 'granted') {
@@ -48,7 +49,7 @@ export async function enablePushNotifications(): Promise<boolean> {
 
 /** On boot: silently refresh the subscription where permission is already granted. Never prompts. */
 export function syncPushSubscription() {
-	if (supported() && Notification.permission === 'granted') {
+	if (pushSupported() && Notification.permission === 'granted') {
 		subscribe().catch(() => void 0) // offline/transient — the next boot retries
 	}
 }

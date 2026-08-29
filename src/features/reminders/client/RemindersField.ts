@@ -17,9 +17,10 @@ function unitLabel(unit: CustomUnit): string {
 	}
 }
 
-/** "30 min", "1 hour", "2 days" — the span part of a reminder's label. English for now; the single
- * seam where localized wording plugs in later (mirrors the backend's own reminderSpan). */
-function reminderSpanLabel(minutes: number): string {
+/** "30 min", "1 hour", "2 days" — a span of minutes in words. Exported because it is the app's ONE
+ * wording for one: the settings dialog's default-duration and snap pickers read their labels from here
+ * rather than growing a second vocabulary for the same numbers. (Mirrors the backend's reminderSpan.) */
+export function reminderSpanLabel(minutes: number): string {
 	const unit = ([['week', UNIT_MINUTES.weeks], ['day', UNIT_MINUTES.days], ['hour', UNIT_MINUTES.hours]] as const)
 		.find(([, factor]) => minutes >= factor && minutes % factor === 0)
 	if (!unit) {
@@ -33,8 +34,9 @@ function reminderSpanLabel(minutes: number): string {
 	}
 }
 
-/** The full one-line label, for the preset menu. */
-function reminderLabel(minutes: number): string {
+/** The full one-line label, for the preset menu — and for the default-reminder setting, which offers
+ * the very same presets. */
+export function reminderLabel(minutes: number): string {
 	return minutes === 0 ? t('At start of event') : t('${span} before', { span: reminderSpanLabel(minutes) })
 }
 

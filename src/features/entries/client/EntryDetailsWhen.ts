@@ -5,6 +5,7 @@ import { FLOATING_TIME_ZONE, type Entry } from '../Entry.js'
 import { type TimeZonePicker, longZoneName, systemZoneId, zoneCity, zoneNamePart } from '../../time/client/TimeZonePicker.js'
 import { getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
+import { DefaultDurationSetting } from './DefaultDurationSetting.js'
 import { controlHeight } from '../../../design/controlHeight.css.js'
 
 /**
@@ -119,7 +120,7 @@ export class EntryDetailsWhen extends Component {
 		if (!this.entry.start) {
 			// Picking a date SCHEDULES the entry rather than moving a span that isn't there. All-day,
 			// because a date is all the user said — the switch on the next line adds a time.
-			this.entry.scheduleAt(new DateTime(`${value}T00:00:00`), true)
+			this.entry.scheduleAt(new DateTime(`${value}T00:00:00`), true, DefaultDurationSetting.current)
 		} else {
 			this.entry.moveStart(this.withDate(value, this.entry.start))
 		}
@@ -148,7 +149,7 @@ export class EntryDetailsWhen extends Component {
 	}
 
 	private readonly toggleAllDay = () => {
-		this.entry.setAllDay(!this.entry.allDay)
+		this.entry.setAllDay(!this.entry.allDay, DefaultDurationSetting.current)
 		this.commit()
 	}
 

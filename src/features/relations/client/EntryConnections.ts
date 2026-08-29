@@ -118,8 +118,16 @@ export class EntryConnections extends Component {
 		return localStorage.getItem(`Mitra.Connections.${view}`) !== 'false'
 	}
 
-	static setEnabledFor(view: 'week' | 'month' | 'timeline', enabled: boolean) {
-		localStorage.setItem(`Mitra.Connections.${view}`, String(enabled))
+	/** `undefined` FORGETS the choice rather than writing the current default: an explicit `true` would
+	 * pin the lines on for good, and the day this default changes it would have to change for the people
+	 * who never chose (see Setting.set — only deviations are stored). */
+	static setEnabledFor(view: 'week' | 'month' | 'timeline', enabled: boolean | undefined) {
+		const key = `Mitra.Connections.${view}`
+		if (enabled === undefined) {
+			localStorage.removeItem(key)
+		} else {
+			localStorage.setItem(key, String(enabled))
+		}
 		EntryStore.notify()
 	}
 

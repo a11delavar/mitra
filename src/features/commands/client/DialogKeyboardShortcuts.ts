@@ -1,6 +1,6 @@
 import { component, html, css, type HTMLTemplateResult } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
-import { commands, type Command, type CommandGroup } from '../Command.js'
+import { commandInstances, type Command, type CommandGroup } from '../Command.js'
 
 /**
  * The keyboard cheat sheet, grouped the way users think — views, navigation, entries, general.
@@ -38,8 +38,7 @@ export class DialogKeyboardShortcuts extends DialogComponent {
 
 	private get groups(): Array<{ heading: string, shortcuts: Array<{ action: string, keys: HTMLTemplateResult }> }> {
 		const { keys, word, row, modifier, alt, deleteKey } = DialogKeyboardShortcuts
-		const of = (group: CommandGroup) => commands()
-			.map(constructor => new constructor())
+		const of = (group: CommandGroup) => commandInstances()
 			.filter(command => command.keys?.length && command.group === group)
 			.map(row)
 		return [
@@ -62,6 +61,7 @@ export class DialogKeyboardShortcuts extends DialogComponent {
 				shortcuts: [
 					{ action: t('Search or run a command…'), keys: html`${keys('/')}${word(t('or'))}${keys(modifier, 'P')}${word(t('or'))}${keys(modifier, 'K')}` },
 					...of('general'),
+					{ action: t('Settings'), keys: keys(modifier, ',') },
 					// The sidebar eye's Alt+click (see Sidebar.toggleSolo) — a pointer gesture, so hand-written.
 					{ action: t('Show only one calendar, or bring the rest back'), keys: html`${keys(alt)}${word(t('click'))}` },
 					{ action: t('Close'), keys: keys('Esc') },

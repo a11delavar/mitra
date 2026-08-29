@@ -1,5 +1,6 @@
 import { DateTime } from '@3mo/date-time'
-import { Entry, DEFAULT_REMINDER_MINUTES } from '../Entry.js'
+import { Entry } from '../Entry.js'
+import { DefaultReminderSetting } from '../../reminders/client/DefaultReminderSetting.js'
 import { getPrimarySource, getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
@@ -36,7 +37,7 @@ export class CreateEntry extends Command {
 			end: start.add({ hours: 1 }),
 			allDay: false,
 			// A timed draft — same default as a create gesture, same capability guard (see EntryDragController).
-			reminders: getCapabilities(source.id).reminders ? [DEFAULT_REMINDER_MINUTES] : undefined,
+			reminders: getCapabilities(source.id).reminders ? DefaultReminderSetting.reminders : undefined,
 		})
 		EntryStore.upsertDraft(draft)
 		EntryEditorIntent.openDraft(draft)

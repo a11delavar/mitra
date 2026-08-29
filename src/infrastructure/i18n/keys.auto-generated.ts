@@ -53,6 +53,7 @@ declare global {
 		"About": unknown
 		"About.Keywords": unknown
 		"Account": unknown
+		"Account options": unknown
 		"Add integration": unknown
 		"Add Integration": unknown
 		"Add participant": unknown
@@ -63,10 +64,13 @@ declare global {
 		"Add time zone": unknown
 		"Add your first integration": unknown
 		"AddIntegration.Keywords": unknown
+		"Administration": unknown
 		"After": unknown
 		"All day": unknown
 		"All entries": unknown
 		"All subtasks done": unknown
+		"Allow": unknown
+		"Allowed": unknown
 		"Alt+click to show only this one": unknown
 		"Alt+click to show the previously visible ones": unknown
 		"Amount": unknown
@@ -84,6 +88,7 @@ declare global {
 		"Back": unknown
 		"before": unknown
 		"before at ${time}": unknown
+		"Blocked": unknown
 		"Blocked by": unknown
 		"Blocks": unknown
 		"Busy": unknown
@@ -93,6 +98,7 @@ declare global {
 		"Calendar URL": unknown
 		"Calendars": unknown
 		"Cancelled": unknown
+		"Change ${name}…": unknown
 		"Checking what would be copied…": unknown
 		"Checking what would move…": unknown
 		"Choose a task status": unknown
@@ -109,6 +115,10 @@ declare global {
 		"Connect": unknown
 		"Connect an account": unknown
 		"Connecting…": unknown
+		"Connector lines in the month view": unknown
+		"Connector lines in the timeline": unknown
+		"Connector lines in the week view": unknown
+		"ConnectorLines.Keywords": unknown
 		"Continue with Google": unknown
 		"Copied to ${name}": unknown
 		"Copy": unknown
@@ -128,11 +138,20 @@ declare global {
 		"CreateEntry.Keywords": unknown
 		"Ctrl": unknown
 		"Custom…": unknown
+		"Dark": unknown
 		"Date": unknown
 		"days": unknown
+		"Default Calendar": unknown
+		"Default Duration": unknown
 		"Default for new entries — click to unset": unknown
 		"Default for new entries, as the first one shown": unknown
+		"Default Reminder": unknown
+		"Default View": unknown
 		"Default visibility": unknown
+		"DefaultDurationSetting.Keywords": unknown
+		"DefaultReminderSetting.Keywords": unknown
+		"DefaultSourceSetting.Keywords": unknown
+		"DefaultViewSetting.Keywords": unknown
 		"Del": unknown
 		"Delete": unknown
 		"Delete entry": unknown
@@ -197,8 +216,11 @@ declare global {
 		"Keep the chain intact": unknown
 		"Keyboard Shortcuts": unknown
 		"KeyboardShortcuts.Keywords": unknown
+		"Language": unknown
+		"LanguageSetting.Keywords": unknown
 		"Leave the originals here and add a copy over there": unknown
 		"Leave them here": unknown
+		"Light": unknown
 		"Location": unknown
 		"Make attendance optional": unknown
 		"Make attendance optional for everyone": unknown
@@ -207,6 +229,7 @@ declare global {
 		"Mark all required": unknown
 		"Mark as cancelled": unknown
 		"Mark as done": unknown
+		"Match the system": unknown
 		"minutes": unknown
 		"modified": unknown
 		"Month": unknown
@@ -248,6 +271,8 @@ declare global {
 		"Nothing planned yet — draw a task on the row below": unknown
 		"Nothing was copied": unknown
 		"Nothing was moved": unknown
+		"Notifications": unknown
+		"NotificationsSetting.Keywords": unknown
 		"Notion.TokenHint": unknown
 		"Occurrences": unknown
 		"of event at ${time}": unknown
@@ -260,6 +285,7 @@ declare global {
 		"Open in ${provider}": unknown
 		"Open in Google Maps": unknown
 		"Open link": unknown
+		"OpenSettings.Keywords": unknown
 		"Optional": unknown
 		"Options": unknown
 		"or": unknown
@@ -284,7 +310,9 @@ declare global {
 		"Related to": unknown
 		"Reload to finish updating": unknown
 		"Reminder": unknown
+		"Reminder notifications": unknown
 		"Reminders": unknown
+		"Reminders you add are always saved; this decides whether this browser may also alert you.": unknown
 		"Remove": unknown
 		"Remove all": unknown
 		"Remove every participant": unknown
@@ -309,9 +337,11 @@ declare global {
 		"Search for an event or task to link": unknown
 		"Search or run a command (${hotkey})": unknown
 		"Search or run a command…": unknown
+		"Search settings…": unknown
 		"select": unknown
 		"Server URL": unknown
 		"Set as the default for new entries": unknown
+		"Settings": unknown
 		"Show as busy or free": unknown
 		"Show calendar": unknown
 		"Show fewer participants": unknown
@@ -326,6 +356,8 @@ declare global {
 		"ShowPreviouslyVisibleSources.Keywords": unknown
 		"Sign out": unknown
 		"Site URL": unknown
+		"Snap to": unknown
+		"SnapSetting.Keywords": unknown
 		"Sources": unknown
 		"Start date": unknown
 		"Start time": unknown
@@ -345,15 +377,21 @@ declare global {
 		"The hours you book on Jira issues": unknown
 		"the last ${weekday}": unknown
 		"The originals stay exactly where they are": unknown
+		"The step dragging and resizing land on": unknown
 		"The task databases of your workspace": unknown
 		"Their copies landed but the originals could not be deleted — delete them here by hand.": unknown
+		"Theme": unknown
+		"ThemeSetting.Keywords": unknown
 		"There is no other calendar these entries could move to.": unknown
 		"This and following entries": unknown
 		"This and its ${count:pluralityNumber} subtasks": unknown
+		"This browser is blocking notifications — allow them in its site settings to get reminders here.": unknown
+		"This browser will show your reminders.": unknown
 		"This entry": unknown
 		"This relationship could not be saved": unknown
 		"This relationship is not possible": unknown
 		"Time zone": unknown
+		"Timed entries only": unknown
 		"Timeline": unknown
 		"Timeline View": unknown
 		"TimelineView.Keywords": unknown
@@ -364,6 +402,8 @@ declare global {
 		"Today": unknown
 		"Toggle sidebar": unknown
 		"Toggle Sidebar": unknown
+		"Toggle.Off": unknown
+		"Toggle.On": unknown
 		"ToggleSidebar.Keywords": unknown
 		"unchanged": unknown
 		"Unknown entry": unknown
@@ -385,6 +425,7 @@ declare global {
 		"Welcome to ${name}": unknown
 		"What's New": unknown
 		"WhatsNew.Keywords": unknown
+		"Where new events and tasks are created": unknown
 		"Workspace": unknown
 		"Year": unknown
 		"Year View": unknown
