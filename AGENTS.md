@@ -175,8 +175,8 @@
   - `EntrySegments` Engine:
     - `EntrySegments.for(entry)`: Memoized per-day segments with `previous`/`next` links.
     - `timedOn(day)`: Clustered side-by-side columns.
-    - `runsIn(from, to, accept)`: Representative segments touching window.
-    - `monthSlots` / `allDaySlots` / `monthWeek(week, maxSlots)`: Greedy lane packing.
+    - `runsIn(from, to, accept)`: Representative segments touching window via per-cohort `segmentsByDay` index.
+    - `monthSlots` / `allDaySlots` / `monthWeek(week)`: Unbounded greedy lane packing (no slot caps; overflow clips behind bottom fade).
     - `static laneRank(entry)`: Lane ordering for month packing.
   - Self-Placement: Views map dates to grid columns via `Map<dayValue, index>`.
   - Hot-Loop Date Math: Cache `.dayValue` (`YYYYMMDD` integer) or `epochMilliseconds` in tight loops.
@@ -184,8 +184,16 @@
   - `EntryDragController`: Container-level controller for create, move (delta translation), and resize (edge drag). Resize handles: 0.25rem strips (`resize: 'block' | 'inline'`).
   - Drafts: Single active local draft in `EntryStore.draft` (`id = 0`, `persisted = false`). Backend assigns final IDs.
   - `CalendarScrollController`: Date-anchored scrolling across views. Snapping gated on device type (notched wheel vs continuous touch/trackpad).
+  - `DensityController`: Shared zoom gesture (Ctrl+wheel, wheel over rail, 2-finger pinch). Subclasses override `settled()` to dispatch synthetic scroll on inner scroller elements.
   - `TimeZoneLaneController`: Alternative zones fold; anchor zone never folds. Clamps cells (`max-inline-size: var(--zone-width)`). Rail inline drag with `touch-action: pan-y`.
   - Week All-Day Lane: Explicit row tracks (`grid-template-rows: repeat(var(--slots), var(--slot-height))`), never auto-flow.
+- **Month View** (`mitra-weeks`):
+  - Strip of week rows with subgrid column alignment and continuous CSS density scaling (`--_month-density`).
+  - Row Structure: Numerals track + `.entries` overlay (unbounded lanes, `overflow: hidden` + gradient bottom fade). Routines ribbon rendered in track after last bar.
+  - Stacking Context: Explicit `z-index: 2` on `.entries` to preserve stacking order over relations connectors (z: 1 resting, z: 3 hover).
+  - Caching & Rendering: Per-week layout memo (`weekLayouts` keyed on routines cohort) with `guard()`ed week templates.
+  - Week-Number Rail: Leading track (`--_week-rail-width`) in header and canvas. Click dispatches navigation and view switch. `[data-week-numbers]` collapses rail when undefined. Numeral is block-sticky inside cell.
+  - Zoom Engine (`WeeksDensityController`): Bounds 2–9 weeks (min row 4.5rem). Multiplies ideal height (`--month-zoom`). `[data-zooming]` enables granular tracking during gestures; settles via whole-row quantization glide before returning authority to CSS integer fitting.
 - **Yearly View** (`mitra-months`):
   - Horizontal strip of `mitra-day` mini-month cells.
   - Month metadata from `CalendarDatesController.months`.

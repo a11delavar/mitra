@@ -43,7 +43,7 @@ export abstract class DensityController extends Controller {
 		return this.options.axis === 'inline' ? point.clientX : point.clientY
 	}
 
-	private clamp(zoom: number) {
+	protected clamp(zoom: number) {
 		return Math.min(this.options.max, Math.max(this.options.min, zoom))
 	}
 
@@ -54,10 +54,14 @@ export abstract class DensityController extends Controller {
 		return this.frame !== undefined || this.pinch !== undefined
 	}
 
-	/** Persist the landed zoom and let the host's scroll handler settle whatever it derives from the
-	 * scroll position — the gesture's own (typically skipped) scroll events are all there ever were. */
+	/** Persist the landed zoom, then announce it. */
 	private settle() {
 		localStorage.setItem(this.options.storageKey, String(this.zoom))
+		this.settled()
+	}
+
+	/** Dispatches synthetic scroll event on gesture settle. Subclasses override when scroller is not host. */
+	protected settled() {
 		this.host.dispatchEvent(new Event('scroll'))
 	}
 
@@ -85,7 +89,8 @@ export abstract class DensityController extends Controller {
 	 * pointer position. */
 	protected abstract pin(previous: number): void
 
-	private setTarget(zoom: number) {
+	/** Animates zoom toward target value across animation frames. */
+	protected setTarget(zoom: number) {
 		this.target = this.clamp(zoom)
 		this.frame ??= requestAnimationFrame(this.tick)
 	}

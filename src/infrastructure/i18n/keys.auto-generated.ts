@@ -9,7 +9,6 @@ declare global {
 	interface LocalizableStringKeys {
 		"\"${heading}\" could not be copied: ${message}": unknown
 		"\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks are still open.": unknown
-		"+${count:number} more": unknown
 		"${count:number} min": unknown
 		"${count:number} more": unknown
 		"${count:pluralityNumber} are marked as free": unknown
@@ -419,6 +418,7 @@ declare global {
 		"Visibility": unknown
 		"Wall clock — no time zone": unknown
 		"Week": unknown
+		"Week ${week:number}": unknown
 		"Week View": unknown
 		"weeks": unknown
 		"WeekView.Keywords": unknown

@@ -1,5 +1,4 @@
 {
-	"+${count:number} more": "+${count:number} mais",
 	"${count:number} min": "${count:number} min",
 	"${count:pluralityNumber} days": ["${count:pluralityNumber} dia", "${count:pluralityNumber} dias"],
 	"${count:pluralityNumber} hours": ["${count:pluralityNumber} hora", "${count:pluralityNumber} horas"],
@@ -265,6 +264,7 @@
 	"About.Keywords": "versão info de build lançamento commit sobre",
 	"View on GitHub": "Ver no GitHub",
 	"Week": "Semana",
+	"Week ${week:number}": "Semana ${week:number}",
 	"Welcome to ${name}": "Bem-vindo ao ${name}",
 	"Week View": "Vista semanal",
 	"weeks": "semanas",

@@ -14,10 +14,10 @@ export interface MonthBar {
 	readonly clippedRight: boolean
 }
 
-/** A week of the month grid: the bars that fit, and per-column counts of the ones that didn't. */
+/** A week of the month grid: every entry touching it as a column-spanning bar at its packed slot.
+ * Unbounded — a week too dense for its row height clips visually (the month view's fade), never here. */
 export interface MonthWeek {
 	readonly bars: ReadonlyArray<MonthBar>
-	readonly hiddenByColumn: ReadonlyArray<number>
 }
 
 /**
@@ -115,23 +115,43 @@ export class EntrySegments {
 		return segments
 	}
 
+	/** Index of dated segments bucketed by day value for range queries. */
+	private _segmentsByDay?: ReadonlyMap<number, ReadonlyArray<EntrySegment>>
+	private get segmentsByDay(): ReadonlyMap<number, ReadonlyArray<EntrySegment>> {
+		if (!this._segmentsByDay) {
+			const map = new Map<number, Array<EntrySegment>>()
+			for (const entry of this.entries) {
+				for (const segment of EntrySegments.for(entry)) {
+					if (segment.dayValue !== undefined) {
+						const list = map.get(segment.dayValue)
+						list ? list.push(segment) : map.set(segment.dayValue, [segment])
+					}
+				}
+			}
+			this._segmentsByDay = map
+		}
+		return this._segmentsByDay
+	}
+
 	/** One segment per accepted entry whose run touches [from, to] — its first slice in range — sorted
 	 * (earliest, then longest run first) so DOM — and thus paint — order stays deterministic. */
 	runsIn(from: DateTime, to: DateTime, accept: (entry: Entry) => boolean): ReadonlyArray<EntrySegment> {
 		const fromValue = from.dayStart.valueOf()
 		const toValue = to.dayStart.valueOf()
-		const reps = new Array<EntrySegment>()
-		for (const entry of this.entries) {
-			if (!accept(entry)) {
+		const byEntry = new Map<Entry, EntrySegment>()
+		for (const [dayValue, segments] of this.segmentsByDay) {
+			if (dayValue < fromValue || dayValue > toValue) {
 				continue
 			}
-			const inRange = EntrySegments.for(entry).find(segment => segment.dayValue !== undefined && segment.dayValue >= fromValue && segment.dayValue <= toValue)
-			if (inRange) {
-				reps.push(inRange)
+			for (const segment of segments) {
+				const kept = byEntry.get(segment.entry)
+				if ((!kept || segment.dayValue! < kept.dayValue!) && accept(segment.entry)) {
+					byEntry.set(segment.entry, segment)
+				}
 			}
 		}
 		const runDays = (segment: EntrySegment) => segment.runEnd.dayValue! - segment.dayValue!
-		return reps.sort((a, b) => a.dayValue === b.dayValue
+		return [...byEntry.values()].sort((a, b) => a.dayValue === b.dayValue
 			? runDays(b) - runDays(a) // longest run first, so it claims the lowest lane
 			: a.dayValue! - b.dayValue!)
 	}
@@ -149,19 +169,16 @@ export class EntrySegments {
 		return entry.allDay ? 1 : 2
 	}
 
-	/** A week of the month grid: each entry touching it as a column-spanning bar at its packed slot,
-	 * plus the per-column counts of events pushed past `maxSlots` (the "+N more" overflow). */
-	monthWeek(week: ReadonlyArray<DateTime>, maxSlots: number): MonthWeek {
+	/** A week of the month grid: each entry touching it as a column-spanning bar at its packed slot. */
+	monthWeek(week: ReadonlyArray<DateTime>): MonthWeek {
 		const weekStart = week[0]!
 		const weekEnd = week[week.length - 1]!
 		const weekEndValue = weekEnd.dayStart.valueOf()
-		const lastSlot = maxSlots - 1 // the top slot is reserved for the "+N more" affordance
 		// Built once per week so each bar's column is an O(1) numeric lookup, not a findIndex.
 		const columnByDay = new Map(week.map((day, index) => [day.dayStart.valueOf(), index]))
 		const columnOf = (dayValue: number) => columnByDay.get(dayValue) ?? -1
 
 		const bars = new Array<MonthBar>()
-		const hiddenByColumn = new Array<number>(week.length).fill(0)
 		for (const segment of this.runsIn(weekStart, weekEnd, () => true)) {
 			const startColumn = columnOf(segment.dayValue!)
 			const clippedRight = segment.runEnd.dayValue! > weekEndValue
@@ -169,25 +186,15 @@ export class EntrySegments {
 			if (startColumn < 0 || endColumn < 0) {
 				continue
 			}
-			const packed = this.monthSlots.get(segment.entry) ?? 0
-			// A gesture's own ghost is never overflow: it is the drag's only feedback, so past the cap it
-			// rides the last visible slot instead of vanishing into a "+N more" it can't be counted in.
-			const isGhost = EntryStore.isPreview(segment.entry)
-			const slot = isGhost ? Math.max(0, Math.min(packed, lastSlot - 1)) : packed
-			if (!isGhost && slot >= lastSlot) {
-				for (let column = startColumn; column <= endColumn; column++) {
-					hiddenByColumn[column] = (hiddenByColumn[column] ?? 0) + 1
-				}
-				continue
-			}
-			bars.push({ segment, startColumn, span: endColumn - startColumn + 1, slot, clippedRight })
+			bars.push({ segment, startColumn, span: endColumn - startColumn + 1, slot: this.monthSlots.get(segment.entry) ?? 0, clippedRight })
 		}
-		return { bars, hiddenByColumn }
+		return { bars }
 	}
 
 	/** Each dated entry's shared lane (slot) across all its days, packing non-overlapping events into the
 	 * same row — ordered by `Entry.laneRank` so spanning bars sit on top. The month view needs this rather
-	 * than CSS auto-flow because its "+N more" overflow has to know exactly which events fall past the cap. */
+	 * than CSS auto-flow so a bar keeps ONE lane across every week it spans (dense flow would re-pack it
+	 * per row), and so the connections layer can rank anchors without reading layout. */
 	private _monthSlots?: ReadonlyMap<Entry, number>
 	get monthSlots(): ReadonlyMap<Entry, number> {
 		return this._monthSlots ??= this.slots(this.entries)

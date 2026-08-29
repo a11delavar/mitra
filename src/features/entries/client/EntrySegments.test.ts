@@ -472,26 +472,25 @@ describe('EntrySegments', () => {
 		const day = new Entry({ heading: 'Day', start: base.add({ days: 1 }), end: base.add({ days: 2 }) })
 
 		it('places each entry as a spanning bar at its packed slot', () => {
-			const { bars, hiddenByColumn } = EntrySegments.of([day, trip], week).monthWeek(week, 4)
+			const { bars } = EntrySegments.of([day, trip], week).monthWeek(week)
 			const bar = (heading: string) => bars.find(b => b.segment.entry.heading === heading)!
 
 			assert.deepEqual({ ...bar('Trip'), segment: 0 }, { segment: 0, startColumn: 0, span: 3, slot: 0, clippedRight: false })
 			assert.deepEqual({ ...bar('Day'), segment: 0 }, { segment: 0, startColumn: 1, span: 1, slot: 1, clippedRight: false })
-			assert.deepEqual([...hiddenByColumn], [0, 0, 0, 0, 0, 0, 0])
 		})
 
 		it('flags a bar whose run continues past the week as clipped, spanning to the week edge', () => {
 			const long = new Entry({ heading: 'Long', start: base, end: base.add({ days: 9 }) })
-			const [bar] = EntrySegments.of([long], week).monthWeek(week, 4).bars
+			const [bar] = EntrySegments.of([long], week).monthWeek(week).bars
 			assert.equal(bar!.clippedRight, true)
 			assert.equal(bar!.span, 7)
 		})
 
-		it('counts events past the slot cap as per-column overflow', () => {
-			const { bars, hiddenByColumn } = EntrySegments.of([day, trip], week).monthWeek(week, 2)
-
-			assert.deepEqual(bars.map(b => b.segment.entry.heading), ['Trip']) // slot 0 fits; the +1 overflows
-			assert.deepEqual([...hiddenByColumn], [0, 1, 0, 0, 0, 0, 0])
+		it('places every entry, however deep the packing goes — a dense week clips visually, never here', () => {
+			const stack = Array.from({ length: 10 }, (_, i) => new Entry({ heading: `E${i}`, start: base.add({ hours: 9 + i }), end: base.add({ hours: 10 + i }) }))
+			const { bars } = EntrySegments.of(stack, week).monthWeek(week)
+			assert.equal(bars.length, 10)
+			assert.deepEqual([...new Set(bars.map(bar => bar.slot))].length, 10)
 		})
 	})
 
@@ -567,15 +566,13 @@ describe('EntrySegments', () => {
 	describe('monthWeek (move ghost)', () => {
 		const week = Array.from({ length: 7 }, (_, i) => base.add({ days: i }))
 
-		it('keeps a move ghost visible past the slot cap instead of counting it as overflow', () => {
-			// The ghost is the drag's only feedback — it may never disappear into a "+N more" it isn't in.
+		it('previews a move ghost at the packed slot it will land in', () => {
 			const trip = new Entry({ heading: 'Trip', start: base, end: base.add({ days: 3 }) })
 			const ghost = new Entry({ heading: 'Ghost', start: base.add({ days: 1 }), end: base.add({ days: 2 }) })
 
-			const { bars, hiddenByColumn } = duringMove(undefined, ghost, () => EntrySegments.of([trip, ghost], week).monthWeek(week, 2))
+			const { bars } = duringMove(undefined, ghost, () => EntrySegments.of([trip, ghost], week).monthWeek(week))
 			assert.deepEqual(bars.map(bar => bar.segment.entry.heading), ['Trip', 'Ghost'])
-			assert.equal(bars.find(bar => bar.segment.entry === ghost)!.slot, 0) // clamped to the last visible slot
-			assert.deepEqual([...hiddenByColumn], [0, 0, 0, 0, 0, 0, 0])
+			assert.equal(bars.find(bar => bar.segment.entry === ghost)!.slot, 1) // under the trip it overlaps
 		})
 	})
 })
