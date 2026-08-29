@@ -343,3 +343,4 @@
 - **License**: AGPL-3.0-only (`LICENSE`, `package.json`).
 - **Privacy & Placeholders**: No real-world people names or initials in code, tests, or seeds. Use role-based placeholders (`organizer@example.com`, `me@example.com`).
 - **Architecture**: Domain-Driven Design and OOP. Business logic belongs on aggregate roots, value objects, and domain collections, not loose procedural helper functions.
+- **Comment Brevity & Quality**: Never write verbose, essay-style JSDocs, conversational prose, or line-by-line narrations. Code should be self-documenting. Keep comments strictly focused on non-obvious domain invariants, RFC/protocol edge cases, or platform bugs, distilled into 1–2 concise, high-signal sentences.

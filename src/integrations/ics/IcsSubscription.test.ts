@@ -2,20 +2,18 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { IcsSubscription } from './IcsSubscription.js'
 
-// Tests for IcsSubscription URL normalization, capabilities, and credential merging.
-
 describe('Calendar subscription addresses', () => {
-	it('accepts a webcal link by fetching it over https — the scheme is a subscribe-to-this marker, not a transport', () => {
+	it('accepts a webcal link by fetching it over https', () => {
 		assert.equal(IcsSubscription.normalizeUrl('webcal://example.com/calendar.ics'), 'https://example.com/calendar.ics')
 		assert.equal(IcsSubscription.normalizeUrl('WEBCAL://example.com/calendar.ics'), 'https://example.com/calendar.ics')
 		assert.equal(IcsSubscription.normalizeUrl('webcals://example.com/calendar.ics'), 'https://example.com/calendar.ics')
 	})
 
-	it('leaves a plain http feed alone — a LAN calendar may genuinely have no TLS, exactly as a CalDAV server may', () => {
+	it('leaves a plain http feed alone', () => {
 		assert.equal(IcsSubscription.normalizeUrl('http://nas.local/calendar.ics'), 'http://nas.local/calendar.ics')
 	})
 
-	it('trims what was pasted and keeps the query, where most feeds carry their secret', () => {
+	it('trims whitespace and preserves query parameters', () => {
 		assert.equal(IcsSubscription.normalizeUrl('  https://example.com/feed?token=abc  '), 'https://example.com/feed?token=abc')
 	})
 
@@ -27,7 +25,7 @@ describe('Calendar subscription addresses', () => {
 })
 
 describe('Calendar subscription capabilities', () => {
-	it('refuses every write — a published feed is a file on someone else\'s server', () => {
+	it('refuses writes', () => {
 		const capabilities = new IcsSubscription().capabilities
 		assert.equal(capabilities.createEntries, false)
 		assert.equal(capabilities.editEntries, false)
@@ -35,29 +33,29 @@ describe('Calendar subscription capabilities', () => {
 		assert.equal(capabilities.renameEntries, false)
 	})
 
-	it('claims no relation store, since a store that can never be written to is not one to claim authority over', () => {
+	it('claims no relation store', () => {
 		assert.equal(new IcsSubscription().capabilities.relations, false)
 	})
 
-	it('still holds every field the feed carries, so a subscribed entry shows its place, invitees and repeat rule', () => {
+	it('preserves readable entry fields', () => {
 		const capabilities = new IcsSubscription().capabilities
 		for (const field of ['recurrence', 'reminders', 'location', 'description', 'participants', 'timeZone', 'transparency', 'visibility', 'allDay'] as const) {
 			assert.equal(capabilities[field], true, `${field} should still be readable`)
 		}
 	})
 
-	it('polls a quarter-hourly at most — a published file behind a cache is no fresher than that', () => {
+	it('polls with 15-minute sync interval', () => {
 		assert.equal(new IcsSubscription().syncInterval, 15 * 60_000)
 	})
 })
 
 describe('Calendar subscription connecting', () => {
-	it('needs only the address — auth is the exception, not the gate', () => {
+	it('needs only the address to connect', () => {
 		assert.equal(new IcsSubscription().canConnect, false)
 		assert.equal(new IcsSubscription({ uri: 'https://example.com/calendar.ics' }).canConnect, true)
 	})
 
-	it('settles its address once: the link IS the identity, so an edit can never re-point it at another calendar', () => {
+	it('preserves uri on merge', () => {
 		const stored = new IcsSubscription({ uri: 'https://example.com/first.ics' })
 		stored.merge(new IcsSubscription({ uri: 'https://example.com/second.ics' }))
 		assert.equal(stored.uri, 'https://example.com/first.ics')
@@ -78,7 +76,7 @@ describe('Calendar subscription connecting', () => {
 		assert.equal(stored.credentials.password, 'rotated')
 	})
 
-	it('never takes its label from the form — the calendar names itself during discovery', () => {
+	it('never takes its label from the form', () => {
 		const stored = new IcsSubscription({ uri: 'https://example.com/c.ics', credentials: { username: 'Team Holidays' } })
 		stored.merge(new IcsSubscription({ credentials: { username: 'Something the user typed' } }))
 		assert.equal(stored.credentials.username, 'Team Holidays')

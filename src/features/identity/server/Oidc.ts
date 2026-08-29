@@ -6,25 +6,16 @@ const logger = createLogger('OIDC')
 export interface OidcOptions {
 	issuer: string
 	clientId: string
-	/** Absent for a public client — PKCE (always on) is then the sole proof of possession. */
 	clientSecret?: string
-	/** The app's external base URL — the redirect URI and cookie security derive from it. */
 	baseUrl: URL
 	scope: string
 }
 
 /**
- * The OpenID Connect relying party (multi-user mode): mitra's BACKEND runs the Authorization Code +
- * PKCE flow and hands the browser nothing but an opaque session cookie (see Session.ts) — no token
- * ever reaches frontend storage, and the same-origin SPA needs no auth library at all. Configured
- * entirely via environment variables; see {@link Oidc.fromEnv}.
+ * OpenID Connect relying party client handling Authorization Code + PKCE flows.
  */
 export class Oidc {
-	/**
-	 * OIDC switches on when `MITRA_OIDC_ISSUER` is set; without it the deployment stays zero-auth
-	 * single-user. A half-configured issuer fails the boot loudly — a calendar silently falling back
-	 * to no authentication would be far worse than not starting.
-	 */
+	/** Creates an OIDC client from environment variables, returning undefined in single-user mode. */
 	static fromEnv(env: NodeJS.ProcessEnv = process.env): Oidc | undefined {
 		const issuer = env.MITRA_OIDC_ISSUER
 		if (!issuer) {
@@ -57,41 +48,34 @@ export class Oidc {
 		return this.options.baseUrl
 	}
 
-	/** Cookies are `Secure` only when the app is actually served over https — a plain-http LAN deployment would otherwise lose them. */
 	get secure() {
 		return this.baseUrl.protocol === 'https:'
 	}
 
-	/** What to register at the identity provider. */
 	get redirectUri() {
 		return new URL('/auth/callback', this.baseUrl).href
 	}
 
 	private configuration?: Promise<client.Configuration>
 
-	/** Discovers (and caches) the IdP's metadata lazily: in a compose stack the IdP may well boot
-	 * after mitra, so a failed discovery must retry on the next sign-in instead of poisoning the cache. */
 	private discover(): Promise<client.Configuration> {
 		return this.configuration ??= client.discovery(
 			new URL(this.options.issuer),
 			this.options.clientId,
 			this.options.clientSecret,
 			this.options.clientSecret ? undefined : client.None(),
-			// An http issuer is allowed deliberately: a LAN self-host or compose-internal IdP has no TLS.
 			new URL(this.options.issuer).protocol === 'http:' ? { execute: [client.allowInsecureRequests] } : undefined,
 		).then(configuration => {
 			logger.debug(`Discovered OIDC metadata for ${this.options.issuer}`)
 			return configuration
 		}).catch(error => {
 			this.configuration = undefined
-			// Common and operationally important (IdP down / wrong issuer / DNS) — surface it at info level,
-			// since it's retried on the next sign-in rather than crashing the server.
 			logger.warn(`OIDC discovery failed for ${this.options.issuer}: ${error instanceof Error ? error.message : error}`)
 			throw error
 		})
 	}
 
-	/** Starts the code flow: the returned `verifier`/`state` round-trip via a short-lived cookie. */
+	/** Starts the authorization code flow returning redirect URL, PKCE verifier, and state. */
 	async authorization(): Promise<{ url: URL, verifier: string, state: string }> {
 		const configuration = await this.discover()
 		const verifier = client.randomPKCECodeVerifier()
@@ -106,7 +90,7 @@ export class Oidc {
 		return { url, verifier, state }
 	}
 
-	/** Finishes the code flow: exchanges the code, validating state, PKCE and the ID token. */
+	/** Exchanges the authorization code for tokens and extracts verified user identity claims. */
 	async callback(currentUrl: URL, verifier: string, state: string): Promise<{ claims: IdentityClaims, idToken?: string }> {
 		const configuration = await this.discover()
 		const tokens = await client.authorizationCodeGrant(configuration, currentUrl, {
@@ -128,7 +112,7 @@ export class Oidc {
 		}
 	}
 
-	/** The RP-initiated logout URL, where the IdP offers one — ends the SSO session too, not just ours. */
+	/** Builds the RP-initiated logout URL if supported by the provider. */
 	async endSessionUrl(idToken?: string): Promise<URL | undefined> {
 		try {
 			const configuration = await this.discover()
@@ -140,7 +124,7 @@ export class Oidc {
 				post_logout_redirect_uri: this.baseUrl.href,
 			})
 		} catch {
-			return undefined // signing out locally must not fail because the IdP is unreachable
+			return undefined
 		}
 	}
 }

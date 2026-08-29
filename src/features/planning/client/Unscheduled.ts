@@ -10,26 +10,12 @@ import { EntryDragController } from '../../entries/client/EntryDragController.js
 import type { EntrySegmentComponent } from '../../entries/client/EventSegment.js'
 
 /**
- * The calendar's complement: the entries no window of days can contain, because they have no start.
- * Deliberately NOT a second feed — it filters `EntryStore.entries` off the same windowed fetch (which
- * carries undated rows in every window, see features/entries/server/entries.ts), so nothing here knows about the
- * network.
- *
- * **It is a SECTION, not a panel**: no open state, no width, no breakpoint, no chrome. It fills
- * whatever box the shell hands it, because where planning surfaces live is a question we expect to
- * keep re-answering — the drag controller finds it by tag wherever it ends up.
- *
- * Its rows are the same `mitra-entry-segment` chips the grid draws, which is what makes the drag
- * between the two surfaces read as one object moving. The gesture is `EntryDragController`'s move
- * both ways (see `beginExternal`); this only hands over the pointer.
+ * Section displaying unscheduled tasks filtered from EntryStore.
  */
 @component('mitra-unscheduled')
 export class Unscheduled extends Component {
 	readonly store = new EntryStore(this)
 
-	/** Finished last, alphabetical within each half: a backlog needs a stable order and no provider
-	 * hands one over. A move's ghost lands here too whenever it hovers the section — having no span,
-	 * it simply IS one of these rows. */
 	private get entries(): ReadonlyArray<Entry> {
 		return [...this.store.entries]
 			.filter(entry => !entry.scheduled)
@@ -37,28 +23,18 @@ export class Unscheduled extends Component {
 				|| (a.heading || '').localeCompare(b.heading || ''))
 	}
 
-	/** Done and cancelled alike: both are tasks nobody has to schedule any more. */
 	private static finished(entry: Entry) {
 		return entry.status === TaskStatus.Done || entry.status === TaskStatus.Cancelled
 	}
 
-	/** The calendar new entries go to when it can hold tasks, else the first visible one that can. */
 	private static get target(): Source | undefined {
 		return getPrimarySource(EntryType.Task)
 	}
 
-	/** What the shell gates its Add Task button on. */
 	static get canAdd() {
 		return !!Unscheduled.target
 	}
 
-	/**
-	 * An ordinary create draft (no id, see Entry.persisted), so the store's untitled-draft guard is
-	 * what keeps it local until it has a title.
-	 *
-	 * STATIC because the button does not live here: the shell places it, while what a new task IS
-	 * stays with the section that lists them.
-	 */
 	static add() {
 		const source = Unscheduled.target
 		if (!source) {
@@ -69,11 +45,6 @@ export class Unscheduled extends Component {
 		EntryEditorIntent.openDraft(draft)
 	}
 
-	/**
-	 * This element — not the row — is the capture element on purpose (see `beginExternal`), which is
-	 * also why the mark and the open editor are exempt: a captured pointer retargets the trailing
-	 * click, and those controls exist to receive it.
-	 */
 	private readonly handlePointerDown = (e: PointerEvent) => {
 		if (e.button !== 0) {
 			return
@@ -97,8 +68,6 @@ export class Unscheduled extends Component {
 				min-block-size: 0;
 				gap: 0.5rem;
 
-				/* The voice the account headings speak (see .integration > header), so the two lists read
-				   as siblings in one column. */
 				> header {
 					display: flex;
 					align-items: center;
@@ -132,8 +101,6 @@ export class Unscheduled extends Component {
 					flex-direction: column;
 					gap: 0.25rem;
 					overflow-y: auto;
-					/* Deliberately NO touch-action: the browser's axis lock is what lets a downward drag
-					   scroll this list while a sideways one swipes to the other tab. */
 					flex: 1;
 					min-block-size: 0;
 
@@ -145,11 +112,6 @@ export class Unscheduled extends Component {
 							inline-size: 100%;
 							cursor: grab;
 							padding-block: 0.25rem;
-							/* The ONE thing this list says about the chip: here its height is FREE. A chip
-							   is its own query container, and size containment sizes the box without
-							   consulting its contents — right in a grid cell, wrong in a list. Every
-							   height tier then reads "unknown", which is why the chip's tiers put the
-							   ROOMY answer first (see EventSegment). */
 							container-type: inline-size;
 						}
 					}

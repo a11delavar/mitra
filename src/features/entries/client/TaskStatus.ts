@@ -121,7 +121,6 @@ export class TaskStatusComponent extends Component {
 		this.change.dispatch()
 	}
 
-	// Stop the click from bubbling to the segment (which would open the editor popover).
 	private readonly onToggle = (e: MouseEvent) => {
 		e.stopPropagation()
 		e.preventDefault()
@@ -482,8 +481,6 @@ export class TaskStatusComponent extends Component {
 		const showsProgressDial = this.status === TaskStatus.Doing || (progress !== undefined && progress > 0 && progress < 1 && this.status !== TaskStatus.Done && this.status !== TaskStatus.Cancelled)
 		const percent = progress !== undefined ? Math.round(progress * 100) : 50
 
-		// Disabled, not withheld: the glyph IS the task's state, and a task with no visible status reads as
-		// no task at all. Only the click, the menu and the tooltip's invitation go.
 		const editable = getCapabilities(this.entry.sourceId).editEntries
 
 		return html`

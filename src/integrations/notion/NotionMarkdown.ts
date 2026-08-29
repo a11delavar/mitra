@@ -2,41 +2,20 @@ import { Lexer, type Token, type Tokens } from 'marked'
 import { type NotionAnnotations, type NotionBlock, type NotionBlockContent, type NotionDate, type NotionRichText } from './NotionClient.js'
 
 /**
- * Notion page bodies ↔ mitra's markdown descriptions — what makes `description` a supported
- * capability for Notion (see {@link Notion.capabilities}).
- *
- * The invariant both directions uphold: **a description edit replaces exactly what the description
- * shows.** {@link toMarkdown} renders only blocks it can fully re-author (checked recursively by
- * {@link isReplaceable} — a bullet hiding an embed deep inside is excluded wholesale), and the
- * write pass deletes only those, appending the new content after whatever it preserved. So
- * collaborative content markdown can't express — images (Notion-hosted urls expire within the
- * hour), embeds, sub-pages, synced blocks, nesting past the fetch depth — stays invisible AND
- * untouched, which is what makes a shared page body safe to edit from a plain markdown field.
- *
- * Parsing uses the same `marked` (GFM) the frontend renders descriptions with, so what the editor
- * previews is what Notion receives — including the `> [!type]` callouts MarkdownRenderer styles,
- * which map onto Notion callout blocks.
+ * Bi-directional converter between Notion page body block trees and Markdown descriptions.
+ * Preserves unmapped or deeply nested blocks by replacing only verified convertible blocks.
  */
 export class NotionMarkdown {
-	/** Block types with a faithful markdown form — the ONLY types either direction touches. */
 	private static readonly convertibleTypes = new Set(['paragraph', 'heading_1', 'heading_2', 'heading_3', 'bulleted_list_item', 'numbered_list_item', 'to_do', 'quote', 'callout', 'code', 'divider', 'table', 'table_row', 'bookmark'])
 
-	/** The types whose children carry convertible content (nested list items, quote/callout bodies,
-	 * table rows) — the body reader descends into these. A paragraph's indented children have no
-	 * markdown form, so they stay unfetched and make their parent opaque instead. */
 	static readonly containerTypes = new Set(['bulleted_list_item', 'numbered_list_item', 'to_do', 'quote', 'callout', 'table'])
 
 	private static readonly listTypes = new Set(['bulleted_list_item', 'numbered_list_item', 'to_do'])
 
-	/** Notion caps a rich text run at 2000 characters — longer text is split across runs. */
 	private static readonly maxRunLength = 2000
 
-	/** Notion caps write-payload nesting at two levels below the top — the body reader fetches
-	 * exactly that deep, so whatever the description shows, a write can faithfully re-author. */
 	static readonly maxNestingDepth = 2
 
-	/** Notion's `code.language` enum. An unknown fence language falls back to 'plain text' rather
-	 * than 400-ing the write; reads keep Notion's name as the fence info string. */
 	private static readonly codeLanguages = new Set(['abap', 'arduino', 'bash', 'basic', 'c', 'clojure', 'coffeescript', 'c++', 'c#', 'css', 'dart', 'diff', 'docker', 'elixir', 'elm', 'erlang', 'flow', 'fortran', 'f#', 'gherkin', 'glsl', 'go', 'graphql', 'groovy', 'haskell', 'html', 'java', 'javascript', 'json', 'julia', 'kotlin', 'latex', 'less', 'lisp', 'livescript', 'lua', 'makefile', 'markdown', 'markup', 'matlab', 'mermaid', 'nix', 'objective-c', 'ocaml', 'pascal', 'perl', 'php', 'plain text', 'powershell', 'prolog', 'protobuf', 'python', 'r', 'reason', 'ruby', 'rust', 'sass', 'scala', 'scheme', 'scss', 'shell', 'sql', 'swift', 'typescript', 'vb.net', 'verilog', 'vhdl', 'visual basic', 'webassembly', 'xml', 'yaml'])
 
 	private static readonly codeAliases = new Map([
@@ -47,22 +26,18 @@ export class NotionMarkdown {
 		['text', 'plain text'], ['txt', 'plain text'], ['', 'plain text'],
 	])
 
-	/** mitra's markdown callout types (`> [!type]`, see MarkdownRenderer) → Notion callout colors… */
 	private static readonly calloutColors = new Map([
 		['note', 'gray_background'], ['info', 'blue_background'], ['tip', 'green_background'],
 		['success', 'green_background'], ['important', 'purple_background'], ['warning', 'yellow_background'],
 		['caution', 'orange_background'], ['danger', 'red_background'], ['error', 'red_background'],
 	])
 
-	/** …and back (background and plain foreground variants alike); anything unmapped reads as 'note'. */
 	private static readonly calloutTypes = new Map([
 		['blue_background', 'info'], ['blue', 'info'], ['green_background', 'tip'], ['green', 'tip'],
 		['purple_background', 'important'], ['purple', 'important'], ['yellow_background', 'warning'], ['yellow', 'warning'],
 		['orange_background', 'caution'], ['orange', 'caution'], ['red_background', 'danger'], ['red', 'danger'],
 	])
 
-	/** The type-keyed content payload (`block[block.type]`) — where rich text lives and children
-	 * attach (see {@link NotionBlockContent}). */
 	static contentOf(block: NotionBlock): NotionBlockContent | undefined {
 		return (block as unknown as Record<string, NotionBlockContent | undefined>)[block.type]
 	}
@@ -73,18 +48,12 @@ export class NotionMarkdown {
 		return date ? NotionMarkdown.dateLabel(date) : run.plain_text ?? run.text?.content ?? ''
 	}
 
-	/** Formats date mention span (`YYYY-MM-DD HH:MM → YYYY-MM-DD HH:MM`). */
 	private static dateLabel(date: NotionDate): string {
 		const stamp = (value: string) => value.includes('T') ? `${value.slice(0, 10)} ${value.slice(11, 16)}` : value
 		return [date.start, date.end].filter(Boolean).map(value => stamp(value!)).join(' → ')
 	}
 
-	/**
-	 * Whether a block — with every descendant — can be re-authored from its markdown form. Only
-	 * replaceable blocks are rendered into the description and deleted by a description write.
-	 * A block whose children exist but weren't fetched (an unsupported container, or nesting past
-	 * the read depth) can't be vouched for, so it counts as opaque wholesale.
-	 */
+	/** Checks whether a block and all its descendants can be safely converted to/from Markdown. */
 	static isReplaceable(block: NotionBlock): boolean {
 		if (!NotionMarkdown.convertibleTypes.has(block.type)) {
 			return false
@@ -163,17 +132,15 @@ export class NotionMarkdown {
 				}
 				const width = Math.max(...rows.map(row => row.length), content.table_width ?? 0, 1)
 				const line = (cells: Array<string>) => `| ${Array.from({ length: width }, (_, index) => cells[index] ?? '').join(' | ')} |`
-				// Markdown tables require a header — a header-less Notion table gets an empty one.
 				const [header, ...body] = content.has_column_header === false ? [[], ...rows] : rows
 				return [line(header!), `| ${Array.from({ length: width }, () => '---').join(' | ')} |`, ...body.map(line)].join('\n')
 			}
 			default:
-				return undefined // table_row renders through its table; nothing else is replaceable
+				return undefined
 		}
 	}
 
 	private static listItem(line: string, children: Array<NotionBlock>): string {
-		// Tab continuation-indent satisfies both `- ` and `1. ` content columns.
 		return !children.length ? line : `${line}\n${NotionMarkdown.blocksToMarkdown(children).split('\n').map(child => child ? `\t${child}` : child).join('\n')}`
 	}
 
@@ -209,12 +176,10 @@ export class NotionMarkdown {
 		return longestBacktickRun ? `${delimiter} ${content} ${delimiter}` : `\`${content}\``
 	}
 
-	/** Inline characters that would re-tokenize as markup on the way back in. */
 	private static escape(text: string): string {
 		return text.replaceAll(/([\\`*_~[\]<])/g, '\\$1')
 	}
 
-	/** Line-leading characters that would turn a plain paragraph line into a heading/quote/list. */
 	private static guardLineStarts(text: string): string {
 		return text.split('\n').map(line => line
 			.replace(/^(#{1,6}\s|>|[-+]\s)/, '\\$&')
@@ -235,7 +200,6 @@ export class NotionMarkdown {
 				case 'def':
 					break
 				case 'paragraph': {
-					// Standalone link lines write back as bookmark blocks to preserve card formatting.
 					const inline = (token as Tokens.Paragraph).tokens
 					const link = inline.length === 1 && inline[0]?.type === 'link' ? inline[0] as Tokens.Link : undefined
 					blocks.push(link
@@ -244,7 +208,6 @@ export class NotionMarkdown {
 					break
 				}
 				case 'heading': {
-					// Notion has three heading levels — deeper markdown headings clamp to the smallest.
 					const level = Math.min((token as Tokens.Heading).depth, 3)
 					blocks.push({ type: `heading_${level}`, [`heading_${level}`]: { rich_text: NotionMarkdown.runsOf((token as Tokens.Heading).tokens) } } as NotionBlock)
 					break
@@ -267,15 +230,13 @@ export class NotionMarkdown {
 					blocks.push(NotionMarkdown.tableBlock(token as Tokens.Table))
 					break
 				default:
-					// Raw HTML and stray top-level text have no block form — keep their text as a paragraph.
 					blocks.push({ type: 'paragraph', paragraph: { rich_text: NotionMarkdown.runsOf('tokens' in token && token.tokens ? token.tokens : [token]) } })
 			}
 		}
 		return blocks
 	}
 
-	/** Nest `children` inside `content` while Notion's payload cap allows; past it, hand them back
-	 * to flatten as siblings — content preserved, structure clamped. */
+	/** Nests children inside content while depth allows; flattens remaining children as siblings when exceeded. */
 	private static nest(content: NotionBlockContent, children: Array<NotionBlock>, depth: number): Array<NotionBlock> {
 		if (!children.length) {
 			return []
@@ -291,8 +252,6 @@ export class NotionMarkdown {
 		const blocks: Array<NotionBlock> = []
 		for (const item of list.items) {
 			const type = item.task ? 'to_do' : list.ordered ? 'numbered_list_item' : 'bulleted_list_item'
-			// The item's leading text/paragraph is ITS inline content ('checkbox' is the task marker,
-			// already lifted into item.checked); everything after nests below it.
 			const inner = item.tokens.filter(token => token.type !== 'checkbox')
 			const [first, ...rest] = inner
 			const leading = first?.type === 'text' || first?.type === 'paragraph' ? first as Tokens.Text : undefined
@@ -309,8 +268,6 @@ export class NotionMarkdown {
 	private static quoteBlocks(quote: Tokens.Blockquote, depth: number): Array<NotionBlock> {
 		const [first, ...rest] = quote.tokens
 		const firstParagraph = first?.type === 'paragraph' ? first as Tokens.Paragraph : undefined
-		// A `[!type]`-led quote is one of MarkdownRenderer's callouts: first line = type + title,
-		// the rest of the quote is the callout body.
 		const callout = firstParagraph?.text.match(/^\[!(\w+)\]([^\n]*)\n?([\s\S]*)$/)
 		if (callout) {
 			const [, type, title, remainder] = callout
@@ -318,7 +275,6 @@ export class NotionMarkdown {
 				...(remainder?.trim() ? NotionMarkdown.tokensToBlocks(Lexer.lex(remainder), depth + 1) : []),
 				...NotionMarkdown.tokensToBlocks(rest, depth + 1),
 			]
-			// A title-less callout promotes its first paragraph to the callout line (Notion's own shape).
 			const titled = title?.trim() ? NotionMarkdown.runsOf(Lexer.lexInline(title.trim())) : undefined
 			const lead = !titled && body[0]?.type === 'paragraph' ? body.shift() : undefined
 			const content: NotionBlockContent = {
@@ -368,7 +324,6 @@ export class NotionMarkdown {
 					runs.push(...NotionMarkdown.textRuns((token as Tokens.Codespan).text, { ...style, code: true }, link))
 					break
 				case 'image': {
-					// No inline image in Notion — degrade to a link on the alt text.
 					const image = token as Tokens.Image
 					runs.push(...NotionMarkdown.textRuns(image.text || image.href, style, image.href))
 					break

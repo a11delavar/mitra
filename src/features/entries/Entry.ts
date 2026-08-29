@@ -20,7 +20,6 @@ export enum TaskStatus {
 	Cancelled = 'cancelled',
 }
 
-/** Progress tally for a specific step category (subtasks or checklist items). */
 export interface EntryTally {
 	readonly done: number
 	readonly total: number
@@ -28,7 +27,6 @@ export interface EntryTally {
 
 /**
  * Task progress rollup derived from subtasks and description checklist items.
- * Total excludes cancelled subtasks; children and descendants count direct and full subtask trees.
  */
 export interface EntryRollup {
 	readonly done: number
@@ -41,11 +39,7 @@ export interface EntryRollup {
 }
 
 /**
- * Whether an event's time counts as busy when someone asks whether you are available — RFC 5545's
- * TRANSP (§3.8.2.7), where OPAQUE (busy) is the default and TRANSPARENT (free) is the "I'm blocking
- * this out, but don't let it stop anyone booking me" case. EVENT-ONLY, exactly as {@link TaskStatus}
- * is task-only: a VTODO has no TRANSP, and free-busy generation considers events alone. Distinct from
- * {@link Visibility}, which is about who may READ the entry, not about what it does to your calendar.
+ * RFC 5545 TRANSP availability contribution (Busy/Free) for events.
  */
 export enum Transparency {
 	Busy = 'busy',
@@ -53,15 +47,7 @@ export enum Transparency {
 }
 
 /**
- * Who may see the entry's details on a shared calendar — RFC 5545's CLASS (§3.8.1.3). Unlike
- * {@link Transparency} this is NOT event-only: CLASS is equally valid on a VTODO, so it survives a
- * type flip.
- *
- * `null` is a real, user-pickable value ("Default visibility"): the RFC leaves an absent CLASS to
- * default to PUBLIC, and the calendar's own sharing settings decide in practice — which is what
- * Google's `visibility: default` and Notion Calendar's "Default visibility" both mean. So absence is
- * "let the calendar decide", NOT "public", and it is spelled `null` (like `color`) so it survives a
- * JSON round-trip, where an undefined key would read as "leave alone".
+ * RFC 5545 CLASS access classification.
  */
 export enum Visibility {
 	Public = 'public',
@@ -72,59 +58,29 @@ export enum Visibility {
 export interface EntryData {
 	raw?: string
 	etag?: string
-	/** The entry's counterpart at the provider as a user-facing link (e.g. a Notion page URL). */
 	url?: string
-	/** When mitra last WROTE this entry to its provider, in local epoch-ms (our own clock, never the
-	 * provider's). Lets a sync spare a just-written row from deletion while the remote index catches
-	 * up, without differencing two independent clocks. Set by the Notion write paths; see Notion.ts. */
 	localWriteAt?: number
 }
 
-/** The reserved `Entry.timeZone` value for RFC 5545 FLOATING times ("09:00 wherever the observer
- * is") — deliberately not an IANA id, so every consumer that treats the field as a zone must handle
- * it explicitly. Never handed to Intl/Temporal: the wall clock of a floating entry is encoded
- * as-if-UTC in its instants, so 'UTC' is the zone to read/write those fields in. */
+/** Reserved `Entry.timeZone` value for RFC 5545 floating times. */
 export const FLOATING_TIME_ZONE = 'floating'
 
-/** Minimum duration in minutes an edit or resize may leave behind. */
 export const MINIMUM_DURATION_MINUTES = 15
 
 @model('Entry')
 @entity()
-// A resource (uri) may hold SEVERAL rows: the series master plus one per single-occurrence override
-// (they share the .ics — see CalDAV.syncSourceEntries), so the row identity within a source is
-// (uri, recurrenceId). SQLite treats NULLs as distinct, so masters (NULL recurrenceId) pass; their
-// one-per-resource invariant is upheld by the sync logic, not the index.
 @unique({ properties: ['sourceId', 'uri', 'recurrenceId'] })
 export class Entry {
-	// No default: the backend assigns the id on create. A locally-created entry (a drag draft) has no id
-	// until then — `persisted` (below) is the single, intrinsic source of "is this still a draft". The
-	// explicit `type` is required because, without a default value, MikroORM can't infer the column type.
 	@primaryKey({ type: 'string' }) id?: string
 	@manyToOne(() => Source, { mapToPk: true, deleteRule: 'cascade' }) sourceId!: string
 	@property({ type: 'string', nullable: true }) uri?: string
 
-	/**
-	 * Setting the type is the CONVERSION, not a plain field write: a status only makes sense on a task,
-	 * so becoming an event drops it; becoming a task leaves it unset, which *is* "to do". That's why the
-	 * editor's draft switch and {@link migrateTo} both just assign here.
-	 *
-	 * It also accepts the wire form (see {@link EntryType.parse}), so assigning a raw `"task"` lands as
-	 * the instance. An unmodelled type throws rather than becoming an event.
-	 *
-	 * Crossing the API is NOT that assignment though: {@link EntryType.converter} maps this member onto
-	 * the key `type` in both directions, so a response reproduces exactly what the server holds instead
-	 * of re-running the conversion rule above on the way in.
-	 */
 	@property({ type: EntryType.Mapper, fieldName: 'type' })
 	@converter({ type: EntryType.converter })
 	private _type!: EntryType
 	get type(): EntryType { return this._type }
 	set type(value: EntryType | EntryTypeValue) {
 		this._type = EntryType.parse(value)
-		// Each kind sheds what only the other kind can hold: a status exists only on a task, a
-		// free/busy contribution only on an event (RFC 5545 gives VTODO no TRANSP). `visibility` is
-		// deliberately absent from both arms — CLASS is valid on either component, so it travels along.
 		if (this._type.isTask) {
 			this.transparency = null
 		} else {
@@ -135,8 +91,6 @@ export class Entry {
 
 	@property({ type: 'string' }) heading = ''
 	@property({ type: 'string' }) description = ''
-	// A plain string, per RFC 5545: LOCATION is a TEXT property. Free text is always valid; the
-	// editor's autocomplete merely helps produce a nicely formatted one.
 	@property({ type: 'string' }) location = ''
 	@property({ type: 'string', nullable: true }) color: string | null = null
 
@@ -145,18 +99,13 @@ export class Entry {
 
 	@enumType({ items: () => TaskStatus, nullable: true }) status?: TaskStatus
 
-	/**
-	 * Task PERCENT-COMPLETE (RFC 5545 §3.8.1.8), 0-100.
-	 * `null` represents absence ("no percentage stated") to match DB nullability and avoid dirty diffs.
-	 */
+	/** Task PERCENT-COMPLETE (RFC 5545 §3.8.1.8), 0-100. */
 	@property({ type: 'number', nullable: true }) percentComplete: number | null = null
 
-	/** Authored progress fraction (0-1) derived from percentComplete. Parent subtask rollups belong to {@link RelationGraph}. */
 	get progress(): number | undefined {
 		return this.percentComplete === null || this.percentComplete === undefined ? undefined : this.percentComplete / 100
 	}
 
-	/** Parsed description checklist items. */
 	get checklist(): Checklist {
 		return Checklist.of(this.description)
 	}
@@ -164,73 +113,28 @@ export class Entry {
 	get done() { return this.status === TaskStatus.Done }
 	set done(value) { this.status = value ? TaskStatus.Done : TaskStatus.ToDo }
 
-	/** Whether the task outcome is decided (Done or Cancelled). An event is never closed. */
+	/** Whether the task outcome is decided (Done or Cancelled). */
 	get closed() { return this.status === TaskStatus.Done || this.status === TaskStatus.Cancelled }
 
-	/** The event's free/busy contribution ({@link Transparency}) — cleared by the `type` setter when the
-	 * entry becomes a task, the mirror of `status`. `null` means the RFC's OPAQUE default (busy), which
-	 * is why nothing has to express "unset" from the client: the editor offers Busy and Free, and
-	 * picking Busy on an entry that carries no TRANSP is simply no change at all.
-	 *
-	 * Empty is `null` rather than `undefined` (unlike `status`, and like `color`/`reminders`) because
-	 * the two must not both occur: MikroORM hydrates the empty column as `null`, so a setter that wrote
-	 * `undefined` would make a freshly synced row compare unequal to its own stored self and every
-	 * `editEquals` consumer would see a phantom edit. */
 	@enumType({ items: () => Transparency, nullable: true }) transparency: Transparency | null = null
-
-	/** The access classification ({@link Visibility}) — `null` is the real value "let the calendar
-	 * decide", not a missing one, so the column and the wire both carry it. Kept across a type flip:
-	 * CLASS is as valid on a task as on an event. */
 	@enumType({ items: () => Visibility, nullable: true }) visibility: Visibility | null = null
 
 	@property({ type: 'boolean' }) allDay = false
-
-	// The IANA zone the entry's times were AUTHORED in (stamped with the browser's zone at creation).
-	// start/end stay absolute instants — this is not display metadata but recurrence semantics: a series
-	// repeats at a WALL-CLOCK time in this zone ("every Monday 09:00 Berlin"), so expansion must know
-	// which zone's 09:00 survives a DST flip (see features/recurrence/server/occurrences.ts).
-	// Nullable because absence is a real domain state, not a hydration artifact: synced entries whose
-	// DTSTART is UTC (no TZID) declared no authoring zone, rows predating this field never had one, and
-	// the server must not invent one (its own zone is arbitrary — a UTC container). Only the CHOICE of
-	// empty value (`null`, not undefined) follows the hydration convention, like `recurrence`.
-	// The reserved value FLOATING_TIME_ZONE mirrors RFC 5545's third time form — a bare local time with
-	// neither TZID nor `Z`, meaning "this wall clock wherever the observer is" ("take pill at 09:00").
-	// Mitra doesn't author or fully render floating times yet, but it must never corrupt one another
-	// client wrote: such entries keep the marker, encode their wall clock as-if-UTC in start/end, and
-	// round-trip back to a bare local DTSTART (see CalDAV.ts). Rendering them per-viewer is future work.
 	@property({ type: 'string', nullable: true }) timeZone?: string | null
-
 	@property({ type: 'json', nullable: true }) data?: EntryData
-
-	// Reminders, as MINUTES BEFORE START (0 = at start) — the flat value of RFC 5545's VALARM
-	// subcomponents with a relative TRIGGER (-PT30M ↔ 30). Multiple allowed,
-	// kept ascending and deduplicated by the editor. "None" is `null` on both sides of the wire (like
-	// `recurrence`: MikroORM hydrates the empty column as null, and editEquals must see one value).
 	@property({ type: 'json', nullable: true }) reminders?: Array<number> | null
 
-	/**
-	 * Date-time anchor that reminders count back from (`start`, falling back to `end` for due-only tasks).
-	 */
+	/** Date-time anchor that reminders count back from (`start`, falling back to `end` for due-only tasks). */
 	get reminderAnchor(): DateTime | undefined {
 		return this.start ?? (this.type?.isTask ? this.end : undefined)
 	}
 
-	/** Whether reminder anchor is the task's due date rather than start. */
 	get remindersAnchorToEnd() {
 		return !this.start && !!this.reminderAnchor
 	}
 
-	// --- Participants (RFC 5545 ATTENDEE / ORGANIZER) ---------------------------------------------------
-	// The invitee list — one JSON column of `Participant` value records, like `reminders`, with the same
-	// tri-state wire convention (array sets, `null` clears, absent keeps) and the same replace-don't-
-	// mutate rule (clones share the array). The organizer is IN the list (`organizer: true`); `self`
-	// marks the account's own address, stamped at sync/seed time. The mutations below are the entry's
-	// own behavior — the editor wires straight to them, keeping all the list rules here (like the
-	// timing methods) — and each assigns a NEW normalized list, never edits the held one.
 	@property({ type: 'json', nullable: true }) participants?: Array<Participant> | null
 
-	/** The list as its domain collection ({@link Participants}) — hydrated/wire arrays are plain, so
-	 * behavior re-enters the domain here (normalization is idempotent, the lists are small). */
 	get participantList(): Participants | null {
 		return Participants.normalize(this.participants)
 	}
@@ -243,15 +147,10 @@ export class Entry {
 		return !!this.participants?.length
 	}
 
-	/** Whether the account may modify the participant list — iTIP (RFC 5546) reserves that for the
-	 * ORGANIZER; the rule itself lives on the collection ({@link Participants.manageable}). */
 	get canManageParticipants() {
 		return this.participantList?.manageable ?? true
 	}
 
-	/** Invite `emails` — the list rules (dedupe, pending-required defaults, enlisting the account as
-	 * organizer on the first invite) live on the collection ({@link Participants.inviting}).
-	 * @returns whether anything was actually added. */
 	invite(emails: ReadonlyArray<string>, ownAddress?: string): boolean {
 		const invited = (this.participantList ?? new Participants()).inviting(emails, ownAddress)
 		if (!invited) {
@@ -261,13 +160,10 @@ export class Entry {
 		return true
 	}
 
-	/** Set every invitee's attendance to `role` ({@link Participants.marked} — organizer untouched). */
 	markAllParticipants(role: ParticipantRole) {
 		this.participants = this.participantList?.marked(role) ?? null
 	}
 
-	/** Set ONE invitee's attendance to `role` ({@link Participants.withRole}).
-	 * @returns whether anything actually changed. */
 	setParticipantRole(email: string, role: ParticipantRole): boolean {
 		const marked = this.participantList?.withRole(email, role)
 		if (!marked) {
@@ -277,9 +173,6 @@ export class Entry {
 		return true
 	}
 
-	/** Uninvite ONE participant ({@link Participants.without} — which clears the list once the last
-	 * invitee goes, and refuses the organizer).
-	 * @returns whether anything actually changed. */
 	removeParticipant(email: string): boolean {
 		const list = this.participantList
 		if (!list?.invitee(email)) {
@@ -289,35 +182,17 @@ export class Entry {
 		return true
 	}
 
-	/** Remove every participant — back to a plain private entry (the organizer included; without
-	 * invitees there is nothing to organize). */
 	clearParticipants() {
 		this.participants = null
 	}
 
-	// --- Recurrence (RFC 5545) ------------------------------------------------------------------------
-	// A recurring series is a single MASTER row carrying the `recurrence` rule (a value object → recurrence_*
-	// columns); its occurrences are expanded on read, never stored. A single edited occurrence is its own
-	// OVERRIDE row (it has a `recurrenceId` but no `recurrence` rule of its own), linked to its master by the
-	// shared iCal UID. Expanded occurrences are synthetic (non-persisted) Entry objects that carry
-	// `recurrenceMasterId` so edits route to the series. `exdates` holds excluded occurrence epoch-ms (the
-	// non-.ics integrations' EXDATE; CalDAV keeps its EXDATEs inside data.raw). `recurrence` is tri-state on
-	// the wire: an object sets the rule, `null` removes it deliberately, absent/undefined leaves it alone —
-	// JSON drops undefined keys, so only an explicit null can express "remove" in a full-entry PUT.
 	@property({ type: 'string', nullable: true }) uid?: string
 	@embedded(() => Recurrence, { prefix: 'recurrence_', nullable: true }) recurrence?: Recurrence | null
 	@property({ type: 'json', nullable: true }) exdates?: Array<number>
 	@property({ type: 'string', nullable: true }) recurrenceMasterId?: string
 	@property({ type: 'datetime', nullable: true }) recurrenceId?: DateTime
-	/** The series anchor (the master's own start), carried on expanded occurrences so rule editing from
-	 * ANY occurrence derives its suggestions from the date the rule actually iterates from — a rule that
-	 * doesn't match its anchor silently loses the occurrences before its first match. Deliberately not a
-	 * column: it's derived render-state on synthetic occurrences, never persisted. */
 	seriesStart?: DateTime
 
-	// --- Relationships ---------------------------------------------------------------------------------
-	// The entry's OUTGOING relationships. Stored in EntryRelation table and materialized onto this field.
-	// Tri-state: array sets, null clears, undefined keeps. Always replaced, never mutated in place.
 	relations?: Array<Relation> | null
 
 	/** Collection wrapper providing grouping, filtering, and edge helpers for this entry's relations. */
@@ -415,30 +290,17 @@ export class Entry {
 		return !!this.recurrence || this.isRecurring
 	}
 
-	/** Whether another entry carries the same user-editable content — the surface an edit changes and a
-	 * save round-trips. Identity and sync bookkeeping (`id`, `uri`, `data`) are deliberately excluded, so
-	 * a local working copy compares equal to its server counterpart exactly when there's nothing left to
-	 * persist. DateTimes compare by value via `Object[equals]`. */
+	/** Whether another entry carries the same user-editable content. */
 	editEquals(other: Entry) {
-		// `recurrence` counts as editable content (the Repeat field mutates it); `Object[equals]` compares
-		// the value objects structurally. The series *link* fields (uid, recurrenceMasterId, recurrenceId,
-		// exdates) are sync bookkeeping like `uri`/`data`, so they stay excluded.
 		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'allDay', 'timeZone', 'status', 'percentComplete', 'transparency', 'visibility', 'recurrence', 'reminders', 'participants'] as const
-		// Relations are deliberately absent: they have their own write path (a relations-only PUT to
-		// the series master — see RelationsField) and must never mark an entry dirty here.
 		return editable.every(key => Object[equals](this[key], other[key]))
 	}
 
-	/** A value snapshot of this entry. Shallow — DateTimes are immutable and `data` is never mutated on
-	 * the client, so sharing them is safe. */
 	clone() {
 		return new Entry({ ...this })
 	}
 
-	/** A standalone copy carrying only the user-editable content — no identity (`id`, `uri`, `uid`),
-	 * no sync bookkeeping (`data` — its raw .ics could smuggle the source's RRULE back in), and no
-	 * series membership: duplicating always yields a SINGLE entry, so a master sheds its rule and an
-	 * occurrence sheds its link — the copy is based on that very occurrence, not the series. */
+	/** Creates a standalone copy with user-editable fields (excluding identity, sync data, and recurrence rules). */
 	duplicate() {
 		return new Entry({
 			sourceId: this.sourceId,
@@ -456,15 +318,10 @@ export class Entry {
 			transparency: this.transparency,
 			visibility: this.visibility,
 			reminders: this.reminders ? [...this.reminders] : this.reminders,
-			// Copies inherit owned relations; derived incoming links belong to other entries and are omitted.
 			relations: this.relationList.writes,
 		})
 	}
 
-	/** Adopt another entry's values onto THIS instance — in place, so identity (and everything keyed on
-	 * it: open editors, segment memos, view-transition names) survives a server refresh. Every field is
-	 * assigned explicitly so values the other entry *lacks* (e.g. a status cleared on the server) are
-	 * cleared here too, rather than lingering. */
 	assign(values: Entry) {
 		return Object.assign(this, {
 			id: values.id,
@@ -500,18 +357,10 @@ export class Entry {
 		if (!this.start || !this.end) {
 			return false
 		}
-		// All-day spans store the end as the exclusive next midnight, so a single all-day day is
-		// start=day, end=day+1 — compare against the inclusive last day, not the raw end.
 		return this.inclusiveEnd.dayStart.valueOf() > this.start.dayStart.valueOf()
 	}
 
-	// --- Timing (frontend-only) -----------------------------------------------------------------------
-	// These read/mutate the span with DateTime arithmetic, so — like `multiDay`/`duration` — they only run
-	// on the frontend (where start/end are DateTimes). The backend keeps start/end as plain Dates and never
-	// calls them. The entry editor wires its inputs straight to these, keeping all the span rules here.
-
-	/** The exclusive end to measure/edit against; tolerates a malformed entry (no end, or an end not after
-	 * the start — e.g. an all-day task synced without a DUE) by treating it as a single day. */
+	/** Exclusive end DateTime to measure or edit against. */
 	get effectiveEnd(): DateTime {
 		const start = this.start!
 		if (this.end && this.end.valueOf() > start.valueOf()) {
@@ -520,12 +369,12 @@ export class Entry {
 		return this.allDay ? start.dayStart.add({ days: 1 }) : start
 	}
 
-	/** The inclusive last day, for display — all-day ends are stored exclusive-next-midnight. */
+	/** Inclusive last day for display (all-day ends are stored exclusive-next-midnight). */
 	get inclusiveEnd(): DateTime {
 		return this.allDay ? this.effectiveEnd.subtract({ days: 1 }) : this.effectiveEnd
 	}
 
-	/** Move to a new start: a timed entry keeps its duration; an all-day entry shifts by whole days. */
+	/** Moves start DateTime, preserving duration for timed entries or whole days for all-day entries. */
 	moveStart(start: DateTime) {
 		if (this.allDay) {
 			const day = start.dayStart
@@ -546,14 +395,12 @@ export class Entry {
 		this.end = allDay ? start.dayStart.add({ days: 1 }) : this.start.add({ minutes: durationMinutes })
 	}
 
-	/** The inverse of {@link scheduleAt}. Only a task can hold this state (see {@link unschedulable}). */
 	unschedule() {
 		this.start = undefined
 		this.end = undefined
 		this.reminders = null
 	}
 
-	/** Resize the end, keeping the start. */
 	setEnd(end: DateTime) {
 		if (this.allDay) {
 			const startDay = this.start!.dayStart
@@ -565,7 +412,7 @@ export class Entry {
 		}
 	}
 
-	/** Move to another source. Converts entry type if target source does not support current type. */
+	/** Moves entry to another source, converting type if unsupported by target. */
 	migrateTo(source: Source) {
 		this.sourceId = source.id
 		if (!source.supportsEntryType(this.type)) {
@@ -573,7 +420,6 @@ export class Entry {
 		}
 	}
 
-	/** Adopt another entry's start, end, and all-day state. */
 	adoptSpan(other: Entry) {
 		this.start = other.start
 		this.end = other.end
@@ -598,7 +444,6 @@ export class Entry {
 		this.timeZone = zone
 	}
 
-	/** Sets all-day state, snapping to day bounds when enabled or defaulting to 09:00 with duration when disabled. */
 	setAllDay(allDay: boolean, durationMinutes: number) {
 		if (allDay === this.allDay || !this.start) {
 			this.allDay = allDay

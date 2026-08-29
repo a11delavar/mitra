@@ -16,17 +16,7 @@ export class EntryDetailsComponent extends Component {
 	@property({
 		type: Boolean,
 		updated(this: EntryDetailsComponent) {
-			// Reconcile the native popover to `open` on the next frame — never synchronously here — for two
-			// reasons that both otherwise close the popover the instant it opens:
-			//   1. Tap-to-open ends with a trusted `click` that (since Chromium 135) is delivered to the grid
-			//      container holding pointer capture — i.e. OUTSIDE this popover. Showing synchronously lets
-			//      the (experimental, soon-to-ship) click-based popover light-dismiss use that click to close
-			//      us the instant we opened, so a real click reads as "nothing happens".
-			//   2. `handleBeforeToggle` mirrors browser-driven toggles back into `open` (through the two-way
-			//      bind + `openChange`); calling show/hidePopover from inside that `beforetoggle` dispatch is
-			//      the re-entrancy the platform warns about ("beforetoggle … triggered another popover to be
-			//      shown").
-			// Deferring past the current task, then reconciling against the popover's real state, avoids both.
+			// Defers native popover toggle to next frame to prevent immediate dismiss from tap clicks.
 			requestAnimationFrame(() => {
 				if (!this.isConnected) {
 					return
@@ -43,15 +33,12 @@ export class EntryDetailsComponent extends Component {
 
 	@property({ type: Object }) segment?: EntrySegment
 
-	// Subscribe to the store: external changes adopted onto the open entry re-render the popover too.
-	// (Adoption only happens while the entry is clean, so a re-render can't fight in-progress typing.)
 	readonly store = new EntryStore(this)
 
 	private get source() {
 		return this.segment?.entry.sourceId ? getSource(this.segment.entry.sourceId) : undefined
 	}
 
-	/** What the entry's provider can hold — fields it can't are hidden, not silently dropped. */
 	private get capabilities() {
 		return getCapabilities(this.segment!.entry.sourceId)
 	}
@@ -70,50 +57,36 @@ export class EntryDetailsComponent extends Component {
 	@eventListener('toggle')
 	protected handleToggle(e: ToggleEvent) {
 		if (e.newState === 'open') {
-			// Only grab focus for a fresh, untitled entry (e.g. a just-dropped draft); don't steal it when
-			// reopening one that already has a title.
 			if (!this.segment?.entry.heading?.trim()) {
 				requestAnimationFrame(() => this.titleInput?.focus())
 			}
 		}
 	}
 
-	// The binder mutated the entry in place; committing it (and everything else — coalescing, the
-	// create/update sequencing, adopting the response) is the store's concern, not this component's.
 	private readonly handleChange = () => {
 		return EntryStore.commit(this.segment!.entry)
 	}
 
-	// A child mutated the entry IN PLACE and said so — the task checkbox/menu its status, the
-	// <mitra-entry-details-when> editor its span, the <mitra-entry-details-sharing> row its TRANSP and
-	// CLASS. The response is the same for all three: render the new value everywhere this frame (the
-	// object is shared, so nothing else would notice), then persist.
 	private readonly handleInPlaceEdit = () => {
 		EntryStore.notify()
 		this.handleChange().catch(reportSaveError)
 	}
 
-	// Handles scoped delete across series and hierarchy axes; bypass skips dialog confirmation.
 	private readonly handleDelete = async (bypass: boolean) => {
 		const entry = this.segment!.entry
 		const scope = await Hierarchy.resolveScope(entry, 'delete', bypass)
 		if (!scope) {
-			return // cancelled — nothing happens
+			return
 		}
 		this.hidePopover()
 		return Hierarchy.deleteScoped(entry, scope).catch(error =>
 			console.error('Deleting the entry failed — it was restored in the view:', error))
 	}
 
-	/** Ctrl (⌘ on Mac) bypasses the scope dialog for single-entry operations. */
 	private static bypassesScope(e: MouseEvent | KeyboardEvent): boolean {
 		return e.ctrlKey || e.metaKey
 	}
 
-	/** Duplicate this entry — the pointer twin of Alt-drag, for when you're already in the editor. With
-	 * no drop position to place it, the copy takes this entry's own slot and opens for editing (a
-	 * duplicate exists to be changed, and it sits right on top of its original until it is). A series
-	 * occurrence copies into a single standalone entry, like the gesture — see EntryStore.duplicate. */
 	private readonly handleDuplicate = () => {
 		const entry = this.segment!.entry
 		this.hidePopover()
@@ -122,18 +95,10 @@ export class EntryDetailsComponent extends Component {
 			.catch(error => console.error('Duplicating the entry failed — nothing was added:', error))
 	}
 
-	/** Apple keyboards have no forward-delete key: their ⌫ "delete" reports `Backspace` (⌦ only exists
-	 * on full-size boards, or as fn+⌫) — so the menu's hint shows the glyph Mac users actually press. */
 	private static readonly appleKeyboard = /Mac|iPhone|iPad/.test(navigator.platform)
 
-	/** Alt as the board prints it — ⌥ on Apple's, like the cheat sheet's own label. */
 	private static get altKey() { return EntryDetailsComponent.appleKeyboard ? '⌥' : 'Alt' }
 
-	// Delete (and Backspace — the only "delete" an Apple keyboard has, and what Apple Calendar itself
-	// uses) deletes the entry while its editor is open: the keyboard twin of the menu's Delete button.
-	// With Ctrl (⌘) held it presets the scope: a series occurrence deletes alone, no dialog. Guarded
-	// like PageCalendar's view shortcuts: a keystroke inside a text field (title, description, the
-	// source select…), an Alt chord, or an IME composition is theirs, not ours.
 	@eventListener({ target: window, type: 'keydown' })
 	protected handleWindowKeyDown(e: KeyboardEvent) {
 		if (e.key !== 'Delete' && e.key !== 'Backspace') {
@@ -149,8 +114,6 @@ export class EntryDetailsComponent extends Component {
 		void this.handleDelete(EntryDetailsComponent.bypassesScope(e))
 	}
 
-	// As a bottom sheet this slides out rather than vanishing; closeSheet reports when it took over
-	// (and hides the popover itself once the slide lands), leaving the anchored popover to close flat.
 	private readonly handleClose = (e: Event) => {
 		e.stopPropagation()
 		if (!closeSheet(this)) {
@@ -186,16 +149,6 @@ export class EntryDetailsComponent extends Component {
 
 	static override get styles() {
 		return css`
-			/* Block-direction placements for anchors too wide to sit beside: a multi-day all-day bar
-			   can span the whole week, so no window is wide enough to fit the popover on either inline
-			   side of it — without these it fell straight through to the bottom sheet on a full-size
-			   desktop. Inset-based rather than 'position-area: block-end span-all' on purpose: the
-			   position-area grid tracks follow the ANCHOR, and the week strip keeps buffer days in the
-			   DOM, so a wide segment's grid — and with it the containing block that fallbacks are
-			   overflow-tested against — reaches past the viewport, and the popover got parked partly
-			   off-screen (verified). Zero inline insets pin that containing block to the real viewport
-			   instead; anchor-center then centres on the anchor but shifts as far as needed to stay
-			   inside it. */
 			@position-try --below {
 				position-area: none;
 				inset-block: calc(anchor(end) + 0.25rem) auto;
@@ -211,20 +164,9 @@ export class EntryDetailsComponent extends Component {
 			}
 
 			mitra-entry-details {
-				/* Closed means GONE, which needs saying explicitly: an author display declaration beats
-				   the UA rule that hides a non-open popover no matter how weak the selector, and this
-				   element sits in the DOM while still closed for one frame every single time it opens
-				   (lit renders it, then EntryDetailsComponent defers showPopover by a frame — see the
-				   note there). The old value was "contents", which generates no box for the host but
-				   still lays its CHILD out in the page flow; harmless while the host carried the
-				   visuals, but now that the sheet contract moved surface, radius and shadow onto that
-				   child it flashed a stray glass panel into the calendar on every open. */
 				display: none;
 				cursor: default;
 
-				/* The entry's colour tints the toggle switch, the pickers' chosen rows and the text
-				   selection — inherited from the segment this editor renders inside, which declares it for
-				   every surface the entry opens (see EntrySegment), not just for this one. */
 				& ::selection {
 					background-color: color-mix(in srgb, var(--mitra-entry-segment-color) 40%, transparent);
 				}
@@ -239,11 +181,6 @@ export class EntryDetailsComponent extends Component {
 				outline: none;
 				padding: 0;
 
-				/* The sheet contract's frame properties (see components/sheet.ts): the editor's outer
-				   shape and its depth belong to the FRAME, because the frame's scroll-container clip
-				   crops anything the list paints outside its own border box — which is every pixel of
-				   a drop shadow, and the corners. The list keeps a matching radius of its own so its
-				   border and glass are shaped too (sheet mode replaces that with top-only rounding). */
 				--sheet-frame-radius: 0.5rem;
 				--sheet-frame-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48), 0px 4px 12px -1px rgba(0,0,0,0.24);
 
@@ -251,27 +188,12 @@ export class EntryDetailsComponent extends Component {
 				margin-inline: 0.25rem;
 				position-area: inline-end span-all;
 				position-visibility: anchors-visible;
-				/* The ladder: beside the anchor (right, then left — flip-block is pointless here, the
-				   block axis is already span-all), then below/above it for anchors too wide to have a
-				   beside (see the @position-try rules), and --sheet (see components/sheet.ts) as the
-				   terminal fallback: pinned to the viewport it always fits, so the popover becomes a
-				   draggable bottom sheet exactly when every anchored placement above overflowed. The
-				   former 'position-try-order: most-block-size' had to go for it: ordered by block
-				   size, the viewport-tall sheet would sort to the front and win everywhere. */
 				position-try-fallbacks: flip-inline, --sheet;
 
-				/* The below/above rungs exist only where a floating popover has breathing room. On a
-				   phone they would often FIT (any entry with a viewport-height of space under it), and
-				   every placement that fits wins over the sheet — so listing them unconditionally
-				   trades the consistent sheet-on-mobile experience for a popover lottery decided by
-				   scroll position. The sheet itself stays fallback-triggered, not breakpointed: a
-				   desktop window squeezed too tight for every rung still gets it. */
 				@media (width >= 40rem) {
 					position-try-fallbacks: flip-inline, --below, --above, --sheet;
 				}
 
-				/* Wide enough for the times row to carry the inline zone chip ("GMT+3:30") next to the
-				   end time without cramping the inputs. */
 				width: 360px;
 				max-height: 80dvh;
 
@@ -283,15 +205,6 @@ export class EntryDetailsComponent extends Component {
 					background: transparent;
 				}
 
-				/* The popover itself is the sheet contract's transparent frame (see components/sheet.ts):
-				   the editor is its single child and carries ALL the chrome — in anchored mode too, where
-				   it also caps itself (inherit = the frame's 80dvh), so the border and radius never scroll
-				   away with long content. A column of exactly two: the toolbar, then the list, which ALONE
-				   scrolls — a toolbar outside the scroller stays locked in place in both modes.
-
-				   The two align by construction, not by subgrid (a scroll container can't subgrid): each
-				   declares the same columns — a FIXED-length glyph gutter (two auto gutters would size to
-				   their own differing contents) and the content — behind the same inline padding. */
 				> .editor {
 					--gutter: 1.5rem;
 					--inset: 1rem 0.5rem;
@@ -302,11 +215,8 @@ export class EntryDetailsComponent extends Component {
 					backdrop-filter: blur(10px);
 					border: var(--border);
 					border-radius: var(--sheet-frame-radius);
-					/* Rounds the toolbar into the frame; top-layer popovers inside are unaffected by clip. */
 					overflow: clip;
 
-					/* The header: toolbar (source, type, chrome) and title row (task checkbox, heading).
-					   Sits outside the scroller with a bottom border separating it from the details list. */
 					> header {
 						flex-shrink: 0;
 						display: flex;
@@ -336,23 +246,15 @@ export class EntryDetailsComponent extends Component {
 								font-size: 0.8125rem;
 							}
 
-							/* The chips ARE fields (field.css.ts) — rest/hover/open/focus states, chevron reveal
-							   and picker anchoring all come from there, the picker's surface and option rows from
-							   selectStyles/pickerRow. Only the tighter box is the toolbar's own. */
 							:is(.entry-type, .source).field {
 								--control-height: 1.5rem;
 								--field-padding-inline: 0.4375rem;
 							}
 
-							/* A picker row leaves its columns to the caller (pickerRow.css.ts): the name takes
-							   the slack, or space-between pushes it off its own icon to the row's far edge. */
 							.source > select option > .name {
 								flex: 1;
 							}
 
-							/* The name ellipsizes so a verbose calendar can't squeeze the strip; the icon the
-							   clone carries is dropped — the dot in front marks the source (the picker's own
-							   options keep theirs). */
 							.source > select selectedcontent {
 								display: block;
 								max-width: 10rem;
@@ -365,8 +267,6 @@ export class EntryDetailsComponent extends Component {
 								}
 							}
 
-							/* The effective colour as one swatch-sized dot in the glyph gutter — it doubles as
-							   the source's mark (the chip beside it deliberately has no icon). */
 							> .color {
 								grid-column: 1;
 								display: inline-flex;
@@ -386,8 +286,6 @@ export class EntryDetailsComponent extends Component {
 									}
 								}
 
-								/* The palette is a <menu popover>, so surface and placement come from menu.css.ts;
-								   it holds swatches instead of rows, hence the one padding it does ask for. */
 								> menu[popover] {
 									padding: 0.5rem;
 									flex-direction: row;
@@ -425,26 +323,13 @@ export class EntryDetailsComponent extends Component {
 					> ul {
 						list-style: none;
 						margin: 0;
-						/* padding-inline stated explicitly: the UA's default 40px list indent must not
-						   survive, and the value is the toolbar's own — one rail for both boxes' columns. */
 						padding-block: 0.375rem 0.75rem;
 						padding-inline: var(--inset);
 						overflow-y: auto;
-						/* A flex child's automatic minimum is its content — without this the list refuses
-						   to shrink and the cap above never produces the scroll. */
 						min-height: 0;
 						display: grid;
-						/* The toolbar's columns (see .editor above): a leading glyph (icon / checkbox /
-						   switch) and its content. Every row subgrids them so the glyphs line up; the
-						   date/time editor does its own start/→/end alignment within the content column. */
 						grid-template-columns: var(--gutter) minmax(0, 1fr);
-						/* Rows size to their content and NOTHING may talk them out of it. A row left at the
-						   default auto keeps an auto maximum, which a capped grid is free to clamp once the
-						   list outgrows its 80dvh: the tallest row (a long participant list) was squeezed by
-						   exactly the overflow while its content kept its real height, so the add box ended up
-						   drawn over "Description". The cap has to produce a SCROLL, never a shorter row. */
 						grid-auto-rows: min-content;
-						/* The field boxes carry the vertical air now — the gap only separates their borders. */
 						row-gap: 0.125rem;
 						column-gap: 0.5rem;
 
@@ -457,11 +342,6 @@ export class EntryDetailsComponent extends Component {
 							border: none;
 							grid-column: -1 / 1;
 
-							/* The groups already drop their own separator when they render nothing, with one
-							   exception the template cannot answer in time: the relations block learns what
-							   points at this entry ASYNCHRONOUSLY, so on a provider that cannot author them it
-							   starts empty and may fill in a moment later. It publishes that answer as an
-							   attribute, and the separator follows it live. */
 							&:has(+ mitra-relations-field[data-empty]) {
 								display: none;
 							}
@@ -479,10 +359,6 @@ export class EntryDetailsComponent extends Component {
 								flex-shrink: 0;
 							}
 
-							/* A field row IS the field (see field.css.ts): the box reaches beyond the columns —
-							the net-zero margin/padding pair keeps the grid alignment — so the hover border
-							wraps the glyph and the content as ONE control. Capped at the trailing side, where
-							the full bleed would sit flush against the popover's tighter 0.5rem end inset. */
 							&.field {
 								margin-inline: -0.5rem -0.25rem;
 							}
@@ -496,8 +372,6 @@ export class EntryDetailsComponent extends Component {
 							}
 
 							&.description {
-								/* The same box and metrics for BOTH faces of the field (the editing textarea
-								and the rendered markdown), so toggling between them never shifts the layout. */
 								> textarea, > .rendered {
 									grid-column: 2 / -1;
 									width: 100%;
@@ -514,30 +388,18 @@ export class EntryDetailsComponent extends Component {
 							}
 
 							&.source {
-								/* The icon sits in the gutter over the select, which spans the whole row: it must not
-								swallow the clicks that open the picker. Sized to the gutter's other glyphs — the
-								clock, the globe, the palette — rather than to the roomier option list's. */
 								> mitra-source-icon {
 									grid-area: 1 / 1;
 									pointer-events: none;
 									font-size: 0.875rem;
 								}
 
-								/* The whole row is one select: it reads as plain text — the selected option's
-								own dot/type/name via <selectedcontent> — and the row's field box carries
-								the hover/active feedback. */
 								> select {
 									display: grid;
 									grid-template-columns: subgrid;
-									/* Row 1 explicitly: the mark above shares the gutter cell with it, and two
-									auto-placed items both wanting column 1 would land on separate lines. */
 									grid-row: 1;
 									grid-column: -1 / 1;
 
-									/* The picker wears the popover's tinted glass, border, and shadow (it inherits the
-									segment colour var), so the two read as one plane. It prefers opening beside
-									the row and flips inline/block when the space runs out — the same strategy as
-									the details popover itself. */
 									&::picker(select) {
 										background: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
 										border: var(--border);
@@ -552,9 +414,6 @@ export class EntryDetailsComponent extends Component {
 										grid-column: -1;
 									}
 
-									/* Only the name: it sits in the content column, so the closed picker reads as plain
-									text on the same rails as every other row. The icon it also cloned out of the
-									chosen option is dropped — the row draws its own (see the template). */
 									selectedcontent {
 										grid-column: 2;
 										align-items: center;
@@ -588,10 +447,8 @@ export class EntryDetailsComponent extends Component {
 					}
 				}
 
-				/* Sheet mode — the --sheet fallback landed (see components/sheet.ts for the mechanics). */
 				@container anchored(fallback: --sheet) {
 					& > .editor > ul {
-						/* The home-indicator region on gesture phones must not clip the last row. */
 						padding-block-end: max(1rem, env(safe-area-inset-bottom));
 					}
 				}
@@ -692,7 +549,6 @@ export class EntryDetailsComponent extends Component {
 				`,
 				this.remindersTemplate,
 			],
-			// The field owns its persistence — see RelationsField; a draft's list rides the create.
 			[html`<mitra-relations-field .entry=${entry}></mitra-relations-field>`],
 		]
 		return groups
@@ -700,27 +556,13 @@ export class EntryDetailsComponent extends Component {
 			.filter(rows => rows.length > 0)
 	}
 
-	/**
-	 * The type switch: event ⇄ task, on any entry whose source can hold both (see `Source.entryTypes`).
-	 * Absent otherwise — a source that holds ONE type has nothing to choose (a Notion view holds tasks,
-	 * an events-only collection holds events), and the word alone would only restate what the checkbox
-	 * and the fields already say. A SAVED entry converts by re-creation: on CalDAV a task is a VTODO and
-	 * an event a VEVENT with no mixing within one resource (RFC 4791 §4.1), so the backend routes the
-	 * change through the same create-first/delete-after path a between-sources migration takes, and the
-	 * store adopts the re-created identity from the response. A series stays out (occurrence routing
-	 * doesn't compose with re-creation) — matching the backend's own rejection.
-	 */
 	private get entryTypeTemplate() {
 		const entry = this.segment!.entry
 		const source = this.source
-		// A conversion re-creates the entry, so it needs both halves of a write.
 		const switchable = this.capabilities.editEntries && !!source?.supportsEntryType(EntryType.Event) && !!source.supportsEntryType(EntryType.Task) && !entry.partOfSeries
 		if (!switchable) {
 			return html.nothing
 		}
-		// The domain owns what flipping MEANS (assigning the type IS the conversion — a status exists only
-		// on a task, see Entry's `type` setter, which also parses the select's raw value); the chip renders
-		// it and commits through the usual path.
 		const handleTypeChange = (e: Event) => {
 			entry.type = (e.target as HTMLSelectElement).value as EntryTypeValue
 			EntryStore.notify()
@@ -732,9 +574,6 @@ export class EntryDetailsComponent extends Component {
 					<button>
 						<selectedcontent></selectedcontent>
 					</button>
-					${/* Mapped, never inline <option> literals: an inline option carrying a lit marker is present
-					    when lit sets the template's innerHTML, and Chromium clones it into <selectedcontent> right
-					    then — duplicating the marker and corrupting lit's part indices (see PageCalendar). */''}
 					${EntryType.all.map(type => html`
 						<option value=${type.value} ?selected=${type === entry.type}>${type.format()}</option>
 					`)}
@@ -744,9 +583,6 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	private get sourceTemplate() {
-		// Migrate the entry to the picked source: its shape follows the target (see Entry.migrateTo) and
-		// the usual commit persists it — the backend re-creates it over there and the store adopts the
-		// re-created identity from the response. A draft simply changes what it will be created in.
 		const handleSourceChange = (e: Event) => {
 			const sourceId = (e.target as HTMLSelectElement).value
 			const source = getIntegrations().flatMap(integration => [...integration.sources]).find(source => source.id === sourceId)
@@ -759,12 +595,6 @@ export class EntryDetailsComponent extends Component {
 			this.handleChange().catch(reportSaveError)
 		}
 		const entry = this.segment!.entry
-		// Whether a target integration can hold this entry's current content — the same capabilities that
-		// hide editor fields also decide where an entry may move. Offering an impossible target would
-		// collapse a series' rule or drop a Cancelled status (the backend rejects both), so it's excluded
-		// rather than shown and left to fail. The entry's own source is always kept (it's the selection).
-		// Through `getCapabilities`, not the integration: it owns the plain-DTO fallback, and it is also
-		// where a read-only calendar loses its write flags.
 		const canHold = (target: Source) => {
 			const capabilities = getCapabilities(target.id)
 			return capabilities.createEntries
@@ -780,7 +610,6 @@ export class EntryDetailsComponent extends Component {
 						<selectedcontent></selectedcontent>
 					</button>
 					${getIntegrations().map(integration => {
-						// Filter by enabled, not visible: visibility is a view preference, not a destination restriction.
 						const sources = [...integration.sources].filter(source =>
 							source.id === entry.sourceId || (source.enabled && canHold(source)))
 						return !sources.length ? html.nothing : html`
@@ -857,7 +686,6 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	private get remindersTemplate() {
-		// Reminders anchor to the start time — an undated entry has nothing to remind about.
 		return !this.segment!.entry.start || !this.capabilities.reminders ? html.nothing : html`
 			<li class="reminders field">
 				<mitra-icon icon="bell"></mitra-icon>
@@ -868,7 +696,6 @@ export class EntryDetailsComponent extends Component {
 
 	@state() private editingDescription = false
 
-	/** Handles interactive checklist box toggling in the rendered markdown description. */
 	private readonly handleChecklistToggle = (e: CustomEvent<{ index: number, checked: boolean }>) => {
 		const entry = this.segment!.entry
 		entry.description = entry.checklist.toggle(e.detail.index, e.detail.checked)
@@ -877,7 +704,6 @@ export class EntryDetailsComponent extends Component {
 
 	private get descriptionTemplate() {
 		const editDescription = (e: Event) => {
-			// Ignore clicks on links (navigation) or checkboxes (handled by @check).
 			if (!this.capabilities.editEntries || e.composedPath().some(node => node instanceof HTMLAnchorElement || node instanceof HTMLInputElement)) {
 				return
 			}
@@ -898,11 +724,6 @@ export class EntryDetailsComponent extends Component {
 						@blur=${() => this.editingDescription = false}
 					></textarea>
 				` : html`
-					<!-- Focusable, and focus IS the switch into edit mode: the rendered face is a view of the
-						same field, so reaching it by keyboard has to put the caret in it like clicking does —
-						otherwise Description was the one row Tab passed through with nothing to show. A click
-						on a link focuses the ANCHOR, not this div, so links still just follow (the guard in
-						editDescription covers the bubbled click). -->
 					<div class="rendered" tabindex=${this.capabilities.editEntries ? '0' : '-1'} @focus=${editDescription} @click=${editDescription}>
 						${!this.segment!.entry.description ? html`
 							<div class="placeholder">${t('Description')}</div>

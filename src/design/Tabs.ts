@@ -2,28 +2,14 @@ import { Component, component, html, css, property, event, query } from '@a11d/l
 import { focusRing } from './focusRing.css.js'
 
 /**
- * ```html
- * <mitra-tabs selected="calendars" @selectedChange=${…}>
- *   <mitra-tab name="calendars" icon="calendar-days">Calendars</mitra-tab>
- *   <mitra-tab-panel name="calendars">…</mitra-tab-panel>
- * </mitra-tabs>
- * ```
- *
- * A tab and its panel are written next to each other and paired by `name`; two slots sort them into
- * the rail and the carousel. Shadow DOM (as `mitra-icon` already uses) is what buys those slots —
- * the shadow holds two structural boxes, all author content stays slotted in the light DOM.
- *
- * Switching is a SCROLL: a snapping carousel, so trackpad and finger swipes are the compositor's,
- * and `scrollend` is the one path button, key, swipe and resize all commit through. No gesture code,
- * and there must not be. A button press JUMPS instead — the UA's distance-proportional smooth scroll
- * read as the tab sliding rather than changing.
+ * Declarative scroll-driven tab container pairing tabs and panels by name.
  */
 @component('mitra-tabs')
 export class Tabs extends Component {
-	/** The `name` of the tab on screen. */
+	/** Active tab name. */
 	@property({ reflect: true }) selected?: string
 
-	/** The settled tab's `name` — fired when it changes, whichever way it was reached. */
+	/** Fired when active tab changes. */
 	@event() readonly selectedChange!: EventDispatcher<string>
 
 	@query('[part=panels]') private readonly panels?: HTMLElement
@@ -47,20 +33,17 @@ export class Tabs extends Component {
 		}
 	}
 
-	/** The children own how they look; this owns which one is on. */
 	private sync() {
 		const name = this.current?.name
 		this.tabs.forEach(tab => tab.selected = tab.name === name)
 		this.panelElements.forEach(panel => panel.selected = panel.name === name)
 	}
 
-	/** `inline: 'start'` is logical, so it lands right in RTL — unlike arithmetic on scrollLeft. */
 	private reveal() {
 		this.panelElements.find(panel => panel.name === this.current?.name)
 			?.scrollIntoView({ behavior: 'instant', inline: 'start', block: 'nearest' })
 	}
 
-	/** Where the carousel came to rest IS the selection — measured, so it holds in RTL. */
 	private readonly handleScrollEnd = () => {
 		const panels = this.panelElements
 		const start = this.panels?.getBoundingClientRect().left
@@ -83,7 +66,6 @@ export class Tabs extends Component {
 		}
 	}
 
-	/** The ARIA tablist keys, with automatic activation. */
 	private readonly handleKeyDown = (e: KeyboardEvent) => {
 		const tabs = this.tabs
 		const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
@@ -97,7 +79,6 @@ export class Tabs extends Component {
 		}
 	}
 
-	/** First update only: re-anchoring per render would fight the user's own swipe. */
 	protected override firstUpdated(changed: Map<PropertyKey, unknown>) {
 		super.firstUpdated?.(changed)
 		this.sync()
@@ -118,9 +99,6 @@ export class Tabs extends Component {
 				flex-direction: column;
 				min-block-size: 0;
 				gap: 1rem;
-				/* Looks redundant against the scroller, but a light-tree walk cannot see a clip declared
-				   inside a shadow root — and one asks whether an off-screen panel is on screen (see
-				   EntryDragController.visibleBox). */
 				overflow: clip;
 			}
 
@@ -135,8 +113,6 @@ export class Tabs extends Component {
 				background: color-mix(in srgb, var(--color-text) 8%, transparent);
 			}
 
-			/* Inline overflow only, each panel scrolling itself — that is what lets the browser axis-lock
-			   a finger. No scroll-behavior: every programmatic move here is a jump (see reveal). */
 			[part=panels] {
 				flex: 1;
 				min-block-size: 0;
@@ -166,10 +142,9 @@ export class Tabs extends Component {
 	}
 }
 
-/** One mode's button; its label is its content. */
+/** Tab button within `<mitra-tabs>`. */
 @component('mitra-tab')
 export class Tab extends Component {
-	/** Pairs it with the `mitra-tab-panel` of the same name. */
 	@property({ reflect: true }) name?: string
 	@property() icon?: string
 	@property({ type: Number }) badge?: number
@@ -183,7 +158,7 @@ export class Tab extends Component {
 
 	protected override connected() {
 		super.connected?.()
-		this.slot = 'tab' // so the author never writes a slot attribute
+		this.slot = 'tab'
 		this.tabIndex = this.selected ? 0 : -1
 		if (this.name) {
 			this.id ||= `tab-${this.name}`
@@ -214,9 +189,6 @@ export class Tab extends Component {
 				color: var(--color-text);
 			}
 
-			/* The thumb must move AWAY from a rail that is itself a tint of the text colour, so the two
-			   schemes want opposite fills. (--color-surface is within a hair of the background in dark,
-			   and vanished into the rail.) */
 			:host([selected]) {
 				color: var(--color-text);
 				background: light-dark(var(--color-background), color-mix(in srgb, var(--color-text) 14%, transparent));
@@ -227,7 +199,6 @@ export class Tab extends Component {
 				font-size: 1rem;
 			}
 
-			/* A count, not an alert — nothing here is overdue. */
 			.badge {
 				font-size: 0.7rem;
 				font-variant-numeric: tabular-nums;
@@ -247,10 +218,9 @@ export class Tab extends Component {
 	}
 }
 
-/** What is behind one tab; everything inside stays in the light DOM. */
+/** Tab content panel paired with a `<mitra-tab>` by name. */
 @component('mitra-tab-panel')
 export class TabPanel extends Component {
-	/** Pairs it with the `mitra-tab` of the same name. */
 	@property({ reflect: true }) name?: string
 	@property({ type: Boolean, reflect: true }) selected = false
 
@@ -273,11 +243,6 @@ export class TabPanel extends Component {
 				flex-direction: column;
 				scroll-snap-align: start;
 				scroll-snap-stop: always;
-
-				/* A half-way swipe crossfades. Opacity is the one property safe to animate on a scroll
-				   track (see the bottom sheet), and a panel exactly the scrollport's width puts the
-				   default view() range at full opacity dead centre, where a snap rests. NO base opacity:
-				   an inactive timeline falls back to the base style, which must be the visible one. */
 				animation: tab-panel-fade linear both;
 				animation-timeline: view(inline);
 			}

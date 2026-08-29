@@ -1,16 +1,6 @@
 /**
- * The people invited to an entry — the domain reading of RFC 5545's ATTENDEE and ORGANIZER
- * properties. A {@link Participant} is a plain value record (like `UserTimeZone`); {@link Participants}
- * is the first-class collection the domain operates through.
- *
- * Permissions follow iTIP (RFC 5546): only the *Organizer* of a group-scheduled entry may change its
- * participant list; everyone else is limited to replying with their own participation status. The
- * organizer is one of the participants (`organizer: true`), and "is that me?" is resolved against the
- * account's own calendar-user addresses (`Integration.addresses`) and stamped as `self` at sync time.
+ * Participant role mappings based on RFC 5545 ATTENDEE ROLE.
  */
-
-/** RFC 5545 ROLE, in domain terms. Absent means {@link ParticipantRole.Required} (the RFC default) —
- * {@link Participants.normalize} makes it explicit so structural comparison never sees a phantom diff. */
 export enum ParticipantRole {
 	Chair = 'chair',
 	Required = 'required',
@@ -18,7 +8,9 @@ export enum ParticipantRole {
 	NonParticipant = 'non-participant',
 }
 
-/** RFC 5545 PARTSTAT. Absent means {@link ParticipantStatus.NeedsAction} (the RFC default). */
+/**
+ * Participant response status mappings based on RFC 5545 PARTSTAT.
+ */
 export enum ParticipantStatus {
 	NeedsAction = 'needs-action',
 	Accepted = 'accepted',
@@ -28,15 +20,11 @@ export enum ParticipantStatus {
 }
 
 export interface Participant {
-	/** Lowercased e-mail address — the participant's identity (RFC 5545 CAL-ADDRESS sans `mailto:`). */
 	email: string
-	/** Display name (the CN parameter), when the provider carries one. */
 	name?: string
-	/** Whether this participant is the entry's ORGANIZER — the only one iTIP lets manage the list. */
 	organizer?: boolean
 	role?: ParticipantRole
 	status?: ParticipantStatus
-	/** Whether this participant is the account itself (matched against `Integration.addresses`). */
 	self?: boolean
 }
 
@@ -44,29 +32,17 @@ const roles = new Set<string>(Object.values(ParticipantRole))
 const statuses = new Set<string>(Object.values(ParticipantStatus))
 
 /**
- * An entry's participant list as a domain collection. An `Array` subclass on purpose: it serializes
- * as a plain JSON array, so the DB column, the wire and structural equality (`Object[equals]`, which
- * drives `Entry.editEquals` and the provider diffs) all see the same shape as a hydrated plain array.
- * Value semantics throughout — operations return a NEW list (clones share the array, so the list is
- * always replaced, never mutated; see `Entry`'s participant methods).
+ * First-class array collection of participants associated with an entry.
  */
 export class Participants extends Array<Participant> {
-	/** A list may not exceed this — a sanity bound for the JSON column, not a product limit. */
 	static readonly maxCount = 300
 
-	/** Derived-array methods (`map`/`filter`/`slice`) yield plain arrays, not `Participants` — the
-	 * subclass is a domain entry point (via {@link normalize}), not a type to propagate through
-	 * projections; keeps results comparing equal to plain-array literals and free of stray behavior. */
 	static override get [Symbol.species]() {
 		return Array
 	}
 
 	/**
-	 * The canonical form of a raw (client-, provider- or store-supplied) list: trimmed lowercase
-	 * e-mails (invalid ones dropped), explicit role/status defaults, deduplicated by e-mail with at
-	 * most one organizer, and `null` for "none" — the same tri-state convention as `reminders`, so a
-	 * hydrated empty column and a cleared list compare equal. Idempotent, so re-entering the domain
-	 * from an already-normalized array is free of surprises. (Named to not collide with `Array.from`.)
+	 * Normalizes raw participant array into deduplicated Participants collection or null if empty/invalid.
 	 */
 	static normalize(raw: ReadonlyArray<Partial<Participant>> | null | undefined): Participants | null {
 		if (!raw?.length) {
@@ -104,41 +80,32 @@ export class Participants extends Array<Participant> {
 		return this.find(participant => participant.organizer)
 	}
 
-	/** The account itself among the invitees (see `Integration.addresses`). */
 	get self(): Participant | undefined {
 		return this.find(participant => participant.self)
 	}
 
-	/** Everyone but the account itself — whoever "Email participants" (or any scheduling message the
-	 * account sends about the entry) actually addresses; one doesn't notify oneself. */
+	/** Returns all participants except the current authenticated account. */
 	get others(): Array<Participant> {
 		return this.filter(participant => !participant.self)
 	}
 
-	/** Whether the account may change this list. iTIP (RFC 5546) reserves attendee-list changes for
-	 * the ORGANIZER: a list without one belongs to the account's own entry (inviting someone makes
-	 * the account the organizer), a group-scheduled one is manageable only when the organizer is
-	 * `self`. */
+	/** Whether the participant list is manageable by the current account under iTIP rules. */
 	get manageable() {
 		return !this.organizer || !!this.organizer.self
 	}
 
-	/** Organizer first — how every calendar UI lists them; the rest keep their stored order. */
+	/** Returns copy with the organizer listed first. */
 	get organizerFirst(): Array<Participant> {
 		return [...this].sort((a, b) => Number(!!b.organizer) - Number(!!a.organizer))
 	}
 
-	/** The avatar glyph for a participant: the first grapheme of the display name, or of the e-mail. */
+	/** Returns the uppercase initial glyph for avatar display. */
 	static initialOf(participant: Participant): string {
 		return [...participant.name || participant.email][0]?.toUpperCase() ?? '?'
 	}
 
 	/**
-	 * This list with `emails` newly invited — pending, required, asked to reply — skipping anyone
-	 * already on it. Inviting turns the entry group-scheduled, which per iTIP makes the account its
-	 * organizer: a list without one also enlists `ownAddress` as such (when the integration knows it).
-	 * `null` when nothing would change (every address already invited, or none valid) — so callers
-	 * can tell a real change from a no-op without diffing.
+	 * Returns a new collection with added email addresses and assigned organizer if unorganized.
 	 */
 	inviting(emails: ReadonlyArray<string>, ownAddress?: string): Participants | null {
 		const known = new Set(this.map(participant => participant.email))
@@ -155,38 +122,32 @@ export class Participants extends Array<Participant> {
 		return Participants.normalize([...organizer, ...this, ...additions])
 	}
 
-	/** This list with every invitee marked `role` — the organizer isn't an invitee and stays untouched. */
+	/** Returns a new collection with all non-organizer invitees assigned to role. */
 	marked(role: ParticipantRole): Participants | null {
 		return Participants.normalize(this.map(participant => participant.organizer ? participant : { ...participant, role }))
 	}
 
-	/** This list with one invitee marked `role`, the single-person counterpart of {@link marked} (and
-	 * bound by the same iTIP rule: the organizer is not an invitee, so marking them is a no-op).
-	 * `null` when nothing would change, so callers can tell a real change from one. */
+	/** Returns a new collection with target email assigned to role. */
 	withRole(email: string, role: ParticipantRole): Participants | null {
 		const target = email.trim().toLowerCase()
 		const affected = this.find(participant => participant.email === target && !participant.organizer && participant.role !== role)
 		return !affected ? null : Participants.normalize(this.map(participant => participant === affected ? { ...participant, role } : participant))
 	}
 
-	/** The person on this list at `email` who may be uninvited or re-marked — the ORGANIZER never is
-	 * (iTIP makes them the list's owner, not one of its invitees; {@link marked} skips them too). */
+	/** Returns non-organizer participant by email. */
 	invitee(email: string): Participant | undefined {
 		const target = email.trim().toLowerCase()
 		return this.find(participant => participant.email === target && !participant.organizer)
 	}
 
-	/** This list without one invitee. Uninviting the LAST one clears the list outright — organizer
-	 * included, because a lone organizer has nothing to organize: the entry is private again, exactly
-	 * where "Remove all" ({@link Entry.clearParticipants}) leaves it. */
+	/** Returns a new collection without target email, clearing list if no invitees remain. */
 	without(email: string): Participants | null {
 		const removed = this.invitee(email)
 		const remaining = this.filter(participant => participant !== removed)
 		return Participants.normalize(remaining.some(participant => !participant.organizer) ? remaining : [])
 	}
 
-	/** How the invitees stand: everything not an explicit yes/no/maybe — needs-action and delegated
-	 * alike — is still "awaiting" a reply. */
+	/** Aggregates response counts across participant statuses. */
 	get counts() {
 		const count = (status: ParticipantStatus) => this.filter(participant => participant.status === status).length
 		const yes = count(ParticipantStatus.Accepted)
@@ -195,7 +156,7 @@ export class Participants extends Array<Participant> {
 		return { yes, no, maybe, awaiting: this.length - yes - no - maybe }
 	}
 
-	/** "3 yes, 1 no, 1 maybe, 2 awaiting" — the replies aggregated, zero groups omitted. */
+	/** Summarizes non-zero response counts (e.g. "3 yes, 1 no"). */
 	get summary(): string {
 		const counts = this.counts
 		return ([['yes', counts.yes], ['no', counts.no], ['maybe', counts.maybe], ['awaiting', counts.awaiting]] as const)
@@ -204,13 +165,10 @@ export class Participants extends Array<Participant> {
 			.join(', ')
 	}
 
-	/** A paste-ready comma-separated list of the e-mails — what "Copy participants' emails" copies. */
 	get emails(): string {
 		return this.map(participant => participant.email).join(', ')
 	}
 
-	/** The `mailto:` behind "Email participants" — {@link others}, falling back to everyone when the
-	 * account is alone, so the link always opens a composable draft. */
 	get mailto(): string {
 		const others = this.others.map(participant => participant.email)
 		return `mailto:${(others.length ? others : this.map(participant => participant.email)).join(',')}`

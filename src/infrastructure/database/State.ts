@@ -1,12 +1,7 @@
 import { type EntityManager } from '@mikro-orm/core'
 import { entity, primaryKey, property } from '../model/orm.js'
 
-/**
- * A tiny key-value store for loose instance state (the Web Push VAPID keypair, the reminder scheduler's
- * watermark). Holding it in a table rather than in JSON files beside the database makes any point-in-time
- * copy of database.sqlite internally consistent: the whole instance is one atomic unit for backup and
- * restore, with no side files that must be copied together to stay valid.
- */
+/** Key-value store for instance metadata and state in SQLite. */
 @entity()
 export class State {
 	@primaryKey({ type: 'string' }) key!: string

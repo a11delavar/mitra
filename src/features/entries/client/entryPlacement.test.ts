@@ -31,7 +31,7 @@ describe('entryPlacement', () => {
 		it('spans to the exclusive next midnight after the later day', () => {
 			const { start, end } = placeAllDay(day, day.add({ days: 2 }))
 			assert.equal(start.valueOf(), day.valueOf())
-			assert.equal(end.valueOf(), day.add({ days: 3 }).valueOf()) // exclusive end = lastDay + 1
+			assert.equal(end.valueOf(), day.add({ days: 3 }).valueOf())
 		})
 
 		it('flips when the earlier day is dragged after the later', () => {
@@ -42,13 +42,12 @@ describe('entryPlacement', () => {
 	})
 
 	describe('resizePlacement (all-day, exclusive-end off-by-one)', () => {
-		// A 3-day all-day entry: days 0,1,2 inclusive → start = day0, end = day3 (exclusive next midnight).
 		const allDay3 = { start: day, end: day.add({ days: 3 }), allDay: true }
 
 		it('resize-start back onto its own first day leaves start and end unchanged', () => {
 			const { start, end } = resizePlacement(allDay3, 'start', day, 15)
 			assert.equal(start.valueOf(), day.valueOf())
-			assert.equal(end.valueOf(), day.add({ days: 3 }).valueOf()) // must NOT grow by a day
+			assert.equal(end.valueOf(), day.add({ days: 3 }).valueOf())
 		})
 
 		it('resize-start later shrinks the leading edge, keeping the end', () => {
@@ -65,7 +64,6 @@ describe('entryPlacement', () => {
 
 		it('resize-start dragged past the fixed last day flips the entry', () => {
 			const { start, end } = resizePlacement(allDay3, 'start', day.add({ days: 5 }), 15)
-			// fixed last inclusive day = day2; dragged day5 is later → span day2..day5
 			assert.equal(start.valueOf(), day.add({ days: 2 }).valueOf())
 			assert.equal(end.valueOf(), day.add({ days: 6 }).valueOf())
 		})

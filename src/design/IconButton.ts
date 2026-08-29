@@ -15,13 +15,6 @@ export class IconButton extends Component {
 				display: inline-flex;
 				font-size: 1rem;
 
-				/* On a touch screen an icon button is a TARGET, not just a glyph, so it takes a floor size
-				   there — its natural box is ~26px, which is nothing to hit with a finger. Zero on a precise
-				   pointer, where the glyph's own box is target enough, and zero wherever an icon button is
-				   embedded in dense content a square that size would burst (see the task checkbox inside a
-				   grid segment, which opts out). Deliberately smaller than the shared control height
-				   (controlHeight.css.ts) — mix that in and read var(--control-height) here to make icon
-				   buttons exactly as tall as every other control on touch. */
 				--icon-button-size: 0;
 				@media (pointer: coarse) {
 					--icon-button-size: 2rem;
@@ -41,8 +34,6 @@ export class IconButton extends Component {
 					opacity: 0.9;
 					font-size: inherit;
 					cursor: pointer;
-					/* Opacity is in the list because hover CHANGES it (below) — it was the one property the
-					   button animated to and then snapped to. */
 					transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 					border: 1px solid transparent;
 
@@ -51,8 +42,6 @@ export class IconButton extends Component {
 						${activated};
 					}
 
-					/* The shared ring (focusRing.css.ts) plus this button's own hover surface, so a
-					   keyboard-focused icon button reads exactly like a focused field. */
 					&:focus-visible {
 						opacity: 1;
 						${activated};

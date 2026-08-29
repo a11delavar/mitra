@@ -21,11 +21,9 @@ export class MarkdownRenderer extends Renderer {
 	])
 
 	override heading(token: Tokens.Heading) {
-		// Demote one level so embedded content never injects an <h1>.
 		return super.heading({ ...token, depth: Math.min(token.depth + 1, 6) })
 	}
 
-	/** Wraps task list item contents in .label to preserve single grid column layout. */
 	override listitem(token: Tokens.ListItem) {
 		const content = super.listitem(token)
 		const input = token.task ? content.match(/<input\b[^>]*>/)?.[0] : undefined
@@ -48,7 +46,6 @@ export class MarkdownRenderer extends Renderer {
 	}
 
 	override blockquote(token: Tokens.Blockquote) {
-		// GitHub/Obsidian callouts: a blockquote whose first line is `[!type] optional title`.
 		const quote = this.parser.parse(token.tokens)
 		const match = quote.match(/<p>\s*\[!(\w+)\]([^\n<]*)/i)
 		if (!match) {
@@ -71,8 +68,6 @@ export class MarkdownRenderer extends Renderer {
 
 	render(markdown: string) {
 		this.checkboxes = 0
-		// Rename every HTML tag to a `mitra-markdown-*` custom element. Unknown ones render inert
-		// (so raw/unsafe HTML is neutralized); defining a `mitra-markdown-x` element opts into it.
 		markdown = markdown
 			.replaceAll(/<(?!\/)(.)([^>]+)>/g, '<mitra-markdown-$1$2>')
 			.replaceAll(/<\/(.*)>/g, '</mitra-markdown-$1>')

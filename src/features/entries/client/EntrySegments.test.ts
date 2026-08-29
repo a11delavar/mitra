@@ -8,7 +8,6 @@ import { EntryStore } from './EntryStore.js'
 describe('EntrySegments', () => {
 	const base = new DateTime().dayStart
 
-	/** Lay something out as if `ghost` were the live move preview of `source` (the store decides both). */
 	const duringMove = <T>(source: Entry | undefined, ghost: Entry, act: () => T): T => {
 		EntryStore.setDragging(source)
 		EntryStore.setPreview(ghost)
@@ -35,8 +34,6 @@ describe('EntrySegments', () => {
 		})
 
 		it('gives a zero-duration timed entry a minimum visible slab (end == start)', () => {
-			// A synced task pinned to an instant (e.g. Notion "20:00" with no due time). Without a floor it
-			// renders as a 1px sliver; the grid needs end > start to show anything.
 			const at = base.add({ hours: 20 })
 			const [segment] = EntrySegments.for(new Entry({ start: at, end: at }))
 			assert.equal(segment!.startMinute, 20 * 60 + 1)
@@ -44,8 +41,6 @@ describe('EntrySegments', () => {
 		})
 
 		it('gives a timed entry with no end a minimum visible slab below its start', () => {
-			// The dangerous case: a bare `endMinute` of 2 sits *above* a late start, so CSS grid swaps the
-			// reversed lines and paints a near-full-day block. It must fall below the start instead.
 			const [segment] = EntrySegments.for(new Entry({ start: base.add({ hours: 20 }) }))
 			assert.equal(segment!.startMinute, 20 * 60 + 1)
 			assert.ok(segment!.endMinute > segment!.startMinute, 'end must fall below start, never invert')
@@ -54,13 +49,10 @@ describe('EntrySegments', () => {
 
 		it('clamps the minimum slab to the grid bottom for a near-midnight start', () => {
 			const [segment] = EntrySegments.for(new Entry({ start: base.add({ hours: 23, minutes: 55 }), end: base.add({ hours: 23, minutes: 55 }) }))
-			assert.equal(segment!.endMinute, 1441) // 1436 + 15 would overflow the 1440-track grid
+			assert.equal(segment!.endMinute, 1441)
 		})
 
 		it('runs an entry ending at the next midnight to the day\'s bottom, not a minimum slab', () => {
-			// Producible by dragging/resizing to a day's bottom edge (the gesture clamps to minute 1440).
-			// `slice` keeps it a single-day segment, so `end.hour` reads 0 — above the start, which would
-			// otherwise floor it to a 15-minute sliver instead of the full afternoon.
 			const segments = EntrySegments.for(new Entry({ start: base.add({ hours: 13 }), end: base.add({ days: 1 }) }))
 			assert.equal(segments.length, 1)
 			assert.equal(segments[0]!.startMinute, 13 * 60 + 1)
@@ -68,7 +60,6 @@ describe('EntrySegments', () => {
 		})
 
 		it('runs the last day of a multi-day entry ending at midnight to its bottom', () => {
-			// Same exclusive end, one day further out: the final slice has no `next` either.
 			const segments = EntrySegments.for(new Entry({ start: base.add({ hours: 13 }), end: base.add({ days: 2 }) }))
 			assert.equal(segments.length, 2)
 			assert.equal(segments[1]!.startMinute, 1)
@@ -80,9 +71,9 @@ describe('EntrySegments', () => {
 			assert.equal(segments.length, 3)
 			assert.equal(segments[0]!.next, segments[1])
 			assert.equal(segments[1]!.previous, segments[0])
-			assert.equal(segments[1]!.startMinute, 1) // continues from before → clamped to top
-			assert.equal(segments[1]!.endMinute, 1441) // continues past → clamped to bottom
-			assert.equal(segments[1]!.allDay, true) // a multi-day chunk renders as a block
+			assert.equal(segments[1]!.startMinute, 1)
+			assert.equal(segments[1]!.endMinute, 1441)
+			assert.equal(segments[1]!.allDay, true)
 			assert.equal(segments[2]!.endMinute, 2 * 60 + 1)
 		})
 
@@ -116,7 +107,6 @@ describe('EntrySegments', () => {
 		})
 
 		it('keys a create draft and a move ghost distinctly', () => {
-			// The two possible id-less entries can coexist — their keyed renders must not collide.
 			const draft = new Entry({})
 			const ghost = new Entry({})
 			EntryStore.setPreview(ghost)
@@ -152,9 +142,9 @@ describe('EntrySegments', () => {
 			EntryStore.setPreview(ghost)
 			try {
 				const segments = EntrySegments.of([source, ghost], [base]).timedOn(base)
-				assert.equal(segments.length, 2) // both render...
-				assert.deepEqual(segments.find(s => s.entry === source)!.overlap, { slot: 0, total: 1, span: 1, inset: 0 }) // ...but the source keeps full width
-				assert.equal(segments.find(s => s.entry === ghost)!.overlap, undefined) // the ghost floats, unpacked
+				assert.equal(segments.length, 2)
+				assert.deepEqual(segments.find(s => s.entry === source)!.overlap, { slot: 0, total: 1, span: 1, inset: 0 })
+				assert.equal(segments.find(s => s.entry === ghost)!.overlap, undefined)
 			} finally {
 				EntryStore.setPreview(undefined)
 			}
@@ -176,8 +166,6 @@ describe('EntrySegments', () => {
 		})
 
 		it('cascades a staggered later event above the earlier one instead of splitting the width', () => {
-			// The start decides: 10:00 falls inside A's run and past its headroom, so B rides on A —
-			// A keeps its full width and readable title (the Google/Notion semantic).
 			const a = new Entry({ heading: 'A', start: base.add({ hours: 9 }), end: base.add({ hours: 11 }) })
 			const b = new Entry({ heading: 'B', start: base.add({ hours: 10 }), end: base.add({ hours: 12 }) })
 
@@ -198,9 +186,6 @@ describe('EntrySegments', () => {
 		})
 
 		it('widens a segment into a later column left free by neighbours (span > 1)', () => {
-			// All four start within the headroom of 9:00, so they are mates of one group (columns);
-			// this test is about the greedy pass's rightward widening. Greedy: A c0, X c1,
-			// B c1 (X frees it), W c2 — X widens over c2, free during 9:00–9:20.
 			const a = new Entry({ heading: 'A', start: base.with({ hour: 9 }), end: base.with({ hour: 12 }) })
 			const x = new Entry({ heading: 'X', start: base.with({ hour: 9 }), end: base.with({ hour: 9, minute: 20 }) })
 			const b = new Entry({ heading: 'B', start: base.with({ hour: 9, minute: 30 }), end: base.with({ hour: 9, minute: 45 }) })
@@ -220,8 +205,8 @@ describe('EntrySegments', () => {
 			const bars = EntrySegments.of([block, pills], [base]).timedOn(base)
 			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
 
-			assert.deepEqual(overlap('Block'), { slot: 0, total: 1, span: 1, inset: 0 }) // keeps its full width
-			assert.deepEqual(overlap('Pills'), { slot: 0, total: 1, span: 1, inset: 1 }) // floats on top
+			assert.deepEqual(overlap('Block'), { slot: 0, total: 1, span: 1, inset: 0 })
+			assert.deepEqual(overlap('Pills'), { slot: 0, total: 1, span: 1, inset: 1 })
 		})
 
 		it('keeps the columns below the headroom threshold and floats at exactly the threshold', () => {
@@ -229,7 +214,6 @@ describe('EntrySegments', () => {
 			const late = (minute: number) => new Entry({ heading: 'Late', start: base.with({ hour: 17, minute }), end: base.with({ hour: 18, minute }) })
 			const overlapOf = (segments: ReturnType<EntrySegments['timedOn']>, heading: string) => segments.find(s => s.entry.heading === heading)!.overlap
 
-			// 17:44 start leaves too little room for the host's title above a float — columns stay.
 			const under = EntrySegments.of([block(), late(44)], [base]).timedOn(base)
 			assert.deepEqual(overlapOf(under, 'Block'), { slot: 0, total: 2, span: 1, inset: 0 })
 			assert.deepEqual(overlapOf(under, 'Late'), { slot: 1, total: 2, span: 1, inset: 0 })
@@ -240,8 +224,6 @@ describe('EntrySegments', () => {
 		})
 
 		it('floats a segment whose tail pokes past its host, sliding under later chips', () => {
-			// Gym's start lies inside the block, so it cascades; its 15-minute tail slides UNDER the
-			// later 21:00 chip (full width, painted above) instead of folding the day into columns.
 			const block = new Entry({ heading: 'Block', start: base.with({ hour: 17 }), end: base.with({ hour: 21 }) })
 			const pills = new Entry({ heading: 'Pills', start: base.with({ hour: 19, minute: 30 }), end: base.with({ hour: 20, minute: 45 }) })
 			const gym = new Entry({ heading: 'Gym', start: base.with({ hour: 20, minute: 15 }), end: base.with({ hour: 21, minute: 15 }) })
@@ -252,13 +234,11 @@ describe('EntrySegments', () => {
 
 			assert.deepEqual(overlap('Block'), { slot: 0, total: 1, span: 1, inset: 0 })
 			assert.deepEqual(overlap('Pills'), { slot: 0, total: 1, span: 1, inset: 1 })
-			assert.deepEqual(overlap('Gym'), { slot: 0, total: 1, span: 1, inset: 2 }) // covers Pills, pokes past the block
-			assert.deepEqual(overlap('Cards'), { slot: 0, total: 1, span: 1, inset: 0 }) // anchors fresh, full width beneath the tail
+			assert.deepEqual(overlap('Gym'), { slot: 0, total: 1, span: 1, inset: 2 })
+			assert.deepEqual(overlap('Cards'), { slot: 0, total: 1, span: 1, inset: 0 })
 		})
 
 		it('cascades a straddling segment — the start decides, never the extent', () => {
-			// Only 30 of its 90 minutes lie within the block, but it STARTS inside the block's run,
-			// so it rides on top; the block keeps its full width.
 			const block = new Entry({ heading: 'Block', start: base.with({ hour: 17 }), end: base.with({ hour: 21 }) })
 			const runover = new Entry({ heading: 'Runover', start: base.with({ hour: 20, minute: 30 }), end: base.with({ hour: 22 }) })
 
@@ -276,16 +256,13 @@ describe('EntrySegments', () => {
 			const bars = EntrySegments.of([block, first, clash, second], [base]).timedOn(base)
 			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
 
-			assert.deepEqual(overlap('Block'), { slot: 0, total: 1, span: 1, inset: 0 }) // full width — never folded
-			assert.deepEqual(overlap('First'), { slot: 0, total: 2, span: 1, inset: 1 }) // level-1 leaves, side by side
+			assert.deepEqual(overlap('Block'), { slot: 0, total: 1, span: 1, inset: 0 })
+			assert.deepEqual(overlap('First'), { slot: 0, total: 2, span: 1, inset: 1 })
 			assert.deepEqual(overlap('Clash'), { slot: 1, total: 2, span: 1, inset: 1 })
-			assert.deepEqual(overlap('Second'), { slot: 0, total: 2, span: 2, inset: 1 }) // reuses the level, widens over it
+			assert.deepEqual(overlap('Second'), { slot: 0, total: 2, span: 2, inset: 1 })
 		})
 
 		it('anchors a fresh full-width group once the running base has ended, beneath a poking tail', () => {
-			// The user's Notion reference case: Pills overlaps the block by only 15 minutes yet
-			// cascades (its start lies inside); PGIT starts after the block ended and anchors a new
-			// full-width group; Gym lands within PGIT's headroom and splits with it side-by-side.
 			const sew = new Entry({ heading: 'SEW', start: base.with({ hour: 17 }), end: base.with({ hour: 21 }) })
 			const pills = new Entry({ heading: 'Pills', start: base.with({ hour: 20, minute: 45 }), end: base.with({ hour: 22 }) })
 			const pgit = new Entry({ heading: 'PGIT', start: base.with({ hour: 21, minute: 45 }), end: base.with({ hour: 22, minute: 45 }) })
@@ -310,12 +287,10 @@ describe('EntrySegments', () => {
 
 			assert.deepEqual(overlap('A'), { slot: 0, total: 2, span: 1, inset: 0 })
 			assert.deepEqual(overlap('M'), { slot: 1, total: 2, span: 1, inset: 0 })
-			assert.deepEqual(overlap('R'), { slot: 1, total: 2, span: 1, inset: 1 }) // both cover it; M ends later
+			assert.deepEqual(overlap('R'), { slot: 1, total: 2, span: 1, inset: 1 })
 		})
 
 		it('treats a multi-day slice as an ordinary block — the day\'s chips cascade over it', () => {
-			// No special tier: the slice simply runs from midnight, so it anchors the day's first group
-			// and later starts ride on top exactly as they would over any long block.
 			const overnight = new Entry({ heading: 'Overnight', start: base.subtract({ hours: 2 }), end: base.add({ hours: 2 }) })
 			const meeting = new Entry({ heading: 'Meeting', start: base.add({ hours: 1 }), end: base.add({ hours: 2 }) })
 
@@ -323,16 +298,14 @@ describe('EntrySegments', () => {
 			const slice = bars.find(s => s.entry === overnight)!
 			const chip = bars.find(s => s.entry === meeting)!
 
-			assert.deepEqual(slice.overlap, { slot: 0, total: 1, span: 1, inset: 0 }) // keeps its full width
-			assert.deepEqual(chip.overlap, { slot: 0, total: 1, span: 1, inset: 1 }) // cascades on top
-			assert.equal(bars[0]!.entry, overnight) // earlier start paints first
+			assert.deepEqual(slice.overlap, { slot: 0, total: 1, span: 1, inset: 0 })
+			assert.deepEqual(chip.overlap, { slot: 0, total: 1, span: 1, inset: 1 })
+			assert.equal(bars[0]!.entry, overnight)
 			assert.equal(chip.covers, true)
 			assert.equal(slice.covers, false)
 		})
 
 		it('splits a multi-day run side-by-side with a chip sharing its start', () => {
-			// The screenshot case: the run starts 13:00 and so does the task. Neither can cascade (no
-			// headroom), so they split the width — both stay fully readable, no burying.
 			const run = new Entry({ heading: 'Off-site', start: base.add({ hours: 13 }), end: base.add({ days: 2, hours: 13 }) })
 			const review = new Entry({ heading: 'Review', start: base.add({ hours: 13 }), end: base.add({ hours: 13, minutes: 45 }) })
 
@@ -341,7 +314,7 @@ describe('EntrySegments', () => {
 
 			assert.deepEqual(overlap('Off-site'), { slot: 0, total: 2, span: 1, inset: 0 })
 			assert.deepEqual(overlap('Review'), { slot: 1, total: 2, span: 1, inset: 0 })
-			assert.deepEqual(bars.map(s => s.covers), [false, false]) // mates cover nothing
+			assert.deepEqual(bars.map(s => s.covers), [false, false])
 		})
 
 		it('splits two overlapping multi-day runs into columns like any other pair', () => {
@@ -351,16 +324,11 @@ describe('EntrySegments', () => {
 			const bars = EntrySegments.of([first, second], [base]).timedOn(base)
 			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
 
-			// Both slices span the whole day (midnight to midnight), so they share the same start and
-			// split the width rather than one swallowing the other.
 			assert.deepEqual(overlap('First'), { slot: 0, total: 2, span: 1, inset: 0 })
 			assert.deepEqual(overlap('Second'), { slot: 1, total: 2, span: 1, inset: 0 })
 		})
 
 		it('marks whatever paints over another box as covering — and side-by-side mates as not', () => {
-			// The poke-tail scenario: Pills cascades over Block (covers), Gym cascades over Pills
-			// (covers), and Cards — a fresh full-width anchor — paints over Gym's poking tail, so it
-			// covers too, even at inset 0: the floating treatment keys on covering, not insets.
 			const block = new Entry({ heading: 'Block', start: base.with({ hour: 17 }), end: base.with({ hour: 21 }) })
 			const pills = new Entry({ heading: 'Pills', start: base.with({ hour: 19, minute: 30 }), end: base.with({ hour: 20, minute: 45 }) })
 			const gym = new Entry({ heading: 'Gym', start: base.with({ hour: 20, minute: 15 }), end: base.with({ hour: 21, minute: 15 }) })
@@ -372,9 +340,8 @@ describe('EntrySegments', () => {
 			assert.equal(covers('Block'), false)
 			assert.equal(covers('Pills'), true)
 			assert.equal(covers('Gym'), true)
-			assert.equal(covers('Cards'), true) // fresh anchor, inset 0 — but it paints over Gym's tail
+			assert.equal(covers('Cards'), true)
 
-			// Mates in crisp side-by-side columns cover nothing — they stay flat.
 			const a = new Entry({ heading: 'A', start: base.add({ hours: 9 }), end: base.add({ hours: 11 }) })
 			const b = new Entry({ heading: 'B', start: base.add({ hours: 9, minutes: 30 }), end: base.add({ hours: 11, minutes: 30 }) })
 			const mates = EntrySegments.of([a, b], [base]).timedOn(base)
@@ -395,8 +362,6 @@ describe('EntrySegments', () => {
 		})
 
 		it('cascades overlapping floats on the same host, each covering sibling a level deeper', () => {
-			// Gym is contained in Block (not in Pills!) and starts 30 minutes — one cascade gap — after
-			// Pills, so it stacks on top of Pills instead of folding the day back into columns.
 			const block = new Entry({ heading: 'Block', start: base.with({ hour: 17 }), end: base.with({ hour: 21 }) })
 			const pills = new Entry({ heading: 'Pills', start: base.with({ hour: 18, minute: 45 }), end: base.with({ hour: 20 }) })
 			const gym = new Entry({ heading: 'Gym', start: base.with({ hour: 19, minute: 15 }), end: base.with({ hour: 20, minute: 15 }) })
@@ -404,7 +369,7 @@ describe('EntrySegments', () => {
 			const bars = EntrySegments.of([block, pills, gym], [base]).timedOn(base)
 			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
 
-			assert.deepEqual(overlap('Block'), { slot: 0, total: 1, span: 1, inset: 0 }) // keeps full width
+			assert.deepEqual(overlap('Block'), { slot: 0, total: 1, span: 1, inset: 0 })
 			assert.deepEqual(overlap('Pills'), { slot: 0, total: 1, span: 1, inset: 1 })
 			assert.deepEqual(overlap('Gym'), { slot: 0, total: 1, span: 1, inset: 2 })
 		})
@@ -419,8 +384,8 @@ describe('EntrySegments', () => {
 			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
 
 			assert.deepEqual(overlap('A'), { slot: 0, total: 1, span: 1, inset: 1 })
-			assert.deepEqual(overlap('B'), { slot: 0, total: 1, span: 1, inset: 2 }) // covers A → deeper
-			assert.deepEqual(overlap('C'), { slot: 0, total: 1, span: 1, inset: 1 }) // covers nothing → shallow again
+			assert.deepEqual(overlap('B'), { slot: 0, total: 1, span: 1, inset: 2 })
+			assert.deepEqual(overlap('C'), { slot: 0, total: 1, span: 1, inset: 1 })
 		})
 	})
 
@@ -433,7 +398,7 @@ describe('EntrySegments', () => {
 
 			const reps = EntrySegments.of([day, trip], week).runsIn(base, base.add({ days: 6 }), () => true)
 
-			assert.deepEqual(reps.map(s => s.entry.heading), ['Trip', 'Day']) // same start day → longer run first
+			assert.deepEqual(reps.map(s => s.entry.heading), ['Trip', 'Day'])
 			assert.ok(reps.every(s => s.date!.dayStart.equals(base.add({ days: 1 }).dayStart)))
 		})
 
@@ -443,7 +408,7 @@ describe('EntrySegments', () => {
 			const [rep] = EntrySegments.of([ongoing], week).runsIn(base, base.add({ days: 6 }), () => true)
 
 			assert.equal(rep!.date!.dayStart.equals(base.dayStart), true)
-			assert.equal(rep!.hasPrevious, true) // its run continues off the left edge
+			assert.equal(rep!.hasPrevious, true)
 		})
 
 		it('honours the accept predicate', () => {
@@ -458,8 +423,6 @@ describe('EntrySegments', () => {
 	describe('laneRank', () => {
 		it('ranks multi-day spans top, then all-day, then timed, then undated', () => {
 			assert.equal(EntrySegments.laneRank(new Entry({ start: base, end: base.add({ days: 2 }) })), 0)
-			// A real single-day all-day entry is stored end = start + 1 day (exclusive); it must rank as
-			// all-day (1), not as a multi-day span (0).
 			assert.equal(EntrySegments.laneRank(new Entry({ start: base, end: base.add({ days: 1 }), allDay: true })), 1)
 			assert.equal(EntrySegments.laneRank(new Entry({ start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })), 2)
 			assert.equal(EntrySegments.laneRank(new Entry({})), 3)
@@ -501,9 +464,9 @@ describe('EntrySegments', () => {
 			const late = new Entry({ heading: 'Late', start: base.add({ days: 4 }).with({ hour: 9 }), end: base.add({ days: 4 }).with({ hour: 10 }) })
 
 			const slots = EntrySegments.of([early, late, trip], [base]).monthSlots
-			assert.equal(slots.get(trip), 0) // multi-day span → top row
-			assert.equal(slots.get(early), 1) // overlaps the trip on day 0 → next row
-			assert.equal(slots.get(late), 0) // date-disjoint from the trip → reuses the top row
+			assert.equal(slots.get(trip), 0)
+			assert.equal(slots.get(early), 1)
+			assert.equal(slots.get(late), 0)
 		})
 	})
 
@@ -515,12 +478,11 @@ describe('EntrySegments', () => {
 
 			const slots = EntrySegments.of([conference, visit, later], [base]).allDaySlots
 			assert.equal(slots.get(conference), 0)
-			assert.equal(slots.get(visit), 1) // overlaps the conference on day 2 → next lane
-			assert.equal(slots.get(later), 0) // date-disjoint → reuses the top lane
+			assert.equal(slots.get(visit), 1)
+			assert.equal(slots.get(later), 0)
 		})
 
 		it('never lets a timed entry occupy a lane', () => {
-			// Unlike monthSlots — the month grid stacks timed chips into the same rows, the lane doesn't.
 			const meeting = new Entry({ heading: 'Meeting', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
 			const holiday = new Entry({ heading: 'Holiday', start: base, end: base.add({ days: 1 }), allDay: true })
 
@@ -530,36 +492,34 @@ describe('EntrySegments', () => {
 		})
 
 		it('puts a move ghost in the free lane it will land in, without shifting the packed ones', () => {
-			// The reported bug: the ghost used to hold no lane at all and rode the trailing empty one, so it
-			// sank below every bar — buried, and jumping up a lane on release.
 			const banner = allDay('Banner', 0, 8)
 			const task = allDay('Task', 0)
-			const ghost = allDay('Task', 3) // dragged three days along, out from under the banner's lane
+			const ghost = allDay('Task', 3)
 
 			const slots = duringMove(task, ghost, () => EntrySegments.of([banner, task, ghost], [base]).allDaySlots)
 			assert.equal(slots.get(banner), 0)
-			assert.equal(slots.get(task), 1) // the packed lanes stay exactly where they were
-			assert.equal(slots.get(ghost), 1) // lane 0 is the banner's on day 3; lane 1 is free there
+			assert.equal(slots.get(task), 1)
+			assert.equal(slots.get(ghost), 1)
 		})
 
 		it('lets a move ghost reuse the cells its own source is vacating', () => {
 			const banner = allDay('Banner', 0, 8)
 			const trip = allDay('Trip', 1, 3)
-			const ghost = allDay('Trip', 2, 3) // nudged one day on: days 2–3 are still its source's own cells
+			const ghost = allDay('Trip', 2, 3)
 
 			const slots = duringMove(trip, ghost, () => EntrySegments.of([banner, trip, ghost], [base]).allDaySlots)
-			assert.equal(slots.get(ghost), 1) // stays in its own lane instead of stacking below it
+			assert.equal(slots.get(ghost), 1)
 		})
 
 		it('falls back to a fresh lane when a move ghost fits in none', () => {
 			const banner = allDay('Banner', 0, 8)
 			const task = allDay('Task', 0)
-			const other = allDay('Other', 3) // date-disjoint from the task → shares its lane
-			const ghost = allDay('Task', 3) // right onto the other entry: no lane left on day 3
+			const other = allDay('Other', 3)
+			const ghost = allDay('Task', 3)
 
 			const slots = duringMove(task, ghost, () => EntrySegments.of([banner, task, other, ghost], [base]).allDaySlots)
 			assert.equal(slots.get(other), 1)
-			assert.equal(slots.get(ghost), 2) // the lane below the packed ones — the strip's trailing empty lane
+			assert.equal(slots.get(ghost), 2)
 		})
 	})
 
@@ -572,7 +532,7 @@ describe('EntrySegments', () => {
 
 			const { bars } = duringMove(undefined, ghost, () => EntrySegments.of([trip, ghost], week).monthWeek(week))
 			assert.deepEqual(bars.map(bar => bar.segment.entry.heading), ['Trip', 'Ghost'])
-			assert.equal(bars.find(bar => bar.segment.entry === ghost)!.slot, 1) // under the trip it overlaps
+			assert.equal(bars.find(bar => bar.segment.entry === ghost)!.slot, 1)
 		})
 	})
 })

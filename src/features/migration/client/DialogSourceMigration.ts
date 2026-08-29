@@ -34,7 +34,6 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 
 	private get canMove() { return canMoveEntriesOut(this.source) }
 
-	/** The run is under way — its own screen, so no control has to narrate its own state. */
 	private get running() { return this.migration.status === TaskStatus.PENDING }
 
 	private get reported() { return this.migration.status === TaskStatus.COMPLETE }
@@ -54,7 +53,6 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 		void this.migration.run()
 	}
 
-	/** Back to the question before this one: the series choice if it was asked, else the picker. */
 	private back() {
 		if (this.flatten !== undefined && this.preview.value?.flattenable.length) {
 			this.flatten = undefined
@@ -64,8 +62,6 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 		}
 	}
 
-	/** Whether the series question is still outstanding. Asked BEFORE the preview, so the preview
-	 * shows the consequences of the answer rather than a number that changes after the fact. */
 	private asksSeries(plan: MigrationPlan) {
 		return this.flatten === undefined && plan.flattenable.length > 0
 	}
@@ -99,7 +95,6 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 			}
 
 			mitra-dialog-source-migration {
-				/* One width for every screen, so answering a question doesn't resize the dialog. */
 				--mitra-dialog-width: min(30rem, 92vw);
 
 				ul {
@@ -108,9 +103,7 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 					list-style: none;
 				}
 
-				/* Target list grouped by account. */
 				.targets {
-					/* Aligns account headings with row icons, matching sidebar inset. */
 					--row-inset: 0.75rem;
 					display: flex;
 					flex-direction: column;
@@ -146,15 +139,12 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 							white-space: nowrap;
 						}
 
-						/* Direct child only, or this claims the glyph inside <mitra-source-icon> too. */
 						> mitra-icon:last-child {
 							color: var(--color-text-muted);
 						}
 					}
 				}
 
-				/* Where the entries are going, as one object. It anchors every screen after the picker —
-				   preview and run show the same panel, so confirming does not relayout the dialog. */
 				.journey {
 					display: flex;
 					align-items: center;
@@ -197,7 +187,6 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 					text-wrap: balance;
 				}
 
-				/* One line per consequence, each led by the glyph for its kind. */
 				.report {
 					display: flex;
 					flex-direction: column;
@@ -211,7 +200,6 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 					}
 
 					mitra-icon {
-						/* Holds the glyph on the first line's optical centre as the text wraps. */
 						margin-block-start: 0.0625rem;
 						flex-shrink: 0;
 					}
@@ -235,7 +223,6 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 					}
 				}
 
-				/* The promise the phase order makes, kept beside the button that relies on it. */
 				.assurance {
 					display: flex;
 					align-items: center;
@@ -270,8 +257,6 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 					color: var(--color-text-muted);
 				}
 
-				/* Waiting and the outcome share one centred column, so the dialog settles rather than
-				   jumps between them. */
 				.waiting,
 				.outcome {
 					display: flex;
@@ -308,8 +293,6 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 					}
 				}
 
-				/* The outcome's glyph: the destination's own colour when it worked, the error tone when
-				   it didn't — the one moment this dialog is allowed to be graphic. */
 				.mark {
 					inline-size: 3rem;
 					block-size: 3rem;
@@ -398,7 +381,6 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 		`
 	}
 
-	/** Origin → destination. The one element every screen after the picker keeps on show. */
 	private get journeyTemplate() {
 		return html`
 			<div class="journey">
@@ -424,8 +406,6 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 		`
 	}
 
-	/** The run has its own screen rather than a button that renames itself — which is what used to make
-	 * BOTH buttons read "Copying…" at once. */
 	private runningTemplate(plan: MigrationPlan) {
 		const count = plan.movingCount(this.flatten === true)
 		return html`
@@ -436,7 +416,6 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 		`
 	}
 
-	/** The one question with a behaviour to pick, so the one screen with decision cards. */
 	private seriesTemplate(plan: MigrationPlan) {
 		const series = plan.flattenable
 		const occurrences = series.reduce((total, verdict) => total + (verdict.occurrences ?? 0), 0)
@@ -466,8 +445,6 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 			? t('${count:pluralityNumber} of ${total:number} entries move', { count: moving, total: plan.total })
 			: t('${count:pluralityNumber} of ${total:number} entries are copied', { count: moving, total: plan.total })}</p>
 			<ul class="report">
-				${/* The tick says what the numbers above cannot: that these arrive undiminished. It is the
-				    whole line when there is nothing else to report, and a count once there is. */''}
 				${!plan.cleanCount ? html.nothing : html`
 					<li class="clean">
 						<mitra-icon icon="check"></mitra-icon>
@@ -522,7 +499,6 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 		`
 	}
 
-	/** Which entries stay behind, by name — a count alone leaves the user hunting for them. */
 	private namesTemplate(blocked: ReadonlyArray<MigrationVerdict>) {
 		const named = blocked.slice(0, NAMED_BLOCKED).map(verdict => verdict.heading || t('Untitled')).join(', ')
 		const rest = blocked.length - NAMED_BLOCKED
@@ -567,7 +543,6 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 		`
 	}
 
-	/** The result screen's only button closes it; nothing else here uses the dialog's primary action. */
 	protected override primaryAction() {
 		return undefined
 	}

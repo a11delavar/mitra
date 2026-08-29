@@ -7,15 +7,9 @@ export class JiraRequestError extends Error {
 }
 
 /**
- * The slice of the Jira Cloud REST API the Tempo integration needs, and only that: who the credential
- * is, what an issue is called, and which project keys exist.
- *
- * Separate from {@link TempoClient} because it is a different product behind a different host, a
- * different auth scheme (Basic `email:token`, not a bearer) and a different failure domain — a Jira
- * outage degrades headings to `#id` while the timesheet itself keeps syncing.
+ * Minimal Jira Cloud REST API client for resolving user profile details, issue metadata, and project keys.
  */
 export class JiraClient {
-	/** Jira caps a bulk fetch at 100 ids per request. */
 	static readonly bulkFetchLimit = 100
 
 	constructor(
@@ -46,15 +40,12 @@ export class JiraClient {
 		return await response.json() as T
 	}
 
-	/** The account the credential authenticates as — the `authorAccountId` every Tempo write needs, and
-	 * the integration's display label. Tempo v4 has no equivalent endpoint of its own. */
+	/** Returns authenticated Jira user profile details including accountId and timeZone. */
 	myself(): Promise<{ accountId: string, displayName?: string, emailAddress?: string, timeZone?: string }> {
 		return this.request('GET', 'rest/api/3/myself')
 	}
 
-	/** Names for issues addressed by numeric id or by key — both forms in one call, which is what lets
-	 * the same request serve a sync (id → key) and a create (key → id). Issues the credential cannot
-	 * see come back in `errors` rather than as a failure, so a partly-visible batch still resolves. */
+	/** Fetches issue summaries and keys keyed by both numeric id and issue key. */
 	async issues(idsOrKeys: Array<string>): Promise<Map<string, TempoIssue & { id: string }>> {
 		const resolved = new Map<string, TempoIssue & { id: string }>()
 		for (let index = 0; index < idsOrKeys.length; index += JiraClient.bulkFetchLimit) {
@@ -65,7 +56,6 @@ export class JiraClient {
 			})
 			for (const issue of response.issues ?? []) {
 				const entry = { id: issue.id, key: issue.key, summary: issue.fields?.summary ?? '' }
-				// Keyed under BOTH forms: the caller asked in one of them and shouldn't have to know which.
 				resolved.set(issue.id, entry)
 				resolved.set(issue.key, entry)
 			}
@@ -73,8 +63,7 @@ export class JiraClient {
 		return resolved
 	}
 
-	/** Every project key the credential can see — what tells a real issue key apart from any other
-	 * hyphenated word in an entry's title (see Tempo.findIssueKey). */
+	/** Fetches visible Jira project keys. */
 	async projectKeys(): Promise<Array<string>> {
 		const keys: Array<string> = []
 		for (let startAt = 0; ; startAt += 50) {

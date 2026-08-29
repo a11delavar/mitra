@@ -2,15 +2,11 @@ import { createLogger } from '../../infrastructure/logging/Logger.js'
 
 const logger = createLogger('Notion')
 
-/** The pinned API version every request declares (Notion's API is date-versioned and the header is
- * mandatory). 2026-03-11 is the first version documenting the view endpoints; it also renames
- * `archived` to `in_trash` across objects — the shapes below follow it. */
+/** Pinned Notion API version header. */
 export const NOTION_VERSION = '2026-03-11'
 
-// --- Wire shapes (only the fields mitra reads — Notion objects carry many more) ---------------------
+// --- Wire shapes ----------------------------------------------------------------------------------
 
-/** A rich text run's style flags. Absent means false; `underline` has no markdown form and is read
- * as plain text. */
 export interface NotionAnnotations {
 	bold?: boolean
 	italic?: boolean
@@ -19,7 +15,7 @@ export interface NotionAnnotations {
 	code?: boolean
 }
 
-/** A rich text run. Reads extract text via {@link NotionMarkdown.textOf}. Date mentions format `mention.date` directly. */
+/** Rich text run payload. */
 export interface NotionRichText {
 	type?: string
 	plain_text?: string
@@ -29,9 +25,7 @@ export interface NotionRichText {
 	mention?: { type?: string, date?: NotionDate | null }
 }
 
-/** A date property value. `start`/`end` are ISO 8601 — date-only ("2026-07-14") marks an all-day
- * value; with a clock they carry a UTC offset UNLESS `time_zone` (an IANA id) is set, in which case
- * they are that zone's wall clock and must carry no offset. */
+/** Notion date property value with ISO 8601 strings and optional IANA time_zone. */
 export interface NotionDate {
 	start: string
 	end?: string | null
@@ -43,10 +37,7 @@ export interface NotionStatusOption {
 	name: string
 }
 
-/** A page's property value, keyed by its `type`. Only the types mitra maps are modelled; writes
- * send the same shapes with only the identifying fields (e.g. a status by option id alone). The
- * `select`/`multi_select` shapes are write-only here — mitra reads none of them, but fills them
- * when a view's filter demands a value for a page to appear in it (see {@link deriveFilterDefaults}). */
+/** Page property value keyed by type. */
 export interface NotionPropertyValue {
 	id?: string
 	type?: string
@@ -57,9 +48,7 @@ export interface NotionPropertyValue {
 	select?: { name: string } | null
 	multi_select?: Array<{ name: string }>
 	relation?: Array<{ id: string }>
-	/** Set on a relation value Notion truncated at 25 ids — the rest live behind
-	 * {@link NotionClient.pageRelation}. A wholesale property write must never be derived from a
-	 * truncated list: it would delete the ids it never saw. */
+	/** Set on a relation value Notion truncated at 25 items. */
 	has_more?: boolean
 }
 
@@ -72,33 +61,21 @@ export interface NotionPage {
 	properties: Record<string, NotionPropertyValue>
 }
 
-/**
- * The type-keyed content payload of a block — one shape for every type mitra converts (only the
- * fields it reads/writes). `children` is where nesting lives on BOTH directions: a write payload
- * nests inline here (Notion's own shape), and the recursive body read (Notion.fetchBodyBlocks)
- * attaches fetched children here too, so converter code walks one tree.
- */
+/** Content payload of a block across supported block types. */
 export interface NotionBlockContent {
 	rich_text?: Array<NotionRichText>
-	/** to_do */
 	checked?: boolean
-	/** code */
 	language?: string
-	/** callout — e.g. 'red_background' */
 	color?: string
-	/** table */
 	table_width?: number
 	has_column_header?: boolean
-	/** table_row */
 	cells?: Array<Array<NotionRichText>>
-	/** bookmark */
 	url?: string
 	caption?: Array<NotionRichText>
 	children?: Array<NotionBlock>
 }
 
-/** A page-body block. Only the types NotionMarkdown converts are keyed; any other `type` is opaque
- * content mitra never renders nor touches. */
+/** Page body block. */
 export interface NotionBlock {
 	object?: 'block'
 	id?: string
@@ -120,8 +97,7 @@ export interface NotionBlock {
 	bookmark?: NotionBlockContent
 }
 
-/** A data source's schema property (the config side of {@link NotionPropertyValue}). The status
- * config carries the option→group structure a page value omits. */
+/** Data source schema property configuration. */
 export interface NotionSchemaProperty {
 	id: string
 	name: string
@@ -130,10 +106,6 @@ export interface NotionSchemaProperty {
 		options: Array<NotionStatusOption>
 		groups: Array<{ id: string, name: string, option_ids: Array<string> }>
 	}
-	/** A relation property's config: WHICH container it points at (verified against a real
-	 * workspace: both ids are served, `data_source_id` being the current spelling), and whether
-	 * Notion keeps a synced twin property on the other side (`dual_property` — "Parent Task" ↔
-	 * "Sub Tasks"), which is one relationship exposed as two properties. */
 	relation?: {
 		data_source_id?: string
 		database_id?: string
@@ -142,23 +114,16 @@ export interface NotionSchemaProperty {
 	}
 }
 
-/** A data source — the queryable unit holding schema and rows; a database is just its container. */
+/** Queryable Notion data source containing schema and row definitions. */
 export interface NotionDataSource {
 	object: 'data_source'
 	id: string
 	title?: Array<NotionRichText>
-	/** The database containing this data source — what a relation property naming a `database_id`
-	 * points at when it points back here. */
 	parent?: { database_id?: string }
 	properties: Record<string, NotionSchemaProperty>
 }
 
-/**
- * A single property condition (the leaf of a saved `filter` tree, or the value of a `quick_filters`
- * entry). Only the operators mitra can SATISFY by writing a value are modelled — creating a page into
- * a view means matching its filter. Everything else (ranges, `is_empty`, `does_not_equal`, text
- * `contains`, formulas…) is left unmodelled and ignored. `relation.contains` names the page a
- * relation must include — exactly the "Area = University" shape real Notion task views use. */
+/** Single property filter condition. */
 export interface NotionPropertyCondition {
 	select?: { equals?: string }
 	status?: { equals?: string }
@@ -167,15 +132,13 @@ export interface NotionPropertyCondition {
 	relation?: { contains?: string }
 }
 
-/** A saved view filter: an `and`/`or` tree, or a leaf that also carries its property reference (a
- * schema id OR name). */
+/** Saved view filter tree or leaf condition. */
 export type NotionViewFilter =
 	| { and: Array<NotionViewFilter> }
 	| { or: Array<NotionViewFilter> }
 	| (NotionPropertyCondition & { property: string })
 
-/** The view's quick-filter chips: a flat map of raw property id → condition. Real Notion task views
- * keep their filtering here (the top-level `filter` is often null), so pre-fill reads both. */
+/** Quick filter property map on views. */
 export type NotionQuickFilters = Record<string, NotionPropertyCondition>
 
 export interface NotionView {
@@ -188,7 +151,7 @@ export interface NotionView {
 	quick_filters?: NotionQuickFilters
 }
 
-/** The bot user behind a token (`GET /users/me`) — what labels and identifies a connection. */
+/** Bot user information for the authenticated token. */
 export interface NotionBotUser {
 	object: 'user'
 	id: string
@@ -201,17 +164,13 @@ interface NotionList<T> {
 	results: Array<T>
 	next_cursor?: string | null
 	has_more?: boolean
-	/** Query endpoints cap at 10,000 results and declare truncation here rather than erroring. */
 	request_status?: { type: 'complete' | 'incomplete', incomplete_reason?: string }
 }
 
-/** A view query handle (`POST /views/{id}/queries`): the first results page rides along; further
- * pages are read off the query id. The cache behind it expires server-side after ~15 minutes. */
 interface NotionViewQuery extends NotionList<{ object: string, id: string }> {
 	id: string
 }
 
-/** A Notion API error body. */
 interface NotionError {
 	code?: string
 	message?: string
@@ -223,23 +182,12 @@ export class NotionRequestError extends Error {
 	}
 }
 
-/**
- * A minimal typed client for the Notion REST API — bearer token + pinned {@link NOTION_VERSION},
- * JSON in/out, Notion's own error messages surfaced, and one polite retry on 429 honouring
- * `Retry-After`. Deliberately not the official SDK: mitra touches a handful of endpoints, and a
- * ~100-line client keeps the wire shapes (and their tests) in one visible place.
- *
- * The endpoint methods below mirror Notion's own nouns; the task semantics (what a page MEANS)
- * live in Notion.ts, keeping this file purely protocol.
- */
+/** HTTP client for the Notion REST API with token authorization and 429 backoff. */
 export class NotionClient {
 	static readonly baseUrl = 'https://api.notion.com/v1/'
 
-	/** How long a 429's Retry-After is honoured at most — anything longer fails the sync cycle
-	 * instead of stalling the whole (single-threaded) synchronizer loop. */
 	private static readonly maxRetryAfterSeconds = 30
 
-	/** `fetchImplementation` is injectable for tests; defaults to the runtime's fetch. */
 	constructor(
 		private readonly token: string,
 		private readonly fetchImplementation: typeof fetch = fetch,
@@ -256,7 +204,6 @@ export class NotionClient {
 			body: body === undefined ? undefined : JSON.stringify(body),
 		})
 
-		// 429 is the per-connection limit, 529 the service-overload variant — both carry Retry-After.
 		if ((response.status === 429 || response.status === 529) && !isRetry) {
 			const retryAfter = Number(response.headers.get('Retry-After')) || 1
 			if (retryAfter <= NotionClient.maxRetryAfterSeconds) {
@@ -273,7 +220,6 @@ export class NotionClient {
 		return await response.json() as T
 	}
 
-	/** Drain a cursor-paginated listing. `page` maps a cursor to one page of results. */
 	private async paginate<T>(page: (cursor: string | undefined) => Promise<NotionList<T>>): Promise<Array<T>> {
 		const results: Array<T> = []
 		let cursor: string | undefined
@@ -285,14 +231,10 @@ export class NotionClient {
 		return results
 	}
 
-	/** The bot user the token authenticates as — the connection's identity and workspace label.
-	 * Also the cheapest "is this token valid" probe. */
 	me(): Promise<NotionBotUser> {
 		return this.request('GET', 'users/me')
 	}
 
-	/** Every data source shared with the connection (Notion has no list-databases endpoint —
-	 * search with an object filter is the enumeration mechanism). */
 	searchDataSources(): Promise<Array<NotionDataSource>> {
 		return this.paginate(cursor => this.request('POST', 'search', {
 			filter: { property: 'object', value: 'data_source' },
@@ -301,17 +243,11 @@ export class NotionClient {
 		}))
 	}
 
-	/** A data source's schema — the `properties` map (status options/groups, property types). */
 	dataSource(dataSourceId: string): Promise<NotionDataSource> {
 		return this.request('GET', `data_sources/${dataSourceId}`)
 	}
 
-	/** The views of a data source. The listing returns partial objects (often bare ids), so each
-	 * view is retrieved individually when its name/type didn't ride along. A view whose type Notion's
-	 * own API refuses to serialize (`400 validation_error: Unsupported view type: feed`, and any
-	 * future kind like it) is DROPPED, not fatal: such a view can never be a task source, and letting
-	 * one unsupported view abort retrieval would break discovery — and every sync — for the whole
-	 * account (the reported "cannot do anything with Notion" bug). Other errors still propagate. */
+	/** Fetches views for a data source, skipping unsupported view types. */
 	async views(dataSourceId: string): Promise<Array<NotionView>> {
 		const listed = await this.paginate<NotionView>(cursor =>
 			this.request('GET', `views?data_source_id=${encodeURIComponent(dataSourceId)}&page_size=100${cursor ? `&start_cursor=${encodeURIComponent(cursor)}` : ''}`))
@@ -336,13 +272,7 @@ export class NotionClient {
 		return this.request('GET', `views/${viewId}`)
 	}
 
-	/**
-	 * The ids of every page the view currently contains — Notion evaluates the view's own
-	 * filter/sorts server-side (mitra never re-implements filter semantics). Membership being the
-	 * complete current state is what makes remote deletions (and pages drifting out of a filtered
-	 * view) detectable as a set difference — so `complete` reports whether it really is: the query
-	 * cache caps at 10,000 results, and a truncated membership must never drive deletions.
-	 */
+	/** Fetches all page IDs in a view, noting if the query result was capped. */
 	async viewPageIds(viewId: string): Promise<{ ids: Array<string>, complete: boolean }> {
 		const query = await this.request<NotionViewQuery>('POST', `views/${viewId}/queries`, { page_size: 100 })
 		const ids = query.results.map(result => result.id)
@@ -357,11 +287,6 @@ export class NotionClient {
 		return { ids, complete }
 	}
 
-	/** Full page objects of a data source, optionally only those edited at/after `editedOnOrAfter`
-	 * (the incremental-sync filter; timestamp filters take no `property` key). Ascending edit-time
-	 * order on purpose: this query shares the 10,000-result cap, and ascending order means a
-	 * truncation drops the NEWEST edits — the caller's watermark (the max edit stamp actually
-	 * seen) then stays behind the dropped ones, so the next cycle picks them up. */
 	queryDataSourcePages(dataSourceId: string, editedOnOrAfter?: string): Promise<Array<NotionPage>> {
 		return this.paginate(cursor => this.request('POST', `data_sources/${dataSourceId}/query`, {
 			...(editedOnOrAfter ? { filter: { timestamp: 'last_edited_time', last_edited_time: { on_or_after: editedOnOrAfter } } } : {}),
@@ -375,35 +300,22 @@ export class NotionClient {
 		return this.request('GET', `pages/${pageId}`)
 	}
 
-	/**
-	 * The COMPLETE id list of one relation property of one page — a page object truncates a relation
-	 * value at 25 ids and flags `has_more`, and this endpoint pages through the rest.
-	 *
-	 * `propertyId` goes into the path VERBATIM: schema property ids arrive percent-encoded
-	 * (`%5CHMd`), and that is the form the endpoint expects. Encoding it again is the one dangerous
-	 * mistake here — verified live: a double-encoded id answers `200` with an EMPTY list rather
-	 * than the `400 validation_error` a truly unknown id gets.
-	 */
+	/** Fetches the full relation list for a relation property when truncated on the page object. */
 	async pageRelation(pageId: string, propertyId: string): Promise<Array<{ id: string }>> {
 		const items = await this.paginate<{ type?: string, relation?: { id?: string } }>(cursor =>
 			this.request('GET', `pages/${pageId}/properties/${propertyId}?page_size=100${cursor ? `&start_cursor=${encodeURIComponent(cursor)}` : ''}`))
 		return items.flatMap(item => item.relation?.id ? [{ id: item.relation.id }] : [])
 	}
 
-	/** One level of a block's children (a page is a block — its children are the page body). Deeper
-	 * levels are separate fetches; `has_children` marks where. */
 	blockChildren(blockId: string): Promise<Array<NotionBlock>> {
 		return this.paginate(cursor =>
 			this.request('GET', `blocks/${blockId}/children?page_size=100${cursor ? `&start_cursor=${encodeURIComponent(cursor)}` : ''}`))
 	}
 
-	/** Appends blocks after a parent's existing children. Notion caps one request at 100 blocks and
-	 * two levels of payload nesting — callers chunk/clamp (see Notion.replaceBody / NotionMarkdown). */
 	appendBlockChildren(blockId: string, children: Array<NotionBlock>): Promise<void> {
 		return this.request('PATCH', `blocks/${blockId}/children`, { children }).then(() => undefined)
 	}
 
-	/** Like pages, block DELETE is a move to trash — recoverable in Notion, not a hard delete. */
 	deleteBlock(blockId: string): Promise<void> {
 		return this.request('DELETE', `blocks/${blockId}`).then(() => undefined)
 	}
@@ -420,8 +332,6 @@ export class NotionClient {
 		return this.request('PATCH', `pages/${pageId}`, { properties })
 	}
 
-	/** Notion has no hard delete over the API — trashing (`in_trash`; `archived` is the legacy
-	 * spelling) is the deletion semantic. */
 	trashPage(pageId: string): Promise<NotionPage> {
 		return this.request('PATCH', `pages/${pageId}`, { in_trash: true })
 	}

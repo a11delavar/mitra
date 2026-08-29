@@ -3,15 +3,6 @@ import { canCopyEntriesOut, canMoveEntriesOut, canRestoreSourceVisibility, getEn
 import { Command } from '../../commands/Command.js'
 import { DialogSourceMigration } from '../../migration/client/DialogSourceMigration.js'
 
-/**
- * The calendar-visibility verbs — the palette's twin of the sidebar's Alt+click and its ⋯ item.
- *
- * Not `@command()`-registered: the registry holds classes, one singleton verb each, but "only show
- * Work" is parameterized by a calendar, so there's one instance per row and the list changes as
- * calendars come and go. They're built from the store instead (see {@link sourceCommands}). Being
- * keyless, they never reach the keyboard interceptor or the shortcut sheet, so nothing drifts.
- */
-
 class ShowOnlySource extends Command {
 	constructor(private readonly source: Source) {
 		super()
@@ -19,13 +10,10 @@ class ShowOnlySource extends Command {
 
 	get heading() { return t('Only Show ${name}', { name: this.source.name }) }
 	readonly icon = 'scan-eye'
-	/** A symbolic key (see i18n/index.ts): search terms are a bag of synonyms rather than prose, so
-	 * each language wants the words ITS users would type, not a translation of the English ones. */
 	readonly keywords = t('ShowOnlySource.Keywords')
 	readonly keys = []
 	readonly group = undefined
 
-	/** One row per calendar would crowd out the app's own verbs in an unqueried palette. */
 	override get listedWithoutQuery() { return false }
 
 	override async execute() {

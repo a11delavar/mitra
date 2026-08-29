@@ -16,15 +16,6 @@ import { Dev } from '../../../integrations/dev/Dev.js'
 import { NotificationSubscription } from '../../reminders/NotificationSubscription.js'
 import { Session } from '../../identity/server/Session.js'
 
-// The sidebar's manual order (PUT /sources/order, PUT /integrations/order). These tests pin the two
-// halves of the contract: the WRITE is wholesale — listed rows take their index, every unlisted
-// sibling drops back to null (infrastructure/model/order.ts applyOrder) — and the READ is the natural (insertion)
-// fetch STABLE-sorted by `byOrder` at the client boundary, so numbered rows come first and the null
-// rest keeps insertion (= discovery/connection) order: a newly discovered, newly enabled or
-// re-appearing row APPENDS instead of reshuffling the list. (A SQL `order asc nulls last` was tried
-// and reverted — its tie order is arbitrary, which could reshuffle every pre-feature sidebar.)
-
-/** A private in-memory ORM with the production entity set and naming strategy (see entries.test.ts). */
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
 		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Dev, Source, Entry, Recurrence, NotificationSubscription, Session],
@@ -44,7 +35,6 @@ async function inMemoryOrm() {
 	return orm
 }
 
-/** Seeds a user owning one Dev integration with sources named per `names`, in that insertion order. */
 async function seedUser(em: EntityManager, username: string, names: Array<string>) {
 	const user = new User({ username })
 	const integration = new Dev({ userId: user.id, uri: `dev://${username}` })
@@ -54,8 +44,6 @@ async function seedUser(em: EntityManager, username: string, names: Array<string
 	return { user, integration, sources }
 }
 
-/** What the sidebar shows: the natural fetch, stable-sorted by the shared comparator — exactly
- * what `fetchIntegrations` does with the API response. */
 const displayed = async (em: EntityManager, integrationId: string) =>
 	(await em.find(Source, { integrationId })).sort(byOrder)
 

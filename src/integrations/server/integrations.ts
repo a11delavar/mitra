@@ -12,20 +12,12 @@ const logger = createLogger('Integrations')
 
 export const integrationsRouter = Router()
 
-// Deliberately NO orderBy: the response stays in natural (insertion) order and the client applies
-// the display comparator itself (`byOrder` at the fetchIntegrations boundary, see infrastructure/model/order.ts).
-// A SQL `order asc nulls last` was tried and reverted — SQLite's tie order under an ORDER BY is
-// arbitrary, so the never-ordered rows (every pre-feature sidebar) could reshuffle; the client's
-// STABLE sort keeps them exactly as they always were.
 integrationsRouter.get('/', async (req, res) => {
 	const em = orm.em.fork()
 	const integrations = await em.find(Integration, { userId: req.user.id }, { populate: ['sources'] })
 	return res.json(integrations)
 })
 
-// The sidebar's manual account order — the integration-level counterpart of PUT /sources/order:
-// listed integrations take their index, an unlisted one drops back to null (see infrastructure/model/order.ts).
-// Registered before PUT /:id, which would otherwise read "order" as an id.
 integrationsRouter.put('/order', async (req, res) => {
 	const ids = req.body.ids as Array<string>
 	if (!Array.isArray(ids) || !ids.length || ids.some(id => typeof id !== 'string') || new Set(ids).size !== ids.length) {
@@ -44,14 +36,10 @@ integrationsRouter.put('/order', async (req, res) => {
 	return res.status(204).end()
 })
 
-/** Google Calendar's OAuth consent flow (see GoogleOAuth.ts). Configured deployment-wide via env. */
 const google = GoogleOAuth.fromEnv()
 
-// Whether this deployment can connect Google accounts — drives the provider option in the add dialog.
 integrationsRouter.get('/google', (_req, res) => res.json({ configured: !!google }))
 
-/** The consent dance's cross-redirect state (PKCE verifier + CSRF state + the exact redirect URI the
- * flow started with), parked in a short-lived HttpOnly cookie — the same shape as auth.ts's Transit. */
 interface GoogleTransit {
 	verifier: string
 	state: string
@@ -62,7 +50,6 @@ const googleTransitCookie = 'Mitra.GoogleAuth'
 
 const requestOrigin = (req: Request) => `${req.protocol}://${req.get('host')}`
 
-// Starts the consent flow: a plain link target (the dialog navigates here), redirecting to Google.
 integrationsRouter.get('/google/connect', async (req, res) => {
 	if (!google) {
 		return res.status(400).json({ error: 'Google Calendar is not configured — set MITRA_GOOGLE_CLIENT_ID and MITRA_GOOGLE_CLIENT_SECRET' })
@@ -75,10 +62,6 @@ integrationsRouter.get('/google/connect', async (req, res) => {
 	return res.redirect(url.href)
 })
 
-// Google redirects back here (a top-level GET, so the Lax session cookie rides along). Exchanges the
-// code for the refresh token, upserts the integration — reconnecting an already-connected account
-// renews its grant in place, thanks to the (userId, uri) identity — and lands back in the app with
-// the integration's source picker open (see Mitra.openPendingIntegration).
 integrationsRouter.get('/google/callback', async (req, res) => {
 	if (typeof req.query.error === 'string') {
 		logger.info(`Google consent was not granted: ${req.query.error}`)
@@ -86,12 +69,10 @@ integrationsRouter.get('/google/callback', async (req, res) => {
 	}
 	const raw = cookie(req, googleTransitCookie)
 	if (!raw || !google) {
-		return res.redirect('/') // expired or cold callback — the user can restart from the dialog
+		return res.redirect('/')
 	}
 	res.clearCookie(googleTransitCookie, { path: '/api/integrations/google' })
 	const transit = JSON.parse(Buffer.from(raw, 'base64url').toString()) as GoogleTransit
-	// Reconstruct the "current URL" off the redirect URI the flow started with — behind a reverse
-	// proxy the request's own protocol/host are the internal ones (mirrors auth.ts's callback).
 	const { email, refreshToken } = await google.callback(new URL(req.originalUrl, transit.redirectUri), transit.verifier, transit.state)
 
 	const em = orm.em.fork()
@@ -103,11 +84,6 @@ integrationsRouter.get('/google/callback', async (req, res) => {
 		integration = new GoogleCalendar({ userId: req.user.id, uri, credentials: { username: email, refreshToken } })
 		em.persist(integration)
 	}
-	// Discover the account's calendars now (persisted disabled, per the opt-in data flow), so the
-	// picker dialog opens populated. A discovery failure (e.g. the CalDAV API not enabled in the
-	// cloud project) still keeps the connected account — the dialog's Refresh surfaces the error.
-	// Exclusively, and flushing inside: this discovery persists rows, so a daemon cycle running
-	// alongside it would reconcile the same account from a fork that cannot see them yet.
 	await Integration.exclusively(integration.id, async () => {
 		await integration!.getSources(em)
 		await em.flush()
@@ -118,15 +94,12 @@ integrationsRouter.get('/google/callback', async (req, res) => {
 	return res.redirect(`/?integration=${integration.id}`)
 })
 
-// Validate credentials and preview the available sources without persisting anything. On edit the
-// client omits the password, so we start from the stored integration (by id) so `merge` reuses it.
 integrationsRouter.post('/sources', async (req, res) => {
 	const incoming = req.body as Integration
 	const em = orm.em.fork()
 	const integration: Integration = await em.findOne(Integration, { id: incoming.id, userId: req.user.id })
 		?? new (integrationClassFor(incoming.type))({ userId: req.user.id })
 	integration.merge(incoming)
-	// checkDuplicate: surface an already-connected account in the dialog's Connect step, before Save.
 	return res.json(await integration.getSources(em, { checkDuplicate: true }))
 })
 
@@ -152,10 +125,6 @@ integrationsRouter.put('/:id', async (req, res) => {
 	return res.json(await em.findOneOrFail(Integration, { id: integration.id }, { populate: ['sources'] }))
 })
 
-// Full re-import of every enabled source (see Integration.reimportSource) — the integration-wide
-// counterpart of POST /sources/:id/reimport. There is deliberately no manual SYNC endpoint beside
-// it: syncing is the daemon's job, triggered by presence (an opening/reloading client syncs its
-// user's integrations immediately), so the app never needs to ask.
 integrationsRouter.post('/:id/reimport', async (req, res) => {
 	const em = orm.em.fork()
 	const integration = await req.user.integration(em, req.params.id)
@@ -173,7 +142,6 @@ integrationsRouter.delete('/:id', async (req, res) => {
 	const em = orm.em.fork()
 	const integration = await req.user.integration(em, req.params.id)
 	em.remove(integration)
-	// Sources and their entries are removed by the ON DELETE CASCADE foreign keys.
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
 	logger.info(`Disconnected integration ${integration.id}`)

@@ -6,8 +6,6 @@ import { Integration } from '../../../integrations/Integration.js'
 import { Notion } from '../../../integrations/notion/Notion.js'
 import { closeTask } from './taskClosure.js'
 
-// The regression this pins: ticking a Notion task off used to author PERCENT-COMPLETE 100, which the
-// backend's capability guard refuses outright — so the status never reached Notion at all.
 describe('closeTask', () => {
 	const task = (init?: Partial<Entry>) => new Entry({ id: 'a', sourceId: 's', type: EntryType.Task, heading: 'Ship it', status: TaskStatus.ToDo, ...init })
 

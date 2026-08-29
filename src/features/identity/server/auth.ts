@@ -16,11 +16,8 @@ declare global {
 
 const logger = createLogger('Auth')
 
-/** Multi-user mode when configured (see Oidc.fromEnv); otherwise zero-auth single-user. */
 export const oidc = Oidc.fromEnv()
 
-// The pre-auth single-user row, seeded for single-user mode (and for dev seeding, which targets it).
-// Multi-user mode never touches it — every OIDC identity gets its own fresh user.
 async function findOrSeedDefaultUser(): Promise<User> {
 	const existing = await orm.em.findOne(User, { username: User.default.username })
 	if (existing) {
@@ -37,13 +34,12 @@ const defaultUser = oidc && process.env.MITRA_DEV !== 'true'
 	? undefined
 	: await findOrSeedDefaultUser()
 
-// Expired sessions self-delete when touched; this sweeps the ones whose browsers never came back.
 const sweptSessions = await orm.em.nativeDelete(Session, { expiresAt: { $lt: new Date() } })
 if (sweptSessions) {
 	logger.debug(`Swept ${sweptSessions} expired session(s) at boot`)
 }
 
-/** Parse one cookie out of the raw header — the app has only a handful, not worth a dependency. */
+/** Parses named cookie value from the request Cookie header. */
 export function cookie(req: Request, name: string): string | undefined {
 	for (const pair of req.headers.cookie?.split(';') ?? []) {
 		const separator = pair.indexOf('=')
@@ -58,19 +54,12 @@ function setSessionCookie(res: Response, token: string) {
 	res.cookie(Session.cookie, token, { httpOnly: true, sameSite: 'lax', secure: oidc?.secure ?? false, maxAge: Session.lifetime, path: '/' })
 }
 
-/** Zero-auth single-user mode: every request is the default user. */
 const singleUser: RequestHandler = (req, _res, next) => {
 	req.user = defaultUser!
 	next()
 }
 
-/**
- * Multi-user (OIDC) mode: resolves the session cookie to its user. Unauthenticated requests split by
- * kind — API calls answer a plain 401 (the frontend bounces itself through /auth/login), asset
- * requests pass (bundles and the PWA manifest are the app's code, not data — and installability dies
- * if the manifest redirects), and page navigations redirect into the sign-in flow. CSRF rests on the
- * cookie being SameSite=Lax: cross-site subrequests simply arrive unauthenticated.
- */
+/** Resolves session cookies in multi-user mode, redirecting unauthenticated page requests to login. */
 const session: RequestHandler = async (req, res, next) => {
 	const token = cookie(req, Session.cookie)
 	if (token) {
@@ -107,8 +96,6 @@ const session: RequestHandler = async (req, res, next) => {
 
 export const authMiddleware: RequestHandler = oidc ? session : singleUser
 
-/** The sign-in dance's cross-redirect state (PKCE verifier + CSRF state + the deep link to return
- * to), parked in a short-lived HttpOnly cookie between /auth/login and /auth/callback. */
 interface Transit {
 	verifier: string
 	state: string
@@ -117,13 +104,11 @@ interface Transit {
 
 const transitCookie = 'Mitra.Auth'
 
-/** The interactive sign-in/out endpoints — mounted at /auth, and only in multi-user mode (server.ts). */
 export const authRouter = Router()
 
 authRouter.get('/login', async (req, res) => {
 	const { url, verifier, state } = await oidc!.authorization()
 	const requested = typeof req.query.returnTo === 'string' ? req.query.returnTo : undefined
-	// Only same-app paths ride along — an absolute URL here would be an open redirect.
 	const returnTo = requested?.startsWith('/') && !requested.startsWith('//') ? requested : undefined
 	const transit: Transit = { verifier, state, returnTo }
 	res.cookie(transitCookie, Buffer.from(JSON.stringify(transit)).toString('base64url'),
@@ -134,14 +119,11 @@ authRouter.get('/login', async (req, res) => {
 authRouter.get('/callback', async (req, res) => {
 	const raw = cookie(req, transitCookie)
 	if (!raw) {
-		return res.redirect('/auth/login') // expired or cold callback — restart the dance
+		return res.redirect('/auth/login')
 	}
 	res.clearCookie(transitCookie, { path: '/auth' })
 	logger.debug('OIDC callback received; exchanging authorization code')
 	const transit = JSON.parse(Buffer.from(raw, 'base64url').toString()) as Transit
-	// The exchange validates the callback against the registered redirect URI — reconstruct the
-	// "current URL" off the configured base too, since behind the reverse proxy the request's own
-	// protocol/host are the internal ones.
 	const { claims, idToken } = await oidc!.callback(new URL(req.originalUrl, oidc!.baseUrl), transit.verifier, transit.state)
 	const em = orm.em.fork()
 	const user = await User.provision(em, oidc!.issuer, claims)
@@ -153,7 +135,6 @@ authRouter.get('/callback', async (req, res) => {
 	return res.redirect(transit.returnTo ?? '/')
 })
 
-// GET on purpose: signing out is a plain link, and a cross-site-forged logout is an annoyance, not a breach.
 authRouter.get('/logout', async (req, res) => {
 	const token = cookie(req, Session.cookie)
 	let idToken: string | undefined

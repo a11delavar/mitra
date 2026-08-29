@@ -6,7 +6,6 @@ import { DensityController } from './DensityController.js'
  * Drives `--month-zoom` host property and quantizes landed zoom to integer week row fits.
  */
 export class WeeksDensityController extends DensityController {
-	/** Pinned anchor offset captured at gesture start. */
 	private anchor?: { pointer: number, content: number, pitch: number }
 
 	constructor(host: Component) {
@@ -22,26 +21,17 @@ export class WeeksDensityController extends DensityController {
 		})
 	}
 
-	/** Ideal week row height in rem at zoom 1 (matches --_ideal-week-height). */
 	private static readonly idealRem = 8.5
-
-	/** Minimum and maximum visible week count bounds. */
 	private static readonly weeks = { min: 2, max: 9 }
-
-	/** Minimum week row height in rem. */
 	private static readonly minRowRem = 4.5
-
-	/** Cached root font size in pixels. */
 	private rootFontSize = 16
 
-	/** Computes visible week count bounds for current viewport height. */
 	private weekBounds(height: number) {
 		const { min, max } = WeeksDensityController.weeks
 		const fits = Math.floor((height + 1) / (WeeksDensityController.minRowRem * this.rootFontSize + 1))
 		return { min, max: Math.max(min, Math.min(max, fits)) }
 	}
 
-	/** Computes zoom level required to fit exact number of whole week rows. */
 	private zoomFor(weeks: number, height: number) {
 		return ((height + 1) / weeks - 1) / (WeeksDensityController.idealRem * this.rootFontSize)
 	}
@@ -55,7 +45,6 @@ export class WeeksDensityController extends DensityController {
 		return Math.min(this.zoomFor(bounds.min, height), Math.max(this.zoomFor(bounds.max, height), zoom))
 	}
 
-	/** Finds zoom level corresponding to nearest whole-row fit. */
 	private quantized(): number | undefined {
 		const height = this.scroller?.clientHeight
 		if (!height) {
@@ -66,12 +55,10 @@ export class WeeksDensityController extends DensityController {
 		return this.zoomFor(Math.min(bounds.max, Math.max(bounds.min, Math.round(raw))), height)
 	}
 
-	/** Inner scroll container element. */
 	private get scroller() {
 		return this.host?.renderRoot?.querySelector<HTMLElement>('.days') ?? null
 	}
 
-	/** Rendered week row pitch in pixels including 1px grid gap. */
 	private get pitch() {
 		const week = this.host.renderRoot.querySelector('.week')
 		return !week ? 0 : week.getBoundingClientRect().height + 1
@@ -101,7 +88,6 @@ export class WeeksDensityController extends DensityController {
 		this.anchor = this.reference(clientY) ?? this.anchor
 	}
 
-	/** Adjusts scroll position to maintain anchored content point under pointer. */
 	protected pin(_previous: number) {
 		const scroller = this.scroller
 		const anchor = this.anchor
@@ -112,7 +98,6 @@ export class WeeksDensityController extends DensityController {
 		scroller.scrollTop = anchor.content * (pitch / anchor.pitch) - anchor.pointer
 	}
 
-	/** Quantizes zoom to nearest whole-row fit on gesture completion. */
 	protected override settled() {
 		const quantized = this.quantized()
 		if (quantized !== undefined && Math.abs(quantized - this.zoom) > 0.001) {

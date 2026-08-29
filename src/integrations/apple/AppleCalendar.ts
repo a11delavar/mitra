@@ -2,12 +2,7 @@ import { model } from '../../infrastructure/model/model.js'
 import { CalDAV } from '../caldav/CalDAV.js'
 import { integration } from '../Integration.js'
 
-/**
- * Apple Calendar (iCloud) integration.
- * Apple uses standard CalDAV, but requires an App-Specific Password instead of the main Apple ID password.
- * The server URL is fixed to caldav.icloud.com, so we subclass CalDAV to hide the URI field in the UI
- * and tailor the terminology.
- */
+/** Apple Calendar (iCloud) integration using fixed caldav.icloud.com server URL. */
 @model('AppleCalendar')
 @integration('apple')
 export class AppleCalendar extends CalDAV {
@@ -23,7 +18,6 @@ export class AppleCalendar extends CalDAV {
 		return `Apple Calendar integration for "${this.credentials.username}"`
 	}
 
-	// The server URL is fixed, so only the Apple ID is needed to connect (unlike CalDAV's URL + username).
 	override get canConnect() {
 		return !!this.credentials.username
 	}

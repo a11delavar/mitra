@@ -6,13 +6,10 @@ export const switchStyles = css`
 		all: unset;
 		box-sizing: border-box;
 
-		/* The reset above sets display as an AUTHOR declaration, which beats the UA's rule for the hidden
-		   attribute — so a hidden switch stayed visible and clickable until this handed it back. */
 		&[hidden] {
 			display: none;
 		}
-		/* One knob sizes the whole control, so a surface that needs a bigger target (the settings rows)
-		   raises this instead of restating the geometry. */
+
 		--switch-block-size: 1rem;
 		inline-size: calc(var(--switch-block-size) * 1.75);
 		block-size: var(--switch-block-size);

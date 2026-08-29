@@ -11,9 +11,6 @@ const logger = createLogger('Sources')
 
 export const sourcesRouter = Router()
 
-// The sidebar's manual order, applied wholesale: `ids` is ONE integration's sources in their new
-// order — the rows the sidebar shows. Listed rows take their index; the integration's remaining
-// rows (disabled ones) drop back to null, i.e. "append when they next appear" (see infrastructure/model/order.ts).
 sourcesRouter.put('/order', async (req, res) => {
 	const ids = req.body.ids as Array<string>
 	if (!Array.isArray(ids) || !ids.length || ids.some(id => typeof id !== 'string') || new Set(ids).size !== ids.length) {
@@ -46,12 +43,9 @@ sourcesRouter.put('/:id/visibility', async (req, res) => {
 	return res.json(source)
 })
 
-/** "Only show this calendar" (the rule is User.showOnly's). One request for the whole batch, so a
- * failure can't leave the calendar half-hidden. */
 sourcesRouter.put('/:id/solo', async (req, res) => {
 	const em = orm.em.fork()
 	const source = await req.user.source(em, req.params.id)
-	// Soloing a disabled source would hide everything and reveal nothing.
 	if (!source.enabled) {
 		return res.status(400).json({ error: 'A disabled source cannot be the only one shown' })
 	}
@@ -59,20 +53,15 @@ sourcesRouter.put('/:id/solo', async (req, res) => {
 	user.showOnly(await req.user.sources(em, { enabled: true }), source.id)
 	await em.flush()
 
-	// Keep the request's user (a different entity manager's instance) in sync so a follow-up GET reflects the change.
 	req.user.previouslyHiddenSourceIds = user.previouslyHiddenSourceIds
 	syncEmitter.emit('updated', req.user.id)
 	logger.debug(`Source ${source.id} is now the only one shown`)
 	return res.json(user)
 })
 
-/** The way back out of a solo (see User.restorePreviousVisibility). */
 sourcesRouter.put('/restore-visibility', async (req, res) => {
 	const em = orm.em.fork()
 	const user = await em.findOneOrFail(User, { id: req.user.id })
-	// Nothing to restore is a no-op, not an error — "not in a solo" is what the caller asked for. Keeps
-	// a second tab with a stale record from getting a button that throws instead of the current truth.
-	// (Presence, not length: an empty record still means soloed.)
 	if (!user.previouslyHiddenSourceIds) {
 		return res.json(user)
 	}
@@ -80,15 +69,12 @@ sourcesRouter.put('/restore-visibility', async (req, res) => {
 	user.restorePreviousVisibility(await req.user.sources(em, { enabled: true }))
 	await em.flush()
 
-	// Keep the request's user (a different entity manager's instance) in sync so a follow-up GET reflects the change.
 	req.user.previouslyHiddenSourceIds = undefined
 	syncEmitter.emit('updated', req.user.id)
 	logger.debug('Restored the visibility from before the solo')
 	return res.json(user)
 })
 
-// Full re-import: rebuild the source's local cache from the provider (see Integration.reimportSource).
-// Distinct from the background SYNC, which only pulls deltas and needs no endpoint of its own.
 sourcesRouter.post('/:id/reimport', async (req, res) => {
 	const em = orm.em.fork()
 	const source = await req.user.source(em, req.params.id)
@@ -102,9 +88,6 @@ sourcesRouter.post('/:id/reimport', async (req, res) => {
 	return res.status(204).end()
 })
 
-// --- Source Migration (move / copy entries between sources) -------------------------------------
-
-/** Helper to execute migration work with MigrationRefused mapped to 400. */
 async function migration(req: Request<{ id: string }>, res: Response, work: (migration: SourceMigration) => Promise<unknown>) {
 	try {
 		return res.json(await work(await SourceMigration.of(orm.em.fork(), req.user, req.params.id, req.body ?? {})))
@@ -122,7 +105,6 @@ sourcesRouter.post('/:id/migrate', (req, res) => migration(req, res, async sourc
 	const outcome = await source.run()
 	syncEmitter.emit('updated', req.user.id)
 	logger.info(`Migrated entries from source ${req.params.id} to ${String(req.body?.targetSourceId)}: ${JSON.stringify(outcome)}`)
-	// Return 200 with outcome report even if aborted, rendered inline by client.
 	return outcome
 }))
 
@@ -142,7 +124,6 @@ sourcesRouter.put('/:id/name', async (req, res) => {
 	const em = orm.em.fork()
 	const source = await req.user.source(em, req.params.id)
 
-	// A blank name would leave an unlabelled row with nothing to grab for a future rename; reject it.
 	const name = String(req.body.name ?? '').trim()
 	if (!name) {
 		return res.status(400).json({ error: 'A name is required' })

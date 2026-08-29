@@ -34,7 +34,7 @@ describe('isNewer', () => {
 		assert.equal(isNewer('v0.4.0', 'v0.3.0'), true)
 		assert.equal(isNewer('v0.3.0', 'v0.3.0'), false)
 		assert.equal(isNewer('v0.2.9', 'v0.3.0'), false)
-		assert.equal(isNewer('v0.10.0', 'v0.9.0'), true) // numeric, not lexicographic
+		assert.equal(isNewer('v0.10.0', 'v0.9.0'), true)
 		assert.equal(isNewer('v1.0.0', 'v0.99.99'), true)
 	})
 
@@ -55,7 +55,6 @@ describe('isNewer', () => {
 })
 
 describe('UpdateChecker.check', () => {
-	/** A fetchJson stub answering by URL substring — unmatched URLs reject like a network failure. */
 	const stub = (answers: Record<string, unknown>) => (url: string) => {
 		const match = Object.entries(answers).find(([needle]) => url.includes(needle))
 		return match ? Promise.resolve(match[1]) : Promise.reject(new Error(`404: ${url}`))

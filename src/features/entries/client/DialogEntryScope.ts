@@ -5,39 +5,31 @@ import { type RecurrenceScope } from '../../recurrence/Recurrence.js'
 import { type EntryPlan } from '../../relations/EntryPlan.js'
 import { type Entry } from '../Entry.js'
 
-/** One way this gesture could carry to the entries that depend on the moved one, with the plan it
- * would apply — the count on its card, and what the caller writes if it is picked. */
 export interface ShiftOption {
 	readonly strategy: ShiftStrategy
 	readonly plan: EntryPlan
 }
 
-/** Scope for edit, move, or delete across the recurrence, hierarchy and dependency axes. */
+/** Scope for edit, move, or delete across recurrence, hierarchy, and dependency axes. */
 export interface EntryScope {
 	readonly recurrence?: RecurrenceScope
 	readonly subtasks: boolean
-	/** How the dependents follow. Absent when nothing depends on the entry, or nothing would move. */
 	readonly shift?: ShiftStrategy
 }
 
 export interface EntryScopeParameters {
 	readonly entry: Entry
 	readonly intent: 'edit' | 'move' | 'delete'
-	/** Ask the recurrence question — the entry is an occurrence of a series. */
 	readonly series: boolean
-	/** How many entries sit beneath this one; 0 asks no hierarchy question at all. */
 	readonly subtasks: number
-	/** The DISTINCT outcomes for the entries downstream of this one; fewer than two asks nothing. */
 	readonly shifts?: ReadonlyArray<ShiftOption>
 }
 
 /**
- * Combined scope dialog for recurring series and hierarchy subtrees. Each axis is a question of its own
- * and gets a screen of its own: picking a card answers it and then either asks the next one or closes.
+ * Scope dialog for recurring series, subtasks, and dependent shifts.
  */
 @component('mitra-dialog-entry-scope')
 export class DialogEntryScope extends DialogComponent<EntryScopeParameters, EntryScope | undefined> {
-	/** Platform-conventional label for the bypass modifier key. */
 	private static get modifier() {
 		return navigator.userAgent.includes('Mac') ? '⌘' : t('Ctrl')
 	}
@@ -48,7 +40,6 @@ export class DialogEntryScope extends DialogComponent<EntryScopeParameters, Entr
 
 	protected override createRenderRoot() { return this }
 
-	/** The questions this gesture actually raises, in the order they are asked. */
 	private get questions() {
 		return [
 			...this.parameters.series ? ['recurrence' as const] : [],
@@ -59,7 +50,6 @@ export class DialogEntryScope extends DialogComponent<EntryScopeParameters, Entr
 
 	private get question() { return this.questions[this.step] }
 
-	/** The entry's own glyph, which stands for "this one alone" on both screens. */
 	private get entryIcon() { return this.parameters.entry.type.isTask ? 'calendar-check' : 'calendar' }
 
 	private get heading() {
@@ -94,7 +84,6 @@ export class DialogEntryScope extends DialogComponent<EntryScopeParameters, Entr
 	}
 
 	private chooseShift(shift: ShiftStrategy) {
-		// The narrow answer is the absence of one, so a caller never has to know the vocabulary to skip it.
 		this.close({ ...this.answer, shift: shift === ShiftStrategy.None ? undefined : shift })
 	}
 
@@ -102,7 +91,6 @@ export class DialogEntryScope extends DialogComponent<EntryScopeParameters, Entr
 		return { recurrence: this.parameters.series ? this.recurrence : undefined, subtasks: this.subtasks }
 	}
 
-	/** On to the next question, or out with what has been answered so far. */
 	private answered() {
 		if (this.step < this.questions.length - 1) {
 			this.step++
@@ -114,7 +102,6 @@ export class DialogEntryScope extends DialogComponent<EntryScopeParameters, Entr
 	static override get styles() {
 		return css`
 			mitra-dialog-entry-scope {
-				/* One width for every question, so answering the first one doesn't resize the dialog. */
 				--mitra-dialog-width: min(28rem, 92vw);
 
 				.count {
@@ -156,7 +143,6 @@ export class DialogEntryScope extends DialogComponent<EntryScopeParameters, Entr
 		`
 	}
 
-	/** On the series' first occurrence "this and following" IS the whole series, so it isn't offered. */
 	private get recurrenceChoices() {
 		return html`
 			<mitra-choices>

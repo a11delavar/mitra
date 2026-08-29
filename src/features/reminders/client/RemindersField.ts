@@ -7,7 +7,6 @@ type CustomUnit = 'minutes' | 'hours' | 'days' | 'weeks'
 
 const UNIT_MINUTES: Record<CustomUnit, number> = { minutes: 1, hours: 60, days: 24 * 60, weeks: 7 * 24 * 60 }
 
-// The unit words for the custom dialog's select. Static t() per case so the scanner sees each key.
 function unitLabel(unit: CustomUnit): string {
 	switch (unit) {
 		case 'minutes': return t('minutes')
@@ -17,9 +16,7 @@ function unitLabel(unit: CustomUnit): string {
 	}
 }
 
-/** "30 min", "1 hour", "2 days" — a span of minutes in words. Exported because it is the app's ONE
- * wording for one: the settings dialog's default-duration and snap pickers read their labels from here
- * rather than growing a second vocabulary for the same numbers. (Mirrors the backend's reminderSpan.) */
+/** Formats minute duration into localized span text (e.g. "30 min", "1 hour", "2 days"). */
 export function reminderSpanLabel(minutes: number): string {
 	const unit = ([['week', UNIT_MINUTES.weeks], ['day', UNIT_MINUTES.days], ['hour', UNIT_MINUTES.hours]] as const)
 		.find(([, factor]) => minutes >= factor && minutes % factor === 0)
@@ -34,23 +31,14 @@ export function reminderSpanLabel(minutes: number): string {
 	}
 }
 
-/** The full one-line label, for the preset menu — and for the default-reminder setting, which offers
- * the very same presets. */
+/** Formats full reminder label for menus and settings. */
 export function reminderLabel(minutes: number): string {
 	return minutes === 0 ? t('At start of event') : t('${span} before', { span: reminderSpanLabel(minutes) })
 }
 
 /**
- * The "Reminders" control for the entry editor — simplicity with control: a muted
- * placeholder (or the list of active reminders, each removable) plus a preset menu anchored to the
- * FIELD (see field.css.ts) whose
- * last item opens the full custom editor (any count of minutes/hours/days/weeks before). Reminders are
- * MINUTES BEFORE START on the entry (see Entry.reminders), multiple allowed, deduplicated, ascending.
- *
- * Adding the FIRST reminder is the contextual moment to ask for notification permission and register
- * the push subscription — the ask appears exactly when the user expresses they want to be notified.
- *
- * Mutates `entry.reminders` in place and fires `change`; the host persists.
+ * Entry editor reminders field supporting preset list and custom duration dialog.
+ * Prompts for notification permission on first added reminder.
  */
 @component('mitra-reminders-field')
 export class RemindersField extends Component {
@@ -58,29 +46,23 @@ export class RemindersField extends Component {
 
 	@property({
 		type: Object,
-		// The popover got reused for another entry: close the menu/dialog opened for the previous one.
 		updated(this: RemindersField) { this.menu?.hidePopover(); this.dialog?.close(); this.draft = undefined },
 	}) entry!: Entry
 
-	/** Fired after `entry.reminders` is mutated, so the host can persist. */
 	@event() readonly change!: EventDispatcher
 
-	/** The custom dialog's working state; absent when the dialog is closed. */
 	@state() private draft?: { count: number, unit: CustomUnit }
 
 	protected override createRenderRoot() { return this }
 
 	@query('menu[popover]') private readonly menu?: HTMLElement
 	@query('dialog') private readonly dialog?: HTMLDialogElement
-	// The custom dialog's unit select.
 	@query('dialog select') private readonly unitSelect?: HTMLSelectElement
 
 	private get reminders(): Array<number> {
 		return this.entry.reminders ?? []
 	}
 
-	/** When this reminder will actually notify — "at 14:24", with the day when it isn't the event's
-	 * own (a "1 day before" fires yesterday). */
 	private fireLabel(minutes: number): string {
 		const fireAt = this.entry.start!.subtract({ minutes })
 		const sameDay = fireAt.dayStart.valueOf() === this.entry.start!.dayStart.valueOf()
@@ -92,8 +74,6 @@ export class RemindersField extends Component {
 	}
 
 	private commit(reminders: Array<number>) {
-		// `null`, not undefined, for "none": the wire's tri-state needs an explicit clear, and the
-		// hydrated canonical is null too — one value, no phantom dirt.
 		this.entry.reminders = reminders.length ? [...new Set(reminders)].sort((a, b) => a - b) : null
 		this.requestUpdate()
 		this.change.dispatch()
@@ -104,8 +84,6 @@ export class RemindersField extends Component {
 		this.commit([...this.reminders, minutes])
 		this.menu?.hidePopover()
 		if (first) {
-			// The user just asked to be notified — the one moment the permission prompt is expected.
-			// A denial only mutes THIS browser; the reminder persists (and other CalDAV clients alert).
 			enablePushNotifications().catch(() => void 0)
 		}
 	}
@@ -136,7 +114,6 @@ export class RemindersField extends Component {
 	}
 
 	protected override updated() {
-		// The dialog's unit select suffers the value-before-options timing on its first render.
 		if (this.unitSelect && this.draft) {
 			this.unitSelect.value = this.draft.unit
 		}
@@ -183,8 +160,6 @@ export class RemindersField extends Component {
 					> mitra-icon-button {
 						color: var(--color-text-muted);
 						font-size: 0.8rem;
-						/* Swallow the button's own padding so the row stays text-height — otherwise the
-						   first row's label sits lower than the gutter bell. */
 						margin-block: -0.25rem;
 						opacity: 0;
 						transition: opacity 0.15s ease;
@@ -196,8 +171,6 @@ export class RemindersField extends Component {
 					}
 				}
 
-				/* The preset menu wears the popover's tinted glass and opens beside the row — the same
-				   strategy as the source/repeat pickers. */
 				> menu[popover] {
 					margin: 0;
 					margin-inline: 0.875rem;
@@ -212,7 +185,6 @@ export class RemindersField extends Component {
 					}
 				}
 
-				/* --- Custom dialog (the RepeatField dialog's look) ---------------------------------------- */
 				dialog {
 					margin: auto;
 					border: var(--border);
@@ -267,7 +239,6 @@ export class RemindersField extends Component {
 	}
 
 	protected override get template() {
-		// The reminders still read; only the ways to change them go.
 		const editable = getCapabilities(this.entry.sourceId).editEntries
 		return !this.entry?.start ? html.nothing : html`
 			${!this.reminders.length ? html`
@@ -286,9 +257,6 @@ export class RemindersField extends Component {
 					`}
 				</div>
 			`)}
-			<!-- The one control that adds a reminder, whether there are none yet or several: a plain icon
-				button at the row's end. (It used to be a full-width button wearing the placeholder text,
-				which read as an input rather than as something to press.) -->
 			${!editable ? html.nothing : html`
 				<mitra-icon-button class="add" icon="plus" label=${t('Add reminder')} @click=${this.toggleMenu}></mitra-icon-button>
 			`}

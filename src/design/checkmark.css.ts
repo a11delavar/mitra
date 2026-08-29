@@ -1,14 +1,6 @@
 import { unsafeCSS } from '@a11d/lit'
 
-/**
- * The "this one is chosen" tick, for every list of options the app offers — a native select's picker
- * and the time-zone picker's rows alike. It sits in the row's LEADING gutter, vertically centred on the
- * row: at the start, because that is where the eye scans for which item is current, and centred rather
- * than baseline-aligned, because a glyph on a text baseline hangs visibly low.
- *
- * Nest it into a `::before` of the chosen row, which must be `position: relative` and reserve the
- * gutter (`padding-inline-start: 2rem`). It paints in `currentColor`, so the row decides the hue.
- */
+/** SVG checkmark mask styles for selected option rows. */
 export const checkmark = unsafeCSS`
 	content: "";
 	position: absolute;

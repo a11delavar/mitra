@@ -7,9 +7,6 @@ import { Integration } from '../../integrations/Integration.js'
 import { Entry } from '../entries/Entry.js'
 import { UserSettings } from '../settings/UserSettings.js'
 
-/** An ADDITIONAL time zone shown in the day grid's time axis: the IANA id plus an optional short
- * custom label ("DE"). The system time zone is not on this list — it anchors the grid itself and is
- * always the column adjacent to the days. */
 export interface UserTimeZone {
 	id: string
 	label?: string
@@ -24,47 +21,30 @@ export class User {
 	@primaryKey() id: string = crypto.randomUUID()
 	@property({ type: 'string', unique: true }) username!: string
 
-	// The OIDC identity this user signs in as; absent in single-user mode (see Identity).
 	@embedded(() => Identity, { prefix: 'oidc_', nullable: true }) identity?: Identity
 
 	@manyToOne(() => Source, { mapToPk: true, deleteRule: 'set null', nullable: true }) defaultSourceId?: string
 
 	@property({ type: 'json', nullable: true }) timeZones?: Array<UserTimeZone>
 
-	/** Persisted user preferences; NULL if unset. */
 	@property({ type: 'json', nullable: true }) settings?: UserSettings
 
-	/** The app version whose release notes this user last saw (What's-New dialog) — the sidebar's news
-	 * dot lights when the running version differs. Null until first recorded, so a fresh user starts
-	 * dark: the dot means "the instance moved since you last looked", never "welcome". */
 	@property({ type: 'string', nullable: true }) lastSeenVersion?: string
 
-	/**
-	 * What to come back to after "Only show this calendar" — the sources that were HIDDEN when the solo
-	 * began, not the ones that were visible. Storing the complement means a source that appears mid-solo
-	 * comes back shown, instead of being hidden by a record taken before it existed.
-	 *
-	 * Presence marks the solo, not content: `[]` is the usual case (nothing was hidden) and still means
-	 * "soloed", `undefined` means not. So test the array itself, never its length.
-	 */
+	/** Sources hidden before a solo view began; presence marks an active solo. */
 	@property({ type: 'json', nullable: true }) previouslyHiddenSourceIds?: Array<string>
 
 	constructor(init?: Partial<User>) {
 		Object.assign(this, init)
 	}
 
-	/**
-	 * Just-in-time provisioning: resolves an OIDC identity to its local user, creating a fresh one on
-	 * first sight. Enabling OIDC on a previously single-user deployment does NOT carry that data over —
-	 * every identity, including the first, starts empty and re-adds its own integrations.
-	 */
+	/** JIT provisions an OIDC user on first login or updates existing identity profile claims. */
 	static async provision(em: EntityManager, issuer: string, claims: IdentityClaims): Promise<User> {
 		const existing = await em.findOne(User, { identity: { issuer, subject: claims.sub } })
 		if (existing) {
 			existing.identity?.applyClaims(claims)
 			return existing
 		}
-		// The username's only job is uniqueness — displays use the identity's `name`/`email`.
 		const user = new User({ username: claims.sub, identity: Identity.fromClaims(issuer, claims) })
 		em.persist(user)
 		return user
@@ -76,12 +56,7 @@ export class User {
 	}
 
 	/**
-	 * "Only show this calendar" (PUT /sources/:id/solo). `sources` are the ENABLED ones — the rows the
-	 * sidebar shows; a disabled source is nobody's business here.
-	 *
-	 * Two cases record nothing. Soloing while already soloed keeps the FIRST record, so hopping between
-	 * calendars still comes back to the visibility the user arranged. And soloing the only calendar
-	 * that's on show records nothing at all — there's nothing to come back from.
+	 * Hides all enabled sources except the chosen sourceId, storing previously hidden sources for restoration.
 	 */
 	showOnly(sources: ReadonlyArray<Source>, sourceId: string): void {
 		const visible = sources.filter(source => source.visible)
@@ -94,7 +69,7 @@ export class User {
 		}
 	}
 
-	/** Back out of a solo: hide the recorded sources again, show everything else, spend the record. */
+	/** Restores source visibility to the state prior to soloing and clears the solo record. */
 	restorePreviousVisibility(sources: ReadonlyArray<Source>): void {
 		const previouslyHidden = new Set(this.previouslyHiddenSourceIds)
 		this.previouslyHiddenSourceIds = undefined
@@ -103,9 +78,7 @@ export class User {
 		}
 	}
 
-	// Ownership-scoped lookups: routes resolve every entity through these, so a foreign id — however
-	// guessed — reads as a plain NotFoundError (the central error handler's 404) instead of leaking
-	// or mutating another user's data.
+	// --- Scoped Lookups ---------------------------------------------------------------------------
 
 	integrations(em: EntityManager): Promise<Array<Integration>> {
 		return em.find(Integration, { userId: this.id })
@@ -122,7 +95,7 @@ export class User {
 
 	async source(em: EntityManager, id: string): Promise<Source> {
 		const source = await em.findOneOrFail(Source, { id })
-		await this.integration(em, source.integrationId) // not ours → NotFoundError → 404
+		await this.integration(em, source.integrationId)
 		return source
 	}
 

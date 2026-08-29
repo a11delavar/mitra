@@ -12,9 +12,6 @@ import icsLogo from '../ics/logo.svg'
 import notionLogo from '../notion/logo.svg'
 import tempoLogo from '../tempo/logo.svg'
 
-/** Resolves an integration class's `logo` name (see IntegrationClass) to its inlined SVG markup. The
- * marks render inline (`unsafeHTML`), not via `<img>`, so the monochrome ones inherit `currentColor`
- * and theme with the surface while Google keeps its own gradient. */
 const logos: Record<string, string> = {
 	caldav: caldavLogo,
 	google: googleLogo,
@@ -26,16 +23,9 @@ const logos: Record<string, string> = {
 
 @component('mitra-dialog-integration')
 export class DialogIntegration extends DialogComponent<{ readonly id?: string, readonly preselectSources?: boolean }, Integration> {
-	/** The integration being configured. Unset while the add flow is still on the type-select step —
-	 * picking a type constructs a fresh entity of its final class, and going back simply discards it,
-	 * so no in-between-types conversion ever happens. */
 	@state() private entity?: Integration
-
 	@state() private discovering = false
 	@state() private discoveryError?: string
-
-	/** Whether the deployment can connect Google accounts — gates the provider's add panel.
-	 * Unset while the check is in flight; only the add flow offers connecting a new account. */
 	@state() private googleAvailability?: { configured: boolean } | { error: string }
 
 	private readonly binder = new Binder(this, 'entity')
@@ -44,36 +34,25 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 
 	private get isEdit() { return !!this.parameters.id }
 
-	/** The class behind the current entity — its `label` titles the details step. */
 	private get integrationClass(): IntegrationClass | undefined {
 		return integrationClasses().find(integrationClass => integrationClass.type === this.entity?.type)
 	}
 
 	private selectType(integrationClass: IntegrationClass) {
 		this.entity = new integrationClass({ sources: [] as any })
-		// A discovery still in flight for a previously picked type must not bleed into this one.
 		this.discovering = false
 		this.discoveryError = undefined
 	}
 
-	/** Runs source discovery for the current entity — the Connect/Refresh action. */
 	private async discover() {
 		const entity = this.entity!
 		this.discovering = true
 		this.discoveryError = undefined
 		try {
 			const sources = await discoverSources(entity)
-			// The user may have gone back (and picked another type) while this discovery was in
-			// flight — a stale result must not land on the now-different entity.
 			if (this.entity !== entity) {
 				return
 			}
-			// A fresh add pre-selects everything found — the common case is "import my account", so
-			// unticking is the exception, not ticking every box. An edit (or its Refresh) keeps the
-			// persisted activation state instead. Notion is the deliberate exception: its sources are
-			// VIEWS, and a database's views mostly overlap (All / Board / This week show the same
-			// tasks), so ticking them all would render every task once per view — pre-select one view
-			// per database and let overlaps be an explicit choice.
 			if (!this.isEdit) {
 				const seenDataSources = new Set<string>()
 				for (const source of sources) {
@@ -105,17 +84,12 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 		}
 		const integration = getIntegrations().find(integration => integration.id === this.parameters.id)
 		if (integration) {
-			// A provider the client doesn't model (e.g. the backend-only Dev) arrives as a plain
-			// '@type'-less DTO without methods — fall back to a generic CalDAV-shaped copy for it.
 			this.entity = integration.editableCopy?.() ?? new CalDAV({
 				id: this.parameters.id,
 				uri: integration.uri ?? '',
 				credentials: { username: integration.credentials?.username ?? '', password: '' },
 				sources: [...integration.sources].map(source => new Source({ uri: source.uri, entryTypes: source.entryTypes, name: source.name, enabled: source.enabled })) as any,
 			})
-			// Fresh from an OAuth connect (preselectSources): tick everything, like a fresh add — the
-			// account was just authorized to import it. The sources are still persisted disabled
-			// server-side (opt-in data flow); saving is what enables the ticked ones.
 			if (this.parameters.preselectSources) {
 				[...this.entity.sources].forEach(source => source.enabled = true)
 			}
@@ -125,7 +99,6 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 	static override get styles() {
 		return css`
 			mitra-dialog-integration {
-				/* The type-select grid earns more room than the default form dialog width. */
 				&:has(.types) {
 					--mitra-dialog-width: min(36rem, 92vw);
 				}
@@ -134,7 +107,6 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 					display: grid;
 					grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
 					gap: 0.625rem;
-					/* Built for a growing catalog: the grid scrolls before the dialog outgrows the screen. */
 					max-height: min(24rem, 60vh);
 					overflow-y: auto;
 
@@ -231,8 +203,6 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 							font-size: 16px;
 						}
 
-						/* Name and what the collection holds on one line — the types are a caption, so they
-						   never compete with the name for the row. */
 						.name {
 							display: flex;
 							align-items: baseline;
@@ -267,8 +237,6 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 		`
 	}
 
-	/** The type-select step: one tile per connectable service, built from the shared registry so a new
-	 * provider's class appears here on its own — the dialog only maps its `logo` name to an asset. */
 	private get typesTemplate() {
 		return html`
 			<div class="types">
@@ -292,9 +260,6 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 				${!entity.sources.length ? html.nothing : html`
 					<div class="sources">
 						<span class="sources-title">${t('Sources')}</span>
-						${/* One checkbox per COLLECTION, never a per-type pair for the same URL: what a source
-						    can hold is a subtitle (see Source.entryTypes), and enabling it imports every type
-						    it carries. */''}
 						${entity.sources.map(source => html`
 							<label class="source">
 								<input type="checkbox" .checked=${source.enabled} @change=${() => { source.toggleEnabled(); this.requestUpdate() }}>
@@ -321,7 +286,6 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 			case 'ics': return this.icsTemplate
 			case 'notion': return this.notionTemplate
 			case 'tempo': return this.tempoTemplate
-			// Also the fallback for provider types the client doesn't model (see the edit fallback above).
 			default: return this.caldavTemplate
 		}
 	}
@@ -385,9 +349,6 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 		`
 	}
 
-	/** Add: hand off to Google's consent screen (the callback lands back here with the source picker
-	 * open — see Mitra.initialized). Edit: the grant isn't form-editable, so only the account label
-	 * and a sources Refresh show. */
 	private get googleTemplate() {
 		if (this.isEdit) {
 			return html`
@@ -422,9 +383,6 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 		`
 	}
 
-	/** Add: paste an internal-connection / personal-access token (no deployment config, unlike
-	 * Google's OAuth). Edit: the workspace label is discovery-derived and read-only; a re-pasted
-	 * token rotates the grant, a blank one keeps the stored secret. */
 	private get notionTemplate() {
 		const { bind } = this.binder
 		return html`
@@ -475,14 +433,10 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 		`
 	}
 
-	/** Whether Connect is blocked. The domain part — which fields a connection needs — lives on the
-	 * entity ({@link Integration.canConnect}); the dialog only adds the edit policy: an edit can always
-	 * refresh, since the server still holds the secrets the form leaves blank. */
 	private get connectDisabled(): boolean {
 		return !this.isEdit && !this.entity!.canConnect
 	}
 
-	/** The Connect/Refresh control — always re-runnable, in particular after an error. */
 	private get connectTemplate() {
 		return this.discovering ? html`
 			<button class="connect" disabled>${t('Connecting…')}</button>

@@ -2,8 +2,6 @@ import { converter } from '@a11d/converter'
 import { model } from '../../infrastructure/model/model.js'
 import { Integration, integration, withheld } from '../Integration.js'
 
-/** A fetched feed plus the validators the next conditional GET asks with. `notModified` is the 304
- * answer: unchanged, and no body was re-sent. */
 export interface IcsFeed {
 	text: string
 	etag?: string
@@ -12,17 +10,14 @@ export interface IcsFeed {
 }
 
 export interface IcsSubscriptionCredentials {
-	/** The calendar name derived from the feed (X-WR-CALNAME or file name). */
+	/** Calendar name derived from feed (X-WR-CALNAME or file name). */
 	username: string
-	/** Optional HTTP Basic auth username for protected feeds. */
+	/** Optional HTTP Basic auth username. */
 	authUsername?: string
 	password?: string
 }
 
-/**
- * Published iCalendar (.ics / webcal) feed subscription integration.
- * Read-only; synced via HTTP polling.
- */
+/** Published iCalendar (.ics / webcal) feed subscription integration. */
 @model('IcsSubscription')
 @integration('ics')
 export class IcsSubscription extends Integration<IcsSubscriptionCredentials> {
@@ -30,7 +25,6 @@ export class IcsSubscription extends Integration<IcsSubscriptionCredentials> {
 	static readonly logo: string = 'ics'
 	static readonly description: string = 'Any calendar link — webcal:// or .ics'
 
-	/** Read-only integration: all write operations and relations are disabled. */
 	override get capabilities() {
 		return {
 			...Integration.fullCapabilities,
@@ -47,14 +41,12 @@ export class IcsSubscription extends Integration<IcsSubscriptionCredentials> {
 
 	override get syncInterval() { return 15 * 60_000 }
 
-	/** Memoized feed download shared between discovery and entry sync. */
 	@converter({ out: {} }) feed?: Promise<IcsFeed>
 
 	@converter(withheld<IcsSubscriptionCredentials>('password')) override credentials!: IcsSubscriptionCredentials
 
 	constructor(init?: Partial<IcsSubscription>) {
 		super()
-		// Empty strings prevent rendering 'undefined' in form bindings.
 		this.uri = ''
 		this.credentials = { username: '', authUsername: '', password: '' }
 		Object.assign(this, init)
@@ -64,7 +56,6 @@ export class IcsSubscription extends Integration<IcsSubscriptionCredentials> {
 		return `Calendar subscription "${this.credentials.username || this.uri}"`
 	}
 
-	/** Normalizes webcal:// to https:// and validates URL format. */
 	static normalizeUrl(raw: string | undefined): string | undefined {
 		const trimmed = raw?.trim()
 		if (!trimmed) {
@@ -79,7 +70,6 @@ export class IcsSubscription extends Integration<IcsSubscriptionCredentials> {
 		}
 	}
 
-	/** The URL is the identity, so it is write-once; only credentials remain editable. */
 	override merge(incoming: this) {
 		this.uri = this.uri || IcsSubscription.normalizeUrl(incoming.uri)
 		this.credentials = {

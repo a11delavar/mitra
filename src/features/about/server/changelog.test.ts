@@ -2,10 +2,6 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { annotateChangelog, parseChangelog } from './changelog.js'
 
-// The parser must accept exactly what cliff.toml emits (see that file's `body` template): release
-// headings `## [0.3.0] - 2026-07-10`, an optional `## [Unreleased]` on top (dev images), a file
-// preamble before the first section, and `### <emoji> <Title>` category headings within each.
-
 const fixture = `# Changelog
 
 All notable changes to Mitra are documented here.

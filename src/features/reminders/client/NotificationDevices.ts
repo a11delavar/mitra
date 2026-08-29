@@ -11,9 +11,6 @@ import { currentEndpoint, sendTestNotification, unregisterDevice } from './push.
 export class NotificationDevices extends Component {
 	@state() private tested = false
 
-	/** The registered devices and which one is this browser — one load, since a row cannot be marked
-	 * "this device" until both have arrived. Re-run by {@link forget}; a failure now reads as a failure
-	 * instead of as an empty list. */
 	private readonly devices = new Task(this, {
 		args: () => [] as const,
 		task: async () => ({
@@ -80,8 +77,6 @@ export class NotificationDevices extends Component {
 					}
 				}
 
-				/* Deliberately not named "empty": this renders inside the settings dialog's light DOM,
-				   whose own .empty rule ("No matches") would centre it and pad it out. */
 				> .note {
 					margin: 0;
 					color: var(--color-text-muted);
@@ -155,8 +150,6 @@ export class NotificationDevices extends Component {
 				<button @click=${this.test}>${t('Send test')}</button>
 			</header>
 			${this.devices.render({
-				// Nothing while pending: the list sits in an already-visible settings row, and a spinner
-				// that flashes for one local request reads as noise.
 				pending: () => html.nothing,
 				error: () => html`<p class="note">${t('Could not load your devices.')}</p>`,
 				complete: ({ subscriptions, endpoint }) => !subscriptions.length

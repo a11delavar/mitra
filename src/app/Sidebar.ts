@@ -16,16 +16,11 @@ import { canInstall, promptInstall, onInstallAvailabilityChange } from './pwa.js
 @component('mitra-sidebar')
 export class Sidebar extends Component {
 	@event() readonly openChange!: EventDispatcher<boolean>
-	/** A source was hidden or shown — the calendar listens to refetch through its view transition. */
 	@event() readonly sourcesChange!: EventDispatcher
 	@property({ type: Boolean, reflect: true }) open = false
 
-	/** Tabs rather than stacked sections: each mode wants the column's whole height, and tabs cost
-	 * nothing at any width, where a pane beside the calendar would. */
 	@state() private tab: 'calendars' | 'planning' = (localStorage.getItem('Mitra.SidebarTab') as 'planning' | null) ?? 'calendars'
 
-	/** Subscribes the sidebar to the store, so the tab's badge follows a task being scheduled or
-	 * dropped back with no wiring to `mitra-unscheduled`. */
 	readonly store = new EntryStore(this)
 
 	private get unscheduledCount() {
@@ -37,17 +32,7 @@ export class Sidebar extends Component {
 		localStorage.setItem('Mitra.SidebarTab', tab)
 	}
 
-	/**
-	 * Drag-to-reorder (@3mo/reorderability), which the ⋯ menus' Move up/down mirror. Grouping is ONE
-	 * CONTROLLER PER LIST — a controller only ever sees the items registered with it, so the accounts
-	 * reorder among themselves and each account's sources among their own siblings, and a drag can
-	 * never carry a row into another account (which is exactly the current feature's promise).
-	 *
-	 * The `handle` is what disambiguates the two nesting levels: a `.source` sits INSIDE a
-	 * `.integration`, so a press on a row is in the path of both controllers' items — the accounts
-	 * controller only grabs from the heading's own `.title`, so it stands down for a row (and for the
-	 * heading's ⋯ and its menu, which stay plain buttons).
-	 */
+	/** Drag-to-reorder controller for top-level integrations. */
 	private readonly integrationsReorder = new ReorderabilityController(this, {
 		handleReorder: (source, destination) => {
 			const ids = getIntegrations().map(integration => integration.id)
@@ -55,11 +40,7 @@ export class Sidebar extends Component {
 		},
 	})
 
-	/** One per account, created on that account's first render. Safe to create late: the controller
-	 * registers itself as its own event listener, so it survives being constructed after the host has
-	 * connected (a bound-handler field would not — see the package). A disconnected account's
-	 * controller is deliberately NOT disposed: its items deregister themselves with the rows lit
-	 * drops, so it resolves no item and returns — and an id is a UUID, never handed out twice. */
+	/** Per-integration drag-to-reorder controllers for child sources. */
 	private readonly sourcesReorder = new Map<string, ReorderabilityController>()
 
 	private sourcesReorderOf(integration: Integration) {
@@ -76,9 +57,7 @@ export class Sidebar extends Component {
 		return controller
 	}
 
-	/** The one commit path for both the drag and the ⋯ menu: move `ids` and write them wholesale.
-	 * Optimistic — the Api reorder functions re-sort the local store before the request — so this
-	 * re-renders at once and falls back to the server's truth if the write fails. */
+	/** Move items optimistically and persist the new order to the backend. */
 	private commitOrder(ids: Array<string>, from: number, to: number, commit: () => Promise<unknown>) {
 		if (from === to || from < 0 || to < 0 || to >= ids.length) {
 			return
@@ -92,7 +71,6 @@ export class Sidebar extends Component {
 		})
 	}
 
-	// The install button appears/disappears with the browser's installability signal (see pwa.ts).
 	private unsubscribeInstallAvailability?: () => void
 
 	protected override connected() {
@@ -105,9 +83,7 @@ export class Sidebar extends Component {
 		this.unsubscribeInstallAvailability?.()
 	}
 
-	/** A tab left open for days still learns of updates: returning to it re-fetches the meta once its
-	 * boot-time copy has aged past the server's own check cadence (see refreshMetaIfStale) — no timers
-	 * tick while the tab is hidden. */
+	/** Re-check metadata on visibility change. */
 	@eventListener({ target: document, type: 'visibilitychange' })
 	protected async refreshMeta() {
 		if (document.visibilityState === 'visible') {
@@ -118,8 +94,6 @@ export class Sidebar extends Component {
 
 	static override get styles() {
 		return css`
-			/* Animated by the scroll-driven fade below — a custom property only interpolates once it's
-			   registered with a type. */
 			@property --sidebar-fade {
 				syntax: '<length>';
 				inherits: false;
@@ -736,35 +710,25 @@ export class Sidebar extends Component {
 		this.visibilityChanged()
 	}
 
-	/**
-	 * "Only show this calendar" and its way back, as one gesture — the Alt+click and the ⋯ item both
-	 * land here. Leave a solo if there is one, enter one otherwise; which row asked doesn't matter,
-	 * since a solo is a state of the whole list.
-	 *
-	 * Hiding or showing a calendar by hand meanwhile does NOT spend the record — the way back stays
-	 * parked until it's used.
-	 */
+	/** Toggle solo visibility for the given source. */
 	private async toggleSolo(source: Source) {
 		await (canRestoreSourceVisibility() ? restoreSourceVisibility() : soloSource(source.id))
 		this.visibilityChanged()
 	}
 
-	/** Re-render the rows, and let the page refetch through its transition (see PageCalendar). */
 	private visibilityChanged() {
 		this.requestUpdate()
 		this.sourcesChange.dispatch()
 	}
 
-	/** Nothing to solo down to when this row is already all that's on show. */
 	private isOnlyVisible(source: Source) {
 		const visible = getVisibleSources()
 		return visible.length === 1 && visible[0]?.id === source.id
 	}
 
-	/** The source whose name row is currently in inline-edit mode (double-click or ⋯ → Rename). */
 	@state() private renamingId?: string
 
-	/** Enter the name row's inline edit, then select its whole text so a rename is a single overtype. */
+	/** Enter inline rename mode for the given source. */
 	private async startRename(source: Source) {
 		this.renamingId = source.id
 		await this.updateComplete
@@ -774,8 +738,6 @@ export class Sidebar extends Component {
 		}
 		el.focus()
 		getSelection()?.selectAllChildren(el)
-		// Launched from the ⋯ menu, close it now — AFTER moving focus to the field, so the popover's
-		// focus-restore doesn't yank focus back to its trigger (which would blur → commit → exit).
 		const menu = this.querySelector<HTMLElement>(`#source-menu-${source.id}`)
 		if (menu?.matches(':popover-open')) {
 			menu.hidePopover()
@@ -785,15 +747,14 @@ export class Sidebar extends Component {
 	private handleRenameKeydown(e: KeyboardEvent, source: Source) {
 		if (e.key === 'Enter') {
 			e.preventDefault();
-			(e.target as HTMLElement).blur() // → commit
+			(e.target as HTMLElement).blur()
 		} else if (e.key === 'Escape') {
 			e.preventDefault()
 			this.cancelRename(source, e.target as HTMLElement)
 		}
 	}
 
-	/** Persist the edited name (on blur, whether via Enter or clicking away). Guarded so the blur that
-	 * follows a cancel — which has already cleared the flag — is a no-op rather than a re-save. */
+	/** Persist edited source name on blur. */
 	private async commitRename(source: Source, el: HTMLElement) {
 		if (this.renamingId !== source.id) {
 			return
@@ -809,22 +770,15 @@ export class Sidebar extends Component {
 
 	private cancelRename(source: Source, el: HTMLElement) {
 		this.renamingId = undefined
-		// Lit won't reset text the user typed into the contenteditable (its recorded value is unchanged),
-		// so restore the original label ourselves before the blur-triggered commit sees it.
 		el.textContent = source.name
 	}
 
-	/** Whether this is the source a new entry will actually land in — asked of the same function the
-	 * create paths ask (getPrimarySource), not re-derived from the stored preference. There often ISN'T
-	 * one stored: the default then falls back to the first visible source, and a stored default that has
-	 * since been hidden falls back the same way. Reading `defaultSourceId` alone left the marker silent
-	 * in the first case and lit on a hidden row that creates no longer target in the second. */
+	/** Check whether the source is the default target for new entries. */
 	private isDefault(source: Source) {
 		return getPrimarySource()?.id === source.id
 	}
 
-	/** What the marker promises, worded for the three states it can actually be in — a lit marker that
-	 * holds the default only by fallback must not offer to unset something that was never set. */
+	/** Tooltip hint for source default marker. */
 	private defaultHint(source: Source) {
 		if (!this.isDefault(source)) {
 			return t('Set as the default for new entries')
@@ -834,9 +788,7 @@ export class Sidebar extends Component {
 			: t('Default for new entries, as the first one shown')
 	}
 
-	/** Only a STORED preference can be cleared: clicking the source that already holds the default by
-	 * fallback has nothing to undo (clearing it would re-elect the same row), so it stands down rather
-	 * than round-tripping to the server for no visible change. */
+	/** Set or toggle custom default source. */
 	private async toggleDefault(source: Source) {
 		const stored = getDefaultSourceId() === source.id
 		if (this.isDefault(source) && !stored) {
@@ -865,10 +817,7 @@ export class Sidebar extends Component {
 		this.requestUpdate()
 	}
 
-	/** Shift a source one slot within its integration — the ⋯ menu's keyboard/touch-reachable twin of
-	 * the drag, committing through the very same path. Reordering is what elects the fallback default
-	 * ("the first one shown"), so moving a source to the top doubles as picking the default when none
-	 * is stored. */
+	/** Shift source order by delta within its integration. */
 	private moveSource(integration: Integration, source: Source, delta: number) {
 		const ids = getEnabledSources(integration).map(source => source.id)
 		const index = ids.indexOf(source.id)
@@ -881,17 +830,12 @@ export class Sidebar extends Component {
 		this.commitOrder(ids, index, index + delta, () => reorderIntegrations(ids))
 	}
 
-	/** What the brand row admits about the build: a bare `dev` when the build is main past the last tag
-	 * (the rolling `dev` image — and a git-less local fallback), otherwise the version as it is — the
-	 * tag on a release, the whole describe string for anything murkier: dirty trees, pre-release tags,
-	 * tagless clones. */
+	/** Formatted build version label. */
 	private get versionLabel() {
 		return mitra.version === 'dev' || /^v\d.*-\d+-g[0-9a-f]+$/.test(mitra.version) ? 'dev' : mitra.version
 	}
 
-	/** What the dot on the brand mark means right now, worded for the row's title. The stale-tab case
-	 * wins over a pending server-side update: a reload delivers it in one click — and usually clears
-	 * the other signal along the way. */
+	/** Update availability tooltip text. */
 	private get updateHint() {
 		if (isBundleStale()) {
 			return t('Reload to finish updating')
@@ -913,7 +857,6 @@ export class Sidebar extends Component {
 									<mitra-icon icon="pencil"></mitra-icon>
 									${t('Edit')}
 								</button>
-								${/* The drag reorder's accessible, discoverable twin (see SidebarReorderController). */''}
 								<button ?disabled=${index === 0} @click=${(e: Event) => { this.closeMenu(e); this.moveIntegration(i.id, -1) }}>
 									<mitra-icon icon="arrow-up"></mitra-icon>
 									${t('Move up')}
@@ -922,8 +865,6 @@ export class Sidebar extends Component {
 									<mitra-icon icon="arrow-down"></mitra-icon>
 									${t('Move down')}
 								</button>
-								${/* Re-import only — there is deliberately no "sync now" here: syncing runs itself,
-								   and offering to trigger it would imply what's on screen might be stale. */''}
 								<button
 									title=${t('Delete the locally cached entries of every enabled source and import everything again')}
 									@click=${(e: Event) => { this.closeMenu(e); reimportIntegration(i.id).catch(() => void 0) }}>
@@ -939,8 +880,6 @@ export class Sidebar extends Component {
 						<div class="sources">
 							${getEnabledSources(i).map((source, sourceIndex, sources) => html`
 								<div class="source" ${this.sourcesReorderOf(i).item({ index: sourceIndex })} ?data-hidden=${source.hidden}>
-									${/* The shared source icon (see SourceIcon), filled here for the source new entries
-									    land in — which is what clicking it toggles. */''}
 									<button class="marker"
 										@click=${() => this.toggleDefault(source)}
 										title=${this.defaultHint(source)}>
@@ -954,7 +893,6 @@ export class Sidebar extends Component {
 					</div>
 			`)}
 			</div>
-			${/* Belongs to THIS mode, not to the column: adding an account says nothing in Planning. */''}
 			<button class="action" @click=${() => this.openDialog()}>
 				<mitra-icon icon="plus"></mitra-icon>
 				${t('Add Integration')}
@@ -962,8 +900,6 @@ export class Sidebar extends Component {
 		`
 	}
 
-	/** The button is this mode's primary verb, in the same shape and place Calendars puts "Add
-	 * Integration" — jotting a task down is a central act, not a glyph tucked into a heading. */
 	private get planningTemplate() {
 		return html`
 			<mitra-unscheduled></mitra-unscheduled>
@@ -991,16 +927,13 @@ export class Sidebar extends Component {
 						${this.updateHint || !hasUnseenChanges() ? html.nothing : html`<span class="news-dot" title=${t('What\'s New')}></span>`}
 					</span>
 				</button>
-				${/* The column's two modes. Rendered as a tablist so the roles say what the shape says. */''}
 				<mitra-tabs .selected=${this.tab} @selectedChange=${(e: CustomEvent<string>) => this.setTab(e.detail as 'calendars' | 'planning')}>
 					<mitra-tab name="calendars" icon="calendar-days">${t('Calendars')}</mitra-tab>
 					<mitra-tab-panel name="calendars">${this.calendarsTemplate}</mitra-tab-panel>
 
-					${/* The one thing a tab costs is not seeing the other list — so the number comes along. */''}
 					<mitra-tab name="planning" icon="list-todo" .badge=${this.unscheduledCount}>${t('Planning')}</mitra-tab>
 					<mitra-tab-panel name="planning">${this.planningTemplate}</mitra-tab-panel>
 				</mitra-tabs>
-				${/* What is left here is app-level and true in either mode. */''}
 				<div class="footer">
 					${getUser()?.identity ? html.nothing : html`
 						<button class="action" title=${t('Settings')} @click=${Sidebar.openSettings}>
@@ -1022,7 +955,6 @@ export class Sidebar extends Component {
 		`
 	}
 
-	/** Opens the settings dialog — the footer's affordance and the chord below share it. */
 	private static readonly openSettings = () => void new DialogSettings({}).confirm().catch(() => undefined)
 
 	@eventListener({ target: window, type: 'keydown' })
@@ -1033,10 +965,9 @@ export class Sidebar extends Component {
 		}
 	}
 
-	// A provider photo that fails to load (link rotated, endpoint needs auth) falls back to the icon.
 	@state() private profilePictureBroken = false
 
-	/** Who is signed in + sign-out — only in multi-user (OIDC) mode, marked by the user carrying an identity. */
+	/** User account footer for multi-user mode. */
 	private get accountTemplate() {
 		const identity = getUser()?.identity
 		return !identity ? html.nothing : html`
@@ -1067,8 +998,6 @@ export class Sidebar extends Component {
 		`
 	}
 
-	// The source's label doubles as its inline rename field: `contenteditable` is toggled on by
-	// renamingId (via double-click or ⋯ → Rename). Enter/blur commit, Escape reverts.
 	private getNameTemplate(source: Source) {
 		return html`
 			<div
@@ -1085,10 +1014,6 @@ export class Sidebar extends Component {
 
 	private getActionsTemplate(integration: Integration, source: Source, index: number, count: number) {
 		return html`
-			${/* The ⋯ leads and the eye trails, against convention: the eye is the one that stays on show for
-			    a hidden source, and only in the last slot does it sit on the trailing edge rather than floating
-			    in the gap the (invisible) ⋯ would have filled. The menu anchors to the whole group rather than
-			    to its own trigger, so it opens clear of the eye now sitting beside it. */''}
 			<div class="actions" style="anchor-name: --source-menu-${source.id}">
 				<mitra-icon-button
 					icon="more-horizontal"
@@ -1104,8 +1029,6 @@ export class Sidebar extends Component {
 						<mitra-icon icon="palette"></mitra-icon>
 						<mitra-color-picker .value=${source.color} @change=${(e: CustomEvent) => this.setSourceColor(source, e.detail, (e.currentTarget as HTMLElement).closest('[popover]')!)}></mitra-color-picker>
 					</div>
-					${/* The Alt+click gesture's reachable twin, as Move up/down is the drag's. One item rather
-					    than two — there is only ever one solo, so the state decides which way it points. */''}
 					${canRestoreSourceVisibility() ? html`
 						<button @click=${(e: Event) => { this.closeMenu(e); this.toggleSolo(source) }}>
 							<mitra-icon icon="eye"></mitra-icon>
@@ -1117,7 +1040,6 @@ export class Sidebar extends Component {
 							${t('Only show this calendar')}
 						</button>
 					`}
-					${/* The drag reorder's accessible, discoverable twin (see SidebarReorderController). */''}
 					<button ?disabled=${index === 0} @click=${(e: Event) => { this.closeMenu(e); this.moveSource(integration, source, -1) }}>
 						<mitra-icon icon="arrow-up"></mitra-icon>
 						${t('Move up')}
@@ -1126,7 +1048,6 @@ export class Sidebar extends Component {
 						<mitra-icon icon="arrow-down"></mitra-icon>
 						${t('Move down')}
 					</button>
-					${/* Read-only sources allow copy but not move (see canCopyEntriesOut / canMoveEntriesOut). */''}
 					${!canCopyEntriesOut(source) ? html.nothing : html`
 						<button
 							title=${canMoveEntriesOut(source) ? t('Move or copy every entry into another calendar') : t('Copy every entry into another calendar')}
@@ -1142,8 +1063,6 @@ export class Sidebar extends Component {
 						${t('Re-import entries')}
 					</button>
 				</menu>
-				${/* Alt+click solos and un-solos, the way Alt+drag duplicates. Named in the tooltip rather
-				    than left to be found, like the name row's "Double-click to rename". */''}
 				<mitra-icon-button
 					class="eye-icon"
 					icon=${source.hidden ? 'eye-off' : 'eye'}

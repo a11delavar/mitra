@@ -42,7 +42,6 @@ describe('Tempo ticket keys', () => {
 
 	it('takes the first of several keys, in reading order', () => {
 		assert.equal(Tempo.findIssueKey('ACME-9588, ACME-9589 & other topics', isProjectKey), 'ACME-9588')
-		// The first CANDIDATE isn't necessarily the first real key.
 		assert.equal(Tempo.findIssueKey('UTF-8 issues in NOVA-14026', isProjectKey), 'NOVA-14026')
 	})
 
@@ -53,8 +52,6 @@ describe('Tempo ticket keys', () => {
 
 describe('Tempo worklog text', () => {
 	it('titles an entry with the issue it books against, not the worklog note', () => {
-		// The note is usually a bare activity label, and one worklog in six carries text Jira wrote
-		// itself ("Working on work item ACME-1234") — as a title it says the least of anything available.
 		assert.equal(Tempo.headingFor(issue, 10001), 'ACME-1234 Fix the parser')
 	})
 
@@ -64,7 +61,6 @@ describe('Tempo worklog text', () => {
 	})
 
 	it('keeps the key in the title, which is the only thing a duplicate carries its ticket in', () => {
-		// Entry.duplicate drops `data`, so a copy booked from this heading must still name its issue.
 		const heading = Tempo.headingFor(issue, 10001)
 		assert.equal(Tempo.findIssueKey(heading, isProjectKey), 'ACME-1234')
 	})
@@ -77,13 +73,11 @@ describe('Tempo worklog text', () => {
 
 describe('Tempo times', () => {
 	it('reads a wall clock in the account zone, not as UTC', () => {
-		// Reading it as UTC is what shifted every worklog by the viewer's own offset.
 		const start = Tempo.startOf({ startDate: '2026-08-03', startTime: '09:34:00' }, BERLIN)
 		assert.equal(start.toISOString(), '2026-08-03T07:34:00.000Z')
 	})
 
 	it('writes back the wall clock the user sees, not the UTC face of the instant', () => {
-		// The reported bug: an entry placed at 22:30 in Berlin was booked at 20:30 in Tempo.
 		const instant = new Date('2026-08-24T20:30:00Z')
 		assert.deepEqual(Tempo.dateTimeOf(instant, BERLIN), { startDate: '2026-08-24', startTime: '22:30:00' })
 	})
@@ -201,7 +195,6 @@ describe('Tempo integration', () => {
 		assert.equal(stored.credentials.token, 'tempo-old')
 		assert.equal(stored.credentials.jiraToken, 'jira-new')
 		assert.equal(stored.credentials.site, 'https://acme.atlassian.net')
-		// The label and the zone are discovery's to set, never the form's.
 		assert.equal(stored.credentials.username, 'Alice')
 		assert.equal(stored.credentials.timeZone, BERLIN)
 	})
@@ -211,7 +204,6 @@ describe('Tempo integration', () => {
 		for (const off of ['recurrence', 'reminders', 'location', 'timeZone', 'participants', 'allDay', 'relations', 'renameEntries'] as const) {
 			assert.equal(capabilities[off], false, off)
 		}
-		// The note is editable; the title is the issue's and therefore not ours to rename.
 		assert.equal(capabilities.description, true)
 		for (const on of ['createEntries', 'editEntries', 'deleteEntries'] as const) {
 			assert.equal(capabilities[on], true, on)
@@ -236,7 +228,6 @@ describe('external links in general', () => {
 	})
 
 	it('refuses a URL that is not https, whatever the provider sent', () => {
-		// The URL is synced data, so a scheme check here is what keeps it from being an execution vector.
 		for (const url of ['javascript:alert(1)', 'data:text/html,<script>', 'http://acme.test/x', 'not a url', '']) {
 			assert.equal(Integration.externalUrlOf(new Entry({ data: { url } })), undefined, url)
 		}

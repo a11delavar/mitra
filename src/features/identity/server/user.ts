@@ -33,7 +33,6 @@ userRouter.put('/time-zones', async (req, res) => {
 	const user = await em.findOneOrFail(User, { id: req.user.id })
 	user.timeZones = timeZones.length ? timeZones : undefined
 	await em.flush()
-	// Keep the request's user (a different entity manager's instance) in sync so a follow-up GET reflects the change.
 	req.user.timeZones = user.timeZones
 	return res.json(user)
 })
@@ -48,7 +47,6 @@ userRouter.put('/seen-version', async (req, res) => {
 	const user = await em.findOneOrFail(User, { id: req.user.id })
 	user.lastSeenVersion = version
 	await em.flush()
-	// Keep the request's user (a different entity manager's instance) in sync so a follow-up GET reflects the change.
 	req.user.lastSeenVersion = user.lastSeenVersion
 	return res.json(user)
 })
@@ -59,7 +57,6 @@ userRouter.put('/settings', async (req, res) => {
 	const user = await em.findOneOrFail(User, { id: req.user.id })
 	user.applySettings(req.body.settings)
 	await em.flush()
-	// Keep the request's user (a different entity manager's instance) in sync so a follow-up GET reflects the change.
 	req.user.settings = user.settings
 	return res.json(user)
 })
@@ -68,12 +65,11 @@ userRouter.put('/default-source', async (req, res) => {
 	const sourceId = (req.body.sourceId ?? null) as string | null
 	const em = orm.em.fork()
 	if (sourceId !== null) {
-		await req.user.source(em, sourceId) // 404s a source that isn't the user's own
+		await req.user.source(em, sourceId)
 	}
 	const user = await em.findOneOrFail(User, { id: req.user.id })
 	user.defaultSourceId = sourceId ?? undefined
 	await em.flush()
-	// Keep the request's user (a different entity manager's instance) in sync so a follow-up GET reflects the change.
 	req.user.defaultSourceId = user.defaultSourceId
 	return res.json(user)
 })

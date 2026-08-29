@@ -25,7 +25,6 @@ describe('AppleCalendar', () => {
 				credentials: { username: 'test@icloud.com', password: 'password123' }
 			})
 
-			// Attempt to change uri, change username, and blank the password
 			calendar.merge(new AppleCalendar({
 				uri: 'https://evil.server.com/',
 				credentials: { username: 'new@icloud.com', password: '' }
@@ -46,8 +45,6 @@ describe('AppleCalendar', () => {
 	})
 
 	describe('crossing the API', () => {
-		// This provider IS a CalDAV, which is exactly the risk: tagged as the class it extends, iCloud
-		// would come back as plain CalDAV — URI field shown, fixed endpoint editable.
 		it('tags itself as itself, not as the provider it extends', () => {
 			const calendar = new AppleCalendar({ credentials: { username: 'apple@icloud.com', password: 'abc' }, sources: [] as never })
 

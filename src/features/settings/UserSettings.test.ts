@@ -23,8 +23,6 @@ describe('UserSettings', () => {
 			assert.equal(UserSettings.sanitize({ defaultView: 'gantt' }), undefined)
 		})
 
-		// The minute fields are checked for SHAPE, not for membership of a picker's list: those lists live
-		// on the browser-side setting classes (see UserSettings.sanitize for why they cannot be read here).
 		it('drops a span that is not a whole, sane number of minutes', () => {
 			assert.equal(UserSettings.sanitize({ snapMinutes: 0 }), undefined)
 			assert.equal(UserSettings.sanitize({ snapMinutes: 61 }), undefined)

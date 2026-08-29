@@ -3,15 +3,7 @@ import { focusRing } from './focusRing.css.js'
 import { activated } from './activated.css.js'
 import { controlHeight } from './controlHeight.css.js'
 
-/**
- * A standalone button's chrome. Like input.css.ts, it stands down for a button that IS an editor field
- * or lives inside one: there the FIELD owns every surface and state (field.css.ts), and a button that
- * merely stands in for the real control — the date row's "+ End date" — has to be indistinguishable
- * from the field beside it. `all: unset` on such a button is NOT enough to opt out, because these state
- * rules outweigh it; the guard is what actually keeps them off (which is why that button used to take a
- * hover background and lose the field's corner radius). Nested dialogs are their own surface, so their
- * buttons keep the standalone chrome.
- */
+/** Standalone button and select styles excluding inline editor fields. */
 export const buttonStyles = css`
 	:is(button, select):where(:not(.field, .field *), dialog *) {
 		appearance: base-select;

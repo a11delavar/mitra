@@ -11,31 +11,16 @@ import { JiraClient } from './JiraClient.js'
 
 const logger = createLogger('Tempo')
 
-/** A source's own sync bookkeeping. The two caches are here rather than on the engine because the
- * engine is a singleton shared by every connected account, and both are cheap to rebuild (a
- * re-import clears them). */
 interface TempoSyncState {
-	/** The newest `updatedAt` actually seen — never "now", whose clock is ours, not Tempo's. */
 	updatedFrom?: string
-	/** Numeric issue id → what it is called. Timesheets reuse a handful of issues, so this converges
-	 * to no Jira traffic at all on an idle cycle. */
 	issues?: Record<string, TempoIssue>
-	/** Every project key the credential can see — what {@link Tempo.findIssueKey} asks. */
 	projectKeys?: Array<string>
 }
 
 /**
- * The network/CRUD half of {@link Tempo} — split out for the reason CalDAV's is: that class is the
- * frontend's API model, and neither API client (nor the credentials they carry) belongs in a browser
- * bundle. Registered by server/registerEngines.ts.
- *
- * The engine is a SINGLETON over every connected account, so all per-account state lives on the
- * `integration` argument or its source's {@link TempoSyncState} — never on `this`.
+ * Sync engine implementation for Tempo Timesheets and Jira Cloud.
  */
 export class TempoSyncEngine implements SyncEngine {
-	/** How far behind the watermark an incremental query reaches. Tempo's `updatedAt` is second-
-	 * precision, but a worklog written in the same second the previous cycle read would otherwise be
-	 * missed forever; a minute costs one small re-serve that compares equal and stays silent. */
 	private static readonly watermarkOverlapMs = 60_000
 
 	private tempo(integration: Tempo): TempoClient {
@@ -50,8 +35,6 @@ export class TempoSyncEngine implements SyncEngine {
 
 	async fetchSources(integration: Integration): Promise<Array<Source>> {
 		const tempo = integration as Tempo
-		// Two probes because two credentials, and a connect must say WHICH one is wrong rather than
-		// failing with whichever call happens to run first.
 		await this.tempo(tempo).globalConfiguration().catch(error => {
 			throw new Error(`Tempo rejected the API token: ${error instanceof Error ? error.message : error}`)
 		})
@@ -59,12 +42,7 @@ export class TempoSyncEngine implements SyncEngine {
 			throw new Error(`Jira rejected the e-mail and API token: ${error instanceof Error ? error.message : error}`)
 		})
 
-		// The Jira account IS the identity: one person's timesheet, whatever site path was typed. Set
-		// here, the earliest authenticated call, so a fresh add has its `(userId, uri)` before first flush.
 		tempo.uri = `${Tempo.uriPrefix}${me.accountId}`
-		// The e-mail, not the display name: it names the ACCOUNT rather than the person, which is what
-		// distinguishes two connected Atlassian accounts (and Jira may withhold the name entirely).
-		// The typed credential is the fallback because Jira hides `emailAddress` under some privacy settings.
 		tempo.credentials = {
 			...tempo.credentials,
 			username: me.emailAddress || tempo.credentials.jiraEmail || me.displayName || 'Tempo',
@@ -95,9 +73,6 @@ export class TempoSyncEngine implements SyncEngine {
 		const existingByUri = new Map(existing.map(entry => [entry.uri, entry]))
 		let changed = false
 
-		// Deletions ride their own audit feed: a deleted worklog is simply absent from the listing, and
-		// only a full re-fetch of the entire history could tell that apart from "not edited lately".
-		// Skipped on a first sync, where there is nothing local a past deletion could still describe.
 		if (since) {
 			for (const deleted of await client.deletedWorklogs(since)) {
 				const entry = existingByUri.get(String(deleted.tempoWorklogId))
@@ -118,8 +93,6 @@ export class TempoSyncEngine implements SyncEngine {
 				em.persist(target)
 			}
 			Tempo.applyWorklog(target, worklog, issues.get(String(worklog.issue.id)), tempo.credentials.site, Tempo.zoneOf(tempo))
-			// Compared by field, not by stamp: our own write-echoes are re-served inside the overlap
-			// window and must not tick every client (they apply, compare equal, and stay silent).
 			if (!before || !before.editEquals(target)) {
 				changed = true
 			}
@@ -135,9 +108,7 @@ export class TempoSyncEngine implements SyncEngine {
 	}
 
 	/**
-	 * Names for the issue ids seen this cycle, memoized on the source. A Jira that is down, slow or
-	 * simply no longer shares an issue degrades the heading to `#<id>` — never a failed sync, since the
-	 * timesheet itself is perfectly readable without its labels.
+	 * Resolves issue metadata for unmapped issue IDs and caches results in source syncState.
 	 */
 	private async resolveIssues(integration: Tempo, source: Source, issueIds: Array<number>): Promise<Map<string, TempoIssue>> {
 		const state = (source.syncState ?? {}) as TempoSyncState
@@ -146,7 +117,6 @@ export class TempoSyncEngine implements SyncEngine {
 		if (missing.length) {
 			try {
 				for (const [key, issue] of await this.jira(integration).issues(missing)) {
-					// bulkfetch answers under both id and key; only the id is what a worklog carries.
 					if (/^\d+$/.test(key)) {
 						known.set(key, { key: issue.key, summary: issue.summary })
 					}
@@ -159,8 +129,6 @@ export class TempoSyncEngine implements SyncEngine {
 		return known
 	}
 
-	/** The project keys the credential can see, memoized per source and refreshed only when a heading
-	 * names a project that isn't in the list yet (a project created since the last connect). */
 	private async projectKeys(integration: Tempo, source: Source, refresh: boolean): Promise<Array<string>> {
 		const state = (source.syncState ?? {}) as TempoSyncState
 		if (state.projectKeys?.length && !refresh) {
@@ -200,9 +168,6 @@ export class TempoSyncEngine implements SyncEngine {
 			startDate,
 			startTime,
 			timeSpentSeconds: seconds,
-			// The booking line goes down verbatim: the key is EXTRACTED from it, never carved out of it,
-			// so "Working on ACME-123 so we are ready" is kept whole as what was done. A draft that
-			// already carries a note (a duplicate of an existing worklog) keeps that instead.
 			description: entry.description || entry.heading,
 		})
 		this.rememberIssue(source, worklog.issue.id, issue)
@@ -229,10 +194,6 @@ export class TempoSyncEngine implements SyncEngine {
 		}
 		const { startDate, startTime } = Tempo.dateTimeOf(new Date(incoming.start as unknown as Date), Tempo.zoneOf(tempo))
 
-		// Diff-scoped over a FULL-REPLACE endpoint: everything mitra doesn't show (billable seconds,
-		// work attributes, the author) is carried over from the stored worklog, so an edit to the note
-		// or the times cannot wipe it. The issue is untouchable either way — Tempo's PUT has no
-		// issueId, which is why a worklog's title is not mitra's to rename (see Tempo.capabilities).
 		const input: TempoWorklogInput = {
 			authorAccountId: stored.author?.accountId ?? Tempo.accountIdOf(source),
 			startDate,
@@ -251,7 +212,6 @@ export class TempoSyncEngine implements SyncEngine {
 			try {
 				await this.tempo(integration as Tempo).deleteWorklog(entry.uri)
 			} catch (error) {
-				// Already gone remotely — deleting it locally is the right outcome, not an error.
 				if (!(error instanceof TempoRequestError) || error.status !== 404) {
 					throw error
 				}
@@ -260,13 +220,10 @@ export class TempoSyncEngine implements SyncEngine {
 		em.remove(entry)
 	}
 
-	/** Unreachable by construction: Tempo has no recurrence, so no entry of its own ever carries one. */
 	excludeOccurrence(): Promise<void> {
 		return Promise.reject(new Error('Tempo worklogs cannot repeat'))
 	}
 
-	/** The ticket an entry's title books against, with one retry against a freshly read project list so
-	 * a project created since the last connect isn't rejected as imaginary. */
 	private async findIssueKey(integration: Tempo, source: Source, heading: string): Promise<string> {
 		for (const refresh of [false, true]) {
 			const keys = new Set(await this.projectKeys(integration, source, refresh))

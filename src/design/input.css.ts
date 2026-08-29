@@ -12,10 +12,6 @@ export const inputStyles = css`
 		max-width: 100%;
 		outline: none;
 
-		/* Standalone (dialog forms, search rows): the control is its own box. Inside a \`.field\` the
-		   FIELD is the box and the control stays bare (see field.css.ts) — except in a nested
-		   <dialog>, which is its own surface again. :where keeps the guard specificity-free so
-		   per-site overrides keep winning like they always did. */
 		&:where(:not(.field, .field *), dialog *) {
 			${controlHeight};
 			height: var(--control-height);
@@ -51,7 +47,6 @@ export const inputStyles = css`
 		line-height: 1.4;
 	}
 
-	/* The radio counterpart of the checkbox below: same surfaces and accent, but a circle with a dot. */
 	input[type=radio] {
 		appearance: none;
 		box-sizing: border-box;

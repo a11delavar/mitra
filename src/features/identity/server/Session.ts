@@ -3,20 +3,14 @@ import { User } from '../User.js'
 import { entity, primaryKey, property, manyToOne } from '../../../infrastructure/model/orm.js'
 
 /**
- * A signed-in browser (multi-user mode). The HttpOnly cookie holds a random 256-bit bearer token;
- * the row's id is only its SHA-256 digest, so a leaked database dump contains nothing that opens a
- * live session. The identity provider's tokens are deliberately NOT kept alive here — mitra calls no
- * upstream APIs on the user's behalf, so a session's validity is purely its own sliding expiry (only
- * the raw id_token is retained, as the `id_token_hint` for RP-initiated logout).
+ * Represents an authenticated user session stored by token SHA-256 hash.
  */
 @entity()
 export class Session {
 	static readonly cookie = 'mitra-session'
-
-	/** How long a session lives without renewal. */
 	static readonly lifetime = 30 * 24 * 60 * 60 * 1000
 
-	/** Mints a session: the returned `token` goes into the cookie; only its digest is persisted. */
+	/** Mints a session returning the cookie token and the hashed session record. */
 	static issue(user: User, idToken?: string): { session: Session, token: string } {
 		const token = randomBytes(32).toString('base64url')
 		const session = new Session({
@@ -45,7 +39,6 @@ export class Session {
 		return this.expiresAt.getTime() <= Date.now()
 	}
 
-	/** Sliding expiry: past the halfway point, the next authenticated request extends the session. */
 	get shouldRenew(): boolean {
 		return this.expiresAt.getTime() - Date.now() < Session.lifetime / 2
 	}

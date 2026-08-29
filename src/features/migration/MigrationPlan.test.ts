@@ -17,19 +17,19 @@ describe('MigrationVerdict', () => {
 
 	it('is flattenable only when recurrence is the blocker AND the rule expanded', () => {
 		assert.equal(blocked('recurrence', 12).flattenable, true)
-		assert.equal(blocked('recurrence', null).flattenable, false, 'an unexpandable rule stays blocked')
+		assert.equal(blocked('recurrence', null).flattenable, false)
 		assert.equal(blocked('participants', 12).flattenable, false)
 	})
 
 	it('lifts the recurrence blocker under flattening, and nothing else', () => {
 		assert.equal(blocked('recurrence', 3).moves(false), false)
 		assert.equal(blocked('recurrence', 3).moves(true), true)
-		assert.equal(blocked('participants').moves(true), false, 'flattening answers the series question alone')
+		assert.equal(blocked('participants').moves(true), false)
 	})
 
 	it('counts a flattened series as the entries it becomes, and everything else as one', () => {
 		assert.equal(blocked('recurrence', 3).creations(true), 3)
-		assert.equal(blocked('recurrence', 3).creations(false), 0, 'it does not move at all')
+		assert.equal(blocked('recurrence', 3).creations(false), 0)
 		assert.equal(clean().creations(false), 1)
 	})
 })
@@ -42,16 +42,16 @@ describe('MigrationPlan', () => {
 	})
 
 	it('counts what LEAVES, however many entries a flattened series becomes over there', () => {
-		assert.equal(plan().movingCount(false), 9, 'the series stays behind')
+		assert.equal(plan().movingCount(false), 9)
 		assert.equal(plan().movingCount(true), 10)
 		assert.equal(plan().creations(false), 9)
-		assert.equal(plan().creations(true), 13, '9 entries, and the series arriving as its 4 occurrences')
+		assert.equal(plan().creations(true), 13)
 	})
 
 	it('tallies each loss and each remaining reason, most-common first', () => {
 		assert.deepEqual(plan().losses, [['reminders', 2], ['location', 1]])
 		assert.deepEqual(plan().blockers(false), [['recurrence', 1]])
-		assert.deepEqual(plan().blockers(true), [], 'the flatten choice answered the only objection')
+		assert.deepEqual(plan().blockers(true), [])
 	})
 })
 

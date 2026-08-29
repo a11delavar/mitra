@@ -20,11 +20,6 @@ import { Dev } from '../../dev/Dev.js'
 import { NotificationSubscription } from '../../../features/reminders/NotificationSubscription.js'
 import { Session } from '../../../features/identity/server/Session.js'
 
-// The Notion sync pipeline against real SQLite: full-membership deletions (and their two safety
-// guards), incremental-content upserts, the field-compare `changed` contract, write mirroring onto
-// sibling view rows, and the duplicate-connect guard. The network is a stub client injected into the
-// integration's memo slot — the exact seam `Notion.createClient` exists for.
-
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
 		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Dev, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
@@ -66,7 +61,6 @@ const dataSource = (): NotionDataSource => ({
 		},
 		'Due': { id: 'due', name: 'Due', type: 'date' },
 		'Area': { id: 'area', name: 'Area', type: 'select' },
-		// The two-way self-references a real task database carries, each a pair of synced twins.
 		'Parent Task': { id: 'uXhq', name: 'Parent Task', type: 'relation', relation: { data_source_id: 'ds-1', type: 'dual_property', dual_property: { synced_property_name: 'Sub Tasks' } } },
 		'Sub Tasks': { id: 'VrqI', name: 'Sub Tasks', type: 'relation', relation: { data_source_id: 'ds-1', type: 'dual_property', dual_property: { synced_property_name: 'Parent Task' } } },
 		'Blocked by': { id: '%5CHMd', name: 'Blocked by', type: 'relation', relation: { data_source_id: 'ds-1', type: 'dual_property', dual_property: { synced_property_name: 'Blocking' } } },
@@ -93,22 +87,17 @@ interface StubState {
 	members?: { ids: Array<string>, complete: boolean }
 	delta?: Array<NotionPage>
 	byId?: Record<string, NotionPage>
-	/** Page-body blocks by parent block id — what blockChildren serves (default: empty bodies). */
 	bodies?: Record<string, Array<NotionBlock>>
 	updateEcho?: NotionPage
 	createEcho?: NotionPage
 	trashError?: Error
 	viewFilter?: unknown
 	viewQuickFilters?: unknown
-	/** Overrides the discovered view list (keep the ids stable to keep source keys stable — change a
-	 * `name` to simulate a REMOTE rename). */
 	views?: Array<{ object: string, id: string, name: string, type: string }>
-	/** What the property-item endpoint serves for a relation value Notion truncated at 25 ids. */
 	fullRelation?: Array<string>
 	relationError?: Error
 }
 
-/** The endpoints the code under test touches, recording writes for assertions. */
 function stubClient(state: StubState) {
 	const calls = {
 		updates: new Array<{ pageId: string, properties: Record<string, unknown> }>(),
@@ -168,8 +157,6 @@ function stubClient(state: StubState) {
 	return { client: client as unknown as NotionClient, calls }
 }
 
-/** A user owning a Notion integration with the stub wired into the client memo. `view-2` is the
- * sibling view of the same database — disabled unless a test enables it. */
 async function seed(em: EntityManager, state: StubState) {
 	const user = new User({ username: `alice-${crypto.randomUUID()}` })
 	const integration = new Notion({ userId: user.id, uri: 'notion://bot-1', credentials: { username: 'Acme', token: 'ntn_secret' } })
@@ -219,9 +206,9 @@ describe('Notion sync', () => {
 			members: { ids: ['p1'], complete: true },
 			delta: [page('p1', { title: 'Same as before' })],
 		})
-		assert.equal(await sync(integration, em, source), true) // first sight — a real change
+		assert.equal(await sync(integration, em, source), true)
 		await em.flush()
-		assert.equal(await sync(integration, em, source), false) // identical re-serve — no notify
+		assert.equal(await sync(integration, em, source), false)
 	})
 
 	it('applies a remote edit and reports it', async () => {
@@ -265,8 +252,6 @@ describe('Notion sync', () => {
 		await sync(integration, em, source)
 		await em.flush()
 
-		// A row mitra just created (localWriteAt stamped on our own clock): its page id is not yet in
-		// the (lagging) membership, so the deletion pass must spare it.
 		const fresh = new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: 'p-fresh', type: EntryType.Task, heading: 'Just created', data: { localWriteAt: Date.now() } })
 		em.persist(fresh)
 		await em.flush()
@@ -274,7 +259,7 @@ describe('Notion sync', () => {
 		state.delta = []
 		await sync(integration, em, source)
 		await em.flush()
-		assert.ok(await em.findOne(Entry, { sourceId: source.id, uri: 'p-fresh' }), 'the just-created row must survive the membership set difference')
+		assert.ok(await em.findOne(Entry, { sourceId: source.id, uri: 'p-fresh' }))
 	})
 
 	it('deletes a stale row whose write time has aged past the grace window', async () => {
@@ -286,7 +271,6 @@ describe('Notion sync', () => {
 		await sync(integration, em, source)
 		await em.flush()
 
-		// A row mitra wrote long ago (localWriteAt well outside the overlap window), no longer a member.
 		const stale = new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: 'p-old', type: EntryType.Task, heading: 'Left the view', data: { localWriteAt: Date.now() - 10 * 60_000 } })
 		em.persist(stale)
 		await em.flush()
@@ -294,7 +278,7 @@ describe('Notion sync', () => {
 		state.delta = []
 		await sync(integration, em, source)
 		await em.flush()
-		assert.equal(await em.findOne(Entry, { sourceId: source.id, uri: 'p-old' }), null, 'a row aged past the grace window and absent from the view is removed')
+		assert.equal(await em.findOne(Entry, { sourceId: source.id, uri: 'p-old' }), null)
 	})
 
 	it('prunes a created task once it leaves (or never joins) the view — the source mirrors the view', async () => {
@@ -306,9 +290,6 @@ describe('Notion sync', () => {
 		await sync(integration, em, source)
 		await em.flush()
 
-		// A task created in mitra whose page doesn't match the view's filter (no University relation),
-		// with an aged localWriteAt so the index-lag grace window doesn't apply. It is NOT retained:
-		// membership is the single source of truth — no per-entry "created here" exception.
 		const orphan = new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: 'p-mine', type: EntryType.Task, heading: 'Not a member', data: { localWriteAt: Date.now() - 10 * 60_000 } })
 		em.persist(orphan)
 		await em.flush()
@@ -316,19 +297,18 @@ describe('Notion sync', () => {
 		state.delta = []
 		await sync(integration, em, source)
 		await em.flush()
-		assert.equal(await em.findOne(Entry, { sourceId: source.id, uri: 'p-mine' }), null, 'a row absent from the view membership is pruned, however it got here')
+		assert.equal(await em.findOne(Entry, { sourceId: source.id, uri: 'p-mine' }), null)
 	})
 
 	it('stamps a created entry with a local-clock write time so the next cycle spares it', async () => {
 		const em = orm.em.fork()
 		const { integration, source } = await seed(em, {
-			createEcho: page('page-new', { title: 'Buy milk', editedAt: '2000-01-01T00:00:00.000Z' }), // ancient remote stamp
+			createEcho: page('page-new', { title: 'Buy milk', editedAt: '2000-01-01T00:00:00.000Z' }),
 		})
 		const entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Buy milk' })
 		const before = Date.now()
 		await integration.createEntry(em, entry)
-		// The freshness clock is OURS, not the (ancient) remote last_edited_time — immune to clock skew.
-		assert.ok((entry.data?.localWriteAt ?? 0) >= before, 'createEntry stamps localWriteAt on our own clock')
+		assert.ok((entry.data?.localWriteAt ?? 0) >= before)
 	})
 
 	it('skips deletion detection entirely when the membership is truncated, but still applies edits', async () => {
@@ -340,12 +320,12 @@ describe('Notion sync', () => {
 		await sync(integration, em, source)
 		await em.flush()
 
-		state.members = { ids: ['p1'], complete: false } // p2 fell off a TRUNCATED listing — not a deletion signal
+		state.members = { ids: ['p1'], complete: false }
 		state.delta = [page('p1', { title: 'Edited meanwhile', editedAt: '2026-07-12T08:00:00.000Z' })]
 		await sync(integration, em, source)
 		await em.flush()
 		const entries = await em.find(Entry, { sourceId: source.id })
-		assert.equal(entries.length, 2, 'no row may be deleted off a truncated membership')
+		assert.equal(entries.length, 2)
 		assert.equal(entries.find(e => e.uri === 'p1')?.heading, 'Edited meanwhile')
 	})
 
@@ -353,7 +333,7 @@ describe('Notion sync', () => {
 		const em = orm.em.fork()
 		const { integration, source, calls } = await seed(em, {
 			members: { ids: ['p-old'], complete: true },
-			delta: [], // edited long before the watermark — the delta no longer carries it
+			delta: [],
 			byId: { 'p-old': page('p-old', { title: 'Slid into view' }) },
 		})
 		const s = source
@@ -372,7 +352,7 @@ describe('Notion sync', () => {
 			bodies: {
 				p1: [
 					{ object: 'block', id: 'b1', type: 'paragraph', paragraph: { rich_text: [{ plain_text: 'Call ' }, { plain_text: 'them', annotations: { bold: true } }] } },
-					{ object: 'block', id: 'b2', type: 'embed' }, // not expressible in markdown — invisible
+					{ object: 'block', id: 'b2', type: 'embed' },
 				],
 			},
 		})
@@ -391,7 +371,6 @@ describe('Notion sync', () => {
 		await sync(integration, em, source)
 		await em.flush()
 
-		// Same properties, same edit stamp — only the body differs (minute-rounded stamps can hide this).
 		state.bodies = { p1: [{ object: 'block', id: 'b1', type: 'paragraph', paragraph: { rich_text: [{ plain_text: 'v2' }] } }] }
 		assert.equal(await sync(integration, em, source), true)
 		assert.equal((await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })).description, 'v2')
@@ -429,8 +408,6 @@ describe('Notion entry CRUD', () => {
 	it('pre-fills the view\'s filter properties so a created task actually lands in the filtered view', async () => {
 		const em = orm.em.fork()
 		const { integration, source, calls } = await seed(em, {
-			// The "University" view: Area = University (this is the bug the user hit — without it the
-			// page is created but never appears in the view and the next sync prunes it).
 			viewFilter: { property: 'area', select: { equals: 'University' } },
 			createEcho: page('page-new', { title: 'Read chapter 3', editedAt: '2026-07-14T12:00:00.000Z' }),
 		})
@@ -438,7 +415,6 @@ describe('Notion entry CRUD', () => {
 		await integration.createEntry(em, entry)
 		const created = calls.updates.find(u => u.pageId === '(create)')!
 		assert.deepEqual(created.properties['Area'], { select: { name: 'University' } })
-		// The user's own mapped fields still ride along (title/status/date), not just the filter default.
 		assert.ok(created.properties['Name'], 'title still written')
 		assert.ok(created.properties['Status'], 'status still written')
 	})
@@ -446,17 +422,16 @@ describe('Notion entry CRUD', () => {
 	it('pre-fills a relation the view filters on (the real "Area = University" shape) from quick_filters', async () => {
 		const em = orm.em.fork()
 		const { integration, source, calls } = await seed(em, {
-			viewQuickFilters: { area: { relation: { contains: 'university-page-id' } } }, // "area" resolves to the Area property
+			viewQuickFilters: { area: { relation: { contains: 'university-page-id' } } },
 			createEcho: page('page-new', { editedAt: '2026-07-14T12:00:00.000Z' }),
 		})
-		// Make "Area" a relation for this test (the seed's Area is a select; override the schema fetch).
 		;(integration as any).client.dataSource = () => Promise.resolve({ object: 'data_source', id: 'ds-1', title: [{ plain_text: 'Tasks' }], properties: {
 			Name: { id: 'title', name: 'Name', type: 'title' },
 			Status: dataSource().properties['Status'],
 			Due: { id: 'due', name: 'Due', type: 'date' },
 			Area: { id: 'area', name: 'Area', type: 'relation' },
 		} })
-		;(integration as any).dataSources = undefined // reset the memo so the override is used
+		;(integration as any).dataSources = undefined
 		const entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Read chapter 3', status: TaskStatus.ToDo })
 		await integration.createEntry(em, entry)
 		const created = calls.updates.find(u => u.pageId === '(create)')!
@@ -466,14 +441,12 @@ describe('Notion entry CRUD', () => {
 	it('lets the user\'s mapped status win over a status the view filters on', async () => {
 		const em = orm.em.fork()
 		const { integration, source, calls } = await seed(em, {
-			// A "Done" view — but the user creates a To Do task. We must NOT rewrite their status to Done.
 			viewFilter: { property: 'st', status: { equals: 'Done' } },
 			createEcho: page('page-new', { editedAt: '2026-07-14T12:00:00.000Z' }),
 		})
 		const entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Start reading', status: TaskStatus.ToDo })
 		await integration.createEntry(em, entry)
 		const created = calls.updates.find(u => u.pageId === '(create)')!
-		// Status is the To-do group's option, not the filter's "Done" (the task simply won't show in that view).
 		assert.deepEqual(created.properties['Status'], { status: { id: 'o-todo' } })
 	})
 
@@ -482,7 +455,7 @@ describe('Notion entry CRUD', () => {
 		const { integration, source, calls } = await seed(em, { createEcho: page('page-new', { editedAt: '2026-07-14T12:00:00.000Z' }) })
 		;(integration as any).client.view = () => Promise.reject(new Error('view fetch hiccup'))
 		const entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Resilient', status: TaskStatus.ToDo })
-		const created = await integration.createEntry(em, entry) // must not throw
+		const created = await integration.createEntry(em, entry)
 		assert.equal(created.uri, 'page-new')
 		const create = calls.updates.find(u => u.pageId === '(create)')!
 		assert.ok(create.properties['Name'], 'the task is created without the filter pre-fill rather than failing')
@@ -497,7 +470,6 @@ describe('Notion entry CRUD', () => {
 		await integration.createEntry(em, entry)
 		assert.deepEqual(calls.createChildren.map(block => block.type), ['to_do'])
 		assert.equal(calls.createChildren[0]!.to_do?.rich_text?.[0]?.text?.content, 'draft slides')
-		// The stored description is the write's own normalized markdown, so the next sync stays silent.
 		assert.equal(entry.description, '- [ ] draft slides')
 	})
 
@@ -508,8 +480,8 @@ describe('Notion entry CRUD', () => {
 			bodies: {
 				p1: [
 					{ object: 'block', id: 'b-para', type: 'paragraph', paragraph: { rich_text: [{ plain_text: 'Old notes' }] } },
-					{ object: 'block', id: 'b-image', type: 'image' }, // was invisible in the editor — must survive
-					{ object: 'block', id: 'b-subpage', type: 'child_page', has_children: true }, // a whole sub-page — must survive
+					{ object: 'block', id: 'b-image', type: 'image' },
+					{ object: 'block', id: 'b-subpage', type: 'child_page', has_children: true },
 				],
 			},
 		})
@@ -526,9 +498,9 @@ describe('Notion entry CRUD', () => {
 		assert.deepEqual(calls.deletedBlocks, ['b-para'], 'only the replaceable block goes — image and sub-page stay')
 		assert.equal(calls.appended.length, 1)
 		assert.deepEqual(calls.appended[0]!.children.map(block => block.type), ['heading_1'])
-		assert.equal(calls.updates.length, 0, 'a description-only edit writes no page properties')
+		assert.equal(calls.updates.length, 0)
 		assert.equal(existing.description, '# New plan')
-		assert.equal(twin.description, '# New plan', 'the sibling view\'s row of the same page mirrors the body write')
+		assert.equal(twin.description, '# New plan')
 	})
 
 	it('rejects creating a recurring task', async () => {
@@ -543,7 +515,6 @@ describe('Notion entry CRUD', () => {
 		const { integration, source, sibling, calls } = await seed(em, {
 			updateEcho: page('p1', { title: 'Renamed', status: 'o-doing', editedAt: '2026-07-14T12:00:00.000Z' }),
 		})
-		// The same page mirrored in both views (the sibling's row exists even while disabled).
 		const existing = new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: 'p1', type: EntryType.Task, heading: 'Original', status: TaskStatus.Doing })
 		const twin = new Entry({ id: crypto.randomUUID(), sourceId: sibling.id, uri: 'p1', type: EntryType.Task, heading: 'Original', status: TaskStatus.Doing })
 		em.persist([existing, twin])
@@ -554,8 +525,6 @@ describe('Notion entry CRUD', () => {
 		await em.flush()
 
 		assert.equal(calls.updates.length, 1)
-		// Only the title changed — the status property must not ride along (it would rename a
-		// finer-grained option to the group's first one).
 		assert.deepEqual(Object.keys(calls.updates[0]!.properties), ['Name'])
 		assert.equal(twin.heading, 'Renamed')
 	})
@@ -581,8 +550,6 @@ describe('Notion entry CRUD', () => {
 		await integration.deleteEntry(em, existing)
 		await em.flush()
 		assert.deepEqual(calls.trashed, ['p1'])
-		// Scoped to THIS integration's sources — another integration's row of the same page id
-		// (another user's mirror of the same workspace, say) is not ours to delete.
 		assert.equal(await em.count(Entry, { uri: 'p1', sourceId: { $in: [source.id, sibling.id] } }), 0)
 	})
 
@@ -599,8 +566,6 @@ describe('Notion entry CRUD', () => {
 	})
 })
 
-// Relationships against the real pipeline: Notion is authoritative for the links its own relation
-// properties hold, and ONLY those — the per-fact authority rule (see AGENTS.md "Data authority").
 describe('Notion relationships', () => {
 	let orm: MikroORM
 
@@ -623,13 +588,11 @@ describe('Notion relationships', () => {
 		await em.flush()
 
 		const dependent = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p-94' })
-		// The page id IS the uid — that is what makes "Blocked by: Reach 95.5 kg" a mitra relation.
 		assert.equal(dependent.uid, 'p-94')
 		assert.deepEqual((await rowsOf(em, dependent)).map(row => [row.type.value, row.targetUid]), [
 			['FINISHTOSTART', 'p-95'],
 			['PARENT', 'p-goal'],
 		])
-		// The predecessor owns no line of its own: the reverse reading is derived, never stored.
 		assert.deepEqual((await rowsOf(em, await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p-95' }))).map(row => row.type.value), ['PARENT'])
 	})
 
@@ -657,13 +620,11 @@ describe('Notion relationships', () => {
 		await sync(integration, em, source)
 		await em.flush()
 
-		// A link the user authored in mitra to an entry living in ANOTHER provider: no Notion relation
-		// property can point there, so mitra's table is its only home and the sync must not wipe it.
 		const entry = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })
 		em.persist(new EntryRelation({ entryId: entry.id!, type: RelationType.Parent, targetUid: 'caldav-uid' }))
 		await em.flush()
 
-		state.delta = [page('p1', { editedAt: '2026-07-12T08:00:00.000Z' })] // the "Blocked by" was cleared in Notion
+		state.delta = [page('p1', { editedAt: '2026-07-12T08:00:00.000Z' })]
 		await sync(integration, em, source)
 		await em.flush()
 
@@ -694,8 +655,6 @@ describe('Notion relationships', () => {
 		await sync(integration, em, source)
 		await em.flush()
 
-		// Claiming the truncated list would delete the ids mitra never saw — from the table now, and
-		// from Notion on the next write. So the parse abstains instead (the tri-state's `undefined`).
 		state.delta = [page('p1', { blockedBy: ['p2'], truncated: true, editedAt: '2026-07-12T08:00:00.000Z' })]
 		state.relationError = new NotionRequestError(404, 'object_not_found', 'page not found')
 		await sync(integration, em, source)
@@ -715,14 +674,13 @@ describe('Notion relationships', () => {
 		await em.flush()
 
 		const existing = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })
-		await EntryRelation.loadFor(em, [existing]) // what the PUT route does before handing the edit over
+		await EntryRelation.loadFor(em, [existing])
 		const incoming = existing.clone()
 		incoming.relations = EntryRelations.of(undefined, [...existing.relations ?? [], { type: RelationType.FinishToStart, targetUid: 'p2' }]).value
 		await integration.updateEntry(em, existing, incoming)
 		await em.flush()
 
 		assert.equal(calls.updates.length, 1)
-		// The untouched "Parent Task" is never rewritten — a value mitra never saw cannot be clobbered.
 		assert.deepEqual(calls.updates[0]!.properties, { 'Blocked by': { relation: [{ id: 'p2' }] } })
 		assert.equal(EntryRelations.of(undefined, existing.relations).equals(EntryRelations.of(undefined, incoming.relations)), true)
 	})
@@ -763,8 +721,6 @@ describe('Notion relationships', () => {
 		incoming.relations = EntryRelations.of(undefined, [{ type: RelationType.Parent, targetUid: 'caldav-uid' }]).value
 		await integration.updateEntry(em, existing, incoming)
 
-		// Nothing mapped changed, so nothing was written — Notion would reject the id anyway, and the
-		// relation table (which the route reconciles) is where that link genuinely lives.
 		assert.equal(calls.updates.length, 0)
 	})
 
@@ -784,7 +740,6 @@ describe('Notion relationships', () => {
 		await em.flush()
 
 		assert.deepEqual(calls.updates[0]!.properties['Parent Task'], { relation: [{ id: 'p2' }] })
-		// The echo is the created page: its id becomes the uid, and its relations the entry's.
 		assert.equal(created.uid, 'p-created')
 		assert.deepEqual(created.relations?.map(relation => relation.targetUid), ['p2'])
 	})
@@ -794,8 +749,6 @@ describe('Notion relationships', () => {
 		const { integration, source } = await seed(em, {
 			createEcho: page('p-created', { editedAt: '2026-07-14T12:00:00.000Z' }),
 		})
-		// The moved entry keeps its old uid across the move (see entries.ts), and another entry points
-		// at it — a pointer that would dangle the moment Notion hands out a new identity.
 		const moved = new Entry({ id: crypto.randomUUID(), uid: 'travelling-uid', sourceId: source.id, type: EntryType.Task, heading: 'Moved', status: TaskStatus.ToDo })
 		const pointer = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Points at it' })
 		em.persist([moved, pointer])
@@ -847,11 +800,11 @@ describe('Notion connect identity', () => {
 
 	it('rejects connecting the same workspace twice with a clear message instead of a constraint crash', async () => {
 		const em = orm.em.fork()
-		const { user } = await seed(em, {}) // owns notion://bot-1 already
+		const { user } = await seed(em, {})
 
 		const second = new Notion({ userId: user.id, credentials: { username: '', token: 'ntn_other' } })
 		em.persist(second)
-		;(second as any).client = stubClient({}).client // discovery resolves the SAME bot user
+		;(second as any).client = stubClient({}).client
 		await assert.rejects(
 			() => second.applyAndSync(em, { credentials: { token: 'ntn_other' }, sources: [] } as any),
 			/already connected/,
@@ -859,9 +812,6 @@ describe('Notion connect identity', () => {
 	})
 })
 
-// The reconciliation logic under test lives in the base Integration.getSources — Notion is just a
-// convenient concrete provider to drive it through (its fetchSources derives each source's name from
-// the database title + view name).
 describe('Integration source reconciliation (name preservation)', () => {
 	let orm: MikroORM
 
@@ -872,62 +822,53 @@ describe('Integration source reconciliation (name preservation)', () => {
 		const em = orm.em.fork()
 		const { integration, source } = await seed(em, {})
 
-		// The first reconcile records the provider's name as the baseline.
 		await integration.getSources(em)
 		await em.flush()
 		assert.equal(source.remoteName, 'Tasks · All')
 
-		// The user renames the source (PUT /sources/:id/name simply sets source.name).
 		source.name = 'My custom name'
 		await em.flush()
 
-		// A later background sync reconciles again — the custom name must survive, not reset.
 		await integration.getSources(em)
 		await em.flush()
-		assert.equal(source.name, 'My custom name', 'a local rename is not clobbered by a sync cycle')
+		assert.equal(source.name, 'My custom name')
 	})
 
 	it('preserves a rename made before the remoteName baseline existed (the upgrade case)', async () => {
 		const em = orm.em.fork()
 		const { integration, source } = await seed(em, {})
 
-		// A row that predates the remoteName column: renamed locally, baseline still null.
 		source.name = 'My custom name'
 		source.remoteName = null
 		await em.flush()
 
-		// The first reconcile after upgrade must NOT reset it — it records the baseline silently.
 		await integration.getSources(em)
 		await em.flush()
-		assert.equal(source.name, 'My custom name', 'a pre-existing rename is not reset on the first reconcile')
-		assert.equal(source.remoteName, 'Tasks · All', 'the provider name is captured as the baseline for next time')
+		assert.equal(source.name, 'My custom name')
+		assert.equal(source.remoteName, 'Tasks · All')
 	})
 
-	// A source's identity is its URI ALONE now that one collection is one source (Source.keyOf), and the
-	// incoming sources arrive structure-cloned — plain objects with no class, no getters (see AGENTS.md).
-	// Both halves are load-bearing: mismatched keys silently disable every source on save.
 	it('enables the ticked sources of a plain, uri-keyed request body', async () => {
 		const em = orm.em.fork()
 		const { integration, source, sibling } = await seed(em, {})
 		const body = { credentials: { token: '' }, sources: [
-			{ uri: sibling.uri, enabled: true }, // the wire carries data only — no entryTypes, no key getter
+			{ uri: sibling.uri, enabled: true },
 			{ uri: source.uri, enabled: false },
 		] }
 		await integration.applyAndSync(em, structuredClone(body) as never)
-		assert.equal(sibling.enabled, true, 'the ticked source is matched by uri and enabled')
-		assert.equal(source.enabled, false, 'the unticked one is turned off')
-		// And the types stay the provider's answer, never the (type-less) request body's.
+		assert.equal(sibling.enabled, true)
+		assert.equal(source.enabled, false)
 		assert.deepEqual([...sibling.entryTypes], [EntryType.Task])
 	})
 
 	it('refreshes the entry types a source declares from the provider on every reconcile', async () => {
 		const em = orm.em.fork()
 		const { integration, source } = await seed(em, {})
-		source.entryTypes = [EntryType.Event] // as if the collection's component set had been different before
+		source.entryTypes = [EntryType.Event]
 		await em.flush()
 		await integration.getSources(em)
 		await em.flush()
-		assert.deepEqual([...source.entryTypes], [EntryType.Task], 'what a source can hold is provider truth, unlike its name')
+		assert.deepEqual([...source.entryTypes], [EntryType.Task])
 	})
 
 	it('still adopts a rename made at the provider (a local custom name yields to it)', async () => {
@@ -936,17 +877,16 @@ describe('Integration source reconciliation (name preservation)', () => {
 		await integration.getSources(em)
 		await em.flush()
 
-		source.name = 'My custom name' // renamed locally...
+		source.name = 'My custom name'
 		await em.flush()
 
-		// ...but now the VIEW itself is renamed in Notion (same id → same source key, new composite name).
 		state.views = [
 			{ object: 'view', id: 'view-1', name: 'Active', type: 'table' },
 			{ object: 'view', id: 'view-2', name: 'Board', type: 'board' },
 		]
 		await integration.getSources(em)
 		await em.flush()
-		assert.equal(source.name, 'Tasks · Active', 'a provider rename propagates through')
+		assert.equal(source.name, 'Tasks · Active')
 		assert.equal(source.remoteName, 'Tasks · Active')
 	})
 })

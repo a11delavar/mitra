@@ -9,7 +9,6 @@ import { EntryDragController } from '../../entries/client/EntryDragController.js
 import { WeeksDensityController } from './WeeksDensityController.js'
 import { Routines, type RoutineRun } from '../../routines/client/Routines.js'
 
-/** Cached week row layout structure. */
 type RenderedWeek = { week: ReadonlyArray<DateTime>, row: number, runs: ReadonlyArray<RoutineRun> } & MonthWeek
 
 /**
@@ -33,12 +32,10 @@ export class Weeks extends Component {
 
 	private get segments(): EntrySegments { return EntrySegments.of(this.routines.kept, this.buffer.window.days) }
 
-	/** Cached week layouts keyed by cohort routines. */
 	private weekLayouts: { cohort?: Routines, byWeek: Map<number, RenderedWeek> } = { byWeek: new Map() }
 
 	@query('.days') private readonly daysElement?: HTMLElement
 
-	/** Scroll and date metrics for week rows. */
 	private get metrics() {
 		const scroller = this.daysElement
 		const daysInWeek = this.navigatingDate.daysInWeek
@@ -84,7 +81,6 @@ export class Weeks extends Component {
 		this.toggleAttribute('data-week-numbers', this.weekNumbers)
 	}
 
-	/** Whether active calendar locale defines week numbers (ISO-8601 fallback). */
 	private get weekNumbers() {
 		return this.navigatingDate.weekOfYear !== undefined
 	}
@@ -95,9 +91,6 @@ export class Weeks extends Component {
 
 	static override get styles() {
 		return css`
-			/* Registered so the 100cqb (and the rem-based ideal) they carry are ABSOLUTIZED to px at
-			   computed-value time — see the twin registrations in Days.ts for why this is what makes
-			   the row math work outside Chromium. */
 			@property --_weeks-strip-height {
 				syntax: '<length>';
 				inherits: false;
@@ -215,7 +208,6 @@ export class Weeks extends Component {
 						color: var(--color-text);
 					}
 
-					/* Numeral sticks in block axis within cell so zoomed rows keep visible week labels. */
 					> span {
 						position: sticky;
 						inset-block-start: 0;
@@ -248,7 +240,6 @@ export class Weeks extends Component {
 						min-height: 0;
 						overflow: hidden;
 						mask-image: linear-gradient(to bottom, black calc(100% - 0.625rem), transparent);
-						/* Explicit z-index: 2 restores stacking order over resting connectors (z: 1) inside mask context. */
 						z-index: 2;
 						pointer-events: none;
 
@@ -309,8 +300,6 @@ export class Weeks extends Component {
 	protected override get template() {
 		const today = new DateTime().dayStart
 		const todayValue = today.valueOf()
-		// The month highlight (data-with-background) belongs to the guard key: it moves when the
-		// navigating month flips, and every cell of every week wears it.
 		const monthValue = this.bufferNavigatingDate.monthStart.dayStart.valueOf()
 		const daysInWeek = this.navigatingDate.daysInWeek
 		const weeks = new Array<Array<DateTime>>()

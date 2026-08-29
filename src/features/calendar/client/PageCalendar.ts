@@ -16,9 +16,6 @@ import { windowDragHandle } from '../../../design/windowDrag.css.js'
 @component('mitra-page-calendar')
 @route('/')
 export class PageCalendar extends PageComponent {
-	/** Without customizable-select support the classic picker renders an option's text verbatim, so a
-	 * <kbd> hint would fuse into the label ("YearY") — the hints are only rendered where they draw as
-	 * chips. A render-time gate, not CSS: the classic picker is OS-drawn and ignores author styles. */
 	private static readonly customizableSelectsSupported = CSS.supports('appearance', 'base-select')
 
 	@state() navigatingDate = new DateTime()
@@ -27,17 +24,12 @@ export class PageCalendar extends PageComponent {
 
 	readonly mediaController = new MediaQueryController(this, '(min-width: 800px)', () => this.sidebarOpen = PageCalendar.preferredSidebarOpen)
 
-	/** On desktop the sidebar opens unless the user collapsed it (remembered per browser); on mobile
-	 * it's an overlay and always starts closed. Evaluated eagerly for the initial render — the media
-	 * controller below only fires on breakpoint CHANGES, never on load. */
 	private static get preferredSidebarOpen() {
 		return window.matchMedia('(min-width: 800px)').matches && localStorage.getItem('Mitra.SidebarCollapsed') !== 'true'
 	}
 
 	readonly toggleSidebar = () => {
 		this.sidebarOpen = !this.sidebarOpen
-		// Only a desktop toggle expresses a lasting preference — closing the mobile overlay is just
-		// dismissing it, and must not collapse the sidebar on the next desktop visit.
 		if (this.mediaController.matches) {
 			localStorage.setItem('Mitra.SidebarCollapsed', String(!this.sidebarOpen))
 		}
@@ -45,7 +37,6 @@ export class PageCalendar extends PageComponent {
 
 	@queryAll('mitra-entry-segment') readonly eventSegments!: Array<EntrySegmentComponent>
 
-	/** The scoped view transition's stage — persistent across view swaps (see the template). */
 	@query('.calendar') private readonly calendar!: HTMLElement
 
 	setView(value: CalendarView) {
@@ -55,9 +46,6 @@ export class PageCalendar extends PageComponent {
 		this.transition('view-switch', () => { this.view = value })
 	}
 
-	/** Run a navigation-shaped change through the calendar's scoped view transition (see
-	 * calendarTransition.ts) — settling every segment's render first, so the new-state capture
-	 * snapshots the finished layout, never a mid-update frame. */
 	private transition(type: CalendarTransitionType, change: () => unknown) {
 		transitionCalendar(this.calendar, type, async () => {
 			await change()
@@ -70,44 +58,25 @@ export class PageCalendar extends PageComponent {
 	readonly store = new EntryStore(this)
 
 	@query('mitra-command-palette') private readonly palette!: CommandPalette
-
 	@query('mitra-sidebar') private readonly sidebar?: Sidebar
-
 	@query('input.goto-date') private readonly gotoDateInput!: HTMLInputElement
 
-	/** The page's palette commands — the registry's own instances (see commands/), rebuilt only when the
-	 * language changes. The palette only lists and dispatches; the keydown interceptor below matches
-	 * against these same instances. */
 	get commands() { return commandInstances() }
 
-	/** Those plus one verb per calendar, which can't be a stable list — calendars come and go while the
-	 * page lives — so they're built from the store per render (see commands/sources.ts). Keyless, so
-	 * the interceptor above stays on the registry's instances.
-	 *
-	 * They lead rather than trail: appended, the way out of a solo landed sixteenth in a list that
-	 * scrolls at ten. The per-calendar solos cost the head of the list nothing, since they wait for
-	 * something to be typed (see Command.listedWithoutQuery). */
 	private get paletteCommands() {
 		return [...sourceCommands(), ...this.commands, ...settingCommands()]
 	}
 
-	/** Follows any change to which sources are on show. Visibility filters server-side, so the entries
-	 * are re-read; the sidebar is re-rendered from here because a palette command changes its state
-	 * without the sidebar being the one that did it. */
 	readonly sourcesChanged = () => {
 		this.sidebar?.requestUpdate()
 		this.transition('source-toggle', () => this.fetcher.task.run())
 	}
 
-	/** How far one "next"/"previous" hop moves: one of whatever the current view shows. */
 	get navigationStep() {
 		return this.view === 'week' ? { weeks: 1 } : this.view === 'year' ? { years: 1 } : { months: 1 }
 	}
 
-	/** The Go to Date command's surface: reveal a native date picker seeded to the current position;
-	 * picking a day navigates the calendar there. Stays on the page (not the command class) because
-	 * it drives the page's own hidden input — rendered, not `display: none`, so `showPicker()` can
-	 * open it while the palette's click/Enter still carries the transient activation the API requires. */
+	/** Trigger native date picker for the Go to Date command. */
 	goToDate() {
 		const input = this.gotoDateInput
 		const date = this.navigatingDate
@@ -115,7 +84,6 @@ export class PageCalendar extends PageComponent {
 		try {
 			input.showPicker()
 		} catch {
-			// showPicker is unsupported or blocked here — the (visually hidden) field still accepts typed input.
 			input.focus()
 		}
 	}
@@ -123,17 +91,12 @@ export class PageCalendar extends PageComponent {
 	private handleGoToDate(e: Event) {
 		const value = (e.target as HTMLInputElement).value
 		if (value) {
-			// Local midnight (the `T` suffix), matching the local `new DateTime()` used everywhere else for navigation.
 			this.navigatingDate = new DateTime(`${value}T00:00:00`)
 		}
 	}
 
 	@eventListener({ target: window, type: 'keydown' })
 	protected handleKeyDown(e: KeyboardEvent) {
-		// Never hijack a keystroke meant for a text field — a single-letter view shortcut ('m' → month)
-		// would otherwise fire mid-typing. Covers native fields AND contenteditable (the sidebar's
-		// inline source-rename is a `contenteditable` div, not an <input>). Also stand down for shortcut
-		// chords (Ctrl/Cmd/Alt) and IME composition, which aren't ours to consume.
 		const target = e.target
 		const editable = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
 			|| target instanceof HTMLSelectElement || (target instanceof HTMLElement && target.isContentEditable)
@@ -141,22 +104,16 @@ export class PageCalendar extends PageComponent {
 			return
 		}
 
-		// A modal dialog owns the keyboard while open — everything behind it is inert, so the focused
-		// target always sits inside the dialog's composed path. Without this, pressing "m" in, say, the
-		// shortcuts sheet would switch the calendar's view behind the dialog.
 		if (e.composedPath().some(node => node instanceof HTMLDialogElement)) {
 			return
 		}
 
-		// "/" is the page's search affordance (the header's fake search box as a key), not a command —
-		// opening the palette from inside the palette makes no sense, so it isn't listed there.
 		if (e.key === '/') {
 			e.preventDefault()
 			this.palette.show()
 			return
 		}
 
-		// One interceptor for every keyed command: first registered match wins (see commands/).
 		const command = this.commands.find(command => command.matches(e))
 		if (command) {
 			e.preventDefault()
@@ -170,8 +127,6 @@ export class PageCalendar extends PageComponent {
 				display: contents;
 			}
 
-			/* A running transition's pseudo tree wins hit-testing by default, deadening the calendar
-			   for the animation's duration — let clicks fall through to the live DOM instead. */
 			::view-transition {
 				pointer-events: none;
 			}
@@ -185,14 +140,6 @@ export class PageCalendar extends PageComponent {
 				flex-direction: row;
 				position: absolute;
 				inset: 0;
-				/* clip, not hidden — the shell must never be a SCROLL container. Nothing here is meant to
-				   scroll (the views own their scrollers), but 'hidden' still leaves a scrollable box whose
-				   offset only code can reach: let the header outgrow a short viewport once and any
-				   scrollIntoView inside (the week view centres a day's cell on arrivals, see
-				   CalendarScrollController's arrival hook) could
-				   park the header out of sight, with no gesture able to bring it back. Same reason the
-				   document itself is pinned to the viewport in Mitra's root styles; 'clip' cannot hold an
-				   offset at all, and crops identically. */
 				overflow: clip;
 
 				main {
@@ -201,11 +148,6 @@ export class PageCalendar extends PageComponent {
 					flex: 1;
 					min-width: 0;
 					min-height: 0;
-					/* The week view sizes its day columns off this container's 100cqi (see the
-					   grid-template-columns math in Days.ts): the strip and this column are width-identical,
-					   and container units — unlike percentages, which never resolve early enough for the
-					   length-ratio math there — are plain px by computed-value time. Containment is inert on
-					   main itself: a flex: 1 (basis-0) item never consults its contents for its inline size. */
 					container-type: inline-size;
 
 					> header {
@@ -215,42 +157,23 @@ export class PageCalendar extends PageComponent {
 						gap: 0.75rem;
 						padding: 0.75rem 1.25rem;
 
-						/* Window Controls Overlay: the manifest's display_override removes the OS title bar and
-						   hands that strip to us, so nothing is draggable until we say so. The header is that
-						   handle — its padding, its gaps, and the stretch either side of the title — while
-						   everything in it stays the app's (windowDrag.css.ts).
-
-						   The overlaid buttons sit at the top-inline-END on Windows/Linux and the top-inline-START
-						   on macOS (the traffic lights). env(titlebar-area-*) already encodes which — no OS
-						   sniffing: the trailing gap is the viewport minus the safe area's far edge (the Windows
-						   button cluster; ~0 on macOS), so this inset clears them exactly where they exist. */
 						@media (display-mode: window-controls-overlay) {
 							box-sizing: border-box;
 							min-height: env(titlebar-area-height, auto);
 							padding-inline-end: calc(1.25rem + (100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw)));
 							${windowDragHandle};
 
-							/* The flanking columns are pure layout and the month label is pure text — inert
-							   forever, so they carry the window rather than punching two holes in it. Their
-							   controls are handed back by the handle above and stay live. */
 							.leading, .trailing, h1 {
 								-webkit-app-region: drag;
 							}
 						}
 
-						/* On a cramped header the shortcut hints are noise — every kbd goes (the search's, the
-						   Today chip's, and the view options' — the select picker is still a DOM descendant, so
-						   the container query reaches it). */
 						@container (max-width: 40rem) {
 							kbd {
 								display: none;
 							}
 						}
 
-						/* Two equal columns flank the search, so it stays truly centered — and keeps its size —
-						   however wide the month label renders while scrolling. Once the header runs out of
-						   room, the trailing column stops flexing so the leading one grows into the freed
-						   center, carrying the (by then icon-sized) search over to the controls on the right. */
 						.leading, .trailing {
 							flex: 1 0 0;
 							min-width: 0;
@@ -277,7 +200,6 @@ export class PageCalendar extends PageComponent {
 							font-size: 20px;
 						}
 
-						/* Sheds its label on a cramped header, leaving a jump-to-today icon. */
 						.today {
 							mitra-icon {
 								display: none;
@@ -295,8 +217,6 @@ export class PageCalendar extends PageComponent {
 							}
 						}
 
-						/* The view select likewise: label out, glyph in. (The classic, OS-drawn select ignores
-						   both the in-button icon and these rules — it just keeps showing the option text.) */
 						select {
 							> button > mitra-icon {
 								display: none;
@@ -314,9 +234,6 @@ export class PageCalendar extends PageComponent {
 							}
 						}
 
-						/* The fake search box: just a button dressed as an input — the real one lives in the palette.
-						   Fixed width and unshrinkable, so scrolling from a short month into a long one (July →
-						   September) never resizes it — the flanking columns absorb the label's growth, not this. */
 						.search {
 							width: 18rem;
 							flex-shrink: 0;
@@ -324,8 +241,6 @@ export class PageCalendar extends PageComponent {
 							border-radius: calc(2 * var(--border-radius));
 							font-weight: 400;
 
-							/* Muted on the placeholder text only, so the icon reads at the same weight as the
-							   view and Today icons beside it — the three collapse to matching glyphs. */
 							span {
 								flex: 1;
 								text-align: start;
@@ -334,9 +249,6 @@ export class PageCalendar extends PageComponent {
 								color: var(--color-text-muted);
 							}
 
-							/* Collapses to a bare icon only when even the widest month ("September") could no
-							   longer sit beside the full box — kept this late so the palette stays full as long
-							   as it possibly can. */
 							@container (max-width: 44rem) {
 								width: auto;
 								border-radius: var(--border-radius);
@@ -347,8 +259,6 @@ export class PageCalendar extends PageComponent {
 							}
 						}
 
-						/* Once the search has collapsed, freeze the trailing column at its content width so the
-						   leading one grows into the center — carrying the search icon over to the controls. */
 						@container (max-width: 44rem) {
 							.trailing {
 								flex: none;
@@ -356,11 +266,6 @@ export class PageCalendar extends PageComponent {
 						}
 					}
 
-					/* The view transition's scope (see calendarTransition.ts): contained, so the browser
-					   needn't force containment at capture time (a reflow), and clipped, so morphing
-					   snapshots stay inside the calendar — header and sidebar sit outside the scope and
-					   stay live. Deliberately NOT a query container: the week view's 100cqi math
-					   (see Days.ts) must keep resolving against main. */
 					.calendar {
 						flex: 1;
 						min-width: 0;
@@ -377,18 +282,12 @@ export class PageCalendar extends PageComponent {
 					}
 				}
 
-				/* Leading inset only while the sidebar is collapsed — then the header owns the top-leading
-				   corner and must clear macOS's traffic lights (titlebar-area-x ≈ their width; 0 elsewhere).
-				   With the sidebar open it owns that corner itself (see Sidebar), and insetting the header
-				   too would shove its title needlessly over. */
 				mitra-sidebar:not([open]) + main > header {
 					@media (display-mode: window-controls-overlay) {
 						padding-inline-start: calc(1.25rem + env(titlebar-area-x, 0px));
 					}
 				}
 
-				/* Anchors the native date picker near the header (where the palette was); kept rendered, not
-				   display:none, so showPicker() works — see goToDate. */
 				input.goto-date {
 					position: fixed;
 					inset-block-start: 3.5rem;
@@ -409,10 +308,6 @@ export class PageCalendar extends PageComponent {
 	protected override get template() {
 		return html`
 			<lit-page>
-				${/* Hiding/showing a source refetches (visibility filters server-side) through the calendar's
-				   transition, so survivors glide into the freed space; the SSE echo then applies as a no-op.
-				   It navigates like the views do: the Planning panel's chips carry the same editor, whose
-				   relation lines can lead to a dated entry. */''}
 				<mitra-sidebar ?open=${bind(this, 'sidebarOpen')} @sourcesChange=${this.sourcesChanged}
 					@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
 				></mitra-sidebar>
@@ -433,10 +328,6 @@ export class PageCalendar extends PageComponent {
 									<mitra-icon icon="calendar-cog"></mitra-icon>
 									<selectedcontent></selectedcontent>
 								</button>
-								${/* Options built via .map, NOT inline <option> literals: an inline option carrying a lit marker is
-								   present when lit sets the template's innerHTML, and Chrome 150 clones it into <selectedcontent>
-								   right then — duplicating the marker and corrupting lit's part indices. Mapped options aren't
-								   in the template at prep time, so nothing is cloned then. (Do not inline these.) */''}
 								${[{ value: 'year', label: t('Year'), key: 'Y' }, { value: 'month', label: t('Month'), key: 'M' }, { value: 'week', label: t('Week'), key: 'W' }, { value: 'timeline', label: t('Timeline'), key: 'L' }].map(o => html`<option value=${o.value} ?selected=${o.value === this.view}>${o.label}${PageCalendar.customizableSelectsSupported ? html`<kbd>${o.key}</kbd>` : html.nothing}</option>`)}
 							</select>
 							<button class="today" @click=${() => this.navigatingDate = new DateTime()}>
@@ -445,8 +336,6 @@ export class PageCalendar extends PageComponent {
 							</button>
 						</div>
 					</header>
-					${/* The scoped view transition's stage (see calendarTransition.ts): a PERSISTENT element —
-					   the scope must survive the update it animates, while the views inside swap out. */''}
 					<div class="calendar">
 						${choose(this.view, [
 							['week', () => html`
@@ -486,7 +375,6 @@ export class PageCalendar extends PageComponent {
 					.commands=${this.paletteCommands}
 					@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
 				></mitra-command-palette>
-				${/* Visually hidden but rendered, so the Go to Date command can open its native picker (see goToDate). */''}
 				<input class="goto-date" type="date" aria-hidden="true" tabindex="-1" @change=${(e: Event) => this.handleGoToDate(e)}>
 			</lit-page>
 		`

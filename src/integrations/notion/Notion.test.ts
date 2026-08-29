@@ -13,10 +13,6 @@ import { asBrowser, wireOf } from '../../infrastructure/model/wire.testing.js'
 type DateTime = import('@3mo/date-time').DateTime
 const D = (iso: string) => new Date(iso) as unknown as DateTime
 
-/** A task database's schema the way GET /data_sources/{id} serves it: a status property whose
- * options live in the three fixed groups (incl. a second "Shipped" option in Complete, to pin that
- * reads map by group and writes never rename it), a date property, and a decoy earlier date
- * property ("Created") that conventional naming must lose against. */
 const dataSource = (overrides?: Partial<NotionDataSource>): NotionDataSource => ({
 	object: 'data_source',
 	id: 'ds-1',
@@ -40,12 +36,8 @@ const dataSource = (overrides?: Partial<NotionDataSource>): NotionDataSource => 
 			},
 		},
 		'Due': { id: 'due', name: 'Due', type: 'date' },
-		// A non-mapped select the way a "University" view filters on it (referenced by id in filters).
 		'Area': { id: 'area%3F', name: 'Area', type: 'select' },
 		'Pinned': { id: 'pin', name: 'Pinned', type: 'checkbox' },
-		// The relation properties verbatim from a real task database: two two-way self-references
-		// (each a pair of synced twins, ids percent-encoded as Notion serves them) and one pointing
-		// at ANOTHER database, which relates a task to something that is not an entry.
 		'Parent Task': relationProperty('uXhq', 'Parent Task', 'Sub Tasks'),
 		'Sub Tasks': relationProperty('VrqI', 'Sub Tasks', 'Parent Task'),
 		'Blocked by': relationProperty('%5CHMd', 'Blocked by', 'Blocking'),
@@ -55,7 +47,6 @@ const dataSource = (overrides?: Partial<NotionDataSource>): NotionDataSource => 
 	...overrides,
 })
 
-/** A self-referencing relation property of the fixture database, with its synced twin. */
 const relationProperty = (id: string, name: string, twin?: string) => ({
 	id, name, type: 'relation',
 	relation: {
@@ -102,7 +93,6 @@ describe('Notion.schemaIndexOf', () => {
 	})
 
 	it('prefers a conventionally-named date property over an earlier decoy', () => {
-		// "Created" comes first in the schema map, but "Due" is the scheduling property.
 		assert.equal(schema().dateProperty, 'Due')
 	})
 
@@ -119,7 +109,6 @@ describe('Notion.schemaIndexOf', () => {
 		assert.equal(index.optionByStatus.get(TaskStatus.ToDo), 'o-not-started')
 		assert.equal(index.optionByStatus.get(TaskStatus.Doing), 'o-doing')
 		assert.equal(index.optionByStatus.get(TaskStatus.Done), 'o-done')
-		// The fourth status has no Notion group — deliberately unwritable.
 		assert.equal(index.optionByStatus.get(TaskStatus.Cancelled), undefined)
 	})
 
@@ -154,8 +143,6 @@ describe('Notion relation properties (relationPropertiesOf)', () => {
 	const namesAndTypes = (source: NotionDataSource) => Notion.relationPropertiesOf(source).map(property => [property.name, property.type.value])
 
 	it('maps the end mitra STORES of each two-way relationship, and drops the synced twin', () => {
-		// One Notion relationship is two synced properties; mitra stores one direction and derives the
-		// reverse, so mapping both would double every edge — and leave the write path two places to go.
 		assert.deepEqual(namesAndTypes(dataSource()), [
 			['Parent Task', 'PARENT'],
 			['Blocked by', 'FINISHTOSTART'],
@@ -178,8 +165,6 @@ describe('Notion relation properties (relationPropertiesOf)', () => {
 	})
 
 	it('maps a lone "Blocking" to NOTHING — that end has no RELTYPE to be stored as', () => {
-		// All four RFC 9253 temporal types are authored on the dependent, so the "blocks" direction is
-		// the other page's line to own. Inventing one here would misstate who waits for whom.
 		const source = dataSource()
 		delete source.properties['Blocked by']
 		source.properties['Blocking'] = relationProperty('%40n~I', 'Blocking') as never
@@ -219,7 +204,6 @@ describe('Notion relation reads (relationsFrom)', () => {
 	})
 
 	it('reads each mapped property as lines of its type, targeting the related PAGE IDS', () => {
-		// Page ids are uids here (see applyPage) — that is what makes a Notion relation a mitra one.
 		assert.deepEqual(Notion.relationsFrom(related({ parent: ['page-parent'], blockedBy: ['page-blocker'] }), schema())?.map(relation => [relation.type.value, relation.targetUid]), [
 			['FINISHTOSTART', 'page-blocker'],
 			['PARENT', 'page-parent'],
@@ -304,7 +288,6 @@ describe('Notion relation writes (relationPropertiesFrom / changedRelationProper
 
 describe('Notion.deriveFilterDefaults', () => {
 	it('sets a select property the view filters on, resolving the filter\'s property ID to its name', () => {
-		// The "University" view: Area = University, referenced by url-encoded property id (as saved filters do).
 		const defaults = Notion.deriveFilterDefaults({ filter: { property: 'area%3F', select: { equals: 'University' } } }, dataSource())
 		assert.deepEqual(defaults, { Area: { select: { name: 'University' } } })
 	})
@@ -345,9 +328,8 @@ describe('Notion.deriveFilterDefaults', () => {
 	})
 
 	it('reads quick_filters (where real task views keep their filtering, with raw property ids)', () => {
-		// The University view has filter:null and everything in quick_filters, keyed by the RAW id.
 		const defaults = Notion.deriveFilterDefaults({ filter: null as any, quick_filters: {
-			'area?': { select: { equals: 'University' } }, // raw id `area?` ↔ schema id `area%3F`
+			'area?': { select: { equals: 'University' } },
 		} }, dataSource())
 		assert.deepEqual(defaults, { Area: { select: { name: 'University' } } })
 	})
@@ -362,7 +344,6 @@ describe('Notion.deriveFilterDefaults', () => {
 	})
 
 	it('skips a filter on a since-deleted property (the University view\'s stale relation) rather than guessing', () => {
-		// `]{OQ` resolves to no current schema property → no write, no crash.
 		const defaults = Notion.deriveFilterDefaults({ quick_filters: {
 			']{OQ': { relation: { contains: 'some-page' } },
 		} }, dataSource())
@@ -380,7 +361,6 @@ describe('Notion.deriveFilterDefaults', () => {
 	it('writes a real status option the view filters on, but skips a status GROUP name (not a writable option)', () => {
 		const byOption = Notion.deriveFilterDefaults({ filter: { property: 'Status', status: { equals: 'Shipped' } } }, dataSource())
 		assert.deepEqual(byOption, { Status: { status: { name: 'Shipped' } } })
-		// "Complete" is a GROUP, not an option — unwritable, so it's skipped rather than failing the create.
 		const byGroup = Notion.deriveFilterDefaults({ filter: { property: 'Status', status: { equals: 'Complete' } } }, dataSource())
 		assert.deepEqual(byGroup, {})
 	})
@@ -393,7 +373,6 @@ describe('Notion.deriveFilterDefaults', () => {
 	})
 
 	it('skips a condition no single value can satisfy, and an unknown property', () => {
-		// A date-range / is-not-empty style condition mitra doesn't model → ignored (undefined operator).
 		assert.deepEqual(Notion.deriveFilterDefaults({ filter: { property: 'Due' } as any }, dataSource()), {})
 		assert.deepEqual(Notion.deriveFilterDefaults({ filter: { property: 'Nonexistent', select: { equals: 'x' } } }, dataSource()), {})
 	})
@@ -433,7 +412,7 @@ describe('Notion date decoding (spanFrom)', () => {
 
 	it('reads a wall-clock date-time in the value\'s time_zone, which becomes the authoring zone', () => {
 		const span = Notion.spanFrom({ start: '2026-07-14T09:00:00', end: '2026-07-14T10:00:00', time_zone: 'Europe/Berlin' })
-		assert.equal(span.start!.toISOString(), '2026-07-14T07:00:00.000Z') // 09:00 Berlin (CEST) = 07:00Z
+		assert.equal(span.start!.toISOString(), '2026-07-14T07:00:00.000Z')
 		assert.equal(span.end!.toISOString(), '2026-07-14T08:00:00.000Z')
 		assert.equal(span.timeZone, 'Europe/Berlin')
 	})
@@ -562,7 +541,7 @@ describe('Notion page reads (applyPage)', () => {
 			reminders: [30],
 		})
 		Notion.applyPage(entry, page(), schema())
-		assert.equal(entry.description, '', 'a page object carries no body — without a fetched description there is none')
+		assert.equal(entry.description, '')
 		assert.equal(entry.location, '')
 		assert.equal(entry.color, null)
 		assert.equal(entry.reminders, null)
@@ -592,14 +571,6 @@ describe('Notion integration model', () => {
 	})
 
 	it('declares what Notion cannot represent — the editor hides these fields', () => {
-		// timeZone:false — Notion's date property can't hold a named IANA zone (its API resolves any
-		// time_zone to a fixed offset and returns time_zone:null), so the zone picker/lens is hidden.
-		// description:true — the page body maps to markdown (NotionMarkdown).
-		// participants:false — a page has no invitees (people ≠ RFC 5545 group-scheduling).
-		// percentComplete:false — Notion models status groups only, without percent-complete property.
-		// Asserted as the DEVIATIONS from the full set rather than as a snapshot of it: a capability
-		// added to Integration is supported here until Notion says otherwise, and a whole-object
-		// comparison would fail on every such addition without Notion having changed at all.
 		const capabilities = account().capabilities
 		const unsupported = Object.entries(capabilities).filter(([, supported]) => !supported).map(([key]) => key)
 		assert.deepEqual(unsupported.sort(), ['cancelledStatus', 'location', 'participants', 'percentComplete', 'recurrence', 'reminders', 'timeZone', 'transparency', 'visibility'])
@@ -627,15 +598,13 @@ describe('Notion integration model', () => {
 			assert.deepEqual(json.credentials, { username: 'Acme Workspace', token: '' })
 		})
 
-		// The other direction of the same rule, and the reason it is a rule about direction: the connect
-		// dialog posts the very instance the user pasted the token into, and it has to arrive.
 		it('delivers the token when it is the browser asking', () => {
 			assert.equal(asBrowser(() => wireOf(account())).credentials.token, 'ntn_secret')
 		})
 
 		it('never carries a live connection', () => {
 			const integration = account()
-			integration['getClient']() // reaching for it is what creates it
+			integration['getClient']()
 
 			assert.equal('client' in wireOf(integration), false)
 			assert.equal('dataSources' in wireOf(integration), false)
@@ -643,8 +612,6 @@ describe('Notion integration model', () => {
 	})
 
 	it('is a polymorphic editable copy carrying the credentials as held', () => {
-		// As the client holds them — the token already withheld by the server that answered (see the
-		// `@converter` on `credentials`), and blank is exactly what `merge` reads as "keep the stored one".
 		const held = new Notion({ ...account(), credentials: { username: 'Acme Workspace', token: '' } })
 		const copy = held.editableCopy()
 

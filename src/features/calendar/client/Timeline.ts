@@ -12,7 +12,6 @@ import { CalendarScrollController } from './CalendarScrollController.js'
 import { EntryDragController } from '../../entries/client/EntryDragController.js'
 import { TimelineDensityController } from './TimelineDensityController.js'
 
-/** An entry's run projected onto the buffer as a column-spanning bar. */
 interface TimelineBar {
 	readonly segment: EntrySegment
 	readonly startColumn: number
@@ -20,60 +19,47 @@ interface TimelineBar {
 	readonly clippedRight: boolean
 }
 
-/** A timeline lane containing task bars (or ghost previews) for a single row. */
 interface TimelineRow {
 	readonly key: string
-	/** Task start date used for sorting and offscreen jump targeting. */
 	readonly date: DateTime
 	readonly sortValue: number
 	readonly heading: string
 	readonly bars: Array<TimelineBar>
 }
 
-/** A bar with the row it landed in (1-based, as CSS grid counts). */
 type PlacedBar = TimelineBar & { readonly row: number }
 
-/** How far ahead recurring task occurrences are shown before collapsing into the next single instance. */
 const ROUTINE_HORIZON = 24 * 60 * 60 * 1000
-
-/** Maximum distance in days to smooth-scroll a jump before cutting directly to the target. */
 const MAX_GLIDE_DAYS = 365
 
 /**
  * Horizontally-scrolling timeline view for open, scheduled tasks.
- * Each row corresponds to a single task sorted by start date.
  */
 @component('mitra-timeline')
 export class Timeline extends Component {
 	@property({ type: Object }) navigatingDate = new DateTime()
 	@property({ type: Array }) entries = new Array<Entry>()
 
-	// Render radius must stay ahead of the half-viewport plus recenter hysteresis (120 ≥ 90 + 21).
 	private readonly dates: CalendarDatesController = new CalendarDatesController(this, { radiusDays: 120, shiftDays: 21 })
 	protected readonly entryDrag = new EntryDragController(this, 'timeline')
 	protected readonly density = new TimelineDensityController(this)
 
 	private get days(): Array<DateTime> { return this.dates.days }
-	// Segments span the full buffer so horizontal scrolling does not alter row presence.
 	private get segments() { return EntrySegments.of(this.entries, this.dates.days) }
 
-	/** Rows of the last render, in order for scroll-anchoring lookups. */
 	private renderedRows: Array<TimelineRow> = []
 
-	/** Column pitch measured off a rendered backdrop cell to avoid sub-pixel rounding drift across wide buffers. */
 	private get pitch() {
 		const cell = this.renderRoot.querySelector('.backdrop .day')
 		return cell ? cell.getBoundingClientRect().width : this.scrollWidth / (this.days.length || 1)
 	}
 
-	/** Content offset centering the given date's column. */
 	private inlineOffsetOf(date: DateTime) {
 		const first = this.days[0]
 		const pitch = this.pitch
 		if (!first || !(pitch > 0)) {
 			return undefined
 		}
-		// Consecutive local days, so day distance is the column index.
 		const column = Math.round((date.dayStart.valueOf() - first.dayStart.valueOf()) / 86_400_000)
 		return (column + 0.5) * pitch - this.clientWidth / 2
 	}
@@ -82,7 +68,6 @@ export class Timeline extends Component {
 		axis: 'inline',
 		scroller: () => this,
 		ready: () => this.days.length > 0 && this.pitch > 0,
-		// Suspend scroll sync during pinch-zoom or glides to prevent intermediate frame churn.
 		suspended: () => this.density.active || this.gliding,
 		offsetOf: date => this.inlineOffsetOf(date),
 		dateAt: offset => {
@@ -94,18 +79,12 @@ export class Timeline extends Component {
 			return this.days[Math.max(0, Math.min(column, this.days.length - 1))]
 		},
 		equivalent: (a, b) => a.dayStart.equals(b.dayStart),
-		// Reveal the target date's vertical row band upon arrival.
 		arrived: date => this.revealRowAt(date),
 	})
 
-	/**
-	 * Anchors vertical scroll position to a row key (or start day fallback) so row mutations above
-	 * the viewport do not shift visible content.
-	 */
 	private blockAnchor?: { key?: string, value: number, offset: number }
 	private restoringBlock = false
 
-	/** Content offset and height metrics of the entry rows. */
 	private get rowMetrics() {
 		const entries = this.renderRoot.querySelector('.entries')
 		const height = entries?.querySelector('.row')?.getBoundingClientRect().height
@@ -115,7 +94,6 @@ export class Timeline extends Component {
 		return { top: entries.getBoundingClientRect().top - this.getBoundingClientRect().top + this.scrollTop, height }
 	}
 
-	/** Updates dataset attributes on offscreen rows directly to avoid per-scroll-frame re-renders. */
 	private readonly markOffscreenRows = () => {
 		this.jumpFrame = undefined
 		const rows = this.renderRoot.querySelectorAll<HTMLElement>('.entries > .row')
@@ -129,7 +107,6 @@ export class Timeline extends Component {
 		rows.forEach((element, index) => {
 			const row = this.renderedRows[index]
 			const bar = row?.bars[0]
-			// When a task has no rendered bar in the buffer, determine direction from its start date.
 			const side = !row ? undefined
 				: !bar ? (row.sortValue < dayAt(from) ? 'before' : 'after')
 					: bar.startColumn + bar.span - 1 < from ? 'before'
@@ -146,8 +123,6 @@ export class Timeline extends Component {
 	}
 
 	private jumpFrame?: number
-
-	/** True while a jump is gliding. */
 	private gliding = false
 
 	@eventListener('scrollend')
@@ -155,15 +130,12 @@ export class Timeline extends Component {
 		this.gliding = false
 	}
 
-	/** Smoothly scrolls the timeline horizontally to reveal the row's entry. */
 	private jumpToRow(row: TimelineRow) {
 		const bar = row.bars[0]
-		// Target bar midpoint if rendered, otherwise fall back to task date.
 		const target = bar ? this.days[Math.round(bar.startColumn + (bar.span - 1) / 2)] ?? row.date : row.date
 		const buffer = this.dates.days
 		this.dates.navigatingDate = target
 		const offset = this.inlineOffsetOf(target)
-		// Cut instantly if distance exceeds max glide threshold, buffer regenerated, or reduced motion is requested.
 		const pitch = this.pitch
 		const far = offset === undefined || !(pitch > 0) || Math.abs(offset - Math.abs(this.scrollLeft)) / pitch > MAX_GLIDE_DAYS
 		if (far || this.dates.days !== buffer || matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -172,7 +144,6 @@ export class Timeline extends Component {
 		}
 		this.gliding = true
 		const distance = Math.max(0, Math.min(offset, this.scrollWidth - this.clientWidth))
-		// scrollLeft counts backwards in RTL — the mirror of the reading's Math.abs().
 		this.scrollTo({ left: getComputedStyle(this).direction === 'rtl' ? -distance : distance, behavior: 'smooth' })
 	}
 
@@ -189,13 +160,11 @@ export class Timeline extends Component {
 		if (!metrics || !this.renderedRows.length) {
 			return
 		}
-		// Row currently intersecting the viewport's top edge.
 		const index = Math.min(this.renderedRows.length - 1, Math.max(0, Math.floor((this.scrollTop - metrics.top) / metrics.height)))
 		const row = this.renderedRows[index]!
 		this.blockAnchor = { key: row.key, value: row.sortValue, offset: metrics.top + index * metrics.height - this.scrollTop }
 	}
 
-	/** Restores vertical scroll position to match the current block anchor. */
 	private restoreBlockAnchor() {
 		const anchor = this.blockAnchor
 		const metrics = this.rowMetrics
@@ -213,7 +182,6 @@ export class Timeline extends Component {
 		}
 	}
 
-	/** Centers the row corresponding to date in the vertical viewport. */
 	private revealRowAt(date: DateTime) {
 		this.blockAnchor = { value: date.dayStart.valueOf(), offset: Math.round(this.clientHeight / 2) }
 		this.restoreBlockAnchor()
@@ -224,7 +192,6 @@ export class Timeline extends Component {
 	}
 
 	protected override updated(props: PropertyValues<this>) {
-		// Avoid re-anchoring when navigation originated from internal scrolling.
 		if (props.has('navigatingDate') && !this.navigatingDate.dayStart.equals(this.dates.navigatingDate.dayStart)) {
 			this.scrolling.navigate(this.navigatingDate)
 		}
@@ -237,10 +204,8 @@ export class Timeline extends Component {
 		return css`
 			mitra-timeline {
 				display: grid;
-				/* Integer pixel rounding prevents sub-pixel phase jitter and cumulative pitch error during zoom. */
 				--day-width: max(1px, round(calc(100cqi / 180 * var(--timeline-zoom, 3)), 1px));
 				--row-height: 1.75rem;
-				/* Tinted rules ensure consistent contrast across transparent canvas backgrounds. */
 				--_rule: color-mix(in srgb, var(--color-text-muted) 12%, transparent);
 				--_rule-strong: color-mix(in srgb, var(--color-text-muted) 28%, transparent);
 				grid-template-columns: repeat(var(--_days-length, 1), var(--day-width));
@@ -248,7 +213,6 @@ export class Timeline extends Component {
 				min-height: 0;
 				min-width: 0;
 				overflow: auto;
-				/* Two-finger pinch belongs to TimelineDensityController; single-finger pan still scrolls. */
 				touch-action: pan-x pan-y;
 
 				mitra-entry-segment {
@@ -265,7 +229,6 @@ export class Timeline extends Component {
 							display: none !important;
 						}
 
-						/* Too narrow for both: the time goes before the heading does. */
 						@container (max-width: 6rem) {
 							display: none !important;
 						}
@@ -297,7 +260,6 @@ export class Timeline extends Component {
 						padding-block: 0.25rem;
 						border-inline-start: 1px solid var(--_rule-strong);
 
-						/* Sticks label within the visible portion of its month cell. */
 						> span {
 							position: sticky;
 							inset-inline-start: 0.5rem;
@@ -326,7 +288,6 @@ export class Timeline extends Component {
 							border-radius: 999px;
 						}
 
-						/* In narrow columns, hide day numbers except for week starts and today. */
 						&:not([data-week-start]):not([data-today]) > span {
 							@container (max-width: 1.25rem) {
 								display: none;
@@ -339,7 +300,6 @@ export class Timeline extends Component {
 						}
 					}
 
-					/* Packed bands for all-day events. */
 					.events {
 						grid-row: 3;
 						grid-column: 1 / -1;
@@ -376,7 +336,6 @@ export class Timeline extends Component {
 						}
 					}
 
-					/* Shaded column extending all-day event background through the body. */
 					.shade {
 						grid-row: 1;
 						background-color: color-mix(in srgb, var(--_shade-color, transparent) 10%, transparent);
@@ -404,7 +363,6 @@ export class Timeline extends Component {
 							background-color: color-mix(in srgb, var(--color-text-muted) 6%, transparent);
 						}
 
-						/* Sticky indicator pointing towards offscreen task bars. */
 						> .jump {
 							position: sticky;
 							z-index: 2;
@@ -416,7 +374,6 @@ export class Timeline extends Component {
 							padding: 0;
 							font-size: 0.75rem;
 							color: var(--color-text-muted);
-							/* Opaque background avoids muddying over shaded event columns or the today line. */
 							background-color: color-mix(in srgb, var(--color-text) 5%, var(--color-background));
 							border: 1px solid color-mix(in srgb, var(--color-text) 20%, var(--color-background));
 
@@ -442,12 +399,10 @@ export class Timeline extends Component {
 						}
 					}
 
-					/* Explicit height prevents container sizing collapse. */
 					> mitra-entry-segment {
 						align-self: center;
 						block-size: calc(var(--row-height) - 0.375rem);
 						z-index: 1;
-						/* Heading overflows single-day bars and sticks to the viewport edge during horizontal scroll. */
 						overflow: visible !important;
 
 						> .heading {
@@ -458,7 +413,6 @@ export class Timeline extends Component {
 							overflow: visible !important;
 						}
 
-						/* Always display task status checkbox even in narrow bars since heading overflows the box. */
 						mitra-task-status {
 							display: inline-flex !important;
 						}
@@ -476,7 +430,6 @@ export class Timeline extends Component {
 					}
 				}
 
-				/* Sticky drop/create target filling the remaining viewport area below the planned rows. */
 				.create {
 					grid-column: 1 / -1;
 					grid-row: 3;
@@ -495,7 +448,6 @@ export class Timeline extends Component {
 						align-items: center;
 						background-color: var(--color-background);
 						border-block-start: 1px solid var(--_rule-strong);
-						/* The press belongs to the day column underneath. */
 						pointer-events: none;
 					}
 
@@ -524,7 +476,6 @@ export class Timeline extends Component {
 	protected override get template() {
 		const context = (entry: Entry) => entry.type === EntryType.Event && !!entry.allDay
 		const events = this.bars(context)
-		// Cached for scroll-anchoring lookups.
 		const rows = this.renderedRows = this.rows
 		const placed: Array<PlacedBar> = rows.flatMap((row, index) => row.bars.map(bar => ({ ...bar, row: index + 1 })))
 		return html`
@@ -544,22 +495,16 @@ export class Timeline extends Component {
 		`
 	}
 
-	/** Predicate for entries eligible for the timeline (open, scheduled tasks). */
 	private static isPlanned(entry: Entry) {
 		return entry.type === EntryType.Task && entry.scheduled && !entry.closed
 	}
 
-	/** Unique key identifying a task or recurring instance row. */
 	private static rowKey(entry: Entry) {
 		return entry.uid
 			? `${entry.uid}:${entry.recurrenceId?.valueOf() ?? ''}`
 			: entry.id ?? (EntryStore.isPreview(entry) ? 'preview' : 'draft')
 	}
 
-	/**
-	 * Limits recurring series occurrences to those due within the horizon (or the next single instance),
-	 * preventing repetitive tasks from crowding out the planning list.
-	 */
 	private static withinRoutineHorizon(entries: Array<Entry>): Array<Entry> {
 		const now = new DateTime()
 		const from = now.dayStart.valueOf()
@@ -582,10 +527,6 @@ export class Timeline extends Component {
 		return kept
 	}
 
-	/**
-	 * One row per planned task, sorted by start date.
-	 * Derived from entries (not visible bars) so panning does not alter row presence. Drafts sort last.
-	 */
 	private get rows(): Array<TimelineRow> {
 		const bars = new Map(this.bars(Timeline.isPlanned).map(bar => [bar.segment.entry, bar]))
 		const byKey = new Map<string, TimelineRow>()
@@ -610,7 +551,6 @@ export class Timeline extends Component {
 		return [...byKey.values()].sort((a, b) => a.sortValue - b.sortValue || a.heading.localeCompare(b.heading))
 	}
 
-	/** Projects entries across the buffer days into column-spanning bars. */
 	private bars(accept: (entry: Entry) => boolean): Array<TimelineBar> {
 		const days = this.days
 		const first = days[0]
@@ -644,7 +584,6 @@ export class Timeline extends Component {
 	private headerTemplate(events: Array<TimelineBar>) {
 		const { days, offset } = this.dates.window
 		const todayValue = new DateTime().dayStart.valueOf()
-		// Group days into contiguous month header cells.
 		const months = new Array<{ column: number, span: number, label: string }>()
 		for (const [index, day] of days.entries()) {
 			const previous = days[index - 1]
@@ -678,7 +617,6 @@ export class Timeline extends Component {
 	private backdropTemplate(events: Array<TimelineBar>) {
 		const { days, offset } = this.dates.window
 		const todayValue = new DateTime().dayStart.valueOf()
-		// Render DOM cells only for the visible window; surrounding buffer days remain empty grid tracks.
 		return html`
 			<div class="backdrop">
 				${repeat(days, day => day.dayStart.toISOString(), (day, index) => html`
@@ -711,7 +649,6 @@ export class Timeline extends Component {
 					</div>
 				`)}
 				${repeat(placed, bar => bar.segment.id, bar => this.barTemplate(bar, bar.row))}
-				${/* Connectors must render after anchor elements; bar row serves as rank. */ ''}
 				${!EntryConnections.isEnabledFor('timeline') ? html.nothing : html`
 					<mitra-entry-connections
 						.segments=${placed.map(bar => bar.segment)}

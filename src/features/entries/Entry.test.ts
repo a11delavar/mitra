@@ -37,7 +37,6 @@ describe('Entry', () => {
 	describe('allDay', () => {
 		it('is a stored flag, not inferred from the times', () => {
 			assert.equal(new Entry({ start: day, end: day.add({ days: 1 }), allDay: true }).allDay, true)
-			// Midnight bounds alone no longer imply all-day — the flag is explicit.
 			assert.equal(new Entry({ start: day, end: day.add({ days: 1 }) }).allDay, false)
 		})
 
@@ -66,13 +65,13 @@ describe('Entry', () => {
 			assert.equal(new Entry({}).canManageParticipants, true)
 			assert.equal(new Entry({ participants: [{ email: 'a@example.com' }] }).canManageParticipants, true)
 			assert.equal(new Entry({ participants: [{ email: 'me@example.com', organizer: true, self: true }] }).canManageParticipants, true)
-			assert.equal(invited().canManageParticipants, false) // someone else's meeting
+			assert.equal(invited().canManageParticipants, false)
 		})
 
 		it('counts as editable content — editEquals compares the lists structurally', () => {
 			const a = invited()
 			const b = invited()
-			assert.equal(a.editEquals(b), true) // same content, different array instances
+			assert.equal(a.editEquals(b), true)
 			b.participants = [...b.participants!, { email: 'late@example.com' }]
 			assert.equal(a.editEquals(b), false)
 		})
@@ -90,7 +89,7 @@ describe('Entry', () => {
 			const entry = invited()
 			assert.equal(entry.invite(['ME@example.com'], 'me@example.com'), false)
 			assert.equal(entry.invite(['second@example.com']), true)
-			assert.equal(entry.organizer?.email, 'organizer@example.com') // the foreign organizer stays
+			assert.equal(entry.organizer?.email, 'organizer@example.com')
 		})
 
 		it('invite replaces the list — the previous array (a clone may share it) is untouched', () => {
@@ -111,8 +110,8 @@ describe('Entry', () => {
 			const entry = invited()
 			assert.equal(entry.setParticipantRole('ME@example.com', ParticipantRole.Optional), true)
 			assert.deepEqual(entry.participants!.map(participant => participant.role), [ParticipantRole.Required, ParticipantRole.Optional])
-			assert.equal(entry.setParticipantRole('me@example.com', ParticipantRole.Optional), false) // already optional
-			assert.equal(entry.setParticipantRole('organizer@example.com', ParticipantRole.Optional), false) // not an invitee
+			assert.equal(entry.setParticipantRole('me@example.com', ParticipantRole.Optional), false)
+			assert.equal(entry.setParticipantRole('organizer@example.com', ParticipantRole.Optional), false)
 		})
 
 		it('removeParticipant uninvites one, refuses the organizer, and clears the list with the last invitee', () => {
@@ -127,7 +126,7 @@ describe('Entry', () => {
 			assert.equal(entry.removeParticipant('A@example.com'), true)
 			assert.deepEqual(entry.participants!.map(participant => participant.email), ['organizer@example.com', 'b@example.com'])
 			assert.equal(entry.removeParticipant('b@example.com'), true)
-			assert.equal(entry.participants, null) // a lone organizer has nothing to organize
+			assert.equal(entry.participants, null)
 			assert.equal(entry.removeParticipant('b@example.com'), false)
 		})
 
@@ -208,9 +207,9 @@ describe('Entry', () => {
 
 		it('takes an inclusive last day for all-day, clamping below the start to a single day', () => {
 			const e = new Entry({ start: day, end: day.add({ days: 1 }), allDay: true })
-			e.setEnd(day.add({ days: 2 })) // inclusive day 2 → exclusive day 3
+			e.setEnd(day.add({ days: 2 }))
 			assert.equal(e.end!.valueOf(), day.add({ days: 3 }).valueOf())
-			e.setEnd(day.subtract({ days: 1 })) // before start → single day
+			e.setEnd(day.subtract({ days: 1 }))
 			assert.equal(e.end!.valueOf(), day.add({ days: 1 }).valueOf())
 		})
 	})
@@ -271,8 +270,6 @@ describe('Entry', () => {
 		it('counts the free/busy contribution and the visibility as editable content', () => {
 			assert.equal(base().editEquals(new Entry({ ...base(), transparency: Transparency.Free })), false)
 			assert.equal(base().editEquals(new Entry({ ...base(), visibility: Visibility.Private })), false)
-			// An entry that names no CLASS and one explicitly reset to the calendar's default are the
-			// same entry — `null` IS the unset value here, so a save must not see a change (see Entry).
 			assert.equal(base().editEquals(new Entry({ ...base(), visibility: null })), true)
 		})
 
@@ -299,7 +296,7 @@ describe('Entry', () => {
 			task.migrateTo(both)
 			assert.equal(task.sourceId, 'both')
 			assert.equal(task.type, EntryType.Task)
-			assert.equal(task.status, TaskStatus.Done) // still a task, so its status stands
+			assert.equal(task.status, TaskStatus.Done)
 		})
 
 		it('keeps a status only where it makes sense — on a task', () => {
@@ -309,7 +306,7 @@ describe('Entry', () => {
 			assert.equal(task.status, undefined)
 			const event = new Entry({ id: 'b', sourceId: 'cal', type: EntryType.Event, heading: 'Meeting' })
 			event.migrateTo(taskList)
-			assert.equal(event.status, undefined) // becomes a task with no status yet — that's "to do"
+			assert.equal(event.status, undefined)
 		})
 
 		it('leaves identity and link fields to the backend', () => {
@@ -321,7 +318,6 @@ describe('Entry', () => {
 		})
 	})
 
-	// What the editor's draft type switch drives (a source holding both types — see Source.entryTypes).
 	describe('the type setter', () => {
 		it('drops the status when becoming an event — only a task has one', () => {
 			const task = new Entry({ sourceId: 's', type: EntryType.Task, heading: 'Draft', status: TaskStatus.Doing })
@@ -340,8 +336,6 @@ describe('Entry', () => {
 		it('drops the free/busy contribution when becoming a task — the mirror image of the status', () => {
 			const event = new Entry({ sourceId: 's', type: EntryType.Event, heading: 'Draft', transparency: Transparency.Free })
 			event.type = EntryType.Task
-			// `null`, never `undefined`: the empty value has to be the one the database hydrates, or a
-			// synced row would compare unequal to itself (see Entry.transparency).
 			assert.equal(event.transparency, null)
 		})
 
@@ -363,9 +357,6 @@ describe('Entry', () => {
 		})
 	})
 
-	// The type lives behind an accessor, so a plain spread would send the backing `_type` — the member's
-	// `@converter` is what maps it onto `type`, and the API's request builder (which structure-clones,
-	// stripping every prototype) is the harshest path it takes.
 	describe('crossing the API', () => {
 		const entry = new Entry({ id: 'e1', sourceId: 's1', type: EntryType.Task, heading: 'Chore', status: TaskStatus.Doing })
 
@@ -425,8 +416,6 @@ describe('Entry', () => {
 
 	describe('setTimeZone', () => {
 		it('keeps the wall clock and moves the instant', () => {
-			// 14:00 Berlin (CEST, UTC+2) → picked Tehran (UTC+3:30): stays 14:00 on the wall, so the
-			// instant moves from 12:00Z to 10:30Z.
 			const e = new Entry({
 				start: new Date('2026-07-06T12:00:00Z') as unknown as DateTime,
 				end: new Date('2026-07-06T13:00:00Z') as unknown as DateTime,
@@ -436,7 +425,6 @@ describe('Entry', () => {
 			assert.equal(e.timeZone, 'Asia/Tehran')
 			assert.equal(new Date(e.start!.valueOf()).toISOString(), '2026-07-06T10:30:00.000Z')
 			assert.equal(new Date(e.end!.valueOf()).toISOString(), '2026-07-06T11:30:00.000Z')
-			// The re-zoned values must be REAL DateTimes — the editor reads DateTime getters right after.
 			assert.equal(e.multiDay, false)
 			assert.ok(e.start instanceof DateTime)
 		})
@@ -455,13 +443,12 @@ describe('Entry', () => {
 
 		it('pins a FLOATING entry\'s as-if-UTC wall clock to the picked zone', () => {
 			const e = new Entry({
-				start: new Date('2026-07-06T09:00:00Z') as unknown as DateTime, // floating 09:00, encoded as-if-UTC
+				start: new Date('2026-07-06T09:00:00Z') as unknown as DateTime,
 				end: new Date('2026-07-06T09:30:00Z') as unknown as DateTime,
 				timeZone: FLOATING_TIME_ZONE,
 			})
 			e.setTimeZone('Asia/Tehran')
 			assert.equal(e.timeZone, 'Asia/Tehran')
-			// The 09:00 wall clock survives, now anchored: 09:00 Tehran = 05:30Z.
 			assert.equal(new Date(e.start!.valueOf()).toISOString(), '2026-07-06T05:30:00.000Z')
 		})
 	})
@@ -592,10 +579,8 @@ describe('Entry', () => {
 		})
 
 		it('reads the lead/lag GAP into the boundary it compares against', () => {
-			// A lag pushes the required start later: an hour after the predecessor ends.
 			assert.equal(verdict(dependent(RelationType.FinishToStart, 11, 13, 'PT1H'), predecessor(9, 11)), true)
 			assert.equal(verdict(dependent(RelationType.FinishToStart, 12, 14, 'PT1H'), predecessor(9, 11)), false)
-			// A lead lets the pair overlap by that much.
 			assert.equal(verdict(dependent(RelationType.FinishToStart, 10, 12, '-PT1H'), predecessor(9, 11)), false)
 		})
 
@@ -607,11 +592,7 @@ describe('Entry', () => {
 		})
 	})
 
-
 	describe('closed', () => {
-		// "No longer outstanding" is one idea with two spellings, and the rollup already draws the line
-		// there: a cancelled child leaves the denominator rather than pinning its parent below 100%
-		// unfinishably. Stated once so the counting rule and the follow-up offers cannot drift apart.
 		it('covers both decided outcomes, and only those', () => {
 			assert.equal(new Entry({ type: EntryType.Task, status: TaskStatus.Done }).closed, true)
 			assert.equal(new Entry({ type: EntryType.Task, status: TaskStatus.Cancelled }).closed, true)
@@ -620,8 +601,6 @@ describe('Entry', () => {
 			assert.equal(new Entry({ type: EntryType.Task }).closed, false)
 		})
 
-		// An event has no status to decide — the type setter sheds it (RFC 5545 gives VEVENT no STATUS
-		// mitra models), so a closed event is not a thing that can exist.
 		it('is never true for an event', () => {
 			const entry = new Entry({ type: EntryType.Task, status: TaskStatus.Done })
 			entry.type = EntryType.Event

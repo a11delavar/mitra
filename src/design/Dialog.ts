@@ -60,19 +60,10 @@ export class Dialog extends Component {
 				color: var(--color-text);
 				border: var(--border);
 				border-radius: 14px;
-				/* A token, so slotted content can bleed to the dialog's edge (e.g. a scroll region
-				   whose scrollbar should ride the dialog border) with a matching negative margin. */
 				--mitra-dialog-padding: 1.25rem;
 				padding: var(--mitra-dialog-padding);
-				/* Every width here is the width of the WHOLE dialog, padding and border included — the way
-				   the rest of the app's controls measure themselves. On content-box the padding was added
-				   on top, which is how a 375px phone got a 402px dialog with its close button off the
-				   screen: a min-width outweighs a max-width, so the 92vw cap could never save it. */
 				box-sizing: border-box;
 				min-width: min(360px, 92vw);
-				/* A dialog needing more room than the default sets --mitra-dialog-width on its host
-				   (it inherits through the shadow boundary) — an explicit width, not just a cap, so
-				   intrinsically-sized content (e.g. an auto-fill grid) gets a definite size to fill. */
 				width: var(--mitra-dialog-width, auto);
 				max-width: var(--mitra-dialog-width, min(420px, 92vw));
 				box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
@@ -82,18 +73,10 @@ export class Dialog extends Component {
 					background: rgba(0, 0, 0, 0.45);
 				}
 
-				/* The app's own copy of the top-layer rule (windowDrag.css.ts): every other overlay is
-				   in the light DOM and reached by the global one, this <dialog> is not. Without it a
-				   dialog tall enough to reach the header would be dead where the two overlap. */
 				@media (display-mode: window-controls-overlay) {
 					-webkit-app-region: no-drag;
 				}
 
-				/* Modern entry animation: @starting-style supplies the "from" state as the
-				   native dialog moves into the top layer. Closing is instant (the host is
-				   removed synchronously), so no exit transition is defined. Width is deliberately
-				   NOT transitioned — a multi-step dialog resizes instantly between steps (animating
-				   it fought the intrinsic width and left the dialog stuck at its min-width). */
 				@media (prefers-reduced-motion: no-preference) {
 					transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
 
@@ -109,7 +92,6 @@ export class Dialog extends Component {
 				flex-direction: column;
 				gap: 1.125rem;
 				width: 100%;
-				/* Positioning context for the headingless close button below. */
 				position: relative;
 			}
 
@@ -130,8 +112,6 @@ export class Dialog extends Component {
 					font-weight: 600;
 				}
 
-				/* For dialogs where a whole-pane surface takes the content (e.g. the welcome dialog), the
-				   close button stays, floating over the content's top-right corner. */
 				&[data-headingless] {
 					position: absolute;
 					inset-block-start: var(--mitra-dialog-header-inset, 0);

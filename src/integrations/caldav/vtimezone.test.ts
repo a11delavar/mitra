@@ -14,7 +14,6 @@ describe('buildVTimezone', () => {
 		const berlin = buildVTimezone('Europe/Berlin', 2026)
 		assert.equal(berlin.getFirstPropertyValue('tzid')?.toString(), 'Europe/Berlin')
 		assert.equal(observances(berlin).length, 2)
-		// EU rule: daylight from the last Sunday of March, standard from the last Sunday of October.
 		assert.match(rule(berlin, 'daylight')!, /FREQ=YEARLY.*BYMONTH=3/)
 		assert.match(rule(berlin, 'daylight')!, /BYDAY=-1SU/)
 		assert.match(rule(berlin, 'standard')!, /FREQ=YEARLY.*BYMONTH=10/)
@@ -32,7 +31,6 @@ describe('buildVTimezone', () => {
 	})
 
 	it('emits a single standing observance for a zone without transitions', () => {
-		// Iran abolished DST in 2022 — a fixed +03:30 within any modern window.
 		const tehran = buildVTimezone('Asia/Tehran', 2026)
 		const all = observances(tehran)
 		assert.equal(all.length, 1)
@@ -42,8 +40,6 @@ describe('buildVTimezone', () => {
 		assert.equal(rule(tehran, 'standard'), undefined)
 	})
 
-	// The property the whole feature rests on: an .ics we write with `DTSTART;TZID=…` + this VTIMEZONE
-	// must yield the same instants back when parsed — by our own sync and by any other client.
 	it('round-trips zoned local times to the correct instants, on both sides of a DST flip', () => {
 		const calendar = new ICAL.Component('vcalendar')
 		calendar.addSubcomponent(buildVTimezone('Europe/Berlin', 2026))
@@ -56,10 +52,9 @@ describe('buildVTimezone', () => {
 			event.updatePropertyWithValue(property, time).setParameter('tzid', 'Europe/Berlin')
 		}
 
-		write('dtstart', { month: 7, day: 7 }) // CEST: 09:00 Berlin = 07:00Z
-		write('dtend', { month: 12, day: 7 }) // CET: 09:00 Berlin = 08:00Z
+		write('dtstart', { month: 7, day: 7 })
+		write('dtend', { month: 12, day: 7 })
 
-		// Serialize and re-parse from scratch — the zone must resolve via the embedded VTIMEZONE alone.
 		const reparsed = new ICAL.Component(ICAL.parse(calendar.toString()))
 		const parsedEvent = new ICAL.Event(reparsed.getFirstSubcomponent('vevent')!)
 		assert.equal(parsedEvent.startDate.toJSDate().toISOString(), '2026-07-07T07:00:00.000Z')

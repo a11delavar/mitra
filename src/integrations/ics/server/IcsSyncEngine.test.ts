@@ -20,8 +20,6 @@ import { Session } from '../../../features/identity/server/Session.js'
 import { IcsSubscription } from '../IcsSubscription.js'
 import { IcsSyncEngine } from './IcsSyncEngine.js'
 
-// Tests for IcsSyncEngine feed fetching, SQLite sync, conditional GET handling, and entity reconciliation.
-
 const FEED_URL = 'https://example.com/calendar.ics'
 const BERLIN = 'Europe/Berlin'
 
@@ -62,8 +60,6 @@ RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
 END:STANDARD
 END:VTIMEZONE`
 
-// Outlook writes Microsoft zone names, which Temporal cannot resolve — the VTIMEZONE is then the only
-// thing that says what the wall clock meant.
 const WINDOWS_VTIMEZONE = `BEGIN:VTIMEZONE
 TZID:W. Europe Standard Time
 BEGIN:STANDARD
@@ -161,8 +157,6 @@ interface Served {
 	headers?: Record<string, string>
 }
 
-/** Replaces global `fetch`, recording every request so the conditional headers and the Basic auth can
- * be asserted against what actually went out. */
 function serveFeed(...responses: Array<Served>) {
 	const requests = new Array<{ url: string, headers: Record<string, string> }>()
 	let index = 0
@@ -179,8 +173,6 @@ function serveFeed(...responses: Array<Served>) {
 }
 
 const engine = new IcsSyncEngine()
-// `poll` drives a cycle through `Integration.getSources`, which dispatches by discriminator. Registered
-// for this one alone, so the test never pulls in the CalDAV engine's protocol libraries.
 registerEngine('ics', engine)
 
 async function seed(em: EntityManager, init?: Partial<IcsSubscription['credentials']>) {
@@ -191,8 +183,6 @@ async function seed(em: EntityManager, init?: Partial<IcsSubscription['credentia
 	return integration
 }
 
-/** One cycle the way `Integration.sync` runs it, with the download memo cleared first — as a freshly
- * loaded entity would be. */
 async function poll(em: EntityManager, integration: IcsSubscription) {
 	integration.feed = undefined
 	const [source] = await integration.getSources(em)
@@ -211,17 +201,17 @@ describe('Calendar subscription discovery', () => {
 	beforeEach(() => { served = serveFeed() })
 	afterEach(() => served.restore())
 
-	it('names the calendar and the account from the feed itself, since a subscription has no account to name', async () => {
+	it('names the calendar and the account from the feed itself', async () => {
 		const em = orm.em.fork()
 		const integration = await seed(em)
 		const sources = await engine.fetchSources(integration)
 
 		assert.equal(integration.credentials.username, 'Team Holidays')
-		assert.equal(sources.length, 1, 'a subscription is exactly one calendar')
+		assert.equal(sources.length, 1)
 		assert.equal(sources[0]!.name, 'Team Holidays')
 		assert.equal(sources[0]!.color, '#FF5733')
 		assert.equal(sources[0]!.uri, FEED_URL)
-		assert.equal(sources[0]!.enabled, false, 'opt-in, like every other provider')
+		assert.equal(sources[0]!.enabled, false)
 		assert.deepEqual([...sources[0]!.entryTypes], [EntryType.Event, EntryType.Task])
 	})
 
@@ -266,7 +256,6 @@ describe('Calendar subscription discovery', () => {
 	it('says plainly that nothing is there, rather than echoing a bare status', async () => {
 		served.restore()
 		served = serveFeed({ status: 404 })
-		// HTTP/2 sends no reason phrase, so the status text is empty and used to trail the message.
 		await assert.rejects(() => engine.fetchSources(transient()), /No calendar was found at that address/)
 	})
 
@@ -282,7 +271,6 @@ describe('Calendar subscription discovery', () => {
 	})
 })
 
-/** An unpersisted subscription — enough for the paths that fail before anything is ever stored. */
 function transient(uri = FEED_URL) {
 	return new IcsSubscription({ userId: crypto.randomUUID(), uri, credentials: { username: '' } })
 }
@@ -304,18 +292,18 @@ describe('Calendar subscription sync', () => {
 		assert.deepEqual(entries.map(entry => entry.uri).sort(), [
 			'allday@example.com', 'floating@example.com', 'outlook@example.com',
 			'series@example.com', 'series@example.com', 'task@example.com', 'zoned@example.com',
-		], 'the series master and its override share a UID and are two rows; the VJOURNAL is not one at all')
+		])
 
 		const zoned = entries.find(entry => entry.uri === 'zoned@example.com')!
 		assert.equal(zoned.heading, 'Zoned standup')
 		assert.equal(zoned.location, 'Room 1')
 		assert.equal(zoned.timeZone, BERLIN)
-		assert.equal(zoned.start!.toISOString(), '2026-08-10T07:00:00.000Z', 'CEST is UTC+2 in August')
+		assert.equal(zoned.start!.toISOString(), '2026-08-10T07:00:00.000Z')
 		assert.equal(zoned.type, EntryType.Event)
 
 		const allDay = entries.find(entry => entry.uri === 'allday@example.com')!
 		assert.equal(allDay.allDay, true)
-		assert.equal(allDay.start!.getTime(), Date.UTC(2026, 7, 14), 'an all-day bound is a UTC midnight, whatever zone the server runs in')
+		assert.equal(allDay.start!.getTime(), Date.UTC(2026, 7, 14))
 
 		const floating = entries.find(entry => entry.uri === 'floating@example.com')!
 		assert.equal(floating.timeZone, FLOATING_TIME_ZONE)
@@ -332,7 +320,7 @@ describe('Calendar subscription sync', () => {
 		const { entries } = await poll(em, await seed(em))
 
 		const outlook = entries.find(entry => entry.uri === 'outlook@example.com')!
-		assert.equal(outlook.timeZone, null, 'a non-IANA TZID would throw on every wall-clock expansion')
+		assert.equal(outlook.timeZone, null)
 		assert.equal(outlook.start!.toISOString(), '2026-08-11T09:00:00.000Z')
 	})
 
@@ -343,7 +331,7 @@ describe('Calendar subscription sync', () => {
 
 		const master = entries.find(entry => entry.uri === 'series@example.com' && !entry.recurrenceId)!
 		const override = entries.find(entry => entry.uri === 'series@example.com' && entry.recurrenceId)!
-		assert.ok(master.recurrence, 'the master carries the rule')
+		assert.ok(master.recurrence)
 		assert.equal(override.recurrenceMasterId, master.id)
 		assert.equal(override.heading, 'Weekly sync (moved)')
 	})
@@ -357,7 +345,7 @@ describe('Calendar subscription sync', () => {
 
 		const second = await poll(em, integration)
 		assert.equal(second.changed, false)
-		assert.equal(second.entries.length, first.entries.length, 'a 304 must never be read as an emptied calendar')
+		assert.equal(second.entries.length, first.entries.length)
 		assert.equal(served.requests[1]!.headers['if-none-match'], '"v1"')
 		assert.equal(served.requests[1]!.headers['if-modified-since'], 'Mon, 10 Aug 2026 06:00:00 GMT')
 	})
@@ -367,7 +355,7 @@ describe('Calendar subscription sync', () => {
 		const em = orm.em.fork()
 		const integration = await seed(em)
 		assert.equal((await poll(em, integration)).changed, true)
-		assert.equal((await poll(em, integration)).changed, false, 'identical bytes are not a change to notify clients about')
+		assert.equal((await poll(em, integration)).changed, false)
 	})
 
 	it('reports an edit to one entity without touching the rest', async () => {
@@ -381,10 +369,10 @@ describe('Calendar subscription sync', () => {
 		const second = await poll(em, integration)
 		assert.equal(second.changed, true)
 		assert.equal(second.entries.find(entry => entry.uri === 'zoned@example.com')!.heading, 'Zoned standup (renamed)')
-		assert.equal(second.entries.find(entry => entry.uri === 'allday@example.com')!.id, before, 'an untouched entity keeps its row')
+		assert.equal(second.entries.find(entry => entry.uri === 'allday@example.com')!.id, before)
 	})
 
-	it('removes what the feed no longer carries — a full document has no other way to say "deleted"', async () => {
+	it('removes what the feed no longer carries', async () => {
 		const without = feed([ALL_DAY, FLOATING, WINDOWS_ZONED, SERIES, SERIES_OVERRIDE, TASK].join('\r\n'))
 		served = serveFeed({ headers: {} }, { body: without, headers: {} })
 		const em = orm.em.fork()
@@ -407,8 +395,8 @@ describe('Calendar subscription sync', () => {
 		const { entries } = await poll(em, integration)
 		const series = entries.filter(entry => entry.uri === 'series@example.com')
 		assert.equal(series.length, 1)
-		assert.ok(!series[0]!.recurrenceId, 'the survivor is the master, which has no recurrence-id')
-		assert.ok(series[0]!.recurrence, 'and it still carries the rule')
+		assert.ok(!series[0]!.recurrenceId)
+		assert.ok(series[0]!.recurrence)
 	})
 
 	it('imports a component with no UID under a stable identity of its own, rather than dropping it', async () => {
@@ -425,7 +413,7 @@ END:VEVENT`)
 		assert.equal(first.entries[0]!.heading, 'Broken but real')
 
 		const second = await poll(em, integration)
-		assert.equal(second.entries.length, 1, 'the synthetic identity must survive the next poll, not duplicate the row')
+		assert.equal(second.entries.length, 1)
 		assert.equal(second.entries[0]!.id, first.entries[0]!.id)
 	})
 
@@ -439,12 +427,12 @@ END:VEVENT`)
 		await integration.reimportSource(em, source)
 		const rebuilt = await em.find(Entry, { sourceId: source.id })
 		assert.equal(rebuilt.length, entries.length)
-		assert.equal(rebuilt.every(entry => entries.every(before => before.id !== entry.id)), true, 'a re-import wipes the cache and imports afresh')
+		assert.equal(rebuilt.every(entry => entries.every(before => before.id !== entry.id)), true)
 	})
 })
 
 describe('Calendar subscription writes', () => {
-	it('refuses every write loudly, so a path that forgets the capability gate cannot silently drop an edit', () => {
+	it('refuses writes', () => {
 		assert.throws(() => engine.createEntry(), /read-only/)
 		assert.throws(() => engine.updateEntry(), /read-only/)
 		assert.throws(() => engine.deleteEntry(), /read-only/)

@@ -2,7 +2,6 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { SyncPacer, type Paceable } from './SyncPacer.js'
 
-/** A pacer whose presence is the given set of online user ids. */
 const pacerWith = (...onlineUserIds: Array<string>) => {
 	const online = new Set(onlineUserIds)
 	return new SyncPacer({ isOnline: userId => online.has(userId) })
@@ -99,7 +98,7 @@ describe('SyncPacer.prune', () => {
 		pacer.recordSuccess(gone, 0)
 		pacer.recordSuccess(kept, 0)
 		pacer.prune(new Set(['kept']))
-		assert.equal(pacer.shouldSync(gone, { now: 1 }), true) // fresh again — no recorded attempt
+		assert.equal(pacer.shouldSync(gone, { now: 1 }), true)
 		assert.equal(pacer.shouldSync(kept, { now: 1 }), false)
 	})
 })

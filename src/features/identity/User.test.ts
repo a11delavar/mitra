@@ -8,8 +8,6 @@ import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
 
 const ISSUER = 'https://idp.example.com/realms/home'
 
-/** Just enough of an EntityManager for User.provision: findOne by the embedded (issuer, subject),
- * persist into the backing array. */
 function fakeEm(users: Array<User>): EntityManager {
 	return {
 		findOne: (_type: unknown, where: { identity?: { issuer?: string, subject?: unknown } }) =>
@@ -52,8 +50,6 @@ describe('User', () => {
 		})
 	})
 
-	// "Only show this calendar" and its way back. The record is the complement — what was hidden — and
-	// these pin what that buys: a calendar appearing mid-solo comes back shown.
 	describe('showOnly / restorePreviousVisibility', () => {
 		const sourcesOf = (...hidden: Array<boolean>) => hidden.map((isHidden, index) =>
 			new Source({ id: `s${index}`, integrationId: 'i', uri: `dev://s${index}`, name: `s${index}`, enabled: true, hidden: isHidden }))
@@ -79,7 +75,6 @@ describe('User', () => {
 			user.showOnly(sources, 's0')
 			user.showOnly(sources, 's1')
 			assert.deepEqual(hiddenOf(sources), [true, false, true])
-			// Not ['s0', 's2'] — the second hop must not record the first hop's solo as the way back.
 			assert.deepEqual(user.previouslyHiddenSourceIds, ['s2'])
 		})
 
@@ -106,13 +101,10 @@ describe('User', () => {
 			sources.push(fresh)
 			user.restorePreviousVisibility(sources)
 			assert.equal(fresh.hidden, false)
-			// s2 goes back to hidden; the newcomer keeps the visibility it was created with.
 			assert.deepEqual(hiddenOf(sources), [false, false, true, false])
 		})
 	})
 
-	// The restore rests on presence vs. emptiness, so the wire must keep them apart: an empty list
-	// arriving as undefined would leave the user soloed with no offer to come back.
 	describe('previouslyHiddenSourceIds', () => {
 		const round = (ids: Array<string> | undefined) => revive<User>(wireOf(new User({ username: 'u', previouslyHiddenSourceIds: ids }))).previouslyHiddenSourceIds
 

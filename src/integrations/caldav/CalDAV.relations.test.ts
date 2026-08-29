@@ -8,14 +8,8 @@ import { EntryType } from '../../features/entries/EntryType.js'
 import { Source } from '../../features/sources/Source.js'
 import { EntryRelations } from '../../features/relations/EntryRelations.js'
 import { RelationType } from '../../features/relations/RelationType.js'
-// The CRUD/sync methods below go through `Integration`'s registry, so the engines must be registered
-// for 'caldav'/'google' the same way the running server registers them (see app/server.ts).
 import '../server/registerEngines.js'
 
-// The losslessness contract behind the DIFF-based write (see CalDAV.writeRelations): a line the
-// user didn't touch must survive VERBATIM — foreign directions, X- extensions, the RFC 9253 GAP
-// parameter, and even parameters the model doesn't carry — or an unrelated mitra edit could
-// silently destroy another client's relationship data.
 describe('CalDAV relations round-trip', () => {
 	const raw = [
 		'BEGIN:VCALENDAR',
@@ -55,7 +49,6 @@ describe('CalDAV relations round-trip', () => {
 		assert.match(serialized, /RELATED-TO;RELTYPE=CHILD:child-uid/)
 		assert.match(serialized, /RELATED-TO;RELTYPE=FINISHTOSTART;GAP=PT1D:predecessor-uid|RELATED-TO;GAP=PT1D;RELTYPE=FINISHTOSTART:predecessor-uid/)
 		assert.match(serialized, /RELATED-TO;RELTYPE=X-DUPLICATE-OF:duplicate-uid/)
-		// The bare line stays BARE — untouched lines are not re-authored into another form.
 		assert.match(serialized, /RELATED-TO:bare-parent-uid/)
 	})
 
@@ -75,9 +68,7 @@ describe('CalDAV relations round-trip', () => {
 
 		CalDAV.writeRelations(withForeignParams, edited)
 		const serialized = withForeignParams.toString()
-		// The untouched foreign line survives byte-for-byte, X- parameter included …
 		assert.match(serialized, /RELATED-TO;RELTYPE=FINISHTOSTART;X-CLIENT-DATA=abc:kept-uid/)
-		// … and the added line appears alongside it.
 		assert.match(serialized, /RELATED-TO;RELTYPE=PARENT:new-parent/)
 	})
 
@@ -109,7 +100,6 @@ describe('CalDAV relations round-trip', () => {
 		const parsed = CalDAV.relationsFrom(lax)!
 		assert.equal(parsed[0]!.type, RelationType.Child)
 
-		// An unchanged write must recognize the lowercase line as the SAME relation and keep it verbatim.
 		CalDAV.writeRelations(lax, parsed)
 		assert.match(lax.toString(), /RELATED-TO;RELTYPE=child:someone/)
 	})
@@ -168,16 +158,6 @@ describe('CalDAV relations round-trip', () => {
 	})
 })
 
-/**
- * WHO owns a relationship when the server is only pretending to be an iCalendar store. Google's
- * CalDAV v2 regenerates the `.ics` from Google's own event model, which has no relationship concept,
- * so a `RELATED-TO` mitra writes is gone by the next read — and a DEFINITE parse of that read would
- * mean "the user removed it" and wipe the row. Reported and reproduced in the app: a link saved on a
- * Google event disappeared on the very next sync, seconds later.
- *
- * `capabilities.relations` is the whole seam — declared where every other unsupported fact is, so one
- * flag gates both halves: the editor authors none, and the sync claims none.
- */
 describe('CalDAV relations: who is authoritative (capabilities.relations)', () => {
 	const withRelation = [
 		'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//test//EN',
@@ -216,8 +196,6 @@ describe('CalDAV relations: who is authoritative (capabilities.relations)', () =
 	it('leaves the value UNDEFINED on Google, so the stored rows are never wiped by a read that lost them', async () => {
 		const { entry, persisted } = await sync(google())
 		assert.equal(entry.relations, undefined)
-		// Nothing mirrored either: `undefined` means the table is the store and this sync has no
-		// opinion about it (see Integration.reconcileRelations).
 		assert.equal(persisted.length, 1)
 	})
 
@@ -263,7 +241,6 @@ describe('CalDAV relations: who is authoritative (capabilities.relations)', () =
 			incoming.relations = EntryRelations.of(undefined, [{ type: RelationType.Parent, targetUid: 'parent-uid' }]).value
 			await integration.updateEntry(em(), entry, incoming)
 			assert.equal(writes.length, 0)
-			// The route's own reconcile is what persists this edit — see features/entries/server/entries.ts.
 			assert.doesNotMatch(entry.data!.raw!, /parent-uid/)
 		})
 

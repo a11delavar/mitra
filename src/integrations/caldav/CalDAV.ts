@@ -1,6 +1,6 @@
 import { type EntityManager } from '@mikro-orm/sqlite'
 import { converter } from '@a11d/converter'
-import '@a11d/bidirectional-map' // registers the global BidirectionalMap the iCalendar mappings below use
+import '@a11d/bidirectional-map'
 import { type createDAVClient } from 'tsdav'
 import ICAL from 'ical.js'
 import { EntryRelations } from '../../features/relations/EntryRelations.js'
@@ -17,27 +17,20 @@ import { Participants, ParticipantRole, ParticipantStatus, type Participant } fr
 
 export interface CalDAVCredentials {
 	username: string
-	/** The Basic-auth secret. Optional so credential shapes without one (see GoogleCalendar) stay assignable. */
 	password?: string
 }
 
 @model('CalDAV')
 @integration('caldav')
 export class CalDAV extends Integration<CalDAVCredentials> {
-	// Typed `string` (not the inferred literal) so subclasses can override with their own values —
-	// a narrowed literal type would reject an override on the static side.
 	static readonly label: string = 'CalDAV'
 	static readonly logo: string = 'caldav'
 	static readonly description: string = 'Nextcloud, Fastmail, Radicale — any CalDAV server'
 
-	/** The password authorizes the account; the username identifies it. */
 	@converter(withheld<CalDAVCredentials>('password')) override credentials!: CalDAVCredentials
 
 	constructor(init?: Partial<CalDAV>) {
 		super()
-		// The blank credential shape is the provider's own knowledge, so it seeds it here. Empty strings,
-		// not undefined: the edit form binds these keyPaths straight to `input.value`, and an undefined
-		// there renders as the literal text "undefined". `init` (a stored/edited copy) overwrites them.
 		this.uri = ''
 		this.credentials = { username: '', password: '' }
 		Object.assign(this, init)
@@ -50,34 +43,17 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	override merge(incoming: CalDAV) {
 		this.uri = incoming.uri || this.uri
 		if (incoming.credentials.username !== this.credentials.username) {
-			this.addresses = undefined // another account — its own addresses get re-discovered on sync
+			this.addresses = undefined
 		}
 		this.credentials = {
 			username: incoming.credentials.username,
-			// A blank incoming password keeps the stored secret — the edit form leaves it empty.
 			password: incoming.credentials.password || this.credentials.password,
 		}
 	}
 
-	/**
-	 * The memo slot for the sync engine's live tsdav connection — transient, not state. `out: {}` is how
-	 * a member says "never serialized": the API's shape is the domain's, and a socket (holding this
-	 * account's credentials) is not part of it. Declaring it here rather than letting the engine attach
-	 * it dynamically is what keeps that guard — an UNDECLARED property has no converter opting it out,
-	 * so it would ride onto the wire with its credentials intact.
-	 *
-	 * The type reference is erased (`import type` above), so declaring it costs the browser bundle
-	 * nothing — which is the whole reason the engine itself lives server-side.
-	 *
-	 * Public, unlike {@link ../notion/Notion.js}'s equivalent, because CalDAV's engine is a separate
-	 * collaborator rather than the class's own methods.
-	 */
+	/** Transient tsdav client connection instance. */
 	@converter({ out: {} }) client?: ReturnType<typeof createDAVClient>
 
-	/** The tsdav client configuration — the one thing a differently-authenticated provider
-	 * (see GoogleCalendar's OAuth) swaps out; everything else about the protocol is shared. Public: the
-	 * sync engine ({@link ./server/CalDAVSyncEngine.js}) is a separate collaborator that builds its
-	 * client from this, not a subclass sharing `this`. */
 	get clientParameters(): Parameters<typeof createDAVClient>[0] {
 		return {
 			defaultAccountType: 'caldav',
@@ -90,28 +66,21 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
-	/** Build a DTSTART/DTEND/DUE/EXDATE value. All-day entries are written date-only (`VALUE=DATE`) —
-	 * that's what makes a real all-day event (not a 00:00→00:00 timed one); `DTEND` stays the exclusive
-	 * next day. All-day bounds are CANONICAL date encodings — UTC midnights (see calendarDate.ts) — so
-	 * the DATE is simply the instant's UTC calendar day, whatever zone the server runs in. */
+	/** Build a DTSTART/DTEND/DUE/EXDATE value (written as VALUE=DATE for all-day). */
 	static toICALTime(date: Date, allDay: boolean) {
 		if (!allDay) {
 			return ICAL.Time.fromJSDate(date, true)
 		}
-		// Explicit fields, not a spread — a PlainDate's fields are prototype getters (spread to {}).
 		const { year, month, day } = calendarDateOf(date, 'UTC')
 		return ICAL.Time.fromData({ year, month, day, isDate: true })
 	}
 
-	/** Whether a parsed timed value is an RFC 5545 FLOATING time — a bare local date-time that came
-	 * with neither a `Z` suffix nor a TZID, which ical.js models as its zone-less "local" zone. Public:
-	 * the sync engine reads it directly while parsing (see {@link ../server/CalDAVSyncEngine.js}). */
+	/** Whether a parsed timed value is an RFC 5545 FLOATING time. */
 	static isFloating(value: unknown): boolean {
 		return value instanceof ICAL.Time && !value.isDate && value.zone === ICAL.Timezone.localTimezone
 	}
 
-	/** Whether Temporal can resolve a TZID as an IANA zone — what decides if it's stored as an entry's
-	 * `timeZone` and used for wall-clock math (an unresolvable id would throw on every expansion). */
+	/** Whether Temporal can resolve a TZID as a valid IANA time zone. */
 	static resolvableZone(tzid: string | null | undefined): tzid is string {
 		try {
 			return !!tzid && !!Temporal.Instant.fromEpochMilliseconds(0).toZonedDateTimeISO(tzid)
@@ -121,17 +90,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	}
 
 	/**
-	 * The stored instant of an iCalendar time — the ONE decoder every read goes through, with Temporal
-	 * (not the resource) as the zone authority:
-	 * - a date-only value (all-day) is its canonical UTC-midnight date encoding, read off the value's
-	 *   own y/m/d fields — NEVER `toJSDate()`, which lands on the SERVER's local midnight;
-	 * - a value whose property carried a `tzid` is that zone's wall clock (ical.js keeps the literal
-	 *   fields whether or not it resolved the TZID), converted by Temporal — so a zoned time reads
-	 *   correctly even when the resource omits its VTIMEZONE (RFC 7809 timezones-by-reference servers),
-	 *   with a non-IANA TZID (a Microsoft zone name, say) falling through to the value's own resolution;
-	 * - a FLOATING value reads off its own fields as-if-UTC — deterministic wherever the server runs,
-	 *   and the exact reverse of how the write path emits it, so a floating wall clock round-trips;
-	 * - anything else (`Z`-suffixed, or VTIMEZONE-resolved under a non-IANA TZID) via `toJSDate()`.
+	 * Converts an iCalendar time object and optional TZID to a JavaScript Date.
 	 */
 	static instantFrom(time: { isDate?: boolean, year: number, month: number, day: number, hour?: number, minute?: number, second?: number, toJSDate(): Date } | null | undefined, tzid?: string): Date | undefined {
 		if (!time) {
@@ -151,7 +110,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return time.toJSDate()
 	}
 
-	/** mitra TaskStatus ↔ CalDAV VTODO STATUS (RFC 5545 §3.8.1.11). */
 	private static readonly icalTaskStatus = new BidirectionalMap<TaskStatus, string>([
 		[TaskStatus.ToDo, 'NEEDS-ACTION'],
 		[TaskStatus.Doing, 'IN-PROCESS'],
@@ -159,9 +117,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		[TaskStatus.Cancelled, 'CANCELLED'],
 	])
 
-	/** CalDAV VTODO STATUS → mitra TaskStatus. A missing/unknown STATUS falls back to PERCENT-COMPLETE
-	 * (>= 100 means done), then to ToDo — so a VTODO with no status is shown as ToDo, never mutated.
-	 * A pure static like the participant mappings, so it is unit-testable on its own. */
 	static statusFromICal(status: string | undefined, percentComplete: number): TaskStatus {
 		return CalDAV.icalTaskStatus.getKey(status?.toUpperCase() ?? '')
 			?? (percentComplete >= 100 ? TaskStatus.Done : TaskStatus.ToDo)
@@ -169,7 +124,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 	/**
 	 * Computes PERCENT-COMPLETE for iCalendar (RFC 5545 §3.8.1.8).
-	 * Completed tasks are pinned to 100; unstated values (null/undefined) return undefined to omit the property.
 	 */
 	static percentCompleteForICal(status: TaskStatus | undefined, percentComplete: number | null | undefined): number | undefined {
 		if ((status ?? TaskStatus.ToDo) === TaskStatus.Done) {
@@ -178,8 +132,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return percentComplete === null || percentComplete === undefined ? undefined : Math.min(100, Math.max(0, Math.round(percentComplete)))
 	}
 
-	/** Writes STATUS, PERCENT-COMPLETE, and COMPLETED instant on a VTODO. Static (no `this` — nothing
-	 * here is instance state) and public: the sync engine calls it while building/editing a resource. */
 	static writeTaskStatus(component: ICAL.Component, status: TaskStatus | undefined, percentComplete: number | null | undefined) {
 		const effective = status ?? TaskStatus.ToDo
 		component.updatePropertyWithValue('status', CalDAV.icalTaskStatus.get(effective))
@@ -196,36 +148,25 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
-	/** mitra {@link Transparency} ↔ iCalendar TRANSP (RFC 5545 §3.8.2.7). */
 	private static readonly icalTransparency = new BidirectionalMap<Transparency, string>([
 		[Transparency.Busy, 'OPAQUE'],
 		[Transparency.Free, 'TRANSPARENT'],
 	])
 
-	/** mitra {@link Visibility} ↔ iCalendar CLASS (RFC 5545 §3.8.1.3). */
 	private static readonly icalVisibility = new BidirectionalMap<Visibility, string>([
 		[Visibility.Public, 'PUBLIC'],
 		[Visibility.Private, 'PRIVATE'],
 		[Visibility.Confidential, 'CONFIDENTIAL'],
 	])
 
-	/** iCalendar TRANSP → mitra {@link Transparency}. A missing value stays `null` rather than being
-	 * filled in with the OPAQUE default: both read as "Busy" in the editor, and keeping the absence
-	 * means a later edit of some other field never quietly adds a TRANSP the resource never had. An
-	 * unknown word is treated as absent — the RFC allows only these two. A pure static, like the
-	 * task-status and participant mappings, so it is unit-testable on its own. */
 	static transparencyFromICal(transparency: string | undefined): Transparency | null {
 		return CalDAV.icalTransparency.getKey(transparency?.toUpperCase() ?? '') ?? null
 	}
 
-	/** iCalendar CLASS → mitra {@link Visibility}. Absent (or a value outside the three the RFC names —
-	 * CLASS permits private extensions) is `null`: "whatever the calendar defaults to". */
 	static visibilityFromICal(visibility: string | undefined): Visibility | null {
 		return CalDAV.icalVisibility.getKey(visibility?.toUpperCase() ?? '') ?? null
 	}
 
-	/** Write (or drop) TRANSP. Only ever called for a VEVENT — RFC 5545 gives VTODO no such property.
-	 * Public: called from the sync engine's write path. */
 	static writeTransparency(component: ICAL.Component, transparency: Transparency | null | undefined) {
 		if (transparency) {
 			component.updatePropertyWithValue('transp', CalDAV.icalTransparency.get(transparency)!)
@@ -234,10 +175,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
-	/** Write (or drop) CLASS. "Default visibility" is the ABSENCE of the property, which is what the
-	 * calendar's own sharing settings then decide — so picking it removes the line rather than writing
-	 * PUBLIC, which would be a different (and stronger) statement. Public (member, not the CLASS value):
-	 * called from the sync engine's write path. */
 	static writeVisibility(component: ICAL.Component, visibility: Visibility | null | undefined) {
 		if (visibility) {
 			component.updatePropertyWithValue('class', CalDAV.icalVisibility.get(visibility)!)
@@ -265,7 +202,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return !!a && !!b && CalDAV.resolveMemberUrl(sourceUri, a) === CalDAV.resolveMemberUrl(sourceUri, b)
 	}
 
-	/** Checks if an href matches the collection URL, tolerating trailing slash differences. */
 	static isCollectionHref(sourceUri: string, href: string | null | undefined): boolean {
 		const collection = CalDAV.resolveMemberUrl(sourceUri, sourceUri)
 		const url = CalDAV.resolveMemberUrl(sourceUri, href)
@@ -273,8 +209,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	}
 
 	/**
-	 * Splits `sync-collection` multistatus responses into changed and deleted member URLs
-	 * and detects if the response was truncated (RFC 6578 §3.6).
+	 * Splits sync-collection multistatus responses into changed and deleted member URLs (RFC 6578 §3.6).
 	 */
 	static partitionMemberResponses(sourceUri: string, responses: ReadonlyArray<{ href?: string, status?: number, error?: Record<string, unknown> }>): { changedUrls: Array<string>, deletedUrls: Array<string>, truncated: boolean } {
 		const truncated = responses.some(r => r.status === 507 || !!r.error?.numberOfMatchesWithinLimits)
@@ -288,17 +223,10 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
-	/** A stored recurrence-id as epoch ms (occurrence instants are compared by ms throughout), or
-	 * undefined for none — tolerant of the column surfacing as a Date or a raw ms number. */
 	static instantOf(recurrenceId: Date | number | null | undefined): number | undefined {
 		return recurrenceId === null || recurrenceId === undefined ? undefined : new Date(recurrenceId).getTime()
 	}
 
-	/** A TZID resolved against the resource's own VTIMEZONEs — a zoned resource always carries the
-	 * definitions of every TZID it uses (RFC 5545 §3.6.5). When `generate` is set (WE are authoring a
-	 * user-picked zone the resource doesn't carry yet), the definition is built off the runtime's zone
-	 * data ({@link buildVTimezone}) and embedded; a zone the runtime can't resolve yields undefined, so
-	 * the caller writes UTC rather than a TZID with no matching definition. */
 	private static timezoneIn(comp: ICAL.Component, tzid: string | undefined, generate = false, aroundYear = 0): ICAL.Timezone | undefined {
 		if (!tzid) {
 			return undefined
@@ -316,12 +244,10 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			comp.addSubcomponent(vtimezone)
 			return new ICAL.Timezone(vtimezone)
 		} catch {
-			return undefined // not a resolvable IANA zone — fall back to a UTC write
+			return undefined
 		}
 	}
 
-	/** A FLOATING (zone-less) ICAL.Time off an as-if-UTC instant — its UTC wall clock becomes the bare
-	 * local value, the reverse of how {@link instantFrom} reads floating times back. */
 	private static floatingTime(date: Date): ICAL.Time {
 		return ICAL.Time.fromData({
 			year: date.getUTCFullYear(), month: date.getUTCMonth() + 1, day: date.getUTCDate(),
@@ -329,8 +255,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		})
 	}
 
-	/** Drop VTIMEZONEs no property's TZID references anymore — a re-zoned entry leaves its old one behind.
-	 * Public: called by the sync engine after it finishes editing a resource. */
 	static pruneTimezones(comp: ICAL.Component): void {
 		const used = new Set(comp.getAllSubcomponents()
 			.filter(candidate => candidate.name !== 'vtimezone')
@@ -380,18 +304,11 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
-	/** The subcomponent a ROW represents within its resource: an override row owns the component
-	 * carrying its RECURRENCE-ID, a master (or plain) row the one without — a series and its
-	 * single-occurrence overrides share one resource (RFC 4791: one UID per resource). Public: the
-	 * sync engine locates the row's component through this when applying an edit. */
 	static componentFor(entry: Entry, comp: ICAL.Component): ICAL.Component | undefined {
 		return [...comp.getAllSubcomponents('vevent'), ...comp.getAllSubcomponents('vtodo')]
 			.find(component => CalDAV.recurrenceProps(component).recurrenceId?.getTime() === CalDAV.instantOf(entry.recurrenceId))
 	}
 
-	/** Mirror a successful resource write onto the resource's OTHER rows (a master and its overrides
-	 * each carry their own copy of `raw`/`etag`), so none is left holding a stale If-Match etag. Public:
-	 * the sync engine calls it after a write. */
 	static async syncResourceRows(em: EntityManager, written: Entry): Promise<void> {
 		for (const sibling of await em.find(Entry, { sourceId: written.sourceId, uri: written.uri, id: { $ne: written.id } })) {
 			sibling.data = { ...sibling.data, raw: written.data?.raw, etag: written.data?.etag }
@@ -399,12 +316,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	}
 
 	/**
-	 * Reads one parsed VEVENT/VTODO onto an entry, taking what it needs off the `integration`.
-	 * Static rather than an instance method because a subscribed feed is not a CalDAV account: the two
-	 * providers sharing this have no common ancestor below `Integration`, which knows no iCalendar.
+	 * Reads one parsed VEVENT/VTODO onto an entry.
 	 */
 	static applyComponent(entry: Entry, component: ICAL.Component, integration: Integration): void {
-		// The component IS the type — RFC 4791 §4.1 forbids mixing them within one resource.
 		const entryType = component.name === 'vtodo' ? EntryType.Task : EntryType.Event
 		entry.type = entryType
 		entry.color = component.getFirstPropertyValue('color')?.toString() || null
@@ -448,7 +362,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		entry.recurrenceId = recurrence.recurrenceId as any
 	}
 
-	/** Links each override row back to its series master by shared UID. */
 	static linkOverridesToMasters(entries: ReadonlyArray<Entry>): boolean {
 		let linked = false
 		for (const entry of entries) {
@@ -465,7 +378,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 	/**
 	 * Determines if a collection is writable from WebDAV `current-user-privilege-set` (RFC 3744).
-	 * Returns `undefined` if missing (server does not implement ACL).
 	 */
 	static writableFromPrivileges(privilegeSet: unknown): boolean | undefined {
 		if (privilegeSet === null || privilegeSet === undefined) {
@@ -482,16 +394,12 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			}
 		}
 		walk(privilegeSet, 0)
-		// An unrecognized shape is "we don't know", not a refusal.
 		if (!names.size) {
 			return undefined
 		}
-		// `write` is the aggregate, `write-content`/`bind` its halves (change a resource, add one).
 		return ['write', 'write-content', 'bind', 'all'].some(privilege => names.has(privilege))
 	}
 
-	/** The recurrence info off a parsed VEVENT/VTODO: the master's rule (as a `Recurrence` value object), the
-	 * shared UID, and a RECURRENCE-ID when the component is a single-occurrence override. */
 	static recurrenceProps(component: ICAL.Component): { uid?: string, recurrence?: Recurrence, recurrenceId?: Date } {
 		const rrule = component.getFirstPropertyValue('rrule')?.toString() || undefined
 		return {
@@ -504,12 +412,10 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
-	/** Determine reminder anchor (`START` if DTSTART present, else `END`). */
 	private static reminderAnchorOf(component: ICAL.Component): 'START' | 'END' {
 		return component.getFirstProperty('dtstart') ? 'START' : 'END'
 	}
 
-	/** Extract reminder offsets in minutes before anchor from DISPLAY VALARM subcomponents. */
 	static remindersFrom(component: ICAL.Component): Array<number> | null {
 		const anchor = CalDAV.reminderAnchorOf(component)
 		const minutes = component.getAllSubcomponents('valarm').flatMap(alarm => {
@@ -525,13 +431,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			const seconds = duration.toSeconds()
 			return seconds > 0 ? [] : [Math.round(-seconds / 60)]
 		})
-		// `null`, not undefined, for "none" — the canonical no-reminders value everywhere (see Entry).
 		return minutes.length ? [...new Set(minutes)].sort((a, b) => a - b) : null
 	}
 
-	// --- Participants (RFC 5545 ATTENDEE / ORGANIZER) ---------------------------------------------------
-
-	/** mitra ParticipantRole ↔ ATTENDEE;ROLE (RFC 5545 §3.2.16). */
 	private static readonly icalRole = new BidirectionalMap<ParticipantRole, string>([
 		[ParticipantRole.Chair, 'CHAIR'],
 		[ParticipantRole.Required, 'REQ-PARTICIPANT'],
@@ -539,7 +441,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		[ParticipantRole.NonParticipant, 'NON-PARTICIPANT'],
 	])
 
-	/** mitra ParticipantStatus ↔ ATTENDEE;PARTSTAT (RFC 5545 §3.2.12). */
 	private static readonly icalPartStat = new BidirectionalMap<ParticipantStatus, string>([
 		[ParticipantStatus.NeedsAction, 'NEEDS-ACTION'],
 		[ParticipantStatus.Accepted, 'ACCEPTED'],
@@ -548,17 +449,12 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		[ParticipantStatus.Delegated, 'DELEGATED'],
 	])
 
-	/** The e-mail of a CAL-ADDRESS value (`mailto:a@b`, scheme case-insensitive). Non-mailto addresses
-	 * (urn:uuid resources etc.) pass through as-is and get dropped by the e-mail normalization. */
 	private static calAddressEmail(value: string | null | undefined): string | undefined {
 		return value?.toString().trim().replace(/^mailto:/i, '') || undefined
 	}
 
 	/**
-	 * The entry's participants off its ATTENDEE/ORGANIZER properties, normalized (see Participant.ts).
-	 * The organizer joins the list (`organizer: true`) — merged with its own ATTENDEE when it is also
-	 * one (Google-style .ics) — and `addresses` (the account's own, see {@link discoverAddresses})
-	 * stamp `self`. Rooms and resources (CUTYPE) aren't people and are skipped.
+	 * Extracts and normalizes participants from ATTENDEE and ORGANIZER properties.
 	 */
 	static participantsFrom(component: ICAL.Component, addresses?: ReadonlyArray<string> | null): Participants | null {
 		const own = new Set((addresses ?? []).map(address => address.toLowerCase()))
@@ -571,8 +467,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				email: organizerEmail,
 				name: organizerProperty?.getParameter('cn')?.toString(),
 				organizer: true,
-				// ORGANIZER carries no PARTSTAT — authoring the event counts as a yes (an ATTENDEE of the
-				// same address, when present, overrides this with its actual reply).
 				status: ParticipantStatus.Accepted,
 				self: self(organizerEmail),
 			})
@@ -595,20 +489,10 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	}
 
 	/**
-	 * Write the participant list back: the ATTENDEE properties are wholly ours (rewritten from the
-	 * list, organizer included — RSVP requested while a reply is pending), while ORGANIZER only ever
-	 * *appears* with the list's organizer (the entry became group-scheduled) or *disappears* with the
-	 * last participant — an existing one is never rewritten, since iTIP (RFC 5546) reserves list
-	 * changes for the organizer themselves and the route rejects everyone else's before this runs.
-	 *
-	 * Notifying the invitees is deliberately NOT ours: a scheduling server (RFC 6638) is the
-	 * scheduling agent for every ATTENDEE we write, and mails the invitations and cancellations out
-	 * itself. We only ever say WHO is invited.
+	 * Serializes participants to ATTENDEE and ORGANIZER properties.
 	 */
 	static writeParticipants(component: ICAL.Component, raw: ReadonlyArray<Participant> | null) {
 		component.removeAllProperties('attendee')
-		// Whatever the caller holds re-enters the domain here, so the written properties are always
-		// the canonical reading of the list (dedupe, ≤ 1 organizer, explicit defaults).
 		const participants = Participants.normalize(raw)
 		if (!participants) {
 			component.removeAllProperties('organizer')
@@ -635,9 +519,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
-	// --- Relationships (RFC 5545 RELATED-TO) -------------------------------------------------------------
-
-	/** Parses RELATED-TO properties (RFC 5545 §3.8.4.5) into canonical relations, preserving RELTYPE and RFC 9253 GAP. */
 	static relationsFrom(component: ICAL.Component): Array<Relation> | null {
 		return EntryRelations.of(undefined, component.getAllProperties('related-to').map(property => ({
 			type: property.getParameter('reltype')?.toString() || RelationType.Parent,
@@ -646,13 +527,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}))).value
 	}
 
-	/** Diffs RELATED-TO properties against desired relations. Untouched properties preserve unparsed
-	 * parameters (VALUE, LANGUAGE, X-*). Static (no `this`) and public: the sync engine calls it while
-	 * writing a resource. */
 	static writeRelations(component: ICAL.Component, lines: Array<Relation> | undefined | null) {
-		// Writes only owned relations so derived incoming lines are never persisted into external resources.
 		const relations = lines === undefined ? undefined : EntryRelations.of(undefined, lines).writes
-		// Matches properties using canonical relation keys.
 		const keyOf = (init: RelationInit) => Relation.from(init)?.key ?? ''
 		const desired = new Map((relations ?? []).map(relation => [keyOf(relation), relation]))
 		const kept = new Set<string>()
@@ -663,9 +539,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				gap: property.getParameter('gap')?.toString().trim() || null,
 			})
 			if (desired.has(key) && !kept.has(key)) {
-				kept.add(key) // untouched — foreign parameters and all
+				kept.add(key)
 			} else {
-				component.removeProperty(property) // removed by the user (or a duplicate of a kept line)
+				component.removeProperty(property)
 			}
 		}
 		for (const [key, relation] of desired) {
@@ -677,7 +553,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
-	/** Write DISPLAY VALARMs matching the component's reminder anchor. */
 	static writeReminders(component: ICAL.Component, reminders: Array<number> | undefined | null) {
 		const anchor = CalDAV.reminderAnchorOf(component)
 		for (const alarm of component.getAllSubcomponents('valarm')) {
@@ -698,13 +573,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
-	/** A failed write as a throwable error carrying the server's own explanation — servers put the
-	 * REASON in the response body (Radicale, e.g., names the exact parse/validation complaint there),
-	 * and "412 Precondition Failed" alone leaves a production log with nothing to act on. Public: the
-	 * sync engine throws it on a failed create/update/delete. */
 	static async writeError(operation: string, response: { status: number, statusText: string, text?: () => Promise<string> }): Promise<Error> {
 		const detail = (await response.text?.().catch(() => ''))?.trim().slice(0, 500)
 		return new Error(`CalDAV ${operation} failed: ${response.status} ${response.statusText}${detail ? ` — ${detail}` : ''}`)
 	}
-
 }

@@ -35,9 +35,6 @@ describe('GoogleCalendar', () => {
 			assert.deepEqual(json.credentials, { username: 'someone@gmail.com', refreshToken: '' })
 		})
 
-		// Withholding is a rule about DIRECTION, not about the field: a request still carries whatever the
-		// sender holds. Moot for Google in practice — the consent flow lands on the backend, so a browser
-		// never has a grant to send — but the mechanism is the same one Notion's connect depends on.
 		it('withholds nothing when it is the browser asking', () => {
 			assert.equal(asBrowser(() => wireOf(account())).credentials.refreshToken, 'grant-1')
 		})
@@ -55,15 +52,13 @@ describe('GoogleCalendar', () => {
 
 	describe('editableCopy', () => {
 		it('is a polymorphic copy for the edit form: same provider class, credentials as held, sources plain', () => {
-			// As the client holds it — the grant already withheld by the server that answered (see the
-			// `@converter` on `credentials`); this copy only has to preserve it.
 			const held = new GoogleCalendar({ ...account(), credentials: { username: 'someone@gmail.com', refreshToken: '' } })
 			const copy = held.editableCopy()
 
-			assert.ok(copy instanceof GoogleCalendar) // the dialog round-trips the right '@type' without knowing providers
+			assert.ok(copy instanceof GoogleCalendar)
 			assert.equal(copy.uri, GoogleCalendar.uriFor('someone@gmail.com'))
 			assert.deepEqual(copy.credentials, { username: 'someone@gmail.com', refreshToken: '' })
-			assert.ok(Array.isArray(copy.sources)) // plain array — JSON-serializable, no circular Collection owner
+			assert.ok(Array.isArray(copy.sources))
 			assert.deepEqual([...copy.sources].map(source => [source.name, source.enabled]), [['Personal', true]])
 		})
 	})

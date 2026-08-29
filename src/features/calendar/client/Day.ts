@@ -9,10 +9,7 @@ export class Day extends Component {
 	@property({ type: Array }) entries: ReadonlyArray<EntrySegment> = []
 	@property({ type: Boolean, reflect: true }) today = false
 
-	/** Set by the week view, where this header titles a whole column and sticks to the top of the
-	 * scroller — part of the grid's frame, so a view transition names it and keeps it above the
-	 * entries it animates (see calendarTransition.ts). The month and year grids print the same header
-	 * as a numeral inside the cell, where entries legitimately pass over it. */
+	/** Whether this header titles a whole column in the week grid. */
 	@property({ type: Boolean, attribute: 'column-header' }) columnHeader = false
 
 	static override get styles() {
@@ -58,10 +55,6 @@ export class Day extends Component {
 						z-index: 10;
 					}
 
-					/* The year strip collapses this cell to a bare centred numeral — driven by the parent
-					   (mitra-months), NOT a container query: a year cell can't be told apart from a narrow
-					   (mobile) month cell by its own size alone. See Months.ts. */
-
 					.weekday {
 						font-size: 0.7rem;
 						font-weight: 600;
@@ -99,9 +92,6 @@ export class Day extends Component {
 							padding: 0 0.35rem;
 							font-weight: 700;
 							box-sizing: border-box;
-							/* The pill flies between views as its own group. It sits inside the (also named)
-							   column header in the week view, but a scoped transition nests descendant groups
-							   under their ancestor rather than double-drawing them, so it leaves no ghost. */
 							view-transition-name: today-badge;
 
 							@container (max-height: 450px) {
@@ -130,20 +120,10 @@ export class Day extends Component {
 				.entries {
 					grid-row: 2;
 					display: grid;
-					/* fr, not a repeated length — see the .axis rule in Days.ts for why. */
 					grid-template-rows: repeat(1440, minmax(0, 1fr));
 					grid-template-columns: 1fr;
 					position: relative;
-					/* Deliberately NOT a container/stacking context: the chips' z-index must resolve in
-					   the view's own context so the connections layer (z 1, see EntryConnections) can sit
-					   between the day surface and the chips (z 2). Every @container query the chips use
-					   is height-based and answered by the chip's own size container — an inline-size
-					   container here served nothing and trapped the z-order. */
 					padding-inline: 1px;
-					/* Every block stops short of the trailing edge by this much, leaving a strip of raw day
-					   at every minute — a permanent drag-to-create target even on a day that is visually
-					   full (the Notion affordance). The drag controller treats any bare .entries surface
-					   as a create, so reserving the strip is all it takes. */
 					--_edge-gutter: 0.5rem;
 
 					mitra-entry-segment {
@@ -151,47 +131,19 @@ export class Day extends Component {
 						z-index: 2;
 						position: relative;
 
-						/* Chips share this one z-plane on purpose: paint order is DOM order, which timedOn
-						   keeps sorted by start — so a chip always covers what began BEFORE it (a cascading
-						   chip covers its base; a fresh block covers the poking tail of a long earlier chip),
-						   never the other way around. Elevating cascades by inset instead would let a long
-						   tail bury a later short block wholesale. */
-
-						/* A partially covered chip surfaces while selected (its editor is open; set on click,
-						   see EventSegment). Lives here, not in EventSegment.ts: the flat z-index above
-						   outweighs any selector written there ((0,1,2) vs (0,1,1)), so its exception must too. */
 						&[selected] {
 							z-index: 99;
 						}
 
-						/* The same specificity trap would pin an actively dragged chip (or a move's ghost) at
-						   the flat level, beneath later-starting chips — restate its elevation where it wins. */
 						&[dragging] {
 							z-index: 9999;
 						}
 
-						/* STICKY LABEL. A block scrolled past its own top keeps its identity: the heading
-						   rides down with the viewport, bounded by the block's box, so a multi-day run
-						   (whose slice starts at midnight) or any tall event stays named wherever you are
-						   in the day. Lives here, not in EventSegment.ts: only the timed grid scrolls in
-						   the block axis — the all-day lane's bars are one line tall and stick in the
-						   INLINE axis instead (see Days.ts), and the month/year cells render their bars
-						   outside .entries entirely, so neither is touched by this rule.
-
-						   The HEADING alone, never the time row with it: two sticky siblings each clamp
-						   independently to the box, so on the last line of a short block's travel they
-						   collapse onto each other and the two texts garble. The heading is the identity;
-						   the time is what the grid position already says. */
 						> .heading {
 							position: sticky;
-							/* Clear of the sticky day headers and the all-day lane above them. */
 							inset-block-start: calc(var(--header-height, 2.75rem) + var(--_all-day-lane-height, 1.375rem) + 0.25rem);
 						}
 
-						/* The location is the one row a travelling heading can reach, so only then does it
-						   need to carry the block's own background to occlude it instead of ghosting over
-						   it — and only then, because on a covering (glass) block that background
-						   composites twice and would otherwise tint the label band on every chip. */
 						&:has(> .location) > .heading {
 							background-color: inherit;
 						}
@@ -212,9 +164,6 @@ export class Day extends Component {
 			</div>
 
 			<div class="entries">
-				${/* Keyed on the entry INSTANCE — the store keeps it stable while ids change under it
-				    (draft graduation, cross-source migration), so the element (and an open editor
-				    popover inside it) survives those. */ ''}
 				${repeat(this.entries, segment => segment.entry, segment => html`
 					<mitra-entry-segment
 						style=${styleMap({

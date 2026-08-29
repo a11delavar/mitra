@@ -17,12 +17,10 @@ describe('EntryStore', () => {
 		id: 'a', sourceId: 's', type: EntryType.Event, heading: 'Standup', start: at(9), end: at(10), ...init,
 	})
 
-	/** A controllable fake transport: resolves/rejects on demand, records calls. */
 	const fake = () => {
 		const calls = { create: 0, update: 0, delete: new Array<string>(), occurrenceEdits: new Array<RecurrenceScope>(), occurrenceDeletes: new Array<RecurrenceScope>() }
 		const settlers = new Array<{ resolve: (saved: Entry) => void, reject: (error: unknown) => void }>()
 		const request = (entry: Entry) => new Promise<Entry>((resolve, reject) => {
-			// Capture what was sent; by default the server echoes it back (possibly normalized by the settler).
 			const sent = entry.clone()
 			settlers.push({ resolve: saved => resolve(saved ?? sent), reject })
 		})
@@ -35,8 +33,6 @@ describe('EntryStore', () => {
 				editOccurrence: (entry: Entry, scope: RecurrenceScope) => (calls.occurrenceEdits.push(scope), request(entry)),
 				deleteOccurrence: (_entry: Entry, scope: RecurrenceScope) => (calls.occurrenceDeletes.push(scope), Promise.resolve()),
 			},
-			/** Settle the oldest pending request — waiting for one to appear first, since a commit may
-			 * await other things (e.g. the scope resolver) before it issues the request. */
 			async respond(saved?: Entry) {
 				while (!settlers.length) {
 					await new Promise<void>(resolve => setTimeout(resolve))
@@ -51,7 +47,6 @@ describe('EntryStore', () => {
 			get pending() { return settlers.length },
 		}
 		function settled() {
-			// Let the commit loop's continuations run before the test asserts.
 			return new Promise<void>(resolve => setTimeout(resolve))
 		}
 	}
@@ -93,7 +88,7 @@ describe('EntryStore', () => {
 			const refetched = entry({ heading: 'Renamed', start: at(14), end: at(15) })
 			EntryStore.applyServerEntries([refetched])
 			const [working] = EntryStore.entries
-			assert.equal(working, first) // identity survives — open editors keep a live entry
+			assert.equal(working, first)
 			assert.equal(working!.heading, 'Renamed')
 			assert.equal(working!.start!.valueOf(), at(14).valueOf())
 		})
@@ -103,8 +98,8 @@ describe('EntryStore', () => {
 			EntryStore.applyServerEntries([working])
 			working.heading = 'Local edit'
 			EntryStore.applyServerEntries([entry({ heading: 'External edit' })])
-			assert.equal(working.heading, 'Local edit') // pending wins until its own save confirms
-			assert.equal(EntryStore.isDirty(working), true) // still dirty — now against the newer canonical
+			assert.equal(working.heading, 'Local edit')
+			assert.equal(EntryStore.isDirty(working), true)
 		})
 
 		it('drops a clean entry the fetch no longer contains, keeps a dirty one', () => {
@@ -122,7 +117,7 @@ describe('EntryStore', () => {
 			assert.equal(EntryStore.isDirty(working), false)
 			working.moveStart(at(14))
 			assert.equal(EntryStore.isDirty(working), true)
-			working.moveStart(at(9)) // undoing the edit makes it clean again — no flag to unset
+			working.moveStart(at(9))
 			assert.equal(EntryStore.isDirty(working), false)
 		})
 	})
@@ -136,25 +131,22 @@ describe('EntryStore', () => {
 			const commit = EntryStore.commit(draft)
 			await transport.respond(entry({ id: 'assigned' }))
 			await commit
-			assert.equal(draft.id, 'assigned') // same instance, now persisted
-			assert.deepEqual([...EntryStore.entries], [draft]) // out of the draft slot, into the identity map
+			assert.equal(draft.id, 'assigned')
+			assert.deepEqual([...EntryStore.entries], [draft])
 			assert.equal(EntryStore.isDirty(draft), false)
 		})
 
 		it('keeps a committing draft visible when the create-gesture cleanup fires (click-away)', async () => {
-			// Clicking away commits (input change), then the grid's pointerup dismisses "the draft" — that
-			// dismissal must not destroy a titled entry whose POST is mid-flight, or it vanishes until the
-			// sync echo brings it back.
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
 			const draft = entry({ id: undefined })
 			EntryStore.upsertDraft(draft)
 			const commit = EntryStore.commit(draft)
-			EntryStore.discardDraft() // the plain-click-on-empty-grid path
-			assert.deepEqual([...EntryStore.entries], [draft]) // still rendered — no gap
+			EntryStore.discardDraft()
+			assert.deepEqual([...EntryStore.entries], [draft])
 			await transport.respond(entry({ id: 'assigned' }))
 			await commit
-			assert.deepEqual([...EntryStore.entries], [draft]) // graduated, still the same instance
+			assert.deepEqual([...EntryStore.entries], [draft])
 			assert.equal(draft.id, 'assigned')
 			assert.equal(EntryStore.isDirty(draft), false)
 		})
@@ -177,10 +169,10 @@ describe('EntryStore', () => {
 			EntryStore.upsertDraft(first)
 			const commit = EntryStore.commit(first)
 			const second = entry({ id: undefined, heading: 'Second' })
-			EntryStore.upsertDraft(second) // displaces `first` while its POST is in flight
+			EntryStore.upsertDraft(second)
 			await transport.respond(entry({ id: 'assigned', heading: 'First' }))
 			await commit
-			assert.deepEqual([...EntryStore.entries], [first, second]) // first landed in the identity map
+			assert.deepEqual([...EntryStore.entries], [first, second])
 			assert.equal(first.id, 'assigned')
 		})
 
@@ -214,10 +206,10 @@ describe('EntryStore', () => {
 			EntryStore.applyServerEntries([working])
 			working.heading = 'First edit'
 			const commit = EntryStore.commit(working)
-			working.heading = 'Second edit' // while the first PUT is in flight
-			await transport.respond() // first round: server confirms 'First edit'
-			assert.equal(working.heading, 'Second edit') // not clobbered by the response
-			assert.equal(transport.pending, 1) // the loop re-derived dirtiness and saved again
+			working.heading = 'Second edit'
+			await transport.respond()
+			assert.equal(working.heading, 'Second edit')
+			assert.equal(transport.pending, 1)
 			await transport.respond()
 			await commit
 			assert.equal(transport.calls.update, 2)
@@ -231,7 +223,6 @@ describe('EntryStore', () => {
 			EntryStore.applyServerEntries([working])
 			working.moveStart(at(14))
 			const commit = EntryStore.commit(working)
-			// The server rounds and enriches (uri, etag) — the client must converge on that, not pin forever.
 			await transport.respond(entry({ start: at(14), end: at(15), uri: '/dav/a.ics', data: { etag: '"2"' } }))
 			await commit
 			assert.equal(working.uri, '/dav/a.ics')
@@ -248,7 +239,7 @@ describe('EntryStore', () => {
 			await transport.fail(new Error('offline'))
 			await rejection
 			assert.equal(working.heading, 'Edit')
-			assert.equal(EntryStore.isDirty(working), true) // the next change retries
+			assert.equal(EntryStore.isDirty(working), true)
 		})
 
 		it('rekeys the identity map when a migration re-creates the entry under a new id', async () => {
@@ -256,15 +247,15 @@ describe('EntryStore', () => {
 			EntryStore.persistence = transport.persistence
 			const working = entry()
 			EntryStore.applyServerEntries([working])
-			working.sourceId = 'another-source' // a migration — the backend re-creates and returns a new id
+			working.sourceId = 'another-source'
 			const commit = EntryStore.commit(working)
 			await transport.respond(entry({ id: 'migrated', sourceId: 'another-source' }))
 			await commit
-			assert.equal(working.id, 'migrated') // same instance, new identity
+			assert.equal(working.id, 'migrated')
 			assert.deepEqual([...EntryStore.entries], [working])
 			assert.equal(EntryStore.isDirty(working), false)
 			EntryStore.applyServerEntries([entry({ id: 'migrated', sourceId: 'another-source' })])
-			assert.deepEqual([...EntryStore.entries], [working]) // adopted under the new id; the old one is fully forgotten
+			assert.deepEqual([...EntryStore.entries], [working])
 		})
 
 		it('drops the local copy when the server says the entry is gone (PUT 404)', async () => {
@@ -307,7 +298,7 @@ describe('EntryStore', () => {
 			const working = entry()
 			EntryStore.applyServerEntries([working])
 			const deletion = EntryStore.delete(working)
-			assert.deepEqual([...EntryStore.entries], []) // optimistic — no waiting for the request
+			assert.deepEqual([...EntryStore.entries], [])
 			await deletion
 			assert.deepEqual(transport.calls.delete, ['a'])
 		})
@@ -318,12 +309,12 @@ describe('EntryStore', () => {
 			const draft = entry({ id: undefined })
 			EntryStore.upsertDraft(draft)
 			EntryStore.commit(draft).catch(() => void 0)
-			const deletion = EntryStore.delete(draft) // deleted while the POST is in flight
+			const deletion = EntryStore.delete(draft)
 			assert.deepEqual([...EntryStore.entries], [])
 			await transport.respond(entry({ id: 'assigned' }))
 			await deletion
-			assert.deepEqual(transport.calls.delete, ['assigned']) // no orphan left on the server
-			assert.deepEqual([...EntryStore.entries], []) // graduation mid-delete didn't resurrect it
+			assert.deepEqual(transport.calls.delete, ['assigned'])
+			assert.deepEqual([...EntryStore.entries], [])
 		})
 
 		it('deletes nothing on the server for a never-saved draft', async () => {
@@ -345,17 +336,17 @@ describe('EntryStore', () => {
 			const span = entry({ id: undefined, start: at(14), end: at(15) })
 			const duplication = EntryStore.duplicate(original, span)
 			const copy = EntryStore.entries.find(e => e !== original)!
-			assert.equal(copy.persisted, false) // dashed while the create is in flight
+			assert.equal(copy.persisted, false)
 			assert.equal(copy.heading, 'Standup')
 			assert.equal(copy.description, 'Notes')
 			assert.deepEqual(copy.reminders, [30])
-			assert.equal(copy.start!.valueOf(), at(14).valueOf()) // placed where it was dropped...
-			assert.equal(original.start!.valueOf(), at(9).valueOf()) // ...while the original stays put
+			assert.equal(copy.start!.valueOf(), at(14).valueOf())
+			assert.equal(original.start!.valueOf(), at(9).valueOf())
 			assert.equal(EntryStore.isDirty(original), false)
 			await transport.respond(new Entry({ ...copy.clone(), id: 'copy' }))
 			await duplication
 			assert.equal(transport.calls.create, 1)
-			assert.equal(copy.id, 'copy') // same instance, now a working entry
+			assert.equal(copy.id, 'copy')
 			assert.deepEqual([...EntryStore.entries], [original, copy])
 			assert.equal(EntryStore.isDirty(copy), false)
 		})
@@ -370,15 +361,15 @@ describe('EntryStore', () => {
 			EntryStore.applyServerEntries([occurrence])
 			const duplication = EntryStore.duplicate(occurrence, entry({ id: undefined, start: at(14), end: at(15) }))
 			const copy = EntryStore.entries.find(e => e !== occurrence)!
-			assert.equal(copy.heading, 'Standup') // based on this very occurrence...
-			assert.equal(copy.recurrence, undefined) // ...but a single entry: no rule...
-			assert.equal(copy.recurrenceMasterId, undefined) // ...and no series link
+			assert.equal(copy.heading, 'Standup')
+			assert.equal(copy.recurrence, undefined)
+			assert.equal(copy.recurrenceMasterId, undefined)
 			assert.equal(copy.recurrenceId, undefined)
 			assert.equal(copy.uid, undefined)
 			assert.equal(copy.seriesStart, undefined)
 			await transport.respond(new Entry({ ...copy.clone(), id: 'copy' }))
 			await duplication
-			assert.equal(transport.calls.create, 1) // a plain create — no scope arises
+			assert.equal(transport.calls.create, 1)
 			assert.deepEqual(transport.calls.occurrenceEdits, [])
 		})
 
@@ -393,7 +384,7 @@ describe('EntryStore', () => {
 			assert.equal(shown.end!.valueOf(), original.end!.valueOf())
 			await transport.respond(new Entry({ ...shown.clone(), id: 'copy' }))
 			const copy = await duplication
-			assert.equal(copy, shown) // resolves with the copy, so the caller can open its editor
+			assert.equal(copy, shown)
 			assert.equal(copy.id, 'copy')
 		})
 
@@ -418,7 +409,7 @@ describe('EntryStore', () => {
 			assert.equal(EntryStore.entries.length, 2)
 			await transport.fail(new Error('offline'))
 			await rejection
-			assert.deepEqual([...EntryStore.entries], [original]) // back to what the server holds
+			assert.deepEqual([...EntryStore.entries], [original])
 		})
 	})
 
@@ -427,16 +418,16 @@ describe('EntryStore', () => {
 			const source = entry()
 			EntryStore.applyServerEntries([source])
 			EntryStore.setDragging(source)
-			assert.equal(EntryStore.isDragging(source), true) // no ghost yet ⇒ a live resize: float
+			assert.equal(EntryStore.isDragging(source), true)
 			const ghost = new Entry({ ...source.clone(), id: undefined })
 			ghost.moveStart(at(14))
 			EntryStore.setPreview(ghost)
-			assert.deepEqual([...EntryStore.entries], [source, ghost]) // both render: dim + dashed
-			assert.equal(ghost.persisted, false) // dashed through the same rule as a draft
+			assert.deepEqual([...EntryStore.entries], [source, ghost])
+			assert.equal(ghost.persisted, false)
 			assert.equal(EntryStore.isDragSource(source), true)
 			assert.equal(EntryStore.isDragging(source), false)
 			assert.equal(EntryStore.isPreview(ghost), true)
-			assert.equal(EntryStore.isDirty(source), false) // a move never touches the entry mid-gesture
+			assert.equal(EntryStore.isDirty(source), false)
 			EntryStore.setPreview(undefined)
 			EntryStore.setDragging(undefined)
 			assert.deepEqual([...EntryStore.entries], [source])
@@ -446,13 +437,13 @@ describe('EntryStore', () => {
 			const source = entry()
 			EntryStore.applyServerEntries([source])
 			EntryStore.setDragging(source)
-			const ghost = new Entry({ ...source.clone(), id: undefined }) // same span — releasing changes nothing
+			const ghost = new Entry({ ...source.clone(), id: undefined })
 			EntryStore.setPreview(ghost)
-			assert.deepEqual([...EntryStore.entries], [source]) // no ghost rendered...
-			assert.equal(EntryStore.isDragSource(source), false) // ...no dimmed source...
-			assert.equal(EntryStore.isDragging(source), false) // ...and no live-resize float either
+			assert.deepEqual([...EntryStore.entries], [source])
+			assert.equal(EntryStore.isDragSource(source), false)
+			assert.equal(EntryStore.isDragging(source), false)
 			assert.equal(EntryStore.isPreview(ghost), false)
-			ghost.moveStart(at(14)) // next frame drags away again
+			ghost.moveStart(at(14))
 			EntryStore.setPreview(ghost)
 			assert.deepEqual([...EntryStore.entries], [source, ghost])
 			assert.equal(EntryStore.isDragSource(source), true)
@@ -472,13 +463,12 @@ describe('EntryStore', () => {
 			EntryStore.applyServerEntries([working])
 			working.heading = 'Renamed series'
 			const commit = EntryStore.commit(working)
-			// The edit routes to the MASTER; the response is the master — different id, different span.
 			await transport.respond(entry({ id: 'master', heading: 'Renamed series', start: at(1), end: at(2) }))
 			await commit
 			assert.deepEqual(transport.calls.occurrenceEdits, ['all'])
-			assert.equal(working.id, 'master__1000') // identity untouched — no rekey onto the master
-			assert.equal(working.start!.valueOf(), at(9).valueOf()) // span untouched — nothing adopted
-			assert.equal(EntryStore.isDirty(working), false) // its own sent state became its canonical
+			assert.equal(working.id, 'master__1000')
+			assert.equal(working.start!.valueOf(), at(9).valueOf())
+			assert.equal(EntryStore.isDirty(working), false)
 		})
 
 		it('\'this\' detaches: the instance adopts the standalone\'s identity and leaves the series', async () => {
@@ -492,8 +482,8 @@ describe('EntryStore', () => {
 			await transport.respond(entry({ id: 'detached', recurrenceMasterId: undefined, start: at(14), end: at(15) }))
 			await commit
 			assert.deepEqual(transport.calls.occurrenceEdits, ['this'])
-			assert.equal(working.id, 'detached') // same instance, new real identity
-			assert.equal(working.recurrenceMasterId, undefined) // no longer part of the series
+			assert.equal(working.id, 'detached')
+			assert.equal(working.recurrenceMasterId, undefined)
 			assert.equal(working.recurrence, undefined)
 			assert.deepEqual([...EntryStore.entries], [working])
 			assert.equal(EntryStore.isDirty(working), false)
@@ -507,7 +497,7 @@ describe('EntryStore', () => {
 			EntryStore.applyServerEntries([working])
 			working.heading = 'Should not stick'
 			await EntryStore.commit(working)
-			assert.equal(working.heading, 'Standup') // snapped back to the series' state
+			assert.equal(working.heading, 'Standup')
 			assert.deepEqual(transport.calls.occurrenceEdits, [])
 			assert.equal(EntryStore.isDirty(working), false)
 		})
@@ -518,11 +508,11 @@ describe('EntryStore', () => {
 			EntryStore.resolveScope = () => Promise.reject(new Error('must not be asked'))
 			const working = occurrence({ recurrence: new Recurrence({ freq: 'DAILY' }) })
 			EntryStore.applyServerEntries([working])
-			working.recurrence = null // remove the rule — series-wide by definition
+			working.recurrence = null
 			const commit = EntryStore.commit(working)
 			await transport.respond(entry({ id: 'master' }))
 			await commit
-			assert.equal(transport.calls.update, 1) // the plain update path (updateEvent routes to the master)
+			assert.equal(transport.calls.update, 1)
 			assert.deepEqual(transport.calls.occurrenceEdits, [])
 			assert.equal(EntryStore.isDirty(working), false)
 		})
@@ -538,7 +528,7 @@ describe('EntryStore', () => {
 			await transport.respond(entry({ id: 'detached', type: EntryType.Task, status: TaskStatus.Done }))
 			await commit
 			assert.deepEqual(transport.calls.occurrenceEdits, ['this'])
-			assert.equal(working.recurrenceMasterId, undefined) // detached — the completion is this occurrence's own
+			assert.equal(working.recurrenceMasterId, undefined)
 			assert.equal(working.status, TaskStatus.Done)
 			assert.equal(EntryStore.isDirty(working), false)
 		})
@@ -588,7 +578,7 @@ describe('EntryStore', () => {
 			const commit = EntryStore.commit(working)
 			await transport.respond(entry({ id: 'master', type: EntryType.Task, status: TaskStatus.Done, heading: 'Renamed series' }))
 			await commit
-			assert.deepEqual(transport.calls.occurrenceEdits, ['all']) // the whole edit takes the asked scope
+			assert.deepEqual(transport.calls.occurrenceEdits, ['all'])
 		})
 
 		it('a preset scope (Ctrl-drop) commits without asking and detaches like a chosen \'this\'', async () => {
@@ -628,7 +618,7 @@ describe('EntryStore', () => {
 			const second = occurrence({ id: 'master__2000', recurrenceId: at(11), start: at(11), end: at(12) })
 			EntryStore.applyServerEntries([first, second])
 			await EntryStore.delete(first)
-			assert.deepEqual([...EntryStore.entries], [second]) // only the deleted instance dropped
+			assert.deepEqual([...EntryStore.entries], [second])
 			assert.deepEqual(transport.calls.occurrenceDeletes, ['this'])
 			assert.deepEqual(transport.calls.delete, [])
 		})
@@ -642,7 +632,7 @@ describe('EntryStore', () => {
 			const later = occurrence({ id: 'master__2000', recurrenceId: at(11), start: at(11), end: at(12) })
 			EntryStore.applyServerEntries([earlier, target, later])
 			await EntryStore.delete(target)
-			assert.deepEqual([...EntryStore.entries], [earlier]) // this one and everything after it dropped
+			assert.deepEqual([...EntryStore.entries], [earlier])
 			assert.deepEqual(transport.calls.occurrenceDeletes, ['following'])
 		})
 
@@ -655,8 +645,8 @@ describe('EntryStore', () => {
 			const unrelated = entry({ id: 'other' })
 			EntryStore.applyServerEntries([first, second, unrelated])
 			await EntryStore.delete(first)
-			assert.deepEqual([...EntryStore.entries], [unrelated]) // every occurrence gone at once
-			assert.deepEqual(transport.calls.delete, ['master']) // and the server call targets the master
+			assert.deepEqual([...EntryStore.entries], [unrelated])
+			assert.deepEqual(transport.calls.delete, ['master'])
 		})
 
 		it('cancelling a scoped delete leaves everything untouched', async () => {
@@ -679,9 +669,8 @@ describe('EntryStore', () => {
 			const sibling = occurrence({ id: 'master__2000', recurrenceId: at(11), start: at(11), end: at(12) })
 			EntryStore.applyServerEntries([target, sibling])
 			await assert.rejects(EntryStore.delete(target), /400/)
-			// Back in the view immediately — a failure must not masquerade as a delete until the next reload.
 			assert.deepEqual(new Set(EntryStore.entries), new Set([target, sibling]))
-			assert.equal(EntryStore.isDirty(target), false) // reinstated with its canonical intact
+			assert.equal(EntryStore.isDirty(target), false)
 		})
 
 		it('a failed whole-series delete reinstates every dropped instance', async () => {
@@ -723,7 +712,7 @@ describe('EntryStore', () => {
 			EntryStore.applyServerEntries([working])
 			working.relateTo('FINISHTOSTART', 'other-uid')
 			assert.equal(EntryStore.isDirty(working), false)
-			await EntryStore.commit(working) // resolves without a request — nothing is dirty
+			await EntryStore.commit(working)
 			assert.equal(transport.calls.update, 0)
 		})
 
@@ -752,10 +741,8 @@ describe('EntryStore', () => {
 	})
 
 	describe('onTaskClosed', () => {
-		// Fires only on transition to closed, after successful server persistence.
 		const task = (init?: Partial<Entry>) => entry({ type: EntryType.Task, status: TaskStatus.ToDo, ...init })
 
-		/** Records the entries the hook announced. */
 		const watch = () => {
 			const closed = new Array<Entry>()
 			EntryStore.onTaskClosed = entry => void closed.push(entry)
@@ -770,13 +757,12 @@ describe('EntryStore', () => {
 			EntryStore.applyServerEntries([working])
 			working.status = TaskStatus.Done
 			const commit = EntryStore.commit(working)
-			assert.deepEqual(closed, []) // nothing announced while the write is still in flight
+			assert.deepEqual(closed, [])
 			await transport.respond()
 			await commit
 			assert.deepEqual(closed, [working])
 		})
 
-		// Cancelled tasks are excluded from the open set and fire onTaskClosed too.
 		it('fires for Cancelled too', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
@@ -816,7 +802,6 @@ describe('EntryStore', () => {
 			assert.deepEqual(closed, [])
 		})
 
-		// Only a task has an outcome to decide; an event's status is shed by the type setter.
 		it('stays silent for an event', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence

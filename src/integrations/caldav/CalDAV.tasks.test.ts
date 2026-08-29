@@ -3,8 +3,6 @@ import assert from 'node:assert/strict'
 import { CalDAV } from './CalDAV.js'
 import { TaskStatus } from '../../features/entries/Entry.js'
 
-// CalDAV task completion and PERCENT-COMPLETE mapping tests (RFC 5545 §3.8.1.8).
-
 describe('percentCompleteForICal', () => {
 	it('round-trips an authored percentage instead of deriving one from the status', () => {
 		assert.equal(CalDAV.percentCompleteForICal(TaskStatus.ToDo, 40), 40)

@@ -21,11 +21,6 @@ import { TempoSyncEngine } from './TempoSyncEngine.js'
 import { TempoRequestError, type TempoClient } from './TempoClient.js'
 import { type JiraClient } from './JiraClient.js'
 
-// The Tempo sync pipeline against real SQLite: the delta watermark and its overlap, deletions off the
-// audit feed, the field-compare `changed` contract, issue resolution degrading to ids, and the writes
-// — in particular that a move carries the fields mitra never shows and rewrites no text. Both networks
-// are stubs injected into the integration's memo slots, the seam those slots exist for.
-
 const ACCOUNT = 'acct:0000-1111'
 const SITE = 'https://acme.atlassian.net'
 const BERLIN = 'Europe/Berlin'
@@ -159,10 +154,9 @@ describe('Tempo discovery', () => {
 		const sources = await engine.fetchSources(integration)
 
 		assert.equal(integration.uri, `${Tempo.uriPrefix}${ACCOUNT}`)
-		// The e-mail names the account; the display name names the person.
 		assert.equal(integration.credentials.username, 'alice@example.com')
 		assert.deepEqual(sources.map(source => [source.uri, source.name, source.enabled]), [
-			[Tempo.sourceUri(ACCOUNT), 'My worklogs', false], // opt-in, like every other provider's
+			[Tempo.sourceUri(ACCOUNT), 'My worklogs', false],
 		])
 		assert.deepEqual(sources[0]!.entryTypes, [EntryType.Event])
 	})
@@ -209,7 +203,6 @@ describe('Tempo sync', () => {
 			['1', 'ACME-1234 Fix the parser', 'Refactoring'],
 			['2', 'ACME-1234 Fix the parser', 'Review'],
 		])
-		// 09:34 + 30min, read in the account's zone (Berlin, +02:00 in August).
 		assert.equal((entries[1]!.end as unknown as Date).toISOString(), '2026-08-03T08:04:00.000Z')
 		assert.equal(source.syncState?.updatedFrom, '2026-08-04T11:00:00Z')
 	})
@@ -225,8 +218,7 @@ describe('Tempo sync', () => {
 		await em.flush()
 		await sync(integration, em, source)
 
-		assert.equal(calls.searches[0], undefined) // a first sync has no watermark to ask from
-		// A worklog written in the same second the last cycle read would be missed without the overlap.
+		assert.equal(calls.searches[0], undefined)
 		assert.equal(calls.searches[1], '2026-08-03T08:59:00.000Z')
 	})
 
@@ -259,7 +251,6 @@ describe('Tempo sync', () => {
 		await sync(integration, em, source)
 		await em.flush()
 
-		// A deleted worklog is simply absent from the listing, which is why the feed exists at all.
 		state.worklogs = []
 		state.deleted = [{ tempoWorklogId: '42', deletedAt: '2026-08-06T10:00:00Z' }]
 		assert.equal(await sync(integration, em, source), true)
@@ -280,7 +271,7 @@ describe('Tempo sync', () => {
 		state.worklogs = [worklog({ tempoWorklogId: 3, updatedAt: '2026-08-09T09:00:00Z' })]
 		await sync(integration, em, source)
 
-		assert.deepEqual(calls.bulkFetched, [['10001']]) // two worklogs, one issue, one lookup — then none
+		assert.deepEqual(calls.bulkFetched, [['10001']])
 		assert.deepEqual(source.syncState?.issues, { '10001': { key: 'ACME-1234', summary: 'Fix the parser' } })
 	})
 
@@ -293,7 +284,7 @@ describe('Tempo sync', () => {
 
 		const entry = await em.findOneOrFail(Entry, { sourceId: source.id })
 		assert.equal(entry.heading, '#10001')
-		assert.equal(entry.data?.url, undefined) // nothing to browse to without a key
+		assert.equal(entry.data?.url, undefined)
 	})
 })
 
@@ -326,16 +317,13 @@ describe('Tempo writes', () => {
 			issueId: 10001,
 			authorAccountId: ACCOUNT,
 			startDate: '2026-08-10',
-			startTime: '09:00:00', // the wall clock the entry sits at, not the UTC face of its instant
+			startTime: '09:00:00',
 			timeSpentSeconds: 5400,
-			// Verbatim: the key is extracted from the line, never carved out of it.
 			description: 'Work on ACME-1234',
 		}])
 	})
 
 	it('books a duplicate against the same ticket, keeping its note rather than its title', async () => {
-		// Entry.duplicate carries heading + description; the heading is the ISSUE's line, so writing it
-		// as the note would replace what was actually done with the ticket's name.
 		const em = orm.em.fork()
 		const { integration, source, calls } = await seed(em, { issues: { 'ACME-1234': ACME_1234 } })
 		await engine.createEntry(integration, em, new Entry({
@@ -351,8 +339,6 @@ describe('Tempo writes', () => {
 	})
 
 	it('books the wall clock the entry sits at, in the account zone', async () => {
-		// The reported bug: an entry created at 22:30 in Berlin arrived in Tempo as 20:30, because the
-		// write took the instant's UTC face. Both directions now speak the Jira profile's zone.
 		const em = orm.em.fork()
 		const { integration, source, calls } = await seed(em, { issues: { 'ACME-1234': ACME_1234 } })
 		await engine.createEntry(integration, em, new Entry({
@@ -399,7 +385,6 @@ describe('Tempo writes', () => {
 		moved.end = new Date('2026-08-04T12:00:00+02:00') as never
 		await engine.updateEntry(integration, em, entry, moved)
 
-		// Tempo's PUT is a full replace, so anything omitted here would be wiped from the timesheet.
 		assert.deepEqual(calls.updated, [{
 			worklogId: '42',
 			input: {
@@ -427,8 +412,6 @@ describe('Tempo writes', () => {
 
 	it('does not rewrite a note whose own text a move never touched', async () => {
 		const em = orm.em.fork()
-		// Whitespace and all: the note travels as its own field, so a move carries it byte for byte
-		// rather than reconstructing it from anything the user can see.
 		const stored = worklog({ description: 'Planning session\n' })
 		const { integration, entry, calls } = await syncedEntry(em, { stored })
 

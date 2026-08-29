@@ -14,15 +14,7 @@ import { Session } from '../../features/identity/server/Session.js'
 import { State } from './State.js'
 import { migrations } from './migrations/index.js'
 
-/**
- * The ORM configuration, shared between the app (orm.ts) and the migrations CLI (migrations/cli.ts) —
- * generated migrations are only correct when both see the same entities and naming strategy.
- *
- * The backend ships as a single esbuild bundle, so migrations can't be discovered on disk at runtime:
- * they are imported explicitly (`migrationsList`). `snapshot` stays off here because the migrator
- * otherwise re-introspects the schema after running migrations and writes a snapshot file next to the
- * production database — the CLI turns it back on for generation, where the snapshot belongs in git.
- */
+/** ORM configuration shared between runtime (orm.ts) and migration CLI. */
 export function ormConfig(dbName: string) {
 	return defineConfig({
 		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, IcsSubscription, Notion, Tempo, Dev, Source, Entry, Recurrence, EntryRelation, NotificationSubscription, Session, State],

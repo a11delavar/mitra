@@ -6,8 +6,7 @@ export interface Span {
 	readonly end: DateTime
 }
 
-/** Order two days into an all-day span — `[from, exclusive next midnight after to]`. Dragging the two days
- * past each other just swaps them, so a create/resize gesture flips gracefully with no special case. */
+/** Order two days into an all-day span `[from, exclusive next midnight after to]`. */
 export function placeAllDay(a: DateTime, b: DateTime): Span {
 	const [from, to] = a.dayStart.isAfter(b.dayStart) ? [b, a] : [a, b]
 	return { start: from.dayStart, end: to.dayStart.add({ days: 1 }) }
@@ -23,13 +22,11 @@ export function placeTimed(a: DateTime, b: DateTime, snapMinutes: number): Span 
 	return { start, end }
 }
 
-/** The new span when resizing one edge of an existing entry to `dragged`, keeping the other edge fixed.
- * All-day bounds are exclusive next-midnight, so the fixed *trailing* edge is `end − 1 day`; dragging an
- * edge past the other flips the entry, matching the create gesture. */
+/** Computes the new span when resizing one edge of an existing entry to `dragged`. */
 export function resizePlacement(entry: Pick<Entry, 'start' | 'end' | 'allDay'>, edge: 'start' | 'end', dragged: DateTime, snapMinutes: number): Span {
 	if (entry.allDay) {
 		const firstDay = entry.start!.dayStart
-		const lastDay = entry.end!.dayStart.subtract({ days: 1 }) // end is the exclusive next midnight
+		const lastDay = entry.end!.dayStart.subtract({ days: 1 })
 		return placeAllDay(edge === 'end' ? firstDay : lastDay, dragged)
 	}
 	return placeTimed(edge === 'end' ? entry.start! : entry.end!, dragged, snapMinutes)

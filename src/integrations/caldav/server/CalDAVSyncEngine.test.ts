@@ -1,28 +1,17 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { CalDAV } from '../CalDAV.js'
-// syncSourceEntries goes through `Integration`'s registry, so the engine must be registered for
-// 'caldav' the same way the running server registers it (see app/server.ts).
 import '../../server/registerEngines.js'
 import { Entry } from '../../../features/entries/Entry.js'
 import { EntryType } from '../../../features/entries/EntryType.js'
 import { Source } from '../../../features/sources/Source.js'
 
-/**
- * Tests for RFC 6578 sync-collection pagination and truncation handling.
- */
-
 const COLLECTION = 'https://example.com/cal/'
 
-/** One `sync-collection` answer the fake server is scripted to give. */
 type Listing = {
-	/** Member hrefs, with the status the server reports for each (200 = changed/added, 404 = removed). */
 	readonly members: ReadonlyArray<{ href: string, status?: number }>
-	/** The DAV:sync-token the answer carries — absent means the element is missing entirely. */
 	readonly token?: string
-	/** Cut short per RFC 6578 §3.6: a 507 for the collection itself, with the matches-limit error. */
 	readonly truncated?: boolean
-	/** A REPORT the server did not really answer (tsdav surfaces it as one non-ok row, not a throw). */
 	readonly failure?: number
 }
 
@@ -32,7 +21,6 @@ const ics = (uid: string, summary: string) => [
 	'END:VEVENT', 'END:VCALENDAR',
 ].join('\r\n')
 
-/** Scripted fake DAV server returning multistatus responses for tests. */
 function fakeServer(listings: ReadonlyArray<Listing>) {
 	const tokensSent = new Array<string | undefined>()
 	const multigets = new Array<Array<string>>()
@@ -46,7 +34,6 @@ function fakeServer(listings: ReadonlyArray<Listing>) {
 				return Promise.resolve([{ href: COLLECTION, status: listing.failure, statusText: 'Nope', ok: false, raw: 'an error page' }])
 			}
 			return Promise.resolve([
-				// The collection's own row: the truncation mark per RFC 6578 §3.6.
 				...listing.truncated
 					? [{ href: COLLECTION, status: 507, ok: false, error: { numberOfMatchesWithinLimits: {} }, raw }]
 					: [{ href: COLLECTION, status: 200, ok: true, raw }],
@@ -69,7 +56,6 @@ function fakeServer(listings: ReadonlyArray<Listing>) {
 	}
 }
 
-/** An entity manager that serves the seeded rows and records what the sync persisted and removed. */
 function fakeEntityManager(entries: ReadonlyArray<Entry>) {
 	return {
 		persisted: new Array<Entry>(),
@@ -81,7 +67,6 @@ function fakeEntityManager(entries: ReadonlyArray<Entry>) {
 				this.persisted.push(entity)
 			}
 		},
-		// Relation rows also pass through here (the sync reconciles them); only entries are of interest.
 		remove(entity: unknown) {
 			if (entity instanceof Entry) {
 				this.removed.push(entity)
@@ -121,7 +106,6 @@ describe('CalDAV sync follows a truncated listing to its end (RFC 6578)', () => 
 	it('repeats the REPORT with each advanced token until the listing is complete', async () => {
 		const { reports, tokensSent } = await sync(chunked)
 		assert.equal(reports, 3)
-		// The first pass has nothing to send; each follow-up replays the token the previous one returned.
 		assert.deepEqual(tokensSent, [undefined, 'token-1', 'token-2'])
 	})
 
@@ -164,15 +148,14 @@ describe('CalDAV sync follows a truncated listing to its end (RFC 6578)', () => 
 			{ members: [{ href: '/cal/a.ics', status: 404 }], token: 'token-2' },
 		], [gone])
 		assert.deepEqual(em.removed, [gone])
-		assert.deepEqual(fetched, []) // nothing left to fetch — the member is gone
+		assert.deepEqual(fetched, [])
 	})
 
 	it('gives up after a bounded number of REPORTs rather than chasing an endlessly truncating server', async () => {
-		// Every answer is truncated and every token is fresh, so only the cap can end the walk.
 		const endless = Array.from({ length: 200 }, (_, index) => ({ members: [{ href: `/cal/${index}.ics` }], token: `token-${index}`, truncated: true }))
 		const { reports, source } = await sync(endless)
 		assert.equal(reports, 50)
-		assert.deepEqual(source.syncState, { syncToken: 'token-49' }) // resumed by the next cycle
+		assert.deepEqual(source.syncState, { syncToken: 'token-49' })
 	})
 
 	it('stops instead of spinning when a truncated answer repeats the token it was given', async () => {
@@ -190,7 +173,6 @@ describe('CalDAV sync follows a truncated listing to its end (RFC 6578)', () => 
 	})
 })
 
-// Deletions are inferred only when the listing is known to be complete.
 describe('CalDAV sync only reads absence as deletion off a listing it knows is complete', () => {
 	it('keeps the entries a truncated first listing has not got to yet', async () => {
 		const [kept, alsoKept] = [localEntry('kept'), localEntry('also-kept')]
@@ -198,7 +180,7 @@ describe('CalDAV sync only reads absence as deletion off a listing it knows is c
 			[{ members: [{ href: '/cal/kept.ics' }], token: 'token-1', truncated: true }],
 			[kept, alsoKept],
 		)
-		assert.deepEqual(em.removed, []) // `also-kept` is in a chunk we never received
+		assert.deepEqual(em.removed, [])
 	})
 
 	it('does remove them once the walk reaches the end of the listing', async () => {
@@ -207,7 +189,6 @@ describe('CalDAV sync only reads absence as deletion off a listing it knows is c
 			{ members: [{ href: '/cal/kept.ics' }], token: 'token-1', truncated: true },
 			{ members: [{ href: '/cal/still-here.ics' }], token: 'token-2' },
 		], [kept, gone])
-		// The complete listing names kept.ics and still-here.ics; `gone` is in neither, so it is gone.
 		assert.deepEqual(em.removed, [gone])
 	})
 
@@ -235,10 +216,9 @@ describe('CalDAV sync only reads absence as deletion off a listing it knows is c
 			[kept, unserved],
 		)
 		assert.deepEqual(em.removed, [])
-		assert.deepEqual(fetched, [`${COLLECTION}kept.ics`]) // a 507 member is not fetchable
+		assert.deepEqual(fetched, [`${COLLECTION}kept.ics`])
 	})
 
-	// An emptied calendar is a legitimate complete listing — the guard must not turn into "never delete".
 	it('mirrors a genuinely emptied collection', async () => {
 		const entries = [localEntry('a'), localEntry('b')]
 		const { em, changed } = await sync([{ members: [], token: 'token-1' }], entries)
@@ -247,7 +227,6 @@ describe('CalDAV sync only reads absence as deletion off a listing it knows is c
 	})
 })
 
-// RFC 6578 §3.6 truncation indicator parsing.
 describe('partitionMemberResponses reads the truncation mark', () => {
 	it('reports a listing the server cut short', () => {
 		const { changedUrls, truncated } = CalDAV.partitionMemberResponses(COLLECTION, [

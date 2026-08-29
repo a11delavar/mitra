@@ -2,10 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { CalDAV } from './CalDAV.js'
 import { type Source } from '../../features/sources/Source.js'
-// Discovery dispatches through `Integration`'s registry, as the running server does (see app/server.ts).
 import '../server/registerEngines.js'
-
-// Tests for WebDAV ACL privilege parsing (RFC 3744) and read-only collection detection.
 
 const privileges = (...names: Array<string>) => ({ privilege: names.map(name => ({ [name]: {} })) })
 
@@ -63,8 +60,6 @@ describe('CalDAV discovery marks a shared calendar read-only', () => {
 		})
 		await (dav as unknown as { fetchSources(): Promise<Array<Source>> }).fetchSources()
 
-		// Custom props REPLACE tsdav's defaults, so dropping one here would quietly cost every calendar
-		// its display name, colour or component set.
 		assert.deepEqual(Object.keys(asked?.props ?? {}).sort(), [
 			'c:calendar-description', 'c:calendar-timezone', 'c:supported-calendar-component-set',
 			'ca:calendar-color', 'cs:getctag', 'd:current-user-privilege-set', 'd:displayname',

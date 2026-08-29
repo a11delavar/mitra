@@ -1,17 +1,7 @@
 import { Controller, eventListener, type Component } from '@a11d/lit'
 
 /**
- * The shared mechanics of a view's density (zoom) gesture: a trackpad pinch (which the OS delivers as
- * ctrl+wheel), a plain wheel over the view's rail chrome, or a two-finger touch pinch — eased toward a
- * target across animation frames (so a coarse mouse-wheel notch animates instead of jumping) and
- * persisted per browser. What zoom spatially MEANS — which CSS property it drives, and how the scroll
- * position is pinned while it changes — belongs to the subclass: {@link apply} writes the zoom out;
- * {@link captureAnchor}/{@link driftAnchor}/{@link pin} keep the content under the pointer still, on
- * cached values only — they run per animation frame and must read no layout.
- *
- * Listeners are registered manually rather than via `@eventListener`: the decorator keeps initializers
- * in a set that subclasses end up SHARING with their base (its copy-on-write seeds from a property that
- * never exists), so a decorated subclass would leak its listeners onto every sibling subclass.
+ * Base controller managing zoom gesture mechanics (pinch, wheel on rail, touch gestures).
  */
 export abstract class DensityController extends Controller {
 	protected zoom: number
@@ -25,12 +15,8 @@ export abstract class DensityController extends Controller {
 			readonly storageKey: string
 			readonly min: number
 			readonly max: number
-			/** The sticky chrome a PLAIN wheel zooms over — ctrl+wheel zooms anywhere. */
 			readonly rail: string
-			/** Where the zoom starts before the user ever sets one. Defaults to `min`. */
 			readonly initial?: number
-			/** The axis the anchor is pinned along. The zoom STEP is always the wheel's Y — a pinch
-			 * reports one whichever way the view runs. */
 			readonly axis?: 'block' | 'inline'
 		},
 	) {
@@ -38,7 +24,6 @@ export abstract class DensityController extends Controller {
 		this.zoom = this.target = this.clamp(Number(localStorage.getItem(options.storageKey)) || options.initial || options.min)
 	}
 
-	/** The pointer coordinate along {@link options}.axis. */
 	private pointerOf(point: { clientX: number, clientY: number }) {
 		return this.options.axis === 'inline' ? point.clientX : point.clientY
 	}
@@ -47,14 +32,11 @@ export abstract class DensityController extends Controller {
 		return Math.min(this.options.max, Math.max(this.options.min, zoom))
 	}
 
-	/** Whether a zoom gesture is mid-flight. Scroll handlers deriving state from the scroll position
-	 * should skip these frames — the per-frame pinning scrolls too; {@link settle} nudges one real
-	 * pass once the gesture lands. */
+	/** Whether a zoom gesture is mid-flight. */
 	get active() {
 		return this.frame !== undefined || this.pinch !== undefined
 	}
 
-	/** Persist the landed zoom, then announce it. */
 	private settle() {
 		localStorage.setItem(this.options.storageKey, String(this.zoom))
 		this.settled()
@@ -75,18 +57,12 @@ export abstract class DensityController extends Controller {
 		}
 	}
 
-	/** Write the current {@link zoom} out (typically a host CSS custom property). */
 	protected abstract apply(): void
 
-	/** Remember what sits under `pointer`, so {@link pin} can hold it there as the density changes —
-	 * caching along whatever layout it needs. */
 	protected abstract captureAnchor(pointer: number): void
 
-	/** Follow the anchor to a drifted pointer position (a two-finger pinch's centre moves). */
 	protected abstract driftAnchor(pointer: number): void
 
-	/** After the density changed from `previous` to {@link zoom}, scroll the anchor back under its
-	 * pointer position. */
 	protected abstract pin(previous: number): void
 
 	/** Animates zoom toward target value across animation frames. */
@@ -99,7 +75,6 @@ export abstract class DensityController extends Controller {
 		this.frame = undefined
 		const remaining = this.target - this.zoom
 		const previous = this.zoom
-		// Ease ~a quarter of the way each frame; snap when close enough to stop the loop.
 		this.zoom = Math.abs(remaining) < 0.0005 ? this.target : this.zoom + remaining * 0.25
 		this.apply()
 		this.pin(previous)
@@ -112,15 +87,12 @@ export abstract class DensityController extends Controller {
 
 	@eventListener('wheel', { passive: false })
 	protected handleWheel(e: WheelEvent) {
-		// Zoom when pinching (ctrl+wheel) anywhere, or when scrolling over the rail; a plain wheel over
-		// the content scrolls as usual.
 		const onRail = !!(e.target as Element | null)?.closest?.(this.options.rail)
 		if (!e.ctrlKey && !onRail) {
 			return
 		}
 		e.preventDefault()
 		this.captureAnchor(this.pointerOf(e))
-		// Exponential so each notch is a proportional step. Scrolling up (deltaY < 0) magnifies.
 		this.setTarget(this.target * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)))
 	}
 
@@ -129,7 +101,7 @@ export abstract class DensityController extends Controller {
 		if (e.touches.length !== 2) {
 			return
 		}
-		e.preventDefault() // claim the two-finger gesture (browser pinch-zoom is off via touch-action)
+		e.preventDefault()
 		this.pinch = { startDistance: DensityController.distance(e.touches), startZoom: this.zoom }
 		this.captureAnchor(this.midpoint(e.touches))
 	}
@@ -140,8 +112,7 @@ export abstract class DensityController extends Controller {
 			return
 		}
 		e.preventDefault()
-		this.driftAnchor(this.midpoint(e.touches)) // the pinch centre may drift
-		// A pinch is continuous, so it drives zoom directly (no easing) for a 1:1 feel.
+		this.driftAnchor(this.midpoint(e.touches))
 		const previous = this.zoom
 		this.zoom = this.target = this.clamp(this.pinch.startZoom * (DensityController.distance(e.touches) / this.pinch.startDistance))
 		this.apply()

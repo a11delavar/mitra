@@ -15,14 +15,6 @@ import { Dev } from '../../../integrations/dev/Dev.js'
 import { NotificationSubscription } from '../../reminders/NotificationSubscription.js'
 import { Session } from '../../identity/server/Session.js'
 
-// Ownership scoping for the /entries routes. A route must resolve user-owned entities through
-// `req.user.sources/…` — a bare `em.find(Source, …)` sees EVERY user's rows, so in multi-user (OIDC)
-// mode it leaks one user's data to another. The regression that motivated this file: GET
-// /entries/search resolved its visible sources with a bare `em.find(Source, { enabled, hidden })`,
-// searching across every user's calendars. These tests pin the scoping guarantee the fix relies on.
-
-/** A private in-memory ORM (never the file-backed singleton in orm.ts) with the production entity set
- * and naming strategy, so `User.sources`' `$and`/`$in` filter is exercised against real SQLite. */
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
 		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Dev, Source, Entry, Recurrence, NotificationSubscription, Session],
@@ -42,8 +34,6 @@ async function inMemoryOrm() {
 	return orm
 }
 
-/** Seeds a user owning one Dev integration with a single source, plus one entry on it whose heading
- * carries `term`. The source's visibility (enabled/hidden) is caller-controlled. */
 async function seedUser(em: EntityManager, username: string, term: string, source: Partial<Source> = {}) {
 	const user = new User({ username })
 	const integration = new Dev({ userId: user.id, uri: `dev://${username}` })
@@ -54,7 +44,6 @@ async function seedUser(em: EntityManager, username: string, term: string, sourc
 	return { user, integration, source: src, entry }
 }
 
-/** Mirrors the entry query GET /entries/search runs, given a set of visible source ids. */
 function searchEntries(em: EntityManager, sourceIds: Array<string>, q: string) {
 	const term = `%${q.trim()}%`
 	return em.find(Entry, {
@@ -67,8 +56,6 @@ function searchEntries(em: EntityManager, sourceIds: Array<string>, q: string) {
 	}, { orderBy: { start: 'desc' }, limit: 20 })
 }
 
-/** Mirrors the entry query GET /entries runs, including the undated arm. Recurring masters are
- * excluded there and expanded separately (see occurrences.ts). */
 function windowedEntries(em: EntityManager, sourceIds: Array<string>, start: Date, end: Date) {
 	return em.find(Entry, {
 		sourceId: { $in: sourceIds },
@@ -104,7 +91,6 @@ describe('entries ownership scoping', () => {
 		it('still honours the visibility filter within the user\'s own sources', async () => {
 			const em = orm.em.fork()
 			const { user, integration, source: visibleSource } = await seedUser(em, 'carol', 'standup')
-			// A second source of hers that must be filtered out: disabled AND hidden.
 			const hidden = new Source({ integrationId: integration.id, uri: 'carol/hidden', entryTypes: [EntryType.Event], name: 'hidden', enabled: false, hidden: true })
 			em.persist(hidden)
 			await em.flush()
@@ -118,25 +104,22 @@ describe('entries ownership scoping', () => {
 		it('a scoped search returns only the requesting user\'s matching entries', async () => {
 			const em = orm.em.fork()
 			const alice = await seedUser(em, 'search-alice', 'roadmap')
-			await seedUser(em, 'search-bob', 'roadmap') // Bob has a same-heading entry
+			await seedUser(em, 'search-bob', 'roadmap')
 
-			// The FIXED path: resolve visible sources through the user, then search within them.
 			const visibleSources = await alice.user.sources(em, { enabled: true, hidden: false })
 			const results = await searchEntries(em, visibleSources.map(source => source.id), 'roadmap')
 
 			assert.deepEqual(results.map(entry => entry.id), [alice.entry.id])
 		})
 
-		it('regression: a BARE em.find(Source, …) leaks another user\'s entries into the results', async () => {
+		it('regression: a bare em.find(Source, …) leaks another user\'s entries into the results', async () => {
 			const em = orm.em.fork()
 			const alice = await seedUser(em, 'leak-alice', 'secret-project')
 			const bob = await seedUser(em, 'leak-bob', 'secret-project')
 
-			// The OLD, unscoped resolution the fix removed — visible sources across EVERY user.
 			const bareSources = await em.find(Source, { enabled: true, hidden: false })
 			const leaked = await searchEntries(em, bareSources.map(source => source.id), 'secret-project')
 
-			// Both users' entries come back — the very leak the scoping fix closes.
 			assert.deepEqual(new Set(leaked.map(entry => entry.id)), new Set([alice.entry.id, bob.entry.id]))
 		})
 	})
@@ -148,8 +131,6 @@ describe('GET /entries carries the undated rows in every window', () => {
 	before(async () => { orm = await inMemoryOrm() })
 	after(async () => { await orm.close(true) })
 
-	/** An undated task belongs to no window, so only every window carrying it keeps the section on one
-	 * fetch and one reconcile pass with the grid. */
 	it('returns a task with no dates whichever window is asked for', async () => {
 		const em = orm.em.fork()
 		const { user, source } = await seedUser(em, 'undated', 'anything')
@@ -165,7 +146,7 @@ describe('GET /entries carries the undated rows in every window', () => {
 		assert.ok(december.some(entry => entry.id === undated.id))
 	})
 
-	it('still windows the DATED ones — the undated arm widens nothing else', async () => {
+	it('still windows the dated ones', async () => {
 		const em = orm.em.fork()
 		const { user, source } = await seedUser(em, 'windowed', 'anything')
 		const dated = new Entry({

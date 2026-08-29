@@ -147,8 +147,8 @@ describe('SourceMigration', () => {
 			const plan = (await SourceMigration.of(em, user, origin.id, { targetSourceId: target.id })).plan()
 
 			assert.deepEqual(plan.flattenable.map(verdict => verdict.occurrences), [3])
-			assert.equal(plan.movingCount(true), 1, 'the series moves once flattening is chosen')
-			assert.equal(plan.creations(true), 3, 'and arrives as three single entries')
+			assert.equal(plan.movingCount(true), 1)
+			assert.equal(plan.creations(true), 3)
 		})
 
 		it('holds a series back when its own edited occurrences could not follow it', async () => {
@@ -159,7 +159,6 @@ describe('SourceMigration', () => {
 
 			const plan = (await SourceMigration.of(em, user, origin.id, { targetSourceId: target.id })).plan()
 
-			// Both of them: the override shares the master's UID, and neither may land alone.
 			assert.equal(plan.movingCount(false), 0)
 			assert.deepEqual(plan.blockers(false), [['occurrence', 2]])
 		})
@@ -235,7 +234,7 @@ describe('SourceMigration', () => {
 			const moved = await em.find(Entry, { sourceId: target.id })
 			const rows = await em.find(EntryRelation, {})
 			assert.equal(rows.length, 1)
-			assert.equal(rows[0]!.targetUid, predecessor.uid, 'the uid travels with the entry, so the link still resolves')
+			assert.equal(rows[0]!.targetUid, predecessor.uid)
 			assert.equal(rows[0]!.entryId, moved.find(entry => entry.heading === 'second')!.id)
 		})
 
@@ -249,7 +248,7 @@ describe('SourceMigration', () => {
 
 			const rows = await em.find(EntryRelation, {}, { refresh: true })
 			assert.equal(rows.length, 1)
-			assert.equal(rows[0]!.targetUid, `minted-${predecessor.uid}`, 'the link follows the entry to its new identity')
+			assert.equal(rows[0]!.targetUid, `minted-${predecessor.uid}`)
 		})
 
 		it('leaves a relationship pointing outside the batch exactly as it was', async () => {
@@ -261,7 +260,7 @@ describe('SourceMigration', () => {
 			await (await SourceMigration.of(em, user, origin.id, { targetSourceId: target.id })).run()
 
 			const rows = await em.find(EntryRelation, {}, { refresh: true })
-			assert.equal(rows[0]!.targetUid, 'somewhere-else', 'cross-source links are legal, and dangling is by design')
+			assert.equal(rows[0]!.targetUid, 'somewhere-else')
 		})
 
 		it('leaves the entries the plan refuses right where they are', async () => {
@@ -294,8 +293,8 @@ describe('SourceMigration', () => {
 			const moved = await em.find(Entry, { sourceId: target.id })
 			assert.equal(outcome.created, 3)
 			assert.equal(moved.length, 3)
-			assert.ok(moved.every(entry => !entry.recurrence?.freq), 'a flattened occurrence no longer repeats')
-			assert.deepEqual([...new Set(moved.map(entry => entry.uid))].length, 3, 'each occurrence gets an identity of its own')
+			assert.ok(moved.every(entry => !entry.recurrence?.freq))
+			assert.deepEqual([...new Set(moved.map(entry => entry.uid))].length, 3)
 			assert.equal(await em.count(Entry, { sourceId: origin.id }), 0)
 		})
 
@@ -322,11 +321,11 @@ describe('SourceMigration', () => {
 			const outcome = await (await SourceMigration.of(em, user, origin.id, { targetSourceId: target.id, keepOriginals: true })).run()
 
 			assert.equal(outcome.created, 1)
-			assert.equal(outcome.moved, 0, 'nothing left the origin')
+			assert.equal(outcome.moved, 0)
 			assert.equal(await em.count(Entry, { sourceId: origin.id }), 1)
 			const [copy] = await em.find(Entry, { sourceId: target.id })
 			assert.equal(copy!.heading, 'one')
-			assert.notEqual(copy!.uid, original.uid, 'two entries answering to one identity would make every link to it ambiguous')
+			assert.notEqual(copy!.uid, original.uid)
 		})
 
 		it('copies a linked PAIR as a linked pair — the copies point at each other, never back at the originals', async () => {
@@ -341,10 +340,10 @@ describe('SourceMigration', () => {
 			const copyOf = (heading: string) => copies.find(entry => entry.heading === heading)!
 			const rows = await em.find(EntryRelation, {}, { refresh: true })
 			const copied = rows.find(row => row.entryId === copyOf('second').id)
-			assert.ok(copied, 'the copy carries the link')
-			assert.equal(copied.targetUid, copyOf('first').uid, 'and it points at the OTHER copy, not at the original')
+			assert.ok(copied)
+			assert.equal(copied.targetUid, copyOf('first').uid)
 			const stayed = rows.find(row => row.entryId === dependent.id)
-			assert.equal(stayed!.targetUid, predecessor.uid, 'the originals go on pointing at each other')
+			assert.equal(stayed!.targetUid, predecessor.uid)
 		})
 
 		it('leaves a copied link that pointed OUT of the batch pointing where it did', async () => {
@@ -370,7 +369,7 @@ describe('SourceMigration', () => {
 
 			const rows = await em.find(EntryRelation, {}, { refresh: true })
 			const pointing = rows.filter(row => row.entryId === dependent.id)
-			assert.deepEqual(pointing.map(row => row.targetUid), [predecessor.uid], 'the original is still there under that uid — nothing to repoint')
+			assert.deepEqual(pointing.map(row => row.targetUid), [predecessor.uid])
 		})
 
 		it('aborts before deleting anything when a copy fails, and takes its copies back', async () => {
@@ -384,8 +383,8 @@ describe('SourceMigration', () => {
 			assert.equal(outcome.failedEntry, 'poison')
 			assert.equal(outcome.moved, 0)
 			assert.equal(outcome.duplicates, 0)
-			assert.equal(await em.count(Entry, { sourceId: origin.id }), 2, 'nothing is deleted before every copy has landed')
-			assert.equal(await em.count(Entry, { sourceId: target.id }), 0, 'and the copies already made are taken back')
+			assert.equal(await em.count(Entry, { sourceId: origin.id }), 2)
+			assert.equal(await em.count(Entry, { sourceId: target.id }), 0)
 		})
 	})
 })

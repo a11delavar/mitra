@@ -2,27 +2,12 @@ import { type Component } from '@a11d/lit'
 import { DensityController } from './DensityController.js'
 
 /**
- * Vertical density (zoom) of the months strip — the gesture mechanics live in {@link DensityController};
- * this owns what the zoom means there.
- *
- * The controller drives a single host inline property, `--months-zoom`: a pure multiplier over "twelve
- * months fill the viewport" (the host's CSS derives each row's height from it, so nothing else needs to
- * be kept in sync):
- *   zoom 1 → the whole year fits
- *   zoom 4 → a quarter fills the viewport (12 / 4)
- *
- * Pinning holds the content point under the pointer still: every row scales uniformly, so the scroll
- * offset below the sticky header simply scales by the same zoom ratio — pure arithmetic on values cached
- * at gesture start, no per-frame layout reads.
+ * Vertical density zoom controller for the year view months strip.
  */
 export class MonthsDensityController extends DensityController {
-	/** What to hold still while the density changes: the host-relative pointer Y, with the sticky
-	 * header's height and the host's top cached along so re-pinning reads no layout. */
 	private anchor?: { y: number, headerHeight: number, hostTop: number }
 
 	constructor(host: Component) {
-		// max 4 → three months fill the viewport (12 / 4): beyond that the strip stops reading as a
-		// bird's-eye and the month view is the better tool.
 		super(host, { storageKey: 'Mitra.YearZoom', min: 1, max: 4, rail: '.label, .corner' })
 	}
 
@@ -45,8 +30,6 @@ export class MonthsDensityController extends DensityController {
 		}
 	}
 
-	/** After the density changed, scroll so the anchored content point sits back under the pointer:
-	 * the strip below the header scaled by `zoom / previous`, so its scroll offset does too. */
 	protected pin(previous: number) {
 		if (!this.anchor || this.zoom === previous) {
 			return

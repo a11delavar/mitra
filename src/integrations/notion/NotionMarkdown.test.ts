@@ -9,8 +9,6 @@ const text = (content: string, annotations?: NotionRichText['annotations'], href
 const paragraph = (...runs: Array<NotionRichText>): NotionBlock =>
 	({ object: 'block', id: crypto.randomUUID(), type: 'paragraph', paragraph: { rich_text: runs } })
 
-/** Round-trip through both directions: what a body write produces must read back as the same
- * markdown — that's what keeps the write echo and the next sync's read comparing equal. */
 const roundTrips = (markdown: string) =>
 	assert.equal(NotionMarkdown.toMarkdown(NotionMarkdown.toBlocks(markdown)), markdown)
 
@@ -139,13 +137,11 @@ describe('NotionMarkdown.toMarkdown', () => {
 			{ type: 'image', id: 'b-img' } as NotionBlock,
 			{ type: 'child_page', id: 'b-page' } as NotionBlock,
 			{
-				// A bullet with an embed inside: replacing it would delete the embed, so ALL of it is opaque.
 				type: 'bulleted_list_item',
 				has_children: true,
 				bulleted_list_item: { rich_text: [text('hides an embed')], children: [{ type: 'embed' } as NotionBlock] },
 			},
 			{
-				// A quote whose children were never fetched (past the read depth) — can't be vouched for.
 				type: 'quote',
 				has_children: true,
 				quote: { rich_text: [text('unfetched depths')] },
@@ -181,7 +177,6 @@ describe('NotionMarkdown.toBlocks', () => {
 		const b = a.bulleted_list_item!.children![0]!
 		const c = b.bulleted_list_item!.children![0]!
 		assert.equal(c.bulleted_list_item!.rich_text![0]!.text!.content, 'c')
-		// `d` cannot nest a third level down in one write — it flattens to c's sibling, content intact.
 		assert.equal(c.bulleted_list_item!.children, undefined)
 		assert.equal(b.bulleted_list_item!.children![1]!.bulleted_list_item!.rich_text![0]!.text!.content, 'd')
 	})

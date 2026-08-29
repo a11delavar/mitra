@@ -14,14 +14,7 @@ import { Color } from '../../features/sources/Color.js'
 import { normalizeAllDay } from '../../features/time/calendarDate.js'
 import { entity } from '../../infrastructure/model/orm.js'
 
-/**
- * A dev-only, self-contained calendar with no external backend: its sources and entries live only in
- * our database, so every operation is a direct local persist/remove and there is nothing to sync. It
- * exists so the app renders without a real account; because it's a genuine persisted integration,
- * hiding sources / editing / creating / deleting all work through the normal routes (unlike a
- * read-only response overlay). `sync()` is overridden to a no-op so the base `getSources` doesn't treat
- * the empty remote list as "everything vanished" and delete the locally-owned sources.
- */
+/** Dev-only local calendar integration with no external backend. */
 @model('Dev')
 @entity({ discriminatorValue: 'dev' })
 export class Dev extends Integration {
@@ -38,8 +31,6 @@ export class Dev extends Integration {
 		this.uri = incoming.uri || this.uri
 	}
 
-	/** Local-only: the rows in our database ARE the data, so there is no remote to poll — the
-	 * background daemon and manual refreshes skip this integration entirely. */
 	override get syncInterval() { return Infinity }
 
 	override sync(): Promise<boolean> {
@@ -54,14 +45,11 @@ export class Dev extends Integration {
 		return Promise.resolve(false)
 	}
 
-	/** Dev sources have no external counterpart to re-import from — the local rows ARE the source,
-	 * so a wipe-and-rebuild would just be deletion. */
 	override reimportSource(): Promise<void> {
 		return Promise.resolve()
 	}
 
 	override excludeOccurrence(_em: EntityManager, master: Entry, recurrenceId: Date): Promise<void> {
-		// No .ics — record the excluded instant in the column the occurrence expansion filters on.
 		master.exdates = [...(master.exdates ?? []), recurrenceId.getTime()]
 		return Promise.resolve()
 	}
@@ -86,13 +74,7 @@ export class Dev extends Integration {
 		existing.visibility = incoming.visibility
 		existing.reminders = incoming.reminders
 		existing.participants = incoming.participants
-		// Relations are deliberately NOT copied: Dev has no native link store, so the EntryRelation
-		// table is the sole store and the route reconciles it (see Integration's relations contract).
-		// Recurrence is column-only for Dev (no .ics); the GET path expands `recurrence` via
-		// expandRecurrenceFields. (uid/recurrenceId aren't edited through the UI and Dev has no sync/overrides.)
 		existing.recurrence = incoming.recurrence
-		// Absent = keep: only a scoped series edit carries exclusions (shifted along with the series —
-		// see occurrences.ts); a plain content edit stays silent about them.
 		if (incoming.exdates !== undefined) {
 			existing.exdates = incoming.exdates
 		}
@@ -107,11 +89,7 @@ export class Dev extends Integration {
 
 const INTEGRATION_ID = 'dev-sample-integration'
 
-/**
- * Dev-only: seeds the persisted {@link Dev} sample integration with realistic events.
- * It uses the current date in the URI to ensure the fixture is recreated once a day, staying
- * anchored to the current date while preserving edits made during a single day's dev session.
- */
+/** Seeds realistic sample events and tasks for development. */
 export async function seedDev(orm: MikroORM) {
 	const em = orm.em.fork()
 
@@ -455,8 +433,7 @@ export async function seedDev(orm: MikroORM) {
 		relate(calcPrep2, RelationType.FinishToStart, calcPrep1)
 		relate(advCalcExam, RelationType.FinishToStart, calcPrep2)
 
-		// ---- Routines (density collapse samples, see features/routines/client/Routines.ts) ----
-		// Daily (collapses in month and year)
+		// Routines
 		personalEvent({
 			heading: '💊 Morning Meds',
 			start: at(pastStart, 0, 7, 30),
@@ -464,7 +441,6 @@ export async function seedDev(orm: MikroORM) {
 			recurrence: new Recurrence({ freq: 'DAILY' })
 		})
 
-		// Weekdays (collapses in month and year)
 		workEvent({
 			heading: 'Standup',
 			start: at(pastStart, 0, 9, 15),
@@ -472,7 +448,6 @@ export async function seedDev(orm: MikroORM) {
 			recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['MO', 'TU', 'WE', 'TH', 'FR'] })
 		})
 
-		// Every 2 days (collapses in month and year)
 		hobbyEvent({
 			heading: '🏊 Swim',
 			start: at(pastStart, 3, 6, 0),
@@ -480,12 +455,9 @@ export async function seedDev(orm: MikroORM) {
 			recurrence: new Recurrence({ freq: 'DAILY', interval: 2 })
 		})
 
-		// Detached occurrences ("this entry only": pools by appearance and stays marks)
 		hobbyEvent({ heading: '🏊 Swim', start: at(thisWeekMonday, 1, 21), end: at(thisWeekMonday, 1, 22) })
 		hobbyEvent({ heading: '🏊 Swim', start: at(thisWeekMonday, 3, 21), end: at(thisWeekMonday, 3, 22) })
 
-		// Morning + evening pills pooling by appearance; past occurrences detached as completed tasks.
-		// The morning dose is Notion-shaped: no end date on import means a full 24h span (10:00 → 10:00).
 		personalTask({ heading: '💊 Pills', status: TaskStatus.ToDo, start: todayStart.with({ hour: 10 }), end: todayStart.with({ hour: 10 }), recurrence: new Recurrence({ freq: 'DAILY' }) })
 		personalTask({ heading: '💊 Pills', status: TaskStatus.ToDo, start: todayStart.with({ hour: 20 }), end: todayStart.with({ hour: 20 }), recurrence: new Recurrence({ freq: 'DAILY' }) })
 		for (let day = 1; day <= 60; day++) {
@@ -494,20 +466,16 @@ export async function seedDev(orm: MikroORM) {
 			personalTask({ heading: '💊 Pills', status: TaskStatus.Done, start: past.with({ hour: 20 }), end: past.with({ hour: 20 }) })
 		}
 
-		// Three weekly series pooling into one routine.
 		hobbyEvent({ heading: '🏐 Volleyball', start: at(pastStart, 1, 19), end: at(pastStart, 1, 20, 30), recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['TU'] }) })
 		hobbyEvent({ heading: '🏐 Volleyball', start: at(pastStart, 3, 19), end: at(pastStart, 3, 20, 30), recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['TH'] }) })
 		hobbyEvent({ heading: '🏐 Volleyball', start: at(pastStart, 5, 15), end: at(pastStart, 5, 16, 30), recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['SA'] }) })
 
-		// Unruled ~5-weekly habit (marks in year view with slack factor, bars in month view).
 		for (let cut = 1; cut <= 10; cut++) {
 			const day = todayStart.subtract({ days: cut * 35 })
 			upkeepEvent({ heading: '💈 Haircut', start: day.with({ hour: 11 }), end: day.with({ hour: 11, minute: 45 }) })
 		}
-		// The next one is still an all-day placeholder — no appointment booked yet.
 		upkeepEvent({ heading: '💈 Haircut', allDay: true, start: allDayStart(todayStart, 0), end: allDayStart(todayStart, 1) })
 
-		// Biweekly (bars in month, marks in year)
 		personalEvent({
 			heading: 'Therapy',
 			start: at(pastStart, 4, 17),
@@ -515,7 +483,6 @@ export async function seedDev(orm: MikroORM) {
 			recurrence: new Recurrence({ freq: 'WEEKLY', interval: 2, byday: ['FR'] })
 		})
 
-		// Ended routine (marks stop at until date)
 		personalEvent({
 			heading: '📓 Journal',
 			start: at(pastStart, 6, 22),
@@ -523,7 +490,6 @@ export async function seedDev(orm: MikroORM) {
 			recurrence: new Recurrence({ freq: 'DAILY', until: Recurrence.untilFromDay(todayStart.subtract({ months: 4 }).year, todayStart.subtract({ months: 4 }).month, todayStart.subtract({ months: 4 }).day) })
 		})
 
-		// Too few to be a routine (< 4 instances: bars in both views)
 		workTask({
 			heading: 'Month-end Accounting',
 			start: at(thisWeekMonday, 7, 9),
@@ -532,7 +498,6 @@ export async function seedDev(orm: MikroORM) {
 			recurrence: new Recurrence({ freq: 'DAILY', count: 3 })
 		})
 
-		// Long burst (> rows threshold: collapses)
 		uniEvent({
 			heading: 'Language Course',
 			start: at(nextWeekMonday, 14, 19),
@@ -540,10 +505,7 @@ export async function seedDev(orm: MikroORM) {
 			recurrence: new Recurrence({ freq: 'DAILY', count: 21 })
 		})
 
-		// ---- Worked-through history ----
-		// A plan you actually keep leaves almost nothing open behind you: the timeline reads top-down as
-		// work still owed, so past weeks must be overwhelmingly Done with the odd Cancelled — anything
-		// else turns the view into a graveyard of rows nobody will ever tick.
+		// History
 		const past = (weeks: number, dayOffset: number, hour: number, minute = 0) => at(thisWeekMonday.subtract({ days: weeks * 7 }), dayOffset, hour, minute)
 		workTask({ heading: 'Close the Q2 books', status: TaskStatus.Done, start: past(1, 1, 9), end: past(1, 1, 12) })
 		workTask({ heading: 'Review the security audit', status: TaskStatus.Done, start: past(2, 3, 14), end: past(2, 3, 16) })
@@ -556,8 +518,7 @@ export async function seedDev(orm: MikroORM) {
 		personalEvent({ type: EntryType.Task, heading: 'Book the dentist', status: TaskStatus.Done, start: past(2, 2, 12), end: past(2, 2, 12, 30) })
 		personalEvent({ type: EntryType.Task, heading: 'Return the parcel', status: TaskStatus.Cancelled, start: past(4, 4, 16), end: past(4, 4, 17) })
 
-		// ---- Unscheduled (no dates at all) ----
-		// Across calendars and statuses, so the section renders with more than one colour and mark.
+		// Unscheduled
 		workTask({ heading: 'Draft the hiring plan' })
 		workTask({ heading: 'Reply to the vendor quote', status: TaskStatus.Doing })
 		personalEvent({ type: EntryType.Task, heading: 'Renew the passport' })

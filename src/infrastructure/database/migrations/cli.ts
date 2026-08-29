@@ -7,18 +7,9 @@ import { migrate } from './migrate.js'
 
 const logger = createLogger('Database')
 
-// The migrations CLI behind the root `db:migration:*` scripts (built and run by scripts/db.ts,
-// which bundles it the same way as the backend). Commands:
-//   create <Name> — diff the entities against the committed schema snapshot and generate a
-//                   migration named `Migration<timestamp>_<Name>` (e.g. `npm run db:migration:create -- Participants`)
-//   up            — apply pending migrations to the local database, exactly as a production boot would
-//   down          — revert the latest applied migration
-
-/** Emits generated migrations in this repository's style (tabs, single quotes, no semicolons) so
- * they need no touch-up before committing. */
+/** Emits generated migrations formatted to repository conventions. */
 class MitraMigrationGenerator extends TSMigrationGenerator {
 	override generateMigrationFile(className: string, diff: { up: Array<string>, down: Array<string> }) {
-		// Empty diff entries are group separators — kept as blank lines, but stripped at the edges.
 		const statements = (direction: Array<string>) => direction.slice(
 			direction.findIndex(sql => sql !== ''),
 			direction.findLastIndex(sql => sql !== '') + 1,
@@ -44,8 +35,7 @@ class MitraMigrationGenerator extends TSMigrationGenerator {
 
 const migrationsDirectory = `${process.cwd()}/src/infrastructure/database/migrations`
 
-/** Generation is pure — entities + committed snapshot in, SQL out. An in-memory database keeps the
- * result independent of whatever state the local dev database happens to be in. */
+/** Generate a migration by diffing current entities against the committed schema snapshot. */
 async function createMigration(name: string) {
 	const config = ormConfig(':memory:')
 	const orm = await MikroORM.init({
@@ -73,8 +63,7 @@ async function createMigration(name: string) {
 	}
 }
 
-/** Appends the freshly generated migration to migrations/index.ts, which the bundled backend imports
- * in place of on-disk discovery. */
+/** Append newly generated migration class to migrations/index.ts. */
 async function registerMigration(className: string) {
 	const indexPath = `${migrationsDirectory}/index.ts`
 	const index = await readFile(indexPath, 'utf8')
@@ -103,8 +92,6 @@ async function run(direction: 'up' | 'down') {
 const command = process.argv[2]
 switch (command) {
 	case 'create': {
-		// The name becomes part of the class name (`Migration<timestamp>_<Name>`), so it must be a
-		// bare PascalCase identifier — and requiring one keeps the migration history self-describing.
 		const name = process.argv[3]
 		if (!name || !/^[A-Z][A-Za-z0-9]*$/.test(name)) {
 			console.error(`Migrations need a PascalCase name, e.g.: npm run db:migration:create -- ${name ? 'Participants' : 'Initial'}`)

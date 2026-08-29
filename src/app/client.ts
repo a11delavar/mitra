@@ -1,12 +1,9 @@
 import '@a11d/lit-application-native'
 import '@3mo/date-time'
 import '@3mo/date-time-value-constructor'
-// After the @3mo packages: they register their own `de` dictionary (e.g. Week→"KW"), and the dictionary
-// merge lets the last writer win — so the app's own translations must be registered last to override
-// library defaults. No component calls `t()` at module-eval time, so this later position is safe.
+// App translations registered after packages to override library dictionary defaults.
 import '../infrastructure/i18n/index.js'
-// Before any component: the theme setting stamps the stored theme on <html> at module scope, and the
-// shell would otherwise paint the system's answer first (see app/settings.ts).
+// Theme setting applied at module scope before UI component imports.
 import './settings.js'
 import '../design/Icon.js'
 import '../design/IconButton.js'

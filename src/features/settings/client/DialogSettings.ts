@@ -42,7 +42,6 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 
 	protected override firstUpdated(props: PropertyValues) {
 		super.firstUpdated(props)
-		// Scroll target row into view if opened via focus parameter.
 		this.focusedRow?.scrollIntoView({ block: 'center' })
 	}
 
@@ -52,7 +51,6 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 		localStorage.setItem(DialogSettings.lastPageKey, page)
 	}
 
-	/** Active settings filtered by current device applicability. */
 	private get available() {
 		return settings().filter(setting => setting.applies)
 	}
@@ -61,7 +59,6 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 		return this.available.filter(setting => setting.page === page)
 	}
 
-	/** Pages that contain at least one applicable setting. */
 	private get pages() {
 		return settingsPages.filter(page => this.settingsOf(page).length)
 	}
@@ -70,7 +67,6 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 		return !!this.query.trim()
 	}
 
-	/** Search results grouped by settings page. */
 	private get results() {
 		return this.pages
 			.map(page => ({ page, settings: this.settingsOf(page).filter(setting => setting.matches(this.query)) }))
@@ -78,7 +74,6 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 	}
 
 	private handleSearchKeyDown(e: KeyboardEvent) {
-		// Escape clears active search query before dismissing dialog.
 		if (e.key === 'Escape' && this.searching) {
 			e.preventDefault()
 			e.stopPropagation()
@@ -213,9 +208,7 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 						gap: 0.5rem;
 						position: sticky;
 						inset-block-start: 0;
-						/* No z-index: being positioned already puts it over the rows, and any value here ties
-						   with the dialog's own close button (Dialog.ts) — which is slotted BEFORE this, so
-						   the tie went to this background and ate all but two nubs of the ✕. */
+						/* Positioned header sits over rows without explicit z-index to avoid clashing with close button */
 						background: var(--color-surface);
 						padding-block: 1rem 0.875rem;
 						padding-inline-end: 2rem;
@@ -256,7 +249,6 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 					flex-direction: column;
 				}
 
-				/* Narrow container query: single-pane navigation where rail and content span full grid width. */
 				@container settings (max-width: 40rem) {
 					.pages, .content {
 						grid-column: 1 / -1;
@@ -350,7 +342,6 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 	}
 
 	private rowsTemplate(settings: ReadonlyArray<Setting<unknown>>) {
-		// Keyed by class name to preserve setting row instance identity across page switches.
 		return html`
 			<div class="rows">
 				${repeat(settings, setting => setting.constructor.name, setting => html`

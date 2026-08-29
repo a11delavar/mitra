@@ -17,8 +17,8 @@ describe('Source.keyOf', () => {
 	// produce the SAME key as the managed row's getter — otherwise nothing matches and all sources disable.
 	it('keys a structure-cloned plain object identically to the managed instance', () => {
 		const managed = new Source({ uri: 'https://dav/cal/', entryTypes: [EntryType.Event], name: 'X', enabled: true })
-		const wireClone = structuredClone(managed) // loses the class, the getter, everything but data
-		assert.equal((wireClone as { key?: string }).key, undefined) // the getter is gone — this was the trap
+		const wireClone = structuredClone(managed)
+		assert.equal((wireClone as { key?: string }).key, undefined)
 	})
 })
 
@@ -34,8 +34,6 @@ describe('Source entry types', () => {
 		assert.equal(tasks.supportsEntryType(EntryType.Task), true)
 	})
 
-	// RFC 4791 §5.2.3: an absent supported-calendar-component-set accepts everything. Same reading for a
-	// row written before the column existed (its `kinds` hydrates as null).
 	it('reads an unknown or empty list as "everything"', () => {
 		for (const kinds of [undefined, [] as Array<EntryType>, null as unknown as Array<EntryType>]) {
 			const unknown = new Source({ uri: 'https://dav/cal/', name: 'X', entryTypes: kinds as Array<EntryType> })
@@ -51,8 +49,6 @@ describe('Source entry types', () => {
 		assert.equal(source([]).defaultEntryType, EntryType.Event)
 	})
 
-	// The list is stored as value objects and carried as plain ones, which is EntryTypes.converter's
-	// whole job — and the API's request builder structure-clones, stripping every prototype on the way.
 	describe('crossing the API', () => {
 		it('travels as plain values and arrives as value objects again', () => {
 			const both = source([EntryType.Event, EntryType.Task])
@@ -62,8 +58,6 @@ describe('Source entry types', () => {
 		})
 
 		it('sends a list it never learned as empty rather than dropping the key', () => {
-			// A row written before the column existed, whose NULL the driver may hand straight over — every
-			// consumer reads `[]` as "accept everything", while a missing key would leave the client guessing.
 			const unknowing = Object.assign(source(), { entryTypes: null })
 
 			assert.deepEqual(wireOf(unknowing).entryTypes, [])
@@ -72,8 +66,6 @@ describe('Source entry types', () => {
 	})
 })
 
-// Writing has two "no": what the provider can do, and what THIS calendar grants. They must compose
-// without either being able to promote the other.
 describe('Source.readOnly narrows what may be written to one calendar', () => {
 	const shared = new Source({ uri: 'https://dav/shared/', name: 'Shared with me', readOnly: true })
 	const own = new Source({ uri: 'https://dav/mine/', name: 'Mine' })
@@ -85,7 +77,6 @@ describe('Source.readOnly narrows what may be written to one calendar', () => {
 			[capabilities.createEntries, capabilities.editEntries, capabilities.deleteEntries, capabilities.renameEntries],
 			[false, false, false, false],
 		)
-		// What the model can HOLD is unaffected by whether you may write here.
 		for (const field of ['recurrence', 'reminders', 'location', 'participants', 'timeZone', 'relations'] as const) {
 			assert.equal(capabilities[field], true, `${field} should be unaffected`)
 		}
@@ -93,7 +84,6 @@ describe('Source.readOnly narrows what may be written to one calendar', () => {
 
 	it('leaves a calendar of your own exactly as the provider left it', () => {
 		assert.equal(new CalDAV().capabilitiesFor(own).editEntries, true)
-		// An unset flag is a row predating the column — writable, never a silent demotion.
 		assert.equal(new CalDAV().capabilitiesFor(new Source({ uri: 'u', name: 'n', readOnly: null })).editEntries, true)
 		assert.equal(new CalDAV().capabilitiesFor(undefined).editEntries, true)
 	})

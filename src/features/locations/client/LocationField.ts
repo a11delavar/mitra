@@ -2,9 +2,7 @@ import { Component, component, html, css, property, state, event, query } from '
 import { type Entry } from '../../entries/Entry.js'
 import { searchLocations, getCapabilities, type LocationSuggestion } from '../../../infrastructure/http/Api.js'
 
-// The user's position, fetched once per session (on first use of a location field) to bias the
-// geocoder towards nearby places. Denied or unavailable simply means unbiased results — the field
-// never depends on it.
+// Cached user coordinates for geocoding bias.
 let position: { lat: number, lon: number } | undefined
 let positionRequested = false
 function requestPosition() {
@@ -19,9 +17,6 @@ function requestPosition() {
 	)
 }
 
-// Presentation of a suggestion's kind of place — the raw OSM tag value the proxy passes through
-// (`restaurant`, `fast_food`, …) mapped to a glyph here, in ONE place, so wording (and later,
-// localization) never leaks into the backend. Anything unmapped is still a place: map-pin.
 const PLACE_ICONS: Record<string, string> = {
 	restaurant: 'utensils', food_court: 'utensils', fast_food: 'hamburger',
 	cafe: 'coffee', bar: 'beer', pub: 'beer', biergarten: 'beer',
@@ -41,45 +36,25 @@ function placeIcon(suggestion: LocationSuggestion): string {
 	return suggestion.recent ? 'history' : PLACE_ICONS[suggestion.type ?? ''] ?? 'map-pin'
 }
 
-/** The human label for a kind of place: `fast_food` → "Fast Food". English for now — this is the
- * single seam where localized wording plugs in later. */
 function placeLabel(type: string): string {
 	return type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
 }
 
 /**
- * The "Location" control for the entry editor, Google Calendar-style: ONE always-editable field —
- * a single-line-behaving textarea, so `field-sizing` lets a long address wrap and grow — with
- * a trailing map link opening the address in Google Maps once one is set. (One mode on purpose: a
- * separate rendered/editing state can flip underneath mid-typing; a plain field can't.)
- *
- * Typing live-queries suggestions into a menu anchored to the FIELD (see field.css.ts — the field's
- * scoped `--field` anchor, so this component needs no anchor token of its own): recently used
- * locations from the user's own entries first (shown on focus even before typing), then geocoder
- * results (via the backend's Photon proxy, biased towards the user's position when granted). The menu
- * prefers opening beside the row — the same placement strategy and tinted glass as the other pickers.
- *
- * The value is and stays a plain string (RFC 5545 LOCATION is TEXT), so free text is always valid;
- * picking a suggestion merely fills in a nicely formatted one. Mutates `entry.location` in place and
- * fires `change`; the host persists.
+ * Location input with suggestions popover and Google Maps link.
  */
 @component('mitra-location-field')
 export class LocationField extends Component {
 	@property({
 		type: Object,
-		// The popover got reused for another entry while suggestions were open: they belong to the
-		// previous entry's typing — drop them.
 		updated(this: LocationField) { this.close() },
 	}) entry!: Entry
 
-	/** Fired after `entry.location` is mutated by picking a suggestion. (Typed edits additionally fire
-	 * the field's own bubbling `change` on commit, like every other field.) */
 	@event() readonly change!: EventDispatcher
 
 	@state() private suggestions = new Array<LocationSuggestion>()
 	@state() private activeIndex = -1
 
-	// Responses may resolve out of order; only the latest issued request's may drive the menu.
 	private searchSequence = 0
 	private debounceTimer?: ReturnType<typeof setTimeout>
 
@@ -95,8 +70,6 @@ export class LocationField extends Component {
 
 	private readonly handleInput = (e: Event) => {
 		const field = e.target as HTMLTextAreaElement
-		// The textarea is only multi-LOOKING (so a long address wraps); the value stays single-line —
-		// Enter is intercepted below, and pasted newlines collapse here.
 		if (field.value.includes('\n')) {
 			field.value = field.value.replace(/\s*\n+\s*/g, ' ')
 		}
@@ -119,7 +92,7 @@ export class LocationField extends Component {
 
 	private close() {
 		clearTimeout(this.debounceTimer)
-		this.searchSequence++ // orphan any in-flight response
+		this.searchSequence++
 		this.suggestions = []
 		this.activeIndex = -1
 		this.menu?.hidePopover()
@@ -137,8 +110,6 @@ export class LocationField extends Component {
 
 	private readonly handleKeydown = (e: KeyboardEvent) => {
 		if (e.key === 'Enter') {
-			// Never a newline: Enter picks the active suggestion, or commits the typed text as-is (the
-			// blur fires the field's own change).
 			e.preventDefault()
 			this.activeIndex >= 0 ? this.pick(this.suggestions[this.activeIndex]!) : this.field?.blur()
 			return
@@ -151,8 +122,6 @@ export class LocationField extends Component {
 			const delta = e.key === 'ArrowDown' ? 1 : -1
 			this.activeIndex = (this.activeIndex + delta + this.suggestions.length) % this.suggestions.length
 		} else if (e.key === 'Escape') {
-			// Only dismiss the suggestions — stop it before the popover machinery closes the whole
-			// details editor.
 			e.stopPropagation()
 			this.close()
 		}
@@ -166,14 +135,11 @@ export class LocationField extends Component {
 				display: flex;
 				gap: 0.25rem;
 
-				/* The global textarea's field-sizing makes the field grow as a long address wraps. */
 				> textarea {
 					flex: 1;
 					min-width: 0;
 				}
 
-				/* The Google Maps opener. Always laid out (just invisible while there's no location), so
-				   the field doesn't shift the moment the first character makes it appear. */
 				> a {
 					display: inline-flex;
 					align-self: center;
@@ -194,8 +160,6 @@ export class LocationField extends Component {
 					}
 				}
 
-				/* The suggestions wear the popover's tinted glass and open beside the row, flipping
-				   inline/block when the space runs out — the same strategy as the source/repeat pickers. */
 				> menu[popover] {
 					margin: 0;
 					margin-inline: 0.875rem;
@@ -209,8 +173,6 @@ export class LocationField extends Component {
 					position-try-fallbacks: flip-inline, flip-block, flip-inline flip-block;
 
 					> button {
-						/* The leading glyph: what KIND of thing this row is — recently used, a typed place,
-						   or just somewhere on the map. */
 						> .glyph {
 							color: var(--color-text-muted);
 						}
@@ -227,7 +189,6 @@ export class LocationField extends Component {
 								overflow: hidden;
 								text-overflow: ellipsis;
 
-								/* The kind of place, disambiguating a bare name ("Teheran · Restaurant"). */
 								> .kind {
 									font-weight: 400;
 									color: var(--color-text-muted);
@@ -244,7 +205,6 @@ export class LocationField extends Component {
 							}
 						}
 
-						/* The keyboard-active row shares the hover surface. */
 						&[data-active] {
 							background: color-mix(in srgb, var(--color-text) 8%, transparent);
 						}
@@ -269,10 +229,6 @@ export class LocationField extends Component {
 				target="_blank" rel="noopener noreferrer" title=${t('Open in Google Maps')} aria-label=${t('Open in Google Maps')}>
 				<mitra-icon icon="map"></mitra-icon>
 			</a>
-			<!-- A MANUAL popover: light dismiss would race the opening click — the recents query is local-DB
-				fast, so on an empty field the menu can open between pointerdown (focus) and pointerup, and
-				the completing click would instantly dismiss it (a flash). Its lifecycle is fully owned here
-				anyway: blur, Escape, and picking close it. -->
 			<menu popover="manual">
 				${this.suggestions.map((suggestion, index) => html`
 					<button type="button" ?data-active=${index === this.activeIndex}

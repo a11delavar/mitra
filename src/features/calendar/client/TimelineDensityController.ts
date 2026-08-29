@@ -6,14 +6,12 @@ import { DensityController } from './DensityController.js'
  * Pins the anchor by measured track widths rather than zoom ratios to accommodate integer-pixel day track rounding.
  */
 export class TimelineDensityController extends DensityController {
-	/** Fixed gesture anchor captured at start to prevent cumulative error across animation frames. */
 	private anchor?: { inline: number, rtl: boolean, hostStart: number, content: number, width: number }
 
 	constructor(host: Component) {
 		super(host, { storageKey: 'Mitra.TimelineZoom', min: 1, max: 26, initial: 3, rail: '.header', axis: 'inline' })
 	}
 
-	/** Measured width of a single day column in the rendered backdrop. */
 	private get trackWidth() {
 		return this.host.renderRoot.querySelector('.backdrop .day')?.getBoundingClientRect().width ?? 0
 	}
@@ -35,7 +33,6 @@ export class TimelineDensityController extends DensityController {
 	}
 
 	protected driftAnchor(clientX: number) {
-		// Rebase anchor when pinch midpoint moves during a two-finger gesture.
 		if (this.anchor) {
 			this.anchor = this.reference(clientX, this.anchor.rtl, this.anchor.hostStart) ?? this.anchor
 		}

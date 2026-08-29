@@ -8,8 +8,7 @@ import { writeIndexHtml } from './indexHtml.ts'
 const tsgoPlatformDir = dirname(fileURLToPath(import.meta.resolve(`@typescript/native-preview-${process.platform}-${process.arch}/package.json`)))
 spawn(join(tsgoPlatformDir, `lib/tsgo${process.platform === 'win32' ? '.exe' : ''}`), ['--noEmit', '--watch'], { stdio: 'inherit' })
 
-// Build + watch the backend, then run it (with the dev sample fixture). Shares its esbuild config with
-// the production build (scripts/esbuild.ts), differing only by sourcemaps + watch.
+// Build, watch, and run backend with dev fixtures.
 const backendContext = await esbuild.context({ ...backendOptions, sourcemap: 'inline' })
 await backendContext.rebuild()
 await backendContext.watch()
