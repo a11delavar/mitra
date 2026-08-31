@@ -6,6 +6,7 @@ import { type Entry } from '../../entries/Entry.js'
 import { EntrySegments } from '../../entries/client/EntrySegments.js'
 import { type EntrySegment } from '../../entries/client/EntrySegment.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
+import { HideDoneTasksSetting } from '../../entries/client/HideDoneTasksSetting.js'
 import { EntryConnections, type SegmentPlacement } from '../../relations/client/EntryConnections.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { CalendarScrollController } from './CalendarScrollController.js'
@@ -59,7 +60,7 @@ export class Days extends Component {
 	protected readonly entryDrag = new EntryDragController(this)
 	protected readonly density = new DayDensityController(this)
 	protected readonly zoneLane: TimeZoneLaneController = new TimeZoneLaneController(this)
-	private get segments() { return EntrySegments.of(this.entries, this.dates.window.days) }
+	private get segments() { return EntrySegments.of(HideDoneTasksSetting.filter(this.entries), this.dates.window.days) }
 
 	/** Time axis columns with user-configured zones followed by the anchor system zone. */
 	private get timeZoneColumns(): Array<UserTimeZone | undefined> {

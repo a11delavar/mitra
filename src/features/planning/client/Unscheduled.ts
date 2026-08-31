@@ -7,6 +7,7 @@ import { EntryStore } from '../../entries/client/EntryStore.js'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
 import { EntrySegments } from '../../entries/client/EntrySegments.js'
 import { EntryDragController } from '../../entries/client/EntryDragController.js'
+import { HideDoneTasksSetting } from '../../entries/client/HideDoneTasksSetting.js'
 import type { EntrySegmentComponent } from '../../entries/client/EventSegment.js'
 
 /**
@@ -16,11 +17,16 @@ import type { EntrySegmentComponent } from '../../entries/client/EventSegment.js
 export class Unscheduled extends Component {
 	readonly store = new EntryStore(this)
 
-	private get entries(): ReadonlyArray<Entry> {
-		return [...this.store.entries]
+	/** Visible unscheduled tasks matching current lens filters. */
+	static get shown(): ReadonlyArray<Entry> {
+		return [...HideDoneTasksSetting.filter(EntryStore.entries)]
 			.filter(entry => !entry.scheduled)
 			.sort((a, b) => Number(Unscheduled.finished(a)) - Number(Unscheduled.finished(b))
 				|| (a.heading || '').localeCompare(b.heading || ''))
+	}
+
+	private get entries(): ReadonlyArray<Entry> {
+		return Unscheduled.shown
 	}
 
 	private static finished(entry: Entry) {

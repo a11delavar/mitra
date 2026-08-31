@@ -12,7 +12,8 @@ describe('UserSettings', () => {
 				defaultDurationMinutes: 30,
 				snapMinutes: 5,
 				defaultReminderMinutes: 60,
-			}), { defaultView: 'timeline', defaultDurationMinutes: 30, snapMinutes: 5, defaultReminderMinutes: 60 })
+				hideDoneTasks: true,
+			}), { defaultView: 'timeline', defaultDurationMinutes: 30, snapMinutes: 5, defaultReminderMinutes: 60, hideDoneTasks: true })
 		})
 
 		it('drops a key it does not know, keeping the rest of the write', () => {
@@ -39,6 +40,11 @@ describe('UserSettings', () => {
 		it('drops a value of the wrong type outright', () => {
 			assert.equal(UserSettings.sanitize({ snapMinutes: '15' }), undefined)
 			assert.equal(UserSettings.sanitize({ defaultView: 7 }), undefined)
+			assert.equal(UserSettings.sanitize({ hideDoneTasks: 'yes' }), undefined)
+		})
+
+		it('keeps a lens turned back off, so the choice reads as made rather than never taken', () => {
+			assert.deepEqual(UserSettings.sanitize({ hideDoneTasks: false }), { hideDoneTasks: false })
 		})
 
 		it('keeps an explicit null reminder, and tells it from an absent one', () => {

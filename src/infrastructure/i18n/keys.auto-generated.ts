@@ -166,6 +166,7 @@ declare global {
 		"Does not repeat": unknown
 		"Doing": unknown
 		"Done": unknown
+		"Done and cancelled tasks leave the calendar. Search still finds them, and they still count towards progress.": unknown
 		"Double-click to rename": unknown
 		"Draft": unknown
 		"drag": unknown
@@ -205,7 +206,9 @@ declare global {
 		"GoToDate.Keywords": unknown
 		"GoToToday.Keywords": unknown
 		"Hide calendar": unknown
+		"Hide done tasks": unknown
 		"Hide the other time zones": unknown
+		"HideDoneTasksSetting.Keywords": unknown
 		"hours": unknown
 		"Ics.UrlHint": unknown
 		"Include time": unknown

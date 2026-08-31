@@ -13,6 +13,8 @@ export class UserSettings {
 	snapMinutes?: number
 	/** Lead time in minutes before entry start for default reminders (null = none). */
 	defaultReminderMinutes?: number | null
+	/** Whether closed tasks (done or cancelled) are hidden from calendar views. */
+	hideDoneTasks?: boolean
 
 	/**
 	 * Sanitizes user settings input, dropping unknown keys and out-of-range values.
@@ -38,6 +40,9 @@ export class UserSettings {
 			if (value === null || (typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 28 * 24 * 60)) {
 				settings.defaultReminderMinutes = value as number | null
 			}
+		}
+		if (typeof incoming.hideDoneTasks === 'boolean') {
+			settings.hideDoneTasks = incoming.hideDoneTasks
 		}
 		return Object.keys(settings).length ? settings : undefined
 	}

@@ -27,6 +27,9 @@ export class EntrySegmentComponent extends Component {
 				}
 			})
 			const entry = this.segment?.entry
+			if (entry) {
+				EntryEditorIntent.setEditing(entry, open)
+			}
 			if (wasOpen && !open && entry && !entry.persisted && !entry.heading?.trim()) {
 				EntryStore.discardDraft()
 			}
@@ -43,6 +46,13 @@ export class EntrySegmentComponent extends Component {
 	protected handleClick(e: MouseEvent) {
 		e.stopPropagation()
 		this.open = true
+	}
+
+	protected override disconnected() {
+		const entry = this.segment?.entry
+		if (this.open && entry) {
+			EntryEditorIntent.setEditing(entry, false)
+		}
 	}
 
 	private readonly handleStatusChange = () => {
@@ -81,6 +91,7 @@ export class EntrySegmentComponent extends Component {
 			this.style.removeProperty('--mitra-entry-progress')
 		}
 		if (EntryEditorIntent.shouldOpen(entry) && !this.segment!.hasPrevious) {
+			EntryEditorIntent.setEditing(entry, true)
 			EntryEditorIntent.consume()
 			this.open = true
 		}

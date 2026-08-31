@@ -67,6 +67,7 @@
 	"DefaultReminderSetting.Keywords": "reminder notification default minutes before alarm alert",
 	"DefaultSourceSetting.Keywords": "default calendar source target new entries created",
 	"DefaultViewSetting.Keywords": "view start startup default week month year timeline opens",
+	"HideDoneTasksSetting.Keywords": "hide done completed cancelled closed tasks finished declutter",
 	"LanguageSetting.Keywords": "language translation locale region english german french",
 	"NotificationsSetting.Keywords": "notifications push permission browser allow reminders alerts",
 	"OpenSettings.Keywords": "settings preferences options configure customize",

@@ -74,4 +74,45 @@ describe('EntryEditorIntent', () => {
 			assert.equal(EntryEditorIntent.shouldOpen(entry()), false)
 		})
 	})
+
+	describe('an open editor', () => {
+		it('holds its entry, and lets go when it closes', () => {
+			const open = entry()
+			assert.equal(EntryEditorIntent.holds(open), false)
+			EntryEditorIntent.setEditing(open, true)
+			assert.equal(EntryEditorIntent.holds(open), true)
+			EntryEditorIntent.setEditing(open, false)
+			assert.equal(EntryEditorIntent.holds(open), false)
+		})
+
+		it('holds the same persisted entry under another instance, since a refetch may swap it', () => {
+			EntryEditorIntent.setEditing(entry(), true)
+			assert.equal(EntryEditorIntent.holds(entry()), true)
+			assert.equal(EntryEditorIntent.holds(entry({ id: 'b' })), false)
+		})
+
+		it('is not let go by another entry closing its own editor', () => {
+			const open = entry()
+			EntryEditorIntent.setEditing(open, true)
+			EntryEditorIntent.setEditing(entry({ id: 'b' }), false)
+			assert.equal(EntryEditorIntent.holds(open), true)
+		})
+
+		it('takes the claim over from the request without a gap, so a render between the two never drops it', () => {
+			const target = entry()
+			EntryEditorIntent.requestOpen('a')
+			EntryEditorIntent.setEditing(target, true)
+			EntryEditorIntent.consume()
+			assert.equal(EntryEditorIntent.holds(target), true)
+		})
+
+		it('holds one entry at a time, the last one opened', () => {
+			const first = entry()
+			const second = entry({ id: 'b' })
+			EntryEditorIntent.setEditing(first, true)
+			EntryEditorIntent.setEditing(second, true)
+			assert.equal(EntryEditorIntent.holds(first), false)
+			assert.equal(EntryEditorIntent.holds(second), true)
+		})
+	})
 })

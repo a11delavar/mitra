@@ -7,6 +7,7 @@ import { CalendarScrollController } from './CalendarScrollController.js'
 import { EntryDragController } from '../../entries/client/EntryDragController.js'
 import { MonthsDensityController } from './MonthsDensityController.js'
 import { Routines } from '../../routines/client/Routines.js'
+import { HideDoneTasksSetting } from '../../entries/client/HideDoneTasksSetting.js'
 
 /**
  * Year view months strip with one row per month aligned across weekday columns.
@@ -28,7 +29,7 @@ export class Months extends Component {
 
 	private get routines(): Routines { return Routines.of(this.entries, this.buffer.window.days, 'month') }
 
-	private get segments(): EntrySegments { return EntrySegments.of(this.routines.kept, this.buffer.window.days) }
+	private get segments(): EntrySegments { return EntrySegments.of(HideDoneTasksSetting.filter(this.routines.kept), this.buffer.window.days) }
 
 	private get columns() { return 31 + this.navigatingDate.daysInWeek - 1 }
 

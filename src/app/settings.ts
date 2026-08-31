@@ -3,6 +3,7 @@
 import '../design/ThemeSetting.js'
 import '../infrastructure/i18n/LanguageSetting.js'
 import '../features/calendar/client/DefaultViewSetting.js'
+import '../features/entries/client/HideDoneTasksSetting.js'
 import '../features/relations/client/ConnectorLinesSetting.js'
 import '../features/sources/client/DefaultSourceSetting.js'
 import '../features/entries/client/DefaultDurationSetting.js'

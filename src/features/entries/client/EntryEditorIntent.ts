@@ -6,6 +6,7 @@ import { EntryStore } from './EntryStore.js'
  */
 export class EntryEditorIntent {
 	private static pending?: Entry | string
+	private static editing?: Entry
 
 	/** Request opening the editor for a draft entry. */
 	static openDraft(draft: Entry) {
@@ -30,6 +31,26 @@ export class EntryEditorIntent {
 		this.pending = undefined
 	}
 
+	/** Records entry with active editor to keep it visible while display lenses are active. */
+	static setEditing(entry: Entry, open: boolean) {
+		const editing = open ? entry : this.isEditing(entry) ? undefined : this.editing
+		if (this.editing !== editing) {
+			this.editing = editing
+			EntryStore.notify()
+		}
+	}
+
+	/** Whether the entry (or its persisted equivalent) is currently being edited. */
+	static isEditing(entry: Entry) {
+		return this.editing !== undefined
+			&& (this.editing === entry || (this.editing.id !== undefined && this.editing.id === entry.id))
+	}
+
+	/** Whether the entry is active or pending editor open and must remain rendered. */
+	static holds(entry: Entry) {
+		return this.shouldOpen(entry) || this.isEditing(entry)
+	}
+
 	/** Clears pending request if no matching entry is present in the rendered set. */
 	static settle(entries: ReadonlyArray<Entry>) {
 		if (typeof this.pending === 'string' && !entries.some(entry => this.shouldOpen(entry))) {
@@ -39,5 +60,6 @@ export class EntryEditorIntent {
 
 	static reset() {
 		this.pending = undefined
+		this.editing = undefined
 	}
 }

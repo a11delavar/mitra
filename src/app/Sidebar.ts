@@ -24,7 +24,7 @@ export class Sidebar extends Component {
 	readonly store = new EntryStore(this)
 
 	private get unscheduledCount() {
-		return this.store.entries.filter(entry => !entry.scheduled).length
+		return Unscheduled.shown.length
 	}
 
 	private setTab(tab: 'calendars' | 'planning') {

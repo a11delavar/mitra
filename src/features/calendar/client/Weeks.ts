@@ -8,6 +8,7 @@ import { CalendarScrollController } from './CalendarScrollController.js'
 import { EntryDragController } from '../../entries/client/EntryDragController.js'
 import { WeeksDensityController } from './WeeksDensityController.js'
 import { Routines, type RoutineRun } from '../../routines/client/Routines.js'
+import { HideDoneTasksSetting } from '../../entries/client/HideDoneTasksSetting.js'
 
 type RenderedWeek = { week: ReadonlyArray<DateTime>, row: number, runs: ReadonlyArray<RoutineRun> } & MonthWeek
 
@@ -30,7 +31,7 @@ export class Weeks extends Component {
 	private get days(): Array<DateTime> { return this.buffer.days }
 	private get routines(): Routines { return Routines.of(this.entries, this.buffer.window.days, 'week') }
 
-	private get segments(): EntrySegments { return EntrySegments.of(this.routines.kept, this.buffer.window.days) }
+	private get segments(): EntrySegments { return EntrySegments.of(HideDoneTasksSetting.filter(this.routines.kept), this.buffer.window.days) }
 
 	private weekLayouts: { cohort?: Routines, byWeek: Map<number, RenderedWeek> } = { byWeek: new Map() }
 
