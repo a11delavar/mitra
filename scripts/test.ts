@@ -1,6 +1,6 @@
 import esbuild from 'esbuild'
 import { glob } from 'node:fs/promises'
-import { define, inject } from './esbuild.ts'
+import { backendOptions, define, inject } from './esbuild.ts'
 
 const entryPoints = new Array<string>()
 for await (const file of glob('src/**/*.test.ts')) {
@@ -14,6 +14,8 @@ await esbuild.build({
 	platform: 'node',
 	format: 'esm',
 	mainFields: ['module', 'main'],
+	// createRequire shim for CJS dependencies with dynamic requires in ESM test bundle.
+	banner: backendOptions.banner,
 	external: ['tsdav', 'better-sqlite3', 'esbuild'],
 	sourcemap: 'inline',
 	inject,

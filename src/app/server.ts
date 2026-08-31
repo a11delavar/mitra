@@ -16,6 +16,7 @@ import { userRouter } from '../features/identity/server/user.js'
 import { locationsRouter } from '../features/locations/server/locations.js'
 import { pushRouter } from '../features/reminders/server/push.js'
 import { healthRouter } from '../infrastructure/http/health.js'
+import { compression, precompressed } from '../infrastructure/http/compression.js'
 import { metaRouter } from '../features/about/server/meta.js'
 import { updateChecker } from '../features/about/server/updates.js'
 import { ReminderScheduler } from '../features/reminders/server/ReminderScheduler.js'
@@ -30,6 +31,8 @@ updateChecker.start()
 
 const app = express()
 app.use(cors())
+// Before everything it covers: the API routers below and the static frontend at the bottom.
+app.use(compression())
 
 // Request logger middleware.
 app.use((req, res, next) => {
@@ -78,12 +81,20 @@ app.use('/api/push', pushRouter)
 
 // Serve frontend SPA dist bundle.
 const frontendDistPath = path.resolve(import.meta.dirname, '../../dist')
+app.use(precompressed(frontendDistPath))
 app.use(express.static(frontendDistPath))
-app.get(/(.*)/, (_, res) => res.sendFile(path.join(frontendDistPath, 'index.html')))
+// Use root option to ensure Express 5 send can resolve Windows drive letters on deep links.
+app.get(/(.*)/, (_, res) => res.sendFile('index.html', { root: frontendDistPath }))
+
+/** Extracts HTTP error status (400-599) from Error object when present. */
+function httpStatusOf(error: unknown) {
+	const status = Number((error as { status?: unknown, statusCode?: unknown }).status ?? (error as { statusCode?: unknown }).statusCode)
+	return Number.isInteger(status) && status >= 400 && status <= 599 ? status : undefined
+}
 
 // Central error handler.
 const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
-	const status = error instanceof NotFoundError ? 404 : 500
+	const status = error instanceof NotFoundError ? 404 : (httpStatusOf(error) ?? 500)
 	if (status >= 500) {
 		logger.error(`${req.method} ${req.originalUrl} failed:`, error)
 	} else {
