@@ -32,6 +32,28 @@ export class Source {
 		return this.enabled && !this.hidden
 	}
 
+	/** Timestamp when source finished initial import (null while importing). */
+	@property({ type: 'datetime', nullable: true }) importedAt?: Date | null
+
+	get importing() {
+		return this.enabled && !this.importedAt
+	}
+
+	/** Resets import timestamp and sync state for full re-import. */
+	awaitImport() {
+		this.importedAt = null
+		this.syncState = undefined
+	}
+
+	/** Records successful full import. Returns true if this ended an active import. */
+	markImported(): boolean {
+		if (this.importedAt) {
+			return false
+		}
+		this.importedAt = new Date()
+		return true
+	}
+
 	@property({ type: 'json', nullable: true }) syncState?: Record<string, any>
 
 	supportsEntryType(type: EntryType): boolean {

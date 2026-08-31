@@ -92,7 +92,8 @@
 - **Identity Model**: Value object `Identity` (`src/features/identity/Identity.ts`) with `issuer`, `subject`, `email`, `name`, `picture` URL. Embedded in `User` as nullable `oidc_*` columns (`@embedded`, unique on `['identity.issuer', 'identity.subject']`). `user.identity != null` indicates OIDC user.
 - **Provisioning**: `User.provision(em, issuer, claims)` JIT provisions on first login. No automatic data migration from single-user mode.
 - **Tenant Isolation**: Routes must scope queries through `User` (`user.integrations`, `user.sources`, `user.entries`). Never use bare `em.find*`. Foreign IDs throw `NotFoundError` (404).
-- **User Scoping**: SSE (`syncEmitter.emit('updated', userId)`), Web Push (`userId`), and reminders (`sendTo(userId, ...)`) are isolated per user.
+- **User Scoping**: SSE (`syncEmitter.emit('updated', userId, scope?)`), Web Push (`userId`), and reminders (`sendTo(userId, ...)`) are isolated per user.
+- **SSE Scope** (`SyncScope`): `'entries'` (default wire event `'updated'`) or `'sources'`. `'sources'` triggers client `fetchIntegrations()` to update calendar metadata, colors, and import states. Entry mutations use `'entries'` to prevent recreating `Source` object references.
 
 ## Integrations & Sync Engine
 - **Class Hierarchy & Registration**:
@@ -134,9 +135,17 @@
 - **Sync Pacing & Presence** (`SyncPacer.ts`):
   - Largest interval wins: presence cadence (10s online, 5min offline via `presence.ts`), provider `syncInterval` (Google/Notion = 60s, Dev = `Infinity`), or flat 60s failure rest.
   - User coming online triggers immediate scoped sync. No manual "Sync Now" button or endpoint.
-- **Sync vs Re-import**:
-  - **Sync**: Background incremental pull (`Integration.sync`, no client button).
-  - **Re-import**: Full wipe and rebuild (`POST /api/sources/:id/reimport`, icon `hard-drive-download`).
+- **Vocabulary**: User-facing operations are named by intent, not mechanism:
+  - **Connect**: Account auth and calendar discovery.
+  - **Import**: Initial population of an enabled source (`Source.importing`).
+  - **Sync**: Background incremental reconciliation (`Integration.sync`).
+  - **Re-import**: Re-reading a calendar from the beginning (UI strings express intent, not local deletion).
+  - **Internal terms**: 'fetch' is internal code-only; 'Refresh' is reserved for UI discovery reload.
+- **Asynchronous Source Import** (`src/integrations/server/Importer.ts`):
+  - **Non-blocking Apply**: `Integration.apply` persists credentials and enabled sources without reading entries, returning immediately with sources in `importing` state (`importedAt: null`).
+  - **Importer Execution**: `Importer.start(em, userId, integrationId)` drains pending sources in background with forked EM. Emits `'sources'` SSE event after each pagination pass. Sync locks are held per pass, not across entire import.
+  - **Import Completion**: `Source.importedAt` is set when `syncSource` completes without truncation/changes (capped at `Importer.maxPasses = 20`). Failures remain un-stamped for synchronizer retry. Local providers (`Dev`) seed `importedAt` immediately.
+  - **Re-import**: Discards entries, resets `Source.awaitImport()`, returns HTTP 202, and triggers background `Importer.start`.
 - **CalDAV Protocols & Edge Cases**:
   - Multiget batch fallback: Tolerates 404s by falling back to individual fetches.
   - Date Writes (`CalDAV.writeDate`): Preserves authored form (TZID -> wall clock in VTIMEZONE; zoneless -> UTC). Series start shift shifts override `RECURRENCE-ID`s.
@@ -315,7 +324,8 @@
   - Realm separation: Lane layer draws lane<->lane edges; canvas layer draws timed<->timed and cross-realm edges (via scroll-driven CSS animation timeline / offset correction).
 
 ## Sidebar & Navigation
-- **Source Icon**: `<mitra-source-icon>` (`src/features/sources/client/SourceIcon.ts`) is the unified icon component.
+- **Source Icon**: `<mitra-source-icon>` (`src/features/sources/client/SourceIcon.ts`) renders source/provider glyphs reading color, importing state, and entry types directly from the bound `.source` (re-rendered when integration refetches mint fresh instances). Never mirror `Source` fields into separate component properties.
+  - **Picker Caveat**: `<mitra-source-icon>` inside an `<option>` renders uncolored in closed select pickers because `<selectedcontent>` clones markup without preserving Lit property bindings or template-applied inline styles.
 - **Sidebar Grid**: Single CSS grid (`.integrations`) aligns all source rows, headings, and gutters across providers. Its `--sidebar-gap` is both the column gap and (the first column being zero-wide) a row's content inset — the Planning tab's heading takes it too, so every heading in the sidebar rides one column. Anything listing sources elsewhere (the migration dialog) reproduces that relationship: heading text starts where the row icons do.
 - **Gutter**: Scroller uses `scrollbar-gutter: stable` to prevent layout shifts.
 - **Primary Source**: Always resolve via `getPrimarySource()` (default source or first visible), never raw ID.

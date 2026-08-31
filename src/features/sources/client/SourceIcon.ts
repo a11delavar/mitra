@@ -10,6 +10,7 @@ import { contrastColor } from '../../../design/contrastColor.js'
  */
 @component('mitra-source-icon')
 export class SourceIcon extends Component {
+	/** Source model instance for type-based icon resolution. */
 	@property({ type: Object }) source?: Source
 
 	/** Outline the icon in full color (used for default source selection). */
@@ -42,15 +43,31 @@ export class SourceIcon extends Component {
 						transform: scale(0.9);
 					}
 				}
+
+				&[importing] mitra-icon {
+					animation: mitra-source-icon-spin 1.1s linear infinite;
+
+					@media (prefers-reduced-motion: reduce) {
+						animation: none;
+						opacity: 0.6;
+					}
+				}
+			}
+
+			@keyframes mitra-source-icon-spin {
+				to { rotate: 1turn }
 			}
 		`
 	}
 
 	protected override get template() {
 		this.style.setProperty('--mitra-source-icon-color', this.source?.color ?? '')
+		this.toggleAttribute('importing', !!this.source?.importing)
 		const getIcon = () => {
 			const provider = this.icon ?? (this.source && getIntegrationFor(this.source.id)?.sourceIcon)
 			switch (true) {
+				case !!this.source?.importing:
+					return 'loader-circle'
 				case !!provider:
 					return provider
 				case this.source?.readOnly === true:

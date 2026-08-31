@@ -130,8 +130,9 @@ export async function seedDev(orm: MikroORM) {
 		})
 		em.persist(integration)
 
+		// Seed sample sources with importedAt pre-set.
 		const calendar = (slug: string, types: Array<EntryType>, name: string, color: string) => {
-			const source = new Source({ id: `dev-sample-${slug}`, integrationId: integration.id, uri: `mitra://sample/${slug}`, entryTypes: types, name, color, enabled: true, hidden: false })
+			const source = new Source({ id: `dev-sample-${slug}`, integrationId: integration.id, uri: `mitra://sample/${slug}`, entryTypes: types, name, color, enabled: true, hidden: false, importedAt: new Date() })
 			em.persist(source)
 			return source
 		}

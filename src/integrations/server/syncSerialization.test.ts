@@ -114,7 +114,7 @@ describe('concurrent syncs of one integration', () => {
 		const account = await em.findOneOrFail(SlowProvider, { id: integrationId })
 
 		await Promise.all([
-			account.applyAndSync(em, new SlowProvider({ sources: [new Source({ uri: 'slow://calendar', enabled: true })] as never })),
+			account.apply(em, new SlowProvider({ sources: [new Source({ uri: 'slow://calendar', enabled: true })] as never })),
 			syncFrom(integrationId),
 		])
 

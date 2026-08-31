@@ -158,8 +158,6 @@ declare global {
 		"Delete just this entry of a series": unknown
 		"Delete repeating entry": unknown
 		"Delete subtasks too?": unknown
-		"Delete the locally cached entries and import everything from the source again": unknown
-		"Delete the locally cached entries of every enabled source and import everything again": unknown
 		"Delete the open entry": unknown
 		"Description": unknown
 		"Devices": unknown
@@ -211,6 +209,7 @@ declare global {
 		"HideDoneTasksSetting.Keywords": unknown
 		"hours": unknown
 		"Ics.UrlHint": unknown
+		"Importing entries…": unknown
 		"Include time": unknown
 		"Install as an App": unknown
 		"Install mitra as an app — it gets its own window, and notifications appear under its own name and icon": unknown
@@ -312,6 +311,8 @@ declare global {
 		"Progress": unknown
 		"Public": unknown
 		"Re-import entries": unknown
+		"Read every enabled calendar of this account again from the start": unknown
+		"Read this calendar again from the start": unknown
 		"read-only": unknown
 		"Refresh": unknown
 		"Related to": unknown

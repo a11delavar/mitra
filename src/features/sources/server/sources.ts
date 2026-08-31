@@ -6,6 +6,7 @@ import { Source } from '../Source.js'
 import { applyOrder } from '../../../infrastructure/model/order.js'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
 import { Integration } from '../../../integrations/Integration.js'
+import { importer } from '../../../integrations/server/Importer.js'
 import { MigrationRefused, SourceMigration } from '../../migration/server/SourceMigration.js'
 const logger = createLogger('Sources')
 
@@ -26,7 +27,7 @@ sourcesRouter.put('/order', async (req, res) => {
 	}
 	applyOrder(await em.find(Source, { integrationId: sources[0]!.integrationId }), ids)
 	await em.flush()
-	syncEmitter.emit('updated', req.user.id)
+	syncEmitter.emit('updated', req.user.id, 'sources')
 	logger.debug(`Reordered ${ids.length} source(s)`)
 	return res.status(204).end()
 })
@@ -38,7 +39,7 @@ sourcesRouter.put('/:id/visibility', async (req, res) => {
 	source.hidden = req.body.hidden
 	await em.flush()
 
-	syncEmitter.emit('updated', req.user.id)
+	syncEmitter.emit('updated', req.user.id, 'sources')
 	logger.debug(`Source ${source.id} ${source.hidden ? 'hidden' : 'shown'}`)
 	return res.json(source)
 })
@@ -54,7 +55,7 @@ sourcesRouter.put('/:id/solo', async (req, res) => {
 	await em.flush()
 
 	req.user.previouslyHiddenSourceIds = user.previouslyHiddenSourceIds
-	syncEmitter.emit('updated', req.user.id)
+	syncEmitter.emit('updated', req.user.id, 'sources')
 	logger.debug(`Source ${source.id} is now the only one shown`)
 	return res.json(user)
 })
@@ -70,7 +71,7 @@ sourcesRouter.put('/restore-visibility', async (req, res) => {
 	await em.flush()
 
 	req.user.previouslyHiddenSourceIds = undefined
-	syncEmitter.emit('updated', req.user.id)
+	syncEmitter.emit('updated', req.user.id, 'sources')
 	logger.debug('Restored the visibility from before the solo')
 	return res.json(user)
 })
@@ -81,11 +82,11 @@ sourcesRouter.post('/:id/reimport', async (req, res) => {
 	const integration = await em.findOneOrFail(Integration, { id: source.integrationId })
 
 	await integration.reimportSource(em, source)
-	await em.flush()
 
-	syncEmitter.emit('updated', req.user.id)
-	logger.info(`Re-imported source "${source.name}" (${source.id})`)
-	return res.status(204).end()
+	syncEmitter.emit('updated', req.user.id, 'sources')
+	void importer.start(em, req.user.id, integration.id)
+	logger.info(`Re-importing source "${source.name}" (${source.id})`)
+	return res.status(202).end()
 })
 
 async function migration(req: Request<{ id: string }>, res: Response, work: (migration: SourceMigration) => Promise<unknown>) {
@@ -115,7 +116,7 @@ sourcesRouter.put('/:id/color', async (req, res) => {
 	source.color = req.body.color
 	await em.flush()
 
-	syncEmitter.emit('updated', req.user.id)
+	syncEmitter.emit('updated', req.user.id, 'sources')
 	logger.debug(`Source ${source.id} recoloured to ${source.color}`)
 	return res.json(source)
 })
@@ -132,7 +133,7 @@ sourcesRouter.put('/:id/name', async (req, res) => {
 	source.name = name
 	await em.flush()
 
-	syncEmitter.emit('updated', req.user.id)
+	syncEmitter.emit('updated', req.user.id, 'sources')
 	logger.debug(`Source ${source.id} renamed to "${source.name}"`)
 	return res.json(source)
 })

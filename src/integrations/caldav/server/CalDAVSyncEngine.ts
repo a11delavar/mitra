@@ -259,7 +259,8 @@ export class CalDAVSyncEngine implements SyncEngine {
 
 		await integration.reconcileRelations(em, existingEntries)
 
-		source.syncState = { syncToken: newSyncToken }
+		// Mark incomplete if truncated by server to keep import open for subsequent passes.
+		source.syncState = { syncToken: newSyncToken, ...complete ? {} : { incomplete: true } }
 
 		logger.debug(`Synced "${source.name}": ${changedObjects.length} fetched, ${deletedUrls.length} deleted${changed ? '' : ' (no local changes)'}`)
 		return changed

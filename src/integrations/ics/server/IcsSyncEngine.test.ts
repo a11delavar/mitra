@@ -423,8 +423,13 @@ END:VEVENT`)
 		const integration = await seed(em)
 		const { source, entries } = await poll(em, integration)
 
-		integration.feed = undefined
 		await integration.reimportSource(em, source)
+		assert.equal(source.importing, true)
+		assert.equal(await em.count(Entry, { sourceId: source.id }), 0)
+
+		integration.feed = undefined
+		await integration.syncSource(em, source)
+		await em.flush()
 		const rebuilt = await em.find(Entry, { sourceId: source.id })
 		assert.equal(rebuilt.length, entries.length)
 		assert.equal(rebuilt.every(entry => entries.every(before => before.id !== entry.id)), true)

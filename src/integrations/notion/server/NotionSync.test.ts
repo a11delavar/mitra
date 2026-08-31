@@ -806,7 +806,7 @@ describe('Notion connect identity', () => {
 		em.persist(second)
 		;(second as any).client = stubClient({}).client
 		await assert.rejects(
-			() => second.applyAndSync(em, { credentials: { token: 'ntn_other' }, sources: [] } as any),
+			() => second.apply(em, { credentials: { token: 'ntn_other' }, sources: [] } as any),
 			/already connected/,
 		)
 	})
@@ -855,7 +855,7 @@ describe('Integration source reconciliation (name preservation)', () => {
 			{ uri: sibling.uri, enabled: true },
 			{ uri: source.uri, enabled: false },
 		] }
-		await integration.applyAndSync(em, structuredClone(body) as never)
+		await integration.apply(em, structuredClone(body) as never)
 		assert.equal(sibling.enabled, true)
 		assert.equal(source.enabled, false)
 		assert.deepEqual([...sibling.entryTypes], [EntryType.Task])

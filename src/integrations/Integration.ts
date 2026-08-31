@@ -216,13 +216,23 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	}
 
 	/**
+	 * Syncs a single source, marking it imported once a pass completes without truncation.
+	 * @returns whether any entries changed or import completed.
+	 */
+	async syncSource(em: EntityManager, source: Source): Promise<boolean> {
+		const changed = await this.syncSourceEntries(em, source)
+		const imported = !source.syncState?.incomplete && source.markImported()
+		return changed || imported
+	}
+
+	/**
 	 * Syncs entries for every currently enabled source.
-	 * @returns whether any entry changed.
+	 * @returns whether anything worth republishing happened.
 	 */
 	async syncEntries(em: EntityManager): Promise<boolean> {
 		let changed = false
 		for (const source of await em.find(Source, { integrationId: this.id, enabled: true })) {
-			if (await this.syncSourceEntries(em, source)) {
+			if (await this.syncSource(em, source)) {
 				changed = true
 			}
 		}
@@ -261,28 +271,24 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		return [...new Set(ids)].sort().reduceRight<() => Promise<T>>((inner, id) => () => Integration.exclusively(id, inner), work)()
 	}
 
-	/**
-	 * Rebuilds local cache from provider for a single source.
-	 */
+	/** Discards cached entries for a source and resets it for full background re-import. */
 	async reimportSource(em: EntityManager, source: Source): Promise<void> {
 		await Integration.exclusively(this.id, async () => {
 			const entries = await em.find(Entry, { sourceId: source.id })
 			entries.forEach(entry => em.remove(entry))
-			source.syncState = undefined
-			await em.flush()
-			await this.syncSourceEntries(em, source)
+			source.awaitImport()
 			await em.flush()
 		})
 	}
 
 	/**
-	 * Applies updated credentials and active source selection from incoming DTO, then syncs.
+	 * Applies updated credentials and active source selection from incoming DTO without blocking on entry import.
 	 */
-	applyAndSync(em: EntityManager, incoming: this): Promise<void> {
-		return Integration.exclusively(this.id, () => this.applyAndSyncExclusively(em, incoming))
+	apply(em: EntityManager, incoming: this): Promise<void> {
+		return Integration.exclusively(this.id, () => this.applyExclusively(em, incoming))
 	}
 
-	private async applyAndSyncExclusively(em: EntityManager, incoming: this): Promise<void> {
+	private async applyExclusively(em: EntityManager, incoming: this): Promise<void> {
 		this.merge(incoming)
 		const sources = await this.getSources(em, { checkDuplicate: true })
 
@@ -290,9 +296,6 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		for (const source of sources) {
 			source.enabled = enabledKeys.has(source.uri)
 		}
-		await em.flush()
-
-		await this.syncEntries(em)
 		await em.flush()
 	}
 

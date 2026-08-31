@@ -155,7 +155,7 @@ describe('CalDAV sync follows a truncated listing to its end (RFC 6578)', () => 
 		const endless = Array.from({ length: 200 }, (_, index) => ({ members: [{ href: `/cal/${index}.ics` }], token: `token-${index}`, truncated: true }))
 		const { reports, source } = await sync(endless)
 		assert.equal(reports, 50)
-		assert.deepEqual(source.syncState, { syncToken: 'token-49' })
+		assert.deepEqual(source.syncState, { syncToken: 'token-49', incomplete: true })
 	})
 
 	it('stops instead of spinning when a truncated answer repeats the token it was given', async () => {
@@ -169,7 +169,7 @@ describe('CalDAV sync follows a truncated listing to its end (RFC 6578)', () => 
 	it('stops instead of spinning when a truncated answer carries no token at all', async () => {
 		const { reports, source } = await sync([{ members: [{ href: '/cal/a.ics' }], truncated: true }], [], 'token-0')
 		assert.equal(reports, 1)
-		assert.deepEqual(source.syncState, { syncToken: 'token-0' })
+		assert.deepEqual(source.syncState, { syncToken: 'token-0', incomplete: true })
 	})
 })
 
@@ -206,7 +206,8 @@ describe('CalDAV sync only reads absence as deletion off a listing it knows is c
 		const { em, source, changed } = await sync([{ members: [], failure: 503 }], entries, 'token-0')
 		assert.deepEqual(em.removed, [])
 		assert.equal(changed, false)
-		assert.deepEqual(source.syncState, { syncToken: 'token-0' })
+		// Incomplete, so a failed listing can never be mistaken for a finished import.
+		assert.deepEqual(source.syncState, { syncToken: 'token-0', incomplete: true })
 	})
 
 	it('deletes nothing when a member the server could not serve (507) is missing from the listing', async () => {

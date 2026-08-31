@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { syncEmitter } from './syncEmitter.js'
+import { syncEmitter, type SyncScope } from './syncEmitter.js'
 import { presence } from './presence.js'
 
 export const eventsRouter = Router()
@@ -12,7 +12,9 @@ eventsRouter.get('/', (req, res) => {
 		'Connection': 'keep-alive',
 	})
 
-	const listener = (userId: string) => userId === req.user.id && res.write('data: updated\n\n')
+	// `updated` stays the word for entry-only changes so a client running a stale bundle keeps refreshing.
+	const listener = (userId: string, scope: SyncScope = 'entries') =>
+		userId === req.user.id && res.write(`data: ${scope === 'sources' ? 'sources' : 'updated'}\n\n`)
 	syncEmitter.on('updated', listener)
 
 	const disconnect = presence.connect(req.user.id)

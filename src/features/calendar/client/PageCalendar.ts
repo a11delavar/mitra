@@ -72,6 +72,12 @@ export class PageCalendar extends PageComponent {
 		this.transition('source-toggle', () => this.fetcher.task.run())
 	}
 
+	/** Updates sidebar and calendar when source metadata or import state changes without transition. */
+	readonly sourcesRefreshed = () => {
+		this.sidebar?.requestUpdate()
+		this.requestUpdate()
+	}
+
 	get navigationStep() {
 		return this.view === 'week' ? { weeks: 1 } : this.view === 'year' ? { years: 1 } : { months: 1 }
 	}

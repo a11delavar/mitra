@@ -8,6 +8,7 @@ import { applyOrder } from '../../infrastructure/model/order.js'
 import { createLogger } from '../../infrastructure/logging/Logger.js'
 import { Integration, integrationClassFor } from '../Integration.js'
 import { GoogleCalendar } from '../google/GoogleCalendar.js'
+import { importer } from './Importer.js'
 const logger = createLogger('Integrations')
 
 export const integrationsRouter = Router()
@@ -31,7 +32,7 @@ integrationsRouter.put('/order', async (req, res) => {
 	}
 	applyOrder(integrations, ids)
 	await em.flush()
-	syncEmitter.emit('updated', req.user.id)
+	syncEmitter.emit('updated', req.user.id, 'sources')
 	logger.debug(`Reordered ${ids.length} integration(s)`)
 	return res.status(204).end()
 })
@@ -89,7 +90,7 @@ integrationsRouter.get('/google/callback', async (req, res) => {
 		await em.flush()
 	}).catch(error =>
 		logger.warn(`Connected ${integration.toString()}, but calendar discovery failed: ${error instanceof Error ? error.message : error}`))
-	syncEmitter.emit('updated', req.user.id)
+	syncEmitter.emit('updated', req.user.id, 'sources')
 	logger.info(`Connected ${integration.toString()}`)
 	return res.redirect(`/?integration=${integration.id}`)
 })
@@ -108,21 +109,26 @@ integrationsRouter.post('/', async (req, res) => {
 	const em = orm.em.fork()
 	const integration: Integration = new (integrationClassFor(incoming.type))({ userId: req.user.id })
 	em.persist(integration)
-	await integration.applyAndSync(em, incoming)
-	syncEmitter.emit('updated', req.user.id)
-	const saved = await em.findOneOrFail(Integration, { id: integration.id }, { populate: ['sources'] })
+	await integration.apply(em, incoming)
+	syncEmitter.emit('updated', req.user.id, 'sources')
+	// Fork fresh context to populate newly created sources collection.
+	const saved = await em.fork().findOneOrFail(Integration, { id: integration.id }, { populate: ['sources'] })
 	const enabled = saved.sources.getItems().filter(source => source.enabled).length
 	logger.info(`Connected ${integration.type} integration with ${enabled} source(s) enabled`)
+	void importer.start(em, req.user.id, integration.id)
 	return res.status(201).json(saved)
 })
 
 integrationsRouter.put('/:id', async (req, res) => {
 	const em = orm.em.fork()
 	const integration = await req.user.integration(em, req.params.id)
-	await integration.applyAndSync(em, req.body as Integration)
-	syncEmitter.emit('updated', req.user.id)
+	await integration.apply(em, req.body as Integration)
+	syncEmitter.emit('updated', req.user.id, 'sources')
 	logger.debug(`Updated integration ${integration.id}`)
-	return res.json(await em.findOneOrFail(Integration, { id: integration.id }, { populate: ['sources'] }))
+	// Fork fresh context to populate newly created sources collection.
+	const saved = await em.fork().findOneOrFail(Integration, { id: integration.id }, { populate: ['sources'] })
+	void importer.start(em, req.user.id, integration.id)
+	return res.json(saved)
 })
 
 integrationsRouter.post('/:id/reimport', async (req, res) => {
@@ -132,10 +138,10 @@ integrationsRouter.post('/:id/reimport', async (req, res) => {
 	for (const source of sources) {
 		await integration.reimportSource(em, source)
 	}
-	await em.flush()
-	syncEmitter.emit('updated', req.user.id)
-	logger.info(`Re-imported integration ${integration.id} (${sources.length} source(s))`)
-	return res.status(204).end()
+	syncEmitter.emit('updated', req.user.id, 'sources')
+	void importer.start(em, req.user.id, integration.id)
+	logger.info(`Re-importing integration ${integration.id} (${sources.length} source(s))`)
+	return res.status(202).end()
 })
 
 integrationsRouter.delete('/:id', async (req, res) => {
@@ -143,7 +149,7 @@ integrationsRouter.delete('/:id', async (req, res) => {
 	const integration = await req.user.integration(em, req.params.id)
 	em.remove(integration)
 	await em.flush()
-	syncEmitter.emit('updated', req.user.id)
+	syncEmitter.emit('updated', req.user.id, 'sources')
 	logger.info(`Disconnected integration ${integration.id}`)
 	return res.status(204).end()
 })

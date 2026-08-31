@@ -75,8 +75,9 @@ export class Synchronizer {
 		} else {
 			this.logger.verbose(`Sync cycle complete: ${integrations.length} integration(s), no changes`)
 		}
+		// Scope to sources so clients reconcile source states and clear import spinners.
 		for (const changedUserId of changedUsers) {
-			syncEmitter.emit('updated', changedUserId)
+			syncEmitter.emit('updated', changedUserId, 'sources')
 		}
 	}
 }

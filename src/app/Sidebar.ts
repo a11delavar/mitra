@@ -780,6 +780,9 @@ export class Sidebar extends Component {
 
 	/** Tooltip hint for source default marker. */
 	private defaultHint(source: Source) {
+		if (source.importing) {
+			return t('Importing entries…')
+		}
 		if (!this.isDefault(source)) {
 			return t('Set as the default for new entries')
 		}
@@ -866,7 +869,7 @@ export class Sidebar extends Component {
 									${t('Move down')}
 								</button>
 								<button
-									title=${t('Delete the locally cached entries of every enabled source and import everything again')}
+									title=${t('Read every enabled calendar of this account again from the start')}
 									@click=${(e: Event) => { this.closeMenu(e); reimportIntegration(i.id).catch(() => void 0) }}>
 									<mitra-icon icon="hard-drive-download"></mitra-icon>
 									${t('Re-import entries')}
@@ -1057,7 +1060,7 @@ export class Sidebar extends Component {
 						</button>
 					`}
 					<button
-						title=${t('Delete the locally cached entries and import everything from the source again')}
+						title=${t('Read this calendar again from the start')}
 						@click=${(e: Event) => { this.closeMenu(e); reimportSource(source.id).catch(() => void 0) }}>
 						<mitra-icon icon="hard-drive-download"></mitra-icon>
 						${t('Re-import entries')}

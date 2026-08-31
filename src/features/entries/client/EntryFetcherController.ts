@@ -1,7 +1,7 @@
 import { Controller, eventListener } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { Task } from '@lit/task'
-import { fetchEvents } from '../../../infrastructure/http/Api.js'
+import { fetchEvents, fetchIntegrations } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
 import { Relations } from '../../relations/client/Relations.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
@@ -56,11 +56,14 @@ export class EntryFetcherController extends Controller {
 	private connect() {
 		this.eventSource?.close()
 		this.eventSource = new EventSource('/api/events', { withCredentials: true })
-		this.eventSource.onmessage = event => {
+		this.eventSource.onmessage = async event => {
 			this.lastContact = Date.now()
-			if (event.data === 'updated') {
-				void this.task.run()
+			// Sources change triggers full integration refresh to sync import states, renames, and colors.
+			if (event.data === 'sources') {
+				await fetchIntegrations().catch(() => undefined)
+				this.host.sourcesRefreshed()
 			}
+			void this.task.run()
 		}
 	}
 
