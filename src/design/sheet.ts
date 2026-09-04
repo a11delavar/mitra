@@ -1,7 +1,16 @@
-import { css } from '@a11d/lit'
+import { Controller, css, unsafeCSS, type ReactiveControllerHost } from '@a11d/lit'
+import { MediaQueryController } from '@3mo/media-query-observer'
+import { SwipeabilityController } from '@3mo/swipeability'
+
+/** Width below which an anchored popover is presented at the block-end edge as a sheet instead. */
+const sheetQuery = '(width < 40rem)'
+
+const duration = 250
 
 /**
- * Bottom-sheet styling and gesture controller for popovers.
+ * Bottom-sheet presentation of an anchored popover: below the breakpoint it covers the viewport and
+ * its single child rests against the block-end edge. No "touch-action" is declared on purpose -
+ * claiming the axis would leave the content unable to scroll.
  */
 export const sheetStyles = css`
 	/* Pinned viewport-covering fallback when anchor placement overflows. */
@@ -17,139 +26,178 @@ export const sheetStyles = css`
 	}
 
 	[popover][data-sheet] {
-		container-type: anchored;
-		overflow-x: hidden;
-		overflow-y: auto;
-		scroll-snap-type: block mandatory;
-		scrollbar-width: none;
-		overscroll-behavior: none;
-
+		/* Named by the host as a custom property rather than as "position-anchor" itself, so that the
+		   sheet below can decline the anchor - an inline style could not be overridden. */
+		position-anchor: var(--mitra-sheet-anchor, none);
+		overflow: clip;
+		background: none;
 		border-start-start-radius: var(--sheet-frame-radius, 0);
 		border-start-end-radius: var(--sheet-frame-radius, 0);
 		box-shadow: var(--sheet-frame-shadow, none);
-
-		@media (prefers-reduced-motion: no-preference) {
-			scroll-behavior: smooth;
-		}
-
-		background: none;
-		scroll-timeline-name: --mitra-sheet-track;
-		scroll-timeline-axis: block;
 	}
 
-	@keyframes mitra-sheet-dim {
-		from { opacity: 0 }
-		to { opacity: 1 }
-	}
+	@media ${unsafeCSS(sheetQuery)} {
+		[popover][data-sheet] {
+			/* Off the anchor entirely: while it is placed in the anchor's area, "inset" fills that
+			   area rather than the viewport - a half-width panel with a gap beneath it. */
+			position-anchor: none;
+			position-area: none;
+			position-visibility: always;
+			position-try-fallbacks: none;
 
-	@container anchored(fallback: --sheet) {
-		/* Viewport-fixed dimmer animating opacity driven by sheet scroll timeline. */
-		[popover][data-sheet]::after {
-			content: '';
 			position: fixed;
 			inset: 0;
-			z-index: -1;
-			pointer-events: none;
-			background: rgb(0 0 0 / 0.32);
-
-			animation: mitra-sheet-dim linear both;
-			animation-timeline: --mitra-sheet-track;
-		}
-
-		/* 100dvb spacer serving as the closed snap position above sheet content. */
-		[popover][data-sheet]::before {
-			content: '';
-			display: block;
-			flex: none;
-			block-size: 100dvb;
-			scroll-snap-align: start;
-		}
-
-		/* Sheet content panel resting at open snap position. */
-		[popover][data-sheet] > * {
-			flex: none;
-			box-sizing: border-box;
-			inline-size: 100%;
-			max-inline-size: 30rem;
-			max-block-size: calc(100dvb - 2.5rem);
-			overflow-y: auto;
-			scroll-snap-align: end;
 			margin: 0;
-			margin-inline: auto;
-			border: none;
-			border-block-start: var(--border);
-			border-radius: 0;
-			border-start-start-radius: 1.25rem;
-			border-start-end-radius: 1.25rem;
-			box-shadow: 0 -12px 48px rgb(0 0 0 / 0.3);
-		}
+			inline-size: auto;
+			block-size: auto;
+			max-inline-size: none;
+			max-block-size: none;
+			justify-content: flex-end;
+			border-start-start-radius: 0;
+			border-start-end-radius: 0;
+			box-shadow: none;
 
-		/* Grab handle bar on sheet top edge. */
-		[popover][data-sheet] > *::before {
-			content: '';
-			inline-size: 2.25rem;
-			block-size: 0.25rem;
-			border-radius: 0.125rem;
-			margin-block: 0.375rem 0;
-			margin-inline: auto;
-			background: color-mix(in srgb, var(--color-text) 25%, transparent);
+			&::after {
+				content: '';
+				position: fixed;
+				inset: 0;
+				z-index: -1;
+				pointer-events: none;
+				background: rgb(0 0 0 / 0.32);
+				opacity: var(--mitra-sheet-progress, 1);
+				transition: opacity ${duration}ms cubic-bezier(0.2, 0, 0, 1);
+
+				@starting-style {
+					opacity: 0;
+				}
+			}
+
+			> * {
+				flex: none;
+				box-sizing: border-box;
+				inline-size: 100%;
+				max-inline-size: 30rem;
+				max-block-size: calc(100dvb - 2.5rem);
+				margin: 0;
+				margin-inline: auto;
+				border: none;
+				border-block-start: var(--border);
+				border-radius: 0;
+				border-start-start-radius: 1.25rem;
+				border-start-end-radius: 1.25rem;
+				box-shadow: 0 -12px 48px rgb(0 0 0 / 0.3);
+				padding-block-end: env(safe-area-inset-bottom);
+				translate: 0 var(--mitra-sheet-offset, 0px);
+				transition: translate ${duration}ms cubic-bezier(0.2, 0, 0, 1);
+
+				/* Comes in from beneath the edge. Declared last, as a starting style must be. */
+				@starting-style {
+					translate: 0 100%;
+				}
+			}
+
+			/* Grab handle bar on sheet top edge. */
+			> *::before {
+				content: '';
+				inline-size: 2.25rem;
+				block-size: 0.25rem;
+				border-radius: 0.125rem;
+				margin-block: 0.375rem 0;
+				margin-inline: auto;
+				background: color-mix(in srgb, var(--color-text) 25%, transparent);
+			}
+
+			&[data-swiping] {
+				> *, &::after {
+					transition: none;
+				}
+			}
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		[popover][data-sheet] {
+			> *, &::after {
+				transition: none;
+			}
 		}
 	}
 `
 
-/**
- * Slide a sheet down to closed snap offset before hiding. Returns false if not an open sheet.
- */
-export function closeSheet(popover: HTMLElement) {
-	if (!popover.matches('[popover][data-sheet]:popover-open') || popover.scrollHeight - popover.clientHeight <= 2) {
-		return false
+type SheetHost = ReactiveControllerHost & HTMLElement
+
+/** Presents its host popover as a sheet below {@link sheetQuery} and lets it be swiped away. */
+export class SheetController extends Controller {
+	readonly media: MediaQueryController
+	readonly swipeability: SwipeabilityController
+
+	constructor(protected override readonly host: SheetHost) {
+		super(host)
+		const controller = this
+		this.media = new MediaQueryController(host, sheetQuery)
+		this.swipeability = new SwipeabilityController(host, {
+			axis: 'block',
+			direction: 'end',
+			get surface() { return controller.sheet },
+			get detents() { return [0, controller.travel] },
+			// It only ever rests open: dismissing hides the popover outright.
+			detent: 0,
+			get disabled() { return !controller.presented },
+			handleSwipeStart: () => host.toggleAttribute('data-swiping', true),
+			handleSwipe: offset => controller.place(offset),
+			handleSwipeEnd: detent => {
+				host.toggleAttribute('data-swiping', false)
+				if (detent > 0) {
+					void controller.close()
+				} else {
+					controller.place(0)
+				}
+			},
+		})
 	}
-	popover.scrollTop = 0
-	return true
-}
 
-/** Initialize delegated sheet lifecycle and gesture event listeners. */
-export function initializeSheetGestures() {
-	// Scroll to open snap position on open.
-	document.addEventListener('toggle', (e: Event) => {
-		const popover = e.target
-		if (popover instanceof HTMLElement && popover.matches('[popover][data-sheet]') && (e as ToggleEvent).newState === 'open') {
-			popover.scrollTop = popover.scrollHeight
-		}
-	}, { capture: true })
+	get presented() {
+		return this.media.matches && this.host.matches(':popover-open')
+	}
 
-	// Dismiss popover when scrolling settles at top closed spacer position.
-	document.addEventListener('scrollend', e => {
-		const popover = e.target
-		if (popover instanceof HTMLElement && popover.matches('[popover][data-sheet]:popover-open')
-			&& popover.scrollHeight - popover.clientHeight > 2 && popover.scrollTop < 2) {
-			popover.hidePopover()
-		}
-	}, { capture: true })
+	private get sheet() {
+		return this.host.querySelector<HTMLElement>(':scope > *') ?? undefined
+	}
 
-	// Tap on track/dim backdrop dismisses sheet.
-	let pressedTrack: HTMLElement | undefined
-	document.addEventListener('pointerdown', e => {
-		pressedTrack = e.target instanceof HTMLElement && e.target.matches('[popover][data-sheet]:popover-open') ? e.target : undefined
-	}, { capture: true })
+	private get travel() {
+		return this.sheet?.offsetHeight ?? 0
+	}
 
-	document.addEventListener('click', e => {
-		const popover = pressedTrack
-		pressedTrack = undefined
-		if (popover && e.target === popover && popover.matches('[popover][data-sheet]:popover-open')
-			&& popover.scrollHeight - popover.clientHeight > 2) {
-			closeSheet(popover)
-		}
-	}, { capture: true })
-
-	// Escape key slides sheet down.
-	document.addEventListener('keydown', e => {
-		if (e.key !== 'Escape' || e.defaultPrevented) {
+	override hostConnected() {
+		if (!this.media.matches) {
 			return
 		}
-		const sheet = [...document.querySelectorAll<HTMLElement>('[popover][data-sheet]:popover-open')].at(-1)
-		if (sheet && closeSheet(sheet)) {
-			e.preventDefault()
+		// The tap which opens the sheet must not also land on whatever the sheet brings under the
+		// finger: a touch is followed by a compatibility click once the sheet is already there.
+		this.host.style.pointerEvents = 'none'
+		setTimeout(() => this.host.style.removeProperty('pointer-events'), duration + 100)
+	}
+
+	override hostDisconnected() {
+		this.swipeability.abandon()
+	}
+
+	/** Slides the sheet away before hiding the popover. False when it is not presented as a sheet. */
+	async close() {
+		if (!this.presented) {
+			return false
 		}
-	}, { capture: true })
+		this.place(this.travel)
+		await new Promise(resolve => setTimeout(resolve, duration))
+		if (this.host.matches(':popover-open')) {
+			this.host.hidePopover()
+		}
+		return true
+	}
+
+	private place(offset: number) {
+		const travel = this.travel
+		this.host.style.setProperty('--mitra-sheet-offset', `${offset}px`)
+		this.host.style.setProperty('--mitra-sheet-progress', `${travel ? 1 - offset / travel : 1}`)
+	}
 }

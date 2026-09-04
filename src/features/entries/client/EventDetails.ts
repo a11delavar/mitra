@@ -7,7 +7,7 @@ import { getIntegrations, getSource, getCapabilities, getExternalLink } from '..
 import { EntryStore, reportSaveError } from './EntryStore.js'
 import * as Hierarchy from '../../relations/client/Hierarchy.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
-import { closeSheet } from '../../../design/sheet.js'
+import { SheetController } from '../../../design/sheet.js'
 import { EntryDetailsSharing } from './EntryDetailsSharing.js'
 
 @component('mitra-entry-details')
@@ -44,6 +44,8 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	protected override createRenderRoot() { return this }
+
+	readonly sheetController = new SheetController(this)
 
 	@query('.title') private readonly titleInput?: HTMLInputElement
 	@query('.description textarea') private readonly descriptionTextarea?: HTMLTextAreaElement
@@ -114,9 +116,9 @@ export class EntryDetailsComponent extends Component {
 		void this.handleDelete(EntryDetailsComponent.bypassesScope(e))
 	}
 
-	private readonly handleClose = (e: Event) => {
+	private readonly handleClose = async (e: Event) => {
 		e.stopPropagation()
-		if (!closeSheet(this)) {
+		if (!await this.sheetController.close()) {
 			this.hidePopover()
 		}
 	}

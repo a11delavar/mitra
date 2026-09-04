@@ -31,7 +31,7 @@ import { fieldStyles } from '../design/field.css.js'
 import { focusRingStyles } from '../design/focusRing.css.js'
 import { kbdStyles } from '../design/kbd.css.js'
 import { menuStyles } from '../design/menu.css.js'
-import { sheetStyles, initializeSheetGestures } from '../design/sheet.js'
+import { sheetStyles } from '../design/sheet.js'
 import { Choices, Choice } from '../design/Choices.js'
 import { windowDragStyles } from '../design/windowDrag.css.js'
 import { TaskStatusComponent } from '../features/entries/client/TaskStatus.js'
@@ -75,7 +75,6 @@ export class Mitra extends Application {
 	}
 
 	protected override async initialized() {
-		initializeSheetGestures()
 		Mitra.trackFocusModality()
 		const pendingIntegrationId = Mitra.consumePendingIntegrationParameter()
 		await Promise.all([fetchIntegrations(), fetchUser(), fetchMeta()])

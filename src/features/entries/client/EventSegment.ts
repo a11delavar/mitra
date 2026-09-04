@@ -508,7 +508,7 @@ export class EntrySegmentComponent extends Component {
 	private get detailsTemplate() {
 		return !this.open ? html.nothing : html`
 			<mitra-entry-details popover data-sheet ?open=${bind(this, 'open')}
-				style="position-anchor: ${this.anchorName}"
+				style="--mitra-sheet-anchor: ${this.anchorName}"
 				.segment=${this.segment}
 				@click=${(e: Event) => e.stopPropagation()}
 			></mitra-entry-details>
