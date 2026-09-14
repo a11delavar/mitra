@@ -229,6 +229,15 @@
   - Sticky `.jump` buttons on viewport edges when task bar scrolls out of view.
   - Zoom via `TimelineDensityController`.
 
+## Routing & URL State
+- **One Route** (`PageCalendar`, `@route('/:view', '/')`): View is the path (`/week`), active overlays and filters are query parameters (`?date=`, `?selected=`, `?settings=`). Canonicalizes `/` to `/{defaultView}`. Unrecognized parameters fallback gracefully.
+- **`CalendarLocation`** (`src/features/calendar/client/CalendarLocation.ts`): Value object parsing and serializing URL navigation state. Initialized on page boot so initial render and fetch match restored view and date. Today is omitted to prevent link date pinning.
+- **Single Writer, Derive Don't Mirror**: `PageCalendar` is the sole URL writer — it overrides `get url()` to derive from live state and never assigns `parameters`; an inbound `parameters` change is purely the router's arrival signal, handled by an idempotent `restore()`. Components publish state the page reads (`EntryEditorIntent.target`, `SettingsParameters.pageChange`).
+- **Replace, Never Push**: All writes funnel through the `updateUrl()` override (the framework's own `parameters` hook lands there too) into `UrlSyncController` (`src/infrastructure/routing/`), which owns the timing policy: `history.replaceState`, 100ms trailing debounce, flushed on `pagehide`/`visibilitychange`. Its host is typed `PageCalendar` (as `EntryFetcherController`'s is), so it reads `host.url` and self-schedules from `hostUpdated()` — no callbacks, no generics, nothing for the page to call. A write is skipped outright when the URL has not moved, so an unrelated re-render (an entry saved, a drag frame) neither writes nor postpones a write already due. Pushing would bury the arrival page under an entry per scroll flick, and the framework's `setUrl` wraps pushes in a document-level view transition that fights `transitionCalendar`. Collapses to a declared `historyStrategy` once @a11d/lit-application ships one (drafted upstream).
+- **Device Preferences**: Zoom, sidebar open state/tab, connectors, and timezone folding live in `localStorage`, excluded from shared URLs.
+- **Stale Targets**: `?selected=` restores via `EntryEditorIntent.requestOpen`. Unmatched intents settle and clear from the URL on next write.
+- **SPA Fallback**: The server catch-all must stay `res.sendFile('index.html', { root })` — without `root`, send dotfile-checks every segment of the absolute path and 404s deep links whenever the checkout lives under a dotted directory (e.g. a `.claude` worktree).
+
 ## View Transitions
 - **Engine**: `src/features/calendar/client/calendarTransition.ts` (`transitionCalendar`).
 - **Scope**: Scoped `element.startViewTransition` on `.calendar` container (Chromium 147+). Used for view navigation and source visibility changes only (not background SSE).
@@ -268,7 +277,8 @@
   - Searchable two-pane dialog (pages: `general`, `calendar`, `entries`, `notifications`, `administration`).
   - Native standalone controls; active palette focus marked with focus ring (`ring` from `focusRing.css.ts`, color declared locally). Search groups match sidebar section styling (0.75rem/600 muted).
   - Scroll containers require explicit inline padding to prevent clipping focus rings at padding boxes.
-  - Entry points: sidebar footer (account gear in multi-user mode), command palette, and `Ctrl/⌘+,` chord (handled via window listener on `Sidebar`, documented in shortcut sheet).
+  - Entry points: Sidebar footer, command palette, and `Ctrl/⌘+,` chord routed through `PageCalendar.openSettings()` to sync active page to URL.
+  - `SettingsParameters` accepts `page` (validated via `DialogSettings.pageOf`) and `pageChange` callback.
 
 ## Recurrence & Routines (RFC 5545)
 - **Recurrence Model**:

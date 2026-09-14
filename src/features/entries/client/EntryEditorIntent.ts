@@ -2,11 +2,19 @@ import { type Entry } from '../Entry.js'
 import { EntryStore } from './EntryStore.js'
 
 /**
- * Tracks pending intent to open an entry editor across view navigation and refetches.
+ * Which entry the editor is on: the one open right now, and the one it has been asked to open across
+ * view navigation and refetches. Display lenses keep what it {@link holds} rendered, and the calendar
+ * page mirrors its {@link target} into the URL.
  */
 export class EntryEditorIntent {
 	private static pending?: Entry | string
 	private static editing?: Entry
+
+	/** The open entry as an id, or the requested one until it renders. A draft has none and is
+	 * deliberately absent: an unsaved entry is nothing to link back to. */
+	static get target() {
+		return this.editing?.id ?? (typeof this.pending === 'string' ? this.pending : undefined)
+	}
 
 	/** Request opening the editor for a draft entry. */
 	static openDraft(draft: Entry) {
@@ -55,6 +63,7 @@ export class EntryEditorIntent {
 	static settle(entries: ReadonlyArray<Entry>) {
 		if (typeof this.pending === 'string' && !entries.some(entry => this.shouldOpen(entry))) {
 			this.pending = undefined
+			EntryStore.notify()
 		}
 	}
 

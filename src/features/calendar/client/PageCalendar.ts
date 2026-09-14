@@ -1,4 +1,4 @@
-import { component, html, state, css, eventListener, bind, query, queryAll, choose } from '@a11d/lit'
+import { component, html, state, css, eventListener, bind, query, queryAll, choose, type PropertyValues } from '@a11d/lit'
 import { PageComponent, route } from '@a11d/lit-application'
 import { DateTime } from '@3mo/date-time'
 import { MediaQueryController } from '@3mo/media-query-observer'
@@ -9,17 +9,29 @@ import { EntryFetcherController } from '../../entries/client/EntryFetcherControl
 import { CommandPalette } from '../../commands/client/CommandPalette.js'
 import { commandInstances, sourceCommands, settingCommands } from '../../../app/commands.js'
 import { type CalendarView } from '../CalendarView.js'
+import { CalendarLocation, type CalendarParameters } from './CalendarLocation.js'
 import { DefaultViewSetting } from './DefaultViewSetting.js'
+import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
+import { DialogSettings, type SettingsParameters } from '../../settings/client/DialogSettings.js'
+import { type SettingsPageId } from '../../settings/client/Setting.js'
+import { UrlSyncController } from '../../../infrastructure/routing/UrlSyncController.js'
 import type { Sidebar } from '../../../app/Sidebar.js'
 import { windowDragHandle } from '../../../design/windowDrag.css.js'
 
+// The view is the path (`/week`), everything open on top of it is a query parameter. `/` stays a valid
+// entry point — the PWA start URL and the OAuth redirect both land there — and canonicalizes on arrival.
 @component('mitra-page-calendar')
-@route('/')
-export class PageCalendar extends PageComponent {
+@route('/:view', '/')
+export class PageCalendar extends PageComponent<CalendarParameters> {
 	private static readonly customizableSelectsSupported = CSS.supports('appearance', 'base-select')
 
-	@state() navigatingDate = new DateTime()
-	@state() view: CalendarView = DefaultViewSetting.current
+	private static get opened() {
+		return CalendarLocation.of(globalThis.location, DefaultViewSetting.current)
+	}
+
+	@state() navigatingDate = PageCalendar.opened.date
+	@state() view: CalendarView = PageCalendar.opened.view
+	@state() private settingsPage?: SettingsPageId
 	@state() sidebarOpen = PageCalendar.preferredSidebarOpen
 
 	readonly mediaController = new MediaQueryController(this, '(min-width: 800px)', () => this.sidebarOpen = PageCalendar.preferredSidebarOpen)
@@ -52,6 +64,57 @@ export class PageCalendar extends PageComponent {
 			await this.updateComplete
 			await Promise.all(this.eventSegments.map(e => e.updateComplete))
 		})
+	}
+
+	private get location() {
+		return new CalendarLocation(this.view, this.navigatingDate, EntryEditorIntent.target, this.settingsPage)
+	}
+
+	/** The URL derives from live state; `parameters` is never written back — it is only the router's
+	 * message that a navigation arrived — so there is no bag to keep mirrored. */
+	override get url() {
+		return this.location.url()
+	}
+
+	private readonly urlSync = new UrlSyncController(this)
+
+	/** The framework's own parameter hook lands here too, so this is the single funnel for URL writes.
+	 * Replacing rather than pushing is the point: scrolling re-anchors the day continuously, and an
+	 * entry per flick would bury the page the user arrived from. Collapses to a declared
+	 * `historyStrategy` once @a11d/lit-application ships one. */
+	protected override updateUrl() {
+		this.urlSync.schedule()
+	}
+
+	protected override updated(props: PropertyValues) {
+		super.updated(props)
+		if (props.has('parameters')) {
+			this.restore(CalendarLocation.from(this.parameters, DefaultViewSetting.current))
+		}
+	}
+
+	/** Restores navigation and modal state from arriving URL parameters, on load or history navigation.
+	 * Everything it sets is guarded, so the router re-delivering the current URL is a no-op. */
+	private restore(location: CalendarLocation) {
+		this.view = location.view
+		if (!this.navigatingDate.dayStart.equals(location.date.dayStart)) {
+			this.navigatingDate = location.date
+		}
+		if (location.selected && location.selected !== EntryEditorIntent.target) {
+			EntryEditorIntent.requestOpen(location.selected)
+		}
+		if (location.settings && !this.settingsPage) {
+			void this.openSettings({ page: location.settings }).catch(() => undefined)
+		}
+	}
+
+	/** Opens settings dialog and mirrors active settings page to URL. */
+	async openSettings(parameters: SettingsParameters = {}) {
+		try {
+			return await new DialogSettings({ ...parameters, pageChange: v => this.settingsPage = v }).confirm()
+		} finally {
+			this.settingsPage = undefined
+		}
 	}
 
 	readonly fetcher = new EntryFetcherController(this)
@@ -316,6 +379,7 @@ export class PageCalendar extends PageComponent {
 			<lit-page>
 				<mitra-sidebar ?open=${bind(this, 'sidebarOpen')} @sourcesChange=${this.sourcesChanged}
 					@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
+					@settingsClick=${() => void this.openSettings().catch(() => undefined)}
 				></mitra-sidebar>
 				<main>
 					<header>

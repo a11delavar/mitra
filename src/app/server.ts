@@ -83,7 +83,7 @@ app.use('/api/push', pushRouter)
 const frontendDistPath = path.resolve(import.meta.dirname, '../../dist')
 app.use(precompressed(frontendDistPath))
 app.use(express.static(frontendDistPath))
-// Use root option to ensure Express 5 send can resolve Windows drive letters on deep links.
+// The SPA fallback: any non-API path serves the shell, so deep links (/week?date=…) survive a reload.
 app.get(/(.*)/, (_, res) => res.sendFile('index.html', { root: frontendDistPath }))
 
 /** Extracts HTTP error status (400-599) from Error object when present. */

@@ -115,4 +115,38 @@ describe('EntryEditorIntent', () => {
 			assert.equal(EntryEditorIntent.holds(second), true)
 		})
 	})
+
+	describe('the target the URL carries', () => {
+		it('is nothing until an editor is asked for', () => {
+			assert.equal(EntryEditorIntent.target, undefined)
+		})
+
+		it('names the requested entry before it renders, and the open one after', () => {
+			EntryEditorIntent.requestOpen('a')
+			assert.equal(EntryEditorIntent.target, 'a')
+			EntryEditorIntent.setEditing(entry(), true)
+			EntryEditorIntent.consume()
+			assert.equal(EntryEditorIntent.target, 'a')
+		})
+
+		it('lets go when the editor closes, so the URL stops naming it', () => {
+			EntryEditorIntent.setEditing(entry(), true)
+			EntryEditorIntent.setEditing(entry(), false)
+			assert.equal(EntryEditorIntent.target, undefined)
+		})
+
+		it('drops a request no fetch could match, so a dead link heals itself', () => {
+			EntryEditorIntent.requestOpen('a')
+			EntryEditorIntent.settle([entry({ id: 'b' })])
+			assert.equal(EntryEditorIntent.target, undefined)
+		})
+
+		it('names no draft, since an unsaved entry is nothing to link back to', () => {
+			const draft = entry({ id: undefined })
+			EntryEditorIntent.openDraft(draft)
+			EntryEditorIntent.setEditing(draft, true)
+			assert.equal(EntryEditorIntent.holds(draft), true)
+			assert.equal(EntryEditorIntent.target, undefined)
+		})
+	})
 })

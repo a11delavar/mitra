@@ -1,5 +1,4 @@
 import { command, Command } from '../../commands/Command.js'
-import { DialogSettings } from './DialogSettings.js'
 import { settings, settingsPage, type Setting, type SettingVerb } from './Setting.js'
 
 @command()
@@ -9,7 +8,7 @@ export class OpenSettings extends Command {
 	keywords = t('OpenSettings.Keywords')
 	group = undefined
 	keys = []
-	execute() { return new DialogSettings({}).confirm() }
+	execute() { return this.calendar.openSettings() }
 }
 
 // Settings palette commands are derived dynamically based on current values and applicable options.
@@ -45,7 +44,7 @@ class RevealSetting extends Command {
 
 	override get listedWithoutQuery() { return false }
 
-	override execute() { return new DialogSettings({ focus: this.setting }).confirm() }
+	override execute() { return this.calendar.openSettings({ focus: this.setting }) }
 }
 
 /** Builds command palette actions for all applicable settings. */

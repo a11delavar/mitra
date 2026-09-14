@@ -1,7 +1,6 @@
 import { Component, component, html, css, property, state, event, eventListener, unsafeCSS } from '@a11d/lit'
 import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, getPrimarySource, setDefaultSource, reimportSource, reimportIntegration, reorderSources, reorderIntegrations, getEnabledSources, getVisibleSources, soloSource, restoreSourceVisibility, canRestoreSourceVisibility, canCopyEntriesOut, canMoveEntriesOut } from '../infrastructure/http/Api.js'
 import { DialogAbout, hasUnseenChanges } from '../features/about/client/DialogAbout.js'
-import { DialogSettings } from '../features/settings/client/DialogSettings.js'
 import { DialogIntegration } from '../integrations/client/DialogIntegration.js'
 import { DialogSourceMigration } from '../features/migration/client/DialogSourceMigration.js'
 import { type Source } from '../features/sources/Source.js'
@@ -17,6 +16,8 @@ import { canInstall, promptInstall, onInstallAvailabilityChange } from './pwa.js
 export class Sidebar extends Component {
 	@event() readonly openChange!: EventDispatcher<boolean>
 	@event() readonly sourcesChange!: EventDispatcher
+	/** The calendar page owns opening it, so the URL can carry the page it lands on. */
+	@event({ bubbles: true, composed: true }) readonly settingsClick!: EventDispatcher
 	@property({ type: Boolean, reflect: true }) open = false
 
 	@state() private tab: 'calendars' | 'planning' = (localStorage.getItem('Mitra.SidebarTab') as 'planning' | null) ?? 'calendars'
@@ -939,7 +940,7 @@ export class Sidebar extends Component {
 				</mitra-tabs>
 				<div class="footer">
 					${getUser()?.identity ? html.nothing : html`
-						<button class="action" title=${t('Settings')} @click=${Sidebar.openSettings}>
+						<button class="action" title=${t('Settings')} @click=${() => this.settingsClick.dispatch()}>
 							<mitra-icon icon="settings"></mitra-icon>
 							${t('Settings')}
 						</button>
@@ -958,13 +959,11 @@ export class Sidebar extends Component {
 		`
 	}
 
-	private static readonly openSettings = () => void new DialogSettings({}).confirm().catch(() => undefined)
-
 	@eventListener({ target: window, type: 'keydown' })
 	protected handleSettingsHotkey(e: KeyboardEvent) {
 		if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key === ',' && !document.querySelector('mitra-dialog-settings')) {
 			e.preventDefault()
-			Sidebar.openSettings()
+			this.settingsClick.dispatch()
 		}
 	}
 
@@ -986,7 +985,6 @@ export class Sidebar extends Component {
 					<div class="name">${identity.name || identity.email || t('Account')}</div>
 					${!identity.email || identity.email === identity.name ? html.nothing : html`<div class="email">${identity.email}</div>`}
 				</div>
-				<mitra-icon-button icon="settings" label=${t('Settings')} @click=${Sidebar.openSettings}></mitra-icon-button>
 				<span class="actions">
 					<mitra-icon-button icon="more-horizontal" label=${t('Account options')}
 						style="anchor-name: --account-menu" @click=${this.toggleMenu}></mitra-icon-button>
@@ -997,6 +995,7 @@ export class Sidebar extends Component {
 						</button>
 					</menu>
 				</span>
+				<mitra-icon-button icon="settings" label=${t('Settings')} @click=${() => this.settingsClick.dispatch()}></mitra-icon-button>
 			</div>
 		`
 	}

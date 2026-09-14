@@ -9,6 +9,10 @@ import { type SettingRow } from './SettingRow.js'
 export interface SettingsParameters {
 	/** Open on a specific setting row (e.g. from palette). */
 	readonly focus?: Setting<unknown>
+	/** Open on a named page ID. */
+	readonly page?: string
+	/** Callback when active settings page changes. */
+	readonly pageChange?: (page: SettingsPageId) => void
 }
 
 /** Settings dialog with page navigation rail and unified search across pages and setting keys. */
@@ -26,18 +30,25 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 	/** Local storage key for persisting active page across dialog openings. */
 	private static readonly lastPageKey = 'Mitra.Settings.Page'
 
-	private static get lastPage() {
+	static get lastPage(): SettingsPageId {
 		const stored = localStorage.getItem(DialogSettings.lastPageKey) as SettingsPageId | null
 		return stored && settingsPages.includes(stored) ? stored : 'general'
+	}
+
+	/** Validates and resolves setting page ID from string. */
+	static pageOf(value: string | undefined) {
+		return settingsPages.find(page => page === value)
 	}
 
 	protected override createRenderRoot() { return this }
 
 	protected override connected() {
-		if (this.parameters.focus) {
-			this.page = this.parameters.focus.page
+		const page = this.parameters.focus?.page ?? DialogSettings.pageOf(this.parameters.page)
+		if (page) {
+			this.page = page
 			this.drilled = true
 		}
+		this.parameters.pageChange?.(this.page)
 	}
 
 	protected override firstUpdated(props: PropertyValues) {
@@ -49,6 +60,7 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 		this.page = page
 		this.drilled = true
 		localStorage.setItem(DialogSettings.lastPageKey, page)
+		this.parameters.pageChange?.(page)
 	}
 
 	private get available() {
