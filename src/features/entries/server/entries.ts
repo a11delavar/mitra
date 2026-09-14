@@ -13,6 +13,7 @@ import { EntryRelation } from '../../relations/EntryRelation.js'
 import { Entry, FLOATING_TIME_ZONE, Transparency } from '../Entry.js'
 import { normalizeAllDay, projectAllDay } from '../../time/calendarDate.js'
 import { editOccurrence, deleteOccurrence, expandedOccurrences } from '../../recurrence/server/occurrences.js'
+import { entryWindow } from './entryWindow.js'
 import { assertRelationsValid, attachRelations, relationClosure } from '../../relations/server/relations.js'
 
 const logger = createLogger('Entries')
@@ -57,16 +58,7 @@ entriesRouter.get('/', async (req, res) => {
 	const visibleSources = await req.user.sources(em, { enabled: true, hidden: false })
 	const visibleSourceIds = visibleSources.map(source => source.id)
 
-	const rows = await em.find(Entry, {
-		sourceId: { $in: visibleSourceIds },
-		recurrence: { freq: null },
-		$or: [
-			{ start: { $gte: startDate, $lte: endDate } },
-			{ end: { $gte: startDate, $lte: endDate } },
-			{ start: { $lte: startDate }, end: { $gte: endDate } },
-			{ start: null },
-		],
-	})
+	const rows = await em.find(Entry, entryWindow(visibleSourceIds, startDate, endDate))
 
 	const occurrences = await expandedOccurrences(em, visibleSourceIds, startDate, endDate)
 

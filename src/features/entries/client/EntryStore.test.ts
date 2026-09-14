@@ -448,6 +448,17 @@ describe('EntryStore', () => {
 			assert.deepEqual([...EntryStore.entries], [source, ghost])
 			assert.equal(EntryStore.isDragSource(source), true)
 		})
+
+		it('shows nothing pending while an undated entry hovers the unschedule target', () => {
+			const source = entry({ type: EntryType.Task, start: undefined, end: undefined })
+			EntryStore.applyServerEntries([source])
+			EntryStore.setDragging(source)
+			const ghost = new Entry({ ...source.clone(), id: undefined })
+			ghost.unschedule() // also clears reminders, so the two are not edit-equal
+			EntryStore.setPreview(ghost)
+			assert.deepEqual([...EntryStore.entries], [source])
+			assert.equal(EntryStore.isPreview(ghost), false)
+		})
 	})
 
 	describe('recurring series', () => {

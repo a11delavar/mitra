@@ -26,8 +26,10 @@ export class EntryStore extends Controller {
 
 	static persistence = { create: createEvent, update: updateEvent, delete: deleteEvent, editOccurrence, deleteOccurrence }
 
+	/** A drag only ever moves the span, so a ghost occupying the source's is a second copy of it —
+	 * as the unschedule target showed, where both are dateless but `unschedule` also drops reminders. */
 	private static get shownPreview(): Entry | undefined {
-		return this.preview && this.dragging && this.preview.editEquals(this.dragging) ? undefined : this.preview
+		return this.preview && this.dragging && this.preview.spanEquals(this.dragging) ? undefined : this.preview
 	}
 
 	static get entries(): ReadonlyArray<Entry> {
@@ -440,7 +442,16 @@ export class EntryStore extends Controller {
 		}
 	}
 
+	/** Whether this exact preview is the one on screen. */
+	static previewing(entry: Entry) {
+		return this.preview === entry
+	}
+
 	static setPreview(entry: Entry | undefined) {
+		// Re-notifies even for the same instance, which drags mutate in place; nothing to nothing can't.
+		if (this.preview === undefined && entry === undefined) {
+			return
+		}
 		this.preview = entry
 		this.notify()
 	}

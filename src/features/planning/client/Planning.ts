@@ -11,22 +11,35 @@ import { HideDoneTasksSetting } from '../../entries/client/HideDoneTasksSetting.
 import type { EntrySegmentComponent } from '../../entries/client/EventSegment.js'
 
 /**
- * Section displaying unscheduled tasks filtered from EntryStore.
+ * The two lists of tasks awaiting a decision: the ones whose day has passed, and the ones that never
+ * got a day. Neither is bounded by the window the calendar is showing.
  */
-@component('mitra-unscheduled')
-export class Unscheduled extends Component {
+@component('mitra-planning')
+export class Planning extends Component {
 	readonly store = new EntryStore(this)
 
+	/**
+	 * Open tasks whose day has gone by, most overdue first. A drag's ghost belongs to the grid it is
+	 * being dropped on: nothing is dropped into this list, so a preview that happens to be overdue
+	 * too would only read as a second copy of the entry already here.
+	 */
+	static get overdue(): ReadonlyArray<Entry> {
+		return EntryStore.entries
+			.filter(entry => entry.overdue && !EntryStore.previewing(entry))
+			.sort((a, b) => a.lastDay!.valueOf() - b.lastDay!.valueOf())
+	}
+
 	/** Visible unscheduled tasks matching current lens filters. */
-	static get shown(): ReadonlyArray<Entry> {
+	static get unscheduled(): ReadonlyArray<Entry> {
 		return [...HideDoneTasksSetting.filter(EntryStore.entries)]
 			.filter(entry => !entry.scheduled)
-			.sort((a, b) => Number(Unscheduled.finished(a)) - Number(Unscheduled.finished(b))
+			.sort((a, b) => Number(Planning.finished(a)) - Number(Planning.finished(b))
 				|| (a.heading || '').localeCompare(b.heading || ''))
 	}
 
-	private get entries(): ReadonlyArray<Entry> {
-		return Unscheduled.shown
+	/** What the tab badge counts: everything either list is asking the user to decide about. */
+	static get pending() {
+		return Planning.overdue.length + Planning.unscheduled.length
 	}
 
 	private static finished(entry: Entry) {
@@ -38,11 +51,11 @@ export class Unscheduled extends Component {
 	}
 
 	static get canAdd() {
-		return !!Unscheduled.target
+		return !!Planning.target
 	}
 
 	static add() {
-		const source = Unscheduled.target
+		const source = Planning.target
 		if (!source) {
 			return
 		}
@@ -68,13 +81,31 @@ export class Unscheduled extends Component {
 
 	static override get styles() {
 		return css`
-			mitra-unscheduled {
+			mitra-planning {
 				display: flex;
 				flex-direction: column;
 				min-block-size: 0;
-				gap: 0.5rem;
+				gap: 1.25rem;
 
-				> header {
+				/* The backlog never takes the whole column: the list below is also the unschedule
+				   drop target, which has to stay worth aiming at. */
+				> .overdue {
+					flex: 0 1 auto;
+					max-block-size: 50%;
+				}
+
+				> .unscheduled {
+					flex: 1;
+				}
+
+				> section {
+					display: flex;
+					flex-direction: column;
+					min-block-size: 0;
+					gap: 0.5rem;
+				}
+
+				header {
 					display: flex;
 					align-items: center;
 					gap: 0.5rem;
@@ -99,10 +130,7 @@ export class Unscheduled extends Component {
 					}
 				}
 
-				> .entries {
-					list-style: none;
-					margin: 0;
-					padding: 0;
+				.entries {
 					display: flex;
 					flex-direction: column;
 					gap: 0.25rem;
@@ -110,20 +138,29 @@ export class Unscheduled extends Component {
 					flex: 1;
 					min-block-size: 0;
 
-					> li {
+					ul {
+						list-style: none;
+						margin: 0;
+						padding: 0;
+						display: flex;
+						flex-direction: column;
+						gap: 0.25rem;
+					}
+
+					li {
 						flex-shrink: 0;
 						display: flex;
+					}
 
-						> mitra-entry-segment {
-							inline-size: 100%;
-							cursor: grab;
-							padding-block: 0.25rem;
-							container-type: inline-size;
-						}
+					mitra-entry-segment {
+						inline-size: 100%;
+						cursor: grab;
+						padding-block: 0.25rem;
+						container-type: inline-size;
 					}
 				}
 
-				> .empty {
+				.empty {
 					flex: 1;
 					display: flex;
 					flex-direction: column;
@@ -148,32 +185,57 @@ export class Unscheduled extends Component {
 	protected override createRenderRoot() { return this }
 
 	protected override get template() {
-		const entries = this.entries
+		const overdue = Planning.overdue
+		const unscheduled = Planning.unscheduled
+		return html`
+			${!overdue.length ? html.nothing : html`
+				<section class="overdue">
+					${this.headerTemplate(t('Overdue'), overdue.length)}
+					<div class="entries" @pointerdown=${this.handlePointerDown}>
+						<ul>
+							${repeat(overdue, entry => entry.id, entry => html`
+								<li>
+									<mitra-entry-segment dated .segment=${EntrySegments.for(entry)[0]}></mitra-entry-segment>
+								</li>
+							`)}
+						</ul>
+					</div>
+				</section>
+			`}
+			<section class="unscheduled">
+				${this.headerTemplate(t('Unscheduled'), unscheduled.length)}
+				${!unscheduled.length ? html`
+					<div class="empty">
+						<mitra-icon icon="list-todo"></mitra-icon>
+						<span>${t('Tasks without a date land here — drag one onto the calendar to schedule it')}</span>
+					</div>
+				` : html`
+					<div class="entries" @pointerdown=${this.handlePointerDown}>
+						<ul>
+							${repeat(unscheduled, entry => EntrySegments.for(entry)[0]!.id, entry => html`
+								<li>
+									<mitra-entry-segment .segment=${EntrySegments.for(entry)[0]}></mitra-entry-segment>
+								</li>
+							`)}
+						</ul>
+					</div>
+				`}
+			</section>
+		`
+	}
+
+	private headerTemplate(heading: string, count: number) {
 		return html`
 			<header @pointerdown=${(e: Event) => e.stopPropagation()}>
-				<h2>${t('Unscheduled')}</h2>
-				${!entries.length ? html.nothing : html`<span class="count">${entries.length}</span>`}
+				<h2>${heading}</h2>
+				${!count ? html.nothing : html`<span class="count">${count}</span>`}
 			</header>
-			${!entries.length ? html`
-				<div class="empty">
-					<mitra-icon icon="list-todo"></mitra-icon>
-					<span>${t('Tasks without a date land here — drag one onto the calendar to schedule it')}</span>
-				</div>
-			` : html`
-				<ul class="entries" @pointerdown=${this.handlePointerDown}>
-					${repeat(entries, entry => EntrySegments.for(entry)[0]!.id, entry => html`
-						<li>
-							<mitra-entry-segment .segment=${EntrySegments.for(entry)[0]}></mitra-entry-segment>
-						</li>
-					`)}
-				</ul>
-			`}
 		`
 	}
 }
 
 declare global {
 	interface HTMLElementTagNameMap {
-		'mitra-unscheduled': Unscheduled
+		'mitra-planning': Planning
 	}
 }

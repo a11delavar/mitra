@@ -8,12 +8,13 @@ import { Integration } from '../../../integrations/Integration.js'
 import { Identity } from '../../identity/Identity.js'
 import { GoogleCalendar } from '../../../integrations/google/GoogleCalendar.js'
 import { EntryType } from '../EntryType.js'
-import { Entry } from '../Entry.js'
+import { Entry, TaskStatus } from '../Entry.js'
 import { CalDAV } from '../../../integrations/caldav/CalDAV.js'
 import { AppleCalendar } from '../../../integrations/apple/AppleCalendar.js'
 import { Dev } from '../../../integrations/dev/Dev.js'
 import { NotificationSubscription } from '../../reminders/NotificationSubscription.js'
 import { Session } from '../../identity/server/Session.js'
+import { entryWindow } from './entryWindow.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
@@ -57,16 +58,7 @@ function searchEntries(em: EntityManager, sourceIds: Array<string>, q: string) {
 }
 
 function windowedEntries(em: EntityManager, sourceIds: Array<string>, start: Date, end: Date) {
-	return em.find(Entry, {
-		sourceId: { $in: sourceIds },
-		recurrence: { freq: null },
-		$or: [
-			{ start: { $gte: start, $lte: end } },
-			{ end: { $gte: start, $lte: end } },
-			{ start: { $lte: start }, end: { $gte: end } },
-			{ start: null },
-		],
-	})
+	return em.find(Entry, entryWindow(sourceIds, start, end))
 }
 
 describe('entries ownership scoping', () => {
@@ -125,6 +117,67 @@ describe('entries ownership scoping', () => {
 	})
 })
 
+describe('GET /entries carries the overdue backlog in every window', () => {
+	let orm: MikroORM
+
+	before(async () => { orm = await inMemoryOrm() })
+	after(async () => { await orm.close(true) })
+
+	const task = (sourceId: string, heading: string, dates: Partial<Entry>) =>
+		new Entry({ id: crypto.randomUUID(), sourceId, type: EntryType.Task, heading, ...dates })
+
+	const june = [new Date('2026-06-01T00:00:00Z'), new Date('2026-06-30T00:00:00Z')] as const
+
+	it('reaches tasks due long before the window, whatever their status column says', async () => {
+		const em = orm.em.fork()
+		const { user, source } = await seedUser(em, 'backlog', 'anything')
+		const [from, to] = [new Date('2021-03-02T09:00:00Z') as never, new Date('2021-03-02T10:00:00Z') as never]
+		const untouched = task(source.id, 'Untouched', { start: from, end: to })
+		const started = task(source.id, 'Started', { start: from, end: to, status: TaskStatus.Doing })
+		const dueOnly = task(source.id, 'No due date', { start: from })
+		em.persist([untouched, started, dueOnly])
+		await em.flush()
+
+		const sourceIds = (await user.sources(em, { enabled: true, hidden: false })).map(s => s.id)
+		const found = (await windowedEntries(em, sourceIds, ...june)).map(entry => entry.id)
+
+		assert.ok(found.includes(untouched.id))
+		assert.ok(found.includes(started.id))
+		assert.ok(found.includes(dueOnly.id))
+	})
+
+	it('leaves settled tasks and bygone events where they are', async () => {
+		const em = orm.em.fork()
+		const { user, source } = await seedUser(em, 'settled', 'anything')
+		const [from, to] = [new Date('2021-03-02T09:00:00Z') as never, new Date('2021-03-02T10:00:00Z') as never]
+		const done = task(source.id, 'Done', { start: from, end: to, status: TaskStatus.Done })
+		const cancelled = task(source.id, 'Cancelled', { start: from, end: to, status: TaskStatus.Cancelled })
+		const event = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Event, heading: 'Last year', start: from, end: to })
+		em.persist([done, cancelled, event])
+		await em.flush()
+
+		const sourceIds = (await user.sources(em, { enabled: true, hidden: false })).map(s => s.id)
+		const found = (await windowedEntries(em, sourceIds, ...june)).map(entry => entry.id)
+
+		assert.ok(!found.includes(done.id))
+		assert.ok(!found.includes(cancelled.id))
+		assert.ok(!found.includes(event.id))
+	})
+
+	it('does not drag the future backwards', async () => {
+		const em = orm.em.fork()
+		const { user, source } = await seedUser(em, 'ahead', 'anything')
+		const later = task(source.id, 'Later', { start: new Date('2027-09-02T09:00:00Z') as never, end: new Date('2027-09-02T10:00:00Z') as never })
+		em.persist(later)
+		await em.flush()
+
+		const sourceIds = (await user.sources(em, { enabled: true, hidden: false })).map(s => s.id)
+		const found = (await windowedEntries(em, sourceIds, ...june)).map(entry => entry.id)
+
+		assert.ok(!found.includes(later.id))
+	})
+})
+
 describe('GET /entries carries the undated rows in every window', () => {
 	let orm: MikroORM
 
@@ -150,7 +203,7 @@ describe('GET /entries carries the undated rows in every window', () => {
 		const em = orm.em.fork()
 		const { user, source } = await seedUser(em, 'windowed', 'anything')
 		const dated = new Entry({
-			id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Ship it',
+			id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Event, heading: 'Ship it',
 			start: new Date('2026-06-15T09:00:00Z') as never, end: new Date('2026-06-15T10:00:00Z') as never,
 		})
 		em.persist(dated)

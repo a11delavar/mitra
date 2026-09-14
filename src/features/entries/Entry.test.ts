@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Entry, TaskStatus, Transparency, Visibility, FLOATING_TIME_ZONE } from './Entry.js'
 import { EntryType } from './EntryType.js'
+import { Recurrence } from '../recurrence/Recurrence.js'
 import { ParticipantRole } from '../participants/Participant.js'
 import { Source } from '../sources/Source.js'
 import { EntryRelations } from '../relations/EntryRelations.js'
@@ -589,6 +590,60 @@ describe('Entry', () => {
 			assert.equal(verdict(dependent(RelationType.of('X-WAITS-FOR'), 10, 12), predecessor(9, 11)), false)
 			assert.equal(verdict(dependent(RelationType.FinishToStart, 10, 12, 'not a duration'), predecessor(9, 11)), false)
 			assert.equal(verdict(dependent(RelationType.FinishToStart, 10, 12), new Entry({ id: 'p', sourceId: 's', type: EntryType.Task, uid: 'predecessor' })), false)
+		})
+	})
+
+	describe('spanEquals', () => {
+		it('is true only when both ends and the all-day flag match', () => {
+			const span = { start: day.add({ hours: 9 }), end: day.add({ hours: 10 }) }
+			assert.equal(new Entry(span).spanEquals(new Entry(span)), true)
+			assert.equal(new Entry(span).spanEquals(new Entry({ ...span, end: day.add({ hours: 11 }) })), false)
+			assert.equal(new Entry(span).spanEquals(new Entry({ ...span, allDay: true })), false)
+		})
+
+		it('treats two undated entries as the same span', () => {
+			assert.equal(new Entry({ heading: 'a' }).spanEquals(new Entry({ heading: 'b' })), true)
+			assert.equal(new Entry({ heading: 'a' }).spanEquals(new Entry({ start: day })), false)
+		})
+	})
+
+	describe('overdue', () => {
+		const task = (init: Partial<Entry>) => new Entry({ type: EntryType.Task, ...init })
+
+		it('is true for an open task whose day has passed', () => {
+			assert.equal(task({ start: day.subtract({ days: 3 }), end: day.subtract({ days: 3 }).add({ hours: 1 }) }).overdue, true)
+		})
+
+		it('is false while the task still belongs to the current day', () => {
+			assert.equal(task({ start: day.add({ hours: 9 }), end: day.add({ hours: 10 }) }).overdue, false)
+		})
+
+		it('is false once the outcome is decided', () => {
+			const dates = { start: day.subtract({ days: 3 }), end: day.subtract({ days: 3 }).add({ hours: 1 }) }
+			assert.equal(task({ ...dates, status: TaskStatus.Done }).overdue, false)
+			assert.equal(task({ ...dates, status: TaskStatus.Cancelled }).overdue, false)
+			assert.equal(task({ ...dates, status: TaskStatus.Doing }).overdue, true)
+		})
+
+		it('counts an all-day task from its last day, not its exclusive end', () => {
+			assert.equal(task({ start: day, end: day.add({ days: 1 }), allDay: true }).overdue, false)
+			assert.equal(task({ start: day.subtract({ days: 1 }), end: day, allDay: true }).overdue, true)
+		})
+
+		it('falls back to the start when the task has no due date', () => {
+			assert.equal(task({ start: day.subtract({ days: 1 }) }).overdue, true)
+			assert.equal(task({ start: day }).overdue, false)
+		})
+
+		it('is false for a repeating task, whose next turn settles the missed one', () => {
+			const dates = { start: day.subtract({ days: 3 }), end: day.subtract({ days: 3 }).add({ hours: 1 }) }
+			assert.equal(task({ ...dates, recurrenceMasterId: 'master' }).overdue, false)
+			assert.equal(task({ ...dates, recurrence: new Recurrence({ freq: 'WEEKLY' }) }).overdue, false)
+		})
+
+		it('is false for an undated task and for events', () => {
+			assert.equal(task({ heading: 'someday' }).overdue, false)
+			assert.equal(new Entry({ type: EntryType.Event, start: day.subtract({ days: 3 }), end: day.subtract({ days: 3 }) }).overdue, false)
 		})
 	})
 

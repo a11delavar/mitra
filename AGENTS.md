@@ -173,11 +173,15 @@
   - MikroORM custom type `EntryTypeType` (`src/features/entries/server/EntryTypeType.ts`).
   - Assigning `Entry.type` performs conversion.
   - Format methods: `EntryType.format()` / `formatPlural()`.
-- **Undated Entries & Unscheduled Section** (`mitra-unscheduled`):
-  - Only tasks can be unscheduled (`Entry.unschedulable`).
+- **Planning Surface** (`mitra-planning`): two sections, Overdue then Unscheduled, both from `EntryStore`.
+  - `Entry.overdue`: open task whose `Entry.lastDay` is before today. By day, not instant. Repeating tasks exempt (`partOfSeries`).
+  - Unscheduled is also the drop target clearing an entry's dates, so it keeps `flex: 1`; Overdue caps at half the panel.
+  - `Planning.pending` feeds the sidebar tab badge. Only tasks can be unscheduled (`Entry.unschedulable`).
+  - Overdue excludes the drag preview (`EntryStore.previewing`): a ghost with a new past date is still overdue, and nothing is dropped into this list. The ghost belongs to the grid; the source row stays, faded.
   - Scheduling and unscheduling share `EntryDragController.move`.
   - Drawer tabs: `src/design/Tabs.ts` (declarative, scroll-driven).
   - Chip height tiers: roomy-first, cramped as exception via `--density`.
+- **Window Query** (`src/features/entries/server/entryWindow.ts`): `GET /entries` also carries rows no window contains — undated (`start: null`) and open tasks due before the window start. Route and test import it; never restate the filter. Client narrows via `Entry.overdue`.
 
 ## Calendar Views & Layout Engine
 - **Layout Architecture**:
@@ -192,11 +196,19 @@
   - Hot-Loop Date Math: Cache `.dayValue` (`YYYYMMDD` integer) or `epochMilliseconds` in tight loops.
 - **Gestures & Controllers**:
   - `EntryDragController`: Container-level controller for create, move (delta translation), and resize (edge drag). Resize handles: 0.25rem strips (`resize: 'block' | 'inline'`).
+    - Cells are chosen by *nearness*, so every point would snap into one. `places()` gates that on the grid's box minus the sidebar's, which overlays the grid below 800px. A release with nothing built reverts via `adoptSpan(drag.before)`.
+    - A move carries the offset from `drag.anchor` (the grabbed point of the entry) to the pointer. A chip dragged in from the planning list was never grabbed on a day, so its anchor is the entry's own start — hit-testing the sidebar's coordinates would offset the drop by whatever day the clamp picked.
+    - `EntryStore.shownPreview` drops the ghost when it `spanEquals` the dragged entry — a drag moves nothing else, and comparing by `editEquals` doubled the row over the unschedule target, where `unschedule()` also clears reminders.
+    - `apply` skips repainting when the built span equals the shown preview (`Entry.spanEquals` + `EntryStore.previewing`). Without it every frame repainted every chip — never call `setPreview` with an unchanged span.
   - Drafts: Single active local draft in `EntryStore.draft` (`id = 0`, `persisted = false`). Backend assigns final IDs.
   - `CalendarScrollController`: Date-anchored scrolling across views. Snapping gated on device type (notched wheel vs continuous touch/trackpad).
   - `DensityController`: Shared zoom gesture (Ctrl+wheel, wheel over rail, 2-finger pinch). Subclasses override `settled()` to dispatch synthetic scroll on inner scroller elements.
   - `TimeZoneLaneController`: Alternative zones fold; anchor zone never folds. Clamps cells (`max-inline-size: var(--zone-width)`). Rail inline drag with `touch-action: pan-y`.
   - Week All-Day Lane: Explicit row tracks (`grid-template-rows: repeat(var(--slots), var(--slot-height))`), never auto-flow.
+- **Entry Chip Heading** (`EventSegment.ts`): two layouts picked by `--inline`, declared once. Triggers: no meta row (`[data-meta]` absent), or no height for one (`@container (max-height: 2rem)`). Set the switch; never re-declare the collapsed layout. `--inline` is a space toggle (empty = on, `initial` = off) read as `--_x: var(--inline) <on>; prop: var(--_x, <off>)` — CSS `if()` is Chromium-only.
+  - When-line comes from `DateTimeRange.format()` (`Intl.formatRange`), which drops the shared parts and puts the day before the times. Never hand-assemble start/separator/end.
+  - `.range` and `.point` both render; `--inline` picks. A one-line chip shows only the start.
+  - `dated` adds the day, for lists drawn away from the grid. Off wherever a column already answers "when".
 - **Month View** (`mitra-weeks`):
   - Strip of week rows with subgrid column alignment and continuous CSS density scaling (`--_month-density`).
   - Row Structure: Numerals track + `.entries` overlay (unbounded lanes, `overflow: hidden` + gradient bottom fade). Routines ribbon rendered in track after last bar.

@@ -57,6 +57,7 @@ interface Drawing {
 interface Drag {
 	readonly kind: Kind
 	readonly mode: Mode
+	/** The point of the entry the gesture has hold of; the drop carries the same offset to the pointer. */
 	readonly anchor?: DragPoint
 	readonly source?: Source
 	readonly entry?: Entry
@@ -69,6 +70,8 @@ interface Drag {
 	readonly cells: ReadonlyArray<Cell>
 	readonly laneBottom?: number
 	readonly unscheduledBox?: DOMRect
+	readonly gridBox?: DOMRect
+	readonly sidebarBox?: DOMRect
 	point: { x: number, y: number }
 	moved: boolean
 	armed: boolean
@@ -96,9 +99,24 @@ export class EntryDragController extends Controller {
 		controller?.beginExternal(entry, segment, surface, e)
 	}
 
+	/** Where a chip listed outside the grid is held: by its own start, so the drop lands it on the pointer. */
+	private static grabOf(entry: Entry): DragPoint | undefined {
+		const start = entry.start
+		return !start ? undefined : { date: start.dayStart, minute: Math.round((start.valueOf() - start.dayStart.valueOf()) / 60_000) }
+	}
+
 	private static unscheduledBox() {
-		const section = document.querySelector('mitra-unscheduled')
-		const box = section && EntryDragController.visibleBox(section)
+		return EntryDragController.boxOf('mitra-planning .unscheduled')
+	}
+
+	/** On a narrow window the sidebar lies over the grid, so its rect is no proof of a day underneath. */
+	private static sidebarBox() {
+		return EntryDragController.boxOf('mitra-sidebar nav')
+	}
+
+	private static boxOf(selector: string) {
+		const element = document.querySelector(selector)
+		const box = element && EntryDragController.visibleBox(element)
 		return box && box.width > 0 && box.height > 0 ? box : undefined
 	}
 
@@ -144,14 +162,9 @@ export class EntryDragController extends Controller {
 		if (!cells.length) {
 			return // nothing on screen to place it on
 		}
-		const mode = this.editMode(entry)
-		const anchor = this.pointAt(cells, e.clientX, e.clientY, mode)
-		if (!anchor) {
-			return
-		}
 		this.begin({
 			...this.commonAt(e, cells, surface),
-			kind: 'move', mode, anchor, entry, before: entry.clone(), grabbedSegment: segment,
+			kind: 'move', mode: this.editMode(entry), anchor: EntryDragController.grabOf(entry), entry, before: entry.clone(), grabbedSegment: segment,
 		})
 	}
 
@@ -166,6 +179,8 @@ export class EntryDragController extends Controller {
 			cells,
 			laneBottom: this.element.querySelector('.all-day')?.getBoundingClientRect().bottom,
 			unscheduledBox: EntryDragController.unscheduledBox(),
+			gridBox: EntryDragController.visibleBox(this.element),
+			sidebarBox: EntryDragController.sidebarBox(),
 			moved: false,
 			armed: this.requiresHold(e.pointerType),
 		}
@@ -275,9 +290,19 @@ export class EntryDragController extends Controller {
 		return new Entry({ ...before, start: before.start.add({ milliseconds: shift }), end: before.end.add({ milliseconds: shift }) })
 	}
 
-	private overUnscheduled(point: { x: number, y: number }) {
-		const box = this.drag!.unscheduledBox
+	private static within(box: DOMRect | undefined, point: { x: number, y: number }) {
 		return !!box && point.x >= box.left && point.x <= box.right && point.y >= box.top && point.y <= box.bottom
+	}
+
+	private overUnscheduled(point: { x: number, y: number }) {
+		return EntryDragController.within(this.drag!.unscheduledBox, point)
+	}
+
+	/** Whether a day lies under the point. Cells are picked by nearness, so without this every point
+	 * would snap into one — including those over a sidebar drawn on top of the grid. */
+	private places(point: { x: number, y: number }) {
+		const drag = this.drag!
+		return EntryDragController.within(drag.gridBox, point) && !EntryDragController.within(drag.sidebarBox, point)
 	}
 
 	private buildResize(current: DragPoint): Entry | undefined {
@@ -300,6 +325,9 @@ export class EntryDragController extends Controller {
 			const cleared = drag.before!.clone()
 			cleared.unschedule()
 			return cleared
+		}
+		if (!this.places(point)) {
+			return undefined
 		}
 		const mode: Mode = drag.kind === 'move' && drag.laneBottom !== undefined
 			? (point.y <= drag.laneBottom ? 'allday' : 'timed')
@@ -498,6 +526,10 @@ export class EntryDragController extends Controller {
 		const built = this.buildAt(drag.point)
 		if (built) {
 			this.apply(built)
+		} else if (drag.kind === 'move' && drag.preview) {
+			// Nothing under the pointer to place it on, so take the ghost away rather than leave it
+			// at the last spot that had one — and stop repainting the grid behind it.
+			EntryStore.setPreview(undefined)
 		}
 	}
 
@@ -590,6 +622,11 @@ export class EntryDragController extends Controller {
 			}
 			case 'move': {
 				const preview = drag.preview ??= new Entry({ ...built, id: undefined })
+				// Frames keep landing on the same snapped spot while the pointer stays in it, and
+				// repainting every chip to redraw an identical ghost is what made dragging drag.
+				if (EntryStore.previewing(preview) && preview.spanEquals(built)) {
+					break
+				}
 				preview.adoptSpan(built)
 				EntryStore.setPreview(preview)
 				break
@@ -648,6 +685,15 @@ export class EntryDragController extends Controller {
 		if (drag.moved) {
 			const built = this.buildAt(drag.point)
 			const entry = drag.entry!
+			// Nowhere to put it: take the entry back rather than keep the last frame's placement.
+			if (!built && drag.before) {
+				this.teardown(e.pointerId)
+				EntryStore.setPreview(undefined)
+				EntryStore.setDragging(undefined)
+				entry.adoptSpan(drag.before)
+				EntryStore.notify()
+				return
+			}
 			if (drag.kind === 'move' && e.altKey && getCapabilities(entry.sourceId).createEntries) {
 				this.teardown(e.pointerId)
 				EntryStore.setPreview(undefined)

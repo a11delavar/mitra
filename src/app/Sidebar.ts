@@ -10,7 +10,7 @@ import { ReorderabilityController, ReorderabilityState } from '@3mo/reorderabili
 import { focusRing } from '../design/focusRing.css.js'
 import { windowDragHandle } from '../design/windowDrag.css.js'
 import { EntryStore } from '../features/entries/client/EntryStore.js'
-import { Unscheduled } from '../features/planning/client/Unscheduled.js'
+import { Planning } from '../features/planning/client/Planning.js'
 import { canInstall, promptInstall, onInstallAvailabilityChange } from './pwa.js'
 
 @component('mitra-sidebar')
@@ -23,8 +23,8 @@ export class Sidebar extends Component {
 
 	readonly store = new EntryStore(this)
 
-	private get unscheduledCount() {
-		return Unscheduled.shown.length
+	private get planningCount() {
+		return Planning.pending
 	}
 
 	private setTab(tab: 'calendars' | 'planning') {
@@ -433,13 +433,13 @@ export class Sidebar extends Component {
 				}
 
 				mitra-tab-panel > .integrations,
-				mitra-tab-panel > mitra-unscheduled {
+				mitra-tab-panel > mitra-planning {
 					flex: 1;
 					min-height: 0;
 				}
 
-				/* Align unscheduled header with the account headings grid column. */
-				mitra-tab-panel > mitra-unscheduled > header {
+				/* Align the planning headings with the account headings grid column. */
+				mitra-tab-panel > mitra-planning header {
 					padding-inline-start: var(--sidebar-gap);
 				}
 
@@ -905,9 +905,9 @@ export class Sidebar extends Component {
 
 	private get planningTemplate() {
 		return html`
-			<mitra-unscheduled></mitra-unscheduled>
-			${!Unscheduled.canAdd ? html.nothing : html`
-				<button class="action" @click=${() => Unscheduled.add()}>
+			<mitra-planning></mitra-planning>
+			${!Planning.canAdd ? html.nothing : html`
+				<button class="action" @click=${() => Planning.add()}>
 					<mitra-icon icon="plus"></mitra-icon>
 					${t('Add Task')}
 				</button>
@@ -934,7 +934,7 @@ export class Sidebar extends Component {
 					<mitra-tab name="calendars" icon="calendar-days">${t('Calendars')}</mitra-tab>
 					<mitra-tab-panel name="calendars">${this.calendarsTemplate}</mitra-tab-panel>
 
-					<mitra-tab name="planning" icon="list-todo" .badge=${this.unscheduledCount}>${t('Planning')}</mitra-tab>
+					<mitra-tab name="planning" icon="list-todo" .badge=${this.planningCount}>${t('Planning')}</mitra-tab>
 					<mitra-tab-panel name="planning">${this.planningTemplate}</mitra-tab-panel>
 				</mitra-tabs>
 				<div class="footer">

@@ -260,6 +260,22 @@ export class Entry {
 		return !!this.start
 	}
 
+	/** The last day the entry occupies — for a task, the day it is owed on. */
+	get lastDay() {
+		return !this.start ? this.end?.dayStart : this.inclusiveEnd.dayStart
+	}
+
+	/**
+	 * Whether an open task's day has gone by. Compared by day: one due this morning is still today's.
+	 * A repeating task is never behind — the next occurrence settles the missed one.
+	 */
+	get overdue() {
+		if (!this.type?.isTask || this.closed || this.partOfSeries) {
+			return false
+		}
+		return !!this.lastDay && this.lastDay.isBefore(new DateTime().dayStart)
+	}
+
 	/**
 	 * Whether the entry may LOSE its dates again. A VTODO's date properties are both optional and
 	 * Notion's is nullable, but DTSTART is REQUIRED of a VEVENT (RFC 5545 §3.6.1) — an undated event
@@ -418,6 +434,13 @@ export class Entry {
 		if (!source.supportsEntryType(this.type)) {
 			this.type = source.defaultEntryType
 		}
+	}
+
+	/** Whether another entry occupies exactly the span this one does. */
+	spanEquals(other: Entry) {
+		return this.allDay === other.allDay
+			&& this.start?.valueOf() === other.start?.valueOf()
+			&& this.end?.valueOf() === other.end?.valueOf()
 	}
 
 	adoptSpan(other: Entry) {

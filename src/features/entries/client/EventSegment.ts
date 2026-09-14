@@ -1,4 +1,5 @@
 import { component, html, property, Component, css, state, bind, queryConnectedInstances, eventListener, unsafeCSS } from '@a11d/lit'
+import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { TaskStatus } from '../Entry.js'
 import { type EntrySegment } from './EntrySegment.js'
 import { type RoutineRun } from '../../routines/client/Routines.js'
@@ -37,6 +38,9 @@ export class EntrySegmentComponent extends Component {
 	}) open = false
 
 	@property({ type: Boolean, reflect: true }) selected = false
+
+	/** Draws the entry's day too, for chips listed where no column supplies the date. */
+	@property({ type: Boolean }) dated = false
 
 	@property({ type: Object }) routine?: RoutineRun
 	@property({ type: Array }) ticks?: ReadonlyArray<number>
@@ -240,8 +244,7 @@ export class EntrySegmentComponent extends Component {
 					white-space: normal;
 					word-break: break-word;
 					line-height: 1.1;
-					display: flex;
-					flex-direction: column;
+					min-width: 0;
 
 					--header-line: 0.8125rem;
 					--header-mark: 0.8125rem;
@@ -251,8 +254,33 @@ export class EntrySegmentComponent extends Component {
 						--header-mark: 0.9375rem;
 					}
 
+					/* A meta row above the label, or one centred line. The triggers set --inline empty to
+					   pick the line, or to initial so each pair below falls back to the stacked value. */
+					--inline: initial;
+
+					&:not([data-meta]) {
+						--inline: ;
+						--header-line: 0.875rem;
+						--header-mark: 0.875rem;
+					}
+
+					@container (max-height: 2rem) {
+						--inline: ;
+						--header-line: 0.875rem;
+						--header-mark: 0.875rem;
+					}
+
+					display: flex;
+					--_direction: var(--inline) row;
+					flex-direction: var(--_direction, column);
+					--_align: var(--inline) center;
+					align-items: var(--_align, stretch);
+					--_margin: var(--inline) auto;
+					margin-block: var(--_margin, 0);
+
 					> .header {
-						display: flex;
+						--_header-display: var(--inline) contents;
+						display: var(--_header-display, flex);
 						align-items: center;
 						min-width: 0;
 
@@ -263,7 +291,6 @@ export class EntrySegmentComponent extends Component {
 							margin-inline-end: 0.25rem;
 							align-items: center;
 							justify-content: center;
-							vertical-align: middle;
 
 							> :is(button, mitra-icon-button) {
 								font-size: var(--header-mark);
@@ -277,19 +304,21 @@ export class EntrySegmentComponent extends Component {
 							}
 						}
 
-						> .time {
+						> .when {
 							opacity: 0.75;
 							font-size: 0.65rem;
 							white-space: nowrap;
 							margin-inline-end: 0.25rem;
 							overflow: clip;
 
-							@container (max-height: 2rem) and (max-width: 7rem) {
-								display: none;
-							}
+							/* One line has room for the start, not the span. */
+							--_range-display: var(--inline) none;
+							--_point-display: var(--inline) inline;
+							&.range { display: var(--_range-display, inline); }
+							&.point { display: var(--_point-display, none); }
 
-							> .separator, > .end {
-								@container (max-height: 2rem) {
+							@container (max-height: 2rem) and (max-width: 7rem) {
+								&.range, &.point {
 									display: none;
 								}
 							}
@@ -300,43 +329,12 @@ export class EntrySegmentComponent extends Component {
 						min-width: 0;
 					}
 
-					@container (max-height: 2rem) {
-						display: block;
-						min-width: 0;
-						--header-line: 0.875rem;
-						--header-mark: 0.875rem;
-						margin-block: auto;
-
-						> .header {
-							display: contents;
-
-							> mitra-task-status {
-								vertical-align: -0.125em;
-							}
-						}
-					}
-
 					@container (max-height: 1rem) {
 						white-space: nowrap;
 					}
 
 					@container (max-height: 0.5rem) {
 						display: none;
-					}
-				}
-
-				&:not(:has(> .heading > .header > .time)) > .heading {
-					display: block;
-					min-width: 0;
-					--header-line: 0.875rem;
-					--header-mark: 0.875rem;
-
-					> .header {
-						display: contents;
-
-						> mitra-task-status {
-							vertical-align: -0.125em;
-						}
 					}
 				}
 
@@ -456,6 +454,31 @@ export class EntrySegmentComponent extends Component {
 
 	protected override createRenderRoot() { return this }
 
+	private get timed() {
+		return !this.segment!.allDay && this.segment!.entry.scheduled
+	}
+
+	private get showsDate() {
+		return this.dated && !!this.segment!.entry.lastDay
+	}
+
+	/** Which fields the when-line carries: the day only when this chip has to say which one. */
+	private get whenOptions(): Intl.DateTimeFormatOptions {
+		const day = this.segment!.entry.lastDay
+		return {
+			...!this.showsDate ? {} : { day: 'numeric', month: 'short', ...day!.year === new DateTime().year ? {} : { year: 'numeric' as const } },
+			...!this.timed ? {} : { hour: '2-digit', minute: '2-digit', hour12: false },
+		}
+	}
+
+	/** What the entry spans: its hours when it has them, otherwise the days it occupies. */
+	private get whenSpan() {
+		const entry = this.segment!.entry
+		return this.timed
+			? new DateTimeRange(entry.start, entry.effectiveEnd)
+			: new DateTimeRange(entry.start?.dayStart ?? entry.lastDay, entry.lastDay)
+	}
+
 	protected override get template() {
 		if (!this.segment) return html.nothing
 
@@ -464,7 +487,7 @@ export class EntrySegmentComponent extends Component {
 			this.segment.entry.color ?? getSource(this.segment.entry.sourceId)?.color ?? ''
 		)
 
-		const showsTime = !this.segment.allDay && this.segment.entry.scheduled
+		const meta = this.timed || this.showsDate
 		if (this.routine) {
 			return html`
 				${this.ticks?.map(column => html`<i class="mark" style="grid-column: ${column};"></i>`)}
@@ -472,18 +495,15 @@ export class EntrySegmentComponent extends Component {
 			`
 		}
 		return html`
-			<div class="heading">
-				${!this.segment.entry.type.isTask && !showsTime ? html.nothing : html`
+			<div class="heading" ?data-meta=${meta}>
+				${!this.segment.entry.type.isTask && !meta ? html.nothing : html`
 					<div class="header">
 						${!this.segment.entry.type.isTask ? html.nothing : html`
 							<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
 						`}
-						${!showsTime ? html.nothing : html`
-							<span class="time">
-								<span class="start">${this.segment.entry.start?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-								<span class="separator">-</span>
-								<span class="end">${this.segment.entry.end?.format({ hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-							</span>
+						${!meta ? html.nothing : html`
+							<span class="when range">${this.whenSpan.format(this.whenOptions)}</span>
+							<span class="when point">${this.whenSpan.start?.format(this.whenOptions)}</span>
 						`}
 					</div>
 				`}

@@ -296,6 +296,7 @@ declare global {
 		"Options": unknown
 		"or": unknown
 		"Organizer": unknown
+		"Overdue": unknown
 		"Participant options": unknown
 		"Password": unknown
 		"Password (optional)": unknown

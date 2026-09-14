@@ -11,7 +11,7 @@ import { EntryConnections } from '../features/relations/client/EntryConnections.
 import { PageCalendar } from '../features/calendar/client/PageCalendar.js'
 import { CommandPalette } from '../features/commands/client/CommandPalette.js'
 import { Sidebar } from './Sidebar.js'
-import { Unscheduled } from '../features/planning/client/Unscheduled.js'
+import { Planning } from '../features/planning/client/Planning.js'
 import { EntryDetailsComponent } from '../features/entries/client/EventDetails.js'
 import { DialogAbout, markChangesSeen } from '../features/about/client/DialogAbout.js'
 import { DialogIntegration } from '../integrations/client/DialogIntegration.js'
@@ -192,7 +192,7 @@ export class Mitra extends Application {
 			${PageCalendar.styles}
 			${CommandPalette.styles}
 			${Sidebar.styles}
-			${Unscheduled.styles}
+			${Planning.styles}
 			${Weeks.styles}
 			${Months.styles}
 			${Days.styles}

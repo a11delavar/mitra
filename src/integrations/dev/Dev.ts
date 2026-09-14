@@ -519,6 +519,12 @@ export async function seedDev(orm: MikroORM) {
 		personalEvent({ type: EntryType.Task, heading: 'Book the dentist', status: TaskStatus.Done, start: past(2, 2, 12), end: past(2, 2, 12, 30) })
 		personalEvent({ type: EntryType.Task, heading: 'Return the parcel', status: TaskStatus.Cancelled, start: past(4, 4, 16), end: past(4, 4, 17) })
 
+		// Overdue: open tasks whose day has gone by. The last one falls outside the window the calendar
+		// fetches, where the planning list is the only surface that can still reach it.
+		workTask({ heading: 'Send the quarterly report', start: past(1, 2, 9), end: past(1, 2, 11) })
+		uniTask({ heading: 'ML: Submit exercise 3', status: TaskStatus.Doing, start: past(3, 3, 16), end: past(3, 3, 18) })
+		upkeepTask({ heading: 'Renew the tenancy insurance', start: past(40, 1, 10), end: past(40, 1, 11) })
+
 		// Unscheduled
 		workTask({ heading: 'Draft the hiring plan' })
 		workTask({ heading: 'Reply to the vendor quote', status: TaskStatus.Doing })
