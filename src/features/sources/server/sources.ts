@@ -1,4 +1,4 @@
-import { Router, type Request, type Response } from 'express'
+import express, { Router, type Request, type Response } from 'express'
 import { orm } from '../../../infrastructure/database/orm.js'
 import { syncEmitter } from '../../../infrastructure/realtime/syncEmitter.js'
 import { User } from '../../identity/User.js'
@@ -8,6 +8,7 @@ import { createLogger } from '../../../infrastructure/logging/Logger.js'
 import { Integration } from '../../../integrations/Integration.js'
 import { importer } from '../../../integrations/server/Importer.js'
 import { MigrationRefused, SourceMigration } from '../../migration/server/SourceMigration.js'
+import { IcsImport } from '../../migration/server/IcsImport.js'
 const logger = createLogger('Sources')
 
 export const sourcesRouter = Router()
@@ -106,6 +107,28 @@ sourcesRouter.post('/:id/migrate', (req, res) => migration(req, res, async sourc
 	const outcome = await source.run()
 	syncEmitter.emit('updated', req.user.id)
 	logger.info(`Migrated entries from source ${req.params.id} to ${String(req.body?.targetSourceId)}: ${JSON.stringify(outcome)}`)
+	return outcome
+}))
+
+const icsBody = express.text({ type: 'text/calendar', limit: '25mb' })
+
+async function icsImport(req: Request<{ id: string }>, res: Response, work: (icsImport: IcsImport) => Promise<unknown>) {
+	try {
+		return res.json(await work(await IcsImport.of(orm.em.fork(), req.user, req.params.id, req.body)))
+	} catch (error) {
+		if (error instanceof MigrationRefused) {
+			return res.status(400).json({ error: error.message })
+		}
+		throw error
+	}
+}
+
+sourcesRouter.post('/:id/ics/preview', icsBody, (req, res) => icsImport(req, res, ics => Promise.resolve(ics.plan())))
+
+sourcesRouter.post('/:id/ics', icsBody, (req, res) => icsImport(req, res, async ics => {
+	const outcome = await ics.run()
+	syncEmitter.emit('updated', req.user.id)
+	logger.info(`Imported calendar file into source ${req.params.id}: ${JSON.stringify(outcome)}`)
 	return outcome
 }))
 

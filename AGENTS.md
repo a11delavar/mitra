@@ -160,11 +160,21 @@
 - **Ordering & Safety**: No cross-provider transaction. Copy failure rolls back copies and aborts before delete; delete failure leaves recoverable duplicates (never loss).
 - **Copy vs Move** (`keepOriginals`): Skips phase 3 and mints fresh UIDs for copies. Phase 2 still runs, SCOPED: a move rewrites every row pointing at a departing UID; a copy rewrites only the copies' own rows, so a copied pair is a linked pair and the originals keep pointing at each other. A link whose target was not copied is left alone either way. Read-only origins permit copy but refuse move.
 - **Concurrency Locks**: `Integration.exclusivelyAcross(ids, work)` sorts and deduplicates integration IDs to avoid deadlock.
-- **Fidelity Preview** (`src/features/sources/MigrationPlan.ts`): Projected from `capabilitiesFor(target)`. `MigrationBlocker` (recurrence, occurrence override pinning, participants, transparency, visibility, percentComplete) vs `MigrationLoss` (reminders, location, description, timeZone, allDay, cancelledStatus, type). Wire plan transmits only non-clean verdicts; `cleanCount = total - verdicts.length`.
+- **Fidelity Preview** (`src/features/migration/MigrationPlan.ts`): Projected from `capabilitiesFor(target)` via `MigrationVerdict.assess` (shared with `IcsImport`). `MigrationBlocker` (recurrence, occurrence override pinning, participants, transparency, visibility, percentComplete) vs `MigrationLoss` (reminders, location, description, timeZone, allDay, cancelledStatus, type). Wire plan transmits only non-clean verdicts; `cleanCount = total - verdicts.length`.
 - **Series Handling**: Refused if target lacks recurrence unless user explicitly selects `flatten: true` (writes `FLATTEN_HORIZON_DAYS = 366` single occurrences via `Occurrences.of(master)`).
 - **Data Boundary**: `data.raw` never travels (strips origin sync data/ETag). Exclusions travel as `exdates` column via `exdatesOf`.
 - **API Routes**: `POST /api/sources/:id/migrate/preview` and `POST /api/sources/:id/migrate` (`{ targetSourceId, entryIds?, keepOriginals?, flatten? }`). Returns 200 with `MigrationOutcome` report even on abort.
 - **UI** (`DialogSourceMigration.ts`): Driven by `@lit/task` `Task` states (target picker -> series decision cards -> preview report -> outcome report).
+
+## OS Calendar Integration (PWA Launches)
+- **Manifest & Launch** (`scripts/indexHtml.ts`, `src/app/launch.ts`):
+  - Registers `file_handlers` (`.ics`), `protocol_handlers` (`webcal` -> `/?subscribe=%s`), and `launch_handler: focus-existing`.
+  - Cold protocol launches surface on both URL params and `launchQueue` (deduplicated on arrival). Window drag-and-drop intercepts `.ics` files to prevent browser file navigation.
+  - `webcal` opens `DialogIntegration` prefilled without auto-connecting to keep external fetches user-initiated.
+- **ICS File Import** (`src/features/migration/server/IcsImport.ts`, `POST /api/sources/:id/ics[/preview]`):
+  - Reuses `SourceMigration` copy semantics: mints fresh UIDs, rewrites in-file `RELATED-TO` links, and rolls back on failure. Series overrides are blocked; exclusions persist in `exdates` (`data.raw` never persists).
+  - Uses route-level `express.text` (25 MB) and client `postCalendar()` to avoid enlarging global JSON body limits.
+  - UI: `DialogIcsImport` mirrors migration flow (target picker -> fidelity preview -> outcome; no series flattening).
 
 ## Sources & Entry Types
 - **Type Declaration**: Sources declare supported types via `Source.entryTypes` array (`'event'`, `'task'`). Source identity is `uri` alone.

@@ -22,7 +22,7 @@ const logos: Record<string, string> = {
 }
 
 @component('mitra-dialog-integration')
-export class DialogIntegration extends DialogComponent<{ readonly id?: string, readonly preselectSources?: boolean }, Integration> {
+export class DialogIntegration extends DialogComponent<{ readonly id?: string, readonly preselectSources?: boolean, readonly prefill?: Integration }, Integration> {
 	@state() private entity?: Integration
 	@state() private discovering = false
 	@state() private discoveryError?: string
@@ -77,6 +77,10 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 
 	protected override connected() {
 		if (!this.isEdit) {
+			// A prefilled entity (e.g. a webcal: launch) opens straight on the provider panel for review.
+			if (this.parameters.prefill) {
+				this.entity = this.parameters.prefill
+			}
 			fetchGoogleAvailability()
 				.then(availability => this.googleAvailability = availability)
 				.catch((error: Error) => this.googleAvailability = { error: error.message })

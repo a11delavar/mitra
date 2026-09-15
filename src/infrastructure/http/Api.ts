@@ -274,6 +274,30 @@ export function reimportIntegration(id: string) {
 	return Api.post(`/integrations/${id}/reimport`)
 }
 
+/** Posts a raw iCalendar body — text/calendar bypasses the JSON transport and its body size limit. */
+async function postCalendar<T>(route: string, ics: string): Promise<T> {
+	const response = await fetch(Api.url + route, {
+		method: 'POST',
+		credentials: 'include',
+		headers: { 'accept': 'application/json', 'content-type': 'text/calendar' },
+		body: ics,
+	})
+	if (response.status >= 400) {
+		await new ApiError(response).throw()
+	}
+	return JSON.parse(await response.text(), (_, value) => [...Api.valueConstructors].find(converter => converter.shallConstruct(value))?.construct(value) ?? value) as T
+}
+
+/** Fidelity preview of importing a calendar file's entries into a target source. */
+export function previewIcsImport(targetSourceId: string, ics: string) {
+	return postCalendar<MigrationPlan>(`/sources/${targetSourceId}/ics/preview`, ics)
+}
+
+/** Imports a calendar file's entries into a target source. */
+export function importIcs(targetSourceId: string, ics: string) {
+	return postCalendar<MigrationOutcome>(`/sources/${targetSourceId}/ics`, ics)
+}
+
 export function discoverSources(integration: Integration) {
 	return Api.post<Array<Source>>('/integrations/sources', integration)
 }

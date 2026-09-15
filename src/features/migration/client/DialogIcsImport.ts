@@ -1,100 +1,58 @@
 import { component, html, css, state } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { Task, TaskStatus, initialState } from '@lit/task'
-import { canMoveEntriesOut, getCapabilities, getIntegrations, migrateSourceEntries, previewSourceMigration } from '../../../infrastructure/http/Api.js'
+import { getCapabilities, getIntegrations, importIcs, previewIcsImport } from '../../../infrastructure/http/Api.js'
 import { MigrationPlan, type MigrationOutcome, type MigrationVerdict } from '../MigrationPlan.js'
 import { type Source } from '../../sources/Source.js'
 
 const NAMED_BLOCKED = 5
 
-/** Dialog to move or copy all entries from a source to another calendar with fidelity preview. */
-@component('mitra-dialog-source-migration')
-export class DialogSourceMigration extends DialogComponent<{ readonly source: Source }, void> {
+/** Dialog to add the entries of an opened .ics file to a chosen calendar with fidelity preview. */
+@component('mitra-dialog-ics-import')
+export class DialogIcsImport extends DialogComponent<{ readonly fileName: string, readonly ics: string }, void> {
 	@state() private target?: Source
-	@state() private flatten?: boolean
-	@state() private keepOriginals = false
 
 	private readonly preview = new Task(this, {
 		args: () => [this.target?.id] as const,
-		task: ([targetId]) => !targetId ? initialState : previewSourceMigration(this.source.id, targetId, !this.canMove),
+		task: ([targetId]) => !targetId ? initialState : previewIcsImport(targetId, this.parameters.ics),
 	})
 
-	private readonly migration = new Task(this, {
+	private readonly importer = new Task(this, {
 		autoRun: false,
-		task: () => migrateSourceEntries(this.source.id, {
-			targetSourceId: this.target!.id,
-			flatten: this.flatten === true,
-			keepOriginals: this.keepOriginals,
-		}),
+		task: () => importIcs(this.target!.id, this.parameters.ics),
 	})
 
 	protected override createRenderRoot() { return this }
 
-	private get source() { return this.parameters.source }
+	private get running() { return this.importer.status === TaskStatus.PENDING }
 
-	private get canMove() { return canMoveEntriesOut(this.source) }
+	private get reported() { return this.importer.status === TaskStatus.COMPLETE }
 
-	private get running() { return this.migration.status === TaskStatus.PENDING }
-
-	private get reported() { return this.migration.status === TaskStatus.COMPLETE }
-
-	/** Available destination sources (writable, enabled, excluding origin). */
+	/** Available destination sources (writable, enabled). */
 	private get targets() {
 		return getIntegrations()
 			.map(integration => ({
 				integration,
-				sources: [...integration.sources].filter(source => source.id !== this.source.id && source.enabled && getCapabilities(source.id).createEntries),
+				sources: [...integration.sources].filter(source => source.enabled && getCapabilities(source.id).createEntries),
 			}))
 			.filter(({ sources }) => sources.length)
 	}
 
-	private start(keepOriginals: boolean) {
-		this.keepOriginals = keepOriginals
-		void this.migration.run()
-	}
-
-	private back() {
-		if (this.flatten !== undefined && this.preview.value?.flattenable.length) {
-			this.flatten = undefined
-		} else {
-			this.target = undefined
-			this.flatten = undefined
-		}
-	}
-
-	private asksSeries(plan: MigrationPlan) {
-		return this.flatten === undefined && plan.flattenable.length > 0
-	}
-
 	private get heading() {
 		if (this.reported) {
-			return this.migration.value!.aborted
-				? this.keepOriginals ? t('Nothing was copied') : t('Nothing was moved')
-				: this.keepOriginals ? t('Copied to ${name}', { name: this.target!.name }) : t('Moved to ${name}', { name: this.target!.name })
+			return this.importer.value!.aborted ? t('Nothing was added') : t('Added to ${name}', { name: this.target!.name })
 		}
 		if (!this.target) {
-			return this.canMove ? t('Move entries to another calendar') : t('Copy entries to another calendar')
+			return t('Add ${name} to a calendar', { name: this.parameters.fileName })
 		}
-		const plan = this.preview.value
-		if (plan && !this.running && this.asksSeries(plan)) {
-			return t('Repeating entries cannot repeat in ${name}', { name: this.target.name })
-		}
-		return this.canMove ? t('Move to ${name}', { name: this.target.name }) : t('Copy to ${name}', { name: this.target.name })
+		return t('Add to ${name}', { name: this.target.name })
 	}
 
 	static override get styles() {
+		// The migration-progress and migration-mark keyframes are shared from DialogSourceMigration's
+		// styles — both blocks land in the same global Light-DOM sheet.
 		return css`
-			@keyframes migration-progress {
-				from { translate: -100%; }
-				to { translate: 400%; }
-			}
-
-			@keyframes migration-mark {
-				from { scale: 0.8; opacity: 0; }
-				to { scale: 1; opacity: 1; }
-			}
-
-			mitra-dialog-source-migration {
+			mitra-dialog-ics-import {
 				--mitra-dialog-width: min(30rem, 92vw);
 
 				ul {
@@ -167,6 +125,11 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 							overflow: hidden;
 							text-overflow: ellipsis;
 							white-space: nowrap;
+						}
+
+						> mitra-icon {
+							flex-shrink: 0;
+							color: var(--color-text-muted);
 						}
 					}
 
@@ -250,13 +213,6 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 					text-wrap: pretty;
 				}
 
-				.count {
-					display: block;
-					margin-block-start: 0.125rem;
-					font-weight: 400;
-					color: var(--color-text-muted);
-				}
-
 				.waiting,
 				.outcome {
 					display: flex;
@@ -335,7 +291,7 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 		return html`
 			<mitra-dialog heading=${this.heading}>
 				${!this.target || this.reported || this.running ? html.nothing : html`
-					<mitra-icon-button slot="leading" icon="arrow-left" label=${t('Back')} @click=${() => this.back()}></mitra-icon-button>
+					<mitra-icon-button slot="leading" icon="arrow-left" label=${t('Back')} @click=${() => this.target = undefined}></mitra-icon-button>
 				`}
 				${this.body}
 			</mitra-dialog>
@@ -344,26 +300,22 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 
 	private get body() {
 		if (this.reported) {
-			return this.outcomeTemplate(this.migration.value!)
+			return this.outcomeTemplate(this.importer.value!)
 		}
 		return this.preview.render({
 			initial: () => this.targetTemplate,
-			pending: () => this.waitingTemplate(this.canMove ? t('Checking what would move…') : t('Checking what would be copied…')),
+			pending: () => this.waitingTemplate(t('Checking what the calendar can take…')),
 			error: error => html`<p class="failure">${error instanceof Error ? error.message : String(error)}</p>`,
-			complete: plan => this.running ? this.runningTemplate(plan)
-				: this.asksSeries(plan) ? this.seriesTemplate(plan)
-					: this.planTemplate(plan),
+			complete: plan => this.running ? this.runningTemplate(plan) : this.planTemplate(plan),
 		})
 	}
 
 	private get targetTemplate() {
 		const targets = this.targets
 		return !targets.length ? html`
-			<p class="hint">${t('There is no other calendar these entries could move to.')}</p>
+			<p class="hint">${t('There is no calendar the file could be added to.')}</p>
 		` : html`
-			<p class="hint">${this.canMove
-				? t('Every entry in ${name} moves — the ones the chosen calendar cannot take stay here.', { name: this.source.name })
-				: t('Every entry in ${name} is copied — the ones the chosen calendar cannot take are left out. ${name} itself is read-only and stays exactly as it is.', { name: this.source.name })}</p>
+			<p class="hint">${t('Choose the calendar the entries of this file are added to — the ones it cannot take are left out. The file itself stays untouched.')}</p>
 			<ul class="targets">
 				${targets.map(({ integration, sources }) => html`
 					<li class="account">${integration.credentials?.username || integration.type}</li>
@@ -385,8 +337,8 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 		return html`
 			<div class="journey">
 				<span class="end">
-					<mitra-source-icon .source=${this.source}></mitra-source-icon>
-					<span class="name">${this.source.name}</span>
+					<mitra-icon icon="file"></mitra-icon>
+					<span class="name">${this.parameters.fileName}</span>
 				</span>
 				<mitra-icon class="arrow" icon="arrow-right"></mitra-icon>
 				<span class="end">
@@ -407,43 +359,18 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 	}
 
 	private runningTemplate(plan: MigrationPlan) {
-		const count = plan.movingCount(this.flatten === true)
 		return html`
 			${this.journeyTemplate}
-			${this.waitingTemplate(this.keepOriginals
-			? t('Copying ${count:pluralityNumber} entries…', { count })
-			: t('Moving ${count:pluralityNumber} entries…', { count }))}
-		`
-	}
-
-	private seriesTemplate(plan: MigrationPlan) {
-		const series = plan.flattenable
-		const occurrences = series.reduce((total, verdict) => total + (verdict.occurrences ?? 0), 0)
-		return html`
-			<mitra-choices>
-				<mitra-choice autofocus icon="repeat" @click=${() => this.flatten = false}>
-					${t('Leave them here')}
-					<span class="count">${t('${count:pluralityNumber} entries', { count: series.length })}</span>
-				</mitra-choice>
-				<mitra-choice icon="copy" @click=${() => this.flatten = true}>
-					${t('Flatten into single entries')}
-					<span class="count">${t('${count:pluralityNumber} entries', { count: occurrences })}</span>
-				</mitra-choice>
-			</mitra-choices>
-			<p class="hint">${t('Flattening writes out a year of occurrences as separate entries. They stop repeating, and links pointing at the series are left behind.')}</p>
+			${this.waitingTemplate(t('Adding ${count:pluralityNumber} entries…', { count: plan.movingCount(false) }))}
 		`
 	}
 
 	private planTemplate(plan: MigrationPlan) {
-		const flatten = this.flatten === true
-		const moving = plan.movingCount(flatten)
-		const arriving = plan.creations(flatten)
-		const blocked = plan.blocked(flatten)
+		const adding = plan.movingCount(false)
+		const blocked = plan.blocked(false)
 		return html`
 			${this.journeyTemplate}
-			<p class="lead">${this.canMove
-			? t('${count:pluralityNumber} of ${total:number} entries move', { count: moving, total: plan.total })
-			: t('${count:pluralityNumber} of ${total:number} entries are copied', { count: moving, total: plan.total })}</p>
+			<p class="lead">${t('${count:pluralityNumber} of ${total:number} entries are added', { count: adding, total: plan.total })}</p>
 			<ul class="report">
 				${!plan.cleanCount ? html.nothing : html`
 					<li class="clean">
@@ -459,42 +386,25 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 						${MigrationPlan.lossLabel(loss, count, this.target!)}
 					</li>
 				`)}
-				${plan.blockers(flatten).map(([blocker, count]) => html`
+				${plan.blockers(false).map(([blocker, count]) => html`
 					<li class="blocked">
 						<mitra-icon icon="ban"></mitra-icon>
 						<span>
-							${this.canMove
-								? t('${reason}, kept here', { reason: MigrationPlan.blockerLabel(blocker, count) })
-								: t('${reason}, left out', { reason: MigrationPlan.blockerLabel(blocker, count) })}
+							${t('${reason}, left out', { reason: MigrationPlan.blockerLabel(blocker, count) })}
 							${!blocked.length ? html.nothing : this.namesTemplate(blocked)}
 						</span>
 					</li>
 				`)}
-				${arriving === moving ? html.nothing : html`
-					<li class="clean">
-						<mitra-icon icon="copy"></mitra-icon>
-						${t('${count:pluralityNumber} entries arrive, the flattened series included', { count: arriving })}
-					</li>
-				`}
 			</ul>
 			<p class="assurance">
 				<mitra-icon icon="shield-check"></mitra-icon>
-				${this.canMove
-				? t('Nothing is deleted here until its copy has landed')
-				: t('The originals stay exactly where they are')}
+				${t('The file stays exactly as it is')}
 			</p>
-			${this.migration.status !== TaskStatus.ERROR ? html.nothing : html`
-				<p class="failure">${this.migration.error instanceof Error ? this.migration.error.message : String(this.migration.error)}</p>
+			${this.importer.status !== TaskStatus.ERROR ? html.nothing : html`
+				<p class="failure">${this.importer.error instanceof Error ? this.importer.error.message : String(this.importer.error)}</p>
 			`}
-			${!this.canMove ? html.nothing : html`
-				<button slot="footer" ?disabled=${!moving}
-					title=${t('Leave the originals here and add a copy over there')}
-					@click=${() => this.start(true)}>
-					${t('Copy instead')}
-				</button>
-			`}
-			<button slot="footer" class="primary" ?disabled=${!moving} @click=${() => this.start(!this.canMove)}>
-				${this.canMove ? t('Move ${count:pluralityNumber} entries', { count: moving }) : t('Copy ${count:pluralityNumber} entries', { count: moving })}
+			<button slot="footer" class="primary" ?disabled=${!adding} @click=${() => void this.importer.run()}>
+				${t('Add ${count:pluralityNumber} entries', { count: adding })}
 			</button>
 		`
 	}
@@ -512,16 +422,10 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 					<mitra-icon icon=${outcome.aborted ? 'alert-triangle' : 'check'}></mitra-icon>
 				</span>
 				${outcome.aborted ? this.abortedTemplate(outcome) : html`
-					<p class="headline">${this.keepOriginals
-					? t('${count:pluralityNumber} entries copied to ${name}', { count: outcome.created, name: this.target!.name })
-					: t('${count:pluralityNumber} entries moved to ${name}', { count: outcome.moved, name: this.target!.name })}</p>
-					${!outcome.left && !outcome.duplicates ? html.nothing : html`
+					<p class="headline">${t('${count:pluralityNumber} entries added to ${name}', { count: outcome.created, name: this.target!.name })}</p>
+					${!outcome.left ? html.nothing : html`
 						<div class="detail">
-							${!outcome.left ? html.nothing : html`<span>${t('${count:pluralityNumber} stayed in ${name}', { count: outcome.left, name: this.source.name })}</span>`}
-							${!outcome.duplicates ? html.nothing : html`
-								<span>${t('${count:pluralityNumber} are now in both calendars', { count: outcome.duplicates })}</span>
-								<span>${t('Their copies landed but the originals could not be deleted — delete them here by hand.')}</span>
-							`}
+							<span>${t('${count:pluralityNumber} were left out', { count: outcome.left })}</span>
 						</div>
 					`}
 				`}
@@ -531,13 +435,13 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 
 	private abortedTemplate(outcome: MigrationOutcome) {
 		return html`
-			<p class="headline">${t('Every entry is still in ${name}. Nothing was deleted.', { name: this.source.name })}</p>
+			<p class="headline">${t('Nothing from the file was added.')}</p>
 			<div class="detail">
 				<span class="failure">${!outcome.failedEntry
 				? outcome.failure
-				: t('"${heading}" could not be copied: ${message}', { heading: outcome.failedEntry, message: outcome.failure ?? '' })}</span>
+				: t('"${heading}" could not be added: ${message}', { heading: outcome.failedEntry, message: outcome.failure ?? '' })}</span>
 				${!outcome.duplicates ? html.nothing : html`
-					<span>${t('${count:pluralityNumber} copies could not be taken back and are now in both calendars.', { count: outcome.duplicates })}</span>
+					<span>${t('${count:pluralityNumber} landed anyway and could not be taken back — delete them in ${name} by hand.', { count: outcome.duplicates, name: this.target!.name })}</span>
 				`}
 			</div>
 		`
@@ -550,6 +454,6 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 
 declare global {
 	interface HTMLElementTagNameMap {
-		'mitra-dialog-source-migration': DialogSourceMigration
+		'mitra-dialog-ics-import': DialogIcsImport
 	}
 }

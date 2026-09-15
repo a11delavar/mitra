@@ -7,6 +7,7 @@ export {}
 
 declare global {
 	interface LocalizableStringKeys {
+		"\"${heading}\" could not be added: ${message}": unknown
 		"\"${heading}\" could not be copied: ${message}": unknown
 		"\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks are still open.": unknown
 		"${count:number} min": unknown
@@ -21,17 +22,20 @@ declare global {
 		"${count:pluralityNumber} copies could not be taken back and are now in both calendars.": unknown
 		"${count:pluralityNumber} days": unknown
 		"${count:pluralityNumber} entries": unknown
+		"${count:pluralityNumber} entries added to ${name}": unknown
 		"${count:pluralityNumber} entries arrive, the flattened series included": unknown
 		"${count:pluralityNumber} entries copied to ${name}": unknown
 		"${count:pluralityNumber} entries moved to ${name}": unknown
 		"${count:pluralityNumber} have participants": unknown
 		"${count:pluralityNumber} hours": unknown
+		"${count:pluralityNumber} landed anyway and could not be taken back — delete them in ${name} by hand.": unknown
 		"${count:pluralityNumber} lose their cancelled status": unknown
 		"${count:pluralityNumber} lose their description": unknown
 		"${count:pluralityNumber} lose their location": unknown
 		"${count:pluralityNumber} lose their reminders": unknown
 		"${count:pluralityNumber} lose their time zone": unknown
 		"${count:pluralityNumber} months": unknown
+		"${count:pluralityNumber} of ${total:number} entries are added": unknown
 		"${count:pluralityNumber} of ${total:number} entries are copied": unknown
 		"${count:pluralityNumber} of ${total:number} entries move": unknown
 		"${count:pluralityNumber} participants": unknown
@@ -39,20 +43,23 @@ declare global {
 		"${count:pluralityNumber} stayed in ${name}": unknown
 		"${count:pluralityNumber} stop being all-day": unknown
 		"${count:pluralityNumber} weeks": unknown
+		"${count:pluralityNumber} were left out": unknown
 		"${count:pluralityNumber} years": unknown
 		"${done} of ${total:pluralityNumber} checklist items done": unknown
 		"${done} of ${total:pluralityNumber} steps done": unknown
 		"${done} of ${total:pluralityNumber} subtasks done": unknown
 		"${names} and ${count:pluralityNumber} more": unknown
 		"${percent}% complete": unknown
-		"${reason} and are left out": unknown
-		"${reason} and stay here": unknown
+		"${reason}, kept here": unknown
+		"${reason}, left out": unknown
 		"${span} before": unknown
 		"${status} — click to toggle, Alt-click for options": unknown
 		"About": unknown
 		"About.Keywords": unknown
 		"Account": unknown
 		"Account options": unknown
+		"Add ${count:pluralityNumber} entries": unknown
+		"Add ${name} to a calendar": unknown
 		"Add integration": unknown
 		"Add Integration": unknown
 		"Add participant": unknown
@@ -61,7 +68,10 @@ declare global {
 		"Add reminder": unknown
 		"Add Task": unknown
 		"Add time zone": unknown
+		"Add to ${name}": unknown
 		"Add your first integration": unknown
+		"Added to ${name}": unknown
+		"Adding ${count:pluralityNumber} entries…": unknown
 		"AddIntegration.Keywords": unknown
 		"Administration": unknown
 		"After": unknown
@@ -98,9 +108,11 @@ declare global {
 		"Calendars": unknown
 		"Cancelled": unknown
 		"Change ${name}…": unknown
+		"Checking what the calendar can take…": unknown
 		"Checking what would be copied…": unknown
 		"Checking what would move…": unknown
 		"Choose a task status": unknown
+		"Choose the calendar the entries of this file are added to — the ones it cannot take are left out. The file itself stays untouched.": unknown
 		"Choose your sources": unknown
 		"Clear custom progress": unknown
 		"click": unknown
@@ -273,8 +285,10 @@ declare global {
 		"No matching entries": unknown
 		"No release notes available": unknown
 		"None": unknown
+		"Nothing from the file was added.": unknown
 		"Nothing is deleted here until its copy has landed": unknown
 		"Nothing planned yet — draw a task on the row below": unknown
+		"Nothing was added": unknown
 		"Nothing was copied": unknown
 		"Nothing was moved": unknown
 		"Notifications": unknown
@@ -386,6 +400,7 @@ declare global {
 		"the ${ordinal} ${weekday}": unknown
 		"The calendars of your Google account": unknown
 		"The calendars of your iCloud account": unknown
+		"The file stays exactly as it is": unknown
 		"The hours you book on Jira issues": unknown
 		"the last ${weekday}": unknown
 		"The originals stay exactly where they are": unknown
@@ -394,6 +409,7 @@ declare global {
 		"Their copies landed but the originals could not be deleted — delete them here by hand.": unknown
 		"Theme": unknown
 		"ThemeSetting.Keywords": unknown
+		"There is no calendar the file could be added to.": unknown
 		"There is no other calendar these entries could move to.": unknown
 		"This and following entries": unknown
 		"This and its ${count:pluralityNumber} subtasks": unknown

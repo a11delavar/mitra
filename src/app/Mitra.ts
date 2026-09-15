@@ -1,5 +1,5 @@
 import { component, css } from '@a11d/lit'
-import { Application, application } from '@a11d/lit-application'
+import { Application, application, DialogCancelledError } from '@a11d/lit-application'
 import { fetchIntegrations, fetchMeta, fetchUser, getIntegrations, getMeta, getUser } from '../infrastructure/http/Api.js'
 import { Weeks } from '../features/calendar/client/Weeks.js'
 import { Months } from '../features/calendar/client/Months.js'
@@ -17,6 +17,9 @@ import { DialogAbout, markChangesSeen } from '../features/about/client/DialogAbo
 import { DialogIntegration } from '../integrations/client/DialogIntegration.js'
 import { DialogWelcome } from '../features/onboarding/client/DialogWelcome.js'
 import { DialogSourceMigration } from '../features/migration/client/DialogSourceMigration.js'
+import { DialogIcsImport } from '../features/migration/client/DialogIcsImport.js'
+import { IcsSubscription } from '../integrations/ics/IcsSubscription.js'
+import { consumeSubscribeParameter, observeFileDrops, observeLaunches } from './launch.js'
 import { DialogKeyboardShortcuts } from '../features/commands/client/DialogKeyboardShortcuts.js'
 import { DialogSettings } from '../features/settings/client/DialogSettings.js'
 import { SettingRow } from '../features/settings/client/SettingRow.js'
@@ -77,6 +80,7 @@ export class Mitra extends Application {
 	protected override async initialized() {
 		Mitra.trackFocusModality()
 		const pendingIntegrationId = Mitra.consumePendingIntegrationParameter()
+		const subscribeUrl = consumeSubscribeParameter()
 		await Promise.all([fetchIntegrations(), fetchUser(), fetchMeta()])
 		document.title = this.documentTitle
 		syncPushSubscription()
@@ -85,15 +89,49 @@ export class Mitra extends Application {
 			markChangesSeen()
 		}
 		await super.initialized()
+		// Warm OS launches (focus-existing) and file opens arrive here even while another dialog is up.
+		observeLaunches({
+			subscribe: url => void Mitra.subscribe(url),
+			files: files => void Mitra.addCalendarFiles(files),
+		})
+		observeFileDrops(files => void Mitra.addCalendarFiles(files))
 		if (pendingIntegrationId) {
 			await new DialogIntegration({ id: pendingIntegrationId, preselectSources: true }).confirm()
 			document.querySelector('mitra-sidebar')?.requestUpdate()
+		} else if (subscribeUrl) {
+			await Mitra.subscribe(subscribeUrl)
 		} else if (!getIntegrations().length) {
 			if (await new DialogWelcome().confirm()) {
 				await new DialogIntegration({}).confirm()
 				document.querySelector('mitra-sidebar')?.requestUpdate()
 			}
 		}
+	}
+
+	/** Opens the connect dialog prefilled with a subscription for a webcal: (or .ics link) launch. */
+	private static async subscribe(url: string) {
+		const normalized = IcsSubscription.normalizeUrl(url)
+		if (!normalized) {
+			return
+		}
+		await new DialogIntegration({ prefill: new IcsSubscription({ uri: normalized }) }).confirm()
+			.catch(Mitra.absorbCancellation)
+		document.querySelector('mitra-sidebar')?.requestUpdate()
+	}
+
+	/** Runs the add-to-calendar flow for opened or dropped .ics files, one at a time. */
+	private static async addCalendarFiles(files: ReadonlyArray<File>) {
+		for (const file of files) {
+			await new DialogIcsImport({ fileName: file.name, ics: await file.text() }).confirm()
+				.catch(Mitra.absorbCancellation)
+		}
+	}
+
+	private static absorbCancellation(error: unknown) {
+		if (!(error instanceof DialogCancelledError)) {
+			throw error
+		}
+		return undefined
 	}
 
 	/** Window title derived from page heading and instance name. */
@@ -207,6 +245,7 @@ export class Mitra extends Application {
 			${DialogIntegration.styles}
 			${DialogWelcome.styles}
 			${DialogSourceMigration.styles}
+			${DialogIcsImport.styles}
 			${DialogKeyboardShortcuts.styles}
 			${DialogSettings.styles}
 			${SettingRow.styles}

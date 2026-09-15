@@ -1,5 +1,7 @@
 import { model } from '../../infrastructure/model/model.js'
 import { type Source } from '../sources/Source.js'
+import { type Entry, TaskStatus, Transparency, FLOATING_TIME_ZONE } from '../entries/Entry.js'
+import { type Integration } from '../../integrations/Integration.js'
 
 /** Target capability that prevents moving an entry (evaluated up front). */
 export type MigrationBlocker = 'recurrence' | 'occurrence' | 'participants' | 'transparency' | 'visibility' | 'percentComplete'
@@ -19,6 +21,69 @@ export class MigrationVerdict {
 
 	constructor(init?: Partial<MigrationVerdict>) {
 		Object.assign(this, init)
+	}
+
+	/** Assesses one entry against a target's capabilities. `occurrence` marks entries entangled with
+	 * edited occurrences; `occurrences` is read lazily, only when recurrence actually blocks. */
+	static assess(entry: Entry, { target, capabilities, occurrence, occurrences }: {
+		target: Source
+		capabilities: Integration['capabilities']
+		occurrence: boolean
+		occurrences?: () => number | null
+	}): MigrationVerdict {
+		const blockers = new Array<MigrationBlocker>()
+		const losses = new Array<MigrationLoss>()
+
+		if (occurrence) {
+			blockers.push('occurrence')
+		}
+		if (entry.recurrence?.freq && !capabilities.recurrence) {
+			blockers.push('recurrence')
+		}
+		if (entry.participants?.length && !capabilities.participants) {
+			blockers.push('participants')
+		}
+		// Only 'Free' transparency is a blocker; default opaque is preserved implicitly.
+		if (entry.transparency === Transparency.Free && !capabilities.transparency) {
+			blockers.push('transparency')
+		}
+		if (entry.visibility && !capabilities.visibility) {
+			blockers.push('visibility')
+		}
+		if (entry.percentComplete !== null && entry.percentComplete !== undefined && !capabilities.percentComplete) {
+			blockers.push('percentComplete')
+		}
+
+		if (entry.reminders?.length && !capabilities.reminders) {
+			losses.push('reminders')
+		}
+		if (entry.location && !capabilities.location) {
+			losses.push('location')
+		}
+		if (entry.description && !capabilities.description) {
+			losses.push('description')
+		}
+		// Floating time zone is not a named zone, so it has no zone loss.
+		if (entry.timeZone && entry.timeZone !== FLOATING_TIME_ZONE && !capabilities.timeZone) {
+			losses.push('timeZone')
+		}
+		if (entry.allDay && !capabilities.allDay) {
+			losses.push('allDay')
+		}
+		if (entry.status === TaskStatus.Cancelled && !capabilities.cancelledStatus) {
+			losses.push('cancelledStatus')
+		}
+		if (!target.supportsEntryType(entry.type)) {
+			losses.push('type')
+		}
+
+		return new MigrationVerdict({
+			entryId: entry.id!,
+			heading: entry.heading,
+			blockers,
+			losses,
+			occurrences: !blockers.includes('recurrence') ? null : occurrences?.() ?? null,
+		})
 	}
 
 	/** True if entry moves with all fields intact. */

@@ -3,10 +3,10 @@ import { type DateTime } from '@3mo/date-time'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
 import { Integration } from '../../../integrations/Integration.js'
 import { type User } from '../../identity/User.js'
-import { Entry, FLOATING_TIME_ZONE, TaskStatus, Transparency } from '../../entries/Entry.js'
+import { Entry } from '../../entries/Entry.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
 import { Occurrences, exdatesOf } from '../../recurrence/server/occurrences.js'
-import { MigrationOutcome, MigrationPlan, MigrationVerdict, type MigrationBlocker, type MigrationLoss } from '../MigrationPlan.js'
+import { MigrationOutcome, MigrationPlan, MigrationVerdict } from '../MigrationPlan.js'
 import { type Source } from '../../sources/Source.js'
 
 const logger = createLogger('Migration')
@@ -94,59 +94,11 @@ export class SourceMigration {
 
 	/** Computes blockers and field losses for an entry based on target capabilities. */
 	private verdictFor(entry: Entry): MigrationVerdict {
-		const capabilities = this.targetIntegration.capabilitiesFor(this.target)
-		const blockers = new Array<MigrationBlocker>()
-		const losses = new Array<MigrationLoss>()
-
-		if (entry.recurrenceId || (entry.id && this.overriddenMasterIds.has(entry.id))) {
-			blockers.push('occurrence')
-		}
-		if (entry.recurrence?.freq && !capabilities.recurrence) {
-			blockers.push('recurrence')
-		}
-		if (entry.participants?.length && !capabilities.participants) {
-			blockers.push('participants')
-		}
-		// Only 'Free' transparency is a blocker; default opaque is preserved implicitly.
-		if (entry.transparency === Transparency.Free && !capabilities.transparency) {
-			blockers.push('transparency')
-		}
-		if (entry.visibility && !capabilities.visibility) {
-			blockers.push('visibility')
-		}
-		if (entry.percentComplete !== null && entry.percentComplete !== undefined && !capabilities.percentComplete) {
-			blockers.push('percentComplete')
-		}
-
-		if (entry.reminders?.length && !capabilities.reminders) {
-			losses.push('reminders')
-		}
-		if (entry.location && !capabilities.location) {
-			losses.push('location')
-		}
-		if (entry.description && !capabilities.description) {
-			losses.push('description')
-		}
-		// Floating time zone is not a named zone, so it has no zone loss.
-		if (entry.timeZone && entry.timeZone !== FLOATING_TIME_ZONE && !capabilities.timeZone) {
-			losses.push('timeZone')
-		}
-		if (entry.allDay && !capabilities.allDay) {
-			losses.push('allDay')
-		}
-		if (entry.status === TaskStatus.Cancelled && !capabilities.cancelledStatus) {
-			losses.push('cancelledStatus')
-		}
-		if (!this.target.supportsEntryType(entry.type)) {
-			losses.push('type')
-		}
-
-		return new MigrationVerdict({
-			entryId: entry.id!,
-			heading: entry.heading,
-			blockers,
-			losses,
-			occurrences: !blockers.includes('recurrence') ? null : this.occurrencesOf(entry)?.length ?? null,
+		return MigrationVerdict.assess(entry, {
+			target: this.target,
+			capabilities: this.targetIntegration.capabilitiesFor(this.target),
+			occurrence: !!entry.recurrenceId || (!!entry.id && this.overriddenMasterIds.has(entry.id)),
+			occurrences: () => this.occurrencesOf(entry)?.length ?? null,
 		})
 	}
 

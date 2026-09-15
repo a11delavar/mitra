@@ -198,17 +198,17 @@ export class IcsSyncEngine implements SyncEngine {
 		return changed
 	}
 
-	private static modelledComponents(calendar: ICAL.Component): Array<ICAL.Component> {
+	static modelledComponents(calendar: ICAL.Component): Array<ICAL.Component> {
 		return ['vevent', 'vtodo'].flatMap(name => calendar.getAllSubcomponents(name))
 	}
 
 	/** Generates a stable synthetic UID for UID-less components by hashing component content. */
-	private static syntheticUid(component: ICAL.Component): string {
+	static syntheticUid(component: ICAL.Component): string {
 		return `mitra-ics-${createHash('sha256').update(component.toString()).digest('hex').slice(0, 32)}`
 	}
 
 	/** Serializes components and referenced VTIMEZONEs into a standalone VCALENDAR string. */
-	private static serialize(components: ReadonlyArray<ICAL.Component>, timezones: ReadonlyArray<ICAL.Component>): string {
+	static serialize(components: ReadonlyArray<ICAL.Component>, timezones: ReadonlyArray<ICAL.Component>): string {
 		const referenced = new Set(components.flatMap(component => component.getAllProperties()
 			.map(property => property.getParameter('tzid')?.toString())
 			.filter((tzid): tzid is string => !!tzid)))

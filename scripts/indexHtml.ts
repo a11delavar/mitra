@@ -74,10 +74,18 @@ export async function writeIndexHtml() {
 	for (const { name, contents } of [...generated.images, ...generated.files]) {
 		if (name === 'manifest.webmanifest') {
 			const manifest = JSON.parse(contents.toString())
+			manifest.id = '/'
 			manifest.display_override = ['window-controls-overlay']
 			// Omit orientation property so Android respects the user's rotation lock.
 			delete manifest.orientation
 			manifest.icons = [...manifest.icons.filter(({ src }: { src: string }) => !isSurplusMaskable(src)), ...monochromeIcons]
+			// OS-level calendar app registration: installed instances open .ics files and webcal: links.
+			// focus-existing routes every launch into the running window as LaunchParams (src/app/launch.ts)
+			// instead of navigating it, so the calendar keeps its state.
+			manifest.launch_handler = { client_mode: 'focus-existing' }
+			manifest.file_handlers = [{ action: '/', accept: { 'text/calendar': ['.ics'] } }]
+			manifest.protocol_handlers = [{ protocol: 'webcal', url: '/?subscribe=%s' }]
+			manifest.categories = ['productivity', 'utilities']
 			fs.writeFileSync(join(distDir, name), JSON.stringify(manifest, null, 2))
 			continue
 		}
