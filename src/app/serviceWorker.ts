@@ -69,7 +69,7 @@ worker.addEventListener('push', event => {
 		body: new ReminderNotification(payload).bodyAt(Date.now()),
 		tag: payload.tag,
 		renotify: true,
-		badge: '/android-chrome-192x192.png',
+		badge: '/notification-badge.png',
 		timestamp: payload.timestamp,
 		requireInteraction: true,
 		data: payload,

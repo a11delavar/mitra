@@ -30,6 +30,7 @@
 		"eslint": "9.x",
 		"favicons": "7.x",
 		"git-cliff": "2.x",
+		"sharp": "0.35.x",
 		"tsx": "4.x"
 	},
 	"dependencies": {
