@@ -145,6 +145,7 @@ declare global {
 		"Copying ${count:pluralityNumber} entries…": unknown
 		"CopyVersion.Keywords": unknown
 		"Could not load your devices.": unknown
+		"Create": unknown
 		"Create and move entries right on the grid — every change syncs back to its source.": unknown
 		"Create Entry": unknown
 		"CreateEntry.Keywords": unknown

@@ -63,13 +63,21 @@ interface SubscriptionChangeLikeEvent {
 // this a new version idles in "waiting" until every mitra tab closes.
 worker.addEventListener('install', () => worker.skipWaiting())
 
+// The colored mark is what every platform that shows a picture gets: Windows' toast app logo, the
+// desktop message center, Android's large icon. The badge is the exception — Android's status bar keeps
+// only its alpha channel, so there it must be the monochrome silhouette, which everywhere else would
+// render as a white smudge.
+const appIcon = '/android-chrome-192x192.png'
+const badge = /Android/i.test(navigator.userAgent) ? '/notification-badge.png' : appIcon
+
 worker.addEventListener('push', event => {
 	const payload = (event.data?.json() ?? {}) as PushPayload
 	event.waitUntil(worker.registration.showNotification(payload.title || 'Mitra', {
 		body: new ReminderNotification(payload).bodyAt(Date.now()),
 		tag: payload.tag,
 		renotify: true,
-		badge: '/notification-badge.png',
+		icon: appIcon,
+		badge,
 		timestamp: payload.timestamp,
 		requireInteraction: true,
 		data: payload,

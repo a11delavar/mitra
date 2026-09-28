@@ -21,7 +21,8 @@ export interface CalendarScrollGeometry {
 
 	equivalent(a: DateTime, b: DateTime): boolean
 
-	arrived?(date: DateTime): void
+	/** Where the other axis rests on arriving at `date`. Both axes move in one scroll, so a glide is never cancelled halfway. */
+	arrival?(date: DateTime): number | undefined
 }
 
 /**
@@ -40,28 +41,50 @@ export class CalendarScrollController extends Controller {
 		super(host)
 	}
 
-	/** Navigate to date and anchor scroll position. */
+	/** Navigate to date and anchor scroll position, gliding there when it is near and the days in view stay loaded. */
 	navigate(date: DateTime) {
+		const days = this.dates.days
 		this.dates.navigatingDate = date
-		void this.anchor(date).then(() => this.geometry.arrived?.(date))
+		void this.anchor(date, { arrive: true, glide: this.anchored && (() => this.dates.days === days) })
 	}
 
-	/** Anchor scroll offset to the specified date. */
-	async anchor(date = this.dates.navigatingDate) {
+	private anchored = false
+	private glideRunning = false
+
+	/** Any other write to the scroller while this is true cancels the glide. */
+	get gliding() { return this.glideRunning }
+
+	/**
+	 * Anchor scroll offset to the specified date. A glide happens only within two viewports and without
+	 * reduced motion; while it runs the offset is not read back into a date, which would chase the glide.
+	 */
+	async anchor(date = this.dates.navigatingDate, { glide, arrive }: { glide?: false | (() => boolean), arrive?: boolean } = {}) {
 		await this.host.updateComplete
 		const scroller = this.geometry.scroller()
 		const offset = scroller ? this.geometry.offsetOf(date) : undefined
 		if (!scroller || offset === undefined) {
 			return
 		}
-		const distance = this.geometry.axis === 'inline'
+		const inline = this.geometry.axis === 'inline'
+		const distance = inline
 			? Math.max(0, Math.min(offset, scroller.scrollWidth - scroller.clientWidth))
 			: Math.max(0, Math.min(offset, scroller.scrollHeight - scroller.clientHeight))
-		if (this.geometry.axis === 'inline') {
-			scroller.scrollLeft = getComputedStyle(scroller).direction === 'rtl' ? -distance : distance
-		} else {
-			scroller.scrollTop = distance
+		const current = inline ? Math.abs(scroller.scrollLeft) : scroller.scrollTop
+		const viewport = inline ? scroller.clientWidth : scroller.clientHeight
+		const smooth = !!glide && glide() && Math.abs(distance - current) >= 1 && Math.abs(distance - current) <= viewport * 2
+			&& !matchMedia('(prefers-reduced-motion: reduce)').matches
+		const position = inline && getComputedStyle(scroller).direction === 'rtl' ? -distance : distance
+		const cross = arrive ? this.geometry.arrival?.(date) : undefined
+		if (smooth) {
+			this.glideRunning = true
+			scroller.addEventListener('scrollend', () => this.glideRunning = false, { once: true })
 		}
+		scroller.scrollTo({
+			[inline ? 'left' : 'top']: position,
+			...(cross === undefined ? {} : { [inline ? 'top' : 'left']: cross }),
+			behavior: smooth ? 'smooth' : 'instant',
+		})
+		this.anchored = true
 		this.signature = this.currentSignature
 	}
 
@@ -81,7 +104,7 @@ export class CalendarScrollController extends Controller {
 	@eventListener('scroll', { capture: true, passive: true })
 	protected handleScroll(e: Event) {
 		const scroller = this.geometry.scroller()
-		if (!scroller || e.target !== scroller || !this.geometry.ready() || this.geometry.suspended?.()) {
+		if (!scroller || e.target !== scroller || this.gliding || !this.geometry.ready() || this.geometry.suspended?.()) {
 			return
 		}
 		const signature = this.currentSignature

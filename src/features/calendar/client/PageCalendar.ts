@@ -8,6 +8,9 @@ import { EntryStore } from '../../entries/client/EntryStore.js'
 import { EntryFetcherController } from '../../entries/client/EntryFetcherController.js'
 import { CommandPalette } from '../../commands/client/CommandPalette.js'
 import { commandInstances, sourceCommands, settingCommands } from '../../../app/commands.js'
+import { type Command } from '../../commands/Command.js'
+import { GoToToday, NextPeriod, PreviousPeriod } from './navigationCommands.js'
+import { CreateEntry } from '../../entries/client/commands.js'
 import { type CalendarView } from '../CalendarView.js'
 import { CalendarLocation, type CalendarParameters } from './CalendarLocation.js'
 import { DefaultViewSetting } from './DefaultViewSetting.js'
@@ -126,6 +129,38 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 
 	get commands() { return commandInstances() }
 
+	/** The header's buttons are the commands' own, so they read and act as the keys do. */
+	private command<T extends Command>(type: abstract new () => T) {
+		return this.commands.find((command): command is T => command instanceof type)
+	}
+
+	/** The period in view. The week view also names its week, the one of its center day, so each step changes the heading. */
+	private get headingTemplate() {
+		const date = this.navigatingDate
+		if (this.view === 'year') {
+			return html`<h1>${date.format({ year: 'numeric' })}</h1>`
+		}
+		const week = this.view === 'week' ? date.weekOfYear : undefined
+		return html`
+			<h1>
+				<span class="month">${date.format({ month: 'long', year: 'numeric' })}</span>
+				<span class="month short">${date.format({ month: 'short', year: 'numeric' })}</span>
+				${week === undefined ? html.nothing : html`<span class="week">${t('Week ${week:number}', { week })}</span>`}
+			</h1>
+		`
+	}
+
+	private commandButton(type: abstract new () => Command, { className, icon, label }: { className: string, icon: string, label?: string }) {
+		const command = this.command(type)
+		const keys = command?.keyLabels?.join(' ')
+		return !command ? html.nothing : html`
+			<button class=${className} title=${keys ? `${command.heading} (${keys})` : command.heading} @click=${() => void command.dispatch()}>
+				<mitra-icon icon=${icon}></mitra-icon>
+				${!label ? html.nothing : html`<span>${label}</span> <kbd>${keys}</kbd>`}
+			</button>
+		`
+	}
+
 	private get paletteCommands() {
 		return [...sourceCommands(), ...this.commands, ...settingCommands()]
 	}
@@ -226,6 +261,12 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 						gap: 0.75rem;
 						padding: 0.75rem 1.25rem;
 
+						/* Before the window-controls rule, whose end padding clears the title bar buttons. */
+						@container (max-width: 40rem) {
+							gap: 0.5rem;
+							padding-inline: 1rem;
+						}
+
 						@media (display-mode: window-controls-overlay) {
 							box-sizing: border-box;
 							min-height: env(titlebar-area-height, auto);
@@ -243,19 +284,37 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 							}
 						}
 
+						/* Equal shares center the search. Neither side gives up its content for it: the search box shrinks first. */
 						.leading, .trailing {
 							flex: 1 0 0;
-							min-width: 0;
 							display: flex;
 							align-items: center;
 							gap: 0.75rem;
+
+							@container (max-width: 40rem) {
+								gap: 0.5rem;
+							}
+						}
+
+						/* Once the search is an icon, the heading is what gives way. */
+						.leading {
+							@container (max-width: 52rem) {
+								min-inline-size: 0;
+							}
 						}
 
 						.trailing {
 							justify-content: flex-end;
 						}
 
+						/* One line. Where the heading gives way, the week wraps out of sight before the month clips. */
 						h1 {
+							display: flex;
+							align-items: baseline;
+							column-gap: 0.375rem;
+							block-size: 1lh;
+							min-inline-size: 0;
+							overflow: hidden;
 							padding: 0;
 							margin: 0;
 							font-size: 1.125rem;
@@ -263,25 +322,107 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 							letter-spacing: -0.01em;
 							color: var(--color-text);
 							white-space: nowrap;
+
+							> .month {
+								min-inline-size: 0;
+								overflow: hidden;
+								text-overflow: ellipsis;
+
+								&.short {
+									display: none;
+								}
+							}
+
+							> .week {
+								font-weight: 500;
+								color: var(--color-text-muted);
+							}
+
+							@container (max-width: 52rem) {
+								flex-wrap: wrap;
+							}
+
+							@container (max-width: 40rem) {
+								> .month {
+									display: none;
+
+									&.short {
+										display: block;
+									}
+								}
+							}
 						}
 
 						.toggle {
 							font-size: 20px;
 						}
 
-						.today {
+						.today, .create {
 							mitra-icon {
 								display: none;
 								font-size: 1rem;
 							}
 
 							@container (max-width: 40rem) {
+								aspect-ratio: 1;
+								padding-inline: 0;
+
 								mitra-icon {
 									display: inline-flex;
 								}
 
 								span {
 									display: none;
+								}
+							}
+						}
+
+						/* Its plus says what it does at every width. */
+						.create mitra-icon {
+							display: inline-flex;
+						}
+
+						/* One control, its buttons sharing borders. Phones step by swiping, so there it is Today alone. */
+						.period {
+							display: flex;
+
+							> button {
+								&:not(:first-child) {
+									margin-inline-start: -1px;
+									border-start-start-radius: 0;
+									border-end-start-radius: 0;
+								}
+
+								&:not(:last-child) {
+									border-start-end-radius: 0;
+									border-end-end-radius: 0;
+								}
+
+								&:focus-visible {
+									z-index: 1;
+								}
+							}
+
+							> .previous, > .next {
+								padding-inline: 0.5rem;
+
+								mitra-icon {
+									font-size: 1rem;
+
+									&:dir(rtl) {
+										scale: -1 1;
+									}
+								}
+							}
+
+							@container (max-width: 40rem) {
+								> .previous, > .next {
+									display: none;
+								}
+
+								> .today {
+									margin-inline-start: 0;
+									border-radius: var(--border-radius);
 								}
 							}
 						}
@@ -304,8 +445,8 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 						}
 
 						.search {
-							width: 18rem;
-							flex-shrink: 0;
+							flex: 0 1 18rem;
+							min-inline-size: 7rem;
 							justify-content: flex-start;
 							border-radius: calc(2 * var(--border-radius));
 							font-weight: 400;
@@ -315,12 +456,17 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 								text-align: start;
 								white-space: nowrap;
 								overflow: hidden;
+								text-overflow: ellipsis;
 								color: var(--color-text-muted);
 							}
 
-							@container (max-width: 44rem) {
-								width: auto;
+							@container (max-width: 52rem) {
+								flex: none;
+								min-inline-size: 0;
 								border-radius: var(--border-radius);
+								aspect-ratio: 1;
+								justify-content: center;
+								padding-inline: 0;
 
 								span, kbd {
 									display: none;
@@ -328,7 +474,7 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 							}
 						}
 
-						@container (max-width: 44rem) {
+						@container (max-width: 52rem) {
 							.trailing {
 								flex: none;
 							}
@@ -385,7 +531,7 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 					<header>
 						<div class="leading">
 							<mitra-icon-button class="toggle" icon="panel-left" label=${t('Toggle sidebar')} @click=${this.toggleSidebar}></mitra-icon-button>
-							<h1>${this.navigatingDate.format(this.view === 'year' ? { year: 'numeric' } : { month: 'long', year: 'numeric' })}</h1>
+							${this.headingTemplate}
 						</div>
 						<button class="search" title=${t('Search or run a command (${hotkey})', { hotkey: CommandPalette.hotkey })} @click=${() => this.palette.show()}>
 							<mitra-icon icon="search"></mitra-icon>
@@ -400,10 +546,12 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 								</button>
 								${[{ value: 'year', label: t('Year'), key: 'Y' }, { value: 'month', label: t('Month'), key: 'M' }, { value: 'week', label: t('Week'), key: 'W' }, { value: 'timeline', label: t('Timeline'), key: 'L' }].map(o => html`<option value=${o.value} ?selected=${o.value === this.view}>${o.label}${PageCalendar.customizableSelectsSupported ? html`<kbd>${o.key}</kbd>` : html.nothing}</option>`)}
 							</select>
-							<button class="today" @click=${() => this.navigatingDate = new DateTime()}>
-								<mitra-icon icon="calendar-1"></mitra-icon>
-								<span>${t('Today')}</span> <kbd>T</kbd>
-							</button>
+							${this.commandButton(CreateEntry, { className: 'create', icon: 'plus', label: t('Create') })}
+							<div class="period" role="group">
+								${this.commandButton(PreviousPeriod, { className: 'previous', icon: 'chevron-left' })}
+								${this.commandButton(GoToToday, { className: 'today', icon: 'calendar-1', label: t('Today') })}
+								${this.commandButton(NextPeriod, { className: 'next', icon: 'chevron-right' })}
+							</div>
 						</div>
 					</header>
 					<div class="calendar">

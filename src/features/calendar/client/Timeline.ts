@@ -79,7 +79,10 @@ export class Timeline extends Component {
 			return this.days[Math.max(0, Math.min(column, this.days.length - 1))]
 		},
 		equivalent: (a, b) => a.dayStart.equals(b.dayStart),
-		arrived: date => this.revealRowAt(date),
+		arrival: date => {
+			this.blockAnchor = { value: date.dayStart.valueOf(), offset: Math.round(this.clientHeight / 2) }
+			return this.blockTarget
+		},
 	})
 
 	private blockAnchor?: { key?: string, value: number, offset: number }
@@ -165,26 +168,26 @@ export class Timeline extends Component {
 		this.blockAnchor = { key: row.key, value: row.sortValue, offset: metrics.top + index * metrics.height - this.scrollTop }
 	}
 
-	private restoreBlockAnchor() {
+	private get blockTarget() {
 		const anchor = this.blockAnchor
 		const metrics = this.rowMetrics
 		if (!anchor || !metrics || !this.renderedRows.length) {
-			return
+			return undefined
 		}
 		const byKey = anchor.key === undefined ? -1 : this.renderedRows.findIndex(row => row.key === anchor.key)
 		const byDate = this.renderedRows.findIndex(row => row.sortValue >= anchor.value)
 		const index = byKey >= 0 ? byKey : byDate >= 0 ? byDate : this.renderedRows.length - 1
-		const target = Math.max(0, metrics.top + index * metrics.height - anchor.offset)
-		if (Math.abs(this.scrollTop - target) >= 1) {
+		return Math.max(0, metrics.top + index * metrics.height - anchor.offset)
+	}
+
+	/** Held while navigation glides, which already carries the rows to the anchor. */
+	private restoreBlockAnchor() {
+		const target = this.scrolling.gliding ? undefined : this.blockTarget
+		if (target !== undefined && Math.abs(this.scrollTop - target) >= 1) {
 			this.restoringBlock = true
 			this.scrollTop = target
 			this.restoringBlock = false
 		}
-	}
-
-	private revealRowAt(date: DateTime) {
-		this.blockAnchor = { value: date.dayStart.valueOf(), offset: Math.round(this.clientHeight / 2) }
-		this.restoreBlockAnchor()
 	}
 
 	protected override initialized() {
@@ -454,18 +457,6 @@ export class Timeline extends Component {
 					&:hover > .row {
 						background-color: color-mix(in srgb, var(--color-accent) 6%, var(--color-background));
 					}
-
-					.hint {
-						position: sticky;
-						inset-inline-start: 0;
-						inline-size: max-content;
-						display: flex;
-						align-items: center;
-						gap: 0.375rem;
-						padding-inline: 0.75rem;
-						color: var(--color-text-muted);
-						font-size: 0.75rem;
-					}
 				}
 			}
 		`
@@ -483,13 +474,8 @@ export class Timeline extends Component {
 			${this.backdropTemplate(events)}
 			${this.entriesTemplate(rows, placed)}
 			${!getPrimarySource(EntryType.Task) ? html.nothing : html`
-				<div class="create">
-					<div class="row">
-						<span class="hint">
-							<mitra-icon icon="plus"></mitra-icon>
-							${t('New task')}
-						</span>
-					</div>
+				<div class="create" title=${t('New task')}>
+					<div class="row"></div>
 				</div>
 			`}
 		`

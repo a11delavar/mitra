@@ -19,7 +19,8 @@ export class GoToToday extends Command {
 export class NextPeriod extends Command {
 	get heading() {
 		switch (this.calendar.view) {
-			case 'month': return t('Next Month')
+			case 'month':
+			case 'timeline': return t('Next Month')
 			case 'year': return t('Next Year')
 			default: return t('Next Week')
 		}
@@ -39,7 +40,8 @@ export class NextPeriod extends Command {
 export class PreviousPeriod extends Command {
 	get heading() {
 		switch (this.calendar.view) {
-			case 'month': return t('Previous Month')
+			case 'month':
+			case 'timeline': return t('Previous Month')
 			case 'year': return t('Previous Year')
 			default: return t('Previous Week')
 		}

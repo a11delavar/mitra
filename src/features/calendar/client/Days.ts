@@ -54,7 +54,10 @@ export class Days extends Component {
 			return this.days[Math.min(Math.max(0, centerColumn), this.days.length - 1)]
 		},
 		equivalent: (a, b) => a.dayStart.equals(b.dayStart),
-		arrived: date => this.renderRoot.querySelector(`[data-date="${date.dayStart.toISOString()}"]`)?.scrollIntoView({ block: 'center', inline: 'nearest' }),
+		arrival: date => {
+			const day = this.renderRoot.querySelector(`[data-date="${date.dayStart.toISOString()}"]`)?.getBoundingClientRect()
+			return !day ? undefined : day.top - this.getBoundingClientRect().top - this.clientTop + this.scrollTop + (day.height - this.clientHeight) / 2
+		},
 	})
 
 	protected readonly entryDrag = new EntryDragController(this)
