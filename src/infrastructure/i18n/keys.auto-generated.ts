@@ -40,6 +40,8 @@ declare global {
 		"${count:pluralityNumber} of ${total:number} entries move": unknown
 		"${count:pluralityNumber} participants": unknown
 		"${count:pluralityNumber} repeat": unknown
+		"${count:pluralityNumber} repeating entries: every occurrence goes too.": unknown
+		"${count:pluralityNumber} selected": unknown
 		"${count:pluralityNumber} stayed in ${name}": unknown
 		"${count:pluralityNumber} stop being all-day": unknown
 		"${count:pluralityNumber} weeks": unknown
@@ -115,11 +117,14 @@ declare global {
 		"Choose the calendar the entries of this file are added to — the ones it cannot take are left out. The file itself stays untouched.": unknown
 		"Choose your sources": unknown
 		"Clear custom progress": unknown
+		"Clear filter": unknown
+		"Clear selection": unknown
 		"click": unknown
 		"close": unknown
 		"Close": unknown
 		"Close out the subtasks that are still open": unknown
 		"Color": unknown
+		"Columns": unknown
 		"Commands": unknown
 		"Commit": unknown
 		"Confidential": unknown
@@ -150,6 +155,7 @@ declare global {
 		"Create Entry": unknown
 		"CreateEntry.Keywords": unknown
 		"Ctrl": unknown
+		"Custom range": unknown
 		"Custom…": unknown
 		"Dark": unknown
 		"Date": unknown
@@ -167,6 +173,7 @@ declare global {
 		"DefaultViewSetting.Keywords": unknown
 		"Del": unknown
 		"Delete": unknown
+		"Delete ${count:pluralityNumber} entries?": unknown
 		"Delete entry": unknown
 		"Delete just this entry of a series": unknown
 		"Delete repeating entry": unknown
@@ -184,6 +191,7 @@ declare global {
 		"Drag onto another entry to make it wait for this one": unknown
 		"Duplicate": unknown
 		"Duplicate an entry": unknown
+		"Duration": unknown
 		"Edit": unknown
 		"Edit entry": unknown
 		"Edit integration": unknown
@@ -206,6 +214,8 @@ declare global {
 		"Flattening writes out a year of occurrences as separate entries. They stop repeating, and links pointing at the series are left behind.": unknown
 		"Forward": unknown
 		"Free": unknown
+		"From": unknown
+		"From ${date}": unknown
 		"General": unknown
 		"Go to Date…": unknown
 		"Go to entry": unknown
@@ -217,6 +227,7 @@ declare global {
 		"GoToDate.Keywords": unknown
 		"GoToToday.Keywords": unknown
 		"Hide calendar": unknown
+		"Hide column": unknown
 		"Hide done tasks": unknown
 		"Hide the other time zones": unknown
 		"HideDoneTasksSetting.Keywords": unknown
@@ -229,6 +240,7 @@ declare global {
 		"Integration options": unknown
 		"Integration Token": unknown
 		"Interval": unknown
+		"Keep": unknown
 		"Keep the chain intact": unknown
 		"Keyboard Shortcuts": unknown
 		"KeyboardShortcuts.Keywords": unknown
@@ -265,6 +277,7 @@ declare global {
 		"Move subtasks too?": unknown
 		"Move them all by the same amount": unknown
 		"Move to ${name}": unknown
+		"Move to…": unknown
 		"Move up": unknown
 		"Moved to ${name}": unknown
 		"MoveSourceEntries.Keywords": unknown
@@ -275,6 +288,9 @@ declare global {
 		"Never": unknown
 		"New dev build — ${count:pluralityNumber} commits ahead": unknown
 		"New task": unknown
+		"Next 12 months": unknown
+		"Next 30 days": unknown
+		"Next 7 days": unknown
 		"Next Month": unknown
 		"Next Week": unknown
 		"Next Year": unknown
@@ -282,9 +298,12 @@ declare global {
 		"NextPeriod.Keywords": unknown
 		"No date": unknown
 		"No device is registered for reminders yet.": unknown
+		"No entries in this period": unknown
+		"No entries match the filters": unknown
 		"No matches": unknown
 		"No matching entries": unknown
 		"No release notes available": unknown
+		"No status": unknown
 		"None": unknown
 		"Nothing from the file was added.": unknown
 		"Nothing is deleted here until its copy has landed": unknown
@@ -313,8 +332,10 @@ declare global {
 		"Organizer": unknown
 		"Overdue": unknown
 		"Participant options": unknown
+		"Participants": unknown
 		"Password": unknown
 		"Password (optional)": unknown
+		"Past 30 days": unknown
 		"Pick the calendars and task lists to show — recolor, rename or hide them in the sidebar anytime.": unknown
 		"Plan your days": unknown
 		"Planning": unknown
@@ -349,9 +370,11 @@ declare global {
 		"Rename": unknown
 		"Rename time zone": unknown
 		"Repeat": unknown
+		"Repeating": unknown
 		"Repeating entries cannot repeat in ${name}": unknown
 		"Repeats": unknown
 		"Repository": unknown
+		"Reset columns": unknown
 		"Reset to calendar color": unknown
 		"Reset to default color": unknown
 		"Save": unknown
@@ -363,6 +386,8 @@ declare global {
 		"Search or run a command…": unknown
 		"Search settings…": unknown
 		"select": unknown
+		"Select": unknown
+		"Select all": unknown
 		"Send test": unknown
 		"Server URL": unknown
 		"Set as the default for new entries": unknown
@@ -383,14 +408,20 @@ declare global {
 		"Site URL": unknown
 		"Snap to": unknown
 		"SnapSetting.Keywords": unknown
+		"Sort ascending": unknown
+		"Sort descending": unknown
 		"Sources": unknown
 		"Start date": unknown
 		"Start time": unknown
+		"Status": unknown
 		"Stop notifying this device": unknown
 		"Subtask of": unknown
 		"Subtasks": unknown
 		"Subtasks still open": unknown
 		"Switch to all-day": unknown
+		"Table": unknown
+		"Table View": unknown
+		"TableView.Keywords": unknown
 		"Task": unknown
 		"Tasks": unknown
 		"Tasks without a date land here — drag one onto the calendar to schedule it": unknown
@@ -435,11 +466,13 @@ declare global {
 		"Toggle.Off": unknown
 		"Toggle.On": unknown
 		"ToggleSidebar.Keywords": unknown
+		"Type": unknown
 		"unchanged": unknown
 		"Unknown device": unknown
 		"Unknown entry": unknown
 		"Unreleased": unknown
 		"Unscheduled": unknown
+		"Until": unknown
 		"Untitled": unknown
 		"Update available: ${version}": unknown
 		"Username": unknown
@@ -457,6 +490,7 @@ declare global {
 		"Welcome to ${name}": unknown
 		"What's New": unknown
 		"WhatsNew.Keywords": unknown
+		"When": unknown
 		"Where new events and tasks are created": unknown
 		"Workspace": unknown
 		"Year": unknown

@@ -14,7 +14,8 @@ import { AppleCalendar } from '../../../integrations/apple/AppleCalendar.js'
 import { Dev } from '../../../integrations/dev/Dev.js'
 import { NotificationSubscription } from '../../reminders/NotificationSubscription.js'
 import { Session } from '../../identity/server/Session.js'
-import { entryWindow } from './entryWindow.js'
+import { entryWindow, everyEntry } from './entryWindow.js'
+import { seriesStarts } from '../../recurrence/server/occurrences.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
@@ -231,5 +232,66 @@ describe('GET /entries carries the undated rows in every window', () => {
 
 		assert.ok(window.some(entry => entry.id === hers.id))
 		assert.ok(!window.some(entry => entry.id === his.id))
+	})
+})
+
+describe('GET /entries/all lists every entry once', () => {
+	let orm: MikroORM
+
+	before(async () => { orm = await inMemoryOrm() })
+	after(async () => { await orm.close(true) })
+
+	async function everything(em: EntityManager, user: User) {
+		const sourceIds = (await user.sources(em, { enabled: true, hidden: false })).map(s => s.id)
+		return [...await em.find(Entry, everyEntry(sourceIds)), ...await seriesStarts(em, sourceIds)]
+	}
+
+	it('reaches entries of any date, undated ones included', async () => {
+		const em = orm.em.fork()
+		const { user, source, entry: undated } = await seedUser(em, 'all-dates', 'anything')
+		const long = new Entry({
+			id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Event, heading: 'Long ago',
+			start: new Date('2001-03-01T09:00:00Z') as never, end: new Date('2001-03-01T10:00:00Z') as never,
+		})
+		em.persist(long)
+		await em.flush()
+
+		const ids = (await everything(em, user)).map(entry => entry.id)
+		assert.ok(ids.includes(long.id))
+		assert.ok(ids.includes(undated.id))
+	})
+
+	it('lists a series as the one occurrence it starts on, never its master or its overrides', async () => {
+		const em = orm.em.fork()
+		const { user, source } = await seedUser(em, 'all-series', 'anything')
+		const start = new Date('2024-01-05T07:30:00Z')
+		const master = new Entry({
+			id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Event, heading: 'Morning meds',
+			start: start as never, end: new Date('2024-01-05T07:35:00Z') as never, recurrence: new Recurrence({ freq: 'DAILY' }),
+		})
+		const override = new Entry({
+			id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Event, heading: 'Morning meds, later',
+			start: new Date('2024-02-01T09:00:00Z') as never, end: new Date('2024-02-01T09:05:00Z') as never,
+			recurrenceMasterId: master.id, recurrenceId: new Date('2024-02-01T07:30:00Z') as never,
+		})
+		em.persist([master, override])
+		await em.flush()
+
+		const rows = (await everything(em, user)).filter(entry => entry.heading.startsWith('Morning meds'))
+		assert.equal(rows.length, 1)
+		const [series] = rows
+		assert.equal(series!.recurrenceMasterId, master.id)
+		assert.equal(series!.recurrenceId?.valueOf(), start.valueOf())
+		assert.equal(series!.seriesStart?.valueOf(), start.valueOf())
+	})
+
+	it('scopes to the requesting user like every window', async () => {
+		const em = orm.em.fork()
+		const alice = await seedUser(em, 'all-alice', 'anything')
+		const bob = await seedUser(em, 'all-bob', 'anything')
+
+		const ids = (await everything(em, alice.user)).map(entry => entry.id)
+		assert.ok(ids.includes(alice.entry.id))
+		assert.ok(!ids.includes(bob.entry.id))
 	})
 })

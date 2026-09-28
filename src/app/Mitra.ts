@@ -5,6 +5,13 @@ import { Weeks } from '../features/calendar/client/Weeks.js'
 import { Months } from '../features/calendar/client/Months.js'
 import { Days } from '../features/calendar/client/Days.js'
 import { Timeline } from '../features/calendar/client/Timeline.js'
+import { Table } from '../features/calendar/client/Table.js'
+import { TableColumnMenu } from '../features/calendar/client/TableColumnMenu.js'
+import { TableSelection } from '../features/calendar/client/TableSelection.js'
+import { ParticipantAvatar } from '../features/participants/client/ParticipantAvatar.js'
+import { ParticipantFaces } from '../features/participants/client/ParticipantFaces.js'
+import { EntryLink } from '../features/relations/client/EntryLink.js'
+import { MapLink } from '../features/locations/client/MapLink.js'
 import { Day } from '../features/calendar/client/Day.js'
 import { EntrySegmentComponent } from '../features/entries/client/EventSegment.js'
 import { EntryConnections } from '../features/relations/client/EntryConnections.js'
@@ -49,6 +56,7 @@ import { TimeZonePicker } from '../features/time/client/TimeZonePicker.js'
 import { syncPushSubscription } from '../features/reminders/client/push.js'
 import { syncThemeColor } from './pwa.js'
 import { DialogEntryScope } from '../features/entries/client/DialogEntryScope.js'
+import { DialogDeleteEntries } from '../features/entries/client/DialogDeleteEntries.js'
 import { DialogCompleteParent } from '../features/relations/client/DialogCompleteParent.js'
 import { DialogCloseSubtasks } from '../features/relations/client/DialogCloseSubtasks.js'
 import { DialogRelationFailed } from '../features/relations/client/DialogRelationFailed.js'
@@ -235,6 +243,13 @@ export class Mitra extends Application {
 			${Months.styles}
 			${Days.styles}
 			${Timeline.styles}
+			${Table.styles}
+			${TableColumnMenu.styles}
+			${TableSelection.styles}
+			${ParticipantAvatar.styles}
+			${ParticipantFaces.styles}
+			${EntryLink.styles}
+			${MapLink.styles}
 			${Day.styles}
 			${EntrySegmentComponent.styles}
 			${EntryConnections.styles}
@@ -251,6 +266,7 @@ export class Mitra extends Application {
 			${SettingRow.styles}
 			${NotificationDevices.styles}
 			${DialogEntryScope.styles}
+			${DialogDeleteEntries.styles}
 			${DialogCompleteParent.styles}
 			${DialogCloseSubtasks.styles}
 			${DialogRelationFailed.styles}

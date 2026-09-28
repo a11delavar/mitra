@@ -34,7 +34,7 @@ Preferences in Mitra are partitioned based on their scope:
 
 ### Calendar
 
-- **Default view** — Which calendar view Mitra opens on initial load: *Week*, *Month*, *Year*, or *Timeline*.
+- **Default view** — Which calendar view Mitra opens on initial load: *Week*, *Month*, *Year*, *Timeline*, or *Table*.
 - **Connector lines** — Toggles visual lines between linked and dependent tasks separately for the *Week view*, *Month view*, and *Timeline*.
 
 ### Entries

@@ -6,6 +6,8 @@ import { activated } from './activated.css.js'
 export class IconButton extends Component {
 	@property() icon!: string
 	@property() label?: string
+	/** The popover the button toggles, which light dismiss then leaves to the button: a click on it while open closes it rather than reopening it. */
+	@property() popoverTarget?: string
 
 	protected override createRenderRoot() { return this }
 
@@ -55,7 +57,7 @@ export class IconButton extends Component {
 
 	protected override get template() {
 		return html`
-			<button aria-label=${ifDefined(this.label)} title=${ifDefined(this.label)}>
+			<button aria-label=${ifDefined(this.label)} title=${ifDefined(this.label)} popovertarget=${ifDefined(this.popoverTarget)}>
 				<mitra-icon icon=${this.icon}></mitra-icon>
 			</button>
 		`

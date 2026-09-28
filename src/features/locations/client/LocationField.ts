@@ -1,6 +1,7 @@
 import { Component, component, html, css, property, state, event, query } from '@a11d/lit'
 import { type Entry } from '../../entries/Entry.js'
 import { searchLocations, getCapabilities, type LocationSuggestion } from '../../../infrastructure/http/Api.js'
+import './MapLink.js'
 
 // Cached user coordinates for geocoding bias.
 let position: { lat: number, lon: number } | undefined
@@ -140,26 +141,6 @@ export class LocationField extends Component {
 					min-width: 0;
 				}
 
-				> a {
-					display: inline-flex;
-					align-self: center;
-					padding: 2px;
-					border-radius: var(--border-radius);
-					color: var(--color-text-muted);
-					font-size: 0.87rem;
-					transition: color 0.15s ease, background 0.15s ease;
-
-					&:hover {
-						color: var(--color-text);
-						background: color-mix(in srgb, var(--color-text) 6%, transparent);
-					}
-
-					&[data-empty] {
-						visibility: hidden;
-						pointer-events: none;
-					}
-				}
-
 				> menu[popover] {
 					margin: 0;
 					margin-inline: 0.875rem;
@@ -224,11 +205,7 @@ export class LocationField extends Component {
 				@keydown=${this.handleKeydown}
 				@blur=${() => this.close()}
 			></textarea>
-			<a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(this.entry?.location ?? '')}"
-				?data-empty=${!this.entry?.location}
-				target="_blank" rel="noopener noreferrer" title=${t('Open in Google Maps')} aria-label=${t('Open in Google Maps')}>
-				<mitra-icon icon="map"></mitra-icon>
-			</a>
+			<mitra-map-link location=${this.entry?.location ?? ''}></mitra-map-link>
 			<menu popover="manual">
 				${this.suggestions.map((suggestion, index) => html`
 					<button type="button" ?data-active=${index === this.activeIndex}

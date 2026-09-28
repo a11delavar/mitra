@@ -1,8 +1,23 @@
 import { DateTime } from '@3mo/date-time'
 import { command, Command } from '../../commands/Command.js'
+import { CalendarPeriod } from './CalendarPeriod.js'
 
 function rtl() {
 	return getComputedStyle(document.documentElement).direction === 'rtl'
+}
+
+/** A view with no period to step (the table) leaves the arrow keys alone and keeps the commands off the palette's unsearched list. */
+abstract class StepPeriod extends Command {
+	protected abstract readonly direction: 1 | -1
+	protected get period() { return this.calendar.period }
+	group = 'navigation' as const
+	override get listedWithoutQuery() { return !!this.period }
+	execute() {
+		const { calendar, period } = this
+		if (period) {
+			calendar.navigatingDate = this.direction > 0 ? calendar.navigatingDate.add(period.step) : calendar.navigatingDate.subtract(period.step)
+		}
+	}
 }
 
 @command()
@@ -16,45 +31,23 @@ export class GoToToday extends Command {
 }
 
 @command()
-export class NextPeriod extends Command {
-	get heading() {
-		switch (this.calendar.view) {
-			case 'month':
-			case 'timeline': return t('Next Month')
-			case 'year': return t('Next Year')
-			default: return t('Next Week')
-		}
-	}
+export class NextPeriod extends StepPeriod {
+	protected readonly direction = 1
+	get heading() { return (this.period ?? CalendarPeriod.of('month')).nextLabel }
 	icon = 'arrow-right'
 	keywords = t('NextPeriod.Keywords')
-	get keys() { return [rtl() ? 'ArrowLeft' : 'ArrowRight'] }
-	group = 'navigation'
+	get keys() { return !this.period ? undefined : [rtl() ? 'ArrowLeft' : 'ArrowRight'] }
 	override get shortcutLabel() { return t('Forward') }
-	execute() {
-		const { calendar } = this
-		calendar.navigatingDate = calendar.navigatingDate.add(calendar.navigationStep)
-	}
 }
 
 @command()
-export class PreviousPeriod extends Command {
-	get heading() {
-		switch (this.calendar.view) {
-			case 'month':
-			case 'timeline': return t('Previous Month')
-			case 'year': return t('Previous Year')
-			default: return t('Previous Week')
-		}
-	}
+export class PreviousPeriod extends StepPeriod {
+	protected readonly direction = -1
+	get heading() { return (this.period ?? CalendarPeriod.of('month')).previousLabel }
 	icon = 'arrow-left'
 	keywords = t('PreviousPeriod.Keywords')
-	get keys() { return [rtl() ? 'ArrowRight' : 'ArrowLeft'] }
-	group = 'navigation'
+	get keys() { return !this.period ? undefined : [rtl() ? 'ArrowRight' : 'ArrowLeft'] }
 	override get shortcutLabel() { return t('Back') }
-	execute() {
-		const { calendar } = this
-		calendar.navigatingDate = calendar.navigatingDate.subtract(calendar.navigationStep)
-	}
 }
 
 @command()

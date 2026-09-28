@@ -127,6 +127,11 @@ export function fetchEvents(start: DateTime, end: DateTime) {
 	return Api.get<Array<Entry>>(`/entries?start=${start.toISOString()}&end=${end.toISOString()}&tz=${tz()}`)
 }
 
+/** Every visible entry whatever its dates, a series once as the occurrence it starts on. */
+export function fetchAllEntries() {
+	return Api.get<Array<Entry>>(`/entries/all?tz=${tz()}`)
+}
+
 /** Full-text search across all visible entries. */
 export function searchEntries(query: string) {
 	return Api.get<Array<Entry>>(`/entries/search?q=${encodeURIComponent(query)}&tz=${tz()}`)

@@ -16,7 +16,8 @@ export const taskStatusIcon = new Map<TaskStatus, string>([
 	[TaskStatus.Cancelled, 'square-x'],
 ])
 
-function label(status: TaskStatus): string {
+/** The app's status words, also read by the table's status column and filter. */
+export function taskStatusLabel(status: TaskStatus): string {
 	switch (status) {
 		case TaskStatus.ToDo: return t('To Do')
 		case TaskStatus.Doing: return t('Doing')
@@ -24,6 +25,8 @@ function label(status: TaskStatus): string {
 		case TaskStatus.Cancelled: return t('Cancelled')
 	}
 }
+
+const label = taskStatusLabel
 
 /**
  * Task completion and status control.

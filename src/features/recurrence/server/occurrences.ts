@@ -259,31 +259,41 @@ export async function expandedOccurrences(em: EntityManager, sourceIds: Readonly
 		const ranges = Occurrences.of(master)?.within(windowStart, windowEnd) ?? []
 		return ranges
 			.filter(occurrence => !overridden.has(`${master.id}|${occurrence.start.valueOf()}`))
-			.map(occurrence => new Entry({
-				// Stable, CSS-ident-safe id per occurrence (the master id + the instant in ms): unique render
-				// key for anchor-name/view-transition-name; edits route to the master via recurrenceMasterId.
-				id: `${master.id}__${occurrence.start.getTime()}`,
-				sourceId: master.sourceId,
-				type: master.type,
-				heading: master.heading,
-				description: master.description,
-				location: master.location,
-				color: master.color,
-				status: master.status,
-				transparency: master.transparency,
-				visibility: master.visibility,
-				allDay: master.allDay,
-				timeZone: master.timeZone,
-				reminders: master.reminders,
-				participants: master.participants,
-				start: occurrence.start as DateTime,
-				end: occurrence.end as DateTime,
-				uid: master.uid,
-				recurrence: master.recurrence,
-				recurrenceMasterId: master.id,
-				recurrenceId: occurrence.start as DateTime,
-				seriesStart: master.start,
-			}))
+			.map(occurrence => occurrenceOf(master, occurrence))
+	})
+}
+
+/** Every series once, as the occurrence it starts on: a whole-series edit, move or delete goes through it as through any other. */
+export async function seriesStarts(em: EntityManager, sourceIds: ReadonlyArray<string>): Promise<Array<Entry>> {
+	const masters = await em.find(Entry, { sourceId: { $in: [...sourceIds] }, recurrence: { freq: { $ne: null } } })
+	return masters.filter(master => !!master.start).map(master => occurrenceOf(master, { start: master.start!, end: master.end }))
+}
+
+function occurrenceOf(master: Entry, occurrence: { readonly start: Date, readonly end?: Date }) {
+	return new Entry({
+		// Stable, CSS-ident-safe id per occurrence (the master id + the instant in ms): unique render
+		// key for anchor-name/view-transition-name; edits route to the master via recurrenceMasterId.
+		id: `${master.id}__${occurrence.start.getTime()}`,
+		sourceId: master.sourceId,
+		type: master.type,
+		heading: master.heading,
+		description: master.description,
+		location: master.location,
+		color: master.color,
+		status: master.status,
+		transparency: master.transparency,
+		visibility: master.visibility,
+		allDay: master.allDay,
+		timeZone: master.timeZone,
+		reminders: master.reminders,
+		participants: master.participants,
+		start: occurrence.start as DateTime,
+		end: occurrence.end as DateTime,
+		uid: master.uid,
+		recurrence: master.recurrence,
+		recurrenceMasterId: master.id,
+		recurrenceId: occurrence.start as DateTime,
+		seriesStart: master.start,
 	})
 }
 

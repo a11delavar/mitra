@@ -98,6 +98,7 @@ export default defineConfig({
 						{ slug: 'guides/participants' },
 						{ slug: 'guides/notifications' },
 						{ slug: 'guides/location-autocomplete' },
+						{ slug: 'guides/table-view' },
 						{ slug: 'guides/keyboard-shortcuts' },
 						{ slug: 'guides/settings' },
 					],

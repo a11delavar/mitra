@@ -12,6 +12,8 @@ Press <kbd>?</kbd> anywhere in the calendar to open the built-in cheat sheet —
 | Week view | <kbd>W</kbd> |
 | Month view | <kbd>M</kbd> |
 | Year view | <kbd>Y</kbd> |
+| Timeline view | <kbd>L</kbd> |
+| Table view | <kbd>S</kbd> |
 
 ## Navigation
 

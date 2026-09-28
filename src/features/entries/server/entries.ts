@@ -12,8 +12,8 @@ import { EntryRelations } from '../../relations/EntryRelations.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
 import { Entry, FLOATING_TIME_ZONE, Transparency } from '../Entry.js'
 import { normalizeAllDay, projectAllDay } from '../../time/calendarDate.js'
-import { editOccurrence, deleteOccurrence, expandedOccurrences } from '../../recurrence/server/occurrences.js'
-import { entryWindow } from './entryWindow.js'
+import { editOccurrence, deleteOccurrence, expandedOccurrences, seriesStarts } from '../../recurrence/server/occurrences.js'
+import { entryWindow, everyEntry } from './entryWindow.js'
 import { assertRelationsValid, attachRelations, relationClosure } from '../../relations/server/relations.js'
 
 const logger = createLogger('Entries')
@@ -63,6 +63,14 @@ entriesRouter.get('/', async (req, res) => {
 	const occurrences = await expandedOccurrences(em, visibleSourceIds, startDate, endDate)
 
 	const entries = [...rows, ...occurrences]
+	await attachRelations(em, req.user, entries)
+	return res.json(entries.map(entry => projectedForViewer(entry, viewerZone(req))))
+})
+
+entriesRouter.get('/all', async (req, res) => {
+	const em = orm.em.fork()
+	const visibleSourceIds = (await req.user.sources(em, { enabled: true, hidden: false })).map(source => source.id)
+	const entries = [...await em.find(Entry, everyEntry(visibleSourceIds)), ...await seriesStarts(em, visibleSourceIds)]
 	await attachRelations(em, req.user, entries)
 	return res.json(entries.map(entry => projectedForViewer(entry, viewerZone(req))))
 })

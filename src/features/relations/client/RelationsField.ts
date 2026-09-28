@@ -1,17 +1,14 @@
-import { Component, component, html, css, property, state, event } from '@a11d/lit'
-import { type DateTime } from '@3mo/date-time'
+import { Component, component, html, css, property, state } from '@a11d/lit'
 import { RelationType, RelationSection } from '../RelationType.js'
 import { type Relation } from '../Relation.js'
 import { EntryType } from '../../entries/EntryType.js'
 import { type RelationLine } from '../EntryRelations.js'
-import { TaskStatus, type Entry } from '../../entries/Entry.js'
-import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
-import { getCapabilities, getSource, searchEntries, updateEvent, updateRelations } from '../../../infrastructure/http/Api.js'
-import { EntryStore, reportSaveError } from '../../entries/client/EntryStore.js'
-import { offerFollowUps } from './Hierarchy.js'
+import { type Entry } from '../../entries/Entry.js'
+import { getCapabilities, getSource, searchEntries, updateRelations } from '../../../infrastructure/http/Api.js'
+import { EntryStore } from '../../entries/client/EntryStore.js'
 import { Relations } from './Relations.js'
 import { controlHeight } from '../../../design/controlHeight.css.js'
-import '../../entries/client/TaskStatus.js'
+import './EntryLink.js'
 
 /** The authorable families keyed by the section their lines land in. These sections render ALWAYS —
  * each is its own row with its own add action (the empty row IS the entry point), and each opens
@@ -30,8 +27,6 @@ interface Line {
 	 * without this every editor open would flash "Unknown entry" over links that are perfectly fine. */
 	readonly pending?: boolean
 	readonly remove: () => void
-	/** Absent where there is nothing to go to: a pointer still resolving, or a dangling one. */
-	readonly open?: () => void
 }
 
 /**
@@ -72,10 +67,6 @@ export class RelationsField extends Component {
 		// previous one — close, clear, refetch.
 		updated(this: RelationsField) { this.closePicker(); this.error = undefined },
 	}) entry!: Entry
-
-	/** The palette's contract: the calendar navigates to the date, and the intent opens the editor once
-	 * the segment renders there. Bubbles composed, so it reaches the page from inside a popover. */
-	@event({ bubbles: true, composed: true }) readonly navigate!: EventDispatcher<DateTime>
 
 	/** Subscribed, because everything this renders is derived: the entry's own lines, and the headings
 	 * the graph resolves for them. Without it a removal stayed on screen until some other state changed. */
@@ -145,22 +136,10 @@ export class RelationsField extends Component {
 			// Shows pending placeholder until relation closure lands to distinguish unloaded from dangling links.
 			pending: !Relations.loaded,
 			violated: !!line.edge && !!from && !!to && line.edge.violatedBy(from, to),
-			open: other && this.opener(other),
 			// Removals update this entry for outgoing lines, or the owning entry for incoming lines.
 			remove: line.direction === 'outgoing'
 				? () => this.removeOutgoing(line.relation)
 				: () => { this.removeIncoming(line).catch(() => void 0) },
-		}
-	}
-
-	/** Navigates to a related entry in the calendar, or triggers editor directly for undated entries. */
-	private opener(target: Entry) {
-		return !target.id ? undefined : () => {
-			this.closest('mitra-entry-details')?.hidePopover()
-			if (target.start) {
-				this.navigate.dispatch(target.start)
-			}
-			EntryEditorIntent.requestOpen(target.id!)
 		}
 	}
 
@@ -193,28 +172,6 @@ export class RelationsField extends Component {
 		} catch (error) {
 			this.error = error instanceof Error ? error.message : String(error)
 		}
-	}
-
-	/** Updates status on the store's tracked instance if present, falling back to direct API write for untracked entries. */
-	private async handleTargetStatusChange(target: Entry) {
-		EntryStore.notify()
-		if (!target.persisted) {
-			this.requestUpdate()
-			return
-		}
-		const tracked = EntryStore.entries.find(entry => entry.id === target.id)
-		if (tracked && tracked !== target) {
-			tracked.status = target.status
-			tracked.percentComplete = target.percentComplete
-			EntryStore.notify()
-		}
-		const saved = tracked ?? target
-		await (tracked ? EntryStore.commit(tracked) : updateEvent(target)).catch(reportSaveError)
-		// Direct API writes bypass EntryStore.onTaskClosed, so trigger follow-up offers explicitly.
-		if (saved.closed) {
-			offerFollowUps(saved).catch(() => void 0)
-		}
-		this.requestUpdate()
 	}
 
 	// --- Picker -----------------------------------------------------------------------------------------
@@ -398,40 +355,11 @@ export class RelationsField extends Component {
 						gap: 0.375rem;
 						min-width: 0;
 
-						> mitra-task-status {
-							font-size: 0.85rem;
-							inline-size: 0.85rem;
-							block-size: 0.85rem;
-							flex-shrink: 0;
-						}
-
-						> mitra-icon.glyph {
-							font-size: 0.8rem;
-							inline-size: 0.85rem;
-							block-size: 0.85rem;
-							display: flex;
-							align-items: center;
-							justify-content: center;
-							flex-shrink: 0;
-							color: var(--color-text-muted);
-						}
-
-						> .heading {
+						> .unresolved {
 							flex: 1;
 							min-width: 0;
-							white-space: nowrap;
-							overflow: hidden;
-							text-overflow: ellipsis;
-
-							> .unresolved {
-								color: var(--color-text-muted);
-								font-style: italic;
-							}
-						}
-
-						&[data-struck] > .heading {
-							text-decoration: line-through;
 							color: var(--color-text-muted);
+							font-style: italic;
 						}
 
 						> mitra-icon-button {
@@ -447,33 +375,9 @@ export class RelationsField extends Component {
 							opacity: 1;
 						}
 
-						/* A line that leads somewhere is a button, and a button inside a field row takes none of the
-						   standalone button chrome (button.css.ts) — so it only has to shed the UA's own. */
-						> button.heading {
-							background: none;
-							border: none;
-							padding: 0;
-							font: inherit;
-							color: inherit;
-							text-align: start;
-							cursor: pointer;
-
-							&:hover,
-							&:focus-visible {
-								text-decoration: underline;
-							}
-						}
-
-						&[data-struck] > button.heading {
-							&:hover,
-							&:focus-visible {
-								text-decoration: line-through underline;
-							}
-						}
-
 						/* A broken dependency, in the app's one status colour — the same signal the calendar's
 						   connector wears, on the line that owns it rather than over the whole field. */
-						&[data-violated] > .heading {
+						&[data-violated] > mitra-entry-link > .heading {
 							color: var(--color-error);
 						}
 					}
@@ -608,37 +512,16 @@ export class RelationsField extends Component {
 							${this.rollup.subtasks.done.format()}/${this.rollup.subtasks.total.format()}
 						</span>
 					`}
-					${lines.map(line => {
-						const heading = line.heading ?? html`<span class="unresolved">${line.pending ? '…' : t('Unknown entry')}</span>`
-						const target = line.target
-						const isTask = target?.type.isTask ?? false
-						const isDone = isTask && (target?.done || target?.status === TaskStatus.Done || target?.status === TaskStatus.Cancelled)
-						const color = target ? (target.color || getSource(target.sourceId)?.color) : undefined
-
-						return html`
-							<span class="relation"
-								data-status=${target?.status ?? (isTask ? 'todo' : 'none')}
-								?data-struck=${isDone}
-								?data-violated=${line.violated}
-							>
-								${!target ? html.nothing : isTask ? html`
-									<mitra-task-status
-										style=${color ? `color: ${color};` : ''}
-										.entry=${target}
-										@change=${() => this.handleTargetStatusChange(target)}
-									></mitra-task-status>
-								` : html`
-									<mitra-icon class="glyph" icon="calendar" style=${color ? `color: ${color};` : ''}></mitra-icon>
-								`}
-								${!line.open
-									? html`<span class="heading">${heading}</span>`
-									: html`<button type="button" class="heading" @click=${line.open}>${heading}</button>`}
-								<mitra-icon-button icon="x" label=${t('Remove relationship')}
-									@click=${() => line.remove()}
-								></mitra-icon-button>
-							</span>
-						`
-					})}
+					${lines.map(line => html`
+						<span class="relation" ?data-violated=${line.violated}>
+							${line.target
+								? html`<mitra-entry-link .entry=${line.target}></mitra-entry-link>`
+								: html`<span class="heading unresolved">${line.pending ? '…' : t('Unknown entry')}</span>`}
+							<mitra-icon-button icon="x" label=${t('Remove relationship')}
+								@click=${() => line.remove()}
+							></mitra-icon-button>
+						</span>
+					`)}
 					${!addType ? html.nothing : html`
 						<mitra-icon-button class="add" icon="plus" label=${t('Add relationship')}
 							@click=${() => this.togglePicker(addType)}

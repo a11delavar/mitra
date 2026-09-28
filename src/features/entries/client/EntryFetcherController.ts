@@ -1,10 +1,11 @@
 import { Controller, eventListener } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { Task } from '@lit/task'
-import { fetchEvents, fetchIntegrations } from '../../../infrastructure/http/Api.js'
+import { fetchAllEntries, fetchEvents, fetchIntegrations } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
 import { Relations } from '../../relations/client/Relations.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
+import { TableWindow } from '../../calendar/client/TableWindow.js'
 import type { PageCalendar } from '../../calendar/client/PageCalendar.js'
 
 /** Fetches and keeps calendar entries synchronized via navigation tasks and SSE. */
@@ -21,15 +22,24 @@ export class EntryFetcherController extends Controller {
 
 	readonly task = new Task(this.host, {
 		args: () => {
-			const monthIndex = this.host.navigatingDate.year * 12 + this.host.navigatingDate.month
-			const yearView = this.host.view === 'year'
-			const timelineView = this.host.view === 'timeline'
-			return [yearView, timelineView, timelineView ? 0 : yearView ? Math.floor(monthIndex / 6) : monthIndex] as const
+			const { view, navigatingDate } = this.host
+			const monthIndex = navigatingDate.year * 12 + navigatingDate.month
+			switch (view) {
+				case 'timeline': return ['timeline', 0] as const
+				case 'year': return ['year', Math.floor(monthIndex / 6)] as const
+				// Today is part of the key: a window counted from it moves on at midnight.
+				case 'table': return ['table', `${TableWindow.current.key}:${new DateTime().dayStart.valueOf()}`] as const
+				default: return ['grid', monthIndex] as const
+			}
 		},
 		task: () => {
 			if (this.host.view === 'timeline') {
 				const today = new DateTime()
 				return fetchEvents(today.monthStart.subtract({ months: EntryFetcherController.timelineMonths }), today.monthEnd.add({ months: EntryFetcherController.timelineMonths }))
+			}
+			if (this.host.view === 'table') {
+				const bounds = TableWindow.current.bounds()
+				return !bounds ? fetchAllEntries() : fetchEvents(bounds.start, bounds.end)
 			}
 			const months = this.host.view === 'year' ? 16 : 1
 			const start = this.host.navigatingDate.monthStart.subtract({ months })

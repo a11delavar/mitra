@@ -121,6 +121,18 @@ export const inputStyles = css`
 			}
 		}
 
+		/* Some of what it stands for, as a select-all over a partial selection: a dash where the tick goes. */
+		&:indeterminate {
+			background: var(--color-accent);
+			border-color: var(--color-accent);
+
+			&::before {
+				transform: scale(1);
+				-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round'%3E%3Cline x1='6' y1='12' x2='18' y2='12'/%3E%3C/svg%3E") center / contain no-repeat;
+				mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round'%3E%3Cline x1='6' y1='12' x2='18' y2='12'/%3E%3C/svg%3E") center / contain no-repeat;
+			}
+		}
+
 		${focusRing};
 	}
 `

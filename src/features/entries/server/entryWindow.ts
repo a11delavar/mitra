@@ -25,3 +25,8 @@ export function entryWindow(sourceIds: ReadonlyArray<string>, start: Date, end: 
 		],
 	}
 }
+
+/** Every entry once, whatever its dates. A series stands in as its start (`seriesStarts`), so its master, occurrences and overrides stay out. */
+export function everyEntry(sourceIds: ReadonlyArray<string>): FilterQuery<Entry> {
+	return { sourceId: { $in: [...sourceIds] }, recurrence: { freq: null }, recurrenceMasterId: null }
+}

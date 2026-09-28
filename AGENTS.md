@@ -238,13 +238,23 @@
   - Bar text renders outside bar. Transparent canvas.
   - Sticky `.jump` buttons on viewport edges when task bar scrolls out of view.
   - Zoom via `TimelineDensityController`.
+- **Table View** (`mitra-table`, `src/features/calendar/client/Table.ts`):
+  - Lists a `TableWindow` counted from today (presets or a custom range; `HideDoneTasksSetting` does not apply), chosen in the When column's menu. No paging: the table has no `PageCalendar.period`. Title cell embeds `mitra-entry-segment` for color, status, and popovers.
+  - The unbounded window (`GET /entries/all`) lists a series once, as its start occurrence (`seriesStarts`), so `TableRow.scope` is `'all'` there and batch actions go through the tested occurrence routes.
+  - CSS grid `div[role=grid]` with `subgrid` rows (never `<table>`: Lit template parser foster-parents elements out of `<tbody>`, and Chromium drops `subgrid` under `content-visibility: auto`). Virtualization monitors `.cells`.
+  - Header row itself is `position: sticky` (never individual cells). Trailing `.actions` track is sticky to the end. Only sticky header cells take a `z-index`, so resizers can straddle column boundaries.
+  - Columns fit their content (`max-content`). A hidden `.anchor` row holds each column's widest content so tracks stay put under virtualization; the title chip has no intrinsic width, so its widest heading stands in.
+  - Resize line is drawn inside the handle, offset by the handle's start taken at press. Never `position: fixed`: `.calendar`'s `contain: layout` shifts it.
+  - Cells reuse editor components (`mitra-participant-faces`, `mitra-entry-link`, `mitra-map-link`), never copies. A row pending an editor open (`EntryEditorIntent.holds`) keeps its cells.
+  - `DataGridController` from `@3mo/data-grid/controller` only (`bundles.test.ts` asserts no Material). `columns` is made once per table; `rows` derives in `willUpdate`.
+  - Batch mutations run entries in parallel, but series occurrences sequentially (scope `'this'`, sharing master exclusions).
 
 ## Routing & URL State
 - **One Route** (`PageCalendar`, `@route('/:view', '/')`): View is the path (`/week`), active overlays and filters are query parameters (`?date=`, `?selected=`, `?settings=`). Canonicalizes `/` to `/{defaultView}`. Unrecognized parameters fallback gracefully.
 - **`CalendarLocation`** (`src/features/calendar/client/CalendarLocation.ts`): Value object parsing and serializing URL navigation state. Initialized on page boot so initial render and fetch match restored view and date. Today is omitted to prevent link date pinning.
 - **Single Writer, Derive Don't Mirror**: `PageCalendar` is the sole URL writer — it overrides `get url()` to derive from live state and never assigns `parameters`; an inbound `parameters` change is purely the router's arrival signal, handled by an idempotent `restore()`. Components publish state the page reads (`EntryEditorIntent.target`, `SettingsParameters.pageChange`).
 - **Replace, Never Push**: All writes funnel through the `updateUrl()` override (the framework's own `parameters` hook lands there too) into `UrlSyncController` (`src/infrastructure/routing/`), which owns the timing policy: `history.replaceState`, 100ms trailing debounce, flushed on `pagehide`/`visibilitychange`. Its host is typed `PageCalendar` (as `EntryFetcherController`'s is), so it reads `host.url` and self-schedules from `hostUpdated()` — no callbacks, no generics, nothing for the page to call. A write is skipped outright when the URL has not moved, so an unrelated re-render (an entry saved, a drag frame) neither writes nor postpones a write already due. Pushing would bury the arrival page under an entry per scroll flick, and the framework's `setUrl` wraps pushes in a document-level view transition that fights `transitionCalendar`. Collapses to a declared `historyStrategy` once @a11d/lit-application ships one (drafted upstream).
-- **Device Preferences**: Zoom, sidebar open state/tab, connectors, and timezone folding live in `localStorage`, excluded from shared URLs.
+- **Device Preferences**: Zoom, sidebar open state/tab, connectors, timezone folding, and the table's window live in `localStorage`, excluded from shared URLs.
 - **Stale Targets**: `?selected=` restores via `EntryEditorIntent.requestOpen`. Unmatched intents settle and clear from the URL on next write.
 - **SPA Fallback**: The server catch-all must stay `res.sendFile('index.html', { root })` — without `root`, send dotfile-checks every segment of the absolute path and 404s deep links whenever the checkout lives under a dotted directory (e.g. a `.claude` worktree).
 
@@ -260,7 +270,7 @@
   - Facts are `abstract readonly` fields (not getters) for static data (`heading`, `keywords`, `keys`). Getters reserved for live state (`NextPeriod.heading`, `keyLabels`). Members with defaults (`shortcutLabel`, `keyLabels`, `matches`) are accessors.
   - Context resolved dynamically via `Mitra.instance.calendar` (public properties on `PageCalendar`).
   - Execution: Always run via `Command.dispatch()` to catch and absorb `DialogCancelledError`.
-  - Page header buttons (Create, `‹ Today ›`) are the commands themselves (`PageCalendar.commandButton`): titled with the command's heading and keys, acting through `dispatch()`.
+  - Page header buttons (Create, `‹ Today ›`) are the commands themselves (`PageCalendar.commandButton`): titled with the command's heading and keys, acting through `dispatch()`. `PageCalendar.period` (`CalendarPeriod`) is what the arrows step by and the heading names; the table has none.
   - Non-Command Actions: Pointer gestures and editor-specific shortcuts stay in their own components.
 - **Command Palette** (`mitra-command-palette`):
   - Pure view. Filters via `commandMatches` → `termsMatch` (`src/features/commands/termsMatch.ts`, the app's ONE search rule — also the settings dialog's; kept out of `Command.ts` so searching doesn't drag in the app root).

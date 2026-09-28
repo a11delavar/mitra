@@ -20,6 +20,8 @@ import { type SettingsPageId } from '../../settings/client/Setting.js'
 import { UrlSyncController } from '../../../infrastructure/routing/UrlSyncController.js'
 import type { Sidebar } from '../../../app/Sidebar.js'
 import { windowDragHandle } from '../../../design/windowDrag.css.js'
+import { CalendarPeriod } from './CalendarPeriod.js'
+import { TableWindow } from './TableWindow.js'
 
 // The view is the path (`/week`), everything open on top of it is a query parameter. `/` stays a valid
 // entry point — the PWA start URL and the OAuth redirect both land there — and canonicalizes on arrival.
@@ -134,17 +136,22 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 		return this.commands.find((command): command is T => command instanceof type)
 	}
 
-	/** The period in view. The week view also names its week, the one of its center day, so each step changes the heading. */
+	/** What the header names and one step moves by. The table has none: it lists a window counted from today. */
+	get period() {
+		return CalendarPeriod.ofView(this.view)
+	}
+
+	/** A week also names its number, the one of its center day in the week view, so each step changes the heading. */
 	private get headingTemplate() {
-		const date = this.navigatingDate
-		if (this.view === 'year') {
-			return html`<h1>${date.format({ year: 'numeric' })}</h1>`
+		const { period, navigatingDate: date } = this
+		if (!period) {
+			return html`<h1>${TableWindow.current.label}</h1>`
 		}
-		const week = this.view === 'week' ? date.weekOfYear : undefined
+		const week = period.kind === 'week' ? date.weekOfYear : undefined
 		return html`
 			<h1>
-				<span class="month">${date.format({ month: 'long', year: 'numeric' })}</span>
-				<span class="month short">${date.format({ month: 'short', year: 'numeric' })}</span>
+				<span class="name">${period.title(date)}</span>
+				<span class="name short">${period.title(date, 'short')}</span>
 				${week === undefined ? html.nothing : html`<span class="week">${t('Week ${week:number}', { week })}</span>`}
 			</h1>
 		`
@@ -174,10 +181,6 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 	readonly sourcesRefreshed = () => {
 		this.sidebar?.requestUpdate()
 		this.requestUpdate()
-	}
-
-	get navigationStep() {
-		return this.view === 'week' ? { weeks: 1 } : this.view === 'year' ? { years: 1 } : { months: 1 }
 	}
 
 	/** Trigger native date picker for the Go to Date command. */
@@ -323,7 +326,7 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 							color: var(--color-text);
 							white-space: nowrap;
 
-							> .month {
+							> .name {
 								min-inline-size: 0;
 								overflow: hidden;
 								text-overflow: ellipsis;
@@ -343,7 +346,7 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 							}
 
 							@container (max-width: 40rem) {
-								> .month {
+								> .name {
 									display: none;
 
 									&.short {
@@ -490,7 +493,7 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 						contain: layout;
 						overflow: clip;
 
-						mitra-weeks, mitra-months, mitra-days, mitra-timeline {
+						mitra-weeks, mitra-months, mitra-days, mitra-timeline, mitra-table {
 							flex: 1;
 							min-height: 0;
 						}
@@ -544,13 +547,13 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 									<mitra-icon icon="calendar-cog"></mitra-icon>
 									<selectedcontent></selectedcontent>
 								</button>
-								${[{ value: 'year', label: t('Year'), key: 'Y' }, { value: 'month', label: t('Month'), key: 'M' }, { value: 'week', label: t('Week'), key: 'W' }, { value: 'timeline', label: t('Timeline'), key: 'L' }].map(o => html`<option value=${o.value} ?selected=${o.value === this.view}>${o.label}${PageCalendar.customizableSelectsSupported ? html`<kbd>${o.key}</kbd>` : html.nothing}</option>`)}
+								${[{ value: 'year', label: t('Year'), key: 'Y' }, { value: 'month', label: t('Month'), key: 'M' }, { value: 'week', label: t('Week'), key: 'W' }, { value: 'timeline', label: t('Timeline'), key: 'L' }, { value: 'table', label: t('Table'), key: 'S' }].map(o => html`<option value=${o.value} ?selected=${o.value === this.view}>${o.label}${PageCalendar.customizableSelectsSupported ? html`<kbd>${o.key}</kbd>` : html.nothing}</option>`)}
 							</select>
 							${this.commandButton(CreateEntry, { className: 'create', icon: 'plus', label: t('Create') })}
 							<div class="period" role="group">
-								${this.commandButton(PreviousPeriod, { className: 'previous', icon: 'chevron-left' })}
+								${!this.period ? html.nothing : this.commandButton(PreviousPeriod, { className: 'previous', icon: 'chevron-left' })}
 								${this.commandButton(GoToToday, { className: 'today', icon: 'calendar-1', label: t('Today') })}
-								${this.commandButton(NextPeriod, { className: 'next', icon: 'chevron-right' })}
+								${!this.period ? html.nothing : this.commandButton(NextPeriod, { className: 'next', icon: 'chevron-right' })}
 							</div>
 						</div>
 					</header>
@@ -585,6 +588,13 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 									.navigatingDate=${this.navigatingDate}
 									@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
 								></mitra-timeline>
+							`],
+							['table', () => html`
+								<mitra-table
+									.entries=${this.store.entries}
+									.navigatingDate=${this.navigatingDate}
+									@windowChange=${() => this.requestUpdate()}
+								></mitra-table>
 							`]
 						])}
 					</div>

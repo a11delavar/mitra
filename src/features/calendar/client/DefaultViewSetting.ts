@@ -21,6 +21,7 @@ export class DefaultViewSetting extends ChoiceSetting<CalendarView> {
 			case 'month': return t('Month')
 			case 'year': return t('Year')
 			case 'timeline': return t('Timeline')
+			case 'table': return t('Table')
 		}
 	}
 

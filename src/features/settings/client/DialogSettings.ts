@@ -2,6 +2,7 @@ import { component, html, css, state, query, repeat, type PropertyValues, ifDefi
 import { DialogComponent } from '@a11d/lit-application'
 import { activated } from '../../../design/activated.css.js'
 import { focusRing } from '../../../design/focusRing.css.js'
+import { searchBox } from '../../../design/searchBox.css.js'
 import { settings, settingsPage, settingsPages, type Setting, type SettingsPageId } from './Setting.js'
 import { SettingsStore } from './SettingsStore.js'
 import { type SettingRow } from './SettingRow.js'
@@ -122,27 +123,8 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 					padding: 0.75rem 0.375rem;
 
 					> .search {
-						position: relative;
-						display: flex;
-						align-items: center;
+						${searchBox};
 						margin-block-end: 0.75rem;
-
-						> mitra-icon {
-							position: absolute;
-							inset-inline-start: 0.625rem;
-							font-size: 0.9375rem;
-							color: var(--color-text-muted);
-							pointer-events: none;
-						}
-
-						input[type=search] {
-							inline-size: 100%;
-							padding-inline-start: 2rem;
-
-							&::-webkit-search-cancel-button {
-								display: none;
-							}
-						}
 					}
 
 					> nav {

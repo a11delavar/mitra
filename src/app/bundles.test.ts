@@ -40,4 +40,18 @@ describe('the browser bundle', () => {
 			)
 		}
 	})
+
+	it('takes the data grid controller alone, never the Material components packaged around it', async () => {
+		const inputs = await inputsOf(frontendOptions)
+		assert.ok(
+			inputs.some(input => input.includes('@3mo/data-grid/dist/controller/DataGridController.js')),
+			'the table view runs on the data grid controller',
+		)
+		for (const forbidden of ['@3mo/data-grid/dist/index.js', '@3mo/data-grid/dist/DataGrid.js', '@3mo/data-grid/dist/columns/', '@3mo/theme', '@3mo/icon/', '@3mo/checkbox', '@3mo/menu', '@3mo/popover', '@3mo/tooltip']) {
+			assert.ok(
+				!inputs.some(input => input.includes(forbidden)),
+				`${forbidden} must not reach the browser bundle`,
+			)
+		}
+	})
 })

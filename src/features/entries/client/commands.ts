@@ -22,7 +22,10 @@ export class CreateEntry extends Command {
 		}
 		const now = new DateTime()
 		const start = now.dayStart.add({ hours: now.hour + 1 })
-		calendar.setView('week')
+		// The table lists a draft as a row of its own, so it keeps the view; the grids hand over to the week.
+		if (calendar.view !== 'table') {
+			calendar.setView('week')
+		}
 		calendar.navigatingDate = now
 		const draft = new Entry({
 			sourceId: source.id,

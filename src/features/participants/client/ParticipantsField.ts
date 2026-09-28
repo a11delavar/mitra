@@ -1,9 +1,9 @@
 import { Component, component, html, css, property, state, event, query } from '@a11d/lit'
-import { ParticipantRole, ParticipantStatus, Participants, type Participant } from '../Participant.js'
+import { ParticipantRole, type Participants, type Participant } from '../Participant.js'
 import { type Entry } from '../../entries/Entry.js'
-import { Color } from '../../sources/Color.js'
 import { getIntegrationFor, getCapabilities } from '../../../infrastructure/http/Api.js'
-import { contrastColor } from '../../../design/contrastColor.js'
+import './ParticipantAvatar.js'
+import './ParticipantFaces.js'
 
 /**
  * Entry editor participants field supporting batch actions, role toggling, attendee uninviting, and collapse/expand.
@@ -94,11 +94,6 @@ export class ParticipantsField extends Component {
 		this.changed()
 	}
 
-	private static readonly statusBadges = new Map<ParticipantStatus, { icon: string, color: string }>([
-		[ParticipantStatus.Accepted, { icon: 'check', color: Color.Green }],
-		[ParticipantStatus.Declined, { icon: 'x', color: Color.Red }],
-		[ParticipantStatus.Tentative, { icon: 'minus', color: Color.Yellow }],
-	])
 
 
 	static override get styles() {
@@ -146,41 +141,6 @@ export class ParticipantsField extends Component {
 					display: flex;
 					align-items: center;
 					gap: 0.5rem;
-
-					> .avatar {
-						position: relative;
-						flex-shrink: 0;
-						width: 1.5rem;
-						height: 1.5rem;
-						border-radius: 50%;
-						display: flex;
-						align-items: center;
-						justify-content: center;
-						font-size: 0.6875rem;
-						font-weight: 650;
-						background: color-mix(in srgb, var(--participant-color) 35%, var(--color-surface));
-						color: color-mix(in srgb, var(--participant-color) 60%, var(--color-text));
-
-						> .reply {
-							position: absolute;
-							inset-block-end: -0.125rem;
-							inset-inline-end: -0.125rem;
-							width: 0.75rem;
-							height: 0.75rem;
-							border-radius: 50%;
-							display: flex;
-							align-items: center;
-							justify-content: center;
-							background: var(--reply-color);
-							color: ${contrastColor('var(--reply-color)')};
-							outline: 2px solid var(--color-surface);
-
-							> mitra-icon {
-								font-size: 0.5rem;
-								--mitra-icon-stroke-width: 4;
-							}
-						}
-					}
 
 					> .who {
 						flex: 1;
@@ -272,25 +232,6 @@ export class ParticipantsField extends Component {
 							border-radius: 50%;
 							font-size: 0.8rem;
 							background: color-mix(in srgb, var(--color-text) 8%, transparent);
-						}
-
-						> .faces > .face {
-							flex-shrink: 0;
-							inline-size: 0.95rem;
-							block-size: 0.95rem;
-							border-radius: 50%;
-							display: flex;
-							align-items: center;
-							justify-content: center;
-							font-size: 0.45rem;
-							font-weight: 650;
-							outline: 2px solid var(--color-surface);
-							background: color-mix(in srgb, var(--participant-color) 35%, var(--color-surface));
-							color: color-mix(in srgb, var(--participant-color) 60%, var(--color-text));
-
-							& + .face {
-								margin-inline-start: -0.4rem;
-							}
 						}
 
 						> .label {
@@ -438,11 +379,7 @@ export class ParticipantsField extends Component {
 			${!collapsible ? html.nothing : html`
 				<details ?open=${this.expanded} @toggle=${(e: Event) => this.expanded = (e.target as HTMLDetailsElement).open}>
 					<summary class="person">
-						<div class="faces">
-							${hidden.slice(0, ParticipantsField.previewedFaces).map(participant => html`
-								<span class="face" style="--participant-color: ${Color.get(participant.email).value}">${Participants.initialOf(participant)}</span>
-							`)}
-						</div>
+						<mitra-participant-faces class="faces" .participants=${hidden.slice(0, ParticipantsField.previewedFaces)}></mitra-participant-faces>
 						<div class="chevron">
 							<mitra-icon icon="chevron-up"></mitra-icon>
 						</div>
@@ -458,7 +395,6 @@ export class ParticipantsField extends Component {
 	}
 
 	private personTemplate(participant: Participant) {
-		const badge = ParticipantsField.statusBadges.get(participant.status ?? ParticipantStatus.NeedsAction)
 		const optional = participant.role === ParticipantRole.Optional
 		const detail = [
 			participant.name,
@@ -466,14 +402,7 @@ export class ParticipantsField extends Component {
 		].filter(Boolean).join(' · ')
 		return html`
 			<div class="person">
-				<div class="avatar" style="--participant-color: ${Color.get(participant.email).value}">
-					${Participants.initialOf(participant)}
-					${!badge ? html.nothing : html`
-						<div class="reply" style="--reply-color: ${badge.color}">
-							<mitra-icon icon=${badge.icon}></mitra-icon>
-						</div>
-					`}
-				</div>
+				<mitra-participant-avatar .participant=${participant} reply></mitra-participant-avatar>
 				<div class="who">
 					<span class="email">${participant.email}</span>
 					${!detail ? html.nothing : html`<span class="detail">${detail}</span>`}

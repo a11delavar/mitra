@@ -39,3 +39,13 @@ export class TimelineView extends Command {
 	group = 'views'
 	execute() { this.calendar.setView('timeline') }
 }
+
+@command()
+export class TableView extends Command {
+	heading = t('Table View')
+	icon = 'table-2'
+	keywords = t('TableView.Keywords')
+	keys = ['s']
+	group = 'views'
+	execute() { this.calendar.setView('table') }
+}
