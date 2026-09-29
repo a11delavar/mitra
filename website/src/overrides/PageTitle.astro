@@ -1,0 +1,62 @@
+---
+import type { StarlightRouteData } from '@astrojs/starlight/route-data'
+
+// Section, last update and reading time, all derived from the page itself.
+
+const { entry, sidebar, lastUpdated, lang } = Astro.locals.starlightRoute
+
+type Entry = StarlightRouteData['sidebar'][number]
+
+function sectionOf(entries: Array<Entry>, group?: string): string | undefined {
+	for (const entry of entries) {
+		if (entry.type === 'link' && entry.isCurrent) {
+			return group
+		}
+		if (entry.type === 'group') {
+			const found = sectionOf(entry.entries, entry.label)
+			if (found) {
+				return found
+			}
+		}
+	}
+	return undefined
+}
+
+const words = entry.body?.split(/\s+/).filter(Boolean).length ?? 0
+const minutes = Math.max(1, Math.round(words / 200))
+
+const facts = [
+	sectionOf(sidebar),
+	lastUpdated?.toLocaleDateString(lang, { dateStyle: 'medium', timeZone: 'UTC' }),
+	words > 0 ? `${minutes} minute read` : undefined,
+].filter(Boolean)
+---
+
+{facts.length > 0 && <p class="meta">{facts.map(fact => <span>{fact}</span>)}</p>}
+<h1 id="_top">{entry.data.title}</h1>
+
+<style>
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem;
+		margin: 0 0 0.75rem;
+		font-size: 0.8125rem;
+		color: var(--color-text-muted);
+	}
+
+	.meta span + span::before {
+		content: '·';
+		margin-inline-end: 0.5rem;
+	}
+
+	h1 {
+		margin: 0;
+		font-size: var(--sl-text-h1);
+		line-height: var(--sl-line-height-headings);
+		font-weight: 650;
+		letter-spacing: -0.02em;
+		color: var(--color-text);
+	}
+</style>

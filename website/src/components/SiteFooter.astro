@@ -1,0 +1,113 @@
+---
+import { docsBase, withBase } from '../../site.mjs'
+import { version } from '../generated/meta.json'
+import Brand from './Brand.astro'
+---
+
+<footer class="footer">
+	<div class="inner">
+		<div class="identity">
+			<Brand />
+			<p>One calendar to plan your events and tasks.</p>
+			<p class="license">
+				Open source under the AGPL-3.0 · <span class="version">v{version}</span>
+			</p>
+		</div>
+		<nav class="columns">
+			<div>
+				<h2>Docs</h2>
+				<a href={withBase(`/${docsBase}/getting-started/installation/`)}>Installation</a>
+				<a href={withBase(`/${docsBase}/getting-started/configuration/`)}>Configuration</a>
+				<a href={withBase(`/${docsBase}/reference/environment-variables/`)}>Environment variables</a>
+			</div>
+			<div>
+				<h2>Integrations</h2>
+				<a href={withBase(`/${docsBase}/integrations/caldav/`)}>CalDAV</a>
+				<a href={withBase(`/${docsBase}/integrations/google-calendar/`)}>Google Calendar</a>
+				<a href={withBase(`/${docsBase}/integrations/apple-calendar/`)}>Apple Calendar</a>
+				<a href={withBase(`/${docsBase}/integrations/notion/`)}>Notion</a>
+			</div>
+			<div>
+				<h2>Project</h2>
+				<a href="https://github.com/a11delavar/mitra">Source</a>
+				<a href="https://github.com/a11delavar/mitra/releases">Releases</a>
+				<a href="https://github.com/a11delavar/mitra/issues">Issues</a>
+				<a href="https://github.com/a11delavar/mitra/pkgs/container/mitra">Container image</a>
+			</div>
+		</nav>
+	</div>
+</footer>
+
+<style>
+	.footer {
+		border-block-start: 1px solid var(--mitra-hairline);
+		margin-block-start: 6rem;
+	}
+
+	.inner {
+		max-inline-size: var(--mitra-page);
+		margin-inline: auto;
+		padding: 3.5rem var(--mitra-gutter) 4rem;
+		display: grid;
+		gap: 3rem;
+		grid-template-columns: minmax(14rem, 1fr) auto;
+		align-items: start;
+	}
+
+	.identity p {
+		margin: 0.75rem 0 0;
+		font-size: 0.875rem;
+		color: var(--color-text-muted);
+		max-inline-size: 22rem;
+	}
+
+	.license {
+		font-size: 0.8125rem;
+	}
+
+	.version {
+		font-family: var(--mitra-font-mono);
+	}
+
+	.columns {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, auto));
+		gap: 2.5rem;
+	}
+
+	.columns div {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	h2 {
+		margin: 0 0 0.25rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		letter-spacing: 0;
+		color: var(--color-text-muted);
+	}
+
+	a {
+		font-size: 0.875rem;
+		color: color-mix(in srgb, var(--color-text) 80%, var(--color-background));
+		text-decoration: none;
+		transition: color 0.15s ease;
+	}
+
+	a:hover {
+		color: var(--color-text);
+	}
+
+	@media (width < 52rem) {
+		.inner {
+			grid-template-columns: 1fr;
+			gap: 2.5rem;
+		}
+
+		.columns {
+			grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+		}
+	}
+</style>

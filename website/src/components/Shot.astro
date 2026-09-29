@@ -1,0 +1,41 @@
+---
+import { captureUrl } from '../captures'
+
+interface Props {
+	name: string
+	alt: string
+	/** A cropped detail is not shaped like the whole window. */
+	aspect?: string
+	width?: number
+	class?: string
+}
+
+const { name, alt, aspect = '1440 / 900', width = 1800, class: className } = Astro.props
+const light = await captureUrl(`${name}-light`, width)
+const dark = await captureUrl(`${name}-dark`, width)
+---
+
+{/* Both themes ride as custom properties: a `url()` is only fetched once a declaration using it wins. */}
+<div
+	class:list={['shot', className]}
+	role="img"
+	aria-label={alt}
+	style={`--light: url(${light}); --dark: url(${dark}); --aspect: ${aspect};`}
+>
+</div>
+
+<style>
+	.shot {
+		aspect-ratio: var(--aspect);
+		background-image: var(--light);
+		background-size: 100% 100%;
+		background-repeat: no-repeat;
+		border: 1px solid var(--mitra-hairline);
+		border-radius: 12px;
+		box-shadow: var(--mitra-shadow-soft);
+	}
+
+	:global(:root[data-theme='dark']) .shot {
+		background-image: var(--dark);
+	}
+</style>

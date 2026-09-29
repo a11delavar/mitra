@@ -5,7 +5,12 @@ description: Customize Mitra's theme, language, default views, and entry default
 
 Mitra's settings live in one unified dialog. Open it from the gear icon on your account card at the bottom of the sidebar (or the **Settings** row in single-user mode), from the [command palette](keyboard-shortcuts.md) (<kbd>/</kbd>, <kbd>Ctrl</kbd>+<kbd>K</kbd>, or <kbd>Ctrl</kbd>+<kbd>P</kbd>), or with <kbd>Ctrl</kbd>+<kbd>,</kbd> from anywhere.
 
-All settings are optional. An untouched setting follows Mitra's built-in default — so when a default improves in a later release, your experience updates automatically. Selecting a value that matches the current default leaves no override stored in the database.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/settings-detail-dark.png">
+  <img src="../../assets/screenshots/settings-detail-light.png" alt="The settings dialog, open on the General page" />
+</picture>
+
+All settings are optional. A setting you haven't changed follows Mitra's built-in default, so when a default improves in a later release, you get the new one automatically. Selecting a value that matches the current default leaves no override stored in the database.
 
 ## Find a setting
 
@@ -29,24 +34,24 @@ Preferences in Mitra are partitioned based on their scope:
 
 ### General
 
-- **Theme** — *Match the system*, *Light*, or *Dark*. *Match the system* adapts dynamically to your operating system's dark/light mode preference.
-- **Language** — Select from any of the built-in languages (English, German, French, Spanish, Portuguese, Italian). Interface updates apply instantly without reloading.
+- **Theme**: *Match the system*, *Light* or *Dark*. *Match the system* follows your operating system's light or dark mode.
+- **Language**: English, German, French, Spanish, Portuguese or Italian. The change applies right away, without reloading.
 
 ### Calendar
 
-- **Default view** — Which calendar view Mitra opens on initial load: *Week*, *Month*, *Year*, *Timeline*, or *Table*.
-- **Connector lines** — Toggles visual lines between linked and dependent tasks separately for the *Week view*, *Month view*, and *Timeline*.
+- **Default view**: which view Mitra opens on (*Week*, *Month*, *Year*, *Timeline* or *Table*).
+- **Connector lines**: turns the lines between linked and dependent tasks on or off, separately for the *Week view*, *Month view* and *Timeline*.
 
 ### Entries
 
-- **Default calendar** — The target calendar for newly created events and tasks (syncs with the [primary calendar marker in the sidebar](calendars.md#where-new-entries-land)). When unset, entries default to the first visible calendar.
-- **Default duration** — Default time span for new entries created without an explicit duration (e.g., clicking on the grid, dragging an unscheduled task, or disabling all-day).
-- **Snap to** — Time step granularity that dragging, resizing, and creation gestures snap to (5, 10, 15, or 30 minutes).
+- **Default calendar**: the calendar new events and tasks go to. It is the same as the [default calendar marker in the sidebar](calendars.md#where-new-entries-land). When unset, new entries go to the first visible calendar.
+- **Default duration**: how long a new entry is when you don't give it a length, for example when you click on the grid, drag in an unscheduled task or turn off all-day.
+- **Snap to**: the step that dragging, resizing and creating entries snaps to (5, 10, 15 or 30 minutes).
 
 ### Notifications
 
-- **Reminder notifications** — Whether the current browser can display Web Push reminders. Reminders you configure are always stored on the server; this only determines whether your active browser alerts you.
-- **Default reminder** — Pre-set reminder interval for newly created timed entries, or *None*. All-day entries do not receive timed reminders.
+- **Reminder notifications**: whether this browser shows reminders as push notifications. Reminders you set are always stored on the server; this only decides whether this browser alerts you.
+- **Default reminder**: the reminder new timed entries start with, or *None*. All-day entries don't get timed reminders.
 
 Mitra can request permission when undecided. If notifications are blocked, you can re-enable them in your browser's site permissions settings. See [Reminders & notifications](notifications.md) for background daemon setup.
 

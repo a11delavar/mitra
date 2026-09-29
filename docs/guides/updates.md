@@ -3,7 +3,7 @@ title: Updates
 description: How Mitra's update indicator works, what it sends to GitHub, and how to disable the check entirely.
 ---
 
-Mitra tells you when a newer build than the one you're running exists — but it only **indicates**. Pulling the new image stays your deployment's job (see [Updating](../getting-started/installation.md#updating)).
+Mitra tells you when a newer build than the one you're running exists, but that is all it does. Pulling the new image stays your deployment's job (see [Updating](../getting-started/installation.md#updating)).
 
 ## The update indicator
 
@@ -16,9 +16,9 @@ Clicking the instance name anywhere opens the About dialog, where the running ve
 
 ## What it sends
 
-The **server** — never the browser — asks github.com a few times a day whether something newer exists. The request carries **nothing about your instance** beyond the request itself: your IP and the running version in the user agent. No telemetry, no identifiers, no counts.
+The **server**, never the browser, asks github.com a few times a day whether something newer exists. The request carries **nothing about your instance** beyond the request itself: your IP and the running version in the user agent. No telemetry, no identifiers, no counts.
 
-Air-gapped instances that simply can't reach GitHub stay quiet on their own — one log line notes it can't reach GitHub, then it retries silently.
+An instance that can't reach GitHub stays quiet: it logs one line saying so, then keeps retrying without further messages.
 
 ## Disabling the check
 
@@ -33,7 +33,7 @@ Accepted "off" values are `off`, `false`, `0`, and `no`. Anything else (or leavi
 
 ## Keeping up to date
 
-The indicator doesn't update Mitra for you — that's intentional. To actually update:
+The indicator doesn't update Mitra for you, on purpose. To update:
 
 ```bash
 docker compose pull

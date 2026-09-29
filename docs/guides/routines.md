@@ -9,5 +9,10 @@ In the **Month** and **Year** views, frequent routines (such as daily habits, me
 - **Inspect & open:** **Hover** to see the title and frequency; **click** to open that day's entry.
 - **Rescheduled sessions:** If you move a single session with *This entry only*, it stays with its routine as a mark on its new day.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/month-detail-dark.png">
+  <img src="../../assets/screenshots/month-detail-light.png" alt="The month view, with routines shown as small marks under each day" />
+</picture>
+
 > [!NOTE]
 > The **Week view** always displays routines as full time blocks with start and end times.

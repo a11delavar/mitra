@@ -3,7 +3,7 @@ import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { TaskStatus } from '../Entry.js'
 import { type EntrySegment } from './EntrySegment.js'
 import { type RoutineRun } from '../../routines/client/Routines.js'
-import { contrastColor } from '../../../design/contrastColor.js'
+import { contrastColorOf } from '../../../design/contrastColor.js'
 import { getSource, getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore, reportSaveError } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
@@ -195,7 +195,7 @@ export class EntrySegmentComponent extends Component {
 				&[data-connect=target] {
 					--segment-bg: var(--mitra-entry-segment-color);
 					background-color: var(--segment-bg);
-					color: ${contrastColor('var(--mitra-entry-segment-color)')};
+					${contrastColorOf('color', 'var(--mitra-entry-segment-color)')}
 				}
 
 				&[data-connect=reject] {

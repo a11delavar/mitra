@@ -1,7 +1,7 @@
 import { Component, component, html, css, property } from '@a11d/lit'
 import { ParticipantStatus, Participants, type Participant } from '../Participant.js'
 import { Color } from '../../sources/Color.js'
-import { contrastColor } from '../../../design/contrastColor.js'
+import { contrastColorOf } from '../../../design/contrastColor.js'
 
 /** A participant's face: their initial in the colour their address stands for, and optionally the badge of their reply. */
 @component('mitra-participant-avatar')
@@ -46,7 +46,7 @@ export class ParticipantAvatar extends Component {
 					align-items: center;
 					justify-content: center;
 					background: var(--reply-color);
-					color: ${contrastColor('var(--reply-color)')};
+					${contrastColorOf('color', 'var(--reply-color)')}
 					outline: 2px solid var(--color-surface);
 
 					> mitra-icon {

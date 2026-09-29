@@ -4,44 +4,25 @@ import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'astro/config'
 import { unified } from '@astrojs/markdown-remark'
 import starlight from '@astrojs/starlight'
-import lucode from 'lucode-starlight'
 import { remarkAlert } from 'remark-github-blockquote-alert'
 import { visit } from 'unist-util-visit'
+import { base, docsBase, site } from './site.mjs'
 
-// This site is a rendering of the repo's ./docs — plain, GitHub-browsable Markdown that never needs
-// site-specific syntax. Two build-time translations make that possible: GitHub `> [!NOTE]` alerts
-// become styled callouts (remark-github-blockquote-alert), and relative `*.md` links become the
-// site's clean routes (rehypeMarkdownLinks, below). Content in ../docs is linked into
-// src/content/docs by prepare.mjs before every dev/build.
+// ../docs stays GitHub-browsable Markdown; the plugins below translate it for the site.
 
-// Deploy target. Set via env so switching hosts is a one-line change in the workflow (the GitHub
-// Pages project site lives under /mitra; a future host at a root domain sets no base at all).
-const site = process.env.MITRA_DOCS_SITE || undefined
-const base = process.env.MITRA_DOCS_BASE || undefined
-// The prefix rewritten links carry — the base without a trailing slash (`''` at a root domain).
-const linkBase = (base ?? '').replace(/\/+$/, '')
-
-// The docs are reachable under two roots — ../docs and the src/content/docs link into it — and a
-// file's path can arrive via either, so routes resolve against whichever root contains it.
 const here = path.dirname(fileURLToPath(import.meta.url))
-const docsRoots = [path.resolve(here, '../docs'), path.resolve(here, 'src/content/docs')]
+const docsRoots = [path.resolve(here, '../docs'), path.resolve(here, 'src/content/docs', docsBase)]
 
-/**
- * Rewrites the docs' relative `*.md` links to the site's routes.
- *
- * ./docs links between files with plain relative paths (`installation.md`,
- * `../guides/logging.md#which-level-to-use`) so the folder is navigable on GitHub. On the site those
- * files render at extension-less, base-prefixed routes, so each link is resolved against its source
- * file and mapped onto its route — base applied, anchor preserved, external/absolute/anchor-only
- * links left untouched.
- */
+/** Maps the docs' relative `*.md` links onto the site's routes, anchor kept. */
 function rehypeMarkdownLinks() {
-	return (/** @type {any} */ tree, /** @type {any} */ file) => {
-		visit(tree, 'element', (/** @type {any} */ node) => {
-			if (node.tagName !== 'a' || typeof node.properties?.href !== 'string') {
+	/** @param {import('hast').Root} tree @param {import('vfile').VFile} file */
+	return (tree, file) => {
+		visit(tree, 'element', node => {
+			const href = node.properties.href
+			if (node.tagName !== 'a' || typeof href !== 'string') {
 				return
 			}
-			const match = node.properties.href.match(/^(?!https?:|mailto:|\/|#)(.+?)\.md(#.*)?$/i)
+			const match = href.match(/^(?!https?:|mailto:|\/|#)(.+?)\.md(#.*)?$/i)
 			if (!match || !file.path) {
 				return
 			}
@@ -56,95 +37,163 @@ function rehypeMarkdownLinks() {
 				.replace(/\\/g, '/')
 				.replace(/\.md$/i, '')
 				.replace(/(^|\/)(index|readme)$/i, '')
-			node.properties.href = `${linkBase}/${route}${route ? '/' : ''}${match[2] ?? ''}`
+			node.properties.href = `${base}/${docsBase}/${route}${route ? '/' : ''}${match[2] ?? ''}`
 		})
 	}
 }
 
+/**
+ * Turns a docs `<picture>` (which GitHub needs) into two lazy `<img>`s switched on `data-theme`, so
+ * the site's theme toggle wins over the OS. Raw HTML never becomes rehype elements, hence a text
+ * rewrite in the remark stage.
+ */
+function remarkDocsAssets() {
+	const asset = /(?:\.\.\/)*assets\/([A-Za-z0-9._/-]+)\.png/g
+	const picture = /<picture>\s*<source[^>]*srcset="([^"]+)"[^>]*>\s*<img\s+src="([^"]+)"\s+alt="([^"]*)"\s*\/?>\s*<\/picture>/g
+
+	/** @param {import('mdast').Root} tree */
+	return tree => {
+		visit(tree, 'html', node => {
+			node.value = node.value
+				.replace(asset, (_match, file) => `${base}/assets/${file}.webp`)
+				.replace(picture, (_match, dark, light, alt) =>
+					`<img class="theme-light" src="${light}" alt="${alt}" loading="lazy" />` +
+					`<img class="theme-dark" src="${dark}" alt="${alt}" loading="lazy" />`)
+		})
+	}
+}
+
+/**
+ * The docs' shape, declared once: it drives the sidebar AND the redirects from the pre-/docs/ routes.
+ * @type {Array<{ label: string, items: Array<{ slug: string, label?: string, hidden?: boolean }> }>}
+ */
+const sections = [
+	{
+		label: 'Getting Started',
+		items: [
+			{ slug: '', label: 'Overview' },
+			{ slug: 'getting-started/installation' },
+			{ slug: 'getting-started/configuration' },
+		],
+	},
+	{
+		label: 'Using Mitra',
+		items: [
+			{ slug: 'guides/views' },
+			{ slug: 'guides/calendars' },
+			{ slug: 'guides/unscheduled-tasks' },
+			{ slug: 'guides/routines' },
+			{ slug: 'guides/participants' },
+			{ slug: 'guides/notifications' },
+			{ slug: 'guides/location-autocomplete' },
+			// Reached from Views; listed only so its old URL keeps redirecting.
+			{ slug: 'guides/table-view', hidden: true },
+			{ slug: 'guides/keyboard-shortcuts' },
+			{ slug: 'guides/settings' },
+			{ slug: 'guides/default-calendar-app' },
+		],
+	},
+	{
+		label: 'Relationships',
+		items: [
+			{ slug: 'guides/relationships', label: 'Overview' },
+			{ slug: 'guides/relationships/hierarchy', label: 'Hierarchy & Subtasks' },
+			{ slug: 'guides/relationships/dependencies' },
+		],
+	},
+	{
+		label: 'Integrations',
+		items: [
+			{ slug: 'integrations', label: 'Overview' },
+			{ slug: 'integrations/caldav' },
+			{ slug: 'integrations/google-calendar' },
+			{ slug: 'integrations/apple-calendar' },
+			{ slug: 'integrations/calendar-subscriptions' },
+			{ slug: 'integrations/notion' },
+			{ slug: 'integrations/tempo' },
+		],
+	},
+	{
+		label: 'Administration',
+		items: [
+			{ slug: 'guides/multi-user' },
+			{ slug: 'guides/backups' },
+			{ slug: 'guides/updates' },
+			{ slug: 'guides/health-checks' },
+			{ slug: 'guides/logging' },
+		],
+	},
+	{
+		label: 'Reference',
+		items: [
+			{ slug: 'reference/environment-variables' },
+		],
+	},
+]
+
+const sidebar = sections.map(section => ({
+	label: section.label,
+	items: section.items.filter(item => !item.hidden).map(({ slug, label }) => ({
+		slug: slug ? `${docsBase}/${slug}` : docsBase,
+		...(label ? { label } : {}),
+	})),
+}))
+
+// The docs used to live at the site root; those URLs keep resolving.
+const redirects = Object.fromEntries(
+	sections
+		.flatMap(section => section.items.map(item => item.slug))
+		.filter(Boolean)
+		.map(slug => [`/${slug}`, `/${docsBase}/${slug}/`])
+)
+
 export default defineConfig({
-	...(site ? { site } : {}),
+	site: new URL(site).origin,
 	...(base ? { base } : {}),
+	redirects,
 	markdown: {
 		processor: unified({
-			remarkPlugins: [remarkAlert],
+			remarkPlugins: [remarkAlert, remarkDocsAssets],
 			rehypePlugins: [rehypeMarkdownLinks],
 		}),
 	},
 	integrations: [
 		starlight({
 			title: 'Mitra',
-			description: 'Documentation for Mitra — one calendar to plan your events and tasks, self-hosted and synced with the calendars you already use.',
-			logo: { src: './src/assets/mitra.svg' },
+			description: 'Documentation for Mitra, a self-hosted calendar for your events and tasks.',
+			logo: { src: './src/assets/mitra.svg', alt: 'Mitra' },
 			favicon: '/favicon.svg',
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/a11delavar/mitra' },
 			],
+			// Remapped from the link to ../docs in starlightRouteData.ts.
 			editLink: { baseUrl: 'https://github.com/a11delavar/mitra/edit/main/docs/' },
-			sidebar: [
-				{
-					label: 'Getting Started',
-					items: [
-						{ slug: 'index', label: 'Overview' },
-						{ slug: 'getting-started/installation' },
-						{ slug: 'getting-started/configuration' },
-					],
+			routeMiddleware: './src/starlightRouteData.ts',
+			sidebar,
+			customCss: ['./src/styles/docs.css'],
+			components: {
+				Header: './src/overrides/Header.astro',
+				PageTitle: './src/overrides/PageTitle.astro',
+				ThemeSelect: './src/overrides/ThemeSelect.astro',
+				Footer: './src/overrides/Footer.astro',
+			},
+			expressiveCode: {
+				themes: ['github-dark-default', 'github-light-default'],
+				styleOverrides: {
+					borderRadius: '8px',
+					borderColor: 'var(--mitra-hairline)',
+					codeBackground: 'var(--color-surface)',
+					frames: {
+						editorActiveTabBackground: 'var(--color-surface)',
+						editorTabBarBackground: 'transparent',
+						terminalBackground: 'var(--color-surface)',
+						terminalTitlebarBackground: 'transparent',
+						shadowColor: 'transparent',
+					},
 				},
-				{
-					label: 'Using Mitra',
-					items: [
-						{ slug: 'guides/calendars' },
-						{ slug: 'guides/unscheduled-tasks' },
-						{ slug: 'guides/routines' },
-						{ slug: 'guides/participants' },
-						{ slug: 'guides/notifications' },
-						{ slug: 'guides/location-autocomplete' },
-						{ slug: 'guides/table-view' },
-						{ slug: 'guides/keyboard-shortcuts' },
-						{ slug: 'guides/settings' },
-					],
-				},
-				{
-					label: 'Relationships',
-					items: [
-						{ slug: 'guides/relationships', label: 'Overview' },
-						{ slug: 'guides/relationships/hierarchy', label: 'Hierarchy & Subtasks' },
-						{ slug: 'guides/relationships/dependencies' },
-					],
-				},
-				{
-					label: 'Integrations',
-					items: [
-						{ slug: 'integrations', label: 'Overview' },
-						{ slug: 'integrations/caldav' },
-						{ slug: 'integrations/google-calendar' },
-						{ slug: 'integrations/apple-calendar' },
-						{ slug: 'integrations/calendar-subscriptions' },
-						{ slug: 'integrations/notion' },
-						{ slug: 'integrations/tempo' },
-					],
-				},
-				{
-					label: 'Administration',
-					items: [
-						{ slug: 'guides/multi-user' },
-						{ slug: 'guides/backups' },
-						{ slug: 'guides/updates' },
-						{ slug: 'guides/health-checks' },
-						{ slug: 'guides/logging' },
-					],
-				},
-				{
-					label: 'Reference',
-					items: [
-						{ slug: 'reference/environment-variables' },
-					],
-				},
-			],
-			customCss: ['./src/styles/custom.css'],
-			plugins: [
-				// No top-nav links — the sidebar is the only navigation for now.
-				lucode(),
-			],
+			},
+			pagination: false,
+			credits: false,
 		}),
 	],
 })

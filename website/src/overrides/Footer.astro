@@ -1,0 +1,53 @@
+---
+import { withBase } from '../../site.mjs'
+import Icon from '../components/Icon.astro'
+
+const { editUrl } = Astro.locals.starlightRoute
+---
+
+<footer>
+	{editUrl && (
+		<a class="edit" href={editUrl.href} rel="noreferrer">
+			<Icon name="pencil" size="1em" />
+			Edit this page
+		</a>
+	)}
+	<div class="links">
+		<a href={withBase('/')}>Home</a>
+		<a href="https://github.com/a11delavar/mitra">GitHub</a>
+		<a href="https://github.com/a11delavar/mitra/blob/main/LICENSE">AGPL-3.0</a>
+	</div>
+</footer>
+
+<style>
+	footer {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem 2rem;
+		justify-content: space-between;
+		align-items: center;
+		margin-block-start: 4rem;
+		padding-block-start: 1.5rem;
+		border-block-start: 1px solid var(--mitra-hairline);
+		font-size: 0.8125rem;
+		color: var(--color-text-muted);
+	}
+
+	.links {
+		display: flex;
+		gap: 1.25rem;
+	}
+
+	a {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		color: var(--color-text-muted);
+		text-decoration: none;
+		transition: color 0.15s ease;
+	}
+
+	a:hover {
+		color: var(--color-text);
+	}
+</style>

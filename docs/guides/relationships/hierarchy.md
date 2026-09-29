@@ -3,15 +3,20 @@ title: Hierarchy
 description: Break tasks into subtasks, track automatic progress rollups, and coordinate parent and child task completion.
 ---
 
-Tasks in Mitra can be broken down into subtasks and linked across [calendars](../calendars.md) — including [unscheduled tasks](../unscheduled-tasks.md) that have no date yet. Mitra automatically rolls up subtask completion into the parent task, displays progress indicators on the calendar, and offers smart follow-up prompts when completing or moving related tasks.
+Tasks in Mitra can be broken down into subtasks and linked across [calendars](../calendars.md), including [unscheduled tasks](../unscheduled-tasks.md) that have no date yet. The parent task shows how many of its subtasks are done, the calendar shows its progress, and Mitra asks what to do with related tasks when you complete or move one.
 
 ## Subtasks & parent tasks
 
-You can link any task as a subtask or parent of another in its editor under **Relations**:
+A task's editor has a row for each side of the link:
 
-1. Open a task's editor and select **＋ Relation**.
-2. Pick **Subtask** (to add a child task) or **Parent** (to assign this task to a parent).
+1. Open the task's editor.
+2. Select **＋** on **Subtask of** to give it a parent, or on **Subtasks** to add a child task.
 3. Search for the task you want to link.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../../assets/screenshots/hierarchy-detail-dark.png">
+  <img src="../../../assets/screenshots/hierarchy-detail-light.png" alt="A task with a checklist in its description and one finished subtask, counted as 1/1" />
+</picture>
 
 Each subtask displays its status directly in the editor with its [calendar's color](../calendars.md#recolor). You can tick or toggle subtasks in place without leaving the parent task's editor.
 
@@ -40,9 +45,9 @@ When working with hierarchical tasks, Mitra offers follow-up actions:
 - **Moving or deleting**: Moving a parent task to a new day or time asks whether you want to move its subtasks by the same amount of time. Deleting a parent offers to delete its subtasks along with it.
 
 > [!TIP]
-> Hold **Ctrl** (or **⌘** on macOS — see [keyboard shortcuts](../keyboard-shortcuts.md)) when moving or deleting a parent task to bypass the prompt and apply the change only to the selected task.
+> Hold **Ctrl** (**⌘** on macOS, see [keyboard shortcuts](../keyboard-shortcuts.md)) when moving or deleting a parent task to skip the prompt and change only that task.
 
 ## See also
 
-- [Relationships Overview →](README.md)
-- [Dependencies →](dependencies.md)
+- [Relationships Overview](README.md)
+- [Dependencies](dependencies.md)

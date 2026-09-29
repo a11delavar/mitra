@@ -1,9 +1,9 @@
 ---
 title: Apple Calendar
-description: Connect an iCloud calendar to Mitra using an app-specific password — no deployment setup required.
+description: Connect an iCloud calendar to Mitra with an app-specific password. Nothing to set up on the server.
 ---
 
-Apple Calendar (iCloud) connects natively — **no deployment configuration**. Apple requires an **app-specific password** rather than your main Apple ID password, which you generate in a minute.
+Apple Calendar (iCloud) works without **any setup on the server**. Apple requires an **app-specific password** rather than your main Apple ID password, which you generate in a minute.
 
 ## Connect an account
 
@@ -11,14 +11,14 @@ Apple Calendar (iCloud) connects natively — **no deployment configuration**. A
 2. Under **Sign-In and Security**, select **App-Specific Passwords**.
 3. Generate a new password and name it something memorable (e.g. "Mitra").
 4. In Mitra, choose **Add Integration → Apple Calendar** and enter:
-   - **Apple ID** — your iCloud email (e.g. `you@icloud.com`).
-   - **App-Specific Password** — the password you just generated.
+   - **Apple ID**: your iCloud email (for example `you@icloud.com`).
+   - **App-Specific Password**: the password you just generated.
 5. Save, then enable the calendars you want from the source picker.
 
 > [!TIP]
-> App-specific passwords are single-use secrets tied to your Apple ID. If you ever need to revoke Mitra's access, delete the "Mitra" password from your Apple ID's Sign-In and Security page — your main password and other apps are unaffected.
+> App-specific passwords are single-use secrets tied to your Apple ID. If you ever need to revoke Mitra's access, delete the "Mitra" password from your Apple ID's Sign-In and Security page. Your main password and other apps are not affected.
 
-## What syncs — and one important caveat
+## What syncs, and one important caveat
 
 Your **calendar events** sync perfectly, two-way.
 
@@ -27,9 +27,9 @@ Your **calendar events** sync perfectly, two-way.
 > [!CAUTION]
 > Tasks you create in your Apple integration within Mitra will sync to *other Mitra instances*, but they **will not appear in the native Apple Reminders app**. Calendar events, however, sync both ways without issue.
 
-If two-way task sync with Apple Reminders matters to you, that's a limitation on Apple's side, not Mitra's — there's no CalDAV surface for it to use.
+If two-way task sync with Apple Reminders matters to you, that is a limitation on Apple's side, not Mitra's: Apple offers no CalDAV access to Reminders.
 
 ## Troubleshooting
 
 - **"Invalid password" when connecting.** You must use an **app-specific password**, not your normal Apple ID password. Two-factor authentication also needs to be enabled on your Apple ID to generate one.
-- **Nothing appears after connecting.** Discovered calendars start disabled — open the source picker and enable them.
+- **Nothing appears after connecting.** Discovered calendars start out disabled. Open the source picker and enable them.

@@ -9,9 +9,9 @@
 			"autoPort": true
 		},
 		{
-			"name": "mitra-docs",
+			"name": "mitra-website",
 			"runtimeExecutable": "npm",
-			"runtimeArgs": ["--prefix", "website", "run", "preview"],
+			"runtimeArgs": ["--prefix", "website", "run", "dev"],
 			"port": 4321,
 			"autoPort": true
 		}

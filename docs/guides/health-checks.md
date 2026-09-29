@@ -1,6 +1,6 @@
 ---
 title: Health checks
-description: Mitra's unauthenticated health endpoint for orchestrators, load balancers, and uptime monitors — plus the built-in Docker health check.
+description: Mitra's unauthenticated health endpoint for orchestrators, load balancers and uptime monitors, and the built-in Docker health check.
 ---
 
 Mitra exposes a single, unauthenticated health endpoint for orchestrators, load balancers, and uptime monitors to ask "is this instance serving?".
@@ -11,14 +11,14 @@ Mitra exposes a single, unauthenticated health endpoint for orchestrators, load 
 GET /api/health
 ```
 
-It checks the one thing the app can't run without — the **database** — and answers:
+It checks the one thing the app can't run without, the **database**, and answers:
 
 | Response | Meaning |
 | --- | --- |
-| `200` `{"status":"ok"}` | Serving — the database is reachable. |
-| `503` `{"status":"error"}` | Not serving — the database is unreachable (or the check timed out). |
+| `200` `{"status":"ok"}` | Serving. The database is reachable. |
+| `503` `{"status":"error"}` | Not serving. The database is unreachable, or the check timed out. |
 
-The reply is deliberately **bare**: no version, build, or dependency details that would help an unauthorized caller fingerprint your deployment. It sends `Cache-Control: no-store`, so probes always hit live state. Per-user integrations (CalDAV, Notion, Google, the OIDC provider, Photon) are intentionally **not** part of the check — a transient outage there must not flap the container's health.
+The reply is deliberately **bare**: no version, build, or dependency details that would help an unauthorized caller fingerprint your deployment. It sends `Cache-Control: no-store`, so probes always hit live state. Per-user integrations (CalDAV, Notion, Google, the OIDC provider, Photon) are **not** part of the check on purpose: a short outage at one of them shouldn't mark the container unhealthy.
 
 ## Built-in Docker health check
 

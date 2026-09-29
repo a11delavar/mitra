@@ -1,11 +1,16 @@
 ---
 title: Table view
-description: Your entries as rows — pick the days to list, sort and filter them, and change many at once.
+description: Your entries as rows. Pick the days to list, sort and filter them, and change many at once.
 ---
 
 The **Table** view lists your entries as rows instead of drawing them on a grid. Open it with <kbd>S</kbd> or from the view picker.
 
-Every row is one entry — each occurrence of a repeating entry is a row of its own — and its title is the same chip the calendar draws: click it to open the entry's editor.
+Every row is one entry, and each occurrence of a repeating entry gets a row of its own. Its title is the same chip the calendar draws: click it to open the entry's editor.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/table-detail-dark.png">
+  <img src="../../assets/screenshots/table-detail-light.png" alt="The table view, with a column each for when, calendar, status and participants" />
+</picture>
 
 ## Which entries
 
@@ -23,7 +28,7 @@ The **search** field matches every word you type against the title, the location
 
 Click a column's heading for its menu:
 
-- **Sort ascending** or **Sort descending** — choose the one in force again to remove it. Hold <kbd>Shift</kbd> to sort by several columns.
+- **Sort ascending** or **Sort descending**. Choose the active one again to remove it. Hold <kbd>Shift</kbd> to sort by several columns.
 - The column's **filter**, where it has one: untick the values to leave out. Hold <kbd>Alt</kbd> to keep just the one you click. The **Status** filter's **No status** stands for events, so unticking it lists tasks alone.
 - **Hide column**, which also lifts the column's filter.
 
@@ -31,7 +36,7 @@ The **Status**, **Calendar**, **Type** and **Repeats** columns can filter, and *
 
 ## Columns
 
-The table starts with **Title**, **When**, **Calendar**, **Status**, **Location**, **Participants**, **Subtask of** and **Blocked by**. The button at the end of the heading row shows the others — **Duration**, **Type**, **Repeats**, **Reminders** and **Description** — and **Reset columns** puts the defaults back.
+The table starts with **Title**, **When**, **Calendar**, **Status**, **Location**, **Participants**, **Subtask of** and **Blocked by**. The button at the end of the heading row shows the others (**Duration**, **Type**, **Repeats**, **Reminders** and **Description**), and **Reset columns** puts the defaults back.
 
 Every column is as wide as its content. Drag a heading to move its column, and its edge to resize it; double-click the edge to fit the column to its content again.
 

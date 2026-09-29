@@ -1,21 +1,21 @@
 ---
 title: CalDAV
-description: Connect any CalDAV server — Nextcloud, Radicale, Fastmail, mailbox.org and more — for two-way sync of both events and tasks.
+description: Connect any CalDAV server, such as Nextcloud, Radicale, Fastmail or mailbox.org, to sync events and tasks both ways.
 ---
 
-CalDAV is the open standard most calendar servers speak, and it's Mitra's most direct integration. It connects **straight from the app** — no deployment configuration — and syncs both **events** and **tasks** (VTODO) two-way.
+CalDAV is the open standard most calendar servers speak, and it's Mitra's most direct integration. You connect it **straight from the app**, with no setup on the server, and it syncs both **events** and **tasks** (VTODO) both ways.
 
 ## Connect an account
 
 1. In Mitra, open the sidebar and choose **Add Integration → CalDAV**.
 2. Enter the connection details:
-   - **Server URL** — your CalDAV endpoint, e.g. `https://caldav.example.com`.
-   - **Username** — usually your account name or email.
-   - **Password** — your account password (or an app password, if your provider issues them).
-3. Save. Mitra discovers the calendars on the account and lists them, **disabled**, in a source picker — each with a note of what it holds ("Events · Tasks"), since a CalDAV calendar may accept both.
+   - **Server URL**: your CalDAV endpoint, for example `https://caldav.example.com`.
+   - **Username**: usually your account name or email.
+   - **Password**: your account password, or an app password if your provider issues them.
+3. Save. Mitra discovers the calendars on the account and lists them, **disabled**, in a source picker. Each one shows what it holds ("Events · Tasks"), since a CalDAV calendar can accept both.
 4. Enable the sources you want on your timeline.
 
-That's it — enabled sources sync in the background from then on.
+That's it. Enabled sources sync in the background from then on.
 
 ## Server URLs for common providers
 
@@ -30,24 +30,24 @@ Point Mitra at the provider's CalDAV base URL; it discovers the individual calen
 | **Baïkal** | `https://<your-baikal>/dav.php` |
 
 > [!NOTE]
-> [Google Calendar](google-calendar.md) and [Apple Calendar](apple-calendar.md) also speak CalDAV, but they don't accept a plain password — Google needs OAuth and Apple needs an app-specific password. Use their dedicated pages rather than the generic CalDAV form.
+> [Google Calendar](google-calendar.md) and [Apple Calendar](apple-calendar.md) also speak CalDAV, but they don't accept a plain password: Google needs OAuth and Apple needs an app-specific password. Use their dedicated pages rather than the generic CalDAV form.
 
 ## What syncs
 
-- **Events and tasks.** A collection is **one** source in Mitra, holding whichever component types the server says it accepts — most accept both `VEVENT` and `VTODO`, and both sync two-way. A collection restricted to one of them offers only that one when you create an entry.
-- **Recurring events.** Full RFC 5545 recurrence — a repeating series is one entry, expanded across the views. Editing an occurrence edits the series (per-occurrence editing where the server supports it).
+- **Events and tasks.** A collection is **one** source in Mitra, holding whichever types the server says it accepts. Most accept both `VEVENT` and `VTODO`, and both sync both ways. A collection restricted to one of them offers only that one when you create an entry.
+- **Recurring events.** Full RFC 5545 recurrence: a repeating series is one entry, shown on every day it occurs. Editing an occurrence edits the series (per-occurrence editing where the server supports it).
 - **All-day and multi-day** entries, locations, descriptions, colors, and reminders, subject to what your server stores.
 
-While you have the app open, enabled sources are polled about every 10 seconds, so changes made elsewhere show up almost immediately. While nobody's looking, polling relaxes to every few minutes to keep your server's logs quiet — and opening or reloading the app syncs right away, so you never wait on a poll.
+While you have the app open, enabled sources are polled about every 10 seconds, so changes made elsewhere show up almost immediately. While nobody's looking, polling slows to every few minutes to keep your server's logs quiet. Opening or reloading the app syncs right away, so you never wait for the next poll.
 
 ## Editing
 
 - Edits, moves, resizes, and deletes you make in Mitra are written back to the server.
 - **Read-only shared calendars.** Calendars shared with you with view-only permissions are automatically detected and marked **read-only**. They sync and display normally, while edit actions are disabled. Personal customizations (renaming, recoloring, reordering, and hiding) remain available.
-- Renaming, recoloring, reordering and hiding a calendar are Mitra's own view of it and work the same for every provider — see **[Calendars & task lists](../guides/calendars.md)**. Your rename survives background syncs; only a genuine rename on the server side is adopted. These stay available on a read-only calendar too.
+- Renaming, recoloring, reordering and hiding a calendar are Mitra's own view of it and work the same for every provider. See **[Calendars & task lists](../guides/calendars.md)**. Your rename survives background syncs; only a genuine rename on the server side is adopted. These stay available on a read-only calendar too.
 
 ## Troubleshooting
 
-- **Nothing appears after connecting.** Discovered sources start **disabled** by design — open the source picker and enable the ones you want.
+- **Nothing appears after connecting.** Discovered sources start out **disabled** on purpose. Open the source picker and enable the ones you want.
 - **A calendar looks out of date after a code update.** Use [**Re-import entries**](../guides/calendars.md#re-import-a-source) on the source: it drops Mitra's local copy and fetches everything again (a normal sync only pulls deltas, so unchanged entries are never re-read).
 - **Connection fails.** Double-check the Server URL includes the scheme (`https://`) and points at the CalDAV endpoint, not the web UI. Watch the [logs](../guides/logging.md) at `debug` level to see the CalDAV round-trips.

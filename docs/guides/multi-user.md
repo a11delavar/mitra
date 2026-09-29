@@ -1,11 +1,11 @@
 ---
 title: Multi-user & sign-in (OIDC)
-description: Share one Mitra deployment with family or a team by connecting it to any OpenID Connect provider — everyone signs in with their existing account.
+description: Share one Mitra deployment with family or a team by connecting it to any OpenID Connect provider. Everyone signs in with their existing account.
 ---
 
-Out of the box Mitra is **single-user with no login** — fine when only you can reach it. To share one deployment with family or a team, connect it to any **OpenID Connect (OIDC)** provider. Everyone then signs in with their existing account and gets their own private calendars.
+By default Mitra is **single-user with no login**, which is fine when only you can reach it. To share one deployment with family or a team, connect it to any **OpenID Connect (OIDC)** provider. Everyone then signs in with their existing account and gets their own private calendars.
 
-Mitra has been used with Pocket ID, Authelia, Authentik, Keycloak, and Google, among others — any standards-compliant OIDC provider works.
+Mitra has been used with Pocket ID, Authelia, Authentik, Keycloak and Google, among others. Any standards-compliant OIDC provider works.
 
 ## Enable multi-user mode
 
@@ -24,7 +24,7 @@ services:
     # …
 ```
 
-Then register this **redirect URI** at your provider — `MITRA_URL` plus `/auth/callback`:
+Then register this **redirect URI** at your provider. It is `MITRA_URL` plus `/auth/callback`:
 
 ```text
 https://mitra.example.com/auth/callback
@@ -33,12 +33,12 @@ https://mitra.example.com/auth/callback
 That's all the provider needs to know. Restart Mitra (`docker compose up -d`) and it switches into multi-user mode.
 
 > [!NOTE]
-> Setting `MITRA_OIDC_ISSUER` is the switch. `MITRA_OIDC_CLIENT_ID` and `MITRA_URL` become **required** alongside it — a half-configured issuer fails the boot loudly on purpose. A calendar silently falling back to *no authentication* would be far worse than not starting.
+> Setting `MITRA_OIDC_ISSUER` is the switch. `MITRA_OIDC_CLIENT_ID` and `MITRA_URL` are then **required** as well. If one is missing, Mitra refuses to start on purpose: quietly falling back to *no authentication* would be much worse.
 
 ### Public vs confidential clients
 
-- **Confidential client** — register a client secret and set `MITRA_OIDC_CLIENT_SECRET`.
-- **Public client** — omit the secret entirely. PKCE is always on, so a public client is fully supported.
+- **Confidential client**: register a client secret and set `MITRA_OIDC_CLIENT_SECRET`.
+- **Public client**: leave the secret out. PKCE is always on, so a public client is fully supported.
 
 ### Scopes
 
@@ -46,25 +46,25 @@ That's all the provider needs to know. Restart Mitra (`docker compose up -d`) an
 
 ## How sign-in works
 
-- **Sign-in happens on the server** (Authorization Code flow with PKCE). Your browser only ever holds an opaque session cookie — **no tokens live in web storage**, so there's nothing for XSS to steal.
+- **Sign-in happens on the server** (Authorization Code flow with PKCE). Your browser only holds an opaque session cookie. **No tokens are kept in web storage**, so there is nothing for an XSS attack to steal.
 - **Sessions are Mitra's own**: a random cookie token, stored hashed, with a sliding 30-day expiry. CSRF protection rests on `SameSite=Lax`.
 - **HTTPS matters**: session cookies are marked `Secure` when `MITRA_URL` is `https://`. An `http://` issuer is allowed for LAN/compose-internal providers that have no TLS.
-- **Single sign-out** is supported where your provider offers it — signing out of Mitra ends the upstream SSO session too.
+- **Single sign-out** works where your provider offers it: signing out of Mitra also ends your session at the provider.
 
 ## Accounts provision themselves
 
-Anyone your provider authenticates gets a Mitra account on **first sign-in** — there's no separate user list to manage in Mitra. **Control who may sign in from your provider** (by group, app assignment, or however your IdP scopes access). Each person's name and email refresh from the ID token on every sign-in.
+Anyone your provider lets in gets a Mitra account on **first sign-in**. There is no separate user list to manage in Mitra. **Control who may sign in from your provider** (by group, app assignment, or however your IdP scopes access). Each person's name and email refresh from the ID token on every sign-in.
 
 ## Turning OIDC on is a fresh start
 
 > [!CAUTION]
-> Enabling multi-user mode gives **every identity — including the first person to sign in — a brand-new, empty account.** The calendars you added while the deployment was single-user do **not** carry over.
+> Enabling multi-user mode gives **every identity a brand-new, empty account, including the first person to sign in.** The calendars you added while the deployment was single-user do **not** carry over.
 
-This is deliberate: there's no automatic migration of the single-user data to an OIDC identity. After your first sign-in, simply **re-add your integrations**. (The same applies in reverse — the single-user account and OIDC accounts are separate.)
+This is deliberate: there's no automatic migration of the single-user data to an OIDC identity. After your first sign-in, **add your integrations again**. The same applies the other way round: the single-user account and the OIDC accounts are separate.
 
 ## Troubleshooting
 
 - **Boot fails with a missing-variable error.** When `MITRA_OIDC_ISSUER` is set, `MITRA_OIDC_CLIENT_ID` and `MITRA_URL` must be too.
 - **Redirect/`invalid redirect_uri` errors at the provider.** The registered redirect URI must exactly equal `MITRA_URL` + `/auth/callback`.
-- **"Discovery failed" in the logs.** Mitra discovers the provider metadata lazily and retries on the next sign-in, so an IdP that boots *after* Mitra in the same stack recovers on its own. A persistent failure means a wrong issuer URL, DNS, or an unreachable IdP — check at [`debug` log level](logging.md).
-- **My old calendars are gone after enabling OIDC.** Expected — see [Turning OIDC on is a fresh start](#turning-oidc-on-is-a-fresh-start). Re-add your integrations.
+- **"Discovery failed" in the logs.** Mitra discovers the provider metadata lazily and retries on the next sign-in, so an IdP that boots *after* Mitra in the same stack recovers on its own. If it keeps failing, the issuer URL is wrong, DNS doesn't resolve, or the provider is unreachable. Check at the [`debug` log level](logging.md).
+- **My old calendars are gone after enabling OIDC.** That is expected. See [Turning OIDC on is a fresh start](#turning-oidc-on-is-a-fresh-start) and add your integrations again.

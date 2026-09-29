@@ -7,20 +7,24 @@ Dependencies declare execution order: one task or event must finish before the n
 
 ## Creating a dependency
 
-In any entry's editor under **Relations**:
+In any entry's editor:
 
-1. Select **＋ Relation**.
-2. Choose **Blocks** (if this entry must happen *before* the target) or **Depends on** (if this entry requires the target to finish *first*).
-3. Search for the prerequisite or follow-up entry.
+1. Select **＋** on **Blocked by**.
+2. Search for the entry that has to finish first.
 
-Mitra records the relationship from both sides — adding "A blocks B" automatically shows "B depends on A" on entry B.
+Mitra records the relationship on both sides: the other entry lists this one under **Blocks**.
 
 ## Visual connection arrows
 
-On the calendar grid (Day and Week views), Mitra draws smooth connection arrows between dependent entries:
+In the week view, Mitra draws a connection line between dependent entries:
 
 - The line starts at the end of the prerequisite entry and points to the start of the dependent entry.
 - Clicking or hovering over an entry highlights its active dependency lines so you can trace complex workflows at a glance.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../../assets/screenshots/week-detail-dark.png">
+  <img src="../../../assets/screenshots/week-detail-light.png" alt="A week with three study tasks joined by lines, each one leading to the next and on to the exam" />
+</picture>
 
 ## Schedule conflict warnings
 
@@ -39,7 +43,7 @@ When you move or reschedule an entry that has dependent tasks or events linked t
 - **Move them all by the same amount**: Shifts all connected entries in the chain by the exact same amount of time, preserving the time gaps between your tasks.
 
 > [!TIP]
-> Hold **Ctrl** (or **⌘** on macOS — see [keyboard shortcuts](../keyboard-shortcuts.md)) while dragging an entry to bypass the prompt and move only the selected entry.
+> Hold **Ctrl** (**⌘** on macOS, see [keyboard shortcuts](../keyboard-shortcuts.md)) while dragging an entry to skip the prompt and move only that entry.
 
 ### Subtasks and recurring events
 
@@ -48,6 +52,6 @@ When you move or reschedule an entry that has dependent tasks or events linked t
 
 ## See also
 
-- [Relationships Overview →](README.md)
-- [Hierarchy →](hierarchy.md)
-- [Keyboard Shortcuts →](../keyboard-shortcuts.md)
+- [Relationships Overview](README.md)
+- [Hierarchy](hierarchy.md)
+- [Keyboard Shortcuts](../keyboard-shortcuts.md)

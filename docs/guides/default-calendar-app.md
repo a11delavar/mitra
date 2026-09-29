@@ -8,7 +8,7 @@ When installed as a desktop application, Mitra registers with your operating sys
 - Double-click downloaded `.ics` calendar files and email invitations to import them directly into Mitra.
 - Click `webcal://` links on the web to quickly subscribe to external calendar feeds.
 - Set Mitra as your computer's default calendar handler across Windows, macOS, or Linux.
-- Drag and drop `.ics` files straight into your calendar view—even without installing the app.
+- Drag and drop `.ics` files straight into your calendar view, even without installing the app.
 
 > [!NOTE]
 > OS-level file and protocol associations are supported on desktop by Chromium-based browsers (Google Chrome, Microsoft Edge, Brave, and Opera). If you use Mitra in a browser tab or an unsupported browser, you can still import `.ics` files anytime using drag-and-drop.
@@ -55,7 +55,7 @@ Opening a calendar file with Mitra launches the **import wizard**:
 3. **Confirm import**: Click to import the entries. Your local file on disk is never modified.
 
 > [!TIP]
-> **No installation needed for drag-and-drop**: You can drag an `.ics` file from your desktop or file manager and drop it anywhere onto Mitra to start the import flow immediately—even when running inside a regular browser tab.
+> **No installation needed for drag-and-drop**: You can drag an `.ics` file from your desktop or file manager and drop it anywhere onto Mitra to start the import right away, even in a regular browser tab.
 
 ### Important details about file imports
 
@@ -82,5 +82,5 @@ Mitra never connects to the remote feed automatically upon clicking a link; you 
 
 ## See also
 
-- [Calendar Subscriptions](../integrations/calendar-subscriptions.md) — How subscribed feeds sync and update
-- [Calendars & Task Lists](calendars.md) — Managing calendar sources and entry targets
+- [Calendar Subscriptions](../integrations/calendar-subscriptions.md): how subscribed feeds sync and update
+- [Calendars & Task Lists](calendars.md): managing calendars and where new entries go

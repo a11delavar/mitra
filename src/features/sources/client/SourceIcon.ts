@@ -2,7 +2,7 @@ import { Component, component, html, css, property } from '@a11d/lit'
 import { type Source } from '../Source.js'
 import { EntryType } from '../../entries/EntryType.js'
 import { getIntegrationFor } from '../../../infrastructure/http/Api.js'
-import { contrastColor } from '../../../design/contrastColor.js'
+import { contrastColorOf } from '../../../design/contrastColor.js'
 
 /**
  * Renders the domain icon for a source in its assigned color.
@@ -37,7 +37,7 @@ export class SourceIcon extends Component {
 
 				&[selected] {
 					background: var(--mitra-source-icon-color);
-					color: ${contrastColor('var(--mitra-source-icon-color)')};
+					${contrastColorOf('color', 'var(--mitra-source-icon-color)')}
 
 					mitra-icon {
 						transform: scale(0.9);

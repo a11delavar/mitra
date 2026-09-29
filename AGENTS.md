@@ -96,6 +96,11 @@
 - **User Scoping**: SSE (`syncEmitter.emit('updated', userId, scope?)`), Web Push (`userId`), and reminders (`sendTo(userId, ...)`) are isolated per user.
 - **SSE Scope** (`SyncScope`): `'entries'` (default wire event `'updated'`) or `'sources'`. `'sources'` triggers client `fetchIntegrations()` to update calendar metadata, colors, and import states. Entry mutations use `'entries'` to prevent recreating `Source` object references.
 
+## The Sample Calendar (`seedSample` in `src/integrations/dev/Dev.ts`)
+One fixture serves the dev account and every screenshot the site ships, so keep it calm: one entry per concept, the all-day lane empty around today, days inside 07:00–19:00 (what a capture holds).
+- **One dependency chain in the CURRENT week**: the app opens on today−2…today+4. Give its connector a clear band of time; a chip between two linked tasks swallows the line.
+- **`sampleUri()` gates the refresh**: a seed edit does nothing until the day changes. Force it by repointing the integration's `uri`.
+
 ## Integrations & Sync Engine
 - **Class Hierarchy & Registration**:
   - `Integration` base class (STI).
@@ -112,7 +117,7 @@
   - **Dev Calendar** (`src/integrations/dev/Dev.ts`, type `'dev'`):
     - Self-contained, local-only calendar (no remote server).
     - `sync()` is no-op, CRUD operations write directly to SQLite. `syncInterval = Infinity`.
-    - Seeded via `seedDev(orm)` when `MITRA_DEV=true`.
+    - Seeded via `seedDev(orm)` when `MITRA_DEV=true`, from `seedSample` (see §The Sample Calendar).
   - **Notion** (`integrations/notion/Notion.ts`, type `'notion'`):
     - Direct `Integration` subclass (REST API, `Notion-Version: 2026-03-11`). Token PAT auth.
     - Sources: `notion://{dataSourceId}/{viewId}`. Requires status and date properties. Unsupported view types (e.g. feed) are ignored on fetch.
@@ -376,6 +381,14 @@
 - **Ordering**: `Source.order` column (nullable integer).
 - **Row Actions**: Source visibility eye toggle is the trailing action.
 
+## Website (`website/`)
+- **One Astro project**: the homepage (`src/pages/index.astro`) plus Starlight rendering `../docs`, linked in by `prepare.mjs` (everything it writes is gitignored). The host lives once in `site.mjs`.
+- **The look is emitted, never restated**: `tools/tokens.mjs` evaluates `src/design`'s lit fragments in Node, so `contrastColorOf()` feature-detects in CSS rather than with `CSS.supports`.
+- **Raw HTML in Markdown never becomes rehype elements**: rewrite it in remark, on the text (`remarkDocsAssets`). Clear `website/.astro` and `node_modules/.astro` after changing a plugin.
+- **Captures** (`MITRA_VERSION=v0.5.0 npm run build && npm run screenshots`): settle on a stable, non-zero count of `mitra-entry-segment, mitra-table-row`, never a delay; drive surfaces with real input and park the pointer afterwards.
+- **Longhands only with `animation-timeline`**: the minifier folds `animation:` plus `animation-timeline` into one shorthand Chrome rejects, so the animation silently never runs.
+- **Copy** (site, `docs/`, README): plain sentences, no em or en dashes (a heading's dash also breaks its anchor), no emoji bullets. Quote a frontmatter `description` containing a colon.
+
 ## Build, Test & CI/CD
 - **Runtime**: Node 25+ required (Temporal API).
 - **Type Checking**: Run `tsgo` (`node_modules/@typescript/native-preview-<platform>/lib/tsgo --noEmit`). esbuild does not typecheck.
@@ -397,6 +410,7 @@
   - `.github/workflows/release.yml`: Publishes GitHub Release from top section of `CHANGELOG.md`.
   - `.github/workflows/cleanup.yml`: Prunes untagged GHCR manifests.
 - **Changelog**: `CHANGELOG.md` generated via git-cliff (`npm run changelog`, `cliff.toml`).
+- **Website Deploy**: `.github/workflows/website.yml` builds `website/` in CI (`fetch-depth: 0`: docs pages date themselves from `git log`) and publishes `ghcr.io/a11delavar/mitra-website` (Caddy, port 8080, amd64 + arm64), whose Dockerfile carries the whole server config.
 
 ## Conventions
 - **Commit Messages**: Single-line `type: Capitalized phrase` (`feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `test:`, `ci:`, `build:`, `infra:`, `chore:`). Commit subject becomes the user-facing release note in `CHANGELOG.md`; state the end-user effect, not implementation mechanics.

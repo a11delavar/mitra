@@ -1,9 +1,14 @@
 ---
 title: Keyboard shortcuts
-description: Drive Mitra from the keyboard — views, navigation, entries, and the command palette.
+description: "Use Mitra from the keyboard: views, navigation, entries and the command palette."
 ---
 
-Press <kbd>?</kbd> anywhere in the calendar to open the built-in cheat sheet — it always reflects exactly what your version supports. The vocabulary follows the de-facto web-calendar standard (Google Calendar, Notion Calendar, Proton Calendar), so muscle memory carries over.
+Press <kbd>?</kbd> anywhere in the calendar to open the built-in cheat sheet. It always shows exactly what your version supports. The keys follow the common conventions of web calendars like Google Calendar, Notion Calendar and Proton Calendar, so what you already know carries over.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/shortcuts-detail-dark.png">
+  <img src="../../assets/screenshots/shortcuts-detail-light.png" alt="The keyboard shortcuts sheet, opened with the question mark key" />
+</picture>
 
 ## Views
 
@@ -49,4 +54,4 @@ Press <kbd>?</kbd> anywhere in the calendar to open the built-in cheat sheet —
 > [!NOTE]
 > On a Mac, <kbd>Ctrl</kbd> reads as <kbd>⌘</kbd> and <kbd>Alt</kbd> as <kbd>⌥</kbd> throughout, and <kbd>⌫</kbd> stands in for <kbd>Delete</kbd> (<kbd>Backspace</kbd> deletes as well everywhere).
 
-The three ways into the palette are interchangeable — the header's search box shows <kbd>/</kbd> because it is the shortest thing to teach, not because the chords are second-class. Single-letter shortcuts never fire while you type in a text field, and every shortcut is also discoverable in the palette itself, where commands show their key hints.
+The three ways to open the palette all do the same thing. The header's search box shows <kbd>/</kbd> only because it is the shortest to remember. Single-letter shortcuts never fire while you type in a text field, and every shortcut is also discoverable in the palette itself, where commands show their key hints.

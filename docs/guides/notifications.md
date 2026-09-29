@@ -3,7 +3,7 @@ title: Reminders & notifications
 description: How Mitra delivers reminders through Web Push, configuration requirements, and device management.
 ---
 
-Mitra notifies you before an event starts — even with no tab open — using standard **Web Push**. This provides self-hosted, OS-level notifications with no third-party accounts, push services, or external sign-ups required. Mitra generates its signing keypair automatically on first boot.
+Mitra notifies you before an event starts, even with no tab open, using standard **Web Push**. You get system notifications from your own server, without any third-party accounts or sign-ups. Mitra generates its signing keypair automatically on first boot.
 
 ## Requirements
 
@@ -17,6 +17,13 @@ Mitra notifies you before an event starts — even with no tab open — using st
 ## Adding reminders
 
 Reminders are configured per entry in the editor. Mitra requests browser notification permission **contextually** the first time you add a reminder.
+
+**Settings → Notifications** holds the rest: whether this browser may alert you, and the reminder new timed entries start with.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/notifications-detail-dark.png">
+  <img src="../../assets/screenshots/notifications-detail-light.png" alt="The Notifications settings page, with the browser permission and the default reminder" />
+</picture>
 
 - **Timed events**: Default to one reminder, 30 minutes before. All-day events default to none.
 - **Tasks**: Tasks with only a due date count back from the due time. Unscheduling a task clears its reminders.

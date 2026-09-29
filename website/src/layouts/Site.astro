@@ -1,0 +1,105 @@
+---
+import { getImage } from 'astro:assets'
+import { withBase } from '../../site.mjs'
+import weekDark from '../assets/screenshots/week-dark.png'
+import Brand from '../components/Brand.astro'
+import NavLinks from '../components/NavLinks.astro'
+import SiteFooter from '../components/SiteFooter.astro'
+import '../styles/base.css'
+
+interface Props {
+	title: string
+	description: string
+	current?: 'home' | 'docs'
+}
+
+const { title, description, current = 'home' } = Astro.props
+const canonical = new URL(Astro.url.pathname, Astro.site)
+
+// Link previews get the app itself. Kept as PNG: some scrapers still refuse anything else.
+const card = await getImage({ src: weekDark, format: 'png', width: 1200 })
+const preview = new URL(card.src, Astro.site)
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>{title}</title>
+		<meta name="description" content={description} />
+		<link rel="canonical" href={canonical.href} />
+		<link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:url" content={canonical.href} />
+		<meta property="og:image" content={preview.href} />
+		<meta name="twitter:card" content="summary_large_image" />
+
+		{/* Starlight's pre-paint theme stamp, for pages Starlight does not render. */}
+		<script is:inline>
+			;(() => {
+				const stored = localStorage.getItem('starlight-theme')
+				const choice = stored === 'light' || stored === 'dark' ? stored : 'system'
+				const root = document.documentElement
+				root.dataset.mitraTheme = choice
+				root.dataset.theme = choice === 'system'
+					? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+					: choice
+			})()
+		</script>
+	</head>
+	<body>
+		<a class="skip" href="#main">Skip to content</a>
+		<header class="header">
+			<div class="bar">
+				<Brand />
+				<NavLinks current={current} />
+			</div>
+		</header>
+		<main id="main">
+			<slot />
+		</main>
+		<SiteFooter />
+
+		<style>
+			.skip {
+				position: fixed;
+				z-index: 10;
+				inset-block-start: 0.5rem;
+				inset-inline-start: 0.5rem;
+				padding: 0.5rem 0.75rem;
+				border-radius: var(--border-radius);
+				background: var(--color-surface);
+				color: var(--color-text);
+				text-decoration: none;
+				transform: translateY(-200%);
+			}
+
+			.skip:focus {
+				transform: none;
+			}
+
+			.header {
+				position: sticky;
+				inset-block-start: 0;
+				z-index: 5;
+				background: var(--mitra-glass);
+				backdrop-filter: blur(12px);
+				border-block-end: 1px solid var(--mitra-hairline);
+			}
+
+			.bar {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 1rem;
+				max-inline-size: var(--mitra-page);
+				margin-inline: auto;
+				padding: 0.75rem var(--mitra-gutter);
+			}
+		</style>
+	</body>
+</html>

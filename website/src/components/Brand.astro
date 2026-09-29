@@ -1,0 +1,35 @@
+---
+import { withBase } from '../../site.mjs'
+import logo from '../assets/mitra.svg'
+
+interface Props {
+	href?: string
+}
+
+const { href = withBase('/') } = Astro.props
+---
+
+<a class="brand" href={href}>
+	<img src={logo.src} alt="" width="28" height="28" />
+	<span translate="no">Mitra</span>
+</a>
+
+<style>
+	.brand {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		text-decoration: none;
+		color: var(--color-text);
+		font-size: 1rem;
+		font-weight: 650;
+		letter-spacing: -0.01em;
+		white-space: nowrap;
+		min-width: 0;
+	}
+
+	img {
+		inline-size: 1.75rem;
+		block-size: 1.75rem;
+	}
+</style>

@@ -1,0 +1,113 @@
+---
+import { captureUrl } from '../captures'
+
+// The week view taken apart: layers captured at one moment and one scroll offset, so they register
+// exactly. Why they rest flat and arrive from behind: AGENTS.md §Website, Depth.
+
+const layers = [
+	{ name: 'frame', label: 'The calendar grid' },
+	{ name: 'events', label: 'Events' },
+	{ name: 'tasks', label: 'Tasks' },
+	{ name: 'links', label: 'Connections between entries' },
+]
+
+const images = Object.fromEntries(
+	await Promise.all(layers.flatMap(({ name }) => ['light', 'dark'].map(async theme =>
+		[`${name}-${theme}`, await captureUrl(`week-${name}-${theme}`, 1920)] as const
+	)))
+)
+---
+
+<div class="scene">
+	<div class="stack">
+		{layers.map(({ name, label }, index) => (
+			<div
+				class:list={['layer', name]}
+				style={`--light: url(${images[`${name}-light`]}); --dark: url(${images[`${name}-dark`]}); --index: ${index};`}
+				role="img"
+				aria-label={label}
+			>
+			</div>
+		))}
+	</div>
+</div>
+
+<style>
+	/* `--scene-room` is the height the page can give the scene; the width follows from it, so a pinned
+	   scene never runs past the bottom of the screen. */
+	.scene {
+		inline-size: 100%;
+		max-inline-size: calc(var(--scene-room, 100vh) * 960 / 620);
+		margin-inline: auto;
+	}
+
+	.stack {
+		position: relative;
+		/* The week crop: `details.week` in scripts/screenshots.ts. */
+		aspect-ratio: 960 / 620;
+	}
+
+	.layer {
+		position: absolute;
+		inset: 0;
+		background-image: var(--light);
+		background-size: 100% 100%;
+		background-repeat: no-repeat;
+		border-radius: 12px;
+	}
+
+	:global(:root[data-theme='dark']) .layer {
+		background-image: var(--dark);
+	}
+
+	.layer.frame {
+		border: 1px solid var(--mitra-hairline);
+		box-shadow: var(--mitra-shadow-soft);
+	}
+
+	/* A phone shows the first few days at a readable size rather than the whole week at a third. */
+	@media (width < 40rem) {
+		.scene {
+			max-inline-size: var(--scene-room, 100vh);
+		}
+
+		.stack {
+			aspect-ratio: 1;
+		}
+
+		.layer {
+			background-size: auto 100%;
+			/* The capture starts two days back; this centres the crop on today. */
+			background-position: 60% top;
+		}
+	}
+
+	/* Driven by the `--story` timeline the homepage declares; anywhere else the layers just rest. */
+	@supports (animation-timeline: view()) {
+		@media (prefers-reduced-motion: no-preference) {
+			/* Longhands only: see index.astro. */
+			.layer {
+				animation-name: land;
+				animation-timing-function: linear;
+				animation-fill-mode: both;
+				animation-timeline: --story;
+			}
+
+			.layer.frame { animation-range: entry 40% contain 0%; }
+			.layer.events { animation-range: contain 20% contain 30%; }
+			.layer.tasks { animation-range: contain 45% contain 55%; }
+			.layer.links { animation-range: contain 70% contain 80%; }
+		}
+	}
+
+	@keyframes land {
+		from {
+			transform: perspective(2000px) translate3d(0, 5%, calc(-180px - var(--index) * 40px));
+			opacity: 0;
+		}
+		to {
+			transform: perspective(2000px) translate3d(0, 0, 0);
+			opacity: 1;
+		}
+	}
+</style>

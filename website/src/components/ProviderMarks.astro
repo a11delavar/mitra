@@ -1,0 +1,94 @@
+---
+import { docsBase, withBase } from '../../site.mjs'
+
+// Inlined, not <img>: most marks are drawn in `currentColor` and must take the page's ink.
+
+const providers = [
+	{ id: 'caldav', name: 'CalDAV', doc: 'integrations/caldav' },
+	{ id: 'google', name: 'Google Calendar', doc: 'integrations/google-calendar' },
+	{ id: 'apple', name: 'Apple Calendar', doc: 'integrations/apple-calendar' },
+	{ id: 'notion', name: 'Notion', doc: 'integrations/notion' },
+	{ id: 'tempo', name: 'Tempo', doc: 'integrations/tempo' },
+	{ id: 'ics', name: 'Subscriptions', doc: 'integrations/calendar-subscriptions' },
+]
+
+const files = import.meta.glob<string>('../logos/*.svg', { eager: true, query: '?raw', import: 'default' })
+const marks = providers.map(provider => {
+	const svg = files[`../logos/${provider.id}.svg`]
+	if (!svg) {
+		throw new Error(`Missing provider logo ${provider.id}.svg. Did prepare.mjs run?`)
+	}
+	return { ...provider, svg }
+})
+---
+
+<ul class="marks">
+	{marks.map(({ id, name, doc, svg }) => (
+		<li>
+			<a href={withBase(`/${docsBase}/${doc}/`)}>
+				<span class:list={['mark', id]} set:html={svg} />
+				<span class="name">{name}</span>
+			</a>
+		</li>
+	))}
+</ul>
+
+<style>
+	/* Six, three or two across, so a row is never left with one card on its own. */
+	.marks {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+		gap: 0.75rem;
+	}
+
+	@media (width < 64rem) {
+		.marks {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
+	}
+
+	@media (width < 34rem) {
+		.marks {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+
+	a {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		block-size: 100%;
+		padding: 1.25rem 1rem;
+		border: 1px solid var(--mitra-hairline);
+		border-radius: 12px;
+		background: color-mix(in srgb, var(--color-surface) 60%, transparent);
+		text-decoration: none;
+		color: var(--color-text);
+		transition: border-color 0.3s var(--mitra-ease), background 0.3s var(--mitra-ease), transform 0.3s var(--mitra-ease);
+	}
+
+	a:hover {
+		border-color: var(--mitra-hairline-strong);
+		background: var(--color-surface);
+		transform: translateY(-2px);
+	}
+
+	.mark {
+		display: inline-flex;
+		inline-size: 1.75rem;
+		block-size: 1.75rem;
+	}
+
+	.mark :global(svg) {
+		inline-size: 100%;
+		block-size: 100%;
+	}
+
+	.name {
+		font-size: 0.875rem;
+		font-weight: 550;
+	}
+</style>

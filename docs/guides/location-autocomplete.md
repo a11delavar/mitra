@@ -1,14 +1,14 @@
 ---
 title: Location autocomplete
-description: The keyless, privacy-preserving geocoder behind Mitra's location field — and how to point it at your own Photon instance.
+description: The geocoder behind Mitra's location field, which needs no API key and protects your privacy, and how to use your own Photon instance instead.
 ---
 
-The entry editor's **location** field autocompletes as you type. It works out of the box with **no API key and no signup**, powered by [Photon](https://photon.komoot.io) — a free, open-source, OpenStreetMap-based geocoder built for search-as-you-type.
+The entry editor's **location** field autocompletes as you type. It works right away with **no API key and no signup**, using [Photon](https://photon.komoot.io): a free, open-source geocoder based on OpenStreetMap and built for search as you type.
 
 ## How it works
 
 - Suggestions combine **recently used locations** from your own entries with **geocoder results** from Photon.
-- Queries are **proxied through your own server** — location keystrokes leave from the Mitra backend, never directly from the browser, so no user IPs are exposed to the geocoder.
+- Queries go **through your own server**. Searches are sent from the Mitra backend, never directly from the browser, so the geocoder never sees your users' IP addresses.
 - The UI language and (when granted) your position bias the results toward nearby, sensibly-labelled places.
 - A picked suggestion just fills in a nicely formatted string; the location stays plain text, so you can always type anything freely.
 
@@ -16,14 +16,14 @@ By default Mitra queries komoot's public Photon instance. Nothing needs configur
 
 ## Self-hosting the geocoder
 
-If you'd rather not rely on komoot's public instance — for privacy, for reliability, or to avoid its fair-use limits at scale — [host Photon yourself](https://github.com/komoot/photon) and point Mitra at it:
+If you'd rather not rely on komoot's public instance, whether for privacy, reliability or its fair-use limits, [host Photon yourself](https://github.com/komoot/photon) and point Mitra at it:
 
 ```yaml
 environment:
   MITRA_PHOTON_URL: 'https://photon.internal.example.com'
 ```
 
-Mitra will query your instance instead. No frontend changes are needed — the swap is entirely server-side.
+Mitra will query your instance instead. Nothing changes in the app itself; the switch happens entirely on the server.
 
 ## Troubleshooting
 

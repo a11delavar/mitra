@@ -11,12 +11,12 @@ Google Calendar speaks CalDAV too, but Google requires **OAuth** instead of a pa
 2. [Give Mitra the client ID and secret.](#step-2-configure-mitra)
 3. [Connect an account from the app.](#step-3-connect-an-account)
 
-You only do steps 1–2 once per deployment. Every user who connects Google gets their own per-account grant.
+You only do steps 1 and 2 once per deployment. Every user who connects Google gets their own per-account grant.
 
-## Step 1 — Google Cloud setup
+## Step 1: Google Cloud setup
 
 1. Create a project in the [Google Cloud console](https://console.cloud.google.com) and enable the **CalDAV API** under *APIs & Services*.
-2. Configure the **OAuth consent screen**. Add yourself — and anyone else who'll connect an account — as a **test user**, or publish the app.
+2. Configure the **OAuth consent screen**. Add yourself and anyone else who will connect an account as a **test user**, or publish the app.
    > [!CAUTION]
    > While the consent screen stays in **Testing**, Google expires each grant after **7 days**, so users have to reconnect weekly. **Published** apps keep grants indefinitely.
 3. Create an **OAuth client** of type *Web application*. Set the **authorized redirect URI** to your `MITRA_URL` plus `/api/integrations/google/callback`:
@@ -27,7 +27,7 @@ You only do steps 1–2 once per deployment. Every user who connects Google gets
 
    Copy the generated **client ID** and **client secret** for the next step.
 
-## Step 2 — Configure Mitra
+## Step 2: Configure Mitra
 
 Provide the credentials via environment variables:
 
@@ -50,11 +50,11 @@ docker compose up -d
 
 Notes:
 
-- **Both variables are required together.** Setting only `MITRA_GOOGLE_CLIENT_ID` without the secret fails the boot loudly — that's deliberate, to avoid a half-configured provider.
+- **Both variables are required together.** If you set `MITRA_GOOGLE_CLIENT_ID` without the secret, Mitra refuses to start. That is on purpose, so you never end up with a half-configured provider.
 - In the *Add Integration* dialog, **Google Calendar** is always listed as a provider. However, if not configured, the connect button is replaced with a hint instructing the admin to configure these environment variables.
 - `MITRA_URL` should match the address in your redirect URI. On a localhost/LAN single-user trial you can omit it and Mitra derives the redirect from the request origin, but a real deployment should set it explicitly.
 
-## Step 3 — Connect an account
+## Step 3: Connect an account
 
 In Mitra, choose **Add Integration → Google Calendar → Continue with Google**. Mitra walks the user through Google's consent screen, then returns to the app with the account's source picker open and every calendar pre-ticked. Enable the calendars you want and they sync like any other CalDAV source.
 
@@ -82,9 +82,9 @@ A user can disconnect at any time:
 
 ## How it works
 
-The refresh token Google issues **never leaves the server** — the browser only ever runs the consent redirect. Mitra stores the token next to the account and uses it to mint short-lived access tokens for CalDAV requests. Reconnecting the same Google account renews the grant in place rather than creating a duplicate.
+The refresh token Google issues **never leaves the server**. The browser only handles the consent redirect. Mitra stores the token next to the account and uses it to mint short-lived access tokens for CalDAV requests. Reconnecting the same Google account renews the grant in place rather than creating a duplicate.
 
-Because Google's CalDAV shares the Google Calendar API quotas, Mitra paces Google syncs to at most about once a minute — and to every few minutes while nobody has the app open — comfortably within the limits even with many connected accounts.
+Because Google's CalDAV shares the Google Calendar API quotas, Mitra syncs Google at most about once a minute, and every few minutes while nobody has the app open. That stays well within the limits even with many connected accounts.
 
 ## Troubleshooting
 

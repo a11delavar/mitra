@@ -1,0 +1,77 @@
+---
+import Icon from './Icon.astro'
+
+// Stored under Starlight's key so the homepage and the docs share one choice.
+---
+
+<mitra-theme-toggle>
+	<button type="button" title="Theme" aria-label="Theme">
+		<span class="system"><Icon name="sun-moon" /></span>
+		<span class="light"><Icon name="sun" /></span>
+		<span class="dark"><Icon name="moon" /></span>
+	</button>
+</mitra-theme-toggle>
+
+<style>
+	mitra-theme-toggle button {
+		--control-height: 2rem;
+		inline-size: 2rem;
+		padding: 0;
+		font-size: 1rem;
+		color: var(--color-text-muted);
+	}
+
+	mitra-theme-toggle button:hover {
+		color: var(--color-text);
+	}
+
+	span {
+		display: none;
+	}
+
+	/* Before the module runs, show the resting glyph rather than nothing. */
+	:global(:root:not([data-mitra-theme])) .system,
+	:global(:root[data-mitra-theme='system']) .system,
+	:global(:root[data-mitra-theme='light']) .light,
+	:global(:root[data-mitra-theme='dark']) .dark {
+		display: inline-flex;
+	}
+</style>
+
+<script>
+	type Choice = 'system' | 'light' | 'dark'
+
+	const key = 'starlight-theme'
+	const order: Array<Choice> = ['system', 'light', 'dark']
+
+	const stored = (): Choice => {
+		const value = localStorage.getItem(key)
+		return value === 'light' || value === 'dark' ? value : 'system'
+	}
+
+	const preferred = () => matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+
+	function apply(choice: Choice) {
+		document.documentElement.dataset.mitraTheme = choice
+		document.documentElement.dataset.theme = choice === 'system' ? preferred() : choice
+		localStorage.setItem(key, choice === 'system' ? '' : choice)
+	}
+
+	class ThemeToggle extends HTMLElement {
+		constructor() {
+			super()
+			apply(stored())
+			this.querySelector('button')?.addEventListener('click', () => {
+				apply(order[(order.indexOf(stored()) + 1) % order.length]!)
+			})
+		}
+	}
+
+	customElements.define('mitra-theme-toggle', ThemeToggle)
+
+	matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+		if (stored() === 'system') {
+			apply('system')
+		}
+	})
+</script>

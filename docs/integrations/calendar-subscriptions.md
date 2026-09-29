@@ -1,6 +1,6 @@
 ---
 title: Calendar Subscriptions
-description: Subscribe to any published calendar link — a webcal:// address or an .ics feed — and see it on your timeline, read-only.
+description: Subscribe to any published calendar link, a webcal:// address or an .ics feed, and see it on your timeline, read-only.
 ---
 
 Plenty of calendars are **published rather than shared**: holiday lists, sports fixtures, school schedules, availability feeds from a work tool, or the secret address from your personal Google or Outlook calendar. Instead of signing in to an account, you subscribe with a link.
@@ -8,7 +8,7 @@ Plenty of calendars are **published rather than shared**: holiday lists, sports 
 A **calendar subscription** brings one of these feeds into Mitra. Mitra automatically fetches updates on a schedule and shows the events on your timeline alongside your other calendars.
 
 > [!NOTE]
-> Subscriptions are **read-only** — the feed is hosted on an external server and does not accept remote edits. Mitra shows all event details (locations, attendees, recurrence rules, and notes), but editing actions are disabled. See [What read-only means](#what-read-only-means) below.
+> Subscriptions are **read-only**. The feed lives on another server and doesn't accept edits. Mitra shows all event details (locations, attendees, recurrence rules, and notes), but editing actions are disabled. See [What read-only means](#what-read-only-means) below.
 
 ## Subscribe to a calendar
 
@@ -20,7 +20,7 @@ A **calendar subscription** brings one of these feeds into Mitra. Mitra automati
 4. Click **Connect**. Mitra discovers the calendar and displays it in the source picker.
 5. Turn on the checkbox for the calendar and click **Save**.
 
-The calendar adopts its title from the feed. You can rename it anytime in the sidebar — your custom name is preserved across syncs.
+The calendar adopts its title from the feed. You can rename it in the sidebar at any time, and your name is kept across syncs.
 
 ### Where to find a calendar link
 
@@ -68,5 +68,5 @@ Your personal customizations remain fully functional: you can rename, recolor, r
 
 ## See also
 
-- [Calendars & sources](../guides/calendars.md) — managing, recoloring, and organizing calendars
-- [Google Calendar](google-calendar.md) — connecting Google accounts and shared calendars
+- [Calendars & sources](../guides/calendars.md): managing, recoloring and organizing calendars
+- [Google Calendar](google-calendar.md): connecting Google accounts and shared calendars

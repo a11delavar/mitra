@@ -1,0 +1,24 @@
+---
+import { iconSvg } from '../../tools/icons.mjs'
+
+interface Props {
+	name: string
+	size?: string
+	strokeWidth?: number
+	class?: string
+}
+
+const { name, size = '1em', strokeWidth = 2, class: className } = Astro.props
+---
+
+<span class:list={['icon', className]} aria-hidden="true" set:html={iconSvg(name, { size, strokeWidth })} />
+
+<style>
+	.icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		line-height: 0;
+	}
+</style>
