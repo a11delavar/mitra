@@ -1,5 +1,5 @@
 import { Component, component, html, css, property, state, event, eventListener, unsafeCSS, ifDefined } from '@a11d/lit'
-import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, getPrimarySource, setDefaultSource, reimportSource, reimportIntegration, reorderSources, reorderIntegrations, getEnabledSources, getVisibleSources, soloSource, restoreSourceVisibility, canRestoreSourceVisibility, canCopyEntriesOut, canMoveEntriesOut, getCapabilities, createSource } from '../infrastructure/http/Api.js'
+import { getIntegrations, getMeta, getUser, instanceName, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, getPrimarySource, setDefaultSource, reimportSource, reimportIntegration, reorderSources, reorderIntegrations, getEnabledSources, getVisibleSources, soloSource, restoreSourceVisibility, canRestoreSourceVisibility, canCopyEntriesOut, canMoveEntriesOut, getCapabilities, createSource } from '../infrastructure/http/Api.js'
 import { DialogAbout, hasUnseenChanges } from '../features/about/client/DialogAbout.js'
 import { DialogIntegration } from '../integrations/client/DialogIntegration.js'
 import { DialogSourceMigration } from '../features/migration/client/DialogSourceMigration.js'
@@ -160,7 +160,7 @@ export class Sidebar extends Component {
 					gap: 1rem;
 					overflow: hidden;
 					box-sizing: border-box;
-					font-family: 'Inter', sans-serif;
+					font-family: var(--font-family);
 					background-color: transparent;
 
 					@media (max-width: 800px) {
@@ -743,9 +743,8 @@ export class Sidebar extends Component {
 	/** Shift source order by delta within its integration. */
 	/** Falls back to the integration name when there is no account, like Mitra. */
 	private integrationTitle(integration: Integration) {
-		return integration.credentials?.username
-			|| integrationClasses().find(integrationClass => integrationClass.type === integration.type)?.label
-			|| integration.type
+		const label = integrationClasses().find(integrationClass => integrationClass.type === integration.type)?.label
+		return integration.credentials?.username || (label ? String(t(label)) : integration.type)
 	}
 
 	private async addSource(integration: Integration) {
@@ -853,7 +852,7 @@ export class Sidebar extends Component {
 
 	protected override get template() {
 		return !this.narrow.matches ? this.navTemplate : html`
-			<mitra-modal-sheet placement="inline-start" label=${getMeta()?.name ?? 'Mitra'} ?open=${this.open}
+			<mitra-modal-sheet placement="inline-start" label=${instanceName()} ?open=${this.open}
 				@openChange=${(e: CustomEvent<boolean>) => e.detail !== this.open && this.openChange.dispatch(e.detail)}
 			>${this.navTemplate}</mitra-modal-sheet>
 		`
@@ -867,7 +866,7 @@ export class Sidebar extends Component {
 						<img src="/android-chrome-192x192.png" alt="">
 						${!this.updateHint ? '' : html`<span class="dot"></span>`}
 					</span>
-					<span class="name">${getMeta()?.name ?? 'Mitra'}</span>
+					<span class="name">${instanceName()}</span>
 					<span class="version">
 						<span class="label">${this.versionLabel}</span>
 						${this.updateHint || !hasUnseenChanges() ? html.nothing : html`<span class="news-dot" title=${t('What\'s New')}></span>`}

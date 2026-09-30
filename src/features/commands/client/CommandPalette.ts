@@ -113,7 +113,7 @@ export class CommandPalette extends Component {
 					border: var(--border);
 					border-radius: 14px;
 					box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
-					font-family: 'Inter', sans-serif;
+					font-family: var(--font-family);
 
 					&::backdrop {
 						background: rgba(0, 0, 0, 0.25);

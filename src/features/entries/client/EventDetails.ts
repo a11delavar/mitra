@@ -124,7 +124,7 @@ export class EntryDetailsComponent extends Component {
 		const link = getExternalLink(this.segment!.entry)
 		return !link ? html.nothing : html`
 			<mitra-menu-item icon="external-link" href=${link.url} target="_blank">
-				${link.label ? t('Open in ${provider}', { provider: link.label }) : t('Open link')}
+				${link.label ? t('Open in ${provider}', { provider: t(link.label) }) : t('Open link')}
 			</mitra-menu-item>
 		`
 	}
@@ -150,7 +150,7 @@ export class EntryDetailsComponent extends Component {
 				display: contents;
 				cursor: default;
 				color: var(--color-text);
-				font-family: 'Inter', sans-serif;
+				font-family: var(--font-family);
 				font-size: 0.75rem;
 
 				& ::selection {

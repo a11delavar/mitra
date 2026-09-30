@@ -256,6 +256,15 @@ export class EntryDetailsWhen extends Component {
 						gap: 0.5rem;
 
 						> :is(mitra-date-field, mitra-time-field) { flex: 1; min-width: 0; }
+
+						> mitra-icon[icon="arrow-right"] {
+							flex-shrink: 0;
+							color: var(--color-text-muted);
+
+							&:dir(rtl) {
+								scale: -1 1;
+							}
+						}
 					}
 				}
 

@@ -237,7 +237,7 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 				padding: 0 !important;
 				background-color: var(--color-background);
 				color: var(--color-text);
-				font-family: 'Inter', sans-serif;
+				font-family: var(--font-family);
 				display: flex;
 				flex-direction: row;
 				position: absolute;
@@ -310,6 +310,8 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 							display: flex;
 							align-items: baseline;
 							column-gap: 0.375rem;
+							/* A number, never normal: normal grows the line box to a fallback font's metrics (Persian), past the 1lh that clips it. */
+							line-height: 1.25;
 							block-size: 1lh;
 							min-inline-size: 0;
 							overflow: hidden;

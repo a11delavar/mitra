@@ -10,7 +10,7 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 const srcDir = path.resolve(here, '../src')
 const i18nDir = path.resolve(srcDir, 'infrastructure/i18n')
 const keysFile = path.join(i18nDir, 'keys.auto-generated.ts')
-const dicts = ['de.json', 'fr.json', 'es.json', 'pt.json', 'it.json']
+const dicts = ['de.json', 'fr.json', 'es.json', 'pt.json', 'it.json', 'fa.json']
 
 const analyzeOnly = process.argv.includes('--analyze')
 
@@ -31,8 +31,8 @@ function sourceFiles(dir: string): Array<string> {
 
 const callPattern = /\bt\(\s*(['"])((?:\\.|(?!\1)[^\\])*)\1/g
 
-// Collect provider class descriptions which are dynamically localized via t(class.description).
-const descriptionPattern = /\bstatic\s+(?:(?:readonly|override)\s+)*description\s*(?::\s*string\s*)?=\s*(['"])((?:\\.|(?!\1)[^\\])*)\1/g
+// Collect provider class labels and descriptions which are dynamically localized via t(class.label) / t(class.description).
+const descriptionPattern = /\bstatic\s+(?:(?:readonly|override)\s+)*(?:label|description)\s*(?::\s*string\s*)?=\s*(['"])((?:\\.|(?!\1)[^\\])*)\1/g
 
 function unescape(raw: string, quote: string): string {
 	return raw.replace(/\\(['"\\])/g, (_, char) => char === quote || char === '\\' ? char : `\\${char}`)

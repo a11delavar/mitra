@@ -229,7 +229,7 @@ export class Planning extends Component {
 		return html`
 			<header @pointerdown=${(e: Event) => e.stopPropagation()}>
 				<h2>${heading}</h2>
-				${!count ? html.nothing : html`<span class="count">${count}</span>`}
+				${!count ? html.nothing : html`<span class="count">${count.format()}</span>`}
 			</header>
 		`
 	}

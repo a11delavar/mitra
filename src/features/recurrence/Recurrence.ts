@@ -28,7 +28,6 @@ const FREQUENCIES: ReadonlyArray<Frequency> = ['DAILY', 'WEEKLY', 'MONTHLY', 'YE
 /** RRULE weekday codes in RFC 5545 / Temporal order (Monday-first; Temporal `dayOfWeek` is 1=Mon … 7=Sun). */
 export const WEEKDAY_CODES = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'] as const
 const WEEKDAY_SET: ReadonlySet<string> = new Set(['MO', 'TU', 'WE', 'TH', 'FR'])
-const FREQ_UNIT: Record<Frequency, string> = { DAILY: 'day', WEEKLY: 'week', MONTHLY: 'month', YEARLY: 'year' }
 /** Mean length of one FREQ unit in days (Gregorian averages, see {@link Recurrence.strideDays}). */
 const DAYS_PER_FREQUENCY: Record<Frequency, number> = { DAILY: 1, WEEKLY: 7, MONTHLY: 30.436875, YEARLY: 365.2425 }
 function pad(value: number, width = 2) {
@@ -56,10 +55,6 @@ function weekdayName(index: number): string {
 
 function monthDayName(date: Temporal.PlainDate): string {
 	return date.toLocaleString(language(), { month: 'short', day: 'numeric' })
-}
-
-function asConjunction(items: ReadonlyArray<string>): string {
-	return new Intl.ListFormat(language(), { style: 'long', type: 'conjunction' }).format(items)
 }
 
 // UNTIL is a calendar day, stored as UTC midnight: its date is the instant's UTC reading, whether
@@ -171,44 +166,32 @@ export class Recurrence {
 
 	/** Human label, e.g. "Every week on Thu until Jul 18". `start` lets a yearly rule name its date. */
 	describe(start?: DateTime): string {
-		const n = this.every
-		const every = `Every ${n} ${FREQ_UNIT[this.freq]}s`
-		let base: string
+		const frequency = Recurrence.frequencyLabel(this.freq, this.every)
+		let rule: string
 		switch (this.freq) {
-			case 'DAILY':
-				base = n > 1 ? every : 'Every day'
+			case 'WEEKLY': {
+				const weekdays = this.byday?.length === WEEKDAY_SET.size && this.byday.every(code => WEEKDAY_SET.has(code))
+				rule = weekdays && this.every === 1 ? t('Every weekday')
+					: !this.byday?.length ? frequency
+						: `${frequency} ${t('on ${weekday}', { weekday: this.byday.map(Recurrence.weekdayLabel).format() })}`
 				break
-			case 'WEEKLY':
-				if (this.byday && this.byday.length === WEEKDAY_SET.size && this.byday.every(code => WEEKDAY_SET.has(code))) {
-					base = 'Every weekday'
-				} else {
-					const on = this.byday?.length ? ` on ${asConjunction(this.byday.map(Recurrence.weekdayLabel))}` : ''
-					base = `${n > 1 ? every : 'Every week'}${on}`
-				}
-				break
+			}
 			case 'MONTHLY': {
-				let on = ''
-				if (this.bymonthday) {
-					on = ` on the ${Recurrence.ordinal(this.bymonthday)}`
-				} else if (this.byday?.length === 1) {
-					const code = this.byday[0]!
-					const ord = code.startsWith('-1') ? 'last' : Recurrence.ordinal(Number(/^-?\d+/.exec(code)?.[0] ?? '1'))
-					on = ` on the ${ord} ${Recurrence.weekdayLabel(code)}`
-				}
-				base = `${n > 1 ? every : 'Every month'}${on}`
+				const on = this.bymonthday ? Recurrence.monthDayLabel(this.bymonthday)
+					: this.byday?.length === 1 ? Recurrence.monthWeekdayLabel(this.byday[0]!)
+						: undefined
+				rule = on ? `${frequency} ${on}` : frequency
 				break
 			}
 			case 'YEARLY':
-				base = n > 1 ? every : start ? `Every year on ${start.format({ month: 'short', day: 'numeric' })}` : 'Every year'
+				rule = this.every === 1 && start ? `${frequency} ${t('on ${date}', { date: start.format({ month: 'short', day: 'numeric' }) })}` : frequency
 				break
+			default:
+				rule = frequency
 		}
-		if (this.count) {
-			return `${base}, ${this.count} times`
-		}
-		if (this.until) {
-			return `${base} until ${monthDayName(untilParts(this.until))}`
-		}
-		return base
+		return String(this.count ? t('${rule}, ${count:pluralityNumber} times', { rule, count: this.count })
+			: this.until ? t('${rule} until ${date}', { rule, date: monthDayName(untilParts(this.until)) })
+				: rule)
 	}
 
 	/** Parse an RRULE string (tolerant of a leading `RRULE:` and part order); `undefined` if not modelled. */
@@ -266,15 +249,15 @@ export class Recurrence {
 		const weekOfMonth = Math.floor((dayOfMonth - 1) / 7) + 1
 		const isLastWeekdayOfMonth = dayOfMonth + 7 > start.daysInMonth
 		return [
-			{ id: 'none', label: 'Does not repeat' },
-			{ id: 'daily', label: 'Every day', recurrence: new Recurrence({ freq: 'DAILY' }) },
-			{ id: 'weekday', label: 'Every weekday', detail: `${Recurrence.weekdayLabel('MO')} – ${Recurrence.weekdayLabel('FR')}`, recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['MO', 'TU', 'WE', 'TH', 'FR'] }) },
-			{ id: 'weekly', label: 'Every week', detail: `on ${wdLabel}`, recurrence: new Recurrence({ freq: 'WEEKLY', byday: [wd] }) },
-			{ id: 'biweekly', label: 'Every 2 weeks', detail: `on ${wdLabel}`, recurrence: new Recurrence({ freq: 'WEEKLY', interval: 2, byday: [wd] }) },
-			{ id: 'monthly-day', label: 'Every month', detail: `on the ${Recurrence.ordinal(dayOfMonth)}`, recurrence: new Recurrence({ freq: 'MONTHLY', bymonthday: dayOfMonth }) },
-			{ id: 'monthly-weekday', label: 'Every month', detail: `on the ${Recurrence.ordinal(weekOfMonth)} ${wdLabel}`, recurrence: new Recurrence({ freq: 'MONTHLY', byday: [`${weekOfMonth}${wd}`] }) },
-			...(isLastWeekdayOfMonth ? [{ id: 'monthly-last', label: 'Every month', detail: `on the last ${wdLabel}`, recurrence: new Recurrence({ freq: 'MONTHLY', byday: [`-1${wd}`] }) }] : []),
-			{ id: 'yearly', label: 'Every year', detail: `on ${start.format({ month: 'short', day: 'numeric' })}`, recurrence: new Recurrence({ freq: 'YEARLY' }) },
+			{ id: 'none', label: String(t('Does not repeat')) },
+			{ id: 'daily', label: Recurrence.frequencyLabel('DAILY'), recurrence: new Recurrence({ freq: 'DAILY' }) },
+			{ id: 'weekday', label: String(t('Every weekday')), detail: `${Recurrence.weekdayLabel('MO')} – ${Recurrence.weekdayLabel('FR')}`, recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['MO', 'TU', 'WE', 'TH', 'FR'] }) },
+			{ id: 'weekly', label: Recurrence.frequencyLabel('WEEKLY'), detail: String(t('on ${weekday}', { weekday: wdLabel })), recurrence: new Recurrence({ freq: 'WEEKLY', byday: [wd] }) },
+			{ id: 'biweekly', label: Recurrence.frequencyLabel('WEEKLY', 2), detail: String(t('on ${weekday}', { weekday: wdLabel })), recurrence: new Recurrence({ freq: 'WEEKLY', interval: 2, byday: [wd] }) },
+			{ id: 'monthly-day', label: Recurrence.frequencyLabel('MONTHLY'), detail: Recurrence.monthDayLabel(dayOfMonth), recurrence: new Recurrence({ freq: 'MONTHLY', bymonthday: dayOfMonth }) },
+			{ id: 'monthly-weekday', label: Recurrence.frequencyLabel('MONTHLY'), detail: Recurrence.monthWeekdayLabel(`${weekOfMonth}${wd}`), recurrence: new Recurrence({ freq: 'MONTHLY', byday: [`${weekOfMonth}${wd}`] }) },
+			...(isLastWeekdayOfMonth ? [{ id: 'monthly-last', label: Recurrence.frequencyLabel('MONTHLY'), detail: Recurrence.monthWeekdayLabel(`-1${wd}`), recurrence: new Recurrence({ freq: 'MONTHLY', byday: [`-1${wd}`] }) }] : []),
+			{ id: 'yearly', label: Recurrence.frequencyLabel('YEARLY'), detail: String(t('on ${date}', { date: start.format({ month: 'short', day: 'numeric' }) })), recurrence: new Recurrence({ freq: 'YEARLY' }) },
 		]
 	}
 
@@ -303,11 +286,38 @@ export class Recurrence {
 		return index === -1 ? code : weekdayName(index)
 	}
 
-	/** Ordinals like "1st", "2nd", "3rd", "4th", "21st". The category comes from Intl.PluralRules; the suffixes are
-	 * English (pinned `en`) until the surrounding phrases ("Every month on…") are translatable too. */
+	/** "Every week", "Every 2 weeks": one plural entry per unit, whose singular form is the interval-less phrase. */
+	static frequencyLabel(freq: Frequency, count = 1): string {
+		switch (freq) {
+			case 'DAILY': return String(t('Every ${count:pluralityNumber} days', { count }))
+			case 'WEEKLY': return String(t('Every ${count:pluralityNumber} weeks', { count }))
+			case 'MONTHLY': return String(t('Every ${count:pluralityNumber} months', { count }))
+			case 'YEARLY': return String(t('Every ${count:pluralityNumber} years', { count }))
+		}
+	}
+
+	/** "on the 25th" (BYMONTHDAY). */
+	static monthDayLabel(day: number): string {
+		return String(t('on the ${ordinal}', { ordinal: Recurrence.ordinal(day) }))
+	}
+
+	/** "on the 4th Thu", "on the last Thu" (a monthly BYDAY with its week ordinal). */
+	static monthWeekdayLabel(code: string): string {
+		const weekday = Recurrence.weekdayLabel(code)
+		return String(code.startsWith('-1')
+			? t('on the last ${weekday}', { weekday })
+			: t('on the ${ordinal} ${weekday}', { ordinal: Recurrence.ordinal(Number(/^-?\d+/.exec(code)?.[0] ?? '1')), weekday }))
+	}
+
+	/** Ordinals like "1st", "2nd", "3rd", "4th", "21st". Intl.PluralRules picks the language's ordinal category
+	 * and the dictionary its form (German "25.", French "1er"), keyed by the English form of that category. */
 	static ordinal(n: number): string {
-		const suffix: Record<string, string> = { one: 'st', two: 'nd', few: 'rd', other: 'th' }
-		return `${n}${suffix[new Intl.PluralRules('en', { type: 'ordinal' }).select(n)]}`
+		switch (new Intl.PluralRules(language(), { type: 'ordinal' }).select(n)) {
+			case 'one': return String(t('${n:number}st', { n }))
+			case 'two': return String(t('${n:number}nd', { n }))
+			case 'few': return String(t('${n:number}rd', { n }))
+			default: return String(t('${n:number}th', { n }))
+		}
 	}
 
 	/** A bare day-or-datetime UNTIL becomes UTC midnight of that calendar day (read back via getUTC*). */

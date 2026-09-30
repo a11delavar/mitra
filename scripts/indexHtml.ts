@@ -110,6 +110,7 @@ export async function writeIndexHtml() {
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 	<title>Mitra</title>
 	${head}
+	<link rel="stylesheet" href="/fonts.css">
 	<script type="module" src="/index.js"></script>
 	<script></script>
 </head>

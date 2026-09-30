@@ -52,15 +52,16 @@ export const backendOptions: BuildOptions = {
 	define,
 }
 
-/** Frontend client bundle configuration with code splitting and inlined SVG loaders. */
+/** Frontend client bundle configuration with code splitting, inlined SVG loaders and the shipped fonts. */
 export const frontendOptions: BuildOptions = {
-	entryPoints: [{ in: './src/app/client.ts', out: 'index' }],
+	entryPoints: [{ in: './src/app/client.ts', out: 'index' }, { in: './src/app/fonts.css', out: 'fonts' }],
 	bundle: true,
 	splitting: true,
 	format: 'esm',
 	legalComments: 'none',
 	outdir: distDir,
-	loader: { '.svg': 'text' },
+	loader: { '.svg': 'text', '.woff2': 'file' },
+	assetNames: 'fonts/[name]-[hash]',
 	inject,
 	define: defineFor('browser'),
 }

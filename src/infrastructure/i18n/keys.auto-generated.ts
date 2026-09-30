@@ -48,10 +48,16 @@ declare global {
 		"${done} of ${total:pluralityNumber} checklist items done": unknown
 		"${done} of ${total:pluralityNumber} steps done": unknown
 		"${done} of ${total:pluralityNumber} subtasks done": unknown
+		"${n:number}nd": unknown
+		"${n:number}rd": unknown
+		"${n:number}st": unknown
+		"${n:number}th": unknown
 		"${names} and ${count:pluralityNumber} more": unknown
-		"${percent}% complete": unknown
+		"${percent} complete": unknown
 		"${reason}, kept here": unknown
 		"${reason}, left out": unknown
+		"${rule} until ${date}": unknown
+		"${rule}, ${count:pluralityNumber} times": unknown
 		"${span} before": unknown
 		"${status}. Click to toggle, Alt-click for options": unknown
 		"About": unknown
@@ -87,6 +93,7 @@ declare global {
 		"Any CalDAV server, like Nextcloud, Fastmail or Radicale": unknown
 		"Any calendar link (webcal:// or .ics)": unknown
 		"App-Specific Password": unknown
+		"Apple Calendar": unknown
 		"Apple ID": unknown
 		"Apply to subtasks too?": unknown
 		"Ask everyone to attend": unknown
@@ -103,10 +110,12 @@ declare global {
 		"Blocked by": unknown
 		"Blocks": unknown
 		"Busy": unknown
+		"CalDAV": unknown
 		"CalDAV, Google, Apple or Notion, synced in both directions. Or start fresh with calendars stored in Mitra itself.": unknown
 		"Calendar": unknown
 		"Calendar name": unknown
 		"Calendar options": unknown
+		"Calendar Subscription": unknown
 		"Calendar URL": unknown
 		"Calendars": unknown
 		"Calendars stored in Mitra itself, no account needed": unknown
@@ -186,6 +195,7 @@ declare global {
 		"Delete subtasks too?": unknown
 		"Delete the open entry": unknown
 		"Delete this calendar and every entry in it": unknown
+		"Demo": unknown
 		"Demo.Hint": unknown
 		"Description": unknown
 		"Devices": unknown
@@ -212,11 +222,16 @@ declare global {
 		"Event": unknown
 		"Events": unknown
 		"Every": unknown
+		"Every ${count:pluralityNumber} days": unknown
+		"Every ${count:pluralityNumber} months": unknown
+		"Every ${count:pluralityNumber} weeks": unknown
+		"Every ${count:pluralityNumber} years": unknown
 		"Every entry in ${name} is copied. The ones the chosen calendar cannot take are left out. ${name} itself is read-only and stays exactly as it is.": unknown
 		"Every entry in ${name} moves. The ones the chosen calendar cannot take stay here.": unknown
 		"Every entry is still in ${name}. Nothing was deleted.": unknown
 		"Every subtask of \"${heading}\" is done, which completes ${count:pluralityNumber} more tasks above it. Mark them all as done?": unknown
 		"Every subtask of \"${heading}\" is done. Mark it as done too?": unknown
+		"Every weekday": unknown
 		"Everything travels intact": unknown
 		"Flatten into single entries": unknown
 		"Flattening writes out a year of occurrences as separate entries. They stop repeating, and links pointing at the series are left behind.": unknown
@@ -230,6 +245,7 @@ declare global {
 		"Go to entry": unknown
 		"Go to Today": unknown
 		"Google account": unknown
+		"Google Calendar": unknown
 		"Google.ConfigurationHint": unknown
 		"Google.ConsentHint": unknown
 		"Google.SharedCalendarsHint": unknown
@@ -270,6 +286,7 @@ declare global {
 		"Mark as done": unknown
 		"Match the system": unknown
 		"minutes": unknown
+		"Mitra": unknown
 		"Mitra.Hint": unknown
 		"modified": unknown
 		"Month": unknown
@@ -327,10 +344,16 @@ declare global {
 		"Nothing was moved": unknown
 		"Notifications": unknown
 		"NotificationsSetting.Keywords": unknown
+		"Notion": unknown
 		"Notion.TokenHint": unknown
 		"Occurrences": unknown
 		"of event at ${time}": unknown
 		"On": unknown
+		"on ${date}": unknown
+		"on ${weekday}": unknown
+		"on the ${ordinal}": unknown
+		"on the ${ordinal} ${weekday}": unknown
+		"on the last ${weekday}": unknown
 		"One calendar to plan your events and tasks": unknown
 		"Only Show ${name}": unknown
 		"Only show this calendar": unknown
@@ -442,6 +465,7 @@ declare global {
 		"Task": unknown
 		"Tasks": unknown
 		"Tasks without a date land here. Drag one onto the calendar to schedule it": unknown
+		"Tempo": unknown
 		"Tempo API Token": unknown
 		"Tempo.TokenHint": unknown
 		"Test notification sent.": unknown

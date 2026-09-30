@@ -5,14 +5,15 @@ import { getChangelog, runningReleaseUrl } from './changelog.js'
 
 export const metaRouter = Router()
 
-const instanceName = process.env.MITRA_NAME || 'Mitra'
+// Only an operator's name travels: without one the client names itself, in the viewer's language.
+const instanceName = process.env.MITRA_NAME
 
 /**
  * Returns instance metadata and update status for authenticated users.
  */
 metaRouter.get('/', (_req, res) => {
 	return res.json({
-		name: instanceName,
+		...(instanceName ? { name: instanceName } : {}),
 		version: mitra.version,
 		commit: mitra.commit,
 		node: process.version,

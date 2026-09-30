@@ -1,6 +1,6 @@
 import { component, css } from '@a11d/lit'
 import { Application, application, DialogCancelledError } from '@a11d/lit-application'
-import { fetchIntegrations, fetchMeta, fetchUser, getIntegrations, getMeta, getUser } from '../infrastructure/http/Api.js'
+import { fetchIntegrations, fetchMeta, fetchUser, getIntegrations, getUser, instanceName } from '../infrastructure/http/Api.js'
 import { Weeks } from '../features/calendar/client/Weeks.js'
 import { Months } from '../features/calendar/client/Months.js'
 import { Days } from '../features/calendar/client/Days.js'
@@ -136,7 +136,7 @@ export class Mitra extends Application {
 
 	/** Window title derived from page heading and instance name. */
 	protected override get documentTitle() {
-		return [this.pageHeading, getMeta()?.name || 'Mitra'].filter(Boolean).join(' | ')
+		return [this.pageHeading, instanceName()].filter(Boolean).join(' | ')
 	}
 
 	/** Track global focus modality (keyboard vs pointer) for focus rings. */

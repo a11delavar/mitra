@@ -46,7 +46,8 @@ let currentUser: User | undefined
 
 /** Instance metadata from backend `/meta`. */
 export interface InstanceMeta {
-	name: string
+	/** The operator's `MITRA_NAME`, if any. */
+	name?: string
 	version: string
 	commit: string
 	node: string
@@ -76,6 +77,11 @@ export async function refreshMetaIfStale() {
 
 export function getMeta() {
 	return meta
+}
+
+/** The operator's `MITRA_NAME`, else Mitra's own name in the current language. */
+export function instanceName() {
+	return meta?.name ?? String(t('Mitra'))
 }
 
 /** Whether the running client bundle is older than the server version. */

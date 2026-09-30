@@ -1,6 +1,6 @@
 import { component, html, css } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
-import { getMeta } from '../../../infrastructure/http/Api.js'
+import { instanceName } from '../../../infrastructure/http/Api.js'
 
 /**
  * The first-run welcome: a calendar with no integrations is an empty grid, so this dialog greets the
@@ -119,7 +119,7 @@ export class DialogWelcome extends DialogComponent<void, boolean | undefined> {
 				<div class="welcome">
 					<header class="hero">
 						<img src="/android-chrome-192x192.png" alt="">
-						<h2>${t('Welcome to ${name}', { name: getMeta()?.name || 'Mitra' })}</h2>
+						<h2>${t('Welcome to ${name}', { name: instanceName() })}</h2>
 						<p>${t('One calendar to plan your events and tasks')}</p>
 					</header>
 					<ol class="steps">

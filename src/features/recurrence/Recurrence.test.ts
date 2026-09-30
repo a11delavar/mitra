@@ -1,7 +1,12 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
+import { Localizer } from '@3mo/localization'
+import en from '../../infrastructure/i18n/en.json' with { type: 'json' }
 import { Recurrence } from './Recurrence.js'
+
+// The plural phrases ("Every day" / "Every 2 weeks") live in the English dictionary, not in their keys.
+Localizer.dictionaries.add({ en })
 
 describe('Recurrence', () => {
 	// Thu 25 Jun 2026, the screenshots' anchor (the last Thursday of June, 4th week).
@@ -281,11 +286,17 @@ describe('Recurrence', () => {
 			assert.equal(new Recurrence({ freq: 'MONTHLY', byday: ['-1TH'] }).describe(), 'Every month on the last Thu')
 			assert.equal(new Recurrence({ freq: 'MONTHLY', byday: ['4TH'] }).describe(), 'Every month on the 4th Thu')
 			assert.equal(new Recurrence({ freq: 'YEARLY' }).describe(thu), 'Every year on Jun 25')
+			assert.equal(new Recurrence({ freq: 'MONTHLY', interval: 3 }).describe(), 'Every 3 months')
+		})
+
+		it('keeps an interval on a weekday rule', () => {
+			assert.equal(new Recurrence({ freq: 'WEEKLY', interval: 2, byday: ['MO', 'TU', 'WE', 'TH', 'FR'] }).describe(), 'Every 2 weeks on Mon, Tue, Wed, Thu, and Fri')
 		})
 
 		it('appends the end clause', () => {
 			assert.equal(new Recurrence({ freq: 'WEEKLY', byday: ['TH'], until: Recurrence.untilFromDay(2026, 7, 18) }).describe(), 'Every week on Thu until Jul 18')
 			assert.equal(new Recurrence({ freq: 'DAILY', count: 10 }).describe(), 'Every day, 10 times')
+			assert.equal(new Recurrence({ freq: 'DAILY', count: 1 }).describe(), 'Every day, once')
 		})
 	})
 

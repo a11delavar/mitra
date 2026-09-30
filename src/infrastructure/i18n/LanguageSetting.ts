@@ -7,7 +7,7 @@ import { ChoiceSetting, setting, type SettingStorage } from '../../features/sett
 @setting()
 export class LanguageSetting extends ChoiceSetting<LanguageCode> {
 	/** Supported application language codes. */
-	private static readonly languages: Array<LanguageCode> = ['en', 'de', 'fr', 'es', 'pt', 'it']
+	private static readonly languages: Array<LanguageCode> = ['en', 'de', 'fr', 'es', 'pt', 'it', 'fa']
 
 	/** Formats native localized language name. */
 	private static label(code: LanguageCode) {

@@ -16,6 +16,7 @@ export const themeStyles = css`
 		--color-border: var(--color-surface);
 		--border: 1px solid var(--color-border);
 		--border-radius: 4px;
+		--font-family: 'Inter Variable', 'Vazirmatn Variable', sans-serif;
 
 		&[data-theme=light] {
 			color-scheme: light;

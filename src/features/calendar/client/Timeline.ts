@@ -595,7 +595,7 @@ export class Timeline extends Component {
 						style="grid-column: ${offset + index + 1};"
 						?data-week-start=${day.dayOfWeek === 1}
 						?data-today=${day.dayStart.valueOf() === todayValue}
-					><span>${day.day}</span></div>
+					><span>${day.format({ day: 'numeric' })}</span></div>
 				`)}
 				<div class="events">
 					${repeat(events, bar => bar.segment.entry, bar => this.barTemplate(bar))}

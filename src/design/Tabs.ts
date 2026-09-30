@@ -230,7 +230,7 @@ export class Tab extends Component {
 		return html`
 			${!this.icon ? html.nothing : html`<mitra-icon icon=${this.icon}></mitra-icon>`}
 			<slot></slot>
-			${!this.badge ? html.nothing : html`<span class="badge">${this.badge}</span>`}
+			${!this.badge ? html.nothing : html`<span class="badge">${this.badge.format()}</span>`}
 		`
 	}
 }

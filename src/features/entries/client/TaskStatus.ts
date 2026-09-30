@@ -67,7 +67,7 @@ export class TaskStatusComponent extends Component {
 			return TaskStatusComponent.summarize(rollup)
 		}
 		const progress = this.progress
-		return progress === undefined ? undefined : t('${percent}% complete', { percent: String(Math.round(progress * 100)) })
+		return progress === undefined ? undefined : t('${percent} complete', { percent: Math.round(progress * 100).formatAsPercent() })
 	}
 
 	/** Formats progress summary label adapted by step type (subtasks, checklist items, or steps). */
@@ -308,7 +308,7 @@ export class TaskStatusComponent extends Component {
 				<div class="progress-section subtasks">
 					<div class="progress-header">
 						<span>${t('Progress')}</span>
-						<span class="value">${value}%</span>
+						<span class="value">${value.formatAsPercent()}</span>
 					</div>
 					<mitra-progress .value=${value / 100}></mitra-progress>
 					${!leftover ? html`
@@ -342,7 +342,7 @@ export class TaskStatusComponent extends Component {
 						<span class="value none">${t('None')}</span>
 					` : html`
 						<div class="value-group">
-							<span class="value">${value}%</span>
+							<span class="value">${value.formatAsPercent()}</span>
 							<mitra-icon-button size="small" class="clear" icon="x" label=${t('Clear custom progress')} @click=${this.clearPercent}></mitra-icon-button>
 						</div>
 					`}

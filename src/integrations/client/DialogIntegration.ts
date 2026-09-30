@@ -245,7 +245,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 	protected override get template() {
 		return html`
 			<mitra-dialog
-				heading=${this.isEdit ? t('Edit integration') : this.integrationClass?.label ?? t('Add integration')}
+				heading=${this.isEdit ? t('Edit integration') : (this.integrationClass ? t(this.integrationClass.label) : t('Add integration'))}
 				primaryButtonText=${!this.entity ? html.nothing : t('Save')}
 				?primaryButtonDisabled=${this.saveDisabled}
 				?primaryOnEnter=${!!this.entity && !this.discoversSources && !this.isEdit}
@@ -266,7 +266,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 				${this.offeredClasses.map(integrationClass => html`
 					<button class="type" @click=${() => this.selectType(integrationClass)}>
 						<span class="logo">${unsafeHTML(logos[integrationClass.logo] ?? '')}</span>
-						<span class="name">${integrationClass.label}</span>
+						<span class="name">${t(integrationClass.label)}</span>
 						<span class="description">${t(integrationClass.description)}</span>
 					</button>
 				`)}

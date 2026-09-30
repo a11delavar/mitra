@@ -272,9 +272,9 @@ async function open(page: Devtools, origin: string, theme: Theme) {
 		document.head.append(style)
 		await document.fonts.ready
 	`)
-	const inter = await page.evaluate<boolean>('return document.fonts.check("500 14px Inter")')
+	const inter = await page.evaluate<boolean>('return document.fonts.check("500 14px Inter Variable")')
 	if (!inter) {
-		consola.warn('Inter is not installed, so captures will use a fallback face and will not match the site.')
+		consola.warn('Inter did not load, so captures will use a fallback face and will not match the site.')
 	}
 }
 

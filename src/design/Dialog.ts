@@ -1,4 +1,4 @@
-import { Component, component, html, css, property, state, query, event } from '@a11d/lit'
+import { Component, component, html, css, property, state, query, event, type PropertyValues } from '@a11d/lit'
 import { DialogComponent, DialogActionKey, type ApplicationTopLayer } from '@a11d/lit-application'
 import { Mitra } from '../app/Mitra.js'
 import './Button.js'
@@ -17,7 +17,7 @@ export class Dialog extends Component {
 	@event() readonly openChange!: EventDispatcher<boolean>
 	@event() readonly primaryAction!: EventDispatcher
 
-	@property({ updated(this: Dialog) { this.pageHeadingChange.dispatch(this.heading) } }) heading = ''
+	@property() heading = ''
 	@property() errorHandler?: (error: Error) => void | Promise<void>
 	@property({ type: Boolean }) preventCancellationOnEscape = false
 	@property({ type: Boolean }) primaryOnEnter = false
@@ -67,6 +67,14 @@ export class Dialog extends Component {
 	}
 
 	@query('dialog') private readonly dialog!: HTMLDialogElement
+
+	// The heading names the window only when the dialog is its page (popped out). In place, even closed, it renamed the tab.
+	protected override updated(changed: PropertyValues<this>) {
+		super.updated(changed)
+		if (this.boundToWindow && (changed.has('heading') || changed.has('boundToWindow'))) {
+			this.pageHeadingChange.dispatch(this.heading)
+		}
+	}
 	@query('lit-application-top-layer') readonly topLayerElement!: ApplicationTopLayer
 
 	get primaryActionElement(): HTMLElement | undefined { return undefined }
@@ -101,7 +109,7 @@ export class Dialog extends Component {
 				width: var(--mitra-dialog-width, auto);
 				max-width: var(--mitra-dialog-width, min(420px, 92vw));
 				box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
-				font-family: 'Inter', sans-serif;
+				font-family: var(--font-family);
 
 				&::backdrop {
 					background: rgba(0, 0, 0, 0.45);

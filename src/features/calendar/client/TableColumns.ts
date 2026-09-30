@@ -67,7 +67,7 @@ function status(entry: Entry) {
 	}
 	const progress = Relations.progressOf(entry)
 	const underway = progress !== undefined && progress > 0 && progress < 1
-	return text(`${taskStatusLabel(entry.status ?? TaskStatus.ToDo)}${!underway ? '' : ` · ${Math.round(progress * 100)} %`}`)
+	return text(`${taskStatusLabel(entry.status ?? TaskStatus.ToDo)}${!underway ? '' : ` · ${Math.round(progress * 100).formatAsPercent()}`}`)
 }
 
 /**
