@@ -71,6 +71,14 @@ export class EntrySegmentComponent extends Component {
 		}
 	}
 
+	@eventListener({ target: EntryEditorIntent.requests, type: 'request' })
+	protected handleOpenRequest() {
+		const entry = this.segment?.entry
+		if (entry && EntryEditorIntent.shouldOpen(entry)) {
+			this.requestUpdate()
+		}
+	}
+
 	protected override updated(changed: Map<PropertyKey, unknown>) {
 		super.updated?.(changed)
 		const entry = this.segment?.entry
@@ -113,7 +121,9 @@ export class EntrySegmentComponent extends Component {
 				gap: 0.125rem;
 				padding: 0.125rem;
 				--color-accent: var(--mitra-entry-segment-color);
+				${contrastColorOf('--color-accent-text', 'var(--color-accent)')};
 				--mitra-entry-surface: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
+				--mitra-surface: var(--mitra-entry-surface);
 				--segment-bg: color-mix(in srgb, var(--mitra-entry-segment-color) 25%, var(--color-background));
 				background-color: var(--segment-bg);
 				border-inline-start: 3px solid var(--mitra-entry-segment-color);
@@ -195,7 +205,7 @@ export class EntrySegmentComponent extends Component {
 				&[data-connect=target] {
 					--segment-bg: var(--mitra-entry-segment-color);
 					background-color: var(--segment-bg);
-					${contrastColorOf('color', 'var(--mitra-entry-segment-color)')}
+					${contrastColorOf('color', 'var(--mitra-entry-segment-color)')};
 				}
 
 				&[data-connect=reject] {
@@ -296,11 +306,10 @@ export class EntrySegmentComponent extends Component {
 							align-items: center;
 							justify-content: center;
 
-							> :is(button, mitra-icon-button) {
+							> button {
 								font-size: var(--header-mark);
 								block-size: 100%;
 								inline-size: 100%;
-								--icon-button-size: 0;
 							}
 
 							@container (max-width: 3.5rem) and (max-height: 2rem) {
@@ -531,8 +540,7 @@ export class EntrySegmentComponent extends Component {
 
 	private get detailsTemplate() {
 		return !this.open ? html.nothing : html`
-			<mitra-entry-details popover data-sheet ?open=${bind(this, 'open')}
-				style="--mitra-sheet-anchor: ${this.anchorName}"
+			<mitra-entry-details ?open=${bind(this, 'open')}
 				.segment=${this.segment}
 				@click=${(e: Event) => e.stopPropagation()}
 			></mitra-entry-details>

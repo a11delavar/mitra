@@ -1,5 +1,4 @@
 import { themeStyles } from '../../src/design/theme.css.js'
-import { buttonStyles } from '../../src/design/button.css.js'
 import { Color } from '../../src/features/sources/Color.js'
 
 /** The calendar colours, as `--mitra-color-red` and so on. */
@@ -11,4 +10,4 @@ const palette = {
 }
 
 /** Served to the site as they are, so only add fragments that make sense on a web page. */
-export const fragments = [themeStyles, buttonStyles, palette]
+export const fragments = [themeStyles, palette]

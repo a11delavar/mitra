@@ -1,5 +1,6 @@
 import { DateTime } from '@3mo/date-time'
 import { calendarViews, type CalendarView } from '../CalendarView.js'
+import { calendarDateOf } from '../../time/calendarDate.js'
 
 /** The route and query parameters the calendar page round-trips through the URL. */
 export type CalendarParameters = {
@@ -34,8 +35,9 @@ export class CalendarLocation {
 	}
 
 	/** Formats DateTime into YYYY-MM-DD string. */
+	// ISO, never the display calendar's numbers: a Persian 1405-07-08 read back as a Gregorian day is some 620 years off.
 	private static dayOf(date: DateTime) {
-		return [String(date.year).padStart(4, '0'), String(date.month).padStart(2, '0'), String(date.day).padStart(2, '0')].join('-')
+		return calendarDateOf(date).toString()
 	}
 
 	constructor(

@@ -3,7 +3,7 @@ import { command, Command } from '../../commands/Command.js'
 import { CalendarPeriod } from './CalendarPeriod.js'
 
 function rtl() {
-	return getComputedStyle(document.documentElement).direction === 'rtl'
+	return document.documentElement.matches(':dir(rtl)')
 }
 
 /** A view with no period to step (the table) leaves the arrow keys alone and keeps the commands off the palette's unsearched list. */

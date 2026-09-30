@@ -54,9 +54,13 @@ export class Days extends Component {
 			return this.days[Math.min(Math.max(0, centerColumn), this.days.length - 1)]
 		},
 		equivalent: (a, b) => a.dayStart.equals(b.dayStart),
+		// Today is arrived at at the time it is now, any other day at its middle.
 		arrival: date => {
-			const day = this.renderRoot.querySelector(`[data-date="${date.dayStart.toISOString()}"]`)?.getBoundingClientRect()
-			return !day ? undefined : day.top - this.getBoundingClientRect().top - this.clientTop + this.scrollTop + (day.height - this.clientHeight) / 2
+			const target = date.dayStart.equals(new DateTime().dayStart)
+				? this.renderRoot.querySelector('.overlays > .now')
+				: this.renderRoot.querySelector(`[data-date="${date.dayStart.toISOString()}"]`)
+			const box = target?.getBoundingClientRect()
+			return !box ? undefined : box.top - this.getBoundingClientRect().top - this.clientTop + this.scrollTop + (box.height - this.clientHeight) / 2
 		},
 	})
 
@@ -123,7 +127,9 @@ export class Days extends Component {
 	}
 
 	protected override updated(props: PropertyValues<this>) {
-		if (props.has('navigatingDate') && !this.navigatingDate.dayStart.equals(this.dates.navigatingDate.dayStart)) {
+		// A scroll hands back the very date it read; any other date is a navigation, also to the day already in view
+		// (Today, after scrolling away from the time it is now).
+		if (props.has('navigatingDate') && this.navigatingDate !== this.dates.navigatingDate) {
 			this.scrolling.navigate(this.navigatingDate)
 		}
 		if (props.has('hideTime')) {

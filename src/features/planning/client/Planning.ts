@@ -105,7 +105,8 @@ export class Planning extends Component {
 					gap: 0.5rem;
 				}
 
-				header {
+				/* Child combinators throughout: an entry's editor opens inside these lists, with a header and rows of its own. */
+				> section > header {
 					display: flex;
 					align-items: center;
 					gap: 0.5rem;
@@ -130,7 +131,7 @@ export class Planning extends Component {
 					}
 				}
 
-				.entries {
+				> section > .entries {
 					display: flex;
 					flex-direction: column;
 					gap: 0.25rem;
@@ -138,7 +139,7 @@ export class Planning extends Component {
 					flex: 1;
 					min-block-size: 0;
 
-					ul {
+					> ul {
 						list-style: none;
 						margin: 0;
 						padding: 0;
@@ -147,12 +148,12 @@ export class Planning extends Component {
 						gap: 0.25rem;
 					}
 
-					li {
+					> ul > li {
 						flex-shrink: 0;
 						display: flex;
 					}
 
-					mitra-entry-segment {
+					> ul > li > mitra-entry-segment {
 						inline-size: 100%;
 						cursor: grab;
 						padding-block: 0.25rem;
@@ -160,7 +161,7 @@ export class Planning extends Component {
 					}
 				}
 
-				.empty {
+				> section > .empty {
 					flex: 1;
 					display: flex;
 					flex-direction: column;

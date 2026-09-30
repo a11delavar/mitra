@@ -1,66 +1,61 @@
-import { Component, component, html, css, property, ifDefined } from '@a11d/lit'
-import { focusRing } from './focusRing.css.js'
-import { activated } from './activated.css.js'
+import { component, css, html, property } from '@a11d/lit'
+import { Button, type ButtonVariant } from './Button.js'
 
+/**
+ * A square button showing only a glyph; `label` names it and is its tooltip. It sizes its glyph itself, so
+ * every icon button in the app is one of two sizes: the control height, or `small` for actions inside dense rows.
+ * `--mitra-glyph-inset` reads how far the glyph sits inside the box, for rows aligning glyphs rather than boxes.
+ */
 @component('mitra-icon-button')
-export class IconButton extends Component {
+export class IconButton extends Button {
 	@property() icon!: string
-	@property() label?: string
-	/** The popover the button toggles, which light dismiss then leaves to the button: a click on it while open closes it rather than reopening it. */
-	@property() popoverTarget?: string
-
-	protected override createRenderRoot() { return this }
+	@property({ reflect: true }) override variant: ButtonVariant = 'plain'
+	@property({ reflect: true }) size?: 'small'
 
 	static override get styles() {
 		return css`
-			mitra-icon-button {
-				display: inline-flex;
-				font-size: 1rem;
+			${super.styles}
 
-				--icon-button-size: 0;
+			:host {
+				--_size: var(--control-height);
+				--_glyph: 1.125rem;
+				--mitra-glyph-inset: calc((var(--_size) - var(--_glyph)) / 2);
+				color: inherit;
+			}
+
+			:host([size=small]) {
+				--_size: 1.5rem;
+				--_glyph: 0.9375rem;
+
 				@media (pointer: coarse) {
-					--icon-button-size: 2rem;
+					--_size: 2rem;
 				}
+			}
 
-				> button {
-					all: unset;
-					display: flex;
-					align-items: center;
-					justify-content: center;
-					box-sizing: border-box;
-					min-inline-size: var(--icon-button-size);
-					min-block-size: var(--icon-button-size);
-					padding: 0.25rem;
-					border-radius: var(--border-radius);
-					color: currentColor;
-					opacity: 0.9;
-					font-size: inherit;
-					cursor: pointer;
-					transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-					border: 1px solid transparent;
+			[part=button] {
+				flex: none;
+				inline-size: var(--_size);
+				block-size: var(--_size);
+				min-block-size: 0;
+				padding: 0;
+			}
 
-					&:hover {
-						opacity: 1;
-						${activated};
-					}
+			:host([variant=plain]) [part=button] {
+				opacity: 0.85;
 
-					&:focus-visible {
-						opacity: 1;
-						${activated};
-					}
-
-					${focusRing};
+				&:is(:hover, :focus-visible) {
+					opacity: 1;
 				}
+			}
+
+			mitra-icon {
+				font-size: var(--_glyph);
 			}
 		`
 	}
 
-	protected override get template() {
-		return html`
-			<button aria-label=${ifDefined(this.label)} title=${ifDefined(this.label)} popovertarget=${ifDefined(this.popoverTarget)}>
-				<mitra-icon icon=${this.icon}></mitra-icon>
-			</button>
-		`
+	protected override get content() {
+		return html`<mitra-icon part="icon" icon=${this.icon}></mitra-icon>`
 	}
 }
 

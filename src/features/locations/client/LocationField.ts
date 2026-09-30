@@ -1,6 +1,7 @@
-import { Component, component, html, css, property, state, event, query } from '@a11d/lit'
+import { Component, component, html, css, property, state, event, query, bind } from '@a11d/lit'
 import { type Entry } from '../../entries/Entry.js'
 import { searchLocations, getCapabilities, type LocationSuggestion } from '../../../infrastructure/http/Api.js'
+import { LatestSearch } from '../../../design/Combobox.js'
 import './MapLink.js'
 
 // Cached user coordinates for geocoding bias.
@@ -41,9 +42,7 @@ function placeLabel(type: string): string {
 	return type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
 }
 
-/**
- * Location input with suggestions popover and Google Maps link.
- */
+/** The location field, suggesting places as it is typed into, with a link to the place on a map. */
 @component('mitra-location-field')
 export class LocationField extends Component {
 	@property({
@@ -54,19 +53,25 @@ export class LocationField extends Component {
 	@event() readonly change!: EventDispatcher
 
 	@state() private suggestions = new Array<LocationSuggestion>()
-	@state() private activeIndex = -1
+	@state() open = false
 
-	private searchSequence = 0
-	private debounceTimer?: ReturnType<typeof setTimeout>
+	private readonly search = new LatestSearch((query: string) => searchLocations(query, position).catch(() => new Array<LocationSuggestion>()), 250)
 
 	protected override createRenderRoot() { return this }
 
 	@query('textarea') private readonly field?: HTMLTextAreaElement
-	@query('menu[popover]') private readonly menu?: HTMLElement
+
+	private async suggest(query: string, immediately = false) {
+		const suggestions = await this.search.run(query, { immediately })
+		if (this.isConnected) {
+			this.suggestions = suggestions
+			this.open = suggestions.length > 0
+		}
+	}
 
 	private readonly handleFocus = () => {
 		requestPosition()
-		this.search(this.entry.location.trim())
+		void this.suggest(this.entry.location.trim(), true)
 	}
 
 	private readonly handleInput = (e: Event) => {
@@ -75,56 +80,29 @@ export class LocationField extends Component {
 			field.value = field.value.replace(/\s*\n+\s*/g, ' ')
 		}
 		this.entry.location = field.value
-		clearTimeout(this.debounceTimer)
-		this.debounceTimer = setTimeout(() => this.search(this.entry.location.trim()), 250)
-	}
-
-	private async search(query: string) {
-		const sequence = ++this.searchSequence
-		const suggestions = await searchLocations(query, position).catch(() => new Array<LocationSuggestion>())
-		if (sequence !== this.searchSequence || !this.isConnected) {
-			return
-		}
-		this.suggestions = suggestions
-		this.activeIndex = -1
-		await this.updateComplete
-		suggestions.length ? this.menu?.showPopover() : this.menu?.hidePopover()
+		void this.suggest(this.entry.location.trim())
 	}
 
 	private close() {
-		clearTimeout(this.debounceTimer)
-		this.searchSequence++
+		this.search.cancel()
 		this.suggestions = []
-		this.activeIndex = -1
-		this.menu?.hidePopover()
+		this.open = false
 	}
 
 	private pick(suggestion: LocationSuggestion) {
 		this.entry.location = suggestion.detail ? `${suggestion.name}, ${suggestion.detail}` : suggestion.name
-		const field = this.field
-		if (field) {
-			field.value = this.entry.location
+		if (this.field) {
+			this.field.value = this.entry.location
 		}
 		this.close()
 		this.change.dispatch()
 	}
 
-	private readonly handleKeydown = (e: KeyboardEvent) => {
-		if (e.key === 'Enter') {
+	/** Enter that chose no suggestion keeps what was typed. */
+	private readonly handleKeyDown = (e: KeyboardEvent) => {
+		if (e.key === 'Enter' && !e.defaultPrevented) {
 			e.preventDefault()
-			this.activeIndex >= 0 ? this.pick(this.suggestions[this.activeIndex]!) : this.field?.blur()
-			return
-		}
-		if (!this.suggestions.length) {
-			return
-		}
-		if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-			e.preventDefault()
-			const delta = e.key === 'ArrowDown' ? 1 : -1
-			this.activeIndex = (this.activeIndex + delta + this.suggestions.length) % this.suggestions.length
-		} else if (e.key === 'Escape') {
-			e.stopPropagation()
-			this.close()
+			this.field?.blur()
 		}
 	}
 
@@ -136,58 +114,44 @@ export class LocationField extends Component {
 				display: flex;
 				gap: 0.25rem;
 
-				> textarea {
+				textarea {
 					flex: 1;
 					min-width: 0;
 				}
 
-				> menu[popover] {
-					margin: 0;
-					margin-inline: 0.875rem;
+				mitra-listbox {
 					max-inline-size: 280px;
-					max-height: 60dvh;
-					overflow-y: auto;
-					background: var(--mitra-entry-surface);
-					border: var(--border);
-					box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48), 0px 4px 12px -1px rgba(0,0,0,0.24);
-					position-area: inline-end span-all;
-					position-try-fallbacks: flip-inline, flip-block, flip-inline flip-block;
+				}
 
-					> button {
-						> .glyph {
-							color: var(--color-text-muted);
-						}
+				mitra-option {
+					> .glyph {
+						color: var(--color-text-muted);
+					}
 
-						> .text {
-							flex: 1;
-							min-width: 0;
-							display: flex;
-							flex-direction: column;
-							gap: 1px;
+					> .text {
+						flex: 1;
+						min-width: 0;
+						display: flex;
+						flex-direction: column;
+						gap: 1px;
 
-							> .name {
-								white-space: nowrap;
-								overflow: hidden;
-								text-overflow: ellipsis;
+						> .name {
+							white-space: nowrap;
+							overflow: hidden;
+							text-overflow: ellipsis;
 
-								> .kind {
-									font-weight: 400;
-									color: var(--color-text-muted);
-								}
-							}
-
-							> .detail {
-								font-size: 0.6875rem;
+							> .kind {
 								font-weight: 400;
 								color: var(--color-text-muted);
-								white-space: nowrap;
-								overflow: hidden;
-								text-overflow: ellipsis;
 							}
 						}
 
-						&[data-active] {
-							background: color-mix(in srgb, var(--color-text) 8%, transparent);
+						> .detail {
+							font-size: 0.6875rem;
+							color: var(--color-text-muted);
+							white-space: nowrap;
+							overflow: hidden;
+							text-overflow: ellipsis;
 						}
 					}
 				}
@@ -197,31 +161,30 @@ export class LocationField extends Component {
 
 	protected override get template() {
 		return html`
-			<textarea rows="1" placeholder=${t('Location')} autocomplete="off" spellcheck="false"
-				?readonly=${!getCapabilities(this.entry?.sourceId ?? '').editEntries}
-				.value=${this.entry?.location ?? ''}
-				@focus=${this.handleFocus}
-				@input=${this.handleInput}
-				@keydown=${this.handleKeydown}
-				@blur=${() => this.close()}
-			></textarea>
-			<mitra-map-link location=${this.entry?.location ?? ''}></mitra-map-link>
-			<menu popover="manual">
-				${this.suggestions.map((suggestion, index) => html`
-					<button type="button" ?data-active=${index === this.activeIndex}
-						@pointerdown=${(e: Event) => e.preventDefault()}
-						@click=${() => this.pick(suggestion)}>
-						<mitra-icon class="glyph" icon=${placeIcon(suggestion)}></mitra-icon>
-						<span class="text">
-							<span class="name">
-								${suggestion.name}
-								${!suggestion.type ? html.nothing : html`<span class="kind">· ${placeLabel(suggestion.type)}</span>`}
+			<mitra-combobox ?open=${bind(this, 'open')}
+				@pick=${(e: CustomEvent<LocationSuggestion>) => this.pick(e.detail)} @keydown=${this.handleKeyDown}>
+				<textarea slot="input" rows="1" placeholder=${t('Location')} aria-label=${t('Location')} autocomplete="off" spellcheck="false"
+					?readonly=${!getCapabilities(this.entry?.sourceId ?? '').editEntries}
+					.value=${this.entry?.location ?? ''}
+					@focus=${this.handleFocus}
+					@input=${this.handleInput}
+				></textarea>
+				<mitra-listbox aria-label=${t('Location')}>
+					${this.suggestions.map(suggestion => html`
+						<mitra-option .value=${suggestion}>
+							<mitra-icon class="glyph" icon=${placeIcon(suggestion)}></mitra-icon>
+							<span class="text">
+								<span class="name">
+									${suggestion.name}
+									${!suggestion.type ? html.nothing : html`<span class="kind">· ${placeLabel(suggestion.type)}</span>`}
+								</span>
+								${!suggestion.detail ? html.nothing : html`<span class="detail">${suggestion.detail}</span>`}
 							</span>
-							${!suggestion.detail ? html.nothing : html`<span class="detail">${suggestion.detail}</span>`}
-						</span>
-					</button>
-				`)}
-			</menu>
+						</mitra-option>
+					`)}
+				</mitra-listbox>
+			</mitra-combobox>
+			<mitra-map-link location=${this.entry?.location ?? ''}></mitra-map-link>
 		`
 	}
 }

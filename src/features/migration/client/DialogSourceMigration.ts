@@ -4,6 +4,9 @@ import { Task, TaskStatus, initialState } from '@lit/task'
 import { canMoveEntriesOut, getCapabilities, getIntegrations, migrateSourceEntries, previewSourceMigration } from '../../../infrastructure/http/Api.js'
 import { MigrationPlan, type MigrationOutcome, type MigrationVerdict } from '../MigrationPlan.js'
 import { type Source } from '../../sources/Source.js'
+import { pressable } from '../../../design/pressable.css.js'
+import { activated } from '../../../design/activated.css.js'
+import { controlHeight } from '../../../design/controlHeight.css.js'
 
 const NAMED_BLOCKED = 5
 
@@ -84,11 +87,6 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 
 	static override get styles() {
 		return css`
-			@keyframes migration-progress {
-				from { translate: -100%; }
-				to { translate: 400%; }
-			}
-
 			@keyframes migration-mark {
 				from { scale: 0.8; opacity: 0; }
 				to { scale: 1; opacity: 1; }
@@ -124,12 +122,21 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 					}
 
 					button {
+						${pressable};
+						${controlHeight};
+						display: flex;
+						align-items: center;
 						inline-size: 100%;
-						justify-content: start;
+						min-block-size: var(--control-height);
 						gap: 0.5rem;
 						padding-inline: var(--row-inset);
-						background: transparent;
-						border-color: transparent;
+						border-radius: var(--border-radius);
+						font-size: 0.8125rem;
+						transition: background 0.15s ease;
+
+						&:hover {
+							${activated};
+						}
 
 						.name {
 							flex: 1;
@@ -267,30 +274,8 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 					padding-block: 0.5rem;
 				}
 
-				.progress {
+				mitra-progress {
 					inline-size: min(14rem, 60%);
-					block-size: 2px;
-					border-radius: 999px;
-					background: color-mix(in srgb, var(--color-text) 10%, transparent);
-					overflow: clip;
-
-					&::after {
-						content: '';
-						display: block;
-						block-size: 100%;
-						inline-size: 25%;
-						border-radius: inherit;
-						background: var(--color-text);
-						animation: migration-progress 1.1s cubic-bezier(0.65, 0, 0.35, 1) infinite;
-					}
-
-					@media (prefers-reduced-motion: reduce) {
-						&::after {
-							inline-size: 100%;
-							opacity: 0.35;
-							animation: none;
-						}
-					}
 				}
 
 				.mark {
@@ -400,7 +385,7 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 	private waitingTemplate(label: string) {
 		return html`
 			<div class="waiting">
-				<div class="progress"></div>
+				<mitra-progress></mitra-progress>
 				<p class="hint">${label}</p>
 			</div>
 		`
@@ -487,15 +472,15 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 				<p class="failure">${this.migration.error instanceof Error ? this.migration.error.message : String(this.migration.error)}</p>
 			`}
 			${!this.canMove ? html.nothing : html`
-				<button slot="footer" ?disabled=${!moving}
+				<mitra-button slot="footer" ?disabled=${!moving}
 					title=${t('Leave the originals here and add a copy over there')}
 					@click=${() => this.start(true)}>
 					${t('Copy instead')}
-				</button>
+				</mitra-button>
 			`}
-			<button slot="footer" class="primary" ?disabled=${!moving} @click=${() => this.start(!this.canMove)}>
+			<mitra-button slot="footer" variant="primary" ?disabled=${!moving} @click=${() => this.start(!this.canMove)}>
 				${this.canMove ? t('Move ${count:pluralityNumber} entries', { count: moving }) : t('Copy ${count:pluralityNumber} entries', { count: moving })}
-			</button>
+			</mitra-button>
 		`
 	}
 

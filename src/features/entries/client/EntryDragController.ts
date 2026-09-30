@@ -549,7 +549,7 @@ export class EntryDragController extends Controller {
 		drawing.target = valid ? chip : undefined
 
 		const port = drawing.source.portBox
-		const rtl = getComputedStyle(this.element).direction === 'rtl'
+		const rtl = this.element.matches(':dir(rtl)')
 		const portX = port ? (rtl ? port.right : port.left) : x
 		const portY = port ? port.top + port.height / 2 : y
 		const to: EntrySegment | ConnectionAim = drawing.target?.segment ?? { forward: x >= portX, down: y >= portY }

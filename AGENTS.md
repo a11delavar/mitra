@@ -39,22 +39,30 @@
   - 2D Scroll: Single scroll container (`overflow: auto`) with `position: sticky` (`top: 0` day headers, `left: 0` time axis, `top: 0; left: 0` top-left corner). No JS scroll sync.
   - Overlaps: Interval Graph Coloring algorithm. JS passes collision data strictly via CSS Custom Properties (`--overlap-slot`, `--overlap-total`) to `<mitra-entry-segment>`. Container queries disable clustering in narrow views.
   - Cross-Day Entries: Split at data layer (`getEntriesForDay`). Never span a single DOM element across midnight. Pass original time range for text, use booleans `continuesNext` / `continuedFromPrevious` to clamp grid rows (1 to 1441) and strip border radii.
-- **Popovers & Bottom Sheets** (`components/sheet.ts`, `sheetStyles`, `initializeSheetGestures`):
-  - **Opt-In**: Add `data-sheet` attribute and append `--sheet` as LAST fallback in `position-try-fallbacks`. Descendants style via `@container anchored(fallback: --sheet)`.
-  - **Single Child Chrome**: The popover host is a transparent scroll track (`::before` is `100dvb` spacer). Surface, border, radius, shadow live strictly on the single child (e.g. `mitra-entry-details > ul`). Child's `::before` is the grab handle.
-  - **Host Visibility**: Host must be `display: none` when closed (never `display: contents`).
-  - **Dragging & Dimming**: Native scroll tracking (`scroll-snap-type: block mandatory`). Dimmer is a viewport-fixed `::after` animating `opacity` on a named `scroll-timeline`.
-  - **Gestures**: Open slides via smooth scrolling to target offset (no CSS transforms or `@starting-style`). Close via `closeSheet(popover)` (scrolls down before dismiss; falls back to `hidePopover()`). Escape keydown intercepted. Delete is abrupt/optimistic.
-  - **Delegated Triggers**: `Mitra.initialized()` delegates `scrollend` at offset 0 (requires non-zero scroll range) and press-then-click on track (requires pointerdown on track).
-  - **Pre-Sheet Fallbacks**: Inset-based `anchor()` + `justify-self: anchor-center` (`--below`/`--above`), active only at `width >= 40rem`. Sheet body max width `30rem` centered.
+- **Popovers, Dialogs & Sheets** (`design/Popover.ts`, `design/ModalSheet.ts`):
+  - **One popover, three presentations**: `mitra-popover` is anchored where there is room, centered where there is none (the `--centered` rung, pure CSS, no JavaScript), and with `sheet` a modal bottom sheet below `40rem` (`[data-sheet]`, a `mitra-modal-sheet` on 3MO's `SheetController`). Its content is slotted, so switching presentation never rebuilds it.
+  - **Entry editor**: `mitra-entry-details` is `display: contents` and renders `<mitra-popover sheet>` around its `.editor`, which carries the surface, border and radius. It anchors at its segment through `show(segment)`; `close()` hides it (a sheet slides away). Its placement chain is `flip-inline, --centered` (beside its segment, else a dialog; no above/below rungs), declared on its popover from its own stylesheet, which therefore includes `centered` (`@position-try` names are tree-scoped).
+  - **Sheet focus**: the sheet's dialog takes focus as it opens unless something inside has `[autofocus]`, never its first control.
   - **Incompatible**: `position-try-order: most-block-size` is forbidden.
-  - **Testing**: Test with CDP touch/mouse events, not bare `segment.open = true`.
+  - **Testing**: Test with CDP touch/mouse events, not bare `segment.open = true`. The editor is open when its popover reflects `open` (`mitra-entry-details:has(> mitra-popover[open])`).
 - **Forms**: Constructors seed empty strings (`""`), never `undefined`, for form-bound fields (`uri`, credentials). Form `merge` methods use `||`, not `??`.
-- **Fields vs Content Controls**: `.field` strips chrome from host inputs/textareas/selects, but preserves checkboxes/radios (nested content). `input[type=checkbox]` uses `inline-grid` (prevents whole-line block wrapping in prose).
+- **Fields vs Content Controls**: the entry editor's rows (`.field`, `entries/client/editorFields.css.ts`, scoped to `mitra-entry-details`, never global) strip chrome from the inputs, textareas and selects inside and anchor their pickers to the whole row. Every checkbox is `mitra-checkbox` (including Markdown task lists, caught by `mitra-markdown` on capture-phase `change`).
 - **Comments & Architecture**:
   - Comments must explain non-obvious constraints, invariants, or platform traps (1-3 sentences). No line-by-line narration.
   - Update `AGENTS.md` immediately when new architectural decisions are made.
   - Operator docs live in `docs/` (Markdown, Starlight frontmatter, GitHub alerts `> [!NOTE]`, relative links). Sync env vars in `docs/reference/environment-variables.md`, provider docs in `docs/integrations/<provider>.md`, shared guides in `docs/guides/`.
+
+## Design Library (`src/design`)
+Feature components compose design primitives and hold domain logic only. Registered via `design/index.ts`.
+- **Boundary**: `src/design` imports nothing from features or infrastructure (`design/boundary.test.ts`). Exception: `Dialog.ts` -> `Mitra.styles` for shadow top-layer styling.
+- **Shadow DOM Primitives**: Controls are shadow DOM with `:host([attr])` state and exposed `part`s (no `Mitra.ts` registration). Feature components remain light DOM.
+- **Controls & Events**: Base `Control` delegates focus to internal native inputs and respects `autofocus`. Controls re-emit composed `change` events; bind with `live()`. A control carries `:state(focus-visible)` while its inner control has keyboard focus, for a context that rings it from outside (`:has(:focus-visible)` stops at the shadow root); the editor's rows ring themselves and zero the field's own ring (`--mitra-field-ring`). Event guards must use `startedInField`/`startedOnControl` (`eventOrigin.ts`, `composedPath()`), never `target.closest()`.
+- **Selects & Comboboxes**: `mitra-select` is an ARIA combobox hosting slotted `<mitra-option>`s via button + listbox; exposes `::part(listbox)` and reflects `open` for `.field` rows. `mitra-combobox` supports `floating` (manual popover) and `inline` (in-flow for pickers/palettes; Escape fires `dismiss`).
+- **Overlays**: `mitra-popover` is its own popover host; a subclass declares its `popoverType` (`'manual'` for a floating listbox, `null` for an inline one), which a presentation switch restores, never a blanket `'auto'`. `mitra-popover-container` pairs trigger and popover (`display: contents`, invoker binding without IDs). `--mitra-surface` tints nested popovers.
+- **Date, Time & Text Fields**: Segmented `mitra-date-field`/`mitra-time-field` follow app locale (values stay strings). Base `InputField<T>` backs `mitra-text-field` (bound on `input`), `mitra-search-field`, and `mitra-number-field` (clamped on `change`). `plain` drops the box for a search that heads a picker (time zones, relations); the picker draws the hairline beneath it.
+- **Shared Fragments** (`*.css.ts`): Reusable state fragments (`fieldChrome`, `optionRow`, `selected`, `disabled`, `pressable`, `scrollbar`). `selected` is the single source of truth for active items. Interpolations must use `unsafeCSS(...)` on template strings (tagged templates reject arguments).
+- **Field Context**: a context that wears the box itself (the editor's rows) sets `--mitra-field-*` (border, background, padding, picker button, read-only opacity, select indicator), and the design fields drop their chrome; an overlay opened from there (`mitra-dialog`, `mitra-popover` and so every picker) restores them (`fieldChromeRestored`).
+- **Sheets & Dialogs**: `mitra-modal-sheet` is a modal `<dialog>` sheet on 3MO's `SheetController` (the phone sidebar, and `mitra-popover`'s sheet presentation). Content laid out while closed has zero dimensions (`mitra-tabs` re-reveals on resize). Standalone `mitra-dialog` renders in place so invoker popovers stay open.
 
 ## Backend & Database (MikroORM / SQLite)
 - **ORM & STI**: SQLite with MikroORM. Single Table Inheritance (`@entity({ discriminatorColumn: 'type' })`) for polymorphic models (`Integration`, `Entry`). STI subclasses with no new columns need no migration; register in `ormConfig.ts` and `registerIntegrations.ts`.
@@ -194,7 +202,7 @@ One fixture serves the dev account and every screenshot the site ships, so keep 
   - `Planning.pending` feeds the sidebar tab badge. Only tasks can be unscheduled (`Entry.unschedulable`).
   - Overdue excludes the drag preview (`EntryStore.previewing`): a ghost with a new past date is still overdue, and nothing is dropped into this list. The ghost belongs to the grid; the source row stays, faded.
   - Scheduling and unscheduling share `EntryDragController.move`.
-  - Drawer tabs: `src/design/Tabs.ts` (declarative, scroll-driven).
+  - Drawer tabs: `src/design/Tabs.ts` (declarative, scroll-driven). The panel strip always scrolls LTR (in RTL its panels are reversed with `order: calc(-1 * sibling-index())`): Chromium puts a `view()` timeline one panel off in a scroller whose origin is its inline end (RTL or `row-reverse`), which faded the shown panel out.
   - Chip height tiers: roomy-first, cramped as exception via `--density`.
 - **Window Query** (`src/features/entries/server/entryWindow.ts`): `GET /entries` also carries rows no window contains — undated (`start: null`) and open tasks due before the window start. Route and test import it; never restate the filter. Client narrows via `Entry.overdue`.
 
@@ -216,7 +224,7 @@ One fixture serves the dev account and every screenshot the site ships, so keep 
     - `EntryStore.shownPreview` drops the ghost when it `spanEquals` the dragged entry — a drag moves nothing else, and comparing by `editEquals` doubled the row over the unschedule target, where `unschedule()` also clears reminders.
     - `apply` skips repainting when the built span equals the shown preview (`Entry.spanEquals` + `EntryStore.previewing`). Without it every frame repainted every chip — never call `setPreview` with an unchanged span.
   - Drafts: Single active local draft in `EntryStore.draft` (`id = 0`, `persisted = false`). Backend assigns final IDs.
-  - `CalendarScrollController`: Date-anchored scrolling across views. Snapping gated on device type (notched wheel vs continuous touch/trackpad).
+  - `CalendarScrollController`: Date-anchored scrolling across views. Snapping gated on device type (notched wheel vs continuous touch/trackpad). A navigation arrives on the cross axis too (`geometry.arrival`): the week view centers today's now line, any other day its middle. A view tells a navigation from a scroll echo by identity: a scroll hands back the very date it read, so a same-day navigation (Today) still arrives.
   - `DensityController`: Shared zoom gesture (Ctrl+wheel, wheel over rail, 2-finger pinch). Subclasses override `settled()` to dispatch synthetic scroll on inner scroller elements.
   - `TimeZoneLaneController`: Alternative zones fold; anchor zone never folds. Clamps cells (`max-inline-size: var(--zone-width)`). Rail inline drag with `touch-action: pan-y`.
   - Week All-Day Lane: Explicit row tracks (`grid-template-rows: repeat(var(--slots), var(--slot-height))`), never auto-flow.
@@ -251,13 +259,12 @@ One fixture serves the dev account and every screenshot the site ships, so keep 
   - Columns fit their content (`max-content`). A hidden `.anchor` row holds each column's widest content so tracks stay put under virtualization; the title chip has no intrinsic width, so its widest heading stands in.
   - Resize line is drawn inside the handle, offset by the handle's start taken at press. Never `position: fixed`: `.calendar`'s `contain: layout` shifts it.
   - Cells reuse editor components (`mitra-participant-faces`, `mitra-entry-link`, `mitra-map-link`), never copies. A row pending an editor open (`EntryEditorIntent.holds`) keeps its cells.
-  - `DataGridController` from `@3mo/data-grid/controller` only (`bundles.test.ts` asserts no Material). `columns` is made once per table; `rows` derives in `willUpdate`.
   - Batch mutations run entries in parallel, but series occurrences sequentially (scope `'this'`, sharing master exclusions).
 
 ## Routing & URL State
 - **One Route** (`PageCalendar`, `@route('/:view', '/')`): View is the path (`/week`), active overlays and filters are query parameters (`?date=`, `?selected=`, `?settings=`). Canonicalizes `/` to `/{defaultView}`. Unrecognized parameters fallback gracefully.
 - **`CalendarLocation`** (`src/features/calendar/client/CalendarLocation.ts`): Value object parsing and serializing URL navigation state. Initialized on page boot so initial render and fetch match restored view and date. Today is omitted to prevent link date pinning.
-- **Single Writer, Derive Don't Mirror**: `PageCalendar` is the sole URL writer — it overrides `get url()` to derive from live state and never assigns `parameters`; an inbound `parameters` change is purely the router's arrival signal, handled by an idempotent `restore()`. Components publish state the page reads (`EntryEditorIntent.target`, `SettingsParameters.pageChange`).
+- **Single Writer, Derive Don't Mirror**: `PageCalendar` is the sole URL writer — it overrides `get url()` to derive from live state and never assigns `parameters`; an inbound `parameters` change is purely the router's arrival signal, handled by an idempotent `restore()` of the address bar (`CalendarLocation.of(location)`), never of `parameters` themselves: the router re-hands the path parameters the page was first navigated with, so reading `view` from them reverted an in-app view switch on the next app render. Components publish state the page reads (`EntryEditorIntent.target`, `SettingsParameters.pageChange`).
 - **Replace, Never Push**: All writes funnel through the `updateUrl()` override (the framework's own `parameters` hook lands there too) into `UrlSyncController` (`src/infrastructure/routing/`), which owns the timing policy: `history.replaceState`, 100ms trailing debounce, flushed on `pagehide`/`visibilitychange`. Its host is typed `PageCalendar` (as `EntryFetcherController`'s is), so it reads `host.url` and self-schedules from `hostUpdated()` — no callbacks, no generics, nothing for the page to call. A write is skipped outright when the URL has not moved, so an unrelated re-render (an entry saved, a drag frame) neither writes nor postpones a write already due. Pushing would bury the arrival page under an entry per scroll flick, and the framework's `setUrl` wraps pushes in a document-level view transition that fights `transitionCalendar`. Collapses to a declared `historyStrategy` once @a11d/lit-application ships one (drafted upstream).
 - **Device Preferences**: Zoom, sidebar open state/tab, connectors, timezone folding, and the table's window live in `localStorage`, excluded from shared URLs.
 - **Stale Targets**: `?selected=` restores via `EntryEditorIntent.requestOpen`. Unmatched intents settle and clear from the URL on next write.
@@ -279,12 +286,13 @@ One fixture serves the dev account and every screenshot the site ships, so keep 
   - Non-Command Actions: Pointer gestures and editor-specific shortcuts stay in their own components.
 - **Command Palette** (`mitra-command-palette`):
   - Pure view. Filters via `commandMatches` → `termsMatch` (`src/features/commands/termsMatch.ts`, the app's ONE search rule — also the settings dialog's; kept out of `Command.ts` so searching doesn't drag in the app root).
-  - Navigation: Native `<dialog closedby="any">`. Triggered by bare `/`, `Ctrl+P`, or `Ctrl+K`.
+  - Navigation: Native `<dialog closedby="any">` around an inline `mitra-combobox` (its `dismiss` closes the dialog). Triggered by bare `/`, `Ctrl+P`, or `Ctrl+K`.
   - Search: Unwindowed backend `GET /entries/search?q=` (SQL LIKE, limit 20, 200ms debounce).
   - Selection: Emits `navigate` and requests editor open via `EntryEditorIntent.requestOpen(id)`.
 - **Editor Intent** (`src/features/entries/client/EntryEditorIntent.ts`):
   - Holds transient view intent for target editor (`openDraft(draft)` or `requestOpen(id)`).
   - `EntrySegment.updated` opens run-start segment (`!hasPrevious`) and consumes intent. `settle(entries)` clears unmatched intents.
+  - A span edit in the editor (`EntryDetailsWhen.commit`) requests its entry again: a new day or lane renders it in a new segment, which would otherwise leave the editor closed. Series entries are excluded.
 - **Keyboard Interceptor** (`PageCalendar.handleKeyDown`):
   - Must ignore inputs (`<input>`, `<textarea>`, `<select>`, `[contenteditable]`), IME composition, modifier chords, and open dialogs (`e.composedPath()` has `HTMLDialogElement`).
 - **Registry Instances**: `commandInstances()` caches one instance per class and rebuilds them when the language changes (facts are stringified at construction). Never `new` the registry per render.
@@ -374,7 +382,6 @@ One fixture serves the dev account and every screenshot the site ships, so keep 
 
 ## Sidebar & Navigation
 - **Source Icon**: `<mitra-source-icon>` (`src/features/sources/client/SourceIcon.ts`) renders source/provider glyphs reading color, importing state, and entry types directly from the bound `.source` (re-rendered when integration refetches mint fresh instances). Never mirror `Source` fields into separate component properties.
-  - **Picker Caveat**: `<mitra-source-icon>` inside an `<option>` renders uncolored in closed select pickers because `<selectedcontent>` clones markup without preserving Lit property bindings or template-applied inline styles.
 - **Sidebar Grid**: Single CSS grid (`.integrations`) aligns all source rows, headings, and gutters across providers. Its `--sidebar-gap` is both the column gap and (the first column being zero-wide) a row's content inset — the Planning tab's heading takes it too, so every heading in the sidebar rides one column. Anything listing sources elsewhere (the migration dialog) reproduces that relationship: heading text starts where the row icons do.
 - **Gutter**: Scroller uses `scrollbar-gutter: stable` to prevent layout shifts.
 - **Primary Source**: Always resolve via `getPrimarySource()` (default source or first visible), never raw ID.

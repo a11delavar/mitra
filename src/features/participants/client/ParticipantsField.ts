@@ -1,9 +1,10 @@
-import { Component, component, html, css, property, state, event, query } from '@a11d/lit'
+import { Component, component, html, css, property, state, event, query, bind } from '@a11d/lit'
 import { ParticipantRole, type Participants, type Participant } from '../Participant.js'
 import { type Entry } from '../../entries/Entry.js'
 import { getIntegrationFor, getCapabilities } from '../../../infrastructure/http/Api.js'
 import './ParticipantAvatar.js'
 import './ParticipantFaces.js'
+import { type Menu } from '../../../design/Menu.js'
 
 /**
  * Entry editor participants field supporting batch actions, role toggling, attendee uninviting, and collapse/expand.
@@ -15,17 +16,17 @@ export class ParticipantsField extends Component {
 
 	@property({
 		type: Object,
-		updated(this: ParticipantsField) { this.menu?.hidePopover(); this.expanded = false; this.adding = false },
+		updated(this: ParticipantsField) { this.menu?.hide(); this.expanded = false; this.adding = false },
 	}) entry!: Entry
 
 	@event() readonly change!: EventDispatcher
 
-	@state() private expanded = false
+	@state() expanded = false
 	@state() private adding = false
 
 	protected override createRenderRoot() { return this }
 
-	@query('menu[popover]') private readonly menu?: HTMLElement
+	@query('mitra-menu') private readonly menu?: Menu
 	@query('input.add') private readonly addInput?: HTMLInputElement
 
 	private get participants(): Participants | null {
@@ -59,23 +60,16 @@ export class ParticipantsField extends Component {
 
 	private readonly copyEmails = () => {
 		navigator.clipboard.writeText(this.participants?.emails ?? '').catch(() => void 0)
-		this.menu?.hidePopover()
 	}
 
 	private markAll(role: ParticipantRole) {
 		this.entry.markAllParticipants(role)
 		this.changed()
-		this.menu?.hidePopover()
 	}
 
 	private readonly removeAll = () => {
 		this.entry.clearParticipants()
 		this.changed()
-		this.menu?.hidePopover()
-	}
-
-	private readonly toggleMenu = () => {
-		this.menu?.togglePopover()
 	}
 
 	private readonly startAdding = async () => {
@@ -107,11 +101,9 @@ export class ParticipantsField extends Component {
 				justify-content: center;
 				gap: 0.375rem;
 				padding-block: calc((var(--control-height) - 2px - 1lh) / 2);
-				anchor-scope: --participants-menu;
 
 				mitra-icon-button {
 					color: var(--color-text-muted);
-					font-size: 0.87rem;
 					margin-block: -0.25rem;
 				}
 
@@ -130,10 +122,6 @@ export class ParticipantsField extends Component {
 							font-size: 0.6875rem;
 							color: var(--color-text-muted);
 						}
-					}
-
-					> .menu-button {
-						anchor-name: --participants-menu;
 					}
 				}
 
@@ -284,11 +272,11 @@ export class ParticipantsField extends Component {
 					}
 				}
 
-				> menu[popover] {
-					--field-anchor: --participants-menu;
-					background: var(--mitra-entry-surface);
-					border: var(--border);
-					box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48), 0px 4px 12px -1px rgba(0,0,0,0.24);
+				/* Opens off its own button rather than beside the editor, as the rows' pickers do. */
+				> header mitra-menu[popover] {
+					position-anchor: auto;
+					position-area: block-end span-inline-start;
+					margin: 0.25rem 0;
 				}
 			}
 		`
@@ -299,7 +287,6 @@ export class ParticipantsField extends Component {
 		return !this.entry ? html.nothing : html`
 			${this.headerTemplate}
 			${this.peopleTemplate}
-			${empty ? html.nothing : this.menuTemplate}
 			${!this.canManage || !(empty || this.adding) ? html.nothing : this.addTemplate(empty)}
 		`
 	}
@@ -329,11 +316,12 @@ export class ParticipantsField extends Component {
 					<span>${t('${count:pluralityNumber} participants', { count: participants.length })}</span>
 					<span class="summary">${participants.summary}</span>
 				</div>
-				<mitra-icon-button class="menu-button" label=${t('Participant options')} icon="more-horizontal"
-					@click=${this.toggleMenu}
-				></mitra-icon-button>
+				<mitra-popover-container>
+					<mitra-icon-button size="small" label=${t('Participant options')} icon="more-horizontal"></mitra-icon-button>
+					${this.menuTemplate}
+				</mitra-popover-container>
 				${!this.canManage ? html.nothing : html`
-					<mitra-icon-button label=${t('Add participant')} icon="plus" @click=${this.startAdding}></mitra-icon-button>
+					<mitra-icon-button size="small" label=${t('Add participant')} icon="plus" @click=${this.startAdding}></mitra-icon-button>
 				`}
 			</header>
 		`
@@ -342,31 +330,16 @@ export class ParticipantsField extends Component {
 	private get menuTemplate() {
 		const gate = this.canManage ? undefined : t('Only the organizer can change participants')
 		return html`
-			<menu popover>
-				<a href=${this.participants!.mailto} @click=${() => this.menu?.hidePopover()}>
-					<mitra-icon icon="mail"></mitra-icon>
-					${t('Email participants')}
-				</a>
-				<button type="button" @click=${this.copyEmails}>
-					<mitra-icon icon="copy"></mitra-icon>
-					${t('Copy participants\' emails')}
-				</button>
-				<button type="button" ?disabled=${!this.canManage} title=${gate ?? t('Ask everyone to attend')}
-					@click=${() => this.markAll(ParticipantRole.Required)}>
-					<mitra-icon icon="user-check"></mitra-icon>
-					${t('Mark all required')}
-				</button>
-				<button type="button" ?disabled=${!this.canManage} title=${gate ?? t('Make attendance optional for everyone')}
-					@click=${() => this.markAll(ParticipantRole.Optional)}>
-					<mitra-icon icon="user-minus"></mitra-icon>
-					${t('Mark all optional')}
-				</button>
-				<button type="button" class="danger" ?disabled=${!this.canManage} title=${gate ?? t('Remove every participant')}
-					@click=${this.removeAll}>
-					<mitra-icon icon="user-x"></mitra-icon>
-					${t('Remove all')}
-				</button>
-			</menu>
+			<mitra-menu slot="popover">
+				<mitra-menu-item icon="mail" href=${this.participants!.mailto}>${t('Email participants')}</mitra-menu-item>
+				<mitra-menu-item icon="copy" @click=${this.copyEmails}>${t('Copy participants\' emails')}</mitra-menu-item>
+				<mitra-menu-item icon="user-check" ?disabled=${!this.canManage} title=${gate ?? t('Ask everyone to attend')}
+					@click=${() => this.markAll(ParticipantRole.Required)}>${t('Mark all required')}</mitra-menu-item>
+				<mitra-menu-item icon="user-minus" ?disabled=${!this.canManage} title=${gate ?? t('Make attendance optional for everyone')}
+					@click=${() => this.markAll(ParticipantRole.Optional)}>${t('Mark all optional')}</mitra-menu-item>
+				<mitra-menu-item icon="user-x" variant="danger" ?disabled=${!this.canManage} title=${gate ?? t('Remove every participant')}
+					@click=${this.removeAll}>${t('Remove all')}</mitra-menu-item>
+			</mitra-menu>
 		`
 	}
 
@@ -377,7 +350,7 @@ export class ParticipantsField extends Component {
 		return html`
 			${(collapsible ? all.slice(0, ParticipantsField.collapsedRows) : all).map(participant => this.personTemplate(participant))}
 			${!collapsible ? html.nothing : html`
-				<details ?open=${this.expanded} @toggle=${(e: Event) => this.expanded = (e.target as HTMLDetailsElement).open}>
+				<details ?open=${bind(this, 'expanded', { event: 'toggle' })}>
 					<summary class="person">
 						<mitra-participant-faces class="faces" .participants=${hidden.slice(0, ParticipantsField.previewedFaces)}></mitra-participant-faces>
 						<div class="chevron">
@@ -409,11 +382,11 @@ export class ParticipantsField extends Component {
 				</div>
 				${!this.canManage || participant.organizer ? html.nothing : html`
 					<div class="actions">
-						<mitra-icon-button icon=${optional ? 'user-check' : 'user-minus'}
+						<mitra-icon-button size="small" icon=${optional ? 'user-check' : 'user-minus'}
 							label=${optional ? t('Ask this participant to attend') : t('Make attendance optional')}
 							@click=${() => this.toggleRole(participant)}
 						></mitra-icon-button>
-						<mitra-icon-button icon="x" label=${t('Remove participant')}
+						<mitra-icon-button size="small" icon="x" label=${t('Remove participant')}
 							@click=${() => this.uninvite(participant)}
 						></mitra-icon-button>
 					</div>

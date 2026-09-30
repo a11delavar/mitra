@@ -11,6 +11,7 @@ import { CalendarDatesController } from './CalendarDatesController.js'
 import { CalendarScrollController } from './CalendarScrollController.js'
 import { EntryDragController } from '../../entries/client/EntryDragController.js'
 import { TimelineDensityController } from './TimelineDensityController.js'
+import { pressable } from '../../../design/pressable.css.js'
 
 interface TimelineBar {
 	readonly segment: EntrySegment
@@ -66,6 +67,7 @@ export class Timeline extends Component {
 
 	private readonly scrolling: CalendarScrollController = new CalendarScrollController(this, this.dates, {
 		axis: 'inline',
+		alignment: 'center',
 		scroller: () => this,
 		ready: () => this.days.length > 0 && this.pitch > 0,
 		suspended: () => this.density.active || this.gliding,
@@ -147,7 +149,7 @@ export class Timeline extends Component {
 		}
 		this.gliding = true
 		const distance = Math.max(0, Math.min(offset, this.scrollWidth - this.clientWidth))
-		this.scrollTo({ left: getComputedStyle(this).direction === 'rtl' ? -distance : distance, behavior: 'smooth' })
+		this.scrollTo({ left: this.matches(':dir(rtl)') ? -distance : distance, behavior: 'smooth' })
 	}
 
 	@eventListener('scroll', { passive: true })
@@ -367,6 +369,7 @@ export class Timeline extends Component {
 						}
 
 						> .jump {
+							${pressable};
 							position: sticky;
 							z-index: 2;
 							display: none;
@@ -379,6 +382,7 @@ export class Timeline extends Component {
 							color: var(--color-text-muted);
 							background-color: color-mix(in srgb, var(--color-text) 5%, var(--color-background));
 							border: 1px solid color-mix(in srgb, var(--color-text) 20%, var(--color-background));
+							border-radius: var(--border-radius);
 
 							&:hover {
 								color: var(--color-text);

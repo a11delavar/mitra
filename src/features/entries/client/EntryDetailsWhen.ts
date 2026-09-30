@@ -1,12 +1,14 @@
-import { Component, component, html, css, property, state, event, query } from '@a11d/lit'
+import { Component, component, html, css, property, state, event, query, live } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { Temporal } from 'temporal-polyfill'
 import { FLOATING_TIME_ZONE, type Entry } from '../Entry.js'
 import { type TimeZonePicker, longZoneName, systemZoneId, zoneCity, zoneNamePart } from '../../time/client/TimeZonePicker.js'
 import { getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
+import { EntryEditorIntent } from './EntryEditorIntent.js'
 import { DefaultDurationSetting } from './DefaultDurationSetting.js'
 import { controlHeight } from '../../../design/controlHeight.css.js'
+import { type DateField } from '../../../design/DateTimeField.js'
 
 /**
  * Date, time, all-day, and time zone editor for an entry.
@@ -21,6 +23,8 @@ export class EntryDetailsWhen extends Component {
 	override role = 'listitem'
 
 	@event() readonly change!: EventDispatcher
+	/** Asks the calendar around to bring a moved entry into view. */
+	@event({ bubbles: true, composed: true }) readonly reveal!: EventDispatcher<DateTime>
 
 	readonly store = new EntryStore(this)
 
@@ -66,20 +70,18 @@ export class EntryDetailsWhen extends Component {
 		return this.toInstant(this.wall(base).with({ hour, minute, second: 0, millisecond: 0 }))
 	}
 
-	private readonly openPicker = (e: Event) => {
-		if (!this.editable) {
-			return
-		}
-		try {
-			(e.currentTarget as HTMLInputElement).showPicker()
-		} catch {
-			// showPicker is unsupported or blocked.
-		}
-	}
-
 	private commit() {
+		const { entry } = this
 		this.requestUpdate()
 		this.change.dispatch()
+		if (entry.start) {
+			this.reveal.dispatch(entry.start)
+		}
+		// A new span can land the entry on another day or lane, where a new segment renders it; once that has
+		// rendered, it opens the editor again rather than letting it close with the old one.
+		if (!entry.partOfSeries) {
+			setTimeout(() => entry.id ? EntryEditorIntent.requestOpen(entry.id) : EntryEditorIntent.openDraft(entry))
+		}
 	}
 
 	private readonly handleStartDateChange = (e: Event) => {
@@ -120,8 +122,8 @@ export class EntryDetailsWhen extends Component {
 	}
 
 	@query('mitra-time-zone-picker') private readonly zonePicker?: TimeZonePicker
-	@query('.end-date') private readonly endDateInput?: HTMLInputElement
-	@query('.start-date') private readonly startDateInput?: HTMLInputElement
+	@query('.end-date') private readonly endDateInput?: DateField
+	@query('.start-date') private readonly startDateInput?: DateField
 
 	private get foreignZone(): string | undefined {
 		const zone = this.entry.timeZone
@@ -182,22 +184,14 @@ export class EntryDetailsWhen extends Component {
 		this.endDateShown = true
 		await this.updateComplete
 		await new Promise(resolve => setTimeout(resolve, 100))
-		try {
-			this.endDateInput?.showPicker()
-		} catch {
-			// Ignore if showPicker is blocked.
-		}
+		this.endDateInput?.showPicker()
 	}
 
 	private readonly addDate = async () => {
 		this.dateShown = true
 		await this.updateComplete
 		await new Promise(resolve => setTimeout(resolve, 100))
-		try {
-			this.startDateInput?.showPicker()
-		} catch {
-			// Ignore if showPicker is blocked.
-		}
+		this.startDateInput?.showPicker()
 	}
 
 	private readonly clearDate = () => {
@@ -261,7 +255,7 @@ export class EntryDetailsWhen extends Component {
 						align-items: center;
 						gap: 0.5rem;
 
-						> input { flex: 1; min-width: 0; }
+						> :is(mitra-date-field, mitra-time-field) { flex: 1; min-width: 0; }
 					}
 				}
 
@@ -292,20 +286,10 @@ export class EntryDetailsWhen extends Component {
 					> .lens {
 						flex-shrink: 0;
 						align-self: center;
-						font-size: 0.85rem;
 						color: var(--color-text-muted);
 
 						&[data-localized] { color: var(--color-accent); }
 					}
-				}
-
-				mitra-time-zone-picker {
-					background: var(--mitra-entry-surface);
-					box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48), 0px 4px 12px -1px rgba(0,0,0,0.24);
-					position-area: inline-end span-all;
-					position-try-fallbacks: flip-inline, flip-block, flip-inline flip-block;
-					margin: 0;
-					margin-inline: 0.875rem;
 				}
 
 				.add-end {
@@ -315,16 +299,15 @@ export class EntryDetailsWhen extends Component {
 				.clear {
 					flex-shrink: 0;
 					align-self: center;
-					font-size: 0.85rem;
 					color: var(--color-text-muted);
 					opacity: 0;
 					transition: opacity 0.15s ease;
-					margin-inline-end: -0.25rem;
+					margin-inline-end: calc(-1 * var(--mitra-glyph-inset));
 				}
 
 				.dates > .field:hover > .clear,
 				.dates > .field:focus-within > .clear,
-				.clear:focus-visible {
+				.clear:focus-within {
 					opacity: 1;
 				}
 
@@ -332,10 +315,6 @@ export class EntryDetailsWhen extends Component {
 					.clear {
 						opacity: 1;
 					}
-				}
-
-				input::-webkit-calendar-picker-indicator {
-					display: none;
 				}
 			}
 		`
@@ -354,7 +333,7 @@ export class EntryDetailsWhen extends Component {
 							<span class="allday-label">${t('No date')}</span>
 						` : this.dateShown ? html`
 							<div class="field">
-								<input type="date" class="start-date" aria-label=${t('Date')} .value=${''} @click=${this.openPicker} @change=${this.handleStartDateChange}>
+								<mitra-date-field class="start-date" label=${t('Date')} .value=${''} @change=${this.handleStartDateChange}></mitra-date-field>
 							</div>
 						` : html`
 							<button class="field add-end" @click=${this.addDate}>
@@ -371,9 +350,9 @@ export class EntryDetailsWhen extends Component {
 				<mitra-icon icon=${this.entry.allDay ? 'calendar-days' : 'clock'}></mitra-icon>
 				<div class="dates">
 					<div class="field">
-						<input type="date" class="start-date" aria-label=${t('Start date')} ?readonly=${!this.editable} .value=${this.dateValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartDateChange}>
+						<mitra-date-field class="start-date" label=${t('Start date')} ?readonly=${!this.editable} .value=${this.dateValue(this.entry.start)} @change=${this.handleStartDateChange}></mitra-date-field>
 						${!this.clearable ? html.nothing : html`
-							<mitra-icon-button class="clear" icon="x" label=${t('Remove the date')} title=${t('Remove the date — the task moves to Unscheduled')} @click=${this.clearDate}></mitra-icon-button>
+							<mitra-icon-button size="small" class="clear" icon="x" label=${t('Remove the date')} title=${t('Remove the date — the task moves to Unscheduled')} @click=${this.clearDate}></mitra-icon-button>
 						`}
 					</div>
 					${!this.displayMultiDay && !this.endDateShown ? (!this.editable ? html.nothing : html`
@@ -384,27 +363,27 @@ export class EntryDetailsWhen extends Component {
 					`) : html`
 						<div class="field">
 							<mitra-icon icon="arrow-right"></mitra-icon>
-							<input type="date" class="end-date" aria-label=${t('End date')} ?readonly=${!this.editable} .value=${this.dateValue(this.entry.inclusiveEnd)} @click=${this.openPicker} @change=${this.handleEndDateChange}>
+							<mitra-date-field class="end-date" label=${t('End date')} ?readonly=${!this.editable} .value=${this.dateValue(this.entry.inclusiveEnd)} @change=${this.handleEndDateChange}></mitra-date-field>
 							${!this.editable ? html.nothing : html`
-								<mitra-icon-button class="clear" icon="x" label=${t('Remove the end date')} @click=${this.clearEndDate}></mitra-icon-button>
+								<mitra-icon-button size="small" class="clear" icon="x" label=${t('Remove the end date')} @click=${this.clearEndDate}></mitra-icon-button>
 							`}
 						</div>
 					`}
 				</div>
 			</div>
 			<div class="row">
-				<button class="switch" role="switch" aria-label=${t('All day')} title=${this.entry.allDay ? t('Include time') : t('Switch to all-day')}
-					aria-checked=${!this.entry.allDay} @click=${this.toggleAllDay}
+				<mitra-switch class="switch" label=${t('Include time')} title=${this.entry.allDay ? t('Include time') : t('Switch to all-day')}
+					?checked=${live(!this.entry.allDay)} @change=${this.toggleAllDay}
 					?hidden=${!this.editable || !getCapabilities(this.entry.sourceId).allDay}
-				></button>
+				></mitra-switch>
 				<div class="times">
 					${this.entry.allDay ? html`
 						<span class="allday-label">${t('All day')}</span>
 						` : html`
-							<input type="time" class="field" aria-label=${t('Start time')} ?readonly=${!this.editable} .value=${this.timeValue(this.entry.start)} @click=${this.openPicker} @change=${this.handleStartTimeChange}>
+							<mitra-time-field class="field" label=${t('Start time')} ?readonly=${!this.editable} .value=${this.timeValue(this.entry.start)} @change=${this.handleStartTimeChange}></mitra-time-field>
 							<div class="field">
 								<mitra-icon icon="arrow-right"></mitra-icon>
-								<input type="time" aria-label=${t('End time')} ?readonly=${!this.editable} .value=${this.timeValue(this.entry.effectiveEnd)} @click=${this.openPicker} @change=${this.handleEndTimeChange}>
+								<mitra-time-field label=${t('End time')} ?readonly=${!this.editable} .value=${this.timeValue(this.entry.effectiveEnd)} @change=${this.handleEndTimeChange}></mitra-time-field>
 							</div>
 						`}
 				</div>
@@ -416,13 +395,13 @@ export class EntryDetailsWhen extends Component {
 						<button class="zone-label" ?disabled=${this.zoneReadonly}
 							?data-placeholder=${this.zoneIsPrimary}
 							title=${this.zoneTitle} aria-label=${this.zoneTitle}
-							@click=${() => this.zonePicker?.togglePopover()}
+							@click=${(e: Event) => this.zonePicker?.toggle(e.currentTarget as HTMLElement)}
 						>
 							<span class="text">${this.zoneLabel}</span>
 							<mitra-icon class="chevron" icon="chevron-down"></mitra-icon>
 						</button>
 						${!this.foreignZone ? html.nothing : html`
-							<mitra-icon-button class="lens" ?data-localized=${!this.showEventZone}
+							<mitra-icon-button size="small" class="lens" ?data-localized=${!this.showEventZone}
 								icon=${this.showEventZone ? 'earth' : 'house'}
 								label=${this.lensTitle} @click=${this.toggleLens}
 							></mitra-icon-button>

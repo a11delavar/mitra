@@ -1,5 +1,6 @@
 import { component, html, join, property, state, Component, css, eventListener, event, Binder, query } from '@a11d/lit'
 import { type Source } from '../../sources/Source.js'
+import { Color } from '../../sources/Color.js'
 import { EntryType, type EntryTypeValue } from '../EntryType.js'
 import { TaskStatus, Transparency } from '../Entry.js'
 import type { EntrySegment } from './EntrySegment.js'
@@ -7,8 +8,10 @@ import { getIntegrations, getSource, getCapabilities, getExternalLink } from '..
 import { EntryStore, reportSaveError } from './EntryStore.js'
 import * as Hierarchy from '../../relations/client/Hierarchy.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
-import { SheetController } from '../../../design/sheet.js'
+import { centered, type Popover } from '../../../design/Popover.js'
 import { EntryDetailsSharing } from './EntryDetailsSharing.js'
+import { startedInField } from '../../../design/eventOrigin.js'
+import { editorFieldStyles } from './editorFields.css.js'
 
 @component('mitra-entry-details')
 export class EntryDetailsComponent extends Component {
@@ -16,16 +19,15 @@ export class EntryDetailsComponent extends Component {
 	@property({
 		type: Boolean,
 		updated(this: EntryDetailsComponent) {
-			// Defers native popover toggle to next frame to prevent immediate dismiss from tap clicks.
+			// Deferred a frame, so the tap that opened it is not also the press outside that dismisses it.
 			requestAnimationFrame(() => {
 				if (!this.isConnected) {
 					return
 				}
-				const isOpen = this.matches(':popover-open')
-				if (this.open && !isOpen) {
-					this.showPopover()
-				} else if (!this.open && isOpen) {
-					this.hidePopover()
+				if (this.open) {
+					this.popoverElement?.show(this.closest('mitra-entry-segment') ?? undefined)
+				} else {
+					this.popoverElement?.hide()
 				}
 			})
 		}
@@ -45,24 +47,24 @@ export class EntryDetailsComponent extends Component {
 
 	protected override createRenderRoot() { return this }
 
-	readonly sheetController = new SheetController(this)
-
+	/** Its popover, which is anchored at the segment, centered where it has no room, and a sheet on a phone. */
+	@query('mitra-popover') private readonly popoverElement?: Popover
 	@query('.title') private readonly titleInput?: HTMLInputElement
 	@query('.description textarea') private readonly descriptionTextarea?: HTMLTextAreaElement
 
-	@eventListener('beforetoggle')
-	handleBeforeToggle(e: ToggleEvent) {
-		this.open = e.newState === 'open'
-		this.openChange.dispatch(this.open)
+	private readonly handleOpenChange = (e: CustomEvent<boolean>) => {
+		if (e.detail !== this.open) {
+			this.open = e.detail
+			this.openChange.dispatch(e.detail)
+		}
+		if (e.detail && !this.segment?.entry.heading?.trim()) {
+			requestAnimationFrame(() => this.titleInput?.focus())
+		}
 	}
 
-	@eventListener('toggle')
-	protected handleToggle(e: ToggleEvent) {
-		if (e.newState === 'open') {
-			if (!this.segment?.entry.heading?.trim()) {
-				requestAnimationFrame(() => this.titleInput?.focus())
-			}
-		}
+	/** Closes the editor, as its X does: a sheet slides away first. */
+	close() {
+		this.popoverElement?.hide()
 	}
 
 	private readonly handleChange = () => {
@@ -80,7 +82,7 @@ export class EntryDetailsComponent extends Component {
 		if (!scope) {
 			return
 		}
-		this.hidePopover()
+		this.close()
 		return Hierarchy.deleteScoped(entry, scope).catch(error =>
 			console.error('Deleting the entry failed — it was restored in the view:', error))
 	}
@@ -91,7 +93,7 @@ export class EntryDetailsComponent extends Component {
 
 	private readonly handleDuplicate = () => {
 		const entry = this.segment!.entry
-		this.hidePopover()
+		this.close()
 		return EntryStore.duplicate(entry)
 			.then(copy => EntryEditorIntent.requestOpen(copy.id!))
 			.catch(error => console.error('Duplicating the entry failed — nothing was added:', error))
@@ -106,35 +108,25 @@ export class EntryDetailsComponent extends Component {
 		if (e.key !== 'Delete' && e.key !== 'Backspace') {
 			return
 		}
-		const target = e.target
-		const editable = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
-			|| target instanceof HTMLSelectElement || (target instanceof HTMLElement && target.isContentEditable)
-		if (!this.open || editable || e.altKey || e.isComposing || !this.capabilities.deleteEntries) {
+		if (!this.open || startedInField(e) || e.altKey || e.isComposing || !this.capabilities.deleteEntries) {
 			return
 		}
 		e.preventDefault()
 		void this.handleDelete(EntryDetailsComponent.bypassesScope(e))
 	}
 
-	private readonly handleClose = async (e: Event) => {
+	private readonly handleClose = (e: Event) => {
 		e.stopPropagation()
-		if (!await this.sheetController.close()) {
-			this.hidePopover()
-		}
+		this.close()
 	}
 
 	private get externalLinkTemplate() {
 		const link = getExternalLink(this.segment!.entry)
 		return !link ? html.nothing : html`
-			<button @click=${() => window.open(link.url, '_blank', 'noopener,noreferrer')}>
-				<mitra-icon icon="external-link"></mitra-icon>
+			<mitra-menu-item icon="external-link" href=${link.url} target="_blank">
 				${link.label ? t('Open in ${provider}', { provider: link.label }) : t('Open link')}
-			</button>
+			</mitra-menu-item>
 		`
-	}
-
-	private readonly toggleMenu = (e: Event) => {
-		(e.currentTarget as HTMLElement).parentElement?.querySelector<HTMLElement>('menu[popover]')?.togglePopover()
 	}
 
 	private get hasMenu() {
@@ -151,72 +143,54 @@ export class EntryDetailsComponent extends Component {
 
 	static override get styles() {
 		return css`
-			@position-try --below {
-				position-area: none;
-				inset-block: calc(anchor(end) + 0.25rem) auto;
-				inset-inline: 0;
-				justify-self: anchor-center;
-			}
-
-			@position-try --above {
-				position-area: none;
-				inset-block: auto calc(anchor(start) + 0.25rem);
-				inset-inline: 0;
-				justify-self: anchor-center;
-			}
+			${editorFieldStyles}
+			${centered}
 
 			mitra-entry-details {
-				display: none;
+				display: contents;
 				cursor: default;
+				color: var(--color-text);
+				font-family: 'Inter', sans-serif;
+				font-size: 0.75rem;
 
 				& ::selection {
 					background-color: color-mix(in srgb, var(--mitra-entry-segment-color) 40%, transparent);
 				}
 
-				&:popover-open {
-					display: flex;
-					flex-direction: column;
+				/* Beside its segment, or where neither side has room, in the middle of the viewport as a dialog. The frame
+				   is the editor's own, so the popover's surface steps aside. */
+				> mitra-popover:not([data-sheet]) {
+					inline-size: 360px;
+					max-block-size: 80dvh;
+					margin: 0 0.25rem;
+					padding: 0;
+					border: none;
+					border-radius: 0.5rem;
+					background: none;
+					backdrop-filter: none;
+					box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48), 0px 4px 12px -1px rgba(0,0,0,0.24);
+					overflow: clip;
+					position-area: inline-end span-all;
+					position-visibility: anchors-visible;
+					position-try-fallbacks: flip-inline, --centered;
+
+					&:popover-open {
+						display: flex;
+						flex-direction: column;
+					}
 				}
 
-				border: none;
-				margin: 0;
-				outline: none;
-				padding: 0;
-
-				--sheet-frame-radius: 0.5rem;
-				--sheet-frame-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48), 0px 4px 12px -1px rgba(0,0,0,0.24);
-
-				position: fixed;
-				margin-inline: 0.25rem;
-				position-area: inline-end span-all;
-				position-visibility: anchors-visible;
-				position-try-fallbacks: flip-inline, --sheet;
-
-				@media (width >= 40rem) {
-					position-try-fallbacks: flip-inline, --below, --above, --sheet;
-				}
-
-				width: 360px;
-				max-height: 80dvh;
-
-				color: var(--color-text);
-				font-family: 'Inter', sans-serif;
-				font-size: 0.75rem;
-
-				&::backdrop {
-					background: transparent;
-				}
-
-				> .editor {
+				> mitra-popover > .editor {
 					--gutter: 1.5rem;
-					--inset: 1rem 0.5rem;
-					max-height: inherit;
+					/* Rows' fields overhang it by 0.5rem on both sides, so a field's box sits 0.5rem from either edge. */
+					--inset: 1rem;
+					min-block-size: 0;
 					display: flex;
 					flex-direction: column;
 					background: var(--mitra-entry-surface);
 					backdrop-filter: blur(10px);
 					border: var(--border);
-					border-radius: var(--sheet-frame-radius);
+					border-radius: 0.5rem;
 					overflow: clip;
 
 					> header {
@@ -224,8 +198,9 @@ export class EntryDetailsComponent extends Component {
 						display: flex;
 						flex-direction: column;
 						gap: 0.25rem;
-						padding-block: 0.4375rem 0.375rem;
-						padding-inline: var(--inset);
+						/* The close button's box keeps the same distance from the top and the end edge. */
+						padding-block: 0.5rem 0.375rem;
+						padding-inline: var(--inset) 0.5rem;
 						border-block-end: 1px solid color-mix(in srgb, var(--color-text) 6%, transparent);
 						font-size: 0.75rem;
 
@@ -239,13 +214,13 @@ export class EntryDetailsComponent extends Component {
 								grid-column: 2;
 								display: flex;
 								align-items: center;
-								margin-inline: -0.4375rem -0.25rem;
+								margin-inline-start: -0.4375rem;
 							}
 
 							> .bar > .spacer { flex: 1; }
 
 							mitra-icon-button {
-								font-size: 0.8125rem;
+								color: var(--color-text-muted);
 							}
 
 							:is(.entry-type, .source).field {
@@ -253,20 +228,8 @@ export class EntryDetailsComponent extends Component {
 								--field-padding-inline: 0.4375rem;
 							}
 
-							.source > select option > .name {
-								flex: 1;
-							}
-
-							.source > select selectedcontent {
-								display: block;
-								max-width: 10rem;
-								overflow: hidden;
-								text-overflow: ellipsis;
-								white-space: nowrap;
-
-								mitra-source-icon {
-									display: none;
-								}
+							.source mitra-select::part(value) {
+								max-inline-size: 10rem;
 							}
 
 							> .color {
@@ -274,23 +237,17 @@ export class EntryDetailsComponent extends Component {
 								display: inline-flex;
 								align-items: center;
 
-								> .dot {
-									width: 0.875rem;
-									height: 0.875rem;
-									border-radius: var(--border-radius);
-									border: none;
-									cursor: pointer;
+								> mitra-popover-container > .dot::part(button) {
+									inline-size: 0.875rem;
+									min-block-size: 0.875rem;
 									padding: 0;
+									border: none;
+									background: var(--dot);
 									transition: transform 0.1s;
-
-									&:hover {
-										transform: scale(1.15);
-									}
 								}
 
-								> menu[popover] {
-									padding: 0.5rem;
-									flex-direction: row;
+								> mitra-popover-container > .dot::part(button):hover {
+									transform: scale(1.15);
 								}
 							}
 						}
@@ -308,6 +265,9 @@ export class EntryDetailsComponent extends Component {
 
 							> .title {
 								grid-column: 2;
+								/* Overhangs its column at the start like every row's field, and ends where the header does. */
+								inline-size: calc(100% + 0.5rem);
+								max-inline-size: none;
 								margin-inline-start: -0.5rem;
 								font-size: 0.9375rem;
 								font-weight: 600;
@@ -334,6 +294,20 @@ export class EntryDetailsComponent extends Component {
 						grid-auto-rows: min-content;
 						row-gap: 0.125rem;
 						column-gap: 0.5rem;
+
+						/* The rows' pickers open beside the editor rather than over it; a dialog's open at their controls. */
+						:where(.field [popover]:not(mitra-dialog *)),
+						:where(.field mitra-select:not(mitra-dialog *))::part(listbox) {
+							min-inline-size: 10rem;
+							position-area: inline-end span-all;
+							position-try-fallbacks: flip-inline, flip-block, flip-inline flip-block;
+							margin: 0 0.875rem;
+						}
+
+						/* A row's trailing action lands its glyph as far from the field's end as the row's icon sits from its start. */
+						.field mitra-icon-button.add {
+							margin-inline-end: calc(-1 * var(--mitra-glyph-inset));
+						}
 
 						> hr {
 							margin: 0.5rem 0;
@@ -362,7 +336,7 @@ export class EntryDetailsComponent extends Component {
 							}
 
 							&.field {
-								margin-inline: -0.5rem -0.25rem;
+								margin-inline: -0.5rem;
 							}
 
 							> .content {
@@ -389,56 +363,6 @@ export class EntryDetailsComponent extends Component {
 								}
 							}
 
-							&.source {
-								> mitra-source-icon {
-									grid-area: 1 / 1;
-									pointer-events: none;
-									font-size: 0.875rem;
-								}
-
-								> select {
-									display: grid;
-									grid-template-columns: subgrid;
-									grid-row: 1;
-									grid-column: -1 / 1;
-
-									&::picker(select) {
-										background: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
-										border: var(--border);
-										box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48),0px 4px 12px -1px rgba(0,0,0,0.24);
-										position-area: inline-end span-all;
-										position-try-fallbacks: flip-inline, flip-block, flip-inline flip-block;
-										margin-inline: 0.875rem;
-									}
-
-									&::picker-icon {
-										grid-row: 1;
-										grid-column: -1;
-									}
-
-									selectedcontent {
-										grid-column: 2;
-										align-items: center;
-
-										mitra-source-icon {
-											display: none;
-										}
-									}
-
-									optgroup > legend {
-										font-size: 0.6875rem;
-										font-weight: 600;
-										color: var(--color-text-muted);
-										padding: 0.375rem 0.625rem 0.125rem;
-									}
-
-									option {
-										gap: 0.5rem;
-										.name { flex: 1; }
-									}
-								}
-							}
-
 							&.color {
 								.content {
 									gap: 0.375rem;
@@ -449,8 +373,15 @@ export class EntryDetailsComponent extends Component {
 					}
 				}
 
-				@container anchored(fallback: --sheet) {
-					& > .editor > ul {
+				/* As a sheet the sheet's panel is the frame and wears the surface: the editor fills it and scrolls within. */
+				> mitra-popover[data-sheet] > .editor {
+					flex: 1;
+					background: none;
+					border: none;
+					border-radius: 0;
+					backdrop-filter: none;
+
+					> ul {
 						padding-block-end: max(1rem, env(safe-area-inset-bottom));
 					}
 				}
@@ -460,52 +391,48 @@ export class EntryDetailsComponent extends Component {
 
 	protected override get template() {
 		return !this.segment ? html.nothing : html`
-			<div class="editor">
-				<header>
-					<div class="toolbar">
-						${this.colorTemplate}
-						<span class="bar">
-							${this.sourceTemplate}
-							<span class="spacer"></span>
-							${this.entryTypeTemplate}
-							${!this.hasMenu ? html.nothing : html`
-								<mitra-icon-button
-									label=${t('Options')}
-									icon="more-horizontal"
-									style="anchor-name: --entry-menu-${this.segment.entry.id}; color: var(--color-text-muted)"
-									@click=${this.toggleMenu}
+			<mitra-popover sheet @openChange=${this.handleOpenChange}>
+				<div class="editor">
+					<header>
+						<div class="toolbar">
+							${this.colorTemplate}
+							<span class="bar">
+								${this.sourceTemplate}
+								<span class="spacer"></span>
+								${this.entryTypeTemplate}
+								${!this.hasMenu ? html.nothing : html`
+									<mitra-popover-container>
+										<mitra-icon-button label=${t('Options')} icon="more-horizontal"></mitra-icon-button>
+										<mitra-menu slot="popover">
+											${this.externalLinkTemplate}
+											${!this.segment.entry.persisted || !this.capabilities.createEntries ? html.nothing : html`
+												<mitra-menu-item icon="copy" @click=${this.handleDuplicate}>
+													${t('Duplicate')}
+													<kbd>${EntryDetailsComponent.altKey}</kbd>
+													<span class="word">${t('drag')}</span>
+												</mitra-menu-item>
+											`}
+											${!this.capabilities.deleteEntries ? html.nothing : html`
+												<mitra-menu-item icon="trash-2" variant="danger" @click=${(e: MouseEvent) => void this.handleDelete(EntryDetailsComponent.bypassesScope(e))}>
+													${t('Delete')}
+													<kbd>${EntryDetailsComponent.appleKeyboard ? '⌫' : 'Del'}</kbd>
+												</mitra-menu-item>
+											`}
+										</mitra-menu>
+									</mitra-popover-container>
+								`}
+								<mitra-icon-button class="close" icon="x" label=${t('Close')}
+									@click=${this.handleClose}
 								></mitra-icon-button>
-							`}
-							<menu popover id="entry-menu-${this.segment.entry.id}" style="position-anchor: --entry-menu-${this.segment.entry.id}">
-								${this.externalLinkTemplate}
-								${!this.segment.entry.persisted || !this.capabilities.createEntries ? html.nothing : html`
-									<button @click=${this.handleDuplicate}>
-										<mitra-icon icon="copy"></mitra-icon>
-										${t('Duplicate')}
-										<kbd>${EntryDetailsComponent.altKey}</kbd>
-										<span class="word">${t('drag')}</span>
-									</button>
-								`}
-								${!this.capabilities.deleteEntries ? html.nothing : html`
-									<button class="danger" @click=${(e: MouseEvent) => void this.handleDelete(EntryDetailsComponent.bypassesScope(e))}>
-										<mitra-icon icon="trash-2"></mitra-icon>
-										${t('Delete')}
-										<kbd>${EntryDetailsComponent.appleKeyboard ? '⌫' : 'Del'}</kbd>
-									</button>
-								`}
-							</menu>
-							<mitra-icon-button class="close" icon="x" label=${t('Close')}
-								style="color: var(--color-text-muted)"
-								@click=${this.handleClose}
-							></mitra-icon-button>
-						</span>
-					</div>
-					${this.titleRowTemplate}
-				</header>
-				<ul>
-					${join(this.groups, html`<hr>`)}
-				</ul>
-			</div>
+							</span>
+						</div>
+						${this.titleRowTemplate}
+					</header>
+					<ul>
+						${join(this.groups, html`<hr>`)}
+					</ul>
+				</div>
+			</mitra-popover>
 		`
 	}
 
@@ -565,29 +492,23 @@ export class EntryDetailsComponent extends Component {
 		if (!switchable) {
 			return html.nothing
 		}
-		const handleTypeChange = (e: Event) => {
-			entry.type = (e.target as HTMLSelectElement).value as EntryTypeValue
+		const handleTypeChange = (e: CustomEvent<EntryTypeValue>) => {
+			entry.type = e.detail
 			EntryStore.notify()
 			this.handleChange().catch(reportSaveError)
 		}
 		return html`
 			<span class="entry-type field">
-				<select @change=${handleTypeChange}>
-					<button>
-						<selectedcontent></selectedcontent>
-					</button>
-					${EntryType.all.map(type => html`
-						<option value=${type.value} ?selected=${type === entry.type}>${type.format()}</option>
-					`)}
-				</select>
+				<mitra-select label=${t('Type')} .value=${entry.type.value} @change=${handleTypeChange}>
+					${EntryType.all.map(type => html`<mitra-option .value=${type.value}>${type.format()}</mitra-option>`)}
+				</mitra-select>
 			</span>
 		`
 	}
 
 	private get sourceTemplate() {
-		const handleSourceChange = (e: Event) => {
-			const sourceId = (e.target as HTMLSelectElement).value
-			const source = getIntegrations().flatMap(integration => [...integration.sources]).find(source => source.id === sourceId)
+		const handleSourceChange = (e: CustomEvent<Source>) => {
+			const source = e.detail
 			const entry = this.segment!.entry
 			if (!source || source.id === entry.sourceId) {
 				return
@@ -607,26 +528,21 @@ export class EntryDetailsComponent extends Component {
 		}
 		return !this.source?.name ? html.nothing : html`
 			<span class="source field">
-				<select ?disabled=${!this.capabilities.editEntries} @change=${handleSourceChange}>
-					<button>
-						<selectedcontent></selectedcontent>
-					</button>
-					${getIntegrations().map(integration => {
-						const sources = [...integration.sources].filter(source =>
-							source.id === entry.sourceId || (source.enabled && canHold(source)))
-						return !sources.length ? html.nothing : html`
-							<optgroup label=${integration.credentials?.username || integration.type}>
-								<legend>${integration.credentials?.username || integration.type}</legend>
+				<mitra-select label=${t('Calendar')} ?disabled=${!this.capabilities.editEntries} .value=${this.source} @change=${handleSourceChange}>
+					${getIntegrations()
+						.map(integration => ({ integration, sources: [...integration.sources].filter(source => source.id === entry.sourceId || (source.enabled && canHold(source))) }))
+						.filter(({ sources }) => sources.length)
+						.map(({ integration, sources }) => html`
+							<mitra-option-group label=${integration.credentials?.username || integration.type}>
 								${sources.map(source => html`
-									<option value=${source.id} ?selected=${source.id === entry.sourceId}>
+									<mitra-option .value=${source} label=${source.name}>
 										<mitra-source-icon .source=${source}></mitra-source-icon>
-										<span class="name">${source.name}</span>
-									</option>
+										${source.name}
+									</mitra-option>
 								`)}
-							</optgroup>
-						`
-					})}
-				</select>
+							</mitra-option-group>
+						`)}
+				</mitra-select>
 			</span>
 		`
 	}
@@ -651,7 +567,7 @@ export class EntryDetailsComponent extends Component {
 
 	private readonly handleColorChange = (e: CustomEvent<string | null>) => {
 		this.setColor(e.detail)
-		;((e.target as HTMLElement).closest('[popover]') as HTMLElement | null)?.hidePopover()
+		;(e.target as HTMLElement).closest('mitra-popover')?.hide()
 	}
 
 	private get colorTemplate() {
@@ -659,16 +575,19 @@ export class EntryDetailsComponent extends Component {
 		const activeColor = entry?.color || this.source?.color
 		return !entry ? html.nothing : html`
 			<span class="color">
-				<button class="dot" ?disabled=${!this.capabilities.editEntries} popovertarget="entry-color-${entry.id}" title=${t('Color')}
-					style="anchor-name: --entry-color-${entry.id}; background: ${activeColor ?? 'var(--color-text-muted)'}"></button>
-				<menu popover id="entry-color-${entry.id}" style="position-anchor: --entry-color-${entry.id}">
-					<mitra-color-picker
-						.value=${activeColor}
-						.resetValue=${this.source?.color}
-						resetLabel=${t('Reset to calendar color')}
-						@change=${this.handleColorChange}
-					></mitra-color-picker>
-				</menu>
+				<mitra-popover-container>
+					<mitra-button class="dot" label=${t('Color')} ?disabled=${!this.capabilities.editEntries}
+						style="--dot: ${activeColor ?? 'var(--color-text-muted)'}"></mitra-button>
+					<mitra-popover slot="popover">
+						<mitra-color-picker
+							.palette=${Color.palette}
+							.value=${activeColor}
+							.resetValue=${this.source?.color}
+							resetLabel=${t('Reset to calendar color')}
+							@change=${this.handleColorChange}
+						></mitra-color-picker>
+					</mitra-popover>
+				</mitra-popover-container>
 			</span>
 		`
 	}

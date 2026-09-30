@@ -1,7 +1,7 @@
-import { Component, component, html, css, property, state, event, eventListener, repeat, query } from '@a11d/lit'
+import { component, html, css, property, state, event, repeat, query } from '@a11d/lit'
 import { type UserTimeZone } from '../../identity/User.js'
-import { pickerRow, pickerRowChosen } from '../../../design/pickerRow.css.js'
-import { activated } from '../../../design/activated.css.js'
+import { Popover } from '../../../design/Popover.js'
+import type { SearchField } from '../../../design/TextField.js'
 
 // --- Zone presentation (shared by the axis header, the picker, and the entry editor) ----------------
 
@@ -95,36 +95,23 @@ function allZoneRows(): ReadonlyArray<ZoneRow> {
 }
 
 /**
- * A time zone picker as an anchored POPOVER (the host element IS the popover): search-as-you-type over
- * every IANA zone, arrow-key + Enter selection, the popover glass. The opener anchors it (sets
- * `position-anchor` on this element) and calls `togglePopover()`; a chosen zone id is dispatched as
- * `pick` and the popover closes itself. `exclude` hides ids that would be no-ops for the caller.
+ * A searchable list of every IANA zone, as a popover: `toggle(anchor)` opens it, and a chosen zone id is `pick`ed
+ * and closes it. `exclude` leaves out ids that would change nothing for the caller.
  */
 @component('mitra-time-zone-picker')
-export class TimeZonePicker extends Component {
-	/** Fired with the picked IANA zone id. */
+export class TimeZonePicker extends Popover {
 	@event() readonly pick!: EventDispatcher<string>
 
-	/** Zone ids not to offer (e.g. already-shown columns). */
 	@property({ type: Object }) exclude?: ReadonlySet<string>
 
-	/** The caller's current zone id — pinned to the top and check-marked, so the picker opens on it. */
+	/** The caller's current zone, marked and where the list opens, among its neighbours by offset. */
 	@property() selected?: string
 
 	@state() private query = ''
-	@state() private activeIndex = -1
 
-	@query('input') private readonly searchInput?: HTMLInputElement
-	@query('.rows [data-active]') private readonly activeRow?: HTMLElement
+	@query('mitra-search-field') private readonly input?: SearchField
 
-	protected override createRenderRoot() { return this }
-
-	protected override connected() {
-		super.connected()
-		this.setAttribute('popover', '')
-	}
-
-	private get filteredRows(): ReadonlyArray<ZoneRow> {
+	private get rows(): ReadonlyArray<ZoneRow> {
 		const rows = !this.exclude?.size ? allZoneRows() : allZoneRows().filter(row => !this.exclude!.has(row.id))
 		const query = this.query.trim().toLowerCase()
 		const matches = !query ? rows : rows.filter(row =>
@@ -132,177 +119,101 @@ export class TimeZonePicker extends Component {
 			|| row.name.toLowerCase().includes(query)
 			|| row.offset.toLowerCase().includes(query)
 			|| row.id.toLowerCase().includes(query))
-		// Pin the browser's own zone (the reset target) to the top, so it never hides in the offset order.
-		// The caller's CURRENT zone is deliberately NOT hoisted — it stays in its natural offset position
-		// and the picker scrolls to it on open (see handleToggle), so the user lands among its neighbours.
+		// The browser's own zone is the way back to the default, so it heads the list rather than hiding in the offset order.
 		const system = systemZoneId()
 		return [...matches.filter(row => row.id === system), ...matches.filter(row => row.id !== system)]
 	}
 
-	@eventListener('toggle')
-	protected handleToggle(e: ToggleEvent) {
-		if (e.newState === 'open') {
-			this.query = ''
-			// Open highlighted on the current zone in its natural position, and CENTER it in view — so the
-			// user sees it selected among its offset-neighbours (Enter re-picks it). Typing resets to -1.
-			this.activeIndex = this.filteredRows.findIndex(row => row.id === this.selected)
-			const input = this.searchInput
-			input?.focus()
-			if (input) {
-				input.value = ''
-			}
-			this.updateComplete.then(() => this.activeRow?.scrollIntoView({ block: 'center' }))
+	protected override opened() {
+		this.query = ''
+		if (this.input) {
+			this.input.value = ''
+			this.input.focus()
 		}
 	}
 
 	private choose(id: string) {
-		this.hidePopover()
+		this.hide()
 		this.pick.dispatch(id)
-	}
-
-	private readonly handleInput = (e: Event) => {
-		this.query = (e.target as HTMLInputElement).value
-		this.activeIndex = -1
-	}
-
-	private readonly handleKeydown = (e: KeyboardEvent) => {
-		const rows = this.filteredRows
-		if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-			e.preventDefault()
-			const delta = e.key === 'ArrowDown' ? 1 : -1
-			this.activeIndex = rows.length ? (this.activeIndex + delta + rows.length) % rows.length : -1
-			this.updateComplete.then(() => this.activeRow?.scrollIntoView({ block: 'nearest' }))
-		} else if (e.key === 'Enter') {
-			// The highlighted row, or — straight after typing — the top match.
-			e.preventDefault()
-			const row = rows[this.activeIndex] ?? rows[0]
-			if (row) {
-				this.choose(row.id)
-			}
-		}
 	}
 
 	static override get styles() {
 		return css`
-			mitra-time-zone-picker {
-				margin: 0.25rem 0 0;
+			${super.styles}
+
+			:host {
 				padding: 0;
-				max-inline-size: calc(100dvw - 0.75rem); /* never wider than the viewport */
-				background: color-mix(in srgb, var(--color-surface) 95%, transparent);
-				backdrop-filter: blur(10px);
-				border: var(--border);
-				border-radius: 8px;
-				box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48), 0px 4px 12px -1px rgba(0,0,0,0.24);
-				position-area: block-end span-inline-end;
-				position-try-fallbacks: flip-block, flip-inline;
+				inline-size: 26rem;
+				max-inline-size: calc(100dvw - 0.75rem);
+			}
 
-				&:popover-open {
-					display: flex;
-					flex-direction: column;
-					gap: 0.375rem;
-				}
+			:host(:popover-open) {
+				display: flex;
+				flex-direction: column;
+			}
 
-				/* The search reads as a plain row of the popover (no box, no focus ring — the caret and
-				   the filtering are feedback enough), separated from the results by a hairline. */
-				> input.search {
-					flex-shrink: 0;
-					background: transparent;
-					border: none;
-					border-radius: 0;
-					border-block-end: 1px solid rgba(255, 255, 255, 0.06);
-					padding-block: 0.4rem;
-					padding-inline: 0.5rem;
+			mitra-search-field {
+				flex-shrink: 0;
+				border-block-end: var(--border);
+			}
 
-					&:hover,
-					&:focus-visible {
-						background: transparent;
-						border-color: transparent;
-						border-block-end-color: rgba(255, 255, 255, 0.06);
-						box-shadow: none;
-					}
-				}
+			mitra-listbox {
+				max-block-size: min(24rem, 50dvh);
+				padding: 0.25rem;
+				--mitra-option-inset: 2rem;
+			}
 
-				> .rows {
-					overflow-y: overlay;
-					max-height: min(24rem, 50dvh);
-					display: flex;
-					flex-direction: column;
-					gap: 1px;
+			.offset {
+				flex-shrink: 0;
+				inline-size: 5.25rem;
+				color: var(--color-text-muted);
+				font-variant-numeric: tabular-nums;
+			}
 
-					> button {
-						all: unset;
-						/* The shared option row (pickerRow.css.ts) — literally the same row a select's picker
-						   gives its options, so the two lists cannot drift apart again. Only the columns a
-						   ZONE is made of are local. */
-						${pickerRow}
+			.name {
+				font-weight: 500;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
 
-						/* The keyboard-active row is the hovered row as far as the eye is concerned. */
-						&[data-active] {
-							${activated};
-							color: var(--color-text);
-						}
+			.city {
+				color: var(--color-text-muted);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
 
-						> .offset {
-							flex-shrink: 0;
-							inline-size: 5.25rem;
-							color: var(--color-text-muted);
-							font-variant-numeric: tabular-nums;
-						}
-
-						> .name {
-							font-weight: 500;
-							white-space: nowrap;
-							overflow: hidden;
-							text-overflow: ellipsis;
-						}
-
-						> .city {
-							color: var(--color-text-muted);
-							white-space: nowrap;
-							overflow: hidden;
-							text-overflow: ellipsis;
-						}
-
-						/* The caller's current zone wears the shared chosen state: tinted, firmer, and ticked
-						   in the leading gutter. */
-						&[data-selected] {
-							${pickerRowChosen};
-
-							&::before {
-								color: var(--color-accent);
-							}
-						}
-
-						/* Tags the browser's own zone, hoisted to the top as the "reset to default" pick. */
-						> .primary {
-							margin-inline-start: auto;
-							flex-shrink: 0;
-							color: var(--color-text-muted);
-							font-size: 0.6875rem;
-							text-transform: uppercase;
-							letter-spacing: 0.04em;
-						}
-					}
-				}
+			.primary {
+				margin-inline-start: auto;
+				flex-shrink: 0;
+				color: var(--color-text-muted);
+				font-size: 0.6875rem;
+				font-weight: 500;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
 			}
 		`
 	}
 
 	protected override get template() {
+		const system = systemZoneId()
 		return html`
-			<input class="search" placeholder="Time zone" autocomplete="off" spellcheck="false"
-				@input=${this.handleInput}
-				@keydown=${this.handleKeydown}>
-			<div class="rows">
-				${repeat(this.filteredRows, row => row.id, (row, index) => html`
-					<button type="button" ?data-active=${index === this.activeIndex} ?data-selected=${row.id === this.selected} @click=${() => this.choose(row.id)}>
-						<span class="offset">${row.offset}</span>
-						<span class="name">${row.name}</span>
-						<span class="city">– ${row.city}</span>
-						${row.id !== systemZoneId() ? html.nothing : html`<span class="primary">primary</span>`}
-					</button>
-				`)}
-			</div>
+			<mitra-combobox inline activateFirst .selected=${this.selected} @pick=${(e: CustomEvent<string>) => this.choose(e.detail)} @dismiss=${() => this.hide()}>
+				<mitra-search-field slot="input" plain placeholder=${t('Time zone')}
+					@input=${(e: Event) => this.query = (e.target as SearchField).value}
+				></mitra-search-field>
+				<mitra-listbox aria-label=${t('Time zone')}>
+					${repeat(this.rows, row => row.id, row => html`
+						<mitra-option .value=${row.id}>
+							<span class="offset">${row.offset}</span>
+							<span class="name">${row.name}</span>
+							<span class="city">– ${row.city}</span>
+							${row.id !== system ? html.nothing : html`<span class="primary">${t('Primary')}</span>`}
+						</mitra-option>
+					`)}
+				</mitra-listbox>
+			</mitra-combobox>
 		`
 	}
 }

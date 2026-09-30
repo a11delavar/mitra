@@ -32,16 +32,8 @@ import { DialogSettings } from '../features/settings/client/DialogSettings.js'
 import { SettingRow } from '../features/settings/client/SettingRow.js'
 import { NotificationDevices } from '../features/reminders/client/NotificationDevices.js'
 import { themeStyles } from '../design/theme.css.js'
-import { IconButton } from '../design/IconButton.js'
-import { buttonStyles } from '../design/button.css.js'
-import { switchStyles } from '../design/switch.css.js'
-import { selectStyles } from '../design/select.css.js'
-import { inputStyles } from '../design/input.css.js'
-import { fieldStyles } from '../design/field.css.js'
 import { focusRingStyles } from '../design/focusRing.css.js'
 import { kbdStyles } from '../design/kbd.css.js'
-import { menuStyles } from '../design/menu.css.js'
-import { sheetStyles } from '../design/sheet.js'
 import { Choices, Choice } from '../design/Choices.js'
 import { windowDragStyles } from '../design/windowDrag.css.js'
 import { TaskStatusComponent } from '../features/entries/client/TaskStatus.js'
@@ -51,8 +43,8 @@ import { LocationField } from '../features/locations/client/LocationField.js'
 import { RemindersField } from '../features/reminders/client/RemindersField.js'
 import { ParticipantsField } from '../features/participants/client/ParticipantsField.js'
 import { RelationsField } from '../features/relations/client/RelationsField.js'
-import { TimeZoneHeader, DialogTimeZoneRename } from '../features/time/client/TimeZoneHeader.js'
-import { TimeZonePicker } from '../features/time/client/TimeZonePicker.js'
+import { TimeZoneHeader } from '../features/time/client/TimeZoneHeader.js'
+import '../features/time/client/TimeZonePicker.js'
 import { syncPushSubscription } from '../features/reminders/client/push.js'
 import { syncThemeColor } from './pwa.js'
 import { DialogEntryScope } from '../features/entries/client/DialogEntryScope.js'
@@ -200,20 +192,12 @@ export class Mitra extends Application {
 				-webkit-tap-highlight-color: transparent;
 			}
 
-			${buttonStyles}
-			${switchStyles}
-			${selectStyles}
-			${inputStyles}
-			${fieldStyles}
 			${focusRingStyles}
-			${menuStyles}
 			${kbdStyles}
-			${sheetStyles}
 			${windowDragStyles}
 
 			${ScrollDeviceController.styles}
 
-			${IconButton.styles}
 			${Choices.styles}
 			${Choice.styles}
 			${Markdown.styles}
@@ -260,8 +244,6 @@ export class Mitra extends Application {
 			${ParticipantsField.styles}
 			${RelationsField.styles}
 			${TimeZoneHeader.styles}
-			${DialogTimeZoneRename.styles}
-			${TimeZonePicker.styles}
 		`
 	}
 }

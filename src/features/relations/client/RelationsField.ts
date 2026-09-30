@@ -9,6 +9,8 @@ import { EntryStore } from '../../entries/client/EntryStore.js'
 import { Relations } from './Relations.js'
 import { controlHeight } from '../../../design/controlHeight.css.js'
 import './EntryLink.js'
+import { LatestSearch } from '../../../design/Combobox.js'
+import { type Popover } from '../../../design/Popover.js'
 
 /** The authorable families keyed by the section their lines land in. These sections render ALWAYS —
  * each is its own row with its own add action (the empty row IS the entry point), and each opens
@@ -30,7 +32,7 @@ interface Line {
 }
 
 /**
- * The relationship controls for the entry editor: ONE `.field` ROW PER SECTION (see field.css.ts),
+ * The relationship controls for the entry editor: ONE `.field` ROW PER SECTION (see editorFields.css.ts),
  * not one row holding them all. "Blocked by" and "Subtask of" are separate fields the way Location and
  * Reminders are — each with its own leading glyph, its own hover box, and its own `+` icon button at
  * the row's end (the RemindersField add affordance). The component therefore subgrids the popover's
@@ -46,7 +48,7 @@ interface Line {
  * them: the mirror pairs share a glyph (see RelationSection), so "Blocked by X" and "Blocks X" would be
  * indistinguishable without it.
  *
- * Each authorable row owns its own picker, anchored by the field's scoped `--field` (field.css.ts) —
+ * Each authorable row owns its own picker, anchored by the field's scoped `--field` (editorFields.css.ts) —
  * no per-instance anchor tokens, and no re-anchoring when the user moves between families. The picker
  * keeps FIXED geometry (the TimeZonePicker pattern): a hairline search row over a constant-height
  * results pane, so it never shifts while searching. Its kind is preset by whichever row opened it, so
@@ -73,7 +75,6 @@ export class RelationsField extends Component {
 	readonly store = new EntryStore(this)
 
 	@state() private suggestions = new Array<Entry>()
-	@state() private activeIndex = -1
 	@state() private pendingType: RelationType = RelationType.authorable[0]!
 	/** The query the shown suggestions answer — '' before any search, so the results area can tell
 	 * "type something" apart from "nothing matched". */
@@ -81,19 +82,13 @@ export class RelationsField extends Component {
 	/** A terminal save rejection (self-reference/cycle → 400) surfaced inline; cleared on interaction. */
 	@state() private error?: string
 
-	// Responses may resolve out of order; only the latest issued request's may land.
-	private searchSequence = 0
-	private debounceTimer?: ReturnType<typeof setTimeout>
+	private readonly search = new LatestSearch((query: string) => query ? searchEntries(query).catch(() => new Array<Entry>()) : Promise.resolve(new Array<Entry>()), 250)
 
 	/** Target entries by uid, for naming owned lines: fed by the fetched view and by picked
 	 * suggestions, so a just-added line has its name before any refetch. */
 	private readonly resolvedByUid = new Map<string, Entry>()
 
 	protected override createRenderRoot() { return this }
-
-	/** Each authorable row carries its own picker, keyed by the family it authors. */
-	private menuFor(type: RelationType) { return this.querySelector<HTMLElement>(`menu.picker[data-type="${type.value}"]`) }
-	private searchInputFor(type: RelationType) { return this.querySelector<HTMLInputElement>(`menu.picker[data-type="${type.value}"] input.search`) }
 
 	/** Relationships live on the series MASTER — an occurrence reads/edits its master's. */
 	private get targetId() { return this.entry.recurrenceMasterId ?? this.entry.id }
@@ -176,54 +171,37 @@ export class RelationsField extends Component {
 
 	// --- Picker -----------------------------------------------------------------------------------------
 
-	private togglePicker(type: RelationType) {
-		this.error = undefined
-		const wasOpen = this.menuFor(type)?.matches(':popover-open')
-		// Closes whichever family's picker was open — including this one, making the button a toggle.
-		// Jumping between families therefore always starts the search over, which it must: the results
-		// are filtered against the pending kind's already-related set (hierarchy and dependency are
-		// separate graphs), so the other family's list would be answering the wrong question.
-		this.closePicker()
-		if (wasOpen) {
-			return
+	/**
+	 * Each authorable row has its own picker. Opening one starts the search over, as the results are filtered
+	 * against that row's family (hierarchy and dependency are separate graphs).
+	 */
+	private handlePickerToggle(type: RelationType, open: boolean) {
+		this.resetSearch()
+		if (open) {
+			this.error = undefined
+			this.pendingType = type
 		}
-		this.pendingType = type
-		this.menuFor(type)?.showPopover()
-		this.searchInputFor(type)?.focus()
 	}
 
 	private resetSearch() {
-		clearTimeout(this.debounceTimer)
-		this.searchSequence++ // orphan any in-flight response
+		this.search.cancel()
 		this.suggestions = []
-		this.activeIndex = -1
 		this.searchedQuery = ''
-		this.querySelectorAll<HTMLInputElement>('menu.picker input.search').forEach(input => input.value = '')
+		this.querySelectorAll<HTMLElementTagNameMap['mitra-search-field']>('.picker mitra-search-field').forEach(field => field.value = '')
 	}
 
 	private closePicker() {
 		this.resetSearch()
-		this.querySelectorAll<HTMLElement>('menu.picker').forEach(menu => {
-			// hidePopover() throws on an element that isn't showing.
-			if (menu.matches(':popover-open')) {
-				menu.hidePopover()
-			}
-		})
+		this.querySelectorAll<Popover>('mitra-popover.picker').forEach(picker => picker.hide())
 	}
 
-	private readonly handleInput = (e: Event) => {
-		clearTimeout(this.debounceTimer)
-		this.debounceTimer = setTimeout(() => this.search((e.target as HTMLInputElement).value.trim()), 250)
-	}
-
-	private async search(query: string) {
-		const sequence = ++this.searchSequence
-		const results = query ? await searchEntries(query).catch(() => new Array<Entry>()) : []
-		if (sequence !== this.searchSequence || !this.isConnected) {
+	private readonly handleInput = async (e: Event) => {
+		const query = (e.target as HTMLInputElement).value.trim()
+		const results = await this.search.run(query)
+		if (!this.isConnected) {
 			return
 		}
-		// Already-related only WITHIN the pending type's family: hierarchy and dependency are
-		// separate graphs (see RelationType.family) — being a subtask of X doesn't preclude "Blocked by X".
+		// Already related only within the pending family: being a subtask of X doesn't preclude "Blocked by X".
 		const family = this.pendingType.family
 		const related = new Set(this.relations.filter(relation => RelationType.of(relation.type).family === family).map(relation => relation.targetUid))
 		this.suggestions = results.filter(candidate =>
@@ -231,7 +209,6 @@ export class RelationsField extends Component {
 			&& candidate.uid !== this.entry.uid && candidate.id !== this.targetId // not itself
 			&& !candidate.recurrenceId // an override row stands behind its master
 			&& !related.has(candidate.uid))
-		this.activeIndex = -1
 		this.searchedQuery = query
 	}
 
@@ -239,30 +216,6 @@ export class RelationsField extends Component {
 		this.resolvedByUid.set(candidate.uid!, candidate)
 		this.commit(() => this.entry.relateTo(this.pendingType, candidate.uid!))
 		this.closePicker()
-	}
-
-	private readonly handleKeydown = (e: KeyboardEvent) => {
-		if (e.key === 'Enter') {
-			// The highlighted suggestion, or — straight after typing — the top match.
-			e.preventDefault()
-			const candidate = this.suggestions[this.activeIndex] ?? this.suggestions[0]
-			if (candidate) {
-				this.pick(candidate)
-			}
-			return
-		}
-		if (e.key === 'Escape') {
-			// Only dismiss the picker — stop it before the popover machinery closes the whole editor.
-			e.stopPropagation()
-			this.closePicker()
-			return
-		}
-		if (this.suggestions.length && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
-			e.preventDefault()
-			const delta = e.key === 'ArrowDown' ? 1 : -1
-			this.activeIndex = (this.activeIndex + delta + this.suggestions.length) % this.suggestions.length
-			this.updateComplete.then(() => this.querySelector('.results [data-active]')?.scrollIntoView({ block: 'nearest' })).catch(() => void 0)
-		}
 	}
 
 	static override get styles() {
@@ -290,7 +243,7 @@ export class RelationsField extends Component {
 					   (see EventDetails): the full bleed would sit flush against the popover's tighter
 					   0.5rem end inset, and a row 4px wider than the Reminders row above it is exactly the
 					   misalignment these rows exist to avoid. */
-					&.field { margin-inline: -0.5rem -0.25rem; }
+					&.field { margin-inline: -0.5rem; }
 
 					> mitra-icon {
 						grid-column: 1;
@@ -309,7 +262,7 @@ export class RelationsField extends Component {
 					display: grid;
 					grid-template-columns: max-content minmax(0, 1fr) auto;
 					/* The FIRST line spans the control height, so the field glyph's first-line pin (see
-					   field.css.ts) stays centred on it however many lines follow. */
+					   editorFields.css.ts) stays centred on it however many lines follow. */
 					grid-template-rows: minmax(calc(var(--control-height) - 2px), auto);
 					align-items: center;
 					column-gap: 0.5rem;
@@ -339,11 +292,10 @@ export class RelationsField extends Component {
 						white-space: nowrap;
 					}
 
-					> .add {
+					> mitra-popover-container > .add {
 						grid-column: 3;
 						grid-row: 1;
 						color: var(--color-text-muted);
-						font-size: 0.8rem;
 						/* Swallow the button's own padding so it never stretches the row past a line's height. */
 						margin-block: -0.25rem;
 					}
@@ -364,14 +316,13 @@ export class RelationsField extends Component {
 
 						> mitra-icon-button {
 							color: var(--color-text-muted);
-							font-size: 0.8rem;
 							margin-block: -0.25rem;
 							opacity: 0;
 							transition: opacity 0.15s ease;
 						}
 
 						&:hover > mitra-icon-button,
-						> mitra-icon-button:focus-visible {
+						> mitra-icon-button:focus-within {
 							opacity: 1;
 						}
 
@@ -386,94 +337,61 @@ export class RelationsField extends Component {
 				> .error {
 					grid-column: 2;
 					font-size: 0.6875rem;
-					color: #ff6b6b; /* the danger tint menu.css uses */
+					color: var(--color-error);
 				}
 
-				/* The picker wears the popover's tinted glass and opens beside its OWN row — the
-				   position-anchor comes from the field's scoped --field name (field.css.ts), so there is
-				   no per-instance token here. FIXED geometry (the TimeZonePicker pattern): a hairline
-				   search row over a constant-height results pane — nothing shifts as results come and
-				   go. No kind control: the row that opened it preset the kind. */
-				menu.picker {
-					margin: 0;
-					margin-inline: 0.875rem;
+				/* A search over a results pane of fixed height, so nothing shifts as results come and go. */
+				mitra-popover.picker {
 					padding: 0;
 					inline-size: 280px;
 					max-inline-size: calc(100dvw - 0.75rem);
-					background: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
-					border: var(--border);
-					box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48), 0px 4px 12px -1px rgba(0,0,0,0.24);
-					position-area: inline-end span-all;
-					position-try-fallbacks: flip-inline, flip-block, flip-inline flip-block;
 
 					&:popover-open {
 						display: flex;
 						flex-direction: column;
-						gap: 0;
-						height: 180px;
+						block-size: 180px;
 					}
 
-					/* The search reads as a plain row of the popover (no box, no focus ring — the caret
-					   and the filtering are feedback enough), separated by a hairline. */
-					> input.search {
-						border: none;
-						border-bottom: var(--border);
-						border-radius: 0;
-						background: transparent;
-						padding: 0.375rem 0.5rem;
-						font-size: 0.8125rem;
-						color: var(--color-text);
-						outline: none;
-
-						&::placeholder {
-							color: var(--color-text-muted);
-						}
+					mitra-search-field {
+						flex-shrink: 0;
+						border-block-end: var(--border);
 					}
 
-					> .results {
+					mitra-listbox {
 						flex: 1;
-						min-height: 0;
-						overflow-y: auto;
-						display: flex;
-						flex-direction: column;
-						gap: 1px;
+						min-block-size: 0;
 						padding: 0.25rem;
+					}
 
-						> .hint {
-							margin: auto;
-							padding-inline: 1rem;
-							text-align: center;
+					.hint {
+						margin: auto;
+						padding-inline: 1rem;
+						text-align: center;
+						color: var(--color-text-muted);
+						font-size: 0.75rem;
+					}
+
+					mitra-option {
+						> .glyph {
 							color: var(--color-text-muted);
-							font-size: 0.75rem;
 						}
 
-						> button {
-							> .glyph {
+						> .text {
+							flex: 1;
+							min-width: 0;
+							white-space: nowrap;
+							overflow: hidden;
+							text-overflow: ellipsis;
+
+							> .when {
+								font-size: 0.6875rem;
 								color: var(--color-text-muted);
 							}
+						}
 
-							> .text {
-								flex: 1;
-								min-width: 0;
-								white-space: nowrap;
-								overflow: hidden;
-								text-overflow: ellipsis;
-
-								> .when {
-									font-size: 0.6875rem;
-									font-weight: 400;
-									color: var(--color-text-muted);
-								}
-							}
-
-							&[data-struck] > .text {
-								text-decoration: line-through;
-								color: var(--color-text-muted);
-							}
-
-							&[data-active] {
-								background: color-mix(in srgb, var(--color-text) 8%, transparent);
-							}
+						&[data-struck] > .text {
+							text-decoration: line-through;
+							color: var(--color-text-muted);
 						}
 					}
 				}
@@ -517,16 +435,16 @@ export class RelationsField extends Component {
 							${line.target
 								? html`<mitra-entry-link .entry=${line.target}></mitra-entry-link>`
 								: html`<span class="heading unresolved">${line.pending ? '…' : t('Unknown entry')}</span>`}
-							<mitra-icon-button icon="x" label=${t('Remove relationship')}
+							<mitra-icon-button size="small" icon="x" label=${t('Remove relationship')}
 								@click=${() => line.remove()}
 							></mitra-icon-button>
 						</span>
 					`)}
 					${!addType ? html.nothing : html`
-						<mitra-icon-button class="add" icon="plus" label=${t('Add relationship')}
-							@click=${() => this.togglePicker(addType)}
-						></mitra-icon-button>
-						${this.pickerTemplate(addType)}
+						<mitra-popover-container>
+							<mitra-icon-button size="small" class="add" icon="plus" label=${t('Add relationship')}></mitra-icon-button>
+							${this.pickerTemplate(addType)}
+						</mitra-popover-container>
 					`}
 				</div>
 			</div>
@@ -535,39 +453,29 @@ export class RelationsField extends Component {
 
 	private pickerTemplate(type: RelationType) {
 		return html`
-			<!-- A MANUAL popover (the LocationField reasoning): its lifecycle is owned here — Escape,
-				picking, the add buttons and an entry switch close it; light dismiss would tear it
-				away from the editor popover's own dismissal. -->
-			<menu class="picker" popover="manual" data-type=${type.value}
+			<mitra-popover slot="popover" class="picker" @openChange=${(e: CustomEvent<boolean>) => this.handlePickerToggle(type, e.detail)}
 				@change=${(e: Event) => e.stopPropagation()} @input=${(e: Event) => e.stopPropagation()}>
-				<input class="search" placeholder=${t('Search entries…')} autocomplete="off" spellcheck="false"
-					@input=${this.handleInput}
-					@keydown=${this.handleKeydown}>
-				<div class="results">
-					${/* Only the open picker's results are worth rendering — the suggestions are filtered
-					     against the PENDING family, so another row's copy would be answering for the
-					     wrong kind if it ever showed. */''}
-					${this.pendingType !== type || !this.suggestions.length ? html`
-						<span class="hint">${this.searchedQuery ? t('No matching entries') : t('Search for an event or task to link')}</span>
-					` : this.suggestions.map((candidate, index) => {
-						const color = candidate.color || getSource(candidate.sourceId)?.color
-						const isDone = candidate.type === EntryType.Task && candidate.done
-						return html`
-							<button type="button" ?data-active=${index === this.activeIndex} ?data-struck=${isDone}
-								@pointerdown=${(e: Event) => e.preventDefault()}
-								@click=${() => this.pick(candidate)}>
-								<mitra-icon class="glyph" icon=${candidate.type === EntryType.Task ? 'list-todo' : 'calendar'}
-									style=${color ? `color: ${color};` : ''}
-								></mitra-icon>
-								<span class="text">
-									${candidate.heading}
-									${!candidate.start ? html.nothing : html`<span class="when"> · ${candidate.start.format({ month: 'short', day: 'numeric' })}</span>`}
-								</span>
-							</button>
-						`
-					})}
-				</div>
-			</menu>
+				<mitra-combobox inline activateFirst @pick=${(e: CustomEvent<Entry>) => this.pick(e.detail)}
+					@dismiss=${(e: Event) => ((e.currentTarget as HTMLElement).parentElement as Popover).hide()}>
+					<mitra-search-field slot="input" plain autofocus placeholder=${t('Search entries…')} @input=${this.handleInput}></mitra-search-field>
+					<mitra-listbox aria-label=${t('Search entries…')}>
+						${this.pendingType !== type || !this.suggestions.length ? html`
+							<span class="hint" data-hint>${this.searchedQuery ? t('No matching entries') : t('Search for an event or task to link')}</span>
+						` : this.suggestions.map(candidate => {
+							const color = candidate.color || getSource(candidate.sourceId)?.color
+							return html`
+								<mitra-option .value=${candidate} ?data-struck=${candidate.type === EntryType.Task && candidate.done}>
+									<mitra-icon class="glyph" icon=${candidate.type === EntryType.Task ? 'list-todo' : 'calendar'} style=${color ? `color: ${color};` : ''}></mitra-icon>
+									<span class="text">
+										${candidate.heading}
+										${!candidate.start ? html.nothing : html`<span class="when"> · ${candidate.start.format({ month: 'short', day: 'numeric' })}</span>`}
+									</span>
+								</mitra-option>
+							`
+						})}
+					</mitra-listbox>
+				</mitra-combobox>
+			</mitra-popover>
 		`
 	}
 }

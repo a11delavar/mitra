@@ -13,7 +13,7 @@ export class ParticipantFaces extends Component {
 		return css`
 			mitra-participant-faces {
 				--participant-faces-ring: var(--color-surface);
-				--participant-avatar-size: 0.95rem;
+				--mitra-avatar-size: 0.95rem;
 				display: flex;
 				align-items: center;
 
@@ -21,7 +21,7 @@ export class ParticipantFaces extends Component {
 					outline: 2px solid var(--participant-faces-ring);
 
 					& + mitra-participant-avatar {
-						margin-inline-start: calc(var(--participant-avatar-size) * -0.42);
+						margin-inline-start: calc(var(--mitra-avatar-size) * -0.42);
 					}
 				}
 			}

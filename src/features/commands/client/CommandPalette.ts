@@ -4,6 +4,7 @@ import { type Entry } from '../../entries/Entry.js'
 import { getSource, searchEntries } from '../../../infrastructure/http/Api.js'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
 import { commandMatches, Command } from '../Command.js'
+import { LatestSearch } from '../../../design/Combobox.js'
 
 /**
  * The command palette: a top-layer search box ("/", Ctrl/Cmd+P or +K, or the header's search trigger) over the
@@ -25,18 +26,17 @@ export class CommandPalette extends Component {
 
 	@state() private searchTerm = ''
 	@state() private entries = new Array<Entry>()
-	@state() private selectedIndex = 0
 
 	@query('dialog') private readonly dialog!: HTMLDialogElement
-	@query('menu [data-selected]') private readonly selectedResult?: HTMLElement
+
+	private readonly search = new LatestSearch((term: string) => searchEntries(term).catch(() => new Array<Entry>()))
 
 	protected override createRenderRoot() { return this }
 
 	show() {
 		this.searchTerm = ''
 		this.entries = []
-		this.selectedIndex = 0
-		this.searchToken++
+		this.search.cancel()
 		this.dialog.showModal()
 	}
 
@@ -58,25 +58,6 @@ export class CommandPalette extends Component {
 		}
 	}
 
-	/** Monotonic token: debounces keystrokes and discards stale responses — only the latest search lands. */
-	private searchToken = 0
-
-	private async search(term: string) {
-		const token = ++this.searchToken
-		if (!term.trim()) {
-			this.entries = []
-			return
-		}
-		await new Promise(resolve => setTimeout(resolve, 200))
-		if (token !== this.searchToken) {
-			return
-		}
-		const entries = await searchEntries(term.trim()).catch(() => new Array<Entry>())
-		if (token === this.searchToken) {
-			this.entries = entries
-		}
-	}
-
 	private get matchingCommands() {
 		const queried = !!this.searchTerm.trim()
 		return this.commands.filter(command => (queried || command.listedWithoutQuery) && commandMatches(command, this.searchTerm))
@@ -85,10 +66,6 @@ export class CommandPalette extends Component {
 	/** Entries only join the list once there is something to search for — an empty palette is a command menu. */
 	private get matchingEntries() {
 		return this.searchTerm.trim() ? this.entries : new Array<Entry>()
-	}
-
-	private get results(): Array<Command | Entry> {
-		return [...this.matchingCommands, ...this.matchingEntries]
 	}
 
 	private select(result: Command | Entry) {
@@ -104,45 +81,14 @@ export class CommandPalette extends Component {
 		}
 	}
 
-	private handleInput(term: string) {
+	private async handleInput(term: string) {
 		this.searchTerm = term
-		this.selectedIndex = 0
-		void this.search(term)
-	}
-
-	private handleKeyDown(e: KeyboardEvent) {
-		const count = this.results.length
-		switch (e.key) {
-			case 'ArrowDown':
-				e.preventDefault()
-				this.selectedIndex = count ? (this.selectedIndex + 1) % count : 0
-				break
-			case 'ArrowUp':
-				e.preventDefault()
-				this.selectedIndex = count ? (this.selectedIndex - 1 + count) % count : 0
-				break
-			case 'Enter': {
-				e.preventDefault()
-				const selected = this.results[this.selectedIndex]
-				if (selected) {
-					this.select(selected)
-				}
-				break
-			}
-			default:
-				break
+		if (!term.trim()) {
+			this.search.cancel()
+			this.entries = []
+			return
 		}
-	}
-
-	protected override updated() {
-		// Keep the highlighted result in view as the user arrows/types — but ONLY while open. The palette
-		// stays mounted (a closed <dialog>) and re-renders whenever its `commands` prop changes, which the
-		// page hands it fresh on every render; calling scrollIntoView there forces a synchronous
-		// whole-document layout (reflowing the entire calendar) for nothing. The guard makes a closed
-		// palette's update a no-op — no layout thrash during calendar scrolling.
-		if (this.dialog?.open) {
-			this.selectedResult?.scrollIntoView({ block: 'nearest' })
-		}
+		this.entries = await this.search.run(term.trim())
 	}
 
 	private static when(entry: Entry) {
@@ -182,7 +128,7 @@ export class CommandPalette extends Component {
 						}
 					}
 
-					> header {
+					header {
 						display: flex;
 						align-items: center;
 						gap: 0.625rem;
@@ -195,8 +141,13 @@ export class CommandPalette extends Component {
 						}
 
 						input[type=search] {
+							appearance: none;
 							flex: 1;
+							min-inline-size: 0;
 							height: auto;
+							outline: none;
+							font-family: inherit;
+							color: var(--color-text);
 							padding: 0;
 							font-size: 0.9375rem;
 							font-weight: 450;
@@ -217,23 +168,12 @@ export class CommandPalette extends Component {
 						}
 					}
 
-					> menu {
-						margin: 0;
+					mitra-listbox {
 						padding: 0.375rem;
 						max-height: min(50vh, 24rem);
-						overflow: auto;
 						overscroll-behavior: contain;
-						display: flex;
-						flex-direction: column;
-						gap: 1px;
-						list-style: none;
-
-						li {
-							display: contents;
-						}
 
 						.group {
-							display: block;
 							padding: 0.5rem 0.625rem 0.25rem;
 							font-size: 0.6875rem;
 							font-weight: 600;
@@ -243,53 +183,41 @@ export class CommandPalette extends Component {
 						}
 
 						.empty {
-							display: block;
 							padding: 1.5rem;
 							text-align: center;
 							font-size: 0.8125rem;
 							color: var(--color-text-muted);
 						}
+					}
 
-						button {
-							all: unset;
-							display: flex;
-							align-items: center;
-							gap: 0.625rem;
-							padding: 0.5rem 0.625rem;
-							border-radius: 8px;
-							font-size: 0.8125rem;
-							font-weight: 500;
-							cursor: pointer;
+					mitra-option {
+						gap: 0.625rem;
+						font-weight: 500;
 
-							&[data-selected] {
-								background: color-mix(in srgb, var(--color-text) 8%, transparent);
-							}
+						mitra-icon {
+							font-size: 1rem;
+							color: var(--color-text-muted);
+						}
 
-							mitra-icon {
-								font-size: 1rem;
-								color: var(--color-text-muted);
-							}
+						.swatch {
+							inline-size: 0.625rem;
+							block-size: 0.625rem;
+							margin-inline: 3px;
+							border-radius: 50%;
+							flex-shrink: 0;
+						}
 
-							.swatch {
-								inline-size: 0.625rem;
-								block-size: 0.625rem;
-								margin-inline: 3px;
-								border-radius: 50%;
-								flex-shrink: 0;
-							}
+						.heading {
+							flex: 1;
+							white-space: nowrap;
+							overflow: hidden;
+							text-overflow: ellipsis;
+						}
 
-							.heading {
-								flex: 1;
-								white-space: nowrap;
-								overflow: hidden;
-								text-overflow: ellipsis;
-							}
-
-							.when {
-								font-size: 0.75rem;
-								color: var(--color-text-muted);
-								white-space: nowrap;
-							}
+						.when {
+							font-size: 0.75rem;
+							color: var(--color-text-muted);
+							white-space: nowrap;
 						}
 					}
 
@@ -316,53 +244,40 @@ export class CommandPalette extends Component {
 		const commands = this.matchingCommands
 		const entries = this.matchingEntries
 		return html`
-			<dialog closedby="any" @keydown=${(e: KeyboardEvent) => this.handleKeyDown(e)}>
-				<header>
-					<mitra-icon icon="search"></mitra-icon>
-					<input type="search" autofocus placeholder=${t('Search entries or run a command…')}
-						.value=${this.searchTerm}
-						@input=${(e: Event) => this.handleInput((e.target as HTMLInputElement).value)}
-					>
-					<kbd>esc</kbd>
-				</header>
-				<menu>
-					${!commands.length ? html.nothing : html`
-						<li class="group">${t('Commands')}</li>
-						${commands.map((command, index) => html`
-							<li>
-								<button ?data-selected=${index === this.selectedIndex}
-									@pointerenter=${() => this.selectedIndex = index}
-									@click=${() => this.select(command)}
-								>
+			<dialog closedby="any">
+				<mitra-combobox inline activateFirst @pick=${(e: CustomEvent<Command | Entry>) => this.select(e.detail)} @dismiss=${() => this.dialog.close()}>
+					<header slot="input">
+						<mitra-icon icon="search"></mitra-icon>
+						<input type="search" autofocus placeholder=${t('Search entries or run a command…')} aria-label=${t('Search entries or run a command…')}
+							.value=${this.searchTerm}
+							@input=${(e: Event) => void this.handleInput((e.target as HTMLInputElement).value)}
+						>
+						<kbd>esc</kbd>
+					</header>
+					<mitra-listbox aria-label=${t('Search entries or run a command…')}>
+						${!commands.length ? html.nothing : html`
+							<span class="group">${t('Commands')}</span>
+							${commands.map(command => html`
+								<mitra-option .value=${command}>
 									<mitra-icon icon=${command.icon}></mitra-icon>
 									<span class="heading">${command.heading}</span>
 									${!command.shortcut ? html.nothing : html`<kbd>${command.shortcut}</kbd>`}
-								</button>
-							</li>
-						`)}
-					`}
-					${!entries.length ? html.nothing : html`
-						<li class="group">${t('Entries')}</li>
-						${entries.map((entry, entryIndex) => {
-							const index = commands.length + entryIndex
-							return html`
-								<li>
-									<button ?data-selected=${index === this.selectedIndex}
-										@pointerenter=${() => this.selectedIndex = index}
-										@click=${() => this.select(entry)}
-									>
-										<span class="swatch" style=${`background: ${entry.color ?? getSource(entry.sourceId)?.color ?? 'var(--color-accent)'}`}></span>
-										<span class="heading">${entry.heading || t('Untitled')}</span>
-										<span class="when">${CommandPalette.when(entry)}</span>
-									</button>
-								</li>
-							`
-						})}
-					`}
-					${commands.length || entries.length ? html.nothing : html`
-						<li class="empty">${t('No matches')}</li>
-					`}
-				</menu>
+								</mitra-option>
+							`)}
+						`}
+						${!entries.length ? html.nothing : html`
+							<span class="group">${t('Entries')}</span>
+							${entries.map(entry => html`
+								<mitra-option .value=${entry}>
+									<span class="swatch" style=${`background: ${entry.color ?? getSource(entry.sourceId)?.color ?? 'var(--color-accent)'}`}></span>
+									<span class="heading">${entry.heading || t('Untitled')}</span>
+									<span class="when">${CommandPalette.when(entry)}</span>
+								</mitra-option>
+							`)}
+						`}
+						${commands.length || entries.length ? html.nothing : html`<span class="empty">${t('No matches')}</span>`}
+					</mitra-listbox>
+				</mitra-combobox>
 				<footer>
 					<span><kbd>↑</kbd><kbd>↓</kbd> ${t('navigate')}</span>
 					<span><kbd>↵</kbd> ${t('select')}</span>

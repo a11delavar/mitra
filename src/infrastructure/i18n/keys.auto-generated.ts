@@ -34,7 +34,6 @@ declare global {
 		"${count:pluralityNumber} lose their location": unknown
 		"${count:pluralityNumber} lose their reminders": unknown
 		"${count:pluralityNumber} lose their time zone": unknown
-		"${count:pluralityNumber} months": unknown
 		"${count:pluralityNumber} of ${total:number} entries are added": unknown
 		"${count:pluralityNumber} of ${total:number} entries are copied": unknown
 		"${count:pluralityNumber} of ${total:number} entries move": unknown
@@ -46,7 +45,6 @@ declare global {
 		"${count:pluralityNumber} stop being all-day": unknown
 		"${count:pluralityNumber} weeks": unknown
 		"${count:pluralityNumber} were left out": unknown
-		"${count:pluralityNumber} years": unknown
 		"${done} of ${total:pluralityNumber} checklist items done": unknown
 		"${done} of ${total:pluralityNumber} steps done": unknown
 		"${done} of ${total:pluralityNumber} subtasks done": unknown
@@ -113,7 +111,9 @@ declare global {
 		"Checking what the calendar can take…": unknown
 		"Checking what would be copied…": unknown
 		"Checking what would move…": unknown
+		"Choose a date": unknown
 		"Choose a task status": unknown
+		"Choose a time": unknown
 		"Choose the calendar the entries of this file are added to — the ones it cannot take are left out. The file itself stays untouched.": unknown
 		"Choose your sources": unknown
 		"Clear custom progress": unknown
@@ -214,6 +214,7 @@ declare global {
 		"Flattening writes out a year of occurrences as separate entries. They stop repeating, and links pointing at the series are left behind.": unknown
 		"Forward": unknown
 		"Free": unknown
+		"Frequency": unknown
 		"From": unknown
 		"From ${date}": unknown
 		"General": unknown
@@ -282,6 +283,7 @@ declare global {
 		"Moved to ${name}": unknown
 		"MoveSourceEntries.Keywords": unknown
 		"Moving ${count:pluralityNumber} entries…": unknown
+		"Name": unknown
 		"navigate": unknown
 		"Navigation": unknown
 		"never": unknown
@@ -291,6 +293,7 @@ declare global {
 		"Next 12 months": unknown
 		"Next 30 days": unknown
 		"Next 7 days": unknown
+		"Next month": unknown
 		"Next Month": unknown
 		"Next Week": unknown
 		"Next Year": unknown
@@ -339,10 +342,12 @@ declare global {
 		"Pick the calendars and task lists to show — recolor, rename or hide them in the sidebar anytime.": unknown
 		"Plan your days": unknown
 		"Planning": unknown
+		"Previous month": unknown
 		"Previous Month": unknown
 		"Previous Week": unknown
 		"Previous Year": unknown
 		"PreviousPeriod.Keywords": unknown
+		"Primary": unknown
 		"Primary time zone — switch to ${city} time to change the zone": unknown
 		"Private": unknown
 		"Progress": unknown
@@ -468,6 +473,7 @@ declare global {
 		"ToggleSidebar.Keywords": unknown
 		"Type": unknown
 		"unchanged": unknown
+		"Unit": unknown
 		"Unknown device": unknown
 		"Unknown entry": unknown
 		"Unreleased": unknown
@@ -485,6 +491,7 @@ declare global {
 		"Week": unknown
 		"Week ${week:number}": unknown
 		"Week View": unknown
+		"Weekdays": unknown
 		"weeks": unknown
 		"WeekView.Keywords": unknown
 		"Welcome to ${name}": unknown

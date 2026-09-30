@@ -9,6 +9,9 @@ import type { CalendarDatesController } from './CalendarDatesController.js'
 export interface CalendarScrollGeometry {
 	readonly axis: 'inline' | 'block'
 
+	/** Where {@link offsetOf} puts the date in the viewport: at its start (default) or its center. */
+	readonly alignment?: 'start' | 'center'
+
 	scroller(): HTMLElement | null
 
 	ready(): boolean
@@ -48,6 +51,33 @@ export class CalendarScrollController extends Controller {
 		void this.anchor(date, { arrive: true, glide: this.anchored && (() => this.dates.days === days) })
 	}
 
+	/** Whether the date is on screen now, not merely among the rendered days. */
+	shows(date: DateTime) {
+		const scroller = this.geometry.scroller()
+		const offset = scroller ? this.geometry.offsetOf(date) : undefined
+		if (!scroller || offset === undefined) {
+			return false
+		}
+		const inline = this.geometry.axis === 'inline'
+		const distance = offset - (inline ? Math.abs(scroller.scrollLeft) : scroller.scrollTop)
+		const viewport = inline ? scroller.clientWidth : scroller.clientHeight
+		return this.geometry.alignment === 'center'
+			? Math.abs(distance) < viewport / 2
+			: distance >= -1 && distance < viewport
+	}
+
+	/**
+	 * A change that moved what the user looks at (`reveal`) is followed there, and one within view stays put.
+	 * It goes out as `navigate` like any other: the page owns the date, so setting it here would be undone by its next render.
+	 */
+	@eventListener('reveal')
+	protected handleReveal(e: CustomEvent<DateTime>) {
+		e.stopPropagation()
+		if (!this.shows(e.detail)) {
+			this.host.dispatchEvent(new CustomEvent('navigate', { detail: e.detail, bubbles: true, composed: true }))
+		}
+	}
+
 	private anchored = false
 	private glideRunning = false
 
@@ -73,7 +103,7 @@ export class CalendarScrollController extends Controller {
 		const viewport = inline ? scroller.clientWidth : scroller.clientHeight
 		const smooth = !!glide && glide() && Math.abs(distance - current) >= 1 && Math.abs(distance - current) <= viewport * 2
 			&& !matchMedia('(prefers-reduced-motion: reduce)').matches
-		const position = inline && getComputedStyle(scroller).direction === 'rtl' ? -distance : distance
+		const position = inline && scroller.matches(':dir(rtl)') ? -distance : distance
 		const cross = arrive ? this.geometry.arrival?.(date) : undefined
 		if (smooth) {
 			this.glideRunning = true

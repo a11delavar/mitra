@@ -43,6 +43,12 @@ describe('CalendarLocation', () => {
 			assert.equal(new CalendarLocation('week', new DateTime('2027-09-03T00:00:00')).parameters.date, '2027-09-03')
 		})
 
+		it('writes the ISO day whatever calendar the language reads it in', () => {
+			const persian = new DateTime('2027-03-15T00:00:00')
+			Object.defineProperties(persian, { year: { get: () => 1405 }, month: { get: () => 12 }, day: { get: () => 24 } })
+			assert.equal(new CalendarLocation('week', persian).parameters.date, '2027-03-15')
+		})
+
 		it('omits what is not open rather than writing it empty', () => {
 			const parameters = new CalendarLocation('timeline', day).parameters
 			assert.equal('selected' in parameters, false)

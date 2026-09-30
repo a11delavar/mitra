@@ -2,6 +2,7 @@ import { component, html, css, state } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { fetchChangelog, getMeta, getUser, isBundleStale, setSeenVersion } from '../../../infrastructure/http/Api.js'
 import { type ChangelogSection } from '../Changelog.js'
+import { scrollbar } from '../../../design/scrollbar.css.js'
 const repository = 'https://github.com/a11delavar/mitra'
 
 function runningVersion() {
@@ -154,23 +155,7 @@ export class DialogAbout extends DialogComponent {
 				}
 
 				.update {
-					all: unset;
-					box-sizing: border-box;
-					display: flex;
-					align-items: center;
-					justify-content: center;
-					gap: 0.375rem;
 					width: 100%;
-					padding: 0.5rem 0.75rem;
-					border-radius: var(--border-radius);
-					font-size: 0.8125rem;
-					color: var(--color-text);
-					cursor: pointer;
-					background: color-mix(in srgb, var(--color-accent) 8%, transparent);
-
-					&:hover {
-						background: color-mix(in srgb, var(--color-accent) 12%, transparent);
-					}
 				}
 
 				.sections {
@@ -180,8 +165,7 @@ export class DialogAbout extends DialogComponent {
 					flex-direction: column;
 					margin-inline: calc(-1 * var(--mitra-dialog-padding));
 					border-top: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
-					scrollbar-width: thin;
-					scrollbar-color: color-mix(in srgb, var(--color-text) 15%, transparent) transparent;
+					${scrollbar};
 				}
 
 				.empty {
@@ -394,16 +378,16 @@ export class DialogAbout extends DialogComponent {
 
 	private get updateTemplate() {
 		if (isBundleStale()) {
-			return html`<button class="update" @click=${() => location.reload()}>${t('Reload to finish updating')}</button>`
+			return html`<mitra-button class="update" variant="primary" @click=${() => location.reload()}>${t('Reload to finish updating')}</mitra-button>`
 		}
 		const update = this.meta?.update
 		return !update ? html.nothing : html`
-			<a class="update" href=${update.url} target="_blank" rel="noreferrer">
+			<mitra-button class="update" variant="primary" href=${update.url} target="_blank">
 				${update.commits
 					? t('New dev build — ${count:pluralityNumber} commits ahead', { count: update.commits })
 					: t('Update available: ${version}', { version: update.version })}
 				→
-			</a>
+			</mitra-button>
 		`
 	}
 

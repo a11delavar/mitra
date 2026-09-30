@@ -13,15 +13,27 @@ import Icon from './Icon.astro'
 </mitra-theme-toggle>
 
 <style>
+	/* The app's icon button, drawn by the site: the component itself would bring lit and every lucide glyph along. */
 	mitra-theme-toggle button {
-		--control-height: 2rem;
+		box-sizing: border-box;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 		inline-size: 2rem;
+		block-size: 2rem;
 		padding: 0;
+		border: 1px solid var(--mitra-hairline);
+		border-radius: var(--border-radius);
+		background: var(--mitra-wash);
+		font: inherit;
 		font-size: 1rem;
 		color: var(--color-text-muted);
+		cursor: pointer;
+		transition: color 0.15s ease, background 0.3s var(--mitra-ease), border-color 0.15s ease;
 	}
 
 	mitra-theme-toggle button:hover {
+		border-color: var(--mitra-hairline-strong);
 		color: var(--color-text);
 	}
 

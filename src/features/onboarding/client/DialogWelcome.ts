@@ -104,27 +104,10 @@ export class DialogWelcome extends DialogComponent<void, boolean | undefined> {
 					}
 				}
 
-				/* The one loud element on the surface: a full-width accent CTA into the first step. */
 				.cta {
 					width: 100%;
-					height: 2.5rem;
+					--control-height: 2.5rem;
 					font-size: 0.875rem;
-					font-weight: 600;
-					border: none;
-					border-radius: 8px;
-					background: var(--color-accent);
-					color: var(--color-accent-text);
-
-					&:not(:disabled) {
-						&:hover {
-							background: color-mix(in srgb, var(--color-accent) 88%, var(--color-background));
-						}
-
-						&:active {
-							background: color-mix(in srgb, var(--color-accent) 78%, var(--color-background));
-							box-shadow: none;
-						}
-					}
 				}
 			}
 		`
@@ -150,7 +133,7 @@ export class DialogWelcome extends DialogComponent<void, boolean | undefined> {
 							</li>
 						`)}
 					</ol>
-					<button class="cta" @click=${() => this.close(true)}>${t('Add your first integration')}</button>
+					<mitra-button class="cta" variant="primary" @click=${() => this.close(true)}>${t('Add your first integration')}</mitra-button>
 				</div>
 			</mitra-dialog>
 		`

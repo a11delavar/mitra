@@ -2,6 +2,7 @@ import { Component, component, html, css, property, state, event, query } from '
 import { type Entry } from '../../entries/Entry.js'
 import { getCapabilities } from '../../../infrastructure/http/Api.js'
 import { enablePushNotifications } from './push.js'
+import { type Menu } from '../../../design/Menu.js'
 
 type CustomUnit = 'minutes' | 'hours' | 'days' | 'weeks'
 
@@ -46,7 +47,7 @@ export class RemindersField extends Component {
 
 	@property({
 		type: Object,
-		updated(this: RemindersField) { this.menu?.hidePopover(); this.dialog?.close(); this.draft = undefined },
+		updated(this: RemindersField) { this.menu?.hide(); this.draft = undefined },
 	}) entry!: Entry
 
 	@event() readonly change!: EventDispatcher
@@ -55,9 +56,7 @@ export class RemindersField extends Component {
 
 	protected override createRenderRoot() { return this }
 
-	@query('menu[popover]') private readonly menu?: HTMLElement
-	@query('dialog') private readonly dialog?: HTMLDialogElement
-	@query('dialog select') private readonly unitSelect?: HTMLSelectElement
+	@query('mitra-menu') private readonly menu?: Menu
 
 	private get reminders(): Array<number> {
 		return this.entry.reminders ?? []
@@ -82,26 +81,18 @@ export class RemindersField extends Component {
 	private add(minutes: number) {
 		const first = !this.reminders.length
 		this.commit([...this.reminders, minutes])
-		this.menu?.hidePopover()
 		if (first) {
 			enablePushNotifications().catch(() => void 0)
 		}
 	}
 
-	private readonly toggleMenu = () => {
-		this.menu?.togglePopover()
-	}
-
 	// --- Custom dialog --------------------------------------------------------------------------------
 
 	private readonly openCustomDialog = () => {
-		this.menu?.hidePopover()
 		this.draft = { count: 10, unit: 'minutes' }
-		this.updateComplete.then(() => this.dialog?.showModal())
 	}
 
 	private readonly cancelDialog = () => {
-		this.dialog?.close()
 		this.draft = undefined
 	}
 
@@ -109,14 +100,7 @@ export class RemindersField extends Component {
 		if (this.draft) {
 			this.add(this.draft.count * UNIT_MINUTES[this.draft.unit])
 		}
-		this.dialog?.close()
 		this.draft = undefined
-	}
-
-	protected override updated() {
-		if (this.unitSelect && this.draft) {
-			this.unitSelect.value = this.draft.unit
-		}
 	}
 
 	static override get styles() {
@@ -134,11 +118,10 @@ export class RemindersField extends Component {
 
 				> :is(.placeholder, .reminder) { grid-column: 1; }
 
-				> .add {
+				> mitra-popover-container > .add {
 					grid-column: 2;
 					grid-row: 1;
 					color: var(--color-text-muted);
-					font-size: 0.8rem;
 					/* Swallow the button's own padding so it never stretches the row past a line's height. */
 					margin-block: -0.25rem;
 				}
@@ -159,80 +142,28 @@ export class RemindersField extends Component {
 
 					> mitra-icon-button {
 						color: var(--color-text-muted);
-						font-size: 0.8rem;
 						margin-block: -0.25rem;
 						opacity: 0;
 						transition: opacity 0.15s ease;
 					}
 
 					&:hover > mitra-icon-button,
-					> mitra-icon-button:focus-visible {
+					> mitra-icon-button:focus-within {
 						opacity: 1;
 					}
 				}
 
-				> menu[popover] {
-					margin: 0;
-					margin-inline: 0.875rem;
-					background: var(--mitra-entry-surface);
-					border: var(--border);
-					box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48), 0px 4px 12px -1px rgba(0,0,0,0.24);
-					position-area: inline-end span-all;
-					position-try-fallbacks: flip-inline, flip-block, flip-inline flip-block;
-
-					> button.custom {
-						color: var(--color-text-muted);
-					}
+				mitra-menu-item.custom {
+					color: var(--color-text-muted);
 				}
 
-				dialog {
-					margin: auto;
-					border: var(--border);
-					border-radius: 14px;
-					padding: 1.25rem;
-					min-width: 280px;
-					background: color-mix(in srgb, var(--color-surface) 94%, transparent);
-					backdrop-filter: blur(12px);
-					color: var(--color-text);
-					font-family: 'Inter', sans-serif;
-					font-size: 0.8125rem;
-					box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+				.custom-reminder {
+					display: flex;
+					align-items: center;
+					gap: 0.5rem;
 
-					&::backdrop { background: rgba(0, 0, 0, 0.45); }
-
-					@media (prefers-reduced-motion: no-preference) {
-						transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
-						@starting-style { opacity: 0; transform: scale(0.95) translateY(8px); }
-					}
-
-					> .reminder-dialog {
-						display: flex;
-						flex-direction: column;
-						gap: 1rem;
-
-						> header {
-							display: flex;
-							align-items: center;
-							justify-content: space-between;
-							gap: 1rem;
-
-							> h3 { margin: 0; font-size: 1rem; font-weight: 650; letter-spacing: -0.01em; }
-						}
-
-						> .before {
-							display: flex;
-							align-items: center;
-							gap: 0.5rem;
-							> .count { inline-size: 4rem; }
-							> select { min-inline-size: 6rem; }
-						}
-
-						> .dialog-actions {
-							display: flex;
-							justify-content: flex-end;
-							gap: 0.5rem;
-						}
-					}
+					> .count { inline-size: 4rem; }
+					mitra-select { min-inline-size: 6rem; }
 				}
 			}
 		`
@@ -251,21 +182,23 @@ export class RemindersField extends Component {
 							: html`${reminderSpanLabel(minutes)} <span class="detail">${t('before at ${time}', { time: this.fireLabel(minutes) })}</span>`}
 					</span>
 					${!editable ? html.nothing : html`
-						<mitra-icon-button icon="x" label=${t('Remove reminder')}
+						<mitra-icon-button size="small" icon="x" label=${t('Remove reminder')}
 							@click=${() => this.commit(this.reminders.filter(other => other !== minutes))}
 						></mitra-icon-button>
 					`}
 				</div>
 			`)}
 			${!editable ? html.nothing : html`
-				<mitra-icon-button class="add" icon="plus" label=${t('Add reminder')} @click=${this.toggleMenu}></mitra-icon-button>
+				<mitra-popover-container>
+					<mitra-icon-button size="small" class="add" icon="plus" label=${t('Add reminder')}></mitra-icon-button>
+					<mitra-menu slot="popover">
+						${RemindersField.presets.filter(minutes => !this.reminders.includes(minutes)).map(minutes => html`
+							<mitra-menu-item @click=${() => this.add(minutes)}>${reminderLabel(minutes)}</mitra-menu-item>
+						`)}
+						<mitra-menu-item class="custom" @click=${this.openCustomDialog}>${t('Custom…')}</mitra-menu-item>
+					</mitra-menu>
+				</mitra-popover-container>
 			`}
-			<menu popover>
-				${RemindersField.presets.filter(minutes => !this.reminders.includes(minutes)).map(minutes => html`
-					<button type="button" @click=${() => this.add(minutes)}>${reminderLabel(minutes)}</button>
-				`)}
-				<button type="button" class="custom" @click=${this.openCustomDialog}>${t('Custom…')}</button>
-			</menu>
 			${this.dialogTemplate}
 		`
 	}
@@ -273,31 +206,21 @@ export class RemindersField extends Component {
 	private get dialogTemplate() {
 		const draft = this.draft
 		return html`
-			<dialog @cancel=${this.cancelDialog} @click=${(e: Event) => { if (e.target === this.dialog) this.cancelDialog() }}
+			<mitra-dialog heading=${t('Reminder')} primaryButtonText=${t('Done')} .open=${!!draft}
+				@openChange=${this.cancelDialog} @primaryAction=${this.confirmDialog}
 				@change=${(e: Event) => e.stopPropagation()} @input=${(e: Event) => e.stopPropagation()}>
 				${!draft ? html.nothing : html`
-					<div class="reminder-dialog">
-						<header>
-							<h3>${t('Reminder')}</h3>
-							<mitra-icon-button icon="x" label=${t('Close')} style="color: var(--color-text-muted)" @click=${this.cancelDialog}></mitra-icon-button>
-						</header>
-						<div class="before">
-							<input class="count" type="number" min="1" aria-label=${t('Amount')} .value=${String(draft.count)}
-								@change=${(e: Event) => this.draft = { ...draft, count: Math.max(1, Math.trunc(Number((e.target as HTMLInputElement).value)) || 1) }}>
-							<select @change=${(e: Event) => this.draft = { ...draft, unit: (e.target as HTMLSelectElement).value as CustomUnit }}>
-								<button>
-									<selectedcontent></selectedcontent>
-								</button>
-								${(Object.keys(UNIT_MINUTES) as Array<CustomUnit>).map(unit => html`<option value=${unit}>${unitLabel(unit)}</option>`)}
-							</select>
-							<span>${t('before')}</span>
-						</div>
-						<div class="dialog-actions">
-							<button type="button" class="primary" @click=${this.confirmDialog}>${t('Done')}</button>
-						</div>
+					<div class="custom-reminder">
+						<mitra-number-field class="count" min="1" aria-label=${t('Amount')} .value=${draft.count}
+							@change=${(e: CustomEvent<number>) => this.draft = { ...draft, count: e.detail }}
+						></mitra-number-field>
+						<mitra-select label=${t('Unit')} .value=${draft.unit} @change=${(e: CustomEvent<CustomUnit>) => this.draft = { ...draft, unit: e.detail }}>
+							${(Object.keys(UNIT_MINUTES) as Array<CustomUnit>).map(unit => html`<mitra-option .value=${unit}>${unitLabel(unit)}</mitra-option>`)}
+						</mitra-select>
+						<span>${t('before')}</span>
 					</div>
 				`}
-			</dialog>
+			</mitra-dialog>
 		`
 	}
 }

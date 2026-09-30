@@ -6,6 +6,7 @@ import { EntryStore, reportSaveError } from '../../entries/client/EntryStore.js'
 import { getSource, updateEvent } from '../../../infrastructure/http/Api.js'
 import { offerFollowUps } from './Hierarchy.js'
 import '../../entries/client/TaskStatus.js'
+import { pressable } from '../../../design/pressable.css.js'
 
 /**
  * Another entry, named where one entry points at it: a task's status, which can be changed right here,
@@ -32,7 +33,7 @@ export class EntryLink extends Component {
 
 	/** Navigates to the entry in the calendar, or straight to its editor when it has no date. */
 	open() {
-		this.closest('mitra-entry-details')?.hidePopover()
+		this.closest('mitra-entry-details')?.close()
 		if (this.entry.start) {
 			this.navigate.dispatch(this.entry.start)
 		}
@@ -103,13 +104,8 @@ export class EntryLink extends Component {
 
 				/* A heading that leads somewhere is a button without any of the standalone button chrome. */
 				> button.heading {
-					background: none;
-					border: none;
-					padding: 0;
-					font: inherit;
-					color: inherit;
+					${pressable};
 					text-align: start;
-					cursor: pointer;
 
 					&:hover,
 					&:focus-visible {

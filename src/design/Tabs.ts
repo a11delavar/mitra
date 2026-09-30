@@ -1,4 +1,5 @@
 import { Component, component, html, css, property, event, query } from '@a11d/lit'
+import { ResizeController } from '@3mo/resize-observer'
 import { focusRing } from './focusRing.css.js'
 
 /**
@@ -13,6 +14,9 @@ export class Tabs extends Component {
 	@event() readonly selectedChange!: EventDispatcher<string>
 
 	@query('[part=panels]') private readonly panels?: HTMLElement
+
+	// Panels laid out while hidden (in a closed sheet) scrolled nowhere; once the tabs get a size, the selected one is shown.
+	readonly resize = new ResizeController(this, { callback: () => this.reveal() })
 
 	private get tabs() { return [...this.querySelectorAll('mitra-tab')] }
 	private get panelElements() { return [...this.querySelectorAll('mitra-tab-panel')] }
@@ -68,7 +72,9 @@ export class Tabs extends Component {
 
 	private readonly handleKeyDown = (e: KeyboardEvent) => {
 		const tabs = this.tabs
-		const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
+		const forward = this.matches(':dir(rtl)') ? 'ArrowLeft' : 'ArrowRight'
+		const backward = forward === 'ArrowLeft' ? 'ArrowRight' : 'ArrowLeft'
+		const step = e.key === forward ? 1 : e.key === backward ? -1 : 0
 		const index = step ? tabs.findIndex(tab => tab.name === this.current?.name) + step
 			: e.key === 'Home' ? 0
 				: e.key === 'End' ? tabs.length - 1 : undefined
@@ -126,6 +132,17 @@ export class Tabs extends Component {
 
 			[part=panels]::-webkit-scrollbar {
 				display: none;
+			}
+
+			/* Chromium places a view timeline one panel off in a scroller whose origin is its inline end, so every panel
+			   faded out where it stood: the strip scrolls left to right, and in RTL its panels line up from the right. */
+			:host(:dir(rtl)) [part=panels] {
+				direction: ltr;
+			}
+
+			:host(:dir(rtl)) ::slotted(mitra-tab-panel) {
+				direction: rtl;
+				order: calc(-1 * sibling-index());
 			}
 		`
 	}
@@ -243,8 +260,14 @@ export class TabPanel extends Component {
 				flex-direction: column;
 				scroll-snap-align: start;
 				scroll-snap-stop: always;
-				animation: tab-panel-fade linear both;
-				animation-timeline: view(inline);
+			}
+
+			/* Without scroll-driven animations the fade would run as a zero-length animation and rest invisible. */
+			@supports (animation-timeline: view()) {
+				:host {
+					animation: tab-panel-fade linear both;
+					animation-timeline: view(inline);
+				}
 			}
 
 			@keyframes tab-panel-fade {

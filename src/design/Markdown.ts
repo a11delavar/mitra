@@ -1,5 +1,6 @@
 import { Component, component, css, event, html, property } from '@a11d/lit'
 import { marked, Renderer, type Tokens } from 'marked'
+import { Checkbox } from './Checkbox.js'
 
 export class MarkdownRenderer extends Renderer {
 	/** Whether task-list checkboxes are interactive. */
@@ -26,7 +27,7 @@ export class MarkdownRenderer extends Renderer {
 
 	override listitem(token: Tokens.ListItem) {
 		const content = super.listitem(token)
-		const input = token.task ? content.match(/<input\b[^>]*>/)?.[0] : undefined
+		const input = token.task ? content.match(/<mitra-checkbox\b[^>]*><\/mitra-checkbox>/)?.[0] : undefined
 		return !input ? content : content
 			.replace(input, '')
 			.replace('<li>', `<li class="task">${input}<div class="label">`)
@@ -35,10 +36,10 @@ export class MarkdownRenderer extends Renderer {
 
 	override checkbox({ checked }: Tokens.Checkbox) {
 		const index = this.checkboxes++
-		const state = checked ? ' checked=""' : ''
+		const state = checked ? ' checked' : ''
 		return this.interactive
-			? `<input type="checkbox"${state} data-checkbox="${index}">`
-			: `<input type="checkbox"${state} disabled="">`
+			? `<mitra-checkbox${state} data-checkbox="${index}"></mitra-checkbox>`
+			: `<mitra-checkbox${state} disabled></mitra-checkbox>`
 	}
 
 	override link(token: Tokens.Link) {
@@ -89,14 +90,17 @@ export class Markdown extends Component {
 
 	protected override createRenderRoot() { return this }
 
-	private readonly handleChange = (e: Event) => {
-		const box = e.target as HTMLInputElement
-		const index = Number(box.dataset.checkbox)
-		if (box.type !== 'checkbox' || Number.isNaN(index)) {
-			return
-		}
-		e.stopPropagation()
-		this.check.dispatch({ index, checked: box.checked })
+	// A checkbox's own `change` doesn't bubble, so it is caught on its way down.
+	private readonly handleChange = {
+		capture: true,
+		handleEvent: (e: Event) => {
+			const box = e.target
+			const index = box instanceof Checkbox ? Number(box.dataset.checkbox) : NaN
+			if (box instanceof Checkbox && !Number.isNaN(index)) {
+				e.stopPropagation()
+				this.check.dispatch({ index, checked: box.checked })
+			}
+		},
 	}
 
 	static override get styles() {
@@ -153,17 +157,22 @@ export class Markdown extends Component {
 					align-items: start;
 					margin-inline-start: -1.4em;
 
-					> input[type=checkbox] {
-						inline-size: 1.1em;
-						block-size: 1.1em;
+					/* Sized to the prose rather than to the control height, and a read-only list is not a disabled one. */
+					> mitra-checkbox {
 						margin-block-start: calc((1lh - 1.1em) / 2);
 
-						&::before {
+						&::part(checkbox) {
+							inline-size: 1.1em;
+							block-size: 1.1em;
+						}
+
+						&::part(checkbox)::before {
 							inline-size: 0.8em;
 							block-size: 0.8em;
 						}
 
-						&:disabled {
+						&[disabled]::part(checkbox) {
+							opacity: 1;
 							cursor: default;
 						}
 					}
@@ -173,7 +182,7 @@ export class Markdown extends Component {
 						> :last-child { margin-block-end: 0; }
 					}
 
-					&:has(> input:checked) > .label {
+					&:has(> mitra-checkbox[checked]) > .label {
 						color: var(--color-text-muted);
 						text-decoration: line-through;
 					}

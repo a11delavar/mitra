@@ -10,6 +10,7 @@ export class UrlSyncController extends Controller {
 	private static readonly settleDelay = 100
 
 	private pending?: ReturnType<typeof setTimeout>
+	private known?: string
 
 	constructor(protected override readonly host: PageCalendar) {
 		super(host)
@@ -35,8 +36,18 @@ export class UrlSyncController extends Controller {
 	protected write() {
 		clearTimeout(this.pending)
 		if (this.stale) {
-			history.replaceState(history.state, '', this.host.url)
+			this.known = this.host.url.href
+			history.replaceState(history.state, '', this.known)
 		}
+	}
+
+	/** Whether a URL the router delivers is a navigation. The router re-renders the page with whatever the address
+	 * bar says, so the URL it last delivered, or this controller's own earlier write, arrives again after the state
+	 * has moved on; restoring that would undo the move. */
+	arrived(url: URL) {
+		const news = url.href !== this.known
+		this.known = url.href
+		return news
 	}
 
 	private get stale() {

@@ -4,6 +4,9 @@ import { Task, TaskStatus, initialState } from '@lit/task'
 import { getCapabilities, getIntegrations, importIcs, previewIcsImport } from '../../../infrastructure/http/Api.js'
 import { MigrationPlan, type MigrationOutcome, type MigrationVerdict } from '../MigrationPlan.js'
 import { type Source } from '../../sources/Source.js'
+import { pressable } from '../../../design/pressable.css.js'
+import { activated } from '../../../design/activated.css.js'
+import { controlHeight } from '../../../design/controlHeight.css.js'
 
 const NAMED_BLOCKED = 5
 
@@ -49,8 +52,7 @@ export class DialogIcsImport extends DialogComponent<{ readonly fileName: string
 	}
 
 	static override get styles() {
-		// The migration-progress and migration-mark keyframes are shared from DialogSourceMigration's
-		// styles — both blocks land in the same global Light-DOM sheet.
+		// The migration-mark keyframes come from DialogSourceMigration's styles: both land in the one global sheet.
 		return css`
 			mitra-dialog-ics-import {
 				--mitra-dialog-width: min(30rem, 92vw);
@@ -82,12 +84,21 @@ export class DialogIcsImport extends DialogComponent<{ readonly fileName: string
 					}
 
 					button {
+						${pressable};
+						${controlHeight};
+						display: flex;
+						align-items: center;
 						inline-size: 100%;
-						justify-content: start;
+						min-block-size: var(--control-height);
 						gap: 0.5rem;
 						padding-inline: var(--row-inset);
-						background: transparent;
-						border-color: transparent;
+						border-radius: var(--border-radius);
+						font-size: 0.8125rem;
+						transition: background 0.15s ease;
+
+						&:hover {
+							${activated};
+						}
 
 						.name {
 							flex: 1;
@@ -223,30 +234,8 @@ export class DialogIcsImport extends DialogComponent<{ readonly fileName: string
 					padding-block: 0.5rem;
 				}
 
-				.progress {
+				mitra-progress {
 					inline-size: min(14rem, 60%);
-					block-size: 2px;
-					border-radius: 999px;
-					background: color-mix(in srgb, var(--color-text) 10%, transparent);
-					overflow: clip;
-
-					&::after {
-						content: '';
-						display: block;
-						block-size: 100%;
-						inline-size: 25%;
-						border-radius: inherit;
-						background: var(--color-text);
-						animation: migration-progress 1.1s cubic-bezier(0.65, 0, 0.35, 1) infinite;
-					}
-
-					@media (prefers-reduced-motion: reduce) {
-						&::after {
-							inline-size: 100%;
-							opacity: 0.35;
-							animation: none;
-						}
-					}
 				}
 
 				.mark {
@@ -352,7 +341,7 @@ export class DialogIcsImport extends DialogComponent<{ readonly fileName: string
 	private waitingTemplate(label: string) {
 		return html`
 			<div class="waiting">
-				<div class="progress"></div>
+				<mitra-progress></mitra-progress>
 				<p class="hint">${label}</p>
 			</div>
 		`
@@ -403,9 +392,9 @@ export class DialogIcsImport extends DialogComponent<{ readonly fileName: string
 			${this.importer.status !== TaskStatus.ERROR ? html.nothing : html`
 				<p class="failure">${this.importer.error instanceof Error ? this.importer.error.message : String(this.importer.error)}</p>
 			`}
-			<button slot="footer" class="primary" ?disabled=${!adding} @click=${() => void this.importer.run()}>
+			<mitra-button slot="footer" variant="primary" ?disabled=${!adding} @click=${() => void this.importer.run()}>
 				${t('Add ${count:pluralityNumber} entries', { count: adding })}
-			</button>
+			</mitra-button>
 		`
 	}
 

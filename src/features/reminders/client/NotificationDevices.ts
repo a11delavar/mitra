@@ -68,7 +68,7 @@ export class NotificationDevices extends Component {
 						color: var(--color-text-muted);
 					}
 
-					> button {
+					> mitra-button {
 						margin-inline-start: auto;
 
 						.sent + & {
@@ -126,14 +126,13 @@ export class NotificationDevices extends Component {
 						> mitra-icon-button {
 							flex-shrink: 0;
 							color: var(--color-text-muted);
-							font-size: 0.8rem;
 							margin-block: -0.25rem;
 							opacity: 0;
 							transition: opacity 0.15s ease;
 						}
 
 						&:hover > mitra-icon-button,
-						> mitra-icon-button:focus-visible {
+						> mitra-icon-button:focus-within {
 							opacity: 1;
 						}
 					}
@@ -147,7 +146,7 @@ export class NotificationDevices extends Component {
 			<header>
 				<h4>${t('Devices')}</h4>
 				${!this.tested ? html.nothing : html`<span class="sent">${t('Test notification sent.')}</span>`}
-				<button @click=${this.test}>${t('Send test')}</button>
+				<mitra-button @click=${this.test}>${t('Send test')}</mitra-button>
 			</header>
 			${this.devices.render({
 				pending: () => html.nothing,
@@ -167,7 +166,7 @@ export class NotificationDevices extends Component {
 					<span class="seen">${t('last seen ${when}', { when: this.lastSeenLabel(device.lastSeenAt) })}</span>
 				</span>
 				${device.endpoint !== endpoint ? html.nothing : html`<span class="here">${t('this device')}</span>`}
-				<mitra-icon-button icon="x" label=${t('Stop notifying this device')} @click=${() => this.forget(device.endpoint)}></mitra-icon-button>
+				<mitra-icon-button size="small" icon="x" label=${t('Stop notifying this device')} @click=${() => this.forget(device.endpoint)}></mitra-icon-button>
 			</li>
 		`
 	}

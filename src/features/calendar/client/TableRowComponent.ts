@@ -1,8 +1,10 @@
-import { Component, component, html, property, eventListener, type PropertyValues } from '@a11d/lit'
+import { Component, component, html, property, eventListener, live, type PropertyValues } from '@a11d/lit'
 import { type DataRecord } from '@3mo/data-grid/controller'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
 import { type Table } from './Table.js'
 import { type TableRow } from './TableRow.js'
+import { startedOnControl } from '../../../design/eventOrigin.js'
+import { type Checkbox } from '../../../design/Checkbox.js'
 
 /**
  * One row of the table: an element of its own so the grid's virtualization can empty it while it is
@@ -22,14 +24,14 @@ export class TableRowComponent extends Component {
 	/** A click on a cell selects the row, with Shift or Ctrl reading as a range or an addition; the chip and the controls keep their own clicks. */
 	@eventListener('click')
 	protected handleClick(e: MouseEvent) {
-		if (!(e.target as Element).closest('mitra-entry-segment, input, button, a, menu')) {
+		if (!startedOnControl(e) && !(e.target as Element).closest('mitra-entry-segment, menu')) {
 			this.table.grid.selection.select(this.record.data, { event: e })
 		}
 	}
 
 	@eventListener('keydown')
 	protected handleKeyDown(e: KeyboardEvent) {
-		if ((e.target as Element).closest('input, select, button, a, mitra-entry-details')) {
+		if (startedOnControl(e) || (e.target as Element).closest('mitra-entry-details')) {
 			return
 		}
 		if (e.key === ' ') {
@@ -72,8 +74,8 @@ export class TableRowComponent extends Component {
 		const row = this.record.data
 		return html`
 			<div class="select" role="gridcell" @click=${(e: Event) => e.stopPropagation()}>
-				<input type="checkbox" tabindex="-1" aria-label=${t('Select')} .checked=${this.record.isSelected}
-					@click=${(e: MouseEvent) => grid.selection.select(row, { preserve: true, selected: (e.target as HTMLInputElement).checked, event: e })}>
+				<mitra-checkbox tabindex="-1" label=${t('Select')} .checked=${live(this.record.isSelected)}
+					@click=${(e: MouseEvent) => grid.selection.select(row, { preserve: true, selected: (e.currentTarget as Checkbox).checked, event: e })}></mitra-checkbox>
 			</div>
 			${grid.columns.columns.visible.map(column => html`
 				<div class="cell" ${grid.cell(column)} data-alignment=${column.alignment}>

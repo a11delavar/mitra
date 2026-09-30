@@ -5,6 +5,8 @@ import { EntryStore } from './EntryStore.js'
 import { offerToCloseSubtasks } from '../../relations/client/Hierarchy.js'
 import { Relations } from '../../relations/client/Relations.js'
 import { closeTask } from './taskClosure.js'
+import { type Slider } from '../../../design/Slider.js'
+import { type Menu } from '../../../design/Menu.js'
 
 const order = [TaskStatus.ToDo, TaskStatus.Doing, TaskStatus.Done, TaskStatus.Cancelled] as const
 
@@ -80,15 +82,15 @@ export class TaskStatusComponent extends Component {
 		return t('${done} of ${total:pluralityNumber} steps done', { done, total: rollup.total })
 	}
 
-	@query('menu[popover]') private readonly menu?: HTMLElement
+	@query('mitra-menu') private readonly menu?: Menu
 
 	private commit(status: TaskStatus) {
 		if (this.entry.status === status) {
-			this.menu?.hidePopover()
+			this.menu?.hide()
 			return
 		}
 		closeTask(this.entry, status)
-		this.menu?.hidePopover()
+		this.menu?.hide()
 		this.requestUpdate()
 		this.change.dispatch()
 	}
@@ -96,7 +98,7 @@ export class TaskStatusComponent extends Component {
 	/** Opens leftover subtask closure prompt from the menu. */
 	private readonly closeOutSubtasks = (e: Event) => {
 		e.stopPropagation()
-		this.menu?.hidePopover()
+		this.menu?.hide()
 		void offerToCloseSubtasks(this.entry).catch(() => void 0)
 	}
 
@@ -112,8 +114,7 @@ export class TaskStatusComponent extends Component {
 
 	private readonly handleSliderInput = (e: Event) => {
 		e.stopPropagation()
-		const input = e.target as HTMLInputElement
-		const val = Number(input.value)
+		const val = (e.target as Slider).value
 		this.entry.percentComplete = val
 		if (val === 100 && this.entry.status !== TaskStatus.Done) {
 			this.entry.status = TaskStatus.Done
@@ -128,7 +129,7 @@ export class TaskStatusComponent extends Component {
 		e.stopPropagation()
 		e.preventDefault()
 		if (e.altKey) {
-			this.menu?.togglePopover()
+			this.menu?.toggle(e.currentTarget as HTMLElement)
 			return
 		}
 		this.commit(this.status === TaskStatus.Done ? TaskStatus.ToDo : TaskStatus.Done)
@@ -137,7 +138,7 @@ export class TaskStatusComponent extends Component {
 	private readonly onContextMenu = (e: MouseEvent) => {
 		e.preventDefault()
 		e.stopPropagation()
-		this.menu?.togglePopover()
+		this.menu?.toggle(e.currentTarget as HTMLElement)
 	}
 
 	private readonly pick = (status: TaskStatus) => (e: Event) => {
@@ -160,9 +161,6 @@ export class TaskStatusComponent extends Component {
 				display: inline-flex;
 				flex-shrink: 0;
 				position: relative;
-
-				anchor-name: --task-status;
-				anchor-scope: --task-status;
 
 				> button.status-button {
 					all: unset;
@@ -203,11 +201,8 @@ export class TaskStatusComponent extends Component {
 					}
 				}
 
-				> menu[popover] {
-					position-anchor: --task-status;
-					background: var(--mitra-entry-surface);
-					padding: 0.375rem;
-					min-inline-size: 185px;
+				> mitra-menu {
+					min-inline-size: 11.5rem;
 
 					.progress-section {
 						margin-block-start: 0.375rem;
@@ -233,23 +228,8 @@ export class TaskStatusComponent extends Component {
 								min-block-size: 1.25rem;
 
 								.clear {
-									all: unset;
-									display: inline-flex;
-									align-items: center;
-									justify-content: center;
-									cursor: pointer;
 									color: var(--color-text-muted);
-									border-radius: 4px;
-									padding: 0.125rem;
-
-									&:hover {
-										color: var(--color-text);
-										background: color-mix(in srgb, var(--color-text) 10%, transparent);
-									}
-
-									mitra-icon {
-										font-size: 0.75rem;
-									}
+									margin-block: -0.25rem;
 								}
 							}
 
@@ -265,99 +245,12 @@ export class TaskStatusComponent extends Component {
 							}
 						}
 
-						input.progress-slider {
-							-webkit-appearance: none;
-							appearance: none;
-							inline-size: 100%;
-							block-size: 1.25rem;
-							background: transparent;
-							border: none;
-							border-radius: 0;
-							box-shadow: none;
-							cursor: pointer;
-							margin: 0;
-							padding: 0;
-							outline: none;
-
-							&::-webkit-slider-runnable-track {
-								block-size: 0.25rem;
-								border-radius: 9999px;
-								background: linear-gradient(
-									to right,
-									var(--color-accent) 0%,
-									var(--color-accent) var(--slider-percent, 0%),
-									color-mix(in srgb, var(--color-text) 15%, transparent) var(--slider-percent, 0%),
-									color-mix(in srgb, var(--color-text) 15%, transparent) 100%
-								);
-							}
-
-							&::-moz-range-track {
-								block-size: 0.25rem;
-								border-radius: 9999px;
-								background: linear-gradient(
-									to right,
-									var(--color-accent) 0%,
-									var(--color-accent) var(--slider-percent, 0%),
-									color-mix(in srgb, var(--color-text) 15%, transparent) var(--slider-percent, 0%),
-									color-mix(in srgb, var(--color-text) 15%, transparent) 100%
-								);
-							}
-
-							&::-webkit-slider-thumb {
-								-webkit-appearance: none;
-								appearance: none;
-								margin-block-start: -0.375rem;
-								inline-size: 1rem;
-								block-size: 1rem;
-								border-radius: 50%;
-								background: var(--color-accent);
-								box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-								border: 2px solid var(--color-surface);
-								cursor: grab;
-								transition: transform 0.1s ease;
-
-								&:hover {
-									transform: scale(1.15);
-								}
-
-								&:active {
-									cursor: grabbing;
-									transform: scale(1.25);
-								}
-							}
-
-							&::-moz-range-thumb {
-								inline-size: 1rem;
-								block-size: 1rem;
-								border-radius: 50%;
-								background: var(--color-accent);
-								box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-								border: 2px solid var(--color-surface);
-								cursor: grab;
-								transition: transform 0.1s ease;
-
-								&:hover {
-									transform: scale(1.15);
-								}
-
-								&:active {
-									cursor: grabbing;
-									transform: scale(1.25);
-								}
-							}
+						mitra-slider {
+							margin-block-end: -0.25rem;
 						}
 
 						&.subtasks {
-							.progress-bar {
-								block-size: 0.25rem;
-								border-radius: 9999px;
-								background: linear-gradient(
-									to right,
-									var(--color-accent) 0%,
-									var(--color-accent) var(--slider-percent, 0%),
-									color-mix(in srgb, var(--color-text) 15%, transparent) var(--slider-percent, 0%),
-									color-mix(in srgb, var(--color-text) 15%, transparent) 100%
-								);
+							mitra-progress {
 								margin-block: 0.125rem;
 							}
 
@@ -400,12 +293,6 @@ export class TaskStatusComponent extends Component {
 					}
 				}
 
-				& > :is(button, mitra-icon-button) {
-					> button {
-						padding: 0;
-						&:hover:not(:focus-visible) { background: none; }
-					}
-				}
 			}
 		`
 	}
@@ -423,7 +310,7 @@ export class TaskStatusComponent extends Component {
 						<span>${t('Progress')}</span>
 						<span class="value">${value}%</span>
 					</div>
-					<div class="progress-bar" style="--slider-percent: ${value}%;"></div>
+					<mitra-progress .value=${value / 100}></mitra-progress>
 					${!leftover ? html`
 						<div class="progress-summary">
 							<mitra-icon icon="chart-pie"></mitra-icon>
@@ -456,17 +343,14 @@ export class TaskStatusComponent extends Component {
 					` : html`
 						<div class="value-group">
 							<span class="value">${value}%</span>
-							<button class="clear" aria-label=${t('Clear custom progress')} @click=${this.clearPercent}>
-								<mitra-icon icon="x"></mitra-icon>
-							</button>
+							<mitra-icon-button size="small" class="clear" icon="x" label=${t('Clear custom progress')} @click=${this.clearPercent}></mitra-icon-button>
 						</div>
 					`}
 				</div>
-				<input class="progress-slider" type="range" min="0" max="100" step="5"
-					style="--slider-percent: ${value}%;"
-					.value=${String(value)}
+				<mitra-slider label=${t('Progress')} step="5" .value=${value}
 					@input=${this.handleSliderInput}
-					@click=${(e: Event) => e.stopPropagation()}>
+					@click=${(e: Event) => e.stopPropagation()}
+				></mitra-slider>
 			</div>
 		`
 	}
@@ -504,15 +388,12 @@ export class TaskStatusComponent extends Component {
 					<mitra-icon icon=${taskStatusIcon.get(this.status)!}></mitra-icon>
 				`}
 			</button>
-			<menu popover>
+			<mitra-menu>
 				${order.filter(status => status !== TaskStatus.Cancelled || getCapabilities(this.entry.sourceId).cancelledStatus).map(status => html`
-					<button aria-current=${status === this.status} @click=${this.pick(status)}>
-						<mitra-icon icon=${taskStatusIcon.get(status)!}></mitra-icon>
-						${label(status)}
-					</button>
+					<mitra-menu-item type="radio" icon=${taskStatusIcon.get(status)!} ?selected=${status === this.status} @click=${this.pick(status)}>${label(status)}</mitra-menu-item>
 				`)}
 				${this.progressSectionTemplate}
-			</menu>
+			</mitra-menu>
 		`
 	}
 }

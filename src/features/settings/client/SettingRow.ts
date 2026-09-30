@@ -20,10 +20,6 @@ export class SettingRow extends Component {
 
 	protected override createRenderRoot() { return this }
 
-	protected override updated() {
-		this.setting.syncControl(this)
-	}
-
 	static override get styles() {
 		return css`
 			mitra-setting-row {
@@ -75,21 +71,13 @@ export class SettingRow extends Component {
 					${controlHeight};
 					min-block-size: var(--control-height);
 
-					select {
-						field-sizing: content;
+					mitra-select {
 						min-inline-size: 7rem;
 						max-inline-size: 100%;
-						justify-content: space-between;
 						font-weight: 400;
-
-						selectedcontent {
-							overflow: hidden;
-							text-overflow: ellipsis;
-							white-space: nowrap;
-						}
 					}
 
-					.switch {
+					mitra-switch {
 						--switch-block-size: 1.25rem;
 					}
 
@@ -116,7 +104,7 @@ export class SettingRow extends Component {
 				}
 
 				@container settings (max-width: 40rem) {
-					&:has(> .control select) {
+					&:has(> .control mitra-select) {
 						grid-template-columns: 1.375rem minmax(0, 1fr);
 						row-gap: 0.625rem;
 
@@ -124,7 +112,7 @@ export class SettingRow extends Component {
 							grid-column: 2;
 							justify-content: flex-start;
 
-							select {
+							mitra-select {
 								inline-size: 100%;
 							}
 						}

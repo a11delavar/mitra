@@ -198,7 +198,7 @@ export class TimeZoneLaneController extends Controller {
 			originX: e.clientX,
 			originY: e.clientY,
 			startWidth: this.folded ? 0 : this.openWidth,
-			sign: getComputedStyle(this.host).direction === 'rtl' ? -1 : 1,
+			sign: this.host.matches(':dir(rtl)') ? -1 : 1,
 			claimed: false,
 		}
 		this.host.addEventListener('pointermove', this.onPointerMove)

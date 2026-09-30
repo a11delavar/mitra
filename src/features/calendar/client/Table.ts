@@ -3,13 +3,13 @@ import { DateTime } from '@3mo/date-time'
 import { observeResize } from '@3mo/resize-observer'
 import { DataGridController, type DataGridColumn, DataGridSelectability, DataGridSelectionBehaviorOnDataChange, DataGridSortingStrategy } from '@3mo/data-grid/controller'
 import { type Entry } from '../../entries/Entry.js'
-import { searchBox } from '../../../design/searchBox.css.js'
 import { TableWindow } from './TableWindow.js'
 import { TableRow, TableFilter } from './TableRow.js'
 import { tableColumns, widestContentOf, hideable } from './TableColumns.js'
 import './TableRowComponent.js'
 import './TableColumnMenu.js'
 import './TableSelection.js'
+import { startedInField } from '../../../design/eventOrigin.js'
 
 /**
  * The entries of a window as rows: the same continuum the grids draw, listed for sorting, filtering
@@ -25,7 +25,7 @@ export class Table extends Component {
 	@event() readonly windowChange!: EventDispatcher<TableWindow>
 
 	@state() query = ''
-	@state() private filter = new TableFilter()
+	@state() filter = new TableFilter()
 	@state() private window = TableWindow.current
 	@state() private selection = new Array<TableRow>()
 
@@ -92,7 +92,7 @@ export class Table extends Component {
 	/** The keys that act on the selection as a whole; a field, an open editor or a menu keeps them for itself. */
 	@eventListener('keydown')
 	protected handleKeyDown(e: KeyboardEvent) {
-		if ((e.target as Element).closest('input, textarea, select, [contenteditable]') || this.querySelector(':popover-open') || !this.selection.length) {
+		if (startedInField(e) || this.querySelector(':popover-open') || !this.selection.length) {
 			return
 		}
 		if (e.key === 'Escape') {
@@ -129,7 +129,6 @@ export class Table extends Component {
 					column-gap: 0.75rem;
 
 					> .search {
-						${searchBox};
 						margin-block-end: 0.75rem;
 						margin-inline-start: 1.25rem;
 					}
@@ -147,20 +146,6 @@ export class Table extends Component {
 
 					> mitra-table-selection {
 						grid-column: 1 / -1;
-					}
-				}
-
-				/* Options toggle: a checked one shows its tick, an unchecked one keeps the tick's room. */
-				menu {
-					[aria-checked=false] > .check {
-						visibility: hidden;
-					}
-
-					hr {
-						inline-size: auto;
-						margin: 0.25rem 0;
-						border: none;
-						border-block-start: 1px solid var(--_rule);
 					}
 				}
 
@@ -389,7 +374,7 @@ export class Table extends Component {
 							/* Ringed in the row's own colour, so the faces cut into each other the way the row paints. */
 							> mitra-participant-faces {
 								--participant-faces-ring: var(--_row-bg);
-								--participant-avatar-size: 1.25rem;
+								--mitra-avatar-size: 1.25rem;
 							}
 
 							> .more {
@@ -441,10 +426,7 @@ export class Table extends Component {
 		const tracks = ['1.75rem', ...grid.columns.columns.visible.map(column => String(column.width)), 'auto'].join(' ')
 		return html`
 			<header>
-				<div class="search">
-					<mitra-icon icon="search"></mitra-icon>
-					<input type="search" aria-label=${t('Search entries…')} placeholder=${t('Search entries…')} ${bind(this, 'query', { event: 'input' })}>
-				</div>
+				<mitra-search-field class="search" placeholder=${t('Search entries…')} ${bind(this, 'query')}></mitra-search-field>
 				<span class="count">${t('${count:pluralityNumber} entries', { count: this.rows.length })}</span>
 				<mitra-table-selection role="toolbar" .rows=${this.selection} @clear=${() => this.selection = []}></mitra-table-selection>
 			</header>
@@ -460,8 +442,7 @@ export class Table extends Component {
 			${records.length ? html.nothing : html`
 				<p class="empty">${this.query.trim() || this.filter.excluded.size ? t('No entries match the filters') : t('No entries in this period')}</p>
 			`}
-			<mitra-table-column-menu .filter=${this.filter} .window=${this.window}
-				@filterChange=${(e: CustomEvent<TableFilter>) => this.filter = e.detail}
+			<mitra-table-column-menu .filter=${bind(this, 'filter')} .window=${this.window}
 				@windowChange=${(e: CustomEvent<TableWindow>) => this.setWindow(e.detail)}
 			></mitra-table-column-menu>
 		`
@@ -497,19 +478,19 @@ export class Table extends Component {
 	}
 
 	private get headerTemplate() {
-		const { grid, columnMenu } = this
+		const { grid } = this
 		const allState = grid.selection.allState
 		return html`
 			<div class="header" ${grid.header.ref()}>
 				<div class="select" role="columnheader" ${observeResize(([entry]) => grid.columns.setColumnWidth('selection', entry?.borderBoxSize[0]?.inlineSize ?? 0))}>
-					<input type="checkbox" aria-label=${t('Select all')} .checked=${live(allState === 'all')} .indeterminate=${live(allState === 'some')}
-						@click=${() => grid.selection.toggleAll()}>
+					<mitra-checkbox label=${t('Select all')} .checked=${live(allState === 'all')} .indeterminate=${live(allState === 'some')}
+						@click=${() => grid.selection.toggleAll()}></mitra-checkbox>
 				</div>
 				${grid.columns.columns.visible.map(column => html`
 					<div class="column" tabindex="0" aria-haspopup="menu" data-alignment=${column.alignment}
 						${grid.columnHeader(column, { dragImage: html`<div class="table-column-preview">${column.heading}</div>` })}
-						@pointerdown=${() => columnMenu.press(column)}
-						@click=${(e: MouseEvent) => !(e.target as Element).closest('.resizer') && void columnMenu.toggle(column, e.currentTarget as HTMLElement)}
+						@pointerdown=${() => this.columnMenu.press(column)}
+						@click=${(e: MouseEvent) => !(e.target as Element).closest('.resizer') && void this.columnMenu.toggle(column, e.currentTarget as HTMLElement)}
 						@keydown=${(e: KeyboardEvent) => this.handleHeadingKeyDown(e, column)}
 					>
 						<span class="label">${column.heading}</span>
@@ -521,22 +502,17 @@ export class Table extends Component {
 					</div>
 				`)}
 				<div class="actions" role="columnheader" aria-label=${t('Columns')}>
-					<mitra-icon-button icon="columns-3-cog" label=${t('Columns')} popoverTarget="table-columns"></mitra-icon-button>
-					<menu id="table-columns" popover>
-						${[...grid.columns.columns].map(column => html`
-							<button role="menuitemcheckbox" aria-checked=${!column.hidden} ?disabled=${!hideable(column)}
-								@click=${() => column.modify({ hidden: !column.hidden })}
-							>
-								<mitra-icon class="check" icon="check"></mitra-icon>
-								${column.heading}
-							</button>
-						`)}
-						<hr>
-						<button popovertarget="table-columns" popovertargetaction="hide" @click=${() => grid.columns.columns.modifications.set([])}>
-							<mitra-icon icon="rotate-ccw"></mitra-icon>
-							${t('Reset columns')}
-						</button>
-					</menu>
+					<mitra-popover-container>
+						<mitra-icon-button icon="columns-3-cog" label=${t('Columns')}></mitra-icon-button>
+						<mitra-menu slot="popover">
+							${[...grid.columns.columns].map(column => html`
+								<mitra-menu-item type="checkbox" ?selected=${!column.hidden} ?disabled=${!hideable(column)}
+									@click=${() => column.modify({ hidden: !column.hidden })}>${column.heading}</mitra-menu-item>
+							`)}
+							<hr>
+							<mitra-menu-item icon="rotate-ccw" @click=${() => grid.columns.columns.modifications.set([])}>${t('Reset columns')}</mitra-menu-item>
+						</mitra-menu>
+					</mitra-popover-container>
 				</div>
 			</div>
 		`

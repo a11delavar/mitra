@@ -1,4 +1,4 @@
-import { Component, component, html, css, property, state, event, query } from '@a11d/lit'
+import { Component, component, html, css, property, state, event, query, ifDefined } from '@a11d/lit'
 import { type DataGridColumn, DataGridSortingStrategy } from '@3mo/data-grid/controller'
 import { TaskStatus } from '../../entries/Entry.js'
 import { EntryType } from '../../entries/EntryType.js'
@@ -8,6 +8,9 @@ import { getVisibleSources } from '../../../infrastructure/http/Api.js'
 import { TableRow, TableFilter, type TableFacet } from './TableRow.js'
 import { TableWindow } from './TableWindow.js'
 import { hideable } from './TableColumns.js'
+import { type Menu } from '../../../design/Menu.js'
+import { checkmark } from '../../../design/checkmark.css.js'
+import { selectedColor } from '../../../design/selected.css.js'
 
 interface TableFilterOption {
 	readonly value: string
@@ -27,7 +30,7 @@ export class TableColumnMenu extends Component {
 
 	@state() private column?: DataGridColumn<TableRow>
 
-	@query('menu') private readonly menu!: HTMLElement
+	@query('mitra-menu') private readonly menu!: Menu
 
 	private static options(facet: TableFacet): Array<TableFilterOption> {
 		switch (facet) {
@@ -59,18 +62,16 @@ export class TableColumnMenu extends Component {
 		if (!closing) {
 			this.column = column
 			await this.updateComplete
-			this.menu.showPopover({ source: heading })
+			this.menu.show(heading)
 		}
 	}
 
 	private isOpenFor(column: DataGridColumn<TableRow>) {
-		return this.menu.matches(':popover-open') && this.column?.dataSelector === column.dataSelector
+		return this.menu.open && this.column?.dataSelector === column.dataSelector
 	}
 
 	private close() {
-		if (this.menu.matches(':popover-open')) {
-			this.menu.hidePopover()
-		}
+		this.menu.hide()
 	}
 
 	/** A click includes or leaves out one value; with Alt, it keeps that value alone, or all of them again, as Alt does on a calendar's eye. */
@@ -87,15 +88,11 @@ export class TableColumnMenu extends Component {
 				display: contents;
 
 				/* Hangs from the heading's start edge, or its end edge where the heading sits near the end. */
-				> menu {
-					position-area: bottom span-right;
+				> mitra-menu {
+					position-area: block-end span-inline-end;
 					position-try-fallbacks: flip-inline, flip-block, flip-block flip-inline;
 
-					> [role=menuitemradio] > .check {
-						margin-inline-start: auto;
-					}
-
-					/* The two days a custom range spans, under a label that is checked while it is in force. */
+					/* The two days a custom range spans, under a label ticked like the presets above it while it is in force. */
 					> .range {
 						display: grid;
 						grid-template-columns: 1fr 1fr;
@@ -104,19 +101,15 @@ export class TableColumnMenu extends Component {
 
 						> .label {
 							grid-column: 1 / -1;
-							display: flex;
-							align-items: center;
-							gap: 0.5rem;
+							position: relative;
+							padding-inline-start: 1.375rem;
 							font-size: 0.8125rem;
 							font-weight: 500;
 
-							> .check {
-								margin-inline-start: auto;
-								font-size: 15px;
-							}
-
-							&:not([data-checked]) > .check {
-								visibility: hidden;
+							&[data-checked]::before {
+								${checkmark};
+								inset-inline-start: 0;
+								background-color: ${selectedColor};
 							}
 						}
 					}
@@ -130,20 +123,17 @@ export class TableColumnMenu extends Component {
 	protected override get template() {
 		const { column } = this
 		return html`
-			<menu popover>
+			<mitra-menu>
 				${!column ? html.nothing : html`
 					${this.sortingTemplate(column)}
 					${this.filterTemplate(column)}
 					${column.dataSelector === 'when' ? this.windowTemplate : html.nothing}
 					${!hideable(column) ? html.nothing : html`
 						<hr>
-						<button @click=${() => { this.close(); column.hide() }}>
-							<mitra-icon icon="eye-off"></mitra-icon>
-							${t('Hide column')}
-						</button>
+						<mitra-menu-item icon="eye-off" @click=${() => column.hide()}>${t('Hide column')}</mitra-menu-item>
 					`}
 				`}
-			</menu>
+			</mitra-menu>
 		`
 	}
 
@@ -151,11 +141,9 @@ export class TableColumnMenu extends Component {
 	private sortingTemplate(column: DataGridColumn<TableRow>) {
 		const strategy = column.sortingDefinition?.strategy
 		return [DataGridSortingStrategy.Ascending, DataGridSortingStrategy.Descending].map(option => html`
-			<button role="menuitemradio" aria-checked=${strategy === option} @click=${(e: MouseEvent) => { this.close(); column.toggleSort(option, e) }}>
-				<mitra-icon icon=${option === DataGridSortingStrategy.Ascending ? 'arrow-up' : 'arrow-down'}></mitra-icon>
-				${option === DataGridSortingStrategy.Ascending ? t('Sort ascending') : t('Sort descending')}
-				<mitra-icon class="check" icon="check"></mitra-icon>
-			</button>
+			<mitra-menu-item type="radio" ?selected=${strategy === option} icon=${option === DataGridSortingStrategy.Ascending ? 'arrow-up' : 'arrow-down'}
+				@click=${(e: MouseEvent) => column.toggleSort(option, e)}
+			>${option === DataGridSortingStrategy.Ascending ? t('Sort ascending') : t('Sort descending')}</mitra-menu-item>
 		`)
 	}
 
@@ -174,18 +162,12 @@ export class TableColumnMenu extends Component {
 		return html`
 			<hr>
 			${TableWindow.presets.map(option => html`
-				<button role="menuitemradio" aria-checked=${window.equals(option)} @click=${() => { this.close(); this.windowChange.dispatch(option) }}>
-					${option.label}
-					<mitra-icon class="check" icon="check"></mitra-icon>
-				</button>
+				<mitra-menu-item type="radio" ?selected=${window.equals(option)} @click=${() => this.windowChange.dispatch(option)}>${option.label}</mitra-menu-item>
 			`)}
 			<div class="range" role="group" aria-label=${t('Custom range')}>
-				<span class="label" ?data-checked=${custom}>
-					${t('Custom range')}
-					<mitra-icon class="check" icon="check"></mitra-icon>
-				</span>
-				<input type="date" aria-label=${t('From')} .value=${day(start)} @change=${(e: Event) => choose((e.target as HTMLInputElement).value, day(end))}>
-				<input type="date" aria-label=${t('Until')} .value=${day(end)} @change=${(e: Event) => choose(day(start), (e.target as HTMLInputElement).value)}>
+				<span class="label" ?data-checked=${custom}>${t('Custom range')}</span>
+				<mitra-date-field label=${t('From')} .value=${day(start)} @change=${(e: CustomEvent<string | undefined>) => e.detail && choose(e.detail, day(end))}></mitra-date-field>
+				<mitra-date-field label=${t('Until')} .value=${day(end)} @change=${(e: CustomEvent<string | undefined>) => e.detail && choose(day(start), e.detail)}></mitra-date-field>
 			</div>
 		`
 	}
@@ -199,17 +181,15 @@ export class TableColumnMenu extends Component {
 		return html`
 			<hr>
 			${TableColumnMenu.options(facet).map(option => html`
-				<button role="menuitemcheckbox" aria-checked=${!excluded?.has(option.value)} @click=${(e: MouseEvent) => this.toggleValue(facet, option.value, e)}>
-					<mitra-icon class="check" icon="check"></mitra-icon>
-					${option.source ? html`<mitra-source-icon .source=${option.source}></mitra-source-icon>` : !option.icon ? html.nothing : html`<mitra-icon icon=${option.icon}></mitra-icon>`}
+				<mitra-menu-item type="checkbox" ?selected=${!excluded?.has(option.value)} icon=${ifDefined(option.icon)}
+					@click=${(e: MouseEvent) => this.toggleValue(facet, option.value, e)}
+				>
+					${!option.source ? html.nothing : html`<mitra-source-icon .source=${option.source}></mitra-source-icon>`}
 					${option.label}
-				</button>
+				</mitra-menu-item>
 			`)}
 			${!excluded?.size ? html.nothing : html`
-				<button @click=${() => this.filterChange.dispatch(this.filter.excluding(facet))}>
-					<mitra-icon icon="rotate-ccw"></mitra-icon>
-					${t('Clear filter')}
-				</button>
+				<mitra-menu-item icon="rotate-ccw" @click=${() => this.filterChange.dispatch(this.filter.excluding(facet))}>${t('Clear filter')}</mitra-menu-item>
 			`}
 		`
 	}

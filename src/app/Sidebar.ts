@@ -1,9 +1,10 @@
-import { Component, component, html, css, property, state, event, eventListener, unsafeCSS } from '@a11d/lit'
+import { Component, component, html, css, property, state, event, eventListener, unsafeCSS, ifDefined } from '@a11d/lit'
 import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, getPrimarySource, setDefaultSource, reimportSource, reimportIntegration, reorderSources, reorderIntegrations, getEnabledSources, getVisibleSources, soloSource, restoreSourceVisibility, canRestoreSourceVisibility, canCopyEntriesOut, canMoveEntriesOut } from '../infrastructure/http/Api.js'
 import { DialogAbout, hasUnseenChanges } from '../features/about/client/DialogAbout.js'
 import { DialogIntegration } from '../integrations/client/DialogIntegration.js'
 import { DialogSourceMigration } from '../features/migration/client/DialogSourceMigration.js'
 import { type Source } from '../features/sources/Source.js'
+import { Color } from '../features/sources/Color.js'
 import { type Integration } from '../integrations/Integration.js'
 import { ReorderabilityController, ReorderabilityState } from '@3mo/reorderability'
 import { focusRing } from '../design/focusRing.css.js'
@@ -11,6 +12,8 @@ import { windowDragHandle } from '../design/windowDrag.css.js'
 import { EntryStore } from '../features/entries/client/EntryStore.js'
 import { Planning } from '../features/planning/client/Planning.js'
 import { canInstall, promptInstall, onInstallAvailabilityChange } from './pwa.js'
+import { scrollbar } from '../design/scrollbar.css.js'
+import { MediaQueryController } from '@3mo/media-query-observer'
 
 @component('mitra-sidebar')
 export class Sidebar extends Component {
@@ -115,55 +118,25 @@ export class Sidebar extends Component {
 				   arithmetic of per-element paddings. */
 				--sidebar-width: 16rem;
 				--sidebar-inset: 0.5rem;
-				--sidebar-scrollbar-width: 0.5rem;
 				/* Source list column gap and row content inset, aligning headings across tabs. */
 				--sidebar-gap: 0.5rem;
+
+				--mitra-modal-sheet-size: var(--sidebar-width);
 
 				display: flex;
 				flex-direction: column;
 				transition: margin-inline-start 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
 				z-index: 1000;
 
-				@media (max-width: 800px) {
-					position: absolute;
-					inset: 0;
-					width: auto;
-					margin-inline-start: 0;
-					pointer-events: none;
-					opacity: 1;
-				}
-
 				&:not([open]) {
 					margin-inline-start: calc(-1 * var(--sidebar-width));
 					opacity: 0;
 					pointer-events: none;
-					@media (max-width: 800px) {
-						margin-inline-start: 0;
-						opacity: 1;
-					}
 				}
 
-				&[open] {
-					@media (max-width: 800px) {
-						pointer-events: auto;
-					}
-				}
-
-				.backdrop {
-					display: none;
-
-					@media (max-width: 800px) {
-						display: block;
-						position: absolute;
-						inset: 0;
-						background-color: rgba(0, 0, 0, 0.4);
-						opacity: 0;
-						transition: opacity 0.3s ease;
-
-						&[data-open] {
-							opacity: 1;
-						}
-					}
+				/* A narrow screen has no column to spare: the nav is a sheet over the calendar (see the template). */
+				@media (max-width: 800px) {
+					display: contents;
 				}
 
 				/* Three regions: the brand row and the footer never move; only the integrations between
@@ -184,16 +157,10 @@ export class Sidebar extends Component {
 					background-color: transparent;
 
 					@media (max-width: 800px) {
-						position: relative;
-						height: 100%;
-						background-color: var(--color-background);
-						box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-						transform: translateX(-100%);
-						transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-						&[data-open] {
-							transform: translateX(0);
-						}
+						flex: 1;
+						min-block-size: 0;
+						inline-size: auto;
+						border-inline-end: none;
 					}
 
 					/* Window Controls Overlay (see PageCalendar's header): with the OS title bar gone, the
@@ -229,26 +196,8 @@ export class Sidebar extends Component {
 					border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
 					border-radius: 0.5rem;
 
-					/* A provider photo and its absence must occupy the same box, or the name's rail would
-					   depend on whether the identity happens to carry a picture. */
-					.avatar, .avatar-fallback {
-						inline-size: 2rem;
-						block-size: 2rem;
-						flex-shrink: 0;
-						border-radius: 50%;
-					}
-
-					.avatar {
-						object-fit: cover;
-					}
-
-					.avatar-fallback {
-						display: inline-flex;
-						align-items: center;
-						justify-content: center;
-						background: color-mix(in srgb, var(--color-text) 8%, transparent);
-						color: var(--color-text-muted);
-						font-size: 0.9375rem;
+					mitra-avatar {
+						--mitra-avatar-size: 2rem;
 					}
 
 					> mitra-icon-button {
@@ -265,7 +214,7 @@ export class Sidebar extends Component {
 
 					&:hover .actions mitra-icon-button,
 					&:focus-within .actions mitra-icon-button,
-					&:has(menu:popover-open) .actions mitra-icon-button {
+					&:has(mitra-menu:popover-open) .actions mitra-icon-button {
 						opacity: 1;
 					}
 
@@ -440,7 +389,7 @@ export class Sidebar extends Component {
 				}
 
 				/* Align the planning headings with the account headings grid column. */
-				mitra-tab-panel > mitra-planning header {
+				mitra-tab-panel > mitra-planning > section > header {
 					padding-inline-start: var(--sidebar-gap);
 				}
 
@@ -459,7 +408,8 @@ export class Sidebar extends Component {
 					column-gap: var(--sidebar-gap);
 					row-gap: 1.5rem;
 					margin-inline-end: calc(-1 * var(--sidebar-inset));
-					padding-inline-end: calc(var(--sidebar-inset) - var(--sidebar-scrollbar-width));
+					${scrollbar};
+					padding-inline-end: calc(var(--sidebar-inset) - var(--scrollbar-width));
 					scrollbar-gutter: stable;
 					/* Dissolves the bottom edge while there's more list below, so a row is never sliced flat
 					   against the footer. */
@@ -467,35 +417,6 @@ export class Sidebar extends Component {
 					animation: sidebar-scroll-fade linear both;
 					animation-timeline: scroll(self);
 					animation-range: calc(100% - 1.25rem) 100%;
-
-					&::-webkit-scrollbar {
-						width: var(--sidebar-scrollbar-width);
-					}
-
-					/* No track, and no stepper arrows — the thumb alone. */
-					&::-webkit-scrollbar-track {
-						background: transparent;
-					}
-
-					&::-webkit-scrollbar-button {
-						display: none;
-					}
-
-					&::-webkit-scrollbar-thumb {
-						border-radius: 999px;
-						background: color-mix(in srgb, var(--color-text) 12%, transparent);
-					}
-
-					&:hover::-webkit-scrollbar-thumb {
-						background: color-mix(in srgb, var(--color-text) 26%, transparent);
-					}
-
-					/* Firefox has no ::-webkit-scrollbar to size, so it keeps the standard thin thumb — its
-					   gutter is then the UA's thin width, a pixel or two off the padding above. */
-					@supports not selector(::-webkit-scrollbar-thumb) {
-						scrollbar-width: thin;
-						scrollbar-color: color-mix(in srgb, var(--color-text) 12%, transparent) transparent;
-					}
 				}
 
 				/* Each level down to the row hands the same columns on, unchanged. */
@@ -540,7 +461,7 @@ export class Sidebar extends Component {
 						user-select: none;
 					}
 
-					> mitra-icon-button {
+					> mitra-popover-container > mitra-icon-button {
 						grid-column: 4;
 						justify-self: end;
 					}
@@ -565,7 +486,7 @@ export class Sidebar extends Component {
 					   in the row holds focus — tabbing into a transparent button used to park the focus ring
 					   on something invisible. */
 					&:focus-within .actions mitra-icon-button,
-					&:has(menu:popover-open) .actions mitra-icon-button {
+					&:has(mitra-menu:popover-open) .actions mitra-icon-button {
 						opacity: 1;
 					}
 
@@ -640,16 +561,10 @@ export class Sidebar extends Component {
 					cursor: grabbing;
 				}
 
-				/* Every glyph the sidebar's own buttons carry is one size. */
-				mitra-icon-button {
-					font-size: 0.875rem;
-				}
-
-				/* An icon button's glyph sits 5px inside its own box (0.25rem padding + 1px border); the
-				   trailing ones bleed that back out, so it is the GLYPHS that land on the trailing edge —
-				   aligning the boxes instead leaves every icon a few pixels short of the text above it. */
-				.integration > header > mitra-icon-button, .actions, .account > mitra-icon-button {
-					margin-inline-end: -0.3125rem;
+				/* The trailing icon buttons bleed their glyph inset back out, so it is the GLYPHS that land on the
+				   trailing edge — aligning the boxes instead leaves every icon a few pixels short of the text above. */
+				.integration > header > mitra-popover-container > mitra-icon-button, .actions > mitra-icon-button:last-child, .account > mitra-icon-button:last-child {
+					margin-inline-end: calc(-1 * var(--mitra-glyph-inset));
 				}
 
 				/* Pinned below the scroll region — always visible, however long the source list grows. */
@@ -662,31 +577,40 @@ export class Sidebar extends Component {
 
 				/* Sized to a source row rather than to its own padding, which is where the footer's height
 				   went: two of these plus a 1rem gap used to cost as much as three source rows. */
+				/* Outlined: the sidebar's own surface shows through until a hover fills them. */
 				.action {
 					color: var(--color-text-muted);
-					background: transparent;
-					mitra-icon { font-size: 0.875rem; }
+
+					&::part(button):not(:hover, :active) {
+						background: transparent;
+					}
 				}
 
-				/* Both menus in here open off the sidebar's inline end — a 280px column has no room to drop
-				   one below its trigger — and both wear the app's shared menu skin (see menu.css), which the
-				   source menu used to re-implement at slightly different paddings, radii and shadow: two
-				   visibly different menus hanging off two ⋯ buttons a row apart. */
-				menu[popover] {
+				/* A 280px column has no room to drop a menu below its trigger, so they open off its inline end. */
+				mitra-menu {
 					margin: 0;
 					position-area: inline-end span-block-end;
 					position-try-fallbacks: flip-block;
 
-					/* The colour picker is the one menu row that isn't a button; match the shared skin's. */
 					.color-row {
 						display: flex;
 						align-items: center;
 						gap: 0.5rem;
-						padding: 0.4rem 0.625rem;
+						padding: 0.25rem 0.625rem;
 
 						> mitra-icon {
-							font-size: 15px;
+							font-size: 1rem;
 						}
+					}
+				}
+
+				/* A source's menu opens past its whole cluster of actions rather than over its eye. */
+				.source .actions {
+					anchor-name: --source-actions;
+					anchor-scope: --source-actions;
+
+					mitra-menu {
+						position-anchor: --source-actions;
 					}
 				}
 			}
@@ -739,10 +663,6 @@ export class Sidebar extends Component {
 		}
 		el.focus()
 		getSelection()?.selectAllChildren(el)
-		const menu = this.querySelector<HTMLElement>(`#source-menu-${source.id}`)
-		if (menu?.matches(':popover-open')) {
-			menu.hidePopover()
-		}
 	}
 
 	private handleRenameKeydown(e: KeyboardEvent, source: Source) {
@@ -802,14 +722,6 @@ export class Sidebar extends Component {
 		this.requestUpdate()
 	}
 
-	private closeMenu(e: Event) {
-		(e.currentTarget as HTMLElement).closest<HTMLElement>('[popover]')?.hidePopover()
-	}
-
-	private toggleMenu(e: Event) {
-		(e.currentTarget as HTMLElement).parentElement?.querySelector<HTMLElement>('menu[popover]')?.togglePopover()
-	}
-
 	private async openDialog(id?: string) {
 		await new DialogIntegration({ id }).confirm()
 		this.requestUpdate()
@@ -855,31 +767,17 @@ export class Sidebar extends Component {
 					<div class="integration" ${this.integrationsReorder.item({ index, handle: '.title' })}>
 						<header>
 							<span class="title">${i.credentials?.username || i.type}</span>
-							<mitra-icon-button icon="more-horizontal" label=${t('Integration options')} style="anchor-name: --anchor-${i.id}" @click=${this.toggleMenu}></mitra-icon-button>
-							<menu popover id="menu-${i.id}" style="position-anchor: --anchor-${i.id}">
-								<button @click=${(e: Event) => { this.closeMenu(e); this.openDialog(i.id) }}>
-									<mitra-icon icon="pencil"></mitra-icon>
-									${t('Edit')}
-								</button>
-								<button ?disabled=${index === 0} @click=${(e: Event) => { this.closeMenu(e); this.moveIntegration(i.id, -1) }}>
-									<mitra-icon icon="arrow-up"></mitra-icon>
-									${t('Move up')}
-								</button>
-								<button ?disabled=${index === integrations.length - 1} @click=${(e: Event) => { this.closeMenu(e); this.moveIntegration(i.id, 1) }}>
-									<mitra-icon icon="arrow-down"></mitra-icon>
-									${t('Move down')}
-								</button>
-								<button
-									title=${t('Read every enabled calendar of this account again from the start')}
-									@click=${(e: Event) => { this.closeMenu(e); reimportIntegration(i.id).catch(() => void 0) }}>
-									<mitra-icon icon="hard-drive-download"></mitra-icon>
-									${t('Re-import entries')}
-								</button>
-								<button class="danger" @click=${(e: Event) => { this.closeMenu(e); this.removeIntegration(i.id) }}>
-									<mitra-icon icon="trash-2"></mitra-icon>
-									${t('Delete')}
-								</button>
-							</menu>
+							<mitra-popover-container>
+								<mitra-icon-button size="small" icon="more-horizontal" label=${t('Integration options')}></mitra-icon-button>
+								<mitra-menu slot="popover">
+									<mitra-menu-item icon="pencil" @click=${() => this.openDialog(i.id)}>${t('Edit')}</mitra-menu-item>
+									<mitra-menu-item icon="arrow-up" ?disabled=${index === 0} @click=${() => this.moveIntegration(i.id, -1)}>${t('Move up')}</mitra-menu-item>
+									<mitra-menu-item icon="arrow-down" ?disabled=${index === integrations.length - 1} @click=${() => this.moveIntegration(i.id, 1)}>${t('Move down')}</mitra-menu-item>
+									<mitra-menu-item icon="hard-drive-download" title=${t('Read every enabled calendar of this account again from the start')}
+										@click=${() => void reimportIntegration(i.id).catch(() => void 0)}>${t('Re-import entries')}</mitra-menu-item>
+									<mitra-menu-item icon="trash-2" variant="danger" @click=${() => this.removeIntegration(i.id)}>${t('Delete')}</mitra-menu-item>
+								</mitra-menu>
+							</mitra-popover-container>
 						</header>
 						<div class="sources">
 							${getEnabledSources(i).map((source, sourceIndex, sources) => html`
@@ -897,10 +795,10 @@ export class Sidebar extends Component {
 					</div>
 			`)}
 			</div>
-			<button class="action" @click=${() => this.openDialog()}>
+			<mitra-button class="action" @click=${() => this.openDialog()}>
 				<mitra-icon icon="plus"></mitra-icon>
 				${t('Add Integration')}
-			</button>
+			</mitra-button>
 		`
 	}
 
@@ -908,18 +806,27 @@ export class Sidebar extends Component {
 		return html`
 			<mitra-planning></mitra-planning>
 			${!Planning.canAdd ? html.nothing : html`
-				<button class="action" @click=${() => Planning.add()}>
+				<mitra-button class="action" @click=${() => Planning.add()}>
 					<mitra-icon icon="plus"></mitra-icon>
 					${t('Add Task')}
-				</button>
+				</mitra-button>
 			`}
 		`
 	}
 
+	private readonly narrow = new MediaQueryController(this, '(max-width: 800px)')
+
 	protected override get template() {
+		return !this.narrow.matches ? this.navTemplate : html`
+			<mitra-modal-sheet placement="inline-start" label=${getMeta()?.name ?? 'Mitra'} ?open=${this.open}
+				@openChange=${(e: CustomEvent<boolean>) => e.detail !== this.open && this.openChange.dispatch(e.detail)}
+			>${this.navTemplate}</mitra-modal-sheet>
+		`
+	}
+
+	private get navTemplate() {
 		return html`
-			<div class="backdrop" ?data-open=${this.open} @click=${() => this.openChange.dispatch(false)}></div>
-			<nav ?data-open=${this.open}>
+			<nav>
 				<button class="brand" title=${[`Mitra ${mitra.version}`, this.updateHint].filter(Boolean).join(' — ')} @click=${() => new DialogAbout().confirm()}>
 					<span class="mark">
 						<img src="/android-chrome-192x192.png" alt="">
@@ -940,18 +847,18 @@ export class Sidebar extends Component {
 				</mitra-tabs>
 				<div class="footer">
 					${getUser()?.identity ? html.nothing : html`
-						<button class="action" title=${t('Settings')} @click=${() => this.settingsClick.dispatch()}>
+						<mitra-button class="action" title=${t('Settings')} @click=${() => this.settingsClick.dispatch()}>
 							<mitra-icon icon="settings"></mitra-icon>
 							${t('Settings')}
-						</button>
+						</mitra-button>
 					`}
 					${!canInstall() ? html.nothing : html`
-						<button class="action"
+						<mitra-button class="action"
 							title=${t('Install mitra as an app — it gets its own window, and notifications appear under its own name and icon')}
 							@click=${() => promptInstall()}>
 							<mitra-icon icon="monitor-down"></mitra-icon>
 							${t('Install as an App')}
-						</button>
+						</mitra-button>
 					`}
 					${this.accountTemplate}
 				</div>
@@ -967,33 +874,24 @@ export class Sidebar extends Component {
 		}
 	}
 
-	@state() private profilePictureBroken = false
 
 	/** User account footer for multi-user mode. */
 	private get accountTemplate() {
 		const identity = getUser()?.identity
 		return !identity ? html.nothing : html`
 			<div class="account">
-				${identity.picture && !this.profilePictureBroken ? html`
-					<img class="avatar" src=${identity.picture} alt="" referrerpolicy="no-referrer" @error=${() => this.profilePictureBroken = true}>
-				` : html`
-					<span class="avatar-fallback">
-						<mitra-icon icon="user"></mitra-icon>
-					</span>
-				`}
+				<mitra-avatar src=${ifDefined(identity.picture ?? undefined)}></mitra-avatar>
 				<div class="who">
 					<div class="name">${identity.name || identity.email || t('Account')}</div>
 					${!identity.email || identity.email === identity.name ? html.nothing : html`<div class="email">${identity.email}</div>`}
 				</div>
 				<span class="actions">
-					<mitra-icon-button icon="more-horizontal" label=${t('Account options')}
-						style="anchor-name: --account-menu" @click=${this.toggleMenu}></mitra-icon-button>
-					<menu popover id="account-menu" style="position-anchor: --account-menu">
-						<button @click=${(e: Event) => { this.closeMenu(e); location.assign('/auth/logout') }}>
-							<mitra-icon icon="log-out"></mitra-icon>
-							${t('Sign out')}
-						</button>
-					</menu>
+					<mitra-popover-container>
+						<mitra-icon-button icon="more-horizontal" label=${t('Account options')}></mitra-icon-button>
+						<mitra-menu slot="popover">
+							<mitra-menu-item icon="log-out" @click=${() => location.assign('/auth/logout')}>${t('Sign out')}</mitra-menu-item>
+						</mitra-menu>
+					</mitra-popover-container>
 				</span>
 				<mitra-icon-button icon="settings" label=${t('Settings')} @click=${() => this.settingsClick.dispatch()}></mitra-icon-button>
 			</div>
@@ -1016,56 +914,33 @@ export class Sidebar extends Component {
 
 	private getActionsTemplate(integration: Integration, source: Source, index: number, count: number) {
 		return html`
-			<div class="actions" style="anchor-name: --source-menu-${source.id}">
-				<mitra-icon-button
-					icon="more-horizontal"
-					label=${t('Calendar options')}
-					@click=${(e: Event) => ((e.currentTarget as HTMLElement).nextElementSibling as HTMLElement)?.togglePopover()}
-				></mitra-icon-button>
-				<menu popover id="source-menu-${source.id}" style="position-anchor: --source-menu-${source.id}">
-					<button @click=${() => this.startRename(source)}>
-						<mitra-icon icon="pencil"></mitra-icon>
-						${t('Rename')}
-					</button>
-					<div class="color-row">
-						<mitra-icon icon="palette"></mitra-icon>
-						<mitra-color-picker .value=${source.color} @change=${(e: CustomEvent) => this.setSourceColor(source, e.detail, (e.currentTarget as HTMLElement).closest('[popover]')!)}></mitra-color-picker>
-					</div>
-					${canRestoreSourceVisibility() ? html`
-						<button @click=${(e: Event) => { this.closeMenu(e); this.toggleSolo(source) }}>
-							<mitra-icon icon="eye"></mitra-icon>
-							${t('Show previously visible calendars')}
-						</button>
-					` : html`
-						<button ?disabled=${this.isOnlyVisible(source)} @click=${(e: Event) => { this.closeMenu(e); this.toggleSolo(source) }}>
-							<mitra-icon icon="scan-eye"></mitra-icon>
-							${t('Only show this calendar')}
-						</button>
-					`}
-					<button ?disabled=${index === 0} @click=${(e: Event) => { this.closeMenu(e); this.moveSource(integration, source, -1) }}>
-						<mitra-icon icon="arrow-up"></mitra-icon>
-						${t('Move up')}
-					</button>
-					<button ?disabled=${index === count - 1} @click=${(e: Event) => { this.closeMenu(e); this.moveSource(integration, source, 1) }}>
-						<mitra-icon icon="arrow-down"></mitra-icon>
-						${t('Move down')}
-					</button>
-					${!canCopyEntriesOut(source) ? html.nothing : html`
-						<button
-							title=${canMoveEntriesOut(source) ? t('Move or copy every entry into another calendar') : t('Copy every entry into another calendar')}
-							@click=${(e: Event) => { this.closeMenu(e); new DialogSourceMigration({ source }).confirm().catch(() => void 0) }}>
-							<mitra-icon icon="folder-input"></mitra-icon>
-							${canMoveEntriesOut(source) ? t('Move entries to…') : t('Copy entries to…')}
-						</button>
-					`}
-					<button
-						title=${t('Read this calendar again from the start')}
-						@click=${(e: Event) => { this.closeMenu(e); reimportSource(source.id).catch(() => void 0) }}>
-						<mitra-icon icon="hard-drive-download"></mitra-icon>
-						${t('Re-import entries')}
-					</button>
-				</menu>
-				<mitra-icon-button
+			<div class="actions">
+				<mitra-popover-container>
+					<mitra-icon-button size="small" icon="more-horizontal" label=${t('Calendar options')}></mitra-icon-button>
+					<mitra-menu slot="popover">
+						<mitra-menu-item icon="pencil" @click=${() => this.startRename(source)}>${t('Rename')}</mitra-menu-item>
+						<div class="color-row">
+							<mitra-icon icon="palette"></mitra-icon>
+							<mitra-color-picker .palette=${Color.palette} .value=${source.color} @change=${(e: CustomEvent) => this.setSourceColor(source, e.detail, (e.currentTarget as HTMLElement).closest('mitra-menu')!)}></mitra-color-picker>
+						</div>
+						${canRestoreSourceVisibility() ? html`
+							<mitra-menu-item icon="eye" @click=${() => this.toggleSolo(source)}>${t('Show previously visible calendars')}</mitra-menu-item>
+						` : html`
+							<mitra-menu-item icon="scan-eye" ?disabled=${this.isOnlyVisible(source)} @click=${() => this.toggleSolo(source)}>${t('Only show this calendar')}</mitra-menu-item>
+						`}
+						<mitra-menu-item icon="arrow-up" ?disabled=${index === 0} @click=${() => this.moveSource(integration, source, -1)}>${t('Move up')}</mitra-menu-item>
+						<mitra-menu-item icon="arrow-down" ?disabled=${index === count - 1} @click=${() => this.moveSource(integration, source, 1)}>${t('Move down')}</mitra-menu-item>
+						${!canCopyEntriesOut(source) ? html.nothing : html`
+							<mitra-menu-item icon="folder-input"
+								title=${canMoveEntriesOut(source) ? t('Move or copy every entry into another calendar') : t('Copy every entry into another calendar')}
+								@click=${() => void new DialogSourceMigration({ source }).confirm().catch(() => void 0)}
+							>${canMoveEntriesOut(source) ? t('Move entries to…') : t('Copy entries to…')}</mitra-menu-item>
+						`}
+						<mitra-menu-item icon="hard-drive-download" title=${t('Read this calendar again from the start')}
+							@click=${() => void reimportSource(source.id).catch(() => void 0)}>${t('Re-import entries')}</mitra-menu-item>
+					</mitra-menu>
+				</mitra-popover-container>
+				<mitra-icon-button size="small"
 					class="eye-icon"
 					icon=${source.hidden ? 'eye-off' : 'eye'}
 					label=${`${source.hidden ? t('Show calendar') : t('Hide calendar')} — ${canRestoreSourceVisibility() ? t('Alt+click to show the previously visible ones') : t('Alt+click to show only this one')}`}

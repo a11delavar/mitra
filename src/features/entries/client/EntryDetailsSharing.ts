@@ -55,13 +55,13 @@ export class EntryDetailsSharing extends Component {
 		this.change.dispatch()
 	}
 
-	private readonly handleTransparencyChange = (e: Event) => {
-		this.entry.transparency = (e.target as HTMLSelectElement).value as Transparency
+	private readonly handleTransparencyChange = (e: CustomEvent<Transparency>) => {
+		this.entry.transparency = e.detail
 		this.commit()
 	}
 
-	private readonly handleVisibilityChange = (e: Event) => {
-		this.entry.visibility = ((e.target as HTMLSelectElement).value || null) as Visibility | null
+	private readonly handleVisibilityChange = (e: CustomEvent<Visibility | null>) => {
+		this.entry.visibility = e.detail
 		this.commit()
 	}
 
@@ -95,17 +95,11 @@ export class EntryDetailsSharing extends Component {
 						min-width: 0;
 
 						&:first-child { margin-inline-start: calc(-1 * var(--field-padding-inline)); }
-						&:last-child { margin-inline-end: -0.25rem; }
+						&:last-child { margin-inline-end: -0.5rem; }
 
-						> select {
+						mitra-select {
 							flex: 1;
 							min-width: 0;
-
-							selectedcontent {
-								overflow: hidden;
-								text-overflow: ellipsis;
-								white-space: nowrap;
-							}
 						}
 					}
 				}
@@ -123,27 +117,20 @@ export class EntryDetailsSharing extends Component {
 			<div class="choices">
 				${!this.showsTransparency ? html.nothing : html`
 					<span class="transparency field">
-						<select aria-label=${t('Show as busy or free')} title=${t('Show as busy or free')} ?disabled=${!this.capabilities.editEntries} @change=${this.handleTransparencyChange}>
-							<button>
-								<selectedcontent></selectedcontent>
-							</button>
-							${/* Mapped options prevent Chromium duplicate marker bug with <selectedcontent> */''}
-							${Object.values(Transparency).map(value => html`
-								<option value=${value} ?selected=${value === transparency}>${transparencyLabel(value)}</option>
-							`)}
-						</select>
+						<mitra-select label=${t('Show as busy or free')} title=${t('Show as busy or free')} ?disabled=${!this.capabilities.editEntries}
+							.value=${transparency} @change=${this.handleTransparencyChange}
+						>
+							${Object.values(Transparency).map(value => html`<mitra-option .value=${value}>${transparencyLabel(value)}</mitra-option>`)}
+						</mitra-select>
 					</span>
 				`}
 				${!this.capabilities.visibility ? html.nothing : html`
 					<span class="visibility field">
-						<select ?data-placeholder=${!this.entry.visibility} aria-label=${t('Visibility')} title=${t('Visibility')} ?disabled=${!this.capabilities.editEntries} @change=${this.handleVisibilityChange}>
-							<button>
-								<selectedcontent></selectedcontent>
-							</button>
-							${[null, ...Object.values(Visibility)].map(value => html`
-								<option value=${value ?? ''} ?selected=${value === this.entry.visibility}>${visibilityLabel(value)}</option>
-							`)}
-						</select>
+						<mitra-select label=${t('Visibility')} title=${t('Visibility')} ?disabled=${!this.capabilities.editEntries} .placeholder=${!this.entry.visibility}
+							.value=${this.entry.visibility ?? null} @change=${this.handleVisibilityChange}
+						>
+							${[null, ...Object.values(Visibility)].map(value => html`<mitra-option .value=${value}>${visibilityLabel(value)}</mitra-option>`)}
+						</mitra-select>
 					</span>
 				`}
 			</div>

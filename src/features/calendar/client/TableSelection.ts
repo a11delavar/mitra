@@ -125,13 +125,10 @@ export class TableSelection extends Component {
 					flex: 1;
 				}
 
-				> menu[popover] {
-					position-area: bottom span-right;
+				mitra-menu {
+					position-area: block-end span-inline-end;
 				}
 
-				> .delete {
-					color: var(--color-error);
-				}
 			}
 		`
 	}
@@ -145,36 +142,38 @@ export class TableSelection extends Component {
 		return html`
 			<span class="count">${t('${count:pluralityNumber} selected', { count: rows.length })}</span>
 			${!rows.some(TableSelection.editable) ? html.nothing : [TaskStatus.ToDo, TaskStatus.Done, TaskStatus.Cancelled].map(status => html`
-				<button @click=${() => this.setStatus(status)}>
+				<mitra-button @click=${() => this.setStatus(status)}>
 					<mitra-icon icon=${taskStatusIcon.get(status)!}></mitra-icon>
 					${taskStatusLabel(status)}
-				</button>
+				</mitra-button>
 			`)}
 			${!destinations.length ? html.nothing : html`
-				<button popovertarget="table-move">
-					<mitra-icon icon="folder-input"></mitra-icon>
-					${t('Move to…')}
-				</button>
-				<menu id="table-move" popover>
-					${destinations.map(source => html`
-						<button popovertarget="table-move" popovertargetaction="hide" @click=${() => this.moveTo(source)}>
-							<mitra-source-icon .source=${source}></mitra-source-icon>
-							${source.name}
-						</button>
-					`)}
-				</menu>
+				<mitra-popover-container>
+					<mitra-button>
+						<mitra-icon icon="folder-input"></mitra-icon>
+						${t('Move to…')}
+					</mitra-button>
+					<mitra-menu slot="popover">
+						${destinations.map(source => html`
+							<mitra-menu-item @click=${() => this.moveTo(source)}>
+								<mitra-source-icon .source=${source}></mitra-source-icon>
+								${source.name}
+							</mitra-menu-item>
+						`)}
+					</mitra-menu>
+				</mitra-popover-container>
 			`}
 			${!rows.some(TableSelection.deletable) ? html.nothing : html`
-				<button class="delete" @click=${() => void this.delete()}>
+				<mitra-button variant="danger" @click=${() => void this.delete()}>
 					<mitra-icon icon="trash-2"></mitra-icon>
 					${t('Delete')}
-				</button>
+				</mitra-button>
 			`}
 			<span class="spacer"></span>
-			<button @click=${() => this.clear.dispatch()}>
+			<mitra-button @click=${() => this.clear.dispatch()}>
 				<mitra-icon icon="x"></mitra-icon>
 				${t('Clear selection')}
-			</button>
+			</mitra-button>
 		`
 	}
 }

@@ -48,7 +48,7 @@ export class NotificationsSetting extends Setting<boolean> {
 
 	override get control() {
 		return Notification.permission === 'default' ? html`
-			<button @click=${() => void this.set(true)}>${t('Allow')}</button>
+			<mitra-button @click=${() => void this.set(true)}>${t('Allow')}</mitra-button>
 		` : html`
 			<span class="state" ?data-denied=${Notification.permission === 'denied'}>
 				${Notification.permission === 'granted' ? t('Allowed') : t('Blocked')}

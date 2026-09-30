@@ -235,7 +235,7 @@ export class EntryConnections extends Component {
 	private edge(kind: ConnectorEdge['kind'], from: Entry, to: Entry, fromSeg: EntrySegment, toSeg: EntrySegment, violated: boolean): ConnectorEdge {
 		const A = `--mitra-entry-segment-${fromSeg.id}`
 		const B = `--mitra-entry-segment-${toSeg.id}`
-		const rtl = getComputedStyle(this).direction === 'rtl'
+		const rtl = this.matches(':dir(rtl)')
 		const [start, end] = rtl ? ['right', 'left'] : ['left', 'right']
 		const a = this.placementOf(fromSeg)
 		const b = this.placementOf(toSeg)
@@ -818,7 +818,7 @@ export class EntryConnections extends Component {
 	}
 
 	protected override get template() {
-		const rtl = getComputedStyle(this).direction === 'rtl'
+		const rtl = this.matches(':dir(rtl)')
 		const hovered = this.hoveredEntryId
 		return html`
 			${repeat(this.connectorEdges, edge => edge.key, edge =>

@@ -1,4 +1,4 @@
-import { html, type HTMLTemplateResult } from '@a11d/lit'
+import { html, live, type HTMLTemplateResult } from '@a11d/lit'
 import { Localizer } from '@3mo/localization'
 import { termsMatch } from '../../commands/termsMatch.js'
 import { getSettings, setSettings } from '../../../infrastructure/http/Api.js'
@@ -150,9 +150,6 @@ export abstract class Setting<T> {
 	/** Optional full-width content rendered beneath the setting row. */
 	get details(): HTMLTemplateResult | undefined { return undefined }
 
-	/** Synchronizes rendered control state post-render (see ChoiceSetting.syncControl). */
-	syncControl(_row: HTMLElement): void { }
-
 	/** Row leading icon or custom graphic. */
 	get glyph(): unknown {
 		return html`<mitra-icon icon=${this.icon}></mitra-icon>`
@@ -170,14 +167,12 @@ export abstract class ToggleSetting extends Setting<boolean> {
 
 	override get control() {
 		return html`
-			<button class="switch" role="switch" aria-checked=${this.value ? 'true' : 'false'} aria-label=${this.heading}
-				@click=${() => void this.set(!this.value)}
-			></button>
+			<mitra-switch label=${this.heading} ?checked=${live(this.value)} @change=${(e: CustomEvent<boolean>) => void this.set(e.detail)}></mitra-switch>
 		`
 	}
 }
 
-/** Multi-option setting rendering a select element. */
+/** Multi-option setting rendering a select. */
 export abstract class ChoiceSetting<T> extends Setting<T> {
 	/** Values and labels on offer in picker display order. */
 	abstract get options(): Array<{ value: T, label: string }>
@@ -189,25 +184,10 @@ export abstract class ChoiceSetting<T> extends Setting<T> {
 	}
 
 	override get control() {
-		const options = this.options
 		return html`
-			<select aria-label=${this.heading} @change=${(e: Event) => void this.set(options[Number((e.target as HTMLSelectElement).value)]!.value)}>
-				<button>
-					<selectedcontent></selectedcontent>
-				</button>
-				${options.map((option, index) => html`
-					<option value=${index}>${option.label}</option>
-				`)}
-			</select>
+			<mitra-select label=${this.heading} .value=${live(this.value)} @change=${(e: CustomEvent<T>) => void this.set(e.detail)}>
+				${this.options.map(option => html`<mitra-option .value=${option.value}>${option.label}</mitra-option>`)}
+			</mitra-select>
 		`
-	}
-
-	/** Synchronizes select element's selectedIndex after rendering. */
-	override syncControl(row: HTMLElement) {
-		const select = row.querySelector('select')
-		const index = this.options.findIndex(option => Object.is(option.value, this.value))
-		if (select && index >= 0 && select.selectedIndex !== index) {
-			select.selectedIndex = index
-		}
 	}
 }

@@ -1,6 +1,6 @@
 import { component, html, state, css, eventListener, bind, query, queryAll, choose, type PropertyValues } from '@a11d/lit'
 import { PageComponent, route } from '@a11d/lit-application'
-import { DateTime } from '@3mo/date-time'
+import { type DateTime } from '@3mo/date-time'
 import { MediaQueryController } from '@3mo/media-query-observer'
 import { transitionCalendar, type CalendarTransitionType } from './calendarTransition.js'
 import type { EntrySegmentComponent } from '../../entries/client/EventSegment.js'
@@ -22,14 +22,14 @@ import type { Sidebar } from '../../../app/Sidebar.js'
 import { windowDragHandle } from '../../../design/windowDrag.css.js'
 import { CalendarPeriod } from './CalendarPeriod.js'
 import { TableWindow } from './TableWindow.js'
+import { startedInField } from '../../../design/eventOrigin.js'
+import { type Popover } from '../../../design/Popover.js'
 
 // The view is the path (`/week`), everything open on top of it is a query parameter. `/` stays a valid
 // entry point — the PWA start URL and the OAuth redirect both land there — and canonicalizes on arrival.
 @component('mitra-page-calendar')
 @route('/:view', '/')
 export class PageCalendar extends PageComponent<CalendarParameters> {
-	private static readonly customizableSelectsSupported = CSS.supports('appearance', 'base-select')
-
 	private static get opened() {
 		return CalendarLocation.of(globalThis.location, DefaultViewSetting.current)
 	}
@@ -94,7 +94,12 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 	protected override updated(props: PropertyValues) {
 		super.updated(props)
 		if (props.has('parameters')) {
-			this.restore(CalendarLocation.from(this.parameters, DefaultViewSetting.current))
+			// Read from the address bar, not from `parameters`: the router hands on the path's parameters from when the
+			// page was navigated to (the view before an in-app switch), and only the query as it stands.
+			const location = CalendarLocation.of(globalThis.location, DefaultViewSetting.current)
+			if (this.urlSync.arrived(location.url())) {
+				this.restore(location)
+			}
 		}
 	}
 
@@ -127,7 +132,7 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 
 	@query('mitra-command-palette') private readonly palette!: CommandPalette
 	@query('mitra-sidebar') private readonly sidebar?: Sidebar
-	@query('input.goto-date') private readonly gotoDateInput!: HTMLInputElement
+	@query('mitra-popover.goto-date') private readonly gotoDate!: Popover
 
 	get commands() { return commandInstances() }
 
@@ -159,12 +164,18 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 
 	private commandButton(type: abstract new () => Command, { className, icon, label }: { className: string, icon: string, label?: string }) {
 		const command = this.command(type)
-		const keys = command?.keyLabels?.join(' ')
-		return !command ? html.nothing : html`
-			<button class=${className} title=${keys ? `${command.heading} (${keys})` : command.heading} @click=${() => void command.dispatch()}>
+		if (!command) {
+			return html.nothing
+		}
+		const keys = command.keyLabels?.join(' ')
+		const title = keys ? `${command.heading} (${keys})` : command.heading
+		return !label ? html`
+			<mitra-icon-button class=${className} variant="default" icon=${icon} label=${command.heading} title=${title} @click=${() => void command.dispatch()}></mitra-icon-button>
+		` : html`
+			<mitra-button class=${className} title=${title} @click=${() => void command.dispatch()}>
 				<mitra-icon icon=${icon}></mitra-icon>
-				${!label ? html.nothing : html`<span>${label}</span> <kbd>${keys}</kbd>`}
-			</button>
+				<span>${label}</span> <kbd>${keys}</kbd>
+			</mitra-button>
 		`
 	}
 
@@ -183,31 +194,15 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 		this.requestUpdate()
 	}
 
-	/** Trigger native date picker for the Go to Date command. */
+	/** Opens a month to pick a day from under the heading, for the Go to Date command. */
 	goToDate() {
-		const input = this.gotoDateInput
-		const date = this.navigatingDate
-		input.value = `${String(date.year).padStart(4, '0')}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`
-		try {
-			input.showPicker()
-		} catch {
-			input.focus()
-		}
-	}
-
-	private handleGoToDate(e: Event) {
-		const value = (e.target as HTMLInputElement).value
-		if (value) {
-			this.navigatingDate = new DateTime(`${value}T00:00:00`)
-		}
+		this.gotoDate.show(this.querySelector('main > header h1') ?? undefined)
+		this.gotoDate.querySelector('mitra-date-picker')?.focus()
 	}
 
 	@eventListener({ target: window, type: 'keydown' })
 	protected handleKeyDown(e: KeyboardEvent) {
-		const target = e.target
-		const editable = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
-			|| target instanceof HTMLSelectElement || (target instanceof HTMLElement && target.isContentEditable)
-		if (editable || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) {
+		if (startedInField(e) || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) {
 			return
 		}
 
@@ -356,19 +351,16 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 							}
 						}
 
-						.toggle {
-							font-size: 20px;
-						}
-
 						.today, .create {
 							mitra-icon {
 								display: none;
-								font-size: 1rem;
 							}
 
 							@container (max-width: 40rem) {
-								aspect-ratio: 1;
-								padding-inline: 0;
+								&::part(button) {
+									aspect-ratio: 1;
+									padding-inline: 0;
+								}
 
 								mitra-icon {
 									display: inline-flex;
@@ -385,37 +377,30 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 							display: inline-flex;
 						}
 
-						/* One control, its buttons sharing borders. Phones step by swiping, so there it is Today alone. */
+						/* One control, its buttons sharing borders. The border is translucent, so two overlapping ones would read
+						   twice as dark: each button after the first drops its own. Phones step by swiping, so there it is Today alone. */
 						.period {
 							display: flex;
 
-							> button {
-								&:not(:first-child) {
-									margin-inline-start: -1px;
+							> * {
+								&:not(:first-child)::part(button) {
+									border-inline-start-width: 0;
 									border-start-start-radius: 0;
 									border-end-start-radius: 0;
 								}
 
-								&:not(:last-child) {
+								&:not(:last-child)::part(button) {
 									border-start-end-radius: 0;
 									border-end-end-radius: 0;
 								}
 
-								&:focus-visible {
+								&:focus-within {
 									z-index: 1;
 								}
 							}
 
-							> .previous, > .next {
-								padding-inline: 0.5rem;
-
-								mitra-icon {
-									font-size: 1rem;
-
-									&:dir(rtl) {
-										scale: -1 1;
-									}
-								}
+							> :is(.previous, .next):dir(rtl)::part(icon) {
+								scale: -1 1;
 							}
 
 							@container (max-width: 40rem) {
@@ -423,25 +408,25 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 									display: none;
 								}
 
-								> .today {
-									margin-inline-start: 0;
+								> .today::part(button) {
+									border-inline-start-width: 1px;
 									border-radius: var(--border-radius);
 								}
 							}
 						}
 
-						select {
-							> button > mitra-icon {
+						/* An icon alone on a phone, its words everywhere else. */
+						mitra-select.view {
+							&::part(icon) {
 								display: none;
-								font-size: 1rem;
 							}
 
 							@container (max-width: 40rem) {
-								> button > mitra-icon {
+								&::part(icon) {
 									display: inline-flex;
 								}
 
-								> button > selectedcontent {
+								&::part(value) {
 									display: none;
 								}
 							}
@@ -450,9 +435,12 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 						.search {
 							flex: 0 1 18rem;
 							min-inline-size: 7rem;
-							justify-content: flex-start;
-							border-radius: calc(2 * var(--border-radius));
 							font-weight: 400;
+
+							&::part(button) {
+								justify-content: flex-start;
+								border-radius: calc(2 * var(--border-radius));
+							}
 
 							span {
 								flex: 1;
@@ -466,10 +454,13 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 							@container (max-width: 52rem) {
 								flex: none;
 								min-inline-size: 0;
-								border-radius: var(--border-radius);
-								aspect-ratio: 1;
-								justify-content: center;
-								padding-inline: 0;
+
+								&::part(button) {
+									border-radius: var(--border-radius);
+									aspect-ratio: 1;
+									justify-content: center;
+									padding-inline: 0;
+								}
 
 								span, kbd {
 									display: none;
@@ -506,16 +497,8 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 					}
 				}
 
-				input.goto-date {
-					position: fixed;
-					inset-block-start: 3.5rem;
-					inset-inline-start: 50%;
-					inline-size: 1px;
-					block-size: 1px;
-					padding: 0;
-					border: none;
-					opacity: 0;
-					pointer-events: none;
+				mitra-popover.goto-date {
+					position-area: block-end span-inline-end;
 				}
 			}
 		`
@@ -536,19 +519,17 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 							<mitra-icon-button class="toggle" icon="panel-left" label=${t('Toggle sidebar')} @click=${this.toggleSidebar}></mitra-icon-button>
 							${this.headingTemplate}
 						</div>
-						<button class="search" title=${t('Search or run a command (${hotkey})', { hotkey: CommandPalette.hotkey })} @click=${() => this.palette.show()}>
+						<mitra-button class="search" title=${t('Search or run a command (${hotkey})', { hotkey: CommandPalette.hotkey })} @click=${() => this.palette.show()}>
 							<mitra-icon icon="search"></mitra-icon>
 							<span>${t('Search or run a command…')}</span>
 							<kbd>${CommandPalette.hotkey}</kbd>
-						</button>
+						</mitra-button>
 						<div class="trailing">
-							<select title=${t('View')} .value=${this.view} @change=${(e: Event) => this.setView((e.target as HTMLSelectElement).value as CalendarView)}>
-								<button>
-									<mitra-icon icon="calendar-cog"></mitra-icon>
-									<selectedcontent></selectedcontent>
-								</button>
-								${[{ value: 'year', label: t('Year'), key: 'Y' }, { value: 'month', label: t('Month'), key: 'M' }, { value: 'week', label: t('Week'), key: 'W' }, { value: 'timeline', label: t('Timeline'), key: 'L' }, { value: 'table', label: t('Table'), key: 'S' }].map(o => html`<option value=${o.value} ?selected=${o.value === this.view}>${o.label}${PageCalendar.customizableSelectsSupported ? html`<kbd>${o.key}</kbd>` : html.nothing}</option>`)}
-							</select>
+							<mitra-select class="view" icon="calendar-cog" label=${t('View')} title=${t('View')} .value=${this.view} @change=${(e: CustomEvent<CalendarView>) => this.setView(e.detail)}>
+								${([['year', t('Year'), 'Y'], ['month', t('Month'), 'M'], ['week', t('Week'), 'W'], ['timeline', t('Timeline'), 'L'], ['table', t('Table'), 'S']] as const).map(([view, label, key]) => html`
+									<mitra-option .value=${view} label=${label}>${label}<kbd slot="detail">${key}</kbd></mitra-option>
+								`)}
+							</mitra-select>
 							${this.commandButton(CreateEntry, { className: 'create', icon: 'plus', label: t('Create') })}
 							<div class="period" role="group">
 								${!this.period ? html.nothing : this.commandButton(PreviousPeriod, { className: 'previous', icon: 'chevron-left' })}
@@ -562,31 +543,27 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 							['week', () => html`
 								<mitra-days
 									.entries=${this.store.entries}
-									.navigatingDate=${this.navigatingDate}
-									@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
+									.navigatingDate=${bind(this, 'navigatingDate', { event: 'navigate' })}
 								></mitra-days>
 							`],
 							['month', () => html`
 								<mitra-weeks
 									.entries=${this.store.entries}
-									.navigatingDate=${this.navigatingDate}
-									@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
+									.navigatingDate=${bind(this, 'navigatingDate', { event: 'navigate' })}
 									@switchToWeek=${() => this.setView('week')}
 								></mitra-weeks>
 							`],
 							['year', () => html`
 								<mitra-months
 									.entries=${this.store.entries}
-									.navigatingDate=${this.navigatingDate}
-									@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
+									.navigatingDate=${bind(this, 'navigatingDate', { event: 'navigate' })}
 									@switchToMonth=${() => this.setView('month')}
 								></mitra-months>
 							`],
 							['timeline', () => html`
 								<mitra-timeline
 									.entries=${this.store.entries}
-									.navigatingDate=${this.navigatingDate}
-									@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
+									.navigatingDate=${bind(this, 'navigatingDate', { event: 'navigate' })}
 								></mitra-timeline>
 							`],
 							['table', () => html`
@@ -603,7 +580,11 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 					.commands=${this.paletteCommands}
 					@navigate=${(e: CustomEvent<DateTime>) => this.navigatingDate = e.detail}
 				></mitra-command-palette>
-				<input class="goto-date" type="date" aria-hidden="true" tabindex="-1" @change=${(e: Event) => this.handleGoToDate(e)}>
+				<mitra-popover class="goto-date">
+					<mitra-date-picker .value=${this.navigatingDate}
+						@pick=${(e: CustomEvent<DateTime>) => { this.navigatingDate = e.detail; this.gotoDate.hide() }}
+					></mitra-date-picker>
+				</mitra-popover>
 			</lit-page>
 		`
 	}

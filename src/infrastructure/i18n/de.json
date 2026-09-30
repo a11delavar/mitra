@@ -8,10 +8,6 @@
 		"${count:pluralityNumber} Stunde",
 		"${count:pluralityNumber} Stunden"
 	],
-	"${count:pluralityNumber} months": [
-		"${count:pluralityNumber} Monat",
-		"${count:pluralityNumber} Monate"
-	],
 	"${count:pluralityNumber} participants": [
 		"${count:pluralityNumber} Teilnehmer",
 		"${count:pluralityNumber} Teilnehmer"
@@ -19,10 +15,6 @@
 	"${count:pluralityNumber} weeks": [
 		"${count:pluralityNumber} Woche",
 		"${count:pluralityNumber} Wochen"
-	],
-	"${count:pluralityNumber} years": [
-		"${count:pluralityNumber} Jahr",
-		"${count:pluralityNumber} Jahre"
 	],
 	"${span} before": "${span} vorher",
 	"${status} — click to toggle, Alt-click for options": "${status} — zum Umschalten klicken, Alt-Klick für Optionen",
@@ -159,6 +151,10 @@
 	"Edit integration": "Integration bearbeiten",
 	"Edit repeating entry": "Wiederkehrenden Eintrag bearbeiten",
 	"End date": "Enddatum",
+	"Choose a date": "Datum wählen",
+	"Choose a time": "Uhrzeit wählen",
+	"Previous month": "Vorheriger Monat",
+	"Next month": "Nächster Monat",
 	"Date": "Datum",
 	"No date": "Kein Datum",
 	"Remove the date": "Datum entfernen",
@@ -166,6 +162,9 @@
 	"Remove the end date": "Enddatum entfernen",
 	"End time": "Endzeit",
 	"Ends": "Endet",
+	"Weekdays": "Wochentage",
+	"Frequency": "Häufigkeit",
+	"Unit": "Einheit",
 	"Entries": "Einträge",
 	"Event": "Termin",
 	"Events": "Termine",
@@ -284,6 +283,7 @@
 	"Reload to finish updating": "Neu laden, um das Update abzuschließen",
 	"Rename": "Umbenennen",
 	"Rename time zone": "Zeitzone umbenennen",
+	"Name": "Name",
 	"Repeat": "Wiederholung",
 	"Repeats": "Wiederholt sich",
 	"Repository": "Repository",
@@ -317,6 +317,7 @@
 	"This and following entries": "Dieser und folgende Einträge",
 	"This entry": "Dieser Eintrag",
 	"Time zone": "Zeitzone",
+	"Primary": "Primär",
 	"Timeline": "Zeitleiste",
 	"Timeline View": "Zeitleistenansicht",
 	"Table": "Tabelle",

@@ -8,6 +8,10 @@ import { EntryStore } from './EntryStore.js'
  */
 export class EntryEditorIntent {
 	private static pending?: Entry | string
+
+	/** Fires `request` on every open request. A view that guards its templates re-renders nothing for one,
+	 * so segments listen here to update themselves. */
+	static readonly requests = new EventTarget()
 	private static editing?: Entry
 
 	/** The open entry as an id, or the requested one until it renders. A draft has none and is
@@ -20,12 +24,14 @@ export class EntryEditorIntent {
 	static openDraft(draft: Entry) {
 		this.pending = draft
 		EntryStore.notify()
+		this.requests.dispatchEvent(new Event('request'))
 	}
 
 	/** Request opening the editor for an entry by id after render/refetch. */
 	static requestOpen(id: string) {
 		this.pending = id
 		EntryStore.notify()
+		this.requests.dispatchEvent(new Event('request'))
 	}
 
 	/** Whether the given entry matches the pending open intent. */

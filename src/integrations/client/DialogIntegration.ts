@@ -1,4 +1,4 @@
-import { component, html, css, state, Binder, unsafeHTML, ifDefined } from '@a11d/lit'
+import { component, html, css, state, Binder, unsafeHTML, ifDefined, live } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { Source } from '../../features/sources/Source.js'
 import { integrationClasses, type Integration, type IntegrationClass } from '../Integration.js'
@@ -11,6 +11,8 @@ import appleLogo from '../apple/logo.svg'
 import icsLogo from '../ics/logo.svg'
 import notionLogo from '../notion/logo.svg'
 import tempoLogo from '../tempo/logo.svg'
+import '../../design/TextField.js'
+import { pressable } from '../../design/pressable.css.js'
 
 const logos: Record<string, string> = {
 	caldav: caldavLogo,
@@ -115,8 +117,12 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 					overflow-y: auto;
 
 					.type {
-						height: auto;
+						${pressable};
+						display: flex;
 						flex-direction: column;
+						border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+						border-radius: var(--border-radius);
+						transition: border-color 0.15s ease;
 						align-items: flex-start;
 						justify-content: flex-start;
 						gap: 0.125rem;
@@ -158,15 +164,6 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 					flex-direction: column;
 					gap: 1rem;
 
-					> label {
-						display: flex;
-						flex-direction: column;
-						gap: 0.3rem;
-						font-size: 0.75rem;
-						font-weight: 600;
-						color: var(--color-text-muted);
-					}
-
 					.connect {
 						align-self: flex-start;
 					}
@@ -180,7 +177,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 					.error {
 						margin: 0;
 						font-size: 0.8125rem;
-						color: #ff6b6b;
+						color: var(--color-error);
 					}
 				}
 
@@ -196,12 +193,12 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 					}
 
 					.source {
-						display: flex;
-						align-items: center;
-						gap: 0.625rem;
 						font-size: 0.875rem;
 						color: var(--color-text);
-						cursor: pointer;
+
+						&::part(label) {
+							gap: 0.625rem;
+						}
 
 						mitra-source-icon {
 							font-size: 16px;
@@ -265,8 +262,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 					<div class="sources">
 						<span class="sources-title">${t('Sources')}</span>
 						${entity.sources.map(source => html`
-							<label class="source">
-								<input type="checkbox" .checked=${source.enabled} @change=${() => { source.toggleEnabled(); this.requestUpdate() }}>
+							<mitra-checkbox class="source" .checked=${live(source.enabled)} @change=${() => { source.toggleEnabled(); this.requestUpdate() }}>
 								<mitra-source-icon .source=${source} icon=${ifDefined(entity.sourceIcon)}></mitra-source-icon>
 								<span class="name">
 									${source.name}
@@ -275,7 +271,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 										...source.readOnly ? [t('read-only')] : [],
 									].join(' · ')}</span>
 								</span>
-							</label>
+							</mitra-checkbox>
 						`)}
 					</div>
 				`}
@@ -297,14 +293,8 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 	private get appleTemplate() {
 		const { bind } = this.binder
 		return html`
-			<label>
-				${t('Apple ID')}
-				<input ${bind({ keyPath: 'credentials.username', event: 'input' })} ?readonly=${this.isEdit} autocomplete="off" placeholder="email@icloud.com">
-			</label>
-			<label>
-				${t('App-Specific Password')}
-				<input type="password" ${bind({ keyPath: 'credentials.password', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : ''} autocomplete="off">
-			</label>
+			<mitra-text-field label=${t('Apple ID')} ${bind({ keyPath: 'credentials.username' })} ?readonly=${this.isEdit} placeholder="email@icloud.com"></mitra-text-field>
+			<mitra-text-field label=${t('App-Specific Password')} type="password" ${bind({ keyPath: 'credentials.password' })} placeholder=${this.isEdit ? t('unchanged') : ''}></mitra-text-field>
 			${this.connectTemplate}
 		`
 	}
@@ -313,23 +303,11 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 		const { bind } = this.binder
 		return html`
 			${!this.isEdit ? html`<p class="hint">${t('Ics.UrlHint')}</p>` : html`
-				<label>
-					${t('Calendar')}
-					<input readonly .value=${this.entity!.credentials.username ?? ''} autocomplete="off">
-				</label>
+				<mitra-text-field label=${t('Calendar')} readonly .value=${this.entity!.credentials.username ?? ''}></mitra-text-field>
 			`}
-			<label>
-				${t('Calendar URL')}
-				<input ${bind({ keyPath: 'uri', event: 'input' })} ?readonly=${this.isEdit} placeholder="https://example.com/calendar.ics" autocomplete="off">
-			</label>
-			<label>
-				${t('Username (optional)')}
-				<input ${bind({ keyPath: 'credentials.authUsername', event: 'input' })} autocomplete="off">
-			</label>
-			<label>
-				${t('Password (optional)')}
-				<input type="password" ${bind({ keyPath: 'credentials.password', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : ''} autocomplete="off">
-			</label>
+			<mitra-text-field label=${t('Calendar URL')} ${bind({ keyPath: 'uri' })} ?readonly=${this.isEdit} placeholder="https://example.com/calendar.ics"></mitra-text-field>
+			<mitra-text-field label=${t('Username (optional)')} ${bind({ keyPath: 'credentials.authUsername' })}></mitra-text-field>
+			<mitra-text-field label=${t('Password (optional)')} type="password" ${bind({ keyPath: 'credentials.password' })} placeholder=${this.isEdit ? t('unchanged') : ''}></mitra-text-field>
 			${this.connectTemplate}
 		`
 	}
@@ -337,18 +315,9 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 	private get caldavTemplate() {
 		const { bind } = this.binder
 		return html`
-			<label>
-				${t('Server URL')}
-				<input ${bind({ keyPath: 'uri', event: 'input' })} ?readonly=${this.isEdit} placeholder="https://caldav.example.com" autocomplete="off">
-			</label>
-			<label>
-				${t('Username')}
-				<input ${bind({ keyPath: 'credentials.username', event: 'input' })} ?readonly=${this.isEdit} autocomplete="off">
-			</label>
-			<label>
-				${t('Password')}
-				<input type="password" ${bind({ keyPath: 'credentials.password', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : ''} autocomplete="off">
-			</label>
+			<mitra-text-field label=${t('Server URL')} ${bind({ keyPath: 'uri' })} ?readonly=${this.isEdit} placeholder="https://caldav.example.com"></mitra-text-field>
+			<mitra-text-field label=${t('Username')} ${bind({ keyPath: 'credentials.username' })} ?readonly=${this.isEdit}></mitra-text-field>
+			<mitra-text-field label=${t('Password')} type="password" ${bind({ keyPath: 'credentials.password' })} placeholder=${this.isEdit ? t('unchanged') : ''}></mitra-text-field>
 			${this.connectTemplate}
 		`
 	}
@@ -356,17 +325,14 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 	private get googleTemplate() {
 		if (this.isEdit) {
 			return html`
-				<label>
-					${t('Google account')}
-					<input readonly .value=${this.entity!.credentials.username} autocomplete="off">
-				</label>
+				<mitra-text-field label=${t('Google account')} readonly .value=${this.entity!.credentials.username}></mitra-text-field>
 				${this.sharedCalendarsHint}
 				${this.connectTemplate}
 			`
 		}
 		const availability = this.googleAvailability
 		return !availability ? html`
-			<button class="connect" disabled>${t('Continue with Google')}</button>
+			<mitra-button class="connect" disabled>${t('Continue with Google')}</mitra-button>
 		` : 'error' in availability ? html`
 			<p class="error">${availability.error}</p>
 		` : !availability.configured ? html`
@@ -374,7 +340,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 		` : html`
 			<p class="hint">${t('Google.ConsentHint')}</p>
 			${this.sharedCalendarsHint}
-			<button class="connect" @click=${() => connectGoogle()}>${t('Continue with Google')}</button>
+			<mitra-button class="connect" @click=${() => connectGoogle()}>${t('Continue with Google')}</mitra-button>
 		`
 	}
 
@@ -391,17 +357,11 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 		const { bind } = this.binder
 		return html`
 			${this.isEdit ? html`
-				<label>
-					${t('Workspace')}
-					<input readonly .value=${this.entity!.credentials.username ?? ''} autocomplete="off">
-				</label>
+				<mitra-text-field label=${t('Workspace')} readonly .value=${this.entity!.credentials.username ?? ''}></mitra-text-field>
 			` : html`
 				<p class="hint">${t('Notion.TokenHint')}</p>
 			`}
-			<label>
-				${t('Integration Token')}
-				<input type="password" ${bind({ keyPath: 'credentials.token', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : 'ntn_…'} autocomplete="off">
-			</label>
+			<mitra-text-field label=${t('Integration Token')} type="password" ${bind({ keyPath: 'credentials.token' })} placeholder=${this.isEdit ? t('unchanged') : 'ntn_…'}></mitra-text-field>
 			${this.connectTemplate}
 		`
 	}
@@ -410,29 +370,14 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 		const { bind } = this.binder
 		return html`
 			${this.isEdit ? html`
-				<label>
-					${t('Atlassian Account')}
-					<input readonly .value=${this.entity!.credentials.username ?? ''} autocomplete="off">
-				</label>
+				<mitra-text-field label=${t('Atlassian Account')} readonly .value=${this.entity!.credentials.username ?? ''}></mitra-text-field>
 			` : html`
 				<p class="hint">${t('Tempo.TokenHint')}</p>
 			`}
-			<label>
-				${t('Site URL')}
-				<input ${bind({ keyPath: 'credentials.site', event: 'input' })} ?readonly=${this.isEdit} placeholder="https://example.atlassian.net" autocomplete="off">
-			</label>
-			<label>
-				${t('Tempo API Token')}
-				<input type="password" ${bind({ keyPath: 'credentials.token', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : ''} autocomplete="off">
-			</label>
-			<label>
-				${t('Atlassian Account E-mail')}
-				<input ${bind({ keyPath: 'credentials.jiraEmail', event: 'input' })} autocomplete="off" placeholder="email@example.com">
-			</label>
-			<label>
-				${t('Atlassian API Token')}
-				<input type="password" ${bind({ keyPath: 'credentials.jiraToken', event: 'input' })} placeholder=${this.isEdit ? t('unchanged') : ''} autocomplete="off">
-			</label>
+			<mitra-text-field label=${t('Site URL')} ${bind({ keyPath: 'credentials.site' })} ?readonly=${this.isEdit} placeholder="https://example.atlassian.net"></mitra-text-field>
+			<mitra-text-field label=${t('Tempo API Token')} type="password" ${bind({ keyPath: 'credentials.token' })} placeholder=${this.isEdit ? t('unchanged') : ''}></mitra-text-field>
+			<mitra-text-field label=${t('Atlassian Account E-mail')} ${bind({ keyPath: 'credentials.jiraEmail' })} placeholder="email@example.com"></mitra-text-field>
+			<mitra-text-field label=${t('Atlassian API Token')} type="password" ${bind({ keyPath: 'credentials.jiraToken' })} placeholder=${this.isEdit ? t('unchanged') : ''}></mitra-text-field>
 			${this.connectTemplate}
 		`
 	}
@@ -443,11 +388,11 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 
 	private get connectTemplate() {
 		return this.discovering ? html`
-			<button class="connect" disabled>${t('Connecting…')}</button>
+			<mitra-button class="connect" disabled>${t('Connecting…')}</mitra-button>
 		` : html`
-			<button class="connect" @click=${() => this.discover()} ?disabled=${this.connectDisabled}>
+			<mitra-button class="connect" @click=${() => this.discover()} ?disabled=${this.connectDisabled}>
 				${this.entity!.sources.length ? t('Refresh') : t('Connect')}
-			</button>
+			</mitra-button>
 			${!this.discoveryError ? html.nothing : html`<p class="error">${this.discoveryError}</p>`}
 		`
 	}

@@ -42,6 +42,7 @@ export class Months extends Component {
 
 	private readonly scrolling: CalendarScrollController = new CalendarScrollController(this, this.buffer, {
 		axis: 'block',
+		alignment: 'center',
 		scroller: () => this,
 		ready: () => this.buffer.months.length > 0,
 		suspended: () => this.density.active,

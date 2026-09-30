@@ -1,11 +1,21 @@
 import { Component, component, html, css, property, state, query, event } from '@a11d/lit'
 import { DialogComponent, DialogActionKey, type ApplicationTopLayer } from '@a11d/lit-application'
 import { Mitra } from '../app/Mitra.js'
+import './Button.js'
+import './IconButton.js'
+import { fieldChromeRestored } from './fieldChrome.css.js'
 
+/**
+ * The dialog chrome of a `DialogComponent`, or a dialog of its own where none takes it over: bound through `open`,
+ * it then closes itself (its X, Escape, a press outside) with `openChange`, and its primary button fires `primaryAction`.
+ * Rendered where it is used, it keeps a popover it opens from open, which a dialog appended elsewhere would dismiss.
+ */
 @component('mitra-dialog')
 @DialogComponent.dialogElement()
 export class Dialog extends Component {
 	@event({ bubbles: true, composed: true, cancelable: true }) readonly pageHeadingChange!: EventDispatcher<string>
+	@event() readonly openChange!: EventDispatcher<boolean>
+	@event() readonly primaryAction!: EventDispatcher
 
 	@property({ updated(this: Dialog) { this.pageHeadingChange.dispatch(this.heading) } }) heading = ''
 	@property() errorHandler?: (error: Error) => void | Promise<void>
@@ -21,17 +31,40 @@ export class Dialog extends Component {
 	@state() executingAction?: DialogActionKey
 	@state() private hasFooter = false
 
-	@state({
+	@property({
+		type: Boolean,
 		updated(this: Dialog, open: boolean) {
-			if (open) {
+			if (open && !this.dialog.open) {
 				this.dialog.showModal()
-			} else {
+			} else if (!open) {
 				this.dialog.close()
 			}
 		}
 	}) open = false
 
-	handleAction!: (key: DialogActionKey) => void | Promise<void>
+	private readonly standaloneAction = (key: DialogActionKey) => {
+		if (key === DialogActionKey.Primary) {
+			this.primaryAction.dispatch()
+		} else {
+			this.open = false
+			this.openChange.dispatch(false)
+		}
+	}
+
+	/** A `DialogComponent` replaces this with its own. */
+	handleAction: (key: DialogActionKey) => void | Promise<void> = this.standaloneAction
+
+	private get standalone() {
+		return this.handleAction === this.standaloneAction
+	}
+
+	// A DialogComponent answers Escape itself, so the platform's own dismissal only ever stands for a standalone dialog.
+	private readonly handleCancel = (e: Event) => {
+		e.preventDefault()
+		if (this.standalone) {
+			this.handleAction(DialogActionKey.Cancellation)
+		}
+	}
 
 	@query('dialog') private readonly dialog!: HTMLDialogElement
 	@query('lit-application-top-layer') readonly topLayerElement!: ApplicationTopLayer
@@ -53,6 +86,7 @@ export class Dialog extends Component {
 			}
 
 			dialog {
+				${fieldChromeRestored};
 				margin: auto;
 				outline: none;
 				background: var(--color-background);
@@ -100,11 +134,6 @@ export class Dialog extends Component {
 				align-items: center;
 				gap: 0.75rem;
 
-				> mitra-icon-button {
-					--icon-button-size: 2rem;
-					font-size: 1.0625rem;
-				}
-
 				h2 {
 					flex: 1;
 					margin: 0;
@@ -139,7 +168,7 @@ export class Dialog extends Component {
 
 	protected override get template() {
 		return html`
-			<dialog part="dialog" @cancel=${(e: Event) => e.preventDefault()}>
+			<dialog part="dialog" .closedBy=${this.standalone ? 'any' : 'closerequest'} @cancel=${this.handleCancel}>
 				<div class="panel">
 					<header class="header" ?data-headingless=${!this.heading}>
 						<slot name="leading"></slot>
@@ -150,13 +179,15 @@ export class Dialog extends Component {
 					<footer class="footer" ?data-empty=${!this.primaryButtonText && !this.hasFooter}>
 						<slot name="footer" @slotchange=${(e: Event) => this.hasFooter = (e.target as HTMLSlotElement).assignedElements().length > 0}></slot>
 						${!this.primaryButtonText ? html.nothing : html`
-							<button class="primary" ?disabled=${this.primaryButtonDisabled || this.executingAction === DialogActionKey.Primary} @click=${() => this.handleAction(DialogActionKey.Primary)}>
+							<mitra-button variant="primary" ?disabled=${this.primaryButtonDisabled || this.executingAction === DialogActionKey.Primary} @click=${() => this.handleAction(DialogActionKey.Primary)}>
 								${this.primaryButtonText}
-							</button>
+							</mitra-button>
 						`}
 					</footer>
 				</div>
-				<lit-application-top-layer></lit-application-top-layer>
+				<!-- Dialogs go to the last top layer connected, so a closed standalone one (the editor's Repeat, its
+					reminders) must hold none: every dialog would land inside the editor, and go down with it. -->
+				${this.standalone && !this.open ? html.nothing : html`<lit-application-top-layer></lit-application-top-layer>`}
 			</dialog>
 		`
 	}

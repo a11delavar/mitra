@@ -1,4 +1,5 @@
 import { DateTime, DateTimeRange } from '@3mo/date-time'
+import { calendarDateOf } from '../../time/calendarDate.js'
 
 export const tableWindowPresets = ['past30', 'today', 'next7', 'next30', 'next12', 'all'] as const
 
@@ -68,9 +69,9 @@ export class TableWindow {
 		return this.kind !== 'custom' ? this.kind : `custom:${TableWindow.dayOf(this.from!)}:${TableWindow.dayOf(this.to!)}`
 	}
 
-	/** A day as a key and a date field write it. */
+	/** A day as a key and a date field write it: ISO, whatever calendar the language reads days in. */
 	static dayOf(date: DateTime) {
-		return `${String(date.year).padStart(4, '0')}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`
+		return calendarDateOf(date).toString()
 	}
 
 	/** No bounds at all. A series then lists once, as its start, since its occurrences never end. */

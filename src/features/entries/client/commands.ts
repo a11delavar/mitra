@@ -1,5 +1,6 @@
 import { DateTime } from '@3mo/date-time'
 import { Entry } from '../Entry.js'
+import { EntryType } from '../EntryType.js'
 import { DefaultReminderSetting } from '../../reminders/client/DefaultReminderSetting.js'
 import { getPrimarySource, getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
@@ -22,14 +23,16 @@ export class CreateEntry extends Command {
 		}
 		const now = new DateTime()
 		const start = now.dayStart.add({ hours: now.hour + 1 })
-		// The table lists a draft as a row of its own, so it keeps the view; the grids hand over to the week.
-		if (calendar.view !== 'table') {
+		// Every view shows the draft where it is, but the timeline lists only tasks: there it is a task, and a
+		// calendar that holds none hands over to the week.
+		const timelineTask = calendar.view === 'timeline' && source.supportsEntryType(EntryType.Task)
+		if (calendar.view === 'timeline' && !timelineTask) {
 			calendar.setView('week')
 		}
 		calendar.navigatingDate = now
 		const draft = new Entry({
 			sourceId: source.id,
-			type: source.defaultEntryType,
+			type: timelineTask ? EntryType.Task : source.defaultEntryType,
 			heading: '',
 			start,
 			end: start.add({ hours: 1 }),

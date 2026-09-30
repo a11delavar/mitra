@@ -1,8 +1,9 @@
-import { Component, component, html, css, property, state, event, query } from '@a11d/lit'
+import { Component, component, html, css, property, state, event, live } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
 import { Recurrence, WEEKDAY_CODES, type Frequency, type RecurrencePreset } from '../Recurrence.js'
 import { type Entry } from '../../entries/Entry.js'
 import { getCapabilities } from '../../../infrastructure/http/Api.js'
+import { type SelectionGroupValue } from '../../../design/SelectionGroup.js'
 const FREQ_OPTIONS: ReadonlyArray<{ value: Frequency }> = [
 	{ value: 'DAILY' },
 	{ value: 'WEEKLY' },
@@ -12,13 +13,14 @@ const FREQ_OPTIONS: ReadonlyArray<{ value: Frequency }> = [
 
 // The frequency unit as it reads in the "Every N …" select, pluralized by the current interval so
 // "Every 1 week" / "Every 2 weeks" agree. The count drives the plural, hence pluralityNumber.
+/** The unit alone, as the number beside it asks for it ("Every [2] [weeks]"): the language's own plural, by `Intl`. */
 function freqLabel(value: Frequency, count: number): string {
-	switch (value) {
-		case 'DAILY': return t('${count:pluralityNumber} days', { count })
-		case 'WEEKLY': return t('${count:pluralityNumber} weeks', { count })
-		case 'MONTHLY': return t('${count:pluralityNumber} months', { count })
-		case 'YEARLY': return t('${count:pluralityNumber} years', { count })
-	}
+	const unit = ({ DAILY: 'day', WEEKLY: 'week', MONTHLY: 'month', YEARLY: 'year' } as const)[value]
+	return new Intl.NumberFormat(Localizer.languages.current, { style: 'unit', unit, unitDisplay: 'long' })
+		.formatToParts(count)
+		.filter(part => part.type === 'unit')
+		.map(part => part.value)
+		.join('')
 }
 
 type MenuItem = RecurrencePreset & { checked: boolean }
@@ -36,7 +38,7 @@ export class RepeatField extends Component {
 		type: Object,
 		// If the shown entry changes while the Custom dialog is open (e.g. the popover is reused for another
 		// entry), close it and drop the stale draft rather than leaving it editing the wrong entry.
-		updated(this: RepeatField) { this.dialog?.close(); this.draft = undefined },
+		updated(this: RepeatField) { this.draft = undefined },
 	}) entry!: Entry
 
 	/** Fired after `entry.recurrence` is mutated, so the host can persist and re-render. */
@@ -56,10 +58,6 @@ export class RepeatField extends Component {
 	 * silently dropping every occurrence before the new rule's first match. */
 	private get start(): DateTime { return this.entry.seriesStart ?? this.entry.start! }
 
-	@query('dialog') private readonly dialog?: HTMLDialogElement
-	// The preset dropdown (the first select) and the Custom dialog's frequency select.
-	@query('select') private readonly presetSelect?: HTMLSelectElement
-	@query('dialog select') private readonly freqSelect?: HTMLSelectElement
 
 	private get currentLabel(): string {
 		return this.entry.recurrence ? this.entry.recurrence.describe(this.start) : t('Does not repeat')
@@ -88,12 +86,10 @@ export class RepeatField extends Component {
 		return items
 	}
 
-	private readonly handleSelect = (e: Event) => {
-		e.stopPropagation() // the RULE change is dispatched via commit(); the raw select change isn't a span edit
-		const id = (e.target as HTMLSelectElement).value
+	private readonly handleSelect = (e: CustomEvent<string>) => {
+		const id = e.detail
 		if (id === 'custom') {
-			// An action, not a value: reopen the real selection underneath and edit in the dialog instead.
-			this.syncSelect()
+			// An action rather than a value: the select goes back to the rule in force as this re-renders.
 			this.openCustomDialog()
 			return
 		}
@@ -101,24 +97,6 @@ export class RepeatField extends Component {
 			return // the already-active custom rule
 		}
 		this.commit(this.menuItems.find(item => item.id === id)?.recurrence)
-	}
-
-	/** Keep the select's own (dirty-flagged) value on the checked item — after a "Custom…" pick, a dialog
-	 * cancel, or an external change re-render, the attribute alone doesn't move it back. */
-	private syncSelect() {
-		if (this.presetSelect) {
-			this.presetSelect.value = this.menuItems.find(item => item.checked)?.id ?? 'none'
-		}
-	}
-
-	protected override updated() {
-		this.syncSelect()
-		// The Custom dialog's frequency select suffers the same value-before-options timing on its first
-		// render — without this it can display "day" while the rule (and the visible weekday chips) are
-		// weekly.
-		if (this.freqSelect && this.draft) {
-			this.freqSelect.value = this.draft.freq
-		}
 	}
 
 	// --- Custom dialog --------------------------------------------------------------------------------
@@ -132,12 +110,9 @@ export class RepeatField extends Component {
 		} else if (this.draft.count) {
 			this.lastCount = this.draft.count
 		}
-		this.requestUpdate()
-		this.updateComplete.then(() => this.dialog?.showModal())
 	}
 
 	private readonly cancelDialog = () => {
-		this.dialog?.close()
 		this.draft = undefined
 	}
 
@@ -145,7 +120,6 @@ export class RepeatField extends Component {
 		if (this.draft) {
 			this.commit(this.draft)
 		}
-		this.dialog?.close()
 		this.draft = undefined
 	}
 
@@ -154,12 +128,12 @@ export class RepeatField extends Component {
 		this.requestUpdate()
 	}
 
-	private readonly onInterval = (e: Event) => {
-		this.patchDraft({ interval: Math.max(1, Math.trunc(Number((e.target as HTMLInputElement).value)) || 1) })
+	private readonly onInterval = (e: CustomEvent<number>) => {
+		this.patchDraft({ interval: e.detail })
 	}
 
-	private readonly onFreq = (e: Event) => {
-		const freq = (e.target as HTMLSelectElement).value as Frequency
+	private readonly onFreq = (e: CustomEvent<Frequency>) => {
+		const freq = e.detail
 		// Reset the by-rules so each frequency starts from a valid default derived from the start date.
 		const patch: Partial<Recurrence> = { freq, byday: undefined, bymonthday: undefined }
 		if (freq === 'WEEKLY') {
@@ -170,18 +144,10 @@ export class RepeatField extends Component {
 		this.patchDraft(patch)
 	}
 
-	private readonly toggleWeekday = (code: string) => (e: Event) => {
-		e.preventDefault()
-		const selected = new Set(this.draft!.byday ?? [])
-		if (selected.has(code)) {
-			selected.delete(code) // keep at least one day selected
-			if (selected.size === 0) {
-				return
-			}
-		} else {
-			selected.add(code)
-		}
-		this.patchDraft({ byday: WEEKDAY_CODES.filter(c => selected.has(c)) })
+	private readonly chooseWeekdays = (e: CustomEvent<SelectionGroupValue>) => {
+		const selected = new Set(e.detail instanceof Array ? e.detail : [])
+		// At least one day stays selected: emptying the set re-renders the one it had.
+		this.patchDraft(selected.size ? { byday: WEEKDAY_CODES.filter(code => selected.has(code)) } : {})
 	}
 
 	private get monthlyOptions(): Array<MonthlyOption> {
@@ -218,12 +184,17 @@ export class RepeatField extends Component {
 		return this.draft!.bymonthday ? 'monthday' : this.draft!.byday?.[0] ?? 'monthday'
 	}
 
-	private readonly chooseMonthly = (key: string) => (e: Event) => {
-		e.preventDefault()
+	private readonly chooseMonthly = (e: CustomEvent<SelectionGroupValue>) => {
+		const key = String(e.detail)
 		this.patchDraft(key === 'monthday' ? { bymonthday: this.start.day, byday: undefined } : { byday: [key], bymonthday: undefined })
 	}
 
-	private readonly setEnds = (type: 'never' | 'until' | 'count') => () => {
+	private get ends() {
+		return this.draft!.until ? 'until' : this.draft!.count ? 'count' : 'never'
+	}
+
+	private readonly setEnds = (e: CustomEvent<SelectionGroupValue>) => {
+		const type = e.detail
 		if (type === 'until') {
 			this.patchDraft({ until: this.draftUntil, count: undefined })
 		} else if (type === 'count') {
@@ -258,8 +229,8 @@ export class RepeatField extends Component {
 		this.patchDraft({ until: this.lastUntil, count: undefined })
 	}
 
-	private readonly onCount = (e: Event) => {
-		this.lastCount = Math.max(1, Math.trunc(Number((e.target as HTMLInputElement).value)) || 1)
+	private readonly onCount = (e: CustomEvent<number>) => {
+		this.lastCount = e.detail
 		this.patchDraft({ count: this.lastCount, until: undefined })
 	}
 
@@ -276,158 +247,39 @@ export class RepeatField extends Component {
 				min-width: 0;
 				display: flex;
 
-				/* The same bare in-field select as the popover's source row — the field box around it
-				   carries the hover/active feedback; its picker wears the popover's tinted glass,
-				   opening beside the row before below/above. */
-				> select {
-					width: 100%;
-
-					selectedcontent {
-						display: flex;
-						align-items: baseline;
-						gap: 0.5rem;
-						overflow: hidden;
-						white-space: nowrap;
-
-						.detail { color: var(--color-text-muted); }
-					}
-
-					/* The same picker strategy as the source selector: the popover's tinted glass, opening
-					   beside the row and flipping inline/block when the space runs out. */
-					&::picker(select) {
-						background: var(--mitra-entry-surface);
-						border: var(--border);
-						box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48), 0px 4px 12px -1px rgba(0,0,0,0.24);
-						position-area: inline-end span-all;
-						position-try-fallbacks: flip-inline, flip-block, flip-inline flip-block;
-						margin-inline: 0.875rem;
-						max-height: 60dvh;
-						overflow-y: auto;
-					}
-
-					option {
-						gap: 0.5rem;
-
-						.name { white-space: nowrap; }
-						.detail { color: var(--color-text-muted); font-weight: 400; white-space: nowrap; }
-						&.custom { color: var(--color-text-muted); }
-					}
+				> mitra-select {
+					flex: 1;
 				}
 
-				/* --- Custom dialog ------------------------------------------------------------------------ */
-				dialog {
-					margin: auto;
-					border: var(--border);
-					border-radius: 14px;
-					padding: 1.25rem;
-					min-width: 320px;
-					max-width: min(380px, 92vw);
-					background: color-mix(in srgb, var(--color-surface) 94%, transparent);
-					backdrop-filter: blur(12px);
-					color: var(--color-text);
-					font-family: 'Inter', sans-serif;
-					font-size: 0.8125rem;
-					box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+				.custom-repeat {
+					display: flex;
+					flex-direction: column;
+					gap: 1rem;
 
-					&::backdrop { background: rgba(0, 0, 0, 0.45); }
-
-					@media (prefers-reduced-motion: no-preference) {
-						transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
-						@starting-style { opacity: 0; transform: scale(0.95) translateY(8px); }
+					.every {
+						display: flex;
+						align-items: center;
+						gap: 0.5rem;
+						> .interval { inline-size: 4rem; }
+						mitra-select { min-inline-size: 6rem; }
 					}
 
-					> .repeat-dialog {
-						display: flex;
-						flex-direction: column;
-						gap: 1rem;
+					.ends-label {
+						margin-block-end: -0.5rem;
+						font-weight: 600;
+						color: var(--color-text-muted);
+					}
 
-						> header {
-							display: flex;
-							align-items: center;
-							justify-content: space-between;
-							gap: 1rem;
+					.ends {
+						display: grid;
+						grid-template-columns: auto 1fr;
+						align-items: center;
+						gap: 0.625rem 1rem;
 
-							> h3 { margin: 0; font-size: 1rem; font-weight: 650; letter-spacing: -0.01em; }
-						}
-
-						.every {
-							display: flex;
-							align-items: center;
-							gap: 0.5rem;
-							> .interval { inline-size: 4rem; }
-							> select { min-inline-size: 6rem; }
-						}
-
-						/* Weekday chips (Mo … Su). */
-						.weekdays {
-							display: flex;
-							gap: 0.375rem;
-							flex-wrap: wrap;
-							> button {
-								all: unset;
-								box-sizing: border-box;
-								inline-size: 2rem;
-								block-size: 2rem;
-								display: grid;
-								place-content: center;
-								border-radius: 50%;
-								font-size: 0.75rem;
-								font-weight: 600;
-								cursor: pointer;
-								background: color-mix(in srgb, var(--color-text) 8%, transparent);
-								color: var(--color-text);
-								transition: background 0.15s ease, color 0.15s ease;
-								&:hover { background: color-mix(in srgb, var(--color-text) 14%, transparent); }
-								&[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-text); }
-							}
-						}
-
-						/* Monthly segmented control (the Nth | the Nth Wd | the last Wd). */
-						.monthly {
-							display: flex;
-							flex-wrap: wrap;
-							gap: 0.375rem;
-							> button {
-								all: unset;
-								box-sizing: border-box;
-								padding: 0.3rem 0.625rem;
-								border-radius: var(--border-radius);
-								font-size: 0.75rem;
-								font-weight: 500;
-								cursor: pointer;
-								background: color-mix(in srgb, var(--color-text) 8%, transparent);
-								color: var(--color-text);
-								transition: background 0.15s ease, color 0.15s ease;
-								&:hover { background: color-mix(in srgb, var(--color-text) 14%, transparent); }
-								&[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-text); }
-							}
-						}
-
-						.ends {
-							display: grid;
-							grid-template-columns: auto auto 1fr;
-							align-items: center;
-							gap: 0.625rem 0.5rem;
-							> .ends-label { grid-column: 1 / -1; font-weight: 600; color: var(--color-text-muted); }
-
-							label {
-								display: contents;
-								/* Radios wear the global input.css convention; only their grid placement is local. */
-								> input[type="radio"] { grid-column: 1; justify-self: start; }
-								> span { grid-column: 2; }
-							}
-
-							input[type="date"], input[type="number"] { grid-column: 3; justify-self: start; }
-							input[type="number"] { inline-size: 4rem; }
-							.after-times { grid-column: 3; display: inline-flex; align-items: center; gap: 0.5rem; }
-						}
-
-						.dialog-actions {
-							display: flex;
-							justify-content: flex-end;
-							gap: 0.5rem;
-							margin-block-start: 0.25rem;
-						}
+						> mitra-radio { grid-column: 1; }
+						> :not(mitra-radio) { grid-column: 2; justify-self: start; }
+						mitra-number-field { inline-size: 4rem; }
+						.after-times { display: inline-flex; align-items: center; gap: 0.5rem; }
 					}
 				}
 			}
@@ -436,21 +288,18 @@ export class RepeatField extends Component {
 
 	protected override get template() {
 		return !this.entry?.start ? html.nothing : html`
-			<!-- No rule means nothing is chosen here, so "Does not repeat" reads as a placeholder rather
-				than as a value (field.css.ts owns what that looks like). -->
-			<!-- The custom dialog opens from this select, so disabling it here closes the whole editor —
-				while the rule itself still reads out of the collapsed control. -->
-			<select ?data-placeholder=${!this.entry.recurrence} ?disabled=${!getCapabilities(this.entry.sourceId).editEntries} @change=${this.handleSelect}>
-				<button>
-					<selectedcontent></selectedcontent>
-				</button>
+			<!-- No rule means nothing is chosen here, so "Does not repeat" reads as a placeholder rather than as a value. -->
+			<mitra-select label=${t('Repeat')} .placeholder=${!this.entry.recurrence} ?disabled=${!getCapabilities(this.entry.sourceId).editEntries}
+				.value=${live(this.menuItems.find(item => item.checked)?.id ?? 'none')}
+				@change=${this.handleSelect}
+			>
 				${this.menuItems.map(item => html`
-					<option value=${item.id} ?selected=${item.checked} class=${item.id === 'custom' ? 'custom' : ''}>
-						<span class="name">${item.label}</span>
-						${item.detail ? html`<span class="detail">${item.detail}</span>` : html.nothing}
-					</option>
+					<mitra-option .value=${item.id} label=${item.label} ?data-muted=${item.id === 'custom'}>
+						${item.label}
+						${!item.detail ? html.nothing : html`<span slot="detail">${item.detail}</span>`}
+					</mitra-option>
 				`)}
-			</select>
+			</mitra-select>
 			${this.dialogTemplate}
 		`
 	}
@@ -458,76 +307,49 @@ export class RepeatField extends Component {
 	private get dialogTemplate() {
 		const draft = this.draft
 		return html`
-			<dialog @cancel=${this.cancelDialog} @click=${(e: Event) => { if (e.target === this.dialog) this.cancelDialog() }}
+			<mitra-dialog heading=${t('Repeat')} primaryButtonText=${t('Done')} .open=${!!draft}
+				@openChange=${this.cancelDialog} @primaryAction=${this.confirmDialog}
 				@change=${(e: Event) => e.stopPropagation()} @input=${(e: Event) => e.stopPropagation()}>
 				${!draft ? html.nothing : html`
-					<div class="repeat-dialog">
-						<header>
-							<h3>${t('Repeat')}</h3>
-							<mitra-icon-button icon="x" label=${t('Close')} style="color: var(--color-text-muted)" @click=${this.cancelDialog}></mitra-icon-button>
-						</header>
+					<div class="custom-repeat">
 						<div class="every">
 							<label>${t('Every')}</label>
-							<input class="interval" type="number" min="1" aria-label=${t('Interval')} .value=${String(draft.every)} @change=${this.onInterval}>
-							<select .value=${draft.freq} @change=${this.onFreq}>
-								<button>
-									<selectedcontent></selectedcontent>
-								</button>
-								${FREQ_OPTIONS.map(option => html`<option value=${option.value}>${freqLabel(option.value, draft.every)}</option>`)}
-							</select>
+							<mitra-number-field class="interval" min="1" aria-label=${t('Interval')} .value=${draft.every} @change=${this.onInterval}></mitra-number-field>
+							<mitra-select label=${t('Frequency')} .value=${draft.freq} @change=${this.onFreq}>
+								${FREQ_OPTIONS.map(option => html`<mitra-option .value=${option.value}>${freqLabel(option.value, draft.every)}</mitra-option>`)}
+							</mitra-select>
 						</div>
 
 						${draft.freq !== 'WEEKLY' ? html.nothing : html`
-							<div class="weekdays">
+							<mitra-selection-group multiple aria-label=${t('Weekdays')} .value=${live(draft.byday ?? [])} @change=${this.chooseWeekdays}>
 								${WEEKDAY_CODES.map(code => html`
-									<button aria-pressed=${draft.byday?.includes(code) ?? false} title=${Recurrence.weekdayLabel(code)} @click=${this.toggleWeekday(code)}>
-										${Recurrence.weekdayLabel(code).slice(0, 2)}
-									</button>
+									<mitra-toggle value=${code} title=${Recurrence.weekdayLabel(code)}>${Recurrence.weekdayLabel(code).slice(0, 2)}</mitra-toggle>
 								`)}
-							</div>
+							</mitra-selection-group>
 						`}
 
 						${draft.freq !== 'MONTHLY' ? html.nothing : html`
-							<div class="monthly">
-								${this.monthlyOptions.map(option => html`
-									<button aria-pressed=${this.monthlyMode === option.key} @click=${this.chooseMonthly(option.key)}>${option.label}</button>
-								`)}
-							</div>
+							<mitra-selection-group aria-label=${t('Repeat')} .value=${live(this.monthlyMode)} @change=${this.chooseMonthly}>
+								${this.monthlyOptions.map(option => html`<mitra-toggle value=${option.key}>${option.label}</mitra-toggle>`)}
+							</mitra-selection-group>
 						`}
 
-						<!-- A real <form>, so the radios' group is scoped to it: two editors open at once
-							can both use the plain name "ends" without joining one group (a radio group is
-							per form owner). Submission is never wanted — Enter in the date/number field
-							would otherwise implicitly submit and navigate. -->
-						<form class="ends" @submit=${(e: Event) => e.preventDefault()}>
-							<div class="ends-label">${t('Ends')}</div>
-							<label>
-								<input type="radio" name="ends" .checked=${!draft.until && !draft.count} @change=${this.setEnds('never')}>
-								<span>${t('Never')}</span>
-							</label>
-							<label>
-								<input type="radio" name="ends" .checked=${!!draft.until} @change=${this.setEnds('until')}>
-								<span>${t('On')}</span>
-								<input type="date" aria-label=${t('End date')} ?disabled=${!draft.until}
-									.value=${this.dateValue(this.draftUntil)} @change=${this.onUntil}>
-							</label>
-							<label>
-								<input type="radio" name="ends" .checked=${!!draft.count} @change=${this.setEnds('count')}>
-								<span>${t('After')}</span>
-								<span class="after-times">
-									<input type="number" min="1" aria-label=${t('Occurrences')} ?disabled=${!draft.count}
-										.value=${String(this.draftCount)} @change=${this.onCount}>
-									${t('times')}
-								</span>
-							</label>
-						</form>
-
-						<div class="dialog-actions">
-							<button type="button" class="primary" @click=${this.confirmDialog}>${t('Done')}</button>
-						</div>
+						<span class="ends-label">${t('Ends')}</span>
+						<mitra-selection-group class="ends" aria-label=${t('Ends')} .value=${live(this.ends)} @change=${this.setEnds}>
+							<mitra-radio value="never">${t('Never')}</mitra-radio>
+							<mitra-radio value="until">${t('On')}</mitra-radio>
+							<mitra-date-field label=${t('End date')} ?disabled=${!draft.until}
+								.value=${this.dateValue(this.draftUntil)} @change=${this.onUntil}></mitra-date-field>
+							<mitra-radio value="count">${t('After')}</mitra-radio>
+							<span class="after-times">
+								<mitra-number-field min="1" aria-label=${t('Occurrences')} ?disabled=${!draft.count}
+									.value=${this.draftCount} @change=${this.onCount}></mitra-number-field>
+								${t('times')}
+							</span>
+						</mitra-selection-group>
 					</div>
 				`}
-			</dialog>
+			</mitra-dialog>
 		`
 	}
 }

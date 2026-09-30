@@ -1,8 +1,7 @@
-import { component, html, css, state, query, repeat, type PropertyValues, ifDefined } from '@a11d/lit'
+import { component, html, css, state, query, repeat, type PropertyValues, ifDefined, bind } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { activated } from '../../../design/activated.css.js'
 import { focusRing } from '../../../design/focusRing.css.js'
-import { searchBox } from '../../../design/searchBox.css.js'
 import { settings, settingsPage, settingsPages, type Setting, type SettingsPageId } from './Setting.js'
 import { SettingsStore } from './SettingsStore.js'
 import { type SettingRow } from './SettingRow.js'
@@ -20,7 +19,7 @@ export interface SettingsParameters {
 @component('mitra-dialog-settings')
 export class DialogSettings extends DialogComponent<SettingsParameters> {
 	@state() private page: SettingsPageId = DialogSettings.lastPage
-	@state() private query = ''
+	@state() query = ''
 	/** Single-pane drilldown state for narrow viewports. */
 	@state() private drilled = false
 
@@ -123,7 +122,6 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 					padding: 0.75rem 0.375rem;
 
 					> .search {
-						${searchBox};
 						margin-block-end: 0.75rem;
 					}
 
@@ -283,14 +281,10 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 	private get railTemplate() {
 		return html`
 			<div class="pages">
-				<div class="search">
-					<mitra-icon icon="search"></mitra-icon>
-					<input type="search" autofocus placeholder=${t('Search settings…')}
-						.value=${this.query}
-						@input=${(e: Event) => this.query = (e.target as HTMLInputElement).value}
-						@keydown=${(e: KeyboardEvent) => this.handleSearchKeyDown(e)}
-					>
-				</div>
+				<mitra-search-field class="search" autofocus placeholder=${t('Search settings…')}
+					${bind(this, 'query')}
+					@keydown=${(e: KeyboardEvent) => this.handleSearchKeyDown(e)}
+				></mitra-search-field>
 				<nav>
 					${this.pages.map(page => {
 						const { title, icon } = settingsPage(page)

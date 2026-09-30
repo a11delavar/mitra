@@ -1,4 +1,4 @@
-import { Component, component, html, css, state, property, event, repeat, query } from '@a11d/lit'
+import { Component, component, html, css, state, property, event, repeat, query, bind } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { type UserTimeZone } from '../../identity/User.js'
 import { getTimeZones, setTimeZones } from '../../../infrastructure/http/Api.js'
@@ -17,10 +17,6 @@ import { type TimeZonePicker, zoneNamePart, shortZoneLabel, longZoneName, system
  */
 @component('mitra-time-zone-header')
 export class TimeZoneHeader extends Component {
-	// Per-instance anchor token so anchored popovers of two instances never collide.
-	private static count = 0
-	private readonly anchor = `--time-zone-${TimeZoneHeader.count++}`
-
 	/** Whether the additional zones' columns are currently tucked away (the host's fold state). */
 	@property({ type: Boolean, reflect: true }) folded = false
 
@@ -71,8 +67,8 @@ export class TimeZoneHeader extends Component {
 		this.requestUpdate()
 	}
 
-	private readonly toggleMenu = (e: Event) => {
-		((e.currentTarget as HTMLElement).nextElementSibling as HTMLElement | null)?.togglePopover()
+	private readonly togglePicker = (e: Event) => {
+		this.picker?.toggle(e.currentTarget as HTMLElement)
 	}
 
 	static override get styles() {
@@ -97,7 +93,6 @@ export class TimeZoneHeader extends Component {
 					display: flex;
 					align-items: center;
 					color: var(--color-text-muted);
-					font-size: 0.7rem;
 
 					> .add {
 						opacity: 0;
@@ -128,7 +123,7 @@ export class TimeZoneHeader extends Component {
 						pointer-events: none;
 						transition: opacity 0.15s ease;
 
-						mitra-icon {
+						&::part(icon) {
 							transition: rotate 0.24s cubic-bezier(0.2, 0, 0, 1);
 						}
 					}
@@ -145,15 +140,15 @@ export class TimeZoneHeader extends Component {
 					pointer-events: auto;
 				}
 
-				&:dir(rtl) > .actions > .fold mitra-icon {
+				&:dir(rtl) > .actions > .fold::part(icon) {
 					scale: -1 1;
 				}
 
-				&:not([folded]) > .actions > .fold mitra-icon {
+				&:not([folded]) > .actions > .fold::part(icon) {
 					rotate: 180deg;
 				}
 
-				> .zone {
+				> mitra-popover-container > .zone {
 					all: unset;
 					box-sizing: border-box;
 					justify-self: center;
@@ -191,13 +186,12 @@ export class TimeZoneHeader extends Component {
 
 				/* Tucked away, an alternative zone's chip is a zero-width invisible button — it must stop
 				   answering the pointer too (the template drops it out of the tab order to match). */
-				&[folded] > .zone[data-alternative] {
+				&[folded] > mitra-popover-container > .zone[data-alternative] {
 					pointer-events: none;
 				}
 
-				menu[popover] {
+				mitra-menu {
 					position-area: block-end span-inline-end;
-					position-try-fallbacks: flip-block, flip-inline;
 				}
 			}
 		`
@@ -208,41 +202,33 @@ export class TimeZoneHeader extends Component {
 		return html`
 			<div class="actions">
 				${zones.length === 0 ? html.nothing : html`
-					<mitra-icon-button class="fold" icon="chevrons-right"
+					<mitra-icon-button size="small" class="fold" icon="chevrons-right"
 						label=${this.folded ? t('Show the other time zones') : t('Hide the other time zones')}
 						@click=${() => this.fold.dispatch(!this.folded)}
 					></mitra-icon-button>
 				`}
-				<mitra-icon-button class="add" icon="plus" label=${t('Add time zone')}
-					style="anchor-name: ${this.anchor}-add"
-					@click=${() => this.picker?.togglePopover()}
-				></mitra-icon-button>
+				<mitra-icon-button size="small" class="add" icon="plus" label=${t('Add time zone')} @click=${this.togglePicker}></mitra-icon-button>
 			</div>
-			${repeat(zones, zone => zone.id, (zone, index) => html`
-				<button class="zone" data-alternative tabindex=${this.folded ? -1 : 0} style="anchor-name: ${this.anchor}-${index}" title=${longZoneName(zone.id)} @click=${this.toggleMenu}>
-					${shortZoneLabel(zone)}
-				</button>
-				<menu popover style="position-anchor: ${this.anchor}-${index}">
-					<button @click=${(e: Event) => { (e.currentTarget as HTMLElement).closest<HTMLElement>('[popover]')?.hidePopover(); this.rename(zone).catch(() => void 0) }}>
-						<mitra-icon icon="pencil"></mitra-icon>
-						${t('Rename')}
+			${repeat(zones, zone => zone.id, zone => html`
+				<mitra-popover-container>
+					<button class="zone" data-alternative tabindex=${this.folded ? -1 : 0} title=${longZoneName(zone.id)}>
+						${shortZoneLabel(zone)}
 					</button>
-					<button class="danger" @click=${(e: Event) => { (e.currentTarget as HTMLElement).closest<HTMLElement>('[popover]')?.hidePopover(); this.removeZone(zone) }}>
-						<mitra-icon icon="x"></mitra-icon>
-						${t('Remove')}
-					</button>
-				</menu>
+					<mitra-menu slot="popover">
+						<mitra-menu-item icon="pencil" @click=${() => void this.rename(zone).catch(() => void 0)}>${t('Rename')}</mitra-menu-item>
+						<mitra-menu-item icon="x" variant="danger" @click=${() => this.removeZone(zone)}>${t('Remove')}</mitra-menu-item>
+					</mitra-menu>
+				</mitra-popover-container>
 			`)}
-			<button class="zone" style="anchor-name: ${this.anchor}-system" title=${longZoneName()} @click=${this.toggleMenu}>
-				${shortZoneLabel()}
-			</button>
-			<menu popover style="position-anchor: ${this.anchor}-system">
-				<button @click=${(e: Event) => { (e.currentTarget as HTMLElement).closest<HTMLElement>('[popover]')?.hidePopover(); this.renameSystem().catch(() => void 0) }}>
-					<mitra-icon icon="pencil"></mitra-icon>
-					${t('Rename')}
+			<mitra-popover-container>
+				<button class="zone" title=${longZoneName()}>
+					${shortZoneLabel()}
 				</button>
-			</menu>
-			<mitra-time-zone-picker style="position-anchor: ${this.anchor}-add"
+				<mitra-menu slot="popover">
+					<mitra-menu-item icon="pencil" @click=${() => void this.renameSystem().catch(() => void 0)}>${t('Rename')}</mitra-menu-item>
+				</mitra-menu>
+			</mitra-popover-container>
+			<mitra-time-zone-picker
 				.exclude=${new Set([...zones.map(zone => zone.id), systemZoneId()])}
 				@pick=${(e: CustomEvent<string>) => this.add(e.detail)}
 			></mitra-time-zone-picker>
@@ -253,31 +239,17 @@ export class TimeZoneHeader extends Component {
 /** Rename dialog: a short custom label for the column ("DE"); empty resets to the automatic name. */
 @component('mitra-dialog-time-zone-rename')
 export class DialogTimeZoneRename extends DialogComponent<{ readonly zone: UserTimeZone }, string | undefined> {
-	@state() private label = this.parameters.zone.label ?? ''
+	@state() label = this.parameters.zone.label ?? ''
 
 	protected override createRenderRoot() { return this }
-
-	static override get styles() {
-		return css`
-			mitra-dialog-time-zone-rename {
-				.hint {
-					display: block;
-					margin-block-start: 0.5rem;
-					font-size: 0.75rem;
-					color: var(--color-text-muted);
-				}
-			}
-		`
-	}
 
 	protected override get template() {
 		return html`
 			<mitra-dialog heading=${t('Rename time zone')} primaryButtonText=${t('Save')} primaryOnEnter>
-				<div>
-					<input placeholder=${zoneNamePart(this.parameters.zone.id, 'short')} maxlength="24"
-						.value=${this.label} @input=${(e: Event) => this.label = (e.target as HTMLInputElement).value}>
-					<span class="hint">${t('Shown above the time axis. Leave empty to use the automatic name.')}</span>
-				</div>
+				<mitra-text-field label=${t('Name')} autofocus placeholder=${zoneNamePart(this.parameters.zone.id, 'short')} maxlength="24"
+					hint=${t('Shown above the time axis. Leave empty to use the automatic name.')}
+					${bind(this, 'label')}
+				></mitra-text-field>
 			</mitra-dialog>
 		`
 	}

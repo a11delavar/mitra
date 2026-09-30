@@ -17,24 +17,11 @@ export class MapLink extends Component {
 			mitra-map-link {
 				display: inline-flex;
 				align-self: center;
+				color: var(--color-text-muted);
 
 				&[data-empty] {
 					visibility: hidden;
 					pointer-events: none;
-				}
-
-				> a {
-					display: inline-flex;
-					padding: 2px;
-					border-radius: var(--border-radius);
-					color: var(--color-text-muted);
-					font-size: 0.87rem;
-					transition: color 0.15s ease, background 0.15s ease;
-
-					&:hover {
-						color: var(--color-text);
-						background: color-mix(in srgb, var(--color-text) 6%, transparent);
-					}
 				}
 			}
 		`
@@ -42,10 +29,9 @@ export class MapLink extends Component {
 
 	protected override get template() {
 		return html`
-			<a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(this.location)}"
-				target="_blank" rel="noopener noreferrer" title=${t('Open in Google Maps')} aria-label=${t('Open in Google Maps')}>
-				<mitra-icon icon="map"></mitra-icon>
-			</a>
+			<mitra-icon-button size="small" icon="map" label=${t('Open in Google Maps')} target="_blank"
+				href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(this.location)}"
+			></mitra-icon-button>
 		`
 	}
 }

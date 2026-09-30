@@ -28,7 +28,7 @@ export class TimelineDensityController extends DensityController {
 
 	protected captureAnchor(clientX: number) {
 		const rect = this.host.getBoundingClientRect()
-		const rtl = getComputedStyle(this.host).direction === 'rtl'
+		const rtl = this.host.matches(':dir(rtl)')
 		this.anchor = this.reference(clientX, rtl, rtl ? rect.right : rect.left)
 	}
 
