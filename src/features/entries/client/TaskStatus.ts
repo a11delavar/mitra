@@ -4,7 +4,6 @@ import { getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
 import { offerToCloseSubtasks } from '../../relations/client/Hierarchy.js'
 import { Relations } from '../../relations/client/Relations.js'
-import { closeTask } from './taskClosure.js'
 import { type Slider } from '../../../design/Slider.js'
 import { type Menu } from '../../../design/Menu.js'
 
@@ -89,7 +88,7 @@ export class TaskStatusComponent extends Component {
 			this.menu?.hide()
 			return
 		}
-		closeTask(this.entry, status)
+		this.entry.setStatus(status, getCapabilities(this.entry.sourceId))
 		this.menu?.hide()
 		this.requestUpdate()
 		this.change.dispatch()

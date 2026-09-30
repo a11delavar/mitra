@@ -12,6 +12,8 @@ import { type RelationType } from '../relations/RelationType.js'
 import { RelationEdge } from '../relations/RelationEdge.js'
 import { EntryRelations } from '../relations/EntryRelations.js'
 import { Checklist } from './Checklist.js'
+import { type ReminderDefaults } from '../reminders/ReminderDefaults.js'
+import { type Integration } from '../../integrations/Integration.js'
 
 export enum TaskStatus {
 	ToDo = 'todo',
@@ -67,6 +69,9 @@ export const FLOATING_TIME_ZONE = 'floating'
 
 export const MINIMUM_DURATION_MINUTES = 15
 
+/** The defaults an entry's reminders still follow, until the user sets their own. Kept off the entry so it is never persisted, cloned or sent. */
+const reminderDefaults = new WeakMap<Entry, ReminderDefaults>()
+
 @model('Entry')
 @entity()
 @unique({ properties: ['sourceId', 'uri', 'recurrenceId'] })
@@ -86,6 +91,10 @@ export class Entry {
 		} else {
 			this.status = undefined
 			this.percentComplete = null
+		}
+		const defaults = reminderDefaults.get(this)
+		if (defaults) {
+			this.adoptDefaultReminders(defaults)
 		}
 	}
 
@@ -116,6 +125,14 @@ export class Entry {
 	/** Whether the task outcome is decided (Done or Cancelled). */
 	get closed() { return this.status === TaskStatus.Done || this.status === TaskStatus.Cancelled }
 
+	/** Writes 100% progress on Done if the provider supports `percentComplete` (RFC 5545 §3.8.1.8). */
+	setStatus(status: TaskStatus, capabilities: Pick<Integration['capabilities'], 'percentComplete'>) {
+		this.status = status
+		if (status === TaskStatus.Done && capabilities.percentComplete) {
+			this.percentComplete = 100
+		}
+	}
+
 	@enumType({ items: () => Transparency, nullable: true }) transparency: Transparency | null = null
 	@enumType({ items: () => Visibility, nullable: true }) visibility: Visibility | null = null
 
@@ -131,6 +148,35 @@ export class Entry {
 
 	get remindersAnchorToEnd() {
 		return !this.start && !!this.reminderAnchor
+	}
+
+	/** Epoch ms that reminders count back from, resolving floating times against observer `zone`. */
+	reminderAnchorInstant(zone?: string): number | undefined {
+		const anchor = this.reminderAnchor
+		if (!anchor) {
+			return undefined
+		}
+		const epoch = (anchor as unknown as Date).getTime()
+		if (this.allDay || this.timeZone !== FLOATING_TIME_ZONE || !zone) {
+			return epoch
+		}
+		return Temporal.Instant.fromEpochMilliseconds(epoch)
+			.toZonedDateTimeISO('UTC')
+			.toPlainDateTime()
+			.toZonedDateTime(zone, { disambiguation: 'compatible' })
+			.epochMilliseconds
+	}
+
+	/** Starts the reminders from `defaults`, following them across kind changes until the user sets their own. All-day entries get none. */
+	adoptDefaultReminders(defaults: ReminderDefaults) {
+		reminderDefaults.set(this, defaults)
+		this.reminders = this.allDay || !this.reminderAnchor ? null : defaults.for(this.type)
+	}
+
+	/** The user's own reminders, which no default replaces. */
+	setReminders(minutes: ReadonlyArray<number>) {
+		reminderDefaults.delete(this)
+		this.reminders = minutes.length ? [...new Set(minutes)].sort((a, b) => a - b) : null
 	}
 
 	@property({ type: 'json', nullable: true }) participants?: Array<Participant> | null

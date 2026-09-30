@@ -9,6 +9,7 @@ import { Source } from '../sources/Source.js'
 import { EntryRelations } from '../relations/EntryRelations.js'
 import { RelationType } from '../relations/RelationType.js'
 import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
+import { ReminderDefaults } from '../reminders/ReminderDefaults.js'
 
 describe('Entry', () => {
 	const day = new DateTime().dayStart
@@ -660,6 +661,81 @@ describe('Entry', () => {
 			const entry = new Entry({ type: EntryType.Task, status: TaskStatus.Done })
 			entry.type = EntryType.Event
 			assert.equal(entry.closed, false)
+		})
+	})
+
+	describe('setStatus', () => {
+		const task = (init?: Partial<Entry>) => new Entry({ type: EntryType.Task, status: TaskStatus.ToDo, ...init })
+
+		it('records full progress on done where the provider can hold it', () => {
+			const entry = task()
+			entry.setStatus(TaskStatus.Done, { percentComplete: true })
+			assert.equal(entry.status, TaskStatus.Done)
+			assert.equal(entry.percentComplete, 100)
+		})
+
+		it('leaves progress unstated where the provider cannot', () => {
+			const entry = task()
+			entry.setStatus(TaskStatus.Done, { percentComplete: false })
+			assert.equal(entry.percentComplete, null)
+		})
+
+		it('keeps the progress a cancelled task already had', () => {
+			const entry = task({ status: TaskStatus.Doing, percentComplete: 40 })
+			entry.setStatus(TaskStatus.Cancelled, { percentComplete: true })
+			assert.equal(entry.status, TaskStatus.Cancelled)
+			assert.equal(entry.percentComplete, 40)
+		})
+	})
+
+	describe('default reminders', () => {
+		const defaults = new ReminderDefaults(30, 0)
+		const timed = (type: EntryType) => new Entry({ type, start: day.add({ hours: 10 }), end: day.add({ hours: 11 }) })
+
+		it('starts each kind with its own default', () => {
+			const event = timed(EntryType.Event)
+			event.adoptDefaultReminders(defaults)
+			const task = timed(EntryType.Task)
+			task.adoptDefaultReminders(defaults)
+			assert.deepEqual(event.reminders, [30])
+			assert.deepEqual(task.reminders, [0])
+		})
+
+		it('gives an all-day entry none', () => {
+			const entry = new Entry({ type: EntryType.Event, start: day, end: day.add({ days: 1 }), allDay: true })
+			entry.adoptDefaultReminders(defaults)
+			assert.equal(entry.reminders, null)
+		})
+
+		it('re-picks the default when the kind changes', () => {
+			const entry = timed(EntryType.Event)
+			entry.adoptDefaultReminders(defaults)
+			entry.type = EntryType.Task
+			assert.deepEqual(entry.reminders, [0])
+		})
+
+		it('keeps reminders the user set across a kind change', () => {
+			const entry = timed(EntryType.Event)
+			entry.adoptDefaultReminders(defaults)
+			entry.setReminders([30])
+			entry.type = EntryType.Task
+			assert.deepEqual(entry.reminders, [30])
+		})
+
+		it('leaves a copy with the reminders it was given', () => {
+			const entry = timed(EntryType.Event)
+			entry.adoptDefaultReminders(defaults)
+			const copy = entry.clone()
+			copy.type = EntryType.Task
+			assert.deepEqual(copy.reminders, [30])
+		})
+
+		it('stores reminders the user sets once each, in order', () => {
+			const entry = timed(EntryType.Event)
+			entry.setReminders([30, 5, 30])
+			assert.deepEqual(entry.reminders, [5, 30])
+			entry.setReminders([])
+			assert.equal(entry.reminders, null)
 		})
 	})
 })

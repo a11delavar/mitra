@@ -11,8 +11,10 @@ export class UserSettings {
 	defaultDurationMinutes?: number
 	/** Grid snap granularity in minutes for time edits and gestures. */
 	snapMinutes?: number
-	/** Lead time in minutes before entry start for default reminders (null = none). */
+	/** Lead time in minutes before an event's start for its default reminder (null = none). */
 	defaultReminderMinutes?: number | null
+	/** Lead time in minutes before a task's anchor for its default reminder (0 = at the time, null = none). */
+	defaultTaskReminderMinutes?: number | null
 	/** Whether closed tasks (done or cancelled) are hidden from calendar views. */
 	hideDoneTasks?: boolean
 
@@ -35,11 +37,13 @@ export class UserSettings {
 		if (minutes(incoming.snapMinutes, 60)) {
 			settings.snapMinutes = incoming.snapMinutes as number
 		}
-		if ('defaultReminderMinutes' in incoming) {
-			const value = incoming.defaultReminderMinutes
-			if (value === null || (typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 28 * 24 * 60)) {
-				settings.defaultReminderMinutes = value as number | null
-			}
+		const reminderMinutes = (value: unknown) =>
+			value === null || (typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 28 * 24 * 60)
+		if ('defaultReminderMinutes' in incoming && reminderMinutes(incoming.defaultReminderMinutes)) {
+			settings.defaultReminderMinutes = incoming.defaultReminderMinutes as number | null
+		}
+		if ('defaultTaskReminderMinutes' in incoming && reminderMinutes(incoming.defaultTaskReminderMinutes)) {
+			settings.defaultTaskReminderMinutes = incoming.defaultTaskReminderMinutes as number | null
 		}
 		if (typeof incoming.hideDoneTasks === 'boolean') {
 			settings.hideDoneTasks = incoming.hideDoneTasks

@@ -10,9 +10,9 @@ import { Integration } from '../../../integrations/Integration.js'
 import { EntryType } from '../EntryType.js'
 import { EntryRelations } from '../../relations/EntryRelations.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
-import { Entry, FLOATING_TIME_ZONE, Transparency } from '../Entry.js'
+import { Entry, FLOATING_TIME_ZONE, TaskStatus, Transparency } from '../Entry.js'
 import { normalizeAllDay, projectAllDay } from '../../time/calendarDate.js'
-import { editOccurrence, deleteOccurrence, expandedOccurrences, seriesStarts } from '../../recurrence/server/occurrences.js'
+import { editOccurrence, deleteOccurrence, expandedOccurrences, seriesStarts, occurrenceOf } from '../../recurrence/server/occurrences.js'
 import { entryWindow, everyEntry } from './entryWindow.js'
 import { assertRelationsValid, attachRelations, relationClosure } from '../../relations/server/relations.js'
 
@@ -390,6 +390,50 @@ entriesRouter.put('/:id', async (req, res) => {
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
 	logger.debug(`Updated entry ${existing.id} "${incoming.heading}"`)
+	return res.json(projectedForViewer(existing, viewerZone(req)))
+})
+
+/** Marks a task done without a full entry body, for a notification's Done button. */
+entriesRouter.post('/:id/complete', async (req, res) => {
+	const em = orm.em.fork()
+	const existing = await req.user.entry(em, req.params.id)
+	const source = await em.findOneOrFail(Source, { id: existing.sourceId })
+	const integration = await em.findOneOrFail(Integration, { id: source.integrationId })
+	const capabilities = integration.capabilitiesFor(source)
+
+	if (!existing.type?.isTask) {
+		return res.status(400).json({ error: 'Only a task can be completed' })
+	}
+	if (!capabilities.editEntries) {
+		return res.status(400).json({ error: 'This calendar cannot be edited from mitra' })
+	}
+
+	const { recurrenceId } = req.body as { recurrenceId?: number }
+
+	// An occurrence detaches like a 'this' edit. Its recurrenceId comes canonical from the scheduler, so no viewer-zone normalization.
+	if (typeof recurrenceId === 'number' && existing.recurrence?.freq) {
+		const start = new Date(recurrenceId)
+		const span = existing.start && existing.end ? existing.end.getTime() - existing.start.getTime() : undefined
+		const occurrence = occurrenceOf(existing, { start, end: span === undefined ? undefined : new Date(start.getTime() + span) })
+		occurrence.setStatus(TaskStatus.Done, capabilities)
+		const detached = await editOccurrence(em, integration, existing, start, occurrence, 'this')
+		await em.flush()
+		syncEmitter.emit('updated', req.user.id)
+		logger.debug(`Completed occurrence ${start.toISOString()} of series ${existing.id} "${existing.heading}"`)
+		return res.json(projectedForViewer(detached, viewerZone(req)))
+	}
+
+	const incoming = existing.clone()
+	incoming.setStatus(TaskStatus.Done, capabilities)
+	// A second tap must not write to the provider again.
+	if (incoming.status === existing.status && incoming.percentComplete === existing.percentComplete) {
+		return res.json(projectedForViewer(existing, viewerZone(req)))
+	}
+
+	await integration.updateEntry(em, existing, incoming)
+	await em.flush()
+	syncEmitter.emit('updated', req.user.id)
+	logger.debug(`Completed task ${existing.id} "${existing.heading}"`)
 	return res.json(projectedForViewer(existing, viewerZone(req)))
 })
 

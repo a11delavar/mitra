@@ -1,6 +1,8 @@
 import { Component, component, html, css, property, state, event, query } from '@a11d/lit'
 import { type Entry } from '../../entries/Entry.js'
+import { type EntryType } from '../../entries/EntryType.js'
 import { getCapabilities } from '../../../infrastructure/http/Api.js'
+import { EntryStore } from '../../entries/client/EntryStore.js'
 import { enablePushNotifications } from './push.js'
 import { type Menu } from '../../../design/Menu.js'
 
@@ -33,8 +35,11 @@ export function reminderSpanLabel(minutes: number): string {
 }
 
 /** Formats full reminder label for menus and settings. */
-export function reminderLabel(minutes: number): string {
-	return minutes === 0 ? t('At start of event') : t('${span} before', { span: reminderSpanLabel(minutes) })
+export function reminderLabel(minutes: number, type?: EntryType): string {
+	if (minutes === 0) {
+		return type?.isTask ? t('At the time of the task') : t('At start of event')
+	}
+	return t('${span} before', { span: reminderSpanLabel(minutes) })
 }
 
 /**
@@ -52,6 +57,8 @@ export class RemindersField extends Component {
 
 	@event() readonly change!: EventDispatcher
 
+	readonly store = new EntryStore(this)
+
 	@state() private draft?: { count: number, unit: CustomUnit }
 
 	protected override createRenderRoot() { return this }
@@ -63,8 +70,9 @@ export class RemindersField extends Component {
 	}
 
 	private fireLabel(minutes: number): string {
-		const fireAt = this.entry.start!.subtract({ minutes })
-		const sameDay = fireAt.dayStart.valueOf() === this.entry.start!.dayStart.valueOf()
+		const anchor = this.entry.reminderAnchor!
+		const fireAt = anchor.subtract({ minutes })
+		const sameDay = fireAt.dayStart.valueOf() === anchor.dayStart.valueOf()
 		return new Intl.DateTimeFormat(Localizer.languages.current, {
 			hour: '2-digit',
 			minute: '2-digit',
@@ -73,7 +81,7 @@ export class RemindersField extends Component {
 	}
 
 	private commit(reminders: Array<number>) {
-		this.entry.reminders = reminders.length ? [...new Set(reminders)].sort((a, b) => a - b) : null
+		this.entry.setReminders(reminders)
 		this.requestUpdate()
 		this.change.dispatch()
 	}
@@ -171,15 +179,17 @@ export class RemindersField extends Component {
 
 	protected override get template() {
 		const editable = getCapabilities(this.entry.sourceId).editEntries
-		return !this.entry?.start ? html.nothing : html`
+		return !this.entry?.reminderAnchor ? html.nothing : html`
 			${!this.reminders.length ? html`
 				<span class="placeholder">${t('Reminders')}</span>
 			` : this.reminders.map(minutes => html`
 				<div class="reminder">
 					<span>
-						${minutes === 0
-							? html`${t('At start')} <span class="detail">${t('of event at ${time}', { time: this.fireLabel(minutes) })}</span>`
-							: html`${reminderSpanLabel(minutes)} <span class="detail">${t('before at ${time}', { time: this.fireLabel(minutes) })}</span>`}
+						${minutes !== 0
+							? html`${reminderSpanLabel(minutes)} <span class="detail">${t('before at ${time}', { time: this.fireLabel(minutes) })}</span>`
+							: this.entry.type?.isTask
+								? html`${t('At the time of the task')} <span class="detail">${this.fireLabel(0)}</span>`
+								: html`${t('At start')} <span class="detail">${t('of event at ${time}', { time: this.fireLabel(minutes) })}</span>`}
 					</span>
 					${!editable ? html.nothing : html`
 						<mitra-icon-button size="small" icon="x" label=${t('Remove reminder')}
@@ -193,7 +203,7 @@ export class RemindersField extends Component {
 					<mitra-icon-button size="small" class="add" icon="plus" label=${t('Add reminder')}></mitra-icon-button>
 					<mitra-menu slot="popover">
 						${RemindersField.presets.filter(minutes => !this.reminders.includes(minutes)).map(minutes => html`
-							<mitra-menu-item @click=${() => this.add(minutes)}>${reminderLabel(minutes)}</mitra-menu-item>
+							<mitra-menu-item @click=${() => this.add(minutes)}>${reminderLabel(minutes, this.entry.type)}</mitra-menu-item>
 						`)}
 						<mitra-menu-item class="custom" @click=${this.openCustomDialog}>${t('Custom…')}</mitra-menu-item>
 					</mitra-menu>

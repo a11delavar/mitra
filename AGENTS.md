@@ -341,20 +341,26 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
 
 ## Reminders & Notifications (Web Push, RFC 8030)
 - **Anchor Semantics**:
-  - `Entry.reminders` count minutes before `Entry.reminderAnchor` (`start`, falling back to `end` for due-only tasks). `unschedule()` clears reminders.
+  - `Entry.reminders` count minutes before `Entry.reminderAnchor` (`start`, falling back to `end` for due-only tasks; UI gates on `reminderAnchor`). `unschedule()` clears reminders; closed tasks never fire.
   - CalDAV TRIGGER `RELATED`: `START` by default, `END` for due-only tasks (`CalDAV.reminderAnchorOf`). Reads and writes share anchor mapping to preserve unmanaged alarms.
-- **Delivery Guarantees & Bundling**:
+  - Default reminders tracked in a module `WeakMap` until user explicitly customizes via `setReminders`.
+- **Payload & Rendering** (`ReminderNotification`):
+  - Body shows entry time (never live countdown; delegated to OS `timestamp` to avoid burning silent-push budget).
+  - Server renders per subscription (`ReminderNotification.for`) in its `language` and `timeZone`, with the regular keys via `localizeIn` (`i18n/dictionaries.ts`; the server has no current language, so no `t()`). The worker only shows the payload.
+  - Max 2 buttons (Chrome limit): Tasks get Done + Snooze; events get Snooze (body tap navigates to `/?date=&selected=`).
+  - "Done" posts `POST /entries/:id/complete` (detaches occurrence like a 'this' edit; falls back to opening editor on error).
+- **Delivery Guarantees**:
   - Push headers set `TTL` (`anchor + 5 min` grace) and `urgency: 'high'` (bypasses Android Doze, prevents stale queue delivery).
-  - `ReminderNotification` (`src/features/reminders/ReminderNotification.ts`): Dependency-free model bundled into service worker (`scripts/esbuild.ts`).
-  - Service worker re-renders body on arrival via `bodyAt(Date.now())` (fallback to static body).
+  - `icon` sent to Android only (prevents origin letter avatar on Android without duplicating image on Windows).
 - **Scheduler Engine** (`ReminderScheduler`):
   - Ticks claim `(watermark, now + interval]` window and schedule exact timers (`setTimeout`).
   - Persistent watermark (`reminder.watermark` state key) advances to `now` for crash recovery; in-memory `dispatched` map deduplicates.
   - Query bounds: `start > watermark - ZONE_SLACK` (or `end` for due-only tasks).
-  - Observer time zone: `NotificationSubscription.timeZone` / `lastSeenAt` tracked per device to resolve floating wall-clock times (`Reminders.anchorInstant`).
+  - Observer time zone: `NotificationSubscription.timeZone` / `lastSeenAt` tracked per device to resolve floating wall-clock times (`Entry.reminderAnchorInstant`).
 - **Device Management Surface**:
   - Subscriptions listed under Settings → Notifications via `NotificationsSetting.details` rendering `<mitra-notification-devices>`.
-  - Push endpoints serve as device identifiers for active client highlighting and revocation.
+  - `NotificationSubscription.register` updates `deviceFacts()` while preserving user-assigned `name`; `keys` masked via `withheld()`.
+  - The page registers again on a language change. A rotated subscription (`previousEndpoint`) inherits `name` and `language` (`succeed`), which the worker cannot read.
 
 ## Participants (RFC 5545 / 5546 iTIP, RFC 6638)
 - **Storage & Capability**:

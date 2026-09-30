@@ -80,6 +80,7 @@
 	"ConnectorLines.Keywords": "connector lines arrows dependencies relations subtasks draw",
 	"DefaultDurationSetting.Keywords": "duration length default minutes hour long meeting",
 	"DefaultReminderSetting.Keywords": "reminder notification default minutes before alarm alert",
+	"DefaultTaskReminderSetting.Keywords": "reminder notification task default due time alarm when",
 	"DefaultSourceSetting.Keywords": "default calendar source target new entries created",
 	"DefaultViewSetting.Keywords": "view start startup default week month year timeline opens table",
 	"HideDoneTasksSetting.Keywords": "hide done completed cancelled closed tasks finished declutter",

@@ -2,7 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { type DateTime } from '@3mo/date-time'
 import { EntryType } from '../entries/EntryType.js'
-import { Entry, FLOATING_TIME_ZONE } from '../entries/Entry.js'
+import { Entry, FLOATING_TIME_ZONE, TaskStatus } from '../entries/Entry.js'
 import { dueReminders } from './Reminders.js'
 
 describe('Reminders', () => {
@@ -71,6 +71,24 @@ describe('Reminders', () => {
 		it('never anchors an EVENT to its end, since only a task has a due date', () => {
 			const due = dueReminders([entry({ end: D('2026-07-06T09:31:00Z'), reminders: [30] })], watermark, now)
 			assert.equal(due.length, 0)
+		})
+
+		it('says nothing about a task the user already closed', () => {
+			const start = D('2026-07-06T09:31:00Z')
+			assert.equal(dueReminders([task({ start, reminders: [30], status: TaskStatus.Done })], watermark, now).length, 0)
+			assert.equal(dueReminders([task({ start, reminders: [30], status: TaskStatus.Cancelled })], watermark, now).length, 0)
+			assert.equal(dueReminders([task({ start, reminders: [30], status: TaskStatus.Doing })], watermark, now).length, 1)
+		})
+
+		it('builds the notification of the entry it is due for', () => {
+			const [due] = dueReminders([task({ id: 'master__1', end: D('2026-07-06T09:31:00Z'), reminders: [30], location: 'Room 4', recurrenceMasterId: 'master', recurrenceId: D('2026-07-06T09:31:00Z') })], watermark, now)
+			const { facts } = due!.notification()
+			assert.equal(facts.kind, 'task')
+			assert.equal(facts.tag, 'master__1|30')
+			assert.equal(facts.timestamp, Date.parse('2026-07-06T09:31:00Z'))
+			assert.equal(facts.when?.due, true)
+			assert.equal(facts.location, 'Room 4')
+			assert.deepEqual(facts.entry, { id: 'master__1', master: 'master', recurrenceId: Date.parse('2026-07-06T09:31:00Z') })
 		})
 
 		describe('floating entries', () => {

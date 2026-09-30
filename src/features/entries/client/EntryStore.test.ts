@@ -5,7 +5,6 @@ import { Entry, TaskStatus } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
 import { Recurrence, type RecurrenceScope } from '../../recurrence/Recurrence.js'
 import { EntryStore } from './EntryStore.js'
-import { closeTask } from './taskClosure.js'
 import { Integration } from '../../../integrations/Integration.js'
 import { ApiError } from '../../../infrastructure/http/Api.js'
 
@@ -551,7 +550,7 @@ describe('EntryStore', () => {
 			EntryStore.resolveScope = () => (asked = true, Promise.resolve('all' as const))
 			const working = occurrence({ type: EntryType.Task, status: TaskStatus.ToDo })
 			EntryStore.applyServerEntries([working])
-			closeTask(working, TaskStatus.Done, Integration.defaultCapabilities)
+			working.setStatus(TaskStatus.Done, Integration.defaultCapabilities)
 			const commit = EntryStore.commit(working)
 			await transport.respond(entry({ id: 'detached', type: EntryType.Task, status: TaskStatus.Done, percentComplete: 100 }))
 			await commit

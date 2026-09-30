@@ -6,7 +6,7 @@ import { EntryChange } from '../EntryChange.js'
 import { Entry } from '../Entry.js'
 import { DefaultDurationSetting } from './DefaultDurationSetting.js'
 import { SnapSetting } from './SnapSetting.js'
-import { DefaultReminderSetting } from '../../reminders/client/DefaultReminderSetting.js'
+import { ReminderSetting } from '../../reminders/client/DefaultReminderSetting.js'
 import { EntryType } from '../EntryType.js'
 import { getPrimarySource, getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
@@ -262,8 +262,11 @@ export class EntryDragController extends Controller {
 			return new Entry({ ...base, start, end, allDay: true })
 		}
 		const { start, end } = placeTimed(anchor.date.dayStart.add({ minutes: anchor.minute }), current.date.dayStart.add({ minutes: current.minute }), EntryDragController.snapMinutes)
-		const reminders = getCapabilities(drag.source!.id).reminders ? DefaultReminderSetting.reminders : undefined
-		return new Entry({ ...base, start, end, allDay: false, reminders })
+		const created = new Entry({ ...base, start, end, allDay: false })
+		if (getCapabilities(drag.source!.id).reminders) {
+			created.adoptDefaultReminders(ReminderSetting.defaults)
+		}
+		return created
 	}
 
 	private buildMove(current: DragPoint, mode: Mode): Entry | undefined {

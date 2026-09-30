@@ -4,7 +4,7 @@ import { EntryPlan, type PlannedWrite, type SkippedEntry } from '../EntryPlan.js
 import { type EntryChange } from '../../entries/EntryChange.js'
 import { type Entry, TaskStatus } from '../../entries/Entry.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
-import { closeTask } from '../../entries/client/taskClosure.js'
+import { getCapabilities } from '../../../infrastructure/http/Api.js'
 import { Relations } from './Relations.js'
 import { DialogEntryScope, type EntryScope } from '../../entries/client/DialogEntryScope.js'
 import { DialogCompleteParent } from './DialogCompleteParent.js'
@@ -78,7 +78,7 @@ export async function offerToCloseSubtasks(entry: Entry) {
 	await run(EntryPlan.of({
 		writes: outstanding.map(child => ({
 			entry: child,
-			mutate: (target: Entry) => closeTask(target, closure),
+			mutate: (target: Entry) => target.setStatus(closure, getCapabilities(target.sourceId)),
 		})),
 	}))
 }
@@ -96,7 +96,7 @@ async function offerToCompleteParents(closed: Entry) {
 		// Deepest first so intermediate states remain valid.
 		writes: parents.map(parent => ({
 			entry: parent,
-			mutate: (target: Entry) => closeTask(target, TaskStatus.Done),
+			mutate: (target: Entry) => target.setStatus(TaskStatus.Done, getCapabilities(target.sourceId)),
 		})),
 	}))
 }

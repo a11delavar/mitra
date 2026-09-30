@@ -1,4 +1,3 @@
-import { type Converter } from '@a11d/converter'
 import { entity, primaryKey, property, manyToOne, oneToMany, unique, Collection } from '../infrastructure/model/orm.js'
 import { User } from '../features/identity/User.js'
 import { Source } from '../features/sources/Source.js'
@@ -34,18 +33,6 @@ function engineFor(integration: Integration): SyncEngine {
 		throw new Error(`No sync engine registered for integration type '${integration.type}'. See integrations/server/registerEngines.ts. This only ever runs server-side, after that file's import.`)
 	}
 	return engine
-}
-
-/**
- * Converter masking sensitive credential fields on server responses while preserving them on requests.
- */
-export function withheld<TCredentials extends Record<string, any>>(...secrets: Array<keyof TCredentials & string>): Converter<TCredentials, TCredentials> {
-	return {
-		deconstruct: credentials => mitra.runtime !== 'server' ? credentials : {
-			...credentials,
-			...Object.fromEntries(secrets.map(secret => [secret, ''])),
-		},
-	}
 }
 
 /** In-flight sync chains serialized per integration id to prevent concurrent duplicate imports. */

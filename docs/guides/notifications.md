@@ -18,20 +18,22 @@ Mitra notifies you before an event starts, even with no tab open, using standard
 
 Reminders are configured per entry in the editor. Mitra requests browser notification permission **contextually** the first time you add a reminder.
 
-**Settings → Notifications** holds the rest: whether this browser may alert you, and the reminder new timed entries start with.
+**Settings → Notifications** holds the rest: whether this browser may alert you, the reminders new entries start with, and your devices.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/notifications-detail-dark.png">
-  <img src="../../assets/screenshots/notifications-detail-light.png" alt="The Notifications settings page, with the browser permission and the default reminder" />
+  <img src="../../assets/screenshots/notifications-detail-light.png" alt="The Notifications settings page, with the default reminders, the browser permission and the device list" />
 </picture>
 
 - **Timed events**: Default to one reminder, 30 minutes before. All-day events default to none.
-- **Tasks**: Tasks with only a due date count back from the due time. Unscheduling a task clears its reminders.
-- **Presets**: Offers *At start of event*, *5 minutes*, *10 minutes*, *30 minutes*, *1 hour*, and *1 day* before.
+- **Tasks**: Default to one reminder at the time of the task. A task with only a due date reminds you at its due time. Unscheduling a task clears its reminders.
+- **Presets**: Offers *At start of event* (*At the time of the task* for tasks), *5 minutes*, *10 minutes*, *30 minutes*, *1 hour*, and *1 day* before.
 - **Custom offsets**: Specify custom durations in minutes, hours, days, or weeks.
 - Multiple reminders can be attached to a single entry.
 
-When a reminder fires, the notification stays until dismissed and provides **Snooze 10 min** and **Open** actions.
+When a reminder fires, the notification stays until you dismiss it. Tap it to open the entry. Tasks also have a **Done** button that marks the task done without opening Mitra, and both events and tasks have **Snooze**. Some browsers, like Safari and Firefox, don't show these buttons, but tapping the notification always works.
+
+Reminders for tasks you have already marked done or cancelled don't fire.
 
 > [!NOTE]
 > If a browser denies notification permission, the reminder still **persists** on the entry and syncs to connected CalDAV clients.
@@ -42,16 +44,17 @@ The Mitra **server** schedules and delivers reminders in the background:
 
 - **Exact second timing**: The scheduler scans upcoming reminders once per minute and sleeps until the exact fire instant.
 - **Automatic expiration (TTL)**: Messages carry an expiration (`anchor + 5 min` grace). Offline devices drop expired alerts on reconnect instead of delivering stale notifications late.
-- **Dynamic text**: Notifications re-calculate elapsed time at delivery ("Starts in 12 min", "Starts now", "Started 5 min ago").
+- **What it says**: The notification shows when the entry is, such as "10:00–11:00" or "Due tomorrow 10:00", in the language Mitra is set to on that device and in its time zone. On Android it also counts down to the start.
 - **Series & overrides**: Recurring series fire per occurrence, respecting exclusions and exceptions.
 - **Enabled vs. hidden**: Hidden sidebar calendars still deliver reminders; only *disabled* sources are muted.
 - **Downtime recovery**: Reminders fire exactly once across restarts. Overdue reminders from prolonged downtime are discarded to avoid alert storms.
 
 ## Managing devices
 
-**Settings → Notifications** displays active push registrations for your account, showing device time zones, last-seen timestamps, and your current browser badge.
+**Settings → Notifications** lists the devices that get your reminders. Each one shows its browser and system (for example "Chrome on Android"), its time zone, when it was last used, and which one you are on now.
 
-- **Send test**: Sends an end-to-end push notification to verify delivery on the active device.
+- **Rename**: Give a device a name you'll recognize, like "Work laptop". Clear the name to go back to the one the browser reported.
+- **Test event / Test task**: Sends a sample reminder to all your devices, so you can check that notifications arrive and see what they look like. **Done** on a test task only closes the notification.
 - **Remove device**: Revokes subscriptions for devices you no longer use.
 
 > [!NOTE]
@@ -78,7 +81,7 @@ Mitra installs as a Progressive Web App (PWA) on desktop and mobile:
 
 ## Troubleshooting
 
-- **Test delivery first**: Use **Settings → Notifications → Send test**. If it succeeds, delivery is operational.
+- **Test delivery first**: Use **Settings → Notifications → Test event** or **Test task**. If it arrives, notifications work.
 - **No reminders received**: Subscriptions are **per-instance** and **per-origin**. Ensure notification permission was granted on this specific deployment.
 - **Closed desktop browsers**: Chrome on Windows requires background app processing enabled to deliver push while closed (*Continue running background apps when Google Chrome is closed*). Alternatively, install Mitra in Edge or use Safari on macOS.
 - **Permission prompt missing**: Verify the instance is served over HTTPS. On iOS, install Mitra to the Home Screen first.

@@ -1,7 +1,7 @@
 import { DateTime } from '@3mo/date-time'
 import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
-import { DefaultReminderSetting } from '../../reminders/client/DefaultReminderSetting.js'
+import { ReminderSetting } from '../../reminders/client/DefaultReminderSetting.js'
 import { getPrimarySource, getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
@@ -37,8 +37,10 @@ export class CreateEntry extends Command {
 			start,
 			end: start.add({ hours: 1 }),
 			allDay: false,
-			reminders: getCapabilities(source.id).reminders ? DefaultReminderSetting.reminders : undefined,
 		})
+		if (getCapabilities(source.id).reminders) {
+			draft.adoptDefaultReminders(ReminderSetting.defaults)
+		}
 		EntryStore.upsertDraft(draft)
 		EntryEditorIntent.openDraft(draft)
 	}

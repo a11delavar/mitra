@@ -10,6 +10,7 @@ declare global {
 		"\"${heading}\" could not be added: ${message}": unknown
 		"\"${heading}\" could not be copied: ${message}": unknown
 		"\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks are still open.": unknown
+		"${browser} on ${platform}": unknown
 		"${count:number} min": unknown
 		"${count:number} more": unknown
 		"${count:pluralityNumber} are marked as free": unknown
@@ -100,6 +101,7 @@ declare global {
 		"Ask this participant to attend": unknown
 		"At start": unknown
 		"At start of event": unknown
+		"At the time of the task": unknown
 		"Atlassian Account": unknown
 		"Atlassian Account E-mail": unknown
 		"Atlassian API Token": unknown
@@ -175,14 +177,16 @@ declare global {
 		"days": unknown
 		"Default Calendar": unknown
 		"Default Duration": unknown
+		"Default event reminder": unknown
 		"Default for new entries, as the first one shown": unknown
 		"Default for new entries. Click to unset": unknown
-		"Default Reminder": unknown
+		"Default task reminder": unknown
 		"Default View": unknown
 		"Default visibility": unknown
 		"DefaultDurationSetting.Keywords": unknown
 		"DefaultReminderSetting.Keywords": unknown
 		"DefaultSourceSetting.Keywords": unknown
+		"DefaultTaskReminderSetting.Keywords": unknown
 		"DefaultViewSetting.Keywords": unknown
 		"Del": unknown
 		"Delete": unknown
@@ -207,6 +211,7 @@ declare global {
 		"Draft": unknown
 		"drag": unknown
 		"Drag onto another entry to make it wait for this one": unknown
+		"Due ${when}": unknown
 		"Duplicate": unknown
 		"Duplicate an entry": unknown
 		"Duration": unknown
@@ -407,6 +412,7 @@ declare global {
 		"Remove the date. The task moves to Unscheduled": unknown
 		"Remove the end date": unknown
 		"Rename": unknown
+		"Rename this device": unknown
 		"Rename time zone": unknown
 		"Repeat": unknown
 		"Repeating": unknown
@@ -428,7 +434,8 @@ declare global {
 		"select": unknown
 		"Select": unknown
 		"Select all": unknown
-		"Send test": unknown
+		"Sent a test event reminder to your devices.": unknown
+		"Sent a test task reminder to your devices.": unknown
 		"Server URL": unknown
 		"Set as the default for new entries": unknown
 		"Settings": unknown
@@ -448,6 +455,7 @@ declare global {
 		"Site URL": unknown
 		"Snap to": unknown
 		"SnapSetting.Keywords": unknown
+		"Snooze ${count} min": unknown
 		"Sort ascending": unknown
 		"Sort descending": unknown
 		"Sources": unknown
@@ -464,11 +472,13 @@ declare global {
 		"TableView.Keywords": unknown
 		"Task": unknown
 		"Tasks": unknown
+		"Tasks with a time only": unknown
 		"Tasks without a date land here. Drag one onto the calendar to schedule it": unknown
 		"Tempo": unknown
 		"Tempo API Token": unknown
 		"Tempo.TokenHint": unknown
-		"Test notification sent.": unknown
+		"Test event": unknown
+		"Test task": unknown
 		"the ${ordinal}": unknown
 		"the ${ordinal} ${weekday}": unknown
 		"The calendars of your Google account": unknown
@@ -507,6 +517,7 @@ declare global {
 		"Toggle.Off": unknown
 		"Toggle.On": unknown
 		"ToggleSidebar.Keywords": unknown
+		"Tomorrow": unknown
 		"Type": unknown
 		"unchanged": unknown
 		"Unit": unknown
@@ -539,6 +550,7 @@ declare global {
 		"Year": unknown
 		"Year View": unknown
 		"YearView.Keywords": unknown
+		"Yesterday": unknown
 		"Zoom the view": unknown
 	}
 }

@@ -3,7 +3,6 @@ import { TaskStatus } from '../../entries/Entry.js'
 import { type Source } from '../../sources/Source.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
 import { taskStatusIcon, taskStatusLabel } from '../../entries/client/TaskStatus.js'
-import { closeTask } from '../../entries/client/taskClosure.js'
 import { DialogDeleteEntries } from '../../entries/client/DialogDeleteEntries.js'
 import { getCapabilities, getEnabledSources } from '../../../infrastructure/http/Api.js'
 import { type TableRow } from './TableRow.js'
@@ -49,7 +48,7 @@ export class TableSelection extends Component {
 
 	private setStatus(status: TaskStatus) {
 		const rows = this.rows.filter(row => TableSelection.editable(row) && row.entry.status !== status)
-		rows.forEach(row => closeTask(row.entry, status))
+		rows.forEach(row => row.entry.setStatus(status, getCapabilities(row.entry.sourceId)))
 		EntryStore.notify()
 		void TableSelection.write(rows, row => EntryStore.commit(row.entry))
 	}

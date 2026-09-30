@@ -5,7 +5,7 @@ import { Integration } from '../../../integrations/Integration.js'
 import { Entry } from '../../entries/Entry.js'
 import { expandedOccurrences } from '../../recurrence/server/occurrences.js'
 import { dueReminders, type DueReminder } from '../Reminders.js'
-import { ReminderNotification, reminderSpan } from '../ReminderNotification.js'
+import { reminderSpan } from '../ReminderNotification.js'
 import { NotificationSubscription } from '../NotificationSubscription.js'
 import { sendTo } from './push.js'
 import { State } from '../../../infrastructure/database/State.js'
@@ -92,10 +92,11 @@ export class ReminderScheduler {
 			const zoneByUser = await this.observerZones(em)
 			const userOf = (entry: Entry) => userBySource.get(entry.sourceId)
 
-			const due = dueReminders([...rows, ...occurrences], watermark, until, entry => {
+			const zoneOf = (entry: Entry) => {
 				const userId = userOf(entry)
 				return userId ? zoneByUser.get(userId) : undefined
-			})
+			}
+			const due = dueReminders([...rows, ...occurrences], watermark, until, zoneOf)
 			this.logger.debug(`Tick: window (${watermark.toISOString()}, ${until.toISOString()}]: scanned ${rows.length} plain + ${occurrences.length} occurrence(s), ${due.length} due`)
 
 			for (const reminder of due) {
@@ -123,17 +124,12 @@ export class ReminderScheduler {
 	}
 
 	/** Schedule exact timer for reminder delivery. */
-	private schedule(userId: string, { entry, minutes, anchor, fireAt }: DueReminder, now: number) {
-		const payload = ReminderNotification.compose({
-			title: entry.heading || 'Untitled',
-			tag: `${entry.id}|${minutes}`,
-			timestamp: anchor,
-			url: '/',
-			reminder: { minutes, location: entry.location || undefined },
-		}, fireAt)
+	private schedule(userId: string, reminder: DueReminder, now: number) {
+		const { entry, minutes, fireAt } = reminder
+		const notification = reminder.notification()
 		const send = () => {
 			this.logger.info(`Reminder: "${entry.heading}" ${minutes ? `in ${reminderSpan(minutes)}` : 'now'}`)
-			sendTo(userId, payload).catch(error => this.logger.warn('Reminder delivery failed:', error instanceof Error ? error.message : error))
+			sendTo(userId, notification).catch(error => this.logger.warn('Reminder delivery failed:', error instanceof Error ? error.message : error))
 		}
 		const delay = fireAt - now
 		if (delay <= 0) {

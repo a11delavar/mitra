@@ -5,11 +5,13 @@
  * features/reminders/client/push.ts. It deliberately does nothing else (no caching or offline concerns), so
  * updates to it are rare and never gate the app.
  *
- * Anything it imports is bundled INTO it, so it may only reach for dependency-free modules
- * (ReminderNotification.ts), never the ORM-bound domain classes.
+ * The server renders each notification for this device, so the worker shows what it receives. Anything it
+ * imports is bundled INTO it, so it may only reach for dependency-free modules (deviceFacts), never the
+ * ORM-bound domain classes.
  */
 
-import { ReminderNotification, type PushPayload } from '../features/reminders/ReminderNotification.js'
+import { type PushPayload } from '../features/reminders/ReminderNotification.js'
+import { deviceFacts } from '../features/reminders/deviceFacts.js'
 
 // The worker global, typed structurally: the bundle shares the frontend tsconfig (DOM lib), which
 // doesn't know the ServiceWorker globals.
@@ -33,9 +35,16 @@ const worker = self as unknown as {
 		}
 	}
 	clients: {
-		matchAll(options: { type: 'window', includeUncontrolled: boolean }): Promise<Array<{ focus(): Promise<unknown> }>>
+		matchAll(options: { type: 'window', includeUncontrolled: boolean }): Promise<Array<WindowClientLike>>
 		openWindow(url: string): Promise<unknown>
+		claim(): Promise<unknown>
 	}
+}
+
+interface WindowClientLike {
+	focus(): Promise<unknown>
+	/** Only works on a client this worker controls. */
+	navigate?(url: string): Promise<unknown>
 }
 
 interface PushSubscriptionLike {
@@ -63,42 +72,81 @@ interface SubscriptionChangeLikeEvent {
 // this a new version idles in "waiting" until every mitra tab closes.
 worker.addEventListener('install', () => worker.skipWaiting())
 
-// The colored mark is what every platform that shows a picture gets: Windows' toast app logo, the
-// desktop message center, Android's large icon. The badge is the exception: Android's status bar keeps
-// only its alpha channel, so there it must be the monochrome silhouette, which everywhere else would
-// render as a white smudge.
+// Android needs an `icon`, or Chrome draws a letter avatar of the origin; elsewhere it only adds a second
+// picture beside the text, the app's own icon already heading the notification. Android's status bar keeps
+// only the badge's alpha channel, so there the badge is the monochrome silhouette.
+const android = /Android/i.test(navigator.userAgent)
 const appIcon = '/android-chrome-192x192.png'
-const badge = /Android/i.test(navigator.userAgent) ? '/notification-badge.png' : appIcon
+const icon = android ? appIcon : undefined
+const badge = android ? '/notification-badge.png' : appIcon
+
+// Claim open tabs so a notification tap can navigate one instead of opening a second window.
+worker.addEventListener('activate', event => event.waitUntil(worker.clients.claim()))
 
 worker.addEventListener('push', event => {
 	const payload = (event.data?.json() ?? {}) as PushPayload
 	event.waitUntil(worker.registration.showNotification(payload.title || 'Mitra', {
-		body: new ReminderNotification(payload).bodyAt(Date.now()),
+		body: payload.body,
 		tag: payload.tag,
-		renotify: true,
-		icon: appIcon,
+		// Chrome rejects `renotify` without a tag, and a push that shows nothing gets a generic browser notification.
+		renotify: !!payload.tag,
+		icon,
 		badge,
 		timestamp: payload.timestamp,
 		requireInteraction: true,
 		data: payload,
-		actions: [{ action: 'snooze', title: 'Snooze 10 min' }, { action: 'open', title: 'Open' }],
+		actions: payload.actions ?? [],
 	}))
 })
 
 worker.addEventListener('notificationclick', event => {
+	const payload = event.notification.data
 	event.notification.close()
 	if (event.action === 'snooze') {
-		event.waitUntil(fetch('/api/push/snooze', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(event.notification.data ?? {}),
-		}))
+		event.waitUntil(post('/api/push/snooze', payload?.facts ?? {}))
 		return
 	}
-	const url = event.notification.data?.url || '/'
-	event.waitUntil(worker.clients.matchAll({ type: 'window', includeUncontrolled: true })
-		.then(windows => windows[0] ? windows[0].focus() : worker.clients.openWindow(url)))
+	if (event.action === 'done') {
+		event.waitUntil(complete(payload))
+		return
+	}
+	event.waitUntil(open(payload))
 })
+
+/** Opens the entry instead when the request fails, e.g. on an expired session. */
+async function complete(payload: PushPayload | undefined): Promise<unknown> {
+	const entry = payload?.facts?.entry
+	if (!entry) {
+		return undefined
+	}
+	const response = await post(`/api/entries/${encodeURIComponent(entry.master ?? entry.id)}/complete`, { recurrenceId: entry.recurrenceId })
+	return response?.ok ? undefined : open(payload)
+}
+
+/** Takes an open mitra tab to the entry, or opens one. */
+async function open(payload: PushPayload | undefined): Promise<unknown> {
+	const url = payload?.url || '/'
+	const [client] = await worker.clients.matchAll({ type: 'window', includeUncontrolled: true })
+	if (client) {
+		await client.focus()
+		try {
+			if (client.navigate && await client.navigate(url) !== null) {
+				return undefined
+			}
+		} catch {
+			// A tab loaded before this worker activated is not controlled.
+		}
+	}
+	return worker.clients.openWindow(url)
+}
+
+function post(url: string, body: unknown) {
+	return fetch(url, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(body),
+	}).catch(() => undefined)
+}
 
 /** Re-subscribes when push service rotates subscription endpoints. */
 worker.addEventListener('pushsubscriptionchange', event => {
@@ -108,15 +156,13 @@ worker.addEventListener('pushsubscriptionchange', event => {
 			userVisibleOnly: true,
 			applicationServerKey: base64UrlToBytes(key) as BufferSource,
 		})
-		await fetch('/api/push/subscription', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ ...subscription.toJSON() as object, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
+		// The old endpoint lets the server carry over the device's name and language, which this worker can't read.
+		await post('/api/push/subscription', {
+			...subscription.toJSON() as object,
+			previousEndpoint: event.oldSubscription?.endpoint,
+			timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+			...deviceFacts(),
 		})
-		const gone = event.oldSubscription?.endpoint
-		if (gone && gone !== subscription.endpoint) {
-			await fetch(`/api/push/subscription?endpoint=${encodeURIComponent(gone)}`, { method: 'DELETE' })
-		}
 	})())
 })
 

@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import esbuild from 'esbuild'
-import { backendOptions, frontendOptions } from '../../scripts/esbuild.ts'
+import { backendOptions, frontendOptions, serviceWorkerOptions } from '../../scripts/esbuild.ts'
 
 /**
  * Bundle graph invariants asserted against esbuild metafiles.
@@ -27,6 +27,18 @@ describe('the server bundle', () => {
 			!inputs.some(input => input.includes('features/settings/client')),
 			'the server bundle must not reach any settings client code',
 		)
+	})
+})
+
+describe('the service worker bundle', () => {
+	it('stays dependency-free, so a push can be shown without dragging the app in', async () => {
+		const inputs = await inputsOf(serviceWorkerOptions)
+		assert.deepEqual(inputs.filter(input => input.includes('node_modules')), [])
+	})
+
+	it('renders no text itself: the server sends each device its notification', async () => {
+		const inputs = await inputsOf(serviceWorkerOptions)
+		assert.deepEqual(inputs.filter(input => input.includes('infrastructure/i18n') || input.includes('ReminderNotification')), [])
 	})
 })
 

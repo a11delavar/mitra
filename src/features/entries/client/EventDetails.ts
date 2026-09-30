@@ -607,7 +607,7 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	private get remindersTemplate() {
-		return !this.segment!.entry.start || !this.capabilities.reminders ? html.nothing : html`
+		return !this.segment!.entry.reminderAnchor || !this.capabilities.reminders ? html.nothing : html`
 			<li class="reminders field">
 				<mitra-icon icon="bell"></mitra-icon>
 				<mitra-reminders-field .entry=${this.segment!.entry} @change=${this.handleChange}></mitra-reminders-field>

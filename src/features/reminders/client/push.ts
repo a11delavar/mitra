@@ -1,4 +1,6 @@
 import { Api } from '@a11d/api'
+import { deviceFacts } from '../deviceFacts.js'
+import { type NotificationSubscription } from '../NotificationSubscription.js'
 
 /**
  * Web Push client utilities for managing notification permissions, service worker registration, and subscriptions.
@@ -22,7 +24,12 @@ async function subscribe(): Promise<PushSubscription> {
 		userVisibleOnly: true,
 		applicationServerKey: base64UrlToBytes(key) as BufferSource,
 	})
-	await Api.post('/push/subscription', { ...subscription.toJSON(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })
+	await Api.post('/push/subscription', {
+		...subscription.toJSON(),
+		timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+		language: Localizer.languages.current,
+		...deviceFacts(),
+	})
 	return subscription
 }
 
@@ -45,6 +52,9 @@ export function syncPushSubscription() {
 	}
 }
 
+// Notifications are written in the language the device last registered with.
+Localizer.languages.change.subscribe(() => syncPushSubscription())
+
 /** Returns the push subscription endpoint of the current browser. */
 export async function currentEndpoint(): Promise<string | undefined> {
 	if (!pushSupported() || Notification.permission !== 'granted') {
@@ -55,15 +65,24 @@ export async function currentEndpoint(): Promise<string | undefined> {
 	return subscription?.endpoint
 }
 
-/** Sends a test notification to all registered user devices. */
-export function sendTestNotification() {
-	return Api.post('/push/test')
+export function fetchDevices() {
+	return Api.get<Array<NotificationSubscription>>('/push/subscriptions')
 }
 
-/** Unregisters a device subscription by endpoint. */
-export async function unregisterDevice(endpoint: string) {
-	await Api.delete(`/push/subscription?endpoint=${encodeURIComponent(endpoint)}`)
-	if (await currentEndpoint() === endpoint) {
+/** Sends a real reminder for a made-up entry of the given kind to every registered device. */
+export function sendTestNotification(kind: 'event' | 'task') {
+	return Api.post('/push/test', { kind })
+}
+
+/** An empty name restores the one the browser reports. */
+export function renameDevice(id: string, name: string) {
+	return Api.put<NotificationSubscription>(`/push/subscriptions/${id}/name`, { name })
+}
+
+/** Also unsubscribes this browser when it is the device removed. */
+export async function forgetDevice(device: NotificationSubscription) {
+	await Api.delete(`/push/subscriptions/${device.id}`)
+	if (await currentEndpoint() === device.endpoint) {
 		const registration = await navigator.serviceWorker.getRegistration()
 		await (await registration?.pushManager.getSubscription())?.unsubscribe()
 	}

@@ -51,7 +51,11 @@ Preferences in Mitra are partitioned based on their scope:
 ### Notifications
 
 - **Reminder notifications**: whether this browser shows reminders as push notifications. Reminders you set are always stored on the server; this only decides whether this browser alerts you.
-- **Default reminder**: the reminder new timed entries start with, or *None*. All-day entries don't get timed reminders.
+- **Default event reminder**: how long before a new timed event reminds you, or *None*. Defaults to 30 minutes.
+- **Default task reminder**: when a new task reminds you, or *None*. Defaults to the task's own time.
+- **Devices**: the devices that get your reminders. You can rename them, send a test reminder, or remove one.
+
+All-day entries don't get timed reminders.
 
 Mitra can request permission when undecided. If notifications are blocked, you can re-enable them in your browser's site permissions settings. See [Reminders & notifications](notifications.md) for background daemon setup.
 

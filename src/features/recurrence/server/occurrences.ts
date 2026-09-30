@@ -269,7 +269,7 @@ export async function seriesStarts(em: EntityManager, sourceIds: ReadonlyArray<s
 	return masters.filter(master => !!master.start).map(master => occurrenceOf(master, { start: master.start!, end: master.end }))
 }
 
-function occurrenceOf(master: Entry, occurrence: { readonly start: Date, readonly end?: Date }) {
+export function occurrenceOf(master: Entry, occurrence: { readonly start: Date, readonly end?: Date }) {
 	return new Entry({
 		// Stable, CSS-ident-safe id per occurrence (the master id + the instant in ms): unique render
 		// key for anchor-name/view-transition-name; edits route to the master via recurrenceMasterId.
@@ -281,6 +281,7 @@ function occurrenceOf(master: Entry, occurrence: { readonly start: Date, readonl
 		location: master.location,
 		color: master.color,
 		status: master.status,
+		percentComplete: master.percentComplete,
 		transparency: master.transparency,
 		visibility: master.visibility,
 		allDay: master.allDay,
@@ -361,6 +362,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 			location: edited.location,
 			color: edited.color ?? null,
 			status: edited.status,
+			percentComplete: edited.percentComplete,
 			transparency: edited.transparency,
 			visibility: edited.visibility,
 			allDay: edited.allDay,
@@ -406,6 +408,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 			location: master.location,
 			color: master.color ?? null,
 			status: master.status,
+			percentComplete: master.percentComplete,
 			transparency: master.transparency,
 			visibility: master.visibility,
 			allDay: master.allDay,
@@ -435,6 +438,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 			location: edited.location,
 			color: edited.color ?? null,
 			status: edited.status,
+			percentComplete: edited.percentComplete,
 			transparency: edited.transparency,
 			visibility: edited.visibility,
 			allDay: edited.allDay,
@@ -461,6 +465,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 		location: edited.location,
 		color: edited.color ?? null,
 		status: edited.status,
+		percentComplete: edited.percentComplete,
 		transparency: edited.transparency,
 		visibility: edited.visibility,
 		allDay: edited.allDay,
@@ -489,6 +494,7 @@ export async function deleteOccurrence(em: EntityManager, integration: Integrati
 			location: master.location,
 			color: master.color ?? null,
 			status: master.status,
+			percentComplete: master.percentComplete,
 			transparency: master.transparency,
 			visibility: master.visibility,
 			allDay: master.allDay,
