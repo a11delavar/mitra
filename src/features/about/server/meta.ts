@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { isDeveloperSystem } from '../../../infrastructure/environment.js'
+import { isDemo, isDeveloperSystem } from '../../../infrastructure/environment.js'
 import { updateChecker } from './updates.js'
 import { getChangelog, runningReleaseUrl } from './changelog.js'
 
@@ -17,6 +17,7 @@ metaRouter.get('/', (_req, res) => {
 		commit: mitra.commit,
 		node: process.version,
 		...(isDeveloperSystem ? { development: true } : {}),
+		...(isDemo ? { demo: true } : {}),
 		...(runningReleaseUrl() ? { releaseUrl: runningReleaseUrl() } : {}),
 		...(updateChecker.update ? { update: updateChecker.update } : {}),
 	})

@@ -6,6 +6,7 @@ import { NotFoundError } from '@mikro-orm/sqlite'
 import { ModelValueConstructor } from '@a11d/api-model-value-constructor'
 import { createLogger, logLevelName } from '../infrastructure/logging/Logger.js'
 import { orm } from '../infrastructure/database/orm.js'
+import { isDemo } from '../infrastructure/environment.js'
 import { authMiddleware, authRouter, oidc } from '../features/identity/server/auth.js'
 import { synchronizer } from '../integrations/server/Synchronizer.js'
 import { eventsRouter } from '../infrastructure/realtime/events.js'
@@ -56,6 +57,8 @@ app.use(express.json({ reviver: (_key, value) => modelConstructor.shallConstruct
 if (oidc) {
 	app.use('/auth', authRouter)
 	logger.info(`Multi-user mode: OIDC against ${oidc.issuer} (redirect URI ${oidc.redirectUri})`)
+} else if (isDemo) {
+	logger.info('Demo mode: every visitor gets a sandbox with the sample calendar')
 } else {
 	logger.info('Single-user mode: no authentication (set MITRA_OIDC_ISSUER to enable multi-user sign-in)')
 }

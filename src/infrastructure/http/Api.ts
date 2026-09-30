@@ -51,6 +51,7 @@ export interface InstanceMeta {
 	commit: string
 	node: string
 	development?: boolean
+	demo?: boolean
 	releaseUrl?: string
 	update?: { version: string, url: string, commits?: number }
 }

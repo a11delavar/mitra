@@ -1,4 +1,5 @@
 import { command, Command } from '../Command.js'
+import { getMeta } from '../../../infrastructure/http/Api.js'
 import { DialogIntegration } from '../../../integrations/client/DialogIntegration.js'
 import { DialogAbout } from '../../about/client/DialogAbout.js'
 import { DialogKeyboardShortcuts } from './DialogKeyboardShortcuts.js'
@@ -30,6 +31,7 @@ export class AddIntegration extends Command {
 	keywords = t('AddIntegration.Keywords')
 	group = undefined
 	keys = []
+	override get available() { return !getMeta()?.demo }
 	execute() { return new DialogIntegration({}).confirm() }
 }
 

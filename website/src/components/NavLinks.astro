@@ -1,5 +1,5 @@
 ---
-import { docsBase, withBase } from '../../site.mjs'
+import { demo, docsBase, withBase } from '../../site.mjs'
 import Icon from './Icon.astro'
 import ThemeToggle from './ThemeToggle.astro'
 
@@ -12,6 +12,7 @@ const { current } = Astro.props
 
 <nav class="nav">
 	<a href={withBase(`/${docsBase}/`)} aria-current={current === 'docs' ? 'page' : undefined}>Docs</a>
+	<a href={demo}>Demo</a>
 	<a href="https://github.com/a11delavar/mitra" rel="noreferrer" title="GitHub" aria-label="GitHub">
 		<Icon name="github" />
 	</a>

@@ -68,6 +68,9 @@ export abstract class Command {
 	 * empty palette should read as a curated menu. */
 	get listedWithoutQuery() { return true }
 
+	/** False when this instance turned the command off, rather than it not applying right now. */
+	get available() { return true }
+
 	/** The palette's kbd hint beside the heading. */
 	get shortcut() { return !this.keys?.length ? undefined : Command.keyLabel(this.keys[0]!) }
 

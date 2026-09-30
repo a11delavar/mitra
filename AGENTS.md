@@ -95,6 +95,7 @@ Feature components compose design primitives and hold domain logic only. Registe
 - **Modes**:
   - Single-User (default): Zero-auth using seeded `[default_local_user]`.
   - Multi-User: Enabled via env `MITRA_OIDC_ISSUER`, `MITRA_OIDC_CLIENT_ID`, `MITRA_URL` (optional: `MITRA_OIDC_CLIENT_SECRET`, `MITRA_OIDC_SCOPES`). Incomplete config throws in `Oidc.fromEnv`.
+  - Demo (`MITRA_DEMO=true`, wins over OIDC): the `visitor` strategy opens a `Sandbox` (`demo-<uuid>` user holding a synced `Demo` integration) where multi-user mode would ask for a sign-in. Past `Sandbox.cap` the least recently seen sandbox is evicted. Dotted paths outside `/api/` never open one, so an asset fetch leaves nothing behind. Connecting is refused (403) and `meta.demo` hides its entry points (`Command.available`, the sidebar button).
 - **Relying Party**: Backend OIDC client (`src/features/identity/server/Oidc.ts`, Auth Code + PKCE via `openid-client`, routes `/auth/*`). Supports lazy discovery and HTTP LAN issuers.
 - **Sessions** (`src/features/identity/server/Session.ts`): 256-bit cookie token, stored SHA-256 hashed, sliding 30-day expiry, `SameSite=Lax`. Retains `id_token` for RP-initiated logout (`id_token_hint`). Unauthenticated `/api/*` returns 401; page navs redirect to `/auth/login?returnTo=...`.
 - **Identity Model**: Value object `Identity` (`src/features/identity/Identity.ts`) with `issuer`, `subject`, `email`, `name`, `picture` URL. Embedded in `User` as nullable `oidc_*` columns (`@embedded`, unique on `['identity.issuer', 'identity.subject']`). `user.identity != null` indicates OIDC user.
@@ -105,7 +106,7 @@ Feature components compose design primitives and hold domain logic only. Registe
 - **SSE Scope** (`SyncScope`): `'entries'` (default wire event `'updated'`) or `'sources'`. `'sources'` triggers client `fetchIntegrations()` to update calendar metadata, colors, and import states. Entry mutations use `'entries'` to prevent recreating `Source` object references.
 
 ## The Sample Calendar (`Demo.seed` in `src/integrations/demo/Demo.ts`)
-One fixture serves the dev account and every screenshot the site ships, so keep it calm: one entry per concept, the all-day lane empty around today, days inside 07:00–19:00 (what a capture holds).
+One fixture serves the dev account, every demo sandbox and every screenshot the site ships, so keep it calm: one entry per concept, the all-day lane empty around today, days inside 07:00–19:00 (what a capture holds).
 - **One dependency chain in the CURRENT week**: the app opens on today−2…today+4. Give its connector a clear band of time; a chip between two linked tasks swallows the line.
 - **`credentials.seededFor` gates the refresh**: a seed edit shows up the next day, or immediately via the Demo integration's Re-import.
 

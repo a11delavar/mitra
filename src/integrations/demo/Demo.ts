@@ -16,7 +16,7 @@ import { normalizeAllDay } from '../../features/time/calendarDate.js'
 /** The signed-in user's address in the sample data. */
 const me = 'me@example.com'
 
-/** Sample calendars for development, offered only with `MITRA_DEV`. See AGENTS.md §The Sample Calendar. */
+/** Sample calendars, offered only with `MITRA_DEV` and given to every `MITRA_DEMO` visitor. See AGENTS.md §The Sample Calendar. */
 @model('Demo')
 @integration('demo')
 export class Demo extends MitraCalendar {

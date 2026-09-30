@@ -1,4 +1,4 @@
-import { Router, type Request } from 'express'
+import { Router, type Request, type RequestHandler } from 'express'
 import { orm } from '../../infrastructure/database/orm.js'
 import { syncEmitter } from '../../infrastructure/realtime/syncEmitter.js'
 import { cookie } from '../../features/identity/server/auth.js'
@@ -8,13 +8,18 @@ import { Color } from '../../features/sources/Color.js'
 import { EntryTypes } from '../../features/entries/EntryType.js'
 import { applyOrder } from '../../infrastructure/model/order.js'
 import { createLogger } from '../../infrastructure/logging/Logger.js'
-import { isDeveloperSystem } from '../../infrastructure/environment.js'
+import { isDemo, isDeveloperSystem } from '../../infrastructure/environment.js'
 import { Integration, integrationClassFor } from '../Integration.js'
 import { GoogleCalendar } from '../google/GoogleCalendar.js'
 import { importer } from './Importer.js'
 const logger = createLogger('Integrations')
 
 export const integrationsRouter = Router()
+
+/** Keeps strangers' credentials off a demo box, and the box from fetching the URLs they type. */
+const refusedInDemo: RequestHandler = (_req, res, next) => isDemo
+	? res.status(403).json({ error: 'Connecting accounts is turned off in the demo' })
+	: next()
 
 integrationsRouter.get('/', async (req, res) => {
 	const em = orm.em.fork()
@@ -54,7 +59,7 @@ const googleTransitCookie = 'Mitra.GoogleAuth'
 
 const requestOrigin = (req: Request) => `${req.protocol}://${req.get('host')}`
 
-integrationsRouter.get('/google/connect', async (req, res) => {
+integrationsRouter.get('/google/connect', refusedInDemo, async (req, res) => {
 	if (!google) {
 		return res.status(400).json({ error: 'Google Calendar is not configured. Set MITRA_GOOGLE_CLIENT_ID and MITRA_GOOGLE_CLIENT_SECRET' })
 	}
@@ -98,7 +103,7 @@ integrationsRouter.get('/google/callback', async (req, res) => {
 	return res.redirect(`/?integration=${integration.id}`)
 })
 
-integrationsRouter.post('/sources', async (req, res) => {
+integrationsRouter.post('/sources', refusedInDemo, async (req, res) => {
 	const incoming = req.body as Integration
 	const em = orm.em.fork()
 	const integration: Integration = await em.findOne(Integration, { id: incoming.id, userId: req.user.id })
@@ -107,7 +112,7 @@ integrationsRouter.post('/sources', async (req, res) => {
 	return res.json(await integration.getSources(em, { checkDuplicate: true }))
 })
 
-integrationsRouter.post('/', async (req, res) => {
+integrationsRouter.post('/', refusedInDemo, async (req, res) => {
 	const incoming = req.body as Integration
 	if (integrationClassFor(incoming.type).developmentOnly && !isDeveloperSystem) {
 		return res.status(403).json({ error: 'This integration is only available on a development system' })
