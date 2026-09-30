@@ -2,8 +2,8 @@ import { type Converter } from '@a11d/converter'
 import { Type } from '../../infrastructure/model/orm.js'
 
 /**
- * WHERE a relationship line groups in the editor: by EDGE semantics, not stored direction — a
- * foreign CHILD pointing here and an owned PARENT pointing away both read "Subtask of" — so mirror
+ * WHERE a relationship line groups in the editor: by EDGE semantics, not stored direction (a
+ * foreign CHILD pointing here and an owned PARENT pointing away both read "Subtask of"), so mirror
  * pairs share a glyph (the kind) while the label carries the direction. Open like
  * {@link RelationType}: an uninterpreted type is its own section, labelled by its raw value.
  */
@@ -19,7 +19,7 @@ export class RelationSection {
 
 	private static readonly opaque = new Map<string, RelationSection>()
 
-	/** One cached instance per value, known or not — {@link RelationType.of}'s contract. */
+	/** One cached instance per value, known or not: {@link RelationType.of}'s contract. */
 	static of(value: RelationSection | string): RelationSection {
 		if (value instanceof RelationSection) {
 			return value
@@ -39,7 +39,7 @@ export class RelationSection {
 		return index < 0 ? RelationSection.all.length : index
 	}
 
-	/** The section's heading. FRONTEND-ONLY, like {@link EntryType.format} — `t()` is a frontend
+	/** The section's heading. FRONTEND-ONLY, like {@link EntryType.format}, since `t()` is a frontend
 	 * global; the i18n scanner tracks these shared keys. An opaque section reads as its raw value. */
 	format(): string {
 		switch (this) {
@@ -65,23 +65,23 @@ export class RelationSection {
 
 /**
  * HOW one entry relates to another: the iCalendar RELTYPE vocabulary (RFC 5545 §3.2.15 hierarchy,
- * RFC 9253 §5 temporal dependencies) as a value object, following {@link EntryType}'s pattern — the
+ * RFC 9253 §5 temporal dependencies) as a value object, following {@link EntryType}'s pattern: the
  * type answers its own questions (family, sections, authorability, edge readings), and there is one
  * instance per value, so `===` is the whole comparison story.
  *
  * Unlike EntryType the vocabulary is OPEN: an unknown value (`X-…`) is data that must round-trip,
- * never an error — so {@link of} answers a cached opaque instance instead of throwing, and
+ * never an error, so {@link of} answers a cached opaque instance instead of throwing, and
  * {@link Relation.type} stays a raw string (relations tolerate plain wire DTOs), reaching this
  * behaviour via `of()`.
  */
 export class RelationType {
-	/** This entry is a child of the target — Mitra's canonical hierarchy direction. */
+	/** This entry is a child of the target, Mitra's canonical hierarchy direction. */
 	static readonly Parent = new RelationType('PARENT')
 	/** The target is a child of this entry. Foreign clients author this; Mitra never does. */
 	static readonly Child = new RelationType('CHILD')
 	/** This entry and the target share a parent. Derivable, so Mitra never authors it. */
 	static readonly Sibling = new RelationType('SIBLING')
-	/** This entry cannot start until the target finishes — Mitra's canonical dependency direction. */
+	/** This entry cannot start until the target finishes, Mitra's canonical dependency direction. */
 	static readonly FinishToStart = new RelationType('FINISHTOSTART')
 	/** This entry cannot finish until the target finishes. */
 	static readonly FinishToFinish = new RelationType('FINISHTOFINISH')
@@ -90,7 +90,7 @@ export class RelationType {
 	/** This entry cannot finish until the target starts. */
 	static readonly StartToFinish = new RelationType('STARTTOFINISH')
 
-	/** The types the editor OFFERS, in UI order — everything else round-trips and renders read-only. */
+	/** The types the editor OFFERS, in UI order. Everything else round-trips and renders read-only. */
 	static readonly authorable: ReadonlyArray<RelationType> = [RelationType.FinishToStart, RelationType.Parent]
 
 	private static readonly known = new Map<string, RelationType>(
@@ -100,7 +100,7 @@ export class RelationType {
 	/** One cached instance per UNKNOWN value too, so `===` works for `X-` types like any other. */
 	private static readonly opaque = new Map<string, RelationType>()
 
-	/** The one instance for a value, however spelled — normalized like {@link Relation.normalize}
+	/** The one instance for a value, however spelled, normalized like {@link Relation.normalize}
 	 * (trimmed, UPPERCASE), so a parsed line and a constructed instance meet on the same identity. */
 	static of(value: RelationType | string): RelationType {
 		if (value instanceof RelationType) {
@@ -134,7 +134,7 @@ export class RelationType {
 		}
 	}
 
-	/** The {@link RelationSection} a stored line of this type groups into — the hierarchy pair flips
+	/** The {@link RelationSection} a stored line of this type groups into. The hierarchy pair flips
 	 * within one family, so this is the instance's knowledge, not the family's. */
 	get section(): RelationSection {
 		switch (this) {
@@ -149,7 +149,7 @@ export class RelationType {
 		}
 	}
 
-	/** The same edge read from the target's side — a DERIVED line, so every reading flips. */
+	/** The same edge read from the target's side: a DERIVED line, so every reading flips. */
 	get inverseSection(): RelationSection {
 		switch (this) {
 			case RelationType.Parent:
@@ -185,7 +185,7 @@ export class RelationType {
 		return this.family === 'dependency' ? { dependent: ownerUid, predecessor: targetUid } : undefined
 	}
 
-	/** WHICH boundaries a temporal type couples — the dependent's may never fall before the
+	/** WHICH boundaries a temporal type couples: the dependent's may never fall before the
 	 * predecessor's. The verdict over two entries is {@link Entry.violates}; shift propagation will
 	 * read the same pair to know what to move. */
 	get coupling(): { predecessor: 'start' | 'end', dependent: 'start' | 'end' } | undefined {
@@ -224,7 +224,7 @@ export class RelationType {
 		}
 	}
 
-	/** Interpolates and serializes as the wire value — the same word the .ics carries. */
+	/** Interpolates and serializes as the wire value, the same word the .ics carries. */
 	toString() {
 		return this.value
 	}

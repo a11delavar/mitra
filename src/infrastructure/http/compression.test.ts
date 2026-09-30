@@ -24,7 +24,7 @@ function raw(origin: string, url: string, accept = 'br, gzip') {
 				bytes,
 			}))
 		})
-		request.setTimeout(4000, () => request.destroy(new Error('TIMED OUT — the response never completed')))
+		request.setTimeout(4000, () => request.destroy(new Error('TIMED OUT: the response never completed')))
 		request.on('error', reject)
 		request.end()
 	})
@@ -100,7 +100,7 @@ describe('compression', () => {
 		const reader = response.body!.getReader()
 		const first = await Promise.race([
 			reader.read().then(({ value }) => Buffer.from(value!).toString()),
-			new Promise<string>(resolve => setTimeout(() => resolve('TIMED OUT — the stream is buffered'), 2000)),
+			new Promise<string>(resolve => setTimeout(() => resolve('TIMED OUT: the stream is buffered'), 2000)),
 		])
 		assert.equal(first, 'data: first\n\n')
 		await reader.cancel()

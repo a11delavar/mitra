@@ -13,7 +13,7 @@ import { Migration20260829101122_AddNotificationSubscriptionDevice } from './Mig
 import { Migration20260831093000_SourceImportedAt } from './Migration20260831093000_SourceImportedAt.js'
 /**
  * Every migration the app ships, oldest first. The backend bundles into a single file, so migrations
- * are imported explicitly rather than discovered on disk — `npm run db:migration:create` generates a
+ * are imported explicitly rather than discovered on disk. `npm run db:migration:create` generates a
  * new migration and appends it here.
  */
 export const migrations: Array<Constructor<Migration>> = [

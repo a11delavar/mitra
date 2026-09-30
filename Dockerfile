@@ -3,7 +3,7 @@
 # ── Build stage ───────────────────────────────────────────────────────────────
 # Bundles the backend + frontend with esbuild. `better-sqlite3`/`tsdav` are kept
 # external by the bundle, so they (and only they, plus their deps) must survive in
-# node_modules for the runtime stage — hence `npm prune --omit=dev` at the end.
+# node_modules for the runtime stage, hence `npm prune --omit=dev` at the end.
 # Node 25 is required (Temporal API behaviour); build tools are present so
 # better-sqlite3 can compile from source if no prebuilt binary exists for this ABI.
 FROM node:25-bookworm-slim AS builder
@@ -30,7 +30,7 @@ COPY scripts ./scripts
 COPY src ./src
 RUN npm run build
 
-# Strip dev dependencies — leaves the runtime externals (better-sqlite3, tsdav, …).
+# Strip dev dependencies. This leaves the runtime externals (better-sqlite3, tsdav, …).
 RUN npm prune --omit=dev
 
 # ── Runtime stage ─────────────────────────────────────────────────────────────
@@ -63,7 +63,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 
 # Links the image to its repo on GHCR (README, permissions) and stamps metadata.
 LABEL org.opencontainers.image.source="https://github.com/a11delavar/mitra"
-LABEL org.opencontainers.image.description="Mitra — one calendar to plan your events and tasks, self-hostable and synced with the calendars you already use."
+LABEL org.opencontainers.image.description="Mitra: one calendar to plan your events and tasks, self-hostable and synced with the calendars you already use."
 LABEL org.opencontainers.image.licenses="AGPL-3.0-only"
 
 CMD ["node", "out/server/server.mjs"]

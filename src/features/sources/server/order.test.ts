@@ -12,13 +12,13 @@ import { EntryType } from '../../entries/EntryType.js'
 import { Entry } from '../../entries/Entry.js'
 import { CalDAV } from '../../../integrations/caldav/CalDAV.js'
 import { AppleCalendar } from '../../../integrations/apple/AppleCalendar.js'
-import { Dev } from '../../../integrations/dev/Dev.js'
+import { MitraCalendar } from '../../../integrations/mitra/MitraCalendar.js'
 import { NotificationSubscription } from '../../reminders/NotificationSubscription.js'
 import { Session } from '../../identity/server/Session.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
-		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Dev, Source, Entry, Recurrence, NotificationSubscription, Session],
+		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, MitraCalendar, Source, Entry, Recurrence, NotificationSubscription, Session],
 		dbName: ':memory:',
 		namingStrategy: class extends UnderscoreNamingStrategy {
 			override joinColumnName(propertyName: string) {
@@ -37,7 +37,7 @@ async function inMemoryOrm() {
 
 async function seedUser(em: EntityManager, username: string, names: Array<string>) {
 	const user = new User({ username })
-	const integration = new Dev({ userId: user.id, uri: `dev://${username}` })
+	const integration = new MitraCalendar({ userId: user.id, uri: `dev://${username}` })
 	const sources = names.map(name => new Source({ integrationId: integration.id, uri: `${username}/${name}`, entryTypes: [EntryType.Event], name, enabled: true }))
 	em.persist([user, integration, ...sources])
 	await em.flush()
@@ -71,7 +71,7 @@ describe('sidebar manual order', () => {
 		assert.equal(d!.order, null)
 	})
 
-	it('a later wholesale write resets every unlisted sibling — stale numbers never interleave', async () => {
+	it('a later wholesale write resets every unlisted sibling, so stale numbers never interleave', async () => {
 		const em = orm.em.fork()
 		const { integration, sources: [a, b, c, d] } = await seedUser(em, 'reset', ['a', 'b', 'c', 'd'])
 		const siblings = await em.find(Source, { integrationId: integration.id })
@@ -98,7 +98,7 @@ describe('sidebar manual order', () => {
 	it('integrations sort the same way: placed ones first, connection order for the rest', async () => {
 		const em = orm.em.fork()
 		const user = new User({ username: 'accounts' })
-		const integrations = ['one', 'two', 'three'].map(name => new Dev({ userId: user.id, uri: `dev://accounts/${name}` }))
+		const integrations = ['one', 'two', 'three'].map(name => new MitraCalendar({ userId: user.id, uri: `dev://accounts/${name}` }))
 		em.persist([user, ...integrations])
 		await em.flush()
 		applyOrder(integrations, [integrations[2]!.id])
@@ -113,7 +113,7 @@ describe('sidebar manual order', () => {
 		const bob = await seedUser(em, 'bob', ['b'])
 		const ids = [alice.sources[0]!.id, bob.sources[0]!.id]
 		const resolved = await alice.user.sources(em, { id: { $in: ids } })
-		assert.equal(resolved.length, 1) // fewer than requested — the route 404s exactly this
+		assert.equal(resolved.length, 1) // fewer than requested, which the route 404s exactly this
 		assert.equal(resolved[0]!.id, alice.sources[0]!.id)
 	})
 })

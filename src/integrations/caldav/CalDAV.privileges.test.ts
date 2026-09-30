@@ -31,7 +31,7 @@ describe('CalDAV write privileges', () => {
 })
 
 describe('CalDAV discovery marks a shared calendar read-only', () => {
-	it('only for a definite refusal — never for a server that stayed quiet', async () => {
+	it('only for a definite refusal, never for a server that stayed quiet', async () => {
 		const dav = new CalDAV({ uri: 'https://dav/', credentials: { username: 'u', password: 'p' } })
 		;(dav as unknown as { client: unknown }).client = Promise.resolve({
 			fetchCalendars: () => Promise.resolve([

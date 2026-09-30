@@ -5,13 +5,13 @@ import { Migration } from '@mikro-orm/migrations'
  *
  * Introspects first because this REPLAYS on a baselined database: an instance first booted in dev got
  * its schema from `orm.schema.update()` against the current entities, so the column is already there
- * and a bare `add column` would fail the boot. `execute`, not `addSql` — queued SQL runs after `up()`
+ * and a bare `add column` would fail the boot. `execute`, not `addSql`: queued SQL runs after `up()`
  * returns and could not read its own precondition.
  *
  * The generator also offered an `integration` rebuild (its discriminator gained `ics`) and a second
  * `entry.percent_complete`; both dropped by hand. The discriminator is an unconstrained text column,
  * and that rebuild would have cascaded every `source` away. `percent_complete` is already added by
- * Migration20260822140000 — it reappeared only because the committed snapshot was never regenerated.
+ * Migration20260822140000. It reappeared only because the committed snapshot was never regenerated.
  */
 export class Migration20260826182337_AddSourceReadOnly extends Migration {
 	override async up(): Promise<void> {

@@ -52,12 +52,12 @@ async function createMigration(name: string) {
 	try {
 		const result = await orm.migrator.create(undefined, false, false, name)
 		if (!result.fileName) {
-			logger.info('No schema changes detected — entities match the snapshot.')
+			logger.info('No schema changes detected, entities match the snapshot.')
 			return
 		}
 		const className = result.fileName.replace(/\.ts$/, '')
 		await registerMigration(className)
-		logger.info(`Generated ${result.fileName} and registered it in migrations/index.ts — review it before committing.`)
+		logger.info(`Generated ${result.fileName} and registered it in migrations/index.ts. Review it before committing.`)
 	} finally {
 		await orm.close()
 	}
@@ -70,7 +70,7 @@ async function registerMigration(className: string) {
 	const withImport = index.replace(/\n(\/\*\*)/, `\nimport { ${className} } from './${className}.js'\n$1`)
 	const withEntry = withImport.replace(/\n\]\n$/, `\n\t${className},\n]\n`)
 	if (withImport === index || withEntry === withImport) {
-		throw new Error(`Could not register ${className} in ${indexPath} — add it manually.`)
+		throw new Error(`Could not register ${className} in ${indexPath}. Add it manually.`)
 	}
 	await writeFile(indexPath, withEntry)
 }
@@ -106,6 +106,6 @@ switch (command) {
 		await run(command)
 		break
 	default:
-		console.error(`Unknown command '${command ?? ''}' — expected create, up or down.`)
+		console.error(`Unknown command '${command ?? ''}', expected create, up or down.`)
 		process.exitCode = 1
 }

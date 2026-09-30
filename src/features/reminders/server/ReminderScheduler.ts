@@ -61,7 +61,7 @@ export class ReminderScheduler {
 			const persisted = (await this.readWatermark())?.getTime() ?? now.getTime()
 			const watermark = new Date(Math.max(persisted, now.getTime() - CLAMP))
 			if (persisted < watermark.getTime()) {
-				this.logger.warn(`Skipped reminders due between ${new Date(persisted).toISOString()} and ${watermark.toISOString()} — too far behind to still be useful.`)
+				this.logger.warn(`Skipped reminders due between ${new Date(persisted).toISOString()} and ${watermark.toISOString()}: too far behind to still be useful.`)
 			}
 			const until = new Date(now.getTime() + ReminderScheduler.interval)
 
@@ -96,7 +96,7 @@ export class ReminderScheduler {
 				const userId = userOf(entry)
 				return userId ? zoneByUser.get(userId) : undefined
 			})
-			this.logger.debug(`Tick: window (${watermark.toISOString()}, ${until.toISOString()}] — scanned ${rows.length} plain + ${occurrences.length} occurrence(s), ${due.length} due`)
+			this.logger.debug(`Tick: window (${watermark.toISOString()}, ${until.toISOString()}]: scanned ${rows.length} plain + ${occurrences.length} occurrence(s), ${due.length} due`)
 
 			for (const reminder of due) {
 				const userId = userOf(reminder.entry)

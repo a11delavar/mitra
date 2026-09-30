@@ -2,18 +2,18 @@ import { Migration } from '@mikro-orm/migrations'
 
 /**
  * One collection is one source now (see Source.entryTypes): the old model kept an event/task SIBLING
- * PAIR per CalDAV collection — two rows sharing one `uri`, split by the `type` column — and this
+ * PAIR per CalDAV collection (two rows sharing one `uri`, split by the `type` column), and this
  * migration merges each pair into a single row so no instance loses data on update:
  *
  * - the pair's entries are re-pointed at the surviving row (the enabled one, events first on a tie),
  * - what the collection can hold moves into the new `entry_types` list (the union of the pair),
- * - `enabled` is the pair's OR, `hidden` its AND — if either sibling was on show, the collection is,
+ * - `enabled` is the pair's OR, `hidden` its AND: if either sibling was on show, the collection is,
  * - a user's default source follows the merge (a preference pointing at the losing sibling re-points),
  * - a merged source's `sync_state` is cleared: its two sibling tokens each covered only one component
  *   type's ingestion, so the next sync re-lists the collection from scratch (idempotent upserts).
  *
  * The table rebuilds deliberately do NOT follow the generated drop-and-recreate scaffold: migrations
- * run inside a transaction, where `pragma foreign_keys = off` is a NO-OP — and with foreign keys
+ * run inside a transaction, where `pragma foreign_keys = off` is a NO-OP, and with foreign keys
  * enforced, SQLite's `drop table` performs an implicit `DELETE FROM` whose `on delete cascade`/`set
  * null` actions fire for real (dropping `source` would have deleted every entry and nulled every
  * user's default source; caught by the fixture test). So each rebuild routes through an FK-free
@@ -23,14 +23,14 @@ import { Migration } from '@mikro-orm/migrations'
 export class Migration20260802230147_MergeSourceTypes extends Migration {
 	override async up(): Promise<void> {
 		// A database born on the new entities (a dev `schema.update()` build) has no `type` column and
-		// no sibling pairs — nothing to do.
+		// no sibling pairs, so nothing to do.
 		const columns = await this.execute('select name from pragma_table_info(\'source\')') as Array<{ name: string }>
 		if (!columns.some(column => column.name === 'type')) {
 			return
 		}
 
-		// 1. Analyse the old shape while `type` still exists: one group per collection — a sibling pair
-		// shares its (integration_id, uri) — ordered so each group's FIRST row is the survivor. The
+		// 1. Analyse the old shape while `type` still exists: one group per collection (a sibling pair
+		// shares its (integration_id, uri)), ordered so each group's FIRST row is the survivor. The
 		// users' default-source preferences are captured too: the rebuild below empties `source` once,
 		// which fires their `on delete set null`.
 		const rows = await this.execute(
@@ -39,7 +39,7 @@ export class Migration20260802230147_MergeSourceTypes extends Migration {
 		const groups = [...Map.groupBy(rows, row => `${row.integrationId} ${row.uri}`).values()]
 		const defaultSources = await this.execute('select id, default_source_id as sourceId from user where default_source_id is not null') as Array<{ id: string, sourceId: string }>
 
-		// 2. Rebuild: `source` trades `type` for `entry_types` (null for now — filled below), `entry`
+		// 2. Rebuild: `source` trades `type` for `entry_types` (null for now, filled below), `entry`
 		// sheds the old enum's check constraint.
 		for (const sql of [
 			'create table `entry__holding` (`id` text not null primary key, `source_id` text not null, `uri` text null, `type` text not null, `heading` text not null default \'\', `description` text not null default \'\', `location` text not null default \'\', `color` text null, `start` datetime null, `end` datetime null, `status` text null, `all_day` integer not null default false, `time_zone` text null, `data` json null, `reminders` json null, `participants` json null, `uid` text null, `recurrence_freq` text null, `recurrence_interval` integer null, `recurrence_byday` json null, `recurrence_bymonthday` integer null, `recurrence_count` integer null, `recurrence_until` datetime null, `exdates` json null, `recurrence_master_id` text null, `recurrence_id` datetime null);',
@@ -67,12 +67,12 @@ export class Migration20260802230147_MergeSourceTypes extends Migration {
 			const types = [...new Set(group.map(row => row.type))].sort() // alphabetical = calendar-first
 			for (const loser of losers) {
 				// A member the survivor also holds would collide with the (source_id, uri, recurrence_id)
-				// unique index — the old sync's cross-source duplicate guard made that rare, never impossible.
+				// unique index. The old sync's cross-source duplicate guard made that rare, never impossible.
 				await this.execute(
 					'delete from entry where source_id = ? and exists (select 1 from entry other where other.source_id = ? and other.uri is entry.uri and other.recurrence_id is entry.recurrence_id)',
 					[loser.id, survivor!.id],
 				)
-				// Re-point BEFORE deleting the sibling row — `entry.source_id` cascades on delete.
+				// Re-point BEFORE deleting the sibling row, since `entry.source_id` cascades on delete.
 				await this.execute('update entry set source_id = ? where source_id = ?', [survivor!.id, loser.id])
 				await this.execute('delete from source where id = ?', [loser.id])
 			}
@@ -87,7 +87,7 @@ export class Migration20260802230147_MergeSourceTypes extends Migration {
 			}
 		}
 
-		// 4. Restore the default-source preferences the rebuild nulled — onto the survivor when the
+		// 4. Restore the default-source preferences the rebuild nulled, onto the survivor when the
 		// preference pointed at a merged-away sibling.
 		for (const { id, sourceId } of defaultSources) {
 			await this.execute('update user set default_source_id = ? where id = ?', [survivorOf.get(sourceId) ?? sourceId, id])
@@ -101,7 +101,7 @@ export class Migration20260802230147_MergeSourceTypes extends Migration {
 		const defaultSources = await this.execute('select id, default_source_id as sourceId from user where default_source_id is not null') as Array<{ id: string, sourceId: string }>
 
 		// The reverse rebuild, through the same FK-free holding table (see the class comment): `entry`
-		// gets its check constraint back, `source` its NOT NULL `type` — task-only rows are tasks,
+		// gets its check constraint back, `source` its NOT NULL `type`: task-only rows are tasks,
 		// everything else becomes the event row and the split below re-creates its task sibling.
 		for (const sql of [
 			'create table `entry__holding` (`id` text not null primary key, `source_id` text not null, `uri` text null, `type` text not null, `heading` text not null default \'\', `description` text not null default \'\', `location` text not null default \'\', `color` text null, `start` datetime null, `end` datetime null, `status` text null, `all_day` integer not null default false, `time_zone` text null, `data` json null, `reminders` json null, `participants` json null, `uid` text null, `recurrence_freq` text null, `recurrence_interval` integer null, `recurrence_byday` json null, `recurrence_bymonthday` integer null, `recurrence_count` integer null, `recurrence_until` datetime null, `exdates` json null, `recurrence_master_id` text null, `recurrence_id` datetime null);',
@@ -122,7 +122,7 @@ export class Migration20260802230147_MergeSourceTypes extends Migration {
 		}
 
 		// Re-split collections that held both types: the merged row stays the event source, a fresh
-		// task sibling takes the task entries. The original sibling's id is gone for good — ids are
+		// task sibling takes the task entries. The original sibling's id is gone for good, but ids are
 		// opaque, so a new one serves. Both start token-less and re-list on the next sync.
 		for (const source of sources) {
 			const types = JSON.parse(source.entryTypes ?? '[]') as Array<string>

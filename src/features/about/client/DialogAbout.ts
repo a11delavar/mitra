@@ -128,7 +128,7 @@ export class DialogAbout extends DialogComponent {
 							color: var(--color-text-muted);
 						}
 
-						/* Values sit right after their labels — spreading them to the far edge made the
+						/* Values sit right after their labels. Spreading them to the far edge made the
 						   header read wider than it is. */
 						dd {
 							margin: 0;
@@ -384,7 +384,7 @@ export class DialogAbout extends DialogComponent {
 		return !update ? html.nothing : html`
 			<mitra-button class="update" variant="primary" href=${update.url} target="_blank">
 				${update.commits
-					? t('New dev build — ${count:pluralityNumber} commits ahead', { count: update.commits })
+					? t('New dev build: ${count:pluralityNumber} commits ahead', { count: update.commits })
 					: t('Update available: ${version}', { version: update.version })}
 				→
 			</mitra-button>

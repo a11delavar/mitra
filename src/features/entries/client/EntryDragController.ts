@@ -299,7 +299,7 @@ export class EntryDragController extends Controller {
 	}
 
 	/** Whether a day lies under the point. Cells are picked by nearness, so without this every point
-	 * would snap into one — including those over a sidebar drawn on top of the grid. */
+	 * would snap into one, including those over a sidebar drawn on top of the grid. */
 	private places(point: { x: number, y: number }) {
 		const drag = this.drag!
 		return EntryDragController.within(drag.gridBox, point) && !EntryDragController.within(drag.sidebarBox, point)
@@ -414,7 +414,7 @@ export class EntryDragController extends Controller {
 		if (e.button !== 0) {
 			return
 		}
-		// A second pointer while a gesture is in flight means multi-touch (a pinch-zoom) — abandon the
+		// A second pointer while a gesture is in flight means multi-touch (a pinch-zoom), so abandon the
 		// single-pointer drag so it neither fights the zoom nor leaves a stray draft behind.
 		if (this.drag && e.pointerId !== this.drag.pointerId) {
 			this.onPointerCancel(new PointerEvent('pointercancel', { pointerId: this.drag.pointerId }))
@@ -423,11 +423,11 @@ export class EntryDragController extends Controller {
 		const target = e.target as HTMLElement
 		if (target.closest('mitra-entry-details') || target.closest('mitra-task-status')) {
 			// Interactions inside the editor popover, or on a task's status checkbox/menu, are never grid
-			// gestures — otherwise a tap on the checkbox would also register as a tap-to-open on the segment.
+			// gestures. Otherwise a tap on the checkbox would also register as a tap-to-open on the segment.
 			return
 		}
 		const cells = this.snapshotCells()
-		// Snapshotted up front, like the cells, so every frame stays free of DOM reads — see commonAt.
+		// Snapshotted up front, like the cells, so every frame stays free of DOM reads (see commonAt).
 		const common = this.commonAt(e, cells, this.element)
 
 		// Connecting handle hit-test takes precedence over entry chip gestures.
@@ -446,7 +446,7 @@ export class EntryDragController extends Controller {
 			return
 		}
 
-		// Move / resize an existing entry — persisted ones only (a draft is owned by the create flow + editor).
+		// Move / resize an existing entry, persisted ones only (a draft is owned by the create flow + editor).
 		// A series occurrence drags like any entry: the drop's commit resolves the edit's scope.
 		const segment = target.closest('mitra-entry-segment') as EntrySegmentComponent | null
 		const entry = segment?.segment?.entry
@@ -528,7 +528,7 @@ export class EntryDragController extends Controller {
 			this.apply(built)
 		} else if (drag.kind === 'move' && drag.preview) {
 			// Nothing under the pointer to place it on, so take the ghost away rather than leave it
-			// at the last spot that had one — and stop repainting the grid behind it.
+			// at the last spot that had one, and stop repainting the grid behind it.
 			EntryStore.setPreview(undefined)
 		}
 	}

@@ -39,7 +39,7 @@ describe('HideDoneTasksSetting', () => {
 	})
 
 	describe('while the lens is on', () => {
-		it('drops a done task and a cancelled one — the outcome is decided either way', () => {
+		it('drops a done task and a cancelled one: the outcome is decided either way', () => {
 			assert.equal(HideDoneTasksSetting.shows(task('a', TaskStatus.Done), true), false)
 			assert.equal(HideDoneTasksSetting.shows(task('b', TaskStatus.Cancelled), true), false)
 		})

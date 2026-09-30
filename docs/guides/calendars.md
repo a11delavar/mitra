@@ -16,6 +16,10 @@ Every calendar and task list Mitra imports from a connected account is a **sourc
 
 When you connect an account, Mitra discovers its calendars and lists but leaves them **off**. You pick the ones you want in the source picker, under the account's **⋯ → Edit**. Each one shows what it holds ("Events · Tasks"). Mitra only syncs and stores the sources you enable, so the ones you leave off cost nothing.
 
+## Add or delete a calendar
+
+Calendars from a connected account are created and deleted at the provider, and Mitra picks up the change on its next sync. [Mitra calendars](../integrations/mitra.md) are the exception: add one from the Mitra heading's **⋯ → New calendar**, and delete one, along with its entries, with **⋯ → Delete calendar**.
+
 ## Hide without unsyncing
 
 The **eye** on a source row hides it from the calendar. That's a view preference only: the source keeps syncing, and its entries come straight back when you show it again.
@@ -87,4 +91,4 @@ To move a single entry, open it and pick another calendar in its **source row**.
 
 ## Re-import a source
 
-**⋯ → Re-import entries**, on a single source or on a whole account, throws away Mitra's local copy of the entries and fetches everything from the provider again. Your data at the provider is never touched. This only rebuilds Mitra's own copy, so use it when a calendar looks wrong or out of date after an update. Day to day you never need it: syncing runs on its own (see [how syncing works](../integrations/README.md#how-syncing-works)).
+**⋯ → Re-import entries**, on a single source or on a whole account, throws away Mitra's local copy of the entries and fetches everything from the provider again. Your data at the provider is never touched. This only rebuilds Mitra's own copy, so use it when a calendar looks wrong or out of date after an update. Day to day you never need it: syncing runs on its own (see [how syncing works](../integrations/README.md#how-syncing-works)). Mitra calendars don't offer it, since there's no provider to fetch from.

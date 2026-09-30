@@ -363,7 +363,7 @@ export class TaskStatusComponent extends Component {
 		this.setAttribute('data-status', this.status)
 
 		const readout = this.progressLabel
-		const name = readout ? `${label(this.status)} — ${readout}` : label(this.status)
+		const name = readout ? `${label(this.status)} (${readout})` : label(this.status)
 		const progress = this.progress
 		const showsProgressDial = this.status === TaskStatus.Doing || (progress !== undefined && progress > 0 && progress < 1 && this.status !== TaskStatus.Done && this.status !== TaskStatus.Cancelled)
 		const percent = progress !== undefined ? Math.round(progress * 100) : 50
@@ -372,7 +372,7 @@ export class TaskStatusComponent extends Component {
 
 		return html`
 			<button class="status-button" aria-label=${name} ?disabled=${!editable}
-				title=${editable ? t('${status} — click to toggle, Alt-click for options', { status: name }) : name}
+				title=${editable ? t('${status}. Click to toggle, Alt-click for options', { status: name }) : name}
 				@click=${this.onToggle}
 				@contextmenu=${this.onContextMenu}>
 				${showsProgressDial ? html`

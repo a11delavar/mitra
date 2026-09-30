@@ -15,7 +15,7 @@ import { AppleCalendar } from '../../../integrations/apple/AppleCalendar.js'
 import { IcsSubscription } from '../../../integrations/ics/IcsSubscription.js'
 import { Notion } from '../../../integrations/notion/Notion.js'
 import { Tempo } from '../../../integrations/tempo/Tempo.js'
-import { Dev } from '../../../integrations/dev/Dev.js'
+import { MitraCalendar } from '../../../integrations/mitra/MitraCalendar.js'
 import { NotificationSubscription } from '../../reminders/NotificationSubscription.js'
 import { Session } from '../../identity/server/Session.js'
 import { MigrationRefused } from './SourceMigration.js'
@@ -23,7 +23,7 @@ import { IcsImport } from './IcsImport.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
-		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, IcsSubscription, Notion, Tempo, Dev, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
+		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, IcsSubscription, Notion, Tempo, MitraCalendar, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
 		dbName: ':memory:',
 		namingStrategy: class extends UnderscoreNamingStrategy {
 			override joinColumnName(propertyName: string) {
@@ -109,7 +109,7 @@ END:VEVENT`
 
 async function seed(em: EntityManager, init?: Partial<Source>) {
 	const user = new User({ username: `importer-${crypto.randomUUID()}` })
-	const integration = new Dev({ userId: user.id, uri: `mitra://test/${crypto.randomUUID()}` })
+	const integration = new MitraCalendar({ userId: user.id, uri: `mitra://test/${crypto.randomUUID()}` })
 	const source = new Source({
 		id: crypto.randomUUID(),
 		integrationId: integration.id,

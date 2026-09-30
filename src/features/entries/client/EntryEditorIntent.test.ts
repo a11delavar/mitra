@@ -29,14 +29,14 @@ describe('EntryEditorIntent', () => {
 			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: undefined })), false)
 		})
 
-		it('opens once — the second segment of a multi-day draft finds nothing pending', () => {
+		it('opens once: the second segment of a multi-day draft finds nothing pending', () => {
 			const draft = entry({ id: undefined })
 			EntryEditorIntent.openDraft(draft)
 			EntryEditorIntent.consume()
 			assert.equal(EntryEditorIntent.shouldOpen(draft), false)
 		})
 
-		it('is left alone by a fetch — a draft is never among the server entries', () => {
+		it('is left alone by a fetch, since a draft is never among the server entries', () => {
 			const draft = entry({ id: undefined })
 			EntryEditorIntent.openDraft(draft)
 			EntryEditorIntent.settle([entry()])

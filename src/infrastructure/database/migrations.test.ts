@@ -13,8 +13,8 @@ import { Migration20260802230147_MergeSourceTypes } from './migrations/Migration
 // migrations, instances predating migrations get baselined instead of crashing on `create table`,
 // and a second boot must always be a no-op. Dev boots use `orm.schema.update()` and never touch this.
 
-/** A private in-memory ORM on the production config — the real entity set, naming strategy and
- * migrations list — with the schema deliberately NOT created yet. */
+/** A private in-memory ORM on the production config (the real entity set, naming strategy and
+ * migrations list) with the schema deliberately NOT created yet. */
 function inMemoryOrm() {
 	return MikroORM.init(ormConfig(':memory:'))
 }
@@ -83,7 +83,7 @@ describe('migrate', () => {
 		try {
 			// Dev boots build their schema from today's entities, so a dev database that later boots in
 			// production already HAS whatever the newer migrations create. `migrate` catches a failed
-			// replay and falls back to a wholesale sync, which still satisfies the baselining test above —
+			// replay and falls back to a wholesale sync, which still satisfies the baselining test above,
 			// so the replay is exercised directly here, where a failure can't be papered over. Every
 			// migration after the initial one must therefore introspect and no-op on the new shape.
 			await orm.schema.update()
@@ -115,8 +115,8 @@ describe('migrate', () => {
 	it('replays the source-type merge when baselining the previous release\'s schema', async () => {
 		const orm = await inMemoryOrm()
 		try {
-			// A real pre-migrations instance: the last pre-migrations release's schema — exactly what the
-			// initial migration creates — with live data and no migrations log. The initial migration's SQL
+			// A real pre-migrations instance: the last pre-migrations release's schema (exactly what the
+			// initial migration creates) with live data and no migrations log. The initial migration's SQL
 			// is executed directly rather than via the migrator, which would create (and cache) the log table.
 			const sql = (query: string) => orm.em.getConnection().execute(query)
 			const initial = new (migrations[0]!)(orm.em.getDriver() as never, orm.config)
@@ -127,8 +127,8 @@ describe('migrate', () => {
 
 			await sql('insert into user (id, username) values (\'u1\', \'someone\')')
 			await sql('insert into integration (id, user_id, uri, type, credentials) values (\'i1\', \'u1\', \'caldav://example\', \'caldav\', \'{}\')')
-			// An event/task sibling pair for one collection (the old CalDAV discovery shape) — the enabled
-			// event row must survive and inherit the pair — plus a single-type source that must stay untouched.
+			// An event/task sibling pair for one collection (the old CalDAV discovery shape). The enabled
+			// event row must survive and inherit the pair, plus a single-type source that must stay untouched.
 			await sql('insert into source (id, integration_id, uri, type, name, enabled, hidden, sync_state) values (\'s-event\', \'i1\', \'https://example/cal\', \'event\', \'Calendar\', 1, 0, \'{"token":"e"}\')')
 			await sql('insert into source (id, integration_id, uri, type, name, enabled, hidden, sync_state) values (\'s-task\', \'i1\', \'https://example/cal\', \'task\', \'Calendar\', 0, 1, \'{"token":"t"}\')')
 			await sql('insert into source (id, integration_id, uri, type, name, enabled, hidden, sync_state) values (\'s-solo\', \'i1\', \'https://example/todos\', \'task\', \'Todos\', 1, 0, \'{"token":"solo"}\')')
@@ -145,7 +145,7 @@ describe('migrate', () => {
 			assert.deepEqual([...merged.entryTypes], [EntryType.Event, EntryType.Task])
 			assert.equal(merged.enabled, true, 'either sibling on show means the collection is')
 			assert.equal(merged.hidden, false)
-			assert.equal(merged.syncState ?? null, null, 'merged sibling tokens are void — the next sync re-lists')
+			assert.equal(merged.syncState ?? null, null, 'merged sibling tokens are void, the next sync re-lists')
 
 			const solo = sources[1]!
 			assert.deepEqual([...solo.entryTypes], [EntryType.Task])

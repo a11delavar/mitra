@@ -4,7 +4,7 @@ import { DateTime } from '@3mo/date-time'
 import { Recurrence } from './Recurrence.js'
 
 describe('Recurrence', () => {
-	// Thu 25 Jun 2026 — the screenshots' anchor (the last Thursday of June, 4th week).
+	// Thu 25 Jun 2026, the screenshots' anchor (the last Thursday of June, 4th week).
 	const thu = new DateTime('2026-06-25T09:00:00')
 
 	describe('weekdayCode / weekdayLabel / ordinal', () => {
@@ -197,7 +197,7 @@ describe('Recurrence', () => {
 			assert.equal(new Recurrence({ freq: 'WEEKLY', byday: ['MO'], interval: null as never, bymonthday: null as never, count: null as never }).valid, true)
 		})
 
-		it('rejects malformed parts — the routes 400 on these before any .ics writer sees them', () => {
+		it('rejects malformed parts: the routes 400 on these before any .ics writer sees them', () => {
 			assert.equal(new Recurrence({ freq: 'BOGUS' as never }).valid, false)
 			assert.equal(new Recurrence({ freq: 'WEEKLY', byday: ['XX'] }).valid, false)
 			assert.equal(new Recurrence({ freq: 'MONTHLY', bymonthday: 32 }).valid, false)
@@ -224,8 +224,8 @@ describe('Recurrence', () => {
 			assert.equal(rule.rebased(monday, new Date('2026-06-08T11:30:00Z')), rule)
 		})
 
-		it('measures the shift in LOCAL calendar days — an all-day snap to local midnight is not a day move', () => {
-			// A timed entry converted to all-day snaps to local midnight — before the timed instant in UTC
+		it('measures the shift in LOCAL calendar days: an all-day snap to local midnight is not a day move', () => {
+			// A timed entry converted to all-day snaps to local midnight, before the timed instant in UTC
 			// for any zone ahead of it. That must not read as "moved a day earlier" and rotate the weekdays.
 			const timed = new Date(2026, 5, 8, 9) // local Jun 8, 09:00
 			const localMidnight = new Date(2026, 5, 8) // local Jun 8, 00:00
@@ -264,7 +264,7 @@ describe('Recurrence', () => {
 		})
 
 		it('a month-day follows the anchor read in the given zone', () => {
-			// Jul 10 22:00Z is already Jul 11 in Berlin — the month-day must be 11, not UTC's 10.
+			// Jul 10 22:00Z is already Jul 11 in Berlin, so the month-day must be 11, not UTC's 10.
 			const moved = new Recurrence({ freq: 'MONTHLY', bymonthday: 10 })
 				.rebased(new Date('2026-07-09T22:00:00Z'), new Date('2026-07-10T22:00:00Z'), 'Europe/Berlin')
 			assert.equal(moved.bymonthday, 11)
@@ -346,7 +346,7 @@ describe('Recurrence', () => {
 		it('asContinuation keeps UNTIL and carries the REMAINING count', () => {
 			const until = Recurrence.untilFromDay(2026, 12, 31)
 			assert.match(new Recurrence({ freq: 'WEEKLY', byday: ['MO'], until }).asContinuation().toRRule(), /UNTIL=20261231T235959Z$/)
-			// A "10 times" series split after its first occurrence continues "9 times" — never forever.
+			// A "10 times" series split after its first occurrence continues "9 times", never forever.
 			assert.equal(new Recurrence({ freq: 'DAILY', count: 10 }).asContinuation(1).count, 9)
 			assert.equal(new Recurrence({ freq: 'DAILY', count: 10 }).asContinuation(9).count, 1)
 			// An unbounded rule stays unbounded, and a count never collapses below one occurrence.

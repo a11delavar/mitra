@@ -1,17 +1,17 @@
 /**
- * The service worker: the piece the browser's push service can wake with NO mitra tab open — receiving
+ * The service worker: the piece the browser's push service can wake with NO mitra tab open, receiving
  * the (end-to-end encrypted) reminder payload and showing the OS notification. Bundled standalone
  * (scripts/esbuild.ts `serviceWorkerOptions`) and served as `/sw.js`; the page registers it in
- * features/reminders/client/push.ts. It deliberately does nothing else — no caching/offline concerns — so
+ * features/reminders/client/push.ts. It deliberately does nothing else (no caching or offline concerns), so
  * updates to it are rare and never gate the app.
  *
  * Anything it imports is bundled INTO it, so it may only reach for dependency-free modules
- * (ReminderNotification.ts) — never the ORM-bound domain classes.
+ * (ReminderNotification.ts), never the ORM-bound domain classes.
  */
 
 import { ReminderNotification, type PushPayload } from '../features/reminders/ReminderNotification.js'
 
-// The worker global, typed structurally — the bundle shares the frontend tsconfig (DOM lib), which
+// The worker global, typed structurally: the bundle shares the frontend tsconfig (DOM lib), which
 // doesn't know the ServiceWorker globals.
 const worker = self as unknown as {
 	addEventListener(type: 'push' | 'notificationclick' | 'install' | 'activate' | 'pushsubscriptionchange', listener: (event: PushLikeEvent & NotificationClickLikeEvent & SubscriptionChangeLikeEvent) => void): void
@@ -59,12 +59,12 @@ interface SubscriptionChangeLikeEvent {
 	waitUntil(promise: Promise<unknown>): void
 }
 
-// Take over immediately on update — this worker holds no state worth a graceful handover, and without
+// Take over immediately on update. This worker holds no state worth a graceful handover, and without
 // this a new version idles in "waiting" until every mitra tab closes.
 worker.addEventListener('install', () => worker.skipWaiting())
 
 // The colored mark is what every platform that shows a picture gets: Windows' toast app logo, the
-// desktop message center, Android's large icon. The badge is the exception — Android's status bar keeps
+// desktop message center, Android's large icon. The badge is the exception: Android's status bar keeps
 // only its alpha channel, so there it must be the monochrome silhouette, which everywhere else would
 // render as a white smudge.
 const appIcon = '/android-chrome-192x192.png'

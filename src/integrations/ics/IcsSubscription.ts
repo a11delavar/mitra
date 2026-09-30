@@ -23,11 +23,11 @@ export interface IcsSubscriptionCredentials {
 export class IcsSubscription extends Integration<IcsSubscriptionCredentials> {
 	static readonly label: string = 'Calendar Subscription'
 	static readonly logo: string = 'ics'
-	static readonly description: string = 'Any calendar link — webcal:// or .ics'
+	static readonly description: string = 'Any calendar link (webcal:// or .ics)'
 
 	override get capabilities() {
 		return {
-			...Integration.fullCapabilities,
+			...Integration.defaultCapabilities,
 			relations: false,
 			createEntries: false, editEntries: false, deleteEntries: false, renameEntries: false,
 		}

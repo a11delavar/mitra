@@ -28,7 +28,7 @@ describe('User', () => {
 			assert.equal(users.length, 1)
 		})
 
-		it('creates a fresh user on first sight — never claiming a pre-auth default user', async () => {
+		it('creates a fresh user on first sight, never claiming a pre-auth default user', async () => {
 			const preAuth = new User({ username: User.default.username })
 			const users = [preAuth]
 			const provisioned = await User.provision(fakeEm(users), ISSUER, { sub: 'subject-1', email: 'operator@example.com', name: 'Operator' })
@@ -63,7 +63,7 @@ describe('User', () => {
 			assert.deepEqual(user.previouslyHiddenSourceIds, ['s2'])
 		})
 
-		it('records an EMPTY list when nothing was hidden — which still means "soloed"', () => {
+		it('records an EMPTY list when nothing was hidden, which still means "soloed"', () => {
 			const user = new User({ username: 'u' })
 			user.showOnly(sourcesOf(false, false), 's0')
 			assert.deepEqual(user.previouslyHiddenSourceIds, [])
@@ -93,7 +93,7 @@ describe('User', () => {
 			assert.equal(user.previouslyHiddenSourceIds, undefined)
 		})
 
-		it('brings a calendar that appeared mid-solo back SHOWN — no record ever knew of it', () => {
+		it('brings a calendar that appeared mid-solo back SHOWN, since no record ever knew of it', () => {
 			const user = new User({ username: 'u' })
 			const sources = sourcesOf(false, false, true)
 			user.showOnly(sources, 's0')

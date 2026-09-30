@@ -207,7 +207,7 @@ export class NotionClient {
 		if ((response.status === 429 || response.status === 529) && !isRetry) {
 			const retryAfter = Number(response.headers.get('Retry-After')) || 1
 			if (retryAfter <= NotionClient.maxRetryAfterSeconds) {
-				logger.debug(`Rate limited on ${path} — retrying in ${retryAfter}s`)
+				logger.debug(`Rate limited on ${path}, retrying in ${retryAfter}s`)
 				await new Promise(resolve => setTimeout(resolve, retryAfter * 1000))
 				return this.request<T>(method, path, body, true)
 			}

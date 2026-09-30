@@ -27,7 +27,7 @@ describe('Presence', () => {
 		const online: Array<string> = []
 		presence.onOnline(userId => online.push(userId))
 		const disconnect1 = presence.connect('user-1')
-		presence.connect('user-1') // second client — already online, no announcement
+		presence.connect('user-1') // second client, already online, no announcement
 		disconnect1()
 		assert.deepEqual(online, ['user-1'])
 	})
@@ -44,7 +44,7 @@ describe('Presence', () => {
 		assert.deepEqual(offline, ['user-1'])
 	})
 
-	it('announces again after everyone disconnected — a page reload comes back online', () => {
+	it('announces again after everyone disconnected: a page reload comes back online', () => {
 		const presence = new Presence()
 		const online: Array<string> = []
 		presence.onOnline(userId => online.push(userId))
@@ -59,7 +59,7 @@ describe('Presence', () => {
 		const disconnect1 = presence.connect('user-1')
 		disconnect1()
 		presence.connect('user-1')
-		disconnect1() // stale teardown fires again — must not count the new client down
+		disconnect1() // stale teardown fires again and must not count the new client down
 		assert.equal(presence.isOnline('user-1'), true)
 	})
 })

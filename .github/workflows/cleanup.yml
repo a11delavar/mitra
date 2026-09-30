@@ -1,9 +1,9 @@
 name: Cleanup GHCR
 
 # GHCR never garbage-collects, so two things pile up forever:
-#   • untagged manifests — multi-arch publishes leave child images, and a moved
+#   • untagged manifests: multi-arch publishes leave child images, and a moved
 #     `dev` tag orphans its previous digest;
-#   • per-commit `sha-*` tags — one per push to main.
+#   • per-commit `sha-*` tags: one per push to main.
 # This prunes both. It starts in DRY-RUN: check the run summary, then set
 # `dry-run: false` once the selection looks right. `latest`, `dev` and release
 # tags (X.Y.Z / X.Y / X) are never matched.

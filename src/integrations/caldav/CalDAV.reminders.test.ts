@@ -29,7 +29,7 @@ describe('reminders (VALARM)', () => {
 		assert.equal(CalDAV.remindersFrom(owner), null)
 	})
 
-	it('reads a due-only task\'s END-anchored alarm — its only possible anchor', () => {
+	it('reads a due-only task\'s END-anchored alarm, its only possible anchor', () => {
 		assert.deepEqual(CalDAV.remindersFrom(component('vtodo', ['DUE:20260101T090000Z'], [['TRIGGER;RELATED=END:-PT30M']])), [30])
 	})
 

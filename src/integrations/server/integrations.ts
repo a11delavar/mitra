@@ -4,8 +4,11 @@ import { syncEmitter } from '../../infrastructure/realtime/syncEmitter.js'
 import { cookie } from '../../features/identity/server/auth.js'
 import { GoogleOAuth } from '../google/server/GoogleOAuth.js'
 import { Source } from '../../features/sources/Source.js'
+import { Color } from '../../features/sources/Color.js'
+import { EntryTypes } from '../../features/entries/EntryType.js'
 import { applyOrder } from '../../infrastructure/model/order.js'
 import { createLogger } from '../../infrastructure/logging/Logger.js'
+import { isDeveloperSystem } from '../../infrastructure/environment.js'
 import { Integration, integrationClassFor } from '../Integration.js'
 import { GoogleCalendar } from '../google/GoogleCalendar.js'
 import { importer } from './Importer.js'
@@ -53,7 +56,7 @@ const requestOrigin = (req: Request) => `${req.protocol}://${req.get('host')}`
 
 integrationsRouter.get('/google/connect', async (req, res) => {
 	if (!google) {
-		return res.status(400).json({ error: 'Google Calendar is not configured — set MITRA_GOOGLE_CLIENT_ID and MITRA_GOOGLE_CLIENT_SECRET' })
+		return res.status(400).json({ error: 'Google Calendar is not configured. Set MITRA_GOOGLE_CLIENT_ID and MITRA_GOOGLE_CLIENT_SECRET' })
 	}
 	const redirectUri = google.redirectUri(requestOrigin(req))
 	const { url, verifier, state } = await google.authorization(redirectUri)
@@ -106,6 +109,9 @@ integrationsRouter.post('/sources', async (req, res) => {
 
 integrationsRouter.post('/', async (req, res) => {
 	const incoming = req.body as Integration
+	if (integrationClassFor(incoming.type).developmentOnly && !isDeveloperSystem) {
+		return res.status(403).json({ error: 'This integration is only available on a development system' })
+	}
 	const em = orm.em.fork()
 	const integration: Integration = new (integrationClassFor(incoming.type))({ userId: req.user.id })
 	em.persist(integration)
@@ -117,6 +123,42 @@ integrationsRouter.post('/', async (req, res) => {
 	logger.info(`Connected ${integration.type} integration with ${enabled} source(s) enabled`)
 	void importer.start(em, req.user.id, integration.id)
 	return res.status(201).json(saved)
+})
+
+integrationsRouter.post('/:id/sources', async (req, res) => {
+	const em = orm.em.fork()
+	const integration = await req.user.integration(em, req.params.id)
+	if (!integration.capabilities.createSources) {
+		return res.status(403).json({ error: 'This integration cannot create calendars from mitra' })
+	}
+
+	const name = String(req.body.name ?? '').trim()
+	if (!name) {
+		return res.status(400).json({ error: 'A name is required' })
+	}
+
+	// Only pass entryTypes when given: undefined would overwrite Source's default.
+	let entryTypes: EntryTypes | undefined
+	try {
+		entryTypes = req.body.entryTypes === undefined ? undefined : EntryTypes.parse(req.body.entryTypes)
+	} catch (error) {
+		return res.status(400).json({ error: error instanceof Error ? error.message : String(error) })
+	}
+
+	const siblings = await em.find(Source, { integrationId: integration.id })
+	const source = new Source({
+		name,
+		enabled: true,
+		hidden: false,
+		color: req.body.color ? String(req.body.color) : Color.unusedAmong(siblings.map(sibling => sibling.color)),
+		...entryTypes ? { entryTypes } : {},
+	})
+	await integration.createSource(em, source)
+	await em.flush()
+
+	syncEmitter.emit('updated', req.user.id, 'sources')
+	logger.info(`Created source "${source.name}" (${source.id}) in integration ${integration.id}`)
+	return res.status(201).json(source)
 })
 
 integrationsRouter.put('/:id', async (req, res) => {

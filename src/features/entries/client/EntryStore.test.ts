@@ -283,7 +283,7 @@ describe('EntryStore', () => {
 			assert.equal(EntryStore.isDirty(working), false)
 		})
 
-		it('drops a draft — it only ever existed locally', () => {
+		it('drops a draft, since it only ever existed locally', () => {
 			const draft = entry({ id: undefined })
 			EntryStore.upsertDraft(draft)
 			EntryStore.revert(draft)
@@ -388,7 +388,7 @@ describe('EntryStore', () => {
 			assert.equal(copy.id, 'copy')
 		})
 
-		it('saves without a heading — the untitled-draft guard does not apply', async () => {
+		it('saves without a heading: the untitled-draft guard does not apply', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
 			const untitled = entry({ heading: '' })
@@ -551,7 +551,7 @@ describe('EntryStore', () => {
 			EntryStore.resolveScope = () => (asked = true, Promise.resolve('all' as const))
 			const working = occurrence({ type: EntryType.Task, status: TaskStatus.ToDo })
 			EntryStore.applyServerEntries([working])
-			closeTask(working, TaskStatus.Done, Integration.fullCapabilities)
+			closeTask(working, TaskStatus.Done, Integration.defaultCapabilities)
 			const commit = EntryStore.commit(working)
 			await transport.respond(entry({ id: 'detached', type: EntryType.Task, status: TaskStatus.Done, percentComplete: 100 }))
 			await commit
@@ -562,7 +562,7 @@ describe('EntryStore', () => {
 			assert.equal(EntryStore.isDirty(working), false)
 		})
 
-		it('a progress-only change bypasses the scope dialog too — progress belongs to the occurrence', async () => {
+		it('a progress-only change bypasses the scope dialog too, since progress belongs to the occurrence', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
 			let asked = false
@@ -695,7 +695,7 @@ describe('EntryStore', () => {
 			assert.deepEqual(new Set(EntryStore.entries), new Set([first, second]))
 		})
 
-		it('a scoped delete rejected with 404 stays dropped — the series is gone server-side already', async () => {
+		it('a scoped delete rejected with 404 stays dropped, since the series is gone server-side already', async () => {
 			const transport = fake()
 			EntryStore.persistence = { ...transport.persistence, deleteOccurrence: () => Promise.reject(Object.assign(Object.create(ApiError.prototype), { response: { status: 404 } })) }
 			EntryStore.resolveScope = () => Promise.resolve('this')
@@ -716,7 +716,7 @@ describe('EntryStore', () => {
 	})
 
 	describe('relations', () => {
-		it('do NOT participate in dirty-tracking — the field persists them through its own PUT', async () => {
+		it('do NOT participate in dirty-tracking: the field persists them through its own PUT', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
 			const working = entry({ uid: 'self', relations: null })
@@ -800,7 +800,7 @@ describe('EntryStore', () => {
 			assert.deepEqual(closed, [])
 		})
 
-		it('stays silent when the save fails — the transition never reached the server', async () => {
+		it('stays silent when the save fails, since the transition never reached the server', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
 			const closed = watch()

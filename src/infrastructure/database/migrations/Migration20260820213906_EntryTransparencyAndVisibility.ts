@@ -5,7 +5,7 @@ import { Migration } from '@mikro-orm/migrations'
  * SQLite can't attach a CHECK to a column added with `alter table`, so both enums arrive via the
  * table rebuild MikroORM generates. The rebuild also drops the stale CHECK the initial migration put
  * on `type`: that column is a custom mapper now, and the ORM's own schema has carried no constraint
- * there for a while — this is prod catching up with what a fresh database already looks like.
+ * there for a while. This is prod catching up with what a fresh database already looks like.
  */
 export class Migration20260820213906_EntryTransparencyAndVisibility extends Migration {
 	override up(): void | Promise<void> {

@@ -29,7 +29,7 @@
   - Dotted symbolic keys (`Namespace.Name` in `en.json`) ONLY for long prose (`Notion.TokenHint`) and command palette search keyword blobs (`GoToDate.Keywords`).
   - All 6 locale dictionaries must be fully translated. Add keys in feature blocks beside related keys.
   - Language switches live through `Localizer.languages.current` (no reload). `i18n/index.ts` re-registers `LocalizerController` on `PageComponent`/`DialogComponent`: lit snapshots a class's initializers at finalize time, so the framework's bases never got the one @3mo/localization installs.
-  - Check a natural key is not already taken with another sense before reusing it (`t('On')` is the date preposition — the toggle state is `Toggle.On`).
+  - Check a natural key is not already taken with another sense before reusing it (`t('On')` is the date preposition, the toggle state is `Toggle.On`).
 - **Domain vs View Separation**:
   - Domain records in `src/features/*/` (`Entry`, `Source`, `Integration`) hold persistence/domain state only (e.g. `Entry.persisted`), never layout math.
   - Client layout lives in `src/features/entries/client/`: `EntrySegment` (per-day geometry from `(entry, date, links)`), `EntrySegments` (cross-segment calculations). UI components (`mitra-entry-segment`, `mitra-entry-details`) are view decorations.
@@ -67,7 +67,7 @@ Feature components compose design primitives and hold domain logic only. Registe
 ## Backend & Database (MikroORM / SQLite)
 - **ORM & STI**: SQLite with MikroORM. Single Table Inheritance (`@entity({ discriminatorColumn: 'type' })`) for polymorphic models (`Integration`, `Entry`). STI subclasses with no new columns need no migration; register in `ormConfig.ts` and `registerIntegrations.ts`.
 - **Migrations vs Dev Sync**:
-  - `MITRA_DEV=true`: schema diff-sync via `orm.schema.update()`.
+  - `MITRA_DEV=true`: schema diff-sync via `orm.schema.update()`, and the Demo integration is offered.
   - Non-dev: `migrate.ts` runs `orm.migrator.up()`.
   - Entity changes require: `npm run db:migration:create -- <PascalCaseName>` (generates migration and updates `.schema-snapshot.json`). Autorun via `migrationsList` in `src/infrastructure/database/migrations/index.ts`.
   - Migrations are immutable once committed. Replays run against databases without migration logs; migrations must be safe on fresh schemas (check via `pragma_table_info`).
@@ -80,7 +80,7 @@ Feature components compose design primitives and hold domain logic only. Registe
   - Conversion is re-creation: PUT route creates new entry, deletes old entry, compensates on failure.
   - `status` is gated on incoming type. Recurring series cannot convert (returns 400).
 - **Opt-in Source Discovery**: Discovered external sources must be saved with `enabled: false`. Sync entries only when enabled.
-- **Enabled vs Visible**: a target an entry may LIVE in is `enabled` (`getEnabledSources()`); `visible` is a VIEW preference and must never remove a destination — a solo ("only show this calendar") once left the editor's source picker with nowhere to move to.
+- **Enabled vs Visible**: a target an entry may LIVE in is `enabled` (`getEnabledSources()`); `visible` is a VIEW preference and must never remove a destination. A solo ("only show this calendar") once left the editor's source picker with nowhere to move to.
 - **Source Reconciliation**:
   - Preserves local renames (`PUT /sources/:id/name`).
   - `Source.remoteName` stores provider's baseline name. Reconcile updates displayed `name` only if remote name actually changed.
@@ -104,17 +104,19 @@ Feature components compose design primitives and hold domain logic only. Registe
 - **User Scoping**: SSE (`syncEmitter.emit('updated', userId, scope?)`), Web Push (`userId`), and reminders (`sendTo(userId, ...)`) are isolated per user.
 - **SSE Scope** (`SyncScope`): `'entries'` (default wire event `'updated'`) or `'sources'`. `'sources'` triggers client `fetchIntegrations()` to update calendar metadata, colors, and import states. Entry mutations use `'entries'` to prevent recreating `Source` object references.
 
-## The Sample Calendar (`seedSample` in `src/integrations/dev/Dev.ts`)
+## The Sample Calendar (`Demo.seed` in `src/integrations/demo/Demo.ts`)
 One fixture serves the dev account and every screenshot the site ships, so keep it calm: one entry per concept, the all-day lane empty around today, days inside 07:00–19:00 (what a capture holds).
 - **One dependency chain in the CURRENT week**: the app opens on today−2…today+4. Give its connector a clear band of time; a chip between two linked tasks swallows the line.
-- **`sampleUri()` gates the refresh**: a seed edit does nothing until the day changes. Force it by repointing the integration's `uri`.
+- **`credentials.seededFor` gates the refresh**: a seed edit shows up the next day, or immediately via the Demo integration's Re-import.
 
 ## Integrations & Sync Engine
 - **Class Hierarchy & Registration**:
   - `Integration` base class (STI).
   - `registeredIntegrations` (`registerIntegrations.ts`): Imports all connectable classes in display order.
-  - Class statics: `label`, `description`, `logo` (asset key for inline SVG), `canConnect` getter.
+  - Class statics: `label`, `description`, `logo` (asset key for inline SVG), plus the facts the add dialog reads: `onePerUser`, `developmentOnly`, `discoversSources`. Instance getters: `canConnect`, `reimportable`.
   - Base constructor sets STI discriminator via `new.target.type`.
+- **Capabilities** (`Integration.defaultCapabilities`): everything a provider can do, in one object. Entry features default to `true`, `createSources`/`deleteSources` to `false`. `capabilitiesIn(source)` turns off the write actions on read-only sources.
+- **Source Management**: `POST /api/integrations/:id/sources` and `DELETE /api/sources/:id` check the capability, then call the optional `SyncEngine.createSource`/`deleteSource`. Renaming needs no capability: the name is Mitra's for every provider.
 - **Integration Types**:
   - **CalDAV** (`integrations/caldav/CalDAV.ts`): Standard remote CalDAV sync engine.
   - **Google Calendar** (`integrations/google/GoogleCalendar.ts`, type `'google'`):
@@ -122,10 +124,15 @@ One fixture serves the dev account and every screenshot the site ships, so keep 
     - Credentials: `{ username: email, refreshToken }`. `toJSON` masks tokens; `merge` is a no-op.
     - Connect Flow (`GoogleOAuth.ts`): Backend PKCE exchange `/api/integrations/google/connect` -> callback -> redirect to `/?integration=<id>`.
     - Limitations: `capabilities.relations = false` (Google CalDAV drops `RELATED-TO` and `X-` properties).
-  - **Dev Calendar** (`src/integrations/dev/Dev.ts`, type `'dev'`):
-    - Self-contained, local-only calendar (no remote server).
-    - `sync()` is no-op, CRUD operations write directly to SQLite. `syncInterval = Infinity`.
-    - Seeded via `seedDev(orm)` when `MITRA_DEV=true`, from `seedSample` (see §The Sample Calendar).
+  - **Mitra** (`integrations/mitra/MitraCalendar.ts`, type `'mitra'`): calendars stored in Mitra's own database, no provider.
+    - `syncInterval = Infinity`; writes go straight to the database.
+    - `fetchSources` returns the stored sources unchanged. Returning `[]` would make `getSources` delete them all, and Edit → Save reaches that path. `reimportSource` is a no-op for the same reason, and `reimportable` is false.
+    - Constant uri `mitra://local`, so the `(userId, uri)` index allows one per user. New sources get `mitra://calendar/<id>` and are stamped `importedAt` on creation.
+    - `participants: false`: nothing can deliver an invitation, so entries with participants can't move in.
+  - **Demo** (`integrations/demo/Demo.ts`, type `'demo'`): `MitraCalendar` plus the sample data (see §The Sample Calendar).
+    - `developmentOnly`: offered only when `MITRA_DEV=true` (`meta.development`), and `POST /api/integrations` refuses it otherwise.
+    - Seeds in `syncSource`, which the importer and the sync daemon both call, and rebuilds the entries (not the sources) when the day changes. Hence a finite 1h `syncInterval`.
+    - Takes `participants: true` back so the fixture exercises the UI.
   - **Notion** (`integrations/notion/Notion.ts`, type `'notion'`):
     - Direct `Integration` subclass (REST API, `Notion-Version: 2026-03-11`). Token PAT auth.
     - Sources: `notion://{dataSourceId}/{viewId}`. Requires status and date properties. Unsupported view types (e.g. feed) are ignored on fetch.
@@ -147,7 +154,7 @@ One fixture serves the dev account and every screenshot the site ships, so keep 
   - Shared Google calendars must be enabled at `calendar.google.com/calendar/syncselect`.
   - UI: Editor fields render selectable `readonly` text (not `disabled`). Mutation controls hidden. Time zone lens remains active.
 - **Sync Pacing & Presence** (`SyncPacer.ts`):
-  - Largest interval wins: presence cadence (10s online, 5min offline via `presence.ts`), provider `syncInterval` (Google/Notion = 60s, Dev = `Infinity`), or flat 60s failure rest.
+  - Largest interval wins: presence cadence (10s online, 5min offline via `presence.ts`), provider `syncInterval` (Google/Notion = 60s, Demo = 1h, Mitra = `Infinity`), or flat 60s failure rest.
   - User coming online triggers immediate scoped sync. No manual "Sync Now" button or endpoint.
 - **Vocabulary**: User-facing operations are named by intent, not mechanism:
   - **Connect**: Account auth and calendar discovery.
@@ -158,7 +165,7 @@ One fixture serves the dev account and every screenshot the site ships, so keep 
 - **Asynchronous Source Import** (`src/integrations/server/Importer.ts`):
   - **Non-blocking Apply**: `Integration.apply` persists credentials and enabled sources without reading entries, returning immediately with sources in `importing` state (`importedAt: null`).
   - **Importer Execution**: `Importer.start(em, userId, integrationId)` drains pending sources in background with forked EM. Emits `'sources'` SSE event after each pagination pass. Sync locks are held per pass, not across entire import.
-  - **Import Completion**: `Source.importedAt` is set when `syncSource` completes without truncation/changes (capped at `Importer.maxPasses = 20`). Failures remain un-stamped for synchronizer retry. Local providers (`Dev`) seed `importedAt` immediately.
+  - **Import Completion**: `Source.importedAt` is set when `syncSource` completes without truncation/changes (capped at `Importer.maxPasses = 20`). Failures remain un-stamped for synchronizer retry. Mitra calendars are stamped on creation, since there's nothing to import.
   - **Re-import**: Discards entries, resets `Source.awaitImport()`, returns HTTP 202, and triggers background `Importer.start`.
 - **CalDAV Protocols & Edge Cases**:
   - Multiget batch fallback: Tolerates 404s by falling back to individual fetches.
@@ -204,7 +211,7 @@ One fixture serves the dev account and every screenshot the site ships, so keep 
   - Scheduling and unscheduling share `EntryDragController.move`.
   - Drawer tabs: `src/design/Tabs.ts` (declarative, scroll-driven). The panel strip always scrolls LTR (in RTL its panels are reversed with `order: calc(-1 * sibling-index())`): Chromium puts a `view()` timeline one panel off in a scroller whose origin is its inline end (RTL or `row-reverse`), which faded the shown panel out.
   - Chip height tiers: roomy-first, cramped as exception via `--density`.
-- **Window Query** (`src/features/entries/server/entryWindow.ts`): `GET /entries` also carries rows no window contains — undated (`start: null`) and open tasks due before the window start. Route and test import it; never restate the filter. Client narrows via `Entry.overdue`.
+- **Window Query** (`src/features/entries/server/entryWindow.ts`): `GET /entries` also carries rows no window contains: undated (`start: null`) and open tasks due before the window start. Route and test import it; never restate the filter. Client narrows via `Entry.overdue`.
 
 ## Calendar Views & Layout Engine
 - **Layout Architecture**:
@@ -220,15 +227,15 @@ One fixture serves the dev account and every screenshot the site ships, so keep 
 - **Gestures & Controllers**:
   - `EntryDragController`: Container-level controller for create, move (delta translation), and resize (edge drag). Resize handles: 0.25rem strips (`resize: 'block' | 'inline'`).
     - Cells are chosen by *nearness*, so every point would snap into one. `places()` gates that on the grid's box minus the sidebar's, which overlays the grid below 800px. A release with nothing built reverts via `adoptSpan(drag.before)`.
-    - A move carries the offset from `drag.anchor` (the grabbed point of the entry) to the pointer. A chip dragged in from the planning list was never grabbed on a day, so its anchor is the entry's own start — hit-testing the sidebar's coordinates would offset the drop by whatever day the clamp picked.
-    - `EntryStore.shownPreview` drops the ghost when it `spanEquals` the dragged entry — a drag moves nothing else, and comparing by `editEquals` doubled the row over the unschedule target, where `unschedule()` also clears reminders.
-    - `apply` skips repainting when the built span equals the shown preview (`Entry.spanEquals` + `EntryStore.previewing`). Without it every frame repainted every chip — never call `setPreview` with an unchanged span.
+    - A move carries the offset from `drag.anchor` (the grabbed point of the entry) to the pointer. A chip dragged in from the planning list was never grabbed on a day, so its anchor is the entry's own start. Hit-testing the sidebar's coordinates would offset the drop by whatever day the clamp picked.
+    - `EntryStore.shownPreview` drops the ghost when it `spanEquals` the dragged entry: a drag moves nothing else, and comparing by `editEquals` doubled the row over the unschedule target, where `unschedule()` also clears reminders.
+    - `apply` skips repainting when the built span equals the shown preview (`Entry.spanEquals` + `EntryStore.previewing`). Without it every frame repainted every chip, so never call `setPreview` with an unchanged span.
   - Drafts: Single active local draft in `EntryStore.draft` (`id = 0`, `persisted = false`). Backend assigns final IDs.
   - `CalendarScrollController`: Date-anchored scrolling across views. Snapping gated on device type (notched wheel vs continuous touch/trackpad). A navigation arrives on the cross axis too (`geometry.arrival`): the week view centers today's now line, any other day its middle. A view tells a navigation from a scroll echo by identity: a scroll hands back the very date it read, so a same-day navigation (Today) still arrives.
   - `DensityController`: Shared zoom gesture (Ctrl+wheel, wheel over rail, 2-finger pinch). Subclasses override `settled()` to dispatch synthetic scroll on inner scroller elements.
   - `TimeZoneLaneController`: Alternative zones fold; anchor zone never folds. Clamps cells (`max-inline-size: var(--zone-width)`). Rail inline drag with `touch-action: pan-y`.
   - Week All-Day Lane: Explicit row tracks (`grid-template-rows: repeat(var(--slots), var(--slot-height))`), never auto-flow.
-- **Entry Chip Heading** (`EventSegment.ts`): two layouts picked by `--inline`, declared once. Triggers: no meta row (`[data-meta]` absent), or no height for one (`@container (max-height: 2rem)`). Set the switch; never re-declare the collapsed layout. `--inline` is a space toggle (empty = on, `initial` = off) read as `--_x: var(--inline) <on>; prop: var(--_x, <off>)` — CSS `if()` is Chromium-only.
+- **Entry Chip Heading** (`EventSegment.ts`): two layouts picked by `--inline`, declared once. Triggers: no meta row (`[data-meta]` absent), or no height for one (`@container (max-height: 2rem)`). Set the switch; never re-declare the collapsed layout. `--inline` is a space toggle (empty = on, `initial` = off) read as `--_x: var(--inline) <on>; prop: var(--_x, <off>)`, since CSS `if()` is Chromium-only.
   - When-line comes from `DateTimeRange.format()` (`Intl.formatRange`), which drops the shared parts and puts the day before the times. Never hand-assemble start/separator/end.
   - `.range` and `.point` both render; `--inline` picks. A one-line chip shows only the start.
   - `dated` adds the day, for lists drawn away from the grid. Off wherever a column already answers "when".
@@ -264,11 +271,11 @@ One fixture serves the dev account and every screenshot the site ships, so keep 
 ## Routing & URL State
 - **One Route** (`PageCalendar`, `@route('/:view', '/')`): View is the path (`/week`), active overlays and filters are query parameters (`?date=`, `?selected=`, `?settings=`). Canonicalizes `/` to `/{defaultView}`. Unrecognized parameters fallback gracefully.
 - **`CalendarLocation`** (`src/features/calendar/client/CalendarLocation.ts`): Value object parsing and serializing URL navigation state. Initialized on page boot so initial render and fetch match restored view and date. Today is omitted to prevent link date pinning.
-- **Single Writer, Derive Don't Mirror**: `PageCalendar` is the sole URL writer — it overrides `get url()` to derive from live state and never assigns `parameters`; an inbound `parameters` change is purely the router's arrival signal, handled by an idempotent `restore()` of the address bar (`CalendarLocation.of(location)`), never of `parameters` themselves: the router re-hands the path parameters the page was first navigated with, so reading `view` from them reverted an in-app view switch on the next app render. Components publish state the page reads (`EntryEditorIntent.target`, `SettingsParameters.pageChange`).
-- **Replace, Never Push**: All writes funnel through the `updateUrl()` override (the framework's own `parameters` hook lands there too) into `UrlSyncController` (`src/infrastructure/routing/`), which owns the timing policy: `history.replaceState`, 100ms trailing debounce, flushed on `pagehide`/`visibilitychange`. Its host is typed `PageCalendar` (as `EntryFetcherController`'s is), so it reads `host.url` and self-schedules from `hostUpdated()` — no callbacks, no generics, nothing for the page to call. A write is skipped outright when the URL has not moved, so an unrelated re-render (an entry saved, a drag frame) neither writes nor postpones a write already due. Pushing would bury the arrival page under an entry per scroll flick, and the framework's `setUrl` wraps pushes in a document-level view transition that fights `transitionCalendar`. Collapses to a declared `historyStrategy` once @a11d/lit-application ships one (drafted upstream).
+- **Single Writer, Derive Don't Mirror**: `PageCalendar` is the sole URL writer. It overrides `get url()` to derive from live state and never assigns `parameters`; an inbound `parameters` change is purely the router's arrival signal, handled by an idempotent `restore()` of the address bar (`CalendarLocation.of(location)`), never of `parameters` themselves: the router re-hands the path parameters the page was first navigated with, so reading `view` from them reverted an in-app view switch on the next app render. Components publish state the page reads (`EntryEditorIntent.target`, `SettingsParameters.pageChange`).
+- **Replace, Never Push**: All writes funnel through the `updateUrl()` override (the framework's own `parameters` hook lands there too) into `UrlSyncController` (`src/infrastructure/routing/`), which owns the timing policy: `history.replaceState`, 100ms trailing debounce, flushed on `pagehide`/`visibilitychange`. Its host is typed `PageCalendar` (as `EntryFetcherController`'s is), so it reads `host.url` and self-schedules from `hostUpdated()`: no callbacks, no generics, nothing for the page to call. A write is skipped outright when the URL has not moved, so an unrelated re-render (an entry saved, a drag frame) neither writes nor postpones a write already due. Pushing would bury the arrival page under an entry per scroll flick, and the framework's `setUrl` wraps pushes in a document-level view transition that fights `transitionCalendar`. Collapses to a declared `historyStrategy` once @a11d/lit-application ships one (drafted upstream).
 - **Device Preferences**: Zoom, sidebar open state/tab, connectors, timezone folding, and the table's window live in `localStorage`, excluded from shared URLs.
 - **Stale Targets**: `?selected=` restores via `EntryEditorIntent.requestOpen`. Unmatched intents settle and clear from the URL on next write.
-- **SPA Fallback**: The server catch-all must stay `res.sendFile('index.html', { root })` — without `root`, send dotfile-checks every segment of the absolute path and 404s deep links whenever the checkout lives under a dotted directory (e.g. a `.claude` worktree).
+- **SPA Fallback**: The server catch-all must stay `res.sendFile('index.html', { root })`. Without `root`, send dotfile-checks every segment of the absolute path and 404s deep links whenever the checkout lives under a dotted directory (e.g. a `.claude` worktree).
 
 ## View Transitions
 - **Engine**: `src/features/calendar/client/calendarTransition.ts` (`transitionCalendar`).
@@ -285,7 +292,7 @@ One fixture serves the dev account and every screenshot the site ships, so keep 
   - Page header buttons (Create, `‹ Today ›`) are the commands themselves (`PageCalendar.commandButton`): titled with the command's heading and keys, acting through `dispatch()`. `PageCalendar.period` (`CalendarPeriod`) is what the arrows step by and the heading names; the table has none.
   - Non-Command Actions: Pointer gestures and editor-specific shortcuts stay in their own components.
 - **Command Palette** (`mitra-command-palette`):
-  - Pure view. Filters via `commandMatches` → `termsMatch` (`src/features/commands/termsMatch.ts`, the app's ONE search rule — also the settings dialog's; kept out of `Command.ts` so searching doesn't drag in the app root).
+  - Pure view. Filters via `commandMatches` → `termsMatch` (`src/features/commands/termsMatch.ts`, the app's ONE search rule, also the settings dialog's; kept out of `Command.ts` so searching doesn't drag in the app root).
   - Navigation: Native `<dialog closedby="any">` around an inline `mitra-combobox` (its `dismiss` closes the dialog). Triggered by bare `/`, `Ctrl+P`, or `Ctrl+K`.
   - Search: Unwindowed backend `GET /entries/search?q=` (SQL LIKE, limit 20, 200ms debounce).
   - Selection: Emits `navigate` and requests editor open via `EntryEditorIntent.requestOpen(id)`.
@@ -320,7 +327,7 @@ One fixture serves the dev account and every screenshot the site ships, so keep 
   - Occurrences expanded on read via `expandRecurrence`.
   - Edited exceptions sync as individual rows with `RECURRENCE-ID` and `recurrenceMasterId`.
   - Edits currently apply series-wide via dedicated recurrence API routes.
-  - A scoped edit may ALSO change the calendar, and the two compose (`editOccurrence`'s `movingTo`): 'this' detaches the occurrence INTO the target, 'following' starts the continuation there (the old half stays), 'all' re-creates the whole series there — same uid, rule and exclusions — and deletes it here, create-first. The client must send `sourceId` with the scoped PUT; without it the picker changed and nothing moved.
+  - A scoped edit may ALSO change the calendar, and the two compose (`editOccurrence`'s `movingTo`): 'this' detaches the occurrence INTO the target, 'following' starts the continuation there (the old half stays), 'all' re-creates the whole series there (same uid, rule and exclusions) and deletes it here, create-first. The client must send `sourceId` with the scoped PUT; without it the picker changed and nothing moved.
 - **Routines (Density Collapse)**:
   - Dense cohorts collapse into compact ribbons in month/year views.
   - Layer above recurrence: entries sharing appearance (`sourceId`, `heading`) pool into one routine (series, overrides, detached check-offs, all-day placeholders). Blank headings fall back to per-master.
@@ -382,7 +389,7 @@ One fixture serves the dev account and every screenshot the site ships, so keep 
 
 ## Sidebar & Navigation
 - **Source Icon**: `<mitra-source-icon>` (`src/features/sources/client/SourceIcon.ts`) renders source/provider glyphs reading color, importing state, and entry types directly from the bound `.source` (re-rendered when integration refetches mint fresh instances). Never mirror `Source` fields into separate component properties.
-- **Sidebar Grid**: Single CSS grid (`.integrations`) aligns all source rows, headings, and gutters across providers. Its `--sidebar-gap` is both the column gap and (the first column being zero-wide) a row's content inset — the Planning tab's heading takes it too, so every heading in the sidebar rides one column. Anything listing sources elsewhere (the migration dialog) reproduces that relationship: heading text starts where the row icons do.
+- **Sidebar Grid**: Single CSS grid (`.integrations`) aligns all source rows, headings, and gutters across providers. Its `--sidebar-gap` is both the column gap and (the first column being zero-wide) a row's content inset. The Planning tab's heading takes it too, so every heading in the sidebar rides one column. Anything listing sources elsewhere (the migration dialog) reproduces that relationship: heading text starts where the row icons do.
 - **Gutter**: Scroller uses `scrollbar-gutter: stable` to prevent layout shifts.
 - **Primary Source**: Always resolve via `getPrimarySource()` (default source or first visible), never raw ID.
 - **Ordering**: `Source.order` column (nullable integer).

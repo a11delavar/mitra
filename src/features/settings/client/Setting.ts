@@ -105,7 +105,7 @@ export abstract class Setting<T> {
 	/** Which page of the dialog renders it. */
 	abstract readonly page: SettingsPageId
 
-	/** The value in force when the user has never chosen — the code's own default, never stored. */
+	/** The value in force when the user has never chosen: the code's own default, never stored. */
 	abstract readonly fallback: T
 
 	protected abstract readonly storage: SettingStorage<T>

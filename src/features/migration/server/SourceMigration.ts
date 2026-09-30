@@ -178,7 +178,7 @@ export class SourceMigration {
 			}
 			await this.em.flush()
 		}
-		logger.info(`${this.keepOriginals ? 'Copied' : 'Moved'} ${outcome.created} entries from ${this.origin} to ${this.target} — ${outcome.left} left behind, ${outcome.duplicates} duplicated`)
+		logger.info(`${this.keepOriginals ? 'Copied' : 'Moved'} ${outcome.created} entries from ${this.origin} to ${this.target}, ${outcome.left} left behind, ${outcome.duplicates} duplicated`)
 		return outcome
 	}
 
@@ -195,7 +195,7 @@ export class SourceMigration {
 			}
 		}
 		await this.em.flush().catch(() => void 0)
-		logger.error(`Migration from ${this.origin} to ${this.target} aborted at "${failed?.heading ?? ''}" — ${outcome.duplicates} copies could not be taken back: ${outcome.failure}`)
+		logger.error(`Migration from ${this.origin} to ${this.target} aborted at "${failed?.heading ?? ''}". ${outcome.duplicates} copies could not be taken back: ${outcome.failure}`)
 		return outcome
 	}
 

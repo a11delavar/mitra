@@ -13,7 +13,7 @@ import { CalDAV } from '../../caldav/CalDAV.js'
 import { GoogleCalendar } from '../../google/GoogleCalendar.js'
 import { AppleCalendar } from '../../apple/AppleCalendar.js'
 import { Notion } from '../../notion/Notion.js'
-import { Dev } from '../../dev/Dev.js'
+import { MitraCalendar } from '../../mitra/MitraCalendar.js'
 import { NotificationSubscription } from '../../../features/reminders/NotificationSubscription.js'
 import { Session } from '../../../features/identity/server/Session.js'
 import { Tempo, type TempoWorklog } from '../Tempo.js'
@@ -27,7 +27,7 @@ const BERLIN = 'Europe/Berlin'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
-		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Tempo, Dev, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
+		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Tempo, MitraCalendar, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
 		dbName: ':memory:',
 		namingStrategy: class extends UnderscoreNamingStrategy {
 			override joinColumnName(propertyName: string) {

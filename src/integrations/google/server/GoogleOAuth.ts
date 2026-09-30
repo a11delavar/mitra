@@ -82,10 +82,10 @@ export class GoogleOAuth {
 		})
 		const email = tokens.claims()?.email
 		if (typeof email !== 'string' || !email) {
-			throw new Error('Google returned no account email — the "email" scope was not granted')
+			throw new Error('Google returned no account email. The "email" scope was not granted')
 		}
 		if (!tokens.refresh_token) {
-			throw new Error('Google returned no refresh token — retry connecting the account')
+			throw new Error('Google returned no refresh token. Retry connecting the account')
 		}
 		return { email, refreshToken: tokens.refresh_token }
 	}

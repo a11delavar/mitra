@@ -204,7 +204,7 @@ entriesRouter.put('/:id', async (req, res) => {
 	const body = req.body as Partial<Entry> & { sourceId?: string, scope?: RecurrenceScope, recurrenceId?: string }
 
 	// Tri-state like `recurrence`: an array sets, `null` clears, absent keeps. Validated BEFORE any
-	// integration write — a 400 must leave the external store untouched.
+	// integration write, since a 400 must leave the external store untouched.
 	const relations = EntryRelations.parse(body.relations)
 	if (relations === EntryRelations.invalid) {
 		return res.status(400).json({ error: 'Invalid relations' })
@@ -217,15 +217,15 @@ entriesRouter.put('/:id', async (req, res) => {
 	}
 
 	// `null` removes the repeat (collapse the series); an object sets it; absent (undefined) keeps it.
-	// Only a rule the request actually carries is validated — the stored one isn't this request's doing.
+	// Only a rule the request actually carries is validated, since the stored one isn't this request's doing.
 	const incomingRecurrence = body.recurrence === undefined ? existing.recurrence : Recurrence.from(body.recurrence)
 	if (body.recurrence !== undefined && body.recurrence !== null && incomingRecurrence && !incomingRecurrence.valid) {
 		return res.status(400).json({ error: 'Invalid recurrence rule' })
 	}
 
 	// Same tri-state as `recurrence`/`reminders`: an array sets, `null` clears, absent keeps. Actually
-	// CHANGING the list is the organizer's prerogative — iTIP (RFC 5546) limits everyone else to
-	// replying with their own status — so a non-organizer's edit that touches it is rejected, while
+	// CHANGING the list is the organizer's prerogative: iTIP (RFC 5546) limits everyone else to
+	// replying with their own status, so a non-organizer's edit that touches it is rejected, while
 	// their content edits (which echo the stored list back unchanged) pass through.
 	const incomingParticipants = body.participants === undefined ? existing.participants ?? null : Participants.normalize(body.participants)
 	if (!Object[equals](incomingParticipants, existing.participants ?? null) && !existing.canManageParticipants) {
@@ -254,19 +254,19 @@ entriesRouter.put('/:id', async (req, res) => {
 	}
 
 	if (incomingParticipants?.length && !targetIntegration.capabilities.participants) {
-		return res.status(400).json({ error: 'This calendar does not support participants — remove them before moving the entry' })
+		return res.status(400).json({ error: 'This calendar does not support participants. Remove them before moving the entry' })
 	}
 
 	const incomingVisibility = body.visibility === undefined ? existing.visibility : body.visibility
 	if (body.transparency === Transparency.Free && !targetIntegration.capabilities.transparency) {
-		return res.status(400).json({ error: 'This calendar cannot mark an entry as free — set it back to busy before moving the entry' })
+		return res.status(400).json({ error: 'This calendar cannot mark an entry as free. Set it back to busy before moving the entry' })
 	}
 	if (incomingVisibility && !targetIntegration.capabilities.visibility) {
-		return res.status(400).json({ error: 'This calendar does not support visibility — reset it to the default before moving the entry' })
+		return res.status(400).json({ error: 'This calendar does not support visibility. Reset it to the default before moving the entry' })
 	}
 	const incomingPercentComplete = body.percentComplete === undefined ? existing.percentComplete : incomingPercent(body.percentComplete)
 	if (incomingPercentComplete !== null && !targetIntegration.capabilities.percentComplete) {
-		return res.status(400).json({ error: 'This calendar does not support task progress — clear it first' })
+		return res.status(400).json({ error: 'This calendar does not support task progress. Clear it first' })
 	}
 
 	// Type conversion: tasks and events cannot mix in single CalDAV resource (RFC 4791 §4.1), so converted entries re-create below.

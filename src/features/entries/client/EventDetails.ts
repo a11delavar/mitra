@@ -84,7 +84,7 @@ export class EntryDetailsComponent extends Component {
 		}
 		this.close()
 		return Hierarchy.deleteScoped(entry, scope).catch(error =>
-			console.error('Deleting the entry failed — it was restored in the view:', error))
+			console.error('Deleting the entry failed, so it was restored in the view:', error))
 	}
 
 	private static bypassesScope(e: MouseEvent | KeyboardEvent): boolean {
@@ -96,7 +96,7 @@ export class EntryDetailsComponent extends Component {
 		this.close()
 		return EntryStore.duplicate(entry)
 			.then(copy => EntryEditorIntent.requestOpen(copy.id!))
-			.catch(error => console.error('Duplicating the entry failed — nothing was added:', error))
+			.catch(error => console.error('Duplicating the entry failed, so nothing was added:', error))
 	}
 
 	private static readonly appleKeyboard = /Mac|iPhone|iPad/.test(navigator.platform)
@@ -452,19 +452,19 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	/**
-	 * The popover's rows in GROUPS, empty ones dropped — a separator then rides strictly BETWEEN what
+	 * The popover's rows in GROUPS, empty ones dropped. A separator then rides strictly BETWEEN what
 	 * remains ({@link join}), so it cannot double up, lead, or trail. That matters because what a row
 	 * has to say is the PROVIDER's answer, not this template's: a Notion task has no free/busy, no
-	 * visibility and no reminders, so its whole third group vanishes — and used to leave its neighbour's
+	 * visibility and no reminders, so its whole third group vanishes, and used to leave its neighbour's
 	 * separator sitting against the next one.
 	 *
 	 * Emptiness is each row's OWN answer (`html.nothing`, which every row template already returns when
-	 * its capability is off) — never re-derived here, or the two would drift. The one row that cannot
+	 * its capability is off), never re-derived here, or the two would drift. The one row that cannot
 	 * answer as a template is the sharing element, which decides inside itself; it exposes the same
 	 * question as {@link EntryDetailsSharing.applies}.
 	 *
-	 * The order is the argument: everything up to reminders describes THIS entry, so relationships —
-	 * which connect it to OTHERS, and whose rows grow — close the popover as their own group.
+	 * The order is the argument: everything up to reminders describes THIS entry, so relationships,
+	 * which connect it to OTHERS, and whose rows grow, close the popover as their own group.
 	 */
 	private get groups() {
 		const entry = this.segment!.entry

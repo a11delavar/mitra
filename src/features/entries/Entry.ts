@@ -239,7 +239,7 @@ export class Entry {
 	}
 
 	/** Whether the backend has assigned this entry an id. A locally-created draft has none until it's
-	 * saved, so `!persisted` *is* "this is a draft" — no separate flag or side store to keep in sync. */
+	 * saved, so `!persisted` *is* "this is a draft", with no separate flag or side store to keep in sync. */
 	get persisted() {
 		return this.id !== undefined
 	}
@@ -250,8 +250,8 @@ export class Entry {
 	}
 
 	/**
-	 * Whether the entry sits anywhere on the calendar. Undated rows are real — a Notion page with an
-	 * empty date property, a VTODO with neither DTSTART nor DUE — and no window of days can contain
+	 * Whether the entry sits anywhere on the calendar. Undated rows are real (a Notion page with an
+	 * empty date property, a VTODO with neither DTSTART nor DUE) and no window of days can contain
 	 * one, so the grid cannot show them at all; the unscheduled section is the complement that does.
 	 *
 	 * Only the START counts: a bare due date already belongs to a day.
@@ -260,14 +260,14 @@ export class Entry {
 		return !!this.start
 	}
 
-	/** The last day the entry occupies — for a task, the day it is owed on. */
+	/** The last day the entry occupies (for a task, the day it is owed on). */
 	get lastDay() {
 		return !this.start ? this.end?.dayStart : this.inclusiveEnd.dayStart
 	}
 
 	/**
 	 * Whether an open task's day has gone by. Compared by day: one due this morning is still today's.
-	 * A repeating task is never behind — the next occurrence settles the missed one.
+	 * A repeating task is never behind: the next occurrence settles the missed one.
 	 */
 	get overdue() {
 		if (!this.type?.isTask || this.closed || this.partOfSeries) {
@@ -278,7 +278,7 @@ export class Entry {
 
 	/**
 	 * Whether the entry may LOSE its dates again. A VTODO's date properties are both optional and
-	 * Notion's is nullable, but DTSTART is REQUIRED of a VEVENT (RFC 5545 §3.6.1) — an undated event
+	 * Notion's is nullable, but DTSTART is REQUIRED of a VEVENT (RFC 5545 §3.6.1), so an undated event
 	 * has no iCalendar form. The unscheduled section still RENDERS whatever undated rows a provider
 	 * hands us: an entry no surface shows is one the user cannot fix.
 	 */
@@ -292,14 +292,14 @@ export class Entry {
 		return !!this.recurrenceMasterId
 	}
 
-	/** True for the occurrence the series starts on — the one where "this and following" would reach
+	/** True for the occurrence the series starts on: the one where "this and following" would reach
 	 * the whole series and is therefore not worth offering. Both instants come from the expansion
 	 * (see occurrences.ts), so a synced override, which carries no anchor, answers false. */
 	get isSeriesStart() {
 		return !!this.recurrenceId && !!this.seriesStart && this.recurrenceId.equals(this.seriesStart)
 	}
 
-	/** True when the entry belongs to a recurring series — either the master that carries the rule
+	/** True when the entry belongs to a recurring series: either the master that carries the rule
 	 * (`recurrence`) or one of its occurrences (`isRecurring`). Such entries aren't independently
 	 * drag/resize-movable; their schedule is read-only in the editor (the rule itself stays editable). */
 	get partOfSeries() {

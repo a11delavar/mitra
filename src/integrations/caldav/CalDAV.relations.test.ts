@@ -38,7 +38,7 @@ describe('CalDAV relations round-trip', () => {
 		])
 	})
 
-	it('write-then-parse is identity — an unchanged list leaves every line VERBATIM (diff, not rewrite)', () => {
+	it('write-then-parse is identity: an unchanged list leaves every line VERBATIM (diff, not rewrite)', () => {
 		const subject = component()
 		const parsed = CalDAV.relationsFrom(subject)
 
@@ -72,7 +72,7 @@ describe('CalDAV relations round-trip', () => {
 		assert.match(serialized, /RELATED-TO;RELTYPE=PARENT:new-parent/)
 	})
 
-	it('removing ONE relation deletes only its line — a same-target sibling stays verbatim', () => {
+	it('removing ONE relation deletes only its line: a same-target sibling stays verbatim', () => {
 		const subject = component()
 		const parsed = CalDAV.relationsFrom(subject)!
 		const remaining = parsed.filter(relation => relation.targetUid !== 'child-uid')
@@ -188,7 +188,7 @@ describe('CalDAV relations: who is authoritative (capabilities.relations)', () =
 
 	const google = () => new GoogleCalendar({ credentials: { username: 'someone@gmail.com', refreshToken: 'grant-1' } })
 
-	it('parses a DEFINITE value on a real iCalendar store — what the resource says IS the truth there', async () => {
+	it('parses a DEFINITE value on a real iCalendar store: what the resource says IS the truth there', async () => {
 		const { entry } = await sync(new CalDAV({ credentials: { username: 'u', password: 'p' } }))
 		assert.deepEqual(entry.relations?.map(relation => [relation.type.value, relation.targetUid]), [['FINISHTOSTART', 'blocker-uid']])
 	})
@@ -199,7 +199,7 @@ describe('CalDAV relations: who is authoritative (capabilities.relations)', () =
 		assert.equal(persisted.length, 1)
 	})
 
-	it('still ingests everything else from the resource — only the relationship changes hands', async () => {
+	it('still ingests everything else from the resource, only the relationship changes hands', async () => {
 		const { entry } = await sync(google())
 		assert.equal(entry.heading, 'Kickoff')
 		assert.equal(entry.uid, 'u1')
@@ -233,7 +233,7 @@ describe('CalDAV relations: who is authoritative (capabilities.relations)', () =
 			assert.match(entry.data!.raw!, /RELATED-TO;RELTYPE=PARENT:parent-uid/)
 		})
 
-		it('sends NOTHING to Google for a relations-only edit — a line the next read discards is pure churn', async () => {
+		it('sends NOTHING to Google for a relations-only edit: a line the next read discards is pure churn', async () => {
 			const integration = google()
 			const writes = stub(integration)
 			const entry = existing()

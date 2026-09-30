@@ -25,7 +25,7 @@ export interface CalDAVCredentials {
 export class CalDAV extends Integration<CalDAVCredentials> {
 	static readonly label: string = 'CalDAV'
 	static readonly logo: string = 'caldav'
-	static readonly description: string = 'Nextcloud, Fastmail, Radicale — any CalDAV server'
+	static readonly description: string = 'Any CalDAV server, like Nextcloud, Fastmail or Radicale'
 
 	@converter(withheld<CalDAVCredentials>('password')) override credentials!: CalDAVCredentials
 
@@ -271,11 +271,11 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	 * Rewrite (or `append`) a date property in the entry's authoring `zone` (Entry.timeZone): an IANA
 	 * id writes the instant as that zone's WALL CLOCK under a TZID, EMBEDDING the matching VTIMEZONE
 	 * when the resource doesn't carry it yet ({@link timezoneIn}); FLOATING writes a bare local time
-	 * (neither TZID nor `Z`); null or 'UTC' (the same fixed-instant semantics — RFC 5545 §3.3.5 says a
+	 * (neither TZID nor `Z`); null or 'UTC' (the same fixed-instant semantics, since RFC 5545 §3.3.5 says a
 	 * UTC time is written in its `Z` form, never under a TZID) and all-day go through
-	 * {@link toICALTime}. Omitting `zone` entirely PRESERVES the property's own authored form — its
-	 * current TZID, resolved only against embedded definitions, never fabricated — for rewrites that
-	 * don't re-author the zone. Writing the UTC form into a TZID property — the old behavior — let the
+	 * {@link toICALTime}. Omitting `zone` entirely PRESERVES the property's own authored form (its
+	 * current TZID, resolved only against embedded definitions, never fabricated) for rewrites that
+	 * don't re-author the zone. Writing the UTC form into a TZID property, the old behavior, let the
 	 * zone reinterpret the UTC wall clock, shifting the series by the zone offset on zoned servers
 	 * like Google.
 	 *
@@ -575,6 +575,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 	static async writeError(operation: string, response: { status: number, statusText: string, text?: () => Promise<string> }): Promise<Error> {
 		const detail = (await response.text?.().catch(() => ''))?.trim().slice(0, 500)
-		return new Error(`CalDAV ${operation} failed: ${response.status} ${response.statusText}${detail ? ` — ${detail}` : ''}`)
+		return new Error(`CalDAV ${operation} failed: ${response.status} ${response.statusText}${detail ? `: ${detail}` : ''}`)
 	}
 }

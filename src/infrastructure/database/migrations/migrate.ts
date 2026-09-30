@@ -26,7 +26,7 @@ export async function migrate(orm: MikroORM) {
 		if (!legacy) {
 			throw error
 		}
-		logger.warn(`Replaying migrations on this pre-migrations database failed (${error instanceof Error ? error.message : error}) — its schema predates the initial migration. Falling back to a wholesale schema sync; if sources look duplicated or stale afterwards, re-import the affected integrations.`)
+		logger.warn(`Replaying migrations on this pre-migrations database failed (${error instanceof Error ? error.message : error}): its schema predates the initial migration. Falling back to a wholesale schema sync; if sources look duplicated or stale afterwards, re-import the affected integrations.`)
 		await orm.schema.update()
 		const storage = orm.migrator.getStorage()
 		for (const migration of migrations.slice(1)) {

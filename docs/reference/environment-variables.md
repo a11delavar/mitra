@@ -55,7 +55,7 @@ These are **not** for configuring a deployment. They are set by the build or onl
 | --- | --- | --- |
 | `MITRA_VERSION` | Build | The version string baked into the image. Do not set at runtime. |
 | `MITRA_COMMIT` | Build | The commit hash baked into the image. Do not set at runtime. |
-| `MITRA_DEV` | Dev only | Seeds a sample calendar for local development. Do not set on a real deployment. |
+| `MITRA_DEV` | Dev only | Offers the **Demo** integration, a set of sample calendars, for local development. Do not set on a real deployment. |
 | `NODE_ENV` | Image | Set to `production` by the container image. |
 
 ## Example

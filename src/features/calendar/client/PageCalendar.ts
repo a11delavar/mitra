@@ -26,7 +26,7 @@ import { startedInField } from '../../../design/eventOrigin.js'
 import { type Popover } from '../../../design/Popover.js'
 
 // The view is the path (`/week`), everything open on top of it is a query parameter. `/` stays a valid
-// entry point — the PWA start URL and the OAuth redirect both land there — and canonicalizes on arrival.
+// entry point (the PWA start URL and the OAuth redirect both land there) and canonicalizes on arrival.
 @component('mitra-page-calendar')
 @route('/:view', '/')
 export class PageCalendar extends PageComponent<CalendarParameters> {
@@ -75,8 +75,8 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 		return new CalendarLocation(this.view, this.navigatingDate, EntryEditorIntent.target, this.settingsPage)
 	}
 
-	/** The URL derives from live state; `parameters` is never written back — it is only the router's
-	 * message that a navigation arrived — so there is no bag to keep mirrored. */
+	/** The URL derives from live state; `parameters` is never written back. It is only the router's
+	 * message that a navigation arrived, so there is no bag to keep mirrored. */
 	override get url() {
 		return this.location.url()
 	}

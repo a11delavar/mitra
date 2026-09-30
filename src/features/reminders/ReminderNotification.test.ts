@@ -71,7 +71,7 @@ describe('ReminderNotification', () => {
 	})
 
 	describe('compose', () => {
-		it('pre-renders the body as it reads on time — the fallback for an older service worker', () => {
+		it('pre-renders the body as it reads on time, the fallback for an older service worker', () => {
 			const payload = ReminderNotification.compose({ title: 'Standup', tag: 'e|30', timestamp: start, reminder: { minutes: 30 } }, start - 30 * MINUTE)
 			assert.equal(payload.body, '⏰ Starts in 30 min')
 		})

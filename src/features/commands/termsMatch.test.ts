@@ -16,7 +16,7 @@ describe('termsMatch', () => {
 		assert.equal(termsMatch('  WEEK  ', 'Week View'), true)
 	})
 
-	it('matches within a word — a half-remembered label still finds its row', () => {
+	it('matches within a word, so a half-remembered label still finds its row', () => {
 		assert.equal(termsMatch('eek', 'Week View'), true)
 	})
 

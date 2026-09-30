@@ -4,7 +4,7 @@ import { Participants, ParticipantRole, ParticipantStatus } from './Participant.
 
 describe('Participants', () => {
 	describe('normalize', () => {
-		it('is null for none — the tri-state clear, like reminders', () => {
+		it('is null for none: the tri-state clear, like reminders', () => {
 			assert.equal(Participants.normalize(undefined), null)
 			assert.equal(Participants.normalize(null), null)
 			assert.equal(Participants.normalize([]), null)
@@ -32,7 +32,7 @@ describe('Participants', () => {
 			])
 		})
 
-		it('keeps at most one organizer — the first', () => {
+		it('keeps at most one organizer: the first', () => {
 			const participants = Participants.normalize([
 				{ email: 'a@example.com', organizer: true },
 				{ email: 'b@example.com', organizer: true },
@@ -45,7 +45,7 @@ describe('Participants', () => {
 			assert.equal(Participants.normalize(raw)!.length, Participants.maxCount)
 		})
 
-		it('serializes as a plain JSON array — the column and the wire never see the class', () => {
+		it('serializes as a plain JSON array: the column and the wire never see the class', () => {
 			assert.equal(JSON.stringify(Participants.normalize([{ email: 'a@example.com' }])), JSON.stringify([{ email: 'a@example.com', role: 'required', status: 'needs-action' }]))
 		})
 	})
@@ -96,7 +96,7 @@ describe('Participants', () => {
 	})
 
 	describe('manageable (iTIP RFC 5546)', () => {
-		it('is the organizer\'s call — or anyone\'s while there is no organizer yet', () => {
+		it('is the organizer\'s call, or anyone\'s while there is no organizer yet', () => {
 			assert.equal(Participants.normalize([{ email: 'invitee@example.com' }])!.manageable, true)
 			assert.equal(Participants.normalize([{ email: 'me@example.com', organizer: true, self: true }])!.manageable, true)
 			assert.equal(Participants.normalize([{ email: 'organizer@example.com', organizer: true }])!.manageable, false)
@@ -148,7 +148,7 @@ describe('Participants', () => {
 			assert.equal(list().withRole('organizer@example.com', ParticipantRole.Optional), null)
 		})
 
-		it('exposes only invitees as removable — never the organizer', () => {
+		it('exposes only invitees as removable, never the organizer', () => {
 			assert.equal(list().invitee('a@example.com')?.email, 'a@example.com')
 			assert.equal(list().invitee('organizer@example.com'), undefined)
 			assert.equal(list().invitee('nobody@example.com'), undefined)
@@ -158,7 +158,7 @@ describe('Participants', () => {
 			assert.deepEqual(list().without('a@example.com')!.map(participant => participant.email), ['organizer@example.com', 'b@example.com'])
 		})
 
-		it('clears the list once the last invitee goes — a lone organizer has nothing to organize', () => {
+		it('clears the list once the last invitee goes, since a lone organizer has nothing to organize', () => {
 			const alone = Participants.normalize([{ email: 'organizer@example.com', organizer: true }, { email: 'a@example.com' }])!
 			assert.equal(alone.without('a@example.com'), null)
 		})

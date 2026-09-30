@@ -5,18 +5,18 @@ import { getMeta } from '../../../infrastructure/http/Api.js'
 /**
  * The first-run welcome: a calendar with no integrations is an empty grid, so this dialog greets the
  * user and walks the path from nothing to a working calendar in three quiet steps. Opened by the
- * application boot alone — only while there are zero integrations, and never over the OAuth-callback
+ * application boot alone, only while there are zero integrations, and never over the OAuth-callback
  * flow (which already lands in an open source picker). Confirming with the CTA resolves `true` and the
  * boot chains straight into the Add-integration dialog; dismissing resolves `undefined` and leaves the
- * empty calendar be — the sidebar's own "Add Integration" stays as the way back in.
+ * empty calendar be. The sidebar's own "Add Integration" stays as the way back in.
  */
 @component('mitra-dialog-welcome')
 export class DialogWelcome extends DialogComponent<void, boolean | undefined> {
 	private static get steps() {
 		return [
-			{ icon: 'cable', title: t('Connect an account'), description: t('CalDAV, Google, Apple or Notion — Mitra syncs in both directions.') },
-			{ icon: 'list-checks', title: t('Choose your sources'), description: t('Pick the calendars and task lists to show — recolor, rename or hide them in the sidebar anytime.') },
-			{ icon: 'calendar-days', title: t('Plan your days'), description: t('Create and move entries right on the grid — every change syncs back to its source.') },
+			{ icon: 'cable', title: t('Connect an account'), description: t('CalDAV, Google, Apple or Notion, synced in both directions. Or start fresh with calendars stored in Mitra itself.') },
+			{ icon: 'list-checks', title: t('Choose your sources'), description: t('Pick the calendars and task lists to show. Recolor, rename or hide them in the sidebar anytime.') },
+			{ icon: 'calendar-days', title: t('Plan your days'), description: t('Create and move entries right on the grid. Every change syncs back to its source.') },
 		]
 	}
 
@@ -32,7 +32,7 @@ export class DialogWelcome extends DialogComponent<void, boolean | undefined> {
 					padding-block-start: 0.75rem;
 				}
 
-				/* The greeting: the mark above the words, centered — a moment of arrival, not a form. */
+				/* The greeting: the mark above the words, centered: a moment of arrival, not a form. */
 				.hero {
 					display: flex;
 					flex-direction: column;

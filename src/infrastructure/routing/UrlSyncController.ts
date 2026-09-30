@@ -20,7 +20,7 @@ export class UrlSyncController extends Controller {
 		this.schedule()
 	}
 
-	/** Every render asks, so only a URL that actually moved starts the clock — an unrelated re-render
+	/** Every render asks, so only a URL that actually moved starts the clock. An unrelated re-render
 	 * (an entry saved, a drag frame) must neither write nor postpone a write already due. */
 	schedule() {
 		if (this.stale) {
@@ -29,7 +29,7 @@ export class UrlSyncController extends Controller {
 		}
 	}
 
-	/** A tab can be frozen or discarded between the last change and the settle — which is the very case
+	/** A tab can be frozen or discarded between the last change and the settle, which is the very case
 	 * the URL is being kept current for. */
 	@eventListener({ target: window, type: 'pagehide' })
 	@eventListener({ target: document, type: 'visibilitychange' })

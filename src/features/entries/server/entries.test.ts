@@ -11,7 +11,7 @@ import { EntryType } from '../EntryType.js'
 import { Entry, TaskStatus } from '../Entry.js'
 import { CalDAV } from '../../../integrations/caldav/CalDAV.js'
 import { AppleCalendar } from '../../../integrations/apple/AppleCalendar.js'
-import { Dev } from '../../../integrations/dev/Dev.js'
+import { MitraCalendar } from '../../../integrations/mitra/MitraCalendar.js'
 import { NotificationSubscription } from '../../reminders/NotificationSubscription.js'
 import { Session } from '../../identity/server/Session.js'
 import { entryWindow, everyEntry } from './entryWindow.js'
@@ -19,7 +19,7 @@ import { seriesStarts } from '../../recurrence/server/occurrences.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
-		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Dev, Source, Entry, Recurrence, NotificationSubscription, Session],
+		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, MitraCalendar, Source, Entry, Recurrence, NotificationSubscription, Session],
 		dbName: ':memory:',
 		namingStrategy: class extends UnderscoreNamingStrategy {
 			override joinColumnName(propertyName: string) {
@@ -38,7 +38,7 @@ async function inMemoryOrm() {
 
 async function seedUser(em: EntityManager, username: string, term: string, source: Partial<Source> = {}) {
 	const user = new User({ username })
-	const integration = new Dev({ userId: user.id, uri: `dev://${username}` })
+	const integration = new MitraCalendar({ userId: user.id, uri: `dev://${username}` })
 	const src = new Source({ integrationId: integration.id, uri: `${username}/calendar`, entryTypes: [EntryType.Event], name: username, enabled: true, hidden: false, ...source })
 	const entry = new Entry({ id: crypto.randomUUID(), sourceId: src.id, type: EntryType.Event, heading: `${term} (${username})` })
 	em.persist([user, integration, src, entry])

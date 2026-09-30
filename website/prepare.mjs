@@ -13,7 +13,7 @@ const write = (file, content) => {
 	fs.writeFileSync(path.join(here, file), content)
 }
 
-// Starlight hardcodes `src/content/docs`, so ../docs is linked in — one level deep, which is what
+// Starlight hardcodes `src/content/docs`, so ../docs is linked in, one level deep, which is what
 // puts every page under /docs/ without moving a file. A junction on Windows needs no elevation.
 const docsLink = path.join(here, 'src/content/docs', docsBase)
 fs.mkdirSync(path.dirname(docsLink), { recursive: true })

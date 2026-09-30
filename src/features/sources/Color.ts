@@ -17,6 +17,14 @@ export class Color {
 		Color.Grey
 	]
 
+	/** The first preset none of `taken` uses, starting at green, so each new calendar gets its own. */
+	static unusedAmong(taken: Iterable<string | null | undefined>): string {
+		const used = new Set(taken)
+		const start = Color.palette.indexOf(Color.Green)
+		const rotation = [...Color.palette.slice(start), ...Color.palette.slice(0, start)]
+		return rotation.find(color => !used.has(color)) ?? rotation[used.size % rotation.length]!
+	}
+
 	static get(identifier: string): Color {
 		let hash = 0
 		for (let i = 0; i < identifier.length; i++) {

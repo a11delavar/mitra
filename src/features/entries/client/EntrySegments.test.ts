@@ -238,7 +238,7 @@ describe('EntrySegments', () => {
 			assert.deepEqual(overlap('Cards'), { slot: 0, total: 1, span: 1, inset: 0 })
 		})
 
-		it('cascades a straddling segment — the start decides, never the extent', () => {
+		it('cascades a straddling segment: the start decides, never the extent', () => {
 			const block = new Entry({ heading: 'Block', start: base.with({ hour: 17 }), end: base.with({ hour: 21 }) })
 			const runover = new Entry({ heading: 'Runover', start: base.with({ hour: 20, minute: 30 }), end: base.with({ hour: 22 }) })
 
@@ -290,7 +290,7 @@ describe('EntrySegments', () => {
 			assert.deepEqual(overlap('R'), { slot: 1, total: 2, span: 1, inset: 1 })
 		})
 
-		it('treats a multi-day slice as an ordinary block — the day\'s chips cascade over it', () => {
+		it('treats a multi-day slice as an ordinary block: the day\'s chips cascade over it', () => {
 			const overnight = new Entry({ heading: 'Overnight', start: base.subtract({ hours: 2 }), end: base.add({ hours: 2 }) })
 			const meeting = new Entry({ heading: 'Meeting', start: base.add({ hours: 1 }), end: base.add({ hours: 2 }) })
 
@@ -328,7 +328,7 @@ describe('EntrySegments', () => {
 			assert.deepEqual(overlap('Second'), { slot: 1, total: 2, span: 1, inset: 0 })
 		})
 
-		it('marks whatever paints over another box as covering — and side-by-side mates as not', () => {
+		it('marks whatever paints over another box as covering, and side-by-side mates as not', () => {
 			const block = new Entry({ heading: 'Block', start: base.with({ hour: 17 }), end: base.with({ hour: 21 }) })
 			const pills = new Entry({ heading: 'Pills', start: base.with({ hour: 19, minute: 30 }), end: base.with({ hour: 20, minute: 45 }) })
 			const gym = new Entry({ heading: 'Gym', start: base.with({ hour: 20, minute: 15 }), end: base.with({ hour: 21, minute: 15 }) })
@@ -449,7 +449,7 @@ describe('EntrySegments', () => {
 			assert.equal(bar!.span, 7)
 		})
 
-		it('places every entry, however deep the packing goes — a dense week clips visually, never here', () => {
+		it('places every entry, however deep the packing goes: a dense week clips visually, never here', () => {
 			const stack = Array.from({ length: 10 }, (_, i) => new Entry({ heading: `E${i}`, start: base.add({ hours: 9 + i }), end: base.add({ hours: 10 + i }) }))
 			const { bars } = EntrySegments.of(stack, week).monthWeek(week)
 			assert.equal(bars.length, 10)

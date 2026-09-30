@@ -6,7 +6,7 @@ import { type Entry } from '../Entry.js'
 import { ApiError, createEvent, deleteEvent, deleteOccurrence, editOccurrence, updateEvent, updateRelations } from '../../../infrastructure/http/Api.js'
 
 export const reportSaveError = (error: unknown) =>
-	console.error('Persisting the entry failed — the edit is kept locally and retried on the next change:', error)
+	console.error('Persisting the entry failed. The edit is kept locally and retried on the next change:', error)
 
 /**
  * Central client store and persistence coordinator for entries.
@@ -26,7 +26,7 @@ export class EntryStore extends Controller {
 
 	static persistence = { create: createEvent, update: updateEvent, delete: deleteEvent, editOccurrence, deleteOccurrence }
 
-	/** A drag only ever moves the span, so a ghost occupying the source's is a second copy of it —
+	/** A drag only ever moves the span, so a ghost occupying the source's is a second copy of it,
 	 * as the unschedule target showed, where both are dateless but `unschedule` also drops reminders. */
 	private static get shownPreview(): Entry | undefined {
 		return this.preview && this.dragging && this.preview.spanEquals(this.dragging) ? undefined : this.preview
@@ -132,7 +132,7 @@ export class EntryStore extends Controller {
 		return run
 	}
 
-	/** Whether the entry's rule differs from its canonical — a rule edit is series-wide by definition,
+	/** Whether the entry's rule differs from its canonical. A rule edit is series-wide by definition,
 	 * so it bypasses the scope dialog and routes straight to the master. */
 	private static ruleChanged(entry: Entry) {
 		return !Recurrence.equal(entry.recurrence, this.canonicalById.get(entry.id!)?.recurrence)
@@ -159,7 +159,7 @@ export class EntryStore extends Controller {
 		}
 	}
 
-	/** Adopt a relations-only server result onto the tracked copies of that entry — the
+	/** Adopt a relations-only server result onto the tracked copies of that entry. The
 	 * incoming-line removal edits ANOTHER entry than the open editor's, and if that other entry's
 	 * working copy happens to be dirty, leaving its old relations in place would resurrect the
 	 * removed link with its next full PUT. */
@@ -386,10 +386,10 @@ export class EntryStore extends Controller {
 
 	/**
 	 * Adopt a fetched window of server entries. Canonical always refreshes; the working instance only
-	 * takes the incoming values while it's clean and idle — a dirty or mid-save entry keeps its local
+	 * takes the incoming values while it's clean and idle. A dirty or mid-save entry keeps its local
 	 * values (they're about to overwrite the server's anyway). Working entries the fetch no longer
 	 * contains are dropped when clean (deleted externally, or outside the fetched window) and kept while
-	 * dirty/saving — an external delete then resolves at that save's 404. The create draft, having no
+	 * dirty/saving, and an external delete then resolves at that save's 404. The create draft, having no
 	 * id, passes through untouched.
 	 */
 	static applyServerEntries(entries: ReadonlyArray<Entry>) {

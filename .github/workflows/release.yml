@@ -2,7 +2,7 @@ name: Release
 
 # Turns a pushed SemVer tag into a GitHub Release, using the notes already written
 # in CHANGELOG.md (generated from commits by `npm run changelog`, then editable by
-# hand). The release body is the file's top section — so anything you/AI add to it
+# hand). The release body is the file's top section, so anything you/AI add to it
 # is what gets published. Pre-release tags (`-rc`/`-beta`/`-alpha`) are marked as such.
 #
 # Cut a release with:  npm run release [version]
@@ -25,12 +25,12 @@ jobs:
           # The body of the first "## [..]" section (without its header line).
           awk '/^## \[/{c++; next} c==1' CHANGELOG.md > RELEASE_NOTES.md
           if [ ! -s RELEASE_NOTES.md ]; then
-            echo "No CHANGELOG.md section found — run 'npm run changelog -- --tag ${{ github.ref_name }}' before tagging." > RELEASE_NOTES.md
+            echo "No CHANGELOG.md section found. Run 'npm run changelog -- --tag ${{ github.ref_name }}' before tagging." > RELEASE_NOTES.md
           fi
 
       # The update-check manifest: instances on the release channel resolve it via
       # `releases/latest/download/mitra.json` (see src/backend/updates.ts). Shipping it as a release
-      # asset — rather than letting checkers hit the API — makes GitHub count every check in the
+      # asset (rather than letting checkers hit the API) makes GitHub count every check in the
       # asset's public `download_count`: the project's only ambient adoption signal (per release,
       # ≈ active stable instances × 4 checks/day), with zero infrastructure and nothing sent beyond
       # the request itself.

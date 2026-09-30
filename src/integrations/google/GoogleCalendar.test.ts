@@ -19,7 +19,7 @@ describe('GoogleCalendar', () => {
 	})
 
 	describe('merge', () => {
-		it('keeps the stored grant — nothing is form-editable', () => {
+		it('keeps the stored grant: nothing is form-editable', () => {
 			const integration = account()
 			integration.merge(new GoogleCalendar({ uri: 'https://evil.example.com/', credentials: { username: 'other@gmail.com', refreshToken: '' } }))
 			assert.equal(integration.uri, GoogleCalendar.uriFor('someone@gmail.com'))

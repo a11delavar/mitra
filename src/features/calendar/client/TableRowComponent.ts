@@ -51,7 +51,7 @@ export class TableRowComponent extends Component {
 		return this.table.grid.virtualization.isRendered(this) || EntryEditorIntent.holds(this.record.data.entry)
 	}
 
-	/** An entry asked to open elsewhere — a link, the palette — comes into view, so its editor opens where it can be seen. */
+	/** An entry asked to open elsewhere (a link, the palette) comes into view, so its editor opens where it can be seen. */
 	protected override updated(changed: PropertyValues<this>) {
 		super.updated(changed)
 		if (EntryEditorIntent.shouldOpen(this.record.data.entry)) {

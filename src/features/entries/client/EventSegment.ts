@@ -24,8 +24,8 @@ export class EntrySegmentComponent extends Component {
 		updated(this: EntrySegmentComponent, open: boolean, wasOpen: boolean) {
 			const entry = this.segment?.entry
 			// A segment mounts closed and lit counts that initial value as a change, so only a real
-			// transition may speak for the entry: otherwise a second segment of one already open —
-			// another day of its run — would retract the editor as it arrives.
+			// transition may speak for the entry: otherwise a second segment of one already open,
+			// another day of its run, would retract the editor as it arrives.
 			if (!entry || (!open && !wasOpen)) {
 				return
 			}

@@ -20,7 +20,6 @@ import { compression, precompressed } from '../infrastructure/http/compression.j
 import { metaRouter } from '../features/about/server/meta.js'
 import { updateChecker } from '../features/about/server/updates.js'
 import { ReminderScheduler } from '../features/reminders/server/ReminderScheduler.js'
-import { seedDev } from '../integrations/dev/Dev.js'
 
 const logger = createLogger('API')
 const PORT = Number(process.env.MITRA_PORT) || 3000
@@ -65,11 +64,6 @@ if (oidc) {
 app.use('/api/health', healthRouter)
 app.use(authMiddleware)
 
-if (process.env.MITRA_DEV === 'true') {
-	await seedDev(orm)
-	logger.info('Dev sample integration seeded')
-}
-
 app.use('/api/events', eventsRouter)
 app.use('/api/entries', entriesRouter)
 app.use('/api/integrations', integrationsRouter)
@@ -105,6 +99,6 @@ const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
 app.use(errorHandler)
 
 app.listen(PORT, () => {
-	logger.info(`Mitra ${mitra.version} — backend API running on http://localhost:${PORT}`)
+	logger.info(`Mitra ${mitra.version}: backend API running on http://localhost:${PORT}`)
 	logger.info(`Log level: ${logLevelName} (set MITRA_LOG_LEVEL=debug for per-request detail, trace for SQL)`)
 })

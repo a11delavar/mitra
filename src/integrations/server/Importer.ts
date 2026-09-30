@@ -58,12 +58,12 @@ export class Importer {
 					await em.flush()
 				})
 			} catch (error) {
-				this.logger.warn(`Import of ${source.toString()} failed — the synchronizer retries it:`, error)
+				this.logger.warn(`Import of ${source.toString()} failed, the synchronizer retries it:`, error)
 				return
 			}
 			syncEmitter.emit('updated', userId, 'sources')
 			if (source.importing && pass >= Importer.maxPasses) {
-				this.logger.warn(`Stopped importing ${source.toString()} after ${pass} passes — it never came back quiet`)
+				this.logger.warn(`Stopped importing ${source.toString()} after ${pass} passes, it never came back quiet`)
 				return
 			}
 		}

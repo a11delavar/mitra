@@ -171,9 +171,9 @@ export class EntrySegments {
 		return this._monthSlots ??= this.slots(this.entries)
 	}
 
-	/** The week all-day lane's packing: the same greedy rows over only the all-day entries — a timed
+	/** The week all-day lane's packing: the same greedy rows over only the all-day entries. A timed
 	 * entry never occupies a lane there, so packing around it would punch holes in the strip. Computed
-	 * (not CSS `dense` auto-flow) because the lane needs its row COUNT for explicit tracks — see the
+	 * (not CSS `dense` auto-flow) because the lane needs its row COUNT for explicit tracks. See the
 	 * `.all-day` rule in Days.ts for why auto-flow rows can't size that row. */
 	private _allDaySlots?: ReadonlyMap<Entry, number>
 	get allDaySlots(): ReadonlyMap<Entry, number> {

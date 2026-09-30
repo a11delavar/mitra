@@ -149,11 +149,11 @@ describe('Notion relation properties (relationPropertiesOf)', () => {
 		])
 	})
 
-	it('addresses a property by its percent-encoded schema id — what the property-item endpoint wants', () => {
+	it('addresses a property by its percent-encoded schema id: what the property-item endpoint wants', () => {
 		assert.equal(Notion.relationPropertiesOf(dataSource()).find(property => property.type === RelationType.FinishToStart)?.id, '%5CHMd')
 	})
 
-	it('ignores a relation into ANOTHER database — a task\'s "Project" is not a relationship between entries', () => {
+	it('ignores a relation into ANOTHER database: a task\'s "Project" is not a relationship between entries', () => {
 		assert.equal(namesAndTypes(dataSource()).some(([name]) => name === 'Project'), false)
 	})
 
@@ -164,7 +164,7 @@ describe('Notion relation properties (relationPropertiesOf)', () => {
 		assert.deepEqual(namesAndTypes(source).find(([name]) => name === 'Sub Tasks'), ['Sub Tasks', 'CHILD'])
 	})
 
-	it('maps a lone "Blocking" to NOTHING — that end has no RELTYPE to be stored as', () => {
+	it('maps a lone "Blocking" to NOTHING, since that end has no RELTYPE to be stored as', () => {
 		const source = dataSource()
 		delete source.properties['Blocked by']
 		source.properties['Blocking'] = relationProperty('%40n~I', 'Blocking') as never
@@ -210,7 +210,7 @@ describe('Notion relation reads (relationsFrom)', () => {
 		])
 	})
 
-	it('ignores the synced twin — the same relationship read from its other end would double the edge', () => {
+	it('ignores the synced twin: the same relationship read from its other end would double the edge', () => {
 		assert.equal(Notion.relationsFrom(related({ blocking: ['page-dependent'] }), schema()), null)
 	})
 
@@ -218,7 +218,7 @@ describe('Notion relation reads (relationsFrom)', () => {
 		assert.equal(Notion.relationsFrom(page(), schema()), null)
 	})
 
-	it('drops a page relating to ITSELF — a self-reference is meaningless, not an edge', () => {
+	it('drops a page relating to ITSELF: a self-reference is meaningless, not an edge', () => {
 		assert.equal(Notion.relationsFrom(related({ parent: ['page-1'] }), schema()), null)
 	})
 
@@ -236,7 +236,7 @@ describe('Notion relation ownership (retainedRelations)', () => {
 		new Relation({ type: RelationType.of('X-DUPLICATE-OF'), targetUid: 'page-twin' }),
 	]
 
-	it('keeps what Notion cannot express — a cross-provider target and a type no property carries', () => {
+	it('keeps what Notion cannot express: a cross-provider target and a type no property carries', () => {
 		assert.deepEqual(Notion.retainedRelations(relations, schema(), isPage).map(relation => relation.targetUid), ['caldav-uid', 'page-twin'])
 	})
 
@@ -253,7 +253,7 @@ describe('Notion relation writes (relationPropertiesFrom / changedRelationProper
 	const isPage = (uid: string) => uid.startsWith('page-')
 	const parentOf = (uid: string) => new Relation({ type: RelationType.Parent, targetUid: uid })
 
-	it('writes each property\'s COMPLETE list — a relation property is stored wholesale', () => {
+	it('writes each property\'s COMPLETE list, since a relation property is stored wholesale', () => {
 		const properties = Notion.relationPropertiesFrom([parentOf('page-a'), parentOf('page-b')], schema(), isPage)
 		assert.deepEqual(properties['Parent Task'], { relation: [{ id: 'page-a' }, { id: 'page-b' }] })
 		assert.deepEqual(properties['Blocked by'], { relation: [] })
@@ -307,7 +307,7 @@ describe('Notion.deriveFilterDefaults', () => {
 		assert.deepEqual(defaults, { Area: { select: { name: 'University' } }, Pinned: { checkbox: true } })
 	})
 
-	it('leaves an OR group alone — which branch to satisfy would be a guess', () => {
+	it('leaves an OR group alone: which branch to satisfy would be a guess', () => {
 		const defaults = Notion.deriveFilterDefaults({ filter: {
 			or: [
 				{ property: 'Area', select: { equals: 'University' } },
@@ -484,7 +484,7 @@ describe('Notion property writes (propertiesFrom)', () => {
 		assert.deepEqual(properties['Due'], { date: { start: '2026-07-15', end: null, time_zone: null } })
 	})
 
-	it('scopes an update to the changed properties only — an untouched status is never rewritten', () => {
+	it('scopes an update to the changed properties only: an untouched status is never rewritten', () => {
 		const properties = Notion.propertiesFrom(entry(), schema(), { heading: true, status: false, span: false })
 		assert.deepEqual(Object.keys(properties), ['Name'])
 	})
@@ -494,7 +494,7 @@ describe('Notion property writes (propertiesFrom)', () => {
 		assert.equal(properties['Status'], undefined)
 	})
 
-	it('rejects the cancelled status — Notion has no group for it', () => {
+	it('rejects the cancelled status, since Notion has no group for it', () => {
 		assert.throws(() => Notion.propertiesFrom(entry({ status: TaskStatus.Cancelled }), schema()), /cancelled/)
 	})
 
@@ -570,10 +570,10 @@ describe('Notion integration model', () => {
 		sources: [new Source({ uri: 'notion://ds-1/view-1', entryTypes: [EntryType.Task], name: 'Tasks · All', enabled: true })] as any,
 	})
 
-	it('declares what Notion cannot represent — the editor hides these fields', () => {
+	it('declares what Notion cannot represent: the editor hides these fields', () => {
 		const capabilities = account().capabilities
 		const unsupported = Object.entries(capabilities).filter(([, supported]) => !supported).map(([key]) => key)
-		assert.deepEqual(unsupported.sort(), ['cancelledStatus', 'location', 'participants', 'percentComplete', 'recurrence', 'reminders', 'timeZone', 'transparency', 'visibility'])
+		assert.deepEqual(unsupported.sort(), ['cancelledStatus', 'createSources', 'deleteSources', 'location', 'participants', 'percentComplete', 'recurrence', 'reminders', 'timeZone', 'transparency', 'visibility'])
 		assert.equal(capabilities.description, true)
 		assert.equal(capabilities.relations, true)
 	})
@@ -624,7 +624,7 @@ describe('Notion integration model', () => {
 		assert.ok(account().syncInterval >= 60_000)
 	})
 
-	it('rejects recurring tasks at every write — Notion has no repeat concept', async () => {
+	it('rejects recurring tasks at every write, since Notion has no repeat concept', async () => {
 		await assert.rejects(() => account().excludeOccurrence(), /recurring/)
 	})
 

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { calendarDateOf, midnightOf, normalizeAllDay, projectAllDay } from './calendarDate.js'
 
 // All-day bounds are calendar DATES: stored as canonical UTC midnights, projected into the viewer's
-// zone on read — `calendarDateOf` and `midnightOf` must be exact inverses in every zone, or an
+// zone on read. `calendarDateOf` and `midnightOf` must be exact inverses in every zone, or an
 // all-day event drifts off its dates for some viewer.
 describe('all-day date encoding', () => {
 	const jun2 = Temporal.PlainDate.from('2026-06-02')

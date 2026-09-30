@@ -120,7 +120,7 @@ export class EntryConnections extends Component {
 
 	/** `undefined` FORGETS the choice rather than writing the current default: an explicit `true` would
 	 * pin the lines on for good, and the day this default changes it would have to change for the people
-	 * who never chose (see Setting.set — only deviations are stored). */
+	 * who never chose (see Setting.set: only deviations are stored). */
 	static setEnabledFor(view: 'week' | 'month' | 'timeline', enabled: boolean | undefined) {
 		const key = `Mitra.Connections.${view}`
 		if (enabled === undefined) {
@@ -137,12 +137,12 @@ export class EntryConnections extends Component {
 	// Re-renders on store notifications, so a relation edit redraws immediately.
 	readonly store = new EntryStore(this)
 
-	/** The chips rendered inside this layer's canvas — the anchor-bearing source of truth for which
+	/** The chips rendered inside this layer's canvas: the anchor-bearing source of truth for which
 	 * entries participate and which slices carry the ports. */
 	@property({ type: Array }) segments: ReadonlyArray<EntrySegment> = []
 
 	/** Per-segment grid placement (see {@link SegmentPlacement}); a missing entry reads as the week's
-	 * timed grid — day columns, minute rank, the canvas frame. */
+	 * timed grid: day columns, minute rank, the canvas frame. */
 	@property({ type: Object }) placement?: ReadonlyMap<EntrySegment, SegmentPlacement>
 
 	/** Whether this layer hosts unsnapped freeform curve rendering. */
@@ -170,7 +170,7 @@ export class EntryConnections extends Component {
 	}
 
 	override connected() {
-		// The layer itself is pointer-events: none — hover intent is read off the surrounding view;
+		// The layer itself is pointer-events: none. Hover intent is read off the surrounding view;
 		// the scroller is the natural delegate (covers every canvas within it).
 		this.scrollHost = (this.parentElement?.closest('mitra-days, mitra-weeks, mitra-timeline') ?? this.parentElement) as HTMLElement | null
 		this.scrollHost?.addEventListener('pointerover', this.handlePointerOver)
@@ -298,7 +298,7 @@ export class EntryConnections extends Component {
 			const drop = `calc(anchor(${A} ${start}) + 0.5rem)`
 			// The plain vertical drop hangs off the PARENT's leading edge, so it only reaches the child
 			// when the child's own columns contain that edge. Merely overlapping spans is not enough: a
-			// child starting inside its parent's run left the drop ending in empty space — a hairline stub
+			// child starting inside its parent's run left the drop ending in empty space, a hairline stub
 			// connecting nothing (visible in the month view too, where the rows are close enough to read
 			// it as a speck).
 			const dropsOnChild = b.start <= a.start && b.end >= a.start
@@ -579,7 +579,7 @@ export class EntryConnections extends Component {
 		`
 	}
 
-	/** The chip's presented color — its own, else its calendar's (the same resolution EventSegment uses). */
+	/** The chip's presented color: its own, else its calendar's (the same resolution EventSegment uses). */
 	private static colorOf(entry: Entry): string {
 		return entry.color || getSource(entry.sourceId)?.color || 'var(--color-text)'
 	}
@@ -587,9 +587,9 @@ export class EntryConnections extends Component {
 	static override get styles() {
 		return css`
 			/* The scroller's block scroll offset as a LENGTH, for the cross-realm pieces: a scroll-driven
-			   animation (see .lane-shifted) sweeps this from -1px to (scroll range - 1px) — the -1px is the
+			   animation (see .lane-shifted) sweeps this from -1px to (scroll range - 1px). The -1px is the
 			   grid gap the lane travels before it sticks, so max(0px, …) is exactly its stuck displacement.
-			   Registered (top-level — a nested @property is silently dropped) so keyframes can interpolate
+			   Registered (top-level, since a nested @property is silently dropped) so keyframes can interpolate
 			   it; non-inheriting, since every piece animates its own. */
 			@property --_scroll-shift {
 				syntax: '<length>';

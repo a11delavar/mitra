@@ -2,7 +2,7 @@
  * OS launch integration. The PWA manifest (scripts/indexHtml.ts) registers mitra as a handler for
  * .ics files and the webcal: protocol; with `launch_handler: focus-existing`, a launch reaches the
  * already-running window as LaunchParams on `window.launchQueue` instead of navigating it. A cold
- * start instead navigates to the handler URL, whose `?subscribe=` parameter is consumed at boot —
+ * start instead navigates to the handler URL, whose `?subscribe=` parameter is consumed at boot, so
  * a cold protocol launch surfaces on BOTH paths, which {@link observeLaunches} deduplicates.
  */
 
@@ -53,7 +53,7 @@ export function observeLaunches(handlers: LaunchHandlers) {
 	})
 }
 
-/** Accepts .ics files dropped onto the window — the in-browser counterpart to OS file launches.
+/** Accepts .ics files dropped onto the window, the in-browser counterpart to OS file launches.
  * Every file drop is claimed (never handed to the browser, which would navigate away from the app);
  * non-calendar files are simply ignored. */
 export function observeFileDrops(handler: (files: ReadonlyArray<File>) => void) {

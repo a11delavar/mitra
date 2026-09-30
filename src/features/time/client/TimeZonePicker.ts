@@ -12,7 +12,7 @@ export function zoneNamePart(zoneId: string | undefined, style: 'short' | 'long'
 		.find(part => part.type === 'timeZoneName')?.value ?? ''
 }
 
-/** The compact column label: the user's custom name, else Intl's `short` name — a real abbreviation
+/** The compact column label: the user's custom name, else Intl's `short` name: a real abbreviation
  * ("PDT") where the zone has one, a localized offset ("GMT+2") where it doesn't. The generic names
  * ("Germany Time") don't fit a 3.75rem column. */
 export function shortZoneLabel(zone?: UserTimeZone): string {
@@ -24,19 +24,19 @@ export function longZoneName(zoneId?: string): string {
 	return zoneNamePart(zoneId, 'long')
 }
 
-/** The zone the browser runs in — the grid's anchor; never offered (or storable) as an addition. */
+/** The zone the browser runs in, the grid's anchor; never offered (or storable) as an addition. */
 export function systemZoneId(): string {
 	return new Intl.DateTimeFormat().resolvedOptions().timeZone
 }
 
-/** The zone id's city segment ("Asia/Tehran" → "Tehran") — the most recognizable compact handle a
+/** The zone id's city segment ("Asia/Tehran" → "Tehran"), the most recognizable compact handle a
  * zone has; the offsets and generic names collide across zones, the city never does within one. */
 export function zoneCity(zoneId: string): string {
 	return zoneId.split('/').at(-1)!.replaceAll('_', ' ')
 }
 
 // Renames of the SYSTEM zone live in localStorage, not the database: the system zone is browser state
-// (it changes when the device travels), so its label is browser state too — no second source of truth
+// (it changes when the device travels), so its label is browser state too, with no second source of truth
 // about which zone anchors the grid. Keyed by zone id, so a "DE" stays bound to Europe/Berlin rather
 // than to whatever zone the device happens to be in.
 const SYSTEM_LABELS_KEY = 'Mitra.TimeZones.Labels'
@@ -59,7 +59,7 @@ export function setSystemZoneLabel(label: string | undefined) {
 		}
 		localStorage.setItem(SYSTEM_LABELS_KEY, JSON.stringify(labels))
 	} catch {
-		// Storage unavailable — the rename just doesn't stick.
+		// Storage unavailable, so the rename just doesn't stick.
 	}
 }
 
@@ -75,7 +75,7 @@ interface ZoneRow {
 
 let zoneRows: ReadonlyArray<ZoneRow> | undefined
 
-/** Every IANA zone the runtime knows, presentable and sorted by offset — built lazily on first picker
+/** Every IANA zone the runtime knows, presentable and sorted by offset, built lazily on first picker
  * open (~400 zones × two Intl formatters is one-time work worth deferring off the boot path). */
 function allZoneRows(): ReadonlyArray<ZoneRow> {
 	return zoneRows ??= Intl.supportedValuesOf('timeZone')

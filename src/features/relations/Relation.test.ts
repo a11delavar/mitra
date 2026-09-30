@@ -7,7 +7,7 @@ import { Entry } from '../entries/Entry.js'
 import { EntryType } from '../entries/EntryType.js'
 
 describe('Relation', () => {
-	describe('from — the one coercion point', () => {
+	describe('from: the one coercion point', () => {
 		it('canonicalizes as it coerces: trimmed UPPERCASE type, blank gap as null, absent direction as outgoing', () => {
 			const relation = Relation.from({ type: ' finishtostart ', targetUid: ' target ', gap: '  ' })!
 			assert.equal(relation.type, RelationType.FinishToStart)
@@ -22,7 +22,7 @@ describe('Relation', () => {
 			assert.equal(Relation.from({ type: RelationType.Parent, targetUid: ' ' }), undefined)
 		})
 
-		it('gives back a real instance even from a DTO the reviver left plain — behaviour, not a shape', () => {
+		it('gives back a real instance even from a DTO the reviver left plain: behaviour, not a shape', () => {
 			const plain = JSON.parse(JSON.stringify(new Relation({ type: RelationType.Parent, targetUid: 'p' }))) as unknown
 			const relation = Relation.from(plain as never)!
 			assert.equal(relation instanceof Relation, true)
@@ -31,7 +31,7 @@ describe('Relation', () => {
 	})
 
 	describe('key and equals', () => {
-		it('separates the two readings of one edge — direction is part of a line identity', () => {
+		it('separates the two readings of one edge: direction is part of a line identity', () => {
 			const owned = Relation.from({ type: RelationType.Parent, targetUid: 'p' })!
 			const derived = Relation.from({ type: RelationType.Parent, targetUid: 'p', direction: 'incoming' })!
 			assert.notEqual(owned.key, derived.key)
@@ -51,8 +51,8 @@ describe('Relation', () => {
 			const normalized = EntryRelations.of(undefined, [
 				{ type: 'parent', targetUid: ' b ' },
 				{ type: 'FINISHTOSTART', targetUid: 'a' },
-				{ type: 'PARENT', targetUid: 'b' }, // true duplicate of the first — dropped
-				{ type: 'PARENT', targetUid: 'b', gap: 'PT1D' }, // same pair, DIFFERENT gap — a distinct relationship
+				{ type: 'PARENT', targetUid: 'b' }, // true duplicate of the first, dropped
+				{ type: 'PARENT', targetUid: 'b', gap: 'PT1D' }, // same pair, DIFFERENT gap, a distinct relationship
 			]).value
 			assert.deepEqual(normalized?.map(relation => [relation.type, relation.targetUid, relation.gap]), [
 				[RelationType.FinishToStart, 'a', null],
@@ -61,7 +61,7 @@ describe('Relation', () => {
 			])
 		})
 
-		it('collapses none to null — empty array, all-junk input, and nullish all mean the same', () => {
+		it('collapses none to null: empty array, all-junk input, and nullish all mean the same', () => {
 			assert.equal(EntryRelations.of(undefined, []).value, null)
 			assert.equal(EntryRelations.of(undefined, null).value, null)
 			assert.equal(EntryRelations.of(undefined, undefined).value, null)
@@ -100,7 +100,7 @@ describe('Relation', () => {
 		})
 	})
 
-	describe('writes — what may be persisted', () => {
+	describe('writes: what may be persisted', () => {
 		it('is the OWNED half alone, canonical null for none', () => {
 			const bag = EntryRelations.of('self', [
 				{ type: RelationType.Parent, targetUid: 'p' },
@@ -110,7 +110,7 @@ describe('Relation', () => {
 			assert.equal(EntryRelations.of('self', [{ type: RelationType.Parent, targetUid: 'p', direction: 'incoming' }]).writes, null)
 		})
 
-		it('parse keeps only what the client may store — a derived line it PUTs back is dropped', () => {
+		it('parse keeps only what the client may store: a derived line it PUTs back is dropped', () => {
 			const parsed = EntryRelations.parse([
 				{ type: 'PARENT', targetUid: 'p' },
 				{ type: 'PARENT', targetUid: 'c', direction: 'incoming' },
@@ -122,7 +122,7 @@ describe('Relation', () => {
 			assert.equal(EntryRelations.parse([{ type: 'PARENT', targetUid: 'p', direction: 'sideways' }]), EntryRelations.invalid)
 		})
 
-		it('writesDiffer ignores the derived half entirely — else every entry goes dirty on every sync', () => {
+		it('writesDiffer ignores the derived half entirely, else every entry goes dirty on every sync', () => {
 			const stored = EntryRelations.of('self', [{ type: RelationType.Parent, targetUid: 'p' }])
 			const served = EntryRelations.of('self', [
 				{ type: RelationType.Parent, targetUid: 'p' },
@@ -147,17 +147,17 @@ describe('Relation', () => {
 			assert.equal(EntryRelations.of(undefined, [{ type: 'PARENT', targetUid: 'x' }]).equals(EntryRelations.of(undefined, null)), false)
 		})
 
-		it('distinguishes gap values — a lead/lag change is a real change', () => {
+		it('distinguishes gap values: a lead/lag change is a real change', () => {
 			assert.equal(EntryRelations.of(undefined, [{ type: 'FINISHTOSTART', targetUid: 'a', gap: 'PT1D' }]).equals(EntryRelations.of(undefined, [{ type: 'FINISHTOSTART', targetUid: 'a' }])), false)
 		})
 	})
 
 	describe('RelationType', () => {
-		it('is one instance per value — of() answers the same identity for any spelling', () => {
+		it('is one instance per value: of() answers the same identity for any spelling', () => {
 			assert.equal(RelationType.of('parent'), RelationType.Parent)
 			assert.equal(RelationType.of(' FINISHTOSTART '), RelationType.FinishToStart)
 			assert.equal(RelationType.of(RelationType.Child), RelationType.Child)
-			// Unknown values are DATA, not errors — opaque instances, cached so === still works.
+			// Unknown values are DATA, not errors: opaque instances, cached so === still works.
 			const foreign = RelationType.of('X-DUPLICATE-OF')
 			assert.equal(RelationType.of('x-duplicate-of'), foreign)
 			assert.equal(foreign.value, 'X-DUPLICATE-OF')
@@ -172,7 +172,7 @@ describe('Relation', () => {
 			assert.equal(RelationType.of('X-DUPLICATE-OF').family, undefined)
 		})
 
-		it('knows its sections from either end — mirror pairs flip, uninterpreted types keep their raw value', () => {
+		it('knows its sections from either end: mirror pairs flip, uninterpreted types keep their raw value', () => {
 			assert.equal(RelationType.Parent.section, RelationSection.SubtaskOf)
 			assert.equal(RelationType.Parent.inverseSection, RelationSection.Subtasks)
 			assert.equal(RelationType.Child.section, RelationSection.Subtasks)
@@ -214,8 +214,8 @@ describe('Relation', () => {
 		it('relateTo normalizes, dedupes and ignores self-references', () => {
 			const subject = entry()
 			subject.relateTo(RelationType.FinishToStart, 'other')
-			subject.relateTo(RelationType.FinishToStart, 'other') // duplicate — no second row
-			subject.relateTo(RelationType.Parent, 'self') // self-reference — ignored
+			subject.relateTo(RelationType.FinishToStart, 'other') // duplicate, no second row
+			subject.relateTo(RelationType.Parent, 'self') // self-reference, ignored
 			assert.deepEqual(subject.relations?.map(relation => [relation.type, relation.targetUid]), [[RelationType.FinishToStart, 'other']])
 		})
 
@@ -226,14 +226,14 @@ describe('Relation', () => {
 			assert.equal(subject.relations, null)
 		})
 
-		it('relations do NOT participate in editEquals — they have their own write path', () => {
+		it('relations do NOT participate in editEquals: they have their own write path', () => {
 			const a = entry()
 			const b = entry()
 			a.relateTo(RelationType.Parent, 'p')
 			assert.equal(a.editEquals(b), true)
 		})
 
-		it('replaces the array rather than mutating it — a shared snapshot keeps its value', () => {
+		it('replaces the array rather than mutating it, so a shared snapshot keeps its value', () => {
 			const subject = entry()
 			subject.relateTo(RelationType.Parent, 'p')
 			const snapshot = subject.relations

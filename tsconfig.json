@@ -21,7 +21,7 @@
 		"noUnusedParameters": true,
 		"resolveJsonModule": true,
 		// esbuild does every emit in this project; TypeScript is only ever a checker (`tsgo --noEmit`,
-		// and the editor). Saying so lets a file import a sibling by its real `.ts` name — which the
+		// and the editor). Saying so lets a file import a sibling by its real `.ts` name, which the
 		// scripts/ modules already do among themselves, and which src/app/bundles.test.ts needs so it
 		// can assert against the REAL build options rather than a drifting copy of them.
 		"noEmit": true,

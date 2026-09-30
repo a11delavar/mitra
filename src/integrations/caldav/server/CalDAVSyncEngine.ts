@@ -135,7 +135,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 			})
 			const failure = result.find(r => (r.status ?? 200) >= 400 && r.status !== 507 && (!r.href || CalDAV.isCollectionHref(source.uri, r.href)))
 			if (failure) {
-				logger.warn(`Listing "${source.name}" answered ${failure.status} — keeping the stored entries and the stored sync token`)
+				logger.warn(`Listing "${source.name}" answered ${failure.status}, keeping the stored entries and the stored sync token`)
 				break
 			}
 			const page = CalDAV.partitionMemberResponses(source.uri, result)
@@ -152,14 +152,14 @@ export class CalDAVSyncEngine implements SyncEngine {
 				break
 			}
 			if (!returnedToken || returnedToken === syncToken) {
-				logger.warn(`"${source.name}" truncated its listing without advancing the sync token — ${members.size} member(s) this pass`)
+				logger.warn(`"${source.name}" truncated its listing without advancing the sync token: ${members.size} member(s) this pass`)
 				break
 			}
 			syncToken = returnedToken
-			logger.debug(`"${source.name}" truncated the listing after request ${requests + 1} (${members.size} member(s) so far) — continuing with the advanced token`)
+			logger.debug(`"${source.name}" truncated the listing after request ${requests + 1} (${members.size} member(s) so far), continuing with the advanced token`)
 		}
 		if (requests === CalDAVSyncEngine.maxListingRequests) {
-			logger.warn(`Stopped listing "${source.name}" after ${requests} sync-collection requests — ${members.size} member(s) this pass, the rest next cycle`)
+			logger.warn(`Stopped listing "${source.name}" after ${requests} sync-collection requests: ${members.size} member(s) this pass, the rest next cycle`)
 		}
 		return {
 			changedUrls: [...members].filter(([, state]) => state === 'changed').map(([url]) => url),
@@ -193,7 +193,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 				}
 			}
 		} else if (!priorToken) {
-			logger.warn(`First listing of "${source.name}" came back incomplete — skipping remote-deletion detection this cycle`)
+			logger.warn(`First listing of "${source.name}" came back incomplete, skipping remote-deletion detection this cycle`)
 		}
 
 		let changed = false
@@ -282,7 +282,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 		if (response.status === 412) {
 			const fresh = await this.refetchResource(integration, entry)
 			if (fresh) {
-				logger.debug(`Etag of ${entry.uri} was stale (the server re-normalized the resource) — re-applying the edit onto the refreshed copy`)
+				logger.debug(`Etag of ${entry.uri} was stale (the server re-normalized the resource), re-applying the edit onto the refreshed copy`)
 				data = applyTo(fresh.raw)
 				response = await client.updateCalendarObject({
 					calendarObject: { url: entry.uri!, data, etag: fresh.etag }
@@ -463,7 +463,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 			}
 		}
 
-		logger.debug(`Updated ${existing.uri} — changed: ${keys.length ? keys.join(', ') : 'recurrence/exdates'}`)
+		logger.debug(`Updated ${existing.uri}, changed: ${keys.length ? keys.join(', ') : 'recurrence/exdates'}`)
 		logger.verbose(existing.data.raw)
 		await CalDAV.syncResourceRows(em, existing)
 	}

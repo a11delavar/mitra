@@ -14,7 +14,7 @@ const DAY = 24 * 60 * 60 * 1000
 const day = (index: number) => new DateTime(Date.UTC(2026, 7, index))
 
 describe('ShiftStrategy', () => {
-	/** A task ON day `at`, with no duration — an entry without an end IS its own end, which keeps the
+	/** A task ON day `at`, with no duration. An entry without an end IS its own end, which keeps the
 	 * arithmetic in whole days and the expectations readable. */
 	const task = (uid: string, at: number, relations: Array<RelationInit> = [], init: Partial<Entry> = {}) => {
 		const entry = new Entry({ id: uid, sourceId: 's', uid, type: EntryType.Task, heading: uid, start: day(at), ...init })
@@ -23,7 +23,7 @@ describe('ShiftStrategy', () => {
 	}
 	const blocks = (predecessorUid: string, gap?: string) => ({ type: RelationType.FinishToStart, targetUid: predecessorUid, gap })
 
-	/** The moved entry is already where the gesture put it — the planner reads geometry, not gestures. */
+	/** The moved entry is already where the gesture put it: the planner reads geometry, not gestures. */
 	const moveOf = (entry: Entry, days: number) => {
 		const before = entry.clone()
 		entry.start = entry.start!.add({ days })
@@ -39,7 +39,7 @@ describe('ShiftStrategy', () => {
 		return [write.entry.uid!, (probe.start!.valueOf() - from) / DAY]
 	}))
 
-	describe('Minimum — keep the chain intact', () => {
+	describe('Minimum: keep the chain intact', () => {
 		it('ATTENUATES along the chain and stops at the first link with slack to absorb it', () => {
 			// a ──2d slack──> b ──0d──> c ──5d──> d. Moving a by +3 pushes b and c by 1, and stops.
 			const a = task('a', 1)
@@ -48,7 +48,7 @@ describe('ShiftStrategy', () => {
 			assert.deepEqual(shifts(ShiftStrategy.Minimum.plan(graph, moveOf(a, 3))), { b: 1, c: 1 })
 		})
 
-		it('plans NOTHING when the predecessor moves earlier — nothing is broken by that', () => {
+		it('plans NOTHING when the predecessor moves earlier, since nothing is broken by that', () => {
 			const a = task('a', 5)
 			const graph = RelationGraph.of([a, task('b', 6, [blocks('a')])])
 
@@ -89,7 +89,7 @@ describe('ShiftStrategy', () => {
 			assert.equal(ShiftStrategy.Minimum.plan(graph, moveOf(a, 3)).isEmpty, true)
 		})
 
-		it('rounds an all-day dependent up to whole days — it has no clock time to land on', () => {
+		it('rounds an all-day dependent up to whole days, since it has no clock time to land on', () => {
 			// An hour long on purpose: the deficit lands mid-day, and an all-day entry cannot.
 			const a = task('a', 1, [], { end: day(1).add({ hours: 1 }) })
 			const graph = RelationGraph.of([a, task('b', 2, [blocks('a')], { allDay: true, end: day(3) })])
@@ -138,7 +138,7 @@ describe('ShiftStrategy', () => {
 			assert.deepEqual(shifts(ShiftStrategy.Minimum.plan(graph, moveOf(c, -4))), { b: -3, a: -2 })
 		})
 
-		it('answers for a RESIZE from either side — the geometry broke, not the gesture', () => {
+		it('answers for a RESIZE from either side: the geometry broke, not the gesture', () => {
 			// Dragging the dependent's START earlier into its predecessor is the case that used to be
 			// silent while the same overlap made the other way round asked.
 			const b = task('b', 5, [blocks('a')], { end: day(6) })
@@ -149,7 +149,7 @@ describe('ShiftStrategy', () => {
 			assert.deepEqual(shifts(ShiftStrategy.Minimum.plan(graph, EntryChange.of(b, before))), { a: -2 })
 		})
 
-		it('takes a shifted entry SUBTREE with it — nobody aimed at those, and leaving them strands them', () => {
+		it('takes a shifted entry SUBTREE with it: nobody aimed at those, and leaving them strands them', () => {
 			const a = task('a', 1)
 			const child = task('child', 4, [{ type: RelationType.Parent, targetUid: 'b' }])
 			const graph = RelationGraph.of([a, task('b', 3, [blocks('a')]), child])
@@ -164,7 +164,7 @@ describe('ShiftStrategy', () => {
 		})
 	})
 
-	describe('Maintain — the whole chain by the same amount', () => {
+	describe('Maintain: the whole chain by the same amount', () => {
 		it('moves every downstream entry by the delta, slack and all', () => {
 			const a = task('a', 1)
 			const graph = RelationGraph.of([a, task('b', 3, [blocks('a')]), task('c', 3, [blocks('b')]), task('d', 8, [blocks('c')])])
@@ -172,14 +172,14 @@ describe('ShiftStrategy', () => {
 			assert.deepEqual(shifts(ShiftStrategy.Maintain.plan(graph, moveOf(a, 3))), { b: 3, c: 3, d: 3 })
 		})
 
-		it('pulls the chain back when the move was backwards — this is the reversible one', () => {
+		it('pulls the chain back when the move was backwards: this is the reversible one', () => {
 			const a = task('a', 5)
 			const graph = RelationGraph.of([a, task('b', 6, [blocks('a')])])
 
 			assert.deepEqual(shifts(ShiftStrategy.Maintain.plan(graph, moveOf(a, -3))), { b: -3 })
 		})
 
-		it('carries the chain on BOTH sides — the authored intervals sit either side of the dragged entry', () => {
+		it('carries the chain on BOTH sides: the authored intervals sit either side of the dragged entry', () => {
 			const c = task('c', 5, [blocks('b')])
 			const graph = RelationGraph.of([task('a', 1), task('b', 3, [blocks('a')]), c])
 

@@ -35,7 +35,7 @@ describe('Occurrences', () => {
 			assert.equal(occ[0]!.start.toISOString(), '2026-06-01T09:00:00.000Z')
 		})
 
-		it('respects COUNT — no occurrences after the series ends', () => {
+		it('respects COUNT: no occurrences after the series ends', () => {
 			const raw = vevent(['DTSTART:20260601T090000Z', 'DTEND:20260601T093000Z', 'RRULE:FREQ=DAILY;COUNT=3'])
 			assert.equal(Occurrences.fromICS(raw)!.within(at('2026-06-10T00:00:00Z'), at('2026-06-20T00:00:00Z')).length, 0)
 			assert.equal(Occurrences.fromICS(raw)!.within(at('2026-06-01T00:00:00Z'), at('2026-06-30T00:00:00Z')).length, 3)
@@ -68,7 +68,7 @@ describe('Occurrences', () => {
 		})
 
 		it('expands off the MASTER even when a bundled override precedes it in document order', () => {
-			// A resource bundles the master with its RECURRENCE-ID overrides in no guaranteed order —
+			// A resource bundles the master with its RECURRENCE-ID overrides in no guaranteed order:
 			// read the first VEVENT blindly and an override-first resource loses its RRULE (and EXDATEs):
 			// the whole series silently stops expanding.
 			const raw = calendar([
@@ -82,15 +82,15 @@ describe('Occurrences', () => {
 			const occ = Occurrences.fromICS(raw)!.within(at('2026-06-01T00:00:00Z'), at('2026-06-05T23:59:59Z'))
 			assert.deepEqual(occ.map(o => o.start.toISOString()), [
 				'2026-06-01T09:00:00.000Z',
-				'2026-06-02T09:00:00.000Z', // the rule instance — the override row replaces it at render time
+				'2026-06-02T09:00:00.000Z', // the rule instance, the override row replaces it at render time
 				'2026-06-04T09:00:00.000Z', // Jun 3 is EXDATE'd on the master
 				'2026-06-05T09:00:00.000Z',
 			])
 		})
 
-		it('resolves DATE exdates at the series\' zone\'s midnight — the instant the expansion produces', () => {
+		it('resolves DATE exdates at the series\' zone\'s midnight, the instant the expansion produces', () => {
 			// An all-day Tehran (UTC+3:30) series: occurrences are Tehran-midnight instants (20:30Z the
-			// previous day). Its EXDATE;VALUE=DATE:20260608 must exclude THAT instant — read at the
+			// previous day). Its EXDATE;VALUE=DATE:20260608 must exclude THAT instant. Read at the
 			// server's own midnight (a UTC container's 00:00Z, say) it matches nothing and the excluded
 			// day keeps rendering, doubled next to whatever detached copy it stood for.
 			const raw = vevent(['DTSTART;VALUE=DATE:20260601', 'DTEND;VALUE=DATE:20260602', 'RRULE:FREQ=DAILY', 'EXDATE;VALUE=DATE:20260608'])
@@ -98,7 +98,7 @@ describe('Occurrences', () => {
 				.within(at('2026-06-06T21:00:00Z'), at('2026-06-09T12:00:00Z'))
 			assert.deepEqual(occ.map(o => o.start.toISOString()), [
 				'2026-06-06T20:30:00.000Z', // Jun 7 Tehran
-				'2026-06-08T20:30:00.000Z', // Jun 9 Tehran — Jun 8 is excluded
+				'2026-06-08T20:30:00.000Z', // Jun 9 Tehran, Jun 8 is excluded
 			])
 		})
 	})
@@ -132,10 +132,10 @@ describe('Occurrences', () => {
 
 	describe('zone-aware expansion (the entry\'s timeZone)', () => {
 		const at = (iso: string) => new Date(iso)
-		// Mon Jul 6 2026, 09:00 in Berlin (CEST, UTC+2) — the wall time the series repeats at.
+		// Mon Jul 6 2026, 09:00 in Berlin (CEST, UTC+2), the wall time the series repeats at.
 		const berlinNineAm = at('2026-07-06T07:00:00Z')
 
-		it('keeps the wall clock across a DST flip — 09:00 Berlin stays 09:00', () => {
+		it('keeps the wall clock across a DST flip: 09:00 Berlin stays 09:00', () => {
 			// Berlin leaves DST on Oct 25 2026: the UTC instant must shift from 07:00Z to 08:00Z.
 			const occ = Occurrences.fromRule('FREQ=WEEKLY', berlinNineAm, undefined, [], 'Europe/Berlin')!
 				.within(at('2026-10-19T00:00:00Z'), at('2026-10-27T23:59:59Z'))
@@ -146,18 +146,18 @@ describe('Occurrences', () => {
 		})
 
 		it('a series with NO authoring zone recurs at FIXED UTC instants across a DST flip, on any server', () => {
-			// RFC 5545 §3.8.5.3: a UTC-form DTSTART recurs at fixed UTC instants — no DST adjustment.
+			// RFC 5545 §3.8.5.3: a UTC-form DTSTART recurs at fixed UTC instants, no DST adjustment.
 			// (This replaced a server-local legacy path whose spacing depended on the container's TZ and
 			// was deliberately untestable; the whole suite now runs identically under any TZ env.)
 			const occ = Occurrences.fromRule('FREQ=WEEKLY', at('2026-10-19T07:00:00Z'), undefined)!
 				.within(at('2026-10-19T00:00:00Z'), at('2026-10-27T23:59:59Z'))
 			assert.deepEqual(occ.map(o => o.start.toISOString()), [
 				'2026-10-19T07:00:00.000Z',
-				'2026-10-26T07:00:00.000Z', // still 07:00Z — Berlin renders 09:00→08:00, as UTC anchoring means
+				'2026-10-26T07:00:00.000Z', // still 07:00Z. Berlin renders 09:00→08:00, as UTC anchoring means
 			])
 		})
 
-		it('an explicit \'UTC\' zone and no zone expand identically — the round trip through a plain-Z .ics is lossless', () => {
+		it('an explicit \'UTC\' zone and no zone expand identically: the round trip through a plain-Z .ics is lossless', () => {
 			// A timed entry authored with timeZone 'UTC' serializes as a bare-Z DTSTART (no TZID), which
 			// syncs back as timeZone null: both must mean the same fixed-instant expansion.
 			const window = [at('2026-10-19T00:00:00Z'), at('2026-10-27T23:59:59Z')] as const
@@ -166,7 +166,7 @@ describe('Occurrences', () => {
 			assert.deepEqual(explicit.map(o => o.start.toISOString()), none.map(o => o.start.toISOString()))
 		})
 
-		it('a FLOATING master expands at its as-if-UTC instants — the marker never reaches Temporal', () => {
+		it('a FLOATING master expands at its as-if-UTC instants: the marker never reaches Temporal', () => {
 			const master = new Entry({
 				id: 'f', sourceId: 's', type: EntryType.Event, heading: 'Pill', timeZone: 'floating',
 				start: at('2026-10-19T09:00:00Z') as never, end: at('2026-10-19T09:15:00Z') as never, // 09:00 wall, encoded as-if-UTC
@@ -302,7 +302,7 @@ describe('scoped occurrence edits', () => {
 
 	it('\'following\' on a COUNT-bounded series carries the REMAINING count onto the continuation', async () => {
 		// A daily "10 times" series split at its SECOND occurrence: the old half keeps occurrence #1,
-		// so the continuation repeats 9 more times — it must never become a never-ending series.
+		// so the continuation repeats 9 more times. It must never become a never-ending series.
 		const { calls, integration } = stub()
 		const m = new Entry({
 			id: 'm', sourceId: 's', type: EntryType.Event, heading: 'Standup', uid: 'u1',
@@ -321,7 +321,7 @@ describe('scoped occurrence edits', () => {
 		assert.ok(calls.updates[0]!.incoming.recurrence!.until!.valueOf() < new Date('2026-06-02T09:00:00Z').getTime())
 	})
 
-	it('\'all\' adopts the edit\'s duration — a resized occurrence resizes the whole series', async () => {
+	it('\'all\' adopts the edit\'s duration: a resized occurrence resizes the whole series', async () => {
 		const { calls, integration } = stub()
 		const resized = new Entry({
 			sourceId: 's', type: EntryType.Event, heading: 'Standup',
@@ -335,7 +335,7 @@ describe('scoped occurrence edits', () => {
 
 	it('\'all\' converting timed → all-day gives the series a whole-day span, not its old clock length', async () => {
 		// Dragging an occurrence of a 09:00–10:00 series into the all-day lane: the edit is the day
-		// itself. Shifting the stored end by the start's delta would leave a 1-hour "all-day" master —
+		// itself. Shifting the stored end by the start's delta would leave a 1-hour "all-day" master,
 		// invisible in the lane, but the next conversion back to timed resurrects the stale hour.
 		const { calls, integration } = stub()
 		const m = master()
@@ -351,13 +351,13 @@ describe('scoped occurrence edits', () => {
 		assert.equal((incoming.end as unknown as Date).toISOString(), '2026-06-02T00:00:00.000Z') // midnight → next midnight
 	})
 
-	it('\'all\' converting all-day → timed adopts the edit\'s clock span — not a 24-hour event', async () => {
+	it('\'all\' converting all-day → timed adopts the edit\'s clock span, not a 24-hour event', async () => {
 		const { calls, integration } = stub()
 		const m = master()
 		m.timeZone = 'UTC'
 		m.allDay = true
 		m.start = D('2026-06-01T00:00:00Z')
-		m.end = D('2026-06-02T00:00:00Z') // exclusive next midnight — a 24h stored span
+		m.end = D('2026-06-02T00:00:00Z') // exclusive next midnight, a 24h stored span
 		const timed = new Entry({
 			sourceId: 's', type: EntryType.Event, heading: 'Standup', allDay: false,
 			start: D('2026-06-08T02:00:00Z'), end: D('2026-06-08T03:00:00Z'), // dropped at 02:00, one hour
@@ -366,12 +366,12 @@ describe('scoped occurrence edits', () => {
 		const { incoming } = calls.updates[0]!
 		assert.equal(incoming.allDay, false)
 		assert.equal((incoming.start as unknown as Date).toISOString(), '2026-06-01T02:00:00.000Z')
-		assert.equal((incoming.end as unknown as Date).toISOString(), '2026-06-01T03:00:00.000Z') // 1h — not 02:00 the next day
+		assert.equal((incoming.end as unknown as Date).toISOString(), '2026-06-01T03:00:00.000Z') // 1h, not 02:00 the next day
 	})
 
 	it('a timed → all-day → back-to-timed round trip lands the series exactly at the released span', async () => {
 		// The reported bug: a 2h daily series moved to all-day and back previewed 06:00–07:00 but saved
-		// 06:00–08:00 — the master's pre-conversion length leaking through. Replay both commits.
+		// 06:00–08:00: the master's pre-conversion length leaking through. Replay both commits.
 		const { calls, integration } = stub()
 		const m = new Entry({
 			id: 'm', sourceId: 's', type: EntryType.Task, heading: 'Test', uid: 'u1', timeZone: 'UTC',
@@ -384,7 +384,7 @@ describe('scoped occurrence edits', () => {
 		await editOccurrence(em, integration, m, new Date('2026-07-10T02:00:00Z'),
 			span({ allDay: true, start: D('2026-07-10T00:00:00Z'), end: D('2026-07-11T00:00:00Z') }), 'all')
 		apply(calls.updates[0]!.incoming)
-		// 2) …and back onto the grid at 06:00 — the ghost previews the default one-hour slot.
+		// 2) …and back onto the grid at 06:00, where the ghost previews the default one-hour slot.
 		await editOccurrence(em, integration, m, new Date('2026-07-10T00:00:00Z'),
 			span({ allDay: false, start: D('2026-07-10T06:00:00Z'), end: D('2026-07-10T07:00:00Z') }), 'all')
 		const final = calls.updates[1]!.incoming
@@ -394,7 +394,7 @@ describe('scoped occurrence edits', () => {
 
 	it('\'all\' conversions keep the weekday rule aligned in the SERIES\' zone, not the server\'s', async () => {
 		// A weekly-Friday 02:00 Berlin series (00:00Z): converting an occurrence to all-day snaps its
-		// start to Berlin midnight — 22:00Z the PREVIOUS UTC day. A server counting its own (e.g. a UTC
+		// start to Berlin midnight, 22:00Z the PREVIOUS UTC day. A server counting its own (e.g. a UTC
 		// container's) calendar days would read that as a day move, rotate the rule to Thursday, and
 		// silently desync it from its own anchor.
 		const { calls, integration } = stub()
@@ -409,14 +409,14 @@ describe('scoped occurrence edits', () => {
 		})
 		await editOccurrence(em, integration, m, new Date('2026-07-10T00:00:00Z'), allDay, 'all')
 		const { incoming } = calls.updates[0]!
-		assert.deepEqual(incoming.recurrence!.byday, ['FR']) // same Berlin day — no rotation
+		assert.deepEqual(incoming.recurrence!.byday, ['FR']) // same Berlin day, no rotation
 		assert.equal((incoming.start as unknown as Date).toISOString(), '2026-07-09T22:00:00.000Z')
 		assert.equal((incoming.end as unknown as Date).toISOString(), '2026-07-10T22:00:00.000Z')
 	})
 
 	it('\'all\' shifts the anchor wall-clock in the master\'s zone, like the exclusions', async () => {
 		// Series anchored Fri Oct 23 09:00 Berlin (CEST); the Nov 6 occurrence (CET) is dragged 2 days
-		// later within CET, so the instant delta is exactly 48h — but the ANCHOR's +48h crosses the
+		// later within CET, so the instant delta is exactly 48h, but the ANCHOR's +48h crosses the
 		// Oct 25 DST end. An instant shift would beach the whole series at 08:00.
 		const { calls, integration } = stub()
 		const m = new Entry({
@@ -430,7 +430,7 @@ describe('scoped occurrence edits', () => {
 		})
 		await editOccurrence(em, integration, m, new Date('2026-11-06T08:00:00Z'), moved, 'all') // Fri 09:00 CET
 		const { incoming } = calls.updates[0]!
-		assert.equal((incoming.start as unknown as Date).toISOString(), '2026-10-25T08:00:00.000Z') // Sun 09:00 CET — 09:00 stays 09:00
+		assert.equal((incoming.start as unknown as Date).toISOString(), '2026-10-25T08:00:00.000Z') // Sun 09:00 CET: 09:00 stays 09:00
 		assert.deepEqual(incoming.recurrence!.byday, ['SU'])
 	})
 
@@ -469,7 +469,7 @@ describe('scoped occurrence edits', () => {
 
 	it('\'all\' shifts the exclusions wall-clock in the master\'s zone, like the occurrences themselves', async () => {
 		// A Friday 09:00 Berlin series dragged one week later, across the Oct 25 DST end: the instant
-		// delta is 7d + 1h, but every occurrence — and so every exclusion — moves exactly 7 wall days.
+		// delta is 7d + 1h, but every occurrence (and so every exclusion) moves exactly 7 wall days.
 		const { calls, integration } = stub()
 		const m = master()
 		m.timeZone = 'Europe/Berlin'
@@ -482,12 +482,12 @@ describe('scoped occurrence edits', () => {
 			start: D('2026-10-30T08:00:00Z'), end: D('2026-10-30T09:00:00Z'), // 09:00 CET, one week later
 		})
 		await editOccurrence(em, integration, m, new Date('2026-10-23T07:00:00Z'), moved, 'all')
-		// 09:00 Berlin stays 09:00 Berlin — an instant shift (+7d1h) would beach it at 10:00.
+		// 09:00 Berlin stays 09:00 Berlin: an instant shift (+7d1h) would beach it at 10:00.
 		assert.deepEqual(calls.updates[0]!.incoming.exdates, [new Date('2026-11-13T08:00:00Z').getTime()])
 	})
 
 	it('\'all\' reads DATE exclusions as canonical UTC dates before shifting them (whatever the master\'s zone)', async () => {
-		// All-day bounds are DATES encoded as UTC midnights (see calendarDate.ts) — the series' own
+		// All-day bounds are DATES encoded as UTC midnights (see calendarDate.ts). The series' own
 		// `timeZone` (Tehran here) governs only TIMED wall-clock math, never all-day day arithmetic:
 		// read at any other midnight, the shifted exclusion lands hours off and excludes nothing.
 		const { calls, integration } = stub()
@@ -519,8 +519,8 @@ describe('scoped occurrence edits', () => {
 		const { calls, integration } = stub()
 		const m = master()
 		m.exdates = [
-			new Date('2026-06-01T09:00:00Z').getTime(), // before the split — stays the old half's
-			new Date('2026-06-15T09:00:00Z').getTime(), // after it — the continuation's, at +1h
+			new Date('2026-06-01T09:00:00Z').getTime(), // before the split, stays the old half's
+			new Date('2026-06-15T09:00:00Z').getTime(), // after it, the continuation's, at +1h
 		]
 		const result = await editOccurrence(em, integration, m, recurrenceId, edited(), 'following')
 		assert.equal(calls.updates[0]!.incoming.exdates, undefined) // the old half keeps its own untouched
@@ -533,7 +533,7 @@ describe('scoped occurrence edits', () => {
 		assert.deepEqual(calls.excludes, [recurrenceId.getTime()])
 		assert.equal(calls.creates.length, 1)
 		assert.equal(result.heading, 'Edited')
-		assert.equal(result.recurrence, undefined) // a standalone — no rule, no series link
+		assert.equal(result.recurrence, undefined) // a standalone: no rule, no series link
 		assert.equal(result.recurrenceMasterId, undefined)
 	})
 
@@ -577,7 +577,7 @@ describe('scoped occurrence edits', () => {
 			assert.ok(result.recurrence, 'the rule travels with it')
 		})
 
-		it('\'all\' takes the copy back when the original cannot be deleted — a duplicate beats a loss', async () => {
+		it('\'all\' takes the copy back when the original cannot be deleted: a duplicate beats a loss', async () => {
 			const here = stub()
 			const there = target()
 			here.integration.deleteEntry = () => Promise.reject(new Error('nope'))

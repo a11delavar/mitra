@@ -131,7 +131,7 @@ describe('NotionMarkdown.toMarkdown', () => {
 		assert.equal(NotionMarkdown.toMarkdown([bookmark('')]), '')
 	})
 
-	it('skips blocks markdown cannot express — and whole branches hiding one', () => {
+	it('skips blocks markdown cannot express, and whole branches hiding one', () => {
 		const blocks: Array<NotionBlock> = [
 			paragraph(text('visible')),
 			{ type: 'image', id: 'b-img' } as NotionBlock,

@@ -1,20 +1,21 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { Source } from './Source.js'
+import { Color } from './Color.js'
 import { CalDAV } from '../../integrations/caldav/CalDAV.js'
 import { IcsSubscription } from '../../integrations/ics/IcsSubscription.js'
 import { EntryType } from '../entries/EntryType.js'
 import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
 
 describe('Source.keyOf', () => {
-	it('is the collection URL alone — one collection is ONE source, whatever types it holds', () => {
+	it('is the collection URL alone: one collection is ONE source, whatever types it holds', () => {
 		const source = new Source({ uri: 'https://dav/cal/', entryTypes: [EntryType.Event, EntryType.Task], name: 'X' })
 		assert.equal(source.uri, 'https://dav/cal/')
 	})
 
 	// The enable-on-save bug: `@a11d/api` structure-clones request bodies, so incoming sources reach the
 	// backend as plain objects with no `key` getter. `applyAndSync` keys them via `keyOf`, which must
-	// produce the SAME key as the managed row's getter — otherwise nothing matches and all sources disable.
+	// produce the SAME key as the managed row's getter. Otherwise nothing matches and all sources disable.
 	it('keys a structure-cloned plain object identically to the managed instance', () => {
 		const managed = new Source({ uri: 'https://dav/cal/', entryTypes: [EntryType.Event], name: 'X', enabled: true })
 		const wireClone = structuredClone(managed)
@@ -42,7 +43,7 @@ describe('Source entry types', () => {
 		}
 	})
 
-	it('defaults new entries to events wherever it can hold one — mitra is calendar-first', () => {
+	it('defaults new entries to events wherever it can hold one, since mitra is calendar-first', () => {
 		assert.equal(source([EntryType.Event, EntryType.Task]).defaultEntryType, EntryType.Event)
 		assert.equal(source([EntryType.Event]).defaultEntryType, EntryType.Event)
 		assert.equal(source([EntryType.Task]).defaultEntryType, EntryType.Task)
@@ -90,5 +91,19 @@ describe('Source.readOnly narrows what may be written to one calendar', () => {
 
 	it('cannot promote a provider that already refuses writes', () => {
 		assert.equal(new IcsSubscription().capabilitiesFor(own).editEntries, false)
+	})
+})
+
+describe('Color.unusedAmong', () => {
+	it('starts a first calendar on green', () => {
+		assert.equal(Color.unusedAmong([]), Color.Green)
+	})
+
+	it('skips the presets the account already uses, and colours it never picked', () => {
+		assert.equal(Color.unusedAmong([Color.Green, '#123456', undefined]), Color.Blue)
+	})
+
+	it('cycles once every preset is taken', () => {
+		assert.ok(Color.palette.includes(Color.unusedAmong(Color.palette)))
 	})
 })

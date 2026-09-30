@@ -37,7 +37,7 @@ describe('MigrationVerdict', () => {
 describe('MigrationPlan', () => {
 	const plan = () => new MigrationPlan({ total: 10, verdicts: [lossy('reminders'), lossy('reminders', 'location'), blocked('recurrence', 4)] })
 
-	it('reads the clean entries as the remainder — they are never listed', () => {
+	it('reads the clean entries as the remainder, since they are never listed', () => {
 		assert.equal(plan().cleanCount, 7)
 	})
 

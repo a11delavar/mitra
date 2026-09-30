@@ -3,15 +3,15 @@ import { DialogComponent } from '@a11d/lit-application'
 import { commandInstances, type Command, type CommandGroup } from '../Command.js'
 
 /**
- * The keyboard cheat sheet, grouped the way users think — views, navigation, entries, general.
+ * The keyboard cheat sheet, grouped the way users think: views, navigation, entries, general.
  * Every keyed {@link Command} documents itself: its rows derive from the registry, so a new command
  * class appears here (and in the palette) without touching this dialog. Only the vocabulary that
- * deliberately is NOT a command — pointer gestures and owner-guarded keys (see Command.ts) — is
+ * deliberately is NOT a command (pointer gestures and owner-guarded keys, see Command.ts) is
  * written by hand below. Opened with "?" and from the palette.
  */
 @component('mitra-dialog-keyboard-shortcuts')
 export class DialogKeyboardShortcuts extends DialogComponent {
-	/** Apple boards label their keys with glyphs — and their "delete" IS Backspace, printed ⌫. */
+	/** Apple boards label their keys with glyphs, and their "delete" IS Backspace, printed ⌫. */
 	private static readonly mac = navigator.userAgent.includes('Mac')
 	private static get modifier() { return DialogKeyboardShortcuts.mac ? '⌘' : t('Ctrl') }
 	private static get alt() { return DialogKeyboardShortcuts.mac ? '⌥' : 'Alt' }
@@ -21,7 +21,7 @@ export class DialogKeyboardShortcuts extends DialogComponent {
 		return html`${labels.map(label => html`<kbd>${label}</kbd>`)}`
 	}
 
-	/** A gesture or connective beside the key chips ("or", "drag", "scroll") — words, not keys. */
+	/** A gesture or connective beside the key chips ("or", "drag", "scroll"): words, not keys. */
 	private static word(text: string) {
 		return html`<span class="word">${text}</span>`
 	}
@@ -62,7 +62,7 @@ export class DialogKeyboardShortcuts extends DialogComponent {
 					{ action: t('Search or run a command…'), keys: html`${keys('/')}${word(t('or'))}${keys(modifier, 'P')}${word(t('or'))}${keys(modifier, 'K')}` },
 					...of('general'),
 					{ action: t('Settings'), keys: keys(modifier, ',') },
-					// The sidebar eye's Alt+click (see Sidebar.toggleSolo) — a pointer gesture, so hand-written.
+					// The sidebar eye's Alt+click (see Sidebar.toggleSolo), a pointer gesture, so hand-written.
 					{ action: t('Show only one calendar, or bring the rest back'), keys: html`${keys(alt)}${word(t('click'))}` },
 					{ action: t('Close'), keys: keys('Esc') },
 				],
@@ -121,7 +121,7 @@ export class DialogKeyboardShortcuts extends DialogComponent {
 							flex-shrink: 0;
 						}
 
-						/* Hints are hidden on a touch screen everywhere else in the app (kbd.css.ts) — this
+						/* Hints are hidden on a touch screen everywhere else in the app (kbd.css.ts). This
 						   sheet is the one place they ARE the content, so both re-declare display and
 						   opt back in. Bigger and firmer here than a hint decorating a control, too. */
 						.word {

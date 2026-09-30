@@ -111,7 +111,7 @@ describe('annotateChangelog', () => {
 		assert.equal(older!.current, false)
 	})
 
-	it('links each section to its GitHub notes — tag page, or releases index for unreleased', () => {
+	it('links each section to its GitHub notes: tag page, or releases index for unreleased', () => {
 		const [unreleased, release] = annotateChangelog(parsed, 'v0.3.0')
 		assert.equal(unreleased!.url, 'https://github.com/a11delavar/mitra/releases')
 		assert.equal(release!.url, 'https://github.com/a11delavar/mitra/releases/tag/v0.3.0')

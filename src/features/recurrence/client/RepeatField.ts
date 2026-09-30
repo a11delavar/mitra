@@ -53,7 +53,7 @@ export class RepeatField extends Component {
 
 	protected override createRenderRoot() { return this }
 
-	/** The date the rule iterates from — the SERIES anchor, not the shown occurrence's own date. Presets
+	/** The date the rule iterates from: the SERIES anchor, not the shown occurrence's own date. Presets
 	 * and defaults derived from a later occurrence would write a rule that no longer matches the anchor,
 	 * silently dropping every occurrence before the new rule's first match. */
 	private get start(): DateTime { return this.entry.seriesStart ?? this.entry.start! }

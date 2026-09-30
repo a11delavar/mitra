@@ -105,6 +105,7 @@ const sections = [
 		label: 'Integrations',
 		items: [
 			{ slug: 'integrations', label: 'Overview' },
+			{ slug: 'integrations/mitra' },
 			{ slug: 'integrations/caldav' },
 			{ slug: 'integrations/google-calendar' },
 			{ slug: 'integrations/apple-calendar' },

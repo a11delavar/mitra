@@ -347,8 +347,8 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 			<p class="hint">${t('There is no other calendar these entries could move to.')}</p>
 		` : html`
 			<p class="hint">${this.canMove
-				? t('Every entry in ${name} moves — the ones the chosen calendar cannot take stay here.', { name: this.source.name })
-				: t('Every entry in ${name} is copied — the ones the chosen calendar cannot take are left out. ${name} itself is read-only and stays exactly as it is.', { name: this.source.name })}</p>
+				? t('Every entry in ${name} moves. The ones the chosen calendar cannot take stay here.', { name: this.source.name })
+				: t('Every entry in ${name} is copied. The ones the chosen calendar cannot take are left out. ${name} itself is read-only and stays exactly as it is.', { name: this.source.name })}</p>
 			<ul class="targets">
 				${targets.map(({ integration, sources }) => html`
 					<li class="account">${integration.credentials?.username || integration.type}</li>
@@ -505,7 +505,7 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 							${!outcome.left ? html.nothing : html`<span>${t('${count:pluralityNumber} stayed in ${name}', { count: outcome.left, name: this.source.name })}</span>`}
 							${!outcome.duplicates ? html.nothing : html`
 								<span>${t('${count:pluralityNumber} are now in both calendars', { count: outcome.duplicates })}</span>
-								<span>${t('Their copies landed but the originals could not be deleted — delete them here by hand.')}</span>
+								<span>${t('Their copies landed but the originals could not be deleted. Delete them here by hand.')}</span>
 							`}
 						</div>
 					`}

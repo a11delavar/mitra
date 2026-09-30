@@ -1,4 +1,4 @@
-# git-cliff — generates CHANGELOG.md from the commit history.
+# git-cliff generates CHANGELOG.md from the commit history.
 # Author/refresh with `npm run changelog` (stamp a version with `-- --tag vX.Y.Z`).
 [changelog]
 header = """

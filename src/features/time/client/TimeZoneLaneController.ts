@@ -11,7 +11,7 @@ const CLAIM_DISTANCE = 8
 /** Haptic tick (ms) as the lane crosses the point where letting go would flip it. */
 const TICK_MS = 8
 
-/** Haptic pulse (ms) when the lane lands — the same scale as the grid's press-and-hold confirmation. */
+/** Haptic pulse (ms) when the lane lands, the same scale as the grid's press-and-hold confirmation. */
 const COMMIT_MS = 15
 
 /** One in-flight rail drag, or `undefined` when idle. */
@@ -19,7 +19,7 @@ interface Drag {
 	readonly pointerId: number
 	readonly originX: number
 	readonly originY: number
-	/** The lane's per-column width (px) at pointer-down — what the travel is added to. */
+	/** The lane's per-column width (px) at pointer-down, what the travel is added to. */
 	readonly startWidth: number
 	/** +1 in LTR, −1 in RTL: pulling toward the inline-end always opens the lane. */
 	readonly sign: number
@@ -30,17 +30,17 @@ interface Drag {
  * The time axis' ALTERNATIVE zone columns, and whether they're out or tucked away.
  *
  * The axis is expensive on a phone: every additional zone is another column of sticky rail the day
- * columns never get back. So the lane folds — the anchor zone, the one the grid is built on, always
- * stays — and the alternatives come out on demand, two ways that mean the same thing:
+ * columns never get back. So the lane folds (the anchor zone, the one the grid is built on, always
+ * stays) and the alternatives come out on demand, two ways that mean the same thing:
  *
  *   - drag the rail toward the inline-end (finger, pen or mouse) and the columns follow the pointer 1:1,
  *     with a haptic tick the moment releasing would open them and a fuller one when they land;
  *   - or click the chevron in the header's leading track.
  *
  * The width is a CSS custom property (`--zone-width`) the grid tracks are sized from, so opening is a
- * transition on ONE registered length and dragging is that same length driven per frame — no track list
+ * transition on ONE registered length and dragging is that same length driven per frame, so no track list
  * is ever rebuilt in JS. What this owns is the STATE: a deliberate fold is remembered per browser, and
- * until there is one the viewport decides. That default stays a styling decision — the container query
+ * until there is one the viewport decides. That default stays a styling decision: the container query
  * in Days.ts writes its verdict into `--_auto-fold` and this reads it back, so the breakpoint lives in
  * the stylesheet with every other one.
  */
@@ -57,7 +57,7 @@ export class TimeZoneLaneController extends Controller {
 	private position?: number
 	private drag?: Drag
 	private observer?: ResizeObserver
-	/** Whether the container query has been consulted since connecting — see {@link hostUpdated}. */
+	/** Whether the container query has been consulted since connecting (see {@link hostUpdated}). */
 	private resolved = false
 
 	private static get storedPreference(): boolean | undefined {
@@ -65,7 +65,7 @@ export class TimeZoneLaneController extends Controller {
 			const stored = localStorage.getItem(STORAGE_KEY)
 			return stored === null ? undefined : stored === 'true'
 		} catch {
-			return undefined // storage unavailable — every session starts on the viewport's default
+			return undefined // storage unavailable, so every session starts on the viewport's default
 		}
 	}
 
@@ -74,7 +74,7 @@ export class TimeZoneLaneController extends Controller {
 		return this.preference ?? this.autoFolded
 	}
 
-	/** Nothing to fold without alternative zones — the anchor column alone is not a lane. */
+	/** Nothing to fold without alternative zones: the anchor column alone is not a lane. */
 	private get zoneCount() {
 		return getTimeZones().length
 	}
@@ -107,7 +107,7 @@ export class TimeZoneLaneController extends Controller {
 	}
 
 	/** The container query can only answer once the strip has been laid out, which is a layout later than
-	 * connecting — reading it here (rather than waiting for the observer's first delivery) is what keeps a
+	 * connecting. Reading it here (rather than waiting for the observer's first delivery) is what keeps a
 	 * narrow viewport from painting the lane open at all. Once only: every later change of verdict arrives
 	 * through the observer, and a per-render style read would flush layout on every minute tick. */
 	override hostUpdated() {
@@ -115,7 +115,7 @@ export class TimeZoneLaneController extends Controller {
 			return
 		}
 		this.resolved = true
-		// This first verdict is not a state CHANGE the user made, so it must not animate — the day columns
+		// This first verdict is not a state CHANGE the user made, so it must not animate, or the day columns
 		// would jump on every load of a narrow viewport. Adopting it behind the no-transition attribute and
 		// flushing style before lifting that attribute is what makes the lane start out where it belongs.
 		this.host.toggleAttribute('data-zones-immediate', true)
@@ -124,7 +124,7 @@ export class TimeZoneLaneController extends Controller {
 		this.host.removeAttribute('data-zones-immediate')
 	}
 
-	/** Fold or unfold deliberately — the header's chevron, and the reveal a newly added zone asks for.
+	/** Fold or unfold deliberately: the header's chevron, and the reveal a newly added zone asks for.
 	 * From here on this is the remembered preference, whatever the viewport would have chosen. */
 	setFolded(folded: boolean) {
 		if (folded === this.folded) {
@@ -150,7 +150,7 @@ export class TimeZoneLaneController extends Controller {
 		try {
 			localStorage.setItem(STORAGE_KEY, String(folded))
 		} catch {
-			// Storage unavailable — the fold just doesn't survive a reload.
+			// Storage unavailable, so the fold just doesn't survive a reload.
 		}
 		this.reflect()
 	}
@@ -176,7 +176,7 @@ export class TimeZoneLaneController extends Controller {
 	}
 
 	private readonly onPointerDown = (e: PointerEvent) => {
-		// A second pointer means multi-touch — the density controller's pinch, most likely. Abandon the
+		// A second pointer means multi-touch, most likely the density controller's pinch, most likely. Abandon the
 		// single-pointer drag rather than let one finger's sideways component fold the lane mid-zoom.
 		if (this.drag) {
 			if (e.pointerId !== this.drag.pointerId) {
@@ -189,7 +189,7 @@ export class TimeZoneLaneController extends Controller {
 			return
 		}
 		// A press on the header's own controls (the chevron, the "+", a zone's menu button) is a click,
-		// not a drag — capturing the pointer would retarget the click onto the grid and swallow it.
+		// not a drag. Capturing the pointer would retarget the click onto the grid and swallow it.
 		if (target.closest('button, mitra-icon-button')) {
 			return
 		}
@@ -228,7 +228,7 @@ export class TimeZoneLaneController extends Controller {
 
 	private readonly onPointerUp = () => {
 		if (!this.drag?.claimed) {
-			this.release() // a tap, or a scroll that never turned inline — nothing to settle
+			this.release() // a tap, or a scroll that never turned inline, so nothing to settle
 			return
 		}
 		const folded = this.wouldFold
@@ -243,7 +243,7 @@ export class TimeZoneLaneController extends Controller {
 
 	private readonly onPointerCancel = () => this.release()
 
-	/** Hand back the pointer, the listeners and the lane's width — the shared teardown of both endings. */
+	/** Hand back the pointer, the listeners and the lane's width, the shared teardown of both endings. */
 	private release() {
 		if (this.drag?.claimed && this.host.hasPointerCapture(this.drag.pointerId)) {
 			this.host.releasePointerCapture(this.drag.pointerId)

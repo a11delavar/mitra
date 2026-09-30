@@ -5,7 +5,7 @@ import { GoogleCalendar } from '../google/GoogleCalendar.js'
 import { AppleCalendar } from '../apple/AppleCalendar.js'
 import { Notion } from '../notion/Notion.js'
 import { Tempo } from '../tempo/Tempo.js'
-import { Dev } from '../dev/Dev.js'
+import { MitraCalendar } from '../mitra/MitraCalendar.js'
 import './registerEngines.js'
 
 const resolvesAnEngine = async (integration: { updateEntry(em: never, a: never, b: never): Promise<void> }) => {
@@ -25,7 +25,7 @@ describe('sync engine registry', () => {
 	})
 
 	it('leaves the providers that implement their own sync alone', async () => {
-		for (const integration of [new Notion(), new Dev()]) {
+		for (const integration of [new Notion(), new MitraCalendar()]) {
 			assert.equal(await resolvesAnEngine(integration), true, `${integration.type} should not depend on the registry`)
 		}
 	})

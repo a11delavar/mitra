@@ -11,12 +11,12 @@ describe('closeTask', () => {
 
 	it('records full progress where the provider can hold it', () => {
 		const entry = task()
-		closeTask(entry, TaskStatus.Done, Integration.fullCapabilities)
+		closeTask(entry, TaskStatus.Done, Integration.defaultCapabilities)
 		assert.equal(entry.status, TaskStatus.Done)
 		assert.equal(entry.percentComplete, 100)
 	})
 
-	it('leaves progress unstated where it cannot — the status alone carries done', () => {
+	it('leaves progress unstated where it cannot, since the status alone carries done', () => {
 		const entry = task()
 		closeTask(entry, TaskStatus.Done, new Notion().capabilities)
 		assert.equal(entry.status, TaskStatus.Done)
@@ -25,7 +25,7 @@ describe('closeTask', () => {
 
 	it('keeps the progress a cancelled task already had', () => {
 		const entry = task({ status: TaskStatus.Doing, percentComplete: 40 })
-		closeTask(entry, TaskStatus.Cancelled, Integration.fullCapabilities)
+		closeTask(entry, TaskStatus.Cancelled, Integration.defaultCapabilities)
 		assert.equal(entry.status, TaskStatus.Cancelled)
 		assert.equal(entry.percentComplete, 40)
 	})

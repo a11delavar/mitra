@@ -29,7 +29,7 @@ describe('RelationEdge', () => {
 			}
 		})
 
-		it('answers undefined for anything that joins no graph — an opaque type, SIBLING, no target', () => {
+		it('answers undefined for anything that joins no graph: an opaque type, SIBLING, no target', () => {
 			assert.equal(edge('a', RelationType.of('X-WAITS-FOR'), 'b'), undefined)
 			assert.equal(edge('a', RelationType.Sibling, 'b'), undefined)
 			assert.equal(edge('a', RelationType.Parent, ''), undefined)
@@ -50,7 +50,7 @@ describe('RelationEdge', () => {
 		})
 	})
 
-	describe('bestPair — which occurrences connect', () => {
+	describe('bestPair: which occurrences connect', () => {
 		const at = (hour: number) => ({ start: hourOf(hour), boundaryOf: (which: 'start' | 'end') => hourOf(which === 'start' ? hour : hour + 1) })
 
 		it('prefers a SATISFIED pair over a nearer one that would read as broken', () => {

@@ -8,22 +8,22 @@ import { Entry, FLOATING_TIME_ZONE } from '../../entries/Entry.js'
 import { CalDAV } from '../../../integrations/caldav/CalDAV.js'
 
 /**
- * The occurrence domain of recurring series — everything between a stored MASTER row and its rendered
+ * The occurrence domain of recurring series: everything between a stored MASTER row and its rendered
  * instances.
  *
  * **Read side** ({@link expandedOccurrences}): a series is a single master row; its occurrences are
- * expanded on demand into synthetic, never-persisted `Entry` objects — from the master's raw .ics when
+ * expanded on demand into synthetic, never-persisted `Entry` objects, from the master's raw .ics when
  * the integration stores one (the .ics carries the authoritative anchor and EXDATEs), else from the
  * recurrence columns plus the `exdates` column. This needs ical.js's rule iterator, which is why it
  * lives here in the backend and not on the (frontend-bundled) `Recurrence` value object.
  *
  * **Write side** ({@link editOccurrence} / {@link deleteOccurrence}): RFC 5545 occurrence-editing
- * scopes, built from the integration's primitives so they work for both CalDAV (.ics) and the local
- * Dev calendar:
+ * scopes, built from the integration's primitives so they work for both CalDAV (.ics) and Mitra's
+ * own calendars:
  *  - **all**: shift the whole series to the edit (wall-clock in its own zone), adopt the edit's duration,
  *    and apply its other fields onto the master.
  *  - **following**: truncate the master to end before this occurrence, and start a new series at the edit.
- *  - **this**: detach — drop this occurrence from the series (EXDATE) and add a standalone entry with the edit.
+ *  - **this**: detach this occurrence from the series (EXDATE) and add a standalone entry with the edit.
  *
  * "this" is deliberately a *detach* (a standalone entry), not a linked RECURRENCE-ID override: RFC 4791 forbids
  * the same UID in two resources and mitra stores one .ics per row, so a true override would need same-resource
@@ -36,7 +36,7 @@ import { CalDAV } from '../../../integrations/caldav/CalDAV.js'
 // iterate wall times (09:00 stays 09:00 across a DST flip) while everything downstream needs instants.
 // Temporal does the zone math; ical.js only ever sees FLOATING times.
 
-/** The instant's wall-clock reading in `zone`, as a floating ical.js time — the anchor the iterator sees. */
+/** The instant's wall-clock reading in `zone`, as a floating ical.js time: the anchor the iterator sees. */
 function wallAnchor(instant: Date, zone: string): ICAL.Time {
 	const zoned = Temporal.Instant.fromEpochMilliseconds(instant.getTime()).toZonedDateTimeISO(zone)
 	return ICAL.Time.fromData({ year: zoned.year, month: zoned.month, day: zoned.day, hour: zoned.hour, minute: zoned.minute, second: zoned.second })
@@ -49,7 +49,7 @@ function wallToInstantMs(time: ICAL.Time, zone: string): number {
 		.toZonedDateTime(zone, { disambiguation: 'compatible' }).epochMilliseconds
 }
 
-/** An EXDATE value as the instant it excludes — decoded the same way the sync stores instants
+/** An EXDATE value as the instant it excludes, decoded the same way the sync stores instants
  * ({@link CalDAV.instantFrom}, honoring the property's own TZID via Temporal), so exclusions always
  * land on the very instants `within` produces. A DATE (all-day) exclusion is that calendar day's
  * midnight in the series' day-math zone. */
@@ -57,36 +57,36 @@ function exdateMs(value: ICAL.Time, tzid: string | undefined, zone: string): num
 	return value.isDate ? wallToInstantMs(value, zone) : CalDAV.instantFrom(value, tzid)!.getTime()
 }
 
-/** The series MASTER among a parsed resource's components — the one WITHOUT a RECURRENCE-ID. A
+/** The series MASTER among a parsed resource's components: the one WITHOUT a RECURRENCE-ID. A
  * resource bundles the master with its single-occurrence overrides (RFC 4791: one UID per resource)
- * in NO guaranteed document order — an override authored first would otherwise be mistaken for the
+ * in NO guaranteed document order. An override authored first would otherwise be mistaken for the
  * master, and the series (its RRULE and EXDATEs live on the real master) would silently not expand. */
 function masterComponentOf(component: ICAL.Component): ICAL.Component | undefined {
 	const subcomponents = [...component.getAllSubcomponents('vevent'), ...component.getAllSubcomponents('vtodo')]
 	return subcomponents.find(sub => !sub.getFirstProperty('recurrence-id')) ?? subcomponents[0]
 }
 
-/** The zone a series' day math happens in — ALWAYS a real zone, so nothing about expansion, shifting
- * or excluding ever depends on where the container runs. An ALL-DAY series is a sequence of DATES —
- * canonical UTC-midnight encodings (see calendarDate.ts) — so it iterates in UTC (pure date
+/** The zone a series' day math happens in, ALWAYS a real zone, so nothing about expansion, shifting
+ * or excluding ever depends on where the container runs. An ALL-DAY series is a sequence of DATES
+ * (canonical UTC-midnight encodings, see calendarDate.ts), so it iterates in UTC (pure date
  * arithmetic, no DST drift). A timed series repeats at a wall-clock time in its own `timeZone`. One
- * with NO authoring zone (a UTC-form DTSTART — which RFC 5545 §3.8.5.3 defines as recurring at fixed
+ * with NO authoring zone (a UTC-form DTSTART, which RFC 5545 §3.8.5.3 defines as recurring at fixed
  * UTC instants) or a FLOATING one (wall clock encoded as-if-UTC, see Entry.timeZone) reads its wall
- * clock in UTC, so both also iterate there — the same fixed-instant math on every server. (Formerly
+ * clock in UTC, so both also iterate there: the same fixed-instant math on every server. (Formerly
  * these fell to a server-local legacy path, whose expansion silently depended on the container's TZ.) */
 function dayMathZoneOf(master: Pick<Entry, 'allDay' | 'timeZone'>): string {
 	return master.allDay || !master.timeZone || master.timeZone === FLOATING_TIME_ZONE ? 'UTC' : master.timeZone
 }
 
 /**
- * The occurrences of ONE recurring series — the iterable materialization of its rule. Constructed from
+ * The occurrences of ONE recurring series: the iterable materialization of its rule. Constructed from
  * whatever the master actually stores ({@link Occurrences.of}): its raw .ics when the integration keeps
  * one (the .ics carries the authoritative rule and EXDATEs), else the recurrence columns plus the
- * `exdates` column. A window then materializes the intersecting date-ranges via {@link within} — a
+ * `exdates` column. A window then materializes the intersecting date-ranges via {@link within}. A
  * never-ending series stays finite because the window bounds it.
  *
  * Iteration is ALWAYS wall-clock in the series' day-math zone ({@link dayMathZoneOf}), anchored on the
- * master's start read in it — a 09:00-Berlin series stays 09:00 through DST, and a zone-less (UTC-form)
+ * master's start read in it: a 09:00-Berlin series stays 09:00 through DST, and a zone-less (UTC-form)
  * one repeats at fixed UTC instants, on any server.
  */
 export class Occurrences {
@@ -101,7 +101,7 @@ export class Occurrences {
 	/** The series' occurrences off a master entry, however it stores its rule; `undefined` when the
 	 * entry isn't an expandable master (no rule, no start, or a malformed stored rule). The master's
 	 * `timeZone` (stamped at creation, or synced from a TZID) makes the iteration wall-clock in it;
-	 * none (and the floating marker, which must never reach Temporal/Intl) means UTC — see
+	 * none (and the floating marker, which must never reach Temporal/Intl) means UTC. See
 	 * {@link dayMathZoneOf}. */
 	static of(master: Entry): Occurrences | undefined {
 		if (!master.start) {
@@ -123,7 +123,7 @@ export class Occurrences {
 	/**
 	 * From a raw .ics: applies its EXDATEs and inherits the master's duration (DTEND/DUE − DTSTART).
 	 * Works for VEVENT and VTODO (anchored on DTSTART, else DUE). With a `zone`, the anchor is the
-	 * master's start read in it — the stored DTSTART may be UTC-written, whose wall clock would drift;
+	 * master's start read in it, since the stored DTSTART may be UTC-written, whose wall clock would drift;
 	 * without one (a direct call), the anchor is the DTSTART's own instant read in UTC. All property
 	 * values decode via {@link CalDAV.instantFrom}, so a TZID resolves through Temporal whether or not
 	 * the resource embeds its VTIMEZONE.
@@ -156,7 +156,7 @@ export class Occurrences {
 	}
 
 	/** The anchor instant with a zone that actually resolves: a stored `timeZone` that Temporal can't
-	 * read (a Microsoft zone name synced before ids were sanitized, say) falls back to UTC — fixed
+	 * read (a Microsoft zone name synced before ids were sanitized, say) falls back to UTC: fixed
 	 * instants beat a crashed read for every series in the window. */
 	private static anchorOf(instant: Date, zone: string): [Date, string] {
 		try {
@@ -168,8 +168,8 @@ export class Occurrences {
 	}
 
 	/**
-	 * From DB columns (rrule string + start/end + excluded epoch-ms), with no raw .ics — integrations
-	 * that don't persist one (e.g. the local `Dev` calendar) expand this way; `exdates` carries that
+	 * From DB columns (rrule string + start/end + excluded epoch-ms), with no raw .ics. Integrations
+	 * that don't persist one (e.g. a Mitra calendar) expand this way; `exdates` carries that
 	 * calendar's exclusions (its EXDATE equivalent).
 	 */
 	static fromRule(rrule: string, start: Date, end: Date | undefined, exdates: ReadonlyArray<number> = [], zone = 'UTC'): Occurrences | undefined {
@@ -177,7 +177,7 @@ export class Occurrences {
 		try {
 			rule = ICAL.Recur.fromString(rrule)
 		} catch {
-			return undefined // malformed rule — render nothing rather than throw on a read
+			return undefined // malformed rule: render nothing rather than throw on a read
 		}
 		if (!rule.freq) {
 			return undefined
@@ -188,9 +188,9 @@ export class Occurrences {
 
 	/** The occurrence date-ranges intersecting [windowStart, windowEnd]. The rule's occurrences ascend
 	 * from the anchor, so iteration stops once past the window; `maxIterations` is only a backstop for
-	 * a pathological/non-advancing rule and is generous — a far-future window must still be reachable
+	 * a pathological/non-advancing rule and is generous: a far-future window must still be reachable
 	 * for a dense series (a daily one needs one iteration per day from the anchor to the window). */
-	/** How many RULE-GENERATED occurrences fall strictly before `instant` — the COUNT bookkeeping of a
+	/** How many RULE-GENERATED occurrences fall strictly before `instant`: the COUNT bookkeeping of a
 	 * "this and following" split. Deliberately blind to EXDATEs: RFC 5545's COUNT bounds the rule's
 	 * generation BEFORE exclusions prune the set, so an excluded instance still consumes count. */
 	generatedBefore(instant: Date, maxIterations = 100_000): number {
@@ -205,7 +205,7 @@ export class Occurrences {
 			}
 			const startMs = wallToInstantMs(time, this.zone)
 			if (startMs <= previousMs || startMs >= boundMs) {
-				break // non-advancing (malformed) or past the split — occurrences ascend
+				break // non-advancing (malformed) or past the split, since occurrences ascend
 			}
 			previousMs = startMs
 			generated++
@@ -227,7 +227,7 @@ export class Occurrences {
 			// A wall time in the series' zone becomes an instant THERE (UTC ⇒ the fixed-instant case).
 			const startMs = wallToInstantMs(time, this.zone)
 			if (startMs <= previousMs) {
-				break // a non-advancing iterator (malformed rule) — don't spin
+				break // a non-advancing iterator (malformed rule), so don't spin
 			}
 			previousMs = startMs
 			if (startMs > windowEndMs) {
@@ -300,7 +300,7 @@ function occurrenceOf(master: Entry, occurrence: { readonly start: Date, readonl
 // --- Write side: scoped edits -----------------------------------------------------------------------
 
 /** Shift one instant the way the series' occurrences shift when an edit moves the anchor `from` → `to`:
- * in the master's wall-clock zone, mirroring `within` — a 09:00 stays a 09:00 across a DST flip. For a
+ * in the master's wall-clock zone, mirroring `within`: a 09:00 stays a 09:00 across a DST flip. For a
  * zone-less series ({@link dayMathZoneOf} ⇒ UTC, which has no DST) this reduces to the plain instant
  * delta, exactly as such fixed-instant series move. */
 function shiftMs(ms: number, zone: string, from: Date, to: Date): number {
@@ -309,7 +309,7 @@ function shiftMs(ms: number, zone: string, from: Date, to: Date): number {
 	return wall(ms).add(delta).toZonedDateTime(zone, { disambiguation: 'compatible' }).epochMilliseconds
 }
 
-/** A master's excluded instants (epoch-ms), from wherever it stores them — the raw .ics EXDATEs when
+/** A master's excluded instants (epoch-ms), from wherever it stores them: the raw .ics EXDATEs when
  * the integration keeps one (the same authority the expansion reads), else the `exdates` column. */
 export function exdatesOf(master: Entry): Array<number> {
 	if (master.data?.raw) {
@@ -320,7 +320,7 @@ export function exdatesOf(master: Entry): Array<number> {
 	return master.exdates ?? []
 }
 
-/** The exclusions shift exactly like the occurrences they stand for ({@link shiftMs}) — matched by
+/** The exclusions shift exactly like the occurrences they stand for ({@link shiftMs}). Matched by
  * instant, one left behind by a series-wide move matches nothing afterwards, and the detached
  * occurrence it stood for reappears at the shifted slot, doubled next to its detached copy. */
 function shiftExdates(exdates: Array<number>, zone: string, from: Date, to: Date): Array<number> {
@@ -344,11 +344,11 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 		const editedStart = new Date(edited.start?.getTime() ?? recurrenceId.getTime())
 		const exdates = exdatesOf(master)
 		// The anchor shifts the way the occurrences read: wall-clock in the series' own zone ({@link
-		// shiftMs}), so a drag expressed at THIS occurrence can't beach the anchor — and with it every
-		// occurrence — an hour off across a DST flip the anchor straddles but the occurrence doesn't.
+		// shiftMs}), so a drag expressed at THIS occurrence can't beach the anchor (and with it every
+		// occurrence) an hour off across a DST flip the anchor straddles but the occurrence doesn't.
 		const start = master.start === undefined ? undefined
 			: new Date(shiftMs(master.start.getTime(), dayMathZoneOf(master), recurrenceId, editedStart)) as DateTime
-		// The span adopts the edit's DURATION rather than shifting the stored end by the start's delta —
+		// The span adopts the edit's DURATION rather than shifting the stored end by the start's delta:
 		// that would carry the master's old length over the edit, silently dropping a resize and turning
 		// an all-day ↔ timed conversion into a day-long timed entry (or a few-hours "all-day" one).
 		const durationMs = edited.start && edited.end ? edited.end.getTime() - edited.start.getTime()
@@ -393,7 +393,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 	}
 
 	if (scope === 'following') {
-		// Capture the rule — and the count its old half consumes — BEFORE truncating the master
+		// Capture the rule (and the count its old half consumes) BEFORE truncating the master
 		// (updateEntry mutates master.recurrence, and the raw .ics this counting reads, in place).
 		const rule = master.recurrence!
 		const consumed = rule.count ? Occurrences.of(master)?.generatedBefore(recurrenceId) ?? 0 : 0
@@ -418,16 +418,16 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 			uid: master.uid,
 		})
 		await integration.updateEntry(em, master, truncated)
-		// New half: a fresh series (new UID) starting at the edit, continuing the original cadence — with
+		// New half: a fresh series (new UID) starting at the edit, continuing the original cadence, with
 		// the rule rebased onto the edit's day, so the new anchor (possibly dragged to another weekday)
 		// still matches it and renders as the continuation's first occurrence.
 		const continuationStart = new Date(edited.start?.getTime() ?? recurrenceId.getTime())
-		// The continuation half also inherits its half of the exclusions (shifted like its occurrences) —
+		// The continuation half also inherits its half of the exclusions (shifted like its occurrences):
 		// created without them, a previously detached occurrence past the split would render doubled.
 		const carried = exdatesOf(master).filter(ms => ms >= recurrenceId.getTime())
 		const continuation = new Entry({
 			id: crypto.randomUUID(),
-			uid: crypto.randomUUID(), // a fresh series is a fresh identity — relatable from birth (Dev has no .ics to mint one from)
+			uid: crypto.randomUUID(), // a fresh series is a fresh identity, relatable from birth (a Mitra calendar has no .ics to mint one from)
 			sourceId: intoSourceId,
 			type: master.type,
 			heading: edited.heading,
@@ -449,7 +449,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 		return into.createEntry(em, continuation)
 	}
 
-	// 'this' — detach this occurrence into a standalone entry.
+	// 'this': detach this occurrence into a standalone entry.
 	await integration.excludeOccurrence(em, master, recurrenceId)
 	const standalone = new Entry({
 		id: crypto.randomUUID(),

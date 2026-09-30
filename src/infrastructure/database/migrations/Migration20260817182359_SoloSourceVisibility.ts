@@ -1,12 +1,12 @@
 import { Migration } from '@mikro-orm/migrations'
 
 /**
- * `User.previouslyHiddenSourceIds` — the record a solo leaves behind so "show all again" can restore
+ * `User.previouslyHiddenSourceIds`: the record a solo leaves behind so "show all again" can restore
  * exactly what was on show before (see features/identity/User.ts).
  *
  * Guarded like every migration here: baselining replays post-initial migrations onto databases that
  * predate migrations, and those include DEV builds, whose schema `orm.schema.update()` already made
- * from today's entities — so the column is already there and an unguarded `add column` throws. The
+ * from today's entities, so the column is already there and an unguarded `add column` throws. The
  * failure is not local: it aborts the whole replay and drops the boot into the wholesale-schema-sync
  * fallback, which warns the operator to re-import their integrations.
  */

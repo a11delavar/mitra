@@ -3,6 +3,7 @@ import { orm } from '../../../infrastructure/database/orm.js'
 import { syncEmitter } from '../../../infrastructure/realtime/syncEmitter.js'
 import { User } from '../../identity/User.js'
 import { Source } from '../Source.js'
+import { Entry } from '../../entries/Entry.js'
 import { applyOrder } from '../../../infrastructure/model/order.js'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
 import { Integration } from '../../../integrations/Integration.js'
@@ -131,6 +132,29 @@ sourcesRouter.post('/:id/ics', icsBody, (req, res) => icsImport(req, res, async 
 	logger.info(`Imported calendar file into source ${req.params.id}: ${JSON.stringify(outcome)}`)
 	return outcome
 }))
+
+sourcesRouter.get('/:id/entries/count', async (req, res) => {
+	const em = orm.em.fork()
+	const source = await req.user.source(em, req.params.id)
+	return res.json(await em.count(Entry, { sourceId: source.id }))
+})
+
+sourcesRouter.delete('/:id', async (req, res) => {
+	const em = orm.em.fork()
+	const source = await req.user.source(em, req.params.id)
+	const integration = await em.findOneOrFail(Integration, { id: source.integrationId })
+	if (!integration.capabilitiesFor(source).deleteSources) {
+		return res.status(403).json({ error: 'This calendar cannot be deleted from mitra' })
+	}
+
+	const entries = await em.count(Entry, { sourceId: source.id })
+	await integration.deleteSource(em, source)
+	await em.flush()
+
+	syncEmitter.emit('updated', req.user.id, 'sources')
+	logger.info(`Deleted source "${source.name}" (${source.id}) and its ${entries} entr${entries === 1 ? 'y' : 'ies'}`)
+	return res.status(204).end()
+})
 
 sourcesRouter.put('/:id/color', async (req, res) => {
 	const em = orm.em.fork()

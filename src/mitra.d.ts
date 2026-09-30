@@ -1,7 +1,7 @@
 /**
  * The build's identity, baked into every bundle at build time as one `mitra` object (see `define` in
  * scripts/esbuild.ts). Lowercase to stay clear of the `Mitra` application class. Build-time facts
- * only — deployment-time ones (the instance's display name, the server's runtime) live on the
+ * only. Deployment-time ones (the instance's display name, the server's runtime) live on the
  * authenticated `/api/meta` endpoint instead, because a container's environment isn't known when
  * its image is built.
  */
@@ -10,9 +10,9 @@ declare const mitra: {
 	 * otherwise (`v0.3.0-14-ga1b2c3d[-dirty]`), or `dev` when neither git nor the MITRA_VERSION
 	 * env var can say. */
 	readonly version: string
-	/** The short commit hash — empty when the build had neither git nor the MITRA_COMMIT env var. */
+	/** The short commit hash, empty when the build had neither git nor the MITRA_COMMIT env var. */
 	readonly commit: string
-	/** Which bundle this is. Isomorphic code runs in both, and a few rules differ by end — see
+	/** Which bundle this is. Isomorphic code runs in both, and a few rules differ by end. See
 	 * `withheld()` in `integrations/Integration.ts`, which withholds a provider's secrets from a
 	 * response but not from a request. A build fact, not a detected one: nothing at run time can
 	 * change what a bundle was built as. */

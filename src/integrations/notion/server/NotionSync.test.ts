@@ -16,13 +16,13 @@ import { Entry, TaskStatus } from '../../../features/entries/Entry.js'
 import { CalDAV } from '../../caldav/CalDAV.js'
 import { AppleCalendar } from '../../apple/AppleCalendar.js'
 import { NotionRequestError, type NotionBlock, type NotionClient, type NotionDataSource, type NotionPage } from '../NotionClient.js'
-import { Dev } from '../../dev/Dev.js'
+import { MitraCalendar } from '../../mitra/MitraCalendar.js'
 import { NotificationSubscription } from '../../../features/reminders/NotificationSubscription.js'
 import { Session } from '../../../features/identity/server/Session.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
-		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Dev, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
+		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, MitraCalendar, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
 		dbName: ':memory:',
 		namingStrategy: class extends UnderscoreNamingStrategy {
 			override joinColumnName(propertyName: string) {
@@ -243,7 +243,7 @@ describe('Notion sync', () => {
 		assert.deepEqual((await em.find(Entry, { sourceId: source.id })).map(e => e.uri), ['p1'])
 	})
 
-	it('never removes a row edited moments ago — the view index may not surface a fresh page yet', async () => {
+	it('never removes a row edited moments ago, since the view index may not surface a fresh page yet', async () => {
 		const em = orm.em.fork()
 		const { integration, source, state } = await seed(em, {
 			members: { ids: ['p1'], complete: true },
@@ -281,7 +281,7 @@ describe('Notion sync', () => {
 		assert.equal(await em.findOne(Entry, { sourceId: source.id, uri: 'p-old' }), null)
 	})
 
-	it('prunes a created task once it leaves (or never joins) the view — the source mirrors the view', async () => {
+	it('prunes a created task once it leaves (or never joins) the view: the source mirrors the view', async () => {
 		const em = orm.em.fork()
 		const { integration, source, state } = await seed(em, {
 			members: { ids: ['p1'], complete: true },
@@ -473,7 +473,7 @@ describe('Notion entry CRUD', () => {
 		assert.equal(entry.description, '- [ ] draft slides')
 	})
 
-	it('replaces only the blocks the description showed — collaborative content it could not render survives', async () => {
+	it('replaces only the blocks the description showed: collaborative content it could not render survives', async () => {
 		const em = orm.em.fork()
 		const { integration, source, sibling, calls } = await seed(em, {
 			byId: { p1: page('p1', { editedAt: '2026-07-14T12:00:00.000Z' }) },
@@ -495,7 +495,7 @@ describe('Notion entry CRUD', () => {
 		await integration.updateEntry(em, existing, incoming)
 		await em.flush()
 
-		assert.deepEqual(calls.deletedBlocks, ['b-para'], 'only the replaceable block goes — image and sub-page stay')
+		assert.deepEqual(calls.deletedBlocks, ['b-para'], 'only the replaceable block goes, image and sub-page stay')
 		assert.equal(calls.appended.length, 1)
 		assert.deepEqual(calls.appended[0]!.children.map(block => block.type), ['heading_1'])
 		assert.equal(calls.updates.length, 0)
@@ -596,7 +596,7 @@ describe('Notion relationships', () => {
 		assert.deepEqual((await rowsOf(em, await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p-95' }))).map(row => row.type.value), ['PARENT'])
 	})
 
-	it('reports a relation-only remote change — it sits outside editEquals, so the sync compares it itself', async () => {
+	it('reports a relation-only remote change: it sits outside editEquals, so the sync compares it itself', async () => {
 		const em = orm.em.fork()
 		const { integration, source, state } = await seed(em, {
 			members: { ids: ['p1'], complete: true },
@@ -631,7 +631,7 @@ describe('Notion relationships', () => {
 		assert.deepEqual((await rowsOf(em, entry)).map(row => row.targetUid), ['caldav-uid'])
 	})
 
-	it('completes a truncated relation value before parsing it — the 25-id cap must never look like a removal', async () => {
+	it('completes a truncated relation value before parsing it: the 25-id cap must never look like a removal', async () => {
 		const em = orm.em.fork()
 		const { integration, source, calls } = await seed(em, {
 			members: { ids: ['p1'], complete: true },
@@ -705,7 +705,7 @@ describe('Notion relationships', () => {
 		assert.deepEqual(calls.updates[0]!.properties, { 'Blocked by': { relation: [] } })
 	})
 
-	it('never sends a link Notion cannot hold — it stays in the table alone', async () => {
+	it('never sends a link Notion cannot hold, it stays in the table alone', async () => {
 		const em = orm.em.fork()
 		const { integration, source, calls } = await seed(em, {
 			members: { ids: ['p1'], complete: true },
@@ -744,7 +744,7 @@ describe('Notion relationships', () => {
 		assert.deepEqual(created.relations?.map(relation => relation.targetUid), ['p2'])
 	})
 
-	it('re-points what pointed at an entry MOVED into Notion — Notion assigns the uid, so nothing may orphan', async () => {
+	it('re-points what pointed at an entry MOVED into Notion: Notion assigns the uid, so nothing may orphan', async () => {
 		const em = orm.em.fork()
 		const { integration, source } = await seed(em, {
 			createEcho: page('p-created', { editedAt: '2026-07-14T12:00:00.000Z' }),

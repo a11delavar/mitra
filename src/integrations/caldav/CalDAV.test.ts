@@ -89,7 +89,7 @@ describe('CalDAV member URLs', () => {
 			])
 		})
 
-		it('merges the organizer with its own ATTENDEE — one row whose actual reply wins', () => {
+		it('merges the organizer with its own ATTENDEE: one row whose actual reply wins', () => {
 			const component = vevent([
 				'ORGANIZER:mailto:me@example.com',
 				'ATTENDEE;PARTSTAT=TENTATIVE:mailto:me@example.com',
@@ -104,7 +104,7 @@ describe('CalDAV member URLs', () => {
 			assert.deepEqual(CalDAV.participantsFrom(component, ['me@example.com'])!.map(participant => !!participant.self), [true, false])
 		})
 
-		it('skips rooms and resources — bookable things, not people', () => {
+		it('skips rooms and resources: bookable things, not people', () => {
 			const component = vevent([
 				'ATTENDEE;CUTYPE=ROOM:mailto:room@example.com',
 				'ATTENDEE;CUTYPE=RESOURCE:mailto:projector@example.com',
@@ -113,7 +113,7 @@ describe('CalDAV member URLs', () => {
 			assert.deepEqual(CalDAV.participantsFrom(component)!.map(participant => participant.email), ['attendee@example.com'])
 		})
 
-		it('is null without any — the canonical no-participants value', () => {
+		it('is null without any, the canonical no-participants value', () => {
 			assert.equal(CalDAV.participantsFrom(vevent([])), null)
 		})
 
@@ -141,14 +141,14 @@ describe('CalDAV member URLs', () => {
 			assert.equal(component.getFirstProperty('organizer')?.getParameter('cn')?.toString(), 'Organizer')
 		})
 
-		it('clearing the list also retires the ORGANIZER — back to a plain private entry', () => {
+		it('clearing the list also retires the ORGANIZER, back to a plain private entry', () => {
 			const component = vevent(['ORGANIZER:mailto:me@example.com', 'ATTENDEE:mailto:attendee@example.com'])
 			CalDAV.writeParticipants(component, null)
 			assert.equal(component.getFirstProperty('organizer'), null)
 			assert.equal(component.getAllProperties('attendee').length, 0)
 		})
 
-		it('leaves scheduling to the server — no SCHEDULE-AGENT on what we write (RFC 6638 default)', () => {
+		it('leaves scheduling to the server: no SCHEDULE-AGENT on what we write (RFC 6638 default)', () => {
 			const component = vevent([])
 			CalDAV.writeParticipants(component, [{ email: 'attendee@example.com' }])
 			assert.equal(component.getFirstProperty('attendee')?.getParameter('schedule-agent'), undefined)
@@ -292,13 +292,13 @@ describe('CalDAV free/busy and access class (TRANSP / CLASS)', () => {
 			assert.equal(entry.visibility, Visibility.Private)
 		})
 
-		it('leaves an event that names neither unset — absence is the OPAQUE / calendar-default reading', async () => {
+		it('leaves an event that names neither unset: absence is the OPAQUE / calendar-default reading', async () => {
 			const entry = await sync(resource(), [EntryType.Event])
 			assert.equal(entry.transparency, null)
 			assert.equal(entry.visibility, null)
 		})
 
-		it('gives a VTODO its CLASS but no free/busy contribution — RFC 5545 gives VTODO no TRANSP', async () => {
+		it('gives a VTODO its CLASS but no free/busy contribution, since RFC 5545 gives VTODO no TRANSP', async () => {
 			const raw = [
 				'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//test//EN',
 				'BEGIN:VTODO', 'UID:t1', 'DTSTAMP:20260101T000000Z', 'SUMMARY:Buy milk',
@@ -505,7 +505,7 @@ describe('CalDAV all-day serialization', () => {
 			assert.match(master.data!.raw!, /EXDATE;VALUE=DATE:20260608/)
 		})
 
-		it('excludeOccurrence strips a bundled override of that instant — EXDATE alone would leave the override alive', async () => {
+		it('excludeOccurrence strips a bundled override of that instant: EXDATE alone would leave the override alive', async () => {
 			const master = new Entry({
 				id: 'm', sourceId: 's', type: EntryType.Event, heading: 'Gym', uri: 'https://example.com/cal/gym.ics',
 				allDay: false, data: { raw: bundledRaw },
@@ -563,7 +563,7 @@ describe('CalDAV all-day serialization', () => {
 			assert.equal(existing.data!.raw, puts[1]!.data)
 		})
 
-		it('a second 412 propagates — something is genuinely racing us', async () => {
+		it('a second 412 propagates: something is genuinely racing us', async () => {
 			const puts = new Array<{ etag?: string, data: string, ok: boolean }>()
 			const existing = entry()
 			const incoming = new Entry({ ...existing, heading: 'Late Gym' } as Partial<Entry>)
@@ -615,7 +615,7 @@ describe('CalDAV all-day serialization', () => {
 			timeZone: 'Europe/Berlin', recurrence, data: { raw },
 		})
 
-		it('a time shift writes the new WALL CLOCK in the authored zone — never the UTC form', async () => {
+		it('a time shift writes the new WALL CLOCK in the authored zone, never the UTC form', async () => {
 			const existing = masterRow(zonedRaw())
 			const incoming = new Entry({ ...existing, start: D('2026-07-04T08:00:00Z'), end: D('2026-07-04T09:00:00Z') } as Partial<Entry>)
 			await stubbed().updateEntry({ find: () => Promise.resolve([]) } as never, existing, incoming)
@@ -695,7 +695,7 @@ describe('CalDAV all-day serialization', () => {
 			assert.equal(entry!.start?.valueOf(), new Date('2026-07-06T09:00:00Z').getTime())
 		})
 
-		it('ingests all-day DATE values as canonical UTC midnights — never the server\'s local midnight', async () => {
+		it('ingests all-day DATE values as canonical UTC midnights, never the server\'s local midnight', async () => {
 			const allDayRaw = [
 				'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//test//EN',
 				'BEGIN:VEVENT', 'UID:u8', 'DTSTAMP:20260101T000000Z', 'SUMMARY:Exam Preparation',
@@ -773,7 +773,7 @@ describe('CalDAV all-day serialization', () => {
 describe('CalDAV credentials on the wire', () => {
 	const account = () => new CalDAV({ uri: 'https://example', credentials: { username: 'someone', password: 'typed' }, sources: [] as never })
 
-	it('answers with the account but a blank password — the browser only ever needs the label', () => {
+	it('answers with the account but a blank password: the browser only ever needs the label', () => {
 		assert.deepEqual(wireOf(account()).credentials, { username: 'someone', password: '' })
 	})
 
@@ -934,7 +934,7 @@ describe('CalDAV zone authoring (VTIMEZONE generation)', () => {
 		assert.doesNotMatch(existing.data!.raw!, /TZID:Europe\/Berlin/)
 	})
 
-	it('authoring \'UTC\' explicitly writes the plain Z form — RFC 5545 forbids a TZID naming UTC', async () => {
+	it('authoring \'UTC\' explicitly writes the plain Z form, since RFC 5545 forbids a TZID naming UTC', async () => {
 		const existing = row(utcRaw, null)
 		await stubbed().updateEntry(em, existing, new Entry({ ...existing, timeZone: 'UTC' } as Partial<Entry>))
 		assert.match(existing.data!.raw!, /DTSTART:20260704T070000Z/)
@@ -971,7 +971,7 @@ describe('CalDAV floating times', () => {
 		assert.equal(Private.isFloating(parseDtstart('DTSTART;VALUE=DATE:20260704')), false)
 	})
 
-	it('writes a floating entry as a bare local time — neither TZID nor Z — round-tripping the wall clock', async () => {
+	it('writes a floating entry as a bare local time (neither TZID nor Z), round-tripping the wall clock', async () => {
 		const stubbed = () => {
 			const dav = new CalDAV({ credentials: { username: 'u', password: 'p' } })
 			;(dav as unknown as { client: unknown }).client = Promise.resolve({

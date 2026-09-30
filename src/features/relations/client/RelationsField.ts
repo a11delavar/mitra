@@ -12,19 +12,19 @@ import './EntryLink.js'
 import { LatestSearch } from '../../../design/Combobox.js'
 import { type Popover } from '../../../design/Popover.js'
 
-/** The authorable families keyed by the section their lines land in. These sections render ALWAYS —
+/** The authorable families keyed by the section their lines land in. These sections render ALWAYS:
  * each is its own row with its own add action (the empty row IS the entry point), and each opens
  * the picker preset to its type, so the picker itself never asks for a kind. */
 const AUTHORABLE_BY_SECTION = new Map(RelationType.authorable.map(type => [type.section, type]))
 
 /** One rendered line: what to show and how to undo it (an outgoing removal edits this entry, a
- * derived one edits the OTHER entry — the line doesn't care which). */
+ * derived one edits the OTHER entry, and the line doesn't care which). */
 interface Line {
 	readonly target?: Entry
 	readonly heading?: string
-	/** This line's dependency is already broken by the two entries' times — see {@link Entry.violates}. */
+	/** This line's dependency is already broken by the two entries' times (see {@link Entry.violates}). */
 	readonly violated?: boolean
-	/** No heading YET — the resolver hasn't answered. Distinct from a heading-less line, which is a
+	/** No heading YET: the resolver hasn't answered. Distinct from a heading-less line, which is a
 	 * genuinely dangling pointer: an owned line knows only its target's uid until the view lands, so
 	 * without this every editor open would flash "Unknown entry" over links that are perfectly fine. */
 	readonly pending?: boolean
@@ -34,11 +34,11 @@ interface Line {
 /**
  * The relationship controls for the entry editor: ONE `.field` ROW PER SECTION (see editorFields.css.ts),
  * not one row holding them all. "Blocked by" and "Subtask of" are separate fields the way Location and
- * Reminders are — each with its own leading glyph, its own hover box, and its own `+` icon button at
+ * Reminders are, each with its own leading glyph, its own hover box, and its own `+` icon button at
  * the row's end (the RemindersField add affordance). The component therefore subgrids the popover's
  * two columns and emits the rows itself, exactly like `mitra-entry-details-when`.
  *
- * The two authorable families are ALWAYS present — an empty one is the muted section label standing in
+ * The two authorable families are ALWAYS present: an empty one is the muted section label standing in
  * as the field's placeholder, which is also its own entry point. Derived families ("Blocks",
  * "Subtasks") and read-only ones appear only when they have lines, and carry no add button: the
  * pointer lives on the other entry, so there is nothing to author from this side. Derived lines
@@ -48,17 +48,17 @@ interface Line {
  * them: the mirror pairs share a glyph (see RelationSection), so "Blocked by X" and "Blocks X" would be
  * indistinguishable without it.
  *
- * Each authorable row owns its own picker, anchored by the field's scoped `--field` (editorFields.css.ts) —
+ * Each authorable row owns its own picker, anchored by the field's scoped `--field` (editorFields.css.ts):
  * no per-instance anchor tokens, and no re-anchoring when the user moves between families. The picker
  * keeps FIXED geometry (the TimeZonePicker pattern): a hairline search row over a constant-height
  * results pane, so it never shifts while searching. Its kind is preset by whichever row opened it, so
- * the picker itself is pure search — over ALL entries (the palette's backend search; the store is
+ * the picker itself is pure search over ALL entries (the palette's backend search; the store is
  * windowed and must not be relied on).
  *
  * Owned lines derive LIVE from `entry.relations` and edits render optimistically; the field OWNS
- * persistence (see commit) — relations are excluded from the entry's dirty-tracking entirely;
+ * persistence (see commit): relations are excluded from the entry's dirty-tracking entirely;
  * the fetched view only enriches them with resolved target entries and contributes the derived half.
- * A server-side 400 (a cycle) is terminal, not retryable — the field reverts the edit and surfaces
+ * A server-side 400 (a cycle) is terminal, not retryable: the field reverts the edit and surfaces
  * the message inline. Relationships are series-level: an occurrence reads and edits its MASTER's list.
  */
 @component('mitra-relations-field')
@@ -66,7 +66,7 @@ export class RelationsField extends Component {
 	@property({
 		type: Object,
 		// The popover got reused for another entry: the picker and the fetched view belong to the
-		// previous one — close, clear, refetch.
+		// previous one, so close, clear and refetch.
 		updated(this: RelationsField) { this.closePicker(); this.error = undefined },
 	}) entry!: Entry
 
@@ -76,7 +76,7 @@ export class RelationsField extends Component {
 
 	@state() private suggestions = new Array<Entry>()
 	@state() private pendingType: RelationType = RelationType.authorable[0]!
-	/** The query the shown suggestions answer — '' before any search, so the results area can tell
+	/** The query the shown suggestions answer, '' before any search, so the results area can tell
 	 * "type something" apart from "nothing matched". */
 	@state() private searchedQuery = ''
 	/** A terminal save rejection (self-reference/cycle → 400) surfaced inline; cleared on interaction. */
@@ -90,22 +90,22 @@ export class RelationsField extends Component {
 
 	protected override createRenderRoot() { return this }
 
-	/** Relationships live on the series MASTER — an occurrence reads/edits its master's. */
+	/** Relationships live on the series MASTER: an occurrence reads/edits its master's. */
 	private get targetId() { return this.entry.recurrenceMasterId ?? this.entry.id }
 
 	private get relations(): Array<Relation> {
 		return this.entry.relations ?? []
 	}
 
-	/** The entry's relationships as the domain sees them — BOTH directions, already bucketed and
+	/** The entry's relationships as the domain sees them: BOTH directions, already bucketed and
 	 * silenced. Read paths attach the derived half, so there is nothing to fetch: an occurrence
 	 * carries its master's list, and the closure names every entry a line can point at. */
 	private get relationList() {
 		return this.entry.relationList
 	}
 
-	/** The entries a line's endpoints name — this entry itself, a resolved target, or the owner of a
-	 * derived line — so a coupling can be judged from either side by the same expression. */
+	/** The entries a line's endpoints name (this entry itself, a resolved target, or the owner of a
+	 * derived line), so a coupling can be judged from either side by the same expression. */
 	private entryOf(uid: string): Entry | undefined {
 		return uid === this.entry.uid ? this.entry : Relations.entryOf(uid) ?? this.resolvedByUid.get(uid)
 	}
@@ -222,7 +222,7 @@ export class RelationsField extends Component {
 		return css`
 			mitra-relations-field {
 				/* Each section is a ROW of the popover's own two-column grid, not a block inside one
-				   cell — so "Blocked by" and "Subtask of" are siblings of Location and Reminders rather
+				   cell, so "Blocked by" and "Subtask of" are siblings of Location and Reminders rather
 				   than tenants of a shared "Relationships" row. Same shape as mitra-entry-details-when. */
 				display: grid;
 				grid-template-columns: subgrid;
@@ -239,7 +239,7 @@ export class RelationsField extends Component {
 					min-height: var(--control-height);
 
 					/* The field box bleeds past the columns so it wraps the glyph and the content as ONE
-					   control — the same pair the editor's own li.field rows use, TRAILING CAP INCLUDED
+					   control, the same pair the editor's own li.field rows use, TRAILING CAP INCLUDED
 					   (see EventDetails): the full bleed would sit flush against the popover's tighter
 					   0.5rem end inset, and a row 4px wider than the Reminders row above it is exactly the
 					   misalignment these rows exist to avoid. */
@@ -268,7 +268,7 @@ export class RelationsField extends Component {
 					column-gap: 0.5rem;
 					row-gap: 0.25rem;
 
-					/* Later lines are bare text — a grown row gets the same air below them that the
+					/* Later lines are bare text, so a grown row gets the same air below them that the
 					   first line's centring leaves above. */
 					&:has(.relation ~ .relation) {
 						padding-block-end: 0.3125rem;
@@ -326,7 +326,7 @@ export class RelationsField extends Component {
 							opacity: 1;
 						}
 
-						/* A broken dependency, in the app's one status colour — the same signal the calendar's
+						/* A broken dependency, in the app's one status colour: the same signal the calendar's
 						   connector wears, on the line that owns it rather than over the whole field. */
 						&[data-violated] > mitra-entry-link > .heading {
 							color: var(--color-error);
@@ -409,7 +409,7 @@ export class RelationsField extends Component {
 	}
 
 	protected override get template() {
-		// Drafts author relations too — the list rides the create. Only the view fetch (resolved
+		// Drafts author relations too: the list rides the create. Only the view fetch (resolved
 		// names, incoming lines) waits for identity; nothing can point at a draft yet anyway.
 		return !this.entry ? html.nothing : html`
 			${this.sections.map(section => this.sectionTemplate(section))}
@@ -418,7 +418,7 @@ export class RelationsField extends Component {
 	}
 
 	private sectionTemplate({ section, lines, addType }: { section: RelationSection, lines: Array<Line>, addType?: RelationType }) {
-		// A derived/read-only family exists only through its lines — there is nothing to author from
+		// A derived/read-only family exists only through its lines. There is nothing to author from
 		// this side, so an empty one has no row at all (and no add button when it does).
 		return !lines.length && !addType ? html.nothing : html`
 			<div class="row field" data-section=${section.value}>

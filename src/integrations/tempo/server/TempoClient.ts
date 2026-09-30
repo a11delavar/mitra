@@ -55,7 +55,7 @@ export class TempoClient {
 		if (response.status === 429 && !isRetry) {
 			const retryAfter = Number(response.headers.get('Retry-After')) || 1
 			if (retryAfter <= TempoClient.maxRetryAfterSeconds) {
-				logger.debug(`Rate limited on ${path} — retrying in ${retryAfter}s`)
+				logger.debug(`Rate limited on ${path}, retrying in ${retryAfter}s`)
 				await new Promise(resolve => setTimeout(resolve, retryAfter * 1000))
 				return this.request<T>(method, path, body, true)
 			}

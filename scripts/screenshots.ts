@@ -10,7 +10,7 @@ import { consola } from 'consola'
 // into layers. Layers share ONE page session and scroll offset, or they stop registering.
 //
 // Usage: MITRA_VERSION=v0.5.0 npm run build && npm run screenshots
-// (pin the version — the sidebar prints it, and a dirty tree writes `-dirty` into every image)
+// (pin the version: the sidebar prints it, and a dirty tree writes `-dirty` into every image)
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(here, '..')
@@ -141,9 +141,37 @@ async function waitFor(probe: () => Promise<boolean>, what: string, attempts = 1
 	throw new Error(`Timed out waiting for ${what}`)
 }
 
-function startServer(port: number) {
-	const child = spawn(process.execPath, [path.join(rootDir, 'out/server/server.mjs')], {
-		cwd: rootDir,
+/** Recreates the Demo integration every capture shows, so no leftover edits or hidden calendars reach the images. */
+async function seedSampleCalendar(origin: string) {
+	const api = (route: string, init?: RequestInit) => fetch(`${origin}api/${route}`, { headers: { 'Content-Type': 'application/json' }, ...init })
+	for (const integration of await (await api('integrations')).json() as Array<{ id: string, type: string }>) {
+		if (integration.type === 'demo') {
+			await api(`integrations/${integration.id}`, { method: 'DELETE' })
+		}
+	}
+	const sources = await (await api('integrations/sources', { method: 'POST', body: JSON.stringify({ id: crypto.randomUUID(), type: 'demo' }) })).json()
+	const { id } = await (await api('integrations', { method: 'POST', body: JSON.stringify({ type: 'demo', sources }) })).json()
+	await waitFor(async () => {
+		const demo = (await (await api('integrations')).json() as Array<{ id: string, sources: Array<{ importedAt?: string }> }>).find(integration => integration.id === id)
+		return !!demo?.sources.length && demo.sources.every(source => source.importedAt)
+	}, 'the sample calendar')
+}
+
+/**
+ * Stages the build beside an empty database: the server reads `data/` relative to its bundle, and the developer's own
+ * database would put their calendars in the images. Externals still resolve upward to the checkout's node_modules.
+ */
+function stageServer(stageDir: string) {
+	fs.mkdirSync(path.join(stageDir, 'out/server'), { recursive: true })
+	fs.mkdirSync(path.join(stageDir, 'data'))
+	fs.copyFileSync(path.join(rootDir, 'out/server/server.mjs'), path.join(stageDir, 'out/server/server.mjs'))
+	fs.copyFileSync(path.join(rootDir, 'CHANGELOG.md'), path.join(stageDir, 'CHANGELOG.md'))
+	fs.symlinkSync(path.join(rootDir, 'dist'), path.join(stageDir, 'dist'), 'junction')
+}
+
+function startServer(port: number, stageDir: string) {
+	const child = spawn(process.execPath, [path.join(stageDir, 'out/server/server.mjs')], {
+		cwd: stageDir,
 		env: { ...process.env, MITRA_DEV: 'true', MITRA_PORT: String(port), MITRA_UPDATE_CHECK: 'off' },
 		stdio: ['ignore', 'pipe', 'pipe'],
 	})
@@ -154,7 +182,7 @@ function startServer(port: number) {
 function startChrome(port: number, profileDir: string) {
 	const executable = chromeCandidates.find(candidate => candidate && fs.existsSync(candidate))
 	if (!executable) {
-		throw new Error('No Chrome found — set CHROME_PATH to a Chrome or Chromium binary.')
+		throw new Error('No Chrome found. Set CHROME_PATH to a Chrome or Chromium binary.')
 	}
 	consola.info(`Chrome: ${executable}`)
 	return spawn(executable, [
@@ -230,7 +258,7 @@ async function open(page: Devtools, origin: string, theme: Theme) {
 	await waitFor(() => page.evaluate<boolean>('return !!document.querySelector("mitra-page-calendar")'), 'the app to boot')
 	await page.evaluate(`
 		localStorage.setItem('Mitra.Appearance.Theme', ${JSON.stringify(JSON.stringify(theme))})
-		// Zoom the day grid past "the whole day at once" so entries read at their working size —
+		// Zoom the day grid past "the whole day at once" so entries read at their working size,
 		// what the app opens on at a comfortable window, rather than the squeezed 24-hour fit.
 		localStorage.setItem('Mitra.WeekZoom', '2')
 	`)
@@ -246,7 +274,7 @@ async function open(page: Devtools, origin: string, theme: Theme) {
 	`)
 	const inter = await page.evaluate<boolean>('return document.fonts.check("500 14px Inter")')
 	if (!inter) {
-		consola.warn('Inter is not installed — captures will use a fallback face and will not match the site.')
+		consola.warn('Inter is not installed, so captures will use a fallback face and will not match the site.')
 	}
 }
 
@@ -325,7 +353,7 @@ async function click(page: Devtools, find: string) {
 /** Location is empty around today; hiding it, as a reader would, brings Participants into the crop. */
 async function hideTableLocation(page: Devtools) {
 	await click(page, '[...document.querySelectorAll("mitra-table .header .column .label")].find(label => label.textContent.trim() === "Location")')
-	await click(page, '[...document.querySelectorAll("mitra-table-column-menu menu button")].find(button => button.textContent.trim() === "Hide column")')
+	await click(page, '[...document.querySelectorAll("mitra-table-column-menu mitra-menu-item")].find(item => item.textContent.trim() === "Hide column")')
 }
 
 /** A crop the given width around the element, as tall as it plus padding, kept inside the viewport. */
@@ -363,20 +391,21 @@ async function openChip(page: Devtools, heading: string) {
 async function openFound(page: Devtools, heading: string) {
 	await press(page, ...keys.slash())
 	await page.send('Input.insertText', { text: heading })
-	const result = `[...document.querySelectorAll('mitra-command-palette li button')].find(button => button.querySelector('.heading')?.textContent.trim() === ${JSON.stringify(heading)})`
+	const result = `[...document.querySelectorAll('mitra-command-palette mitra-option')].find(option => option.querySelector('.heading')?.textContent.trim() === ${JSON.stringify(heading)})`
 	await waitFor(() => page.evaluate<boolean>(`return !!${result}`), `"${heading}" in the palette`)
 	await click(page, result)
 	await editorOpened(page, heading)
 }
 
 async function editorOpened(page: Devtools, heading: string) {
-	await waitFor(() => page.evaluate<boolean>('return !!document.querySelector("mitra-entry-details:popover-open")'), `the editor of "${heading}"`)
+	await waitFor(() => page.evaluate<boolean>(`return !!${openEditor}`), `the editor of "${heading}"`)
 	await settle(page)
 	// The popover slides in; capture it at rest.
 	await page.evaluate('await new Promise(resolve => setTimeout(resolve, 600))')
 }
 
-const openEditor = 'document.querySelector("mitra-entry-details:popover-open")'
+// The details element is `display: contents`; its popover's `.editor` carries the surface.
+const openEditor = 'document.querySelector("mitra-entry-details > mitra-popover[open] > .editor")'
 
 const sidebarTab = (name: string) => `document.querySelector('mitra-sidebar mitra-tab[name="${name}"]')`
 
@@ -394,7 +423,7 @@ async function measureAxis(page: Devtools) {
 		return axis ? Math.round(axis.getBoundingClientRect().width) : 0
 	`)
 	if (!width) {
-		throw new Error('No time axis found — the week view must be on screen before capturing layers.')
+		throw new Error('No time axis found. The week view must be on screen before capturing layers.')
 	}
 	await page.evaluate(`document.documentElement.style.setProperty('--capture-axis', '${width}px')`)
 }
@@ -409,23 +438,26 @@ async function setLayer(page: Devtools, layer: string | null) {
 
 async function main() {
 	if (!fs.existsSync(path.join(rootDir, 'out/server/server.mjs'))) {
-		consola.error('No build found — run `npm run build` first.')
+		consola.error('No build found. Run `npm run build` first.')
 		process.exitCode = 1
 		return
 	}
 
 	fs.mkdirSync(outDir, { recursive: true })
 	const profileDir = fs.mkdtempSync(path.join(rootDir, 'data/.chrome-'))
+	const stageDir = fs.mkdtempSync(path.join(rootDir, 'data/.capture-'))
 
 	const appPort = await freePort()
 	const debugPort = await freePort()
 	const processes = new Array<ChildProcess>()
 
 	try {
-		processes.push(startServer(appPort))
+		stageServer(stageDir)
+		processes.push(startServer(appPort, stageDir))
 		const origin = `http://127.0.0.1:${appPort}/`
 		await waitFor(async () => (await fetch(`${origin}api/health`)).ok, 'the app server')
 		consola.info(`Mitra on ${origin}`)
+		await seedSampleCalendar(origin)
 
 		processes.push(startChrome(debugPort, profileDir))
 		await waitFor(async () => (await fetch(`http://127.0.0.1:${debugPort}/json/version`)).ok, 'Chrome')
@@ -488,7 +520,7 @@ async function main() {
 
 			await capture(browser, `calendars-detail-${theme}`, false, { x: 0, y: 0, ...details.sidebar })
 
-			await click(browser, '[...document.querySelectorAll("mitra-sidebar button.action")].find(button => button.textContent.trim() === "Add Integration")')
+			await click(browser, '[...document.querySelectorAll("mitra-sidebar .action")].find(button => button.textContent.trim() === "Add Integration")')
 			await capture(browser, `integrations-detail-${theme}`, false, await aroundOpenDialog(browser, 28))
 			await press(browser, ...keys.escape())
 
@@ -520,10 +552,14 @@ async function main() {
 		}
 		// Chrome can hold its profile past the kill; a leftover must never mask the real error.
 		await new Promise(resolve => setTimeout(resolve, 500))
-		try {
-			fs.rmSync(profileDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 })
-		} catch {
-			consola.debug(`Left behind ${profileDir}`)
+		// Unlinked first, so the recursive removal below can never follow it into the real dist/.
+		fs.rmSync(path.join(stageDir, 'dist'), { force: true })
+		for (const dir of [profileDir, stageDir]) {
+			try {
+				fs.rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 })
+			} catch {
+				consola.debug(`Left behind ${dir}`)
+			}
 		}
 	}
 }

@@ -34,7 +34,7 @@ interface Routine {
 	readonly masters: Set<string>
 }
 
-/** Routine identity key: (sourceId, heading) — deliberately not allDay: an all-day placeholder
+/** Routine identity key: (sourceId, heading), deliberately not allDay: an all-day placeholder
  * becomes timed once the appointment is booked, and stays the same habit. Undefined for empty titles. */
 function appearance(entry: Entry): string | undefined {
 	const heading = entry.heading.trim().toLowerCase()

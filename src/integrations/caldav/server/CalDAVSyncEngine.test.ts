@@ -243,7 +243,7 @@ describe('partitionMemberResponses reads the truncation mark', () => {
 		assert.equal(truncated, false)
 	})
 
-	it('leaves out a member the server itself could not serve — neither fetchable nor gone', () => {
+	it('leaves out a member the server itself could not serve: neither fetchable nor gone', () => {
 		const { changedUrls, deletedUrls, truncated } = CalDAV.partitionMemberResponses(COLLECTION, [{ href: '/cal/left-out.ics', status: 507 }])
 		assert.deepEqual(changedUrls, [])
 		assert.deepEqual(deletedUrls, [])

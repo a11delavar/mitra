@@ -84,7 +84,7 @@ export class Tempo extends Integration<TempoCredentials> {
 
 	override get capabilities() {
 		return {
-			...Integration.fullCapabilities,
+			...Integration.defaultCapabilities,
 			recurrence: false, reminders: false, location: false, cancelledStatus: false,
 			percentComplete: false, timeZone: false, participants: false, transparency: false,
 			visibility: false, relations: false, allDay: false, renameEntries: false,
@@ -113,7 +113,7 @@ export class Tempo extends Integration<TempoCredentials> {
 		}
 	}
 
-	// --- Mapping (pure, static — the tested surface) ------------------------------------------------
+	// --- Mapping (pure and static, the tested surface) ------------------------------------------------
 
 	private static readonly issueKeyPattern = /\b[A-Za-z][A-Za-z0-9_]*-\d+\b/g
 

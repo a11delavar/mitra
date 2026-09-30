@@ -28,7 +28,7 @@ declare global {
 		"${count:pluralityNumber} entries moved to ${name}": unknown
 		"${count:pluralityNumber} have participants": unknown
 		"${count:pluralityNumber} hours": unknown
-		"${count:pluralityNumber} landed anyway and could not be taken back — delete them in ${name} by hand.": unknown
+		"${count:pluralityNumber} landed anyway and could not be taken back. Delete them in ${name} by hand.": unknown
 		"${count:pluralityNumber} lose their cancelled status": unknown
 		"${count:pluralityNumber} lose their description": unknown
 		"${count:pluralityNumber} lose their location": unknown
@@ -53,7 +53,7 @@ declare global {
 		"${reason}, kept here": unknown
 		"${reason}, left out": unknown
 		"${span} before": unknown
-		"${status} — click to toggle, Alt-click for options": unknown
+		"${status}. Click to toggle, Alt-click for options": unknown
 		"About": unknown
 		"About.Keywords": unknown
 		"Account": unknown
@@ -77,13 +77,15 @@ declare global {
 		"After": unknown
 		"All day": unknown
 		"All entries": unknown
+		"All entries in this calendar will be deleted too. This can't be undone.": unknown
 		"All subtasks done": unknown
 		"Allow": unknown
 		"Allowed": unknown
 		"Alt+click to show only this one": unknown
 		"Alt+click to show the previously visible ones": unknown
 		"Amount": unknown
-		"Any calendar link — webcal:// or .ics": unknown
+		"Any CalDAV server, like Nextcloud, Fastmail or Radicale": unknown
+		"Any calendar link (webcal:// or .ics)": unknown
 		"App-Specific Password": unknown
 		"Apple ID": unknown
 		"Apply to subtasks too?": unknown
@@ -101,11 +103,13 @@ declare global {
 		"Blocked by": unknown
 		"Blocks": unknown
 		"Busy": unknown
-		"CalDAV, Google, Apple or Notion — Mitra syncs in both directions.": unknown
+		"CalDAV, Google, Apple or Notion, synced in both directions. Or start fresh with calendars stored in Mitra itself.": unknown
 		"Calendar": unknown
+		"Calendar name": unknown
 		"Calendar options": unknown
 		"Calendar URL": unknown
 		"Calendars": unknown
+		"Calendars stored in Mitra itself, no account needed": unknown
 		"Cancelled": unknown
 		"Change ${name}…": unknown
 		"Checking what the calendar can take…": unknown
@@ -114,7 +118,7 @@ declare global {
 		"Choose a date": unknown
 		"Choose a task status": unknown
 		"Choose a time": unknown
-		"Choose the calendar the entries of this file are added to — the ones it cannot take are left out. The file itself stays untouched.": unknown
+		"Choose the calendar the entries of this file are added to. The ones it cannot take are left out. The file itself stays untouched.": unknown
 		"Choose your sources": unknown
 		"Clear custom progress": unknown
 		"Clear filter": unknown
@@ -151,7 +155,7 @@ declare global {
 		"CopyVersion.Keywords": unknown
 		"Could not load your devices.": unknown
 		"Create": unknown
-		"Create and move entries right on the grid — every change syncs back to its source.": unknown
+		"Create and move entries right on the grid. Every change syncs back to its source.": unknown
 		"Create Entry": unknown
 		"CreateEntry.Keywords": unknown
 		"Ctrl": unknown
@@ -162,8 +166,8 @@ declare global {
 		"days": unknown
 		"Default Calendar": unknown
 		"Default Duration": unknown
-		"Default for new entries — click to unset": unknown
 		"Default for new entries, as the first one shown": unknown
+		"Default for new entries. Click to unset": unknown
 		"Default Reminder": unknown
 		"Default View": unknown
 		"Default visibility": unknown
@@ -173,12 +177,16 @@ declare global {
 		"DefaultViewSetting.Keywords": unknown
 		"Del": unknown
 		"Delete": unknown
+		"Delete \"${name}\"?": unknown
 		"Delete ${count:pluralityNumber} entries?": unknown
+		"Delete calendar": unknown
 		"Delete entry": unknown
 		"Delete just this entry of a series": unknown
 		"Delete repeating entry": unknown
 		"Delete subtasks too?": unknown
 		"Delete the open entry": unknown
+		"Delete this calendar and every entry in it": unknown
+		"Demo.Hint": unknown
 		"Description": unknown
 		"Devices": unknown
 		"Does not repeat": unknown
@@ -204,8 +212,8 @@ declare global {
 		"Event": unknown
 		"Events": unknown
 		"Every": unknown
-		"Every entry in ${name} is copied — the ones the chosen calendar cannot take are left out. ${name} itself is read-only and stays exactly as it is.": unknown
-		"Every entry in ${name} moves — the ones the chosen calendar cannot take stay here.": unknown
+		"Every entry in ${name} is copied. The ones the chosen calendar cannot take are left out. ${name} itself is read-only and stays exactly as it is.": unknown
+		"Every entry in ${name} moves. The ones the chosen calendar cannot take stay here.": unknown
 		"Every entry is still in ${name}. Nothing was deleted.": unknown
 		"Every subtask of \"${heading}\" is done, which completes ${count:pluralityNumber} more tasks above it. Mark them all as done?": unknown
 		"Every subtask of \"${heading}\" is done. Mark it as done too?": unknown
@@ -237,11 +245,12 @@ declare global {
 		"Importing entries…": unknown
 		"Include time": unknown
 		"Install as an App": unknown
-		"Install mitra as an app — it gets its own window, and notifications appear under its own name and icon": unknown
+		"Install mitra as an app. It gets its own window, and notifications appear under its own name and icon": unknown
 		"Integration options": unknown
 		"Integration Token": unknown
 		"Interval": unknown
 		"Keep": unknown
+		"Keep the calendar": unknown
 		"Keep the chain intact": unknown
 		"Keyboard Shortcuts": unknown
 		"KeyboardShortcuts.Keywords": unknown
@@ -261,6 +270,7 @@ declare global {
 		"Mark as done": unknown
 		"Match the system": unknown
 		"minutes": unknown
+		"Mitra.Hint": unknown
 		"modified": unknown
 		"Month": unknown
 		"Month View": unknown
@@ -268,6 +278,7 @@ declare global {
 		"Move ${count:pluralityNumber} entries": unknown
 		"Move dependent entries too?": unknown
 		"Move down": unknown
+		"Move entries first…": unknown
 		"Move entries from ${name}…": unknown
 		"Move entries to another calendar": unknown
 		"Move entries to…": unknown
@@ -288,7 +299,8 @@ declare global {
 		"Navigation": unknown
 		"never": unknown
 		"Never": unknown
-		"New dev build — ${count:pluralityNumber} commits ahead": unknown
+		"New calendar": unknown
+		"New dev build: ${count:pluralityNumber} commits ahead": unknown
 		"New task": unknown
 		"Next 12 months": unknown
 		"Next 30 days": unknown
@@ -297,7 +309,6 @@ declare global {
 		"Next Month": unknown
 		"Next Week": unknown
 		"Next Year": unknown
-		"Nextcloud, Fastmail, Radicale — any CalDAV server": unknown
 		"NextPeriod.Keywords": unknown
 		"No date": unknown
 		"No device is registered for reminders yet.": unknown
@@ -310,7 +321,7 @@ declare global {
 		"None": unknown
 		"Nothing from the file was added.": unknown
 		"Nothing is deleted here until its copy has landed": unknown
-		"Nothing planned yet — draw a task on the row below": unknown
+		"Nothing planned yet. Draw a task on the row below": unknown
 		"Nothing was added": unknown
 		"Nothing was copied": unknown
 		"Nothing was moved": unknown
@@ -339,7 +350,7 @@ declare global {
 		"Password": unknown
 		"Password (optional)": unknown
 		"Past 30 days": unknown
-		"Pick the calendars and task lists to show — recolor, rename or hide them in the sidebar anytime.": unknown
+		"Pick the calendars and task lists to show. Recolor, rename or hide them in the sidebar anytime.": unknown
 		"Plan your days": unknown
 		"Planning": unknown
 		"Previous month": unknown
@@ -348,7 +359,7 @@ declare global {
 		"Previous Year": unknown
 		"PreviousPeriod.Keywords": unknown
 		"Primary": unknown
-		"Primary time zone — switch to ${city} time to change the zone": unknown
+		"Primary time zone. Switch to ${city} time to change the zone": unknown
 		"Private": unknown
 		"Progress": unknown
 		"Public": unknown
@@ -370,7 +381,7 @@ declare global {
 		"Remove relationship": unknown
 		"Remove reminder": unknown
 		"Remove the date": unknown
-		"Remove the date — the task moves to Unscheduled": unknown
+		"Remove the date. The task moves to Unscheduled": unknown
 		"Remove the end date": unknown
 		"Rename": unknown
 		"Rename time zone": unknown
@@ -382,6 +393,7 @@ declare global {
 		"Reset columns": unknown
 		"Reset to calendar color": unknown
 		"Reset to default color": unknown
+		"Sample calendars filled with generated data, rebuilt daily": unknown
 		"Save": unknown
 		"scroll": unknown
 		"Search entries or run a command…": unknown
@@ -404,8 +416,8 @@ declare global {
 		"Show previously visible calendars": unknown
 		"Show Previously Visible Calendars": unknown
 		"Show the other time zones": unknown
-		"Showing ${city} time — switch to the primary time zone": unknown
-		"Showing the primary time zone — switch to ${city} time": unknown
+		"Showing ${city} time. Switch to the primary time zone": unknown
+		"Showing the primary time zone. Switch to ${city} time": unknown
 		"Shown above the time axis. Leave empty to use the automatic name.": unknown
 		"ShowOnlySource.Keywords": unknown
 		"ShowPreviouslyVisibleSources.Keywords": unknown
@@ -429,7 +441,7 @@ declare global {
 		"TableView.Keywords": unknown
 		"Task": unknown
 		"Tasks": unknown
-		"Tasks without a date land here — drag one onto the calendar to schedule it": unknown
+		"Tasks without a date land here. Drag one onto the calendar to schedule it": unknown
 		"Tempo API Token": unknown
 		"Tempo.TokenHint": unknown
 		"Test notification sent.": unknown
@@ -443,14 +455,14 @@ declare global {
 		"The originals stay exactly where they are": unknown
 		"The step dragging and resizing land on": unknown
 		"The task databases of your workspace": unknown
-		"Their copies landed but the originals could not be deleted — delete them here by hand.": unknown
+		"Their copies landed but the originals could not be deleted. Delete them here by hand.": unknown
 		"Theme": unknown
 		"ThemeSetting.Keywords": unknown
 		"There is no calendar the file could be added to.": unknown
 		"There is no other calendar these entries could move to.": unknown
 		"This and following entries": unknown
 		"This and its ${count:pluralityNumber} subtasks": unknown
-		"This browser is blocking notifications — allow them in its site settings to get reminders here.": unknown
+		"This browser is blocking notifications. Allow them in its site settings to get reminders here.": unknown
 		"This browser will show your reminders.": unknown
 		"this device": unknown
 		"This entry": unknown
@@ -487,7 +499,7 @@ declare global {
 		"View on GitHub": unknown
 		"Views": unknown
 		"Visibility": unknown
-		"Wall clock — no time zone": unknown
+		"Wall clock (no time zone)": unknown
 		"Week": unknown
 		"Week ${week:number}": unknown
 		"Week View": unknown

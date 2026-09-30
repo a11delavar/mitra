@@ -31,7 +31,7 @@ describe('Reminders', () => {
 			assert.equal(early.length + late.length, 0)
 		})
 
-		it('fires each offset independently — only the due one', () => {
+		it('fires each offset independently, only the due one', () => {
 			const due = dueReminders([entry({ start: D('2026-07-06T09:31:00Z'), reminders: [0, 30, 60] })], watermark, now)
 			assert.deepEqual(due.map(d => d.minutes), [30])
 		})
@@ -68,7 +68,7 @@ describe('Reminders', () => {
 			assert.equal(due[0]!.anchor, Date.parse('2026-07-06T09:31:00Z'))
 		})
 
-		it('never anchors an EVENT to its end — only a task has a due date', () => {
+		it('never anchors an EVENT to its end, since only a task has a due date', () => {
 			const due = dueReminders([entry({ end: D('2026-07-06T09:31:00Z'), reminders: [30] })], watermark, now)
 			assert.equal(due.length, 0)
 		})
@@ -90,7 +90,7 @@ describe('Reminders', () => {
 				assert.equal(dueReminders([floating()], watermark, now).length, 1)
 			})
 
-			it('leaves an all-day span alone — those are floating DAYS, not wall clocks', () => {
+			it('leaves an all-day span alone, since those are floating DAYS, not wall clocks', () => {
 				const allDay = entry({ start: D('2026-07-06T09:31:00Z'), reminders: [30], timeZone: FLOATING_TIME_ZONE, allDay: true })
 				assert.equal(dueReminders([allDay], watermark, now, () => 'Europe/Berlin').length, 1)
 			})

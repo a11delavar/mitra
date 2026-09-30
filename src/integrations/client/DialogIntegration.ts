@@ -1,10 +1,12 @@
-import { component, html, css, state, Binder, unsafeHTML, ifDefined, live } from '@a11d/lit'
+import { component, html, css, state, Binder, bind, unsafeHTML, ifDefined, live } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { Source } from '../../features/sources/Source.js'
 import { integrationClasses, type Integration, type IntegrationClass } from '../Integration.js'
 import { EntryType } from '../../features/entries/EntryType.js'
 import { CalDAV, Notion } from '../registerIntegrations.js'
-import { discoverSources, createIntegration, updateIntegration, getIntegrations, fetchIntegrations, fetchGoogleAvailability, connectGoogle } from '../../infrastructure/http/Api.js'
+import { discoverSources, createIntegration, updateIntegration, getIntegrations, fetchIntegrations, fetchGoogleAvailability, connectGoogle, createSource, getMeta } from '../../infrastructure/http/Api.js'
+import mitraLogo from '../mitra/logo.svg'
+import demoLogo from '../demo/logo.svg'
 import caldavLogo from '../caldav/logo.svg'
 import googleLogo from '../google/logo.svg'
 import appleLogo from '../apple/logo.svg'
@@ -15,12 +17,14 @@ import '../../design/TextField.js'
 import { pressable } from '../../design/pressable.css.js'
 
 const logos: Record<string, string> = {
+	mitra: mitraLogo,
 	caldav: caldavLogo,
 	google: googleLogo,
 	apple: appleLogo,
 	ics: icsLogo,
 	notion: notionLogo,
 	tempo: tempoLogo,
+	demo: demoLogo,
 }
 
 @component('mitra-dialog-integration')
@@ -29,6 +33,8 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 	@state() private discovering = false
 	@state() private discoveryError?: string
 	@state() private googleAvailability?: { configured: boolean } | { error: string }
+	/** The first calendar's name, for integrations that don't discover sources. */
+	@state() calendarName = ''
 
 	private readonly binder = new Binder(this, 'entity')
 
@@ -36,12 +42,22 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 
 	private get isEdit() { return !!this.parameters.id }
 
+	private get discoversSources() { return this.integrationClass?.discoversSources !== false }
+
 	private get integrationClass(): IntegrationClass | undefined {
 		return integrationClasses().find(integrationClass => integrationClass.type === this.entity?.type)
 	}
 
+	private get offeredClasses(): Array<IntegrationClass> {
+		const connected = new Set(getIntegrations().map(integration => integration.type))
+		return integrationClasses().filter(integrationClass =>
+			(!integrationClass.developmentOnly || !!getMeta()?.development)
+			&& !(integrationClass.onePerUser && connected.has(integrationClass.type)))
+	}
+
 	private selectType(integrationClass: IntegrationClass) {
 		this.entity = new integrationClass({ sources: [] as any })
+		this.calendarName = ''
 		this.discovering = false
 		this.discoveryError = undefined
 	}
@@ -113,8 +129,6 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 					display: grid;
 					grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
 					gap: 0.625rem;
-					max-height: min(24rem, 60vh);
-					overflow-y: auto;
 
 					.type {
 						${pressable};
@@ -221,12 +235,20 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 		`
 	}
 
+	private get saveDisabled() {
+		if (this.discovering) {
+			return true
+		}
+		return (this.discoversSources || this.isEdit) && !this.entity?.sources.length
+	}
+
 	protected override get template() {
 		return html`
 			<mitra-dialog
 				heading=${this.isEdit ? t('Edit integration') : this.integrationClass?.label ?? t('Add integration')}
 				primaryButtonText=${!this.entity ? html.nothing : t('Save')}
-				?primaryButtonDisabled=${!this.entity?.sources.length || this.discovering}
+				?primaryButtonDisabled=${this.saveDisabled}
+				?primaryOnEnter=${!!this.entity && !this.discoversSources && !this.isEdit}
 			>
 				${this.isEdit || !this.entity ? html.nothing : html`
 					<mitra-icon-button slot="leading" icon="arrow-left" label=${t('Back')}
@@ -241,7 +263,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 	private get typesTemplate() {
 		return html`
 			<div class="types">
-				${integrationClasses().map(integrationClass => html`
+				${this.offeredClasses.map(integrationClass => html`
 					<button class="type" @click=${() => this.selectType(integrationClass)}>
 						<span class="logo">${unsafeHTML(logos[integrationClass.logo] ?? '')}</span>
 						<span class="name">${integrationClass.label}</span>
@@ -281,6 +303,8 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 
 	private get panelTemplate() {
 		switch (this.entity!.type) {
+			case 'mitra': return this.mitraTemplate
+			case 'demo': return this.demoTemplate
 			case 'google': return this.googleTemplate
 			case 'apple': return this.appleTemplate
 			case 'ics': return this.icsTemplate
@@ -288,6 +312,22 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 			case 'tempo': return this.tempoTemplate
 			default: return this.caldavTemplate
 		}
+	}
+
+	private get mitraTemplate() {
+		return html`
+			<p class="hint">${t('Mitra.Hint')}</p>
+			${this.isEdit ? html.nothing : html`
+				<mitra-text-field label=${t('Calendar name')} placeholder=${t('Calendar')} ${bind(this, 'calendarName', { event: 'input' })}></mitra-text-field>
+			`}
+		`
+	}
+
+	private get demoTemplate() {
+		return html`
+			<p class="hint">${t('Demo.Hint')}</p>
+			${this.connectTemplate}
+		`
 	}
 
 	private get appleTemplate() {
@@ -398,6 +438,13 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 	}
 
 	protected override async primaryAction() {
+		// Nothing was discovered, so create the first calendar through the regular source endpoint.
+		if (!this.discoversSources && !this.isEdit) {
+			const integration = await createIntegration(this.entity!)
+			await createSource(integration.id, { name: this.calendarName.trim() || String(t('Calendar')) })
+			await fetchIntegrations()
+			return integration
+		}
 		const integration = this.isEdit ? await updateIntegration(this.entity!) : await createIntegration(this.entity!)
 		await fetchIntegrations()
 		return integration

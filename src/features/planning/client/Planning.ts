@@ -208,7 +208,7 @@ export class Planning extends Component {
 				${!unscheduled.length ? html`
 					<div class="empty">
 						<mitra-icon icon="list-todo"></mitra-icon>
-						<span>${t('Tasks without a date land here — drag one onto the calendar to schedule it')}</span>
+						<span>${t('Tasks without a date land here. Drag one onto the calendar to schedule it')}</span>
 					</div>
 				` : html`
 					<div class="entries" @pointerdown=${this.handlePointerDown}>

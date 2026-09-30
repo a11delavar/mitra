@@ -50,6 +50,7 @@ export interface InstanceMeta {
 	version: string
 	commit: string
 	node: string
+	development?: boolean
 	releaseUrl?: string
 	update?: { version: string, url: string, commits?: number }
 }
@@ -195,7 +196,7 @@ export function getEnabledSources(integration?: Integration) {
 
 /** Returns effective capabilities for a source, combining provider capabilities with source-level permissions. */
 export function getCapabilities(sourceId: string): Integration['capabilities'] {
-	return Integration.capabilitiesIn(getIntegrationFor(sourceId)?.capabilities ?? Integration.fullCapabilities, getSource(sourceId))
+	return Integration.capabilitiesIn(getIntegrationFor(sourceId)?.capabilities ?? Integration.defaultCapabilities, getSource(sourceId))
 }
 
 /**
@@ -235,6 +236,20 @@ export async function restoreSourceVisibility() {
 /** Whether there is a previous solo state to restore. */
 export function canRestoreSourceVisibility() {
 	return !!currentUser?.previouslyHiddenSourceIds
+}
+
+/** Requires `capabilities.createSources`. */
+export function createSource(integrationId: string, init: { name: string, color?: string, entryTypes?: Array<EntryType> }) {
+	return Api.post<Source>(`/integrations/${integrationId}/sources`, init)
+}
+
+export function countSourceEntries(id: string) {
+	return Api.get<number>(`/sources/${id}/entries/count`)
+}
+
+/** Deletes the calendar and all its entries. Requires `capabilities.deleteSources`. */
+export function deleteSource(id: string) {
+	return Api.delete(`/sources/${id}`)
 }
 
 export function updateSourceColor(id: string, color: string) {
@@ -279,7 +294,7 @@ export function reimportIntegration(id: string) {
 	return Api.post(`/integrations/${id}/reimport`)
 }
 
-/** Posts a raw iCalendar body — text/calendar bypasses the JSON transport and its body size limit. */
+/** Posts a raw iCalendar body: text/calendar bypasses the JSON transport and its body size limit. */
 async function postCalendar<T>(route: string, ics: string): Promise<T> {
 	const response = await fetch(Api.url + route, {
 		method: 'POST',

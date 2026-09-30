@@ -62,14 +62,14 @@ describe('Entry', () => {
 			assert.equal(new Entry({}).organizer, undefined)
 		})
 
-		it('is manageable without an organizer (one\'s own entry) or as the organizer — iTIP (RFC 5546)', () => {
+		it('is manageable without an organizer (one\'s own entry) or as the organizer, per iTIP (RFC 5546)', () => {
 			assert.equal(new Entry({}).canManageParticipants, true)
 			assert.equal(new Entry({ participants: [{ email: 'a@example.com' }] }).canManageParticipants, true)
 			assert.equal(new Entry({ participants: [{ email: 'me@example.com', organizer: true, self: true }] }).canManageParticipants, true)
 			assert.equal(invited().canManageParticipants, false)
 		})
 
-		it('counts as editable content — editEquals compares the lists structurally', () => {
+		it('counts as editable content: editEquals compares the lists structurally', () => {
 			const a = invited()
 			const b = invited()
 			assert.equal(a.editEquals(b), true)
@@ -93,7 +93,7 @@ describe('Entry', () => {
 			assert.equal(entry.organizer?.email, 'organizer@example.com')
 		})
 
-		it('invite replaces the list — the previous array (a clone may share it) is untouched', () => {
+		it('invite replaces the list, and the previous array (a clone may share it) is untouched', () => {
 			const entry = invited()
 			const before = entry.participants
 			entry.invite(['second@example.com'])
@@ -165,7 +165,7 @@ describe('Entry', () => {
 			assert.equal(occurrence({ recurrenceId: at(3, 9), seriesStart: at(0, 9) }).isSeriesStart, false)
 		})
 
-		it('is false without an anchor — a synced override carries none', () => {
+		it('is false without an anchor, since a synced override carries none', () => {
 			assert.equal(occurrence({ recurrenceId: at(0, 9) }).isSeriesStart, false)
 		})
 	})
@@ -292,7 +292,7 @@ describe('Entry', () => {
 			assert.equal(e.type, EntryType.Task)
 		})
 
-		it('keeps the type on a source that supports both — a source holds types, it doesn\'t dictate one', () => {
+		it('keeps the type on a source that supports both: a source holds types, it doesn\'t dictate one', () => {
 			const task = new Entry({ id: 'a', sourceId: 'tasks', type: EntryType.Task, heading: 'Todo', status: TaskStatus.Done })
 			task.migrateTo(both)
 			assert.equal(task.sourceId, 'both')
@@ -300,7 +300,7 @@ describe('Entry', () => {
 			assert.equal(task.status, TaskStatus.Done)
 		})
 
-		it('keeps a status only where it makes sense — on a task', () => {
+		it('keeps a status only where it makes sense: on a task', () => {
 			const task = new Entry({ id: 'a', sourceId: 'tasks', type: EntryType.Task, heading: 'Todo', status: TaskStatus.Done })
 			task.migrateTo(calendar)
 			assert.equal(task.type, EntryType.Event)
@@ -320,27 +320,27 @@ describe('Entry', () => {
 	})
 
 	describe('the type setter', () => {
-		it('drops the status when becoming an event — only a task has one', () => {
+		it('drops the status when becoming an event, since only a task has one', () => {
 			const task = new Entry({ sourceId: 's', type: EntryType.Task, heading: 'Draft', status: TaskStatus.Doing })
 			task.type = EntryType.Event
 			assert.equal(task.type, EntryType.Event)
 			assert.equal(task.status, undefined)
 		})
 
-		it('becoming a task leaves the status unset — which is "to do"', () => {
+		it('becoming a task leaves the status unset, which is "to do"', () => {
 			const event = new Entry({ sourceId: 's', type: EntryType.Event, heading: 'Draft' })
 			event.type = EntryType.Task
 			assert.equal(event.type, EntryType.Task)
 			assert.equal(event.status, undefined)
 		})
 
-		it('drops the free/busy contribution when becoming a task — the mirror image of the status', () => {
+		it('drops the free/busy contribution when becoming a task, the mirror image of the status', () => {
 			const event = new Entry({ sourceId: 's', type: EntryType.Event, heading: 'Draft', transparency: Transparency.Free })
 			event.type = EntryType.Task
 			assert.equal(event.transparency, null)
 		})
 
-		it('keeps the visibility across the flip both ways — CLASS is valid on a task too', () => {
+		it('keeps the visibility across the flip both ways, since CLASS is valid on a task too', () => {
 			const event = new Entry({ sourceId: 's', type: EntryType.Event, heading: 'Draft', visibility: Visibility.Private })
 			event.type = EntryType.Task
 			assert.equal(event.visibility, Visibility.Private)
@@ -348,7 +348,7 @@ describe('Entry', () => {
 			assert.equal(event.visibility, Visibility.Private)
 		})
 
-		it('keeps everything else — the span and content survive the flip both ways', () => {
+		it('keeps everything else: the span and content survive the flip both ways', () => {
 			const draft = new Entry({ sourceId: 's', type: EntryType.Event, heading: 'Draft', start: at(0, 9), end: at(0, 10), reminders: [30] })
 			draft.type = EntryType.Task
 			draft.type = EntryType.Event
@@ -396,7 +396,7 @@ describe('Entry', () => {
 			assert.equal(e.editEquals(incoming), true)
 		})
 
-		it('adoptSpan takes over start, end, and all-day — nothing else', () => {
+		it('adoptSpan takes over start, end, and all-day, nothing else', () => {
 			const e = new Entry({ id: 'a', heading: 'Mine', start: at(0, 9), end: at(0, 10), allDay: false })
 			const other = new Entry({ id: 'b', heading: 'Other', start: day, end: day.add({ hours: 24 }), allDay: true })
 			e.adoptSpan(other)
@@ -430,7 +430,7 @@ describe('Entry', () => {
 			assert.ok(e.start instanceof DateTime)
 		})
 
-		it('leaves an all-day span alone — floating days have no wall clock to keep', () => {
+		it('leaves an all-day span alone, since floating days have no wall clock to keep', () => {
 			const e = new Entry({
 				start: new Date('2026-07-06T00:00:00Z') as unknown as DateTime,
 				end: new Date('2026-07-07T00:00:00Z') as unknown as DateTime,
@@ -457,7 +457,7 @@ describe('Entry', () => {
 	describe('scheduling', () => {
 		const task = (fields = {}) => new Entry({ type: EntryType.Task, heading: 'Write the report', ...fields })
 
-		it('an entry with no start is unscheduled — the calendar cannot place it', () => {
+		it('an entry with no start is unscheduled: the calendar cannot place it', () => {
 			assert.equal(task().scheduled, false)
 			assert.equal(task({ start: at(0, 9), end: at(0, 10) }).scheduled, true)
 		})
@@ -467,7 +467,7 @@ describe('Entry', () => {
 			assert.equal(task({ start: at(0, 9) }).scheduled, true)
 		})
 
-		it('only a task may lose its dates again — an undated event has no iCalendar form', () => {
+		it('only a task may lose its dates again, since an undated event has no iCalendar form', () => {
 			assert.equal(task().unschedulable, true)
 			assert.equal(new Entry({ type: EntryType.Event }).unschedulable, false)
 		})
@@ -488,7 +488,7 @@ describe('Entry', () => {
 			assert.equal(e.end!.valueOf(), day.add({ days: 3 }).valueOf())
 		})
 
-		it('unschedule is its inverse — the entry leaves the calendar and the section takes it', () => {
+		it('unschedule is its inverse: the entry leaves the calendar and the section takes it', () => {
 			const e = task({ start: at(0, 9), end: at(0, 10) })
 			e.unschedule()
 			assert.equal(e.start, undefined)
@@ -516,7 +516,7 @@ describe('Entry', () => {
 	})
 
 	describe('duplicate', () => {
-		it('carries the relationships the entry OWNS — a copy of a subtask is a subtask of the same parent', () => {
+		it('carries the relationships the entry OWNS: a copy of a subtask is a subtask of the same parent', () => {
 			const entry = new Entry({ id: 'e', sourceId: 's', uid: 'original', type: EntryType.Task, heading: 'Task' })
 			entry.relations = EntryRelations.of('original', [
 				{ type: RelationType.Parent, targetUid: 'parent' },
@@ -526,7 +526,7 @@ describe('Entry', () => {
 			assert.deepEqual(entry.duplicate().relations?.map(relation => [relation.type.value, relation.targetUid]), [['FINISHTOSTART', 'blocker'], ['PARENT', 'parent']])
 		})
 
-		it('leaves the DERIVED half behind — no copy gets to make another entry point at it', () => {
+		it('leaves the DERIVED half behind, so no copy gets to make another entry point at it', () => {
 			const entry = new Entry({ id: 'e', sourceId: 's', uid: 'original', type: EntryType.Task, heading: 'Task' })
 			entry.relations = EntryRelations.of('original', [{ type: RelationType.Parent, targetUid: 'child', direction: 'incoming' }]).value
 
@@ -585,7 +585,7 @@ describe('Entry', () => {
 			assert.equal(verdict(dependent(RelationType.FinishToStart, 10, 12, '-PT1H'), predecessor(9, 11)), false)
 		})
 
-		it('anything undecidable is NOT a violation — another family, an unreadable gap, a missing boundary', () => {
+		it('anything undecidable is NOT a violation: another family, an unreadable gap, a missing boundary', () => {
 			assert.equal(verdict(dependent(RelationType.Parent, 10, 12), predecessor(9, 11)), false)
 			assert.equal(verdict(dependent(RelationType.of('X-WAITS-FOR'), 10, 12), predecessor(9, 11)), false)
 			assert.equal(verdict(dependent(RelationType.FinishToStart, 10, 12, 'not a duration'), predecessor(9, 11)), false)

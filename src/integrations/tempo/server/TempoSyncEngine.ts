@@ -123,7 +123,7 @@ export class TempoSyncEngine implements SyncEngine {
 				}
 				source.syncState = { ...source.syncState, issues: Object.fromEntries(known) }
 			} catch (error) {
-				logger.warn(`Could not resolve ${missing.length} issue name(s) — their entries stay labelled by id: ${error instanceof Error ? error.message : error}`)
+				logger.warn(`Could not resolve ${missing.length} issue name(s), their entries stay labelled by id: ${error instanceof Error ? error.message : error}`)
 			}
 		}
 		return known
@@ -139,7 +139,7 @@ export class TempoSyncEngine implements SyncEngine {
 			source.syncState = { ...source.syncState, projectKeys: keys }
 			return keys
 		} catch (error) {
-			logger.warn(`Could not read the Jira project list — falling back to accepting any ticket-shaped word: ${error instanceof Error ? error.message : error}`)
+			logger.warn(`Could not read the Jira project list, falling back to accepting any ticket-shaped word: ${error instanceof Error ? error.message : error}`)
 			return state.projectKeys ?? []
 		}
 	}
@@ -184,7 +184,7 @@ export class TempoSyncEngine implements SyncEngine {
 		const source = await em.findOneOrFail(Source, { id: existing.sourceId })
 		const stored = Tempo.storedWorklogOf(existing)
 		if (!stored) {
-			throw new Error('This worklog has not been synced yet — re-import the source and try again')
+			throw new Error('This worklog has not been synced yet. Re-import the source and try again')
 		}
 		const issue = ((source.syncState ?? {}) as TempoSyncState).issues?.[String(stored.issue.id)]
 
@@ -232,7 +232,7 @@ export class TempoSyncEngine implements SyncEngine {
 				return key
 			}
 		}
-		throw new Error(`No Jira ticket in "${heading}" — start the title with a ticket key, e.g. ACME-1234`)
+		throw new Error(`No Jira ticket in "${heading}". Start the title with a ticket key, e.g. ACME-1234`)
 	}
 
 	private rememberIssue(source: Source, issueId: number, issue: TempoIssue): void {

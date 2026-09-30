@@ -5,13 +5,13 @@ import { getTimeZones, setTimeZones } from '../../../infrastructure/http/Api.js'
 import { type TimeZonePicker, zoneNamePart, shortZoneLabel, longZoneName, systemZoneId, systemZoneLabel, setSystemZoneLabel } from './TimeZonePicker.js'
 
 /**
- * The day grid's time-axis header: one compact label per displayed zone — the user's additional zones
- * first, the system zone last (adjacent to the days; it anchors the grid and can't be removed) — plus
+ * The day grid's time-axis header: one compact label per displayed zone (the user's additional zones
+ * first, the system zone last (adjacent to the days; it anchors the grid and can't be removed), plus
  * the affordances around them: a hover-revealed "+" opening a searchable picker over every IANA zone,
  * and a per-zone menu to rename (a custom short label like "DE") or remove. Mutations persist via the
  * user settings API and fire `change`, so the host re-renders its axis columns.
  *
- * The additional zones' columns FOLD (the host owns the state and the gesture — see
+ * The additional zones' columns FOLD (the host owns the state and the gesture, see
  * TimeZoneLaneController); this contributes the chevron that asks for it, and clips its own labels
  * against `--zone-width` so they can shrink away with the tracks they sit in.
  */
@@ -41,7 +41,7 @@ export class TimeZoneHeader extends Component {
 			return // already a column
 		}
 		// A zone added into a folded lane would land in a column nobody can see, so the lane comes out
-		// with it — the new column is the whole point of the interaction.
+		// with it, since the new column is the whole point of the interaction.
 		this.fold.dispatch(false)
 		this.commit([...getTimeZones(), { id }]).catch(() => void 0)
 	}
@@ -75,7 +75,7 @@ export class TimeZoneHeader extends Component {
 		return css`
 			mitra-time-zone-header {
 				/* The header adopts the day grid's OWN tracks (through the .timezone cell's subgrid):
-				   the affordances on the leading track, one label per zone track — the exact tracks
+				   the affordances on the leading track, one label per zone track, the exact tracks
 				   the axis hours below sit on, so alignment is the grid's job, not a coincidence. */
 				grid-column: 1 / -1;
 				display: grid;
@@ -85,7 +85,7 @@ export class TimeZoneHeader extends Component {
 				> .actions {
 					justify-self: center;
 					/* The positioning context for the fold chevron, which hangs BELOW this cell rather than
-					   beside the "+". The leading track therefore stays exactly as wide as the "+" alone —
+					   beside the "+". The leading track therefore stays exactly as wide as the "+" alone:
 					   it is sticky chrome, so a second in-flow icon would cost the day columns that width
 					   for the entire life of the view, in the very state (unfolded) where a fold button
 					   matters least. */
@@ -101,7 +101,7 @@ export class TimeZoneHeader extends Component {
 
 					/* Out of flow, in the empty all-day corner directly under the "+", and revealed with it.
 					   Hover and keyboard focus are its only triggers; touch has neither, and that's the
-					   deliberate trade — there the rail drag IS the affordance, and it's the folded lane
+					   deliberate trade: there the rail drag IS the affordance, and it's the folded lane
 					   (which needs no button to advertise itself) a phone starts in.
 
 					   The block padding keeps its box FLUSH against the "+" so travelling down to it never
@@ -111,7 +111,7 @@ export class TimeZoneHeader extends Component {
 
 					   The chevron points where the lane is about to go: toward the days while the other
 					   zones are tucked away, back at the axis once they are out. Flipped in RTL, where
-					   inline-end is the other way — 180° on top of that mirror is a plain vertical flip,
+					   inline-end is the other way. 180° on top of that mirror is a plain vertical flip,
 					   which a chevron is symmetric under, so the two compose correctly. */
 					> .fold {
 						position: absolute;
@@ -168,10 +168,10 @@ export class TimeZoneHeader extends Component {
 					}
 
 					/* An additional zone's label is one of the two cells that FOLD their column (the axis
-					   hours below are the other — see the [data-foreign] rule in Days.ts, which explains
+					   hours below are the other, see the [data-foreign] rule in Days.ts, which explains
 					   why a definite max-inline-size is what lets the auto track follow). Clipped and
 					   un-padded so it can reach zero, and faded by the same width ratio. The anchor zone's
-					   label — the one without this attribute — never folds, so it keeps the plain 100% cap
+					   label (the one without this attribute) never folds, so it keeps the plain 100% cap
 					   above and takes exactly the width it needs. */
 					&[data-alternative] {
 						max-inline-size: var(--zone-width);
@@ -184,7 +184,7 @@ export class TimeZoneHeader extends Component {
 					}
 				}
 
-				/* Tucked away, an alternative zone's chip is a zero-width invisible button — it must stop
+				/* Tucked away, an alternative zone's chip is a zero-width invisible button, so it must stop
 				   answering the pointer too (the template drops it out of the tab order to match). */
 				&[folded] > mitra-popover-container > .zone[data-alternative] {
 					pointer-events: none;

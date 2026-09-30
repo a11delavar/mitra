@@ -1,11 +1,12 @@
 import { Component, component, html, css, property, state, event, eventListener, unsafeCSS, ifDefined } from '@a11d/lit'
-import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, getPrimarySource, setDefaultSource, reimportSource, reimportIntegration, reorderSources, reorderIntegrations, getEnabledSources, getVisibleSources, soloSource, restoreSourceVisibility, canRestoreSourceVisibility, canCopyEntriesOut, canMoveEntriesOut } from '../infrastructure/http/Api.js'
+import { getIntegrations, getMeta, getUser, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, getPrimarySource, setDefaultSource, reimportSource, reimportIntegration, reorderSources, reorderIntegrations, getEnabledSources, getVisibleSources, soloSource, restoreSourceVisibility, canRestoreSourceVisibility, canCopyEntriesOut, canMoveEntriesOut, getCapabilities, createSource } from '../infrastructure/http/Api.js'
 import { DialogAbout, hasUnseenChanges } from '../features/about/client/DialogAbout.js'
 import { DialogIntegration } from '../integrations/client/DialogIntegration.js'
 import { DialogSourceMigration } from '../features/migration/client/DialogSourceMigration.js'
+import { DialogSourceDeletion } from '../features/sources/client/DialogSourceDeletion.js'
 import { type Source } from '../features/sources/Source.js'
 import { Color } from '../features/sources/Color.js'
-import { type Integration } from '../integrations/Integration.js'
+import { integrationClasses, type Integration } from '../integrations/Integration.js'
 import { ReorderabilityController, ReorderabilityState } from '@3mo/reorderability'
 import { focusRing } from '../design/focusRing.css.js'
 import { windowDragHandle } from '../design/windowDrag.css.js'
@@ -50,10 +51,16 @@ export class Sidebar extends Component {
 	private sourcesReorderOf(integration: Integration) {
 		let controller = this.sourcesReorder.get(integration.id)
 		if (!controller) {
+			const id = integration.id
 			controller = new ReorderabilityController(this, {
+				// Looked up per drag: the controller outlives the integration object every refetch replaces.
 				handleReorder: (source, destination) => {
-					const ids = getEnabledSources(integration).map(source => source.id)
-					this.commitOrder(ids, source, destination, () => reorderSources(integration, ids))
+					const current = getIntegrations().find(integration => integration.id === id)
+					if (!current) {
+						return
+					}
+					const ids = getEnabledSources(current).map(source => source.id)
+					this.commitOrder(ids, source, destination, () => reorderSources(current, ids))
 				},
 			})
 			this.sourcesReorder.set(integration.id, controller)
@@ -113,7 +120,7 @@ export class Sidebar extends Component {
 			}
 
 			mitra-sidebar {
-				/* Only the three lengths that two distant rules must agree on live here — the source list's
+				/* Only the three lengths that two distant rules must agree on live here. The source list's
 				   columns are laid out by ONE grid the rows subscribe to (see .integrations), not by an
 				   arithmetic of per-element paddings. */
 				--sidebar-width: 16rem;
@@ -147,7 +154,7 @@ export class Sidebar extends Component {
 					width: var(--sidebar-width);
 					height: 100%;
 					/* Mixed from the text colour, not --color-surface: surface is LIGHTER than the background
-					   in light mode, so that border read as a bevel — or as nothing at all. */
+					   in light mode, so that border read as a bevel, or as nothing at all. */
 					border-inline-end: 1px solid color-mix(in srgb, var(--color-text) 9%, transparent);
 					padding: 1.5rem var(--sidebar-inset) var(--sidebar-inset);
 					gap: 1rem;
@@ -165,7 +172,7 @@ export class Sidebar extends Component {
 
 					/* Window Controls Overlay (see PageCalendar's header): with the OS title bar gone, the
 					   sidebar's dead space becomes the window-drag handle. On macOS the window buttons overlay
-					   its top-leading corner, so the first row also drops below the button band — the clamp is
+					   its top-leading corner, so the first row also drops below the button band. The clamp is
 					   the band height where the buttons are actually on the leading side (titlebar-area-x ≈
 					   their width) and collapses to 0 on Windows/Linux (x = 0), wasting no space there. */
 					@media (display-mode: window-controls-overlay) {
@@ -173,11 +180,11 @@ export class Sidebar extends Component {
 
 						/* The column carries the window; everything in it stays the app's (windowDrag.css.ts).
 						   This is what keeps the tabs clickable and swipeable and the whole planning list live
-						   — and what keeps the NEXT thing added here live without anyone remembering to. */
+						   and what keeps the NEXT thing added here live without anyone remembering to. */
 						${windowDragHandle};
 
 						/* The one part of the column that is inert on purpose: the brand mark carries the
-						   window, so the logo moves it. Its version whisper does not — it stays live (see
+						   window, so the logo moves it. Its version whisper does not: it stays live (see
 						   .version), which is what keeps About reachable from a row that drags. */
 						.brand, .brand :is(.mark, img, .name) {
 							-webkit-app-region: drag;
@@ -204,7 +211,7 @@ export class Sidebar extends Component {
 						color: var(--color-text-muted);
 					}
 
-					/* The menu holding the rare action keeps to itself until the card is reached for — the
+					/* The menu holding the rare action keeps to itself until the card is reached for, the
 					   same bargain a source row's ⋯ strikes with its eye. Focus and an open menu pin it, so
 					   it never fades out from under itself. */
 					.actions mitra-icon-button {
@@ -259,7 +266,7 @@ export class Sidebar extends Component {
 					cursor: pointer;
 					border-radius: 0.375rem;
 
-					/* The global button skin's hover/active box is far too loud for a brand mark — the only
+					/* The global button skin's hover/active box is far too loud for a brand mark. The only
 					   affordance is the version whisper waking up. */
 					&:not(:disabled) {
 						&:hover, &:active {
@@ -277,7 +284,7 @@ export class Sidebar extends Component {
 						height: 1.375rem;
 					}
 
-					/* The update badge: a quiet accent dot on the mark's corner — no text, no animation;
+					/* The update badge: a quiet accent dot on the mark's corner, with no text, no animation;
 					   the row's title whispers what it means, the About dialog carries the detail. */
 					.mark {
 						position: relative;
@@ -317,7 +324,7 @@ export class Sidebar extends Component {
 						letter-spacing: 0.02em;
 						color: var(--color-text-muted);
 
-						/* Dimmed on the text only — the news dot inside must keep its full accent. */
+						/* Dimmed on the text only, since the news dot inside must keep its full accent. */
 						.label {
 							overflow: hidden;
 							white-space: nowrap;
@@ -326,7 +333,7 @@ export class Sidebar extends Component {
 						}
 
 						/* The news dot: the instance moved since this user last opened What's New. Quiet by
-						   design — no toast, no auto-opened dialog; it goes out when What's New is opened
+						   design: no toast, no auto-opened dialog; it goes out when What's New is opened
 						   (About → What's New, or the palette command). */
 						.news-dot {
 							flex-shrink: 0;
@@ -337,7 +344,7 @@ export class Sidebar extends Component {
 						}
 
 						/* Under Window Controls Overlay the brand row drags the window, making this whisper
-						   the row's only click-through to About — it is already live (the handle hands every
+						   the row's only click-through to About. It is already live (the handle hands every
 						   element back), so all it needs here is a real hit area and a hover affordance. */
 						@media (display-mode: window-controls-overlay) {
 							cursor: pointer;
@@ -360,12 +367,12 @@ export class Sidebar extends Component {
 
 				/* The scrolling middle: takes whatever height the brand row and footer leave over.
 
-				   It is also THE grid. One set of columns — marker | name | actions, between two zero-width
-				   edge tracks — is declared here, and every account heading and every source row subscribes
+				   It is also THE grid. One set of columns (marker | name | actions, between two zero-width
+				   edge tracks) is declared here, and every account heading and every source row subscribes
 				   to it through subgrid. A heading's ⋯ and a row's ⋯ then sit in the same track instead of
 				   being talked into the same place by matching paddings. The edge tracks are what inset a
 				   row's content from its own hover chip: padding cannot do that job here, because padding on
-				   a subgrid item shifts its tracks off the parent's — the very misalignment this prevents.
+				   a subgrid item shifts its tracks off the parent's, the very misalignment this prevents.
 
 				   The thumb rides the nav's own inline padding, clear of the content: the negative margin
 				   lets the box reach the divider, scrollbar-gutter: stable reserves the thumb's lane whether
@@ -431,12 +438,12 @@ export class Sidebar extends Component {
 				.sources { row-gap: 0.125rem; }
 
 				/* Reordering (@3mo/reorderability): while a drag is in flight THIS element carries
-				   [data-reordering] and the grabbed item [data-reorderability=dragging] — the siblings
+				   [data-reordering] and the grabbed item [data-reorderability=dragging]. The siblings
 				   glide aside, the grabbed one rides the pointer raw (its transform is driven per frame).
 				   Everything is transforms only, so the subgrid tracks the alignment rests on are never
 				   touched; the attributes and transforms clear together on release, and the store's
 				   re-sorted render lands in the same task, so the settled order paints exactly once,
-				   transition-free — which is why this transition is scoped to the attribute. */
+				   transition-free, which is why this transition is scoped to the attribute. */
 				&[data-reordering] {
 					.source:not([data-reorderability=${unsafeCSS(ReorderabilityState.Dragging)}]),
 					.integration:not([data-reorderability=${unsafeCSS(ReorderabilityState.Dragging)}]) {
@@ -470,7 +477,7 @@ export class Sidebar extends Component {
 				.source {
 					min-height: 1.75rem;
 					border-radius: 0.375rem;
-					/* The whole row is its own drag handle — a mouse drag must never start a text
+					/* The whole row is its own drag handle: a mouse drag must never start a text
 					   selection, and the grab cursor is the affordance; the row's own controls keep their
 					   pointer cursors, and the rename field restores text behaviour below. */
 					cursor: grab;
@@ -483,7 +490,7 @@ export class Sidebar extends Component {
 
 					/* Keep the actions visible while this row's menu popover is open, so the 3-dot doesn't
 					   fade out from under its own menu when the pointer leaves the row. Ditto while anything
-					   in the row holds focus — tabbing into a transparent button used to park the focus ring
+					   in the row holds focus, since tabbing into a transparent button used to park the focus ring
 					   on something invisible. */
 					&:focus-within .actions mitra-icon-button,
 					&:has(mitra-menu:popover-open) .actions mitra-icon-button {
@@ -499,11 +506,11 @@ export class Sidebar extends Component {
 						.actions .eye-icon { opacity: 1; }
 					}
 
-					/* The leading marker is the shared source icon (see SourceIcon) — the glyph, the colour, the
+					/* The leading marker is the shared source icon (see SourceIcon). The glyph, the colour, the
 					   filled state and its geometry all belong to it. This is only what makes it clickable:
 					   clicking toggles whether the source is the default for new entries. */
 					.marker {
-						/* The all: unset comes first — it resets grid-column too, so placing the marker above
+						/* The all: unset comes first: it resets grid-column too, so placing the marker above
 						   it would put the icon back in the edge track. */
 						all: unset;
 						grid-column: 2;
@@ -551,7 +558,7 @@ export class Sidebar extends Component {
 					}
 				}
 
-				/* The grabbed row/block lifts above its gliding siblings on an opaque backing — after the
+				/* The grabbed row/block lifts above its gliding siblings on an opaque backing, after the
 				   hover rule, so the lift's backing wins over the row's own hover chip while it's carried. */
 				.source[data-reorderability=${unsafeCSS(ReorderabilityState.Dragging)}], .integration[data-reorderability=${unsafeCSS(ReorderabilityState.Dragging)}] {
 					z-index: 5;
@@ -562,12 +569,12 @@ export class Sidebar extends Component {
 				}
 
 				/* The trailing icon buttons bleed their glyph inset back out, so it is the GLYPHS that land on the
-				   trailing edge — aligning the boxes instead leaves every icon a few pixels short of the text above. */
+				   trailing edge. Aligning the boxes instead leaves every icon a few pixels short of the text above. */
 				.integration > header > mitra-popover-container > mitra-icon-button, .actions > mitra-icon-button:last-child, .account > mitra-icon-button:last-child {
 					margin-inline-end: calc(-1 * var(--mitra-glyph-inset));
 				}
 
-				/* Pinned below the scroll region — always visible, however long the source list grows. */
+				/* Pinned below the scroll region, always visible, however long the source list grows. */
 				.footer {
 					flex-shrink: 0;
 					display: flex;
@@ -708,7 +715,7 @@ export class Sidebar extends Component {
 			return t('Set as the default for new entries')
 		}
 		return getDefaultSourceId() === source.id
-			? t('Default for new entries — click to unset')
+			? t('Default for new entries. Click to unset')
 			: t('Default for new entries, as the first one shown')
 	}
 
@@ -734,6 +741,27 @@ export class Sidebar extends Component {
 	}
 
 	/** Shift source order by delta within its integration. */
+	/** Falls back to the integration name when there is no account, like Mitra. */
+	private integrationTitle(integration: Integration) {
+		return integration.credentials?.username
+			|| integrationClasses().find(integrationClass => integrationClass.type === integration.type)?.label
+			|| integration.type
+	}
+
+	private async addSource(integration: Integration) {
+		const source = await createSource(integration.id, { name: String(t('Calendar')) })
+		await fetchIntegrations()
+		this.sourcesChange.dispatch()
+		await this.startRename(source)
+	}
+
+	private async removeSource(source: Source) {
+		if (await DialogSourceDeletion.confirmAndDelete(source)) {
+			this.requestUpdate()
+			this.sourcesChange.dispatch()
+		}
+	}
+
 	private moveSource(integration: Integration, source: Source, delta: number) {
 		const ids = getEnabledSources(integration).map(source => source.id)
 		const index = ids.indexOf(source.id)
@@ -766,15 +794,20 @@ export class Sidebar extends Component {
 				${getIntegrations().map((i, index, integrations) => html`
 					<div class="integration" ${this.integrationsReorder.item({ index, handle: '.title' })}>
 						<header>
-							<span class="title">${i.credentials?.username || i.type}</span>
+							<span class="title">${this.integrationTitle(i)}</span>
 							<mitra-popover-container>
 								<mitra-icon-button size="small" icon="more-horizontal" label=${t('Integration options')}></mitra-icon-button>
 								<mitra-menu slot="popover">
+									${!i.capabilities.createSources ? html.nothing : html`
+										<mitra-menu-item icon="plus" @click=${() => void this.addSource(i)}>${t('New calendar')}</mitra-menu-item>
+									`}
 									<mitra-menu-item icon="pencil" @click=${() => this.openDialog(i.id)}>${t('Edit')}</mitra-menu-item>
 									<mitra-menu-item icon="arrow-up" ?disabled=${index === 0} @click=${() => this.moveIntegration(i.id, -1)}>${t('Move up')}</mitra-menu-item>
 									<mitra-menu-item icon="arrow-down" ?disabled=${index === integrations.length - 1} @click=${() => this.moveIntegration(i.id, 1)}>${t('Move down')}</mitra-menu-item>
-									<mitra-menu-item icon="hard-drive-download" title=${t('Read every enabled calendar of this account again from the start')}
-										@click=${() => void reimportIntegration(i.id).catch(() => void 0)}>${t('Re-import entries')}</mitra-menu-item>
+									${!i.reimportable ? html.nothing : html`
+										<mitra-menu-item icon="hard-drive-download" title=${t('Read every enabled calendar of this account again from the start')}
+											@click=${() => void reimportIntegration(i.id).catch(() => void 0)}>${t('Re-import entries')}</mitra-menu-item>
+									`}
 									<mitra-menu-item icon="trash-2" variant="danger" @click=${() => this.removeIntegration(i.id)}>${t('Delete')}</mitra-menu-item>
 								</mitra-menu>
 							</mitra-popover-container>
@@ -827,7 +860,7 @@ export class Sidebar extends Component {
 	private get navTemplate() {
 		return html`
 			<nav>
-				<button class="brand" title=${[`Mitra ${mitra.version}`, this.updateHint].filter(Boolean).join(' — ')} @click=${() => new DialogAbout().confirm()}>
+				<button class="brand" title=${[`Mitra ${mitra.version}`, this.updateHint].filter(Boolean).join('\n')} @click=${() => new DialogAbout().confirm()}>
 					<span class="mark">
 						<img src="/android-chrome-192x192.png" alt="">
 						${!this.updateHint ? '' : html`<span class="dot"></span>`}
@@ -854,7 +887,7 @@ export class Sidebar extends Component {
 					`}
 					${!canInstall() ? html.nothing : html`
 						<mitra-button class="action"
-							title=${t('Install mitra as an app — it gets its own window, and notifications appear under its own name and icon')}
+							title=${t('Install mitra as an app. It gets its own window, and notifications appear under its own name and icon')}
 							@click=${() => promptInstall()}>
 							<mitra-icon icon="monitor-down"></mitra-icon>
 							${t('Install as an App')}
@@ -903,7 +936,7 @@ export class Sidebar extends Component {
 			<div
 				class="name"
 				data-rename-id=${source.id}
-				title=${`${source.name} — ${t('Double-click to rename')}`}
+				title=${`${source.name}\n${t('Double-click to rename')}`}
 				contenteditable=${this.renamingId === source.id ? 'plaintext-only' : 'false'}
 				@dblclick=${() => this.startRename(source)}
 				@keydown=${(e: KeyboardEvent) => this.handleRenameKeydown(e, source)}
@@ -936,14 +969,20 @@ export class Sidebar extends Component {
 								@click=${() => void new DialogSourceMigration({ source }).confirm().catch(() => void 0)}
 							>${canMoveEntriesOut(source) ? t('Move entries to…') : t('Copy entries to…')}</mitra-menu-item>
 						`}
-						<mitra-menu-item icon="hard-drive-download" title=${t('Read this calendar again from the start')}
-							@click=${() => void reimportSource(source.id).catch(() => void 0)}>${t('Re-import entries')}</mitra-menu-item>
+						${!integration.reimportable ? html.nothing : html`
+							<mitra-menu-item icon="hard-drive-download" title=${t('Read this calendar again from the start')}
+								@click=${() => void reimportSource(source.id).catch(() => void 0)}>${t('Re-import entries')}</mitra-menu-item>
+						`}
+						${!getCapabilities(source.id).deleteSources ? html.nothing : html`
+							<mitra-menu-item icon="trash-2" variant="danger" title=${t('Delete this calendar and every entry in it')}
+								@click=${() => void this.removeSource(source)}>${t('Delete calendar')}</mitra-menu-item>
+						`}
 					</mitra-menu>
 				</mitra-popover-container>
 				<mitra-icon-button size="small"
 					class="eye-icon"
 					icon=${source.hidden ? 'eye-off' : 'eye'}
-					label=${`${source.hidden ? t('Show calendar') : t('Hide calendar')} — ${canRestoreSourceVisibility() ? t('Alt+click to show the previously visible ones') : t('Alt+click to show only this one')}`}
+					label=${`${source.hidden ? t('Show calendar') : t('Hide calendar')}\n${canRestoreSourceVisibility() ? t('Alt+click to show the previously visible ones') : t('Alt+click to show only this one')}`}
 					@click=${(e: MouseEvent) => e.altKey ? this.toggleSolo(source) : this.toggleVisibility(source)}
 				></mitra-icon-button>
 			</div>

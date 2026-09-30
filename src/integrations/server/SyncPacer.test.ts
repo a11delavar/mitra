@@ -33,7 +33,7 @@ describe('SyncPacer.shouldSync', () => {
 		assert.equal(pacer.shouldSync(it1, { now: SyncPacer.idleInterval }), true)
 	})
 
-	it('judges presence per owner — one user watching does not speed up another\'s integrations', () => {
+	it('judges presence per owner: one user watching does not speed up another\'s integrations', () => {
 		const pacer = pacerWith('user-1')
 		const watched = integration({ id: 'a', userId: 'user-1' })
 		const unwatched = integration({ id: 'b', userId: 'user-2' })

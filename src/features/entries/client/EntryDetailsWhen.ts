@@ -136,7 +136,7 @@ export class EntryDetailsWhen extends Component {
 
 	private get zoneLabel(): string {
 		if (this.entry.timeZone === FLOATING_TIME_ZONE) {
-			return t('Wall clock — no time zone')
+			return t('Wall clock (no time zone)')
 		}
 		const shown = this.foreignZone && this.showEventZone ? this.foreignZone : systemZoneId()
 		return `${zoneNamePart(shown, 'shortOffset')} ${zoneCity(shown)}`
@@ -148,19 +148,19 @@ export class EntryDetailsWhen extends Component {
 
 	private get zoneTitle(): string {
 		if (this.zoneReadonly && this.foreignZone && !this.showEventZone) {
-			return t('Primary time zone — switch to ${city} time to change the zone', { city: zoneCity(this.foreignZone) })
+			return t('Primary time zone. Switch to ${city} time to change the zone', { city: zoneCity(this.foreignZone) })
 		}
 		const zone = this.entry.timeZone ?? undefined
 		return !zone ? t('Time zone')
-			: zone === FLOATING_TIME_ZONE ? t('Wall clock — no time zone')
-				: `${zoneCity(zone)} — ${longZoneName(zone)} (${zoneNamePart(zone, 'longOffset')})`
+			: zone === FLOATING_TIME_ZONE ? t('Wall clock (no time zone)')
+				: `${zoneCity(zone)}, ${longZoneName(zone)} (${zoneNamePart(zone, 'longOffset')})`
 	}
 
 	private get lensTitle(): string {
 		const city = this.foreignZone ? zoneCity(this.foreignZone) : ''
 		return this.showEventZone
-			? t('Showing ${city} time — switch to the primary time zone', { city })
-			: t('Showing the primary time zone — switch to ${city} time', { city })
+			? t('Showing ${city} time. Switch to the primary time zone', { city })
+			: t('Showing the primary time zone. Switch to ${city} time', { city })
 	}
 
 	private readonly toggleLens = () => {
@@ -352,7 +352,7 @@ export class EntryDetailsWhen extends Component {
 					<div class="field">
 						<mitra-date-field class="start-date" label=${t('Start date')} ?readonly=${!this.editable} .value=${this.dateValue(this.entry.start)} @change=${this.handleStartDateChange}></mitra-date-field>
 						${!this.clearable ? html.nothing : html`
-							<mitra-icon-button size="small" class="clear" icon="x" label=${t('Remove the date')} title=${t('Remove the date — the task moves to Unscheduled')} @click=${this.clearDate}></mitra-icon-button>
+							<mitra-icon-button size="small" class="clear" icon="x" label=${t('Remove the date')} title=${t('Remove the date. The task moves to Unscheduled')} @click=${this.clearDate}></mitra-icon-button>
 						`}
 					</div>
 					${!this.displayMultiDay && !this.endDateShown ? (!this.editable ? html.nothing : html`

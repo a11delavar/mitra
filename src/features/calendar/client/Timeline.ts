@@ -627,7 +627,7 @@ export class Timeline extends Component {
 	private entriesTemplate(rows: Array<TimelineRow>, placed: Array<PlacedBar>) {
 		return html`
 			<div class="entries">
-				${rows.length ? html.nothing : html`<div class="empty">${t('Nothing planned yet — draw a task on the row below')}</div>`}
+				${rows.length ? html.nothing : html`<div class="empty">${t('Nothing planned yet. Draw a task on the row below')}</div>`}
 				${repeat(rows, row => row.key, (row, index) => html`
 					<div class="row" style="grid-row: ${index + 1};">
 						<button class="jump before" tabindex="-1" title=${t('Go to entry')} @click=${() => this.jumpToRow(row)}>

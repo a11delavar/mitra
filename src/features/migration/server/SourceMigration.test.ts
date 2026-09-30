@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { MikroORM, UnderscoreNamingStrategy, type EntityManager } from '@mikro-orm/sqlite'
 import { entity } from '../../../infrastructure/model/orm.js'
 import { Integration } from '../../../integrations/Integration.js'
-import { Dev } from '../../../integrations/dev/Dev.js'
+import { MitraCalendar } from '../../../integrations/mitra/MitraCalendar.js'
 import { Notion } from '../../../integrations/notion/Notion.js'
 import { CalDAV } from '../../../integrations/caldav/CalDAV.js'
 import { GoogleCalendar } from '../../../integrations/google/GoogleCalendar.js'
@@ -25,7 +25,7 @@ const D = (iso: string) => new Date(iso) as unknown as DateTime
 
 /** Test double simulating a target that assigns its own UID (e.g. Notion page ID). */
 @entity({ discriminatorValue: 'test-minting' })
-class Minting extends Dev {
+class Minting extends MitraCalendar {
 	override createEntry(em: EntityManager, entry: Entry) {
 		entry.uid = `minted-${entry.uid}`
 		return super.createEntry(em, entry)
@@ -34,15 +34,15 @@ class Minting extends Dev {
 
 /** Test double with restricted capabilities. */
 @entity({ discriminatorValue: 'test-limited' })
-class Limited extends Dev {
+class Limited extends MitraCalendar {
 	override get capabilities() {
-		return { ...Integration.fullCapabilities, recurrence: false, reminders: false, participants: false }
+		return { ...Integration.defaultCapabilities, recurrence: false, reminders: false, participants: false }
 	}
 }
 
 /** Test double that throws when entry heading is 'poison'. */
 @entity({ discriminatorValue: 'test-failing' })
-class Failing extends Dev {
+class Failing extends MitraCalendar {
 	override createEntry(em: EntityManager, entry: Entry) {
 		if (entry.heading === 'poison') {
 			throw new Error('the provider said no')
@@ -53,7 +53,7 @@ class Failing extends Dev {
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
-		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, Dev, Minting, Limited, Failing, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
+		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, MitraCalendar, Minting, Limited, Failing, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
 		dbName: ':memory:',
 		namingStrategy: class extends UnderscoreNamingStrategy {
 			override joinColumnName(propertyName: string) {
@@ -71,9 +71,9 @@ async function inMemoryOrm() {
 }
 
 /** Seeds a user with origin and target sources on separate integrations. */
-async function seed(em: EntityManager, TargetIntegration: typeof Dev = Dev) {
+async function seed(em: EntityManager, TargetIntegration: typeof MitraCalendar = MitraCalendar) {
 	const user = new User({ username: 'owner' })
-	const from = new Dev({ userId: user.id, uri: 'dev://origin' })
+	const from = new MitraCalendar({ userId: user.id, uri: 'dev://origin' })
 	const to = new TargetIntegration({ userId: user.id, uri: 'dev://target' })
 	const origin = new Source({ integrationId: from.id, uri: 'origin/calendar', name: 'Origin', enabled: true })
 	const target = new Source({ integrationId: to.id, uri: 'target/calendar', name: 'Target', enabled: true })
@@ -186,14 +186,14 @@ describe('SourceMigration', () => {
 			await assert.rejects(() => SourceMigration.of(em, user, origin.id, { targetSourceId: origin.id }), MigrationRefused)
 		})
 
-		it('will not move out of a read-only calendar — the originals could never be deleted', async () => {
+		it('will not move out of a read-only calendar, since the originals could never be deleted', async () => {
 			const { user, origin, target } = await seed(em)
 			origin.readOnly = true
 			await em.flush()
 			await assert.rejects(() => SourceMigration.of(em, user, origin.id, { targetSourceId: target.id }), MigrationRefused)
 		})
 
-		it('will still COPY out of a read-only calendar — a copy asks nothing of the origin', async () => {
+		it('will still COPY out of a read-only calendar, since a copy asks nothing of the origin', async () => {
 			const { user, origin, target } = await seed(em)
 			origin.readOnly = true
 			await em.flush()
@@ -312,7 +312,7 @@ describe('SourceMigration', () => {
 			assert.equal(outcome.created, 2)
 		})
 
-		it('keeps the originals — and gives their copies identities of their own — when asked to copy', async () => {
+		it('keeps the originals (and gives their copies identities of their own) when asked to copy', async () => {
 			const { user, origin, target } = await seed(em)
 			const original = entryIn(origin, { heading: 'one' })
 			em.persist(original)
@@ -328,7 +328,7 @@ describe('SourceMigration', () => {
 			assert.notEqual(copy!.uid, original.uid)
 		})
 
-		it('copies a linked PAIR as a linked pair — the copies point at each other, never back at the originals', async () => {
+		it('copies a linked PAIR as a linked pair: the copies point at each other, never back at the originals', async () => {
 			const { user, origin, target } = await seed(em)
 			const [predecessor, dependent] = [entryIn(origin, { heading: 'first' }), entryIn(origin, { heading: 'second' })]
 			em.persist([predecessor, dependent, new EntryRelation({ entryId: dependent.id!, type: RelationType.FinishToStart, targetUid: predecessor.uid! })])

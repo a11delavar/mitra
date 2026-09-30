@@ -9,7 +9,7 @@ describe('EntryRelations', () => {
 
 	describe('sections', () => {
 		it('reads all four states of a hierarchy pair, whichever side authored it', () => {
-			// Two entries, four possible lines — the same two facts told from either side.
+			// Two entries, four possible lines: the same two facts told from either side.
 			assert.deepEqual(readings(EntryRelations.of('self', [{ type: RelationType.Parent, targetUid: 'p' }])), [['subtask-of', 'outgoing p']])
 			assert.deepEqual(readings(EntryRelations.of('self', [{ type: RelationType.Child, targetUid: 'c' }])), [['subtasks', 'outgoing c']])
 			assert.deepEqual(readings(EntryRelations.of('self', [{ type: RelationType.Parent, targetUid: 'c', direction: 'incoming' as const }])), [['subtasks', 'incoming c']])
@@ -29,7 +29,7 @@ describe('EntryRelations', () => {
 			assert.equal(bag.lines[0]!.ownerUid, undefined)
 		})
 
-		it('keeps a genuine second line over the same pair — a hierarchy edge and a dependency are not echoes', () => {
+		it('keeps a genuine second line over the same pair: a hierarchy edge and a dependency are not echoes', () => {
 			const bag = EntryRelations.of('self', [{ type: RelationType.Parent, targetUid: 'p' }, { type: RelationType.FinishToStart, targetUid: 'p', direction: 'incoming' as const }])
 			assert.deepEqual(readings(bag), [['blocks', 'incoming p'], ['subtask-of', 'outgoing p']])
 		})
@@ -54,7 +54,7 @@ describe('EntryRelations', () => {
 	})
 
 	describe('writes', () => {
-		it('is the persisting projection alone — a derived line is never in it', () => {
+		it('is the persisting projection alone: a derived line is never in it', () => {
 			const bag = EntryRelations.of('self', [{ type: RelationType.Parent, targetUid: 'p' }, { type: RelationType.FinishToStart, targetUid: 'd', direction: 'incoming' as const }])
 			assert.deepEqual(bag.writes!.map(relation => [relation.type.value, relation.targetUid]), [['PARENT', 'p']])
 		})
@@ -95,7 +95,7 @@ describe('EntryRelations', () => {
 			assert.deepEqual(bag.edges.map(edge => edge.key), ['hierarchy p self'])
 		})
 
-		it('leaves an uninterpreted line out — it constrains nothing', () => {
+		it('leaves an uninterpreted line out, since it constrains nothing', () => {
 			assert.deepEqual(EntryRelations.of('self', [{ type: 'X-WAITS-FOR', targetUid: 'x' }]).edges, [])
 		})
 	})

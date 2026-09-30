@@ -15,7 +15,7 @@ import { EntryRelation } from '../EntryRelation.js'
 import { Entry, TaskStatus } from '../../entries/Entry.js'
 import { CalDAV } from '../../../integrations/caldav/CalDAV.js'
 import { AppleCalendar } from '../../../integrations/apple/AppleCalendar.js'
-import { Dev } from '../../../integrations/dev/Dev.js'
+import { MitraCalendar } from '../../../integrations/mitra/MitraCalendar.js'
 import { NotificationSubscription } from '../../reminders/NotificationSubscription.js'
 import { Session } from '../../identity/server/Session.js'
 import { assertRelationsValid, relationClosure } from './relations.js'
@@ -24,7 +24,7 @@ import { assertRelationsValid, relationClosure } from './relations.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
-		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Dev, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
+		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, MitraCalendar, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
 		dbName: ':memory:',
 		namingStrategy: class extends UnderscoreNamingStrategy {
 			override joinColumnName(propertyName: string) {
@@ -58,7 +58,7 @@ describe('hierarchy rollup', () => {
 		await em.nativeDelete(Integration, {})
 		await em.nativeDelete(User, {})
 		user = new User({ username: 'owner' })
-		const integration = new Dev({ userId: user.id, uri: 'dev://owner' })
+		const integration = new MitraCalendar({ userId: user.id, uri: 'dev://owner' })
 		source = new Source({ integrationId: integration.id, uri: 'owner/calendar', entryTypes: [EntryType.Event, EntryType.Task], name: 'Calendar', enabled: true, hidden: false })
 		em.persist([user, integration, source])
 		await em.flush()
@@ -80,7 +80,7 @@ describe('hierarchy rollup', () => {
 		await em.flush()
 	}
 
-	it('counts the children that point at the parent with PARENT — mitra\'s own direction', async () => {
+	it('counts the children that point at the parent with PARENT, mitra\'s own direction', async () => {
 		await task('parent')
 		const first = await task('a', TaskStatus.Done)
 		const second = await task('b', TaskStatus.ToDo)
@@ -195,7 +195,7 @@ describe('hierarchy rollup', () => {
 	it('never counts a child on a source the user does not own', async () => {
 		await task('parent')
 		const stranger = new User({ username: 'stranger' })
-		const strangerIntegration = new Dev({ userId: stranger.id, uri: 'dev://stranger' })
+		const strangerIntegration = new MitraCalendar({ userId: stranger.id, uri: 'dev://stranger' })
 		const strangerSource = new Source({ integrationId: strangerIntegration.id, uri: 'stranger/calendar', entryTypes: [EntryType.Task], name: 'Theirs', enabled: true, hidden: false })
 		const theirTask = new Entry({ id: crypto.randomUUID(), sourceId: strangerSource.id, uid: 'theirs', type: EntryType.Task, heading: 'theirs', status: TaskStatus.Done })
 		em.persist([stranger, strangerIntegration, strangerSource, theirTask])
@@ -230,7 +230,7 @@ describe('hierarchy rollup', () => {
 			assert.deepEqual(graph.parentsOf('parent'), [])
 		})
 
-		it('names only the entries the graph mentions — an unrelated entry is not in it', async () => {
+		it('names only the entries the graph mentions: an unrelated entry is not in it', async () => {
 			await task('parent')
 			const child = await task('a')
 			await relate(child, RelationType.Parent, 'parent')
@@ -251,7 +251,7 @@ describe('hierarchy rollup', () => {
 	})
 
 	describe('what a WRITE path sees', () => {
-		it('loadFor yields the entry OWN rows only — a write path can never diff against a derived line', async () => {
+		it('loadFor yields the entry OWN rows only, so a write path can never diff against a derived line', async () => {
 			// The structural reason a provider sync cannot churn on the derived half: it never sees one.
 			const parent = await task('parent')
 			const child = await task('a')
@@ -304,7 +304,7 @@ describe('hierarchy rollup', () => {
 			assert.equal(await assertRelationsValid(em, user, first, candidates([RelationType.Parent, 'second'])), undefined)
 		})
 
-		it('judges the CANDIDATE list, not the stored one — a write replaces what it holds today', async () => {
+		it('judges the CANDIDATE list, not the stored one: a write replaces what it holds today', async () => {
 			// The entry currently claims f as its child (a foreign CHILD line). Re-pointing it as f's
 			// child is legal precisely because this write deletes the line that would contradict it.
 			const entry = await task('entry')

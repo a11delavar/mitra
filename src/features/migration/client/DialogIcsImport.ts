@@ -304,7 +304,7 @@ export class DialogIcsImport extends DialogComponent<{ readonly fileName: string
 		return !targets.length ? html`
 			<p class="hint">${t('There is no calendar the file could be added to.')}</p>
 		` : html`
-			<p class="hint">${t('Choose the calendar the entries of this file are added to — the ones it cannot take are left out. The file itself stays untouched.')}</p>
+			<p class="hint">${t('Choose the calendar the entries of this file are added to. The ones it cannot take are left out. The file itself stays untouched.')}</p>
 			<ul class="targets">
 				${targets.map(({ integration, sources }) => html`
 					<li class="account">${integration.credentials?.username || integration.type}</li>
@@ -430,7 +430,7 @@ export class DialogIcsImport extends DialogComponent<{ readonly fileName: string
 				? outcome.failure
 				: t('"${heading}" could not be added: ${message}', { heading: outcome.failedEntry, message: outcome.failure ?? '' })}</span>
 				${!outcome.duplicates ? html.nothing : html`
-					<span>${t('${count:pluralityNumber} landed anyway and could not be taken back — delete them in ${name} by hand.', { count: outcome.duplicates, name: this.target!.name })}</span>
+					<span>${t('${count:pluralityNumber} landed anyway and could not be taken back. Delete them in ${name} by hand.', { count: outcome.duplicates, name: this.target!.name })}</span>
 				`}
 			</div>
 		`

@@ -35,4 +35,5 @@ E-mails are selectable, so you can copy a single address straight out of a row.
 - **A reply came in but the badge didn't change.** Replies arrive through the calendar server, so they appear on Mitra's next sync rather than instantly.
 - **Answering an invitation yourself.** Mitra shows everyone's reply but doesn't send yours. Accept or decline in your mail client or another calendar app, and the answer syncs back here.
 - **The add box is missing.** Someone else organizes that entry; only the organizer may change the list.
+- **The people row is missing.** The entry is in a calendar that can't send invitations, such as a [Mitra calendar](../integrations/mitra.md) or a Notion view.
 - **A meeting room isn't listed.** Rooms and equipment are resource attendees, not people, so they're left out of the list.

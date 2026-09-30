@@ -7,7 +7,7 @@ name: Docker
 #   • push tag `vX.Y.Z`    → `X.Y.Z`, `X.Y`, `X`, and `latest`
 #   • push tag `vX.Y.Z-rc.N` → only `X.Y.Z-rc.N` (no floating `X`/`X.Y`, no `latest`)
 #   • pull request          → build only (no push), to validate the Dockerfile
-# Pushing the tag is the single trigger — `release.yml` turns the same tag into a
+# Pushing the tag is the single trigger: `release.yml` turns the same tag into a
 # GitHub Release with commit-based notes, in parallel.
 on:
   push:
@@ -33,7 +33,7 @@ jobs:
           fetch-depth: 0
 
       # The version string baked into the app (see scripts/esbuild.ts): the tag itself on tag builds,
-      # `v0.3.0-14-ga1b2c3d` on main/PR builds — passed into the image as a build ARG since the
+      # `v0.3.0-14-ga1b2c3d` on main/PR builds. It's passed into the image as a build ARG since the
       # Docker context carries no .git to compute it from.
       - name: Compute version string
         id: version
@@ -43,7 +43,7 @@ jobs:
 
       # The committed CHANGELOG.md only covers releases, but a `dev` image built from main carries
       # commits past the last tag that no section describes. Generate the `[Unreleased]` section into
-      # the build context here — the checkout above has full history, and git-cliff ships as a
+      # the build context here. The checkout above has full history, and git-cliff ships as a
       # standalone binary via npm, so no `npm ci` is needed. Mutates only the CI workspace; nothing is
       # committed. Tag builds skip this: the release flow guarantees the top section IS the release
       # (release.yml warns when it's missing).

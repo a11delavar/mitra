@@ -28,7 +28,7 @@ export class NotificationsSetting extends Setting<boolean> {
 	override get hint() {
 		switch (Notification.permission) {
 			case 'granted': return t('This browser will show your reminders.')
-			case 'denied': return t('This browser is blocking notifications — allow them in its site settings to get reminders here.')
+			case 'denied': return t('This browser is blocking notifications. Allow them in its site settings to get reminders here.')
 			default: return t('Reminders you add are always saved; this decides whether this browser may also alert you.')
 		}
 	}

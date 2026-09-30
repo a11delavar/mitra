@@ -42,7 +42,7 @@ export class TableSelection extends Component {
 	private static async write(rows: ReadonlyArray<TableRow>, write: (row: TableRow) => Promise<unknown>) {
 		await Promise.all([...Map.groupBy(rows, row => row.entry.recurrenceMasterId ?? row.entry).values()].map(async series => {
 			for (const row of series) {
-				await write(row).catch(error => console.error('Changing the entry failed — it was restored in the view:', error))
+				await write(row).catch(error => console.error('Changing the entry failed, so it was restored in the view:', error))
 			}
 		}))
 	}

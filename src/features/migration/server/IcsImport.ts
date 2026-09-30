@@ -26,7 +26,7 @@ interface IcsEntity {
 }
 
 /**
- * Imports the VEVENT/VTODO components of one iCalendar file into a target source — the file-origin
+ * Imports the VEVENT/VTODO components of one iCalendar file into a target source: the file-origin
  * sibling of {@link SourceMigration}'s copy phase. Copy semantics throughout: fresh identities are
  * minted (re-importing a file duplicates predictably instead of overwriting), in-file RELATED-TO
  * links are repointed onto the minted UIDs, and a failure rolls back everything already created.
@@ -72,7 +72,7 @@ export class IcsImport {
 			entry.uid = crypto.randomUUID()
 			if (entry.recurrence?.freq) {
 				// EXDATEs travel through the exdates column; the parse reads them off a transient raw
-				// (the same authority the expansion reads) which must not persist — the file is not sync state.
+				// (the same authority the expansion reads) which must not persist, since the file is not sync state.
 				entry.data = { raw: IcsSyncEngine.serialize([master], timezones) }
 				const exdates = exdatesOf(entry)
 				entry.exdates = exdates.length ? exdates : undefined
@@ -115,7 +115,7 @@ export class IcsImport {
 
 		for (const { entry, fileUid } of taking) {
 			try {
-				// Converted only now — the verdicts above must judge the type the file authored.
+				// Converted only now: the verdicts above must judge the type the file authored.
 				entry.migrateTo(this.target)
 				const row = await this.targetIntegration.createEntry(this.em, entry)
 				await EntryRelation.reconcile(this.em, row.id!, row.relations ?? null)
@@ -143,7 +143,7 @@ export class IcsImport {
 			await this.em.flush()
 		}
 
-		logger.info(`Imported ${created.length} entries from a calendar file into ${this.target} — ${left} left out`)
+		logger.info(`Imported ${created.length} entries from a calendar file into ${this.target}, ${left} left out`)
 		return new MigrationOutcome({ created: created.length, left })
 	}
 
@@ -158,7 +158,7 @@ export class IcsImport {
 			await this.targetIntegration.deleteEntry(this.em, row).catch(() => outcome.duplicates++)
 		}
 		await this.em.flush().catch(() => void 0)
-		logger.error(`Import into ${this.target} aborted at "${failed?.heading ?? ''}" — ${outcome.duplicates} entries could not be taken back: ${outcome.failure}`)
+		logger.error(`Import into ${this.target} aborted at "${failed?.heading ?? ''}". ${outcome.duplicates} entries could not be taken back: ${outcome.failure}`)
 		return outcome
 	}
 }

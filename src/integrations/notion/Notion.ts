@@ -88,7 +88,7 @@ export class Notion extends Integration<NotionCredentials> {
 
 	override get capabilities() {
 		return {
-			...Integration.fullCapabilities,
+			...Integration.defaultCapabilities,
 			recurrence: false, reminders: false, location: false, cancelledStatus: false,
 			percentComplete: false, timeZone: false, participants: false, transparency: false,
 			visibility: false,
@@ -150,13 +150,13 @@ export class Notion extends Integration<NotionCredentials> {
 
 		const dataSources = await client.searchDataSources()
 		if (!dataSources.length) {
-			throw new Error('No databases are shared with this Notion connection — open a database in Notion and add the connection under ••• → Connections')
+			throw new Error('No databases are shared with this Notion connection. Open a database in Notion and add the connection under ••• → Connections')
 		}
 		const sources: Array<Source> = []
 		for (const found of dataSources) {
 			const dataSource = found.properties ? found : await this.dataSource(found.id)
 			if (!Notion.schemaIndexOf(dataSource)) {
-				logger.debug(`Skipping "${Notion.plainText(dataSource.title) || found.id}" — no status/date properties, not a task database`)
+				logger.debug(`Skipping "${Notion.plainText(dataSource.title) || found.id}": no status/date properties, not a task database`)
 				continue
 			}
 			const title = Notion.plainText(dataSource.title) || 'Untitled'
@@ -221,7 +221,7 @@ export class Notion extends Integration<NotionCredentials> {
 				}
 			}
 		} else {
-			logger.warn(`View membership of "${source.name}" is truncated (10k cap) — skipping remote-deletion detection this cycle`)
+			logger.warn(`View membership of "${source.name}" is truncated (10k cap), skipping remote-deletion detection this cycle`)
 		}
 
 		for (const id of memberIds) {
@@ -295,7 +295,7 @@ export class Notion extends Integration<NotionCredentials> {
 					value.has_more = false
 				} catch (error) {
 					if (error instanceof NotionRequestError && (error.status === 404 || error.status === 403)) {
-						logger.debug(`Leaving the relationships of ${page.id} untouched — "${property.name}" is truncated and unreadable: ${error.message}`)
+						logger.debug(`Leaving the relationships of ${page.id} untouched: "${property.name}" is truncated and unreadable: ${error.message}`)
 						return { relations: undefined }
 					}
 					throw error
@@ -317,7 +317,7 @@ export class Notion extends Integration<NotionCredentials> {
 		const dataSource = await this.dataSource(dataSourceId)
 
 		const filterDefaults = await this.getClient().view(viewId).then(view => Notion.deriveFilterDefaults(view, dataSource)).catch(error => {
-			logger.warn(`Could not read the filter of view ${viewId} to pre-fill a new task — creating without it: ${error instanceof Error ? error.message : error}`)
+			logger.warn(`Could not read the filter of view ${viewId} to pre-fill a new task, creating without it: ${error instanceof Error ? error.message : error}`)
 			return {} as Record<string, NotionPropertyValue>
 		})
 		const pageIds = schema.relationProperties.length ? await this.dataSourcePageIds(em, dataSourceId) : new Set<string>()
@@ -454,7 +454,7 @@ export class Notion extends Integration<NotionCredentials> {
 		return NotionMarkdown.toMarkdown(blocks)
 	}
 
-	// --- Mapping (pure, static — the tested surface) ------------------------------------------------
+	// --- Mapping (pure and static, the tested surface) ------------------------------------------------
 
 	static plainText(richText: Array<NotionRichText> | undefined): string {
 		return (richText ?? []).map(run => NotionMarkdown.textOf(run)).join('')
@@ -470,7 +470,7 @@ export class Notion extends Integration<NotionCredentials> {
 	}
 
 	/**
-	 * Resolve what makes this data source a task database — or undefined when it isn't one:
+	 * Resolve what makes this data source a task database, or undefined when it isn't one:
 	 * mitra requires a status property (completion is what makes a page a task) and a date
 	 * property (a calendar can't place an unschedulable task). With several candidates, a
 	 * conventionally-named property wins over schema order, so "Due" beats a decorative
@@ -521,7 +521,7 @@ export class Notion extends Integration<NotionCredentials> {
 	 * a mirror twin can never be mistaken for its canonical end.
 	 *
 	 * An `undefined` type marks a name that is RECOGNIZED but unstorable: all four RFC 9253 temporal
-	 * types are authored on the DEPENDENT, so "Blocking" — the end naming what waits on THIS page —
+	 * types are authored on the DEPENDENT, so "Blocking" (the end naming what waits on THIS page)
 	 * has no RELTYPE to be written as. That edge belongs to the other page, and where the "Blocked
 	 * by" twin exists it already carries the same relationship in the direction mitra stores.
 	 */
@@ -532,11 +532,11 @@ export class Notion extends Integration<NotionCredentials> {
 		[/^block(s|ing)$|^successors?$|^dependents?$/i, undefined],
 	]
 
-	/** The RELTYPE a relation property's name means — a conventional one from
+	/** The RELTYPE a relation property's name means: a conventional one from
 	 * {@link relationTypesByName}, else an opaque `X-NOTION-…` type built from the name itself. An
 	 * unrecognized Notion relation is a link with no direction semantics: reading it as PARENT or
 	 * FINISHTOSTART would borrow a word that means something else, and SIBLING is already taken (it
-	 * means "shares a parent") — so the open vocabulary carries it as itself, round-tripping
+	 * means "shares a parent"), so the open vocabulary carries it as itself, round-tripping
 	 * losslessly and rendering read-only under its own section. `undefined` = not mapped at all. */
 	private static relationTypeOf(name: string): RelationType | undefined {
 		for (const [pattern, type] of Notion.relationTypesByName) {

@@ -24,11 +24,11 @@ export class Synchronizer {
 	start() {
 		this.logger.info(`Started synchronizer. Will poll watched integrations every ${SyncPacer.activeInterval / 1000}s, unwatched ones every ${SyncPacer.idleInterval / 60_000}min.`)
 		presence.onOnline(userId => {
-			this.logger.debug(`User ${userId} came online — syncing now, then polling every ${SyncPacer.activeInterval / 1000}s while connected`)
+			this.logger.debug(`User ${userId} came online, syncing now, then polling every ${SyncPacer.activeInterval / 1000}s while connected`)
 			this.syncSafely({ userId })
 		})
 		presence.onOffline(userId =>
-			this.logger.debug(`User ${userId} went offline — polling relaxes to every ${SyncPacer.idleInterval / 60_000}min`))
+			this.logger.debug(`User ${userId} went offline, polling relaxes to every ${SyncPacer.idleInterval / 60_000}min`))
 		this.syncSafely()
 		setInterval(() => {
 			if (!this.pending) {

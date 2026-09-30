@@ -2,7 +2,7 @@ import { defineCollection } from 'astro:content'
 import { docsLoader } from '@astrojs/starlight/loaders'
 import { docsSchema } from '@astrojs/starlight/schema'
 
-// The content in src/content/docs is a link to the repo's ./docs — the single source of truth
+// The content in src/content/docs is a link to the repo's ./docs, the single source of truth
 // that is also browsable on GitHub (created by prepare.mjs before dev/build).
 export const collections = {
 	docs: defineCollection({

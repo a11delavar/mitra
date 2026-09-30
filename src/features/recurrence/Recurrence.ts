@@ -4,11 +4,11 @@ import { embeddable, property } from '../../infrastructure/model/orm.js'
 import { calendarDateOf } from '../time/calendarDate.js'
 
 /**
- * The recurrence rule of a series, as an intrinsic DDD value object — the rule parts (FREQ/INTERVAL/BYDAY/
+ * The recurrence rule of a series, as an intrinsic DDD value object: the rule parts (FREQ/INTERVAL/BYDAY/
  * BYMONTHDAY/COUNT/UNTIL), not a stringly-typed `rrule`. It is the single source of truth for authoring (the
  * Repeat UI), .ics round-tripping (`toRRule`/`fromRRule`), expansion, and persistence: a MikroORM embeddable
  * mapped onto `Entry` as `recurrence_*` columns. Kept free of `ical.js` so it bundles into the frontend; the
- * backend converts to/from the .ics RRULE string at the edges. As a value object it is immutable in spirit —
+ * backend converts to/from the .ics RRULE string at the edges. As a value object it is immutable in spirit:
  * edits go through `with(...)`, which returns a new instance.
  */
 export type Frequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'
@@ -35,7 +35,7 @@ function pad(value: number, width = 2) {
 	return String(value).padStart(width, '0')
 }
 
-/** The UI language when the localization runtime is present (the frontend); node — tests, backend logs —
+/** The UI language when the localization runtime is present (the frontend); node (tests, backend logs)
  * pins to `en` so label output stays deterministic there. (Try/catch, not just a typeof guard: the
  * Localizer global exists wherever the module is bundled, but its `current` getter dereferences
  * `window`, which only the browser has.) */
@@ -62,7 +62,7 @@ function asConjunction(items: ReadonlyArray<string>): string {
 	return new Intl.ListFormat(language(), { style: 'long', type: 'conjunction' }).format(items)
 }
 
-// UNTIL is a calendar day, stored as UTC midnight — its date is the instant's UTC reading, whether
+// UNTIL is a calendar day, stored as UTC midnight: its date is the instant's UTC reading, whether
 // `until` arrives as a frontend DateTime or the backend's plain Date.
 function untilParts(until: DateTime): Temporal.PlainDate {
 	return calendarDateOf(until as unknown as Date, 'UTC')
@@ -136,16 +136,16 @@ export class Recurrence {
 		return parts.join(';')
 	}
 
-	/** Value equality that tolerates absence on either side — two missing rules are the same rule.
+	/** Value equality that tolerates absence on either side: two missing rules are the same rule.
 	 * The absence-safe form of {@link equals} for call sites holding `Recurrence | null | undefined`. */
 	static equal(a: Recurrence | null | undefined, b: Recurrence | null | undefined): boolean {
 		return a ? a.equals(b) : !b
 	}
 
-	/** Whether the rule is well-formed enough to serialise and iterate — the routes 400 on anything
+	/** Whether the rule is well-formed enough to serialise and iterate. The routes 400 on anything
 	 * else before it can reach an .ics writer. A value object owns its own validity; no ical.js needed:
 	 * everything this accepts serialises to an RRULE ical.js parses. Absent parts may be `undefined`
-	 * (fresh instances) or `null` (nullable columns hydrated from the database) — both mean "not set". */
+	 * (fresh instances) or `null` (nullable columns hydrated from the database), both mean "not set". */
 	get valid(): boolean {
 		const absent = (value: number | null | undefined) => value === undefined || value === null
 		return FREQUENCIES.includes(this.freq)
@@ -241,7 +241,7 @@ export class Recurrence {
 	}
 
 	/** Rebuild from a plain object that crossed the wire (e.g. an HTTP body), normalising `until` to a
-	 * DateTime. Picks the rule fields explicitly — a wire payload can carry anything, and none of it
+	 * DateTime. Picks the rule fields explicitly: a wire payload can carry anything, and none of it
 	 * belongs on the value object. Judging the result is {@link valid}'s job, so a caller can 400 a
 	 * present-but-malformed rule instead of silently dropping it. */
 	static from(data: Partial<Recurrence> | undefined | null): Recurrence | undefined {
@@ -303,7 +303,7 @@ export class Recurrence {
 		return index === -1 ? code : weekdayName(index)
 	}
 
-	/** "1st", "2nd", "3rd", "4th", "21st"… — the category comes from Intl.PluralRules; the suffixes are
+	/** Ordinals like "1st", "2nd", "3rd", "4th", "21st". The category comes from Intl.PluralRules; the suffixes are
 	 * English (pinned `en`) until the surrounding phrases ("Every month on…") are translatable too. */
 	static ordinal(n: number): string {
 		const suffix: Record<string, string> = { one: 'st', two: 'nd', few: 'rd', other: 'th' }
@@ -315,7 +315,7 @@ export class Recurrence {
 		return new DateTime(`${pad(year, 4)}-${pad(month)}-${pad(day)}T00:00:00.000Z`)
 	}
 
-	/** The UTC calendar day immediately before an instant — the UNTIL that ends a series just before a given
+	/** The UTC calendar day immediately before an instant: the UNTIL that ends a series just before a given
 	 * occurrence (its end-of-day-UTC excludes that occurrence while including the prior one, for ≥daily rules). */
 	static dayBefore(instant: Date): DateTime {
 		const previous = calendarDateOf(instant, 'UTC').subtract({ days: 1 })
@@ -323,18 +323,18 @@ export class Recurrence {
 	}
 
 	/**
-	 * The rule as it reads once its anchor moves from `from` to `to` — a weekday list rotates with the
+	 * The rule as it reads once its anchor moves from `from` to `to`: a weekday list rotates with the
 	 * move and a month-day follows it, so the rule keeps matching its anchor (a rule that doesn't match
-	 * its anchor silently loses every occurrence before its first match — the anchor's own). This is
+	 * its anchor silently loses every occurrence before its first match, the anchor's own). This is
 	 * what "move ALL entries of a weekly-Monday series one day later" means: it becomes a Tuesday
 	 * series. A time-only move (same calendar day) changes nothing.
 	 */
 	rebased(from: Date, to: Date, zone?: string | null): Recurrence {
 		// The delta counts CALENDAR days in the series' own `zone` when the caller has one (the backend
-		// passes the master's timeZone — the zone its occurrences and exclusions shift in), else local
+		// passes the master's timeZone, the zone its occurrences and exclusions shift in), else local
 		// days. UTC flooring would read a plain timed→all-day conversion as "one day earlier" in any
 		// zone ahead of UTC (local midnight is the previous UTC day) and rotate the weekdays for a move
-		// that never happened — and without the explicit zone, a server running elsewhere (a UTC
+		// that never happened, and without the explicit zone, a server running elsewhere (a UTC
 		// container) makes the same misreading of the user's midnights.
 		const day = (value: Date) => calendarDateOf(value, zone)
 		const deltaDays = day(to).since(day(from)).days
@@ -350,20 +350,20 @@ export class Recurrence {
 			})
 		}
 		if (this.bymonthday) {
-			// Read in the same calendar as the delta — the UTC date of a zone's midnight is the day before.
+			// Read in the same calendar as the delta: the UTC date of a zone's midnight is the day before.
 			patch.bymonthday = calendarDateOf(to, zone).day
 		}
 		return this.with(patch)
 	}
 
-	/** This rule truncated to end before `recurrenceId` (UNTIL = the day before; COUNT cleared) — the "old"
+	/** This rule truncated to end before `recurrenceId` (UNTIL = the day before; COUNT cleared): the "old"
 	 * half of a "this and following" split, or a "delete this and following". */
 	endingBefore(recurrenceId: Date): Recurrence {
 		return this.with({ until: Recurrence.dayBefore(recurrenceId), count: undefined })
 	}
 
 	/** This rule as a fresh series starting at a split point: keeps UNTIL; a COUNT-bounded rule carries
-	 * the REMAINING count — the original minus `consumed`, the occurrences the old half kept — so a
+	 * the REMAINING count (the original minus `consumed`, the occurrences the old half kept), so a
 	 * "10 times" series split after its first occurrence continues "9 times", never forever. */
 	asContinuation(consumed = 0): Recurrence {
 		return this.with({ count: this.count ? Math.max(1, this.count - consumed) : undefined })

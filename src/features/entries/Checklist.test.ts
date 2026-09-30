@@ -25,7 +25,7 @@ describe('Checklist', () => {
 		assert.equal(of('- [ ]', '- [x]  ', '- [] Wrong', '- [y] Wrong', 'Not a list [ ] item').isEmpty, true)
 	})
 
-	it('leaves the syntax shown inside a fenced block alone — that is an example, not a step', () => {
+	it('leaves the syntax shown inside a fenced block alone, since that is an example, not a step', () => {
 		const checklist = of('- [ ] Real', '', '```markdown', '- [ ] Example', '- [x] Example', '```', '', '- [x] Also real')
 		assert.deepEqual(checklist.items.map(item => item.text), ['Real', 'Also real'])
 	})

@@ -18,6 +18,8 @@ export interface SyncEngine {
 	updateEntry(integration: Integration, em: EntityManager, existing: Entry, incoming: Entry): Promise<void>
 	deleteEntry(integration: Integration, em: EntityManager, entry: Entry): Promise<void>
 	excludeOccurrence(integration: Integration, em: EntityManager, master: Entry, recurrenceId: Date): Promise<void>
+	createSource?(integration: Integration, em: EntityManager, source: Source): Promise<Source>
+	deleteSource?(integration: Integration, em: EntityManager, source: Source): Promise<void>
 }
 
 const engines = new Map<string, SyncEngine>()
@@ -29,7 +31,7 @@ export function registerEngine(type: string, engine: SyncEngine) {
 function engineFor(integration: Integration): SyncEngine {
 	const engine = engines.get(integration.type)
 	if (!engine) {
-		throw new Error(`No sync engine registered for integration type '${integration.type}' — see integrations/server/registerEngines.ts. This only ever runs server-side, after that file's import.`)
+		throw new Error(`No sync engine registered for integration type '${integration.type}'. See integrations/server/registerEngines.ts. This only ever runs server-side, after that file's import.`)
 	}
 	return engine
 }
@@ -82,11 +84,23 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 
 	/** Supported data model capabilities (recurrence, reminders, timeZone, etc.). */
 	get capabilities() {
-		return Integration.fullCapabilities
+		return Integration.defaultCapabilities
 	}
 
 	/** Optional icon override for this integration's sources (e.g. 'rss' for subscriptions). */
 	get sourceIcon(): string | undefined { return undefined }
+
+	/** Whether re-import can rebuild the entries from somewhere. */
+	get reimportable() { return true }
+
+	/** Whether a user can connect this integration only once. */
+	static readonly onePerUser: boolean = false
+
+	/** Offered only on a development system (`MITRA_DEV`). */
+	static readonly developmentOnly: boolean = false
+
+	/** False when connecting finds nothing, so the first source is created instead. */
+	static readonly discoversSources: boolean = true
 
 	/** Returns effective capabilities for a specific source, masking write capabilities if read-only. */
 	capabilitiesFor(source: Pick<Source, 'readOnly'> | undefined) {
@@ -97,12 +111,12 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	static capabilitiesIn(capabilities: Integration['capabilities'], source: Pick<Source, 'readOnly'> | undefined) {
 		return !source?.readOnly ? capabilities : {
 			...capabilities,
-			createEntries: false, editEntries: false, deleteEntries: false, renameEntries: false,
+			createEntries: false, editEntries: false, deleteEntries: false, renameEntries: false, deleteSources: false,
 		}
 	}
 
-	static get fullCapabilities() {
-		return { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, percentComplete: true, timeZone: true, participants: true, transparency: true, visibility: true, relations: true, allDay: true, createEntries: true, editEntries: true, deleteEntries: true, renameEntries: true }
+	static get defaultCapabilities() {
+		return { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, percentComplete: true, timeZone: true, participants: true, transparency: true, visibility: true, relations: true, allDay: true, createEntries: true, editEntries: true, deleteEntries: true, renameEntries: true, createSources: false, deleteSources: false }
 	}
 
 	/** External link to view the entry at the upstream provider. */
@@ -126,23 +140,23 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 
 	/**
 	 * Fetches the account's remote sources (e.g. calendars, task lists) as transient
-	 * (unpersisted) entities. Internal — callers use {@link getSources}, which reconciles
-	 * these against the database. Delegates to the registered {@link SyncEngine} — a subclass with no
-	 * engine (Dev) overrides this directly instead.
+	 * (unpersisted) entities. Internal: callers use {@link getSources}, which reconciles
+	 * these against the database. Delegates to the registered {@link SyncEngine}. A subclass with no
+	 * engine (Notion, Mitra) overrides this directly instead.
 	 */
 	protected fetchSources(existing?: ReadonlyArray<Source>): Promise<Array<Source>> {
 		return engineFor(this).fetchSources(this, existing)
 	}
 
 	/** Fetches and stores the entries of a single source. @returns whether any entry changed. Delegates
-	 * to the registered {@link SyncEngine} — a subclass with no engine (Dev) overrides this directly. */
+	 * to the registered {@link SyncEngine}. A subclass with no engine (Notion, Mitra) overrides this directly. */
 	protected syncSourceEntries(em: EntityManager, source: Source): Promise<boolean> {
 		return engineFor(this).syncSourceEntries(this, em, source)
 	}
 
 	/**
 	 * Merges the client-supplied `incoming` representation into this integration. Each
-	 * provider decides which fields to overwrite and which to preserve — for example,
+	 * provider decides which fields to overwrite and which to preserve. For example,
 	 * CalDAV keeps the stored password when `incoming` carries a blank one.
 	 */
 	abstract merge(incoming: this): void
@@ -153,7 +167,8 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 			id: this.id,
 			uri: this.uri,
 			credentials: { ...this.credentials },
-			sources: [...this.sources].map(source => new Source({ uri: source.uri, entryTypes: source.entryTypes, name: source.name, enabled: source.enabled })) as any,
+			// The icon reads color and import state too; without importedAt every enabled row showed a spinner.
+			sources: [...this.sources].map(source => new Source({ uri: source.uri, entryTypes: source.entryTypes, name: source.name, enabled: source.enabled, color: source.color, importedAt: source.importedAt })) as any,
 		})
 	}
 
@@ -167,7 +182,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		if (options?.checkDuplicate && this.uri) {
 			const duplicate = await em.findOne(Integration, { userId: this.userId, uri: this.uri, id: { $ne: this.id } }, { flushMode: FlushMode.COMMIT })
 			if (duplicate) {
-				throw new Error('This account is already connected — edit the existing integration instead of adding it again')
+				throw new Error('This account is already connected. Edit the existing integration instead of adding it again')
 			}
 		}
 
@@ -317,6 +332,24 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	excludeOccurrence(em: EntityManager, master: Entry, recurrenceId: Date): Promise<void> {
 		return engineFor(this).excludeOccurrence(this, em, master, recurrenceId)
 	}
+
+	/** Routes check `capabilities.createSources` first; the throw is only a safety net. */
+	createSource(em: EntityManager, source: Source): Promise<Source> {
+		const engine = engineFor(this)
+		if (!engine.createSource) {
+			throw new Error(`Integration type '${this.type}' declares createSources but its sync engine implements no createSource`)
+		}
+		return engine.createSource(this, em, source)
+	}
+
+	/** Deletes the source and its entries. Routes check `capabilities.deleteSources` first. */
+	deleteSource(em: EntityManager, source: Source): Promise<void> {
+		const engine = engineFor(this)
+		if (!engine.deleteSource) {
+			throw new Error(`Integration type '${this.type}' declares deleteSources but its sync engine implements no deleteSource`)
+		}
+		return engine.deleteSource(this, em, source)
+	}
 }
 
 type IntegrationConstructor = new (init?: any) => Integration
@@ -326,6 +359,9 @@ export interface IntegrationClass extends IntegrationConstructor {
 	readonly label: string
 	readonly logo: string
 	readonly description: string
+	readonly onePerUser: boolean
+	readonly developmentOnly: boolean
+	readonly discoversSources: boolean
 }
 
 const registeredIntegrations = new Map<string, IntegrationClass>()

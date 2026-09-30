@@ -99,13 +99,13 @@ export class UpdateChecker {
 		try {
 			const update = await this.check()
 			if (update && update.version !== this.update?.version) {
-				logger.info(`Update available: ${update.version} (running ${this.version}) — ${update.url}`)
+				logger.info(`Update available: ${update.version} (running ${this.version}), see ${update.url}`)
 			}
 			this.update = update
 		} catch (error) {
 			if (!this.unreachableReported) {
 				this.unreachableReported = true
-				logger.info('Update check could not reach GitHub — retrying quietly (set MITRA_UPDATE_CHECK=off to disable checks entirely)')
+				logger.info('Update check could not reach GitHub, retrying quietly (set MITRA_UPDATE_CHECK=off to disable checks entirely)')
 			}
 			logger.debug('Update check failed:', error)
 		}
@@ -130,7 +130,7 @@ export class UpdateChecker {
 			if (typeof manifest?.version === 'string') {
 				return { version: manifest.version, url: manifest.url || `https://github.com/${repository}/releases/tag/${manifest.version}` }
 			}
-		} catch { /* pre-manifest release — fall through */ }
+		} catch { /* pre-manifest release, fall through */ }
 		const release = await this.fetchJson(`https://api.github.com/repos/${repository}/releases/latest`)
 		return typeof release?.tag_name !== 'string' ? undefined
 			: { version: release.tag_name, url: release.html_url || `https://github.com/${repository}/releases/tag/${release.tag_name}` }

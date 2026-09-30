@@ -8,7 +8,7 @@ import { Session } from './Session.js'
 declare global {
 	namespace Express {
 		interface Request {
-			/** The authenticated user — attached by {@link authMiddleware} before any route runs. */
+			/** The authenticated user, attached by {@link authMiddleware} before any route runs. */
 			user: User
 		}
 	}

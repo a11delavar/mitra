@@ -7,10 +7,13 @@ sidebar:
 
 Mitra doesn't replace the accounts you already have. It **brings them in**. Connect a source and Mitra syncs it in the background: events and tasks show up on your timeline, and edits you make in Mitra go back to where they came from.
 
+You can also [create calendars in Mitra itself](mitra.md), with no account behind them.
+
 ## Supported integrations
 
 | Integration | What it syncs | Deployment setup |
 | --- | --- | --- |
+| **[Mitra](mitra.md)** | Nothing to sync: the calendars are stored in Mitra | None, no account needed |
 | **[CalDAV](caldav.md)** | Events *and* tasks from any CalDAV server | None, connects from the app |
 | **[Google Calendar](google-calendar.md)** | Google calendars (via CalDAV + OAuth) | One-time OAuth setup |
 | **[Apple Calendar](apple-calendar.md)** | iCloud calendars (and Mitra-side tasks) | None, uses an app-specific password |
@@ -43,6 +46,7 @@ To connect one, choose **Add Integration** at the foot of the sidebar.
 
 In the app, open the sidebar and choose **Add Integration**, then pick the provider. Each provider's page below covers exactly what to enter:
 
+- [Create calendars in Mitra](mitra.md)
 - [Connect a CalDAV account](caldav.md)
 - [Connect Google Calendar](google-calendar.md)
 - [Connect Apple Calendar](apple-calendar.md)
