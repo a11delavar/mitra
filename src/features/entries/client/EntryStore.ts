@@ -72,7 +72,7 @@ export class EntryStore extends Controller {
 		if (pending) {
 			return pending
 		}
-		if (!entry.persisted && !entry.heading?.trim()) {
+		if (!entry.persisted && !entry.heading?.trim() && !entry.type.isAvailability) {
 			return Promise.resolve()
 		}
 		const wasClosed = entry.persisted && (this.canonicalById.get(entry.id!)?.closed ?? false)

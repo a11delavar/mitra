@@ -13,7 +13,8 @@ describe('UserSettings', () => {
 				snapMinutes: 5,
 				defaultReminderMinutes: 60,
 				hideDoneTasks: true,
-			}), { defaultView: 'timeline', defaultDurationMinutes: 30, snapMinutes: 5, defaultReminderMinutes: 60, hideDoneTasks: true })
+				hideAvailability: true,
+			}), { defaultView: 'timeline', defaultDurationMinutes: 30, snapMinutes: 5, defaultReminderMinutes: 60, hideDoneTasks: true, hideAvailability: true })
 		})
 
 		it('drops a key it does not know, keeping the rest of the write', () => {
@@ -41,6 +42,7 @@ describe('UserSettings', () => {
 			assert.equal(UserSettings.sanitize({ snapMinutes: '15' }), undefined)
 			assert.equal(UserSettings.sanitize({ defaultView: 7 }), undefined)
 			assert.equal(UserSettings.sanitize({ hideDoneTasks: 'yes' }), undefined)
+			assert.equal(UserSettings.sanitize({ hideAvailability: 1 }), undefined)
 		})
 
 		it('keeps a lens turned back off, so the choice reads as made rather than never taken', () => {

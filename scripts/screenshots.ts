@@ -60,6 +60,9 @@ const captureCss = `
 	html[data-capture='events'] mitra-entry-segment:not([data-status]) { visibility: visible; }
 	html[data-capture='tasks'] mitra-entry-segment[data-status] { visibility: visible; }
 	html[data-capture='links'] mitra-entry-connections { visibility: visible; }
+
+	/* The availability guide's captures are about the windows; links between entries only distract there. */
+	html[data-scene='availability'] mitra-entry-connections { visibility: hidden; }
 `
 
 const layers = ['frame', 'events', 'tasks', 'links'] as const
@@ -169,8 +172,37 @@ function stageServer(stageDir: string) {
 	fs.symlinkSync(path.join(rootDir, 'dist'), path.join(stageDir, 'dist'), 'junction')
 }
 
-function startServer(port: number, stageDir: string) {
-	const child = spawn(process.execPath, [path.join(stageDir, 'out/server/server.mjs')], {
+/**
+ * Every capture happens at this week's Thursday, 10:20: the sample week is laid out around it, so a run on any other day
+ * opened the week elsewhere.
+ */
+function captureMoment() {
+	const thursday = new Date()
+	thursday.setDate(thursday.getDate() - (thursday.getDay() + 6) % 7 + 3)
+	thursday.setHours(10, 20, 0, 0)
+	return thursday.getTime()
+}
+
+/**
+ * Replaces `Date`'s now with `now`, an expression of the real one. Nothing reads `Temporal.Now`, so this is the whole clock.
+ * A function sharing `Date`'s prototype, so `instanceof` holds both ways and subclasses (`DateTime`) construct through it.
+ */
+function clockAt(now: string) {
+	return `(() => {
+		const RealDate = Date
+		const now = () => ${now}
+		function ShiftedDate(...args) {
+			return new.target ? Reflect.construct(RealDate, args.length ? args : [now()], new.target) : new RealDate(now()).toString()
+		}
+		ShiftedDate.prototype = RealDate.prototype
+		Object.setPrototypeOf(ShiftedDate, RealDate)
+		ShiftedDate.now = now
+		globalThis.Date = ShiftedDate
+	})()`
+}
+
+function startServer(port: number, stageDir: string, clock: string) {
+	const child = spawn(process.execPath, ['--import', `data:text/javascript,${encodeURIComponent(clock)}`, path.join(stageDir, 'out/server/server.mjs')], {
 		cwd: stageDir,
 		env: { ...process.env, MITRA_DEV: 'true', MITRA_PORT: String(port), MITRA_UPDATE_CHECK: 'off' },
 		stdio: ['ignore', 'pipe', 'pipe'],
@@ -253,9 +285,10 @@ async function detail(page: Devtools, size: { width: number, height: number }): 
 }
 
 /** Loads the app fresh in the given theme and waits until the calendar has drawn its entries. */
-async function open(page: Devtools, origin: string, theme: Theme) {
+async function open(page: Devtools, origin: string, theme: Theme, { availability = false } = {}) {
 	await page.send('Page.navigate', { url: origin })
 	await waitFor(() => page.evaluate<boolean>('return !!document.querySelector("mitra-page-calendar")'), 'the app to boot')
+	await showAvailability(page, availability)
 	await page.evaluate(`
 		localStorage.setItem('Mitra.Appearance.Theme', ${JSON.stringify(JSON.stringify(theme))})
 		// Zoom the day grid past "the whole day at once" so entries read at their working size,
@@ -378,8 +411,26 @@ async function around(page: Devtools, find: string, width: number, padding: numb
 	}
 }
 
+/**
+ * The opening week's last day is cut off, so on the day of the week that puts what a capture needs there, the strip
+ * first scrolls it into view, with `room` to spare after it.
+ */
+async function bringIntoView(page: Devtools, elements: string, room = 24) {
+	await page.evaluate(`
+		const main = document.querySelector('mitra-page-calendar main').getBoundingClientRect()
+		const elements = ${elements}
+		const shown = element => element.getBoundingClientRect().x >= main.x && element.getBoundingClientRect().right + ${room} <= innerWidth
+		const next = elements.find(element => element.getBoundingClientRect().x >= main.x)
+		if (!elements.some(shown) && next) {
+			document.querySelector('mitra-days').scrollBy({ left: next.getBoundingClientRect().right + ${room} - innerWidth })
+			await new Promise(resolve => setTimeout(resolve, 600))
+		}
+	`)
+}
+
 /** Opens an entry's editor from its chip on screen; the week also renders its neighbours off-screen. */
 async function openChip(page: Devtools, heading: string) {
+	await bringIntoView(page, `[...document.querySelectorAll('mitra-entry-segment')].filter(segment => segment.textContent.includes(${JSON.stringify(heading)}))`)
 	await click(page, `[...document.querySelectorAll('mitra-entry-segment')].find(segment => {
 		const { x, right } = segment.getBoundingClientRect()
 		return segment.textContent.includes(${JSON.stringify(heading)}) && x >= document.querySelector('mitra-page-calendar main').getBoundingClientRect().x && right <= innerWidth
@@ -395,6 +446,41 @@ async function openFound(page: Devtools, heading: string) {
 	await waitFor(() => page.evaluate<boolean>(`return !!${result}`), `"${heading}" in the palette`)
 	await click(page, result)
 	await editorOpened(page, heading)
+}
+
+/** Wednesday's work, the sample's one labelled window: its place, Home office, is all it says. */
+const homeOffice = `[...document.querySelectorAll('mitra-availability-segment')].find(segment => {
+	const label = segment.querySelector('.label')
+	const { x, right } = label?.getBoundingClientRect() ?? { x: -1, right: Infinity }
+	return label?.textContent === 'Home office' && x >= document.querySelector('mitra-page-calendar main').getBoundingClientRect().x && right <= innerWidth
+})`
+
+/**
+ * Tuesday to Thursday, with their headers, from 08:00 to 18:30: working hours and study time as they usually are, and
+ * Wednesday's home office between them. The grid is parked so 08:00 meets the sticky header, which keeps the morning routine out.
+ */
+async function aroundHomeOffice(page: Devtools): Promise<Clip> {
+	await waitFor(() => page.evaluate<boolean>(`return !!${homeOffice}`), 'the Home office window')
+	const rect = await page.evaluate<Clip>(`
+		const scroller = document.querySelector('mitra-days')
+		const day = ${homeOffice}.closest('mitra-day')
+		const entries = () => day.querySelector('.entries').getBoundingClientRect()
+		const hour = entries().height / 24
+		const sticky = Math.max(...[...scroller.querySelectorAll('[data-chrome]')].map(element => element.getBoundingClientRect().bottom).filter(bottom => bottom < innerHeight / 2))
+		scroller.scrollTop += entries().top + 8 * hour - sticky
+		await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+		const { x, width } = day.getBoundingClientRect()
+		const top = scroller.getBoundingClientRect().top
+		return { x: Math.round(x - width), y: Math.round(top), width: Math.round(3 * width), height: Math.round(entries().top + 18.5 * hour - top) }
+	`)
+	return { ...rect, width: Math.min(rect.width, viewport.width - rect.x) }
+}
+
+/** Every capture but the availability guide's shows the calendar with availability off, the setting a reader may not use. */
+async function showAvailability(page: Devtools, shown: boolean) {
+	await page.evaluate(`
+		await fetch('/api/user/settings', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ settings: ${shown ? '{}' : '{ hideAvailability: true }'} }) })
+	`)
 }
 
 async function editorOpened(page: Devtools, heading: string) {
@@ -453,7 +539,9 @@ async function main() {
 
 	try {
 		stageServer(stageDir)
-		processes.push(startServer(appPort, stageDir))
+		// The page's clock stands still, so every capture reads 10:20. The server's runs on from there: its sync pacing measures elapsed time.
+		const moment = captureMoment()
+		processes.push(startServer(appPort, stageDir, clockAt(`RealDate.now() + ${moment - Date.now()}`)))
 		const origin = `http://127.0.0.1:${appPort}/`
 		await waitFor(async () => (await fetch(`${origin}api/health`)).ok, 'the app server')
 		consola.info(`Mitra on ${origin}`)
@@ -469,6 +557,7 @@ async function main() {
 		browser.sessionId = sessionId
 
 		await browser.send('Page.enable')
+		await browser.send('Page.addScriptToEvaluateOnNewDocument', { source: clockAt(String(moment)) })
 		await browser.send('Runtime.enable')
 		await browser.send('Emulation.setDeviceMetricsOverride', {
 			width: viewport.width,
@@ -542,6 +631,16 @@ async function main() {
 			await openFound(browser, 'Declutter the Flat')
 			await capture(browser, `hierarchy-detail-${theme}`, false, await around(browser, openEditor, details.surface.width, 28))
 			await press(browser, ...keys.escape())
+
+			// Last, and the only one with availability shown. A tap on the label reaches the window beneath, as a reader's would.
+			await open(browser, origin, theme, { availability: true })
+			await browser.evaluate('document.documentElement.dataset.scene = "availability"')
+			await capture(browser, `availability-detail-${theme}`, false, await aroundHomeOffice(browser))
+			await click(browser, `${homeOffice}.querySelector('.label')`)
+			await editorOpened(browser, 'Home office')
+			await capture(browser, `availability-editor-detail-${theme}`, false, await around(browser, openEditor, details.surface.width, 28))
+			await press(browser, ...keys.escape())
+			await browser.evaluate('delete document.documentElement.dataset.scene')
 		}
 
 		browser.close()

@@ -44,4 +44,5 @@ A connected account keeps its own copy of your entries. A Mitra calendar doesn't
 ## See also
 
 - [Calendars & task lists](../guides/calendars.md): managing, recoloring and organizing calendars
+- [Availability](../guides/availability.md): working hours and focus time, shaded in their calendar
 - [Backups](../guides/backups.md): protecting everything Mitra stores

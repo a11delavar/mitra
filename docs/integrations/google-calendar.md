@@ -80,6 +80,10 @@ A user can disconnect at any time:
 - Delete the integration in Mitra, **or**
 - Revoke the grant from their [Google account's security settings](https://myaccount.google.com/permissions).
 
+## Busy availability
+
+[Availability](../guides/availability.md) you mark as busy in one of your Google calendars is added to that calendar as busy events. It works as described for [CalDAV](caldav.md#busy-availability).
+
 ## How it works
 
 The refresh token Google issues **never leaves the server**. The browser only handles the consent redirect. Mitra stores the token next to the account and uses it to mint short-lived access tokens for CalDAV requests. Reconnecting the same Google account renews the grant in place rather than creating a duplicate.

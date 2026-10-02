@@ -36,9 +36,15 @@ export class EntryEditorIntent {
 
 	/** Whether the given entry matches the pending open intent. */
 	static shouldOpen(entry: Entry) {
-		return typeof this.pending === 'string'
-			? entry.id === this.pending || entry.recurrenceMasterId === this.pending
-			: this.pending !== undefined && this.pending === entry
+		if (typeof this.pending !== 'string') {
+			return this.pending !== undefined && this.pending === entry
+		}
+		// Only a series' occurrences render, not its master. A master saved locally is replaced by its
+		// occurrences on the next fetch, so opening it would close the editor again right away.
+		if (entry.recurrence && !entry.isRecurring) {
+			return false
+		}
+		return entry.id === this.pending || entry.recurrenceMasterId === this.pending
 	}
 
 	static consume() {

@@ -2,6 +2,7 @@ import { entity, primaryKey, property, manyToOne, oneToMany, unique, Collection 
 import { User } from '../features/identity/User.js'
 import { Source } from '../features/sources/Source.js'
 import { Entry } from '../features/entries/Entry.js'
+import { EntryType } from '../features/entries/EntryType.js'
 import { EntryRelation } from '../features/relations/EntryRelation.js'
 import type { Relation } from '../features/relations/Relation.js'
 import { FlushMode, type EntityManager } from '@mikro-orm/core'
@@ -19,6 +20,8 @@ export interface SyncEngine {
 	excludeOccurrence(integration: Integration, em: EntityManager, master: Entry, recurrenceId: Date): Promise<void>
 	createSource?(integration: Integration, em: EntityManager, source: Source): Promise<Source>
 	deleteSource?(integration: Integration, em: EntityManager, source: Source): Promise<void>
+	/** Brings what the provider holds for availability in line with `entries`: all of it, or only what stands for the entries in `of`. */
+	publishAvailability?(integration: Integration, em: EntityManager, entries: ReadonlyArray<Entry>, of?: ReadonlyArray<Entry>): Promise<boolean>
 }
 
 const engines = new Map<string, SyncEngine>()
@@ -102,8 +105,9 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		}
 	}
 
+	/** `availability`: whether the provider's calendars take part in availability, which Mitra stores either way. */
 	static get defaultCapabilities() {
-		return { recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, percentComplete: true, timeZone: true, participants: true, transparency: true, visibility: true, relations: true, allDay: true, createEntries: true, editEntries: true, deleteEntries: true, renameEntries: true, createSources: false, deleteSources: false }
+		return { availability: true, recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, percentComplete: true, timeZone: true, participants: true, transparency: true, visibility: true, relations: true, allDay: true, createEntries: true, editEntries: true, deleteEntries: true, renameEntries: true, createSources: false, deleteSources: false }
 	}
 
 	/** External link to view the entry at the upstream provider. */
@@ -118,6 +122,26 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		} catch {
 			return undefined
 		}
+	}
+
+	/** Whether entries of `type` can live in `source`, which for availability also takes the provider's say. */
+	canHold(source: Source, type: EntryType): boolean {
+		return source.supportsEntryType(type) && (!type.isAvailability || this.capabilitiesFor(source).availability)
+	}
+
+	/** Whether `entry` lives only in Mitra's database. Availability always does, since no provider stores it. */
+	storesLocally(entry: Pick<Entry, 'type'>): boolean {
+		return entry.type.isAvailability
+	}
+
+	/** The source's entries its provider holds. Syncs read only these, so they never delete what exists only in Mitra. */
+	syncedEntries(em: EntityManager, source: Pick<Source, 'id'>): Promise<Array<Entry>> {
+		return em.find(Entry, { sourceId: source.id, type: { $ne: EntryType.Availability } })
+	}
+
+	/** Whether the integration wrote this entry to stand in for availability elsewhere, so Mitra shows the availability instead. */
+	writtenForAvailability(_entry: Entry): boolean {
+		return false
 	}
 
 	/** Whether entered credentials satisfy minimum requirements to attempt discovery. */
@@ -276,7 +300,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	/** Discards cached entries for a source and resets it for full background re-import. */
 	async reimportSource(em: EntityManager, source: Source): Promise<void> {
 		await Integration.exclusively(this.id, async () => {
-			const entries = await em.find(Entry, { sourceId: source.id })
+			const entries = await this.syncedEntries(em, source)
 			entries.forEach(entry => em.remove(entry))
 			source.awaitImport()
 			await em.flush()
@@ -301,23 +325,51 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		await em.flush()
 	}
 
-	createEntry(em: EntityManager, entry: Entry): Promise<Entry> {
-		return engineFor(this).createEntry(this, em, entry)
+	async createEntry(em: EntityManager, entry: Entry): Promise<Entry> {
+		if (!this.storesLocally(entry)) {
+			return engineFor(this).createEntry(this, em, entry)
+		}
+		em.persist(entry)
+		await this.stored(em, entry)
+		return entry
 	}
 
-	updateEntry(em: EntityManager, existing: Entry, incoming: Entry): Promise<void> {
-		return engineFor(this).updateEntry(this, em, existing, incoming)
+	async updateEntry(em: EntityManager, existing: Entry, incoming: Entry): Promise<void> {
+		if (!this.storesLocally(existing)) {
+			return engineFor(this).updateEntry(this, em, existing, incoming)
+		}
+		existing.adopt(incoming)
+		await this.stored(em, existing)
 	}
 
-	deleteEntry(em: EntityManager, entry: Entry): Promise<void> {
-		return engineFor(this).deleteEntry(this, em, entry)
+	async deleteEntry(em: EntityManager, entry: Entry): Promise<void> {
+		if (!this.storesLocally(entry)) {
+			return engineFor(this).deleteEntry(this, em, entry)
+		}
+		em.remove(entry)
+		await this.stored(em, entry, { removed: true })
 	}
 
 	/**
 	 * Excludes a single occurrence of a recurring master (RFC 5545 EXDATE).
 	 */
-	excludeOccurrence(em: EntityManager, master: Entry, recurrenceId: Date): Promise<void> {
-		return engineFor(this).excludeOccurrence(this, em, master, recurrenceId)
+	async excludeOccurrence(em: EntityManager, master: Entry, recurrenceId: Date): Promise<void> {
+		if (!this.storesLocally(master)) {
+			return engineFor(this).excludeOccurrence(this, em, master, recurrenceId)
+		}
+		master.exclude(recurrenceId)
+		await this.stored(em, master)
+	}
+
+	/**
+	 * Hands the engine a change to an entry Mitra stores, as it hands it every other write: availability may stand for
+	 * something at the provider (CalDAV's busy copy), which the engine then brings in line. Without the lock, as any entry write.
+	 */
+	private async stored(em: EntityManager, entry: Entry, { removed = false } = {}) {
+		const engine = engines.get(this.type)
+		if (entry.type.isAvailability && engine?.publishAvailability) {
+			await engine.publishAvailability(this, em, removed ? [] : [entry], [entry])
+		}
 	}
 
 	/** Routes check `capabilities.createSources` first; the throw is only a safety net. */
@@ -336,6 +388,23 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 			throw new Error(`Integration type '${this.type}' declares deleteSources but its sync engine implements no deleteSource`)
 		}
 		return engine.deleteSource(this, em, source)
+	}
+
+	/** The availability in `sources`, by default every enabled calendar: masters and single windows, since a rule covers its occurrences. */
+	async availability(em: EntityManager, sources?: ReadonlyArray<Pick<Source, 'id'>>): Promise<Array<Entry>> {
+		const ids = (sources ?? await em.find(Source, { integrationId: this.id, enabled: true })).map(source => source.id)
+		return !ids.length ? [] : em.find(Entry, { sourceId: { $in: ids }, type: EntryType.Availability, recurrenceMasterId: null })
+	}
+
+	/**
+	 * Hands the engine all the availability in this integration's calendars, or `entries` instead, for a change that
+	 * reaches beyond one entry: a calendar turned on or off, the account disconnected, a sync repairing it.
+	 * What reaches the provider is up to the engine; the default does nothing. @returns whether anything changed.
+	 */
+	publishAvailability(em: EntityManager, entries?: ReadonlyArray<Entry>): Promise<boolean> {
+		const engine = engines.get(this.type)
+		return !engine?.publishAvailability ? Promise.resolve(false)
+			: Integration.exclusively(this.id, async () => engine.publishAvailability!(this, em, entries ?? await this.availability(em)))
 	}
 }
 

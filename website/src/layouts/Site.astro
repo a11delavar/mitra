@@ -1,10 +1,9 @@
 ---
-import { getImage } from 'astro:assets'
 import { withBase } from '../../site.mjs'
-import weekDark from '../assets/screenshots/week-dark.png'
 import Brand from '../components/Brand.astro'
 import NavLinks from '../components/NavLinks.astro'
 import SiteFooter from '../components/SiteFooter.astro'
+import { linkPreview } from '../linkPreview'
 import '../styles/base.css'
 
 interface Props {
@@ -15,10 +14,7 @@ interface Props {
 
 const { title, description, current = 'home' } = Astro.props
 const canonical = new URL(Astro.url.pathname, Astro.site)
-
-// Link previews get the app itself. Kept as PNG: some scrapers still refuse anything else.
-const card = await getImage({ src: weekDark, format: 'png', width: 1200 })
-const preview = new URL(card.src, Astro.site)
+const preview = await linkPreview(Astro.site)
 ---
 
 <!doctype html>
@@ -32,11 +28,13 @@ const preview = new URL(card.src, Astro.site)
 		<link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" />
 
 		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="Mitra" />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
 		<meta property="og:url" content={canonical.href} />
 		<meta property="og:image" content={preview.href} />
 		<meta name="twitter:card" content="summary_large_image" />
+		<slot name="head" />
 
 		{/* Starlight's pre-paint theme stamp, for pages Starlight does not render. */}
 		<script is:inline>

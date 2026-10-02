@@ -1,5 +1,6 @@
 // Side-effect imports populate command registry in display order.
 import '../features/entries/client/commands.js'
+import '../features/availability/client/commands.js'
 import '../features/calendar/client/viewsCommands.js'
 import '../features/calendar/client/navigationCommands.js'
 import '../features/commands/client/appCommands.js'

@@ -436,6 +436,7 @@
 	"${count:pluralityNumber} lose their reminders": ["${count:pluralityNumber} perde os lembretes", "${count:pluralityNumber} perdem os lembretes"],
 	"${count:pluralityNumber} lose their time zone": ["${count:pluralityNumber} perde o fuso horário", "${count:pluralityNumber} perdem o fuso horário"],
 	"${count:pluralityNumber} arrive with everything they carry": ["${count:pluralityNumber} chega com tudo o que contém", "${count:pluralityNumber} chegam com tudo o que contêm"],
+	"${count:pluralityNumber} are availability": ["${count:pluralityNumber} é disponibilidade", "${count:pluralityNumber} são disponibilidade"],
 	"${count:pluralityNumber} repeat": ["${count:pluralityNumber} repete-se", "${count:pluralityNumber} repetem-se"],
 	"${count:pluralityNumber} stayed in ${name}": ["${count:pluralityNumber} ficou em ${name}", "${count:pluralityNumber} ficaram em ${name}"],
 	"${count:pluralityNumber} stop being all-day": ["${count:pluralityNumber} deixa de ser de dia inteiro", "${count:pluralityNumber} deixam de ser de dia inteiro"],
@@ -543,5 +544,11 @@
 	"Tasks with a time only": "Apenas tarefas com hora",
 	"Where new events and tasks are created": "Onde novos eventos e tarefas são criados",
 	"The step dragging and resizing land on": "O passo em que arrastar e redimensionar assentam",
-	"Account options": "Opções da conta"
+	"Account options": "Opções da conta",
+	"Availability": "Disponibilidade",
+	"Add Availability": "Adicionar disponibilidade",
+	"CreateAvailability.Keywords": "novo bloco horário de trabalho foco trabalho profundo bloco de tempo planejamento sombreamento",
+	"Hide availability": "Ocultar disponibilidade",
+	"Availability leaves the week view. It stays in its calendars, and busy availability still shows as busy to others.": "A disponibilidade sai da vista de semana. Continua nos seus calendários, e a disponibilidade ocupada continua a aparecer como ocupada para os outros.",
+	"HideAvailabilitySetting.Keywords": "ocultar esconder disponibilidade horário de trabalho sombreamento foco limpar"
 }

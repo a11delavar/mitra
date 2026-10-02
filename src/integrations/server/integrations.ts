@@ -171,6 +171,9 @@ integrationsRouter.put('/:id', async (req, res) => {
 	const integration = await req.user.integration(em, req.params.id)
 	await integration.apply(em, req.body as Integration)
 	syncEmitter.emit('updated', req.user.id, 'sources')
+	// A calendar turned off takes back the busy availability written to it; one turned on gets it once its import completes.
+	await integration.publishAvailability(em).then(() => em.flush()).catch((error: unknown) =>
+		logger.warn(`Could not bring the availability written to ${integration.toString()} in line: ${error instanceof Error ? error.message : error}`))
 	logger.debug(`Updated integration ${integration.id}`)
 	// Fork fresh context to populate newly created sources collection.
 	const saved = await em.fork().findOneOrFail(Integration, { id: integration.id }, { populate: ['sources'] })
@@ -194,6 +197,9 @@ integrationsRouter.post('/:id/reimport', async (req, res) => {
 integrationsRouter.delete('/:id', async (req, res) => {
 	const em = orm.em.fork()
 	const integration = await req.user.integration(em, req.params.id)
+	// Its availability goes with it, so take back what was written for it first.
+	await integration.publishAvailability(em, []).catch((error: unknown) =>
+		logger.warn(`Could not take back the availability written to ${integration.toString()}: ${error instanceof Error ? error.message : error}`))
 	em.remove(integration)
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id, 'sources')

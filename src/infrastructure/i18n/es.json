@@ -436,6 +436,7 @@
 	"${count:pluralityNumber} lose their reminders": ["${count:pluralityNumber} pierde sus recordatorios", "${count:pluralityNumber} pierden sus recordatorios"],
 	"${count:pluralityNumber} lose their time zone": ["${count:pluralityNumber} pierde su zona horaria", "${count:pluralityNumber} pierden su zona horaria"],
 	"${count:pluralityNumber} arrive with everything they carry": ["${count:pluralityNumber} llega con todo lo que contiene", "${count:pluralityNumber} llegan con todo lo que contienen"],
+	"${count:pluralityNumber} are availability": ["${count:pluralityNumber} es disponibilidad", "${count:pluralityNumber} son disponibilidad"],
 	"${count:pluralityNumber} repeat": ["${count:pluralityNumber} se repite", "${count:pluralityNumber} se repiten"],
 	"${count:pluralityNumber} stayed in ${name}": ["${count:pluralityNumber} se quedó en ${name}", "${count:pluralityNumber} se quedaron en ${name}"],
 	"${count:pluralityNumber} stop being all-day": ["${count:pluralityNumber} deja de ser de todo el día", "${count:pluralityNumber} dejan de ser de todo el día"],
@@ -543,5 +544,11 @@
 	"Tasks with a time only": "Solo tareas con hora",
 	"Where new events and tasks are created": "Donde se crean los nuevos eventos y tareas",
 	"The step dragging and resizing land on": "El paso en el que caen el arrastre y el redimensionado",
-	"Account options": "Opciones de la cuenta"
+	"Account options": "Opciones de la cuenta",
+	"Availability": "Disponibilidad",
+	"Add Availability": "Añadir disponibilidad",
+	"CreateAvailability.Keywords": "nuevo franja horario laboral enfoque trabajo profundo bloque de tiempo planificación sombreado",
+	"Hide availability": "Ocultar disponibilidad",
+	"Availability leaves the week view. It stays in its calendars, and busy availability still shows as busy to others.": "La disponibilidad sale de la vista de semana. Se queda en sus calendarios, y la disponibilidad ocupada sigue mostrándose como ocupada a los demás.",
+	"HideAvailabilitySetting.Keywords": "ocultar esconder disponibilidad horario laboral sombreado enfoque despejar"
 }

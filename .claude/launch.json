@@ -9,6 +9,13 @@
 			"autoPort": true
 		},
 		{
+			"name": "mitra-worktree",
+			"runtimeExecutable": "node",
+			"runtimeArgs": ["--input-type=module", "-e", "const { readdirSync, statSync, existsSync } = await import('node:fs'); const { join } = await import('node:path'); const { pathToFileURL } = await import('node:url'); const root = '.claude/worktrees'; const newest = dir => Math.max(0, ...readdirSync(dir, { recursive: true, withFileTypes: true }).filter(entry => entry.isFile()).map(entry => statSync(join(entry.parentPath, entry.name)).mtimeMs)); const worktrees = existsSync(root) ? readdirSync(root).filter(name => existsSync(join(root, name, 'scripts', 'dev.ts'))) : []; const chosen = process.env.MITRA_WORKTREE || worktrees.map(name => ({ name, changed: newest(join(root, name, 'src')) })).sort((a, b) => b.changed - a.changed)[0]?.name; if (chosen) process.chdir(join(root, chosen)); process.env.MITRA_PORT = process.env.PORT || '3248'; console.log('Running Mitra from ' + process.cwd() + ' on port ' + process.env.MITRA_PORT); await import(pathToFileURL('scripts/dev.ts').href)"],
+			"port": 3248,
+			"autoPort": true
+		},
+		{
 			"name": "mitra-website",
 			"runtimeExecutable": "npm",
 			"runtimeArgs": ["--prefix", "website", "run", "dev"],

@@ -92,6 +92,10 @@ export class Entry {
 			this.status = undefined
 			this.percentComplete = null
 		}
+		if (this._type.isAvailability) {
+			this.participants = null
+			this.reminders = null
+		}
 		const defaults = reminderDefaults.get(this)
 		if (defaults) {
 			this.adoptDefaultReminders(defaults)
@@ -135,6 +139,11 @@ export class Entry {
 
 	@enumType({ items: () => Transparency, nullable: true }) transparency: Transparency | null = null
 	@enumType({ items: () => Visibility, nullable: true }) visibility: Visibility | null = null
+
+	/** TRANSP with its default filled in: busy for events (RFC 5545), free for availability. */
+	get showAs(): Transparency {
+		return this.transparency ?? (this.type?.isAvailability ? Transparency.Free : Transparency.Busy)
+	}
 
 	@property({ type: 'boolean' }) allDay = false
 	@property({ type: 'string', nullable: true }) timeZone?: string | null
@@ -493,6 +502,31 @@ export class Entry {
 		this.start = other.start
 		this.end = other.end
 		this.allDay = other.allDay
+	}
+
+	/** Takes over everything an edit can change, as an entry kept in Mitra's own database does. */
+	adopt(edited: Entry) {
+		this.heading = edited.heading
+		this.description = edited.description
+		this.location = edited.location
+		this.color = edited.color
+		this.adoptSpan(edited)
+		this.timeZone = edited.timeZone
+		this.status = edited.status
+		this.percentComplete = edited.percentComplete
+		this.transparency = edited.transparency
+		this.visibility = edited.visibility
+		this.reminders = edited.reminders
+		this.participants = edited.participants
+		this.recurrence = edited.recurrence
+		if (edited.exdates !== undefined) {
+			this.exdates = edited.exdates
+		}
+	}
+
+	/** Excludes one occurrence of the series (RFC 5545 EXDATE). */
+	exclude(recurrenceId: Date) {
+		this.exdates = [...(this.exdates ?? []), recurrenceId.getTime()]
 	}
 
 	/** Re-zones entry while keeping wall-clock time. */

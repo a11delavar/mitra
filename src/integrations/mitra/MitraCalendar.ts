@@ -2,7 +2,6 @@ import { type EntityManager } from '@mikro-orm/sqlite'
 import { model } from '../../infrastructure/model/model.js'
 import { Integration, integration } from '../Integration.js'
 import { type Source } from '../../features/sources/Source.js'
-import { type Entry } from '../../features/entries/Entry.js'
 
 /**
  * Local SQLite-backed integration with no external remote sync.
@@ -60,42 +59,8 @@ export class MitraCalendar extends Integration {
 		return Promise.resolve()
 	}
 
-	override createEntry(em: EntityManager, entry: Entry): Promise<Entry> {
-		em.persist(entry)
-		return Promise.resolve(entry)
-	}
-
-	override updateEntry(_em: EntityManager, existing: Entry, incoming: Entry): Promise<void> {
-		existing.heading = incoming.heading
-		existing.description = incoming.description
-		existing.location = incoming.location
-		existing.color = incoming.color
-		existing.start = incoming.start
-		existing.end = incoming.end
-		existing.allDay = incoming.allDay
-		existing.timeZone = incoming.timeZone
-		existing.status = incoming.status
-		existing.percentComplete = incoming.percentComplete
-		existing.transparency = incoming.transparency
-		existing.visibility = incoming.visibility
-		existing.reminders = incoming.reminders
-		existing.participants = incoming.participants
-		existing.recurrence = incoming.recurrence
-		if (incoming.exdates !== undefined) {
-			existing.exdates = incoming.exdates
-		}
-		return Promise.resolve()
-	}
-
-	override deleteEntry(em: EntityManager, entry: Entry): Promise<void> {
-		em.remove(entry)
-		return Promise.resolve()
-	}
-
-	override excludeOccurrence(_em: EntityManager, master: Entry, recurrenceId: Date): Promise<void> {
-		master.exdates = [...(master.exdates ?? []), recurrenceId.getTime()]
-		return Promise.resolve()
-	}
+	/** Every entry lives in the database: there is no provider. */
+	override storesLocally() { return true }
 
 	override createSource(em: EntityManager, source: Source): Promise<Source> {
 		source.integrationId = this.id

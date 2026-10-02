@@ -436,6 +436,7 @@
 	"${count:pluralityNumber} lose their reminders": ["${count:pluralityNumber} perd ses rappels", "${count:pluralityNumber} perdent leurs rappels"],
 	"${count:pluralityNumber} lose their time zone": ["${count:pluralityNumber} perd son fuseau horaire", "${count:pluralityNumber} perdent leur fuseau horaire"],
 	"${count:pluralityNumber} arrive with everything they carry": ["${count:pluralityNumber} arrive avec tout ce qu’elle contient", "${count:pluralityNumber} arrivent avec tout ce qu’elles contiennent"],
+	"${count:pluralityNumber} are availability": ["${count:pluralityNumber} est une disponibilité", "${count:pluralityNumber} sont des disponibilités"],
 	"${count:pluralityNumber} repeat": ["${count:pluralityNumber} se répète", "${count:pluralityNumber} se répètent"],
 	"${count:pluralityNumber} stayed in ${name}": ["${count:pluralityNumber} est restée dans ${name}", "${count:pluralityNumber} sont restées dans ${name}"],
 	"${count:pluralityNumber} stop being all-day": ["${count:pluralityNumber} n’est plus sur toute la journée", "${count:pluralityNumber} ne sont plus sur toute la journée"],
@@ -543,5 +544,11 @@
 	"Tasks with a time only": "Uniquement les tâches avec une heure",
 	"Where new events and tasks are created": "Où les nouveaux événements et tâches sont créés",
 	"The step dragging and resizing land on": "Le pas sur lequel le déplacement et le redimensionnement se posent",
-	"Account options": "Options du compte"
+	"Account options": "Options du compte",
+	"Availability": "Disponibilité",
+	"Add Availability": "Ajouter une disponibilité",
+	"CreateAvailability.Keywords": "nouveau créneau heures de travail concentration travail profond bloc de temps planification ombrage",
+	"Hide availability": "Masquer les disponibilités",
+	"Availability leaves the week view. It stays in its calendars, and busy availability still shows as busy to others.": "Les disponibilités quittent la vue semaine. Elles restent dans leurs agendas, et les disponibilités occupées apparaissent toujours comme occupées aux autres.",
+	"HideAvailabilitySetting.Keywords": "masquer cacher disponibilité heures de travail ombrage concentration désencombrer"
 }

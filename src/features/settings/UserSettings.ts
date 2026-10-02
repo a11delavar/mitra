@@ -17,6 +17,8 @@ export class UserSettings {
 	defaultTaskReminderMinutes?: number | null
 	/** Whether closed tasks (done or cancelled) are hidden from calendar views. */
 	hideDoneTasks?: boolean
+	/** Whether availability is hidden from the week view. */
+	hideAvailability?: boolean
 
 	/**
 	 * Sanitizes user settings input, dropping unknown keys and out-of-range values.
@@ -47,6 +49,9 @@ export class UserSettings {
 		}
 		if (typeof incoming.hideDoneTasks === 'boolean') {
 			settings.hideDoneTasks = incoming.hideDoneTasks
+		}
+		if (typeof incoming.hideAvailability === 'boolean') {
+			settings.hideAvailability = incoming.hideAvailability
 		}
 		return Object.keys(settings).length ? settings : undefined
 	}

@@ -162,7 +162,7 @@ export function updateRelations(id: string, relations: Array<Relation> | null) {
 
 /** Default target source for newly created entries. */
 export function getPrimarySource(type?: EntryType): Source | undefined {
-	const visibleSources = getVisibleSources().filter(s => !type || s.supportsEntryType(type))
+	const visibleSources = getVisibleSources().filter(s => !type || canHold(s, type))
 	return visibleSources.find(s => s.id === getDefaultSourceId()) ?? visibleSources[0]
 }
 
@@ -204,6 +204,11 @@ export function getEnabledSources(integration?: Integration) {
 /** Returns effective capabilities for a source, combining provider capabilities with source-level permissions. */
 export function getCapabilities(sourceId: string): Integration['capabilities'] {
 	return Integration.capabilitiesIn(getIntegrationFor(sourceId)?.capabilities ?? Integration.defaultCapabilities, getSource(sourceId))
+}
+
+/** Whether entries of `type` can live in `source`, which for availability also takes the provider's say. */
+export function canHold(source: Source, type: EntryType) {
+	return getIntegrationFor(source.id)?.canHold(source, type) ?? source.supportsEntryType(type)
 }
 
 /**
@@ -411,6 +416,8 @@ export function editOccurrence(occurrence: Entry, scope: RecurrenceScope) {
 		allDay: occurrence.allDay,
 		timeZone: occurrence.timeZone ?? null,
 		status: occurrence.status,
+		transparency: occurrence.transparency,
+		visibility: occurrence.visibility,
 		reminders: occurrence.reminders ?? null,
 		participants: occurrence.participants ?? null,
 	})

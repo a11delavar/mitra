@@ -45,6 +45,7 @@ Day-to-day behaviour, whichever accounts you connected.
 - **[Calendars & task lists](guides/calendars.md)**: choose what gets imported, rename, recolor, reorder and hide it, and pick where new entries go.
 - **[Unscheduled tasks](guides/unscheduled-tasks.md)**: where tasks without a date live, and how to drag them onto the calendar and back.
 - **[Routines](guides/routines.md)**: how daily habits show up as small day marks in the month and year views.
+- **[Availability](guides/availability.md)**: shade the time each calendar is for, like working hours or study time, and show it as busy where others look.
 - **[Relationships](guides/relationships/README.md)**: link tasks and events across calendars, organize subtasks and track dependencies.
 - **[Participants & invitations](guides/participants.md)**: invite people to an entry and follow their replies.
 - **[Reminders & notifications](guides/notifications.md)**: how push reminders work and what they need.

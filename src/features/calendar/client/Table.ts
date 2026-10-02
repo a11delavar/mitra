@@ -3,6 +3,7 @@ import { DateTime } from '@3mo/date-time'
 import { observeResize } from '@3mo/resize-observer'
 import { DataGridController, type DataGridColumn, DataGridSelectability, DataGridSelectionBehaviorOnDataChange, DataGridSortingStrategy } from '@3mo/data-grid/controller'
 import { type Entry } from '../../entries/Entry.js'
+import { Availability } from '../../availability/client/Availability.js'
 import { TableWindow } from './TableWindow.js'
 import { TableRow, TableFilter } from './TableRow.js'
 import { tableColumns, widestContentOf, hideable } from './TableColumns.js'
@@ -63,7 +64,7 @@ export class Table extends Component {
 		super.willUpdate(changed)
 		if (['entries', 'query', 'filter', 'window'].some(key => changed.has(key as keyof Table))) {
 			const { window } = this
-			this.rows = this.entries.map(entry => TableRow.for(entry, window)).filter(row => row.inWindow(window) && row.matches(this.query, this.filter))
+			this.rows = Availability.outside(this.entries).map(entry => TableRow.for(entry, window)).filter(row => row.inWindow(window) && row.matches(this.query, this.filter))
 			this.grid.virtualization.handleItemsChange()
 		}
 	}

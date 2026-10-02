@@ -1,16 +1,18 @@
 import { type Converter } from '@a11d/converter'
 import { Type } from '../../infrastructure/model/orm.js'
 
-export type EntryTypeValue = 'event' | 'task'
+export type EntryTypeValue = 'event' | 'task' | 'availability'
 
 /**
- * Value object representing an entry's domain type (event or task).
+ * Value object representing an entry's domain type (event, task, or availability).
  */
 export class EntryType {
 	static readonly Event = new EntryType('event')
 	static readonly Task = new EntryType('task')
+	/** A recurring window of time, shaded behind the calendar's entries. Mitra stores it itself, in whichever calendar it belongs to. */
+	static readonly Availability = new EntryType('availability')
 
-	static readonly all: ReadonlyArray<EntryType> = [EntryType.Event, EntryType.Task]
+	static readonly all: ReadonlyArray<EntryType> = [EntryType.Event, EntryType.Task, EntryType.Availability]
 
 	static parse(value: EntryType | EntryTypeValue | string): EntryType {
 		const parsed = EntryType.tryParse(value)
@@ -34,12 +36,18 @@ export class EntryType {
 		return this === EntryType.Task
 	}
 
+	get isAvailability() {
+		return this === EntryType.Availability
+	}
+
 	format() {
 		switch (this.value) {
 			case 'event':
 				return t('Event')
 			case 'task':
 				return t('Task')
+			case 'availability':
+				return t('Availability')
 		}
 	}
 
@@ -49,6 +57,8 @@ export class EntryType {
 				return t('Events')
 			case 'task':
 				return t('Tasks')
+			case 'availability':
+				return t('Availability')
 		}
 	}
 

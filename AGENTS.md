@@ -90,7 +90,7 @@ Feature components compose design primitives and hold domain logic only. Registe
   - `Source.remoteName` stores provider's baseline name. Reconcile updates displayed `name` only if remote name actually changed.
 - **Data Authority**:
   - **Backend-Owned**: `DTSTART`, `STATUS`, `TRANSP`, `SUMMARY`, `DESCRIPTION`.
-  - **Mitra-Owned**: Source colors, order, visibility, availability overrides.
+  - **Mitra-Owned**: Source colors, order, visibility, availability.
   - **Mirror**: Mitra-owned facts optionally reflected upstream (e.g. `X-MITRA-*`).
   - **Primary Data**: SQLite DB is authoritative for users, sessions, and local overrides.
   - **Relations Graph**: `GET /entries/relations/closure` returns the graph.
@@ -111,7 +111,8 @@ Feature components compose design primitives and hold domain logic only. Registe
 
 ## The Sample Calendar (`Demo.seed` in `src/integrations/demo/Demo.ts`)
 One fixture serves the dev account, every demo sandbox and every screenshot the site ships, so keep it calm: one entry per concept, the all-day lane empty around today, days inside 07:00–19:00 (what a capture holds).
-- **One dependency chain in the CURRENT week**: the app opens on today−2…today+4. Give its connector a clear band of time; a chip between two linked tasks swallows the line.
+- **Structured Availability Windows**: Shape the fixture's week using distinct, unnamed availability blocks (the color suffices; only Wednesday's work carries a place); recurring entries anchor to weekday rules or fixed dates to prevent drifting.
+- **Dependency Links in Current Week**: App opens on `today−2…today+4`. Connectors must remain clear of intermediate chips and ribbon labels.
 - **`credentials.seededFor` gates the refresh**: a seed edit shows up the next day, or immediately via the Demo integration's Re-import.
 
 ## Integrations & Sync Engine
@@ -120,7 +121,8 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
   - `registeredIntegrations` (`registerIntegrations.ts`): Imports all connectable classes in display order.
   - Class statics: `label`, `description`, `logo` (asset key for inline SVG), plus the facts the add dialog reads: `onePerUser`, `developmentOnly`, `discoversSources`. Instance getters: `canConnect`, `reimportable`.
   - Base constructor sets STI discriminator via `new.target.type`.
-- **Capabilities** (`Integration.defaultCapabilities`): everything a provider can do, in one object. Entry features default to `true`, `createSources`/`deleteSources` to `false`. `capabilitiesIn(source)` turns off the write actions on read-only sources.
+- **Capabilities** (`Integration.defaultCapabilities`): everything a provider can do, in one object. Entry features default to `true`, `createSources`/`deleteSources` to `false`. `capabilitiesIn(source)` turns off write actions on read-only sources; `availability` indicates provider support (Notion and Tempo disabled).
+- **What Syncs See**: Engines query entries via `Integration.syncedEntries` (never bare `em.find`), excluding availability so remote sync passes and re-imports cannot delete local availability.
 - **Source Management**: `POST /api/integrations/:id/sources` and `DELETE /api/sources/:id` check the capability, then call the optional `SyncEngine.createSource`/`deleteSource`. Renaming needs no capability: the name is Mitra's for every provider.
 - **Integration Types**:
   - **CalDAV** (`integrations/caldav/CalDAV.ts`): Standard remote CalDAV sync engine.
@@ -130,7 +132,7 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
     - Connect Flow (`GoogleOAuth.ts`): Backend PKCE exchange `/api/integrations/google/connect` -> callback -> redirect to `/?integration=<id>`.
     - Limitations: `capabilities.relations = false` (Google CalDAV drops `RELATED-TO` and `X-` properties).
   - **Mitra** (`integrations/mitra/MitraCalendar.ts`, type `'mitra'`): calendars stored in Mitra's own database, no provider.
-    - `syncInterval = Infinity`; writes go straight to the database.
+    - `syncInterval = Infinity`; writes go straight to the database (`storesLocally` is true for every entry).
     - `fetchSources` returns the stored sources unchanged. Returning `[]` would make `getSources` delete them all, and Edit → Save reaches that path. `reimportSource` is a no-op for the same reason, and `reimportable` is false.
     - Constant uri `mitra://local`, so the `(userId, uri)` index allows one per user. New sources get `mitra://calendar/<id>` and are stamped `importedAt` on creation.
     - `participants: false`: nothing can deliver an invitation, so entries with participants can't move in.
@@ -202,11 +204,11 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
   - UI: `DialogIcsImport` mirrors migration flow (target picker -> fidelity preview -> outcome; no series flattening).
 
 ## Sources & Entry Types
-- **Type Declaration**: Sources declare supported types via `Source.entryTypes` array (`'event'`, `'task'`). Source identity is `uri` alone.
+- **Type Declaration**: Sources declare supported types via `Source.entryTypes` (`'event'`, `'task'`). Availability is unlisted (supported everywhere; gated by provider `capabilities.availability`). Source identity is `uri` alone.
 - **EntryType Value Object** (`src/features/entries/EntryType.ts`):
-  - `EntryType.Event` (`'event'`) and `EntryType.Task` (`'task'`).
+  - `EntryType.Event` (`'event'`), `EntryType.Task` (`'task'`), and `EntryType.Availability` (`'availability'`).
   - MikroORM custom type `EntryTypeType` (`src/features/entries/server/EntryTypeType.ts`).
-  - Assigning `Entry.type` performs conversion.
+  - Assigning `Entry.type` converts and strips unsupported fields (availability drops status, participants, reminders).
   - Format methods: `EntryType.format()` / `formatPlural()`.
 - **Planning Surface** (`mitra-planning`): two sections, Overdue then Unscheduled, both from `EntryStore`.
   - `Entry.overdue`: open task whose `Entry.lastDay` is before today. By day, not instant. Repeating tasks exempt (`partOfSeries`).
@@ -303,8 +305,8 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
   - Selection: Emits `navigate` and requests editor open via `EntryEditorIntent.requestOpen(id)`.
 - **Editor Intent** (`src/features/entries/client/EntryEditorIntent.ts`):
   - Holds transient view intent for target editor (`openDraft(draft)` or `requestOpen(id)`).
-  - `EntrySegment.updated` opens run-start segment (`!hasPrevious`) and consumes intent. `settle(entries)` clears unmatched intents.
-  - A span edit in the editor (`EntryDetailsWhen.commit`) requests its entry again: a new day or lane renders it in a new segment, which would otherwise leave the editor closed. Series entries are excluded.
+  - Anchored via `EntryEditorAnchor` on hosting surfaces (chips, availability segments), which declare `entryColors` (`entryColors.css.ts`) and open run-start segments (`!hasPrevious`). `settle(entries)` clears unmatched intents.
+  - Surface transitions (chip ↔ availability type changes) and span edits defer re-requesting the entry until post-render to prevent departing hosts from intercepting the intent.
 - **Keyboard Interceptor** (`PageCalendar.handleKeyDown`):
   - Must ignore inputs (`<input>`, `<textarea>`, `<select>`, `[contenteditable]`), IME composition, modifier chords, and open dialogs (`e.composedPath()` has `HTMLDialogElement`).
 - **Registry Instances**: `commandInstances()` caches one instance per class and rebuilds them when the language changes (facts are stringified at construction). Never `new` the registry per render.
@@ -398,6 +400,21 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
   - SVG router routes by grid columns (not dates).
   - Realm separation: Lane layer draws lane<->lane edges; canvas layer draws timed<->timed and cross-realm edges (via scroll-driven CSS animation timeline / offset correction).
 
+## Availability
+- **Model & Local Storage**:
+  - `EntryType.Availability` defines repeating background windows adopting calendar color; defaults to free (`Entry.showAs`).
+  - Stored locally (`Integration.storesLocally` is `true`); writes bypass remote engines and cascade on calendar deletion.
+- **Rendering & View Filtering** (`src/features/availability/client/`):
+  - Filtered from standard layouts via `Availability.outside()` (never enters `EntrySegments` or `Routines`). Rendered in Week view as `<mitra-availability-segment>`.
+  - Layering: `.window` (base, opens editor via `Drag.availability`), chips (z-index 2+), `.labels` (z-index 3 at `Availability.labelPositions`). Hour lines (`.overlays .hour`) remain click-through.
+  - Global `HideAvailabilitySetting` toggles visibility across all calendars.
+- **Fences & Series Intent**:
+  - Excluded from search, relations, participants, reminders, and all-day lanes. Migration requires `capabilities.availability`.
+  - `EntryEditorIntent.shouldOpen` matches occurrences only, never series masters (avoids closing editor on post-save occurrence replacement).
+- **External Publishing & CalDAV**:
+  - Local writes dispatch to `SyncEngine.publishAvailability(entry)` without locking; reconciled on calendar toggle, disconnect, and full sync.
+  - CalDAV mirrors busy availability as `VEVENT` series prefixed `mitra-availability-<uid>` (free availability is never exported). Failed writes retry on subsequent sync.
+
 ## Sidebar & Navigation
 - **Source Icon**: `<mitra-source-icon>` (`src/features/sources/client/SourceIcon.ts`) renders source/provider glyphs reading color, importing state, and entry types directly from the bound `.source` (re-rendered when integration refetches mint fresh instances). Never mirror `Source` fields into separate component properties.
 - **Sidebar Grid**: Single CSS grid (`.integrations`) aligns all source rows, headings, and gutters across providers. Its `--sidebar-gap` is both the column gap and (the first column being zero-wide) a row's content inset. The Planning tab's heading takes it too, so every heading in the sidebar rides one column. Anything listing sources elsewhere (the migration dialog) reproduces that relationship: heading text starts where the row icons do.
@@ -410,7 +427,8 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
 - **One Astro project**: the homepage (`src/pages/index.astro`) plus Starlight rendering `../docs`, linked in by `prepare.mjs` (everything it writes is gitignored). The host lives once in `site.mjs`.
 - **The look is emitted, never restated**: `tools/tokens.mjs` evaluates `src/design`'s lit fragments in Node, so `contrastColorOf()` feature-detects in CSS rather than with `CSS.supports`.
 - **Raw HTML in Markdown never becomes rehype elements**: rewrite it in remark, on the text (`remarkDocsAssets`). Clear `website/.astro` and `node_modules/.astro` after changing a plugin.
-- **Captures** (`MITRA_VERSION=v0.5.0 npm run build && npm run screenshots`): settle on a stable, non-zero count of `mitra-entry-segment, mitra-table-row`, never a delay; drive surfaces with real input and park the pointer afterwards.
+- **Captures** (`MITRA_VERSION=v0.5.0 npm run build && npm run screenshots`): settle on a stable, non-zero count of `mitra-entry-segment, mitra-table-row`, never a delay; drive surfaces with real input and park pointer afterwards. Frozen at Thursday 10:20 (`clockAt`); availability is hidden across captures except in the availability guide.
+- **Crawlers**: website `robots.txt` points to Starlight sitemap; app `robots.txt` disallows all (prevents demo sandbox creation and crawler indexing). `starlight-llms-txt` provides `/llms.txt` and `/llms-full.txt`.
 - **Longhands only with `animation-timeline`**: the minifier folds `animation:` plus `animation-timeline` into one shorthand Chrome rejects, so the animation silently never runs.
 - **Copy** (site, `docs/`, README): plain sentences, no em or en dashes (a heading's dash also breaks its anchor), no emoji bullets. Quote a frontmatter `description` containing a colon.
 
@@ -418,7 +436,7 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
 - **Runtime**: Node 25+ required (Temporal API).
 - **Type Checking**: Run `tsgo` (`node_modules/@typescript/native-preview-<platform>/lib/tsgo --noEmit`). esbuild does not typecheck.
 - **Linting**: `npm run lint` (`eslint .`, ESLint 9 flat config). Enforces tabs, single quotes, no semicolons, a trailing newline (`eol-last`), `max-lines` 1000 per file (split like `CalDAV.<topic>.test.ts`), `no-console` (except `warn`/`error`).
-- **Tests**: `npm test` -> `scripts/test.ts` (esbuild bundles `src/**/*.test.ts` -> `out_test/`, runs `node:test`).
+- **Tests**: `npm test` -> `scripts/test.ts` (clears `out_test/`, bundles `src/**/*.test.ts`, runs `node:test`).
 - **Development**: `npm start` -> `scripts/dev.ts` (`tsgo --watch` + esbuild watch).
 - **Production Build**: `npm run build` -> `scripts/build.ts`. Shared esbuild config in `scripts/esbuild.ts`. Requires `data/` directory.
 - **PWA Icons & Badges** (`scripts/indexHtml.ts`):

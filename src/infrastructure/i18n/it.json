@@ -436,6 +436,7 @@
 	"${count:pluralityNumber} lose their reminders": ["${count:pluralityNumber} perde i promemoria", "${count:pluralityNumber} perdono i promemoria"],
 	"${count:pluralityNumber} lose their time zone": ["${count:pluralityNumber} perde il fuso orario", "${count:pluralityNumber} perdono il fuso orario"],
 	"${count:pluralityNumber} arrive with everything they carry": ["${count:pluralityNumber} arriva con tutto ciò che contiene", "${count:pluralityNumber} arrivano con tutto ciò che contengono"],
+	"${count:pluralityNumber} are availability": ["${count:pluralityNumber} è disponibilità", "${count:pluralityNumber} sono disponibilità"],
 	"${count:pluralityNumber} repeat": ["${count:pluralityNumber} si ripete", "${count:pluralityNumber} si ripetono"],
 	"${count:pluralityNumber} stayed in ${name}": ["${count:pluralityNumber} è rimasta in ${name}", "${count:pluralityNumber} sono rimaste in ${name}"],
 	"${count:pluralityNumber} stop being all-day": ["${count:pluralityNumber} non è più di tutto il giorno", "${count:pluralityNumber} non sono più di tutto il giorno"],
@@ -543,5 +544,11 @@
 	"Tasks with a time only": "Solo attività con orario",
 	"Where new events and tasks are created": "Dove vengono create nuove voci e attività",
 	"The step dragging and resizing land on": "Il passo su cui si posano trascinamento e ridimensionamento",
-	"Account options": "Opzioni account"
+	"Account options": "Opzioni account",
+	"Availability": "Disponibilità",
+	"Add Availability": "Aggiungi disponibilità",
+	"CreateAvailability.Keywords": "nuovo fascia orario di lavoro concentrazione lavoro profondo blocco di tempo pianificazione ombreggiatura",
+	"Hide availability": "Nascondi la disponibilità",
+	"Availability leaves the week view. It stays in its calendars, and busy availability still shows as busy to others.": "La disponibilità esce dalla vista settimana. Resta nei suoi calendari, e la disponibilità occupata appare ancora occupata agli altri.",
+	"HideAvailabilitySetting.Keywords": "nascondere nascondi disponibilità orario di lavoro ombreggiatura concentrazione ripulire"
 }

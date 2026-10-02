@@ -85,14 +85,19 @@ entriesRouter.get('/search', async (req, res) => {
 	const visibleSources = await req.user.sources(em, { enabled: true, hidden: false })
 
 	const term = `%${q.trim()}%`
-	const entries = await em.find(Entry, {
+	const integrations = new Map((await em.find(Integration, { id: { $in: visibleSources.map(source => source.integrationId) } })).map(integration => [integration.id, integration]))
+	const integrationOf = new Map(visibleSources.map(source => [source.id, integrations.get(source.integrationId)]))
+	const found = await em.find(Entry, {
 		sourceId: { $in: visibleSources.map(source => source.id) },
+		// Availability is background, not something to search for, and so are the events written for it.
+		type: { $ne: EntryType.Availability },
 		$or: [
 			{ heading: { $like: term } },
 			{ description: { $like: term } },
 			{ location: { $like: term } },
 		],
 	}, { orderBy: { start: 'desc' }, limit: 20 })
+	const entries = found.filter(entry => !integrationOf.get(entry.sourceId)?.writtenForAvailability(entry))
 
 	await attachRelations(em, req.user, entries)
 	return res.json(entries.map(entry => projectedForViewer(entry, viewerZone(req))))
@@ -148,9 +153,12 @@ entriesRouter.post('/', async (req, res) => {
 	if (!type) {
 		return res.status(400).json({ error: `Unknown entry type: ${String(body.type)}` })
 	}
-	if (!targetSource.supportsEntryType(type)) {
-		return res.status(400).json({ error: `This calendar cannot hold ${type.isTask ? 'tasks' : 'events'}` })
+	if (!targetIntegration.canHold(targetSource, type)) {
+		return res.status(400).json({ error: `This calendar cannot hold ${type.isTask ? 'tasks' : type.isAvailability ? 'availability' : 'events'}` })
 	}
+
+	// These fields are assigned after `type`, so what availability can't carry is dropped here as well.
+	const availability = type.isAvailability
 
 	const incoming = new Entry({
 		id: crypto.randomUUID(),
@@ -170,8 +178,8 @@ entriesRouter.post('/', async (req, res) => {
 		transparency: type.isTask ? null : body.transparency ?? null,
 		visibility: body.visibility ?? null,
 		recurrence: incomingRecurrence,
-		reminders: body.reminders ?? undefined,
-		participants: Participants.normalize(body.participants),
+		reminders: availability ? null : body.reminders ?? undefined,
+		participants: availability ? null : Participants.normalize(body.participants),
 		relations: relations ?? null,
 	})
 
@@ -278,9 +286,9 @@ entriesRouter.put('/:id', async (req, res) => {
 		if (existing.partOfSeries) {
 			return res.status(400).json({ error: 'A recurring entry cannot change its type' })
 		}
-		if (!targetSource.supportsEntryType(incomingType)) {
-			return res.status(400).json({ error: 'The picked calendar cannot hold this entry type' })
-		}
+	}
+	if ((incomingType !== existing.type || (incomingType.isAvailability && targetSource.id !== currentSource.id)) && !targetIntegration.canHold(targetSource, incomingType)) {
+		return res.status(400).json({ error: 'The picked calendar cannot hold this entry type' })
 	}
 
 	if (body.scope && body.recurrenceId) {
@@ -299,8 +307,8 @@ entriesRouter.put('/:id', async (req, res) => {
 			percentComplete: body.percentComplete === undefined ? existing.percentComplete : incomingPercent(body.percentComplete),
 			transparency: existing.type.isTask ? null : body.transparency ?? existing.transparency,
 			visibility: incomingVisibility,
-			reminders: body.reminders === undefined ? existing.reminders : body.reminders,
-			participants: incomingParticipants,
+			reminders: existing.type.isAvailability ? null : body.reminders === undefined ? existing.reminders : body.reminders,
+			participants: existing.type.isAvailability ? null : incomingParticipants,
 		})
 		if (edited.allDay) {
 			const zone = dayZone(req, edited.timeZone)
@@ -311,7 +319,7 @@ entriesRouter.put('/:id', async (req, res) => {
 			? normalizeAllDay(new Date(body.recurrenceId), dayZone(req, existing.timeZone))
 			: new Date(body.recurrenceId)
 		const movingTo = targetSource.id === currentSource.id ? undefined : { source: targetSource, integration: targetIntegration }
-		if (movingTo && !targetSource.supportsEntryType(existing.type)) {
+		if (movingTo && !targetIntegration.canHold(targetSource, existing.type)) {
 			return res.status(400).json({ error: 'The picked calendar cannot hold this entry type' })
 		}
 		if (movingTo && body.scope !== 'this' && !targetIntegration.capabilities.recurrence) {
@@ -345,8 +353,8 @@ entriesRouter.put('/:id', async (req, res) => {
 		transparency: incomingType.isTask ? null : body.transparency ?? existing.transparency,
 		visibility: incomingVisibility,
 		recurrence: incomingRecurrence,
-		reminders: body.reminders === undefined ? existing.reminders : body.reminders,
-		participants: incomingParticipants,
+		reminders: incomingType.isAvailability ? null : body.reminders === undefined ? existing.reminders : body.reminders,
+		participants: incomingType.isAvailability ? null : incomingParticipants,
 		relations,
 	})
 

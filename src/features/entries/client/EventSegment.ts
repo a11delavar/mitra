@@ -6,13 +6,15 @@ import { type RoutineRun } from '../../routines/client/Routines.js'
 import { contrastColorOf } from '../../../design/contrastColor.js'
 import { getSource, getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore, reportSaveError } from './EntryStore.js'
-import { EntryEditorIntent } from './EntryEditorIntent.js'
+import { EntryEditorAnchor } from './EntryEditorAnchor.js'
+import { entryColors } from './entryColors.css.js'
 
 @component('mitra-entry-segment')
 export class EntrySegmentComponent extends Component {
 	@queryConnectedInstances() private static readonly instances: Set<EntrySegmentComponent>
 
 	readonly store = new EntryStore(this)
+	readonly editor = new EntryEditorAnchor(this)
 
 	@property({ type: Object }) segment?: EntrySegment
 
@@ -34,7 +36,6 @@ export class EntrySegmentComponent extends Component {
 					i.selected = open
 				}
 			})
-			EntryEditorIntent.setEditing(entry, open)
 			if (!open && !entry.persisted && !entry.heading?.trim()) {
 				EntryStore.discardDraft()
 			}
@@ -56,26 +57,11 @@ export class EntrySegmentComponent extends Component {
 		this.open = true
 	}
 
-	protected override disconnected() {
-		const entry = this.segment?.entry
-		if (this.open && entry) {
-			EntryEditorIntent.setEditing(entry, false)
-		}
-	}
-
 	private readonly handleStatusChange = () => {
 		EntryStore.notify()
 		const entry = this.segment?.entry
 		if (entry?.persisted) {
 			EntryStore.commit(entry).catch(reportSaveError)
-		}
-	}
-
-	@eventListener({ target: EntryEditorIntent.requests, type: 'request' })
-	protected handleOpenRequest() {
-		const entry = this.segment?.entry
-		if (entry && EntryEditorIntent.shouldOpen(entry)) {
-			this.requestUpdate()
 		}
 	}
 
@@ -106,11 +92,6 @@ export class EntrySegmentComponent extends Component {
 			this.removeAttribute('data-progress')
 			this.style.removeProperty('--mitra-entry-progress')
 		}
-		if (EntryEditorIntent.shouldOpen(entry) && !this.segment!.hasPrevious) {
-			EntryEditorIntent.setEditing(entry, true)
-			EntryEditorIntent.consume()
-			this.open = true
-		}
 	}
 
 	static override get styles() {
@@ -120,10 +101,7 @@ export class EntrySegmentComponent extends Component {
 				flex-direction: column;
 				gap: 0.125rem;
 				padding: 0.125rem;
-				--color-accent: var(--mitra-entry-segment-color);
-				${contrastColorOf('--color-accent-text', 'var(--color-accent)')};
-				--mitra-entry-surface: color-mix(in srgb, color-mix(in srgb, var(--mitra-entry-segment-color) 7.5%, var(--color-surface)) 80%, transparent);
-				--mitra-surface: var(--mitra-entry-surface);
+				${entryColors};
 				--segment-bg: color-mix(in srgb, var(--mitra-entry-segment-color) 25%, var(--color-background));
 				background-color: var(--segment-bg);
 				border-inline-start: 3px solid var(--mitra-entry-segment-color);

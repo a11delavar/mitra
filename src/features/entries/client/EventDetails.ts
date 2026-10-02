@@ -4,7 +4,7 @@ import { Color } from '../../sources/Color.js'
 import { EntryType, type EntryTypeValue } from '../EntryType.js'
 import { TaskStatus, Transparency } from '../Entry.js'
 import type { EntrySegment } from './EntrySegment.js'
-import { getIntegrations, getSource, getCapabilities, getExternalLink } from '../../../infrastructure/http/Api.js'
+import { getIntegrations, getSource, getCapabilities, getExternalLink, canHold } from '../../../infrastructure/http/Api.js'
 import { EntryStore, reportSaveError } from './EntryStore.js'
 import * as Hierarchy from '../../relations/client/Hierarchy.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
@@ -25,7 +25,7 @@ export class EntryDetailsComponent extends Component {
 					return
 				}
 				if (this.open) {
-					this.popoverElement?.show(this.closest('mitra-entry-segment') ?? undefined)
+					this.popoverElement?.show(this.closest<HTMLElement>('mitra-entry-segment, mitra-availability-segment > .window') ?? undefined)
 				} else {
 					this.popoverElement?.hide()
 				}
@@ -43,6 +43,10 @@ export class EntryDetailsComponent extends Component {
 
 	private get capabilities() {
 		return getCapabilities(this.segment!.entry.sourceId)
+	}
+
+	private get isAvailability() {
+		return this.segment!.entry.type.isAvailability
 	}
 
 	protected override createRenderRoot() { return this }
@@ -478,7 +482,7 @@ export class EntryDetailsComponent extends Component {
 				`,
 				this.remindersTemplate,
 			],
-			[html`<mitra-relations-field .entry=${entry}></mitra-relations-field>`],
+			[this.isAvailability ? html.nothing : html`<mitra-relations-field .entry=${entry}></mitra-relations-field>`],
 		]
 		return groups
 			.map(rows => rows.filter(row => row !== html.nothing))
@@ -488,19 +492,22 @@ export class EntryDetailsComponent extends Component {
 	private get entryTypeTemplate() {
 		const entry = this.segment!.entry
 		const source = this.source
-		const switchable = this.capabilities.editEntries && !!source?.supportsEntryType(EntryType.Event) && !!source.supportsEntryType(EntryType.Task) && !entry.partOfSeries
-		if (!switchable) {
-			return html.nothing
-		}
+		// Its own type always, so a type that can't change still shows, disabled, rather than vanishing.
+		const types = EntryType.all.filter(type => type === entry.type || (!!source && canHold(source, type)))
+		const fixed = !this.capabilities.editEntries || types.length < 2 || entry.partOfSeries
 		const handleTypeChange = (e: CustomEvent<EntryTypeValue>) => {
 			entry.type = e.detail
 			EntryStore.notify()
+			// The type decides what draws the entry (a chip or availability), and the editor closes with the old one, so
+			// whatever draws it next opens it again: asked once that has rendered, or the departing chip claims it. By the
+			// entry itself, since converting re-creates it under a new id.
+			setTimeout(() => EntryEditorIntent.openDraft(entry))
 			this.handleChange().catch(reportSaveError)
 		}
 		return html`
 			<span class="entry-type field">
-				<mitra-select label=${t('Type')} .value=${entry.type.value} @change=${handleTypeChange}>
-					${EntryType.all.map(type => html`<mitra-option .value=${type.value}>${type.format()}</mitra-option>`)}
+				<mitra-select label=${t('Type')} ?disabled=${fixed} .value=${entry.type.value} @change=${handleTypeChange}>
+					${types.map(type => html`<mitra-option .value=${type.value}>${type.format()}</mitra-option>`)}
 				</mitra-select>
 			</span>
 		`
@@ -518,9 +525,10 @@ export class EntryDetailsComponent extends Component {
 			this.handleChange().catch(reportSaveError)
 		}
 		const entry = this.segment!.entry
-		const canHold = (target: Source) => {
+		const canMoveTo = (target: Source) => {
 			const capabilities = getCapabilities(target.id)
 			return capabilities.createEntries
+				&& (!entry.type.isAvailability || capabilities.availability)
 				&& (!entry.partOfSeries || capabilities.recurrence)
 				&& (entry.status !== TaskStatus.Cancelled || capabilities.cancelledStatus)
 				&& (entry.transparency !== Transparency.Free || capabilities.transparency)
@@ -530,7 +538,7 @@ export class EntryDetailsComponent extends Component {
 			<span class="source field">
 				<mitra-select label=${t('Calendar')} ?disabled=${!this.capabilities.editEntries} .value=${this.source} @change=${handleSourceChange}>
 					${getIntegrations()
-						.map(integration => ({ integration, sources: [...integration.sources].filter(source => source.id === entry.sourceId || (source.enabled && canHold(source))) }))
+						.map(integration => ({ integration, sources: [...integration.sources].filter(source => source.id === entry.sourceId || (source.enabled && canMoveTo(source))) }))
 						.filter(({ sources }) => sources.length)
 						.map(({ integration, sources }) => html`
 							<mitra-option-group label=${integration.credentials?.username || integration.type}>
@@ -557,7 +565,7 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	private get participantsTemplate() {
-		return !this.capabilities.participants ? html.nothing : html`
+		return !this.capabilities.participants || this.isAvailability ? html.nothing : html`
 			<li class="participants field">
 				<mitra-icon icon="users"></mitra-icon>
 				<mitra-participants-field .entry=${this.segment!.entry} @change=${this.handleChange}></mitra-participants-field>
@@ -607,7 +615,7 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	private get remindersTemplate() {
-		return !this.segment!.entry.reminderAnchor || !this.capabilities.reminders ? html.nothing : html`
+		return !this.segment!.entry.reminderAnchor || !this.capabilities.reminders || this.isAvailability ? html.nothing : html`
 			<li class="reminders field">
 				<mitra-icon icon="bell"></mitra-icon>
 				<mitra-reminders-field .entry=${this.segment!.entry} @change=${this.handleChange}></mitra-reminders-field>

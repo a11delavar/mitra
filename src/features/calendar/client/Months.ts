@@ -8,6 +8,7 @@ import { EntryDragController } from '../../entries/client/EntryDragController.js
 import { MonthsDensityController } from './MonthsDensityController.js'
 import { Routines } from '../../routines/client/Routines.js'
 import { HideDoneTasksSetting } from '../../entries/client/HideDoneTasksSetting.js'
+import { Availability } from '../../availability/client/Availability.js'
 
 /**
  * Year view months strip with one row per month aligned across weekday columns.
@@ -27,7 +28,7 @@ export class Months extends Component {
 	@query('.corner') private readonly corner?: HTMLElement
 	@query('mitra-day') private readonly dayCell?: HTMLElement
 
-	private get routines(): Routines { return Routines.of(this.entries, this.buffer.window.days, 'month') }
+	private get routines(): Routines { return Routines.of(Availability.outside(this.entries), this.buffer.window.days, 'month') }
 
 	private get segments(): EntrySegments { return EntrySegments.of(HideDoneTasksSetting.filter(this.routines.kept), this.buffer.window.days) }
 

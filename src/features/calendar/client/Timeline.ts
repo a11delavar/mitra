@@ -4,6 +4,7 @@ import { type Entry } from '../../entries/Entry.js'
 import { EntryType } from '../../entries/EntryType.js'
 import { getPrimarySource, getSource } from '../../../infrastructure/http/Api.js'
 import { EntrySegments } from '../../entries/client/EntrySegments.js'
+import { Availability } from '../../availability/client/Availability.js'
 import { type EntrySegment } from '../../entries/client/EntrySegment.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
 import { EntryConnections } from '../../relations/client/EntryConnections.js'
@@ -46,7 +47,7 @@ export class Timeline extends Component {
 	protected readonly density = new TimelineDensityController(this)
 
 	private get days(): Array<DateTime> { return this.dates.days }
-	private get segments() { return EntrySegments.of(this.entries, this.dates.days) }
+	private get segments() { return EntrySegments.of(Availability.outside(this.entries), this.dates.days) }
 
 	private renderedRows: Array<TimelineRow> = []
 

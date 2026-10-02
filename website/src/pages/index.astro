@@ -35,13 +35,23 @@ const views = [
 	{ name: 'table', title: 'Table', text: 'Your entries as rows. Sort and filter them, and change many at once.' },
 ]
 
+// The site name Google shows in results, which "Mitra" alone does not pin down.
+const website = {
+	'@context': 'https://schema.org',
+	'@type': 'WebSite',
+	name: 'Mitra',
+	alternateName: 'Mitra Calendar',
+	url: new URL(withBase('/'), Astro.site).href,
+}
+
 const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) [data-view='${name}']`).join(',\n')} { display: block; }`
 ---
 
 <Site
-	title="Mitra | One calendar to plan your events and tasks"
-	description="Mitra is a self-hosted calendar that puts your tasks on the same timeline as your events, and syncs with the calendars you already use."
+	title="Mitra | Self-hosted calendar for your events and tasks"
+	description="Mitra is a free, open source, self-hosted calendar that puts your tasks on the same timeline as your events and syncs with the calendars you already use."
 >
+	<script type="application/ld+json" slot="head" set:html={JSON.stringify(website)} />
 	<div class="progress" aria-hidden="true"></div>
 
 	<section class="hero">
@@ -61,7 +71,7 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 			<p class="fineprint">Free and open source. Runs in a single Docker container.</p>
 		</div>
 		<div class="frame">
-			<Shot name="week" alt="Mitra's week view, with events and tasks in the same columns" width={2200} />
+			<Shot name="week" alt="Mitra's week view, with events and tasks in the same columns" width={2200} priority />
 		</div>
 	</section>
 
@@ -510,7 +520,8 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 		border-radius: 0.375rem;
 		font-size: 0.875rem;
 		font-weight: 550;
-		color: var(--color-text-muted);
+		/* Muted text only just clears 4.5:1 on the page itself; the wash under the track drags it below. */
+		color: color-mix(in srgb, var(--color-text), var(--color-background) 40%);
 		cursor: pointer;
 		transition: color 0.15s ease, background 0.15s ease;
 	}

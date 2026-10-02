@@ -29,6 +29,10 @@ Your **calendar events** sync perfectly, two-way.
 
 If two-way task sync with Apple Reminders matters to you, that is a limitation on Apple's side, not Mitra's: Apple offers no CalDAV access to Reminders.
 
+## Busy availability
+
+[Availability](../guides/availability.md) you mark as busy in one of your iCloud calendars is added to that calendar as busy events. It works as described for [CalDAV](caldav.md#busy-availability).
+
 ## Troubleshooting
 
 - **"Invalid password" when connecting.** You must use an **app-specific password**, not your normal Apple ID password. Two-factor authentication also needs to be enabled on your Apple ID to generate one.

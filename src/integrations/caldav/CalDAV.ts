@@ -52,6 +52,13 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
+	/** The UID prefix of the busy events written for busy availability. Other clients keep UIDs, unlike `X-` properties. */
+	static readonly availabilityUidPrefix = 'mitra-availability-'
+
+	override writtenForAvailability(entry: Entry) {
+		return !!entry.uid?.startsWith(CalDAV.availabilityUidPrefix)
+	}
+
 	/** Transient tsdav client connection instance. */
 	@converter({ out: {} }) client?: ReturnType<typeof createDAVClient>
 

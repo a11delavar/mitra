@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
+import { Recurrence } from '../../recurrence/Recurrence.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 import { EntryStore } from './EntryStore.js'
 
@@ -54,6 +55,13 @@ describe('EntryEditorIntent', () => {
 		it('matches a rendered occurrence of the picked series', () => {
 			EntryEditorIntent.requestOpen('master')
 			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'master-2', recurrenceMasterId: 'master' })), true)
+		})
+
+		it('skips a series master in favor of its occurrences', () => {
+			EntryEditorIntent.requestOpen('master')
+			const master = entry({ id: 'master', recurrence: new Recurrence({ freq: 'WEEKLY' }) })
+			assert.equal(EntryEditorIntent.shouldOpen(master), false)
+			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'master-2', recurrenceMasterId: 'master', recurrence: master.recurrence })), true)
 		})
 
 		it('is consumed by the segment that opened it', () => {

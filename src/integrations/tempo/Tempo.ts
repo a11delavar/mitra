@@ -83,10 +83,11 @@ export class Tempo extends Integration<TempoCredentials> {
 		return `Tempo integration for "${this.credentials.username || this.uri || '(new)'}"`
 	}
 
+	/** No availability: it is edited with this provider's capabilities, and would not repeat. */
 	override get capabilities() {
 		return {
 			...Integration.defaultCapabilities,
-			recurrence: false, reminders: false, location: false, cancelledStatus: false,
+			availability: false, recurrence: false, reminders: false, location: false, cancelledStatus: false,
 			percentComplete: false, timeZone: false, participants: false, transparency: false,
 			visibility: false, relations: false, allDay: false, renameEntries: false,
 		}

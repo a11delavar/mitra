@@ -5,6 +5,9 @@ export class ReminderDefaults {
 	constructor(readonly event: number | null, readonly task: number | null) { }
 
 	for(type: EntryType): Array<number> | null {
+		if (type.isAvailability) {
+			return null
+		}
 		const minutes = type.isTask ? this.task : this.event
 		return minutes === null ? null : [minutes]
 	}

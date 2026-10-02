@@ -69,7 +69,7 @@ export class TempoSyncEngine implements SyncEngine {
 		const since = state.updatedFrom ? new Date(Date.parse(state.updatedFrom) - TempoSyncEngine.watermarkOverlapMs).toISOString() : undefined
 
 		const worklogs = await client.searchWorklogs(accountId, since)
-		const existing = await em.find(Entry, { sourceId: source.id })
+		const existing = await integration.syncedEntries(em, source)
 		const existingByUri = new Map(existing.map(entry => [entry.uri, entry]))
 		let changed = false
 

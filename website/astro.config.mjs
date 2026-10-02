@@ -4,9 +4,10 @@ import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'astro/config'
 import { unified } from '@astrojs/markdown-remark'
 import starlight from '@astrojs/starlight'
+import starlightLlmsTxt from 'starlight-llms-txt'
 import { remarkAlert } from 'remark-github-blockquote-alert'
 import { visit } from 'unist-util-visit'
-import { base, docsBase, site } from './site.mjs'
+import { base, demo, docsBase, site } from './site.mjs'
 
 // ../docs stays GitHub-browsable Markdown; the plugins below translate it for the site.
 
@@ -83,6 +84,7 @@ const sections = [
 			{ slug: 'guides/calendars' },
 			{ slug: 'guides/unscheduled-tasks' },
 			{ slug: 'guides/routines' },
+			{ slug: 'guides/availability' },
 			{ slug: 'guides/participants' },
 			{ slug: 'guides/notifications' },
 			{ slug: 'guides/location-autocomplete' },
@@ -132,13 +134,29 @@ const sections = [
 	},
 ]
 
+/** A docs slug as Starlight's collection id. */
+const docId = (/** @type {string} */ slug) => slug ? `${docsBase}/${slug}` : docsBase
+
 const sidebar = sections.map(section => ({
 	label: section.label,
 	items: section.items.filter(item => !item.hidden).map(({ slug, label }) => ({
-		slug: slug ? `${docsBase}/${slug}` : docsBase,
+		slug: docId(slug),
 		...(label ? { label } : {}),
 	})),
 }))
+
+// The docs as plain Markdown for language models (llmstxt.org), in sidebar order, one set per section.
+const llmsTxt = starlightLlmsTxt({
+	description: 'Mitra is a free, open source, self-hosted calendar that puts tasks on the same timeline as events. '
+		+ 'It syncs with the calendars people already use (CalDAV, Google Calendar, iCloud, calendar subscriptions, Notion and Tempo) '
+		+ 'and runs as a single Docker container.',
+	customSets: sections.map(section => ({ label: section.label, paths: section.items.map(item => docId(item.slug)) })),
+	promote: sections.flatMap(section => section.items.map(item => docId(item.slug))),
+	optionalLinks: [
+		{ label: 'Source code', url: 'https://github.com/a11delavar/mitra', description: 'the repository, AGPL-3.0' },
+		{ label: 'Demo', url: demo, description: 'a public instance with sample data, reset per visitor' },
+	],
+})
 
 // The docs used to live at the site root; those URLs keep resolving.
 const redirects = Object.fromEntries(
@@ -161,6 +179,7 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'Mitra',
+			plugins: [llmsTxt],
 			description: 'Documentation for Mitra, a self-hosted calendar for your events and tasks.',
 			logo: { src: './src/assets/mitra.svg', alt: 'Mitra' },
 			favicon: '/favicon.svg',

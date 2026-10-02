@@ -7,6 +7,7 @@ import { EntrySegments } from '../../entries/client/EntrySegments.js'
 import { type EntrySegment } from '../../entries/client/EntrySegment.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
 import { HideDoneTasksSetting } from '../../entries/client/HideDoneTasksSetting.js'
+import { Availability } from '../../availability/client/Availability.js'
 import { EntryConnections, type SegmentPlacement } from '../../relations/client/EntryConnections.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { CalendarScrollController } from './CalendarScrollController.js'
@@ -67,7 +68,7 @@ export class Days extends Component {
 	protected readonly entryDrag = new EntryDragController(this)
 	protected readonly density = new DayDensityController(this)
 	protected readonly zoneLane: TimeZoneLaneController = new TimeZoneLaneController(this)
-	private get segments() { return EntrySegments.of(HideDoneTasksSetting.filter(this.entries), this.dates.window.days) }
+	private get segments() { return EntrySegments.of(HideDoneTasksSetting.filter(Availability.outside(this.entries)), this.dates.window.days) }
 
 	/** Time axis columns with user-configured zones followed by the anchor system zone. */
 	private get timeZoneColumns(): Array<UserTimeZone | undefined> {
@@ -369,7 +370,9 @@ export class Days extends Component {
 						grid-template-rows: repeat(1440, minmax(0, 1fr));
 						grid-template-columns: subgrid;
 
-						.hour { border-top: var(--border); grid-column: 1 / -1; z-index: 1; }
+						/* Click-through: a line lies over the day, and a click on it belongs to what is beneath (the grid's create
+						   gesture, an availability window). */
+						.hour { border-top: var(--border); grid-column: 1 / -1; z-index: 1; pointer-events: none; }
 
 						.now {
 							grid-column: 1 / -1;
@@ -566,6 +569,7 @@ export class Days extends Component {
 					style="grid-column: ${offset + index + 1};"
 					.date=${day}
 					.entries=${this.segments.timedOn(day)}
+					.availability=${Availability.on(this.entries, day)}
 					?today=${day.dayStart.valueOf() === todayValue}
 				></mitra-day>
 			`)}

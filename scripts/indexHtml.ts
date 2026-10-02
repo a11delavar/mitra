@@ -48,7 +48,7 @@ function writeNotificationBadge() {
 	return sharp('assets/mitra-monochrome.svg').resize(96, 96).png().toFile(join(distDir, 'notification-badge.png'))
 }
 
-/** Generates single-page HTML shell, PWA manifest, and favicons from assets/mitra.svg. */
+/** Generates single-page HTML shell, PWA manifest, favicons from assets/mitra.svg, and robots.txt. */
 export async function writeIndexHtml() {
 	fs.mkdirSync(distDir, { recursive: true })
 
@@ -118,4 +118,8 @@ export async function writeIndexHtml() {
 </body>
 </html>
 `.trim())
+
+	// A calendar is private, so crawlers stay out of every instance. Disallowing the fetch rather than
+	// tagging the shell noindex also keeps them from opening demo sandboxes, which the document request opens.
+	fs.writeFileSync(join(distDir, 'robots.txt'), 'User-agent: *\nDisallow: /\n')
 }

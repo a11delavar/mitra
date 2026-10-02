@@ -2,7 +2,6 @@ import { component, html, css, state, Binder, bind, unsafeHTML, ifDefined, live 
 import { DialogComponent } from '@a11d/lit-application'
 import { Source } from '../../features/sources/Source.js'
 import { integrationClasses, type Integration, type IntegrationClass } from '../Integration.js'
-import { EntryType } from '../../features/entries/EntryType.js'
 import { CalDAV, Notion } from '../registerIntegrations.js'
 import { discoverSources, createIntegration, updateIntegration, getIntegrations, fetchIntegrations, fetchGoogleAvailability, connectGoogle, createSource, getMeta } from '../../infrastructure/http/Api.js'
 import mitraLogo from '../mitra/logo.svg'
@@ -289,7 +288,8 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 								<span class="name">
 									${source.name}
 									<span class="types">${[
-										...(source.entryTypes.length ? source.entryTypes : EntryType.all).map(type => type.formatPlural()),
+										// Availability fits every calendar, so only what the provider stores is listed.
+										...source.supportedEntryTypes.filter(type => !type.isAvailability).map(type => type.formatPlural()),
 										...source.readOnly ? [t('read-only')] : [],
 									].join(' · ')}</span>
 								</span>

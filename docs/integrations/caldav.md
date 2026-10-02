@@ -46,6 +46,21 @@ While you have the app open, enabled sources are polled about every 10 seconds, 
 - **Read-only shared calendars.** Calendars shared with you with view-only permissions are automatically detected and marked **read-only**. They sync and display normally, while edit actions are disabled. Personal customizations (renaming, recoloring, reordering, and hiding) remain available.
 - Renaming, recoloring, reordering and hiding a calendar are Mitra's own view of it and work the same for every provider. See **[Calendars & task lists](../guides/calendars.md)**. Your rename survives background syncs; only a genuine rename on the server side is adopted. These stay available on a read-only calendar too.
 
+## Busy availability
+
+[Availability](../guides/availability.md) you mark as **Busy** is added to the calendar it belongs to as busy events, so the time shows as taken on your phone and to anyone who invites you. There's nothing to set up.
+
+- Each busy availability becomes a repeating event with the same times and repeat rule, marked busy. If the availability has no name, the event is called "Busy". Its place and visibility, for example **Private**, carry over.
+- Mitra shows the availability itself in place of these events, so the time doesn't appear twice.
+- Mitra keeps the events in step with your availability. If one is changed, moved or deleted in another app, Mitra puts it back on the next sync.
+- Marking the availability **Free** again, deleting it, turning its calendar off, or disconnecting the account removes the events. Moving it to another calendar moves its events along.
+- A calendar that only holds tasks, or one you can't write to, gets no events.
+
+> [!NOTE]
+> Changes to a single day of busy availability aren't carried over. The event keeps following the repeat rule, so a day you moved or shortened still shows its usual time.
+
+This works the same for [Google Calendar](google-calendar.md) and [Apple Calendar](apple-calendar.md), which Mitra connects to over CalDAV.
+
 ## Troubleshooting
 
 - **Nothing appears after connecting.** Discovered sources start out **disabled** on purpose. Open the source picker and enable the ones you want.

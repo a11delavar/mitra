@@ -523,6 +523,10 @@
 		"${count:pluralityNumber} مورد با تمام اطلاعات خود منتقل می‌شود",
 		"${count:pluralityNumber} مورد با تمام اطلاعات خود منتقل می‌شوند"
 	],
+	"${count:pluralityNumber} are availability": [
+		"${count:pluralityNumber} مورد زمان در دسترس است",
+		"${count:pluralityNumber} مورد زمان در دسترس هستند"
+	],
 	"${count:pluralityNumber} repeat": [
 		"${count:pluralityNumber} مورد تکرار دارد",
 		"${count:pluralityNumber} مورد تکرار دارند"
@@ -681,5 +685,11 @@
 	"Tasks with a time only": "فقط کارهای دارای ساعت",
 	"Where new events and tasks are created": "محل ایجاد رویدادها و کارهای جدید",
 	"The step dragging and resizing land on": "گام‌هایی که کشیدن و تغییر اندازه روی آن منطبق می‌شود",
-	"Account options": "گزینه‌های حساب کاربری"
+	"Account options": "گزینه‌های حساب کاربری",
+	"Availability": "در دسترس بودن",
+	"Add Availability": "افزودن زمان در دسترس",
+	"CreateAvailability.Keywords": "جدید بازه ساعات کاری تمرکز کار عمیق بلوک زمانی برنامه سایه",
+	"Hide availability": "پنهان کردن زمان در دسترس",
+	"Availability leaves the week view. It stays in its calendars, and busy availability still shows as busy to others.": "زمان در دسترس از نمای هفته خارج می‌شود. در تقویم‌های خود می‌ماند و زمان‌های مشغول همچنان برای دیگران مشغول نشان داده می‌شوند.",
+	"HideAvailabilitySetting.Keywords": "پنهان مخفی در دسترس ساعات کاری سایه تمرکز مرتب‌سازی"
 }

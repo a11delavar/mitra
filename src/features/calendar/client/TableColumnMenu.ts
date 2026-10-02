@@ -38,7 +38,7 @@ export class TableColumnMenu extends Component {
 				...[TaskStatus.ToDo, TaskStatus.Doing, TaskStatus.Done, TaskStatus.Cancelled].map(status => ({ value: status, label: taskStatusLabel(status), icon: taskStatusIcon.get(status) })),
 				{ value: TableRow.noStatus, label: t('No status') },
 			]
-			case 'typeKey': return EntryType.all.map(type => ({ value: type.value, label: type.format() }))
+			case 'typeKey': return EntryType.all.filter(type => !type.isAvailability).map(type => ({ value: type.value, label: type.format() }))
 			case 'sourceName': return getVisibleSources().map(source => ({ value: source.id, label: source.name, source }))
 			case 'repeats': return [
 				{ value: 'repeating', label: t('Repeating'), icon: 'repeat' },

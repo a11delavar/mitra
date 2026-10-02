@@ -451,6 +451,7 @@
 	"${count:pluralityNumber} lose their reminders": ["${count:pluralityNumber} verliert die Erinnerungen", "${count:pluralityNumber} verlieren die Erinnerungen"],
 	"${count:pluralityNumber} lose their time zone": ["${count:pluralityNumber} verliert die Zeitzone", "${count:pluralityNumber} verlieren die Zeitzone"],
 	"${count:pluralityNumber} arrive with everything they carry": ["${count:pluralityNumber} kommt mit allem an, was er enthält", "${count:pluralityNumber} kommen mit allem an, was sie enthalten"],
+	"${count:pluralityNumber} are availability": ["${count:pluralityNumber} ist Verfügbarkeit", "${count:pluralityNumber} sind Verfügbarkeit"],
 	"${count:pluralityNumber} repeat": ["${count:pluralityNumber} wiederholt sich", "${count:pluralityNumber} wiederholen sich"],
 	"${count:pluralityNumber} stayed in ${name}": ["${count:pluralityNumber} ist in ${name} geblieben", "${count:pluralityNumber} sind in ${name} geblieben"],
 	"${count:pluralityNumber} stop being all-day": ["${count:pluralityNumber} ist nicht mehr ganztägig", "${count:pluralityNumber} sind nicht mehr ganztägig"],
@@ -558,5 +559,11 @@
 	"Tasks with a time only": "Nur Aufgaben mit Uhrzeit",
 	"Where new events and tasks are created": "Wo neue Termine und Aufgaben angelegt werden",
 	"The step dragging and resizing land on": "Der Schritt, auf dem Ziehen und Größenänderung landen",
-	"Account options": "Kontooptionen"
+	"Account options": "Kontooptionen",
+	"Availability": "Verfügbarkeit",
+	"Add Availability": "Verfügbarkeit hinzufügen",
+	"CreateAvailability.Keywords": "neu zeitfenster arbeitszeiten fokus deep work zeitblock planung schattierung",
+	"Hide availability": "Verfügbarkeit ausblenden",
+	"Availability leaves the week view. It stays in its calendars, and busy availability still shows as busy to others.": "Verfügbarkeit verschwindet aus der Wochenansicht. Sie bleibt in ihren Kalendern, und beschäftigte Verfügbarkeit zeigt anderen die Zeit weiterhin als belegt.",
+	"HideAvailabilitySetting.Keywords": "ausblenden verbergen verfügbarkeit arbeitszeiten schattierung fokus aufräumen"
 }

@@ -18,6 +18,7 @@ import { DialogRelationFailed } from '../../relations/client/DialogRelationFaile
 import { type EntrySegment } from './EntrySegment.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
+import type { AvailabilitySegment } from '../../availability/client/AvailabilitySegment.js'
 import { placeAllDay, placeTimed, resizePlacement, snapToGrid } from './entryPlacement.js'
 import { haptic } from '../../../design/haptics.js'
 
@@ -64,6 +65,8 @@ interface Drag {
 	readonly before?: Entry
 	readonly edge?: 'start' | 'end'
 	readonly grabbedSegment?: EntrySegmentComponent
+	/** The availability the gesture started on, opened if the tap never became a drag. */
+	readonly availability?: AvailabilitySegment
 	readonly pointerId: number
 	readonly surface: HTMLElement
 	readonly origin: { x: number, y: number }
@@ -470,17 +473,22 @@ export class EntryDragController extends Controller {
 			return
 		}
 
-		// Create on empty grid / lane / cell.
+		// Create on empty grid / lane / cell. A drag over availability still creates; a tap opens the availability.
+		const availability = target.closest('mitra-availability-segment') as AvailabilitySegment | null
 		const mode = this.createModeAt(target)
 		const source = mode ? getPrimarySource(this.createType) : undefined
 		if (!mode || !source || !getCapabilities(source.id).createEntries) {
+			// Nothing can be created here, so open the availability right away.
+			if (availability) {
+				availability.open = true
+			}
 			return
 		}
 		const anchor = this.pointAt(cells, e.clientX, e.clientY, mode)
 		if (!anchor) {
 			return
 		}
-		this.begin({ ...common, kind: 'create', mode, anchor, source })
+		this.begin({ ...common, kind: 'create', mode, anchor, source, availability: availability ?? undefined })
 	}
 
 	private readonly onPointerMove = (e: PointerEvent) => {
@@ -673,6 +681,7 @@ export class EntryDragController extends Controller {
 
 		if (drag.kind === 'create') {
 			const built = drag.moved ? this.buildAt(drag.point) : undefined
+			const availability = drag.availability
 			this.teardown(e.pointerId)
 			if (built) {
 				const draft = drag.gestureDraft ?? built
@@ -681,6 +690,10 @@ export class EntryDragController extends Controller {
 				EntryEditorIntent.openDraft(draft)
 			} else {
 				EntryStore.discardDraft()
+				// Pointer capture swallows the click, so the tap is handled here.
+				if (availability) {
+					availability.open = true
+				}
 			}
 			return
 		}

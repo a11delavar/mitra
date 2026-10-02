@@ -383,7 +383,7 @@ export class EntryDetailsWhen extends Component {
 			<div class="row">
 				<mitra-switch class="switch" label=${t('Include time')} title=${this.entry.allDay ? t('Include time') : t('Switch to all-day')}
 					?checked=${live(!this.entry.allDay)} @change=${this.toggleAllDay}
-					?hidden=${!this.editable || !getCapabilities(this.entry.sourceId).allDay}
+					?hidden=${!this.editable || !getCapabilities(this.entry.sourceId).allDay || this.entry.type.isAvailability}
 				></mitra-switch>
 				<div class="times">
 					${this.entry.allDay ? html`

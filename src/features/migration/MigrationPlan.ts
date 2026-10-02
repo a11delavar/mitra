@@ -4,7 +4,7 @@ import { type Entry, TaskStatus, Transparency, FLOATING_TIME_ZONE } from '../ent
 import { type Integration } from '../../integrations/Integration.js'
 
 /** Target capability that prevents moving an entry (evaluated up front). */
-export type MigrationBlocker = 'recurrence' | 'occurrence' | 'participants' | 'transparency' | 'visibility' | 'percentComplete'
+export type MigrationBlocker = 'availability' | 'recurrence' | 'occurrence' | 'participants' | 'transparency' | 'visibility' | 'percentComplete'
 
 /** Target capability that strips an entry field on arrival. */
 export type MigrationLoss = 'reminders' | 'location' | 'description' | 'timeZone' | 'allDay' | 'cancelledStatus' | 'type'
@@ -34,6 +34,9 @@ export class MigrationVerdict {
 		const blockers = new Array<MigrationBlocker>()
 		const losses = new Array<MigrationLoss>()
 
+		if (entry.type.isAvailability && !capabilities.availability) {
+			blockers.push('availability')
+		}
 		if (occurrence) {
 			blockers.push('occurrence')
 		}
@@ -166,6 +169,7 @@ export class MigrationPlan {
 	/** Human-readable label for a blocker count (frontend-only). */
 	static blockerLabel(blocker: MigrationBlocker, count: number): string {
 		switch (blocker) {
+			case 'availability': return t('${count:pluralityNumber} are availability', { count })
 			case 'recurrence': return t('${count:pluralityNumber} repeat', { count })
 			case 'occurrence': return t('${count:pluralityNumber} belong to a series with edited occurrences', { count })
 			case 'participants': return t('${count:pluralityNumber} have participants', { count })

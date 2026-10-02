@@ -51,6 +51,15 @@ export async function assertRelationsValid(em: EntityManager, user: User, entry:
 	if (!relations?.length) {
 		return undefined
 	}
+	// Availability can't be either end of a relation.
+	if (entry.type.isAvailability) {
+		return 'Availability cannot be related to other entries'
+	}
+	const sourceIds = (await user.sources(em)).map(source => source.id)
+	const targets = await em.find(Entry, { uid: { $in: relations.map(relation => relation.targetUid) }, sourceId: { $in: sourceIds } })
+	if (targets.some(target => target.type.isAvailability)) {
+		return 'Availability cannot be related to other entries'
+	}
 	const entryUid = entry.uid
 	if (entryUid && relations.some(relation => relation.targetUid === entryUid)) {
 		return 'An entry cannot relate to itself'

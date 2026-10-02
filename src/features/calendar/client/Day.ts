@@ -1,12 +1,17 @@
 import { Component, component, html, property, css, repeat, styleMap } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
 import type { EntrySegment } from '../../entries/client/EntrySegment.js'
+import { Availability, type AvailabilityPlacement } from '../../availability/client/Availability.js'
 import '../../entries/client/EventSegment.js'
+import '../../availability/client/AvailabilitySegment.js'
 
 @component('mitra-day')
 export class Day extends Component {
 	@property({ type: Object }) date!: DateTime
 	@property({ type: Array }) entries: ReadonlyArray<EntrySegment> = []
+
+	/** This day's availability, each window with its ribbon along the day's end edge. */
+	@property({ type: Array }) availability: ReadonlyArray<AvailabilityPlacement> = []
 	@property({ type: Boolean, reflect: true }) today = false
 
 	/** Whether this header titles a whole column in the week grid. */
@@ -124,7 +129,9 @@ export class Day extends Component {
 					grid-template-columns: 1fr;
 					position: relative;
 					padding-inline: 1px;
-					--_edge-gutter: 0.5rem;
+					/* Chips stop short of the day's end edge, and of an availability label there. */
+					--_availability-label: 0.625rem;
+					--_edge-gutter: max(0.5rem, var(--_availability-present) * (var(--_availability-label) + 0.125rem));
 
 					mitra-entry-segment {
 						grid-column: 1 / -1;
@@ -163,7 +170,13 @@ export class Day extends Component {
 				`)}
 			</div>
 
-			<div class="entries">
+			<div class="entries" style=${styleMap({ '--_availability-present': this.availability.some(({ segment }) => Availability.labelOf(segment.entry)) ? '1' : '0' })}>
+				${repeat(this.availability, ({ segment }) => segment.entry, ({ segment, labelAt }) => html`
+					<mitra-availability-segment
+						style=${styleMap({ '--_availability-rows': `${segment.startMinute} / ${segment.endMinute}`, '--_availability-label-at': `${labelAt}` })}
+						.segment=${segment}
+					></mitra-availability-segment>
+				`)}
 				${repeat(this.entries, segment => segment.entry, segment => html`
 					<mitra-entry-segment
 						style=${styleMap({

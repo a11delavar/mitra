@@ -63,6 +63,7 @@
 	"${count:pluralityNumber} lose their reminders": ["${count:pluralityNumber} loses its reminders", "${count:pluralityNumber} lose their reminders"],
 	"${count:pluralityNumber} lose their time zone": ["${count:pluralityNumber} loses its time zone", "${count:pluralityNumber} lose their time zone"],
 	"${count:pluralityNumber} arrive with everything they carry": ["${count:pluralityNumber} arrives with everything it carries", "${count:pluralityNumber} arrive with everything they carry"],
+	"${count:pluralityNumber} are availability": ["${count:pluralityNumber} is availability", "${count:pluralityNumber} are availability"],
 	"${count:pluralityNumber} repeat": ["${count:pluralityNumber} repeats", "${count:pluralityNumber} repeat"],
 	"${count:pluralityNumber} stayed in ${name}": ["${count:pluralityNumber} stayed in ${name}", "${count:pluralityNumber} stayed in ${name}"],
 	"${count:pluralityNumber} stop being all-day": ["${count:pluralityNumber} stops being all-day", "${count:pluralityNumber} stop being all-day"],
@@ -90,5 +91,7 @@
 	"SnapSetting.Keywords": "snap grid step granularity minutes drag resize",
 	"ThemeSetting.Keywords": "theme dark light mode colors appearance contrast",
 	"Toggle.Off": "Off",
-	"Toggle.On": "On"
+	"Toggle.On": "On",
+	"CreateAvailability.Keywords": "new frame working hours focus deep work time block schedule shade",
+	"HideAvailabilitySetting.Keywords": "hide availability working hours shading focus time declutter"
 }

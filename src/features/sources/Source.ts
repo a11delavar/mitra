@@ -56,8 +56,16 @@ export class Source {
 
 	@property({ type: 'json', nullable: true }) syncState?: Record<string, any>
 
+	/**
+	 * Whether entries of `type` can live here. The provider's list decides for events and tasks. Availability
+	 * fits any calendar, since Mitra stores it; whether a provider takes part is `capabilities.availability`.
+	 */
 	supportsEntryType(type: EntryType): boolean {
-		return !this.entryTypes?.length || this.entryTypes.includes(type)
+		return type.isAvailability || !this.entryTypes?.length || this.entryTypes.includes(type)
+	}
+
+	get supportedEntryTypes(): Array<EntryType> {
+		return EntryType.all.filter(type => this.supportsEntryType(type))
 	}
 
 	get defaultEntryType(): EntryType {

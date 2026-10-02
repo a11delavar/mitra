@@ -573,7 +573,7 @@ describe('Notion integration model', () => {
 	it('declares what Notion cannot represent: the editor hides these fields', () => {
 		const capabilities = account().capabilities
 		const unsupported = Object.entries(capabilities).filter(([, supported]) => !supported).map(([key]) => key)
-		assert.deepEqual(unsupported.sort(), ['cancelledStatus', 'createSources', 'deleteSources', 'location', 'participants', 'percentComplete', 'recurrence', 'reminders', 'timeZone', 'transparency', 'visibility'])
+		assert.deepEqual(unsupported.sort(), ['availability', 'cancelledStatus', 'createSources', 'deleteSources', 'location', 'participants', 'percentComplete', 'recurrence', 'reminders', 'timeZone', 'transparency', 'visibility'])
 		assert.equal(capabilities.description, true)
 		assert.equal(capabilities.relations, true)
 	})

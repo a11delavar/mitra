@@ -10,6 +10,7 @@ import { Color } from '../../../features/sources/Color.js'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
 import type { Integration, SyncEngine } from '../../Integration.js'
 import { CalDAV } from '../CalDAV.js'
+import { CalDAVAvailability } from './CalDAVAvailability.js'
 
 const logger = createLogger('CalDAV')
 
@@ -177,7 +178,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 
 		const { changedUrls, deletedUrls, syncToken: newSyncToken, complete } = await this.listMembers(client, source)
 
-		const existingEntries = await em.find(Entry, { sourceId: source.id })
+		const existingEntries = await base.syncedEntries(em, source)
 
 		const changedObjects = changedUrls.length
 			? await this.fetchObjects(client, remoteCalendar, changedUrls)
@@ -263,7 +264,29 @@ export class CalDAVSyncEngine implements SyncEngine {
 		source.syncState = { syncToken: newSyncToken, ...complete ? {} : { incomplete: true } }
 
 		logger.debug(`Synced "${source.name}": ${changedObjects.length} fetched, ${deletedUrls.length} deleted${changed ? '' : ' (no local changes)'}`)
+
+		// Undo what other apps did to the busy events for availability, once the sync has read all of them.
+		if (complete) {
+			try {
+				changed = await CalDAVAvailability.publish(integration, em, await integration.availability(em, [source]), { only: source }) || changed
+			} catch (error) {
+				logger.warn(`Could not restore busy availability in "${source.name}": ${error instanceof Error ? error.message : error}`)
+			}
+		}
 		return changed
+	}
+
+	/** A single entry's change never fails its write: the busy copy it misses is restored by the next sync. */
+	async publishAvailability(base: Integration, em: EntityManager, entries: ReadonlyArray<Entry>, of?: ReadonlyArray<Entry>): Promise<boolean> {
+		if (!of) {
+			return CalDAVAvailability.publish(base as CalDAV, em, entries)
+		}
+		try {
+			return await CalDAVAvailability.publish(base as CalDAV, em, entries, { of })
+		} catch (error) {
+			logger.warn(`Could not write busy availability to ${base.toString()}, the next sync restores it: ${error instanceof Error ? error.message : error}`)
+			return false
+		}
 	}
 
 	private async refetchResource(integration: CalDAV, entry: Entry): Promise<{ raw: string, etag?: string } | undefined> {

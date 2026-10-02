@@ -9,6 +9,7 @@ import { EntryDragController } from '../../entries/client/EntryDragController.js
 import { WeeksDensityController } from './WeeksDensityController.js'
 import { Routines, type RoutineRun } from '../../routines/client/Routines.js'
 import { HideDoneTasksSetting } from '../../entries/client/HideDoneTasksSetting.js'
+import { Availability } from '../../availability/client/Availability.js'
 
 type RenderedWeek = { week: ReadonlyArray<DateTime>, row: number, runs: ReadonlyArray<RoutineRun> } & MonthWeek
 
@@ -29,7 +30,7 @@ export class Weeks extends Component {
 
 	private get bufferNavigatingDate(): DateTime { return this.buffer.navigatingDate }
 	private get days(): Array<DateTime> { return this.buffer.days }
-	private get routines(): Routines { return Routines.of(this.entries, this.buffer.window.days, 'week') }
+	private get routines(): Routines { return Routines.of(Availability.outside(this.entries), this.buffer.window.days, 'week') }
 
 	private get segments(): EntrySegments { return EntrySegments.of(HideDoneTasksSetting.filter(this.routines.kept), this.buffer.window.days) }
 

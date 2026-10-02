@@ -13,6 +13,7 @@ declare global {
 		"${browser} on ${platform}": unknown
 		"${count:number} min": unknown
 		"${count:number} more": unknown
+		"${count:pluralityNumber} are availability": unknown
 		"${count:pluralityNumber} are marked as free": unknown
 		"${count:pluralityNumber} are now in both calendars": unknown
 		"${count:pluralityNumber} arrive with everything they carry": unknown
@@ -67,6 +68,7 @@ declare global {
 		"Account options": unknown
 		"Add ${count:pluralityNumber} entries": unknown
 		"Add ${name} to a calendar": unknown
+		"Add Availability": unknown
 		"Add integration": unknown
 		"Add Integration": unknown
 		"Add participant": unknown
@@ -105,6 +107,8 @@ declare global {
 		"Atlassian Account": unknown
 		"Atlassian Account E-mail": unknown
 		"Atlassian API Token": unknown
+		"Availability": unknown
+		"Availability leaves the week view. It stays in its calendars, and busy availability still shows as busy to others.": unknown
 		"Back": unknown
 		"before": unknown
 		"before at ${time}": unknown
@@ -168,6 +172,7 @@ declare global {
 		"Create": unknown
 		"Create and move entries right on the grid. Every change syncs back to its source.": unknown
 		"Create Entry": unknown
+		"CreateAvailability.Keywords": unknown
 		"CreateEntry.Keywords": unknown
 		"Ctrl": unknown
 		"Custom range": unknown
@@ -256,10 +261,12 @@ declare global {
 		"Google.SharedCalendarsHint": unknown
 		"GoToDate.Keywords": unknown
 		"GoToToday.Keywords": unknown
+		"Hide availability": unknown
 		"Hide calendar": unknown
 		"Hide column": unknown
 		"Hide done tasks": unknown
 		"Hide the other time zones": unknown
+		"HideAvailabilitySetting.Keywords": unknown
 		"HideDoneTasksSetting.Keywords": unknown
 		"hours": unknown
 		"Ics.UrlHint": unknown

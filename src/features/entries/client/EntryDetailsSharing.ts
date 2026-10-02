@@ -111,7 +111,7 @@ export class EntryDetailsSharing extends Component {
 		if (!EntryDetailsSharing.applies(this.entry)) {
 			return html.nothing
 		}
-		const transparency = this.entry.transparency ?? Transparency.Busy
+		const transparency = this.entry.showAs
 		return html`
 			<mitra-icon icon="eye"></mitra-icon>
 			<div class="choices">

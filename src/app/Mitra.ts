@@ -14,6 +14,7 @@ import { EntryLink } from '../features/relations/client/EntryLink.js'
 import { MapLink } from '../features/locations/client/MapLink.js'
 import { Day } from '../features/calendar/client/Day.js'
 import { EntrySegmentComponent } from '../features/entries/client/EventSegment.js'
+import { AvailabilitySegment } from '../features/availability/client/AvailabilitySegment.js'
 import { EntryConnections } from '../features/relations/client/EntryConnections.js'
 import { PageCalendar } from '../features/calendar/client/PageCalendar.js'
 import { CommandPalette } from '../features/commands/client/CommandPalette.js'
@@ -218,6 +219,7 @@ export class Mitra extends Application {
 			${MapLink.styles}
 			${Day.styles}
 			${EntrySegmentComponent.styles}
+			${AvailabilitySegment.styles}
 			${EntryConnections.styles}
 			${EntryDetailsComponent.styles}
 			${EntryDetailsWhen.styles}

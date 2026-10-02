@@ -38,12 +38,14 @@ await Promise.all(fs.readdirSync(shots).filter(name => name.endsWith('.png')).ma
 	}
 }))
 
-// Starlight looks for the not-found page in the docs collection, but it is no operator doc.
+// Starlight looks for the not-found page in the docs collection, but it is no operator doc. As a
+// draft it is left out of every docs listing (llms.txt included), while the 404 route still reads it.
 write('src/content/docs/404.md', `---
 title: Not found
 description: That page does not exist.
 template: splash
 editUrl: false
+draft: true
 ---
 
 This page doesn't exist. It may have moved, or the link may be out of date.

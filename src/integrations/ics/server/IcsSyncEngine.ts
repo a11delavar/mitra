@@ -143,7 +143,7 @@ export class IcsSyncEngine implements SyncEngine {
 			}
 		}
 
-		const existingEntries = await em.find(Entry, { sourceId: source.id })
+		const existingEntries = await integration.syncedEntries(em, source)
 		let changed = false
 
 		for (const [uid, components] of entities) {

@@ -87,10 +87,11 @@ export class Notion extends Integration<NotionCredentials> {
 		return `Notion integration for "${this.credentials.username || this.uri || '(new)'}"`
 	}
 
+	/** No availability: it is edited with this provider's capabilities, and would not repeat. */
 	override get capabilities() {
 		return {
 			...Integration.defaultCapabilities,
-			recurrence: false, reminders: false, location: false, cancelledStatus: false,
+			availability: false, recurrence: false, reminders: false, location: false, cancelledStatus: false,
 			percentComplete: false, timeZone: false, participants: false, transparency: false,
 			visibility: false,
 		}
@@ -202,7 +203,7 @@ export class Notion extends Integration<NotionCredentials> {
 		const editedSince = watermark ? new Date(Date.parse(watermark) - Notion.watermarkOverlapMs).toISOString() : undefined
 		const editedPages = new Map((await client.queryDataSourcePages(dataSourceId, editedSince)).map(page => [page.id, page]))
 
-		const existing = await em.find(Entry, { sourceId: source.id })
+		const existing = await this.syncedEntries(em, source)
 		const existingByUri = new Map(existing.map(entry => [entry.uri, entry]))
 
 		await EntryRelation.loadFor(em, existing)
