@@ -64,6 +64,12 @@ describe('EntryEditorIntent', () => {
 			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'master-2', recurrenceMasterId: 'master', recurrence: master.recurrence })), true)
 		})
 
+		it('opens a picked occurrence and none of its siblings, which may render first in the view being left', () => {
+			EntryEditorIntent.requestOpen('master__2')
+			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'master__1', recurrenceMasterId: 'master' })), false)
+			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'master__2', recurrenceMasterId: 'master' })), true)
+		})
+
 		it('is consumed by the segment that opened it', () => {
 			EntryEditorIntent.requestOpen('a')
 			EntryEditorIntent.consume()

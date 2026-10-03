@@ -284,6 +284,7 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
   - Resize line is drawn inside the handle, offset by the handle's start taken at press. Never `position: fixed`: `.calendar`'s `contain: layout` shifts it.
   - Cells reuse editor components (`mitra-participant-faces`, `mitra-entry-link`, `mitra-map-link`), never copies. A row pending an editor open (`EntryEditorIntent.holds`) keeps its cells.
   - Batch mutations run entries in parallel, but series occurrences sequentially (scope `'this'`, sharing master exclusions).
+  - The editor opens inside the title cell, so the grid would take Home, End and the arrows typed into its fields as cursor moves; `TableRowComponent` stops field-originated keys from reaching it.
 
 ## Routing & URL State
 - **One Route** (`PageCalendar`, `@route('/:view', '/')`): View is the path (`/week`), active overlays and filters are query parameters (`?date=`, `?selected=`, `?settings=`). Canonicalizes `/` to `/{defaultView}`. Unrecognized parameters fallback gracefully.
@@ -313,6 +314,7 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
   - Navigation: Native `<dialog closedby="any">` around an inline `mitra-combobox` (its `dismiss` closes the dialog). Triggered by bare `/`, `Ctrl+P`, or `Ctrl+K`.
   - Search: Unwindowed backend `GET /entries/search?q=` (SQL LIKE, limit 20, 200ms debounce).
   - Selection: Emits `navigate` and requests editor open via `EntryEditorIntent.requestOpen(id)`.
+  - Series hits: the search filter is `entrySearch` (route and test share it); `seriesNear` turns each master into its occurrence in progress or next to come (else its last), under the `master__ms` id the window mints. Never request a master id from a pick: any rendered occurrence matches it, and one in the view being left takes the intent before navigation lands.
 - **Editor Intent** (`src/features/entries/client/EntryEditorIntent.ts`):
   - Holds transient view intent for target editor (`openDraft(draft)` or `requestOpen(id)`).
   - Anchored via `EntryEditorAnchor` on hosting surfaces (chips, availability segments), which declare `entryColors` (`entryColors.css.ts`) and open run-start segments (`!hasPrevious`). `settle(entries)` clears unmatched intents.

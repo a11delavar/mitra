@@ -799,10 +799,11 @@ export class EntryConnections extends Component {
 						border-radius: 50%;
 					}
 
+					/* Starts at the chip's edge, never inside it: a horizontal chip's end is its resize strip. */
 					> .connect {
 						position: absolute;
 						inset-block: -0.625rem;
-						inset-inline: -0.75rem -0.5rem;
+						inset-inline: 0 -0.5rem;
 						pointer-events: auto;
 						cursor: crosshair;
 					}

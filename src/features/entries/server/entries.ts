@@ -12,8 +12,8 @@ import { EntryRelations } from '../../relations/EntryRelations.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
 import { Entry, FLOATING_TIME_ZONE, TaskStatus, Transparency } from '../Entry.js'
 import { normalizeAllDay, projectAllDay } from '../../time/calendarDate.js'
-import { editOccurrence, deleteOccurrence, expandedOccurrences, seriesStarts, occurrenceOf } from '../../recurrence/server/occurrences.js'
-import { entryWindow, everyEntry } from './entryWindow.js'
+import { editOccurrence, deleteOccurrence, expandedOccurrences, seriesStarts, seriesNear, occurrenceOf } from '../../recurrence/server/occurrences.js'
+import { entrySearch, entryWindow, everyEntry } from './entryWindow.js'
 import { assertRelationsValid, attachRelations, relationClosure } from '../../relations/server/relations.js'
 
 const logger = createLogger('Entries')
@@ -89,20 +89,12 @@ entriesRouter.get('/search', async (req, res) => {
 	const em = orm.em.fork()
 	const visibleSources = await req.user.sources(em, { enabled: true, hidden: false })
 
-	const term = `%${q.trim()}%`
 	const integrations = new Map((await em.find(Integration, { id: { $in: visibleSources.map(source => source.integrationId) } })).map(integration => [integration.id, integration]))
 	const integrationOf = new Map(visibleSources.map(source => [source.id, integrations.get(source.integrationId)]))
-	const found = await em.find(Entry, {
-		sourceId: { $in: visibleSources.map(source => source.id) },
-		// Availability is background, not something to search for, and so are the events written for it.
-		type: { $ne: EntryType.Availability },
-		$or: [
-			{ heading: { $like: term } },
-			{ description: { $like: term } },
-			{ location: { $like: term } },
-		],
-	}, { orderBy: { start: 'desc' }, limit: 20 })
-	const entries = found.filter(entry => !integrationOf.get(entry.sourceId)?.writtenForAvailability(entry))
+	const found = await em.find(Entry, entrySearch(visibleSources.map(source => source.id), q), { orderBy: { start: 'desc' }, limit: 20 })
+	// The events written for availability are background too, like availability itself.
+	const matches = found.filter(entry => !integrationOf.get(entry.sourceId)?.writtenForAvailability(entry))
+	const entries = await seriesNear(em, matches, viewerZone(req) ?? 'UTC', new Date())
 
 	await attachRelations(em, req.user, entries)
 	return res.json(entries.map(entry => projectedForViewer(entry, viewerZone(req))))

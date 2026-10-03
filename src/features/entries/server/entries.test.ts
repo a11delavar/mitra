@@ -14,8 +14,8 @@ import { AppleCalendar } from '../../../integrations/apple/AppleCalendar.js'
 import { MitraCalendar } from '../../../integrations/mitra/MitraCalendar.js'
 import { NotificationSubscription } from '../../reminders/NotificationSubscription.js'
 import { Session } from '../../identity/server/Session.js'
-import { entryWindow, everyEntry } from './entryWindow.js'
-import { seriesStarts } from '../../recurrence/server/occurrences.js'
+import { entrySearch, entryWindow, everyEntry } from './entryWindow.js'
+import { expandedOccurrences, seriesNear, seriesStarts } from '../../recurrence/server/occurrences.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
@@ -46,16 +46,8 @@ async function seedUser(em: EntityManager, username: string, term: string, sourc
 	return { user, integration, source: src, entry }
 }
 
-function searchEntries(em: EntityManager, sourceIds: Array<string>, q: string) {
-	const term = `%${q.trim()}%`
-	return em.find(Entry, {
-		sourceId: { $in: sourceIds },
-		$or: [
-			{ heading: { $like: term } },
-			{ description: { $like: term } },
-			{ location: { $like: term } },
-		],
-	}, { orderBy: { start: 'desc' }, limit: 20 })
+async function searchEntries(em: EntityManager, sourceIds: Array<string>, q: string, now = new Date()) {
+	return seriesNear(em, await em.find(Entry, entrySearch(sourceIds, q), { orderBy: { start: 'desc' }, limit: 20 }), 'UTC', now)
 }
 
 function windowedEntries(em: EntityManager, sourceIds: Array<string>, start: Date, end: Date) {
@@ -115,6 +107,62 @@ describe('entries ownership scoping', () => {
 
 			assert.deepEqual(new Set(leaked.map(entry => entry.id)), new Set([alice.entry.id, bob.entry.id]))
 		})
+	})
+})
+
+describe('GET /entries/search finds a series as one occurrence', () => {
+	let orm: MikroORM
+
+	before(async () => { orm = await inMemoryOrm() })
+	after(async () => { await orm.close(true) })
+
+	const now = new Date('2026-09-29T09:00:00Z')
+
+	async function weekly(username: string, init: Partial<Entry> = {}) {
+		const em = orm.em.fork()
+		const { user, source } = await seedUser(em, username, 'anything')
+		const master = new Entry({
+			id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Event, heading: 'Team sync',
+			start: new Date('2024-09-24T12:00:00Z') as never, end: new Date('2024-09-24T13:00:00Z') as never,
+			recurrence: new Recurrence({ freq: 'WEEKLY' }), ...init,
+		})
+		em.persist(master)
+		await em.flush()
+		const sourceIds = (await user.sources(em, { enabled: true, hidden: false })).map(s => s.id)
+		const [found, ...rest] = await searchEntries(em, sourceIds, 'Team sync', now)
+		assert.equal(rest.length, 0)
+		return { em, sourceIds, master, found: found! }
+	}
+
+	it('as the next one from now, under the id its window mints — the id the editor intent opens', async () => {
+		const { em, sourceIds, master, found } = await weekly('search-series')
+		assert.equal(found.start?.toISOString(), '2026-09-29T12:00:00.000Z')
+		assert.equal(found.recurrenceMasterId, master.id)
+
+		const window = await expandedOccurrences(em, sourceIds, new Date('2026-09-28T00:00:00Z'), new Date('2026-10-05T00:00:00Z'))
+		assert.deepEqual(window.filter(entry => entry.id === found.id).map(entry => entry.start?.valueOf()), [found.start?.valueOf()])
+	})
+
+	it('as the one in progress, not the one after it', async () => {
+		const { found } = await weekly('search-running', { start: new Date('2024-09-24T08:30:00Z') as never, end: new Date('2024-09-24T09:30:00Z') as never })
+		assert.equal(found.start?.toISOString(), '2026-09-29T08:30:00.000Z')
+	})
+
+	it('as its last one once it has ended', async () => {
+		const { found } = await weekly('search-ended', { recurrence: new Recurrence({ freq: 'WEEKLY', count: 3 }) })
+		assert.equal(found.start?.toISOString(), '2024-10-08T12:00:00.000Z')
+	})
+
+	it('passes over an excluded or overridden date, which the window does not render as an occurrence', async () => {
+		const { em, sourceIds, master } = await weekly('search-overridden', { exdates: [new Date('2026-09-29T12:00:00Z').getTime()] })
+		em.persist(new Entry({
+			id: crypto.randomUUID(), sourceId: master.sourceId, type: EntryType.Event, heading: 'Moved sync',
+			start: new Date('2026-10-07T15:00:00Z') as never, end: new Date('2026-10-07T16:00:00Z') as never,
+			recurrenceMasterId: master.id, recurrenceId: new Date('2026-10-06T12:00:00Z') as never,
+		}))
+		await em.flush()
+		const [found] = await searchEntries(em, sourceIds, 'Team sync', now)
+		assert.equal(found!.start?.toISOString(), '2026-10-13T12:00:00.000Z')
 	})
 })
 

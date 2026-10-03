@@ -30,3 +30,18 @@ export function entryWindow(sourceIds: ReadonlyArray<string>, start: Date, end: 
 export function everyEntry(sourceIds: ReadonlyArray<string>): FilterQuery<Entry> {
 	return { sourceId: { $in: [...sourceIds] }, recurrence: { freq: null }, recurrenceMasterId: null }
 }
+
+/** The entries a palette search matches. A series matches as its master; `seriesNear` then names the occurrence it opens. */
+export function entrySearch(sourceIds: ReadonlyArray<string>, query: string): FilterQuery<Entry> {
+	const term = `%${query.trim()}%`
+	return {
+		sourceId: { $in: [...sourceIds] },
+		// Availability is background, not something to search for.
+		type: { $ne: EntryType.Availability },
+		$or: [
+			{ heading: { $like: term } },
+			{ description: { $like: term } },
+			{ location: { $like: term } },
+		],
+	}
+}

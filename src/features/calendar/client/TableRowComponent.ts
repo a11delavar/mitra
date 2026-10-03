@@ -3,7 +3,7 @@ import { type DataRecord } from '@3mo/data-grid/controller'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
 import { type Table } from './Table.js'
 import { type TableRow } from './TableRow.js'
-import { startedOnControl } from '../../../design/eventOrigin.js'
+import { startedInField, startedOnControl } from '../../../design/eventOrigin.js'
 import { type Checkbox } from '../../../design/Checkbox.js'
 
 /**
@@ -31,6 +31,11 @@ export class TableRowComponent extends Component {
 
 	@eventListener('keydown')
 	protected handleKeyDown(e: KeyboardEvent) {
+		// The editor opens inside the title cell, so the grid would take Home, End and the arrows typed into its fields as cursor moves.
+		if (startedInField(e) && (e.target as Element).closest('mitra-entry-details')) {
+			e.stopPropagation()
+			return
+		}
 		if (startedOnControl(e) || (e.target as Element).closest('mitra-entry-details')) {
 			return
 		}

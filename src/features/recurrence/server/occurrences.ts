@@ -239,6 +239,34 @@ export class Occurrences {
 		return occurrences
 	}
 
+	/** The occurrence in progress or next to come at `instant`, else the series' last one; `skip` passes over
+	 * starts that are represented elsewhere (overridden dates). */
+	nearest(instant: Date, skip: (startMs: number) => boolean = () => false, maxIterations = 100_000): { start: Date, end: Date } | undefined {
+		const iterator = this.rule.iterator(this.anchor)
+		const instantMs = instant.getTime()
+		let previousMs = -Infinity
+		let nearest: { start: Date, end: Date } | undefined
+		for (let i = 0; i < maxIterations; i++) {
+			const time = iterator.next()
+			if (!time) {
+				break
+			}
+			const startMs = wallToInstantMs(time, this.zone)
+			if (startMs <= previousMs) {
+				break
+			}
+			previousMs = startMs
+			if (this.exdates.has(startMs) || skip(startMs)) {
+				continue
+			}
+			nearest = { start: new Date(startMs), end: new Date(startMs + this.durationMs) }
+			if (startMs + this.durationMs >= instantMs) {
+				break
+			}
+		}
+		return nearest
+	}
+
 	within(windowStart: Date, windowEnd: Date, maxIterations = 100_000): Array<{ start: Date, end: Date }> {
 		const occurrences = new Array<{ start: Date, end: Date }>()
 		const iterator = this.rule.iterator(this.anchor)
@@ -277,10 +305,7 @@ export class Occurrences {
  */
 export async function expandedOccurrences(em: EntityManager, sourceIds: ReadonlyArray<string>, windowStart: Date, windowEnd: Date, viewerZone?: string): Promise<Array<Entry>> {
 	const masters = await em.find(Entry, { sourceId: { $in: [...sourceIds] }, recurrence: { freq: { $ne: null } } })
-	const overrides = masters.length
-		? await em.find(Entry, { recurrenceMasterId: { $in: masters.map(master => master.id!) } })
-		: []
-	const overridden = new Set(overrides.map(override => `${override.recurrenceMasterId}|${override.recurrenceId?.valueOf()}`))
+	const overridden = await overriddenOf(em, masters)
 
 	return masters.flatMap(master => {
 		const ranges = !master.start && viewerZone
@@ -306,6 +331,28 @@ export function currentOccurrence(master: Entry, zone: string, now = new Date())
 export async function seriesStarts(em: EntityManager, sourceIds: ReadonlyArray<string>): Promise<Array<Entry>> {
 	const masters = await em.find(Entry, { sourceId: { $in: [...sourceIds] }, recurrence: { freq: { $ne: null } } })
 	return masters.filter(master => !!(master.start ?? master.due)).map(master => occurrenceOf(master, { start: (master.start ?? master.due)!, end: master.end }))
+}
+
+/** Each series among `entries` as the occurrence that stands for it at `now` ({@link Occurrences.nearest}; an
+ * unscheduled one as its {@link currentOccurrence}), carrying the id the window expansion mints for it: an editor
+ * intent naming the master would be taken by whichever of its occurrences renders first. Other rows pass through. */
+export async function seriesNear(em: EntityManager, entries: ReadonlyArray<Entry>, viewerZone: string, now: Date): Promise<Array<Entry>> {
+	const overridden = await overriddenOf(em, entries.filter(entry => entry.recurrence?.freq))
+	return entries.map(entry => {
+		const skip = (startMs: number) => overridden.has(`${entry.id}|${startMs}`)
+		const occurrence = !entry.recurrence?.freq ? undefined
+			: !entry.start ? [currentOccurrence(entry, viewerZone, now)].find(range => range && !skip(range.start.valueOf()))
+				: Occurrences.of(entry)?.nearest(now, skip)
+		return occurrence ? occurrenceOf(entry, occurrence) : entry
+	})
+}
+
+/** `masterId|recurrenceIdMs` of every override row, whose dates the masters' expansion leaves out. */
+async function overriddenOf(em: EntityManager, masters: ReadonlyArray<Entry>) {
+	const overrides = masters.length
+		? await em.find(Entry, { recurrenceMasterId: { $in: masters.map(master => master.id!) } })
+		: []
+	return new Set(overrides.map(override => `${override.recurrenceMasterId}|${override.recurrenceId?.valueOf()}`))
 }
 
 /** One occurrence of `master` at the instant its rule yields: the start, or the due of an unscheduled series. The due keeps its exact offset from the start, as the end does (RFC 5545 §3.8.5.3). */
