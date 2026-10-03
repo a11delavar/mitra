@@ -1,6 +1,6 @@
-import { component, css, event, html, property, query, type HTMLTemplateResult } from '@a11d/lit'
+import { component, css, event, html, property, query, type ElementRef, type ElementRefs, type HTMLTemplateResult } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { FieldDateTimeController, FieldTimeController, FieldDateTimePrecision } from '@3mo/date-time-fields/controller'
+import { FieldDateTimeController, FieldTimeController, FieldDateTimePrecision, type DateTimeSegment } from '@3mo/date-time-fields/controller'
 import { Control } from './Control.js'
 import { type Popover } from './Popover.js'
 import { type DatePicker } from './DatePicker.js'
@@ -19,23 +19,28 @@ import { fieldChrome } from './fieldChrome.css.js'
  * wears the box itself (the entry editor's rows) sets `--mitra-field-*`: the box sheds its chrome and its button, and a
  * click on the box stands for the button.
  */
-abstract class SegmentedField extends Control {
+export abstract class SegmentedField<T, TSegment> extends Control {
 	/** A native `change` stops at the shadow root; this one carries the value. */
-	@event() readonly change!: EventDispatcher<string | undefined>
+	@event() readonly change!: EventDispatcher<T | undefined>
 
-	@property({ bindingDefault: true, event: 'change' }) value?: string
+	@property({ type: Object, bindingDefault: true, event: 'change' }) value?: T
 	@property() label?: string
 	@property({ type: Boolean, reflect: true }) readonly = false
 	@property({ type: Boolean, reflect: true }) disabled = false
 
 	@query('mitra-popover') protected readonly picker?: Popover
 
-	protected abstract readonly controller: FieldDateTimeController<this> | FieldTimeController<this>
+	protected abstract readonly controller: {
+		readonly group: ElementRef<HTMLElement, void>
+		readonly segment: ElementRefs<HTMLElement, TSegment>
+		focus(): void
+	}
+	protected abstract get segments(): ReadonlyArray<TSegment>
 	protected abstract readonly icon: string
 	protected abstract readonly pickerLabel: string
 	protected abstract get pickerTemplate(): HTMLTemplateResult
 
-	protected commit(value: string | undefined) {
+	protected commit(value: T | undefined) {
 		if (value !== this.value) {
 			this.value = value
 			this.change.dispatch(value)
@@ -138,7 +143,7 @@ abstract class SegmentedField extends Control {
 				padding: 0.5rem;
 			}
 
-			.times {
+			.slots {
 				display: flex;
 				flex-direction: column;
 				gap: 1px;
@@ -147,7 +152,7 @@ abstract class SegmentedField extends Control {
 				${scrollbar};
 				padding: 0;
 
-				/* The selected slot's tick keeps its room on every row, so the times stay in one column. */
+				/* The selected slot's tick keeps its room on every row, so the slots stay in one column. */
 				--mitra-option-inset: 1.75rem;
 
 				button {
@@ -176,7 +181,7 @@ abstract class SegmentedField extends Control {
 		return html`
 			<div part="box" @click=${this.handleBoxClick}>
 				<div part="segments" ${controller.group.ref()}>
-					${controller.segments.segments.map(segment => html`<span ${controller.segment.ref(segment)}></span>`)}
+					${this.segments.map(segment => html`<span ${controller.segment.ref(segment)}></span>`)}
 				</div>
 				${this.readonly || this.disabled ? html.nothing : html`
 					<mitra-icon-button size="small" tabindex="-1" icon=${this.icon} label=${this.pickerLabel} @click=${() => this.showPicker({ focus: true })}></mitra-icon-button>
@@ -187,12 +192,23 @@ abstract class SegmentedField extends Control {
 	}
 
 	protected pickerOpened(_focus: boolean) { }
+
+	/** A picker of slots (times, lengths): Up and Down walk them. */
+	protected readonly handleSlotsKeyDown = (e: KeyboardEvent) => {
+		const step = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0
+		if (step) {
+			e.preventDefault()
+			const buttons = [...this.renderRoot.querySelectorAll<HTMLElement>('.slots button')]
+			buttons[buttons.indexOf((this.renderRoot as ShadowRoot).activeElement as HTMLElement) + step]?.focus()
+		}
+	}
 }
 
 /** A date field; `value` is the `YYYY-MM-DD` of a native date input, while the segments follow the language. */
 @component('mitra-date-field')
-export class DateField extends SegmentedField {
+export class DateField extends SegmentedField<string, DateTimeSegment> {
 	protected readonly icon = 'calendar'
+	protected get segments() { return this.controller.segments.segments }
 	protected override get pickerLabel() { return t('Choose a date') }
 
 	protected readonly controller = new FieldDateTimeController(this, host => ({
@@ -234,10 +250,11 @@ export class DateField extends SegmentedField {
 
 /** A time field; `value` is the `HH:mm` of a native time input, while the segments follow the language's clock. */
 @component('mitra-time-field')
-export class TimeField extends SegmentedField {
+export class TimeField extends SegmentedField<string, DateTimeSegment> {
 	private static readonly step = 30
 
 	protected readonly icon = 'clock'
+	protected get segments() { return this.controller.segments.segments }
 	protected override get pickerLabel() { return t('Choose a time') }
 
 	protected readonly controller = new FieldTimeController(this, host => ({
@@ -257,7 +274,7 @@ export class TimeField extends SegmentedField {
 	/** Opens on the slot at or just before the time in force. */
 	protected override pickerOpened(focus: boolean) {
 		void this.updateComplete.then(() => {
-			const slots = [...this.renderRoot.querySelectorAll<HTMLElement>('.times button')]
+			const slots = [...this.renderRoot.querySelectorAll<HTMLElement>('.slots button')]
 			const [hour, minute] = (this.value ?? '').split(':').map(Number)
 			const index = hour === undefined || Number.isNaN(hour) ? 0 : Math.floor((hour * 60 + (minute ?? 0)) / TimeField.step)
 			slots[index]?.scrollIntoView({ block: 'center' })
@@ -267,20 +284,10 @@ export class TimeField extends SegmentedField {
 		})
 	}
 
-	private readonly handleKeyDown = (e: KeyboardEvent) => {
-		const step = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0
-		if (step) {
-			e.preventDefault()
-			const buttons = [...this.renderRoot.querySelectorAll<HTMLElement>('.times button')]
-			const next = buttons[buttons.indexOf((this.renderRoot as ShadowRoot).activeElement as HTMLElement) + step]
-			next?.focus()
-		}
-	}
-
 	protected get pickerTemplate() {
 		const selected = this.value?.slice(0, 5)
 		return html`
-			<div class="times" role="listbox" aria-label=${this.pickerLabel} @keydown=${this.handleKeyDown}>
+			<div class="slots" role="listbox" aria-label=${this.pickerLabel} @keydown=${this.handleSlotsKeyDown}>
 				${this.slots.map(slot => {
 					const value = `${String(slot.hour).padStart(2, '0')}:${String(slot.minute).padStart(2, '0')}`
 					return html`

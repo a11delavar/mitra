@@ -37,6 +37,7 @@ Point Mitra at the provider's CalDAV base URL; it discovers the individual calen
 - **Events and tasks.** A collection is **one** source in Mitra, holding whichever types the server says it accepts. Most accept both `VEVENT` and `VTODO`, and both sync both ways. A collection restricted to one of them offers only that one when you create an entry.
 - **Recurring events.** Full RFC 5545 recurrence: a repeating series is one entry, shown on every day it occurs. Editing an occurrence edits the series (per-occurrence editing where the server supports it).
 - **All-day and multi-day** entries, locations, descriptions, colors, and reminders, subject to what your server stores.
+- **A task's dates.** Its schedule is `DTSTART` with its length as `ESTIMATED-DURATION`, and its [due date](../guides/unscheduled-tasks.md#schedule-constraints-and-planning) is `DUE`. A task an older version of Mitra wrote, or another app saved with a start and a `DUE` but no length, is read as planned from the one to the other, without a due date.
 
 While you have the app open, enabled sources are polled about every 10 seconds, so changes made elsewhere show up almost immediately. While nobody's looking, polling slows to every few minutes to keep your server's logs quiet. Opening or reloading the app syncs right away, so you never wait for the next poll.
 

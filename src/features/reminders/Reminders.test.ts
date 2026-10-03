@@ -58,13 +58,13 @@ describe('Reminders', () => {
 		})
 
 		it('anchors a due-only task to its due date', () => {
-			const due = dueReminders([task({ end: D('2026-07-06T09:31:00Z'), reminders: [30] })], watermark, now)
+			const due = dueReminders([task({ due: D('2026-07-06T09:31:00Z'), reminders: [30] })], watermark, now)
 			assert.equal(due.length, 1)
 			assert.equal(due[0]!.anchor, Date.parse('2026-07-06T09:31:00Z'))
 		})
 
 		it('prefers the start over the due date when a task has both', () => {
-			const due = dueReminders([task({ start: D('2026-07-06T09:31:00Z'), end: D('2026-07-06T18:00:00Z'), reminders: [30] })], watermark, now)
+			const due = dueReminders([task({ start: D('2026-07-06T09:31:00Z'), due: D('2026-07-06T18:00:00Z'), reminders: [30] })], watermark, now)
 			assert.equal(due[0]!.anchor, Date.parse('2026-07-06T09:31:00Z'))
 		})
 
@@ -81,12 +81,13 @@ describe('Reminders', () => {
 		})
 
 		it('builds the notification of the entry it is due for', () => {
-			const [due] = dueReminders([task({ id: 'master__1', end: D('2026-07-06T09:31:00Z'), reminders: [30], location: 'Room 4', recurrenceMasterId: 'master', recurrenceId: D('2026-07-06T09:31:00Z') })], watermark, now)
+			const [due] = dueReminders([task({ id: 'master__1', due: D('2026-07-06T09:31:00Z'), reminders: [30], location: 'Room 4', recurrenceMasterId: 'master', recurrenceId: D('2026-07-06T09:31:00Z') })], watermark, now)
 			const { facts } = due!.notification()
 			assert.equal(facts.kind, 'task')
 			assert.equal(facts.tag, 'master__1|30')
 			assert.equal(facts.timestamp, Date.parse('2026-07-06T09:31:00Z'))
 			assert.equal(facts.when?.due, true)
+			assert.equal(facts.when?.end, Date.parse('2026-07-06T09:31:00Z'))
 			assert.equal(facts.location, 'Room 4')
 			assert.deepEqual(facts.entry, { id: 'master__1', master: 'master', recurrenceId: Date.parse('2026-07-06T09:31:00Z') })
 		})

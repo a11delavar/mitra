@@ -43,7 +43,7 @@ Day-to-day behaviour, whichever accounts you connected.
 
 - **[Views](guides/views.md)**: [week](guides/views.md#week), [month](guides/views.md#month), [year](guides/views.md#year), [timeline](guides/views.md#timeline) and [table](guides/table-view.md).
 - **[Calendars & task lists](guides/calendars.md)**: choose what gets imported, rename, recolor, reorder and hide it, and pick where new entries go.
-- **[Unscheduled tasks](guides/unscheduled-tasks.md)**: where tasks without a date live, and how to drag them onto the calendar and back.
+- **[Planning tasks](guides/unscheduled-tasks.md)**: give tasks a due date and an estimate, keep unscheduled tasks in the Planning tab, and schedule them when you're ready.
 - **[Routines](guides/routines.md)**: how daily habits show up as small day marks in the month and year views.
 - **[Availability](guides/availability.md)**: shade the time each calendar is for, like working hours or study time, and show it as busy where others look.
 - **[Relationships](guides/relationships/README.md)**: link tasks and events across calendars, organize subtasks and track dependencies.

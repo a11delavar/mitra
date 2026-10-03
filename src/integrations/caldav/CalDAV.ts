@@ -21,6 +21,12 @@ export interface CalDAVCredentials {
 	password?: string
 }
 
+// ESTIMATED-DURATION (draft-ietf-calext-ical-tasks): unregistered, ical.js would read it as text.
+ICAL.design.icalendar.property['estimated-duration'] ??= { defaultType: 'duration' }
+
+/** A VTODO's dates as an entry holds them. */
+type TaskTimes = Pick<Entry, 'start' | 'end' | 'due' | 'estimate' | 'allDay'>
+
 @model('CalDAV')
 @integration('caldav')
 export class CalDAV extends Integration<CalDAVCredentials> {
@@ -349,9 +355,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			const percent = value('percent-complete')
 			entry.status = CalDAV.statusFromICal(value('status')?.toString(), Number(percent ?? 0))
 			entry.percentComplete = percent === null || percent === undefined ? null : Math.min(100, Math.max(0, Math.round(Number(percent))))
-			entry.start = CalDAV.instantFrom(value('dtstart'), tzidOf('dtstart')) as any || undefined
-			entry.end = CalDAV.instantFrom(value('due'), tzidOf('due') ?? tzidOf('dtstart')) as any || undefined
-			entry.allDay = !!value('dtstart')?.isDate
+			Object.assign(entry, CalDAV.taskTimesFrom(component))
 		}
 
 		entry.visibility = CalDAV.visibilityFromICal(component.getFirstPropertyValue('class')?.toString())
@@ -360,9 +364,11 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		entry.participants = CalDAV.participantsFrom(component, integration.addresses)
 		entry.relations = integration.capabilities.relations ? CalDAV.relationsFrom(component) : undefined
 
-		const dtstartTzid = tzidOf('dtstart')
-		entry.timeZone = CalDAV.resolvableZone(dtstartTzid) ? dtstartTzid
-			: CalDAV.isFloating(component.getFirstPropertyValue('dtstart')) ? FLOATING_TIME_ZONE : null
+		// An unscheduled task carries its zone on DUE.
+		const anchor = component.getFirstProperty('dtstart') || entryType.isEvent ? 'dtstart' : 'due'
+		const anchorTzid = tzidOf(anchor)
+		entry.timeZone = CalDAV.resolvableZone(anchorTzid) ? anchorTzid
+			: CalDAV.isFloating(component.getFirstPropertyValue(anchor)) ? FLOATING_TIME_ZONE : null
 
 		const recurrence = CalDAV.recurrenceProps(component)
 		entry.uid = recurrence.uid
@@ -370,6 +376,69 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		entry.recurrenceId = recurrence.recurrenceId as any
 	}
 
+	/**
+	 * A VTODO's schedule and constraints. ESTIMATED-DURATION is the one fact that is the span from DTSTART
+	 * once there is one and the estimate before. Without it, DTSTART and DUE are the block mitra used to
+	 * write, so DUE is read as its end rather than as a deadline nobody set.
+	 */
+	static taskTimesFrom(component: ICAL.Component): TaskTimes {
+		const tzidOf = (name: string) => component.getFirstProperty(name)?.getParameter('tzid')?.toString()
+		const dtstart = component.getFirstPropertyValue('dtstart') as ICAL.Time | null
+		const dueValue = component.getFirstPropertyValue('due') as ICAL.Time | null
+		const start = CalDAV.instantFrom(dtstart, tzidOf('dtstart')) as Entry['start']
+		const due = CalDAV.instantFrom(dueValue, tzidOf('due') ?? tzidOf('dtstart')) as Entry['due']
+		const duration = component.getFirstPropertyValue('estimated-duration') as ICAL.Duration | null
+		const length = duration && !duration.isNegative && duration.toSeconds() > 0 ? duration : undefined
+		const allDay = !!(dtstart ?? dueValue)?.isDate
+		if (!start) {
+			return { start: undefined, end: undefined, due, estimate: length ? Math.round(length.toSeconds() / 60) : null, allDay }
+		}
+		if (length) {
+			// RFC 5545 §3.3.6: days and weeks are calendar days, the time parts exact, so a P1D across a DST change
+			// keeps the wall clock. Floating and UTC times are both held as UTC instants, where the two agree.
+			const zone = !allDay && CalDAV.resolvableZone(tzidOf('dtstart')) ? tzidOf('dtstart')! : 'UTC'
+			const end = Temporal.Instant.fromEpochMilliseconds(start.valueOf()).toZonedDateTimeISO(zone)
+				.add({ weeks: length.weeks, days: length.days, hours: length.hours, minutes: length.minutes, seconds: length.seconds })
+			return { start, end: new Date(end.epochMilliseconds) as Entry['end'], due, estimate: null, allDay }
+		}
+		return { start, end: due, due: undefined, estimate: null, allDay }
+	}
+
+	/**
+	 * Writes {@link taskTimesFrom}'s shape back: DTSTART, the span or estimate as ESTIMATED-DURATION, and DUE only for a
+	 * due. A timed length is written in hours, never days, which a reader would take as calendar days (§3.3.6).
+	 */
+	static writeTaskTimes(comp: ICAL.Component, component: ICAL.Component, entry: TaskTimes & Pick<Entry, 'timeZone'>) {
+		const write = (name: string, date: Date | undefined) => date
+			? CalDAV.writeDate(comp, component, name, date, entry.allDay, { zone: entry.timeZone })
+			: component.removeAllProperties(name)
+		write('dtstart', entry.start)
+		write('due', entry.due)
+		const length = CalDAV.lengthOf(entry)
+		if (length) {
+			component.updatePropertyWithValue('estimated-duration', length)
+		} else {
+			component.removeAllProperties('estimated-duration')
+		}
+	}
+
+	/** An all-day span in the days between its canonical dates, a timed one as the exact time; an estimate in days only when it is whole days. */
+	private static lengthOf(entry: TaskTimes): ICAL.Duration | undefined {
+		if (entry.start && entry.end && entry.allDay) {
+			const days = calendarDateOf(entry.start, 'UTC').until(calendarDateOf(entry.end, 'UTC')).days
+			return days > 0 ? ICAL.Duration.fromData({ days }) : undefined
+		}
+		const seconds = entry.start
+			? entry.end && Math.round((entry.end.valueOf() - entry.start.valueOf()) / 1000)
+			: entry.estimate && entry.estimate * 60
+		if (!seconds || seconds <= 0) {
+			return undefined
+		}
+		const day = 24 * 60 * 60
+		return !entry.start && seconds % day === 0
+			? ICAL.Duration.fromData({ days: seconds / day })
+			: ICAL.Duration.fromData({ hours: Math.floor(seconds / 3600), minutes: Math.floor(seconds % 3600 / 60), seconds: seconds % 60 })
+	}
 	static linkOverridesToMasters(entries: ReadonlyArray<Entry>): boolean {
 		let linked = false
 		for (const entry of entries) {

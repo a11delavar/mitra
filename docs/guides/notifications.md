@@ -26,7 +26,7 @@ Reminders are configured per entry in the editor. Mitra requests browser notific
 </picture>
 
 - **Timed events**: Default to one reminder, 30 minutes before. All-day events default to none.
-- **Tasks**: Default to one reminder at the time of the task. A task with only a due date reminds you at its due time. Unscheduling a task clears its reminders.
+- **Tasks**: Default to one reminder at the time of the task. A task with only a due date reminds you at its due time. Unscheduling a task keeps its reminders only when it has a due date for them to count from.
 - **Presets**: Offers *At start of event* (*At the time of the task* for tasks), *5 minutes*, *10 minutes*, *30 minutes*, *1 hour*, and *1 day* before.
 - **Custom offsets**: Specify custom durations in minutes, hours, days, or weeks.
 - Multiple reminders can be attached to a single entry.

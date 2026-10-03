@@ -29,11 +29,12 @@ export class Planning extends Component {
 			.sort((a, b) => a.lastDay!.valueOf() - b.lastDay!.valueOf())
 	}
 
-	/** Visible unscheduled tasks matching current lens filters. */
+	/** Visible unscheduled tasks matching current lens filters: the soonest due first, then the undated by heading. */
 	static get unscheduled(): ReadonlyArray<Entry> {
 		return [...HideDoneTasksSetting.filter(EntryStore.entries)]
 			.filter(entry => !entry.scheduled)
 			.sort((a, b) => Number(Planning.finished(a)) - Number(Planning.finished(b))
+				|| (a.due?.valueOf() ?? Infinity) - (b.due?.valueOf() ?? Infinity)
 				|| (a.heading || '').localeCompare(b.heading || ''))
 	}
 
@@ -77,6 +78,13 @@ export class Planning extends Component {
 		if (segment && entry?.persisted) {
 			EntryDragController.beginExternal(entry, segment, this, e)
 		}
+	}
+
+	/** Brings `entry`'s row into view once the list has it, so its editor has somewhere to open from. */
+	async reveal(entry: Entry) {
+		await this.updateComplete
+		const row = [...this.querySelectorAll('mitra-entry-segment')].find(segment => segment.segment?.entry === entry)
+		row?.scrollIntoView({ block: 'nearest' })
 	}
 
 	static override get styles() {
@@ -215,7 +223,7 @@ export class Planning extends Component {
 						<ul>
 							${repeat(unscheduled, entry => EntrySegments.for(entry)[0]!.id, entry => html`
 								<li>
-									<mitra-entry-segment .segment=${EntrySegments.for(entry)[0]}></mitra-entry-segment>
+									<mitra-entry-segment dated .segment=${EntrySegments.for(entry)[0]}></mitra-entry-segment>
 								</li>
 							`)}
 						</ul>

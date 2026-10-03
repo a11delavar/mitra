@@ -3,7 +3,7 @@ title: Hierarchy
 description: Break tasks into subtasks, track automatic progress rollups, and coordinate parent and child task completion.
 ---
 
-Tasks in Mitra can be broken down into subtasks and linked across [calendars](../calendars.md), including [unscheduled tasks](../unscheduled-tasks.md) that have no date yet. The parent task shows how many of its subtasks are done, the calendar shows its progress, and Mitra asks what to do with related tasks when you complete or move one.
+Tasks in Mitra can be broken down into subtasks and linked across [calendars](../calendars.md), including [unscheduled tasks](../unscheduled-tasks.md#the-planning-tab) that have no date yet. The parent task shows how many of its subtasks are done, the calendar shows its progress, and Mitra asks what to do with related tasks when you complete or move one.
 
 ## Subtasks & parent tasks
 

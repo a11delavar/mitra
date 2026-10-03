@@ -7,7 +7,7 @@ import { type Integration } from '../../integrations/Integration.js'
 export type MigrationBlocker = 'availability' | 'recurrence' | 'occurrence' | 'participants' | 'transparency' | 'visibility' | 'percentComplete'
 
 /** Target capability that strips an entry field on arrival. */
-export type MigrationLoss = 'reminders' | 'location' | 'description' | 'timeZone' | 'allDay' | 'cancelledStatus' | 'type'
+export type MigrationLoss = 'reminders' | 'location' | 'description' | 'due' | 'estimate' | 'timeZone' | 'allDay' | 'cancelledStatus' | 'type'
 
 /** Single entry assessment (blockers and field losses). */
 @model('MigrationVerdict')
@@ -65,6 +65,12 @@ export class MigrationVerdict {
 		}
 		if (entry.description && !capabilities.description) {
 			losses.push('description')
+		}
+		if (entry.due && !capabilities.due) {
+			losses.push('due')
+		}
+		if (entry.estimate !== null && entry.estimate !== undefined && !capabilities.estimate) {
+			losses.push('estimate')
 		}
 		// Floating time zone is not a named zone, so it has no zone loss.
 		if (entry.timeZone && entry.timeZone !== FLOATING_TIME_ZONE && !capabilities.timeZone) {
@@ -159,6 +165,8 @@ export class MigrationPlan {
 			case 'reminders': return t('${count:pluralityNumber} lose their reminders', { count })
 			case 'location': return t('${count:pluralityNumber} lose their location', { count })
 			case 'description': return t('${count:pluralityNumber} lose their description', { count })
+			case 'due': return t('${count:pluralityNumber} lose their due date', { count })
+			case 'estimate': return t('${count:pluralityNumber} lose their estimate', { count })
 			case 'timeZone': return t('${count:pluralityNumber} lose their time zone', { count })
 			case 'allDay': return t('${count:pluralityNumber} stop being all-day', { count })
 			case 'cancelledStatus': return t('${count:pluralityNumber} lose their cancelled status', { count })

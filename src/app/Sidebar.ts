@@ -11,6 +11,7 @@ import { ReorderabilityController, ReorderabilityState } from '@3mo/reorderabili
 import { focusRing } from '../design/focusRing.css.js'
 import { windowDragHandle } from '../design/windowDrag.css.js'
 import { EntryStore } from '../features/entries/client/EntryStore.js'
+import type { Entry } from '../features/entries/Entry.js'
 import { Planning } from '../features/planning/client/Planning.js'
 import { canInstall, promptInstall, onInstallAvailabilityChange } from './pwa.js'
 import { scrollbar } from '../design/scrollbar.css.js'
@@ -35,6 +36,13 @@ export class Sidebar extends Component {
 	private setTab(tab: 'calendars' | 'planning') {
 		this.tab = tab
 		localStorage.setItem('Mitra.SidebarTab', tab)
+	}
+
+	/** Turns to the planning list and brings `entry`'s row into view there. */
+	async showPlanning(entry: Entry) {
+		this.setTab('planning')
+		await this.updateComplete
+		await this.querySelector('mitra-planning')?.reveal(entry)
 	}
 
 	/** Drag-to-reorder controller for top-level integrations. */

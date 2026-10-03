@@ -28,6 +28,10 @@ const incomingDate = (value: unknown, stored: Entry['start']): Entry['start'] =>
 const incomingPercent = (value: unknown): number | null =>
 	typeof value === 'number' && Number.isFinite(value) ? Math.min(100, Math.max(0, Math.round(value))) : null
 
+/** A whole, positive number of minutes, else none. */
+const incomingEstimate = (value: unknown): number | null =>
+	typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.round(value) : null
+
 const dayZone = (req: Request, timeZone: string | null | undefined) =>
 	viewerZone(req) ?? (timeZone && timeZone !== FLOATING_TIME_ZONE ? timeZone : undefined)
 
@@ -37,6 +41,7 @@ function projectedForViewer<T extends Entry>(entry: T, zone: string | undefined)
 		const project = (instant: Date) => projectAllDay(instant, zone) as never
 		entry.start = entry.start ? project(entry.start) : entry.start
 		entry.end = entry.end ? project(entry.end) : entry.end
+		entry.due = entry.due ? project(entry.due) : entry.due
 		entry.recurrenceId = entry.recurrenceId ? project(entry.recurrenceId) : entry.recurrenceId
 		entry.seriesStart = entry.seriesStart ? project(entry.seriesStart) : entry.seriesStart
 	}
@@ -60,7 +65,7 @@ entriesRouter.get('/', async (req, res) => {
 
 	const rows = await em.find(Entry, entryWindow(visibleSourceIds, startDate, endDate))
 
-	const occurrences = await expandedOccurrences(em, visibleSourceIds, startDate, endDate)
+	const occurrences = await expandedOccurrences(em, visibleSourceIds, startDate, endDate, viewerZone(req) ?? 'UTC')
 
 	const entries = [...rows, ...occurrences]
 	await attachRelations(em, req.user, entries)
@@ -148,6 +153,9 @@ entriesRouter.post('/', async (req, res) => {
 	if (incomingPercent(body.percentComplete) !== null && !targetIntegration.capabilities.percentComplete) {
 		return res.status(400).json({ error: 'This calendar does not support task progress' })
 	}
+	if (body.due && !targetIntegration.capabilities.due) {
+		return res.status(400).json({ error: 'This calendar does not support due dates' })
+	}
 
 	const type = body.type ? EntryType.tryParse(body.type) : targetSource.defaultEntryType
 	if (!type) {
@@ -171,6 +179,9 @@ entriesRouter.post('/', async (req, res) => {
 		color: body.color ?? null,
 		start: body.start ? new DateTime(body.start) : undefined,
 		end: body.end ? new DateTime(body.end) : undefined,
+		due: type.isTask && body.due ? new DateTime(body.due) : undefined,
+		// The estimate stands for the end until there is a start, and is lost where the provider has none.
+		estimate: type.isTask && !body.start && targetIntegration.capabilities.estimate ? incomingEstimate(body.estimate) : null,
 		allDay: body.allDay ?? false,
 		timeZone: body.timeZone ?? null,
 		status: body.status,
@@ -192,6 +203,7 @@ entriesRouter.post('/', async (req, res) => {
 		const zone = dayZone(req, incoming.timeZone)
 		incoming.start = incoming.start ? normalizeAllDay(incoming.start, zone) as never : incoming.start
 		incoming.end = incoming.end ? normalizeAllDay(incoming.end, zone) as never : incoming.end
+		incoming.due = incoming.due ? normalizeAllDay(incoming.due, zone) as never : incoming.due
 	}
 
 	const created = await targetIntegration.createEntry(em, incoming)
@@ -276,6 +288,11 @@ entriesRouter.put('/:id', async (req, res) => {
 	if (incomingPercentComplete !== null && !targetIntegration.capabilities.percentComplete) {
 		return res.status(400).json({ error: 'This calendar does not support task progress. Clear it first' })
 	}
+	const incomingDue = incomingDate(body.due, existing.due)
+	if (incomingDue && !targetIntegration.capabilities.due) {
+		return res.status(400).json({ error: 'This calendar does not support due dates. Clear it first' })
+	}
+	const incomingEstimateMinutes = body.estimate === undefined ? existing.estimate : incomingEstimate(body.estimate)
 
 	// Type conversion: tasks and events cannot mix in single CalDAV resource (RFC 4791 §4.1), so converted entries re-create below.
 	const incomingType = body.type === undefined ? existing.type : EntryType.tryParse(body.type)
@@ -301,6 +318,8 @@ entriesRouter.put('/:id', async (req, res) => {
 			color: body.color !== undefined ? body.color : existing.color,
 			start: body.start ? new DateTime(body.start) : existing.start,
 			end: body.end ? new DateTime(body.end) : existing.end,
+			due: existing.type.isTask && body.due ? new DateTime(body.due) : undefined,
+			estimate: existing.type.isTask && !body.start && targetIntegration.capabilities.estimate ? incomingEstimateMinutes : null,
 			allDay: body.allDay ?? existing.allDay,
 			timeZone: body.timeZone === undefined ? existing.timeZone : body.timeZone,
 			status: body.status ?? existing.status,
@@ -314,6 +333,7 @@ entriesRouter.put('/:id', async (req, res) => {
 			const zone = dayZone(req, edited.timeZone)
 			edited.start = body.start && edited.start ? normalizeAllDay(edited.start, zone) as never : edited.start
 			edited.end = body.end && edited.end ? normalizeAllDay(edited.end, zone) as never : edited.end
+			edited.due = body.due && edited.due ? normalizeAllDay(edited.due, zone) as never : edited.due
 		}
 		const occurrenceId = existing.allDay
 			? normalizeAllDay(new Date(body.recurrenceId), dayZone(req, existing.timeZone))
@@ -346,6 +366,7 @@ entriesRouter.put('/:id', async (req, res) => {
 		color: body.color !== undefined ? body.color : existing.color,
 		start: incomingDate(body.start, existing.start),
 		end: incomingDate(body.end, existing.end),
+		due: incomingType.isTask ? incomingDue : undefined,
 		allDay: body.allDay ?? existing.allDay,
 		timeZone: body.timeZone === undefined ? existing.timeZone : body.timeZone,
 		status: incomingType.isTask ? body.status ?? existing.status : undefined,
@@ -358,10 +379,14 @@ entriesRouter.put('/:id', async (req, res) => {
 		relations,
 	})
 
+	// The estimate stands for the end until there is a start, and is lost where the provider has none.
+	incoming.estimate = incomingType.isTask && !incoming.start && targetIntegration.capabilities.estimate ? incomingEstimateMinutes : null
+
 	if (incoming.allDay) {
 		const zone = dayZone(req, incoming.timeZone)
 		incoming.start = body.start && incoming.start ? normalizeAllDay(incoming.start, zone) as never : incoming.start
 		incoming.end = body.end && incoming.end ? normalizeAllDay(incoming.end, zone) as never : incoming.end
+		incoming.due = body.due && incoming.due ? normalizeAllDay(incoming.due, zone) as never : incoming.due
 	}
 
 	// DTSTART is required for VEVENT (RFC 5545 §3.6.1).

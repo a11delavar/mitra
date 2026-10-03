@@ -105,9 +105,9 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		}
 	}
 
-	/** `availability`: whether the provider's calendars take part in availability, which Mitra stores either way. */
+	/** `availability`: whether the provider's calendars take part in availability, which Mitra stores either way. `due` and `estimate`: a task's deadline, and its length while unscheduled. */
 	static get defaultCapabilities() {
-		return { availability: true, recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, percentComplete: true, timeZone: true, participants: true, transparency: true, visibility: true, relations: true, allDay: true, createEntries: true, editEntries: true, deleteEntries: true, renameEntries: true, createSources: false, deleteSources: false }
+		return { availability: true, recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, percentComplete: true, due: true, estimate: true, timeZone: true, participants: true, transparency: true, visibility: true, relations: true, allDay: true, createEntries: true, editEntries: true, deleteEntries: true, renameEntries: true, createSources: false, deleteSources: false }
 	}
 
 	/** External link to view the entry at the upstream provider. */

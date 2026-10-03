@@ -56,8 +56,7 @@ export class RepeatField extends Component {
 	/** The date the rule iterates from: the SERIES anchor, not the shown occurrence's own date. Presets
 	 * and defaults derived from a later occurrence would write a rule that no longer matches the anchor,
 	 * silently dropping every occurrence before the new rule's first match. */
-	private get start(): DateTime { return this.entry.seriesStart ?? this.entry.start! }
-
+	private get start(): DateTime { return this.entry.seriesStart ?? this.entry.start ?? this.entry.due! }
 
 	private get currentLabel(): string {
 		return this.entry.recurrence ? this.entry.recurrence.describe(this.start) : t('Does not repeat')
@@ -287,7 +286,7 @@ export class RepeatField extends Component {
 	}
 
 	protected override get template() {
-		return !this.entry?.start ? html.nothing : html`
+		return !this.entry?.start && !this.entry?.due ? html.nothing : html`
 			<!-- No rule means nothing is chosen here, so "Does not repeat" reads as a placeholder rather than as a value. -->
 			<mitra-select label=${t('Repeat')} .placeholder=${!this.entry.recurrence} ?disabled=${!getCapabilities(this.entry.sourceId).editEntries}
 				.value=${live(this.menuItems.find(item => item.checked)?.id ?? 'none')}

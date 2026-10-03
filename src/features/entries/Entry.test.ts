@@ -463,9 +463,11 @@ describe('Entry', () => {
 			assert.equal(task({ start: at(0, 9), end: at(0, 10) }).scheduled, true)
 		})
 
-		it('only the START counts: a bare due date already belongs to a day', () => {
-			assert.equal(task({ end: at(0, 17) }).scheduled, false)
+		it('only the START counts: a due is a constraint, and a start without an end is a moment', () => {
+			assert.equal(task({ due: at(0, 17) }).scheduled, false)
 			assert.equal(task({ start: at(0, 9) }).scheduled, true)
+			assert.equal(task({ start: at(0, 9) }).point, true)
+			assert.equal(task({ start: at(0, 9), end: at(0, 10) }).point, false)
 		})
 
 		it('only a task may lose its dates again, since an undated event has no iCalendar form', () => {
@@ -495,6 +497,139 @@ describe('Entry', () => {
 			assert.equal(e.start, undefined)
 			assert.equal(e.end, undefined)
 			assert.equal(e.scheduled, false)
+		})
+
+		describe('the estimate and the end are one fact', () => {
+			it('a drop lasts as long as the estimate, which the end then stands for', () => {
+				const e = task({ estimate: 120 })
+				e.scheduleAt(at(1, 14), false, 60)
+				assert.equal(e.end!.valueOf(), at(1, 16).valueOf())
+				assert.equal(e.estimate, null)
+			})
+
+			it('an all-day drop covers the whole days of the estimate, and at least one', () => {
+				const days = task({ estimate: 2 * 24 * 60 })
+				days.scheduleAt(at(2, 0), true, 60)
+				assert.equal(days.end!.valueOf(), day.add({ days: 4 }).valueOf())
+				const hours = task({ estimate: 120 })
+				hours.scheduleAt(at(2, 0), true, 60)
+				assert.equal(hours.end!.valueOf(), day.add({ days: 3 }).valueOf())
+			})
+
+			it('unscheduling keeps the length as the estimate', () => {
+				const e = task({ start: at(0, 9), end: at(0, 11, 30) })
+				e.unschedule()
+				assert.equal(e.estimate, 150)
+			})
+
+			it('an all-day span keeps its days, though one across a DST change lasts 49 hours', () => {
+				const start = DateTime.from(Date.parse('2026-10-23T22:00:00Z'), 'iso8601', 'Europe/Berlin')
+				const e = task({ allDay: true, start, end: start.add({ days: 2 }) })
+				e.unschedule()
+				assert.equal(e.estimate, 2 * 24 * 60)
+			})
+
+			it('a moment has no length to keep', () => {
+				const e = task({ start: at(0, 9) })
+				e.unschedule()
+				assert.equal(e.estimate, null)
+			})
+
+			it('a drop turning an all-day task timed brings its due along, in the same form', () => {
+				const e = task({ allDay: true, due: day.add({ days: 3 }) })
+				const placed = e.clone()
+				placed.scheduleAt(at(1, 14), false, 60)
+				e.adoptSpan(placed)
+				assert.equal(e.allDay, false)
+				assert.equal(e.due!.valueOf(), at(3, 17).valueOf())
+			})
+
+			it('adopting a span adopts its estimate with it', () => {
+				const e = task({ start: at(0, 9), end: at(0, 10) })
+				const cleared = e.clone()
+				cleared.unschedule()
+				e.adoptSpan(cleared)
+				assert.equal(e.start, undefined)
+				assert.equal(e.estimate, 60)
+			})
+		})
+
+		it('unscheduling keeps the reminders while a due anchors them', () => {
+			const withDue = task({ start: at(0, 9), end: at(0, 10), due: at(2, 17), reminders: [30] })
+			withDue.unschedule()
+			assert.deepEqual(withDue.reminders, [30])
+			assert.equal(withDue.reminderAnchor?.valueOf(), at(2, 17).valueOf())
+			const without = task({ start: at(0, 9), end: at(0, 10), reminders: [30] })
+			without.unschedule()
+			assert.equal(without.reminders, null)
+		})
+	})
+
+	describe('due', () => {
+		const task = (fields: Partial<Entry> = {}) => new Entry({ type: EntryType.Task, heading: 'Hand in', ...fields })
+
+		it('is what the task is owed on, whatever its schedule', () => {
+			assert.equal(task({ start: at(0, 9), end: at(0, 10), due: at(3, 17) }).lastDay!.valueOf(), at(3, 0).valueOf())
+			assert.equal(task({ due: at(3, 17) }).lastDay!.valueOf(), at(3, 0).valueOf())
+		})
+
+		it('makes a task overdue once its day has gone by, even with a block still ahead', () => {
+			assert.equal(task({ start: at(5, 9), end: at(5, 10), due: day.subtract({ days: 1 }) }).overdue, true)
+			assert.equal(task({ start: day.subtract({ days: 3 }), end: day.subtract({ days: 3 }).add({ hours: 1 }), due: at(2, 17) }).overdue, false)
+		})
+
+		it('belongs to tasks only', () => {
+			const e = task({ due: at(1, 17), estimate: 30 })
+			e.type = EntryType.Event
+			assert.equal(e.due, undefined)
+			assert.equal(e.estimate, null)
+		})
+
+		it('follows the entry between days and times', () => {
+			const e = task({ due: at(1, 17, 45) })
+			e.setAllDay(true, 60)
+			assert.equal(e.due!.valueOf(), at(1, 0).valueOf())
+			e.setAllDay(false, 60)
+			assert.equal(e.due!.valueOf(), at(1, 17).valueOf())
+		})
+
+		it('is an edit of its own', () => {
+			assert.equal(task({ due: at(1, 17) }).editEquals(task({ due: at(2, 17) })), false)
+			assert.equal(task({ estimate: 30 }).editEquals(task({ estimate: 60 })), false)
+		})
+	})
+
+	describe('duration', () => {
+		const format = (parts: { days?: number, hours?: number, minutes?: number }) => new Intl.DurationFormat(Localizer.languages.current, { style: 'narrow' }).format(parts)
+
+		it('splits a span into days, hours and minutes', () => {
+			assert.equal(new Entry({ start: at(0, 10), end: at(1, 12, 30) }).duration, format({ days: 1, hours: 2, minutes: 30 }))
+		})
+
+		it('reads an all-day span across a DST change as whole days', () => {
+			const start = DateTime.from(Date.parse('2026-10-23T22:00:00Z'), 'iso8601', 'Europe/Berlin')
+			assert.equal(new Entry({ allDay: true, start, end: start.add({ days: 2 }) }).duration, format({ days: 2 }))
+		})
+	})
+
+	describe('a moment', () => {
+		const point = () => new Entry({ type: EntryType.Task, heading: 'Take the pills', start: at(0, 10) })
+
+		it('moves without growing an end', () => {
+			const e = point()
+			e.moveStart(at(1, 11))
+			assert.equal(e.start!.valueOf(), at(1, 11).valueOf())
+			assert.equal(e.end, undefined)
+		})
+
+		it('turns all-day and back without growing an end', () => {
+			const e = point()
+			e.setAllDay(true, 60)
+			assert.equal(e.start!.valueOf(), day.valueOf())
+			assert.equal(e.end, undefined)
+			e.setAllDay(false, 60)
+			assert.equal(e.start!.valueOf(), at(0, 9).valueOf())
+			assert.equal(e.end, undefined)
 		})
 	})
 

@@ -59,6 +59,8 @@
 	"${count:pluralityNumber} have participants": ["${count:pluralityNumber} has participants", "${count:pluralityNumber} have participants"],
 	"${count:pluralityNumber} lose their cancelled status": ["${count:pluralityNumber} loses its cancelled status", "${count:pluralityNumber} lose their cancelled status"],
 	"${count:pluralityNumber} lose their description": ["${count:pluralityNumber} loses its description", "${count:pluralityNumber} lose their description"],
+	"${count:pluralityNumber} lose their due date": ["${count:pluralityNumber} loses its due date", "${count:pluralityNumber} lose their due date"],
+	"${count:pluralityNumber} lose their estimate": ["${count:pluralityNumber} loses its estimate", "${count:pluralityNumber} lose their estimate"],
 	"${count:pluralityNumber} lose their location": ["${count:pluralityNumber} loses its location", "${count:pluralityNumber} lose their location"],
 	"${count:pluralityNumber} lose their reminders": ["${count:pluralityNumber} loses its reminders", "${count:pluralityNumber} lose their reminders"],
 	"${count:pluralityNumber} lose their time zone": ["${count:pluralityNumber} loses its time zone", "${count:pluralityNumber} lose their time zone"],

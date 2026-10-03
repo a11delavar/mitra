@@ -127,13 +127,19 @@
 	"End date": "تاریخ پایان",
 	"Choose a date": "انتخاب تاریخ",
 	"Choose a time": "انتخاب زمان",
+	"Choose a length": "انتخاب مدت",
 	"Previous month": "ماه قبل",
 	"Next month": "ماه بعد",
-	"Date": "تاریخ",
 	"No date": "بدون تاریخ",
 	"Remove the date": "حذف تاریخ",
 	"Remove the date. The task moves to Unscheduled": "حذف تاریخ. کار به بخش زمان‌بندی‌نشده منتقل می‌شود",
 	"Remove the end date": "حذف تاریخ پایان",
+	"Due date": "تاریخ سررسید",
+	"Due time": "زمان سررسید",
+	"Estimate": "تخمین",
+	"Remove the due date": "حذف تاریخ سررسید",
+	"Remove the end time": "حذف زمان پایان",
+	"Due ${date}": "سررسید ${date}",
 	"End time": "زمان پایان",
 	"Ends": "پایان می‌یابد",
 	"Weekdays": "روزهای کاری",
@@ -506,6 +512,14 @@
 	"${count:pluralityNumber} lose their description": [
 		"${count:pluralityNumber} مورد توضیحات خود را از دست می‌دهد",
 		"${count:pluralityNumber} مورد توضیحات خود را از دست می‌دهند"
+	],
+	"${count:pluralityNumber} lose their due date": [
+		"${count:pluralityNumber} مورد تاریخ سررسید خود را از دست می‌دهد",
+		"${count:pluralityNumber} مورد تاریخ سررسید خود را از دست می‌دهند"
+	],
+	"${count:pluralityNumber} lose their estimate": [
+		"${count:pluralityNumber} مورد تخمین خود را از دست می‌دهد",
+		"${count:pluralityNumber} مورد تخمین خود را از دست می‌دهند"
 	],
 	"${count:pluralityNumber} lose their location": [
 		"${count:pluralityNumber} مورد مکان خود را از دست می‌دهد",

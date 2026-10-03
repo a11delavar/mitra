@@ -29,7 +29,7 @@ export class DueReminder {
 			timestamp: this.anchor,
 			when: {
 				start: (entry.start as Date | undefined)?.getTime(),
-				end: (entry.end as Date | undefined)?.getTime(),
+				end: ((entry.remindersAnchorToEnd ? entry.due : entry.end) as Date | undefined)?.getTime(),
 				...entry.allDay ? { allDay: true } : undefined,
 				...entry.timeZone === FLOATING_TIME_ZONE ? { floating: true } : undefined,
 				...entry.remindersAnchorToEnd ? { due: true } : undefined,

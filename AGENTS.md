@@ -63,7 +63,7 @@ Feature components compose design primitives and hold domain logic only. Registe
 - **Controls & Events**: Base `Control` delegates focus to internal native inputs and respects `autofocus`. Controls re-emit composed `change` events; bind with `live()`. A control carries `:state(focus-visible)` while its inner control has keyboard focus, for a context that rings it from outside (`:has(:focus-visible)` stops at the shadow root); the editor's rows ring themselves and zero the field's own ring (`--mitra-field-ring`). Event guards must use `startedInField`/`startedOnControl` (`eventOrigin.ts`, `composedPath()`), never `target.closest()`.
 - **Selects & Comboboxes**: `mitra-select` is an ARIA combobox hosting slotted `<mitra-option>`s via button + listbox; exposes `::part(listbox)` and reflects `open` for `.field` rows. `mitra-combobox` supports `floating` (manual popover) and `inline` (in-flow for pickers/palettes; Escape fires `dismiss`).
 - **Overlays**: `mitra-popover` is its own popover host; a subclass declares its `popoverType` (`'manual'` for a floating listbox, `null` for an inline one), which a presentation switch restores, never a blanket `'auto'`. `mitra-popover-container` pairs trigger and popover (`display: contents`, invoker binding without IDs). `--mitra-surface` tints nested popovers.
-- **Date, Time & Text Fields**: Segmented `mitra-date-field`/`mitra-time-field` follow app locale (values stay strings). Base `InputField<T>` backs `mitra-text-field` (bound on `input`), `mitra-search-field`, and `mitra-number-field` (clamped on `change`). `plain` drops the box for a search that heads a picker (time zones, relations); the picker draws the hairline beneath it.
+- **Date, Time & Text Fields**: Segmented `mitra-date-field`/`mitra-time-field` follow app locale (values stay strings). Base `InputField<T>` backs `mitra-text-field` (bound on `input`), `mitra-search-field`, and `mitra-number-field` (clamped on `change`). `mitra-duration-field` (minutes, an hour and a minute segment on `@3mo/segmented-input`, presets as its picker) shares `SegmentedField` and its `.slots` picker list with the date and time fields. `plain` drops the box for a search that heads a picker (time zones, relations); the picker draws the hairline beneath it.
 - **Shared Fragments** (`*.css.ts`): Reusable state fragments (`fieldChrome`, `optionRow`, `selected`, `disabled`, `pressable`, `scrollbar`). `selected` is the single source of truth for active items. Interpolations must use `unsafeCSS(...)` on template strings (tagged templates reject arguments).
 - **Field Context**: a context that wears the box itself (the editor's rows) sets `--mitra-field-*` (border, background, padding, picker button, read-only opacity, select indicator), and the design fields drop their chrome; an overlay opened from there (`mitra-dialog`, `mitra-popover` and so every picker) restores them (`fieldChromeRestored`).
 - **Sheets & Dialogs**: `mitra-modal-sheet` is a modal `<dialog>` sheet on 3MO's `SheetController` (the phone sidebar, and `mitra-popover`'s sheet presentation). Content laid out while closed has zero dimensions (`mitra-tabs` re-reveals on resize). Standalone `mitra-dialog` renders in place so invoker popovers stay open. It announces `pageHeadingChange` only while `boundToWindow` (popped out): rendered in place, its bubbling heading would rename the tab even closed.
@@ -211,13 +211,23 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
   - Assigning `Entry.type` converts and strips unsupported fields (availability drops status, participants, reminders).
   - Format methods: `EntryType.format()` / `formatPlural()`.
 - **Planning Surface** (`mitra-planning`): two sections, Overdue then Unscheduled, both from `EntryStore`.
-  - `Entry.overdue`: open task whose `Entry.lastDay` is before today. By day, not instant. Repeating tasks exempt (`partOfSeries`).
+  - `Entry.overdue`: open task whose `Entry.lastDay` (`due`, else schedule `end`) is before today. By day, not instant. Repeating tasks exempt (`partOfSeries`).
+  - Unscheduled sorts by due (dated first); start-less series yield only `currentOccurrence`. Due tasks show with flag.
   - Unscheduled is also the drop target clearing an entry's dates, so it keeps `flex: 1`; Overdue caps at half the panel.
   - `Planning.pending` feeds the sidebar tab badge. Only tasks can be unscheduled (`Entry.unschedulable`).
   - Overdue excludes the drag preview (`EntryStore.previewing`): a ghost with a new past date is still overdue, and nothing is dropped into this list. The ghost belongs to the grid; the source row stays, faded.
   - Scheduling and unscheduling share `EntryDragController.move`.
   - Drawer tabs: `src/design/Tabs.ts` (declarative, scroll-driven). The panel strip always scrolls LTR (in RTL its panels are reversed with `order: calc(-1 * sibling-index())`): Chromium puts a `view()` timeline one panel off in a scroller whose origin is its inline end (RTL or `row-reverse`), which faded the shown panel out.
   - Chip height tiers: roomy-first, cramped as exception via `--density`.
+- **Due Dates & Estimates**:
+  - Vocabulary (UI and docs, one word per idea): the **schedule** (`start`/`end`; a task is scheduled or unscheduled), the **constraints** (**due date** and **estimate**, never "deadline" or "duration"), and **planning**, scheduling unscheduled tasks to fit their constraints (the Planning tab). A start without an end is a **moment**.
+  - Task temporal model: `start`/`end` (schedule), `due` (due date), `estimate` (minutes). End and estimate are mutually exclusive: `start ? estimate === null : end === null`. `scheduleAt` turns estimate into `end`; `unschedule` converts duration back to `estimate`. Drag gestures only move schedule, never `due`.
+  - Moments: Scheduled task without `end` (`Entry.point`) renders single segment moving without duration; `MINIMUM_DURATION_MINUTES` applies only once `end` exists.
+  - Value type parity: `setAllDay` converts `due` along with schedule (day ↔ 17:00 wall-clock) to satisfy VTODO `DTSTART`/`DUE` type-matching requirement.
+  - CalDAV wire mapping (`taskTimesFrom`/`writeTaskTimes`): writes `DTSTART`, `ESTIMATED-DURATION` (ical.js duration) for length/estimate, and `DUE` for deadlines. Never write `DURATION` on a `VTODO` (RFC 5545 defines it as computing `DUE`). Legacy blocks without `ESTIMATED-DURATION` treat `DUE` as `end`.
+  - Provider capabilities: `due` and `estimate` (Notion supports neither). Mutations 400 if target cannot store `due`; unsupported `estimate` drops silently.
+  - Recurring start-less tasks: Anchored on `due` (`Occurrences.of`). In UI (`expandedOccurrences`), only `currentOccurrence` (first upcoming due in viewer zone) is emitted. Scheduling one occurrence detaches it implicitly as `'this'` (`EntryStore.schedulesOccurrence`).
+  - Task editor layout: dates (shows a `mitra-duration-field` estimate while unscheduled), times, due, time zone, recurrence. Field placeholders use noun labels, never verbs.
 - **Window Query** (`src/features/entries/server/entryWindow.ts`): `GET /entries` also carries rows no window contains: undated (`start: null`) and open tasks due before the window start. Route and test import it; never restate the filter. Client narrows via `Entry.overdue`.
 
 ## Calendar Views & Layout Engine
@@ -307,6 +317,7 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
   - Holds transient view intent for target editor (`openDraft(draft)` or `requestOpen(id)`).
   - Anchored via `EntryEditorAnchor` on hosting surfaces (chips, availability segments), which declare `entryColors` (`entryColors.css.ts`) and open run-start segments (`!hasPrevious`). `settle(entries)` clears unmatched intents.
   - Surface transitions (chip ↔ availability type changes) and span edits defer re-requesting the entry until post-render to prevent departing hosts from intercepting the intent.
+  - A span edit also dispatches `reveal` with its entry, so the reopened editor has a segment on screen: the view's `CalendarScrollController` navigates to a scheduled entry it doesn't show, and `PageCalendar` sends an unscheduled one to the Planning tab (`Sidebar.showPlanning` opens the sidebar and scrolls to the row).
 - **Keyboard Interceptor** (`PageCalendar.handleKeyDown`):
   - Must ignore inputs (`<input>`, `<textarea>`, `<select>`, `[contenteditable]`), IME composition, modifier chords, and open dialogs (`e.composedPath()` has `HTMLDialogElement`).
 - **Registry Instances**: `commandInstances()` caches one instance per class and rebuilds them when the language changes (facts are stringified at construction). Never `new` the registry per render.
@@ -343,8 +354,8 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
 
 ## Reminders & Notifications (Web Push, RFC 8030)
 - **Anchor Semantics**:
-  - `Entry.reminders` count minutes before `Entry.reminderAnchor` (`start`, falling back to `end` for due-only tasks; UI gates on `reminderAnchor`). `unschedule()` clears reminders; closed tasks never fire.
-  - CalDAV TRIGGER `RELATED`: `START` by default, `END` for due-only tasks (`CalDAV.reminderAnchorOf`). Reads and writes share anchor mapping to preserve unmanaged alarms.
+  - `Entry.reminders` count minutes before `Entry.reminderAnchor` (`start`, falling back to `due` for unscheduled tasks; UI gates on `reminderAnchor`). `unschedule()` clears reminders unless a due remains to anchor them; closed tasks never fire.
+  - CalDAV TRIGGER `RELATED`: `START` by default, `END` for unscheduled tasks, relative to `DUE` (`CalDAV.reminderAnchorOf`). Reads and writes share anchor mapping to preserve unmanaged alarms.
   - Default reminders tracked in a module `WeakMap` until user explicitly customizes via `setReminders`.
 - **Payload & Rendering** (`ReminderNotification`):
   - Body shows entry time (never live countdown; delegated to OS `timestamp` to avoid burning silent-push budget).
@@ -357,7 +368,7 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
 - **Scheduler Engine** (`ReminderScheduler`):
   - Ticks claim `(watermark, now + interval]` window and schedule exact timers (`setTimeout`).
   - Persistent watermark (`reminder.watermark` state key) advances to `now` for crash recovery; in-memory `dispatched` map deduplicates.
-  - Query bounds: `start > watermark - ZONE_SLACK` (or `end` for due-only tasks).
+  - Query bounds: `start > watermark - ZONE_SLACK` (or `due` for unscheduled tasks).
   - Observer time zone: `NotificationSubscription.timeZone` / `lastSeenAt` tracked per device to resolve floating wall-clock times (`Entry.reminderAnchorInstant`).
 - **Device Management Surface**:
   - Subscriptions listed under Settings → Notifications via `NotificationsSetting.details` rendering `<mitra-notification-devices>`.

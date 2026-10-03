@@ -33,6 +33,8 @@ declare global {
 		"${count:pluralityNumber} landed anyway and could not be taken back. Delete them in ${name} by hand.": unknown
 		"${count:pluralityNumber} lose their cancelled status": unknown
 		"${count:pluralityNumber} lose their description": unknown
+		"${count:pluralityNumber} lose their due date": unknown
+		"${count:pluralityNumber} lose their estimate": unknown
 		"${count:pluralityNumber} lose their location": unknown
 		"${count:pluralityNumber} lose their reminders": unknown
 		"${count:pluralityNumber} lose their time zone": unknown
@@ -131,6 +133,7 @@ declare global {
 		"Checking what would be copied…": unknown
 		"Checking what would move…": unknown
 		"Choose a date": unknown
+		"Choose a length": unknown
 		"Choose a task status": unknown
 		"Choose a time": unknown
 		"Choose the calendar the entries of this file are added to. The ones it cannot take are left out. The file itself stays untouched.": unknown
@@ -178,7 +181,6 @@ declare global {
 		"Custom range": unknown
 		"Custom…": unknown
 		"Dark": unknown
-		"Date": unknown
 		"days": unknown
 		"Default Calendar": unknown
 		"Default Duration": unknown
@@ -216,7 +218,10 @@ declare global {
 		"Draft": unknown
 		"drag": unknown
 		"Drag onto another entry to make it wait for this one": unknown
+		"Due ${date}": unknown
 		"Due ${when}": unknown
+		"Due date": unknown
+		"Due time": unknown
 		"Duplicate": unknown
 		"Duplicate an entry": unknown
 		"Duration": unknown
@@ -229,6 +234,7 @@ declare global {
 		"End time": unknown
 		"Ends": unknown
 		"Entries": unknown
+		"Estimate": unknown
 		"Event": unknown
 		"Events": unknown
 		"Every": unknown
@@ -417,7 +423,9 @@ declare global {
 		"Remove reminder": unknown
 		"Remove the date": unknown
 		"Remove the date. The task moves to Unscheduled": unknown
+		"Remove the due date": unknown
 		"Remove the end date": unknown
+		"Remove the end time": unknown
 		"Rename": unknown
 		"Rename this device": unknown
 		"Rename time zone": unknown

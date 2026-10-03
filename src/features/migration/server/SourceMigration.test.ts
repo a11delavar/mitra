@@ -36,7 +36,7 @@ class Minting extends MitraCalendar {
 @entity({ discriminatorValue: 'test-limited' })
 class Limited extends MitraCalendar {
 	override get capabilities() {
-		return { ...Integration.defaultCapabilities, recurrence: false, reminders: false, participants: false }
+		return { ...Integration.defaultCapabilities, recurrence: false, reminders: false, participants: false, due: false, estimate: false }
 	}
 }
 
@@ -123,6 +123,18 @@ describe('SourceMigration', () => {
 			assert.equal(plan.cleanCount, 1)
 			assert.deepEqual(plan.verdicts.map(verdict => verdict.heading), ['noisy'])
 			assert.deepEqual(plan.losses, [['reminders', 1]])
+		})
+
+		it('names a due and an estimate the target cannot keep', async () => {
+			const { user, origin, target } = await seed(em, Limited)
+			em.persist([
+				entryIn(origin, { heading: 'owed', type: EntryType.Task, start: undefined, end: undefined, due: D('2026-09-04T17:00:00Z'), estimate: 60 }),
+			])
+			await em.flush()
+
+			const plan = (await SourceMigration.of(em, user, origin.id, { targetSourceId: target.id })).plan()
+
+			assert.deepEqual(plan.losses.map(([loss]) => loss).sort(), ['due', 'estimate'])
 		})
 
 		it('refuses what the per-entry route would refuse, one line per reason', async () => {
@@ -221,6 +233,18 @@ describe('SourceMigration', () => {
 			assert.equal(outcome.failure, null)
 			assert.equal(await em.count(Entry, { sourceId: origin.id }), 0)
 			assert.deepEqual((await em.find(Entry, { sourceId: target.id })).map(entry => entry.heading).sort(), ['one', 'two'])
+		})
+
+		it('carries the due and the estimate of a task', async () => {
+			const { user, origin, target } = await seed(em)
+			em.persist(entryIn(origin, { type: EntryType.Task, start: undefined, end: undefined, due: D('2026-09-04T17:00:00Z'), estimate: 90 }))
+			await em.flush()
+
+			await (await SourceMigration.of(em, user, origin.id, { targetSourceId: target.id })).run()
+
+			const [moved] = await em.find(Entry, { sourceId: target.id })
+			assert.equal(moved!.due?.valueOf(), Date.parse('2026-09-04T17:00:00Z'))
+			assert.equal(moved!.estimate, 90)
 		})
 
 		it('carries the identity, so a relationship between two moved entries survives', async () => {

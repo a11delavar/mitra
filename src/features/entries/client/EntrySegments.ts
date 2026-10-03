@@ -38,8 +38,12 @@ export class EntrySegments {
 	}
 
 	private static slice(entry: Entry): ReadonlyArray<EntrySegment> {
-		if (!entry.start || !entry.end) {
+		if (!entry.start) {
 			return [new EntrySegment(entry)]
+		}
+		// A moment with no end still belongs to the day it starts on.
+		if (!entry.end) {
+			return [new EntrySegment(entry, entry.start.dayStart)]
 		}
 		const startDay = entry.start.dayStart
 		const endDay = entry.end.dayStart

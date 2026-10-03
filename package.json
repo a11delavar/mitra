@@ -46,6 +46,7 @@
 		"@3mo/menu": "0.14.x",
 		"@3mo/reorderability": "x",
 		"@3mo/resize-observer": "x",
+		"@3mo/segmented-input": "0.2.x",
 		"@3mo/selectability": "0.3.x",
 		"@3mo/selection-group": "0.1.x",
 		"@3mo/sheet": "0.1.x",

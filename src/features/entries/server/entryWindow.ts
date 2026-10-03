@@ -21,7 +21,7 @@ export function entryWindow(sourceIds: ReadonlyArray<string>, start: Date, end: 
 			{ end: { $gte: start, $lte: end } },
 			{ start: { $lte: start }, end: { $gte: end } },
 			{ start: null },
-			{ $and: [openTask, { $or: [{ end: { $lt: start } }, { end: null, start: { $lt: start } }] }] },
+			{ $and: [openTask, { $or: [{ due: { $lt: start } }, { end: { $lt: start } }, { end: null, start: { $lt: start } }] }] },
 		],
 	}
 }

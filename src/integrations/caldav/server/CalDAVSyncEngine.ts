@@ -328,7 +328,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 			throw new Error('Entry must have a URL and raw data to be updated via CalDAV')
 		}
 
-		const keys: Array<keyof Entry> = (['heading', 'description', 'location', 'color', 'start', 'end', 'status', 'percentComplete', 'transparency', 'visibility', 'allDay', 'timeZone', 'reminders', 'participants'] as const)
+		const keys: Array<keyof Entry> = (['heading', 'description', 'location', 'color', 'start', 'end', 'due', 'estimate', 'status', 'percentComplete', 'transparency', 'visibility', 'allDay', 'timeZone', 'reminders', 'participants'] as const)
 			.filter(key => !Object[equals](existing[key], incoming[key]))
 
 		const recurrenceChanged = !Recurrence.equal(existing.recurrence, incoming.recurrence)
@@ -388,21 +388,19 @@ export class CalDAVSyncEngine implements SyncEngine {
 				}
 			}
 
-			const spanChanged = keys.includes('start') || keys.includes('end') || keys.includes('allDay') || keys.includes('timeZone')
-			if (spanChanged) {
+			const spanChanged = (['start', 'end', 'due', 'estimate', 'allDay', 'timeZone'] as const).some(key => keys.includes(key))
+			if (spanChanged && isTask) {
+				CalDAV.writeTaskTimes(comp, component, incoming)
+			} else if (spanChanged) {
 				if (incoming.start) {
 					CalDAV.writeDate(comp, component, 'dtstart', incoming.start, incoming.allDay, { zone: incoming.timeZone })
 				} else {
 					component.removeAllProperties('dtstart')
 				}
-			}
-
-			if (spanChanged) {
-				const name = isTask ? 'due' : 'dtend'
 				if (incoming.end) {
-					CalDAV.writeDate(comp, component, name, incoming.end, incoming.allDay, { zone: incoming.timeZone })
+					CalDAV.writeDate(comp, component, 'dtend', incoming.end, incoming.allDay, { zone: incoming.timeZone })
 				} else {
-					component.removeAllProperties(name)
+					component.removeAllProperties('dtend')
 				}
 			}
 
@@ -465,6 +463,12 @@ export class CalDAVSyncEngine implements SyncEngine {
 		if (keys.includes('end')) {
 			existing.end = incoming.end
 		}
+		if (keys.includes('due')) {
+			existing.due = incoming.due
+		}
+		if (keys.includes('estimate')) {
+			existing.estimate = incoming.estimate
+		}
 		if (keys.includes('allDay')) {
 			existing.allDay = incoming.allDay
 		}
@@ -512,8 +516,12 @@ export class CalDAVSyncEngine implements SyncEngine {
 		component.updatePropertyWithValue('summary', entry.heading)
 		!entry.description ? void 0 : component.updatePropertyWithValue('description', entry.description)
 		!entry.location ? void 0 : component.updatePropertyWithValue('location', entry.location)
-		!entry.start ? void 0 : CalDAV.writeDate(comp, component, 'dtstart', entry.start, entry.allDay, { zone: entry.timeZone })
-		!entry.end ? void 0 : CalDAV.writeDate(comp, component, isTask ? 'due' : 'dtend', entry.end, entry.allDay, { zone: entry.timeZone })
+		if (isTask) {
+			CalDAV.writeTaskTimes(comp, component, entry)
+		} else {
+			!entry.start ? void 0 : CalDAV.writeDate(comp, component, 'dtstart', entry.start, entry.allDay, { zone: entry.timeZone })
+			!entry.end ? void 0 : CalDAV.writeDate(comp, component, 'dtend', entry.end, entry.allDay, { zone: entry.timeZone })
+		}
 		!entry.color ? void 0 : component.updatePropertyWithValue('color', entry.color)
 		!entry.recurrence ? void 0 : component.updatePropertyWithValue('rrule', ICAL.Recur.fromString(entry.recurrence.toRRule(entry.allDay)))
 		entry.exdates?.forEach(ms => CalDAV.writeDate(comp, component, 'exdate', new Date(ms), entry.allDay, { zone: entry.timeZone, append: true }))

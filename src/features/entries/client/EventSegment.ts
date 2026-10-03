@@ -256,10 +256,12 @@ export class EntrySegmentComponent extends Component {
 						--header-mark: 0.875rem;
 					}
 
+					/* Only a chip too short for a meta row centres its line; a tall one without a meta row keeps it at the top. */
 					@container (max-height: 2rem) {
 						--inline: ;
 						--header-line: 0.875rem;
 						--header-mark: 0.875rem;
+						margin-block: auto;
 					}
 
 					display: flex;
@@ -267,8 +269,6 @@ export class EntrySegmentComponent extends Component {
 					flex-direction: var(--_direction, column);
 					--_align: var(--inline) center;
 					align-items: var(--_align, stretch);
-					--_margin: var(--inline) auto;
-					margin-block: var(--_margin, 0);
 
 					> .header {
 						--_header-display: var(--inline) contents;
@@ -291,6 +291,17 @@ export class EntrySegmentComponent extends Component {
 							}
 
 							@container (max-width: 3.5rem) and (max-height: 2rem) {
+								display: none;
+							}
+						}
+
+						> .due {
+							flex-shrink: 0;
+							font-size: 0.65rem;
+							opacity: 0.75;
+							margin-inline-end: 0.25rem;
+
+							@container (max-height: 2rem) and (max-width: 7rem) {
 								display: none;
 							}
 						}
@@ -462,6 +473,13 @@ export class EntrySegmentComponent extends Component {
 		}
 	}
 
+	private get dueLabel() {
+		const { entry } = this.segment!
+		return entry.due!.format(entry.allDay
+			? { weekday: 'short', day: 'numeric', month: 'short' }
+			: { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })
+	}
+
 	/** What the entry spans: its hours when it has them, otherwise the days it occupies. */
 	private get whenSpan() {
 		const entry = this.segment!.entry
@@ -495,6 +513,9 @@ export class EntrySegmentComponent extends Component {
 						${!meta ? html.nothing : html`
 							<span class="when range">${this.whenSpan.format(this.whenOptions)}</span>
 							<span class="when point">${this.whenSpan.start?.format(this.whenOptions)}</span>
+						`}
+						${!this.segment.entry.due ? html.nothing : html`
+							<mitra-icon class="due" icon="flag" title=${t('Due ${date}', { date: this.dueLabel })}></mitra-icon>
 						`}
 					</div>
 				`}

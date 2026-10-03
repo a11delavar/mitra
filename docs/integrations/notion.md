@@ -47,6 +47,7 @@ Notion's data model shapes what syncs. Mitra **hides** the fields Notion can't s
 | Location | ❌ hidden |
 | *Cancelled* status | ❌ there's no equivalent group in Notion |
 | Per-task time zone | ❌ Notion dates store a fixed offset, not a named zone |
+| Due date and estimate | ❌ the date property is the task's schedule |
 
 Times still **display** correctly in your own time zone. The limitation only means you can't *set* a time zone per task. Tasks without a date sync too; they don't land on the calendar, but search finds them.
 

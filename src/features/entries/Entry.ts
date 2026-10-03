@@ -91,6 +91,8 @@ export class Entry {
 		} else {
 			this.status = undefined
 			this.percentComplete = null
+			this.due = undefined
+			this.estimate = null
 		}
 		if (this._type.isAvailability) {
 			this.participants = null
@@ -109,6 +111,12 @@ export class Entry {
 
 	@property({ type: 'datetime', nullable: true }) start?: DateTime
 	@property({ type: 'datetime', nullable: true }) end?: DateTime
+
+	/** A task's deadline, apart from when it is planned. All-day, it is the due day's canonical midnight. */
+	@property({ type: 'datetime', nullable: true }) due?: DateTime
+
+	/** A task's length in minutes while it has no start. The end is the same fact once it does, so one of the two is always empty. */
+	@property({ type: 'number', nullable: true }) estimate: number | null = null
 
 	@enumType({ items: () => TaskStatus, nullable: true }) status?: TaskStatus
 
@@ -150,9 +158,9 @@ export class Entry {
 	@property({ type: 'json', nullable: true }) data?: EntryData
 	@property({ type: 'json', nullable: true }) reminders?: Array<number> | null
 
-	/** Date-time anchor that reminders count back from (`start`, falling back to `end` for due-only tasks). */
+	/** Date-time anchor that reminders count back from (`start`, falling back to `due` for unscheduled tasks). */
 	get reminderAnchor(): DateTime | undefined {
-		return this.start ?? (this.type?.isTask ? this.end : undefined)
+		return this.start ?? (this.type?.isTask ? this.due : undefined)
 	}
 
 	get remindersAnchorToEnd() {
@@ -280,13 +288,9 @@ export class Entry {
 			return undefined
 		}
 
-		const minutes = this.end.since(this.start).minutes
-
-		return new Intl.DurationFormat(Localizer.languages.current, { style: 'narrow' }).format({
-			days: Math.floor(minutes / 60 / 24),
-			hours: Math.floor(minutes / 60),
-			minutes: Math.floor(minutes % 60)
-		})
+		// Calendar days, so an all-day span across a DST change still reads as whole days.
+		const { days, hours, minutes } = this.start.zonedDateTime.until(this.end.zonedDateTime, { largestUnit: 'days', smallestUnit: 'minutes' })
+		return new Intl.DurationFormat(Localizer.languages.current, { style: 'narrow' }).format({ days, hours, minutes })
 	}
 
 	constructor(init?: Partial<Entry>) {
@@ -305,19 +309,16 @@ export class Entry {
 	}
 
 	/**
-	 * Whether the entry sits anywhere on the calendar. Undated rows are real (a Notion page with an
-	 * empty date property, a VTODO with neither DTSTART nor DUE) and no window of days can contain
-	 * one, so the grid cannot show them at all; the unscheduled section is the complement that does.
-	 *
-	 * Only the START counts: a bare due date already belongs to a day.
+	 * Whether the entry sits anywhere on the calendar, which only a start does. A due is a constraint,
+	 * not a placement, so a task with one but no start stays in the unscheduled section.
 	 */
 	get scheduled() {
 		return !!this.start
 	}
 
-	/** The last day the entry occupies (for a task, the day it is owed on). */
+	/** The day a task is owed on: its due, else the last day its schedule occupies. */
 	get lastDay() {
-		return !this.start ? this.end?.dayStart : this.inclusiveEnd.dayStart
+		return this.due?.dayStart ?? (!this.start ? undefined : this.inclusiveEnd.dayStart)
 	}
 
 	/**
@@ -363,7 +364,7 @@ export class Entry {
 
 	/** Whether another entry carries the same user-editable content. */
 	editEquals(other: Entry) {
-		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'allDay', 'timeZone', 'status', 'percentComplete', 'transparency', 'visibility', 'recurrence', 'reminders', 'participants'] as const
+		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'due', 'estimate', 'allDay', 'timeZone', 'status', 'percentComplete', 'transparency', 'visibility', 'recurrence', 'reminders', 'participants'] as const
 		return editable.every(key => Object[equals](this[key], other[key]))
 	}
 
@@ -382,6 +383,8 @@ export class Entry {
 			color: this.color,
 			start: this.start,
 			end: this.end,
+			due: this.due,
+			estimate: this.estimate,
 			allDay: this.allDay,
 			timeZone: this.timeZone,
 			status: this.status,
@@ -405,6 +408,8 @@ export class Entry {
 			color: values.color,
 			start: values.start,
 			end: values.end,
+			due: values.due,
+			estimate: values.estimate,
 			status: values.status,
 			percentComplete: values.percentComplete,
 			transparency: values.transparency,
@@ -445,11 +450,20 @@ export class Entry {
 		return this.allDay ? this.effectiveEnd.subtract({ days: 1 }) : this.effectiveEnd
 	}
 
+	/** Whether the task is planned at a moment only, with no end (taking a pill at 10:00). */
+	get point() {
+		return !!this.type?.isTask && !!this.start && !this.end
+	}
+
 	/** Moves start DateTime, preserving duration for timed entries or whole days for all-day entries. */
 	moveStart(start: DateTime) {
+		if (this.point) {
+			this.start = this.allDay ? start.dayStart : start
+			return
+		}
 		if (this.allDay) {
 			const day = start.dayStart
-			const deltaDays = Math.round((day.valueOf() - this.start!.dayStart.valueOf()) / 86_400_000)
+			const deltaDays = this.start!.zonedDateTime.toPlainDate().until(day.zonedDateTime.toPlainDate()).days
 			this.end = this.effectiveEnd.add({ days: deltaDays })
 			this.start = day
 		} else {
@@ -459,17 +473,29 @@ export class Entry {
 		}
 	}
 
-	/** Schedules unscheduled entry with default or configured duration. */
+	/** Schedules an unscheduled entry for as long as its estimate, else `durationMinutes` (a day when all-day). */
 	scheduleAt(start: DateTime, allDay: boolean, durationMinutes: number) {
-		this.allDay = allDay
+		this.setAllDay(allDay, durationMinutes)
 		this.start = allDay ? start.dayStart : start
-		this.end = allDay ? start.dayStart.add({ days: 1 }) : this.start.add({ minutes: durationMinutes })
+		this.end = allDay
+			? this.start.add({ days: Math.max(1, Math.round(TimeSpan.fromMinutes(this.estimate ?? 0).days)) })
+			: this.start.add({ minutes: this.estimate ?? durationMinutes })
+		this.estimate = null
 	}
 
+	/** Takes the dates off; the span's length stays behind as the estimate. Reminders stay only while a due anchors them. */
 	unschedule() {
+		if (this.start && this.end) {
+			// All-day spans count calendar days: one spanning a DST change lasts 47 or 49 hours.
+			this.estimate = this.allDay
+				? TimeSpan.fromDays(this.start.zonedDateTime.toPlainDate().until(this.effectiveEnd.zonedDateTime.toPlainDate()).days).minutes
+				: Math.round(this.effectiveEnd.since(this.start).minutes)
+		}
 		this.start = undefined
 		this.end = undefined
-		this.reminders = null
+		if (!this.due) {
+			this.reminders = null
+		}
 	}
 
 	setEnd(end: DateTime) {
@@ -498,10 +524,13 @@ export class Entry {
 			&& this.end?.valueOf() === other.end?.valueOf()
 	}
 
+	/** The span, with the estimate that stands for it while there is none and the due, whose form follows the span's precision. */
 	adoptSpan(other: Entry) {
 		this.start = other.start
 		this.end = other.end
+		this.estimate = other.estimate
 		this.allDay = other.allDay
+		this.due = other.due
 	}
 
 	/** Takes over everything an edit can change, as an entry kept in Mitra's own database does. */
@@ -543,18 +572,30 @@ export class Entry {
 			)
 			this.start = rezoned(this.start)
 			this.end = rezoned(this.end)
+			this.due = rezoned(this.due)
 		}
 		this.timeZone = zone
 	}
 
+	/** Switches every date of the entry between days and times. A due keeps its day, and turns timed at the end of the working day. */
 	setAllDay(allDay: boolean, durationMinutes: number) {
-		if (allDay === this.allDay || !this.start) {
-			this.allDay = allDay
+		if (allDay === this.allDay) {
+			return
+		}
+		if (this.due) {
+			this.due = allDay ? this.due.dayStart : this.due.dayStart.with({ hour: 17 })
+		}
+		this.allDay = allDay
+		if (!this.start) {
+			return
+		}
+		if (!this.end) {
+			this.start = allDay ? this.start.dayStart : this.start.dayStart.with({ hour: 9 })
 			return
 		}
 		if (allDay) {
 			const firstDay = this.start.dayStart
-			const lastDay = this.effectiveEnd.dayStart
+			const lastDay = (this.end.valueOf() > this.start.valueOf() ? this.end : this.start).dayStart
 			this.start = firstDay
 			this.end = (lastDay.valueOf() > firstDay.valueOf() ? lastDay : firstDay).add({ days: 1 })
 		} else {
@@ -562,6 +603,5 @@ export class Entry {
 			this.start = at
 			this.end = at.add({ minutes: durationMinutes })
 		}
-		this.allDay = allDay
 	}
 }

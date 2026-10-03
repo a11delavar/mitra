@@ -275,7 +275,7 @@ export class EntryDragController extends Controller {
 	private buildMove(current: DragPoint, mode: Mode): Entry | undefined {
 		const drag = this.drag!
 		const before = drag.before!
-		if (!before.start || !before.end) {
+		if (!before.start || (!before.end && !before.point)) {
 			const placed = before.clone()
 			placed.scheduleAt(mode === 'allday' ? current.date : current.date.dayStart.add({ minutes: current.minute }), mode === 'allday', DefaultDurationSetting.current)
 			return placed
@@ -288,12 +288,12 @@ export class EntryDragController extends Controller {
 		}
 		if (drag.mode === 'allday') {
 			const days = Math.round((current.date.dayStart.valueOf() - drag.anchor!.date.dayStart.valueOf()) / 86_400_000)
-			return new Entry({ ...before, start: before.start.add({ days }), end: before.end.add({ days }) })
+			return new Entry({ ...before, start: before.start.add({ days }), end: before.end?.add({ days }) })
 		}
 		const grabMs = drag.anchor!.date.dayStart.add({ minutes: drag.anchor!.minute }).valueOf()
 		const currentMs = current.date.dayStart.add({ minutes: current.minute }).valueOf()
 		const shift = snapToGrid(before.start.valueOf() + (currentMs - grabMs), EntryDragController.snapMinutes) - before.start.valueOf()
-		return new Entry({ ...before, start: before.start.add({ milliseconds: shift }), end: before.end.add({ milliseconds: shift }) })
+		return new Entry({ ...before, start: before.start.add({ milliseconds: shift }), end: before.end?.add({ milliseconds: shift }) })
 	}
 
 	private static within(box: DOMRect | undefined, point: { x: number, y: number }) {
@@ -719,7 +719,8 @@ export class EntryDragController extends Controller {
 				}
 				return
 			}
-			const bypass = e.ctrlKey || e.metaKey
+			// Planning one occurrence of an unscheduled series can only mean that one.
+			const bypass = e.ctrlKey || e.metaKey || (!!entry.recurrenceMasterId && !drag.before?.start)
 			const delta = built?.start && entry.start ? built.start.valueOf() - entry.start.valueOf() : 0
 			const isMove = drag.kind === 'move'
 			this.teardown(e.pointerId)

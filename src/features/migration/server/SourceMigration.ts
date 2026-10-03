@@ -1,11 +1,10 @@
 import { type EntityManager } from '@mikro-orm/core'
-import { type DateTime } from '@3mo/date-time'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
 import { Integration } from '../../../integrations/Integration.js'
 import { type User } from '../../identity/User.js'
 import { Entry } from '../../entries/Entry.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
-import { Occurrences, exdatesOf } from '../../recurrence/server/occurrences.js'
+import { Occurrences, exdatesOf, occurrenceOf } from '../../recurrence/server/occurrences.js'
 import { MigrationOutcome, MigrationPlan, MigrationVerdict } from '../MigrationPlan.js'
 import { type Source } from '../../sources/Source.js'
 
@@ -204,13 +203,10 @@ export class SourceMigration {
 		if (!this.flatten || !verdict.flattenable) {
 			return [this.copyOf(entry)]
 		}
-		return (this.occurrencesOf(entry) ?? []).map(occurrence => this.copyOf(entry, {
-			uid: crypto.randomUUID(),
-			recurrence: null,
-			exdates: undefined,
-			start: occurrence.start as DateTime,
-			end: entry.end ? occurrence.end as DateTime : undefined,
-		}))
+		return (this.occurrencesOf(entry) ?? []).map(occurrence => {
+			const flattened = occurrenceOf(entry, occurrence)
+			return this.copyOf(entry, { uid: crypto.randomUUID(), recurrence: null, exdates: undefined, start: flattened.start, end: flattened.end, due: flattened.due })
+		})
 	}
 
 	/** Creates a target entry clone, preserving content and UID (or minting fresh UID for copy), dropping origin sync data. */
@@ -226,6 +222,8 @@ export class SourceMigration {
 			color: entry.color ?? null,
 			start: entry.start,
 			end: entry.end,
+			due: entry.due,
+			estimate: entry.estimate,
 			allDay: entry.allDay,
 			timeZone: entry.timeZone,
 			status: entry.status,

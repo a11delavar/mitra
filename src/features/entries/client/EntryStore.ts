@@ -195,8 +195,13 @@ export class EntryStore extends Controller {
 		return probe.editEquals(canonical) && !entry.editEquals(canonical)
 	}
 
+	/** Whether an unscheduled occurrence just got its start. Only that one is being planned, so it goes without asking. */
+	private static schedulesOccurrence(entry: Entry) {
+		return !!entry.start && !this.canonicalById.get(entry.id!)?.start
+	}
+
 	private static async commitOccurrence(entry: Entry, sent: Entry, preset?: RecurrenceScope): Promise<boolean> {
-		const scope = preset ?? (this.completionOnlyChanged(entry) ? 'this' : await EntryStore.resolveScope(entry, 'edit'))
+		const scope = preset ?? (this.completionOnlyChanged(entry) || this.schedulesOccurrence(entry) ? 'this' : await EntryStore.resolveScope(entry, 'edit'))
 		if (!this.tracks(entry)) {
 			return false
 		}

@@ -87,12 +87,12 @@ export class Notion extends Integration<NotionCredentials> {
 		return `Notion integration for "${this.credentials.username || this.uri || '(new)'}"`
 	}
 
-	/** No availability: it is edited with this provider's capabilities, and would not repeat. */
+	/** No availability: it is edited with this provider's capabilities, and would not repeat. No due or estimate: the one date property is the schedule. */
 	override get capabilities() {
 		return {
 			...Integration.defaultCapabilities,
 			availability: false, recurrence: false, reminders: false, location: false, cancelledStatus: false,
-			percentComplete: false, timeZone: false, participants: false, transparency: false,
+			percentComplete: false, due: false, estimate: false, timeZone: false, participants: false, transparency: false,
 			visibility: false,
 		}
 	}

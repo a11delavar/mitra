@@ -6,6 +6,7 @@ import { type Integration } from '../../../integrations/Integration.js'
 import { type Source } from '../../sources/Source.js'
 import { Entry, FLOATING_TIME_ZONE } from '../../entries/Entry.js'
 import { CalDAV } from '../../../integrations/caldav/CalDAV.js'
+import { calendarDateOf, midnightOf } from '../../time/calendarDate.js'
 
 /**
  * The occurrence domain of recurring series: everything between a stored MASTER row and its rendered
@@ -104,31 +105,35 @@ export class Occurrences {
 	 * none (and the floating marker, which must never reach Temporal/Intl) means UTC. See
 	 * {@link dayMathZoneOf}. */
 	static of(master: Entry): Occurrences | undefined {
-		if (!master.start) {
+		// An unscheduled task repeats its due.
+		const anchor = (master.start ?? master.due) as Date | undefined
+		if (!anchor) {
 			return undefined // no anchor to expand from
 		}
-		const zone = { id: dayMathZoneOf(master), start: master.start as Date }
+		const zone = { id: dayMathZoneOf(master), start: anchor }
+		// The span as the sync read it: a task's DUE is no longer necessarily its end.
+		const durationMs = master.start && master.end ? master.end.valueOf() - master.start.valueOf() : 0
 		if (master.data?.raw) {
-			return Occurrences.fromICS(master.data.raw, zone)
+			return Occurrences.fromICS(master.data.raw, zone, durationMs)
 		}
 		return !master.recurrence ? undefined : Occurrences.fromRule(
 			master.recurrence.toRRule(master.allDay),
-			master.start as Date,
-			master.end as Date | undefined,
+			anchor,
+			master.start ? master.end as Date | undefined : undefined,
 			master.exdates ?? [],
 			zone.id,
 		)
 	}
 
 	/**
-	 * From a raw .ics: applies its EXDATEs and inherits the master's duration (DTEND/DUE − DTSTART).
-	 * Works for VEVENT and VTODO (anchored on DTSTART, else DUE). With a `zone`, the anchor is the
-	 * master's start read in it, since the stored DTSTART may be UTC-written, whose wall clock would drift;
-	 * without one (a direct call), the anchor is the DTSTART's own instant read in UTC. All property
-	 * values decode via {@link CalDAV.instantFrom}, so a TZID resolves through Temporal whether or not
-	 * the resource embeds its VTIMEZONE.
+	 * From a raw .ics: applies its EXDATEs and inherits the master's duration (DTEND/DUE − DTSTART unless
+	 * `durationMs` says otherwise). Works for VEVENT and VTODO (anchored on DTSTART, else DUE). With a
+	 * `zone`, the anchor is the master's start read in it, since the stored DTSTART may be UTC-written,
+	 * whose wall clock would drift; without one (a direct call), the anchor is the DTSTART's own instant
+	 * read in UTC. All property values decode via {@link CalDAV.instantFrom}, so a TZID resolves through
+	 * Temporal whether or not the resource embeds its VTIMEZONE.
 	 */
-	static fromICS(raw: string, zone?: { id: string, start: Date }): Occurrences | undefined {
+	static fromICS(raw: string, zone?: { id: string, start: Date }, durationMs?: number): Occurrences | undefined {
 		const component = new ICAL.Component(ICAL.parse(raw))
 		const v = masterComponentOf(component)
 		const rrule = v?.getFirstPropertyValue('rrule') as ICAL.Recur | null
@@ -141,7 +146,6 @@ export class Occurrences {
 		const startInstant = CalDAV.instantFrom(dtstart, v.getFirstProperty('dtstart') ? tzidOf('dtstart') : tzidOf('due'))!
 		const endProp = (v.getFirstPropertyValue('dtend') ?? v.getFirstPropertyValue('due')) as ICAL.Time | null
 		const endInstant = !endProp ? undefined : CalDAV.instantFrom(endProp, tzidOf('dtend') ?? tzidOf('due') ?? tzidOf('dtstart'))
-		const durationMs = endInstant ? endInstant.getTime() - startInstant.getTime() : 0
 
 		const [anchorInstant, anchorZone] = Occurrences.anchorOf(zone?.start ?? startInstant, zone?.id ?? 'UTC')
 
@@ -152,7 +156,7 @@ export class Occurrences {
 			}
 		}
 
-		return new Occurrences(rrule, wallAnchor(anchorInstant, anchorZone), durationMs, exdates, anchorZone)
+		return new Occurrences(rrule, wallAnchor(anchorInstant, anchorZone), durationMs ?? (endInstant ? endInstant.getTime() - startInstant.getTime() : 0), exdates, anchorZone)
 	}
 
 	/** The anchor instant with a zone that actually resolves: a stored `timeZone` that Temporal can't
@@ -213,6 +217,28 @@ export class Occurrences {
 		return generated
 	}
 
+	/** The first `count` occurrences starting at or after `after`, for a series no window shows. */
+	next(after: Date, count: number, maxIterations = 100_000): Array<{ start: Date, end: Date }> {
+		const occurrences = new Array<{ start: Date, end: Date }>()
+		const iterator = this.rule.iterator(this.anchor)
+		let previousMs = -Infinity
+		for (let i = 0; i < maxIterations && occurrences.length < count; i++) {
+			const time = iterator.next()
+			if (!time) {
+				break
+			}
+			const startMs = wallToInstantMs(time, this.zone)
+			if (startMs <= previousMs) {
+				break
+			}
+			previousMs = startMs
+			if (startMs >= after.getTime() && !this.exdates.has(startMs)) {
+				occurrences.push({ start: new Date(startMs), end: new Date(startMs + this.durationMs) })
+			}
+		}
+		return occurrences
+	}
+
 	within(windowStart: Date, windowEnd: Date, maxIterations = 100_000): Array<{ start: Date, end: Date }> {
 		const occurrences = new Array<{ start: Date, end: Date }>()
 		const iterator = this.rule.iterator(this.anchor)
@@ -246,9 +272,10 @@ export class Occurrences {
  * The rendered occurrences of every recurring master among `sourceIds` that intersect the window, as
  * synthetic entries. Masters are loaded regardless of date (a master's DTSTART may be far before the
  * window); occurrence dates that already have an override row are skipped, so a customised instance
- * (fetched as a plain row) isn't duplicated by a default one.
+ * (fetched as a plain row) isn't duplicated by a default one. Given the viewer's zone, a series with no
+ * start yields its {@link currentOccurrence} instead, whatever the window.
  */
-export async function expandedOccurrences(em: EntityManager, sourceIds: ReadonlyArray<string>, windowStart: Date, windowEnd: Date): Promise<Array<Entry>> {
+export async function expandedOccurrences(em: EntityManager, sourceIds: ReadonlyArray<string>, windowStart: Date, windowEnd: Date, viewerZone?: string): Promise<Array<Entry>> {
 	const masters = await em.find(Entry, { sourceId: { $in: [...sourceIds] }, recurrence: { freq: { $ne: null } } })
 	const overrides = masters.length
 		? await em.find(Entry, { recurrenceMasterId: { $in: masters.map(master => master.id!) } })
@@ -256,20 +283,35 @@ export async function expandedOccurrences(em: EntityManager, sourceIds: Readonly
 	const overridden = new Set(overrides.map(override => `${override.recurrenceMasterId}|${override.recurrenceId?.valueOf()}`))
 
 	return masters.flatMap(master => {
-		const ranges = Occurrences.of(master)?.within(windowStart, windowEnd) ?? []
+		const ranges = !master.start && viewerZone
+			? [currentOccurrence(master, viewerZone)].filter(range => !!range)
+			: Occurrences.of(master)?.within(windowStart, windowEnd) ?? []
 		return ranges
 			.filter(occurrence => !overridden.has(`${master.id}|${occurrence.start.valueOf()}`))
 			.map(occurrence => occurrenceOf(master, occurrence))
 	})
 }
 
+/**
+ * The occurrence of a series with no start that the viewer has to do next: the first whose due day has not gone by
+ * in `zone`. Such a series is on no grid, only in the planning list. All-day dues are canonical UTC midnights, so
+ * today is measured as one too.
+ */
+export function currentOccurrence(master: Entry, zone: string, now = new Date()): { start: Date, end: Date } | undefined {
+	const today = midnightOf(calendarDateOf(now, zone), master.allDay ? 'UTC' : zone)
+	return Occurrences.of(master)?.next(today, 1)[0]
+}
+
 /** Every series once, as the occurrence it starts on: a whole-series edit, move or delete goes through it as through any other. */
 export async function seriesStarts(em: EntityManager, sourceIds: ReadonlyArray<string>): Promise<Array<Entry>> {
 	const masters = await em.find(Entry, { sourceId: { $in: [...sourceIds] }, recurrence: { freq: { $ne: null } } })
-	return masters.filter(master => !!master.start).map(master => occurrenceOf(master, { start: master.start!, end: master.end }))
+	return masters.filter(master => !!(master.start ?? master.due)).map(master => occurrenceOf(master, { start: (master.start ?? master.due)!, end: master.end }))
 }
 
+/** One occurrence of `master` at the instant its rule yields: the start, or the due of an unscheduled series. The due keeps its exact offset from the start, as the end does (RFC 5545 §3.8.5.3). */
 export function occurrenceOf(master: Entry, occurrence: { readonly start: Date, readonly end?: Date }) {
+	const scheduled = !!master.start
+	const dueOffset = master.due && master.start ? master.due.valueOf() - master.start.valueOf() : 0
 	return new Entry({
 		// Stable, CSS-ident-safe id per occurrence (the master id + the instant in ms): unique render
 		// key for anchor-name/view-transition-name; edits route to the master via recurrenceMasterId.
@@ -288,13 +330,15 @@ export function occurrenceOf(master: Entry, occurrence: { readonly start: Date, 
 		timeZone: master.timeZone,
 		reminders: master.reminders,
 		participants: master.participants,
-		start: occurrence.start as DateTime,
-		end: occurrence.end as DateTime,
+		start: scheduled ? occurrence.start as DateTime : undefined,
+		end: scheduled && master.end ? occurrence.end as DateTime : undefined,
+		due: master.due ? new Date(occurrence.start.valueOf() + dueOffset) as DateTime : undefined,
+		estimate: master.estimate,
 		uid: master.uid,
 		recurrence: master.recurrence,
 		recurrenceMasterId: master.id,
 		recurrenceId: occurrence.start as DateTime,
-		seriesStart: master.start,
+		seriesStart: master.start ?? master.due,
 	})
 }
 
@@ -342,13 +386,19 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 	const into = movingTo?.integration ?? integration
 	const intoSourceId = movingTo?.source.id ?? master.sourceId
 	if (scope === 'all') {
-		const editedStart = new Date(edited.start?.getTime() ?? recurrenceId.getTime())
+		// What the rule iterates: the start, or the due of an unscheduled series.
+		const editedAnchor = (master.start ? edited.start : edited.due) ?? edited.start ?? edited.due
+		const editedStart = new Date(editedAnchor?.getTime() ?? recurrenceId.getTime())
 		const exdates = exdatesOf(master)
 		// The anchor shifts the way the occurrences read: wall-clock in the series' own zone ({@link
 		// shiftMs}), so a drag expressed at THIS occurrence can't beach the anchor (and with it every
 		// occurrence) an hour off across a DST flip the anchor straddles but the occurrence doesn't.
-		const start = master.start === undefined ? undefined
-			: new Date(shiftMs(master.start.getTime(), dayMathZoneOf(master), recurrenceId, editedStart)) as DateTime
+		const masterAnchor = master.start ?? master.due
+		const anchor = masterAnchor === undefined ? undefined
+			: new Date(shiftMs(masterAnchor.getTime(), dayMathZoneOf(master), recurrenceId, editedStart)) as DateTime
+		const start = master.start ? anchor : undefined
+		// The due keeps the offset from the anchor the edit gave it.
+		const due = !edited.due || !anchor ? undefined : new Date(anchor.getTime() + edited.due.getTime() - editedStart.getTime()) as DateTime
 		// The span adopts the edit's DURATION rather than shifting the stored end by the start's delta:
 		// that would carry the master's old length over the edit, silently dropping a resize and turning
 		// an all-day ↔ timed conversion into a day-long timed entry (or a few-hours "all-day" one).
@@ -371,6 +421,8 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 			participants: edited.participants,
 			start,
 			end: start === undefined || durationMs === undefined ? undefined : new Date(start.getTime() + durationMs) as DateTime,
+			due,
+			estimate: start ? null : edited.estimate,
 			// The rule follows the shift (a weekly-Monday series moved a day later becomes weekly-Tuesday);
 			// a rule left mismatching its shifted anchor would silently lose the anchor's own occurrence.
 			recurrence: master.recurrence!.rebased(recurrenceId, editedStart, dayMathZoneOf(master)),
@@ -417,6 +469,8 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 			participants: master.participants,
 			start: master.start,
 			end: master.end,
+			due: master.due,
+			estimate: master.estimate,
 			recurrence: rule.endingBefore(recurrenceId),
 			uid: master.uid,
 		})
@@ -424,7 +478,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 		// New half: a fresh series (new UID) starting at the edit, continuing the original cadence, with
 		// the rule rebased onto the edit's day, so the new anchor (possibly dragged to another weekday)
 		// still matches it and renders as the continuation's first occurrence.
-		const continuationStart = new Date(edited.start?.getTime() ?? recurrenceId.getTime())
+		const continuationStart = new Date((master.start ? edited.start : edited.due)?.getTime() ?? recurrenceId.getTime())
 		// The continuation half also inherits its half of the exclusions (shifted like its occurrences):
 		// created without them, a previously detached occurrence past the split would render doubled.
 		const carried = exdatesOf(master).filter(ms => ms >= recurrenceId.getTime())
@@ -447,6 +501,8 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 			participants: edited.participants,
 			start: edited.start,
 			end: edited.end,
+			due: edited.due,
+			estimate: edited.estimate,
 			recurrence: rule.asContinuation(consumed).rebased(recurrenceId, continuationStart, dayMathZoneOf(master)),
 			exdates: carried.length ? shiftExdates(carried, dayMathZoneOf(master), recurrenceId, continuationStart) : undefined,
 		})
@@ -474,6 +530,8 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 		participants: edited.participants,
 		start: edited.start,
 		end: edited.end,
+		due: edited.due,
+		estimate: edited.estimate,
 	})
 	return into.createEntry(em, standalone)
 }
@@ -503,6 +561,8 @@ export async function deleteOccurrence(em: EntityManager, integration: Integrati
 			participants: master.participants,
 			start: master.start,
 			end: master.end,
+			due: master.due,
+			estimate: master.estimate,
 			recurrence: master.recurrence!.endingBefore(recurrenceId),
 			uid: master.uid,
 		})

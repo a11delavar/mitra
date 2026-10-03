@@ -4,6 +4,7 @@ import { type DateTime } from '@3mo/date-time'
 import { MediaQueryController } from '@3mo/media-query-observer'
 import { transitionCalendar, type CalendarTransitionType } from './calendarTransition.js'
 import type { EntrySegmentComponent } from '../../entries/client/EventSegment.js'
+import type { Entry } from '../../entries/Entry.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
 import { EntryFetcherController } from '../../entries/client/EntryFetcherController.js'
 import { CommandPalette } from '../../commands/client/CommandPalette.js'
@@ -43,6 +44,21 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 
 	private static get preferredSidebarOpen() {
 		return window.matchMedia('(min-width: 800px)').matches && localStorage.getItem('Mitra.SidebarCollapsed') !== 'true'
+	}
+
+	/**
+	 * An entry no view has taken (`reveal`): one edited in the sidebar goes to the view, which follows it there, and one
+	 * left without a start goes to the planning list, so neither it nor its open editor vanishes.
+	 */
+	@eventListener('reveal')
+	protected handleReveal(e: CustomEvent<Entry>) {
+		const entry = e.detail
+		if (entry.start) {
+			this.querySelector('.calendar')?.firstElementChild?.dispatchEvent(new CustomEvent('reveal', { detail: entry }))
+		} else {
+			this.sidebarOpen = true
+			void this.sidebar?.showPlanning(entry)
+		}
 	}
 
 	readonly toggleSidebar = () => {

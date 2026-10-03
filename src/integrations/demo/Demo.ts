@@ -157,11 +157,19 @@ export class Demo extends MitraCalendar {
 			recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['MO', 'WE', 'FR'] })
 		})
 
-		// Five minutes draws as a hairline: a daily mark in the year view without a bar in the week.
-		personalEvent({
+		// A moment, not a span: a task with a start and no end, every morning. Taken until yesterday, as a series
+		// split there would leave it; the two share a heading, so they pool into one routine.
+		const firstDoseToday = at(todayStart, 0, 7, 30)
+		personalTask({
 			heading: '💊 Morning Meds',
+			status: TaskStatus.Done,
 			start: at(pastStart, 0, 7, 30),
-			end: at(pastStart, 0, 7, 35),
+			recurrence: new Recurrence({ freq: 'DAILY', until: Recurrence.dayBefore(firstDoseToday) })
+		})
+		personalTask({
+			heading: '💊 Morning Meds',
+			status: TaskStatus.ToDo,
+			start: firstDoseToday,
 			recurrence: new Recurrence({ freq: 'DAILY' })
 		})
 
@@ -206,11 +214,13 @@ export class Demo extends MitraCalendar {
 		workEvent({ heading: 'Team Retro', start: at(nextWeekMonday, 0, 11), end: at(nextWeekMonday, 0, 12) })
 
 		// The work days' one link, from Tuesday morning down into Wednesday afternoon through the clear band below it.
+		// Planned for Tuesday, owed by Friday noon: the schedule and the due are two facts.
 		const prepQ3 = workTask({
 			heading: 'Prepare Q3 Presentation',
 			status: TaskStatus.Doing,
 			start: at(thisWeekMonday, 1, 9),
-			end: at(thisWeekMonday, 1, 12)
+			end: at(thisWeekMonday, 1, 12),
+			due: at(thisWeekMonday, 4, 12),
 		})
 
 		const q3Planning = workEvent({
@@ -275,6 +285,16 @@ export class Demo extends MitraCalendar {
 			end: at(pastStart, 5, 19),
 			status: TaskStatus.ToDo,
 			recurrence: new Recurrence({ freq: 'MONTHLY', bymonthday: 15 })
+		})
+
+		// Owed every month and never planned: the series repeats its due, and the planning list shows the one coming up.
+		upkeepTask({
+			heading: 'Pay the rent',
+			status: TaskStatus.ToDo,
+			allDay: true,
+			due: allDayStart(todayStart.subtract({ years: 2 }).with({ day: 1 }), 0),
+			estimate: 15,
+			recurrence: new Recurrence({ freq: 'MONTHLY', bymonthday: 1 }),
 		})
 
 		// Months out: a yearly entry anchored near today lands in the opening week, on whatever weekday the date falls.
@@ -403,9 +423,10 @@ export class Demo extends MitraCalendar {
 
 		// ---- Unscheduled -------------------------------------------------------------------------
 
-		workTask({ heading: 'Draft the hiring plan' })
-		workTask({ heading: 'Reply to the vendor quote', status: TaskStatus.Doing })
+		// How long each takes is all a planner needs; one is owed by a date.
+		workTask({ heading: 'Draft the hiring plan', estimate: 120 })
+		workTask({ heading: 'Reply to the vendor quote', status: TaskStatus.Doing, estimate: 30 })
 		personalTask({ heading: 'Renew the passport' })
-		uniTask({ heading: 'Pick a thesis topic' })
+		uniTask({ heading: 'Pick a thesis topic', allDay: true, due: allDayStart(nextWeekMonday, 11), estimate: 2 * 24 * 60 })
 	}
 }

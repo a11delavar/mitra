@@ -1,5 +1,6 @@
 import { Controller, eventListener, type Component } from '@a11d/lit'
 import type { DateTime } from '@3mo/date-time'
+import type { Entry } from '../../entries/Entry.js'
 import { ResizeController } from '@3mo/resize-observer'
 import type { CalendarDatesController } from './CalendarDatesController.js'
 
@@ -67,14 +68,19 @@ export class CalendarScrollController extends Controller {
 	}
 
 	/**
-	 * A change that moved what the user looks at (`reveal`) is followed there, and one within view stays put.
+	 * An entry whose dates moved what the user looks at (`reveal`) is followed there, and one within view stays put.
 	 * It goes out as `navigate` like any other: the page owns the date, so setting it here would be undone by its next render.
+	 * One without a start belongs to no view, so it carries on to the page.
 	 */
 	@eventListener('reveal')
-	protected handleReveal(e: CustomEvent<DateTime>) {
+	protected handleReveal(e: CustomEvent<Entry>) {
+		const { start } = e.detail
+		if (!start) {
+			return
+		}
 		e.stopPropagation()
-		if (!this.shows(e.detail)) {
-			this.host.dispatchEvent(new CustomEvent('navigate', { detail: e.detail, bubbles: true, composed: true }))
+		if (!this.shows(start)) {
+			this.host.dispatchEvent(new CustomEvent('navigate', { detail: start, bubbles: true, composed: true }))
 		}
 	}
 

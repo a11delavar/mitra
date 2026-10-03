@@ -76,7 +76,7 @@ export class ReminderScheduler {
 				// Bounds query to entries whose anchor falls inside/after the watermark window.
 				$or: [
 					{ start: { $gt: new Date(watermark.getTime() - ZONE_SLACK) } },
-					{ start: null, end: { $gt: new Date(watermark.getTime() - ZONE_SLACK) } },
+					{ start: null, due: { $gt: new Date(watermark.getTime() - ZONE_SLACK) } },
 				],
 			})
 			const masters = await em.find(Entry, { sourceId: { $in: enabledSourceIds }, reminders: { $ne: null }, recurrence: { freq: { $ne: null } } })

@@ -632,6 +632,10 @@ async function main() {
 			await capture(browser, `hierarchy-detail-${theme}`, false, await around(browser, openEditor, details.surface.width, 28))
 			await press(browser, ...keys.escape())
 
+			await openFound(browser, 'Prepare Q3 Presentation')
+			await capture(browser, `due-detail-${theme}`, false, await around(browser, openEditor, details.surface.width, 28))
+			await press(browser, ...keys.escape())
+
 			// Last, and the only one with availability shown. A tap on the label reaches the window beneath, as a reader's would.
 			await open(browser, origin, theme, { availability: true })
 			await browser.evaluate('document.documentElement.dataset.scene = "availability"')
