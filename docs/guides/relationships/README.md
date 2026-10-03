@@ -11,10 +11,10 @@ In Mitra you can link any entry to another, even across different calendars and 
 
 Mitra organizes relationships into two concepts:
 
-| Type | Purpose | Visual on the calendar | Guide |
-| --- | --- | --- | --- |
-| **[Hierarchy](hierarchy.md)** | Breaks goals into parent and child tasks with automatic progress calculation | Orbiting progress rings and subtask counts | [Hierarchy](hierarchy.md) |
-| **[Dependencies](dependencies.md)** | Declares execution order (prerequisites and follow-ups) | Curved connection arrows and conflict warnings | [Dependencies](dependencies.md) |
+| Type | Purpose | Visual on the calendar |
+| --- | --- | --- |
+| **[Hierarchy](hierarchy.md)** | Breaks goals into parent and child tasks with automatic progress calculation | Orbiting progress rings and subtask counts |
+| **[Dependencies](dependencies.md)** | Declares execution order (prerequisites and follow-ups) | Curved connection arrows and conflict warnings |
 
 ## Adding a relationship
 

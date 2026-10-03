@@ -475,6 +475,13 @@ describe('Entry', () => {
 			assert.equal(new Entry({ type: EntryType.Event }).unschedulable, false)
 		})
 
+		it('a repeating task keeps its dates, which identify its occurrences', () => {
+			const master = task({ start: at(0, 9), end: at(0, 10), recurrence: new Recurrence({ freq: 'WEEKLY' }) })
+			const occurrence = task({ start: at(7, 9), end: at(7, 10), recurrenceMasterId: 'master', recurrenceId: at(7, 9) })
+			assert.equal(master.unschedulable, false)
+			assert.equal(occurrence.unschedulable, false)
+		})
+
 		it('scheduleAt gives a timed drop the default duration', () => {
 			const e = task()
 			e.scheduleAt(at(1, 14, 30), false, 60)

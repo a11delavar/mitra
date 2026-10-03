@@ -135,11 +135,10 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
     - `syncInterval = Infinity`; writes go straight to the database (`storesLocally` is true for every entry).
     - `fetchSources` returns the stored sources unchanged. Returning `[]` would make `getSources` delete them all, and Edit → Save reaches that path. `reimportSource` is a no-op for the same reason, and `reimportable` is false.
     - Constant uri `mitra://local`, so the `(userId, uri)` index allows one per user. New sources get `mitra://calendar/<id>` and are stamped `importedAt` on creation.
-    - `participants: false`: nothing can deliver an invitation, so entries with participants can't move in.
+    - Participants are a record only: nothing delivers invitations or replies, and `addresses` stays empty, so a list started here has no organizer.
   - **Demo** (`integrations/demo/Demo.ts`, type `'demo'`): `MitraCalendar` plus the sample data (see §The Sample Calendar).
     - `developmentOnly`: offered only when `MITRA_DEV=true` (`meta.development`), and `POST /api/integrations` refuses it otherwise.
     - Seeds in `syncSource`, which the importer and the sync daemon both call, and rebuilds the entries (not the sources) when the day changes. Hence a finite 1h `syncInterval`.
-    - Takes `participants: true` back so the fixture exercises the UI.
   - **Notion** (`integrations/notion/Notion.ts`, type `'notion'`):
     - Direct `Integration` subclass (REST API, `Notion-Version: 2026-03-11`). Token PAT auth.
     - Sources: `notion://{dataSourceId}/{viewId}`. Requires status and date properties. Unsupported view types (e.g. feed) are ignored on fetch.
@@ -214,7 +213,7 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
   - `Entry.overdue`: open task whose `Entry.lastDay` (`due`, else schedule `end`) is before today. By day, not instant. Repeating tasks exempt (`partOfSeries`).
   - Unscheduled sorts by due (dated first); start-less series yield only `currentOccurrence`. Due tasks show with flag.
   - Unscheduled is also the drop target clearing an entry's dates, so it keeps `flex: 1`; Overdue caps at half the panel.
-  - `Planning.pending` feeds the sidebar tab badge. Only tasks can be unscheduled (`Entry.unschedulable`).
+  - `Planning.pending` feeds the sidebar tab badge. Only one-off tasks can be unscheduled (`Entry.unschedulable`, shared by the editor's ✕ and the drop on Unscheduled): a series' dates identify its occurrences.
   - Overdue excludes the drag preview (`EntryStore.previewing`): a ghost with a new past date is still overdue, and nothing is dropped into this list. The ghost belongs to the grid; the source row stays, faded.
   - Scheduling and unscheduling share `EntryDragController.move`.
   - Drawer tabs: `src/design/Tabs.ts` (declarative, scroll-driven). The panel strip always scrolls LTR (in RTL its panels are reversed with `order: calc(-1 * sibling-index())`): Chromium puts a `view()` timeline one panel off in a scroller whose origin is its inline end (RTL or `row-reverse`), which faded the shown panel out.

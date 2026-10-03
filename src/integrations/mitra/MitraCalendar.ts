@@ -39,9 +39,9 @@ export class MitraCalendar extends Integration {
 
 	override get syncInterval() { return Infinity }
 
-	/** No participants: there is no server to deliver invitations. */
+	/** Participants are kept as a record of who is involved: with no server behind it, nothing delivers invitations or replies. */
 	override get capabilities() {
-		return { ...Integration.defaultCapabilities, participants: false, createSources: true, deleteSources: true }
+		return { ...Integration.defaultCapabilities, createSources: true, deleteSources: true }
 	}
 
 	/** Identity pass preserving existing database sources during reconciliation. */

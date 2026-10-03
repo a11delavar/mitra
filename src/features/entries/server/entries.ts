@@ -12,7 +12,7 @@ import { EntryRelations } from '../../relations/EntryRelations.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
 import { Entry, FLOATING_TIME_ZONE, TaskStatus, Transparency } from '../Entry.js'
 import { normalizeAllDay, projectAllDay } from '../../time/calendarDate.js'
-import { editOccurrence, deleteOccurrence, expandedOccurrences, seriesStarts, seriesNear, occurrenceOf } from '../../recurrence/server/occurrences.js'
+import { editOccurrence, deleteOccurrence, expandedOccurrences, seriesStarts, seriesNear, occurrenceAt } from '../../recurrence/server/occurrences.js'
 import { entrySearch, entryWindow, everyEntry } from './entryWindow.js'
 import { assertRelationsValid, attachRelations, relationClosure } from '../../relations/server/relations.js'
 
@@ -301,6 +301,11 @@ entriesRouter.put('/:id', async (req, res) => {
 	}
 
 	if (body.scope && body.recurrenceId) {
+		const occurrenceId = existing.allDay
+			? normalizeAllDay(new Date(body.recurrenceId), dayZone(req, existing.timeZone))
+			: new Date(body.recurrenceId)
+		// Absent dates are the occurrence's own, never the master's: the master's start would move the series to its first occurrence.
+		const occurrence = occurrenceAt(existing, occurrenceId)
 		const edited = new Entry({
 			sourceId: existing.sourceId,
 			type: existing.type,
@@ -308,10 +313,9 @@ entriesRouter.put('/:id', async (req, res) => {
 			description: body.description ?? existing.description,
 			location: body.location ?? existing.location,
 			color: body.color !== undefined ? body.color : existing.color,
-			start: body.start ? new DateTime(body.start) : existing.start,
-			end: body.end ? new DateTime(body.end) : existing.end,
-			due: existing.type.isTask && body.due ? new DateTime(body.due) : undefined,
-			estimate: existing.type.isTask && !body.start && targetIntegration.capabilities.estimate ? incomingEstimateMinutes : null,
+			start: incomingDate(body.start, occurrence.start),
+			end: incomingDate(body.end, occurrence.end),
+			due: existing.type.isTask ? incomingDate(body.due, occurrence.due) : undefined,
 			allDay: body.allDay ?? existing.allDay,
 			timeZone: body.timeZone === undefined ? existing.timeZone : body.timeZone,
 			status: body.status ?? existing.status,
@@ -321,15 +325,13 @@ entriesRouter.put('/:id', async (req, res) => {
 			reminders: existing.type.isAvailability ? null : body.reminders === undefined ? existing.reminders : body.reminders,
 			participants: existing.type.isAvailability ? null : incomingParticipants,
 		})
+		edited.estimate = existing.type.isTask && !edited.start && targetIntegration.capabilities.estimate ? incomingEstimateMinutes : null
 		if (edited.allDay) {
 			const zone = dayZone(req, edited.timeZone)
 			edited.start = body.start && edited.start ? normalizeAllDay(edited.start, zone) as never : edited.start
 			edited.end = body.end && edited.end ? normalizeAllDay(edited.end, zone) as never : edited.end
 			edited.due = body.due && edited.due ? normalizeAllDay(edited.due, zone) as never : edited.due
 		}
-		const occurrenceId = existing.allDay
-			? normalizeAllDay(new Date(body.recurrenceId), dayZone(req, existing.timeZone))
-			: new Date(body.recurrenceId)
 		const movingTo = targetSource.id === currentSource.id ? undefined : { source: targetSource, integration: targetIntegration }
 		if (movingTo && !targetIntegration.canHold(targetSource, existing.type)) {
 			return res.status(400).json({ error: 'The picked calendar cannot hold this entry type' })
@@ -438,8 +440,7 @@ entriesRouter.post('/:id/complete', async (req, res) => {
 	// An occurrence detaches like a 'this' edit. Its recurrenceId comes canonical from the scheduler, so no viewer-zone normalization.
 	if (typeof recurrenceId === 'number' && existing.recurrence?.freq) {
 		const start = new Date(recurrenceId)
-		const span = existing.start && existing.end ? existing.end.getTime() - existing.start.getTime() : undefined
-		const occurrence = occurrenceOf(existing, { start, end: span === undefined ? undefined : new Date(start.getTime() + span) })
+		const occurrence = occurrenceAt(existing, start)
 		occurrence.setStatus(TaskStatus.Done, capabilities)
 		const detached = await editOccurrence(em, integration, existing, start, occurrence, 'this')
 		await em.flush()

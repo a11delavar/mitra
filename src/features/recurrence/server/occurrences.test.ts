@@ -4,7 +4,7 @@ import { Recurrence } from '../Recurrence.js'
 import { type Integration } from '../../../integrations/Integration.js'
 import { EntryType } from '../../entries/EntryType.js'
 import { Entry } from '../../entries/Entry.js'
-import { Occurrences, editOccurrence, deleteOccurrence } from './occurrences.js'
+import { Occurrences, AnchorlessSeriesError, editOccurrence, deleteOccurrence, occurrenceAt } from './occurrences.js'
 
 describe('Occurrences', () => {
 	describe('fromICS', () => {
@@ -254,6 +254,27 @@ describe('scoped occurrence edits', () => {
 		assert.equal(incoming.location, 'Room B')
 		assert.equal((incoming.start as unknown as Date).toISOString(), '2026-06-01T10:00:00.000Z') // anchor shifted +1h
 		assert.equal(incoming.recurrence, m.recurrence) // the rule itself is untouched
+	})
+
+	it('a series keeps the date it repeats from: only \'this\' may drop it, as its occurrence leaves the series', async () => {
+		const undated = () => new Entry({ sourceId: 's', type: EntryType.Task, heading: 'Standup' })
+		for (const scope of ['all', 'following'] as const) {
+			const { calls, integration } = stub()
+			await assert.rejects(editOccurrence(em, integration, master(), recurrenceId, undated(), scope), (error: Error & { status?: number }) => error instanceof AnchorlessSeriesError && error.status === 400)
+			assert.equal(calls.updates.length + calls.creates.length, 0)
+		}
+		const rent = new Entry({ id: 'r', sourceId: 's', type: EntryType.Task, heading: 'Pay the rent', uid: 'u2', due: D('2026-06-01T00:00:00Z'), recurrence: new Recurrence({ freq: 'MONTHLY' }) })
+		await assert.rejects(editOccurrence(em, stub().integration, rent, new Date('2026-07-01T00:00:00Z'), undated(), 'all'), AnchorlessSeriesError)
+		const { calls, integration } = stub()
+		const detached = await editOccurrence(em, integration, master(), recurrenceId, undated(), 'this')
+		assert.equal(detached.start, undefined)
+		assert.deepEqual(calls.excludes, [recurrenceId.getTime()])
+	})
+
+	it('occurrenceAt reads the occurrence itself, not the master it expands from', () => {
+		const occurrence = occurrenceAt(master(), recurrenceId)
+		assert.equal((occurrence.start as unknown as Date).toISOString(), '2026-06-08T09:00:00.000Z')
+		assert.equal((occurrence.end as unknown as Date).toISOString(), '2026-06-08T10:00:00.000Z')
 	})
 
 	it('\'all\' moved to another day rebases the rule so the anchor\'s own occurrence survives', async () => {

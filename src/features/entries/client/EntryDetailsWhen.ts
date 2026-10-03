@@ -272,7 +272,7 @@ export class EntryDetailsWhen extends Component {
 	}
 
 	private get clearable() {
-		return this.editable && this.entry.unschedulable && !this.entry.partOfSeries
+		return this.editable && this.entry.unschedulable
 	}
 
 	private get editable() {

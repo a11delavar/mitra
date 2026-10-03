@@ -389,7 +389,22 @@ export function occurrenceOf(master: Entry, occurrence: { readonly start: Date, 
 	})
 }
 
+/** The occurrence `master` expands to at `recurrenceId`, each lasting as long as the master does. */
+export function occurrenceAt(master: Entry, recurrenceId: Date) {
+	const span = master.start && master.end ? master.end.getTime() - master.start.getTime() : undefined
+	return occurrenceOf(master, { start: recurrenceId, end: span === undefined ? undefined : new Date(recurrenceId.getTime() + span) })
+}
+
 // --- Write side: scoped edits -----------------------------------------------------------------------
+
+/** A series edit that leaves its rule nothing to repeat from. */
+export class AnchorlessSeriesError extends Error {
+	readonly status = 400
+
+	constructor() {
+		super('A repeating entry cannot lose the date it repeats from')
+	}
+}
 
 /** Shift one instant the way the series' occurrences shift when an edit moves the anchor `from` → `to`:
  * in the master's wall-clock zone, mirroring `within`: a 09:00 stays a 09:00 across a DST flip. For a
@@ -432,10 +447,13 @@ export interface OccurrenceTarget {
 export async function editOccurrence(em: EntityManager, integration: Integration, master: Entry, recurrenceId: Date, edited: Entry, scope: RecurrenceScope, movingTo?: OccurrenceTarget): Promise<Entry> {
 	const into = movingTo?.integration ?? integration
 	const intoSourceId = movingTo?.source.id ?? master.sourceId
+	// What the rule iterates: the start, or the due of an unscheduled series. Only 'this' may drop it, as its occurrence leaves the series.
+	const editedAnchor = master.start ? edited.start : edited.due
+	if (scope !== 'this' && !editedAnchor) {
+		throw new AnchorlessSeriesError()
+	}
 	if (scope === 'all') {
-		// What the rule iterates: the start, or the due of an unscheduled series.
-		const editedAnchor = (master.start ? edited.start : edited.due) ?? edited.start ?? edited.due
-		const editedStart = new Date(editedAnchor?.getTime() ?? recurrenceId.getTime())
+		const editedStart = new Date(editedAnchor!.getTime())
 		const exdates = exdatesOf(master)
 		// The anchor shifts the way the occurrences read: wall-clock in the series' own zone ({@link
 		// shiftMs}), so a drag expressed at THIS occurrence can't beach the anchor (and with it every
@@ -525,7 +543,7 @@ export async function editOccurrence(em: EntityManager, integration: Integration
 		// New half: a fresh series (new UID) starting at the edit, continuing the original cadence, with
 		// the rule rebased onto the edit's day, so the new anchor (possibly dragged to another weekday)
 		// still matches it and renders as the continuation's first occurrence.
-		const continuationStart = new Date((master.start ? edited.start : edited.due)?.getTime() ?? recurrenceId.getTime())
+		const continuationStart = new Date(editedAnchor!.getTime())
 		// The continuation half also inherits its half of the exclusions (shifted like its occurrences):
 		// created without them, a previously detached occurrence past the split would render doubled.
 		const carried = exdatesOf(master).filter(ms => ms >= recurrenceId.getTime())

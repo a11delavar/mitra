@@ -335,11 +335,12 @@ export class Entry {
 	/**
 	 * Whether the entry may LOSE its dates again. A VTODO's date properties are both optional and
 	 * Notion's is nullable, but DTSTART is REQUIRED of a VEVENT (RFC 5545 §3.6.1), so an undated event
-	 * has no iCalendar form. The unscheduled section still RENDERS whatever undated rows a provider
-	 * hands us: an entry no surface shows is one the user cannot fix.
+	 * has no iCalendar form. A series is out too, since its dates are what identify its occurrences.
+	 * The unscheduled section still RENDERS whatever undated rows a provider hands us: an entry no
+	 * surface shows is one the user cannot fix.
 	 */
 	get unschedulable() {
-		return this.type.isTask
+		return this.type.isTask && !this.partOfSeries
 	}
 
 	/** True for a rendered occurrence (an expanded instance or a synced override) of a recurring series.

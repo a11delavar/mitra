@@ -37,7 +37,7 @@ A connected account keeps its own copy of your entries. A Mitra calendar doesn't
 
 ## Limitations
 
-- **No participants**: there's no calendar server to send invitations or collect replies, so entries can't have participants. An entry that has them can't be moved in until you remove them.
+- **No invitations**: entries can have participants, but there's no calendar server to send them invitations or updates, or to collect their replies. The list only records who is involved. Moving a meeting in from a CalDAV calendar deletes it there, and some servers then tell its participants it was cancelled. Copy it instead if they shouldn't hear about it.
 - **Not visible to other apps**: Mitra calendars aren't published over CalDAV. Use a [CalDAV](caldav.md) server for calendars you also want to open elsewhere.
 - **Nothing to re-import**: there's no provider to fetch from, so **Re-import entries** isn't offered.
 

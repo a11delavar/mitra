@@ -41,11 +41,6 @@ export class Demo extends MitraCalendar {
 		return `mitra://sample/${slug}`
 	}
 
-	/** Turned back on so the sample data shows participants. */
-	override get capabilities() {
-		return { ...super.capabilities, participants: true }
-	}
-
 	/** Hourly, enough to notice the day changing. */
 	override get syncInterval() { return 60 * 60 * 1000 }
 
