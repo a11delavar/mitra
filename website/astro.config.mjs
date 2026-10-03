@@ -86,6 +86,7 @@ const sections = [
 			{ slug: 'guides/routines' },
 			{ slug: 'guides/availability' },
 			{ slug: 'guides/participants' },
+			{ slug: 'guides/links' },
 			{ slug: 'guides/notifications' },
 			{ slug: 'guides/location-autocomplete' },
 			// Reached from Views; listed only so its old URL keeps redirecting.

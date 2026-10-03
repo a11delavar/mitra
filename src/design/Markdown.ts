@@ -1,6 +1,7 @@
 import { Component, component, css, event, html, property } from '@a11d/lit'
-import { marked, Renderer, type Tokens } from 'marked'
+import { Renderer, type Tokens } from 'marked'
 import { Checkbox } from './Checkbox.js'
+import { MarkdownLinks } from './MarkdownLinks.js'
 
 export class MarkdownRenderer extends Renderer {
 	/** Whether task-list checkboxes are interactive. */
@@ -42,8 +43,18 @@ export class MarkdownRenderer extends Renderer {
 			: `<mitra-checkbox${state} disabled></mitra-checkbox>`
 	}
 
+	/**
+	 * Links render as `mitra-link`, which shows where they lead; marked's own anchor carries the escaped
+	 * address. A bare address drops its words so the link names its destination. A scheme that would run code
+	 * renders its words alone.
+	 */
 	override link(token: Tokens.Link) {
-		return super.link(token).replace('<a', '<a target="_blank" rel="noopener noreferrer"')
+		if (!MarkdownLinks.allows(token.href)) {
+			return this.parser.parseInline(token.tokens)
+		}
+		return super.link(MarkdownLinks.isBare(token) ? { ...token, text: '', tokens: [] } : token)
+			.replace(/^<a /, '<mitra-link ')
+			.replace(/<\/a>$/, '</mitra-link>')
 	}
 
 	override blockquote(token: Tokens.Blockquote) {
@@ -69,10 +80,11 @@ export class MarkdownRenderer extends Renderer {
 
 	render(markdown: string) {
 		this.checkboxes = 0
+		// Raw HTML is renamed into inert tags; an autolink (`<scheme:…>`, `<name@host>`) is Markdown, not a tag.
 		markdown = markdown
-			.replaceAll(/<(?!\/)(.)([^>]+)>/g, '<mitra-markdown-$1$2>')
+			.replaceAll(/<(?!\/|[a-zA-Z][a-zA-Z0-9+.-]{1,31}:[^\s<>]*>|[^\s<>@]+@[^\s<>]+>)(.)([^>]+)>/g, '<mitra-markdown-$1$2>')
 			.replaceAll(/<\/(.*)>/g, '</mitra-markdown-$1>')
-		return marked.parse(markdown, { renderer: this, async: false })
+		return MarkdownLinks.marked.parse(markdown, { renderer: this, async: false })
 	}
 }
 

@@ -4,6 +4,8 @@ import { TaskStatus } from '../Entry.js'
 import { type EntrySegment } from './EntrySegment.js'
 import { type RoutineRun } from '../../routines/client/Routines.js'
 import { contrastColorOf } from '../../../design/contrastColor.js'
+import { MarkdownLinks } from '../../../design/MarkdownLinks.js'
+import { Link } from '../../../design/Link.js'
 import { getSource, getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore, reportSaveError } from './EntryStore.js'
 import { EntryEditorAnchor } from './EntryEditorAnchor.js'
@@ -488,6 +490,19 @@ export class EntrySegmentComponent extends Component {
 			: new DateTimeRange(entry.start?.dayStart ?? entry.lastDay, entry.lastDay)
 	}
 
+	/** A location that is a link says where it leads ("Join Zoom"), not its address. */
+	private get locationTemplate() {
+		const { location } = this.segment!.entry
+		const link = MarkdownLinks.sole(location)
+		const appearance = link ? Link.appearanceOf(new URL(link)) : undefined
+		return html`
+			<div class="location">
+				${!appearance ? html.nothing : html`<mitra-icon icon=${appearance.icon}></mitra-icon>`}
+				<span class="label">${appearance?.label ?? location}</span>
+			</div>
+		`
+	}
+
 	protected override get template() {
 		if (!this.segment) return html.nothing
 
@@ -521,11 +536,7 @@ export class EntrySegmentComponent extends Component {
 				`}
 				<span class="label">${this.segment.entry.heading || (this.segment.entry.persisted ? '' : t('Draft'))}</span>
 			</div>
-			${this.segment.allDay || !this.segment.entry.location ? html.nothing : html`
-				<div class="location">
-					<span class="label">${this.segment.entry.location}</span>
-				</div>
-			`}
+			${this.segment.allDay || !this.segment.entry.location ? html.nothing : this.locationTemplate}
 			${!this.segment.entry.partOfSeries ? html.nothing : html`
 				<mitra-icon class="recurring" icon="repeat" title=${t('Repeats')}></mitra-icon>
 			`}

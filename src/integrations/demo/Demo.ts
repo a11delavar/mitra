@@ -221,6 +221,7 @@ export class Demo extends MitraCalendar {
 			start: at(thisWeekMonday, 1, 9),
 			end: at(thisWeekMonday, 1, 12),
 			due: at(thisWeekMonday, 4, 12),
+			description: 'Start from the [quarterly deck template](https://example.com/templates/quarterly-deck).',
 		})
 
 		const q3Planning = workEvent({
@@ -243,7 +244,8 @@ export class Demo extends MitraCalendar {
 			heading: 'Dinner with friends',
 			start: at(nextWeekMonday, 4, 19),
 			end: at(nextWeekMonday, 4, 22),
-			location: 'City Center'
+			location: 'City Center',
+			description: 'Table for six at [the bistro](https://example.com/bistro).',
 		})
 
 		// Saturday's household time holds the chores: the groceries, then the clear-out, one part of it a subtask of its own.
@@ -353,7 +355,13 @@ export class Demo extends MitraCalendar {
 		// Wednesday morning's step curves down into Thursday afternoon's, Thursday morning's drops straight into it,
 		// and the exam on Friday morning rises from it through the clear band between: a connector is swallowed by any chip in its way.
 		const algoPrep1 = uniTask({ heading: 'DA: Study Graphs and Trees', status: TaskStatus.Done, start: at(thisWeekMonday, 2, 9), end: at(thisWeekMonday, 2, 12) })
-		const algoPrep2 = uniTask({ heading: 'DA: Study Dynamic Programming', status: TaskStatus.Doing, start: at(thisWeekMonday, 3, 9), end: at(thisWeekMonday, 3, 12) })
+		const algoPrep2 = uniTask({
+			heading: 'DA: Study Dynamic Programming',
+			status: TaskStatus.Doing,
+			start: at(thisWeekMonday, 3, 9),
+			end: at(thisWeekMonday, 3, 12),
+			description: 'Lecture notes are in [my vault](obsidian://open?vault=University&file=Dynamic%20Programming).',
+		})
 		const algoPrep3 = uniTask({ heading: 'DA: Solve Practice Exam', status: TaskStatus.ToDo, start: at(thisWeekMonday, 3, 14), end: at(thisWeekMonday, 3, 15, 30) })
 
 		const algoExam = uniEvent({

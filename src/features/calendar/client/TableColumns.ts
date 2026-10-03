@@ -7,6 +7,7 @@ import { Relations } from '../../relations/client/Relations.js'
 import '../../participants/client/ParticipantFaces.js'
 import '../../relations/client/EntryLink.js'
 import '../../locations/client/MapLink.js'
+import { MarkdownLinks } from '../../../design/MarkdownLinks.js'
 import { reminderSpanLabel } from '../../reminders/client/RemindersField.js'
 import { type TableRow } from './TableRow.js'
 
@@ -57,6 +58,17 @@ function links(entries: ReadonlyArray<Entry>) {
 	return html`${entries.map(entry => html`<mitra-entry-link .entry=${entry}></mitra-entry-link>`)}`
 }
 
+/** A place with its map; a location that is a link, as the link it is. */
+function location(value: string) {
+	const link = MarkdownLinks.sole(value)
+	return link
+		? html`<mitra-link href=${link}></mitra-link>`
+		: html`
+			${text(value)}
+			${!value ? html.nothing : html`<mitra-map-link location=${value}></mitra-map-link>`}
+		`
+}
+
 function reminders(entry: Entry) {
 	return text((entry.reminders ?? []).map(minutes => minutes === 0 ? t('At start') : reminderSpanLabel(minutes)).join(', '))
 }
@@ -90,12 +102,7 @@ export const tableColumns = (): Array<DataGridColumn<TableRow>> => [
 	column('statusRank', t('Status'), { getContentTemplate: (_, row) => status(row.entry) }),
 	column('durationMinutes', t('Duration'), { alignment: 'end', hidden: true, getContentTemplate: (_, row) => text(row.entry.duration) }),
 	column('typeKey', t('Type'), { hidden: true, getContentTemplate: (_, row) => text(row.entry.type.format()) }),
-	column('location', t('Location'), {
-		getContentTemplate: (_, row) => html`
-			${text(row.location)}
-			${!row.location ? html.nothing : html`<mitra-map-link location=${row.location}></mitra-map-link>`}
-		`,
-	}),
+	column('location', t('Location'), { getContentTemplate: (_, row) => location(row.location) }),
 	column('repeats', t('Repeats'), { hidden: true }),
 	column('participants', t('Participants'), { getContentTemplate: (_, row) => participants(row.entry) }),
 	column('reminders', t('Reminders'), { hidden: true, getContentTemplate: (_, row) => reminders(row.entry) }),

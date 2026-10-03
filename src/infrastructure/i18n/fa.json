@@ -120,6 +120,7 @@
 	"Duplicate": "تکثیر",
 	"Open in ${provider}": "باز کردن در ${provider}",
 	"Open link": "باز کردن پیوند",
+	"Join ${service}": "پیوستن به ${service}",
 	"Duplicate an entry": "ایجاد نسخه مشابه از یک مورد",
 	"Edit": "ویرایش",
 	"Edit integration": "ویرایش یکپارچه‌سازی",

@@ -636,6 +636,11 @@ async function main() {
 			await capture(browser, `due-detail-${theme}`, false, await around(browser, openEditor, details.surface.width, 28))
 			await press(browser, ...keys.escape())
 
+			// Its notes link into an Obsidian vault: the Links row above the description, and the link within it.
+			await openFound(browser, 'DA: Study Dynamic Programming')
+			await capture(browser, `links-detail-${theme}`, false, await around(browser, openEditor, details.surface.width, 28))
+			await press(browser, ...keys.escape())
+
 			// Last, and the only one with availability shown. A tap on the label reaches the window beneath, as a reader's would.
 			await open(browser, origin, theme, { availability: true })
 			await browser.evaluate('document.documentElement.dataset.scene = "availability"')

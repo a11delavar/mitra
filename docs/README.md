@@ -48,6 +48,7 @@ Day-to-day behaviour, whichever accounts you connected.
 - **[Availability](guides/availability.md)**: shade the time each calendar is for, like working hours or study time, and show it as busy where others look.
 - **[Relationships](guides/relationships/README.md)**: link tasks and events across calendars, organize subtasks and track dependencies.
 - **[Participants & invitations](guides/participants.md)**: invite people to an entry and follow their replies.
+- **[Links](guides/links.md)**: the links in an entry, shown by what they open, from meetings to join to notes in other apps.
 - **[Reminders & notifications](guides/notifications.md)**: how push reminders work and what they need.
 - **[Location autocomplete](guides/location-autocomplete.md)**: the geocoder behind the location field.
 - **[Keyboard shortcuts](guides/keyboard-shortcuts.md)**: control the views, navigation and entries from the keyboard.

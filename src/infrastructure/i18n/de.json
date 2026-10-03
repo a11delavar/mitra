@@ -159,6 +159,7 @@
 	"Duplicate": "Duplizieren",
 	"Open in ${provider}": "In ${provider} öffnen",
 	"Open link": "Link öffnen",
+	"Join ${service}": "${service} beitreten",
 	"Duplicate an entry": "Eintrag duplizieren",
 	"Edit": "Bearbeiten",
 	"Edit integration": "Integration bearbeiten",

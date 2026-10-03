@@ -2,6 +2,7 @@ import { Component, component, html, css, property, state, event, query, bind } 
 import { type Entry } from '../../entries/Entry.js'
 import { searchLocations, getCapabilities, type LocationSuggestion } from '../../../infrastructure/http/Api.js'
 import { LatestSearch } from '../../../design/Combobox.js'
+import { MarkdownLinks } from '../../../design/MarkdownLinks.js'
 import './MapLink.js'
 
 // Cached user coordinates for geocoding bias.
@@ -42,7 +43,11 @@ function placeLabel(type: string): string {
 	return type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
 }
 
-/** The location field, suggesting places as it is typed into, with a link to the place on a map. */
+/**
+ * The location field, suggesting places as it is typed into, with a link to the place on a map. A
+ * location that is a link (a meeting, a note) is a destination, not a place: it shows as that link
+ * until clicked to edit, and gets no map.
+ */
 @component('mitra-location-field')
 export class LocationField extends Component {
 	@property({
@@ -54,6 +59,7 @@ export class LocationField extends Component {
 
 	@state() private suggestions = new Array<LocationSuggestion>()
 	@state() open = false
+	@state() private editing = false
 
 	private readonly search = new LatestSearch((query: string) => searchLocations(query, position).catch(() => new Array<LocationSuggestion>()), 250)
 
@@ -61,7 +67,24 @@ export class LocationField extends Component {
 
 	@query('textarea') private readonly field?: HTMLTextAreaElement
 
+	private get editable() {
+		return getCapabilities(this.entry?.sourceId ?? '').editEntries
+	}
+
+	private readonly edit = (e: Event) => {
+		if (!this.editable || e.composedPath().some(node => node instanceof HTMLAnchorElement)) {
+			return
+		}
+		this.editing = true
+		void this.updateComplete.then(() => this.field?.focus())
+	}
+
 	private async suggest(query: string, immediately = false) {
+		// A link is no place: the geocoder refuses it (Photon answers 403), and a meeting link would hand it its passcode.
+		if (MarkdownLinks.sole(query)) {
+			this.close()
+			return
+		}
 		const suggestions = await this.search.run(query, { immediately })
 		if (this.isConnected) {
 			this.suggestions = suggestions
@@ -119,6 +142,15 @@ export class LocationField extends Component {
 					min-width: 0;
 				}
 
+				> .link {
+					flex: 1;
+					min-width: 0;
+					display: flex;
+					align-items: center;
+					cursor: text;
+					outline: none;
+				}
+
 				mitra-listbox {
 					max-inline-size: 280px;
 				}
@@ -160,14 +192,23 @@ export class LocationField extends Component {
 	}
 
 	protected override get template() {
+		const link = MarkdownLinks.sole(this.entry?.location)
+		if (link && !this.editing) {
+			return html`
+				<div class="link" tabindex=${this.editable ? '0' : '-1'} @focus=${this.edit} @click=${this.edit}>
+					<mitra-link plain href=${link}></mitra-link>
+				</div>
+			`
+		}
 		return html`
 			<mitra-combobox ?open=${bind(this, 'open')}
 				@pick=${(e: CustomEvent<LocationSuggestion>) => this.pick(e.detail)} @keydown=${this.handleKeyDown}>
 				<textarea slot="input" rows="1" placeholder=${t('Location')} aria-label=${t('Location')} autocomplete="off" spellcheck="false"
-					?readonly=${!getCapabilities(this.entry?.sourceId ?? '').editEntries}
+					?readonly=${!this.editable}
 					.value=${this.entry?.location ?? ''}
 					@focus=${this.handleFocus}
 					@input=${this.handleInput}
+					@blur=${() => this.editing = false}
 				></textarea>
 				<mitra-listbox aria-label=${t('Location')}>
 					${this.suggestions.map(suggestion => html`
@@ -184,7 +225,7 @@ export class LocationField extends Component {
 					`)}
 				</mitra-listbox>
 			</mitra-combobox>
-			<mitra-map-link location=${this.entry?.location ?? ''}></mitra-map-link>
+			<mitra-map-link location=${link ? '' : this.entry?.location ?? ''}></mitra-map-link>
 		`
 	}
 }

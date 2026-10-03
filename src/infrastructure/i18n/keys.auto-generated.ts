@@ -283,6 +283,7 @@ declare global {
 		"Integration options": unknown
 		"Integration Token": unknown
 		"Interval": unknown
+		"Join ${service}": unknown
 		"Keep": unknown
 		"Keep the calendar": unknown
 		"Keep the chain intact": unknown

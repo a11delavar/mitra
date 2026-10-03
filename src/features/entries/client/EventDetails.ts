@@ -12,6 +12,8 @@ import { centered, type Popover } from '../../../design/Popover.js'
 import { EntryDetailsSharing } from './EntryDetailsSharing.js'
 import { startedInField } from '../../../design/eventOrigin.js'
 import { editorFieldStyles } from './editorFields.css.js'
+import { MarkdownLinks } from '../../../design/MarkdownLinks.js'
+import { scrollbar } from '../../../design/scrollbar.css.js'
 
 @component('mitra-entry-details')
 export class EntryDetailsComponent extends Component {
@@ -343,12 +345,28 @@ export class EntryDetailsComponent extends Component {
 								margin-inline: -0.5rem;
 							}
 
+							&[hidden] {
+								display: none;
+							}
+
 							> .content {
 								grid-column: 2 / -1;
 								display: flex;
 								align-items: center;
 								flex-wrap: wrap;
 								opacity: 0.85;
+							}
+
+							&.hyperlinks > .links {
+								grid-column: 2 / -1;
+								display: flex;
+								flex-wrap: wrap;
+								gap: 0.25rem 0.875rem;
+								padding-block: calc((var(--control-height) - 2px - 1lh) / 2);
+								/* Two lines of links at most, the rest scrolled to, so a long page of notes cannot push the description away. */
+								max-block-size: calc(2lh + 0.25rem);
+								overflow-y: auto;
+								${scrollbar}
 							}
 
 							&.description {
@@ -475,7 +493,7 @@ export class EntryDetailsComponent extends Component {
 		const groups = [
 			// Rendered for an UNDATED entry too, where it shows just the way in (see EntryDetailsWhen).
 			[html`<mitra-entry-details-when .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-entry-details-when>`],
-			[this.locationTemplate, this.participantsTemplate, this.descriptionTemplate],
+			[this.locationTemplate, this.participantsTemplate, this.hyperlinksTemplate, this.descriptionTemplate],
 			[
 				!EntryDetailsSharing.applies(entry) ? html.nothing : html`
 					<mitra-entry-details-sharing .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-entry-details-sharing>
@@ -569,6 +587,23 @@ export class EntryDetailsComponent extends Component {
 			<li class="participants field">
 				<mitra-icon icon="users"></mitra-icon>
 				<mitra-participants-field .entry=${this.segment!.entry} @change=${this.handleChange}></mitra-participants-field>
+			</li>
+		`
+	}
+
+	/**
+	 * The description's links, gathered above it: a reading of the text, so a link is added and removed where
+	 * it is written. The row is always there, hidden while the description holds none: a row inserted before
+	 * the description would make lit rebuild the textarea being typed in.
+	 */
+	private get hyperlinksTemplate() {
+		const links = MarkdownLinks.of(this.segment!.entry.description)
+		return !this.capabilities.description ? html.nothing : html`
+			<li class="hyperlinks field" ?hidden=${!links.length}>
+				<mitra-icon icon="link-2"></mitra-icon>
+				<span class="links">
+					${links.map(link => html`<mitra-link plain href=${link.href}>${link.words || html.nothing}</mitra-link>`)}
+				</span>
 			</li>
 		`
 	}
