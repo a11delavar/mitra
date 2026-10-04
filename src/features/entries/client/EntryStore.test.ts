@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Entry, TaskStatus } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
+import { EntryRank } from '../EntryRank.js'
 import { Recurrence, type RecurrenceScope } from '../../recurrence/Recurrence.js'
 import { EntryStore } from './EntryStore.js'
 import { Integration } from '../../../integrations/Integration.js'
@@ -31,6 +32,7 @@ describe('EntryStore', () => {
 				delete: (id: string) => (calls.delete.push(id), Promise.resolve()),
 				editOccurrence: (entry: Entry, scope: RecurrenceScope) => (calls.occurrenceEdits.push(scope), request(entry)),
 				deleteOccurrence: (_entry: Entry, scope: RecurrenceScope) => (calls.occurrenceDeletes.push(scope), Promise.resolve()),
+				reorder: (_ranks: Record<string, string>) => Promise.resolve(),
 			},
 			async respond(saved?: Entry) {
 				while (!settlers.length) {
@@ -118,6 +120,50 @@ describe('EntryStore', () => {
 			assert.equal(EntryStore.isDirty(working), true)
 			working.moveStart(at(9))
 			assert.equal(EntryStore.isDirty(working), false)
+		})
+	})
+
+	describe('reorder', () => {
+		const undated = { type: EntryType.Task, start: undefined, end: undefined }
+		const task = (id: string, key?: string, fields: Partial<Entry> = {}) =>
+			entry({ ...undated, id, heading: id, rank: key ? EntryRank.parse(key) : null, ...fields })
+		const sending = () => {
+			const sent = new Array<Record<string, string>>()
+			EntryStore.persistence = { ...fake().persistence, reorder: ranks => (sent.push(ranks), Promise.resolve()) }
+			return sent
+		}
+
+		it('stores only the moved task, a repeating one through its series', async () => {
+			const sent = sending()
+			const [rent, passport] = [task('series__1', 'a0', { recurrenceMasterId: 'series' }), task('passport', 'a9')]
+
+			await EntryStore.reorder([rent, passport], rent, passport, undefined)
+
+			assert.deepEqual(Object.keys(sent[0]!), ['series'])
+			assert.ok(passport.rank!.isBefore(rent.rank!))
+		})
+
+		it('ranks the list afresh first when a neighbor has no rank yet, keeping the order it showed', async () => {
+			const sent = sending()
+			const [first, unranked, moved] = [task('first', 'a3'), task('unranked'), task('moved', 'a5')]
+
+			await EntryStore.reorder([first, unranked, moved], moved, first, unranked)
+
+			assert.deepEqual(Object.keys(sent[0]!).sort(), ['first', 'moved', 'unranked'])
+			assert.ok(first.rank!.isBefore(moved.rank!) && moved.rank!.isBefore(unranked.rank!))
+		})
+
+		it('restores every rank it changed when the server refuses', async () => {
+			EntryStore.persistence = { ...fake().persistence, reorder: () => Promise.reject(new Error('refused')) }
+			const [first, unranked, moved] = [task('first', 'a3'), task('unranked'), task('moved', 'a5')]
+			const quiet = console.error
+			console.error = () => void 0
+			try {
+				await EntryStore.reorder([first, unranked, moved], moved, first, unranked)
+			} finally {
+				console.error = quiet
+			}
+			assert.deepEqual([first.rank?.key, unranked.rank, moved.rank?.key], ['a3', null, 'a5'])
 		})
 	})
 

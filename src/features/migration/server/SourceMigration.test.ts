@@ -13,6 +13,7 @@ import { Session } from '../../identity/server/Session.js'
 import { User } from '../../identity/User.js'
 import { Entry, TaskStatus, Transparency } from '../../entries/Entry.js'
 import { EntryType } from '../../entries/EntryType.js'
+import { EntryRank } from '../../entries/EntryRank.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
 import { RelationType } from '../../relations/RelationType.js'
 import { Recurrence } from '../../recurrence/Recurrence.js'
@@ -245,6 +246,19 @@ describe('SourceMigration', () => {
 			const [moved] = await em.find(Entry, { sourceId: target.id })
 			assert.equal(moved!.due?.valueOf(), Date.parse('2026-09-04T17:00:00Z'))
 			assert.equal(moved!.estimate, 90)
+		})
+
+		it('keeps a moved task in its place in the manual order, and starts a copy unranked', async () => {
+			const { user, origin, target } = await seed(em)
+			em.persist([entryIn(origin, { heading: 'moved', type: EntryType.Task, rank: EntryRank.parse('a5') })])
+			await em.flush()
+			await (await SourceMigration.of(em, user, origin.id, { targetSourceId: target.id })).run()
+			const [moved] = await em.find(Entry, { sourceId: target.id })
+			assert.equal(moved!.rank?.key, 'a5')
+
+			await (await SourceMigration.of(em, user, target.id, { targetSourceId: origin.id, keepOriginals: true })).run()
+			const [copy] = await em.find(Entry, { sourceId: origin.id })
+			assert.equal(copy!.rank, null)
 		})
 
 		it('carries the identity, so a relationship between two moved entries survives', async () => {

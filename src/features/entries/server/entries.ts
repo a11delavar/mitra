@@ -15,6 +15,7 @@ import { normalizeAllDay, projectAllDay } from '../../time/calendarDate.js'
 import { editOccurrence, deleteOccurrence, expandedOccurrences, seriesStarts, seriesNear, occurrenceAt } from '../../recurrence/server/occurrences.js'
 import { entrySearch, entryWindow, everyEntry } from './entryWindow.js'
 import { assertRelationsValid, attachRelations, relationClosure } from '../../relations/server/relations.js'
+import { EntryRank } from '../EntryRank.js'
 
 const logger = createLogger('Entries')
 
@@ -104,6 +105,32 @@ entriesRouter.get('/relations/closure', async (req, res) => {
 	const em = orm.em.fork()
 	const entries = await relationClosure(em, req.user)
 	return res.json(entries.map(entry => projectedForViewer(entry, viewerZone(req))))
+})
+
+/** Stores where the client placed tasks in the manual order, as their ranks keyed by entry id. */
+entriesRouter.put('/ranks', async (req, res) => {
+	const keys = Object.entries((req.body ?? {}) as Record<string, unknown>)
+	if (!keys.length || keys.some(([, key]) => typeof key !== 'string')) {
+		return res.status(400).json({ error: 'Ranks must map entry ids to rank keys' })
+	}
+	let ranks: Array<[string, EntryRank]>
+	try {
+		ranks = keys.map(([id, key]) => [id, EntryRank.parse(key as string)])
+	} catch {
+		return res.status(400).json({ error: 'Malformed rank' })
+	}
+	const em = orm.em.fork()
+	for (const [id, rank] of ranks) {
+		const entry = await req.user.entry(em, id)
+		if (!entry.type.isTask || entry.recurrenceMasterId) {
+			return res.status(400).json({ error: 'Only tasks have a manual order' })
+		}
+		entry.rank = rank
+	}
+	await em.flush()
+	syncEmitter.emit('updated', req.user.id)
+	logger.debug(`Ranked ${ranks.length} task(s)`)
+	return res.status(204).end()
 })
 
 entriesRouter.post('/', async (req, res) => {
@@ -393,6 +420,7 @@ entriesRouter.put('/:id', async (req, res) => {
 		incoming.id = crypto.randomUUID()
 		incoming.uid = currentSource.uri && currentSource.uri === targetSource.uri ? crypto.randomUUID() : existing.uid
 		incoming.relations = relations !== undefined ? relations : existing.relations ?? null
+		incoming.rank = incoming.type.isTask ? existing.rank : null
 		incoming.migrateTo(targetSource)
 		const created = await targetIntegration.createEntry(em, incoming)
 		try {

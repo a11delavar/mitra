@@ -539,7 +539,7 @@ export class Timeline extends Component {
 				})
 			}
 		}
-		return [...byKey.values()].sort((a, b) => a.sortValue - b.sortValue || a.heading.localeCompare(b.heading))
+		return [...byKey.values()].sort((a, b) => a.sortValue - b.sortValue || a.date.valueOf() - b.date.valueOf() || a.heading.localeCompare(b.heading))
 	}
 
 	private bars(accept: (entry: Entry) => boolean): Array<TimelineBar> {

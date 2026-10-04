@@ -72,13 +72,14 @@ interface SubscriptionChangeLikeEvent {
 // this a new version idles in "waiting" until every mitra tab closes.
 worker.addEventListener('install', () => worker.skipWaiting())
 
-// Android needs an `icon`, or Chrome draws a letter avatar of the origin; elsewhere it only adds a second
-// picture beside the text, the app's own icon already heading the notification. Android's status bar keeps
-// only the badge's alpha channel, so there the badge is the monochrome silhouette.
+// Both pictures are Android's alone. Chrome there always draws a "large icon" at the notification's end,
+// substituting a letter avatar of the origin when none is sent (NotificationBuilderBase.ensureNormalizedIcon),
+// and Wear OS shows that picture as the avatar with the small icon superimposed. The status bar keeps only
+// the badge's alpha channel, so the badge is the monochrome silhouette. Windows and macOS toasts ignore
+// `badge`, and their header already carries the installed app's icon, so sending one only adds a second picture.
 const android = /Android/i.test(navigator.userAgent)
-const appIcon = '/android-chrome-192x192.png'
-const icon = android ? appIcon : undefined
-const badge = android ? '/notification-badge.png' : appIcon
+const icon = android ? '/android-chrome-192x192.png' : undefined
+const badge = android ? '/notification-badge.png' : undefined
 
 // Claim open tabs so a notification tap can navigate one instead of opening a second window.
 worker.addEventListener('activate', event => event.waitUntil(worker.clients.claim()))

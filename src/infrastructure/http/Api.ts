@@ -155,6 +155,11 @@ export function getRelationClosure() {
 	return Api.get<Array<Entry>>(`/entries/relations/closure?tz=${tz()}`)
 }
 
+/** Stores tasks' places in the manual order, as rank keys by entry id. */
+export function rankEntries(ranks: Record<string, string>) {
+	return Api.put<void>('/entries/ranks', ranks)
+}
+
 /** Update entry relationships via master entry PUT. */
 export function updateRelations(id: string, relations: Array<Relation> | null) {
 	return Api.put<Entry>(`/entries/${id}?tz=${tz()}`, { relations })

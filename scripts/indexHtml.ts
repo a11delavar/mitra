@@ -33,17 +33,9 @@ function adaptiveLayer(path: string, background?: string) {
 </svg>`)
 }
 
-async function writeMonochromeIcons() {
-	const layer = adaptiveLayer('assets/mitra-monochrome.svg')
-	await Promise.all(adaptiveSizes.map(size => sharp(layer).resize(size, size).png().toFile(join(distDir, `android-chrome-monochrome-${size}x${size}.png`))))
-	return adaptiveSizes.map(size => ({
-		src: `/android-chrome-monochrome-${size}x${size}.png`,
-		sizes: `${size}x${size}`,
-		type: 'image/png',
-		purpose: 'monochrome',
-	}))
-}
-
+// The silhouette ships only as the push badge. It is deliberately NOT a `purpose: monochrome` manifest icon:
+// Chrome's WebAPK minter ignores that purpose (webapk.proto), while Edge on Windows takes it, tinted black, as the
+// toast header icon of the installed app, so it would buy nothing on Android and lose the mark on Windows.
 function writeNotificationBadge() {
 	return sharp('assets/mitra-monochrome.svg').resize(96, 96).png().toFile(join(distDir, 'notification-badge.png'))
 }
@@ -70,7 +62,7 @@ export async function writeIndexHtml() {
 			yandex: false,
 		},
 	})
-	const [monochromeIcons] = await Promise.all([writeMonochromeIcons(), writeNotificationBadge()])
+	await writeNotificationBadge()
 	for (const { name, contents } of [...generated.images, ...generated.files]) {
 		if (name === 'manifest.webmanifest') {
 			const manifest = JSON.parse(contents.toString())
@@ -78,7 +70,7 @@ export async function writeIndexHtml() {
 			manifest.display_override = ['window-controls-overlay']
 			// Omit orientation property so Android respects the user's rotation lock.
 			delete manifest.orientation
-			manifest.icons = [...manifest.icons.filter(({ src }: { src: string }) => !isSurplusMaskable(src)), ...monochromeIcons]
+			manifest.icons = manifest.icons.filter(({ src }: { src: string }) => !isSurplusMaskable(src))
 			// OS-level calendar app registration: installed instances open .ics files and webcal: links.
 			// focus-existing routes every launch into the running window as LaunchParams (src/app/launch.ts)
 			// instead of navigating it, so the calendar keeps its state.

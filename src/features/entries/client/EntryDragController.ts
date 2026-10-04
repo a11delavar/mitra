@@ -97,9 +97,9 @@ export class EntryDragController extends Controller {
 	/**
 	 * Hand off an external drag gesture (e.g. from the unscheduled drawer) to the active calendar grid.
 	 */
-	static beginExternal(entry: Entry, segment: EntrySegmentComponent, surface: HTMLElement, e: PointerEvent) {
+	static beginExternal(entry: Entry, segment: EntrySegmentComponent, surface: HTMLElement, e: PointerEvent, options?: { held?: boolean }) {
 		const controller = [...this.grids].filter(controller => controller.element.isConnected).at(-1)
-		controller?.beginExternal(entry, segment, surface, e)
+		controller?.beginExternal(entry, segment, surface, e, options)
 	}
 
 	/** Where a chip listed outside the grid is held: by its own start, so the drop lands it on the pointer. */
@@ -157,7 +157,7 @@ export class EntryDragController extends Controller {
 		this.element.removeEventListener('pointerdown', this.onPointerDown)
 	}
 
-	private beginExternal(entry: Entry, segment: EntrySegmentComponent, surface: HTMLElement, e: PointerEvent) {
+	private beginExternal(entry: Entry, segment: EntrySegmentComponent, surface: HTMLElement, e: PointerEvent, options?: { held?: boolean }) {
 		if (this.drag || !entry.persisted || !getCapabilities(entry.sourceId).editEntries) {
 			return
 		}
@@ -165,8 +165,11 @@ export class EntryDragController extends Controller {
 		if (!cells.length) {
 			return // nothing on screen to place it on
 		}
+		const common = this.commonAt(e, cells, surface)
 		this.begin({
-			...this.commonAt(e, cells, surface),
+			...common,
+			// A gesture handed off mid-drag (the list's reorder leaving the list) has served its touch hold.
+			armed: options?.held ? false : common.armed,
 			kind: 'move', mode: this.editMode(entry), anchor: EntryDragController.grabOf(entry), entry, before: entry.clone(), grabbedSegment: segment,
 		})
 	}

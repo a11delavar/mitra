@@ -3,7 +3,8 @@ import { type ReactiveControllerHost } from 'lit'
 import { Recurrence, type RecurrenceScope } from '../../recurrence/Recurrence.js'
 import { type EntryPlan, type SkippedEntry } from '../../relations/EntryPlan.js'
 import { type Entry } from '../Entry.js'
-import { ApiError, createEvent, deleteEvent, deleteOccurrence, editOccurrence, updateEvent, updateRelations } from '../../../infrastructure/http/Api.js'
+import { ApiError, createEvent, deleteEvent, deleteOccurrence, editOccurrence, rankEntries, updateEvent, updateRelations } from '../../../infrastructure/http/Api.js'
+import { EntryRank } from '../EntryRank.js'
 
 export const reportSaveError = (error: unknown) =>
 	console.error('Persisting the entry failed. The edit is kept locally and retried on the next change:', error)
@@ -24,7 +25,7 @@ export class EntryStore extends Controller {
 	private static merged?: ReadonlyArray<Entry>
 	private static dragging?: Entry
 
-	static persistence = { create: createEvent, update: updateEvent, delete: deleteEvent, editOccurrence, deleteOccurrence }
+	static persistence = { create: createEvent, update: updateEvent, delete: deleteEvent, editOccurrence, deleteOccurrence, reorder: rankEntries }
 
 	/** A drag only ever moves the span, so a ghost occupying the source's is a second copy of it,
 	 * as the unschedule target showed, where both are dateless but `unschedule` also drops reminders. */
@@ -423,6 +424,27 @@ export class EntryStore extends Controller {
 			}
 		}
 		this.notify()
+	}
+
+	/** Places the entry between two neighbors of the listed order and stores what changed: only the entry,
+	 * unless the neighbors can't decide a rank, in which case the whole list is ranked afresh first. */
+	static async reorder(listed: ReadonlyArray<Entry>, entry: Entry, previous?: Entry, next?: Entry): Promise<void> {
+		const before = new Map([...listed, entry].map(each => [each, each.rank]))
+		try {
+			const placed = EntryRank.tryBetween(previous?.rank, next?.rank)
+			if (!placed) {
+				EntryRank.sequence(listed.length).forEach((rank, index) => listed[index]!.rank = rank)
+			}
+			entry.rank = placed ?? EntryRank.between(previous?.rank ?? undefined, next?.rank ?? undefined)
+			this.notify()
+			const changed = placed ? [entry] : [...new Set([...listed, entry])]
+			// A repeating task holds its place through its series.
+			await EntryStore.persistence.reorder(Object.fromEntries(changed.map(each => [each.masterId!, each.rank!.key])))
+		} catch (error) {
+			before.forEach((rank, each) => each.rank = rank)
+			this.notify()
+			console.error('Reordering failed. The previous order is restored:', error)
+		}
 	}
 
 	static upsertDraft(entry: Entry) {

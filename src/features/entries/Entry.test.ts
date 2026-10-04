@@ -506,6 +506,28 @@ describe('Entry', () => {
 			assert.equal(e.scheduled, false)
 		})
 
+		it('adopting an unscheduled span drops reminders with it, mirroring unschedule', () => {
+			const e = task({ start: at(0, 9), end: at(0, 10), reminders: [10] })
+			e.adoptSpan(task())
+			assert.equal(e.scheduled, false)
+			assert.equal(e.reminders, null)
+		})
+
+		it('adopting a span between unscheduled entries leaves reminders untouched', () => {
+			const e = task()
+			e.adoptSpan(task())
+			assert.equal(e.reminders, undefined)
+			assert.equal(e.editEquals(task()), true)
+		})
+
+		it('adopting an unscheduled span keeps the reminders while a due anchors them', () => {
+			const e = task({ start: at(0, 9), end: at(0, 10), due: at(2, 17), reminders: [30] })
+			const cleared = e.clone()
+			cleared.unschedule()
+			e.adoptSpan(cleared)
+			assert.deepEqual(e.reminders, [30])
+		})
+
 		describe('the estimate and the end are one fact', () => {
 			it('a drop lasts as long as the estimate, which the end then stands for', () => {
 				const e = task({ estimate: 120 })

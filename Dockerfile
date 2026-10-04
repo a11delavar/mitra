@@ -4,9 +4,9 @@
 # Bundles the backend + frontend with esbuild. `better-sqlite3`/`tsdav` are kept
 # external by the bundle, so they (and only they, plus their deps) must survive in
 # node_modules for the runtime stage, hence `npm prune --omit=dev` at the end.
-# Node 25 is required (Temporal API behaviour); build tools are present so
+# Both stages share one Node (match .nvmrc) so the better-sqlite3 ABI agrees; build tools are present so
 # better-sqlite3 can compile from source if no prebuilt binary exists for this ABI.
-FROM node:25-bookworm-slim AS builder
+FROM node:26-bookworm-slim AS builder
 WORKDIR /app
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends python3 make g++ \
@@ -34,7 +34,7 @@ RUN npm run build
 RUN npm prune --omit=dev
 
 # ── Runtime stage ─────────────────────────────────────────────────────────────
-FROM node:25-bookworm-slim AS runtime
+FROM node:26-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 

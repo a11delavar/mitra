@@ -211,13 +211,15 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
   - Format methods: `EntryType.format()` / `formatPlural()`.
 - **Planning Surface** (`mitra-planning`): two sections, Overdue then Unscheduled, both from `EntryStore`.
   - `Entry.overdue`: open task whose `Entry.lastDay` (`due`, else schedule `end`) is before today. By day, not instant. Repeating tasks exempt (`partOfSeries`).
-  - Unscheduled sorts by due (dated first); start-less series yield only `currentOccurrence`. Due tasks show with flag.
+  - Unscheduled sorts by manual order, then due (dated first); start-less series yield only `currentOccurrence`. Due tasks show with flag.
   - Unscheduled is also the drop target clearing an entry's dates, so it keeps `flex: 1`; Overdue caps at half the panel.
   - `Planning.pending` feeds the sidebar tab badge. Only one-off tasks can be unscheduled (`Entry.unschedulable`, shared by the editor's ✕ and the drop on Unscheduled): a series' dates identify its occurrences.
   - Overdue excludes the drag preview (`EntryStore.previewing`): a ghost with a new past date is still overdue, and nothing is dropped into this list. The ghost belongs to the grid; the source row stays, faded.
   - Scheduling and unscheduling share `EntryDragController.move`.
   - Drawer tabs: `src/design/Tabs.ts` (declarative, scroll-driven). The panel strip always scrolls LTR (in RTL its panels are reversed with `order: calc(-1 * sibling-index())`): Chromium puts a `view()` timeline one panel off in a scroller whose origin is its inline end (RTL or `row-reverse`), which faded the shown panel out.
   - Chip height tiers: roomy-first, cramped as exception via `--density`.
+  - **Manual Task Order**: `Entry.rank` (`EntryRank`, a fractional key, null until placed) is Mitra's own and never synced. The client places tasks (`EntryStore.reorder`) and sends only the changed ranks to `PUT /entries/ranks`. A series ranks through its master (`Entry.masterId`). Paths that re-create an entry must carry `rank`.
+  - **Reorder Gesture**: a stock `@3mo/reorderability` controller on the Unscheduled list. Leaving the list `abandon()`s the reorder and hands the pointer to `EntryDragController.beginExternal(..., { held: true })`.
 - **Due Dates & Estimates**:
   - Vocabulary (UI and docs, one word per idea): the **schedule** (`start`/`end`; a task is scheduled or unscheduled), the **constraints** (**due date** and **estimate**, never "deadline" or "duration"), and **planning**, scheduling unscheduled tasks to fit their constraints (the Planning tab). A start without an end is a **moment**.
   - Task temporal model: `start`/`end` (schedule), `due` (due date), `estimate` (minutes). End and estimate are mutually exclusive: `start ? estimate === null : end === null`. `scheduleAt` turns estimate into `end`; `unschedule` converts duration back to `estimate`. Drag gestures only move schedule, never `due`.
@@ -450,7 +452,7 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
 - **Copy** (site, `docs/`, README): plain sentences, no em or en dashes (a heading's dash also breaks its anchor), no emoji bullets. Quote a frontmatter `description` containing a colon.
 
 ## Build, Test & CI/CD
-- **Runtime**: Node 25+ required (Temporal API).
+- **Runtime**: Node 26 (`.nvmrc`, read by CI; `engines` and the Dockerfile match it). Temporal comes from `scripts/injectTemporalPolyfill.ts` wherever the native one is missing or partial.
 - **Type Checking**: Run `tsgo` (`node_modules/@typescript/native-preview-<platform>/lib/tsgo --noEmit`). esbuild does not typecheck.
 - **Linting**: `npm run lint` (`eslint .`, ESLint 9 flat config). Enforces tabs, single quotes, no semicolons, a trailing newline (`eol-last`), `max-lines` 1000 per file (split like `CalDAV.<topic>.test.ts`), `no-console` (except `warn`/`error`).
 - **Tests**: `npm test` -> `scripts/test.ts` (clears `out_test/`, bundles `src/**/*.test.ts`, runs `node:test`).
@@ -458,12 +460,13 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
 - **Production Build**: `npm run build` -> `scripts/build.ts`. Shared esbuild config in `scripts/esbuild.ts`. Requires `data/` directory.
 - **PWA Icons & Badges** (`scripts/indexHtml.ts`):
   - **Maskable Icon**: Android requires a dedicated `purpose: "maskable"` (never `"any maskable"`, which creates a white plate). `adaptiveLayer()` scales the mark to 50% over `themeColor` to fit Android's 66% circular mask (tighter than the 80% spec).
-  - **Monochrome & Badge**: Single-color on transparency (`assets/mitra-monochrome.svg`). Android draws the notification `badge` (`notification-badge.png`) from its alpha alone, so `serviceWorker.ts` sends it on Android only; elsewhere, and as the `icon` everywhere, the colored mark.
+  - **Monochrome & Badge**: Single-color on transparency (`assets/mitra-monochrome.svg`), shipped only as `notification-badge.png` (Android draws the badge from its alpha alone). Never as a `purpose: monochrome` manifest icon: Chrome's WebAPK minter ignores that purpose, and Edge on Windows paints it black into the installed app's toast header.
+  - **Notification pictures are Android-only** (`serviceWorker.ts`): Chrome for Android always shows a large icon at the notification's end (a letter avatar of the origin when none is sent) and Wear OS draws it as the avatar with the small icon on top, so the `icon` is the colored mark there. Windows and macOS ignore `badge`, and their toast header shows the icon the OS registered at install time from the manifest's `purpose: any` icons, which no notification option changes.
 - **Compression** (`src/infrastructure/http/compression.ts`):
   - **Static Precompression**: `precompressed(dist)` middleware serves build-time `.br` (Brotli quality 11) / `.gz` (Gzip level 9) assets generated by `scripts/precompress.ts`. Falls back to runtime/static files if precompressed sibling is stale or missing.
   - **Dynamic Compression**: `compression()` middleware compresses API responses (Brotli quality 5, 1 KB threshold).
   - **SSE Stream Invariant**: `compression()` MUST explicitly filter out `text/event-stream` to prevent buffering server-sent events.
-- **Docker**: Multi-stage `Dockerfile` based on `node:25-bookworm-slim`. Published to `ghcr.io/a11delavar/mitra`.
+- **Docker**: Multi-stage `Dockerfile` based on `node:26-bookworm-slim`. Published to `ghcr.io/a11delavar/mitra`.
 - **CI / Workflows**:
   - `.github/workflows/qa.yml`: Parallel typecheck (`tsgo`), lint (`eslint`), and test (`npm test`).
   - `.github/workflows/docker.yml`: Git-tag driven multi-arch build via `docker/metadata-action`.

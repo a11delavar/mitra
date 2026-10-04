@@ -228,6 +228,8 @@ export class SourceMigration {
 			timeZone: entry.timeZone,
 			status: entry.status,
 			percentComplete: entry.percentComplete,
+			// A copy is a new task, so it starts unranked rather than sharing the original's key.
+			rank: this.keepOriginals ? null : entry.rank,
 			transparency: entry.transparency,
 			visibility: entry.visibility,
 			recurrence: entry.recurrence,

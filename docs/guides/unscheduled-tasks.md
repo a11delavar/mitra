@@ -36,12 +36,20 @@ The sidebar's **Planning** tab is where you plan: your unscheduled tasks wait th
 
 The tab has two lists:
 
-- **Unscheduled** holds every unscheduled task. Tasks with a due date come first, the soonest at the top. The rest follow in alphabetical order, and finished tasks move to the bottom.
+- **Unscheduled** holds every unscheduled task. Until you [put them in order](#put-tasks-in-order), tasks with a due date come first, the soonest at the top. The rest follow in alphabetical order, and finished tasks move to the bottom.
 - **Overdue** holds the tasks you've fallen behind on. See [overdue tasks](#overdue-tasks).
 
 The number on the tab counts both lists, so you can see how much is waiting from the **Calendars** tab too. Click a task to open it, as you would in the views.
 
 To note down a task for later, press **Add Task** at the bottom of the tab. It only asks for a title. The task goes to your [default calendar](calendars.md#where-new-entries-land), or to the first calendar that can hold tasks if your default can't.
+
+## Put tasks in order
+
+Drag a task up or down the **Unscheduled** list to reorder it. The order is saved, and a task keeps its place when it moves to another calendar.
+
+Your order comes before due dates. New tasks appear below the ones you've placed, and finished tasks stay at the bottom.
+
+Mitra keeps the order itself, so other apps don't see it.
 
 ## Set a due date
 

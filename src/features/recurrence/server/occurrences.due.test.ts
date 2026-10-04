@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { Recurrence } from '../Recurrence.js'
 import { EntryType } from '../../entries/EntryType.js'
 import { Entry } from '../../entries/Entry.js'
+import { EntryRank } from '../../entries/EntryRank.js'
 import { Occurrences, occurrenceOf, currentOccurrence } from './occurrences.js'
 
 type DateTime = import('@3mo/date-time').DateTime
@@ -35,6 +36,12 @@ describe('a repeating task with a due', () => {
 		assert.equal(occurrence.due?.valueOf(), Date.parse('2026-04-01T00:00:00Z'))
 		assert.equal(occurrence.estimate, 15)
 		assert.equal(occurrence.recurrenceId?.valueOf(), Date.parse('2026-04-01T00:00:00Z'))
+	})
+
+	it('lists where its series sits in the manual order', () => {
+		const series = rent()
+		series.rank = EntryRank.parse('a3')
+		assert.equal(occurrenceOf(series, { start: new Date('2026-04-01T00:00:00Z') }).rank?.key, 'a3')
 	})
 
 	it('keeps the due at its offset from a scheduled occurrence', () => {

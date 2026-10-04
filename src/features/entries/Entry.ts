@@ -11,6 +11,7 @@ import { type Relation, type RelationInit } from '../relations/Relation.js'
 import { type RelationType } from '../relations/RelationType.js'
 import { RelationEdge } from '../relations/RelationEdge.js'
 import { EntryRelations } from '../relations/EntryRelations.js'
+import { EntryRank } from './EntryRank.js'
 import { Checklist } from './Checklist.js'
 import { type ReminderDefaults } from '../reminders/ReminderDefaults.js'
 import { type Integration } from '../../integrations/Integration.js'
@@ -122,6 +123,11 @@ export class Entry {
 
 	/** Task PERCENT-COMPLETE (RFC 5545 §3.8.1.8), 0-100. */
 	@property({ type: 'number', nullable: true }) percentComplete: number | null = null
+
+	/** Position in the manual order, owned by Mitra and never written to the provider. Only
+	 * `PUT /entries/ranks` changes it, so editEquals ignores it. */
+	@converter(EntryRank.converter)
+	@property({ type: EntryRank.Mapper, nullable: true }) rank: EntryRank | null = null
 
 	get progress(): number | undefined {
 		return this.percentComplete === null || this.percentComplete === undefined ? undefined : this.percentComplete / 100
@@ -363,6 +369,11 @@ export class Entry {
 		return !!this.recurrence || this.isRecurring
 	}
 
+	/** The row that holds what a whole series shares: its master, or the entry itself when it stands alone. */
+	get masterId() {
+		return this.recurrenceMasterId ?? this.id
+	}
+
 	/** Whether another entry carries the same user-editable content. */
 	editEquals(other: Entry) {
 		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'due', 'estimate', 'allDay', 'timeZone', 'status', 'percentComplete', 'transparency', 'visibility', 'recurrence', 'reminders', 'participants'] as const
@@ -413,6 +424,7 @@ export class Entry {
 			estimate: values.estimate,
 			status: values.status,
 			percentComplete: values.percentComplete,
+			rank: values.rank,
 			transparency: values.transparency,
 			visibility: values.visibility,
 			allDay: values.allDay,
@@ -527,6 +539,10 @@ export class Entry {
 
 	/** The span, with the estimate that stands for it while there is none and the due, whose form follows the span's precision. */
 	adoptSpan(other: Entry) {
+		// Leaving the calendar drops reminders as unschedule() does, unless a due date still anchors them.
+		if (this.scheduled && !other.scheduled && !other.due) {
+			this.reminders = null
+		}
 		this.start = other.start
 		this.end = other.end
 		this.estimate = other.estimate
