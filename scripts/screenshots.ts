@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { spawn, type ChildProcess } from 'node:child_process'
+import { execSync, spawn, type ChildProcess } from 'node:child_process'
 import fs from 'node:fs'
 import net from 'node:net'
 import path from 'node:path'
@@ -9,8 +9,8 @@ import { consola } from 'consola'
 // Captures the imagery the website and docs use: every view in both themes, and the week view split
 // into layers. Layers share ONE page session and scroll offset, or they stop registering.
 //
-// Usage: MITRA_VERSION=v0.5.0 npm run build && npm run screenshots
-// (pin the version: the sidebar prints it, and a dirty tree writes `-dirty` into every image)
+// Usage: npm run screenshots (it builds first, stamped with package.json's version: the sidebar prints it, and a
+// version from `git describe` would write `-dirty` into every image)
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(here, '..')
@@ -41,6 +41,9 @@ type View = 'week' | 'month' | 'year' | 'timeline' | 'table'
 
 /** Each layer hides the app and shows one part again; `visibility` keeps every frame on the same pixels. */
 const captureCss = `
+	/* A blinking caret stood in some captures of a focused field and not in others. */
+	* { caret-color: transparent !important; }
+
 	html[data-capture] mitra-application { visibility: hidden; }
 	html[data-capture] :is(mitra-entry-details, mitra-command-palette, dialog) { display: none !important; }
 
@@ -323,15 +326,23 @@ async function show(page: Devtools, view: View) {
 	await settle(page)
 }
 
-/** Waits until the rendered entries (chips, or the table's rows) are there and hold steady. */
+/**
+ * Waits until the rendered entries (chips, or the table's rows) are there and hold steady, and every scroller has come to
+ * rest: a view still arriving (the year strip finishing its snap) stood a few pixels elsewhere from run to run.
+ */
 async function settle(page: Devtools) {
 	await page.evaluate(`
 		const count = () => document.querySelectorAll('mitra-entry-segment, mitra-table-row').length
-		let previous = -1
+		const scrolls = () => [...document.querySelectorAll('*')]
+			.filter(element => element.scrollLeft || element.scrollTop)
+			.map(element => element.scrollLeft + ':' + element.scrollTop)
+			.join()
+		const state = () => count() + '|' + scrolls()
+		let previous = ''
 		let stable = 0
-		for (let attempt = 0; attempt < 60 && (stable < 4 || previous === 0); attempt++) {
+		for (let attempt = 0; attempt < 60 && (stable < 4 || count() === 0); attempt++) {
 			await new Promise(resolve => setTimeout(resolve, 250))
-			const current = count()
+			const current = state()
 			stable = current === previous ? stable + 1 : 0
 			previous = current
 		}
@@ -525,11 +536,9 @@ async function setLayer(page: Devtools, layer: string | null) {
 }
 
 async function main() {
-	if (!fs.existsSync(path.join(rootDir, 'out/server/server.mjs'))) {
-		consola.error('No build found. Run `npm run build` first.')
-		process.exitCode = 1
-		return
-	}
+	const { version } = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8')) as { version: string }
+	consola.start(`Building v${version}`)
+	execSync('npm run build', { cwd: rootDir, stdio: 'inherit', env: { ...process.env, MITRA_VERSION: `v${version}` } })
 
 	fs.mkdirSync(outDir, { recursive: true })
 	const profileDir = fs.mkdtempSync(path.join(rootDir, 'data/.chrome-'))

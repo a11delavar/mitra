@@ -155,7 +155,10 @@ export class Routines {
 			: this.entries.filter(entry => !this.collapses(entry))
 	}
 
-	/** Every collapsed routine touching [from, to] with its active days, sorted by start day for deterministic packing. */
+	/**
+	 * Every collapsed routine touching [from, to] with its active days, sorted by start day, then by identity (calendar and
+	 * heading) so ties never follow the order the entries arrived in.
+	 */
 	runsIn(from: DateTime, to: DateTime): ReadonlyArray<RoutineRun> {
 		const fromValue = from.dayStart.valueOf()
 		const toValue = to.dayStart.valueOf()
@@ -169,6 +172,8 @@ export class Routines {
 				runs.push({ segment: EntrySegments.for(inRange[0]!.entry)[0]!, days })
 			}
 		}
-		return runs.sort((a, b) => a.days[0]! - b.days[0]! || a.days.at(-1)! - b.days.at(-1)!)
+		return runs.sort((a, b) => a.days[0]! - b.days[0]! || a.days.at(-1)! - b.days.at(-1)!
+			|| a.segment.entry.heading.localeCompare(b.segment.entry.heading)
+			|| String(a.segment.entry.sourceId).localeCompare(String(b.segment.entry.sourceId)))
 	}
 }

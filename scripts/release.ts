@@ -62,8 +62,12 @@ async function main() {
 		consola.info(`Generating CHANGELOG.md for ${tag}...`)
 		runInherit(`npm run changelog -- --tag ${tag}`)
 
+		consola.info(`Capturing the screenshots for ${tag}...`)
+		runInherit('npm run screenshots')
+
 		consola.info('Creating release commit...')
-		runInherit('git add package.json package-lock.json CHANGELOG.md')
+		// How the changelog is generated travels with the release notes it shaped, and the images with the version they print.
+		runInherit('git add package.json package-lock.json CHANGELOG.md cliff.toml assets/screenshots')
 		runInherit(`git commit -m "release: ${tag}"`)
 
 		consola.success(`Created release commit for ${tag}.`)

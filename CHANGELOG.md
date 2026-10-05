@@ -2,6 +2,56 @@
 
 All notable changes to Mitra are documented here.
 
+## [0.6.0] - 2026-10-05
+
+
+### ✨ Features
+- Enhance date-time related rows alignment when editing entries ([1ed0063](https://github.com/a11delavar/mitra/commit/1ed006353c511c8560b206e83e0020622827db68))
+- Reorder unscheduled tasks by dragging ([c2c90cf](https://github.com/a11delavar/mitra/commit/c2c90cf0e08f0720fd6313db075ffa185208d396))
+- Gather descriptions links in a dedicated row in the entry editor ([01b5b80](https://github.com/a11delavar/mitra/commit/01b5b8019d9bf8bcb58d226c5964a848d5a15c41))
+- Due dates and estimates for tasks ([8b48aeb](https://github.com/a11delavar/mitra/commit/8b48aebcf27b372511b8715d9e29ccb1a6388690))
+- Availability ([451e4c1](https://github.com/a11delavar/mitra/commit/451e4c107d5c8e61e12947de44d04710c5ac1eba))
+- Clearer reminders with a Done button, separate defaults for events and tasks, and named devices ([b3f5fb8](https://github.com/a11delavar/mitra/commit/b3f5fb8e4480fc84d3929a4df9001d37cf1b06f0))
+- Persian translations ([0359636](https://github.com/a11delavar/mitra/commit/035963693de13d5f934c7935d100fc73932441f7))
+- Create calendars that live in Mitra itself ([19f98ce](https://github.com/a11delavar/mitra/commit/19f98ce3c3304d550540bc05805673c4494e688b))
+- Localized date and time fields ([1190f8a](https://github.com/a11delavar/mitra/commit/1190f8a3b817ee7e4195be884507fdf7ae3930bb))
+- Table View ([aac5361](https://github.com/a11delavar/mitra/commit/aac536157444d92a4d21524734b20e39317c5804))
+- Enhance header with navigation and create buttons ([2ba54b4](https://github.com/a11delavar/mitra/commit/2ba54b499e1e6b5c0c18385aef61d73ac87ad659))
+- Set Mitra as default calendar app ([25e2153](https://github.com/a11delavar/mitra/commit/25e2153437616f6c95dd850d9f09ca741b3acb84))
+- Keep your calendar view and opened items across reloads and shared links ([16baa13](https://github.com/a11delavar/mitra/commit/16baa13250aa1ebf94b1da42893e310e0fd5cd24))
+- Overdue tasks planning ([198cce0](https://github.com/a11delavar/mitra/commit/198cce09ecc415a8c10e61bf86ea98b8924effc3))
+- Import calendar entries asynchronously ([4912697](https://github.com/a11delavar/mitra/commit/4912697df6ce29d834f7e5c804761c90e91c1e33))
+- Add setting to hide completed tasks from calendar views ([d14cb70](https://github.com/a11delavar/mitra/commit/d14cb701fd624a7448d46511716f010b274911b4))
+- Improved reminder delivery and device management ([249c09a](https://github.com/a11delavar/mitra/commit/249c09a1c06980edce841de376b2d018492f621a))
+- Week numbers in month view ([8b2ac3c](https://github.com/a11delavar/mitra/commit/8b2ac3c30b31ef9fe449e53db5370c534a98ea0f))
+- Settings ([af4eb61](https://github.com/a11delavar/mitra/commit/af4eb61f979b53ed044b2d34e675cfe29eb63770))
+- Support description task checklists ([901740e](https://github.com/a11delavar/mitra/commit/901740e599bc075442ec7885e5453c2f869802ed))
+- Detect multiple recurrence chains as routines ([a8e3f6e](https://github.com/a11delavar/mitra/commit/a8e3f6e861a4de13812f755fb26fed895eb9fc21))
+- Source migration ([e296a44](https://github.com/a11delavar/mitra/commit/e296a44c696634eb8322ba85ff8c1150d394a69c))
+- Support CalDAV sync-collection pagination ([2e0b7c6](https://github.com/a11delavar/mitra/commit/2e0b7c609db631c9599def4c432b5ce6012b18ab))
+- Subscribed calendars ([9b4b545](https://github.com/a11delavar/mitra/commit/9b4b54560245859d9cb5ddf54141e9a55731bbc1))
+
+### ⚡ Performance
+- Add static asset pre-compression and dynamic HTTP response compression ([5d54919](https://github.com/a11delavar/mitra/commit/5d54919323a5c6191c7c48ef86ddeb777e6a22be))
+
+### 🐛 Bug Fixes
+- Repeating tasks keep their dates when moved to Unscheduled or edited one occurrence at a time ([ac1a773](https://github.com/a11delavar/mitra/commit/ac1a773bd2b0cc7216e39aa469e470e4f5d78673))
+- Open recurring entries from the command palette ([b99adaf](https://github.com/a11delavar/mitra/commit/b99adaf8c8bc87bf08a1f5774bbfa27eda1acd09))
+- Enhance sheets behavior ([3af9a47](https://github.com/a11delavar/mitra/commit/3af9a47b48f86e4dccb3668ef3c2ac52449f1c91))
+- Bypass recurring scope dialog on task progress and completion ([9816856](https://github.com/a11delavar/mitra/commit/981685655a1c68171b19c2e968f588214ea785a1))
+- Fix certain Notion elements not handled in the description ([2e07958](https://github.com/a11delavar/mitra/commit/2e07958ae384dcfc94a66f2a65c21f5e88c78d5f))
+- Sync a task's status to Notion when it is ticked off ([27e9fdb](https://github.com/a11delavar/mitra/commit/27e9fdb9cae0e7b319762d15f1ceb1a9b7a640f0))
+
+### 📝 Documentation
+- Add public demo ([761f7aa](https://github.com/a11delavar/mitra/commit/761f7aa893bdc678d347d2d212fc52634a6902f0))
+- Launch website ([23dec5f](https://github.com/a11delavar/mitra/commit/23dec5fbcf49477112f4906d812cab82e6bc1ac7))
+
+### 🧹 Refactors
+- Streamline and condense code comments across entire codebase ([9d6e414](https://github.com/a11delavar/mitra/commit/9d6e414475162bd635e0cc584ef9d134acc72326))
+
+### 🔧 Chores
+- Better PWA icons ([efc903b](https://github.com/a11delavar/mitra/commit/efc903bad8bafdbcf2a5c490baa266d0daaea8f4))
+- Compact agents file ([32e0eba](https://github.com/a11delavar/mitra/commit/32e0ebae9f1ee3b32d424587833a2459d945fced))
 ## [0.5.0] - 2026-08-25
 
 
@@ -39,20 +89,17 @@ All notable changes to Mitra are documented here.
 ### 📝 Documentation
 - Add documentation on data authority ([54ff1c4](https://github.com/a11delavar/mitra/commit/54ff1c4b4cbd7abd26e0c2447cd9e92d7c7fd52e))
 
-### 🔧 Chores
-- Add screenshot to the docs and the readme file ([838dcce](https://github.com/a11delavar/mitra/commit/838dccef6630d1feaa496604efea478a0fe2f2eb))
-- Improve window drag styles ([fd5e716](https://github.com/a11delavar/mitra/commit/fd5e7162b1ba9f55a77edcea949435953198e56a))
-- More realistic sample fixture ([396f08d](https://github.com/a11delavar/mitra/commit/396f08dab72b62fe040ce9a73b79619e43f2c5a7))
-
 ### 🧹 Refactors
 - Slice codebase into vertical domain features and integrations ([d4d0b32](https://github.com/a11delavar/mitra/commit/d4d0b3249c7dfd27d4a5bba7dee6be80d290fd02))
 - Centralize relationship graph logic and rollup calculations ([3e22f4b](https://github.com/a11delavar/mitra/commit/3e22f4b2df2cfd0d53795d03a5af918c1860890c))
 - Extract editor intent tracking from entry store ([834c9aa](https://github.com/a11delavar/mitra/commit/834c9aa565248ea45311a0e929b39199a7f3236a))
+
+### 🔧 Chores
+- Add screenshot to the docs and the readme file ([838dcce](https://github.com/a11delavar/mitra/commit/838dccef6630d1feaa496604efea478a0fe2f2eb))
+- Improve window drag styles ([fd5e716](https://github.com/a11delavar/mitra/commit/fd5e7162b1ba9f55a77edcea949435953198e56a))
+- More realistic sample fixture ([396f08d](https://github.com/a11delavar/mitra/commit/396f08dab72b62fe040ce9a73b79619e43f2c5a7))
 ## [0.4.0] - 2026-07-29
 
-
-### ⚡ Performance
-- Switch between calendar views smoothly, even with hundreds of entries ([2e9a53d](https://github.com/a11delavar/mitra/commit/2e9a53da3309e9439e5c19d1857e817d1bf37f12))
 
 ### ✨ Features
 - Participants ([8c9440a](https://github.com/a11delavar/mitra/commit/8c9440aeaeb5ce44443dcc4c774a7de5ccce279c))
@@ -88,6 +135,9 @@ All notable changes to Mitra are documented here.
 - Apple Calendar integration (#2) ([d1da646](https://github.com/a11delavar/mitra/commit/d1da64651188c739da37cc1aaf0c5e9c6c59ee41))
 - Google Calendar integration ([df27876](https://github.com/a11delavar/mitra/commit/df27876362b3ea1f02a47ab3b71b5023f52a7152))
 
+### ⚡ Performance
+- Switch between calendar views smoothly, even with hundreds of entries ([2e9a53d](https://github.com/a11delavar/mitra/commit/2e9a53da3309e9439e5c19d1857e817d1bf37f12))
+
 ### 🐛 Bug Fixes
 - Keep the all-day bar titles sliding, and let the lane fit its entries ([e179c98](https://github.com/a11delavar/mitra/commit/e179c982f701e21e54c841f07064af6355dcae37))
 - Let the on-screen keyboard shrink the layout ([47b5fd6](https://github.com/a11delavar/mitra/commit/47b5fd605cab640cb50731757809854145ed05ec))
@@ -111,19 +161,16 @@ All notable changes to Mitra are documented here.
 - Add documentation website ([9a89672](https://github.com/a11delavar/mitra/commit/9a89672e76ef2ed9f3aa01bc2b40aa07a12c77fb))
 - Add documentation for existing features ([2119315](https://github.com/a11delavar/mitra/commit/21193153690ed74237560bf69d71d588bbd277b2))
 
+### 🧹 Refactors
+- Move JSON state files into the database ([35ed9c1](https://github.com/a11delavar/mitra/commit/35ed9c106fbc3e308ae8ea5cc67cccc36276b99b))
+- Simplify element queries ([d154811](https://github.com/a11delavar/mitra/commit/d1548113fe58e3e73e09adb59e1f66a59ee4c85e))
+
 ### 🔧 Chores
 - No .env injection log ([96b9a19](https://github.com/a11delavar/mitra/commit/96b9a19d075a6155453f3a587ebaada7e57e6851))
 - Enhance bottom sheet fallback trigger ([474ea6b](https://github.com/a11delavar/mitra/commit/474ea6b1a0cda8210e7c1d3e4db12f4a2db6499f))
 - Add support for Notion page content ([0c7446e](https://github.com/a11delavar/mitra/commit/0c7446e581b218268500e663687a5da79208baba))
-
-### 🧹 Refactors
-- Move JSON state files into the database ([35ed9c1](https://github.com/a11delavar/mitra/commit/35ed9c106fbc3e308ae8ea5cc67cccc36276b99b))
-- Simplify element queries ([d154811](https://github.com/a11delavar/mitra/commit/d1548113fe58e3e73e09adb59e1f66a59ee4c85e))
 ## [0.3.0] - 2026-07-10
 
-
-### ⚡ Performance
-- Improve virtualization performance ([37e42ed](https://github.com/a11delavar/mitra/commit/37e42ed0a8ac5152c946a27e67ad6f7fd316eb43))
 
 ### ✨ Features
 - Redesign Logo ([d559574](https://github.com/a11delavar/mitra/commit/d55957428f92ebb2fb63921ca1beb0b6bd83081b))
@@ -141,6 +188,9 @@ All notable changes to Mitra are documented here.
 - Reminders with push notifications ([c2c8854](https://github.com/a11delavar/mitra/commit/c2c8854c51537186b142818a084d1b06c600e29d))
 - Location selector with support for recent and approximate locations ([adc486c](https://github.com/a11delavar/mitra/commit/adc486c47ef31fb4180c2ac86234f038f57efb35))
 
+### ⚡ Performance
+- Improve virtualization performance ([37e42ed](https://github.com/a11delavar/mitra/commit/37e42ed0a8ac5152c946a27e67ad6f7fd316eb43))
+
 ### 🐛 Bug Fixes
 - Harden CalDAV sync against missing objects ([21ce421](https://github.com/a11delavar/mitra/commit/21ce421f1adaac7e991d6f09d18b5811b5de0b0e))
 - Fix timezone handling for recurring all-day entries ([71c5f21](https://github.com/a11delavar/mitra/commit/71c5f21db5894aa95082382cea51ed8a13306802))
@@ -148,12 +198,12 @@ All notable changes to Mitra are documented here.
 - Task status changes on a repeating occurrence apply to just that entry ([b8e744e](https://github.com/a11delavar/mitra/commit/b8e744ecbb6237e11c28b633ea8d4373a012071a))
 - Repeating entries keep their wall-clock time across DST changes ([0e001bc](https://github.com/a11delavar/mitra/commit/0e001bc7c331cb35f12f2eada2cc326fb4b4aa91))
 
-### 🔧 Chores
-- Black & white accent color ([c0448cf](https://github.com/a11delavar/mitra/commit/c0448cfef5bb29e62b3ceb91aef3338141ff4a92))
-
 ### 🧹 Refactors
 - Rename technical name of month view to weeks view ([daf1d4f](https://github.com/a11delavar/mitra/commit/daf1d4f1c93c13ff96d1e9ef1708431773436f4b))
 - Derive all app icons from one SVG logo ([8bde2d2](https://github.com/a11delavar/mitra/commit/8bde2d2fd2884240e80caeaa2c131ba86e3ea4d3))
+
+### 🔧 Chores
+- Black & white accent color ([c0448cf](https://github.com/a11delavar/mitra/commit/c0448cfef5bb29e62b3ceb91aef3338141ff4a92))
 ## [0.2.0] - 2026-07-05
 
 
@@ -204,6 +254,11 @@ All notable changes to Mitra are documented here.
 - Integrate ESLint ([f018da0](https://github.com/a11delavar/mitra/commit/f018da08d9412ce15b4f66aad29c5a226959f973))
 - Serve the frontend by backend instead of esbuild-server ([d2d7f15](https://github.com/a11delavar/mitra/commit/d2d7f157485e483cbe3910b62f81eeab88575db0))
 
+### 🧹 Refactors
+- Vertically slice the server modules ([5458229](https://github.com/a11delavar/mitra/commit/54582294a5a0accec491f27d02e3db0326d4e7cb))
+- Separate events and event segments ([d66ac85](https://github.com/a11delavar/mitra/commit/d66ac8535042fb446e93eb7819780483dc6f8e0b))
+- More streamlined layout and use light dom ([91f6fd9](https://github.com/a11delavar/mitra/commit/91f6fd90cd533427350007c4a8861818af34d496))
+
 ### 🔧 Chores
 - Preserve session cookie with API requests ([17de6a2](https://github.com/a11delavar/mitra/commit/17de6a2c099b7ca2f6a9111ac6ebbe7038932a4c))
 - Add license ([09d8ec4](https://github.com/a11delavar/mitra/commit/09d8ec40fb356b82da9a4c3fa0c8bf3635e390f7))
@@ -211,8 +266,3 @@ All notable changes to Mitra are documented here.
 - Prevent refetching when nothing changed ([8929a1a](https://github.com/a11delavar/mitra/commit/8929a1a36ac6cf98eeb99d2f1c7ac19dc89fa4bc))
 - Enhance text color of events ([a20ae03](https://github.com/a11delavar/mitra/commit/a20ae0339dee5aefd78bb24cdcc860bbb4de9344))
 - Add readme and agents files ([d45269c](https://github.com/a11delavar/mitra/commit/d45269c6c583fca422b7ca85630e6db5ca2d40b6))
-
-### 🧹 Refactors
-- Vertically slice the server modules ([5458229](https://github.com/a11delavar/mitra/commit/54582294a5a0accec491f27d02e3db0326d4e7cb))
-- Separate events and event segments ([d66ac85](https://github.com/a11delavar/mitra/commit/d66ac8535042fb446e93eb7819780483dc6f8e0b))
-- More streamlined layout and use light dom ([91f6fd9](https://github.com/a11delavar/mitra/commit/91f6fd90cd533427350007c4a8861818af34d496))
