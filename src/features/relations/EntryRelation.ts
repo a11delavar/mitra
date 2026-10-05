@@ -64,6 +64,19 @@ export class EntryRelation {
 		}
 	}
 
+	/**
+	 * Points the rows of entries in `sourceIds` (only those of `entryIds`, when given) from the old UIDs of entries that
+	 * moved to their new ones. Never another user's: a calendar two users share gives both the very same UIDs.
+	 */
+	static async repoint(em: EntityManager, uids: ReadonlyMap<string, string>, sourceIds: ReadonlyArray<string>, entryIds?: ReadonlyArray<string>): Promise<void> {
+		const rows = uids.size ? await em.find(EntryRelation, { targetUid: { $in: [...uids.keys()] }, ...entryIds ? { entryId: { $in: [...entryIds] } } : {} }) : []
+		const ownerIds = [...new Set(rows.map(row => row.entryId))]
+		const owned = new Set(ownerIds.length ? (await em.find(Entry, { id: { $in: ownerIds }, sourceId: { $in: [...sourceIds] } })).map(entry => entry.id) : [])
+		for (const row of rows.filter(row => owned.has(row.entryId))) {
+			row.targetUid = uids.get(row.targetUid)!
+		}
+	}
+
 	/** Synchronizes an entry's relation rows with desired relations without committing the transaction. */
 	static async reconcile(em: EntityManager, entryId: string, relations: ReadonlyArray<Relation> | null): Promise<void> {
 		EntryRelation.applyDiff(em, entryId, EntryRelations.of(undefined, relations).writes, await em.find(EntryRelation, { entryId }))

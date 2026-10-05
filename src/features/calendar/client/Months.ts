@@ -294,9 +294,7 @@ export class Months extends Component {
 
 	private entriesTemplate(month: CalendarMonth, row: number) {
 		const segments = this.segments.runsIn(month.first, month.last, () => true)
-			.map(segment => ({ segment, rank: EntrySegments.laneRank(segment.entry) }))
-			.sort((a, b) => a.rank - b.rank)
-			.map(ranked => ranked.segment)
+			.toSorted((a, b) => EntrySegments.laneOrder(a.entry, b.entry))
 		const runs = this.routines.runsIn(month.first, month.last)
 		return html`
 			<div class="entries" style="grid-row: ${row};">

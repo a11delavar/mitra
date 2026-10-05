@@ -63,7 +63,7 @@ Feature components compose design primitives and hold domain logic only. Registe
 - **Controls & Events**: Base `Control` delegates focus to internal native inputs and respects `autofocus`. Controls re-emit composed `change` events; bind with `live()`. A control carries `:state(focus-visible)` while its inner control has keyboard focus, for a context that rings it from outside (`:has(:focus-visible)` stops at the shadow root); the editor's rows ring themselves and zero the field's own ring (`--mitra-field-ring`). Event guards must use `startedInField`/`startedOnControl` (`eventOrigin.ts`, `composedPath()`), never `target.closest()`.
 - **Selects & Comboboxes**: `mitra-select` is an ARIA combobox hosting slotted `<mitra-option>`s via button + listbox; exposes `::part(listbox)` and reflects `open` for `.field` rows. `mitra-combobox` supports `floating` (manual popover) and `inline` (in-flow for pickers/palettes; Escape fires `dismiss`).
 - **Overlays**: `mitra-popover` is its own popover host; a subclass declares its `popoverType` (`'manual'` for a floating listbox, `null` for an inline one), which a presentation switch restores, never a blanket `'auto'`. `mitra-popover-container` pairs trigger and popover (`display: contents`, invoker binding without IDs). `--mitra-surface` tints nested popovers.
-- **Date, Time & Text Fields**: Segmented `mitra-date-field`/`mitra-time-field` follow app locale (values stay strings). Base `InputField<T>` backs `mitra-text-field` (bound on `input`), `mitra-search-field`, and `mitra-number-field` (clamped on `change`). `mitra-duration-field` (minutes, an hour and a minute segment on `@3mo/segmented-input`, presets as its picker) shares `SegmentedField` and its `.slots` picker list with the date and time fields. `plain` drops the box for a search that heads a picker (time zones, relations); the picker draws the hairline beneath it.
+- **Date, Time & Text Fields**: Segmented `mitra-date-field`/`mitra-time-field`/`mitra-date-time-field` (`SegmentedField`) follow app locale; a date field's value is a `DateTime` read in its `timeZone` (the system's unless given; the editor passes its lens, the repeat end `UTC`), and picks are re-anchored there (`dayIn`: upstream's picker path drops the zone). Pickers `mitra-date-picker`/`mitra-time-picker`; the date-time field shows both and edits a draft (a time picked or the picker closed commits, Escape drops). Date units expose `part`s `date`/`time`, muted while showing `impliedDate` (`:state(implied)`, live with drafts and typing); slotted row actions sit at the box's end. Stale segments never commit (`commitSegments`: a focused field removed before rendering its new value blurs). Date and time units read left to right in RTL (`readsLeftToRight`, Persian; the segments' arrows mirrored), until `@3mo` derives it. Base `InputField<T>` backs `mitra-text-field` (bound on `input`), `mitra-search-field`, and `mitra-number-field` (clamped on `change`). `mitra-duration-field` (minutes, an hour and a minute segment on `@3mo/segmented-input`, presets as its picker) lists its presets in `slots` rows, as the time picker does. `plain` drops the box for a search that heads a picker (time zones, relations); the picker draws the hairline beneath it.
 - **Shared Fragments** (`*.css.ts`): Reusable state fragments (`fieldChrome`, `optionRow`, `selected`, `disabled`, `pressable`, `scrollbar`). `selected` is the single source of truth for active items. Interpolations must use `unsafeCSS(...)` on template strings (tagged templates reject arguments).
 - **Field Context**: a context that wears the box itself (the editor's rows) sets `--mitra-field-*` (border, background, padding, picker button, read-only opacity, select indicator), and the design fields drop their chrome; an overlay opened from there (`mitra-dialog`, `mitra-popover` and so every picker) restores them (`fieldChromeRestored`).
 - **Sheets & Dialogs**: `mitra-modal-sheet` is a modal `<dialog>` sheet on 3MO's `SheetController` (the phone sidebar, and `mitra-popover`'s sheet presentation). Content laid out while closed has zero dimensions (`mitra-tabs` re-reveals on resize). Standalone `mitra-dialog` renders in place so invoker popovers stay open. It announces `pageHeadingChange` only while `boundToWindow` (popped out): rendered in place, its bubbling heading would rename the tab even closed.
@@ -104,7 +104,7 @@ Feature components compose design primitives and hold domain logic only. Registe
 - **Sessions** (`src/features/identity/server/Session.ts`): 256-bit cookie token, stored SHA-256 hashed, sliding 30-day expiry, `SameSite=Lax`. Retains `id_token` for RP-initiated logout (`id_token_hint`). Unauthenticated `/api/*` returns 401; page navs redirect to `/auth/login?returnTo=...`.
 - **Identity Model**: Value object `Identity` (`src/features/identity/Identity.ts`) with `issuer`, `subject`, `email`, `name`, `picture` URL. Embedded in `User` as nullable `oidc_*` columns (`@embedded`, unique on `['identity.issuer', 'identity.subject']`). `user.identity != null` indicates OIDC user.
 - **Provisioning**: `User.provision(em, issuer, claims)` JIT provisions on first login. No automatic data migration from single-user mode.
-- **Tenant Isolation**: Routes must scope queries through `User` (`user.integrations`, `user.sources`, `user.entries`). Never use bare `em.find*`. Foreign IDs throw `NotFoundError` (404).
+- **Tenant Isolation**: Routes must scope queries through `User` (`user.integrations`, `user.sources`, `user.entries`). Never use bare `em.find*`. Foreign IDs throw `NotFoundError` (404). `EntryRelation` has no user column and shared calendars share UIDs: `targetUid` matches stay in the user's sources (`EntryRelation.repoint`, relation graph); so do location recents. Push endpoints are unique: another user's registration takes the row, never the device name.
 - **Error Handling**: Central error handler in `src/app/server.ts` maps `NotFoundError` to 404, preserves `error.status`/`statusCode` in range 400–599 (from `http-errors` / Express parsers), and defaults to 500 for unhandled exceptions.
 - **User Scoping**: SSE (`syncEmitter.emit('updated', userId, scope?)`), Web Push (`userId`), and reminders (`sendTo(userId, ...)`) are isolated per user.
 - **SSE Scope** (`SyncScope`): `'entries'` (default wire event `'updated'`) or `'sources'`. `'sources'` triggers client `fetchIntegrations()` to update calendar metadata, colors, and import states. Entry mutations use `'entries'` to prevent recreating `Source` object references.
@@ -177,6 +177,7 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
   - Multiget batch fallback: Tolerates 404s by falling back to individual fetches.
   - Date Writes (`CalDAV.writeDate`): Preserves authored form (TZID -> wall clock in VTIMEZONE; zoneless -> UTC). Series start shift shifts override `RECURRENCE-ID`s.
   - Concurrent Edits (412): Route all writes through `CalDAV.writeResource(entry, applyTo)`. Retries once on 412 with fresh ETag.
+  - `updateEntry` mirrors changes (`exdates` too) onto the entry only after the PUT succeeds; null `exdates` means nothing to write.
 
 ## Bulk Migration (Move / Copy Entries Between Calendars)
 - **3-Phase Architecture** (`src/features/sources/server/SourceMigration.ts`):
@@ -228,7 +229,7 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
   - CalDAV wire mapping (`taskTimesFrom`/`writeTaskTimes`): writes `DTSTART`, `ESTIMATED-DURATION` (ical.js duration) for length/estimate, and `DUE` for deadlines. Never write `DURATION` on a `VTODO` (RFC 5545 defines it as computing `DUE`). Legacy blocks without `ESTIMATED-DURATION` treat `DUE` as `end`.
   - Provider capabilities: `due` and `estimate` (Notion supports neither). Mutations 400 if target cannot store `due`; unsupported `estimate` drops silently.
   - Recurring start-less tasks: Anchored on `due` (`Occurrences.of`). In UI (`expandedOccurrences`), only `currentOccurrence` (first upcoming due in viewer zone) is emitted. Scheduling one occurrence detaches it implicitly as `'this'` (`EntryStore.schedulesOccurrence`).
-  - Task editor layout: dates (shows a `mitra-duration-field` estimate while unscheduled), times, due, time zone, recurrence. Field placeholders use noun labels, never verbs.
+  - Editor moments (`EntryDetailsWhen`): one field per row (start, end or unscheduled estimate, due), `mitra-date-time-field` or all-day `mitra-date-field`, then zone and repeat. Each row's All day toggle (pressed while all-day) switches entry-wide `setAllDay`, shown only on the row in use. The end gets the start's day as `impliedDate`. Task ✕: start unschedules, end makes a moment. Placeholders use noun labels, never verbs.
 - **Window Query** (`src/features/entries/server/entryWindow.ts`): `GET /entries` also carries rows no window contains: undated (`start: null`) and open tasks due before the window start. Route and test import it; never restate the filter. Client narrows via `Entry.overdue`.
 
 ## Calendar Views & Layout Engine
@@ -239,7 +240,7 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
     - `timedOn(day)`: Clustered side-by-side columns.
     - `runsIn(from, to, accept)`: Representative segments touching window via per-cohort `segmentsByDay` index.
     - `monthSlots` / `allDaySlots` / `monthWeek(week)`: Unbounded greedy lane packing (no slot caps; overflow clips behind bottom fade).
-    - `static laneRank(entry)`: Lane ordering for month packing.
+    - `static laneRank(entry)` / `laneOrder(a, b)`: Lane ordering for month and year packing; ties fall to the heading, never arrival order.
   - Self-Placement: Views map dates to grid columns via `Map<dayValue, index>`.
   - Hot-Loop Date Math: Cache `.dayValue` (`YYYYMMDD` integer) or `epochMilliseconds` in tight loops.
 - **Gestures & Controllers**:
@@ -446,17 +447,17 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
 - **One Astro project**: the homepage (`src/pages/index.astro`) plus Starlight rendering `../docs`, linked in by `prepare.mjs` (everything it writes is gitignored). The host lives once in `site.mjs`.
 - **The look is emitted, never restated**: `tools/tokens.mjs` evaluates `src/design`'s lit fragments in Node, so `contrastColorOf()` feature-detects in CSS rather than with `CSS.supports`.
 - **Raw HTML in Markdown never becomes rehype elements**: rewrite it in remark, on the text (`remarkDocsAssets`). Clear `website/.astro` and `node_modules/.astro` after changing a plugin.
-- **Captures** (`MITRA_VERSION=v0.5.0 npm run build && npm run screenshots`): settle on a stable, non-zero count of `mitra-entry-segment, mitra-table-row`, never a delay; drive surfaces with real input and park pointer afterwards. Frozen at Thursday 10:20 (`clockAt`); availability is hidden across captures except in the availability guide.
+- **Captures** (`MITRA_VERSION=v0.5.0 npm run build && npm run screenshots`): settle on a stable, non-zero count of `mitra-entry-segment, mitra-table-row`, never a delay; drive surfaces with real input and park pointer afterwards. Frozen at one Thursday (2026-10-01 10:20, Berlin, en-US) under reduced motion (`capturedAt`), so a rerun rewrites only what changed; availability is hidden across captures except in the availability guide.
 - **Crawlers**: website `robots.txt` points to Starlight sitemap; app `robots.txt` disallows all (prevents demo sandbox creation and crawler indexing). `starlight-llms-txt` provides `/llms.txt` and `/llms-full.txt`.
 - **Longhands only with `animation-timeline`**: the minifier folds `animation:` plus `animation-timeline` into one shorthand Chrome rejects, so the animation silently never runs.
 - **Copy** (site, `docs/`, README): plain sentences, no em or en dashes (a heading's dash also breaks its anchor), no emoji bullets. Quote a frontmatter `description` containing a colon.
 
 ## Build, Test & CI/CD
 - **Runtime**: Node 26 (`.nvmrc`, read by CI; `engines` and the Dockerfile match it). Temporal comes from `scripts/injectTemporalPolyfill.ts` wherever the native one is missing or partial.
-- **Type Checking**: Run `tsgo` (`node_modules/@typescript/native-preview-<platform>/lib/tsgo --noEmit`). esbuild does not typecheck.
+- **Type Checking**: `npm run typecheck` (TypeScript 7, the native `tsc`), the one entry for `npm start`, CI and agents; esbuild does not typecheck. typescript-eslint still needs TypeScript 6's JS API, so `typescript` aliases `@typescript/typescript6` and 7 installs as `typescript7`; the script calls its `bin/tsc` by path, since `@typescript/old` (6) also claims `tsc`.
 - **Linting**: `npm run lint` (`eslint .`, ESLint 9 flat config). Enforces tabs, single quotes, no semicolons, a trailing newline (`eol-last`), `max-lines` 1000 per file (split like `CalDAV.<topic>.test.ts`), `no-console` (except `warn`/`error`).
 - **Tests**: `npm test` -> `scripts/test.ts` (clears `out_test/`, bundles `src/**/*.test.ts`, runs `node:test`).
-- **Development**: `npm start` -> `scripts/dev.ts` (`tsgo --watch` + esbuild watch).
+- **Development**: `npm start` -> `scripts/dev.ts` (`npm run typecheck -- --watch` + esbuild watch).
 - **Production Build**: `npm run build` -> `scripts/build.ts`. Shared esbuild config in `scripts/esbuild.ts`. Requires `data/` directory.
 - **PWA Icons & Badges** (`scripts/indexHtml.ts`):
   - **Maskable Icon**: Android requires a dedicated `purpose: "maskable"` (never `"any maskable"`, which creates a white plate). `adaptiveLayer()` scales the mark to 50% over `themeColor` to fit Android's 66% circular mask (tighter than the 80% spec).
@@ -468,7 +469,7 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
   - **SSE Stream Invariant**: `compression()` MUST explicitly filter out `text/event-stream` to prevent buffering server-sent events.
 - **Docker**: Multi-stage `Dockerfile` based on `node:26-bookworm-slim`. Published to `ghcr.io/a11delavar/mitra`.
 - **CI / Workflows**:
-  - `.github/workflows/qa.yml`: Parallel typecheck (`tsgo`), lint (`eslint`), and test (`npm test`).
+  - `.github/workflows/qa.yml`: Parallel typecheck (`npm run typecheck`), lint (`eslint`), and test (`npm test`).
   - `.github/workflows/docker.yml`: Git-tag driven multi-arch build via `docker/metadata-action`.
   - `.github/workflows/release.yml`: Publishes GitHub Release from top section of `CHANGELOG.md`.
   - `.github/workflows/cleanup.yml`: Prunes untagged GHCR manifests.

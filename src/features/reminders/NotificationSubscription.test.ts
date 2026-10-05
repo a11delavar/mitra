@@ -24,6 +24,13 @@ describe('NotificationSubscription', () => {
 			assert.equal(registered.language, 'de')
 		})
 
+		it('forgets the name the previous user gave the device once another user registers it', () => {
+			const registered = subscription()
+			registered.register('someone-else', { keys })
+			assert.equal(registered.userId, 'someone-else')
+			assert.equal(registered.name, null)
+		})
+
 		it('clears facts the device no longer reports', () => {
 			const registered = subscription()
 			registered.register('u', { keys, platform: 'Android' })

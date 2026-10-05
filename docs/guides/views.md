@@ -9,7 +9,7 @@ In every view but the table, the arrows beside **Today** step back and forward b
 
 ## Week
 
-<kbd>W</kbd>. Hour by hour, with a column per day. Tasks sit in the same columns as events, all-day entries in the lane along the top, and [dependencies](relationships/dependencies.md) as lines between entries. Drag across empty time to create an entry, and drag an entry to move or resize it.
+<kbd>W</kbd>. Hour by hour, with a column per day. Tasks sit in the same columns as events, all-day entries in the lane along the top, and [dependencies](relationships/dependencies.md) as lines between entries. Drag across empty time to create an entry, and drag an entry to move or resize it. An entry you create in the all-day lane is all-day, one you create below it has times. To switch it later, open it and press **All day** at the end of a date, which shows while you're on it.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/week-detail-dark.png">

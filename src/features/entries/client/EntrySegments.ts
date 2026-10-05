@@ -150,6 +150,18 @@ export class EntrySegments {
 		return entry.allDay ? 1 : 2
 	}
 
+	/**
+	 * The order lanes are packed in: by rank, then earliest start and longest first. Ties fall to the heading, so the order
+	 * never depends on how the entries arrived and a reload never swaps two lanes.
+	 */
+	static laneOrder(a: Entry, b: Entry): number {
+		const rank = EntrySegments.laneRank(a) - EntrySegments.laneRank(b)
+		if (rank !== 0) return rank
+		if (a.start && b.start && !a.start.equals(b.start)) return a.start.isBefore(b.start) ? -1 : 1
+		if (a.end && b.end && !a.end.equals(b.end)) return a.end.isAfter(b.end) ? -1 : 1
+		return a.heading.localeCompare(b.heading) || String(a.id).localeCompare(String(b.id))
+	}
+
 	monthWeek(week: ReadonlyArray<DateTime>): MonthWeek {
 		const weekStart = week[0]!
 		const weekEnd = week[week.length - 1]!
@@ -195,15 +207,7 @@ export class EntrySegments {
 			(EntryStore.isPreview(entry) ? previewDates : datesByEntry).set(entry, dates)
 		}
 
-		const ordered = [...datesByEntry.keys()].sort((a, b) => {
-			const rankA = EntrySegments.laneRank(a)
-			const rankB = EntrySegments.laneRank(b)
-			if (rankA !== rankB) return rankA - rankB
-			if (!a.start || !b.start || !a.end || !b.end) return 0
-			if (!a.start.equals(b.start)) return a.start.isBefore(b.start) ? -1 : 1
-			if (!a.end.equals(b.end)) return a.end.isAfter(b.end) ? -1 : 1
-			return 0
-		})
+		const ordered = [...datesByEntry.keys()].sort(EntrySegments.laneOrder)
 
 		const slots = new Map<Entry, number>()
 		const rows = new Array<Set<number>>()

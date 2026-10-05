@@ -221,7 +221,6 @@ declare global {
 		"Due ${date}": unknown
 		"Due ${when}": unknown
 		"Due date": unknown
-		"Due time": unknown
 		"Duplicate": unknown
 		"Duplicate an entry": unknown
 		"Duration": unknown
@@ -231,7 +230,6 @@ declare global {
 		"Edit repeating entry": unknown
 		"Email participants": unknown
 		"End date": unknown
-		"End time": unknown
 		"Ends": unknown
 		"Entries": unknown
 		"Estimate": unknown
@@ -277,7 +275,6 @@ declare global {
 		"hours": unknown
 		"Ics.UrlHint": unknown
 		"Importing entries…": unknown
-		"Include time": unknown
 		"Install as an App": unknown
 		"Install mitra as an app. It gets its own window, and notifications appear under its own name and icon": unknown
 		"Integration options": unknown
@@ -426,7 +423,6 @@ declare global {
 		"Remove the date. The task moves to Unscheduled": unknown
 		"Remove the due date": unknown
 		"Remove the end date": unknown
-		"Remove the end time": unknown
 		"Rename": unknown
 		"Rename this device": unknown
 		"Rename time zone": unknown
@@ -476,13 +472,11 @@ declare global {
 		"Sort descending": unknown
 		"Sources": unknown
 		"Start date": unknown
-		"Start time": unknown
 		"Status": unknown
 		"Stop notifying this device": unknown
 		"Subtask of": unknown
 		"Subtasks": unknown
 		"Subtasks still open": unknown
-		"Switch to all-day": unknown
 		"Table": unknown
 		"Table View": unknown
 		"TableView.Keywords": unknown

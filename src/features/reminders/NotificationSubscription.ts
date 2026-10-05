@@ -39,8 +39,14 @@ export class NotificationSubscription {
 		Object.assign(this, init)
 	}
 
-	/** Restamps what the device reports on every registration, leaving the user's `name` alone. */
+	/**
+	 * Restamps what the device reports on every registration, leaving the user's `name` alone. A browser signed in to by
+	 * another user becomes theirs, as its endpoint is unique, but the name the previous user gave it does not.
+	 */
 	register(userId: string, registration: DeviceFacts & { keys: PushKeys, timeZone?: string, language?: string }) {
+		if (this.userId && this.userId !== userId) {
+			this.name = null
+		}
 		this.userId = userId
 		this.keys = registration.keys
 		this.timeZone = registration.timeZone ?? null

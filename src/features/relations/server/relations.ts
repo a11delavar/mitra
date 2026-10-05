@@ -1,4 +1,4 @@
-import type { EntityManager } from '@mikro-orm/sqlite'
+import type { EntityManager, FilterQuery } from '@mikro-orm/sqlite'
 import { type User } from '../../identity/User.js'
 import { RelationGraph } from '../RelationGraph.js'
 import { type Relation } from '../Relation.js'
@@ -16,7 +16,8 @@ async function relationGraph(em: EntityManager, user: User, excludeEntryId?: str
 	if (!sourceIds.length) {
 		return RelationGraph.empty
 	}
-	const rows = (await em.find(EntryRelation, {})).filter(row => row.entryId !== excludeEntryId)
+	// The rows of the user's own entries only: another user's link to a uid they share is not the user's to see.
+	const rows = (await em.find(EntryRelation, { entryId: { sourceId: { $in: sourceIds } } } as FilterQuery<EntryRelation>)).filter(row => row.entryId !== excludeEntryId)
 	if (!rows.length) {
 		return RelationGraph.empty
 	}

@@ -13,6 +13,7 @@ import { Color } from '../../features/sources/Color.js'
 import { type Relation } from '../../features/relations/Relation.js'
 import { RelationType } from '../../features/relations/RelationType.js'
 import { EntryRelation } from '../../features/relations/EntryRelation.js'
+import { User } from '../../features/identity/User.js'
 import { createLogger } from '../../infrastructure/logging/Logger.js'
 import { NotionClient, NotionRequestError, type NotionBlock, type NotionDataSource, type NotionDate, type NotionPage, type NotionPropertyCondition, type NotionPropertyValue, type NotionRichText, type NotionView, type NotionViewFilter } from './NotionClient.js'
 import { NotionMarkdown } from './NotionMarkdown.js'
@@ -333,18 +334,12 @@ export class Notion extends Integration<NotionCredentials> {
 		const previousUid = entry.uid
 		Notion.applyPage(entry, page, schema, { description: NotionMarkdown.toMarkdown(blocks), localWrite: true, ...await this.relationsOf(page, schema, entry.relations, isPage) })
 		em.persist(entry)
-		await Notion.repointRelations(em, previousUid, entry.uid!)
+		// A moved entry's new page id: the links of this account's user follow it.
+		if (previousUid && previousUid !== entry.uid) {
+			const sources = await (await em.findOneOrFail(User, { id: this.userId })).sources(em)
+			await EntryRelation.repoint(em, new Map([[previousUid, entry.uid!]]), sources.map(source => source.id))
+		}
 		return entry
-	}
-
-	/** Rewrites EntryRelation rows when an entry receives a newly minted Notion page UID on move. */
-	private static async repointRelations(em: EntityManager, previousUid: string | undefined, uid: string): Promise<void> {
-		if (!previousUid || previousUid === uid) {
-			return
-		}
-		for (const row of await em.find(EntryRelation, { targetUid: previousUid })) {
-			row.targetUid = uid
-		}
 	}
 
 	override async updateEntry(em: EntityManager, existing: Entry, incoming: Entry): Promise<void> {

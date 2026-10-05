@@ -34,6 +34,8 @@ export interface MigrationOptions {
 export class SourceMigration {
 	private constructor(
 		private readonly em: EntityManager,
+		/** Who moves the entries: only their links are theirs to repoint. */
+		private readonly user: User,
 		readonly origin: Source,
 		private readonly originIntegration: Integration,
 		readonly target: Source,
@@ -82,7 +84,7 @@ export class SourceMigration {
 		const overrides = await em.find(Entry, { sourceId: origin.id, recurrenceMasterId: { $ne: null } })
 		const overriddenMasterIds = new Set(overrides.map(override => override.recurrenceMasterId!))
 
-		return new SourceMigration(em, origin, originIntegration, target, targetIntegration, entries, overriddenMasterIds, keepOriginals, options.flatten === true)
+		return new SourceMigration(em, user, origin, originIntegration, target, targetIntegration, entries, overriddenMasterIds, keepOriginals, options.flatten === true)
 	}
 
 	/** Fidelity preview of what the migration would move, modify, or block. */
@@ -156,10 +158,8 @@ export class SourceMigration {
 		// Moves rewrite all matching target references; copies scope repointing to the copied set.
 		if (uids.size) {
 			const copyIds = copied.flatMap(({ copies }) => copies.map(copy => copy.id!))
-			const scope = { targetUid: { $in: [...uids.keys()] }, ...this.keepOriginals ? { entryId: { $in: copyIds } } : {} }
-			for (const row of await this.em.find(EntryRelation, scope)) {
-				row.targetUid = uids.get(row.targetUid)!
-			}
+			const sourceIds = (await this.user.sources(this.em)).map(source => source.id)
+			await EntryRelation.repoint(this.em, uids, sourceIds, this.keepOriginals ? copyIds : undefined)
 			await this.em.flush()
 		}
 

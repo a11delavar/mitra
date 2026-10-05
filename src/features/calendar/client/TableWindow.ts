@@ -69,7 +69,7 @@ export class TableWindow {
 		return this.kind !== 'custom' ? this.kind : `custom:${TableWindow.dayOf(this.from!)}:${TableWindow.dayOf(this.to!)}`
 	}
 
-	/** A day as a key and a date field write it: ISO, whatever calendar the language reads days in. */
+	/** A day as a key writes it: ISO, whatever calendar the language reads days in. */
 	static dayOf(date: DateTime) {
 		return calendarDateOf(date).toString()
 	}

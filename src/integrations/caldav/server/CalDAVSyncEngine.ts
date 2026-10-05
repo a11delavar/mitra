@@ -333,8 +333,10 @@ export class CalDAVSyncEngine implements SyncEngine {
 
 		const recurrenceChanged = !Recurrence.equal(existing.recurrence, incoming.recurrence)
 		const relationsChanged = integration.capabilities.relations && incoming.relations !== undefined && existing.relationList.writesDiffer(incoming.relationList)
+		// None to write when absent, and when null: the database hands back an empty column as null.
+		const exdates = incoming.exdates ?? undefined
 
-		if (keys.length === 0 && !recurrenceChanged && incoming.exdates === undefined && !relationsChanged) {
+		if (keys.length === 0 && !recurrenceChanged && !exdates && !relationsChanged) {
 			return
 		}
 
@@ -342,6 +344,9 @@ export class CalDAVSyncEngine implements SyncEngine {
 			? incoming.start.getTime() - existing.start.getTime()
 			: undefined
 
+		let uid: string | undefined
+		// Writes the change into the resource only: the entry takes it once the server has stored it, as a write that fails
+		// in a caller which carries on (publishing availability) would otherwise leave values the server never got.
 		const applyTo = (raw: string): string => {
 			const comp = new ICAL.Component(ICAL.parse(raw))
 			const component = CalDAV.componentFor(existing, comp)
@@ -352,13 +357,11 @@ export class CalDAVSyncEngine implements SyncEngine {
 
 			if (keys.includes('heading')) {
 				component.updatePropertyWithValue('summary', incoming.heading)
-				existing.heading = incoming.heading
 			}
 
 			if (keys.includes('description')) {
 				component.updatePropertyWithValue('description', incoming.description)
 				component.getFirstProperty('description')?.removeParameter('altrep')
-				existing.description = incoming.description
 			}
 
 			if (keys.includes('location')) {
@@ -367,7 +370,6 @@ export class CalDAVSyncEngine implements SyncEngine {
 				} else {
 					component.removeProperty('location')
 				}
-				existing.location = incoming.location
 			}
 
 			if (keys.includes('color')) {
@@ -376,7 +378,6 @@ export class CalDAVSyncEngine implements SyncEngine {
 				} else {
 					component.removeProperty('color')
 				}
-				existing.color = incoming.color
 			}
 
 			if (overrideShift !== undefined) {
@@ -406,28 +407,22 @@ export class CalDAVSyncEngine implements SyncEngine {
 
 			if (isTask && (keys.includes('status') || keys.includes('percentComplete'))) {
 				CalDAV.writeTaskStatus(component, incoming.status, incoming.percentComplete)
-				existing.status = incoming.status
-				existing.percentComplete = incoming.percentComplete
 			}
 
 			if (!isTask && keys.includes('transparency')) {
 				CalDAV.writeTransparency(component, incoming.transparency)
-				existing.transparency = incoming.transparency
 			}
 
 			if (keys.includes('visibility')) {
 				CalDAV.writeVisibility(component, incoming.visibility)
-				existing.visibility = incoming.visibility
 			}
 
 			if (keys.includes('reminders')) {
 				CalDAV.writeReminders(component, incoming.reminders)
-				existing.reminders = incoming.reminders
 			}
 
 			if (keys.includes('participants')) {
 				CalDAV.writeParticipants(component, incoming.participants ?? null)
-				existing.participants = incoming.participants
 			}
 
 			if (relationsChanged) {
@@ -437,16 +432,16 @@ export class CalDAVSyncEngine implements SyncEngine {
 			if (recurrenceChanged) {
 				if (incoming.recurrence) {
 					component.updatePropertyWithValue('rrule', ICAL.Recur.fromString(incoming.recurrence.toRRule(incoming.allDay)))
-					existing.uid ||= component.getFirstPropertyValue('uid')?.toString() || undefined
+					uid = component.getFirstPropertyValue('uid')?.toString() || undefined
 				} else {
 					component.removeAllProperties('rrule')
 					component.removeAllProperties('exdate')
 				}
 			}
 
-			if (incoming.exdates !== undefined) {
+			if (exdates) {
 				component.removeAllProperties('exdate')
-				for (const ms of incoming.exdates) {
+				for (const ms of exdates) {
 					CalDAV.writeDate(comp, component, 'exdate', new Date(ms), incoming.allDay, { zone: incoming.timeZone, append: true })
 				}
 			}
@@ -457,26 +452,13 @@ export class CalDAVSyncEngine implements SyncEngine {
 
 		await this.writeResource(integration, existing, applyTo)
 
-		if (keys.includes('start')) {
-			existing.start = incoming.start
-		}
-		if (keys.includes('end')) {
-			existing.end = incoming.end
-		}
-		if (keys.includes('due')) {
-			existing.due = incoming.due
-		}
-		if (keys.includes('estimate')) {
-			existing.estimate = incoming.estimate
-		}
-		if (keys.includes('allDay')) {
-			existing.allDay = incoming.allDay
-		}
-		if (keys.includes('timeZone')) {
-			existing.timeZone = incoming.timeZone
-		}
+		Object.assign(existing, Object.fromEntries(keys.map(key => [key, incoming[key]])))
 		if (recurrenceChanged) {
 			existing.recurrence = incoming.recurrence
+			existing.uid ||= uid
+		}
+		if (exdates) {
+			existing.exdates = [...exdates]
 		}
 		if (relationsChanged) {
 			existing.relations = incoming.relations ?? null

@@ -1,5 +1,6 @@
 import { Component, component, html, css, property, state, event, live } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
+import { calendarDateOf } from '../../time/calendarDate.js'
 import { Recurrence, WEEKDAY_CODES, type Frequency, type RecurrencePreset } from '../Recurrence.js'
 import { type Entry } from '../../entries/Entry.js'
 import { getCapabilities } from '../../../infrastructure/http/Api.js'
@@ -218,25 +219,18 @@ export class RepeatField extends Component {
 		return this.draft!.count ?? this.lastCount
 	}
 
-	private readonly onUntil = (e: Event) => {
-		const value = (e.target as HTMLInputElement).value
-		if (!value) {
-			return
+	// UNTIL is a UTC calendar day (see Recurrence.untilFromDay), which the field reads and writes in UTC.
+	private readonly onUntil = (e: CustomEvent<DateTime | undefined>) => {
+		if (e.detail) {
+			const { year, month, day } = calendarDateOf(e.detail, 'UTC')
+			this.lastUntil = Recurrence.untilFromDay(year, month, day)
+			this.patchDraft({ until: this.lastUntil, count: undefined })
 		}
-		const [year, month, day] = value.split('-')
-		this.lastUntil = Recurrence.untilFromDay(Number(year), Number(month), Number(day))
-		this.patchDraft({ until: this.lastUntil, count: undefined })
 	}
 
 	private readonly onCount = (e: CustomEvent<number>) => {
 		this.lastCount = e.detail
 		this.patchDraft({ count: this.lastCount, until: undefined })
-	}
-
-	// UNTIL is a UTC calendar day (see Recurrence.untilFromDay), so read it back via getUTC* for the input.
-	private dateValue(date: DateTime) {
-		const utc = date as unknown as Date
-		return `${String(utc.getUTCFullYear()).padStart(4, '0')}-${String(utc.getUTCMonth() + 1).padStart(2, '0')}-${String(utc.getUTCDate()).padStart(2, '0')}`
 	}
 
 	static override get styles() {
@@ -338,7 +332,7 @@ export class RepeatField extends Component {
 							<mitra-radio value="never">${t('Never')}</mitra-radio>
 							<mitra-radio value="until">${t('On')}</mitra-radio>
 							<mitra-date-field label=${t('End date')} ?disabled=${!draft.until}
-								.value=${this.dateValue(this.draftUntil)} @change=${this.onUntil}></mitra-date-field>
+								timeZone="UTC" .value=${this.draftUntil} @change=${this.onUntil}></mitra-date-field>
 							<mitra-radio value="count">${t('After')}</mitra-radio>
 							<span class="after-times">
 								<mitra-number-field min="1" aria-label=${t('Occurrences')} ?disabled=${!draft.count}

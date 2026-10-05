@@ -10,7 +10,7 @@ import { controlHeight } from '../../../design/controlHeight.css.js'
  */
 // The shadow-rooted fields whose chrome a row wears, inside it or the row itself; their keyboard focus is the row's,
 // read through `:state()`.
-const focusedField = unsafeCSS(':is(mitra-select, mitra-date-field, mitra-time-field, mitra-duration-field, mitra-text-field, mitra-search-field, mitra-number-field):state(focus-visible)')
+const focusedField = unsafeCSS(':is(mitra-select, mitra-date-field, mitra-time-field, mitra-date-time-field, mitra-duration-field, mitra-text-field, mitra-search-field, mitra-number-field):state(focus-visible)')
 
 export const editorFieldStyles = css`
 	:where(mitra-entry-details) {
@@ -54,7 +54,7 @@ export const editorFieldStyles = css`
 
 			&:where(
 				:is(input, textarea, :has(:is(input:not([type=checkbox], [type=radio]), textarea))):focus-within,
-				:is(mitra-date-field, mitra-time-field, mitra-duration-field, :has(mitra-date-field, mitra-time-field, mitra-duration-field)):focus-within,
+				:is(mitra-date-field, mitra-time-field, mitra-date-time-field, mitra-duration-field, :has(mitra-date-field, mitra-time-field, mitra-date-time-field, mitra-duration-field)):focus-within,
 				:open, :has(input:open, :popover-open, mitra-select[open]),
 				:focus-visible, ${focusedField}, :has(:focus-visible, ${focusedField})
 			) {
@@ -124,8 +124,8 @@ export const editorFieldStyles = css`
 		}
 
 		/* A shadow-rooted field inside a row reads in the row's own type, as the native inputs it replaced did. */
-		.field :is(mitra-date-field, mitra-time-field, mitra-duration-field, mitra-select),
-		:is(mitra-date-field, mitra-time-field, mitra-duration-field, mitra-select).field {
+		.field :is(mitra-date-field, mitra-time-field, mitra-date-time-field, mitra-duration-field, mitra-select),
+		:is(mitra-date-field, mitra-time-field, mitra-date-time-field, mitra-duration-field, mitra-select).field {
 			font: inherit;
 		}
 

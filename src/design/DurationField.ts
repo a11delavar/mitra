@@ -1,7 +1,9 @@
-import { component, eventListener, html, property, state } from '@a11d/lit'
+import { component, css, eventListener, html, property, state } from '@a11d/lit'
 import { TimeSpan } from '@3mo/date-time'
 import { SegmentedInputController, type EditableSegment, type InputSegment, type SegmentedInputStep } from '@3mo/segmented-input'
-import { SegmentedField } from './DateTimeField.js'
+import { SegmentedField } from './SegmentedField.js'
+import { scrollbar } from './scrollbar.css.js'
+import { slots } from './slots.css.js'
 
 type Unit = 'hour' | 'minute'
 
@@ -105,6 +107,37 @@ export class DurationField extends SegmentedField<number, InputSegment> {
 				slot?.focus()
 			}
 		})
+	}
+
+	/** Up and Down walk the presets. */
+	private readonly handleSlotsKeyDown = (e: KeyboardEvent) => {
+		const step = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0
+		if (step) {
+			e.preventDefault()
+			const buttons = [...this.renderRoot.querySelectorAll<HTMLElement>('.slots button')]
+			buttons[buttons.indexOf((this.renderRoot as ShadowRoot).activeElement as HTMLElement) + step]?.focus()
+		}
+	}
+
+	static override get styles() {
+		return css`
+			${super.styles}
+
+			/* The list reaches the popover's edges, so that its scrollbar runs along the edge. */
+			mitra-popover {
+				padding: 0;
+				overflow: clip;
+			}
+
+			.slots {
+				${slots};
+				max-block-size: 16rem;
+				overflow-y: auto;
+				${scrollbar};
+				padding-block: 0.5rem;
+				padding-inline: 0.5rem 0.125rem;
+			}
+		`
 	}
 
 	protected get pickerTemplate() {

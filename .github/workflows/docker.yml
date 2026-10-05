@@ -32,6 +32,14 @@ jobs:
           # Full history so `git describe` below can reach the nearest tag.
           fetch-depth: 0
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Type Check
+        run: npm run typecheck
+
       # The version string baked into the app (see scripts/esbuild.ts): the tag itself on tag builds,
       # `v0.3.0-14-ga1b2c3d` on main/PR builds. It's passed into the image as a build ARG since the
       # Docker context carries no .git to compute it from.

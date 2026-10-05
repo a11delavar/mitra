@@ -1,6 +1,5 @@
-import { Component, component, html, css, property, state, event, query, live } from '@a11d/lit'
-import { DateTime } from '@3mo/date-time'
-import { Temporal } from 'temporal-polyfill'
+import { Component, component, html, css, property, state, event, query, ifDefined } from '@a11d/lit'
+import { type DateTime } from '@3mo/date-time'
 import { FLOATING_TIME_ZONE, type Entry } from '../Entry.js'
 import { type TimeZonePicker, longZoneName, systemZoneId, zoneCity, zoneNamePart } from '../../time/client/TimeZonePicker.js'
 import { getCapabilities } from '../../../infrastructure/http/Api.js'
@@ -8,17 +7,34 @@ import { EntryStore } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 import { DefaultDurationSetting } from './DefaultDurationSetting.js'
 import { controlHeight } from '../../../design/controlHeight.css.js'
-import { type DateField } from '../../../design/DateTimeField.js'
+import { type DateField } from '../../../design/DateField.js'
 import { type DurationField } from '../../../design/DurationField.js'
 
+/** A moment's row: what it shows and edits, and what removes it. */
+type Moment = {
+	readonly kind: 'start' | 'end' | 'due'
+	readonly icon: string
+	readonly label: string
+	readonly value?: DateTime
+	/** Takes the moment picked, and whether the field held a time. */
+	readonly handleChange: (value: DateTime, timed: boolean) => void
+	readonly remove?: { readonly label: string, readonly title?: string, readonly handler: () => void }
+	/** The time a day picked into the empty field takes. */
+	readonly defaultTime?: string
+	/** A moment whose day its date only repeats (an end's, the start's), which then recedes. */
+	readonly impliedDate?: DateTime
+}
+
 /**
- * Date, time, all-day, due, estimate, time zone and repeat editor for an entry.
+ * The entry's moments, one row each: its start, its end (a task's estimate while it has no start) and a task's due. Each
+ * is one date field, with the time of day unless the entry is all-day, which every row's toggle switches for all of them.
+ * Then the time zone and the repeat rule.
  */
 @component('mitra-entry-details-when')
 export class EntryDetailsWhen extends Component {
 	@property({
 		type: Object,
-		updated(this: EntryDetailsWhen) { this.endDateShown = false; this.dateShown = false; this.dueShown = false; this.estimateShown = false; this.showEventZone = false }
+		updated(this: EntryDetailsWhen) { this.startShown = false; this.endShown = false; this.dueShown = false; this.estimateShown = false; this.showEventZone = false }
 	}) entry!: Entry
 
 	override role = 'listitem'
@@ -29,48 +45,20 @@ export class EntryDetailsWhen extends Component {
 
 	readonly store = new EntryStore(this)
 
-	@state() private endDateShown = false
-	@state() private dateShown = false
+	@state() private startShown = false
+	@state() private endShown = false
 	@state() private dueShown = false
 	@state() private estimateShown = false
 	@state() private showEventZone = false
 
 	protected override createRenderRoot() { return this }
 
-	/** Zone used for display and editing in native date/time fields. */
+	/** Zone used for display and editing in the date fields. */
 	private get zone(): string {
 		return this.entry.allDay ? systemZoneId()
 			: this.entry.timeZone === FLOATING_TIME_ZONE ? 'UTC'
 				: this.foreignZone && !this.showEventZone ? systemZoneId()
 					: this.entry.timeZone ?? systemZoneId()
-	}
-
-	private wall(dt: DateTime): Temporal.PlainDateTime {
-		return Temporal.Instant.fromEpochMilliseconds(dt.valueOf()).toZonedDateTimeISO(this.zone).toPlainDateTime()
-	}
-
-	private toInstant(wall: Temporal.PlainDateTime): DateTime {
-		return new DateTime(wall.toZonedDateTime(this.zone, { disambiguation: 'compatible' }).epochMilliseconds)
-	}
-
-	private dateValue(dt: DateTime) {
-		const wall = this.wall(dt)
-		return `${String(wall.year).padStart(4, '0')}-${String(wall.month).padStart(2, '0')}-${String(wall.day).padStart(2, '0')}`
-	}
-
-	private timeValue(dt: DateTime) {
-		const wall = this.wall(dt)
-		return `${String(wall.hour).padStart(2, '0')}:${String(wall.minute).padStart(2, '0')}`
-	}
-
-	private withDate(value: string, base: DateTime) {
-		const [year, month, day] = value.split('-').map(Number)
-		return this.toInstant(this.wall(base).with({ year, month, day }))
-	}
-
-	private withTime(value: string, base: DateTime) {
-		const [hour, minute] = value.split(':').map(Number)
-		return this.toInstant(this.wall(base).with({ hour, minute, second: 0, millisecond: 0 }))
 	}
 
 	private commit() {
@@ -85,37 +73,41 @@ export class EntryDetailsWhen extends Component {
 		}
 	}
 
-	private readonly handleStartDateChange = (e: Event) => {
-		const value = (e.target as HTMLInputElement).value
-		if (!value) return
-		if (!this.entry.start) {
-			// An estimate shorter than a day asks for hours, so the task gets a time; anything else takes the whole day.
-			const timed = !!this.entry.estimate && TimeSpan.fromMinutes(this.entry.estimate).days < 1
-			this.entry.scheduleAt(new DateTime(`${value}T${timed ? '09' : '00'}:00:00`), !timed, DefaultDurationSetting.current)
+	/** Shows the field a placeholder stood for and opens its picker, once the press on the placeholder is over. */
+	private async openField(show: () => void, field: () => DateField | undefined) {
+		show()
+		await this.updateComplete
+		await new Promise(resolve => setTimeout(resolve, 100))
+		field()?.showPicker()
+	}
+
+	private readonly handleStartChange = (value: DateTime, timed: boolean) => {
+		if (this.entry.start) {
+			this.entry.moveStart(value)
+		} else if (timed) {
+			this.entry.scheduleAt(value, false, DefaultDurationSetting.current)
 		} else {
-			this.entry.moveStart(this.withDate(value, this.entry.start))
+			// An estimate shorter than a day asks for hours, so the task gets a time; anything else takes the whole day.
+			const hours = !!this.entry.estimate && TimeSpan.fromMinutes(this.entry.estimate).days < 1
+			this.entry.scheduleAt(hours ? value.with({ hour: 9 }) : value, !hours, DefaultDurationSetting.current)
 		}
 		this.commit()
 	}
 
-	private readonly handleEndDateChange = (e: Event) => {
-		const value = (e.target as HTMLInputElement).value
-		if (!value || !this.entry.start) return
-		this.entry.setEnd(this.withDate(value, this.entry.allDay ? this.entry.inclusiveEnd : this.entry.effectiveEnd))
-		this.commit()
+	private readonly handleEndChange = (value: DateTime) => {
+		if (this.entry.start) {
+			this.entry.setEnd(value)
+			this.commit()
+		}
 	}
 
-	private readonly handleStartTimeChange = (e: Event) => {
-		const value = (e.target as HTMLInputElement).value
-		if (!value || !this.entry.start) return
-		this.entry.moveStart(this.withTime(value, this.entry.start))
-		this.commit()
-	}
-
-	private readonly handleEndTimeChange = (e: Event) => {
-		const value = (e.target as HTMLInputElement).value
-		if (!value || !this.entry.start) return
-		this.entry.setEnd(this.withTime(value, this.entry.effectiveEnd))
+	private readonly handleDueChange = (value: DateTime) => {
+		const { entry } = this
+		// A first due on an unscheduled task is a day; nothing else depends on the entry's precision yet.
+		if (!entry.start && !entry.due) {
+			entry.allDay = true
+		}
+		entry.due = value
 		this.commit()
 	}
 
@@ -124,45 +116,33 @@ export class EntryDetailsWhen extends Component {
 		this.commit()
 	}
 
-	private readonly addEndTime = () => {
-		this.entry.setEnd(this.entry.start!.add({ minutes: DefaultDurationSetting.current }))
+	private readonly addStart = () => this.openField(() => this.startShown = true, () => this.startField)
+
+	private readonly removeStart = () => {
+		this.entry.unschedule()
+		this.startShown = false
 		this.commit()
 	}
 
-	private readonly clearEndTime = () => {
-		this.entry.end = undefined
-		this.commit()
-	}
-
-	private readonly handleDueDateChange = (e: Event) => {
-		const value = (e.target as HTMLInputElement).value
-		if (!value) return
-		const { entry } = this
-		// A first due on an unscheduled task is a day; nothing else depends on the entry's precision yet.
-		if (!entry.start && !entry.due) {
-			entry.allDay = true
+	/** A moment gains an end: a timed one the default duration, an all-day one the day picked. */
+	private readonly addEnd = async () => {
+		if (this.entry.allDay) {
+			await this.openField(() => this.endShown = true, () => this.endField)
+		} else {
+			this.entry.setEnd(this.entry.start!.add({ minutes: DefaultDurationSetting.current }))
+			this.commit()
 		}
-		entry.due = entry.allDay ? new DateTime(`${value}T00:00:00`)
-			: entry.due ? this.withDate(value, entry.due)
-				: this.toInstant(Temporal.PlainDate.from(value).toPlainDateTime({ hour: 17 }))
+	}
+
+	private readonly removeEnd = () => {
+		this.entry.end = undefined
+		this.endShown = false
 		this.commit()
 	}
 
-	private readonly handleDueTimeChange = (e: Event) => {
-		const value = (e.target as HTMLInputElement).value
-		if (!value || !this.entry.due) return
-		this.entry.due = this.withTime(value, this.entry.due)
-		this.commit()
-	}
+	private readonly addDue = () => this.openField(() => this.dueShown = true, () => this.dueField)
 
-	private readonly addDue = async () => {
-		this.dueShown = true
-		await this.updateComplete
-		await new Promise(resolve => setTimeout(resolve, 100))
-		this.dueDateInput?.showPicker()
-	}
-
-	private readonly clearDue = () => {
+	private readonly removeDue = () => {
 		this.entry.due = undefined
 		this.dueShown = false
 		this.commit()
@@ -171,8 +151,8 @@ export class EntryDetailsWhen extends Component {
 	private readonly addEstimate = async () => {
 		this.estimateShown = true
 		await this.updateComplete
-		this.estimateInput?.focus()
-		this.estimateInput?.showPicker()
+		this.estimateField?.focus()
+		this.estimateField?.showPicker()
 	}
 
 	private readonly handleEstimateChange = (e: CustomEvent<number | undefined>) => {
@@ -185,10 +165,10 @@ export class EntryDetailsWhen extends Component {
 	private static readonly estimates = [15, 30, 60, 120, 180, 240, ...[1, 2, 3, 7].map(days => TimeSpan.fromDays(days).minutes)]
 
 	@query('mitra-time-zone-picker') private readonly zonePicker?: TimeZonePicker
-	@query('.end-date') private readonly endDateInput?: DateField
-	@query('.start-date') private readonly startDateInput?: DateField
-	@query('.due-date') private readonly dueDateInput?: DateField
-	@query('.estimate-length') private readonly estimateInput?: DurationField
+	@query('.start > :is(mitra-date-field, mitra-date-time-field)') private readonly startField?: DateField
+	@query('.end > :is(mitra-date-field, mitra-date-time-field)') private readonly endField?: DateField
+	@query('.due > :is(mitra-date-field, mitra-date-time-field)') private readonly dueField?: DateField
+	@query('.estimate > mitra-duration-field') private readonly estimateField?: DurationField
 
 	private get foreignZone(): string | undefined {
 		const zone = this.entry.timeZone
@@ -238,43 +218,6 @@ export class EntryDetailsWhen extends Component {
 		this.commit()
 	}
 
-	private get displayMultiDay(): boolean {
-		if (this.entry.allDay || !this.entry.start || !this.entry.end) {
-			return this.entry.multiDay
-		}
-		return this.dateValue(this.entry.start) !== this.dateValue(this.entry.inclusiveEnd)
-	}
-
-	private readonly addEndDate = async () => {
-		this.endDateShown = true
-		await this.updateComplete
-		await new Promise(resolve => setTimeout(resolve, 100))
-		this.endDateInput?.showPicker()
-	}
-
-	private readonly addDate = async () => {
-		this.dateShown = true
-		await this.updateComplete
-		await new Promise(resolve => setTimeout(resolve, 100))
-		this.startDateInput?.showPicker()
-	}
-
-	private readonly clearDate = () => {
-		this.entry.unschedule()
-		this.dateShown = false
-		this.commit()
-	}
-
-	private readonly clearEndDate = () => {
-		this.entry.setEnd(this.entry.allDay ? this.entry.start! : this.withDate(this.dateValue(this.entry.start!), this.entry.effectiveEnd))
-		this.endDateShown = false
-		this.commit()
-	}
-
-	private get clearable() {
-		return this.editable && this.entry.unschedulable
-	}
-
 	private get editable() {
 		return getCapabilities(this.entry.sourceId).editEntries
 	}
@@ -297,51 +240,78 @@ export class EntryDetailsWhen extends Component {
 					grid-template-columns: subgrid;
 					${controlHeight};
 					min-height: var(--control-height);
+					margin-inline: -0.5rem;
 
-					&.field { margin-inline: -0.5rem; }
-					&:not(.field) { align-items: center; }
+					> mitra-icon {
+						grid-column: 1;
+						font-size: 0.87rem;
+						color: var(--color-text-muted);
+						flex-shrink: 0;
 
-					> mitra-icon { grid-column: 1; font-size: 0.87rem; color: var(--color-text-muted); flex-shrink: 0; }
-					> .switch { grid-column: 1; align-self: center; }
+						&[icon^=clock-arrow]:dir(rtl) {
+							scale: -1 1;
+						}
+					}
+
+					> :is(mitra-date-field, mitra-date-time-field, mitra-duration-field, button, .placeholder, .zone) {
+						grid-column: 2;
+						min-inline-size: 0;
+					}
+
+					/* Its box's border and its first segment's padding stand outside the column, so that its digits start where
+					   the other rows' words do. */
+					> :is(mitra-date-field, mitra-date-time-field, mitra-duration-field) {
+						margin-inline-start: -2px;
+					}
+
+					> button {
+						all: unset;
+						cursor: pointer;
+					}
+
+					> :is(button, .placeholder) {
+						display: flex;
+						align-items: center;
+					}
+
+					> :is(mitra-date-field, mitra-date-time-field) > mitra-icon-button {
+						color: var(--color-text-muted);
+
+						/* A row's last action lands its glyph as far from the row's end as the row's icon sits from its start, out
+						   past the field box's border too. */
+						&:last-child {
+							margin-inline-end: calc(-1 * var(--mitra-glyph-inset) - 1px);
+						}
+					}
+
+					/* A row's actions show while it is in use. All day most of all: the lane an entry is created in has already
+					   decided between days and times. */
+					:is(.remove, .precision) {
+						opacity: 0;
+						visibility: hidden;
+						transition: opacity 0.15s ease, visibility 0.15s;
+					}
+
+					&:is(:hover, :focus-within) :is(.remove, .precision) {
+						opacity: 1;
+						visibility: visible;
+					}
+
+					@media (pointer: coarse) {
+						.remove {
+							opacity: 1;
+							visibility: visible;
+						}
+					}
 
 					&:is(:hover, :focus-within, :has(:popover-open)) .chevron {
 						opacity: 1;
 					}
 				}
 
-				.dates, .times {
-					grid-column: 2;
-					display: grid;
-					grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-					column-gap: 0.25rem;
-
-					> .field {
-						--field-padding-inline: 0.25rem;
-						&:first-child { margin-inline-start: calc(-1 * var(--field-padding-inline)); }
-						&:last-child { margin-inline-end: -0.5rem; }
-
-						display: flex;
-						align-items: center;
-						gap: 0.5rem;
-
-						> :is(mitra-date-field, mitra-time-field, mitra-duration-field, mitra-select) { flex: 1; min-width: 0; }
-
-						> mitra-icon {
-							flex-shrink: 0;
-							color: var(--color-text-muted);
-
-							&[icon="arrow-right"]:dir(rtl) {
-								scale: -1 1;
-							}
-						}
-					}
-				}
-
 				.zone {
-					grid-column: 2;
 					display: flex;
 					gap: 0.25rem;
-					min-inline-size: 0;
 
 					> .zone-label {
 						all: unset;
@@ -365,33 +335,10 @@ export class EntryDetailsWhen extends Component {
 						flex-shrink: 0;
 						align-self: center;
 						color: var(--color-text-muted);
+						/* Its glyph lines up with the clocks of the rows above. */
+						margin-inline-end: calc(-1 * var(--mitra-glyph-inset));
 
 						&[data-localized] { color: var(--color-accent); }
-					}
-				}
-
-				.add-end {
-					cursor: pointer;
-				}
-
-				.clear {
-					flex-shrink: 0;
-					align-self: center;
-					color: var(--color-text-muted);
-					opacity: 0;
-					transition: opacity 0.15s ease;
-					margin-inline-end: calc(-1 * var(--mitra-glyph-inset));
-				}
-
-				:is(.dates, .times) > .field:hover > .clear,
-				:is(.dates, .times) > .field:focus-within > .clear,
-				.clear:focus-within {
-					opacity: 1;
-				}
-
-				@media (pointer: coarse) {
-					.clear {
-						opacity: 1;
 					}
 				}
 			}
@@ -404,7 +351,8 @@ export class EntryDetailsWhen extends Component {
 		}
 		const dated = !!this.entry.start || !!this.entry.due
 		return html`
-			${this.entry.start ? this.scheduleTemplate : this.unscheduledTemplate}
+			${this.startTemplate}
+			${this.entry.start ? this.endTemplate : this.estimateTemplate}
 			${this.dueTemplate}
 			${this.entry.allDay || !dated || !this.capabilities.timeZone ? html.nothing : this.zoneTemplate}
 			${!dated || !this.capabilities.recurrence ? html.nothing : html`
@@ -416,135 +364,109 @@ export class EntryDetailsWhen extends Component {
 		`
 	}
 
-	private get switchTemplate() {
-		return html`
-			<mitra-switch class="switch" label=${t('Include time')} title=${this.entry.allDay ? t('Include time') : t('Switch to all-day')}
-				?checked=${live(!this.entry.allDay)} @change=${this.toggleAllDay}
-				?hidden=${!this.editable || !this.capabilities.allDay || this.entry.type.isAvailability}
-			></mitra-switch>
+	/** All day, pressed while it is: it takes every moment of the entry between days and times at once. */
+	private get allDayTemplate() {
+		return !this.editable || !this.capabilities.allDay || this.entry.type.isAvailability ? html.nothing : html`
+			<mitra-icon-button size="small" class="precision" icon="clock-fading" label=${t('All day')}
+				?pressed=${this.entry.allDay} @click=${this.toggleAllDay}
+			></mitra-icon-button>
 		`
 	}
 
-	/** A task with no start: the start's placeholder, and its estimate where the end goes once it has one. */
-	private get unscheduledTemplate() {
-		const estimates = this.entry.type.isTask && this.capabilities.estimate
-		return html`
-			<div class="row">
-				<mitra-icon icon="calendar-plus"></mitra-icon>
-				<div class="dates">
-					${!this.editable ? html`
-						<span class="allday-label">${t('No date')}</span>
-					` : this.dateShown ? html`
-						<div class="field">
-							<mitra-date-field class="start-date" label=${t('Start date')} .value=${''} @change=${this.handleStartDateChange}></mitra-date-field>
-						</div>
-					` : html`
-						<button class="field add-end" @click=${this.addDate}>
-							<span class="placeholder">${t('Start date')}</span>
-						</button>
-					`}
-					${!estimates ? html.nothing : this.entry.estimate !== null || this.estimateShown ? html`
-						<span class="estimate field">
-							<mitra-icon icon="hourglass"></mitra-icon>
-							<mitra-duration-field class="estimate-length" label=${t('Estimate')} ?readonly=${!this.editable}
-								.presets=${EntryDetailsWhen.estimates} .value=${this.entry.estimate ?? undefined} @change=${this.handleEstimateChange}
-							></mitra-duration-field>
-						</span>
-					` : html`
-						<button class="estimate field add-end" @click=${this.addEstimate}>
-							<mitra-icon icon="hourglass"></mitra-icon>
-							<span class="placeholder">${t('Estimate')}</span>
-						</button>
-					`}
-				</div>
-			</div>
-			${!this.entry.due ? html.nothing : html`
-				<div class="row">
-					${this.switchTemplate}
-					<div class="times">
-						<span class="allday-label">${this.entry.allDay ? t('All day') : t('Include time')}</span>
-					</div>
-				</div>
+	/**
+	 * A moment's row: its field, with what removes it and the all-day toggle. The field holds a date and a time unless the entry
+	 * is all-day; empty, it does once the entry has any date to take the precision from, and a day picked into it takes
+	 * `defaultTime`.
+	 */
+	private momentTemplate({ kind, icon, label, value, handleChange, remove, defaultTime, impliedDate }: Moment) {
+		const actions = html`
+			${!remove || !this.editable ? html.nothing : html`
+				<mitra-icon-button size="small" class="remove" icon="x" label=${remove.label} title=${remove.title ?? remove.label} @click=${remove.handler}></mitra-icon-button>
 			`}
+			${!value ? html.nothing : this.allDayTemplate}
+		`
+		const timed = !this.entry.allDay && !!(value ?? this.entry.start ?? this.entry.due)
+		const change = (e: CustomEvent<DateTime | undefined>) => e.detail && handleChange(e.detail, timed)
+		return html`
+			<div class="${kind} row field">
+				<mitra-icon icon=${icon}></mitra-icon>
+				${timed ? html`
+					<mitra-date-time-field label=${label} timeZone=${this.zone} defaultTime=${ifDefined(defaultTime)} .impliedDate=${impliedDate} ?readonly=${!this.editable} .value=${value} @change=${change}>${actions}</mitra-date-time-field>
+				` : html`
+					<mitra-date-field label=${label} timeZone=${this.zone} .impliedDate=${impliedDate} ?readonly=${!this.editable} .value=${value} @change=${change}>${actions}</mitra-date-field>
+				`}
+			</div>
 		`
 	}
 
-	private get scheduleTemplate() {
-		const start = this.entry.start!
+	/** A field not given yet: its name, which shows the field. */
+	private placeholderTemplate(kind: 'start' | 'end' | 'due' | 'estimate', icon: string, label: string, handler: () => void) {
 		return html`
-			<div class="row">
-				<mitra-icon icon=${this.entry.allDay ? 'calendar-days' : 'clock'}></mitra-icon>
-				<div class="dates">
-					<div class="field">
-						<mitra-date-field class="start-date" label=${t('Start date')} ?readonly=${!this.editable} .value=${this.dateValue(start)} @change=${this.handleStartDateChange}></mitra-date-field>
-						${!this.clearable ? html.nothing : html`
-							<mitra-icon-button size="small" class="clear" icon="x" label=${t('Remove the date')} title=${t('Remove the date. The task moves to Unscheduled')} @click=${this.clearDate}></mitra-icon-button>
-						`}
-					</div>
-					${!this.displayMultiDay && !this.endDateShown ? (!this.editable ? html.nothing : html`
-						<button class="field add-end" @click=${this.addEndDate}>
-							<span class="placeholder">${t('End date')}</span>
-						</button>
-					`) : html`
-						<div class="field">
-							<mitra-icon icon="arrow-right"></mitra-icon>
-							<mitra-date-field class="end-date" label=${t('End date')} ?readonly=${!this.editable} .value=${this.dateValue(this.entry.inclusiveEnd)} @change=${this.handleEndDateChange}></mitra-date-field>
-							${!this.editable ? html.nothing : html`
-								<mitra-icon-button size="small" class="clear" icon="x" label=${t('Remove the end date')} @click=${this.clearEndDate}></mitra-icon-button>
-							`}
-						</div>
-					`}
-				</div>
-			</div>
-			<div class="row">
-				${this.switchTemplate}
-				<div class="times">
-					${this.entry.allDay ? html`
-						<span class="allday-label">${t('All day')}</span>
-					` : html`
-						<mitra-time-field class="field" label=${t('Start time')} ?readonly=${!this.editable} .value=${this.timeValue(start)} @change=${this.handleStartTimeChange}></mitra-time-field>
-						${this.entry.point ? (!this.editable ? html.nothing : html`
-							<button class="field add-end" @click=${this.addEndTime}>
-								<span class="placeholder">${t('End time')}</span>
-							</button>
-						`) : html`
-							<div class="field">
-								<mitra-time-field label=${t('End time')} ?readonly=${!this.editable} .value=${this.timeValue(this.entry.effectiveEnd)} @change=${this.handleEndTimeChange}></mitra-time-field>
-								${!this.editable || !this.entry.type.isTask || this.entry.partOfSeries ? html.nothing : html`
-									<mitra-icon-button size="small" class="clear" icon="x" label=${t('Remove the end time')} @click=${this.clearEndTime}></mitra-icon-button>
-								`}
-							</div>
-						`}
-					`}
-				</div>
+			<div class="${kind} row field">
+				<mitra-icon icon=${icon}></mitra-icon>
+				<button @click=${handler}><span class="placeholder">${label}</span></button>
 			</div>
 		`
+	}
+
+	private get startTemplate() {
+		const { start } = this.entry
+		return start || this.startShown
+			? this.momentTemplate({
+				kind: 'start', icon: 'clock-arrow-right', label: t('Start date'), value: start, handleChange: this.handleStartChange, defaultTime: '09:00',
+				remove: !start || !this.entry.unschedulable ? undefined : { label: t('Remove the date'), title: t('Remove the date. The task moves to Unscheduled'), handler: this.removeStart },
+			})
+			: this.editable ? this.placeholderTemplate('start', 'clock-arrow-right', t('Start date'), this.addStart)
+				: html`
+					<div class="start row field">
+						<mitra-icon icon="clock-arrow-right"></mitra-icon>
+						<span class="placeholder">${t('No date')}</span>
+					</div>
+				`
+	}
+
+	/** The end, which a task may go without: then it is a moment, and its row only offers one. */
+	private get endTemplate() {
+		const { entry } = this
+		const end = entry.point ? undefined : entry.allDay ? entry.inclusiveEnd : entry.effectiveEnd
+		return end || this.endShown
+			? this.momentTemplate({
+				kind: 'end', icon: 'clock-arrow-left', label: t('End date'), value: end, handleChange: this.handleEndChange,
+				impliedDate: entry.start,
+				remove: !end || !entry.type.isTask || entry.partOfSeries ? undefined : { label: t('Remove the end date'), handler: this.removeEnd },
+			})
+			: !this.editable ? html.nothing
+				: this.placeholderTemplate('end', 'clock-arrow-left', t('End date'), this.addEnd)
+	}
+
+	/** A task with no start: its estimate, where the end goes once it has one. */
+	private get estimateTemplate() {
+		if (!this.entry.type.isTask || !this.capabilities.estimate) {
+			return html.nothing
+		}
+		return this.entry.estimate !== null || this.estimateShown ? html`
+			<div class="estimate row field">
+				<mitra-icon icon="hourglass"></mitra-icon>
+				<mitra-duration-field label=${t('Estimate')} ?readonly=${!this.editable}
+					.presets=${EntryDetailsWhen.estimates} .value=${this.entry.estimate ?? undefined} @change=${this.handleEstimateChange}
+				></mitra-duration-field>
+			</div>
+		` : !this.editable ? html.nothing
+			: this.placeholderTemplate('estimate', 'hourglass', t('Estimate'), this.addEstimate)
 	}
 
 	/** A task's deadline: its own row, kept apart from when the task is planned. */
 	private get dueTemplate() {
-		return (!this.entry.type.isTask || !this.capabilities.due || (!this.entry.due && !this.editable)) ? html.nothing : html`
-			<div class="row">
-				<mitra-icon icon="flag"></mitra-icon>
-				<div class="dates">
-					${!this.entry.due && !this.dueShown ? html`
-						<button class="field add-end" @click=${this.addDue}>
-							<span class="placeholder">${t('Due date')}</span>
-						</button>
-					` : html`
-						<div class="field">
-							<mitra-date-field class="due-date" label=${t('Due date')} ?readonly=${!this.editable} .value=${this.entry.due ? this.dateValue(this.entry.due) : ''} @change=${this.handleDueDateChange}></mitra-date-field>
-							${!this.entry.due || !this.editable || this.entry.partOfSeries ? html.nothing : html`
-								<mitra-icon-button size="small" class="clear" icon="x" label=${t('Remove the due date')} @click=${this.clearDue}></mitra-icon-button>
-							`}
-						</div>
-					`}
-					${!this.entry.due || this.entry.allDay ? html.nothing : html`
-						<mitra-time-field class="field" label=${t('Due time')} ?readonly=${!this.editable} .value=${this.timeValue(this.entry.due)} @change=${this.handleDueTimeChange}></mitra-time-field>
-					`}
-				</div>
-			</div>
-		`
+		const { due } = this.entry
+		if (!this.entry.type.isTask || !this.capabilities.due || (!due && !this.editable)) {
+			return html.nothing
+		}
+		return due || this.dueShown
+			? this.momentTemplate({
+				kind: 'due', icon: 'flag', label: t('Due date'), value: due, handleChange: this.handleDueChange, defaultTime: '17:00',
+				remove: !due || this.entry.partOfSeries ? undefined : { label: t('Remove the due date'), handler: this.removeDue },
+			})
+			: this.placeholderTemplate('due', 'flag', t('Due date'), this.addDue)
 	}
 
 	private get zoneTemplate() {

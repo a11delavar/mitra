@@ -1,309 +1,123 @@
-import { component, css, event, html, property, query, type ElementRef, type ElementRefs, type HTMLTemplateResult } from '@a11d/lit'
+import { component, css, eventListener, html, property, query, state } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { FieldDateTimeController, FieldTimeController, FieldDateTimePrecision, type DateTimeSegment } from '@3mo/date-time-fields/controller'
-import { Control } from './Control.js'
-import { type Popover } from './Popover.js'
-import { type DatePicker } from './DatePicker.js'
-import { ring } from './focusRing.css.js'
-import { activated } from './activated.css.js'
-import { controlHeight } from './controlHeight.css.js'
-import './IconButton.js'
-import { scrollbar } from './scrollbar.css.js'
-import { optionRow, optionRowSelected } from './optionRow.css.js'
-import { disabled } from './disabled.css.js'
-import { fieldChrome } from './fieldChrome.css.js'
+import { FieldDateTimePrecision } from '@3mo/date-time-fields/controller'
+import { DateField } from './DateField.js'
+import { type TimePicker } from './TimePicker.js'
 
 /**
- * What a date and a time field share: typed segments in the language's order, digits and calendar, a button and
- * Alt+ArrowDown for a picker, and `value` as the string of the native input each replaces. A context that
- * wears the box itself (the entry editor's rows) sets `--mitra-field-*`: the box sheds its chrome and its button, and a
- * click on the box stands for the button.
+ * A date and time field: `value` is a moment, read in `timeZone`, while the segments follow the language. Its picker holds both, the days of a month beside the times of a day, and edits a draft: a day picked
+ * waits there for a time, which completes the moment. Closing the picker keeps what was picked, Escape drops it.
  */
-export abstract class SegmentedField<T, TSegment> extends Control {
-	/** A native `change` stops at the shadow root; this one carries the value. */
-	@event() readonly change!: EventDispatcher<T | undefined>
+@component('mitra-date-time-field')
+export class DateTimeField extends DateField {
+	/** The time a day takes while the field has none, `HH:mm`: one picked, or typed without a time. */
+	@property() defaultTime?: string
 
-	@property({ type: Object, bindingDefault: true, event: 'change' }) value?: T
-	@property() label?: string
-	@property({ type: Boolean, reflect: true }) readonly = false
-	@property({ type: Boolean, reflect: true }) disabled = false
+	/** The moment being picked while the picker is open. */
+	@state() private draft?: DateTime
+	private dropsDraft = false
 
-	@query('mitra-popover') protected readonly picker?: Popover
+	protected override get precision() { return FieldDateTimePrecision.Minute }
+	protected override get shown() { return this.draft ?? this.value }
 
-	protected abstract readonly controller: {
-		readonly group: ElementRef<HTMLElement, void>
-		readonly segment: ElementRefs<HTMLElement, TSegment>
-		focus(): void
+	protected override get referenceDate() {
+		const { hour, minute } = this.defaultPlainTime
+		return !this.defaultTime ? super.referenceDate : super.referenceDate.dayStart.with({ hour, minute })
 	}
-	protected abstract get segments(): ReadonlyArray<TSegment>
-	protected abstract readonly icon: string
-	protected abstract readonly pickerLabel: string
-	protected abstract get pickerTemplate(): HTMLTemplateResult
 
-	protected commit(value: T | undefined) {
-		if (value !== this.value) {
-			this.value = value
-			this.change.dispatch(value)
+	private get defaultPlainTime() {
+		return Temporal.PlainTime.from(this.defaultTime ?? '00:00')
+	}
+
+	protected override commit(value: DateTime | undefined) {
+		this.draft = undefined
+		super.commit(value)
+	}
+
+	@eventListener('keydown')
+	protected handleKeyDown(e: KeyboardEvent) {
+		if (e.key === 'Escape') {
+			this.dropsDraft = true
 		}
 	}
 
-	/** Whether the picker opening takes the focus: from the keyboard it does, while a pointer keeps typing in the segments. */
-	private focusesPicker = false
+	/** A day keeps the time, or takes the default one. */
+	private pickDay(day: DateTime) {
+		const { hour, minute } = this.shown ? this.zoned(this.shown) : this.defaultPlainTime
+		this.draft = this.dayIn(day).with({ hour, minute })
+	}
 
-	/** Opens the picker, as `showPicker()` does a native input's. */
-	showPicker({ focus = false } = {}) {
-		if (!this.readonly && !this.disabled) {
-			this.focusesPicker = focus
-			this.picker?.show(this)
+	/** A time keeps the day: the one picked, the value's, or today's while there is none. */
+	private pickTime(time: string) {
+		const { hour, minute } = Temporal.PlainTime.from(time)
+		this.commit(this.zoned(this.shown ?? new DateTime()).dayStart.with({ hour, minute }))
+		this.closePicker()
+	}
+
+	@query('mitra-time-picker') private readonly timePicker?: TimePicker
+
+	/** Opened from the keyboard, the focus lands on the part it came from: the time from a time segment, else the day. */
+	protected override pickerOpened(focus: boolean) {
+		this.dropsDraft = false
+		const segment = (this.renderRoot as ShadowRoot).activeElement?.getAttribute('data-segment') ?? ''
+		const time = DateTimeField.timeUnits.has(segment)
+		if (focus && time) {
+			this.timePicker?.focus()
 		}
+		super.pickerOpened(focus && !time)
 	}
 
-	private readonly handleBoxClick = (e: MouseEvent) => {
-		const button = this.renderRoot.querySelector('mitra-icon-button')
-		if (button && getComputedStyle(button).display === 'none' && !e.defaultPrevented) {
-			this.showPicker()
+	protected override pickerClosed() {
+		const { draft } = this
+		this.draft = undefined
+		if (draft !== undefined && !this.dropsDraft) {
+			this.commit(draft)
 		}
-	}
-
-	protected closePicker() {
-		this.picker?.hide()
-		this.controller.focus()
-	}
-
-	override focus() {
-		this.controller.focus()
 	}
 
 	static override get styles() {
 		return css`
-			:host {
-				${controlHeight};
-				display: inline-flex;
-				min-inline-size: 0;
-				font-size: 0.8125rem;
-				font-weight: 500;
-				color: var(--color-text);
+			${super.styles}
+
+			/* Never narrower than both parts: short of room, it moves rather than squeezes the times. */
+			mitra-popover:popover-open {
+				display: grid;
+				grid-template-columns: auto auto;
+				column-gap: 0.5rem;
+				min-inline-size: max-content;
+				overflow: clip;
 			}
 
-			[part=box] {
-				${fieldChrome};
-				flex: 1;
-				display: flex;
-				align-items: center;
-				gap: 0.25rem;
-				padding-inline: var(--mitra-field-padding, 0.75rem 0.25rem);
-			}
-
-			:host([disabled]) [part=box] {
-				${disabled};
-			}
-
-			:host([readonly]) [part=box] {
-				opacity: var(--mitra-field-readonly-opacity, 0.55);
-			}
-
-			[part=segments] {
-				flex: 1;
-				min-inline-size: 0;
-				white-space: nowrap;
-				font-variant-numeric: tabular-nums;
-				cursor: text;
-
-				> * {
-					outline: none;
-					caret-color: transparent;
-					user-select: none;
-				}
-
-				> [role] {
-					border-radius: 0.2rem;
-					padding-inline: 1px;
-
-					&:focus {
-						background: color-mix(in srgb, var(--color-accent) 40%, transparent);
-					}
-
-					&[data-placeholder] {
-						color: var(--color-text-muted);
-					}
-				}
-
-				> [aria-hidden] {
-					color: var(--color-text-muted);
-				}
-			}
-
-			mitra-icon-button {
-				display: var(--mitra-field-button, inline-flex);
-				color: var(--color-text-muted);
-				margin-inline-end: calc(-1 * var(--mitra-glyph-inset) + 0.125rem);
-			}
-
-			mitra-popover {
-				padding: 0.5rem;
-			}
-
-			.slots {
-				display: flex;
-				flex-direction: column;
-				gap: 1px;
-				max-block-size: 16rem;
-				overflow-y: auto;
-				${scrollbar};
-				padding: 0;
-
-				/* The selected slot's tick keeps its room on every row, so the slots stay in one column. */
-				--mitra-option-inset: 1.75rem;
-
-				button {
-					all: unset;
-					${optionRow};
-					font-variant-numeric: tabular-nums;
-
-					&:hover {
-						${activated};
-					}
-
-					&:focus-visible {
-						${ring};
-					}
-
-					&[aria-selected=true] {
-						${optionRowSelected};
-					}
-				}
+			/* As tall as the month beside it however many times it holds, and out to the popover's edges, so that its
+			   scrollbar runs along the edge. */
+			mitra-time-picker {
+				box-sizing: border-box;
+				block-size: 0;
+				min-block-size: calc(100% + 1rem);
+				max-block-size: none;
+				margin-block: -0.5rem;
+				margin-inline-end: -0.5rem;
+				padding-block: 0.5rem;
+				padding-inline: 0.5rem 0.125rem;
+				border-inline-start: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
 			}
 		`
 	}
 
-	protected override get template() {
-		const { controller } = this
+	protected override get pickerTemplate() {
 		return html`
-			<div part="box" @click=${this.handleBoxClick}>
-				<div part="segments" ${controller.group.ref()}>
-					${this.segments.map(segment => html`<span ${controller.segment.ref(segment)}></span>`)}
-				</div>
-				${this.readonly || this.disabled ? html.nothing : html`
-					<mitra-icon-button size="small" tabindex="-1" icon=${this.icon} label=${this.pickerLabel} @click=${() => this.showPicker({ focus: true })}></mitra-icon-button>
-				`}
-			</div>
-			<mitra-popover @openChange=${(e: CustomEvent<boolean>) => e.detail && this.pickerOpened(this.focusesPicker)}>${this.pickerTemplate}</mitra-popover>
-		`
-	}
-
-	protected pickerOpened(_focus: boolean) { }
-
-	/** A picker of slots (times, lengths): Up and Down walk them. */
-	protected readonly handleSlotsKeyDown = (e: KeyboardEvent) => {
-		const step = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0
-		if (step) {
-			e.preventDefault()
-			const buttons = [...this.renderRoot.querySelectorAll<HTMLElement>('.slots button')]
-			buttons[buttons.indexOf((this.renderRoot as ShadowRoot).activeElement as HTMLElement) + step]?.focus()
-		}
-	}
-}
-
-/** A date field; `value` is the `YYYY-MM-DD` of a native date input, while the segments follow the language. */
-@component('mitra-date-field')
-export class DateField extends SegmentedField<string, DateTimeSegment> {
-	protected readonly icon = 'calendar'
-	protected get segments() { return this.controller.segments.segments }
-	protected override get pickerLabel() { return t('Choose a date') }
-
-	protected readonly controller = new FieldDateTimeController(this, host => ({
-		get value() { return DateField.dateOf(host.value) },
-		precision: FieldDateTimePrecision.Day,
-		get label() { return host.label },
-		get readonly() { return host.readonly },
-		get disabled() { return host.disabled },
-		handleChange: date => host.commit(DateField.stringOf(date)),
-		get handlePickerOpen() { return host.readonly || host.disabled ? undefined : () => host.showPicker({ focus: true }) },
-	}))
-
-	/** A plain date is the local midnight of that day, which the segments read in the language's calendar. */
-	private static dateOf(value?: string) {
-		return value ? new DateTime(`${value}T00:00:00`) : undefined
-	}
-
-	private static stringOf(date?: Date) {
-		const pad = (value: number) => String(value).padStart(2, '0')
-		return date ? `${String(date.getFullYear()).padStart(4, '0')}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` : undefined
-	}
-
-	@query('mitra-date-picker') private readonly datePicker?: DatePicker
-
-	protected override pickerOpened(focus: boolean) {
-		if (focus) {
-			this.datePicker?.focus()
-		}
-	}
-
-	protected get pickerTemplate() {
-		return html`
-			<mitra-date-picker .value=${this.controller.selectedDate}
-				@pick=${(e: CustomEvent<DateTime>) => { this.controller.pick(e.detail); this.closePicker() }}
+			<mitra-date-picker .value=${this.shown && this.zoned(this.shown)}
+				@pick=${(e: CustomEvent<DateTime>) => this.pickDay(e.detail)}
 			></mitra-date-picker>
-		`
-	}
-}
-
-/** A time field; `value` is the `HH:mm` of a native time input, while the segments follow the language's clock. */
-@component('mitra-time-field')
-export class TimeField extends SegmentedField<string, DateTimeSegment> {
-	private static readonly step = 30
-
-	protected readonly icon = 'clock'
-	protected get segments() { return this.controller.segments.segments }
-	protected override get pickerLabel() { return t('Choose a time') }
-
-	protected readonly controller = new FieldTimeController(this, host => ({
-		get value() { return host.value || undefined },
-		get label() { return host.label },
-		get readonly() { return host.readonly },
-		get disabled() { return host.disabled },
-		handleChange: value => host.commit(value),
-		get handlePickerOpen() { return host.readonly || host.disabled ? undefined : () => host.showPicker({ focus: true }) },
-	}))
-
-	private get slots() {
-		const day = new DateTime().dayStart
-		return Array.from({ length: 24 * 60 / TimeField.step }, (_, index) => day.add({ minutes: index * TimeField.step }))
-	}
-
-	/** Opens on the slot at or just before the time in force. */
-	protected override pickerOpened(focus: boolean) {
-		void this.updateComplete.then(() => {
-			const slots = [...this.renderRoot.querySelectorAll<HTMLElement>('.slots button')]
-			const [hour, minute] = (this.value ?? '').split(':').map(Number)
-			const index = hour === undefined || Number.isNaN(hour) ? 0 : Math.floor((hour * 60 + (minute ?? 0)) / TimeField.step)
-			slots[index]?.scrollIntoView({ block: 'center' })
-			if (focus) {
-				slots[index]?.focus()
-			}
-		})
-	}
-
-	protected get pickerTemplate() {
-		const selected = this.value?.slice(0, 5)
-		return html`
-			<div class="slots" role="listbox" aria-label=${this.pickerLabel} @keydown=${this.handleSlotsKeyDown}>
-				${this.slots.map(slot => {
-					const value = `${String(slot.hour).padStart(2, '0')}:${String(slot.minute).padStart(2, '0')}`
-					return html`
-						<button role="option" tabindex="-1" aria-selected=${value === selected}
-							@click=${() => { this.controller.pick(slot); this.closePicker() }}
-						>${slot.format({ hour: 'numeric', minute: '2-digit' })}</button>
-					`
-				})}
-			</div>
+			<mitra-time-picker .value=${this.shown ? this.zoned(this.shown).zonedDateTime.toPlainTime().toString({ smallestUnit: 'minute' }) : this.defaultTime}
+				@pick=${(e: CustomEvent<string>) => this.pickTime(e.detail)}
+			></mitra-time-picker>
 		`
 	}
 }
 
 declare global {
 	interface HTMLElementTagNameMap {
-		'mitra-date-field': DateField
-		'mitra-time-field': TimeField
+		'mitra-date-time-field': DateTimeField
 	}
 }

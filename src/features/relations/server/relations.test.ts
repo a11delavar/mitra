@@ -239,6 +239,18 @@ describe('hierarchy rollup', () => {
 			assert.deepEqual((await relationClosure(em, user)).map(found => found.uid).sort(), ['a', 'parent'])
 		})
 
+		it('holds only the user\'s own links: another user linking to a uid they share brings no entry of theirs in', async () => {
+			await task('shared')
+			const other = new User({ username: 'other' })
+			const theirs = new MitraCalendar({ userId: other.id, uri: 'dev://other' })
+			const theirSource = new Source({ integrationId: theirs.id, uri: 'other/calendar', entryTypes: [EntryType.Task], name: 'Theirs', enabled: true, hidden: false })
+			const theirTask = new Entry({ id: crypto.randomUUID(), sourceId: theirSource.id, uid: 'their-task', type: EntryType.Task, heading: 'theirs' })
+			em.persist([other, theirs, theirSource, theirTask, new EntryRelation({ entryId: theirTask.id!, type: RelationType.Parent, targetUid: 'shared' })])
+			await em.flush()
+
+			assert.deepEqual(await relationClosure(em, user), [])
+		})
+
 		it('carries BOTH directions on every entry it serves, so the editor needs no second request', async () => {
 			await task('parent')
 			const child = await task('a')

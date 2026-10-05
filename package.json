@@ -7,6 +7,7 @@
 		"start": "node ./scripts/dev.ts",
 		"test": "node ./scripts/test.ts && node --test \"out_test/**/*.js\"",
 		"lint": "eslint \"**/*.ts\"",
+		"typecheck": "node ./node_modules/typescript7/bin/tsc",
 		"build": "node ./scripts/build.ts",
 		"db:migration:create": "node ./scripts/db.ts create",
 		"db:migration:up": "node ./scripts/db.ts up",
@@ -26,13 +27,14 @@
 		"@types/express": "5.0.x",
 		"@types/node": "25.9.x",
 		"@types/web-push": "3.x",
-		"@typescript/native-preview": "latest",
 		"esbuild": "x",
 		"eslint": "9.x",
 		"favicons": "7.x",
 		"git-cliff": "2.x",
 		"sharp": "0.35.x",
-		"tsx": "4.x"
+		"tsx": "4.x",
+		"typescript": "npm:@typescript/typescript6@6.0.x",
+		"typescript7": "npm:typescript@7.0.x"
 	},
 	"dependencies": {
 		"@3mo/data-grid": "0.38.x",

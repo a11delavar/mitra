@@ -7,6 +7,8 @@ name: Cleanup GHCR
 # This prunes both. It starts in DRY-RUN: check the run summary, then set
 # `dry-run: false` once the selection looks right. `latest`, `dev` and release
 # tags (X.Y.Z / X.Y / X) are never matched.
+# `account` is the literal `user` for a personal account: any other value is
+# taken as an organization name and queried through `/orgs/<name>/` (a 404).
 on:
   schedule:
     - cron: '0 4 * * 0' # Sundays 04:00 UTC
@@ -21,7 +23,7 @@ jobs:
       - name: Delete untagged versions (incl. orphaned multi-arch children)
         uses: snok/container-retention-policy@v3.1.0
         with:
-          account: ${{ github.repository_owner }}
+          account: user
           token: ${{ secrets.GITHUB_TOKEN }}
           image-names: mitra
           tag-selection: untagged
@@ -31,7 +33,7 @@ jobs:
       - name: Prune old per-commit (sha-*) tags, keeping the most recent
         uses: snok/container-retention-policy@v3.1.0
         with:
-          account: ${{ github.repository_owner }}
+          account: user
           token: ${{ secrets.GITHUB_TOKEN }}
           image-names: mitra
           tag-selection: tagged

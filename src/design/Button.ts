@@ -4,6 +4,7 @@ import { activated } from './activated.css.js'
 import { controlHeight } from './controlHeight.css.js'
 import { Control } from './Control.js'
 import { disabled } from './disabled.css.js'
+import { selected } from './selected.css.js'
 
 export type ButtonVariant = 'default' | 'primary' | 'plain' | 'danger'
 
@@ -20,6 +21,8 @@ export class Button extends Control {
 	@property() target?: string
 	/** The accessible name, and the tooltip unless the host carries a `title` of its own. */
 	@property() label?: string
+	/** Makes it a toggle, announced as pressed or not and tinted while pressed; left out, it is a plain button. */
+	@property({ type: Boolean, reflect: true }) pressed?: boolean
 	/** The popover this button toggles: the element, or its id in this button's tree. */
 	@property({ type: Object }) popoverTarget?: HTMLElement | string
 	@property() popoverTargetAction?: 'toggle' | 'show' | 'hide'
@@ -140,6 +143,12 @@ export class Button extends Control {
 				}
 			}
 
+			:host([pressed]) [part=button] {
+				&, &:hover {
+					${selected};
+				}
+			}
+
 			:host([variant=danger]) {
 				color: var(--color-error);
 			}
@@ -162,6 +171,7 @@ export class Button extends Control {
 			>${this.content}</a>
 		` : html`
 			<button part="button" ?disabled=${this.disabled} aria-label=${ifDefined(this.label)} title=${ifDefined(this.tooltip)}
+				aria-pressed=${ifDefined(this.pressed === undefined ? undefined : String(this.pressed))}
 				@click=${{ handleEvent: this.invoke, capture: true }}
 			>${this.content}</button>
 		`

@@ -144,7 +144,8 @@ export class DatePicker extends Component {
 	}
 
 	protected override get template() {
-		const today = new DateTime().dayStart
+		// The days are counted in the zone of the value given, today among them.
+		const today = DateTime.from(Date.now(), undefined, this.cursor.timeZoneId).dayStart
 		const month = this.cursor.monthStart
 		const weeks = this.weeks
 		return html`

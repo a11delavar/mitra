@@ -289,6 +289,26 @@ describe('SourceMigration', () => {
 			assert.equal(rows[0]!.targetUid, `minted-${predecessor.uid}`)
 		})
 
+		it('repoints only the moving user\'s links: a shared calendar gives another user the very same UIDs', async () => {
+			const { user, origin, target } = await seed(em, Minting)
+			const [predecessor, dependent] = [entryIn(origin, { heading: 'first' }), entryIn(origin, { heading: 'second' })]
+			const other = new User({ username: 'other' })
+			const theirs = new MitraCalendar({ userId: other.id, uri: 'dev://theirs' })
+			const theirSource = new Source({ integrationId: theirs.id, uri: 'theirs/calendar', name: 'Theirs', enabled: true })
+			const theirDependent = entryIn(theirSource, { heading: 'theirs' })
+			em.persist([predecessor, dependent, other, theirs, theirSource, theirDependent,
+				new EntryRelation({ entryId: dependent.id!, type: RelationType.FinishToStart, targetUid: predecessor.uid! }),
+				new EntryRelation({ entryId: theirDependent.id!, type: RelationType.FinishToStart, targetUid: predecessor.uid! }),
+			])
+			await em.flush()
+
+			await (await SourceMigration.of(em, user, origin.id, { targetSourceId: target.id })).run()
+
+			const rows = await em.find(EntryRelation, {}, { refresh: true })
+			assert.equal(rows.find(row => row.entryId === theirDependent.id)!.targetUid, predecessor.uid)
+			assert.equal(rows.find(row => row.entryId !== theirDependent.id)!.targetUid, `minted-${predecessor.uid}`)
+		})
+
 		it('leaves a relationship pointing outside the batch exactly as it was', async () => {
 			const { user, origin, target } = await seed(em, Minting)
 			const dependent = entryIn(origin, { heading: 'second' })

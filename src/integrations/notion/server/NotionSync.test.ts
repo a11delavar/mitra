@@ -762,6 +762,23 @@ describe('Notion relationships', () => {
 		assert.deepEqual((await rowsOf(em, pointer)).map(row => row.targetUid), ['p-created'])
 	})
 
+	it('re-points only its own user\'s links: a calendar two users share gives both the same uids', async () => {
+		const em = orm.em.fork()
+		const { integration, source } = await seed(em, {
+			createEcho: page('p-created', { editedAt: '2026-07-14T12:00:00.000Z' }),
+		})
+		const other = await seed(em, {})
+		const moved = new Entry({ id: crypto.randomUUID(), uid: 'shared-uid', sourceId: source.id, type: EntryType.Task, heading: 'Moved', status: TaskStatus.ToDo })
+		const theirs = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), sourceId: other.source.id, type: EntryType.Task, heading: 'Theirs' })
+		em.persist([moved, theirs, new EntryRelation({ entryId: theirs.id!, type: RelationType.FinishToStart, targetUid: 'shared-uid' })])
+		await em.flush()
+
+		await integration.createEntry(em, moved)
+		await em.flush()
+
+		assert.deepEqual((await rowsOf(em, theirs)).map(row => row.targetUid), ['shared-uid'])
+	})
+
 	it('mirrors a relation write onto the sibling view\'s row, keeping that row\'s own mitra-owned link', async () => {
 		const em = orm.em.fork()
 		const { integration, source, sibling, state } = await seed(em, {

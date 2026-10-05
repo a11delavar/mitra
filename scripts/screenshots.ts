@@ -173,15 +173,10 @@ function stageServer(stageDir: string) {
 }
 
 /**
- * Every capture happens at this week's Thursday, 10:20: the sample week is laid out around it, so a run on any other day
- * opened the week elsewhere.
+ * Every capture happens on one fixed Thursday at 10:20, in one zone and language: the sample week is laid out around
+ * it, and a moving date repainted every image on every run, so only what changed changes in the history.
  */
-function captureMoment() {
-	const thursday = new Date()
-	thursday.setDate(thursday.getDate() - (thursday.getDay() + 6) % 7 + 3)
-	thursday.setHours(10, 20, 0, 0)
-	return thursday.getTime()
-}
+const capturedAt = { moment: Date.parse('2026-10-01T10:20:00+02:00'), timeZone: 'Europe/Berlin', locale: 'en-US' }
 
 /**
  * Replaces `Date`'s now with `now`, an expression of the real one. Nothing reads `Temporal.Now`, so this is the whole clock.
@@ -204,7 +199,7 @@ function clockAt(now: string) {
 function startServer(port: number, stageDir: string, clock: string) {
 	const child = spawn(process.execPath, ['--import', `data:text/javascript,${encodeURIComponent(clock)}`, path.join(stageDir, 'out/server/server.mjs')], {
 		cwd: stageDir,
-		env: { ...process.env, MITRA_DEV: 'true', MITRA_PORT: String(port), MITRA_UPDATE_CHECK: 'off' },
+		env: { ...process.env, TZ: capturedAt.timeZone, MITRA_DEV: 'true', MITRA_PORT: String(port), MITRA_UPDATE_CHECK: 'off' },
 		stdio: ['ignore', 'pipe', 'pipe'],
 	})
 	child.stderr.on('data', chunk => consola.debug(String(chunk).trim()))
@@ -228,6 +223,7 @@ function startChrome(port: number, profileDir: string) {
 		'--force-device-scale-factor=1',
 		'--force-color-profile=srgb',
 		'--font-render-hinting=none',
+		`--lang=${capturedAt.locale}`,
 		'about:blank',
 	], { stdio: ['ignore', 'ignore', 'ignore'] })
 }
@@ -237,6 +233,12 @@ function startChrome(port: number, profileDir: string) {
 type Clip = { x: number, y: number, width: number, height: number }
 
 async function capture(page: Devtools, file: string, transparent: boolean, clip?: Clip) {
+	// A transition caught halfway (a progress ring filling in) differed run to run; endless ones (spinners) never settle.
+	await page.evaluate(`
+		const settling = document.getAnimations().filter(animation => animation.effect?.getComputedTiming().endTime !== Infinity && animation.playState === 'running' && !(animation.timeline instanceof ScrollTimeline || animation.timeline instanceof ViewTimeline))
+		await Promise.all(settling.map(animation => animation.finished.catch(() => undefined)))
+		await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+	`)
 	await page.send('Emulation.setDefaultBackgroundColorOverride',
 		transparent ? { color: { r: 0, g: 0, b: 0, a: 0 } } : {})
 	const { data } = await page.send('Page.captureScreenshot', {
@@ -540,7 +542,7 @@ async function main() {
 	try {
 		stageServer(stageDir)
 		// The page's clock stands still, so every capture reads 10:20. The server's runs on from there: its sync pacing measures elapsed time.
-		const moment = captureMoment()
+		const { moment } = capturedAt
 		processes.push(startServer(appPort, stageDir, clockAt(`RealDate.now() + ${moment - Date.now()}`)))
 		const origin = `http://127.0.0.1:${appPort}/`
 		await waitFor(async () => (await fetch(`${origin}api/health`)).ok, 'the app server')
@@ -559,6 +561,10 @@ async function main() {
 		await browser.send('Page.enable')
 		await browser.send('Page.addScriptToEvaluateOnNewDocument', { source: clockAt(String(moment)) })
 		await browser.send('Runtime.enable')
+		await browser.send('Emulation.setTimezoneOverride', { timezoneId: capturedAt.timeZone })
+		await browser.send('Emulation.setLocaleOverride', { locale: capturedAt.locale })
+		// A capture is a still: endless motion (the dial of a task in progress) stood at another angle in every run.
+		await browser.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] })
 		await browser.send('Emulation.setDeviceMetricsOverride', {
 			width: viewport.width,
 			height: viewport.height,

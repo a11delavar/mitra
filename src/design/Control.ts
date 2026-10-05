@@ -4,7 +4,7 @@ import { Component, eventListener } from '@a11d/lit'
 export abstract class Control extends Component {
 	static override readonly shadowRootOptions: ShadowRootInit = { ...Component.shadowRootOptions, delegatesFocus: true }
 
-	private readonly internals = this.attachInternals()
+	protected readonly internals = this.attachInternals()
 
 	// A dialog looks for its autofocus delegate when it opens, which can be before this control has rendered one.
 	protected override initialized() {

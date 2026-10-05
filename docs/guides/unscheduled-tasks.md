@@ -53,11 +53,11 @@ Mitra keeps the order itself, so other apps don't see it.
 
 ## Set a due date
 
-Open the task, press **Due date** and pick a day. You can add a time as well. To remove the due date, press the **✕** beside it.
+Open the task, press **Due date** and pick a day. To remove the due date, press the **✕** beside it.
 
 A task with a due date shows a small flag, in the views and in the Planning tab. Scheduling, unscheduling or moving the task never changes its due date.
 
-An all-day task is due on a day. If you give the task times, its due date gets a time too, 17:00 on the same day, which you can change.
+An all-day task is due on a day. To give it a time, turn off **All day** at the end of the due date, which shows while you're on it. That gives the whole task times, so its due date becomes 17:00 on the same day, which you can change.
 
 ## Set an estimate
 
@@ -96,7 +96,7 @@ Unscheduling removes a task's schedule and returns it to the Planning tab. There
 
 The task keeps its due date, and the length of its schedule becomes its estimate. Its reminders stay if it has a due date for them to count down to, and are removed otherwise.
 
-The **✕** beside the end date does something else. It doesn't unschedule the task, it only shortens it to the day it starts.
+The **✕** beside the end date does something else. It doesn't unschedule the task, it turns it into a [moment](#moments).
 
 > [!NOTE]
 > Only tasks can be unscheduled. An event always has a date. A task that repeats on a schedule, such as a weekly review, can't be unscheduled either.
@@ -121,7 +121,7 @@ Repeating tasks are never overdue.
 
 A **moment** is a scheduled task with a start and no end, for something you do at one point in time rather than over a stretch of it, such as taking your morning medication at 7:30. In the week view it shows as a slim, one-line entry at its start time.
 
-To turn a task into a moment, open it and press the **✕** beside its end time. To give it an end again, press **End time**.
+To turn a task into a moment, open it and press the **✕** beside its end date. To give it an end again, press **End date**.
 
 ## Which calendars support this
 

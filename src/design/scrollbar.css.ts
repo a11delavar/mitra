@@ -6,7 +6,7 @@ import { unsafeCSS } from '@a11d/lit'
  * so the standard properties are only Firefox's.
  */
 export const scrollbar = unsafeCSS`
-	--scrollbar-width: 0.5rem;
+	--scrollbar-width: 0.375rem;
 
 	&::-webkit-scrollbar {
 		inline-size: var(--scrollbar-width);

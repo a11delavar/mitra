@@ -376,12 +376,14 @@ export function updateEvent(entry: Entry) {
 			...(entry.recurrence !== undefined ? { recurrence: entry.recurrence } : {}),
 		})
 	}
+	// `null` clears; an absent date is the stored one to the server, and JSON drops an undefined one.
 	return Api.put<Entry>(`/entries/${entry.id}?tz=${tz()}`, Object.assign(entry.clone(), {
 		recurrence: entry.recurrence ?? null,
 		reminders: entry.reminders ?? null,
 		participants: entry.participants ?? null,
 		start: entry.start ?? null,
 		end: entry.end ?? null,
+		due: entry.due ?? null,
 	}))
 }
 

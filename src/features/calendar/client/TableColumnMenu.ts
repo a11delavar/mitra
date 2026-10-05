@@ -152,13 +152,7 @@ export class TableColumnMenu extends Component {
 		const { window } = this
 		const custom = window.kind === 'custom'
 		const { start, end } = window.bounds() ?? TableWindow.default.bounds()!
-		const choose = (from: string, to: string) => {
-			const range = TableWindow.parse(`custom:${from}:${to}`)
-			if (range) {
-				this.windowChange.dispatch(range)
-			}
-		}
-		const day = TableWindow.dayOf
+		const choose = (from?: DateTime, to?: DateTime) => from && to && this.windowChange.dispatch(TableWindow.between(from, to))
 		return html`
 			<hr>
 			${TableWindow.presets.map(option => html`
@@ -166,8 +160,8 @@ export class TableColumnMenu extends Component {
 			`)}
 			<div class="range" role="group" aria-label=${t('Custom range')}>
 				<span class="label" ?data-checked=${custom}>${t('Custom range')}</span>
-				<mitra-date-field label=${t('From')} .value=${day(start)} @change=${(e: CustomEvent<string | undefined>) => e.detail && choose(e.detail, day(end))}></mitra-date-field>
-				<mitra-date-field label=${t('Until')} .value=${day(end)} @change=${(e: CustomEvent<string | undefined>) => e.detail && choose(day(start), e.detail)}></mitra-date-field>
+				<mitra-date-field label=${t('From')} .value=${start} @change=${(e: CustomEvent<DateTime | undefined>) => choose(e.detail, end)}></mitra-date-field>
+				<mitra-date-field label=${t('Until')} .value=${end} @change=${(e: CustomEvent<DateTime | undefined>) => choose(start, e.detail)}></mitra-date-field>
 			</div>
 		`
 	}

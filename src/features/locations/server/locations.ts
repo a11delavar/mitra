@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
 import { orm } from '../../../infrastructure/database/orm.js'
+import { recentLocations, type LocationSuggestion } from './recentLocations.js'
 
 const logger = createLogger('Locations')
 
@@ -15,20 +16,14 @@ interface PhotonFeature {
 	properties?: Record<string, unknown>
 }
 
-interface LocationSuggestion {
-	name: string
-	detail: string
-	type?: string
-	recent?: boolean
-}
-
 export const locationsRouter = Router()
 
 locationsRouter.get('/', async (req, res) => {
 	const { q, lang, lat, lon } = req.query as { q?: string, lang?: string, lat?: string, lon?: string }
 	const query = q?.trim() ?? ''
 
-	const recents = await recentLocations(query)
+	const em = orm.em.fork()
+	const recents = await recentLocations(em, (await req.user.sources(em)).map(source => source.id), query)
 	if (query.length < 2) {
 		return res.json(recents)
 	}
@@ -63,19 +58,6 @@ locationsRouter.get('/', async (req, res) => {
 
 function full(suggestion: LocationSuggestion): string {
 	return suggestion.detail ? `${suggestion.name}, ${suggestion.detail}` : suggestion.name
-}
-
-async function recentLocations(query: string): Promise<Array<LocationSuggestion>> {
-	const em = orm.em.fork()
-	const escaped = query.replace(/[\\%_]/g, match => `\\${match}`)
-	const rows = await em.getConnection().execute(
-		'select location from entry where location <> \'\' and location like \'%\' || ? || \'%\' escape \'\\\' group by location order by max(start) desc limit 4',
-		[escaped],
-	) as Array<{ location: string }>
-	return rows.map(row => {
-		const [name = row.location, ...rest] = row.location.split(', ')
-		return { name, detail: rest.join(', '), recent: true }
-	})
 }
 
 const TYPE_KEYS = new Set(['amenity', 'shop', 'leisure', 'tourism', 'office', 'craft', 'historic', 'sport', 'railway', 'aeroway', 'healthcare'])
