@@ -1,99 +1,80 @@
 ---
 title: Tempo
-description: Sync your Jira worklogs both ways. See booked hours on your calendar, and log, move, resize or retitle time directly from Mitra.
+description: See the hours you book in Tempo on your calendar, and book, move, resize and delete them from Mitra.
 ---
 
-Mitra connects to [Tempo](https://www.tempo.io/), the time-tracking platform for Jira. The unit it syncs is the **worklog**: hours logged against Jira issues on a given day. Your worklogs appear as ordinary timed entries on the calendar, side-by-side with the meetings and tasks that produced them.
+[Tempo](https://www.tempo.io/) is a time-tracking app for Jira. Mitra shows your **worklogs**, the hours you booked on Jira issues, as timed entries on your calendar, next to the meetings and tasks the time went into.
 
-Worklogs sync **both ways**:
-- **Move or resize** an entry in Mitra to adjust its start time or duration in Tempo.
-- **Edit the title** in Mitra to update the worklog description in Tempo.
-- **Delete** an entry in Mitra to delete the worklog in Tempo.
-- **Create a new entry** in Mitra with a Jira issue key to book new time straight to Tempo.
+Worklogs sync both ways. Move or resize an entry to change when and how long you worked, edit its description to change the worklog's note, delete it to delete the worklog, or create one to book new time.
 
-There is nothing to set up on the server. You connect from the app with your Atlassian and Tempo API tokens.
+You connect from the app with two API tokens. There's nothing to set up on the server.
 
 ## Connect your timesheet
 
-Connecting requires both a **Tempo API token** and an **Atlassian API token**:
+Mitra needs a token from Tempo and one from Atlassian: Tempo holds the hours, and Jira knows the issues and who you are.
 
-1. **Create a Tempo API token:**
-   - In Jira / Tempo, go to **Settings (gear icon) → Data Access → API integration**.
-   - Select **New Token**, enter a name (e.g. "Mitra"), and copy the generated token.
-2. **Create an Atlassian API token:**
-   - Go to [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
-   - Select **Create API token**, name it, and copy the token.
-3. **Add the integration in Mitra:**
-   - Open the sidebar, select **Add Integration → Tempo**, and fill in:
-     - **Site URL**: your Atlassian URL (for example `https://your-company.atlassian.net`)
-     - **Tempo API Token**: the token from Step 1
-     - **Atlassian Account E-mail**: the email address of your Atlassian account
-     - **Atlassian API Token**: the token from Step 2
-4. Enable the **My worklogs** calendar source in the source picker.
+1. Create a Tempo API token. In Jira, open Tempo's **Settings** (the gear icon) → **Data Access** → **API integration**, choose **New Token**, name it "Mitra", and copy the token.
+2. Create an Atlassian API token at [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens) with **Create API token**, and copy it. Create both tokens as the same Jira user.
+3. In Mitra, choose **Add Integration** at the foot of the sidebar, then **Tempo**, and fill in:
+   - **Site URL**, your Atlassian address, such as `https://your-company.atlassian.net`.
+   - **Tempo API Token**, the token from step 1.
+   - **Atlassian Account E-mail**, the email address of your Atlassian account.
+   - **Atlassian API Token**, the token from step 2.
+4. Press **Connect**. Mitra lists one calendar, **My worklogs**.
+5. Leave it turned on and press **Save**.
 
-> [!NOTE]
-> **Why two tokens?** Tempo and Atlassian are separate APIs. Tempo stores the worklog duration and issue ID, while Jira resolves issue keys (like `PROJ-123`), issue summaries, and your user identity. Both tokens are required for two-way synchronization.
+Tempo limits how often apps may call it, so Mitra syncs it about once a minute (see [how syncing works](README.md#how-syncing-works)).
 
-## How worklogs appear on the calendar
+## How worklogs look
 
-Each worklog shows as a timed calendar entry titled with the **Jira issue it is booked against**, its key and summary:
+An entry's title is the Jira issue the time is booked on, its key and summary:
 
 ```text
 ACME-1234 Code review for auth migration
 ```
 
-- **The title is the issue; the note is yours.** The worklog's own description becomes the entry's description, shown under the title in the editor. Tempo's own web app shows them the same way. The ticket says what the time was *about*, while the note is often just an activity label ("Review") or text Jira wrote for you ("Working on work item ACME-1234").
-- **Titles are read-only.** Mitra will not rename a Jira issue because you edited a calendar entry, so the title field is locked on a saved worklog and you edit the note instead. If the time is on the wrong ticket, delete the entry and book it again.
-- **Unknown issues:** if Jira can't name the issue (deleted, or no longer visible to you), the title falls back to `#<issue id>` and the entry keeps working.
-- **Time zones:** Tempo stores worklogs in bare wall-clock time without time zone offsets. Mitra translates worklog times using the **time zone configured in your Jira user profile**, ensuring times match what you see in the Tempo web app.
-- **Instances without start times:** Some Jira/Tempo deployments disable explicit worklog start times. In those environments, all worklogs for a day share the same default start time and stack vertically on the grid, with exact durations preserved.
+The worklog's note is the entry's description. Tempo's own app shows them the same way, because the issue says what the time was about, while the note is often an activity label such as "Review", or text Jira wrote for you, such as "Working on work item ACME-1234".
 
-## Booking time from Mitra
+The title belongs to the issue, so you can't edit it on a saved worklog: Mitra doesn't rename a Jira issue because you edited a calendar entry. Edit the description to say what you did. If Jira can't name the issue, because it was deleted or you can no longer see it, the title shows `#` and the issue's ID, and the entry keeps working.
 
-To log new time directly to Jira from Mitra, create a new timed entry on your Tempo calendar source and include the **Jira issue key** anywhere in the title:
+Tempo stores worklogs as plain clock times, without a time zone. Mitra reads them in the time zone of your Jira profile, so they show at the same times as in Tempo.
 
-| You type | Jira issue booked | Logged description |
-| --- | --- | --- |
-| `ACME-1234 Team standup` | `ACME-1234` | `ACME-1234 Team standup` |
-| `Investigating ACME-1234 regression` | `ACME-1234` | `Investigating ACME-1234 regression` |
-| `ACME-1234` | `ACME-1234` | `ACME-1234` |
+Some Tempo sites turn off start times. There, every worklog of a day starts at the same time, so they stack up, but their lengths are right.
 
-Mitra verifies the issue key against your accessible Jira projects. If you create an entry without a valid issue key, Mitra prompts you to provide one before saving.
+## Book time from Mitra
 
-What you type is logged **whole**: the key is read out of the line, never cut out of it. Once the worklog is saved, the title becomes the issue's own key and summary, and what you typed is kept as the note. That swap happens once, at booking, which is also why the title is editable while you are writing it and locked afterwards.
+Create a timed entry in **My worklogs**, and put the Jira issue key anywhere in its title:
+
+| You type | Booked on |
+| --- | --- |
+| `ACME-1234 Team standup` | `ACME-1234` |
+| `Investigating ACME-1234 regression` | `ACME-1234` |
+| `ACME-1234` | `ACME-1234` |
+
+Mitra checks the key against the Jira projects you can see. If the title has no such key, or Jira has no such issue, Mitra doesn't book anything and tells you why.
+
+The worklog's note is what you wrote in the description, or, if you left that empty, the whole title as you typed it. Once the time is booked, the title becomes the issue's key and summary. That swap happens once, when you book, which is why you can edit the title while you write it and not afterwards.
 
 > [!TIP]
-> **Fast time booking:** To log time for a recurring task or yesterday's ticket, duplicate an existing worklog entry (hold **Alt** and drag, or choose **⋯ → Duplicate**) and drag it to the new time slot.
+> To book time on an issue you've booked before, duplicate one of its entries: hold <kbd>Alt</kbd> (<kbd>⌥</kbd> on a Mac) while you drag it to the new time, or choose **Duplicate** in its editor's **⋯** menu.
 
-### Constraints when editing worklogs
+## Change a worklog
 
-- **Issue keys cannot be changed:** The Tempo API does not support moving an existing worklog to a different Jira issue. To switch issues, delete the worklog and create a new entry with the correct key.
-- **Preserved attributes:** Mitra preserves all custom Tempo attributes (such as billable hours, account categories, or custom work tags) when updating entries.
-- **Approval periods:** If your timesheet period is closed, locked, or approved in Tempo, Tempo will reject attempts to add, edit, or delete worklogs for those dates.
+Moving, resizing, deleting and editing the description go straight to Tempo. A few things to know:
 
-## Open issue in Jira
+- A worklog stays on its issue. Tempo can't move a worklog to another issue, so to book the time elsewhere, delete the entry and create a new one with the right key.
+- Mitra keeps Tempo's own details of a worklog, such as its billable time and work attributes, when it changes it.
+- When a timesheet period is closed or approved in Tempo, Tempo refuses to add, change or delete worklogs in it.
 
-Every Tempo worklog entry includes **Open in Jira** in its **⋯** menu, taking you directly to the issue in your browser.
+To open the issue in Jira, choose **Open in Jira** in the editor's **⋯** menu.
 
-## What Tempo can and can't hold
+## What a worklog can't hold
 
-A Tempo worklog is a block of time with a description attached to a Jira issue. Mitra automatically hides unsupported calendar fields:
-
-| Feature | In a Tempo source |
-| --- | --- |
-| Two-way booked time & duration | ✅ |
-| Issue key & summary as the title | ✅ read-only (it belongs to the issue, not the entry) |
-| Worklog note | ✅ the entry's description |
-| Open ticket in Jira | ✅ via **⋯ → Open in Jira** |
-| All-day entries | ❌ a worklog is timed hours on a specific day |
-| Reminders & Recurrence | ❌ |
-| Location & Participants | ❌ |
-| Task relationships & dependencies | ❌ |
+A worklog is a stretch of time on one day, booked on one issue. So a Tempo calendar holds only timed entries: no all-day entries, repeats, reminders, location, participants, relationships, busy or free, visibility or [availability](../availability.md). Mitra hides these fields on worklogs.
 
 ## Troubleshooting
 
-- **401 Unauthorized error when connecting:** Verify that your Atlassian Account E-mail matches the account that generated the Atlassian API token, and ensure the Tempo API token was created under the same Jira user.
-- **Worklogs show at the wrong time of day:** Check the time zone configured in your Jira account profile settings (*Account settings → Time zone*).
-- **Cannot change ticket key:** Tempo does not allow reassigning existing worklogs to a different issue. Delete the entry in Mitra and create a new one with the desired ticket key.
-- **Cannot edit the title:** a worklog's title is its Jira issue's summary, which Mitra never rewrites. Edit the description to record what you did.
-- **Worklogs stack at the top of the day:** Your organization has disabled start times in Tempo Global Configuration. The hours and durations remain accurate.
+- If Mitra says "Tempo rejected the API token", create a new Tempo API token and enter it under the account's **⋯ → Edit**.
+- If Mitra says "Jira rejected the e-mail and API token", check that the email address belongs to the Atlassian account that created the API token.
+- If worklogs show at the wrong time of day, check the time zone in your Jira profile (**Account settings** → **Time zone**). After changing it, use **Re-import entries** in the **⋯** menu of **My worklogs**, so the worklogs you already have move too.
+- If worklogs stack up at the same time each day, your Tempo site has turned off start times. The hours are still right.

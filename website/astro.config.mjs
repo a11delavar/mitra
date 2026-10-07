@@ -1,13 +1,16 @@
 // @ts-check
+import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'astro/config'
 import { unified } from '@astrojs/markdown-remark'
+import sitemap from '@astrojs/sitemap'
 import starlight from '@astrojs/starlight'
 import starlightLlmsTxt from 'starlight-llms-txt'
 import { remarkAlert } from 'remark-github-blockquote-alert'
 import { visit } from 'unist-util-visit'
 import { base, demo, docsBase, site } from './site.mjs'
+import { lastCommitDate } from './tools/git.mjs'
 
 // ../docs stays GitHub-browsable Markdown; the plugins below translate it for the site.
 
@@ -65,43 +68,44 @@ function remarkDocsAssets() {
 }
 
 /**
- * The docs' shape, declared once: it drives the sidebar AND the redirects from the pre-/docs/ routes.
- * @type {Array<{ label: string, items: Array<{ slug: string, label?: string, hidden?: boolean }> }>}
+ * The docs' shape, declared once: it drives the sidebar AND the redirects from the pre-/docs/ routes. An entry is a
+ * group of pages, or one page on its own.
+ * @type {Array<{ label: string, items: Array<{ slug: string, label?: string }> } | { slug: string, label: string }>}
  */
 const sections = [
+	{ slug: '', label: 'Getting started' },
 	{
-		label: 'Getting Started',
+		label: 'Views',
 		items: [
-			{ slug: '', label: 'Overview' },
-			{ slug: 'getting-started/installation' },
-			{ slug: 'getting-started/configuration' },
+			{ slug: 'views', label: 'Overview' },
+			{ slug: 'views/week' },
+			{ slug: 'views/month' },
+			{ slug: 'views/year' },
+			{ slug: 'views/timeline' },
+			{ slug: 'views/table' },
 		],
 	},
 	{
-		label: 'Using Mitra',
+		label: 'Features',
 		items: [
-			{ slug: 'guides/views' },
-			{ slug: 'guides/calendars' },
-			{ slug: 'guides/unscheduled-tasks' },
-			{ slug: 'guides/routines' },
-			{ slug: 'guides/availability' },
-			{ slug: 'guides/participants' },
-			{ slug: 'guides/links' },
-			{ slug: 'guides/notifications' },
-			{ slug: 'guides/location-autocomplete' },
-			// Reached from Views; listed only so its old URL keeps redirecting.
-			{ slug: 'guides/table-view', hidden: true },
-			{ slug: 'guides/keyboard-shortcuts' },
-			{ slug: 'guides/settings' },
-			{ slug: 'guides/default-calendar-app' },
-		],
-	},
-	{
-		label: 'Relationships',
-		items: [
-			{ slug: 'guides/relationships', label: 'Overview' },
-			{ slug: 'guides/relationships/hierarchy', label: 'Hierarchy & Subtasks' },
-			{ slug: 'guides/relationships/dependencies' },
+			{ slug: 'entries' },
+			{ slug: 'repeats' },
+			{ slug: 'time-zones' },
+			{ slug: 'calendars' },
+			{ slug: 'planning' },
+			{ slug: 'routines' },
+			{ slug: 'availability' },
+			{ slug: 'subtasks' },
+			{ slug: 'dependencies' },
+			{ slug: 'participants' },
+			{ slug: 'links' },
+			{ slug: 'reminders' },
+			{ slug: 'location' },
+			// The app around the features, last.
+			{ slug: 'settings' },
+			{ slug: 'install-app' },
+			{ slug: 'calendar-files' },
+			{ slug: 'shortcuts' },
 		],
 	},
 	{
@@ -110,9 +114,9 @@ const sections = [
 			{ slug: 'integrations', label: 'Overview' },
 			{ slug: 'integrations/mitra' },
 			{ slug: 'integrations/caldav' },
-			{ slug: 'integrations/google-calendar' },
-			{ slug: 'integrations/apple-calendar' },
-			{ slug: 'integrations/calendar-subscriptions' },
+			{ slug: 'integrations/google' },
+			{ slug: 'integrations/apple' },
+			{ slug: 'integrations/subscriptions' },
 			{ slug: 'integrations/notion' },
 			{ slug: 'integrations/tempo' },
 		],
@@ -120,17 +124,12 @@ const sections = [
 	{
 		label: 'Administration',
 		items: [
-			{ slug: 'guides/multi-user' },
-			{ slug: 'guides/backups' },
-			{ slug: 'guides/updates' },
-			{ slug: 'guides/health-checks' },
-			{ slug: 'guides/logging' },
-		],
-	},
-	{
-		label: 'Reference',
-		items: [
-			{ slug: 'reference/environment-variables' },
+			{ slug: 'configuration' },
+			{ slug: 'sso' },
+			{ slug: 'backups' },
+			{ slug: 'updates' },
+			{ slug: 'health-checks' },
+			{ slug: 'logging' },
 		],
 	},
 ]
@@ -138,34 +137,130 @@ const sections = [
 /** A docs slug as Starlight's collection id. */
 const docId = (/** @type {string} */ slug) => slug ? `${docsBase}/${slug}` : docsBase
 
-const sidebar = sections.map(section => ({
-	label: section.label,
-	items: section.items.filter(item => !item.hidden).map(({ slug, label }) => ({
-		slug: docId(slug),
-		...(label ? { label } : {}),
-	})),
-}))
+/** A docs slug as its route. */
+const docPath = (/** @type {string} */ slug) => slug ? `/${docsBase}/${slug}/` : `/${docsBase}/`
+
+/** The pages of an entry, whether a group or a page on its own. */
+const pagesOf = (/** @type {typeof sections[number]} */ section) => 'items' in section ? section.items : [section]
+
+const sidebar = sections.map(section => 'items' in section
+	? {
+		label: section.label,
+		items: section.items.map(({ slug, label }) => ({
+			slug: docId(slug),
+			...(label ? { label } : {}),
+		})),
+	}
+	: { slug: docId(section.slug), label: section.label })
 
 // The docs as plain Markdown for language models (llmstxt.org), in sidebar order, one set per section.
 const llmsTxt = starlightLlmsTxt({
 	description: 'Mitra is a free, open source, self-hosted calendar that puts tasks on the same timeline as events. '
-		+ 'It syncs with the calendars people already use (CalDAV, Google Calendar, iCloud, calendar subscriptions, Notion and Tempo) '
-		+ 'and runs as a single Docker container.',
-	customSets: sections.map(section => ({ label: section.label, paths: section.items.map(item => docId(item.slug)) })),
-	promote: sections.flatMap(section => section.items.map(item => docId(item.slug))),
+		+ 'It keeps calendars itself, with no account behind them, and syncs with the calendars people already use '
+		+ '(CalDAV, Google Calendar, iCloud, calendar subscriptions, Notion and Tempo). It runs as a single Docker container.',
+	customSets: sections.map(section => ({ label: section.label, paths: pagesOf(section).map(item => docId(item.slug)) })),
+	promote: sections.flatMap(section => pagesOf(section).map(item => docId(item.slug))),
 	optionalLinks: [
 		{ label: 'Source code', url: 'https://github.com/a11delavar/mitra', description: 'the repository, AGPL-3.0' },
 		{ label: 'Demo', url: demo, description: 'a public instance with sample data, reset per visitor' },
 	],
 })
 
-// The docs used to live at the site root; those URLs keep resolving.
-const redirects = Object.fromEntries(
-	sections
-		.flatMap(section => section.items.map(item => item.slug))
+/** Pages that moved inside the docs, old slug to new. */
+const moved = {
+	'guides/table-view': 'views/table',
+	'guides/relationships': 'subtasks',
+	'guides/relationships/hierarchy': 'subtasks',
+	'guides/relationships/dependencies': 'dependencies',
+	'guides/multi-user': 'sso',
+	'guides/unscheduled-tasks': 'planning',
+	'guides/notifications': 'reminders',
+	'guides/location-autocomplete': 'location',
+	'guides/default-calendar-app': 'calendar-files',
+	'guides/single-sign-on': 'sso',
+	'guides/keyboard-shortcuts': 'shortcuts',
+	'integrations/google-calendar': 'integrations/google',
+	'integrations/apple-calendar': 'integrations/apple',
+	'integrations/calendar-subscriptions': 'integrations/subscriptions',
+	'getting-started/configuration': 'configuration',
+	'reference/environment-variables': 'configuration',
+	'getting-started/installation': '',
+	'getting-started/first-steps': '',
+	'guides/availability': 'availability',
+	'guides/backups': 'backups',
+	'guides/calendar-files': 'calendar-files',
+	'guides/calendars': 'calendars',
+	'guides/configuration': 'configuration',
+	'guides/dependencies': 'dependencies',
+	'guides/health-checks': 'health-checks',
+	'guides/install-app': 'install-app',
+	'guides/links': 'links',
+	'guides/location': 'location',
+	'guides/logging': 'logging',
+	'guides/participants': 'participants',
+	'guides/planning': 'planning',
+	'guides/reminders': 'reminders',
+	'guides/routines': 'routines',
+	'guides/settings': 'settings',
+	'guides/shortcuts': 'shortcuts',
+	'guides/sso': 'sso',
+	'guides/subtasks': 'subtasks',
+	'guides/updates': 'updates',
+	'guides/views': 'views',
+	'guides/views/month': 'views/month',
+	'guides/views/table': 'views/table',
+	'guides/views/timeline': 'views/timeline',
+	'guides/views/week': 'views/week',
+	'guides/views/year': 'views/year',
+}
+
+// The docs used to live at the site root, and some pages have moved since; those URLs keep resolving.
+const redirects = Object.fromEntries([
+	...sections
+		.flatMap(section => pagesOf(section).map(item => item.slug))
 		.filter(Boolean)
-		.map(slug => [`/${slug}`, `/${docsBase}/${slug}/`])
-)
+		.map(slug => [`/${slug}`, docPath(slug)]),
+	...Object.entries(moved).flatMap(([from, to]) => [
+		[`/${from}`, docPath(to)],
+		[`/${docsBase}/${from}`, docPath(to)],
+	]),
+])
+
+/**
+ * The same redirects as Caddy rules, imported by the Caddyfile in ./Dockerfile: Astro alone can only write pages that
+ * jump on load, and a moved page should answer with a real 301.
+ * @type {import('astro').AstroIntegration}
+ */
+const caddyRedirects = {
+	name: 'caddy-redirects',
+	hooks: {
+		'astro:build:done': () => {
+			const rules = Object.entries(redirects).flatMap(([from, to]) => [`${base}${from}`, `${base}${from}/`]
+				.map(address => `redir ${address} ${base}${to} permanent`))
+			fs.writeFileSync(path.join(here, 'redirects.caddy'), `${rules.join('\n')}\n`)
+		},
+	},
+}
+
+/** The file a page is built from, repo-relative, so the sitemap can date it. */
+function sourceOf(/** @type {string} */ url) {
+	const route = new URL(url).pathname.slice(base.length)
+	if (route === '/') {
+		return 'website/src/pages/index.astro'
+	}
+	const slug = route.replace(new RegExp(`^/${docsBase}/?`), '').replace(/\/$/, '')
+	return [`docs/${slug}.md`, `docs/${slug ? `${slug}/` : ''}README.md`]
+		.find(file => fs.existsSync(path.resolve(here, '..', file)))
+}
+
+// Starlight brings its own sitemap only when the site has none; this one dates every page by its last commit.
+const datedSitemap = sitemap({
+	serialize(item) {
+		const source = sourceOf(item.url)
+		const date = source && lastCommitDate(source, path.resolve(here, '..'))
+		return date ? { ...item, lastmod: date.toISOString() } : item
+	},
+})
 
 export default defineConfig({
 	site: new URL(site).origin,
@@ -178,6 +273,8 @@ export default defineConfig({
 		}),
 	},
 	integrations: [
+		caddyRedirects,
+		datedSitemap,
 		starlight({
 			title: 'Mitra',
 			plugins: [llmsTxt],

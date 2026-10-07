@@ -4,12 +4,13 @@ import { docsBase, withBase } from '../../site.mjs'
 // Inlined, not <img>: most marks are drawn in `currentColor` and must take the page's ink.
 
 const providers = [
+	{ id: 'mitra', name: 'Mitra calendars', doc: 'integrations/mitra', text: 'Built in. Kept on your own server, with no account behind them.' },
 	{ id: 'caldav', name: 'CalDAV', doc: 'integrations/caldav' },
-	{ id: 'google', name: 'Google Calendar', doc: 'integrations/google-calendar' },
-	{ id: 'apple', name: 'Apple Calendar', doc: 'integrations/apple-calendar' },
+	{ id: 'google', name: 'Google Calendar', doc: 'integrations/google' },
+	{ id: 'apple', name: 'Apple Calendar', doc: 'integrations/apple' },
 	{ id: 'notion', name: 'Notion', doc: 'integrations/notion' },
 	{ id: 'tempo', name: 'Tempo', doc: 'integrations/tempo' },
-	{ id: 'ics', name: 'Subscriptions', doc: 'integrations/calendar-subscriptions' },
+	{ id: 'ics', name: 'Subscriptions', doc: 'integrations/subscriptions' },
 ]
 
 const files = import.meta.glob<string>('../logos/*.svg', { eager: true, query: '?raw', import: 'default' })
@@ -23,30 +24,41 @@ const marks = providers.map(provider => {
 ---
 
 <ul class="marks">
-	{marks.map(({ id, name, doc, svg }) => (
-		<li>
+	{marks.map(({ id, name, doc, text, svg }) => (
+		<li class:list={{ built: !!text }}>
 			<a href={withBase(`/${docsBase}/${doc}/`)}>
 				<span class:list={['mark', id]} set:html={svg} />
 				<span class="name">{name}</span>
+				{text && <span class="text">{text}</span>}
 			</a>
 		</li>
 	))}
 </ul>
 
 <style>
-	/* Six, three or two across, so a row is never left with one card on its own. */
+	/* The built-in card stands beside the six providers, which sit three, three or two across so a
+	   row is never left with one card on its own. */
 	.marks {
 		list-style: none;
 		margin: 0;
 		padding: 0;
 		display: grid;
-		grid-template-columns: repeat(6, minmax(0, 1fr));
+		grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
 		gap: 0.75rem;
+	}
+
+	.built {
+		grid-row: span 2;
 	}
 
 	@media (width < 64rem) {
 		.marks {
 			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
+
+		.built {
+			grid-row: auto;
+			grid-column: 1 / -1;
 		}
 	}
 
@@ -76,6 +88,11 @@ const marks = providers.map(provider => {
 		transform: translateY(-2px);
 	}
 
+	.built a {
+		padding: 1.5rem 1.25rem;
+		background: var(--color-surface);
+	}
+
 	.mark {
 		display: inline-flex;
 		inline-size: 1.75rem;
@@ -90,5 +107,16 @@ const marks = providers.map(provider => {
 	.name {
 		font-size: 0.875rem;
 		font-weight: 550;
+	}
+
+	.built .name {
+		font-size: 1rem;
+	}
+
+	.text {
+		margin-block-start: auto;
+		max-inline-size: 22rem;
+		font-size: 0.875rem;
+		color: var(--color-text-muted);
 	}
 </style>

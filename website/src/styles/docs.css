@@ -84,12 +84,16 @@ mobile-starlight-toc > nav {
 .sidebar-content {
 	padding-block-start: 1.25rem;
 
-	ul.top-level > li > details > summary > .group-label > span,
-	ul.top-level > li > .large {
+	ul.top-level > li > details > summary > .group-label > span {
 		font-size: 0.75rem;
 		font-weight: 600;
 		color: var(--color-text-muted);
 		letter-spacing: 0;
+	}
+
+	/* A page on its own at the top level (Getting started) reads as a page, not as a group heading. */
+	ul.top-level > li > a.large:not([aria-current='page']) {
+		font-weight: 400;
 	}
 
 	a {
@@ -107,6 +111,33 @@ mobile-starlight-toc > nav {
 			background: color-mix(in srgb, var(--color-accent) 8%, transparent);
 			color: var(--color-text);
 			font-weight: 600;
+		}
+	}
+
+	/* Groups fold open and shut. An engine without `::details-content` or `interpolate-size` snaps,
+	   as it did before; the clip margin keeps the first and last link's focus ring visible. */
+	details {
+		interpolate-size: allow-keywords;
+
+		&::details-content {
+			block-size: 0;
+			opacity: 0;
+			overflow: clip;
+			overflow-clip-margin: 0.5rem;
+		}
+
+		&[open]::details-content {
+			block-size: auto;
+			opacity: 1;
+		}
+
+		@media (prefers-reduced-motion: no-preference) {
+			&::details-content {
+				transition:
+					block-size 0.3s var(--mitra-ease),
+					opacity 0.2s ease,
+					content-visibility 0.3s allow-discrete;
+			}
 		}
 	}
 }

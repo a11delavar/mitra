@@ -50,8 +50,7 @@ draft: true
 
 This page doesn't exist. It may have moved, or the link may be out of date.
 
-- [Documentation](${base}/${docsBase}/)
-- [Installation](${base}/${docsBase}/getting-started/installation/)
+- [Getting started](${base}/${docsBase}/)
 - [Home](${base}/)
 `)
 

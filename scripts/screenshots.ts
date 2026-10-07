@@ -1,6 +1,7 @@
 /// <reference types="node" />
 import { execSync, spawn, type ChildProcess } from 'node:child_process'
 import fs from 'node:fs'
+import http from 'node:http'
 import net from 'node:net'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -199,10 +200,29 @@ function clockAt(now: string) {
 	})()`
 }
 
-function startServer(port: number, stageDir: string, clock: string) {
+/** What the stand-in geocoder answers to any search: a city with the places a search for it turns up, and its namesake. */
+const geneva = [
+	{ name: 'Geneva', state: 'Geneva', country: 'Switzerland', osm_key: 'place', osm_value: 'city' },
+	{ name: 'Geneva Airport', city: 'Le Grand-Saconnex', state: 'Geneva', country: 'Switzerland', osm_key: 'aeroway', osm_value: 'aerodrome' },
+	{ name: 'Genève-Cornavin', city: 'Geneva', country: 'Switzerland', osm_key: 'railway', osm_value: 'station' },
+	{ name: 'Palais des Nations', street: 'Avenue de la Paix', city: 'Geneva', country: 'Switzerland', osm_key: 'tourism', osm_value: 'attraction' },
+	{ name: 'Parc des Bastions', city: 'Geneva', country: 'Switzerland', osm_key: 'leisure', osm_value: 'park' },
+	{ name: 'Geneva', state: 'Illinois', country: 'United States', osm_key: 'place', osm_value: 'town' },
+]
+
+/** Stands in for Photon, so the location capture shows the same places on every run and asks nobody outside. */
+function startGeocoder(port: number) {
+	const body = JSON.stringify({ type: 'FeatureCollection', features: geneva.map(properties => ({ type: 'Feature', properties })) })
+	return http.createServer((_request, response) => {
+		response.writeHead(200, { 'Content-Type': 'application/json' })
+		response.end(body)
+	}).listen(port, '127.0.0.1')
+}
+
+function startServer(port: number, stageDir: string, clock: string, geocoder: string) {
 	const child = spawn(process.execPath, ['--import', `data:text/javascript,${encodeURIComponent(clock)}`, path.join(stageDir, 'out/server/server.mjs')], {
 		cwd: stageDir,
-		env: { ...process.env, TZ: capturedAt.timeZone, MITRA_DEV: 'true', MITRA_PORT: String(port), MITRA_UPDATE_CHECK: 'off' },
+		env: { ...process.env, TZ: capturedAt.timeZone, MITRA_DEV: 'true', MITRA_PORT: String(port), MITRA_UPDATE_CHECK: 'off', MITRA_PHOTON_URL: geocoder },
 		stdio: ['ignore', 'pipe', 'pipe'],
 	})
 	child.stderr.on('data', chunk => consola.debug(String(chunk).trim()))
@@ -461,6 +481,17 @@ async function openFound(page: Devtools, heading: string) {
 	await editorOpened(page, heading)
 }
 
+/** Picks a zone in the open time zone picker by typing part of its city. The picker draws its field and list in its shadow root. */
+async function pickZone(page: Devtools, city: string) {
+	const picker = '[...document.querySelectorAll("mitra-time-zone-picker")].find(picker => picker.hasAttribute("open"))?.shadowRoot'
+	await waitFor(() => page.evaluate<boolean>(`return !!${picker}?.querySelector("mitra-search-field")`), 'the time zone picker')
+	await click(page, `${picker}.querySelector("mitra-search-field")`)
+	await page.send('Input.insertText', { text: city })
+	const option = `[...(${picker}?.querySelectorAll('mitra-option') ?? [])].find(option => option.querySelector('.city')?.textContent.includes(${JSON.stringify(city)}))`
+	await waitFor(() => page.evaluate<boolean>(`return !!${option}`), `${city} in the time zone picker`)
+	await click(page, option)
+}
+
 /** Wednesday's work, the sample's one labelled window: its place, Home office, is all it says. */
 const homeOffice = `[...document.querySelectorAll('mitra-availability-segment')].find(segment => {
 	const label = segment.querySelector('.label')
@@ -513,6 +544,31 @@ const keys = {
 	question: () => ['?', 'Slash', 191, 8] as const,
 	comma: () => [',', 'Comma', 188, 2] as const,
 	escape: () => ['Escape', 'Escape', 27, 0] as const,
+	create: () => ['c', 'KeyC', 67, 0] as const,
+}
+
+/** The open editor with a list hanging off it (`hanging`, an expression), padded, kept inside the viewport. */
+async function aroundEditorWith(page: Devtools, hanging: string, padding: number): Promise<Clip> {
+	const rect = await page.evaluate<Clip | null>(`
+		const boxes = [${openEditor}, ${hanging}]
+			.filter(Boolean).map(element => element.getBoundingClientRect()).filter(box => box.width > 0)
+		if (boxes.length < 2) {
+			return null
+		}
+		const x = Math.min(...boxes.map(box => box.x)), y = Math.min(...boxes.map(box => box.y))
+		return { x, y, width: Math.max(...boxes.map(box => box.right)) - x, height: Math.max(...boxes.map(box => box.bottom)) - y }
+	`)
+	if (!rect) {
+		throw new Error(`Nothing open beside the editor: ${hanging}`)
+	}
+	const width = details.surface.width
+	const height = Math.min(viewport.height, Math.round(rect.height + padding * 2))
+	return {
+		x: Math.min(viewport.width - width, Math.max(0, Math.round(rect.x + rect.width / 2 - width / 2))),
+		y: Math.min(viewport.height - height, Math.max(0, Math.round(rect.y - padding))),
+		width,
+		height,
+	}
 }
 
 /** Measured from `.axis`: its `.time` parent is `display: contents` and reports zero. */
@@ -546,13 +602,15 @@ async function main() {
 
 	const appPort = await freePort()
 	const debugPort = await freePort()
+	const geocoderPort = await freePort()
 	const processes = new Array<ChildProcess>()
+	const geocoder = startGeocoder(geocoderPort)
 
 	try {
 		stageServer(stageDir)
 		// The page's clock stands still, so every capture reads 10:20. The server's runs on from there: its sync pacing measures elapsed time.
 		const { moment } = capturedAt
-		processes.push(startServer(appPort, stageDir, clockAt(`RealDate.now() + ${moment - Date.now()}`)))
+		processes.push(startServer(appPort, stageDir, clockAt(`RealDate.now() + ${moment - Date.now()}`), `http://127.0.0.1:${geocoderPort}`))
 		const origin = `http://127.0.0.1:${appPort}/`
 		await waitFor(async () => (await fetch(`${origin}api/health`)).ok, 'the app server')
 		consola.info(`Mitra on ${origin}`)
@@ -643,6 +701,16 @@ async function main() {
 			await capture(browser, `participants-detail-${theme}`, false, await around(browser, openEditor, details.surface.width, 28))
 			await press(browser, ...keys.escape())
 
+			// Its Repeat list open, then the Custom dialog, closed again without a change.
+			await openChip(browser, 'Weekly Team Sync')
+			const repeat = `${openEditor}.querySelector('mitra-repeat-field mitra-select')`
+			await click(browser, repeat)
+			await capture(browser, `repeat-detail-${theme}`, false, await aroundEditorWith(browser, `${repeat}.shadowRoot.querySelector('mitra-listbox')`, 28))
+			await click(browser, `[...${repeat}.querySelectorAll('mitra-option')].find(option => option.textContent.trim() === 'Custom…')`)
+			await capture(browser, `repeat-custom-detail-${theme}`, false, await aroundOpenDialog(browser, 28))
+			await press(browser, ...keys.escape())
+			await press(browser, ...keys.escape())
+
 			await openFound(browser, 'Declutter the Flat')
 			await capture(browser, `hierarchy-detail-${theme}`, false, await around(browser, openEditor, details.surface.width, 28))
 			await press(browser, ...keys.escape())
@@ -655,6 +723,38 @@ async function main() {
 			await openFound(browser, 'DA: Study Dynamic Programming')
 			await capture(browser, `links-detail-${theme}`, false, await around(browser, openEditor, details.surface.width, 28))
 			await press(browser, ...keys.escape())
+
+			// A new entry, searched for a place and never saved: the reload below discards it, so no run's search becomes the next one's recent.
+			await press(browser, ...keys.create())
+			await waitFor(() => browser.evaluate<boolean>(`return !!${openEditor}`), 'the editor of a new entry')
+			await click(browser, 'document.querySelector("mitra-location-field textarea")')
+			await browser.send('Input.insertText', { text: 'Geneva' })
+			await waitFor(() => browser.evaluate<boolean>('return document.querySelectorAll("mitra-location-field mitra-option").length >= 6'), 'location suggestions')
+			await browser.evaluate('await new Promise(resolve => setTimeout(resolve, 400))')
+			await capture(browser, `location-detail-${theme}`, false, await aroundEditorWith(browser, 'document.querySelector("mitra-location-field mitra-listbox")', 28))
+
+			// A new entry given another zone in its editor, never saved: the reload throws it away again.
+			await open(browser, origin, theme)
+			await press(browser, ...keys.create())
+			await waitFor(() => browser.evaluate<boolean>(`return !!${openEditor}`), 'the editor of a new entry')
+			// 11:00 in Dubai is 9:00 in Berlin: the entry, and its editor with it, stay in the part of the day on screen.
+			await click(browser, `${openEditor}.querySelector('.zone-label')`)
+			await pickZone(browser, 'Dubai')
+			await waitFor(() => browser.evaluate<boolean>(`return !!${openEditor}.querySelector('.lens')`), 'the time zone switch')
+			await settle(browser)
+			await browser.evaluate('await new Promise(resolve => setTimeout(resolve, 600))')
+			await capture(browser, `time-zone-detail-${theme}`, false, await around(browser, openEditor, details.surface.width, 28))
+
+			// A zone added to the week through its own ＋, then taken away again: the zones belong to the account.
+			await open(browser, origin, theme)
+			await show(browser, 'week')
+			await scrollToMorning(browser)
+			await click(browser, 'document.querySelector("mitra-time-zone-header .add")')
+			await pickZone(browser, 'New York')
+			await waitFor(() => browser.evaluate<boolean>('return !!document.querySelector("mitra-time-zone-header [data-alternative]")'), 'the extra time zone column')
+			await settle(browser)
+			await capture(browser, `time-zones-detail-${theme}`, false, await detail(browser, details.sidebar))
+			await browser.evaluate('await fetch("/api/user/time-zones", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ timeZones: [] }) })')
 
 			// Last, and the only one with availability shown. A tap on the label reaches the window beneath, as a reader's would.
 			await open(browser, origin, theme, { availability: true })
@@ -673,6 +773,7 @@ async function main() {
 		for (const child of processes) {
 			child.kill()
 		}
+		geocoder.close()
 		// Chrome can hold its profile past the kill; a leftover must never mask the real error.
 		await new Promise(resolve => setTimeout(resolve, 500))
 		// Unlinked first, so the recursive removal below can never follow it into the real dist/.

@@ -1,29 +1,32 @@
 ---
-import { docsBase, withBase } from '../../site.mjs'
+import { demo, docsBase, withBase } from '../../site.mjs'
 import AppStack from '../components/AppStack.astro'
 import Icon from '../components/Icon.astro'
 import ProviderMarks from '../components/ProviderMarks.astro'
 import Shot from '../components/Shot.astro'
+import { version } from '../generated/meta.json'
 import Site from '../layouts/Site.astro'
 
 const docs = (slug = '') => withBase(`/${docsBase}/${slug}`)
 
+const release = version.split('.').slice(0, 2).join('.')
+
 const layers = [
 	{
-		title: 'The calendar',
-		text: 'Week, month, year, timeline and table views of the same entries. Switch between them and you stay where you were.',
+		title: 'The week',
+		text: 'Hour by hour, a column per day. Drag to create, move and resize.',
 	},
 	{
 		title: 'Your events',
-		text: 'Brought in from the calendars you already use and kept in sync. Changes you make in Mitra go back to the original calendar.',
+		text: 'Kept in Mitra, or synced with the calendars you already use.',
 	},
 	{
 		title: 'Your tasks',
-		text: 'Tasks sit on the same days as your events. Drag one onto the calendar to schedule it, or back to the list to unschedule it.',
+		text: 'On the same days as your events. Drag one into your week to schedule it.',
 	},
 	{
 		title: 'How they connect',
-		text: 'Link subtasks and dependencies. When one task moves, you can see what depends on it.',
+		text: 'Subtasks and dependencies, drawn as lines between entries.',
 	},
 ]
 
@@ -49,40 +52,37 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 
 <Site
 	title="Mitra | Self-hosted calendar for your events and tasks"
-	description="Mitra is a free, open source, self-hosted calendar that puts your tasks on the same timeline as your events and syncs with the calendars you already use."
+	description="Mitra is a free, open source, self-hosted calendar that puts your tasks on the same timeline as your events. Keep your calendars in Mitra itself, or sync the ones you already use."
 >
 	<script type="application/ld+json" slot="head" set:html={JSON.stringify(website)} />
 	<div class="progress" aria-hidden="true"></div>
 
 	<section class="hero">
 		<div class="intro">
+			<a class="news" href={`https://github.com/a11delavar/mitra/releases/tag/v${version}`}>
+				Mitra {release} is out
+				<span>See what's new</span>
+			</a>
 			<h1>One calendar to plan<br />your events and tasks.</h1>
 			<p class="lede">
-				Mitra is a self-hosted calendar that puts your tasks on the same timeline as your events.
-				It connects to the calendars you already use and keeps them in sync.
+				A self-hosted calendar that puts your tasks on the same timeline as your events. Keep your
+				calendars in Mitra, or sync the ones you already use.
 			</p>
 			<div class="actions">
-				<a class="cta" href={docs('getting-started/installation/')}>
-					Get started
+				<a class="cta" href={demo}>
+					Try the demo
 					<Icon name="arrow-right" />
 				</a>
-				<a class="ghost" href={docs()}>Read the docs</a>
+				<a class="ghost" href={docs('#install-mitra')}>Install Mitra</a>
 			</div>
-			<p class="fineprint">Free and open source. Runs in a single Docker container.</p>
+			<p class="fineprint">No sign-up needed.</p>
 		</div>
-		<div class="frame">
+		<a class="frame" href={demo} aria-label="Open this week in the demo">
 			<Shot name="week" alt="Mitra's week view, with events and tasks in the same columns" width={2200} priority />
-		</div>
+		</a>
 	</section>
 
 	<section class="layers">
-		<header class="lead">
-			<h2>Events and tasks on one timeline</h2>
-			<p>
-				Most tools make you pick between a calendar for your time and a to-do app for your tasks.
-				Mitra puts both in one place, so you can see when there is actually room to get things done.
-			</p>
-		</header>
 		<div class="story">
 			<div class="stage">
 				<AppStack />
@@ -102,12 +102,8 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 	</section>
 
 	<section class="views">
-		<div class="copy">
+		<div class="legend">
 			<h2>The same plan in other views</h2>
-			<p class="intro-text">
-				Every view shows the same entries, and you can switch at any time. Pick the one that suits
-				what you are doing.
-			</p>
 			<div class="tabs" role="radiogroup" aria-label="View">
 				{views.map(({ name, title }, index) => (
 					<Fragment>
@@ -116,7 +112,12 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 					</Fragment>
 				))}
 			</div>
-			{views.map(({ name, text }) => <p class="note" data-view={name}>{text}</p>)}
+			{views.map(({ name, text }) => (
+				<p class="note" data-view={name}>
+					{text}{' '}
+					<a class="link" href={`${demo}/${name}`}>Try it in the demo.</a>
+				</p>
+			))}
 		</div>
 		<div class="screens">
 			{views.map(({ name, title }) => (
@@ -130,66 +131,69 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 
 	<section class="integrations">
 		<header class="lead">
-			<h2>Works with the calendars you already use</h2>
-			<p>
-				Connect an account and Mitra imports its calendars and task lists, then keeps them in sync.
-				Your data stays with the provider.
-			</p>
+			<h2>On its own, or with the calendars you have</h2>
+			<p>Keep calendars in Mitra itself, or sync the ones you already use, both ways.</p>
 		</header>
 		<ProviderMarks />
-		<p class="aside">
-			CalDAV servers can hold both events and tasks. Notion databases work as task lists, and
-			published calendar feeds can be added as read-only subscriptions.{' '}
-			<a class="link" href={docs('integrations/')}>See what each integration supports.</a>
-		</p>
+		<p class="aside"><a class="link" href={docs('integrations/')}>See what each integration supports.</a></p>
 	</section>
 
 	<section class="hosting">
 		<div class="lead">
 			<h2>Host it yourself</h2>
-			<p>
-				Mitra runs as one Docker container with a built-in database. Everything it stores is in a
-				single folder, so a backup is a copy of that folder.
-			</p>
+			<p>One Docker container, with everything it stores in one folder. Free and open source under the AGPL-3.0.</p>
 			<div class="actions">
-				<a class="cta" href={docs('getting-started/installation/')}>
+				<a class="cta" href={docs('#install-mitra')}>
 					Installation guide
 					<Icon name="arrow-right" />
 				</a>
-				<a class="ghost" href={docs('guides/backups/')}>Backups</a>
+				<a class="ghost" href={demo}>Try the demo</a>
 			</div>
 		</div>
 		<figure class="terminal">
-			<figcaption>compose.yaml</figcaption>
-			<pre><code>{`services:
+			<figcaption>
+				compose.yaml
+				<button class="copy" type="button" data-copies="compose" aria-label="Copy compose.yaml">
+					<Icon name="copy" class="idle" />
+					<Icon name="check" class="done" />
+					<span>Copy</span>
+				</button>
+			</figcaption>
+			<pre><code id="compose">{`services:
   mitra:
     image: ghcr.io/a11delavar/mitra:latest
     restart: unless-stopped
     ports:
       - '3000:3000'
     volumes:
-      - ~/mitra:/app/data
-    environment:
-      MITRA_URL: 'https://mitra.example.com'`}</code></pre>
-			<p class="run"><span class="prompt">$</span> docker compose up -d</p>
+      - ~/mitra:/app/data`}</code></pre>
+			<p class="run">
+				<span class="prompt">$</span>
+				<code id="command">docker compose up -d</code>
+				<button class="copy" type="button" data-copies="command" aria-label="Copy the command">
+					<Icon name="copy" class="idle" />
+					<Icon name="check" class="done" />
+				</button>
+			</p>
 		</figure>
 	</section>
-
-	<section class="close">
-		<h2>Set it up in a few minutes</h2>
-		<p>Mitra is open source under the AGPL-3.0. It is still early, so expect some rough edges before 1.0.</p>
-		<div class="actions">
-			<a class="cta" href={docs('getting-started/installation/')}>
-				Get started
-				<Icon name="arrow-right" />
-			</a>
-			<a class="ghost" href="https://github.com/a11delavar/mitra">
-				<Icon name="github" />
-				View on GitHub
-			</a>
-		</div>
-	</section>
 </Site>
+
+<script>
+	// A click on the code selects all of it (CSS); the button saves selecting at all.
+	for (const button of document.querySelectorAll<HTMLButtonElement>('button[data-copies]')) {
+		button.addEventListener('click', async () => {
+			const text = document.getElementById(button.dataset.copies!)?.textContent ?? ''
+			try {
+				await navigator.clipboard.writeText(text)
+				button.dataset.copied = ''
+				setTimeout(() => delete button.dataset.copied, 1600)
+			} catch {
+				// Without clipboard access the code is still one click from being selected.
+			}
+		})
+	}
+</script>
 
 <style>
 	section {
@@ -240,8 +244,7 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 		font-size: clamp(1.75rem, 3.6vw, 2.5rem);
 	}
 
-	.lead p,
-	.intro-text {
+	.lead p {
 		margin: 1rem 0 0;
 		font-size: 1.0625rem;
 		color: var(--color-text-muted);
@@ -305,6 +308,30 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 		max-inline-size: 46rem;
 	}
 
+	.news {
+		display: inline-flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 0.5rem;
+		margin-block-end: 1.75rem;
+		padding: 0.3rem 0.875rem;
+		border: 1px solid var(--mitra-hairline-strong);
+		border-radius: 999px;
+		font-size: 0.8125rem;
+		font-weight: 550;
+		color: var(--color-text-muted);
+		text-decoration: none;
+		transition: background 0.15s ease, color 0.15s ease;
+	}
+
+	.news span {
+		color: var(--color-accent);
+	}
+
+	.news:hover {
+		color: var(--color-text);
+		background: var(--mitra-wash);
+	}
+
 	h1 {
 		font-size: clamp(2.25rem, 6vw, 4rem);
 		line-height: 1.05;
@@ -325,8 +352,17 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 	}
 
 	.frame {
+		display: block;
 		margin-block-start: clamp(3rem, 7vw, 5.5rem);
 		margin-inline: calc(-1 * clamp(0rem, 4vw, 5rem));
+	}
+
+	.frame :global(.shot) {
+		transition: border-color 0.3s var(--mitra-ease);
+	}
+
+	.frame:hover :global(.shot) {
+		border-color: var(--mitra-hairline-strong);
 	}
 
 	/* Translate only: rotating or scaling resamples the app's small text into blur. */
@@ -477,7 +513,7 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 		gap: 2.5rem;
 	}
 
-	.copy {
+	.legend {
 		max-inline-size: 36rem;
 	}
 
@@ -601,7 +637,10 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 	}
 
 	.terminal figcaption {
-		padding: 0.625rem 1rem;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.375rem 0.5rem 0.375rem 1rem;
 		border-block-end: 1px solid var(--mitra-hairline);
 		font-family: var(--mitra-font-mono);
 		font-size: 0.75rem;
@@ -615,6 +654,7 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 	}
 
 	.terminal code {
+		user-select: all;
 		font-family: var(--mitra-font-mono);
 		font-size: 0.8125rem;
 		line-height: 1.7;
@@ -623,9 +663,10 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 
 	.terminal .run {
 		display: flex;
+		align-items: center;
 		gap: 0.625rem;
 		margin: 0;
-		padding: 0.875rem 1rem;
+		padding: 0.375rem 0.5rem 0.375rem 1rem;
 		border-block-start: 1px solid var(--mitra-hairline);
 		font-family: var(--mitra-font-mono);
 		font-size: 0.8125rem;
@@ -633,26 +674,63 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 
 	.terminal .prompt {
 		color: var(--color-text-muted);
+		user-select: none;
+	}
+
+	.terminal .run code {
+		flex: 1;
+	}
+
+	.copy {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		block-size: 2rem;
+		padding-inline: 0.5rem;
+		border: 0;
+		border-radius: 0.375rem;
+		background: transparent;
+		font: inherit;
+		font-size: 0.75rem;
+		color: var(--color-text-muted);
+		cursor: pointer;
+		transition: background 0.15s ease, color 0.15s ease;
+
+		&:hover {
+			background: var(--mitra-wash);
+			color: var(--color-text);
+		}
+
+		:global(.done) {
+			display: none;
+		}
+
+		/* Confirms in place for a moment: a check, and the label reads Copied. */
+		&[data-copied] {
+			color: var(--color-text);
+
+			:global(.idle) {
+				display: none;
+			}
+
+			:global(.done) {
+				display: inline-flex;
+			}
+
+			span {
+				font-size: 0;
+
+				&::after {
+					content: 'Copied';
+					font-size: 0.75rem;
+				}
+			}
+		}
 	}
 
 	@media (width < 60rem) {
 		.hosting {
 			grid-template-columns: minmax(0, 1fr);
 		}
-	}
-
-	/* ── Close ────────────────────────────────────────────────────────────────────────────── */
-
-	.close {
-		text-align: center;
-	}
-
-	.close p {
-		margin: 1rem 0 0;
-		color: var(--color-text-muted);
-	}
-
-	.close .actions {
-		justify-content: center;
 	}
 </style>

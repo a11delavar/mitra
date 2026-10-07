@@ -1,5 +1,5 @@
 ---
-import { docsBase, withBase } from '../../site.mjs'
+import { demo, docsBase, withBase } from '../../site.mjs'
 import { version } from '../generated/meta.json'
 import Brand from './Brand.astro'
 ---
@@ -16,19 +16,22 @@ import Brand from './Brand.astro'
 		<nav class="columns">
 			<div>
 				<h2>Docs</h2>
-				<a href={withBase(`/${docsBase}/getting-started/installation/`)}>Installation</a>
-				<a href={withBase(`/${docsBase}/getting-started/configuration/`)}>Configuration</a>
-				<a href={withBase(`/${docsBase}/reference/environment-variables/`)}>Environment variables</a>
+				<a href={withBase(`/${docsBase}/`)}>Getting started</a>
+				<a href={withBase(`/${docsBase}/configuration/`)}>Configuration</a>
 			</div>
 			<div>
 				<h2>Integrations</h2>
+				<a href={withBase(`/${docsBase}/integrations/mitra/`)}>Mitra calendars</a>
 				<a href={withBase(`/${docsBase}/integrations/caldav/`)}>CalDAV</a>
-				<a href={withBase(`/${docsBase}/integrations/google-calendar/`)}>Google Calendar</a>
-				<a href={withBase(`/${docsBase}/integrations/apple-calendar/`)}>Apple Calendar</a>
+				<a href={withBase(`/${docsBase}/integrations/google/`)}>Google Calendar</a>
+				<a href={withBase(`/${docsBase}/integrations/apple/`)}>Apple Calendar</a>
 				<a href={withBase(`/${docsBase}/integrations/notion/`)}>Notion</a>
+				<a href={withBase(`/${docsBase}/integrations/tempo/`)}>Tempo</a>
+				<a href={withBase(`/${docsBase}/integrations/subscriptions/`)}>Subscriptions</a>
 			</div>
 			<div>
 				<h2>Project</h2>
+				<a href={demo}>Demo</a>
 				<a href="https://github.com/a11delavar/mitra">Source</a>
 				<a href="https://github.com/a11delavar/mitra/releases">Releases</a>
 				<a href="https://github.com/a11delavar/mitra/issues">Issues</a>

@@ -7,9 +7,10 @@
 **One calendar to plan your events and tasks**
 
 [![CI](https://github.com/a11delavar/mitra/actions/workflows/qa.yml/badge.svg)](https://github.com/a11delavar/mitra/actions/workflows/qa.yml)
-[![License: AGPL v3](https://img.shields.io/badge/license-AGPL%20v3-white.svg)](./LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/license-AGPL%20v3-white.svg)](LICENSE)
 [![Image: ghcr.io](https://img.shields.io/badge/image-ghcr.io%2Fa11delavar%2Fmitra-2496ED?logo=docker&logoColor=white)](https://github.com/a11delavar/mitra/pkgs/container/mitra)
 [![Docs](https://img.shields.io/badge/docs-mitracal.com-f97316?logo=markdown&logoColor=white)](https://mitracal.com/docs/)
+[![Demo](https://img.shields.io/badge/demo-demo.mitracal.com-22c55e)](https://demo.mitracal.com)
 
 <br />
 <br />
@@ -27,16 +28,18 @@
 
 ## Why Mitra
 
-Most tools make you choose: a *calendar* for your time, or a *to-do app* for your tasks. Mitra puts both on one timeline, so you plan your day in one place. It's built to be **yours**: self-hosted, private, and connected to the accounts you already have instead of replacing them.
+Most tools make you choose between a calendar for your time and a to-do app for your tasks. Mitra puts both on one timeline, so you can see when there's actually room to get things done. It runs on your own server, keeps calendars itself if you like, and connects to the ones you already have.
+
+Want to look around first? **[Try the demo](https://demo.mitracal.com)**: you get a calendar of your own with sample entries, and nothing to install.
 
 ## Features
 
-- **Events and tasks together**: on one timeline, in week, month, year, timeline and table views. Create anything by dragging, whether timed, multi-day or all-day.
-- **Works with the calendars you already use**: CalDAV accounts (events *and* tasks), Google Calendar, Apple Calendar and Notion task databases sync in the background, and more integrations are coming.
-- **Reminders**: sent as push notifications, even when no tab is open.
-- **Invitations**: add a guest list to any entry and see the replies come in. Your calendar account sends the invitations.
-- **Your look**: per-calendar colours, light and dark themes, and full right-to-left support.
-- **Self-hosted and private**: one small container with a database you own and can back up in seconds.
+- Events and tasks on one timeline, in week, month, year, timeline and table views. Drag to create, move and resize anything.
+- Calendars stored in Mitra itself, with no account behind them, or synced both ways with CalDAV, Google Calendar, Apple Calendar, Notion and Tempo. Published calendar feeds come in as read-only subscriptions.
+- Planning: tasks without a date wait in the Planning tab with a due date and an estimate, until you drag them into your week.
+- Availability, subtasks and dependencies, reminders as push notifications, guest lists with replies, and a command palette for the keyboard.
+- Seven languages, right to left included, light and dark themes, and a color for every calendar.
+- One small container with a database you own, no telemetry, and sign-in for several people when you need it.
 
 ## Get started
 
@@ -50,17 +53,17 @@ services:
       - '3000:3000'
     volumes:
       - ~/mitra:/app/data
-    environment:
-      MITRA_URL: 'https://mitra.example.com' # the public URL users reach Mitra at
+    # environment:
+    #   MITRA_URL: 'https://mitra.example.com' # once Mitra has a public address
 ```
 
 ```sh
 docker compose up -d   # → http://localhost:3000
 ```
 
-Out of the box Mitra runs single-user with no login. Everything you create is stored in the `~/mitra` directory, so backing that up backs up everything.
+Out of the box, Mitra is for one person and has no sign-in. Everything it stores is in the `~/mitra` folder, so backing that up backs up everything.
 
-From here, the **[documentation](https://mitracal.com/docs/)** covers configuration, connecting your calendars (CalDAV, Google, Apple, Notion), multi-user sign-in and everything else. You can also read it as Markdown in [`docs/`](./docs).
+From here, the **[documentation](https://mitracal.com/docs/)** covers your first calendar, connecting accounts, sign-in for several people and everything else. You can also read it as Markdown in [`docs/`](docs).
 
 ## Contributing
 

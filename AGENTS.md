@@ -54,7 +54,7 @@
 - **Comments & Architecture**:
   - Comments must explain non-obvious constraints, invariants, or platform traps (1-3 sentences). No line-by-line narration.
   - Update `AGENTS.md` immediately when new architectural decisions are made.
-  - Operator docs live in `docs/` (Markdown, Starlight frontmatter, GitHub alerts `> [!NOTE]`, relative links). Sync env vars in `docs/reference/environment-variables.md`, provider docs in `docs/integrations/<provider>.md`, shared guides in `docs/guides/`.
+  - Operator docs live in `docs/` (Markdown, Starlight frontmatter, GitHub alerts `> [!NOTE]`, relative links). Sync env vars in `docs/configuration.md`, provider docs in `docs/integrations/<provider>.md`, everything else in `docs/` itself (views in `docs/views/`).
 
 ## Design Library (`src/design`)
 Feature components compose design primitives and hold domain logic only. Registered via `design/index.ts`.
@@ -474,7 +474,7 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
   - `.github/workflows/release.yml`: Publishes GitHub Release from top section of `CHANGELOG.md`.
   - `.github/workflows/cleanup.yml`: Prunes untagged GHCR manifests.
 - **Changelog**: `CHANGELOG.md` generated via git-cliff (`npm run changelog`, `cliff.toml`).
-- **Website Deploy**: `.github/workflows/website.yml` builds `website/` in CI (`fetch-depth: 0`: docs pages date themselves from `git log`) and publishes `ghcr.io/a11delavar/mitra-website` (Caddy, port 8080, amd64 + arm64), whose Dockerfile carries the whole server config.
+- **Website Deploy**: `.github/workflows/website.yml` builds `website/` in CI (`fetch-depth: 0`: docs pages date themselves from `git log`) and publishes `ghcr.io/a11delavar/mitra-website` (Caddy, port 8080, amd64 + arm64), whose Dockerfile carries the whole server config. Moved pages go in `moved` in `astro.config.mjs`: the build writes them as Astro redirect pages and as `redirects.caddy` (real 301s, imported by the Caddyfile).
 
 ## Conventions
 - **Commit Messages**: Single-line `type: Capitalized phrase` (`feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `test:`, `ci:`, `build:`, `infra:`, `chore:`). Commit subject becomes the user-facing release note in `CHANGELOG.md`; state the end-user effect, not implementation mechanics.
