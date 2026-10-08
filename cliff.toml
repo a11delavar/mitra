@@ -23,7 +23,9 @@ trim = true
 
 [git]
 conventional_commits = true
-filter_unconventional = false
+# A commit's body may carry further `type: Phrase` lines, each its own entry; anything else in a body is dropped.
+split_commits = true
+filter_unconventional = true
 # Runs of spaces collapse, so a stray double space never reaches the release notes.
 commit_preprocessors = [
 	{ pattern = ' {2,}', replace = " " },

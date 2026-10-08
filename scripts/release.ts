@@ -49,7 +49,7 @@ class NotesFile {
 		const unreleased = parseChangelog(run('npx git-cliff --unreleased --strip all')).find(section => section.version === 'unreleased')
 		const features = unreleased?.categories.filter(category => category.type === 'features').flatMap(linesOf).map(line => line.subject) ?? []
 		const highlights = (features.length ? features.slice(0, 5) : ['The first highlight'])
-			.map(subject => `## ${subject}\nA paragraph or two in the reader's words.\n\n![What the capture shows](capture-name)\n\nDocs: [Page](../../docs/page.md)\n`)
+			.map(subject => `## ${subject}\nA paragraph or two in the reader's words.\n\n<picture>\n\t<source media="(prefers-color-scheme: dark)" srcset="capture-name-dark.webp">\n\t<img src="capture-name-light.webp" alt="What the capture shows">\n</picture>\n\nDocs: [Page](../../docs/page.md)\n`)
 		this.write(ReleaseNotes.parse(`---\ntitle: \n---\nTwo or three sentences on what ${this.minor} is about.\n\n${highlights.join('\n')}`))
 	}
 }

@@ -40,6 +40,8 @@ html {
 	font-family: var(--mitra-font);
 	font-optical-sizing: auto;
 	scroll-behavior: smooth;
+	/* A link to a section stops below the sticky header (about 3.75rem) with room to breathe, not under it. */
+	scroll-padding-block-start: 6rem;
 	-webkit-text-size-adjust: 100%;
 }
 

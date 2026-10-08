@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { isDemo, isDeveloperSystem } from '../../../infrastructure/environment.js'
 import { updateChecker } from './updates.js'
-import { getChangelog, runningReleaseUrl } from './changelog.js'
+import { getReleaseSources, runningReleaseUrl } from './changelog.js'
 
 export const metaRouter = Router()
 
@@ -24,8 +24,6 @@ metaRouter.get('/', (_req, res) => {
 	})
 })
 
-metaRouter.get('/changelog', async (req, res) => {
-	const sections = await getChangelog()
-	const limit = Number(req.query.limit) || undefined
-	return res.json(limit ? sections.slice(0, limit) : sections)
+metaRouter.get('/releases', async (_req, res) => {
+	return res.json(await getReleaseSources())
 })

@@ -85,6 +85,8 @@ export class Film extends Scene {
 			await reducedMotion(context.browser, false)
 			await this.shoot({ ...context, record: clip => new Recording(context.browser, frames, context.theme, clip) })
 			encodeFilm(frames, file)
+			// Its first frame as a still beside it: what GitHub shows of the film, and the film's poster until it plays.
+			await toWebp(path.join(frames, '0000.png'), file.replace(/\.mp4$/, '.webp'))
 		} finally {
 			fs.rmSync(frames, { recursive: true, force: true })
 		}

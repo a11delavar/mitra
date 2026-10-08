@@ -3,8 +3,9 @@ import path from 'node:path'
 import { createMarkdownProcessor } from '@astrojs/markdown-remark'
 import sharp from 'sharp'
 import { base, docsBase } from '../site.mjs'
-import { linesOf, parseChangelog, type ChangelogCategory, type ParsedChangelogSection } from '../../src/features/about/Changelog'
-import { ReleaseNotes, type ReleaseCapture } from '../../src/features/about/ReleaseNotes'
+import { linesOf, parseChangelog } from '../../src/features/about/Changelog'
+import { Release as ReleaseModel } from '../../src/features/about/Release'
+import { ReleaseDocs, ReleaseNotes, type ReleaseCapture } from '../../src/features/about/ReleaseNotes'
 
 export { linesOf }
 
@@ -12,72 +13,36 @@ export { linesOf }
 const repoRoot = path.resolve(process.cwd(), '..')
 const releasesDir = path.join(repoRoot, 'releases')
 
-/** Where a release stands: in development, the newest shipped (what the `:latest` image runs), or earlier. */
-export type ReleaseState = 'draft' | 'latest' | 'released'
-
-/** A minor release as the site shows it: its notes, if its folder has them, and its changelog sections. */
-export class Release {
+/** A release as the site shows it, read from `CHANGELOG.md` and the `releases/` folders. */
+export class Release extends ReleaseModel {
 	static #all: Array<Release> | undefined
 
-	/** Every release, newest first: each `releases/<minor>/` folder and each minor the changelog lists. */
+	/** Every release, newest first. */
 	static all(): Array<Release> {
 		// Vite does not watch ../releases, so the dev server reads it on every request.
 		if (Release.#all && !import.meta.env.DEV) {
 			return Release.#all
 		}
-		const sections = Map.groupBy(parseChangelog(fs.readFileSync(path.join(repoRoot, 'CHANGELOG.md'), 'utf8')), section => ReleaseNotes.minorOf(section.version))
-		sections.delete('unreleased')
+		const sections = parseChangelog(fs.readFileSync(path.join(repoRoot, 'CHANGELOG.md'), 'utf8'))
 		const folders = !fs.existsSync(releasesDir) ? [] : fs.readdirSync(releasesDir)
 			.filter(name => /^\d+\.\d+$/.test(name) && fs.existsSync(path.join(releasesDir, name, 'README.md')))
-		const releases = [...new Set([...sections.keys(), ...folders])].sort(Release.newestFirst).map(version => {
-			const notes = folders.includes(version) ? ReleaseNotes.parse(fs.readFileSync(path.join(releasesDir, version, 'README.md'), 'utf8')) : undefined
-			return new Release(version, notes, sections.get(version) ?? [])
-		})
-		// The newest release that shipped is the one the `:latest` image runs.
-		releases.find(release => release.date)?.markLatest()
-		return Release.#all = releases
+		const notes = new Map(folders.map(version => [version, ReleaseNotes.parse(fs.readFileSync(path.join(releasesDir, version, 'README.md'), 'utf8'))]))
+		return Release.#all = Release.list(sections, notes)
 	}
 
 	static find(version: string) {
 		return Release.all().find(release => release.version === version)
 	}
 
-	static newestFirst(a: string, b: string) {
-		const [aMajor = 0, aMinor = 0] = a.split('.').map(Number)
-		const [bMajor = 0, bMinor = 0] = b.split('.').map(Number)
-		return (bMajor - aMajor) || (bMinor - aMinor)
-	}
-
-	readonly version: string
-	readonly notes: ReleaseNotes | undefined
-	/** The `x.y.0` changelog section: everything the minor shipped. */
-	readonly everything: ParsedChangelogSection | undefined
-	/** The `x.y.z` sections after it, newest first. */
-	readonly patches: Array<ParsedChangelogSection>
-	#latest = false
-
-	constructor(version: string, notes: ReleaseNotes | undefined, sections: Array<ParsedChangelogSection>) {
-		this.version = version
-		this.notes = notes
-		this.everything = sections.find(section => section.version === `${version}.0`)
-		this.patches = sections.filter(section => section !== this.everything).sort((a, b) => Number(b.version.split('.')[2]) - Number(a.version.split('.')[2]))
-	}
-
-	markLatest() {
-		this.#latest = true
-	}
-
-	get date() {
-		return this.notes?.date ?? this.everything?.date
-	}
-
-	get state(): ReleaseState {
-		return this.#latest ? 'latest' : this.date ? 'released' : 'draft'
-	}
-
 	get url() {
 		return `${base}/releases/${this.version}/`
 	}
+
+	/** What the release shipped that its readers would notice, by category. */
+	get listed() {
+		return this.categories.filter(category => !Release.maintenance.has(category.type))
+	}
+
 
 	/** The notes' title, or the version alone for a release without notes. */
 	get title() {
@@ -93,22 +58,12 @@ export class Release {
 		return this.notes?.intro.replace(/\s+/g, ' ') || `What changed in Mitra ${this.version}: ${this.summary}.`
 	}
 
-	get highlights() {
-		return this.notes?.highlights ?? []
-	}
-
-	get counts() {
-		return (this.everything?.categories ?? [])
-			.map(category => ({ type: category.type, label: labelOf(category), count: linesOf(category).length }))
-			.filter(count => count.count > 0)
-	}
-
-	/** "24 features and 6 fixes", or the total when a release has neither. */
+	/** "24 features and 6 improvements", or the total when a release has neither. */
 	get summary() {
 		const count = (type: string) => this.counts.find(candidate => candidate.type === type)?.count ?? 0
 		const parts = [
 			count('features') ? plural(count('features'), 'feature', 'features') : '',
-			count('bug-fixes') ? plural(count('bug-fixes'), 'fix', 'fixes') : '',
+			count('improvements') ? plural(count('improvements'), 'improvement', 'improvements') : '',
 		].filter(Boolean)
 		if (parts.length) {
 			return parts.join(' and ')
@@ -142,6 +97,11 @@ export class Capture {
 		return this.capture.alt
 	}
 
+	/** Whether the release's folder holds the capture yet: the notes may name one before it is shot. */
+	get exists() {
+		return fs.existsSync(this.path('light')) || this.film
+	}
+
 	/** A film is an `.mp4` under the capture's name rather than a still. */
 	get film() {
 		return fs.existsSync(this.path('light', 'mp4'))
@@ -149,6 +109,11 @@ export class Capture {
 
 	url(theme: 'light' | 'dark') {
 		return `${base}/releases/${this.release.version}/${this.capture.file(theme, this.film ? 'mp4' : 'webp')}`
+	}
+
+	/** The still under the capture's name: the capture itself, or a film's first frame, its poster. */
+	poster(theme: 'light' | 'dark') {
+		return `${base}/releases/${this.release.version}/${this.capture.file(theme)}`
 	}
 
 	/** The pixel size of the light take, which the dark one shares, so the page lays the capture out before it loads. */
@@ -199,8 +164,7 @@ const plural = (count: number, one: string, many: string) => `${count} ${count =
 
 const labels: Record<string, string> = {
 	'features': 'Features',
-	'bug-fixes': 'Fixes',
-	'performance': 'Performance',
+	'improvements': 'Improvements',
 	'documentation': 'Documentation',
 	'refactors': 'Refactors',
 	'tests': 'Tests',
@@ -210,7 +174,7 @@ const labels: Record<string, string> = {
 }
 
 /** A category's label without cliff's glyph. */
-export function labelOf(category: ChangelogCategory): string {
+export function labelOf(category: { type: string, title: string }): string {
 	return labels[category.type] ?? category.title.replace(/^[^\p{L}]+/u, '').trim()
 }
 
@@ -229,18 +193,15 @@ export function formatDate(iso: string, style: 'short' | 'long' = 'short') {
 }
 
 const processor = createMarkdownProcessor()
+const docsPage = (page: string) => `${base}/${docsBase}/${page}`
 
 /** Renders a fragment of the notes, with the docs' relative links mapped onto the site's routes. */
 export async function renderMarkdown(markdown: string): Promise<string> {
-	return (await (await processor).render(markdown.replace(/\]\(((?:\.\.\/)+docs\/[^)\s]*)\)/g, (_match, href: string) => `](${docsUrl(href)})`))).code
+	return (await (await processor).render(ReleaseDocs.linked(markdown, docsPage))).code
 }
 
 /** The site's route of a docs page as the notes link it, `../../docs/views/table.md` being `/docs/views/table/`. */
 export function docsUrl(href: string) {
-	const match = href.match(/^(?:\.\.\/)+docs\/([^#]*?)(?:README)?\.md(#.*)?$/)
-	if (!match) {
-		return href
-	}
-	const route = match[1]!.replace(/\/$/, '')
-	return `${base}/${docsBase}/${route}${route ? '/' : ''}${match[2] ?? ''}`
+	const page = ReleaseDocs.pageOf(href)
+	return page === undefined ? href : docsPage(page)
 }

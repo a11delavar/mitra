@@ -1,13 +1,14 @@
 /**
  * A release's curated notes, `releases/<minor>/README.md`: frontmatter with the title and, once released, the date,
- * then an intro and one `##` per highlight. A highlight names its capture by the bare name of the files beside the
- * notes (`![alt](due-detail)` is `due-detail-light.webp` and `due-detail-dark.webp`, or `.mp4` for a film), and
- * closes with `Docs: [page](../../docs/page.md)`. Pure, shared by the website, the release scripts and the app.
+ * then an intro and one `##` per highlight. A highlight shows its capture as a `<picture>` of the files beside the
+ * notes, whose dark `<source>` GitHub picks by the reader's theme. A film is the same picture of its first frame, and
+ * the readers that can play it find its `.mp4` under the same name. Each closes with `Docs: [page](../../docs/page.md)`.
+ * Pure, shared by the website, the release scripts and the app.
  */
 export class ReleaseNotes {
-	static readonly reservedHeadings = new Set(['Upgrading', 'Contributors'])
+	static readonly reservedHeadings = new Set(['Why Mitra', 'Upgrading', 'Contributors'])
 	static readonly frontmatterPattern = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/
-	static readonly capturePattern = /^!\[([^\]]*)\]\(([A-Za-z0-9-]+)\)[ \t]*$/m
+	static readonly capturePattern = /^<picture>[\s\S]*?<img src="(?<name>[A-Za-z0-9-]+)-light\.webp" alt="(?<alt>[^"]*)"[^>]*>[\s\S]*?<\/picture>[ \t]*$/m
 	static readonly docsPattern = /^Docs: \[([^\]]+)\]\(([^)\s]+)\)[ \t]*$/m
 
 	/** `0.6` for `v0.6.2`, `0.6.0-rc.1` or `0.6`: the folder a version's notes live in. */
@@ -53,9 +54,18 @@ export class ReleaseNotes {
 		return this.sections.filter(section => section instanceof ReleaseHighlight)
 	}
 
-	/** The sections that are not highlights, such as Upgrading. The contributors are read as people, not as a section. */
+	/**
+	 * A letter before the highlights, under `## Why Mitra`, for a release that needs one (the first did): the intro stays
+	 * one paragraph, which is all the releases list, the feed and GitHub show.
+	 */
+	get foreword() {
+		const section = this.sections.find(section => section.heading === 'Why Mitra')
+		return section && ReleaseLetter.of(section.markdown)
+	}
+
+	/** The sections after the highlights, such as Upgrading. The contributors are read as people, not as a section. */
 	get rest() {
-		return this.sections.filter(section => !(section instanceof ReleaseHighlight) && section.heading !== 'Contributors')
+		return this.sections.filter(section => !(section instanceof ReleaseHighlight) && !['Why Mitra', 'Contributors'].includes(section.heading))
 	}
 
 	/** Who made the release, from its `Contributors` list: `- [@login](https://github.com/login): what they did`, or a bare name. */
@@ -128,7 +138,7 @@ export class ReleaseHighlight extends ReleaseSection {
 		return new ReleaseHighlight(
 			heading,
 			text,
-			capture ? new ReleaseCapture(capture[2]!, capture[1]!) : undefined,
+			capture ? new ReleaseCapture(capture.groups!.name!, capture.groups!.alt!) : undefined,
 			docs ? new ReleaseDocs(docs[1]!, docs[2]!) : undefined,
 		)
 	}
@@ -159,6 +169,24 @@ export class ReleaseCapture {
 }
 
 /** One line of a release's Contributors list: a name, where it links to, and what the person did. */
+/** A letter's text, and who signed it: its last line when that is a GitHub profile link and nothing else. */
+export class ReleaseLetter {
+	static of(markdown: string) {
+		const signature = markdown.match(/\n\s*\[(@[\w-]+)\]\((https:\/\/github\.com\/[\w-]+)\)\s*$/)
+		return !signature
+			? new ReleaseLetter(markdown, undefined)
+			: new ReleaseLetter(markdown.slice(0, signature.index).trim(), new ReleaseContributor(signature[1]!, signature[2]))
+	}
+
+	readonly markdown: string
+	readonly signature: ReleaseContributor | undefined
+
+	private constructor(markdown: string, signature: ReleaseContributor | undefined) {
+		this.markdown = markdown
+		this.signature = signature
+	}
+}
+
 export class ReleaseContributor {
 	/** A commit's author: a GitHub login when the name is one or the email a GitHub noreply address, else the name alone. */
 	static ofCommit(name: string, email: string) {
@@ -196,11 +224,33 @@ export class ReleaseContributor {
 
 /** The page of the docs a highlight points at, as the notes link it (`../../docs/page.md`). */
 export class ReleaseDocs {
+	/** A docs page's path under the docs' route, `../../docs/views/table.md` being `views/table/`, or nothing for another link. */
+	static pageOf(href: string) {
+		const match = href.match(/^(?:\.\.\/)+docs\/([^#]*?)(?:README)?\.md(#.*)?$/)
+		if (!match) {
+			return undefined
+		}
+		const route = match[1]!.replace(/\/$/, '')
+		return `${route}${route ? '/' : ''}${match[2] ?? ''}`
+	}
+
+	/** The notes' Markdown with every link to a docs page pointed where `url` says that page lives. */
+	static linked(markdown: string, url: (page: string) => string) {
+		return markdown.replace(/\]\(((?:\.\.\/)+docs\/[^)\s]*)\)/g, (link, href: string) => {
+			const page = ReleaseDocs.pageOf(href)
+			return page === undefined ? link : `](${url(page)})`
+		})
+	}
+
 	readonly label: string
 	readonly href: string
 
 	constructor(label: string, href: string) {
 		this.label = label
 		this.href = href
+	}
+
+	get page() {
+		return ReleaseDocs.pageOf(this.href)
 	}
 }

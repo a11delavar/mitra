@@ -5,7 +5,7 @@ import { execSync } from 'child_process'
 export const distDir = 'dist'
 
 /** Resolves version string: MITRA_VERSION env -> git describe -> 'dev'. */
-function resolveVersion() {
+export function resolveVersion() {
 	if (process.env.MITRA_VERSION) {
 		return process.env.MITRA_VERSION
 	}

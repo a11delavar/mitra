@@ -1,5 +1,7 @@
-import { readFile } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
+import path from 'node:path'
 import { parseChangelog, type ChangelogSection, type ParsedChangelogSection } from '../Changelog.js'
+import { type ReleaseFolder } from '../Release.js'
 export { parseChangelog }
 const repository = 'https://github.com/a11delavar/mitra'
 
@@ -30,10 +32,18 @@ export function runningReleaseUrl() {
 }
 
 const changelogPath = `${import.meta.dirname}/../../CHANGELOG.md`
+// Written by the build (scripts/releaseAssets.ts): every release's notes, and the running release's captures.
+const releasesPath = path.resolve(import.meta.dirname, '../../dist/releases')
 
-let cache: Array<ChangelogSection> | undefined
+let cache: { sections: Array<ChangelogSection>, folders: Array<ReleaseFolder> } | undefined
 
-/** Returns the parsed, cached changelog for the running build. */
-export async function getChangelog(): Promise<Array<ChangelogSection>> {
-	return cache ??= annotateChangelog(parseChangelog(await readFile(changelogPath, 'utf8').catch(() => '')), mitra.version)
+/** What the About dialog builds its releases from: the changelog for the running build, and the release folders it carries. */
+export async function getReleaseSources() {
+	return cache ??= {
+		sections: annotateChangelog(parseChangelog(await readFile(changelogPath, 'utf8').catch(() => '')), mitra.version),
+		folders: await Promise.all((await readdir(releasesPath).catch(() => new Array<string>())).map(async version => {
+			const files = await readdir(path.join(releasesPath, version))
+			return { version, markdown: await readFile(path.join(releasesPath, version, 'README.md'), 'utf8'), files: files.filter(file => file !== 'README.md') }
+		})),
+	}
 }

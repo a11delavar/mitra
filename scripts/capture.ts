@@ -458,8 +458,8 @@ export async function press(page: Devtools, key: string, code: string, keyCode: 
 	await page.evaluate('await new Promise(resolve => setTimeout(resolve, 500))')
 }
 
-/** A real click in the middle of whatever the expression finds. */
-export async function click(page: Devtools, find: string) {
+/** A real click in the middle of whatever the expression finds, holding CDP's `modifiers` (Alt 1, Ctrl 2, Meta 4, Shift 8). */
+export async function click(page: Devtools, find: string, modifiers = 0) {
 	const point = await page.evaluate<{ x: number, y: number } | null>(`
 		const element = ${find}
 		if (!element) {
@@ -472,7 +472,7 @@ export async function click(page: Devtools, find: string) {
 		throw new Error(`Nothing to click: ${find}`)
 	}
 	for (const type of ['mouseMoved', 'mousePressed', 'mouseReleased']) {
-		await page.send('Input.dispatchMouseEvent', { type, ...point, button: type === 'mouseMoved' ? 'none' : 'left', clickCount: 1 })
+		await page.send('Input.dispatchMouseEvent', { type, ...point, modifiers, button: type === 'mouseMoved' ? 'none' : 'left', clickCount: 1 })
 	}
 	// Parked in the corner, or whatever ends up under the pointer is captured in its hover state.
 	await page.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 0, y: 0, button: 'none' })

@@ -13,6 +13,9 @@ export function withBase(path) {
 /** The docs' route prefix; the Markdown itself never leaves ../docs. */
 export const docsBase = 'docs'
 
+/** Where the code and its releases live. */
+export const repository = 'https://github.com/a11delavar/mitra'
+
 /** The public demo instance (`MITRA_DEMO=true`). */
 export const demo = 'https://demo.mitracal.com'
 

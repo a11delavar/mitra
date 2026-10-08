@@ -1,5 +1,7 @@
 ---
 import { withBase } from '../../../site.mjs'
+import Dial from '../../components/Dial.astro'
+import Icon from '../../components/Icon.astro'
 import Site from '../../layouts/Site.astro'
 import { anchorOf, formatDate, Release, renderMarkdown } from '../../releases'
 import '../../styles/releases.css'
@@ -14,9 +16,8 @@ const rows = await Promise.all(Release.all().map(async release => ({
 	<link slot="head" rel="alternate" type="application/rss+xml" title="Mitra releases" href={withBase('/releases.xml')} />
 	<section class="releases">
 		<header class="lead">
-			<h1>Releases</h1>
+			<h1>Releases <a class="feed" href={withBase('/releases.xml')} aria-label="RSS feed" title="RSS feed"><Icon name="rss" /></a></h1>
 			<p>What changed in each version, written for people who use Mitra. The complete list of commits is on each page and on GitHub.</p>
-			<p class="feeds"><a class="link" href={withBase('/releases.xml')}>RSS feed</a></p>
 		</header>
 		<ol class="list">
 			{rows.map(({ release, intro }) => (
@@ -24,18 +25,15 @@ const rows = await Promise.all(Release.all().map(async release => ({
 					<div class="num">
 						<p class="numeral">
 							<a class="version" href={release.url} style={release.transition('version')}>{release.version}</a>
+							{/* Beside the numeral, which release it is to you (the `:latest` and `:dev` images); beneath it, when it ships. */}
 							{release.state === 'latest' && <b style={release.transition('mark')}>Latest</b>}
+							{release.state === 'draft' && <b style={release.transition('mark')}>Next</b>}
 						</p>
-						{release.state === 'draft'
-							? <small class="dev" style={release.transition('mark')}>
-								<svg class="dial" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-									<rect class="track" x="3" y="3" width="18" height="18" rx="2" />
-									<rect class="stroke" x="3" y="3" width="18" height="18" rx="2" pathLength="100" stroke-dasharray="35 65" transform="rotate(-90 12 12)" />
-									<line x1="8" y1="12" x2="16" y2="12" />
-								</svg>
-								in development
-							</small>
-							: release.date && <time datetime={release.date} style={release.transition('date')}>{formatDate(release.date)}</time>}
+						{release.date
+							? <time datetime={release.date} style={release.transition('date')}>{formatDate(release.date)}</time>
+							: release.state === 'draft'
+								? <small class="progress" style={release.transition('date')}><Dial />in progress</small>
+								: <small style={release.transition('date')}>planned</small>}
 					</div>
 					<div class="body">
 						{release.notes?.title && <h2 style={release.transition('title', 'text')}><a href={release.url}>{release.notes.title}</a></h2>}
@@ -66,10 +64,6 @@ const rows = await Promise.all(Release.all().map(async release => ({
 		max-inline-size: var(--release-column);
 		margin-inline: auto;
 		padding: clamp(3rem, 8vh, 5rem) var(--mitra-gutter) 0;
-
-		/* The two channels a reader can run: the newest release (the `:latest` image) and what is in development (`:dev`). */
-		--release-latest: light-dark(#1f8a5b, #4fc48f);
-		--release-dev: light-dark(#2b6cb0, #7fb3f0);
 	}
 
 	.lead {
@@ -78,17 +72,29 @@ const rows = await Promise.all(Release.all().map(async release => ({
 	}
 
 	h1 {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
 		font-size: clamp(2rem, 4vw, 2.75rem);
+	}
+
+	/* The feed, beside the heading it follows. */
+	.feed {
+		display: inline-flex;
+		font-size: 0.5em;
+		color: var(--color-text-muted);
+		transition: color 150ms;
+
+		&:hover,
+		&:focus-visible {
+			color: var(--release-gold);
+		}
 	}
 
 	.lead p {
 		margin: 1rem 0 0;
 		font-size: 1.0625rem;
 		color: var(--color-text-muted);
-	}
-
-	.feeds {
-		font-size: 0.875rem;
 	}
 
 	.list {
@@ -98,12 +104,39 @@ const rows = await Promise.all(Release.all().map(async release => ({
 		border-block-start: 1px solid var(--mitra-hairline);
 	}
 
+	/* The whole row opens the release: its version link stretches over it, and the row's own links sit above that. */
 	.release {
+		position: relative;
 		display: grid;
 		grid-template-columns: 7rem minmax(0, 1fr);
 		gap: 1.5rem;
 		padding-block: 2rem;
 		border-block-end: 1px solid var(--mitra-hairline);
+
+		.version::after {
+			content: '';
+			position: absolute;
+			inset: 0;
+		}
+
+		:is(h2, .highlights, .patches, .intro) :global(a) {
+			position: relative;
+			z-index: 1;
+		}
+
+		/* A view-transition name paints the intro above the stretched link; clicks pass through it to the row. */
+		.intro {
+			pointer-events: none;
+
+			:global(a) {
+				pointer-events: auto;
+			}
+		}
+
+		&:has(.version:hover) h2 a {
+			text-decoration: underline;
+			text-underline-offset: 3px;
+		}
 	}
 
 	/* The numeral, its mark beside it, its date beneath: the same block heads the release's page, so they travel in place. */
@@ -135,6 +168,10 @@ const rows = await Promise.all(Release.all().map(async release => ({
 		color: var(--release-latest);
 	}
 
+	[data-state='draft'] .numeral b {
+		color: var(--release-dev);
+	}
+
 	.num :is(time, small) {
 		display: flex;
 		align-items: center;
@@ -161,34 +198,14 @@ const rows = await Promise.all(Release.all().map(async release => ({
 		color: var(--color-text-muted);
 	}
 
+	/* A release beyond the next: still, muted, nothing promised about when. */
+	[data-state='planned'] :is(.version, .body) {
+		color: var(--color-text-muted);
+	}
+
 	@keyframes sweep {
 		to {
 			background-position: -100% 0;
-		}
-	}
-
-	/* The app's own in-progress dial, orbiting at its pace (TaskStatus.ts). */
-	.dial {
-		inline-size: 1em;
-		block-size: 1em;
-		color: var(--release-dev);
-	}
-
-	.dial .track {
-		opacity: 0.6;
-	}
-
-	.dial .stroke {
-		animation: dial-orbit 11s linear infinite;
-	}
-
-	@keyframes dial-orbit {
-		from {
-			stroke-dashoffset: 0;
-		}
-
-		to {
-			stroke-dashoffset: -100;
 		}
 	}
 
@@ -197,10 +214,6 @@ const rows = await Promise.all(Release.all().map(async release => ({
 			animation: none;
 			background: none;
 			color: var(--release-dev);
-		}
-
-		.dial .stroke {
-			animation: none;
 		}
 	}
 

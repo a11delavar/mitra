@@ -1,0 +1,42 @@
+---
+// The app's in-progress dial (TaskStatus.ts), orbiting at its pace, for the release in progress.
+---
+
+<svg class="dial" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+	<rect class="track" x="3" y="3" width="18" height="18" rx="2" />
+	<rect class="stroke" x="3" y="3" width="18" height="18" rx="2" pathLength="100" stroke-dasharray="35 65" transform="rotate(-90 12 12)" />
+	<line x1="8" y1="12" x2="16" y2="12" />
+</svg>
+
+<style>
+	.dial {
+		flex: none;
+		inline-size: 1.5em;
+		block-size: 1.5em;
+		color: var(--release-dev);
+	}
+
+	.track {
+		opacity: 0.6;
+	}
+
+	.stroke {
+		animation: dial-orbit 11s linear infinite;
+	}
+
+	@keyframes dial-orbit {
+		from {
+			stroke-dashoffset: 0;
+		}
+
+		to {
+			stroke-dashoffset: -100;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.stroke {
+			animation: none;
+		}
+	}
+</style>

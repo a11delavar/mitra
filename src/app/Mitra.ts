@@ -22,6 +22,7 @@ import { Sidebar } from './Sidebar.js'
 import { Planning } from '../features/planning/client/Planning.js'
 import { EntryDetailsComponent } from '../features/entries/client/EventDetails.js'
 import { DialogAbout, markChangesSeen } from '../features/about/client/DialogAbout.js'
+import { ReleaseNotesComponent } from '../features/about/client/ReleaseNotesComponent.js'
 import { DialogIntegration } from '../integrations/client/DialogIntegration.js'
 import { DialogWelcome } from '../features/onboarding/client/DialogWelcome.js'
 import { DialogSourceMigration } from '../features/migration/client/DialogSourceMigration.js'
@@ -226,6 +227,7 @@ export class Mitra extends Application {
 			${EntryDetailsWhen.styles}
 			${EntryDetailsSharing.styles}
 			${DialogAbout.styles}
+			${ReleaseNotesComponent.styles}
 			${DialogIntegration.styles}
 			${DialogWelcome.styles}
 			${DialogSourceMigration.styles}

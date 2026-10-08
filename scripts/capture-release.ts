@@ -60,8 +60,21 @@ const shots = [...scenes.values()]
 	.filter(({ scene, theme }) => due(scene.name, theme))
 	.sort((a, b) => a.scene.language.localeCompare(b.scene.language))
 
+/** The image carries the running release's captures, so every release keeps them under a budget. */
+const budget = 2 * 1024 * 1024
+function weigh() {
+	const bytes = fs.readdirSync(folder).filter(file => /\.(webp|mp4)$/.test(file)).reduce((sum, file) => sum + fs.statSync(path.join(folder, file)).size, 0)
+	const megabytes = `${(bytes / 1024 / 1024).toFixed(1)} MB`
+	if (bytes > budget) {
+		consola.warn(`releases/${minor} holds ${megabytes} of captures, over the ${budget / 1024 / 1024} MB the image carries per release: fewer or shorter films, or tighter crops.`)
+	} else {
+		consola.info(`releases/${minor} holds ${megabytes} of captures.`)
+	}
+}
+
 if (!shots.length) {
 	consola.success(`releases/${minor} has every capture its notes name.`)
+	weigh()
 	process.exit(0)
 }
 
@@ -90,3 +103,4 @@ await stage(async (browser, origin) => {
 		consola.success(path.basename(file))
 	}
 }, { build: !process.argv.includes('--no-build') })
+weigh()

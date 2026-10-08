@@ -1,9 +1,7 @@
 /* What the releases list and a release's page share. */
 
+/* The release colours come from the app's src/features/about/releaseNotes.css.ts, emitted into every page. */
 :root {
-	/* The two channels a reader can run: the newest release (the `:latest` image) and what is in development (`:dev`). */
-	--release-latest: light-dark(#1f8a5b, #4fc48f);
-	--release-dev: light-dark(#2b6cb0, #7fb3f0);
 	/* The column both centre the rows and the hero on, so a row and the hero share their x and travel straight between them. */
 	--release-column: 66rem;
 }

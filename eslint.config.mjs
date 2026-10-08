@@ -30,9 +30,9 @@ export default [
 			'no-restricted-imports': ['error', {
 				patterns: [{
 					group: ['**/server/**', '*/server/*'],
-					message: 'Client code must not import server code.'
-				}]
-			}]
+					message: 'Client code must not import server code.',
+				}],
+			}],
 		}
 	},
 	{
@@ -41,10 +41,10 @@ export default [
 			'no-restricted-imports': ['error', {
 				patterns: [{
 					group: ['**/client/**', '*/client/*'],
-					message: 'Server code must not import client code.'
-				}]
-			}]
-		}
+					message: 'Server code must not import client code.',
+				}],
+			}],
+		},
 	},
 	{
 		files: ['src/features/*/*.ts', 'src/integrations/*.ts'],
@@ -53,9 +53,9 @@ export default [
 			'no-restricted-imports': ['error', {
 				patterns: [{
 					group: ['**/client/**', '*/client/*', '**/server/**', '*/server/*'],
-					message: 'Isomorphic domain models must not import client or server code.'
-				}]
-			}]
-		}
-	}
+					message: 'Isomorphic domain models must not import client or server code.',
+				}],
+			}],
+		},
+	},
 ]

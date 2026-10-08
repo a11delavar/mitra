@@ -10,6 +10,7 @@ import { Integration } from '../../integrations/Integration.js'
 import { type EntryType } from '../../features/entries/EntryType.js'
 import { type Entry } from '../../features/entries/Entry.js'
 import { type ChangelogSection } from '../../features/about/Changelog.js'
+import { type ReleaseFolder } from '../../features/about/Release.js'
 import { type UserSettings } from '../../features/settings/UserSettings.js'
 
 /** Custom API error class extracting backend error messages. */
@@ -89,8 +90,9 @@ export function isBundleStale() {
 	return !!meta && meta.version !== mitra.version
 }
 
-export function fetchChangelog() {
-	return Api.get<Array<ChangelogSection>>('/meta/changelog')
+/** The changelog for the running build and the release folders it carries, which `Release.list()` makes releases of. */
+export function fetchReleases() {
+	return Api.get<{ sections: Array<ChangelogSection>, folders: Array<ReleaseFolder> }>('/meta/releases')
 }
 
 export async function setSeenVersion(version: string) {

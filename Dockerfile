@@ -28,6 +28,10 @@ COPY tsconfig.json ./
 COPY assets ./assets
 COPY scripts ./scripts
 COPY src ./src
+# Every release's notes, and the captures of the one this image is, which the build copies into dist/ for What's New.
+COPY releases ./releases
+# The website's address, which the release notes link to.
+COPY website/site.mjs ./website/site.mjs
 RUN npm run build
 
 # Strip dev dependencies. This leaves the runtime externals (better-sqlite3, tsdav, …).

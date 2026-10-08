@@ -3,4 +3,5 @@ export const site: string
 export const base: string
 export function withBase(path: string): string
 export const docsBase: string
+export const repository: string
 export const demo: string

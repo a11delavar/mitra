@@ -15,7 +15,9 @@ export function iconSvg(name, { size = '1em', strokeWidth = 2, fill = 'none', ..
 	if (!node) {
 		throw new Error(`Unknown lucide icon: ${name}`)
 	}
-	const [tag, attributes, children] = node
+	// lucide 1 hands over the glyph's children alone, lucide 0 the whole `<svg>` node; a checkout without the site's own
+	// install resolves the app's lucide from the folder above.
+	const [tag, attributes, children] = typeof node[0] === 'string' ? node : ['svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24' }, node]
 	return serialize([tag, {
 		...attributes,
 		width: size,

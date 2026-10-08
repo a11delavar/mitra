@@ -35,7 +35,7 @@ A task with subtasks or a checklist shows its progress. Each subtask and each bo
 
 A subtask that's partly done counts in part, whether it has a progress of its own or subtasks of its own. If a task has three subtasks, two of them done and the third at 80%, the task is at 93%. Cancelled subtasks don't count, so dropped work never holds the task back. Events linked as subtasks don't count either.
 
-On the calendar, the outline of a task's checkbox fills up as it progresses. Point at the checkbox to see the count, such as "2 of 3 subtasks done". Right-click it, or <kbd>Alt</kbd>-click it, to open the status menu with the exact percentage.
+On the calendar, the outline of a task's checkbox fills up as it progresses. Point at the checkbox to see the count, such as "2 of 3 subtasks done", or "2 of 4 steps done" when boxes and subtasks count together. Right-click it, or <kbd>Alt</kbd>-click it, to open the status menu with the exact percentage.
 
 ## Set progress by hand
 

@@ -11,12 +11,23 @@ This release is about tasks with a deadline but no slot yet.
 ## Due dates and estimates
 A task can carry a due date before it has a time. Unscheduled tasks line up in Planning.
 
-![The editor with a due date](due-detail)
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="due-detail-dark.webp">
+	<img src="due-detail-light.webp" alt="The editor with a due date">
+</picture>
 
 Docs: [Planning](../../docs/planning.md)
 
 ## Calendars kept in Mitra
 No capture for this one.
+
+## Planning by dragging
+A task dragged into the week.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="plan-task-dark.webp">
+	<img src="plan-task-light.webp" alt="A task dragged into the week">
+</picture>
 
 ## Upgrading
 Nothing to do.
@@ -28,25 +39,41 @@ describe('ReleaseNotes', () => {
 		assert.equal(parsed.title, 'Due dates, availability and calmer reminders')
 		assert.equal(parsed.date, '2026-10-05')
 		assert.equal(parsed.intro, 'This release is about tasks with a deadline but no slot yet.')
-		assert.deepEqual(parsed.highlights.map(highlight => highlight.heading), ['Due dates and estimates', 'Calendars kept in Mitra'])
+		assert.deepEqual(parsed.highlights.map(highlight => highlight.heading), ['Due dates and estimates', 'Calendars kept in Mitra', 'Planning by dragging'])
 	})
 
-	it('lifts the capture and the docs line out of a highlight and keeps the rest of its text', () => {
+	it('lifts the capture\'s picture and the docs line out of a highlight', () => {
 		const parsed = ReleaseNotes.parse(notes)
-		const [first, second] = parsed.highlights
+		const [first, second, third] = parsed.highlights
 		assert.deepEqual(first!.capture, new ReleaseCapture('due-detail', 'The editor with a due date'))
 		assert.deepEqual(first!.docs, new ReleaseDocs('Planning', '../../docs/planning.md'))
 		assert.equal(first!.markdown, 'A task can carry a due date before it has a time. Unscheduled tasks line up in Planning.')
 		assert.equal(first!.lead, 'A task can carry a due date before it has a time.')
 		assert.equal(second!.capture, undefined)
 		assert.equal(second!.docs, undefined)
-		assert.deepEqual(parsed.captures, ['due-detail'])
+		assert.deepEqual(third!.capture, new ReleaseCapture('plan-task', 'A task dragged into the week'))
+		assert.equal(third!.markdown, 'A task dragged into the week.')
+		assert.deepEqual(parsed.captures, ['due-detail', 'plan-task'])
 		assert.equal(first!.capture!.file('dark', 'mp4'), 'due-detail-dark.mp4')
 	})
 
 	it('keeps Upgrading apart from the highlights', () => {
 		const parsed = ReleaseNotes.parse(notes)
 		assert.deepEqual(parsed.rest.map(section => [section.heading, section.markdown]), [['Upgrading', 'Nothing to do.']])
+	})
+
+	it('reads a foreword apart from the highlights and the rest', () => {
+		const parsed = ReleaseNotes.parse('---\ntitle: First\n---\nThe first one.\n\n## Why Mitra\nWhy it exists.\n\n## Week view\nA grid.\n')
+		assert.equal(parsed.foreword?.markdown, 'Why it exists.')
+		assert.deepEqual(parsed.highlights.map(highlight => highlight.heading), ['Week view'])
+		assert.deepEqual(parsed.rest, [])
+	})
+
+	it('reads a letter\'s closing profile link as its signature', () => {
+		const parsed = ReleaseNotes.parse('---\ntitle: First\n---\nThe first one.\n\n## Why Mitra\nWhy it exists.\n\n[@someone](https://github.com/someone)\n')
+		assert.equal(parsed.foreword?.markdown, 'Why it exists.')
+		assert.equal(parsed.foreword?.signature?.name, '@someone')
+		assert.equal(parsed.foreword?.signature?.avatar, 'https://github.com/someone.png?size=96')
 	})
 
 	it('is a draft without a date', () => {

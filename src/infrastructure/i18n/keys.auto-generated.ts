@@ -158,6 +158,7 @@ declare global {
 		"Connector lines in the week view": unknown
 		"ConnectorLines.Keywords": unknown
 		"Continue with Google": unknown
+		"Contributors": unknown
 		"Copied to ${name}": unknown
 		"Copy": unknown
 		"Copy ${count:pluralityNumber} entries": unknown
@@ -210,6 +211,8 @@ declare global {
 		"Demo.Hint": unknown
 		"Description": unknown
 		"Devices": unknown
+		"Docs: ${page}": unknown
+		"Documentation": unknown
 		"Does not repeat": unknown
 		"Doing": unknown
 		"Done": unknown
@@ -246,7 +249,9 @@ declare global {
 		"Every subtask of \"${heading}\" is done, which completes ${count:pluralityNumber} more tasks above it. Mark them all as done?": unknown
 		"Every subtask of \"${heading}\" is done. Mark it as done too?": unknown
 		"Every weekday": unknown
+		"Everything in ${version}": unknown
 		"Everything travels intact": unknown
+		"Features": unknown
 		"Flatten into single entries": unknown
 		"Flattening writes out a year of occurrences as separate entries. They stop repeating, and links pointing at the series are left behind.": unknown
 		"Forward": unknown
@@ -275,6 +280,8 @@ declare global {
 		"hours": unknown
 		"Ics.UrlHint": unknown
 		"Importing entries…": unknown
+		"Improvements": unknown
+		"In progress": unknown
 		"Install as an App": unknown
 		"Install mitra as an app. It gets its own window, and notifications appear under its own name and icon": unknown
 		"Integration options": unknown
@@ -289,6 +296,7 @@ declare global {
 		"Language": unknown
 		"LanguageSetting.Keywords": unknown
 		"last seen ${when}": unknown
+		"Latest": unknown
 		"Leave the originals here and add a copy over there": unknown
 		"Leave them here": unknown
 		"Light": unknown
@@ -335,6 +343,7 @@ declare global {
 		"New calendar": unknown
 		"New dev build: ${count:pluralityNumber} commits ahead": unknown
 		"New task": unknown
+		"Next": unknown
 		"Next 12 months": unknown
 		"Next 30 days": unknown
 		"Next 7 days": unknown
@@ -389,8 +398,10 @@ declare global {
 		"Password": unknown
 		"Password (optional)": unknown
 		"Past 30 days": unknown
+		"Patches": unknown
 		"Pick the calendars and task lists to show. Recolor, rename or hide them in the sidebar anytime.": unknown
 		"Plan your days": unknown
+		"Planned": unknown
 		"Planning": unknown
 		"Previous month": unknown
 		"Previous Month": unknown
@@ -404,10 +415,12 @@ declare global {
 		"Public": unknown
 		"Re-import entries": unknown
 		"Read every enabled calendar of this account again from the start": unknown
+		"Read on mitracal.com": unknown
 		"Read this calendar again from the start": unknown
 		"read-only": unknown
 		"Refresh": unknown
 		"Related to": unknown
+		"Releases": unknown
 		"Reload to finish updating": unknown
 		"Reminder": unknown
 		"Reminder notifications": unknown
@@ -489,6 +502,7 @@ declare global {
 		"Tempo.TokenHint": unknown
 		"Test event": unknown
 		"Test task": unknown
+		"Tests": unknown
 		"the ${ordinal}": unknown
 		"the ${ordinal} ${weekday}": unknown
 		"The calendars of your Google account": unknown

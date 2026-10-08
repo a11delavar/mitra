@@ -1,9 +1,12 @@
 ---
 import { withBase } from '../../../site.mjs'
 import Icon from '../../components/Icon.astro'
+import Dial from '../../components/Dial.astro'
 import Site from '../../layouts/Site.astro'
 import { anchorOf, docsUrl, formatDate, labelOf, linesOf, Release, renderMarkdown } from '../../releases'
 import '../../styles/releases.css'
+// The release look, shared with the app's About dialog (src/features/about/releaseNotes.css.ts).
+import '../../styles/generated/release.css'
 
 export function getStaticPaths() {
 	return Release.all().map(release => ({ params: { version: release.version }, props: { release } }))
@@ -15,8 +18,11 @@ interface Props {
 
 const { release } = Astro.props
 const intro = release.notes ? await renderMarkdown(release.notes.intro) : ''
+const letter = release.notes?.foreword
+const foreword = letter ? await renderMarkdown(letter.markdown) : ''
 const highlights = await Promise.all(release.highlights.map(async highlight => {
-	const capture = highlight.capture && release.capture(highlight.capture)
+	const named = highlight.capture && release.capture(highlight.capture)
+	const capture = named?.exists ? named : undefined
 	return { highlight, html: await renderMarkdown(highlight.markdown), capture, size: await capture?.size() }
 }))
 const rest = await Promise.all((release.notes?.rest ?? []).map(async section => ({ section, html: await renderMarkdown(section.markdown) })))
@@ -24,39 +30,52 @@ const rest = await Promise.all((release.notes?.rest ?? []).map(async section => 
 
 <Site title={`${release.name} | Mitra`} description={release.description} current="releases">
 	<link slot="head" rel="alternate" type="application/rss+xml" title="Mitra releases" href={withBase('/releases.xml')} />
-	<article class="release" data-state={release.state}>
+	<article class="release release-notes" data-state={release.state}>
 		<header class="hero">
 			<a class="crumb" href={withBase('/releases/')}><Icon name="arrow-left" size="0.9em" />Releases</a>
 			{/* The same block as the row on the list, so the navigation moves it rather than reshapes it. */}
 			<div class="num">
 				<p class="numeral">
 					<span class="version" style={release.transition('version')}>{release.version}</span>
-					{release.state === 'latest' && <b style={release.transition('mark')}>Latest</b>}
+					{/* Beside the numeral, which release it is to you (the `:latest` and `:dev` images); beneath it, when it ships. */}
+					{release.state === 'latest' && <b class="mark" style={release.transition('mark')}>Latest</b>}
+					{release.state === 'draft' && <b class="mark" style={release.transition('mark')}>Next</b>}
 				</p>
-				{release.state === 'draft'
-					? <small class="dev" style={release.transition('mark')}>
-						<svg class="dial" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-							<rect class="track" x="3" y="3" width="18" height="18" rx="2" />
-							<rect class="stroke" x="3" y="3" width="18" height="18" rx="2" pathLength="100" stroke-dasharray="35 65" transform="rotate(-90 12 12)" />
-							<line x1="8" y1="12" x2="16" y2="12" />
-						</svg>
-						in development
-					</small>
-					: release.date && <time datetime={release.date} style={release.transition('date')}>{formatDate(release.date)}</time>}
+				{release.date
+					? <time datetime={release.date} style={release.transition('date')}>{formatDate(release.date)}</time>
+					: release.state === 'draft'
+						? <small class="progress" style={release.transition('date')}><Dial />in progress</small>
+						: <small style={release.transition('date')}>planned</small>}
 			</div>
 			<div class="body">
 				<h1 style={release.transition('title', 'text')}>{release.title}</h1>
 				{intro && <div class="intro" style={release.transition('intro', 'text')} set:html={intro} />}
-				{release.state === 'draft' && <p class="note">In development: these notes describe the next release and change until it ships.</p>}
+				{release.state === 'draft' && <p class="note">These notes describe the next release, and change until it ships.</p>}
+				{release.state === 'planned' && <p class="note planned">What this release is meant to hold, which may still move.</p>}
 			</div>
 		</header>
+
+		{letter && (
+			<section class="foreword" id="foreword">
+				<div class="letter">
+					<div class="prose" set:html={foreword} />
+					{letter.signature && (
+						<a class="signature" href={letter.signature.url} rel="noreferrer">
+							<img src={letter.signature.avatar} alt="" width="40" height="40" loading="lazy" decoding="async" />
+							{letter.signature.name}
+						</a>
+					)}
+				</div>
+			</section>
+		)}
 
 		{highlights.map(({ highlight, html, capture, size }, index) => (
 			<section class="highlight" id={anchorOf(highlight.heading)} data-side={index % 2 ? 'start' : 'end'}>
 				<div class="text">
-					<h2>
+					<h2 class="heading">
 						{highlight.heading}
 						{highlight.docs && <a class="docs" href={docsUrl(highlight.docs.href)} aria-label={`Docs: ${highlight.docs.label}`} title={`Docs: ${highlight.docs.label}`}><Icon name="book-open" /></a>}
+						<button class="copy" type="button" data-section={anchorOf(highlight.heading)} aria-label={`Copy a link to ${highlight.heading}`} title="Copy link"><Icon name="link" /><Icon name="check" /></button>
 					</h2>
 					<div class="prose" set:html={html} />
 				</div>
@@ -65,9 +84,9 @@ const rest = await Promise.all((release.notes?.rest ?? []).map(async section => 
 						{/* Lazy either way: the browser fetches a lazy image, and plays an autoplaying film, as it comes into view. */}
 						{/* Each take links to its own file, so a capture opens at full size in a new tab. */}
 						{(['light', 'dark'] as const).map(theme => (
-							<a class={`theme-${theme}`} href={capture.url(theme)} target="_blank" rel="noreferrer" title="Open at full size">
+							<a class={theme} href={capture.url(theme)} target="_blank" rel="noreferrer" title="Open at full size">
 								{capture.film
-									? <video src={capture.url(theme)} width={size?.width} height={size?.height} autoplay muted loop playsinline preload="none" aria-hidden="true" />
+									? <video src={capture.url(theme)} poster={capture.poster(theme)} width={size?.width} height={size?.height} autoplay muted loop playsinline preload="none" aria-hidden="true" />
 									: <img src={capture.url(theme)} width={size?.width} height={size?.height} alt="" loading="lazy" decoding="async" />}
 							</a>
 						))}
@@ -78,19 +97,22 @@ const rest = await Promise.all((release.notes?.rest ?? []).map(async section => 
 
 		{rest.map(({ section, html }) => (
 			<section class="plain" id={anchorOf(section.heading)}>
-				<h2>{section.heading}</h2>
+				<h2 class="heading">
+					{section.heading}
+					<button class="copy" type="button" data-section={anchorOf(section.heading)} aria-label={`Copy a link to ${section.heading}`} title="Copy link"><Icon name="link" /><Icon name="check" /></button>
+				</h2>
 				<div class="prose" set:html={html} />
 			</section>
 		))}
 
 		{release.patches.length > 0 && (
 			<section class="emitted" id="patches">
-				<h2>Patches</h2>
+				<h2 class="title">Patches</h2>
 				{release.patches.map(patch => (
 					<div class="patch">
 						<b>{patch.version}</b>
 						<span class="date">{patch.date && formatDate(patch.date)}</span>
-						<ul>
+						<ul class="lines">
 							{patch.categories.flatMap(linesOf).map(line => (
 								<li><span>{line.subject}</span>{line.url && <a class="hash" href={line.url} rel="noreferrer">{line.hash}</a>}</li>
 							))}
@@ -102,14 +124,17 @@ const rest = await Promise.all((release.notes?.rest ?? []).map(async section => 
 
 		{release.everything && (
 			<section class="emitted" id="everything">
-				<h2>Everything in {release.version} <small>{release.counts.map(count => `${count.count} ${count.label.toLowerCase()}`).join(' · ')}</small></h2>
-				{release.everything.categories.map(category => (
-					<div class="group">
-						<h3>{labelOf(category)}</h3>
-						<ul>
+				<h2 class="title">Everything in {release.version} <small>{release.counts.filter(count => !Release.maintenance.has(count.type)).map(count => `${count.count} ${labelOf(count).toLowerCase()}`).join(' · ')}</small></h2>
+				{release.listed.map(category => (
+					<div class="category" data-type={category.type}>
+						<h3 class="label">{labelOf(category)}</h3>
+						<ul class="lines">
 							{linesOf(category).map(line => (
 								<li><span>{line.subject}</span>{line.url && <a class="hash" href={line.url} rel="noreferrer">{line.hash}</a>}</li>
 							))}
+				{release.maintenanceCount > 0 && (
+					<p class="maintenance">Plus <a href={release.commitsUrl} rel="noreferrer">{release.maintenanceCount} maintenance {release.maintenanceCount === 1 ? 'change' : 'changes'}</a> on GitHub: tests, builds and chores.</p>
+				)}
 						</ul>
 					</div>
 				))}
@@ -118,7 +143,7 @@ const rest = await Promise.all((release.notes?.rest ?? []).map(async section => 
 
 		{release.notes && release.notes.contributors.length > 0 && (
 			<section class="emitted" id="contributors">
-				<h2>Contributors</h2>
+				<h2 class="title">Contributors</h2>
 				<ul class="people">
 					{release.notes.contributors.map(person => (
 						<li>
@@ -138,6 +163,39 @@ const rest = await Promise.all((release.notes?.rest ?? []).map(async section => 
 </Site>
 
 <script>
+	// Back to the list goes back in history when the list is where the reader came from: the browser restores where they
+	// were in it, which a fresh visit to its address would start from the top.
+	const crumb = document.querySelector<HTMLAnchorElement>('a.crumb')
+	crumb?.addEventListener('click', event => {
+		const list = new URL(crumb.href).pathname
+		const previous = window.navigation?.entries()[window.navigation.currentEntry!.index - 1]?.url
+		const came = previous ?? (history.length > 1 ? document.referrer : '')
+		if (came && new URL(came, location.href).pathname === list) {
+			event.preventDefault()
+			history.back()
+		}
+	})
+
+	// A heading's link button copies the address of its section, and says so with a check for a moment.
+	for (const button of document.querySelectorAll<HTMLButtonElement>('button.copy')) {
+		button.addEventListener('click', async () => {
+			const address = new URL(`#${button.dataset.section}`, location.href).href
+			// Where the clipboard API is refused (an embedding frame), the older copy of a selection still works.
+			const copied = await navigator.clipboard.writeText(address).then(() => true, () => {
+				const field = Object.assign(document.createElement('textarea'), { value: address })
+				document.body.append(field)
+				field.select()
+				const done = document.execCommand('copy')
+				field.remove()
+				return done
+			})
+			if (copied) {
+				button.toggleAttribute('data-copied', true)
+				setTimeout(() => button.removeAttribute('data-copied'), 1500)
+			}
+		})
+	}
+
 	// A film rests on its first frame for a reader who asked for less motion. Everything else about it is the markup's.
 	if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
 		for (const film of document.querySelectorAll('video')) {
@@ -148,15 +206,25 @@ const rest = await Promise.all((release.notes?.rest ?? []).map(async section => 
 </script>
 
 <style>
+	/* The page frame and its sizes; how a release reads is generated/release.css. */
 	.release {
 		max-inline-size: var(--mitra-page);
 		margin-inline: auto;
 		padding: clamp(2rem, 5vh, 3rem) var(--mitra-gutter) 0;
 		display: grid;
 		gap: clamp(4rem, 10vh, 7rem);
+		--release-heading: 1.5rem;
+		--release-section: 1.25rem;
+		--release-text: 1rem;
+		--release-shot-height: min(34rem, 78vh);
+	}
 
-		--release-latest: light-dark(#1f8a5b, #4fc48f);
-		--release-dev: light-dark(#2b6cb0, #7fb3f0);
+	.highlight + .highlight {
+		margin-block-start: clamp(1rem, 5vh, 3.5rem);
+	}
+
+	.shot {
+		box-shadow: var(--mitra-shadow-soft);
 	}
 
 	/* Laid out as the list's row, on the list's column: the numeral's column, then the title's. */
@@ -222,7 +290,6 @@ const rest = await Promise.all((release.notes?.rest ?? []).map(async section => 
 	.numeral b {
 		font-size: 0.75rem;
 		font-weight: 600;
-		color: var(--release-latest);
 	}
 
 	.num :is(time, small) {
@@ -232,15 +299,6 @@ const rest = await Promise.all((release.notes?.rest ?? []).map(async section => 
 		font-size: 0.75rem;
 		color: var(--color-text-muted);
 		font-variant-numeric: tabular-nums;
-	}
-
-	[data-state='latest'] .version {
-		color: var(--release-latest);
-	}
-
-	[data-state='draft'] .version,
-	.dev {
-		color: var(--release-dev);
 	}
 
 	.body {
@@ -255,34 +313,9 @@ const rest = await Promise.all((release.notes?.rest ?? []).map(async section => 
 		color: var(--release-dev);
 	}
 
-	.dial {
-		flex: none;
-		inline-size: 1em;
-		block-size: 1em;
-	}
-
-	.dial .track {
-		opacity: 0.6;
-	}
-
-	.dial .stroke {
-		animation: dial-orbit 11s linear infinite;
-	}
-
-	@keyframes dial-orbit {
-		from {
-			stroke-dashoffset: 0;
-		}
-
-		to {
-			stroke-dashoffset: -100;
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.dial .stroke {
-			animation: none;
-		}
+	.note.planned,
+	[data-state='planned'] .version {
+		color: var(--color-text-muted);
 	}
 
 	/* As wide as its text: the snapshot a navigation scales is then the text itself, so the title grows from the
@@ -299,36 +332,29 @@ const rest = await Promise.all((release.notes?.rest ?? []).map(async section => 
 		color: var(--color-text-muted);
 	}
 
-	.intro :global(p),
-	.prose :global(p) {
+	.intro :global(p) {
 		margin: 0;
 	}
 
-	.prose :global(p + p) {
-		margin-block-start: 0.75rem;
+	/* The release's letter, under its title's column and at a reading width. */
+	.foreword {
+		inline-size: min(100%, var(--release-column));
+		margin-inline: auto;
+		padding-inline-start: calc(7rem + 1.5rem);
+		box-sizing: border-box;
+		--release-text: 1.0625rem;
 	}
 
-	/* Text beside its capture, the side alternating down the page. */
-	.highlight {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-		gap: clamp(1.5rem, 4vw, 3rem);
-		align-items: center;
+	.foreword :global(p) {
+		max-inline-size: var(--mitra-content);
 	}
 
-	.highlight[data-side='start'] {
-		grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+	@media (width < 40rem) {
+		.foreword {
+			padding-inline-start: 0;
+		}
 	}
 
-	.highlight[data-side='start'] .text {
-		order: 2;
-	}
-
-	.highlight + .highlight {
-		margin-block-start: clamp(1rem, 5vh, 3.5rem);
-	}
-
-	.text,
 	.plain {
 		display: grid;
 		gap: 0.75rem;
@@ -338,223 +364,70 @@ const rest = await Promise.all((release.notes?.rest ?? []).map(async section => 
 		max-inline-size: var(--mitra-content);
 	}
 
-	h2 {
+	.plain .heading {
+		margin: 0;
 		display: flex;
 		align-items: center;
-		gap: 0.6rem;
-		font-size: 1.5rem;
+		gap: 0.5rem;
+		font-size: var(--release-heading);
 	}
 
-	/* The way to the docs, beside the heading and out of the text. */
-	.docs {
+	/* A section's link, shown beside its heading while the reader is at it (always on a touch screen). */
+	.copy {
 		display: inline-flex;
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
 		font-size: 0.8em;
 		color: var(--color-text-muted);
-		opacity: 0.7;
+		cursor: pointer;
+		opacity: 0;
 		transition: opacity 150ms, color 150ms;
+
+		:global(.icon:last-child) {
+			display: none;
+		}
+
+		&[data-copied] {
+			color: var(--color-accent);
+			opacity: 1;
+
+			:global(.icon:first-child) {
+				display: none;
+			}
+
+			:global(.icon:last-child) {
+				display: inline;
+			}
+		}
+
+		&:hover,
+		&:focus-visible {
+			color: var(--color-accent);
+		}
 	}
 
-	.docs:hover,
-	.docs:focus-visible {
-		opacity: 1;
-		color: var(--color-accent);
+	.heading:hover .copy,
+	.copy:focus-visible {
+		opacity: 0.7;
 	}
 
-	.prose {
-		color: var(--color-text-muted);
-	}
-
-	.prose :global(a) {
-		color: var(--color-text);
-		text-decoration: underline;
-		text-underline-offset: 3px;
-		text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
-	}
-
-	/* Never taller than a screen's worth beside its text: a tall capture shrinks to the height and centres in its column. */
-	.shot {
-		margin: 0;
-		inline-size: fit-content;
-		max-inline-size: 100%;
-		justify-self: center;
-		border: 1px solid var(--mitra-hairline-strong);
-		border-radius: 10px;
-		overflow: hidden;
-		background: var(--color-background);
-		box-shadow: var(--mitra-shadow-soft);
-	}
-
-	.shot a {
-		display: block;
-	}
-
-	.shot :is(img, video) {
-		display: block;
-		max-inline-size: 100%;
-		max-block-size: min(34rem, 78vh);
-		inline-size: auto;
-		block-size: auto;
-	}
-
-	.shot .theme-dark {
-		display: none;
-	}
-
-	:global([data-theme='dark']) .shot .theme-light {
-		display: none;
-	}
-
-	:global([data-theme='dark']) .shot .theme-dark {
-		display: block;
+	@media (hover: none) {
+		.copy {
+			opacity: 0.7;
+		}
 	}
 
 	.emitted {
 		inline-size: min(100%, var(--release-column));
 		margin-inline: auto;
-		border-block-start: 1px solid var(--mitra-hairline);
-		padding-block-start: 2.5rem;
-		display: grid;
-		gap: 1.25rem;
 	}
 
-	.emitted h2 {
-		font-size: 1.25rem;
-	}
-
-	.emitted h2 small {
-		font-weight: 400;
+	.maintenance {
+		margin: 1.5rem 0 0;
 		font-size: 0.875rem;
 		color: var(--color-text-muted);
-	}
-
-	.patch {
-		display: grid;
-		grid-template-columns: 4rem 7rem minmax(0, 1fr);
-		gap: 1rem;
-		align-items: baseline;
-		font-size: 0.9375rem;
-	}
-
-	.patch b {
-		font-weight: 600;
-		font-variant-numeric: tabular-nums;
-	}
-
-	.patch .date {
-		color: var(--color-text-muted);
-		font-variant-numeric: tabular-nums;
-	}
-
-	.group {
-		display: grid;
-		gap: 0.4rem;
-	}
-
-	h3 {
-		font-size: 0.75rem;
-		font-weight: 600;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		color: var(--color-text-muted);
-	}
-
-	.emitted ul {
-		margin: 0;
-		padding: 0;
-		list-style: none;
-		display: grid;
-	}
-
-	.emitted li {
-		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
-		gap: 1rem;
-		padding-block: 0.35rem;
-		border-block-end: 1px solid var(--mitra-hairline);
-		font-size: 0.9375rem;
-	}
-
-	.emitted li:last-child {
-		border-block-end: 0;
-	}
-
-	.hash {
-		flex: none;
-		font-family: var(--mitra-font-mono);
-		font-size: 0.75rem;
-		color: var(--color-text-muted);
-		text-decoration: none;
-	}
-
-	.hash:hover {
-		color: var(--color-text);
-	}
-
-	.people {
-		margin: 0;
-		padding: 0;
-		list-style: none;
-		display: flex;
-		flex-wrap: wrap;
-		gap: 1rem 2rem;
-	}
-
-	.people li {
-		display: flex;
-		align-items: center;
-		gap: 0.6rem;
-		font-size: 0.9375rem;
-	}
-
-	.people a {
-		display: flex;
-		align-items: center;
-		gap: 0.6rem;
-		color: var(--color-text);
-		text-decoration: none;
-	}
-
-	.people a:hover {
-		text-decoration: underline;
-		text-underline-offset: 3px;
-	}
-
-	.people :is(img, .initial) {
-		inline-size: 2.5rem;
-		block-size: 2.5rem;
-		border-radius: 50%;
-		border: 1px solid var(--mitra-hairline-strong);
-	}
-
-	.people .initial {
-		display: grid;
-		place-items: center;
-		font-weight: 600;
-		background: color-mix(in srgb, var(--color-accent) 12%, transparent);
-	}
-
-	.people small {
-		color: var(--color-text-muted);
-	}
-
-	@media (width < 48rem) {
-		.highlight,
-		.highlight[data-side='start'] {
-			grid-template-columns: minmax(0, 1fr);
-		}
-
-		.highlight[data-side='start'] .text {
-			order: 0;
-		}
-
-		.patch {
-			grid-template-columns: 4rem minmax(0, 1fr);
-		}
-
-		.patch .date {
-			display: none;
-		}
 	}
 
 	@media (width < 40rem) {

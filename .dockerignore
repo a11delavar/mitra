@@ -20,6 +20,10 @@ website
 # …except the changelog, which is a runtime asset now (the What's-New dialog serves it; see
 # src/backend/changelog.ts), copied into the image by the Dockerfile.
 !CHANGELOG.md
+# …and the release notes, which the build bundles into dist/ (see scripts/releaseAssets.ts).
+!releases/*/README.md
+# …and the site's address, which the app's release notes link to (website/site.mjs states it once).
+!website/site.mjs
 
 # Misc
 .DS_Store
