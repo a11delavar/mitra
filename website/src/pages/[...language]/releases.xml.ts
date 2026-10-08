@@ -21,12 +21,12 @@ export const GET: APIRoute = ({ props }) => {
 		const page = `${origin}${release.url}`
 		const entries = new Array<{ title: string, link: string, date: string, description: string }>()
 		if (release.date && release.state !== 'draft') {
-			entries.push({ title: `Mitra ${release.name}`, link: page, date: release.date, description: release.notes?.intro || release.summary })
+			entries.push({ title: `${t('Mitra')} ${release.name}`, link: page, date: release.date, description: release.notes?.intro || release.summary })
 		}
 		for (const patch of release.patches) {
 			if (patch.date) {
 				entries.push({
-					title: `Mitra ${patch.version}`,
+					title: `${t('Mitra')} ${patch.version}`,
 					link: `${page}#patches`,
 					date: patch.date,
 					description: patch.categories.flatMap(linesOf).map(line => line.subject).join('. '),

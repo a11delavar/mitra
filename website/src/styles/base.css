@@ -1,11 +1,13 @@
 /* Adds only what a web page needs on top of src/design; states no colour of its own. */
 
+/* As the app's fonts.css: each face covers only its script's range, so a page fetches Vazirmatn only where Persian is. */
 @import '@fontsource-variable/inter';
+@import '@fontsource-variable/vazirmatn';
 @import './generated/mitra.css';
 @import './generated/callouts.css';
 
 :root {
-	--mitra-font: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+	--mitra-font: 'Inter Variable', 'Inter', 'Vazirmatn Variable', ui-sans-serif, system-ui, sans-serif;
 	--mitra-font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace;
 
 	/* A wash of the ink, not --color-border: that equals the surface and vanishes on an open page. */

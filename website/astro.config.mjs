@@ -364,13 +364,15 @@ export default defineConfig({
 		caddyRedirects,
 		datedSitemap,
 		starlight({
-			title: 'Mitra',
+			title: Object.fromEntries(languages.map(language => [language, dictionaries[language]?.['Mitra'] ?? 'Mitra'])),
 			// English at the root, every other language under its prefix. A page not translated yet shows the English
 			// text there, with Starlight's notice; starlightRouteData.ts points search engines at the English page.
 			defaultLocale: 'root',
 			locales: Object.fromEntries(languages.map((language, index) => [index ? language : 'root', {
 				label: new Intl.DisplayNames([language], { type: 'language' }).of(language) ?? language,
 				lang: language,
+				// Starlight reads every language left to right unless told; the script says which way it runs.
+				dir: /** @type {Intl.Locale & { getTextInfo?(): { direction: 'ltr' | 'rtl' } }} */ (new Intl.Locale(language)).getTextInfo?.().direction ?? 'ltr',
 			}])),
 			plugins: [llmsTxt],
 			description: 'Documentation for Mitra, a self-hosted calendar for your events and tasks.',

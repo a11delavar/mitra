@@ -93,7 +93,7 @@ export class Release extends ReleaseModel {
 
 	/** The notes' title, or the version alone for a release without notes. */
 	get title() {
-		return this.notes?.title || `Mitra ${this.version}`
+		return this.notes?.title || `${this.t('Mitra')} ${this.version}`
 	}
 
 	/** `0.6: Calendars in Mitra…`, for a `<title>` and a feed item. */

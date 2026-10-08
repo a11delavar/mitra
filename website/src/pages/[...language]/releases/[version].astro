@@ -36,7 +36,7 @@ const highlights = await Promise.all(release.highlights.map(async highlight => {
 const rest = await Promise.all((release.notes?.rest ?? []).map(async section => ({ section, html: await release.render(section.markdown) })))
 ---
 
-<Site title={`${release.name} | Mitra`} description={release.description} current="releases" languages={languages} translated={release.languages}>
+<Site title={`${release.name} | ${t('Mitra')}`} description={release.description} current="releases" languages={languages} translated={release.languages}>
 	<link slot="head" rel="alternate" type="application/rss+xml" title={t('Mitra releases')} href={withBase(localized('/releases.xml', release.language))} />
 	<article class="release release-notes" data-state={release.state}>
 		<header class="hero">

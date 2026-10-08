@@ -42,7 +42,7 @@ const preview = await linkPreview(Astro.site)
 		<link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" />
 
 		<meta property="og:type" content="website" />
-		<meta property="og:site_name" content="Mitra" />
+		<meta property="og:site_name" content={t('Mitra')} />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
 		<meta property="og:url" content={canonical} />

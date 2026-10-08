@@ -23,7 +23,7 @@ const rows = await Promise.all(Release.all(language).map(async release => ({
 })))
 ---
 
-<Site title={`${t('Releases')} | Mitra`} description={t('What changed in each version of Mitra, written for the people who use it.')} current="releases" languages={languages}>
+<Site title={`${t('Releases')} | ${t('Mitra')}`} description={t('What changed in each version of Mitra, written for the people who use it.')} current="releases" languages={languages}>
 	<link slot="head" rel="alternate" type="application/rss+xml" title={t('Mitra releases')} href={withBase(localized('/releases.xml', language))} />
 	<section class="releases">
 		<header class="lead">

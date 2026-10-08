@@ -22,6 +22,8 @@ if (!fs.existsSync(docsLink)) {
 }
 
 // The logo and the captures the pages import (Astro converts and hashes those).
+// Copied fresh, so a file the repo no longer has (a capture renamed or retired) cannot keep a build passing here alone.
+fs.rmSync(path.join(here, 'src/assets'), { recursive: true, force: true })
 fs.cpSync(path.join(repoRoot, 'assets'), path.join(here, 'src/assets'), { recursive: true })
 write('public/favicon.svg', fs.readFileSync(path.join(repoRoot, 'assets/mitra.svg')))
 

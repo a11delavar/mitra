@@ -14,7 +14,7 @@ export function withBase(path) {
  * The languages the site is written in, English first and at the root, every other under its own prefix (`/de/docs/`).
  * A page's translation is the file beside it with the language before the extension (`week.de.md`, `README.de.md`).
  */
-export const languages = ['en', 'de']
+export const languages = ['en', 'de', 'fr', 'es', 'pt', 'it', 'fa']
 
 /** A site path in `language`: `/docs/` is `/de/docs/` in German. */
 export function localized(path, language) {

@@ -54,8 +54,8 @@ const views = [
 const website = {
 	'@context': 'https://schema.org',
 	'@type': 'WebSite',
-	name: 'Mitra',
-	alternateName: 'Mitra Calendar',
+	name: t('Mitra'),
+	alternateName: ['Mitra', 'Mitra Calendar'],
 	url: new URL(withBase(localized('/', language)), Astro.site).href,
 	inLanguage: language,
 }
@@ -64,7 +64,7 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 ---
 
 <Site
-	title={`Mitra | ${t('Self-hosted calendar for your events and tasks')}`}
+	title={`${t('Mitra')} | ${t('Self-hosted calendar for your events and tasks')}`}
 	description={t('Mitra is a free, open source, self-hosted calendar that puts your tasks on the same timeline as your events. Keep your calendars in Mitra itself, or sync the ones you already use.')}
 	languages={languages}
 >
