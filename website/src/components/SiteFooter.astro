@@ -1,41 +1,50 @@
 ---
-import { demo, docsBase, withBase } from '../../site.mjs'
+import { demo, docsBase, languages, localized, withBase } from '../../site.mjs'
 import { version } from '../generated/meta.json'
+import { localize } from '../i18n'
 import Brand from './Brand.astro'
+
+interface Props {
+	language?: string
+}
+
+const { language = languages[0]! } = Astro.props
+const t = localize(language)
+const docs = (page = '') => withBase(localized(`/${docsBase}/${page}`, language))
 ---
 
 <footer class="footer">
 	<div class="inner">
 		<div class="identity">
-			<Brand />
-			<p>One calendar to plan your events and tasks.</p>
+			<Brand language={language} />
+			<p>{t('One calendar to plan your events and tasks.')}</p>
 			<p class="license">
-				Open source under the AGPL-3.0 · <span class="version">v{version}</span>
+				{t('Open source under the AGPL-3.0')} · <span class="version">v{version}</span>
 			</p>
 		</div>
 		<nav class="columns">
 			<div>
-				<h2>Docs</h2>
-				<a href={withBase(`/${docsBase}/`)}>Getting started</a>
-				<a href={withBase(`/${docsBase}/configuration/`)}>Configuration</a>
+				<h2>{t('Docs')}</h2>
+				<a href={docs()}>{t('Getting started')}</a>
+				<a href={docs('configuration/')}>{t('Configuration')}</a>
 			</div>
 			<div>
-				<h2>Integrations</h2>
-				<a href={withBase(`/${docsBase}/integrations/mitra/`)}>Mitra calendars</a>
-				<a href={withBase(`/${docsBase}/integrations/caldav/`)}>CalDAV</a>
-				<a href={withBase(`/${docsBase}/integrations/google/`)}>Google Calendar</a>
-				<a href={withBase(`/${docsBase}/integrations/apple/`)}>Apple Calendar</a>
-				<a href={withBase(`/${docsBase}/integrations/notion/`)}>Notion</a>
-				<a href={withBase(`/${docsBase}/integrations/tempo/`)}>Tempo</a>
-				<a href={withBase(`/${docsBase}/integrations/subscriptions/`)}>Subscriptions</a>
+				<h2>{t('Integrations')}</h2>
+				<a href={docs('integrations/mitra/')}>{t('Mitra calendars')}</a>
+				<a href={docs('integrations/caldav/')}>CalDAV</a>
+				<a href={docs('integrations/google/')}>Google Calendar</a>
+				<a href={docs('integrations/apple/')}>Apple Calendar</a>
+				<a href={docs('integrations/notion/')}>Notion</a>
+				<a href={docs('integrations/tempo/')}>Tempo</a>
+				<a href={docs('integrations/subscriptions/')}>{t('Subscriptions')}</a>
 			</div>
 			<div>
-				<h2>Project</h2>
-				<a href={demo}>Demo</a>
-				<a href="https://github.com/a11delavar/mitra">Source</a>
-				<a href={withBase('/releases/')}>Releases</a>
-				<a href="https://github.com/a11delavar/mitra/issues">Issues</a>
-				<a href="https://github.com/a11delavar/mitra/pkgs/container/mitra">Container image</a>
+				<h2>{t('Project')}</h2>
+				<a href={demo}>{t('Demo')}</a>
+				<a href="https://github.com/a11delavar/mitra">{t('Source')}</a>
+				<a href={withBase(localized('/releases/', language))}>{t('Releases')}</a>
+				<a href="https://github.com/a11delavar/mitra/issues">{t('Issues')}</a>
+				<a href="https://github.com/a11delavar/mitra/pkgs/container/mitra">{t('Container image')}</a>
 			</div>
 		</nav>
 	</div>

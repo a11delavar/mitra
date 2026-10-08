@@ -6,8 +6,8 @@ description: "Choose Mitra's theme, language and default view, and how new entri
 Mitra keeps its settings in one dialog. Open it with **Settings** at the bottom of the sidebar, with <kbd>Ctrl</kbd>+<kbd>,</kbd> (<kbd>⌘</kbd>+<kbd>,</kbd> on a Mac) from anywhere, or from the [command palette](shortcuts.md). When you sign in with an account, **Settings** is the gear on your account card at the bottom of the sidebar, and the **⋯** beside it holds **Sign out**.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/settings-detail-dark.png">
-  <img src="../assets/screenshots/settings-detail-light.png" alt="The settings dialog, open on the General page" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/settings-detail-dark.webp">
+  <img src="../assets/screenshots/settings-detail-light.webp" alt="The settings dialog, open on the General page" />
 </picture>
 
 You never have to change anything. A setting you leave alone follows Mitra's default, so when a later version improves a default, you get the new one. Choosing the default value yourself counts as leaving it alone.

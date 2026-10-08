@@ -43,7 +43,16 @@ export async function getReleaseSources() {
 		sections: annotateChangelog(parseChangelog(await readFile(changelogPath, 'utf8').catch(() => '')), mitra.version),
 		folders: await Promise.all((await readdir(releasesPath).catch(() => new Array<string>())).map(async version => {
 			const files = await readdir(path.join(releasesPath, version))
-			return { version, markdown: await readFile(path.join(releasesPath, version, 'README.md'), 'utf8'), files: files.filter(file => file !== 'README.md') }
+			const translations = await Promise.all(files.flatMap(file => {
+				const language = file.match(/^README\.(\w+)\.md$/)?.[1]
+				return language ? [readFile(path.join(releasesPath, version, file), 'utf8').then(markdown => [language, markdown] as const)] : []
+			}))
+			return {
+				version,
+				markdown: await readFile(path.join(releasesPath, version, 'README.md'), 'utf8'),
+				translations: Object.fromEntries(translations),
+				files: files.filter(file => !/^README(\.\w+)?\.md$/.test(file)),
+			}
 		})),
 	}
 }

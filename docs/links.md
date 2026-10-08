@@ -6,8 +6,8 @@ description: "How Mitra shows the links in an entry: the meeting to join, the no
 Links in an entry show what they lead to rather than their raw address. A meeting link reads **Join Google Meet**, a link to an Obsidian note shows the note's name, and a web page shows its site and path, such as `example.atlassian.net/browse/DEV-9177`.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/links-detail-dark.png">
-  <img src="../assets/screenshots/links-detail-light.png" alt="An entry's editor with a Links row above its description, holding a link to a note in Obsidian" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/links-detail-dark.webp">
+  <img src="../assets/screenshots/links-detail-light.webp" alt="An entry's editor with a Links row above its description, holding a link to a note in Obsidian" />
 </picture>
 
 ## In the editor

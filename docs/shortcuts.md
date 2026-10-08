@@ -6,8 +6,8 @@ description: "Use Mitra from the keyboard: views, navigation, entries and the co
 Press <kbd>?</kbd> anywhere in the calendar to open the list of shortcuts. It always matches the version you're running. The keys follow the conventions of web calendars like Google Calendar, Notion Calendar and Proton Calendar, so what you already know carries over.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/shortcuts-detail-dark.png">
-  <img src="../assets/screenshots/shortcuts-detail-light.png" alt="The keyboard shortcuts sheet, opened with the question mark key" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/shortcuts-detail-dark.webp">
+  <img src="../assets/screenshots/shortcuts-detail-light.webp" alt="The keyboard shortcuts sheet, opened with the question mark key" />
 </picture>
 
 ## Views
@@ -61,6 +61,6 @@ Single-letter shortcuts never fire while you type in a text field.
 Press <kbd>/</kbd>, <kbd>Ctrl</kbd> + <kbd>K</kbd> or <kbd>Ctrl</kbd> + <kbd>P</kbd> to search your entries or run a command; all three do the same thing. The search looks through the titles, descriptions and locations in all your calendars, not just the days on screen, and lists a repeating entry once. Choosing an entry goes to its date and opens it. The commands cover the views, navigation, new entries, your calendars and your settings, and each shows its keys beside it, so you can learn them as you go.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/palette-detail-dark.png">
-  <img src="../assets/screenshots/palette-detail-light.png" alt="The command palette open over the week view" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/palette-detail-dark.webp">
+  <img src="../assets/screenshots/palette-detail-light.webp" alt="The command palette open over the week view" />
 </picture>

@@ -6,8 +6,8 @@ description: "Add the people involved in an entry and follow their replies. Whet
 An entry can have **participants**: the people involved in it. Mitra saves them with the entry in the standard calendar format, so every other app using the same calendar sees the same list, and replies made in Apple Calendar, Thunderbird or a webmail show up in Mitra too.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/participants-detail-dark.png">
-  <img src="../assets/screenshots/participants-detail-light.png" alt="An entry with three participants, their replies shown as badges on their avatars" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/participants-detail-dark.webp">
+  <img src="../assets/screenshots/participants-detail-light.webp" alt="An entry with three participants, their replies shown as badges on their avatars" />
 </picture>
 
 ## Who sends the invitations

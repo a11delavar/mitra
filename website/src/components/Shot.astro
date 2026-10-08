@@ -10,11 +10,13 @@ interface Props {
 	class?: string
 	/** The page's largest paint: fetched straight from the document instead of after the stylesheet naming it. */
 	priority?: boolean
+	/** The capture in this language where one was shot. */
+	language?: string
 }
 
-const { name, alt, aspect = '1440 / 900', width = 1800, class: className, priority = false } = Astro.props
-const light = await captureUrl(`${name}-light`, width)
-const dark = await captureUrl(`${name}-dark`, width)
+const { name, alt, aspect = '1440 / 900', width = 1800, class: className, priority = false, language } = Astro.props
+const light = await captureUrl(`${name}-light`, width, language)
+const dark = await captureUrl(`${name}-dark`, width, language)
 ---
 
 {/* Keyed on the system scheme, so a theme picked against it also fetches the other capture. */}

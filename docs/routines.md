@@ -6,15 +6,15 @@ description: "How the month and year views show things you do often, such as a d
 Some things happen so often that a bar for each would fill a month with copies: a daily workout, your medication, a weekday standup. In the month and year views, Mitra draws them as a **routine** instead: a thin line under the days, with a mark on each day the routine happens.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/month-detail-dark.png">
-  <img src="../assets/screenshots/month-detail-light.png" alt="The month view, with routines shown as small marks under each day" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/month-detail-dark.webp">
+  <img src="../assets/screenshots/month-detail-light.webp" alt="The month view, with routines shown as small marks under each day" />
 </picture>
 
 In the year view, where every day is small, routines are what you see most: each colored line is a routine running through the months.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/year-detail-dark.png">
-  <img src="../assets/screenshots/year-detail-light.png" alt="The year view, with routines as thin colored lines under the days of every month" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/year-detail-dark.webp">
+  <img src="../assets/screenshots/year-detail-light.webp" alt="The year view, with routines as thin colored lines under the days of every month" />
 </picture>
 
 ## What becomes a routine

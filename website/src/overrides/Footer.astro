@@ -1,19 +1,21 @@
 ---
-import { withBase } from '../../site.mjs'
+import { localized, withBase } from '../../site.mjs'
 import Icon from '../components/Icon.astro'
+import { localize } from '../i18n'
 
-const { editUrl } = Astro.locals.starlightRoute
+const { editUrl, lang } = Astro.locals.starlightRoute
+const t = localize(lang)
 ---
 
 <footer>
 	{editUrl && (
 		<a class="edit" href={editUrl.href} rel="noreferrer">
 			<Icon name="pencil" size="1em" />
-			Edit this page
+			{t('Edit this page')}
 		</a>
 	)}
 	<div class="links">
-		<a href={withBase('/')}>Home</a>
+		<a href={withBase(localized('/', lang))}>{t('Home')}</a>
 		<a href="https://github.com/a11delavar/mitra">GitHub</a>
 		<a href="https://github.com/a11delavar/mitra/blob/main/LICENSE">AGPL-3.0</a>
 	</div>

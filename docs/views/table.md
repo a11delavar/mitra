@@ -10,8 +10,8 @@ The **Table** view lists your entries as rows instead of drawing them on a grid.
 Every row is one entry, and each occurrence of a repeating entry gets a row of its own. Its title is the same chip the calendar draws: click it to open the entry's editor.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/table-detail-dark.png">
-  <img src="../../assets/screenshots/table-detail-light.png" alt="The table view, with a column each for when, calendar, status and participants" />
+  <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/table-detail-dark.webp">
+  <img src="../../assets/screenshots/table-detail-light.webp" alt="The table view, with a column each for when, calendar, status and participants" />
 </picture>
 
 ## Which entries

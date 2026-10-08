@@ -1,8 +1,9 @@
 ---
-import { withBase } from '../../site.mjs'
+import { base, languageOf, languages, localized, withBase } from '../../site.mjs'
 import Brand from '../components/Brand.astro'
 import NavLinks from '../components/NavLinks.astro'
 import SiteFooter from '../components/SiteFooter.astro'
+import { directionOf, localize } from '../i18n'
 import { linkPreview } from '../linkPreview'
 import '../styles/base.css'
 
@@ -10,28 +11,42 @@ interface Props {
 	title: string
 	description: string
 	current?: 'home' | 'docs' | 'releases'
+	/** The languages the page exists in, English first; a page shown in English for want of a translation counts. */
+	languages?: Array<string>
+	/** The languages the page is written in, which search engines are told of; the others point at the English page. */
+	translated?: Array<string>
 }
 
-const { title, description, current = 'home' } = Astro.props
-const canonical = new URL(Astro.url.pathname, Astro.site)
+const { title, description, current = 'home', languages: existing = [languages[0]!], translated = existing } = Astro.props
+const { language, path } = languageOf(Astro.url.pathname.slice(base.length))
+const t = localize(language)
+const url = (to: string) => new URL(withBase(localized(path, to)), Astro.site).href
+const canonical = url(translated.includes(language) ? language : languages[0]!)
+const alternates = existing.map(to => ({ language: to, href: withBase(localized(path, to)) }))
 const preview = await linkPreview(Astro.site)
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={language} dir={directionOf(language)}>
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>{title}</title>
 		<meta name="description" content={description} />
-		<link rel="canonical" href={canonical.href} />
+		<link rel="canonical" href={canonical} />
+		{/* Each language of the page names all of them, itself included, so search engines show the reader's. */}
+		{translated.includes(language) && translated.length > 1 && [
+			...translated.map(to => <link rel="alternate" hreflang={to} href={url(to)} />),
+			<link rel="alternate" hreflang="x-default" href={url(languages[0]!)} />,
+		]}
 		<link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="Mitra" />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
-		<meta property="og:url" content={canonical.href} />
+		<meta property="og:url" content={canonical} />
+		<meta property="og:locale" content={language} />
 		<meta property="og:image" content={preview.href} />
 		<meta name="twitter:card" content="summary_large_image" />
 		<slot name="head" />
@@ -50,17 +65,17 @@ const preview = await linkPreview(Astro.site)
 		</script>
 	</head>
 	<body>
-		<a class="skip" href="#main">Skip to content</a>
+		<a class="skip" href="#main">{t('Skip to content')}</a>
 		<header class="header">
 			<div class="bar">
-				<Brand />
-				<NavLinks current={current} />
+				<Brand language={language} />
+				<NavLinks current={current} language={language} alternates={alternates} />
 			</div>
 		</header>
 		<main id="main">
 			<slot />
 		</main>
-		<SiteFooter />
+		<SiteFooter language={language} />
 
 		<style>
 			.skip {

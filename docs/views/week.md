@@ -8,8 +8,8 @@ sidebar:
 The week view shows your days hour by hour, one column per day. Events and tasks sit side by side in the same columns, so you see the time you have left for your tasks. Open it with <kbd>W</kbd>.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/week-detail-dark.png">
-  <img src="../../assets/screenshots/week-detail-light.png" alt="The week view, with events and tasks side by side in each day's column" />
+  <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/week-detail-dark.webp">
+  <img src="../../assets/screenshots/week-detail-light.webp" alt="The week view, with events and tasks side by side in each day's column" />
 </picture>
 
 All-day entries sit in the lane along the top. When entries overlap, they share the column side by side.

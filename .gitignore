@@ -5,3 +5,5 @@ tsconfig.tsbuildinfo
 out_test/
 out/
 .DS_Store
+# Docs captures in languages other than English: the website build shoots them (npm run screenshots -- --language de).
+assets/screenshots/*/

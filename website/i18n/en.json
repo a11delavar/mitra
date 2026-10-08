@@ -1,0 +1,34 @@
+{
+	"${count:pluralityNumber} changes": [
+		"${count:pluralityNumber} change",
+		"${count:pluralityNumber} changes"
+	],
+	"${count:pluralityNumber} documentation changes": [
+		"${count:pluralityNumber} documentation change",
+		"${count:pluralityNumber} documentation changes"
+	],
+	"${count:pluralityNumber} features": [
+		"${count:pluralityNumber} feature",
+		"${count:pluralityNumber} features"
+	],
+	"${count:pluralityNumber} improvements": [
+		"${count:pluralityNumber} improvement",
+		"${count:pluralityNumber} improvements"
+	],
+	"${count:pluralityNumber} maintenance changes": [
+		"${count:pluralityNumber} maintenance change",
+		"${count:pluralityNumber} maintenance changes"
+	],
+	"${count:pluralityNumber} minute read": [
+		"${count:pluralityNumber} minute read",
+		"${count:pluralityNumber} minute read"
+	],
+	"${count:pluralityNumber} other changes": [
+		"${count:pluralityNumber} other change",
+		"${count:pluralityNumber} other changes"
+	],
+	"${count:pluralityNumber} refactors": [
+		"${count:pluralityNumber} refactor",
+		"${count:pluralityNumber} refactors"
+	]
+}

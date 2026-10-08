@@ -6,8 +6,8 @@ description: "Make an entry repeat, change or delete one occurrence or the whole
 A repeating entry is one entry with a repeat rule, such as a team meeting every Monday or rent due on the 1st of every month. This page calls the whole thing a series, and each of its dates an occurrence. Every occurrence shows a small repeat icon in the views.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/repeat-detail-dark.png">
-  <img src="../assets/screenshots/repeat-detail-light.png" alt="The editor of a weekly team meeting with its Repeat list open: Does not repeat, Every day, Every weekday, Every week on Tue, Every 2 weeks, Every month on the 1st, on the 1st Tue, Every year, and Custom" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/repeat-detail-dark.webp">
+  <img src="../assets/screenshots/repeat-detail-light.webp" alt="The editor of a weekly team meeting with its Repeat list open: Does not repeat, Every day, Every weekday, Every week on Tue, Every 2 weeks, Every month on the 1st, on the 1st Tue, Every year, and Custom" />
 </picture>
 
 ## Make an entry repeat
@@ -23,8 +23,8 @@ To stop an entry repeating, pick **Does not repeat**. A change to the rule alway
 For anything else, pick **Custom…**.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/repeat-custom-detail-dark.png">
-  <img src="../assets/screenshots/repeat-custom-detail-light.png" alt="The Repeat dialog: every 1 week on Tuesday, ending never, on a date, or after a number of times" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/repeat-custom-detail-dark.webp">
+  <img src="../assets/screenshots/repeat-custom-detail-light.webp" alt="The Repeat dialog: every 1 week on Tuesday, ending never, on a date, or after a number of times" />
 </picture>
 
 After **Every**, type a number and pick days, weeks, months or years. A weekly rule then shows the days of the week: turn on each day the entry repeats on, and at least one stays on. A monthly rule repeats on the same day number as the start, such as the 13th, or on the same weekday of the month, such as the 2nd Tuesday. When the start is in the last seven days of its month, it can also repeat on the last Tuesday.

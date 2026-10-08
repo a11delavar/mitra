@@ -10,8 +10,8 @@ Availability belongs to a calendar, next to that calendar's events and tasks. Yo
 It is the usual shape of your week, not a fence. A dentist appointment in the middle of your working hours is fine.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/availability-detail-dark.png">
-  <img src="../assets/screenshots/availability-detail-light.png" alt="Three days of the week view: working hours and study time shaded in their calendars' colors, with Wednesday afternoon's work labelled Home office" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/availability-detail-dark.webp">
+  <img src="../assets/screenshots/availability-detail-light.webp" alt="Three days of the week view: working hours and study time shaded in their calendars' colors, with Wednesday afternoon's work labelled Home office" />
 </picture>
 
 ## Named or not
@@ -30,8 +30,8 @@ Open the command palette with <kbd>/</kbd> or <kbd>Ctrl</kbd> + <kbd>K</kbd> and
 The editor opens, so you can change the times, the days, the name, the place or the calendar. An entry that doesn't repeat can also become availability through its **Type**.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/availability-editor-detail-dark.png">
-  <img src="../assets/screenshots/availability-editor-detail-light.png" alt="The editor of Wednesday's work: its time, its weekly repeat, Home office as its place, and Free" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/availability-editor-detail-dark.webp">
+  <img src="../assets/screenshots/availability-editor-detail-light.webp" alt="The editor of Wednesday's work: its time, its weekly repeat, Home office as its place, and Free" />
 </picture>
 
 ## Edit and move

@@ -8,8 +8,8 @@ sidebar:
 The timeline shows your open tasks that have a date, one per row, in date order. Each bar spans the task's [schedule](../planning.md), so you see at once which tasks run side by side and which come one after the other. Open it with <kbd>L</kbd>.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/timeline-detail-dark.png">
-  <img src="../../assets/screenshots/timeline-detail-light.png" alt="The timeline view, with one open task per row" />
+  <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/timeline-detail-dark.webp">
+  <img src="../../assets/screenshots/timeline-detail-light.webp" alt="The timeline view, with one open task per row" />
 </picture>
 
 A task's title sits beside its bar. When a bar is scrolled out of sight, a button at the edge of the view takes you back to it.

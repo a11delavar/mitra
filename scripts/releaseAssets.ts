@@ -7,7 +7,7 @@ import { ReleaseNotes } from '../src/features/about/ReleaseNotes.ts'
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 /**
- * Copies every release's notes into `dist/releases/<minor>/` for the app's What's New, and the captures of the releases
+ * Copies every release's notes and their translations (`README.de.md`) into `dist/releases/<minor>/` for the app's What's New, and the captures of the releases
  * this build is: a tag's own minor, and past a tag the release in development too. Older releases read as text, so the
  * image carries at most two releases' pictures.
  */
@@ -25,7 +25,9 @@ export function writeReleaseAssets(version: string) {
 	const carried = new Set([ReleaseNotes.minorOf(version), ...!tagged && draft ? [draft] : []])
 	for (const name of folders) {
 		fs.mkdirSync(path.join(target, name), { recursive: true })
-		fs.copyFileSync(path.join(source, name, 'README.md'), path.join(target, name, 'README.md'))
+		for (const file of fs.readdirSync(path.join(source, name)).filter(file => /^README(\.\w+)?\.md$/.test(file))) {
+			fs.copyFileSync(path.join(source, name, file), path.join(target, name, file))
+		}
 		if (carried.has(name)) {
 			for (const file of fs.readdirSync(path.join(source, name)).filter(file => /\.(webp|mp4)$/.test(file))) {
 				fs.copyFileSync(path.join(source, name, file), path.join(target, name, file))

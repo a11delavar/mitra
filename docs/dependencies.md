@@ -6,8 +6,8 @@ description: "Make an entry wait for another, see the order as lines on the cale
 A **dependency** says that an entry can't start until another one has finished: the draft before the review, the review before the release. The entry that waits is blocked by the other.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/week-detail-dark.png">
-  <img src="../assets/screenshots/week-detail-light.png" alt="A week with three study tasks joined by lines, each one leading to the next and on to the exam" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/week-detail-dark.webp">
+  <img src="../assets/screenshots/week-detail-light.webp" alt="A week with three study tasks joined by lines, each one leading to the next and on to the exam" />
 </picture>
 
 ## Add a dependency

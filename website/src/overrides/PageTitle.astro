@@ -1,9 +1,22 @@
 ---
+import path from 'node:path'
 import type { StarlightRouteData } from '@astrojs/starlight/route-data'
+import { base, docsBase, languageOf, languages } from '../../site.mjs'
+import { translationOf, translationState } from '../../tools/translations.mjs'
+import { localize } from '../i18n'
 
-// Section, last update and reading time, all derived from the page itself.
+// Section, last update and reading time, all derived from the page itself. A translation older than its English page
+// says so, from the same git dates.
 
-const { entry, sidebar, lastUpdated, lang } = Astro.locals.starlightRoute
+const { entry, sidebar, lastUpdated, lang, isFallback } = Astro.locals.starlightRoute
+const t = localize(lang)
+const repoRoot = path.resolve(process.cwd(), '..')
+const linkPrefix = `src/content/docs/${docsBase}/`
+const english = entry.filePath?.startsWith(linkPrefix)
+	? `docs/${entry.filePath.slice(linkPrefix.length)}`.replace(new RegExp(`\\.(${languages.slice(1).join('|')})(\\.mdx?)$`, 'i'), '$2')
+	: undefined
+const outdated = !isFallback && lang !== languages[0] && english && translationState(english, lang, repoRoot) === 'outdated'
+const englishPage = `${base}${languageOf(Astro.url.pathname.slice(base.length)).path}`
 
 type Entry = StarlightRouteData['sidebar'][number]
 
@@ -28,12 +41,27 @@ const minutes = Math.max(1, Math.round(words / 200))
 const facts = [
 	sectionOf(sidebar),
 	lastUpdated?.toLocaleDateString(lang, { dateStyle: 'medium', timeZone: 'UTC' }),
-	words > 0 ? `${minutes} minute read` : undefined,
+	words > 0 ? t('${count:pluralityNumber} minute read', { count: minutes }) : undefined,
 ].filter(Boolean)
 ---
 
 {facts.length > 0 && <p class="meta">{facts.map(fact => <span>{fact}</span>)}</p>}
 <h1 id="_top">{entry.data.title}</h1>
+{isFallback && (
+	/* The English text shown here was rendered once, with links to the English docs: they lead on in this language. */
+	<script is:inline define:vars={{ from: `${base}/${docsBase}/`, to: `${base}/${lang}/${docsBase}/` }}>
+		for (const link of document.querySelectorAll(`.sl-markdown-content a[href^="${from}"]`)) {
+			link.setAttribute('href', to + link.getAttribute('href').slice(from.length))
+		}
+	</script>
+)}
+{outdated && english && (
+	<p class="outdated">
+		{t('The English page changed after this translation.')}
+		{' '}<a href={englishPage} hreflang={languages[0]}>{t('Read it in English')}</a>
+		{' · '}<a href={`https://github.com/a11delavar/mitra/edit/main/${translationOf(english, lang)}`} rel="noreferrer">{t('Update the translation')}</a>
+	</p>
+)}
 
 <style>
 	.meta {
@@ -49,6 +77,15 @@ const facts = [
 	.meta span + span::before {
 		content: '·';
 		margin-inline-end: 0.5rem;
+	}
+
+	.outdated {
+		margin: 1rem 0 0;
+		padding: 0.5rem 0.75rem;
+		border-inline-start: 2px solid var(--release-gold, var(--color-accent));
+		background: var(--mitra-wash);
+		font-size: 0.875rem;
+		color: var(--color-text-muted);
 	}
 
 	h1 {

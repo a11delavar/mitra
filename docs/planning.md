@@ -8,8 +8,8 @@ Planning is about tasks that don't have a place in your week yet: ideas you want
 This page covers the Planning tab, due dates, estimates, scheduling and unscheduling tasks, and overdue tasks.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/planning-detail-dark.png">
-  <img src="../assets/screenshots/planning-detail-light.png" alt="The sidebar's Planning tab, listing overdue tasks above the unscheduled ones" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/planning-detail-dark.webp">
+  <img src="../assets/screenshots/planning-detail-light.webp" alt="The sidebar's Planning tab, listing overdue tasks above the unscheduled ones" />
 </picture>
 
 ## Schedule, constraints and planning
@@ -26,8 +26,8 @@ Neither the schedule nor the constraints are required. A task can have a due dat
 For example, a presentation is due on Friday at noon, and you schedule Tuesday morning to prepare it. The views show the task on Tuesday, and a small flag beside it shows that it has a due date.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/due-detail-dark.png">
-  <img src="../assets/screenshots/due-detail-light.png" alt="A task scheduled for Tuesday from 9:00 to 12:00, with a due date on Friday at noon" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/due-detail-dark.webp">
+  <img src="../assets/screenshots/due-detail-light.webp" alt="A task scheduled for Tuesday from 9:00 to 12:00, with a due date on Friday at noon" />
 </picture>
 
 ## The Planning tab

@@ -8,8 +8,8 @@ Mitra shows times in your time zone, the one your device is set to. When you tra
 An entry can also have a time zone of its own, such as a flight that leaves at 9:00 in New York. And the week view can show the hours of other time zones beside yours.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/time-zone-detail-dark.png">
-  <img src="../assets/screenshots/time-zone-detail-light.png" alt="A new entry's editor with its time zone set to GMT+4 Dubai, showing 11:00 in Dubai, while the entry sits at 9:00 on the Berlin week behind it" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/time-zone-detail-dark.webp">
+  <img src="../assets/screenshots/time-zone-detail-light.webp" alt="A new entry's editor with its time zone set to GMT+4 Dubai, showing 11:00 in Dubai, while the entry sits at 9:00 on the Berlin week behind it" />
 </picture>
 
 ## An entry's time zone
@@ -48,8 +48,8 @@ Picking a zone for such an entry gives it that zone and keeps its clock times. I
 The [week view](views/week.md) can show the hours of other time zones in columns beside yours, so you see what time it is there at every hour of your day.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/time-zones-detail-dark.png">
-  <img src="../assets/screenshots/time-zones-detail-light.png" alt="The week view with an EDT column of New York hours beside the GMT+2 column, so 07:00 in Berlin reads 01:00 in New York" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/time-zones-detail-dark.webp">
+  <img src="../assets/screenshots/time-zones-detail-light.webp" alt="The week view with an EDT column of New York hours beside the GMT+2 column, so 07:00 in Berlin reads 01:00 in New York" />
 </picture>
 
 ### Add a time zone to the week

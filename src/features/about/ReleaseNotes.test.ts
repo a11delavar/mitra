@@ -106,6 +106,39 @@ describe('ReleaseNotes', () => {
 		assert.equal(ReleaseNotes.parse(notes).withContributors(authors.slice(1)).markdown, `${notes.trimEnd()}\n\n## Contributors\n- [@someone](https://github.com/someone)\n- Jane Roe\n`)
 	})
 
+	it('reads a translation\'s sections as the English ones in order, under its own headings', () => {
+		const translated = ReleaseNotes.parse(notes).translation(`---
+title: Fälligkeiten, Verfügbarkeit und ruhigere Erinnerungen
+---
+In dieser Version geht es um Aufgaben mit einer Frist, aber ohne Termin.
+
+## Fälligkeiten und Schätzungen
+Eine Aufgabe kann eine Fälligkeit haben, bevor sie eine Zeit hat.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="due-detail-dark.webp">
+	<img src="due-detail-light.webp" alt="Der Editor mit einer Fälligkeit">
+</picture>
+
+Doku: [Planung](../../docs/planning.md)
+
+## Kalender in Mitra
+Ohne Aufnahme.
+
+## Planen durch Ziehen
+Eine Aufgabe, in die Woche gezogen.
+
+## Aktualisieren
+Nichts zu tun.
+`)!
+		assert.equal(translated.date, '2026-10-05')
+		assert.deepEqual(translated.highlights.map(highlight => highlight.heading), ['Fälligkeiten und Schätzungen', 'Kalender in Mitra', 'Planen durch Ziehen'])
+		assert.deepEqual(translated.highlights[0]!.docs, new ReleaseDocs('Planung', '../../docs/planning.md'))
+		assert.deepEqual(translated.highlights[0]!.capture, new ReleaseCapture('due-detail', 'Der Editor mit einer Fälligkeit'))
+		assert.deepEqual(translated.rest.map(section => section.heading), ['Aktualisieren'])
+		assert.equal(ReleaseNotes.parse(notes).translation('## Nur ein Abschnitt\n'), undefined)
+	})
+
 	it('names the minor a version belongs to', () => {
 		assert.equal(ReleaseNotes.minorOf('v0.6.2'), '0.6')
 		assert.equal(ReleaseNotes.minorOf('0.6.0-rc.1'), '0.6')

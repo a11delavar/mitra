@@ -1,10 +1,14 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { languages as siteLanguages } from '../website/site.mjs'
+import { translationOf, translationState } from '../website/tools/translations.mjs'
 
 /**
  * i18n key generation and dictionary coverage analysis. The app's `t('…')` calls are checked against
- * `src/infrastructure/i18n`, the sample calendar's (`src/integrations/demo`) against its own dictionaries.
+ * `src/infrastructure/i18n`, the sample calendar's (`src/integrations/demo`) against its own dictionaries, and the
+ * website's against `website/i18n` (a word the app's dictionaries hold is taken from there). Then it lists, per
+ * language of the website, the docs pages and release notes without a translation beside them or with an outdated one.
  */
 
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -29,6 +33,10 @@ const demoDir = path.resolve(srcDir, 'integrations/demo')
 const app: DictionarySet = { name: 'the app', dir: i18nDir, owns: file => !file.startsWith(demoDir), keys: new Set() }
 const sample: DictionarySet = { name: 'the sample calendar', dir: path.join(demoDir, 'i18n'), owns: file => file.startsWith(demoDir), keys: new Set() }
 const sets = [app, sample]
+
+const rootDir = path.resolve(here, '..')
+const websiteDir = path.join(rootDir, 'website')
+const websiteKeys = new Set<string>()
 
 function sourceFiles(dir: string): Array<string> {
 	return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
@@ -83,6 +91,23 @@ ${lines}
 	console.log(`Wrote ${app.keys.size} keys to ${path.relative(process.cwd(), keysFile)}`)
 }
 
+// The website's pages and components, and the sidebar labels its config declares.
+const websiteFiles = [path.join(websiteDir, 'astro.config.mjs'), ...fs.readdirSync(path.join(websiteDir, 'src'), { recursive: true, encoding: 'utf8' })
+	.filter(file => /\.(ts|astro)$/.test(file) && !file.startsWith('content') && !file.startsWith('generated'))
+	.map(file => path.join(websiteDir, 'src', file))]
+for (const file of websiteFiles) {
+	const source = fs.readFileSync(file, 'utf8')
+	for (const [, quote, raw] of source.matchAll(callPattern)) {
+		websiteKeys.add(unescape(raw!, quote!))
+	}
+	if (file.endsWith('astro.config.mjs')) {
+		const sidebar = source.slice(source.indexOf('const sections = '), source.indexOf('const docId = '))
+		for (const [, quote, raw] of sidebar.matchAll(/\blabel:\s*(['"])((?:\\.|(?!\1)[^\\])*)\1/g)) {
+			websiteKeys.add(unescape(raw!, quote!))
+		}
+	}
+}
+
 // Analyze coverage against the collected keys.
 let hasError = false
 for (const set of sets) {
@@ -107,6 +132,53 @@ for (const set of sets) {
 		if (missing.length || unused.length) {
 			hasError = true
 		}
+	}
+}
+
+const readJson = (file: string) => fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) as Record<string, unknown> : {}
+for (const language of siteLanguages.slice(1)) {
+	const own = readJson(path.join(websiteDir, 'i18n', `${language}.json`))
+	const shared = readJson(path.join(i18nDir, `${language}.json`))
+	const label = `website/i18n/${language}.json`
+	const missing = sorted(websiteKeys).filter(key => !(key in own) && !(key in shared))
+	const unused = Object.keys(own).filter(key => !websiteKeys.has(key)).sort((a, b) => a.localeCompare(b))
+	if (missing.length) {
+		console.log(`\n⚠ ${missing.length} key(s) of the website with no translation in ${label} or the app's ${language}.json:`)
+		missing.forEach(key => console.log(`  + ${JSON.stringify(key)}`))
+	}
+	if (unused.length) {
+		console.log(`\n⚠ ${unused.length} ${label} key(s) no longer used by the website:`)
+		unused.forEach(key => console.log(`  - ${JSON.stringify(key)}`))
+	}
+	if (!missing.length && !unused.length) {
+		console.log(`\n✓ ${label} is in sync with the website (${websiteKeys.size} keys, the app's included).`)
+	}
+	hasError ||= missing.length > 0 || unused.length > 0
+}
+
+// Pages are translated as whole files beside the English ones, so a gap is information, never an error.
+const pages = [
+	...fs.readdirSync(path.join(rootDir, 'docs'), { recursive: true, encoding: 'utf8' }).map(file => `docs/${file.replaceAll('\\', '/')}`),
+	...fs.readdirSync(path.join(rootDir, 'releases'), { recursive: true, encoding: 'utf8' }).map(file => `releases/${file.replaceAll('\\', '/')}`),
+].filter(file => file.endsWith('.md') && !siteLanguages.some(language => file.endsWith(`.${language}.md`)))
+/** A Markdown file's headings, levels only, outside code blocks: a translation has the English ones, in order. */
+const headingsOf = (file: string) => fs.readFileSync(path.join(rootDir, file), 'utf8')
+	.replace(/^(```|~~~)[\s\S]*?^\1/gm, '')
+	.split(/\r?\n/)
+	.flatMap(line => line.match(/^(#{1,6})\s/)?.[1] ?? [])
+	.join(' ')
+for (const language of siteLanguages.slice(1)) {
+	const states = Map.groupBy(pages, page => translationState(page, language, rootDir))
+	const outdated = states.get('outdated') ?? []
+	const translated = [...states.get('current') ?? [], ...outdated]
+	console.log(`\n${language}: ${translated.length} of ${pages.length} pages translated.`)
+	outdated.forEach(page => console.log(`  ~ ${translationOf(page, language)} is older than ${page}`))
+	// Its headings take the English anchors by position, so a different outline would move every link into the page.
+	const misshapen = translated.filter(page => headingsOf(page) !== headingsOf(translationOf(page, language)))
+	misshapen.forEach(page => console.log(`  ⚠ ${translationOf(page, language)} has other headings than ${page}`))
+	hasError ||= misshapen.length > 0
+	if (process.argv.includes('--pages')) {
+		(states.get('missing') ?? []).forEach(page => console.log(`  + ${translationOf(page, language)}`))
 	}
 }
 

@@ -16,8 +16,8 @@
 <br />
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/week-dark.png">
-  <img src="assets/screenshots/week-light.png" alt="Mitra's week view, with events and tasks side by side" />
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/week-dark.webp">
+  <img src="assets/screenshots/week-light.webp" alt="Mitra's week view, with events and tasks side by side" />
 </picture>
 
 </div>

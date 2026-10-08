@@ -1,21 +1,26 @@
 ---
 import Search from '@astrojs/starlight/components/Search.astro'
+import { base, languageOf, languages, localized } from '../../site.mjs'
 import Brand from '../components/Brand.astro'
 import NavLinks from '../components/NavLinks.astro'
 
 // Starlight's header with Mitra's brand and nav swapped in; its grid is kept because it aligns the
-// search field with the reading column.
+// search field with the reading column. Every docs page exists in every language, untranslated ones showing English.
+
+const { lang } = Astro.locals.starlightRoute
+const { path } = languageOf(Astro.url.pathname.slice(base.length))
+const alternates = languages.map(language => ({ language, href: `${base}${localized(path, language)}` }))
 ---
 
 <div class="header">
 	<div class="title-wrapper sl-flex">
-		<Brand />
+		<Brand language={lang} />
 	</div>
 	<div class="sl-flex print:hidden">
 		<Search />
 	</div>
 	<div class="sl-hidden md:sl-flex print:hidden right-group">
-		<NavLinks current="docs" />
+		<NavLinks current="docs" language={lang} alternates={alternates} />
 	</div>
 </div>
 

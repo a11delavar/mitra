@@ -1,12 +1,14 @@
 ---
-import { withBase } from '../../site.mjs'
+import { languages, localized, withBase } from '../../site.mjs'
 import logo from '../assets/mitra.svg'
 
 interface Props {
-	href?: string
+	/** The homepage it leads to is the one in this language. */
+	language?: string
 }
 
-const { href = withBase('/') } = Astro.props
+const { language = languages[0]! } = Astro.props
+const href = withBase(localized('/', language))
 ---
 
 <a class="brand" href={href}>

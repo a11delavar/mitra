@@ -45,7 +45,7 @@ const relative = (file: string) => path.relative(rootDir, file).replaceAll('\\',
 // Borrowed from the docs: no browser needed.
 for (const name of [...captures.keys()].filter(name => !scenes.has(name))) {
 	for (const theme of themes.filter(theme => due(name, theme))) {
-		const source = path.join(outDir, `${name}-${theme}.png`)
+		const source = path.join(outDir, `${name}-${theme}.webp`)
 		if (!fs.existsSync(source)) {
 			throw new Error(`The notes name "${name}", which neither releases/${minor}/scenes.ts shoots nor assets/screenshots has (run npm run screenshots).`)
 		}

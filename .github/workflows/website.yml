@@ -11,6 +11,11 @@ on:
       - 'assets/**'
       - 'src/design/**'
       - 'src/integrations/*/logo.svg'
+      - 'src/infrastructure/i18n/*.json'
+      - 'src/integrations/demo/i18n/*.json'
+      - 'scripts/capture.ts'
+      - 'scripts/screenshots.ts'
+      - 'releases/**'
       - 'package.json'
       - '.github/workflows/website.yml'
   pull_request:
@@ -20,6 +25,11 @@ on:
       - 'assets/**'
       - 'src/design/**'
       - 'src/integrations/*/logo.svg'
+      - 'src/infrastructure/i18n/*.json'
+      - 'src/integrations/demo/i18n/*.json'
+      - 'scripts/capture.ts'
+      - 'scripts/screenshots.ts'
+      - 'releases/**'
       - 'package.json'
       - '.github/workflows/website.yml'
   workflow_dispatch:
@@ -43,7 +53,29 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-          cache-dependency-path: website/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            website/package-lock.json
+
+      # The docs and homepage captures in every language but English, which is committed: shot from the app at this
+      # commit, as `npm run screenshots -- --language <lang>` shoots them locally. Kept while the English captures, the
+      # scenes and the dictionaries stay as they are, since the English captures change whenever the app's look does.
+      - name: Restore the captures in other languages
+        id: captures
+        uses: actions/cache@v4
+        with:
+          path: assets/screenshots/*/
+          key: captures-${{ hashFiles('assets/screenshots/*.webp', 'scripts/capture.ts', 'scripts/screenshots.ts', 'website/site.mjs', 'src/infrastructure/i18n/*.json', 'src/integrations/demo/i18n/*.json') }}
+
+      - name: Shoot the captures in other languages
+        if: steps.captures.outputs.cache-hit != 'true'
+        run: |
+          npm ci
+          mkdir -p data
+          MITRA_VERSION="v$(node -p "require('./package.json').version")" npm run build
+          for language in $(node --input-type=module -e "const { languages } = await import('./website/site.mjs'); console.log(languages.slice(1).join(' '))"); do
+            npm run screenshots -- --language "$language" --no-build
+          done
 
       - name: Build the site
         working-directory: website

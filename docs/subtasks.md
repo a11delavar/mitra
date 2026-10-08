@@ -6,8 +6,8 @@ description: "Break a task into subtasks or a checklist, follow its progress, an
 A task can have **subtasks**: smaller tasks that together make it up. A subtask can live in another calendar, even in another account, can have subtasks of its own, and can be [unscheduled](planning.md#the-planning-tab).
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/hierarchy-detail-dark.png">
-  <img src="../assets/screenshots/hierarchy-detail-light.png" alt="A task with a checklist in its description and one finished subtask, counted as 1/1" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/hierarchy-detail-dark.webp">
+  <img src="../assets/screenshots/hierarchy-detail-light.webp" alt="A task with a checklist in its description and one finished subtask, counted as 1/1" />
 </picture>
 
 ## Add a subtask

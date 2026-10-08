@@ -1,0 +1,774 @@
+---
+import { demo, docsBase, languages, localized, withBase } from '../../site.mjs'
+import { version } from '../generated/meta.json'
+import { localize } from '../i18n'
+import Site from '../layouts/Site.astro'
+import { Release } from '../releases'
+import AppStack from './AppStack.astro'
+import Icon from './Icon.astro'
+import ProviderMarks from './ProviderMarks.astro'
+import Shot from './Shot.astro'
+import '../styles/releases.css'
+
+// The homepage, rendered at `/` and at each other language's `/de/`, its words from the site's dictionaries.
+
+interface Props {
+	language: string
+}
+
+const { language } = Astro.props
+const t = localize(language)
+const docs = (slug = '') => withBase(localized(`/${docsBase}/${slug}`, language))
+
+const release = version.split('.').slice(0, 2).join('.')
+const latest = Release.find(release, language)
+
+const layers = [
+	{
+		title: t('The week'),
+		text: t('Hour by hour, a column per day. Drag to create, move and resize.'),
+	},
+	{
+		title: t('Your events'),
+		text: t('Kept in Mitra, or synced with the calendars you already use.'),
+	},
+	{
+		title: t('Your tasks'),
+		text: t('On the same days as your events. Drag one into your week to schedule it.'),
+	},
+	{
+		title: t('How they connect'),
+		text: t('Subtasks and dependencies, drawn as lines between entries.'),
+	},
+]
+
+const views = [
+	{ name: 'week', title: t('Week'), text: t('Hour by hour, with tasks in the same columns as events.'), alt: t('Mitra\'s week view') },
+	{ name: 'month', title: t('Month'), text: t('Recurring things like workouts shrink to small marks, so a busy month stays readable.'), alt: t('Mitra\'s month view') },
+	{ name: 'year', title: t('Year'), text: t('The whole year on one screen. Handy for finding a free week.'), alt: t('Mitra\'s year view') },
+	{ name: 'timeline', title: t('Timeline'), text: t('Your open tasks, one per row, in the order they are due.'), alt: t('Mitra\'s timeline view') },
+	{ name: 'table', title: t('Table'), text: t('Your entries as rows. Sort and filter them, and change many at once.'), alt: t('Mitra\'s table view') },
+]
+
+// The site name Google shows in results, which "Mitra" alone does not pin down.
+const website = {
+	'@context': 'https://schema.org',
+	'@type': 'WebSite',
+	name: 'Mitra',
+	alternateName: 'Mitra Calendar',
+	url: new URL(withBase(localized('/', language)), Astro.site).href,
+	inLanguage: language,
+}
+
+const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) [data-view='${name}']`).join(',\n')} { display: block; }`
+---
+
+<Site
+	title={`Mitra | ${t('Self-hosted calendar for your events and tasks')}`}
+	description={t('Mitra is a free, open source, self-hosted calendar that puts your tasks on the same timeline as your events. Keep your calendars in Mitra itself, or sync the ones you already use.')}
+	languages={languages}
+>
+	<script type="application/ld+json" slot="head" set:html={JSON.stringify(website)} />
+	<div class="progress" aria-hidden="true"></div>
+
+	<section class="hero">
+		<div class="intro">
+			{/* The latest release as its row on the releases list reads, and travelling into its page the same way. */}
+			<a class="news" href={latest?.url ?? withBase(localized(`/releases/${release}/`, language))}>
+				<span class="version" style={latest?.transition('version')}>{release}</span>
+				{latest?.state === 'latest' && <b style={latest.transition('mark')}>{t('Latest')}</b>}
+				<span class="title" style={latest?.transition('title', 'text')} lang={latest?.translated ? undefined : languages[0]}>{latest?.notes?.title ?? t('See what is new')}</span>
+				<Icon name="arrow-right" size="0.9em" />
+			</a>
+			<h1>{t('One calendar to plan your events and tasks.')}</h1>
+			<p class="lede">{t('A self-hosted calendar that puts your tasks on the same timeline as your events. Keep your calendars in Mitra, or sync the ones you already use.')}</p>
+			<div class="actions">
+				<a class="cta" href={demo}>
+					{t('Try the demo')}
+					<Icon name="arrow-right" />
+				</a>
+				<a class="ghost" href={docs('#install-mitra')}>{t('Install Mitra')}</a>
+			</div>
+			<p class="fineprint">{t('No sign-up needed.')}</p>
+		</div>
+		<a class="frame" href={demo} aria-label={t('Open this week in the demo')}>
+			<Shot name="week" alt={t('Mitra\'s week view, with events and tasks in the same columns')} width={2200} priority language={language} />
+		</a>
+	</section>
+
+	<section class="layers">
+		<div class="story">
+			<div class="stage">
+				<AppStack language={language} />
+				<div class="telling">
+					<div class="bars" aria-hidden="true">{layers.map(() => <i></i>)}</div>
+					<ol class="captions">
+						{layers.map(({ title, text }) => (
+							<li>
+								<h3>{title}</h3>
+								<p>{text}</p>
+							</li>
+						))}
+					</ol>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section class="views">
+		<div class="legend">
+			<h2>{t('The same plan in other views')}</h2>
+			<div class="tabs" role="radiogroup" aria-label={t('View')}>
+				{views.map(({ name, title }, index) => (
+					<Fragment>
+						<input type="radio" name="view" id={`view-${name}`} checked={index === 0} />
+						<label for={`view-${name}`}>{title}</label>
+					</Fragment>
+				))}
+			</div>
+			{views.map(({ name, text }) => (
+				<p class="note" data-view={name}>
+					{text}{' '}
+					<a class="link" href={`${demo}/${name}`}>{t('Try it in the demo.')}</a>
+				</p>
+			))}
+		</div>
+		<div class="screens">
+			{views.map(({ name, alt }) => (
+				<div class="screen" data-view={name}>
+					<Shot name={`${name}-detail`} aspect="860 / 900" width={1720} alt={alt} language={language} />
+				</div>
+			))}
+		</div>
+		<Fragment set:html={`<style>${shownView}</style>`} />
+	</section>
+
+	<section class="integrations">
+		<header class="lead">
+			<h2>{t('On its own, or with the calendars you have')}</h2>
+			<p>{t('Keep calendars in Mitra itself, or sync the ones you already use, both ways.')}</p>
+		</header>
+		<ProviderMarks language={language} />
+		<p class="aside"><a class="link" href={docs('integrations/')}>{t('See what each integration supports.')}</a></p>
+	</section>
+
+	<section class="hosting">
+		<div class="lead">
+			<h2>{t('Host it yourself')}</h2>
+			<p>{t('One Docker container, with everything it stores in one folder. Free and open source under the AGPL-3.0.')}</p>
+			<div class="actions">
+				<a class="cta" href={docs('#install-mitra')}>
+					{t('Installation guide')}
+					<Icon name="arrow-right" />
+				</a>
+				<a class="ghost" href={demo}>{t('Try the demo')}</a>
+			</div>
+		</div>
+		<figure class="terminal">
+			<figcaption>
+				compose.yaml
+				<button class="copy" type="button" data-copies="compose" aria-label={t('Copy ${file}', { file: 'compose.yaml' })}>
+					<Icon name="copy" class="idle" />
+					<Icon name="check" class="done" />
+					<span>{t('Copy')}</span>
+				</button>
+			</figcaption>
+			<pre><code id="compose">{`services:
+  mitra:
+    image: ghcr.io/a11delavar/mitra:latest
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    volumes:
+      - ~/mitra:/app/data`}</code></pre>
+			<p class="run">
+				<span class="prompt">$</span>
+				<code id="command">docker compose up -d</code>
+				<button class="copy" type="button" data-copies="command" aria-label={t('Copy the command')}>
+					<Icon name="copy" class="idle" />
+					<Icon name="check" class="done" />
+				</button>
+			</p>
+		</figure>
+	</section>
+</Site>
+
+<script>
+	// A click on the code selects all of it (CSS); the button saves selecting at all.
+	for (const button of document.querySelectorAll<HTMLButtonElement>('button[data-copies]')) {
+		button.addEventListener('click', async () => {
+			const text = document.getElementById(button.dataset.copies!)?.textContent ?? ''
+			try {
+				await navigator.clipboard.writeText(text)
+				button.dataset.copied = ''
+				setTimeout(() => delete button.dataset.copied, 1600)
+			} catch {
+				// Without clipboard access the code is still one click from being selected.
+			}
+		})
+	}
+</script>
+
+<style>
+	section {
+		max-inline-size: var(--mitra-page);
+		margin-inline: auto;
+		padding-inline: var(--mitra-gutter);
+	}
+
+	section + section {
+		padding-block-start: clamp(5rem, 12vh, 9rem);
+	}
+
+	.progress {
+		position: fixed;
+		z-index: 4;
+		inset-block-end: 0;
+		inset-inline: 0;
+		block-size: 1px;
+		background: var(--color-accent);
+		transform: scaleX(0);
+		transform-origin: 0 50%;
+		opacity: 0.5;
+	}
+
+	/* Scroll-driven rules here use longhands only: a minifier folds `animation-timeline` into the
+	   shorthand, which Chrome then rejects whole. */
+	@supports (animation-timeline: scroll()) {
+		.progress {
+			animation-name: fill;
+			animation-timing-function: linear;
+			animation-fill-mode: both;
+			animation-timeline: scroll(root block);
+		}
+	}
+
+	@keyframes fill {
+		to {
+			transform: scaleX(1);
+		}
+	}
+
+	.lead {
+		max-inline-size: 40rem;
+		margin-block-end: 3rem;
+	}
+
+	h2 {
+		font-size: clamp(1.75rem, 3.6vw, 2.5rem);
+	}
+
+	.lead p {
+		margin: 1rem 0 0;
+		font-size: 1.0625rem;
+		color: var(--color-text-muted);
+	}
+
+	h3 {
+		font-size: 1.0625rem;
+	}
+
+	/* ── Actions ──────────────────────────────────────────────────────────────────────────── */
+
+	.actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		margin-block-start: 2rem;
+	}
+
+	.cta,
+	.ghost {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		block-size: 2.75rem;
+		padding-inline: 1.125rem;
+		border-radius: var(--border-radius);
+		font-size: 0.9375rem;
+		font-weight: 550;
+		text-decoration: none;
+		transition: all 0.3s var(--mitra-ease);
+	}
+
+	.cta {
+		background: var(--color-accent);
+		color: var(--color-accent-text);
+		border: 1px solid transparent;
+	}
+
+	.cta:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 6px 20px color-mix(in srgb, var(--color-accent) 22%, transparent);
+	}
+
+	.ghost {
+		color: var(--color-text);
+		border: 1px solid var(--mitra-hairline-strong);
+		background: transparent;
+	}
+
+	.ghost:hover {
+		background: var(--mitra-wash);
+	}
+
+	/* ── Hero ─────────────────────────────────────────────────────────────────────────────── */
+
+	.hero {
+		padding-block-start: clamp(3.5rem, 9vh, 7rem);
+	}
+
+	.intro {
+		max-inline-size: 46rem;
+	}
+
+	.news {
+		display: inline-flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0.25rem 0.6rem;
+		margin-block-end: 1.75rem;
+		font-size: 0.9375rem;
+		color: var(--color-text-muted);
+		text-decoration: none;
+	}
+
+	.news .version {
+		font-size: 1.25rem;
+		font-weight: 650;
+		letter-spacing: -0.03em;
+		line-height: 1;
+		font-variant-numeric: tabular-nums;
+		color: var(--release-latest);
+	}
+
+	.news b {
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--release-latest);
+	}
+
+	.news .title {
+		transition: color 0.15s ease;
+	}
+
+	.news .icon {
+		/* No text, so no baseline: centred on the line instead, which is the title's cap height. */
+		align-self: center;
+		transition: translate 0.15s ease;
+	}
+
+	.news:hover .title {
+		color: var(--color-text);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	.news:hover .icon {
+		translate: 0.2rem 0;
+	}
+
+	/* Balanced rather than broken by hand, so the line falls where each language's words allow. */
+	h1 {
+		font-size: clamp(2.25rem, 6vw, 4rem);
+		line-height: 1.05;
+		text-wrap: balance;
+	}
+
+	.lede {
+		margin: 1.5rem 0 0;
+		max-inline-size: 34rem;
+		font-size: clamp(1.0625rem, 1.6vw, 1.25rem);
+		line-height: 1.55;
+		color: var(--color-text-muted);
+	}
+
+	.fineprint {
+		margin: 1.25rem 0 0;
+		font-size: 0.8125rem;
+		color: var(--color-text-muted);
+	}
+
+	.frame {
+		display: block;
+		margin-block-start: clamp(3rem, 7vw, 5.5rem);
+		margin-inline: calc(-1 * clamp(0rem, 4vw, 5rem));
+	}
+
+	.frame :global(.shot) {
+		transition: border-color 0.3s var(--mitra-ease);
+	}
+
+	.frame:hover :global(.shot) {
+		border-color: var(--mitra-hairline-strong);
+	}
+
+	/* Translate only: rotating or scaling resamples the app's small text into blur. */
+	@media (prefers-reduced-motion: no-preference) {
+		@supports (animation-timeline: scroll()) {
+			.frame :global(.shot) {
+				animation-name: settle;
+				animation-timing-function: linear;
+				animation-fill-mode: both;
+				animation-timeline: scroll(root block);
+				animation-range: 0 60vh;
+			}
+		}
+	}
+
+	@keyframes settle {
+		from {
+			transform: translateY(1.5rem);
+		}
+	}
+
+	/* ── Layers ───────────────────────────────────────────────────────────────────────────── */
+
+	/* Wider than the reading column, never wider than the window (AGENTS.md: a bleed is derived). */
+	.stage {
+		--wide: min(84rem, 100vw - 2.5rem);
+		inline-size: var(--wide);
+		margin-inline: calc((100% - var(--wide)) / 2);
+		display: grid;
+		grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+		gap: clamp(1.5rem, 4vw, 3.5rem);
+		align-items: center;
+	}
+
+	.bars {
+		display: none;
+	}
+
+	.captions {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		gap: 1.5rem;
+	}
+
+	.captions p {
+		margin: 0.375rem 0 0;
+		color: var(--color-text-muted);
+	}
+
+	@media (width < 60rem) {
+		.stage {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+
+	/* Pinned while the reader scrolls through it: the layers land one by one and the caption beside
+	   them follows. The same at every width; without support the picture simply shows assembled. */
+	@supports (animation-timeline: view()) {
+		@media (prefers-reduced-motion: no-preference) {
+			.story {
+				view-timeline: --story block;
+				block-size: calc(100svh + 3 * 70svh);
+			}
+
+			.stage {
+				position: sticky;
+				inset-block-start: 0;
+				min-block-size: 100svh;
+				padding-block: 4.5rem 2rem;
+				align-content: center;
+				--scene-room: calc(100svh - 7rem);
+			}
+
+			.bars {
+				display: flex;
+				gap: 0.375rem;
+				margin-block-end: 1.5rem;
+			}
+
+			.bars i {
+				flex: 1;
+				block-size: 2px;
+				border-radius: 1px;
+				background: var(--mitra-hairline-strong) linear-gradient(var(--color-text), var(--color-text)) no-repeat;
+				background-size: 0 100%;
+				animation-name: bar;
+				animation-timing-function: linear;
+				animation-fill-mode: both;
+				animation-timeline: --story;
+			}
+
+			.bars i:nth-child(1) { animation-range: contain 0% contain 25%; }
+			.bars i:nth-child(2) { animation-range: contain 25% contain 50%; }
+			.bars i:nth-child(3) { animation-range: contain 50% contain 75%; }
+			.bars i:nth-child(4) { animation-range: contain 75% contain 100%; }
+
+			.captions li {
+				grid-area: 1 / 1;
+				animation-name: caption;
+				animation-timing-function: linear;
+				animation-fill-mode: both;
+				animation-timeline: --story;
+			}
+
+			.captions li:nth-child(1) { animation-name: caption-first; animation-range: contain 0% contain 25%; }
+			.captions li:nth-child(2) { animation-range: contain 25% contain 50%; }
+			.captions li:nth-child(3) { animation-range: contain 50% contain 75%; }
+			.captions li:nth-child(4) { animation-name: caption-last; animation-range: contain 75% contain 100%; }
+
+			/* Stacked, the caption needs its room below the scene. */
+			@media (width < 60rem) {
+				.stage {
+					--scene-room: calc(100svh - 17rem);
+				}
+			}
+		}
+	}
+
+	@keyframes bar {
+		to {
+			background-size: 100% 100%;
+		}
+	}
+
+	@keyframes caption {
+		0%, 100% { opacity: 0; }
+		15%, 85% { opacity: 1; }
+	}
+
+	@keyframes caption-first {
+		85% { opacity: 1; }
+		100% { opacity: 0; }
+	}
+
+	@keyframes caption-last {
+		0% { opacity: 0; }
+		15% { opacity: 1; }
+	}
+
+	/* ── Views ────────────────────────────────────────────────────────────────────────────── */
+
+	/* Stacked until there is room beside the capture for the text and the whole row of view tabs. */
+	.views {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		gap: 2.5rem;
+	}
+
+	.legend {
+		max-inline-size: 36rem;
+	}
+
+	.screens {
+		inline-size: 100%;
+		max-inline-size: 44rem;
+	}
+
+	@media (width >= 72rem) {
+		.views {
+			grid-template-columns: minmax(min-content, 1fr) minmax(0, 44rem);
+			gap: clamp(2.5rem, 5vw, 4rem);
+			align-items: center;
+		}
+	}
+
+	/* The app's own sidebar tabs: a washed track with the chosen one lifted onto the surface. */
+	/* Beside the capture it sizes its column; stacked on a phone it scrolls sideways instead. */
+	.tabs {
+		position: relative;
+		display: inline-flex;
+		max-inline-size: 100%;
+		overflow-x: auto;
+		scrollbar-width: none;
+		gap: 0.25rem;
+		margin-block-start: 2rem;
+		padding: 0.25rem;
+		border-radius: 0.5rem;
+		background: var(--mitra-wash);
+	}
+
+	.tabs input {
+		position: absolute;
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.tabs label {
+		padding: 0.4rem 0.875rem;
+		border-radius: 0.375rem;
+		font-size: 0.875rem;
+		font-weight: 550;
+		/* Muted text only just clears 4.5:1 on the page itself; the wash under the track drags it below. */
+		color: color-mix(in srgb, var(--color-text), var(--color-background) 40%);
+		cursor: pointer;
+		transition: color 0.15s ease, background 0.15s ease;
+	}
+
+	.tabs label:hover,
+	.tabs input:checked + label {
+		color: var(--color-text);
+	}
+
+	.tabs input:checked + label {
+		background: var(--color-surface);
+		box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+	}
+
+	.tabs input:focus-visible + label {
+		outline: 2px solid var(--focus-ring-color);
+		outline-offset: 2px;
+	}
+
+	@media (width < 30rem) {
+		.tabs label {
+			padding-inline: 0.625rem;
+			font-size: 0.8125rem;
+		}
+	}
+
+	[data-view] {
+		display: none;
+	}
+
+	.note {
+		margin: 1rem 0 0;
+		min-block-size: 3em;
+		font-size: 0.9375rem;
+		color: var(--color-text-muted);
+	}
+
+	.screen {
+		animation: appear 0.35s var(--mitra-ease);
+	}
+
+	@keyframes appear {
+		from {
+			opacity: 0;
+			transform: translateY(0.5rem);
+		}
+	}
+
+	/* ── Integrations ─────────────────────────────────────────────────────────────────────── */
+
+	.aside {
+		margin: 1.5rem 0 0;
+		font-size: 0.9375rem;
+		color: var(--color-text-muted);
+		max-inline-size: 42rem;
+	}
+
+	/* ── Hosting ──────────────────────────────────────────────────────────────────────────── */
+
+	.hosting {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		gap: clamp(2rem, 5vw, 4rem);
+		align-items: center;
+	}
+
+	.hosting .lead {
+		margin-block-end: 0;
+	}
+
+	.terminal {
+		margin: 0;
+		border: 1px solid var(--mitra-hairline);
+		border-radius: 12px;
+		background: var(--color-surface);
+		overflow: hidden;
+	}
+
+	.terminal figcaption {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.375rem 0.5rem 0.375rem 1rem;
+		border-block-end: 1px solid var(--mitra-hairline);
+		font-family: var(--mitra-font-mono);
+		font-size: 0.75rem;
+		color: var(--color-text-muted);
+	}
+
+	.terminal pre {
+		margin: 0;
+		padding: 1rem;
+		overflow-x: auto;
+	}
+
+	.terminal code {
+		user-select: all;
+		font-family: var(--mitra-font-mono);
+		font-size: 0.8125rem;
+		line-height: 1.7;
+		color: color-mix(in srgb, var(--color-text) 88%, var(--color-background));
+	}
+
+	.terminal .run {
+		display: flex;
+		align-items: center;
+		gap: 0.625rem;
+		margin: 0;
+		padding: 0.375rem 0.5rem 0.375rem 1rem;
+		border-block-start: 1px solid var(--mitra-hairline);
+		font-family: var(--mitra-font-mono);
+		font-size: 0.8125rem;
+	}
+
+	.terminal .prompt {
+		color: var(--color-text-muted);
+		user-select: none;
+	}
+
+	.terminal .run code {
+		flex: 1;
+	}
+
+	.copy {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		block-size: 2rem;
+		padding-inline: 0.5rem;
+		border: 0;
+		border-radius: 0.375rem;
+		background: transparent;
+		font: inherit;
+		font-size: 0.75rem;
+		color: var(--color-text-muted);
+		cursor: pointer;
+		transition: background 0.15s ease, color 0.15s ease;
+
+		&:hover {
+			background: var(--mitra-wash);
+			color: var(--color-text);
+		}
+
+		:global(.done) {
+			display: none;
+		}
+
+		/* Confirms in place for a moment: a check, and the label reads Copied. */
+		&[data-copied] {
+			color: var(--color-text);
+
+			:global(.idle) {
+				display: none;
+			}
+
+			:global(.done) {
+				display: inline-flex;
+			}
+
+			span {
+				font-size: 0;
+
+				&::after {
+					content: 'Copied';
+					font-size: 0.75rem;
+				}
+			}
+		}
+	}
+
+	@media (width < 60rem) {
+		.hosting {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+</style>

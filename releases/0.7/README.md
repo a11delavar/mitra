@@ -1,7 +1,7 @@
 ---
-title: 
+title: AI, attachments, regions and languages
 ---
-0.7 is about Mitra reaching further: first steps with AI, your region as well as your language, and the files, the motion and the release notes that make it feel finished, with steadier month and year views along the way.
+0.7 is about Mitra reaching further: first steps with AI, your region as well as your language, and the files and the release notes that make it feel finished, with steadier month and year views along the way.
 
 ## AI
 We are exploring how AI can help you plan your time, in Mitra itself and from the assistants you already use.
@@ -19,12 +19,6 @@ Attach files to an entry. Calendars that can keep them, CalDAV first, carry them
 
 ## Undo and redo
 We are looking into taking a change back, and bringing it back again.
-
-## Links that know their apps
-A link to another app wears that app's mark, so an Obsidian note shows as one.
-
-## More motion
-The editor, dialogs, menus and pickers open and close with motion that shows where they come from.
 
 ## Release notes in the app
 The About dialog shows each release the way the website does: its notes, the pictures of the version you run, the fixes that came after, and everything it shipped.

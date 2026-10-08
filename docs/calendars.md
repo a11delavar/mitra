@@ -6,8 +6,8 @@ description: Choose which calendars Mitra imports, rename, recolor, reorder and 
 Every row in the sidebar's **Calendars** tab is a calendar. Some are [stored in Mitra](integrations/mitra.md), and some come from an account you connected. They sit under the heading of the integration they belong to, and everything on this page works the same for all of them, unless it says otherwise.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/calendars-detail-dark.png">
-  <img src="../assets/screenshots/calendars-detail-light.png" alt="The sidebar, listing an account and its five calendars, each in its own colour" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/calendars-detail-dark.webp">
+  <img src="../assets/screenshots/calendars-detail-light.webp" alt="The sidebar, listing an account and its five calendars, each in its own colour" />
 </picture>
 
 A calendar is one row, even when it holds both events and tasks, as most CalDAV calendars do. Whether a given entry is an event or a task belongs to the entry.

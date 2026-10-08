@@ -10,10 +10,11 @@ import { repository } from '../../../website/site.mjs'
  */
 export type ReleaseState = 'planned' | 'draft' | 'latest' | 'released'
 
-/** A release's folder as the server hands it over: its notes, and the files the image carries beside them. */
+/** A release's folder as the server hands it over: its notes, their translations by language, and the files the image carries beside them. */
 export interface ReleaseFolder {
 	version: string
 	markdown: string
+	translations: Record<string, string>
 	files: Array<string>
 }
 
