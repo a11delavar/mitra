@@ -88,8 +88,6 @@ export class ParticipantsField extends Component {
 		this.changed()
 	}
 
-
-
 	static override get styles() {
 		return css`
 			mitra-participants-field {

@@ -4,7 +4,7 @@ import Icon from './Icon.astro'
 import ThemeToggle from './ThemeToggle.astro'
 
 interface Props {
-	current?: 'home' | 'docs'
+	current?: 'home' | 'docs' | 'releases'
 }
 
 const { current } = Astro.props
@@ -12,6 +12,7 @@ const { current } = Astro.props
 
 <nav class="nav">
 	<a href={withBase(`/${docsBase}/`)} aria-current={current === 'docs' ? 'page' : undefined}>Docs</a>
+	<a href={withBase('/releases/')} aria-current={current === 'releases' ? 'page' : undefined}>Releases</a>
 	<a href={demo}>Demo</a>
 	<a href="https://github.com/a11delavar/mitra" rel="noreferrer" title="GitHub" aria-label="GitHub">
 		<Icon name="github" />

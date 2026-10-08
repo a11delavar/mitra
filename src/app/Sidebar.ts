@@ -916,7 +916,6 @@ export class Sidebar extends Component {
 		}
 	}
 
-
 	/** User account footer for multi-user mode. */
 	private get accountTemplate() {
 		const identity = getUser()?.identity

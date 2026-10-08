@@ -575,6 +575,7 @@ export class Timeline extends Component {
 	private headerTemplate(events: Array<TimelineBar>) {
 		const { days, offset } = this.dates.window
 		const todayValue = new DateTime().dayStart.valueOf()
+		const weekStart = CalendarDatesController.sampleWeek[0]!.dayOfWeek
 		const months = new Array<{ column: number, span: number, label: string }>()
 		for (const [index, day] of days.entries()) {
 			const previous = days[index - 1]
@@ -594,7 +595,7 @@ export class Timeline extends Component {
 				${repeat(days, day => day.dayStart.toISOString(), (day, index) => html`
 					<div class="day"
 						style="grid-column: ${offset + index + 1};"
-						?data-week-start=${day.dayOfWeek === 1}
+						?data-week-start=${day.dayOfWeek === weekStart}
 						?data-today=${day.dayStart.valueOf() === todayValue}
 					><span>${day.format({ day: 'numeric' })}</span></div>
 				`)}

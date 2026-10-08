@@ -1,6 +1,6 @@
 import { ModelValueConstructor, model as baseModel } from '@a11d/api-model-value-constructor'
 
-const valueConstructor = new ModelValueConstructor
+const valueConstructor = new ModelValueConstructor()
 
 /**
  * Decorator registering domain model with `@a11d/api-model-value-constructor` serialization.

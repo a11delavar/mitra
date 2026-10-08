@@ -24,4 +24,3 @@ await esbuild.build({
 	inject,
 	define,
 })
-

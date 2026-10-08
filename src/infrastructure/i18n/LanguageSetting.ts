@@ -22,8 +22,8 @@ export class LanguageSetting extends ChoiceSetting<LanguageCode> {
 	readonly fallback: LanguageCode = 'en'
 
 	protected readonly storage: SettingStorage<LanguageCode> = {
-		read: () => Localizer.languages.current,
-		write: value => { Localizer.languages.current = value ?? this.fallback },
+		read: () => Localizer.locales.current.language as LanguageCode,
+		write: value => { Localizer.locales.current = value ?? this.fallback },
 	}
 
 	override get options() {

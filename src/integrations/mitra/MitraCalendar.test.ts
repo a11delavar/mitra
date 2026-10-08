@@ -319,6 +319,48 @@ describe('Demo', () => {
 		assert.equal(after.some(id => before.includes(id)), false, 'every entry was rebuilt')
 	})
 
+	it('is written in the language it is given, calendars included, and rewritten when that changes', async () => {
+		demo.credentials = { language: 'de' }
+		await demo.getSources(em)
+		await em.flush()
+		await demo.syncEntries(em)
+		await em.flush()
+
+		const work = await em.findOneOrFail(Source, { integrationId: demo.id, uri: Demo.sampleUri('work') })
+		assert.equal(work.name, 'Arbeit')
+		assert.equal(work.remoteName, 'Arbeit')
+		const headings = async () => (await em.find(Entry, { sourceId: work.id })).map(entry => entry.heading)
+		assert.equal((await headings()).includes('Wöchentliches Team-Meeting'), true)
+
+		assert.equal(await demo.syncEntries(em), false, 'the same day in the same language')
+
+		demo.merge({ credentials: { language: 'fa' } } as Demo)
+		assert.equal(await demo.syncEntries(em), true, 'a new language rebuilds')
+		await em.flush()
+		assert.equal((await em.findOneOrFail(Source, { id: work.id })).name, 'کار')
+		assert.equal((await headings()).includes('جلسهٔ هفتگی تیم'), true)
+		assert.equal((await headings()).includes('Wöchentliches Team-Meeting'), false)
+	})
+
+	it('a calendar the user renamed keeps its name through a language change', async () => {
+		demo.credentials = { language: 'en' }
+		await demo.getSources(em)
+		await em.flush()
+		await demo.syncEntries(em)
+		await em.flush()
+
+		const work = await em.findOneOrFail(Source, { integrationId: demo.id, uri: Demo.sampleUri('work') })
+		work.name = 'Day job'
+		await em.flush()
+
+		demo.merge({ credentials: { language: 'de' } } as Demo)
+		await demo.syncEntries(em)
+		await em.flush()
+		const renamed = await em.findOneOrFail(Source, { id: work.id })
+		assert.equal(renamed.name, 'Day job')
+		assert.equal(renamed.remoteName, 'Arbeit', 'the baseline moved with the language')
+	})
+
 	it('restores a sample calendar the user deleted, without disturbing the ones they added', async () => {
 		await demo.getSources(em)
 		await em.flush()

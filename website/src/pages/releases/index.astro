@@ -1,0 +1,302 @@
+---
+import { withBase } from '../../../site.mjs'
+import Site from '../../layouts/Site.astro'
+import { anchorOf, formatDate, Release, renderMarkdown } from '../../releases'
+import '../../styles/releases.css'
+
+const rows = await Promise.all(Release.all().map(async release => ({
+	release,
+	intro: release.notes ? await renderMarkdown(release.notes.intro) : '',
+})))
+---
+
+<Site title="Releases | Mitra" description="What changed in each version of Mitra, written for the people who use it." current="releases">
+	<link slot="head" rel="alternate" type="application/rss+xml" title="Mitra releases" href={withBase('/releases.xml')} />
+	<section class="releases">
+		<header class="lead">
+			<h1>Releases</h1>
+			<p>What changed in each version, written for people who use Mitra. The complete list of commits is on each page and on GitHub.</p>
+			<p class="feeds"><a class="link" href={withBase('/releases.xml')}>RSS feed</a></p>
+		</header>
+		<ol class="list">
+			{rows.map(({ release, intro }) => (
+				<li class="release" data-state={release.state}>
+					<div class="num">
+						<p class="numeral">
+							<a class="version" href={release.url} style={release.transition('version')}>{release.version}</a>
+							{release.state === 'latest' && <b style={release.transition('mark')}>Latest</b>}
+						</p>
+						{release.state === 'draft'
+							? <small class="dev" style={release.transition('mark')}>
+								<svg class="dial" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+									<rect class="track" x="3" y="3" width="18" height="18" rx="2" />
+									<rect class="stroke" x="3" y="3" width="18" height="18" rx="2" pathLength="100" stroke-dasharray="35 65" transform="rotate(-90 12 12)" />
+									<line x1="8" y1="12" x2="16" y2="12" />
+								</svg>
+								in development
+							</small>
+							: release.date && <time datetime={release.date} style={release.transition('date')}>{formatDate(release.date)}</time>}
+					</div>
+					<div class="body">
+						{release.notes?.title && <h2 style={release.transition('title', 'text')}><a href={release.url}>{release.notes.title}</a></h2>}
+						{intro && <div class="intro" style={release.transition('intro', 'text')} set:html={intro} />}
+						{release.highlights.length > 0 && (
+							<ul class="highlights">
+								{release.highlights.map(highlight => <li><a href={`${release.url}#${anchorOf(highlight.heading)}`}>{highlight.heading}</a></li>)}
+							</ul>
+						)}
+						{release.summary && <p class="counts">{release.summary}{!release.notes && ', from the changelog'}</p>}
+						{release.patches.length > 0 && (
+							<p class="patches">
+								{release.patches.map(patch => (
+									<a href={`${release.url}#patches`}><b>{patch.version}</b>{patch.date && ` · ${formatDate(patch.date)}`}</a>
+								))}
+							</p>
+						)}
+					</div>
+				</li>
+			))}
+		</ol>
+	</section>
+</Site>
+
+<style>
+	.releases {
+		/* The column a release's page centres its hero and its lists on too, so a row and the hero share their x. */
+		max-inline-size: var(--release-column);
+		margin-inline: auto;
+		padding: clamp(3rem, 8vh, 5rem) var(--mitra-gutter) 0;
+
+		/* The two channels a reader can run: the newest release (the `:latest` image) and what is in development (`:dev`). */
+		--release-latest: light-dark(#1f8a5b, #4fc48f);
+		--release-dev: light-dark(#2b6cb0, #7fb3f0);
+	}
+
+	.lead {
+		max-inline-size: 40rem;
+		margin-block-end: 2.5rem;
+	}
+
+	h1 {
+		font-size: clamp(2rem, 4vw, 2.75rem);
+	}
+
+	.lead p {
+		margin: 1rem 0 0;
+		font-size: 1.0625rem;
+		color: var(--color-text-muted);
+	}
+
+	.feeds {
+		font-size: 0.875rem;
+	}
+
+	.list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		border-block-start: 1px solid var(--mitra-hairline);
+	}
+
+	.release {
+		display: grid;
+		grid-template-columns: 7rem minmax(0, 1fr);
+		gap: 1.5rem;
+		padding-block: 2rem;
+		border-block-end: 1px solid var(--mitra-hairline);
+	}
+
+	/* The numeral, its mark beside it, its date beneath: the same block heads the release's page, so they travel in place. */
+	.num {
+		display: grid;
+		align-content: start;
+		gap: 0.5rem;
+	}
+
+	.numeral {
+		margin: 0;
+		display: flex;
+		align-items: baseline;
+		gap: 0.5rem;
+	}
+
+	.version {
+		font-size: 2rem;
+		font-weight: 650;
+		letter-spacing: -0.03em;
+		line-height: 1;
+		font-variant-numeric: tabular-nums;
+		text-decoration: none;
+	}
+
+	.numeral b {
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--release-latest);
+	}
+
+	.num :is(time, small) {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+		font-size: 0.75rem;
+		color: var(--color-text-muted);
+		font-variant-numeric: tabular-nums;
+	}
+
+	[data-state='latest'] .version {
+		color: var(--release-latest);
+	}
+
+	/* The version in development: a slow light sweeping through its numeral, in the dev channel's colour. */
+	[data-state='draft'] .version {
+		color: transparent;
+		background: linear-gradient(100deg, var(--release-dev) 35%, color-mix(in srgb, var(--release-dev) 30%, transparent) 50%, var(--release-dev) 65%) 100% 0 / 300% 100%;
+		-webkit-background-clip: text;
+		background-clip: text;
+		animation: sweep 5s linear infinite;
+	}
+
+	[data-state='draft'] .body {
+		color: var(--color-text-muted);
+	}
+
+	@keyframes sweep {
+		to {
+			background-position: -100% 0;
+		}
+	}
+
+	/* The app's own in-progress dial, orbiting at its pace (TaskStatus.ts). */
+	.dial {
+		inline-size: 1em;
+		block-size: 1em;
+		color: var(--release-dev);
+	}
+
+	.dial .track {
+		opacity: 0.6;
+	}
+
+	.dial .stroke {
+		animation: dial-orbit 11s linear infinite;
+	}
+
+	@keyframes dial-orbit {
+		from {
+			stroke-dashoffset: 0;
+		}
+
+		to {
+			stroke-dashoffset: -100;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		[data-state='draft'] .version {
+			animation: none;
+			background: none;
+			color: var(--release-dev);
+		}
+
+		.dial .stroke {
+			animation: none;
+		}
+	}
+
+	.body {
+		display: grid;
+		gap: 0.875rem;
+		min-inline-size: 0;
+		align-content: start;
+	}
+
+	/* As wide as its text, so the navigation's snapshot of it has the text's own proportions (see the release page's h1). */
+	h2 {
+		inline-size: fit-content;
+		font-size: 1.375rem;
+	}
+
+	h2 a {
+		text-decoration: none;
+	}
+
+	h2 a:hover {
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	.intro {
+		color: var(--color-text-muted);
+		max-inline-size: var(--mitra-content);
+	}
+
+	.intro :global(p) {
+		margin: 0;
+	}
+
+	/* The highlights as a row of chips, each a way into its part of the page. */
+	.highlights {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.highlights a {
+		display: inline-block;
+		padding: 0.3rem 0.7rem;
+		border: 1px solid var(--mitra-hairline-strong);
+		border-radius: 999px;
+		font-size: 0.875rem;
+		color: var(--color-text);
+		text-decoration: none;
+		transition: border-color 150ms, background-color 150ms;
+	}
+
+	.highlights a:hover {
+		border-color: var(--color-accent);
+		background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+	}
+
+	.counts {
+		margin: 0;
+		font-size: 0.875rem;
+		color: var(--color-text-muted);
+	}
+
+	.patches {
+		margin: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem 1.25rem;
+		font-size: 0.8125rem;
+		color: var(--color-text-muted);
+	}
+
+	.patches a {
+		text-decoration: none;
+	}
+
+	.patches b {
+		font-weight: 600;
+		color: var(--color-text);
+		font-variant-numeric: tabular-nums;
+	}
+
+	@media (width < 40rem) {
+		.release {
+			grid-template-columns: minmax(0, 1fr);
+			gap: 0.75rem;
+		}
+
+		.num {
+			grid-auto-flow: column;
+			justify-content: start;
+			align-items: baseline;
+			gap: 1rem;
+		}
+	}
+</style>

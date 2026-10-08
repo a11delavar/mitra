@@ -34,7 +34,7 @@ type Moment = {
 export class EntryDetailsWhen extends Component {
 	@property({
 		type: Object,
-		updated(this: EntryDetailsWhen) { this.startShown = false; this.endShown = false; this.dueShown = false; this.estimateShown = false; this.showEventZone = false }
+		updated(this: EntryDetailsWhen) { this.startShown = false; this.endShown = false; this.dueShown = false; this.estimateShown = false; this.showEventZone = false },
 	}) entry!: Entry
 
 	override role = 'listitem'

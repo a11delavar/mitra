@@ -40,7 +40,7 @@ function pad(value: number, width = 2) {
  * `window`, which only the browser has.) */
 function language(): string {
 	try {
-		return typeof Localizer === 'undefined' ? 'en' : Localizer.languages.current
+		return typeof Localizer === 'undefined' ? 'en' : String(Localizer.locales.current)
 	} catch {
 		return 'en'
 	}

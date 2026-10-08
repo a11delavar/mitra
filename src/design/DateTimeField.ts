@@ -44,7 +44,7 @@ export class DateTimeField extends DateField {
 	/** A day keeps the time, or takes the default one. */
 	private pickDay(day: DateTime) {
 		const { hour, minute } = this.shown ? this.zoned(this.shown) : this.defaultPlainTime
-		this.draft = this.dayIn(day).with({ hour, minute })
+		this.draft = day.with({ hour, minute })
 	}
 
 	/** A time keeps the day: the one picked, the value's, or today's while there is none. */
@@ -106,7 +106,7 @@ export class DateTimeField extends DateField {
 
 	protected override get pickerTemplate() {
 		return html`
-			<mitra-date-picker .value=${this.shown && this.zoned(this.shown)}
+			<mitra-date-picker .value=${this.controller.selectedDate} .navigationDate=${this.controller.navigationDate}
 				@pick=${(e: CustomEvent<DateTime>) => this.pickDay(e.detail)}
 			></mitra-date-picker>
 			<mitra-time-picker .value=${this.shown ? this.zoned(this.shown).zonedDateTime.toPlainTime().toString({ smallestUnit: 'minute' }) : this.defaultTime}

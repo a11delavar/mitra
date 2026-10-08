@@ -15,7 +15,6 @@ export default [
 			// Mitra intentionally rides modern web platform features (popover, customizable <select>,
 			// anchor positioning, Temporal). Don't gate the templates on Baseline availability.
 			'@html-eslint/use-baseline': 'off',
-			'@stylistic/js/eol-last': ['error', 'always']
 		},
 	},
 	{

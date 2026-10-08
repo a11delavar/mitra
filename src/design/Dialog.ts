@@ -39,7 +39,7 @@ export class Dialog extends Component {
 			} else if (!open) {
 				this.dialog.close()
 			}
-		}
+		},
 	}) open = false
 
 	private readonly standaloneAction = (key: DialogActionKey) => {

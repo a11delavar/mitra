@@ -21,7 +21,7 @@ export function commands(): ReadonlyArray<CommandConstructor> {
 let instances: Array<Command> | undefined
 
 // Rebuild cached command instances when language changes.
-Localizer.languages.change.subscribe(() => instances = undefined)
+Localizer.locales.change.subscribe(() => instances = undefined)
 
 /** The registry as live instances, one per verb. */
 export function commandInstances(): ReadonlyArray<Command> {

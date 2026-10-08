@@ -1,0 +1,46 @@
+/* What the releases list and a release's page share. */
+
+:root {
+	/* The two channels a reader can run: the newest release (the `:latest` image) and what is in development (`:dev`). */
+	--release-latest: light-dark(#1f8a5b, #4fc48f);
+	--release-dev: light-dark(#2b6cb0, #7fb3f0);
+	/* The column both centre the rows and the hero on, so a row and the hero share their x and travel straight between them. */
+	--release-column: 66rem;
+}
+
+/* A navigation between the two is a view transition: both documents opt in here, and the elements the two have in
+ * common (the numeral, the mark, the date, the title, the intro) carry the same `view-transition-name` on each side, so
+ * they travel to their new place while the rest cross-fades. Pure CSS: a browser without cross-document transitions
+ * navigates as before. */
+@view-transition {
+	navigation: auto;
+}
+
+::view-transition-group(*) {
+	animation-duration: 340ms;
+	animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* The page itself swaps quickly beneath the elements that travel. */
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation-duration: 200ms;
+}
+
+/* A text that reads the same on both pages, at a different size: only the new snapshot is shown, scaled up from where the
+ * old one stood, so one text grows rather than two fading through each other. */
+::view-transition-old(*.text) {
+	display: none;
+}
+
+::view-transition-new(*.text) {
+	animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	::view-transition-group(*),
+	::view-transition-old(*),
+	::view-transition-new(*) {
+		animation: none;
+	}
+}

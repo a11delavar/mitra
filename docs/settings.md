@@ -30,7 +30,7 @@ Mitra also remembers some things on each device as you use them: how far you've 
 
 **Theme** is **Match the system**, **Light** or **Dark**. **Match the system**, the default, follows your device's light or dark mode.
 
-**Language** offers English, German, French, Spanish, Portuguese, Italian and Persian, each named in its own language. The change applies at once, without reloading, and Persian lays Mitra out from right to left.
+**Language** offers English, German, French, Spanish, Portuguese, Italian and Persian, each named in its own language. The change applies at once, without reloading, and Persian lays Mitra out from right to left. Dates, times and the first day of the week follow the language as your browser's region writes it, so English in the United States starts weeks on Sunday and in the United Kingdom on Monday, while Persian starts them on Saturday.
 
 ## Calendar
 

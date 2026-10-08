@@ -629,7 +629,7 @@ describe('Entry', () => {
 	})
 
 	describe('duration', () => {
-		const format = (parts: { days?: number, hours?: number, minutes?: number }) => new Intl.DurationFormat(Localizer.languages.current, { style: 'narrow' }).format(parts)
+		const format = (parts: { days?: number, hours?: number, minutes?: number }) => new Intl.DurationFormat(Localizer.locales.current, { style: 'narrow' }).format(parts)
 
 		it('splits a span into days, hours and minutes', () => {
 			assert.equal(new Entry({ start: at(0, 10), end: at(1, 12, 30) }).duration, format({ days: 1, hours: 2, minutes: 30 }))

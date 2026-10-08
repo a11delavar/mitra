@@ -16,7 +16,11 @@ export class CalendarMonth {
 	get firstValue() { return this.first.dayStart.valueOf() }
 	get lastValue() { return this.last.dayStart.valueOf() }
 
-	get firstColumn() { return this.first.monthStart.dayOfWeek - 1 + this.first.day - 1 }
+	/** Counted from the locale's first day of the week, as the weekday header is. */
+	get firstColumn() {
+		const start = this.first.monthStart
+		return (start.dayOfWeek - start.weekStart.dayOfWeek + start.daysInWeek) % start.daysInWeek + this.first.day - 1
+	}
 
 	intersects(from: number, to: number) { return this.firstValue <= to && this.lastValue >= from }
 
@@ -33,18 +37,25 @@ export class CalendarDatesController extends Controller {
 		}
 	}
 
-	private static _sampleWeek = new Array<DateTime>()
-	static get sampleWeek() { return this._sampleWeek as ReadonlyArray<DateTime> }
-
-	private static generateWeek() {
-		const sample = [...CalendarDatesController.generate(CalendarDatesController.today, CalendarDatesController.today.daysInWeek * 2, 'days')]
-		const indexOfFirstWeekStart = sample.findIndex(d => d.dayOfWeek === 1)
-		const daysInWeek = sample[0]!.daysInWeek
-		CalendarDatesController._sampleWeek = sample.slice(indexOfFirstWeekStart, indexOfFirstWeekStart + daysInWeek).map(d => d.dayStart)
+	private static _sampleWeek?: ReadonlyArray<DateTime>
+	/** A week from the day the locale starts it on, for the weekday headers. */
+	static get sampleWeek() {
+		const { today } = CalendarDatesController
+		return CalendarDatesController._sampleWeek ??= [...CalendarDatesController.generate(today.weekStart, today.daysInWeek, 'days')]
 	}
 
+	private static readonly connected = new Set<CalendarDatesController>()
+
+	// Another locale may start the week on another day, and a `DateTime` keeps the calendar it was made in: the days
+	// are generated again. `@3mo/date-time`, imported above, has adopted the locale by the time this runs.
 	static {
-		CalendarDatesController.generateWeek()
+		Localizer.locales.change.subscribe(() => {
+			CalendarDatesController._sampleWeek = undefined
+			for (const controller of CalendarDatesController.connected) {
+				controller._days = []
+				controller.navigatingDate = DateTime.from(controller._navigatingDate.valueOf())
+			}
+		})
 	}
 
 	private _navigatingDate = new DateTime().dayStart
@@ -55,6 +66,14 @@ export class CalendarDatesController extends Controller {
 		private readonly rendering: { radiusDays: number, shiftDays: number, triggerWeeks?: number, bufferWeeks?: number } = { radiusDays: 35, shiftDays: 7 },
 	) {
 		super(host)
+	}
+
+	override hostConnected() {
+		CalendarDatesController.connected.add(this)
+	}
+
+	override hostDisconnected() {
+		CalendarDatesController.connected.delete(this)
 	}
 
 	get navigatingDate() { return this._navigatingDate }
@@ -77,7 +96,7 @@ export class CalendarDatesController extends Controller {
 		this.host.dispatchEvent(new CustomEvent('navigate', { detail: value, bubbles: true, composed: true }))
 
 		if (isOutOfBounds) {
-			const start = value.add({ days: - (WEEKS_BACK_ON_REGEN * DAYS_IN_WEEK) }).weekStart
+			const start = value.add({ days: -(WEEKS_BACK_ON_REGEN * DAYS_IN_WEEK) }).weekStart
 			this._days = [...CalendarDatesController.generate(start, BUFFER_DAYS, 'days')]
 			this._window = undefined
 			this.host.requestUpdate()

@@ -57,7 +57,7 @@ describe('Recurrence', () => {
 		it('includes interval, multiple weekdays and a COUNT end', () => {
 			assert.equal(
 				new Recurrence({ freq: 'WEEKLY', interval: 2, byday: ['MO', 'WE', 'FR'], count: 5 }).toRRule(),
-				'FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE,FR;COUNT=5'
+				'FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE,FR;COUNT=5',
 			)
 		})
 

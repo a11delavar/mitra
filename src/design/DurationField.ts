@@ -26,7 +26,6 @@ export class DurationField extends SegmentedField<number, InputSegment> {
 		get label() { return host.label },
 		get readonly() { return host.readonly },
 		get disabled() { return host.disabled },
-		get direction() { return host.matches(':dir(rtl)') ? 'rtl' as const : 'ltr' as const },
 		accept: (segment, typed, character) => host.accept(segment, typed, character),
 		isComplete: (segment, text) => segment.key === 'minute' && (text.length === 2 || Number(text) > 5),
 		handleSegmentInput: (segment, text) => host.typed = { ...host.units, [segment.key]: text },
@@ -34,8 +33,8 @@ export class DurationField extends SegmentedField<number, InputSegment> {
 		handleCommit: () => host.settle(),
 	}))
 
-	private get language() {
-		return Localizer.languages.current
+	private get locale() {
+		return Localizer.locales.current
 	}
 
 	/** The units as typed, or as the value reads. */
@@ -45,12 +44,12 @@ export class DurationField extends SegmentedField<number, InputSegment> {
 	}
 
 	protected get segments(): ReadonlyArray<InputSegment> {
-		const numbers = new Intl.NumberFormat(this.language, { useGrouping: false })
-		const names = new Intl.DisplayNames(this.language, { type: 'dateTimeField' })
+		const numbers = new Intl.NumberFormat(this.locale, { useGrouping: false })
+		const names = new Intl.DisplayNames(this.locale, { type: 'dateTimeField' })
 		return (['hour', 'minute'] as const).flatMap((unit, index) => {
 			const text = this.units[unit]
 			// The language places and spells the unit around the number: "1 hr", "1 Std.", "۱ ساعت".
-			const parts = new Intl.NumberFormat(this.language, { style: 'unit', unit, unitDisplay: 'short' }).formatToParts(1)
+			const parts = new Intl.NumberFormat(this.locale, { style: 'unit', unit, unitDisplay: 'short' }).formatToParts(1)
 			const at = parts.findIndex(part => part.type === 'integer')
 			const literal = (key: string, value: string): Array<InputSegment> => value ? [{ key, editable: false, text: value }] : []
 			return [
@@ -63,7 +62,7 @@ export class DurationField extends SegmentedField<number, InputSegment> {
 
 	/** A digit in the language's numbering or ASCII; minutes restart past 59. */
 	private accept(segment: EditableSegment, typed: string, character: string) {
-		const numbers = new Intl.NumberFormat(this.language, { useGrouping: false })
+		const numbers = new Intl.NumberFormat(this.locale, { useGrouping: false })
 		const digit = Array.from({ length: 10 }, (_, digit) => digit).find(digit => numbers.format(digit) === character || String(digit) === character)
 		if (digit === undefined) {
 			return undefined
@@ -141,7 +140,7 @@ export class DurationField extends SegmentedField<number, InputSegment> {
 	}
 
 	protected get pickerTemplate() {
-		const format = new Intl.DurationFormat(this.language, { style: 'short' })
+		const format = new Intl.DurationFormat(this.locale, { style: 'short' })
 		const day = TimeSpan.fromDays(1).minutes
 		return html`
 			<div class="slots" role="listbox" aria-label=${this.pickerLabel} @keydown=${this.handleSlotsKeyDown}>

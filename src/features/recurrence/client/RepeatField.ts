@@ -17,7 +17,7 @@ const FREQ_OPTIONS: ReadonlyArray<{ value: Frequency }> = [
 /** The unit alone, as the number beside it asks for it ("Every [2] [weeks]"): the language's own plural, by `Intl`. */
 function freqLabel(value: Frequency, count: number): string {
 	const unit = ({ DAILY: 'day', WEEKLY: 'week', MONTHLY: 'month', YEARLY: 'year' } as const)[value]
-	return new Intl.NumberFormat(Localizer.languages.current, { style: 'unit', unit, unitDisplay: 'long' })
+	return new Intl.NumberFormat(Localizer.locales.current, { style: 'unit', unit, unitDisplay: 'long' })
 		.formatToParts(count)
 		.filter(part => part.type === 'unit')
 		.map(part => part.value)
@@ -148,6 +148,12 @@ export class RepeatField extends Component {
 		const selected = new Set(e.detail instanceof Array ? e.detail : [])
 		// At least one day stays selected: emptying the set re-renders the one it had.
 		this.patchDraft(selected.size ? { byday: WEEKDAY_CODES.filter(code => selected.has(code)) } : {})
+	}
+
+	/** The weekdays in the order the locale runs its week. */
+	private get weekdays() {
+		const first = this.start.weekStart.dayOfWeek - 1
+		return [...WEEKDAY_CODES.slice(first), ...WEEKDAY_CODES.slice(0, first)]
 	}
 
 	private get monthlyOptions(): Array<MonthlyOption> {
@@ -315,7 +321,7 @@ export class RepeatField extends Component {
 
 						${draft.freq !== 'WEEKLY' ? html.nothing : html`
 							<mitra-selection-group multiple aria-label=${t('Weekdays')} .value=${live(draft.byday ?? [])} @change=${this.chooseWeekdays}>
-								${WEEKDAY_CODES.map(code => html`
+								${this.weekdays.map(code => html`
 									<mitra-toggle value=${code} title=${Recurrence.weekdayLabel(code)}>${Recurrence.weekdayLabel(code).slice(0, 2)}</mitra-toggle>
 								`)}
 							</mitra-selection-group>

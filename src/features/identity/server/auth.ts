@@ -3,6 +3,7 @@ import { User } from '../User.js'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
 import { orm } from '../../../infrastructure/database/orm.js'
 import { isDemo } from '../../../infrastructure/environment.js'
+import { languages } from '../../../integrations/demo/i18n/dictionaries.js'
 import { Oidc } from './Oidc.js'
 import { Session } from './Session.js'
 import { Sandbox } from './Sandbox.js'
@@ -120,7 +121,7 @@ const visitor: RequestHandler = async (req, res, next) => {
 		return next()
 	}
 	const em = orm.em.fork()
-	const user = await Sandbox.open(em)
+	const user = await Sandbox.open(em, req.acceptsLanguages(...languages) || undefined)
 	const { session, token } = Session.issue(user)
 	em.persist(session)
 	await em.flush()

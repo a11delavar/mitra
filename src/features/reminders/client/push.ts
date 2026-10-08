@@ -27,7 +27,7 @@ async function subscribe(): Promise<PushSubscription> {
 	await Api.post('/push/subscription', {
 		...subscription.toJSON(),
 		timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-		language: Localizer.languages.current,
+		language: Localizer.locales.current.language,
 		...deviceFacts(),
 	})
 	return subscription
@@ -53,7 +53,7 @@ export function syncPushSubscription() {
 }
 
 // Notifications are written in the language the device last registered with.
-Localizer.languages.change.subscribe(() => syncPushSubscription())
+Localizer.locales.change.subscribe(() => syncPushSubscription())
 
 /** Returns the push subscription endpoint of the current browser. */
 export async function currentEndpoint(): Promise<string | undefined> {

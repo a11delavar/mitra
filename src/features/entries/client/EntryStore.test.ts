@@ -742,7 +742,7 @@ describe('EntryStore', () => {
 
 		it('a scoped delete rejected with 404 stays dropped, since the series is gone server-side already', async () => {
 			const transport = fake()
-			EntryStore.persistence = { ...transport.persistence, deleteOccurrence: () => Promise.reject(Object.assign(Object.create(ApiError.prototype), { response: { status: 404 } })) }
+			EntryStore.persistence = { ...transport.persistence, deleteOccurrence: () => Promise.reject(Object.assign(Object.create(ApiError.prototype) as ApiError, { response: { status: 404 } })) }
 			EntryStore.resolveScope = () => Promise.resolve('this')
 			const target = occurrence()
 			EntryStore.applyServerEntries([target])

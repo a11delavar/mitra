@@ -1,9 +1,10 @@
 name: Release
 
-# Turns a pushed SemVer tag into a GitHub Release, using the notes already written
-# in CHANGELOG.md (generated from commits by `npm run changelog`, then editable by
-# hand). The release body is the file's top section, so anything you/AI add to it
-# is what gets published. Pre-release tags (`-rc`/`-beta`/`-alpha`) are marked as such.
+# Turns a pushed SemVer tag into a GitHub Release. The body is written by scripts/releaseBody.ts:
+# a minor's notes (releases/<minor>/README.md: title, intro, highlight headings and a link to
+# the page on the website), a patch's pointer at its minor, then the tag's CHANGELOG.md section
+# (generated from commits by `npm run changelog`). Pre-release tags (`-rc`/`-beta`/`-alpha`)
+# are marked as such.
 #
 # Cut a release with:  npm run release [version]
 # (`docker.yml` builds the image off the same tag push, in parallel.)
@@ -20,13 +21,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Extract notes for ${{ github.ref_name }} from CHANGELOG.md
-        run: |
-          # The body of the first "## [..]" section (without its header line).
-          awk '/^## \[/{c++; next} c==1' CHANGELOG.md > RELEASE_NOTES.md
-          if [ ! -s RELEASE_NOTES.md ]; then
-            echo "No CHANGELOG.md section found. Run 'npm run changelog -- --tag ${{ github.ref_name }}' before tagging." > RELEASE_NOTES.md
-          fi
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Write the release body for ${{ github.ref_name }}
+        run: node scripts/releaseBody.ts "${{ github.ref_name }}" > RELEASE_NOTES.md
 
       # The update-check manifest: instances on the release channel resolve it via
       # `releases/latest/download/mitra.json` (see src/backend/updates.ts). Shipping it as a release

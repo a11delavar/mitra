@@ -248,6 +248,13 @@ function sourceOf(/** @type {string} */ url) {
 	if (route === '/') {
 		return 'website/src/pages/index.astro'
 	}
+	if (route === '/releases/') {
+		return 'website/src/pages/releases/index.astro'
+	}
+	const release = route.match(/^\/releases\/(\d+\.\d+)\/$/)
+	if (release) {
+		return `releases/${release[1]}/README.md`
+	}
 	const slug = route.replace(new RegExp(`^/${docsBase}/?`), '').replace(/\/$/, '')
 	return [`docs/${slug}.md`, `docs/${slug ? `${slug}/` : ''}README.md`]
 		.find(file => fs.existsSync(path.resolve(here, '..', file)))
@@ -266,6 +273,8 @@ export default defineConfig({
 	site: new URL(site).origin,
 	...(base ? { base } : {}),
 	redirects,
+	// The releases pages read ../releases and the parsers in ../src, which Vite's dev server serves only when allowed to.
+	vite: { server: { fs: { allow: [path.resolve(here, '..')] } } },
 	markdown: {
 		processor: unified({
 			remarkPlugins: [remarkAlert, remarkDocsAssets],

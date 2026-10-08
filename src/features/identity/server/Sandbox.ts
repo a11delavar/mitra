@@ -11,10 +11,14 @@ export class Sandbox {
 
 	private static readonly usernamePrefix = 'demo-'
 
-	static async open(em: EntityManager): Promise<User> {
+	/** The sample calendar is written in `language`, the visitor's browser language on arrival; a switch in Settings rewrites it. */
+	static async open(em: EntityManager, language?: string): Promise<User> {
 		await Sandbox.evictDownTo(em, Sandbox.cap - 1)
 		const user = new User({ username: `${Sandbox.usernamePrefix}${crypto.randomUUID()}` })
 		const demo = new Demo({ userId: user.id })
+		if (language) {
+			demo.credentials = { language }
+		}
 		em.persist([user, demo])
 		await em.flush()
 		await demo.sync(em)

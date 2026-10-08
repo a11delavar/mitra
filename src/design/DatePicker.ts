@@ -15,13 +15,16 @@ export class DatePicker extends Component {
 
 	@property({ type: Object }) value?: DateTime
 
+	/** Where the picker stands until it is moved: a field's own, which counts the days in its zone. Else the value, else today. */
+	@property({ type: Object }) navigationDate?: DateTime
+
 	/** The day the keyboard stands on, which also decides the month shown. */
 	@state() private cursor = new DateTime().dayStart
 
 	protected override willUpdate(changed: PropertyValues<this>) {
 		super.willUpdate(changed)
-		if (changed.has('value')) {
-			this.cursor = (this.value ?? new DateTime()).dayStart
+		if (changed.has('value') || changed.has('navigationDate')) {
+			this.cursor = (this.navigationDate ?? this.value ?? new DateTime()).dayStart
 		}
 	}
 

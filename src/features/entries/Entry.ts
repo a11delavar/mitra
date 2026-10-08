@@ -296,7 +296,7 @@ export class Entry {
 
 		// Calendar days, so an all-day span across a DST change still reads as whole days.
 		const { days, hours, minutes } = this.start.zonedDateTime.until(this.end.zonedDateTime, { largestUnit: 'days', smallestUnit: 'minutes' })
-		return new Intl.DurationFormat(Localizer.languages.current, { style: 'narrow' }).format({ days, hours, minutes })
+		return new Intl.DurationFormat(Localizer.locales.current, { style: 'narrow' }).format({ days, hours, minutes })
 	}
 
 	constructor(init?: Partial<Entry>) {
@@ -585,7 +585,7 @@ export class Entry {
 					.toZonedDateTimeISO(from)
 					.toPlainDateTime()
 					.toZonedDateTime(zone, { disambiguation: 'compatible' })
-					.epochMilliseconds
+					.epochMilliseconds,
 			)
 			this.start = rezoned(this.start)
 			this.end = rezoned(this.end)

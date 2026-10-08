@@ -14,7 +14,7 @@ export class Color {
 		Color.Green,
 		Color.Blue,
 		Color.Purple,
-		Color.Grey
+		Color.Grey,
 	]
 
 	/** The first preset none of `taken` uses, starting at green, so each new calendar gets its own. */

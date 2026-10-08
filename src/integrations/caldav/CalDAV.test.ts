@@ -31,7 +31,7 @@ describe('CalDAV member URLs', () => {
 		it('resolves an absolute-path href (as iCloud returns) to a full URL', () => {
 			assert.equal(
 				CalDAV.resolveMemberUrl(collection, '/123/calendars/xyz/abc.ics'),
-				'https://example.com/123/calendars/xyz/abc.ics'
+				'https://example.com/123/calendars/xyz/abc.ics',
 			)
 		})
 
@@ -42,7 +42,7 @@ describe('CalDAV member URLs', () => {
 		it('returns a full URL unchanged', () => {
 			assert.equal(
 				CalDAV.resolveMemberUrl(collection, 'https://example.com/123/calendars/xyz/abc.ics'),
-				'https://example.com/123/calendars/xyz/abc.ics'
+				'https://example.com/123/calendars/xyz/abc.ics',
 			)
 		})
 
@@ -56,7 +56,7 @@ describe('CalDAV member URLs', () => {
 		it('matches a full URL with its absolute-path equivalent', () => {
 			assert.equal(
 				CalDAV.memberUrlsMatch(collection, 'https://example.com/123/calendars/xyz/abc.ics', '/123/calendars/xyz/abc.ics'),
-				true
+				true,
 			)
 		})
 
@@ -403,7 +403,6 @@ describe('CalDAV free/busy and access class (TRANSP / CLASS)', () => {
 		})
 	})
 })
-
 
 describe('CalDAV all-day serialization', () => {
 	describe('toICALTime', () => {

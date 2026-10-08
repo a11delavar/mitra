@@ -1,4 +1,4 @@
-import { css, event, html, ifDefined, property, query, type ElementRef, type ElementRefs, type HTMLTemplateResult, type PropertyValues } from '@a11d/lit'
+import { css, event, html, ifDefined, property, query, type ElementRef, type ElementRefs, type HTMLTemplateResult } from '@a11d/lit'
 import { Control } from './Control.js'
 import { type Popover } from './Popover.js'
 import { controlHeight } from './controlHeight.css.js'
@@ -41,44 +41,6 @@ export abstract class SegmentedField<T, TSegment> extends Control {
 		if (value !== this.value) {
 			this.value = value
 			this.change.dispatch(value)
-		}
-	}
-
-	/** The value the segments last rendered. */
-	private rendered?: T
-
-	protected override updated(changed: PropertyValues<this>) {
-		super.updated(changed)
-		this.rendered = this.value
-	}
-
-	/**
-	 * Commits what the segments hold, unless they are behind the value in force: a focused field removed before it
-	 * renders a new value commits its old one on blur.
-	 */
-	protected commitSegments(value: T | undefined) {
-		if (this.value === this.rendered) {
-			this.commit(value)
-		}
-	}
-
-	/**
-	 * Whether the units read left to right in a right-to-left language, as Persian writes a date and a time, though
-	 * `@3mo/segmented-input` lays them out right to left.
-	 */
-	protected readonly readsLeftToRight: boolean = false
-
-	private get leftToRight() {
-		return this.readsLeftToRight && this.matches(':dir(rtl)')
-	}
-
-	// The segments' controller walks them in the language's direction: laid out left to right, the arrows walk the other way.
-	private readonly mirrorArrows = (e: KeyboardEvent) => {
-		const opposite = e.key === 'ArrowLeft' ? 'ArrowRight' : e.key === 'ArrowRight' ? 'ArrowLeft' : undefined
-		if (opposite && e.isTrusted && this.leftToRight) {
-			e.stopImmediatePropagation()
-			e.preventDefault()
-			e.target!.dispatchEvent(new KeyboardEvent('keydown', { key: opposite, bubbles: true, composed: true, cancelable: true }))
 		}
 	}
 
@@ -171,10 +133,6 @@ export abstract class SegmentedField<T, TSegment> extends Control {
 				> [aria-hidden] {
 					color: var(--color-text-muted);
 				}
-
-				&[data-left-to-right] {
-					direction: ltr;
-				}
 			}
 
 			mitra-icon-button {
@@ -193,7 +151,7 @@ export abstract class SegmentedField<T, TSegment> extends Control {
 		const { controller } = this
 		return html`
 			<div part="box" @click=${this.handleBoxClick}>
-				<div part="segments" ?data-left-to-right=${this.leftToRight} @keydown=${{ handleEvent: this.mirrorArrows, capture: true }} ${controller.group.ref()}>
+				<div part="segments" ${controller.group.ref()}>
 					${this.segments.map(segment => html`<span part=${ifDefined(this.segmentPart(segment))} ${controller.segment.ref(segment)}></span>`)}
 				</div>
 				<slot></slot>

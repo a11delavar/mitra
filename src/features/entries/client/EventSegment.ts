@@ -41,7 +41,7 @@ export class EntrySegmentComponent extends Component {
 			if (!open && !entry.persisted && !entry.heading?.trim()) {
 				EntryStore.discardDraft()
 			}
-		}
+		},
 	}) open = false
 
 	@property({ type: Boolean, reflect: true }) selected = false
@@ -508,7 +508,7 @@ export class EntrySegmentComponent extends Component {
 
 		this.style.setProperty(
 			'--mitra-entry-segment-color',
-			this.segment.entry.color ?? getSource(this.segment.entry.sourceId)?.color ?? ''
+			this.segment.entry.color ?? getSource(this.segment.entry.sourceId)?.color ?? '',
 		)
 
 		const meta = this.timed || this.showsDate

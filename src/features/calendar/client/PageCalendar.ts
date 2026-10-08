@@ -590,7 +590,7 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 									.navigatingDate=${this.navigatingDate}
 									@windowChange=${() => this.requestUpdate()}
 								></mitra-table>
-							`]
+							`],
 						])}
 					</div>
 				</main>

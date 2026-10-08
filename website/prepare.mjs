@@ -38,6 +38,19 @@ await Promise.all(fs.readdirSync(shots).filter(name => name.endsWith('.png')).ma
 	}
 }))
 
+// A release's captures are frozen in its folder, so they are served as they are: a changed image would be a new release.
+const releases = path.join(repoRoot, 'releases')
+// Copied fresh each time, so a capture a release's folder no longer holds is not served either.
+fs.rmSync(path.join(here, 'public/releases'), { recursive: true, force: true })
+for (const entry of fs.existsSync(releases) ? fs.readdirSync(releases, { withFileTypes: true }) : []) {
+	if (!entry.isDirectory()) {
+		continue
+	}
+	for (const file of fs.readdirSync(path.join(releases, entry.name)).filter(name => /\.(webp|mp4)$/.test(name))) {
+		write(`public/releases/${entry.name}/${file}`, fs.readFileSync(path.join(releases, entry.name, file)))
+	}
+}
+
 // Starlight looks for the not-found page in the docs collection, but it is no operator doc. As a
 // draft it is left out of every docs listing (llms.txt included), while the 404 route still reads it.
 write('src/content/docs/404.md', `---

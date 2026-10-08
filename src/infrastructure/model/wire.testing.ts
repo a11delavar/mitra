@@ -14,7 +14,7 @@ export function wireOf(value: unknown): any {
 
 /** That body as the server's reviver parses it (see the `express.json` reviver in app/server.ts). */
 export function revive<T>(body: unknown): T {
-	const constructor = new ModelValueConstructor
+	const constructor = new ModelValueConstructor()
 	return JSON.parse(JSON.stringify(body), (_key, value) => constructor.shallConstruct(value) ? constructor.construct(value) : value) as T
 }
 

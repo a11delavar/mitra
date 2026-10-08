@@ -209,4 +209,3 @@ declare global {
 		'mitra-option-group': OptionGroup
 	}
 }
-

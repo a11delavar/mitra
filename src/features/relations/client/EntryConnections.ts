@@ -83,7 +83,6 @@ const STUB = '0.875rem'
 
 const HANDLE_REACH = '0.75rem'
 
-
 /** Loop clearance around chips. */
 const LANE = '0.5rem'
 
@@ -157,7 +156,7 @@ export class EntryConnections extends Component {
 	protected override createRenderRoot() { return this }
 
 	private readonly handlePointerOver = (e: Event) => {
-		const target = (e.target as Element | null)
+		const target = e.target as Element | null
 		// Ignore pointer movements over connection layer elements.
 		if (target?.closest?.('mitra-entry-connections')) {
 			return

@@ -300,7 +300,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 		const client = await this.getClient(integration)
 		let data = applyTo(entry.data!.raw!)
 		let response = await client.updateCalendarObject({
-			calendarObject: { url: entry.uri!, data, etag: entry.data!.etag || undefined }
+			calendarObject: { url: entry.uri!, data, etag: entry.data!.etag || undefined },
 		})
 		if (response.status === 412) {
 			const fresh = await this.refetchResource(integration, entry)
@@ -308,7 +308,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 				logger.debug(`Etag of ${entry.uri} was stale (the server re-normalized the resource), re-applying the edit onto the refreshed copy`)
 				data = applyTo(fresh.raw)
 				response = await client.updateCalendarObject({
-					calendarObject: { url: entry.uri!, data, etag: fresh.etag }
+					calendarObject: { url: entry.uri!, data, etag: fresh.etag },
 				})
 			}
 		}
@@ -571,7 +571,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 			if (response.status === 412) {
 				const fresh = await this.refetchResource(integration, entry)
 				response = await client.deleteCalendarObject({
-					calendarObject: { url: entry.uri, etag: fresh?.etag }
+					calendarObject: { url: entry.uri, etag: fresh?.etag },
 				})
 			}
 			if (response.ok === false && response.status !== 404) {

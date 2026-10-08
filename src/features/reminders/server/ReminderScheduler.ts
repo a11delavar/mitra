@@ -145,4 +145,3 @@ export class ReminderScheduler {
 		return new Map(subscriptions.filter(subscription => subscription.timeZone).map(subscription => [subscription.userId, subscription.timeZone!]))
 	}
 }
-

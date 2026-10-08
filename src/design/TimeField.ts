@@ -7,7 +7,6 @@ import { type TimePicker } from './TimePicker.js'
 @component('mitra-time-field')
 export class TimeField extends SegmentedField<string, DateTimeSegment> {
 	protected readonly icon = 'clock'
-	protected override readonly readsLeftToRight = true
 	protected get segments() { return this.controller.segments.segments }
 	protected override get pickerLabel() { return t('Choose a time') }
 
@@ -16,7 +15,7 @@ export class TimeField extends SegmentedField<string, DateTimeSegment> {
 		get label() { return host.label },
 		get readonly() { return host.readonly },
 		get disabled() { return host.disabled },
-		handleChange: value => host.commitSegments(value),
+		handleChange: value => host.commit(value),
 		get handlePickerOpen() { return host.readonly || host.disabled ? undefined : () => host.showPicker({ focus: true }) },
 	}))
 

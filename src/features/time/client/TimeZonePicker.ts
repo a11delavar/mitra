@@ -7,7 +7,7 @@ import type { SearchField } from '../../../design/TextField.js'
 
 /** One `timeZoneName` part off Intl, in the UI language; `zoneId` undefined = the system zone. */
 export function zoneNamePart(zoneId: string | undefined, style: 'short' | 'long' | 'shortOffset' | 'longOffset'): string {
-	return new Intl.DateTimeFormat(Localizer.languages.current, { ...(!zoneId ? {} : { timeZone: zoneId }), timeZoneName: style })
+	return new Intl.DateTimeFormat(Localizer.locales.current, { ...(!zoneId ? {} : { timeZone: zoneId }), timeZoneName: style })
 		.formatToParts(new Date())
 		.find(part => part.type === 'timeZoneName')?.value ?? ''
 }

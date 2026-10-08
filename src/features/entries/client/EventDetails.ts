@@ -32,7 +32,7 @@ export class EntryDetailsComponent extends Component {
 					this.popoverElement?.hide()
 				}
 			})
-		}
+		},
 	}) open = false
 
 	@property({ type: Object }) segment?: EntrySegment

@@ -363,7 +363,8 @@ export class Weeks extends Component {
 		const columnByDay = new Map(week.map((day, index) => [day.dayStart.valueOf(), index]))
 		const columnOf = (dayValue: number) => columnByDay.get(dayValue) ?? 0
 		const routineRow = bars.reduce((lanes, bar) => Math.max(lanes, bar.slot + 1), 0) + 1
-		const weekNumber = week[0]!.weekOfYear
+		// A row starts on the locale's first day, an ISO week on Monday: the row's Thursday falls in the week holding most of it.
+		const weekNumber = week.find(day => day.dayOfWeek === 4)!.weekOfYear
 		return html`
 			${weekNumber === undefined ? html.nothing : html`
 				<div class="week-number" data-chrome style="grid-row: ${row + 1};"

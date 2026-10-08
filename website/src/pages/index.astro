@@ -6,10 +6,13 @@ import ProviderMarks from '../components/ProviderMarks.astro'
 import Shot from '../components/Shot.astro'
 import { version } from '../generated/meta.json'
 import Site from '../layouts/Site.astro'
+import { Release } from '../releases'
+import '../styles/releases.css'
 
 const docs = (slug = '') => withBase(`/${docsBase}/${slug}`)
 
 const release = version.split('.').slice(0, 2).join('.')
+const latest = Release.find(release)
 
 const layers = [
 	{
@@ -59,9 +62,12 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 
 	<section class="hero">
 		<div class="intro">
-			<a class="news" href={`https://github.com/a11delavar/mitra/releases/tag/v${version}`}>
-				Mitra {release} is out
-				<span>See what's new</span>
+			{/* The latest release as its row on the releases list reads, and travelling into its page the same way. */}
+			<a class="news" href={latest?.url ?? withBase(`/releases/${release}/`)}>
+				<span class="version" style={latest?.transition('version')}>{release}</span>
+				{latest?.state === 'latest' && <b style={latest.transition('mark')}>Latest</b>}
+				<span class="title" style={latest?.transition('title', 'text')}>{latest?.notes?.title ?? 'See what is new'}</span>
+				<Icon name="arrow-right" size="0.9em" />
 			</a>
 			<h1>One calendar to plan<br />your events and tasks.</h1>
 			<p class="lede">
@@ -311,25 +317,47 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 	.news {
 		display: inline-flex;
 		flex-wrap: wrap;
-		gap: 0.25rem 0.5rem;
+		align-items: baseline;
+		gap: 0.25rem 0.6rem;
 		margin-block-end: 1.75rem;
-		padding: 0.3rem 0.875rem;
-		border: 1px solid var(--mitra-hairline-strong);
-		border-radius: 999px;
-		font-size: 0.8125rem;
-		font-weight: 550;
+		font-size: 0.9375rem;
 		color: var(--color-text-muted);
 		text-decoration: none;
-		transition: background 0.15s ease, color 0.15s ease;
 	}
 
-	.news span {
-		color: var(--color-accent);
+	.news .version {
+		font-size: 1.25rem;
+		font-weight: 650;
+		letter-spacing: -0.03em;
+		line-height: 1;
+		font-variant-numeric: tabular-nums;
+		color: var(--release-latest);
 	}
 
-	.news:hover {
+	.news b {
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--release-latest);
+	}
+
+	.news .title {
+		transition: color 0.15s ease;
+	}
+
+	.news .icon {
+		/* No text, so no baseline: centred on the line instead, which is the title's cap height. */
+		align-self: center;
+		transition: translate 0.15s ease;
+	}
+
+	.news:hover .title {
 		color: var(--color-text);
-		background: var(--mitra-wash);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	.news:hover .icon {
+		translate: 0.2rem 0;
 	}
 
 	h1 {

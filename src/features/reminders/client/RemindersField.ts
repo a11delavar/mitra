@@ -73,7 +73,7 @@ export class RemindersField extends Component {
 		const anchor = this.entry.reminderAnchor!
 		const fireAt = anchor.subtract({ minutes })
 		const sameDay = fireAt.dayStart.valueOf() === anchor.dayStart.valueOf()
-		return new Intl.DateTimeFormat(Localizer.languages.current, {
+		return new Intl.DateTimeFormat(Localizer.locales.current, {
 			hour: '2-digit',
 			minute: '2-digit',
 			...(sameDay ? {} : { weekday: 'short' }),

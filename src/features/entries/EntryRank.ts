@@ -116,8 +116,8 @@ export class EntryRank {
 
 	private static integerOf(key: string): string {
 		const head = key[0] ?? ''
-		const length
-			= head >= 'a' && head <= 'z' ? head.charCodeAt(0) - 'a'.charCodeAt(0) + 2
+		const length =
+			head >= 'a' && head <= 'z' ? head.charCodeAt(0) - 'a'.charCodeAt(0) + 2
 				: head >= 'A' && head <= 'Z' ? 'Z'.charCodeAt(0) - head.charCodeAt(0) + 2
 					: undefined
 		if (length === undefined || length > key.length) {

@@ -80,7 +80,7 @@ export const setting = () => (constructor: SettingConstructor) => { registeredSe
 let instances: Array<Setting<unknown>> | undefined
 
 // Rebuild cached instances when language changes.
-Localizer.languages.change.subscribe(() => instances = undefined)
+Localizer.locales.change.subscribe(() => instances = undefined)
 
 /** Every setting this build offers, as live instances. */
 export function settings(): ReadonlyArray<Setting<unknown>> {

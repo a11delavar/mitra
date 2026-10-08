@@ -39,7 +39,7 @@ export class NotificationDevices extends Component {
 			return t('never')
 		}
 		const hours = (Date.now() - new Date(value).getTime()) / 3_600_000
-		const format = new Intl.RelativeTimeFormat(Localizer.languages.current, { numeric: 'auto' })
+		const format = new Intl.RelativeTimeFormat(Localizer.locales.current, { numeric: 'auto' })
 		return hours < 24 ? format.format(-Math.round(hours), 'hour') : format.format(-Math.round(hours / 24), 'day')
 	}
 
