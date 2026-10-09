@@ -11,14 +11,11 @@ O Mitra aprende a sua região junto com o seu idioma, de modo que datas, horas e
 
 Documentação: [Configurações](../../docs/settings.md)
 
-## Mais idiomas
-O Mitra está a caminho de falar muitos mais dos idiomas que as pessoas leem.
+## Chinês
+O Mitra aprende chinês, em caracteres simplificados: o aplicativo, seu calendário de exemplo, a documentação e o site, com uma fonte feita para ele.
 
 ## Anexos
 Anexe arquivos a uma entrada. Os calendários que podem guardá-los, o CalDAV primeiro, os levam junto.
-
-## Desfazer e refazer
-Estamos estudando como desfazer uma mudança e trazê-la de volta de novo.
 
 ## Notas de versão no aplicativo
 A caixa Sobre mostra cada versão como o site faz: suas notas, as imagens da versão que você executa, as correções que vieram depois e tudo o que ela trouxe.

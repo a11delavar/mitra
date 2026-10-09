@@ -11,14 +11,11 @@ Mitra lernt zu deiner Sprache auch deine Region, sodass Daten, Uhrzeiten und der
 
 Doku: [Einstellungen](../../docs/settings.md)
 
-## Weitere Sprachen
-Mitra soll viele weitere der Sprachen sprechen, in denen Menschen lesen.
+## Chinesisch
+Mitra lernt Chinesisch, in vereinfachten Schriftzeichen: die App, ihr Beispielkalender, die Doku und die Website, mit einer Schrift, die dafür gemacht ist.
 
 ## Anhänge
 Hänge Dateien an einen Eintrag. Kalender, die sie aufbewahren können, zuerst CalDAV, nehmen sie mit.
-
-## Rückgängig und Wiederholen
-Wir prüfen, wie man eine Änderung zurücknehmen und wieder herstellen kann.
 
 ## Release Notes in der App
 Der Dialog Über zeigt jedes Release so, wie es die Website tut: seine Notizen, die Bilder der Version, die du nutzt, die Korrekturen, die danach kamen, und alles, was es gebracht hat.

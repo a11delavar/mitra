@@ -11,14 +11,11 @@ Mitra aprende tu región junto con tu idioma, para que las fechas, las horas y e
 
 Docs: [Ajustes](../../docs/settings.md)
 
-## Más idiomas
-Mitra está preparado para hablar muchos más de los idiomas que la gente lee.
+## Chino
+Mitra aprende chino, en caracteres simplificados: la aplicación, su calendario de ejemplo, la documentación y el sitio web, con una tipografía hecha para él.
 
 ## Archivos adjuntos
 Adjunta archivos a una entrada. Los calendarios que pueden guardarlos, empezando por CalDAV, los llevan consigo.
-
-## Deshacer y rehacer
-Estamos estudiando cómo deshacer un cambio y volver a hacerlo.
 
 ## Notas de versión en la aplicación
 El diálogo Acerca de muestra cada versión como lo hace el sitio web: sus notas, las imágenes de la versión que ejecutas, las correcciones que llegaron después y todo lo que trajo.

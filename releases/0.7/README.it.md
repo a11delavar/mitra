@@ -11,14 +11,11 @@ Mitra impara la tua regione insieme alla tua lingua, così date, orari e inizio 
 
 Documentazione: [Impostazioni](../../docs/settings.md)
 
-## Più lingue
-Mitra è pronto a parlare molte più delle lingue che le persone leggono.
+## Cinese
+Mitra impara il cinese, in caratteri semplificati: l’app, il suo calendario di esempio, la documentazione e il sito, con un carattere tipografico pensato apposta.
 
 ## Allegati
 Allega file a una voce. I calendari che possono conservarli, CalDAV per primo, li portano con sé.
-
-## Annulla e ripeti
-Stiamo valutando come annullare una modifica e come ripristinarla di nuovo.
 
 ## Note di rilascio nell'app
 La finestra Informazioni mostra ogni release come fa il sito: le sue note, le immagini della versione che usi, le correzioni arrivate dopo e tutto ciò che ha portato.

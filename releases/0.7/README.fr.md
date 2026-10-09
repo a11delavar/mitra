@@ -11,14 +11,11 @@ Mitra apprend votre région en même temps que votre langue : les dates, les he
 
 Documentation : [Paramètres](../../docs/settings.md)
 
-## Plus de langues
-Mitra est appelée à parler bien plus des langues que les gens lisent.
+## Chinois
+Mitra apprend le chinois, en caractères simplifiés : l’application, son agenda d’exemple, la documentation et le site, avec une police conçue pour lui.
 
 ## Pièces jointes
 Joignez des fichiers à une entrée. Les calendriers qui savent les conserver, CalDAV en tête, les emportent avec eux.
-
-## Annuler et rétablir
-Nous étudions la possibilité de revenir sur un changement, puis de le rétablir.
 
 ## Notes de version dans l'application
 La boîte de dialogue À propos présente chaque version comme le fait le site : ses notes, les images de la version que vous utilisez, les correctifs venus ensuite et tout ce qu'elle a apporté.

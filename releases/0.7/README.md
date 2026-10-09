@@ -11,14 +11,11 @@ Mitra learns your region along with your language, so dates, times and the start
 
 Docs: [Settings](../../docs/settings.md)
 
-## More languages
-Mitra is set to speak many more of the languages people read.
+## Chinese
+Mitra learns Chinese, in simplified characters: the app, its sample calendar, the docs and the website, with a typeface made for it.
 
 ## Attachments
 Attach files to an entry. Calendars that can keep them, CalDAV first, carry them along.
-
-## Undo and redo
-We are looking into taking a change back, and bringing it back again.
 
 ## Release notes in the app
 The About dialog shows each release the way the website does: its notes, the pictures of the version you run, the fixes that came after, and everything it shipped.
