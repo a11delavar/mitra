@@ -1,19 +1,26 @@
 ---
 import { captureUrl } from '../captures'
+import { localize } from '../i18n'
+
+interface Props {
+	language: string
+}
+
+const t = localize(Astro.props.language)
 
 // The week view taken apart: layers captured at one moment and one scroll offset, so they register
 // exactly. Why they rest flat and arrive from behind: AGENTS.md §Website, Depth.
 
 const layers = [
-	{ name: 'frame', label: 'The calendar grid' },
-	{ name: 'events', label: 'Events' },
-	{ name: 'tasks', label: 'Tasks' },
-	{ name: 'links', label: 'Connections between entries' },
+	{ name: 'frame', label: t('The calendar grid') },
+	{ name: 'events', label: t('Events') },
+	{ name: 'tasks', label: t('Tasks') },
+	{ name: 'links', label: t('Connections between entries') },
 ]
 
 const images = Object.fromEntries(
 	await Promise.all(layers.flatMap(({ name }) => ['light', 'dark'].map(async theme =>
-		[`${name}-${theme}`, await captureUrl(`week-${name}-${theme}`, 1920)] as const
+		[`${name}-${theme}`, await captureUrl(`week-${name}-${theme}`, 1920, Astro.props.language)] as const
 	)))
 )
 ---

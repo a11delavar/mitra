@@ -6,8 +6,8 @@ description: Add reminders to events and tasks, choose the reminders new entries
 A reminder tells you about an event or a task ahead of time, as a notification from your system, even when Mitra isn't open. It comes from your own Mitra server, so there's no other service to sign up for. On an iPhone or iPad, reminders need Mitra [installed as an app](install-app.md); everywhere else, the browser is enough.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/notifications-detail-dark.png">
-  <img src="../assets/screenshots/notifications-detail-light.png" alt="The Notifications settings page, with the default reminders, the browser permission and the device list" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/notifications-detail-dark.webp">
+  <img src="../assets/screenshots/notifications-detail-light.webp" alt="The Notifications settings page, with the default reminders, the browser permission and the device list" />
 </picture>
 
 ## Add a reminder

@@ -1,0 +1,12 @@
+---
+import Home from '../../components/Home.astro'
+import { languages } from '../../../site.mjs'
+
+export function getStaticPaths() {
+	return languages.slice(1).map(language => ({ params: { language } }))
+}
+
+const { language } = Astro.params
+---
+
+<Home language={language!} />

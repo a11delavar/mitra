@@ -3,10 +3,15 @@ import { linesOf, type ChangelogCategory } from '../Changelog.js'
 import { type Release } from '../Release.js'
 import { ReleaseDocs, type ReleaseCapture, type ReleaseHighlight } from '../ReleaseNotes.js'
 import { releaseNotes } from '../releaseNotes.css.js'
-import { docsBase, site, withBase } from '../../../../website/site.mjs'
+import { Localizer } from '@3mo/localization'
+import { docsBase, languages, localized, site, withBase } from '../../../../website/site.mjs'
 
 const repository = 'https://github.com/a11delavar/mitra'
-const onWebsite = (route: string) => new URL(withBase(route), site).href
+/** A page of the website, in the app's language where the website has it. */
+const onWebsite = (route: string) => {
+	const language = Localizer.locales.current.language
+	return new URL(withBase(languages.includes(language) ? localized(route, language) : route), site).href
+}
 const docsPage = (page: string) => onWebsite(`/${docsBase}/${page}`)
 
 /**

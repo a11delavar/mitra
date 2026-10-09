@@ -22,18 +22,20 @@ if (!fs.existsSync(docsLink)) {
 }
 
 // The logo and the captures the pages import (Astro converts and hashes those).
+// Copied fresh, so a file the repo no longer has (a capture renamed or retired) cannot keep a build passing here alone.
+fs.rmSync(path.join(here, 'src/assets'), { recursive: true, force: true })
 fs.cpSync(path.join(repoRoot, 'assets'), path.join(here, 'src/assets'), { recursive: true })
 write('public/favicon.svg', fs.readFileSync(path.join(repoRoot, 'assets/mitra.svg')))
 
 // The docs' screenshots are raw HTML, which Astro's image pipeline never sees, so their web-sized
-// copies are made here for `remarkDocsAssets` to point at.
+// copies are made here for `remarkDocsAssets` to point at: English's, and each language's the build shot beneath them.
 const shots = path.join(repoRoot, 'assets/screenshots')
 const webp = path.join(here, 'public/assets/screenshots')
-fs.mkdirSync(webp, { recursive: true })
-await Promise.all(fs.readdirSync(shots).filter(name => name.endsWith('.png')).map(async name => {
+await Promise.all(fs.readdirSync(shots, { recursive: true, encoding: 'utf8' }).filter(name => name.endsWith('.webp')).map(async name => {
 	const source = path.join(shots, name)
-	const output = path.join(webp, name.replace(/\.png$/, '.webp'))
+	const output = path.join(webp, name)
 	if (!fs.existsSync(output) || fs.statSync(output).mtimeMs < fs.statSync(source).mtimeMs) {
+		fs.mkdirSync(path.dirname(output), { recursive: true })
 		await sharp(source).resize({ width: 1800, withoutEnlargement: true }).webp({ quality: 88 }).toFile(output)
 	}
 }))

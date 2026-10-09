@@ -1,5 +1,6 @@
 import { component, html, css, ifDefined, state } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
+import { Localizer } from '@3mo/localization'
 import { fetchReleases, getMeta, getUser, isBundleStale, setSeenVersion } from '../../../infrastructure/http/Api.js'
 import { type ChangelogSection } from '../Changelog.js'
 import { Release, type ReleaseFolder } from '../Release.js'
@@ -50,7 +51,7 @@ export class DialogAbout extends DialogComponent {
 		const { sections, folders } = await fetchReleases().catch(() => ({ sections: new Array<ChangelogSection>(), folders: new Array<ReleaseFolder>() }))
 		this.folders = new Map(folders.map(folder => [folder.version, folder]))
 		this.current = sections.find(section => section.current)
-		this.releases = Release.list(sections, new Map(folders.map(folder => [folder.version, ReleaseNotes.parse(folder.markdown)])))
+		this.releases = Release.list(sections, new Map(folders.map(folder => [folder.version, DialogAbout.notesOf(folder)])))
 		this.selected = this.releases.find(release => !!this.current && release.sections.includes(this.current)) ?? this.releases[0]
 		// The list arrives after the dialog took its focus, which landed on the commit link instead.
 		await this.updateComplete
@@ -58,6 +59,13 @@ export class DialogAbout extends DialogComponent {
 	}
 
 	protected override createRenderRoot() { return this }
+
+	/** A release's notes in the app's language where translated, else in English. */
+	private static notesOf(folder: ReleaseFolder) {
+		const english = ReleaseNotes.parse(folder.markdown)
+		const translation = folder.translations[Localizer.locales.current.language]
+		return (translation && english.translation(translation)) || english
+	}
 
 	private get meta() {
 		return getMeta()

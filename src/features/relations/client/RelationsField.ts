@@ -426,7 +426,7 @@ export class RelationsField extends Component {
 				<div class="lines">
 					<span class="kind">${section.format()}</span>
 					${section !== RelationSection.Subtasks || !this.rollup?.subtasks.total ? html.nothing : html`
-						<span class="tally" title=${t('${done} of ${total:pluralityNumber} subtasks done', { done: this.rollup.subtasks.done.format(), total: this.rollup.subtasks.total })}>
+						<span class="tally" title=${t('${done:number} of ${total:pluralityNumber} subtasks done', this.rollup.subtasks)}>
 							${this.rollup.subtasks.done.format()}/${this.rollup.subtasks.total.format()}
 						</span>
 					`}

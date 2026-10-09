@@ -1,0 +1,458 @@
+---
+import { languages, localized, withBase } from '../../../../site.mjs'
+import Icon from '../../../components/Icon.astro'
+import Dial from '../../../components/Dial.astro'
+import Site from '../../../layouts/Site.astro'
+import { linesOf, Release } from '../../../releases'
+import '../../../styles/releases.css'
+// The release look, shared with the app's About dialog (src/features/about/releaseNotes.css.ts).
+import '../../../styles/generated/release.css'
+
+// Every release in every language; one without a translation reads in English there, its notes marked as such.
+export function getStaticPaths() {
+	return languages.flatMap(language => Release.all(language).map(release => ({
+		params: { language: language === languages[0] ? undefined : language, version: release.version },
+		props: { release },
+	})))
+}
+
+interface Props {
+	release: Release
+}
+
+const { release } = Astro.props
+const { t } = release
+// The notes' own language: the page's, or English while they are not translated.
+const notesLanguage = release.translated ? undefined : languages[0]
+const english = `${withBase(`/releases/${release.version}/`)}`
+const intro = release.notes ? await release.render(release.notes.intro) : ''
+const letter = release.notes?.foreword
+const foreword = letter ? await release.render(letter.markdown) : ''
+const highlights = await Promise.all(release.highlights.map(async highlight => {
+	const named = highlight.capture && release.capture(highlight.capture)
+	const capture = named?.exists ? named : undefined
+	return { highlight, html: await release.render(highlight.markdown), capture, size: await capture?.size() }
+}))
+const rest = await Promise.all((release.notes?.rest ?? []).map(async section => ({ section, html: await release.render(section.markdown) })))
+---
+
+<Site title={`${release.name} | ${t('Mitra')}`} description={release.description} current="releases" languages={languages} translated={release.languages}>
+	<link slot="head" rel="alternate" type="application/rss+xml" title={t('Mitra releases')} href={withBase(localized('/releases.xml', release.language))} />
+	<article class="release release-notes" data-state={release.state}>
+		<header class="hero">
+			<a class="crumb" href={withBase(localized('/releases/', release.language))}><Icon name="arrow-left" size="0.9em" />{t('Releases')}</a>
+			{/* The same block as the row on the list, so the navigation moves it rather than reshapes it. */}
+			<div class="num">
+				<p class="numeral">
+					<span class="version" style={release.transition('version')}>{release.version}</span>
+					{/* Beside the numeral, which release it is to you (the `:latest` and `:dev` images); beneath it, when it ships. */}
+					{release.state === 'latest' && <b class="mark" style={release.transition('mark')}>{t('Latest')}</b>}
+					{release.state === 'draft' && <b class="mark" style={release.transition('mark')}>{t('Next')}</b>}
+				</p>
+				{release.date
+					? <time datetime={release.date} style={release.transition('date')}>{release.formatDate(release.date)}</time>
+					: release.state === 'draft'
+						? <small class="progress" style={release.transition('date')}><Dial />{t('in progress')}</small>
+						: <small style={release.transition('date')}>{t('planned')}</small>}
+			</div>
+			<div class="body" lang={notesLanguage}>
+				<h1 style={release.transition('title', 'text')}>{release.title}</h1>
+				{intro && <div class="intro" style={release.transition('intro', 'text')} set:html={intro} />}
+				{release.state === 'draft' && <p class="note">{t('These notes describe the next release, and change until it ships.')}</p>}
+				{release.state === 'planned' && <p class="note planned">{t('What this release is meant to hold, which may still move.')}</p>}
+				{!release.translated && <p class="note" lang={release.language}>{t('These notes are not translated yet, so they read in English.')}</p>}
+				{release.outdated && <p class="note">{t('The English notes changed after this translation.')} <a href={english} hreflang={languages[0]}>{t('Read them in English')}</a></p>}
+			</div>
+		</header>
+
+		{letter && (
+			<section class="foreword" id="foreword" lang={notesLanguage}>
+				<div class="letter">
+					<div class="prose" set:html={foreword} />
+					{letter.signature && (
+						<a class="signature" href={letter.signature.url} rel="noreferrer">
+							<img src={letter.signature.avatar} alt="" width="40" height="40" loading="lazy" decoding="async" />
+							{letter.signature.name}
+						</a>
+					)}
+				</div>
+			</section>
+		)}
+
+		{highlights.map(({ highlight, html, capture, size }, index) => (
+			<section class="highlight" id={release.anchorOf(highlight)} data-side={index % 2 ? 'start' : 'end'} lang={notesLanguage}>
+				<div class="text">
+					<h2 class="heading">
+						{highlight.heading}
+						{highlight.docs && <a class="docs" href={release.docsUrl(highlight.docs.href)} aria-label={t('Docs: ${page}', { page: highlight.docs.label })} title={t('Docs: ${page}', { page: highlight.docs.label })}><Icon name="book-open" /></a>}
+						<button class="copy" type="button" data-section={release.anchorOf(highlight)} aria-label={t('Copy a link to ${section}', { section: highlight.heading })} title={t('Copy link')}><Icon name="link" /><Icon name="check" /></button>
+					</h2>
+					<div class="prose" set:html={html} />
+				</div>
+				{capture && (
+					<figure class="shot" role="img" aria-label={capture.alt}>
+						{/* Lazy either way: the browser fetches a lazy image, and plays an autoplaying film, as it comes into view. */}
+						{/* Each take links to its own file, so a capture opens at full size in a new tab. */}
+						{(['light', 'dark'] as const).map(theme => (
+							<a class={theme} href={capture.url(theme)} target="_blank" rel="noreferrer" title={t('Open at full size')}>
+								{capture.film
+									? <video src={capture.url(theme)} poster={capture.poster(theme)} width={size?.width} height={size?.height} autoplay muted loop playsinline preload="none" aria-hidden="true" />
+									: <img src={capture.url(theme)} width={size?.width} height={size?.height} alt="" loading="lazy" decoding="async" />}
+							</a>
+						))}
+					</figure>
+				)}
+			</section>
+		))}
+
+		{rest.map(({ section, html }) => (
+			<section class="plain" id={release.anchorOf(section)} lang={notesLanguage}>
+				<h2 class="heading">
+					{section.heading}
+					<button class="copy" type="button" data-section={release.anchorOf(section)} aria-label={t('Copy a link to ${section}', { section: section.heading })} title={t('Copy link')}><Icon name="link" /><Icon name="check" /></button>
+				</h2>
+				<div class="prose" set:html={html} />
+			</section>
+		))}
+
+
+		{/* The changelog is written in English, by commit. */}
+		{release.patches.length > 0 && (
+			<section class="emitted" id="patches">
+				<h2 class="title">{t('Patches')}</h2>
+				{release.patches.map(patch => (
+					<div class="patch">
+						<b>{patch.version}</b>
+						<span class="date">{patch.date && release.formatDate(patch.date)}</span>
+						<ul class="lines" lang={languages[0]}>
+							{patch.categories.flatMap(linesOf).map(line => (
+								<li><span>{line.subject}</span>{line.url && <a class="hash" href={line.url} rel="noreferrer">{line.hash}</a>}</li>
+							))}
+						</ul>
+					</div>
+				))}
+			</section>
+		)}
+
+		{release.everything && (
+			<section class="emitted" id="everything">
+				<h2 class="title">{t('Everything in ${version}', { version: release.version })} <small>{release.counts.filter(count => !Release.maintenance.has(count.type)).map(count => release.countOf(count)).join(' · ')}</small></h2>
+				{release.listed.map(category => (
+					<div class="category" data-type={category.type}>
+						<h3 class="label">{release.labelOf(category)}</h3>
+						<ul class="lines" lang={languages[0]}>
+							{linesOf(category).map(line => (
+								<li><span>{line.subject}</span>{line.url && <a class="hash" href={line.url} rel="noreferrer">{line.hash}</a>}</li>
+							))}
+				{release.maintenanceCount > 0 && (
+					<p class="maintenance" lang={release.language} set:html={t('Plus ${link} on GitHub: tests, builds and chores.', { link: `<a href="${release.commitsUrl}" rel="noreferrer">${t('${count:pluralityNumber} maintenance changes', { count: release.maintenanceCount })}</a>` })} />
+				)}
+						</ul>
+					</div>
+				))}
+			</section>
+		)}
+
+		{release.notes && release.notes.contributors.length > 0 && (
+			<section class="emitted" id="contributors">
+				<h2 class="title">{t('Contributors')}</h2>
+				<ul class="people">
+					{release.notes.contributors.map(person => (
+						<li>
+							<a href={person.url} rel="noreferrer">
+								{person.avatar
+									? <img src={person.avatar} alt="" width="40" height="40" loading="lazy" decoding="async" />
+									: <span class="initial" aria-hidden="true">{person.name.replace(/^@/, '')[0]}</span>}
+								{person.name}
+							</a>
+							{person.role && <small>{person.role}</small>}
+						</li>
+					))}
+				</ul>
+			</section>
+		)}
+	</article>
+</Site>
+
+<script>
+	// Back to the list goes back in history when the list is where the reader came from: the browser restores where they
+	// were in it, which a fresh visit to its address would start from the top.
+	const crumb = document.querySelector<HTMLAnchorElement>('a.crumb')
+	crumb?.addEventListener('click', event => {
+		const list = new URL(crumb.href).pathname
+		const previous = window.navigation?.entries()[window.navigation.currentEntry!.index - 1]?.url
+		const came = previous ?? (history.length > 1 ? document.referrer : '')
+		if (came && new URL(came, location.href).pathname === list) {
+			event.preventDefault()
+			history.back()
+		}
+	})
+
+	// A heading's link button copies the address of its section, and says so with a check for a moment.
+	for (const button of document.querySelectorAll<HTMLButtonElement>('button.copy')) {
+		button.addEventListener('click', async () => {
+			const address = new URL(`#${button.dataset.section}`, location.href).href
+			// Where the clipboard API is refused (an embedding frame), the older copy of a selection still works.
+			const copied = await navigator.clipboard.writeText(address).then(() => true, () => {
+				const field = Object.assign(document.createElement('textarea'), { value: address })
+				document.body.append(field)
+				field.select()
+				const done = document.execCommand('copy')
+				field.remove()
+				return done
+			})
+			if (copied) {
+				button.toggleAttribute('data-copied', true)
+				setTimeout(() => button.removeAttribute('data-copied'), 1500)
+			}
+		})
+	}
+
+	// A film rests on its first frame for a reader who asked for less motion. Everything else about it is the markup's.
+	if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+		for (const film of document.querySelectorAll('video')) {
+			film.removeAttribute('autoplay')
+			film.pause()
+		}
+	}
+</script>
+
+<style>
+	/* The page frame and its sizes; how a release reads is generated/release.css. */
+	.release {
+		max-inline-size: var(--mitra-page);
+		margin-inline: auto;
+		padding: clamp(2rem, 5vh, 3rem) var(--mitra-gutter) 0;
+		display: grid;
+		gap: clamp(4rem, 10vh, 7rem);
+		--release-heading: 1.5rem;
+		--release-section: 1.25rem;
+		--release-text: 1rem;
+		--release-shot-height: min(34rem, 78vh);
+	}
+
+	.highlight + .highlight {
+		margin-block-start: clamp(1rem, 5vh, 3.5rem);
+	}
+
+	.shot {
+		box-shadow: var(--mitra-shadow-soft);
+	}
+
+	/* Laid out as the list's row, on the list's column: the numeral's column, then the title's. */
+	.hero {
+		inline-size: min(100%, var(--release-column));
+		margin-inline: auto;
+		display: grid;
+		grid-template-columns: 7rem minmax(0, 1fr);
+		gap: 1.5rem;
+		align-items: start;
+	}
+
+	/* A squiggle in Mitra's colour closes the hero, where the list draws its hairline. */
+	.hero::after {
+		content: '';
+		grid-column: 1 / -1;
+		block-size: 0.5rem;
+		margin-block-start: 1.5rem;
+		background: var(--color-accent);
+		opacity: 0.45;
+		mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 8'><path d='M0 4Q5 0 10 4T20 4' fill='none' stroke='black' stroke-width='1.25' stroke-linecap='round'/></svg>") repeat-x left center / 1.25rem 0.5rem;
+	}
+
+	.crumb {
+		grid-column: 1 / -1;
+		justify-self: start;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		margin-block-end: 1rem;
+		font-size: 0.875rem;
+		color: var(--color-text-muted);
+		text-decoration: none;
+	}
+
+	.crumb:hover {
+		color: var(--color-text);
+	}
+
+	.num {
+		display: grid;
+		align-content: start;
+		gap: 0.5rem;
+		/* On the numeral's baseline, which sits a little below the title's cap height. */
+		padding-block-start: 0.2rem;
+	}
+
+	.numeral {
+		margin: 0;
+		display: flex;
+		align-items: baseline;
+		gap: 0.5rem;
+	}
+
+	.version {
+		font-size: 2rem;
+		font-weight: 650;
+		letter-spacing: -0.03em;
+		line-height: 1;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.numeral b {
+		font-size: 0.75rem;
+		font-weight: 600;
+	}
+
+	.num :is(time, small) {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+		font-size: 0.75rem;
+		color: var(--color-text-muted);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.body {
+		display: grid;
+		gap: 1rem;
+		max-inline-size: 56rem;
+	}
+
+	.note {
+		margin: 0;
+		font-size: 0.9rem;
+		color: var(--release-dev);
+	}
+
+	.note.planned,
+	[data-state='planned'] .version {
+		color: var(--color-text-muted);
+	}
+
+	/* As wide as its text: the snapshot a navigation scales is then the text itself, so the title grows from the
+	 * list's size to this one instead of jumping, both boxes having the text's own proportions. */
+	h1 {
+		inline-size: fit-content;
+		font-size: clamp(1.625rem, 3vw, 2.25rem);
+		text-wrap: pretty;
+	}
+
+	.intro {
+		max-inline-size: var(--mitra-content);
+		font-size: 1.0625rem;
+		color: var(--color-text-muted);
+	}
+
+	.intro :global(p) {
+		margin: 0;
+	}
+
+	/* The release's letter, under its title's column and at a reading width. */
+	.foreword {
+		inline-size: min(100%, var(--release-column));
+		margin-inline: auto;
+		padding-inline-start: calc(7rem + 1.5rem);
+		box-sizing: border-box;
+		--release-text: 1.0625rem;
+	}
+
+	.foreword :global(p) {
+		max-inline-size: var(--mitra-content);
+	}
+
+	@media (width < 40rem) {
+		.foreword {
+			padding-inline-start: 0;
+		}
+	}
+
+	.plain {
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	.plain > * {
+		max-inline-size: var(--mitra-content);
+	}
+
+	.plain .heading {
+		margin: 0;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: var(--release-heading);
+	}
+
+	/* A section's link, shown beside its heading while the reader is at it (always on a touch screen). */
+	.copy {
+		display: inline-flex;
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		font-size: 0.8em;
+		color: var(--color-text-muted);
+		cursor: pointer;
+		opacity: 0;
+		transition: opacity 150ms, color 150ms;
+
+		:global(.icon:last-child) {
+			display: none;
+		}
+
+		&[data-copied] {
+			color: var(--color-accent);
+			opacity: 1;
+
+			:global(.icon:first-child) {
+				display: none;
+			}
+
+			:global(.icon:last-child) {
+				display: inline;
+			}
+		}
+
+		&:hover,
+		&:focus-visible {
+			color: var(--color-accent);
+		}
+	}
+
+	.heading:hover .copy,
+	.copy:focus-visible {
+		opacity: 0.7;
+	}
+
+	@media (hover: none) {
+		.copy {
+			opacity: 0.7;
+		}
+	}
+
+	.emitted {
+		inline-size: min(100%, var(--release-column));
+		margin-inline: auto;
+	}
+
+	.maintenance {
+		margin: 1.5rem 0 0;
+		font-size: 0.875rem;
+		color: var(--color-text-muted);
+	}
+
+	@media (width < 40rem) {
+		.hero {
+			grid-template-columns: minmax(0, 1fr);
+			gap: 0.75rem;
+		}
+
+		.num {
+			grid-auto-flow: column;
+			justify-content: start;
+			align-items: baseline;
+			gap: 1rem;
+		}
+	}
+</style>

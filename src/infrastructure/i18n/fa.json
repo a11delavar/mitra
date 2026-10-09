@@ -430,17 +430,17 @@
 	"Search for an event or task to link": "جستجوی رویداد یا کار برای پیوند دادن",
 	"Subtask of": "زیرکارِ",
 	"Subtasks": "زیرکارها",
-	"${done} of ${total:pluralityNumber} subtasks done": [
-		"${done} از ${total:pluralityNumber} زیرکار انجام شد",
-		"${done} از ${total:pluralityNumber} زیرکار انجام شد"
+	"${done:number} of ${total:pluralityNumber} subtasks done": [
+		"${done:number} از ${total:pluralityNumber} زیرکار انجام شد",
+		"${done:number} از ${total:pluralityNumber} زیرکار انجام شد"
 	],
-	"${done} of ${total:pluralityNumber} checklist items done": [
-		"${done} از ${total:pluralityNumber} مورد فهرست انجام شد",
-		"${done} از ${total:pluralityNumber} مورد فهرست انجام شد"
+	"${done:number} of ${total:pluralityNumber} checklist items done": [
+		"${done:number} از ${total:pluralityNumber} مورد فهرست انجام شد",
+		"${done:number} از ${total:pluralityNumber} مورد فهرست انجام شد"
 	],
-	"${done} of ${total:pluralityNumber} steps done": [
-		"${done} از ${total:pluralityNumber} مرحله انجام شد",
-		"${done} از ${total:pluralityNumber} مرحله انجام شد"
+	"${done:number} of ${total:pluralityNumber} steps done": [
+		"${done:number} از ${total:pluralityNumber} مرحله انجام شد",
+		"${done:number} از ${total:pluralityNumber} مرحله انجام شد"
 	],
 	"All subtasks done": "تمام زیرکارها انجام شد",
 	"\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks are still open.": [

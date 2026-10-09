@@ -3,13 +3,16 @@
  * then an intro and one `##` per highlight. A highlight shows its capture as a `<picture>` of the files beside the
  * notes, whose dark `<source>` GitHub picks by the reader's theme. A film is the same picture of its first frame, and
  * the readers that can play it find its `.mp4` under the same name. Each closes with `Docs: [page](../../docs/page.md)`.
- * Pure, shared by the website, the release scripts and the app.
+ * A translation (`README.<language>.md`) has the same sections in the same order, so each takes its kind from the
+ * English one beside it rather than from its heading. Pure, shared by the website, the release scripts and the app.
  */
 export class ReleaseNotes {
-	static readonly reservedHeadings = new Set(['Why Mitra', 'Upgrading', 'Contributors'])
+	/** The headings that are not highlights, and what each is. */
+	static readonly reservedHeadings = new Map<string, ReleaseSectionKind>([['Why Mitra', 'foreword'], ['Upgrading', 'upgrading'], ['Contributors', 'contributors']])
 	static readonly frontmatterPattern = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/
 	static readonly capturePattern = /^<picture>[\s\S]*?<img src="(?<name>[A-Za-z0-9-]+)-light\.webp" alt="(?<alt>[^"]*)"[^>]*>[\s\S]*?<\/picture>[ \t]*$/m
-	static readonly docsPattern = /^Docs: \[([^\]]+)\]\(([^)\s]+)\)[ \t]*$/m
+	/** A line of its own linking a docs page, whatever word a translation puts before it. */
+	static readonly docsPattern = /^[^\s:[]+: \[([^\]]+)\]\(((?:\.\.\/)+docs\/[^)\s]+)\)[ \t]*$/m
 
 	/** `0.6` for `v0.6.2`, `0.6.0-rc.1` or `0.6`: the folder a version's notes live in. */
 	static minorOf(version: string) {
@@ -21,16 +24,18 @@ export class ReleaseNotes {
 		return /^v?\d+\.\d+\.0(-|$)/.test(version)
 	}
 
-	static parse(markdown: string) {
+	/** `kinds` gives each section's kind by position, for a translation; otherwise its heading says. */
+	static parse(markdown: string, kinds?: ReadonlyArray<ReleaseSectionKind>) {
 		const match = markdown.match(ReleaseNotes.frontmatterPattern)
 		const frontmatter = new Map((match?.[1] ?? '').split(/\r?\n/).flatMap(line => {
 			const field = line.match(/^(\w+):\s*(.*)$/)
 			return !field ? [] : [[field[1]!, field[2]!.trim().replace(/^(['"])(.*)\1$/, '$2')] as const]
 		}))
 		const [intro = '', ...parts] = (match ? markdown.slice(match[0].length) : markdown).split(/^## /m)
-		const sections = parts.map(part => {
+		const sections = parts.map((part, index) => {
 			const newline = part.indexOf('\n')
-			return ReleaseSection.of((newline < 0 ? part : part.slice(0, newline)).trim(), newline < 0 ? '' : part.slice(newline + 1))
+			const heading = (newline < 0 ? part : part.slice(0, newline)).trim()
+			return ReleaseSection.of(heading, newline < 0 ? '' : part.slice(newline + 1), kinds?.[index] ?? ReleaseNotes.reservedHeadings.get(heading) ?? 'highlight')
 		})
 		return new ReleaseNotes(markdown, frontmatter.get('title') ?? '', frontmatter.get('date'), intro.trim(), sections)
 	}
@@ -55,22 +60,32 @@ export class ReleaseNotes {
 	}
 
 	/**
+	 * These notes in another language, from its `README.<language>.md`: its sections are these sections in order, and its
+	 * date is these notes' own, which only the release stamps. Undefined when its sections no longer match these.
+	 */
+	translation(markdown: string) {
+		const translated = ReleaseNotes.parse(markdown, this.sections.map(section => section.kind))
+		return translated.sections.length !== this.sections.length ? undefined
+			: new ReleaseNotes(translated.markdown, translated.title, this.date, translated.intro, translated.sections)
+	}
+
+	/**
 	 * A letter before the highlights, under `## Why Mitra`, for a release that needs one (the first did): the intro stays
 	 * one paragraph, which is all the releases list, the feed and GitHub show.
 	 */
 	get foreword() {
-		const section = this.sections.find(section => section.heading === 'Why Mitra')
+		const section = this.sections.find(section => section.kind === 'foreword')
 		return section && ReleaseLetter.of(section.markdown)
 	}
 
 	/** The sections after the highlights, such as Upgrading. The contributors are read as people, not as a section. */
 	get rest() {
-		return this.sections.filter(section => !(section instanceof ReleaseHighlight) && !['Why Mitra', 'Contributors'].includes(section.heading))
+		return this.sections.filter(section => section.kind === 'upgrading')
 	}
 
 	/** Who made the release, from its `Contributors` list: `- [@login](https://github.com/login): what they did`, or a bare name. */
 	get contributors() {
-		const section = this.sections.find(section => section.heading === 'Contributors')
+		const section = this.sections.find(section => section.kind === 'contributors')
 		return (section?.markdown.split(/\r?\n/) ?? []).flatMap(line => {
 			const match = line.match(/^- (?:\[([^\]]+)\]\(([^)\s]+)\)|([^:]+?))(?::\s*(.*))?\s*$/)
 			return !match ? [] : [new ReleaseContributor((match[1] ?? match[3])!.trim(), match[2], match[4]?.trim() || undefined)]
@@ -109,18 +124,21 @@ export class ReleaseNotes {
 	}
 }
 
+export type ReleaseSectionKind = 'highlight' | 'foreword' | 'upgrading' | 'contributors'
+
 export class ReleaseSection {
-	/** A highlight, unless the heading is reserved for something else. */
-	static of(heading: string, markdown: string) {
-		return ReleaseNotes.reservedHeadings.has(heading) ? new ReleaseSection(heading, markdown.trim()) : ReleaseHighlight.of(heading, markdown)
+	static of(heading: string, markdown: string, kind: ReleaseSectionKind) {
+		return kind === 'highlight' ? ReleaseHighlight.of(heading, markdown) : new ReleaseSection(heading, markdown.trim(), kind)
 	}
 
 	readonly heading: string
 	readonly markdown: string
+	readonly kind: ReleaseSectionKind
 
-	constructor(heading: string, markdown: string) {
+	constructor(heading: string, markdown: string, kind: ReleaseSectionKind) {
 		this.heading = heading
 		this.markdown = markdown
+		this.kind = kind
 	}
 
 	/** The first sentence, for a reader that has room for one line. */
@@ -147,7 +165,7 @@ export class ReleaseHighlight extends ReleaseSection {
 	readonly docs: ReleaseDocs | undefined
 
 	constructor(heading: string, markdown: string, capture: ReleaseCapture | undefined, docs: ReleaseDocs | undefined) {
-		super(heading, markdown)
+		super(heading, markdown, 'highlight')
 		this.capture = capture
 		this.docs = docs
 	}

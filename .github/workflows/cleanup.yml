@@ -16,11 +16,13 @@ on:
 
 jobs:
   cleanup:
+    name: 🧹 Prune Images
     runs-on: ubuntu-latest
     permissions:
       packages: write
     steps:
-      - name: Delete untagged versions (incl. orphaned multi-arch children)
+      # Orphaned multi-arch children included.
+      - name: Delete Untagged Versions
         uses: snok/container-retention-policy@v3.1.0
         with:
           account: user
@@ -30,7 +32,8 @@ jobs:
           cut-off: 1w
           dry-run: true
 
-      - name: Prune old per-commit (sha-*) tags, keeping the most recent
+      # The `sha-*` tags, keeping the most recent.
+      - name: Prune Commit Tags
         uses: snok/container-retention-policy@v3.1.0
         with:
           account: user

@@ -6,8 +6,8 @@ description: "How the location field suggests places, what it sends where, and h
 The location field in the entry editor suggests places as you type. It needs no API key and no sign-up: Mitra uses [Photon](https://photon.komoot.io), a free, open-source geocoder built on OpenStreetMap.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/location-detail-dark.png">
-  <img src="../assets/screenshots/location-detail-light.png" alt="A new entry with Geneva typed into its location, and suggestions below: the city, its airport, its main station, the Palais des Nations, a park, and Geneva in Illinois" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/location-detail-dark.webp">
+  <img src="../assets/screenshots/location-detail-light.webp" alt="A new entry with Geneva typed into its location, and suggestions below: the city, its airport, its main station, the Palais des Nations, a park, and Geneva in Illinois" />
 </picture>
 
 ## Suggestions

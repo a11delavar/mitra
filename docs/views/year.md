@@ -8,8 +8,8 @@ sidebar:
 The year view shows each month as one row of days, so the whole year fits on one screen. It's the place to find a free week, or to see how a trip lines up with everything around it. Open it with <kbd>Y</kbd>.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/year-detail-dark.png">
-  <img src="../../assets/screenshots/year-detail-light.png" alt="The year view, with each month as a row of days" />
+  <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/year-detail-dark.webp">
+  <img src="../../assets/screenshots/year-detail-light.webp" alt="The year view, with each month as a row of days" />
 </picture>
 
 Entries show as bars across their days. Things that come back often, even monthly, show as small marks instead; see [Routines](../routines.md).

@@ -71,14 +71,13 @@ export class TaskStatusComponent extends Component {
 
 	/** Formats progress summary label adapted by step type (subtasks, checklist items, or steps). */
 	private static summarize(rollup: EntryRollup) {
-		const done = String(rollup.done)
 		if (!rollup.checklist.total) {
-			return t('${done} of ${total:pluralityNumber} subtasks done', { done, total: rollup.total })
+			return t('${done:number} of ${total:pluralityNumber} subtasks done', rollup)
 		}
 		if (!rollup.subtasks.total) {
-			return t('${done} of ${total:pluralityNumber} checklist items done', { done, total: rollup.total })
+			return t('${done:number} of ${total:pluralityNumber} checklist items done', rollup)
 		}
-		return t('${done} of ${total:pluralityNumber} steps done', { done, total: rollup.total })
+		return t('${done:number} of ${total:pluralityNumber} steps done', rollup)
 	}
 
 	@query('mitra-menu') private readonly menu?: Menu

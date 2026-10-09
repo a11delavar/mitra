@@ -10,8 +10,8 @@ There are two ways to keep a calendar in Mitra. You can store it in Mitra itself
 To add either, choose **Add Integration** at the foot of the sidebar.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/integrations-detail-dark.png">
-  <img src="../../assets/screenshots/integrations-detail-light.png" alt="The Add integration dialog, offering Mitra, CalDAV, Google Calendar, Apple Calendar, calendar subscriptions, Notion and Tempo" />
+  <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/integrations-detail-dark.webp">
+  <img src="../../assets/screenshots/integrations-detail-light.webp" alt="The Add integration dialog, offering Mitra, CalDAV, Google Calendar, Apple Calendar, calendar subscriptions, Notion and Tempo" />
 </picture>
 
 ## What each one holds

@@ -49,6 +49,7 @@ import { TimeZoneHeader } from '../features/time/client/TimeZoneHeader.js'
 import '../features/time/client/TimeZonePicker.js'
 import { syncPushSubscription } from '../features/reminders/client/push.js'
 import '../integrations/demo/client/language.js'
+import { LanguageSetting } from '../infrastructure/i18n/LanguageSetting.js'
 import { syncThemeColor } from './pwa.js'
 import { DialogEntryScope } from '../features/entries/client/DialogEntryScope.js'
 import { DialogDeleteEntries } from '../features/entries/client/DialogDeleteEntries.js'
@@ -85,6 +86,8 @@ export class Mitra extends Application {
 		const pendingIntegrationId = Mitra.consumePendingIntegrationParameter()
 		const subscribeUrl = consumeSubscribeParameter()
 		await Promise.all([fetchIntegrations(), fetchUser(), fetchMeta()])
+		// After the integrations, so a linked language switches the sample calendar too.
+		LanguageSetting.rememberLinkedLanguage()
 		document.title = this.documentTitle
 		syncPushSubscription()
 		syncThemeColor()

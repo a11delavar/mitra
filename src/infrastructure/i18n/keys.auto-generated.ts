@@ -49,9 +49,9 @@ declare global {
 		"${count:pluralityNumber} stop being all-day": unknown
 		"${count:pluralityNumber} weeks": unknown
 		"${count:pluralityNumber} were left out": unknown
-		"${done} of ${total:pluralityNumber} checklist items done": unknown
-		"${done} of ${total:pluralityNumber} steps done": unknown
-		"${done} of ${total:pluralityNumber} subtasks done": unknown
+		"${done:number} of ${total:pluralityNumber} checklist items done": unknown
+		"${done:number} of ${total:pluralityNumber} steps done": unknown
+		"${done:number} of ${total:pluralityNumber} subtasks done": unknown
 		"${n:number}nd": unknown
 		"${n:number}rd": unknown
 		"${n:number}st": unknown

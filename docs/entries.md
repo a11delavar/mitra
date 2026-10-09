@@ -8,8 +8,8 @@ Everything on your calendar is an **entry**. Most entries are **events**, which 
 This page covers the entry editor: its header, the rows below it, and the description.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/due-detail-dark.png">
-  <img src="../assets/screenshots/due-detail-light.png" alt="The editor of a task in the Work calendar, with its status checkbox and title, its start, end and due date, a link and a description, its visibility, reminders and relationships" />
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/due-detail-dark.webp">
+  <img src="../assets/screenshots/due-detail-light.webp" alt="The editor of a task in the Work calendar, with its status checkbox and title, its start, end and due date, a link and a description, its visibility, reminders and relationships" />
 </picture>
 
 ## Open the editor

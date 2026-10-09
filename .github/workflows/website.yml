@@ -11,6 +11,11 @@ on:
       - 'assets/**'
       - 'src/design/**'
       - 'src/integrations/*/logo.svg'
+      - 'src/infrastructure/i18n/*.json'
+      - 'src/integrations/demo/i18n/*.json'
+      - 'scripts/capture.ts'
+      - 'scripts/screenshots.ts'
+      - 'releases/**'
       - 'package.json'
       - '.github/workflows/website.yml'
   pull_request:
@@ -20,6 +25,11 @@ on:
       - 'assets/**'
       - 'src/design/**'
       - 'src/integrations/*/logo.svg'
+      - 'src/infrastructure/i18n/*.json'
+      - 'src/integrations/demo/i18n/*.json'
+      - 'scripts/capture.ts'
+      - 'scripts/screenshots.ts'
+      - 'releases/**'
       - 'package.json'
       - '.github/workflows/website.yml'
   workflow_dispatch:
@@ -29,7 +39,68 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The site's languages but English, from website/site.mjs, which states them once.
+  languages:
+    name: 🌐 Languages
+    runs-on: ubuntu-latest
+    outputs:
+      list: ${{ steps.list.outputs.list }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: List Languages
+        id: list
+        run: echo "list=$(node --input-type=module -e "const { languages } = await import('./website/site.mjs'); console.log(JSON.stringify(languages.slice(1)))")" >> "$GITHUB_OUTPUT"
+
+  # The docs and homepage captures in one language, shot from the app at this commit as `npm run screenshots -- --language
+  # <lang>` shoots them locally; English's are committed. One job per language, side by side. Kept while the English
+  # captures and the scenes stay as they are: the English captures change whenever the app's look does, so a language
+  # follows its look, and a wording change alone reaches it at the next look.
+  captures:
+    name: 📸 Captures (${{ matrix.language }})
+    needs: languages
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        language: ${{ fromJSON(needs.languages.outputs.list) }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Restore Captures
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: assets/screenshots/${{ matrix.language }}/
+          key: captures-${{ matrix.language }}-${{ hashFiles('assets/screenshots/*.webp', 'scripts/capture.ts', 'scripts/screenshots.ts') }}
+
+      - uses: actions/setup-node@v4
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            website/package-lock.json
+
+      # The site's packages first: the app build bundles website/site.mjs, whose folder's tsconfig extends Astro's.
+      - name: Shoot Captures
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          npm ci --prefix website
+          npm ci
+          mkdir -p data
+          npm run screenshots -- --language "${{ matrix.language }}"
+
+      - name: Upload Captures
+        uses: actions/upload-artifact@v4
+        with:
+          name: captures-${{ matrix.language }}
+          path: assets/screenshots/${{ matrix.language }}/
+          if-no-files-found: error
+          retention-days: 1
+
   build:
+    name: 🚀 Build & Publish
+    needs: captures
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -45,13 +116,24 @@ jobs:
           cache: npm
           cache-dependency-path: website/package-lock.json
 
-      - name: Build the site
+      # Each language's captures into its own folder beside the English ones, where the site looks for them.
+      - name: Download Captures
+        uses: actions/download-artifact@v4
+        with:
+          pattern: captures-*
+          path: assets/screenshots/
+
+      - name: Place Captures
+        working-directory: assets/screenshots
+        run: for folder in captures-*; do mv "$folder" "${folder#captures-}"; done
+
+      - name: Build Site
         working-directory: website
         run: |
           npm ci
           npm run build
 
-      - name: Compute image tags & labels
+      - name: Compute Tags & Labels
         id: meta
         uses: docker/metadata-action@v6
         with:
@@ -63,7 +145,7 @@ jobs:
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GHCR
+      - name: Log In to GHCR
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v4
         with:
@@ -71,7 +153,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & push
+      - name: Build & Push
         uses: docker/build-push-action@v7
         with:
           context: website

@@ -1,16 +1,24 @@
 ---
-import { docsBase, withBase } from '../../site.mjs'
+import { docsBase, localized, withBase } from '../../site.mjs'
+import { localize } from '../i18n'
+
+interface Props {
+	language: string
+}
+
+const { language } = Astro.props
+const t = localize(language)
 
 // Inlined, not <img>: most marks are drawn in `currentColor` and must take the page's ink.
 
 const providers = [
-	{ id: 'mitra', name: 'Mitra calendars', doc: 'integrations/mitra', text: 'Built in. Kept on your own server, with no account behind them.' },
+	{ id: 'mitra', name: t('Mitra calendars'), doc: 'integrations/mitra', text: t('Built in. Kept on your own server, with no account behind them.') },
 	{ id: 'caldav', name: 'CalDAV', doc: 'integrations/caldav' },
 	{ id: 'google', name: 'Google Calendar', doc: 'integrations/google' },
 	{ id: 'apple', name: 'Apple Calendar', doc: 'integrations/apple' },
 	{ id: 'notion', name: 'Notion', doc: 'integrations/notion' },
 	{ id: 'tempo', name: 'Tempo', doc: 'integrations/tempo' },
-	{ id: 'ics', name: 'Subscriptions', doc: 'integrations/subscriptions' },
+	{ id: 'ics', name: t('Subscriptions'), doc: 'integrations/subscriptions' },
 ]
 
 const files = import.meta.glob<string>('../logos/*.svg', { eager: true, query: '?raw', import: 'default' })
@@ -26,7 +34,7 @@ const marks = providers.map(provider => {
 <ul class="marks">
 	{marks.map(({ id, name, doc, text, svg }) => (
 		<li class:list={{ built: !!text }}>
-			<a href={withBase(`/${docsBase}/${doc}/`)}>
+			<a href={withBase(localized(`/${docsBase}/${doc}/`, language))}>
 				<span class:list={['mark', id]} set:html={svg} />
 				<span class="name">{name}</span>
 				{text && <span class="text">{text}</span>}

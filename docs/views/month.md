@@ -8,8 +8,8 @@ sidebar:
 The month view shows weeks as rows, with each entry as a bar across the days it covers. Open it with <kbd>M</kbd>.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/month-detail-dark.png">
-  <img src="../../assets/screenshots/month-detail-light.png" alt="The month view, with entries as bars across the weeks" />
+  <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/month-detail-dark.webp">
+  <img src="../../assets/screenshots/month-detail-light.webp" alt="The month view, with entries as bars across the weeks" />
 </picture>
 
 Things that happen very often, like a daily workout, don't get a bar each. They show as small marks under the days instead; see [Routines](../routines.md).

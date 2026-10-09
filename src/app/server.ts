@@ -18,6 +18,7 @@ import { locationsRouter } from '../features/locations/server/locations.js'
 import { pushRouter } from '../features/reminders/server/push.js'
 import { healthRouter } from '../infrastructure/http/health.js'
 import { compression, precompressed } from '../infrastructure/http/compression.js'
+import { cacheControlOf } from '../infrastructure/http/caching.js'
 import { metaRouter } from '../features/about/server/meta.js'
 import { updateChecker } from '../features/about/server/updates.js'
 import { ReminderScheduler } from '../features/reminders/server/ReminderScheduler.js'
@@ -79,9 +80,9 @@ app.use('/api/push', pushRouter)
 // Serve frontend SPA dist bundle.
 const frontendDistPath = path.resolve(import.meta.dirname, '../../dist')
 app.use(precompressed(frontendDistPath))
-app.use(express.static(frontendDistPath))
+app.use(express.static(frontendDistPath, { cacheControl: false, setHeaders: (res, file) => res.setHeader('Cache-Control', cacheControlOf(file)) }))
 // The SPA fallback: any non-API path serves the shell, so deep links (/week?date=…) survive a reload.
-app.get(/(.*)/, (_, res) => res.sendFile('index.html', { root: frontendDistPath }))
+app.get(/(.*)/, (_, res) => res.sendFile('index.html', { root: frontendDistPath, headers: { 'Cache-Control': cacheControlOf('index.html') } }))
 
 /** Extracts HTTP error status (400-599) from Error object when present. */
 function httpStatusOf(error: unknown) {

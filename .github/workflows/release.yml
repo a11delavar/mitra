@@ -17,6 +17,7 @@ permissions:
 
 jobs:
   release:
+    name: 🏷️ Publish Release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -25,7 +26,7 @@ jobs:
         with:
           node-version-file: .nvmrc
 
-      - name: Write the release body for ${{ github.ref_name }}
+      - name: Write Release Body
         run: node scripts/releaseBody.ts "${{ github.ref_name }}" > RELEASE_NOTES.md
 
       # The update-check manifest: instances on the release channel resolve it via
@@ -34,12 +35,12 @@ jobs:
       # asset's public `download_count`: the project's only ambient adoption signal (per release,
       # ≈ active stable instances × 4 checks/day), with zero infrastructure and nothing sent beyond
       # the request itself.
-      - name: Write update-check manifest
+      - name: Write Update Manifest
         run: |
           printf '{"version":"%s","url":"https://github.com/%s/releases/tag/%s"}\n' \
             "${{ github.ref_name }}" "${{ github.repository }}" "${{ github.ref_name }}" > mitra.json
 
-      - name: Create GitHub Release
+      - name: Create Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

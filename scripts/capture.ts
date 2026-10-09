@@ -6,6 +6,7 @@ import net from 'node:net'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { consola } from 'consola'
+import sharp from 'sharp'
 
 // The capture harness the stills (screenshots.ts) and the films (motion.ts) share: a staged build of the app with the
 // sample calendar, headless Chrome driven over CDP with real input, a clock stood still on one Thursday, and the
@@ -14,6 +15,23 @@ import { consola } from 'consola'
 const here = path.dirname(fileURLToPath(import.meta.url))
 export const rootDir = path.resolve(here, '..')
 export const outDir = path.join(rootDir, 'assets/screenshots')
+
+/**
+ * Where a language's docs captures go: English's are committed in `assets/screenshots/`, every other language's in a
+ * gitignored folder of their own beneath it, shot again by the website's build (they change with every look of the app,
+ * and committed per language they would grow the history several times over).
+ */
+export const outDirOf = (language: string) => language === 'en' ? outDir : path.join(outDir, language)
+
+/** The UI's own text in `language`: the app's dictionaries are keyed by the English text, as the sample's are. */
+export function appText(english: string, language: string): string {
+	const dictionary = path.join(rootDir, 'src/infrastructure/i18n', `${language}.json`)
+	if (language === 'en' || !fs.existsSync(dictionary)) {
+		return english
+	}
+	const translated = (JSON.parse(fs.readFileSync(dictionary, 'utf8')) as Record<string, unknown>)[english]
+	return typeof translated === 'string' ? translated : english
+}
 
 export const viewport = { width: 1440, height: 900, scale: 2 }
 
@@ -201,6 +219,9 @@ export function stageServer(stageDir: string) {
  */
 export const capturedAt = { moment: Date.parse('2026-10-01T10:20:00+02:00'), timeZone: 'Europe/Berlin', locale: 'en-150' }
 
+/** The locale a language's captures stand in: English's European one, any other language as itself. */
+export const localeOf = (language: string) => language === 'en' ? capturedAt.locale : language
+
 /**
  * Replaces `Date`'s now with `now`, an expression of the real one. Nothing reads `Temporal.Now`, so this is the whole clock.
  * A function sharing `Date`'s prototype, so `instanceof` holds both ways and subclasses (`DateTime`) construct through it.
@@ -248,7 +269,7 @@ export function startServer(port: number, stageDir: string, clock: string, geoco
 	return child
 }
 
-export function startChrome(port: number, profileDir: string) {
+export function startChrome(port: number, profileDir: string, locale = capturedAt.locale) {
 	const executable = chromeCandidates.find(candidate => candidate && fs.existsSync(candidate))
 	if (!executable) {
 		throw new Error('No Chrome found. Set CHROME_PATH to a Chrome or Chromium binary.')
@@ -265,7 +286,7 @@ export function startChrome(port: number, profileDir: string) {
 		'--force-device-scale-factor=1',
 		'--force-color-profile=srgb',
 		'--font-render-hinting=none',
-		`--lang=${capturedAt.locale}`,
+		`--lang=${locale}`,
 		'about:blank',
 	], { stdio: ['ignore', 'ignore', 'ignore'] })
 }
@@ -293,10 +314,15 @@ export async function screenshot(page: Devtools, clip?: Clip, transparent = fals
 	return Buffer.from(data, 'base64')
 }
 
-/** A still for the docs, into `assets/screenshots/<file>.png`. */
-export async function capture(page: Devtools, file: string, transparent: boolean, clip?: Clip) {
-	fs.writeFileSync(path.join(outDir, `${file}.png`), await screenshot(page, clip, transparent))
-	consola.success(`${file}.png`)
+/**
+ * A still for the docs, into `assets/screenshots/<file>.webp` (or its language's folder): lossless, so it is the PNG
+ * Chrome took, at half its size.
+ */
+export async function capture(page: Devtools, file: string, transparent: boolean, clip?: Clip, language = 'en') {
+	const output = path.join(outDirOf(language), `${file}.webp`)
+	fs.mkdirSync(path.dirname(output), { recursive: true })
+	fs.writeFileSync(output, await sharp(await screenshot(page, clip, transparent)).webp({ lossless: true, effort: 6 }).toBuffer())
+	consola.success(path.relative(outDir, output).replaceAll('\\', '/'))
 }
 
 /** Stills stand under reduced motion, so endless animations hold one pose; a film lets them run. */
@@ -378,7 +404,7 @@ export async function open(page: Devtools, origin: string, theme: Theme, { avail
 	await showAvailability(page, availability)
 	await page.evaluate(`
 		localStorage.setItem('Mitra.Appearance.Theme', ${JSON.stringify(JSON.stringify(theme))})
-		localStorage.setItem('Localizer.Language', ${JSON.stringify(JSON.stringify(language === 'en' ? capturedAt.locale : language))})
+		localStorage.setItem('Localizer.Language', ${JSON.stringify(JSON.stringify(localeOf(language)))})
 		// Zoom the day grid past "the whole day at once" so entries read at their working size,
 		// what the app opens on at a comfortable window, rather than the squeezed 24-hour fit.
 		localStorage.setItem('Mitra.WeekZoom', '2')
@@ -480,9 +506,9 @@ export async function click(page: Devtools, find: string, modifiers = 0) {
 }
 
 /** Location is empty around today; hiding it, as a reader would, brings Participants into the crop. */
-export async function hideTableLocation(page: Devtools) {
-	await click(page, '[...document.querySelectorAll("mitra-table .header .column .label")].find(label => label.textContent.trim() === "Location")')
-	await click(page, '[...document.querySelectorAll("mitra-table-column-menu mitra-menu-item")].find(item => item.textContent.trim() === "Hide column")')
+export async function hideTableLocation(page: Devtools, language = 'en') {
+	await click(page, `[...document.querySelectorAll("mitra-table .header .column .label")].find(label => label.textContent.trim() === ${JSON.stringify(appText('Location', language))})`)
+	await click(page, `[...document.querySelectorAll("mitra-table-column-menu mitra-menu-item")].find(item => item.textContent.trim() === ${JSON.stringify(appText('Hide column', language))})`)
 }
 
 /** A crop the given width around the element, as tall as it plus padding, kept inside the viewport. */
@@ -556,17 +582,18 @@ export async function pickZone(page: Devtools, city: string) {
 }
 
 /** Wednesday's work, the sample's one labelled window: its place, Home office, is all it says. */
-export const homeOffice = `[...document.querySelectorAll('mitra-availability-segment')].find(segment => {
+export const homeOfficeIn = (language: string) => `[...document.querySelectorAll('mitra-availability-segment')].find(segment => {
 	const label = segment.querySelector('.label')
 	const { x, right } = label?.getBoundingClientRect() ?? { x: -1, right: Infinity }
-	return label?.textContent === 'Home office' && x >= document.querySelector('mitra-page-calendar main').getBoundingClientRect().x && right <= innerWidth
+	return label?.textContent === ${JSON.stringify(sampleText('Home office', language))} && x >= document.querySelector('mitra-page-calendar main').getBoundingClientRect().x && right <= innerWidth
 })`
 
 /**
  * Tuesday to Thursday, with their headers, from 08:00 to 18:30: working hours and study time as they usually are, and
  * Wednesday's home office between them. The grid is parked so 08:00 meets the sticky header, which keeps the morning routine out.
  */
-export async function aroundHomeOffice(page: Devtools): Promise<Clip> {
+export async function aroundHomeOffice(page: Devtools, language = 'en'): Promise<Clip> {
+	const homeOffice = homeOfficeIn(language)
 	await waitFor(() => page.evaluate<boolean>(`return !!${homeOffice}`), 'the Home office window')
 	const rect = await page.evaluate<Clip>(`
 		const scroller = document.querySelector('mitra-days')
@@ -661,10 +688,12 @@ export interface StageOptions {
 	reducedMotion?: boolean
 	/** Builds first, stamped with package.json's version: the sidebar prints it, and `git describe` would write `-dirty` into every image. */
 	build?: boolean
+	/** The language the browser stands in, and the sample calendar is written in. */
+	language?: string
 }
 
 /** Builds and stages the app with the sample calendar, launches Chrome around `scene`, and takes everything down again. */
-export async function stage(scene: (browser: Devtools, origin: string) => Promise<void>, { reducedMotion: reduced = true, build = true }: StageOptions = {}) {
+export async function stage(scene: (browser: Devtools, origin: string) => Promise<void>, { reducedMotion: reduced = true, build = true, language = 'en' }: StageOptions = {}) {
 	const { version } = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8')) as { version: string }
 	if (build) {
 		consola.start(`Building v${version}`)
@@ -690,8 +719,11 @@ export async function stage(scene: (browser: Devtools, origin: string) => Promis
 		await waitFor(async () => (await fetch(`${origin}api/health`)).ok, 'the app server')
 		consola.info(`Mitra on ${origin}`)
 		await seedSampleCalendar(origin)
+		if (language !== 'en') {
+			await sampleLanguage(origin, language)
+		}
 
-		processes.push(startChrome(debugPort, profileDir))
+		processes.push(startChrome(debugPort, profileDir, localeOf(language)))
 		await waitFor(async () => (await fetch(`http://127.0.0.1:${debugPort}/json/version`)).ok, 'Chrome')
 		const chrome = await (await fetch(`http://127.0.0.1:${debugPort}/json/version`)).json()
 
@@ -704,7 +736,7 @@ export async function stage(scene: (browser: Devtools, origin: string) => Promis
 		await browser.send('Page.addScriptToEvaluateOnNewDocument', { source: clockAt(String(moment)) })
 		await browser.send('Runtime.enable')
 		await browser.send('Emulation.setTimezoneOverride', { timezoneId: capturedAt.timeZone })
-		await browser.send('Emulation.setLocaleOverride', { locale: capturedAt.locale })
+		await browser.send('Emulation.setLocaleOverride', { locale: localeOf(language) })
 		// A still stands under reduced motion: endless motion (the dial of a task in progress) stood at another angle in every run.
 		await reducedMotion(browser, reduced)
 		await browser.send('Emulation.setDeviceMetricsOverride', {

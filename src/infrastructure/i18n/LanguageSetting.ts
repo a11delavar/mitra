@@ -9,6 +9,16 @@ export class LanguageSetting extends ChoiceSetting<LanguageCode> {
 	/** Supported application language codes. */
 	private static readonly languages: Array<LanguageCode> = ['en', 'de', 'fr', 'es', 'pt', 'it', 'fa']
 
+	/**
+	 * @3mo/localization speaks a `?lang=` link's language (the website's links into the demo carry one), but only while
+	 * the address holds it, and the calendar rewrites the address at once: a supported one is kept as the choice.
+	 */
+	static rememberLinkedLanguage() {
+		if (new URLSearchParams(location.search).has('lang') && LanguageSetting.languages.includes(Localizer.locales.current.language as LanguageCode)) {
+			Localizer.locales.current = Localizer.locales.current
+		}
+	}
+
 	/** Formats native localized language name. */
 	private static label(code: LanguageCode) {
 		const name = new Intl.DisplayNames([code], { type: 'language' }).of(code)
