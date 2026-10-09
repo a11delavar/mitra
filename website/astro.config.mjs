@@ -394,6 +394,8 @@ export default defineConfig({
 			},
 			expressiveCode: {
 				themes: ['github-dark-default', 'github-light-default'],
+				// Shiki has no grammar for a Caddyfile; the docs still name the block's language for their readers.
+				shiki: { langAlias: { caddy: 'txt' } },
 				styleOverrides: {
 					borderRadius: '8px',
 					borderColor: 'var(--mitra-hairline)',
