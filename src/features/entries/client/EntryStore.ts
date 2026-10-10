@@ -76,6 +76,11 @@ export class EntryStore extends Controller {
 		if (!entry.persisted && !entry.heading?.trim() && !entry.type.isAvailability) {
 			return Promise.resolve()
 		}
+		// With nothing to send, the run below never awaits, so its `finally` would clear the slot before
+		// `inflight.set` filled it, and the settled promise would swallow every later commit.
+		if (!this.tracks(entry) || !this.isDirty(entry)) {
+			return Promise.resolve()
+		}
 		const wasClosed = entry.persisted && (this.canonicalById.get(entry.id!)?.closed ?? false)
 		const run = (async () => {
 			try {

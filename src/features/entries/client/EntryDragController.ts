@@ -562,11 +562,7 @@ export class EntryDragController extends Controller {
 		chip?.setAttribute('data-connect', valid ? 'target' : 'reject')
 		drawing.target = valid ? chip : undefined
 
-		const port = drawing.source.portBox
-		const rtl = this.element.matches(':dir(rtl)')
-		const portX = port ? (rtl ? port.right : port.left) : x
-		const portY = port ? port.top + port.height / 2 : y
-		const to: EntrySegment | ConnectionAim = drawing.target?.segment ?? { forward: x >= portX, down: y >= portY }
+		const to: EntrySegment | ConnectionAim = drawing.target?.segment ?? drawing.source.aimAt(x, y)
 		const target = drawing.target?.segment?.entry
 		const violated = target
 			? target.violates({ type: RelationType.FinishToStart, targetUid: source.uid }, source)

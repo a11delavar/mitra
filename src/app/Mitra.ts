@@ -71,9 +71,9 @@ installHierarchyPrompts()
 export class Mitra extends Application {
 	protected readonly scrollDevice = new ScrollDeviceController(this)
 
-	/** Document-resolved application singleton. */
+	/** Document-resolved application singleton, by its tag: the framework's walks every element, and every command reads it on every page render. */
 	static override get instance() {
-		return Application.instance as Mitra
+		return document.querySelector('mitra-application') as Mitra
 	}
 
 	/** Calendar page light DOM query resolver. */

@@ -121,10 +121,7 @@ const visitor: RequestHandler = async (req, res, next) => {
 		return next()
 	}
 	const em = orm.em.fork()
-	const user = await Sandbox.open(em, req.acceptsLanguages(...languages) || undefined)
-	const { session, token } = Session.issue(user)
-	em.persist(session)
-	await em.flush()
+	const { user, token } = await Sandbox.open(em, req.acceptsLanguages(...languages) || undefined)
 	setSessionCookie(res, token)
 	logger.info(`Opened a sandbox for a new visitor (user ${user.id})`)
 	req.user = user

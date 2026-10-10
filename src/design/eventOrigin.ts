@@ -17,3 +17,8 @@ export function startedInField(event: Event) {
 export function startedOnControl(event: Event) {
 	return path(event).some(element => element.matches(control))
 }
+
+/** Whether the event started in an open popover or dialog, which stands in the top layer away from where its element sits: the gestures of the surface around that element must leave it alone. */
+export function startedInOverlay(event: Event) {
+	return path(event).some(element => element.matches(':popover-open, dialog[open]'))
+}

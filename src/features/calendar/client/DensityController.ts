@@ -1,4 +1,5 @@
 import { Controller, eventListener, type Component } from '@a11d/lit'
+import { startedInOverlay } from '../../../design/eventOrigin.js'
 
 /**
  * Base controller managing zoom gesture mechanics (pinch, wheel on rail, touch gestures).
@@ -87,6 +88,9 @@ export abstract class DensityController extends Controller {
 
 	@eventListener('wheel', { passive: false })
 	protected handleWheel(e: WheelEvent) {
+		if (startedInOverlay(e)) {
+			return
+		}
 		const onRail = !!(e.target as Element | null)?.closest?.(this.options.rail)
 		if (!e.ctrlKey && !onRail) {
 			return
@@ -98,7 +102,7 @@ export abstract class DensityController extends Controller {
 
 	@eventListener('touchstart', { passive: false })
 	protected handleTouchStart(e: TouchEvent) {
-		if (e.touches.length !== 2) {
+		if (e.touches.length !== 2 || startedInOverlay(e)) {
 			return
 		}
 		e.preventDefault()

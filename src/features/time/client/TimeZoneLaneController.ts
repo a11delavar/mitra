@@ -1,6 +1,7 @@
 import { Controller, type Component } from '@a11d/lit'
 import { getTimeZones } from '../../../infrastructure/http/Api.js'
 import { haptic } from '../../../design/haptics.js'
+import { startedInOverlay } from '../../../design/eventOrigin.js'
 
 /** A deliberate fold, remembered per browser (like the view's zoom). Absent = the viewport still decides. */
 const STORAGE_KEY = 'Mitra.TimeZones.Folded'
@@ -185,7 +186,7 @@ export class TimeZoneLaneController extends Controller {
 			return
 		}
 		const target = e.target as Element | null
-		if (e.button !== 0 || !this.zoneCount || !target?.closest('.timezone, .axis')) {
+		if (e.button !== 0 || !this.zoneCount || !target?.closest('.timezone, .axis') || startedInOverlay(e)) {
 			return
 		}
 		// A press on the header's own controls (the chevron, the "+", a zone's menu button) is a click,

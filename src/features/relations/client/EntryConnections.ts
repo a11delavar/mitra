@@ -1,4 +1,4 @@
-import { Component, component, html, css, property, state, repeat } from '@a11d/lit'
+import { Component, component, html, css, unsafeCSS, property, state, repeat } from '@a11d/lit'
 import { RelationGraph } from '../RelationGraph.js'
 import { type Entry } from '../../entries/Entry.js'
 import { type EntrySegment } from '../../entries/client/EntrySegment.js'
@@ -25,10 +25,17 @@ export interface ConnectionDraft {
 	readonly violated: boolean
 }
 
-/** Quadrant direction for an unsnapped connector draft relative to its origin port. */
+/** Where an unsnapped connector draft points relative to its origin port. */
 export interface ConnectionAim {
+	/** Far enough ahead for a single S-curve; otherwise the draft bends twice. */
 	readonly forward: boolean
 	readonly down: boolean
+}
+
+/** A route endpoint as an inset expression in each physical frame ('left'/'right', 'top'/'bottom'). */
+interface Port {
+	x(side: string): string
+	y(side: string): string
 }
 
 interface ConnectorEdge {
@@ -55,6 +62,8 @@ interface ConnectorPiece {
 	readonly flip?: boolean
 	readonly gradient?: string
 	readonly fade?: readonly [number, number]
+	/** Drawn as a bend (see {@link EntryConnections.bend}): which side of the source its target lies on. */
+	readonly bend?: 'ahead' | 'behind'
 }
 
 /** Normalized ink strokes stretched across mask data-URIs. Masked curves antialias inherently;
@@ -78,8 +87,12 @@ const GRADIENT_DIRECTIONS: Record<string, string> = {
 /** Rank delta threshold (~2h apart) above which adjacent columns use vertical S-curves. */
 const TALL_RANK_DELTA = 240
 
+/** Least free time between two timed chips for a vertical S-curve: closer, its box inverts and erases it. */
+const TALL_GAP_MINUTES = 30
+
 /** Horizontal clearance past a port before turning. */
-const STUB = '0.875rem'
+const STUB_REM = 0.875
+const STUB = `${STUB_REM}rem`
 
 const HANDLE_REACH = '0.75rem'
 
@@ -88,6 +101,9 @@ const LANE = '0.5rem'
 
 /** Turn radius for elbow joints. */
 const CORNER = '0.5rem'
+
+/** Turn radius for bends. */
+const BEND_RADIUS = '0.75rem'
 
 /** Integer pixel width to prevent subpixel rasterization snapping discrepancies. */
 const STROKE_WIDTH = 1
@@ -254,6 +270,7 @@ export class EntryConnections extends Component {
 			const w = STROKE_WIDTH
 			const flat = b.rank === a.rank
 			if (columnDelta > 0 && !overlapping) {
+				const ports = [EntryConnections.anchorPort(A, end), EntryConnections.anchorPort(B, start)] as const
 				if (flat) {
 					pieces = [{
 						style: `top: calc(anchor(${A} 50%) - ${w / 2}px); block-size: ${w}px; ${start}: anchor(${A} ${end}); ${end}: calc(anchor(${B} ${start}) + ${HEAD_GAP});`,
@@ -261,7 +278,7 @@ export class EntryConnections extends Component {
 						head: 'head-end-flat',
 						gradient: rtl ? 'to left' : 'to right',
 					}]
-				} else if (columnDelta === 1 && Math.abs(b.rank - a.rank) >= TALL_RANK_DELTA) {
+				} else if (columnDelta === 1 && Math.abs(b.rank - a.rank) >= TALL_RANK_DELTA && this.stacked(fromSeg, toSeg, down)) {
 					const path = down ? 'dependency:s-tall-down' : 'dependency:s-tall-up'
 					pieces = [{
 						path,
@@ -271,16 +288,11 @@ export class EntryConnections extends Component {
 						head: down ? 'head-drop-end' : 'head-rise-end',
 						gradient: GRADIENT_DIRECTIONS[path],
 					}]
+				} else if (columnDelta === 1) {
+					// Neighbouring days leave only the day gutter between the ports, narrower than the arrowhead.
+					pieces = EntryConnections.bend(...ports, down, start, end, rtl)
 				} else {
-					const path = down ? 'dependency:s-down' : 'dependency:s-up'
-					pieces = [{
-						path,
-						style: `${down
-							? `top: anchor(${A} 50%); bottom: anchor(${B} 50%);`
-							: `top: anchor(${B} 50%); bottom: anchor(${A} 50%);`} ${start}: anchor(${A} ${end}); ${end}: calc(anchor(${B} ${start}) + ${HEAD_GAP});`,
-						head: down ? 'head-end-down' : 'head-end-up',
-						gradient: GRADIENT_DIRECTIONS[path],
-					}]
+					pieces = EntryConnections.sCurve(...ports, down, start, end)
 				}
 			} else if (columnDelta === 0 && !flat && down) {
 				pieces = [{
@@ -327,6 +339,51 @@ export class EntryConnections extends Component {
 			key: `${kind}:${fromSeg.id}:${toSeg.id}`, kind, fromEntryId: from.id!, toEntryId: to.id!, pieces, violated, cross,
 			...(kind !== 'dependency' ? {} : { fromColor: EntryConnections.colorOf(from), toColor: EntryConnections.colorOf(to) }),
 		}
+	}
+
+	/** Whether the target sits clear below (or above) the source, leaving a vertical S-curve room between them.
+	 * Only the timed grid can overlap in time; other views' ranks are rows. */
+	private stacked(from: EntrySegment, to: EntrySegment, down: boolean) {
+		if (this.placement?.has(from) || this.placement?.has(to)) {
+			return true
+		}
+		const gap = down ? to.startMinute - from.endMinute : from.startMinute - to.endMinute
+		return gap >= TALL_GAP_MINUTES
+	}
+
+	private static anchorPort(name: string, side: string): Port {
+		return { x: () => `anchor(${name} ${side})`, y: () => `anchor(${name} 50%)` }
+	}
+
+	private static readonly pointerPort: Port = {
+		x: side => side === 'left' ? 'var(--_pointer-x)' : 'calc(100% - var(--_pointer-x))',
+		y: side => side === 'top' ? 'var(--_pointer-y)' : 'calc(100% - var(--_pointer-y))',
+	}
+
+	/** One S-curve from an end port to a start port at least a stub or two ahead of it. */
+	private static sCurve(a: Port, b: Port, down: boolean, start: string, end: string): Array<ConnectorPiece> {
+		const path = down ? 'dependency:s-down' : 'dependency:s-up'
+		const [near, far] = down ? ['top', 'bottom'] : ['bottom', 'top']
+		return [{
+			path,
+			style: `${near}: ${a.y(near)}; ${far}: ${b.y(far)}; ${start}: ${a.x(start)}; ${end}: calc(${b.x(end)} + ${HEAD_GAP});`,
+			head: down ? 'head-end-down' : 'head-end-up',
+			gradient: GRADIENT_DIRECTIONS[path],
+		}]
+	}
+
+	/**
+	 * Leaves the source and enters the target along arcs of one radius joined by their shared tangent, so
+	 * every turn reads alike at any distance, even with the target behind the source. Drawn once per side:
+	 * the box of the wrong one inverts to nothing. The geometry is the stylesheet's (`.bend`).
+	 */
+	private static bend(a: Port, b: Port, down: boolean, start: string, end: string, rtl: boolean): Array<ConnectorPiece> {
+		const [near, far] = down ? ['top', 'bottom'] : ['bottom', 'top']
+		const block = `${near}: ${a.y(near)}; ${far}: ${b.y(far)}; scale: ${rtl ? -1 : 1} ${down ? 1 : -1};`
+		return [
+			{ bend: 'ahead', head: 'head-end-down', style: `${block} ${start}: ${a.x(start)}; ${end}: calc(${b.x(end)} + ${HEAD_GAP});` },
+			{ bend: 'behind', head: 'head-end-down', style: `${block} ${start}: calc(${b.x(start)} - ${HEAD_GAP}); ${end}: ${a.x(end)};` },
+		]
 	}
 
 	private static loopBelow(A: string, B: string, start: string, end: string, rtl: boolean): Array<ConnectorPiece> {
@@ -555,27 +612,31 @@ export class EntryConnections extends Component {
 		return this.edgeTemplate(this.edge('dependency', from.entry, to.entry, from, to, draft.violated), rtl, true, true)
 	}
 
-	/** Renders an unsnapped freeform curve from the source segment to the pointer position. */
+	/** Where a pointer at these viewport coordinates aims a draft from this layer's handle. */
+	aimAt(x: number, y: number): ConnectionAim {
+		const port = this.portBox
+		if (!port) {
+			return { forward: true, down: true }
+		}
+		const rtl = this.matches(':dir(rtl)')
+		const ahead = rtl ? port.right - x : x - port.left
+		const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+		const head = parseFloat(getComputedStyle(this).getPropertyValue('--mitra-connection-head'))
+		// Two stubs and the arrowhead: any closer and an S-curve kinks, so the draft bends instead.
+		return { forward: ahead >= 2 * STUB_REM * rem + head, down: y >= port.top + port.height / 2 }
+	}
+
+	/** Renders an unsnapped freeform route from the source segment to the pointer position. */
 	private freeformTemplate(from: EntrySegment, aim: ConnectionAim, violated: boolean, rtl: boolean) {
-		const A = `--mitra-entry-segment-${from.id}`
-		const port = `anchor(${A} ${rtl ? 'left' : 'right'})`
-		const path = aim.down ? 'dependency:s-down' : 'dependency:s-up'
-		const inline = aim.forward
-			? `left: ${port}; right: calc(100% - var(--_pointer-x) + ${HEAD_GAP});`
-			: `right: ${port}; left: calc(var(--_pointer-x) + ${HEAD_GAP});`
-		const block = aim.down
-			? `top: anchor(${A} 50%); bottom: calc(100% - var(--_pointer-y));`
-			: `top: var(--_pointer-y); bottom: anchor(${A} 50%);`
+		const [start, end] = rtl ? ['right', 'left'] : ['left', 'right']
+		const port = EntryConnections.anchorPort(`--mitra-entry-segment-${from.id}`, end)
 		const color = EntryConnections.colorOf(from.entry)
-		return html`
-			<div class="connection dependency draft" data-emphasized ?data-violated=${violated} style="--_from: ${color}; --_to: ${color};">
-				<div class="piece glyph freeform ${aim.down ? 'head-end-down' : 'head-end-up'} ${aim.forward ? '' : 'mirror'}"
-					style="${inline} ${block} --_grad-dir: ${GRADIENT_DIRECTIONS[path]};"
-				>
-					<div class="ink" style="--_mask: ${maskFor(path)};"></div>
-				</div>
-			</div>
-		`
+		return this.edgeTemplate({
+			key: 'draft', kind: 'dependency', fromEntryId: from.entry.id!, toEntryId: '', violated, fromColor: color, toColor: color,
+			pieces: aim.forward
+				? EntryConnections.sCurve(port, EntryConnections.pointerPort, aim.down, start, end)
+				: EntryConnections.bend(port, EntryConnections.pointerPort, aim.down, start, end, rtl),
+		}, rtl, true, true)
 	}
 
 	/** The chip's presented color: its own, else its calendar's (the same resolution EventSegment uses). */
@@ -684,6 +745,82 @@ export class EntryConnections extends Component {
 							-webkit-mask-composite: xor;
 							mask-composite: exclude;
 						}
+
+						/* Two arcs of one radius and their shared tangent, from the source port (the box's top start
+						   corner, its top end when behind) to the target port at the opposite corner, inline at both.
+						   Container units read the box: the turn t is where the tangent through the route's midpoint
+						   touches the first arc, and lengths divide as tan(atan2(a, b)). The radius shrinks where the
+						   two arcs would overlap. */
+						&.bend {
+							container-type: size;
+
+							> .ink {
+								--_dir: 1;
+								--_x: calc(var(--_dir) * 100cqi);
+								--_y: 100cqb;
+								--_h: hypot(var(--_x), var(--_y));
+								--_r: min(${unsafeCSS(BEND_RADIUS)}, calc(var(--_h) * tan(atan2(var(--_h), calc(4 * var(--_y))))));
+								--_mx: calc(var(--_x) / 2);
+								--_my: calc(var(--_y) / 2 - var(--_r));
+								--_d: hypot(var(--_mx), var(--_my));
+								--_a: acos(tan(atan2(var(--_r), var(--_d))));
+								--_t: calc(mod(atan2(var(--_my), var(--_mx)) - var(--_a) + 180deg, 360deg) - 90deg);
+								--_px: calc((1 - var(--_dir)) / 2 * 100cqi);
+								inset: auto;
+								box-sizing: border-box;
+							}
+
+							&.behind > .ink {
+								--_dir: -1;
+							}
+
+							/* A ring drawn by the gradient, not a padding ring excluded from its box: Chrome leaves a
+							   faint full circle where an excluded ring meets the intersected sector. */
+							> :is(.leave, .enter) {
+								inline-size: calc(2 * var(--_r) + 2px);
+								block-size: calc(2 * var(--_r) + 2px);
+								-webkit-mask: var(--_sector), var(--_ring);
+								mask: var(--_sector), var(--_ring);
+								-webkit-mask-composite: source-in;
+								mask-composite: intersect;
+								--_ring: radial-gradient(closest-side, #0000 calc(100% - 1.75px), #000 calc(100% - 1.25px) calc(100% - 0.75px), #0000 calc(100% - 0.25px));
+							}
+
+							> .leave {
+								--_f0: 0%;
+								--_f1: 0%;
+								--_sector: conic-gradient(#000 var(--_t), #0000 0);
+								left: calc(var(--_px) - var(--_r) - 1px);
+								top: -1px;
+							}
+
+							> .tangent {
+								--_grad-dir: to right;
+								--_f0: 0%;
+								--_f1: 100%;
+								left: calc(var(--_px) + var(--_r) * sin(var(--_t)));
+								top: calc(var(--_r) - var(--_r) * cos(var(--_t)) - ${STROKE_WIDTH / 2}px);
+								inline-size: calc(2 * var(--_d) * sin(var(--_a)));
+								block-size: ${STROKE_WIDTH}px;
+								transform-origin: 0 50%;
+								rotate: var(--_t);
+							}
+
+							> .enter {
+								--_f0: 100%;
+								--_f1: 100%;
+								--_sector: conic-gradient(from 180deg, #000 var(--_t), #0000 0);
+								left: calc(var(--_px) + var(--_x) - var(--_r) - 1px);
+								top: calc(var(--_y) - 2 * var(--_r) - 1px);
+							}
+
+							/* The twin for the other side, whose box inverted. A container's own pseudo-elements query it. */
+							@container (inline-size <= 0px) {
+								> .ink, &::after {
+									display: none;
+								}
+							}
+						}
 					}
 
 					&[data-emphasized] > .piece {
@@ -736,6 +873,11 @@ export class EntryConnections extends Component {
 						block-size: var(--_head-span);
 						clip-path: polygon(0 0, 100% 50%, 0 100%);
 						right: calc(-1 * var(--_head-gap));
+					}
+
+					> .piece.bend.behind::after {
+						right: auto;
+						left: 0;
 					}
 
 					> .piece.elbow.mirror::after {
@@ -833,10 +975,14 @@ export class EntryConnections extends Component {
 		return html`
 			<div class="connection ${edge.kind} ${draft ? 'draft' : ''}" ?data-emphasized=${emphasized} ?data-violated=${edge.violated}>
 				${edge.pieces.map(piece => html`
-					<div class="piece ${piece.path ? 'glyph' : 'elbow'} ${piece.head ?? ''} ${rtl !== !!piece.flip ? 'mirror' : ''} ${piece.inLane ? 'in-lane' : ''} ${edge.cross ? 'lane-shifted' : ''}"
+					<div class="piece ${piece.bend ? `bend ${piece.bend}` : piece.path ? 'glyph' : 'elbow'} ${piece.head ?? ''} ${rtl !== !!piece.flip ? 'mirror' : ''} ${piece.inLane ? 'in-lane' : ''} ${edge.cross ? 'lane-shifted' : ''}"
 						style="${piece.style}${piece.gradient ? ` --_grad-dir: ${piece.gradient};` : ''}${piece.fade ? ` --_f0: ${piece.fade[0]}%; --_f1: ${piece.fade[1]}%;` : ''}${colors}"
 					>
-						<div class="ink" style="${piece.path ? `--_mask: ${maskFor(piece.path)};` : piece.ink ?? ''}"></div>
+						${piece.bend ? html`
+							<div class="ink leave"></div>
+							<div class="ink tangent"></div>
+							<div class="ink enter"></div>
+						` : html`<div class="ink" style="${piece.path ? `--_mask: ${maskFor(piece.path)};` : piece.ink ?? ''}"></div>`}
 					</div>
 				`)}
 			</div>

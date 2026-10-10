@@ -1,4 +1,4 @@
-import { component, html, property, Component, css, state, bind, queryConnectedInstances, eventListener, unsafeCSS } from '@a11d/lit'
+import { component, html, property, Component, css, state, bind, queryConnectedInstances, eventListener, unsafeCSS, guard } from '@a11d/lit'
 import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { TaskStatus } from '../Entry.js'
 import { type EntrySegment } from './EntrySegment.js'
@@ -490,6 +490,16 @@ export class EntrySegmentComponent extends Component {
 			: new DateTimeRange(entry.start?.dayStart ?? entry.lastDay, entry.lastDay)
 	}
 
+	/** Formatted again only once it reads differently: every store notification renders every chip, and Intl's range formatting was most of that. */
+	private get whenTemplate() {
+		const span = this.whenSpan
+		const options = this.whenOptions
+		return guard([span.start?.valueOf(), span.end?.valueOf(), span.timeZoneId, span.calendarId, String(Localizer.locales.current), JSON.stringify(options)], () => html`
+			<span class="when range">${span.format(options)}</span>
+			<span class="when point">${span.start?.format(options)}</span>
+		`)
+	}
+
 	/** A location that is a link says where it leads ("Join Zoom"), not its address. */
 	private get locationTemplate() {
 		const { location } = this.segment!.entry
@@ -525,10 +535,7 @@ export class EntrySegmentComponent extends Component {
 						${!this.segment.entry.type.isTask ? html.nothing : html`
 							<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
 						`}
-						${!meta ? html.nothing : html`
-							<span class="when range">${this.whenSpan.format(this.whenOptions)}</span>
-							<span class="when point">${this.whenSpan.start?.format(this.whenOptions)}</span>
-						`}
+						${!meta ? html.nothing : this.whenTemplate}
 						${!this.segment.entry.due ? html.nothing : html`
 							<mitra-icon class="due" icon="flag" title=${t('Due ${date}', { date: this.dueLabel })}></mitra-icon>
 						`}

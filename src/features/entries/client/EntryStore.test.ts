@@ -244,6 +244,20 @@ describe('EntryStore', () => {
 			assert.equal(transport.calls.update, 1)
 		})
 
+		it('still saves after a commit that had nothing to send', async () => {
+			const transport = fake()
+			EntryStore.persistence = transport.persistence
+			const working = entry()
+			EntryStore.applyServerEntries([working])
+			await EntryStore.commit(working)
+			working.heading = 'Edit'
+			const commit = EntryStore.commit(working)
+			assert.equal(transport.calls.update, 1)
+			await transport.respond()
+			await commit
+			assert.equal(EntryStore.isDirty(working), false)
+		})
+
 		it('saves again when an edit lands mid-flight, keeping the newer local values', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence

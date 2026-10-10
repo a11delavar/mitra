@@ -1,4 +1,4 @@
-import { component, html, css, property, state, event, repeat, query } from '@a11d/lit'
+import { component, html, css, property, state, event, eventListener, repeat, query } from '@a11d/lit'
 import { type UserTimeZone } from '../../identity/User.js'
 import { Popover } from '../../../design/Popover.js'
 import type { SearchField } from '../../../design/TextField.js'
@@ -109,6 +109,20 @@ export class TimeZonePicker extends Popover {
 
 	@state() private query = ''
 
+	/**
+	 * The zones are listed from the first opening on: every entry editor holds a picker, and 400 options laid out in one
+	 * nobody opens cost each tap on an entry hundreds of milliseconds. Before the popover shows, so the list opens at the
+	 * selected zone.
+	 */
+	@state() private listed = false
+
+	@eventListener('beforetoggle')
+	protected handleBeforeOpen(e: ToggleEvent) {
+		if (e.newState === 'open') {
+			this.listed = true
+		}
+	}
+
 	@query('mitra-search-field') private readonly input?: SearchField
 
 	private get rows(): ReadonlyArray<ZoneRow> {
@@ -204,7 +218,7 @@ export class TimeZonePicker extends Popover {
 					@input=${(e: Event) => this.query = (e.target as SearchField).value}
 				></mitra-search-field>
 				<mitra-listbox aria-label=${t('Time zone')}>
-					${repeat(this.rows, row => row.id, row => html`
+					${!this.listed ? html.nothing : repeat(this.rows, row => row.id, row => html`
 						<mitra-option .value=${row.id}>
 							<span class="offset">${row.offset}</span>
 							<span class="name">${row.name}</span>

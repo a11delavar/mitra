@@ -1,4 +1,4 @@
-import { css, event, html, ifDefined, property, query, type ElementRef, type ElementRefs, type HTMLTemplateResult } from '@a11d/lit'
+import { css, event, html, ifDefined, property, query, state, type ElementRef, type ElementRefs, type HTMLTemplateResult } from '@a11d/lit'
 import { Control } from './Control.js'
 import { type Popover } from './Popover.js'
 import { controlHeight } from './controlHeight.css.js'
@@ -22,6 +22,12 @@ export abstract class SegmentedField<T, TSegment> extends Control {
 	@property({ type: Boolean, reflect: true }) disabled = false
 
 	@query('mitra-popover') protected readonly picker?: Popover
+
+	/**
+	 * The picker's content renders from its first opening on, before the popover shows: the entry editor holds several
+	 * fields, and a month and a day's times laid out in each, never opened, cost every tap on an entry.
+	 */
+	@state() private pickerListed = false
 
 	protected abstract readonly controller: {
 		readonly group: ElementRef<HTMLElement, void>
@@ -159,7 +165,10 @@ export abstract class SegmentedField<T, TSegment> extends Control {
 					<mitra-icon-button size="small" tabindex="-1" icon=${this.icon} label=${this.pickerLabel} @click=${() => this.showPicker({ focus: true })}></mitra-icon-button>
 				`}
 			</div>
-			<mitra-popover @openChange=${(e: CustomEvent<boolean>) => e.detail ? this.pickerOpened(this.focusesPicker) : this.pickerClosed()}>${this.pickerTemplate}</mitra-popover>
+			<mitra-popover
+				@beforetoggle=${(e: ToggleEvent) => this.pickerListed ||= e.newState === 'open'}
+				@openChange=${(e: CustomEvent<boolean>) => e.detail ? this.pickerOpened(this.focusesPicker) : this.pickerClosed()}
+			>${!this.pickerListed ? html.nothing : this.pickerTemplate}</mitra-popover>
 		`
 	}
 

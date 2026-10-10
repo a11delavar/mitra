@@ -1,6 +1,6 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { MikroORM, UnderscoreNamingStrategy } from '@mikro-orm/sqlite'
+import { MikroORM, UnderscoreNamingStrategy, type EntityManager } from '@mikro-orm/sqlite'
 import { User } from '../User.js'
 import { Identity } from '../Identity.js'
 import { Source } from '../../sources/Source.js'
@@ -37,7 +37,7 @@ describe('Sandbox', () => {
 
 	it('opens with the sample calendar already imported', async () => {
 		const em = orm.em.fork()
-		const user = await Sandbox.open(em)
+		const { user } = await Sandbox.open(em)
 
 		const integrations = await em.find(Integration, { userId: user.id })
 		assert.deepEqual(integrations.map(integration => integration.type), ['demo'])
@@ -47,29 +47,53 @@ describe('Sandbox', () => {
 		assert.ok(await em.count(Entry, { sourceId: { $in: sources.map(source => source.id) } }) > 0)
 	})
 
-	it('evicts the least recently seen sandboxes with everything in them, and nobody else', async () => {
+	it('opens together with the session of its visit', async () => {
 		const em = orm.em.fork()
-		await Sandbox.evictDownTo(em, 0)
+		const { user, token } = await Sandbox.open(em)
+
+		const session = await em.findOne(Session, { id: Session.idFor(token) })
+		assert.equal(session?.userId, user.id)
+	})
+
+	it('evicts the oldest sandboxes past the count, with everything in them, and nobody else', async () => {
+		const em = orm.em.fork()
+		await Sandbox.evict(em, 0)
 		const bystander = new User({ username: 'bystander' })
 		em.persist([bystander, new MitraCalendar({ userId: bystander.id })])
 		await em.flush()
 
-		const unseen = await Sandbox.open(em)
-		const earlier = await Sandbox.open(em)
-		const later = await Sandbox.open(em)
-		const seenAt = (user: User, hoursFromNow: number) => em.persist(new Session({ id: user.id, userId: user.id, expiresAt: new Date(Date.now() + hoursFromNow * 3_600_000) }))
-		seenAt(earlier, 1)
-		seenAt(later, 2)
-		await em.flush()
+		const oldest = await openedHoursAgo(em, 3)
+		const older = await openedHoursAgo(em, 2)
+		const newest = await openedHoursAgo(em, 1)
 
-		assert.equal(await Sandbox.evictDownTo(em, 1), 2)
+		assert.equal(await Sandbox.evict(em, 1), 2)
 
 		em.clear()
 		const remaining = await em.find(User, {})
-		assert.deepEqual(remaining.map(user => user.id).sort(), [bystander.id, later.id].sort())
+		assert.deepEqual(remaining.map(user => user.id).sort(), [bystander.id, newest.id].sort())
 		const integrations = await em.find(Integration, {})
-		assert.deepEqual(integrations.map(integration => integration.userId).sort(), [bystander.id, later.id].sort())
+		assert.deepEqual(integrations.map(integration => integration.userId).sort(), [bystander.id, newest.id].sort())
 		assert.equal(await em.count(Source, { integrationId: { $nin: integrations.map(integration => integration.id) } }), 0)
-		assert.equal(await em.count(Session, { userId: { $in: [unseen.id, earlier.id] } }), 0)
+		assert.equal(await em.count(Session, { userId: { $in: [oldest.id, older.id] } }), 0)
+	})
+
+	it('evicts every sandbox past its lifetime as the next one opens, however few there are', async () => {
+		const em = orm.em.fork()
+		await Sandbox.evict(em, 0)
+		const expired = await openedHoursAgo(em, 25)
+		const fresh = await openedHoursAgo(em, 23)
+		await Sandbox.open(em)
+
+		em.clear()
+		assert.equal(await em.count(User, { id: expired.id }), 0)
+		assert.equal(await em.count(User, { id: fresh.id }), 1)
 	})
 })
+
+async function openedHoursAgo(em: EntityManager, hours: number) {
+	const { user, token } = await Sandbox.open(em)
+	const session = await em.findOneOrFail(Session, { id: Session.idFor(token) })
+	session.expiresAt = new Date(Date.now() + Session.lifetime - hours * 3_600_000)
+	await em.flush()
+	return user
+}

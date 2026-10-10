@@ -434,8 +434,9 @@ export class Sidebar extends Component {
 					animation-range: calc(100% - 1.25rem) 100%;
 				}
 
-				/* Each level down to the row hands the same columns on, unchanged. */
-				.integration, .integration > header, .sources, .source {
+				/* Each level down to the row hands the same columns on, unchanged. Rows are matched as children of
+				   their list: the Planning tab hosts entry editors, whose calendar field is a .source too. */
+				.integration, .integration > header, .sources, .sources > .source {
 					grid-column: 1 / -1;
 					display: grid;
 					grid-template-columns: subgrid;
@@ -453,7 +454,7 @@ export class Sidebar extends Component {
 				   re-sorted render lands in the same task, so the settled order paints exactly once,
 				   transition-free, which is why this transition is scoped to the attribute. */
 				&[data-reordering] {
-					.source:not([data-reorderability=${unsafeCSS(ReorderabilityState.Dragging)}]),
+					.sources > .source:not([data-reorderability=${unsafeCSS(ReorderabilityState.Dragging)}]),
 					.integration:not([data-reorderability=${unsafeCSS(ReorderabilityState.Dragging)}]) {
 						transition: transform 0.15s ease;
 					}
@@ -482,7 +483,7 @@ export class Sidebar extends Component {
 					}
 				}
 
-				.source {
+				.sources > .source {
 					min-height: 1.75rem;
 					border-radius: 0.375rem;
 					/* The whole row is its own drag handle: a mouse drag must never start a text
@@ -568,7 +569,7 @@ export class Sidebar extends Component {
 
 				/* The grabbed row/block lifts above its gliding siblings on an opaque backing, after the
 				   hover rule, so the lift's backing wins over the row's own hover chip while it's carried. */
-				.source[data-reorderability=${unsafeCSS(ReorderabilityState.Dragging)}], .integration[data-reorderability=${unsafeCSS(ReorderabilityState.Dragging)}] {
+				.sources > .source[data-reorderability=${unsafeCSS(ReorderabilityState.Dragging)}], .integration[data-reorderability=${unsafeCSS(ReorderabilityState.Dragging)}] {
 					z-index: 5;
 					background-color: var(--color-background);
 					border-radius: 0.375rem;
@@ -578,7 +579,7 @@ export class Sidebar extends Component {
 
 				/* The trailing icon buttons bleed their glyph inset back out, so it is the GLYPHS that land on the
 				   trailing edge. Aligning the boxes instead leaves every icon a few pixels short of the text above. */
-				.integration > header > mitra-popover-container > mitra-icon-button, .actions > mitra-icon-button:last-child, .account > mitra-icon-button:last-child {
+				.integration > header > mitra-popover-container > mitra-icon-button, :is(.integrations, .account) .actions > mitra-icon-button:last-child, .account > mitra-icon-button:last-child {
 					margin-inline-end: calc(-1 * var(--mitra-glyph-inset));
 				}
 
@@ -601,8 +602,9 @@ export class Sidebar extends Component {
 					}
 				}
 
-				/* A 280px column has no room to drop a menu below its trigger, so they open off its inline end. */
-				mitra-menu {
+				/* A 280px column has no room to drop a menu below its trigger, so they open off its inline end.
+				   Only the sidebar's own: an entry editor opened from the Planning tab carries its menu in here. */
+				:is(.integrations, .account) mitra-menu {
 					margin: 0;
 					position-area: inline-end span-block-end;
 					position-try-fallbacks: flip-block;
@@ -620,7 +622,7 @@ export class Sidebar extends Component {
 				}
 
 				/* A source's menu opens past its whole cluster of actions rather than over its eye. */
-				.source .actions {
+				.sources > .source .actions {
 					anchor-name: --source-actions;
 					anchor-scope: --source-actions;
 
