@@ -34,6 +34,11 @@ const highlights = await Promise.all(release.highlights.map(async highlight => {
 	return { highlight, html: await release.render(highlight.markdown), capture, size: await capture?.size() }
 }))
 const rest = await Promise.all((release.notes?.rest ?? []).map(async section => ({ section, html: await release.render(section.markdown) })))
+// Every commit, the maintenance ones as one number: the heading is all a reader sees of the folded list.
+const everythingCounts = [
+	...release.counts.filter(count => !Release.maintenance.has(count.type)).map(count => release.countOf(count)),
+	...release.maintenanceCount ? [t('${count:pluralityNumber} maintenance changes', { count: release.maintenanceCount })] : [],
+].join(' · ')
 ---
 
 <Site title={`${release.name} | ${t('Mitra')}`} description={release.description} current="releases" languages={languages} translated={release.languages}>
@@ -116,43 +121,6 @@ const rest = await Promise.all((release.notes?.rest ?? []).map(async section => 
 		))}
 
 
-		{/* The changelog is written in English, by commit. */}
-		{release.patches.length > 0 && (
-			<section class="emitted" id="patches">
-				<h2 class="title">{t('Patches')}</h2>
-				{release.patches.map(patch => (
-					<div class="patch">
-						<b>{patch.version}</b>
-						<span class="date">{patch.date && release.formatDate(patch.date)}</span>
-						<ul class="lines" lang={languages[0]}>
-							{patch.categories.flatMap(linesOf).map(line => (
-								<li><span>{line.subject}</span>{line.url && <a class="hash" href={line.url} rel="noreferrer">{line.hash}</a>}</li>
-							))}
-						</ul>
-					</div>
-				))}
-			</section>
-		)}
-
-		{release.everything && (
-			<section class="emitted" id="everything">
-				<h2 class="title">{t('Everything in ${version}', { version: release.version })} <small>{release.counts.filter(count => !Release.maintenance.has(count.type)).map(count => release.countOf(count)).join(' · ')}</small></h2>
-				{release.listed.map(category => (
-					<div class="category" data-type={category.type}>
-						<h3 class="label">{release.labelOf(category)}</h3>
-						<ul class="lines" lang={languages[0]}>
-							{linesOf(category).map(line => (
-								<li><span>{line.subject}</span>{line.url && <a class="hash" href={line.url} rel="noreferrer">{line.hash}</a>}</li>
-							))}
-				{release.maintenanceCount > 0 && (
-					<p class="maintenance" lang={release.language} set:html={t('Plus ${link} on GitHub: tests, builds and chores.', { link: `<a href="${release.commitsUrl}" rel="noreferrer">${t('${count:pluralityNumber} maintenance changes', { count: release.maintenanceCount })}</a>` })} />
-				)}
-						</ul>
-					</div>
-				))}
-			</section>
-		)}
-
 		{release.notes && release.notes.contributors.length > 0 && (
 			<section class="emitted" id="contributors">
 				<h2 class="title">{t('Contributors')}</h2>
@@ -169,6 +137,47 @@ const rest = await Promise.all((release.notes?.rest ?? []).map(async section => 
 						</li>
 					))}
 				</ul>
+			</section>
+		)}
+
+		{/* The changelog, by commit and in English: what a reader looks up rather than reads, so it closes the page, small. */}
+		{(release.patches.length > 0 || release.everything) && (
+			<section class="emitted changelog">
+				{release.patches.length > 0 && (
+					<section class="patches" id="patches">
+						<h2 class="title">{t('Patches')}</h2>
+						{release.patches.map(patch => (
+							<div class="patch">
+								<b>{patch.version}</b>
+								<span class="date">{patch.date && release.formatDate(patch.date)}</span>
+								<ul class="lines" lang={languages[0]}>
+									{patch.categories.flatMap(linesOf).map(line => (
+										<li><span>{line.subject}</span>{line.url && <a class="hash" href={line.url} rel="noreferrer">{line.hash}</a>}</li>
+									))}
+								</ul>
+							</div>
+						))}
+					</section>
+				)}
+
+				{release.everything && (
+					<details id="everything">
+						<summary class="title"><Icon name="chevron-right" size="0.8em" /><h2>{t('Everything in ${version}', { version: release.version })}</h2> <small>{everythingCounts}</small></summary>
+						{release.listed.map(category => (
+							<div class="category" data-type={category.type}>
+								<h3 class="label">{release.labelOf(category)}</h3>
+								<ul class="lines" lang={languages[0]}>
+									{linesOf(category).map(line => (
+										<li><span>{line.subject}</span>{line.url && <a class="hash" href={line.url} rel="noreferrer">{line.hash}</a>}</li>
+									))}
+								</ul>
+							</div>
+						))}
+						{release.maintenanceCount > 0 && (
+							<p class="maintenance" lang={release.language} set:html={t('Plus ${link} on GitHub: tests, builds and chores.', { link: `<a href="${release.commitsUrl}" rel="noreferrer">${t('${count:pluralityNumber} maintenance changes', { count: release.maintenanceCount })}</a>` })} />
+						)}
+					</details>
+				)}
 			</section>
 		)}
 	</article>
@@ -434,6 +443,94 @@ const rest = await Promise.all((release.notes?.rest ?? []).map(async section => 
 	.emitted {
 		inline-size: min(100%, var(--release-column));
 		margin-inline: auto;
+	}
+
+	/* Headed like the categories inside it rather than like the sections above it. */
+	.changelog {
+		gap: 2.5rem;
+
+		.title {
+			margin: 0;
+			font-size: 0.875rem;
+			font-weight: 600;
+			color: var(--color-text-muted);
+		}
+	}
+
+	.patches {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	/* The commit list is read for troubleshooting, so it starts folded; find-in-page still reaches it. */
+	#everything {
+		interpolate-size: allow-keywords;
+
+		> summary + .category {
+			margin-block-start: 1.25rem;
+		}
+
+		> summary {
+			display: flex;
+			align-items: baseline;
+			flex-wrap: wrap;
+			column-gap: 0.5rem;
+			list-style: none;
+			cursor: pointer;
+			transition: color 150ms;
+
+			&::-webkit-details-marker {
+				display: none;
+			}
+
+			h2 {
+				font: inherit;
+			}
+
+			small {
+				font-size: inherit;
+				font-weight: 400;
+			}
+
+			:global(.icon) {
+				align-self: center;
+				transition: rotate 0.2s var(--mitra-ease);
+
+				&:dir(rtl) {
+					rotate: 180deg;
+				}
+			}
+
+			&:hover {
+				color: var(--color-text);
+			}
+		}
+
+		&[open] > summary :global(.icon) {
+			rotate: 90deg;
+		}
+
+		&::details-content {
+			block-size: 0;
+			opacity: 0;
+			overflow: clip;
+			overflow-clip-margin: 0.5rem;
+		}
+
+		&[open]::details-content {
+			block-size: auto;
+			opacity: 1;
+		}
+
+		@media (prefers-reduced-motion: no-preference) {
+			&::details-content {
+				transition:
+					block-size 0.3s var(--mitra-ease),
+					opacity 0.2s ease,
+					content-visibility 0.3s allow-discrete;
+			}
+		}
 	}
 
 	.maintenance {
