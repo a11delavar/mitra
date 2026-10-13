@@ -8,6 +8,7 @@ import { EntryStore } from '../../entries/client/EntryStore.js'
 import { Recurrence } from '../../recurrence/Recurrence.js'
 import { TableWindow } from './TableWindow.js'
 import { TableRow, TableFilter, type TableFacet } from './TableRow.js'
+import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
 
 describe('TableRow', () => {
 	const day = new DateTime('2026-08-19T00:00:00')
@@ -140,7 +141,7 @@ describe('TableRow', () => {
 		const start = day.add({ hours: 9 })
 		const occurrence = (at: DateTime) => entry({
 			id: `m__${at.valueOf()}`, start: at, end: at.add({ hours: 1 }),
-			recurrence: new Recurrence({ freq: 'DAILY' }), recurrenceMasterId: 'm', recurrenceId: at, seriesStart: start,
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }), recurrenceMasterId: 'm', recurrenceId: at, seriesStart: start,
 		})
 		const all = TableWindow.of('all')
 

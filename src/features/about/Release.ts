@@ -4,9 +4,8 @@ import { ReleaseNotes } from './ReleaseNotes.ts'
 import { repository } from '../../../website/site.mjs'
 
 /**
- * Where a release stands: planned (an undated folder beyond the next), in development (the next undated folder), the
- * newest shipped (what the `:latest` image runs), or earlier. Derived from the dates and the order, never written down,
- * so a release's date moves the next one into development on its own.
+ * `draft` is the next undated folder, `planned` any beyond it. Derived from the dates and the order, never written down,
+ * so dating a release moves the next one into development on its own.
  */
 export type ReleaseState = 'planned' | 'draft' | 'latest' | 'released'
 
@@ -18,18 +17,14 @@ export interface ReleaseFolder {
 	files: Array<string>
 }
 
-/**
- * A minor release: its notes, when its folder holds them, and its changelog sections, the patches apart. The website
- * and the app build their lists with `Release.list()` from the same two sources. Pure.
- */
+/** The website and the app build their lists with `Release.list()` from the same two sources. Pure. */
 export class Release {
 	/** The changelog's section for commits past the last tag, generated into dev builds only. */
 	static readonly unreleased = 'unreleased'
 
 	/**
-	 * Every minor the changelog or a notes folder knows, newest first, the newest dated one marked latest. The oldest
-	 * undated folder is the release in development, and the commits past the last tag are its; any newer undated folder
-	 * is planned. Without a folder in development, those commits are a release of their own.
+	 * The oldest undated folder is the release in development and owns the commits past the last tag; newer undated
+	 * folders are planned. Without a folder in development, those commits are a release of their own.
 	 */
 	static list<T extends Release>(
 		this: new (version: string, notes: ReleaseNotes | undefined, sections: ReadonlyArray<ParsedChangelogSection>) => T,
@@ -135,7 +130,11 @@ export class Release {
 		return categories
 	}
 
-	/** How many commits only kept the project running. */
+	/** What the release shipped that its readers would notice, by category: everything but the maintenance. */
+	get listed() {
+		return this.categories.filter(category => !Release.maintenance.has(category.type))
+	}
+
 	get maintenanceCount() {
 		return this.counts.filter(count => Release.maintenance.has(count.type)).reduce((sum, count) => sum + count.count, 0)
 	}

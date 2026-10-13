@@ -10,6 +10,9 @@ import { EntryRelations } from '../relations/EntryRelations.js'
 import { RelationType } from '../relations/RelationType.js'
 import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
 import { ReminderDefaults } from '../reminders/ReminderDefaults.js'
+import { TimeZone } from '../time/TimeZone.js'
+import { RecurrenceFrequency } from '../recurrence/RecurrenceFrequency.js'
+import { RecurrenceEnd } from '../recurrence/RecurrenceEnd.js'
 
 describe('Entry', () => {
 	const day = new DateTime().dayStart
@@ -416,6 +419,42 @@ describe('Entry', () => {
 		})
 	})
 
+	describe('zone', () => {
+		const timed = (timeZone: string | null) => new Entry({ start: new Date('2026-07-06T12:00:00Z') as unknown as DateTime, timeZone })
+
+		it('is the zone its times are written in, by any of its names', () => {
+			assert.equal(timed('Europe/Berlin').zone, TimeZone.of('Europe/Berlin'))
+			assert.ok(timed('Asia/Calcutta').zone!.equals(TimeZone.of('Asia/Kolkata')))
+		})
+
+		it('is none for an all-day, a floating, a zoneless or an unknown zone', () => {
+			assert.equal(new Entry({ allDay: true, timeZone: 'Europe/Berlin' }).zone, undefined)
+			assert.equal(timed(FLOATING_TIME_ZONE).zone, undefined)
+			assert.equal(timed(null).zone, undefined)
+			assert.equal(timed('Mars/Olympus').zone, undefined)
+		})
+
+		it('follows a change of zone', () => {
+			const entry = timed('Europe/Berlin')
+			entry.setTimeZone('Asia/Tehran')
+			assert.equal(entry.zone, TimeZone.of('Asia/Tehran'))
+		})
+
+		it('calls floating only a timed entry on the wall clock', () => {
+			assert.equal(timed(FLOATING_TIME_ZONE).floating, true)
+			assert.equal(new Entry({ allDay: true, timeZone: FLOATING_TIME_ZONE }).floating, false)
+			assert.equal(timed('Europe/Berlin').floating, false)
+			assert.equal(timed(null).floating, false)
+		})
+
+		it('stays off the wire, which carries the zone\'s id alone', () => {
+			const wire = wireOf(timed('Europe/Berlin'))
+			assert.equal(wire.timeZone, 'Europe/Berlin')
+			assert.equal('zone' in wire, false)
+			assert.equal('floating' in wire, false)
+		})
+	})
+
 	describe('setTimeZone', () => {
 		it('keeps the wall clock and moves the instant', () => {
 			const e = new Entry({
@@ -441,6 +480,19 @@ describe('Entry', () => {
 			e.setTimeZone('Asia/Tehran')
 			assert.equal(e.timeZone, 'Asia/Tehran')
 			assert.equal(new Date(e.start!.valueOf()).toISOString(), '2026-07-06T00:00:00.000Z')
+		})
+
+		it('leaves the dates an entry lacks alone, which arrive as null', () => {
+			const e = new Entry({
+				start: new Date('2026-07-06T12:00:00Z') as unknown as DateTime,
+				end: null as unknown as DateTime,
+				due: null as unknown as DateTime,
+				timeZone: 'Europe/Berlin',
+			})
+			e.setTimeZone('Asia/Tehran')
+			assert.equal(e.due, null)
+			assert.equal(e.end, null)
+			assert.equal(new Date(e.start!.valueOf()).toISOString(), '2026-07-06T10:30:00.000Z')
 		})
 
 		it('pins a FLOATING entry\'s as-if-UTC wall clock to the picked zone', () => {
@@ -476,7 +528,7 @@ describe('Entry', () => {
 		})
 
 		it('a repeating task keeps its dates, which identify its occurrences', () => {
-			const master = task({ start: at(0, 9), end: at(0, 10), recurrence: new Recurrence({ freq: 'WEEKLY' }) })
+			const master = task({ start: at(0, 9), end: at(0, 10), recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })
 			const occurrence = task({ start: at(7, 9), end: at(7, 10), recurrenceMasterId: 'master', recurrenceId: at(7, 9) })
 			assert.equal(master.unschedulable, false)
 			assert.equal(occurrence.unschedulable, false)
@@ -803,7 +855,7 @@ describe('Entry', () => {
 		it('is false for a repeating task, whose next turn settles the missed one', () => {
 			const dates = { start: day.subtract({ days: 3 }), end: day.subtract({ days: 3 }).add({ hours: 1 }) }
 			assert.equal(task({ ...dates, recurrenceMasterId: 'master' }).overdue, false)
-			assert.equal(task({ ...dates, recurrence: new Recurrence({ freq: 'WEEKLY' }) }).overdue, false)
+			assert.equal(task({ ...dates, recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) }).overdue, false)
 		})
 
 		it('is false for an undated task and for events', () => {
@@ -901,5 +953,14 @@ describe('Entry', () => {
 			entry.setReminders([])
 			assert.equal(entry.reminders, null)
 		})
+	})
+})
+
+describe('Entry.editEquals over a rule', () => {
+	const ending = (day: string) => new Entry({ heading: 'Standup', recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, until: RecurrenceEnd.parse(day) }) })
+
+	it('tells a series apart by the day it ends', () => {
+		assert.equal(ending('2026-07-18').editEquals(ending('2026-07-18')), true)
+		assert.equal(ending('2026-07-18').editEquals(ending('2026-08-01')), false)
 	})
 })

@@ -6,6 +6,8 @@ import { EntryType } from '../../entries/EntryType.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
 import { Recurrence } from '../../recurrence/Recurrence.js'
 import { Routines, type RoutineUnit } from './Routines.js'
+import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
+import { RecurrenceWeekday } from '../../recurrence/RecurrenceWeekday.js'
 
 describe('Routines', () => {
 	const base = new DateTime().dayStart
@@ -36,10 +38,10 @@ describe('Routines', () => {
 	const cadence = (recurrence: Recurrence, count: number, from = 0) =>
 		Array.from({ length: count }, (_, index) => from + Math.round(index * recurrence.strideDays))
 
-	const daily = (every = 1) => new Recurrence({ freq: 'DAILY', interval: every > 1 ? every : undefined })
-	const weekly = (byday?: Array<string>, every?: number) => new Recurrence({ freq: 'WEEKLY', byday, interval: every })
-	const monthly = () => new Recurrence({ freq: 'MONTHLY', bymonthday: base.day })
-	const yearly = () => new Recurrence({ freq: 'YEARLY' })
+	const daily = (every = 1) => new Recurrence({ freq: RecurrenceFrequency.Daily, interval: every > 1 ? every : undefined })
+	const weekly = (byday?: Array<string>, every?: number) => new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: byday?.map(code => RecurrenceWeekday.parse(code)!), interval: every })
+	const monthly = () => new Recurrence({ freq: RecurrenceFrequency.Monthly, bymonthday: base.day })
+	const yearly = () => new Recurrence({ freq: RecurrenceFrequency.Yearly })
 
 	const collapsedIn = (unit: RoutineUnit, entries: ReadonlyArray<Entry>, windowDays = unit === 'month' ? 500 : 154) => {
 		const cohort = Routines.of(entries, days(windowDays), unit)
@@ -283,7 +285,7 @@ describe('Routines', () => {
 			const cohort = Routines.of([...gym(), ...otherSeries, master], days(500), 'month')
 			assert.equal(cohort.collapses(master), false)
 			assert.equal(cohort.collapses(otherSeries[0]!), true)
-			// The two same-appearance series pooled into one routine: one run, not two.
+			// Both same-appearance series pool into one routine.
 			assert.equal(cohort.runsIn(base, base.add({ days: 400 })).length, 1)
 		})
 

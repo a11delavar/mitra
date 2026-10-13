@@ -2,17 +2,12 @@ import { Api } from '@a11d/api'
 import { deviceFacts } from '../deviceFacts.js'
 import { type NotificationSubscription } from '../NotificationSubscription.js'
 
-/**
- * Web Push client utilities for managing notification permissions, service worker registration, and subscriptions.
- */
-
 function base64UrlToBytes(value: string): Uint8Array {
 	const padded = value + '='.repeat((4 - value.length % 4) % 4)
 	const binary = atob(padded.replace(/-/g, '+').replace(/_/g, '/'))
 	return Uint8Array.from(binary, character => character.charCodeAt(0))
 }
 
-/** Whether the current browser supports Web Push notifications. */
 export function pushSupported() {
 	return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
 }
@@ -27,13 +22,12 @@ async function subscribe(): Promise<PushSubscription> {
 	await Api.post('/push/subscription', {
 		...subscription.toJSON(),
 		timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-		language: Localizer.locales.current.language,
+		locale: String(Localizer.locales.current),
 		...deviceFacts(),
 	})
 	return subscription
 }
 
-/** Requests notification permission and subscribes browser to Web Push. */
 export async function enablePushNotifications(): Promise<boolean> {
 	if (!pushSupported()) {
 		return false
@@ -45,17 +39,15 @@ export async function enablePushNotifications(): Promise<boolean> {
 	return true
 }
 
-/** Refreshes push subscription if permission was already granted. */
 export function syncPushSubscription() {
 	if (pushSupported() && Notification.permission === 'granted') {
 		subscribe().catch(() => void 0)
 	}
 }
 
-// Notifications are written in the language the device last registered with.
+// Notifications are written in the locale the device last registered with.
 Localizer.locales.change.subscribe(() => syncPushSubscription())
 
-/** Returns the push subscription endpoint of the current browser. */
 export async function currentEndpoint(): Promise<string | undefined> {
 	if (!pushSupported() || Notification.permission !== 'granted') {
 		return undefined

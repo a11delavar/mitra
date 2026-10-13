@@ -1,8 +1,7 @@
 import { DateTime } from '@3mo/date-time'
 import { calendarViews, type CalendarView } from '../CalendarView.js'
-import { calendarDateOf } from '../../time/calendarDate.js'
+import './DateTime.calendar.js'
 
-/** The route and query parameters the calendar page round-trips through the URL. */
 export type CalendarParameters = {
 	view?: string
 	date?: string
@@ -10,9 +9,6 @@ export type CalendarParameters = {
 	settings?: string
 }
 
-/**
- * Value object representing URL-serializable calendar navigation state (view, date, selected entry, settings page).
- */
 export class CalendarLocation {
 	static from(parameters: CalendarParameters | undefined, fallbackView: CalendarView) {
 		return new CalendarLocation(
@@ -34,12 +30,6 @@ export class CalendarLocation {
 		return date === undefined || Number.isNaN(date.valueOf()) ? undefined : date
 	}
 
-	/** Formats DateTime into YYYY-MM-DD string. */
-	// ISO, never the display calendar's numbers: a Persian 1405-07-08 read back as a Gregorian day is some 620 years off.
-	private static dayOf(date: DateTime) {
-		return calendarDateOf(date).toString()
-	}
-
 	constructor(
 		readonly view: CalendarView,
 		readonly date: DateTime,
@@ -54,7 +44,7 @@ export class CalendarLocation {
 	get parameters(): CalendarParameters {
 		return {
 			view: this.view,
-			...this.anchoredToday ? undefined : { date: CalendarLocation.dayOf(this.date) },
+			...this.anchoredToday ? undefined : { date: this.date.isoDate },
 			...this.selected ? { selected: this.selected } : undefined,
 			...this.settings ? { settings: this.settings } : undefined,
 		}

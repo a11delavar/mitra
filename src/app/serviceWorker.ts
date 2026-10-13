@@ -157,7 +157,7 @@ worker.addEventListener('pushsubscriptionchange', event => {
 			userVisibleOnly: true,
 			applicationServerKey: base64UrlToBytes(key) as BufferSource,
 		})
-		// The old endpoint lets the server carry over the device's name and language, which this worker can't read.
+		// The old endpoint lets the server carry over the device's name and locale, which this worker can't read.
 		await post('/api/push/subscription', {
 			...subscription.toJSON() as object,
 			previousEndpoint: event.oldSubscription?.endpoint,

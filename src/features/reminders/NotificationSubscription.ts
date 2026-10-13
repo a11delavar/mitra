@@ -7,7 +7,6 @@ import { type DeviceFacts } from './deviceFacts.js'
 
 type PushKeys = { p256dh: string, auth: string }
 
-/** Web Push registration storing endpoint URL, keys, and what the device reports about itself. */
 @model('NotificationSubscription')
 @entity()
 @unique({ properties: ['endpoint'] })
@@ -22,17 +21,16 @@ export class NotificationSubscription {
 
 	@property({ type: 'string', nullable: true }) name?: string | null
 
-	/** Browser IANA time zone used to resolve floating entry reminders. */
+	/** The device's zone, which floating reminders resolve in. */
 	@property({ type: 'string', nullable: true }) timeZone?: string | null
 
-	/** The app's language on this device, which its notifications are written in. */
-	@property({ type: 'string', nullable: true }) language?: string | null
+	/** The app's locale on this device (a BCP 47 tag), which its notifications are written and formatted in. */
+	@property({ type: 'string', nullable: true }) locale?: string | null
 
 	@property({ type: 'string', nullable: true }) platform?: string | null
 	@property({ type: 'string', nullable: true }) browser?: string | null
 	@property({ type: 'boolean', nullable: true }) mobile?: boolean | null
 
-	/** Timestamp when this device last re-registered. */
 	@property({ type: 'datetime', nullable: true }) lastSeenAt?: Date | null
 
 	constructor(init?: Partial<NotificationSubscription>) {
@@ -43,27 +41,36 @@ export class NotificationSubscription {
 	 * Restamps what the device reports on every registration, leaving the user's `name` alone. A browser signed in to by
 	 * another user becomes theirs, as its endpoint is unique, but the name the previous user gave it does not.
 	 */
-	register(userId: string, registration: DeviceFacts & { keys: PushKeys, timeZone?: string, language?: string }) {
+	register(userId: string, registration: DeviceFacts & { keys: PushKeys, timeZone?: string, locale?: string }) {
 		if (this.userId && this.userId !== userId) {
 			this.name = null
 		}
 		this.userId = userId
 		this.keys = registration.keys
 		this.timeZone = registration.timeZone ?? null
-		this.language = registration.language ?? this.language ?? null
+		this.locale = NotificationSubscription.localeOf(registration.locale) ?? this.locale ?? null
 		this.platform = registration.platform ?? null
 		this.browser = registration.browser ?? null
 		this.mobile = registration.mobile ?? null
 		this.lastSeenAt = new Date()
 	}
 
+	/** A tag every Intl formatter takes: one they refuse would throw at each of the device's reminders. */
+	private static localeOf(tag: unknown) {
+		try {
+			return typeof tag === 'string' ? Intl.getCanonicalLocales(tag)[0] : undefined
+		} catch {
+			return undefined
+		}
+	}
+
 	/**
 	 * Takes over from the subscription the browser rotated away from. The service worker that re-subscribes
-	 * cannot read the app's language, and the user's name belongs to the device, not the endpoint.
+	 * cannot read the app's locale, and the user's name belongs to the device, not the endpoint.
 	 */
 	succeed(previous: NotificationSubscription) {
 		this.name ??= previous.name
-		this.language ??= previous.language
+		this.locale ??= previous.locale
 	}
 
 	/** An empty name falls back to what the browser reports. */

@@ -19,6 +19,7 @@ import { NotionRequestError, type NotionBlock, type NotionClient, type NotionDat
 import { MitraCalendar } from '../../mitra/MitraCalendar.js'
 import { NotificationSubscription } from '../../../features/reminders/NotificationSubscription.js'
 import { Session } from '../../../features/identity/server/Session.js'
+import { RecurrenceFrequency } from '../../../features/recurrence/RecurrenceFrequency.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
@@ -506,7 +507,7 @@ describe('Notion entry CRUD', () => {
 	it('rejects creating a recurring task', async () => {
 		const em = orm.em.fork()
 		const { integration, source } = await seed(em, {})
-		const entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Weekly', recurrence: new Recurrence({ freq: 'WEEKLY' }) })
+		const entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Weekly', recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })
 		await assert.rejects(() => integration.createEntry(em, entry), /recurring/)
 	})
 

@@ -5,6 +5,8 @@ import { type Integration } from '../../../integrations/Integration.js'
 import { EntryType } from '../../entries/EntryType.js'
 import { Entry } from '../../entries/Entry.js'
 import { Occurrences, AnchorlessSeriesError, editOccurrence, deleteOccurrence, occurrenceAt } from './occurrences.js'
+import { RecurrenceFrequency } from '../RecurrenceFrequency.js'
+import { RecurrenceWeekday } from '../RecurrenceWeekday.js'
 
 describe('Occurrences', () => {
 	describe('fromICS', () => {
@@ -170,7 +172,7 @@ describe('Occurrences', () => {
 			const master = new Entry({
 				id: 'f', sourceId: 's', type: EntryType.Event, heading: 'Pill', timeZone: 'floating',
 				start: at('2026-10-19T09:00:00Z') as never, end: at('2026-10-19T09:15:00Z') as never, // 09:00 wall, encoded as-if-UTC
-				recurrence: new Recurrence({ freq: 'WEEKLY' }),
+				recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }),
 			})
 			const occ = Occurrences.of(master)!.within(at('2026-10-19T00:00:00Z'), at('2026-10-27T23:59:59Z'))
 			assert.deepEqual(occ.map(o => o.start.toISOString()), ['2026-10-19T09:00:00.000Z', '2026-10-26T09:00:00.000Z'])
@@ -180,7 +182,7 @@ describe('Occurrences', () => {
 			const master = new Entry({
 				id: 'w', sourceId: 's', type: EntryType.Event, heading: 'Sync', timeZone: 'W. Europe Standard Time',
 				start: at('2026-10-19T07:00:00Z') as never, end: at('2026-10-19T08:00:00Z') as never,
-				recurrence: new Recurrence({ freq: 'WEEKLY' }),
+				recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }),
 			})
 			const occ = Occurrences.of(master)!.within(at('2026-10-19T00:00:00Z'), at('2026-10-27T23:59:59Z'))
 			assert.equal(occ.length, 2) // a crashed read would render the whole window empty (500)
@@ -235,7 +237,7 @@ describe('scoped occurrence edits', () => {
 	const master = () => new Entry({
 		id: 'm', sourceId: 's', type: EntryType.Event, heading: 'Standup', uid: 'u1', location: 'Room A',
 		start: D('2026-06-01T09:00:00Z'), end: D('2026-06-01T10:00:00Z'),
-		recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['MO'] }),
+		recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Monday] }),
 	})
 	const recurrenceId = new Date('2026-06-08T09:00:00Z') // the second Monday
 	const edited = () => new Entry({
@@ -263,7 +265,7 @@ describe('scoped occurrence edits', () => {
 			await assert.rejects(editOccurrence(em, integration, master(), recurrenceId, undated(), scope), (error: Error & { status?: number }) => error instanceof AnchorlessSeriesError && error.status === 400)
 			assert.equal(calls.updates.length + calls.creates.length, 0)
 		}
-		const rent = new Entry({ id: 'r', sourceId: 's', type: EntryType.Task, heading: 'Pay the rent', uid: 'u2', due: D('2026-06-01T00:00:00Z'), recurrence: new Recurrence({ freq: 'MONTHLY' }) })
+		const rent = new Entry({ id: 'r', sourceId: 's', type: EntryType.Task, heading: 'Pay the rent', uid: 'u2', due: D('2026-06-01T00:00:00Z'), recurrence: new Recurrence({ freq: RecurrenceFrequency.Monthly }) })
 		await assert.rejects(editOccurrence(em, stub().integration, rent, new Date('2026-07-01T00:00:00Z'), undated(), 'all'), AnchorlessSeriesError)
 		const { calls, integration } = stub()
 		const detached = await editOccurrence(em, integration, master(), recurrenceId, undated(), 'this')
@@ -287,7 +289,7 @@ describe('scoped occurrence edits', () => {
 		await editOccurrence(em, integration, m, recurrenceId, movedToTuesday, 'all')
 		const { incoming } = calls.updates[0]!
 		assert.equal((incoming.start as unknown as Date).toISOString(), '2026-06-02T09:00:00.000Z') // anchor +1 day
-		assert.deepEqual(incoming.recurrence!.byday, ['TU']) // the weekly-Monday series became weekly-Tuesday
+		assert.deepEqual(incoming.recurrence!.byday?.map(String), ['TU']) // the weekly-Monday series became weekly-Tuesday
 	})
 
 	it('\'following\' moved to another day rebases the continuation\'s rule onto its new anchor', async () => {
@@ -297,8 +299,8 @@ describe('scoped occurrence edits', () => {
 			start: D('2026-06-09T09:00:00Z'), end: D('2026-06-09T10:00:00Z'),
 		})
 		const result = await editOccurrence(em, integration, master(), recurrenceId, movedToTuesday, 'following')
-		assert.deepEqual(calls.updates[0]!.incoming.recurrence!.byday, ['MO']) // the old half keeps its days
-		assert.deepEqual(result.recurrence!.byday, ['TU']) // the new half repeats on its own weekday
+		assert.deepEqual(calls.updates[0]!.incoming.recurrence!.byday?.map(String), ['MO']) // the old half keeps its days
+		assert.deepEqual(result.recurrence!.byday?.map(String), ['TU']) // the new half repeats on its own weekday
 	})
 
 	it('\'following\' truncates the master before the occurrence and starts a continuation series at the edit', async () => {
@@ -309,7 +311,7 @@ describe('scoped occurrence edits', () => {
 		assert.equal(calls.updates.length, 1)
 		const truncatedRule = calls.updates[0]!.incoming.recurrence!
 		assert.ok(truncatedRule.until)
-		assert.ok(truncatedRule.until!.valueOf() < recurrenceId.getTime())
+		assert.ok(truncatedRule.until!.instant.valueOf() < recurrenceId.getTime())
 		assert.equal(calls.updates[0]!.incoming.location, 'Room A') // the old half keeps the master's content
 		// New half: a fresh series at the edited occurrence, continuing the original cadence.
 		assert.equal(calls.creates.length, 1)
@@ -317,7 +319,7 @@ describe('scoped occurrence edits', () => {
 		assert.equal(result.heading, 'Edited')
 		assert.equal(result.location, 'Room B')
 		assert.equal((result.start as unknown as Date).toISOString(), '2026-06-08T10:00:00.000Z')
-		assert.equal(result.recurrence!.freq, 'WEEKLY')
+		assert.equal(result.recurrence!.freq, RecurrenceFrequency.Weekly)
 		assert.notEqual(result.id, m.id)
 	})
 
@@ -328,7 +330,7 @@ describe('scoped occurrence edits', () => {
 		const m = new Entry({
 			id: 'm', sourceId: 's', type: EntryType.Event, heading: 'Standup', uid: 'u1',
 			start: D('2026-06-01T09:00:00Z'), end: D('2026-06-01T10:00:00Z'),
-			recurrence: new Recurrence({ freq: 'DAILY', count: 10 }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily, count: 10 }),
 		})
 		const moved = new Entry({
 			sourceId: 's', type: EntryType.Event, heading: 'Standup',
@@ -339,7 +341,7 @@ describe('scoped occurrence edits', () => {
 		assert.equal(result.recurrence!.until, undefined)
 		// The old half is UNTIL-bounded before the split, its COUNT cleared (UNTIL alone bounds it).
 		assert.equal(calls.updates[0]!.incoming.recurrence!.count, undefined)
-		assert.ok(calls.updates[0]!.incoming.recurrence!.until!.valueOf() < new Date('2026-06-02T09:00:00Z').getTime())
+		assert.ok(calls.updates[0]!.incoming.recurrence!.until!.instant.valueOf() < new Date('2026-06-02T09:00:00Z').getTime())
 	})
 
 	it('\'all\' adopts the edit\'s duration: a resized occurrence resizes the whole series', async () => {
@@ -352,6 +354,20 @@ describe('scoped occurrence edits', () => {
 		const { incoming } = calls.updates[0]!
 		assert.equal((incoming.start as unknown as Date).toISOString(), '2026-06-01T09:00:00.000Z') // anchor unmoved
 		assert.equal((incoming.end as unknown as Date).toISOString(), '2026-06-01T11:30:00.000Z') // every occurrence is 2.5h now
+	})
+
+	it('\'all\' makes a series of moments of a task whose occurrence lost its end', async () => {
+		const { calls, integration } = stub()
+		const task = (end?: DateTime) => new Entry({
+			id: 'm', sourceId: 's', type: EntryType.Task, heading: 'Water the plants', uid: 'u1',
+			start: D('2026-06-01T09:00:00Z'), end, recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Monday] }),
+		})
+		const moment = new Entry({ sourceId: 's', type: EntryType.Task, heading: 'Water the plants', start: D('2026-06-08T09:00:00Z') })
+		await editOccurrence(em, integration, task(D('2026-06-01T10:00:00Z')), recurrenceId, moment, 'all')
+		const { incoming } = calls.updates[0]!
+		assert.equal((incoming.start as unknown as Date).toISOString(), '2026-06-01T09:00:00.000Z')
+		assert.equal(incoming.end, undefined)
+		assert.equal(incoming.point, true)
 	})
 
 	it('\'all\' converting timed → all-day gives the series a whole-day span, not its old clock length', async () => {
@@ -397,7 +413,7 @@ describe('scoped occurrence edits', () => {
 		const m = new Entry({
 			id: 'm', sourceId: 's', type: EntryType.Task, heading: 'Test', uid: 'u1', timeZone: 'UTC',
 			start: D('2026-07-10T02:00:00Z'), end: D('2026-07-10T04:00:00Z'), // 2h
-			recurrence: new Recurrence({ freq: 'DAILY' }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }),
 		})
 		const span = (init: Partial<Entry>) => new Entry({ sourceId: 's', type: EntryType.Task, heading: 'Test', ...init })
 		const apply = (incoming: Entry) => Object.assign(m, { start: incoming.start, end: incoming.end, allDay: incoming.allDay, recurrence: incoming.recurrence })
@@ -422,7 +438,7 @@ describe('scoped occurrence edits', () => {
 		const m = new Entry({
 			id: 'm', sourceId: 's', type: EntryType.Event, heading: 'Standup', uid: 'u1', timeZone: 'Europe/Berlin',
 			start: D('2026-07-10T00:00:00Z'), end: D('2026-07-10T02:00:00Z'), // Fri 02:00–04:00 CEST
-			recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['FR'] }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Friday] }),
 		})
 		const allDay = new Entry({
 			sourceId: 's', type: EntryType.Event, heading: 'Standup', allDay: true,
@@ -430,7 +446,7 @@ describe('scoped occurrence edits', () => {
 		})
 		await editOccurrence(em, integration, m, new Date('2026-07-10T00:00:00Z'), allDay, 'all')
 		const { incoming } = calls.updates[0]!
-		assert.deepEqual(incoming.recurrence!.byday, ['FR']) // same Berlin day, no rotation
+		assert.deepEqual(incoming.recurrence!.byday?.map(String), ['FR']) // same Berlin day, no rotation
 		assert.equal((incoming.start as unknown as Date).toISOString(), '2026-07-09T22:00:00.000Z')
 		assert.equal((incoming.end as unknown as Date).toISOString(), '2026-07-10T22:00:00.000Z')
 	})
@@ -443,7 +459,7 @@ describe('scoped occurrence edits', () => {
 		const m = new Entry({
 			id: 'm', sourceId: 's', type: EntryType.Event, heading: 'Standup', uid: 'u1', timeZone: 'Europe/Berlin',
 			start: D('2026-10-23T07:00:00Z'), end: D('2026-10-23T08:00:00Z'), // Fri 09:00–10:00 CEST
-			recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['FR'] }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Friday] }),
 		})
 		const moved = new Entry({
 			sourceId: 's', type: EntryType.Event, heading: 'Standup',
@@ -452,7 +468,7 @@ describe('scoped occurrence edits', () => {
 		await editOccurrence(em, integration, m, new Date('2026-11-06T08:00:00Z'), moved, 'all') // Fri 09:00 CET
 		const { incoming } = calls.updates[0]!
 		assert.equal((incoming.start as unknown as Date).toISOString(), '2026-10-25T08:00:00.000Z') // Sun 09:00 CET: 09:00 stays 09:00
-		assert.deepEqual(incoming.recurrence!.byday, ['SU'])
+		assert.deepEqual(incoming.recurrence!.byday?.map(String), ['SU'])
 	})
 
 	it('\'all\' shifts the exclusions along with the series; none leaves them untouched', async () => {
@@ -496,7 +512,7 @@ describe('scoped occurrence edits', () => {
 		m.timeZone = 'Europe/Berlin'
 		m.start = D('2026-10-23T07:00:00Z') // 09:00 CEST
 		m.end = D('2026-10-23T08:00:00Z')
-		m.recurrence = new Recurrence({ freq: 'WEEKLY', byday: ['FR'] })
+		m.recurrence = new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Friday] })
 		m.exdates = [new Date('2026-11-06T08:00:00Z').getTime()] // 09:00 CET
 		const moved = new Entry({
 			sourceId: 's', type: EntryType.Event, heading: 'Standup',
@@ -618,7 +634,7 @@ describe('scoped occurrence edits', () => {
 			const { calls, integration } = stub()
 			await deleteOccurrence(em, integration, master(), recurrenceId, 'following')
 			assert.equal(calls.updates.length, 1)
-			assert.ok(calls.updates[0]!.incoming.recurrence!.until!.valueOf() < recurrenceId.getTime())
+			assert.ok(calls.updates[0]!.incoming.recurrence!.until!.instant.valueOf() < recurrenceId.getTime())
 		}
 		{
 			const { calls, integration } = stub()

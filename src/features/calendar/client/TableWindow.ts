@@ -1,14 +1,13 @@
 import { DateTime, DateTimeRange } from '@3mo/date-time'
-import { calendarDateOf } from '../../time/calendarDate.js'
+import './DateTime.calendar.js'
 
 export const tableWindowPresets = ['past30', 'today', 'next7', 'next30', 'next12', 'all'] as const
 
 export type TableWindowPreset = typeof tableWindowPresets[number]
 
 /**
- * Which entries the table lists: days counted from today, never a page turned from a navigated date.
- * Undated tasks and overdue open ones ride along with every window, as they do with every fetch.
- * Like the grids' density it lives on the device rather than in the URL.
+ * Days counted from today, never a page turned from a navigated date; undated and overdue tasks ride along as with
+ * every fetch. It lives on the device, not in the URL.
  */
 export class TableWindow {
 	private static readonly key = 'Mitra.Table.Window'
@@ -66,12 +65,7 @@ export class TableWindow {
 	) { }
 
 	get key() {
-		return this.kind !== 'custom' ? this.kind : `custom:${TableWindow.dayOf(this.from!)}:${TableWindow.dayOf(this.to!)}`
-	}
-
-	/** A day as a key writes it: ISO, whatever calendar the language reads days in. */
-	static dayOf(date: DateTime) {
-		return calendarDateOf(date).toString()
+		return this.kind !== 'custom' ? this.kind : `custom:${this.from!.isoDate}:${this.to!.isoDate}`
 	}
 
 	/** No bounds at all. A series then lists once, as its start, since its occurrences never end. */

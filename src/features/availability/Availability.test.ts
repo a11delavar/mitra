@@ -21,6 +21,7 @@ import { Notion } from '../../integrations/notion/Notion.js'
 import { Tempo } from '../../integrations/tempo/Tempo.js'
 import { MigrationVerdict } from '../migration/MigrationPlan.js'
 import { Availability } from './client/Availability.js'
+import { RecurrenceFrequency } from '../recurrence/RecurrenceFrequency.js'
 
 describe('the availability type', () => {
 	it('parses from its wire value', () => {
@@ -138,7 +139,7 @@ describe('converting an entry to availability', () => {
 })
 
 describe('moving availability to a calendar', () => {
-	const availability = new Entry({ id: 'a', heading: 'Working hours', type: EntryType.Availability, recurrence: new Recurrence({ freq: 'WEEKLY' }) })
+	const availability = new Entry({ id: 'a', heading: 'Working hours', type: EntryType.Availability, recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })
 	const assess = (capabilities: Integration['capabilities']) =>
 		MigrationVerdict.assess(availability, { target: new Source(), capabilities, occurrence: false, occurrences: () => 52 })
 
@@ -172,7 +173,6 @@ async function inMemoryOrm() {
 	return orm
 }
 
-/** Records what reaches the provider. */
 const written = new Array<string>()
 const recorder: SyncEngine = {
 	fetchSources: () => Promise.resolve([]),
@@ -211,7 +211,7 @@ describe('availability in a provider\'s calendar', () => {
 	const entry = (init: Partial<Entry>) => new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), sourceId: work.id, ...init })
 
 	it('is stored in Mitra and never written to the provider', async () => {
-		const hours = await account.createEntry(em, entry({ type: EntryType.Availability, heading: 'Working hours', recurrence: new Recurrence({ freq: 'WEEKLY' }) }))
+		const hours = await account.createEntry(em, entry({ type: EntryType.Availability, heading: 'Working hours', recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) }))
 		await em.flush()
 		await account.updateEntry(em, hours, entry({ type: EntryType.Availability, heading: 'Office hours' }))
 		await account.excludeOccurrence(em, hours, new Date('2026-10-05T07:00:00Z'))
@@ -241,7 +241,7 @@ describe('availability in a provider\'s calendar', () => {
 	})
 
 	it('is handed to the engine as masters and single windows of enabled calendars', async () => {
-		const series = entry({ type: EntryType.Availability, heading: 'Working hours', recurrence: new Recurrence({ freq: 'WEEKLY' }) })
+		const series = entry({ type: EntryType.Availability, heading: 'Working hours', recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })
 		em.persist([
 			series,
 			entry({ type: EntryType.Availability, heading: 'Moved Monday', recurrenceMasterId: series.id, recurrenceId: new DateTime('2026-10-05T07:00:00Z') }),

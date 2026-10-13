@@ -1,118 +1,30 @@
 import { component, html, css, property, state, event, eventListener, repeat, query } from '@a11d/lit'
-import { type UserTimeZone } from '../../identity/User.js'
 import { Popover } from '../../../design/Popover.js'
 import type { SearchField } from '../../../design/TextField.js'
-
-// --- Zone presentation (shared by the axis header, the picker, and the entry editor) ----------------
-
-/** One `timeZoneName` part off Intl, in the UI language; `zoneId` undefined = the system zone. */
-export function zoneNamePart(zoneId: string | undefined, style: 'short' | 'long' | 'shortOffset' | 'longOffset'): string {
-	return new Intl.DateTimeFormat(Localizer.locales.current, { ...(!zoneId ? {} : { timeZone: zoneId }), timeZoneName: style })
-		.formatToParts(new Date())
-		.find(part => part.type === 'timeZoneName')?.value ?? ''
-}
-
-/** The compact column label: the user's custom name, else Intl's `short` name: a real abbreviation
- * ("PDT") where the zone has one, a localized offset ("GMT+2") where it doesn't. The generic names
- * ("Germany Time") don't fit a 3.75rem column. */
-export function shortZoneLabel(zone?: UserTimeZone): string {
-	return (zone ? zone.label : systemZoneLabel()) || zoneNamePart(zone?.id, 'short')
-}
-
-/** The full name for tooltips ("Central European Summer Time"). */
-export function longZoneName(zoneId?: string): string {
-	return zoneNamePart(zoneId, 'long')
-}
-
-/** The zone the browser runs in, the grid's anchor; never offered (or storable) as an addition. */
-export function systemZoneId(): string {
-	return new Intl.DateTimeFormat().resolvedOptions().timeZone
-}
-
-/** The zone id's city segment ("Asia/Tehran" → "Tehran"), the most recognizable compact handle a
- * zone has; the offsets and generic names collide across zones, the city never does within one. */
-export function zoneCity(zoneId: string): string {
-	return zoneId.split('/').at(-1)!.replaceAll('_', ' ')
-}
-
-// Renames of the SYSTEM zone live in localStorage, not the database: the system zone is browser state
-// (it changes when the device travels), so its label is browser state too, with no second source of truth
-// about which zone anchors the grid. Keyed by zone id, so a "DE" stays bound to Europe/Berlin rather
-// than to whatever zone the device happens to be in.
-const SYSTEM_LABELS_KEY = 'Mitra.TimeZones.Labels'
-
-export function systemZoneLabel(): string | undefined {
-	try {
-		return (JSON.parse(localStorage.getItem(SYSTEM_LABELS_KEY) ?? '{}') as Record<string, string>)[systemZoneId()] || undefined
-	} catch {
-		return undefined
-	}
-}
-
-export function setSystemZoneLabel(label: string | undefined) {
-	try {
-		const labels = JSON.parse(localStorage.getItem(SYSTEM_LABELS_KEY) ?? '{}') as Record<string, string>
-		if (label) {
-			labels[systemZoneId()] = label
-		} else {
-			delete labels[systemZoneId()]
-		}
-		localStorage.setItem(SYSTEM_LABELS_KEY, JSON.stringify(labels))
-	} catch {
-		// Storage unavailable, so the rename just doesn't stick.
-	}
-}
-
-// --- Picker data ------------------------------------------------------------------------------------
-
-interface ZoneRow {
-	readonly id: string
-	readonly offset: string
-	readonly offsetMinutes: number
-	readonly name: string
-	readonly city: string
-}
-
-let zoneRows: ReadonlyArray<ZoneRow> | undefined
-
-/** Every IANA zone the runtime knows, presentable and sorted by offset, built lazily on first picker
- * open (~400 zones × two Intl formatters is one-time work worth deferring off the boot path). */
-function allZoneRows(): ReadonlyArray<ZoneRow> {
-	return zoneRows ??= Intl.supportedValuesOf('timeZone')
-		.map(id => {
-			const offset = zoneNamePart(id, 'longOffset') // "GMT+02:00"; plain "GMT" for UTC
-			const match = /GMT([+-])(\d{2}):(\d{2})/.exec(offset)
-			const offsetMinutes = !match ? 0 : (match[1] === '-' ? -1 : 1) * (Number(match[2]) * 60 + Number(match[3]))
-			return {
-				id,
-				offset,
-				offsetMinutes,
-				name: zoneNamePart(id, 'long'),
-				city: zoneCity(id),
-			}
-		})
-		.sort((a, b) => a.offsetMinutes - b.offsetMinutes || a.city.localeCompare(b.city))
-}
+import { TimeZoneDirectory, type TimeZoneTree } from './TimeZoneDirectory.js'
 
 /**
- * A searchable list of every IANA zone, as a popover: `toggle(anchor)` opens it, and a chosen zone id is `pick`ed
- * and closes it. `exclude` leaves out ids that would change nothing for the caller.
+ * A searchable popover over every IANA zone: the formatting region's zones first, then all, each group sharing a name
+ * and a clock as one header for its main city, the others folded under it.
  */
 @component('mitra-time-zone-picker')
 export class TimeZonePicker extends Popover {
 	@event() readonly pick!: EventDispatcher<string>
 
-	@property({ type: Object }) exclude?: ReadonlySet<string>
+	/** One zone, which a pick closes; or several, which a pick toggles one of, leaving the list open. */
+	@property({ type: Object }) selected?: string | ReadonlyArray<string>
 
-	/** The caller's current zone, marked and where the list opens, among its neighbours by offset. */
-	@property() selected?: string
+	/** The account's home, marked with a house in place of a tick. */
+	@property() home?: string
+
+	/** The zone the device runs in, marked with a pin where it is not home. */
+	@property() here?: string
 
 	@state() private query = ''
 
 	/**
-	 * The zones are listed from the first opening on: every entry editor holds a picker, and 400 options laid out in one
-	 * nobody opens cost each tap on an entry hundreds of milliseconds. Before the popover shows, so the list opens at the
-	 * selected zone.
+	 * Listed from the first opening on: every entry editor holds a picker, and 400 unopened options cost each tap on an
+	 * entry hundreds of milliseconds. Set before the popover shows, so the list opens at the selected zone.
 	 */
 	@state() private listed = false
 
@@ -125,19 +37,6 @@ export class TimeZonePicker extends Popover {
 
 	@query('mitra-search-field') private readonly input?: SearchField
 
-	private get rows(): ReadonlyArray<ZoneRow> {
-		const rows = !this.exclude?.size ? allZoneRows() : allZoneRows().filter(row => !this.exclude!.has(row.id))
-		const query = this.query.trim().toLowerCase()
-		const matches = !query ? rows : rows.filter(row =>
-			row.city.toLowerCase().includes(query)
-			|| row.name.toLowerCase().includes(query)
-			|| row.offset.toLowerCase().includes(query)
-			|| row.id.toLowerCase().includes(query))
-		// The browser's own zone is the way back to the default, so it heads the list rather than hiding in the offset order.
-		const system = systemZoneId()
-		return [...matches.filter(row => row.id === system), ...matches.filter(row => row.id !== system)]
-	}
-
 	protected override opened() {
 		this.query = ''
 		if (this.input) {
@@ -147,7 +46,9 @@ export class TimeZonePicker extends Popover {
 	}
 
 	private choose(id: string) {
-		this.hide()
+		if (!Array.isArray(this.selected)) {
+			this.hide()
+		}
 		this.pick.dispatch(id)
 	}
 
@@ -156,8 +57,10 @@ export class TimeZonePicker extends Popover {
 			${super.styles}
 
 			:host {
+				/* Faded from the row's own colour rather than a fixed grey, so it reads on a selected or tinted row too. */
+				--_faded: color-mix(in srgb, currentColor 55%, transparent);
 				padding: 0;
-				inline-size: 26rem;
+				inline-size: 28rem;
 				max-inline-size: calc(100dvw - 0.75rem);
 			}
 
@@ -171,61 +74,97 @@ export class TimeZonePicker extends Popover {
 				border-block-end: var(--border);
 			}
 
+			mitra-option-group::part(label) {
+				color: var(--_faded);
+			}
+
+			/* The list's own columns, between the tick and the chevron: a group's offset and name, and the city it stands for. */
 			mitra-listbox {
-				max-block-size: min(24rem, 50dvh);
+				--mitra-tree-columns: [offset] 4.5rem [name] minmax(0, 1fr) [city] auto;
+				max-block-size: min(26rem, 55dvh);
 				padding: 0.25rem;
-				--mitra-option-inset: 2rem;
+			}
+
+			mitra-option::part(content) {
+				display: contents;
+			}
+
+			mitra-option > span {
+				grid-row: 1;
+				white-space: nowrap;
 			}
 
 			.offset {
-				flex-shrink: 0;
-				inline-size: 5.25rem;
-				color: var(--color-text-muted);
+				grid-column: offset;
+				color: var(--_faded);
 				font-variant-numeric: tabular-nums;
 			}
 
-			.name {
-				font-weight: 500;
-				white-space: nowrap;
+			.name, .country {
+				grid-column: name;
+				min-inline-size: 0;
 				overflow: hidden;
 				text-overflow: ellipsis;
 			}
 
 			.city {
-				color: var(--color-text-muted);
-				white-space: nowrap;
-				overflow: hidden;
-				text-overflow: ellipsis;
+				grid-column: city;
+				justify-self: end;
+				padding-inline-start: 0.75rem;
 			}
 
-			.primary {
-				margin-inline-start: auto;
-				flex-shrink: 0;
-				color: var(--color-text-muted);
-				font-size: 0.6875rem;
-				font-weight: 500;
-				text-transform: uppercase;
-				letter-spacing: 0.04em;
-			}
 		`
 	}
 
+	/** The other cities put their country under the group's name; the empty offset column is all the indent they need. */
+	private treeTemplate(group: TimeZoneTree) {
+		return html`
+			<mitra-option-tree .open=${!!this.query.trim()}>
+				<mitra-option slot="header" .value=${group.main.id} label=${`${group.name} · ${group.main.city}`} marker=${this.markerOf(group.main.id)} title=${this.titleOf(group.main.id)}>
+					<span class="offset">${group.offset}</span>
+					<span class="name">${group.name}</span>
+					<span class="city">${group.main.city}</span>
+				</mitra-option>
+				${repeat(group.others, zone => zone.id, zone => html`
+					<mitra-option .value=${zone.id} label=${`${group.name} · ${zone.city}`} marker=${this.markerOf(zone.id)} title=${this.titleOf(zone.id)}>
+						<span class="country">${zone.country}</span>
+						<span class="city">${zone.city}</span>
+					</mitra-option>
+				`)}
+			</mitra-option-tree>
+		`
+	}
+
+	private markerOf(id: string) {
+		return id === this.home ? 'house' : id === this.here ? 'map-pin' : html.nothing
+	}
+
+	private titleOf(id: string) {
+		return id === this.home ? t('Home') : id === this.here ? t('Current time zone') : html.nothing
+	}
+
 	protected override get template() {
-		const system = systemZoneId()
+		const directory = this.listed ? TimeZoneDirectory.current : undefined
+		const region = directory?.locale.maximize().region
+		const preferred = [this.here, this.home].filter(id => id !== undefined)
+		const regional = this.query || !region ? [] : directory!.find('', zone => zone.region === region, region, preferred)
+		// Never twice: a zone is one option, which the list tells from the others by its value alone.
+		const listed = new Set(regional.flatMap(group => [group.main.id, ...group.others.map(zone => zone.id)]))
+		const groups = directory?.find(this.query, zone => !listed.has(zone.id), region, preferred) ?? []
 		return html`
 			<mitra-combobox inline activateFirst .selected=${this.selected} @pick=${(e: CustomEvent<string>) => this.choose(e.detail)} @dismiss=${() => this.hide()}>
 				<mitra-search-field slot="input" plain placeholder=${t('Time zone')}
 					@input=${(e: Event) => this.query = (e.target as SearchField).value}
 				></mitra-search-field>
 				<mitra-listbox aria-label=${t('Time zone')}>
-					${!this.listed ? html.nothing : repeat(this.rows, row => row.id, row => html`
-						<mitra-option .value=${row.id}>
-							<span class="offset">${row.offset}</span>
-							<span class="name">${row.name}</span>
-							<span class="city">– ${row.city}</span>
-							${row.id !== system ? html.nothing : html`<span class="primary">${t('Primary')}</span>`}
-						</mitra-option>
-					`)}
+					${!regional.length ? html.nothing : html`
+						<mitra-option-group label=${new Intl.DisplayNames([directory!.locale], { type: 'region' }).of(region!) ?? region!}>
+							${regional.map(group => this.treeTemplate(group))}
+						</mitra-option-group>
+					`}
+					<mitra-option-group label=${this.query ? '' : t('All time zones')}>
+						${groups.map(group => this.treeTemplate(group))}
+					</mitra-option-group>
 				</mitra-listbox>
 			</mitra-combobox>
 		`

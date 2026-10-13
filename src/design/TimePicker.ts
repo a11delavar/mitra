@@ -4,11 +4,7 @@ import { ResizeController } from '@3mo/resize-observer'
 import { scrollbar } from './scrollbar.css.js'
 import { slots } from './slots.css.js'
 
-/**
- * The times of a day to pick one from, every `step` minutes in the language's clock; `value` is the `HH:mm` of a native
- * time input. The time in force is marked, and the list shows it, or the last time before it, whenever it appears. Up
- * and Down walk the times.
- */
+/** `value` is a native time input's `HH:mm`; the list shows the time in force, or the last one before it, whenever it appears. */
 @component('mitra-time-picker')
 export class TimePicker extends Component {
 	@event() readonly pick!: EventDispatcher<string>
@@ -25,7 +21,7 @@ export class TimePicker extends Component {
 		const pad = (value: number) => String(value).padStart(2, '0')
 		return Array.from({ length: Math.ceil(24 * 60 / this.step) }, (_, index) => {
 			const time = day.add({ minutes: index * this.step })
-			return { value: `${pad(time.hour)}:${pad(time.minute)}`, label: time.format({ hour: 'numeric', minute: '2-digit' }) }
+			return { value: `${pad(time.hour)}:${pad(time.minute)}`, label: time.format({ timeStyle: 'short' }) }
 		})
 	}
 

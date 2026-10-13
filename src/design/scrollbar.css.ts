@@ -1,12 +1,17 @@
 import { unsafeCSS } from '@a11d/lit'
 
 /**
- * A slim thumb with no track or stepper arrows, for any scroller; `--scrollbar-width` is its lane, for a layout
- * that reserves it with `scrollbar-gutter`. Chromium ignores `::-webkit-scrollbar` once `scrollbar-width` is set,
- * so the standard properties are only Firefox's.
+ * `--scrollbar-width` is its lane, for a layout that reserves it with `scrollbar-gutter`. Chromium ignores
+ * `::-webkit-scrollbar` once `scrollbar-width` is set, so the standard properties are only Firefox's.
  */
 export const scrollbar = unsafeCSS`
 	--scrollbar-width: 0.375rem;
+
+	/* scrollbar-color is inherited, and one from an ancestor (the settings dialog's) would switch the thumb below off. */
+	@supports selector(::-webkit-scrollbar-thumb) {
+		scrollbar-color: auto;
+		scrollbar-width: auto;
+	}
 
 	&::-webkit-scrollbar {
 		inline-size: var(--scrollbar-width);

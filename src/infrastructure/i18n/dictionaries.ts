@@ -7,12 +7,12 @@ import pt from './pt.json' with { type: 'json' }
 import it from './it.json' with { type: 'json' }
 import fa from './fa.json' with { type: 'json' }
 
-/** Localization configuration with source English and translated locale dictionaries. */
 const dictionaries = { en, de, fr, es, pt, it, fa }
 Localizer.dictionaries.add(dictionaries)
 
-/** `t()` in a given language, for the server, which has no current one. Unknown languages read English. */
-export function localizeIn(language: string | null | undefined) {
+/** `t()` in a locale's language (`en-GB` reads English), for the server, which has no current one. Unknown languages read English. */
+export function localizeIn(locale: string | null | undefined) {
+	const language = locale?.split('-')[0]
 	const known = (language && language in dictionaries ? language : 'en') as LanguageCode
 	return (key: string, parameters: Record<string, string | number> = {}) => LocalizableString.get(key).localize(known, parameters).value
 }

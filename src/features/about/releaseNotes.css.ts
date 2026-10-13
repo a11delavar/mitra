@@ -1,9 +1,6 @@
 import { css } from '@a11d/lit'
 
-/**
- * The two channels a reader can run: the newest release (the `:latest` image) and what is in development (`:dev`).
- * Declarations only, for each surface to put where its releases show.
- */
+/** The `:latest` and `:dev` channels' colors: declarations only, for each surface to put where its releases show. */
 export const releaseColors = css`
 	--release-latest: light-dark(#1f8a5b, #4fc48f);
 	--release-gold: light-dark(#a8670f, #e8ac4f);
@@ -11,9 +8,8 @@ export const releaseColors = css`
 `
 
 /**
- * How a release reads, on the website's release page and in the app's About dialog alike (`website/tools/tokens.mjs`
- * emits it for the site). Both mark a release up with these classes under `.release-notes`; each lays out its own hero
- * and sets the sizes below.
+ * Worn by the website's release page (`website/tools/tokens.mjs` emits it) and the app's About dialog alike; each lays
+ * out its own hero and sets the sizes below.
  */
 export const releaseNotes = css`
 	.release-notes {
@@ -143,7 +139,6 @@ export const releaseNotes = css`
 			}
 		}
 
-		/* The way to the docs, beside the heading and out of the text. */
 		.docs {
 			display: inline-flex;
 			font-size: 0.8em;
@@ -230,6 +225,101 @@ export const releaseNotes = css`
 			}
 		}
 
+		/* The changelog, by commit: looked up rather than read, so it closes the release, headed like the categories inside it. */
+		.changelog {
+			gap: 2.5rem;
+
+			.title {
+				margin: 0;
+				font-size: 0.875rem;
+				font-weight: 600;
+				color: var(--color-text-muted);
+			}
+		}
+
+		.patches {
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
+		}
+
+		/* The commit list is read for troubleshooting, so it starts folded; find-in-page still reaches it. */
+		.everything {
+			interpolate-size: allow-keywords;
+
+			> summary {
+				display: flex;
+				align-items: baseline;
+				flex-wrap: wrap;
+				column-gap: 0.5rem;
+				list-style: none;
+				cursor: pointer;
+				transition: color 150ms;
+
+				&::-webkit-details-marker {
+					display: none;
+				}
+
+				> :is(h2, h3) {
+					margin: 0;
+					font: inherit;
+				}
+
+				small {
+					font-size: inherit;
+					font-weight: 400;
+				}
+
+				> :is(.icon, mitra-icon) {
+					align-self: center;
+					transition: rotate 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+
+					&:dir(rtl) {
+						rotate: 180deg;
+					}
+				}
+
+				&:hover {
+					color: var(--color-text);
+				}
+
+				+ .category {
+					margin-block-start: 1.25rem;
+				}
+			}
+
+			&[open] > summary > :is(.icon, mitra-icon) {
+				rotate: 90deg;
+			}
+
+			&::details-content {
+				block-size: 0;
+				opacity: 0;
+				overflow: clip;
+				overflow-clip-margin: 0.5rem;
+			}
+
+			&[open]::details-content {
+				block-size: auto;
+				opacity: 1;
+			}
+
+			@media (prefers-reduced-motion: no-preference) {
+				&::details-content {
+					transition:
+						block-size 0.3s cubic-bezier(0.1, 0.9, 0.2, 1),
+						opacity 0.2s ease,
+						content-visibility 0.3s allow-discrete;
+				}
+			}
+		}
+
+		.maintenance {
+			margin: 1.5rem 0 0;
+			font-size: 0.875rem;
+			color: var(--color-text-muted);
+		}
+
 		.patch {
 			display: grid;
 			grid-template-columns: 4rem 7rem minmax(0, 1fr);
@@ -272,7 +362,6 @@ export const releaseNotes = css`
 			}
 		}
 
-		/* One commit a row: its subject, and its hash at the end. */
 		.lines {
 			margin: 0;
 			padding: 0;

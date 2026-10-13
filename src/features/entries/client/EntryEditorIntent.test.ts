@@ -6,6 +6,7 @@ import { EntryType } from '../EntryType.js'
 import { Recurrence } from '../../recurrence/Recurrence.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 import { EntryStore } from './EntryStore.js'
+import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
 
 describe('EntryEditorIntent', () => {
 	const day = new DateTime().dayStart
@@ -59,7 +60,7 @@ describe('EntryEditorIntent', () => {
 
 		it('skips a series master in favor of its occurrences', () => {
 			EntryEditorIntent.requestOpen('master')
-			const master = entry({ id: 'master', recurrence: new Recurrence({ freq: 'WEEKLY' }) })
+			const master = entry({ id: 'master', recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })
 			assert.equal(EntryEditorIntent.shouldOpen(master), false)
 			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'master-2', recurrenceMasterId: 'master', recurrence: master.recurrence })), true)
 		})

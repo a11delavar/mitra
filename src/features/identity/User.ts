@@ -1,3 +1,4 @@
+import { converter } from '@a11d/converter'
 import type { EntityManager, FilterQuery } from '@mikro-orm/core'
 import { model } from '../../infrastructure/model/model.js'
 import { entity, primaryKey, property, manyToOne, embedded, unique } from '../../infrastructure/model/orm.js'
@@ -6,11 +7,7 @@ import { Source } from '../sources/Source.js'
 import { Integration } from '../../integrations/Integration.js'
 import { Entry } from '../entries/Entry.js'
 import { UserSettings } from '../settings/UserSettings.js'
-
-export interface UserTimeZone {
-	id: string
-	label?: string
-}
+import { UserTimeZones } from '../time/UserTimeZones.js'
 
 @model('User')
 @entity()
@@ -25,7 +22,8 @@ export class User {
 
 	@manyToOne(() => Source, { mapToPk: true, deleteRule: 'set null', nullable: true }) defaultSourceId?: string
 
-	@property({ type: 'json', nullable: true }) timeZones?: Array<UserTimeZone>
+	@converter(UserTimeZones.converter)
+	@property({ type: UserTimeZones.Mapper, nullable: true }) timeZones?: UserTimeZones
 
 	@property({ type: 'json', nullable: true }) settings?: UserSettings
 
@@ -38,7 +36,6 @@ export class User {
 		Object.assign(this, init)
 	}
 
-	/** JIT provisions an OIDC user on first login or updates existing identity profile claims. */
 	static async provision(em: EntityManager, issuer: string, claims: IdentityClaims): Promise<User> {
 		const existing = await em.findOne(User, { identity: { issuer, subject: claims.sub } })
 		if (existing) {
@@ -50,14 +47,11 @@ export class User {
 		return user
 	}
 
-	/** Replaces stored settings with sanitized preferences bag. */
 	applySettings(settings: unknown): void {
 		this.settings = UserSettings.sanitize(settings)
 	}
 
-	/**
-	 * Hides all enabled sources except the chosen sourceId, storing previously hidden sources for restoration.
-	 */
+	/** Keeps the visibility from before the first solo, however many follow. */
 	showOnly(sources: ReadonlyArray<Source>, sourceId: string): void {
 		const visible = sources.filter(source => source.visible)
 		if (!this.previouslyHiddenSourceIds && visible.length === 1 && visible[0]!.id === sourceId) {
@@ -69,7 +63,6 @@ export class User {
 		}
 	}
 
-	/** Restores source visibility to the state prior to soloing and clears the solo record. */
 	restorePreviousVisibility(sources: ReadonlyArray<Source>): void {
 		const previouslyHidden = new Set(this.previouslyHiddenSourceIds)
 		this.previouslyHiddenSourceIds = undefined
@@ -77,8 +70,6 @@ export class User {
 			source.hidden = previouslyHidden.has(source.id)
 		}
 	}
-
-	// --- Scoped Lookups ---------------------------------------------------------------------------
 
 	integrations(em: EntityManager): Promise<Array<Integration>> {
 		return em.find(Integration, { userId: this.id })

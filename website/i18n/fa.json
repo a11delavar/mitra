@@ -3,33 +3,9 @@
 		"${count:pluralityNumber} تغییر",
 		"${count:pluralityNumber} تغییر"
 	],
-	"${count:pluralityNumber} documentation changes": [
-		"${count:pluralityNumber} تغییر در مستندات",
-		"${count:pluralityNumber} تغییر در مستندات"
-	],
-	"${count:pluralityNumber} features": [
-		"${count:pluralityNumber} ویژگی",
-		"${count:pluralityNumber} ویژگی"
-	],
-	"${count:pluralityNumber} improvements": [
-		"${count:pluralityNumber} بهبود",
-		"${count:pluralityNumber} بهبود"
-	],
-	"${count:pluralityNumber} maintenance changes": [
-		"${count:pluralityNumber} تغییر نگه‌داری",
-		"${count:pluralityNumber} تغییر نگه‌داری"
-	],
 	"${count:pluralityNumber} minute read": [
 		"${count:pluralityNumber} دقیقه مطالعه",
 		"${count:pluralityNumber} دقیقه مطالعه"
-	],
-	"${count:pluralityNumber} other changes": [
-		"${count:pluralityNumber} تغییر دیگر",
-		"${count:pluralityNumber} تغییر دیگر"
-	],
-	"${count:pluralityNumber} refactors": [
-		"${count:pluralityNumber} بازسازی",
-		"${count:pluralityNumber} بازسازی"
 	],
 	"${summary}, from the changelog": "${summary}، از فهرست تغییرات",
 	"A self-hosted calendar that puts your tasks on the same timeline as your events. Keep your calendars in Mitra, or sync the ones you already use.": "تقویمی خودمیزبان که کارهایتان را روی همان خط زمانی رویدادهایتان می‌گذارد. تقویم‌هایتان را در میترا نگه دارید، یا آن‌هایی را که از پیش دارید همگام کنید.",
@@ -74,15 +50,12 @@
 	"Open at full size": "باز کردن در اندازه کامل",
 	"Open source under the AGPL-3.0": "متن‌باز تحت AGPL-3.0",
 	"Open this week in the demo": "باز کردن این هفته در دمو",
-	"Other": "سایر",
 	"Overview": "نمای کلی",
 	"planned": "برنامه‌ریزی‌شده",
-	"Plus ${link} on GitHub: tests, builds and chores.": "به‌علاوه ${link} در GitHub: آزمون‌ها، ساخت‌ها و کارهای نگه‌داری.",
 	"Project": "پروژه",
 	"Read it in English": "خواندن به انگلیسی",
 	"Read them in English": "خواندن به انگلیسی",
 	"Recurring things like workouts shrink to small marks, so a busy month stays readable.": "چیزهای تکرارشونده مثل ورزش به نشانه‌های کوچک تبدیل می‌شوند، تا یک ماه شلوغ خوانا بماند.",
-	"Refactors": "بازسازی‌ها",
 	"RSS feed": "فید RSS",
 	"See what each integration supports.": "ببینید هر یکپارچه‌سازی از چه چیزی پشتیبانی می‌کند.",
 	"See what is new": "ببینید چه چیزی تازه است",

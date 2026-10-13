@@ -30,7 +30,9 @@ Mitra también recuerda algunas cosas en cada dispositivo a medida que lo usas: 
 
 **Tema** es **Como el sistema**, **Claro** u **Oscuro**. **Como el sistema**, el valor predeterminado, sigue el modo claro u oscuro de tu dispositivo.
 
-**Idioma** ofrece inglés, alemán, francés, español, portugués, italiano y persa, cada uno con el nombre en su propio idioma. El cambio se aplica al instante, sin recargar, y el persa coloca Mitra de derecha a izquierda. Las fechas, las horas y el primer día de la semana siguen el idioma tal como lo escribe la región de tu navegador, así que el inglés de Estados Unidos empieza las semanas en domingo y el del Reino Unido en lunes, mientras que el persa las empieza en sábado.
+**Idioma** ofrece inglés, alemán, francés, español, portugués, italiano y persa, cada uno con el nombre en su propio idioma. El cambio se aplica al instante, sin recargar, y el persa coloca Mitra de derecha a izquierda.
+
+Cada idioma decide también cómo se escriben las fechas y las horas, qué día empieza la semana y qué días son fin de semana. Al principio sigue cómo escribe tu navegador el idioma, así que el inglés suele escribirse como en Estados Unidos, el alemán como en Alemania y el persa como en Irán. La flecha al final de un idioma despliega los países y zonas donde se escribe, como el Reino Unido o Europa para el inglés: el inglés del Reino Unido escribe 9 Oct 2026 y 13:00 y empieza las semanas en lunes, el de Estados Unidos escribe Oct 9, 2026 y 1:00 PM y las empieza en domingo. Al cambiar de idioma desde la paleta de comandos se conserva tu país si el nuevo idioma se escribe allí. Una vista previa bajo el ajuste muestra cómo se escriben las fechas, las horas, la semana, los números y los nombres de las zonas horarias. Un país aquí no es una zona horaria: Nueva York y Los Ángeles comparten uno.
 
 ## Calendario
 

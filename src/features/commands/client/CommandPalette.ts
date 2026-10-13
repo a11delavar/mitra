@@ -5,19 +5,13 @@ import { getSource, searchEntries } from '../../../infrastructure/http/Api.js'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
 import { commandMatches, Command } from '../Command.js'
 import { LatestSearch } from '../../../design/Combobox.js'
+import { KeyPress } from '../KeyPress.js'
 
-/**
- * The command palette: a top-layer search box ("/", Ctrl/Cmd+P or +K, or the header's search trigger) over the
- * page's {@link Command}s and the ENTIRE entry store. Entries are searched on the backend, so
- * matches aren't limited to the window the calendar happens to have fetched. Picking an entry
- * dispatches `navigate` with its start; picking a command executes it.
- */
+/** Entries are searched on the backend, so matches aren't limited to the window the calendar has fetched. */
 @component('mitra-command-palette')
 export class CommandPalette extends Component {
-	/** What the prominent UI teaches is a bare "/": one key, no chord, and nothing to spell differently
-	 * per platform. The chords ({@link hotkeys}) are equally supported and equally documented in the
-	 * shortcut sheet; they just aren't what a header search box should be shouting. (The page owns the
-	 * "/" keystroke itself, since opening the palette from inside the palette is meaningless.) */
+	/** The key the UI teaches: no chord, nothing to spell per platform. The page owns the keystroke, since opening the
+	 * palette from inside it is meaningless. */
 	static readonly hotkey = '/'
 
 	@property({ type: Array }) commands = new Array<Command>()
@@ -40,15 +34,12 @@ export class CommandPalette extends Component {
 		this.dialog.showModal()
 	}
 
-	/** Both chords open it, on equal footing: **P** (the editor lineage, VS Code's Quick Open) and **K**
-	 * (what most other palettes bound). Neither is prominent in the UI, which teaches "/" instead
-	 * ({@link hotkey}), but both are listed in the shortcut sheet and the docs. A shortcut nobody can
-	 * discover may as well not exist. */
+	/** P as in VS Code's Quick Open, K as most other palettes bind it; the shortcut sheet and the docs list both. */
 	private static readonly hotkeys = ['p', 'k']
 
 	@eventListener({ target: window, type: 'keydown' })
 	protected handleWindowKeyDown(e: KeyboardEvent) {
-		if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && CommandPalette.hotkeys.includes(e.key.toLowerCase())) {
+		if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && CommandPalette.hotkeys.some(key => new KeyPress(e).is(key))) {
 			e.preventDefault()
 			if (this.dialog.open) {
 				this.dialog.close()
@@ -73,7 +64,6 @@ export class CommandPalette extends Component {
 		if (result instanceof Command) {
 			result.dispatch()
 		} else if (result.start) {
-			// Navigate the calendar to the entry, then ask its segment to open once it renders.
 			this.navigate.dispatch(result.start)
 			if (result.id) {
 				EntryEditorIntent.requestOpen(result.id)

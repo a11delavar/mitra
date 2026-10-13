@@ -7,10 +7,8 @@ import { disabled } from './disabled.css.js'
 import { fieldChrome } from './fieldChrome.css.js'
 
 /**
- * A select of the `mitra-option`s inside it (grouped by `mitra-option-group`), any values among them: the ARIA
- * select-only combobox, a button over a listbox. The button shows the selected option's `label` or text, or what is
- * slotted as `value` where that is more than words. Like a native one it takes the value selected; a consumer that
- * may refuse it binds `value` with `live()`.
+ * The ARIA select-only combobox over its slotted `mitra-option`s. Like a native select it takes the value selected; a
+ * consumer that may refuse it binds `value` with `live()`.
  */
 @component('mitra-select')
 export class Select<T = unknown> extends Control {
@@ -174,10 +172,12 @@ export class OptionGroup extends Component {
 
 	static override get styles() {
 		return css`
+			/* A stack of rows, or in a tree's listbox its columns, which a subgrid passes on to the rows (see Listbox). */
 			:host {
-				display: flex;
-				flex-direction: column;
-				gap: 1px;
+				display: grid;
+				grid-template-columns: subgrid;
+				grid-column: 1 / -1;
+				row-gap: 1px;
 			}
 
 			[role=group] {
@@ -185,10 +185,11 @@ export class OptionGroup extends Component {
 			}
 
 			[part=label] {
+				grid-column: 1 / -1;
 				padding: 0.375rem 0.625rem 0.125rem;
 				font-size: 0.6875rem;
 				font-weight: 600;
-				color: var(--color-text-muted);
+				color: color-mix(in srgb, currentColor 55%, transparent);
 			}
 		`
 	}

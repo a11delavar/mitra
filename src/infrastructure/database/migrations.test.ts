@@ -98,6 +98,29 @@ describe('migrate', () => {
 		}
 	})
 
+	it('moves a device\'s locale out of the column named for languages, also where a dev boot added the new one', async () => {
+		for (const devBoot of [false, true]) {
+			const orm = await inMemoryOrm()
+			try {
+				const connection = orm.em.getConnection()
+				await orm.migrator.up({ to: 'Migration20261003010248_EntryRank' })
+				if (devBoot) {
+					await connection.execute('alter table `notification_subscription` add column `locale` text null')
+				}
+				await connection.execute('insert into `user` (`id`, `username`) values (\'u\', \'legacy\')')
+				await connection.execute('insert into `notification_subscription` (`id`, `endpoint`, `keys`, `user_id`, `language`) values (\'s\', \'e\', \'{}\', \'u\', \'en-GB\')')
+
+				await orm.migrator.up()
+
+				const columns = await connection.execute<Array<{ name: string }>>('select name from pragma_table_info(\'notification_subscription\')')
+				assert.ok(!columns.some(column => column.name === 'language'), `devBoot: ${devBoot}`)
+				assert.deepEqual(await connection.execute('select `locale` from `notification_subscription`'), [{ locale: 'en-GB' }])
+			} finally {
+				await orm.close()
+			}
+		}
+	})
+
 	it('is a no-op on an already migrated database', async () => {
 		const orm = await inMemoryOrm()
 		try {

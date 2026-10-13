@@ -8,11 +8,6 @@ import { ReminderNotification } from '../ReminderNotification.js'
 
 const logger = createLogger('Push')
 
-/**
- * Web Push (RFC 8030/8291/8292) delivery using auto-generated VAPID keypair.
- * Delivers encrypted notification payloads to all active subscriptions per user.
- */
-
 interface VapidKeys { publicKey: string, privateKey: string }
 
 async function vapidKeys(): Promise<VapidKeys> {
@@ -30,10 +25,7 @@ async function vapidKeys(): Promise<VapidKeys> {
 const vapid = await vapidKeys()
 webpush.setVapidDetails(process.env.MITRA_VAPID_SUBJECT || 'mailto:mitra@localhost', vapid.publicKey, vapid.privateKey)
 
-/**
- * Send a notification to every browser the user registered, each rendered in that device's language and zone,
- * pruning subscriptions the push service reports gone.
- */
+/** Renders the notification for each device the user registered, in that device's locale and zone. */
 export async function sendTo(userId: string, notification: ReminderNotification): Promise<void> {
 	const em = orm.em.fork()
 	const subscriptions = await em.find(NotificationSubscription, { userId })
@@ -72,7 +64,7 @@ pushRouter.get('/key', (_req, res) => res.json({ key: vapid.publicKey }))
 const text = (value: unknown, max: number) => typeof value === 'string' && value.trim() ? value.trim().slice(0, max) : undefined
 
 pushRouter.post('/subscription', async (req, res) => {
-	const body = req.body as { endpoint?: string, previousEndpoint?: string, keys?: { p256dh?: string, auth?: string }, timeZone?: string, language?: string, platform?: string, browser?: string, mobile?: boolean }
+	const body = req.body as { endpoint?: string, previousEndpoint?: string, keys?: { p256dh?: string, auth?: string }, timeZone?: string, locale?: string, language?: string, platform?: string, browser?: string, mobile?: boolean }
 	if (!body.endpoint || !body.keys?.p256dh || !body.keys.auth) {
 		return res.status(400).json({ error: 'Missing subscription endpoint or keys' })
 	}
@@ -82,7 +74,8 @@ pushRouter.post('/subscription', async (req, res) => {
 	subscription.register(req.user.id, {
 		keys: { p256dh: body.keys.p256dh, auth: body.keys.auth },
 		timeZone: text(body.timeZone, 64),
-		language: text(body.language, 16),
+		// `language` is what a page loaded before locales sends until it reloads.
+		locale: body.locale ?? body.language,
 		platform: text(body.platform, 64),
 		browser: text(body.browser, 64),
 		mobile: typeof body.mobile === 'boolean' ? body.mobile : undefined,

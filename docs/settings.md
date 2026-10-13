@@ -30,7 +30,9 @@ Mitra also remembers some things on each device as you use them: how far you've 
 
 **Theme** is **Match the system**, **Light** or **Dark**. **Match the system**, the default, follows your device's light or dark mode.
 
-**Language** offers English, German, French, Spanish, Portuguese, Italian and Persian, each named in its own language. The change applies at once, without reloading, and Persian lays Mitra out from right to left. Dates, times and the first day of the week follow the language as your browser's region writes it, so English in the United States starts weeks on Sunday and in the United Kingdom on Monday, while Persian starts them on Saturday.
+**Language** offers English, German, French, Spanish, Portuguese, Italian and Persian, each named in its own language. The change applies at once, without reloading, and Persian lays Mitra out from right to left.
+
+Each language also decides how dates and times read, which day the week starts on, and which days are the weekend. At first it reads as your browser writes the language, so English usually reads as in the United States, German as in Germany and Persian as in Iran. The arrow at the end of a language unfolds the countries and areas it is written in, such as the United Kingdom or Europe for English: English for the United Kingdom writes 9 Oct 2026 and 13:00 and starts weeks on Monday, while for the United States it writes Oct 9, 2026 and 1:00 PM and starts them on Sunday. A switch to another language from the command palette keeps your country when the new language is written there. A preview under the setting shows how dates, times, the week, numbers and time zone names read. A country here is not a time zone: New York and Los Angeles share one.
 
 ## Calendar
 

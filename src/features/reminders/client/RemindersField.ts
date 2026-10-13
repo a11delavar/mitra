@@ -19,7 +19,6 @@ function unitLabel(unit: CustomUnit): string {
 	}
 }
 
-/** Formats minute duration into localized span text (e.g. "30 min", "1 hour", "2 days"). */
 export function reminderSpanLabel(minutes: number): string {
 	const unit = ([['week', UNIT_MINUTES.weeks], ['day', UNIT_MINUTES.days], ['hour', UNIT_MINUTES.hours]] as const)
 		.find(([, factor]) => minutes >= factor && minutes % factor === 0)
@@ -34,7 +33,6 @@ export function reminderSpanLabel(minutes: number): string {
 	}
 }
 
-/** Formats full reminder label for menus and settings. */
 export function reminderLabel(minutes: number, type?: EntryType): string {
 	if (minutes === 0) {
 		return type?.isTask ? t('At the time of the task') : t('At start of event')
@@ -42,10 +40,6 @@ export function reminderLabel(minutes: number, type?: EntryType): string {
 	return t('${span} before', { span: reminderSpanLabel(minutes) })
 }
 
-/**
- * Entry editor reminders field supporting preset list and custom duration dialog.
- * Prompts for notification permission on first added reminder.
- */
 @component('mitra-reminders-field')
 export class RemindersField extends Component {
 	private static readonly presets = [0, 5, 10, 30, 60, 24 * 60]
@@ -74,7 +68,7 @@ export class RemindersField extends Component {
 		const fireAt = anchor.subtract({ minutes })
 		const sameDay = fireAt.dayStart.valueOf() === anchor.dayStart.valueOf()
 		return new Intl.DateTimeFormat(Localizer.locales.current, {
-			hour: '2-digit',
+			hour: 'numeric',
 			minute: '2-digit',
 			...(sameDay ? {} : { weekday: 'short' }),
 		}).format(fireAt)
@@ -93,8 +87,6 @@ export class RemindersField extends Component {
 			enablePushNotifications().catch(() => void 0)
 		}
 	}
-
-	// --- Custom dialog --------------------------------------------------------------------------------
 
 	private readonly openCustomDialog = () => {
 		this.draft = { count: 10, unit: 'minutes' }

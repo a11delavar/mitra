@@ -11,7 +11,7 @@ sidebar:
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../assets/screenshots/integrations-detail-dark.webp">
-  <img src="../../assets/screenshots/integrations-detail-light.webp" alt="گفتگوی افزودن یکپارچه‌سازی که میترا، CalDAV، تقویم گوگل، تقویم اپل، اشتراک تقویم، Notion و Tempo را پیشنهاد می‌دهد" />
+  <img src="../../assets/screenshots/integrations-detail-light.webp" alt="پنجرهٔ افزودن یکپارچه‌سازی که میترا، CalDAV، تقویم گوگل، تقویم اپل، اشتراک تقویم، Notion و Tempo را پیشنهاد می‌دهد" />
 </picture>
 
 ## هر کدام چه چیزی نگه می‌دارد

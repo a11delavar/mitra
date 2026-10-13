@@ -3,7 +3,7 @@ title: Fuseaux horaires
 description: Comment Mitra affiche le fuseau horaire propre à une entrée, et comment ajouter les heures d'autres fuseaux horaires à la vue semaine.
 ---
 
-Mitra affiche les heures dans votre fuseau horaire, celui de votre appareil. Quand vous voyagez et que votre appareil change de fuseau, Mitra suit. Dans l'éditeur, ce fuseau s'appelle le fuseau horaire **principal**.
+Mitra affiche les heures dans votre fuseau horaire, celui de votre appareil. Quand vous voyagez et que votre appareil change de fuseau, Mitra suit. Dans l'éditeur, ce fuseau s'appelle le fuseau horaire **actuel**. Votre **domicile** est le fuseau auquel vous appartenez, et reste à côté du fuseau actuel quand vous voyagez.
 
 Une entrée peut aussi avoir son propre fuseau horaire, comme un vol qui part à 9 h 00 à New York. Et la vue semaine peut afficher les heures d'autres fuseaux horaires à côté des vôtres.
 
@@ -20,13 +20,13 @@ Ouvrez une entrée pour voir son fuseau dans la ligne avec le globe, sous ses da
 
 ### Changer le fuseau horaire d'une entrée
 
-Cliquez sur le fuseau et choisissez-en un autre. Saisissez une ville, le nom d'un fuseau ou un décalage pour le trouver. Votre propre fuseau est en tête de liste, marqué **Principal**.
+Cliquez sur le fuseau et choisissez-en un autre. La liste commence par les fuseaux du pays pour lequel votre [langue](settings.md#general) est réglée, puis tous les fuseaux, et marque votre domicile d'une maison là où il se trouve, et votre fuseau actuel d'une épingle quand vous êtes ailleurs. Les fuseaux qui gardent le même nom et la même heure toute l'année partagent une ligne, qui représente l'une de leurs villes, celle de votre propre fuseau ou de votre pays s'il en a une, comme l'heure d'Europe centrale pour Berlin en Allemagne. La flèche au bout de la ligne déplie les autres villes, comme Paris et Amsterdam, et une recherche déplie les lignes où elle trouve quelque chose. Tapez une ville, un pays, le nom d'un fuseau ou un décalage pour en trouver un.
 
 L'entrée conserve ses heures d'horloge dans le nouveau fuseau : une réunion à 9 h 00 à Berlin devient une réunion à 9 h 00 à New York. Si seul le fuseau était faux et que la réunion elle-même n'a pas bougé, changez ensuite ses heures.
 
 ### Votre heure ou celle de l'entrée
 
-Quand le fuseau d'une entrée diffère du vôtre, l'éditeur affiche ses heures dans votre fuseau, donc une réunion à 9 h 00 à New York s'affiche 15 h 00 si vous êtes à Berlin. Un bouton à côté du fuseau bascule vers l'heure propre de l'entrée et inversement. Il affiche une maison quand vous voyez votre heure et un globe quand vous voyez celle de l'entrée, et le pointer vous indique laquelle vous regardez.
+Quand le fuseau d'une entrée diffère du vôtre, l'éditeur affiche ses heures dans votre fuseau, donc une réunion à 9 h 00 à New York s'affiche 15 h 00 si vous êtes à Berlin. Un bouton à côté du fuseau bascule vers l'heure propre de l'entrée et inversement. Il affiche une épingle quand vous voyez votre heure et un globe quand vous voyez celle de l'entrée, et le pointer vous indique laquelle vous regardez.
 
 Vous pouvez modifier les heures dans les deux cas. Pour changer le fuseau lui-même, passez d'abord à l'heure de l'entrée.
 
@@ -54,15 +54,15 @@ La [vue semaine](views/week.md) peut afficher les heures d'autres fuseaux horair
 
 ### Ajouter un fuseau horaire à la semaine
 
-Pointez le haut de la colonne des heures et appuyez sur **＋** (**Ajouter un fuseau horaire**), puis choisissez un fuseau. Sa colonne apparaît à côté de la vôtre, et votre propre fuseau reste la colonne contiguë aux jours.
+Pointez le haut de la colonne des heures et appuyez sur **＋** (**Ajouter un fuseau horaire**). La liste coche les fuseaux que vous avez déjà, avec une maison sur votre domicile et une épingle sur votre fuseau actuel quand vous êtes ailleurs. Choisissez un fuseau pour ajouter sa colonne, ou un fuseau coché pour retirer la sienne. La liste reste ouverte pour la suite. Votre fuseau actuel reste la colonne à côté des jours, et votre domicile reste aussi.
 
-Chaque colonne a pour en-tête un nom court, comme « PDT » ou « GMT+2 ». Pointez-le pour voir le nom complet.
+Chaque colonne porte un nom court : l'abréviation en usage pour le fuseau, comme « PDT » ou « BST », ou, s'il n'y en a pas, son lieu, comme « Iran ». L'abréviation suit votre [langue](settings.md#general) : Berlin s'appelle « CEST » en anglais et « MESZ » en allemand, et quand votre région n'en a pas pour un fuseau, la région du fuseau prête la sienne. Pointez un nom pour voir le nom complet.
 
 ### Renommer ou supprimer un fuseau horaire
 
-Cliquez sur le nom d'un fuseau et choisissez **Renommer** pour lui donner un libellé de votre choix, comme « NYC », ou **Supprimer** pour retirer sa colonne. Pour revenir au nom automatique, renommez-le avec un nom vide.
+Cliquez sur le nom d'un fuseau et choisissez **Renommer** pour lui donner un libellé de votre choix, comme « Maman », **Définir comme domicile** pour en faire votre domicile, ou **Supprimer** pour retirer sa colonne. Pour revenir au nom automatique, renommez-le avec un nom vide.
 
-Votre propre fuseau peut être renommé, mais pas supprimé.
+Votre fuseau actuel et votre domicile peuvent être renommés, mais pas supprimés. Pour remplacer votre domicile, définissez un autre fuseau comme domicile.
 
 ### Replier les colonnes supplémentaires
 
@@ -72,4 +72,6 @@ Sur un écran étroit, les colonnes démarrent repliées jusqu'à ce que vous le
 
 ### Sur tous vos appareils
 
-Les fuseaux que vous ajoutez, et leurs noms, appartiennent à votre compte, donc ils s'affichent sur chaque appareil que vous utilisez. Le nom que vous donnez à votre propre fuseau, et le fait que les colonnes soient repliées ou non, restent propres à chaque appareil, puisque chaque appareil peut se trouver dans un fuseau différent.
+Votre domicile, les fuseaux que vous ajoutez et chaque nom que vous leur donnez appartiennent à votre compte, donc ils s'affichent sur chaque appareil que vous utilisez. Le fait que les colonnes soient repliées ou non reste propre à chaque appareil.
+
+Votre domicile est le fuseau du premier appareil sur lequel vous ouvrez Mitra. En voyage, le fuseau où vous êtes devient la colonne à côté des jours et votre domicile reste à côté, sans que rien ne s'ajoute à votre liste, donc de retour chez vous, il n'y a plus qu'une colonne. Nommer le fuseau où vous êtes le garde dans votre liste. Si vous déménagez, choisissez **Définir comme domicile** sur le fuseau où vous vivez désormais, et votre ancien domicile reste en colonne jusqu'à ce que vous le supprimiez.

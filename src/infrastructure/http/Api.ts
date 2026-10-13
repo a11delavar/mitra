@@ -1,6 +1,6 @@
 import { Api, HttpError, apiError, apiAuthenticator, type ApiAuthenticator } from '@a11d/api'
 import { type DateTime } from '@3mo/date-time'
-import { type User, type UserTimeZone } from '../../features/identity/User.js'
+import { type User } from '../../features/identity/User.js'
 import { type Source } from '../../features/sources/Source.js'
 import { type MigrationOutcome, type MigrationPlan } from '../../features/migration/MigrationPlan.js'
 import { type Relation } from '../../features/relations/Relation.js'
@@ -13,7 +13,6 @@ import { type ChangelogSection } from '../../features/about/Changelog.js'
 import { type ReleaseFolder } from '../../features/about/Release.js'
 import { type UserSettings } from '../../features/settings/UserSettings.js'
 
-/** Custom API error class extracting backend error messages. */
 @apiError()
 export class ApiError extends HttpError {
 	get status() {
@@ -45,7 +44,6 @@ export class CookieAuthenticator implements ApiAuthenticator {
 let integrations = new Array<Integration>()
 let currentUser: User | undefined
 
-/** Instance metadata from backend `/meta`. */
 export interface InstanceMeta {
 	/** The operator's `MITRA_NAME`, if any. */
 	name?: string
@@ -68,7 +66,6 @@ export async function fetchMeta() {
 	return meta = await Api.get<InstanceMeta>('/meta').catch(() => undefined)
 }
 
-/** Refresh instance metadata if older than 6 hours. */
 export async function refreshMetaIfStale() {
 	if (Date.now() - metaFetchedAt > metaMaxAge) {
 		await fetchMeta()
@@ -85,7 +82,6 @@ export function instanceName() {
 	return meta?.name ?? String(t('Mitra'))
 }
 
-/** Whether the running client bundle is older than the server version. */
 export function isBundleStale() {
 	return !!meta && meta.version !== mitra.version
 }
@@ -117,12 +113,24 @@ export async function setDefaultSource(sourceId: string | undefined) {
 	return currentUser = await Api.put<User>('/user/default-source', { sourceId: sourceId ?? null })
 }
 
-export function getTimeZones(): Array<UserTimeZone> {
-	return currentUser?.timeZones ?? []
+export async function settleTimeZone(id: string) {
+	return currentUser = await Api.post<User>('/user/time-zones/settle', { id })
 }
 
-export async function setTimeZones(timeZones: Array<UserTimeZone>) {
-	return currentUser = await Api.put<User>('/user/time-zones', { timeZones })
+export async function makeHomeTimeZone(id: string) {
+	return currentUser = await Api.put<User>('/user/time-zones/home', { id })
+}
+
+export async function addTimeZone(id: string) {
+	return currentUser = await Api.post<User>('/user/time-zones', { id })
+}
+
+export async function removeTimeZone(id: string) {
+	return currentUser = await Api.delete<User>(`/user/time-zones/${encodeURIComponent(id)}`)
+}
+
+export async function renameTimeZone(id: string, label: string | undefined) {
+	return currentUser = await Api.put<User>(`/user/time-zones/${encodeURIComponent(id)}/label`, { label: label ?? null })
 }
 
 export function getSettings(): UserSettings {
@@ -142,7 +150,6 @@ export function fetchAllEntries() {
 	return Api.get<Array<Entry>>(`/entries/all?tz=${tz()}`)
 }
 
-/** Full-text search across all visible entries. */
 export function searchEntries(query: string) {
 	return Api.get<Array<Entry>>(`/entries/search?q=${encodeURIComponent(query)}&tz=${tz()}`)
 }
@@ -152,7 +159,7 @@ export function getVisibleSources(): Array<Source> {
 	return integrations.flatMap(i => [...i.sources]).filter(s => s.visible)
 }
 
-/** Fetches all entries referenced in the user's relationship graph for client-side graph calculations. */
+/** Every entry the user's relation graph reaches, for client-side graph calculations. */
 export function getRelationClosure() {
 	return Api.get<Array<Entry>>(`/entries/relations/closure?tz=${tz()}`)
 }
@@ -162,7 +169,6 @@ export function rankEntries(ranks: Record<string, string>) {
 	return Api.put<void>('/entries/ranks', ranks)
 }
 
-/** Update entry relationships via master entry PUT. */
 export function updateRelations(id: string, relations: Array<Relation> | null) {
 	return Api.put<Entry>(`/entries/${id}?tz=${tz()}`, { relations })
 }
@@ -199,16 +205,13 @@ export function getIntegrationFor(sourceId: string) {
 	return integrations.find(i => [...i.sources].some(s => s.id === sourceId))
 }
 
-/**
- * Enabled sources in display order (across all accounts or a single integration).
- * Unlike visible sources, enabled sources include hidden calendars that can still hold entries.
- */
+/** Unlike visible sources, these include hidden calendars, which can still hold entries. */
 export function getEnabledSources(integration?: Integration) {
 	const sources = integration ? [...integration.sources] : integrations.flatMap(i => [...i.sources])
 	return sources.filter(source => source.enabled)
 }
 
-/** Returns effective capabilities for a source, combining provider capabilities with source-level permissions. */
+/** The provider's capabilities, with writes off for a read-only source. */
 export function getCapabilities(sourceId: string): Integration['capabilities'] {
 	return Integration.capabilitiesIn(getIntegrationFor(sourceId)?.capabilities ?? Integration.defaultCapabilities, getSource(sourceId))
 }
@@ -218,20 +221,16 @@ export function canHold(source: Source, type: EntryType) {
 	return getIntegrationFor(source.id)?.canHold(source, type) ?? source.supportsEntryType(type)
 }
 
-/**
- * Where an entry can be opened outside mitra, if anywhere.
- */
+/** Where an entry can be opened outside Mitra, if anywhere. */
 export function getExternalLink(entry: Entry): { url: string, label?: string } | undefined {
 	const url = Integration.externalUrlOf(entry)
 	return getIntegrationFor(entry.sourceId)?.externalLink?.(entry) ?? (url ? { url } : undefined)
 }
 
-/** True if at least one writable destination source exists for copying entries out. */
 export function canCopyEntriesOut(source: Source) {
 	return getEnabledSources().some(other => other.id !== source.id && getCapabilities(other.id).createEntries)
 }
 
-/** True if entries can be moved out (requires canCopyEntriesOut and deleteEntries permission on origin). */
 export function canMoveEntriesOut(source: Source) {
 	return canCopyEntriesOut(source) && getCapabilities(source.id).deleteEntries
 }
@@ -240,19 +239,16 @@ export function toggleSourceVisibility(id: string, hidden: boolean) {
 	return Api.put(`/sources/${id}/visibility`, { hidden })
 }
 
-/** Show only the specified source, saving current visibility state. */
 export async function soloSource(id: string) {
 	currentUser = await Api.put<User>(`/sources/${id}/solo`)
 	await fetchIntegrations()
 }
 
-/** Restore source visibility prior to solo. */
 export async function restoreSourceVisibility() {
 	currentUser = await Api.put<User>('/sources/restore-visibility')
 	await fetchIntegrations()
 }
 
-/** Whether there is a previous solo state to restore. */
 export function canRestoreSourceVisibility() {
 	return !!currentUser?.previouslyHiddenSourceIds
 }
@@ -279,7 +275,6 @@ export function renameSource(id: string, name: string) {
 	return Api.put<Source>(`/sources/${id}/name`, { name })
 }
 
-/** Persist updated source order within an integration. */
 export function reorderSources(integration: Integration, ids: Array<string>) {
 	const sources = [...integration.sources]
 	applyOrder(sources, ids)
@@ -287,24 +282,21 @@ export function reorderSources(integration: Integration, ids: Array<string>) {
 	return Api.put('/sources/order', { ids })
 }
 
-/** Persist updated integration order across accounts. */
 export function reorderIntegrations(ids: Array<string>) {
 	applyOrder(integrations, ids)
 	integrations.sort(byOrder)
 	return Api.put('/integrations/order', { ids })
 }
 
-/** Clear local cache and re-import all entries from remote source. */
 export function reimportSource(id: string) {
 	return Api.post(`/sources/${id}/reimport`)
 }
 
-/** Fetches fidelity preview for moving or copying entries to targetSourceId. */
+/** Fidelity preview of moving or copying entries to `targetSourceId`. */
 export function previewSourceMigration(sourceId: string, targetSourceId: string, keepOriginals: boolean) {
 	return Api.post<MigrationPlan>(`/sources/${sourceId}/migrate/preview`, { targetSourceId, keepOriginals })
 }
 
-/** Executes bulk source migration (move or copy). */
 export function migrateSourceEntries(sourceId: string, options: { targetSourceId: string, flatten: boolean, keepOriginals: boolean }) {
 	return Api.post<MigrationOutcome>(`/sources/${sourceId}/migrate`, options)
 }
@@ -332,7 +324,6 @@ export function previewIcsImport(targetSourceId: string, ics: string) {
 	return postCalendar<MigrationPlan>(`/sources/${targetSourceId}/ics/preview`, ics)
 }
 
-/** Imports a calendar file's entries into a target source. */
 export function importIcs(targetSourceId: string, ics: string) {
 	return postCalendar<MigrationOutcome>(`/sources/${targetSourceId}/ics`, ics)
 }
@@ -346,7 +337,6 @@ export function fetchGoogleAvailability() {
 	return Api.get<{ configured: boolean }>('/integrations/google')
 }
 
-/** Start Google OAuth PKCE flow. */
 export function connectGoogle() {
 	location.assign('/api/integrations/google/connect')
 }
@@ -402,7 +392,7 @@ export interface LocationSuggestion {
 
 /** Location autocomplete query via backend Photon proxy. */
 export function searchLocations(query: string, position?: { lat: number, lon: number }) {
-	const params = new URLSearchParams({ q: query, lang: navigator.language.split('-')[0] ?? 'en' })
+	const params = new URLSearchParams({ q: query, lang: Localizer.locales.current.language })
 	if (position) {
 		params.set('lat', String(position.lat))
 		params.set('lon', String(position.lon))
@@ -410,7 +400,6 @@ export function searchLocations(query: string, position?: { lat: number, lon: nu
 	return Api.get<Array<LocationSuggestion>>(`/locations?${params}`)
 }
 
-/** Apply scoped edits (this / following / all) to a recurring occurrence. */
 export function editOccurrence(occurrence: Entry, scope: RecurrenceScope) {
 	return Api.put<Entry>(`/entries/${occurrence.recurrenceMasterId}?tz=${tz()}`, {
 		scope,
@@ -436,7 +425,6 @@ export function editOccurrence(occurrence: Entry, scope: RecurrenceScope) {
 	})
 }
 
-/** Delete an occurrence from a recurring series by scope. */
 export function deleteOccurrence(occurrence: Entry, scope: RecurrenceScope) {
 	const query = new URLSearchParams({ scope, recurrenceId: occurrence.recurrenceId!.toISOString(), tz: Intl.DateTimeFormat().resolvedOptions().timeZone })
 	return Api.delete(`/entries/${occurrence.recurrenceMasterId}?${query}`)

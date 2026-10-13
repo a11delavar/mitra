@@ -25,7 +25,7 @@ function dateFormat(start: DateTime, last: DateTime, timed: boolean): Intl.DateT
 	return {
 		weekday: 'short', day: 'numeric', month: 'short',
 		...start.year === year && last.year === year ? {} : { year: 'numeric' },
-		...!timed ? {} : { hour: '2-digit', minute: '2-digit', hour12: false },
+		...!timed ? {} : { hour: 'numeric', minute: '2-digit' },
 	}
 }
 
@@ -82,10 +82,7 @@ function status(entry: Entry) {
 	return text(`${taskStatusLabel(entry.status ?? TaskStatus.ToDo)}${!underway ? '' : ` · ${Math.round(progress * 100).formatAsPercent()}`}`)
 }
 
-/**
- * The table's columns. A table makes them once: the grid controller syncs its definitions again for
- * every new array. Each default column says what the title chip does not say in words.
- */
+/** A table makes them once: the grid controller syncs its definitions again for every new array. */
 export const tableColumns = (): Array<DataGridColumn<TableRow>> => [
 	column('heading', t('Title'), {
 		sticky: 'start',
@@ -132,9 +129,8 @@ function textOf(template: unknown): string {
 const canvas = document.createElement('canvas').getContext('2d')!
 
 /**
- * The column's content that renders widest across the rows in the cells' font, which the size anchor row
- * renders to hold the column's width. The title chip has no width of its own (size containment), so its
- * heading stands in for it.
+ * What the anchor row renders to hold the column's width. The title chip has no width of its own (size containment),
+ * so its heading stands in for it.
  */
 export function widestContentOf(column: DataGridColumn<TableRow>, rows: ReadonlyArray<TableRow>, font: string) {
 	canvas.font = font

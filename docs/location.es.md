@@ -16,7 +16,7 @@ Haz clic en el campo de ubicación para ver los lugares usados hace poco en tus 
 
 Las sugerencias favorecen los lugares cercanos a ti. La primera vez que haces clic en el campo, tu navegador puede preguntar si Mitra puede usar tu ubicación. Si lo permites, tu posición acompaña a cada búsqueda y los lugares cercanos salen primero. Si no, las sugerencias siguen funcionando, sin esa preferencia.
 
-Photon nombra los lugares en inglés, alemán o francés cuando tu navegador está configurado en uno de ellos y, en caso contrario, en el idioma local.
+Photon nombra los lugares en inglés, alemán o francés cuando Mitra está configurado en uno de ellos y, en caso contrario, en el idioma local.
 
 Los calendarios de [Notion](integrations/notion.md) y [Tempo](integrations/tempo.md) no tienen ubicación, así que sus entradas no tienen campo de ubicación.
 

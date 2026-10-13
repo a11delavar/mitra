@@ -1,43 +1,36 @@
-import { Router } from 'express'
+import { Router, type Request, type Response } from 'express'
 import { orm } from '../../../infrastructure/database/orm.js'
-import { User, type UserTimeZone } from '../User.js'
+import { TimeZone } from '../../time/TimeZone.js'
+import { UserTimeZones } from '../../time/UserTimeZones.js'
+import { User } from '../User.js'
 export const userRouter = Router()
 
 userRouter.get('/', (req, res) => {
 	return res.json(req.user)
 })
 
-/** Validates time zone identifier via Intl.DateTimeFormat. */
-function isValidTimeZone(id: string): boolean {
-	try {
-		new Intl.DateTimeFormat(undefined, { timeZone: id })
-		return true
-	} catch {
-		return false
+/** Applies one step to what is stored rather than a whole list, so a device's change never overwrites another's that came first. */
+async function changeTimeZones(req: Request, res: Response, zone: unknown, change: (zones: UserTimeZones, zone: TimeZone) => UserTimeZones) {
+	const parsed = TimeZone.parse(zone)
+	if (!parsed) {
+		return res.status(400).json({ error: 'Unknown time zone' })
 	}
-}
-
-userRouter.put('/time-zones', async (req, res) => {
-	const incoming = (req.body.timeZones ?? []) as Array<UserTimeZone>
-	if (!Array.isArray(incoming) || incoming.some(zone => typeof zone?.id !== 'string' || !isValidTimeZone(zone.id))) {
-		return res.status(400).json({ error: 'Invalid time zone list' })
-	}
-	if (new Set(incoming.map(zone => zone.id)).size !== incoming.length) {
-		return res.status(400).json({ error: 'Duplicate time zones' })
-	}
-	const timeZones = incoming.map(zone => ({
-		id: zone.id,
-		...(typeof zone.label === 'string' && zone.label.trim() ? { label: zone.label.trim().slice(0, 24) } : {}),
-	}))
 	const em = orm.em.fork()
 	const user = await em.findOneOrFail(User, { id: req.user.id })
-	user.timeZones = timeZones.length ? timeZones : undefined
+	user.timeZones = change(user.timeZones ?? UserTimeZones.none, parsed)
 	await em.flush()
 	req.user.timeZones = user.timeZones
 	return res.json(user)
-})
+}
 
-/** Updates last seen release notes version for the current user. */
+/** The zone a device runs in becomes home, unless the account has one. */
+userRouter.post('/time-zones/settle', (req, res) => changeTimeZones(req, res, req.body.id, (zones, zone) => zones.settle(zone)))
+userRouter.put('/time-zones/home', (req, res) => changeTimeZones(req, res, req.body.id, (zones, zone) => zones.makeHome(zone)))
+userRouter.post('/time-zones', (req, res) => changeTimeZones(req, res, req.body.id, (zones, zone) => zones.add(zone)))
+userRouter.delete('/time-zones/:id', (req, res) => changeTimeZones(req, res, req.params.id, (zones, zone) => zones.remove(zone)))
+userRouter.put('/time-zones/:id/label', (req, res) => changeTimeZones(req, res, req.params.id,
+	(zones, zone) => zones.rename(zone, typeof req.body.label === 'string' ? req.body.label : undefined)))
+
 userRouter.put('/seen-version', async (req, res) => {
 	const version = req.body.version
 	if (typeof version !== 'string' || !version.trim() || version.length > 64) {
@@ -51,7 +44,6 @@ userRouter.put('/seen-version', async (req, res) => {
 	return res.json(user)
 })
 
-/** Updates user settings JSON bag. */
 userRouter.put('/settings', async (req, res) => {
 	const em = orm.em.fork()
 	const user = await em.findOneOrFail(User, { id: req.user.id })

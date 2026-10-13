@@ -471,7 +471,7 @@ export class EntrySegmentComponent extends Component {
 		const day = this.segment!.entry.lastDay
 		return {
 			...!this.showsDate ? {} : { day: 'numeric', month: 'short', ...day!.year === new DateTime().year ? {} : { year: 'numeric' as const } },
-			...!this.timed ? {} : { hour: '2-digit', minute: '2-digit', hour12: false },
+			...!this.timed ? {} : { hour: 'numeric', minute: '2-digit' },
 		}
 	}
 
@@ -479,7 +479,7 @@ export class EntrySegmentComponent extends Component {
 		const { entry } = this.segment!
 		return entry.due!.format(entry.allDay
 			? { weekday: 'short', day: 'numeric', month: 'short' }
-			: { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })
+			: { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
 	}
 
 	/** What the entry spans: its hours when it has them, otherwise the days it occupies. */
@@ -490,7 +490,7 @@ export class EntrySegmentComponent extends Component {
 			: new DateTimeRange(entry.start?.dayStart ?? entry.lastDay, entry.lastDay)
 	}
 
-	/** Formatted again only once it reads differently: every store notification renders every chip, and Intl's range formatting was most of that. */
+	/** Formatted again only once it reads differently: every store notification renders every chip, and Intl's range formatting dominates that. */
 	private get whenTemplate() {
 		const span = this.whenSpan
 		const options = this.whenOptions

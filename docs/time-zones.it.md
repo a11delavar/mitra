@@ -3,7 +3,7 @@ title: Fusi orari
 description: Come Mitra mostra il fuso orario di una voce e come aggiungere le ore di altri fusi orari alla vista settimanale.
 ---
 
-Mitra mostra gli orari nel tuo fuso orario, quello impostato sul tuo dispositivo. Quando viaggi e il dispositivo cambia fuso, Mitra lo segue. Nell'editor questo fuso si chiama fuso **principale**.
+Mitra mostra gli orari nel tuo fuso orario, quello impostato sul tuo dispositivo. Quando viaggi e il dispositivo cambia fuso, Mitra lo segue. Nell'editor questo fuso si chiama fuso **attuale**. La tua **casa** è il fuso a cui appartieni, e resta accanto a quello attuale mentre viaggi.
 
 Una voce può anche avere un fuso orario tutto suo, come un volo che parte alle 9:00 a New York. E la vista settimanale può mostrare le ore di altri fusi orari accanto alle tue.
 
@@ -20,13 +20,13 @@ Apri una voce per vedere il suo fuso nella riga con il globo, sotto le sue date,
 
 ### Cambiare il fuso orario di una voce
 
-Clicca il fuso e scegline un altro. Scrivi una città, il nome di un fuso o uno scarto per trovarlo. Il tuo fuso apre l'elenco, contrassegnato come **Principale**.
+Clicca il fuso e scegline un altro. L'elenco inizia con i fusi del paese per cui è impostata la tua [lingua](settings.md#general), poi tutti i fusi, e segna la tua casa con una casa dove si trova, e il tuo fuso attuale con una puntina mentre sei altrove. I fusi che mantengono lo stesso nome e la stessa ora tutto l'anno condividono una riga, che rappresenta una delle loro città, quella del tuo fuso o del tuo paese se ne ha una, come l'Ora dell'Europa centrale per Berlino in Germania. La freccia in fondo alla riga apre le altre città, come Parigi e Amsterdam, e una ricerca apre le righe in cui trova qualcosa. Digita una città, un paese, il nome di un fuso o una differenza di orario per trovarne uno.
 
 La voce mantiene i suoi orari sull'orologio nel nuovo fuso: una riunione alle 9:00 a Berlino diventa una riunione alle 9:00 a New York. Se era sbagliato solo il fuso e la riunione in sé non si è spostata, cambia poi i suoi orari.
 
 ### Il tuo orario o quello della voce
 
-Quando il fuso di una voce è diverso dal tuo, l'editor mostra i suoi orari nel tuo fuso, quindi una riunione alle 9:00 a New York risulta alle 15:00 se ti trovi a Berlino. Un pulsante accanto al fuso passa all'ora propria della voce e viceversa. Mostra una casa mentre vedi la tua ora e un globo mentre vedi quella della voce, e puntandolo ti dice quale stai guardando.
+Quando il fuso di una voce è diverso dal tuo, l'editor mostra i suoi orari nel tuo fuso, quindi una riunione alle 9:00 a New York risulta alle 15:00 se ti trovi a Berlino. Un pulsante accanto al fuso passa all'ora propria della voce e viceversa. Mostra una puntina mentre vedi la tua ora e un globo mentre vedi quella della voce, e puntandolo ti dice quale stai guardando.
 
 Puoi modificare gli orari in entrambi i modi. Per cambiare il fuso stesso, passa prima all'ora della voce.
 
@@ -54,15 +54,15 @@ La [vista settimanale](views/week.md) può mostrare le ore di altri fusi orari i
 
 ### Aggiungere un fuso orario alla settimana
 
-Punta la parte alta della colonna dell'ora e premi **＋** (**Aggiungi fuso orario**), poi scegli un fuso. La sua colonna compare accanto alla tua, e il tuo fuso resta la colonna vicina ai giorni.
+Punta la parte alta della colonna delle ore e premi **＋** (**Aggiungi fuso orario**). L'elenco spunta i fusi che hai già, con una casa sulla tua casa e una puntina sul tuo fuso attuale mentre sei altrove. Scegli un fuso per aggiungerne la colonna, o uno spuntato per toglierla. L'elenco resta aperto per altri. Il tuo fuso attuale resta la colonna accanto ai giorni, e anche la tua casa resta.
 
-Ogni colonna ha come intestazione un nome breve, come "PDT" o "GMT+2". Puntalo per vedere il nome completo.
+Ogni colonna ha come intestazione un nome breve: l'abbreviazione in uso per il fuso, come "PDT" o "BST", oppure, dove non ce n'è una, il suo luogo, come "Iran". L'abbreviazione segue la tua [lingua](settings.md#general): Berlino si chiama "CEST" in inglese e "MESZ" in tedesco, e dove la tua regione non ne ha una per un fuso, la regione del fuso presta la sua. Punta un nome per vedere quello completo.
 
 ### Rinominare o rimuovere un fuso orario
 
-Clicca il nome di un fuso e scegli **Rinomina** per dargli un'etichetta tua, come "NYC", oppure **Rimuovi** per eliminare la sua colonna. Per tornare al nome automatico, rinominalo lasciando il campo vuoto.
+Clicca il nome di un fuso e scegli **Rinomina** per dargli un'etichetta tua, come "Mamma", **Imposta come casa** per farne la tua casa, oppure **Rimuovi** per eliminare la sua colonna. Per tornare al nome automatico, rinominalo lasciando il campo vuoto.
 
-Il tuo fuso si può rinominare, ma non rimuovere.
+Il tuo fuso attuale e la tua casa si possono rinominare, ma non rimuovere. Per sostituire la tua casa, imposta un altro fuso come casa.
 
 ### Nascondere le colonne in più
 
@@ -72,4 +72,6 @@ Su uno schermo stretto, le colonne partono nascoste finché non le apri o le chi
 
 ### Sui tuoi dispositivi
 
-I fusi che aggiungi, e i loro nomi, appartengono al tuo account, quindi compaiono su ogni dispositivo che usi. Il nome che dai al tuo fuso, e se le colonne sono nascoste, restano su ciascun dispositivo, dato che ogni dispositivo può trovarsi in un fuso diverso.
+La tua casa, i fusi che aggiungi e ogni nome che gli dai appartengono al tuo account, quindi compaiono su ogni dispositivo che usi. Se le colonne sono nascoste resta su ciascun dispositivo.
+
+La tua casa è il fuso del primo dispositivo su cui apri Mitra. In viaggio, il fuso in cui sei diventa la colonna accanto ai giorni e la tua casa resta accanto, senza che nulla si aggiunga al tuo elenco, quindi di ritorno a casa torna a essere una sola colonna. Dare un nome al fuso in cui sei lo tiene nel tuo elenco. Se ti trasferisci, scegli **Imposta come casa** sul fuso in cui vivi ora, e la tua vecchia casa resta come colonna finché non la rimuovi.

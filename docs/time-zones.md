@@ -3,7 +3,7 @@ title: Time zones
 description: How Mitra shows an entry's own time zone, and how to add the hours of other time zones to the week view.
 ---
 
-Mitra shows times in your time zone, the one your device is set to. When you travel and your device changes zone, Mitra follows. In the editor, this zone is called the **primary** time zone.
+Mitra shows times in your time zone, the one your device is set to. When you travel and your device changes zone, Mitra follows. In the editor, this zone is called the **current** time zone. Your **home** is the zone you belong to, and stays beside the current one while you travel.
 
 An entry can also have a time zone of its own, such as a flight that leaves at 9:00 in New York. And the week view can show the hours of other time zones beside yours.
 
@@ -20,13 +20,13 @@ Open an entry to see its zone in the row with the globe, below its dates, writte
 
 ### Change an entry's time zone
 
-Click the zone and pick another one. Type a city, a zone's name or an offset to find it. Your own zone heads the list, marked **Primary**.
+Click the zone and pick another one. The list starts with the zones of the country your [language](settings.md#general) is set for, then every zone, and marks your home with a house where it stands, and your current zone with a pin while you're away. Zones that keep the same name and clock all year share one row, which stands for one of their cities, your own zone's or your country's where it has one, such as Central European Time for Berlin in Germany. The arrow at the end of the row unfolds the other cities, such as Paris and Amsterdam, and a search unfolds the rows it finds something in. Type a city, a country, a zone's name or an offset to find one.
 
 The entry keeps its clock times in the new zone: a meeting at 9:00 in Berlin becomes a meeting at 9:00 in New York. If only the zone was wrong and the meeting itself didn't move, change its times afterwards.
 
 ### Your time or the entry's
 
-When an entry's zone differs from yours, the editor shows its times in your zone, so a meeting at 9:00 in New York reads 15:00 if you're in Berlin. A button beside the zone switches to the entry's own time and back. It shows a house while you see your time and a globe while you see the entry's, and pointing at it tells you which one you're looking at.
+When an entry's zone differs from yours, the editor shows its times in your zone, so a meeting at 9:00 in New York reads 15:00 if you're in Berlin. A button beside the zone switches to the entry's own time and back. It shows a pin while you see your time and a globe while you see the entry's, and pointing at it tells you which one you're looking at.
 
 You can edit the times either way. To change the zone itself, switch to the entry's time first.
 
@@ -54,15 +54,15 @@ The [week view](views/week.md) can show the hours of other time zones in columns
 
 ### Add a time zone to the week
 
-Point at the top of the time column and press **＋** (**Add time zone**), then pick a zone. Its column appears beside yours, and your own zone stays the column next to the days.
+Point at the top of the time column and press **＋** (**Add time zone**). The list ticks the zones you already have, with a house on your home and a pin on your current zone while you're away. Pick a zone to add its column, or a ticked one to take its column away. The list stays open for more. Your current zone stays the column next to the days, and your home stays too.
 
-Each column is headed by a short name, such as "PDT" or "GMT+2". Point at it to see the full name.
+Each column is headed by a short name: the abbreviation people use for the zone, such as "PDT" or "BST", or where none is in use, its place, such as "Iran". The abbreviation follows your [language](settings.md#general): Berlin reads "CEST" in English and "MESZ" in German, and where your region has none for a zone, the zone's own region lends its. Point at a name to see the full one.
 
 ### Rename or remove a time zone
 
-Click a zone's name and choose **Rename** to give it a label of your own, such as "NYC", or **Remove** to take its column away. To go back to the automatic name, rename it to nothing.
+Click a zone's name and choose **Rename** to give it a label of your own, such as "Mom", **Make home** to make it your home, or **Remove** to take its column away. To go back to the automatic name, rename it to nothing.
 
-Your own zone can be renamed, but not removed.
+Your current zone and your home can be renamed, but not removed. To replace your home, make another zone home.
 
 ### Fold the extra columns away
 
@@ -72,4 +72,6 @@ On a narrow screen, the columns start folded away until you open or close them y
 
 ### Across your devices
 
-The zones you add, and their names, belong to your account, so they show on every device you use. The name you give your own zone, and whether the columns are folded, stay on each device, since each device can be in a different zone.
+Your home, the zones you add, and every name you give one belong to your account, so they show on every device you use. Whether the columns are folded stays on each device.
+
+Your home is the zone of the first device you open Mitra on. On a trip, the zone you're in becomes the column next to the days and your home stays beside it, without anything being added to your list, so back home it's one column again. Naming the zone you're in keeps it on your list. If you move, choose **Make home** on the zone you live in now, and your old home stays as a column until you remove it.

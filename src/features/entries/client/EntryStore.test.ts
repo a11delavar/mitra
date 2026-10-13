@@ -8,6 +8,7 @@ import { Recurrence, type RecurrenceScope } from '../../recurrence/Recurrence.js
 import { EntryStore } from './EntryStore.js'
 import { Integration } from '../../../integrations/Integration.js'
 import { ApiError } from '../../../infrastructure/http/Api.js'
+import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
 
 describe('EntryStore', () => {
 	const day = new DateTime().dayStart
@@ -415,7 +416,7 @@ describe('EntryStore', () => {
 			EntryStore.persistence = transport.persistence
 			const occurrence = entry({
 				id: 'master__1000', uid: 'uid', recurrenceMasterId: 'master', recurrenceId: at(9),
-				seriesStart: at(9), recurrence: new Recurrence({ freq: 'DAILY' }),
+				seriesStart: at(9), recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }),
 			})
 			EntryStore.applyServerEntries([occurrence])
 			const duplication = EntryStore.duplicate(occurrence, entry({ id: undefined, start: at(14), end: at(15) }))
@@ -576,7 +577,7 @@ describe('EntryStore', () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
 			EntryStore.resolveScope = () => Promise.reject(new Error('must not be asked'))
-			const working = occurrence({ recurrence: new Recurrence({ freq: 'DAILY' }) })
+			const working = occurrence({ recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }) })
 			EntryStore.applyServerEntries([working])
 			working.recurrence = null
 			const commit = EntryStore.commit(working)

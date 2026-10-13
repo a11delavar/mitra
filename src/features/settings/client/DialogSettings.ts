@@ -7,15 +7,12 @@ import { SettingsStore } from './SettingsStore.js'
 import { type SettingRow } from './SettingRow.js'
 
 export interface SettingsParameters {
-	/** Open on a specific setting row (e.g. from palette). */
+	/** Open on a specific setting row. */
 	readonly focus?: Setting<unknown>
-	/** Open on a named page ID. */
 	readonly page?: string
-	/** Callback when active settings page changes. */
 	readonly pageChange?: (page: SettingsPageId) => void
 }
 
-/** Settings dialog with page navigation rail and unified search across pages and setting keys. */
 @component('mitra-dialog-settings')
 export class DialogSettings extends DialogComponent<SettingsParameters> {
 	@state() private page: SettingsPageId = DialogSettings.lastPage
@@ -27,7 +24,6 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 
 	@query('mitra-setting-row[focused]') private readonly focusedRow?: SettingRow
 
-	/** Local storage key for persisting active page across dialog openings. */
 	private static readonly lastPageKey = 'Mitra.Settings.Page'
 
 	static get lastPage(): SettingsPageId {
@@ -35,7 +31,6 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 		return stored && settingsPages.includes(stored) ? stored : 'general'
 	}
 
-	/** Validates and resolves setting page ID from string. */
 	static pageOf(value: string | undefined) {
 		return settingsPages.find(page => page === value)
 	}
@@ -99,7 +94,7 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 				--mitra-dialog-width: min(46rem, 92vw);
 				--settings-padding: 1.25rem;
 				--mitra-dialog-header-inset: 0.5rem;
-				--settings-height: min(24rem, 70vh);
+				--settings-height: min(36rem, 80dvh);
 
 				mitra-dialog::part(dialog) {
 					padding: 0;

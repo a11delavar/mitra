@@ -161,7 +161,7 @@ const everythingCounts = [
 				)}
 
 				{release.everything && (
-					<details id="everything">
+					<details class="everything" id="everything">
 						<summary class="title"><Icon name="chevron-right" size="0.8em" /><h2>{t('Everything in ${version}', { version: release.version })}</h2> <small>{everythingCounts}</small></summary>
 						{release.listed.map(category => (
 							<div class="category" data-type={category.type}>
@@ -443,100 +443,6 @@ const everythingCounts = [
 	.emitted {
 		inline-size: min(100%, var(--release-column));
 		margin-inline: auto;
-	}
-
-	/* Headed like the categories inside it rather than like the sections above it. */
-	.changelog {
-		gap: 2.5rem;
-
-		.title {
-			margin: 0;
-			font-size: 0.875rem;
-			font-weight: 600;
-			color: var(--color-text-muted);
-		}
-	}
-
-	.patches {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-	}
-
-	/* The commit list is read for troubleshooting, so it starts folded; find-in-page still reaches it. */
-	#everything {
-		interpolate-size: allow-keywords;
-
-		> summary + .category {
-			margin-block-start: 1.25rem;
-		}
-
-		> summary {
-			display: flex;
-			align-items: baseline;
-			flex-wrap: wrap;
-			column-gap: 0.5rem;
-			list-style: none;
-			cursor: pointer;
-			transition: color 150ms;
-
-			&::-webkit-details-marker {
-				display: none;
-			}
-
-			h2 {
-				font: inherit;
-			}
-
-			small {
-				font-size: inherit;
-				font-weight: 400;
-			}
-
-			:global(.icon) {
-				align-self: center;
-				transition: rotate 0.2s var(--mitra-ease);
-
-				&:dir(rtl) {
-					rotate: 180deg;
-				}
-			}
-
-			&:hover {
-				color: var(--color-text);
-			}
-		}
-
-		&[open] > summary :global(.icon) {
-			rotate: 90deg;
-		}
-
-		&::details-content {
-			block-size: 0;
-			opacity: 0;
-			overflow: clip;
-			overflow-clip-margin: 0.5rem;
-		}
-
-		&[open]::details-content {
-			block-size: auto;
-			opacity: 1;
-		}
-
-		@media (prefers-reduced-motion: no-preference) {
-			&::details-content {
-				transition:
-					block-size 0.3s var(--mitra-ease),
-					opacity 0.2s ease,
-					content-visibility 0.3s allow-discrete;
-			}
-		}
-	}
-
-	.maintenance {
-		margin: 1.5rem 0 0;
-		font-size: 0.875rem;
-		color: var(--color-text-muted);
 	}
 
 	@media (width < 40rem) {

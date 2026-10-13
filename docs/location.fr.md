@@ -16,7 +16,7 @@ Cliquez dans le champ de lieu pour voir les endroits utilisés récemment dans v
 
 Les suggestions favorisent les endroits proches de vous. La première fois que vous cliquez dans le champ, votre navigateur peut demander si Mitra peut utiliser votre position. Si vous l'autorisez, votre position accompagne chaque recherche, et les endroits proches passent en premier. Sinon, les suggestions fonctionnent quand même, sans cette préférence.
 
-Photon nomme les endroits en anglais, en allemand ou en français quand votre navigateur est réglé sur l'une de ces langues, et dans la langue locale sinon.
+Photon nomme les endroits en anglais, en allemand ou en français quand Mitra est réglé sur l'une de ces langues, et dans la langue locale sinon.
 
 Les calendriers [Notion](integrations/notion.md) et [Tempo](integrations/tempo.md) n'ont pas de lieu, leurs entrées n'ont donc pas de champ de lieu.
 

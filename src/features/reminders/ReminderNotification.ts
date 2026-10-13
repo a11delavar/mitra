@@ -1,7 +1,6 @@
 /**
- * What a reminder is about, and how its notification reads on one device. Rendered on the server, per device,
- * in that device's language and zone; the service worker only shows the result. The body states the entry's
- * time, never a countdown: a shown notification is never re-rendered, and Android counts down from `timestamp`.
+ * Rendered on the server per device, in its locale and zone; the service worker only shows the result. The body states
+ * the entry's time, never a countdown: a shown notification is never re-rendered, and Android counts down from `timestamp`.
  */
 
 import { localizeIn } from '../../infrastructure/i18n/dictionaries.js'
@@ -57,13 +56,13 @@ export interface PushPayload {
 
 /** The device a notification is rendered for. */
 export interface Reader {
-	language?: string | null
+	/** A BCP 47 tag: its language picks the words, the whole tag the clock and the date order. */
+	locale?: string | null
 	timeZone?: string | null
 }
 
 type Localize = ReturnType<typeof localizeIn>
 
-/** Format exact reminder offset unit. */
 export function reminderSpan(minutes: number): string {
 	const units = [
 		{ label: 'week', minutes: 7 * 24 * 60 },
@@ -87,7 +86,7 @@ function dayOf(instant: number, timeZone: string | undefined): string {
 }
 
 export class ReminderNotification {
-	/** Post-start delivery grace window (5 min). */
+	/** How long after the start a reminder is still worth delivering. */
 	private static readonly grace = 5 * MINUTE
 
 	static readonly snoozeMinutes = 10
@@ -131,7 +130,7 @@ export class ReminderNotification {
 		})
 	}
 
-	/** Calculate RFC 8030 push message TTL in seconds. */
+	/** RFC 8030 TTL: until the grace after the anchor runs out. */
 	ttlSeconds(now: number): number {
 		const start = this.facts.timestamp ?? now
 		return Math.ceil((Math.max(0, start - now) + ReminderNotification.grace) / 1000)
@@ -139,7 +138,7 @@ export class ReminderNotification {
 
 	/** The notification as `reader` shows it. */
 	for(reader: Reader, now: number): PushPayload {
-		const t = localizeIn(reader.language)
+		const t = localizeIn(reader.locale)
 		const { facts } = this
 		const title = facts.rehearsal
 			? facts.kind === 'task' ? t('Test task') : t('Test event')
@@ -164,12 +163,12 @@ export class ReminderNotification {
 		if (!when || at === undefined) {
 			return ''
 		}
-		const language = reader.language ?? undefined
+		const locale = reader.locale ?? undefined
 		const readerZone = reader.timeZone ?? undefined
 		// All-day and floating values encode wall-clock time as UTC; only the reader's "today" is read in their zone.
 		const zone = when.allDay || when.floating ? 'UTC' : readerZone
-		const day = this.dayPhrase(at, now, zone, readerZone, language, t)
-		const clock = when.allDay ? t('All day') : this.clockPhrase(when, zone, language)
+		const day = this.dayPhrase(at, now, zone, readerZone, locale, t)
+		const clock = when.allDay ? t('All day') : this.clockPhrase(when, zone, locale)
 		// An all-day task due today reads "Due Today"; a timed one just "Due 10:00".
 		const timing = when.due
 			? t('Due ${when}', { when: (when.allDay ? [day || t('Today')] : [day, clock]).filter(Boolean).join(' ') })
@@ -198,7 +197,7 @@ export class ReminderNotification {
 	}
 
 	/** Empty for today, else "Tomorrow", "Yesterday" or the date. */
-	private dayPhrase(at: number, now: number, zone: string | undefined, readerZone: string | undefined, language: string | undefined, t: Localize): string {
+	private dayPhrase(at: number, now: number, zone: string | undefined, readerZone: string | undefined, locale: string | undefined, t: Localize): string {
 		const target = dayOf(at, zone)
 		if (target === dayOf(now, readerZone)) {
 			return ''
@@ -209,11 +208,11 @@ export class ReminderNotification {
 		if (target === dayOf(now - DAY, readerZone)) {
 			return t('Yesterday')
 		}
-		return new Intl.DateTimeFormat(language, { timeZone: zone, weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(at))
+		return new Intl.DateTimeFormat(locale, { timeZone: zone, weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(at))
 	}
 
-	private clockPhrase(when: PushWhen, zone: string | undefined, language: string | undefined): string {
-		const format = new Intl.DateTimeFormat(language, { timeZone: zone, hour: 'numeric', minute: '2-digit' })
+	private clockPhrase(when: PushWhen, zone: string | undefined, locale: string | undefined): string {
+		const format = new Intl.DateTimeFormat(locale, { timeZone: zone, timeStyle: 'short' })
 		return when.start !== undefined && when.end !== undefined && when.end > when.start
 			? format.formatRange(new Date(when.start), new Date(when.end))
 			: format.format(new Date(ReminderNotification.anchorOf(when)!))

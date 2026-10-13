@@ -3,33 +3,9 @@
 		"${count:pluralityNumber} mudança",
 		"${count:pluralityNumber} mudanças"
 	],
-	"${count:pluralityNumber} documentation changes": [
-		"${count:pluralityNumber} mudança na documentação",
-		"${count:pluralityNumber} mudanças na documentação"
-	],
-	"${count:pluralityNumber} features": [
-		"${count:pluralityNumber} recurso",
-		"${count:pluralityNumber} recursos"
-	],
-	"${count:pluralityNumber} improvements": [
-		"${count:pluralityNumber} melhoria",
-		"${count:pluralityNumber} melhorias"
-	],
-	"${count:pluralityNumber} maintenance changes": [
-		"${count:pluralityNumber} mudança de manutenção",
-		"${count:pluralityNumber} mudanças de manutenção"
-	],
 	"${count:pluralityNumber} minute read": [
 		"${count:pluralityNumber} minuto de leitura",
 		"${count:pluralityNumber} minutos de leitura"
-	],
-	"${count:pluralityNumber} other changes": [
-		"${count:pluralityNumber} outra mudança",
-		"${count:pluralityNumber} outras mudanças"
-	],
-	"${count:pluralityNumber} refactors": [
-		"${count:pluralityNumber} refatoração",
-		"${count:pluralityNumber} refatorações"
 	],
 	"${summary}, from the changelog": "${summary}, segundo o changelog",
 	"A self-hosted calendar that puts your tasks on the same timeline as your events. Keep your calendars in Mitra, or sync the ones you already use.": "Um calendário self-hosted que coloca suas tarefas na mesma linha do tempo dos seus eventos. Mantenha seus calendários no Mitra ou sincronize os que você já usa.",
@@ -74,15 +50,12 @@
 	"Open at full size": "Abrir em tamanho real",
 	"Open source under the AGPL-3.0": "Código aberto sob a AGPL-3.0",
 	"Open this week in the demo": "Abrir esta semana na demo",
-	"Other": "Outros",
 	"Overview": "Visão geral",
 	"planned": "planejada",
-	"Plus ${link} on GitHub: tests, builds and chores.": "Mais ${link} no GitHub: testes, builds e manutenção.",
 	"Project": "Projeto",
 	"Read it in English": "Ler em inglês",
 	"Read them in English": "Ler em inglês",
 	"Recurring things like workouts shrink to small marks, so a busy month stays readable.": "O que se repete, como treinos, encolhe para pequenas marcas, para que um mês cheio continue legível.",
-	"Refactors": "Refatorações",
 	"RSS feed": "Feed RSS",
 	"See what each integration supports.": "Veja o que cada integração suporta.",
 	"See what is new": "Veja as novidades",

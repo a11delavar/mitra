@@ -85,12 +85,6 @@ export class Release extends ReleaseModel {
 		return `${base}${localized(`/releases/${this.version}/`, this.language)}`
 	}
 
-	/** What the release shipped that its readers would notice, by category. */
-	get listed() {
-		return this.categories.filter(category => !Release.maintenance.has(category.type))
-	}
-
-
 	/** The notes' title, or the version alone for a release without notes. */
 	get title() {
 		return this.notes?.title || `${this.t('Mitra')} ${this.version}`
@@ -165,7 +159,7 @@ export class Release extends ReleaseModel {
 		return `${base}${localized(`/${docsBase}/`, this.language)}${page}`
 	}
 
-	/** The `view-transition-name` of one of the release's parts, the same on the list and on its page so it travels between them, and its class for how. */
+	/** The same on the list and on its page, so the part travels between them; the class says how. */
 	transition(part: string, kind?: 'text') {
 		return `view-transition-name: release-${this.version.replace(/\W/g, '-')}-${part};${kind ? ` view-transition-class: ${kind};` : ''}`
 	}
@@ -253,7 +247,6 @@ function mp4Size(file: string) {
 	return { width: undefined, height: undefined }
 }
 
-/** A heading's anchor on its release's page. */
 function anchorOf(heading: string) {
 	return heading.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '')
 }

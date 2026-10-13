@@ -20,6 +20,7 @@ import { NotificationSubscription } from '../../reminders/NotificationSubscripti
 import { Session } from '../../identity/server/Session.js'
 import { MigrationRefused } from './SourceMigration.js'
 import { IcsImport } from './IcsImport.js'
+import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
@@ -183,7 +184,7 @@ describe('Calendar file import', () => {
 		await (await IcsImport.of(em, user, source.id, file(SERIES))).run()
 
 		const [series] = await em.find(Entry, { sourceId: source.id })
-		assert.equal(series!.recurrence?.freq, 'WEEKLY')
+		assert.equal(series!.recurrence?.freq, RecurrenceFrequency.Weekly)
 		assert.deepEqual(series!.exdates, [Date.UTC(2026, 7, 10, 10)])
 		assert.equal(series!.data?.raw, undefined)
 	})

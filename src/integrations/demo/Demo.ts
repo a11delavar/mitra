@@ -3,6 +3,7 @@ import { DateTime } from '@3mo/date-time'
 import { Source } from '../../features/sources/Source.js'
 import { RelationType } from '../../features/relations/RelationType.js'
 import { Recurrence } from '../../features/recurrence/Recurrence.js'
+import { RecurrenceEnd } from '../../features/recurrence/RecurrenceEnd.js'
 import { ParticipantRole, ParticipantStatus } from '../../features/participants/Participant.js'
 import { model } from '../../infrastructure/model/model.js'
 import { integration } from '../Integration.js'
@@ -12,6 +13,8 @@ import { EntryRelation } from '../../features/relations/EntryRelation.js'
 import { Entry, TaskStatus } from '../../features/entries/Entry.js'
 import { Color } from '../../features/sources/Color.js'
 import { normalizeAllDay } from '../../features/time/calendarDate.js'
+import { RecurrenceFrequency } from '../../features/recurrence/RecurrenceFrequency.js'
+import { RecurrenceWeekday } from '../../features/recurrence/RecurrenceWeekday.js'
 
 /** The signed-in user's address in the sample data. */
 const me = 'demo@mitracal.com'
@@ -144,7 +147,7 @@ export class Demo extends MitraCalendar {
 		const mondayOf = (date: DateTime) => date.subtract({ days: date.dayOfWeek - 1 }).dayStart
 		const thisWeekMonday = mondayOf(todayStart)
 		const nextWeekMonday = thisWeekMonday.add({ days: 7 })
-		const pastStart = mondayOf(todayStart.subtract({ years: 2 })) // 2 years ago base
+		const pastStart = mondayOf(todayStart.subtract({ years: 2 }))
 
 		const at = (base: DateTime, dayOffset: number, hour: number, minute = 0) => base.add({ days: dayOffset }).with({ hour, minute })
 		const allDayStart = (base: DateTime, dayOffset: number) => normalizeAllDay(base.add({ days: dayOffset })) as unknown as DateTime
@@ -173,11 +176,11 @@ export class Demo extends MitraCalendar {
 		// Wednesday's work, straight after university, says where it happens.
 
 		const availability = (source: Source, init: Partial<Entry>) => on(source)({ type: EntryType.Availability, ...init })
-		availability(work, { start: at(pastStart, 0, 9), end: at(pastStart, 0, 17), recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['MO', 'TU'] }) })
-		availability(work, { location: t('Home office'), start: at(pastStart, 2, 13), end: at(pastStart, 2, 17), recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['WE'] }) })
-		availability(university, { start: at(pastStart, 2, 9), end: at(pastStart, 2, 13), recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['WE'] }) })
-		availability(university, { start: at(pastStart, 3, 9), end: at(pastStart, 3, 17), recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['TH', 'FR'] }) })
-		availability(upkeep, { start: at(pastStart, 5, 10), end: at(pastStart, 5, 16), recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['SA'] }) })
+		availability(work, { start: at(pastStart, 0, 9), end: at(pastStart, 0, 17), recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Monday, RecurrenceWeekday.Tuesday] }) })
+		availability(work, { location: t('Home office'), start: at(pastStart, 2, 13), end: at(pastStart, 2, 17), recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Wednesday] }) })
+		availability(university, { start: at(pastStart, 2, 9), end: at(pastStart, 2, 13), recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Wednesday] }) })
+		availability(university, { start: at(pastStart, 3, 9), end: at(pastStart, 3, 17), recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Thursday, RecurrenceWeekday.Friday] }) })
+		availability(upkeep, { start: at(pastStart, 5, 10), end: at(pastStart, 5, 16), recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Saturday] }) })
 
 		// ---- Rhythm: one entry per habit, no more ---------------------------------------------------
 
@@ -185,7 +188,7 @@ export class Demo extends MitraCalendar {
 			heading: t('💪 Gym'),
 			start: at(pastStart, 0, 8),
 			end: at(pastStart, 0, 9),
-			recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['MO', 'WE', 'FR'] }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Monday, RecurrenceWeekday.Wednesday, RecurrenceWeekday.Friday] }),
 		})
 
 		// A moment, not a span: a task with a start and no end, every morning. Taken until yesterday, as a series
@@ -195,36 +198,36 @@ export class Demo extends MitraCalendar {
 			heading: t('💊 Morning Meds'),
 			status: TaskStatus.Done,
 			start: at(pastStart, 0, 7, 30),
-			recurrence: new Recurrence({ freq: 'DAILY', until: Recurrence.dayBefore(firstDoseToday) }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily, until: RecurrenceEnd.before(firstDoseToday) }),
 		})
 		personalTask({
 			heading: t('💊 Morning Meds'),
 			status: TaskStatus.ToDo,
 			start: firstDoseToday,
-			recurrence: new Recurrence({ freq: 'DAILY' }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }),
 		})
 
 		hobbyEvent({
 			heading: t('🏐 Volleyball'),
 			start: at(pastStart, 3, 18),
 			end: at(pastStart, 3, 19, 30),
-			recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['TH'] }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Thursday] }),
 		})
 
 		personalEvent({
 			heading: t('Therapy'),
 			start: at(pastStart, 2, 18),
 			end: at(pastStart, 2, 19),
-			recurrence: new Recurrence({ freq: 'WEEKLY', interval: 2, byday: ['WE'] }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, interval: 2, byday: [RecurrenceWeekday.Wednesday] }),
 		})
 
 		// ---- Work (Blue) -------------------------------------------------------------------------
 
 		workEvent({
 			heading: t('Weekly Team Sync'),
-			start: at(pastStart, 1, 15), // Tuesdays, starting 2 years ago
+			start: at(pastStart, 1, 15),
 			end: at(pastStart, 1, 16),
-			recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['TU'] }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Tuesday] }),
 			participants: [
 				{ email: me, organizer: true, self: true, role: ParticipantRole.Required, status: ParticipantStatus.Accepted },
 				{ email: 'colleague1@company.com', role: ParticipantRole.Required, status: ParticipantStatus.Accepted },
@@ -238,7 +241,7 @@ export class Demo extends MitraCalendar {
 			start: at(pastStart, 0, 16),
 			end: at(pastStart, 0, 16, 30),
 			status: TaskStatus.ToDo,
-			recurrence: new Recurrence({ freq: 'MONTHLY', byday: ['1MO'] }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Monthly, byday: [RecurrenceWeekday.Monday.nth(1)] }),
 		})
 
 		workTask({ heading: t('Draft New System Architecture'), status: TaskStatus.ToDo, start: at(thisWeekMonday, 0, 9), end: at(thisWeekMonday, 0, 12) })
@@ -308,7 +311,7 @@ export class Demo extends MitraCalendar {
 			start: at(pastStart, 5, 10),
 			end: at(pastStart, 5, 11),
 			status: TaskStatus.ToDo,
-			recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['SA'] }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Saturday] }),
 		})
 
 		// Evening: a monthly entry lands on whatever weekday its date falls on.
@@ -317,7 +320,7 @@ export class Demo extends MitraCalendar {
 			start: at(pastStart, 5, 17),
 			end: at(pastStart, 5, 19),
 			status: TaskStatus.ToDo,
-			recurrence: new Recurrence({ freq: 'MONTHLY', bymonthday: 15 }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Monthly, bymonthday: 15 }),
 		})
 
 		// Owed every month and never planned: the series repeats its due, and the planning list shows the one coming up.
@@ -327,7 +330,7 @@ export class Demo extends MitraCalendar {
 			allDay: true,
 			due: allDayStart(todayStart.subtract({ years: 2 }).with({ day: 1 }), 0),
 			estimate: 15,
-			recurrence: new Recurrence({ freq: 'MONTHLY', bymonthday: 1 }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Monthly, bymonthday: 1 }),
 		})
 
 		// Months out: a yearly entry anchored near today lands in the opening week, on whatever weekday the date falls.
@@ -336,7 +339,7 @@ export class Demo extends MitraCalendar {
 			heading: t('Car Inspection'),
 			start: at(pastMonth3Start, 1, 9),
 			end: at(pastMonth3Start, 1, 10),
-			recurrence: new Recurrence({ freq: 'YEARLY' }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Yearly }),
 		})
 
 		// ---- Hobbies (Purple) --------------------------------------------------------------------
@@ -413,7 +416,7 @@ export class Demo extends MitraCalendar {
 			start: allDayStart(pastMonth6Start, 0),
 			end: allDayStart(pastMonth6Start, 12),
 			allDay: true,
-			recurrence: new Recurrence({ freq: 'YEARLY' }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Yearly }),
 		})
 
 		const advCalcExam = uniEvent({

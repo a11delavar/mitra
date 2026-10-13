@@ -5,6 +5,7 @@ import { EntryType } from '../../entries/EntryType.js'
 import { Entry } from '../../entries/Entry.js'
 import { EntryRank } from '../../entries/EntryRank.js'
 import { Occurrences, occurrenceOf, currentOccurrence } from './occurrences.js'
+import { RecurrenceFrequency } from '../RecurrenceFrequency.js'
 
 type DateTime = import('@3mo/date-time').DateTime
 const D = (iso: string) => new Date(iso) as unknown as DateTime
@@ -12,7 +13,7 @@ const D = (iso: string) => new Date(iso) as unknown as DateTime
 describe('a repeating task with a due', () => {
 	const rent = () => new Entry({
 		id: 'rent', sourceId: 's', type: EntryType.Task, heading: 'Pay the rent', allDay: true,
-		due: D('2026-01-01T00:00:00Z'), estimate: 15, recurrence: new Recurrence({ freq: 'MONTHLY', bymonthday: 1 }),
+		due: D('2026-01-01T00:00:00Z'), estimate: 15, recurrence: new Recurrence({ freq: RecurrenceFrequency.Monthly, bymonthday: 1 }),
 	})
 
 	it('repeats its due when it has no start', () => {
@@ -48,7 +49,7 @@ describe('a repeating task with a due', () => {
 		const timesheet = new Entry({
 			id: 'sheet', sourceId: 's', type: EntryType.Task, heading: 'Timesheet',
 			start: D('2026-06-05T13:00:00Z'), end: D('2026-06-05T13:30:00Z'), due: D('2026-06-05T15:00:00Z'),
-			recurrence: new Recurrence({ freq: 'WEEKLY' }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }),
 		})
 		const [occurrence] = Occurrences.of(timesheet)!.within(new Date('2026-06-12T00:00:00Z'), new Date('2026-06-12T23:59:59Z'))
 		const expanded = occurrenceOf(timesheet, occurrence!)
@@ -59,7 +60,7 @@ describe('a repeating task with a due', () => {
 	it('repeats a moment as moments', () => {
 		const meds = new Entry({
 			id: 'meds', sourceId: 's', type: EntryType.Task, heading: 'Morning Meds',
-			start: D('2026-06-01T05:30:00Z'), recurrence: new Recurrence({ freq: 'DAILY' }),
+			start: D('2026-06-01T05:30:00Z'), recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }),
 		})
 		const [occurrence] = Occurrences.of(meds)!.within(new Date('2026-06-03T00:00:00Z'), new Date('2026-06-03T23:59:59Z'))
 		const expanded = occurrenceOf(meds, occurrence!)
@@ -77,7 +78,7 @@ describe('a repeating task with a due', () => {
 		const master = new Entry({
 			id: 'sheet', sourceId: 's', type: EntryType.Task, heading: 'Timesheet', data: { raw },
 			start: D('2026-06-05T13:00:00Z'), end: D('2026-06-05T13:30:00Z'), due: D('2026-06-05T15:00:00Z'),
-			recurrence: new Recurrence({ freq: 'WEEKLY' }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }),
 		})
 		const [occurrence] = Occurrences.of(master)!.within(new Date('2026-06-12T00:00:00Z'), new Date('2026-06-12T23:59:59Z'))
 		assert.equal(occurrence!.end.toISOString(), '2026-06-12T13:30:00.000Z')

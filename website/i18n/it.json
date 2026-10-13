@@ -3,33 +3,9 @@
 		"${count:pluralityNumber} modifica",
 		"${count:pluralityNumber} modifiche"
 	],
-	"${count:pluralityNumber} documentation changes": [
-		"${count:pluralityNumber} modifica alla documentazione",
-		"${count:pluralityNumber} modifiche alla documentazione"
-	],
-	"${count:pluralityNumber} features": [
-		"${count:pluralityNumber} funzione",
-		"${count:pluralityNumber} funzioni"
-	],
-	"${count:pluralityNumber} improvements": [
-		"${count:pluralityNumber} miglioramento",
-		"${count:pluralityNumber} miglioramenti"
-	],
-	"${count:pluralityNumber} maintenance changes": [
-		"${count:pluralityNumber} modifica di manutenzione",
-		"${count:pluralityNumber} modifiche di manutenzione"
-	],
 	"${count:pluralityNumber} minute read": [
 		"${count:pluralityNumber} minuto di lettura",
 		"${count:pluralityNumber} minuti di lettura"
-	],
-	"${count:pluralityNumber} other changes": [
-		"${count:pluralityNumber} altra modifica",
-		"${count:pluralityNumber} altre modifiche"
-	],
-	"${count:pluralityNumber} refactors": [
-		"${count:pluralityNumber} refactoring",
-		"${count:pluralityNumber} refactoring"
 	],
 	"${summary}, from the changelog": "${summary}, dal registro delle modifiche",
 	"A self-hosted calendar that puts your tasks on the same timeline as your events. Keep your calendars in Mitra, or sync the ones you already use.": "Un calendario self-hosted che mette le tue attività sulla stessa cronologia dei tuoi eventi. Tieni i tuoi calendari in Mitra o sincronizza quelli che già usi.",
@@ -74,15 +50,12 @@
 	"Open at full size": "Apri a dimensione intera",
 	"Open source under the AGPL-3.0": "Open source con licenza AGPL-3.0",
 	"Open this week in the demo": "Apri questa settimana nella demo",
-	"Other": "Altro",
 	"Overview": "Panoramica",
 	"planned": "pianificata",
-	"Plus ${link} on GitHub: tests, builds and chores.": "Più ${link} su GitHub: test, build e manutenzione.",
 	"Project": "Progetto",
 	"Read it in English": "Leggila in inglese",
 	"Read them in English": "Leggile in inglese",
 	"Recurring things like workouts shrink to small marks, so a busy month stays readable.": "Ciò che si ripete, come gli allenamenti, si riduce a piccoli segni, così un mese pieno resta leggibile.",
-	"Refactors": "Refactoring",
 	"RSS feed": "Feed RSS",
 	"See what each integration supports.": "Scopri cosa supporta ogni integrazione.",
 	"See what is new": "Scopri le novità",

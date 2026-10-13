@@ -1,5 +1,6 @@
 import { component, css } from '@a11d/lit'
 import { Application, application, DialogCancelledError } from '@a11d/lit-application'
+import { Localizer } from '@3mo/localization'
 import { fetchIntegrations, fetchMeta, fetchUser, getIntegrations, getUser, instanceName } from '../infrastructure/http/Api.js'
 import { Weeks } from '../features/calendar/client/Weeks.js'
 import { Months } from '../features/calendar/client/Months.js'
@@ -33,6 +34,7 @@ import { DialogKeyboardShortcuts } from '../features/commands/client/DialogKeybo
 import { DialogSettings } from '../features/settings/client/DialogSettings.js'
 import { SettingRow } from '../features/settings/client/SettingRow.js'
 import { NotificationDevices } from '../features/reminders/client/NotificationDevices.js'
+import { RegionPreview } from '../infrastructure/i18n/RegionPreview.js'
 import { themeStyles } from '../design/theme.css.js'
 import { focusRingStyles } from '../design/focusRing.css.js'
 import { kbdStyles } from '../design/kbd.css.js'
@@ -47,6 +49,7 @@ import { ParticipantsField } from '../features/participants/client/ParticipantsF
 import { RelationsField } from '../features/relations/client/RelationsField.js'
 import { TimeZoneHeader } from '../features/time/client/TimeZoneHeader.js'
 import '../features/time/client/TimeZonePicker.js'
+import { TimeZones } from '../features/time/client/TimeZones.js'
 import { syncPushSubscription } from '../features/reminders/client/push.js'
 import '../integrations/demo/client/language.js'
 import { LanguageSetting } from '../infrastructure/i18n/LanguageSetting.js'
@@ -71,12 +74,11 @@ installHierarchyPrompts()
 export class Mitra extends Application {
 	protected readonly scrollDevice = new ScrollDeviceController(this)
 
-	/** Document-resolved application singleton, by its tag: the framework's walks every element, and every command reads it on every page render. */
+	/** By its tag: the framework's lookup walks every element, and every command reads it on every render. */
 	static override get instance() {
 		return document.querySelector('mitra-application') as Mitra
 	}
 
-	/** Calendar page light DOM query resolver. */
 	get calendar() {
 		return this.querySelector('mitra-page-calendar')!
 	}
@@ -88,7 +90,11 @@ export class Mitra extends Application {
 		await Promise.all([fetchIntegrations(), fetchUser(), fetchMeta()])
 		// After the integrations, so a linked language switches the sample calendar too.
 		LanguageSetting.rememberLinkedLanguage()
+		// Nothing waits for it: until the account has a home, home is this device's zone anyway.
+		void TimeZones.settle().catch(() => void 0)
 		document.title = this.documentTitle
+		// The framework writes the title only when the page heading changes, so a language switch would keep the old name.
+		Localizer.locales.change.subscribe(() => document.title = this.documentTitle)
 		syncPushSubscription()
 		syncThemeColor()
 		if (getUser() && !getUser()?.lastSeenVersion) {
@@ -114,7 +120,6 @@ export class Mitra extends Application {
 		}
 	}
 
-	/** Opens the connect dialog prefilled with a subscription for a webcal: (or .ics link) launch. */
 	private static async subscribe(url: string) {
 		const normalized = IcsSubscription.normalizeUrl(url)
 		if (!normalized) {
@@ -125,7 +130,6 @@ export class Mitra extends Application {
 		document.querySelector('mitra-sidebar')?.requestUpdate()
 	}
 
-	/** Runs the add-to-calendar flow for opened or dropped .ics files, one at a time. */
 	private static async addCalendarFiles(files: ReadonlyArray<File>) {
 		for (const file of files) {
 			await new DialogIcsImport({ fileName: file.name, ics: await file.text() }).confirm()
@@ -140,12 +144,10 @@ export class Mitra extends Application {
 		return undefined
 	}
 
-	/** Window title derived from page heading and instance name. */
 	protected override get documentTitle() {
 		return [this.pageHeading, instanceName()].filter(Boolean).join(' | ')
 	}
 
-	/** Track global focus modality (keyboard vs pointer) for focus rings. */
 	private static trackFocusModality() {
 		const set = (modality: 'keyboard' | 'pointer') => document.documentElement.dataset.focusModality = modality
 		set('pointer')
@@ -157,7 +159,6 @@ export class Mitra extends Application {
 		addEventListener('pointerdown', () => set('pointer'), { capture: true, passive: true })
 	}
 
-	/** Detect whether target is a text input field. */
 	private static isTextEntry(target: EventTarget | null | undefined) {
 		return target instanceof HTMLTextAreaElement
 			|| (target instanceof HTMLElement && target.isContentEditable)
@@ -165,7 +166,7 @@ export class Mitra extends Application {
 				&& !['checkbox', 'radio', 'button', 'submit', 'reset', 'range', 'color', 'file', 'image'].includes(target.type))
 	}
 
-	/** Extract and strip OAuth redirect integration query parameter. */
+	/** The integration an OAuth redirect returns to, taken out of the address. */
 	private static consumePendingIntegrationParameter(): string | null {
 		const parameters = new URLSearchParams(location.search)
 		const id = parameters.get('integration')
@@ -239,6 +240,7 @@ export class Mitra extends Application {
 			${DialogSettings.styles}
 			${SettingRow.styles}
 			${NotificationDevices.styles}
+			${RegionPreview.styles}
 			${DialogEntryScope.styles}
 			${DialogDeleteEntries.styles}
 			${DialogCompleteParent.styles}

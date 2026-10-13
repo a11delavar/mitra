@@ -23,13 +23,16 @@ declare global {
 		"${count:pluralityNumber} carry a visibility": unknown
 		"${count:pluralityNumber} copies could not be taken back and are now in both calendars.": unknown
 		"${count:pluralityNumber} days": unknown
+		"${count:pluralityNumber} documentation changes": unknown
 		"${count:pluralityNumber} entries": unknown
 		"${count:pluralityNumber} entries added to ${name}": unknown
 		"${count:pluralityNumber} entries arrive, the flattened series included": unknown
 		"${count:pluralityNumber} entries copied to ${name}": unknown
 		"${count:pluralityNumber} entries moved to ${name}": unknown
+		"${count:pluralityNumber} features": unknown
 		"${count:pluralityNumber} have participants": unknown
 		"${count:pluralityNumber} hours": unknown
+		"${count:pluralityNumber} improvements": unknown
 		"${count:pluralityNumber} landed anyway and could not be taken back. Delete them in ${name} by hand.": unknown
 		"${count:pluralityNumber} lose their cancelled status": unknown
 		"${count:pluralityNumber} lose their description": unknown
@@ -38,10 +41,13 @@ declare global {
 		"${count:pluralityNumber} lose their location": unknown
 		"${count:pluralityNumber} lose their reminders": unknown
 		"${count:pluralityNumber} lose their time zone": unknown
+		"${count:pluralityNumber} maintenance changes": unknown
 		"${count:pluralityNumber} of ${total:number} entries are added": unknown
 		"${count:pluralityNumber} of ${total:number} entries are copied": unknown
 		"${count:pluralityNumber} of ${total:number} entries move": unknown
+		"${count:pluralityNumber} other changes": unknown
 		"${count:pluralityNumber} participants": unknown
+		"${count:pluralityNumber} refactors": unknown
 		"${count:pluralityNumber} repeat": unknown
 		"${count:pluralityNumber} repeating entries: every occurrence goes too.": unknown
 		"${count:pluralityNumber} selected": unknown
@@ -52,6 +58,7 @@ declare global {
 		"${done:number} of ${total:pluralityNumber} checklist items done": unknown
 		"${done:number} of ${total:pluralityNumber} steps done": unknown
 		"${done:number} of ${total:pluralityNumber} subtasks done": unknown
+		"${from} to ${to}": unknown
 		"${n:number}nd": unknown
 		"${n:number}rd": unknown
 		"${n:number}st": unknown
@@ -90,6 +97,7 @@ declare global {
 		"All entries": unknown
 		"All entries in this calendar will be deleted too. This can't be undone.": unknown
 		"All subtasks done": unknown
+		"All time zones": unknown
 		"Allow": unknown
 		"Allowed": unknown
 		"Alt+click to show only this one": unknown
@@ -109,6 +117,7 @@ declare global {
 		"Atlassian Account": unknown
 		"Atlassian Account E-mail": unknown
 		"Atlassian API Token": unknown
+		"Automatic (${region})": unknown
 		"Availability": unknown
 		"Availability leaves the week view. It stays in its calendars, and busy availability still shows as busy to others.": unknown
 		"Back": unknown
@@ -145,6 +154,7 @@ declare global {
 		"close": unknown
 		"Close": unknown
 		"Close out the subtasks that are still open": unknown
+		"Collapse": unknown
 		"Color": unknown
 		"Columns": unknown
 		"Commands": unknown
@@ -179,9 +189,12 @@ declare global {
 		"CreateAvailability.Keywords": unknown
 		"CreateEntry.Keywords": unknown
 		"Ctrl": unknown
+		"Current time zone": unknown
+		"Current time zone. Switch to ${city} time to change the zone": unknown
 		"Custom range": unknown
 		"Custom…": unknown
 		"Dark": unknown
+		"Date": unknown
 		"days": unknown
 		"Default Calendar": unknown
 		"Default Duration": unknown
@@ -236,6 +249,7 @@ declare global {
 		"Ends": unknown
 		"Entries": unknown
 		"Estimate": unknown
+		"Europe": unknown
 		"Event": unknown
 		"Events": unknown
 		"Every": unknown
@@ -251,6 +265,7 @@ declare global {
 		"Every weekday": unknown
 		"Everything in ${version}": unknown
 		"Everything travels intact": unknown
+		"Expand": unknown
 		"Features": unknown
 		"Flatten into single entries": unknown
 		"Flattening writes out a year of occurrences as separate entries. They stop repeating, and links pointing at the series are left behind.": unknown
@@ -277,6 +292,7 @@ declare global {
 		"Hide the other time zones": unknown
 		"HideAvailabilitySetting.Keywords": unknown
 		"HideDoneTasksSetting.Keywords": unknown
+		"Home": unknown
 		"hours": unknown
 		"Ics.UrlHint": unknown
 		"Importing entries…": unknown
@@ -297,12 +313,14 @@ declare global {
 		"LanguageSetting.Keywords": unknown
 		"last seen ${when}": unknown
 		"Latest": unknown
+		"Latin America": unknown
 		"Leave the originals here and add a copy over there": unknown
 		"Leave them here": unknown
 		"Light": unknown
 		"Location": unknown
 		"Make attendance optional": unknown
 		"Make attendance optional for everyone": unknown
+		"Make home": unknown
 		"Mark all as done": unknown
 		"Mark all optional": unknown
 		"Mark all required": unknown
@@ -371,6 +389,7 @@ declare global {
 		"NotificationsSetting.Keywords": unknown
 		"Notion": unknown
 		"Notion.TokenHint": unknown
+		"Numbers": unknown
 		"Occurrences": unknown
 		"of event at ${time}": unknown
 		"On": unknown
@@ -392,6 +411,7 @@ declare global {
 		"Options": unknown
 		"or": unknown
 		"Organizer": unknown
+		"Other": unknown
 		"Overdue": unknown
 		"Participant options": unknown
 		"Participants": unknown
@@ -403,13 +423,12 @@ declare global {
 		"Plan your days": unknown
 		"Planned": unknown
 		"Planning": unknown
+		"Plus ${link} on GitHub: tests, builds and chores.": unknown
 		"Previous month": unknown
 		"Previous Month": unknown
 		"Previous Week": unknown
 		"Previous Year": unknown
 		"PreviousPeriod.Keywords": unknown
-		"Primary": unknown
-		"Primary time zone. Switch to ${city} time to change the zone": unknown
 		"Private": unknown
 		"Progress": unknown
 		"Public": unknown
@@ -418,6 +437,7 @@ declare global {
 		"Read on mitracal.com": unknown
 		"Read this calendar again from the start": unknown
 		"read-only": unknown
+		"Refactors": unknown
 		"Refresh": unknown
 		"Related to": unknown
 		"Releases": unknown
@@ -471,8 +491,8 @@ declare global {
 		"Show previously visible calendars": unknown
 		"Show Previously Visible Calendars": unknown
 		"Show the other time zones": unknown
-		"Showing ${city} time. Switch to the primary time zone": unknown
-		"Showing the primary time zone. Switch to ${city} time": unknown
+		"Showing ${city} time. Switch to the current time zone": unknown
+		"Showing the current time zone. Switch to ${city} time": unknown
 		"Shown above the time axis. Leave empty to use the automatic name.": unknown
 		"ShowOnlySource.Keywords": unknown
 		"ShowPreviouslyVisibleSources.Keywords": unknown
@@ -526,7 +546,9 @@ declare global {
 		"This entry": unknown
 		"This relationship could not be saved": unknown
 		"This relationship is not possible": unknown
+		"Time": unknown
 		"Time zone": unknown
+		"Time zone names": unknown
 		"Timed entries only": unknown
 		"Timeline": unknown
 		"Timeline View": unknown
@@ -563,6 +585,7 @@ declare global {
 		"Week ${week:number}": unknown
 		"Week View": unknown
 		"Weekdays": unknown
+		"Weekend": unknown
 		"weeks": unknown
 		"WeekView.Keywords": unknown
 		"Welcome to ${name}": unknown
@@ -571,6 +594,7 @@ declare global {
 		"When": unknown
 		"Where new events and tasks are created": unknown
 		"Workspace": unknown
+		"World": unknown
 		"Year": unknown
 		"Year View": unknown
 		"YearView.Keywords": unknown

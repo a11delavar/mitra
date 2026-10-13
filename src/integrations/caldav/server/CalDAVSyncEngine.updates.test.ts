@@ -8,6 +8,8 @@ import { EntryType, EntryTypes } from '../../../features/entries/EntryType.js'
 import { Recurrence } from '../../../features/recurrence/Recurrence.js'
 import { Source } from '../../../features/sources/Source.js'
 import { CalDAVAvailability } from './CalDAVAvailability.js'
+import { RecurrenceFrequency } from '../../../features/recurrence/RecurrenceFrequency.js'
+import { RecurrenceWeekday } from '../../../features/recurrence/RecurrenceWeekday.js'
 
 const COLLECTION = 'https://example.com/cal/'
 
@@ -76,7 +78,7 @@ describe('updating a CalDAV entry', () => {
 	it('takes what the server stored, the exclusions included', async () => {
 		const { integration, puts } = account()
 		const excluded = [Date.parse('2026-07-07T09:00:00.000Z')]
-		const series = event({ recurrence: new Recurrence({ freq: 'DAILY' }), exdates: excluded })
+		const series = event({ recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }), exdates: excluded })
 		const edited = series.clone()
 		edited.heading = 'Daily standup'
 		edited.exdates = [...excluded, Date.parse('2026-07-08T09:00:00.000Z')]
@@ -96,7 +98,7 @@ describe('publishing busy availability to a CalDAV calendar', () => {
 		const source = new Source({ id: 'work', integrationId: 'i1', uri: COLLECTION, name: 'Work', entryTypes: EntryTypes.of(EntryType.Event), enabled: true })
 		const availability = new Entry({
 			id: 'entry-1', uid: 'uid-1', sourceId: 'work', type: EntryType.Availability, heading: 'Deep work', transparency: Transparency.Busy,
-			start, end: start.add({ hours: 2 }), recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['MO'] }), exdates: [Date.parse('2026-07-13T09:00:00.000Z')],
+			start, end: start.add({ hours: 2 }), recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Monday] }), exdates: [Date.parse('2026-07-13T09:00:00.000Z')],
 		})
 		const busy = CalDAVAvailability.eventOf(availability)
 		busy.uri = `${COLLECTION}busy.ics`

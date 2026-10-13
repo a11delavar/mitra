@@ -1,6 +1,6 @@
-import { Component, component, css, html, ifDefined, property } from '@a11d/lit'
+import { Component, component, css, html, ifDefined, property, unsafeHTML } from '@a11d/lit'
 import { linesOf, type ChangelogCategory } from '../Changelog.js'
-import { type Release } from '../Release.js'
+import { Release } from '../Release.js'
 import { ReleaseDocs, type ReleaseCapture, type ReleaseHighlight } from '../ReleaseNotes.js'
 import { releaseNotes } from '../releaseNotes.css.js'
 import { Localizer } from '@3mo/localization'
@@ -15,8 +15,7 @@ const onWebsite = (route: string) => {
 const docsPage = (page: string) => onWebsite(`/${docsBase}/${page}`)
 
 /**
- * A release as its page on the website reads, marked up with the same classes so both wear `releaseNotes.css.ts`:
- * the notes, then the patches, everything it shipped and who made it. Only the captures the build carries show
+ * Marked up with the website's classes so both wear `releaseNotes.css.ts`. Only the captures the build carries show
  * (`files`), so an older release reads as text.
  */
 @component('mitra-release-notes')
@@ -81,11 +80,6 @@ export class ReleaseNotesComponent extends Component {
 						font-size: 1rem;
 					}
 				}
-
-				/* The app keeps the housekeeping out of what changed for the reader; the website lists it all. */
-				.category:is([data-type=chores], [data-type=refactors], [data-type=infrastructure]) {
-					display: none;
-				}
 			}
 		`
 	}
@@ -117,24 +111,6 @@ export class ReleaseNotesComponent extends Component {
 					</section>
 				`}
 				${release.highlights.map((highlight, index) => this.highlightTemplate(highlight, index))}
-				${!release.patches.length ? html.nothing : html`
-					<section class="emitted">
-						<h3 class="title">${t('Patches')}</h3>
-						${release.patches.map(patch => html`
-							<div class="patch">
-								<b>${patch.version}</b>
-								<span class="date">${!patch.date ? html.nothing : ReleaseNotesComponent.dateOf(patch.date).format({ dateStyle: 'medium' })}</span>
-								${this.linesTemplate(patch.categories.flatMap(linesOf))}
-							</div>
-						`)}
-					</section>
-				`}
-				${!release.everything ? html.nothing : html`
-					<section class="emitted">
-						<h3 class="title">${release.unreleased ? t('Unreleased') : t('Everything in ${version}', { version: release.version })}</h3>
-						${this.categoriesTemplate(release)}
-					</section>
-				`}
 				${!release.notes?.contributors.length ? html.nothing : html`
 					<section class="emitted">
 						<h3 class="title">${t('Contributors')}</h3>
@@ -151,6 +127,23 @@ export class ReleaseNotesComponent extends Component {
 								</li>
 							`)}
 						</ul>
+					</section>
+				`}
+				${!release.patches.length && !release.everything ? html.nothing : html`
+					<section class="emitted changelog">
+						${!release.patches.length ? html.nothing : html`
+							<section class="patches">
+								<h3 class="title">${t('Patches')}</h3>
+								${release.patches.map(patch => html`
+									<div class="patch">
+										<b>${patch.version}</b>
+										<span class="date">${!patch.date ? html.nothing : ReleaseNotesComponent.dateOf(patch.date).format({ dateStyle: 'medium' })}</span>
+										${this.linesTemplate(patch.categories.flatMap(linesOf))}
+									</div>
+								`)}
+							</section>
+						`}
+						${!release.everything ? html.nothing : this.everythingTemplate(release)}
 					</section>
 				`}
 				<div class="links">
@@ -220,13 +213,31 @@ export class ReleaseNotesComponent extends Component {
 		`
 	}
 
-	private categoriesTemplate(release: Release) {
-		return release.categories.map(category => html`
-			<div class="category" data-type=${category.type}>
-				<h4 class="label">${ReleaseNotesComponent.labelOf(category)}</h4>
-				${this.linesTemplate(linesOf(category))}
-			</div>
-		`)
+	/** Every commit, folded; its heading counts them, the maintenance ones as one number. */
+	private everythingTemplate(release: Release) {
+		const maintenance = release.maintenanceCount ? t('${count:pluralityNumber} maintenance changes', { count: release.maintenanceCount }) : undefined
+		const counts = [
+			...release.counts.filter(count => !Release.maintenance.has(count.type)).map(count => ReleaseNotesComponent.countOf(count)),
+			...maintenance ? [maintenance] : [],
+		].join(' · ')
+		return html`
+			<details class="everything">
+				<summary class="title">
+					<mitra-icon icon="chevron-right"></mitra-icon>
+					<h3>${release.unreleased ? t('Unreleased') : t('Everything in ${version}', { version: release.version })}</h3>
+					<small>${counts}</small>
+				</summary>
+				${release.listed.map(category => html`
+					<div class="category" data-type=${category.type}>
+						<h4 class="label">${ReleaseNotesComponent.labelOf(category)}</h4>
+						${this.linesTemplate(linesOf(category))}
+					</div>
+				`)}
+				${!maintenance ? html.nothing : html`
+					<p class="maintenance">${unsafeHTML(String(t('Plus ${link} on GitHub: tests, builds and chores.', { link: `<a href="${release.commitsUrl}" target="_blank" rel="noreferrer">${maintenance}</a>` })))}</p>
+				`}
+			</details>
+		`
 	}
 
 	private linesTemplate(lines: ReturnType<typeof linesOf>) {
@@ -248,9 +259,22 @@ export class ReleaseNotesComponent extends Component {
 			'features': () => t('Features'),
 			'improvements': () => t('Improvements'),
 			'documentation': () => t('Documentation'),
+			'refactors': () => t('Refactors'),
 			'tests': () => t('Tests'),
+			'other': () => t('Other'),
 		}
 		return labels[category.type]?.() ?? category.title.replace(/^[^\p{L}]+/u, '').trim()
+	}
+
+	/** "24 features", a category's count of commits in the reader's language. */
+	private static countOf(count: { type: string, count: number }) {
+		const counts: Record<string, () => string> = {
+			'features': () => t('${count:pluralityNumber} features', { count: count.count }),
+			'improvements': () => t('${count:pluralityNumber} improvements', { count: count.count }),
+			'documentation': () => t('${count:pluralityNumber} documentation changes', { count: count.count }),
+			'refactors': () => t('${count:pluralityNumber} refactors', { count: count.count }),
+		}
+		return counts[count.type]?.() ?? t('${count:pluralityNumber} other changes', { count: count.count })
 	}
 
 	/** A release's day, which the reader's calendar then names. */

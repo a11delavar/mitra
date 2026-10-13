@@ -3,33 +3,9 @@
 		"${count:pluralityNumber} modification",
 		"${count:pluralityNumber} modifications"
 	],
-	"${count:pluralityNumber} documentation changes": [
-		"${count:pluralityNumber} modification de la documentation",
-		"${count:pluralityNumber} modifications de la documentation"
-	],
-	"${count:pluralityNumber} features": [
-		"${count:pluralityNumber} fonctionnalité",
-		"${count:pluralityNumber} fonctionnalités"
-	],
-	"${count:pluralityNumber} improvements": [
-		"${count:pluralityNumber} amélioration",
-		"${count:pluralityNumber} améliorations"
-	],
-	"${count:pluralityNumber} maintenance changes": [
-		"${count:pluralityNumber} modification de maintenance",
-		"${count:pluralityNumber} modifications de maintenance"
-	],
 	"${count:pluralityNumber} minute read": [
 		"${count:pluralityNumber} minute de lecture",
 		"${count:pluralityNumber} minutes de lecture"
-	],
-	"${count:pluralityNumber} other changes": [
-		"${count:pluralityNumber} autre modification",
-		"${count:pluralityNumber} autres modifications"
-	],
-	"${count:pluralityNumber} refactors": [
-		"${count:pluralityNumber} refonte",
-		"${count:pluralityNumber} refontes"
 	],
 	"${summary}, from the changelog": "${summary}, d'après le journal des modifications",
 	"A self-hosted calendar that puts your tasks on the same timeline as your events. Keep your calendars in Mitra, or sync the ones you already use.": "Un calendrier auto-hébergé qui place vos tâches sur la même chronologie que vos événements. Gardez vos calendriers dans Mitra, ou synchronisez ceux que vous utilisez déjà.",
@@ -74,15 +50,12 @@
 	"Open at full size": "Ouvrir en taille réelle",
 	"Open source under the AGPL-3.0": "Open source sous AGPL-3.0",
 	"Open this week in the demo": "Ouvrir cette semaine dans la démo",
-	"Other": "Autres",
 	"Overview": "Aperçu",
 	"planned": "prévue",
-	"Plus ${link} on GitHub: tests, builds and chores.": "Plus ${link} sur GitHub : tests, builds et tâches d'entretien.",
 	"Project": "Projet",
 	"Read it in English": "Lire en anglais",
 	"Read them in English": "Les lire en anglais",
 	"Recurring things like workouts shrink to small marks, so a busy month stays readable.": "Les choses récurrentes, comme les séances de sport, se réduisent à de petites marques : un mois chargé reste lisible.",
-	"Refactors": "Refontes",
 	"RSS feed": "Flux RSS",
 	"See what each integration supports.": "Découvrez ce que prend en charge chaque intégration.",
 	"See what is new": "Voir les nouveautés",

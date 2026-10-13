@@ -1,7 +1,9 @@
 import { Component, component, html, css, property, state, event, query, ifDefined } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
-import { FLOATING_TIME_ZONE, type Entry } from '../Entry.js'
-import { type TimeZonePicker, longZoneName, systemZoneId, zoneCity, zoneNamePart } from '../../time/client/TimeZonePicker.js'
+import { type Entry } from '../Entry.js'
+import { type TimeZonePicker } from '../../time/client/TimeZonePicker.js'
+import { TimeZone } from '../../time/TimeZone.js'
+import { TimeZones } from '../../time/client/TimeZones.js'
 import { getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
@@ -10,13 +12,11 @@ import { controlHeight } from '../../../design/controlHeight.css.js'
 import { type DateField } from '../../../design/DateField.js'
 import { type DurationField } from '../../../design/DurationField.js'
 
-/** A moment's row: what it shows and edits, and what removes it. */
 type Moment = {
 	readonly kind: 'start' | 'end' | 'due'
 	readonly icon: string
 	readonly label: string
 	readonly value?: DateTime
-	/** Takes the moment picked, and whether the field held a time. */
 	readonly handleChange: (value: DateTime, timed: boolean) => void
 	readonly remove?: { readonly label: string, readonly title?: string, readonly handler: () => void }
 	/** The time a day picked into the empty field takes. */
@@ -25,11 +25,7 @@ type Moment = {
 	readonly impliedDate?: DateTime
 }
 
-/**
- * The entry's moments, one row each: its start, its end (a task's estimate while it has no start) and a task's due. Each
- * is one date field, with the time of day unless the entry is all-day, which every row's toggle switches for all of them.
- * Then the time zone and the repeat rule.
- */
+/** One row per moment (start, end or a task's estimate, due), then the zone and the repeat rule. Each row's all-day toggle switches them all. */
 @component('mitra-entry-details-when')
 export class EntryDetailsWhen extends Component {
 	@property({
@@ -53,12 +49,10 @@ export class EntryDetailsWhen extends Component {
 
 	protected override createRenderRoot() { return this }
 
-	/** Zone used for display and editing in the date fields. */
 	private get zone(): string {
-		return this.entry.allDay ? systemZoneId()
-			: this.entry.timeZone === FLOATING_TIME_ZONE ? 'UTC'
-				: this.foreignZone && !this.showEventZone ? systemZoneId()
-					: this.entry.timeZone ?? systemZoneId()
+		return this.entry.floating ? 'UTC'
+			: this.showEventZone ? this.entry.zone?.id ?? TimeZones.here.id
+				: TimeZones.here.id
 	}
 
 	private commit() {
@@ -170,9 +164,9 @@ export class EntryDetailsWhen extends Component {
 	@query('.due > :is(mitra-date-field, mitra-date-time-field)') private readonly dueField?: DateField
 	@query('.estimate > mitra-duration-field') private readonly estimateField?: DurationField
 
-	private get foreignZone(): string | undefined {
-		const zone = this.entry.timeZone
-		return zone && zone !== FLOATING_TIME_ZONE && zone !== systemZoneId() ? zone : undefined
+	private get foreignZone(): TimeZone | undefined {
+		const zone = this.entry.zone
+		return zone && !zone.equals(TimeZones.here) ? zone : undefined
 	}
 
 	private get zoneReadonly(): boolean {
@@ -180,32 +174,34 @@ export class EntryDetailsWhen extends Component {
 	}
 
 	private get zoneLabel(): string {
-		if (this.entry.timeZone === FLOATING_TIME_ZONE) {
+		if (this.entry.floating) {
 			return t('Wall clock (no time zone)')
 		}
-		const shown = this.foreignZone && this.showEventZone ? this.foreignZone : systemZoneId()
-		return `${zoneNamePart(shown, 'shortOffset')} ${zoneCity(shown)}`
+		const name = (this.foreignZone && this.showEventZone ? this.foreignZone : TimeZones.here).name()
+		return `${name.offset} ${name.city}`
 	}
 
 	private get zoneIsPrimary(): boolean {
-		return this.entry.timeZone !== FLOATING_TIME_ZONE && !(this.foreignZone && this.showEventZone)
+		return !this.entry.floating && !(this.foreignZone && this.showEventZone)
 	}
 
 	private get zoneTitle(): string {
 		if (this.zoneReadonly && this.foreignZone && !this.showEventZone) {
-			return t('Primary time zone. Switch to ${city} time to change the zone', { city: zoneCity(this.foreignZone) })
+			return t('Current time zone. Switch to ${city} time to change the zone', { city: this.foreignZone.name().city })
 		}
-		const zone = this.entry.timeZone ?? undefined
-		return !zone ? t('Time zone')
-			: zone === FLOATING_TIME_ZONE ? t('Wall clock (no time zone)')
-				: `${zoneCity(zone)}, ${longZoneName(zone)} (${zoneNamePart(zone, 'longOffset')})`
+		if (this.entry.floating) {
+			return t('Wall clock (no time zone)')
+		}
+		const zone = this.entry.zone
+		const name = zone?.name()
+		return !name ? t('Time zone') : `${name.city}, ${name.long} (${name.offset})`
 	}
 
 	private get lensTitle(): string {
-		const city = this.foreignZone ? zoneCity(this.foreignZone) : ''
+		const city = this.foreignZone ? this.foreignZone.name().city : ''
 		return this.showEventZone
-			? t('Showing ${city} time. Switch to the primary time zone', { city })
-			: t('Showing the primary time zone. Switch to ${city} time', { city })
+			? t('Showing ${city} time. Switch to the current time zone', { city })
+			: t('Showing the current time zone. Switch to ${city} time', { city })
 	}
 
 	private readonly toggleLens = () => {
@@ -214,7 +210,7 @@ export class EntryDetailsWhen extends Component {
 
 	private readonly handleZonePick = (e: CustomEvent<string>) => {
 		this.entry.setTimeZone(e.detail)
-		this.showEventZone = e.detail !== systemZoneId()
+		this.showEventZone = !TimeZone.of(e.detail).equals(TimeZones.here)
 		this.commit()
 	}
 
@@ -364,7 +360,7 @@ export class EntryDetailsWhen extends Component {
 		`
 	}
 
-	/** All day, pressed while it is: it takes every moment of the entry between days and times at once. */
+	/** Switches every moment of the entry between days and times at once. */
 	private get allDayTemplate() {
 		return !this.editable || !this.capabilities.allDay || this.entry.type.isAvailability ? html.nothing : html`
 			<mitra-icon-button size="small" class="precision" icon="clock-fading" label=${t('All day')}
@@ -373,11 +369,7 @@ export class EntryDetailsWhen extends Component {
 		`
 	}
 
-	/**
-	 * A moment's row: its field, with what removes it and the all-day toggle. The field holds a date and a time unless the entry
-	 * is all-day; empty, it does once the entry has any date to take the precision from, and a day picked into it takes
-	 * `defaultTime`.
-	 */
+	/** An empty field is timed once the entry has any date to take the precision from; a day picked into it takes `defaultTime`. */
 	private momentTemplate({ kind, icon, label, value, handleChange, remove, defaultTime, impliedDate }: Moment) {
 		const actions = html`
 			${!remove || !this.editable ? html.nothing : html`
@@ -399,7 +391,6 @@ export class EntryDetailsWhen extends Component {
 		`
 	}
 
-	/** A field not given yet: its name, which shows the field. */
 	private placeholderTemplate(kind: 'start' | 'end' | 'due' | 'estimate', icon: string, label: string, handler: () => void) {
 		return html`
 			<div class="${kind} row field">
@@ -433,7 +424,7 @@ export class EntryDetailsWhen extends Component {
 			? this.momentTemplate({
 				kind: 'end', icon: 'clock-arrow-left', label: t('End date'), value: end, handleChange: this.handleEndChange,
 				impliedDate: entry.start,
-				remove: !end || !entry.type.isTask || entry.partOfSeries ? undefined : { label: t('Remove the end date'), handler: this.removeEnd },
+				remove: !end || !entry.type.isTask ? undefined : { label: t('Remove the end date'), handler: this.removeEnd },
 			})
 			: !this.editable ? html.nothing
 				: this.placeholderTemplate('end', 'clock-arrow-left', t('End date'), this.addEnd)
@@ -455,7 +446,6 @@ export class EntryDetailsWhen extends Component {
 			: this.placeholderTemplate('estimate', 'hourglass', t('Estimate'), this.addEstimate)
 	}
 
-	/** A task's deadline: its own row, kept apart from when the task is planned. */
 	private get dueTemplate() {
 		const { due } = this.entry
 		if (!this.entry.type.isTask || !this.capabilities.due || (!due && !this.editable)) {
@@ -484,13 +474,15 @@ export class EntryDetailsWhen extends Component {
 					</button>
 					${!this.foreignZone ? html.nothing : html`
 						<mitra-icon-button size="small" class="lens" ?data-localized=${!this.showEventZone}
-							icon=${this.showEventZone ? 'earth' : 'house'}
+							icon=${this.showEventZone ? 'earth' : 'map-pin'}
 							label=${this.lensTitle} @click=${this.toggleLens}
 						></mitra-icon-button>
 						`}
 				</div>
 				<mitra-time-zone-picker
-					.selected=${this.entry.timeZone && this.entry.timeZone !== FLOATING_TIME_ZONE ? this.entry.timeZone : systemZoneId()}
+					.selected=${this.entry.zone?.id ?? TimeZones.here.id}
+					home=${TimeZones.home.id}
+					here=${TimeZones.here.id}
 					@pick=${this.handleZonePick}
 				></mitra-time-zone-picker>
 			</div>

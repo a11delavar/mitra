@@ -7,6 +7,8 @@ import { EntryType, EntryTypes } from '../../../features/entries/EntryType.js'
 import { Recurrence } from '../../../features/recurrence/Recurrence.js'
 import { CalDAV } from '../CalDAV.js'
 import { CalDAVAvailability } from './CalDAVAvailability.js'
+import { RecurrenceFrequency } from '../../../features/recurrence/RecurrenceFrequency.js'
+import { RecurrenceWeekday } from '../../../features/recurrence/RecurrenceWeekday.js'
 
 const calendars = new Set(['work', 'personal'])
 
@@ -14,7 +16,7 @@ const availability = (init: Partial<Entry> = {}) => new Entry({
 	id: 'entry-1', uid: 'uid-1', sourceId: 'work', type: EntryType.Availability,
 	heading: 'Deep work', timeZone: 'Europe/Berlin', transparency: Transparency.Busy,
 	start: new DateTime('2026-10-06T07:00:00.000Z'), end: new DateTime('2026-10-06T09:00:00.000Z'),
-	recurrence: new Recurrence({ freq: 'WEEKLY', byday: ['TU', 'TH'] }),
+	recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Tuesday, RecurrenceWeekday.Thursday] }),
 	...init,
 })
 

@@ -16,6 +16,7 @@
 		"captures:release": "node ./scripts/capture-release.ts",
 		"i18n:generate": "node ./scripts/i18n.ts",
 		"i18n:analyze": "node ./scripts/i18n.ts --analyze",
+		"zones:generate": "node ./scripts/goldenZones.ts",
 		"changelog": "node ./scripts/changelog.ts",
 		"release": "node ./scripts/release.ts"
 	},
@@ -28,6 +29,8 @@
 		"@types/express": "5.0.x",
 		"@types/node": "25.9.x",
 		"@types/web-push": "3.x",
+		"cldr-bcp47": "48.x",
+		"cldr-core": "48.x",
 		"esbuild": "x",
 		"eslint": "10.x",
 		"favicons": "7.x",

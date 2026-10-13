@@ -25,6 +25,7 @@ import { CalendarPeriod } from './CalendarPeriod.js'
 import { TableWindow } from './TableWindow.js'
 import { startedInField } from '../../../design/eventOrigin.js'
 import { type Popover } from '../../../design/Popover.js'
+import { KeyPress } from '../../commands/KeyPress.js'
 
 // The view is the path (`/week`), everything open on top of it is a query parameter. `/` stays a valid
 // entry point (the PWA start URL and the OAuth redirect both land there) and canonicalizes on arrival.
@@ -46,10 +47,7 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 		return window.matchMedia('(min-width: 800px)').matches && localStorage.getItem('Mitra.SidebarCollapsed') !== 'true'
 	}
 
-	/**
-	 * An entry no view has taken (`reveal`): one edited in the sidebar goes to the view, which follows it there, and one
-	 * left without a start goes to the planning list, so neither it nor its open editor vanishes.
-	 */
+	/** One edited in the sidebar goes to the view, one left without a start to the planning list, so neither it nor its editor vanishes. */
 	@eventListener('reveal')
 	protected handleReveal(e: CustomEvent<Entry>) {
 		const entry = e.detail
@@ -91,18 +89,15 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 		return new CalendarLocation(this.view, this.navigatingDate, EntryEditorIntent.target, this.settingsPage)
 	}
 
-	/** The URL derives from live state; `parameters` is never written back. It is only the router's
-	 * message that a navigation arrived, so there is no bag to keep mirrored. */
+	/** Derived from live state; `parameters` is only the router's message that a navigation arrived, never written back. */
 	override get url() {
 		return this.location.url()
 	}
 
 	private readonly urlSync = new UrlSyncController(this)
 
-	/** The framework's own parameter hook lands here too, so this is the single funnel for URL writes.
-	 * Replacing rather than pushing is the point: scrolling re-anchors the day continuously, and an
-	 * entry per flick would bury the page the user arrived from. Collapses to a declared
-	 * `historyStrategy` once @a11d/lit-application ships one. */
+	/** The single funnel for URL writes. It replaces rather than pushes: scrolling re-anchors the day continuously, and an
+	 * entry per flick would bury the page the user arrived from. */
 	protected override updateUrl() {
 		this.urlSync.schedule()
 	}
@@ -119,8 +114,7 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 		}
 	}
 
-	/** Restores navigation and modal state from arriving URL parameters, on load or history navigation.
-	 * Everything it sets is guarded, so the router re-delivering the current URL is a no-op. */
+	/** Everything it sets is guarded, so the router re-delivering the current URL is a no-op. */
 	private restore(location: CalendarLocation) {
 		this.view = location.view
 		if (!this.navigatingDate.dayStart.equals(location.date.dayStart)) {
@@ -134,7 +128,6 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 		}
 	}
 
-	/** Opens settings dialog and mirrors active settings page to URL. */
 	async openSettings(parameters: SettingsParameters = {}) {
 		try {
 			return await new DialogSettings({ ...parameters, pageChange: v => this.settingsPage = v }).confirm()
@@ -204,13 +197,12 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 		this.transition('source-toggle', () => this.fetcher.task.run())
 	}
 
-	/** Updates sidebar and calendar when source metadata or import state changes without transition. */
+	/** A change to sources' metadata or import state repaints without a transition. */
 	readonly sourcesRefreshed = () => {
 		this.sidebar?.requestUpdate()
 		this.requestUpdate()
 	}
 
-	/** Opens a month to pick a day from under the heading, for the Go to Date command. */
 	goToDate() {
 		this.gotoDate.show(this.querySelector('main > header h1') ?? undefined)
 		this.gotoDate.querySelector('mitra-date-picker')?.focus()
@@ -226,7 +218,7 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 			return
 		}
 
-		if (e.key === '/') {
+		if (new KeyPress(e).is('/')) {
 			e.preventDefault()
 			this.palette.show()
 			return
@@ -433,7 +425,6 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 							}
 						}
 
-						/* An icon alone on a phone, its words everywhere else. */
 						mitra-select.view {
 							&::part(icon) {
 								display: none;

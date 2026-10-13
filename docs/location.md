@@ -16,7 +16,7 @@ Click into the location field to see places used recently in your calendars. As 
 
 Suggestions favour places near you. The first time you click into the field, your browser may ask whether Mitra may use your location. If you allow it, your position goes along with each search, so nearby places come first. If you don't, suggestions still work, without that preference.
 
-Photon names places in English, German or French when your browser is set to one of them, and in the local language otherwise.
+Photon names places in English, German or French when Mitra is set to one of them, and in the local language otherwise.
 
 [Notion](integrations/notion.md) and [Tempo](integrations/tempo.md) calendars have no location, so their entries have no location field.
 

@@ -16,6 +16,7 @@ import { NotificationSubscription } from '../../reminders/NotificationSubscripti
 import { Session } from '../../identity/server/Session.js'
 import { entrySearch, entryWindow, everyEntry } from './entryWindow.js'
 import { expandedOccurrences, seriesNear, seriesStarts } from '../../recurrence/server/occurrences.js'
+import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
@@ -124,7 +125,7 @@ describe('GET /entries/search finds a series as one occurrence', () => {
 		const master = new Entry({
 			id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Event, heading: 'Team sync',
 			start: new Date('2024-09-24T12:00:00Z') as never, end: new Date('2024-09-24T13:00:00Z') as never,
-			recurrence: new Recurrence({ freq: 'WEEKLY' }), ...init,
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }), ...init,
 		})
 		em.persist(master)
 		await em.flush()
@@ -149,7 +150,7 @@ describe('GET /entries/search finds a series as one occurrence', () => {
 	})
 
 	it('as its last one once it has ended', async () => {
-		const { found } = await weekly('search-ended', { recurrence: new Recurrence({ freq: 'WEEKLY', count: 3 }) })
+		const { found } = await weekly('search-ended', { recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, count: 3 }) })
 		assert.equal(found.start?.toISOString(), '2024-10-08T12:00:00.000Z')
 	})
 
@@ -315,7 +316,7 @@ describe('GET /entries/all lists every entry once', () => {
 		const start = new Date('2024-01-05T07:30:00Z')
 		const master = new Entry({
 			id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Event, heading: 'Morning meds',
-			start: start as never, end: new Date('2024-01-05T07:35:00Z') as never, recurrence: new Recurrence({ freq: 'DAILY' }),
+			start: start as never, end: new Date('2024-01-05T07:35:00Z') as never, recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }),
 		})
 		const override = new Entry({
 			id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Event, heading: 'Morning meds, later',

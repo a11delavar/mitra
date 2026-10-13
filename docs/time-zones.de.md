@@ -3,7 +3,7 @@ title: Zeitzonen
 description: Wie Mitra die eigene Zeitzone eines Eintrags zeigt und wie du die Stunden anderer Zeitzonen zur Wochenansicht hinzufügst.
 ---
 
-Mitra zeigt Zeiten in deiner Zeitzone, der, auf die dein Gerät eingestellt ist. Wenn du reist und dein Gerät die Zone wechselt, folgt Mitra. Im Editor heißt diese Zone die **primäre** Zeitzone.
+Mitra zeigt Zeiten in deiner Zeitzone, der, auf die dein Gerät eingestellt ist. Wenn du reist und dein Gerät die Zone wechselt, folgt Mitra. Im Editor heißt diese Zone die **aktuelle** Zeitzone. Dein **Zuhause** ist die Zone, in die du gehörst, und bleibt auf Reisen neben der aktuellen stehen.
 
 Ein Eintrag kann außerdem eine eigene Zeitzone haben, etwa ein Flug, der um 9:00 Uhr in New York startet. Und die Wochenansicht kann die Stunden anderer Zeitzonen neben deinen zeigen.
 
@@ -20,13 +20,13 @@ Jeder Eintrag mit Uhrzeiten hat eine Zeitzone. Einträge, die du erstellst, übe
 
 ### Die Zeitzone eines Eintrags ändern
 
-Klick auf die Zone und wähle eine andere. Tipp eine Stadt, den Namen einer Zone oder eine Abweichung, um sie zu finden. Deine eigene Zone steht oben in der Liste, markiert mit **Primär**.
+Klick auf die Zone und wähle eine andere. Die Liste beginnt mit den Zonen des Landes, für das deine [Sprache](settings.md#general) eingestellt ist, dann folgen alle Zonen, und dein Zuhause trägt dort, wo es steht, ein Haus, deine aktuelle Zone eine Stecknadel, solange du unterwegs bist. Zonen, die das ganze Jahr denselben Namen und dieselbe Uhrzeit haben, teilen sich eine Zeile, die für eine ihrer Städte steht, die deiner eigenen Zone oder deines Landes, wenn es eine hat, etwa Mitteleuropäische Zeit für Berlin in Deutschland. Der Pfeil am Ende der Zeile klappt die anderen Städte auf, etwa Paris und Amsterdam, und eine Suche klappt die Zeilen auf, in denen sie fündig wird. Tipp eine Stadt, ein Land, den Namen einer Zone oder eine Abweichung, um eine zu finden.
 
 Der Eintrag behält seine Uhrzeiten in der neuen Zone: Ein Meeting um 9:00 Uhr in Berlin wird zu einem Meeting um 9:00 Uhr in New York. Wenn nur die Zone falsch war und das Meeting selbst sich nicht verschoben hat, ändere danach seine Zeiten.
 
 ### Deine Zeit oder die des Eintrags
 
-Weicht die Zone eines Eintrags von deiner ab, zeigt der Editor seine Zeiten in deiner Zone, ein Meeting um 9:00 Uhr in New York steht also als 15:00 Uhr da, wenn du in Berlin bist. Eine Schaltfläche neben der Zone wechselt zur Zeit des Eintrags und zurück. Sie zeigt ein Haus, solange du deine Zeit siehst, und einen Globus, solange du die Zeit des Eintrags siehst, und wenn du darauf zeigst, steht dort, welche du gerade ansiehst.
+Weicht die Zone eines Eintrags von deiner ab, zeigt der Editor seine Zeiten in deiner Zone, ein Meeting um 9:00 Uhr in New York steht also als 15:00 Uhr da, wenn du in Berlin bist. Eine Schaltfläche neben der Zone wechselt zur Zeit des Eintrags und zurück. Sie zeigt eine Stecknadel, solange du deine Zeit siehst, und einen Globus, solange du die Zeit des Eintrags siehst, und wenn du darauf zeigst, steht dort, welche du gerade ansiehst.
 
 Du kannst die Zeiten auf beide Arten bearbeiten. Um die Zone selbst zu ändern, wechsle zuerst zur Zeit des Eintrags.
 
@@ -54,15 +54,15 @@ Die [Wochenansicht](views/week.md) kann die Stunden anderer Zeitzonen in Spalten
 
 ### Der Woche eine Zeitzone hinzufügen
 
-Zeig auf den oberen Rand der Zeitspalte und drück **＋** (**Zeitzone hinzufügen**), dann wähle eine Zone. Ihre Spalte erscheint neben deiner, und deine eigene Zone bleibt die Spalte neben den Tagen.
+Zeig auf den oberen Rand der Zeitspalte und drück **＋** (**Zeitzone hinzufügen**). Die Liste hakt die Zonen ab, die du schon hast, dein Zuhause trägt ein Haus und deine aktuelle Zone eine Stecknadel, solange du unterwegs bist. Wähl eine Zone, um ihre Spalte hinzuzufügen, oder eine abgehakte, um ihre Spalte wegzunehmen. Die Liste bleibt dafür offen. Deine aktuelle Zone bleibt die Spalte neben den Tagen, und dein Zuhause bleibt auch.
 
-Jede Spalte hat einen Kurznamen als Überschrift, etwa „PDT“ oder „GMT+2“. Zeig darauf, um den vollen Namen zu sehen.
+Jede Spalte hat einen Kurznamen als Überschrift: die Abkürzung, die man für die Zone verwendet, etwa „PDT“ oder „BST“, oder, wo keine üblich ist, ihren Ort, etwa „Iran“. Die Abkürzung folgt deiner [Sprache](settings.md#general): Berlin heißt auf Englisch „CEST“ und auf Deutsch „MESZ“, und wo deine Region für eine Zone keine kennt, leiht die Region der Zone ihre. Zeig auf einen Namen, um den vollen zu sehen.
 
 ### Eine Zeitzone umbenennen oder entfernen
 
-Klick auf den Namen einer Zone und wähle **Umbenennen**, um ihr eine eigene Bezeichnung zu geben, etwa „NYC“, oder **Entfernen**, um ihre Spalte wegzunehmen. Um zum automatischen Namen zurückzukehren, benenne sie in nichts um.
+Klick auf den Namen einer Zone und wähle **Umbenennen**, um ihr eine eigene Bezeichnung zu geben, etwa „Mama“, **Als Zuhause festlegen**, um sie zu deinem Zuhause zu machen, oder **Entfernen**, um ihre Spalte wegzunehmen. Um zum automatischen Namen zurückzukehren, benenne sie in nichts um.
 
-Deine eigene Zone lässt sich umbenennen, aber nicht entfernen.
+Deine aktuelle Zone und dein Zuhause lassen sich umbenennen, aber nicht entfernen. Um dein Zuhause zu ersetzen, leg eine andere Zone als Zuhause fest.
 
 ### Die zusätzlichen Spalten einklappen
 
@@ -72,4 +72,6 @@ Auf einem schmalen Bildschirm sind die Spalten zunächst eingeklappt, bis du sie
 
 ### Auf allen deinen Geräten
 
-Die Zonen, die du hinzufügst, und ihre Namen gehören zu deinem Konto, sie erscheinen also auf jedem Gerät, das du nutzt. Der Name, den du deiner eigenen Zone gibst, und ob die Spalten eingeklappt sind, bleiben auf jedem Gerät für sich, da jedes Gerät in einer anderen Zone sein kann.
+Dein Zuhause, die Zonen, die du hinzufügst, und jeder Name, den du einer gibst, gehören zu deinem Konto, sie erscheinen also auf jedem Gerät, das du nutzt. Ob die Spalten eingeklappt sind, bleibt auf jedem Gerät für sich.
+
+Dein Zuhause ist die Zone des ersten Geräts, auf dem du Mitra öffnest. Auf Reisen wird die Zone, in der du bist, zur Spalte neben den Tagen, und dein Zuhause bleibt daneben, ohne dass etwas zu deiner Liste hinzukommt, zurück zu Hause ist es also wieder eine Spalte. Benennst du die Zone, in der du bist, bleibt sie auf deiner Liste. Ziehst du um, wähle bei der Zone, in der du jetzt lebst, **Als Zuhause festlegen**, und dein altes Zuhause bleibt als Spalte, bis du es entfernst.

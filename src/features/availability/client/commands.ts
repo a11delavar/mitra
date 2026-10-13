@@ -1,20 +1,21 @@
 import { type DateTime, DateTime as Now } from '@3mo/date-time'
 import { Entry } from '../../entries/Entry.js'
 import { EntryType } from '../../entries/EntryType.js'
-import { Recurrence, WEEKDAY_CODES } from '../../recurrence/Recurrence.js'
+import { Recurrence } from '../../recurrence/Recurrence.js'
+import { RecurrenceWeekday } from '../../recurrence/RecurrenceWeekday.js'
 import { EntryStore, reportSaveError } from '../../entries/client/EntryStore.js'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
 import { getCapabilities, getPrimarySource } from '../../../infrastructure/http/Api.js'
 import { command, Command } from '../../commands/Command.js'
+import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
 
-const WORKDAYS = ['MO', 'TU', 'WE', 'TH', 'FR']
 const START_HOUR = 9
 const END_HOUR = 17
 
 /** The first day from `from` on that matches `days`. RFC 5545 counts DTSTART as an occurrence whatever BYDAY says, so starting elsewhere would shade a stray day. */
-function firstDayMatching(days: ReadonlyArray<string>, from: DateTime): DateTime {
+function firstDayMatching(days: ReadonlyArray<RecurrenceWeekday>, from: DateTime): DateTime {
 	const week = Array.from({ length: 7 }, (_, offset) => from.dayStart.add({ days: offset }))
-	return week.find(day => days.includes(WEEKDAY_CODES[day.dayOfWeek - 1]!)) ?? from.dayStart
+	return week.find(day => days.includes(RecurrenceWeekday.of(day))) ?? from.dayStart
 }
 
 /**
@@ -38,7 +39,7 @@ export class CreateAvailability extends Command {
 
 		const today = new Now()
 		const first = !EntryStore.entries.some(entry => entry.type.isAvailability && entry.sourceId === target.id)
-		const days = first ? WORKDAYS : [WEEKDAY_CODES[today.dayOfWeek - 1]!]
+		const days = first ? RecurrenceWeekday.workdays() : [RecurrenceWeekday.of(today)]
 		const start = firstDayMatching(days, today).with({ hour: START_HOUR })
 		const entry = new Entry({
 			sourceId: target.id,
@@ -47,7 +48,7 @@ export class CreateAvailability extends Command {
 			start,
 			end: start.with({ hour: END_HOUR }),
 			allDay: false,
-			recurrence: new Recurrence({ freq: 'WEEKLY', byday: days }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: days }),
 		})
 
 		calendar.setView('week')

@@ -1,0 +1,110 @@
+import { Memoize as memoize } from 'typescript-memoize'
+import { TimeZoneName } from './TimeZoneName.js'
+import goldenZones from './goldenZones.json' with { type: 'json' }
+
+/**
+ * An IANA time zone, as the platform has only ids (Temporal dropped `TimeZone` in 2024): one instance per zone, its
+ * aliases included (`Asia/Calcutta` is `Asia/Kolkata`), which engines spell differently.
+ */
+export class TimeZone {
+	/** The zone with that id. Throws a `RangeError` for one the runtime does not know. */
+	static of(id: string): TimeZone {
+		return TimeZone.spelled(id.toLowerCase())
+	}
+
+	// Keyed lowercased, so a request cannot grow the cache with every casing of an id.
+	@memoize()
+	private static spelled(id: string): TimeZone {
+		// Intl refuses an unknown zone and spells a known one its own way ("asia/tokyo" is "Asia/Tokyo"). Not Temporal,
+		// whose native engines merge zones that CLDR keeps apart (Oslo is Berlin there), unlike its polyfill.
+		const spelled = new Intl.DateTimeFormat('en', { timeZone: id }).resolvedOptions().timeZone
+		return spelled.toLowerCase() === id ? new TimeZone(spelled) : TimeZone.of(spelled)
+	}
+
+	static parse(value: unknown): TimeZone | undefined {
+		try {
+			return typeof value === 'string' && value ? TimeZone.of(value) : undefined
+		} catch {
+			return undefined
+		}
+	}
+
+	private constructor(readonly id: string) { }
+
+	equals(other: TimeZone) {
+		return this === other
+	}
+
+	/** Minutes ahead of UTC at `at`. */
+	offsetAt(at = new Date()) {
+		return Temporal.Instant.fromEpochMilliseconds(at.getTime()).toZonedDateTimeISO(this.id).offsetNanoseconds / 60_000_000_000
+	}
+
+	/**
+	 * Its offsets in mid-January and mid-July, which differ where it keeps daylight saving in either hemisphere: Berlin
+	 * and Algiers share January's, but only Berlin moves its clock.
+	 */
+	get yearlyOffsets(): readonly [number, number] {
+		const year = new Date().getUTCFullYear()
+		return [this.offsetAt(new Date(Date.UTC(year, 0, 15))), this.offsetAt(new Date(Date.UTC(year, 6, 15)))]
+	}
+
+	/** The default `locale` is the browser app's; the server must pass one. */
+	name(locale = Localizer.locales.current, at = new Date()) {
+		return new TimeZoneName(this, locale, at)
+	}
+
+	/**
+	 * The region the zone belongs to (`Europe/London` is `GB`). Intl lists a region's zones, not a zone's region, so
+	 * every region is asked once; an alias the list spells differently is matched by `equals`.
+	 */
+	@memoize()
+	get region(): string | undefined {
+		const regions = TimeZone.regionsByZone
+		return regions.get(this.id) ?? [...regions].find(([id]) => TimeZone.parse(id)?.equals(this))?.[1]
+	}
+
+	@memoize()
+	private static get regionsByZone() {
+		const regions = new Map<string, string>()
+		if (typeof Intl.Locale.prototype.getTimeZones !== 'function') {
+			return regions
+		}
+		const letters = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ']
+		// Asking only codes that name a region costs a third of asking all 676.
+		const names = new Intl.DisplayNames(['en'], { type: 'region', fallback: 'none' })
+		for (const code of letters.flatMap(first => letters.map(second => first + second)).filter(code => names.of(code))) {
+			// An old code canonicalizes to the current one (UK to GB), which is the one to keep.
+			const locale = new Intl.Locale(`und-${code}`)
+			for (const id of locale.getTimeZones?.() ?? []) {
+				regions.set(id, locale.region ?? code)
+			}
+		}
+		return regions
+	}
+
+	/**
+	 * Whether Unicode's data names a time after this zone in `region`, or worldwide without one: Eastern Time is New
+	 * York's, and Toronto's in Canada. Intl does not expose it; `npm run zones:generate` copies it from CLDR.
+	 */
+	isGoldenIn(region = '001') {
+		return (goldenZones as Record<string, ReadonlyArray<string> | undefined>)[region]?.includes(this.id) ?? false
+	}
+
+	toString() {
+		return this.id
+	}
+
+	toJSON() {
+		return this.id
+	}
+}
+
+declare global {
+	namespace Intl {
+		interface Locale {
+			/** The zones of the locale's region (Intl Locale Info: Chromium 130, Safari 17, Firefox 153). */
+			getTimeZones?(): Array<string> | undefined
+		}
+	}
+}

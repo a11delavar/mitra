@@ -2,6 +2,7 @@ import { DialogCancelledError } from '@a11d/lit-application'
 import { Localizer } from '@3mo/localization'
 import { Mitra } from '../../app/Mitra.js'
 import { termsMatch } from './termsMatch.js'
+import { KeyPress } from './KeyPress.js'
 
 /** Where a keyed command appears in the shortcut sheet's grouping. */
 export type CommandGroup = 'views' | 'navigation' | 'entries' | 'general' | (string & {})
@@ -20,7 +21,6 @@ export function commands(): ReadonlyArray<CommandConstructor> {
 
 let instances: Array<Command> | undefined
 
-// Rebuild cached command instances when language changes.
 Localizer.locales.change.subscribe(() => instances = undefined)
 
 /** The registry as live instances, one per verb. */
@@ -28,10 +28,7 @@ export function commandInstances(): ReadonlyArray<Command> {
 	return instances ??= registeredCommands.map(constructor => new constructor())
 }
 
-/**
- * A user-invocable verb: one class per action, self-describing and self-executing.
- * Facts are declared as readonly fields (rebuilt on language change); live state uses getters.
- */
+/** Facts are readonly fields (rebuilt on a language change); live state uses getters. */
 export abstract class Command {
 	/** The keyboard glyph for a `KeyboardEvent.key` value: arrows draw as arrows, letters uppercase. */
 	static keyLabel(key: string) {
@@ -44,17 +41,16 @@ export abstract class Command {
 		}
 	}
 
-	/** What the palette lists it as. */
 	abstract readonly heading: string
 
 	/** Its lucide glyph in the palette. */
 	abstract readonly icon: string
 
-	/** Additional match terms beyond the heading: synonyms a user might type into the palette. */
+	/** Synonyms a user might type into the palette. */
 	abstract readonly keywords?: string
 
-	/** The `KeyboardEvent.key` values this command answers to. Bare keys only, the interceptor
-	 * stands down for chords. Absent means palette-only. The first key is the palette's hint. */
+	/** Bare keys as a Latin keyboard names them (`KeyPress`), so a Persian layout reaches them too; the interceptor
+	 * stands down for chords. The first is the palette's hint. */
 	abstract readonly keys?: ReadonlyArray<string>
 
 	/** The shortcut sheet's group, expected exactly when {@link keys} exist. */
@@ -63,9 +59,7 @@ export abstract class Command {
 	/** The sheet's label: the palette heading unless that is view-dependent ("Next Week" → "Forward"). */
 	get shortcutLabel() { return this.heading }
 
-	/** Whether it shows in the palette before anything is typed. False for the per-calendar verbs (see
-	 * commands/sources.ts) for the same reason entries are held back: there's one per calendar, and an
-	 * empty palette should read as a curated menu. */
+	/** False for the per-calendar verbs: there is one per calendar, and an empty palette should read as a curated menu. */
 	get listedWithoutQuery() { return true }
 
 	/** False when this instance turned the command off, rather than it not applying right now. */
@@ -78,15 +72,14 @@ export abstract class Command {
 	get keyLabels() { return this.keys?.map(Command.keyLabel) }
 
 	matches(e: KeyboardEvent) {
-		return !!this.keys?.some(key => key.toLowerCase() === e.key.toLowerCase())
+		const press = new KeyPress(e)
+		return !!this.keys?.some(key => press.is(key))
 	}
 
 	abstract execute(): unknown
 
-	/** How every surface RUNS a command (the palette, the keyboard interceptor). It absorbs the one
-	 * rejection that isn't a failure: a command that opens a dialog returns its `confirm()`, which
-	 * rejects with {@link DialogCancelledError} when the user dismisses it, and dismissing a dialog is
-	 * a normal outcome. A genuine failure still reaches the console instead of vanishing. */
+	/** How every surface runs a command. It absorbs {@link DialogCancelledError}, as dismissing a dialog is a normal
+	 * outcome; a genuine failure still reaches the console. */
 	dispatch() {
 		void Promise.resolve(this.execute()).catch(error => {
 			if (!(error instanceof DialogCancelledError)) {
@@ -95,11 +88,9 @@ export abstract class Command {
 		})
 	}
 
-	/** Calendar page driven by commands, resolved via application instance. */
 	protected get calendar() { return Mitra.instance.calendar }
 }
 
-/** Matches query against command heading and keywords using termsMatch. */
 export function commandMatches(command: Command, query: string) {
 	return termsMatch(query, `${command.heading} ${command.keywords ?? ''}`)
 }

@@ -16,7 +16,7 @@ Klick ins Ortsfeld, um Orte zu sehen, die du zuletzt in deinen Kalendern verwend
 
 Die Vorschläge bevorzugen Orte in deiner Nähe. Wenn du zum ersten Mal ins Feld klickst, fragt dein Browser vielleicht, ob Mitra deinen Standort verwenden darf. Wenn du zustimmst, geht deine Position bei jeder Suche mit, und Orte in der Nähe stehen vorn. Wenn nicht, funktionieren die Vorschläge trotzdem, nur ohne diese Gewichtung.
 
-Photon nennt Orte auf Englisch, Deutsch oder Französisch, wenn dein Browser auf eine dieser Sprachen eingestellt ist, sonst in der Landessprache.
+Photon nennt Orte auf Englisch, Deutsch oder Französisch, wenn Mitra auf eine dieser Sprachen eingestellt ist, sonst in der Landessprache.
 
 Kalender von [Notion](integrations/notion.md) und [Tempo](integrations/tempo.md) haben keinen Ort, deshalb haben ihre Einträge kein Ortsfeld.
 

@@ -20,7 +20,7 @@ const notification = (facts: Partial<ReminderFacts>) => new ReminderNotification
 /** Intl's thin and narrow spaces, as plain ones. */
 const plain = (text: string) => text.replace(/[\u2009\u202f\u00a0]/g, ' ')
 
-const berlin: Reader = { language: 'en', timeZone: BERLIN }
+const berlin: Reader = { locale: 'en', timeZone: BERLIN }
 
 /** The body as a reader in Berlin sees it, half an hour before the start unless told otherwise. */
 const body = (facts: Partial<ReminderFacts>, now = start - 30 * 60_000, reader = berlin) => plain(notification(facts).for(reader, now).body)
@@ -56,7 +56,13 @@ describe('ReminderNotification', () => {
 		})
 
 		it('reads the clock in the reader\'s zone and language', () => {
-			assert.equal(plain(notification({}).for({ language: 'de', timeZone: 'Asia/Tehran' }, start).body), '11:30–12:30 Uhr')
+			assert.equal(plain(notification({}).for({ locale: 'de', timeZone: 'Asia/Tehran' }, start).body), '11:30–12:30 Uhr')
+		})
+
+		it('formats by the reader\'s region, in their language\'s words', () => {
+			const britain = { locale: 'en-GB', timeZone: BERLIN }
+			assert.equal(body({}, undefined, britain), '10:00–11:00')
+			assert.equal(body({}, start - 5 * 24 * hour, britain), 'Tue 8 Sept · 10:00–11:00')
 		})
 
 		it('names another day, and leaves today unnamed', () => {
@@ -73,11 +79,11 @@ describe('ReminderNotification', () => {
 			const midnight = Date.UTC(2026, 8, 8)
 			const facts = { when: { start: midnight, end: midnight + 24 * hour, allDay: true }, timestamp: midnight }
 			assert.equal(body(facts, midnight - hour), 'All day')
-			assert.equal(body(facts, midnight - 5 * hour, { language: 'en', timeZone: 'America/New_York' }), 'Tomorrow · All day')
+			assert.equal(body(facts, midnight - 5 * hour, { locale: 'en', timeZone: 'America/New_York' }), 'Tomorrow · All day')
 		})
 
 		it('reads a floating entry as the wall clock it was written as', () => {
-			assert.equal(body({ when: { start, end: start + hour, floating: true } }, start, { language: 'en', timeZone: 'America/New_York' }), '8:00 – 9:00 AM')
+			assert.equal(body({ when: { start, end: start + hour, floating: true } }, start, { locale: 'en', timeZone: 'America/New_York' }), '8:00 – 9:00 AM')
 		})
 
 		it('calls a due-only task due, and names its day unless that day is today', () => {
@@ -100,16 +106,16 @@ describe('ReminderNotification', () => {
 		})
 
 		it('speaks the reader\'s language', () => {
-			assert.equal(body({ kind: 'task', when: { end: start, due: true } }, start - 26 * hour, { language: 'de', timeZone: BERLIN }), 'Fällig Morgen 10:00')
+			assert.equal(body({ kind: 'task', when: { end: start, due: true } }, start - 26 * hour, { locale: 'de', timeZone: BERLIN }), 'Fällig Morgen 10:00')
 		})
 
 		it('falls back to English for a language the app does not speak', () => {
-			assert.equal(body({}, start - 26 * hour, { language: 'ja', timeZone: BERLIN }).startsWith('Tomorrow'), true)
+			assert.equal(body({}, start - 26 * hour, { locale: 'ja', timeZone: BERLIN }).startsWith('Tomorrow'), true)
 		})
 	})
 
 	describe('actions', () => {
-		const actions = (facts: Partial<ReminderFacts>, language = 'en') => notification(facts).for({ language, timeZone: BERLIN }, start).actions
+		const actions = (facts: Partial<ReminderFacts>, locale = 'en') => notification(facts).for({ locale, timeZone: BERLIN }, start).actions
 
 		it('offers a task the one verb that finishes it', () => {
 			assert.deepEqual(actions({ kind: 'task' }).map(action => action.action), ['done', 'snooze'])
@@ -129,7 +135,7 @@ describe('ReminderNotification', () => {
 	})
 
 	describe('url', () => {
-		const url = (facts: Partial<ReminderFacts>, timeZone = BERLIN) => notification(facts).for({ language: 'en', timeZone }, start).url
+		const url = (facts: Partial<ReminderFacts>, timeZone = BERLIN) => notification(facts).for({ locale: 'en', timeZone }, start).url
 
 		it('lands on the entry, on the day it happens', () => {
 			assert.equal(url({ entry: { id: 'abc' } }), '/?date=2026-09-08&selected=abc')
@@ -151,7 +157,7 @@ describe('ReminderNotification', () => {
 	describe('title', () => {
 		it('is the heading, or a stand-in in the reader\'s language', () => {
 			assert.equal(notification({}).for(berlin, start).title, 'Weekly Client')
-			assert.equal(notification({ heading: '' }).for({ language: 'fr', timeZone: BERLIN }, start).title, 'Sans titre')
+			assert.equal(notification({ heading: '' }).for({ locale: 'fr', timeZone: BERLIN }, start).title, 'Sans titre')
 		})
 	})
 
@@ -168,7 +174,7 @@ describe('ReminderNotification', () => {
 
 		it('names itself in each reader\'s language', () => {
 			assert.equal(ReminderNotification.rehearsal('event', now).for(berlin, now).title, 'Test event')
-			assert.equal(ReminderNotification.rehearsal('task', now).for({ language: 'de', timeZone: BERLIN }, now).title, 'Testaufgabe')
+			assert.equal(ReminderNotification.rehearsal('task', now).for({ locale: 'de', timeZone: BERLIN }, now).title, 'Testaufgabe')
 		})
 	})
 

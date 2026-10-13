@@ -16,7 +16,7 @@ Clicca nel campo del luogo per vedere i posti usati di recente nei tuoi calendar
 
 I suggerimenti favoriscono i posti vicini a te. La prima volta che clicchi nel campo, il browser può chiedere se Mitra può usare la tua posizione. Se consenti, la tua posizione accompagna ogni ricerca, così i posti vicini vengono per primi. Se non consenti, i suggerimenti funzionano comunque, senza quella preferenza.
 
-Photon nomina i posti in inglese, tedesco o francese quando il tuo browser è impostato su una di queste lingue, e nella lingua locale altrimenti.
+Photon nomina i posti in inglese, tedesco o francese quando Mitra è impostato su una di queste lingue, e nella lingua locale altrimenti.
 
 I calendari [Notion](integrations/notion.md) e [Tempo](integrations/tempo.md) non hanno un luogo, quindi le loro voci non hanno il campo del luogo.
 

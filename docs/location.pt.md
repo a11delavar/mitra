@@ -16,7 +16,7 @@ Clique no campo de local para ver os lugares usados recentemente nos seus calend
 
 As sugestões favorecem lugares perto de você. Na primeira vez que você clica no campo, o navegador pode perguntar se o Mitra pode usar sua localização. Se você permitir, sua posição vai junto com cada pesquisa, e os lugares próximos aparecem primeiro. Se não permitir, as sugestões continuam funcionando, sem essa preferência.
 
-O Photon dá nome aos lugares em inglês, alemão ou francês quando o navegador está configurado em um desses idiomas e, nos demais casos, no idioma local.
+O Photon dá nome aos lugares em inglês, alemão ou francês quando o Mitra está configurado em um desses idiomas e, nos demais casos, no idioma local.
 
 Os calendários do [Notion](integrations/notion.md) e do [Tempo](integrations/tempo.md) não têm local, então as entradas deles não têm o campo de local.
 

@@ -1,7 +1,9 @@
 import { Component, component, html, property, css, repeat, type PropertyValues, eventListener, queryAsync, styleMap } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
+import { Localizer } from '@3mo/localization'
 import { observeResize } from '@3mo/resize-observer'
-import { type UserTimeZone } from '../../identity/User.js'
+import { type TimeZone } from '../../time/TimeZone.js'
+import { type UserTimeZone } from '../../time/UserTimeZones.js'
 import { type Entry } from '../../entries/Entry.js'
 import { EntrySegments } from '../../entries/client/EntrySegments.js'
 import { type EntrySegment } from '../../entries/client/EntrySegment.js'
@@ -14,7 +16,7 @@ import { CalendarScrollController } from './CalendarScrollController.js'
 import { EntryDragController } from '../../entries/client/EntryDragController.js'
 import { DayDensityController } from './DayDensityController.js'
 import { TimeZoneLaneController } from '../../time/client/TimeZoneLaneController.js'
-import { getTimeZones } from '../../../infrastructure/http/Api.js'
+import { TimeZones } from '../../time/client/TimeZones.js'
 
 @component('mitra-days')
 export class Days extends Component {
@@ -25,7 +27,6 @@ export class Days extends Component {
 	private readonly dates: CalendarDatesController = new CalendarDatesController(this)
 	private get days(): Array<DateTime> { return this.dates.days }
 
-	/** Shared scroll-to-date metrics calculating column width and center offset. */
 	private get metrics() {
 		const timeAxisWidth = this.hideTime ? 0 : this.timeAxisWidth
 		const columnWidth = (this.scrollWidth - timeAxisWidth) / this.days.length
@@ -70,15 +71,14 @@ export class Days extends Component {
 	protected readonly zoneLane: TimeZoneLaneController = new TimeZoneLaneController(this)
 	private get segments() { return EntrySegments.of(HideDoneTasksSetting.filter(Availability.outside(this.entries)), this.dates.window.days) }
 
-	/** Time axis columns with user-configured zones followed by the anchor system zone. */
+	/** `undefined` is the anchor, here, which comes last. */
 	private get timeZoneColumns(): Array<UserTimeZone | undefined> {
-		return [...getTimeZones(), undefined]
+		return [...TimeZones.besides, undefined]
 	}
 
 	private timeAxisWidth = 60
 	private axisMeasured = false
 
-	/** Sync header height and time-axis width on resize. */
 	private readonly updateHeaderSize = ([entry]: ResizeObserverEntry[]) => {
 		const target = entry?.target as HTMLElement | undefined
 		const height = entry?.borderBoxSize?.[0]?.blockSize ?? target?.offsetHeight
@@ -147,7 +147,6 @@ export class Days extends Component {
 
 	private allDayPlacements = new Array<{ lane: number, start: number, end: number }>()
 
-	/** Updates all-day lane height based on visible on-screen bar depth. */
 	private updateLaneHeight() {
 		const timeAxisWidth = this.hideTime ? 0 : this.timeAxisWidth
 		const columnWidth = (this.scrollWidth - timeAxisWidth) / this.days.length
@@ -340,12 +339,14 @@ export class Days extends Component {
 							border-radius: var(--border-radius);
 							font-size: 0.65rem;
 							font-weight: 600;
+							white-space: nowrap;
 							z-index: 10;
 						}
 
 						.hour {
 							font-size: 0.65rem;
 							font-weight: 500;
+							white-space: nowrap;
 							height: min-content;
 							color: var(--color-text-muted);
 							text-align: end;
@@ -513,7 +514,15 @@ export class Days extends Component {
 		const todayValue = today.dayStart.valueOf()
 		const todayIndex = this.days.findIndex(d => d.dayStart.valueOf() === todayValue)
 		const currentMinute = today.hour * 60 + today.minute
-		const currentTimeString = today.format({ hour: '2-digit', minute: '2-digit', hour12: false })
+		const currentTimeString = today.format({ timeStyle: 'short' })
+		// A 12-hour clock names a whole hour alone ("4 PM"); a 24-hour one keeps its minutes, as its hour alone reads "16 Uhr".
+		const hourStyle: Intl.DateTimeFormatOptions = new Intl.DateTimeFormat(Localizer.locales.current, { hour: 'numeric' }).resolvedOptions().hour12 ? { hour: 'numeric' } : { timeStyle: 'short' }
+		const here = TimeZones.here
+		// A zone a half or three quarters of an hour off here (India, Nepal) lands between hours, so it keeps its minutes.
+		const styleIn = (zone: TimeZone): Intl.DateTimeFormatOptions => ({
+			...(zone.offsetAt(reference) - here.offsetAt(reference)) % 60 === 0 ? hourStyle : { timeStyle: 'short' },
+			timeZone: zone.id,
+		})
 		const zones = this.timeZoneColumns
 
 		return html`
@@ -528,8 +537,7 @@ export class Days extends Component {
 				<div class="axis" data-chrome>
 					${zones.map((zone, column) => Array.from({ length: reference.hoursInDay }).map((_, i) => {
 						const isCloseToNow = !zone && todayIndex !== -1 && Math.abs(i * 60 - currentMinute) < 15
-						const timeText = (i === 0 || isCloseToNow) ? '' : reference.with({ hour: i, minute: 0, second: 0, millisecond: 0 })
-							.format({ hour: '2-digit', minute: '2-digit', hour12: false, ...(!zone ? {} : { timeZone: zone.id }) })
+						const timeText = (i === 0 || isCloseToNow) ? '' : reference.with({ hour: i, minute: 0, second: 0, millisecond: 0 }).format(!zone ? hourStyle : styleIn(zone.zone))
 						return html`
 							<div class="hour" style="grid-row: ${i * 60 + 1}; grid-column: ${column + 2};" ?data-foreign=${!!zone}>
 								${timeText}

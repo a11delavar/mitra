@@ -3,33 +3,9 @@
 		"${count:pluralityNumber} cambio",
 		"${count:pluralityNumber} cambios"
 	],
-	"${count:pluralityNumber} documentation changes": [
-		"${count:pluralityNumber} cambio en la documentación",
-		"${count:pluralityNumber} cambios en la documentación"
-	],
-	"${count:pluralityNumber} features": [
-		"${count:pluralityNumber} función",
-		"${count:pluralityNumber} funciones"
-	],
-	"${count:pluralityNumber} improvements": [
-		"${count:pluralityNumber} mejora",
-		"${count:pluralityNumber} mejoras"
-	],
-	"${count:pluralityNumber} maintenance changes": [
-		"${count:pluralityNumber} cambio de mantenimiento",
-		"${count:pluralityNumber} cambios de mantenimiento"
-	],
 	"${count:pluralityNumber} minute read": [
 		"${count:pluralityNumber} minuto de lectura",
 		"${count:pluralityNumber} minutos de lectura"
-	],
-	"${count:pluralityNumber} other changes": [
-		"${count:pluralityNumber} otro cambio",
-		"${count:pluralityNumber} otros cambios"
-	],
-	"${count:pluralityNumber} refactors": [
-		"${count:pluralityNumber} refactorización",
-		"${count:pluralityNumber} refactorizaciones"
 	],
 	"${summary}, from the changelog": "${summary}, según el registro de cambios",
 	"A self-hosted calendar that puts your tasks on the same timeline as your events. Keep your calendars in Mitra, or sync the ones you already use.": "Un calendario autoalojado que pone tus tareas en la misma línea de tiempo que tus eventos. Guarda tus calendarios en Mitra o sincroniza los que ya usas.",
@@ -74,15 +50,12 @@
 	"Open at full size": "Abrir a tamaño completo",
 	"Open source under the AGPL-3.0": "Código abierto bajo la AGPL-3.0",
 	"Open this week in the demo": "Abrir esta semana en la demo",
-	"Other": "Otros",
 	"Overview": "Resumen",
 	"planned": "planificada",
-	"Plus ${link} on GitHub: tests, builds and chores.": "Y además ${link} en GitHub: pruebas, compilaciones y tareas de mantenimiento.",
 	"Project": "Proyecto",
 	"Read it in English": "Leer en inglés",
 	"Read them in English": "Leerlas en inglés",
 	"Recurring things like workouts shrink to small marks, so a busy month stays readable.": "Lo recurrente, como los entrenamientos, se reduce a pequeñas marcas, para que un mes cargado siga siendo legible.",
-	"Refactors": "Refactorizaciones",
 	"RSS feed": "Canal RSS",
 	"See what each integration supports.": "Mira qué admite cada integración.",
 	"See what is new": "Ver las novedades",

@@ -10,6 +10,7 @@ import { Source } from '../../features/sources/Source.js'
 import { Recurrence } from '../../features/recurrence/Recurrence.js'
 import { ParticipantRole, ParticipantStatus } from '../../features/participants/Participant.js'
 import { asBrowser, wireOf } from '../../infrastructure/model/wire.testing.js'
+import { RecurrenceFrequency } from '../../features/recurrence/RecurrenceFrequency.js'
 
 type DateTime = import('@3mo/date-time').DateTime
 const D = (iso: string) => new Date(iso) as unknown as DateTime
@@ -1030,7 +1031,7 @@ describe('CalDAV series created in mitra survive DST (the reported bug)', () => 
 		const entry = new Entry({
 			sourceId: 's', type: EntryType.Event, heading: 'Test via Mitra', timeZone: 'Europe/Berlin',
 			start: D('2026-10-11T08:00:00Z'), end: D('2026-10-11T08:30:00Z'),
-			recurrence: new Recurrence({ freq: 'WEEKLY' }),
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }),
 		})
 		const { dav, em } = stubbedCreate()
 		await dav.createEntry(em, entry)
@@ -1041,7 +1042,7 @@ describe('CalDAV series created in mitra survive DST (the reported bug)', () => 
 		const [master] = await syncBack(entry.data!.raw!, entry.uri!)
 		assert.equal(master!.timeZone, 'Europe/Berlin')
 		assert.equal(master!.start?.valueOf(), new Date('2026-10-11T08:00:00Z').getTime())
-		assert.equal(master!.recurrence?.freq, 'WEEKLY')
+		assert.equal(master!.recurrence?.freq, RecurrenceFrequency.Weekly)
 	})
 })
 

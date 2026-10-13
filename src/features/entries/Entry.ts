@@ -15,6 +15,7 @@ import { EntryRank } from './EntryRank.js'
 import { Checklist } from './Checklist.js'
 import { type ReminderDefaults } from '../reminders/ReminderDefaults.js'
 import { type Integration } from '../../integrations/Integration.js'
+import { TimeZone } from '../time/TimeZone.js'
 
 export enum TaskStatus {
 	ToDo = 'todo',
@@ -28,9 +29,7 @@ export interface EntryTally {
 	readonly total: number
 }
 
-/**
- * Task progress rollup derived from subtasks and description checklist items.
- */
+/** Task progress from subtasks and description checklist items alike. */
 export interface EntryRollup {
 	readonly done: number
 	readonly total: number
@@ -41,17 +40,13 @@ export interface EntryRollup {
 	readonly descendants: number
 }
 
-/**
- * RFC 5545 TRANSP availability contribution (Busy/Free) for events.
- */
+/** RFC 5545 TRANSP. */
 export enum Transparency {
 	Busy = 'busy',
 	Free = 'free',
 }
 
-/**
- * RFC 5545 CLASS access classification.
- */
+/** RFC 5545 CLASS. */
 export enum Visibility {
 	Public = 'public',
 	Private = 'private',
@@ -113,7 +108,7 @@ export class Entry {
 	@property({ type: 'datetime', nullable: true }) start?: DateTime
 	@property({ type: 'datetime', nullable: true }) end?: DateTime
 
-	/** A task's deadline, apart from when it is planned. All-day, it is the due day's canonical midnight. */
+	/** Apart from the schedule. All-day, it is the due day's canonical midnight. */
 	@property({ type: 'datetime', nullable: true }) due?: DateTime
 
 	/** A task's length in minutes while it has no start. The end is the same fact once it does, so one of the two is always empty. */
@@ -140,10 +135,8 @@ export class Entry {
 	get done() { return this.status === TaskStatus.Done }
 	set done(value) { this.status = value ? TaskStatus.Done : TaskStatus.ToDo }
 
-	/** Whether the task outcome is decided (Done or Cancelled). */
 	get closed() { return this.status === TaskStatus.Done || this.status === TaskStatus.Cancelled }
 
-	/** Writes 100% progress on Done if the provider supports `percentComplete` (RFC 5545 §3.8.1.8). */
 	setStatus(status: TaskStatus, capabilities: Pick<Integration['capabilities'], 'percentComplete'>) {
 		this.status = status
 		if (status === TaskStatus.Done && capabilities.percentComplete) {
@@ -161,10 +154,20 @@ export class Entry {
 
 	@property({ type: 'boolean' }) allDay = false
 	@property({ type: 'string', nullable: true }) timeZone?: string | null
+
+	/** Times on whatever clock the reader's is (RFC 5545 floating), stored as if in UTC: an alarm at 7:00 anywhere. */
+	get floating() {
+		return !this.allDay && this.timeZone === FLOATING_TIME_ZONE
+	}
+
+	/** The zone its times are written in: none for an all-day entry, whose days are everyone's, nor for a floating one, as `floating` names no zone. */
+	get zone(): TimeZone | undefined {
+		return this.allDay ? undefined : TimeZone.parse(this.timeZone)
+	}
+
 	@property({ type: 'json', nullable: true }) data?: EntryData
 	@property({ type: 'json', nullable: true }) reminders?: Array<number> | null
 
-	/** Date-time anchor that reminders count back from (`start`, falling back to `due` for unscheduled tasks). */
 	get reminderAnchor(): DateTime | undefined {
 		return this.start ?? (this.type?.isTask ? this.due : undefined)
 	}
@@ -173,14 +176,14 @@ export class Entry {
 		return !this.start && !!this.reminderAnchor
 	}
 
-	/** Epoch ms that reminders count back from, resolving floating times against observer `zone`. */
+	/** Floating times resolve in the observer's `zone`. */
 	reminderAnchorInstant(zone?: string): number | undefined {
 		const anchor = this.reminderAnchor
 		if (!anchor) {
 			return undefined
 		}
 		const epoch = (anchor as unknown as Date).getTime()
-		if (this.allDay || this.timeZone !== FLOATING_TIME_ZONE || !zone) {
+		if (!this.floating || !zone) {
 			return epoch
 		}
 		return Temporal.Instant.fromEpochMilliseconds(epoch)
@@ -264,22 +267,20 @@ export class Entry {
 
 	relations?: Array<Relation> | null
 
-	/** Collection wrapper providing grouping, filtering, and edge helpers for this entry's relations. */
 	get relationList() {
 		return EntryRelations.of(this.uid, this.relations)
 	}
 
-	/** Adds an outgoing relationship (normalized, deduplicated). Replaces array to keep snapshots immutable. */
+	/** Replaces the array, so snapshots stay immutable. */
 	relateTo(type: RelationType | string, targetUid: string) {
 		this.relations = this.relationList.adding(type, targetUid).value
 	}
 
-	/** Removes an outgoing relationship by value; an emptied list collapses to null. */
+	/** An emptied list collapses to null. */
 	unrelate(relation: Relation) {
 		this.relations = this.relationList.without(relation).value
 	}
 
-	/** Evaluates whether an outgoing dependency is violated relative to predecessor. */
 	violates(relation: Relation | RelationInit, predecessor: Entry) {
 		return RelationEdge.of(this.uid ?? '', relation)?.violatedBy(predecessor, this) ?? false
 	}
@@ -303,21 +304,16 @@ export class Entry {
 		Object.assign(this, init)
 	}
 
-	/** Whether the backend has assigned this entry an id. A locally-created draft has none until it's
-	 * saved, so `!persisted` *is* "this is a draft", with no separate flag or side store to keep in sync. */
+	/** A local draft has no id until it is saved, so `!persisted` is what marks a draft. */
 	get persisted() {
 		return this.id !== undefined
 	}
 
-	/** Whether the entry can participate in relationships (persisted with a uid). */
 	get relatable() {
 		return this.persisted && !!this.uid
 	}
 
-	/**
-	 * Whether the entry sits anywhere on the calendar, which only a start does. A due is a constraint,
-	 * not a placement, so a task with one but no start stays in the unscheduled section.
-	 */
+	/** Only a start places an entry: a due is a constraint, so a task with one but no start stays unscheduled. */
 	get scheduled() {
 		return !!this.start
 	}
@@ -339,32 +335,24 @@ export class Entry {
 	}
 
 	/**
-	 * Whether the entry may LOSE its dates again. A VTODO's date properties are both optional and
-	 * Notion's is nullable, but DTSTART is REQUIRED of a VEVENT (RFC 5545 §3.6.1), so an undated event
-	 * has no iCalendar form. A series is out too, since its dates are what identify its occurrences.
-	 * The unscheduled section still RENDERS whatever undated rows a provider hands us: an entry no
-	 * surface shows is one the user cannot fix.
+	 * Whether the entry may lose its dates. DTSTART is required of a VEVENT (RFC 5545 §3.6.1), and a series' dates
+	 * identify its occurrences. Undated rows a provider hands us still render, or the user could never fix them.
 	 */
 	get unschedulable() {
 		return this.type.isTask && !this.partOfSeries
 	}
 
-	/** True for a rendered occurrence (an expanded instance or a synced override) of a recurring series.
-	 * Such entries edit/delete the whole series (via the master) and aren't independently movable in v1. */
+	/** An expanded occurrence or a synced override of a series. */
 	get isRecurring() {
 		return !!this.recurrenceMasterId
 	}
 
-	/** True for the occurrence the series starts on: the one where "this and following" would reach
-	 * the whole series and is therefore not worth offering. Both instants come from the expansion
-	 * (see occurrences.ts), so a synced override, which carries no anchor, answers false. */
+	/** Where "this and following" would reach the whole series. Both instants come from the expansion, so a synced override answers false. */
 	get isSeriesStart() {
 		return !!this.recurrenceId && !!this.seriesStart && this.recurrenceId.equals(this.seriesStart)
 	}
 
-	/** True when the entry belongs to a recurring series: either the master that carries the rule
-	 * (`recurrence`) or one of its occurrences (`isRecurring`). Such entries aren't independently
-	 * drag/resize-movable; their schedule is read-only in the editor (the rule itself stays editable). */
+	/** The master or one of its occurrences: never dragged, its schedule read-only in the editor (the rule stays editable). */
 	get partOfSeries() {
 		return !!this.recurrence || this.isRecurring
 	}
@@ -374,7 +362,6 @@ export class Entry {
 		return this.recurrenceMasterId ?? this.id
 	}
 
-	/** Whether another entry carries the same user-editable content. */
 	editEquals(other: Entry) {
 		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'due', 'estimate', 'allDay', 'timeZone', 'status', 'percentComplete', 'transparency', 'visibility', 'recurrence', 'reminders', 'participants'] as const
 		return editable.every(key => Object[equals](this[key], other[key]))
@@ -468,7 +455,6 @@ export class Entry {
 		return !!this.type?.isTask && !!this.start && !this.end
 	}
 
-	/** Moves start DateTime, preserving duration for timed entries or whole days for all-day entries. */
 	moveStart(start: DateTime) {
 		if (this.point) {
 			this.start = this.allDay ? start.dayStart : start
@@ -522,7 +508,6 @@ export class Entry {
 		}
 	}
 
-	/** Moves entry to another source, converting type if unsupported by target. */
 	migrateTo(source: Source) {
 		this.sourceId = source.id
 		if (!source.supportsEntryType(this.type)) {
@@ -530,7 +515,6 @@ export class Entry {
 		}
 	}
 
-	/** Whether another entry occupies exactly the span this one does. */
 	spanEquals(other: Entry) {
 		return this.allDay === other.allDay
 			&& this.start?.valueOf() === other.start?.valueOf()
@@ -578,9 +562,10 @@ export class Entry {
 	/** Re-zones entry while keeping wall-clock time. */
 	setTimeZone(zone: string) {
 		if (!this.allDay) {
-			const from = this.timeZone === FLOATING_TIME_ZONE ? 'UTC'
+			const from = this.floating ? 'UTC'
 				: this.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
-			const rezoned = (value: DateTime | undefined) => value === undefined ? undefined : new DateTime(
+			// A date the entry lacks arrives as null from the wire, not undefined.
+			const rezoned = (value: DateTime | undefined) => !value ? value : new DateTime(
 				Temporal.Instant.fromEpochMilliseconds(value.valueOf())
 					.toZonedDateTimeISO(from)
 					.toPlainDateTime()
