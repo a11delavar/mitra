@@ -24,6 +24,7 @@ To add either, choose **Add Integration** at the foot of the sidebar.
 | [Apple Calendar](apple.md) | The calendars of an iCloud account | None |
 | [Calendar subscriptions](subscriptions.md) | A published `webcal://` or `.ics` feed, read-only | None |
 | [Notion](notion.md) | Tasks from Notion database views | None |
+| [Todoist](todoist.md) | Tasks from your Todoist projects | None |
 | [Tempo](tempo.md) | The hours you book on Jira issues | None |
 
 Each provider stores different things. Notion tasks can't repeat, for example, and a Tempo worklog has no location. Mitra hides the fields a calendar can't store, so nothing you type disappears on the next sync.
