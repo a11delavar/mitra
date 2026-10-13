@@ -152,6 +152,11 @@ One fixture serves the dev account, every demo sandbox and every screenshot the 
     - Round-Trip: Empty paragraph padding and trailing spaces stripped so clean markdown round-trips without phantom diffs.
     - Filter Defaults: `Notion.deriveFilterDefaults` pre-fills view filter properties on task create. Tasks not matching view filter are not retained locally.
     - Relations: Maps self-referencing relations ("Parent Task" -> `PARENT`, "Blocked by" -> `FINISHTOSTART`, custom -> `X-NOTION-<NAME>`). Non-self relations ignored. Dual properties map only stored direction.
+  - **Todoist** (`integrations/todoist/Todoist.ts`, type `'todoist'`):
+    - Projects are task sources. REST API v1 with bearer token authentication and cursor pagination.
+    - Floating `due.date` values use the account timezone from `/user`; fixed timestamps keep their offset. The separate deadline maps to `Entry.due`.
+    - Due metadata is retained in `data.raw`. Recurring and floating moves use `item_update` and preserve the repeat rule, language and floating semantics.
+    - Reads recent completed tasks; the provider advances recurring tasks on completion. No recurrence editor, availability, participants or reminders.
   - **ICS Feeds** (`integrations/ics/`, type `'ics'`):
     - 1 Feed = 1 Integration holding 1 Source. `webcal(s)://` normalized to `https://`.
     - Entities keyed by UID (or content hash). Change detection via raw VCALENDAR hash.

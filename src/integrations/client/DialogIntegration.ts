@@ -12,6 +12,7 @@ import appleLogo from '../apple/logo.svg'
 import icsLogo from '../ics/logo.svg'
 import notionLogo from '../notion/logo.svg'
 import tempoLogo from '../tempo/logo.svg'
+import todoistLogo from '../todoist/logo.svg'
 import '../../design/TextField.js'
 import { pressable } from '../../design/pressable.css.js'
 
@@ -23,6 +24,7 @@ const logos: Record<string, string> = {
 	ics: icsLogo,
 	notion: notionLogo,
 	tempo: tempoLogo,
+	todoist: todoistLogo,
 	demo: demoLogo,
 }
 
@@ -309,6 +311,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 			case 'apple': return this.appleTemplate
 			case 'ics': return this.icsTemplate
 			case 'notion': return this.notionTemplate
+			case 'todoist': return this.todoistTemplate
 			case 'tempo': return this.tempoTemplate
 			default: return this.caldavTemplate
 		}
@@ -402,6 +405,15 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 				<p class="hint">${t('Notion.TokenHint')}</p>
 			`}
 			<mitra-text-field label=${t('Integration Token')} type="password" ${bind({ keyPath: 'credentials.token' })} placeholder=${this.isEdit ? t('unchanged') : 'ntn_…'}></mitra-text-field>
+			${this.connectTemplate}
+		`
+	}
+
+	private get todoistTemplate() {
+		const { bind } = this.binder
+		return html`
+			${!this.isEdit ? html`<p class="hint">${t('Todoist.TokenHint')}</p>` : html.nothing}
+			<mitra-text-field label=${t('Todoist API Token')} type="password" ${bind({ keyPath: 'credentials.token' })} placeholder=${this.isEdit ? t('unchanged') : ''}></mitra-text-field>
 			${this.connectTemplate}
 		`
 	}
