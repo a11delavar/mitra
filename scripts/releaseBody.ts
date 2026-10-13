@@ -47,6 +47,6 @@ if (notes?.title && ReleaseNotes.isMinorRelease(version)) {
 	}
 }
 if (!lines.length) {
-	lines.push(`No CHANGELOG.md section found. Run 'npm run changelog -- --tag ${tag}' before tagging.`)
+	lines.push(`No CHANGELOG.md section found for ${tag}. Run 'npm run changelog' once the tag exists.`)
 }
 process.stdout.write(`${lines.join('\n').trim()}\n`)

@@ -49,9 +49,9 @@ COPY --from=builder /app/out ./out
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./package.json
 
-# The release notes the in-app What's-New dialog serves (see src/backend/changelog.ts). On dev
-# builds, CI prepends the [Unreleased] section into the build context first (see docker.yml).
-COPY CHANGELOG.md ./CHANGELOG.md
+# The changelog the About dialog serves (see src/features/about/server/changelog.ts), which CI generates into the build
+# context (see docker.yml), as the context has no .git. The pattern lets a local build without one go ahead.
+COPY CHANGELOG.m[d] ./
 
 # SQLite database lives here; mount a volume to persist it across container updates.
 RUN mkdir -p /app/data

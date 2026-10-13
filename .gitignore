@@ -7,3 +7,5 @@ out/
 .DS_Store
 # Docs captures in languages other than English: the website build shoots them (npm run screenshots -- --language de).
 assets/screenshots/*/
+# Generated from the commits and tags (npm run changelog); CI writes it for the image, the release and the site.
+CHANGELOG.md

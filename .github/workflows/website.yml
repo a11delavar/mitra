@@ -16,6 +16,8 @@ on:
       - 'scripts/capture.ts'
       - 'scripts/screenshots.ts'
       - 'releases/**'
+      - 'cliff.toml'
+      - 'scripts/changelog.ts'
       - 'package.json'
       - '.github/workflows/website.yml'
   pull_request:
@@ -30,6 +32,8 @@ on:
       - 'scripts/capture.ts'
       - 'scripts/screenshots.ts'
       - 'releases/**'
+      - 'cliff.toml'
+      - 'scripts/changelog.ts'
       - 'package.json'
       - '.github/workflows/website.yml'
   workflow_dispatch:
@@ -108,13 +112,21 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0 # docs pages date themselves from `git log`
+          fetch-depth: 0 # docs pages date themselves from `git log`, and the changelog comes from every tag
 
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
-          cache-dependency-path: website/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            website/package-lock.json
+
+      # The release pages list each release's commits. git-cliff alone: its binary needs no install scripts.
+      - name: Generate Changelog
+        run: |
+          npm ci --ignore-scripts
+          npm run changelog
 
       # Each language's captures into its own folder beside the English ones, where the site looks for them.
       - name: Download Captures

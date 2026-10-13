@@ -17,8 +17,8 @@ data
 .idea
 website
 *.md
-# …except the changelog, which is a runtime asset now (the What's-New dialog serves it; see
-# src/backend/changelog.ts), copied into the image by the Dockerfile.
+# …except the changelog CI generates into the context, which the About dialog serves (see
+# src/features/about/server/changelog.ts), copied into the image by the Dockerfile.
 !CHANGELOG.md
 # …and the release notes and their translations, which the build bundles into dist/ (see scripts/releaseAssets.ts).
 !releases/*/README.md

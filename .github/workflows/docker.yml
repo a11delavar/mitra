@@ -4,7 +4,8 @@ name: Docker
 #
 # Tagging (handled entirely by docker/metadata-action, off the git ref):
 #   • push to main         → `dev` (rolling) + `sha-<short>` (immutable per commit)
-#   • push tag `vX.Y.Z`    → `X.Y.Z`, `X.Y`, `X`, and `latest`
+#   • push tag `vX.Y.Z`    → `X.Y.Z`, `X.Y`, `X`, and `latest` (each moving one only while
+#                            this is the newest stable tag it covers, so a backport keeps out)
 #   • push tag `vX.Y.Z-rc.N` → only `X.Y.Z-rc.N` (no floating `X`/`X.Y`, no `latest`)
 #   • pull request          → build only (no push), to validate the Dockerfile
 # Pushing the tag is the single trigger: `release.yml` turns the same tag into a
@@ -50,15 +51,22 @@ jobs:
           echo "version=$(git describe --tags --always)" >> "$GITHUB_OUTPUT"
           echo "commit=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
-      # The committed CHANGELOG.md only covers releases, but a `dev` image built from main carries
-      # commits past the last tag that no section describes. Generate the `[Unreleased]` section into
-      # the build context here. The checkout above has full history, and git-cliff ships as a
-      # standalone binary via npm, so no `npm ci` is needed. Mutates only the CI workspace; nothing is
-      # committed. Tag builds skip this: the release flow guarantees the top section IS the release
-      # (release.yml warns when it's missing).
-      - name: Prepend Unreleased Notes
-        if: github.ref == 'refs/heads/main'
-        run: npx --yes git-cliff@2 --unreleased --prepend CHANGELOG.md
+      # The changelog the About dialog serves, into the build context (which carries no .git). A `dev`
+      # image also lists the commits past the last tag as `[Unreleased]`; at a tag there are none.
+      - name: Generate Changelog
+        run: npm run changelog -- --unreleased
+
+      # A backport (a 0.6.x tagged after 0.7.0) must not take `latest` or its major back from the newer
+      # line, so each moving tag follows only the newest stable tag it covers.
+      - name: Rank Tag
+        id: rank
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          tag="$GITHUB_REF_NAME"; version="${tag#v}"; major="${version%%.*}"; rest="${version#*.}"; minor="${rest%%.*}"
+          newest() { git tag -l "$1" | grep -v -- - | sort -V | tail -n 1; }
+          echo "latest=$([ "$(newest 'v*')" = "$tag" ] && echo auto || echo false)" >> "$GITHUB_OUTPUT"
+          echo "major=$([ "$(newest "v$major.*")" = "$tag" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "minor=$([ "$(newest "v$major.$minor.*")" = "$tag" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
       - name: Compute Tags & Labels
         id: meta
@@ -67,13 +75,13 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           # `latest=auto`: applied to stable semver tags, and automatically skipped
           # for pre-releases (e.g. v1.2.3-rc.1).
-          flavor: latest=auto
+          flavor: latest=${{ steps.rank.outputs.latest || 'auto' }}
           tags: |
             type=raw,value=dev,enable={{is_default_branch}}
             type=sha,enable={{is_default_branch}}
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ steps.rank.outputs.minor || 'true' }}
+            type=semver,pattern={{major}},enable=${{ steps.rank.outputs.major || 'true' }}
 
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3

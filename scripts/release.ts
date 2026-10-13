@@ -7,9 +7,10 @@ import { consola } from 'consola'
 import { linesOf, parseChangelog } from '../src/features/about/Changelog.ts'
 import { ReleaseContributor, ReleaseNotes } from '../src/features/about/ReleaseNotes.ts'
 
-// Cuts a release: bumps the version, regenerates the changelog and the captures, commits, and on a yes tags and pushes,
-// which `release.yml` and `docker.yml` pick up. A minor ships with its notes (releases/<minor>/README.md): without a
-// titled one the cut stops after writing a scaffold. Usage: npm run release [version]
+// Cuts a release: bumps the version, regenerates the captures, commits, and on a yes tags and pushes, which
+// `release.yml` and `docker.yml` pick up. A minor ships with its notes (releases/<minor>/README.md): without a titled one
+// the cut stops after writing a scaffold. A patch of an older minor is cut on a branch from its last tag, and only the
+// tag is pushed: the tag keeps its commits, and the changelog finds it. Usage: npm run release [version]
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
@@ -135,14 +136,14 @@ class Cut {
 		return notes
 	}
 
-	/** The version, the changelog and the captures, then the commit that carries them. */
+	/** The version and the captures, then the commit that carries them. The changelog is generated (gitignored) for the captures alone. */
 	commit(notes: ReleaseNotes | undefined) {
 		show(`npm version ${this.version} --no-git-tag-version`)
 		consola.info(`Generating CHANGELOG.md for ${this.tag}...`)
 		show(`npm run changelog -- --tag ${this.tag}`)
 		consola.info(`Capturing the screenshots for ${this.tag}...`)
 		show('npm run screenshots')
-		const files = ['package.json', 'package-lock.json', 'CHANGELOG.md', 'cliff.toml', 'assets/screenshots']
+		const files = ['package.json', 'package-lock.json', 'cliff.toml', 'assets/screenshots']
 		if (notes) {
 			const file = this.notesFile
 			// The build the screenshots just made is this release's: its own scenes are shot now, the rest borrowed from the docs.
@@ -162,14 +163,16 @@ class Cut {
 
 	async push() {
 		const branch = run('git branch --show-current') || 'main'
-		if (!await yes(`\nTag "${this.tag}" and push to origin/${branch}? (y/N): `)) {
+		// Off main, the branch is only the way to the tag: a patch's line lives on as its tags.
+		const refs = branch === 'main' ? `${branch} ${this.tag}` : this.tag
+		if (!await yes(`\nTag "${this.tag}" and push ${branch === 'main' ? `to origin/${branch}` : 'the tag alone'}? (y/N): `)) {
 			consola.info(`\nSkipped tagging and pushing. The commit 'release: ${this.tag}' was created locally. When ready, tag and push with:`)
 			consola.info(`  git tag ${this.tag}`)
-			consola.info(`  git push origin ${branch} ${this.tag}`)
+			consola.info(`  git push origin ${refs}`)
 			return
 		}
 		show(`git tag ${this.tag}`)
-		show(`git push origin ${branch} ${this.tag}`)
+		show(`git push origin ${refs}`)
 		consola.success(`\n🎉 Release ${this.tag} pushed successfully! GitHub Actions will create the release and Docker build.`)
 	}
 }

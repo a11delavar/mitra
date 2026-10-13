@@ -4,7 +4,7 @@ name: Release
 # a minor's notes (releases/<minor>/README.md: title, intro, highlight headings and a link to
 # the page on the website), a patch's pointer at its minor, then the tag's CHANGELOG.md section
 # (generated from commits by `npm run changelog`). Pre-release tags (`-rc`/`-beta`/`-alpha`)
-# are marked as such.
+# are marked as such, and a backport (an older minor's patch) is never marked Latest.
 #
 # Cut a release with:  npm run release [version]
 # (`docker.yml` builds the image off the same tag push, in parallel.)
@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   release:
@@ -21,10 +22,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # the changelog is generated from every commit and tag
 
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+          cache: npm
+
+      # git-cliff alone: its binary needs no install scripts, and nothing here builds.
+      - name: Generate Changelog
+        run: |
+          npm ci --ignore-scripts
+          npm run changelog
 
       - name: Write Release Body
         run: node scripts/releaseBody.ts "${{ github.ref_name }}" > RELEASE_NOTES.md
@@ -40,14 +50,25 @@ jobs:
           printf '{"version":"%s","url":"https://github.com/%s/releases/tag/%s"}\n' \
             "${{ github.ref_name }}" "${{ github.repository }}" "${{ github.ref_name }}" > mitra.json
 
+      # Only the newest stable tag is Latest, which `releases/latest/download/mitra.json` follows: a
+      # backport tagged later would otherwise offer every newer instance a "downgrade".
       - name: Create Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          prerelease=""
-          case "${{ github.ref_name }}" in *-*) prerelease="--prerelease" ;; esac
-          gh release create "${{ github.ref_name }}" \
-            --title "${{ github.ref_name }}" \
+          flags=""
+          case "$GITHUB_REF_NAME" in *-*) flags="--prerelease" ;; esac
+          newest="$(git tag -l 'v*' | grep -v -- - | sort -V | tail -n 1)"
+          [ -z "$flags" ] && [ "$newest" != "$GITHUB_REF_NAME" ] && flags="--latest=false"
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
             --notes-file RELEASE_NOTES.md \
-            $prerelease \
+            $flags \
             mitra.json
+
+      # A tag on main arrives with its release commit, which rebuilds the site; a backport's tag has
+      # no commit there, so its changelog section reaches the site through a build of main.
+      - name: Rebuild Website
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main || gh workflow run website.yml --ref main

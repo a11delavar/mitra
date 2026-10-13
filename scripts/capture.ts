@@ -7,6 +7,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { consola } from 'consola'
 import sharp from 'sharp'
+import { writeChangelog } from './changelog.ts'
 
 // The capture harness the stills (screenshots.ts) and the films (motion.ts) share: a staged build of the app with the
 // sample calendar, headless Chrome driven over CDP with real input, a clock stood still on one Thursday, and the
@@ -208,6 +209,10 @@ export function stageServer(stageDir: string) {
 	fs.mkdirSync(path.join(stageDir, 'out/server'), { recursive: true })
 	fs.mkdirSync(path.join(stageDir, 'data'))
 	fs.copyFileSync(path.join(rootDir, 'out/server/server.mjs'), path.join(stageDir, 'out/server/server.mjs'))
+	// Generated and gitignored, so a fresh checkout has none until asked; a release cut stamps its version on it first.
+	if (!fs.existsSync(path.join(rootDir, 'CHANGELOG.md'))) {
+		writeChangelog({ unreleased: true })
+	}
 	fs.copyFileSync(path.join(rootDir, 'CHANGELOG.md'), path.join(stageDir, 'CHANGELOG.md'))
 	fs.symlinkSync(path.join(rootDir, 'dist'), path.join(stageDir, 'dist'), 'junction')
 }

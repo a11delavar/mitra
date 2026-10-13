@@ -16,7 +16,7 @@
 		"captures:release": "node ./scripts/capture-release.ts",
 		"i18n:generate": "node ./scripts/i18n.ts",
 		"i18n:analyze": "node ./scripts/i18n.ts --analyze",
-		"changelog": "git-cliff -o CHANGELOG.md",
+		"changelog": "node ./scripts/changelog.ts",
 		"release": "node ./scripts/release.ts"
 	},
 	"devDependencies": {

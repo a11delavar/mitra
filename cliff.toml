@@ -1,5 +1,5 @@
-# git-cliff generates CHANGELOG.md from the commit history.
-# Author/refresh with `npm run changelog` (stamp a version with `-- --tag vX.Y.Z`).
+# git-cliff generates CHANGELOG.md from the commit history, through scripts/changelog.ts, which also slots in backported
+# patches. The file is gitignored: CI generates it for the image, the release and the site. Locally: `npm run changelog`.
 [changelog]
 header = """
 # Changelog
@@ -42,7 +42,10 @@ commit_parsers = [
 	{ message = "^ci|^build|^infra", group = "<!-- 5 -->🏗️ Infrastructure" },
 	{ message = "^refactor", group = "<!-- 6 -->🧹 Refactors" },
 	{ message = "^chore", group = "<!-- 7 -->🔧 Chores" },
-	{ message = ".*", group = "<!-- 8 -->🔹 Other" },
+	{ message = "^\\w+(\\(.+\\))?!?: ", group = "<!-- 8 -->🔹 Other" },
+	# A body's other lines (prose, `Fixes #5`, `Co-authored-by:` trailers) are split off too, and would come back as copies
+	# of the subject: only `type: Phrase` lines are entries.
+	{ message = ".*", skip = true },
 ]
 filter_commits = false
 tag_pattern = "v[0-9]*"
