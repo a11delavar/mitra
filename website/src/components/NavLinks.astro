@@ -17,14 +17,20 @@ const t = localize(language)
 ---
 
 <nav class="nav">
-	<a href={withBase(localized(`/${docsBase}/`, language))} aria-current={current === 'docs' ? 'page' : undefined}>{t('Docs')}</a>
-	<a href={withBase(localized('/releases/', language))} aria-current={current === 'releases' ? 'page' : undefined}>{t('Releases')}</a>
-	<a href={demoIn(language)}>{t('Demo')}</a>
-	<a href="https://github.com/a11delavar/mitra" rel="noreferrer" title="GitHub" aria-label="GitHub">
-		<Icon name="github" />
-	</a>
+	<div id="site-menu" class="menu" popover>
+		<a href={withBase(localized(`/${docsBase}/`, language))} aria-current={current === 'docs' ? 'page' : undefined}>{t('Docs')}</a>
+		<a href={withBase(localized('/releases/', language))} aria-current={current === 'releases' ? 'page' : undefined}>{t('Releases')}</a>
+		<a href={demoIn(language)}>{t('Demo')}</a>
+		<a href="https://github.com/a11delavar/mitra" rel="noreferrer" title="GitHub" aria-label="GitHub">
+			<Icon name="github" />
+			<span class="label">GitHub</span>
+		</a>
+	</div>
 	<LanguageSelect language={language} alternates={alternates} />
 	<ThemeToggle />
+	<button class="toggle" type="button" popovertarget="site-menu" aria-label={t('Menu')} title={t('Menu')}>
+		<Icon name="menu" />
+	</button>
 </nav>
 
 <style>
@@ -32,6 +38,77 @@ const t = localize(language)
 		display: flex;
 		align-items: center;
 		gap: 0.25rem;
+		anchor-scope: --site-menu;
+	}
+
+	/* One set of links: inline where the bar has room, a menu below its button where it has not. */
+	.menu {
+		display: contents;
+	}
+
+	.toggle,
+	.label {
+		display: none;
+	}
+
+	@media (width < 40rem) {
+		/* The theme toggle's button, with a menu glyph. */
+		.toggle {
+			anchor-name: --site-menu;
+			box-sizing: border-box;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			inline-size: 2rem;
+			block-size: 2rem;
+			padding: 0;
+			border: 1px solid var(--mitra-hairline);
+			border-radius: var(--border-radius);
+			background: var(--mitra-wash);
+			font: inherit;
+			font-size: 1rem;
+			color: var(--color-text-muted);
+			cursor: pointer;
+			transition: color 0.15s ease, border-color 0.15s ease;
+
+			&:hover,
+			&:focus-visible {
+				border-color: var(--mitra-hairline-strong);
+				color: var(--color-text);
+			}
+		}
+
+		.label {
+			display: inline;
+		}
+
+		.menu {
+			display: none;
+			position: fixed;
+			inset: auto;
+			inset-block-start: 3.5rem;
+			inset-inline-end: 1rem;
+			margin: 0;
+			min-inline-size: 12rem;
+			padding: 0.25rem;
+			border: 1px solid var(--mitra-hairline);
+			border-radius: var(--border-radius);
+			background: var(--color-surface);
+			box-shadow: 0 8px 24px color-mix(in srgb, black 18%, transparent);
+			color: var(--color-text);
+
+			&:popover-open {
+				display: grid;
+			}
+		}
+
+		@supports (anchor-name: --site-menu) {
+			.menu {
+				position-anchor: --site-menu;
+				inset-block-start: calc(anchor(end) + 0.375rem);
+				inset-inline-end: anchor(end);
+			}
+		}
 	}
 
 	a {

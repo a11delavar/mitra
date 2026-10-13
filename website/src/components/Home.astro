@@ -78,8 +78,10 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 			<a class="news" href={latest?.url ?? withBase(localized(`/releases/${release}/`, language))}>
 				<span class="version" style={latest?.transition('version')}>{release}</span>
 				{latest?.state === 'latest' && <b style={latest.transition('mark')}>{t('Latest')}</b>}
-				<span class="title" style={latest?.transition('title', 'text')} lang={latest?.translated ? undefined : languages[0]}>{latest?.notes?.title ?? t('See what is new')}</span>
-				<Icon name="arrow-right" size="0.9em" />
+				<span class="headline">
+					<span class="title" style={latest?.transition('title', 'text')} lang={latest?.translated ? undefined : languages[0]}>{latest?.notes?.title ?? t('See what is new')}</span>
+					<Icon name="arrow-right" size="0.9em" />
+				</span>
 			</a>
 			<h1>{t('One calendar to plan your events and tasks.')}</h1>
 			<p class="lede">{t('A self-hosted calendar that puts your tasks on the same timeline as your events. Keep your calendars in Mitra, or sync the ones you already use.')}</p>
@@ -349,7 +351,17 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 		color: var(--release-latest);
 	}
 
+	/* The title and its arrow wrap as one: on a narrow screen they move below the version together, never apart. */
+	.news .headline {
+		display: flex;
+		flex: 1 1 auto;
+		align-items: baseline;
+		gap: 0.6rem;
+		min-inline-size: 0;
+	}
+
 	.news .title {
+		min-inline-size: 0;
 		transition: color 0.15s ease;
 	}
 
