@@ -543,6 +543,7 @@ export class Sidebar extends Component {
 						&[contenteditable=plaintext-only] {
 							cursor: text;
 							user-select: text;
+							-webkit-user-select: text;
 							text-overflow: clip;
 							outline: 1px solid var(--color-accent, var(--color-text-muted));
 							outline-offset: 2px;

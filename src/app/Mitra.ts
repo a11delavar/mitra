@@ -195,7 +195,14 @@ export class Mitra extends Application {
 
 			:root {
 				user-select: none;
+				-webkit-user-select: none;
+				-webkit-touch-callout: none;
 				-webkit-tap-highlight-color: transparent;
+			}
+
+			input, textarea, [contenteditable] {
+				user-select: text;
+				-webkit-user-select: text;
 			}
 
 			${focusRingStyles}

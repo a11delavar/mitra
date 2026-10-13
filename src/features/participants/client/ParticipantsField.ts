@@ -136,6 +136,7 @@ export class ParticipantsField extends Component {
 
 						> .email {
 							user-select: text;
+							-webkit-user-select: text;
 							cursor: text;
 							overflow: hidden;
 							text-overflow: ellipsis;
