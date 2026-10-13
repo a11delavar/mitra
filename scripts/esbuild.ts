@@ -62,7 +62,7 @@ export const frontendOptions: BuildOptions = {
 	outdir: distDir,
 	loader: { '.svg': 'text', '.woff2': 'file' },
 	assetNames: 'fonts/[name]-[hash]',
-	inject,
+	inject: [...inject, 'scripts/injectRandomUUIDPolyfill.ts'],
 	define: defineFor('browser'),
 }
 
