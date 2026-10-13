@@ -2,6 +2,11 @@
 
 All notable changes to Mitra are documented here.
 
+## [0.6.1] - 2026-10-13
+
+
+### 🐛 Bug Fixes
+- Support instances opened by IP address over plain HTTP instead of localhost or HTTPS ([aa4de85](https://github.com/a11delavar/mitra/commit/aa4de85920efa4c5785dc87c03c802ebb102175c))
 ## [0.6.0] - 2026-10-05
 
 
