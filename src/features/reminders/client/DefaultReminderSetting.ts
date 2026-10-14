@@ -1,4 +1,4 @@
-import { reminderLabel } from './RemindersField.js'
+import { RemindersField } from './RemindersField.js'
 import { EntryType } from '../../entries/EntryType.js'
 import { ReminderDefaults } from '../ReminderDefaults.js'
 import { ChoiceSetting, setting, userStorage } from '../../settings/client/Setting.js'
@@ -19,7 +19,7 @@ export abstract class ReminderSetting extends ChoiceSetting<number | null> {
 	protected abstract readonly type: EntryType
 
 	override get options() {
-		return ReminderSetting.choices.map(minutes => ({ value: minutes, label: minutes === null ? t('None') : reminderLabel(minutes, this.type) }))
+		return ReminderSetting.choices.map(minutes => ({ value: minutes, label: minutes === null ? t('None') : RemindersField.labelOf(minutes, this.type) }))
 	}
 }
 

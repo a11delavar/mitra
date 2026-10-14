@@ -41,7 +41,7 @@ export class EntryRelation {
 	/** Attaches own and incoming (derived) relations to entries scoped to viewer-accessible sources.
 	 * Occurrences inherit relations from their recurrence master. */
 	static async attach(em: EntityManager, entries: ReadonlyArray<Entry>, sourceIds: ReadonlyArray<string>): Promise<void> {
-		const idOf = (entry: Entry) => entry.recurrenceMasterId ?? entry.id
+		const idOf = (entry: Entry) => entry.recurringEntryId ?? entry.id
 		const ids = [...new Set(entries.map(idOf).filter((id): id is string => !!id))]
 		const uids = [...new Set(entries.map(entry => entry.uid).filter((uid): uid is string => !!uid))]
 		const [rows, pointing] = await Promise.all([

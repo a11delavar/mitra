@@ -22,7 +22,7 @@ describe('Routines', () => {
 			start: base.add({ days: offset, hours: 9 }),
 			end: base.add({ days: offset, hours: 10 }),
 			recurrence,
-			recurrenceMasterId: id,
+			recurringEntryId: id,
 		}))
 
 	const detached = (heading: string, offset: number, sourceId = 'cal', init: Partial<Entry> = {}) =>
@@ -45,7 +45,7 @@ describe('Routines', () => {
 
 	const collapsedIn = (unit: RoutineUnit, entries: ReadonlyArray<Entry>, windowDays = unit === 'month' ? 500 : 154) => {
 		const cohort = Routines.of(entries, days(windowDays), unit)
-		return new Set(entries.filter(entry => cohort.collapses(entry)).map(entry => entry.recurrenceMasterId))
+		return new Set(entries.filter(entry => cohort.collapses(entry)).map(entry => entry.recurringEntryId))
 	}
 
 	describe('collapses (the density rule)', () => {
@@ -121,7 +121,7 @@ describe('Routines', () => {
 		it('counts a synced override as an instance of its routine, rule-less as it is', () => {
 			const rule = daily(2)
 			const instances = series('gym', rule, cadence(rule, 13))
-			const override = new Entry({ id: 'gym-moved', heading: 'Gym', start: base.add({ days: 27, hours: 18 }), end: base.add({ days: 27, hours: 19 }), recurrenceMasterId: 'gym', recurrenceId: base.add({ days: 26, hours: 9 }) })
+			const override = new Entry({ id: 'gym-moved', heading: 'Gym', start: base.add({ days: 27, hours: 18 }), end: base.add({ days: 27, hours: 19 }), recurringEntryId: 'gym', recurrenceId: base.add({ days: 26, hours: 9 }) })
 			const cohort = Routines.of([...instances, override], days(500), 'month')
 			assert.equal(cohort.collapses(override), true)
 			assert.equal(cohort.collapses(instances[0]!), true)
@@ -140,7 +140,7 @@ describe('Routines', () => {
 
 		it('ignores a move ghost, so a dragged instance is not counted twice', () => {
 			const instances = series('gym', daily(2), cadence(daily(2), 13))
-			const ghost = new Entry({ heading: 'Gym', start: base.add({ days: 40, hours: 9 }), end: base.add({ days: 40, hours: 10 }), recurrence: daily(2), recurrenceMasterId: 'gym' })
+			const ghost = new Entry({ heading: 'Gym', start: base.add({ days: 40, hours: 9 }), end: base.add({ days: 40, hours: 10 }), recurrence: daily(2), recurringEntryId: 'gym' })
 			EntryStore.setPreview(ghost)
 			try {
 				const cohort = Routines.of([...instances, ghost], days(500), 'month')
@@ -231,7 +231,7 @@ describe('Routines', () => {
 				heading: 'Standup',
 				start: base.add({ days: index, hours: 9 }),
 				end: base.add({ days: index, hours: 10 }),
-				recurrenceMasterId: 'standup',
+				recurringEntryId: 'standup',
 			}))
 			assert.deepEqual(collapsedIn('month', overrides), new Set(['standup']))
 		})

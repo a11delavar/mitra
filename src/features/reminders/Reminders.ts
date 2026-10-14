@@ -8,6 +8,23 @@ import { ReminderNotification } from './ReminderNotification.js'
 const MINUTE = 60_000
 
 export class DueReminder {
+	/** The reminders of `entries` due within `(watermark, until]`, floating times read in the zone `zoneOf` gives. */
+	static within(entries: ReadonlyArray<Entry>, watermark: Date, until: Date, zoneOf?: (entry: Entry) => string | undefined): Array<DueReminder> {
+		return entries.flatMap(entry => {
+			// A closed task keeps its reminders, so they must be skipped here.
+			if (!entry.reminders?.length || entry.closed) {
+				return []
+			}
+			const anchor = entry.reminderAnchorInstant(zoneOf?.(entry))
+			if (anchor === undefined) {
+				return []
+			}
+			return entry.reminders
+				.map(minutes => new DueReminder(entry, minutes, anchor))
+				.filter(({ fireAt }) => fireAt > watermark.getTime() && fireAt <= until.getTime())
+		})
+	}
+
 	constructor(
 		readonly entry: Entry,
 		readonly minutes: number,
@@ -37,28 +54,9 @@ export class DueReminder {
 			location: entry.location || undefined,
 			entry: {
 				id: entry.id!,
-				...entry.recurrenceMasterId ? { master: entry.recurrenceMasterId } : undefined,
+				...entry.recurringEntryId ? { master: entry.recurringEntryId } : undefined,
 				...entry.recurrenceId ? { recurrenceId: (entry.recurrenceId as unknown as Date).getTime() } : undefined,
 			},
 		})
 	}
-}
-
-/**
- * Find reminders due within `(watermark, until]`, resolving floating time zones via `zoneOf`.
- */
-export function dueReminders(entries: ReadonlyArray<Entry>, watermark: Date, until: Date, zoneOf?: (entry: Entry) => string | undefined): Array<DueReminder> {
-	return entries.flatMap(entry => {
-		// A closed task keeps its reminders, so they must be skipped here.
-		if (!entry.reminders?.length || entry.closed) {
-			return []
-		}
-		const anchor = entry.reminderAnchorInstant(zoneOf?.(entry))
-		if (anchor === undefined) {
-			return []
-		}
-		return entry.reminders
-			.map(minutes => new DueReminder(entry, minutes, anchor))
-			.filter(({ fireAt }) => fireAt > watermark.getTime() && fireAt <= until.getTime())
-	})
 }

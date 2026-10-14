@@ -571,7 +571,7 @@ describe('scoped occurrence edits', () => {
 		assert.equal(calls.creates.length, 1)
 		assert.equal(result.heading, 'Edited')
 		assert.equal(result.recurrence, undefined) // a standalone: no rule, no series link
-		assert.equal(result.recurrenceMasterId, undefined)
+		assert.equal(result.recurringEntryId, undefined)
 	})
 
 	describe('a scoped edit that also changes the calendar', () => {

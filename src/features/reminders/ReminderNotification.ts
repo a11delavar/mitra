@@ -4,9 +4,9 @@
  */
 
 import { localizeIn } from '../../infrastructure/i18n/dictionaries.js'
+import { calendarDateOf } from '../time/calendarDate.js'
 
 const MINUTE = 60_000
-const DAY = 24 * 60 * MINUTE
 
 /** When the entry happens, in epoch ms. */
 export interface PushWhen {
@@ -62,28 +62,6 @@ export interface Reader {
 }
 
 type Localize = ReturnType<typeof localizeIn>
-
-export function reminderSpan(minutes: number): string {
-	const units = [
-		{ label: 'week', minutes: 7 * 24 * 60 },
-		{ label: 'day', minutes: 24 * 60 },
-		{ label: 'hour', minutes: 60 },
-	]
-	const unit = units.find(unit => minutes >= unit.minutes && minutes % unit.minutes === 0)
-	if (!unit) {
-		return `${minutes} min`
-	}
-	const count = minutes / unit.minutes
-	return `${count} ${unit.label}${count === 1 ? '' : 's'}`
-}
-
-/** `YYYY-MM-DD` of an instant in `timeZone`. */
-function dayOf(instant: number, timeZone: string | undefined): string {
-	const parts = new Intl.DateTimeFormat('en-US', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })
-		.formatToParts(new Date(instant))
-	const part = (type: string) => parts.find(part => part.type === type)?.value ?? ''
-	return `${part('year')}-${part('month')}-${part('day')}`
-}
 
 export class ReminderNotification {
 	/** How long after the start a reminder is still worth delivering. */
@@ -185,7 +163,7 @@ export class ReminderNotification {
 		}
 		const parameters = new URLSearchParams()
 		if (at !== undefined) {
-			parameters.set('date', dayOf(at, when!.allDay || when!.floating ? 'UTC' : timeZone))
+			parameters.set('date', calendarDateOf(new Date(at), when!.allDay || when!.floating ? 'UTC' : timeZone).toString())
 		}
 		parameters.set('selected', entry.id)
 		return `/?${parameters}`
@@ -198,14 +176,15 @@ export class ReminderNotification {
 
 	/** Empty for today, else "Tomorrow", "Yesterday" or the date. */
 	private dayPhrase(at: number, now: number, zone: string | undefined, readerZone: string | undefined, locale: string | undefined, t: Localize): string {
-		const target = dayOf(at, zone)
-		if (target === dayOf(now, readerZone)) {
+		const target = calendarDateOf(new Date(at), zone)
+		const today = calendarDateOf(new Date(now), readerZone)
+		if (target.equals(today)) {
 			return ''
 		}
-		if (target === dayOf(now + DAY, readerZone)) {
+		if (target.equals(today.add({ days: 1 }))) {
 			return t('Tomorrow')
 		}
-		if (target === dayOf(now - DAY, readerZone)) {
+		if (target.equals(today.subtract({ days: 1 }))) {
 			return t('Yesterday')
 		}
 		return new Intl.DateTimeFormat(locale, { timeZone: zone, weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(at))

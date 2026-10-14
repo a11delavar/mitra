@@ -503,7 +503,7 @@ export class Timeline extends Component {
 		const series = new Map<string, Array<Entry>>()
 		const kept = new Array<Entry>()
 		for (const entry of entries) {
-			const master = entry.recurrenceMasterId
+			const master = entry.recurringEntryId
 			if (!master) {
 				kept.push(entry)
 			} else {

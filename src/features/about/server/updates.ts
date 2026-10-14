@@ -1,52 +1,8 @@
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
+import { type Channel, Version } from '../Version.js'
 const logger = createLogger('Updates')
 
 const repository = 'a11delavar/mitra'
-
-/**
- * Update stream channel determined from version string.
- */
-export type Channel =
-	| { channel: 'release' | 'prerelease', current: string }
-	| { channel: 'dev', sha: string }
-	| { channel: 'none' }
-
-export function detectChannel(version: string): Channel {
-	if (version.endsWith('-dirty')) {
-		return { channel: 'none' }
-	}
-	const describe = version.match(/^v\d+\.\d+\.\d+(?:-[\w.]+)?-\d+-g([0-9a-f]+)$/)
-	if (describe) {
-		return { channel: 'dev', sha: describe[1]! }
-	}
-	if (/^v\d+\.\d+\.\d+$/.test(version)) {
-		return { channel: 'release', current: version }
-	}
-	if (/^v\d+\.\d+\.\d+-[\w.]+$/.test(version)) {
-		return { channel: 'prerelease', current: version }
-	}
-	return { channel: 'none' }
-}
-
-function parseSemver(version: string) {
-	const match = version.match(/^v?(\d+)\.(\d+)\.(\d+)(?:-([\w.]+))?$/)
-	return !match ? undefined : { numbers: [Number(match[1]), Number(match[2]), Number(match[3])], prerelease: match[4] }
-}
-
-/** Determines if `candidate` is newer than `current` semver. */
-export function isNewer(candidate: string, current: string) {
-	const a = parseSemver(candidate)
-	const b = parseSemver(current)
-	if (!a || !b) {
-		return false
-	}
-	for (let i = 0; i < 3; i++) {
-		if (a.numbers[i] !== b.numbers[i]) {
-			return a.numbers[i]! > b.numbers[i]!
-		}
-	}
-	return !a.prerelease && !!b.prerelease
-}
 
 export interface UpdateInfo {
 	version: string
@@ -73,7 +29,7 @@ export class UpdateChecker {
 		private readonly version: string = mitra.version,
 		private readonly fetchJson: FetchJson = url => this.fetchJsonViaHttp(url),
 	) {
-		this.channel = detectChannel(version)
+		this.channel = Version.parse(version)?.channel ?? { channel: 'none' }
 	}
 
 	private get enabled() {
@@ -121,7 +77,8 @@ export class UpdateChecker {
 
 	private async checkRelease(current: string) {
 		const latest = await this.fetchLatestRelease()
-		return latest && isNewer(latest.version, current) ? latest : undefined
+		const running = Version.parse(current)
+		return latest && running && Version.parse(latest.version)?.isNewerThan(running) ? latest : undefined
 	}
 
 	private async fetchLatestRelease(): Promise<UpdateInfo | undefined> {

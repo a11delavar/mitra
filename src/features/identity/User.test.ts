@@ -117,4 +117,20 @@ describe('User', () => {
 			assert.deepEqual(round(['a', 'b']), ['a', 'b'])
 		})
 	})
+
+	describe('hasSeen / hasMissed', () => {
+		it('marks a release as news only to someone who saw an earlier one', () => {
+			const caughtUp = new User({ username: 'a', lastSeenVersion: '0.7.0' })
+			assert.ok(caughtUp.hasSeen('0.7.0'))
+			assert.ok(!caughtUp.hasMissed('0.7.0'))
+			assert.ok(!caughtUp.hasSeen('0.8.0'))
+			assert.ok(caughtUp.hasMissed('0.8.0'))
+		})
+
+		it('has nothing to catch up on for a new account', () => {
+			const fresh = new User({ username: 'a' })
+			assert.ok(!fresh.hasSeen('0.7.0'))
+			assert.ok(!fresh.hasMissed('0.7.0'))
+		})
+	})
 })

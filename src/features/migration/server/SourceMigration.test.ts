@@ -167,7 +167,7 @@ describe('SourceMigration', () => {
 		it('holds a series back when its own edited occurrences could not follow it', async () => {
 			const { user, origin, target } = await seed(em)
 			const master = entryIn(origin, { heading: 'standup', recurrence: Recurrence.fromRRule('FREQ=DAILY;COUNT=5') })
-			em.persist([master, entryIn(origin, { heading: 'standup', recurrenceMasterId: master.id, recurrenceId: D('2026-09-02T09:00:00Z') })])
+			em.persist([master, entryIn(origin, { heading: 'standup', recurringEntryId: master.id, recurrenceId: D('2026-09-02T09:00:00Z') })])
 			await em.flush()
 
 			const plan = (await SourceMigration.of(em, user, origin.id, { targetSourceId: target.id })).plan()

@@ -1,5 +1,6 @@
 import { DateTime } from '@3mo/date-time'
 import { calendarDateOf } from '../time/calendarDate.js'
+import { RecurrenceWeekday } from './RecurrenceWeekday.js'
 
 /*
 	What a series asks of the moment it starts at, on DateTime itself until Mitra has a date class of its own. RFC 5545
@@ -13,6 +14,8 @@ declare module '@3mo/date-time' {
 		readonly recurrenceDate: Temporal.PlainDate
 		/** That date as a yearly series names it, in Gregorian months ("Oct 1"). */
 		formatAsAnniversary(): string
+		/** The first day from here on that falls on one of `days`, where a recurrence on them first occurs: RFC 5545 counts the start as an occurrence whatever BYDAY says. */
+		firstOccurrenceOn(days: ReadonlyArray<RecurrenceWeekday>): DateTime
 	}
 }
 
@@ -22,5 +25,11 @@ Object.defineProperties(DateTime.prototype, {
 	},
 	formatAsAnniversary: {
 		value(this: DateTime) { return this.format({ month: 'short', day: 'numeric', calendar: 'gregory' }) },
+	},
+	firstOccurrenceOn: {
+		value(this: DateTime, days: ReadonlyArray<RecurrenceWeekday>) {
+			const week = Array.from({ length: this.daysInWeek }, (_, offset) => this.dayStart.add({ days: offset }))
+			return week.find(day => days.includes(RecurrenceWeekday.of(day))) ?? this.dayStart
+		},
 	},
 })

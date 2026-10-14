@@ -138,13 +138,4 @@ Nichts zu tun.
 		assert.deepEqual(translated.rest.map(section => section.heading), ['Aktualisieren'])
 		assert.equal(ReleaseNotes.parse(notes).translation('## Nur ein Abschnitt\n'), undefined)
 	})
-
-	it('names the minor a version belongs to', () => {
-		assert.equal(ReleaseNotes.minorOf('v0.6.2'), '0.6')
-		assert.equal(ReleaseNotes.minorOf('0.6.0-rc.1'), '0.6')
-		assert.equal(ReleaseNotes.minorOf('0.6'), '0.6')
-		assert.equal(ReleaseNotes.isMinorRelease('v0.7.0'), true)
-		assert.equal(ReleaseNotes.isMinorRelease('0.7.0-rc.1'), true)
-		assert.equal(ReleaseNotes.isMinorRelease('0.7.1'), false)
-	})
 })

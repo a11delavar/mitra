@@ -4,12 +4,12 @@ import { createMarkdownProcessor } from '@astrojs/markdown-remark'
 import sharp from 'sharp'
 import { base, docsBase, languages, localized } from '../site.mjs'
 import { translationOf, translationState } from '../tools/translations.mjs'
-import { linesOf, parseChangelog } from '../../src/features/about/Changelog'
+import { Changelog } from '../../src/features/about/Changelog'
 import { Release as ReleaseModel } from '../../src/features/about/Release'
 import { ReleaseDocs, ReleaseNotes, type ReleaseCapture, type ReleaseSection } from '../../src/features/about/ReleaseNotes'
 import { localize } from './i18n'
 
-export { linesOf }
+export { Changelog }
 
 // From cwd, not `import.meta`: this module is bundled, so its own path would point into dist.
 const repoRoot = path.resolve(process.cwd(), '..')
@@ -26,7 +26,7 @@ export class Release extends ReleaseModel {
 		if (cached && !import.meta.env.DEV) {
 			return cached
 		}
-		const sections = parseChangelog(fs.readFileSync(path.join(repoRoot, 'CHANGELOG.md'), 'utf8'))
+		const { sections } = Changelog.parse(fs.readFileSync(path.join(repoRoot, 'CHANGELOG.md'), 'utf8'))
 		const folders = !fs.existsSync(releasesDir) ? [] : fs.readdirSync(releasesDir)
 			.filter(name => /^\d+\.\d+$/.test(name) && fs.existsSync(path.join(releasesDir, name, 'README.md')))
 		const notes = new Map(folders.map(version => [version, ReleaseNotes.parse(fs.readFileSync(path.join(releasesDir, version, 'README.md'), 'utf8'))]))

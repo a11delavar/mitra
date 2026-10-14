@@ -22,7 +22,7 @@ import { CommandPalette } from '../features/commands/client/CommandPalette.js'
 import { Sidebar } from './Sidebar.js'
 import { Planning } from '../features/planning/client/Planning.js'
 import { EntryDetailsComponent } from '../features/entries/client/EventDetails.js'
-import { DialogAbout, markChangesSeen } from '../features/about/client/DialogAbout.js'
+import { DialogAbout } from '../features/about/client/DialogAbout.js'
 import { ReleaseNotesComponent } from '../features/about/client/ReleaseNotesComponent.js'
 import { DialogIntegration } from '../integrations/client/DialogIntegration.js'
 import { DialogWelcome } from '../features/onboarding/client/DialogWelcome.js'
@@ -98,7 +98,7 @@ export class Mitra extends Application {
 		syncPushSubscription()
 		syncThemeColor()
 		if (getUser() && !getUser()?.lastSeenVersion) {
-			markChangesSeen()
+			DialogAbout.markSeen()
 		}
 		await super.initialized()
 		// Warm OS launches (focus-existing) and file opens arrive here even while another dialog is up.

@@ -55,20 +55,20 @@ describe('EntryEditorIntent', () => {
 
 		it('matches a rendered occurrence of the picked series', () => {
 			EntryEditorIntent.requestOpen('master')
-			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'master-2', recurrenceMasterId: 'master' })), true)
+			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'master-2', recurringEntryId: 'master' })), true)
 		})
 
 		it('skips a series master in favor of its occurrences', () => {
 			EntryEditorIntent.requestOpen('master')
 			const master = entry({ id: 'master', recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })
 			assert.equal(EntryEditorIntent.shouldOpen(master), false)
-			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'master-2', recurrenceMasterId: 'master', recurrence: master.recurrence })), true)
+			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'master-2', recurringEntryId: 'master', recurrence: master.recurrence })), true)
 		})
 
 		it('opens a picked occurrence and none of its siblings, which may render first in the view being left', () => {
 			EntryEditorIntent.requestOpen('master__2')
-			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'master__1', recurrenceMasterId: 'master' })), false)
-			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'master__2', recurrenceMasterId: 'master' })), true)
+			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'master__1', recurringEntryId: 'master' })), false)
+			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'master__2', recurringEntryId: 'master' })), true)
 		})
 
 		it('is consumed by the segment that opened it', () => {

@@ -136,7 +136,7 @@ describe('EntryStore', () => {
 
 		it('stores only the moved task, a repeating one through its series', async () => {
 			const sent = sending()
-			const [rent, passport] = [task('series__1', 'a0', { recurrenceMasterId: 'series' }), task('passport', 'a9')]
+			const [rent, passport] = [task('series__1', 'a0', { recurringEntryId: 'series' }), task('passport', 'a9')]
 
 			await EntryStore.reorder([rent, passport], rent, passport, undefined)
 
@@ -415,7 +415,7 @@ describe('EntryStore', () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
 			const occurrence = entry({
-				id: 'master__1000', uid: 'uid', recurrenceMasterId: 'master', recurrenceId: at(9),
+				id: 'master__1000', uid: 'uid', recurringEntryId: 'master', recurrenceId: at(9),
 				seriesStart: at(9), recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }),
 			})
 			EntryStore.applyServerEntries([occurrence])
@@ -423,7 +423,7 @@ describe('EntryStore', () => {
 			const copy = EntryStore.entries.find(e => e !== occurrence)!
 			assert.equal(copy.heading, 'Standup')
 			assert.equal(copy.recurrence, undefined)
-			assert.equal(copy.recurrenceMasterId, undefined)
+			assert.equal(copy.recurringEntryId, undefined)
 			assert.equal(copy.recurrenceId, undefined)
 			assert.equal(copy.uid, undefined)
 			assert.equal(copy.seriesStart, undefined)
@@ -523,7 +523,7 @@ describe('EntryStore', () => {
 
 	describe('recurring series', () => {
 		const occurrence = (init?: Partial<Entry>) => entry({
-			id: 'master__1000', recurrenceMasterId: 'master', recurrenceId: at(9), heading: 'Standup', ...init,
+			id: 'master__1000', recurringEntryId: 'master', recurrenceId: at(9), heading: 'Standup', ...init,
 		})
 
 		it('commits with the resolved scope; \'all\' confirms the sent state without adopting the master', async () => {
@@ -550,11 +550,11 @@ describe('EntryStore', () => {
 			EntryStore.applyServerEntries([working])
 			working.moveStart(at(14))
 			const commit = EntryStore.commit(working)
-			await transport.respond(entry({ id: 'detached', recurrenceMasterId: undefined, start: at(14), end: at(15) }))
+			await transport.respond(entry({ id: 'detached', recurringEntryId: undefined, start: at(14), end: at(15) }))
 			await commit
 			assert.deepEqual(transport.calls.occurrenceEdits, ['this'])
 			assert.equal(working.id, 'detached')
-			assert.equal(working.recurrenceMasterId, undefined)
+			assert.equal(working.recurringEntryId, undefined)
 			assert.equal(working.recurrence, undefined)
 			assert.deepEqual([...EntryStore.entries], [working])
 			assert.equal(EntryStore.isDirty(working), false)
@@ -599,7 +599,7 @@ describe('EntryStore', () => {
 			await transport.respond(entry({ id: 'detached', type: EntryType.Task, status: TaskStatus.Done }))
 			await commit
 			assert.deepEqual(transport.calls.occurrenceEdits, ['this'])
-			assert.equal(working.recurrenceMasterId, undefined)
+			assert.equal(working.recurringEntryId, undefined)
 			assert.equal(working.status, TaskStatus.Done)
 			assert.equal(EntryStore.isDirty(working), false)
 		})
@@ -617,7 +617,7 @@ describe('EntryStore', () => {
 			await commit
 			assert.equal(asked, false)
 			assert.deepEqual(transport.calls.occurrenceEdits, ['this'])
-			assert.equal(working.recurrenceMasterId, undefined)
+			assert.equal(working.recurringEntryId, undefined)
 			assert.equal(working.percentComplete, 100)
 			assert.equal(EntryStore.isDirty(working), false)
 		})
@@ -660,11 +660,11 @@ describe('EntryStore', () => {
 			EntryStore.applyServerEntries([working])
 			working.moveStart(at(14))
 			const commit = EntryStore.commit(working, 'this')
-			await transport.respond(entry({ id: 'detached', recurrenceMasterId: undefined, start: at(14), end: at(15) }))
+			await transport.respond(entry({ id: 'detached', recurringEntryId: undefined, start: at(14), end: at(15) }))
 			await commit
 			assert.deepEqual(transport.calls.occurrenceEdits, ['this'])
 			assert.equal(working.id, 'detached')
-			assert.equal(working.recurrenceMasterId, undefined)
+			assert.equal(working.recurringEntryId, undefined)
 			assert.equal(EntryStore.isDirty(working), false)
 		})
 

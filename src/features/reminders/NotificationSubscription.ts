@@ -3,7 +3,7 @@ import { User } from '../identity/User.js'
 import { model } from '../../infrastructure/model/model.js'
 import { entity, primaryKey, property, manyToOne, unique } from '../../infrastructure/model/orm.js'
 import { withheld } from '../../infrastructure/model/withheld.js'
-import { type DeviceFacts } from './deviceFacts.js'
+import { type DeviceFacts } from './DeviceFacts.js'
 
 type PushKeys = { p256dh: string, auth: string }
 

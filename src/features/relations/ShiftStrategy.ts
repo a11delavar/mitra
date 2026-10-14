@@ -11,7 +11,7 @@ const DAY = 24 * 60 * 60 * 1000
 
 /** Why an entry a plan reached is left where it is. */
 function skipReasonOf(entry: Entry): SkippedEntry['reason'] | undefined {
-	if (entry.recurrence || entry.recurrenceMasterId) {
+	if (entry.recurrence || entry.recurringEntryId) {
 		return 'repeats'
 	}
 	return entry.start ? undefined : 'undated'

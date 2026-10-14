@@ -15,7 +15,7 @@ import { MitraCalendar } from '../../../integrations/mitra/MitraCalendar.js'
 import { NotificationSubscription } from '../../reminders/NotificationSubscription.js'
 import { Session } from '../../identity/server/Session.js'
 import { entrySearch, entryWindow, everyEntry } from './entryWindow.js'
-import { expandedOccurrences, seriesNear, seriesStarts } from '../../recurrence/server/occurrences.js'
+import { expandedOccurrences, nearestOccurrence, seriesStarts } from '../../recurrence/server/occurrences.js'
 import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
 
 async function inMemoryOrm() {
@@ -48,7 +48,7 @@ async function seedUser(em: EntityManager, username: string, term: string, sourc
 }
 
 async function searchEntries(em: EntityManager, sourceIds: Array<string>, q: string, now = new Date()) {
-	return seriesNear(em, await em.find(Entry, entrySearch(sourceIds, q), { orderBy: { start: 'desc' }, limit: 20 }), 'UTC', now)
+	return nearestOccurrence(em, await em.find(Entry, entrySearch(sourceIds, q), { orderBy: { start: 'desc' }, limit: 20 }), 'UTC', now)
 }
 
 function windowedEntries(em: EntityManager, sourceIds: Array<string>, start: Date, end: Date) {
@@ -138,7 +138,7 @@ describe('GET /entries/search finds a series as one occurrence', () => {
 	it('as the next one from now, under the id its window mints — the id the editor intent opens', async () => {
 		const { em, sourceIds, master, found } = await weekly('search-series')
 		assert.equal(found.start?.toISOString(), '2026-09-29T12:00:00.000Z')
-		assert.equal(found.recurrenceMasterId, master.id)
+		assert.equal(found.recurringEntryId, master.id)
 
 		const window = await expandedOccurrences(em, sourceIds, new Date('2026-09-28T00:00:00Z'), new Date('2026-10-05T00:00:00Z'))
 		assert.deepEqual(window.filter(entry => entry.id === found.id).map(entry => entry.start?.valueOf()), [found.start?.valueOf()])
@@ -159,7 +159,7 @@ describe('GET /entries/search finds a series as one occurrence', () => {
 		em.persist(new Entry({
 			id: crypto.randomUUID(), sourceId: master.sourceId, type: EntryType.Event, heading: 'Moved sync',
 			start: new Date('2026-10-07T15:00:00Z') as never, end: new Date('2026-10-07T16:00:00Z') as never,
-			recurrenceMasterId: master.id, recurrenceId: new Date('2026-10-06T12:00:00Z') as never,
+			recurringEntryId: master.id, recurrenceId: new Date('2026-10-06T12:00:00Z') as never,
 		}))
 		await em.flush()
 		const [found] = await searchEntries(em, sourceIds, 'Team sync', now)
@@ -321,7 +321,7 @@ describe('GET /entries/all lists every entry once', () => {
 		const override = new Entry({
 			id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Event, heading: 'Morning meds, later',
 			start: new Date('2024-02-01T09:00:00Z') as never, end: new Date('2024-02-01T09:05:00Z') as never,
-			recurrenceMasterId: master.id, recurrenceId: new Date('2024-02-01T07:30:00Z') as never,
+			recurringEntryId: master.id, recurrenceId: new Date('2024-02-01T07:30:00Z') as never,
 		})
 		em.persist([master, override])
 		await em.flush()
@@ -329,7 +329,7 @@ describe('GET /entries/all lists every entry once', () => {
 		const rows = (await everything(em, user)).filter(entry => entry.heading.startsWith('Morning meds'))
 		assert.equal(rows.length, 1)
 		const [series] = rows
-		assert.equal(series!.recurrenceMasterId, master.id)
+		assert.equal(series!.recurringEntryId, master.id)
 		assert.equal(series!.recurrenceId?.valueOf(), start.valueOf())
 		assert.equal(series!.seriesStart?.valueOf(), start.valueOf())
 	})

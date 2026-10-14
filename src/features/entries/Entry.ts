@@ -261,7 +261,7 @@ export class Entry {
 	@property({ type: 'string', nullable: true }) uid?: string
 	@embedded(() => Recurrence, { prefix: 'recurrence_', nullable: true }) recurrence?: Recurrence | null
 	@property({ type: 'json', nullable: true }) exdates?: Array<number>
-	@property({ type: 'string', nullable: true }) recurrenceMasterId?: string
+	@property({ type: 'string', nullable: true, fieldName: 'recurrence_master_id' }) recurringEntryId?: string
 	@property({ type: 'Date', nullable: true }) recurrenceId?: DateTime
 	seriesStart?: DateTime
 
@@ -344,11 +344,11 @@ export class Entry {
 
 	/** An expanded occurrence or a synced override of a series. */
 	get isRecurring() {
-		return !!this.recurrenceMasterId
+		return !!this.recurringEntryId
 	}
 
 	/** Where "this and following" would reach the whole series. Both instants come from the expansion, so a synced override answers false. */
-	get isSeriesStart() {
+	get isFirstOccurrence() {
 		return !!this.recurrenceId && !!this.seriesStart && this.recurrenceId.equals(this.seriesStart)
 	}
 
@@ -359,7 +359,7 @@ export class Entry {
 
 	/** The row that holds what a whole series shares: its master, or the entry itself when it stands alone. */
 	get masterId() {
-		return this.recurrenceMasterId ?? this.id
+		return this.recurringEntryId ?? this.id
 	}
 
 	editEquals(other: Entry) {
@@ -423,7 +423,7 @@ export class Entry {
 			uid: values.uid,
 			recurrence: values.recurrence,
 			exdates: values.exdates,
-			recurrenceMasterId: values.recurrenceMasterId,
+			recurringEntryId: values.recurringEntryId,
 			recurrenceId: values.recurrenceId,
 			seriesStart: values.seriesStart,
 		})

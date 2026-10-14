@@ -393,7 +393,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	/** The availability in `sources`, by default every enabled calendar: masters and single windows, since a rule covers its occurrences. */
 	async availability(em: EntityManager, sources?: ReadonlyArray<Pick<Source, 'id'>>): Promise<Array<Entry>> {
 		const ids = (sources ?? await em.find(Source, { integrationId: this.id, enabled: true })).map(source => source.id)
-		return !ids.length ? [] : em.find(Entry, { sourceId: { $in: ids }, type: EntryType.Availability, recurrenceMasterId: null })
+		return !ids.length ? [] : em.find(Entry, { sourceId: { $in: ids }, type: EntryType.Availability, recurringEntryId: null })
 	}
 
 	/**

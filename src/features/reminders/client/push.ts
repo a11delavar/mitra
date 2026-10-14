@@ -1,5 +1,5 @@
 import { Api } from '@a11d/api'
-import { deviceFacts } from '../deviceFacts.js'
+import { DeviceFacts } from '../DeviceFacts.js'
 import { type NotificationSubscription } from '../NotificationSubscription.js'
 
 function base64UrlToBytes(value: string): Uint8Array {
@@ -23,7 +23,7 @@ async function subscribe(): Promise<PushSubscription> {
 		...subscription.toJSON(),
 		timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 		locale: String(Localizer.locales.current),
-		...deviceFacts(),
+		...DeviceFacts.current(),
 	})
 	return subscription
 }

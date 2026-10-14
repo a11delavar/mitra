@@ -99,7 +99,7 @@ describe('ShiftStrategy', () => {
 
 		it('reports a recurring dependent instead of rewriting its rule, and an undated one instead of dating it', () => {
 			const a = task('a', 1)
-			const series = task('series', 2, [blocks('a')], { recurrenceMasterId: 'series' })
+			const series = task('series', 2, [blocks('a')], { recurringEntryId: 'series' })
 			const undated = task('undated', 2, [blocks('a')], { start: undefined, end: undefined })
 			const plan = ShiftStrategy.Minimum.plan(RelationGraph.of([a, series, undated]), moveOf(a, 3))
 

@@ -3,7 +3,7 @@ import { languages, localized, withBase } from '../../../../site.mjs'
 import Icon from '../../../components/Icon.astro'
 import Dial from '../../../components/Dial.astro'
 import Site from '../../../layouts/Site.astro'
-import { linesOf, Release } from '../../../releases'
+import { Changelog, Release } from '../../../releases'
 import '../../../styles/releases.css'
 // The release look, shared with the app's About dialog (src/features/about/releaseNotes.css.ts).
 import '../../../styles/generated/release.css'
@@ -151,7 +151,7 @@ const everythingCounts = [
 								<b>{patch.version}</b>
 								<span class="date">{patch.date && release.formatDate(patch.date)}</span>
 								<ul class="lines" lang={languages[0]}>
-									{patch.categories.flatMap(linesOf).map(line => (
+									{patch.categories.flatMap(Changelog.linesOf).map(line => (
 										<li><span>{line.subject}</span>{line.url && <a class="hash" href={line.url} rel="noreferrer">{line.hash}</a>}</li>
 									))}
 								</ul>
@@ -167,7 +167,7 @@ const everythingCounts = [
 							<div class="category" data-type={category.type}>
 								<h3 class="label">{release.labelOf(category)}</h3>
 								<ul class="lines" lang={languages[0]}>
-									{linesOf(category).map(line => (
+									{Changelog.linesOf(category).map(line => (
 										<li><span>{line.subject}</span>{line.url && <a class="hash" href={line.url} rel="noreferrer">{line.hash}</a>}</li>
 									))}
 								</ul>

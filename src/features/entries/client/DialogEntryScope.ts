@@ -147,7 +147,7 @@ export class DialogEntryScope extends DialogComponent<EntryScopeParameters, Entr
 		return html`
 			<mitra-choices>
 				<mitra-choice autofocus icon=${this.entryIcon} @click=${() => this.chooseRecurrence('this')}>${t('This entry')}</mitra-choice>
-				${this.parameters.entry.isSeriesStart ? html.nothing : html`
+				${this.parameters.entry.isFirstOccurrence ? html.nothing : html`
 					<mitra-choice icon="chevrons-right" @click=${() => this.chooseRecurrence('following')}>${t('This and following entries')}</mitra-choice>
 				`}
 				<mitra-choice icon="repeat" @click=${() => this.chooseRecurrence('all')}>${t('All entries')}</mitra-choice>

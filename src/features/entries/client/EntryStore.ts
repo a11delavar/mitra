@@ -101,7 +101,7 @@ export class EntryStore extends Controller {
 			try {
 				while (this.tracks(entry) && this.isDirty(entry)) {
 					const sent = entry.clone()
-					if (entry.recurrenceMasterId && !this.ruleChanged(entry)) {
+					if (entry.recurringEntryId && !this.ruleChanged(entry)) {
 						const preset = scope
 						scope = undefined
 						if (!await this.commitOccurrence(entry, sent, preset)) {
@@ -114,7 +114,7 @@ export class EntryStore extends Controller {
 						entry.id = saved.id
 						this.draft = this.draft === entry ? undefined : this.draft
 						this.workingById.set(entry.id!, entry)
-					} else if (!entry.recurrenceMasterId && saved.id !== undefined && saved.id !== entry.id) {
+					} else if (!entry.recurringEntryId && saved.id !== undefined && saved.id !== entry.id) {
 						if (this.workingById.get(entry.id!) === entry) {
 							this.workingById.delete(entry.id!)
 							this.canonicalById.delete(entry.id!)
@@ -125,7 +125,7 @@ export class EntryStore extends Controller {
 					if (!this.tracks(entry)) {
 						break
 					}
-					if (entry.recurrenceMasterId) {
+					if (entry.recurringEntryId) {
 						this.canonicalById.set(entry.id!, sent)
 					} else {
 						this.canonicalById.set(entry.id!, saved.clone())
@@ -167,7 +167,7 @@ export class EntryStore extends Controller {
 		const before = owner.relations ?? null
 		mutate()
 		this.notify()
-		const id = owner.recurrenceMasterId ?? owner.id
+		const id = owner.recurringEntryId ?? owner.id
 		if (!id) {
 			return
 		}
@@ -240,7 +240,7 @@ export class EntryStore extends Controller {
 				this.canonicalById.delete(entry.id!)
 			}
 			entry.id = saved.id
-			entry.recurrenceMasterId = undefined
+			entry.recurringEntryId = undefined
 			entry.recurrenceId = undefined
 			entry.recurrence = undefined
 			entry.seriesStart = undefined
@@ -278,7 +278,7 @@ export class EntryStore extends Controller {
 	/** Deletes an entry or scoped series occurrences optimistically with rollback on error. */
 	static async delete(entry: Entry, scope?: RecurrenceScope) {
 		const pending = this.inflight.get(entry)
-		if (entry.recurrenceMasterId) {
+		if (entry.recurringEntryId) {
 			scope ??= await EntryStore.resolveScope(entry, 'delete')
 			if (!scope) {
 				return
@@ -288,7 +288,7 @@ export class EntryStore extends Controller {
 			this.drop(entry)
 			try {
 				if (scope === 'all') {
-					await EntryStore.persistence.delete(entry.recurrenceMasterId)
+					await EntryStore.persistence.delete(entry.recurringEntryId)
 				} else {
 					await EntryStore.persistence.deleteOccurrence(entry, scope)
 				}
@@ -303,7 +303,7 @@ export class EntryStore extends Controller {
 		const dropped: Array<{ entry: Entry, canonical?: Entry }> = []
 		if (entry.recurrence && entry.id !== undefined) {
 			for (const sibling of [...this.workingById.values()]) {
-				if (sibling !== entry && sibling.recurrenceMasterId === entry.id) {
+				if (sibling !== entry && sibling.recurringEntryId === entry.id) {
 					dropped.push(this.captureAndDrop(sibling))
 				}
 			}
@@ -324,11 +324,11 @@ export class EntryStore extends Controller {
 	}
 
 	private static dropScoped(entry: Entry, scope: RecurrenceScope): () => void {
-		const masterId = entry.recurrenceMasterId!
+		const masterId = entry.recurringEntryId!
 		const cutoff = entry.recurrenceId?.valueOf() ?? -Infinity
 		const dropped: Array<{ entry: Entry, canonical?: Entry }> = []
 		for (const sibling of [...this.workingById.values()]) {
-			if (sibling === entry || sibling.recurrenceMasterId !== masterId) {
+			if (sibling === entry || sibling.recurringEntryId !== masterId) {
 				continue
 			}
 			if (scope === 'all' || (scope === 'following' && (sibling.recurrenceId?.valueOf() ?? -Infinity) >= cutoff)) {

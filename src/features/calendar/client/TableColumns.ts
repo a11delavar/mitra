@@ -8,7 +8,7 @@ import '../../participants/client/ParticipantFaces.js'
 import '../../relations/client/EntryLink.js'
 import '../../locations/client/MapLink.js'
 import { MarkdownLinks } from '../../../design/MarkdownLinks.js'
-import { reminderSpanLabel } from '../../reminders/client/RemindersField.js'
+import '../../time/TimeSpan.time.js'
 import { type TableRow } from './TableRow.js'
 
 type TableColumnKey = 'heading' | 'when' | 'statusRank' | 'durationMinutes' | 'sourceName' | 'typeKey' | 'location' | 'repeats' | 'participants' | 'reminders' | 'subtaskOf' | 'blockedBy' | 'description'
@@ -70,7 +70,7 @@ function location(value: string) {
 }
 
 function reminders(entry: Entry) {
-	return text((entry.reminders ?? []).map(minutes => minutes === 0 ? t('At start') : reminderSpanLabel(minutes)).join(', '))
+	return text((entry.reminders ?? []).map(minutes => minutes === 0 ? t('At start') : TimeSpan.fromMinutes(minutes).formatAsWholeUnit()).join(', '))
 }
 
 function status(entry: Entry) {

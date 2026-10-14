@@ -6,12 +6,12 @@
  * updates to it are rare and never gate the app.
  *
  * The server renders each notification for this device, so the worker shows what it receives. Anything it
- * imports is bundled INTO it, so it may only reach for dependency-free modules (deviceFacts), never the
+ * imports is bundled INTO it, so it may only reach for dependency-free modules (DeviceFacts), never the
  * ORM-bound domain classes.
  */
 
 import { type PushPayload } from '../features/reminders/ReminderNotification.js'
-import { deviceFacts } from '../features/reminders/deviceFacts.js'
+import { DeviceFacts } from '../features/reminders/DeviceFacts.js'
 
 // The worker global, typed structurally: the bundle shares the frontend tsconfig (DOM lib), which
 // doesn't know the ServiceWorker globals.
@@ -162,7 +162,7 @@ worker.addEventListener('pushsubscriptionchange', event => {
 			...subscription.toJSON() as object,
 			previousEndpoint: event.oldSubscription?.endpoint,
 			timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-			...deviceFacts(),
+			...DeviceFacts.current(),
 		})
 	})())
 })

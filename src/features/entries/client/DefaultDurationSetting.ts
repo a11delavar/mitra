@@ -1,4 +1,4 @@
-import { reminderSpanLabel } from '../../reminders/client/RemindersField.js'
+import '../../time/TimeSpan.time.js'
 import { ChoiceSetting, setting, userStorage } from '../../settings/client/Setting.js'
 
 /**
@@ -21,6 +21,6 @@ export class DefaultDurationSetting extends ChoiceSetting<number> {
 	protected readonly storage = userStorage('defaultDurationMinutes')
 
 	override get options() {
-		return DefaultDurationSetting.choices.map(minutes => ({ value: minutes, label: reminderSpanLabel(minutes) }))
+		return DefaultDurationSetting.choices.map(minutes => ({ value: minutes, label: TimeSpan.fromMinutes(minutes).formatAsWholeUnit() }))
 	}
 }

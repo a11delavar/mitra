@@ -14,16 +14,6 @@ export class ReleaseNotes {
 	/** A line of its own linking a docs page, whatever word a translation puts before it. */
 	static readonly docsPattern = /^[^\s:[]+: \[([^\]]+)\]\(((?:\.\.\/)+docs\/[^)\s]+)\)[ \t]*$/m
 
-	/** `0.6` for `v0.6.2`, `0.6.0-rc.1` or `0.6`: the folder a version's notes live in. */
-	static minorOf(version: string) {
-		return version.replace(/^v/, '').split('.').slice(0, 2).join('.')
-	}
-
-	/** Whether a version ships with notes (`x.y.0`, pre-release suffix allowed) rather than being a patch of them. */
-	static isMinorRelease(version: string) {
-		return /^v?\d+\.\d+\.0(-|$)/.test(version)
-	}
-
 	/** `kinds` gives each section's kind by position, for a translation; otherwise its heading says. */
 	static parse(markdown: string, kinds?: ReadonlyArray<ReleaseSectionKind>) {
 		const match = markdown.match(ReleaseNotes.frontmatterPattern)

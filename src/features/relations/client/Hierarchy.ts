@@ -22,7 +22,7 @@ export function subtreeSize(entry: Entry): number {
  * Resolves gesture scope across recurrence, hierarchy, and dependency axes.
  */
 export function resolveScope(entry: Entry, intent: 'edit' | 'move' | 'delete', bypass = false, hasSubtaskAction = true, change?: EntryChange): Promise<EntryScope | undefined> {
-	const series = !!entry.recurrenceMasterId
+	const series = !!entry.recurringEntryId
 	const subtasks = hasSubtaskAction && (intent === 'delete' || intent === 'move') ? subtreeSize(entry) : 0
 	const shifts = change && intent !== 'delete' ? Relations.shiftOptionsFor(change) : []
 	if (bypass || (!series && !subtasks && shifts.length < 2)) {
@@ -47,7 +47,7 @@ let applying = 0
 /** Set of entry IDs currently prompting to avoid duplicate dialogs. */
 const offering = new Set<string>()
 
-const targetIdOf = (entry: Entry) => entry.recurrenceMasterId ?? entry.id
+const targetIdOf = (entry: Entry) => entry.recurringEntryId ?? entry.id
 
 /** Prompts follow-up actions (subtask closure downwards, then parent completion upwards) when a task is closed. */
 export async function offerFollowUps(entry: Entry) {

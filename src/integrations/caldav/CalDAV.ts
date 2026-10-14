@@ -442,10 +442,10 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	static linkOverridesToMasters(entries: ReadonlyArray<Entry>): boolean {
 		let linked = false
 		for (const entry of entries) {
-			if (entry.recurrenceId && entry.uid && !entry.recurrenceMasterId) {
+			if (entry.recurrenceId && entry.uid && !entry.recurringEntryId) {
 				const master = entries.find(other => other.recurrence && !other.recurrenceId && other.uid === entry.uid)
 				if (master) {
-					entry.recurrenceMasterId = master.id
+					entry.recurringEntryId = master.id
 					linked = true
 				}
 			}

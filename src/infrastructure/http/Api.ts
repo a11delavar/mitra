@@ -1,3 +1,4 @@
+import { LocationSuggestion } from '../../features/locations/LocationSuggestion.js'
 import { Api, HttpError, apiError, apiAuthenticator, type ApiAuthenticator } from '@a11d/api'
 import { type DateTime } from '@3mo/date-time'
 import { type User } from '../../features/identity/User.js'
@@ -355,8 +356,8 @@ export function deleteIntegration(id: string) {
 }
 
 export function updateEvent(entry: Entry) {
-	if (entry.recurrenceMasterId) {
-		return Api.put<Entry>(`/entries/${entry.recurrenceMasterId}?tz=${tz()}`, {
+	if (entry.recurringEntryId) {
+		return Api.put<Entry>(`/entries/${entry.recurringEntryId}?tz=${tz()}`, {
 			heading: entry.heading,
 			description: entry.description,
 			location: entry.location,
@@ -384,13 +385,6 @@ export function deleteEvent(id: string) {
 	return Api.delete(`/entries/${id}`)
 }
 
-export interface LocationSuggestion {
-	name: string
-	detail: string
-	type?: string
-	recent?: boolean
-}
-
 /** Location autocomplete query via backend Photon proxy. */
 export function searchLocations(query: string, position?: { lat: number, lon: number }) {
 	const params = new URLSearchParams({ q: query, lang: Localizer.locales.current.language })
@@ -398,11 +392,11 @@ export function searchLocations(query: string, position?: { lat: number, lon: nu
 		params.set('lat', String(position.lat))
 		params.set('lon', String(position.lon))
 	}
-	return Api.get<Array<LocationSuggestion>>(`/locations?${params}`)
+	return Api.get<Array<Partial<LocationSuggestion>>>(`/locations?${params}`).then(places => places.map(place => new LocationSuggestion(place)))
 }
 
 export function editOccurrence(occurrence: Entry, scope: RecurrenceScope) {
-	return Api.put<Entry>(`/entries/${occurrence.recurrenceMasterId}?tz=${tz()}`, {
+	return Api.put<Entry>(`/entries/${occurrence.recurringEntryId}?tz=${tz()}`, {
 		scope,
 		recurrenceId: occurrence.recurrenceId,
 		sourceId: occurrence.sourceId,
@@ -428,5 +422,5 @@ export function editOccurrence(occurrence: Entry, scope: RecurrenceScope) {
 
 export function deleteOccurrence(occurrence: Entry, scope: RecurrenceScope) {
 	const query = new URLSearchParams({ scope, recurrenceId: occurrence.recurrenceId!.toISOString(), tz: TimeZone.deviceId })
-	return Api.delete(`/entries/${occurrence.recurrenceMasterId}?${query}`)
+	return Api.delete(`/entries/${occurrence.recurringEntryId}?${query}`)
 }

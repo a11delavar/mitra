@@ -1,3 +1,6 @@
+import { Version } from './Version.ts'
+import { repository } from '../../../website/site.mjs'
+
 /**
  * One category within a version's changelog section.
  */
@@ -29,48 +32,68 @@ export interface ChangelogLine {
 }
 
 /**
- * Splits changelog markdown into version sections matching cliff format (`## [0.3.0] - 2026-07-10`).
- * Pure, so the website reads the same file through the same parser.
+ * `CHANGELOG.md` as git-cliff writes it: a section per version (`## [0.3.0] - 2026-07-10`), a category per kind of change
+ * (`### ✨ Features`), a line per commit. Pure, so the server, the scripts and the website read it alike.
  */
-export function parseChangelog(markdown: string): Array<ParsedChangelogSection> {
-	const sections = new Array<{ version: string, date?: string, lines: Array<string> }>()
-	for (const line of markdown.split(/\r?\n/)) {
-		const heading = line.match(/^## \[(.+?)\](?: - (\d{4}-\d{2}-\d{2}))?\s*$/)
-		if (heading) {
-			sections.push({ version: heading[1] === 'Unreleased' ? 'unreleased' : heading[1]!, date: heading[2], lines: [] })
-		} else {
-			sections.at(-1)?.lines.push(line)
+export class Changelog {
+	static parse(markdown: string): Changelog {
+		const sections = new Array<{ version: string, date?: string, lines: Array<string> }>()
+		for (const line of markdown.split(/\r?\n/)) {
+			const heading = line.match(/^## \[(.+?)\](?: - (\d{4}-\d{2}-\d{2}))?\s*$/)
+			if (heading) {
+				sections.push({ version: heading[1] === 'Unreleased' ? 'unreleased' : heading[1]!, date: heading[2], lines: [] })
+			} else {
+				sections.at(-1)?.lines.push(line)
+			}
 		}
+		return new Changelog(sections
+			.map(({ version, date, lines }) => ({ version, date, categories: Changelog.categoriesOf(lines) }))
+			.filter(section => section.categories.length > 0))
 	}
-	return sections
-		.map(({ version, date, lines }) => ({ version, date, categories: parseCategories(lines) }))
-		.filter(section => section.categories.length > 0)
-}
 
-function parseCategories(lines: Array<string>): Array<ChangelogCategory> {
-	const categories = new Array<ChangelogCategory & { lines: Array<string> }>()
-	for (const line of lines) {
-		const heading = line.match(/^### (.+?)\s*$/)
-		if (heading) {
-			categories.push({ type: categoryType(heading[1]!), title: heading[1]!, markdown: '', lines: [] })
-		} else {
-			categories.at(-1)?.lines.push(line)
+	private static categoriesOf(lines: Array<string>): Array<ChangelogCategory> {
+		const categories = new Array<ChangelogCategory & { lines: Array<string> }>()
+		for (const line of lines) {
+			const heading = line.match(/^### (.+?)\s*$/)
+			if (heading) {
+				categories.push({ type: Changelog.typeOf(heading[1]!), title: heading[1]!, markdown: '', lines: [] })
+			} else {
+				categories.at(-1)?.lines.push(line)
+			}
 		}
+		return categories
+			.map(({ type, title, lines }) => ({ type, title, markdown: lines.join('\n').trim() }))
+			.filter(category => category.markdown.length > 0)
 	}
-	return categories
-		.map(({ type, title, lines }) => ({ type, title, markdown: lines.join('\n').trim() }))
-		.filter(category => category.markdown.length > 0)
-}
 
-/** `✨ Features` → `features`, so readers can key on a category without its glyph. */
-export function categoryType(title: string) {
-	return title.replace(/^[^\p{L}]+/u, '').trim().toLowerCase().replace(/\s+/g, '-')
-}
+	/** `✨ Features` → `features`, so readers can key on a category without its glyph. */
+	private static typeOf(title: string) {
+		return title.replace(/^[^\p{L}]+/u, '').trim().toLowerCase().replace(/\s+/g, '-')
+	}
 
-/** A category's commits, one per line. A line that is not a commit (hand-edited prose) keeps its text as the subject. */
-export function linesOf(category: ChangelogCategory): Array<ChangelogLine> {
-	return category.markdown.split(/\r?\n/).flatMap(line => {
-		const match = line.match(/^- (.+?)(?: \(\[([0-9a-f]{7,})\]\((https?:\/\/\S+)\)\))?\s*$/)
-		return !match ? [] : [{ subject: match[1]!, ...(match[2] ? { hash: match[2], url: match[3]! } : {}) }]
-	})
+	/** A category's commits, one per line. A line that is not a commit (hand-edited prose) keeps its text as the subject. */
+	static linesOf(category: ChangelogCategory): Array<ChangelogLine> {
+		return category.markdown.split(/\r?\n/).flatMap(line => {
+			const match = line.match(/^- (.+?)(?: \(\[([0-9a-f]{7,})\]\((https?:\/\/\S+)\)\))?\s*$/)
+			return !match ? [] : [{ subject: match[1]!, ...(match[2] ? { hash: match[2], url: match[3]! } : {}) }]
+		})
+	}
+
+	readonly sections: Array<ParsedChangelogSection>
+
+	constructor(sections: Array<ParsedChangelogSection>) {
+		this.sections = sections
+	}
+
+	/** The sections as `running` shows them: its own marked current (the newest where none matches), each linked to its notes on GitHub. */
+	for(running: string): Array<ChangelogSection> {
+		const version = Version.parse(running)
+		const wanted = version?.isTagged ? version.tag : 'unreleased'
+		const current = Math.max(0, this.sections.findIndex(section => section.version === wanted))
+		return this.sections.map((section, index) => ({
+			...section,
+			current: index === current,
+			url: section.version === 'unreleased' ? `${repository}/releases` : `${repository}/releases/tag/v${section.version}`,
+		}))
+	}
 }

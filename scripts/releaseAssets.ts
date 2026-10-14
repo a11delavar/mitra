@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { ReleaseNotes } from '../src/features/about/ReleaseNotes.ts'
+import { Version } from '../src/features/about/Version.ts'
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -18,11 +19,11 @@ export function writeReleaseAssets(version: string) {
 	const folders = !fs.existsSync(source) ? [] : fs.readdirSync(source)
 		.filter(name => /^\d+\.\d+$/.test(name) && fs.existsSync(path.join(source, name, 'README.md')))
 	const notes = new Map(folders.map(name => [name, ReleaseNotes.parse(fs.readFileSync(path.join(source, name, 'README.md'), 'utf8'))]))
-	const tagged = /^v?\d+\.\d+\.\d+(-[\w.]+)?$/.test(version) && !version.endsWith('-dirty')
+	const running = Version.parse(version)
 	// The next release, not one planned beyond it.
 	const draft = folders.filter(name => !notes.get(name)!.date).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))[0]
 	// A tag carries its own release; a build past one (the `:dev` image) carries that release and the draft above it.
-	const carried = new Set([ReleaseNotes.minorOf(version), ...!tagged && draft ? [draft] : []])
+	const carried = new Set([running?.release, ...!running?.isTagged && draft ? [draft] : []])
 	for (const name of folders) {
 		fs.mkdirSync(path.join(target, name), { recursive: true })
 		for (const file of fs.readdirSync(path.join(source, name)).filter(file => /^README(\.\w+)?\.md$/.test(file))) {

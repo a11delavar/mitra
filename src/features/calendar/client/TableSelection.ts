@@ -39,7 +39,7 @@ export class TableSelection extends Component {
 
 	/** Parallel across entries, in turn within a series: its occurrences share one master, whose exclusions parallel writes would race on. */
 	private static async write(rows: ReadonlyArray<TableRow>, write: (row: TableRow) => Promise<unknown>) {
-		await Promise.all([...Map.groupBy(rows, row => row.entry.recurrenceMasterId ?? row.entry).values()].map(async series => {
+		await Promise.all([...Map.groupBy(rows, row => row.entry.recurringEntryId ?? row.entry).values()].map(async series => {
 			for (const row of series) {
 				await write(row).catch(error => console.error('Changing the entry failed, so it was restored in the view:', error))
 			}

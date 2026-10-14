@@ -19,7 +19,7 @@ import { type EntrySegment } from './EntrySegment.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
 import type { AvailabilitySegment } from '../../availability/client/AvailabilitySegment.js'
-import { placeAllDay, placeTimed, resizePlacement, snapToGrid } from './entryPlacement.js'
+import { Schedule } from './Schedule.js'
 import { DayCells, type DayCell } from './DayCells.js'
 import { haptic } from '../../../design/haptics.js'
 
@@ -229,10 +229,10 @@ export class EntryDragController extends Controller {
 		const drag = this.drag!
 		const base = { sourceId: drag.source!.id, type: this.createType ?? drag.source!.defaultEntryType, heading: '' }
 		if (drag.mode === 'allday') {
-			const { start, end } = placeAllDay(anchor.date, current.date)
+			const { start, end } = Schedule.allDay(anchor.date, current.date)
 			return new Entry({ ...base, start, end, allDay: true })
 		}
-		const { start, end } = placeTimed(anchor.date.dayStart.add({ minutes: anchor.minute }), current.date.dayStart.add({ minutes: current.minute }), EntryDragController.snapMinutes)
+		const { start, end } = Schedule.timed(anchor.date.dayStart.add({ minutes: anchor.minute }), current.date.dayStart.add({ minutes: current.minute }), EntryDragController.snapMinutes)
 		const created = new Entry({ ...base, start, end, allDay: false })
 		if (getCapabilities(drag.source!.id).reminders) {
 			created.adoptDefaultReminders(ReminderSetting.defaults)
@@ -260,8 +260,8 @@ export class EntryDragController extends Controller {
 		}
 		const grabMs = drag.anchor!.date.dayStart.add({ minutes: drag.anchor!.minute }).valueOf()
 		const currentMs = current.date.dayStart.add({ minutes: current.minute }).valueOf()
-		const shift = snapToGrid(before.start.valueOf() + (currentMs - grabMs), EntryDragController.snapMinutes) - before.start.valueOf()
-		return new Entry({ ...before, start: before.start.add({ milliseconds: shift }), end: before.end?.add({ milliseconds: shift }) })
+		const { start, end } = new Schedule(before.start, before.end).movedBy(currentMs - grabMs, EntryDragController.snapMinutes)
+		return new Entry({ ...before, start, end })
 	}
 
 	private static within(box: DOMRect | undefined, point: { x: number, y: number }) {
@@ -286,7 +286,7 @@ export class EntryDragController extends Controller {
 			return undefined
 		}
 		const dragged = before.allDay ? current.date : current.date.dayStart.add({ minutes: current.minute })
-		const { start, end } = resizePlacement(before, drag.edge!, dragged, EntryDragController.snapMinutes)
+		const { start, end } = Schedule.resized(before, drag.edge!, dragged, EntryDragController.snapMinutes)
 		return new Entry({ ...before, start, end })
 	}
 
@@ -684,7 +684,7 @@ export class EntryDragController extends Controller {
 				return
 			}
 			// Planning one occurrence of an unscheduled series can only mean that one.
-			const bypass = e.ctrlKey || e.metaKey || (!!entry.recurrenceMasterId && !drag.before?.start)
+			const bypass = e.ctrlKey || e.metaKey || (!!entry.recurringEntryId && !drag.before?.start)
 			const delta = built?.start && entry.start ? built.start.valueOf() - entry.start.valueOf() : 0
 			const isMove = drag.kind === 'move'
 			this.teardown(e.pointerId)

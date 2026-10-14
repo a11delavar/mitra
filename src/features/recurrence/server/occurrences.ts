@@ -256,7 +256,7 @@ export async function seriesStarts(em: EntityManager, sourceIds: ReadonlyArray<s
 }
 
 /** Each series as the occurrence standing for it at `now`, under the id the window mints: an editor intent naming the master would be taken by whichever occurrence renders first. */
-export async function seriesNear(em: EntityManager, entries: ReadonlyArray<Entry>, viewerZone: string, now: Date): Promise<Array<Entry>> {
+export async function nearestOccurrence(em: EntityManager, entries: ReadonlyArray<Entry>, viewerZone: string, now: Date): Promise<Array<Entry>> {
 	const overridden = await overriddenOf(em, entries.filter(entry => entry.recurrence?.freq))
 	return entries.map(entry => {
 		const skip = (startMs: number) => overridden.has(`${entry.id}|${startMs}`)
@@ -270,9 +270,9 @@ export async function seriesNear(em: EntityManager, entries: ReadonlyArray<Entry
 /** `masterId|recurrenceIdMs` of every override row, whose dates the masters' expansion leaves out. */
 async function overriddenOf(em: EntityManager, masters: ReadonlyArray<Entry>) {
 	const overrides = masters.length
-		? await em.find(Entry, { recurrenceMasterId: { $in: masters.map(master => master.id!) } })
+		? await em.find(Entry, { recurringEntryId: { $in: masters.map(master => master.id!) } })
 		: []
-	return new Set(overrides.map(override => `${override.recurrenceMasterId}|${override.recurrenceId?.valueOf()}`))
+	return new Set(overrides.map(override => `${override.recurringEntryId}|${override.recurrenceId?.valueOf()}`))
 }
 
 /** One occurrence of `master` at the instant its rule yields: the start, or the due of an unscheduled series. The due keeps its exact offset from the start, as the end does (RFC 5545 §3.8.5.3). */
@@ -303,7 +303,7 @@ export function occurrenceOf(master: Entry, occurrence: { readonly start: Date, 
 		estimate: master.estimate,
 		uid: master.uid,
 		recurrence: master.recurrence,
-		recurrenceMasterId: master.id,
+		recurringEntryId: master.id,
 		recurrenceId: occurrence.start as DateTime,
 		seriesStart: master.start ?? master.due,
 	})

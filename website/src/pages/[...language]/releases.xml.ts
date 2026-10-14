@@ -1,7 +1,7 @@
 import type { APIRoute, GetStaticPaths } from 'astro'
 import { languages, localized, site, withBase } from '../../../site.mjs'
 import { localize } from '../../i18n'
-import { linesOf, Release } from '../../releases'
+import { Changelog, Release } from '../../releases'
 
 // One item per shipped minor and per patch, newest first. The draft is not news yet. One feed per language, its releases
 // read as its pages read them; patches are listed by their commits, in English.
@@ -29,7 +29,7 @@ export const GET: APIRoute = ({ props }) => {
 					title: `${t('Mitra')} ${patch.version}`,
 					link: `${page}#patches`,
 					date: patch.date,
-					description: patch.categories.flatMap(linesOf).map(line => line.subject).join('. '),
+					description: patch.categories.flatMap(Changelog.linesOf).map(line => line.subject).join('. '),
 				})
 			}
 		}

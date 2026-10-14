@@ -84,8 +84,8 @@ describe('TableRow', () => {
 			assert.equal(TableRow.for(entry()).matches('', leaving('sourceName', 's')), false)
 			assert.equal(TableRow.for(entry()).matches('', leaving('sourceName', 'other')), true)
 			assert.equal(TableRow.for(entry()).matches('', leaving('repeats', 'once')), false)
-			assert.equal(TableRow.for(entry({ recurrenceMasterId: 'm' })).matches('', leaving('repeats', 'once')), true)
-			assert.equal(TableRow.for(entry({ recurrenceMasterId: 'm' })).matches('', leaving('repeats', 'repeating')), false)
+			assert.equal(TableRow.for(entry({ recurringEntryId: 'm' })).matches('', leaving('repeats', 'once')), true)
+			assert.equal(TableRow.for(entry({ recurringEntryId: 'm' })).matches('', leaving('repeats', 'repeating')), false)
 		})
 
 		it('matches every term of the query across the title, the location and the description', () => {
@@ -141,7 +141,7 @@ describe('TableRow', () => {
 		const start = day.add({ hours: 9 })
 		const occurrence = (at: DateTime) => entry({
 			id: `m__${at.valueOf()}`, start: at, end: at.add({ hours: 1 }),
-			recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }), recurrenceMasterId: 'm', recurrenceId: at, seriesStart: start,
+			recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }), recurringEntryId: 'm', recurrenceId: at, seriesStart: start,
 		})
 		const all = TableWindow.of('all')
 

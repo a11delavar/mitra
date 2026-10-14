@@ -91,7 +91,7 @@ export class RelationsField extends Component {
 	protected override createRenderRoot() { return this }
 
 	/** Relationships live on the series MASTER: an occurrence reads/edits its master's. */
-	private get targetId() { return this.entry.recurrenceMasterId ?? this.entry.id }
+	private get targetId() { return this.entry.recurringEntryId ?? this.entry.id }
 
 	private get relations(): Array<Relation> {
 		return this.entry.relations ?? []

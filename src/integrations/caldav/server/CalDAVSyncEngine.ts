@@ -464,7 +464,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 			existing.relations = incoming.relations ?? null
 		}
 		if (overrideShift !== undefined) {
-			for (const override of await em.find(Entry, { recurrenceMasterId: existing.id })) {
+			for (const override of await em.find(Entry, { recurringEntryId: existing.id })) {
 				const instant = CalDAV.instantOf(override.recurrenceId)
 				if (instant !== undefined) {
 					override.recurrenceId = new Date(instant + overrideShift) as any
@@ -554,8 +554,8 @@ export class CalDAVSyncEngine implements SyncEngine {
 
 	async deleteEntry(base: Integration, em: EntityManager, entry: Entry): Promise<void> {
 		const integration = base as CalDAV
-		if (entry.recurrenceId && entry.recurrenceMasterId) {
-			const master = await em.findOne(Entry, { id: entry.recurrenceMasterId })
+		if (entry.recurrenceId && entry.recurringEntryId) {
+			const master = await em.findOne(Entry, { id: entry.recurringEntryId })
 			if (master) {
 				return this.excludeOccurrence(integration, em, master, new Date(entry.recurrenceId))
 			}
@@ -608,7 +608,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 
 		await this.writeResource(integration, master, applyTo)
 
-		for (const override of await em.find(Entry, { recurrenceMasterId: master.id })) {
+		for (const override of await em.find(Entry, { recurringEntryId: master.id })) {
 			if (CalDAV.instantOf(override.recurrenceId) === recurrenceId.getTime()) {
 				em.remove(override)
 			}

@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { ReminderNotification, reminderSpan, type ReminderFacts, type Reader } from './ReminderNotification.js'
+import { ReminderNotification, type ReminderFacts, type Reader } from './ReminderNotification.js'
 
 const BERLIN = 'Europe/Berlin'
 
@@ -26,16 +26,6 @@ const berlin: Reader = { locale: 'en', timeZone: BERLIN }
 const body = (facts: Partial<ReminderFacts>, now = start - 30 * 60_000, reader = berlin) => plain(notification(facts).for(reader, now).body)
 
 describe('ReminderNotification', () => {
-	describe('reminderSpan', () => {
-		it('picks the largest evenly-dividing unit', () => {
-			assert.equal(reminderSpan(30), '30 min')
-			assert.equal(reminderSpan(60), '1 hour')
-			assert.equal(reminderSpan(90), '90 min')
-			assert.equal(reminderSpan(2880), '2 days')
-			assert.equal(reminderSpan(10080), '1 week')
-		})
-	})
-
 	describe('ttlSeconds', () => {
 		it('expires five minutes past the event start, so a queued push cannot outlive it', () => {
 			assert.equal(notification({}).ttlSeconds(start - 30 * 60_000), 30 * 60 + 300)
@@ -68,6 +58,13 @@ describe('ReminderNotification', () => {
 		it('names another day, and leaves today unnamed', () => {
 			assert.equal(body({}, start - 26 * hour), 'Tomorrow · 10:00 – 11:00 AM')
 			assert.equal(body({}, start - 5 * 24 * hour), 'Tue, Sep 8 · 10:00 – 11:00 AM')
+		})
+
+		it('counts tomorrow in days, not 24 hours, across a change of clocks', () => {
+			// 23:30 on Sat 28 Mar 2026 in Berlin; the clocks spring forward that night, so 24 hours on is already Monday.
+			const saturdayNight = Date.UTC(2026, 2, 28, 22, 30)
+			const sundayMorning = Date.UTC(2026, 2, 29, 8, 0)
+			assert.equal(body({ when: { start: sundayMorning, end: sundayMorning + hour } }, saturdayNight), 'Tomorrow · 10:00 – 11:00 AM')
 		})
 
 		it('drops the range for an entry with no end', () => {

@@ -256,7 +256,7 @@ describe('availability in a provider\'s calendar', () => {
 		const series = entry({ type: EntryType.Availability, heading: 'Working hours', recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })
 		em.persist([
 			series,
-			entry({ type: EntryType.Availability, heading: 'Moved Monday', recurrenceMasterId: series.id, recurrenceId: new DateTime('2026-10-05T07:00:00Z') }),
+			entry({ type: EntryType.Availability, heading: 'Moved Monday', recurringEntryId: series.id, recurrenceId: new DateTime('2026-10-05T07:00:00Z') }),
 			entry({ type: EntryType.Availability, heading: 'Retreat' }),
 			entry({ type: EntryType.Availability, heading: 'Old hours', sourceId: hidden.id }),
 			entry({ type: EntryType.Event, heading: 'Standup' }),

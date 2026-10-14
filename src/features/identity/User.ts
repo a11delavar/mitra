@@ -47,6 +47,15 @@ export class User {
 		return user
 	}
 
+	hasSeen(version: string) {
+		return this.lastSeenVersion === version
+	}
+
+	/** Whether `version` is news to the user, who saw an earlier release. A new account has nothing to catch up on. */
+	hasMissed(version: string) {
+		return !!this.lastSeenVersion && !this.hasSeen(version)
+	}
+
 	applySettings(settings: unknown): void {
 		this.settings = UserSettings.sanitize(settings)
 	}

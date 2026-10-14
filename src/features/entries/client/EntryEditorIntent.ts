@@ -44,7 +44,7 @@ export class EntryEditorIntent {
 		if (entry.recurrence && !entry.isRecurring) {
 			return false
 		}
-		return entry.id === this.pending || entry.recurrenceMasterId === this.pending
+		return entry.id === this.pending || entry.recurringEntryId === this.pending
 	}
 
 	static consume() {

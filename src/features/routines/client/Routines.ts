@@ -26,36 +26,53 @@ const MIN_INSTANCES = 4
 
 const DAY = 86_400_000
 
-interface Routine {
-	readonly instances: Array<{ readonly day: number, readonly entry: Entry }>
-	/** Smallest authored rule stride among members (`Infinity` if unruled). */
-	stride: number
-	/** Master IDs belonging to this routine. */
-	readonly masters: Set<string>
-}
-
-/** Routine identity key: (sourceId, heading), deliberately not allDay: an all-day placeholder
- * becomes timed once the appointment is booked, and stays the same habit. Undefined for empty titles. */
-function appearance(entry: Entry): string | undefined {
-	const heading = entry.heading.trim().toLowerCase()
-	return heading ? `${entry.sourceId} ${heading}` : undefined
-}
-
-/** Median day gap across distinct days, providing robust cadence for unruled or pooled cohorts. */
-function observedStride(instances: ReadonlyArray<{ readonly day: number }>): number {
-	const days = [...new Set(instances.map(instance => instance.day))].sort((a, b) => a - b)
-	if (days.length < 2) {
-		return Infinity
+/** A habit pooled from series, overrides and detached instances that share an appearance. */
+class Routine {
+	/**
+	 * The appearance that pools entries, `(sourceId, heading)`, deliberately not allDay: an all-day placeholder becomes timed
+	 * once the appointment is booked, and stays the same habit. None for an empty heading.
+	 */
+	static keyOf(entry: Entry): string | undefined {
+		const heading = entry.heading.trim().toLowerCase()
+		return heading ? `${entry.sourceId} ${heading}` : undefined
 	}
-	// Round to whole days to handle 23h/25h DST boundaries.
-	const gaps = days.slice(1).map((day, index) => Math.round((day - days[index]!) / DAY)).sort((a, b) => a - b)
-	const middle = gaps.length >> 1
-	return gaps.length % 2 ? gaps[middle]! : (gaps[middle - 1]! + gaps[middle]!) / 2
+
+	readonly instances = new Array<{ readonly day: number, readonly entry: Entry }>()
+	/** The smallest stride its members' rules author, `Infinity` without one. */
+	private authoredStride = Infinity
+	/** Master ids belonging to this routine. */
+	readonly masters = new Set<string>()
+
+	add(day: number, entry: Entry) {
+		this.instances.push({ day, entry })
+		this.authoredStride = Math.min(this.authoredStride, entry.recurrence?.strideDays ?? Infinity)
+		if (entry.recurringEntryId) {
+			this.masters.add(entry.recurringEntryId)
+		}
+	}
+
+	/** The median gap between its days, a cadence for unruled or pooled instances too. */
+	private get observedStride(): number {
+		const days = [...new Set(this.instances.map(instance => instance.day))].sort((a, b) => a - b)
+		if (days.length < 2) {
+			return Infinity
+		}
+		// Rounded to whole days, as a DST day lasts 23 or 25 hours.
+		const gaps = days.slice(1).map((day, index) => Math.round((day - days[index]!) / DAY)).sort((a, b) => a - b)
+		const middle = gaps.length >> 1
+		return gaps.length % 2 ? gaps[middle]! : (gaps[middle - 1]! + gaps[middle]!) / 2
+	}
+
+	/** Whether it comes often enough to collapse in rows of `unit`, by the tighter of its authored and observed strides. */
+	collapsesIn(unit: RoutineUnit) {
+		const { days, slack } = UNITS[unit]
+		return this.instances.length >= MIN_INSTANCES && Math.min(this.authoredStride, this.observedStride) < days * slack
+	}
 }
 
 /**
  * Computes which routines collapse into ribbon marks and their per-row runs.
- * Pools recurring series, overrides, and detached instances by appearance `(sourceId, allDay, heading)`.
+ * Pools recurring series, overrides, and detached instances by appearance (`Routine.keyOf`).
  */
 export class Routines {
 	private static readonly cache = new WeakMap<ReadonlyArray<DateTime>, Routines>()
@@ -78,7 +95,6 @@ export class Routines {
 		if (this._collapsed) {
 			return this._collapsed
 		}
-		const { days: unitDays, slack } = UNITS[this.unit]
 		const from = this.days[0]?.dayStart.valueOf()
 		const to = this.days.at(-1)?.dayStart.valueOf()
 		const routines = new Map<string, Routine>()
@@ -91,41 +107,29 @@ export class Routines {
 			if (from === undefined || to === undefined || day < from || day > to) {
 				continue
 			}
-			const master = entry.recurrenceMasterId
 			// Skip unexpanded recurrence masters; occurrences are already expanded.
-			if (!master && entry.recurrence) {
+			if (!entry.recurringEntryId && entry.recurrence) {
 				continue
 			}
-			const key = appearance(entry) ?? master // blank standalones are ignored
+			const key = Routine.keyOf(entry) ?? entry.recurringEntryId // blank standalones are ignored
 			if (!key) {
 				continue
 			}
-			// Take stride from any member with a rule.
-			const stride = entry.recurrence?.strideDays ?? Infinity
-			const found = routines.get(key)
-			if (found) {
-				found.instances.push({ day, entry })
-				found.stride = Math.min(found.stride, stride)
-				if (master) {
-					found.masters.add(master)
-				}
-			} else {
-				routines.set(key, { instances: [{ day, entry }], stride, masters: new Set(master ? [master] : []) })
-			}
+			const routine = routines.get(key) ?? new Routine()
+			routines.set(key, routine)
+			routine.add(day, entry)
 		}
 		const collapsed = new Map<string, Routine>()
-		for (const [key, found] of routines) {
-			// Use the tighter of authored rule stride and observed day intervals.
-			const stride = Math.min(found.stride, observedStride(found.instances))
-			if (stride < unitDays * slack && found.instances.length >= MIN_INSTANCES) {
-				collapsed.set(key, found)
-				found.instances.sort((a, b) => a.day - b.day)
-				for (const { entry } of found.instances) {
-					if (!entry.recurrenceMasterId) {
+		for (const [key, routine] of routines) {
+			if (routine.collapsesIn(this.unit)) {
+				collapsed.set(key, routine)
+				routine.instances.sort((a, b) => a.day - b.day)
+				for (const { entry } of routine.instances) {
+					if (!entry.recurringEntryId) {
 						this.detached.add(entry)
 					}
 				}
-				for (const master of found.masters) {
+				for (const master of routine.masters) {
 					this.collapsedMasters.add(master)
 				}
 			}
@@ -144,7 +148,7 @@ export class Routines {
 		if (EntryStore.isPreview(entry)) {
 			return false
 		}
-		return entry.recurrenceMasterId ? this.collapsedMasters.has(entry.recurrenceMasterId) : this.detached.has(entry)
+		return entry.recurringEntryId ? this.collapsedMasters.has(entry.recurringEntryId) : this.detached.has(entry)
 	}
 
 	/** The entries that still render as bars. Returns the input array unchanged when nothing collapses. */

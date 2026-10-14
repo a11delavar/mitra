@@ -1,7 +1,8 @@
 import { Router } from 'express'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
 import { orm } from '../../../infrastructure/database/orm.js'
-import { recentLocations, type LocationSuggestion } from './recentLocations.js'
+import { LocationSuggestion, type PhotonFeature } from '../LocationSuggestion.js'
+import { recentLocations } from './recentLocations.js'
 
 const logger = createLogger('Locations')
 
@@ -11,10 +12,6 @@ const logger = createLogger('Locations')
 const PHOTON_URL = process.env.MITRA_PHOTON_URL || 'https://photon.komoot.io'
 
 const PHOTON_LANGUAGES = new Set(['en', 'de', 'fr'])
-
-interface PhotonFeature {
-	properties?: Record<string, unknown>
-}
 
 export const locationsRouter = Router()
 
@@ -46,8 +43,8 @@ locationsRouter.get('/', async (req, res) => {
 			throw new Error(`${response.status} ${response.statusText}`)
 		}
 		const body = await response.json() as { features?: Array<PhotonFeature> }
-		const seen = new Set(recents.map(full))
-		const geocoded = suggestions(body.features ?? []).filter(suggestion => !seen.has(full(suggestion)))
+		const seen = new Set(recents.map(recent => recent.location))
+		const geocoded = LocationSuggestion.fromPhoton(body.features ?? []).filter(suggestion => !seen.has(suggestion.location))
 		logger.debug(`Geocoded "${query}" via Photon → ${geocoded.length} suggestion(s) (+${recents.length} recent)`)
 		return res.json([...recents, ...geocoded])
 	} catch (error) {
@@ -55,42 +52,3 @@ locationsRouter.get('/', async (req, res) => {
 		return res.json(recents)
 	}
 })
-
-function full(suggestion: LocationSuggestion): string {
-	return suggestion.detail ? `${suggestion.name}, ${suggestion.detail}` : suggestion.name
-}
-
-const TYPE_KEYS = new Set(['amenity', 'shop', 'leisure', 'tourism', 'office', 'craft', 'historic', 'sport', 'railway', 'aeroway', 'healthcare'])
-
-function placeType(properties: Record<string, unknown>): string | undefined {
-	const key = properties.osm_key
-	const value = properties.osm_value
-	if (typeof key !== 'string' || typeof value !== 'string' || !TYPE_KEYS.has(key) || value === 'yes') {
-		return undefined
-	}
-	return value
-}
-
-function suggestions(features: Array<PhotonFeature>): Array<LocationSuggestion> {
-	const results = new Array<LocationSuggestion>()
-	const seen = new Set<string>()
-	for (const feature of features) {
-		const properties = feature.properties ?? {}
-		const text = (key: string) => typeof properties[key] === 'string' ? properties[key] as string : undefined
-		const street = [text('street'), text('housenumber')].filter(Boolean).join(' ')
-		const name = text('name') || street
-		if (!name) {
-			continue
-		}
-		const detail = [street, text('district'), text('city'), text('state'), text('country')]
-			.filter((part): part is string => !!part && part !== name)
-			.filter((part, index, parts) => parts.indexOf(part) === index)
-			.join(', ')
-		const key = `${name}|${detail}`
-		if (!seen.has(key)) {
-			seen.add(key)
-			results.push({ name, detail, type: placeType(properties) })
-		}
-	}
-	return results
-}

@@ -5,44 +5,30 @@ import { getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
 import { enablePushNotifications } from './push.js'
 import { type Menu } from '../../../design/Menu.js'
+import '../../time/TimeSpan.time.js'
 
 type CustomUnit = 'minutes' | 'hours' | 'days' | 'weeks'
 
 const UNIT_MINUTES: Record<CustomUnit, number> = { minutes: 1, hours: 60, days: 24 * 60, weeks: 7 * 24 * 60 }
 
-function unitLabel(unit: CustomUnit): string {
-	switch (unit) {
-		case 'minutes': return t('minutes')
-		case 'hours': return t('hours')
-		case 'days': return t('days')
-		case 'weeks': return t('weeks')
-	}
-}
-
-export function reminderSpanLabel(minutes: number): string {
-	const unit = ([['week', UNIT_MINUTES.weeks], ['day', UNIT_MINUTES.days], ['hour', UNIT_MINUTES.hours]] as const)
-		.find(([, factor]) => minutes >= factor && minutes % factor === 0)
-	if (!unit) {
-		return t('${count:number} min', { count: minutes })
-	}
-	const count = minutes / unit[1]
-	switch (unit[0]) {
-		case 'week': return t('${count:pluralityNumber} weeks', { count })
-		case 'day': return t('${count:pluralityNumber} days', { count })
-		case 'hour': return t('${count:pluralityNumber} hours', { count })
-	}
-}
-
-export function reminderLabel(minutes: number, type?: EntryType): string {
-	if (minutes === 0) {
-		return type?.isTask ? t('At the time of the task') : t('At start of event')
-	}
-	return t('${span} before', { span: reminderSpanLabel(minutes) })
-}
-
 @component('mitra-reminders-field')
 export class RemindersField extends Component {
 	private static readonly presets = [0, 5, 10, 30, 60, 24 * 60]
+
+	/** A reminder as a choice names it: "At start of event", "30 min before". */
+	static labelOf(minutes: number, type?: EntryType): string {
+		return minutes !== 0 ? t('${span} before', { span: TimeSpan.fromMinutes(minutes).formatAsWholeUnit() })
+			: type?.isTask ? t('At the time of the task') : t('At start of event')
+	}
+
+	private static labelOfUnit(unit: CustomUnit): string {
+		switch (unit) {
+			case 'minutes': return t('minutes')
+			case 'hours': return t('hours')
+			case 'days': return t('days')
+			case 'weeks': return t('weeks')
+		}
+	}
 
 	@property({
 		type: Object,
@@ -178,7 +164,7 @@ export class RemindersField extends Component {
 				<div class="reminder">
 					<span>
 						${minutes !== 0
-							? html`${reminderSpanLabel(minutes)} <span class="detail">${t('before at ${time}', { time: this.fireLabel(minutes) })}</span>`
+							? html`${TimeSpan.fromMinutes(minutes).formatAsWholeUnit()} <span class="detail">${t('before at ${time}', { time: this.fireLabel(minutes) })}</span>`
 							: this.entry.type?.isTask
 								? html`${t('At the time of the task')} <span class="detail">${this.fireLabel(0)}</span>`
 								: html`${t('At start')} <span class="detail">${t('of event at ${time}', { time: this.fireLabel(minutes) })}</span>`}
@@ -195,7 +181,7 @@ export class RemindersField extends Component {
 					<mitra-icon-button size="small" class="add" icon="plus" label=${t('Add reminder')}></mitra-icon-button>
 					<mitra-menu slot="popover">
 						${RemindersField.presets.filter(minutes => !this.reminders.includes(minutes)).map(minutes => html`
-							<mitra-menu-item @click=${() => this.add(minutes)}>${reminderLabel(minutes, this.entry.type)}</mitra-menu-item>
+							<mitra-menu-item @click=${() => this.add(minutes)}>${RemindersField.labelOf(minutes, this.entry.type)}</mitra-menu-item>
 						`)}
 						<mitra-menu-item class="custom" @click=${this.openCustomDialog}>${t('Custom…')}</mitra-menu-item>
 					</mitra-menu>
@@ -217,7 +203,7 @@ export class RemindersField extends Component {
 							@change=${(e: CustomEvent<number>) => this.draft = { ...draft, count: e.detail }}
 						></mitra-number-field>
 						<mitra-select label=${t('Unit')} .value=${draft.unit} @change=${(e: CustomEvent<CustomUnit>) => this.draft = { ...draft, unit: e.detail }}>
-							${(Object.keys(UNIT_MINUTES) as Array<CustomUnit>).map(unit => html`<mitra-option .value=${unit}>${unitLabel(unit)}</mitra-option>`)}
+							${(Object.keys(UNIT_MINUTES) as Array<CustomUnit>).map(unit => html`<mitra-option .value=${unit}>${RemindersField.labelOfUnit(unit)}</mitra-option>`)}
 						</mitra-select>
 						<span>${t('before')}</span>
 					</div>

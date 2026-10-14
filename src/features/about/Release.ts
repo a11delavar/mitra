@@ -1,6 +1,7 @@
 // By their sources' names: scripts/releaseBody.ts runs this in Node, which finds no source behind a `.js`.
-import { type ChangelogCategory, linesOf, type ParsedChangelogSection } from './Changelog.ts'
-import { ReleaseNotes } from './ReleaseNotes.ts'
+import { type ChangelogCategory, Changelog, type ParsedChangelogSection } from './Changelog.ts'
+import { type ReleaseNotes } from './ReleaseNotes.ts'
+import { Version } from './Version.ts'
 import { repository } from '../../../website/site.mjs'
 
 /**
@@ -31,7 +32,7 @@ export class Release {
 		sections: ReadonlyArray<ParsedChangelogSection>,
 		notes: ReadonlyMap<string, ReleaseNotes>,
 	): Array<T> {
-		const byMinor = Map.groupBy(sections, section => section.version === Release.unreleased ? Release.unreleased : ReleaseNotes.minorOf(section.version))
+		const byMinor = Map.groupBy(sections, section => Version.parse(section.version)?.release ?? Release.unreleased)
 		const [draft, ...planned] = [...notes].filter(([, candidate]) => !candidate.date).map(([version]) => version).sort(Release.newestFirst).reverse()
 		const unreleased = byMinor.get(Release.unreleased)
 		if (draft && unreleased) {
@@ -81,7 +82,7 @@ export class Release {
 		this.version = version
 		this.notes = notes
 		this.everything = sections.find(section => section.version === `${version}.0` || section.version === Release.unreleased)
-		this.patches = sections.filter(section => section !== this.everything).sort((a, b) => Number(b.version.split('.')[2]) - Number(a.version.split('.')[2]))
+		this.patches = sections.filter(section => section !== this.everything).sort((a, b) => Version.parse(b.version)!.patch - Version.parse(a.version)!.patch)
 	}
 
 	/** Its changelog sections, the release's own first. */
@@ -153,7 +154,7 @@ export class Release {
 	/** Commits per category, empty ones left out. */
 	get counts() {
 		return this.categories
-			.map(category => ({ type: category.type, title: category.title, count: linesOf(category).length }))
+			.map(category => ({ type: category.type, title: category.title, count: Changelog.linesOf(category).length }))
 			.filter(count => count.count > 0)
 	}
 }

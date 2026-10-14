@@ -158,19 +158,19 @@ describe('Entry', () => {
 		})
 	})
 
-	describe('isSeriesStart', () => {
-		const occurrence = (values: Partial<Entry>) => new Entry({ recurrenceMasterId: 'master', ...values } as Entry)
+	describe('isFirstOccurrence', () => {
+		const occurrence = (values: Partial<Entry>) => new Entry({ recurringEntryId: 'master', ...values } as Entry)
 
 		it('is true for the occurrence sitting on the series anchor', () => {
-			assert.equal(occurrence({ recurrenceId: at(0, 9), seriesStart: at(0, 9) }).isSeriesStart, true)
+			assert.equal(occurrence({ recurrenceId: at(0, 9), seriesStart: at(0, 9) }).isFirstOccurrence, true)
 		})
 
 		it('is false for any later occurrence', () => {
-			assert.equal(occurrence({ recurrenceId: at(3, 9), seriesStart: at(0, 9) }).isSeriesStart, false)
+			assert.equal(occurrence({ recurrenceId: at(3, 9), seriesStart: at(0, 9) }).isFirstOccurrence, false)
 		})
 
 		it('is false without an anchor, since a synced override carries none', () => {
-			assert.equal(occurrence({ recurrenceId: at(0, 9) }).isSeriesStart, false)
+			assert.equal(occurrence({ recurrenceId: at(0, 9) }).isFirstOccurrence, false)
 		})
 	})
 
@@ -529,7 +529,7 @@ describe('Entry', () => {
 
 		it('a repeating task keeps its dates, which identify its occurrences', () => {
 			const master = task({ start: at(0, 9), end: at(0, 10), recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })
-			const occurrence = task({ start: at(7, 9), end: at(7, 10), recurrenceMasterId: 'master', recurrenceId: at(7, 9) })
+			const occurrence = task({ start: at(7, 9), end: at(7, 10), recurringEntryId: 'master', recurrenceId: at(7, 9) })
 			assert.equal(master.unschedulable, false)
 			assert.equal(occurrence.unschedulable, false)
 		})
@@ -751,13 +751,13 @@ describe('Entry', () => {
 		})
 
 		it('still sheds identity and series membership', () => {
-			const entry = new Entry({ id: 'e', sourceId: 's', uid: 'original', type: EntryType.Task, heading: 'Task', recurrenceMasterId: 'master' })
+			const entry = new Entry({ id: 'e', sourceId: 's', uid: 'original', type: EntryType.Task, heading: 'Task', recurringEntryId: 'master' })
 			entry.relations = EntryRelations.of('original', [{ type: RelationType.Parent, targetUid: 'parent' }]).value
 			const copy = entry.duplicate()
 
 			assert.equal(copy.id, undefined)
 			assert.equal(copy.uid, undefined)
-			assert.equal(copy.recurrenceMasterId, undefined)
+			assert.equal(copy.recurringEntryId, undefined)
 		})
 	})
 
@@ -854,7 +854,7 @@ describe('Entry', () => {
 
 		it('is false for a repeating task, whose next turn settles the missed one', () => {
 			const dates = { start: day.subtract({ days: 3 }), end: day.subtract({ days: 3 }).add({ hours: 1 }) }
-			assert.equal(task({ ...dates, recurrenceMasterId: 'master' }).overdue, false)
+			assert.equal(task({ ...dates, recurringEntryId: 'master' }).overdue, false)
 			assert.equal(task({ ...dates, recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) }).overdue, false)
 		})
 

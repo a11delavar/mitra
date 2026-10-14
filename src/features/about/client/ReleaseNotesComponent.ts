@@ -1,5 +1,5 @@
 import { Component, component, css, html, ifDefined, property, unsafeHTML } from '@a11d/lit'
-import { linesOf, type ChangelogCategory } from '../Changelog.js'
+import { Changelog, type ChangelogCategory } from '../Changelog.js'
 import { Release } from '../Release.js'
 import { ReleaseDocs, type ReleaseCapture, type ReleaseHighlight } from '../ReleaseNotes.js'
 import { releaseNotes } from '../releaseNotes.css.js'
@@ -138,7 +138,7 @@ export class ReleaseNotesComponent extends Component {
 									<div class="patch">
 										<b>${patch.version}</b>
 										<span class="date">${!patch.date ? html.nothing : ReleaseNotesComponent.dateOf(patch.date).format({ dateStyle: 'medium' })}</span>
-										${this.linesTemplate(patch.categories.flatMap(linesOf))}
+										${this.linesTemplate(patch.categories.flatMap(Changelog.linesOf))}
 									</div>
 								`)}
 							</section>
@@ -230,7 +230,7 @@ export class ReleaseNotesComponent extends Component {
 				${release.listed.map(category => html`
 					<div class="category" data-type=${category.type}>
 						<h4 class="label">${ReleaseNotesComponent.labelOf(category)}</h4>
-						${this.linesTemplate(linesOf(category))}
+						${this.linesTemplate(Changelog.linesOf(category))}
 					</div>
 				`)}
 				${!maintenance ? html.nothing : html`
@@ -240,7 +240,7 @@ export class ReleaseNotesComponent extends Component {
 		`
 	}
 
-	private linesTemplate(lines: ReturnType<typeof linesOf>) {
+	private linesTemplate(lines: ReturnType<typeof Changelog.linesOf>) {
 		return html`
 			<ul class="lines">
 				${lines.map(line => html`

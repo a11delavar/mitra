@@ -511,10 +511,10 @@ describe('CalDAV all-day serialization', () => {
 				allDay: false, data: { raw: bundledRaw },
 			})
 			const overrideRow = new Entry({
-				id: 'o1', sourceId: 's', recurrenceMasterId: 'm', recurrenceId: new Date('2026-07-11T07:30:00Z') as any,
+				id: 'o1', sourceId: 's', recurringEntryId: 'm', recurrenceId: new Date('2026-07-11T07:30:00Z') as any,
 				uri: 'https://example.com/cal/gym.ics', type: EntryType.Event, heading: 'Gym',
 			})
-			const em = { removed: new Array<Entry>(), find: (_: unknown, where: any) => Promise.resolve(where.recurrenceMasterId ? [overrideRow] : []), remove(entry: Entry) { this.removed.push(entry) } }
+			const em = { removed: new Array<Entry>(), find: (_: unknown, where: any) => Promise.resolve(where.recurringEntryId ? [overrideRow] : []), remove(entry: Entry) { this.removed.push(entry) } }
 			await stubbed().excludeOccurrence(em as never, master, new Date('2026-07-11T07:30:00Z'))
 			assert.match(master.data!.raw!, /EXDATE:20260711T073000Z/)
 			assert.doesNotMatch(master.data!.raw!, /RECURRENCE-ID/)
@@ -627,8 +627,8 @@ describe('CalDAV all-day serialization', () => {
 		it('a series shift also shifts bundled override RECURRENCE-IDs (rows included) but keeps the overrides\' own times', async () => {
 			const rule = Recurrence.fromRRule('FREQ=WEEKLY;BYDAY=SA,MO,WE')
 			const existing = masterRow(zonedRaw(true), rule)
-			const overrideRow = new Entry({ id: 'o', sourceId: 's', recurrenceMasterId: 'm', uri: existing.uri, type: EntryType.Event, heading: 'Gym', recurrenceId: new Date('2026-07-11T07:30:00Z') as any })
-			const em = { find: (_: unknown, where: { recurrenceMasterId?: string }) => Promise.resolve(where.recurrenceMasterId ? [overrideRow] : []) }
+			const overrideRow = new Entry({ id: 'o', sourceId: 's', recurringEntryId: 'm', uri: existing.uri, type: EntryType.Event, heading: 'Gym', recurrenceId: new Date('2026-07-11T07:30:00Z') as any })
+			const em = { find: (_: unknown, where: { recurringEntryId?: string }) => Promise.resolve(where.recurringEntryId ? [overrideRow] : []) }
 			const incoming = new Entry({ ...existing, recurrence: rule, start: D('2026-07-04T08:00:00Z'), end: D('2026-07-04T09:00:00Z') } as Partial<Entry>)
 			await stubbed().updateEntry(em as never, existing, incoming)
 			assert.match(existing.data!.raw!, /RECURRENCE-ID;TZID=Europe\/Berlin:20260711T100000/)
@@ -691,7 +691,7 @@ describe('CalDAV all-day serialization', () => {
 			const [entry] = em.persisted
 			assert.equal(entry!.heading, 'Standup')
 			assert.equal(entry!.recurrenceId, undefined)
-			assert.equal(entry!.recurrenceMasterId, undefined)
+			assert.equal(entry!.recurringEntryId, undefined)
 			assert.equal(entry!.start?.valueOf(), new Date('2026-07-06T09:00:00Z').getTime())
 		})
 
@@ -716,7 +716,7 @@ describe('CalDAV all-day serialization', () => {
 			const override = em.persisted.find(entry => entry.recurrenceId)!
 			assert.ok(master && override)
 			assert.equal(master.uri, override.uri)
-			assert.equal(override.recurrenceMasterId, master.id)
+			assert.equal(override.recurringEntryId, master.id)
 			assert.equal(new Date(override.recurrenceId!.toString()).getTime(), new Date('2026-07-11T07:30:00Z').getTime())
 			assert.equal(override.start?.valueOf(), new Date('2026-07-11T20:00:00Z').getTime())
 		})

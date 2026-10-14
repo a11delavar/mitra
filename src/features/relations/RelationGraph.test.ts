@@ -68,7 +68,7 @@ describe('RelationGraph', () => {
 			// What the connector layer builds from: the chips on screen. Before the edges came from the
 			// graph, each occurrence contributed its master's relationship again and the same arrow was
 			// drawn several times, exactly on top of itself.
-			const occurrence = (id: string, day: number) => entry('series', [{ type: RelationType.FinishToStart, targetUid: 'p' }], { id, recurrenceMasterId: 'series', recurrenceId: new DateTime(), start: new DateTime(2026, 0, day) })
+			const occurrence = (id: string, day: number) => entry('series', [{ type: RelationType.FinishToStart, targetUid: 'p' }], { id, recurringEntryId: 'series', recurrenceId: new DateTime(), start: new DateTime(2026, 0, day) })
 			const graph = RelationGraph.of([entry('p'), occurrence('first', 1), occurrence('second', 8), occurrence('third', 15)])
 			assert.deepEqual(graph.edges.map(edge => edge.key), ['dependency p series'])
 		})
@@ -300,13 +300,13 @@ describe('RelationGraph', () => {
 	describe('one node per uid', () => {
 		it('lets the master stand for the series where both are loaded', () => {
 			const master = entry('series', [{ type: RelationType.Parent, targetUid: 'parent' }])
-			const occurrence = entry('series', [{ type: RelationType.Parent, targetUid: 'parent' }], { id: 'occurrence', recurrenceMasterId: 'series', recurrenceId: new DateTime() })
+			const occurrence = entry('series', [{ type: RelationType.Parent, targetUid: 'parent' }], { id: 'occurrence', recurringEntryId: 'series', recurrenceId: new DateTime() })
 			const graph = RelationGraph.of([master, occurrence, entry('parent')])
 			assert.deepEqual(graph.childrenOf('parent'), [master])
 		})
 
 		it('still counts an occurrence whose master the caller did not load, since it carries the series lines', () => {
-			const occurrence = entry('series', [{ type: RelationType.Parent, targetUid: 'parent' }], { id: 'occurrence', recurrenceMasterId: 'series', recurrenceId: new DateTime() })
+			const occurrence = entry('series', [{ type: RelationType.Parent, targetUid: 'parent' }], { id: 'occurrence', recurringEntryId: 'series', recurrenceId: new DateTime() })
 			const graph = RelationGraph.of([occurrence, entry('parent')])
 			assert.deepEqual(graph.childrenOf('parent'), [occurrence])
 		})

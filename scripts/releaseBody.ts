@@ -1,8 +1,9 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { parseChangelog } from '../src/features/about/Changelog.ts'
+import { Changelog } from '../src/features/about/Changelog.ts'
 import { ReleaseNotes } from '../src/features/about/ReleaseNotes.ts'
+import { Version } from '../src/features/about/Version.ts'
 import { site, withBase } from '../website/site.mjs'
 
 // The GitHub release body for a tag, on stdout. A minor's is its notes in short (title, intro, each highlight's first
@@ -18,17 +19,17 @@ if (!tag) {
 }
 
 const version = tag.replace(/^v/, '')
-const minor = ReleaseNotes.minorOf(version)
+const minor = Version.parse(version)!.release
 const origin = new URL(site)
 const page = `${origin.origin}${withBase(`/releases/${minor}/`)}`
 
 const notesPath = path.join(rootDir, 'releases', minor, 'README.md')
 const notes = fs.existsSync(notesPath) ? ReleaseNotes.parse(fs.readFileSync(notesPath, 'utf8')) : undefined
-const sections = parseChangelog(fs.readFileSync(path.join(rootDir, 'CHANGELOG.md'), 'utf8'))
+const { sections } = Changelog.parse(fs.readFileSync(path.join(rootDir, 'CHANGELOG.md'), 'utf8'))
 const section = sections.find(candidate => candidate.version === version)
 
 const lines = new Array<string>()
-if (notes?.title && ReleaseNotes.isMinorRelease(version)) {
+if (notes?.title && Version.parse(version)!.startsRelease) {
 	lines.push(
 		`## ${notes.title}`,
 		'',

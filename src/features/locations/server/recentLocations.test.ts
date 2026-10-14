@@ -12,6 +12,7 @@ import { Recurrence } from '../../recurrence/Recurrence.js'
 import { NotificationSubscription } from '../../reminders/NotificationSubscription.js'
 import { Integration } from '../../../integrations/Integration.js'
 import { MitraCalendar } from '../../../integrations/mitra/MitraCalendar.js'
+import { LocationSuggestion } from '../LocationSuggestion.js'
 import { recentLocations } from './recentLocations.js'
 
 describe('recent locations', () => {
@@ -63,8 +64,8 @@ describe('recent locations', () => {
 		const mine = await userAt('Gym, Park Road 3', 'Studio', 'Gym hall')
 
 		assert.deepEqual(await recentLocations(em, mine, 'gym'), [
-			{ name: 'Gym hall', detail: '', recent: true },
-			{ name: 'Gym', detail: 'Park Road 3', recent: true },
+			new LocationSuggestion({ name: 'Gym hall', detail: '', recent: true }),
+			new LocationSuggestion({ name: 'Gym', detail: 'Park Road 3', recent: true }),
 		])
 	})
 

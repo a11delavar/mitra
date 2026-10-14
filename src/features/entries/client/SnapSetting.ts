@@ -1,4 +1,4 @@
-import { reminderSpanLabel } from '../../reminders/client/RemindersField.js'
+import '../../time/TimeSpan.time.js'
 import { ChoiceSetting, setting, userStorage } from '../../settings/client/Setting.js'
 
 /**
@@ -21,6 +21,6 @@ export class SnapSetting extends ChoiceSetting<number> {
 	protected readonly storage = userStorage('snapMinutes')
 
 	override get options() {
-		return SnapSetting.choices.map(minutes => ({ value: minutes, label: reminderSpanLabel(minutes) }))
+		return SnapSetting.choices.map(minutes => ({ value: minutes, label: TimeSpan.fromMinutes(minutes).formatAsWholeUnit() }))
 	}
 }

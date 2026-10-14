@@ -12,7 +12,7 @@ import { EntryRelations } from '../../relations/EntryRelations.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
 import { Entry, FLOATING_TIME_ZONE, TaskStatus, Transparency } from '../Entry.js'
 import { normalizeAllDay, projectAllDay } from '../../time/calendarDate.js'
-import { editOccurrence, deleteOccurrence, expandedOccurrences, seriesStarts, seriesNear, occurrenceAt } from '../../recurrence/server/occurrences.js'
+import { editOccurrence, deleteOccurrence, expandedOccurrences, seriesStarts, nearestOccurrence, occurrenceAt } from '../../recurrence/server/occurrences.js'
 import { entrySearch, entryWindow, everyEntry } from './entryWindow.js'
 import { assertRelationsValid, attachRelations, relationClosure } from '../../relations/server/relations.js'
 import { EntryRank } from '../EntryRank.js'
@@ -95,7 +95,7 @@ entriesRouter.get('/search', async (req, res) => {
 	const found = await em.find(Entry, entrySearch(visibleSources.map(source => source.id), q), { orderBy: { start: 'desc' }, limit: 20 })
 	// The events written for availability are background too, like availability itself.
 	const matches = found.filter(entry => !integrationOf.get(entry.sourceId)?.writtenForAvailability(entry))
-	const entries = await seriesNear(em, matches, viewerZone(req) ?? 'UTC', new Date())
+	const entries = await nearestOccurrence(em, matches, viewerZone(req) ?? 'UTC', new Date())
 
 	await attachRelations(em, req.user, entries)
 	return res.json(entries.map(entry => projectedForViewer(entry, viewerZone(req))))
@@ -122,7 +122,7 @@ entriesRouter.put('/ranks', async (req, res) => {
 	const em = orm.em.fork()
 	for (const [id, rank] of ranks) {
 		const entry = await req.user.entry(em, id)
-		if (!entry.type.isTask || entry.recurrenceMasterId) {
+		if (!entry.type.isTask || entry.recurringEntryId) {
 			return res.status(400).json({ error: 'Only tasks have a manual order' })
 		}
 		entry.rank = rank

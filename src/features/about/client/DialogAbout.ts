@@ -12,34 +12,31 @@ import { focusRing } from '../../../design/focusRing.css.js'
 import { scrollbar } from '../../../design/scrollbar.css.js'
 const repository = 'https://github.com/a11delavar/mitra'
 
-function runningVersion() {
-	return getMeta()?.version ?? mitra.version
-}
-
-/**
- * Returns whether the instance is running a newer version than last seen by the user.
- */
-export function hasUnseenChanges() {
-	const seen = getUser()?.lastSeenVersion
-	return !!seen && seen !== runningVersion()
-}
-
-/** Record the running version as seen and dismiss the update dot. */
-export function markChangesSeen() {
-	if (getUser()?.lastSeenVersion === runningVersion()) {
-		return
-	}
-	setSeenVersion(runningVersion())
-		.then(() => document.querySelector('mitra-sidebar')?.requestUpdate())
-		.catch(() => void 0)
-}
-
 /**
  * The About dialog, shaped like Settings: the instance and its releases in the rail, the chosen release beside it
  * (`mitra-release-notes`). The running release opens first.
  */
 @component('mitra-dialog-about')
 export class DialogAbout extends DialogComponent {
+	static get runningVersion() {
+		return getMeta()?.version ?? mitra.version
+	}
+
+	/** Whether the running release is news to the user, which the sidebar marks with a dot. */
+	static get hasNews() {
+		return !!getUser()?.hasMissed(DialogAbout.runningVersion)
+	}
+
+	/** Records the running release as seen, which takes the dot away. */
+	static markSeen() {
+		if (getUser()?.hasSeen(DialogAbout.runningVersion)) {
+			return
+		}
+		setSeenVersion(DialogAbout.runningVersion)
+			.then(() => document.querySelector('mitra-sidebar')?.requestUpdate())
+			.catch(() => void 0)
+	}
+
 	@state() private releases?: Array<Release>
 	@state() private folders = new Map<string, ReleaseFolder>()
 	@state() private current?: ChangelogSection
@@ -47,7 +44,7 @@ export class DialogAbout extends DialogComponent {
 	@state() private copied = false
 
 	protected override async connected() {
-		markChangesSeen()
+		DialogAbout.markSeen()
 		const { sections, folders } = await fetchReleases().catch(() => ({ sections: new Array<ChangelogSection>(), folders: new Array<ReleaseFolder>() }))
 		this.folders = new Map(folders.map(folder => [folder.version, folder]))
 		this.current = sections.find(section => section.current)
@@ -72,7 +69,7 @@ export class DialogAbout extends DialogComponent {
 	}
 
 	private get version() {
-		return runningVersion()
+		return DialogAbout.runningVersion
 	}
 
 	private get commit() {
@@ -208,9 +205,17 @@ export class DialogAbout extends DialogComponent {
 						}
 					}
 
+					/* As narrow as the sidebar, so its words wrap rather than run past it ("New dev build: 2 commits ahead"). */
 					.update {
 						inline-size: 100%;
 						margin-block-start: 0.5rem;
+
+						&::part(button) {
+							white-space: normal;
+							text-wrap: balance;
+							text-align: center;
+							padding-block: 0.375rem;
+						}
 					}
 				}
 

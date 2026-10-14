@@ -28,10 +28,10 @@ export function entryWindow(sourceIds: ReadonlyArray<string>, start: Date, end: 
 
 /** Every entry once, whatever its dates. A series stands in as its start (`seriesStarts`), so its master, occurrences and overrides stay out. */
 export function everyEntry(sourceIds: ReadonlyArray<string>): FilterQuery<Entry> {
-	return { sourceId: { $in: [...sourceIds] }, recurrence: { freq: null }, recurrenceMasterId: null }
+	return { sourceId: { $in: [...sourceIds] }, recurrence: { freq: null }, recurringEntryId: null }
 }
 
-/** The entries a palette search matches. A series matches as its master; `seriesNear` then names the occurrence it opens. */
+/** The entries a palette search matches. A series matches as its master; `nearestOccurrence` then names the occurrence it opens. */
 export function entrySearch(sourceIds: ReadonlyArray<string>, query: string): FilterQuery<Entry> {
 	const term = `%${query.trim()}%`
 	return {

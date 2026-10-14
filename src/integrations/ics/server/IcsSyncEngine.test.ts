@@ -332,7 +332,7 @@ describe('Calendar subscription sync', () => {
 		const master = entries.find(entry => entry.uri === 'series@example.com' && !entry.recurrenceId)!
 		const override = entries.find(entry => entry.uri === 'series@example.com' && entry.recurrenceId)!
 		assert.ok(master.recurrence)
-		assert.equal(override.recurrenceMasterId, master.id)
+		assert.equal(override.recurringEntryId, master.id)
 		assert.equal(override.heading, 'Weekly sync (moved)')
 	})
 

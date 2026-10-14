@@ -3,47 +3,47 @@ import assert from 'node:assert/strict'
 import { type DateTime } from '@3mo/date-time'
 import { EntryType } from '../entries/EntryType.js'
 import { Entry, FLOATING_TIME_ZONE, TaskStatus } from '../entries/Entry.js'
-import { dueReminders } from './Reminders.js'
+import { DueReminder } from './Reminders.js'
 
 describe('Reminders', () => {
 	const D = (iso: string) => new Date(iso) as unknown as DateTime
 	const entry = (init: Partial<Entry>) => new Entry({ id: 'e', sourceId: 's', type: EntryType.Event, heading: 'Standup', ...init })
 	const task = (init: Partial<Entry>) => entry({ type: EntryType.Task, ...init })
 
-	describe('dueReminders', () => {
+	describe('DueReminder.within', () => {
 		const watermark = new Date('2026-07-06T09:00:00Z')
 		const now = new Date('2026-07-06T09:01:00Z')
 
 		it('fires a reminder whose fire time falls inside (watermark, now]', () => {
-			const due = dueReminders([entry({ start: D('2026-07-06T09:31:00Z'), reminders: [30] })], watermark, now)
+			const due = DueReminder.within([entry({ start: D('2026-07-06T09:31:00Z'), reminders: [30] })], watermark, now)
 			assert.equal(due.length, 1)
 			assert.equal(due[0]!.minutes, 30)
 		})
 
 		it('excludes the watermark itself', () => {
-			const due = dueReminders([entry({ start: D('2026-07-06T09:30:00Z'), reminders: [30] })], watermark, now)
+			const due = DueReminder.within([entry({ start: D('2026-07-06T09:30:00Z'), reminders: [30] })], watermark, now)
 			assert.equal(due.length, 0)
 		})
 
 		it('does not fire early or late', () => {
-			const early = dueReminders([entry({ start: D('2026-07-06T09:35:00Z'), reminders: [30] })], watermark, now)
-			const late = dueReminders([entry({ start: D('2026-07-06T09:25:00Z'), reminders: [30] })], watermark, now)
+			const early = DueReminder.within([entry({ start: D('2026-07-06T09:35:00Z'), reminders: [30] })], watermark, now)
+			const late = DueReminder.within([entry({ start: D('2026-07-06T09:25:00Z'), reminders: [30] })], watermark, now)
 			assert.equal(early.length + late.length, 0)
 		})
 
 		it('fires each offset independently, only the due one', () => {
-			const due = dueReminders([entry({ start: D('2026-07-06T09:31:00Z'), reminders: [0, 30, 60] })], watermark, now)
+			const due = DueReminder.within([entry({ start: D('2026-07-06T09:31:00Z'), reminders: [0, 30, 60] })], watermark, now)
 			assert.deepEqual(due.map(d => d.minutes), [30])
 		})
 
 		it('reports the exact instant to fire at, not the tick that noticed it', () => {
-			const due = dueReminders([entry({ start: D('2026-07-06T09:31:00Z'), reminders: [30] })], watermark, new Date('2026-07-06T09:02:00Z'))
+			const due = DueReminder.within([entry({ start: D('2026-07-06T09:31:00Z'), reminders: [30] })], watermark, new Date('2026-07-06T09:02:00Z'))
 			assert.equal(due[0]!.fireAt, Date.parse('2026-07-06T09:01:00Z'))
 			assert.equal(due[0]!.anchor, Date.parse('2026-07-06T09:31:00Z'))
 		})
 
 		it('skips entries with no anchor or no reminders', () => {
-			const due = dueReminders([
+			const due = DueReminder.within([
 				entry({ reminders: [30] }),
 				entry({ start: D('2026-07-06T09:31:00Z') }),
 				entry({ start: D('2026-07-06T09:31:00Z'), reminders: [] }),
@@ -52,36 +52,36 @@ describe('Reminders', () => {
 		})
 
 		it('an "at start" reminder (0) fires at the start itself', () => {
-			const due = dueReminders([entry({ start: D('2026-07-06T09:01:00Z'), reminders: [0] })], watermark, now)
+			const due = DueReminder.within([entry({ start: D('2026-07-06T09:01:00Z'), reminders: [0] })], watermark, now)
 			assert.equal(due.length, 1)
 			assert.equal(due[0]!.minutes, 0)
 		})
 
 		it('anchors a due-only task to its due date', () => {
-			const due = dueReminders([task({ due: D('2026-07-06T09:31:00Z'), reminders: [30] })], watermark, now)
+			const due = DueReminder.within([task({ due: D('2026-07-06T09:31:00Z'), reminders: [30] })], watermark, now)
 			assert.equal(due.length, 1)
 			assert.equal(due[0]!.anchor, Date.parse('2026-07-06T09:31:00Z'))
 		})
 
 		it('prefers the start over the due date when a task has both', () => {
-			const due = dueReminders([task({ start: D('2026-07-06T09:31:00Z'), due: D('2026-07-06T18:00:00Z'), reminders: [30] })], watermark, now)
+			const due = DueReminder.within([task({ start: D('2026-07-06T09:31:00Z'), due: D('2026-07-06T18:00:00Z'), reminders: [30] })], watermark, now)
 			assert.equal(due[0]!.anchor, Date.parse('2026-07-06T09:31:00Z'))
 		})
 
 		it('never anchors an EVENT to its end, since only a task has a due date', () => {
-			const due = dueReminders([entry({ end: D('2026-07-06T09:31:00Z'), reminders: [30] })], watermark, now)
+			const due = DueReminder.within([entry({ end: D('2026-07-06T09:31:00Z'), reminders: [30] })], watermark, now)
 			assert.equal(due.length, 0)
 		})
 
 		it('says nothing about a task the user already closed', () => {
 			const start = D('2026-07-06T09:31:00Z')
-			assert.equal(dueReminders([task({ start, reminders: [30], status: TaskStatus.Done })], watermark, now).length, 0)
-			assert.equal(dueReminders([task({ start, reminders: [30], status: TaskStatus.Cancelled })], watermark, now).length, 0)
-			assert.equal(dueReminders([task({ start, reminders: [30], status: TaskStatus.Doing })], watermark, now).length, 1)
+			assert.equal(DueReminder.within([task({ start, reminders: [30], status: TaskStatus.Done })], watermark, now).length, 0)
+			assert.equal(DueReminder.within([task({ start, reminders: [30], status: TaskStatus.Cancelled })], watermark, now).length, 0)
+			assert.equal(DueReminder.within([task({ start, reminders: [30], status: TaskStatus.Doing })], watermark, now).length, 1)
 		})
 
 		it('builds the notification of the entry it is due for', () => {
-			const [due] = dueReminders([task({ id: 'master__1', due: D('2026-07-06T09:31:00Z'), reminders: [30], location: 'Room 4', recurrenceMasterId: 'master', recurrenceId: D('2026-07-06T09:31:00Z') })], watermark, now)
+			const [due] = DueReminder.within([task({ id: 'master__1', due: D('2026-07-06T09:31:00Z'), reminders: [30], location: 'Room 4', recurringEntryId: 'master', recurrenceId: D('2026-07-06T09:31:00Z') })], watermark, now)
 			const { facts } = due!.notification()
 			assert.equal(facts.kind, 'task')
 			assert.equal(facts.tag, 'master__1|30')
@@ -96,22 +96,22 @@ describe('Reminders', () => {
 			const floating = () => entry({ start: D('2026-07-06T09:31:00Z'), reminders: [30], timeZone: FLOATING_TIME_ZONE })
 
 			it('resolves the wall clock in the observer zone', () => {
-				const due = dueReminders([floating()], new Date('2026-07-06T07:00:00Z'), new Date('2026-07-06T07:01:00Z'), () => 'Europe/Berlin')
+				const due = DueReminder.within([floating()], new Date('2026-07-06T07:00:00Z'), new Date('2026-07-06T07:01:00Z'), () => 'Europe/Berlin')
 				assert.equal(due.length, 1)
 				assert.equal(due[0]!.fireAt, Date.parse('2026-07-06T07:01:00Z'))
 			})
 
 			it('does not fire at the stored instant for that observer', () => {
-				assert.equal(dueReminders([floating()], watermark, now, () => 'Europe/Berlin').length, 0)
+				assert.equal(DueReminder.within([floating()], watermark, now, () => 'Europe/Berlin').length, 0)
 			})
 
 			it('falls back to the stored instant when no zone is known', () => {
-				assert.equal(dueReminders([floating()], watermark, now).length, 1)
+				assert.equal(DueReminder.within([floating()], watermark, now).length, 1)
 			})
 
 			it('leaves an all-day span alone, since those are floating DAYS, not wall clocks', () => {
 				const allDay = entry({ start: D('2026-07-06T09:31:00Z'), reminders: [30], timeZone: FLOATING_TIME_ZONE, allDay: true })
-				assert.equal(dueReminders([allDay], watermark, now, () => 'Europe/Berlin').length, 1)
+				assert.equal(DueReminder.within([allDay], watermark, now, () => 'Europe/Berlin').length, 1)
 			})
 		})
 	})

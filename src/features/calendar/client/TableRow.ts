@@ -45,7 +45,7 @@ export class TableRow {
 	 * window, a series' start stands for the whole series; the same occurrence elsewhere is itself alone.
 	 */
 	static for(entry: Entry, window?: TableWindow): TableRow {
-		const series = !!window?.unbounded && entry.isRecurring && entry.isSeriesStart
+		const series = !!window?.unbounded && entry.isRecurring && entry.isFirstOccurrence
 		const rows = series ? TableRow.seriesRows : TableRow.rows
 		let row = rows.get(entry)
 		if (!row) {

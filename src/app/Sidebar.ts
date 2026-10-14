@@ -1,6 +1,6 @@
 import { Component, component, html, css, property, state, event, eventListener, unsafeCSS, ifDefined } from '@a11d/lit'
 import { getIntegrations, getMeta, getUser, instanceName, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, getPrimarySource, setDefaultSource, reimportSource, reimportIntegration, reorderSources, reorderIntegrations, getEnabledSources, getVisibleSources, soloSource, restoreSourceVisibility, canRestoreSourceVisibility, canCopyEntriesOut, canMoveEntriesOut, getCapabilities, createSource } from '../infrastructure/http/Api.js'
-import { DialogAbout, hasUnseenChanges } from '../features/about/client/DialogAbout.js'
+import { DialogAbout } from '../features/about/client/DialogAbout.js'
 import { DialogIntegration } from '../integrations/client/DialogIntegration.js'
 import { DialogSourceMigration } from '../features/migration/client/DialogSourceMigration.js'
 import { DialogSourceDeletion } from '../features/sources/client/DialogSourceDeletion.js'
@@ -880,7 +880,7 @@ export class Sidebar extends Component {
 					<span class="name">${instanceName()}</span>
 					<span class="version">
 						<span class="label">${this.versionLabel}</span>
-						${this.updateHint || !hasUnseenChanges() ? html.nothing : html`<span class="news-dot" title=${t('What\'s New')}></span>`}
+						${this.updateHint || !DialogAbout.hasNews ? html.nothing : html`<span class="news-dot" title=${t('What\'s New')}></span>`}
 					</span>
 				</button>
 				<mitra-tabs .selected=${this.tab} @selectedChange=${(e: CustomEvent<string>) => this.setTab(e.detail as 'calendars' | 'planning')}>

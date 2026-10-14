@@ -81,8 +81,8 @@ export class SourceMigration {
 		}
 
 		// Identify masters with edited occurrence overrides to hold them back together.
-		const overrides = await em.find(Entry, { sourceId: origin.id, recurrenceMasterId: { $ne: null } })
-		const overriddenMasterIds = new Set(overrides.map(override => override.recurrenceMasterId!))
+		const overrides = await em.find(Entry, { sourceId: origin.id, recurringEntryId: { $ne: null } })
+		const overriddenMasterIds = new Set(overrides.map(override => override.recurringEntryId!))
 
 		return new SourceMigration(em, user, origin, originIntegration, target, targetIntegration, entries, overriddenMasterIds, keepOriginals, options.flatten === true)
 	}

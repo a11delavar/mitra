@@ -1,6 +1,7 @@
 import { Component, component, html, css, property, state, event, query, bind } from '@a11d/lit'
 import { type Entry } from '../../entries/Entry.js'
-import { searchLocations, getCapabilities, type LocationSuggestion } from '../../../infrastructure/http/Api.js'
+import { searchLocations, getCapabilities } from '../../../infrastructure/http/Api.js'
+import { type LocationSuggestion } from '../LocationSuggestion.js'
 import { LatestSearch } from '../../../design/Combobox.js'
 import { MarkdownLinks } from '../../../design/MarkdownLinks.js'
 import './MapLink.js'
@@ -18,29 +19,6 @@ function requestPosition() {
 		() => void 0,
 		{ maximumAge: 10 * 60_000 },
 	)
-}
-
-const PLACE_ICONS: Record<string, string> = {
-	restaurant: 'utensils', food_court: 'utensils', fast_food: 'hamburger',
-	cafe: 'coffee', bar: 'beer', pub: 'beer', biergarten: 'beer',
-	hotel: 'bed', hostel: 'bed', guest_house: 'bed', motel: 'bed', camp_site: 'tent',
-	supermarket: 'shopping-cart', mall: 'store', department_store: 'store', convenience: 'store',
-	museum: 'landmark', gallery: 'landmark', attraction: 'landmark', memorial: 'landmark', monument: 'landmark', castle: 'landmark',
-	station: 'train-front', halt: 'train-front', tram_stop: 'train-front', aerodrome: 'plane',
-	hospital: 'hospital', clinic: 'hospital', doctors: 'hospital', pharmacy: 'hospital',
-	school: 'graduation-cap', university: 'graduation-cap', college: 'graduation-cap', library: 'library',
-	cinema: 'clapperboard', theatre: 'theater',
-	park: 'trees', garden: 'trees', playground: 'trees', nature_reserve: 'trees',
-	sports_centre: 'dumbbell', fitness_centre: 'dumbbell', stadium: 'dumbbell', pitch: 'dumbbell',
-	place_of_worship: 'church', bank: 'banknote',
-}
-
-function placeIcon(suggestion: LocationSuggestion): string {
-	return suggestion.recent ? 'history' : PLACE_ICONS[suggestion.type ?? ''] ?? 'map-pin'
-}
-
-function placeLabel(type: string): string {
-	return type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
 }
 
 /**
@@ -113,7 +91,7 @@ export class LocationField extends Component {
 	}
 
 	private pick(suggestion: LocationSuggestion) {
-		this.entry.location = suggestion.detail ? `${suggestion.name}, ${suggestion.detail}` : suggestion.name
+		this.entry.location = suggestion.location
 		if (this.field) {
 			this.field.value = this.entry.location
 		}
@@ -213,11 +191,11 @@ export class LocationField extends Component {
 				<mitra-listbox aria-label=${t('Location')}>
 					${this.suggestions.map(suggestion => html`
 						<mitra-option .value=${suggestion}>
-							<mitra-icon class="glyph" icon=${placeIcon(suggestion)}></mitra-icon>
+							<mitra-icon class="glyph" icon=${suggestion.icon}></mitra-icon>
 							<span class="text">
 								<span class="name">
 									${suggestion.name}
-									${!suggestion.type ? html.nothing : html`<span class="kind">· ${placeLabel(suggestion.type)}</span>`}
+									${!suggestion.kind ? html.nothing : html`<span class="kind">· ${suggestion.kind}</span>`}
 								</span>
 								${!suggestion.detail ? html.nothing : html`<span class="detail">${suggestion.detail}</span>`}
 							</span>
