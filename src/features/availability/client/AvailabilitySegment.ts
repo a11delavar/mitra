@@ -41,9 +41,11 @@ export class AvailabilitySegment extends Component {
 				${entryColors};
 
 				> .window, > .labels {
+					grid-row: 1;
 					grid-column: 1 / -1;
-					grid-row: var(--_availability-rows);
-					position: relative;
+					position: absolute;
+					inset-block: calc(var(--_from) * 100% / 1440) calc((1440 - var(--_to)) * 100% / 1440);
+					inset-inline: 0;
 				}
 
 				/* The same tint reads far weaker on a light day than on a dark one, so light mode takes more of it. */

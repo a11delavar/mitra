@@ -124,8 +124,10 @@ export class Day extends Component {
 
 				.entries {
 					grid-row: 2;
+					/* One row, and each thing on it placed by its own fraction of the day: Firefox rounds every grid track to 1/60 px,
+					   so in 1440 minute rows a zoom moved what lay deep in the day in 7–15 px steps. */
 					display: grid;
-					grid-template-rows: repeat(1440, minmax(0, 1fr));
+					grid-template-rows: minmax(0, 1fr);
 					grid-template-columns: 1fr;
 					position: relative;
 					padding-inline: 1px;
@@ -134,9 +136,13 @@ export class Day extends Component {
 					--_edge-gutter: max(0.5rem, var(--_availability-present) * (var(--_availability-label) + 0.125rem));
 
 					mitra-entry-segment {
+						grid-row: 1;
 						grid-column: 1 / -1;
+						/* Absolute in its grid area, so its margins take from its minutes as they did stretched across its rows. */
+						position: absolute;
+						inset-block: calc(var(--_from) * 100% / 1440) calc((1440 - var(--_to)) * 100% / 1440);
+						inset-inline-start: 0;
 						z-index: 2;
-						position: relative;
 
 						&[selected] {
 							z-index: 99;
@@ -173,14 +179,15 @@ export class Day extends Component {
 			<div class="entries" style=${styleMap({ '--_availability-present': this.availability.some(({ segment }) => Availability.labelOf(segment.entry)) ? '1' : '0' })}>
 				${repeat(this.availability, ({ segment }) => segment.entry, ({ segment, labelAt }) => html`
 					<mitra-availability-segment
-						style=${styleMap({ '--_availability-rows': `${segment.startMinute} / ${segment.endMinute}`, '--_availability-label-at': `${labelAt}` })}
+						style=${styleMap({ '--_from': `${segment.startMinute - 1}`, '--_to': `${segment.endMinute - 1}`, '--_availability-label-at': `${labelAt}` })}
 						.segment=${segment}
 					></mitra-availability-segment>
 				`)}
 				${repeat(this.entries, segment => segment.entry, segment => html`
 					<mitra-entry-segment
 						style=${styleMap({
-							gridRow: `${segment.startMinute} / ${segment.endMinute}`,
+							'--_from': `${segment.startMinute - 1}`,
+							'--_to': `${segment.endMinute - 1}`,
 							'--overlap-slot': `${segment.overlap?.slot ?? 0}`,
 							'--overlap-total': `${segment.overlap?.total ?? 1}`,
 							'--overlap-span': `${segment.overlap?.span ?? 1}`,

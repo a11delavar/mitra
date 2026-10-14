@@ -315,6 +315,14 @@ export class Days extends Component {
 
 					.timezone, .axis { user-select: none; }
 
+					/* Placed by their minute's fraction of the day, as the chips are (Day.ts). */
+					:is(.axis, .overlays) > :is(.hour, .now) {
+						grid-row: 1;
+						align-self: start;
+						position: relative;
+						top: calc(var(--_at) * 100% / 1440);
+					}
+
 					.timezone {
 						grid-column: 1 / calc(-1 * var(--_days-length) - 1);
 						grid-row: 1;
@@ -332,7 +340,7 @@ export class Days extends Component {
 						grid-column: 1 / calc(-1 * var(--_days-length) - 1);
 						grid-row: 3;
 						display: grid;
-						grid-template-rows: repeat(1440, minmax(0, 1fr));
+						grid-template-rows: minmax(0, 1fr);
 						grid-template-columns: subgrid;
 						position: sticky;
 						inset-inline-start: 0;
@@ -379,7 +387,7 @@ export class Days extends Component {
 						grid-column: calc(-1 * var(--_days-length) - 1) / -1;
 						grid-row: 3;
 						display: grid;
-						grid-template-rows: repeat(1440, minmax(0, 1fr));
+						grid-template-rows: minmax(0, 1fr);
 						grid-template-columns: subgrid;
 
 						/* Click-through: a line lies over the day, and a click on it belongs to what is beneath (the grid's create
@@ -556,24 +564,24 @@ export class Days extends Component {
 						const isCloseToNow = !zone && todayIndex !== -1 && Math.abs(i * 60 - currentMinute) < 15
 						const timeText = (i === 0 || isCloseToNow) ? '' : reference.with({ hour: i, minute: 0, second: 0, millisecond: 0 }).format(!zone ? hourStyle : styleIn(zone.zone))
 						return html`
-							<div class="hour" style="grid-row: ${i * 60 + 1}; grid-column: ${column + 2};" ?data-foreign=${!!zone}>
+							<div class="hour" style="--_at: ${i * 60}; grid-column: ${column + 2};" ?data-foreign=${!!zone}>
 								${timeText}
 							</div>
 						`
 					}))}
 					${todayIndex === -1 ? html.nothing : html`
-						<div class="now" style="grid-row: ${currentMinute + 1};">${currentTimeString}</div>
+						<div class="now" style="--_at: ${currentMinute};">${currentTimeString}</div>
 					`}
 				</div>
 
 				<div class="overlays">
 					${Array.from({ length: reference.hoursInDay }).map((_, i) => {
 						if (i === 0) return html.nothing
-						return html`<div class="hour" style="grid-row: ${i * 60 + 1};"></div>`
+						return html`<div class="hour" style="--_at: ${i * 60};"></div>`
 					})}
 
 					${todayIndex === -1 ? html.nothing : html`
-						<div class="now" style="grid-row: ${currentMinute + 1};">
+						<div class="now" style="--_at: ${currentMinute};">
 							<div class="track"></div>
 							<div class="line" style="grid-column: ${todayIndex + 1};"></div>
 						</div>
