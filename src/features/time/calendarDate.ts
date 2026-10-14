@@ -24,29 +24,3 @@ export function calendarDateOf(instant: Date, zone?: string | null): Temporal.Pl
 export function midnightOf(date: Temporal.PlainDate, zone: string): Date {
 	return new Date(date.toZonedDateTime(zone).epochMilliseconds)
 }
-
-// --- The all-day API boundary --------------------------------------------------------------------
-// An all-day bound is a DATE, but it's stored and carried as an INSTANT (a `Date`/epoch-ms column, so
-// the whole Entry model can hold one field type), CANONICALLY as the date's UTC midnight, which is
-// zone-less and deterministic on every server (the container's TZ is irrelevant). Crossing the
-// boundary therefore always reinterprets across zones (read which date the instant falls on in one
-// zone, re-anchor its midnight in another), so the event covers the same calendar dates, midnight to
-// midnight, for every viewer.
-
-/**
- * Normalize an instant to the CANONICAL all-day bound of the calendar date it falls on in `zone`
- * (that date's UTC midnight). The WRITE side: what the API stores when a viewer in `zone`
- * creates/edits an all-day entry. Inverse of {@link projectAllDay}.
- */
-export function normalizeAllDay(instant: Date, zone?: string | null): Date {
-	return midnightOf(calendarDateOf(instant, zone), 'UTC')
-}
-
-/**
- * Project a canonical all-day bound to the instant it begins at in `zone`: the date's local
- * midnight there. The READ side: a stored UTC-midnight date rendered for a viewer. Inverse of
- * {@link normalizeAllDay}.
- */
-export function projectAllDay(canonical: Date, zone: string): Date {
-	return midnightOf(calendarDateOf(canonical, 'UTC'), zone)
-}

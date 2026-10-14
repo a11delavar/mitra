@@ -8,10 +8,10 @@ import { type Relation } from '../../features/relations/Relation.js'
 import { type RecurrenceScope } from '../../features/recurrence/Recurrence.js'
 import { Integration } from '../../integrations/Integration.js'
 import { type EntryType } from '../../features/entries/EntryType.js'
-import { type Entry } from '../../features/entries/Entry.js'
+import { Entry } from '../../features/entries/Entry.js'
 import { EntryPatch, type EntryPatchField } from '../../features/entries/EntryPatch.js'
-import { TimeZone } from '../../features/time/TimeZone.js'
 import { EntryTimeZone } from '../../features/entries/EntryTimeZone.js'
+import { TimeZone } from '../../features/time/TimeZone.js'
 import { type ChangelogSection } from '../../features/about/Changelog.js'
 import { type ReleaseFolder } from '../../features/about/Release.js'
 import { type UserSettings } from '../../features/settings/UserSettings.js'
@@ -97,6 +97,7 @@ export async function setSeenVersion(version: string) {
 	return currentUser = await Api.put<User>('/user/seen-version', { version })
 }
 
+/** The device's zone, which only "today" needs on the server: the current occurrence of a recurring task without a start. */
 const tz = () => encodeURIComponent(TimeZone.deviceId)
 
 export async function fetchUser() {
@@ -145,7 +146,7 @@ export function fetchEvents(start: DateTime, end: DateTime) {
 
 /** Every visible entry whatever its dates, a series once as the occurrence it starts on. */
 export function fetchAllEntries() {
-	return Api.get<Array<Entry>>(`/entries/all?tz=${tz()}`)
+	return Api.get<Array<Entry>>('/entries/all')
 }
 
 export function searchEntries(query: string) {
@@ -154,7 +155,7 @@ export function searchEntries(query: string) {
 
 /** Every entry the user's relation graph reaches, for client-side graph calculations. */
 export function getRelationClosure() {
-	return Api.get<Array<Entry>>(`/entries/relations/closure?tz=${tz()}`)
+	return Api.get<Array<Entry>>('/entries/relations/closure')
 }
 
 /** Stores tasks' places in the manual order, as rank keys by entry id. */
@@ -163,11 +164,11 @@ export function rankEntries(ranks: Record<string, string>) {
 }
 
 export function updateRelations(id: string, relations: Array<Relation> | null) {
-	return Api.put<Entry>(`/entries/${id}?tz=${tz()}`, { relations })
+	return Api.put<Entry>(`/entries/${id}`, { relations })
 }
 
 export function createEvent(entry: Entry) {
-	return Api.post<Entry>(`/entries?tz=${tz()}`, Object.assign(EntryPatch.of(entry), {
+	return Api.post<Entry>('/entries', Object.assign(EntryPatch.of(entry), {
 		timeZone: entry.timeZone ?? EntryTimeZone.parse(TimeZone.deviceId) ?? null,
 	}))
 }
@@ -286,7 +287,7 @@ export function deleteIntegration(id: string) {
 
 /** Writes `fields` of the entry, or of every occurrence of a repeating one: those they all share, unless told otherwise. */
 export function updateEvent(entry: Entry, fields: ReadonlyArray<EntryPatchField> = entry.recurringEntryId ? EntryPatch.shared : EntryPatch.fields) {
-	return Api.put<Entry>(`/entries/${entry.recurringEntryId ?? entry.id}?tz=${tz()}`, EntryPatch.of(entry, fields))
+	return Api.put<Entry>(`/entries/${entry.recurringEntryId ?? entry.id}`, EntryPatch.of(entry, fields))
 }
 
 export function deleteEvent(id: string) {
@@ -305,7 +306,9 @@ export function searchLocations(query: string, position?: { lat: number, lon: nu
 
 /** One occurrence of a repeating entry, addressed through the entry with how far a change to it reaches. */
 function occurrenceUrl(occurrence: Entry, scope: RecurrenceScope) {
-	const query = new URLSearchParams({ scope, recurrenceId: occurrence.recurrenceId!.toISOString(), tz: TimeZone.deviceId })
+	// Named as the wire names it: an all-day occurrence by its day's UTC midnight.
+	const recurrenceId = new Date(Entry.storedDay(occurrence.recurrenceId, occurrence)!).toISOString()
+	const query = new URLSearchParams({ scope, recurrenceId })
 	return `/entries/${occurrence.recurringEntryId}?${query}`
 }
 

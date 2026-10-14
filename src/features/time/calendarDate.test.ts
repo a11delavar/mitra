@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { calendarDateOf, midnightOf, normalizeAllDay, projectAllDay } from './calendarDate.js'
+import { calendarDateOf, midnightOf } from './calendarDate.js'
 
 // All-day bounds are calendar DATES: stored as canonical UTC midnights, projected into the viewer's
 // zone on read. `calendarDateOf` and `midnightOf` must be exact inverses in every zone, or an
@@ -32,18 +32,6 @@ describe('all-day date encoding', () => {
 		assert.ok(calendarDateOf(new Date('2026-07-11T22:30:00Z'), 'Europe/Berlin') instanceof Temporal.PlainDate)
 		assert.equal(calendarDateOf(new Date('2026-07-11T22:30:00Z'), 'Europe/Berlin').toString(), '2026-07-12')
 		assert.ok(calendarDateOf(new Date()) instanceof Temporal.PlainDate)
-	})
-
-	it('normalizeAllDay ↔ projectAllDay are inverses across the API boundary', () => {
-		// A Berlin viewer's local midnight of Jun 2 (22:00Z Jun 1) normalizes to the canonical UTC date…
-		const berlinMidnight = new Date('2026-06-01T22:00:00Z')
-		assert.equal(normalizeAllDay(berlinMidnight, 'Europe/Berlin').toISOString(), '2026-06-02T00:00:00.000Z')
-		// …and projecting that canonical date back for the same viewer returns the same local midnight.
-		assert.equal(projectAllDay(normalizeAllDay(berlinMidnight, 'Europe/Berlin'), 'Europe/Berlin').toISOString(), berlinMidnight.toISOString())
-		// A viewer west of UTC: canonical Jun 2 projects to Jun 2 04:00Z, and normalizes straight back.
-		const canonical = new Date('2026-06-02T00:00:00Z')
-		assert.equal(projectAllDay(canonical, 'America/New_York').toISOString(), '2026-06-02T04:00:00.000Z')
-		assert.equal(normalizeAllDay(projectAllDay(canonical, 'America/New_York'), 'America/New_York').toISOString(), canonical.toISOString())
 	})
 
 	it('a DST-skipped midnight lands on the day\'s first existing wall-clock time', () => {

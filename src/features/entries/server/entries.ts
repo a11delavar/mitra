@@ -10,47 +10,24 @@ import { EntryRelation } from '../../relations/EntryRelation.js'
 import { Entry } from '../Entry.js'
 import { EntryPatch } from '../EntryPatch.js'
 import { type Relation } from '../../relations/Relation.js'
-import { type EntryTimeZone } from '../EntryTimeZone.js'
-import { normalizeAllDay, projectAllDay } from '../../time/calendarDate.js'
-import { editOccurrence, deleteOccurrence, expandedOccurrences, seriesStarts, nearestOccurrence, occurrenceAt } from '../../recurrence/server/occurrences.js'
 import { TaskStatus } from '../TaskStatus.js'
 import { Transparency } from '../Transparency.js'
+import { editOccurrence, deleteOccurrence, expandedOccurrences, seriesStarts, nearestOccurrence, occurrenceAt } from '../../recurrence/server/occurrences.js'
 import { entrySearch, entryWindow, everyEntry } from './entryWindow.js'
 import { assertRelationsValid, attachRelations, relationClosure } from '../../relations/server/relations.js'
 import { EntryRank } from '../EntryRank.js'
 
 const logger = createLogger('Entries')
 
-// Canonical all-day dates are stored as UTC midnights and projected into the viewer's zone on transit.
+// The viewer's zone, which only "today" needs: the current occurrence of a recurring task without a start.
 const viewerZone = (req: Request) => typeof req.query.tz === 'string' && req.query.tz ? req.query.tz : undefined
 
-const dayZone = (req: Request, timeZone: EntryTimeZone | undefined) =>
-	viewerZone(req) ?? (timeZone && !timeZone.floating ? timeZone.clock : undefined)
-
-/** The all-day dates `patch` carried, from midnights in the sender's zone to the canonical UTC ones. */
-function normalizeDays(entry: Entry, patch: EntryPatch, zone: string | undefined) {
-	for (const field of ['start', 'end', 'due'] as const) {
-		const date = entry[field]
-		if (entry.allDay && patch[field] && date) {
-			entry[field] = normalizeAllDay(date, zone) as never
-		}
-	}
-}
-
-/** Projects canonical all-day dates into viewer timezone before serialization. */
-function projectedForViewer<T extends Entry>(entry: T, zone: string | undefined): T {
-	if (entry.allDay && zone) {
-		const project = (instant: Date) => projectAllDay(instant, zone) as never
-		entry.start = entry.start ? project(entry.start) : entry.start
-		entry.end = entry.end ? project(entry.end) : entry.end
-		entry.due = entry.due ? project(entry.due) : entry.due
-		entry.recurrenceId = entry.recurrenceId ? project(entry.recurrenceId) : entry.recurrenceId
-		entry.seriesStart = entry.seriesStart ? project(entry.seriesStart) : entry.seriesStart
-	}
-	return entry
-}
-
 export const entriesRouter = Router()
+
+// A tab from before all-day dates traveled as days sends its zone with every write, and those days as its own midnights.
+entriesRouter.use((req, res, next) => req.method !== 'GET' && req.query.tz
+	? res.status(409).json({ error: 'Mitra was updated. Reload the page to save your changes.' })
+	: next())
 
 entriesRouter.get('/', async (req, res) => {
 	const { start, end } = req.query as { start?: string, end?: string }
@@ -71,7 +48,7 @@ entriesRouter.get('/', async (req, res) => {
 
 	const entries = [...rows, ...occurrences]
 	await attachRelations(em, req.user, entries)
-	return res.json(entries.map(entry => projectedForViewer(entry, viewerZone(req))))
+	return res.json(entries.map(entry => entry))
 })
 
 entriesRouter.get('/all', async (req, res) => {
@@ -79,7 +56,7 @@ entriesRouter.get('/all', async (req, res) => {
 	const visibleSourceIds = (await req.user.sources(em, { enabled: true, hidden: false })).map(source => source.id)
 	const entries = [...await em.find(Entry, everyEntry(visibleSourceIds)), ...await seriesStarts(em, visibleSourceIds)]
 	await attachRelations(em, req.user, entries)
-	return res.json(entries.map(entry => projectedForViewer(entry, viewerZone(req))))
+	return res.json(entries.map(entry => entry))
 })
 
 entriesRouter.get('/search', async (req, res) => {
@@ -99,13 +76,13 @@ entriesRouter.get('/search', async (req, res) => {
 	const entries = await nearestOccurrence(em, matches, viewerZone(req) ?? 'UTC', new Date())
 
 	await attachRelations(em, req.user, entries)
-	return res.json(entries.map(entry => projectedForViewer(entry, viewerZone(req))))
+	return res.json(entries.map(entry => entry))
 })
 
 entriesRouter.get('/relations/closure', async (req, res) => {
 	const em = orm.em.fork()
 	const entries = await relationClosure(em, req.user)
-	return res.json(entries.map(entry => projectedForViewer(entry, viewerZone(req))))
+	return res.json(entries.map(entry => entry))
 })
 
 /** Stores where the client placed tasks in the manual order, as their ranks keyed by entry id. */
@@ -182,14 +159,12 @@ entriesRouter.post('/', async (req, res) => {
 		return res.status(400).json({ error: relationsError })
 	}
 
-	normalizeDays(incoming, patch, dayZone(req, incoming.timeZone))
-
 	const created = await targetIntegration.createEntry(em, incoming)
 	await EntryRelation.reconcile(em, created.id!, created.relations ?? null)
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
 	logger.debug(`Created ${created.type} "${created.heading}" (${created.id}) in source ${targetSource.id}`)
-	return res.status(201).json(projectedForViewer(created, viewerZone(req)))
+	return res.status(201).json(created)
 })
 
 entriesRouter.put('/:id', async (req, res) => {
@@ -262,18 +237,14 @@ entriesRouter.put('/:id', async (req, res) => {
 		return res.status(400).json({ error: 'The picked calendar cannot hold this entry type' })
 	}
 
-	// A tab from before the scope moved into the address still sends it in the body.
-	const { scope, recurrenceId } = (req.query.scope ? req.query : req.body) as { scope?: RecurrenceScope, recurrenceId?: string }
+	const { scope, recurrenceId } = req.query as { scope?: RecurrenceScope, recurrenceId?: string }
 	if (scope && recurrenceId) {
-		const occurrenceId = existing.allDay
-			? normalizeAllDay(new Date(recurrenceId), dayZone(req, existing.timeZone))
-			: new Date(recurrenceId)
+		const occurrenceId = new Date(recurrenceId)
 		// Absent dates are the occurrence's own, never the master's: the master's start would move the series to its first occurrence.
 		const edited = occurrenceAt(existing, occurrenceId).apply(patch)
 		if (!targetIntegration.capabilities.estimate) {
 			edited.estimate = undefined
 		}
-		normalizeDays(edited, patch, dayZone(req, edited.timeZone))
 		const movingTo = targetSource.id === currentSource.id ? undefined : { source: targetSource, integration: targetIntegration }
 		if (movingTo && !targetIntegration.canHold(targetSource, existing.type)) {
 			return res.status(400).json({ error: 'The picked calendar cannot hold this entry type' })
@@ -290,13 +261,12 @@ entriesRouter.put('/:id', async (req, res) => {
 		await attachRelations(em, req.user, [result])
 		syncEmitter.emit('updated', req.user.id)
 		logger.debug(`Edited occurrence of series ${existing.id} (scope '${scope}')`)
-		return res.json(projectedForViewer(result, viewerZone(req)))
+		return res.json(result)
 	}
 
 	if (!targetIntegration.capabilities.estimate) {
 		incoming.estimate = undefined
 	}
-	normalizeDays(incoming, patch, dayZone(req, incoming.timeZone))
 
 	// DTSTART is required for VEVENT (RFC 5545 §3.6.1).
 	if (patch.start === null && existing.start && !incoming.type.isTask) {
@@ -321,7 +291,7 @@ entriesRouter.put('/:id', async (req, res) => {
 		await em.flush()
 		syncEmitter.emit('updated', req.user.id)
 		logger.debug(`Re-created entry ${existing.id} as ${created.type} in source ${targetSource.id} (new id ${created.id})`)
-		return res.json(projectedForViewer(created, viewerZone(req)))
+		return res.json(created)
 	}
 
 	await targetIntegration.updateEntry(em, existing, incoming)
@@ -332,7 +302,7 @@ entriesRouter.put('/:id', async (req, res) => {
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
 	logger.debug(`Updated entry ${existing.id} "${incoming.heading}"`)
-	return res.json(projectedForViewer(existing, viewerZone(req)))
+	return res.json(existing)
 })
 
 /** Marks a task done without a full entry body, for a notification's Done button. */
@@ -352,7 +322,7 @@ entriesRouter.post('/:id/complete', async (req, res) => {
 
 	const { recurrenceId } = req.body as { recurrenceId?: number }
 
-	// An occurrence detaches like a 'this' edit. Its recurrenceId comes canonical from the scheduler, so no viewer-zone normalization.
+	// An occurrence detaches like a 'this' edit.
 	if (typeof recurrenceId === 'number' && existing.recurrence?.freq) {
 		const start = new Date(recurrenceId)
 		const occurrence = occurrenceAt(existing, start)
@@ -361,21 +331,21 @@ entriesRouter.post('/:id/complete', async (req, res) => {
 		await em.flush()
 		syncEmitter.emit('updated', req.user.id)
 		logger.debug(`Completed occurrence ${start.toISOString()} of series ${existing.id} "${existing.heading}"`)
-		return res.json(projectedForViewer(detached, viewerZone(req)))
+		return res.json(detached)
 	}
 
 	const incoming = existing.clone()
 	incoming.setStatus(TaskStatus.Done, capabilities)
 	// A second tap must not write to the provider again.
 	if (incoming.status === existing.status && incoming.percentComplete === existing.percentComplete) {
-		return res.json(projectedForViewer(existing, viewerZone(req)))
+		return res.json(existing)
 	}
 
 	await integration.updateEntry(em, existing, incoming)
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
 	logger.debug(`Completed task ${existing.id} "${existing.heading}"`)
-	return res.json(projectedForViewer(existing, viewerZone(req)))
+	return res.json(existing)
 })
 
 entriesRouter.delete('/:id', async (req, res) => {
@@ -390,7 +360,7 @@ entriesRouter.delete('/:id', async (req, res) => {
 
 	const { scope, recurrenceId } = req.query as { scope?: RecurrenceScope, recurrenceId?: string }
 	if (scope && scope !== 'all' && recurrenceId) {
-		const occurrenceId = entry.allDay ? normalizeAllDay(new Date(recurrenceId), dayZone(req, entry.timeZone)) : new Date(recurrenceId)
+		const occurrenceId = new Date(recurrenceId)
 		await deleteOccurrence(em, integration, entry, occurrenceId, scope)
 		await em.flush()
 		syncEmitter.emit('updated', req.user.id)

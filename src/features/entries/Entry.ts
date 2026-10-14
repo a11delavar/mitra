@@ -21,6 +21,7 @@ import { type ReminderDefaults } from '../reminders/ReminderDefaults.js'
 import { type Integration } from '../../integrations/Integration.js'
 import { TimeZone } from '../time/TimeZone.js'
 import { EntryPatch } from './EntryPatch.js'
+import { calendarDateOf, midnightOf } from '../time/calendarDate.js'
 
 export interface EntryTally {
 	readonly done: number
@@ -92,11 +93,11 @@ export class Entry {
 	@property({ type: 'string' }) location = ''
 	@property({ type: 'string', nullable: true }) color?: string
 
-	@property({ type: 'Date', nullable: true }) start?: DateTime
-	@property({ type: 'Date', nullable: true }) end?: DateTime
+	@Entry.date() start?: DateTime
+	@Entry.date() end?: DateTime
 
-	/** Apart from the schedule. All-day, it is the due day's canonical midnight. */
-	@property({ type: 'Date', nullable: true }) due?: DateTime
+	/** Apart from the schedule. */
+	@Entry.date() due?: DateTime
 
 	/** A task's length in minutes while it has no start. The end is the same fact once it does, so one of the two is always empty. */
 	@property({ type: 'number', nullable: true }) estimate?: number
@@ -253,8 +254,8 @@ export class Entry {
 	@embedded(() => Recurrence, { prefix: 'recurrence_', nullable: true }) recurrence?: Recurrence
 	@property({ type: 'json', nullable: true }) exdates?: Array<number>
 	@property({ type: 'string', nullable: true, fieldName: 'recurrence_master_id' }) recurringEntryId?: string
-	@property({ type: 'Date', nullable: true }) recurrenceId?: DateTime
-	seriesStart?: DateTime
+	@Entry.date() recurrenceId?: DateTime
+	@Entry.date({ persist: false }) seriesStart?: DateTime
 
 	/** Unknown while absent, none while `null`: a provider may not say. */
 	relations?: Array<Relation> | null
@@ -290,6 +291,35 @@ export class Entry {
 		// Calendar days, so an all-day span across a DST change still reads as whole days.
 		const { days, hours, minutes } = this.start.zonedDateTime.until(this.end.zonedDateTime, { largestUnit: 'days', smallestUnit: 'minutes' })
 		return new Intl.DurationFormat(Localizer.locales.current, { style: 'narrow' }).format({ days, hours, minutes })
+	}
+
+	/** The zone this runtime shows an all-day entry's days in: the browser's own; none on the server, which keeps them as stored. */
+	static dayZone = (): string | undefined => mitra.runtime === 'browser' ? TimeZone.deviceId : undefined
+
+	/**
+	 * Declares one of the entry's dates. The entry holds an all-day date as the midnight that begins its day in `dayZone`,
+	 * and the wire carries it as that day's UTC midnight, which the database keeps: the conversion reads `allDay` from the
+	 * same entry, so it happens only on the way in and out, whatever order the fields come in.
+	 */
+	static date(options: { persist?: boolean } = {}): PropertyDecorator {
+		return (prototype, key) => {
+			converter({ construct: Entry.shownDay, deconstruct: Entry.storedDay })(prototype, key)
+			if (options.persist !== false) {
+				property({ type: 'Date', nullable: true })(prototype as never, String(key))
+			}
+		}
+	}
+
+	/** A day the wire carries as its UTC midnight, as the midnight that begins it in `dayZone`. */
+	static shownDay(value: Date | string | null | undefined, data: { allDay?: boolean | null }) {
+		const zone = Entry.dayZone()
+		return !data.allDay || !zone || !value ? value : new DateTime(midnightOf(calendarDateOf(new Date(value), 'UTC'), zone).getTime())
+	}
+
+	/** The day a midnight in `dayZone` begins, as the UTC midnight the wire carries. */
+	static storedDay(value: Date | string | null | undefined, data: { allDay?: boolean | null }) {
+		const zone = Entry.dayZone()
+		return !data.allDay || !zone || !value ? value : midnightOf(calendarDateOf(new Date(value), zone), 'UTC')
 	}
 
 	constructor(init?: Partial<Entry>) {

@@ -30,8 +30,8 @@ describe('EntryPatch', () => {
 			assert.equal(patch.color, null)
 		})
 
-		it('takes only the fields it is given', () => {
-			assert.deepEqual(Object.keys(EntryPatch.of(task(), ['heading', 'due'])), ['heading', 'due'])
+		it('takes only the fields it is given, and allDay with a date', () => {
+			assert.deepEqual(Object.keys(EntryPatch.of(task(), ['heading', 'due'])), ['allDay', 'heading', 'due'])
 		})
 
 		it('leaves out relations the entry does not know, and clears none it knows to have', () => {

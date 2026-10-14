@@ -13,7 +13,7 @@ import { EntryRelation } from '../../features/relations/EntryRelation.js'
 import { Entry } from '../../features/entries/Entry.js'
 import { TaskStatus } from '../../features/entries/TaskStatus.js'
 import { Color } from '../../features/sources/Color.js'
-import { normalizeAllDay } from '../../features/time/calendarDate.js'
+import { calendarDateOf, midnightOf } from '../../features/time/calendarDate.js'
 import { RecurrenceFrequency } from '../../features/recurrence/RecurrenceFrequency.js'
 import { RecurrenceWeekday } from '../../features/recurrence/RecurrenceWeekday.js'
 
@@ -151,7 +151,7 @@ export class Demo extends MitraCalendar {
 		const pastStart = mondayOf(todayStart.subtract({ years: 2 }))
 
 		const at = (base: DateTime, dayOffset: number, hour: number, minute = 0) => base.add({ days: dayOffset }).with({ hour, minute })
-		const allDayStart = (base: DateTime, dayOffset: number) => normalizeAllDay(base.add({ days: dayOffset })) as unknown as DateTime
+		const allDayStart = (base: DateTime, dayOffset: number) => midnightOf(calendarDateOf(base.add({ days: dayOffset })), 'UTC') as DateTime
 
 		const on = (source: Source) => (init: Partial<Entry>) => {
 			const entry = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: source.defaultEntryType, ...init, sourceId: source.id })

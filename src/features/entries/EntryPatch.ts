@@ -1,6 +1,6 @@
 import { construct, converter } from '@a11d/converter'
 import { model } from '../../infrastructure/model/model.js'
-import { type Entry } from './Entry.js'
+import { Entry } from './Entry.js'
 import { EntryType } from './EntryType.js'
 import { TaskStatus } from './TaskStatus.js'
 import { Transparency } from './Transparency.js'
@@ -11,8 +11,10 @@ import { Participants, type Participant } from '../participants/Participant.js'
 import { EntryRelations } from '../relations/EntryRelations.js'
 import { type Relation } from '../relations/Relation.js'
 
+/** A date as `Entry` converts it, an all-day one by the `allDay` beside it; called at run time, as the two modules import each other. */
 const date = {
-	construct: (value: string | Date | null | undefined) => value === null || value === undefined ? value : new DateTime(value),
+	construct: (value: string | Date | null | undefined, data: { allDay?: boolean | null }) => value === null || value === undefined ? value : Entry.shownDay(new DateTime(value), data),
+	deconstruct: (value: Date | null | undefined, data: { allDay?: boolean | null }) => Entry.storedDay(value, data),
 }
 
 /**
@@ -33,10 +35,11 @@ export class EntryPatch {
 	/** What an edit of one occurrence carries: neither its type nor its rule are its own. */
 	static readonly occurrence = EntryPatch.fields.filter(field => field !== 'type' && field !== 'recurrence' && field !== 'relations')
 
-	/** The given fields of `entry` as they stand, an empty one as cleared. */
+	/** The given fields of `entry` as they stand, an empty one as cleared. A date brings `allDay`, which tells how it travels. */
 	static of(entry: Entry, fields: ReadonlyArray<EntryPatchField> = EntryPatch.fields) {
 		const patch = new EntryPatch()
-		for (const field of fields) {
+		const dated = fields.some(field => field === 'start' || field === 'end' || field === 'due')
+		for (const field of dated && !fields.includes('allDay') ? ['allDay' as const, ...fields] : fields) {
 			// Relations alone tell unknown (absent) from none (null), so unknown ones stay out.
 			if (field !== 'relations' || entry.relations !== undefined) {
 				Object.assign(patch, { [field]: entry[field] ?? null })
