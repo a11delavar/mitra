@@ -158,6 +158,7 @@ export class DialogAbout extends DialogComponent {
 						font-variant-numeric: tabular-nums;
 						color: var(--color-text-muted);
 						user-select: text;
+						-webkit-user-select: text;
 
 						.build {
 							font-size: 0.6875rem;
@@ -188,6 +189,7 @@ export class DialogAbout extends DialogComponent {
 							text-align: start;
 							color: var(--color-text);
 							user-select: text;
+							-webkit-user-select: text;
 
 							.code {
 								font-family: ui-monospace, 'Cascadia Code', monospace;
