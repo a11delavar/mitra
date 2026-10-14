@@ -573,6 +573,7 @@ declare global {
 		"Unscheduled": unknown
 		"Until": unknown
 		"Untitled": unknown
+		"Update available": unknown
 		"Update available: ${version}": unknown
 		"Username": unknown
 		"Username (optional)": unknown

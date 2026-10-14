@@ -330,6 +330,7 @@
 	"unchanged": "inchangé",
 	"Unreleased": "Non publié",
 	"Untitled": "Sans titre",
+	"Update available": "Mise à jour disponible",
 	"Update available: ${version}": "Mise à jour disponible : ${version}",
 	"Username": "Nom d'utilisateur",
 	"About.Keywords": "version build info release commit stand à propos",

@@ -205,7 +205,7 @@ export class DialogAbout extends DialogComponent {
 						}
 					}
 
-					/* As narrow as the sidebar, so its words wrap rather than run past it ("New dev build: 2 commits ahead"). */
+					/* As narrow as the sidebar, so its words wrap rather than run past it ("Reload to finish updating"). */
 					.update {
 						inline-size: 100%;
 						margin-block-start: 0.5rem;
@@ -381,11 +381,10 @@ export class DialogAbout extends DialogComponent {
 		}
 		const update = this.meta?.update
 		return !update ? html.nothing : html`
-			<mitra-button class="update" variant="primary" href=${update.url} target="_blank">
-				${update.commits
-					? t('New dev build: ${count:pluralityNumber} commits ahead', { count: update.commits })
-					: t('Update available: ${version}', { version: update.version })}
-				→
+			<mitra-button class="update" variant="primary" href=${update.url} target="_blank" title=${update.commits
+				? t('New dev build: ${count:pluralityNumber} commits ahead', { count: update.commits })
+				: t('Update available: ${version}', { version: update.version })}>
+				${t('Update available')}
 			</mitra-button>
 		`
 	}

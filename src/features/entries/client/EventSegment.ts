@@ -297,7 +297,7 @@ export class EntrySegmentComponent extends Component {
 							}
 						}
 
-						> .due {
+						> :is(.due, .recurring) {
 							flex-shrink: 0;
 							font-size: 0.65rem;
 							opacity: 0.75;
@@ -380,29 +380,6 @@ export class EntrySegmentComponent extends Component {
 					}
 				}
 
-				& > .recurring {
-					position: absolute;
-					inset-block-start: 0.25rem;
-					inset-inline-end: 0.375rem;
-					font-size: 0.85rem;
-					opacity: 0.6;
-					pointer-events: none;
-
-					@container (max-height: 0.5rem) {
-						display: none;
-					}
-				}
-
-				&:has(> .recurring) > .heading > .header {
-					padding-inline-end: 1.35rem;
-				}
-
-				@container (max-height: 2rem) {
-					&:has(> .recurring) > .heading {
-						padding-inline-end: 1.35rem;
-					}
-				}
-
 				&[data-routine] {
 					display: grid;
 					grid-template-columns: subgrid;
@@ -419,7 +396,7 @@ export class EntrySegmentComponent extends Component {
 					margin-top: 0;
 					overflow: visible;
 
-					> .heading, > .location, > .recurring, > .resize-start, > .resize-end {
+					> .heading, > .location, > .resize-start, > .resize-end {
 						display: none;
 					}
 
@@ -439,17 +416,6 @@ export class EntrySegmentComponent extends Component {
 
 					&:is(:hover, [selected]) > .mark {
 						background-color: var(--mitra-entry-segment-color);
-					}
-				}
-
-				@container (max-width: 6rem) {
-					& > .recurring {
-						display: none;
-					}
-
-					&:has(> .recurring) > .heading,
-					&:has(> .recurring) > .heading > .header {
-						padding-inline-end: 0;
 					}
 				}
 			}
@@ -528,14 +494,16 @@ export class EntrySegmentComponent extends Component {
 				${this.detailsTemplate}
 			`
 		}
+		const repeats = this.segment.entry.partOfSeries
 		return html`
 			<div class="heading" ?data-meta=${meta}>
-				${!this.segment.entry.type.isTask && !meta ? html.nothing : html`
+				${!this.segment.entry.type.isTask && !meta && !repeats ? html.nothing : html`
 					<div class="header">
 						${!this.segment.entry.type.isTask ? html.nothing : html`
 							<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
 						`}
 						${!meta ? html.nothing : this.whenTemplate}
+						${!repeats ? html.nothing : html`<mitra-icon class="recurring" icon="repeat" title=${t('Repeats')}></mitra-icon>`}
 						${!this.segment.entry.due ? html.nothing : html`
 							<mitra-icon class="due" icon="flag" title=${t('Due ${date}', { date: this.dueLabel })}></mitra-icon>
 						`}
@@ -544,9 +512,6 @@ export class EntrySegmentComponent extends Component {
 				<span class="label">${this.segment.entry.heading || (this.segment.entry.persisted ? '' : t('Draft'))}</span>
 			</div>
 			${this.segment.allDay || !this.segment.entry.location ? html.nothing : this.locationTemplate}
-			${!this.segment.entry.partOfSeries ? html.nothing : html`
-				<mitra-icon class="recurring" icon="repeat" title=${t('Repeats')}></mitra-icon>
-			`}
 			${!this.resize || !this.segment.entry.persisted || !Calendars.capabilitiesOf(this.segment.entry.sourceId).entries.edit ? html.nothing : html`
 				<div class="resize-start"></div>
 				<div class="resize-end"></div>
