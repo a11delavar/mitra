@@ -27,8 +27,8 @@ export class GoogleCalendar extends CalDAV {
 		return new URL(`${encodeURIComponent(email)}/`, GoogleCalendar.serverUrl).href
 	}
 
-	override get capabilities() {
-		return { ...super.capabilities, relations: false, percentComplete: false }
+	override get ownership() {
+		return super.ownership.without('relations', 'percentComplete')
 	}
 
 	@converter(withheld<GoogleCalendarCredentials>('refreshToken')) override credentials!: GoogleCalendarCredentials

@@ -200,14 +200,12 @@ describe('Tempo integration', () => {
 	})
 
 	it('declares what a worklog cannot be, and that mitra may write one', () => {
-		const capabilities = new Tempo().capabilities
-		for (const off of ['recurrence', 'reminders', 'location', 'timeZone', 'participants', 'allDay', 'relations', 'renameEntries'] as const) {
-			assert.equal(capabilities[off], false, off)
+		const { capabilities, ownership } = new Tempo()
+		for (const off of ['recurrence', 'reminders', 'location', 'timeZone', 'participants', 'allDay', 'relations'] as const) {
+			assert.equal(ownership.holds(off), false, off)
 		}
-		assert.equal(capabilities.description, true)
-		for (const on of ['createEntries', 'editEntries', 'deleteEntries'] as const) {
-			assert.equal(capabilities[on], true, on)
-		}
+		assert.equal(ownership.holds('description'), true)
+		assert.deepEqual(capabilities.entries, { create: true, edit: true, delete: true, rename: false, cancel: false })
 	})
 
 	it('points its external link at the Jira issue', () => {

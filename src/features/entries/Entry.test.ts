@@ -17,6 +17,7 @@ import { ReminderDefaults } from '../reminders/ReminderDefaults.js'
 import { TimeZone } from '../time/TimeZone.js'
 import { RecurrenceFrequency } from '../recurrence/RecurrenceFrequency.js'
 import { RecurrenceEnd } from '../recurrence/RecurrenceEnd.js'
+import { IntegrationOwnership } from '../../integrations/IntegrationOwnership.js'
 
 describe('Entry', () => {
 	const day = new DateTime().dayStart
@@ -889,20 +890,20 @@ describe('Entry', () => {
 
 		it('records full progress on done where the provider can hold it', () => {
 			const entry = task()
-			entry.setStatus(TaskStatus.Done, { percentComplete: true })
+			entry.setStatus(TaskStatus.Done, new IntegrationOwnership({ percentComplete: 'upstream' }))
 			assert.equal(entry.status, TaskStatus.Done)
 			assert.equal(entry.percentComplete, 100)
 		})
 
 		it('leaves progress unstated where the provider cannot', () => {
 			const entry = task()
-			entry.setStatus(TaskStatus.Done, { percentComplete: false })
+			entry.setStatus(TaskStatus.Done, new IntegrationOwnership())
 			assert.equal(entry.percentComplete, undefined)
 		})
 
 		it('keeps the progress a cancelled task already had', () => {
 			const entry = task({ status: TaskStatus.Doing, percentComplete: 40 })
-			entry.setStatus(TaskStatus.Cancelled, { percentComplete: true })
+			entry.setStatus(TaskStatus.Cancelled, new IntegrationOwnership({ percentComplete: 'upstream' }))
 			assert.equal(entry.status, TaskStatus.Cancelled)
 			assert.equal(entry.percentComplete, 40)
 		})

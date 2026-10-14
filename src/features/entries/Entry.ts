@@ -18,7 +18,10 @@ import { EntryRelations } from '../relations/EntryRelations.js'
 import { EntryRank } from './EntryRank.js'
 import { Checklist } from './Checklist.js'
 import { type ReminderDefaults } from '../reminders/ReminderDefaults.js'
-import { type Integration } from '../../integrations/Integration.js'
+import { type IntegrationOwnership } from '../../integrations/IntegrationOwnership.js'
+import { type Calendar } from '../sources/Calendar.js'
+import { type Validatable } from '../../infrastructure/validation/Validatable.js'
+import { ValidationError } from '../../infrastructure/validation/ValidationError.js'
 import { TimeZone } from '../time/TimeZone.js'
 import { EntryPatch } from './EntryPatch.js'
 
@@ -53,7 +56,7 @@ const reminderDefaults = new WeakMap<Entry, ReminderDefaults>()
 @model('Entry')
 @entity()
 @unique({ properties: ['sourceId', 'uri', 'recurrenceId'] })
-export class Entry {
+export class Entry implements Validatable<Calendar> {
 	@primaryKey({ type: 'string' }) id?: string
 	@manyToOne(() => Source, { mapToPk: true, deleteRule: 'cascade' }) sourceId!: string
 	@property({ type: 'string', nullable: true }) uri?: string
@@ -125,9 +128,10 @@ export class Entry {
 
 	get closed() { return !!this.status?.closed }
 
-	setStatus(status: TaskStatus, capabilities: Pick<Integration['capabilities'], 'percentComplete'>) {
+	/** Writes 100% progress on Done if the provider supports `percentComplete` (RFC 5545 §3.8.1.8). */
+	setStatus(status: TaskStatus, ownership: Pick<IntegrationOwnership, 'holds'>) {
 		this.status = status
-		if (status === TaskStatus.Done && capabilities.percentComplete) {
+		if (status === TaskStatus.Done && ownership.holds('percentComplete')) {
 			this.percentComplete = 100
 		}
 	}
@@ -553,6 +557,29 @@ export class Entry {
 		this.estimate = other.estimate
 		this.allDay = other.allDay
 		this.due = other.due
+	}
+
+	/** What keeps the entry out of `calendar`: a type it can't hold, and every fact it can't store. */
+	*validate({ source, integration }: Calendar) {
+		const { ownership } = integration
+		if (!integration.canHold(source, this.type)) {
+			yield new ValidationError(`This calendar cannot hold ${this.type.isTask ? 'tasks' : this.type.isAvailability ? 'availability' : 'events'}`, ['type'])
+		}
+		if (this.participants?.length && !ownership.holds('participants')) {
+			yield new ValidationError('This calendar does not support participants', ['participants'])
+		}
+		if (this.transparency === Transparency.Free && !ownership.holds('transparency')) {
+			yield new ValidationError('This calendar cannot mark an entry as free', ['transparency'])
+		}
+		if (this.visibility && !ownership.holds('visibility')) {
+			yield new ValidationError('This calendar does not support visibility', ['visibility'])
+		}
+		if (this.percentComplete !== undefined && !ownership.holds('percentComplete')) {
+			yield new ValidationError('This calendar does not support task progress', ['percentComplete'])
+		}
+		if (this.due && !ownership.holds('due')) {
+			yield new ValidationError('This calendar does not support due dates', ['due'])
+		}
 	}
 
 	/** Takes over what `patch` sets, and a new entry's value where it clears. What the type can't hold goes, and an estimate a start replaced. */

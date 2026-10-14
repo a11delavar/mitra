@@ -4,6 +4,8 @@ import { equals } from '@a11d/equals'
 import { model } from '../../infrastructure/model/model.js'
 import { EntryRelations } from '../../features/relations/EntryRelations.js'
 import { Integration, integration } from '../Integration.js'
+import { IntegrationCapabilities } from '../IntegrationCapabilities.js'
+import { IntegrationOwnership } from '../IntegrationOwnership.js'
 import { withheld } from '../../infrastructure/model/withheld.js'
 import { Source } from '../../features/sources/Source.js'
 import { Entry } from '../../features/entries/Entry.js'
@@ -92,12 +94,11 @@ export class Notion extends Integration<NotionCredentials> {
 
 	/** No availability: it is edited with this provider's capabilities, and would not repeat. No due or estimate: the one date property is the schedule. */
 	override get capabilities() {
-		return {
-			...Integration.defaultCapabilities,
-			availability: false, recurrence: false, reminders: false, location: false, cancelledStatus: false,
-			percentComplete: false, due: false, estimate: false, timeZone: false, participants: false, transparency: false,
-			visibility: false,
-		}
+		return new IntegrationCapabilities({ entries: { cancel: false }, availability: false })
+	}
+
+	override get ownership() {
+		return new IntegrationOwnership({ description: 'upstream', relations: 'upstream', allDay: 'upstream', rank: 'mitra' })
 	}
 
 	override get canConnect() {

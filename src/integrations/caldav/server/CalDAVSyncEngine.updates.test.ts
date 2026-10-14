@@ -53,7 +53,7 @@ describe('updating a CalDAV entry', () => {
 		})
 		task.exdates = null as never
 		const done = task.clone()
-		done.setStatus(TaskStatus.Done, { percentComplete: true })
+		done.setStatus(TaskStatus.Done, new CalDAV().ownership)
 
 		await integration.updateEntry(database(), task, done)
 

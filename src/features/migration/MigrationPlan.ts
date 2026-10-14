@@ -27,9 +27,10 @@ export class MigrationVerdict {
 
 	/** Assesses one entry against a target's capabilities. `occurrence` marks entries entangled with
 	 * edited occurrences; `occurrences` is read lazily, only when recurrence actually blocks. */
-	static assess(entry: Entry, { target, capabilities, occurrence, occurrences }: {
+	static assess(entry: Entry, { target, capabilities, ownership, occurrence, occurrences }: {
 		target: Source
 		capabilities: Integration['capabilities']
+		ownership: Integration['ownership']
 		occurrence: boolean
 		occurrences?: () => number | null
 	}): MigrationVerdict {
@@ -42,46 +43,46 @@ export class MigrationVerdict {
 		if (occurrence) {
 			blockers.push('occurrence')
 		}
-		if (entry.recurrence?.freq && !capabilities.recurrence) {
+		if (entry.recurrence?.freq && !ownership.holds('recurrence')) {
 			blockers.push('recurrence')
 		}
-		if (entry.participants?.length && !capabilities.participants) {
+		if (entry.participants?.length && !ownership.holds('participants')) {
 			blockers.push('participants')
 		}
 		// Only 'Free' transparency is a blocker; default opaque is preserved implicitly.
-		if (entry.transparency === Transparency.Free && !capabilities.transparency) {
+		if (entry.transparency === Transparency.Free && !ownership.holds('transparency')) {
 			blockers.push('transparency')
 		}
-		if (entry.visibility && !capabilities.visibility) {
+		if (entry.visibility && !ownership.holds('visibility')) {
 			blockers.push('visibility')
 		}
-		if (entry.percentComplete !== undefined && !capabilities.percentComplete) {
+		if (entry.percentComplete !== undefined && !ownership.holds('percentComplete')) {
 			blockers.push('percentComplete')
 		}
 
-		if (entry.reminders?.length && !capabilities.reminders) {
+		if (entry.reminders?.length && !ownership.holds('reminders')) {
 			losses.push('reminders')
 		}
-		if (entry.location && !capabilities.location) {
+		if (entry.location && !ownership.holds('location')) {
 			losses.push('location')
 		}
-		if (entry.description && !capabilities.description) {
+		if (entry.description && !ownership.holds('description')) {
 			losses.push('description')
 		}
-		if (entry.due && !capabilities.due) {
+		if (entry.due && !ownership.holds('due')) {
 			losses.push('due')
 		}
-		if (entry.estimate !== undefined && !capabilities.estimate) {
+		if (entry.estimate !== undefined && !ownership.holds('estimate')) {
 			losses.push('estimate')
 		}
 		// Floating time zone is not a named zone, so it has no zone loss.
-		if (entry.timeZone && !entry.timeZone.floating && !capabilities.timeZone) {
+		if (entry.timeZone && !entry.timeZone.floating && !ownership.holds('timeZone')) {
 			losses.push('timeZone')
 		}
-		if (entry.allDay && !capabilities.allDay) {
+		if (entry.allDay && !ownership.holds('allDay')) {
 			losses.push('allDay')
 		}
-		if (entry.status === TaskStatus.Cancelled && !capabilities.cancelledStatus) {
+		if (entry.status === TaskStatus.Cancelled && !capabilities.entries.cancel) {
 			losses.push('cancelledStatus')
 		}
 		if (!target.supportsEntryType(entry.type)) {

@@ -75,22 +75,22 @@ describe('Source.readOnly narrows what may be written to one calendar', () => {
 		const capabilities = new CalDAV().capabilitiesFor(shared)
 
 		assert.deepEqual(
-			[capabilities.createEntries, capabilities.editEntries, capabilities.deleteEntries, capabilities.renameEntries],
+			[capabilities.entries.create, capabilities.entries.edit, capabilities.entries.delete, capabilities.entries.rename],
 			[false, false, false, false],
 		)
 		for (const field of ['recurrence', 'reminders', 'location', 'participants', 'timeZone', 'relations'] as const) {
-			assert.equal(capabilities[field], true, `${field} should be unaffected`)
+			assert.equal(new CalDAV().ownership.holds(field), true, `${field} should be unaffected`)
 		}
 	})
 
 	it('leaves a calendar of your own exactly as the provider left it', () => {
-		assert.equal(new CalDAV().capabilitiesFor(own).editEntries, true)
-		assert.equal(new CalDAV().capabilitiesFor(new Source({ uri: 'u', name: 'n', readOnly: null })).editEntries, true)
-		assert.equal(new CalDAV().capabilitiesFor(undefined).editEntries, true)
+		assert.equal(new CalDAV().capabilitiesFor(own).entries.edit, true)
+		assert.equal(new CalDAV().capabilitiesFor(new Source({ uri: 'u', name: 'n', readOnly: null })).entries.edit, true)
+		assert.equal(new CalDAV().capabilitiesFor(undefined).entries.edit, true)
 	})
 
 	it('cannot promote a provider that already refuses writes', () => {
-		assert.equal(new IcsSubscription().capabilitiesFor(own).editEntries, false)
+		assert.equal(new IcsSubscription().capabilitiesFor(own).entries.edit, false)
 	})
 })
 

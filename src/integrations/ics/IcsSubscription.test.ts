@@ -27,20 +27,20 @@ describe('Calendar subscription addresses', () => {
 describe('Calendar subscription capabilities', () => {
 	it('refuses writes', () => {
 		const capabilities = new IcsSubscription().capabilities
-		assert.equal(capabilities.createEntries, false)
-		assert.equal(capabilities.editEntries, false)
-		assert.equal(capabilities.deleteEntries, false)
-		assert.equal(capabilities.renameEntries, false)
+		assert.equal(capabilities.entries.create, false)
+		assert.equal(capabilities.entries.edit, false)
+		assert.equal(capabilities.entries.delete, false)
+		assert.equal(capabilities.entries.rename, false)
 	})
 
 	it('claims no relation store', () => {
-		assert.equal(new IcsSubscription().capabilities.relations, false)
+		assert.equal(new IcsSubscription().ownership.holds('relations'), false)
 	})
 
 	it('preserves readable entry fields', () => {
-		const capabilities = new IcsSubscription().capabilities
+		const ownership = new IcsSubscription().ownership
 		for (const field of ['recurrence', 'reminders', 'location', 'description', 'participants', 'timeZone', 'transparency', 'visibility', 'allDay'] as const) {
-			assert.equal(capabilities[field], true, `${field} should still be readable`)
+			assert.equal(ownership.holds(field), true, `${field} should still be readable`)
 		}
 	})
 

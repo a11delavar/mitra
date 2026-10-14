@@ -21,11 +21,11 @@ export class TableSelection extends Component {
 
 	/** A series has no one status to set: each occurrence keeps its own. */
 	private static editable({ entry, series }: TableRow) {
-		return !series && entry.type.isTask && Calendars.capabilitiesOf(entry.sourceId).editEntries
+		return !series && entry.type.isTask && Calendars.capabilitiesOf(entry.sourceId).entries.edit
 	}
 
 	private static deletable({ entry }: TableRow) {
-		return entry.persisted && Calendars.capabilitiesOf(entry.sourceId).deleteEntries
+		return entry.persisted && Calendars.capabilitiesOf(entry.sourceId).entries.delete
 	}
 
 	/** An occurrence cannot change its type on the way, so it only moves where its type is at home, and a whole series only where it can repeat. */
@@ -33,7 +33,7 @@ export class TableSelection extends Component {
 		const { entry } = row
 		return TableSelection.deletable(row) && entry.sourceId !== to.id
 			&& (!entry.partOfSeries || to.supportsEntryType(entry.type))
-			&& (!row.series || Calendars.capabilitiesOf(to.id).recurrence)
+			&& (!row.series || Calendars.ownershipOf(to.id).holds('recurrence'))
 	}
 
 	/** Parallel across entries, in turn within a series: its occurrences share one master, whose exclusions parallel writes would race on. */
@@ -47,7 +47,7 @@ export class TableSelection extends Component {
 
 	private setStatus(status: TaskStatus) {
 		const rows = this.rows.filter(row => TableSelection.editable(row) && row.entry.status !== status)
-		rows.forEach(row => row.entry.setStatus(status, Calendars.capabilitiesOf(row.entry.sourceId)))
+		rows.forEach(row => row.entry.setStatus(status, Calendars.ownershipOf(row.entry.sourceId)))
 		EntryStore.notify()
 		void TableSelection.write(rows, row => EntryStore.commit(row.entry))
 	}
@@ -135,7 +135,7 @@ export class TableSelection extends Component {
 
 	protected override get template() {
 		const rows = this.shown
-		const destinations = Calendars.enabled().filter(source => !source.readOnly && Calendars.capabilitiesOf(source.id).createEntries
+		const destinations = Calendars.enabled().filter(source => !source.readOnly && Calendars.capabilitiesOf(source.id).entries.create
 			&& rows.some(row => TableSelection.movable(row, source)))
 		return html`
 			<span class="count">${t('${count:pluralityNumber} selected', { count: rows.length })}</span>

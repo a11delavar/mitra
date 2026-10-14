@@ -37,7 +37,7 @@ export class DialogIcsImport extends DialogComponent<{ readonly fileName: string
 		return Calendars.integrations
 			.map(integration => ({
 				integration,
-				sources: [...integration.sources].filter(source => source.enabled && Calendars.capabilitiesOf(source.id).createEntries),
+				sources: [...integration.sources].filter(source => source.enabled && Calendars.capabilitiesOf(source.id).entries.create),
 			}))
 			.filter(({ sources }) => sources.length)
 	}

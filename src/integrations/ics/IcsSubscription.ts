@@ -1,6 +1,8 @@
 import { converter } from '@a11d/converter'
 import { model } from '../../infrastructure/model/model.js'
 import { Integration, integration } from '../Integration.js'
+import { IntegrationCapabilities } from '../IntegrationCapabilities.js'
+import { IntegrationOwnership } from '../IntegrationOwnership.js'
 import { withheld } from '../../infrastructure/model/withheld.js'
 
 export interface IcsFeed {
@@ -27,11 +29,16 @@ export class IcsSubscription extends Integration<IcsSubscriptionCredentials> {
 	static readonly description: string = 'Any calendar link (webcal:// or .ics)'
 
 	override get capabilities() {
-		return {
-			...Integration.defaultCapabilities,
-			relations: false,
-			createEntries: false, editEntries: false, deleteEntries: false, renameEntries: false,
-		}
+		return new IntegrationCapabilities({ entries: { create: false, edit: false, delete: false, rename: false, cancel: false } })
+	}
+
+	/** What a feed's iCalendar carries, but links: a feed's relations point at entries it may not hold. */
+	override get ownership() {
+		return new IntegrationOwnership({
+			recurrence: 'upstream', reminders: 'upstream', location: 'upstream', description: 'upstream', percentComplete: 'upstream',
+			due: 'upstream', estimate: 'upstream', timeZone: 'upstream', participants: 'upstream', transparency: 'upstream',
+			visibility: 'upstream', allDay: 'upstream', rank: 'mitra',
+		})
 	}
 
 	override get sourceIcon() { return 'rss' }

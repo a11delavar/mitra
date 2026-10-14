@@ -133,7 +133,7 @@ integrationsRouter.post('/', refusedInDemo, async (req, res) => {
 integrationsRouter.post('/:id/sources', async (req, res) => {
 	const em = orm.em.fork()
 	const integration = await req.user.integration(em, req.params.id)
-	if (!integration.capabilities.createSources) {
+	if (!integration.capabilities.sources.create) {
 		return res.status(403).json({ error: 'This integration cannot create calendars from mitra' })
 	}
 

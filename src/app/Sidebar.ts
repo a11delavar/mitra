@@ -809,7 +809,7 @@ export class Sidebar extends Component {
 							<mitra-popover-container>
 								<mitra-icon-button size="small" icon="more-horizontal" label=${t('Integration options')}></mitra-icon-button>
 								<mitra-menu slot="popover">
-									${!i.capabilities.createSources ? html.nothing : html`
+									${!i.capabilities.sources.create ? html.nothing : html`
 										<mitra-menu-item icon="plus" @click=${() => void this.addSource(i)}>${t('New calendar')}</mitra-menu-item>
 									`}
 									<mitra-menu-item icon="pencil" @click=${() => this.openDialog(i.id)}>${t('Edit')}</mitra-menu-item>
@@ -985,7 +985,7 @@ export class Sidebar extends Component {
 							<mitra-menu-item icon="hard-drive-download" title=${t('Read this calendar again from the start')}
 								@click=${() => void reimportSource(source.id).catch(() => void 0)}>${t('Re-import entries')}</mitra-menu-item>
 						`}
-						${!Calendars.capabilitiesOf(source.id).deleteSources ? html.nothing : html`
+						${!Calendars.capabilitiesOf(source.id).sources.delete ? html.nothing : html`
 							<mitra-menu-item icon="trash-2" variant="danger" title=${t('Delete this calendar and every entry in it')}
 								@click=${() => void this.removeSource(source)}>${t('Delete calendar')}</mitra-menu-item>
 						`}

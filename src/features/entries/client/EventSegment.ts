@@ -547,7 +547,7 @@ export class EntrySegmentComponent extends Component {
 			${!this.segment.entry.partOfSeries ? html.nothing : html`
 				<mitra-icon class="recurring" icon="repeat" title=${t('Repeats')}></mitra-icon>
 			`}
-			${!this.resize || !this.segment.entry.persisted || !Calendars.capabilitiesOf(this.segment.entry.sourceId).editEntries ? html.nothing : html`
+			${!this.resize || !this.segment.entry.persisted || !Calendars.capabilitiesOf(this.segment.entry.sourceId).entries.edit ? html.nothing : html`
 				<div class="resize-start"></div>
 				<div class="resize-end"></div>
 			`}

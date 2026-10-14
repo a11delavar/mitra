@@ -18,7 +18,7 @@ export class CreateEntry extends Command {
 	override execute() {
 		const { calendar } = this
 		const source = Calendars.primary()
-		if (!source || !Calendars.capabilitiesOf(source.id).createEntries) {
+		if (!source || !Calendars.capabilitiesOf(source.id).entries.create) {
 			return
 		}
 		const now = new DateTime()
@@ -38,7 +38,7 @@ export class CreateEntry extends Command {
 			end: start.add({ hours: 1 }),
 			allDay: false,
 		})
-		if (Calendars.capabilitiesOf(source.id).reminders) {
+		if (Calendars.ownershipOf(source.id).holds('reminders')) {
 			draft.adoptDefaultReminders(ReminderSetting.defaults)
 		}
 		EntryStore.upsertDraft(draft)

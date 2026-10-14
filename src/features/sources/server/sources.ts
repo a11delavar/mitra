@@ -143,7 +143,7 @@ sourcesRouter.delete('/:id', async (req, res) => {
 	const em = orm.em.fork()
 	const source = await req.user.source(em, req.params.id)
 	const integration = await em.findOneOrFail(Integration, { id: source.integrationId })
-	if (!integration.capabilitiesFor(source).deleteSources) {
+	if (!integration.capabilitiesFor(source).sources.delete) {
 		return res.status(403).json({ error: 'This calendar cannot be deleted from mitra' })
 	}
 

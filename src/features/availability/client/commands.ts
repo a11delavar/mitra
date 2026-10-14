@@ -27,7 +27,7 @@ export class CreateAvailability extends Command {
 	override execute() {
 		const { calendar } = this
 		const target = Calendars.primary(EntryType.Availability)
-		if (!target || !Calendars.capabilitiesOf(target.id).createEntries) {
+		if (!target || !Calendars.capabilitiesOf(target.id).entries.create) {
 			return
 		}
 

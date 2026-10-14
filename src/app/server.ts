@@ -90,15 +90,17 @@ function httpStatusOf(error: unknown) {
 	return Number.isInteger(status) && status >= 400 && status <= 599 ? status : undefined
 }
 
-// Central error handler.
+// Central error handler. Many errors at once arrive as one AggregateError, whose first answers for the status and the message.
 const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
-	const status = error instanceof NotFoundError ? 404 : (httpStatusOf(error) ?? 500)
+	const errors: Array<Error> | undefined = error instanceof AggregateError && error.errors.length ? error.errors : undefined
+	const first = errors?.[0] ?? error
+	const status = first instanceof NotFoundError ? 404 : (httpStatusOf(first) ?? 500)
 	if (status >= 500) {
 		logger.error(`${req.method} ${req.originalUrl} failed:`, error)
 	} else {
-		logger.debug(`${req.method} ${req.originalUrl} → ${status}: ${error instanceof Error ? error.message : error}`)
+		logger.debug(`${req.method} ${req.originalUrl} → ${status}: ${errors?.map(each => each.message).join('; ') ?? first.message}`)
 	}
-	res.status(status).json({ error: error.message })
+	res.status(status).json({ error: first.message, ...errors ? { errors } : {} })
 }
 app.use(errorHandler)
 

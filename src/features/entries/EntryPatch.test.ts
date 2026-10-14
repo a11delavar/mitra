@@ -61,7 +61,7 @@ describe('EntryPatch', () => {
 			assert.equal(patch.recurrence?.freq, RecurrenceFrequency.Weekly)
 			assert.deepEqual(patch.participants?.map(participant => participant.email), ['organizer@example.com'])
 			assert.deepEqual((patch.relations as Array<Relation>).map(relation => relation.targetUid), ['parent'])
-			assert.equal(patch.malformation, undefined)
+			assert.deepEqual([...patch.validate()], [])
 		})
 	})
 
@@ -78,10 +78,10 @@ describe('EntryPatch', () => {
 			assert.deepEqual([EntryPatch.from({ estimate: 29.6 }).estimate, EntryPatch.from({ estimate: -5 }).estimate], [30, null])
 		})
 
-		it('tells why it is malformed', () => {
-			assert.equal(EntryPatch.from({ relations: 'parent' }).malformation, 'Invalid relations')
-			assert.equal(EntryPatch.from({ recurrence: { freq: 'sometimes' } }).malformation, 'Invalid recurrence rule')
-			assert.equal(EntryPatch.from({ recurrence: null }).malformation, undefined)
+		it('names each malformed field', () => {
+			const errors = [...EntryPatch.from({ relations: 'parent', recurrence: { freq: 'sometimes' } }).validate()]
+			assert.deepEqual(errors.map(error => [error.message, error.fields]), [['Invalid relations', ['relations']], ['Invalid recurrence rule', ['recurrence']]])
+			assert.deepEqual([...EntryPatch.from({ recurrence: null }).validate()], [])
 		})
 	})
 

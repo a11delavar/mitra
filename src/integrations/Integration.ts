@@ -4,6 +4,8 @@ import { Source } from '../features/sources/Source.js'
 import { Entry } from '../features/entries/Entry.js'
 import { EntryType } from '../features/entries/EntryType.js'
 import { EntryRelation } from '../features/relations/EntryRelation.js'
+import { IntegrationCapabilities } from './IntegrationCapabilities.js'
+import { IntegrationOwnership } from './IntegrationOwnership.js'
 import type { Relation } from '../features/relations/Relation.js'
 import { FlushMode, type EntityManager } from '@mikro-orm/core'
 
@@ -74,7 +76,12 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 
 	/** Supported data model capabilities (recurrence, reminders, timeZone, etc.). */
 	get capabilities() {
-		return Integration.defaultCapabilities
+		return new IntegrationCapabilities()
+	}
+
+	/** Which fields of its entries it holds and who owns each: an integration declares its own, as none are assumed. */
+	get ownership() {
+		return new IntegrationOwnership({ rank: 'mitra' })
 	}
 
 	/** Optional icon override for this integration's sources (e.g. 'rss' for subscriptions). */
@@ -94,20 +101,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 
 	/** Returns effective capabilities for a specific source, masking write capabilities if read-only. */
 	capabilitiesFor(source: Pick<Source, 'readOnly'> | undefined) {
-		return Integration.capabilitiesIn(this.capabilities, source)
-	}
-
-	/** Masks write operations in a capability set when the source is read-only. */
-	static capabilitiesIn(capabilities: Integration['capabilities'], source: Pick<Source, 'readOnly'> | undefined) {
-		return !source?.readOnly ? capabilities : {
-			...capabilities,
-			createEntries: false, editEntries: false, deleteEntries: false, renameEntries: false, deleteSources: false,
-		}
-	}
-
-	/** `availability`: whether the provider's calendars take part in availability, which Mitra stores either way. `due` and `estimate`: a task's deadline, and its length while unscheduled. */
-	static get defaultCapabilities() {
-		return { availability: true, recurrence: true, reminders: true, location: true, description: true, cancelledStatus: true, percentComplete: true, due: true, estimate: true, timeZone: true, participants: true, transparency: true, visibility: true, relations: true, allDay: true, createEntries: true, editEntries: true, deleteEntries: true, renameEntries: true, createSources: false, deleteSources: false }
+		return this.capabilities.in(source)
 	}
 
 	/** External link to view the entry at the upstream provider. */
@@ -372,7 +366,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		}
 	}
 
-	/** Routes check `capabilities.createSources` first; the throw is only a safety net. */
+	/** Routes check `capabilities.sources.create` first; the throw is only a safety net. */
 	createSource(em: EntityManager, source: Source): Promise<Source> {
 		const engine = engineFor(this)
 		if (!engine.createSource) {
@@ -381,7 +375,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		return engine.createSource(this, em, source)
 	}
 
-	/** Deletes the source and its entries. Routes check `capabilities.deleteSources` first. */
+	/** Deletes the source and its entries. Routes check `capabilities.sources.delete` first. */
 	deleteSource(em: EntityManager, source: Source): Promise<void> {
 		const engine = engineFor(this)
 		if (!engine.deleteSource) {

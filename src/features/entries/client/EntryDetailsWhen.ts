@@ -217,11 +217,11 @@ export class EntryDetailsWhen extends Component {
 	}
 
 	private get editable() {
-		return Calendars.capabilitiesOf(this.entry.sourceId).editEntries
+		return Calendars.capabilitiesOf(this.entry.sourceId).entries.edit
 	}
 
-	private get capabilities() {
-		return Calendars.capabilitiesOf(this.entry.sourceId)
+	private get ownership() {
+		return Calendars.ownershipOf(this.entry.sourceId)
 	}
 
 	static override get styles() {
@@ -352,8 +352,8 @@ export class EntryDetailsWhen extends Component {
 			${this.startTemplate}
 			${this.entry.start ? this.endTemplate : this.estimateTemplate}
 			${this.dueTemplate}
-			${this.entry.allDay || !dated || !this.capabilities.timeZone ? html.nothing : this.zoneTemplate}
-			${!dated || !this.capabilities.recurrence ? html.nothing : html`
+			${this.entry.allDay || !dated || !this.ownership.holds('timeZone') ? html.nothing : this.zoneTemplate}
+			${!dated || !this.ownership.holds('recurrence') ? html.nothing : html`
 				<div class="row field">
 					<mitra-icon icon="repeat"></mitra-icon>
 					<mitra-repeat-field .entry=${this.entry} @change=${() => this.commit()}></mitra-repeat-field>
@@ -364,7 +364,7 @@ export class EntryDetailsWhen extends Component {
 
 	/** Switches every moment of the entry between days and times at once. */
 	private get allDayTemplate() {
-		return !this.editable || !this.capabilities.allDay || this.entry.type.isAvailability ? html.nothing : html`
+		return !this.editable || !this.ownership.holds('allDay') || this.entry.type.isAvailability ? html.nothing : html`
 			<mitra-icon-button size="small" class="precision" icon="clock-fading" label=${t('All day')}
 				?pressed=${this.entry.allDay} @click=${this.toggleAllDay}
 			></mitra-icon-button>
@@ -434,7 +434,7 @@ export class EntryDetailsWhen extends Component {
 
 	/** A task with no start: its estimate, where the end goes once it has one. */
 	private get estimateTemplate() {
-		if (!this.entry.type.isTask || !this.capabilities.estimate) {
+		if (!this.entry.type.isTask || !this.ownership.holds('estimate')) {
 			return html.nothing
 		}
 		return this.entry.estimate !== undefined || this.estimateShown ? html`
@@ -450,7 +450,7 @@ export class EntryDetailsWhen extends Component {
 
 	private get dueTemplate() {
 		const { due } = this.entry
-		if (!this.entry.type.isTask || !this.capabilities.due || (!due && !this.editable)) {
+		if (!this.entry.type.isTask || !this.ownership.holds('due') || (!due && !this.editable)) {
 			return html.nothing
 		}
 		return due || this.dueShown

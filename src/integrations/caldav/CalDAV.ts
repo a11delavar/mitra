@@ -7,6 +7,7 @@ import { EntryRelations } from '../../features/relations/EntryRelations.js'
 import { model } from '../../infrastructure/model/model.js'
 import { buildVTimezone } from './vtimezone.js'
 import { Integration, integration } from '../Integration.js'
+import { IntegrationOwnership } from '../IntegrationOwnership.js'
 import { withheld } from '../../infrastructure/model/withheld.js'
 import { Entry } from '../../features/entries/Entry.js'
 import { EntryTimeZone } from '../../features/entries/EntryTimeZone.js'
@@ -45,6 +46,15 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		this.uri = ''
 		this.credentials = { username: '', password: '' }
 		Object.assign(this, init)
+	}
+
+	/** What an iCalendar resource carries (RFC 5545 and its task extensions). */
+	override get ownership() {
+		return new IntegrationOwnership({
+			recurrence: 'upstream', reminders: 'upstream', location: 'upstream', description: 'upstream', percentComplete: 'upstream',
+			due: 'upstream', estimate: 'upstream', timeZone: 'upstream', participants: 'upstream', transparency: 'upstream',
+			visibility: 'upstream', relations: 'upstream', allDay: 'upstream', rank: 'mitra',
+		})
 	}
 
 	override toString() {
@@ -368,7 +378,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 		entry.reminders = CalDAV.remindersFrom(component)
 		entry.participants = CalDAV.participantsFrom(component, integration.addresses)
-		entry.relations = integration.capabilities.relations ? CalDAV.relationsFrom(component) : undefined
+		entry.relations = integration.ownership.holds('relations') ? CalDAV.relationsFrom(component) : undefined
 
 		// An unscheduled task carries its zone on DUE.
 		const anchor = component.getFirstProperty('dtstart') || entryType.isEvent ? 'dtstart' : 'due'

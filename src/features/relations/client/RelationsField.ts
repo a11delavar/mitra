@@ -116,7 +116,7 @@ export class RelationsField extends Component {
 		const list = this.relationList
 		const bySection = new Map(list.sections.map(({ section, lines }) => [section, lines.map(line => this.lineOf(line))]))
 		// Providers without native link storage omit authoring actions, but incoming links remain visible.
-		const authorable = Calendars.capabilitiesOf(this.entry.sourceId).relations ? AUTHORABLE_BY_SECTION : new Map<RelationSection, RelationType>()
+		const authorable = Calendars.ownershipOf(this.entry.sourceId).holds('relations') ? AUTHORABLE_BY_SECTION : new Map<RelationSection, RelationType>()
 		return [...new Set([...bySection.keys(), ...authorable.keys()])]
 			.sort((a, b) => a.rank - b.rank)
 			.map(section => ({ section, lines: bySection.get(section) ?? [], addType: authorable.get(section) }))

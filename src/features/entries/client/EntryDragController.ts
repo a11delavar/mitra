@@ -149,7 +149,7 @@ export class EntryDragController extends Controller {
 	}
 
 	private beginExternal(entry: Entry, segment: EntrySegmentComponent, surface: HTMLElement, e: PointerEvent, options?: { held?: boolean }) {
-		if (this.drag || !entry.persisted || !Calendars.capabilitiesOf(entry.sourceId).editEntries) {
+		if (this.drag || !entry.persisted || !Calendars.capabilitiesOf(entry.sourceId).entries.edit) {
 			return
 		}
 		const cells = this.snapshotCells()
@@ -234,7 +234,7 @@ export class EntryDragController extends Controller {
 		}
 		const { start, end } = Schedule.timed(anchor.date.dayStart.add({ minutes: anchor.minute }), current.date.dayStart.add({ minutes: current.minute }), EntryDragController.snapMinutes)
 		const created = new Entry({ ...base, start, end, allDay: false })
-		if (Calendars.capabilitiesOf(drag.source!.id).reminders) {
+		if (Calendars.ownershipOf(drag.source!.id).holds('reminders')) {
 			created.adoptDefaultReminders(ReminderSetting.defaults)
 		}
 		return created
@@ -427,7 +427,7 @@ export class EntryDragController extends Controller {
 		if (segment) {
 			// A tap still has to open the editor of an entry whose provider mitra may only read, so the
 			// bar is on beginning a drag, not on handling the pointer at all.
-			if (!entry?.persisted || !Calendars.capabilitiesOf(entry.sourceId).editEntries) {
+			if (!entry?.persisted || !Calendars.capabilitiesOf(entry.sourceId).entries.edit) {
 				return
 			}
 			const mode = this.editMode(entry)
@@ -445,7 +445,7 @@ export class EntryDragController extends Controller {
 		const availability = target.closest('mitra-availability-segment') as AvailabilitySegment | null
 		const mode = this.createModeAt(target)
 		const source = mode ? Calendars.primary(this.createType) : undefined
-		if (!mode || !source || !Calendars.capabilitiesOf(source.id).createEntries) {
+		if (!mode || !source || !Calendars.capabilitiesOf(source.id).entries.create) {
 			// Nothing can be created here, so open the availability right away.
 			if (availability) {
 				availability.open = true
@@ -674,7 +674,7 @@ export class EntryDragController extends Controller {
 				EntryStore.notify()
 				return
 			}
-			if (drag.kind === 'move' && e.altKey && Calendars.capabilitiesOf(entry.sourceId).createEntries) {
+			if (drag.kind === 'move' && e.altKey && Calendars.capabilitiesOf(entry.sourceId).entries.create) {
 				this.teardown(e.pointerId)
 				EntryStore.setPreview(undefined)
 				EntryStore.setDragging(undefined)

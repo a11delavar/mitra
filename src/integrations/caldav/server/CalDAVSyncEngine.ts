@@ -332,7 +332,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 			.filter(key => !Object[equals](existing[key], incoming[key]))
 
 		const recurrenceChanged = !Recurrence.equal(existing.recurrence, incoming.recurrence)
-		const relationsChanged = integration.capabilities.relations && incoming.relations !== undefined && existing.relationList.writesDiffer(incoming.relationList)
+		const relationsChanged = integration.ownership.ownerOf('relations') === 'upstream' && incoming.relations !== undefined && existing.relationList.writesDiffer(incoming.relationList)
 		// None to write when absent, and when null: the database hands back an empty column as null.
 		const exdates = incoming.exdates ?? undefined
 
@@ -517,7 +517,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 		if (entry.participants?.length) {
 			CalDAV.writeParticipants(component, entry.participants)
 		}
-		if (integration.capabilities.relations) {
+		if (integration.ownership.ownerOf('relations') === 'upstream') {
 			CalDAV.writeRelations(component, entry.relations)
 		}
 

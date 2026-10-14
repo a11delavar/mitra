@@ -47,7 +47,7 @@ export class LocationField extends Component {
 	@query('textarea') private readonly field?: HTMLTextAreaElement
 
 	private get editable() {
-		return Calendars.capabilitiesOf(this.entry?.sourceId ?? '').editEntries
+		return Calendars.capabilitiesOf(this.entry?.sourceId ?? '').entries.edit
 	}
 
 	private readonly edit = (e: Event) => {

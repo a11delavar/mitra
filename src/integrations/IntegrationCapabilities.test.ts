@@ -1,0 +1,28 @@
+import { describe, it } from 'node:test'
+import assert from 'node:assert/strict'
+import { IntegrationCapabilities } from './IntegrationCapabilities.js'
+
+describe('IntegrationCapabilities', () => {
+	it('takes every write to entries and holds availability, but makes no calendars, unless it says otherwise', () => {
+		const capabilities = new IntegrationCapabilities()
+		assert.deepEqual(capabilities.entries, { create: true, edit: true, delete: true, rename: true, cancel: true })
+		assert.deepEqual(capabilities.sources, { create: false, delete: false })
+		assert.equal(capabilities.availability, true)
+	})
+
+	it('derives without changing what it derives from', () => {
+		const base = new IntegrationCapabilities()
+		const derived = base.with({ entries: { rename: false }, availability: false })
+		assert.deepEqual([derived.entries.rename, derived.entries.create, derived.availability], [false, true, false])
+		assert.deepEqual([base.entries.rename, base.availability], [true, true])
+	})
+
+	it('can write nothing in a read-only source', () => {
+		const readOnly = new IntegrationCapabilities({ sources: { create: true, delete: true } }).in({ readOnly: true })
+		assert.deepEqual(readOnly.entries, { create: false, edit: false, delete: false, rename: false, cancel: false })
+		assert.deepEqual(readOnly.sources, { create: true, delete: false })
+		const writable = new IntegrationCapabilities()
+		assert.equal(writable.in({ readOnly: false }), writable)
+		assert.equal(writable.in(undefined), writable)
+	})
+})

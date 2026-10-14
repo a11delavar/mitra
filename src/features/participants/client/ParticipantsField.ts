@@ -39,7 +39,7 @@ export class ParticipantsField extends Component {
 
 	/** Whether the current user can manage participants (requires write access and organizer status). */
 	private get canManage() {
-		return Calendars.capabilitiesOf(this.entry.sourceId).editEntries && this.entry.canManageParticipants
+		return Calendars.capabilitiesOf(this.entry.sourceId).entries.edit && this.entry.canManageParticipants
 	}
 
 	private get ownAddress(): string | undefined {

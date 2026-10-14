@@ -6,10 +6,21 @@ import { TaskStatus } from './TaskStatus.js'
 import { Transparency } from './Transparency.js'
 import { Visibility } from './Visibility.js'
 import { EntryTimeZone } from './EntryTimeZone.js'
-import { Recurrence } from '../recurrence/Recurrence.js'
+import { Recurrence, type RecurrenceScope } from '../recurrence/Recurrence.js'
 import { Participants, type Participant } from '../participants/Participant.js'
 import { EntryRelations } from '../relations/EntryRelations.js'
 import { type Relation } from '../relations/Relation.js'
+import { type Calendar } from '../sources/Calendar.js'
+import { type Validatable } from '../../infrastructure/validation/Validatable.js'
+import { ValidationError } from '../../infrastructure/validation/ValidationError.js'
+
+/** What a patch applies to: the entry it edits (none creates one), the calendar it is in, the calendar it goes to, and how far an occurrence's edit reaches. */
+export interface EntryPatchContext {
+	readonly entry?: Entry
+	readonly from?: Calendar
+	readonly to: Calendar
+	readonly scope?: RecurrenceScope
+}
 
 /** A date as `Entry` converts it, an all-day one by the `allDay` beside it; called at run time, as the two modules import each other. */
 const date = {
@@ -22,7 +33,7 @@ const date = {
  * other value replaces it. Constructed from a request, it parses its fields, so a malformed one never reaches an entry.
  */
 @model('EntryPatch')
-export class EntryPatch {
+export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 	/** The fields an edit reaches, in the order they apply. */
 	static readonly fields = [
 		'sourceId', 'type', 'heading', 'description', 'location', 'color', 'allDay', 'start', 'end', 'due', 'estimate', 'timeZone',
@@ -78,11 +89,49 @@ export class EntryPatch {
 	@converter({ construct: (value: ReadonlyArray<Partial<Participant>> | null | undefined) => value === undefined ? value : Participants.normalize(value) }) participants?: Array<Participant> | null
 	@converter({ construct: EntryRelations.parse }) relations?: Array<Relation> | null | typeof EntryRelations.invalid
 
-	/** Why the patch can't be applied, as a field came malformed. */
-	get malformation() {
-		return this.relations === EntryRelations.invalid ? 'Invalid relations'
-			: this.recurrence && !this.recurrence.valid ? 'Invalid recurrence rule'
-				: undefined
+	/** What makes the patch invalid: a field that came malformed, and with a context what the edit may not do there. */
+	*validate(context?: EntryPatchContext) {
+		if (this.relations === EntryRelations.invalid) {
+			yield new ValidationError('Invalid relations', ['relations'])
+		}
+		if (this.recurrence && !this.recurrence.valid) {
+			yield new ValidationError('Invalid recurrence rule', ['recurrence'])
+		}
+		if (!context) {
+			return
+		}
+		const { entry, to, scope } = context
+		const target = to.integration.capabilitiesFor(to.source)
+		if (!entry) {
+			if (!target.entries.create) {
+				yield new ValidationError('This calendar cannot be written to from mitra')
+			}
+			return
+		}
+		const from = context.from ?? to
+		const current = from.integration.capabilitiesFor(from.source)
+		const moving = to.source.id !== from.source.id
+		const type = this.type ?? entry.type
+		const recurrence = this.recurrence === undefined ? entry.recurrence : this.recurrence
+		if (!current.entries.edit) {
+			yield new ValidationError('This calendar cannot be edited from mitra')
+		}
+		if (this.heading !== undefined && (this.heading ?? '') !== entry.heading && !current.entries.rename) {
+			yield new ValidationError('Entries in this calendar take their title from the provider and cannot be renamed', ['heading'])
+		}
+		if (moving && !target.entries.create) {
+			yield new ValidationError('This calendar cannot be written to from mitra', ['sourceId'])
+		}
+		if (type !== entry.type && entry.partOfSeries) {
+			yield new ValidationError('A recurring entry cannot change its type', ['type'])
+		}
+		// DTSTART is required of a VEVENT (RFC 5545 §3.6.1).
+		if (this.start === null && entry.start && !type.isTask) {
+			yield new ValidationError('An event must have a date', ['start'])
+		}
+		if (moving && scope !== 'this' && recurrence && !to.integration.ownership.holds('recurrence')) {
+			yield new ValidationError('This calendar cannot hold a repeating entry', ['recurrence'])
+		}
 	}
 
 	/** A whole, positive number of minutes, else none. */

@@ -1,6 +1,8 @@
 import { fetchIntegrations, getUser, putIntegrationOrder, putSourceOrder, restoreSourceVisibility, soloSource } from '../../../infrastructure/http/Api.js'
 import { applyOrder, byOrder } from '../../../infrastructure/model/order.js'
 import { Integration } from '../../../integrations/Integration.js'
+import { IntegrationCapabilities } from '../../../integrations/IntegrationCapabilities.js'
+import { IntegrationOwnership } from '../../../integrations/IntegrationOwnership.js'
 import { type Source } from '../Source.js'
 import { type EntryType } from '../../entries/EntryType.js'
 import { type Entry } from '../../entries/Entry.js'
@@ -58,8 +60,13 @@ export class Calendars {
 	}
 
 	/** The provider's capabilities, with writes off for a read-only source. */
-	static capabilitiesOf(sourceId: string): Integration['capabilities'] {
-		return Integration.capabilitiesIn(Calendars.integrationOf(sourceId)?.capabilities ?? Integration.defaultCapabilities, Calendars.source(sourceId))
+	static capabilitiesOf(sourceId: string): IntegrationCapabilities {
+		return (Calendars.integrationOf(sourceId)?.capabilities ?? new IntegrationCapabilities()).in(Calendars.source(sourceId))
+	}
+
+	/** Which fields the source's entries hold, and who owns each. */
+	static ownershipOf(sourceId: string): IntegrationOwnership {
+		return Calendars.integrationOf(sourceId)?.ownership ?? new IntegrationOwnership()
 	}
 
 	/** Whether entries of `type` can live in `source`, which for availability also takes the provider's say. */
@@ -74,11 +81,11 @@ export class Calendars {
 	}
 
 	static canCopyEntriesOut(source: Source) {
-		return Calendars.enabled().some(other => other.id !== source.id && Calendars.capabilitiesOf(other.id).createEntries)
+		return Calendars.enabled().some(other => other.id !== source.id && Calendars.capabilitiesOf(other.id).entries.create)
 	}
 
 	static canMoveEntriesOut(source: Source) {
-		return Calendars.canCopyEntriesOut(source) && Calendars.capabilitiesOf(source.id).deleteEntries
+		return Calendars.canCopyEntriesOut(source) && Calendars.capabilitiesOf(source.id).entries.delete
 	}
 
 	static reorderSources(integration: Integration, ids: Array<string>) {

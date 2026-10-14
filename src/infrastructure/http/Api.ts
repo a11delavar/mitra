@@ -190,7 +190,7 @@ export async function restoreSourceVisibility() {
 	currentUser = await Api.put<User>('/sources/restore-visibility')
 }
 
-/** Requires `capabilities.createSources`. */
+/** Requires `capabilities.sources.create`. */
 export function createSource(integrationId: string, init: { name: string, color?: string, entryTypes?: Array<EntryType> }) {
 	return Api.post<Source>(`/integrations/${integrationId}/sources`, init)
 }
@@ -199,7 +199,7 @@ export function countSourceEntries(id: string) {
 	return Api.get<number>(`/sources/${id}/entries/count`)
 }
 
-/** Deletes the calendar and all its entries. Requires `capabilities.deleteSources`. */
+/** Deletes the calendar and all its entries. Requires `capabilities.sources.delete`. */
 export function deleteSource(id: string) {
 	return Api.delete(`/sources/${id}`)
 }

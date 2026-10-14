@@ -24,16 +24,20 @@ export class EntryDetailsSharing extends Component {
 		return Calendars.capabilitiesOf(this.entry.sourceId)
 	}
 
+	private get ownership() {
+		return Calendars.ownershipOf(this.entry.sourceId)
+	}
+
 	private get showsTransparency() {
 		return EntryDetailsSharing.showsTransparency(this.entry)
 	}
 
 	private static showsTransparency(entry: Entry) {
-		return !entry.type.isTask && Calendars.capabilitiesOf(entry.sourceId).transparency
+		return !entry.type.isTask && Calendars.ownershipOf(entry.sourceId).holds('transparency')
 	}
 
 	static applies(entry: Entry) {
-		return EntryDetailsSharing.showsTransparency(entry) || !!Calendars.capabilitiesOf(entry.sourceId).visibility
+		return EntryDetailsSharing.showsTransparency(entry) || !!Calendars.ownershipOf(entry.sourceId).holds('visibility')
 	}
 
 	private commit() {
@@ -103,16 +107,16 @@ export class EntryDetailsSharing extends Component {
 			<div class="choices">
 				${!this.showsTransparency ? html.nothing : html`
 					<span class="transparency field">
-						<mitra-select label=${t('Show as busy or free')} title=${t('Show as busy or free')} ?disabled=${!this.capabilities.editEntries}
+						<mitra-select label=${t('Show as busy or free')} title=${t('Show as busy or free')} ?disabled=${!this.capabilities.entries.edit}
 							.value=${transparency} @change=${this.handleTransparencyChange}
 						>
 							${Transparency.all.map(value => html`<mitra-option .value=${value}>${value.format()}</mitra-option>`)}
 						</mitra-select>
 					</span>
 				`}
-				${!this.capabilities.visibility ? html.nothing : html`
+				${!this.ownership.holds('visibility') ? html.nothing : html`
 					<span class="visibility field">
-						<mitra-select label=${t('Visibility')} title=${t('Visibility')} ?disabled=${!this.capabilities.editEntries} .placeholder=${!this.entry.visibility}
+						<mitra-select label=${t('Visibility')} title=${t('Visibility')} ?disabled=${!this.capabilities.entries.edit} .placeholder=${!this.entry.visibility}
 							.value=${this.entry.visibility ?? null} @change=${this.handleVisibilityChange}
 						>
 							${[null, ...Visibility.all].map(value => html`<mitra-option .value=${value}>${value?.format() ?? t('Default visibility')}</mitra-option>`)}

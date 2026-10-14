@@ -155,7 +155,7 @@ describe('converting an entry to availability', () => {
 describe('moving availability to a calendar', () => {
 	const availability = new Entry({ id: 'a', heading: 'Working hours', type: EntryType.Availability, recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })
 	const assess = (capabilities: Integration['capabilities']) =>
-		MigrationVerdict.assess(availability, { target: new Source(), capabilities, occurrence: false, occurrences: () => 52 })
+		MigrationVerdict.assess(availability, { target: new Source(), capabilities, ownership: new CalDAV().ownership, occurrence: false, occurrences: () => 52 })
 
 	it('is clean where the provider takes part', () => {
 		assert.equal(assess(new CalDAV().capabilities).clean, true)

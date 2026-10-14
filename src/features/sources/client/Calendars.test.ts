@@ -45,8 +45,8 @@ describe('Calendars', () => {
 	})
 
 	it('turns writes off for a read-only source', () => {
-		assert.equal(Calendars.capabilitiesOf('holidays').createEntries, false)
-		assert.equal(Calendars.capabilitiesOf('work').createEntries, true)
+		assert.equal(Calendars.capabilitiesOf('holidays').entries.create, false)
+		assert.equal(Calendars.capabilitiesOf('work').entries.create, true)
 	})
 
 	it('copies entries out where another calendar takes them, and moves them only where they can also be deleted', () => {

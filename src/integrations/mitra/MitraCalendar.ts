@@ -1,6 +1,8 @@
 import { type EntityManager } from '@mikro-orm/sqlite'
 import { model } from '../../infrastructure/model/model.js'
 import { Integration, integration } from '../Integration.js'
+import { IntegrationCapabilities } from '../IntegrationCapabilities.js'
+import { IntegrationOwnership } from '../IntegrationOwnership.js'
 import { type Source } from '../../features/sources/Source.js'
 
 /**
@@ -41,7 +43,16 @@ export class MitraCalendar extends Integration {
 
 	/** Participants are kept as a record of who is involved: with no server behind it, nothing delivers invitations or replies. */
 	override get capabilities() {
-		return { ...Integration.defaultCapabilities, createSources: true, deleteSources: true }
+		return new IntegrationCapabilities({ sources: { create: true, delete: true } })
+	}
+
+	/** Every field, all of them its own. */
+	override get ownership() {
+		return new IntegrationOwnership({
+			recurrence: 'mitra', reminders: 'mitra', location: 'mitra', description: 'mitra', percentComplete: 'mitra',
+			due: 'mitra', estimate: 'mitra', timeZone: 'mitra', participants: 'mitra', transparency: 'mitra',
+			visibility: 'mitra', relations: 'mitra', allDay: 'mitra', rank: 'mitra',
+		})
 	}
 
 	/** Identity pass preserving existing database sources during reconciliation. */

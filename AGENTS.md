@@ -65,7 +65,8 @@
 - OIDC client `identity/server/Oidc.ts` (code + PKCE, `/auth/*`); sessions `Session.ts` (hashed 256-bit cookie, sliding 30 days, `SameSite=Lax`, keeps `id_token` for logout). Unauthenticated `/api/*` is 401, pages redirect to login.
 - `Identity` is embedded in `User` (`oidc_*`, unique issuer + subject); `User.provision` creates on first login.
 - **Tenant isolation**: query through the `User` (`user.sources`, `user.entries`), never bare `em.find*`; a foreign id is `NotFoundError` (404). `EntryRelation` has no user column, so `targetUid` matches stay in the user's sources. A push endpoint taken over by another user loses its name.
-- Errors: `app/server.ts` maps `NotFoundError` to 404 and keeps 4xx/5xx `status`, else 500.
+- Errors: `app/server.ts` maps `NotFoundError` to 404 and keeps 4xx/5xx `status`, else 500; an `AggregateError` answers with its first error's status and message, listing all in `errors`.
+- **Validation**: a `Validatable<Context>` yields every `ValidationError` it has in a context (`*validate`), never throws; the caller throws them together as an `AggregateError`. A `ValidationError` names its `fields` and answers 400 (`static status`, a subclass may differ). `EntryPatch.validate({ entry, from, to, scope })` judges the edit (its shape alone without a context), `Entry.validate(calendar)` whether a `Calendar` (source and integration) can hold it; routes ask both once.
 - SSE, push and reminders are per user. SSE scope `'entries'` (default) or `'sources'` (refetches integrations); entry mutations use `'entries'` so `Source` instances survive.
 
 ## The Sample Calendar (`integrations/demo/Demo.ts`)
@@ -75,11 +76,11 @@
 
 ## Integrations & Sync
 - `Integration` (STI) subclasses are listed in `registerIntegrations.ts` in display order, with statics `label`, `description`, `logo`, `onePerUser`, `developmentOnly`, `discoversSources`.
-- **Capabilities** (`Integration.defaultCapabilities`): everything a provider can do in one object; `capabilitiesIn(source)` turns writes off for read-only sources.
+- **What an integration can do and hold**, two value objects each integration declares itself, as nothing is assumed (only a real subclass derives, Google from CalDAV): `IntegrationCapabilities`, what it can do (`entries.create/edit/delete/rename/cancel`, `sources.create/delete`, `availability`; `in(source)` turns writes off for read-only sources), and `IntegrationOwnership`, which entry fields it holds and who owns each, `'upstream'` (a re-import brings it back) or `'mitra'` (lost with the integration), keyed by `Entry` field name: `new IntegrationOwnership({ due: 'upstream', rank: 'mitra' })`. Ask, never read a record: `holds(field)` (unheld fields are hidden and refused), `ownerOf(field)`, `ownedBy(owner)`; code writing a field upstream asks `ownerOf(field) === 'upstream'`.
 - Engines read entries through `Integration.syncedEntries` (excludes availability), never bare `em.find`.
 - Source create/delete routes check the capability, then call `SyncEngine.createSource`/`deleteSource`; renaming needs none.
 - **Providers**:
-  - **CalDAV** (`caldav/CalDAV.ts`). **Google** extends it with OAuth (`refreshToken`, masked in `toJSON`); Google drops `RELATED-TO` and `X-` properties, so `relations = false`; shared calendars must be enabled at `calendar.google.com/calendar/syncselect`.
+  - **CalDAV** (`caldav/CalDAV.ts`). **Google** extends it with OAuth (`refreshToken`, masked in `toJSON`); Google drops `RELATED-TO` and `X-` properties, so its ownership is CalDAV's `without('relations')`; shared calendars must be enabled at `calendar.google.com/calendar/syncselect`.
   - **Mitra** (`mitra/MitraCalendar.ts`): stored locally, `syncInterval = Infinity`, uri `mitra://local` (one per user). `fetchSources` returns the stored sources unchanged (`[]` would delete them all) and re-import is a no-op. Participants are a record only (nothing is delivered).
   - **Demo**: `MitraCalendar` plus the sample, dev only, reseeding in `syncSource` when the day changes (1 h interval).
   - **Notion** (`notion/Notion.ts`, REST `Notion-Version: 2026-03-11`, PAT): sources `notion://{dataSource}/{view}`; membership query plus a `last_edited_time` delta; no recurrence, reminders, location or time zone (`timeZone` always null). The description syncs as Markdown through `NotionMarkdown.ts`, replacing only replaceable blocks and round-tripping cleanly. Self-relations map to `PARENT`/`FINISHTOSTART`/`X-NOTION-*`; view filters pre-fill new tasks.
@@ -103,7 +104,7 @@
 ## Entries
 - `Source.entryTypes` lists `event`/`task`; availability is everywhere, gated by `capabilities.availability`. `EntryType` is a value object; setting `Entry.type` strips what the new type can't hold.
 - **Vocabulary** (UI and docs): the **schedule** (`start`/`end`), the **constraints** (**due date**, **estimate**; never "deadline"/"duration"), **planning** (fitting unscheduled tasks), a **moment** (a start without an end).
-- **Edits are patches** (`EntryPatch`, a model): a field left out keeps, `null` clears, a value sets; its converters parse it at the boundary (`malformation` names a bad rule or relations). `Entry.apply(patch)` takes one over, then drops what the type can't hold and an estimate a start replaced. The client sends `EntryPatch.of(entry, fields)` (`shared` through an occurrence, `occurrence` for one, scope and occurrence in the address); routes build `new Entry().apply(EntryPatch.of(existing)).apply(patch)` and judge that. An entry holds no `null`, relations aside (absent is unknown, `null` is none).
+- **Edits are patches** (`EntryPatch`, a model): a field left out keeps, `null` clears, a value sets; its converters parse it at the boundary. `Entry.apply(patch)` takes one over, then drops what the type can't hold and an estimate a start replaced. The client sends `EntryPatch.of(entry, fields)` (`shared` through an occurrence, `occurrence` for one, scope and occurrence in the address); routes build `new Entry().apply(EntryPatch.of(existing)).apply(patch)` and judge that. An entry holds no `null`, relations aside (absent is unknown, `null` is none).
 - **Task model**: end and estimate exclude each other (`scheduleAt`/`unschedule` convert); drags move the schedule, never `due`. A moment (`Entry.point`) has no duration, a series of moments included. `setAllDay` converts `due` too (VTODO needs matching value types).
 - **CalDAV tasks**: `DTSTART`, `ESTIMATED-DURATION`, `DUE`; never `DURATION` on a VTODO. Legacy DTSTART + DUE reads as a block.
 - **Time zone**: one per entry for all its dates, an `EntryTimeZone` (`Entry.timeZone`): none follows the viewer, `EntryTimeZone.floating` is wall-clock time (`Entry.floating`), else a zone kept in the spelling it was written with (engines spell some differently), whose `clock` is where its wall clock is read (UTC when floating). `Entry.zone` is the `TimeZone` its times are written in. `setTimeZone` keeps the clock times. `TaskStatus`, `Transparency` and `Visibility` are value objects, their columns keeping their CHECK constraints (`@enum` with a `Mapper`). An occurrence's edits travel as plain bodies, which no converter runs on: `wireFields` (`Api.ts`) sends their value objects as codes and `Entry.reviveValues` parses them back, until an `EntryPatch` model replaces both.
@@ -175,7 +176,7 @@
 - Devices are listed under Settings → Notifications; `register` keeps the user's `name`; a rotated subscription inherits name and locale (`succeed`). The page re-registers on a locale change.
 
 ## Participants
-- `Entry.participants` (JSON); `capabilities.participants` (off for Notion); only the organizer edits the list (server-enforced); identity from `Integration.addresses`; CalDAV mapping in `CalDAV.participantsFrom`/`writeParticipants`.
+- `Entry.participants` (JSON); `ownership.holds('participants')` (not for Notion); only the organizer edits the list (server-enforced); identity from `Integration.addresses`; CalDAV mapping in `CalDAV.participantsFrom`/`writeParticipants`.
 
 ## Relationships (RELATED-TO)
 - `RelationType` values; stored on the dependent entry by `uid` (`EntryRelation`); written through `POST /entries/:id/relations`, outside entry dirty checking; CalDAV diffs `RELATED-TO` lines. `ShiftStrategy` moves dependents. Rebuilding `entry` must hold `entry_relation` rows.

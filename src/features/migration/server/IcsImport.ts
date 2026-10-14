@@ -49,7 +49,7 @@ export class IcsImport {
 		}
 		const target = await user.source(em, targetId)
 		const integration = await em.findOneOrFail(Integration, { id: target.integrationId })
-		if (!integration.capabilitiesFor(target).createEntries) {
+		if (!integration.capabilitiesFor(target).entries.create) {
 			throw new MigrationRefused('This calendar cannot be written to from mitra')
 		}
 
@@ -97,6 +97,7 @@ export class IcsImport {
 		return MigrationVerdict.assess(entry, {
 			target: this.target,
 			capabilities: this.targetIntegration.capabilitiesFor(this.target),
+			ownership: this.targetIntegration.ownership,
 			occurrence,
 		})
 	}

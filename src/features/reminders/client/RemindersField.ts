@@ -156,7 +156,7 @@ export class RemindersField extends Component {
 	}
 
 	protected override get template() {
-		const editable = Calendars.capabilitiesOf(this.entry.sourceId).editEntries
+		const editable = Calendars.capabilitiesOf(this.entry.sourceId).entries.edit
 		return !this.entry?.reminderAnchor ? html.nothing : html`
 			${!this.reminders.length ? html`
 				<span class="placeholder">${t('Reminders')}</span>

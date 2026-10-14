@@ -67,10 +67,10 @@ export class SourceMigration {
 			em.findOneOrFail(Integration, { id: origin.integrationId }),
 			em.findOneOrFail(Integration, { id: target.integrationId }),
 		])
-		if (!keepOriginals && !originIntegration.capabilitiesFor(origin).deleteEntries) {
+		if (!keepOriginals && !originIntegration.capabilitiesFor(origin).entries.delete) {
 			throw new MigrationRefused('Entries in this calendar cannot be deleted from mitra, so they can only be copied out of it')
 		}
-		if (!targetIntegration.capabilitiesFor(target).createEntries) {
+		if (!targetIntegration.capabilitiesFor(target).entries.create) {
 			throw new MigrationRefused('This calendar cannot be written to from mitra')
 		}
 
@@ -98,6 +98,7 @@ export class SourceMigration {
 		return MigrationVerdict.assess(entry, {
 			target: this.target,
 			capabilities: this.targetIntegration.capabilitiesFor(this.target),
+			ownership: this.targetIntegration.ownership,
 			occurrence: !!entry.recurrenceId || (!!entry.id && this.overriddenMasterIds.has(entry.id)),
 			occurrences: () => this.occurrencesOf(entry)?.length ?? null,
 		})

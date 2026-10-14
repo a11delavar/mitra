@@ -7,7 +7,7 @@ import { EntryType } from '../EntryType.js'
 import { EntryRank } from '../EntryRank.js'
 import { Recurrence, type RecurrenceScope } from '../../recurrence/Recurrence.js'
 import { EntryStore } from './EntryStore.js'
-import { Integration } from '../../../integrations/Integration.js'
+import { IntegrationOwnership } from '../../../integrations/IntegrationOwnership.js'
 import { ApiError } from '../../../infrastructure/http/Api.js'
 import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
 
@@ -612,7 +612,7 @@ describe('EntryStore', () => {
 			EntryStore.resolveScope = () => (asked = true, Promise.resolve('all' as const))
 			const working = occurrence({ type: EntryType.Task, status: TaskStatus.ToDo })
 			EntryStore.applyServerEntries([working])
-			working.setStatus(TaskStatus.Done, Integration.defaultCapabilities)
+			working.setStatus(TaskStatus.Done, new IntegrationOwnership({ percentComplete: 'upstream' }))
 			const commit = EntryStore.commit(working)
 			await transport.respond(entry({ id: 'detached', type: EntryType.Task, status: TaskStatus.Done, percentComplete: 100 }))
 			await commit

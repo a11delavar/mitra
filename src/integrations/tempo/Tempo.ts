@@ -1,6 +1,8 @@
 import { converter } from '@a11d/converter'
 import { model } from '../../infrastructure/model/model.js'
 import { Integration, integration } from '../Integration.js'
+import { IntegrationCapabilities } from '../IntegrationCapabilities.js'
+import { IntegrationOwnership } from '../IntegrationOwnership.js'
 import { withheld } from '../../infrastructure/model/withheld.js'
 import { type Entry } from '../../features/entries/Entry.js'
 import { EntryType } from '../../features/entries/EntryType.js'
@@ -86,12 +88,11 @@ export class Tempo extends Integration<TempoCredentials> {
 
 	/** No availability: it is edited with this provider's capabilities, and would not repeat. */
 	override get capabilities() {
-		return {
-			...Integration.defaultCapabilities,
-			availability: false, recurrence: false, reminders: false, location: false, cancelledStatus: false,
-			percentComplete: false, timeZone: false, participants: false, transparency: false,
-			visibility: false, relations: false, allDay: false, renameEntries: false,
-		}
+		return new IntegrationCapabilities({ entries: { rename: false, cancel: false }, availability: false })
+	}
+
+	override get ownership() {
+		return new IntegrationOwnership({ description: 'upstream', due: 'upstream', estimate: 'upstream', rank: 'mitra' })
 	}
 
 	override externalLink(entry: Entry) {

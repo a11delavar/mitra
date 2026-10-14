@@ -237,7 +237,7 @@ export class RepeatField extends Component {
 	protected override get template() {
 		return !this.entry?.start && !this.entry?.due ? html.nothing : html`
 			<!-- No rule means nothing is chosen here, so "Does not repeat" reads as a placeholder rather than as a value. -->
-			<mitra-select label=${t('Repeat')} .placeholder=${!this.entry.recurrence} ?disabled=${!Calendars.capabilitiesOf(this.entry.sourceId).editEntries}
+			<mitra-select label=${t('Repeat')} .placeholder=${!this.entry.recurrence} ?disabled=${!Calendars.capabilitiesOf(this.entry.sourceId).entries.edit}
 				.value=${live(this.menuItems.find(item => item.checked)?.id ?? 'none')}
 				@change=${this.handleSelect}
 			>

@@ -77,7 +77,7 @@ export class Relations {
 		if (!predecessor.relatable || !dependent.relatable || predecessor.uid === dependent.uid) {
 			return false
 		}
-		if (!Calendars.capabilitiesOf(dependent.sourceId).relations) {
+		if (!Calendars.ownershipOf(dependent.sourceId).holds('relations')) {
 			return false
 		}
 		const coupled = (from: Entry, to: Entry) => this.graph.edgesFrom(from.uid!).some(edge => edge.family === 'dependency' && edge.to === to.uid)

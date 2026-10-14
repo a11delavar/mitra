@@ -38,8 +38,8 @@ class Minting extends MitraCalendar {
 /** Test double with restricted capabilities. */
 @entity({ discriminatorValue: 'test-limited' })
 class Limited extends MitraCalendar {
-	override get capabilities() {
-		return { ...Integration.defaultCapabilities, recurrence: false, reminders: false, participants: false, due: false, estimate: false }
+	override get ownership() {
+		return super.ownership.without('recurrence', 'reminders', 'participants', 'due', 'estimate')
 	}
 }
 

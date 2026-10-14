@@ -79,7 +79,7 @@ export async function offerToCloseSubtasks(entry: Entry) {
 	await run(EntryPlan.of({
 		writes: outstanding.map(child => ({
 			entry: child,
-			mutate: (target: Entry) => target.setStatus(closure, Calendars.capabilitiesOf(target.sourceId)),
+			mutate: (target: Entry) => target.setStatus(closure, Calendars.ownershipOf(target.sourceId)),
 		})),
 	}))
 }
@@ -97,7 +97,7 @@ async function offerToCompleteParents(closed: Entry) {
 		// Deepest first so intermediate states remain valid.
 		writes: parents.map(parent => ({
 			entry: parent,
-			mutate: (target: Entry) => target.setStatus(TaskStatus.Done, Calendars.capabilitiesOf(target.sourceId)),
+			mutate: (target: Entry) => target.setStatus(TaskStatus.Done, Calendars.ownershipOf(target.sourceId)),
 		})),
 	}))
 }

@@ -9,6 +9,7 @@ import { EntryType } from '../../features/entries/EntryType.js'
 import { EntryRelation } from '../../features/relations/EntryRelation.js'
 import { Recurrence } from '../../features/recurrence/Recurrence.js'
 import { Integration } from '../Integration.js'
+import { IntegrationCapabilities } from '../IntegrationCapabilities.js'
 import { MitraCalendar } from './MitraCalendar.js'
 import { Demo } from '../demo/Demo.js'
 
@@ -58,19 +59,19 @@ describe('MitraCalendar', () => {
 	describe('capabilities', () => {
 		it('manages its own sources, since no remote discovery can', () => {
 			const capabilities = new MitraCalendar().capabilities
-			assert.equal(capabilities.createSources, true)
-			assert.equal(capabilities.deleteSources, true)
+			assert.equal(capabilities.sources.create, true)
+			assert.equal(capabilities.sources.delete, true)
 		})
 
 		it('every other integration declares source management off by default', () => {
-			assert.equal(Integration.defaultCapabilities.createSources, false)
-			assert.equal(Integration.defaultCapabilities.deleteSources, false)
+			assert.equal(new IntegrationCapabilities().sources.create, false)
+			assert.equal(new IntegrationCapabilities().sources.delete, false)
 		})
 
 		it('a read-only calendar cannot be deleted from mitra either', () => {
 			const masked = new MitraCalendar().capabilitiesFor({ readOnly: true })
-			assert.equal(masked.deleteSources, false)
-			assert.equal(masked.createSources, true) // integration-level, so never masked per source
+			assert.equal(masked.sources.delete, false)
+			assert.equal(masked.sources.create, true) // integration-level, so never masked per source
 		})
 
 		it('is never polled: the pacer skips a local-only integration outright', () => {

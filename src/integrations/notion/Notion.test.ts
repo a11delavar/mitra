@@ -573,11 +573,14 @@ describe('Notion integration model', () => {
 	})
 
 	it('declares what Notion cannot represent: the editor hides these fields', () => {
-		const capabilities = account().capabilities
-		const unsupported = Object.entries(capabilities).filter(([, supported]) => !supported).map(([key]) => key)
-		assert.deepEqual(unsupported.sort(), ['availability', 'cancelledStatus', 'createSources', 'deleteSources', 'due', 'estimate', 'location', 'participants', 'percentComplete', 'recurrence', 'reminders', 'timeZone', 'transparency', 'visibility'])
-		assert.equal(capabilities.description, true)
-		assert.equal(capabilities.relations, true)
+		const { capabilities, ownership } = account()
+		const unsupported = (['description', 'due', 'estimate', 'location', 'participants', 'percentComplete', 'recurrence', 'relations', 'reminders', 'timeZone', 'transparency', 'visibility'] as const)
+			.filter(field => !ownership.holds(field))
+		assert.deepEqual(unsupported, ['due', 'estimate', 'location', 'participants', 'percentComplete', 'recurrence', 'reminders', 'timeZone', 'transparency', 'visibility'])
+		assert.equal(ownership.ownerOf('description'), 'upstream')
+		assert.equal(ownership.ownerOf('relations'), 'upstream')
+		assert.deepEqual([capabilities.availability, capabilities.entries.cancel], [false, false])
+		assert.deepEqual(capabilities.sources, { create: false, delete: false })
 	})
 
 	it('keeps the stored token when the edit form leaves it blank, and never takes a client label', () => {

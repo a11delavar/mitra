@@ -9,9 +9,9 @@ import { Integration } from '../../../integrations/Integration.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
 import { Entry } from '../Entry.js'
 import { EntryPatch } from '../EntryPatch.js'
+import { ValidationError } from '../../../infrastructure/validation/ValidationError.js'
 import { type Relation } from '../../relations/Relation.js'
 import { TaskStatus } from '../TaskStatus.js'
-import { Transparency } from '../Transparency.js'
 import { editOccurrence, deleteOccurrence, expandedOccurrences, seriesStarts, nearestOccurrence, occurrenceAt } from '../../recurrence/server/occurrences.js'
 import { entrySearch, entryWindow, everyEntry } from './entryWindow.js'
 import { assertRelationsValid, attachRelations, relationClosure } from '../../relations/server/relations.js'
@@ -116,54 +116,32 @@ entriesRouter.post('/', async (req, res) => {
 
 	const patch = EntryPatch.from(req.body)
 	if (!patch.sourceId) {
-		return res.status(400).json({ error: 'Missing sourceId' })
+		throw new ValidationError('Missing sourceId', ['sourceId'])
 	}
-	if (patch.malformation) {
-		return res.status(400).json({ error: patch.malformation })
-	}
+	const source = await req.user.source(em, patch.sourceId)
+	const to = { source, integration: await em.findOneOrFail(Integration, { id: source.integrationId }) }
 
-	const targetSource = await req.user.source(em, patch.sourceId)
-	const targetIntegration = await em.findOneOrFail(Integration, { id: targetSource.integrationId })
-
-	if (!targetIntegration.capabilitiesFor(targetSource).createEntries) {
-		return res.status(400).json({ error: 'This calendar cannot be written to from mitra' })
-	}
-
-	const incoming = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: targetSource.defaultEntryType }).apply(patch)
+	const incoming = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: source.defaultEntryType }).apply(patch)
 	// The estimate is lost where the provider has none.
-	if (!targetIntegration.capabilities.estimate) {
+	if (!to.integration.ownership.holds('estimate')) {
 		incoming.estimate = undefined
 	}
 
-	if (incoming.participants?.length && !targetIntegration.capabilities.participants) {
-		return res.status(400).json({ error: 'This calendar does not support participants' })
-	}
-	if (incoming.transparency === Transparency.Free && !targetIntegration.capabilities.transparency) {
-		return res.status(400).json({ error: 'This calendar cannot mark an entry as free' })
-	}
-	if (incoming.visibility && !targetIntegration.capabilities.visibility) {
-		return res.status(400).json({ error: 'This calendar does not support visibility' })
-	}
-	if (incoming.percentComplete !== undefined && !targetIntegration.capabilities.percentComplete) {
-		return res.status(400).json({ error: 'This calendar does not support task progress' })
-	}
-	if (incoming.due && !targetIntegration.capabilities.due) {
-		return res.status(400).json({ error: 'This calendar does not support due dates' })
-	}
-	if (!targetIntegration.canHold(targetSource, incoming.type)) {
-		return res.status(400).json({ error: `This calendar cannot hold ${incoming.type.isTask ? 'tasks' : incoming.type.isAvailability ? 'availability' : 'events'}` })
+	const errors = [...patch.validate({ to }), ...incoming.validate(to)]
+	if (errors.length) {
+		throw new AggregateError(errors)
 	}
 
 	const relationsError = await assertRelationsValid(em, req.user, incoming, incoming.relations ?? null)
 	if (relationsError) {
-		return res.status(400).json({ error: relationsError })
+		throw new ValidationError(relationsError, ['relations'])
 	}
 
-	const created = await targetIntegration.createEntry(em, incoming)
+	const created = await to.integration.createEntry(em, incoming)
 	await EntryRelation.reconcile(em, created.id!, created.relations ?? null)
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
-	logger.debug(`Created ${created.type} "${created.heading}" (${created.id}) in source ${targetSource.id}`)
+	logger.debug(`Created ${created.type} "${created.heading}" (${created.id}) in source ${source.id}`)
 	return res.status(201).json(created)
 })
 
@@ -175,14 +153,15 @@ entriesRouter.put('/:id', async (req, res) => {
 
 	// Validated BEFORE any integration write, since a 400 must leave the external store untouched.
 	const patch = EntryPatch.from(req.body)
-	if (patch.malformation) {
-		return res.status(400).json({ error: patch.malformation })
+	const malformed = [...patch.validate()]
+	if (malformed.length) {
+		throw new AggregateError(malformed)
 	}
 	const relations = patch.relations as Array<Relation> | null | undefined
 	if (relations !== undefined) {
 		const relationsError = await assertRelationsValid(em, req.user, existing, relations)
 		if (relationsError) {
-			return res.status(400).json({ error: relationsError })
+			throw new ValidationError(relationsError, ['relations'])
 		}
 	}
 
@@ -202,56 +181,23 @@ entriesRouter.put('/:id', async (req, res) => {
 		em.findOneOrFail(Integration, { id: targetSource.integrationId }),
 	])
 
-	const currentCapabilities = currentIntegration.capabilitiesFor(currentSource)
-	if (!currentCapabilities.editEntries) {
-		return res.status(400).json({ error: 'This calendar cannot be edited from mitra' })
-	}
-	if (incoming.heading !== existing.heading && !currentCapabilities.renameEntries) {
-		return res.status(400).json({ error: 'Entries in this calendar take their title from the provider and cannot be renamed' })
-	}
-	if (targetSource.id !== currentSource.id && !targetIntegration.capabilitiesFor(targetSource).createEntries) {
-		return res.status(400).json({ error: 'This calendar cannot be written to from mitra' })
-	}
-
-	if (incoming.participants?.length && !targetIntegration.capabilities.participants) {
-		return res.status(400).json({ error: 'This calendar does not support participants. Remove them before moving the entry' })
-	}
-	if (incoming.transparency === Transparency.Free && !targetIntegration.capabilities.transparency) {
-		return res.status(400).json({ error: 'This calendar cannot mark an entry as free. Set it back to busy before moving the entry' })
-	}
-	if (incoming.visibility && !targetIntegration.capabilities.visibility) {
-		return res.status(400).json({ error: 'This calendar does not support visibility. Reset it to the default before moving the entry' })
-	}
-	if (incoming.percentComplete !== undefined && !targetIntegration.capabilities.percentComplete) {
-		return res.status(400).json({ error: 'This calendar does not support task progress. Clear it first' })
-	}
-	if (incoming.due && !targetIntegration.capabilities.due) {
-		return res.status(400).json({ error: 'This calendar does not support due dates. Clear it first' })
-	}
-
-	// Type conversion: tasks and events cannot mix in single CalDAV resource (RFC 4791 §4.1), so converted entries re-create below.
-	if (incoming.type !== existing.type && existing.partOfSeries) {
-		return res.status(400).json({ error: 'A recurring entry cannot change its type' })
-	}
-	if ((incoming.type !== existing.type || (incoming.type.isAvailability && targetSource.id !== currentSource.id)) && !targetIntegration.canHold(targetSource, incoming.type)) {
-		return res.status(400).json({ error: 'The picked calendar cannot hold this entry type' })
-	}
-
+	const from = { source: currentSource, integration: currentIntegration }
+	const to = targetSource === currentSource ? from : { source: targetSource, integration: targetIntegration }
 	const { scope, recurrenceId } = req.query as { scope?: RecurrenceScope, recurrenceId?: string }
+	// Type conversion re-creates the entry below: tasks and events cannot share a CalDAV resource (RFC 4791 §4.1).
+	const errors = [...patch.validate({ entry: existing, from, to, scope }), ...incoming.validate(to)]
+	if (errors.length) {
+		throw new AggregateError(errors)
+	}
+
 	if (scope && recurrenceId) {
 		const occurrenceId = new Date(recurrenceId)
 		// Absent dates are the occurrence's own, never the master's: the master's start would move the series to its first occurrence.
 		const edited = occurrenceAt(existing, occurrenceId).apply(patch)
-		if (!targetIntegration.capabilities.estimate) {
+		if (!targetIntegration.ownership.holds('estimate')) {
 			edited.estimate = undefined
 		}
-		const movingTo = targetSource.id === currentSource.id ? undefined : { source: targetSource, integration: targetIntegration }
-		if (movingTo && !targetIntegration.canHold(targetSource, existing.type)) {
-			return res.status(400).json({ error: 'The picked calendar cannot hold this entry type' })
-		}
-		if (movingTo && scope !== 'this' && !targetIntegration.capabilities.recurrence) {
-			return res.status(400).json({ error: 'This calendar cannot hold a repeating entry' })
-		}
+		const movingTo = to === from ? undefined : to
 		const result = await editOccurrence(em, currentIntegration, existing, occurrenceId, edited, scope, movingTo)
 		if (movingTo && scope === 'all' && result.id !== existing.id) {
 			await EntryRelation.reconcile(em, result.id!, existing.relations ?? null)
@@ -264,13 +210,8 @@ entriesRouter.put('/:id', async (req, res) => {
 		return res.json(result)
 	}
 
-	if (!targetIntegration.capabilities.estimate) {
+	if (!targetIntegration.ownership.holds('estimate')) {
 		incoming.estimate = undefined
-	}
-
-	// DTSTART is required for VEVENT (RFC 5545 §3.6.1).
-	if (patch.start === null && existing.start && !incoming.type.isTask) {
-		return res.status(400).json({ error: 'An event must have a date' })
 	}
 
 	// Move between sources or type conversion re-creates the entry (create-first, delete-after ordering).
@@ -316,7 +257,7 @@ entriesRouter.post('/:id/complete', async (req, res) => {
 	if (!existing.type?.isTask) {
 		return res.status(400).json({ error: 'Only a task can be completed' })
 	}
-	if (!capabilities.editEntries) {
+	if (!capabilities.entries.edit) {
 		return res.status(400).json({ error: 'This calendar cannot be edited from mitra' })
 	}
 
@@ -326,7 +267,7 @@ entriesRouter.post('/:id/complete', async (req, res) => {
 	if (typeof recurrenceId === 'number' && existing.recurrence?.freq) {
 		const start = new Date(recurrenceId)
 		const occurrence = occurrenceAt(existing, start)
-		occurrence.setStatus(TaskStatus.Done, capabilities)
+		occurrence.setStatus(TaskStatus.Done, integration.ownership)
 		const detached = await editOccurrence(em, integration, existing, start, occurrence, 'this')
 		await em.flush()
 		syncEmitter.emit('updated', req.user.id)
@@ -335,7 +276,7 @@ entriesRouter.post('/:id/complete', async (req, res) => {
 	}
 
 	const incoming = existing.clone()
-	incoming.setStatus(TaskStatus.Done, capabilities)
+	incoming.setStatus(TaskStatus.Done, integration.ownership)
 	// A second tap must not write to the provider again.
 	if (incoming.status === existing.status && incoming.percentComplete === existing.percentComplete) {
 		return res.json(existing)
@@ -354,7 +295,7 @@ entriesRouter.delete('/:id', async (req, res) => {
 	const source = await em.findOneOrFail(Source, { id: entry.sourceId })
 	const integration = await em.findOneOrFail(Integration, { id: source.integrationId })
 
-	if (!integration.capabilitiesFor(source).deleteEntries) {
+	if (!integration.capabilitiesFor(source).entries.delete) {
 		return res.status(400).json({ error: 'Entries in this calendar cannot be deleted from mitra' })
 	}
 
