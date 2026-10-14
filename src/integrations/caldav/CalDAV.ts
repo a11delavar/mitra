@@ -117,9 +117,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
-	/**
-	 * Converts an iCalendar time object and optional TZID to a JavaScript Date.
-	 */
+	/** Converts an iCalendar time object and optional TZID to a JavaScript Date. */
 	static instantFrom(time: { isDate?: boolean, year: number, month: number, day: number, hour?: number, minute?: number, second?: number, toJSDate(): Date } | null | undefined, tzid?: string): Date | undefined {
 		if (!time) {
 			return undefined
@@ -150,9 +148,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			?? (percentComplete >= 100 ? TaskStatus.Done : TaskStatus.ToDo)
 	}
 
-	/**
-	 * Computes PERCENT-COMPLETE for iCalendar (RFC 5545 §3.8.1.8).
-	 */
+	/** Computes PERCENT-COMPLETE for iCalendar (RFC 5545 §3.8.1.8). */
 	static percentCompleteForICal(status: TaskStatus | undefined, percentComplete: number | null | undefined): number | undefined {
 		if ((status ?? TaskStatus.ToDo) === TaskStatus.Done) {
 			return 100
@@ -236,9 +232,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return url === collection || url + '/' === collection || url === collection + '/'
 	}
 
-	/**
-	 * Splits sync-collection multistatus responses into changed and deleted member URLs (RFC 6578 §3.6).
-	 */
+	/** Splits sync-collection multistatus responses into changed and deleted member URLs (RFC 6578 §3.6). */
 	static partitionMemberResponses(sourceUri: string, responses: ReadonlyArray<{ href?: string, status?: number, error?: Record<string, unknown> }>): { changedUrls: Array<string>, deletedUrls: Array<string>, truncated: boolean } {
 		const truncated = responses.some(r => r.status === 507 || !!r.error?.numberOfMatchesWithinLimits)
 		const members = responses
@@ -296,18 +290,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	}
 
 	/**
-	 * Rewrite (or `append`) a date property in the entry's authoring `zone` (Entry.timeZone): an IANA
-	 * id writes the instant as that zone's WALL CLOCK under a TZID, EMBEDDING the matching VTIMEZONE
-	 * when the resource doesn't carry it yet ({@link timezoneIn}); FLOATING writes a bare local time
-	 * (neither TZID nor `Z`); null or 'UTC' (the same fixed-instant semantics, since RFC 5545 §3.3.5 says a
-	 * UTC time is written in its `Z` form, never under a TZID) and all-day go through
-	 * {@link toICALTime}. Omitting `zone` entirely PRESERVES the property's own authored form (its
-	 * current TZID, resolved only against embedded definitions, never fabricated) for rewrites that
-	 * don't re-author the zone. Writing the UTC form into a TZID property, the old behavior, let the
-	 * zone reinterpret the UTC wall clock, shifting the series by the zone offset on zoned servers
-	 * like Google.
-	 *
-	 * Public: the sync engine writes every date property through this.
+	 * Rewrites (or `append`s) a date property in `zone`: an IANA zone as its wall clock under a TZID with an embedded
+	 * VTIMEZONE, floating as a bare local time, UTC and all-day through {@link toICALTime} (RFC 5545 §3.3.5).
+	 * Omitting `zone` keeps the property's authored form, its TZID resolved only against embedded definitions.
 	 */
 	static writeDate(
 		comp: ICAL.Component, component: ICAL.Component, name: string,
@@ -345,9 +330,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
-	/**
-	 * Reads one parsed VEVENT/VTODO onto an entry.
-	 */
+	/** Reads one parsed VEVENT/VTODO onto an entry. */
 	static applyComponent(entry: Entry, component: ICAL.Component, integration: Integration): void {
 		const entryType = component.name === 'vtodo' ? EntryType.Task : EntryType.Event
 		entry.type = entryType
@@ -393,9 +376,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	}
 
 	/**
-	 * A VTODO's schedule and constraints. ESTIMATED-DURATION is the one fact that is the span from DTSTART
-	 * once there is one and the estimate before. Without it, DTSTART and DUE are the block mitra used to
-	 * write, so DUE is read as its end rather than as a deadline nobody set.
+	 * ESTIMATED-DURATION is the span from DTSTART once there is one, else the estimate. Without it, DTSTART and DUE
+	 * are a legacy block, so DUE reads as its end rather than a due date.
 	 */
 	static taskTimesFrom(component: ICAL.Component): TaskTimes {
 		const tzidOf = (name: string) => component.getFirstProperty(name)?.getParameter('tzid')?.toString()
@@ -469,9 +451,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return linked
 	}
 
-	/**
-	 * Determines if a collection is writable from WebDAV `current-user-privilege-set` (RFC 3744).
-	 */
+	/** Determines if a collection is writable from WebDAV `current-user-privilege-set` (RFC 3744). */
 	static writableFromPrivileges(privilegeSet: unknown): boolean | undefined {
 		if (privilegeSet === null || privilegeSet === undefined) {
 			return undefined
@@ -546,9 +526,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return value?.toString().trim().replace(/^mailto:/i, '') || undefined
 	}
 
-	/**
-	 * Extracts and normalizes participants from ATTENDEE and ORGANIZER properties.
-	 */
+	/** Extracts and normalizes participants from ATTENDEE and ORGANIZER properties. */
 	static participantsFrom(component: ICAL.Component, addresses?: ReadonlyArray<string> | null): Participants | undefined {
 		const own = new Set((addresses ?? []).map(address => address.toLowerCase()))
 		const self = (email: string) => own.has(email.toLowerCase()) || undefined
@@ -581,9 +559,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return Participants.normalize(raw)
 	}
 
-	/**
-	 * Serializes participants to ATTENDEE and ORGANIZER properties.
-	 */
+	/** Serializes participants to ATTENDEE and ORGANIZER properties. */
 	static writeParticipants(component: ICAL.Component, raw: ReadonlyArray<Participant> | null) {
 		component.removeAllProperties('attendee')
 		const participants = Participants.normalize(raw)
@@ -612,18 +588,18 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
-	static relationsFrom(component: ICAL.Component): Array<Relation> | null {
-		return EntryRelations.of(undefined, component.getAllProperties('related-to').map(property => ({
+	static relationsFrom(component: ICAL.Component): EntryRelations {
+		return EntryRelations.of(component.getAllProperties('related-to').map(property => ({
 			type: property.getParameter('reltype')?.toString() || RelationType.Parent,
 			targetUid: property.getFirstValue()?.toString() ?? '',
 			gap: property.getParameter('gap')?.toString() || null,
-		}))).value
+		})))
 	}
 
-	static writeRelations(component: ICAL.Component, lines: Array<Relation> | undefined | null) {
-		const relations = lines === undefined ? undefined : EntryRelations.of(undefined, lines).writes
+	/** Writes the relations the entry owns as RELATED-TO lines, keeping the ones already there as they are. */
+	static writeRelations(component: ICAL.Component, relations: EntryRelations | undefined) {
 		const keyOf = (init: RelationInit) => Relation.from(init)?.key ?? ''
-		const desired = new Map((relations ?? []).map(relation => [keyOf(relation), relation]))
+		const desired = new Map((relations?.writes ?? []).map(relation => [keyOf(relation), relation]))
 		const kept = new Set<string>()
 		for (const property of component.getAllProperties('related-to')) {
 			const key = keyOf({

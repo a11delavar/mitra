@@ -7,6 +7,7 @@ import { IcsSyncEngine } from '../../../integrations/ics/server/IcsSyncEngine.js
 import { type User } from '../../identity/User.js'
 import { Entry } from '../../entries/Entry.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
+import { EntryRelations } from '../../relations/EntryRelations.js'
 import { exdatesOf } from '../../recurrence/server/occurrences.js'
 import { MigrationOutcome, MigrationPlan, MigrationVerdict } from '../MigrationPlan.js'
 import { MigrationRefused } from './SourceMigration.js'
@@ -26,10 +27,8 @@ interface IcsEntity {
 }
 
 /**
- * Imports the VEVENT/VTODO components of one iCalendar file into a target source: the file-origin
- * sibling of {@link SourceMigration}'s copy phase. Copy semantics throughout: fresh identities are
- * minted (re-importing a file duplicates predictably instead of overwriting), in-file RELATED-TO
- * links are repointed onto the minted UIDs, and a failure rolls back everything already created.
+ * Imports one iCalendar file with the copy semantics of {@link SourceMigration}: fresh UIDs are minted, so a re-import
+ * duplicates rather than overwrites, and in-file RELATED-TO links are repointed onto them.
  */
 export class IcsImport {
 	private constructor(
@@ -119,7 +118,7 @@ export class IcsImport {
 				// Converted only now: the verdicts above must judge the type the file authored.
 				entry.migrateTo(this.target)
 				const row = await this.targetIntegration.createEntry(this.em, entry)
-				await EntryRelation.reconcile(this.em, row.id!, row.relations ?? null)
+				await EntryRelation.reconcile(this.em, row.id!, row.relations ?? EntryRelations.none)
 				if (row.uid) {
 					uids.set(fileUid, row.uid)
 				}

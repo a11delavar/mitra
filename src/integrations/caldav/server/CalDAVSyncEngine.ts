@@ -10,6 +10,7 @@ import { Color } from '../../../features/sources/Color.js'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
 import type { Integration, SyncEngine } from '../../Integration.js'
 import { CalDAV } from '../CalDAV.js'
+import { EntryRelations } from '../../../features/relations/EntryRelations.js'
 import { CalDAVAvailability } from './CalDAVAvailability.js'
 
 const logger = createLogger('CalDAV')
@@ -332,7 +333,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 			.filter(key => !Object[equals](existing[key], incoming[key]))
 
 		const recurrenceChanged = !Recurrence.equal(existing.recurrence, incoming.recurrence)
-		const relationsChanged = integration.ownership.ownerOf('relations') === 'upstream' && incoming.relations !== undefined && existing.relationList.writesDiffer(incoming.relationList)
+		const relationsChanged = integration.ownership.ownerOf('relations') === 'upstream' && incoming.relations !== undefined && (existing.relations ?? EntryRelations.none).writesDiffer(incoming.relations)
 		// None to write when absent, and when null: the database hands back an empty column as null.
 		const exdates = incoming.exdates ?? undefined
 
@@ -461,7 +462,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 			existing.exdates = [...exdates]
 		}
 		if (relationsChanged) {
-			existing.relations = incoming.relations ?? null
+			existing.relations = incoming.relations
 		}
 		if (overrideShift !== undefined) {
 			for (const override of await em.find(Entry, { recurringEntryId: existing.id })) {

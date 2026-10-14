@@ -1,23 +1,18 @@
 import { type Entry, type EntryRollup } from '../entries/Entry.js'
 import { TaskStatus } from '../entries/TaskStatus.js'
 import { EntryRelations } from './EntryRelations.js'
-import type { RelationInit } from './Relation.js'
 import type { RelationEdge } from './RelationEdge.js'
 
 /** Maximum traversal depth to prevent infinite loops from unsanitized external graph cycles. */
 const MAX_DEPTH = 50
 
-/**
- * Directed relationship graph over a set of entries. Computes descendants, ancestors, rollups,
- * dependents, and cycle detection. Nodes are keyed by UID; series masters represent occurrences
- * unless the master is absent. Targets may dangle if unreferenced entries are omitted.
- */
+/** Directed relationship graph keyed by UID, where a master stands for its occurrences unless absent. Targets may dangle. */
 export class RelationGraph {
 	static readonly empty = new RelationGraph([])
 
 	/** Builds the graph over entries. `relationsOf` allows passing relation rows directly (e.g. on the
 	 * server to omit rows being replaced during cycle validation). */
-	static of(entries: Iterable<Entry>, relationsOf: (entry: Entry) => Iterable<RelationInit> | null | undefined = entry => entry.relations): RelationGraph {
+	static of(entries: Iterable<Entry>, relationsOf: (entry: Entry) => EntryRelations | undefined = entry => entry.relations): RelationGraph {
 		const identified = [...entries].filter(entry => !!entry.uid)
 		const masters = new Set(identified.filter(entry => !entry.recurrenceId).map(entry => entry.uid!))
 		return new RelationGraph(identified.filter(entry => !entry.recurrenceId || !masters.has(entry.uid!)), relationsOf)
@@ -29,7 +24,7 @@ export class RelationGraph {
 	private readonly incoming = new Map<string, Array<RelationEdge>>()
 	private readonly rollups = new Map<string, EntryRollup | undefined>()
 
-	private constructor(entries: ReadonlyArray<Entry>, relationsOf: (entry: Entry) => Iterable<RelationInit> | null | undefined = entry => entry.relations) {
+	private constructor(entries: ReadonlyArray<Entry>, relationsOf: (entry: Entry) => EntryRelations | undefined = entry => entry.relations) {
 		for (const entry of entries) {
 			// First entry per UID wins, allowing callers to overlay local working copies over fetched rows.
 			if (!this.entriesByUid.has(entry.uid!)) {
@@ -38,7 +33,7 @@ export class RelationGraph {
 		}
 		for (const entry of entries) {
 			// Traverses through EntryRelations to respect line direction and prevent inverted edge creation.
-			for (const edge of EntryRelations.of(entry.uid, relationsOf(entry)).edges) {
+			for (const edge of (relationsOf(entry) ?? EntryRelations.none).edges(entry.uid)) {
 				if (edge.from === edge.to || this.edgesByKey.has(edge.key)) {
 					continue
 				}
@@ -85,10 +80,7 @@ export class RelationGraph {
 		return this.walk([...new Set(seeds)], family, 'up').includes(target)
 	}
 
-	/**
-	 * Computes task progress rollup across subtasks and description checklist items.
-	 * Equal weighting per step; cancelled subtasks are excluded.
-	 */
+	/** Subtasks and description checklist items weigh equally; cancelled subtasks are excluded. */
 	rollupOf(uid: string | undefined, visiting = new Set<string>()): EntryRollup | undefined {
 		if (uid === undefined || visiting.has(uid)) {
 			return undefined
@@ -132,10 +124,7 @@ export class RelationGraph {
 		return rollup
 	}
 
-	/**
-	 * Returns ancestors that become completed when completing this entry (deepest first).
-	 * Requires all non-cancelled task children closed and description checklist fully ticked.
-	 */
+	/** Ancestors that completing this entry completes, deepest first: each needs every non-cancelled task child closed and its checklist ticked. */
 	ancestorsCompletedBy(uid: string | undefined): Array<Entry> {
 		const subject = this.entryOf(uid)
 		if (!subject) {

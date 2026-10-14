@@ -260,21 +260,15 @@ export class Entry implements Validatable<Calendar> {
 	@Entry.date() recurrenceId?: DateTime
 	@Entry.date({ persist: false }) seriesStart?: DateTime
 
-	/** Unknown while absent, none while `null`: a provider may not say. */
-	relations?: Array<Relation> | null
+	/** Unknown while absent, as a provider may not say; none is an empty collection. */
+	@converter(EntryRelations.converter) relations?: EntryRelations
 
-	get relationList() {
-		return EntryRelations.of(this.uid, this.relations)
-	}
-
-	/** Replaces the array, so snapshots stay immutable. */
 	relateTo(type: RelationType | string, targetUid: string) {
-		this.relations = this.relationList.adding(type, targetUid).value
+		this.relations = (this.relations ?? EntryRelations.none).adding(type, targetUid, this.uid)
 	}
 
-	/** An emptied list collapses to null. */
 	unrelate(relation: Relation) {
-		this.relations = this.relationList.without(relation).value
+		this.relations = (this.relations ?? EntryRelations.none).without(relation)
 	}
 
 	violates(relation: Relation | RelationInit, predecessor: Entry) {
@@ -300,9 +294,8 @@ export class Entry implements Validatable<Calendar> {
 	static dayZone = (): TimeZone | undefined => mitra.runtime === 'browser' ? TimeZone.device : undefined
 
 	/**
-	 * Declares one of the entry's dates. The entry holds an all-day date as the midnight that begins its day in `dayZone`,
-	 * and the wire carries it as that day's UTC midnight, which the database keeps: the conversion reads `allDay` from the
-	 * same entry, so it happens only on the way in and out, whatever order the fields come in.
+	 * The entry holds an all-day date as the midnight that begins its day in `dayZone`, the wire as that day's UTC midnight.
+	 * The conversion reads `allDay` from the same entry, so it runs only at the wire, whatever order the fields come in.
 	 */
 	static date(options: { persist?: boolean } = {}): PropertyDecorator {
 		return (prototype, key) => {
@@ -348,10 +341,7 @@ export class Entry implements Validatable<Calendar> {
 		return this.due?.dayStart ?? (!this.start ? undefined : this.inclusiveEnd.dayStart)
 	}
 
-	/**
-	 * Whether an open task's day has gone by. Compared by day: one due this morning is still today's.
-	 * A repeating task is never behind: the next occurrence settles the missed one.
-	 */
+	/** Compared by day, so one due this morning is still today's. A repeating task is never behind: the next occurrence settles the missed one. */
 	get overdue() {
 		if (!this.type?.isTask || this.closed || this.partOfSeries) {
 			return false
@@ -360,8 +350,8 @@ export class Entry implements Validatable<Calendar> {
 	}
 
 	/**
-	 * Whether the entry may lose its dates. DTSTART is required of a VEVENT (RFC 5545 §3.6.1), and a series' dates
-	 * identify its occurrences. Undated rows a provider hands us still render, or the user could never fix them.
+	 * DTSTART is required of a VEVENT (RFC 5545 §3.6.1), and a series' dates identify its occurrences.
+	 * Undated rows a provider hands us still render, or the user could never fix them.
 	 */
 	get unschedulable() {
 		return this.type.isTask && !this.partOfSeries
@@ -416,7 +406,7 @@ export class Entry implements Validatable<Calendar> {
 			transparency: this.transparency,
 			visibility: this.visibility,
 			reminders: this.reminders ? [...this.reminders] : this.reminders,
-			relations: this.relationList.writes,
+			relations: this.relations?.owned,
 		})
 	}
 
@@ -588,8 +578,7 @@ export class Entry implements Validatable<Calendar> {
 		for (const field of EntryPatch.fields) {
 			const value = patch[field]
 			if (value !== undefined) {
-				// Relations keep their null, which tells none from unknown.
-				Object.assign(this, { [field]: value ?? (field === 'relations' ? null : cleared[field]) })
+				Object.assign(this, { [field]: value ?? cleared[field] })
 			}
 		}
 		this.fitType()

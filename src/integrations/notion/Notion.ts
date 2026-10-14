@@ -36,7 +36,6 @@ export interface NotionSchemaIndex {
 	titleProperty: string
 	statusProperty: string
 	dateProperty: string
-	/** Status option id → TaskStatus. */
 	statusByOption: ReadonlyMap<string, TaskStatus>
 	/** TaskStatus → first option id in group. */
 	optionByStatus: ReadonlyMap<TaskStatus, string>
@@ -44,17 +43,13 @@ export interface NotionSchemaIndex {
 	relationProperties: ReadonlyArray<NotionRelationProperty>
 }
 
-/** Mapped self-referencing relation property and its corresponding RelationType. */
 export interface NotionRelationProperty {
 	name: string
 	id: string
 	type: RelationType
 }
 
-/**
- * Notion integration mapping database views to task sources.
- * Pages map to tasks with bi-directional markdown descriptions and self-referencing relations.
- */
+/** Database views as task sources; pages map to tasks with Markdown descriptions and self-referencing relations. */
 @model('Notion')
 @integration('notion')
 export class Notion extends Integration<NotionCredentials> {
@@ -145,8 +140,6 @@ export class Notion extends Integration<NotionCredentials> {
 		return schema
 	}
 
-	// --- Discovery --------------------------------------------------------------------------------
-
 	protected override async fetchSources(): Promise<Array<Source>> {
 		const client = this.getClient()
 
@@ -190,8 +183,6 @@ export class Notion extends Integration<NotionCredentials> {
 	static isSourceView(view: NotionView): boolean {
 		return !view.type || Notion.sourceViewTypes.has(view.type)
 	}
-
-	// --- Sync -------------------------------------------------------------------------------------
 
 	private static readonly watermarkOverlapMs = 2 * 60_000
 
@@ -266,7 +257,7 @@ export class Notion extends Integration<NotionCredentials> {
 			}
 			Notion.applyPage(target, page, schema, { description, ...await this.relationsOf(page, schema, target.relations, isPage) })
 			applied.push(target)
-			if (!before || !before.editEquals(target) || (target.relations !== undefined && before.relationList.writesDiffer(target.relationList))) {
+			if (!before || !before.editEquals(target) || (target.relations !== undefined && (before.relations ?? EntryRelations.none).writesDiffer(target.relations))) {
 				changed = true
 			}
 		}
@@ -292,7 +283,7 @@ export class Notion extends Integration<NotionCredentials> {
 	}
 
 	/** Decodes relations from page properties, completing paginated relations when needed. */
-	private async relationsOf(page: NotionPage, schema: NotionSchemaIndex, stored: ReadonlyArray<Relation> | null | undefined, isPage: (uid: string) => boolean): Promise<{ relations: Array<Relation> | null | undefined }> {
+	private async relationsOf(page: NotionPage, schema: NotionSchemaIndex, stored: EntryRelations | undefined, isPage: (uid: string) => boolean): Promise<{ relations: EntryRelations | undefined }> {
 		for (const property of schema.relationProperties) {
 			const value = page.properties[property.name]
 			if (value?.has_more) {
@@ -308,10 +299,8 @@ export class Notion extends Integration<NotionCredentials> {
 				}
 			}
 		}
-		return { relations: Notion.relationsFrom(page, schema, Notion.retainedRelations(EntryRelations.of(undefined, stored).writes, schema, isPage)) }
+		return { relations: Notion.relationsFrom(page, schema, Notion.retainedRelations(stored?.writes, schema, isPage)) }
 	}
-
-	// --- Entry CRUD ---------------------------------------------------------------------------------
 
 	override async createEntry(em: EntityManager, entry: Entry): Promise<Entry> {
 		if (entry.recurrence) {
@@ -328,7 +317,7 @@ export class Notion extends Integration<NotionCredentials> {
 		})
 		const pageIds = schema.relationProperties.length ? await this.dataSourcePageIds(em, dataSourceId) : new Set<string>()
 		const isPage = (uid: string) => pageIds.has(uid)
-		const properties = { ...filterDefaults, ...Notion.propertiesFrom(entry, schema), ...Notion.changedRelationProperties(null, entry.relationList.writes, schema, isPage) }
+		const properties = { ...filterDefaults, ...Notion.propertiesFrom(entry, schema), ...Notion.changedRelationProperties(undefined, entry.relations?.writes, schema, isPage) }
 		const blocks = entry.description ? NotionMarkdown.toBlocks(entry.description) : []
 		const page = await this.getClient().createPage(dataSourceId, properties, blocks.slice(0, Notion.maxBlocksPerWrite))
 		for (let index = Notion.maxBlocksPerWrite; index < blocks.length; index += Notion.maxBlocksPerWrite) {
@@ -356,13 +345,13 @@ export class Notion extends Integration<NotionCredentials> {
 		const statusChanged = existing.status !== incoming.status
 		const descriptionChanged = (existing.description ?? '') !== (incoming.description ?? '')
 		const spanChanged = (['start', 'end', 'allDay', 'timeZone'] as const).some(key => !Object[equals](existing[key], incoming[key]))
-		const relationsChanged = incoming.relations !== undefined && existing.relationList.writesDiffer(incoming.relationList)
+		const relationsChanged = incoming.relations !== undefined && (existing.relations ?? EntryRelations.none).writesDiffer(incoming.relations)
 		if (!headingChanged && !statusChanged && !spanChanged && !descriptionChanged && !relationsChanged) {
 			return
 		}
 		const source = await em.findOneOrFail(Source, { id: existing.sourceId })
 		const schema = await this.schemaFor(source)
-		const desiredRelations = EntryRelations.of(undefined, relationsChanged ? incoming.relations ?? null : existing.relations).writes
+		const desiredRelations = (relationsChanged ? incoming.relations : existing.relations)?.owned
 		const pageIds = schema.relationProperties.length
 			? await this.dataSourcePageIds(em, Notion.idsOf(source).dataSourceId)
 			: new Set<string>()
@@ -374,7 +363,7 @@ export class Notion extends Integration<NotionCredentials> {
 				status: statusChanged,
 				span: spanChanged,
 			}),
-			...(relationsChanged ? Notion.changedRelationProperties(existing.relations, incoming.relations, schema, isPage) : {}),
+			...(relationsChanged ? Notion.changedRelationProperties(existing.relations?.writes, incoming.relations?.writes, schema, isPage) : {}),
 		}
 		if (!Object.keys(properties).length && !descriptionChanged) {
 			return
@@ -392,7 +381,7 @@ export class Notion extends Integration<NotionCredentials> {
 		await EntryRelation.loadFor(em, siblings)
 		for (const sibling of siblings) {
 			Notion.applyPage(sibling, page, schema, { description, localWrite: true, ...await this.relationsOf(page, schema, sibling.relations, isPage) })
-			await EntryRelation.reconcile(em, sibling.id!, sibling.relations ?? null)
+			await EntryRelation.reconcile(em, sibling.id!, sibling.relations ?? EntryRelations.none)
 		}
 	}
 
@@ -420,8 +409,6 @@ export class Notion extends Integration<NotionCredentials> {
 	override excludeOccurrence(): Promise<void> {
 		return Promise.reject(new Error('Notion does not support recurring tasks'))
 	}
-
-	// --- Page body ↔ description ----------------------------------------------------------------------
 
 	private static readonly maxBlocksPerWrite = 100
 
@@ -454,8 +441,6 @@ export class Notion extends Integration<NotionCredentials> {
 		return NotionMarkdown.toMarkdown(blocks)
 	}
 
-	// --- Mapping (pure and static, the tested surface) ------------------------------------------------
-
 	static plainText(richText: Array<NotionRichText> | undefined): string {
 		return (richText ?? []).map(run => NotionMarkdown.textOf(run)).join('')
 	}
@@ -470,11 +455,8 @@ export class Notion extends Integration<NotionCredentials> {
 	}
 
 	/**
-	 * Resolve what makes this data source a task database, or undefined when it isn't one:
-	 * mitra requires a status property (completion is what makes a page a task) and a date
-	 * property (a calendar can't place an unschedulable task). With several candidates, a
-	 * conventionally-named property wins over schema order, so "Due" beats a decorative
-	 * "Created" date sitting earlier in the map.
+	 * Undefined unless the data source has a status property (completion makes a page a task) and a date property.
+	 * A conventionally named property beats schema order, so "Due" wins over an earlier "Created".
 	 */
 	static schemaIndexOf(dataSource: NotionDataSource): NotionSchemaIndex | undefined {
 		const properties = Object.values(dataSource.properties ?? {})
@@ -515,15 +497,9 @@ export class Notion extends Integration<NotionCredentials> {
 	}
 
 	/**
-	 * What each relation property NAME means, in the vocabulary of {@link RelationType}. The names
-	 * are the ones Notion's own task templates and its built-in sub-item feature create (verified
-	 * against a real workspace: "Parent Task"/"Sub Tasks", "Blocked by"/"Blocking"), matched whole so
-	 * a mirror twin can never be mistaken for its canonical end.
-	 *
-	 * An `undefined` type marks a name that is RECOGNIZED but unstorable: all four RFC 9253 temporal
-	 * types are authored on the DEPENDENT, so "Blocking" (the end naming what waits on THIS page)
-	 * has no RELTYPE to be written as. That edge belongs to the other page, and where the "Blocked
-	 * by" twin exists it already carries the same relationship in the direction mitra stores.
+	 * Relation property names as Notion's own templates create them, matched whole so a mirror twin is never taken for its
+	 * canonical end. `undefined` marks a recognized but unstorable name: RFC 9253 temporal types are authored on the
+	 * dependent, so "Blocking" has no RELTYPE.
 	 */
 	private static readonly relationTypesByName: ReadonlyArray<readonly [RegExp, RelationType | undefined]> = [
 		[/^parent[\s-]?(task|item|page|project)?s?$/i, RelationType.Parent],
@@ -532,12 +508,8 @@ export class Notion extends Integration<NotionCredentials> {
 		[/^block(s|ing)$|^successors?$|^dependents?$/i, undefined],
 	]
 
-	/** The RELTYPE a relation property's name means: a conventional one from
-	 * {@link relationTypesByName}, else an opaque `X-NOTION-…` type built from the name itself. An
-	 * unrecognized Notion relation is a link with no direction semantics: reading it as PARENT or
-	 * FINISHTOSTART would borrow a word that means something else, and SIBLING is already taken (it
-	 * means "shares a parent"), so the open vocabulary carries it as itself, round-tripping
-	 * losslessly and rendering read-only under its own section. `undefined` = not mapped at all. */
+	/** The RELTYPE a property's name means, else an opaque `X-NOTION-…` type, so a relation with no direction semantics
+	 * round-trips as itself. `undefined` means not mapped at all. */
 	private static relationTypeOf(name: string): RelationType | undefined {
 		for (const [pattern, type] of Notion.relationTypesByName) {
 			if (pattern.test(name.trim())) {
@@ -572,25 +544,23 @@ export class Notion extends Integration<NotionCredentials> {
 		return properties
 	}
 
-	// --- Relationships ------------------------------------------------------------------------------
-
 	/** Decodes outgoing relations from page properties plus retained non-Notion relations. */
-	static relationsFrom(page: NotionPage, schema: NotionSchemaIndex, retained: ReadonlyArray<Relation> = []): Array<Relation> | null {
-		return EntryRelations.of(undefined, [
+	static relationsFrom(page: NotionPage, schema: NotionSchemaIndex, retained: ReadonlyArray<Relation> = []): EntryRelations {
+		return EntryRelations.of([
 			...schema.relationProperties.flatMap(property => (page.properties[property.name]?.relation ?? [])
 				.filter(reference => reference.id !== page.id)
 				.map(reference => ({ type: property.type, targetUid: reference.id }))),
 			...retained,
-		]).value
+		])
 	}
 
 	/** Returns stored relations pointing outside this database or with unmapped types. */
-	static retainedRelations(stored: ReadonlyArray<Relation> | null | undefined, schema: NotionSchemaIndex, isPage: (uid: string) => boolean): Array<Relation> {
+	static retainedRelations(stored: ReadonlyArray<Relation> | undefined, schema: NotionSchemaIndex, isPage: (uid: string) => boolean): Array<Relation> {
 		return (stored ?? []).filter(relation => !isPage(relation.targetUid)
 			|| !schema.relationProperties.some(property => property.type === RelationType.of(relation.type)))
 	}
 
-	static relationPropertiesFrom(relations: ReadonlyArray<Relation> | null | undefined, schema: NotionSchemaIndex, isPage: (uid: string) => boolean): Record<string, NotionPropertyValue> {
+	static relationPropertiesFrom(relations: ReadonlyArray<Relation> | undefined, schema: NotionSchemaIndex, isPage: (uid: string) => boolean): Record<string, NotionPropertyValue> {
 		const properties: Record<string, NotionPropertyValue> = {}
 		for (const property of schema.relationProperties) {
 			properties[property.name] = {
@@ -602,7 +572,7 @@ export class Notion extends Integration<NotionCredentials> {
 		return properties
 	}
 
-	static changedRelationProperties(existing: ReadonlyArray<Relation> | null | undefined, incoming: ReadonlyArray<Relation> | null | undefined, schema: NotionSchemaIndex, isPage: (uid: string) => boolean): Record<string, NotionPropertyValue> {
+	static changedRelationProperties(existing: ReadonlyArray<Relation> | undefined, incoming: ReadonlyArray<Relation> | undefined, schema: NotionSchemaIndex, isPage: (uid: string) => boolean): Record<string, NotionPropertyValue> {
 		const ids = (value: NotionPropertyValue | undefined) => (value?.relation ?? []).map(reference => reference.id).join(' ')
 		const before = Notion.relationPropertiesFrom(existing, schema, isPage)
 		const after = Notion.relationPropertiesFrom(incoming, schema, isPage)
@@ -725,7 +695,6 @@ export class Notion extends Integration<NotionCredentials> {
 		}
 	}
 
-	/** Serializes entry fields to Notion property values. */
 	static propertiesFrom(
 		entry: Entry,
 		schema: NotionSchemaIndex,
@@ -752,7 +721,7 @@ export class Notion extends Integration<NotionCredentials> {
 	}
 
 	/** Maps Notion page properties, body, and relations onto an Entry instance. */
-	static applyPage(entry: Entry, page: NotionPage, schema: NotionSchemaIndex, options?: { description?: string, localWrite?: boolean, relations?: Array<Relation> | null }): void {
+	static applyPage(entry: Entry, page: NotionPage, schema: NotionSchemaIndex, options?: { description?: string, localWrite?: boolean, relations?: EntryRelations }): void {
 		entry.type = EntryType.Task
 		entry.uri = page.id
 		entry.uid = page.id

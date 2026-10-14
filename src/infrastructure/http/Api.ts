@@ -4,7 +4,7 @@ import { type DateTime } from '@3mo/date-time'
 import { type User } from '../../features/identity/User.js'
 import { type Source } from '../../features/sources/Source.js'
 import { type MigrationOutcome, type MigrationPlan } from '../../features/migration/MigrationPlan.js'
-import { type Relation } from '../../features/relations/Relation.js'
+import { type EntryRelations } from '../../features/relations/EntryRelations.js'
 import { type RecurrenceScope } from '../../features/recurrence/Recurrence.js'
 import { Integration } from '../../integrations/Integration.js'
 import { type EntryType } from '../../features/entries/EntryType.js'
@@ -163,8 +163,9 @@ export function rankEntries(ranks: Record<string, string>) {
 	return Api.put<void>('/entries/ranks', ranks)
 }
 
-export function updateRelations(id: string, relations: Array<Relation> | null) {
-	return Api.put<Entry>(`/entries/${id}`, { relations })
+/** Writes the relations an entry owns: what it reads back from others is theirs. */
+export function updateRelations(id: string, relations: EntryRelations) {
+	return Api.put<Entry>(`/entries/${id}`, { relations: relations.writes })
 }
 
 export function createEvent(entry: Entry) {

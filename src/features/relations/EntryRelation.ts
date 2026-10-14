@@ -5,11 +5,7 @@ import { Relation } from './Relation.js'
 import { RelationType } from './RelationType.js'
 import type { EntityManager } from '@mikro-orm/core'
 
-/**
- * Queryable persistence entity for {@link Entry.relations} (one row per outgoing relationship).
- * Indexed by `targetUid` to enable reverse relation queries without full table scans.
- * Target UIDs deliberately omit foreign key constraints so targets may dangle.
- */
+/** One row per outgoing relationship, indexed by `targetUid` for reverse queries. Target UIDs have no foreign key, so targets may dangle. */
 @entity()
 export class EntryRelation {
 	@primaryKey() id: string = crypto.randomUUID()
@@ -34,7 +30,7 @@ export class EntryRelation {
 		const rows = ids.length ? await em.find(EntryRelation, { entryId: { $in: ids } }) : []
 		const byEntry = Map.groupBy(rows, row => row.entryId)
 		for (const entry of entries) {
-			entry.relations = EntryRelations.of(entry.uid, (byEntry.get(entry.id!) ?? []).map(row => row.relation)).value
+			entry.relations = EntryRelations.of((byEntry.get(entry.id!) ?? []).map(row => row.relation))
 		}
 	}
 
@@ -60,7 +56,7 @@ export class EntryRelation {
 			const derived = (entry.uid && byTarget.get(entry.uid) || [])
 				.filter(row => row.entryId !== id && ownerUidById.has(row.entryId))
 				.map(row => new Relation({ type: row.type, targetUid: ownerUidById.get(row.entryId)!, gap: row.gap ?? null, direction: 'incoming' }))
-			entry.relations = EntryRelations.of(entry.uid, [...own, ...derived]).value
+			entry.relations = EntryRelations.of([...own, ...derived])
 		}
 	}
 
@@ -78,27 +74,26 @@ export class EntryRelation {
 	}
 
 	/** Synchronizes an entry's relation rows with desired relations without committing the transaction. */
-	static async reconcile(em: EntityManager, entryId: string, relations: ReadonlyArray<Relation> | null): Promise<void> {
-		EntryRelation.applyDiff(em, entryId, EntryRelations.of(undefined, relations).writes, await em.find(EntryRelation, { entryId }))
+	static async reconcile(em: EntityManager, entryId: string, relations: EntryRelations): Promise<void> {
+		EntryRelation.applyDiff(em, entryId, relations.writes, await em.find(EntryRelation, { entryId }))
 	}
 
 	/** Batched {@link reconcile} across multiple entries for sync paths. */
-	static async reconcileAll(em: EntityManager, relationsByEntryId: ReadonlyMap<string, ReadonlyArray<Relation> | null>): Promise<void> {
+	static async reconcileAll(em: EntityManager, relationsByEntryId: ReadonlyMap<string, EntryRelations>): Promise<void> {
 		if (!relationsByEntryId.size) {
 			return
 		}
 		const rows = await em.find(EntryRelation, { entryId: { $in: [...relationsByEntryId.keys()] } })
 		const byEntry = Map.groupBy(rows, row => row.entryId)
 		for (const [entryId, relations] of relationsByEntryId) {
-			EntryRelation.applyDiff(em, entryId, EntryRelations.of(undefined, relations).writes, byEntry.get(entryId) ?? [])
+			EntryRelation.applyDiff(em, entryId, relations.writes, byEntry.get(entryId) ?? [])
 		}
 	}
 
 	// Named to avoid conflicts with Function.prototype.apply in entity decorators.
-	private static applyDiff(em: EntityManager, entryId: string, relations: ReadonlyArray<Relation> | null, rows: ReadonlyArray<EntryRelation>): void {
+	private static applyDiff(em: EntityManager, entryId: string, desired: ReadonlyArray<Relation>, rows: ReadonlyArray<EntryRelation>): void {
 		// Compares canonical relation keys. Reconcile receives only owned lines to protect foreign rows.
 		const key = (relation: Relation) => relation.key
-		const desired = relations ?? []
 		const existingKeys = new Set(rows.map(row => key(row.relation)))
 		const desiredKeys = new Set(desired.map(key))
 		for (const row of rows) {

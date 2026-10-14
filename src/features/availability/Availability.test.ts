@@ -12,6 +12,7 @@ import { TaskStatus } from '../entries/TaskStatus.js'
 import { Transparency } from '../entries/Transparency.js'
 import { EntryType, EntryTypes } from '../entries/EntryType.js'
 import { EntryRelation } from '../relations/EntryRelation.js'
+import { EntryRelations } from '../relations/EntryRelations.js'
 import { RelationType } from '../relations/RelationType.js'
 import { Relation } from '../relations/Relation.js'
 import { assertRelationsValid } from '../relations/server/relations.js'
@@ -301,7 +302,7 @@ describe('availability and relations', () => {
 		const availability = await persist({ type: EntryType.Availability })
 		const task = await persist({ type: EntryType.Task })
 
-		const error = await assertRelationsValid(em, user, availability, [new Relation({ type: RelationType.Parent, targetUid: task.uid! })])
+		const error = await assertRelationsValid(em, user, availability, EntryRelations.of([new Relation({ type: RelationType.Parent, targetUid: task.uid! })]))
 
 		assert.match(String(error), /Availability cannot be related/)
 	})
@@ -310,7 +311,7 @@ describe('availability and relations', () => {
 		const availability = await persist({ type: EntryType.Availability })
 		const task = await persist({ type: EntryType.Task })
 
-		const error = await assertRelationsValid(em, user, task, [new Relation({ type: RelationType.Parent, targetUid: availability.uid! })])
+		const error = await assertRelationsValid(em, user, task, EntryRelations.of([new Relation({ type: RelationType.Parent, targetUid: availability.uid! })]))
 
 		assert.match(String(error), /Availability cannot be related/)
 	})
@@ -319,7 +320,7 @@ describe('availability and relations', () => {
 		const parent = await persist({ type: EntryType.Task })
 		const child = await persist({ type: EntryType.Task })
 
-		const error = await assertRelationsValid(em, user, child, [new Relation({ type: RelationType.Parent, targetUid: parent.uid! })])
+		const error = await assertRelationsValid(em, user, child, EntryRelations.of([new Relation({ type: RelationType.Parent, targetUid: parent.uid! })]))
 
 		assert.equal(error, undefined)
 	})

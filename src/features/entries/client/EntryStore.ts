@@ -6,13 +6,12 @@ import { type Entry } from '../Entry.js'
 import { ApiError, createEvent, deleteEvent, deleteOccurrence, editOccurrence, rankEntries, updateEvent, updateRelations } from '../../../infrastructure/http/Api.js'
 import { EntryRank } from '../EntryRank.js'
 import { EntryPatch } from '../EntryPatch.js'
+import { EntryRelations } from '../../relations/EntryRelations.js'
 
 export const reportSaveError = (error: unknown) =>
 	console.error('Persisting the entry failed. The edit is kept locally and retried on the next change:', error)
 
-/**
- * Central client store and persistence coordinator for entries.
- */
+/** Central client store and persistence coordinator for entries. */
 export class EntryStore extends Controller {
 	private static readonly hosts = new Map<ReactiveControllerHost, EntryStore>()
 
@@ -28,8 +27,7 @@ export class EntryStore extends Controller {
 
 	static persistence = { create: createEvent, update: updateEvent, delete: deleteEvent, editOccurrence, deleteOccurrence, reorder: rankEntries }
 
-	/** A drag only ever moves the span, so a ghost occupying the source's is a second copy of it,
-	 * as the unschedule target showed, where both are dateless but `unschedule` also drops reminders. */
+	/** A drag only ever moves the span, so a ghost occupying the source's is a second copy of it, even when both are dateless. */
 	private static get shownPreview(): Entry | undefined {
 		return this.preview && this.dragging && this.preview.spanEquals(this.dragging) ? undefined : this.preview
 	}
@@ -50,9 +48,8 @@ export class EntryStore extends Controller {
 	}
 
 	/**
-	 * Only where `entries` lie changed, as a drag does on every step: the views that lay them out update, and of the hosts
-	 * showing a single entry or a derived value only those it changes. Repainting every chip of the week for one moving
-	 * entry made dragging lag.
+	 * Only where `entries` lie changed, as on every drag step: the views that lay them out update, and of the hosts
+	 * showing a single entry or a derived value only those it changes.
 	 */
 	static notifyMoved(...entries: ReadonlyArray<Entry | undefined>) {
 		this.merged = undefined
@@ -81,9 +78,7 @@ export class EntryStore extends Controller {
 	/** Post-save hook fired after local task completion/cancellation. */
 	static onTaskClosed: (entry: Entry) => void = () => void 0
 
-	/**
-	 * Persists local changes to the server, chaining in-flight updates and resolving recurrence scope.
-	 */
+	/** Persists local changes, chaining in-flight updates and resolving recurrence scope. */
 	static commit(entry: Entry, scope?: RecurrenceScope): Promise<void> {
 		const pending = this.inflight.get(entry)
 		if (pending) {
@@ -162,12 +157,9 @@ export class EntryStore extends Controller {
 		return !Recurrence.equal(entry.recurrence, this.canonicalById.get(entry.id!)?.recurrence)
 	}
 
-	/**
-	 * Optimistically applies and persists a relation mutation to the entry's series master.
-	 * Restores prior relations on failure and rethrows.
-	 */
+	/** Optimistically applies and persists a relation mutation on the series master, restoring the prior relations on failure. */
 	static async commitRelations(owner: Entry, mutate: () => void): Promise<void> {
-		const before = owner.relations ?? null
+		const before = owner.relations
 		mutate()
 		this.notify()
 		const id = owner.recurringEntryId ?? owner.id
@@ -175,7 +167,7 @@ export class EntryStore extends Controller {
 			return
 		}
 		try {
-			this.adoptRelations(await updateRelations(id, owner.relations ?? null))
+			this.adoptRelations(await updateRelations(id, owner.relations ?? EntryRelations.none))
 		} catch (error) {
 			owner.relations = before
 			this.notify()
@@ -183,10 +175,8 @@ export class EntryStore extends Controller {
 		}
 	}
 
-	/** Adopt a relations-only server result onto the tracked copies of that entry. The
-	 * incoming-line removal edits ANOTHER entry than the open editor's, and if that other entry's
-	 * working copy happens to be dirty, leaving its old relations in place would resurrect the
-	 * removed link with its next full PUT. */
+	/** Adopts a relations-only result onto the tracked copies. An incoming-line removal edits another entry than the
+	 * editor's, and a dirty copy of it would otherwise resurrect the removed link with its next full PUT. */
 	static adoptRelations(saved: Entry) {
 		if (saved.id === undefined) {
 			return
@@ -194,20 +184,17 @@ export class EntryStore extends Controller {
 		const working = this.workingById.get(saved.id)
 		const canonical = this.canonicalById.get(saved.id)
 		if (working) {
-			working.relations = saved.relations ?? null
+			working.relations = saved.relations
 		}
 		if (canonical) {
-			canonical.relations = saved.relations ?? null
+			canonical.relations = saved.relations
 		}
 		if (working || canonical) {
 			this.notify()
 		}
 	}
 
-	/**
-	 * Whether the entry's only change against canonical is task progress/status.
-	 * Scoped edits to occurrence completion commit directly as 'this' without prompting for recurrence scope.
-	 */
+	/** Whether only task progress or status changed, which commits as 'this' without asking for a scope. */
 	private static completionOnlyChanged(entry: Entry) {
 		const canonical = this.canonicalById.get(entry.id!)
 		if (!canonical) {
@@ -411,15 +398,9 @@ export class EntryStore extends Controller {
 		this.notify()
 	}
 
-	// --- Reconcile -------------------------------------------------------------------------------------
-
 	/**
-	 * Adopt a fetched window of server entries. Canonical always refreshes; the working instance only
-	 * takes the incoming values while it's clean and idle. A dirty or mid-save entry keeps its local
-	 * values (they're about to overwrite the server's anyway). Working entries the fetch no longer
-	 * contains are dropped when clean (deleted externally, or outside the fetched window) and kept while
-	 * dirty/saving, and an external delete then resolves at that save's 404. The create draft, having no
-	 * id, passes through untouched.
+	 * Canonical copies always refresh; a working copy takes the server's values only while clean and idle. Working copies
+	 * the fetch lacks drop when clean and stay while dirty or saving, where an external delete resolves at that save's 404.
 	 */
 	static applyServerEntries(entries: ReadonlyArray<Entry>) {
 		const incomingIds = new Set<string>()

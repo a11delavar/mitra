@@ -10,6 +10,7 @@ import { EntryStore } from './EntryStore.js'
 import { IntegrationOwnership } from '../../../integrations/IntegrationOwnership.js'
 import { ApiError } from '../../../infrastructure/http/Api.js'
 import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
+import { EntryRelations } from '../../relations/EntryRelations.js'
 
 describe('EntryStore', () => {
 	const day = new DateTime().dayStart
@@ -780,7 +781,7 @@ describe('EntryStore', () => {
 		it('do NOT participate in dirty-tracking: the field persists them through its own PUT', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
-			const working = entry({ uid: 'self', relations: null })
+			const working = entry({ uid: 'self', relations: EntryRelations.none })
 			EntryStore.applyServerEntries([working])
 			working.relateTo('FINISHTOSTART', 'other-uid')
 			assert.equal(EntryStore.isDirty(working), false)
@@ -789,10 +790,10 @@ describe('EntryStore', () => {
 		})
 
 		it('adoptRelations refreshes tracked copies, so views re-render the saved truth', () => {
-			const working = entry({ uid: 'self', relations: null })
+			const working = entry({ uid: 'self', relations: EntryRelations.none })
 			EntryStore.applyServerEntries([working])
-			EntryStore.adoptRelations(entry({ uid: 'self', relations: [{ type: 'PARENT', targetUid: 'p', gap: null }] as never }))
-			assert.equal(working.relations?.length, 1)
+			EntryStore.adoptRelations(entry({ uid: 'self', relations: EntryRelations.of([{ type: 'PARENT', targetUid: 'p', gap: null }]) }))
+			assert.equal(working.relations?.all.length, 1)
 			assert.equal(EntryStore.isDirty(working), false)
 		})
 	})

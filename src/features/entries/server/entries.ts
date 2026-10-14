@@ -10,7 +10,7 @@ import { EntryRelation } from '../../relations/EntryRelation.js'
 import { Entry } from '../Entry.js'
 import { EntryPatch } from '../EntryPatch.js'
 import { ValidationError } from '../../../infrastructure/validation/ValidationError.js'
-import { type Relation } from '../../relations/Relation.js'
+import { EntryRelations } from '../../relations/EntryRelations.js'
 import { TaskStatus } from '../TaskStatus.js'
 import { editOccurrence, deleteOccurrence, expandedOccurrences, seriesStarts, nearestOccurrence, occurrenceAt } from '../../recurrence/server/occurrences.js'
 import { entrySearch, entryWindow, everyEntry } from './entryWindow.js'
@@ -132,13 +132,13 @@ entriesRouter.post('/', async (req, res) => {
 		throw new AggregateError(errors)
 	}
 
-	const relationsError = await assertRelationsValid(em, req.user, incoming, incoming.relations ?? null)
+	const relationsError = await assertRelationsValid(em, req.user, incoming, incoming.relations ?? EntryRelations.none)
 	if (relationsError) {
 		throw new ValidationError(relationsError, ['relations'])
 	}
 
 	const created = await to.integration.createEntry(em, incoming)
-	await EntryRelation.reconcile(em, created.id!, created.relations ?? null)
+	await EntryRelation.reconcile(em, created.id!, created.relations ?? EntryRelations.none)
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
 	logger.debug(`Created ${created.type} "${created.heading}" (${created.id}) in source ${source.id}`)
@@ -157,7 +157,7 @@ entriesRouter.put('/:id', async (req, res) => {
 	if (malformed.length) {
 		throw new AggregateError(malformed)
 	}
-	const relations = patch.relations as Array<Relation> | null | undefined
+	const { relations } = patch
 	if (relations !== undefined) {
 		const relationsError = await assertRelationsValid(em, req.user, existing, relations)
 		if (relationsError) {
@@ -200,8 +200,8 @@ entriesRouter.put('/:id', async (req, res) => {
 		const movingTo = to === from ? undefined : to
 		const result = await editOccurrence(em, currentIntegration, existing, occurrenceId, edited, scope, movingTo)
 		if (movingTo && scope === 'all' && result.id !== existing.id) {
-			await EntryRelation.reconcile(em, result.id!, existing.relations ?? null)
-			result.relations = existing.relations ?? null
+			await EntryRelation.reconcile(em, result.id!, existing.relations ?? EntryRelations.none)
+			result.relations = existing.relations
 		}
 		await em.flush()
 		await attachRelations(em, req.user, [result])
@@ -228,7 +228,7 @@ entriesRouter.put('/:id', async (req, res) => {
 			await em.flush().catch(() => void 0)
 			throw error
 		}
-		await EntryRelation.reconcile(em, created.id!, created.relations ?? null)
+		await EntryRelation.reconcile(em, created.id!, created.relations ?? EntryRelations.none)
 		await em.flush()
 		syncEmitter.emit('updated', req.user.id)
 		logger.debug(`Re-created entry ${existing.id} as ${created.type} in source ${targetSource.id} (new id ${created.id})`)

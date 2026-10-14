@@ -30,7 +30,7 @@ describe('CalDAV relations round-trip', () => {
 
 	it('parses every RELTYPE opaquely, defaulting a bare RELATED-TO to PARENT (RFC 5545 §3.2.15)', () => {
 		const relations = CalDAV.relationsFrom(component())
-		assert.deepEqual(relations?.map(relation => [relation.type, relation.targetUid, relation.gap]), [
+		assert.deepEqual(relations?.all.map(relation => [relation.type, relation.targetUid, relation.gap]), [
 			[RelationType.Child, 'child-uid', null],
 			[RelationType.FinishToStart, 'predecessor-uid', 'PT1D'],
 			[RelationType.Parent, 'bare-parent-uid', null],
@@ -44,7 +44,7 @@ describe('CalDAV relations round-trip', () => {
 
 		CalDAV.writeRelations(subject, parsed)
 		const reparsed = CalDAV.relationsFrom(subject)
-		assert.equal(EntryRelations.of(undefined, parsed).equals(EntryRelations.of(undefined, reparsed)), true)
+		assert.equal(parsed.equals(reparsed), true)
 		const serialized = subject.toString()
 		assert.match(serialized, /RELATED-TO;RELTYPE=CHILD:child-uid/)
 		assert.match(serialized, /RELATED-TO;RELTYPE=FINISHTOSTART;GAP=PT1D:predecessor-uid|RELATED-TO;GAP=PT1D;RELTYPE=FINISHTOSTART:predecessor-uid/)
@@ -64,7 +64,7 @@ describe('CalDAV relations round-trip', () => {
 			'END:VCALENDAR',
 		].join('\r\n'))).getFirstSubcomponent('vevent')!
 		const parsed = CalDAV.relationsFrom(withForeignParams)!
-		const edited = EntryRelations.of(undefined, [...parsed, { type: RelationType.Parent, targetUid: 'new-parent' }]).value
+		const edited = EntryRelations.of([...parsed.all, { type: RelationType.Parent, targetUid: 'new-parent' }])
 
 		CalDAV.writeRelations(withForeignParams, edited)
 		const serialized = withForeignParams.toString()
@@ -75,14 +75,14 @@ describe('CalDAV relations round-trip', () => {
 	it('removing ONE relation deletes only its line: a same-target sibling stays verbatim', () => {
 		const subject = component()
 		const parsed = CalDAV.relationsFrom(subject)!
-		const remaining = parsed.filter(relation => relation.targetUid !== 'child-uid')
+		const remaining = parsed.all.filter(relation => relation.targetUid !== 'child-uid')
 
-		CalDAV.writeRelations(subject, remaining)
+		CalDAV.writeRelations(subject, EntryRelations.of(remaining))
 		const serialized = subject.toString()
 		assert.doesNotMatch(serialized, /child-uid/)
 		assert.match(serialized, /RELATED-TO:bare-parent-uid/)
 		assert.match(serialized, /RELATED-TO;RELTYPE=X-DUPLICATE-OF:duplicate-uid/)
-		assert.equal(EntryRelations.of(undefined, CalDAV.relationsFrom(subject)).equals(EntryRelations.of(undefined, remaining)), true)
+		assert.equal(CalDAV.relationsFrom(subject).equals(EntryRelations.of(remaining)), true)
 	})
 
 	it('a foreign lowercase reltype normalizes into the same identity, so the diff still matches it', () => {
@@ -98,7 +98,7 @@ describe('CalDAV relations round-trip', () => {
 			'END:VCALENDAR',
 		].join('\r\n'))).getFirstSubcomponent('vevent')!
 		const parsed = CalDAV.relationsFrom(lax)!
-		assert.equal(parsed[0]!.type, RelationType.Child)
+		assert.equal(parsed.all[0]!.type, RelationType.Child)
 
 		CalDAV.writeRelations(lax, parsed)
 		assert.match(lax.toString(), /RELATED-TO;RELTYPE=child:someone/)
@@ -117,21 +117,21 @@ describe('CalDAV relations round-trip', () => {
 			'END:VCALENDAR',
 		].join('\r\n'))).getFirstSubcomponent('vevent')!
 		const parsed = CalDAV.relationsFrom(gapped)
-		assert.equal(parsed?.length, 2)
+		assert.equal(parsed.all.length, 2)
 
 		CalDAV.writeRelations(gapped, parsed)
-		assert.equal(CalDAV.relationsFrom(gapped)?.length, 2)
+		assert.equal(CalDAV.relationsFrom(gapped).all.length, 2)
 	})
 
-	it('writing null clears every RELATED-TO line', () => {
+	it('writing none clears every RELATED-TO line', () => {
 		const subject = component()
 
-		CalDAV.writeRelations(subject, null)
-		assert.equal(CalDAV.relationsFrom(subject), null)
+		CalDAV.writeRelations(subject, EntryRelations.none)
+		assert.equal(CalDAV.relationsFrom(subject).isEmpty, true)
 		assert.doesNotMatch(subject.toString(), /RELATED-TO/)
 	})
 
-	it('parses no RELATED-TO as the canonical null, and dedupes repeated lines', () => {
+	it('parses no RELATED-TO as none, and dedupes repeated lines', () => {
 		const bare = new ICAL.Component(ICAL.parse([
 			'BEGIN:VCALENDAR',
 			'VERSION:2.0',
@@ -141,7 +141,7 @@ describe('CalDAV relations round-trip', () => {
 			'END:VEVENT',
 			'END:VCALENDAR',
 		].join('\r\n'))).getFirstSubcomponent('vevent')!
-		assert.equal(CalDAV.relationsFrom(bare), null)
+		assert.equal(CalDAV.relationsFrom(bare).isEmpty, true)
 
 		const doubled = new ICAL.Component(ICAL.parse([
 			'BEGIN:VCALENDAR',
@@ -154,7 +154,7 @@ describe('CalDAV relations round-trip', () => {
 			'END:VEVENT',
 			'END:VCALENDAR',
 		].join('\r\n'))).getFirstSubcomponent('vevent')!
-		assert.equal(CalDAV.relationsFrom(doubled)?.length, 1)
+		assert.equal(CalDAV.relationsFrom(doubled).all.length, 1)
 	})
 })
 
@@ -190,7 +190,7 @@ describe('CalDAV relations: who is authoritative (capabilities.relations)', () =
 
 	it('parses a DEFINITE value on a real iCalendar store: what the resource says IS the truth there', async () => {
 		const { entry } = await sync(new CalDAV({ credentials: { username: 'u', password: 'p' } }))
-		assert.deepEqual(entry.relations?.map(relation => [relation.type.value, relation.targetUid]), [['FINISHTOSTART', 'blocker-uid']])
+		assert.deepEqual(entry.relations?.all.map(relation => [relation.type.value, relation.targetUid]), [['FINISHTOSTART', 'blocker-uid']])
 	})
 
 	it('leaves the value UNDEFINED on Google, so the stored rows are never wiped by a read that lost them', async () => {
@@ -228,7 +228,7 @@ describe('CalDAV relations: who is authoritative (capabilities.relations)', () =
 			stub(dav)
 			const entry = existing()
 			const incoming = entry.clone()
-			incoming.relations = EntryRelations.of(undefined, [{ type: RelationType.Parent, targetUid: 'parent-uid' }]).value
+			incoming.relations = EntryRelations.of([{ type: RelationType.Parent, targetUid: 'parent-uid' }])
 			await dav.updateEntry(em(), entry, incoming)
 			assert.match(entry.data!.raw!, /RELATED-TO;RELTYPE=PARENT:parent-uid/)
 		})
@@ -238,7 +238,7 @@ describe('CalDAV relations: who is authoritative (capabilities.relations)', () =
 			const writes = stub(integration)
 			const entry = existing()
 			const incoming = entry.clone()
-			incoming.relations = EntryRelations.of(undefined, [{ type: RelationType.Parent, targetUid: 'parent-uid' }]).value
+			incoming.relations = EntryRelations.of([{ type: RelationType.Parent, targetUid: 'parent-uid' }])
 			await integration.updateEntry(em(), entry, incoming)
 			assert.equal(writes.length, 0)
 			assert.doesNotMatch(entry.data!.raw!, /parent-uid/)
@@ -248,7 +248,7 @@ describe('CalDAV relations: who is authoritative (capabilities.relations)', () =
 			const integration = google()
 			stub(integration)
 			const entry = new Entry({ sourceId: 's', type: EntryType.Event, heading: 'New', start: new Date('2026-06-02T09:00:00Z') as never })
-			entry.relations = EntryRelations.of(undefined, [{ type: RelationType.Parent, targetUid: 'parent-uid' }]).value
+			entry.relations = EntryRelations.of([{ type: RelationType.Parent, targetUid: 'parent-uid' }])
 			await integration.createEntry(em(), entry)
 			assert.doesNotMatch(entry.data!.raw!, /RELATED-TO/)
 			assert.match(entry.data!.raw!, /SUMMARY:New/)

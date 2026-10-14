@@ -679,13 +679,13 @@ describe('Notion relationships', () => {
 		const existing = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })
 		await EntryRelation.loadFor(em, [existing])
 		const incoming = existing.clone()
-		incoming.relations = EntryRelations.of(undefined, [...existing.relations ?? [], { type: RelationType.FinishToStart, targetUid: 'p2' }]).value
+		incoming.relations = EntryRelations.of([...existing.relations?.all ?? [], { type: RelationType.FinishToStart, targetUid: 'p2' }])
 		await integration.updateEntry(em, existing, incoming)
 		await em.flush()
 
 		assert.equal(calls.updates.length, 1)
 		assert.deepEqual(calls.updates[0]!.properties, { 'Blocked by': { relation: [{ id: 'p2' }] } })
-		assert.equal(EntryRelations.of(undefined, existing.relations).equals(EntryRelations.of(undefined, incoming.relations)), true)
+		assert.equal((existing.relations ?? EntryRelations.none).equals(incoming.relations ?? EntryRelations.none), true)
 	})
 
 	it('clears a property with an empty list when the last line of its kind goes', async () => {
@@ -701,7 +701,7 @@ describe('Notion relationships', () => {
 		const existing = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })
 		await EntryRelation.loadFor(em, [existing])
 		const incoming = existing.clone()
-		incoming.relations = null
+		incoming.relations = EntryRelations.none
 		await integration.updateEntry(em, existing, incoming)
 		await em.flush()
 
@@ -721,7 +721,7 @@ describe('Notion relationships', () => {
 		const existing = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })
 		await EntryRelation.loadFor(em, [existing])
 		const incoming = existing.clone()
-		incoming.relations = EntryRelations.of(undefined, [{ type: RelationType.Parent, targetUid: 'caldav-uid' }]).value
+		incoming.relations = EntryRelations.of([{ type: RelationType.Parent, targetUid: 'caldav-uid' }])
 		await integration.updateEntry(em, existing, incoming)
 
 		assert.equal(calls.updates.length, 0)
@@ -738,13 +738,13 @@ describe('Notion relationships', () => {
 		await em.flush()
 
 		const draft = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'New task', status: TaskStatus.ToDo })
-		draft.relations = EntryRelations.of(undefined, [{ type: RelationType.Parent, targetUid: 'p2' }]).value
+		draft.relations = EntryRelations.of([{ type: RelationType.Parent, targetUid: 'p2' }])
 		const created = await integration.createEntry(em, draft)
 		await em.flush()
 
 		assert.deepEqual(calls.updates[0]!.properties['Parent Task'], { relation: [{ id: 'p2' }] })
 		assert.equal(created.uid, 'p-created')
-		assert.deepEqual(created.relations?.map(relation => relation.targetUid), ['p2'])
+		assert.deepEqual(created.relations?.all.map(relation => relation.targetUid), ['p2'])
 	})
 
 	it('re-points what pointed at an entry MOVED into Notion: Notion assigns the uid, so nothing may orphan', async () => {
@@ -804,7 +804,7 @@ describe('Notion relationships', () => {
 		const existing = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })
 		await EntryRelation.loadFor(em, [existing])
 		const incoming = existing.clone()
-		incoming.relations = EntryRelations.of(undefined, [{ type: RelationType.FinishToStart, targetUid: 'p2' }]).value
+		incoming.relations = EntryRelations.of([{ type: RelationType.FinishToStart, targetUid: 'p2' }])
 		await integration.updateEntry(em, existing, incoming)
 		await em.flush()
 

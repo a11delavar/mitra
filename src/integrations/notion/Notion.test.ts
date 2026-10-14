@@ -206,27 +206,27 @@ describe('Notion relation reads (relationsFrom)', () => {
 	})
 
 	it('reads each mapped property as lines of its type, targeting the related PAGE IDS', () => {
-		assert.deepEqual(Notion.relationsFrom(related({ parent: ['page-parent'], blockedBy: ['page-blocker'] }), schema())?.map(relation => [relation.type.value, relation.targetUid]), [
+		assert.deepEqual(Notion.relationsFrom(related({ parent: ['page-parent'], blockedBy: ['page-blocker'] }), schema()).all.map(relation => [relation.type.value, relation.targetUid]), [
 			['FINISHTOSTART', 'page-blocker'],
 			['PARENT', 'page-parent'],
 		])
 	})
 
 	it('ignores the synced twin: the same relationship read from its other end would double the edge', () => {
-		assert.equal(Notion.relationsFrom(related({ blocking: ['page-dependent'] }), schema()), null)
+		assert.equal(Notion.relationsFrom(related({ blocking: ['page-dependent'] }), schema()).isEmpty, true)
 	})
 
 	it('reads a page with no relations as the canonical "none"', () => {
-		assert.equal(Notion.relationsFrom(page(), schema()), null)
+		assert.equal(Notion.relationsFrom(page(), schema()).isEmpty, true)
 	})
 
 	it('drops a page relating to ITSELF: a self-reference is meaningless, not an edge', () => {
-		assert.equal(Notion.relationsFrom(related({ parent: ['page-1'] }), schema()), null)
+		assert.equal(Notion.relationsFrom(related({ parent: ['page-1'] }), schema()).isEmpty, true)
 	})
 
 	it('carries the retained (mitra-owned) lines alongside Notion\'s own', () => {
 		const retained = [new Relation({ type: RelationType.Parent, targetUid: 'caldav-uid' })]
-		assert.deepEqual(Notion.relationsFrom(related({ blockedBy: ['page-blocker'] }), schema(), retained)?.map(relation => relation.targetUid), ['page-blocker', 'caldav-uid'])
+		assert.deepEqual(Notion.relationsFrom(related({ blockedBy: ['page-blocker'] }), schema(), retained).all.map(relation => relation.targetUid), ['page-blocker', 'caldav-uid'])
 	})
 })
 
@@ -272,19 +272,19 @@ describe('Notion relation writes (relationPropertiesFrom / changedRelationProper
 	})
 
 	it('writes an EMPTY list to clear the last line of its kind', () => {
-		const changed = Notion.changedRelationProperties([parentOf('page-a')], null, schema(), isPage)
+		const changed = Notion.changedRelationProperties([parentOf('page-a')], undefined, schema(), isPage)
 		assert.deepEqual(changed, { 'Parent Task': { relation: [] } })
 	})
 
 	it('writes nothing when only an unwritable (mitra-owned) line changed', () => {
-		assert.deepEqual(Notion.changedRelationProperties(null, [parentOf('caldav-uid')], schema(), isPage), {})
+		assert.deepEqual(Notion.changedRelationProperties(undefined, [parentOf('caldav-uid')], schema(), isPage), {})
 	})
 
 	it('round-trips: writing a list and reading the echo back yields the same relations', () => {
 		const relations = [parentOf('page-parent'), new Relation({ type: RelationType.FinishToStart, targetUid: 'page-blocker' })]
 		const written = Notion.relationPropertiesFrom(relations, schema(), isPage)
 		const echo = page({ properties: { ...page().properties, ...written } })
-		assert.equal(EntryRelations.of(undefined, Notion.relationsFrom(echo, schema())).equals(EntryRelations.of(undefined, relations)), true)
+		assert.equal(Notion.relationsFrom(echo, schema()).equals(EntryRelations.of(relations)), true)
 	})
 })
 

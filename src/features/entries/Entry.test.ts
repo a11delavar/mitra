@@ -740,24 +740,24 @@ describe('Entry', () => {
 	describe('duplicate', () => {
 		it('carries the relationships the entry OWNS: a copy of a subtask is a subtask of the same parent', () => {
 			const entry = new Entry({ id: 'e', sourceId: 's', uid: 'original', type: EntryType.Task, heading: 'Task' })
-			entry.relations = EntryRelations.of('original', [
+			entry.relations = EntryRelations.of([
 				{ type: RelationType.Parent, targetUid: 'parent' },
 				{ type: RelationType.FinishToStart, targetUid: 'blocker' },
-			]).value
+			])
 
-			assert.deepEqual(entry.duplicate().relations?.map(relation => [relation.type.value, relation.targetUid]), [['FINISHTOSTART', 'blocker'], ['PARENT', 'parent']])
+			assert.deepEqual(entry.duplicate().relations?.all.map(relation => [relation.type.value, relation.targetUid]), [['FINISHTOSTART', 'blocker'], ['PARENT', 'parent']])
 		})
 
 		it('leaves the DERIVED half behind, so no copy gets to make another entry point at it', () => {
 			const entry = new Entry({ id: 'e', sourceId: 's', uid: 'original', type: EntryType.Task, heading: 'Task' })
-			entry.relations = EntryRelations.of('original', [{ type: RelationType.Parent, targetUid: 'child', direction: 'incoming' }]).value
+			entry.relations = EntryRelations.of([{ type: RelationType.Parent, targetUid: 'child', direction: 'incoming' }])
 
-			assert.equal(entry.duplicate().relations, null)
+			assert.equal(entry.duplicate().relations?.isEmpty, true)
 		})
 
 		it('still sheds identity and series membership', () => {
 			const entry = new Entry({ id: 'e', sourceId: 's', uid: 'original', type: EntryType.Task, heading: 'Task', recurringEntryId: 'master' })
-			entry.relations = EntryRelations.of('original', [{ type: RelationType.Parent, targetUid: 'parent' }]).value
+			entry.relations = EntryRelations.of([{ type: RelationType.Parent, targetUid: 'parent' }])
 			const copy = entry.duplicate()
 
 			assert.equal(copy.id, undefined)
@@ -769,11 +769,11 @@ describe('Entry', () => {
 	describe('violates', () => {
 		const dependent = (type: RelationType, start: number, end: number, gap: string | null = null) => {
 			const entry = new Entry({ id: 'd', sourceId: 's', type: EntryType.Task, uid: 'dependent', start: at(0, start), end: at(0, end) })
-			entry.relations = EntryRelations.of(undefined, [{ type, targetUid: 'predecessor', gap }]).value
+			entry.relations = EntryRelations.of([{ type, targetUid: 'predecessor', gap }])
 			return entry
 		}
 		const predecessor = (start: number, end: number) => new Entry({ id: 'p', sourceId: 's', type: EntryType.Task, uid: 'predecessor', start: at(0, start), end: at(0, end) })
-		const verdict = (subject: Entry, against: Entry) => subject.violates(subject.relations![0]!, against)
+		const verdict = (subject: Entry, against: Entry) => subject.violates(subject.relations!.all[0]!, against)
 
 		it('FINISHTOSTART breaks when the dependent starts before the predecessor ends; back-to-back is fine', () => {
 			assert.equal(verdict(dependent(RelationType.FinishToStart, 10, 12), predecessor(9, 11)), true)
@@ -796,7 +796,7 @@ describe('Entry', () => {
 		it('an all-day end is exclusive, so the very next day is a satisfied start', () => {
 			const allDay = (from: number, days: number) => new Entry({ id: 'p', sourceId: 's', type: EntryType.Task, uid: 'predecessor', allDay: true, start: day.add({ days: from }), end: day.add({ days: from + days }) })
 			const next = new Entry({ id: 'd', sourceId: 's', type: EntryType.Task, uid: 'dependent', allDay: true, start: day.add({ days: 1 }), end: day.add({ days: 2 }) })
-			next.relations = EntryRelations.of(undefined, [{ type: RelationType.FinishToStart, targetUid: 'predecessor' }]).value
+			next.relations = EntryRelations.of([{ type: RelationType.FinishToStart, targetUid: 'predecessor' }])
 			assert.equal(verdict(next, allDay(0, 1)), false)
 			assert.equal(verdict(next, allDay(0, 2)), true)
 		})

@@ -1,11 +1,9 @@
+import { type Converter } from '@a11d/converter'
 import { Relation, type RelationDirection, type RelationInit } from './Relation.js'
 import { RelationEdge } from './RelationEdge.js'
 import { type RelationSection, RelationType } from './RelationType.js'
 
-/**
- * Stored {@link Relation} decorated with derived presentation and routing fields.
- * `direction` determines the rendered {@link RelationSection} and which entry owns row persistence.
- */
+/** A stored {@link Relation} with derived presentation fields; `direction` picks its section and which entry owns the row. */
 export interface RelationLine {
 	readonly relation: Relation
 	readonly direction: RelationDirection
@@ -17,29 +15,97 @@ export interface RelationLine {
 }
 
 /**
- * Per-entry collection of owned and derived relation lines, handling grouping, deduplication, and
- * write-filtering. Cross-entry questions (descendants, rollups, cycles) belong to {@link RelationGraph}.
+ * An entry's relations, owned and derived; an entry holding none (`undefined`) does not know them. Views take the
+ * entry's uid when asked, as it can change after its relations arrive.
  */
 export class EntryRelations {
-	static readonly empty = new EntryRelations(undefined, [])
+	static readonly none = new EntryRelations([])
 
-	/** Structurally unusable wire value: parsed at request boundaries to return 400 without throwing. */
-	static readonly invalid: unique symbol = Symbol('invalid relations')
+	/** What a request's unusable relations parse to, so `EntryPatch.validate` refuses them: never held by an entry. */
+	static readonly invalid = new EntryRelations([])
 
-	/** Normalizes items via {@link Relation.from}, drops invalid entries, dedupes by key, and sorts
-	 * owned lines before derived echoes so duplicates are cleanly silenced. */
-	static of(selfUid: string | undefined, relations: Iterable<RelationInit> | null | undefined): EntryRelations {
+	/** Normalizes items via {@link Relation.from}, drops invalid ones, dedupes by key and sorts owned before derived. */
+	static of(relations: Iterable<RelationInit> = []): EntryRelations {
 		const byKey = new Map<string, Relation>()
-		for (const item of relations ?? []) {
+		for (const item of relations) {
 			const relation = Relation.from(item)
 			if (relation && !byKey.has(relation.key)) {
 				byKey.set(relation.key, relation)
 			}
 		}
 		const rank = (relation: Relation) => `${relation.isOutgoing ? 0 : 1} ${relation.type.value} ${relation.targetUid} ${relation.gap ?? ''}`
+		return new EntryRelations([...byKey.values()].sort((a, b) => rank(a).localeCompare(rank(b))))
+	}
+
+	/** An array on the wire; absent stays absent, as it means unknown. */
+	static readonly converter: Converter<Array<RelationInit> | null | undefined, EntryRelations | undefined> = {
+		construct: value => value === undefined ? undefined : EntryRelations.of(value ?? []),
+		deconstruct: relations => relations?.all as Array<RelationInit> | undefined,
+	}
+
+	/** A request's relations: `null` clears them, and only owned ones are kept, so a client echoing what it read cannot
+	 * persist another entry's rows. */
+	static parse(value: unknown): EntryRelations | undefined {
+		if (value === undefined || value === null) {
+			return value === null ? EntryRelations.none : undefined
+		}
+		if (!Array.isArray(value)) {
+			return EntryRelations.invalid
+		}
+		const usable = (item: unknown): item is RelationInit => {
+			if (typeof item !== 'object' || item === null) {
+				return false
+			}
+			const { type, targetUid, gap, direction } = item as Record<'type' | 'targetUid' | 'gap' | 'direction', unknown>
+			const namesAType = type instanceof RelationType || (typeof type === 'string' && !!type.trim())
+			return namesAType
+				&& typeof targetUid === 'string' && !!targetUid.trim()
+				&& (gap === null || gap === undefined || typeof gap === 'string')
+				// Absent direction defaults to outgoing for backwards compatibility.
+				&& (direction === undefined || direction === 'outgoing' || direction === 'incoming')
+		}
+		return value.every(usable) ? EntryRelations.of(value).owned : EntryRelations.invalid
+	}
+
+	private viewed?: { readonly uid: string | undefined, readonly lines: ReadonlyArray<RelationLine> }
+
+	private constructor(readonly all: ReadonlyArray<Relation>) { }
+
+	get isEmpty() {
+		return !this.all.length
+	}
+
+	/** The owned relations, the only ones persisted to external stores. */
+	get writes(): ReadonlyArray<Relation> {
+		return this.all.filter(relation => relation.isOutgoing)
+	}
+
+	get owned(): EntryRelations {
+		return this.writes.length === this.all.length ? this : new EntryRelations(this.writes)
+	}
+
+	equals(other: EntryRelations): boolean {
+		return EntryRelations.same(this.all, other.all)
+	}
+
+	/** Whether the owned halves differ. Comparing full collections would mark entries dirty whenever
+	 * reads attach derived lines. */
+	writesDiffer(other: EntryRelations): boolean {
+		return !EntryRelations.same(this.writes, other.writes)
+	}
+
+	private static same(a: ReadonlyArray<Relation>, b: ReadonlyArray<Relation>) {
+		return a.length === b.length && a.every((relation, index) => relation.equals(b[index]))
+	}
+
+	/** The lines as the entry `selfUid` sees them: a relation authored at both ends shows once, as its own. */
+	lines(selfUid: string | undefined): ReadonlyArray<RelationLine> {
+		if (this.viewed && this.viewed.uid === selfUid) {
+			return this.viewed.lines
+		}
 		const lines = new Array<RelationLine>()
 		const owned = new Set<string>()
-		for (const relation of [...byKey.values()].sort((a, b) => rank(a).localeCompare(rank(b)))) {
+		for (const relation of this.all) {
 			const type = relation.type
 			const outgoing = relation.isOutgoing
 			const line: RelationLine = {
@@ -65,67 +131,17 @@ export class EntryRelations {
 				lines.push(line)
 			}
 		}
-		return new EntryRelations(selfUid, lines)
+		this.viewed = { uid: selfUid, lines }
+		return lines
 	}
 
 	private static keyOf(line: RelationLine) {
 		return line.edge?.key ?? `${line.section.value} ${line.otherUid}`
 	}
 
-	private constructor(private readonly selfUid: string | undefined, readonly lines: ReadonlyArray<RelationLine>) { }
-
-	/** Parses a wire value into owned lines to persist. Derived lines are filtered out so clients
-	 * echoing read responses cannot persist foreign relation rows. */
-	static parse(value: unknown): Array<Relation> | null | undefined | typeof EntryRelations.invalid {
-		if (value === undefined || value === null) {
-			return value as null | undefined
-		}
-		if (!Array.isArray(value)) {
-			return EntryRelations.invalid
-		}
-		const usable = (item: unknown): item is RelationInit => {
-			if (typeof item !== 'object' || item === null) {
-				return false
-			}
-			const { type, targetUid, gap, direction } = item as Record<'type' | 'targetUid' | 'gap' | 'direction', unknown>
-			const namesAType = type instanceof RelationType || (typeof type === 'string' && !!type.trim())
-			return namesAType
-				&& typeof targetUid === 'string' && !!targetUid.trim()
-				&& (gap === null || gap === undefined || typeof gap === 'string')
-				// Absent direction defaults to outgoing for backwards compatibility.
-				&& (direction === undefined || direction === 'outgoing' || direction === 'incoming')
-		}
-		return value.every(usable) ? EntryRelations.of(undefined, value).writes : EntryRelations.invalid
-	}
-
-	/** Canonical stored form of all lines, or `null` if empty. */
-	get value(): Array<Relation> | null {
-		return this.lines.length ? this.lines.map(line => line.relation) : null
-	}
-
-	/** The owned subset of lines in canonical stored form; the only part persisted to external stores. */
-	get writes(): Array<Relation> | null {
-		const owned = this.lines.filter(line => line.direction === 'outgoing').map(line => line.relation)
-		return owned.length ? owned : null
-	}
-
-	equals(other: EntryRelations): boolean {
-		return EntryRelations.same(this.value, other.value)
-	}
-
-	/** Whether the owned halves differ. Comparing full collections would mark entries dirty whenever
-	 * reads attach derived lines. */
-	writesDiffer(other: EntryRelations): boolean {
-		return !EntryRelations.same(this.writes, other.writes)
-	}
-
-	private static same(a: Array<Relation> | null, b: Array<Relation> | null) {
-		return a === null || b === null ? a === b : a.length === b.length && a.every((relation, index) => relation.equals(b[index]))
-	}
-
-	get edges(): ReadonlyArray<RelationEdge> {
+	edges(selfUid: string | undefined): ReadonlyArray<RelationEdge> {
 		const byKey = new Map<string, RelationEdge>()
-		for (const line of this.lines) {
+		for (const line of this.lines(selfUid)) {
 			if (line.edge && !byKey.has(line.edge.key)) {
 				byKey.set(line.edge.key, line.edge)
 			}
@@ -134,9 +150,9 @@ export class EntryRelations {
 	}
 
 	/** Lines grouped by section in {@link RelationSection.rank} order, with owned lines preceding derived lines. */
-	get sections(): ReadonlyArray<{ readonly section: RelationSection, readonly lines: ReadonlyArray<RelationLine> }> {
+	sections(selfUid: string | undefined): ReadonlyArray<{ readonly section: RelationSection, readonly lines: ReadonlyArray<RelationLine> }> {
 		const bySection = new Map<RelationSection, Array<RelationLine>>()
-		for (const line of this.lines) {
+		for (const line of this.lines(selfUid)) {
 			bySection.set(line.section, [...bySection.get(line.section) ?? [], line])
 		}
 		return [...bySection.entries()]
@@ -144,18 +160,12 @@ export class EntryRelations {
 			.map(([section, lines]) => ({ section, lines }))
 	}
 
-	ownerUidOf(line: RelationLine) {
-		return line.ownerUid
-	}
-
-	/** Returns a new collection with the outgoing line added and normalized. */
-	adding(type: RelationType | string, targetUid: string): EntryRelations {
-		return !targetUid || targetUid === this.selfUid
-			? this
-			: EntryRelations.of(this.selfUid, [...this.value ?? [], { type, targetUid }])
+	/** With an outgoing line to `targetUid`, never to `selfUid` itself. */
+	adding(type: RelationType | string, targetUid: string, selfUid?: string): EntryRelations {
+		return !targetUid || targetUid === selfUid ? this : EntryRelations.of([...this.all, { type, targetUid }])
 	}
 
 	without(relation: RelationInit): EntryRelations {
-		return EntryRelations.of(this.selfUid, (this.value ?? []).filter(candidate => !candidate.equals(relation)))
+		return EntryRelations.of(this.all.filter(candidate => !candidate.equals(relation)))
 	}
 }

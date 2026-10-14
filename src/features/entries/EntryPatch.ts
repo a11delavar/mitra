@@ -9,7 +9,6 @@ import { EntryTimeZone } from './EntryTimeZone.js'
 import { Recurrence, type RecurrenceScope } from '../recurrence/Recurrence.js'
 import { Participants, type Participant } from '../participants/Participant.js'
 import { EntryRelations } from '../relations/EntryRelations.js'
-import { type Relation } from '../relations/Relation.js'
 import { type Calendar } from '../sources/Calendar.js'
 import { type Validatable } from '../../infrastructure/validation/Validatable.js'
 import { ValidationError } from '../../infrastructure/validation/ValidationError.js'
@@ -51,7 +50,7 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 		const patch = new EntryPatch()
 		const dated = fields.some(field => field === 'start' || field === 'end' || field === 'due')
 		for (const field of dated && !fields.includes('allDay') ? ['allDay' as const, ...fields] : fields) {
-			// Relations alone tell unknown (absent) from none (null), so unknown ones stay out.
+			// Relations have a none of their own, an empty collection, so absent ones are unknown and stay out.
 			if (field !== 'relations' || entry.relations !== undefined) {
 				Object.assign(patch, { [field]: entry[field] ?? null })
 			}
@@ -87,7 +86,7 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 	@converter({ construct: (value: Partial<Recurrence> | null | undefined) => value === null ? value : Recurrence.from(value) }) recurrence?: Recurrence | null
 	reminders?: Array<number> | null
 	@converter({ construct: (value: ReadonlyArray<Partial<Participant>> | null | undefined) => value === undefined ? value : Participants.normalize(value) }) participants?: Array<Participant> | null
-	@converter({ construct: EntryRelations.parse }) relations?: Array<Relation> | null | typeof EntryRelations.invalid
+	@converter({ construct: EntryRelations.parse, deconstruct: EntryRelations.converter.deconstruct }) relations?: EntryRelations
 
 	/** What makes the patch invalid: a field that came malformed, and with a context what the edit may not do there. */
 	*validate(context?: EntryPatchContext) {
@@ -139,7 +138,7 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 		return value === undefined ? value : typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.round(value) : null
 	}
 
-	/** A percentage clamped to 0–100 (RFC 5545 §3.8.1.8), else none. */
+	/** A percentage clamped to 0-100 (RFC 5545 §3.8.1.8), else none. */
 	private static percent(value: unknown) {
 		return value === undefined ? value : typeof value === 'number' && Number.isFinite(value) ? Math.min(100, Math.max(0, Math.round(value))) : null
 	}

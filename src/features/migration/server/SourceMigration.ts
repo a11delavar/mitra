@@ -4,6 +4,7 @@ import { Integration } from '../../../integrations/Integration.js'
 import { type User } from '../../identity/User.js'
 import { Entry } from '../../entries/Entry.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
+import { EntryRelations } from '../../relations/EntryRelations.js'
 import { Occurrences, exdatesOf, occurrenceOf } from '../../recurrence/server/occurrences.js'
 import { MigrationOutcome, MigrationPlan, MigrationVerdict } from '../MigrationPlan.js'
 import { type Source } from '../../sources/Source.js'
@@ -15,12 +16,7 @@ const FLATTEN_HORIZON_DAYS = 366
 /** Migration request cannot be fulfilled (e.g. invalid target or origin). */
 export class MigrationRefused extends Error { }
 
-/**
- * Bulk migration of entries between sources in three sequential phases:
- * 1. Copy: Create all entries in target and record old-uid -> new-uid mappings.
- * 2. Repoint: Update EntryRelation.targetUid across batch to preserve internal relationships.
- * 3. Delete: Delete originals from origin (skipped if keepOriginals is true).
- */
+/** Moves or copies entries in three phases: copy into the target, repoint `EntryRelation.targetUid`, delete the originals. */
 export interface MigrationOptions {
 	readonly targetSourceId?: unknown
 	/** Entry IDs to migrate; undefined means all entries in the source. */
@@ -136,7 +132,7 @@ export class SourceMigration {
 				const copies = new Array<Entry>()
 				for (const copy of this.copiesOf(entry, verdict)) {
 					const created = await this.targetIntegration.createEntry(this.em, copy)
-					await EntryRelation.reconcile(this.em, created.id!, created.relations ?? null)
+					await EntryRelation.reconcile(this.em, created.id!, created.relations ?? EntryRelations.none)
 					// Record old -> new UID mappings for target-minted identities on move, and fresh UIDs on copy.
 					if (entry.uid && created.uid && created.uid !== entry.uid && !verdict.flattenable) {
 						uids.set(entry.uid, created.uid)
@@ -237,7 +233,7 @@ export class SourceMigration {
 			exdates: entry.recurrence?.freq ? exdatesOf(entry) : undefined,
 			reminders: entry.reminders ? [...entry.reminders] : entry.reminders,
 			participants: entry.participants,
-			relations: entry.relations ?? null,
+			relations: entry.relations,
 			...overrides,
 		})
 		copy.migrateTo(this.target)

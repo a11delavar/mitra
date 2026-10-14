@@ -12,7 +12,7 @@ import { RelationType } from './RelationType.js'
 describe('RelationGraph', () => {
 	const entry = (uid: string, relations: Array<RelationInit> = [], init: Partial<Entry> = {}) => {
 		const created = new Entry({ id: uid, sourceId: 's', uid, type: EntryType.Task, heading: uid, ...init })
-		created.relations = EntryRelations.of(undefined, relations).value
+		created.relations = EntryRelations.of(relations)
 		return created
 	}
 	const uids = (entries: Array<Entry>) => entries.map(found => found.uid).sort()

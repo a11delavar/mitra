@@ -12,6 +12,7 @@ import { Recurrence } from '../recurrence/Recurrence.js'
 import { RecurrenceFrequency } from '../recurrence/RecurrenceFrequency.js'
 import { ParticipantRole } from '../participants/Participant.js'
 import { RelationType } from '../relations/RelationType.js'
+import { EntryRelations } from '../relations/EntryRelations.js'
 import { Relation } from '../relations/Relation.js'
 import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
 
@@ -34,9 +35,9 @@ describe('EntryPatch', () => {
 			assert.deepEqual(Object.keys(EntryPatch.of(task(), ['heading', 'due'])), ['allDay', 'heading', 'due'])
 		})
 
-		it('leaves out relations the entry does not know, and clears none it knows to have', () => {
+		it('leaves out relations the entry does not know, and sends none it knows to have', () => {
 			assert.equal('relations' in EntryPatch.of(task()), false)
-			assert.equal(EntryPatch.of(task({ relations: null })).relations, null)
+			assert.equal(EntryPatch.of(task({ relations: EntryRelations.none })).relations, EntryRelations.none)
 		})
 	})
 
@@ -56,11 +57,11 @@ describe('EntryPatch', () => {
 			const patch = sent(EntryPatch.of(task({
 				recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }),
 				participants: [{ email: 'Organizer@Example.com', organizer: true, role: ParticipantRole.Required }],
-				relations: [new Relation({ type: RelationType.Parent, targetUid: 'parent' })],
+				relations: EntryRelations.of([new Relation({ type: RelationType.Parent, targetUid: 'parent' })]),
 			}), ['recurrence', 'participants', 'relations']))
 			assert.equal(patch.recurrence?.freq, RecurrenceFrequency.Weekly)
 			assert.deepEqual(patch.participants?.map(participant => participant.email), ['organizer@example.com'])
-			assert.deepEqual((patch.relations as Array<Relation>).map(relation => relation.targetUid), ['parent'])
+			assert.deepEqual((patch.relations as EntryRelations).all.map(relation => relation.targetUid), ['parent'])
 			assert.deepEqual([...patch.validate()], [])
 		})
 	})
@@ -106,8 +107,9 @@ describe('EntryPatch', () => {
 			assert.equal(entry.estimate, undefined)
 		})
 
-		it('keeps cleared relations as none, which is not unknown', () => {
-			assert.equal(task({ relations: [] }).apply(Object.assign(new EntryPatch(), { relations: null })).relations, null)
+		it('clears relations to none, which is not unknown', () => {
+			const related = task({ relations: EntryRelations.of([{ type: RelationType.Parent, targetUid: 'parent' }]) })
+			assert.equal(related.apply(EntryPatch.from({ relations: null })).relations, EntryRelations.none)
 		})
 
 		it('rebuilds an entry from its own patch', () => {

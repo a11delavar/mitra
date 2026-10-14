@@ -18,7 +18,7 @@ describe('ShiftStrategy', () => {
 	 * arithmetic in whole days and the expectations readable. */
 	const task = (uid: string, at: number, relations: Array<RelationInit> = [], init: Partial<Entry> = {}) => {
 		const entry = new Entry({ id: uid, sourceId: 's', uid, type: EntryType.Task, heading: uid, start: day(at), ...init })
-		entry.relations = EntryRelations.of(uid, relations).value
+		entry.relations = EntryRelations.of(relations)
 		return entry
 	}
 	const blocks = (predecessorUid: string, gap?: string) => ({ type: RelationType.FinishToStart, targetUid: predecessorUid, gap })

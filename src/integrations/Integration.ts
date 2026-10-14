@@ -6,12 +6,10 @@ import { EntryType } from '../features/entries/EntryType.js'
 import { EntryRelation } from '../features/relations/EntryRelation.js'
 import { IntegrationCapabilities } from './IntegrationCapabilities.js'
 import { IntegrationOwnership } from './IntegrationOwnership.js'
-import type { Relation } from '../features/relations/Relation.js'
+import type { EntryRelations } from '../features/relations/EntryRelations.js'
 import { FlushMode, type EntityManager } from '@mikro-orm/core'
 
-/**
- * Protocol sync and CRUD operations registered per integration type.
- */
+/** Protocol sync and CRUD operations registered per integration type. */
 export interface SyncEngine {
 	/** Fetches remote sources, optionally passing existing persisted sources for conditional requests. */
 	fetchSources(integration: Integration, existing?: ReadonlyArray<Source>): Promise<Array<Source>>
@@ -74,7 +72,6 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	/** Minimum time between background sync polls in ms (0 = every cycle, Infinity = local only). */
 	get syncInterval() { return 0 }
 
-	/** Supported data model capabilities (recurrence, reminders, timeZone, etc.). */
 	get capabilities() {
 		return new IntegrationCapabilities()
 	}
@@ -90,7 +87,6 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	/** Whether re-import can rebuild the entries from somewhere. */
 	get reimportable() { return true }
 
-	/** Whether a user can connect this integration only once. */
 	static readonly onePerUser: boolean = false
 
 	/** Offered only on a development system (`MITRA_DEV`). */
@@ -144,26 +140,19 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	}
 
 	/**
-	 * Fetches the account's remote sources (e.g. calendars, task lists) as transient
-	 * (unpersisted) entities. Internal: callers use {@link getSources}, which reconciles
-	 * these against the database. Delegates to the registered {@link SyncEngine}. A subclass with no
-	 * engine (Notion, Mitra) overrides this directly instead.
+	 * The account's remote sources as transient entities; callers use {@link getSources}, which reconciles them.
+	 * A subclass with no engine (Notion, Mitra) overrides this.
 	 */
 	protected fetchSources(existing?: ReadonlyArray<Source>): Promise<Array<Source>> {
 		return engineFor(this).fetchSources(this, existing)
 	}
 
-	/** Fetches and stores the entries of a single source. @returns whether any entry changed. Delegates
-	 * to the registered {@link SyncEngine}. A subclass with no engine (Notion, Mitra) overrides this directly. */
+	/** @returns whether any entry changed. A subclass with no engine (Notion, Mitra) overrides this. */
 	protected syncSourceEntries(em: EntityManager, source: Source): Promise<boolean> {
 		return engineFor(this).syncSourceEntries(this, em, source)
 	}
 
-	/**
-	 * Merges the client-supplied `incoming` representation into this integration. Each
-	 * provider decides which fields to overwrite and which to preserve. For example,
-	 * CalDAV keeps the stored password when `incoming` carries a blank one.
-	 */
+	/** Each provider decides which fields to keep, e.g. CalDAV keeps the stored password when `incoming` carries a blank one. */
 	abstract merge(incoming: this): void
 
 	editableCopy(): this {
@@ -177,9 +166,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		})
 	}
 
-	/**
-	 * Reconciles persisted sources with remote provider, adding new ones (disabled) and removing obsolete ones.
-	 */
+	/** Reconciles persisted sources with the provider, adding new ones disabled and removing obsolete ones. */
 	async getSources(em: EntityManager, options?: { checkDuplicate?: boolean }): Promise<Array<Source>> {
 		const existing = await em.find(Source, { integrationId: this.id })
 		const remote = await this.fetchSources(existing)
@@ -222,11 +209,9 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		})
 	}
 
-	/**
-	 * Mirrors native-parsed relationships into the {@link EntryRelation} store.
-	 */
+	/** Mirrors natively parsed relationships into the {@link EntryRelation} store. */
 	async reconcileRelations(em: EntityManager, entries: Iterable<Entry>): Promise<void> {
-		const byEntryId = new Map<string, Array<Relation> | null>()
+		const byEntryId = new Map<string, EntryRelations>()
 		for (const entry of entries) {
 			if (entry.id && entry.relations !== undefined) {
 				byEntryId.set(entry.id, entry.relations)
@@ -235,20 +220,14 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		await EntryRelation.reconcileAll(em, byEntryId)
 	}
 
-	/**
-	 * Syncs a single source, marking it imported once a pass completes without truncation.
-	 * @returns whether any entries changed or import completed.
-	 */
+	/** Marks the source imported once a pass completes without truncation. @returns whether entries changed or the import completed. */
 	async syncSource(em: EntityManager, source: Source): Promise<boolean> {
 		const changed = await this.syncSourceEntries(em, source)
 		const imported = !source.syncState?.incomplete && source.markImported()
 		return changed || imported
 	}
 
-	/**
-	 * Syncs entries for every currently enabled source.
-	 * @returns whether anything worth republishing happened.
-	 */
+	/** @returns whether anything worth republishing happened. */
 	async syncEntries(em: EntityManager): Promise<boolean> {
 		let changed = false
 		for (const source of await em.find(Source, { integrationId: this.id, enabled: true })) {
@@ -259,9 +238,6 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		return changed
 	}
 
-	/**
-	 * Full synchronization: reconcile sources, then sync entries for enabled sources.
-	 */
 	sync(em: EntityManager): Promise<boolean> {
 		return Integration.exclusively(this.id, async () => {
 			await this.getSources(em)
@@ -284,9 +260,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		return run
 	}
 
-	/**
-	 * Runs `work` holding exclusive locks across multiple integration IDs (sorted to prevent deadlocks).
-	 */
+	/** Runs `work` holding the locks of several integrations, taken in sorted order to prevent deadlocks. */
 	static exclusivelyAcross<T>(ids: ReadonlyArray<string>, work: () => Promise<T>): Promise<T> {
 		return [...new Set(ids)].sort().reduceRight<() => Promise<T>>((inner, id) => () => Integration.exclusively(id, inner), work)()
 	}
@@ -301,9 +275,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		})
 	}
 
-	/**
-	 * Applies updated credentials and active source selection from incoming DTO without blocking on entry import.
-	 */
+	/** Applies credentials and the source selection without waiting for the entry import. */
 	apply(em: EntityManager, incoming: this): Promise<void> {
 		return Integration.exclusively(this.id, () => this.applyExclusively(em, incoming))
 	}
@@ -344,9 +316,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		await this.stored(em, entry, { removed: true })
 	}
 
-	/**
-	 * Excludes a single occurrence of a recurring master (RFC 5545 EXDATE).
-	 */
+	/** Excludes a single occurrence of a recurring master (RFC 5545 EXDATE). */
 	async excludeOccurrence(em: EntityManager, master: Entry, recurrenceId: Date): Promise<void> {
 		if (!this.storesLocally(master)) {
 			return engineFor(this).excludeOccurrence(this, em, master, recurrenceId)
@@ -356,8 +326,8 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	}
 
 	/**
-	 * Hands the engine a change to an entry Mitra stores, as it hands it every other write: availability may stand for
-	 * something at the provider (CalDAV's busy copy), which the engine then brings in line. Without the lock, as any entry write.
+	 * Availability may stand for something at the provider (CalDAV's busy copy), so the engine hears of every change
+	 * to an entry Mitra stores. Runs without the lock, as any entry write.
 	 */
 	private async stored(em: EntityManager, entry: Entry, { removed = false } = {}) {
 		const engine = engines.get(this.type)
@@ -391,9 +361,8 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	}
 
 	/**
-	 * Hands the engine all the availability in this integration's calendars, or `entries` instead, for a change that
-	 * reaches beyond one entry: a calendar turned on or off, the account disconnected, a sync repairing it.
-	 * What reaches the provider is up to the engine; the default does nothing. @returns whether anything changed.
+	 * Hands the engine all the availability in this integration's calendars, or `entries`, for a change beyond one entry
+	 * (a calendar toggled, the account disconnected, a sync repair). @returns whether anything changed.
 	 */
 	publishAvailability(em: EntityManager, entries?: ReadonlyArray<Entry>): Promise<boolean> {
 		const engine = engines.get(this.type)
@@ -416,9 +385,7 @@ export interface IntegrationClass extends IntegrationConstructor {
 
 const registeredIntegrations = new Map<string, IntegrationClass>()
 
-/**
- * Registers an Integration class with its discriminator type and metadata.
- */
+/** Registers an Integration class with its discriminator type and metadata. */
 export function integration(type: string) {
 	return (target: IntegrationConstructor) => {
 		entity({ discriminatorValue: type })(target as any)

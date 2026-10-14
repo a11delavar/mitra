@@ -1,16 +1,11 @@
 import type { EntityManager, FilterQuery } from '@mikro-orm/sqlite'
 import { type User } from '../../identity/User.js'
 import { RelationGraph } from '../RelationGraph.js'
-import { type Relation } from '../Relation.js'
 import { EntryRelations } from '../EntryRelations.js'
 import { EntryRelation } from '../EntryRelation.js'
 import { Entry } from '../../entries/Entry.js'
-// Integration-agnostic database loading and cycle validation for relation rows. Graph algorithms live in features/relations/RelationGraph.ts.
 
-/**
- * Loads the user's RelationGraph from database rows.
- * `excludeEntryId` omits existing rows for the entry being updated so cycle checks test new candidate relations.
- */
+/** `excludeEntryId` omits the updated entry's existing rows, so cycle checks test its candidate relations. */
 async function relationGraph(em: EntityManager, user: User, excludeEntryId?: string): Promise<RelationGraph> {
 	const sourceIds = (await user.sources(em)).map(source => source.id)
 	if (!sourceIds.length) {
@@ -29,7 +24,7 @@ async function relationGraph(em: EntityManager, user: User, excludeEntryId?: str
 	])
 	const rowsByEntry = Map.groupBy(rows, row => row.entryId)
 	const entries = [...new Set([...owners, ...targets])]
-	return RelationGraph.of(entries, entry => (rowsByEntry.get(entry.id!) ?? []).map(row => row.relation))
+	return RelationGraph.of(entries, entry => EntryRelations.of((rowsByEntry.get(entry.id!) ?? []).map(row => row.relation)))
 }
 
 /** Attaches own and derived relations to entries, scoped to sources accessible by the user. */
@@ -44,12 +39,9 @@ export async function relationClosure(em: EntityManager, user: User): Promise<Ar
 	return entries
 }
 
-/**
- * Validates that candidate relations contain no self-references and introduce no circular hierarchy or dependency.
- * @returns an error message to 400 with, or `undefined` when valid.
- */
-export async function assertRelationsValid(em: EntityManager, user: User, entry: Entry, relations: ReadonlyArray<Relation> | null): Promise<string | undefined> {
-	if (!relations?.length) {
+/** @returns an error message to 400 with when a candidate relation points at itself or closes a cycle, else `undefined`. */
+export async function assertRelationsValid(em: EntityManager, user: User, entry: Entry, relations: EntryRelations): Promise<string | undefined> {
+	if (relations.isEmpty) {
 		return undefined
 	}
 	// Availability can't be either end of a relation.
@@ -57,12 +49,12 @@ export async function assertRelationsValid(em: EntityManager, user: User, entry:
 		return 'Availability cannot be related to other entries'
 	}
 	const sourceIds = (await user.sources(em)).map(source => source.id)
-	const targets = await em.find(Entry, { uid: { $in: relations.map(relation => relation.targetUid) }, sourceId: { $in: sourceIds } })
+	const targets = await em.find(Entry, { uid: { $in: relations.all.map(relation => relation.targetUid) }, sourceId: { $in: sourceIds } })
 	if (targets.some(target => target.type.isAvailability)) {
 		return 'Availability cannot be related to other entries'
 	}
 	const entryUid = entry.uid
-	if (entryUid && relations.some(relation => relation.targetUid === entryUid)) {
+	if (entryUid && relations.all.some(relation => relation.targetUid === entryUid)) {
 		return 'An entry cannot relate to itself'
 	}
 	if (!entryUid) {
@@ -70,8 +62,7 @@ export async function assertRelationsValid(em: EntityManager, user: User, entry:
 	}
 
 	// Seeds graph walk using candidate owned edges to detect cycles before persisting.
-	const candidates = EntryRelations.of(entryUid, relations)
-	const seedsOf = (family: 'hierarchy' | 'dependency') => candidates.lines
+	const seedsOf = (family: 'hierarchy' | 'dependency') => relations.lines(entryUid)
 		.filter(line => line.direction === 'outgoing' && line.edge?.family === family && line.edge.from !== entryUid)
 		.map(line => line.edge!.from)
 

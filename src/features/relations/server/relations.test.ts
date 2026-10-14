@@ -260,7 +260,7 @@ describe('hierarchy rollup', () => {
 
 			const closure = await relationClosure(em, user)
 			const served = closure.find(found => found.uid === 'parent')!
-			assert.deepEqual(served.relations?.map(relation => [relation.direction, relation.type.value, relation.targetUid]), [['incoming', 'PARENT', 'a']])
+			assert.deepEqual(served.relations?.all.map(relation => [relation.direction, relation.type.value, relation.targetUid]), [['incoming', 'PARENT', 'a']])
 		})
 	})
 
@@ -272,8 +272,8 @@ describe('hierarchy rollup', () => {
 			await relate(child, RelationType.Parent, 'parent')
 
 			await EntryRelation.loadFor(em, [parent, child])
-			assert.equal(parent.relations, null)
-			assert.deepEqual(child.relations?.map(relation => [relation.direction, relation.targetUid]), [['outgoing', 'parent']])
+			assert.equal(parent.relations?.isEmpty, true)
+			assert.deepEqual(child.relations?.all.map(relation => [relation.direction, relation.targetUid]), [['outgoing', 'parent']])
 		})
 
 		it('reconcile ignores a derived line, so omitting one can never delete the other row', async () => {
@@ -282,7 +282,7 @@ describe('hierarchy rollup', () => {
 			await relate(child, RelationType.Parent, 'parent')
 
 			// The parent is served "a points at me"; PUTting that back must write nothing of its own.
-			await EntryRelation.reconcile(em, parent.id!, EntryRelations.of('parent', [{ type: RelationType.Parent, targetUid: 'a', direction: 'incoming' }]).value)
+			await EntryRelation.reconcile(em, parent.id!, EntryRelations.of([{ type: RelationType.Parent, targetUid: 'a', direction: 'incoming' }]))
 			await em.flush()
 
 			assert.equal(await em.count(EntryRelation, { entryId: parent.id! }), 0)
@@ -291,7 +291,7 @@ describe('hierarchy rollup', () => {
 	})
 
 	describe('assertRelationsValid', () => {
-		const candidates = (...pairs: Array<[RelationType, string]>) => EntryRelations.of(undefined, pairs.map(([type, targetUid]) => ({ type, targetUid }))).value
+		const candidates = (...pairs: Array<[RelationType, string]>) => EntryRelations.of(pairs.map(([type, targetUid]) => ({ type, targetUid })))
 
 		it('refuses a relationship to the entry itself, which states nothing', async () => {
 			const entry = await task('a')
@@ -338,7 +338,7 @@ describe('hierarchy rollup', () => {
 
 		it('passes an empty or absent list, and an entry no uid identifies yet', async () => {
 			const entry = await task('a')
-			assert.equal(await assertRelationsValid(em, user, entry, null), undefined)
+			assert.equal(await assertRelationsValid(em, user, entry, EntryRelations.none), undefined)
 			const draft = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'draft' })
 			assert.equal(await assertRelationsValid(em, user, draft, candidates([RelationType.Parent, 'a'])), undefined)
 		})
