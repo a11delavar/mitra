@@ -2,7 +2,7 @@ import { DateTime } from '@3mo/date-time'
 import { converter } from '@a11d/converter'
 import { equals } from '@a11d/equals'
 import { model } from '../../infrastructure/model/model.js'
-import { entity, primaryKey, property, enum as enumType, unique, manyToOne, embedded } from '../../infrastructure/model/orm.js'
+import { entity, primaryKey, property, enum as enumType, unique, manyToOne } from '../../infrastructure/model/orm.js'
 import { EntryType, type EntryTypeValue } from './EntryType.js'
 import { TaskStatus } from './TaskStatus.js'
 import { Transparency } from './Transparency.js'
@@ -24,6 +24,7 @@ import { type Validatable } from '../../infrastructure/validation/Validatable.js
 import { ValidationError } from '../../infrastructure/validation/ValidationError.js'
 import { TimeZone } from '../time/TimeZone.js'
 import { EntryPatch } from './EntryPatch.js'
+import { EntryOccurrences } from '../recurrence/EntryOccurrences.js'
 
 export interface EntryTally {
 	readonly done: number
@@ -163,29 +164,12 @@ export class Entry implements Validatable<Calendar> {
 	@property({ type: 'json', nullable: true }) data?: EntryData
 	@property({ type: 'json', nullable: true }) reminders?: Array<number>
 
-	get reminderAnchor(): DateTime | undefined {
-		return this.start ?? (this.type?.isTask ? this.due : undefined)
+	get reminderAnchor() {
+		return this.occurrences.single.reminderAnchor
 	}
 
 	get remindersAnchorToEnd() {
-		return !this.start && !!this.reminderAnchor
-	}
-
-	/** Floating times resolve in the observer's `zone`. */
-	reminderAnchorInstant(zone?: string): number | undefined {
-		const anchor = this.reminderAnchor
-		if (!anchor) {
-			return undefined
-		}
-		const epoch = (anchor as unknown as Date).getTime()
-		if (!this.floating || !zone) {
-			return epoch
-		}
-		return Temporal.Instant.fromEpochMilliseconds(epoch)
-			.toZonedDateTimeISO('UTC')
-			.toPlainDateTime()
-			.toZonedDateTime(zone, { disambiguation: 'compatible' })
-			.epochMilliseconds
+		return this.occurrences.single.remindersAnchorToEnd
 	}
 
 	/** Starts the reminders from `defaults`, following them across kind changes until the user sets their own. All-day entries get none. */
@@ -254,11 +238,12 @@ export class Entry implements Validatable<Calendar> {
 	}
 
 	@property({ type: 'string', nullable: true }) uid?: string
-	@embedded(() => Recurrence, { prefix: 'recurrence_', nullable: true }) recurrence?: Recurrence
-	@property({ type: 'json', nullable: true }) exdates?: Array<number>
-	@property({ type: 'string', nullable: true, fieldName: 'recurrence_master_id' }) recurringEntryId?: string
+	@property({ type: Recurrence.Mapper, nullable: true }) recurrence?: Recurrence
+	@Entry.days() @property({ type: 'json', nullable: true }) exdates?: Array<number>
+	/** A recurring entry's overrides (RFC 5545 RECURRENCE-ID), each standing in for one of its dates; read with it, stored as rows of their own. */
+	overrides?: Array<Entry>
+	@property({ type: 'string', nullable: true }) recurringEntryId?: string
 	@Entry.date() recurrenceId?: DateTime
-	@Entry.date({ persist: false }) seriesStart?: DateTime
 
 	/** Unknown while absent, as a provider may not say; none is an empty collection. */
 	@converter(EntryRelations.converter) relations?: EntryRelations
@@ -306,6 +291,14 @@ export class Entry implements Validatable<Calendar> {
 		}
 	}
 
+	/** A list of all-day dates, as {@link date} converts one. */
+	static days(): PropertyDecorator {
+		return converter({
+			construct: (value: ReadonlyArray<number> | null | undefined, data: { allDay?: boolean | null }) => value?.map(ms => Entry.shownDay(new Date(ms), data)!.valueOf()),
+			deconstruct: (value: ReadonlyArray<number> | null | undefined, data: { allDay?: boolean | null }) => value?.map(ms => Entry.storedDay(new Date(ms), data)!.valueOf()),
+		})
+	}
+
 	/** A day the wire carries as its UTC midnight, as the midnight that begins it in `dayZone`. */
 	static shownDay(value: Date | string | null | undefined, data: { allDay?: boolean | null }) {
 		const zone = Entry.dayZone()
@@ -331,22 +324,18 @@ export class Entry implements Validatable<Calendar> {
 		return this.persisted && !!this.uid
 	}
 
-	/** Only a start places an entry: a due is a constraint, so a task with one but no start stays unscheduled. */
+	// The date facts are its own dates' (its single occurrence's), so the formulas live once.
+
 	get scheduled() {
-		return !!this.start
+		return this.occurrences.single.scheduled
 	}
 
-	/** The day a task is owed on: its due, else the last day its schedule occupies. */
 	get lastDay() {
-		return this.due?.dayStart ?? (!this.start ? undefined : this.inclusiveEnd.dayStart)
+		return this.occurrences.single.lastDay
 	}
 
-	/** Compared by day, so one due this morning is still today's. A repeating task is never behind: the next occurrence settles the missed one. */
 	get overdue() {
-		if (!this.type?.isTask || this.closed || this.partOfSeries) {
-			return false
-		}
-		return !!this.lastDay && this.lastDay.isBefore(new DateTime().dayStart)
+		return this.occurrences.single.overdue
 	}
 
 	/**
@@ -362,14 +351,14 @@ export class Entry implements Validatable<Calendar> {
 		return !!this.recurringEntryId
 	}
 
-	/** Where "this and following" would reach the whole series. Both instants come from the expansion, so a synced override answers false. */
-	get isFirstOccurrence() {
-		return !!this.recurrenceId && !!this.seriesStart && this.recurrenceId.equals(this.seriesStart)
-	}
-
 	/** The master or one of its occurrences: never dragged, its schedule read-only in the editor (the rule stays editable). */
 	get partOfSeries() {
 		return !!this.recurrence || this.isRecurring
+	}
+
+	/** The dates it takes place on, lazily: its own, or each its rule yields. */
+	get occurrences() {
+		return EntryOccurrences.of(this)
 	}
 
 	/** The row that holds what a whole series shares: its master, or the entry itself when it stands alone. */
@@ -440,34 +429,24 @@ export class Entry implements Validatable<Calendar> {
 			exdates: values.exdates,
 			recurringEntryId: values.recurringEntryId,
 			recurrenceId: values.recurrenceId,
-			seriesStart: values.seriesStart,
 		})
 	}
 
 	get multiDay() {
-		if (!this.start || !this.end) {
-			return false
-		}
-		return this.inclusiveEnd.dayStart.valueOf() > this.start.dayStart.valueOf()
+		return this.occurrences.single.multiDay
 	}
 
-	/** Exclusive end DateTime to measure or edit against. */
-	get effectiveEnd(): DateTime {
-		const start = this.start!
-		if (this.end && this.end.valueOf() > start.valueOf()) {
-			return this.end
-		}
-		return this.allDay ? start.dayStart.add({ days: 1 }) : start
+	get effectiveEnd() {
+		return this.occurrences.single.effectiveEnd
 	}
 
-	/** Inclusive last day for display (all-day ends are stored exclusive-next-midnight). */
-	get inclusiveEnd(): DateTime {
-		return this.allDay ? this.effectiveEnd.subtract({ days: 1 }) : this.effectiveEnd
+	get inclusiveEnd() {
+		return this.occurrences.single.inclusiveEnd
 	}
 
 	/** Whether the task is planned at a moment only, with no end (taking a pill at 10:00). */
 	get point() {
-		return !!this.type?.isTask && !!this.start && !this.end
+		return this.occurrences.single.point
 	}
 
 	moveStart(start: DateTime) {

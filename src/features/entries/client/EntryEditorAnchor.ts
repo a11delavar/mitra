@@ -23,8 +23,8 @@ export class EntryEditorAnchor extends Controller {
 
 	/** A view that guards its templates re-renders nothing for a request, so the surface updates itself. */
 	private readonly handleRequest = () => {
-		const entry = this.host.segment?.entry
-		if (entry && EntryEditorIntent.shouldOpen(entry)) {
+		const occurrence = this.host.segment?.occurrence
+		if (occurrence && EntryEditorIntent.shouldOpen(occurrence)) {
 			this.host.requestUpdate()
 		}
 	}
@@ -51,7 +51,7 @@ export class EntryEditorAnchor extends Controller {
 			this.reported = open
 			EntryEditorIntent.setEditing(segment.entry, open)
 		}
-		if (EntryEditorIntent.shouldOpen(segment.entry) && !segment.hasPrevious) {
+		if (EntryEditorIntent.shouldOpen(segment.occurrence) && !segment.hasPrevious) {
 			// Reported before the request is consumed, so no display lens drops the entry in between.
 			EntryEditorIntent.setEditing(segment.entry, true)
 			this.reported = true

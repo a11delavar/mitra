@@ -5,7 +5,6 @@ import { User } from '../../identity/User.js'
 import { Source } from '../../sources/Source.js'
 import { RelationType } from '../RelationType.js'
 import { RelationGraph } from '../RelationGraph.js'
-import { Recurrence } from '../../recurrence/Recurrence.js'
 import { Integration } from '../../../integrations/Integration.js'
 import { Identity } from '../../identity/Identity.js'
 import { GoogleCalendar } from '../../../integrations/google/GoogleCalendar.js'
@@ -25,7 +24,7 @@ import { assertRelationsValid, relationClosure } from './relations.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
-		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, MitraCalendar, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
+		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, MitraCalendar, Source, Entry, EntryRelation, NotificationSubscription, Session],
 		dbName: ':memory:',
 		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {

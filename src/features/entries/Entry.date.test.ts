@@ -22,7 +22,7 @@ describe('Entry.date', () => {
 	}
 	const midnight = (day: string, zone: string) => new DateTime(TimeZone.of(zone).midnightOf(Temporal.PlainDate.from(day)).getTime())
 	const iso = (value: { valueOf(): number } | string | null | undefined) => value === null || value === undefined ? value : new Date(typeof value === 'string' ? value : value.valueOf()).toISOString()
-	const wire = (entry: Entry) => wireOf(entry) as { start?: string, end?: string, due?: string, recurrenceId?: string, seriesStart?: string, allDay?: boolean }
+	const wire = (entry: Entry) => wireOf(entry) as { start?: string, end?: string, due?: string, recurrenceId?: string, exdates?: Array<number>, allDay?: boolean }
 	const holiday = (init: Partial<Entry> = {}) => new Entry({ type: EntryType.Task, heading: 'Holiday', allDay: true, ...init })
 
 	it('holds the dates as given, a plain field to read', () => {
@@ -113,12 +113,12 @@ describe('Entry.date', () => {
 
 	it('carries every date of an occurrence under its own name, and nothing else', () => {
 		showIn('Asia/Tehran')
-		const entry = holiday({ start: midnight('2026-06-02', 'Asia/Tehran'), recurrenceId: midnight('2026-06-02', 'Asia/Tehran'), seriesStart: midnight('2026-05-26', 'Asia/Tehran') })
+		const entry = holiday({ start: midnight('2026-06-02', 'Asia/Tehran'), recurrenceId: midnight('2026-06-02', 'Asia/Tehran'), exdates: [midnight('2026-06-09', 'Asia/Tehran').getTime()] })
 		const sent = wire(entry)
 		assert.deepEqual(Object.keys(sent).filter(key => key.startsWith('_')), [])
-		assert.deepEqual([sent.start, sent.recurrenceId, sent.seriesStart, sent.allDay], ['2026-06-02T00:00:00.000Z', '2026-06-02T00:00:00.000Z', '2026-05-26T00:00:00.000Z', true])
+		assert.deepEqual([sent.start, sent.recurrenceId, sent.exdates, sent.allDay], ['2026-06-02T00:00:00.000Z', '2026-06-02T00:00:00.000Z', [Date.parse('2026-06-09T00:00:00.000Z')], true])
 		const arrived = revive<Entry>(sent)
-		assert.deepEqual([iso(arrived.start), iso(arrived.recurrenceId), iso(arrived.seriesStart)], [iso(entry.start), iso(entry.recurrenceId), iso(entry.seriesStart)])
+		assert.deepEqual([iso(arrived.start), iso(arrived.recurrenceId), arrived.exdates], [iso(entry.start), iso(entry.recurrenceId), entry.exdates])
 	})
 
 	it('shows days in the device\'s zone in the browser, and in none on the server', () => {

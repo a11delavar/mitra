@@ -26,6 +26,7 @@ O seletor de fuso horário também foi redesenhado. Fusos com o mesmo nome e o m
 	<img src="time-zones-light.webp" alt="O seletor de fuso horário, aberto na sua casa entre os fusos agrupados ao redor">
 </picture>
 
+> [!NOTE]
 > Se você deu um nome próprio ao fuso horário em que está, dê esse nome a ele mais uma vez, por favor. Até agora, esses nomes ficavam no dispositivo onde você os deu. A partir de agora, um nome acompanha você em todos os dispositivos.
 
 Documentação: [Fusos horários](../../docs/time-zones.md)

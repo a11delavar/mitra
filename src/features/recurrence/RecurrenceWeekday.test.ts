@@ -70,12 +70,5 @@ describe('RecurrenceWeekday', () => {
 		assert.deepEqual(RecurrenceWeekday.converter.deconstruct!(weekdays, {}), ['MO', '-1FR'])
 		assert.deepEqual(RecurrenceWeekday.converter.construct!(['MO', '-1FR'], {}), weekdays)
 		assert.equal(RecurrenceWeekday.converter.deconstruct!(undefined, {}), undefined)
-
-		const mapper = new RecurrenceWeekday.Mapper()
-		assert.equal(mapper.convertToDatabaseValue(weekdays), '["MO","-1FR"]')
-		assert.equal(mapper.convertToDatabaseValue(undefined), null)
-		assert.deepEqual(mapper.convertToJSValue('["MO","-1FR"]'), weekdays)
-		assert.deepEqual(mapper.convertToJSValue(['MO']), [RecurrenceWeekday.Monday])
-		assert.equal(mapper.convertToJSValue(null), undefined)
 	})
 })

@@ -26,6 +26,7 @@ Auch die Auswahl der Zeitzonen ist neu gestaltet. Zonen mit demselben Namen und 
 	<img src="time-zones-light.webp" alt="Die Auswahl der Zeitzonen, geöffnet beim Zuhause zwischen den gruppierten Zonen um es herum">
 </picture>
 
+> [!NOTE]
 > Wenn du der Zeitzone, in der du bist, einen eigenen Namen gegeben hast, gib ihr diesen Namen bitte noch einmal. Bisher blieben solche Namen auf dem Gerät, auf dem du sie vergeben hast. Ab jetzt folgt dir ein Name auf jedes Gerät.
 
 Doku: [Zeitzonen](../../docs/time-zones.md)

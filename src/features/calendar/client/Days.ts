@@ -4,7 +4,7 @@ import { Localizer } from '@3mo/localization'
 import { observeResize } from '@3mo/resize-observer'
 import { type TimeZone } from '../../time/TimeZone.js'
 import { type UserTimeZone } from '../../time/UserTimeZones.js'
-import { type Entry } from '../../entries/Entry.js'
+import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
 import { EntrySegments } from '../../entries/client/EntrySegments.js'
 import { type EntrySegment } from '../../entries/client/EntrySegment.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
@@ -21,7 +21,9 @@ import { TimeZones } from '../../time/client/TimeZones.js'
 @component('mitra-days')
 export class Days extends Component {
 	@property({ type: Object }) navigatingDate = new DateTime()
-	@property({ type: Array }) entries = new Array<Entry>()
+	/** Whether `navigatingDate` comes from a step, which keeps the time in view. */
+	@property({ type: Boolean }) stepping = false
+	@property({ type: Array }) occurrences = new Array<EntryOccurrence>()
 	@property({ type: Boolean, reflect: true }) hideTime = false
 
 	private readonly dates: CalendarDatesController = new CalendarDatesController(this)
@@ -69,7 +71,7 @@ export class Days extends Component {
 	protected readonly entryDrag = new EntryDragController(this)
 	protected readonly density = new DayDensityController(this)
 	protected readonly zoneLane: TimeZoneLaneController = new TimeZoneLaneController(this)
-	private get segments() { return EntrySegments.of(HideDoneTasksSetting.filter(Availability.outside(this.entries)), this.dates.window.days) }
+	private get segments() { return EntrySegments.of(HideDoneTasksSetting.filter(Availability.outside(this.occurrences)), this.dates.window.days) }
 
 	/** `undefined` is the anchor, here, which comes last. */
 	private get timeZoneColumns(): Array<UserTimeZone | undefined> {
@@ -130,7 +132,7 @@ export class Days extends Component {
 		// A scroll hands back the very date it read; any other date is a navigation, also to the day already in view
 		// (Today, after scrolling away from the time it is now).
 		if (props.has('navigatingDate') && this.navigatingDate !== this.dates.navigatingDate) {
-			this.scrolling.navigate(this.navigatingDate)
+			this.scrolling.navigate(this.navigatingDate, { arrive: !this.stepping })
 		}
 		if (props.has('hideTime')) {
 			void this.scrolling.anchor()
@@ -485,13 +487,13 @@ export class Days extends Component {
 		if (!first || !last) {
 			return html.nothing
 		}
-		const runs = this.segments.runsIn(first, last, entry => !!entry.allDay)
+		const runs = this.segments.runsIn(first, last, occurrence => occurrence.allDay)
 		const slots = this.segments.allDaySlots
-		const laneCount = runs.reduce((count, segment) => EntryStore.isPreview(segment.entry) ? count : Math.max(count, (slots.get(segment.entry) ?? -1) + 1), 0)
-		const laneOf = (entry: Entry) => Math.min(slots.get(entry) ?? laneCount, laneCount)
+		const laneCount = runs.reduce((count, segment) => EntryStore.isPreview(segment.entry) ? count : Math.max(count, (slots.get(segment.occurrence) ?? -1) + 1), 0)
+		const laneOf = (occurrence: EntryOccurrence) => Math.min(slots.get(occurrence) ?? laneCount, laneCount)
 		this.allDayPlacements = runs
 			.filter(segment => !EntryStore.isPreview(segment.entry))
-			.map(segment => ({ lane: laneOf(segment.entry), start: segment.dayValue!, end: segment.runEnd.dayValue! }))
+			.map(segment => ({ lane: laneOf(segment.occurrence), start: segment.dayValue!, end: segment.runEnd.dayValue! }))
 		this.style.setProperty('--_all-day-window-rows', `${laneCount + 1}`)
 		const lastValue = last.dayStart.valueOf()
 		const columnByDay = new Map(days.map((day, index) => [day.dayStart.valueOf(), offset + index]))
@@ -505,7 +507,7 @@ export class Days extends Component {
 		const placements = new Map(runs.map(segment => [segment, {
 			start: Math.round(segment.dayValue! / 86_400_000),
 			end: Math.round(Math.min(segment.runEnd.dayValue ?? segment.dayValue!, lastValue) / 86_400_000),
-			rank: laneOf(segment.entry),
+			rank: laneOf(segment.occurrence),
 		}]))
 		this.laneSegments = runs
 		this.lanePlacement = new Map([...placements].map(([segment, placement]) =>
@@ -513,9 +515,9 @@ export class Days extends Component {
 		return html`
 			<div class="all-day">
 				${days.map((_, index) => html`<div class="day" style="grid-column: ${offset + index + 1};"></div>`)}
-				${repeat(bars, bar => bar.segment.entry, bar => html`
+				${repeat(bars, bar => EntryStore.identityOf(bar.segment.occurrence), bar => html`
 					<mitra-entry-segment
-						style=${styleMap({ gridColumn: `${bar.startColumn + 1} / span ${bar.endColumn - bar.startColumn + 1}`, gridRow: `${laneOf(bar.segment.entry) + 1}` })}
+						style=${styleMap({ gridColumn: `${bar.startColumn + 1} / span ${bar.endColumn - bar.startColumn + 1}`, gridRow: `${laneOf(bar.segment.occurrence) + 1}` })}
 						resize="inline"
 						?has-previous=${bar.segment.hasPrevious}
 						?has-next=${bar.clippedRight}
@@ -602,7 +604,7 @@ export class Days extends Component {
 					style="grid-column: ${offset + index + 1};"
 					.date=${day}
 					.entries=${this.segments.timedOn(day)}
-					.availability=${Availability.on(this.entries, day)}
+					.availability=${Availability.on(this.occurrences, day)}
 					?today=${day.dayStart.valueOf() === todayValue}
 				></mitra-day>
 			`)}

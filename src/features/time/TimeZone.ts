@@ -71,6 +71,13 @@ export class TimeZone {
 		return new Date(day.toZonedDateTime(this.id).epochMilliseconds)
 	}
 
+	/** `instant` moved by the wall-clock distance from `from` to `to` here, so 09:00 stays 09:00 across a DST change. */
+	shift(instant: Date, from: Date, to: Date): Date {
+		const wall = (value: Date) => Temporal.Instant.fromEpochMilliseconds(value.getTime()).toZonedDateTimeISO(this.id).toPlainDateTime()
+		const distance = wall(from).until(wall(to))
+		return new Date(wall(instant).add(distance).toZonedDateTime(this.id, { disambiguation: 'compatible' }).epochMilliseconds)
+	}
+
 	/** Minutes ahead of UTC at `at`. */
 	offsetAt(at = new Date()) {
 		return Temporal.Instant.fromEpochMilliseconds(at.getTime()).toZonedDateTimeISO(this.id).offsetNanoseconds / 60_000_000_000

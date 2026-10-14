@@ -1,5 +1,6 @@
 import { type DateTime } from '@3mo/date-time'
 import { type Entry } from '../../entries/Entry.js'
+import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
 import { type EntrySegment } from '../../entries/client/EntrySegment.js'
 import { EntrySegments } from '../../entries/client/EntrySegments.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
@@ -26,7 +27,7 @@ const MIN_INSTANCES = 4
 
 const DAY = 86_400_000
 
-/** A habit pooled from series, overrides and detached instances that share an appearance. */
+/** A habit pooled from recurring entries, overrides and detached instances that share an appearance. */
 class Routine {
 	/**
 	 * The appearance that pools entries, `(sourceId, heading)`, deliberately not allDay: an all-day placeholder becomes timed
@@ -37,17 +38,17 @@ class Routine {
 		return heading ? `${entry.sourceId} ${heading}` : undefined
 	}
 
-	readonly instances = new Array<{ readonly day: number, readonly entry: Entry }>()
+	readonly instances = new Array<{ readonly day: number, readonly occurrence: EntryOccurrence }>()
 	/** The smallest stride its members' rules author, `Infinity` without one. */
 	private authoredStride = Infinity
-	/** Master ids belonging to this routine. */
-	readonly masters = new Set<string>()
+	/** The recurring entries belonging to this routine. */
+	readonly recurringEntryIds = new Set<string>()
 
-	add(day: number, entry: Entry) {
-		this.instances.push({ day, entry })
-		this.authoredStride = Math.min(this.authoredStride, entry.recurrence?.strideDays ?? Infinity)
-		if (entry.recurringEntryId) {
-			this.masters.add(entry.recurringEntryId)
+	add(day: number, occurrence: EntryOccurrence) {
+		this.instances.push({ day, occurrence })
+		this.authoredStride = Math.min(this.authoredStride, (occurrence.recurringEntry ?? occurrence.entry).recurrence?.strideDays ?? Infinity)
+		if (occurrence.recurringEntryId) {
+			this.recurringEntryIds.add(occurrence.recurringEntryId)
 		}
 	}
 
@@ -72,23 +73,23 @@ class Routine {
 
 /**
  * Computes which routines collapse into ribbon marks and their per-row runs.
- * Pools recurring series, overrides, and detached instances by appearance (`Routine.keyOf`).
+ * Pools recurring entries, overrides, and detached instances by appearance (`Routine.keyOf`).
  */
 export class Routines {
 	private static readonly cache = new WeakMap<ReadonlyArray<DateTime>, Routines>()
 
 	/** The cohort for these inputs, memoised on `days`. */
-	static of(entries: ReadonlyArray<Entry>, days: ReadonlyArray<DateTime>, unit: RoutineUnit): Routines {
+	static of(occurrences: ReadonlyArray<EntryOccurrence>, days: ReadonlyArray<DateTime>, unit: RoutineUnit): Routines {
 		const cached = Routines.cache.get(days)
-		if (cached?.entries === entries && cached.unit === unit) {
+		if (cached?.occurrences === occurrences && cached.unit === unit) {
 			return cached
 		}
-		const cohort = new Routines(entries, days, unit)
+		const cohort = new Routines(occurrences, days, unit)
 		Routines.cache.set(days, cohort)
 		return cohort
 	}
 
-	constructor(readonly entries: ReadonlyArray<Entry>, readonly days: ReadonlyArray<DateTime>, readonly unit: RoutineUnit) { }
+	constructor(readonly occurrences: ReadonlyArray<EntryOccurrence>, readonly days: ReadonlyArray<DateTime>, readonly unit: RoutineUnit) { }
 
 	private _collapsed?: ReadonlyMap<string, Routine>
 	private get collapsed(): ReadonlyMap<string, Routine> {
@@ -98,39 +99,40 @@ export class Routines {
 		const from = this.days[0]?.dayStart.valueOf()
 		const to = this.days.at(-1)?.dayStart.valueOf()
 		const routines = new Map<string, Routine>()
-		for (const entry of this.entries) {
+		for (const occurrence of this.occurrences) {
+			const { entry } = occurrence
 			// Preview ghosts must render as bars for drag feedback.
-			if (!entry.start || EntryStore.isPreview(entry)) {
+			if (!occurrence.start || EntryStore.isPreview(entry)) {
 				continue
 			}
-			const day = entry.start.dayStart.valueOf()
+			const day = occurrence.start.dayStart.valueOf()
 			if (from === undefined || to === undefined || day < from || day > to) {
 				continue
 			}
-			// Skip unexpanded recurrence masters; occurrences are already expanded.
-			if (!entry.recurringEntryId && entry.recurrence) {
+			// A recurring entry whose rule yields nothing shows once, as an entry of its own would.
+			if (!occurrence.recurring && entry.recurrence) {
 				continue
 			}
-			const key = Routine.keyOf(entry) ?? entry.recurringEntryId // blank standalones are ignored
+			const key = Routine.keyOf(entry) ?? occurrence.recurringEntryId // blank standalones are ignored
 			if (!key) {
 				continue
 			}
 			const routine = routines.get(key) ?? new Routine()
 			routines.set(key, routine)
-			routine.add(day, entry)
+			routine.add(day, occurrence)
 		}
 		const collapsed = new Map<string, Routine>()
 		for (const [key, routine] of routines) {
 			if (routine.collapsesIn(this.unit)) {
 				collapsed.set(key, routine)
 				routine.instances.sort((a, b) => a.day - b.day)
-				for (const { entry } of routine.instances) {
-					if (!entry.recurringEntryId) {
-						this.detached.add(entry)
+				for (const { occurrence } of routine.instances) {
+					if (!occurrence.recurring) {
+						this.detached.add(occurrence)
 					}
 				}
-				for (const master of routine.masters) {
-					this.collapsedMasters.add(master)
+				for (const id of routine.recurringEntryIds) {
+					this.collapsedRecurring.add(id)
 				}
 			}
 		}
@@ -138,25 +140,25 @@ export class Routines {
 	}
 
 	/** Standalone instances that landed in a collapsed routine; filled in as `collapsed` resolves. */
-	private readonly detached = new Set<Entry>()
-	/** Master ids whose series is a member of a collapsed routine; filled in as `collapsed` resolves. */
-	private readonly collapsedMasters = new Set<string>()
+	private readonly detached = new Set<EntryOccurrence>()
+	/** The recurring entries that are members of a collapsed routine; filled in as `collapsed` resolves. */
+	private readonly collapsedRecurring = new Set<string>()
 
-	/** Whether this entry collapses to routine marks. Previews never collapse. */
-	collapses(entry: Entry): boolean {
-		void this.collapsed // populates detached/collapsedMasters during resolution
-		if (EntryStore.isPreview(entry)) {
+	/** Whether this occurrence collapses to routine marks. Previews never collapse. */
+	collapses(occurrence: EntryOccurrence): boolean {
+		void this.collapsed // populates detached/collapsedRecurring during resolution
+		if (EntryStore.isPreview(occurrence.entry)) {
 			return false
 		}
-		return entry.recurringEntryId ? this.collapsedMasters.has(entry.recurringEntryId) : this.detached.has(entry)
+		return occurrence.recurringEntryId ? this.collapsedRecurring.has(occurrence.recurringEntryId) : this.detached.has(occurrence)
 	}
 
-	/** The entries that still render as bars. Returns the input array unchanged when nothing collapses. */
-	private _kept?: ReadonlyArray<Entry>
-	get kept(): ReadonlyArray<Entry> {
+	/** The occurrences that still render as bars. Returns the input array unchanged when nothing collapses. */
+	private _kept?: ReadonlyArray<EntryOccurrence>
+	get kept(): ReadonlyArray<EntryOccurrence> {
 		return this._kept ??= this.collapsed.size === 0
-			? this.entries
-			: this.entries.filter(entry => !this.collapses(entry))
+			? this.occurrences
+			: this.occurrences.filter(occurrence => !this.collapses(occurrence))
 	}
 
 	/**
@@ -173,7 +175,7 @@ export class Routines {
 				// One mark per day, not per instance: a twice-daily routine would otherwise place two marks
 				// in one grid column, and the extra implicit row collapses the ribbon to zero height.
 				const days = [...new Set(inRange.map(instance => instance.day))]
-				runs.push({ segment: EntrySegments.for(inRange[0]!.entry)[0]!, days })
+				runs.push({ segment: EntrySegments.for(inRange[0]!.occurrence)[0]!, days })
 			}
 		}
 		return runs.sort((a, b) => a.days[0]! - b.days[0]! || a.days.at(-1)! - b.days.at(-1)!

@@ -2,6 +2,7 @@ import { component, html, property, Component, css, state, bind, queryConnectedI
 import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { TaskStatus } from '../TaskStatus.js'
 import { type EntrySegment } from './EntrySegment.js'
+import { EntrySegments } from './EntrySegments.js'
 import { type RoutineRun } from '../../routines/client/Routines.js'
 import { contrastColorOf } from '../../../design/contrastColor.js'
 import { MarkdownLinks } from '../../../design/MarkdownLinks.js'
@@ -26,15 +27,17 @@ export class EntrySegmentComponent extends Component {
 
 	@state({
 		updated(this: EntrySegmentComponent, open: boolean, wasOpen: boolean) {
-			const entry = this.segment?.entry
+			const segment = this.segment
+			const entry = segment?.entry
 			// A segment mounts closed and lit counts that initial value as a change, so only a real
 			// transition may speak for the entry: otherwise a second segment of one already open,
 			// another day of its run, would retract the editor as it arrives.
-			if (!entry || (!open && !wasOpen)) {
+			if (!segment || !entry || (!open && !wasOpen)) {
 				return
 			}
+			const identity = EntryStore.identityOf(segment.occurrence)
 			EntrySegmentComponent.instances.forEach(i => {
-				if (i.segment?.entry.id === entry.id) {
+				if (i.segment && EntryStore.identityOf(i.segment.occurrence) === identity) {
 					i.selected = open
 				}
 			})
@@ -56,7 +59,30 @@ export class EntrySegmentComponent extends Component {
 	@eventListener('click')
 	protected handleClick(e: MouseEvent) {
 		e.stopPropagation()
+		this.claim()
 		this.open = true
+	}
+
+	/**
+	 * Before anything edits a date its rule yields, an override takes the date over, so the edit never reaches the
+	 * recurring entry. The chip shows the override's day from then on.
+	 */
+	private claim() {
+		const segment = this.segment
+		if (!segment || segment.entry !== segment.occurrence.recurringEntry) {
+			return
+		}
+		const entry = EntryStore.editable(segment.occurrence)
+		const occurrence = EntryStore.occurrences.find(occurrence => occurrence.entry === entry)
+		const days = occurrence ? EntrySegments.for(occurrence) : []
+		this.segment = days.find(day => day.dayValue === segment.dayValue) ?? days[0] ?? segment
+	}
+
+	protected override willUpdate(changed: Map<PropertyKey, unknown>) {
+		super.willUpdate?.(changed)
+		if (changed.has('open') && this.open) {
+			this.claim()
+		}
 	}
 
 	private readonly handleStatusChange = () => {
@@ -76,7 +102,8 @@ export class EntrySegmentComponent extends Component {
 		this.style.anchorName = this.anchorName
 		this.toggleAttribute('data-draft', !entry.persisted)
 		this.toggleAttribute('data-routine', !!this.routine)
-		this.title = !this.routine ? '' : [entry.heading, entry.recurrence?.describe(entry.seriesStart)].filter(Boolean).join(' · ')
+		const recurring = this.segment!.occurrence.recurringEntry ?? entry
+		this.title = !this.routine ? '' : [entry.heading, recurring.recurrence?.describe(recurring.start ?? recurring.due)].filter(Boolean).join(' · ')
 		this.toggleAttribute('dragging', this.store.isDragging(entry) || this.store.isPreview(entry))
 		this.toggleAttribute('drag-source', this.store.isDragSource(entry))
 		if (entry.type.isTask) {
@@ -425,16 +452,16 @@ export class EntrySegmentComponent extends Component {
 	protected override createRenderRoot() { return this }
 
 	private get timed() {
-		return !this.segment!.allDay && this.segment!.entry.scheduled
+		return !this.segment!.allDay && this.segment!.occurrence.scheduled
 	}
 
 	private get showsDate() {
-		return this.dated && !!this.segment!.entry.lastDay
+		return this.dated && !!this.segment!.occurrence.lastDay
 	}
 
 	/** Which fields the when-line carries: the day only when this chip has to say which one. */
 	private get whenOptions(): Intl.DateTimeFormatOptions {
-		const day = this.segment!.entry.lastDay
+		const day = this.segment!.occurrence.lastDay
 		return {
 			...!this.showsDate ? {} : { day: 'numeric', month: 'short', ...day!.year === new DateTime().year ? {} : { year: 'numeric' as const } },
 			...!this.timed ? {} : { hour: 'numeric', minute: '2-digit' },
@@ -442,18 +469,18 @@ export class EntrySegmentComponent extends Component {
 	}
 
 	private get dueLabel() {
-		const { entry } = this.segment!
-		return entry.due!.format(entry.allDay
+		const { occurrence } = this.segment!
+		return occurrence.due!.format(occurrence.allDay
 			? { weekday: 'short', day: 'numeric', month: 'short' }
 			: { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
 	}
 
 	/** What the entry spans: its hours when it has them, otherwise the days it occupies. */
 	private get whenSpan() {
-		const entry = this.segment!.entry
+		const { occurrence } = this.segment!
 		return this.timed
-			? new DateTimeRange(entry.start, entry.effectiveEnd)
-			: new DateTimeRange(entry.start?.dayStart ?? entry.lastDay, entry.lastDay)
+			? new DateTimeRange(occurrence.start, occurrence.effectiveEnd)
+			: new DateTimeRange(occurrence.start?.dayStart ?? occurrence.lastDay, occurrence.lastDay)
 	}
 
 	/** Formatted again only once it reads differently: every store notification renders every chip, and Intl's range formatting dominates that. */
@@ -494,17 +521,17 @@ export class EntrySegmentComponent extends Component {
 				${this.detailsTemplate}
 			`
 		}
-		const repeats = this.segment.entry.partOfSeries
+		const repeats = this.segment.occurrence.recurring || this.segment.entry.partOfSeries
 		return html`
 			<div class="heading" ?data-meta=${meta}>
 				${!this.segment.entry.type.isTask && !meta && !repeats ? html.nothing : html`
 					<div class="header">
 						${!this.segment.entry.type.isTask ? html.nothing : html`
-							<mitra-task-status .entry=${this.segment.entry} @change=${this.handleStatusChange}></mitra-task-status>
+							<mitra-task-status .entry=${this.segment.entry} @pointerdown=${() => this.claim()} @keydown=${() => this.claim()} @change=${this.handleStatusChange}></mitra-task-status>
 						`}
 						${!meta ? html.nothing : this.whenTemplate}
 						${!repeats ? html.nothing : html`<mitra-icon class="recurring" icon="repeat" title=${t('Repeats')}></mitra-icon>`}
-						${!this.segment.entry.due ? html.nothing : html`
+						${!this.segment.occurrence.due ? html.nothing : html`
 							<mitra-icon class="due" icon="flag" title=${t('Due ${date}', { date: this.dueLabel })}></mitra-icon>
 						`}
 					</div>

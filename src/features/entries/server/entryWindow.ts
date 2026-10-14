@@ -1,5 +1,5 @@
-import { type FilterQuery } from '@mikro-orm/core'
-import { type Entry } from '../Entry.js'
+import { type EntityManager, type FilterQuery } from '@mikro-orm/core'
+import { Entry } from '../Entry.js'
 import { TaskStatus } from '../TaskStatus.js'
 import { EntryType } from '../EntryType.js'
 
@@ -10,13 +10,14 @@ const openTask = {
 } as unknown as FilterQuery<Entry>
 
 /**
- * Which entries a window asks for. Two kinds travel with every window because none can contain them:
- * undated rows, and open tasks already past due. The planning surface draws both.
+ * Which one-off entries a window asks for; recurring entries travel whole, with their overrides. Two kinds travel with
+ * every window because none can contain them: undated rows, and open tasks already past due. The planning surface draws both.
  */
 export function entryWindow(sourceIds: ReadonlyArray<string>, start: Date, end: Date): FilterQuery<Entry> {
 	return {
 		sourceId: { $in: [...sourceIds] },
-		recurrence: { freq: null },
+		recurrence: null,
+		recurringEntryId: null,
 		$or: [
 			{ start: { $gte: start, $lte: end } },
 			{ end: { $gte: start, $lte: end } },
@@ -27,9 +28,9 @@ export function entryWindow(sourceIds: ReadonlyArray<string>, start: Date, end: 
 	}
 }
 
-/** Every entry once, whatever its dates. A series stands in as its start (`seriesStarts`), so its master, occurrences and overrides stay out. */
+/** Every one-off entry, whatever its dates; recurring entries travel whole, with their overrides. */
 export function everyEntry(sourceIds: ReadonlyArray<string>): FilterQuery<Entry> {
-	return { sourceId: { $in: [...sourceIds] }, recurrence: { freq: null }, recurringEntryId: null }
+	return { sourceId: { $in: [...sourceIds] }, recurrence: null, recurringEntryId: null }
 }
 
 /** The entries a palette search matches. A series matches as its master; `nearestOccurrence` then names the occurrence it opens. */
@@ -44,5 +45,21 @@ export function entrySearch(sourceIds: ReadonlyArray<string>, query: string): Fi
 			{ description: { $like: term } },
 			{ location: { $like: term } },
 		],
+	}
+}
+
+/** Every recurring entry in the sources, with its overrides. */
+export async function recurringEntries(em: EntityManager, sourceIds: ReadonlyArray<string>): Promise<Array<Entry>> {
+	const recurring = await em.find(Entry, { sourceId: { $in: [...sourceIds] }, recurrence: { $ne: null } })
+	await withOverrides(em, recurring)
+	return recurring
+}
+
+/** Reads each recurring entry's overrides into it. */
+export async function withOverrides(em: EntityManager, entries: ReadonlyArray<Entry>) {
+	const overrides = entries.length ? await em.find(Entry, { recurringEntryId: { $in: entries.map(entry => entry.id!) } }) : []
+	const byEntry = Map.groupBy(overrides, override => override.recurringEntryId!)
+	for (const entry of entries) {
+		entry.overrides = byEntry.get(entry.id!)
 	}
 }

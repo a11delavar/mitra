@@ -1,12 +1,15 @@
 import { Controller } from '@a11d/lit'
 import { type ReactiveControllerHost } from 'lit'
-import { Recurrence, type RecurrenceScope } from '../../recurrence/Recurrence.js'
+import { Recurrence } from '../../recurrence/Recurrence.js'
 import { type EntryPlan, type SkippedEntry } from '../../relations/EntryPlan.js'
 import { type Entry } from '../Entry.js'
 import { ApiError, createEvent, deleteEvent, deleteOccurrence, editOccurrence, rankEntries, updateEvent, updateRelations } from '../../../infrastructure/http/Api.js'
 import { EntryRank } from '../EntryRank.js'
 import { EntryPatch } from '../EntryPatch.js'
 import { EntryRelations } from '../../relations/EntryRelations.js'
+import { type EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
+import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
+import { TimeZone } from '../../time/TimeZone.js'
 
 export const reportSaveError = (error: unknown) =>
 	console.error('Persisting the entry failed. The edit is kept locally and retried on the next change:', error)
@@ -23,7 +26,10 @@ export class EntryStore extends Controller {
 	private static readonly inflight = new Map<Entry, Promise<void>>()
 
 	private static merged?: ReadonlyArray<Entry>
+	private static composed?: ReadonlyArray<EntryOccurrence>
 	private static dragging?: Entry
+	/** The window the entries were fetched for, whose dates the recurring ones yield; none for every entry once. */
+	private static window?: DateTimeRange
 
 	static persistence = { create: createEvent, update: updateEvent, delete: deleteEvent, editOccurrence, deleteOccurrence, reorder: rankEntries }
 
@@ -41,9 +47,73 @@ export class EntryStore extends Controller {
 		]
 	}
 
+	/**
+	 * What the views show: each one-off entry once, a recurring entry's dates in the window (an unscheduled task's current
+	 * one, each entry's first without a window), and the overrides standing in for some of them.
+	 */
+	static get occurrences(): ReadonlyArray<EntryOccurrence> {
+		return this.composed ??= this.compose()
+	}
+
+	private static compose() {
+		const entries = this.entries
+		const overridesOf = Map.groupBy(entries.filter(entry => entry.recurringEntryId), entry => entry.recurringEntryId!)
+		const recurring = new Set(entries.filter(entry => entry.occurrences.recurring).map(entry => entry.id))
+		const window = this.window
+		return entries.flatMap(entry => {
+			if (entry.recurringEntryId && recurring.has(entry.recurringEntryId)) {
+				return []
+			}
+			if (!entry.occurrences.recurring) {
+				return [entry.occurrences.single]
+			}
+			const overrides = overridesOf.get(entry.id!) ?? []
+			if (window && entry.start) {
+				return entry.occurrences.within(window, overrides)
+			}
+			const occurrence = !window ? entry.occurrences.anchored : entry.occurrences.current(TimeZone.deviceId)
+			const override = overrides.find(override => override.recurrenceId?.getTime() === occurrence?.recurrenceId?.getTime())
+			return !occurrence ? [] : [override ? entry.occurrences.overriddenBy(override) : occurrence]
+		})
+	}
+
+	/**
+	 * What keeps an occurrence the same chip across renders: a date its rule yields by its key, which an override taking the
+	 * date over keeps, anything else by its entry, whose dates a drag changes. The drag's preview is a chip of its own.
+	 */
+	static identityOf(occurrence: EntryOccurrence): unknown {
+		return occurrence.recurring && !this.isPreview(occurrence.entry) ? occurrence.key : occurrence.entry
+	}
+
+	/** The occurrence `entry` shows: its own, or for an override the date of its recurring entry it takes over. */
+	static occurrenceOf(entry: Entry) {
+		const recurring = entry.recurringEntryId ? this.workingById.get(entry.recurringEntryId) : undefined
+		return recurring ? recurring.occurrences.overriddenBy(entry) : entry.occurrences.single
+	}
+
+	/**
+	 * The entry an edit of `occurrence` changes: its own, else an override of the date, which the store keeps under the
+	 * occurrence's key so the views show the edit in its place.
+	 */
+	static editable(occurrence: EntryOccurrence): Entry {
+		if (!occurrence.recurring || occurrence.entry.recurringEntryId) {
+			return occurrence.entry
+		}
+		const key = occurrence.key!
+		let override = this.workingById.get(key)
+		if (!override) {
+			override = occurrence.override()
+			this.workingById.set(key, override)
+			this.canonicalById.set(key, override.clone())
+			this.notify()
+		}
+		return override
+	}
+
 	/** Something about the entries changed, which every host may show. */
 	static notify() {
 		this.merged = undefined
+		this.composed = undefined
 		this.hosts.forEach((_, host) => host.requestUpdate())
 	}
 
@@ -53,6 +123,7 @@ export class EntryStore extends Controller {
 	 */
 	static notifyMoved(...entries: ReadonlyArray<Entry | undefined>) {
 		this.merged = undefined
+		this.composed = undefined
 		for (const [host, store] of this.hosts) {
 			if (store.movedBy(entries)) {
 				host.requestUpdate()
@@ -72,14 +143,14 @@ export class EntryStore extends Controller {
 		return this.draft === entry || (entry.id !== undefined && this.workingById.get(entry.id) === entry)
 	}
 
-	static resolveScope: (entry: Entry, intent: 'edit' | 'delete') => Promise<RecurrenceScope | undefined> =
+	static resolveScope: (entry: Entry, intent: 'edit' | 'delete') => Promise<EntryOccurrenceChangeScope | undefined> =
 		() => Promise.resolve('all')
 
 	/** Post-save hook fired after local task completion/cancellation. */
 	static onTaskClosed: (entry: Entry) => void = () => void 0
 
 	/** Persists local changes, chaining in-flight updates and resolving recurrence scope. */
-	static commit(entry: Entry, scope?: RecurrenceScope): Promise<void> {
+	static commit(entry: Entry, scope?: EntryOccurrenceChangeScope): Promise<void> {
 		const pending = this.inflight.get(entry)
 		if (pending) {
 			return pending
@@ -211,7 +282,7 @@ export class EntryStore extends Controller {
 		return !!entry.start && !this.canonicalById.get(entry.id!)?.start
 	}
 
-	private static async commitOccurrence(entry: Entry, sent: Entry, preset?: RecurrenceScope): Promise<boolean> {
+	private static async commitOccurrence(entry: Entry, sent: Entry, preset?: EntryOccurrenceChangeScope): Promise<boolean> {
 		const scope = preset ?? (this.completionOnlyChanged(entry) || this.schedulesOccurrence(entry) ? 'this' : await EntryStore.resolveScope(entry, 'edit'))
 		if (!this.tracks(entry)) {
 			return false
@@ -220,7 +291,7 @@ export class EntryStore extends Controller {
 			this.revert(entry)
 			return false
 		}
-		const saved = await EntryStore.persistence.editOccurrence(entry, scope)
+		const saved = await EntryStore.persistence.editOccurrence(this.occurrenceOf(entry), scope)
 		if (!this.tracks(entry)) {
 			return false
 		}
@@ -233,7 +304,6 @@ export class EntryStore extends Controller {
 			entry.recurringEntryId = undefined
 			entry.recurrenceId = undefined
 			entry.recurrence = undefined
-			entry.seriesStart = undefined
 			entry.uid = saved.uid
 			this.workingById.set(entry.id!, entry)
 			this.canonicalById.set(entry.id!, saved.clone())
@@ -266,7 +336,7 @@ export class EntryStore extends Controller {
 	}
 
 	/** Deletes an entry or scoped series occurrences optimistically with rollback on error. */
-	static async delete(entry: Entry, scope?: RecurrenceScope) {
+	static async delete(entry: Entry, scope?: EntryOccurrenceChangeScope) {
 		const pending = this.inflight.get(entry)
 		if (entry.recurringEntryId) {
 			scope ??= await EntryStore.resolveScope(entry, 'delete')
@@ -280,7 +350,7 @@ export class EntryStore extends Controller {
 				if (scope === 'all') {
 					await EntryStore.persistence.delete(entry.recurringEntryId)
 				} else {
-					await EntryStore.persistence.deleteOccurrence(entry, scope)
+					await EntryStore.persistence.deleteOccurrence(this.occurrenceOf(entry), scope)
 				}
 			} catch (error) {
 				if (!(error instanceof ApiError && error.status === 404)) {
@@ -313,7 +383,7 @@ export class EntryStore extends Controller {
 		}
 	}
 
-	private static dropScoped(entry: Entry, scope: RecurrenceScope): () => void {
+	private static dropScoped(entry: Entry, scope: EntryOccurrenceChangeScope): () => void {
 		const masterId = entry.recurringEntryId!
 		const cutoff = entry.recurrenceId?.valueOf() ?? -Infinity
 		const dropped: Array<{ entry: Entry, canonical?: Entry }> = []
@@ -402,9 +472,11 @@ export class EntryStore extends Controller {
 	 * Canonical copies always refresh; a working copy takes the server's values only while clean and idle. Working copies
 	 * the fetch lacks drop when clean and stay while dirty or saving, where an external delete resolves at that save's 404.
 	 */
-	static applyServerEntries(entries: ReadonlyArray<Entry>) {
+	static applyServerEntries(entries: ReadonlyArray<Entry>, window?: DateTimeRange) {
+		this.window = window
 		const incomingIds = new Set<string>()
-		for (const incoming of entries) {
+		// The store keeps overrides as rows of their own, which edits change like any other.
+		for (const incoming of entries.flatMap(entry => [entry, ...entry.overrides ?? []])) {
 			if (incoming.id === undefined) {
 				continue
 			}
@@ -422,7 +494,15 @@ export class EntryStore extends Controller {
 			}
 		}
 		for (const [id, working] of [...this.workingById]) {
-			if (!incomingIds.has(id) && !this.inflight.has(working) && !this.isDirty(working)) {
+			if (incomingIds.has(id) || this.inflight.has(working) || this.isDirty(working)) {
+				continue
+			}
+			// A clean override an editor may hold stays while its date does, with what its entry holds now.
+			const recurring = working.recurringEntryId ? this.workingById.get(working.recurringEntryId) : undefined
+			if (recurring?.occurrences.recurring && recurring.occurrences.yields(working.recurrenceId!)) {
+				working.assign(Object.assign(recurring.occurrences.at(working.recurrenceId!).override(), { id }))
+				this.canonicalById.set(id, working.clone())
+			} else {
 				this.workingById.delete(id)
 				this.canonicalById.delete(id)
 			}
@@ -515,11 +595,17 @@ export class EntryStore extends Controller {
 		this.draft = undefined
 		this.preview = undefined
 		this.merged = undefined
+		this.composed = undefined
+		this.window = undefined
 		this.dragging = undefined
 	}
 
 	get entries() {
 		return EntryStore.entries
+	}
+
+	get occurrences() {
+		return EntryStore.occurrences
 	}
 
 	isDragging(entry: Entry) {

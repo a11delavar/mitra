@@ -26,6 +26,7 @@ El selector de zonas horarias también se ha rediseñado. Las zonas que comparte
 	<img src="time-zones-light.webp" alt="El selector de zonas horarias, abierto en tu casa entre las zonas agrupadas que la rodean">
 </picture>
 
+> [!NOTE]
 > Si le diste un nombre propio a la zona horaria en la que estás, vuelve a ponérselo, por favor. Hasta ahora, esos nombres se quedaban en el dispositivo donde los pusiste. A partir de ahora, un nombre te sigue a todos tus dispositivos.
 
 Docs: [Zonas horarias](../../docs/time-zones.md)

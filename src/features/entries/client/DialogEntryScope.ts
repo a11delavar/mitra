@@ -1,9 +1,10 @@
 import { component, html, css, state } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { ShiftStrategy } from '../../relations/ShiftStrategy.js'
-import { type RecurrenceScope } from '../../recurrence/Recurrence.js'
 import { type EntryPlan } from '../../relations/EntryPlan.js'
 import { type Entry } from '../Entry.js'
+import { EntryStore } from './EntryStore.js'
+import { type EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
 
 export interface ShiftOption {
 	readonly strategy: ShiftStrategy
@@ -12,7 +13,7 @@ export interface ShiftOption {
 
 /** Scope for edit, move, or delete across recurrence, hierarchy, and dependency axes. */
 export interface EntryScope {
-	readonly recurrence?: RecurrenceScope
+	readonly recurrence?: EntryOccurrenceChangeScope
 	readonly subtasks: boolean
 	readonly shift?: ShiftStrategy
 }
@@ -34,7 +35,7 @@ export class DialogEntryScope extends DialogComponent<EntryScopeParameters, Entr
 		return navigator.userAgent.includes('Mac') ? '⌘' : t('Ctrl')
 	}
 
-	@state() private recurrence: RecurrenceScope = 'this'
+	@state() private recurrence: EntryOccurrenceChangeScope = 'this'
 	@state() private subtasks = false
 	@state() private step = 0
 
@@ -73,7 +74,7 @@ export class DialogEntryScope extends DialogComponent<EntryScopeParameters, Entr
 		}
 	}
 
-	private chooseRecurrence(recurrence: RecurrenceScope) {
+	private chooseRecurrence(recurrence: EntryOccurrenceChangeScope) {
 		this.recurrence = recurrence
 		this.answered()
 	}
@@ -147,7 +148,7 @@ export class DialogEntryScope extends DialogComponent<EntryScopeParameters, Entr
 		return html`
 			<mitra-choices>
 				<mitra-choice autofocus icon=${this.entryIcon} @click=${() => this.chooseRecurrence('this')}>${t('This entry')}</mitra-choice>
-				${this.parameters.entry.isFirstOccurrence ? html.nothing : html`
+				${EntryStore.occurrenceOf(this.parameters.entry).first ? html.nothing : html`
 					<mitra-choice icon="chevrons-right" @click=${() => this.chooseRecurrence('following')}>${t('This and following entries')}</mitra-choice>
 				`}
 				<mitra-choice icon="repeat" @click=${() => this.chooseRecurrence('all')}>${t('All entries')}</mitra-choice>

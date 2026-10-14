@@ -1,11 +1,10 @@
 import { LocationSuggestion } from '../../features/locations/LocationSuggestion.js'
 import { Api, HttpError, apiError, apiAuthenticator, type ApiAuthenticator } from '@a11d/api'
-import { type DateTime } from '@3mo/date-time'
+import { type DateTimeRange } from '@3mo/date-time'
 import { type User } from '../../features/identity/User.js'
 import { type Source } from '../../features/sources/Source.js'
 import { type MigrationOutcome, type MigrationPlan } from '../../features/migration/MigrationPlan.js'
 import { type EntryRelations } from '../../features/relations/EntryRelations.js'
-import { type RecurrenceScope } from '../../features/recurrence/Recurrence.js'
 import { Integration } from '../../integrations/Integration.js'
 import { type EntryType } from '../../features/entries/EntryType.js'
 import { Entry } from '../../features/entries/Entry.js'
@@ -15,6 +14,8 @@ import { TimeZone } from '../../features/time/TimeZone.js'
 import { type ChangelogSection } from '../../features/about/Changelog.js'
 import { type ReleaseFolder } from '../../features/about/Release.js'
 import { type UserSettings } from '../../features/settings/UserSettings.js'
+import { type EntryOccurrenceChangeScope } from '../../features/recurrence/EntryOccurrenceChange.js'
+import { type EntryOccurrence } from '../../features/recurrence/EntryOccurrence.js'
 
 @apiError()
 export class ApiError extends HttpError {
@@ -97,9 +98,6 @@ export async function setSeenVersion(version: string) {
 	return currentUser = await Api.put<User>('/user/seen-version', { version })
 }
 
-/** The device's zone, which only "today" needs on the server: the current occurrence of a recurring task without a start. */
-const tz = () => encodeURIComponent(TimeZone.deviceId)
-
 export async function fetchUser() {
 	return currentUser = await Api.get<User>('/user')
 }
@@ -140,17 +138,18 @@ export async function setSettings(settings: UserSettings) {
 	return currentUser = await Api.put<User>('/user/settings', { settings })
 }
 
-export function fetchEvents(start: DateTime, end: DateTime) {
-	return Api.get<Array<Entry>>(`/entries?start=${start.toISOString()}&end=${end.toISOString()}&tz=${tz()}`)
+/** The window's entries, each recurring entry once, whose dates the store expands. */
+export function fetchEvents(window: DateTimeRange) {
+	return Api.get<Array<Entry>>(`/entries?start=${window.start!.toISOString()}&end=${window.end!.toISOString()}`)
 }
 
-/** Every visible entry whatever its dates, a series once as the occurrence it starts on. */
+/** Every visible entry whatever its dates, each recurring entry once. */
 export function fetchAllEntries() {
 	return Api.get<Array<Entry>>('/entries/all')
 }
 
 export function searchEntries(query: string) {
-	return Api.get<Array<Entry>>(`/entries/search?q=${encodeURIComponent(query)}&tz=${tz()}`)
+	return Api.get<Array<Entry>>(`/entries/search?q=${encodeURIComponent(query)}`)
 }
 
 /** Every entry the user's relation graph reaches, for client-side graph calculations. */
@@ -306,17 +305,16 @@ export function searchLocations(query: string, position?: { lat: number, lon: nu
 }
 
 /** One occurrence of a repeating entry, addressed through the entry with how far a change to it reaches. */
-function occurrenceUrl(occurrence: Entry, scope: RecurrenceScope) {
-	// Named as the wire names it: an all-day occurrence by its day's UTC midnight.
-	const recurrenceId = new Date(Entry.storedDay(occurrence.recurrenceId, occurrence)!).toISOString()
-	const query = new URLSearchParams({ scope, recurrenceId })
+function occurrenceUrl(occurrence: EntryOccurrence, scope: EntryOccurrenceChangeScope) {
+	const query = new URLSearchParams({ scope, recurrenceId: occurrence.storedRecurrenceId!.toISOString() })
 	return `/entries/${occurrence.recurringEntryId}?${query}`
 }
 
-export function editOccurrence(occurrence: Entry, scope: RecurrenceScope) {
-	return Api.put<Entry>(occurrenceUrl(occurrence, scope), EntryPatch.of(occurrence, EntryPatch.occurrence))
+/** The date `occurrence` stands for, as its entry now has it. */
+export function editOccurrence(occurrence: EntryOccurrence, scope: EntryOccurrenceChangeScope) {
+	return Api.put<Entry>(occurrenceUrl(occurrence, scope), EntryPatch.of(occurrence.entry, EntryPatch.occurrence))
 }
 
-export function deleteOccurrence(occurrence: Entry, scope: RecurrenceScope) {
+export function deleteOccurrence(occurrence: EntryOccurrence, scope: EntryOccurrenceChangeScope) {
 	return Api.delete(occurrenceUrl(occurrence, scope))
 }

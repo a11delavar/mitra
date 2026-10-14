@@ -20,6 +20,7 @@ import { Relation, type RelationInit } from '../../features/relations/Relation.j
 import { RelationType } from '../../features/relations/RelationType.js'
 import { TimeZone } from '../../features/time/TimeZone.js'
 import { Participants, ParticipantRole, ParticipantStatus, type Participant } from '../../features/participants/Participant.js'
+import { IcsTime } from './IcsTime.js'
 
 export interface CalDAVCredentials {
 	username: string
@@ -92,48 +93,6 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				password: this.credentials.password,
 			},
 		}
-	}
-
-	/** Build a DTSTART/DTEND/DUE/EXDATE value (written as VALUE=DATE for all-day). */
-	static toICALTime(date: Date, allDay: boolean) {
-		if (!allDay) {
-			return ICAL.Time.fromJSDate(date, true)
-		}
-		const { year, month, day } = TimeZone.UTC.dayOf(date)
-		return ICAL.Time.fromData({ year, month, day, isDate: true })
-	}
-
-	/** Whether a parsed timed value is an RFC 5545 FLOATING time. */
-	static isFloating(value: unknown): boolean {
-		return value instanceof ICAL.Time && !value.isDate && value.zone === ICAL.Timezone.localTimezone
-	}
-
-	/** Whether Temporal can resolve a TZID as a valid IANA time zone. */
-	static resolvableZone(tzid: string | null | undefined): tzid is string {
-		try {
-			return !!tzid && !!Temporal.Instant.fromEpochMilliseconds(0).toZonedDateTimeISO(tzid)
-		} catch {
-			return false
-		}
-	}
-
-	/** Converts an iCalendar time object and optional TZID to a JavaScript Date. */
-	static instantFrom(time: { isDate?: boolean, year: number, month: number, day: number, hour?: number, minute?: number, second?: number, toJSDate(): Date } | null | undefined, tzid?: string): Date | undefined {
-		if (!time) {
-			return undefined
-		}
-		if (time.isDate) {
-			return TimeZone.UTC.midnightOf(Temporal.PlainDate.from({ year: time.year, month: time.month, day: time.day }))
-		}
-		if (CalDAV.resolvableZone(tzid)) {
-			return new Date(Temporal.PlainDateTime
-				.from({ year: time.year, month: time.month, day: time.day, hour: time.hour ?? 0, minute: time.minute ?? 0, second: time.second ?? 0 })
-				.toZonedDateTime(tzid, { disambiguation: 'compatible' }).epochMilliseconds)
-		}
-		if (CalDAV.isFloating(time)) {
-			return new Date(Date.UTC(time.year, time.month - 1, time.day, time.hour ?? 0, time.minute ?? 0, time.second ?? 0))
-		}
-		return time.toJSDate()
 	}
 
 	private static readonly icalTaskStatus = new BidirectionalMap<TaskStatus, string>([
@@ -310,7 +269,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			? ICAL.Time.fromJSDate(date, true).convertToZone(timezone)
 			: floating && !allDay
 				? CalDAV.floatingTime(date)
-				: CalDAV.toICALTime(date, allDay)
+				: IcsTime.toICALTime(date, allDay)
 		const property = options?.append ? component.addPropertyWithValue(name, time) : component.updatePropertyWithValue(name, time)
 		if (timezone) {
 			property.setParameter('tzid', timezone.tzid)
@@ -342,8 +301,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			entry.heading = event.summary || 'Untitled Event'
 			entry.description = event.description || ''
 			entry.location = event.location || ''
-			entry.start = CalDAV.instantFrom(event.startDate, tzidOf('dtstart')) as any || undefined
-			entry.end = CalDAV.instantFrom(event.endDate ?? event.startDate, tzidOf('dtend') ?? tzidOf('dtstart')) as any || undefined
+			entry.start = IcsTime.instantFrom(event.startDate, tzidOf('dtstart')) as any || undefined
+			entry.end = IcsTime.instantFrom(event.endDate ?? event.startDate, tzidOf('dtend') ?? tzidOf('dtstart')) as any || undefined
 			entry.allDay = event.startDate?.isDate ?? false
 			entry.transparency = CalDAV.transparencyFromICal(component.getFirstPropertyValue('transp')?.toString())
 		} else {
@@ -366,13 +325,22 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		// An unscheduled task carries its zone on DUE.
 		const anchor = component.getFirstProperty('dtstart') || entryType.isEvent ? 'dtstart' : 'due'
 		const anchorTzid = tzidOf(anchor)
-		entry.timeZone = CalDAV.resolvableZone(anchorTzid) ? EntryTimeZone.parse(anchorTzid)
-			: CalDAV.isFloating(component.getFirstPropertyValue(anchor)) ? EntryTimeZone.floating : undefined
+		entry.timeZone = IcsTime.resolvableZone(anchorTzid) ? EntryTimeZone.parse(anchorTzid)
+			: IcsTime.isFloating(component.getFirstPropertyValue(anchor)) ? EntryTimeZone.floating : undefined
 
 		const recurrence = CalDAV.recurrenceProps(component)
 		entry.uid = recurrence.uid
 		entry.recurrence = recurrence.recurrence
 		entry.recurrenceId = recurrence.recurrenceId as any
+		entry.exdates = recurrence.recurrence ? CalDAV.exdatesFrom(component) : undefined
+	}
+
+	/** The instants a recurring component excludes, decoded as its occurrences are. */
+	static exdatesFrom(component: ICAL.Component): Array<number> | undefined {
+		const exdates = component.getAllProperties('exdate').flatMap(prop => prop.getValues()
+			.map(value => IcsTime.instantFrom(value as ICAL.Time, prop.getParameter('tzid')?.toString())?.getTime())
+			.filter(ms => ms !== undefined))
+		return exdates.length ? exdates : undefined
 	}
 
 	/**
@@ -383,8 +351,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		const tzidOf = (name: string) => component.getFirstProperty(name)?.getParameter('tzid')?.toString()
 		const dtstart = component.getFirstPropertyValue('dtstart') as ICAL.Time | null
 		const dueValue = component.getFirstPropertyValue('due') as ICAL.Time | null
-		const start = CalDAV.instantFrom(dtstart, tzidOf('dtstart')) as Entry['start']
-		const due = CalDAV.instantFrom(dueValue, tzidOf('due') ?? tzidOf('dtstart')) as Entry['due']
+		const start = IcsTime.instantFrom(dtstart, tzidOf('dtstart')) as Entry['start']
+		const due = IcsTime.instantFrom(dueValue, tzidOf('due') ?? tzidOf('dtstart')) as Entry['due']
 		const duration = component.getFirstPropertyValue('estimated-duration') as ICAL.Duration | null
 		const length = duration && !duration.isNegative && duration.toSeconds() > 0 ? duration : undefined
 		const allDay = !!(dtstart ?? dueValue)?.isDate
@@ -394,7 +362,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		if (length) {
 			// RFC 5545 §3.3.6: days and weeks are calendar days, the time parts exact, so a P1D across a DST change
 			// keeps the wall clock. Floating and UTC times are both held as UTC instants, where the two agree.
-			const zone = !allDay && CalDAV.resolvableZone(tzidOf('dtstart')) ? tzidOf('dtstart')! : 'UTC'
+			const zone = !allDay && IcsTime.resolvableZone(tzidOf('dtstart')) ? tzidOf('dtstart')! : 'UTC'
 			const end = Temporal.Instant.fromEpochMilliseconds(start.valueOf()).toZonedDateTimeISO(zone)
 				.add({ weeks: length.weeks, days: length.days, hours: length.hours, minutes: length.minutes, seconds: length.seconds })
 			return { start, end: new Date(end.epochMilliseconds) as Entry['end'], due, estimate: undefined, allDay }
@@ -478,7 +446,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return {
 			uid: component.getFirstPropertyValue('uid')?.toString() || undefined,
 			recurrence: Recurrence.fromRRule(rrule),
-			recurrenceId: CalDAV.instantFrom(
+			recurrenceId: IcsTime.instantFrom(
 				component.getFirstPropertyValue('recurrence-id') as ICAL.Time | null,
 				component.getFirstProperty('recurrence-id')?.getParameter('tzid')?.toString(),
 			) || undefined,

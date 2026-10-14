@@ -1,6 +1,7 @@
 import { Component, component, html, property, css, repeat, styleMap } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
 import type { EntrySegment } from '../../entries/client/EntrySegment.js'
+import { EntryStore } from '../../entries/client/EntryStore.js'
 import { Availability, type AvailabilityPlacement } from '../../availability/client/Availability.js'
 import '../../entries/client/EventSegment.js'
 import '../../availability/client/AvailabilitySegment.js'
@@ -177,13 +178,13 @@ export class Day extends Component {
 			</div>
 
 			<div class="entries" style=${styleMap({ '--_availability-present': this.availability.some(({ segment }) => Availability.labelOf(segment.entry)) ? '1' : '0' })}>
-				${repeat(this.availability, ({ segment }) => segment.entry, ({ segment, labelAt }) => html`
+				${repeat(this.availability, ({ segment }) => EntryStore.identityOf(segment.occurrence), ({ segment, labelAt }) => html`
 					<mitra-availability-segment
 						style=${styleMap({ '--_from': `${segment.startMinute - 1}`, '--_to': `${segment.endMinute - 1}`, '--_availability-label-at': `${labelAt}` })}
 						.segment=${segment}
 					></mitra-availability-segment>
 				`)}
-				${repeat(this.entries, segment => segment.entry, segment => html`
+				${repeat(this.entries, segment => EntryStore.identityOf(segment.occurrence), segment => html`
 					<mitra-entry-segment
 						style=${styleMap({
 							'--_from': `${segment.startMinute - 1}`,

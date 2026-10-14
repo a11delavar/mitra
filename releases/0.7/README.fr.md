@@ -26,6 +26,7 @@ Le sélecteur de fuseaux horaires a lui aussi été repensé. Les fuseaux qui pa
 	<img src="time-zones-light.webp" alt="Le sélecteur de fuseaux horaires, ouvert sur le domicile parmi les fuseaux regroupés autour">
 </picture>
 
+> [!NOTE]
 > Si vous avez donné un nom personnel au fuseau horaire où vous êtes, donnez-lui ce nom une nouvelle fois, s'il vous plaît. Jusqu'ici, ces noms restaient sur l'appareil où vous les aviez donnés. Désormais, un nom vous suit sur tous vos appareils.
 
 Documentation : [Fuseaux horaires](../../docs/time-zones.md)

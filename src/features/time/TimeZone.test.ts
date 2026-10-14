@@ -56,6 +56,15 @@ describe('TimeZone', () => {
 		assert.equal(`${TimeZone.of('Asia/Tokyo')}`, 'Asia/Tokyo')
 	})
 
+	it('shifts an instant by the wall-clock distance, keeping 09:00 at 09:00 across a DST change', () => {
+		const berlin = TimeZone.of('Europe/Berlin')
+		// A Friday 09:00 CEST occurrence moved to the Sunday: two wall days, the anchor two weeks before it.
+		const shifted = berlin.shift(new Date('2026-10-09T07:00:00Z'), new Date('2026-10-23T07:00:00Z'), new Date('2026-10-25T08:00:00Z'))
+		assert.equal(shifted.toISOString(), '2026-10-11T07:00:00.000Z')
+		// Across the change itself: 09:00 CEST to 09:00 CET is one wall week but 7 days and an hour.
+		assert.equal(berlin.shift(new Date('2026-10-23T07:00:00Z'), new Date('2026-10-23T07:00:00Z'), new Date('2026-10-30T08:00:00Z')).toISOString(), '2026-10-30T08:00:00.000Z')
+	})
+
 	// An all-day entry's days are UTC midnights read back in a viewer's zone, so the two must be exact inverses in every zone.
 	describe('days', () => {
 		const jun2 = Temporal.PlainDate.from('2026-06-02')

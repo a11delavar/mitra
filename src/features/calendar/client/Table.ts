@@ -2,7 +2,7 @@ import { Component, component, html, css, property, state, event, eventListener,
 import { DateTime } from '@3mo/date-time'
 import { observeResize } from '@3mo/resize-observer'
 import { DataGridController, type DataGridColumn, DataGridSelectability, DataGridSelectionBehaviorOnDataChange, DataGridSortingStrategy } from '@3mo/data-grid/controller'
-import { type Entry } from '../../entries/Entry.js'
+import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
 import { Availability } from '../../availability/client/Availability.js'
 import { TableWindow } from './TableWindow.js'
 import { TableRow, TableFilter } from './TableRow.js'
@@ -21,7 +21,7 @@ import { startedInField } from '../../../design/eventOrigin.js'
 @component('mitra-table')
 export class Table extends Component {
 	@property({ type: Object }) navigatingDate = new DateTime()
-	@property({ type: Array }) entries = new Array<Entry>()
+	@property({ type: Array }) occurrences = new Array<EntryOccurrence>()
 
 	@event() readonly windowChange!: EventDispatcher<TableWindow>
 
@@ -62,9 +62,9 @@ export class Table extends Component {
 
 	protected override willUpdate(changed: PropertyValues<this>) {
 		super.willUpdate(changed)
-		if (['entries', 'query', 'filter', 'window'].some(key => changed.has(key as keyof Table))) {
+		if (['occurrences', 'query', 'filter', 'window'].some(key => changed.has(key as keyof Table))) {
 			const { window } = this
-			this.rows = Availability.outside(this.entries).map(entry => TableRow.for(entry, window)).filter(row => row.inWindow(window) && row.matches(this.query, this.filter))
+			this.rows = Availability.outside(this.occurrences).map(occurrence => TableRow.for(occurrence, window)).filter(row => row.inWindow(window) && row.matches(this.query, this.filter))
 			this.grid.virtualization.handleItemsChange()
 		}
 	}

@@ -15,13 +15,14 @@ import { AppleCalendar } from '../../../integrations/apple/AppleCalendar.js'
 import { MitraCalendar } from '../../../integrations/mitra/MitraCalendar.js'
 import { NotificationSubscription } from '../../reminders/NotificationSubscription.js'
 import { Session } from '../../identity/server/Session.js'
-import { entrySearch, entryWindow, everyEntry } from './entryWindow.js'
-import { expandedOccurrences, nearestOccurrence, seriesStarts } from '../../recurrence/server/occurrences.js'
+import { entrySearch, entryWindow, everyEntry, recurringEntries, withOverrides } from './entryWindow.js'
+import { EntryOccurrences } from '../../recurrence/EntryOccurrences.js'
+import { DateTimeRange } from '@3mo/date-time'
 import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
-		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, MitraCalendar, Source, Entry, Recurrence, NotificationSubscription, Session],
+		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, MitraCalendar, Source, Entry, NotificationSubscription, Session],
 		dbName: ':memory:',
 		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {
@@ -49,8 +50,11 @@ async function seedUser(em: EntityManager, username: string, term: string, sourc
 	return { user, integration, source: src, entry }
 }
 
+/** What search finds, each entry as the occurrence the browser picks for it at `now`. */
 async function searchEntries(em: EntityManager, sourceIds: Array<string>, q: string, now = new Date()) {
-	return nearestOccurrence(em, await em.find(Entry, entrySearch(sourceIds, q), { orderBy: { start: 'desc' }, limit: 20 }), 'UTC', now)
+	const entries = await em.find(Entry, entrySearch(sourceIds, q), { orderBy: { start: 'desc' }, limit: 20 })
+	await withOverrides(em, entries.filter(entry => entry.recurrence))
+	return entries.map(entry => entry.occurrences.standing('UTC', now)).filter(occurrence => !!occurrence)
 }
 
 function windowedEntries(em: EntityManager, sourceIds: Array<string>, start: Date, end: Date) {
@@ -97,7 +101,7 @@ describe('entries ownership scoping', () => {
 			const visibleSources = await alice.user.sources(em, { enabled: true, hidden: false })
 			const results = await searchEntries(em, visibleSources.map(source => source.id), 'roadmap')
 
-			assert.deepEqual(results.map(entry => entry.id), [alice.entry.id])
+			assert.deepEqual(results.map(occurrence => occurrence.key), [alice.entry.id])
 		})
 
 		it('regression: a bare em.find(Source, …) leaks another user\'s entries into the results', async () => {
@@ -108,7 +112,7 @@ describe('entries ownership scoping', () => {
 			const bareSources = await em.find(Source, { enabled: true, hidden: false })
 			const leaked = await searchEntries(em, bareSources.map(source => source.id), 'secret-project')
 
-			assert.deepEqual(new Set(leaked.map(entry => entry.id)), new Set([alice.entry.id, bob.entry.id]))
+			assert.deepEqual(new Set(leaked.map(occurrence => occurrence.key)), new Set([alice.entry.id, bob.entry.id]))
 		})
 	})
 })
@@ -142,8 +146,8 @@ describe('GET /entries/search finds a series as one occurrence', () => {
 		assert.equal(found.start?.toISOString(), '2026-09-29T12:00:00.000Z')
 		assert.equal(found.recurringEntryId, master.id)
 
-		const window = await expandedOccurrences(em, sourceIds, new Date('2026-09-28T00:00:00Z'), new Date('2026-10-05T00:00:00Z'))
-		assert.deepEqual(window.filter(entry => entry.id === found.id).map(entry => entry.start?.valueOf()), [found.start?.valueOf()])
+		const window = EntryOccurrences.inWindow(await recurringEntries(em, sourceIds), new DateTimeRange(new Date('2026-09-28T00:00:00Z'), new Date('2026-10-05T00:00:00Z')))
+		assert.deepEqual(window.filter(occurrence => occurrence.key === found.key).map(occurrence => occurrence.start?.valueOf()), [found.start?.valueOf()])
 	})
 
 	it('as the one in progress, not the one after it', async () => {
@@ -294,7 +298,7 @@ describe('GET /entries/all lists every entry once', () => {
 
 	async function everything(em: EntityManager, user: User) {
 		const sourceIds = (await user.sources(em, { enabled: true, hidden: false })).map(s => s.id)
-		return [...await em.find(Entry, everyEntry(sourceIds)), ...await seriesStarts(em, sourceIds)]
+		return [...await em.find(Entry, everyEntry(sourceIds)), ...await recurringEntries(em, sourceIds)]
 	}
 
 	it('reaches entries of any date, undated ones included', async () => {
@@ -312,7 +316,7 @@ describe('GET /entries/all lists every entry once', () => {
 		assert.ok(ids.includes(undated.id))
 	})
 
-	it('lists a series as the one occurrence it starts on, never its master or its overrides', async () => {
+	it('carries a recurring entry once, its overrides within it', async () => {
 		const em = orm.em.fork()
 		const { user, source } = await seedUser(em, 'all-series', 'anything')
 		const start = new Date('2024-01-05T07:30:00Z')
@@ -329,11 +333,9 @@ describe('GET /entries/all lists every entry once', () => {
 		await em.flush()
 
 		const rows = (await everything(em, user)).filter(entry => entry.heading.startsWith('Morning meds'))
-		assert.equal(rows.length, 1)
-		const [series] = rows
-		assert.equal(series!.recurringEntryId, master.id)
-		assert.equal(series!.recurrenceId?.valueOf(), start.valueOf())
-		assert.equal(series!.seriesStart?.valueOf(), start.valueOf())
+		assert.deepEqual(rows.map(entry => entry.id), [master.id])
+		assert.deepEqual(rows[0]!.overrides?.map(entry => entry.id), [override.id])
+		assert.equal(rows[0]!.occurrences.anchored?.recurrenceId?.valueOf(), start.valueOf())
 	})
 
 	it('scopes to the requesting user like every window', async () => {

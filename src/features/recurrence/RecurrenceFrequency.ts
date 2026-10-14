@@ -1,6 +1,5 @@
 import { Localizer } from '@3mo/localization'
 import { type Converter } from '@a11d/converter'
-import { Type } from '../../infrastructure/model/orm.js'
 
 export type RecurrenceFrequencyCode = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'
 
@@ -54,19 +53,5 @@ export class RecurrenceFrequency {
 	static readonly converter: Converter<RecurrenceFrequencyCode | undefined, RecurrenceFrequency | undefined> = {
 		construct: value => RecurrenceFrequency.parse(value),
 		deconstruct: value => value?.code,
-	}
-
-	static readonly Mapper = class extends Type<RecurrenceFrequency | undefined, string | null> {
-		override convertToDatabaseValue(value: RecurrenceFrequency | string | null | undefined): string | null {
-			return RecurrenceFrequency.parse(value)?.code ?? null
-		}
-
-		override convertToJSValue(value: unknown): RecurrenceFrequency | undefined {
-			return RecurrenceFrequency.parse(value)
-		}
-
-		override getColumnType(): string {
-			return 'text'
-		}
 	}
 }

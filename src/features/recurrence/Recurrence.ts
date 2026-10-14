@@ -2,15 +2,11 @@ import { DateTime } from '@3mo/date-time'
 import { Localizer } from '@3mo/localization'
 import { converter } from '@a11d/converter'
 import { model } from '../../infrastructure/model/model.js'
-import { embeddable, property } from '../../infrastructure/model/orm.js'
-import { TimeZone } from '../time/TimeZone.js'
+import { Type } from '@mikro-orm/core'
 import { RecurrenceEnd } from './RecurrenceEnd.js'
 import { RecurrenceFrequency } from './RecurrenceFrequency.js'
 import { RecurrenceWeekday } from './RecurrenceWeekday.js'
 import './DateTime.recurrence.js'
-
-/** Which occurrences a series edit or delete applies to. */
-export type RecurrenceScope = 'this' | 'following' | 'all'
 
 export interface RecurrencePreset {
 	readonly id: string
@@ -19,20 +15,20 @@ export interface RecurrencePreset {
 	readonly recurrence?: Recurrence
 }
 
-/** A series' rule (RFC 5545 RRULE) by its parts. Kept free of ical.js, so it bundles into the frontend. */
+/**
+ * A recurring entry's rule (RFC 5545 RRULE) by the parts Mitra edits, the others kept as written. Kept free of ical.js,
+ * so it bundles into the frontend.
+ */
 @model('Recurrence')
-@embeddable()
 export class Recurrence {
-	// No field defaults: MikroORM reads them off `new Recurrence()` as column defaults, which would give every row a rule.
-	@converter(RecurrenceFrequency.converter)
-	@property({ type: RecurrenceFrequency.Mapper, nullable: true }) freq!: RecurrenceFrequency
-	@property({ type: 'integer', nullable: true }) interval?: number
-	@converter(RecurrenceWeekday.converter)
-	@property({ type: RecurrenceWeekday.Mapper, nullable: true }) byday?: Array<RecurrenceWeekday>
-	@property({ type: 'integer', nullable: true }) bymonthday?: number
-	@property({ type: 'integer', nullable: true }) count?: number
-	@converter(RecurrenceEnd.converter)
-	@property({ type: RecurrenceEnd.Mapper, nullable: true }) until?: RecurrenceEnd
+	@converter(RecurrenceFrequency.converter) freq!: RecurrenceFrequency
+	interval?: number
+	@converter(RecurrenceWeekday.converter) byday?: Array<RecurrenceWeekday>
+	bymonthday?: number
+	count?: number
+	@converter(RecurrenceEnd.converter) until?: RecurrenceEnd
+	/** The parts Mitra doesn't edit (`BYSETPOS=-1`, `BYMONTH=5`, several month days), as the rule wrote them. */
+	rest?: string
 
 	constructor(init?: Partial<Recurrence>) {
 		Object.assign(this, init)
@@ -73,6 +69,9 @@ export class Recurrence {
 		} else if (this.until) {
 			parts.push(`UNTIL=${this.until.toRRule(allDay)}`)
 		}
+		if (this.rest) {
+			parts.push(this.rest)
+		}
 		return parts.join(';')
 	}
 
@@ -81,14 +80,15 @@ export class Recurrence {
 		return a ? a.equals(b) : !b
 	}
 
-	/** Whether ical.js can iterate it. A part read from the database is `null` where a fresh one is `undefined`. */
+	/** Whether ical.js can iterate it. */
 	get valid(): boolean {
-		const absent = (value: number | null | undefined) => value === undefined || value === null
+		const absent = (value: unknown) => value === undefined || value === null
 		return this.freq instanceof RecurrenceFrequency
 			&& (absent(this.interval) || (Number.isInteger(this.interval) && this.interval! >= 1))
 			&& (this.byday ?? []).every(weekday => weekday instanceof RecurrenceWeekday)
 			&& (absent(this.bymonthday) || (Number.isInteger(this.bymonthday) && this.bymonthday! >= 1 && this.bymonthday! <= 31))
 			&& (absent(this.count) || (Number.isInteger(this.count) && this.count! >= 1))
+			&& (absent(this.rest) || (typeof this.rest === 'string' && /^[A-Z-]+=[^;=]+(;[A-Z-]+=[^;=]+)*$/.test(this.rest)))
 	}
 
 	equals(other?: Recurrence | null): boolean {
@@ -101,6 +101,7 @@ export class Recurrence {
 			&& (this.count ?? null) === (other.count ?? null)
 			&& (this.byday ?? []).map(String).sort().join(',') === (other.byday ?? []).map(String).sort().join(',')
 			&& (this.until?.toString() ?? null) === (other.until?.toString() ?? null)
+			&& (this.rest ?? null) === (other.rest ?? null)
 	}
 
 	/** "Every week on Thu until Jul 18". */
@@ -128,6 +129,9 @@ export class Recurrence {
 				break
 			default:
 				rule = frequency
+		}
+		if (this.rest) {
+			rule = String(t('Repeats'))
 		}
 		return String(this.count ? t('${rule}, ${count:pluralityNumber} times', { rule, count: this.count })
 			: this.until ? t('${rule} until ${date}', { rule, date: this.until.format() })
@@ -160,12 +164,17 @@ export class Recurrence {
 			}
 			recurrence.byday = byday
 		}
-		recurrence.bymonthday = parts.BYMONTHDAY ? Math.trunc(Number(parts.BYMONTHDAY)) || undefined : undefined
+		if (parts.BYMONTHDAY && /^\d+$/.test(parts.BYMONTHDAY)) {
+			recurrence.bymonthday = Number(parts.BYMONTHDAY)
+			delete parts.BYMONTHDAY
+		}
 		if (parts.COUNT) {
 			recurrence.count = Math.max(1, Math.trunc(Number(parts.COUNT)) || 1)
 		} else if (parts.UNTIL) {
 			recurrence.until = RecurrenceEnd.parse(parts.UNTIL)
 		}
+		const rest = Object.entries(parts).filter(([key]) => !Recurrence.edited.has(key)).map(([key, value]) => `${key}=${value}`)
+		recurrence.rest = rest.length ? rest.join(';') : undefined
 		return recurrence
 	}
 
@@ -183,7 +192,26 @@ export class Recurrence {
 			bymonthday: data.bymonthday,
 			count: data.count,
 			until: RecurrenceEnd.parse(data.until),
+			rest: data.rest || undefined,
 		})
+	}
+
+	/** A month day reads as one only when it is one; a list stays in `rest`. */
+	private static readonly edited = new Set(['FREQ', 'INTERVAL', 'BYDAY', 'COUNT', 'UNTIL'])
+
+	/** The rule as its RRULE, so the column holds what a calendar would read. */
+	static readonly Mapper = class extends Type<Recurrence | undefined, string | null> {
+		override convertToDatabaseValue(value: Recurrence | null | undefined): string | null {
+			return value?.toRRule() ?? null
+		}
+
+		override convertToJSValue(value: unknown): Recurrence | undefined {
+			return typeof value === 'string' ? Recurrence.fromRRule(value) : undefined
+		}
+
+		override getColumnType(): string {
+			return 'text'
+		}
 	}
 
 	static presets(start: DateTime): Array<RecurrencePreset> {
@@ -242,14 +270,12 @@ export class Recurrence {
 	}
 
 	/**
-	 * The rule once its anchor moves: weekdays rotate and a month day follows, as a rule that misses its anchor loses
-	 * every occurrence before its first match. Days count in the series' zone, where UTC would read a move to all-day
-	 * ahead of UTC as a day earlier.
+	 * The rule once its anchor moves from one day to another: weekdays rotate and a month day follows, as a rule that
+	 * misses its anchor loses every occurrence before its first match. The caller reads each day where it stands, as a
+	 * move between all-day and timed puts them in different frames.
 	 */
-	rebased(from: Date, to: Date, zone?: string | null): Recurrence {
-		const here = zone ? TimeZone.of(zone) : TimeZone.device
-		const day = (value: Date) => here.dayOf(value)
-		const deltaDays = day(to).since(day(from)).days
+	rebased(from: Temporal.PlainDate, to: Temporal.PlainDate): Recurrence {
+		const deltaDays = to.since(from).days
 		if (deltaDays === 0) {
 			return this
 		}
@@ -258,7 +284,7 @@ export class Recurrence {
 			patch.byday = this.byday.map(weekday => weekday.plus(deltaDays))
 		}
 		if (this.bymonthday) {
-			patch.bymonthday = day(to).day
+			patch.bymonthday = to.day
 		}
 		return this.with(patch)
 	}

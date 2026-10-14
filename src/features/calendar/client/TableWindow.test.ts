@@ -9,7 +9,7 @@ describe('TableWindow', () => {
 	const day = (value: DateTime) => [value.year, value.month, value.day, value.hour, value.minute].join('-')
 	const bounds = (window: TableWindow) => {
 		const { start, end } = window.bounds(today)!
-		return [day(start), day(end)]
+		return [day(start!), day(end!)]
 	}
 
 	it('counts whole days from today, today included', () => {

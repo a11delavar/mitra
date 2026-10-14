@@ -31,17 +31,17 @@ function dateFormat(start: DateTime, last: DateTime, timed: boolean): Intl.DateT
 
 /** The span as the chip says it, with what both ends share said once. A row standing for a series says where it starts; its rule is the Repeats column's. */
 function span(row: TableRow) {
-	const { entry } = row
-	const last = entry.lastDay
+	const { occurrence } = row
+	const last = occurrence.lastDay
 	if (!last) {
 		return text('')
 	}
-	const start = entry.start ?? last
-	const timed = !entry.allDay && !!entry.start
+	const start = occurrence.start ?? last
+	const timed = !occurrence.allDay && !!occurrence.start
 	if (row.series) {
 		return text(t('From ${date}', { date: start.format(dateFormat(start, start, timed)) }))
 	}
-	return text((timed ? new DateTimeRange(start, entry.effectiveEnd) : new DateTimeRange(start.dayStart, last)).format(dateFormat(start, last, timed)))
+	return text((timed ? new DateTimeRange(start, occurrence.effectiveEnd) : new DateTimeRange(start.dayStart, last)).format(dateFormat(start, last, timed)))
 }
 
 /** The first few faces, the rest counted; the list itself is the editor's. */

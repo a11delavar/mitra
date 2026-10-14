@@ -231,32 +231,23 @@ describe('Recurrence', () => {
 	})
 
 	describe('rebased', () => {
-		const monday = new Date('2026-06-08T09:00:00Z')
-		const tuesday = new Date('2026-06-09T09:00:00Z')
+		const monday = Temporal.PlainDate.from('2026-06-08')
+		const tuesday = Temporal.PlainDate.from('2026-06-09')
 
-		it('is identity for a time-only move (same calendar day)', () => {
+		it('is identity for a move within the day', () => {
 			const rule = new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Monday] })
-			assert.equal(rule.rebased(monday, new Date('2026-06-08T11:30:00Z')), rule)
-		})
-
-		it('measures the shift in LOCAL calendar days: an all-day snap to local midnight is not a day move', () => {
-			// A timed entry converted to all-day snaps to local midnight, before the timed instant in UTC
-			// for any zone ahead of it. That must not read as "moved a day earlier" and rotate the weekdays.
-			const timed = new Date(2026, 5, 8, 9) // local Jun 8, 09:00
-			const localMidnight = new Date(2026, 5, 8) // local Jun 8, 00:00
-			const rule = new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Monday, RecurrenceWeekday.Tuesday, RecurrenceWeekday.Wednesday, RecurrenceWeekday.Thursday] })
-			assert.equal(rule.rebased(timed, localMidnight), rule)
+			assert.equal(rule.rebased(monday, monday), rule)
 		})
 
 		it('rotates a weekday list with the day shift', () => {
 			const rule = new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Monday, RecurrenceWeekday.Wednesday] })
 			assert.deepEqual(rule.rebased(monday, tuesday).byday?.map(String), ['TU', 'TH'])
 			assert.deepEqual(rule.rebased(monday, tuesday).rebased(tuesday, monday).byday?.map(String), ['MO', 'WE']) // round-trips
-			assert.deepEqual(rule.rebased(monday, new Date('2026-06-06T09:00:00Z')).byday?.map(String), ['SA', 'MO']) // -2 days wraps
+			assert.deepEqual(rule.rebased(monday, Temporal.PlainDate.from('2026-06-06')).byday?.map(String), ['SA', 'MO']) // -2 days wraps
 		})
 
 		it('keeps ordinal prefixes while rotating (the 2nd Tue becomes the 2nd Wed)', () => {
-			assert.deepEqual(new Recurrence({ freq: RecurrenceFrequency.Monthly, byday: [RecurrenceWeekday.Tuesday.nth(2)] }).rebased(tuesday, new Date('2026-06-10T09:00:00Z')).byday?.map(String), ['2WE'])
+			assert.deepEqual(new Recurrence({ freq: RecurrenceFrequency.Monthly, byday: [RecurrenceWeekday.Tuesday.nth(2)] }).rebased(tuesday, Temporal.PlainDate.from('2026-06-10')).byday?.map(String), ['2WE'])
 			assert.deepEqual(new Recurrence({ freq: RecurrenceFrequency.Monthly, byday: [RecurrenceWeekday.Thursday.nth(-1)] }).rebased(monday, tuesday).byday?.map(String), ['-1FR'])
 		})
 
@@ -267,22 +258,6 @@ describe('Recurrence', () => {
 		it('leaves day-agnostic rules alone', () => {
 			const daily = new Recurrence({ freq: RecurrenceFrequency.Daily, interval: 2 })
 			assert.equal(daily.rebased(monday, tuesday).equals(daily), true)
-		})
-
-		it('counts the delta in the given zone, so the server\'s own zone stops mattering', () => {
-			const rule = new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Friday] })
-			// 02:00 Berlin (00:00Z) snapping to Berlin midnight (22:00Z the previous UTC day): the same
-			// Berlin day, whatever calendar the server itself lives in.
-			assert.equal(rule.rebased(new Date('2026-07-10T00:00:00Z'), new Date('2026-07-09T22:00:00Z'), 'Europe/Berlin'), rule)
-			// And one real Berlin day rotates exactly one weekday.
-			assert.deepEqual(rule.rebased(new Date('2026-07-09T22:00:00Z'), new Date('2026-07-10T22:00:00Z'), 'Europe/Berlin').byday?.map(String), ['SA'])
-		})
-
-		it('a month-day follows the anchor read in the given zone', () => {
-			// Jul 10 22:00Z is already Jul 11 in Berlin, so the month-day must be 11, not UTC's 10.
-			const moved = new Recurrence({ freq: RecurrenceFrequency.Monthly, bymonthday: 10 })
-				.rebased(new Date('2026-07-09T22:00:00Z'), new Date('2026-07-10T22:00:00Z'), 'Europe/Berlin')
-			assert.equal(moved.bymonthday, 11)
 		})
 	})
 

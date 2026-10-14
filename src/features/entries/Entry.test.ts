@@ -163,19 +163,19 @@ describe('Entry', () => {
 		})
 	})
 
-	describe('isFirstOccurrence', () => {
-		const occurrence = (values: Partial<Entry>) => new Entry({ recurringEntryId: 'master', ...values } as Entry)
+	describe('an occurrence\'s first', () => {
+		const daily = () => new Entry({ id: 'master', start: at(0, 9), end: at(0, 10), recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }) })
 
-		it('is true for the occurrence sitting on the series anchor', () => {
-			assert.equal(occurrence({ recurrenceId: at(0, 9), seriesStart: at(0, 9) }).isFirstOccurrence, true)
+		it('is the occurrence sitting on the start the rule counts from', () => {
+			assert.equal(daily().occurrences.at(at(0, 9)).first, true)
 		})
 
-		it('is false for any later occurrence', () => {
-			assert.equal(occurrence({ recurrenceId: at(3, 9), seriesStart: at(0, 9) }).isFirstOccurrence, false)
+		it('is not any later occurrence', () => {
+			assert.equal(daily().occurrences.at(at(3, 9)).first, false)
 		})
 
-		it('is false without an anchor, since a synced override carries none', () => {
-			assert.equal(occurrence({ recurrenceId: at(0, 9) }).isFirstOccurrence, false)
+		it('is not an override seen without its recurring entry', () => {
+			assert.equal(new Entry({ recurringEntryId: 'master', recurrenceId: at(0, 9) }).occurrences.single.first, false)
 		})
 	})
 

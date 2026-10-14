@@ -45,11 +45,14 @@ export class CalendarScrollController extends Controller {
 		super(host)
 	}
 
-	/** Navigate to date and anchor scroll position, gliding there when it is near and the days in view stay loaded. */
-	navigate(date: DateTime) {
+	/**
+	 * Navigate to date and anchor scroll position, gliding there when it is near and the days in view stay loaded. It
+	 * arrives on the cross axis too (the day's time), unless it is a step, which keeps what is in view there.
+	 */
+	navigate(date: DateTime, { arrive = true } = {}) {
 		const days = this.dates.days
 		this.dates.navigatingDate = date
-		void this.anchor(date, { arrive: true, glide: this.anchored && (() => this.dates.days === days) })
+		void this.anchor(date, { arrive, glide: this.anchored && (() => this.dates.days === days) })
 	}
 
 	/** Whether the date is on screen now, not merely among the rendered days. */

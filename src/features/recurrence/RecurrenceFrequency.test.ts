@@ -40,11 +40,5 @@ describe('RecurrenceFrequency', () => {
 		assert.equal(RecurrenceFrequency.converter.deconstruct!(RecurrenceFrequency.Monthly, {}), 'MONTHLY')
 		assert.equal(RecurrenceFrequency.converter.deconstruct!(undefined, {}), undefined)
 		assert.equal(RecurrenceFrequency.converter.construct!('MONTHLY', {}), RecurrenceFrequency.Monthly)
-
-		const mapper = new RecurrenceFrequency.Mapper()
-		assert.equal(mapper.convertToDatabaseValue(RecurrenceFrequency.Monthly), 'MONTHLY')
-		assert.equal(mapper.convertToDatabaseValue(null), null)
-		assert.equal(mapper.convertToJSValue('MONTHLY'), RecurrenceFrequency.Monthly)
-		assert.equal(mapper.convertToJSValue(null), undefined)
 	})
 })

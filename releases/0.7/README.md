@@ -26,6 +26,7 @@ The time zone picker is redesigned as well. Zones that share a name and a clock 
 	<img src="time-zones-light.webp" alt="The time zone picker, open on home among the grouped zones around it">
 </picture>
 
+> [!NOTE]
 > If you gave the time zone you're in a name of your own, please give it that name once more. Until now, those names stayed on the device where you set them. From now on, a name follows you to every device.
 
 Docs: [Time zones](../../docs/time-zones.md)

@@ -4,7 +4,6 @@ import { MikroORM, UnderscoreNamingStrategy, type EntityManager } from '@mikro-o
 import { User } from '../../features/identity/User.js'
 import { Identity } from '../../features/identity/Identity.js'
 import { Source } from '../../features/sources/Source.js'
-import { Recurrence } from '../../features/recurrence/Recurrence.js'
 import { Entry } from '../../features/entries/Entry.js'
 import { EntryRelation } from '../../features/relations/EntryRelation.js'
 import { EntryType } from '../../features/entries/EntryType.js'
@@ -50,7 +49,7 @@ class SlowProvider extends Integration<Record<string, never>> {
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
-		entities: [User, Identity, Integration, SlowProvider, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
+		entities: [User, Identity, Integration, SlowProvider, Source, Entry, EntryRelation, NotificationSubscription, Session],
 		dbName: ':memory:',
 		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {

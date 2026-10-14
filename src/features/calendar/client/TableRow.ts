@@ -3,11 +3,13 @@ import { type Entry } from '../../entries/Entry.js'
 import { TaskStatus } from '../../entries/TaskStatus.js'
 import { EntrySegments } from '../../entries/client/EntrySegments.js'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
+import { EntryStore } from '../../entries/client/EntryStore.js'
+import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
 import { Relations } from '../../relations/client/Relations.js'
 import { Calendars } from '../../sources/client/Calendars.js'
 import { termsMatch } from '../../commands/termsMatch.js'
-import { type RecurrenceScope } from '../../recurrence/Recurrence.js'
 import { type TableWindow } from './TableWindow.js'
+import { type EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
 
 /** The columns a row can be filtered by, each by one value of the row's own. */
 export const tableFacets = ['statusRank', 'typeKey', 'sourceName', 'repeats'] as const
@@ -36,22 +38,22 @@ export class TableFilter {
 	}
 }
 
-/** One entry as the table lists it: the facts a column sorts and filters by, beside the entry itself. */
+/** One occurrence as the table lists it: the facts a column sorts and filters by, beside the occurrence itself. */
 export class TableRow {
-	private static readonly rows = new WeakMap<Entry, TableRow>()
-	private static readonly seriesRows = new WeakMap<Entry, TableRow>()
+	private static readonly rows = new WeakMap<EntryOccurrence, TableRow>()
+	private static readonly seriesRows = new WeakMap<EntryOccurrence, TableRow>()
 
 	/**
-	 * One row per entry instance, so a selection and a rendered row survive a re-render. Listing an unbounded
-	 * window, a series' start stands for the whole series; the same occurrence elsewhere is itself alone.
+	 * One row per occurrence, so a selection and a rendered row survive a re-render. Listing an unbounded window, a
+	 * recurring entry's first occurrence stands for all of them; the same occurrence elsewhere is itself alone.
 	 */
-	static for(entry: Entry, window?: TableWindow): TableRow {
-		const series = !!window?.unbounded && entry.isRecurring && entry.isFirstOccurrence
+	static for(occurrence: EntryOccurrence, window?: TableWindow): TableRow {
+		const series = !!window?.unbounded && occurrence.recurring && occurrence.first
 		const rows = series ? TableRow.seriesRows : TableRow.rows
-		let row = rows.get(entry)
+		let row = rows.get(occurrence)
 		if (!row) {
-			row = new TableRow(entry, series)
-			rows.set(entry, row)
+			row = new TableRow(occurrence, series)
+			rows.set(occurrence, row)
 		}
 		return row
 	}
@@ -70,14 +72,20 @@ export class TableRow {
 		[TaskStatus.Cancelled, 3],
 	])
 
-	private constructor(readonly entry: Entry, readonly series: boolean) { }
+	private constructor(readonly occurrence: EntryOccurrence, readonly series: boolean) { }
 
-	/** What a change made through the row reaches: the series it stands for, or the one occurrence it is. */
-	get scope(): RecurrenceScope | undefined {
-		return this.series ? 'all' : this.entry.isRecurring ? 'this' : undefined
+	/** What it shows. */
+	get entry() { return this.occurrence.entry }
+
+	/** The entry an edit through the row changes: an override for a date a rule yields. */
+	editable() { return EntryStore.editable(this.occurrence) }
+
+	/** What a change made through the row reaches: every occurrence it stands for, or the one it is. */
+	get scope(): EntryOccurrenceChangeScope | undefined {
+		return this.series ? 'all' : this.occurrence.recurring ? 'this' : undefined
 	}
 
-	get segment() { return EntrySegments.for(this.entry)[0]! }
+	get segment() { return EntrySegments.for(this.occurrence)[0]! }
 
 	/** Selection identity; a draft has none of its own until it is saved. */
 	get id() { return this.segment.id }
@@ -85,16 +93,19 @@ export class TableRow {
 	get heading() { return this.entry.heading }
 	get headingKey() { return this.entry.heading.toLocaleLowerCase() }
 	/** The When column shows the span and sorts by where it begins: its start, or a due-only task's due. */
-	get when() { return (this.entry.start ?? this.entry.end)?.valueOf() }
+	get when() { return (this.occurrence.start ?? this.occurrence.end)?.valueOf() }
 	get statusRank() { return !this.entry.type.isTask ? undefined : TableRow.statusRanks.get(this.entry.status ?? TaskStatus.ToDo) }
 	get typeKey() { return this.entry.type.value }
 	get source() { return Calendars.source(this.entry.sourceId) }
 	get sourceName() { return this.source?.name ?? '' }
 	get location() { return this.entry.location }
-	get repeats() { return this.entry.recurrence?.describe(this.entry.seriesStart) ?? '' }
+	get repeats() {
+		const recurring = this.occurrence.recurringEntry ?? this.entry
+		return recurring.recurrence?.describe(recurring.start ?? recurring.due) ?? ''
+	}
 
 	get durationMinutes() {
-		const { start, end } = this.entry
+		const { start, end } = this.occurrence
 		return !start || !end ? undefined : Math.round((end.valueOf() - start.valueOf()) / 60_000)
 	}
 
@@ -119,23 +130,23 @@ export class TableRow {
 			case 'statusRank': return !entry.type.isTask ? TableRow.noStatus : (entry.status ?? TaskStatus.ToDo).code
 			case 'typeKey': return entry.type.value
 			case 'sourceName': return entry.sourceId
-			case 'repeats': return entry.partOfSeries ? 'repeating' : 'once'
+			case 'repeats': return this.occurrence.recurring || entry.partOfSeries ? 'repeating' : 'once'
 		}
 	}
 
 	/** Whether the row belongs to the listed window. Undated and overdue rows ride along, as they do with every fetch window, and so does a draft. */
 	inWindow(window: TableWindow, today = new DateTime()) {
-		const { entry } = this
+		const { occurrence } = this
 		const bounds = window.bounds(today)
-		if (!bounds || !entry.start || !entry.persisted || entry.overdue) {
+		if (!bounds || !occurrence.start || !occurrence.entry.persisted || occurrence.overdue) {
 			return true
 		}
-		return entry.start.valueOf() <= bounds.end.valueOf() && entry.inclusiveEnd.valueOf() >= bounds.start.valueOf()
+		return occurrence.start.valueOf() <= bounds.end!.valueOf() && occurrence.inclusiveEnd.valueOf() >= bounds.start!.valueOf()
 	}
 
 	/** Whether the row stays under the filters. One the editor holds always does: a palette pick must find its row. */
 	matches(query: string, filter: TableFilter) {
-		if (EntryEditorIntent.holds(this.entry)) {
+		if (EntryEditorIntent.holds(this.occurrence)) {
 			return true
 		}
 		for (const [key, excluded] of filter.excluded) {

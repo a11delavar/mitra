@@ -5,12 +5,14 @@ import { Entry } from '../Entry.js'
 import { TaskStatus } from '../TaskStatus.js'
 import { EntryType } from '../EntryType.js'
 import { EntryRank } from '../EntryRank.js'
-import { Recurrence, type RecurrenceScope } from '../../recurrence/Recurrence.js'
+import { Recurrence } from '../../recurrence/Recurrence.js'
 import { EntryStore } from './EntryStore.js'
 import { IntegrationOwnership } from '../../../integrations/IntegrationOwnership.js'
 import { ApiError } from '../../../infrastructure/http/Api.js'
 import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
 import { EntryRelations } from '../../relations/EntryRelations.js'
+import { type EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
+import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
 
 describe('EntryStore', () => {
 	const day = new DateTime().dayStart
@@ -21,7 +23,7 @@ describe('EntryStore', () => {
 	})
 
 	const fake = () => {
-		const calls = { create: 0, update: 0, delete: new Array<string>(), occurrenceEdits: new Array<RecurrenceScope>(), occurrenceDeletes: new Array<RecurrenceScope>() }
+		const calls = { create: 0, update: 0, delete: new Array<string>(), occurrenceEdits: new Array<EntryOccurrenceChangeScope>(), occurrenceDeletes: new Array<EntryOccurrenceChangeScope>() }
 		const settlers = new Array<{ resolve: (saved: Entry) => void, reject: (error: unknown) => void }>()
 		const request = (entry: Entry) => new Promise<Entry>((resolve, reject) => {
 			const sent = entry.clone()
@@ -33,8 +35,8 @@ describe('EntryStore', () => {
 				create: (entry: Entry) => (calls.create++, request(entry)),
 				update: (entry: Entry) => (calls.update++, request(entry)),
 				delete: (id: string) => (calls.delete.push(id), Promise.resolve()),
-				editOccurrence: (entry: Entry, scope: RecurrenceScope) => (calls.occurrenceEdits.push(scope), request(entry)),
-				deleteOccurrence: (_entry: Entry, scope: RecurrenceScope) => (calls.occurrenceDeletes.push(scope), Promise.resolve()),
+				editOccurrence: (occurrence: EntryOccurrence, scope: EntryOccurrenceChangeScope) => (calls.occurrenceEdits.push(scope), request(occurrence.entry)),
+				deleteOccurrence: (_occurrence: EntryOccurrence, scope: EntryOccurrenceChangeScope) => (calls.occurrenceDeletes.push(scope), Promise.resolve()),
 				reorder: (_ranks: Record<string, string>) => Promise.resolve(),
 			},
 			async respond(saved?: Entry) {
@@ -418,7 +420,7 @@ describe('EntryStore', () => {
 			EntryStore.persistence = transport.persistence
 			const occurrence = entry({
 				id: 'master__1000', uid: 'uid', recurringEntryId: 'master', recurrenceId: at(9),
-				seriesStart: at(9), recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }),
+				recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }),
 			})
 			EntryStore.applyServerEntries([occurrence])
 			const duplication = EntryStore.duplicate(occurrence, entry({ id: undefined, start: at(14), end: at(15) }))
@@ -428,7 +430,6 @@ describe('EntryStore', () => {
 			assert.equal(copy.recurringEntryId, undefined)
 			assert.equal(copy.recurrenceId, undefined)
 			assert.equal(copy.uid, undefined)
-			assert.equal(copy.seriesStart, undefined)
 			await transport.respond(new Entry({ ...copy.clone(), id: 'copy' }))
 			await duplication
 			assert.equal(transport.calls.create, 1)

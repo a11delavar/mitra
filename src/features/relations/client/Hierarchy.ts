@@ -1,5 +1,4 @@
 import { type ShiftStrategy } from '../ShiftStrategy.js'
-import { type RecurrenceScope } from '../../recurrence/Recurrence.js'
 import { EntryPlan, type PlannedWrite, type SkippedEntry } from '../EntryPlan.js'
 import { type EntryChange } from '../../entries/EntryChange.js'
 import { type Entry } from '../../entries/Entry.js'
@@ -10,6 +9,7 @@ import { Relations } from './Relations.js'
 import { DialogEntryScope, type EntryScope } from '../../entries/client/DialogEntryScope.js'
 import { DialogCompleteParent } from './DialogCompleteParent.js'
 import { DialogCloseSubtasks } from './DialogCloseSubtasks.js'
+import { type EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
 
 /**
  * Hierarchy actions and prompt workflows. Computations use {@link Relations} and writes execute via {@link EntryStore.applyPlan}.
@@ -158,7 +158,7 @@ export function installHierarchyPrompts() {
 }
 
 /** Resolves recurrence scope without hierarchy options for single-entry mutations. */
-export function resolveRecurrenceScope(entry: Entry, intent: 'edit' | 'delete'): Promise<RecurrenceScope | undefined> {
+export function resolveRecurrenceScope(entry: Entry, intent: 'edit' | 'delete'): Promise<EntryOccurrenceChangeScope | undefined> {
 	return new DialogEntryScope({ entry, intent, series: true, subtasks: 0 })
 		.confirm()
 		.catch(() => undefined)

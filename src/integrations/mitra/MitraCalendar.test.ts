@@ -7,7 +7,7 @@ import { Source } from '../../features/sources/Source.js'
 import { Entry } from '../../features/entries/Entry.js'
 import { EntryType } from '../../features/entries/EntryType.js'
 import { EntryRelation } from '../../features/relations/EntryRelation.js'
-import { Recurrence } from '../../features/recurrence/Recurrence.js'
+import { TimeZone } from '../../features/time/TimeZone.js'
 import { Integration } from '../Integration.js'
 import { IntegrationCapabilities } from '../IntegrationCapabilities.js'
 import { MitraCalendar } from './MitraCalendar.js'
@@ -15,7 +15,7 @@ import { Demo } from '../demo/Demo.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
-		entities: [User, Identity, Integration, MitraCalendar, Demo, Source, Entry, Recurrence, EntryRelation],
+		entities: [User, Identity, Integration, MitraCalendar, Demo, Source, Entry, EntryRelation],
 		dbName: ':memory:',
 		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {
@@ -319,6 +319,19 @@ describe('Demo', () => {
 		assert.equal(await filledCalendars(), 5)
 		assert.equal(after.length, before.length, 'the same fixtures, rebuilt')
 		assert.equal(after.some(id => before.includes(id)), false, 'every entry was rebuilt')
+	})
+
+	// One without a zone repeats at fixed instants, so the Gym moved an hour on the wall clock at every DST change.
+	it('seeds its timed entries in the zone it reads their times in, so a recurring one keeps its wall clock', async () => {
+		await demo.getSources(em)
+		await em.flush()
+		await demo.syncEntries(em)
+		await em.flush()
+
+		const sources = await em.find(Source, { integrationId: demo.id })
+		const timed = (await em.find(Entry, { sourceId: { $in: sources.map(source => source.id) } })).filter(entry => entry.start && !entry.allDay)
+		assert.ok(timed.some(entry => entry.recurrence))
+		assert.deepEqual([...new Set(timed.map(entry => entry.timeZone?.id))], [TimeZone.deviceId])
 	})
 
 	it('is written in the language it is given, calendars included, and rewritten when that changes', async () => {

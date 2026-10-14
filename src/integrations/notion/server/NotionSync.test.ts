@@ -24,7 +24,7 @@ import { RecurrenceFrequency } from '../../../features/recurrence/RecurrenceFreq
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
-		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, MitraCalendar, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
+		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, MitraCalendar, Source, Entry, EntryRelation, NotificationSubscription, Session],
 		dbName: ':memory:',
 		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {

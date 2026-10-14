@@ -14,12 +14,12 @@ describe('HideDoneTasksSetting', () => {
 	const task = (id: string, status?: TaskStatus) => new Entry({
 		id, sourceId: 's', type: EntryType.Task, heading: id, status,
 		start: day.add({ hours: 9 }), end: day.add({ hours: 10 }),
-	})
+	}).occurrences.single
 
 	const event = (id: string) => new Entry({
 		id, sourceId: 's', type: EntryType.Event, heading: id,
 		start: day.add({ hours: 9 }), end: day.add({ hours: 10 }),
-	})
+	}).occurrences.single
 
 	beforeEach(() => {
 		EntryEditorIntent.reset()
@@ -64,10 +64,10 @@ describe('HideDoneTasksSetting', () => {
 
 		it('keeps the entry whose editor is open, so ticking it there never tears out the editor', () => {
 			const open = task('a')
-			EntryEditorIntent.setEditing(open, true)
-			open.status = TaskStatus.Done
+			EntryEditorIntent.setEditing(open.entry, true)
+			open.entry.status = TaskStatus.Done
 			assert.equal(HideDoneTasksSetting.shows(open, true), true)
-			EntryEditorIntent.setEditing(open, false)
+			EntryEditorIntent.setEditing(open.entry, false)
 			assert.equal(HideDoneTasksSetting.shows(open, true), false)
 		})
 	})
@@ -75,7 +75,7 @@ describe('HideDoneTasksSetting', () => {
 	describe('filtering a rendered set', () => {
 		it('leaves the open work and the events, in the order they arrived', () => {
 			const entries = [task('a', TaskStatus.Done), event('b'), task('c'), task('d', TaskStatus.Cancelled)]
-			assert.deepEqual(HideDoneTasksSetting.filter(entries, true).map(entry => entry.id), ['b', 'c'])
+			assert.deepEqual(HideDoneTasksSetting.filter(entries, true).map(occurrence => occurrence.key), ['b', 'c'])
 		})
 
 		it('answers the same array twice without recomputing it', () => {

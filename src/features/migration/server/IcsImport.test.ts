@@ -4,7 +4,6 @@ import { MikroORM, UnderscoreNamingStrategy, type EntityManager } from '@mikro-o
 import { User } from '../../identity/User.js'
 import { Identity } from '../../identity/Identity.js'
 import { Source } from '../../sources/Source.js'
-import { Recurrence } from '../../recurrence/Recurrence.js'
 import { Entry } from '../../entries/Entry.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
 import { EntryType } from '../../entries/EntryType.js'
@@ -24,7 +23,7 @@ import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
-		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, IcsSubscription, Notion, Tempo, MitraCalendar, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
+		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, IcsSubscription, Notion, Tempo, MitraCalendar, Source, Entry, EntryRelation, NotificationSubscription, Session],
 		dbName: ':memory:',
 		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {

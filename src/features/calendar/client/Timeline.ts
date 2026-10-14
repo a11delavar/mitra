@@ -1,6 +1,6 @@
 import { Component, component, html, property, css, repeat, type PropertyValues, eventListener, ifDefined, styleMap } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { type Entry } from '../../entries/Entry.js'
+import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
 import { EntryType } from '../../entries/EntryType.js'
 import { Calendars } from '../../sources/client/Calendars.js'
 import { EntrySegments } from '../../entries/client/EntrySegments.js'
@@ -40,14 +40,16 @@ const MAX_GLIDE_DAYS = 365
 @component('mitra-timeline')
 export class Timeline extends Component {
 	@property({ type: Object }) navigatingDate = new DateTime()
-	@property({ type: Array }) entries = new Array<Entry>()
+	/** Whether `navigatingDate` comes from a step, which keeps the time in view. */
+	@property({ type: Boolean }) stepping = false
+	@property({ type: Array }) occurrences = new Array<EntryOccurrence>()
 
 	private readonly dates: CalendarDatesController = new CalendarDatesController(this, { radiusDays: 120, shiftDays: 21 })
 	protected readonly entryDrag = new EntryDragController(this, 'timeline')
 	protected readonly density = new TimelineDensityController(this)
 
 	private get days(): Array<DateTime> { return this.dates.days }
-	private get segments() { return EntrySegments.of(Availability.outside(this.entries), this.dates.days) }
+	private get segments() { return EntrySegments.of(Availability.outside(this.occurrences), this.dates.days) }
 
 	private renderedRows: Array<TimelineRow> = []
 
@@ -199,7 +201,7 @@ export class Timeline extends Component {
 
 	protected override updated(props: PropertyValues<this>) {
 		if (props.has('navigatingDate') && !this.navigatingDate.dayStart.equals(this.dates.navigatingDate.dayStart)) {
-			this.scrolling.navigate(this.navigatingDate)
+			this.scrolling.navigate(this.navigatingDate, { arrive: !this.stepping })
 		}
 		this.restoreBlockAnchor()
 		this.markOffscreenRows()
@@ -470,7 +472,7 @@ export class Timeline extends Component {
 	protected override createRenderRoot() { return this }
 
 	protected override get template() {
-		const context = (entry: Entry) => entry.type === EntryType.Event && !!entry.allDay
+		const context = (occurrence: EntryOccurrence) => occurrence.entry.type === EntryType.Event && occurrence.allDay
 		const events = this.bars(context)
 		const rows = this.renderedRows = this.rows
 		const placed: Array<PlacedBar> = rows.flatMap((row, index) => row.bars.map(bar => ({ ...bar, row: index + 1 })))
@@ -486,44 +488,46 @@ export class Timeline extends Component {
 		`
 	}
 
-	private static isPlanned(entry: Entry) {
-		return entry.type === EntryType.Task && entry.scheduled && !entry.closed
+	private static isPlanned({ entry, scheduled }: EntryOccurrence) {
+		return entry.type === EntryType.Task && scheduled && !entry.closed
 	}
 
-	private static rowKey(entry: Entry) {
+	private static rowKey(occurrence: EntryOccurrence) {
+		const { entry } = occurrence
 		return entry.uid
-			? `${entry.uid}:${entry.recurrenceId?.valueOf() ?? ''}`
-			: entry.id ?? (EntryStore.isPreview(entry) ? 'preview' : 'draft')
+			? `${entry.uid}:${occurrence.recurrenceId?.valueOf() ?? ''}`
+			: occurrence.key ?? (EntryStore.isPreview(entry) ? 'preview' : 'draft')
 	}
 
-	private static withinRoutineHorizon(entries: Array<Entry>): Array<Entry> {
+	private static withinRoutineHorizon(occurrences: ReadonlyArray<EntryOccurrence>): Array<EntryOccurrence> {
 		const now = new DateTime()
 		const from = now.dayStart.valueOf()
 		const to = now.valueOf() + ROUTINE_HORIZON
-		const series = new Map<string, Array<Entry>>()
-		const kept = new Array<Entry>()
-		for (const entry of entries) {
-			const master = entry.recurringEntryId
-			if (!master) {
-				kept.push(entry)
+		const byRecurringEntry = new Map<string, Array<EntryOccurrence>>()
+		const kept = new Array<EntryOccurrence>()
+		for (const occurrence of occurrences) {
+			const id = occurrence.recurringEntryId
+			if (!id) {
+				kept.push(occurrence)
 			} else {
-				series.set(master, [...series.get(master) ?? [], entry])
+				byRecurringEntry.set(id, [...byRecurringEntry.get(id) ?? [], occurrence])
 			}
 		}
-		for (const occurrences of series.values()) {
-			const sorted = [...occurrences].sort((a, b) => a.start!.valueOf() - b.start!.valueOf())
-			const due = sorted.filter(entry => entry.start!.valueOf() >= from && entry.start!.valueOf() <= to)
-			kept.push(...due.length ? due : sorted.filter(entry => entry.start!.valueOf() > to).slice(0, 1))
+		for (const ofOne of byRecurringEntry.values()) {
+			const sorted = [...ofOne].sort((a, b) => a.start!.valueOf() - b.start!.valueOf())
+			const due = sorted.filter(occurrence => occurrence.start!.valueOf() >= from && occurrence.start!.valueOf() <= to)
+			kept.push(...due.length ? due : sorted.filter(occurrence => occurrence.start!.valueOf() > to).slice(0, 1))
 		}
 		return kept
 	}
 
 	private get rows(): Array<TimelineRow> {
-		const bars = new Map(this.bars(Timeline.isPlanned).map(bar => [bar.segment.entry, bar]))
+		const bars = new Map(this.bars(Timeline.isPlanned).map(bar => [bar.segment.occurrence, bar]))
 		const byKey = new Map<string, TimelineRow>()
-		for (const entry of Timeline.withinRoutineHorizon(this.entries.filter(Timeline.isPlanned))) {
-			const key = Timeline.rowKey(entry)
-			const bar = bars.get(entry)
+		for (const occurrence of Timeline.withinRoutineHorizon(this.occurrences.filter(Timeline.isPlanned))) {
+			const key = Timeline.rowKey(occurrence)
+			const bar = bars.get(occurrence)
+			const { entry } = occurrence
 			const row = byKey.get(key)
 			if (row) {
 				if (bar) {
@@ -532,8 +536,8 @@ export class Timeline extends Component {
 			} else {
 				byKey.set(key, {
 					key,
-					date: entry.start!,
-					sortValue: entry.persisted ? entry.start!.dayStart.valueOf() : Number.MAX_SAFE_INTEGER,
+					date: occurrence.start!,
+					sortValue: entry.persisted ? occurrence.start!.dayStart.valueOf() : Number.MAX_SAFE_INTEGER,
 					heading: entry.heading || '',
 					bars: bar ? [bar] : [],
 				})
@@ -542,7 +546,7 @@ export class Timeline extends Component {
 		return [...byKey.values()].sort((a, b) => a.sortValue - b.sortValue || a.date.valueOf() - b.date.valueOf() || a.heading.localeCompare(b.heading))
 	}
 
-	private bars(accept: (entry: Entry) => boolean): Array<TimelineBar> {
+	private bars(accept: (occurrence: EntryOccurrence) => boolean): Array<TimelineBar> {
 		const days = this.days
 		const first = days[0]
 		const last = days.at(-1)
@@ -564,7 +568,7 @@ export class Timeline extends Component {
 		return html`
 			<mitra-entry-segment
 				style=${styleMap({ gridColumn: `${bar.startColumn + 1} / span ${bar.span}`, gridRow: row?.toString() })}
-				resize=${ifDefined(bar.segment.entry.allDay ? 'inline' : undefined)}
+				resize=${ifDefined(bar.segment.occurrence.allDay ? 'inline' : undefined)}
 				?has-previous=${bar.segment.hasPrevious}
 				?has-next=${bar.clippedRight}
 				.segment=${bar.segment}
@@ -600,7 +604,7 @@ export class Timeline extends Component {
 					><span>${day.format({ day: 'numeric' })}</span></div>
 				`)}
 				<div class="events">
-					${repeat(events, bar => bar.segment.entry, bar => this.barTemplate(bar))}
+					${repeat(events, bar => EntryStore.identityOf(bar.segment.occurrence), bar => this.barTemplate(bar))}
 				</div>
 			</div>
 		`

@@ -1,5 +1,8 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { mkdtempSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { MikroORM } from '@mikro-orm/sqlite'
 import { User } from '../../features/identity/User.js'
 import { Source } from '../../features/sources/Source.js'
@@ -8,6 +11,7 @@ import { ormConfig } from './ormConfig.js'
 import { migrate } from './migrations/migrate.js'
 import { migrations, nameOf } from './migrations/index.js'
 import { Migration20260802230147_MergeSourceTypes } from './migrations/Migration20260802230147_MergeSourceTypes.js'
+import { Recurrence } from '../../features/recurrence/Recurrence.js'
 
 // Every boot runs the shipped migrations: fresh databases build their schema with them, instances predating migrations
 // get baselined instead of crashing on `create table`, and a second boot is a no-op.
@@ -68,6 +72,30 @@ describe('migrate', () => {
 
 			assert.deepEqual(await orm.migrator.getStorage().executed(), migrations.map(nameOf))
 			assert.ok(await orm.em.fork().findOne(User, { username: 'legacy' }), 'baselining must preserve existing data')
+		} finally {
+			await orm.close()
+		}
+	})
+
+	it('resumes a database built without the log where its tables stand, so the migrations after run on its data', async () => {
+		// A dev database from before every boot ran the chain: the schema of its day, synced, and no log.
+		const file = join(mkdtempSync(join(tmpdir(), 'mitra-')), 'database.sqlite')
+		const old = await MikroORM.init(ormConfig(file))
+		await old.migrator.up({ to: 'Migration20261013165004_NotificationSubscriptionLocale' })
+		const sql = (query: string) => old.em.getConnection().execute(query)
+		await sql('insert into `user` (`id`, `username`) values (\'u\', \'developer\')')
+		await sql('insert into `integration` (`id`, `user_id`, `uri`, `type`, `credentials`) values (\'i\', \'u\', \'mitra://local\', \'mitra\', \'{}\')')
+		await sql('insert into `source` (`id`, `integration_id`, `uri`, `entry_types`, `name`, `enabled`, `hidden`) values (\'s\', \'i\', \'mitra://local/home\', \'["event"]\', \'Home\', 1, 0)')
+		await sql('insert into `entry` (`id`, `source_id`, `type`, `recurrence_freq`, `recurrence_byday`) values (\'gym\', \'s\', \'event\', \'WEEKLY\', \'["MO","WE","FR"]\')')
+		await sql('drop table `mikro_orm_migrations`')
+		await old.close()
+
+		const orm = await MikroORM.init(ormConfig(file))
+		try {
+			await migrate(orm)
+
+			assert.deepEqual(await orm.em.getConnection().execute('select `recurrence` from `entry`'), [{ recurrence: 'FREQ=WEEKLY;BYDAY=MO,WE,FR' }])
+			assert.deepEqual(await orm.migrator.getStorage().executed(), migrations.map(nameOf))
 		} finally {
 			await orm.close()
 		}
@@ -198,6 +226,49 @@ describe('migrate', () => {
 			const entries = await sql('select id, source_id from entry order by id') as Array<{ id: string, source_id: string }>
 			assert.equal(entries[0]!.source_id, 's1')
 			assert.equal(entries[1]!.source_id, sources[1]!.id, 'task entries move to the re-created task sibling')
+		} finally {
+			await orm.close()
+		}
+	})
+
+	it('keeps each rule as its RRULE, a synced one whole and with its exclusions from its .ics', async () => {
+		const orm = await inMemoryOrm()
+		try {
+			const connection = orm.em.getConnection()
+			await orm.migrator.up({ to: 'Migration20261013165004_NotificationSubscriptionLocale' })
+			const raw = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//t//EN', 'BEGIN:VEVENT', 'UID:u', 'DTSTAMP:20260101T000000Z',
+				'DTSTART:20260630T090000Z', 'DTEND:20260630T093000Z', 'RRULE:FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1', 'EXDATE:20260731T090000Z',
+				'END:VEVENT', 'END:VCALENDAR'].join('\r\n')
+			await connection.execute('insert into `user` (`id`, `username`) values (\'u\', \'legacy\')')
+			await connection.execute('insert into `integration` (`id`, `user_id`, `uri`, `type`, `credentials`) values (\'i\', \'u\', \'caldav://example\', \'caldav\', \'{}\')')
+			await connection.execute('insert into `source` (`id`, `integration_id`, `uri`, `entry_types`, `name`, `enabled`, `hidden`) values (\'s\', \'i\', \'https://example/cal\', \'["event"]\', \'Calendar\', 1, 0)')
+			await connection.execute('insert into `entry` (`id`, `source_id`, `type`, `recurrence_freq`, `recurrence_interval`, `recurrence_byday`, `recurrence_until`) values (\'local\', \'s\', \'event\', \'WEEKLY\', 2, \'["MO","FR"]\', ?)', [Date.parse('2026-07-18T00:00:00Z')])
+			await connection.execute('insert into `entry` (`id`, `source_id`, `type`, `recurrence_freq`, `recurrence_byday`, `data`) values (\'synced\', \'s\', \'event\', \'MONTHLY\', \'["MO","TU","WE","TH","FR"]\', ?)', [JSON.stringify({ raw })])
+			// A TZID whose VTIMEZONE the resource leaves out, which ical.js reads as floating.
+			const zoned = raw.replace('DTSTART:20260630T090000Z', 'DTSTART;TZID=Europe/Berlin:20260630T090000').replace('EXDATE:20260731T090000Z', 'EXDATE;TZID=Europe/Berlin:20261130T090000')
+			await connection.execute('insert into `entry` (`id`, `source_id`, `type`, `recurrence_freq`, `recurrence_byday`, `time_zone`, `data`) values (\'zoned\', \'s\', \'event\', \'MONTHLY\', \'["MO","TU","WE","TH","FR"]\', \'Europe/Berlin\', ?)', [JSON.stringify({ raw: zoned })])
+			await connection.execute('insert into `entry` (`id`, `source_id`, `type`) values (\'once\', \'s\', \'event\')')
+
+			const parts = 'select `id`, `recurrence_freq`, `recurrence_interval`, `recurrence_byday`, `recurrence_bymonthday`, `recurrence_count`, `recurrence_until` from `entry` order by `id`'
+			const before = await connection.execute(parts)
+
+			await orm.migrator.up()
+
+			const rows = await connection.execute('select `id`, `recurrence`, `exdates` from `entry` order by `id`') as Array<{ id: string, recurrence: string | null, exdates: string | null }>
+			assert.deepEqual(rows.map(row => [row.id, row.recurrence && Recurrence.fromRRule(row.recurrence)?.toRRule(), row.exdates]), [
+				['local', 'FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,FR;UNTIL=20260718T235959Z', null],
+				['once', null, null],
+				['synced', 'FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1', JSON.stringify([Date.parse('2026-07-31T09:00:00Z')])],
+				['zoned', 'FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1', JSON.stringify([Date.parse('2026-11-30T08:00:00Z')])],
+			])
+			const columns = await connection.execute('select name from pragma_table_info(\'entry\')') as Array<{ name: string }>
+			assert.ok(!columns.some(column => column.name.startsWith('recurrence_') && column.name !== 'recurrence_id'))
+
+			// A rollback puts each rule back in the columns it came from, and a second upgrade reads it as the first did.
+			await orm.migrator.down({ migrations: ['Migration20261014210517_RecurrenceAsRule'] })
+			assert.deepEqual(await connection.execute(parts), before)
+			await orm.migrator.up()
+			assert.deepEqual(await connection.execute('select `id`, `recurrence`, `exdates` from `entry` order by `id`'), rows)
 		} finally {
 			await orm.close()
 		}

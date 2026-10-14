@@ -10,6 +10,7 @@ import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
 import { EntrySegments } from '../../entries/client/EntrySegments.js'
 import { EntryDragController } from '../../entries/client/EntryDragController.js'
 import { HideDoneTasksSetting } from '../../entries/client/HideDoneTasksSetting.js'
+import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
 import type { EntrySegmentComponent } from '../../entries/client/EventSegment.js'
 
 /**
@@ -22,28 +23,28 @@ export class Planning extends Component {
 	private readonly reorder = new ReorderabilityController(this, { handleReorder: (from, to) => this.commitReorder(from, to) })
 
 	/** The unscheduled chip a reorder has hold of, so the gesture can carry on as a scheduling drag. */
-	private held?: { entry: Entry, segment: EntrySegmentComponent, bounds: DOMRect }
+	private held?: { occurrence: EntryOccurrence, segment: EntrySegmentComponent, bounds: DOMRect }
 
 	/**
 	 * Open tasks whose day has gone by, most overdue first. A drag's ghost belongs to the grid it is
 	 * being dropped on: nothing is dropped into this list, so a preview that happens to be overdue
 	 * too would only read as a second copy of the entry already here.
 	 */
-	static get overdue(): ReadonlyArray<Entry> {
-		return EntryStore.entries
-			.filter(entry => entry.overdue && !EntryStore.previewing(entry))
+	static get overdue(): ReadonlyArray<EntryOccurrence> {
+		return EntryStore.occurrences
+			.filter(occurrence => occurrence.overdue && !EntryStore.previewing(occurrence.entry))
 			.sort((a, b) => a.lastDay!.valueOf() - b.lastDay!.valueOf())
 	}
 
 	/** Visible unscheduled tasks matching current lens filters: open before finished, in the manual order,
 	 * with tasks not placed yet after the placed ones, the soonest due first, then by title. */
-	static get unscheduled(): ReadonlyArray<Entry> {
-		return HideDoneTasksSetting.filter(EntryStore.entries)
-			.filter(entry => !entry.scheduled)
-			.sort((a, b) => Number(a.closed) - Number(b.closed)
-				|| EntryRank.compare(a.rank, b.rank)
+	static get unscheduled(): ReadonlyArray<EntryOccurrence> {
+		return HideDoneTasksSetting.filter(EntryStore.occurrences)
+			.filter(occurrence => !occurrence.scheduled)
+			.sort((a, b) => Number(a.entry.closed) - Number(b.entry.closed)
+				|| EntryRank.compare(a.entry.rank, b.entry.rank)
 				|| (a.due?.valueOf() ?? Infinity) - (b.due?.valueOf() ?? Infinity)
-				|| (a.heading || '').localeCompare(b.heading || ''))
+				|| (a.entry.heading || '').localeCompare(b.entry.heading || ''))
 	}
 
 	/** What the tab badge counts: everything either list is asking the user to decide about. */
@@ -51,7 +52,7 @@ export class Planning extends Component {
 		return Planning.overdue.length + Planning.unscheduled.length
 	}
 
-	private static reorderable(entry: Entry) {
+	private static reorderable({ entry }: EntryOccurrence) {
 		return !entry.closed && entry.persisted
 	}
 
@@ -82,30 +83,30 @@ export class Planning extends Component {
 			return
 		}
 		const segment = target.closest('mitra-entry-segment') as EntrySegmentComponent | null
-		const entry = segment?.segment?.entry
+		const occurrence = segment?.segment?.occurrence
 		this.held = undefined
-		if (!segment || !entry?.persisted) {
+		if (!segment || !occurrence?.entry.persisted) {
 			return
 		}
 		// Closed tasks, overdue ones, and a list too short to reorder go straight to scheduling.
 		const section = (e.currentTarget as HTMLElement).closest('section')!
-		if (section.classList.contains('unscheduled') && Planning.reorderable(entry) && Planning.unscheduled.filter(Planning.reorderable).length >= 2) {
-			this.held = { entry, segment, bounds: section.getBoundingClientRect() }
+		if (section.classList.contains('unscheduled') && Planning.reorderable(occurrence) && Planning.unscheduled.filter(Planning.reorderable).length >= 2) {
+			this.held = { occurrence, segment, bounds: section.getBoundingClientRect() }
 			return
 		}
-		EntryDragController.beginExternal(entry, segment, this, e)
+		EntryDragController.beginExternal(EntryStore.editable(occurrence), segment, this, e)
 	}
 
 	/** `from` and `to` index into {@link unscheduled}. */
 	private commitReorder(from: number, to: number) {
-		const entries = Planning.unscheduled
-		const moved = entries[from]
+		const occurrences = Planning.unscheduled
+		const moved = occurrences[from]
 		if (!moved || from === to) {
 			return
 		}
-		const rest = entries.filter(entry => entry !== moved)
-		const anchor = (entry: Entry | undefined) => entry && Planning.reorderable(entry) ? entry : undefined
-		void EntryStore.reorder(entries.filter(Planning.reorderable), moved, anchor(rest[to - 1]), anchor(rest[to]))
+		const rest = occurrences.filter(occurrence => occurrence !== moved)
+		const anchor = (occurrence: EntryOccurrence | undefined) => occurrence && Planning.reorderable(occurrence) ? occurrence.entry : undefined
+		void EntryStore.reorder(occurrences.filter(Planning.reorderable).map(occurrence => occurrence.entry), moved.entry, anchor(rest[to - 1]), anchor(rest[to]))
 	}
 
 	/** How far (px) a reorder may stray outside the list before it becomes a scheduling drag. */
@@ -119,7 +120,7 @@ export class Planning extends Component {
 		}
 		this.held = undefined
 		this.reorder.abandon()
-		EntryDragController.beginExternal(held.entry, held.segment, this, e, { held: true })
+		EntryDragController.beginExternal(EntryStore.editable(held.occurrence), held.segment, this, e, { held: true })
 	}
 
 	private static near(bounds: DOMRect, e: PointerEvent) {
@@ -131,7 +132,7 @@ export class Planning extends Component {
 	/** Brings `entry`'s row into view once the list has it, so its editor has somewhere to open from. */
 	async reveal(entry: Entry) {
 		await this.updateComplete
-		const row = [...this.querySelectorAll('mitra-entry-segment')].find(segment => segment.segment?.entry === entry)
+		const row = [...this.querySelectorAll('mitra-entry-segment')].find(segment => segment.segment?.entry === entry || (entry.id !== undefined && segment.segment?.occurrence.key === entry.id))
 		row?.scrollIntoView({ block: 'nearest' })
 	}
 
@@ -263,9 +264,9 @@ export class Planning extends Component {
 					${this.headerTemplate(t('Overdue'), overdue.length)}
 					<div class="entries" @pointerdown=${this.handlePointerDown}>
 						<ul>
-							${repeat(overdue, entry => entry.id, entry => html`
+							${repeat(overdue, occurrence => EntryStore.identityOf(occurrence), occurrence => html`
 								<li>
-									<mitra-entry-segment dated .segment=${EntrySegments.for(entry)[0]}></mitra-entry-segment>
+									<mitra-entry-segment dated .segment=${EntrySegments.for(occurrence)[0]}></mitra-entry-segment>
 								</li>
 							`)}
 						</ul>
@@ -282,9 +283,9 @@ export class Planning extends Component {
 				` : html`
 					<div class="entries" @pointerdown=${this.handlePointerDown}>
 						<ul>
-							${repeat(unscheduled, entry => EntrySegments.for(entry)[0]!.id, (entry, index) => html`
-								<li ${this.reorder.item({ index, disabled: !Planning.reorderable(entry) })}>
-									<mitra-entry-segment dated .segment=${EntrySegments.for(entry)[0]}></mitra-entry-segment>
+							${repeat(unscheduled, occurrence => EntrySegments.for(occurrence)[0]!.id, (occurrence, index) => html`
+								<li ${this.reorder.item({ index, disabled: !Planning.reorderable(occurrence) })}>
+									<mitra-entry-segment dated .segment=${EntrySegments.for(occurrence)[0]}></mitra-entry-segment>
 								</li>
 							`)}
 						</ul>

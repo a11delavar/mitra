@@ -8,7 +8,6 @@ import { type User } from '../../identity/User.js'
 import { Entry } from '../../entries/Entry.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
 import { EntryRelations } from '../../relations/EntryRelations.js'
-import { exdatesOf } from '../../recurrence/server/occurrences.js'
 import { MigrationOutcome, MigrationPlan, MigrationVerdict } from '../MigrationPlan.js'
 import { MigrationRefused } from './SourceMigration.js'
 import { type Source } from '../../sources/Source.js'
@@ -58,7 +57,6 @@ export class IcsImport {
 		} catch {
 			throw new MigrationRefused('The file is not a readable calendar (.ics) file')
 		}
-		const timezones = calendar.getAllSubcomponents('vtimezone')
 
 		// Group master and occurrence overrides by UID, like the feed engine does.
 		const groups = Map.groupBy(IcsSyncEngine.modelledComponents(calendar),
@@ -69,14 +67,6 @@ export class IcsImport {
 			const entry = new Entry({ id: crypto.randomUUID(), sourceId: target.id })
 			CalDAV.applyComponent(entry, master, integration)
 			entry.uid = crypto.randomUUID()
-			if (entry.recurrence?.freq) {
-				// EXDATEs travel through the exdates column; the parse reads them off a transient raw
-				// (the same authority the expansion reads) which must not persist, since the file is not sync state.
-				entry.data = { raw: IcsSyncEngine.serialize([master], timezones) }
-				const exdates = exdatesOf(entry)
-				entry.exdates = exdates.length ? exdates : undefined
-				entry.data = undefined
-			}
 			return { entry, fileUid, occurrence: components.some(component => !!CalDAV.recurrenceProps(component).recurrenceId) }
 		})
 		if (!entities.length) {

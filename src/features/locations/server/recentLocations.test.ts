@@ -8,7 +8,6 @@ import { Source } from '../../sources/Source.js'
 import { Entry } from '../../entries/Entry.js'
 import { EntryType } from '../../entries/EntryType.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
-import { Recurrence } from '../../recurrence/Recurrence.js'
 import { NotificationSubscription } from '../../reminders/NotificationSubscription.js'
 import { Integration } from '../../../integrations/Integration.js'
 import { MitraCalendar } from '../../../integrations/mitra/MitraCalendar.js'
@@ -21,7 +20,7 @@ describe('recent locations', () => {
 
 	before(async () => {
 		orm = await MikroORM.init({
-			entities: [User, Identity, Session, Integration, MitraCalendar, Source, Entry, EntryRelation, Recurrence, NotificationSubscription],
+			entities: [User, Identity, Session, Integration, MitraCalendar, Source, Entry, EntryRelation, NotificationSubscription],
 			dbName: ':memory:',
 			forceUndefined: true,
 			namingStrategy: class extends UnderscoreNamingStrategy {

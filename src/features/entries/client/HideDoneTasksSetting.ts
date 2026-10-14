@@ -1,5 +1,5 @@
 import { setting, ToggleSetting, userStorage, type SettingStorage } from '../../settings/client/Setting.js'
-import { type Entry } from '../Entry.js'
+import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 import { EntryStore } from './EntryStore.js'
 
@@ -17,24 +17,25 @@ export class HideDoneTasksSetting extends ToggleSetting {
 		return stored.read() ?? HideDoneTasksSetting.default
 	}
 
-	/** Whether a surface draws this entry. Closed tasks remain visible while their editor is active. */
-	static shows(entry: Entry, hidden = HideDoneTasksSetting.current) {
-		return !hidden || !entry.type.isTask || !entry.closed || EntryEditorIntent.holds(entry)
+	/** Whether a surface draws this occurrence. Closed tasks remain visible while their editor is active. */
+	static shows(occurrence: EntryOccurrence, hidden = HideDoneTasksSetting.current) {
+		const { entry } = occurrence
+		return !hidden || !entry.type.isTask || !entry.closed || EntryEditorIntent.holds(occurrence)
 	}
 
-	private static readonly filtered = new WeakMap<ReadonlyArray<Entry>, { hidden: boolean, result: ReadonlyArray<Entry> }>()
+	private static readonly filtered = new WeakMap<ReadonlyArray<EntryOccurrence>, { hidden: boolean, result: ReadonlyArray<EntryOccurrence> }>()
 
 	/**
-	 * Filters entries for display, memoized on input array identity.
+	 * Filters occurrences for display, memoized on input array identity.
 	 * Returns input untouched when lens is disabled.
 	 */
-	static filter(entries: ReadonlyArray<Entry>, hidden = HideDoneTasksSetting.current): ReadonlyArray<Entry> {
-		const cached = HideDoneTasksSetting.filtered.get(entries)
+	static filter(occurrences: ReadonlyArray<EntryOccurrence>, hidden = HideDoneTasksSetting.current): ReadonlyArray<EntryOccurrence> {
+		const cached = HideDoneTasksSetting.filtered.get(occurrences)
 		if (cached?.hidden === hidden) {
 			return cached.result
 		}
-		const result = !hidden ? entries : entries.filter(entry => HideDoneTasksSetting.shows(entry, hidden))
-		HideDoneTasksSetting.filtered.set(entries, { hidden, result })
+		const result = !hidden ? occurrences : occurrences.filter(occurrence => HideDoneTasksSetting.shows(occurrence, hidden))
+		HideDoneTasksSetting.filtered.set(occurrences, { hidden, result })
 		return result
 	}
 

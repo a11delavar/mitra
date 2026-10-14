@@ -6,7 +6,6 @@ import { Identity } from '../Identity.js'
 import { Source } from '../../sources/Source.js'
 import { Entry } from '../../entries/Entry.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
-import { Recurrence } from '../../recurrence/Recurrence.js'
 import { Integration } from '../../../integrations/Integration.js'
 import { MitraCalendar } from '../../../integrations/mitra/MitraCalendar.js'
 import { Demo } from '../../../integrations/demo/Demo.js'
@@ -18,7 +17,7 @@ let orm: MikroORM
 describe('Sandbox', () => {
 	before(async () => {
 		orm = await MikroORM.init({
-			entities: [User, Identity, Integration, MitraCalendar, Demo, Source, Entry, Recurrence, EntryRelation, Session],
+			entities: [User, Identity, Integration, MitraCalendar, Demo, Source, Entry, EntryRelation, Session],
 			dbName: ':memory:',
 			forceUndefined: true,
 			namingStrategy: class extends UnderscoreNamingStrategy {

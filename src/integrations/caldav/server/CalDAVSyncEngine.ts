@@ -608,6 +608,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 		}
 
 		await this.writeResource(integration, master, applyTo)
+		master.exclude(recurrenceId)
 
 		for (const override of await em.find(Entry, { recurringEntryId: master.id })) {
 			if (CalDAV.instantOf(override.recurrenceId) === recurrenceId.getTime()) {

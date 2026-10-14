@@ -1,3 +1,4 @@
+import { DateTimeRange } from '@3mo/date-time'
 import { type EntityManager } from '@mikro-orm/core'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
 import { Integration } from '../../../integrations/Integration.js'
@@ -5,7 +6,6 @@ import { type User } from '../../identity/User.js'
 import { Entry } from '../../entries/Entry.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
 import { EntryRelations } from '../../relations/EntryRelations.js'
-import { Occurrences, exdatesOf, occurrenceOf } from '../../recurrence/server/occurrences.js'
 import { MigrationOutcome, MigrationPlan, MigrationVerdict } from '../MigrationPlan.js'
 import { type Source } from '../../sources/Source.js'
 
@@ -101,13 +101,12 @@ export class SourceMigration {
 	}
 
 	/** Occurrences within FLATTEN_HORIZON_DAYS, respecting exclusions. */
-	private occurrencesOf(master: Entry): Array<{ start: Date, end: Date }> | undefined {
-		if (!master.start) {
+	private occurrencesOf(master: Entry) {
+		if (!master.start || !master.occurrences.recurring) {
 			return undefined
 		}
-		const from = master.start as Date
-		const until = new Date(Math.max(Date.now(), from.getTime()) + FLATTEN_HORIZON_DAYS * 24 * 60 * 60 * 1000)
-		return Occurrences.of(master)?.within(from, until)
+		const until = new Date(Math.max(Date.now(), master.start.getTime()) + FLATTEN_HORIZON_DAYS * 24 * 60 * 60 * 1000)
+		return master.occurrences.within(new DateTimeRange(master.start, until))
 	}
 
 	/** Runs migration holding exclusive locks across both integrations. */
@@ -200,10 +199,8 @@ export class SourceMigration {
 		if (!this.flatten || !verdict.flattenable) {
 			return [this.copyOf(entry)]
 		}
-		return (this.occurrencesOf(entry) ?? []).map(occurrence => {
-			const flattened = occurrenceOf(entry, occurrence)
-			return this.copyOf(entry, { uid: crypto.randomUUID(), recurrence: undefined, exdates: undefined, start: flattened.start, end: flattened.end, due: flattened.due })
-		})
+		return (this.occurrencesOf(entry) ?? []).map(({ start, end, due }) =>
+			this.copyOf(entry, { uid: crypto.randomUUID(), recurrence: undefined, exdates: undefined, start, end, due }))
 	}
 
 	/** Creates a target entry clone, preserving content and UID (or minting fresh UID for copy), dropping origin sync data. */
@@ -230,7 +227,7 @@ export class SourceMigration {
 			transparency: entry.transparency,
 			visibility: entry.visibility,
 			recurrence: entry.recurrence,
-			exdates: entry.recurrence?.freq ? exdatesOf(entry) : undefined,
+			exdates: entry.recurrence?.freq ? entry.occurrences.excluded : undefined,
 			reminders: entry.reminders ? [...entry.reminders] : entry.reminders,
 			participants: entry.participants,
 			relations: entry.relations,

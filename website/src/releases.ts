@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { createMarkdownProcessor } from '@astrojs/markdown-remark'
+import { remarkAlert } from 'remark-github-blockquote-alert'
 import sharp from 'sharp'
 import { base, docsBase, languages, localized } from '../site.mjs'
 import { translationOf, translationState } from '../tools/translations.mjs'
@@ -251,4 +252,4 @@ function anchorOf(heading: string) {
 	return heading.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '')
 }
 
-const processor = createMarkdownProcessor()
+const processor = createMarkdownProcessor({ remarkPlugins: [remarkAlert] })

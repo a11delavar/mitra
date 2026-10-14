@@ -1,5 +1,5 @@
 import { type DateTime } from '@3mo/date-time'
-import { type Entry } from '../Entry.js'
+import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
 import { EntrySegment } from './EntrySegment.js'
 import { EntryStore } from './EntryStore.js'
 
@@ -20,40 +20,41 @@ export interface MonthWeek {
  * Derives per-day segment slices, timed column clusters, and month/all-day lane slots.
  */
 export class EntrySegments {
-	private static readonly perEntry = new WeakMap<Entry, { readonly spanKey: string, readonly segments: ReadonlyArray<EntrySegment> }>()
+	private static readonly perOccurrence = new WeakMap<EntryOccurrence, { readonly spanKey: string, readonly segments: ReadonlyArray<EntrySegment> }>()
 
-	private static spanKey(entry: Entry) {
-		return `${entry.start?.valueOf()}:${entry.end?.valueOf()}:${!!entry.allDay}`
+	private static spanKey(occurrence: EntryOccurrence) {
+		return `${occurrence.start?.valueOf()}:${occurrence.end?.valueOf()}:${occurrence.allDay}`
 	}
 
-	/** Returns memoized per-day slices for an entry. */
-	static for(entry: Entry): ReadonlyArray<EntrySegment> {
-		const spanKey = EntrySegments.spanKey(entry)
-		let memo = EntrySegments.perEntry.get(entry)
+	/** Returns memoized per-day slices for an occurrence. */
+	static for(occurrence: EntryOccurrence): ReadonlyArray<EntrySegment> {
+		const spanKey = EntrySegments.spanKey(occurrence)
+		let memo = EntrySegments.perOccurrence.get(occurrence)
 		if (memo?.spanKey !== spanKey) {
-			memo = { spanKey, segments: EntrySegments.slice(entry) }
-			EntrySegments.perEntry.set(entry, memo)
+			memo = { spanKey, segments: EntrySegments.slice(occurrence) }
+			EntrySegments.perOccurrence.set(occurrence, memo)
 		}
 		return memo.segments
 	}
 
-	private static slice(entry: Entry): ReadonlyArray<EntrySegment> {
-		if (!entry.start) {
-			return [new EntrySegment(entry)]
+	private static slice(occurrence: EntryOccurrence): ReadonlyArray<EntrySegment> {
+		const { start, end } = occurrence
+		if (!start) {
+			return [new EntrySegment(occurrence)]
 		}
 		// A moment with no end still belongs to the day it starts on.
-		if (!entry.end) {
-			return [new EntrySegment(entry, entry.start.dayStart)]
+		if (!end) {
+			return [new EntrySegment(occurrence, start.dayStart)]
 		}
-		const startDay = entry.start.dayStart
-		const endDay = entry.end.dayStart
-		if (startDay.equals(endDay) || (entry.end.hour === 0 && entry.end.minute === 0 && startDay.equals(endDay.subtract({ days: 1 })))) {
-			return [new EntrySegment(entry, startDay)]
+		const startDay = start.dayStart
+		const endDay = end.dayStart
+		if (startDay.equals(endDay) || (end.hour === 0 && end.minute === 0 && startDay.equals(endDay.subtract({ days: 1 })))) {
+			return [new EntrySegment(occurrence, startDay)]
 		}
 		const segments = new Array<EntrySegment>()
 		let day = startDay
-		while (day.isBefore(endDay) || (day.equals(endDay) && (entry.end.hour > 0 || entry.end.minute > 0))) {
-			const segment = new EntrySegment(entry, day)
+		while (day.isBefore(endDay) || (day.equals(endDay) && (end.hour > 0 || end.minute > 0))) {
+			const segment = new EntrySegment(occurrence, day)
 			const previous = segments.at(-1)
 			if (previous) {
 				previous.next = segment
@@ -67,19 +68,19 @@ export class EntrySegments {
 
 	private static readonly cache = new WeakMap<ReadonlyArray<DateTime>, EntrySegments>()
 
-	/** Returns cached or new EntrySegments cohort for given entries and days. */
-	static of(entries: ReadonlyArray<Entry>, days: ReadonlyArray<DateTime>): EntrySegments {
+	/** Returns cached or new EntrySegments cohort for given occurrences and days. */
+	static of(occurrences: ReadonlyArray<EntryOccurrence>, days: ReadonlyArray<DateTime>): EntrySegments {
 		const cached = EntrySegments.cache.get(days)
-		if (cached?.entries === entries) {
+		if (cached?.occurrences === occurrences) {
 			return cached
 		}
-		const cohort = new EntrySegments(entries, days, cached?.clustered)
+		const cohort = new EntrySegments(occurrences, days, cached?.clustered)
 		EntrySegments.cache.set(days, cohort)
 		return cohort
 	}
 
 	constructor(
-		readonly entries: ReadonlyArray<Entry>,
+		readonly occurrences: ReadonlyArray<EntryOccurrence>,
 		readonly days: ReadonlyArray<DateTime>,
 		/** Each day's clustered list with the segments it was made of, handed on to the next cohort of these days. */
 		private readonly clustered = new Map<number, { readonly members: ReadonlyArray<EntrySegment>, readonly list: ReadonlyArray<EntrySegment> }>(),
@@ -89,11 +90,11 @@ export class EntrySegments {
 	private get timedByDay() {
 		if (!this._timedByDay) {
 			const byDay = new Map<number, Array<EntrySegment>>()
-			for (const entry of this.entries) {
-				if (!entry.allDay) {
-					for (const segment of EntrySegments.for(entry)) {
-						// The day `fallsOn` names: its own, else for a dateless slice its entry's start.
-						const day = segment.date ? segment.dayValue : segment.entry.start?.dayStart.valueOf()
+			for (const occurrence of this.occurrences) {
+				if (!occurrence.allDay) {
+					for (const segment of EntrySegments.for(occurrence)) {
+						// The day `fallsOn` names: its own, else for a dateless slice its start.
+						const day = segment.date ? segment.dayValue : occurrence.start?.dayStart.valueOf()
 						if (day !== undefined) {
 							const list = byDay.get(day)
 							list ? list.push(segment) : byDay.set(day, [segment])
@@ -128,8 +129,8 @@ export class EntrySegments {
 	private get segmentsByDay(): ReadonlyMap<number, ReadonlyArray<EntrySegment>> {
 		if (!this._segmentsByDay) {
 			const map = new Map<number, Array<EntrySegment>>()
-			for (const entry of this.entries) {
-				for (const segment of EntrySegments.for(entry)) {
+			for (const occurrence of this.occurrences) {
+				for (const segment of EntrySegments.for(occurrence)) {
 					if (segment.dayValue !== undefined) {
 						const list = map.get(segment.dayValue)
 						list ? list.push(segment) : map.set(segment.dayValue, [segment])
@@ -142,48 +143,48 @@ export class EntrySegments {
 	}
 
 	/** Returns representative segments whose run touches [from, to], ordered by start date and run length. */
-	runsIn(from: DateTime, to: DateTime, accept: (entry: Entry) => boolean): ReadonlyArray<EntrySegment> {
+	runsIn(from: DateTime, to: DateTime, accept: (occurrence: EntryOccurrence) => boolean): ReadonlyArray<EntrySegment> {
 		const fromValue = from.dayStart.valueOf()
 		const toValue = to.dayStart.valueOf()
-		const byEntry = new Map<Entry, EntrySegment>()
+		const byOccurrence = new Map<EntryOccurrence, EntrySegment>()
 		for (const [dayValue, segments] of this.segmentsByDay) {
 			if (dayValue < fromValue || dayValue > toValue) {
 				continue
 			}
 			for (const segment of segments) {
-				const kept = byEntry.get(segment.entry)
-				if ((!kept || segment.dayValue! < kept.dayValue!) && accept(segment.entry)) {
-					byEntry.set(segment.entry, segment)
+				const kept = byOccurrence.get(segment.occurrence)
+				if ((!kept || segment.dayValue! < kept.dayValue!) && accept(segment.occurrence)) {
+					byOccurrence.set(segment.occurrence, segment)
 				}
 			}
 		}
 		const runDays = (segment: EntrySegment) => segment.runEnd.dayValue! - segment.dayValue!
-		return [...byEntry.values()].sort((a, b) => a.dayValue === b.dayValue
+		return [...byOccurrence.values()].sort((a, b) => a.dayValue === b.dayValue
 			? runDays(b) - runDays(a)
 			: a.dayValue! - b.dayValue!)
 	}
 
 	/** Lane ranking for month grid packing (multi-day first, then all-day, then timed). */
-	static laneRank(entry: Entry): number {
-		if (!entry.start || !entry.end) {
+	static laneRank(occurrence: EntryOccurrence): number {
+		if (!occurrence.start || !occurrence.end) {
 			return 3
 		}
-		if (entry.multiDay) {
+		if (occurrence.multiDay) {
 			return 0
 		}
-		return entry.allDay ? 1 : 2
+		return occurrence.allDay ? 1 : 2
 	}
 
 	/**
 	 * The order lanes are packed in: by rank, then earliest start and longest first. Ties fall to the heading, so the order
 	 * never depends on how the entries arrived and a reload never swaps two lanes.
 	 */
-	static laneOrder(a: Entry, b: Entry): number {
+	static laneOrder(a: EntryOccurrence, b: EntryOccurrence): number {
 		const rank = EntrySegments.laneRank(a) - EntrySegments.laneRank(b)
 		if (rank !== 0) return rank
 		if (a.start && b.start && !a.start.equals(b.start)) return a.start.isBefore(b.start) ? -1 : 1
 		if (a.end && b.end && !a.end.equals(b.end)) return a.end.isAfter(b.end) ? -1 : 1
-		return a.heading.localeCompare(b.heading) || String(a.id).localeCompare(String(b.id))
+		return a.entry.heading.localeCompare(b.entry.heading) || String(a.key).localeCompare(String(b.key))
 	}
 
 	monthWeek(week: ReadonlyArray<DateTime>): MonthWeek {
@@ -201,54 +202,55 @@ export class EntrySegments {
 			if (startColumn < 0 || endColumn < 0) {
 				continue
 			}
-			bars.push({ segment, startColumn, span: endColumn - startColumn + 1, slot: this.monthSlots.get(segment.entry) ?? 0, clippedRight })
+			bars.push({ segment, startColumn, span: endColumn - startColumn + 1, slot: this.monthSlots.get(segment.occurrence) ?? 0, clippedRight })
 		}
 		return { bars }
 	}
 
-	private _monthSlots?: ReadonlyMap<Entry, number>
-	get monthSlots(): ReadonlyMap<Entry, number> {
-		return this._monthSlots ??= this.slots(this.entries)
+	private _monthSlots?: ReadonlyMap<EntryOccurrence, number>
+	get monthSlots(): ReadonlyMap<EntryOccurrence, number> {
+		return this._monthSlots ??= this.slots(this.occurrences)
 	}
 
 	/** The week all-day lane's packing: the same greedy rows over only the all-day entries. A timed
 	 * entry never occupies a lane there, so packing around it would punch holes in the strip. Computed
 	 * (not CSS `dense` auto-flow) because the lane needs its row COUNT for explicit tracks. See the
 	 * `.all-day` rule in Days.ts for why auto-flow rows can't size that row. */
-	private _allDaySlots?: ReadonlyMap<Entry, number>
-	get allDaySlots(): ReadonlyMap<Entry, number> {
-		return this._allDaySlots ??= this.slots(this.entries.filter(entry => !!entry.allDay))
+	private _allDaySlots?: ReadonlyMap<EntryOccurrence, number>
+	get allDaySlots(): ReadonlyMap<EntryOccurrence, number> {
+		return this._allDaySlots ??= this.slots(this.occurrences.filter(occurrence => occurrence.allDay))
 	}
 
-	private slots(entries: ReadonlyArray<Entry>): ReadonlyMap<Entry, number> {
-		const datesByEntry = new Map<Entry, ReadonlyArray<number>>()
-		const previewDates = new Map<Entry, ReadonlyArray<number>>()
-		for (const entry of entries) {
-			const dates = EntrySegments.for(entry).map(s => s.dayValue).filter((v): v is number => v !== undefined)
+	private slots(occurrences: ReadonlyArray<EntryOccurrence>): ReadonlyMap<EntryOccurrence, number> {
+		const datesByOccurrence = new Map<EntryOccurrence, ReadonlyArray<number>>()
+		const previewDates = new Map<EntryOccurrence, ReadonlyArray<number>>()
+		for (const occurrence of occurrences) {
+			const dates = EntrySegments.for(occurrence).map(s => s.dayValue).filter((v): v is number => v !== undefined)
 			if (!dates.length) {
 				continue
 			}
-			(EntryStore.isPreview(entry) ? previewDates : datesByEntry).set(entry, dates)
+			(EntryStore.isPreview(occurrence.entry) ? previewDates : datesByOccurrence).set(occurrence, dates)
 		}
 
-		const ordered = [...datesByEntry.keys()].sort(EntrySegments.laneOrder)
+		const ordered = [...datesByOccurrence.keys()].sort(EntrySegments.laneOrder)
 
-		const slots = new Map<Entry, number>()
+		const slots = new Map<EntryOccurrence, number>()
 		const rows = new Array<Set<number>>()
-		for (const entry of ordered) {
-			const dates = datesByEntry.get(entry)!
+		for (const occurrence of ordered) {
+			const dates = datesByOccurrence.get(occurrence)!
 			let slot = rows.findIndex(row => dates.every(date => !row.has(date)))
 			if (slot === -1) {
 				slot = rows.length
 				rows.push(new Set())
 			}
 			dates.forEach(date => rows[slot]!.add(date))
-			slots.set(entry, slot)
+			slots.set(occurrence, slot)
 		}
 
-		const source = EntryStore.dragSource
+		const dragged = EntryStore.dragSource
+		const source = dragged && ordered.find(occurrence => occurrence.entry === dragged)
 		const vacatingSlot = source ? slots.get(source) : undefined
-		const vacating = new Set(source ? datesByEntry.get(source) ?? [] : [])
+		const vacating = new Set(source ? datesByOccurrence.get(source) ?? [] : [])
 		for (const [preview, dates] of previewDates) {
 			const index = rows.findIndex((row, slot) => dates.every(date => !row.has(date) || (slot === vacatingSlot && vacating.has(date))))
 			slots.set(preview, index === -1 ? rows.length : index)

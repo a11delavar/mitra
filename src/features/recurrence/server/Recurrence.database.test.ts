@@ -31,8 +31,8 @@ async function withEntry(recurrence: Recurrence | undefined, action: (orm: Mikro
 	}
 }
 
-const columns = async (orm: MikroORM, id: string) =>
-	(await orm.em.getConnection().execute('select `recurrence_freq`, `recurrence_byday`, `recurrence_until` from `entry` where `id` = ?', [id]))[0]
+const column = async (orm: MikroORM, id: string) =>
+	(await orm.em.getConnection().execute('select `recurrence` from `entry` where `id` = ?', [id]))[0]!.recurrence
 
 describe('Recurrence in the database', () => {
 	const rule = new Recurrence({
@@ -41,21 +41,22 @@ describe('Recurrence in the database', () => {
 		until: new RecurrenceEnd(Temporal.PlainDate.from('2026-07-18')),
 	})
 
-	it('stores the columns as they always were: the code, the BYDAY parts and UTC midnight in epoch milliseconds', () => withEntry(rule, async (orm, id) => {
-		assert.deepEqual({ ...await columns(orm, id) }, {
-			recurrence_freq: 'MONTHLY',
-			recurrence_byday: '["MO","-1FR"]',
-			recurrence_until: Date.parse('2026-07-18T00:00:00Z'),
-		})
+	it('stores the rule as its RRULE', () => withEntry(rule, async (orm, id) => {
+		assert.equal(await column(orm, id), 'FREQ=MONTHLY;BYDAY=MO,-1FR;UNTIL=20260718T235959Z')
 	}))
 
-	it('reads them back as the value objects', () => withEntry(rule, async (orm, id) => {
+	it('reads it back as the value objects', () => withEntry(rule, async (orm, id) => {
 		const entry = await orm.em.fork().findOneOrFail(Entry, { id })
 		assert.equal(entry.recurrence!.freq, RecurrenceFrequency.Monthly)
 		assert.equal(entry.recurrence!.byday![0], RecurrenceWeekday.Monday)
 		assert.ok(entry.recurrence!.byday![1]!.equals(RecurrenceWeekday.Friday.nth(-1)))
 		assert.ok(entry.recurrence!.until!.equals(rule.until))
 		assert.ok(entry.recurrence!.equals(rule))
+	}))
+
+	it('keeps the parts Mitra doesn\'t edit as written', () => withEntry(Recurrence.fromRRule('FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1'), async (orm, id) => {
+		assert.equal(await column(orm, id), 'FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1')
+		assert.equal((await orm.em.fork().findOneOrFail(Entry, { id })).recurrence!.rest, 'BYSETPOS=-1')
 	}))
 
 	it('leaves a loaded rule unchanged on the next flush', () => withEntry(rule, async (orm, id) => {
@@ -66,14 +67,14 @@ describe('Recurrence in the database', () => {
 		assert.deepEqual(changed.filter(column => column.startsWith('recurrence')), [])
 	}))
 
-	it('finds masters by their frequency', () => withEntry(rule, async orm => {
+	it('finds recurring entries by their rule', () => withEntry(rule, async orm => {
 		const em = orm.em.fork()
-		assert.equal(await em.count(Entry, { recurrence: { freq: { $ne: null } } }), 1)
-		assert.equal(await em.count(Entry, { recurrence: { freq: null } }), 0)
+		assert.equal(await em.count(Entry, { recurrence: { $ne: null } }), 1)
+		assert.equal(await em.count(Entry, { recurrence: null }), 0)
 	}))
 
-	it('keeps the columns empty without a rule', () => withEntry(undefined, async (orm, id) => {
-		assert.deepEqual({ ...await columns(orm, id) }, { recurrence_freq: null, recurrence_byday: null, recurrence_until: null })
-		assert.equal(await orm.em.fork().count(Entry, { recurrence: { freq: null } }), 1)
+	it('keeps the column empty without a rule', () => withEntry(undefined, async (orm, id) => {
+		assert.equal(await column(orm, id), null)
+		assert.equal(await orm.em.fork().count(Entry, { recurrence: null }), 1)
 	}))
 })

@@ -6,19 +6,20 @@ import { TaskStatus } from './TaskStatus.js'
 import { Transparency } from './Transparency.js'
 import { Visibility } from './Visibility.js'
 import { EntryTimeZone } from './EntryTimeZone.js'
-import { Recurrence, type RecurrenceScope } from '../recurrence/Recurrence.js'
+import { Recurrence } from '../recurrence/Recurrence.js'
 import { Participants, type Participant } from '../participants/Participant.js'
 import { EntryRelations } from '../relations/EntryRelations.js'
 import { type Calendar } from '../sources/Calendar.js'
 import { type Validatable } from '../../infrastructure/validation/Validatable.js'
 import { ValidationError } from '../../infrastructure/validation/ValidationError.js'
+import { type EntryOccurrenceChangeScope } from '../recurrence/EntryOccurrenceChange.js'
 
 /** What a patch applies to: the entry it edits (none creates one), the calendar it is in, the calendar it goes to, and how far an occurrence's edit reaches. */
 export interface EntryPatchContext {
 	readonly entry?: Entry
 	readonly from?: Calendar
 	readonly to: Calendar
-	readonly scope?: RecurrenceScope
+	readonly scope?: EntryOccurrenceChangeScope
 }
 
 /** A date as `Entry` converts it, an all-day one by the `allDay` beside it; called at run time, as the two modules import each other. */
@@ -127,6 +128,11 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 		// DTSTART is required of a VEVENT (RFC 5545 §3.6.1).
 		if (this.start === null && entry.start && !type.isTask) {
 			yield new ValidationError('An event must have a date', ['start'])
+		}
+		// What the rule iterates: the start, or the due of an unscheduled task. Only an occurrence leaving the rule may drop it.
+		const anchor = entry.start ? 'start' : 'due'
+		if (scope && scope !== 'this' && entry.recurrence && this[anchor] === null) {
+			yield new ValidationError('A repeating entry cannot lose the date it repeats from', [anchor])
 		}
 		if (moving && scope !== 'this' && recurrence && !to.integration.ownership.holds('recurrence')) {
 			yield new ValidationError('This calendar cannot hold a repeating entry', ['recurrence'])

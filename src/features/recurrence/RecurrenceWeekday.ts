@@ -1,6 +1,5 @@
 import { Localizer } from '@3mo/localization'
 import { type Converter } from '@a11d/converter'
-import { Type } from '../../infrastructure/model/orm.js'
 
 export type RecurrenceWeekdayCode = 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA' | 'SU'
 
@@ -83,20 +82,5 @@ export class RecurrenceWeekday {
 		// An unknown code leaves a hole, which `Recurrence.valid` refuses.
 		construct: value => value?.map(code => RecurrenceWeekday.parse(code)!),
 		deconstruct: value => value?.map(String),
-	}
-
-	static readonly Mapper = class extends Type<Array<RecurrenceWeekday> | undefined, string | null> {
-		override convertToDatabaseValue(value: Array<RecurrenceWeekday> | null | undefined): string | null {
-			return value ? JSON.stringify(value.map(String)) : null
-		}
-
-		override convertToJSValue(value: unknown): Array<RecurrenceWeekday> | undefined {
-			const codes: unknown = typeof value === 'string' ? JSON.parse(value) : value
-			return codes instanceof Array ? codes.map(code => RecurrenceWeekday.parse(code)!) : undefined
-		}
-
-		override getColumnType(): string {
-			return 'json'
-		}
 	}
 }

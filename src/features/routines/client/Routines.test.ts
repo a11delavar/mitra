@@ -7,6 +7,7 @@ import { EntryType } from '../../entries/EntryType.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
 import { Recurrence } from '../../recurrence/Recurrence.js'
 import { Routines, type RoutineUnit } from './Routines.js'
+import { EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
 import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
 import { RecurrenceWeekday } from '../../recurrence/RecurrenceWeekday.js'
 
@@ -15,26 +16,25 @@ describe('Routines', () => {
 
 	const days = (count: number, from = 0) => Array.from({ length: count }, (_, index) => base.add({ days: from + index }))
 
-	const series = (id: string, recurrence: Recurrence, dayOffsets: ReadonlyArray<number>, heading = id, sourceId = 'cal') =>
-		dayOffsets.map(offset => new Entry({
-			id: `${id}__${offset}`,
-			sourceId,
-			heading,
-			start: base.add({ days: offset, hours: 9 }),
-			end: base.add({ days: offset, hours: 10 }),
-			recurrence,
-			recurringEntryId: id,
-		}))
+	/** A one-off entry as the views get it. */
+	const shown = (entry: Entry) => entry.occurrences.single
+
+	/** A recurring entry's occurrences on the given days. */
+	const series = (id: string, recurrence: Recurrence, dayOffsets: ReadonlyArray<number>, heading = id, sourceId = 'cal') => {
+		const at = (offset: number, hours: number) => base.add({ days: offset, hours })
+		const recurring = new Entry({ id, sourceId, heading, start: at(dayOffsets[0] ?? 0, 9), end: at(dayOffsets[0] ?? 0, 10), recurrence })
+		return dayOffsets.map(offset => new EntryOccurrence(recurring, at(offset, 9), at(offset, 10), undefined, at(offset, 9), recurring))
+	}
 
 	const detached = (heading: string, offset: number, sourceId = 'cal', init: Partial<Entry> = {}) =>
-		new Entry({
+		shown(new Entry({
 			id: `loose-${heading}-${offset}`,
 			sourceId,
 			heading,
 			start: base.add({ days: offset, hours: 21 }),
 			end: base.add({ days: offset, hours: 22 }),
 			...init,
-		})
+		}))
 
 	const cadence = (recurrence: Recurrence, count: number, from = 0) =>
 		Array.from({ length: count }, (_, index) => from + Math.round(index * recurrence.strideDays))
@@ -44,14 +44,14 @@ describe('Routines', () => {
 	const monthly = () => new Recurrence({ freq: RecurrenceFrequency.Monthly, bymonthday: base.day })
 	const yearly = () => new Recurrence({ freq: RecurrenceFrequency.Yearly })
 
-	const collapsedIn = (unit: RoutineUnit, entries: ReadonlyArray<Entry>, windowDays = unit === 'month' ? 500 : 154) => {
-		const cohort = Routines.of(entries, days(windowDays), unit)
-		return new Set(entries.filter(entry => cohort.collapses(entry)).map(entry => entry.recurringEntryId))
+	const collapsedIn = (unit: RoutineUnit, occurrences: ReadonlyArray<EntryOccurrence>, windowDays = unit === 'month' ? 500 : 154) => {
+		const cohort = Routines.of(occurrences, days(windowDays), unit)
+		return new Set(occurrences.filter(occurrence => cohort.collapses(occurrence)).map(occurrence => occurrence.recurringEntryId))
 	}
 
 	describe('collapses (the density rule)', () => {
 		it('never collapses an entry that belongs to no routine', () => {
-			const plain = new Entry({ heading: 'Dentist', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
+			const plain = shown(new Entry({ heading: 'Dentist', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) }))
 			assert.equal(Routines.of([plain], days(500), 'month').collapses(plain), false)
 		})
 
@@ -122,7 +122,7 @@ describe('Routines', () => {
 		it('counts a synced override as an instance of its routine, rule-less as it is', () => {
 			const rule = daily(2)
 			const instances = series('gym', rule, cadence(rule, 13))
-			const override = new Entry({ id: 'gym-moved', heading: 'Gym', start: base.add({ days: 27, hours: 18 }), end: base.add({ days: 27, hours: 19 }), recurringEntryId: 'gym', recurrenceId: base.add({ days: 26, hours: 9 }) })
+			const override = shown(new Entry({ id: 'gym-moved', heading: 'Gym', start: base.add({ days: 27, hours: 18 }), end: base.add({ days: 27, hours: 19 }), recurringEntryId: 'gym', recurrenceId: base.add({ days: 26, hours: 9 }) }))
 			const cohort = Routines.of([...instances, override], days(500), 'month')
 			assert.equal(cohort.collapses(override), true)
 			assert.equal(cohort.collapses(instances[0]!), true)
@@ -141,8 +141,8 @@ describe('Routines', () => {
 
 		it('ignores a move ghost, so a dragged instance is not counted twice', () => {
 			const instances = series('gym', daily(2), cadence(daily(2), 13))
-			const ghost = new Entry({ heading: 'Gym', start: base.add({ days: 40, hours: 9 }), end: base.add({ days: 40, hours: 10 }), recurrence: daily(2), recurringEntryId: 'gym' })
-			EntryStore.setPreview(ghost)
+			const ghost = shown(new Entry({ heading: 'Gym', start: base.add({ days: 40, hours: 9 }), end: base.add({ days: 40, hours: 10 }), recurrence: daily(2), recurringEntryId: 'gym' }))
+			EntryStore.setPreview(ghost.entry)
 			try {
 				const cohort = Routines.of([...instances, ghost], days(500), 'month')
 				assert.equal(cohort.collapses(instances[0]!), true)
@@ -161,7 +161,7 @@ describe('Routines', () => {
 
 		it('drops the collapsed routine\'s instances and nothing else', () => {
 			const dense = series('gym', daily(2), cadence(daily(2), 100))
-			const plain = new Entry({ heading: 'Dentist', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
+			const plain = shown(new Entry({ heading: 'Dentist', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) }))
 			const kept = Routines.of([...dense, plain], days(500), 'month').kept
 			assert.deepEqual(kept, [plain])
 		})
@@ -226,14 +226,15 @@ describe('Routines', () => {
 		})
 
 		it('reads the cadence off the days when no occurrence carries a rule at all', () => {
-			const overrides = Array.from({ length: 20 }, (_, index) => new Entry({
+			const overrides = Array.from({ length: 20 }, (_, index) => shown(new Entry({
 				id: `standup__${index}`,
 				sourceId: 'cal',
 				heading: 'Standup',
 				start: base.add({ days: index, hours: 9 }),
 				end: base.add({ days: index, hours: 10 }),
 				recurringEntryId: 'standup',
-			}))
+				recurrenceId: base.add({ days: index, hours: 9 }),
+			})))
 			assert.deepEqual(collapsedIn('month', overrides), new Set(['standup']))
 		})
 
@@ -282,7 +283,7 @@ describe('Routines', () => {
 
 		it('never pools a series MASTER row, since its occurrences arrive expanded', () => {
 			const otherSeries = series('standup', daily(), cadence(daily(), 40), 'Gym')
-			const master = new Entry({ id: 'm', sourceId: 'cal', heading: 'Gym', start: base.add({ days: 51, hours: 21 }), end: base.add({ days: 51, hours: 22 }), recurrence: daily(2) })
+			const master = shown(new Entry({ id: 'm', sourceId: 'cal', heading: 'Gym', start: base.add({ days: 51, hours: 21 }), end: base.add({ days: 51, hours: 22 }), recurrence: daily(2) }))
 			const cohort = Routines.of([...gym(), ...otherSeries, master], days(500), 'month')
 			assert.equal(cohort.collapses(master), false)
 			assert.equal(cohort.collapses(otherSeries[0]!), true)
@@ -298,7 +299,7 @@ describe('Routines', () => {
 
 		it('never pools a move ghost', () => {
 			const loose = detached('Gym', 51)
-			EntryStore.setPreview(loose)
+			EntryStore.setPreview(loose.entry)
 			try {
 				const cohort = Routines.of([...gym(), loose], days(500), 'month')
 				assert.equal(cohort.collapses(loose), false)
@@ -367,7 +368,7 @@ describe('Routines', () => {
 		it('marks a twice-daily routine once per day: a duplicate day collapses the ribbon', () => {
 			const twiceDaily = Array.from({ length: 20 }, (_, index) => index).flatMap(offset => [
 				detached('Pills', offset),
-				new Entry({ id: `pills-pm-${offset}`, sourceId: 'cal', heading: 'Pills', start: base.add({ days: offset, hours: 20 }), end: base.add({ days: offset, hours: 20, minutes: 5 }) }),
+				shown(new Entry({ id: `pills-pm-${offset}`, sourceId: 'cal', heading: 'Pills', start: base.add({ days: offset, hours: 20 }), end: base.add({ days: offset, hours: 20, minutes: 5 }) })),
 			])
 			const runs = Routines.of(twiceDaily, days(500), 'month').runsIn(base, base.add({ days: 4 }))
 			assert.equal(runs.length, 1)

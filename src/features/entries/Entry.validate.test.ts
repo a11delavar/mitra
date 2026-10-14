@@ -65,6 +65,19 @@ describe('EntryPatch.validate', () => {
 		assert.deepEqual(described(patch({ start: null }).validate({ entry: event({ type: EntryType.Task }), to: calendar() })), [])
 	})
 
+	it('keeps the date a rule repeats from, unless one occurrence leaves', () => {
+		const weekly = event({ recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })
+		for (const scope of ['all', 'following'] as const) {
+			assert.deepEqual(described(patch({ start: null }).validate({ entry: weekly, to: calendar(), scope })), [
+				['An event must have a date', ['start']],
+				['A repeating entry cannot lose the date it repeats from', ['start']],
+			])
+		}
+		const rent = new Entry({ id: 'r', sourceId: 'home', type: EntryType.Task, heading: 'Pay the rent', due: start, recurrence: new Recurrence({ freq: RecurrenceFrequency.Monthly }) })
+		assert.deepEqual(described(patch({ due: null }).validate({ entry: rent, to: calendar(), scope: 'all' })), [['A repeating entry cannot lose the date it repeats from', ['due']]])
+		assert.deepEqual(described(patch({ start: null }).validate({ entry: weekly, to: calendar(), scope: 'this' })), [['An event must have a date', ['start']]])
+	})
+
 	it('keeps a recurring entry\'s type, and its rule out of a calendar without one, unless one occurrence leaves', () => {
 		const weekly = event({ recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })
 		assert.deepEqual(described(patch({ type: EntryType.Task }).validate({ entry: weekly, to: calendar() })), [['A recurring entry cannot change its type', ['type']]])

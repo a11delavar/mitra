@@ -42,6 +42,13 @@ describe('the service worker bundle', () => {
 	})
 })
 
+describe('the occurrences of an entry', () => {
+	it('builds for the browser from nothing a server module holds, so both sides expand alike', async () => {
+		const inputs = await inputsOf({ ...frontendOptions, entryPoints: ['src/features/recurrence/EntryOccurrences.ts'] })
+		assert.deepEqual(inputs.filter(input => input.includes('/server/')), [])
+	})
+})
+
 describe('the browser bundle', () => {
 	it('carries no sync engine, nor the protocol client only an engine talks to', async () => {
 		const inputs = await inputsOf(frontendOptions)

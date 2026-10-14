@@ -26,6 +26,9 @@ import { MigrationVerdict } from '../migration/MigrationPlan.js'
 import { Availability } from './client/Availability.js'
 import { RecurrenceFrequency } from '../recurrence/RecurrenceFrequency.js'
 
+/** A one-off entry as the views get it. */
+const shown = (entry: Entry) => entry.occurrences.single
+
 describe('the availability type', () => {
 	it('parses from its wire value', () => {
 		assert.equal(EntryType.parse('availability'), EntryType.Availability)
@@ -97,9 +100,9 @@ describe('the availability labels of a day', () => {
 	describe('of a day with an unlabelled window', () => {
 		it('gives only the labelled windows a place among the labels', () => {
 			const day = new DateTime('2026-10-07T00:00:00').dayStart
-			const window = (id: string, heading: string, start: number, end: number) => new Entry({
+			const window = (id: string, heading: string, start: number, end: number) => shown(new Entry({
 				id, uid: id, sourceId: 's', type: EntryType.Availability, heading, start: day.add({ hours: start }), end: day.add({ hours: end }), allDay: false,
-			})
+			}))
 			const placements = Availability.on([window('a', 'Working hours', 9, 17), window('b', '', 10, 12), window('c', 'Deep work', 9, 12)], day)
 			assert.deepEqual(placements.map(({ segment, labelAt }) => [segment.entry.id, labelAt]), [['a', 1], ['b', 0.5], ['c', 0]])
 		})
@@ -109,10 +112,10 @@ describe('the availability labels of a day', () => {
 	it('gives a day its very list again where its windows did not change', () => {
 		const monday = new DateTime('2026-10-05T00:00:00').dayStart
 		const tuesday = monday.add({ days: 1 })
-		const window = (id: string, day: DateTime) => new Entry({ id, uid: id, sourceId: 's', type: EntryType.Availability, heading: id, start: day.add({ hours: 9 }), end: day.add({ hours: 17 }), allDay: false })
+		const window = (id: string, day: DateTime) => shown(new Entry({ id, uid: id, sourceId: 's', type: EntryType.Availability, heading: id, start: day.add({ hours: 9 }), end: day.add({ hours: 17 }), allDay: false }))
 		const [mondayWindow, tuesdayWindow] = [window('monday', monday), window('tuesday', tuesday)]
 		const before = Availability.on([mondayWindow, tuesdayWindow], monday)
-		const moved = new Entry({ id: 'moved', sourceId: 's', type: EntryType.Event, heading: 'Moved', start: tuesday.add({ hours: 10 }), end: tuesday.add({ hours: 11 }) })
+		const moved = shown(new Entry({ id: 'moved', sourceId: 's', type: EntryType.Event, heading: 'Moved', start: tuesday.add({ hours: 10 }), end: tuesday.add({ hours: 11 }) }))
 		assert.equal(Availability.on([mondayWindow, tuesdayWindow, moved], monday), before)
 		assert.notEqual(Availability.on([mondayWindow, window('other', monday)], monday), before)
 	})
@@ -171,7 +174,7 @@ describe('moving availability to a calendar', () => {
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
-		entities: [User, Identity, Integration, CalDAV, MitraCalendar, Source, Entry, Recurrence, EntryRelation, NotificationSubscription, Session],
+		entities: [User, Identity, Integration, CalDAV, MitraCalendar, Source, Entry, EntryRelation, NotificationSubscription, Session],
 		dbName: ':memory:',
 		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {

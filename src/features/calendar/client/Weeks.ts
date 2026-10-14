@@ -1,7 +1,8 @@
 import { Component, component, html, property, css, type PropertyValues, repeat, guard, event, ifDefined, styleMap, query } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { type Entry } from '../../entries/Entry.js'
+import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
 import { EntrySegments, type MonthWeek } from '../../entries/client/EntrySegments.js'
+import { EntryStore } from '../../entries/client/EntryStore.js'
 import { EntryConnections } from '../../relations/client/EntryConnections.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { CalendarScrollController } from './CalendarScrollController.js'
@@ -22,7 +23,7 @@ export class Weeks extends Component {
 	@event({ bubbles: true, composed: true }) readonly switchToWeek!: EventDispatcher
 
 	@property({ type: Object }) navigatingDate = new DateTime()
-	@property({ type: Array }) entries = new Array<Entry>()
+	@property({ type: Array }) occurrences = new Array<EntryOccurrence>()
 
 	private readonly buffer: CalendarDatesController = new CalendarDatesController(this, { radiusDays: 77, shiftDays: 14 })
 	protected readonly entryDrag = new EntryDragController(this, 'month')
@@ -30,7 +31,7 @@ export class Weeks extends Component {
 
 	private get bufferNavigatingDate(): DateTime { return this.buffer.navigatingDate }
 	private get days(): Array<DateTime> { return this.buffer.days }
-	private get routines(): Routines { return Routines.of(Availability.outside(this.entries), this.buffer.window.days, 'week') }
+	private get routines(): Routines { return Routines.of(Availability.outside(this.occurrences), this.buffer.window.days, 'week') }
 
 	private get segments(): EntrySegments { return EntrySegments.of(HideDoneTasksSetting.filter(this.routines.kept), this.buffer.window.days) }
 
@@ -383,10 +384,10 @@ export class Weeks extends Component {
 					</mitra-day>
 				`)}
 				<div class="entries">
-					${repeat(bars, bar => bar.segment.entry, bar => html`
+					${repeat(bars, bar => EntryStore.identityOf(bar.segment.occurrence), bar => html`
 						<mitra-entry-segment
 							style=${styleMap({ gridColumn: `${bar.startColumn + 1} / span ${bar.span}`, gridRow: `${bar.slot + 1}` })}
-							resize=${ifDefined(bar.segment.entry.allDay ? 'inline' : undefined)}
+							resize=${ifDefined(bar.segment.occurrence.allDay ? 'inline' : undefined)}
 							?has-previous=${bar.segment.hasPrevious}
 							?has-next=${bar.clippedRight}
 							.segment=${bar.segment}

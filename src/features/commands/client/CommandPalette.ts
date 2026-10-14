@@ -1,6 +1,8 @@
 import { Component, component, html, css, property, state, query, event, eventListener } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
 import { type Entry } from '../../entries/Entry.js'
+import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
+import { TimeZone } from '../../time/TimeZone.js'
 import { searchEntries } from '../../../infrastructure/http/Api.js'
 import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
@@ -22,11 +24,14 @@ export class CommandPalette extends Component {
 
 	@state() private open = false
 	@state() private searchTerm = ''
-	@state() private entries = new Array<Entry>()
+	@state() private entries = new Array<EntryOccurrence>()
 
 	@query('dialog') private readonly dialog!: HTMLDialogElement
 
-	private readonly search = new LatestSearch((term: string) => searchEntries(term).catch(() => new Array<Entry>()))
+	/** Each entry as the occurrence standing for it now. */
+	private readonly search = new LatestSearch(async (term: string) => (await searchEntries(term).catch(() => new Array<Entry>()))
+		.map(entry => entry.occurrences.standing(TimeZone.deviceId))
+		.filter(occurrence => !!occurrence))
 
 	protected override createRenderRoot() { return this }
 
@@ -63,17 +68,17 @@ export class CommandPalette extends Component {
 
 	/** Entries only join the list once there is something to search for. An empty palette is a command menu. */
 	private get matchingEntries() {
-		return this.searchTerm.trim() ? this.entries : new Array<Entry>()
+		return this.searchTerm.trim() ? this.entries : new Array<EntryOccurrence>()
 	}
 
-	private select(result: Command | Entry) {
+	private select(result: Command | EntryOccurrence) {
 		this.dialog.close()
 		if (result instanceof Command) {
 			result.dispatch()
 		} else if (result.start) {
 			this.navigate.dispatch(result.start)
-			if (result.id) {
-				EntryEditorIntent.requestOpen(result.id)
+			if (result.key) {
+				EntryEditorIntent.requestOpen(result.key)
 			}
 		}
 	}
@@ -88,10 +93,10 @@ export class CommandPalette extends Component {
 		this.entries = await this.search.run(term.trim())
 	}
 
-	private static when(entry: Entry) {
-		return !entry.start ? '' : entry.allDay
-			? entry.start.format({ dateStyle: 'medium' })
-			: entry.start.format({ dateStyle: 'medium', timeStyle: 'short' })
+	private static when({ start, allDay }: EntryOccurrence) {
+		return !start ? '' : allDay
+			? start.format({ dateStyle: 'medium' })
+			: start.format({ dateStyle: 'medium', timeStyle: 'short' })
 	}
 
 	static override get styles() {
@@ -242,7 +247,7 @@ export class CommandPalette extends Component {
 		const entries = this.matchingEntries
 		return html`
 			<dialog closedby="any" @close=${() => this.open = false}>
-				<mitra-combobox inline activateFirst @pick=${(e: CustomEvent<Command | Entry>) => this.select(e.detail)} @dismiss=${() => this.dialog.close()}>
+				<mitra-combobox inline activateFirst @pick=${(e: CustomEvent<Command | EntryOccurrence>) => this.select(e.detail)} @dismiss=${() => this.dialog.close()}>
 					<header slot="input">
 						<mitra-icon icon="search"></mitra-icon>
 						<input type="search" autofocus placeholder=${t('Search entries or run a command…')} aria-label=${t('Search entries or run a command…')}
@@ -264,11 +269,11 @@ export class CommandPalette extends Component {
 						`}
 						${!entries.length ? html.nothing : html`
 							<span class="group">${t('Entries')}</span>
-							${entries.map(entry => html`
-								<mitra-option .value=${entry}>
-									<span class="swatch" style=${`background: ${entry.color ?? Calendars.source(entry.sourceId)?.color ?? 'var(--color-accent)'}`}></span>
-									<span class="heading">${entry.heading || t('Untitled')}</span>
-									<span class="when">${CommandPalette.when(entry)}</span>
+							${entries.map(occurrence => html`
+								<mitra-option .value=${occurrence}>
+									<span class="swatch" style=${`background: ${occurrence.entry.color ?? Calendars.source(occurrence.entry.sourceId)?.color ?? 'var(--color-accent)'}`}></span>
+									<span class="heading">${occurrence.entry.heading || t('Untitled')}</span>
+									<span class="when">${CommandPalette.when(occurrence)}</span>
 								</mitra-option>
 							`)}
 						`}

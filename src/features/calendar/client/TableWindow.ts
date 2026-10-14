@@ -90,15 +90,15 @@ export class TableWindow {
 	}
 
 	/** The first and the last instant listed, counted in whole days from today; none when unbounded. */
-	bounds(today = new DateTime()): { readonly start: DateTime, readonly end: DateTime } | undefined {
+	bounds(today = new DateTime()): DateTimeRange | undefined {
 		switch (this.kind) {
-			case 'past30': return { start: today.subtract({ days: 29 }).dayStart, end: today.dayEnd }
-			case 'today': return { start: today.dayStart, end: today.dayEnd }
-			case 'next7': return { start: today.dayStart, end: today.add({ days: 6 }).dayEnd }
-			case 'next30': return { start: today.dayStart, end: today.add({ days: 29 }).dayEnd }
-			case 'next12': return { start: today.dayStart, end: today.add({ months: 12 }).subtract({ days: 1 }).dayEnd }
+			case 'past30': return new DateTimeRange(today.subtract({ days: 29 }).dayStart, today.dayEnd)
+			case 'today': return new DateTimeRange(today.dayStart, today.dayEnd)
+			case 'next7': return new DateTimeRange(today.dayStart, today.add({ days: 6 }).dayEnd)
+			case 'next30': return new DateTimeRange(today.dayStart, today.add({ days: 29 }).dayEnd)
+			case 'next12': return new DateTimeRange(today.dayStart, today.add({ months: 12 }).subtract({ days: 1 }).dayEnd)
 			case 'all': return undefined
-			case 'custom': return { start: this.from!.dayStart, end: this.to!.dayEnd }
+			case 'custom': return new DateTimeRange(this.from!.dayStart, this.to!.dayEnd)
 		}
 	}
 }

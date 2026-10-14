@@ -3,7 +3,10 @@ import { Source } from '../../sources/Source.js'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
 import { Integration } from '../../../integrations/Integration.js'
 import { Entry } from '../../entries/Entry.js'
-import { expandedOccurrences } from '../../recurrence/server/occurrences.js'
+import { withOverrides } from '../../entries/server/entryWindow.js'
+import { EntryOccurrences } from '../../recurrence/EntryOccurrences.js'
+import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
+import { DateTimeRange } from '@3mo/date-time'
 import { DueReminder } from '../Reminders.js'
 import { localizeIn } from '../../../infrastructure/i18n/dictionaries.js'
 import '../../time/TimeSpan.time.js'
@@ -73,36 +76,37 @@ export class ReminderScheduler {
 			const rows = await em.find(Entry, {
 				sourceId: { $in: enabledSourceIds },
 				reminders: { $ne: null },
-				recurrence: { freq: null },
+				recurrence: null,
 				// Bounds query to entries whose anchor falls inside/after the watermark window.
 				$or: [
 					{ start: { $gt: new Date(watermark.getTime() - ZONE_SLACK) } },
 					{ start: null, due: { $gt: new Date(watermark.getTime() - ZONE_SLACK) } },
 				],
 			})
-			const masters = await em.find(Entry, { sourceId: { $in: enabledSourceIds }, reminders: { $ne: null }, recurrence: { freq: { $ne: null } } })
+			const masters = await em.find(Entry, { sourceId: { $in: enabledSourceIds }, reminders: { $ne: null }, recurrence: { $ne: null } })
 			const horizon = Math.max(0, ...masters.flatMap(master => master.reminders ?? [])) * MINUTE
-			const occurrences = masters.length
-				? (await expandedOccurrences(em, enabledSourceIds, watermark, new Date(until.getTime() + horizon)))
-					.filter(occurrence => occurrence.reminders?.length)
-				: []
+			await withOverrides(em, masters)
+			const occurrences = [
+				...rows.map(row => row.occurrences.single),
+				...EntryOccurrences.inWindow(masters, new DateTimeRange(watermark, new Date(until.getTime() + horizon))),
+			]
 
 			const integrations = await em.find(Integration, {})
 			const userByIntegration = new Map(integrations.map(integration => [integration.id, integration.userId]))
 			const userBySource = new Map(sources.map(source => [source.id, userByIntegration.get(source.integrationId)]))
 			const zoneByUser = await this.observerZones(em)
-			const userOf = (entry: Entry) => userBySource.get(entry.sourceId)
+			const userOf = (occurrence: EntryOccurrence) => userBySource.get(occurrence.entry.sourceId)
 
-			const zoneOf = (entry: Entry) => {
-				const userId = userOf(entry)
+			const zoneOf = (occurrence: EntryOccurrence) => {
+				const userId = userOf(occurrence)
 				return userId ? zoneByUser.get(userId) : undefined
 			}
-			const due = DueReminder.within([...rows, ...occurrences], watermark, until, zoneOf)
-			this.logger.debug(`Tick: window (${watermark.toISOString()}, ${until.toISOString()}]: scanned ${rows.length} plain + ${occurrences.length} occurrence(s), ${due.length} due`)
+			const due = DueReminder.within(occurrences, watermark, until, zoneOf)
+			this.logger.debug(`Tick: window (${watermark.toISOString()}, ${until.toISOString()}]: scanned ${occurrences.length} occurrence(s), ${due.length} due`)
 
 			for (const reminder of due) {
-				const userId = userOf(reminder.entry)
-				const key = `${reminder.entry.id}|${reminder.minutes}|${reminder.fireAt}`
+				const userId = userOf(reminder.occurrence)
+				const key = `${reminder.occurrence.key}|${reminder.minutes}|${reminder.fireAt}`
 				if (!userId || this.dispatched.has(key)) {
 					continue
 				}
@@ -126,7 +130,7 @@ export class ReminderScheduler {
 
 	/** Schedule exact timer for reminder delivery. */
 	private schedule(userId: string, reminder: DueReminder, now: number) {
-		const { entry, minutes, fireAt } = reminder
+		const { occurrence: { entry }, minutes, fireAt } = reminder
 		const notification = reminder.notification()
 		const send = () => {
 			this.logger.info(`Reminder: "${entry.heading}" ${minutes ? `in ${TimeSpan.fromMinutes(minutes).formatAsWholeUnit(localizeIn('en'))}` : 'now'}`)

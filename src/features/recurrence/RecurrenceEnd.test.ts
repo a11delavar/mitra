@@ -67,12 +67,5 @@ describe('RecurrenceEnd', () => {
 		assert.equal(RecurrenceEnd.converter.deconstruct!(undefined, {}), undefined)
 		assert.ok(RecurrenceEnd.converter.construct!('2026-07-18T00:00:00.000Z', {})!.equals(day('2026-07-18')))
 		assert.ok(RecurrenceEnd.converter.construct!('2026-07-18', {})!.equals(day('2026-07-18')))
-
-		const mapper = new RecurrenceEnd.Mapper()
-		assert.equal(mapper.convertToDatabaseValue(day('2026-07-18')), Date.parse('2026-07-18T00:00:00Z'))
-		assert.equal(mapper.convertToDatabaseValue(undefined), null)
-		assert.ok(mapper.convertToJSValue(Date.parse('2026-07-18T00:00:00Z'))!.equals(day('2026-07-18')))
-		assert.equal(mapper.convertToJSValue(null), undefined)
-		assert.equal(mapper.getColumnType(), 'datetime')
 	})
 })

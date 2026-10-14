@@ -5,6 +5,8 @@ import { EntryStore } from '../../entries/client/EntryStore.js'
 import { DialogDeleteEntries } from '../../entries/client/DialogDeleteEntries.js'
 import { Calendars } from '../../sources/client/Calendars.js'
 import { type TableRow } from './TableRow.js'
+import { type Entry } from '../../entries/Entry.js'
+import { type EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
 
 /**
  * What can be done to the selected rows at once. Each row reaches what it stands for: one occurrence, as
@@ -36,27 +38,29 @@ export class TableSelection extends Component {
 			&& (!row.series || Calendars.ownershipOf(to.id).holds('recurrence'))
 	}
 
-	/** Parallel across entries, in turn within a series: its occurrences share one master, whose exclusions parallel writes would race on. */
-	private static async write(rows: ReadonlyArray<TableRow>, write: (row: TableRow) => Promise<unknown>) {
-		await Promise.all([...Map.groupBy(rows, row => row.entry.recurringEntryId ?? row.entry).values()].map(async series => {
-			for (const row of series) {
-				await write(row).catch(error => console.error('Changing the entry failed, so it was restored in the view:', error))
+	/**
+	 * What the rows' edits change, each with how far it reaches, run in parallel across entries and in turn within a
+	 * recurring entry: its occurrences share its exclusions, which parallel writes would race on.
+	 */
+	private static async write(rows: ReadonlyArray<TableRow>, edit: (entry: Entry) => void, write: (entry: Entry, scope?: EntryOccurrenceChangeScope) => Promise<unknown>) {
+		const edits = rows.map(row => ({ entry: row.editable(), scope: row.scope }))
+		edits.forEach(({ entry }) => edit(entry))
+		EntryStore.notify()
+		await Promise.all([...Map.groupBy(edits, ({ entry }) => entry.recurringEntryId ?? entry).values()].map(async ofOne => {
+			for (const { entry, scope } of ofOne) {
+				await write(entry, scope).catch(error => console.error('Changing the entry failed, so it was restored in the view:', error))
 			}
 		}))
 	}
 
 	private setStatus(status: TaskStatus) {
 		const rows = this.rows.filter(row => TableSelection.editable(row) && row.entry.status !== status)
-		rows.forEach(row => row.entry.setStatus(status, Calendars.ownershipOf(row.entry.sourceId)))
-		EntryStore.notify()
-		void TableSelection.write(rows, row => EntryStore.commit(row.entry))
+		void TableSelection.write(rows, entry => entry.setStatus(status, Calendars.ownershipOf(entry.sourceId)), entry => EntryStore.commit(entry))
 	}
 
 	private moveTo(source: Source) {
 		const rows = this.rows.filter(row => TableSelection.movable(row, source))
-		rows.forEach(row => row.entry.migrateTo(source))
-		EntryStore.notify()
-		void TableSelection.write(rows, row => EntryStore.commit(row.entry, row.scope))
+		void TableSelection.write(rows, entry => entry.migrateTo(source), (entry, scope) => EntryStore.commit(entry, scope))
 	}
 
 	async delete() {
@@ -66,7 +70,7 @@ export class TableSelection extends Component {
 			return
 		}
 		this.clear.dispatch()
-		await TableSelection.write(rows, row => EntryStore.delete(row.entry, row.scope))
+		await TableSelection.write(rows, () => void 0, (entry, scope) => EntryStore.delete(entry, scope))
 	}
 
 	protected override willUpdate(changed: PropertyValues<this>) {

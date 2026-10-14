@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { EntryTimeZone } from '../../features/entries/EntryTimeZone.js'
 import ICAL from 'ical.js'
 import { CalDAV } from './CalDAV.js'
+import { IcsTime } from './IcsTime.js'
 import { CalDAVSyncEngine } from './server/CalDAVSyncEngine.js'
 import '../server/registerEngines.js'
 import { Entry } from '../../features/entries/Entry.js'
@@ -412,12 +413,12 @@ describe('CalDAV free/busy and access class (TRANSP / CLASS)', () => {
 describe('CalDAV all-day serialization', () => {
 	describe('toICALTime', () => {
 		it('writes an all-day DATE as the canonical UTC-midnight encoding\'s calendar day, on any server', () => {
-			const time = CalDAV.toICALTime(D('2026-06-02T00:00:00Z'), true)
+			const time = IcsTime.toICALTime(D('2026-06-02T00:00:00Z'), true)
 			assert.deepEqual([time.year, time.month, time.day, time.isDate], [2026, 6, 2, true])
 		})
 
 		it('keeps a timed value an absolute UTC instant', () => {
-			const time = CalDAV.toICALTime(D('2026-06-01T22:00:00Z'), false)
+			const time = IcsTime.toICALTime(D('2026-06-01T22:00:00Z'), false)
 			assert.equal(time.isDate, false)
 			assert.equal(time.toJSDate().toISOString(), '2026-06-01T22:00:00.000Z')
 		})
@@ -957,22 +958,20 @@ describe('CalDAV zone authoring (VTIMEZONE generation)', () => {
 })
 
 describe('CalDAV floating times', () => {
-	const Private = CalDAV as unknown as { instantFrom(time: unknown): Date | undefined, isFloating(value: unknown): boolean }
-
 	const parseDtstart = (line: string) => {
 		const raw = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//t//EN', 'BEGIN:VEVENT', 'UID:u', line, 'END:VEVENT', 'END:VCALENDAR'].join('\r\n')
-		return new ICAL.Component(ICAL.parse(raw)).getFirstSubcomponent('vevent')!.getFirstPropertyValue('dtstart')
+		return new ICAL.Component(ICAL.parse(raw)).getFirstSubcomponent('vevent')!.getFirstPropertyValue('dtstart') as ICAL.Time
 	}
 
 	it('reads a bare local DTSTART as a FLOATING as-if-UTC instant', () => {
 		const dtstart = parseDtstart('DTSTART:20260704T090000')
-		assert.equal(Private.isFloating(dtstart), true)
-		assert.equal(Private.instantFrom(dtstart)!.toISOString(), '2026-07-04T09:00:00.000Z')
+		assert.equal(IcsTime.isFloating(dtstart), true)
+		assert.equal(IcsTime.instantFrom(dtstart)!.toISOString(), '2026-07-04T09:00:00.000Z')
 	})
 
 	it('does not mistake a UTC or date-only value for floating', () => {
-		assert.equal(Private.isFloating(parseDtstart('DTSTART:20260704T090000Z')), false)
-		assert.equal(Private.isFloating(parseDtstart('DTSTART;VALUE=DATE:20260704')), false)
+		assert.equal(IcsTime.isFloating(parseDtstart('DTSTART:20260704T090000Z')), false)
+		assert.equal(IcsTime.isFloating(parseDtstart('DTSTART;VALUE=DATE:20260704')), false)
 	})
 
 	it('writes a floating entry as a bare local time (neither TZID nor Z), round-tripping the wall clock', async () => {
@@ -998,7 +997,7 @@ describe('CalDAV floating times', () => {
 		assert.match(existing.data!.raw!, /DTSTART:20260704T090000\r\n/)
 		assert.doesNotMatch(existing.data!.raw!, /DTSTART[^\r\n]*TZID/)
 		assert.doesNotMatch(existing.data!.raw!, /VTIMEZONE/)
-		assert.equal(Private.instantFrom(parseDtstart('DTSTART:20260704T090000'))!.toISOString(), '2026-07-04T09:00:00.000Z')
+		assert.equal(IcsTime.instantFrom(parseDtstart('DTSTART:20260704T090000'))!.toISOString(), '2026-07-04T09:00:00.000Z')
 	})
 })
 

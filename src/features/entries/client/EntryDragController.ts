@@ -421,15 +421,16 @@ export class EntryDragController extends Controller {
 		}
 
 		// Move / resize an existing entry, persisted ones only (a draft is owned by the create flow + editor).
-		// A series occurrence drags like any entry: the drop's commit resolves the edit's scope.
+		// An occurrence of a recurring entry drags as an override of its date: the drop's commit resolves the edit's scope.
 		const segment = target.closest('mitra-entry-segment') as EntrySegmentComponent | null
-		const entry = segment?.segment?.entry
+		const occurrence = segment?.segment?.occurrence
 		if (segment) {
 			// A tap still has to open the editor of an entry whose provider mitra may only read, so the
 			// bar is on beginning a drag, not on handling the pointer at all.
-			if (!entry?.persisted || !Calendars.capabilitiesOf(entry.sourceId).entries.edit) {
+			if (!occurrence?.entry.persisted || !Calendars.capabilitiesOf(occurrence.entry.sourceId).entries.edit) {
 				return
 			}
+			const entry = EntryStore.editable(occurrence)
 			const mode = this.editMode(entry)
 			const anchor = this.pointAt(cells, e.clientX, e.clientY, mode)
 			if (!anchor) {

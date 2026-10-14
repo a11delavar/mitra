@@ -1,4 +1,4 @@
-import { type Entry } from '../entries/Entry.js'
+import { type EntryOccurrence } from '../recurrence/EntryOccurrence.js'
 import { ReminderNotification } from './ReminderNotification.js'
 
 /**
@@ -8,25 +8,26 @@ import { ReminderNotification } from './ReminderNotification.js'
 const MINUTE = 60_000
 
 export class DueReminder {
-	/** The reminders of `entries` due within `(watermark, until]`, floating times read in the zone `zoneOf` gives. */
-	static within(entries: ReadonlyArray<Entry>, watermark: Date, until: Date, zoneOf?: (entry: Entry) => string | undefined): Array<DueReminder> {
-		return entries.flatMap(entry => {
+	/** The reminders of `occurrences` due within `(watermark, until]`, floating times read in the zone `zoneOf` gives. */
+	static within(occurrences: ReadonlyArray<EntryOccurrence>, watermark: Date, until: Date, zoneOf?: (occurrence: EntryOccurrence) => string | undefined): Array<DueReminder> {
+		return occurrences.flatMap(occurrence => {
+			const { entry } = occurrence
 			// A closed task keeps its reminders, so they must be skipped here.
 			if (!entry.reminders?.length || entry.closed) {
 				return []
 			}
-			const anchor = entry.reminderAnchorInstant(zoneOf?.(entry))
+			const anchor = occurrence.reminderAnchorInstant(zoneOf?.(occurrence))
 			if (anchor === undefined) {
 				return []
 			}
 			return entry.reminders
-				.map(minutes => new DueReminder(entry, minutes, anchor))
+				.map(minutes => new DueReminder(occurrence, minutes, anchor))
 				.filter(({ fireAt }) => fireAt > watermark.getTime() && fireAt <= until.getTime())
 		})
 	}
 
 	constructor(
-		readonly entry: Entry,
+		readonly occurrence: EntryOccurrence,
 		readonly minutes: number,
 		/** Observer-resolved anchor timestamp in epoch ms. */
 		readonly anchor: number,
@@ -38,24 +39,25 @@ export class DueReminder {
 	}
 
 	notification() {
-		const { entry } = this
+		const { occurrence } = this
+		const { entry } = occurrence
 		return new ReminderNotification({
 			heading: entry.heading,
 			kind: entry.type?.isTask ? 'task' : 'event',
-			tag: `${entry.id}|${this.minutes}`,
+			tag: `${occurrence.key}|${this.minutes}`,
 			timestamp: this.anchor,
 			when: {
-				start: (entry.start as Date | undefined)?.getTime(),
-				end: ((entry.remindersAnchorToEnd ? entry.due : entry.end) as Date | undefined)?.getTime(),
+				start: occurrence.start?.getTime(),
+				end: (occurrence.remindersAnchorToEnd ? occurrence.due : occurrence.end)?.getTime(),
 				...entry.allDay ? { allDay: true } : undefined,
 				...entry.timeZone?.floating ? { floating: true } : undefined,
-				...entry.remindersAnchorToEnd ? { due: true } : undefined,
+				...occurrence.remindersAnchorToEnd ? { due: true } : undefined,
 			},
 			location: entry.location || undefined,
 			entry: {
-				id: entry.id!,
-				...entry.recurringEntryId ? { master: entry.recurringEntryId } : undefined,
-				...entry.recurrenceId ? { recurrenceId: (entry.recurrenceId as unknown as Date).getTime() } : undefined,
+				id: occurrence.key!,
+				...occurrence.recurring ? { master: occurrence.recurringEntryId } : undefined,
+				...occurrence.recurrenceId ? { recurrenceId: occurrence.recurrenceId.getTime() } : undefined,
 			},
 		})
 	}

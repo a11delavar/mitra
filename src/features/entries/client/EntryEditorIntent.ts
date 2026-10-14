@@ -1,4 +1,5 @@
 import { type Entry } from '../Entry.js'
+import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
 import { EntryStore } from './EntryStore.js'
 
 /**
@@ -27,24 +28,20 @@ export class EntryEditorIntent {
 		this.requests.dispatchEvent(new Event('request'))
 	}
 
-	/** Request opening the editor for an entry by id after render/refetch. */
+	/** Request opening the editor for an occurrence by its key, or a recurring entry's first shown one by its id, after render or refetch. */
 	static requestOpen(id: string) {
 		this.pending = id
 		EntryStore.notify()
 		this.requests.dispatchEvent(new Event('request'))
 	}
 
-	/** Whether the given entry matches the pending open intent. */
-	static shouldOpen(entry: Entry) {
+	/** Whether the occurrence matches the pending open intent. */
+	static shouldOpen(occurrence: EntryOccurrence) {
 		if (typeof this.pending !== 'string') {
-			return this.pending !== undefined && this.pending === entry
+			return this.pending !== undefined && this.pending === occurrence.entry
 		}
-		// Only a series' occurrences render, not its master. A master saved locally is replaced by its
-		// occurrences on the next fetch, so opening it would close the editor again right away.
-		if (entry.recurrence && !entry.isRecurring) {
-			return false
-		}
-		return entry.id === this.pending || entry.recurringEntryId === this.pending
+		return occurrence.key === this.pending || occurrence.entry.id === this.pending
+			|| occurrence.recurringEntryId === this.pending
 	}
 
 	static consume() {
@@ -66,14 +63,14 @@ export class EntryEditorIntent {
 			&& (this.editing === entry || (this.editing.id !== undefined && this.editing.id === entry.id))
 	}
 
-	/** Whether the entry is active or pending editor open and must remain rendered. */
-	static holds(entry: Entry) {
-		return this.shouldOpen(entry) || this.isEditing(entry)
+	/** Whether the occurrence is being edited or about to be, and must remain rendered. */
+	static holds(occurrence: EntryOccurrence) {
+		return this.shouldOpen(occurrence) || this.isEditing(occurrence.entry)
 	}
 
-	/** Clears pending request if no matching entry is present in the rendered set. */
-	static settle(entries: ReadonlyArray<Entry>) {
-		if (typeof this.pending === 'string' && !entries.some(entry => this.shouldOpen(entry))) {
+	/** Clears pending request if no matching occurrence is present in the rendered set. */
+	static settle(occurrences: ReadonlyArray<EntryOccurrence>) {
+		if (typeof this.pending === 'string' && !occurrences.some(occurrence => this.shouldOpen(occurrence))) {
 			this.pending = undefined
 			EntryStore.notify()
 		}

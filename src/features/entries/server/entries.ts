@@ -1,9 +1,8 @@
-import { Router, type Request } from 'express'
+import { Router } from 'express'
 import { orm } from '../../../infrastructure/database/orm.js'
 import { syncEmitter } from '../../../infrastructure/realtime/syncEmitter.js'
 import { equals } from '@a11d/equals'
 import { Source } from '../../sources/Source.js'
-import { type RecurrenceScope } from '../../recurrence/Recurrence.js'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
 import { Integration } from '../../../integrations/Integration.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
@@ -12,15 +11,12 @@ import { EntryPatch } from '../EntryPatch.js'
 import { ValidationError } from '../../../infrastructure/validation/ValidationError.js'
 import { EntryRelations } from '../../relations/EntryRelations.js'
 import { TaskStatus } from '../TaskStatus.js'
-import { editOccurrence, deleteOccurrence, expandedOccurrences, seriesStarts, nearestOccurrence, occurrenceAt } from '../../recurrence/server/occurrences.js'
-import { entrySearch, entryWindow, everyEntry } from './entryWindow.js'
+import { entrySearch, entryWindow, everyEntry, recurringEntries, withOverrides } from './entryWindow.js'
 import { assertRelationsValid, attachRelations, relationClosure } from '../../relations/server/relations.js'
 import { EntryRank } from '../EntryRank.js'
+import { type EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
 
 const logger = createLogger('Entries')
-
-// The viewer's zone, which only "today" needs: the current occurrence of a recurring task without a start.
-const viewerZone = (req: Request) => typeof req.query.tz === 'string' && req.query.tz ? req.query.tz : undefined
 
 export const entriesRouter = Router()
 
@@ -44,9 +40,8 @@ entriesRouter.get('/', async (req, res) => {
 
 	const rows = await em.find(Entry, entryWindow(visibleSourceIds, startDate, endDate))
 
-	const occurrences = await expandedOccurrences(em, visibleSourceIds, startDate, endDate, viewerZone(req) ?? 'UTC')
-
-	const entries = [...rows, ...occurrences]
+	// The browser expands the recurring entries itself, each once whatever the window.
+	const entries = [...rows, ...await recurringEntries(em, visibleSourceIds)]
 	await attachRelations(em, req.user, entries)
 	return res.json(entries.map(entry => entry))
 })
@@ -54,7 +49,7 @@ entriesRouter.get('/', async (req, res) => {
 entriesRouter.get('/all', async (req, res) => {
 	const em = orm.em.fork()
 	const visibleSourceIds = (await req.user.sources(em, { enabled: true, hidden: false })).map(source => source.id)
-	const entries = [...await em.find(Entry, everyEntry(visibleSourceIds)), ...await seriesStarts(em, visibleSourceIds)]
+	const entries = [...await em.find(Entry, everyEntry(visibleSourceIds)), ...await recurringEntries(em, visibleSourceIds)]
 	await attachRelations(em, req.user, entries)
 	return res.json(entries.map(entry => entry))
 })
@@ -72,11 +67,11 @@ entriesRouter.get('/search', async (req, res) => {
 	const integrationOf = new Map(visibleSources.map(source => [source.id, integrations.get(source.integrationId)]))
 	const found = await em.find(Entry, entrySearch(visibleSources.map(source => source.id), q), { orderBy: { start: 'desc' }, limit: 20 })
 	// The events written for availability are background too, like availability itself.
-	const matches = found.filter(entry => !integrationOf.get(entry.sourceId)?.writtenForAvailability(entry))
-	const entries = await nearestOccurrence(em, matches, viewerZone(req) ?? 'UTC', new Date())
-
+	const entries = found.filter(entry => !integrationOf.get(entry.sourceId)?.writtenForAvailability(entry))
+	// The browser picks each recurring entry's occurrence, past the dates its overrides take.
+	await withOverrides(em, entries.filter(entry => entry.recurrence))
 	await attachRelations(em, req.user, entries)
-	return res.json(entries.map(entry => entry))
+	return res.json(entries)
 })
 
 entriesRouter.get('/relations/closure', async (req, res) => {
@@ -183,23 +178,23 @@ entriesRouter.put('/:id', async (req, res) => {
 
 	const from = { source: currentSource, integration: currentIntegration }
 	const to = targetSource === currentSource ? from : { source: targetSource, integration: targetIntegration }
-	const { scope, recurrenceId } = req.query as { scope?: RecurrenceScope, recurrenceId?: string }
+	const { scope, recurrenceId } = req.query as { scope?: EntryOccurrenceChangeScope, recurrenceId?: string }
 	// Type conversion re-creates the entry below: tasks and events cannot share a CalDAV resource (RFC 4791 §4.1).
 	const errors = [...patch.validate({ entry: existing, from, to, scope }), ...incoming.validate(to)]
 	if (errors.length) {
 		throw new AggregateError(errors)
 	}
 
+	// The estimate is lost where the calendar has none.
+	if (!targetIntegration.ownership.holds('estimate')) {
+		patch.estimate = null
+		incoming.estimate = undefined
+	}
+
 	if (scope && recurrenceId) {
-		const occurrenceId = new Date(recurrenceId)
-		// Absent dates are the occurrence's own, never the master's: the master's start would move the series to its first occurrence.
-		const edited = occurrenceAt(existing, occurrenceId).apply(patch)
-		if (!targetIntegration.ownership.holds('estimate')) {
-			edited.estimate = undefined
-		}
-		const movingTo = to === from ? undefined : to
-		const result = await editOccurrence(em, currentIntegration, existing, occurrenceId, edited, scope, movingTo)
-		if (movingTo && scope === 'all' && result.id !== existing.id) {
+		const change = existing.occurrences.at(new Date(recurrenceId)).edit(patch, scope)
+		const result = await change.save(em, currentIntegration, targetIntegration)
+		if (scope === 'all' && result !== existing) {
 			await EntryRelation.reconcile(em, result.id!, existing.relations ?? EntryRelations.none)
 			result.relations = existing.relations
 		}
@@ -208,10 +203,6 @@ entriesRouter.put('/:id', async (req, res) => {
 		syncEmitter.emit('updated', req.user.id)
 		logger.debug(`Edited occurrence of series ${existing.id} (scope '${scope}')`)
 		return res.json(result)
-	}
-
-	if (!targetIntegration.ownership.holds('estimate')) {
-		incoming.estimate = undefined
 	}
 
 	// Move between sources or type conversion re-creates the entry (create-first, delete-after ordering).
@@ -262,27 +253,26 @@ entriesRouter.post('/:id/complete', async (req, res) => {
 	}
 
 	const { recurrenceId } = req.body as { recurrenceId?: number }
+	const done = existing.clone()
+	done.setStatus(TaskStatus.Done, integration.ownership)
 
 	// An occurrence detaches like a 'this' edit.
 	if (typeof recurrenceId === 'number' && existing.recurrence?.freq) {
 		const start = new Date(recurrenceId)
-		const occurrence = occurrenceAt(existing, start)
-		occurrence.setStatus(TaskStatus.Done, integration.ownership)
-		const detached = await editOccurrence(em, integration, existing, start, occurrence, 'this')
+		const change = existing.occurrences.at(start).edit(EntryPatch.of(done, ['status', 'percentComplete']), 'this')
+		const detached = await change.save(em, integration)
 		await em.flush()
 		syncEmitter.emit('updated', req.user.id)
 		logger.debug(`Completed occurrence ${start.toISOString()} of series ${existing.id} "${existing.heading}"`)
 		return res.json(detached)
 	}
 
-	const incoming = existing.clone()
-	incoming.setStatus(TaskStatus.Done, integration.ownership)
 	// A second tap must not write to the provider again.
-	if (incoming.status === existing.status && incoming.percentComplete === existing.percentComplete) {
+	if (done.status === existing.status && done.percentComplete === existing.percentComplete) {
 		return res.json(existing)
 	}
 
-	await integration.updateEntry(em, existing, incoming)
+	await integration.updateEntry(em, existing, done)
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
 	logger.debug(`Completed task ${existing.id} "${existing.heading}"`)
@@ -299,10 +289,9 @@ entriesRouter.delete('/:id', async (req, res) => {
 		return res.status(400).json({ error: 'Entries in this calendar cannot be deleted from mitra' })
 	}
 
-	const { scope, recurrenceId } = req.query as { scope?: RecurrenceScope, recurrenceId?: string }
+	const { scope, recurrenceId } = req.query as { scope?: EntryOccurrenceChangeScope, recurrenceId?: string }
 	if (scope && scope !== 'all' && recurrenceId) {
-		const occurrenceId = new Date(recurrenceId)
-		await deleteOccurrence(em, integration, entry, occurrenceId, scope)
+		await entry.occurrences.at(new Date(recurrenceId)).delete(scope).save(em, integration)
 		await em.flush()
 		syncEmitter.emit('updated', req.user.id)
 		logger.debug(`Deleted occurrence of series ${entry.id} (scope '${scope}')`)

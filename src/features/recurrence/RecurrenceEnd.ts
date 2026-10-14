@@ -1,7 +1,6 @@
 import { Localizer } from '@3mo/localization'
 import { DateTime } from '@3mo/date-time'
 import { type Converter } from '@a11d/converter'
-import { Type } from '../../infrastructure/model/orm.js'
 import { TimeZone } from '../time/TimeZone.js'
 
 /**
@@ -75,20 +74,5 @@ export class RecurrenceEnd {
 	static readonly converter: Converter<string | undefined, RecurrenceEnd | undefined> = {
 		construct: value => RecurrenceEnd.parse(value),
 		deconstruct: value => value?.instant.toISOString(),
-	}
-
-	/** Keeps the column a datetime as SQLite stores one, in epoch milliseconds. */
-	static readonly Mapper = class extends Type<RecurrenceEnd | undefined, number | null> {
-		override convertToDatabaseValue(value: unknown): number | null {
-			return RecurrenceEnd.parse(value)?.instant.valueOf() ?? null
-		}
-
-		override convertToJSValue(value: unknown): RecurrenceEnd | undefined {
-			return value === null || value === undefined ? undefined : RecurrenceEnd.of(new Date(value as number | string))
-		}
-
-		override getColumnType(): string {
-			return 'datetime'
-		}
 	}
 }

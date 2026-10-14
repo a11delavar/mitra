@@ -2,7 +2,6 @@ import { UnderscoreNamingStrategy, defineConfig } from '@mikro-orm/sqlite'
 import { Migrator } from '@mikro-orm/migrations'
 import { User } from '../../features/identity/User.js'
 import { Source } from '../../features/sources/Source.js'
-import { Recurrence } from '../../features/recurrence/Recurrence.js'
 import { Integration } from '../../integrations/Integration.js'
 import { Identity } from '../../features/identity/Identity.js'
 import { EntryRelation } from '../../features/relations/EntryRelation.js'
@@ -17,7 +16,7 @@ import { migrations, nameOf } from './migrations/index.js'
 /** ORM configuration shared between runtime (orm.ts) and migration CLI. */
 export function ormConfig(dbName: string) {
 	return defineConfig({
-		entities: [User, Identity, Integration, MitraCalendar, Demo, CalDAV, GoogleCalendar, AppleCalendar, IcsSubscription, Notion, Tempo, Source, Entry, Recurrence, EntryRelation, NotificationSubscription, Session, State],
+		entities: [User, Identity, Integration, MitraCalendar, Demo, CalDAV, GoogleCalendar, AppleCalendar, IcsSubscription, Notion, Tempo, Source, Entry, EntryRelation, NotificationSubscription, Session, State],
 		dbName,
 		extensions: [Migrator],
 		migrations: {

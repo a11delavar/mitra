@@ -1,5 +1,5 @@
 import { Controller, eventListener } from '@a11d/lit'
-import { DateTime } from '@3mo/date-time'
+import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { Task } from '@lit/task'
 import { fetchAllEntries, fetchEvents } from '../../../infrastructure/http/Api.js'
 import { Calendars } from '../../sources/client/Calendars.js'
@@ -33,27 +33,30 @@ export class EntryFetcherController extends Controller {
 				default: return ['grid', monthIndex] as const
 			}
 		},
-		task: () => {
-			if (this.host.view === 'timeline') {
-				const today = new DateTime()
-				return fetchEvents(today.monthStart.subtract({ months: EntryFetcherController.timelineMonths }), today.monthEnd.add({ months: EntryFetcherController.timelineMonths }))
-			}
-			if (this.host.view === 'table') {
-				const bounds = TableWindow.current.bounds()
-				return !bounds ? fetchAllEntries() : fetchEvents(bounds.start, bounds.end)
-			}
-			const months = this.host.view === 'year' ? 16 : 1
-			const start = this.host.navigatingDate.monthStart.subtract({ months })
-			const end = this.host.navigatingDate.monthEnd.add({ months })
-			return fetchEvents(start, end)
+		task: async () => {
+			const window = this.window
+			return { entries: await (window ? fetchEvents(window) : fetchAllEntries()), window }
 		},
-		onComplete: entries => {
+		onComplete: ({ entries, window }) => {
 			this.lastContact = Date.now()
-			EntryStore.applyServerEntries(entries)
-			EntryEditorIntent.settle(entries)
+			EntryStore.applyServerEntries(entries, window)
+			EntryEditorIntent.settle(EntryStore.occurrences)
 			void Relations.refresh().catch(() => void 0)
 		},
 	})
+
+	/** The dates the view fetches, none for every entry. */
+	private get window() {
+		if (this.host.view === 'timeline') {
+			const today = new DateTime()
+			return new DateTimeRange(today.monthStart.subtract({ months: EntryFetcherController.timelineMonths }), today.monthEnd.add({ months: EntryFetcherController.timelineMonths }))
+		}
+		if (this.host.view === 'table') {
+			return TableWindow.current.bounds()
+		}
+		const months = this.host.view === 'year' ? 16 : 1
+		return new DateTimeRange(this.host.navigatingDate.monthStart.subtract({ months }), this.host.navigatingDate.monthEnd.add({ months }))
+	}
 
 	override hostConnected() {
 		this.task.run()

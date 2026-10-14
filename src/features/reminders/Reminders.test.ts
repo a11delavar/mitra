@@ -6,10 +6,13 @@ import { EntryType } from '../entries/EntryType.js'
 import { Entry } from '../entries/Entry.js'
 import { TaskStatus } from '../entries/TaskStatus.js'
 import { DueReminder } from './Reminders.js'
+import { Recurrence } from '../recurrence/Recurrence.js'
+import { RecurrenceFrequency } from '../recurrence/RecurrenceFrequency.js'
 
 describe('Reminders', () => {
 	const D = (iso: string) => new Date(iso) as unknown as DateTime
-	const entry = (init: Partial<Entry>) => new Entry({ id: 'e', sourceId: 's', type: EntryType.Event, heading: 'Standup', ...init })
+	/** A one-off entry's occurrence. */
+	const entry = (init: Partial<Entry>) => new Entry({ id: 'e', sourceId: 's', type: EntryType.Event, heading: 'Standup', ...init }).occurrences.single
 	const task = (init: Partial<Entry>) => entry({ type: EntryType.Task, ...init })
 
 	describe('DueReminder.within', () => {
@@ -82,16 +85,19 @@ describe('Reminders', () => {
 			assert.equal(DueReminder.within([task({ start, reminders: [30], status: TaskStatus.Doing })], watermark, now).length, 1)
 		})
 
-		it('builds the notification of the entry it is due for', () => {
-			const [due] = DueReminder.within([task({ id: 'master__1', due: D('2026-07-06T09:31:00Z'), reminders: [30], location: 'Room 4', recurringEntryId: 'master', recurrenceId: D('2026-07-06T09:31:00Z') })], watermark, now)
+		it('builds the notification of the occurrence it is due for', () => {
+			const at = D('2026-07-06T09:31:00Z')
+			const rent = new Entry({ id: 'master', sourceId: 's', type: EntryType.Task, heading: 'Rent', due: D('2026-07-05T09:31:00Z'), reminders: [30], location: 'Room 4', recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }) })
+			const [due] = DueReminder.within([rent.occurrences.at(at)], watermark, now)
 			const { facts } = due!.notification()
+			const key = `master__${at.getTime()}`
 			assert.equal(facts.kind, 'task')
-			assert.equal(facts.tag, 'master__1|30')
+			assert.equal(facts.tag, `${key}|30`)
 			assert.equal(facts.timestamp, Date.parse('2026-07-06T09:31:00Z'))
 			assert.equal(facts.when?.due, true)
 			assert.equal(facts.when?.end, Date.parse('2026-07-06T09:31:00Z'))
 			assert.equal(facts.location, 'Room 4')
-			assert.deepEqual(facts.entry, { id: 'master__1', master: 'master', recurrenceId: Date.parse('2026-07-06T09:31:00Z') })
+			assert.deepEqual(facts.entry, { id: key, master: 'master', recurrenceId: at.getTime() })
 		})
 
 		describe('floating entries', () => {

@@ -1,7 +1,8 @@
 import { Component, component, html, property, css, repeat, guard, type PropertyValues, event, styleMap, ifDefined, query } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { type Entry } from '../../entries/Entry.js'
+import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
 import { EntrySegments } from '../../entries/client/EntrySegments.js'
+import { EntryStore } from '../../entries/client/EntryStore.js'
 import { CalendarDatesController, type CalendarMonth } from './CalendarDatesController.js'
 import { CalendarScrollController } from './CalendarScrollController.js'
 import { EntryDragController } from '../../entries/client/EntryDragController.js'
@@ -19,7 +20,7 @@ export class Months extends Component {
 	@event({ bubbles: true, composed: true }) readonly switchToMonth!: EventDispatcher
 
 	@property({ type: Object }) navigatingDate = new DateTime()
-	@property({ type: Array }) entries = new Array<Entry>()
+	@property({ type: Array }) occurrences = new Array<EntryOccurrence>()
 
 	private readonly buffer: CalendarDatesController = new CalendarDatesController(this, { radiusDays: 300, shiftDays: 28, triggerWeeks: 52, bufferWeeks: 520 })
 	protected readonly entryDrag = new EntryDragController(this, 'year')
@@ -28,7 +29,7 @@ export class Months extends Component {
 	@query('.corner') private readonly corner?: HTMLElement
 	@query('mitra-day') private readonly dayCell?: HTMLElement
 
-	private get routines(): Routines { return Routines.of(Availability.outside(this.entries), this.buffer.window.days, 'month') }
+	private get routines(): Routines { return Routines.of(Availability.outside(this.occurrences), this.buffer.window.days, 'month') }
 
 	private get segments(): EntrySegments { return EntrySegments.of(HideDoneTasksSetting.filter(this.routines.kept), this.buffer.window.days) }
 
@@ -269,7 +270,7 @@ export class Months extends Component {
 			</div>
 			${repeat(this.buffer.months, month => month.firstValue, (month, index) =>
 				month.intersects(firstValue, lastValue)
-					? guard([month, this.entries, todayValue, index], () => this.monthTemplate(month, index + 2, todayValue))
+					? guard([month, this.occurrences, todayValue, index], () => this.monthTemplate(month, index + 2, todayValue))
 					: html.nothing)}
 		`
 	}
@@ -294,18 +295,18 @@ export class Months extends Component {
 
 	private entriesTemplate(month: CalendarMonth, row: number) {
 		const segments = this.segments.runsIn(month.first, month.last, () => true)
-			.toSorted((a, b) => EntrySegments.laneOrder(a.entry, b.entry))
+			.toSorted((a, b) => EntrySegments.laneOrder(a.occurrence, b.occurrence))
 		const runs = this.routines.runsIn(month.first, month.last)
 		return html`
 			<div class="entries" style="grid-row: ${row};">
-				${repeat(segments, segment => segment.entry, segment => {
+				${repeat(segments, segment => EntryStore.identityOf(segment.occurrence), segment => {
 					const startColumn = month.columnOf(segment.dayValue!)
 					const clippedRight = segment.runEnd.dayValue! > month.lastValue
 					const endColumn = clippedRight ? month.firstColumn + month.days.length - 1 : month.columnOf(segment.runEnd.dayValue!)
 					return html`
 						<mitra-entry-segment
 							style=${styleMap({ gridColumn: `${startColumn + 1} / span ${endColumn - startColumn + 1}` })}
-							resize=${ifDefined(segment.entry.allDay ? 'inline' : undefined)}
+							resize=${ifDefined(segment.occurrence.allDay ? 'inline' : undefined)}
 							?has-previous=${segment.hasPrevious}
 							?has-next=${clippedRight}
 							.segment=${segment}

@@ -6,6 +6,7 @@ import { RecurrenceEnd } from '../RecurrenceEnd.js'
 import { RecurrenceWeekday } from '../RecurrenceWeekday.js'
 import { type Entry } from '../../entries/Entry.js'
 import { Calendars } from '../../sources/client/Calendars.js'
+import { EntryStore } from '../../entries/client/EntryStore.js'
 import { type SelectionGroupValue } from '../../../design/SelectionGroup.js'
 type MenuItem = RecurrencePreset & { checked: boolean }
 type MonthlyOption = { key: string, label: string }
@@ -30,7 +31,11 @@ export class RepeatField extends Component {
 	protected override createRenderRoot() { return this }
 
 	/** The series' start, not the shown occurrence's: a rule that misses its anchor drops every occurrence before its first match. */
-	private get start(): DateTime { return this.entry.seriesStart ?? this.entry.start ?? this.entry.due! }
+	/** Where the rule starts, through an occurrence too. */
+	private get start(): DateTime {
+		const recurring = EntryStore.occurrenceOf(this.entry).recurringEntry ?? this.entry
+		return recurring.start ?? recurring.due!
+	}
 
 	private get currentLabel(): string {
 		return this.entry.recurrence ? this.entry.recurrence.describe(this.start) : t('Does not repeat')
@@ -86,8 +91,9 @@ export class RepeatField extends Component {
 		this.draft = undefined
 	}
 
+	/** An edit here replaces the parts of a rule the editor doesn't show. */
 	private patchDraft(patch: Partial<Recurrence>) {
-		this.draft = this.draft!.with(patch)
+		this.draft = this.draft!.with({ ...patch, rest: undefined })
 		this.requestUpdate()
 	}
 

@@ -3,7 +3,6 @@ import assert from 'node:assert/strict'
 import { MikroORM, UnderscoreNamingStrategy, type EntityManager } from '@mikro-orm/sqlite'
 import { User } from '../../identity/User.js'
 import { Source } from '../Source.js'
-import { Recurrence } from '../../recurrence/Recurrence.js'
 import { applyOrder, byOrder } from '../../../infrastructure/model/order.js'
 import { Integration } from '../../../integrations/Integration.js'
 import { Identity } from '../../identity/Identity.js'
@@ -18,7 +17,7 @@ import { Session } from '../../identity/server/Session.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
-		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, MitraCalendar, Source, Entry, Recurrence, NotificationSubscription, Session],
+		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, MitraCalendar, Source, Entry, NotificationSubscription, Session],
 		dbName: ':memory:',
 		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {

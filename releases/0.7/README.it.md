@@ -26,6 +26,7 @@ Anche la scelta del fuso orario è stata ridisegnata. I fusi che condividono nom
 	<img src="time-zones-light.webp" alt="La scelta del fuso orario, aperta su casa tra i fusi raggruppati intorno">
 </picture>
 
+> [!NOTE]
 > Se avevi dato un nome tuo al fuso orario in cui ti trovi, daglielo di nuovo, per favore. Finora quei nomi restavano sul dispositivo dove li avevi dati. Da ora in poi un nome ti segue su ogni dispositivo.
 
 Documentazione: [Fusi orari](../../docs/time-zones.md)

@@ -11,6 +11,7 @@ import { MitraCalendar } from '../mitra/MitraCalendar.js'
 import { EntryType } from '../../features/entries/EntryType.js'
 import { EntryRelation } from '../../features/relations/EntryRelation.js'
 import { Entry } from '../../features/entries/Entry.js'
+import { EntryTimeZone } from '../../features/entries/EntryTimeZone.js'
 import { TaskStatus } from '../../features/entries/TaskStatus.js'
 import { Color } from '../../features/sources/Color.js'
 import { TimeZone } from '../../features/time/TimeZone.js'
@@ -153,8 +154,10 @@ export class Demo extends MitraCalendar {
 		const at = (base: DateTime, dayOffset: number, hour: number, minute = 0) => base.add({ days: dayOffset }).with({ hour, minute })
 		const allDayStart = (base: DateTime, dayOffset: number) => TimeZone.UTC.midnightOf(TimeZone.device.dayOf(base.add({ days: dayOffset }))) as DateTime
 
+		// In the zone `at` reads its hours in, as the app writes every entry it makes: without one, a rule repeats at fixed instants.
+		const zone = EntryTimeZone.parse(TimeZone.deviceId)
 		const on = (source: Source) => (init: Partial<Entry>) => {
-			const entry = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: source.defaultEntryType, ...init, sourceId: source.id })
+			const entry = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: source.defaultEntryType, timeZone: zone, ...init, sourceId: source.id })
 			em.persist(entry)
 			return entry
 		}

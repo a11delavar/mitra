@@ -13,12 +13,7 @@ abstract class StepPeriod extends Command {
 	protected get period() { return this.calendar.period }
 	group = 'navigation' as const
 	override get listedWithoutQuery() { return !!this.period }
-	execute() {
-		const { calendar, period } = this
-		if (period) {
-			calendar.navigatingDate = this.direction > 0 ? calendar.navigatingDate.add(period.step) : calendar.navigatingDate.subtract(period.step)
-		}
-	}
+	execute() { this.calendar.step(this.direction) }
 }
 
 @command()

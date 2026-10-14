@@ -56,7 +56,7 @@ class Failing extends MitraCalendar {
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
-		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, MitraCalendar, Minting, Limited, Failing, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
+		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, MitraCalendar, Minting, Limited, Failing, Source, Entry, EntryRelation, NotificationSubscription, Session],
 		dbName: ':memory:',
 		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {

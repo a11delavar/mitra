@@ -37,6 +37,8 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 	}
 
 	@state() navigatingDate = PageCalendar.opened.date
+	/** Whether the render under way follows a step, which keeps the time in view where a navigation to a date arrives at the day's. */
+	private stepping = false
 	@state() view: CalendarView = PageCalendar.opened.view
 	@state() private settingsPage?: SettingsPageId
 	@state() sidebarOpen = PageCalendar.preferredSidebarOpen
@@ -104,6 +106,7 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 
 	protected override updated(props: PropertyValues) {
 		super.updated(props)
+		this.stepping = false
 		if (props.has('parameters')) {
 			// Read from the address bar, not from `parameters`: the router hands on the path's parameters from when the
 			// page was navigated to (the view before an in-app switch), and only the query as it stands.
@@ -199,6 +202,15 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 	readonly sourcesRefreshed = () => {
 		this.sidebar?.requestUpdate()
 		this.requestUpdate()
+	}
+
+	/** One period on or back: the days move, and the time in view stays. */
+	step(direction: 1 | -1) {
+		const { period } = this
+		if (period) {
+			this.stepping = true
+			this.navigatingDate = direction > 0 ? this.navigatingDate.add(period.step) : this.navigatingDate.subtract(period.step)
+		}
 	}
 
 	goToDate() {
@@ -549,33 +561,35 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 						${choose(this.view, [
 							['week', () => html`
 								<mitra-days
-									.entries=${this.store.entries}
+									.occurrences=${this.store.occurrences}
 									.navigatingDate=${bind(this, 'navigatingDate', { event: 'navigate' })}
+									.stepping=${this.stepping}
 								></mitra-days>
 							`],
 							['month', () => html`
 								<mitra-weeks
-									.entries=${this.store.entries}
+									.occurrences=${this.store.occurrences}
 									.navigatingDate=${bind(this, 'navigatingDate', { event: 'navigate' })}
 									@switchToWeek=${() => this.setView('week')}
 								></mitra-weeks>
 							`],
 							['year', () => html`
 								<mitra-months
-									.entries=${this.store.entries}
+									.occurrences=${this.store.occurrences}
 									.navigatingDate=${bind(this, 'navigatingDate', { event: 'navigate' })}
 									@switchToMonth=${() => this.setView('month')}
 								></mitra-months>
 							`],
 							['timeline', () => html`
 								<mitra-timeline
-									.entries=${this.store.entries}
+									.occurrences=${this.store.occurrences}
 									.navigatingDate=${bind(this, 'navigatingDate', { event: 'navigate' })}
+									.stepping=${this.stepping}
 								></mitra-timeline>
 							`],
 							['table', () => html`
 								<mitra-table
-									.entries=${this.store.entries}
+									.occurrences=${this.store.occurrences}
 									.navigatingDate=${this.navigatingDate}
 									@windowChange=${() => this.requestUpdate()}
 								></mitra-table>

@@ -47,7 +47,7 @@ const viewer = (zone: string) => ({
 /** The midnight that begins `day` in `zone`. */
 const midnight = (day: string, zone: string) => TimeZone.of(zone).midnightOf(Temporal.PlainDate.from(day))
 const iso = (value: unknown) => value === undefined || value === null ? value : new Date((value as Date).valueOf()).toISOString()
-const datesOf = (entry: Partial<Entry>) => Object.fromEntries((['start', 'end', 'due', 'recurrenceId', 'seriesStart'] as const)
+const datesOf = (entry: Partial<Entry>) => Object.fromEntries((['start', 'end', 'due', 'recurrenceId'] as const)
 	.filter(field => entry[field]).map(field => [field, iso(entry[field])]))
 const shown = (dates: Record<string, string>, zone: string) => Object.fromEntries(Object.entries(dates).map(([field, day]) => [field, iso(midnight(day, zone))]))
 const holiday = (zone: string, dates: Record<string, string>, init: Partial<Entry> = {}): Partial<Entry> =>
@@ -101,10 +101,10 @@ describe('An all-day entry across viewers', () => {
 		}
 	})
 
-	it('shows an occurrence and its series start at the viewer\'s midnights too', () => {
-		const occurrence = new Entry({ type: EntryType.Event, heading: 'Holiday', allDay: true, recurrenceId: midnight('2026-06-08', 'UTC') as never, seriesStart: midnight('2026-06-01', 'UTC') as never })
+	it('shows the date an override takes over at the viewer\'s midnight too', () => {
+		const override = new Entry({ type: EntryType.Event, heading: 'Holiday', allDay: true, recurringEntryId: 'holiday', recurrenceId: midnight('2026-06-08', 'UTC') as never })
 		for (const zone of zones) {
-			assert.deepEqual(datesOf(viewer(zone).see(occurrence)), shown({ recurrenceId: '2026-06-08', seriesStart: '2026-06-01' }, zone), zone)
+			assert.deepEqual(datesOf(viewer(zone).see(override)), shown({ recurrenceId: '2026-06-08' }, zone), zone)
 		}
 	})
 

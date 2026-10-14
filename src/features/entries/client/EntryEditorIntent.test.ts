@@ -14,103 +14,109 @@ describe('EntryEditorIntent', () => {
 		id: 'a', sourceId: 's', type: EntryType.Event, heading: 'Standup', start: day.add({ hours: 9 }), end: day.add({ hours: 10 }), ...init,
 	})
 
+	const shown = (entry: Entry) => entry.occurrences.single
+	const shownAll = (entries: ReadonlyArray<Entry>) => entries.map(shown)
+
 	beforeEach(() => {
 		EntryEditorIntent.reset()
 		EntryStore.reset()
 	})
 
 	it('opens nothing until something is requested', () => {
-		assert.equal(EntryEditorIntent.shouldOpen(entry()), false)
+		assert.equal(EntryEditorIntent.shouldOpen(shown(entry())), false)
 	})
 
 	describe('a draft', () => {
 		it('matches the very instance that was dropped, not another draft', () => {
 			const draft = entry({ id: undefined })
 			EntryEditorIntent.openDraft(draft)
-			assert.equal(EntryEditorIntent.shouldOpen(draft), true)
-			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: undefined })), false)
+			assert.equal(EntryEditorIntent.shouldOpen(shown(draft)), true)
+			assert.equal(EntryEditorIntent.shouldOpen(shown(entry({ id: undefined }))), false)
 		})
 
 		it('opens once: the second segment of a multi-day draft finds nothing pending', () => {
 			const draft = entry({ id: undefined })
 			EntryEditorIntent.openDraft(draft)
 			EntryEditorIntent.consume()
-			assert.equal(EntryEditorIntent.shouldOpen(draft), false)
+			assert.equal(EntryEditorIntent.shouldOpen(shown(draft)), false)
 		})
 
 		it('is left alone by a fetch, since a draft is never among the server entries', () => {
 			const draft = entry({ id: undefined })
 			EntryEditorIntent.openDraft(draft)
-			EntryEditorIntent.settle([entry()])
-			assert.equal(EntryEditorIntent.shouldOpen(draft), true)
+			EntryEditorIntent.settle(shownAll([entry()]))
+			assert.equal(EntryEditorIntent.shouldOpen(shown(draft)), true)
 		})
 	})
 
 	describe('a picked entry', () => {
 		it('matches by id, so it survives the refetch the navigation triggers', () => {
 			EntryEditorIntent.requestOpen('a')
-			assert.equal(EntryEditorIntent.shouldOpen(entry()), true)
-			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'b' })), false)
+			assert.equal(EntryEditorIntent.shouldOpen(shown(entry())), true)
+			assert.equal(EntryEditorIntent.shouldOpen(shown(entry({ id: 'b' }))), false)
 		})
 
-		it('matches a rendered occurrence of the picked series', () => {
-			EntryEditorIntent.requestOpen('master')
-			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'master-2', recurringEntryId: 'master' })), true)
-		})
+		const weekly = () => entry({ id: 'master', recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })
 
-		it('skips a series master in favor of its occurrences', () => {
+		it('matches a rendered occurrence of the picked recurring entry', () => {
 			EntryEditorIntent.requestOpen('master')
-			const master = entry({ id: 'master', recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })
-			assert.equal(EntryEditorIntent.shouldOpen(master), false)
-			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'master-2', recurringEntryId: 'master', recurrence: master.recurrence })), true)
+			assert.equal(EntryEditorIntent.shouldOpen(weekly().occurrences.at(day.add({ days: 7, hours: 9 }))), true)
 		})
 
 		it('opens a picked occurrence and none of its siblings, which may render first in the view being left', () => {
-			EntryEditorIntent.requestOpen('master__2')
-			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'master__1', recurringEntryId: 'master' })), false)
-			assert.equal(EntryEditorIntent.shouldOpen(entry({ id: 'master__2', recurringEntryId: 'master' })), true)
+			const recurring = weekly()
+			const [first, second] = [recurring.occurrences.at(day.add({ hours: 9 })), recurring.occurrences.at(day.add({ days: 7, hours: 9 }))]
+			EntryEditorIntent.requestOpen(second.key!)
+			assert.equal(EntryEditorIntent.shouldOpen(first), false)
+			assert.equal(EntryEditorIntent.shouldOpen(second), true)
+		})
+
+		it('matches an override standing in for the picked occurrence', () => {
+			const second = weekly().occurrences.at(day.add({ days: 7, hours: 9 }))
+			EntryEditorIntent.requestOpen(second.key!)
+			assert.equal(EntryEditorIntent.shouldOpen(second.override().occurrences.single), true)
 		})
 
 		it('is consumed by the segment that opened it', () => {
 			EntryEditorIntent.requestOpen('a')
 			EntryEditorIntent.consume()
-			assert.equal(EntryEditorIntent.shouldOpen(entry()), false)
+			assert.equal(EntryEditorIntent.shouldOpen(shown(entry())), false)
 		})
 
 		it('is kept by a fetch that carries the entry', () => {
 			EntryEditorIntent.requestOpen('a')
-			EntryEditorIntent.settle([entry({ id: 'b' }), entry()])
-			assert.equal(EntryEditorIntent.shouldOpen(entry()), true)
+			EntryEditorIntent.settle(shownAll([entry({ id: 'b' }), entry()]))
+			assert.equal(EntryEditorIntent.shouldOpen(shown(entry())), true)
 		})
 
 		it('is dropped by a fetch without it, so it can never auto-open a later window', () => {
 			EntryEditorIntent.requestOpen('a')
-			EntryEditorIntent.settle([entry({ id: 'b' })])
-			assert.equal(EntryEditorIntent.shouldOpen(entry()), false)
+			EntryEditorIntent.settle(shownAll([entry({ id: 'b' })]))
+			assert.equal(EntryEditorIntent.shouldOpen(shown(entry())), false)
 		})
 	})
 
 	describe('an open editor', () => {
 		it('holds its entry, and lets go when it closes', () => {
 			const open = entry()
-			assert.equal(EntryEditorIntent.holds(open), false)
+			assert.equal(EntryEditorIntent.holds(shown(open)), false)
 			EntryEditorIntent.setEditing(open, true)
-			assert.equal(EntryEditorIntent.holds(open), true)
+			assert.equal(EntryEditorIntent.holds(shown(open)), true)
 			EntryEditorIntent.setEditing(open, false)
-			assert.equal(EntryEditorIntent.holds(open), false)
+			assert.equal(EntryEditorIntent.holds(shown(open)), false)
 		})
 
 		it('holds the same persisted entry under another instance, since a refetch may swap it', () => {
 			EntryEditorIntent.setEditing(entry(), true)
-			assert.equal(EntryEditorIntent.holds(entry()), true)
-			assert.equal(EntryEditorIntent.holds(entry({ id: 'b' })), false)
+			assert.equal(EntryEditorIntent.holds(shown(entry())), true)
+			assert.equal(EntryEditorIntent.holds(shown(entry({ id: 'b' }))), false)
 		})
 
 		it('is not let go by another entry closing its own editor', () => {
 			const open = entry()
 			EntryEditorIntent.setEditing(open, true)
 			EntryEditorIntent.setEditing(entry({ id: 'b' }), false)
-			assert.equal(EntryEditorIntent.holds(open), true)
+			assert.equal(EntryEditorIntent.holds(shown(open)), true)
 		})
 
 		it('takes the claim over from the request without a gap, so a render between the two never drops it', () => {
@@ -118,7 +124,7 @@ describe('EntryEditorIntent', () => {
 			EntryEditorIntent.requestOpen('a')
 			EntryEditorIntent.setEditing(target, true)
 			EntryEditorIntent.consume()
-			assert.equal(EntryEditorIntent.holds(target), true)
+			assert.equal(EntryEditorIntent.holds(shown(target)), true)
 		})
 
 		it('holds one entry at a time, the last one opened', () => {
@@ -126,8 +132,8 @@ describe('EntryEditorIntent', () => {
 			const second = entry({ id: 'b' })
 			EntryEditorIntent.setEditing(first, true)
 			EntryEditorIntent.setEditing(second, true)
-			assert.equal(EntryEditorIntent.holds(first), false)
-			assert.equal(EntryEditorIntent.holds(second), true)
+			assert.equal(EntryEditorIntent.holds(shown(first)), false)
+			assert.equal(EntryEditorIntent.holds(shown(second)), true)
 		})
 	})
 
@@ -152,7 +158,7 @@ describe('EntryEditorIntent', () => {
 
 		it('drops a request no fetch could match, so a dead link heals itself', () => {
 			EntryEditorIntent.requestOpen('a')
-			EntryEditorIntent.settle([entry({ id: 'b' })])
+			EntryEditorIntent.settle(shownAll([entry({ id: 'b' })]))
 			assert.equal(EntryEditorIntent.target, undefined)
 		})
 
@@ -160,7 +166,7 @@ describe('EntryEditorIntent', () => {
 			const draft = entry({ id: undefined })
 			EntryEditorIntent.openDraft(draft)
 			EntryEditorIntent.setEditing(draft, true)
-			assert.equal(EntryEditorIntent.holds(draft), true)
+			assert.equal(EntryEditorIntent.holds(shown(draft)), true)
 			assert.equal(EntryEditorIntent.target, undefined)
 		})
 	})

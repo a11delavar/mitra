@@ -7,6 +7,7 @@ import { EntryStore } from './EntryStore.js'
 
 describe('EntrySegments', () => {
 	const base = new DateTime().dayStart
+	const shown = (entries: ReadonlyArray<Entry>) => entries.map(entry => entry.occurrences.single)
 
 	const duringMove = <T>(source: Entry | undefined, ghost: Entry, act: () => T): T => {
 		EntryStore.setDragging(source)
@@ -24,7 +25,7 @@ describe('EntrySegments', () => {
 
 	describe('for (slicing + links)', () => {
 		it('makes one unlinked segment for a single-day timed entry', () => {
-			const segments = EntrySegments.for(new Entry({ start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) }))
+			const segments = EntrySegments.for(new Entry({ start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) }).occurrences.single)
 			assert.equal(segments.length, 1)
 			assert.equal(segments[0]!.hasPrevious, false)
 			assert.equal(segments[0]!.hasNext, false)
@@ -35,39 +36,39 @@ describe('EntrySegments', () => {
 
 		it('gives a zero-duration timed entry a minimum visible slab (end == start)', () => {
 			const at = base.add({ hours: 20 })
-			const [segment] = EntrySegments.for(new Entry({ start: at, end: at }))
+			const [segment] = EntrySegments.for(new Entry({ start: at, end: at }).occurrences.single)
 			assert.equal(segment!.startMinute, 20 * 60 + 1)
 			assert.equal(segment!.endMinute, 20 * 60 + 1 + 15)
 		})
 
 		it('gives a timed entry with no end a minimum visible slab below its start', () => {
-			const [segment] = EntrySegments.for(new Entry({ start: base.add({ hours: 20 }) }))
+			const [segment] = EntrySegments.for(new Entry({ start: base.add({ hours: 20 }) }).occurrences.single)
 			assert.equal(segment!.startMinute, 20 * 60 + 1)
 			assert.ok(segment!.endMinute > segment!.startMinute, 'end must fall below start, never invert')
 			assert.equal(segment!.endMinute, 20 * 60 + 1 + 15)
 		})
 
 		it('clamps the minimum slab to the grid bottom for a near-midnight start', () => {
-			const [segment] = EntrySegments.for(new Entry({ start: base.add({ hours: 23, minutes: 55 }), end: base.add({ hours: 23, minutes: 55 }) }))
+			const [segment] = EntrySegments.for(new Entry({ start: base.add({ hours: 23, minutes: 55 }), end: base.add({ hours: 23, minutes: 55 }) }).occurrences.single)
 			assert.equal(segment!.endMinute, 1441)
 		})
 
 		it('runs an entry ending at the next midnight to the day\'s bottom, not a minimum slab', () => {
-			const segments = EntrySegments.for(new Entry({ start: base.add({ hours: 13 }), end: base.add({ days: 1 }) }))
+			const segments = EntrySegments.for(new Entry({ start: base.add({ hours: 13 }), end: base.add({ days: 1 }) }).occurrences.single)
 			assert.equal(segments.length, 1)
 			assert.equal(segments[0]!.startMinute, 13 * 60 + 1)
 			assert.equal(segments[0]!.endMinute, 1441)
 		})
 
 		it('runs the last day of a multi-day entry ending at midnight to its bottom', () => {
-			const segments = EntrySegments.for(new Entry({ start: base.add({ hours: 13 }), end: base.add({ days: 2 }) }))
+			const segments = EntrySegments.for(new Entry({ start: base.add({ hours: 13 }), end: base.add({ days: 2 }) }).occurrences.single)
 			assert.equal(segments.length, 2)
 			assert.equal(segments[1]!.startMinute, 1)
 			assert.equal(segments[1]!.endMinute, 1441)
 		})
 
 		it('links a multi-day entry and clamps the interior pieces to the day edges', () => {
-			const segments = EntrySegments.for(new Entry({ start: base.add({ hours: 22 }), end: base.add({ hours: 50 }) }))
+			const segments = EntrySegments.for(new Entry({ start: base.add({ hours: 22 }), end: base.add({ hours: 50 }) }).occurrences.single)
 			assert.equal(segments.length, 3)
 			assert.equal(segments[0]!.next, segments[1])
 			assert.equal(segments[1]!.previous, segments[0])
@@ -79,21 +80,21 @@ describe('EntrySegments', () => {
 
 		it('returns the same instances on repeated calls (stable identity)', () => {
 			const entry = new Entry({ start: base, end: base.add({ days: 2 }) })
-			assert.equal(EntrySegments.for(entry)[0], EntrySegments.for(entry)[0])
+			assert.equal(EntrySegments.for(entry.occurrences.single)[0], EntrySegments.for(entry.occurrences.single)[0])
 		})
 
 		it('keeps the same instances after a content-only change', () => {
 			const entry = new Entry({ heading: 'Old', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
-			const before = EntrySegments.for(entry)
+			const before = EntrySegments.for(entry.occurrences.single)
 			entry.heading = 'New'
-			assert.equal(EntrySegments.for(entry)[0], before[0])
+			assert.equal(EntrySegments.for(entry.occurrences.single)[0], before[0])
 		})
 
 		it('re-slices after an in-place span change', () => {
 			const entry = new Entry({ start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
-			const before = EntrySegments.for(entry)
+			const before = EntrySegments.for(entry.occurrences.single)
 			entry.moveStart(base.add({ hours: 14 }))
-			const after = EntrySegments.for(entry)
+			const after = EntrySegments.for(entry.occurrences.single)
 			assert.notEqual(after[0], before[0])
 			assert.equal(after[0]!.startMinute, 14 * 60 + 1)
 			assert.equal(after[0]!.endMinute, 15 * 60 + 1)
@@ -101,9 +102,9 @@ describe('EntrySegments', () => {
 
 		it('re-slices to more segments when a span grows across days', () => {
 			const entry = new Entry({ start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
-			assert.equal(EntrySegments.for(entry).length, 1)
+			assert.equal(EntrySegments.for(entry.occurrences.single).length, 1)
 			entry.setEnd(base.add({ days: 1, hours: 10 }))
-			assert.equal(EntrySegments.for(entry).length, 2)
+			assert.equal(EntrySegments.for(entry.occurrences.single).length, 2)
 		})
 
 		it('keys a create draft and a move ghost distinctly', () => {
@@ -111,7 +112,7 @@ describe('EntrySegments', () => {
 			const ghost = new Entry({})
 			EntryStore.setPreview(ghost)
 			try {
-				assert.notEqual(EntrySegments.for(draft)[0]!.id, EntrySegments.for(ghost)[0]!.id)
+				assert.notEqual(EntrySegments.for(draft.occurrences.single)[0]!.id, EntrySegments.for(ghost.occurrences.single)[0]!.id)
 			} finally {
 				EntryStore.setPreview(undefined)
 			}
@@ -119,19 +120,19 @@ describe('EntrySegments', () => {
 
 		it('re-slices after an in-place all-day flip', () => {
 			const entry = new Entry({ start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
-			const before = EntrySegments.for(entry)
+			const before = EntrySegments.for(entry.occurrences.single)
 			entry.setAllDay(true, 60)
-			assert.notEqual(EntrySegments.for(entry)[0], before[0])
-			assert.equal(EntrySegments.for(entry)[0]!.allDay, true)
+			assert.notEqual(EntrySegments.for(entry.occurrences.single)[0], before[0])
+			assert.equal(EntrySegments.for(entry.occurrences.single)[0]!.allDay, true)
 		})
 	})
 
 	describe('of', () => {
 		it('reuses the cohort for the same inputs and rebuilds when entries change', () => {
 			const days = [base, base.add({ days: 1 })]
-			const entries = [new Entry({ start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })]
-			assert.equal(EntrySegments.of(entries, days), EntrySegments.of(entries, days))
-			assert.notEqual(EntrySegments.of(entries, days), EntrySegments.of([...entries], days))
+			const occurrences = shown([new Entry({ start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })])
+			assert.equal(EntrySegments.of(occurrences, days), EntrySegments.of(occurrences, days))
+			assert.notEqual(EntrySegments.of(occurrences, days), EntrySegments.of([...occurrences], days))
 		})
 	})
 
@@ -141,11 +142,11 @@ describe('EntrySegments', () => {
 			const days = [base, base.add({ days: 1 })]
 			const monday = new Entry({ id: 'a', heading: 'A', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
 			const tuesday = new Entry({ id: 'b', heading: 'B', start: days[1]!.add({ hours: 9 }), end: days[1]!.add({ hours: 10 }) })
-			const before = EntrySegments.of([monday, tuesday], days)
+			const before = EntrySegments.of(shown([monday, tuesday]), days)
 			const [untouched, touched] = [before.timedOn(days[0]!), before.timedOn(days[1]!)]
 			const ghost = new Entry({ heading: 'B', start: days[1]!.add({ hours: 11 }), end: days[1]!.add({ hours: 12 }) })
 			duringMove(tuesday, ghost, () => {
-				const step = EntrySegments.of([monday, tuesday, ghost], days)
+				const step = EntrySegments.of(shown([monday, tuesday, ghost]), days)
 				assert.equal(step.timedOn(days[0]!), untouched)
 				assert.notEqual(step.timedOn(days[1]!), touched)
 				assert.equal(step.timedOn(days[1]!).length, 2)
@@ -157,8 +158,8 @@ describe('EntrySegments', () => {
 			const first = new Entry({ heading: 'A', start: base.add({ hours: 11 }), end: base.add({ hours: 12 }) })
 			const second = new Entry({ heading: 'A', start: base.add({ hours: 13 }), end: base.add({ hours: 14 }) })
 			const days = [base]
-			duringMove(entry, first, () => EntrySegments.of([entry, first], days).timedOn(base))
-			const moved = duringMove(entry, second, () => EntrySegments.of([entry, second], days).timedOn(base))
+			duringMove(entry, first, () => EntrySegments.of(shown([entry, first]), days).timedOn(base))
+			const moved = duringMove(entry, second, () => EntrySegments.of(shown([entry, second]), days).timedOn(base))
 			assert.deepEqual(moved.map(segment => segment.entry), [entry, second])
 		})
 	})
@@ -169,7 +170,7 @@ describe('EntrySegments', () => {
 			const ghost = new Entry({ heading: 'A', start: base.add({ hours: 10 }), end: base.add({ hours: 12 }) })
 			EntryStore.setPreview(ghost)
 			try {
-				const segments = EntrySegments.of([source, ghost], [base]).timedOn(base)
+				const segments = EntrySegments.of(shown([source, ghost]), [base]).timedOn(base)
 				assert.equal(segments.length, 2)
 				assert.deepEqual(segments.find(s => s.entry === source)!.overlap, { slot: 0, total: 1, span: 1, inset: 0 })
 				assert.equal(segments.find(s => s.entry === ghost)!.overlap, undefined)
@@ -185,7 +186,7 @@ describe('EntrySegments', () => {
 			const b = new Entry({ heading: 'B', start: base.add({ hours: 9, minutes: 30 }), end: base.add({ hours: 11, minutes: 30 }) })
 			const lone = new Entry({ heading: 'Lone', start: base.add({ hours: 14 }), end: base.add({ hours: 15 }) })
 
-			const bars = EntrySegments.of([a, b, lone], [base]).timedOn(base)
+			const bars = EntrySegments.of(shown([a, b, lone]), [base]).timedOn(base)
 			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
 
 			assert.deepEqual(overlap('A'), { slot: 0, total: 2, span: 1, inset: 0 })
@@ -197,7 +198,7 @@ describe('EntrySegments', () => {
 			const a = new Entry({ heading: 'A', start: base.add({ hours: 9 }), end: base.add({ hours: 11 }) })
 			const b = new Entry({ heading: 'B', start: base.add({ hours: 10 }), end: base.add({ hours: 12 }) })
 
-			const bars = EntrySegments.of([a, b], [base]).timedOn(base)
+			const bars = EntrySegments.of(shown([a, b]), [base]).timedOn(base)
 			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
 
 			assert.deepEqual(overlap('A'), { slot: 0, total: 1, span: 1, inset: 0 })
@@ -208,7 +209,7 @@ describe('EntrySegments', () => {
 			const meeting = new Entry({ heading: 'Meeting', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
 			const holiday = new Entry({ heading: 'Holiday', start: base, end: base.add({ days: 1 }), allDay: true })
 
-			const cohort = EntrySegments.of([meeting, holiday], [base, base.add({ days: 1 })])
+			const cohort = EntrySegments.of(shown([meeting, holiday]), [base, base.add({ days: 1 })])
 			assert.deepEqual(cohort.timedOn(base).map(s => s.entry.heading), ['Meeting'])
 			assert.equal(cohort.timedOn(base.add({ days: 1 })).length, 0)
 		})
@@ -219,7 +220,7 @@ describe('EntrySegments', () => {
 			const b = new Entry({ heading: 'B', start: base.with({ hour: 9, minute: 30 }), end: base.with({ hour: 9, minute: 45 }) })
 			const w = new Entry({ heading: 'W', start: base.with({ hour: 9, minute: 35 }), end: base.with({ hour: 10, minute: 30 }) })
 
-			const bars = EntrySegments.of([a, x, b, w], [base]).timedOn(base)
+			const bars = EntrySegments.of(shown([a, x, b, w]), [base]).timedOn(base)
 			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
 
 			assert.deepEqual(overlap('A'), { slot: 0, total: 3, span: 1, inset: 0 })
@@ -230,7 +231,7 @@ describe('EntrySegments', () => {
 			const block = new Entry({ heading: 'Block', start: base.with({ hour: 17 }), end: base.with({ hour: 21 }) })
 			const pills = new Entry({ heading: 'Pills', start: base.with({ hour: 20 }), end: base.with({ hour: 20, minute: 30 }) })
 
-			const bars = EntrySegments.of([block, pills], [base]).timedOn(base)
+			const bars = EntrySegments.of(shown([block, pills]), [base]).timedOn(base)
 			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
 
 			assert.deepEqual(overlap('Block'), { slot: 0, total: 1, span: 1, inset: 0 })
@@ -242,11 +243,11 @@ describe('EntrySegments', () => {
 			const late = (minute: number) => new Entry({ heading: 'Late', start: base.with({ hour: 17, minute }), end: base.with({ hour: 18, minute }) })
 			const overlapOf = (segments: ReturnType<EntrySegments['timedOn']>, heading: string) => segments.find(s => s.entry.heading === heading)!.overlap
 
-			const under = EntrySegments.of([block(), late(44)], [base]).timedOn(base)
+			const under = EntrySegments.of(shown([block(), late(44)]), [base]).timedOn(base)
 			assert.deepEqual(overlapOf(under, 'Block'), { slot: 0, total: 2, span: 1, inset: 0 })
 			assert.deepEqual(overlapOf(under, 'Late'), { slot: 1, total: 2, span: 1, inset: 0 })
 
-			const exact = EntrySegments.of([block(), late(45)], [base]).timedOn(base)
+			const exact = EntrySegments.of(shown([block(), late(45)]), [base]).timedOn(base)
 			assert.deepEqual(overlapOf(exact, 'Block'), { slot: 0, total: 1, span: 1, inset: 0 })
 			assert.deepEqual(overlapOf(exact, 'Late'), { slot: 0, total: 1, span: 1, inset: 1 })
 		})
@@ -257,7 +258,7 @@ describe('EntrySegments', () => {
 			const gym = new Entry({ heading: 'Gym', start: base.with({ hour: 20, minute: 15 }), end: base.with({ hour: 21, minute: 15 }) })
 			const cards = new Entry({ heading: 'Cards', start: base.with({ hour: 21 }), end: base.with({ hour: 22 }) })
 
-			const bars = EntrySegments.of([block, pills, gym, cards], [base]).timedOn(base)
+			const bars = EntrySegments.of(shown([block, pills, gym, cards]), [base]).timedOn(base)
 			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
 
 			assert.deepEqual(overlap('Block'), { slot: 0, total: 1, span: 1, inset: 0 })
@@ -270,7 +271,7 @@ describe('EntrySegments', () => {
 			const block = new Entry({ heading: 'Block', start: base.with({ hour: 17 }), end: base.with({ hour: 21 }) })
 			const runover = new Entry({ heading: 'Runover', start: base.with({ hour: 20, minute: 30 }), end: base.with({ hour: 22 }) })
 
-			const bars = EntrySegments.of([block, runover], [base]).timedOn(base)
+			const bars = EntrySegments.of(shown([block, runover]), [base]).timedOn(base)
 			assert.deepEqual(bars.find(s => s.entry.heading === 'Block')!.overlap, { slot: 0, total: 1, span: 1, inset: 0 })
 			assert.deepEqual(bars.find(s => s.entry.heading === 'Runover')!.overlap, { slot: 0, total: 1, span: 1, inset: 1 })
 		})
@@ -281,7 +282,7 @@ describe('EntrySegments', () => {
 			const clash = new Entry({ heading: 'Clash', start: base.with({ hour: 18, minute: 15 }), end: base.with({ hour: 18, minute: 45 }) })
 			const second = new Entry({ heading: 'Second', start: base.with({ hour: 20 }), end: base.with({ hour: 20, minute: 30 }) })
 
-			const bars = EntrySegments.of([block, first, clash, second], [base]).timedOn(base)
+			const bars = EntrySegments.of(shown([block, first, clash, second]), [base]).timedOn(base)
 			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
 
 			assert.deepEqual(overlap('Block'), { slot: 0, total: 1, span: 1, inset: 0 })
@@ -296,7 +297,7 @@ describe('EntrySegments', () => {
 			const pgit = new Entry({ heading: 'PGIT', start: base.with({ hour: 21, minute: 45 }), end: base.with({ hour: 22, minute: 45 }) })
 			const gym = new Entry({ heading: 'Gym', start: base.with({ hour: 22 }), end: base.with({ hour: 23 }) })
 
-			const bars = EntrySegments.of([sew, pills, pgit, gym], [base]).timedOn(base)
+			const bars = EntrySegments.of(shown([sew, pills, pgit, gym]), [base]).timedOn(base)
 			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
 
 			assert.deepEqual(overlap('SEW'), { slot: 0, total: 1, span: 1, inset: 0 })
@@ -310,7 +311,7 @@ describe('EntrySegments', () => {
 			const m = new Entry({ heading: 'M', start: base.with({ hour: 17, minute: 30 }), end: base.with({ hour: 21 }) })
 			const r = new Entry({ heading: 'R', start: base.with({ hour: 18, minute: 30 }), end: base.with({ hour: 18, minute: 50 }) })
 
-			const bars = EntrySegments.of([a, m, r], [base]).timedOn(base)
+			const bars = EntrySegments.of(shown([a, m, r]), [base]).timedOn(base)
 			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
 
 			assert.deepEqual(overlap('A'), { slot: 0, total: 2, span: 1, inset: 0 })
@@ -322,7 +323,7 @@ describe('EntrySegments', () => {
 			const overnight = new Entry({ heading: 'Overnight', start: base.subtract({ hours: 2 }), end: base.add({ hours: 2 }) })
 			const meeting = new Entry({ heading: 'Meeting', start: base.add({ hours: 1 }), end: base.add({ hours: 2 }) })
 
-			const bars = EntrySegments.of([overnight, meeting], [base]).timedOn(base)
+			const bars = EntrySegments.of(shown([overnight, meeting]), [base]).timedOn(base)
 			const slice = bars.find(s => s.entry === overnight)!
 			const chip = bars.find(s => s.entry === meeting)!
 
@@ -337,7 +338,7 @@ describe('EntrySegments', () => {
 			const run = new Entry({ heading: 'Off-site', start: base.add({ hours: 13 }), end: base.add({ days: 2, hours: 13 }) })
 			const review = new Entry({ heading: 'Review', start: base.add({ hours: 13 }), end: base.add({ hours: 13, minutes: 45 }) })
 
-			const bars = EntrySegments.of([run, review], [base]).timedOn(base)
+			const bars = EntrySegments.of(shown([run, review]), [base]).timedOn(base)
 			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
 
 			assert.deepEqual(overlap('Off-site'), { slot: 0, total: 2, span: 1, inset: 0 })
@@ -349,7 +350,7 @@ describe('EntrySegments', () => {
 			const first = new Entry({ heading: 'First', start: base.subtract({ hours: 2 }), end: base.add({ hours: 26 }) })
 			const second = new Entry({ heading: 'Second', start: base.subtract({ hours: 1 }), end: base.add({ hours: 25 }) })
 
-			const bars = EntrySegments.of([first, second], [base]).timedOn(base)
+			const bars = EntrySegments.of(shown([first, second]), [base]).timedOn(base)
 			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
 
 			assert.deepEqual(overlap('First'), { slot: 0, total: 2, span: 1, inset: 0 })
@@ -362,7 +363,7 @@ describe('EntrySegments', () => {
 			const gym = new Entry({ heading: 'Gym', start: base.with({ hour: 20, minute: 15 }), end: base.with({ hour: 21, minute: 15 }) })
 			const cards = new Entry({ heading: 'Cards', start: base.with({ hour: 21 }), end: base.with({ hour: 22 }) })
 
-			const bars = EntrySegments.of([block, pills, gym, cards], [base]).timedOn(base)
+			const bars = EntrySegments.of(shown([block, pills, gym, cards]), [base]).timedOn(base)
 			const covers = (heading: string) => bars.find(s => s.entry.heading === heading)!.covers
 
 			assert.equal(covers('Block'), false)
@@ -372,7 +373,7 @@ describe('EntrySegments', () => {
 
 			const a = new Entry({ heading: 'A', start: base.add({ hours: 9 }), end: base.add({ hours: 11 }) })
 			const b = new Entry({ heading: 'B', start: base.add({ hours: 9, minutes: 30 }), end: base.add({ hours: 11, minutes: 30 }) })
-			const mates = EntrySegments.of([a, b], [base]).timedOn(base)
+			const mates = EntrySegments.of(shown([a, b]), [base]).timedOn(base)
 			assert.deepEqual(mates.map(s => s.covers), [false, false])
 		})
 
@@ -381,7 +382,7 @@ describe('EntrySegments', () => {
 			const sub = new Entry({ heading: 'Sub', start: base.with({ hour: 10 }), end: base.with({ hour: 15 }) })
 			const pill = new Entry({ heading: 'Pill', start: base.with({ hour: 11 }), end: base.with({ hour: 11, minute: 30 }) })
 
-			const bars = EntrySegments.of([day, sub, pill], [base]).timedOn(base)
+			const bars = EntrySegments.of(shown([day, sub, pill]), [base]).timedOn(base)
 			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
 
 			assert.deepEqual(overlap('Day'), { slot: 0, total: 1, span: 1, inset: 0 })
@@ -394,7 +395,7 @@ describe('EntrySegments', () => {
 			const pills = new Entry({ heading: 'Pills', start: base.with({ hour: 18, minute: 45 }), end: base.with({ hour: 20 }) })
 			const gym = new Entry({ heading: 'Gym', start: base.with({ hour: 19, minute: 15 }), end: base.with({ hour: 20, minute: 15 }) })
 
-			const bars = EntrySegments.of([block, pills, gym], [base]).timedOn(base)
+			const bars = EntrySegments.of(shown([block, pills, gym]), [base]).timedOn(base)
 			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
 
 			assert.deepEqual(overlap('Block'), { slot: 0, total: 1, span: 1, inset: 0 })
@@ -408,7 +409,7 @@ describe('EntrySegments', () => {
 			const b = new Entry({ heading: 'B', start: base.with({ hour: 10, minute: 30 }), end: base.with({ hour: 11, minute: 30 }) })
 			const c = new Entry({ heading: 'C', start: base.with({ hour: 12 }), end: base.with({ hour: 12, minute: 30 }) })
 
-			const bars = EntrySegments.of([block, a, b, c], [base]).timedOn(base)
+			const bars = EntrySegments.of(shown([block, a, b, c]), [base]).timedOn(base)
 			const overlap = (heading: string) => bars.find(s => s.entry.heading === heading)!.overlap
 
 			assert.deepEqual(overlap('A'), { slot: 0, total: 1, span: 1, inset: 1 })
@@ -424,7 +425,7 @@ describe('EntrySegments', () => {
 			const trip = new Entry({ heading: 'Trip', start: base.add({ days: 1 }), end: base.add({ days: 4 }) })
 			const day = new Entry({ heading: 'Day', start: base.add({ days: 1 }), end: base.add({ days: 2 }) })
 
-			const reps = EntrySegments.of([day, trip], week).runsIn(base, base.add({ days: 6 }), () => true)
+			const reps = EntrySegments.of(shown([day, trip]), week).runsIn(base, base.add({ days: 6 }), () => true)
 
 			assert.deepEqual(reps.map(s => s.entry.heading), ['Trip', 'Day'])
 			assert.ok(reps.every(s => s.date!.dayStart.equals(base.add({ days: 1 }).dayStart)))
@@ -433,7 +434,7 @@ describe('EntrySegments', () => {
 		it('clips a run that starts before the window to the first in-range day and flags it', () => {
 			const ongoing = new Entry({ heading: 'Ongoing', start: base.subtract({ days: 3 }), end: base.add({ days: 2 }) })
 
-			const [rep] = EntrySegments.of([ongoing], week).runsIn(base, base.add({ days: 6 }), () => true)
+			const [rep] = EntrySegments.of(shown([ongoing]), week).runsIn(base, base.add({ days: 6 }), () => true)
 
 			assert.equal(rep!.date!.dayStart.equals(base.dayStart), true)
 			assert.equal(rep!.hasPrevious, true)
@@ -443,17 +444,17 @@ describe('EntrySegments', () => {
 			const holiday = new Entry({ heading: 'Holiday', start: base, end: base.add({ days: 1 }), allDay: true })
 			const meeting = new Entry({ heading: 'Meeting', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
 
-			const reps = EntrySegments.of([holiday, meeting], week).runsIn(base, base.add({ days: 6 }), entry => !!entry.allDay)
+			const reps = EntrySegments.of(shown([holiday, meeting]), week).runsIn(base, base.add({ days: 6 }), entry => !!entry.allDay)
 			assert.deepEqual(reps.map(s => s.entry.heading), ['Holiday'])
 		})
 	})
 
 	describe('laneRank', () => {
 		it('ranks multi-day spans top, then all-day, then timed, then undated', () => {
-			assert.equal(EntrySegments.laneRank(new Entry({ start: base, end: base.add({ days: 2 }) })), 0)
-			assert.equal(EntrySegments.laneRank(new Entry({ start: base, end: base.add({ days: 1 }), allDay: true })), 1)
-			assert.equal(EntrySegments.laneRank(new Entry({ start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })), 2)
-			assert.equal(EntrySegments.laneRank(new Entry({})), 3)
+			assert.equal(EntrySegments.laneRank(new Entry({ start: base, end: base.add({ days: 2 }) }).occurrences.single), 0)
+			assert.equal(EntrySegments.laneRank(new Entry({ start: base, end: base.add({ days: 1 }), allDay: true }).occurrences.single), 1)
+			assert.equal(EntrySegments.laneRank(new Entry({ start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) }).occurrences.single), 2)
+			assert.equal(EntrySegments.laneRank(new Entry({}).occurrences.single), 3)
 		})
 	})
 
@@ -463,7 +464,7 @@ describe('EntrySegments', () => {
 		const day = new Entry({ heading: 'Day', start: base.add({ days: 1 }), end: base.add({ days: 2 }) })
 
 		it('places each entry as a spanning bar at its packed slot', () => {
-			const { bars } = EntrySegments.of([day, trip], week).monthWeek(week)
+			const { bars } = EntrySegments.of(shown([day, trip]), week).monthWeek(week)
 			const bar = (heading: string) => bars.find(b => b.segment.entry.heading === heading)!
 
 			assert.deepEqual({ ...bar('Trip'), segment: 0 }, { segment: 0, startColumn: 0, span: 3, slot: 0, clippedRight: false })
@@ -472,14 +473,14 @@ describe('EntrySegments', () => {
 
 		it('flags a bar whose run continues past the week as clipped, spanning to the week edge', () => {
 			const long = new Entry({ heading: 'Long', start: base, end: base.add({ days: 9 }) })
-			const [bar] = EntrySegments.of([long], week).monthWeek(week).bars
+			const [bar] = EntrySegments.of(shown([long]), week).monthWeek(week).bars
 			assert.equal(bar!.clippedRight, true)
 			assert.equal(bar!.span, 7)
 		})
 
 		it('places every entry, however deep the packing goes: a dense week clips visually, never here', () => {
 			const stack = Array.from({ length: 10 }, (_, i) => new Entry({ heading: `E${i}`, start: base.add({ hours: 9 + i }), end: base.add({ hours: 10 + i }) }))
-			const { bars } = EntrySegments.of(stack, week).monthWeek(week)
+			const { bars } = EntrySegments.of(shown(stack), week).monthWeek(week)
 			assert.equal(bars.length, 10)
 			assert.deepEqual([...new Set(bars.map(bar => bar.slot))].length, 10)
 		})
@@ -491,10 +492,10 @@ describe('EntrySegments', () => {
 			const early = new Entry({ heading: 'Early', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
 			const late = new Entry({ heading: 'Late', start: base.add({ days: 4 }).with({ hour: 9 }), end: base.add({ days: 4 }).with({ hour: 10 }) })
 
-			const slots = EntrySegments.of([early, late, trip], [base]).monthSlots
-			assert.equal(slots.get(trip), 0)
-			assert.equal(slots.get(early), 1)
-			assert.equal(slots.get(late), 0)
+			const slots = EntrySegments.of(shown([early, late, trip]), [base]).monthSlots
+			assert.equal(slots.get(trip.occurrences.single), 0)
+			assert.equal(slots.get(early.occurrences.single), 1)
+			assert.equal(slots.get(late.occurrences.single), 0)
 		})
 	})
 
@@ -504,19 +505,19 @@ describe('EntrySegments', () => {
 			const visit = new Entry({ heading: 'Visit', start: base.add({ days: 2 }), end: base.add({ days: 4 }), allDay: true })
 			const later = new Entry({ heading: 'Later', start: base.add({ days: 5 }), end: base.add({ days: 6 }), allDay: true })
 
-			const slots = EntrySegments.of([conference, visit, later], [base]).allDaySlots
-			assert.equal(slots.get(conference), 0)
-			assert.equal(slots.get(visit), 1)
-			assert.equal(slots.get(later), 0)
+			const slots = EntrySegments.of(shown([conference, visit, later]), [base]).allDaySlots
+			assert.equal(slots.get(conference.occurrences.single), 0)
+			assert.equal(slots.get(visit.occurrences.single), 1)
+			assert.equal(slots.get(later.occurrences.single), 0)
 		})
 
 		it('never lets a timed entry occupy a lane', () => {
 			const meeting = new Entry({ heading: 'Meeting', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
 			const holiday = new Entry({ heading: 'Holiday', start: base, end: base.add({ days: 1 }), allDay: true })
 
-			const slots = EntrySegments.of([meeting, holiday], [base]).allDaySlots
-			assert.equal(slots.get(holiday), 0)
-			assert.equal(slots.has(meeting), false)
+			const slots = EntrySegments.of(shown([meeting, holiday]), [base]).allDaySlots
+			assert.equal(slots.get(holiday.occurrences.single), 0)
+			assert.equal(slots.has(meeting.occurrences.single), false)
 		})
 
 		it('puts a move ghost in the free lane it will land in, without shifting the packed ones', () => {
@@ -524,10 +525,10 @@ describe('EntrySegments', () => {
 			const task = allDay('Task', 0)
 			const ghost = allDay('Task', 3)
 
-			const slots = duringMove(task, ghost, () => EntrySegments.of([banner, task, ghost], [base]).allDaySlots)
-			assert.equal(slots.get(banner), 0)
-			assert.equal(slots.get(task), 1)
-			assert.equal(slots.get(ghost), 1)
+			const slots = duringMove(task, ghost, () => EntrySegments.of(shown([banner, task, ghost]), [base]).allDaySlots)
+			assert.equal(slots.get(banner.occurrences.single), 0)
+			assert.equal(slots.get(task.occurrences.single), 1)
+			assert.equal(slots.get(ghost.occurrences.single), 1)
 		})
 
 		it('lets a move ghost reuse the cells its own source is vacating', () => {
@@ -535,8 +536,8 @@ describe('EntrySegments', () => {
 			const trip = allDay('Trip', 1, 3)
 			const ghost = allDay('Trip', 2, 3)
 
-			const slots = duringMove(trip, ghost, () => EntrySegments.of([banner, trip, ghost], [base]).allDaySlots)
-			assert.equal(slots.get(ghost), 1)
+			const slots = duringMove(trip, ghost, () => EntrySegments.of(shown([banner, trip, ghost]), [base]).allDaySlots)
+			assert.equal(slots.get(ghost.occurrences.single), 1)
 		})
 
 		it('falls back to a fresh lane when a move ghost fits in none', () => {
@@ -545,9 +546,9 @@ describe('EntrySegments', () => {
 			const other = allDay('Other', 3)
 			const ghost = allDay('Task', 3)
 
-			const slots = duringMove(task, ghost, () => EntrySegments.of([banner, task, other, ghost], [base]).allDaySlots)
-			assert.equal(slots.get(other), 1)
-			assert.equal(slots.get(ghost), 2)
+			const slots = duringMove(task, ghost, () => EntrySegments.of(shown([banner, task, other, ghost]), [base]).allDaySlots)
+			assert.equal(slots.get(other.occurrences.single), 1)
+			assert.equal(slots.get(ghost.occurrences.single), 2)
 		})
 	})
 
@@ -558,7 +559,7 @@ describe('EntrySegments', () => {
 			const trip = new Entry({ heading: 'Trip', start: base, end: base.add({ days: 3 }) })
 			const ghost = new Entry({ heading: 'Ghost', start: base.add({ days: 1 }), end: base.add({ days: 2 }) })
 
-			const { bars } = duringMove(undefined, ghost, () => EntrySegments.of([trip, ghost], week).monthWeek(week))
+			const { bars } = duringMove(undefined, ghost, () => EntrySegments.of(shown([trip, ghost]), week).monthWeek(week))
 			assert.deepEqual(bars.map(bar => bar.segment.entry.heading), ['Trip', 'Ghost'])
 			assert.equal(bars.find(bar => bar.segment.entry === ghost)!.slot, 1)
 		})
