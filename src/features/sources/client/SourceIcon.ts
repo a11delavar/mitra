@@ -1,7 +1,7 @@
 import { Component, component, html, css, property } from '@a11d/lit'
 import { type Source } from '../Source.js'
 import { EntryType } from '../../entries/EntryType.js'
-import { getIntegrationFor } from '../../../infrastructure/http/Api.js'
+import { Calendars } from './Calendars.js'
 import { contrastColorOf } from '../../../design/contrastColor.js'
 
 /**
@@ -64,7 +64,7 @@ export class SourceIcon extends Component {
 		this.style.setProperty('--mitra-source-icon-color', this.source?.color ?? '')
 		this.toggleAttribute('importing', !!this.source?.importing)
 		const getIcon = () => {
-			const provider = this.icon ?? (this.source && getIntegrationFor(this.source.id)?.sourceIcon)
+			const provider = this.icon ?? (this.source && Calendars.integrationOf(this.source.id)?.sourceIcon)
 			switch (true) {
 				case !!this.source?.importing:
 					return 'loader-circle'

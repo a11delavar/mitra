@@ -1,7 +1,8 @@
 import { Controller, eventListener } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { Task } from '@lit/task'
-import { fetchAllEntries, fetchEvents, fetchIntegrations } from '../../../infrastructure/http/Api.js'
+import { fetchAllEntries, fetchEvents } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryStore } from './EntryStore.js'
 import { Relations } from '../../relations/client/Relations.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
@@ -70,7 +71,7 @@ export class EntryFetcherController extends Controller {
 			this.lastContact = Date.now()
 			// Sources change triggers full integration refresh to sync import states, renames, and colors.
 			if (event.data === 'sources') {
-				await fetchIntegrations().catch(() => undefined)
+				await Calendars.fetch().catch(() => undefined)
 				this.host.sourcesRefreshed()
 			}
 			void this.task.run()

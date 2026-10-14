@@ -1,7 +1,8 @@
 import { Component, component, html, css, property, state, query, event, eventListener } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
 import { type Entry } from '../../entries/Entry.js'
-import { getSource, searchEntries } from '../../../infrastructure/http/Api.js'
+import { searchEntries } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
 import { commandMatches, Command } from '../Command.js'
 import { LatestSearch } from '../../../design/Combobox.js'
@@ -265,7 +266,7 @@ export class CommandPalette extends Component {
 							<span class="group">${t('Entries')}</span>
 							${entries.map(entry => html`
 								<mitra-option .value=${entry}>
-									<span class="swatch" style=${`background: ${entry.color ?? getSource(entry.sourceId)?.color ?? 'var(--color-accent)'}`}></span>
+									<span class="swatch" style=${`background: ${entry.color ?? Calendars.source(entry.sourceId)?.color ?? 'var(--color-accent)'}`}></span>
 									<span class="heading">${entry.heading || t('Untitled')}</span>
 									<span class="when">${CommandPalette.when(entry)}</span>
 								</mitra-option>

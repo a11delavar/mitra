@@ -4,7 +4,8 @@ import { type Entry } from '../../entries/Entry.js'
 import { TaskStatus } from '../../entries/TaskStatus.js'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
 import { EntryStore, reportSaveError } from '../../entries/client/EntryStore.js'
-import { getSource, updateEvent } from '../../../infrastructure/http/Api.js'
+import { updateEvent } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { offerFollowUps } from './Hierarchy.js'
 import '../../entries/client/TaskStatus.js'
 import { pressable } from '../../../design/pressable.css.js'
@@ -126,7 +127,7 @@ export class EntryLink extends Component {
 
 	protected override get template() {
 		const { entry } = this
-		const color = entry.color || getSource(entry.sourceId)?.color
+		const color = entry.color || Calendars.source(entry.sourceId)?.color
 		return html`
 			${entry.type.isTask ? html`
 				<mitra-task-status style=${color ? `color: ${color};` : ''} .entry=${entry} @change=${() => this.handleStatusChange()}></mitra-task-status>

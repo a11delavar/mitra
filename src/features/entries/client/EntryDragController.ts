@@ -8,7 +8,7 @@ import { DefaultDurationSetting } from './DefaultDurationSetting.js'
 import { SnapSetting } from './SnapSetting.js'
 import { ReminderSetting } from '../../reminders/client/DefaultReminderSetting.js'
 import { EntryType } from '../EntryType.js'
-import { getPrimarySource, getCapabilities } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryStore } from './EntryStore.js'
 import * as Hierarchy from '../../relations/client/Hierarchy.js'
 import { Relations } from '../../relations/client/Relations.js'
@@ -149,7 +149,7 @@ export class EntryDragController extends Controller {
 	}
 
 	private beginExternal(entry: Entry, segment: EntrySegmentComponent, surface: HTMLElement, e: PointerEvent, options?: { held?: boolean }) {
-		if (this.drag || !entry.persisted || !getCapabilities(entry.sourceId).editEntries) {
+		if (this.drag || !entry.persisted || !Calendars.capabilitiesOf(entry.sourceId).editEntries) {
 			return
 		}
 		const cells = this.snapshotCells()
@@ -234,7 +234,7 @@ export class EntryDragController extends Controller {
 		}
 		const { start, end } = Schedule.timed(anchor.date.dayStart.add({ minutes: anchor.minute }), current.date.dayStart.add({ minutes: current.minute }), EntryDragController.snapMinutes)
 		const created = new Entry({ ...base, start, end, allDay: false })
-		if (getCapabilities(drag.source!.id).reminders) {
+		if (Calendars.capabilitiesOf(drag.source!.id).reminders) {
 			created.adoptDefaultReminders(ReminderSetting.defaults)
 		}
 		return created
@@ -427,7 +427,7 @@ export class EntryDragController extends Controller {
 		if (segment) {
 			// A tap still has to open the editor of an entry whose provider mitra may only read, so the
 			// bar is on beginning a drag, not on handling the pointer at all.
-			if (!entry?.persisted || !getCapabilities(entry.sourceId).editEntries) {
+			if (!entry?.persisted || !Calendars.capabilitiesOf(entry.sourceId).editEntries) {
 				return
 			}
 			const mode = this.editMode(entry)
@@ -444,8 +444,8 @@ export class EntryDragController extends Controller {
 		// Create on empty grid / lane / cell. A drag over availability still creates; a tap opens the availability.
 		const availability = target.closest('mitra-availability-segment') as AvailabilitySegment | null
 		const mode = this.createModeAt(target)
-		const source = mode ? getPrimarySource(this.createType) : undefined
-		if (!mode || !source || !getCapabilities(source.id).createEntries) {
+		const source = mode ? Calendars.primary(this.createType) : undefined
+		if (!mode || !source || !Calendars.capabilitiesOf(source.id).createEntries) {
 			// Nothing can be created here, so open the availability right away.
 			if (availability) {
 				availability.open = true
@@ -674,7 +674,7 @@ export class EntryDragController extends Controller {
 				EntryStore.notify()
 				return
 			}
-			if (drag.kind === 'move' && e.altKey && getCapabilities(entry.sourceId).createEntries) {
+			if (drag.kind === 'move' && e.altKey && Calendars.capabilitiesOf(entry.sourceId).createEntries) {
 				this.teardown(e.pointerId)
 				EntryStore.setPreview(undefined)
 				EntryStore.setDragging(undefined)

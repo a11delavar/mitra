@@ -4,7 +4,7 @@ import { EntryEditorAnchor } from '../../entries/client/EntryEditorAnchor.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
 import { entryColors } from '../../entries/client/entryColors.css.js'
 import { Availability } from './Availability.js'
-import { getSource } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 
 /**
  * One day's slice of an availability entry: a tinted window, with its label along the day's end edge if it says something. The editor sits in the window, which is what it anchors at: the element itself has no box.
@@ -25,7 +25,7 @@ export class AvailabilitySegment extends Component {
 		super.updated?.(changed)
 		const entry = this.segment?.entry
 		if (entry) {
-			this.style.setProperty('--mitra-entry-segment-color', entry.color ?? getSource(entry.sourceId)?.color ?? '')
+			this.style.setProperty('--mitra-entry-segment-color', entry.color ?? Calendars.source(entry.sourceId)?.color ?? '')
 			this.toggleAttribute('data-unlabelled', !Availability.labelOf(entry))
 		}
 	}

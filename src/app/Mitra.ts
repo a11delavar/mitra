@@ -1,7 +1,8 @@
 import { component, css } from '@a11d/lit'
 import { Application, application, DialogCancelledError } from '@a11d/lit-application'
 import { Localizer } from '@3mo/localization'
-import { fetchIntegrations, fetchMeta, fetchUser, getIntegrations, getUser, instanceName } from '../infrastructure/http/Api.js'
+import { fetchMeta, fetchUser, getUser, instanceName } from '../infrastructure/http/Api.js'
+import { Calendars } from '../features/sources/client/Calendars.js'
 import { Weeks } from '../features/calendar/client/Weeks.js'
 import { Months } from '../features/calendar/client/Months.js'
 import { Days } from '../features/calendar/client/Days.js'
@@ -87,7 +88,7 @@ export class Mitra extends Application {
 		Mitra.trackFocusModality()
 		const pendingIntegrationId = Mitra.consumePendingIntegrationParameter()
 		const subscribeUrl = consumeSubscribeParameter()
-		await Promise.all([fetchIntegrations(), fetchUser(), fetchMeta()])
+		await Promise.all([Calendars.fetch(), fetchUser(), fetchMeta()])
 		// After the integrations, so a linked language switches the sample calendar too.
 		LanguageSetting.rememberLinkedLanguage()
 		// Nothing waits for it: until the account has a home, home is this device's zone anyway.
@@ -112,7 +113,7 @@ export class Mitra extends Application {
 			document.querySelector('mitra-sidebar')?.requestUpdate()
 		} else if (subscribeUrl) {
 			await Mitra.subscribe(subscribeUrl)
-		} else if (!getIntegrations().length) {
+		} else if (!Calendars.integrations.length) {
 			if (await new DialogWelcome().confirm()) {
 				await new DialogIntegration({}).confirm()
 				document.querySelector('mitra-sidebar')?.requestUpdate()

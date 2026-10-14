@@ -1,6 +1,7 @@
 import { Component, component, html, css, property, state, event, query, bind } from '@a11d/lit'
 import { type Entry } from '../../entries/Entry.js'
-import { searchLocations, getCapabilities } from '../../../infrastructure/http/Api.js'
+import { searchLocations } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { type LocationSuggestion } from '../LocationSuggestion.js'
 import { LatestSearch } from '../../../design/Combobox.js'
 import { MarkdownLinks } from '../../../design/MarkdownLinks.js'
@@ -46,7 +47,7 @@ export class LocationField extends Component {
 	@query('textarea') private readonly field?: HTMLTextAreaElement
 
 	private get editable() {
-		return getCapabilities(this.entry?.sourceId ?? '').editEntries
+		return Calendars.capabilitiesOf(this.entry?.sourceId ?? '').editEntries
 	}
 
 	private readonly edit = (e: Event) => {

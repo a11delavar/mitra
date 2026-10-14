@@ -55,7 +55,7 @@
 - **Schema**: dev (`MITRA_DEV=true`) syncs with `orm.schema.update()`; production runs `migrator.up()`. Entity changes need `npm run db:migration:create -- <Name>` (writes the migration, the snapshot and `migrations/index.ts`). Migrations are immutable once committed and must replay on any shape: introspect with `pragma_table_info`, a dev boot may already have the new column. Use `await this.execute()`, never `addSql`.
 - **Table rebuilds**: `foreign_keys = off` does nothing inside a transaction, so dropping a parent cascades. Hold children in an FK-free table, drop and recreate, restore children and references (`user.default_source_id`).
 - **Type conversion** (event ↔ task) re-creates the entry (VEVENT and VTODO can't share a CalDAV resource), compensating on failure; series can't convert (400).
-- Discovered sources are saved `enabled: false`. `enabled` is where an entry may live (`getEnabledSources()`); `visible` is a view preference and never removes a destination.
+- Discovered sources are saved `enabled: false`. `enabled` is where an entry may live (`Calendars.enabled()`); `visible` is a view preference and never removes a destination.
 - Local renames survive sync: `Source.remoteName` is the provider's baseline, `name` changes only when the remote one does.
 - **Authority**: the backend owns DTSTART, STATUS, TRANSP, SUMMARY, DESCRIPTION; Mitra owns source colors, order, visibility and availability (mirrored upstream as `X-MITRA-*` where possible). The SQLite database is authoritative for users, sessions and local overrides.
 
@@ -192,7 +192,7 @@
 - `mitra-link` (`design/Link.ts`) names a bare address by host, meeting service or app (its own tables).
 
 ## Sidebar
-- `mitra-source-icon` reads everything from its `.source`, never mirrored properties. One grid (`.integrations`, `--sidebar-gap`) aligns every row and heading; other source lists reproduce it. `scrollbar-gutter: stable`. The default calendar is `getPrimarySource()`.
+- `mitra-source-icon` reads everything from its `.source`, never mirrored properties. One grid (`.integrations`, `--sidebar-gap`) aligns every row and heading; other source lists reproduce it. `scrollbar-gutter: stable`. The default calendar is `Calendars.primary()`. `Calendars` (`sources/client/`) is the client's store of integrations and sources; `Api.ts` only calls the server.
 
 ## Website (`website/`)
 - One Astro project: the homepage plus Starlight over `../docs` (linked by `prepare.mjs`). `tools/tokens.mjs` emits the look from `src/design`.

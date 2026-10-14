@@ -5,7 +5,7 @@ import { EntryType, type EntryTypeValue } from '../EntryType.js'
 import { TaskStatus } from '../TaskStatus.js'
 import { Transparency } from '../Transparency.js'
 import type { EntrySegment } from './EntrySegment.js'
-import { getIntegrations, getSource, getCapabilities, getExternalLink, canHold } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryStore, reportSaveError } from './EntryStore.js'
 import * as Hierarchy from '../../relations/client/Hierarchy.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
@@ -41,11 +41,11 @@ export class EntryDetailsComponent extends Component {
 	readonly store = new EntryStore(this)
 
 	private get source() {
-		return this.segment?.entry.sourceId ? getSource(this.segment.entry.sourceId) : undefined
+		return this.segment?.entry.sourceId ? Calendars.source(this.segment.entry.sourceId) : undefined
 	}
 
 	private get capabilities() {
-		return getCapabilities(this.segment!.entry.sourceId)
+		return Calendars.capabilitiesOf(this.segment!.entry.sourceId)
 	}
 
 	private get isAvailability() {
@@ -128,7 +128,7 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	private get externalLinkTemplate() {
-		const link = getExternalLink(this.segment!.entry)
+		const link = Calendars.externalLinkOf(this.segment!.entry)
 		return !link ? html.nothing : html`
 			<mitra-menu-item icon="external-link" href=${link.url} target="_blank">
 				${link.label ? t('Open in ${provider}', { provider: t(link.label) }) : t('Open link')}
@@ -137,7 +137,7 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	private get hasMenu() {
-		return !!getExternalLink(this.segment!.entry)
+		return !!Calendars.externalLinkOf(this.segment!.entry)
 			|| (this.segment!.entry.persisted && this.capabilities.createEntries)
 			|| this.capabilities.deleteEntries
 	}
@@ -512,7 +512,7 @@ export class EntryDetailsComponent extends Component {
 		const entry = this.segment!.entry
 		const source = this.source
 		// Its own type always, so a type that can't change still shows, disabled, rather than vanishing.
-		const types = EntryType.all.filter(type => type === entry.type || (!!source && canHold(source, type)))
+		const types = EntryType.all.filter(type => type === entry.type || (!!source && Calendars.canHold(source, type)))
 		const fixed = !this.capabilities.editEntries || types.length < 2 || entry.partOfSeries
 		const handleTypeChange = (e: CustomEvent<EntryTypeValue>) => {
 			entry.type = e.detail
@@ -545,7 +545,7 @@ export class EntryDetailsComponent extends Component {
 		}
 		const entry = this.segment!.entry
 		const canMoveTo = (target: Source) => {
-			const capabilities = getCapabilities(target.id)
+			const capabilities = Calendars.capabilitiesOf(target.id)
 			return capabilities.createEntries
 				&& (!entry.type.isAvailability || capabilities.availability)
 				&& (!entry.partOfSeries || capabilities.recurrence)
@@ -556,7 +556,7 @@ export class EntryDetailsComponent extends Component {
 		return !this.source?.name ? html.nothing : html`
 			<span class="source field">
 				<mitra-select label=${t('Calendar')} ?disabled=${!this.capabilities.editEntries} .value=${this.source} @change=${handleSourceChange}>
-					${getIntegrations()
+					${Calendars.integrations
 						.map(integration => ({ integration, sources: [...integration.sources].filter(source => source.id === entry.sourceId || (source.enabled && canMoveTo(source))) }))
 						.filter(({ sources }) => sources.length)
 						.map(({ integration, sources }) => html`

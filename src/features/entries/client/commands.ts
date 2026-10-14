@@ -2,7 +2,7 @@ import { DateTime } from '@3mo/date-time'
 import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
 import { ReminderSetting } from '../../reminders/client/DefaultReminderSetting.js'
-import { getPrimarySource, getCapabilities } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryStore } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 import { command, Command } from '../../commands/Command.js'
@@ -17,8 +17,8 @@ export class CreateEntry extends Command {
 
 	override execute() {
 		const { calendar } = this
-		const source = getPrimarySource()
-		if (!source || !getCapabilities(source.id).createEntries) {
+		const source = Calendars.primary()
+		if (!source || !Calendars.capabilitiesOf(source.id).createEntries) {
 			return
 		}
 		const now = new DateTime()
@@ -38,7 +38,7 @@ export class CreateEntry extends Command {
 			end: start.add({ hours: 1 }),
 			allDay: false,
 		})
-		if (getCapabilities(source.id).reminders) {
+		if (Calendars.capabilitiesOf(source.id).reminders) {
 			draft.adoptDefaultReminders(ReminderSetting.defaults)
 		}
 		EntryStore.upsertDraft(draft)

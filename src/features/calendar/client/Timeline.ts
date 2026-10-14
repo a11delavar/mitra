@@ -2,7 +2,7 @@ import { Component, component, html, property, css, repeat, type PropertyValues,
 import { DateTime } from '@3mo/date-time'
 import { type Entry } from '../../entries/Entry.js'
 import { EntryType } from '../../entries/EntryType.js'
-import { getPrimarySource, getSource } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { EntrySegments } from '../../entries/client/EntrySegments.js'
 import { Availability } from '../../availability/client/Availability.js'
 import { type EntrySegment } from '../../entries/client/EntrySegment.js'
@@ -478,7 +478,7 @@ export class Timeline extends Component {
 			${this.headerTemplate(events)}
 			${this.backdropTemplate(events)}
 			${this.entriesTemplate(rows, placed)}
-			${!getPrimarySource(EntryType.Task) ? html.nothing : html`
+			${!Calendars.primary(EntryType.Task) ? html.nothing : html`
 				<div class="create" title=${t('New task')}>
 					<div class="row"></div>
 				</div>
@@ -620,7 +620,7 @@ export class Timeline extends Component {
 					></div>
 				`)}
 				${events.map(bar => html`
-					<div class="shade" style=${styleMap({ gridColumn: `${bar.startColumn + 1} / span ${bar.span}`, '--_shade-color': bar.segment.entry.color ?? getSource(bar.segment.entry.sourceId)?.color ?? '' })}></div>
+					<div class="shade" style=${styleMap({ gridColumn: `${bar.startColumn + 1} / span ${bar.span}`, '--_shade-color': bar.segment.entry.color ?? Calendars.source(bar.segment.entry.sourceId)?.color ?? '' })}></div>
 				`)}
 			</div>
 		`

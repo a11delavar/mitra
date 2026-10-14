@@ -1,7 +1,8 @@
 import { component, html, css, state } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { Task, TaskStatus, initialState } from '@lit/task'
-import { getCapabilities, getIntegrations, importIcs, previewIcsImport } from '../../../infrastructure/http/Api.js'
+import { importIcs, previewIcsImport } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { MigrationPlan, type MigrationOutcome, type MigrationVerdict } from '../MigrationPlan.js'
 import { type Source } from '../../sources/Source.js'
 import { pressable } from '../../../design/pressable.css.js'
@@ -33,10 +34,10 @@ export class DialogIcsImport extends DialogComponent<{ readonly fileName: string
 
 	/** Available destination sources (writable, enabled). */
 	private get targets() {
-		return getIntegrations()
+		return Calendars.integrations
 			.map(integration => ({
 				integration,
-				sources: [...integration.sources].filter(source => source.enabled && getCapabilities(source.id).createEntries),
+				sources: [...integration.sources].filter(source => source.enabled && Calendars.capabilitiesOf(source.id).createEntries),
 			}))
 			.filter(({ sources }) => sources.length)
 	}

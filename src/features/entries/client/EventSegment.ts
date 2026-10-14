@@ -6,7 +6,7 @@ import { type RoutineRun } from '../../routines/client/Routines.js'
 import { contrastColorOf } from '../../../design/contrastColor.js'
 import { MarkdownLinks } from '../../../design/MarkdownLinks.js'
 import { Link } from '../../../design/Link.js'
-import { getSource, getCapabilities } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryStore, reportSaveError } from './EntryStore.js'
 import { EntryEditorAnchor } from './EntryEditorAnchor.js'
 import { entryColors } from './entryColors.css.js'
@@ -518,7 +518,7 @@ export class EntrySegmentComponent extends Component {
 
 		this.style.setProperty(
 			'--mitra-entry-segment-color',
-			this.segment.entry.color ?? getSource(this.segment.entry.sourceId)?.color ?? '',
+			this.segment.entry.color ?? Calendars.source(this.segment.entry.sourceId)?.color ?? '',
 		)
 
 		const meta = this.timed || this.showsDate
@@ -547,7 +547,7 @@ export class EntrySegmentComponent extends Component {
 			${!this.segment.entry.partOfSeries ? html.nothing : html`
 				<mitra-icon class="recurring" icon="repeat" title=${t('Repeats')}></mitra-icon>
 			`}
-			${!this.resize || !this.segment.entry.persisted || !getCapabilities(this.segment.entry.sourceId).editEntries ? html.nothing : html`
+			${!this.resize || !this.segment.entry.persisted || !Calendars.capabilitiesOf(this.segment.entry.sourceId).editEntries ? html.nothing : html`
 				<div class="resize-start"></div>
 				<div class="resize-end"></div>
 			`}

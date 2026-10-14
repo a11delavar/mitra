@@ -1,5 +1,6 @@
 import { html } from '@a11d/lit'
-import { getDefaultSourceId, getPrimarySource, getSource, getVisibleSources, setDefaultSource } from '../../../infrastructure/http/Api.js'
+import { setDefaultSource } from '../../../infrastructure/http/Api.js'
+import { Calendars } from './Calendars.js'
 import { ChoiceSetting, setting, type SettingStorage } from '../../settings/client/Setting.js'
 
 /**
@@ -13,10 +14,10 @@ export class DefaultSourceSetting extends ChoiceSetting<string> {
 	readonly page = 'entries'
 	override get hint() { return t('Where new events and tasks are created') }
 
-	get fallback() { return getPrimarySource()?.id ?? '' }
+	get fallback() { return Calendars.primary()?.id ?? '' }
 
 	protected readonly storage: SettingStorage<string> = {
-		read: () => getDefaultSourceId(),
+		read: () => Calendars.defaultId,
 		write: async value => {
 			await setDefaultSource(value)
 			document.querySelector('mitra-sidebar')?.requestUpdate()
@@ -24,10 +25,10 @@ export class DefaultSourceSetting extends ChoiceSetting<string> {
 	}
 
 	override get options() {
-		return getVisibleSources().map(source => ({ value: source.id, label: source.name }))
+		return Calendars.visible.map(source => ({ value: source.id, label: source.name }))
 	}
 
 	override get glyph() {
-		return html`<mitra-source-icon .source=${getSource(this.value)}></mitra-source-icon>`
+		return html`<mitra-source-icon .source=${Calendars.source(this.value)}></mitra-source-icon>`
 	}
 }

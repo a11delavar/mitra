@@ -4,7 +4,7 @@ import { TaskStatus } from '../../entries/TaskStatus.js'
 import { EntrySegments } from '../../entries/client/EntrySegments.js'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
 import { Relations } from '../../relations/client/Relations.js'
-import { getSource } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { termsMatch } from '../../commands/termsMatch.js'
 import { type RecurrenceScope } from '../../recurrence/Recurrence.js'
 import { type TableWindow } from './TableWindow.js'
@@ -88,7 +88,7 @@ export class TableRow {
 	get when() { return (this.entry.start ?? this.entry.end)?.valueOf() }
 	get statusRank() { return !this.entry.type.isTask ? undefined : TableRow.statusRanks.get(this.entry.status ?? TaskStatus.ToDo) }
 	get typeKey() { return this.entry.type.value }
-	get source() { return getSource(this.entry.sourceId) }
+	get source() { return Calendars.source(this.entry.sourceId) }
 	get sourceName() { return this.source?.name ?? '' }
 	get location() { return this.entry.location }
 	get repeats() { return this.entry.recurrence?.describe(this.entry.seriesStart) ?? '' }

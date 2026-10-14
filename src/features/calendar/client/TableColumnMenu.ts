@@ -3,7 +3,7 @@ import { type DataGridColumn, DataGridSortingStrategy } from '@3mo/data-grid/con
 import { TaskStatus } from '../../entries/TaskStatus.js'
 import { EntryType } from '../../entries/EntryType.js'
 import { type Source } from '../../sources/Source.js'
-import { getVisibleSources } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { TableRow, TableFilter, type TableFacet } from './TableRow.js'
 import { TableWindow } from './TableWindow.js'
 import { hideable } from './TableColumns.js'
@@ -38,7 +38,7 @@ export class TableColumnMenu extends Component {
 				{ value: TableRow.noStatus, label: t('No status') },
 			]
 			case 'typeKey': return EntryType.all.filter(type => !type.isAvailability).map(type => ({ value: type.value, label: type.format() }))
-			case 'sourceName': return getVisibleSources().map(source => ({ value: source.id, label: source.name, source }))
+			case 'sourceName': return Calendars.visible.map(source => ({ value: source.id, label: source.name, source }))
 			case 'repeats': return [
 				{ value: 'repeating', label: t('Repeating'), icon: 'repeat' },
 				{ value: 'once', label: t('Does not repeat') },

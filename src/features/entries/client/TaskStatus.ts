@@ -1,7 +1,7 @@
 import { Component, component, html, css, property, event, query } from '@a11d/lit'
 import { type Entry, type EntryRollup } from '../Entry.js'
 import { TaskStatus } from '../TaskStatus.js'
-import { getCapabilities } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryStore } from './EntryStore.js'
 import { offerToCloseSubtasks } from '../../relations/client/Hierarchy.js'
 import { Relations } from '../../relations/client/Relations.js'
@@ -66,7 +66,7 @@ export class TaskStatusComponent extends Component {
 			this.menu?.hide()
 			return
 		}
-		this.entry.setStatus(status, getCapabilities(this.entry.sourceId))
+		this.entry.setStatus(status, Calendars.capabilitiesOf(this.entry.sourceId))
 		this.menu?.hide()
 		this.requestUpdate()
 		this.change.dispatch()
@@ -305,7 +305,7 @@ export class TaskStatusComponent extends Component {
 			`
 		}
 
-		if (!getCapabilities(this.entry.sourceId).percentComplete) {
+		if (!Calendars.capabilitiesOf(this.entry.sourceId).percentComplete) {
 			return html.nothing
 		}
 
@@ -345,7 +345,7 @@ export class TaskStatusComponent extends Component {
 		const showsProgressDial = this.status === TaskStatus.Doing || (progress !== undefined && progress > 0 && progress < 1 && this.status !== TaskStatus.Done && this.status !== TaskStatus.Cancelled)
 		const percent = progress !== undefined ? Math.round(progress * 100) : 50
 
-		const editable = getCapabilities(this.entry.sourceId).editEntries
+		const editable = Calendars.capabilitiesOf(this.entry.sourceId).editEntries
 
 		return html`
 			<button class="status-button" aria-label=${name} ?disabled=${!editable}
@@ -366,7 +366,7 @@ export class TaskStatusComponent extends Component {
 				`}
 			</button>
 			<mitra-menu>
-				${TaskStatus.all.filter(status => status !== TaskStatus.Cancelled || getCapabilities(this.entry.sourceId).cancelledStatus).map(status => html`
+				${TaskStatus.all.filter(status => status !== TaskStatus.Cancelled || Calendars.capabilitiesOf(this.entry.sourceId).cancelledStatus).map(status => html`
 					<mitra-menu-item type="radio" icon=${status.icon} ?selected=${status === this.status} @click=${this.pick(status)}>${status.format()}</mitra-menu-item>
 				`)}
 				${this.progressSectionTemplate}

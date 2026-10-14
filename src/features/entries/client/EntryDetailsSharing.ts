@@ -2,7 +2,7 @@ import { Component, component, html, css, property, event } from '@a11d/lit'
 import { type Entry } from '../Entry.js'
 import { Transparency } from '../Transparency.js'
 import { Visibility } from '../Visibility.js'
-import { getCapabilities } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryStore } from './EntryStore.js'
 
 /**
@@ -21,7 +21,7 @@ export class EntryDetailsSharing extends Component {
 	protected override createRenderRoot() { return this }
 
 	private get capabilities() {
-		return getCapabilities(this.entry.sourceId)
+		return Calendars.capabilitiesOf(this.entry.sourceId)
 	}
 
 	private get showsTransparency() {
@@ -29,11 +29,11 @@ export class EntryDetailsSharing extends Component {
 	}
 
 	private static showsTransparency(entry: Entry) {
-		return !entry.type.isTask && getCapabilities(entry.sourceId).transparency
+		return !entry.type.isTask && Calendars.capabilitiesOf(entry.sourceId).transparency
 	}
 
 	static applies(entry: Entry) {
-		return EntryDetailsSharing.showsTransparency(entry) || !!getCapabilities(entry.sourceId).visibility
+		return EntryDetailsSharing.showsTransparency(entry) || !!Calendars.capabilitiesOf(entry.sourceId).visibility
 	}
 
 	private commit() {

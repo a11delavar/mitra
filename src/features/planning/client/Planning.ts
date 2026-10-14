@@ -4,7 +4,7 @@ import { type Source } from '../../sources/Source.js'
 import { EntryType } from '../../entries/EntryType.js'
 import { Entry } from '../../entries/Entry.js'
 import { EntryRank } from '../../entries/EntryRank.js'
-import { getPrimarySource } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
 import { EntrySegments } from '../../entries/client/EntrySegments.js'
@@ -56,7 +56,7 @@ export class Planning extends Component {
 	}
 
 	private static get target(): Source | undefined {
-		return getPrimarySource(EntryType.Task)
+		return Calendars.primary(EntryType.Task)
 	}
 
 	static get canAdd() {

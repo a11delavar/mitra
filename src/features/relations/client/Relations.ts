@@ -3,7 +3,8 @@ import { RelationGraph } from '../RelationGraph.js'
 import { type EntryPlan } from '../EntryPlan.js'
 import { type EntryChange } from '../../entries/EntryChange.js'
 import { type Entry, type EntryRollup } from '../../entries/Entry.js'
-import { getCapabilities, getRelationClosure } from '../../../infrastructure/http/Api.js'
+import { getRelationClosure } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
 
 /**
@@ -76,7 +77,7 @@ export class Relations {
 		if (!predecessor.relatable || !dependent.relatable || predecessor.uid === dependent.uid) {
 			return false
 		}
-		if (!getCapabilities(dependent.sourceId).relations) {
+		if (!Calendars.capabilitiesOf(dependent.sourceId).relations) {
 			return false
 		}
 		const coupled = (from: Entry, to: Entry) => this.graph.edgesFrom(from.uid!).some(edge => edge.family === 'dependency' && edge.to === to.uid)

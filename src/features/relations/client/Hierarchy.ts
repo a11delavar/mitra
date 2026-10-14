@@ -5,7 +5,7 @@ import { type EntryChange } from '../../entries/EntryChange.js'
 import { type Entry } from '../../entries/Entry.js'
 import { TaskStatus } from '../../entries/TaskStatus.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
-import { getCapabilities } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { Relations } from './Relations.js'
 import { DialogEntryScope, type EntryScope } from '../../entries/client/DialogEntryScope.js'
 import { DialogCompleteParent } from './DialogCompleteParent.js'
@@ -79,7 +79,7 @@ export async function offerToCloseSubtasks(entry: Entry) {
 	await run(EntryPlan.of({
 		writes: outstanding.map(child => ({
 			entry: child,
-			mutate: (target: Entry) => target.setStatus(closure, getCapabilities(target.sourceId)),
+			mutate: (target: Entry) => target.setStatus(closure, Calendars.capabilitiesOf(target.sourceId)),
 		})),
 	}))
 }
@@ -97,7 +97,7 @@ async function offerToCompleteParents(closed: Entry) {
 		// Deepest first so intermediate states remain valid.
 		writes: parents.map(parent => ({
 			entry: parent,
-			mutate: (target: Entry) => target.setStatus(TaskStatus.Done, getCapabilities(target.sourceId)),
+			mutate: (target: Entry) => target.setStatus(TaskStatus.Done, Calendars.capabilitiesOf(target.sourceId)),
 		})),
 	}))
 }

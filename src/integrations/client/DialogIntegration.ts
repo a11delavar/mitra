@@ -3,7 +3,8 @@ import { DialogComponent } from '@a11d/lit-application'
 import { Source } from '../../features/sources/Source.js'
 import { integrationClasses, type Integration, type IntegrationClass } from '../Integration.js'
 import { CalDAV, Notion } from '../registerIntegrations.js'
-import { discoverSources, createIntegration, updateIntegration, getIntegrations, fetchIntegrations, fetchGoogleAvailability, connectGoogle, createSource, getMeta } from '../../infrastructure/http/Api.js'
+import { discoverSources, createIntegration, updateIntegration, fetchGoogleAvailability, connectGoogle, createSource, getMeta } from '../../infrastructure/http/Api.js'
+import { Calendars } from '../../features/sources/client/Calendars.js'
 import mitraLogo from '../mitra/logo.svg'
 import demoLogo from '../demo/logo.svg'
 import caldavLogo from '../caldav/logo.svg'
@@ -48,7 +49,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 	}
 
 	private get offeredClasses(): Array<IntegrationClass> {
-		const connected = new Set(getIntegrations().map(integration => integration.type))
+		const connected = new Set(Calendars.integrations.map(integration => integration.type))
 		return integrationClasses().filter(integrationClass =>
 			(!integrationClass.developmentOnly || !!getMeta()?.development)
 			&& !(integrationClass.onePerUser && connected.has(integrationClass.type)))
@@ -103,7 +104,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 				.catch((error: Error) => this.googleAvailability = { error: error.message })
 			return
 		}
-		const integration = getIntegrations().find(integration => integration.id === this.parameters.id)
+		const integration = Calendars.integrations.find(integration => integration.id === this.parameters.id)
 		if (integration) {
 			this.entity = integration.editableCopy?.() ?? new CalDAV({
 				id: this.parameters.id,
@@ -442,11 +443,11 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 		if (!this.discoversSources && !this.isEdit) {
 			const integration = await createIntegration(this.entity!)
 			await createSource(integration.id, { name: this.calendarName.trim() || String(t('Calendar')) })
-			await fetchIntegrations()
+			await Calendars.fetch()
 			return integration
 		}
 		const integration = this.isEdit ? await updateIntegration(this.entity!) : await createIntegration(this.entity!)
-		await fetchIntegrations()
+		await Calendars.fetch()
 		return integration
 	}
 }

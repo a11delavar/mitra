@@ -4,7 +4,8 @@ import { type Relation } from '../Relation.js'
 import { EntryType } from '../../entries/EntryType.js'
 import { type RelationLine } from '../EntryRelations.js'
 import { type Entry } from '../../entries/Entry.js'
-import { getCapabilities, getSource, searchEntries, updateRelations } from '../../../infrastructure/http/Api.js'
+import { searchEntries, updateRelations } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
 import { Relations } from './Relations.js'
 import { controlHeight } from '../../../design/controlHeight.css.js'
@@ -115,7 +116,7 @@ export class RelationsField extends Component {
 		const list = this.relationList
 		const bySection = new Map(list.sections.map(({ section, lines }) => [section, lines.map(line => this.lineOf(line))]))
 		// Providers without native link storage omit authoring actions, but incoming links remain visible.
-		const authorable = getCapabilities(this.entry.sourceId).relations ? AUTHORABLE_BY_SECTION : new Map<RelationSection, RelationType>()
+		const authorable = Calendars.capabilitiesOf(this.entry.sourceId).relations ? AUTHORABLE_BY_SECTION : new Map<RelationSection, RelationType>()
 		return [...new Set([...bySection.keys(), ...authorable.keys()])]
 			.sort((a, b) => a.rank - b.rank)
 			.map(section => ({ section, lines: bySection.get(section) ?? [], addType: authorable.get(section) }))
@@ -462,7 +463,7 @@ export class RelationsField extends Component {
 						${this.pendingType !== type || !this.suggestions.length ? html`
 							<span class="hint" data-hint>${this.searchedQuery ? t('No matching entries') : t('Search for an event or task to link')}</span>
 						` : this.suggestions.map(candidate => {
-							const color = candidate.color || getSource(candidate.sourceId)?.color
+							const color = candidate.color || Calendars.source(candidate.sourceId)?.color
 							return html`
 								<mitra-option .value=${candidate} ?data-struck=${candidate.type === EntryType.Task && candidate.done}>
 									<mitra-icon class="glyph" icon=${candidate.type === EntryType.Task ? 'list-todo' : 'calendar'} style=${color ? `color: ${color};` : ''}></mitra-icon>

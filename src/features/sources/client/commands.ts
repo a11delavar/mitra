@@ -1,5 +1,5 @@
 import { type Source } from '../Source.js'
-import { canCopyEntriesOut, canMoveEntriesOut, canRestoreSourceVisibility, getEnabledSources, getIntegrations, restoreSourceVisibility, soloSource } from '../../../infrastructure/http/Api.js'
+import { Calendars } from './Calendars.js'
 import { Command } from '../../commands/Command.js'
 import { DialogSourceMigration } from '../../migration/client/DialogSourceMigration.js'
 
@@ -17,7 +17,7 @@ class ShowOnlySource extends Command {
 	override get listedWithoutQuery() { return false }
 
 	override async execute() {
-		await soloSource(this.source.id)
+		await Calendars.solo(this.source.id)
 		this.calendar.sourcesChanged()
 	}
 }
@@ -29,7 +29,7 @@ class MoveSourceEntries extends Command {
 	}
 
 	get heading() {
-		return canMoveEntriesOut(this.source)
+		return Calendars.canMoveEntriesOut(this.source)
 			? t('Move entries from ${name}…', { name: this.source.name })
 			: t('Copy entries from ${name}…', { name: this.source.name })
 	}
@@ -53,17 +53,17 @@ class ShowPreviouslyVisibleSources extends Command {
 	readonly group = undefined
 
 	override async execute() {
-		await restoreSourceVisibility()
+		await Calendars.restoreVisibility()
 		this.calendar.sourcesChanged()
 	}
 }
 
 /** The per-calendar verbs as they stand right now. */
 export function sourceCommands(): Array<Command> {
-	const sources = getIntegrations().flatMap(integration => getEnabledSources(integration))
+	const sources = Calendars.integrations.flatMap(integration => Calendars.enabled(integration))
 	return [
-		...canRestoreSourceVisibility() ? [new ShowPreviouslyVisibleSources()] : [],
+		...Calendars.canRestoreVisibility ? [new ShowPreviouslyVisibleSources()] : [],
 		...sources.length < 2 ? [] : sources.map(source => new ShowOnlySource(source)),
-		...sources.filter(canCopyEntriesOut).map(source => new MoveSourceEntries(source)),
+		...sources.filter(source => Calendars.canCopyEntriesOut(source)).map(source => new MoveSourceEntries(source)),
 	]
 }

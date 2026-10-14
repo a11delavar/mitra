@@ -5,7 +5,7 @@ import { type Entry } from '../Entry.js'
 import { type TimeZonePicker } from '../../time/client/TimeZonePicker.js'
 import { TimeZone } from '../../time/TimeZone.js'
 import { TimeZones } from '../../time/client/TimeZones.js'
-import { getCapabilities } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryStore } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 import { DefaultDurationSetting } from './DefaultDurationSetting.js'
@@ -217,11 +217,11 @@ export class EntryDetailsWhen extends Component {
 	}
 
 	private get editable() {
-		return getCapabilities(this.entry.sourceId).editEntries
+		return Calendars.capabilitiesOf(this.entry.sourceId).editEntries
 	}
 
 	private get capabilities() {
-		return getCapabilities(this.entry.sourceId)
+		return Calendars.capabilitiesOf(this.entry.sourceId)
 	}
 
 	static override get styles() {

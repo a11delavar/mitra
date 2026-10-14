@@ -5,7 +5,7 @@ import { Recurrence } from '../../recurrence/Recurrence.js'
 import { RecurrenceWeekday } from '../../recurrence/RecurrenceWeekday.js'
 import { EntryStore, reportSaveError } from '../../entries/client/EntryStore.js'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
-import { getCapabilities, getPrimarySource } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { command, Command } from '../../commands/Command.js'
 import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
 
@@ -26,8 +26,8 @@ export class CreateAvailability extends Command {
 
 	override execute() {
 		const { calendar } = this
-		const target = getPrimarySource(EntryType.Availability)
-		if (!target || !getCapabilities(target.id).createEntries) {
+		const target = Calendars.primary(EntryType.Availability)
+		if (!target || !Calendars.capabilitiesOf(target.id).createEntries) {
 			return
 		}
 

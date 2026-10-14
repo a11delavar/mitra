@@ -3,7 +3,7 @@ import { RelationGraph } from '../RelationGraph.js'
 import { type Entry } from '../../entries/Entry.js'
 import { type EntrySegment } from '../../entries/client/EntrySegment.js'
 import { type EntrySegmentComponent } from '../../entries/client/EventSegment.js'
-import { getSource } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
 
 /** Grid placement in view-specific units (deltas and order only). */
@@ -641,7 +641,7 @@ export class EntryConnections extends Component {
 
 	/** The chip's presented color: its own, else its calendar's (the same resolution EventSegment uses). */
 	private static colorOf(entry: Entry): string {
-		return entry.color || getSource(entry.sourceId)?.color || 'var(--color-text)'
+		return entry.color || Calendars.source(entry.sourceId)?.color || 'var(--color-text)'
 	}
 
 	static override get styles() {

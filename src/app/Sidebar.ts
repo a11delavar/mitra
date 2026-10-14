@@ -1,5 +1,6 @@
 import { Component, component, html, css, property, state, event, eventListener, unsafeCSS, ifDefined } from '@a11d/lit'
-import { getIntegrations, getMeta, getUser, instanceName, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, fetchIntegrations, getDefaultSourceId, getPrimarySource, setDefaultSource, reimportSource, reimportIntegration, reorderSources, reorderIntegrations, getEnabledSources, getVisibleSources, soloSource, restoreSourceVisibility, canRestoreSourceVisibility, canCopyEntriesOut, canMoveEntriesOut, getCapabilities, createSource } from '../infrastructure/http/Api.js'
+import { getMeta, getUser, instanceName, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, setDefaultSource, reimportSource, reimportIntegration, createSource } from '../infrastructure/http/Api.js'
+import { Calendars } from '../features/sources/client/Calendars.js'
 import { DialogAbout } from '../features/about/client/DialogAbout.js'
 import { DialogIntegration } from '../integrations/client/DialogIntegration.js'
 import { DialogSourceMigration } from '../features/migration/client/DialogSourceMigration.js'
@@ -48,8 +49,8 @@ export class Sidebar extends Component {
 	/** Drag-to-reorder controller for top-level integrations. */
 	private readonly integrationsReorder = new ReorderabilityController(this, {
 		handleReorder: (source, destination) => {
-			const ids = getIntegrations().map(integration => integration.id)
-			this.commitOrder(ids, source, destination, () => reorderIntegrations(ids))
+			const ids = Calendars.integrations.map(integration => integration.id)
+			this.commitOrder(ids, source, destination, () => Calendars.reorderIntegrations(ids))
 		},
 	})
 
@@ -63,12 +64,12 @@ export class Sidebar extends Component {
 			controller = new ReorderabilityController(this, {
 				// Looked up per drag: the controller outlives the integration object every refetch replaces.
 				handleReorder: (source, destination) => {
-					const current = getIntegrations().find(integration => integration.id === id)
+					const current = Calendars.integrations.find(integration => integration.id === id)
 					if (!current) {
 						return
 					}
-					const ids = getEnabledSources(current).map(source => source.id)
-					this.commitOrder(ids, source, destination, () => reorderSources(current, ids))
+					const ids = Calendars.enabled(current).map(source => source.id)
+					this.commitOrder(ids, source, destination, () => Calendars.reorderSources(current, ids))
 				},
 			})
 			this.sourcesReorder.set(integration.id, controller)
@@ -85,7 +86,7 @@ export class Sidebar extends Component {
 		const request = commit()
 		this.requestUpdate()
 		request.catch(async () => {
-			await fetchIntegrations()
+			await Calendars.fetch()
 			this.requestUpdate()
 		})
 	}
@@ -655,7 +656,7 @@ export class Sidebar extends Component {
 
 	/** Toggle solo visibility for the given source. */
 	private async toggleSolo(source: Source) {
-		await (canRestoreSourceVisibility() ? restoreSourceVisibility() : soloSource(source.id))
+		await (Calendars.canRestoreVisibility ? Calendars.restoreVisibility() : Calendars.solo(source.id))
 		this.visibilityChanged()
 	}
 
@@ -665,7 +666,7 @@ export class Sidebar extends Component {
 	}
 
 	private isOnlyVisible(source: Source) {
-		const visible = getVisibleSources()
+		const visible = Calendars.visible
 		return visible.length === 1 && visible[0]?.id === source.id
 	}
 
@@ -714,7 +715,7 @@ export class Sidebar extends Component {
 
 	/** Check whether the source is the default target for new entries. */
 	private isDefault(source: Source) {
-		return getPrimarySource()?.id === source.id
+		return Calendars.primary()?.id === source.id
 	}
 
 	/** Tooltip hint for source default marker. */
@@ -725,14 +726,14 @@ export class Sidebar extends Component {
 		if (!this.isDefault(source)) {
 			return t('Set as the default for new entries')
 		}
-		return getDefaultSourceId() === source.id
+		return Calendars.defaultId === source.id
 			? t('Default for new entries. Click to unset')
 			: t('Default for new entries, as the first one shown')
 	}
 
 	/** Set or toggle custom default source. */
 	private async toggleDefault(source: Source) {
-		const stored = getDefaultSourceId() === source.id
+		const stored = Calendars.defaultId === source.id
 		if (this.isDefault(source) && !stored) {
 			return
 		}
@@ -747,7 +748,7 @@ export class Sidebar extends Component {
 
 	private async removeIntegration(id: string) {
 		await deleteIntegration(id)
-		await fetchIntegrations()
+		await Calendars.fetch()
 		this.requestUpdate()
 	}
 
@@ -760,7 +761,7 @@ export class Sidebar extends Component {
 
 	private async addSource(integration: Integration) {
 		const source = await createSource(integration.id, { name: String(t('Calendar')) })
-		await fetchIntegrations()
+		await Calendars.fetch()
 		this.sourcesChange.dispatch()
 		await this.startRename(source)
 	}
@@ -773,15 +774,15 @@ export class Sidebar extends Component {
 	}
 
 	private moveSource(integration: Integration, source: Source, delta: number) {
-		const ids = getEnabledSources(integration).map(source => source.id)
+		const ids = Calendars.enabled(integration).map(source => source.id)
 		const index = ids.indexOf(source.id)
-		this.commitOrder(ids, index, index + delta, () => reorderSources(integration, ids))
+		this.commitOrder(ids, index, index + delta, () => Calendars.reorderSources(integration, ids))
 	}
 
 	private moveIntegration(id: string, delta: number) {
-		const ids = getIntegrations().map(integration => integration.id)
+		const ids = Calendars.integrations.map(integration => integration.id)
 		const index = ids.indexOf(id)
-		this.commitOrder(ids, index, index + delta, () => reorderIntegrations(ids))
+		this.commitOrder(ids, index, index + delta, () => Calendars.reorderIntegrations(ids))
 	}
 
 	/** Formatted build version label. */
@@ -801,7 +802,7 @@ export class Sidebar extends Component {
 	private get calendarsTemplate() {
 		return html`
 			<div class="integrations">
-				${getIntegrations().map((i, index, integrations) => html`
+				${Calendars.integrations.map((i, index, integrations) => html`
 					<div class="integration" ${this.integrationsReorder.item({ index, handle: '.title' })}>
 						<header>
 							<span class="title">${this.integrationTitle(i)}</span>
@@ -823,7 +824,7 @@ export class Sidebar extends Component {
 							</mitra-popover-container>
 						</header>
 						<div class="sources">
-							${getEnabledSources(i).map((source, sourceIndex, sources) => html`
+							${Calendars.enabled(i).map((source, sourceIndex, sources) => html`
 								<div class="source" ${this.sourcesReorderOf(i).item({ index: sourceIndex })} ?data-hidden=${source.hidden}>
 									<button class="marker"
 										@click=${() => this.toggleDefault(source)}
@@ -967,24 +968,24 @@ export class Sidebar extends Component {
 							<mitra-icon icon="palette"></mitra-icon>
 							<mitra-color-picker .palette=${Color.palette} .value=${source.color} @change=${(e: CustomEvent) => this.setSourceColor(source, e.detail, (e.currentTarget as HTMLElement).closest('mitra-menu')!)}></mitra-color-picker>
 						</div>
-						${canRestoreSourceVisibility() ? html`
+						${Calendars.canRestoreVisibility ? html`
 							<mitra-menu-item icon="eye" @click=${() => this.toggleSolo(source)}>${t('Show previously visible calendars')}</mitra-menu-item>
 						` : html`
 							<mitra-menu-item icon="scan-eye" ?disabled=${this.isOnlyVisible(source)} @click=${() => this.toggleSolo(source)}>${t('Only show this calendar')}</mitra-menu-item>
 						`}
 						<mitra-menu-item icon="arrow-up" ?disabled=${index === 0} @click=${() => this.moveSource(integration, source, -1)}>${t('Move up')}</mitra-menu-item>
 						<mitra-menu-item icon="arrow-down" ?disabled=${index === count - 1} @click=${() => this.moveSource(integration, source, 1)}>${t('Move down')}</mitra-menu-item>
-						${!canCopyEntriesOut(source) ? html.nothing : html`
+						${!Calendars.canCopyEntriesOut(source) ? html.nothing : html`
 							<mitra-menu-item icon="folder-input"
-								title=${canMoveEntriesOut(source) ? t('Move or copy every entry into another calendar') : t('Copy every entry into another calendar')}
+								title=${Calendars.canMoveEntriesOut(source) ? t('Move or copy every entry into another calendar') : t('Copy every entry into another calendar')}
 								@click=${() => void new DialogSourceMigration({ source }).confirm().catch(() => void 0)}
-							>${canMoveEntriesOut(source) ? t('Move entries to…') : t('Copy entries to…')}</mitra-menu-item>
+							>${Calendars.canMoveEntriesOut(source) ? t('Move entries to…') : t('Copy entries to…')}</mitra-menu-item>
 						`}
 						${!integration.reimportable ? html.nothing : html`
 							<mitra-menu-item icon="hard-drive-download" title=${t('Read this calendar again from the start')}
 								@click=${() => void reimportSource(source.id).catch(() => void 0)}>${t('Re-import entries')}</mitra-menu-item>
 						`}
-						${!getCapabilities(source.id).deleteSources ? html.nothing : html`
+						${!Calendars.capabilitiesOf(source.id).deleteSources ? html.nothing : html`
 							<mitra-menu-item icon="trash-2" variant="danger" title=${t('Delete this calendar and every entry in it')}
 								@click=${() => void this.removeSource(source)}>${t('Delete calendar')}</mitra-menu-item>
 						`}
@@ -993,7 +994,7 @@ export class Sidebar extends Component {
 				<mitra-icon-button size="small"
 					class="eye-icon"
 					icon=${source.hidden ? 'eye-off' : 'eye'}
-					label=${`${source.hidden ? t('Show calendar') : t('Hide calendar')}\n${canRestoreSourceVisibility() ? t('Alt+click to show the previously visible ones') : t('Alt+click to show only this one')}`}
+					label=${`${source.hidden ? t('Show calendar') : t('Hide calendar')}\n${Calendars.canRestoreVisibility ? t('Alt+click to show the previously visible ones') : t('Alt+click to show only this one')}`}
 					@click=${(e: MouseEvent) => e.altKey ? this.toggleSolo(source) : this.toggleVisibility(source)}
 				></mitra-icon-button>
 			</div>

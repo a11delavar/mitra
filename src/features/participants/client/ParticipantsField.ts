@@ -1,7 +1,7 @@
 import { Component, component, html, css, property, state, event, query, bind } from '@a11d/lit'
 import { ParticipantRole, type Participants, type Participant } from '../Participant.js'
 import { type Entry } from '../../entries/Entry.js'
-import { getIntegrationFor, getCapabilities } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import './ParticipantAvatar.js'
 import './ParticipantFaces.js'
 import { type Menu } from '../../../design/Menu.js'
@@ -39,11 +39,11 @@ export class ParticipantsField extends Component {
 
 	/** Whether the current user can manage participants (requires write access and organizer status). */
 	private get canManage() {
-		return getCapabilities(this.entry.sourceId).editEntries && this.entry.canManageParticipants
+		return Calendars.capabilitiesOf(this.entry.sourceId).editEntries && this.entry.canManageParticipants
 	}
 
 	private get ownAddress(): string | undefined {
-		return getIntegrationFor(this.entry.sourceId)?.addresses?.[0]
+		return Calendars.integrationOf(this.entry.sourceId)?.addresses?.[0]
 	}
 
 	private changed() {

@@ -6,7 +6,6 @@ import { type Source } from '../../features/sources/Source.js'
 import { type MigrationOutcome, type MigrationPlan } from '../../features/migration/MigrationPlan.js'
 import { type Relation } from '../../features/relations/Relation.js'
 import { type RecurrenceScope } from '../../features/recurrence/Recurrence.js'
-import { applyOrder, byOrder } from '../model/order.js'
 import { Integration } from '../../integrations/Integration.js'
 import { type EntryType } from '../../features/entries/EntryType.js'
 import { type Entry } from '../../features/entries/Entry.js'
@@ -44,7 +43,6 @@ export class CookieAuthenticator implements ApiAuthenticator {
 	}
 }
 
-let integrations = new Array<Integration>()
 let currentUser: User | undefined
 
 export interface InstanceMeta {
@@ -108,10 +106,6 @@ export function getUser() {
 	return currentUser
 }
 
-export function getDefaultSourceId(): string | undefined {
-	return currentUser?.defaultSourceId ?? undefined
-}
-
 export async function setDefaultSource(sourceId: string | undefined) {
 	return currentUser = await Api.put<User>('/user/default-source', { sourceId: sourceId ?? null })
 }
@@ -157,11 +151,6 @@ export function searchEntries(query: string) {
 	return Api.get<Array<Entry>>(`/entries/search?q=${encodeURIComponent(query)}&tz=${tz()}`)
 }
 
-/** All visible sources across accounts in display order. */
-export function getVisibleSources(): Array<Source> {
-	return integrations.flatMap(i => [...i.sources]).filter(s => s.visible)
-}
-
 /** Every entry the user's relation graph reaches, for client-side graph calculations. */
 export function getRelationClosure() {
 	return Api.get<Array<Entry>>(`/entries/relations/closure?tz=${tz()}`)
@@ -176,66 +165,15 @@ export function updateRelations(id: string, relations: Array<Relation> | null) {
 	return Api.put<Entry>(`/entries/${id}?tz=${tz()}`, { relations })
 }
 
-/** Default target source for newly created entries. */
-export function getPrimarySource(type?: EntryType): Source | undefined {
-	const visibleSources = getVisibleSources().filter(s => !type || canHold(s, type))
-	return visibleSources.find(s => s.id === getDefaultSourceId()) ?? visibleSources[0]
-}
-
 export function createEvent(entry: Entry) {
 	return Api.post<Entry>(`/entries?tz=${tz()}`, Object.assign(entry.clone(), {
 		timeZone: entry.timeZone ?? EntryTimeZone.parse(TimeZone.deviceId) ?? null,
 	}))
 }
 
-export async function fetchIntegrations() {
-	const fetched = await Api.get<Array<Integration>>('/integrations')
-	for (const integration of fetched) {
-		integration.sources = [...integration.sources].sort(byOrder) as unknown as Integration['sources']
-	}
-	return integrations = fetched.sort(byOrder)
-}
-
-export function getIntegrations() {
-	return [...integrations]
-}
-
-export function getSource(id: string) {
-	return integrations.flatMap(i => [...i.sources]).find(s => s.id === id)
-}
-
-export function getIntegrationFor(sourceId: string) {
-	return integrations.find(i => [...i.sources].some(s => s.id === sourceId))
-}
-
-/** Unlike visible sources, these include hidden calendars, which can still hold entries. */
-export function getEnabledSources(integration?: Integration) {
-	const sources = integration ? [...integration.sources] : integrations.flatMap(i => [...i.sources])
-	return sources.filter(source => source.enabled)
-}
-
-/** The provider's capabilities, with writes off for a read-only source. */
-export function getCapabilities(sourceId: string): Integration['capabilities'] {
-	return Integration.capabilitiesIn(getIntegrationFor(sourceId)?.capabilities ?? Integration.defaultCapabilities, getSource(sourceId))
-}
-
-/** Whether entries of `type` can live in `source`, which for availability also takes the provider's say. */
-export function canHold(source: Source, type: EntryType) {
-	return getIntegrationFor(source.id)?.canHold(source, type) ?? source.supportsEntryType(type)
-}
-
-/** Where an entry can be opened outside Mitra, if anywhere. */
-export function getExternalLink(entry: Entry): { url: string, label?: string } | undefined {
-	const url = Integration.externalUrlOf(entry)
-	return getIntegrationFor(entry.sourceId)?.externalLink?.(entry) ?? (url ? { url } : undefined)
-}
-
-export function canCopyEntriesOut(source: Source) {
-	return getEnabledSources().some(other => other.id !== source.id && getCapabilities(other.id).createEntries)
-}
-
-export function canMoveEntriesOut(source: Source) {
-	return canCopyEntriesOut(source) && getCapabilities(source.id).deleteEntries
+/** The user's integrations with their sources, in no particular order: `Calendars.fetch()` orders and keeps them. */
+export function fetchIntegrations() {
+	return Api.get<Array<Integration>>('/integrations')
 }
 
 export function toggleSourceVisibility(id: string, hidden: boolean) {
@@ -244,16 +182,10 @@ export function toggleSourceVisibility(id: string, hidden: boolean) {
 
 export async function soloSource(id: string) {
 	currentUser = await Api.put<User>(`/sources/${id}/solo`)
-	await fetchIntegrations()
 }
 
 export async function restoreSourceVisibility() {
 	currentUser = await Api.put<User>('/sources/restore-visibility')
-	await fetchIntegrations()
-}
-
-export function canRestoreSourceVisibility() {
-	return !!currentUser?.previouslyHiddenSourceIds
 }
 
 /** Requires `capabilities.createSources`. */
@@ -278,16 +210,11 @@ export function renameSource(id: string, name: string) {
 	return Api.put<Source>(`/sources/${id}/name`, { name })
 }
 
-export function reorderSources(integration: Integration, ids: Array<string>) {
-	const sources = [...integration.sources]
-	applyOrder(sources, ids)
-	integration.sources = sources.sort(byOrder) as unknown as Integration['sources']
+export function putSourceOrder(ids: Array<string>) {
 	return Api.put('/sources/order', { ids })
 }
 
-export function reorderIntegrations(ids: Array<string>) {
-	applyOrder(integrations, ids)
-	integrations.sort(byOrder)
+export function putIntegrationOrder(ids: Array<string>) {
 	return Api.put('/integrations/order', { ids })
 }
 

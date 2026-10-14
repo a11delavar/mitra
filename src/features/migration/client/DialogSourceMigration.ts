@@ -1,7 +1,8 @@
 import { component, html, css, state } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { Task, TaskStatus, initialState } from '@lit/task'
-import { canMoveEntriesOut, getCapabilities, getIntegrations, migrateSourceEntries, previewSourceMigration } from '../../../infrastructure/http/Api.js'
+import { migrateSourceEntries, previewSourceMigration } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { MigrationPlan, type MigrationOutcome, type MigrationVerdict } from '../MigrationPlan.js'
 import { type Source } from '../../sources/Source.js'
 import { pressable } from '../../../design/pressable.css.js'
@@ -35,7 +36,7 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 
 	private get source() { return this.parameters.source }
 
-	private get canMove() { return canMoveEntriesOut(this.source) }
+	private get canMove() { return Calendars.canMoveEntriesOut(this.source) }
 
 	private get running() { return this.migration.status === TaskStatus.PENDING }
 
@@ -43,10 +44,10 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 
 	/** Available destination sources (writable, enabled, excluding origin). */
 	private get targets() {
-		return getIntegrations()
+		return Calendars.integrations
 			.map(integration => ({
 				integration,
-				sources: [...integration.sources].filter(source => source.id !== this.source.id && source.enabled && getCapabilities(source.id).createEntries),
+				sources: [...integration.sources].filter(source => source.id !== this.source.id && source.enabled && Calendars.capabilitiesOf(source.id).createEntries),
 			}))
 			.filter(({ sources }) => sources.length)
 	}

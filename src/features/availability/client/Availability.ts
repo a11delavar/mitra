@@ -2,7 +2,7 @@ import { type DateTime } from '@3mo/date-time'
 import { type Entry } from '../../entries/Entry.js'
 import { type EntrySegment } from '../../entries/client/EntrySegment.js'
 import { EntrySegments } from '../../entries/client/EntrySegments.js'
-import { getIntegrationFor } from '../../../infrastructure/http/Api.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { HideAvailabilitySetting } from './HideAvailabilitySetting.js'
 
 interface Partition {
@@ -31,7 +31,7 @@ export class Availability {
 		let partition = Availability.partitions.get(entries)
 		if (!partition) {
 			const availability = entries.filter(entry => entry.type.isAvailability)
-			const shown = (entry: Entry) => !entry.type.isAvailability && !getIntegrationFor(entry.sourceId)?.writtenForAvailability(entry)
+			const shown = (entry: Entry) => !entry.type.isAvailability && !Calendars.integrationOf(entry.sourceId)?.writtenForAvailability(entry)
 			const rest = entries.filter(shown)
 			partition = { availability, rest: rest.length === entries.length ? entries : rest }
 			Availability.partitions.set(entries, partition)
