@@ -10,9 +10,11 @@ import { Integration } from '../../../integrations/Integration.js'
 import { EntryType } from '../EntryType.js'
 import { EntryRelations } from '../../relations/EntryRelations.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
-import { Entry, FLOATING_TIME_ZONE, TaskStatus, Transparency } from '../Entry.js'
+import { Entry, FLOATING_TIME_ZONE } from '../Entry.js'
 import { normalizeAllDay, projectAllDay } from '../../time/calendarDate.js'
 import { editOccurrence, deleteOccurrence, expandedOccurrences, seriesStarts, nearestOccurrence, occurrenceAt } from '../../recurrence/server/occurrences.js'
+import { TaskStatus } from '../TaskStatus.js'
+import { Transparency } from '../Transparency.js'
 import { entrySearch, entryWindow, everyEntry } from './entryWindow.js'
 import { assertRelationsValid, attachRelations, relationClosure } from '../../relations/server/relations.js'
 import { EntryRank } from '../EntryRank.js'
@@ -136,7 +138,7 @@ entriesRouter.put('/ranks', async (req, res) => {
 entriesRouter.post('/', async (req, res) => {
 	const em = orm.em.fork()
 
-	const body = req.body as Partial<Entry>
+	const body = Entry.reviveValues(req.body as Partial<Entry>)
 	const targetSourceId = body.sourceId
 	if (!targetSourceId) {
 		return res.status(400).json({ error: 'Missing sourceId' })
@@ -240,7 +242,7 @@ entriesRouter.put('/:id', async (req, res) => {
 	await EntryRelation.loadFor(em, [existing])
 
 	// The client sends the full edited entry; the backend diffs as needed.
-	const body = req.body as Partial<Entry> & { sourceId?: string, scope?: RecurrenceScope, recurrenceId?: string }
+	const body = Entry.reviveValues(req.body as Partial<Entry> & { sourceId?: string, scope?: RecurrenceScope, recurrenceId?: string })
 
 	// Tri-state like `recurrence`: an array sets, `null` clears, absent keeps. Validated BEFORE any
 	// integration write, since a 400 must leave the external store untouched.
@@ -297,7 +299,9 @@ entriesRouter.put('/:id', async (req, res) => {
 	}
 
 	const incomingVisibility = body.visibility === undefined ? existing.visibility : body.visibility
-	if (body.transparency === Transparency.Free && !targetIntegration.capabilities.transparency) {
+	// `null` clears, back to the default (busy for an event); only an absent field keeps the stored one.
+	const incomingTransparency = body.transparency === undefined ? existing.transparency : body.transparency
+	if (incomingTransparency === Transparency.Free && !targetIntegration.capabilities.transparency) {
 		return res.status(400).json({ error: 'This calendar cannot mark an entry as free. Set it back to busy before moving the entry' })
 	}
 	if (incomingVisibility && !targetIntegration.capabilities.visibility) {
@@ -347,7 +351,7 @@ entriesRouter.put('/:id', async (req, res) => {
 			timeZone: body.timeZone === undefined ? existing.timeZone : body.timeZone,
 			status: body.status ?? existing.status,
 			percentComplete: body.percentComplete === undefined ? existing.percentComplete : incomingPercent(body.percentComplete),
-			transparency: existing.type.isTask ? null : body.transparency ?? existing.transparency,
+			transparency: existing.type.isTask ? null : incomingTransparency,
 			visibility: incomingVisibility,
 			reminders: existing.type.isAvailability ? null : body.reminders === undefined ? existing.reminders : body.reminders,
 			participants: existing.type.isAvailability ? null : incomingParticipants,
@@ -392,7 +396,7 @@ entriesRouter.put('/:id', async (req, res) => {
 		timeZone: body.timeZone === undefined ? existing.timeZone : body.timeZone,
 		status: incomingType.isTask ? body.status ?? existing.status : undefined,
 		percentComplete: incomingType.isTask ? incomingPercentComplete : null,
-		transparency: incomingType.isTask ? null : body.transparency ?? existing.transparency,
+		transparency: incomingType.isTask ? null : incomingTransparency,
 		visibility: incomingVisibility,
 		recurrence: incomingRecurrence,
 		reminders: incomingType.isAvailability ? null : body.reminders === undefined ? existing.reminders : body.reminders,

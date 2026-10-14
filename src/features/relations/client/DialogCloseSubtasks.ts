@@ -1,10 +1,10 @@
 import { component, html, css } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
-import { type Entry, TaskStatus } from '../../entries/Entry.js'
-import { taskStatusIcon } from '../../entries/client/TaskStatus.js'
+import { type Entry } from '../../entries/Entry.js'
+import { TaskStatus } from '../../entries/TaskStatus.js'
 
 /** What to do with the leftovers; `undefined` (cancelling the dialog) leaves them exactly as they are. */
-export type SubtaskClosure = TaskStatus.Done | TaskStatus.Cancelled
+export type SubtaskClosure = TaskStatus
 
 /**
  * Prompts whether to mark remaining open subtasks as Done or Cancelled when their parent task is closed.
@@ -48,7 +48,7 @@ export class DialogCloseSubtasks extends DialogComponent<{ readonly entry: Entry
 				})}</p>
 				<mitra-choices>
 					${this.options.map((closure, index) => html`
-						<mitra-choice ?autofocus=${index === 0} icon=${taskStatusIcon.get(closure)!} @click=${() => this.close(closure)}>${this.label(closure)}</mitra-choice>
+						<mitra-choice ?autofocus=${index === 0} icon=${closure.icon} @click=${() => this.close(closure)}>${this.label(closure)}</mitra-choice>
 					`)}
 				</mitra-choices>
 			</mitra-dialog>

@@ -1,6 +1,8 @@
 import { model } from '../../infrastructure/model/model.js'
 import { type Source } from '../sources/Source.js'
-import { type Entry, TaskStatus, Transparency, FLOATING_TIME_ZONE } from '../entries/Entry.js'
+import { type Entry, FLOATING_TIME_ZONE } from '../entries/Entry.js'
+import { TaskStatus } from '../entries/TaskStatus.js'
+import { Transparency } from '../entries/Transparency.js'
 import { type Integration } from '../../integrations/Integration.js'
 
 /** Target capability that prevents moving an entry (evaluated up front). */

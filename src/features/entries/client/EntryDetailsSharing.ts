@@ -1,23 +1,9 @@
 import { Component, component, html, css, property, event } from '@a11d/lit'
-import { Transparency, Visibility, type Entry } from '../Entry.js'
+import { type Entry } from '../Entry.js'
+import { Transparency } from '../Transparency.js'
+import { Visibility } from '../Visibility.js'
 import { getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
-
-function transparencyLabel(transparency: Transparency): string {
-	switch (transparency) {
-		case Transparency.Busy: return t('Busy')
-		case Transparency.Free: return t('Free')
-	}
-}
-
-function visibilityLabel(visibility: Visibility | null): string {
-	switch (visibility) {
-		case Visibility.Public: return t('Public')
-		case Visibility.Private: return t('Private')
-		case Visibility.Confidential: return t('Confidential')
-		default: return t('Default visibility')
-	}
-}
 
 /**
  * Entry sharing and availability editor (RFC 5545 TRANSP and CLASS).
@@ -120,7 +106,7 @@ export class EntryDetailsSharing extends Component {
 						<mitra-select label=${t('Show as busy or free')} title=${t('Show as busy or free')} ?disabled=${!this.capabilities.editEntries}
 							.value=${transparency} @change=${this.handleTransparencyChange}
 						>
-							${Object.values(Transparency).map(value => html`<mitra-option .value=${value}>${transparencyLabel(value)}</mitra-option>`)}
+							${Transparency.all.map(value => html`<mitra-option .value=${value}>${value.format()}</mitra-option>`)}
 						</mitra-select>
 					</span>
 				`}
@@ -129,7 +115,7 @@ export class EntryDetailsSharing extends Component {
 						<mitra-select label=${t('Visibility')} title=${t('Visibility')} ?disabled=${!this.capabilities.editEntries} .placeholder=${!this.entry.visibility}
 							.value=${this.entry.visibility ?? null} @change=${this.handleVisibilityChange}
 						>
-							${[null, ...Object.values(Visibility)].map(value => html`<mitra-option .value=${value}>${visibilityLabel(value)}</mitra-option>`)}
+							${[null, ...Visibility.all].map(value => html`<mitra-option .value=${value}>${value?.format() ?? t('Default visibility')}</mitra-option>`)}
 						</mitra-select>
 					</span>
 				`}

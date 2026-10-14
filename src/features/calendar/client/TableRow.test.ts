@@ -1,7 +1,8 @@
 import { beforeEach, describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { Entry, TaskStatus } from '../../entries/Entry.js'
+import { Entry } from '../../entries/Entry.js'
+import { TaskStatus } from '../../entries/TaskStatus.js'
 import { EntryType } from '../../entries/EntryType.js'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
@@ -70,14 +71,14 @@ describe('TableRow', () => {
 
 		it('files an event under no status, so a status filter can keep or drop events too', () => {
 			assert.equal(TableRow.for(entry()).facet('statusRank'), TableRow.noStatus)
-			assert.equal(TableRow.for(entry()).matches('', leaving('statusRank', TaskStatus.Done)), true)
+			assert.equal(TableRow.for(entry()).matches('', leaving('statusRank', TaskStatus.Done.code)), true)
 			assert.equal(TableRow.for(entry()).matches('', leaving('statusRank', TableRow.noStatus)), false)
-			assert.equal(TableRow.for(task({ status: TaskStatus.Done })).matches('', leaving('statusRank', TaskStatus.Done)), false)
-			assert.equal(TableRow.for(task()).matches('', leaving('statusRank', TaskStatus.Done, TaskStatus.Cancelled)), true)
+			assert.equal(TableRow.for(task({ status: TaskStatus.Done })).matches('', leaving('statusRank', TaskStatus.Done.code)), false)
+			assert.equal(TableRow.for(task()).matches('', leaving('statusRank', TaskStatus.Done.code, TaskStatus.Cancelled.code)), true)
 		})
 
 		it('reads a task without a status as to do', () => {
-			assert.equal(TableRow.for(task({ status: undefined })).facet('statusRank'), TaskStatus.ToDo)
+			assert.equal(TableRow.for(task({ status: undefined })).facet('statusRank'), TaskStatus.ToDo.code)
 		})
 
 		it('filters by calendar and by whether the entry repeats', () => {

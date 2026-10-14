@@ -1,6 +1,6 @@
 import { component, html, property, Component, css, state, bind, queryConnectedInstances, eventListener, unsafeCSS, guard } from '@a11d/lit'
 import { DateTime, DateTimeRange } from '@3mo/date-time'
-import { TaskStatus } from '../Entry.js'
+import { TaskStatus } from '../TaskStatus.js'
 import { type EntrySegment } from './EntrySegment.js'
 import { type RoutineRun } from '../../routines/client/Routines.js'
 import { contrastColorOf } from '../../../design/contrastColor.js'
@@ -80,7 +80,7 @@ export class EntrySegmentComponent extends Component {
 		this.toggleAttribute('dragging', this.store.isDragging(entry) || this.store.isPreview(entry))
 		this.toggleAttribute('drag-source', this.store.isDragSource(entry))
 		if (entry.type.isTask) {
-			this.setAttribute('data-status', entry.status ?? 'todo')
+			this.setAttribute('data-status', (entry.status ?? TaskStatus.ToDo).code)
 			const progress = entry.progress
 			if (progress !== undefined) {
 				this.setAttribute('data-progress', '')

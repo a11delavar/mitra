@@ -1,5 +1,6 @@
 import { type FilterQuery } from '@mikro-orm/core'
-import { type Entry, TaskStatus } from '../Entry.js'
+import { type Entry } from '../Entry.js'
+import { TaskStatus } from '../TaskStatus.js'
 import { EntryType } from '../EntryType.js'
 
 /** A task still awaiting an outcome; no status at all counts as open. Cast because `_type` is private. */

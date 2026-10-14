@@ -4,6 +4,9 @@ import { equals } from '@a11d/equals'
 import { model } from '../../infrastructure/model/model.js'
 import { entity, primaryKey, property, enum as enumType, unique, manyToOne, embedded } from '../../infrastructure/model/orm.js'
 import { EntryType, type EntryTypeValue } from './EntryType.js'
+import { TaskStatus } from './TaskStatus.js'
+import { Transparency } from './Transparency.js'
+import { Visibility } from './Visibility.js'
 import { Source } from '../sources/Source.js'
 import { Recurrence } from '../recurrence/Recurrence.js'
 import { Participants, type ParticipantRole, type Participant } from '../participants/Participant.js'
@@ -16,13 +19,6 @@ import { Checklist } from './Checklist.js'
 import { type ReminderDefaults } from '../reminders/ReminderDefaults.js'
 import { type Integration } from '../../integrations/Integration.js'
 import { TimeZone } from '../time/TimeZone.js'
-
-export enum TaskStatus {
-	ToDo = 'todo',
-	Doing = 'doing',
-	Done = 'done',
-	Cancelled = 'cancelled',
-}
 
 export interface EntryTally {
 	readonly done: number
@@ -38,19 +34,6 @@ export interface EntryRollup {
 	readonly checklist: EntryTally
 	readonly children: number
 	readonly descendants: number
-}
-
-/** RFC 5545 TRANSP. */
-export enum Transparency {
-	Busy = 'busy',
-	Free = 'free',
-}
-
-/** RFC 5545 CLASS. */
-export enum Visibility {
-	Public = 'public',
-	Private = 'private',
-	Confidential = 'confidential',
 }
 
 export interface EntryData {
@@ -114,7 +97,8 @@ export class Entry {
 	/** A task's length in minutes while it has no start. The end is the same fact once it does, so one of the two is always empty. */
 	@property({ type: 'number', nullable: true }) estimate: number | null = null
 
-	@enumType({ items: () => TaskStatus, nullable: true }) status?: TaskStatus
+	@converter(TaskStatus.converter)
+	@enumType({ type: TaskStatus.Mapper, items: TaskStatus.all.map(String), nullable: true }) status?: TaskStatus
 
 	/** Task PERCENT-COMPLETE (RFC 5545 §3.8.1.8), 0-100. */
 	@property({ type: 'number', nullable: true }) percentComplete: number | null = null
@@ -135,7 +119,7 @@ export class Entry {
 	get done() { return this.status === TaskStatus.Done }
 	set done(value) { this.status = value ? TaskStatus.Done : TaskStatus.ToDo }
 
-	get closed() { return this.status === TaskStatus.Done || this.status === TaskStatus.Cancelled }
+	get closed() { return !!this.status?.closed }
 
 	setStatus(status: TaskStatus, capabilities: Pick<Integration['capabilities'], 'percentComplete'>) {
 		this.status = status
@@ -144,8 +128,10 @@ export class Entry {
 		}
 	}
 
-	@enumType({ items: () => Transparency, nullable: true }) transparency: Transparency | null = null
-	@enumType({ items: () => Visibility, nullable: true }) visibility: Visibility | null = null
+	@converter(Transparency.converter)
+	@enumType({ type: Transparency.Mapper, items: Transparency.all.map(String), nullable: true }) transparency: Transparency | null = null
+	@converter(Visibility.converter)
+	@enumType({ type: Visibility.Mapper, items: Visibility.all.map(String), nullable: true }) visibility: Visibility | null = null
 
 	/** TRANSP with its default filled in: busy for events (RFC 5545), free for availability. */
 	get showAs(): Transparency {
@@ -298,6 +284,19 @@ export class Entry {
 		// Calendar days, so an all-day span across a DST change still reads as whole days.
 		const { days, hours, minutes } = this.start.zonedDateTime.until(this.end.zonedDateTime, { largestUnit: 'days', smallestUnit: 'minutes' })
 		return new Intl.DurationFormat(Localizer.locales.current, { style: 'narrow' }).format({ days, hours, minutes })
+	}
+
+	/**
+	 * A request body's status, transparency and visibility as value objects. An Entry arrives with them, a plain body (a
+	 * series or a scoped edit) with their codes; an unknown one reads as none.
+	 */
+	static reviveValues<T extends Partial<Pick<Entry, 'status' | 'transparency' | 'visibility'>>>(body: T): T {
+		const parse = <V>(value: unknown, of: (value: unknown) => V | undefined) => value === undefined || value === null ? value : of(value) ?? null
+		return Object.assign(body, {
+			...'status' in body ? { status: parse(body.status, TaskStatus.parse) ?? undefined } : {},
+			...'transparency' in body ? { transparency: parse(body.transparency, Transparency.parse) } : {},
+			...'visibility' in body ? { visibility: parse(body.visibility, Visibility.parse) } : {},
+		})
 	}
 
 	constructor(init?: Partial<Entry>) {

@@ -1,6 +1,7 @@
 import { type EntityManager } from '@mikro-orm/sqlite'
 import { Source } from '../../../features/sources/Source.js'
-import { Entry, Transparency } from '../../../features/entries/Entry.js'
+import { Entry } from '../../../features/entries/Entry.js'
+import { Transparency } from '../../../features/entries/Transparency.js'
 import { EntryType } from '../../../features/entries/EntryType.js'
 import { Recurrence } from '../../../features/recurrence/Recurrence.js'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'

@@ -355,6 +355,15 @@ export function deleteIntegration(id: string) {
 	return Api.delete(`/integrations/${id}`)
 }
 
+/**
+ * These fields of `entry` as a model carries them, value objects as their codes: a plain request body is no model, so
+ * no converter would run on it. `EntryPatch` replaces this.
+ */
+function wireFields(entry: Entry, fields: ReadonlyArray<keyof Entry & string>) {
+	const wire = (entry as unknown as { toJSON(): Record<string, unknown> }).toJSON()
+	return Object.fromEntries(fields.map(field => [field, wire[field] ?? null]))
+}
+
 export function updateEvent(entry: Entry) {
 	if (entry.recurringEntryId) {
 		return Api.put<Entry>(`/entries/${entry.recurringEntryId}?tz=${tz()}`, {
@@ -363,8 +372,7 @@ export function updateEvent(entry: Entry) {
 			location: entry.location,
 			color: entry.color,
 			timeZone: entry.timeZone ?? null,
-			transparency: entry.transparency ?? null,
-			visibility: entry.visibility ?? null,
+			...wireFields(entry, ['transparency', 'visibility']),
 			reminders: entry.reminders ?? null,
 			participants: entry.participants ?? null,
 			...(entry.recurrence !== undefined ? { recurrence: entry.recurrence } : {}),
@@ -411,10 +419,8 @@ export function editOccurrence(occurrence: Entry, scope: RecurrenceScope) {
 		estimate: occurrence.estimate ?? null,
 		allDay: occurrence.allDay,
 		timeZone: occurrence.timeZone ?? null,
-		status: occurrence.status,
 		percentComplete: occurrence.percentComplete ?? null,
-		transparency: occurrence.transparency,
-		visibility: occurrence.visibility,
+		...wireFields(occurrence, ['status', 'transparency', 'visibility']),
 		reminders: occurrence.reminders ?? null,
 		participants: occurrence.participants ?? null,
 	})

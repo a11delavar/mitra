@@ -1,9 +1,8 @@
 import { Component, component, html, css, property, state, event, query, ifDefined } from '@a11d/lit'
 import { type DataGridColumn, DataGridSortingStrategy } from '@3mo/data-grid/controller'
-import { TaskStatus } from '../../entries/Entry.js'
+import { TaskStatus } from '../../entries/TaskStatus.js'
 import { EntryType } from '../../entries/EntryType.js'
 import { type Source } from '../../sources/Source.js'
-import { taskStatusIcon, taskStatusLabel } from '../../entries/client/TaskStatus.js'
 import { getVisibleSources } from '../../../infrastructure/http/Api.js'
 import { TableRow, TableFilter, type TableFacet } from './TableRow.js'
 import { TableWindow } from './TableWindow.js'
@@ -35,7 +34,7 @@ export class TableColumnMenu extends Component {
 	private static options(facet: TableFacet): Array<TableFilterOption> {
 		switch (facet) {
 			case 'statusRank': return [
-				...[TaskStatus.ToDo, TaskStatus.Doing, TaskStatus.Done, TaskStatus.Cancelled].map(status => ({ value: status, label: taskStatusLabel(status), icon: taskStatusIcon.get(status) })),
+				...TaskStatus.all.map(status => ({ value: status.code, label: status.format(), icon: status.icon })),
 				{ value: TableRow.noStatus, label: t('No status') },
 			]
 			case 'typeKey': return EntryType.all.filter(type => !type.isAvailability).map(type => ({ value: type.value, label: type.format() }))

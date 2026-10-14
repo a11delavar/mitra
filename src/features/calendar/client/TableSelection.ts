@@ -1,8 +1,7 @@
 import { Component, component, html, css, property, event, type PropertyValues } from '@a11d/lit'
-import { TaskStatus } from '../../entries/Entry.js'
+import { TaskStatus } from '../../entries/TaskStatus.js'
 import { type Source } from '../../sources/Source.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
-import { taskStatusIcon, taskStatusLabel } from '../../entries/client/TaskStatus.js'
 import { DialogDeleteEntries } from '../../entries/client/DialogDeleteEntries.js'
 import { getCapabilities, getEnabledSources } from '../../../infrastructure/http/Api.js'
 import { type TableRow } from './TableRow.js'
@@ -142,8 +141,8 @@ export class TableSelection extends Component {
 			<span class="count">${t('${count:pluralityNumber} selected', { count: rows.length })}</span>
 			${!rows.some(TableSelection.editable) ? html.nothing : [TaskStatus.ToDo, TaskStatus.Done, TaskStatus.Cancelled].map(status => html`
 				<mitra-button @click=${() => this.setStatus(status)}>
-					<mitra-icon icon=${taskStatusIcon.get(status)!}></mitra-icon>
-					${taskStatusLabel(status)}
+					<mitra-icon icon=${status.icon}></mitra-icon>
+					${status.format()}
 				</mitra-button>
 			`)}
 			${!destinations.length ? html.nothing : html`

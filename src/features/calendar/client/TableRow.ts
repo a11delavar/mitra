@@ -1,5 +1,6 @@
 import { DateTime } from '@3mo/date-time'
-import { type Entry, TaskStatus } from '../../entries/Entry.js'
+import { type Entry } from '../../entries/Entry.js'
+import { TaskStatus } from '../../entries/TaskStatus.js'
 import { EntrySegments } from '../../entries/client/EntrySegments.js'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
 import { Relations } from '../../relations/client/Relations.js'
@@ -115,7 +116,7 @@ export class TableRow {
 	facet(key: TableFacet): string {
 		const { entry } = this
 		switch (key) {
-			case 'statusRank': return !entry.type.isTask ? TableRow.noStatus : entry.status ?? TaskStatus.ToDo
+			case 'statusRank': return !entry.type.isTask ? TableRow.noStatus : (entry.status ?? TaskStatus.ToDo).code
 			case 'typeKey': return entry.type.value
 			case 'sourceName': return entry.sourceId
 			case 'repeats': return entry.partOfSeries ? 'repeating' : 'once'

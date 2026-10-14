@@ -1,8 +1,8 @@
 import { html, type HTMLTemplateResult } from '@a11d/lit'
 import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { DataGridColumn } from '@3mo/data-grid/controller'
-import { type Entry, TaskStatus } from '../../entries/Entry.js'
-import { taskStatusLabel } from '../../entries/client/TaskStatus.js'
+import { type Entry } from '../../entries/Entry.js'
+import { TaskStatus } from '../../entries/TaskStatus.js'
 import { Relations } from '../../relations/client/Relations.js'
 import '../../participants/client/ParticipantFaces.js'
 import '../../relations/client/EntryLink.js'
@@ -79,7 +79,7 @@ function status(entry: Entry) {
 	}
 	const progress = Relations.progressOf(entry)
 	const underway = progress !== undefined && progress > 0 && progress < 1
-	return text(`${taskStatusLabel(entry.status ?? TaskStatus.ToDo)}${!underway ? '' : ` · ${Math.round(progress * 100).formatAsPercent()}`}`)
+	return text(`${(entry.status ?? TaskStatus.ToDo).format()}${!underway ? '' : ` · ${Math.round(progress * 100).formatAsPercent()}`}`)
 }
 
 /** A table makes them once: the grid controller syncs its definitions again for every new array. */

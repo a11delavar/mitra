@@ -2,7 +2,8 @@ import { component, html, join, property, state, Component, css, eventListener, 
 import { type Source } from '../../sources/Source.js'
 import { Color } from '../../sources/Color.js'
 import { EntryType, type EntryTypeValue } from '../EntryType.js'
-import { TaskStatus, Transparency } from '../Entry.js'
+import { TaskStatus } from '../TaskStatus.js'
+import { Transparency } from '../Transparency.js'
 import type { EntrySegment } from './EntrySegment.js'
 import { getIntegrations, getSource, getCapabilities, getExternalLink, canHold } from '../../../infrastructure/http/Api.js'
 import { EntryStore, reportSaveError } from './EntryStore.js'
@@ -366,7 +367,7 @@ export class EntryDetailsComponent extends Component {
 								/* Two lines of links at most, the rest scrolled to, so a long page of notes cannot push the description away. */
 								max-block-size: calc(2lh + 0.25rem);
 								overflow-y: auto;
-								${scrollbar}
+								${scrollbar};
 							}
 
 							&.description {

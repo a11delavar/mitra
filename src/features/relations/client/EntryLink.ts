@@ -1,6 +1,7 @@
 import { Component, component, html, css, property, event, type PropertyValues } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
-import { TaskStatus, type Entry } from '../../entries/Entry.js'
+import { type Entry } from '../../entries/Entry.js'
+import { TaskStatus } from '../../entries/TaskStatus.js'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
 import { EntryStore, reportSaveError } from '../../entries/client/EntryStore.js'
 import { getSource, updateEvent } from '../../../infrastructure/http/Api.js'

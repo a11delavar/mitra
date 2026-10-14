@@ -1,33 +1,12 @@
 import { Component, component, html, css, property, event, query } from '@a11d/lit'
-import { type Entry, type EntryRollup, TaskStatus } from '../Entry.js'
+import { type Entry, type EntryRollup } from '../Entry.js'
+import { TaskStatus } from '../TaskStatus.js'
 import { getCapabilities } from '../../../infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
 import { offerToCloseSubtasks } from '../../relations/client/Hierarchy.js'
 import { Relations } from '../../relations/client/Relations.js'
 import { type Slider } from '../../../design/Slider.js'
 import { type Menu } from '../../../design/Menu.js'
-
-const order = [TaskStatus.ToDo, TaskStatus.Doing, TaskStatus.Done, TaskStatus.Cancelled] as const
-
-/** The app's status glyphs, also worn by the dialogs that offer a status as a choice. */
-export const taskStatusIcon = new Map<TaskStatus, string>([
-	[TaskStatus.ToDo, 'square'],
-	[TaskStatus.Doing, 'square-minus'],
-	[TaskStatus.Done, 'square-check-big'],
-	[TaskStatus.Cancelled, 'square-x'],
-])
-
-/** The app's status words, also read by the table's status column and filter. */
-export function taskStatusLabel(status: TaskStatus): string {
-	switch (status) {
-		case TaskStatus.ToDo: return t('To Do')
-		case TaskStatus.Doing: return t('Doing')
-		case TaskStatus.Done: return t('Done')
-		case TaskStatus.Cancelled: return t('Cancelled')
-	}
-}
-
-const label = taskStatusLabel
 
 /**
  * Task completion and status control.
@@ -358,10 +337,10 @@ export class TaskStatusComponent extends Component {
 			return html.nothing
 		}
 
-		this.setAttribute('data-status', this.status)
+		this.setAttribute('data-status', this.status.code)
 
 		const readout = this.progressLabel
-		const name = readout ? `${label(this.status)} (${readout})` : label(this.status)
+		const name = readout ? `${this.status.format()} (${readout})` : this.status.format()
 		const progress = this.progress
 		const showsProgressDial = this.status === TaskStatus.Doing || (progress !== undefined && progress > 0 && progress < 1 && this.status !== TaskStatus.Done && this.status !== TaskStatus.Cancelled)
 		const percent = progress !== undefined ? Math.round(progress * 100) : 50
@@ -383,12 +362,12 @@ export class TaskStatusComponent extends Component {
 						<line x1="8" y1="12" x2="16" y2="12" stroke-width="2"/>
 					</svg>
 				` : html`
-					<mitra-icon icon=${taskStatusIcon.get(this.status)!}></mitra-icon>
+					<mitra-icon icon=${this.status.icon}></mitra-icon>
 				`}
 			</button>
 			<mitra-menu>
-				${order.filter(status => status !== TaskStatus.Cancelled || getCapabilities(this.entry.sourceId).cancelledStatus).map(status => html`
-					<mitra-menu-item type="radio" icon=${taskStatusIcon.get(status)!} ?selected=${status === this.status} @click=${this.pick(status)}>${label(status)}</mitra-menu-item>
+				${TaskStatus.all.filter(status => status !== TaskStatus.Cancelled || getCapabilities(this.entry.sourceId).cancelledStatus).map(status => html`
+					<mitra-menu-item type="radio" icon=${status.icon} ?selected=${status === this.status} @click=${this.pick(status)}>${status.format()}</mitra-menu-item>
 				`)}
 				${this.progressSectionTemplate}
 			</mitra-menu>

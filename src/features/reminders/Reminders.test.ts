@@ -2,7 +2,8 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { type DateTime } from '@3mo/date-time'
 import { EntryType } from '../entries/EntryType.js'
-import { Entry, FLOATING_TIME_ZONE, TaskStatus } from '../entries/Entry.js'
+import { Entry, FLOATING_TIME_ZONE } from '../entries/Entry.js'
+import { TaskStatus } from '../entries/TaskStatus.js'
 import { DueReminder } from './Reminders.js'
 
 describe('Reminders', () => {
