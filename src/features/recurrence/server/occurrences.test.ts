@@ -525,7 +525,7 @@ describe('scoped occurrence edits', () => {
 	})
 
 	it('\'all\' reads DATE exclusions as canonical UTC dates before shifting them (whatever the master\'s zone)', async () => {
-		// All-day bounds are DATES encoded as UTC midnights (see calendarDate.ts). The series' own
+		// All-day bounds are DATES encoded as UTC midnights. The series' own
 		// `timeZone` (Tehran here) governs only TIMED wall-clock math, never all-day day arithmetic:
 		// read at any other midnight, the shifted exclusion lands hours off and excludes nothing.
 		const { calls, integration } = stub()

@@ -3,7 +3,7 @@ import { Localizer } from '@3mo/localization'
 import { converter } from '@a11d/converter'
 import { model } from '../../infrastructure/model/model.js'
 import { embeddable, property } from '../../infrastructure/model/orm.js'
-import { calendarDateOf } from '../time/calendarDate.js'
+import { TimeZone } from '../time/TimeZone.js'
 import { RecurrenceEnd } from './RecurrenceEnd.js'
 import { RecurrenceFrequency } from './RecurrenceFrequency.js'
 import { RecurrenceWeekday } from './RecurrenceWeekday.js'
@@ -247,7 +247,8 @@ export class Recurrence {
 	 * ahead of UTC as a day earlier.
 	 */
 	rebased(from: Date, to: Date, zone?: string | null): Recurrence {
-		const day = (value: Date) => calendarDateOf(value, zone)
+		const here = zone ? TimeZone.of(zone) : TimeZone.device
+		const day = (value: Date) => here.dayOf(value)
 		const deltaDays = day(to).since(day(from)).days
 		if (deltaDays === 0) {
 			return this
@@ -257,7 +258,7 @@ export class Recurrence {
 			patch.byday = this.byday.map(weekday => weekday.plus(deltaDays))
 		}
 		if (this.bymonthday) {
-			patch.bymonthday = calendarDateOf(to, zone).day
+			patch.bymonthday = day(to).day
 		}
 		return this.with(patch)
 	}

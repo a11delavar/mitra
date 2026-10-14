@@ -4,7 +4,7 @@
  */
 
 import { localizeIn } from '../../infrastructure/i18n/dictionaries.js'
-import { calendarDateOf } from '../time/calendarDate.js'
+import { TimeZone } from '../time/TimeZone.js'
 
 const MINUTE = 60_000
 
@@ -163,7 +163,7 @@ export class ReminderNotification {
 		}
 		const parameters = new URLSearchParams()
 		if (at !== undefined) {
-			parameters.set('date', calendarDateOf(new Date(at), when!.allDay || when!.floating ? 'UTC' : timeZone).toString())
+			parameters.set('date', (when!.allDay || when!.floating ? TimeZone.UTC : TimeZone.parse(timeZone) ?? TimeZone.device).dayOf(new Date(at)).toString())
 		}
 		parameters.set('selected', entry.id)
 		return `/?${parameters}`
@@ -176,8 +176,8 @@ export class ReminderNotification {
 
 	/** Empty for today, else "Tomorrow", "Yesterday" or the date. */
 	private dayPhrase(at: number, now: number, zone: string | undefined, readerZone: string | undefined, locale: string | undefined, t: Localize): string {
-		const target = calendarDateOf(new Date(at), zone)
-		const today = calendarDateOf(new Date(now), readerZone)
+		const target = (TimeZone.parse(zone) ?? TimeZone.device).dayOf(new Date(at))
+		const today = (TimeZone.parse(readerZone) ?? TimeZone.device).dayOf(new Date(now))
 		if (target.equals(today)) {
 			return ''
 		}

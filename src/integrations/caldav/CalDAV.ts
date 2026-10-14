@@ -17,7 +17,7 @@ import { EntryType } from '../../features/entries/EntryType.js'
 import { Recurrence } from '../../features/recurrence/Recurrence.js'
 import { Relation, type RelationInit } from '../../features/relations/Relation.js'
 import { RelationType } from '../../features/relations/RelationType.js'
-import { calendarDateOf, midnightOf } from '../../features/time/calendarDate.js'
+import { TimeZone } from '../../features/time/TimeZone.js'
 import { Participants, ParticipantRole, ParticipantStatus, type Participant } from '../../features/participants/Participant.js'
 
 export interface CalDAVCredentials {
@@ -89,7 +89,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		if (!allDay) {
 			return ICAL.Time.fromJSDate(date, true)
 		}
-		const { year, month, day } = calendarDateOf(date, 'UTC')
+		const { year, month, day } = TimeZone.UTC.dayOf(date)
 		return ICAL.Time.fromData({ year, month, day, isDate: true })
 	}
 
@@ -115,7 +115,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			return undefined
 		}
 		if (time.isDate) {
-			return midnightOf(Temporal.PlainDate.from({ year: time.year, month: time.month, day: time.day }), 'UTC')
+			return TimeZone.UTC.midnightOf(Temporal.PlainDate.from({ year: time.year, month: time.month, day: time.day }))
 		}
 		if (CalDAV.resolvableZone(tzid)) {
 			return new Date(Temporal.PlainDateTime
@@ -431,7 +431,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	/** An all-day span in the days between its canonical dates, a timed one as the exact time; an estimate in days only when it is whole days. */
 	private static lengthOf(entry: TaskTimes): ICAL.Duration | undefined {
 		if (entry.start && entry.end && entry.allDay) {
-			const days = calendarDateOf(entry.start, 'UTC').until(calendarDateOf(entry.end, 'UTC')).days
+			const days = TimeZone.UTC.dayOf(entry.start).until(TimeZone.UTC.dayOf(entry.end)).days
 			return days > 0 ? ICAL.Duration.fromData({ days }) : undefined
 		}
 		const seconds = entry.start

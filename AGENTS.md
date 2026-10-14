@@ -12,7 +12,7 @@
   - `all: unset` overrides `[hidden]`: restate `&[hidden] { display: none }`.
 - **Dates**:
   - Frontend: `@3mo/date-time`'s global `DateTime` for formatting and view math (`.equals()`, `.dayStart`, `.format()`), no raw `valueOf()` math. Shared and backend: Temporal (polyfilled by `scripts/injectTemporalPolyfill.ts`).
-  - Primitives in `features/time/calendarDate.ts`: `calendarDateOf(instant, zone)`, `midnightOf(date, zone)`.
+  - Days and instants meet on `TimeZone`: `zone.dayOf(instant)` is the day it falls on there, `zone.midnightOf(day)` the instant that day begins (`TimeZone.UTC`, `TimeZone.device`).
   - **An all-day entry's dates are days**, kept as UTC midnights in the database, on the wire and on the server. The browser's `Entry` holds each as the midnight that begins it there, a plain field: each date is declared `@Entry.date()`, whose converter reads `allDay` from the same entry and translates only when the entry crosses the wire, in whichever order its fields come (`Entry.dayZone`: the browser's zone, `TimeZone.deviceId`, which asks Intl (50 µs) again only once the offset changes or the page shows again; none on the server, which passes through). Never a getter or setter on a date: views read them thousands of times a frame. `?tz=` only tells the server the viewer's today (the current occurrence of a start-less recurring task), so a write carrying it comes from a stale tab and is refused (409). An `EntryPatch` converts its dates the same way, which is why `EntryPatch.of` brings `allDay` beside a date.
   - Never spread a `PlainDate` (its fields are prototype getters).
   - `ICAL.Time` lives only at the .ics boundary (`CalDAV.instantFrom`/`toICALTime`); zoned writes keep the resource's VTIMEZONE.

@@ -10,7 +10,7 @@ import { Entry } from '../../features/entries/Entry.js'
 import { EntryTimeZone } from '../../features/entries/EntryTimeZone.js'
 import { TaskStatus } from '../../features/entries/TaskStatus.js'
 import { EntryType } from '../../features/entries/EntryType.js'
-import { calendarDateOf, midnightOf } from '../../features/time/calendarDate.js'
+import { TimeZone } from '../../features/time/TimeZone.js'
 import { Color } from '../../features/sources/Color.js'
 import { type Relation } from '../../features/relations/Relation.js'
 import { RelationType } from '../../features/relations/RelationType.js'
@@ -666,7 +666,7 @@ export class Notion extends Integration<NotionCredentials> {
 
 	private static instantFrom(value: string, timeZone: string | null | undefined): Date {
 		if (!Notion.isDateTime(value)) {
-			return midnightOf(Temporal.PlainDate.from(value), 'UTC')
+			return TimeZone.UTC.midnightOf(Temporal.PlainDate.from(value))
 		}
 		if (timeZone && !Notion.hasOffset(value)) {
 			return new Date(Temporal.PlainDateTime.from(value).toZonedDateTime(timeZone, { disambiguation: 'compatible' }).epochMilliseconds)
@@ -682,8 +682,8 @@ export class Notion extends Integration<NotionCredentials> {
 		if (!Notion.isDateTime(date.start)) {
 			const lastDay = Temporal.PlainDate.from(date.end && !Notion.isDateTime(date.end) ? date.end : date.start)
 			return {
-				start: midnightOf(Temporal.PlainDate.from(date.start), 'UTC') as never,
-				end: midnightOf(lastDay.add({ days: 1 }), 'UTC') as never,
+				start: TimeZone.UTC.midnightOf(Temporal.PlainDate.from(date.start)) as never,
+				end: TimeZone.UTC.midnightOf(lastDay.add({ days: 1 })) as never,
 				allDay: true,
 				timeZone: undefined,
 			}
@@ -702,7 +702,7 @@ export class Notion extends Integration<NotionCredentials> {
 	}
 
 	private static dateOnly(instant: Date): string {
-		return calendarDateOf(instant, 'UTC').toString()
+		return TimeZone.UTC.dayOf(instant).toString()
 	}
 
 	/** Encodes entry span into Notion date property value. */
@@ -712,7 +712,7 @@ export class Notion extends Integration<NotionCredentials> {
 		}
 		if (entry.allDay) {
 			const start = Notion.dateOnly(entry.start)
-			const lastDay = entry.end ? calendarDateOf(entry.end, 'UTC').subtract({ days: 1 }) : undefined
+			const lastDay = entry.end ? TimeZone.UTC.dayOf(entry.end).subtract({ days: 1 }) : undefined
 			const end = lastDay && lastDay.toString() > start ? lastDay.toString() : null
 			return { start, end, time_zone: null }
 		}

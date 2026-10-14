@@ -21,7 +21,6 @@ import { type ReminderDefaults } from '../reminders/ReminderDefaults.js'
 import { type Integration } from '../../integrations/Integration.js'
 import { TimeZone } from '../time/TimeZone.js'
 import { EntryPatch } from './EntryPatch.js'
-import { calendarDateOf, midnightOf } from '../time/calendarDate.js'
 
 export interface EntryTally {
 	readonly done: number
@@ -294,7 +293,7 @@ export class Entry {
 	}
 
 	/** The zone this runtime shows an all-day entry's days in: the browser's own; none on the server, which keeps them as stored. */
-	static dayZone = (): string | undefined => mitra.runtime === 'browser' ? TimeZone.deviceId : undefined
+	static dayZone = (): TimeZone | undefined => mitra.runtime === 'browser' ? TimeZone.device : undefined
 
 	/**
 	 * Declares one of the entry's dates. The entry holds an all-day date as the midnight that begins its day in `dayZone`,
@@ -313,13 +312,13 @@ export class Entry {
 	/** A day the wire carries as its UTC midnight, as the midnight that begins it in `dayZone`. */
 	static shownDay(value: Date | string | null | undefined, data: { allDay?: boolean | null }) {
 		const zone = Entry.dayZone()
-		return !data.allDay || !zone || !value ? value : new DateTime(midnightOf(calendarDateOf(new Date(value), 'UTC'), zone).getTime())
+		return !data.allDay || !zone || !value ? value : new DateTime(zone.midnightOf(TimeZone.UTC.dayOf(new Date(value))).getTime())
 	}
 
 	/** The day a midnight in `dayZone` begins, as the UTC midnight the wire carries. */
 	static storedDay(value: Date | string | null | undefined, data: { allDay?: boolean | null }) {
 		const zone = Entry.dayZone()
-		return !data.allDay || !zone || !value ? value : midnightOf(calendarDateOf(new Date(value), zone), 'UTC')
+		return !data.allDay || !zone || !value ? value : TimeZone.UTC.midnightOf(zone.dayOf(new Date(value)))
 	}
 
 	constructor(init?: Partial<Entry>) {

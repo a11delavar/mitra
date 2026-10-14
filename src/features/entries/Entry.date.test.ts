@@ -3,7 +3,6 @@ import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Entry } from './Entry.js'
 import { EntryType } from './EntryType.js'
-import { midnightOf } from '../time/calendarDate.js'
 import { TimeZone } from '../time/TimeZone.js'
 import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
 
@@ -18,10 +17,10 @@ describe('Entry.date', () => {
 
 	/** Shows days in `zone` as a browser there does, whose DateTimes are in that zone too. */
 	const showIn = (zone: string | undefined) => {
-		Entry.dayZone = () => zone
+		Entry.dayZone = () => TimeZone.parse(zone)
 		process.env.TZ = zone ?? processZone
 	}
-	const midnight = (day: string, zone: string) => new DateTime(midnightOf(Temporal.PlainDate.from(day), zone).getTime())
+	const midnight = (day: string, zone: string) => new DateTime(TimeZone.of(zone).midnightOf(Temporal.PlainDate.from(day)).getTime())
 	const iso = (value: { valueOf(): number } | string | null | undefined) => value === null || value === undefined ? value : new Date(typeof value === 'string' ? value : value.valueOf()).toISOString()
 	const wire = (entry: Entry) => wireOf(entry) as { start?: string, end?: string, due?: string, recurrenceId?: string, seriesStart?: string, allDay?: boolean }
 	const holiday = (init: Partial<Entry> = {}) => new Entry({ type: EntryType.Task, heading: 'Holiday', allDay: true, ...init })
@@ -128,7 +127,7 @@ describe('Entry.date', () => {
 		assert.equal(Entry.dayZone(), undefined)
 		runtime.runtime = 'browser'
 		try {
-			assert.equal(Entry.dayZone(), TimeZone.deviceId)
+			assert.equal(Entry.dayZone(), TimeZone.device)
 		} finally {
 			runtime.runtime = 'server'
 		}

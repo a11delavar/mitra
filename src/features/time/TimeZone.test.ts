@@ -55,4 +55,38 @@ describe('TimeZone', () => {
 		assert.equal(JSON.stringify({ zone: TimeZone.of('Asia/Tokyo') }), '{"zone":"Asia/Tokyo"}')
 		assert.equal(`${TimeZone.of('Asia/Tokyo')}`, 'Asia/Tokyo')
 	})
+
+	// An all-day entry's days are UTC midnights read back in a viewer's zone, so the two must be exact inverses in every zone.
+	describe('days', () => {
+		const jun2 = Temporal.PlainDate.from('2026-06-02')
+
+		it('begins a day at its midnight in the zone', () => {
+			assert.equal(TimeZone.UTC.midnightOf(jun2).toISOString(), '2026-06-02T00:00:00.000Z')
+			assert.equal(TimeZone.of('Europe/Berlin').midnightOf(jun2).toISOString(), '2026-06-01T22:00:00.000Z')
+			assert.equal(TimeZone.of('Asia/Tehran').midnightOf(jun2).toISOString(), '2026-06-01T20:30:00.000Z')
+			assert.equal(TimeZone.of('America/New_York').midnightOf(jun2).toISOString(), '2026-06-02T04:00:00.000Z')
+			assert.equal(TimeZone.of('Pacific/Kiritimati').midnightOf(jun2).toISOString(), '2026-06-01T10:00:00.000Z')
+			assert.equal(TimeZone.of('Europe/Berlin').midnightOf(Temporal.PlainDate.from('2026-01-15')).toISOString(), '2026-01-14T23:00:00.000Z')
+		})
+
+		it('reads a midnight back as its day, everywhere', () => {
+			for (const id of ['Europe/Berlin', 'Asia/Tehran', 'America/New_York', 'Pacific/Kiritimati', 'Pacific/Pago_Pago', 'UTC']) {
+				const zone = TimeZone.of(id)
+				const midnight = zone.midnightOf(jun2)
+				assert.ok(zone.dayOf(midnight).equals(jun2), id)
+				assert.equal(TimeZone.UTC.midnightOf(zone.dayOf(midnight)).toISOString(), '2026-06-02T00:00:00.000Z', id)
+			}
+		})
+
+		it('reads an instant as the day it falls on there', () => {
+			assert.equal(TimeZone.of('Europe/Berlin').dayOf(new Date('2026-07-11T22:30:00Z')).toString(), '2026-07-12')
+			assert.equal(TimeZone.UTC.dayOf(new Date('2026-07-11T22:30:00Z')).toString(), '2026-07-11')
+		})
+
+		it('begins a day whose midnight a DST jump skips at its first wall-clock time', () => {
+			// Santiago springs forward at midnight: Sep 6 2026 begins at 01:00 local.
+			const santiago = TimeZone.of('America/Santiago')
+			assert.equal(santiago.dayOf(santiago.midnightOf(Temporal.PlainDate.from('2026-09-06'))).toString(), '2026-09-06')
+		})
+	})
 })

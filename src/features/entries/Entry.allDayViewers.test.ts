@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { Entry } from './Entry.js'
 import { EntryType } from './EntryType.js'
 import { EntryTimeZone } from './EntryTimeZone.js'
-import { midnightOf } from '../time/calendarDate.js'
+import { TimeZone } from '../time/TimeZone.js'
 import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
 
 /*
@@ -18,7 +18,7 @@ type DateField = keyof Dates
 /** Runs `action` where days are read in `zone`, as a browser there does; none is the server, which keeps them as stored. */
 const readingDaysIn = <T>(zone: string | undefined, action: () => T): T => {
 	const previous = Entry.dayZone
-	Entry.dayZone = () => zone
+	Entry.dayZone = () => TimeZone.parse(zone)
 	try {
 		return action()
 	} finally {
@@ -45,7 +45,7 @@ const viewer = (zone: string) => ({
 })
 
 /** The midnight that begins `day` in `zone`. */
-const midnight = (day: string, zone: string) => midnightOf(Temporal.PlainDate.from(day), zone)
+const midnight = (day: string, zone: string) => TimeZone.of(zone).midnightOf(Temporal.PlainDate.from(day))
 const iso = (value: unknown) => value === undefined || value === null ? value : new Date((value as Date).valueOf()).toISOString()
 const datesOf = (entry: Partial<Entry>) => Object.fromEntries((['start', 'end', 'due', 'recurrenceId', 'seriesStart'] as const)
 	.filter(field => entry[field]).map(field => [field, iso(entry[field])]))

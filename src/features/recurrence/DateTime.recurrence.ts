@@ -1,5 +1,5 @@
 import { DateTime } from '@3mo/date-time'
-import { calendarDateOf } from '../time/calendarDate.js'
+import { TimeZone } from '../time/TimeZone.js'
 import { RecurrenceWeekday } from './RecurrenceWeekday.js'
 
 /*
@@ -21,7 +21,7 @@ declare module '@3mo/date-time' {
 
 Object.defineProperties(DateTime.prototype, {
 	recurrenceDate: {
-		get(this: DateTime) { return calendarDateOf(this, this.timeZone) },
+		get(this: DateTime) { return TimeZone.of(this.timeZone).dayOf(this) },
 	},
 	formatAsAnniversary: {
 		value(this: DateTime) { return this.format({ month: 'short', day: 'numeric', calendar: 'gregory' }) },

@@ -6,7 +6,7 @@ import { type Integration } from '../../../integrations/Integration.js'
 import { type Source } from '../../sources/Source.js'
 import { Entry } from '../../entries/Entry.js'
 import { CalDAV } from '../../../integrations/caldav/CalDAV.js'
-import { calendarDateOf, midnightOf } from '../../time/calendarDate.js'
+import { TimeZone } from '../../time/TimeZone.js'
 
 /*
 	A series is one master row, expanded on read into entries that are never stored. An edit of 'this' occurrence
@@ -245,7 +245,8 @@ export async function expandedOccurrences(em: EntityManager, sourceIds: Readonly
 
 /** A start-less series' occurrence the viewer has to do next: the first whose due day has not gone by in `zone`. */
 export function currentOccurrence(master: Entry, zone: string, now = new Date()): { start: Date, end: Date } | undefined {
-	const today = midnightOf(calendarDateOf(now, zone), master.allDay ? 'UTC' : zone)
+	const here = TimeZone.of(zone)
+	const today = (master.allDay ? TimeZone.UTC : here).midnightOf(here.dayOf(now))
 	return Occurrences.of(master)?.next(today, 1)[0]
 }
 

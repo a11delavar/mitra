@@ -38,6 +38,15 @@ export class TimeZone {
 		return device.id
 	}
 
+	static get UTC() {
+		return TimeZone.of('UTC')
+	}
+
+	/** The zone this device runs in: the browser's, or the server process's. Intl names one it cannot tell `Etc/Unknown`. */
+	static get device() {
+		return TimeZone.parse(TimeZone.deviceId) ?? TimeZone.UTC
+	}
+
 	static parse(value: unknown): TimeZone | undefined {
 		try {
 			return typeof value === 'string' && value ? TimeZone.of(value) : undefined
@@ -50,6 +59,16 @@ export class TimeZone {
 
 	equals(other: TimeZone) {
 		return this === other
+	}
+
+	/** The day `instant` falls on here. Never spread the `PlainDate`: its fields are prototype getters. */
+	dayOf(instant: Date): Temporal.PlainDate {
+		return Temporal.Instant.fromEpochMilliseconds(instant.getTime()).toZonedDateTimeISO(this.id).toPlainDate()
+	}
+
+	/** The instant `day` begins here: its midnight, or its first wall-clock time where a DST jump skips midnight. */
+	midnightOf(day: Temporal.PlainDate): Date {
+		return new Date(day.toZonedDateTime(this.id).epochMilliseconds)
 	}
 
 	/** Minutes ahead of UTC at `at`. */

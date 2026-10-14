@@ -1,5 +1,5 @@
 import { DateTime } from '@3mo/date-time'
-import { calendarDateOf } from '../../time/calendarDate.js'
+import { TimeZone } from '../../time/TimeZone.js'
 
 declare module '@3mo/date-time' {
 	interface DateTime {
@@ -13,6 +13,6 @@ declare module '@3mo/date-time' {
 
 Object.defineProperties(DateTime.prototype, {
 	isoDate: {
-		get(this: DateTime) { return calendarDateOf(this, this.timeZone).toString() },
+		get(this: DateTime) { return TimeZone.of(this.timeZone).dayOf(this).toString() },
 	},
 })

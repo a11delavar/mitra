@@ -2,7 +2,7 @@ import { Localizer } from '@3mo/localization'
 import { DateTime } from '@3mo/date-time'
 import { type Converter } from '@a11d/converter'
 import { Type } from '../../infrastructure/model/orm.js'
-import { calendarDateOf } from '../time/calendarDate.js'
+import { TimeZone } from '../time/TimeZone.js'
 
 /**
  * The last day a series runs (RFC 5545 UNTIL): a calendar day, stored as UTC midnight of it, whether it arrives as a
@@ -10,12 +10,12 @@ import { calendarDateOf } from '../time/calendarDate.js'
  */
 export class RecurrenceEnd {
 	static of(until: Date | DateTime): RecurrenceEnd {
-		return new RecurrenceEnd(calendarDateOf(until as Date, 'UTC'))
+		return new RecurrenceEnd(TimeZone.UTC.dayOf(until as Date))
 	}
 
 	/** The day before an instant: it ends a series just before that occurrence, its end of day keeping the one before. */
 	static before(instant: Date): RecurrenceEnd {
-		return new RecurrenceEnd(calendarDateOf(instant, 'UTC').subtract({ days: 1 }))
+		return new RecurrenceEnd(TimeZone.UTC.dayOf(instant).subtract({ days: 1 }))
 	}
 
 	/** The day an RRULE's UNTIL (`20261001`, `20261001T235959Z`), an ISO day or a stored or sent instant names. */

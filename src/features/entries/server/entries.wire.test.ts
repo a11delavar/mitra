@@ -17,7 +17,7 @@ import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
 import { User } from '../../identity/User.js'
 import { Source } from '../../sources/Source.js'
 import { MitraCalendar } from '../../../integrations/mitra/MitraCalendar.js'
-import { midnightOf } from '../../time/calendarDate.js'
+import { TimeZone } from '../../time/TimeZone.js'
 
 /*
 	All-day and timed entries between viewers in different zones, through the app's own API client, the real entry routes
@@ -33,11 +33,11 @@ const zones = { berlin: 'Europe/Berlin', newYork: 'America/New_York', tehran: 'A
 /** Makes this process a viewer in `zone`, reading days there as a browser does. */
 const viewIn = (zone: string) => {
 	process.env.TZ = zone
-	Entry.dayZone = () => zone
+	Entry.dayZone = () => TimeZone.of(zone)
 }
 
 /** The midnight that begins `day` where this process is. */
-const midnight = (day: string) => new DateTime(midnightOf(Temporal.PlainDate.from(day), process.env.TZ!).getTime())
+const midnight = (day: string) => new DateTime(TimeZone.of(process.env.TZ!).midnightOf(Temporal.PlainDate.from(day)).getTime())
 const utcMidnight = (day: string) => Date.UTC(...day.split('-').map(Number).map((part, index) => index === 1 ? part - 1 : part) as [number, number, number])
 const iso = (value: { valueOf(): number } | null | undefined) => value === null || value === undefined ? value : new Date(value.valueOf()).toISOString()
 
