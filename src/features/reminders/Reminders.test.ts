@@ -1,8 +1,9 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { EntryTimeZone } from '../entries/EntryTimeZone.js'
 import { type DateTime } from '@3mo/date-time'
 import { EntryType } from '../entries/EntryType.js'
-import { Entry, FLOATING_TIME_ZONE } from '../entries/Entry.js'
+import { Entry } from '../entries/Entry.js'
 import { TaskStatus } from '../entries/TaskStatus.js'
 import { DueReminder } from './Reminders.js'
 
@@ -94,7 +95,7 @@ describe('Reminders', () => {
 		})
 
 		describe('floating entries', () => {
-			const floating = () => entry({ start: D('2026-07-06T09:31:00Z'), reminders: [30], timeZone: FLOATING_TIME_ZONE })
+			const floating = () => entry({ start: D('2026-07-06T09:31:00Z'), reminders: [30], timeZone: EntryTimeZone.floating })
 
 			it('resolves the wall clock in the observer zone', () => {
 				const due = DueReminder.within([floating()], new Date('2026-07-06T07:00:00Z'), new Date('2026-07-06T07:01:00Z'), () => 'Europe/Berlin')
@@ -111,7 +112,7 @@ describe('Reminders', () => {
 			})
 
 			it('leaves an all-day span alone, since those are floating DAYS, not wall clocks', () => {
-				const allDay = entry({ start: D('2026-07-06T09:31:00Z'), reminders: [30], timeZone: FLOATING_TIME_ZONE, allDay: true })
+				const allDay = entry({ start: D('2026-07-06T09:31:00Z'), reminders: [30], timeZone: EntryTimeZone.floating, allDay: true })
 				assert.equal(DueReminder.within([allDay], watermark, now, () => 'Europe/Berlin').length, 1)
 			})
 		})

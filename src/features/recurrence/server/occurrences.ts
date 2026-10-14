@@ -4,7 +4,7 @@ import ICAL from 'ical.js'
 import { type RecurrenceScope } from '../Recurrence.js'
 import { type Integration } from '../../../integrations/Integration.js'
 import { type Source } from '../../sources/Source.js'
-import { Entry, FLOATING_TIME_ZONE } from '../../entries/Entry.js'
+import { Entry } from '../../entries/Entry.js'
 import { CalDAV } from '../../../integrations/caldav/CalDAV.js'
 import { calendarDateOf, midnightOf } from '../../time/calendarDate.js'
 
@@ -44,7 +44,7 @@ function masterComponentOf(component: ICAL.Component): ICAL.Component | undefine
  * DTSTART recurs at fixed instants, RFC 5545 §3.8.5.3) or a floating one iterates in UTC too.
  */
 function dayMathZoneOf(master: Pick<Entry, 'allDay' | 'timeZone'>): string {
-	return master.allDay || !master.timeZone || master.timeZone === FLOATING_TIME_ZONE ? 'UTC' : master.timeZone
+	return master.allDay || !master.timeZone ? 'UTC' : master.timeZone.clock
 }
 
 /** One series' occurrences, from its raw .ics where the integration keeps one, else its columns. */

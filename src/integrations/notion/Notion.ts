@@ -6,7 +6,8 @@ import { EntryRelations } from '../../features/relations/EntryRelations.js'
 import { Integration, integration } from '../Integration.js'
 import { withheld } from '../../infrastructure/model/withheld.js'
 import { Source } from '../../features/sources/Source.js'
-import { Entry, FLOATING_TIME_ZONE } from '../../features/entries/Entry.js'
+import { Entry } from '../../features/entries/Entry.js'
+import { EntryTimeZone } from '../../features/entries/EntryTimeZone.js'
 import { TaskStatus } from '../../features/entries/TaskStatus.js'
 import { EntryType } from '../../features/entries/EntryType.js'
 import { calendarDateOf, midnightOf } from '../../features/time/calendarDate.js'
@@ -692,7 +693,7 @@ export class Notion extends Integration<NotionCredentials> {
 			start: Notion.instantFrom(date.start, timeZone) as never,
 			end: date.end ? Notion.instantFrom(date.end, timeZone) as never : undefined,
 			allDay: false,
-			timeZone,
+			timeZone: EntryTimeZone.parse(timeZone) ?? null,
 		}
 	}
 
@@ -715,7 +716,7 @@ export class Notion extends Integration<NotionCredentials> {
 			const end = lastDay && lastDay.toString() > start ? lastDay.toString() : null
 			return { start, end, time_zone: null }
 		}
-		const zone = entry.timeZone && entry.timeZone !== FLOATING_TIME_ZONE ? entry.timeZone : null
+		const zone = entry.timeZone && !entry.timeZone.floating ? entry.timeZone.id : null
 		return {
 			start: zone ? Notion.wallClock(entry.start, zone) : entry.start.toISOString(),
 			end: entry.end ? (zone ? Notion.wallClock(entry.end, zone) : entry.end.toISOString()) : null,

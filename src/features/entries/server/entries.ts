@@ -10,7 +10,8 @@ import { Integration } from '../../../integrations/Integration.js'
 import { EntryType } from '../EntryType.js'
 import { EntryRelations } from '../../relations/EntryRelations.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
-import { Entry, FLOATING_TIME_ZONE } from '../Entry.js'
+import { Entry } from '../Entry.js'
+import { type EntryTimeZone } from '../EntryTimeZone.js'
 import { normalizeAllDay, projectAllDay } from '../../time/calendarDate.js'
 import { editOccurrence, deleteOccurrence, expandedOccurrences, seriesStarts, nearestOccurrence, occurrenceAt } from '../../recurrence/server/occurrences.js'
 import { TaskStatus } from '../TaskStatus.js'
@@ -35,8 +36,8 @@ const incomingPercent = (value: unknown): number | null =>
 const incomingEstimate = (value: unknown): number | null =>
 	typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.round(value) : null
 
-const dayZone = (req: Request, timeZone: string | null | undefined) =>
-	viewerZone(req) ?? (timeZone && timeZone !== FLOATING_TIME_ZONE ? timeZone : undefined)
+const dayZone = (req: Request, timeZone: EntryTimeZone | null | undefined) =>
+	viewerZone(req) ?? (timeZone && !timeZone.floating ? timeZone.clock : undefined)
 
 /** Projects canonical all-day dates into viewer timezone before serialization. */
 function projectedForViewer<T extends Entry>(entry: T, zone: string | undefined): T {

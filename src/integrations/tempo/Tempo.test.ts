@@ -118,7 +118,7 @@ describe('Tempo entry mapping', () => {
 		assert.equal(entry.heading, 'ACME-1234 Fix the parser')
 		assert.equal(entry.description, 'Refactoring')
 		assert.equal(entry.allDay, false)
-		assert.equal(entry.timeZone, BERLIN)
+		assert.equal(entry.timeZone?.id, BERLIN)
 		assert.equal((entry.start as unknown as Date).toISOString(), '2026-08-03T07:34:00.000Z')
 		assert.equal((entry.end as unknown as Date).toISOString(), '2026-08-03T08:34:00.000Z')
 		assert.equal(entry.data?.url, 'https://acme.atlassian.net/browse/ACME-1234')

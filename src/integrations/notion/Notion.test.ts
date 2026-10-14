@@ -1,7 +1,8 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { EntryTimeZone } from '../../features/entries/EntryTimeZone.js'
 import { Notion } from './Notion.js'
-import { Entry, FLOATING_TIME_ZONE } from '../../features/entries/Entry.js'
+import { Entry } from '../../features/entries/Entry.js'
 import { TaskStatus } from '../../features/entries/TaskStatus.js'
 import { EntryType } from '../../features/entries/EntryType.js'
 import { Source } from '../../features/sources/Source.js'
@@ -415,7 +416,7 @@ describe('Notion date decoding (spanFrom)', () => {
 		const span = Notion.spanFrom({ start: '2026-07-14T09:00:00', end: '2026-07-14T10:00:00', time_zone: 'Europe/Berlin' })
 		assert.equal(span.start!.toISOString(), '2026-07-14T07:00:00.000Z')
 		assert.equal(span.end!.toISOString(), '2026-07-14T08:00:00.000Z')
-		assert.equal(span.timeZone, 'Europe/Berlin')
+		assert.equal(span.timeZone?.id, 'Europe/Berlin')
 	})
 
 	it('reads an unset date as an undated task', () => {
@@ -441,12 +442,12 @@ describe('Notion date encoding (dateFrom)', () => {
 	})
 
 	it('writes a zoned timed span as that zone\'s wall clock under time_zone', () => {
-		const date = Notion.dateFrom({ start: D('2026-07-14T07:00:00Z'), end: D('2026-07-14T08:00:00Z'), allDay: false, timeZone: 'Europe/Berlin' })
+		const date = Notion.dateFrom({ start: D('2026-07-14T07:00:00Z'), end: D('2026-07-14T08:00:00Z'), allDay: false, timeZone: EntryTimeZone.parse('Europe/Berlin') })
 		assert.deepEqual(date, { start: '2026-07-14T09:00:00', end: '2026-07-14T10:00:00', time_zone: 'Europe/Berlin' })
 	})
 
 	it('writes a FLOATING entry\'s as-if-UTC instants in the Z form, never the reserved marker', () => {
-		const date = Notion.dateFrom({ start: D('2026-07-14T09:00:00Z'), end: undefined, allDay: false, timeZone: FLOATING_TIME_ZONE })
+		const date = Notion.dateFrom({ start: D('2026-07-14T09:00:00Z'), end: undefined, allDay: false, timeZone: EntryTimeZone.floating })
 		assert.deepEqual(date, { start: '2026-07-14T09:00:00.000Z', end: null, time_zone: null })
 	})
 
@@ -456,13 +457,13 @@ describe('Notion date encoding (dateFrom)', () => {
 
 	it('round-trips through spanFrom in both the all-day and the zoned form', () => {
 		const allDay = { start: D('2026-06-02T00:00:00Z'), end: D('2026-06-05T00:00:00Z'), allDay: true, timeZone: null }
-		const zoned = { start: D('2026-07-14T07:00:00Z'), end: D('2026-07-14T08:00:00Z'), allDay: false, timeZone: 'Europe/Berlin' }
+		const zoned = { start: D('2026-07-14T07:00:00Z'), end: D('2026-07-14T08:00:00Z'), allDay: false, timeZone: EntryTimeZone.parse('Europe/Berlin') }
 		for (const span of [allDay, zoned]) {
 			const back = Notion.spanFrom(Notion.dateFrom(span))
 			assert.equal(back.start!.toISOString(), (span.start as unknown as Date).toISOString())
 			assert.equal(back.end!.toISOString(), (span.end as unknown as Date).toISOString())
 			assert.equal(back.allDay, span.allDay)
-			assert.equal(back.timeZone, span.timeZone)
+			assert.equal(back.timeZone?.id, span.timeZone?.id)
 		}
 	})
 })

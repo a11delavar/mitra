@@ -1,11 +1,12 @@
 import { describe, it, before, after, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
+import { EntryTimeZone } from '../../../features/entries/EntryTimeZone.js'
 import { MikroORM, UnderscoreNamingStrategy, type EntityManager } from '@mikro-orm/sqlite'
 import { User } from '../../../features/identity/User.js'
 import { Identity } from '../../../features/identity/Identity.js'
 import { Source } from '../../../features/sources/Source.js'
 import { Recurrence } from '../../../features/recurrence/Recurrence.js'
-import { Entry, FLOATING_TIME_ZONE } from '../../../features/entries/Entry.js'
+import { Entry } from '../../../features/entries/Entry.js'
 import { TaskStatus } from '../../../features/entries/TaskStatus.js'
 import { EntryRelation } from '../../../features/relations/EntryRelation.js'
 import { EntryType } from '../../../features/entries/EntryType.js'
@@ -298,7 +299,7 @@ describe('Calendar subscription sync', () => {
 		const zoned = entries.find(entry => entry.uri === 'zoned@example.com')!
 		assert.equal(zoned.heading, 'Zoned standup')
 		assert.equal(zoned.location, 'Room 1')
-		assert.equal(zoned.timeZone, BERLIN)
+		assert.equal(zoned.timeZone?.id, BERLIN)
 		assert.equal(zoned.start!.toISOString(), '2026-08-10T07:00:00.000Z')
 		assert.equal(zoned.type, EntryType.Event)
 
@@ -307,7 +308,7 @@ describe('Calendar subscription sync', () => {
 		assert.equal(allDay.start!.getTime(), Date.UTC(2026, 7, 14))
 
 		const floating = entries.find(entry => entry.uri === 'floating@example.com')!
-		assert.equal(floating.timeZone, FLOATING_TIME_ZONE)
+		assert.equal(floating.timeZone, EntryTimeZone.floating)
 
 		const task = entries.find(entry => entry.uri === 'task@example.com')!
 		assert.equal(task.type, EntryType.Task)

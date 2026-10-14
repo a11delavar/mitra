@@ -7,6 +7,7 @@ import { EntryType, type EntryTypeValue } from './EntryType.js'
 import { TaskStatus } from './TaskStatus.js'
 import { Transparency } from './Transparency.js'
 import { Visibility } from './Visibility.js'
+import { EntryTimeZone } from './EntryTimeZone.js'
 import { Source } from '../sources/Source.js'
 import { Recurrence } from '../recurrence/Recurrence.js'
 import { Participants, type ParticipantRole, type Participant } from '../participants/Participant.js'
@@ -42,9 +43,6 @@ export interface EntryData {
 	url?: string
 	localWriteAt?: number
 }
-
-/** Reserved `Entry.timeZone` value for RFC 5545 floating times. */
-export const FLOATING_TIME_ZONE = 'floating'
 
 export const MINIMUM_DURATION_MINUTES = 15
 
@@ -139,16 +137,17 @@ export class Entry {
 	}
 
 	@property({ type: 'boolean' }) allDay = false
-	@property({ type: 'string', nullable: true }) timeZone?: string | null
+	@converter(EntryTimeZone.converter)
+	@property({ type: EntryTimeZone.Mapper, nullable: true }) timeZone?: EntryTimeZone | null
 
 	/** Times on whatever clock the reader's is (RFC 5545 floating), stored as if in UTC: an alarm at 7:00 anywhere. */
 	get floating() {
-		return !this.allDay && this.timeZone === FLOATING_TIME_ZONE
+		return !this.allDay && !!this.timeZone?.floating
 	}
 
 	/** The zone its times are written in: none for an all-day entry, whose days are everyone's, nor for a floating one, as `floating` names no zone. */
 	get zone(): TimeZone | undefined {
-		return this.allDay ? undefined : TimeZone.parse(this.timeZone)
+		return this.allDay ? undefined : this.timeZone?.zone
 	}
 
 	@property({ type: 'json', nullable: true }) data?: EntryData
@@ -287,15 +286,16 @@ export class Entry {
 	}
 
 	/**
-	 * A request body's status, transparency and visibility as value objects. An Entry arrives with them, a plain body (a
-	 * series or a scoped edit) with their codes; an unknown one reads as none.
+	 * A request body's status, transparency, visibility and time zone as value objects. An Entry arrives with them, a plain
+	 * body (a series or a scoped edit) with their codes and ids; an unknown one reads as none.
 	 */
-	static reviveValues<T extends Partial<Pick<Entry, 'status' | 'transparency' | 'visibility'>>>(body: T): T {
+	static reviveValues<T extends Partial<Pick<Entry, 'status' | 'transparency' | 'visibility' | 'timeZone'>>>(body: T): T {
 		const parse = <V>(value: unknown, of: (value: unknown) => V | undefined) => value === undefined || value === null ? value : of(value) ?? null
 		return Object.assign(body, {
 			...'status' in body ? { status: parse(body.status, TaskStatus.parse) ?? undefined } : {},
 			...'transparency' in body ? { transparency: parse(body.transparency, Transparency.parse) } : {},
 			...'visibility' in body ? { visibility: parse(body.visibility, Visibility.parse) } : {},
+			...'timeZone' in body ? { timeZone: parse(body.timeZone, EntryTimeZone.parse) } : {},
 		})
 	}
 
@@ -559,16 +559,15 @@ export class Entry {
 	}
 
 	/** Re-zones entry while keeping wall-clock time. */
-	setTimeZone(zone: string) {
+	setTimeZone(zone: EntryTimeZone) {
 		if (!this.allDay) {
-			const from = this.floating ? 'UTC'
-				: this.timeZone ?? TimeZone.deviceId
+			const from = this.timeZone?.clock ?? TimeZone.deviceId
 			// A date the entry lacks arrives as null from the wire, not undefined.
 			const rezoned = (value: DateTime | undefined) => !value ? value : new DateTime(
 				Temporal.Instant.fromEpochMilliseconds(value.valueOf())
 					.toZonedDateTimeISO(from)
 					.toPlainDateTime()
-					.toZonedDateTime(zone, { disambiguation: 'compatible' })
+					.toZonedDateTime(zone.clock, { disambiguation: 'compatible' })
 					.epochMilliseconds,
 			)
 			this.start = rezoned(this.start)

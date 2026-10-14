@@ -1,3 +1,4 @@
+import { EntryTimeZone } from '../EntryTimeZone.js'
 import { Component, component, html, css, property, state, event, query, ifDefined } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
 import { type Entry } from '../Entry.js'
@@ -209,8 +210,9 @@ export class EntryDetailsWhen extends Component {
 	}
 
 	private readonly handleZonePick = (e: CustomEvent<string>) => {
-		this.entry.setTimeZone(e.detail)
-		this.showEventZone = !TimeZone.of(e.detail).equals(TimeZones.here)
+		const zone = TimeZone.of(e.detail)
+		this.entry.setTimeZone(EntryTimeZone.of(zone))
+		this.showEventZone = !zone.equals(TimeZones.here)
 		this.commit()
 	}
 

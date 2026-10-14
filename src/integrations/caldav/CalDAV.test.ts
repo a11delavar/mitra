@@ -1,10 +1,11 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { EntryTimeZone } from '../../features/entries/EntryTimeZone.js'
 import ICAL from 'ical.js'
 import { CalDAV } from './CalDAV.js'
 import { CalDAVSyncEngine } from './server/CalDAVSyncEngine.js'
 import '../server/registerEngines.js'
-import { Entry, FLOATING_TIME_ZONE } from '../../features/entries/Entry.js'
+import { Entry } from '../../features/entries/Entry.js'
 import { TaskStatus } from '../../features/entries/TaskStatus.js'
 import { Transparency } from '../../features/entries/Transparency.js'
 import { Visibility } from '../../features/entries/Visibility.js'
@@ -458,10 +459,10 @@ describe('CalDAV all-day serialization', () => {
 			const existing = new Entry({
 				id: 'e1', sourceId: 's', type: EntryType.Event, heading: 'Trip', uri: 'https://example.com/cal/e1.ics',
 				start: D('2026-06-02T09:00:00Z'), end: D('2026-06-02T10:00:00Z'), allDay: false,
-				timeZone: 'Europe/Berlin', data: { raw },
+				timeZone: EntryTimeZone.parse('Europe/Berlin'), data: { raw },
 			})
 			const incoming = new Entry({
-				sourceId: 's', type: EntryType.Event, heading: 'Trip', allDay: true, timeZone: 'Europe/Berlin',
+				sourceId: 's', type: EntryType.Event, heading: 'Trip', allDay: true, timeZone: EntryTimeZone.parse('Europe/Berlin'),
 				start: D('2026-06-02T00:00:00Z'), end: D('2026-06-03T00:00:00Z'),
 				exdates: [new Date('2026-06-08T00:00:00Z').getTime()],
 			})
@@ -502,7 +503,7 @@ describe('CalDAV all-day serialization', () => {
 		it('excludeOccurrence writes the occurrence\'s canonical DATE', async () => {
 			const master = new Entry({
 				id: 'm', sourceId: 's', type: EntryType.Event, heading: 'Trip', uri: 'https://example.com/cal/m.ics',
-				allDay: true, timeZone: 'Europe/Berlin', data: { raw },
+				allDay: true, timeZone: EntryTimeZone.parse('Europe/Berlin'), data: { raw },
 			})
 			await stubbed().excludeOccurrence(emStub() as never, master, new Date('2026-06-08T00:00:00Z'))
 			assert.match(master.data!.raw!, /EXDATE;VALUE=DATE:20260608/)
@@ -615,7 +616,7 @@ describe('CalDAV all-day serialization', () => {
 		const masterRow = (raw: string, recurrence?: Recurrence) => new Entry({
 			id: 'm', sourceId: 's', type: EntryType.Event, heading: 'Gym', uri: 'https://example.com/cal/gym.ics',
 			start: D('2026-07-04T07:30:00Z'), end: D('2026-07-04T08:30:00Z'), allDay: false,
-			timeZone: 'Europe/Berlin', recurrence, data: { raw },
+			timeZone: EntryTimeZone.parse('Europe/Berlin'), recurrence, data: { raw },
 		})
 
 		it('a time shift writes the new WALL CLOCK in the authored zone, never the UTC form', async () => {
@@ -914,12 +915,12 @@ describe('CalDAV zone authoring (VTIMEZONE generation)', () => {
 
 	const row = (raw: string, timeZone: string | null) => new Entry({
 		id: 'e1', sourceId: 's', type: EntryType.Event, heading: 'Test', uri: 'https://example.com/cal/e1.ics',
-		start: D('2026-07-04T07:00:00Z'), end: D('2026-07-04T08:00:00Z'), allDay: false, timeZone, data: { raw },
+		start: D('2026-07-04T07:00:00Z'), end: D('2026-07-04T08:00:00Z'), allDay: false, timeZone: EntryTimeZone.parse(timeZone) ?? null, data: { raw },
 	})
 
 	it('picking a zone the resource lacks writes TZID local time AND embeds the generated VTIMEZONE', async () => {
 		const existing = row(utcRaw, null)
-		const incoming = new Entry({ ...existing, timeZone: 'Europe/Berlin' } as Partial<Entry>)
+		const incoming = new Entry({ ...existing, timeZone: EntryTimeZone.parse('Europe/Berlin') } as Partial<Entry>)
 		await stubbed().updateEntry(em, existing, incoming)
 		assert.match(existing.data!.raw!, /DTSTART;TZID=Europe\/Berlin:20260704T090000/)
 		assert.match(existing.data!.raw!, /DTEND;TZID=Europe\/Berlin:20260704T100000/)
@@ -929,9 +930,9 @@ describe('CalDAV zone authoring (VTIMEZONE generation)', () => {
 
 	it('re-zoning drops the previous, now-unreferenced VTIMEZONE', async () => {
 		const berlin = row(utcRaw, null)
-		await stubbed().updateEntry(em, berlin, new Entry({ ...berlin, timeZone: 'Europe/Berlin' } as Partial<Entry>))
+		await stubbed().updateEntry(em, berlin, new Entry({ ...berlin, timeZone: EntryTimeZone.parse('Europe/Berlin') } as Partial<Entry>))
 		const existing = row(berlin.data!.raw!, 'Europe/Berlin')
-		const incoming = new Entry({ ...existing, timeZone: 'Asia/Tehran' } as Partial<Entry>)
+		const incoming = new Entry({ ...existing, timeZone: EntryTimeZone.parse('Asia/Tehran') } as Partial<Entry>)
 		await stubbed().updateEntry(em, existing, incoming)
 		assert.match(existing.data!.raw!, /BEGIN:VTIMEZONE\r\nTZID:Asia\/Tehran/)
 		assert.doesNotMatch(existing.data!.raw!, /TZID:Europe\/Berlin/)
@@ -939,7 +940,7 @@ describe('CalDAV zone authoring (VTIMEZONE generation)', () => {
 
 	it('authoring \'UTC\' explicitly writes the plain Z form, since RFC 5545 forbids a TZID naming UTC', async () => {
 		const existing = row(utcRaw, null)
-		await stubbed().updateEntry(em, existing, new Entry({ ...existing, timeZone: 'UTC' } as Partial<Entry>))
+		await stubbed().updateEntry(em, existing, new Entry({ ...existing, timeZone: EntryTimeZone.parse('UTC') } as Partial<Entry>))
 		assert.match(existing.data!.raw!, /DTSTART:20260704T070000Z/)
 		assert.doesNotMatch(existing.data!.raw!, /TZID/)
 		assert.doesNotMatch(existing.data!.raw!, /VTIMEZONE/)
@@ -947,7 +948,7 @@ describe('CalDAV zone authoring (VTIMEZONE generation)', () => {
 
 	it('clearing a zone (back to UTC) restores the plain Z form and drops the VTIMEZONE', async () => {
 		const berlin = row(utcRaw, null)
-		await stubbed().updateEntry(em, berlin, new Entry({ ...berlin, timeZone: 'Europe/Berlin' } as Partial<Entry>))
+		await stubbed().updateEntry(em, berlin, new Entry({ ...berlin, timeZone: EntryTimeZone.parse('Europe/Berlin') } as Partial<Entry>))
 		const existing = row(berlin.data!.raw!, 'Europe/Berlin')
 		await stubbed().updateEntry(em, existing, new Entry({ ...existing, timeZone: null } as Partial<Entry>))
 		assert.match(existing.data!.raw!, /DTSTART:20260704T070000Z/)
@@ -992,7 +993,7 @@ describe('CalDAV floating times', () => {
 			id: 'e1', sourceId: 's', type: EntryType.Event, heading: 'Pill', uri: 'https://example.com/cal/e1.ics',
 			start: D('2026-07-04T09:00:00Z'), end: D('2026-07-04T09:15:00Z'), allDay: false, timeZone: null, data: { raw: utcRaw },
 		})
-		const incoming = new Entry({ ...existing, timeZone: FLOATING_TIME_ZONE } as Partial<Entry>)
+		const incoming = new Entry({ ...existing, timeZone: EntryTimeZone.floating } as Partial<Entry>)
 		await stubbed().updateEntry({ find: () => Promise.resolve([]) } as never, existing, incoming)
 		assert.match(existing.data!.raw!, /DTSTART:20260704T090000\r\n/)
 		assert.doesNotMatch(existing.data!.raw!, /DTSTART[^\r\n]*TZID/)
@@ -1032,7 +1033,7 @@ describe('CalDAV series created in mitra survive DST (the reported bug)', () => 
 
 	it('a weekly 10:00 Berlin series keeps its zone across create → sync, so it can no longer drift to 09:00', async () => {
 		const entry = new Entry({
-			sourceId: 's', type: EntryType.Event, heading: 'Test via Mitra', timeZone: 'Europe/Berlin',
+			sourceId: 's', type: EntryType.Event, heading: 'Test via Mitra', timeZone: EntryTimeZone.parse('Europe/Berlin'),
 			start: D('2026-10-11T08:00:00Z'), end: D('2026-10-11T08:30:00Z'),
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }),
 		})
@@ -1043,7 +1044,7 @@ describe('CalDAV series created in mitra survive DST (the reported bug)', () => 
 		assert.doesNotMatch(entry.data!.raw!, /DTSTART[^:]*:\d{8}T\d{6}Z/)
 
 		const [master] = await syncBack(entry.data!.raw!, entry.uri!)
-		assert.equal(master!.timeZone, 'Europe/Berlin')
+		assert.equal(master!.timeZone?.id, 'Europe/Berlin')
 		assert.equal(master!.start?.valueOf(), new Date('2026-10-11T08:00:00Z').getTime())
 		assert.equal(master!.recurrence?.freq, RecurrenceFrequency.Weekly)
 	})
@@ -1083,7 +1084,7 @@ describe('CalDAV zoned reads resolve through Temporal, not the resource', () => 
 		const [entry] = await sync(raw)
 		assert.equal(entry!.start?.valueOf(), new Date('2026-10-11T08:00:00Z').getTime())
 		assert.equal(entry!.end?.valueOf(), new Date('2026-10-11T08:30:00Z').getTime())
-		assert.equal(entry!.timeZone, 'Europe/Berlin')
+		assert.equal(entry!.timeZone?.id, 'Europe/Berlin')
 	})
 
 	it('a non-IANA TZID (a Microsoft zone name) keeps ical.js\' VTIMEZONE resolution and is NOT stored as the zone', async () => {
@@ -1102,10 +1103,10 @@ describe('CalDAV zoned reads resolve through Temporal, not the resource', () => 
 		const raw = vevent(['DTSTART:20261011T080000Z', 'RRULE:FREQ=WEEKLY'])
 		const row = new Entry({
 			id: 'r1', sourceId: 's', type: EntryType.Event, heading: 'Zoned', uri,
-			start: D('2026-10-11T08:00:00Z'), timeZone: 'Europe/Berlin', data: { raw, etag: 'e1' },
+			start: D('2026-10-11T08:00:00Z'), timeZone: EntryTimeZone.parse('Europe/Berlin'), data: { raw, etag: 'e1' },
 		})
 		const persisted = await sync(raw, [row], 'e1', 't1')
 		assert.equal(persisted.length, 0)
-		assert.equal(row.timeZone, 'Europe/Berlin')
+		assert.equal(row.timeZone?.id, 'Europe/Berlin')
 	})
 })

@@ -1,4 +1,4 @@
-import { FLOATING_TIME_ZONE, type Entry } from '../entries/Entry.js'
+import { type Entry } from '../entries/Entry.js'
 import { ReminderNotification } from './ReminderNotification.js'
 
 /**
@@ -48,7 +48,7 @@ export class DueReminder {
 				start: (entry.start as Date | undefined)?.getTime(),
 				end: ((entry.remindersAnchorToEnd ? entry.due : entry.end) as Date | undefined)?.getTime(),
 				...entry.allDay ? { allDay: true } : undefined,
-				...entry.timeZone === FLOATING_TIME_ZONE ? { floating: true } : undefined,
+				...entry.timeZone?.floating ? { floating: true } : undefined,
 				...entry.remindersAnchorToEnd ? { due: true } : undefined,
 			},
 			location: entry.location || undefined,

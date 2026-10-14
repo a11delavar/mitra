@@ -11,6 +11,7 @@ import { Integration } from '../../integrations/Integration.js'
 import { type EntryType } from '../../features/entries/EntryType.js'
 import { type Entry } from '../../features/entries/Entry.js'
 import { TimeZone } from '../../features/time/TimeZone.js'
+import { EntryTimeZone } from '../../features/entries/EntryTimeZone.js'
 import { type ChangelogSection } from '../../features/about/Changelog.js'
 import { type ReleaseFolder } from '../../features/about/Release.js'
 import { type UserSettings } from '../../features/settings/UserSettings.js'
@@ -183,7 +184,7 @@ export function getPrimarySource(type?: EntryType): Source | undefined {
 
 export function createEvent(entry: Entry) {
 	return Api.post<Entry>(`/entries?tz=${tz()}`, Object.assign(entry.clone(), {
-		timeZone: entry.timeZone ?? TimeZone.deviceId,
+		timeZone: entry.timeZone ?? EntryTimeZone.parse(TimeZone.deviceId) ?? null,
 	}))
 }
 
@@ -371,8 +372,7 @@ export function updateEvent(entry: Entry) {
 			description: entry.description,
 			location: entry.location,
 			color: entry.color,
-			timeZone: entry.timeZone ?? null,
-			...wireFields(entry, ['transparency', 'visibility']),
+			...wireFields(entry, ['timeZone', 'transparency', 'visibility']),
 			reminders: entry.reminders ?? null,
 			participants: entry.participants ?? null,
 			...(entry.recurrence !== undefined ? { recurrence: entry.recurrence } : {}),
@@ -418,9 +418,8 @@ export function editOccurrence(occurrence: Entry, scope: RecurrenceScope) {
 		due: occurrence.due ?? null,
 		estimate: occurrence.estimate ?? null,
 		allDay: occurrence.allDay,
-		timeZone: occurrence.timeZone ?? null,
 		percentComplete: occurrence.percentComplete ?? null,
-		...wireFields(occurrence, ['status', 'transparency', 'visibility']),
+		...wireFields(occurrence, ['timeZone', 'status', 'transparency', 'visibility']),
 		reminders: occurrence.reminders ?? null,
 		participants: occurrence.participants ?? null,
 	})

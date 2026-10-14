@@ -8,7 +8,8 @@ import { model } from '../../infrastructure/model/model.js'
 import { buildVTimezone } from './vtimezone.js'
 import { Integration, integration } from '../Integration.js'
 import { withheld } from '../../infrastructure/model/withheld.js'
-import { Entry, FLOATING_TIME_ZONE } from '../../features/entries/Entry.js'
+import { Entry } from '../../features/entries/Entry.js'
+import { EntryTimeZone } from '../../features/entries/EntryTimeZone.js'
 import { TaskStatus } from '../../features/entries/TaskStatus.js'
 import { Transparency } from '../../features/entries/Transparency.js'
 import { Visibility } from '../../features/entries/Visibility.js'
@@ -301,16 +302,18 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	static writeDate(
 		comp: ICAL.Component, component: ICAL.Component, name: string,
 		date: Date, allDay: boolean,
-		options?: { zone?: string | null, append?: boolean },
+		options?: { zone?: EntryTimeZone | null, append?: boolean },
 	): void {
 		const authored = options !== undefined && 'zone' in options
-		const zone = authored ? options!.zone ?? null : component.getFirstProperty(name)?.getParameter('tzid')?.toString() ?? null
-		const timezone = allDay || !zone || zone === FLOATING_TIME_ZONE || zone === 'UTC'
+		// The resource's own TZID may name no IANA zone (Outlook's `W. Europe Standard Time`), so it stays a string.
+		const zone = authored ? options!.zone?.id ?? null : component.getFirstProperty(name)?.getParameter('tzid')?.toString() ?? null
+		const floating = authored && !!options!.zone?.floating
+		const timezone = allDay || !zone || floating || zone === 'UTC'
 			? undefined
 			: CalDAV.timezoneIn(comp, zone, authored, date.getUTCFullYear())
 		const time = timezone
 			? ICAL.Time.fromJSDate(date, true).convertToZone(timezone)
-			: authored && !allDay && options!.zone === FLOATING_TIME_ZONE
+			: floating && !allDay
 				? CalDAV.floatingTime(date)
 				: CalDAV.toICALTime(date, allDay)
 		const property = options?.append ? component.addPropertyWithValue(name, time) : component.updatePropertyWithValue(name, time)
@@ -370,8 +373,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		// An unscheduled task carries its zone on DUE.
 		const anchor = component.getFirstProperty('dtstart') || entryType.isEvent ? 'dtstart' : 'due'
 		const anchorTzid = tzidOf(anchor)
-		entry.timeZone = CalDAV.resolvableZone(anchorTzid) ? anchorTzid
-			: CalDAV.isFloating(component.getFirstPropertyValue(anchor)) ? FLOATING_TIME_ZONE : null
+		entry.timeZone = CalDAV.resolvableZone(anchorTzid) ? EntryTimeZone.parse(anchorTzid) ?? null
+			: CalDAV.isFloating(component.getFirstPropertyValue(anchor)) ? EntryTimeZone.floating : null
 
 		const recurrence = CalDAV.recurrenceProps(component)
 		entry.uid = recurrence.uid

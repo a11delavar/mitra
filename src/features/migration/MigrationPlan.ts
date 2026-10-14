@@ -1,6 +1,6 @@
 import { model } from '../../infrastructure/model/model.js'
 import { type Source } from '../sources/Source.js'
-import { type Entry, FLOATING_TIME_ZONE } from '../entries/Entry.js'
+import { type Entry } from '../entries/Entry.js'
 import { TaskStatus } from '../entries/TaskStatus.js'
 import { Transparency } from '../entries/Transparency.js'
 import { type Integration } from '../../integrations/Integration.js'
@@ -75,7 +75,7 @@ export class MigrationVerdict {
 			losses.push('estimate')
 		}
 		// Floating time zone is not a named zone, so it has no zone loss.
-		if (entry.timeZone && entry.timeZone !== FLOATING_TIME_ZONE && !capabilities.timeZone) {
+		if (entry.timeZone && !entry.timeZone.floating && !capabilities.timeZone) {
 			losses.push('timeZone')
 		}
 		if (entry.allDay && !capabilities.allDay) {

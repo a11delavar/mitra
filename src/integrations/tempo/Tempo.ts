@@ -4,6 +4,7 @@ import { Integration, integration } from '../Integration.js'
 import { withheld } from '../../infrastructure/model/withheld.js'
 import { type Entry } from '../../features/entries/Entry.js'
 import { EntryType } from '../../features/entries/EntryType.js'
+import { EntryTimeZone } from '../../features/entries/EntryTimeZone.js'
 import { type TempoClient } from './server/TempoClient.js'
 import { type JiraClient } from './server/JiraClient.js'
 
@@ -168,7 +169,7 @@ export class Tempo extends Integration<TempoCredentials> {
 		entry.description = worklog.description ?? ''
 		entry.location = ''
 		entry.allDay = false
-		entry.timeZone = zone
+		entry.timeZone = EntryTimeZone.parse(zone) ?? null
 		entry.start = start as never
 		entry.end = new Date(start.getTime() + worklog.timeSpentSeconds * 1000) as never
 		entry.percentComplete = null

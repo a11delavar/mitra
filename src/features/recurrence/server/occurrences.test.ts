@@ -1,5 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { EntryTimeZone } from '../../entries/EntryTimeZone.js'
 import { Recurrence } from '../Recurrence.js'
 import { type Integration } from '../../../integrations/Integration.js'
 import { EntryType } from '../../entries/EntryType.js'
@@ -170,7 +171,7 @@ describe('Occurrences', () => {
 
 		it('a FLOATING master expands at its as-if-UTC instants: the marker never reaches Temporal', () => {
 			const master = new Entry({
-				id: 'f', sourceId: 's', type: EntryType.Event, heading: 'Pill', timeZone: 'floating',
+				id: 'f', sourceId: 's', type: EntryType.Event, heading: 'Pill', timeZone: EntryTimeZone.parse('floating'),
 				start: at('2026-10-19T09:00:00Z') as never, end: at('2026-10-19T09:15:00Z') as never, // 09:00 wall, encoded as-if-UTC
 				recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }),
 			})
@@ -180,7 +181,7 @@ describe('Occurrences', () => {
 
 		it('an unresolvable stored zone (a pre-sanitization Microsoft name) falls back to fixed UTC instead of throwing', () => {
 			const master = new Entry({
-				id: 'w', sourceId: 's', type: EntryType.Event, heading: 'Sync', timeZone: 'W. Europe Standard Time',
+				id: 'w', sourceId: 's', type: EntryType.Event, heading: 'Sync', timeZone: new EntryTimeZone.Mapper().convertToJSValue('W. Europe Standard Time'),
 				start: at('2026-10-19T07:00:00Z') as never, end: at('2026-10-19T08:00:00Z') as never,
 				recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }),
 			})
@@ -376,7 +377,7 @@ describe('scoped occurrence edits', () => {
 		// invisible in the lane, but the next conversion back to timed resurrects the stale hour.
 		const { calls, integration } = stub()
 		const m = master()
-		m.timeZone = 'UTC'
+		m.timeZone = EntryTimeZone.parse('UTC')
 		const allDay = new Entry({
 			sourceId: 's', type: EntryType.Event, heading: 'Standup', allDay: true,
 			start: D('2026-06-08T00:00:00Z'), end: D('2026-06-09T00:00:00Z'),
@@ -391,7 +392,7 @@ describe('scoped occurrence edits', () => {
 	it('\'all\' converting all-day → timed adopts the edit\'s clock span, not a 24-hour event', async () => {
 		const { calls, integration } = stub()
 		const m = master()
-		m.timeZone = 'UTC'
+		m.timeZone = EntryTimeZone.parse('UTC')
 		m.allDay = true
 		m.start = D('2026-06-01T00:00:00Z')
 		m.end = D('2026-06-02T00:00:00Z') // exclusive next midnight, a 24h stored span
@@ -411,7 +412,7 @@ describe('scoped occurrence edits', () => {
 		// 06:00–08:00: the master's pre-conversion length leaking through. Replay both commits.
 		const { calls, integration } = stub()
 		const m = new Entry({
-			id: 'm', sourceId: 's', type: EntryType.Task, heading: 'Test', uid: 'u1', timeZone: 'UTC',
+			id: 'm', sourceId: 's', type: EntryType.Task, heading: 'Test', uid: 'u1', timeZone: EntryTimeZone.parse('UTC'),
 			start: D('2026-07-10T02:00:00Z'), end: D('2026-07-10T04:00:00Z'), // 2h
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }),
 		})
@@ -436,7 +437,7 @@ describe('scoped occurrence edits', () => {
 		// silently desync it from its own anchor.
 		const { calls, integration } = stub()
 		const m = new Entry({
-			id: 'm', sourceId: 's', type: EntryType.Event, heading: 'Standup', uid: 'u1', timeZone: 'Europe/Berlin',
+			id: 'm', sourceId: 's', type: EntryType.Event, heading: 'Standup', uid: 'u1', timeZone: EntryTimeZone.parse('Europe/Berlin'),
 			start: D('2026-07-10T00:00:00Z'), end: D('2026-07-10T02:00:00Z'), // Fri 02:00–04:00 CEST
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Friday] }),
 		})
@@ -457,7 +458,7 @@ describe('scoped occurrence edits', () => {
 		// Oct 25 DST end. An instant shift would beach the whole series at 08:00.
 		const { calls, integration } = stub()
 		const m = new Entry({
-			id: 'm', sourceId: 's', type: EntryType.Event, heading: 'Standup', uid: 'u1', timeZone: 'Europe/Berlin',
+			id: 'm', sourceId: 's', type: EntryType.Event, heading: 'Standup', uid: 'u1', timeZone: EntryTimeZone.parse('Europe/Berlin'),
 			start: D('2026-10-23T07:00:00Z'), end: D('2026-10-23T08:00:00Z'), // Fri 09:00–10:00 CEST
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Friday] }),
 		})
@@ -509,7 +510,7 @@ describe('scoped occurrence edits', () => {
 		// delta is 7d + 1h, but every occurrence (and so every exclusion) moves exactly 7 wall days.
 		const { calls, integration } = stub()
 		const m = master()
-		m.timeZone = 'Europe/Berlin'
+		m.timeZone = EntryTimeZone.parse('Europe/Berlin')
 		m.start = D('2026-10-23T07:00:00Z') // 09:00 CEST
 		m.end = D('2026-10-23T08:00:00Z')
 		m.recurrence = new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Friday] })
@@ -529,7 +530,7 @@ describe('scoped occurrence edits', () => {
 		// read at any other midnight, the shifted exclusion lands hours off and excludes nothing.
 		const { calls, integration } = stub()
 		const m = master()
-		m.timeZone = 'Asia/Tehran'
+		m.timeZone = EntryTimeZone.parse('Asia/Tehran')
 		m.allDay = true
 		m.start = D('2026-06-01T00:00:00Z') // all-day Mon Jun 1
 		m.end = D('2026-06-02T00:00:00Z')

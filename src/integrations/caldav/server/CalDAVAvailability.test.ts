@@ -1,5 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { EntryTimeZone } from '../../../features/entries/EntryTimeZone.js'
 import { DateTime } from '@3mo/date-time'
 import { Source } from '../../../features/sources/Source.js'
 import { Entry } from '../../../features/entries/Entry.js'
@@ -16,7 +17,7 @@ const calendars = new Set(['work', 'personal'])
 
 const availability = (init: Partial<Entry> = {}) => new Entry({
 	id: 'entry-1', uid: 'uid-1', sourceId: 'work', type: EntryType.Availability,
-	heading: 'Deep work', timeZone: 'Europe/Berlin', transparency: Transparency.Busy,
+	heading: 'Deep work', timeZone: EntryTimeZone.parse('Europe/Berlin'), transparency: Transparency.Busy,
 	start: new DateTime('2026-10-06T07:00:00.000Z'), end: new DateTime('2026-10-06T09:00:00.000Z'),
 	recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Tuesday, RecurrenceWeekday.Thursday] }),
 	...init,
@@ -37,7 +38,7 @@ describe('busy availability in a CalDAV calendar', () => {
 			assert.equal(event.transparency, Transparency.Busy)
 			assert.equal(event.visibility, Visibility.Private)
 			assert.equal(event.location, 'Office')
-			assert.equal(event.timeZone, 'Europe/Berlin')
+			assert.equal(event.timeZone?.id, 'Europe/Berlin')
 			assert.equal(event.start?.valueOf(), entry.start?.valueOf())
 			assert.equal(Recurrence.equal(event.recurrence, entry.recurrence), true)
 			assert.deepEqual(event.exdates, entry.exdates)

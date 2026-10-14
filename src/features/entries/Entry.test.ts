@@ -1,7 +1,8 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { EntryTimeZone } from './EntryTimeZone.js'
 import { DateTime } from '@3mo/date-time'
-import { Entry, FLOATING_TIME_ZONE } from './Entry.js'
+import { Entry } from './Entry.js'
 import { TaskStatus } from './TaskStatus.js'
 import { Transparency } from './Transparency.js'
 import { Visibility } from './Visibility.js'
@@ -239,7 +240,7 @@ describe('Entry', () => {
 				(e: Entry) => e.description = 'Notes',
 				(e: Entry) => e.location = 'Berlin, Germany',
 				(e: Entry) => e.reminders = [30],
-				(e: Entry) => e.timeZone = 'Asia/Tehran',
+				(e: Entry) => e.timeZone = EntryTimeZone.parse('Asia/Tehran'),
 				(e: Entry) => e.color = '#ff0000',
 				(e: Entry) => e.moveStart(at(1, 9)),
 				(e: Entry) => e.setEnd(at(0, 11)),
@@ -423,7 +424,7 @@ describe('Entry', () => {
 	})
 
 	describe('zone', () => {
-		const timed = (timeZone: string | null) => new Entry({ start: new Date('2026-07-06T12:00:00Z') as unknown as DateTime, timeZone })
+		const timed = (timeZone: string | null) => new Entry({ start: new Date('2026-07-06T12:00:00Z') as unknown as DateTime, timeZone: EntryTimeZone.parse(timeZone) ?? null })
 
 		it('is the zone its times are written in, by any of its names', () => {
 			assert.equal(timed('Europe/Berlin').zone, TimeZone.of('Europe/Berlin'))
@@ -431,21 +432,21 @@ describe('Entry', () => {
 		})
 
 		it('is none for an all-day, a floating, a zoneless or an unknown zone', () => {
-			assert.equal(new Entry({ allDay: true, timeZone: 'Europe/Berlin' }).zone, undefined)
-			assert.equal(timed(FLOATING_TIME_ZONE).zone, undefined)
+			assert.equal(new Entry({ allDay: true, timeZone: EntryTimeZone.parse('Europe/Berlin') }).zone, undefined)
+			assert.equal(timed('floating').zone, undefined)
 			assert.equal(timed(null).zone, undefined)
 			assert.equal(timed('Mars/Olympus').zone, undefined)
 		})
 
 		it('follows a change of zone', () => {
 			const entry = timed('Europe/Berlin')
-			entry.setTimeZone('Asia/Tehran')
+			entry.setTimeZone(EntryTimeZone.parse('Asia/Tehran')!)
 			assert.equal(entry.zone, TimeZone.of('Asia/Tehran'))
 		})
 
 		it('calls floating only a timed entry on the wall clock', () => {
-			assert.equal(timed(FLOATING_TIME_ZONE).floating, true)
-			assert.equal(new Entry({ allDay: true, timeZone: FLOATING_TIME_ZONE }).floating, false)
+			assert.equal(timed('floating').floating, true)
+			assert.equal(new Entry({ allDay: true, timeZone: EntryTimeZone.floating }).floating, false)
 			assert.equal(timed('Europe/Berlin').floating, false)
 			assert.equal(timed(null).floating, false)
 		})
@@ -463,10 +464,10 @@ describe('Entry', () => {
 			const e = new Entry({
 				start: new Date('2026-07-06T12:00:00Z') as unknown as DateTime,
 				end: new Date('2026-07-06T13:00:00Z') as unknown as DateTime,
-				timeZone: 'Europe/Berlin',
+				timeZone: EntryTimeZone.parse('Europe/Berlin'),
 			})
-			e.setTimeZone('Asia/Tehran')
-			assert.equal(e.timeZone, 'Asia/Tehran')
+			e.setTimeZone(EntryTimeZone.parse('Asia/Tehran')!)
+			assert.equal(e.timeZone?.id, 'Asia/Tehran')
 			assert.equal(new Date(e.start!.valueOf()).toISOString(), '2026-07-06T10:30:00.000Z')
 			assert.equal(new Date(e.end!.valueOf()).toISOString(), '2026-07-06T11:30:00.000Z')
 			assert.equal(e.multiDay, false)
@@ -478,10 +479,10 @@ describe('Entry', () => {
 				start: new Date('2026-07-06T00:00:00Z') as unknown as DateTime,
 				end: new Date('2026-07-07T00:00:00Z') as unknown as DateTime,
 				allDay: true,
-				timeZone: 'Europe/Berlin',
+				timeZone: EntryTimeZone.parse('Europe/Berlin'),
 			})
-			e.setTimeZone('Asia/Tehran')
-			assert.equal(e.timeZone, 'Asia/Tehran')
+			e.setTimeZone(EntryTimeZone.parse('Asia/Tehran')!)
+			assert.equal(e.timeZone?.id, 'Asia/Tehran')
 			assert.equal(new Date(e.start!.valueOf()).toISOString(), '2026-07-06T00:00:00.000Z')
 		})
 
@@ -490,9 +491,9 @@ describe('Entry', () => {
 				start: new Date('2026-07-06T12:00:00Z') as unknown as DateTime,
 				end: null as unknown as DateTime,
 				due: null as unknown as DateTime,
-				timeZone: 'Europe/Berlin',
+				timeZone: EntryTimeZone.parse('Europe/Berlin'),
 			})
-			e.setTimeZone('Asia/Tehran')
+			e.setTimeZone(EntryTimeZone.parse('Asia/Tehran')!)
 			assert.equal(e.due, null)
 			assert.equal(e.end, null)
 			assert.equal(new Date(e.start!.valueOf()).toISOString(), '2026-07-06T10:30:00.000Z')
@@ -502,10 +503,10 @@ describe('Entry', () => {
 			const e = new Entry({
 				start: new Date('2026-07-06T09:00:00Z') as unknown as DateTime,
 				end: new Date('2026-07-06T09:30:00Z') as unknown as DateTime,
-				timeZone: FLOATING_TIME_ZONE,
+				timeZone: EntryTimeZone.floating,
 			})
-			e.setTimeZone('Asia/Tehran')
-			assert.equal(e.timeZone, 'Asia/Tehran')
+			e.setTimeZone(EntryTimeZone.parse('Asia/Tehran')!)
+			assert.equal(e.timeZone?.id, 'Asia/Tehran')
 			assert.equal(new Date(e.start!.valueOf()).toISOString(), '2026-07-06T05:30:00.000Z')
 		})
 	})
