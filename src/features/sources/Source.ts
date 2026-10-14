@@ -33,7 +33,7 @@ export class Source {
 	}
 
 	/** Timestamp when source finished initial import (null while importing). */
-	@property({ type: 'datetime', nullable: true }) importedAt?: Date | null
+	@property({ type: 'Date', nullable: true }) importedAt?: Date | null
 
 	get importing() {
 		return this.enabled && !this.importedAt

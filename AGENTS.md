@@ -51,6 +51,7 @@
 
 ## Backend & Database (MikroORM, SQLite)
 - STI for `Integration` and `Entry` (`discriminatorColumn: 'type'`); a subclass without columns needs no migration, only `ormConfig.ts` and `registerIntegrations.ts`.
+- Date columns are `type: 'Date'`, never `'datetime'` (same column): MikroORM compares a `'datetime'` with `equals`, so the Date it loads never matches the milliseconds SQLite keeps, and every flush rewrote every loaded date (`database/dates.test.ts`).
 - **Schema**: dev (`MITRA_DEV=true`) syncs with `orm.schema.update()`; production runs `migrator.up()`. Entity changes need `npm run db:migration:create -- <Name>` (writes the migration, the snapshot and `migrations/index.ts`). Migrations are immutable once committed and must replay on any shape: introspect with `pragma_table_info`, a dev boot may already have the new column. Use `await this.execute()`, never `addSql`.
 - **Table rebuilds**: `foreign_keys = off` does nothing inside a transaction, so dropping a parent cascades. Hold children in an FK-free table, drop and recreate, restore children and references (`user.default_source_id`).
 - **Type conversion** (event ↔ task) re-creates the entry (VEVENT and VTODO can't share a CalDAV resource), compensating on failure; series can't convert (400).

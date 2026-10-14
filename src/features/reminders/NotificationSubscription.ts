@@ -31,7 +31,7 @@ export class NotificationSubscription {
 	@property({ type: 'string', nullable: true }) browser?: string | null
 	@property({ type: 'boolean', nullable: true }) mobile?: boolean | null
 
-	@property({ type: 'datetime', nullable: true }) lastSeenAt?: Date | null
+	@property({ type: 'Date', nullable: true }) lastSeenAt?: Date | null
 
 	constructor(init?: Partial<NotificationSubscription>) {
 		Object.assign(this, init)

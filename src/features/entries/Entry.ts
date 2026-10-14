@@ -105,11 +105,11 @@ export class Entry {
 	@property({ type: 'string' }) location = ''
 	@property({ type: 'string', nullable: true }) color: string | null = null
 
-	@property({ type: 'datetime', nullable: true }) start?: DateTime
-	@property({ type: 'datetime', nullable: true }) end?: DateTime
+	@property({ type: 'Date', nullable: true }) start?: DateTime
+	@property({ type: 'Date', nullable: true }) end?: DateTime
 
 	/** Apart from the schedule. All-day, it is the due day's canonical midnight. */
-	@property({ type: 'datetime', nullable: true }) due?: DateTime
+	@property({ type: 'Date', nullable: true }) due?: DateTime
 
 	/** A task's length in minutes while it has no start. The end is the same fact once it does, so one of the two is always empty. */
 	@property({ type: 'number', nullable: true }) estimate: number | null = null
@@ -262,7 +262,7 @@ export class Entry {
 	@embedded(() => Recurrence, { prefix: 'recurrence_', nullable: true }) recurrence?: Recurrence | null
 	@property({ type: 'json', nullable: true }) exdates?: Array<number>
 	@property({ type: 'string', nullable: true }) recurrenceMasterId?: string
-	@property({ type: 'datetime', nullable: true }) recurrenceId?: DateTime
+	@property({ type: 'Date', nullable: true }) recurrenceId?: DateTime
 	seriesStart?: DateTime
 
 	relations?: Array<Relation> | null

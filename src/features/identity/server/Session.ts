@@ -28,7 +28,7 @@ export class Session {
 
 	@primaryKey({ type: 'string' }) id!: string
 	@manyToOne(() => User, { mapToPk: true, deleteRule: 'cascade' }) userId!: string
-	@property({ type: 'datetime' }) expiresAt!: Date
+	@property({ type: 'Date' }) expiresAt!: Date
 	@property({ type: 'text', nullable: true }) idToken?: string
 
 	constructor(init?: Partial<Session>) {
