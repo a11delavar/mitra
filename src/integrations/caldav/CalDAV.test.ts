@@ -119,7 +119,7 @@ describe('CalDAV member URLs', () => {
 		})
 
 		it('is null without any, the canonical no-participants value', () => {
-			assert.equal(CalDAV.participantsFrom(vevent([])), null)
+			assert.equal(CalDAV.participantsFrom(vevent([])), undefined)
 		})
 
 		it('round-trips through writeParticipants', () => {
@@ -260,16 +260,16 @@ describe('CalDAV free/busy and access class (TRANSP / CLASS)', () => {
 			assert.equal(CalDAV.transparencyFromICal('OPAQUE'), Transparency.Busy)
 			assert.equal(CalDAV.transparencyFromICal('TRANSPARENT'), Transparency.Free)
 			assert.equal(CalDAV.transparencyFromICal('transparent'), Transparency.Free)
-			assert.equal(CalDAV.transparencyFromICal(undefined), null)
-			assert.equal(CalDAV.transparencyFromICal('X-WHATEVER'), null)
+			assert.equal(CalDAV.transparencyFromICal(undefined), undefined)
+			assert.equal(CalDAV.transparencyFromICal('X-WHATEVER'), undefined)
 		})
 
 		it('reads CLASS case-insensitively, with anything else meaning the calendar default', () => {
 			assert.equal(CalDAV.visibilityFromICal('PUBLIC'), Visibility.Public)
 			assert.equal(CalDAV.visibilityFromICal('PRIVATE'), Visibility.Private)
 			assert.equal(CalDAV.visibilityFromICal('confidential'), Visibility.Confidential)
-			assert.equal(CalDAV.visibilityFromICal(undefined), null)
-			assert.equal(CalDAV.visibilityFromICal('X-MY-OWN-CLASS'), null)
+			assert.equal(CalDAV.visibilityFromICal(undefined), undefined)
+			assert.equal(CalDAV.visibilityFromICal('X-MY-OWN-CLASS'), undefined)
 		})
 	})
 
@@ -299,8 +299,8 @@ describe('CalDAV free/busy and access class (TRANSP / CLASS)', () => {
 
 		it('leaves an event that names neither unset: absence is the OPAQUE / calendar-default reading', async () => {
 			const entry = await sync(resource(), [EntryType.Event])
-			assert.equal(entry.transparency, null)
-			assert.equal(entry.visibility, null)
+			assert.equal(entry.transparency, undefined)
+			assert.equal(entry.visibility, undefined)
 		})
 
 		it('gives a VTODO its CLASS but no free/busy contribution, since RFC 5545 gives VTODO no TRANSP', async () => {
@@ -313,7 +313,7 @@ describe('CalDAV free/busy and access class (TRANSP / CLASS)', () => {
 			const entry = await sync(raw, [EntryType.Task])
 			assert.equal(entry.type, EntryType.Task)
 			assert.equal(entry.visibility, Visibility.Confidential)
-			assert.equal(entry.transparency, null)
+			assert.equal(entry.transparency, undefined)
 		})
 	})
 
@@ -334,9 +334,9 @@ describe('CalDAV free/busy and access class (TRANSP / CLASS)', () => {
 			await stubbed().updateEntry(em(), existing, event(resource('CLASS:PRIVATE'), { visibility: Visibility.Confidential }))
 			assert.match(existing.data!.raw!, /CLASS:CONFIDENTIAL/)
 
-			await stubbed().updateEntry(em(), existing, event(existing.data!.raw!, { visibility: null }))
+			await stubbed().updateEntry(em(), existing, event(existing.data!.raw!, { visibility: undefined }))
 			assert.doesNotMatch(existing.data!.raw!, /CLASS:/)
-			assert.equal(existing.visibility, null)
+			assert.equal(existing.visibility, undefined)
 		})
 
 		it('adds neither line to a resource whose only edit was its heading (diff-write losslessness)', async () => {
@@ -915,7 +915,7 @@ describe('CalDAV zone authoring (VTIMEZONE generation)', () => {
 
 	const row = (raw: string, timeZone: string | null) => new Entry({
 		id: 'e1', sourceId: 's', type: EntryType.Event, heading: 'Test', uri: 'https://example.com/cal/e1.ics',
-		start: D('2026-07-04T07:00:00Z'), end: D('2026-07-04T08:00:00Z'), allDay: false, timeZone: EntryTimeZone.parse(timeZone) ?? null, data: { raw },
+		start: D('2026-07-04T07:00:00Z'), end: D('2026-07-04T08:00:00Z'), allDay: false, timeZone: EntryTimeZone.parse(timeZone), data: { raw },
 	})
 
 	it('picking a zone the resource lacks writes TZID local time AND embeds the generated VTIMEZONE', async () => {
@@ -950,7 +950,7 @@ describe('CalDAV zone authoring (VTIMEZONE generation)', () => {
 		const berlin = row(utcRaw, null)
 		await stubbed().updateEntry(em, berlin, new Entry({ ...berlin, timeZone: EntryTimeZone.parse('Europe/Berlin') } as Partial<Entry>))
 		const existing = row(berlin.data!.raw!, 'Europe/Berlin')
-		await stubbed().updateEntry(em, existing, new Entry({ ...existing, timeZone: null } as Partial<Entry>))
+		await stubbed().updateEntry(em, existing, new Entry({ ...existing, timeZone: undefined } as Partial<Entry>))
 		assert.match(existing.data!.raw!, /DTSTART:20260704T070000Z/)
 		assert.doesNotMatch(existing.data!.raw!, /VTIMEZONE/)
 	})
@@ -991,7 +991,7 @@ describe('CalDAV floating times', () => {
 		].join('\r\n')
 		const existing = new Entry({
 			id: 'e1', sourceId: 's', type: EntryType.Event, heading: 'Pill', uri: 'https://example.com/cal/e1.ics',
-			start: D('2026-07-04T09:00:00Z'), end: D('2026-07-04T09:15:00Z'), allDay: false, timeZone: null, data: { raw: utcRaw },
+			start: D('2026-07-04T09:00:00Z'), end: D('2026-07-04T09:15:00Z'), allDay: false, timeZone: undefined, data: { raw: utcRaw },
 		})
 		const incoming = new Entry({ ...existing, timeZone: EntryTimeZone.floating } as Partial<Entry>)
 		await stubbed().updateEntry({ find: () => Promise.resolve([]) } as never, existing, incoming)
@@ -1096,7 +1096,7 @@ describe('CalDAV zoned reads resolve through Temporal, not the resource', () => 
 		const raw = vevent(['DTSTART;TZID=W. Europe Standard Time:20260704T100000', 'RRULE:FREQ=WEEKLY'], vtimezone)
 		const [entry] = await sync(raw)
 		assert.equal(entry!.start?.valueOf(), new Date('2026-07-04T08:00:00Z').getTime())
-		assert.equal(entry!.timeZone, null)
+		assert.equal(entry!.timeZone, undefined)
 	})
 
 	it('an unchanged etag skips re-ingestion entirely, so the row keeps its stamped zone (the Radicale case)', async () => {

@@ -542,7 +542,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 		entry.uid = uid
 		entry.data ??= {}
 		entry.data.raw = iCalString
-		entry.color = entry.color || null
+		entry.color ||= undefined
 		const etag = response.headers?.get('etag') || response.headers?.get('Etag') || response.headers?.get('ETag')
 		if (etag) {
 			entry.data.etag = etag

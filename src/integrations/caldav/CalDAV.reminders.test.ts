@@ -26,7 +26,7 @@ describe('reminders (VALARM)', () => {
 			['TRIGGER:-PT30M'],
 		])
 		owner.getAllSubcomponents('valarm')[2]!.updatePropertyWithValue('action', 'EMAIL')
-		assert.equal(CalDAV.remindersFrom(owner), null)
+		assert.equal(CalDAV.remindersFrom(owner), undefined)
 	})
 
 	it('reads a due-only task\'s END-anchored alarm, its only possible anchor', () => {
@@ -34,7 +34,7 @@ describe('reminders (VALARM)', () => {
 	})
 
 	it('still ignores an END-anchored alarm when the component also has a start', () => {
-		assert.equal(CalDAV.remindersFrom(component('vtodo', ['DTSTART:20260101T080000Z', 'DUE:20260101T090000Z'], [['TRIGGER;RELATED=END:-PT30M']])), null)
+		assert.equal(CalDAV.remindersFrom(component('vtodo', ['DTSTART:20260101T080000Z', 'DUE:20260101T090000Z'], [['TRIGGER;RELATED=END:-PT30M']])), undefined)
 	})
 
 	it('writes a due-only task\'s alarm against END, so it has something to trigger on', () => {

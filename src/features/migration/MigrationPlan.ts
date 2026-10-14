@@ -55,7 +55,7 @@ export class MigrationVerdict {
 		if (entry.visibility && !capabilities.visibility) {
 			blockers.push('visibility')
 		}
-		if (entry.percentComplete !== null && entry.percentComplete !== undefined && !capabilities.percentComplete) {
+		if (entry.percentComplete !== undefined && !capabilities.percentComplete) {
 			blockers.push('percentComplete')
 		}
 
@@ -71,7 +71,7 @@ export class MigrationVerdict {
 		if (entry.due && !capabilities.due) {
 			losses.push('due')
 		}
-		if (entry.estimate !== null && entry.estimate !== undefined && !capabilities.estimate) {
+		if (entry.estimate !== undefined && !capabilities.estimate) {
 			losses.push('estimate')
 		}
 		// Floating time zone is not a named zone, so it has no zone loss.

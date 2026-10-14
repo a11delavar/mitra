@@ -135,14 +135,14 @@ describe('Entry', () => {
 			assert.equal(entry.removeParticipant('A@example.com'), true)
 			assert.deepEqual(entry.participants!.map(participant => participant.email), ['organizer@example.com', 'b@example.com'])
 			assert.equal(entry.removeParticipant('b@example.com'), true)
-			assert.equal(entry.participants, null)
+			assert.equal(entry.participants, undefined)
 			assert.equal(entry.removeParticipant('b@example.com'), false)
 		})
 
 		it('clearParticipants returns the entry to a plain private one', () => {
 			const entry = invited()
 			entry.clearParticipants()
-			assert.equal(entry.participants, null)
+			assert.equal(entry.participants, undefined)
 			assert.equal(entry.hasParticipants, false)
 			assert.equal(entry.canManageParticipants, true)
 		})
@@ -225,7 +225,7 @@ describe('Entry', () => {
 
 	describe('editEquals', () => {
 		const base = () => new Entry({
-			id: 'a', sourceId: 's', type: EntryType.Event, heading: 'Standup', description: '', color: null,
+			id: 'a', sourceId: 's', type: EntryType.Event, heading: 'Standup', description: '',
 			start: at(0, 9), end: at(0, 10), allDay: false,
 		})
 
@@ -279,7 +279,7 @@ describe('Entry', () => {
 		it('counts the free/busy contribution and the visibility as editable content', () => {
 			assert.equal(base().editEquals(new Entry({ ...base(), transparency: Transparency.Free })), false)
 			assert.equal(base().editEquals(new Entry({ ...base(), visibility: Visibility.Private })), false)
-			assert.equal(base().editEquals(new Entry({ ...base(), visibility: null })), true)
+			assert.equal(base().editEquals(new Entry({ ...base(), visibility: undefined })), true)
 		})
 
 		it('compares reminders by value', () => {
@@ -345,7 +345,7 @@ describe('Entry', () => {
 		it('drops the free/busy contribution when becoming a task, the mirror image of the status', () => {
 			const event = new Entry({ sourceId: 's', type: EntryType.Event, heading: 'Draft', transparency: Transparency.Free })
 			event.type = EntryType.Task
-			assert.equal(event.transparency, null)
+			assert.equal(event.transparency, undefined)
 		})
 
 		it('keeps the visibility across the flip both ways, since CLASS is valid on a task too', () => {
@@ -417,14 +417,14 @@ describe('Entry', () => {
 
 		it('assign clears fields the incoming entry lacks', () => {
 			const e = new Entry({ id: 'a', sourceId: 's', type: EntryType.Task, heading: 'Task', status: TaskStatus.Done, color: '#ff0000' })
-			e.assign(new Entry({ id: 'a', sourceId: 's', type: EntryType.Task, heading: 'Task', color: null }))
+			e.assign(new Entry({ id: 'a', sourceId: 's', type: EntryType.Task, heading: 'Task' }))
 			assert.equal(e.status, undefined)
-			assert.equal(e.color, null)
+			assert.equal(e.color, undefined)
 		})
 	})
 
 	describe('zone', () => {
-		const timed = (timeZone: string | null) => new Entry({ start: new Date('2026-07-06T12:00:00Z') as unknown as DateTime, timeZone: EntryTimeZone.parse(timeZone) ?? null })
+		const timed = (timeZone: string | null) => new Entry({ start: new Date('2026-07-06T12:00:00Z') as unknown as DateTime, timeZone: EntryTimeZone.parse(timeZone) })
 
 		it('is the zone its times are written in, by any of its names', () => {
 			assert.equal(timed('Europe/Berlin').zone, TimeZone.of('Europe/Berlin'))
@@ -566,7 +566,7 @@ describe('Entry', () => {
 			const e = task({ start: at(0, 9), end: at(0, 10), reminders: [10] })
 			e.adoptSpan(task())
 			assert.equal(e.scheduled, false)
-			assert.equal(e.reminders, null)
+			assert.equal(e.reminders, undefined)
 		})
 
 		it('adopting a span between unscheduled entries leaves reminders untouched', () => {
@@ -589,7 +589,7 @@ describe('Entry', () => {
 				const e = task({ estimate: 120 })
 				e.scheduleAt(at(1, 14), false, 60)
 				assert.equal(e.end!.valueOf(), at(1, 16).valueOf())
-				assert.equal(e.estimate, null)
+				assert.equal(e.estimate, undefined)
 			})
 
 			it('an all-day drop covers the whole days of the estimate, and at least one', () => {
@@ -617,7 +617,7 @@ describe('Entry', () => {
 			it('a moment has no length to keep', () => {
 				const e = task({ start: at(0, 9) })
 				e.unschedule()
-				assert.equal(e.estimate, null)
+				assert.equal(e.estimate, undefined)
 			})
 
 			it('a drop turning an all-day task timed brings its due along, in the same form', () => {
@@ -646,7 +646,7 @@ describe('Entry', () => {
 			assert.equal(withDue.reminderAnchor?.valueOf(), at(2, 17).valueOf())
 			const without = task({ start: at(0, 9), end: at(0, 10), reminders: [30] })
 			without.unschedule()
-			assert.equal(without.reminders, null)
+			assert.equal(without.reminders, undefined)
 		})
 	})
 
@@ -667,7 +667,7 @@ describe('Entry', () => {
 			const e = task({ due: at(1, 17), estimate: 30 })
 			e.type = EntryType.Event
 			assert.equal(e.due, undefined)
-			assert.equal(e.estimate, null)
+			assert.equal(e.estimate, undefined)
 		})
 
 		it('follows the entry between days and times', () => {
@@ -897,7 +897,7 @@ describe('Entry', () => {
 		it('leaves progress unstated where the provider cannot', () => {
 			const entry = task()
 			entry.setStatus(TaskStatus.Done, { percentComplete: false })
-			assert.equal(entry.percentComplete, null)
+			assert.equal(entry.percentComplete, undefined)
 		})
 
 		it('keeps the progress a cancelled task already had', () => {
@@ -924,7 +924,7 @@ describe('Entry', () => {
 		it('gives an all-day entry none', () => {
 			const entry = new Entry({ type: EntryType.Event, start: day, end: day.add({ days: 1 }), allDay: true })
 			entry.adoptDefaultReminders(defaults)
-			assert.equal(entry.reminders, null)
+			assert.equal(entry.reminders, undefined)
 		})
 
 		it('re-picks the default when the kind changes', () => {
@@ -955,7 +955,7 @@ describe('Entry', () => {
 			entry.setReminders([30, 5, 30])
 			assert.deepEqual(entry.reminders, [5, 30])
 			entry.setReminders([])
-			assert.equal(entry.reminders, null)
+			assert.equal(entry.reminders, undefined)
 		})
 	})
 })

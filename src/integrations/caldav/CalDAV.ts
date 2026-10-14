@@ -177,12 +177,12 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		[Visibility.Confidential, 'CONFIDENTIAL'],
 	])
 
-	static transparencyFromICal(transparency: string | undefined): Transparency | null {
-		return CalDAV.icalTransparency.getKey(transparency?.toUpperCase() ?? '') ?? null
+	static transparencyFromICal(transparency: string | undefined): Transparency | undefined {
+		return CalDAV.icalTransparency.getKey(transparency?.toUpperCase() ?? '')
 	}
 
-	static visibilityFromICal(visibility: string | undefined): Visibility | null {
-		return CalDAV.icalVisibility.getKey(visibility?.toUpperCase() ?? '') ?? null
+	static visibilityFromICal(visibility: string | undefined): Visibility | undefined {
+		return CalDAV.icalVisibility.getKey(visibility?.toUpperCase() ?? '')
 	}
 
 	static writeTransparency(component: ICAL.Component, transparency: Transparency | null | undefined) {
@@ -341,7 +341,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	static applyComponent(entry: Entry, component: ICAL.Component, integration: Integration): void {
 		const entryType = component.name === 'vtodo' ? EntryType.Task : EntryType.Event
 		entry.type = entryType
-		entry.color = component.getFirstPropertyValue('color')?.toString() || null
+		entry.color = component.getFirstPropertyValue('color')?.toString() || undefined
 
 		const tzidOf = (name: string) => component.getFirstProperty(name)?.getParameter('tzid')?.toString()
 		if (entryType.isEvent) {
@@ -360,7 +360,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			entry.location = value('location')?.toString() || ''
 			const percent = value('percent-complete')
 			entry.status = CalDAV.statusFromICal(value('status')?.toString(), Number(percent ?? 0))
-			entry.percentComplete = percent === null || percent === undefined ? null : Math.min(100, Math.max(0, Math.round(Number(percent))))
+			entry.percentComplete = percent === null || percent === undefined ? undefined : Math.min(100, Math.max(0, Math.round(Number(percent))))
 			Object.assign(entry, CalDAV.taskTimesFrom(component))
 		}
 
@@ -373,8 +373,8 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		// An unscheduled task carries its zone on DUE.
 		const anchor = component.getFirstProperty('dtstart') || entryType.isEvent ? 'dtstart' : 'due'
 		const anchorTzid = tzidOf(anchor)
-		entry.timeZone = CalDAV.resolvableZone(anchorTzid) ? EntryTimeZone.parse(anchorTzid) ?? null
-			: CalDAV.isFloating(component.getFirstPropertyValue(anchor)) ? EntryTimeZone.floating : null
+		entry.timeZone = CalDAV.resolvableZone(anchorTzid) ? EntryTimeZone.parse(anchorTzid)
+			: CalDAV.isFloating(component.getFirstPropertyValue(anchor)) ? EntryTimeZone.floating : undefined
 
 		const recurrence = CalDAV.recurrenceProps(component)
 		entry.uid = recurrence.uid
@@ -397,7 +397,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		const length = duration && !duration.isNegative && duration.toSeconds() > 0 ? duration : undefined
 		const allDay = !!(dtstart ?? dueValue)?.isDate
 		if (!start) {
-			return { start: undefined, end: undefined, due, estimate: length ? Math.round(length.toSeconds() / 60) : null, allDay }
+			return { start: undefined, end: undefined, due, estimate: length ? Math.round(length.toSeconds() / 60) : undefined, allDay }
 		}
 		if (length) {
 			// RFC 5545 §3.3.6: days and weeks are calendar days, the time parts exact, so a P1D across a DST change
@@ -405,9 +405,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			const zone = !allDay && CalDAV.resolvableZone(tzidOf('dtstart')) ? tzidOf('dtstart')! : 'UTC'
 			const end = Temporal.Instant.fromEpochMilliseconds(start.valueOf()).toZonedDateTimeISO(zone)
 				.add({ weeks: length.weeks, days: length.days, hours: length.hours, minutes: length.minutes, seconds: length.seconds })
-			return { start, end: new Date(end.epochMilliseconds) as Entry['end'], due, estimate: null, allDay }
+			return { start, end: new Date(end.epochMilliseconds) as Entry['end'], due, estimate: undefined, allDay }
 		}
-		return { start, end: due, due: undefined, estimate: null, allDay }
+		return { start, end: due, due: undefined, estimate: undefined, allDay }
 	}
 
 	/**
@@ -499,7 +499,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return component.getFirstProperty('dtstart') ? 'START' : 'END'
 	}
 
-	static remindersFrom(component: ICAL.Component): Array<number> | null {
+	static remindersFrom(component: ICAL.Component): Array<number> | undefined {
 		const anchor = CalDAV.reminderAnchorOf(component)
 		const minutes = component.getAllSubcomponents('valarm').flatMap(alarm => {
 			const trigger = alarm.getFirstProperty('trigger')
@@ -514,7 +514,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			const seconds = duration.toSeconds()
 			return seconds > 0 ? [] : [Math.round(-seconds / 60)]
 		})
-		return minutes.length ? [...new Set(minutes)].sort((a, b) => a - b) : null
+		return minutes.length ? [...new Set(minutes)].sort((a, b) => a - b) : undefined
 	}
 
 	private static readonly icalRole = new BidirectionalMap<ParticipantRole, string>([
@@ -539,7 +539,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	/**
 	 * Extracts and normalizes participants from ATTENDEE and ORGANIZER properties.
 	 */
-	static participantsFrom(component: ICAL.Component, addresses?: ReadonlyArray<string> | null): Participants | null {
+	static participantsFrom(component: ICAL.Component, addresses?: ReadonlyArray<string> | null): Participants | undefined {
 		const own = new Set((addresses ?? []).map(address => address.toLowerCase()))
 		const self = (email: string) => own.has(email.toLowerCase()) || undefined
 		const raw = new Array<Partial<Participant>>()

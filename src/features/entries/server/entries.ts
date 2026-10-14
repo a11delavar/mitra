@@ -3,14 +3,13 @@ import { orm } from '../../../infrastructure/database/orm.js'
 import { syncEmitter } from '../../../infrastructure/realtime/syncEmitter.js'
 import { equals } from '@a11d/equals'
 import { Source } from '../../sources/Source.js'
-import { Recurrence, type RecurrenceScope } from '../../recurrence/Recurrence.js'
-import { Participants } from '../../participants/Participant.js'
+import { type RecurrenceScope } from '../../recurrence/Recurrence.js'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
 import { Integration } from '../../../integrations/Integration.js'
-import { EntryType } from '../EntryType.js'
-import { EntryRelations } from '../../relations/EntryRelations.js'
 import { EntryRelation } from '../../relations/EntryRelation.js'
 import { Entry } from '../Entry.js'
+import { EntryPatch } from '../EntryPatch.js'
+import { type Relation } from '../../relations/Relation.js'
 import { type EntryTimeZone } from '../EntryTimeZone.js'
 import { normalizeAllDay, projectAllDay } from '../../time/calendarDate.js'
 import { editOccurrence, deleteOccurrence, expandedOccurrences, seriesStarts, nearestOccurrence, occurrenceAt } from '../../recurrence/server/occurrences.js'
@@ -25,19 +24,18 @@ const logger = createLogger('Entries')
 // Canonical all-day dates are stored as UTC midnights and projected into the viewer's zone on transit.
 const viewerZone = (req: Request) => typeof req.query.tz === 'string' && req.query.tz ? req.query.tz : undefined
 
-const incomingDate = (value: unknown, stored: Entry['start']): Entry['start'] =>
-	value === undefined ? stored : value === null ? undefined : new DateTime(value as string)
-
-/** Clamps percentage values to 0-100 per RFC 5545 §3.8.1.8. */
-const incomingPercent = (value: unknown): number | null =>
-	typeof value === 'number' && Number.isFinite(value) ? Math.min(100, Math.max(0, Math.round(value))) : null
-
-/** A whole, positive number of minutes, else none. */
-const incomingEstimate = (value: unknown): number | null =>
-	typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.round(value) : null
-
-const dayZone = (req: Request, timeZone: EntryTimeZone | null | undefined) =>
+const dayZone = (req: Request, timeZone: EntryTimeZone | undefined) =>
 	viewerZone(req) ?? (timeZone && !timeZone.floating ? timeZone.clock : undefined)
+
+/** The all-day dates `patch` carried, from midnights in the sender's zone to the canonical UTC ones. */
+function normalizeDays(entry: Entry, patch: EntryPatch, zone: string | undefined) {
+	for (const field of ['start', 'end', 'due'] as const) {
+		const date = entry[field]
+		if (entry.allDay && patch[field] && date) {
+			entry[field] = normalizeAllDay(date, zone) as never
+		}
+	}
+}
 
 /** Projects canonical all-day dates into viewer timezone before serialization. */
 function projectedForViewer<T extends Entry>(entry: T, zone: string | undefined): T {
@@ -139,94 +137,52 @@ entriesRouter.put('/ranks', async (req, res) => {
 entriesRouter.post('/', async (req, res) => {
 	const em = orm.em.fork()
 
-	const body = Entry.reviveValues(req.body as Partial<Entry>)
-	const targetSourceId = body.sourceId
-	if (!targetSourceId) {
+	const patch = EntryPatch.from(req.body)
+	if (!patch.sourceId) {
 		return res.status(400).json({ error: 'Missing sourceId' })
 	}
-
-	const incomingRecurrence = Recurrence.from(body.recurrence)
-	if (incomingRecurrence && !incomingRecurrence.valid) {
-		return res.status(400).json({ error: 'Invalid recurrence rule' })
+	if (patch.malformation) {
+		return res.status(400).json({ error: patch.malformation })
 	}
 
-	const relations = EntryRelations.parse(body.relations)
-	if (relations === EntryRelations.invalid) {
-		return res.status(400).json({ error: 'Invalid relations' })
-	}
-
-	const targetSource = await req.user.source(em, targetSourceId)
+	const targetSource = await req.user.source(em, patch.sourceId)
 	const targetIntegration = await em.findOneOrFail(Integration, { id: targetSource.integrationId })
 
 	if (!targetIntegration.capabilitiesFor(targetSource).createEntries) {
 		return res.status(400).json({ error: 'This calendar cannot be written to from mitra' })
 	}
 
-	if (body.participants?.length && !targetIntegration.capabilities.participants) {
+	const incoming = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: targetSource.defaultEntryType }).apply(patch)
+	// The estimate is lost where the provider has none.
+	if (!targetIntegration.capabilities.estimate) {
+		incoming.estimate = undefined
+	}
+
+	if (incoming.participants?.length && !targetIntegration.capabilities.participants) {
 		return res.status(400).json({ error: 'This calendar does not support participants' })
 	}
-
-	if (body.transparency === Transparency.Free && !targetIntegration.capabilities.transparency) {
+	if (incoming.transparency === Transparency.Free && !targetIntegration.capabilities.transparency) {
 		return res.status(400).json({ error: 'This calendar cannot mark an entry as free' })
 	}
-	if (body.visibility && !targetIntegration.capabilities.visibility) {
+	if (incoming.visibility && !targetIntegration.capabilities.visibility) {
 		return res.status(400).json({ error: 'This calendar does not support visibility' })
 	}
-	if (incomingPercent(body.percentComplete) !== null && !targetIntegration.capabilities.percentComplete) {
+	if (incoming.percentComplete !== undefined && !targetIntegration.capabilities.percentComplete) {
 		return res.status(400).json({ error: 'This calendar does not support task progress' })
 	}
-	if (body.due && !targetIntegration.capabilities.due) {
+	if (incoming.due && !targetIntegration.capabilities.due) {
 		return res.status(400).json({ error: 'This calendar does not support due dates' })
 	}
-
-	const type = body.type ? EntryType.tryParse(body.type) : targetSource.defaultEntryType
-	if (!type) {
-		return res.status(400).json({ error: `Unknown entry type: ${String(body.type)}` })
-	}
-	if (!targetIntegration.canHold(targetSource, type)) {
-		return res.status(400).json({ error: `This calendar cannot hold ${type.isTask ? 'tasks' : type.isAvailability ? 'availability' : 'events'}` })
+	if (!targetIntegration.canHold(targetSource, incoming.type)) {
+		return res.status(400).json({ error: `This calendar cannot hold ${incoming.type.isTask ? 'tasks' : incoming.type.isAvailability ? 'availability' : 'events'}` })
 	}
 
-	// These fields are assigned after `type`, so what availability can't carry is dropped here as well.
-	const availability = type.isAvailability
-
-	const incoming = new Entry({
-		id: crypto.randomUUID(),
-		uid: crypto.randomUUID(),
-		sourceId: targetSource.id,
-		type,
-		heading: body.heading ?? '',
-		description: body.description ?? '',
-		location: body.location ?? '',
-		color: body.color ?? null,
-		start: body.start ? new DateTime(body.start) : undefined,
-		end: body.end ? new DateTime(body.end) : undefined,
-		due: type.isTask && body.due ? new DateTime(body.due) : undefined,
-		// The estimate stands for the end until there is a start, and is lost where the provider has none.
-		estimate: type.isTask && !body.start && targetIntegration.capabilities.estimate ? incomingEstimate(body.estimate) : null,
-		allDay: body.allDay ?? false,
-		timeZone: body.timeZone ?? null,
-		status: body.status,
-		percentComplete: type.isTask ? incomingPercent(body.percentComplete) : null,
-		transparency: type.isTask ? null : body.transparency ?? null,
-		visibility: body.visibility ?? null,
-		recurrence: incomingRecurrence,
-		reminders: availability ? null : body.reminders ?? undefined,
-		participants: availability ? null : Participants.normalize(body.participants),
-		relations: relations ?? null,
-	})
-
-	const relationsError = await assertRelationsValid(em, req.user, incoming, relations ?? null)
+	const relationsError = await assertRelationsValid(em, req.user, incoming, incoming.relations ?? null)
 	if (relationsError) {
 		return res.status(400).json({ error: relationsError })
 	}
 
-	if (incoming.allDay) {
-		const zone = dayZone(req, incoming.timeZone)
-		incoming.start = incoming.start ? normalizeAllDay(incoming.start, zone) as never : incoming.start
-		incoming.end = incoming.end ? normalizeAllDay(incoming.end, zone) as never : incoming.end
-		incoming.due = incoming.due ? normalizeAllDay(incoming.due, zone) as never : incoming.due
-	}
+	normalizeDays(incoming, patch, dayZone(req, incoming.timeZone))
 
 	const created = await targetIntegration.createEntry(em, incoming)
 	await EntryRelation.reconcile(em, created.id!, created.relations ?? null)
@@ -242,15 +198,12 @@ entriesRouter.put('/:id', async (req, res) => {
 	// The stored relations, up front: the provider's diff and the response BOTH need a definite value.
 	await EntryRelation.loadFor(em, [existing])
 
-	// The client sends the full edited entry; the backend diffs as needed.
-	const body = Entry.reviveValues(req.body as Partial<Entry> & { sourceId?: string, scope?: RecurrenceScope, recurrenceId?: string })
-
-	// Tri-state like `recurrence`: an array sets, `null` clears, absent keeps. Validated BEFORE any
-	// integration write, since a 400 must leave the external store untouched.
-	const relations = EntryRelations.parse(body.relations)
-	if (relations === EntryRelations.invalid) {
-		return res.status(400).json({ error: 'Invalid relations' })
+	// Validated BEFORE any integration write, since a 400 must leave the external store untouched.
+	const patch = EntryPatch.from(req.body)
+	if (patch.malformation) {
+		return res.status(400).json({ error: patch.malformation })
 	}
+	const relations = patch.relations as Array<Relation> | null | undefined
 	if (relations !== undefined) {
 		const relationsError = await assertRelationsValid(em, req.user, existing, relations)
 		if (relationsError) {
@@ -258,27 +211,17 @@ entriesRouter.put('/:id', async (req, res) => {
 		}
 	}
 
-	// `null` removes the repeat (collapse the series); an object sets it; absent (undefined) keeps it.
-	// Only a rule the request actually carries is validated, since the stored one isn't this request's doing.
-	const incomingRecurrence = body.recurrence === undefined ? existing.recurrence : Recurrence.from(body.recurrence)
-	if (body.recurrence !== undefined && body.recurrence !== null && incomingRecurrence && !incomingRecurrence.valid) {
-		return res.status(400).json({ error: 'Invalid recurrence rule' })
-	}
+	const incoming = new Entry().apply(EntryPatch.of(existing)).apply(patch)
 
-	// Same tri-state as `recurrence`/`reminders`: an array sets, `null` clears, absent keeps. Actually
-	// CHANGING the list is the organizer's prerogative: iTIP (RFC 5546) limits everyone else to
-	// replying with their own status, so a non-organizer's edit that touches it is rejected, while
-	// their content edits (which echo the stored list back unchanged) pass through.
-	const incomingParticipants = body.participants === undefined ? existing.participants ?? null : Participants.normalize(body.participants)
-	if (!Object[equals](incomingParticipants, existing.participants ?? null) && !existing.canManageParticipants) {
+	// Changing the list is the organizer's prerogative: iTIP (RFC 5546) limits everyone else to replying with their own
+	// status, so their content edits pass only while they leave it as it is.
+	if (!Object[equals](incoming.participants, existing.participants) && !existing.canManageParticipants) {
 		return res.status(403).json({ error: 'Only the organizer can modify participants' })
 	}
 
-	// Resolve the current and target sources (and their integrations) by id. The current one is owned
-	// transitively (the entry lookup above proved it); a DIFFERENT target must prove its own ownership.
-	const targetSourceId = body.sourceId ?? existing.sourceId
+	// The current source is owned transitively (the entry lookup above proved it); a DIFFERENT target must prove its own ownership.
 	const currentSource = await em.findOneOrFail(Source, { id: existing.sourceId })
-	const targetSource = targetSourceId === existing.sourceId ? currentSource : await req.user.source(em, targetSourceId)
+	const targetSource = incoming.sourceId === existing.sourceId ? currentSource : await req.user.source(em, incoming.sourceId)
 	const [currentIntegration, targetIntegration] = await Promise.all([
 		em.findOneOrFail(Integration, { id: currentSource.integrationId }),
 		em.findOneOrFail(Integration, { id: targetSource.integrationId }),
@@ -288,135 +231,75 @@ entriesRouter.put('/:id', async (req, res) => {
 	if (!currentCapabilities.editEntries) {
 		return res.status(400).json({ error: 'This calendar cannot be edited from mitra' })
 	}
-	if (body.heading !== undefined && body.heading !== existing.heading && !currentCapabilities.renameEntries) {
+	if (incoming.heading !== existing.heading && !currentCapabilities.renameEntries) {
 		return res.status(400).json({ error: 'Entries in this calendar take their title from the provider and cannot be renamed' })
 	}
 	if (targetSource.id !== currentSource.id && !targetIntegration.capabilitiesFor(targetSource).createEntries) {
 		return res.status(400).json({ error: 'This calendar cannot be written to from mitra' })
 	}
 
-	if (incomingParticipants?.length && !targetIntegration.capabilities.participants) {
+	if (incoming.participants?.length && !targetIntegration.capabilities.participants) {
 		return res.status(400).json({ error: 'This calendar does not support participants. Remove them before moving the entry' })
 	}
-
-	const incomingVisibility = body.visibility === undefined ? existing.visibility : body.visibility
-	// `null` clears, back to the default (busy for an event); only an absent field keeps the stored one.
-	const incomingTransparency = body.transparency === undefined ? existing.transparency : body.transparency
-	if (incomingTransparency === Transparency.Free && !targetIntegration.capabilities.transparency) {
+	if (incoming.transparency === Transparency.Free && !targetIntegration.capabilities.transparency) {
 		return res.status(400).json({ error: 'This calendar cannot mark an entry as free. Set it back to busy before moving the entry' })
 	}
-	if (incomingVisibility && !targetIntegration.capabilities.visibility) {
+	if (incoming.visibility && !targetIntegration.capabilities.visibility) {
 		return res.status(400).json({ error: 'This calendar does not support visibility. Reset it to the default before moving the entry' })
 	}
-	const incomingPercentComplete = body.percentComplete === undefined ? existing.percentComplete : incomingPercent(body.percentComplete)
-	if (incomingPercentComplete !== null && !targetIntegration.capabilities.percentComplete) {
+	if (incoming.percentComplete !== undefined && !targetIntegration.capabilities.percentComplete) {
 		return res.status(400).json({ error: 'This calendar does not support task progress. Clear it first' })
 	}
-	const incomingDue = incomingDate(body.due, existing.due)
-	if (incomingDue && !targetIntegration.capabilities.due) {
+	if (incoming.due && !targetIntegration.capabilities.due) {
 		return res.status(400).json({ error: 'This calendar does not support due dates. Clear it first' })
 	}
-	const incomingEstimateMinutes = body.estimate === undefined ? existing.estimate : incomingEstimate(body.estimate)
 
 	// Type conversion: tasks and events cannot mix in single CalDAV resource (RFC 4791 §4.1), so converted entries re-create below.
-	const incomingType = body.type === undefined ? existing.type : EntryType.tryParse(body.type)
-	if (!incomingType) {
-		return res.status(400).json({ error: `Unknown entry type '${String(body.type)}'` })
+	if (incoming.type !== existing.type && existing.partOfSeries) {
+		return res.status(400).json({ error: 'A recurring entry cannot change its type' })
 	}
-	if (incomingType !== existing.type) {
-		if (existing.partOfSeries) {
-			return res.status(400).json({ error: 'A recurring entry cannot change its type' })
-		}
-	}
-	if ((incomingType !== existing.type || (incomingType.isAvailability && targetSource.id !== currentSource.id)) && !targetIntegration.canHold(targetSource, incomingType)) {
+	if ((incoming.type !== existing.type || (incoming.type.isAvailability && targetSource.id !== currentSource.id)) && !targetIntegration.canHold(targetSource, incoming.type)) {
 		return res.status(400).json({ error: 'The picked calendar cannot hold this entry type' })
 	}
 
-	if (body.scope && body.recurrenceId) {
+	// A tab from before the scope moved into the address still sends it in the body.
+	const { scope, recurrenceId } = (req.query.scope ? req.query : req.body) as { scope?: RecurrenceScope, recurrenceId?: string }
+	if (scope && recurrenceId) {
 		const occurrenceId = existing.allDay
-			? normalizeAllDay(new Date(body.recurrenceId), dayZone(req, existing.timeZone))
-			: new Date(body.recurrenceId)
+			? normalizeAllDay(new Date(recurrenceId), dayZone(req, existing.timeZone))
+			: new Date(recurrenceId)
 		// Absent dates are the occurrence's own, never the master's: the master's start would move the series to its first occurrence.
-		const occurrence = occurrenceAt(existing, occurrenceId)
-		const edited = new Entry({
-			sourceId: existing.sourceId,
-			type: existing.type,
-			heading: body.heading ?? existing.heading,
-			description: body.description ?? existing.description,
-			location: body.location ?? existing.location,
-			color: body.color !== undefined ? body.color : existing.color,
-			start: incomingDate(body.start, occurrence.start),
-			end: incomingDate(body.end, occurrence.end),
-			due: existing.type.isTask ? incomingDate(body.due, occurrence.due) : undefined,
-			allDay: body.allDay ?? existing.allDay,
-			timeZone: body.timeZone === undefined ? existing.timeZone : body.timeZone,
-			status: body.status ?? existing.status,
-			percentComplete: body.percentComplete === undefined ? existing.percentComplete : incomingPercent(body.percentComplete),
-			transparency: existing.type.isTask ? null : incomingTransparency,
-			visibility: incomingVisibility,
-			reminders: existing.type.isAvailability ? null : body.reminders === undefined ? existing.reminders : body.reminders,
-			participants: existing.type.isAvailability ? null : incomingParticipants,
-		})
-		edited.estimate = existing.type.isTask && !edited.start && targetIntegration.capabilities.estimate ? incomingEstimateMinutes : null
-		if (edited.allDay) {
-			const zone = dayZone(req, edited.timeZone)
-			edited.start = body.start && edited.start ? normalizeAllDay(edited.start, zone) as never : edited.start
-			edited.end = body.end && edited.end ? normalizeAllDay(edited.end, zone) as never : edited.end
-			edited.due = body.due && edited.due ? normalizeAllDay(edited.due, zone) as never : edited.due
+		const edited = occurrenceAt(existing, occurrenceId).apply(patch)
+		if (!targetIntegration.capabilities.estimate) {
+			edited.estimate = undefined
 		}
+		normalizeDays(edited, patch, dayZone(req, edited.timeZone))
 		const movingTo = targetSource.id === currentSource.id ? undefined : { source: targetSource, integration: targetIntegration }
 		if (movingTo && !targetIntegration.canHold(targetSource, existing.type)) {
 			return res.status(400).json({ error: 'The picked calendar cannot hold this entry type' })
 		}
-		if (movingTo && body.scope !== 'this' && !targetIntegration.capabilities.recurrence) {
+		if (movingTo && scope !== 'this' && !targetIntegration.capabilities.recurrence) {
 			return res.status(400).json({ error: 'This calendar cannot hold a repeating entry' })
 		}
-		const result = await editOccurrence(em, currentIntegration, existing, occurrenceId, edited, body.scope, movingTo)
-		if (movingTo && body.scope === 'all' && result.id !== existing.id) {
+		const result = await editOccurrence(em, currentIntegration, existing, occurrenceId, edited, scope, movingTo)
+		if (movingTo && scope === 'all' && result.id !== existing.id) {
 			await EntryRelation.reconcile(em, result.id!, existing.relations ?? null)
 			result.relations = existing.relations ?? null
 		}
 		await em.flush()
 		await attachRelations(em, req.user, [result])
 		syncEmitter.emit('updated', req.user.id)
-		logger.debug(`Edited occurrence of series ${existing.id} (scope '${body.scope}')`)
+		logger.debug(`Edited occurrence of series ${existing.id} (scope '${scope}')`)
 		return res.json(projectedForViewer(result, viewerZone(req)))
 	}
 
-	const incoming = new Entry({
-		sourceId: targetSource.id,
-		type: incomingType,
-		heading: body.heading ?? existing.heading,
-		description: body.description ?? existing.description,
-		location: body.location ?? existing.location,
-		color: body.color !== undefined ? body.color : existing.color,
-		start: incomingDate(body.start, existing.start),
-		end: incomingDate(body.end, existing.end),
-		due: incomingType.isTask ? incomingDue : undefined,
-		allDay: body.allDay ?? existing.allDay,
-		timeZone: body.timeZone === undefined ? existing.timeZone : body.timeZone,
-		status: incomingType.isTask ? body.status ?? existing.status : undefined,
-		percentComplete: incomingType.isTask ? incomingPercentComplete : null,
-		transparency: incomingType.isTask ? null : incomingTransparency,
-		visibility: incomingVisibility,
-		recurrence: incomingRecurrence,
-		reminders: incomingType.isAvailability ? null : body.reminders === undefined ? existing.reminders : body.reminders,
-		participants: incomingType.isAvailability ? null : incomingParticipants,
-		relations,
-	})
-
-	// The estimate stands for the end until there is a start, and is lost where the provider has none.
-	incoming.estimate = incomingType.isTask && !incoming.start && targetIntegration.capabilities.estimate ? incomingEstimateMinutes : null
-
-	if (incoming.allDay) {
-		const zone = dayZone(req, incoming.timeZone)
-		incoming.start = body.start && incoming.start ? normalizeAllDay(incoming.start, zone) as never : incoming.start
-		incoming.end = body.end && incoming.end ? normalizeAllDay(incoming.end, zone) as never : incoming.end
-		incoming.due = body.due && incoming.due ? normalizeAllDay(incoming.due, zone) as never : incoming.due
+	if (!targetIntegration.capabilities.estimate) {
+		incoming.estimate = undefined
 	}
+	normalizeDays(incoming, patch, dayZone(req, incoming.timeZone))
 
 	// DTSTART is required for VEVENT (RFC 5545 §3.6.1).
-	if (body.start === null && existing.start && !incomingType.isTask) {
+	if (patch.start === null && existing.start && !incoming.type.isTask) {
 		return res.status(400).json({ error: 'An event must have a date' })
 	}
 
@@ -424,8 +307,7 @@ entriesRouter.put('/:id', async (req, res) => {
 	if (currentSource.id !== targetSource.id || incoming.type !== existing.type) {
 		incoming.id = crypto.randomUUID()
 		incoming.uid = currentSource.uri && currentSource.uri === targetSource.uri ? crypto.randomUUID() : existing.uid
-		incoming.relations = relations !== undefined ? relations : existing.relations ?? null
-		incoming.rank = incoming.type.isTask ? existing.rank : null
+		incoming.rank = incoming.type.isTask ? existing.rank : undefined
 		incoming.migrateTo(targetSource)
 		const created = await targetIntegration.createEntry(em, incoming)
 		try {

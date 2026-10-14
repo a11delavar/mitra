@@ -47,7 +47,7 @@ export class EntryDetailsSharing extends Component {
 	}
 
 	private readonly handleVisibilityChange = (e: CustomEvent<Visibility | null>) => {
-		this.entry.visibility = e.detail
+		this.entry.visibility = e.detail ?? undefined
 		this.commit()
 	}
 

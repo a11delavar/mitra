@@ -42,11 +42,11 @@ export class Participants extends Array<Participant> {
 	}
 
 	/**
-	 * Normalizes raw participant array into deduplicated Participants collection or null if empty/invalid.
+	 * Normalizes raw participant array into deduplicated Participants collection, or none if empty/invalid.
 	 */
-	static normalize(raw: ReadonlyArray<Partial<Participant>> | null | undefined): Participants | null {
+	static normalize(raw: ReadonlyArray<Partial<Participant>> | null | undefined): Participants | undefined {
 		if (!raw?.length) {
-			return null
+			return undefined
 		}
 		const byEmail = new Map<string, Participant>()
 		let hasOrganizer = false
@@ -69,7 +69,7 @@ export class Participants extends Array<Participant> {
 			})
 		}
 		if (!byEmail.size) {
-			return null
+			return undefined
 		}
 		const participants = new Participants()
 		participants.push(...byEmail.values())
@@ -107,13 +107,13 @@ export class Participants extends Array<Participant> {
 	/**
 	 * Returns a new collection with added email addresses and assigned organizer if unorganized.
 	 */
-	inviting(emails: ReadonlyArray<string>, ownAddress?: string): Participants | null {
+	inviting(emails: ReadonlyArray<string>, ownAddress?: string): Participants | undefined {
 		const known = new Set(this.map(participant => participant.email))
 		const additions = [...new Set(emails.map(email => email.trim().toLowerCase()))]
 			.filter(email => email.includes('@') && !known.has(email))
 			.map(email => ({ email, role: ParticipantRole.Required, status: ParticipantStatus.NeedsAction }))
 		if (!additions.length) {
-			return null
+			return undefined
 		}
 		const own = ownAddress?.trim().toLowerCase()
 		const organizer = !this.organizer && own && !known.has(own) && !additions.some(addition => addition.email === own)
@@ -123,15 +123,15 @@ export class Participants extends Array<Participant> {
 	}
 
 	/** Returns a new collection with all non-organizer invitees assigned to role. */
-	marked(role: ParticipantRole): Participants | null {
+	marked(role: ParticipantRole): Participants | undefined {
 		return Participants.normalize(this.map(participant => participant.organizer ? participant : { ...participant, role }))
 	}
 
 	/** Returns a new collection with target email assigned to role. */
-	withRole(email: string, role: ParticipantRole): Participants | null {
+	withRole(email: string, role: ParticipantRole): Participants | undefined {
 		const target = email.trim().toLowerCase()
 		const affected = this.find(participant => participant.email === target && !participant.organizer && participant.role !== role)
-		return !affected ? null : Participants.normalize(this.map(participant => participant === affected ? { ...participant, role } : participant))
+		return !affected ? undefined : Participants.normalize(this.map(participant => participant === affected ? { ...participant, role } : participant))
 	}
 
 	/** Returns non-organizer participant by email. */
@@ -141,7 +141,7 @@ export class Participants extends Array<Participant> {
 	}
 
 	/** Returns a new collection without target email, clearing list if no invitees remain. */
-	without(email: string): Participants | null {
+	without(email: string): Participants | undefined {
 		const removed = this.invitee(email)
 		const remaining = this.filter(participant => participant !== removed)
 		return Participants.normalize(remaining.some(participant => !participant.organizer) ? remaining : [])

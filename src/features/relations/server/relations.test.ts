@@ -27,6 +27,7 @@ async function inMemoryOrm() {
 	const orm = await MikroORM.init({
 		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, MitraCalendar, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
 		dbName: ':memory:',
+		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {
 			override joinColumnName(propertyName: string) {
 				return this.propertyToColumnName(propertyName)

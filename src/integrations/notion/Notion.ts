@@ -677,7 +677,7 @@ export class Notion extends Integration<NotionCredentials> {
 	/** Decodes Notion date property value into start/end span and timeZone. */
 	static spanFrom(date: NotionDate | null | undefined): Pick<Entry, 'start' | 'end' | 'allDay' | 'timeZone'> {
 		if (!date?.start) {
-			return { start: undefined, end: undefined, allDay: false, timeZone: null }
+			return { start: undefined, end: undefined, allDay: false, timeZone: undefined }
 		}
 		if (!Notion.isDateTime(date.start)) {
 			const lastDay = Temporal.PlainDate.from(date.end && !Notion.isDateTime(date.end) ? date.end : date.start)
@@ -685,7 +685,7 @@ export class Notion extends Integration<NotionCredentials> {
 				start: midnightOf(Temporal.PlainDate.from(date.start), 'UTC') as never,
 				end: midnightOf(lastDay.add({ days: 1 }), 'UTC') as never,
 				allDay: true,
-				timeZone: null,
+				timeZone: undefined,
 			}
 		}
 		const timeZone = date.time_zone ?? null
@@ -693,7 +693,7 @@ export class Notion extends Integration<NotionCredentials> {
 			start: Notion.instantFrom(date.start, timeZone) as never,
 			end: date.end ? Notion.instantFrom(date.end, timeZone) as never : undefined,
 			allDay: false,
-			timeZone: EntryTimeZone.parse(timeZone) ?? null,
+			timeZone: EntryTimeZone.parse(timeZone),
 		}
 	}
 
@@ -765,11 +765,11 @@ export class Notion extends Integration<NotionCredentials> {
 		entry.allDay = span.allDay
 		entry.timeZone = span.timeZone
 		entry.description = options?.description ?? ''
-		entry.percentComplete = null
+		entry.percentComplete = undefined
 		entry.location = ''
-		entry.color = null
-		entry.reminders = null
-		entry.recurrence = null
+		entry.color = undefined
+		entry.reminders = undefined
+		entry.recurrence = undefined
 		entry.data = { etag: page.last_edited_time, url: page.url, ...(options?.localWrite ? { localWriteAt: Date.now() } : {}) }
 	}
 }

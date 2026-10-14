@@ -130,9 +130,9 @@ describe('Tempo entry mapping', () => {
 		Tempo.applyWorklog(entry, worklog(), issue, 'https://acme.atlassian.net', BERLIN)
 
 		assert.equal(entry.location, '')
-		assert.equal(entry.reminders, null)
-		assert.equal(entry.participants, null)
-		assert.equal(entry.recurrence, null)
+		assert.equal(entry.reminders, undefined)
+		assert.equal(entry.participants, undefined)
+		assert.equal(entry.recurrence, undefined)
 	})
 
 	it('leaves no link when the issue never resolved', () => {

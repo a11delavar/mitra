@@ -205,7 +205,7 @@ export class SourceMigration {
 		}
 		return (this.occurrencesOf(entry) ?? []).map(occurrence => {
 			const flattened = occurrenceOf(entry, occurrence)
-			return this.copyOf(entry, { uid: crypto.randomUUID(), recurrence: null, exdates: undefined, start: flattened.start, end: flattened.end, due: flattened.due })
+			return this.copyOf(entry, { uid: crypto.randomUUID(), recurrence: undefined, exdates: undefined, start: flattened.start, end: flattened.end, due: flattened.due })
 		})
 	}
 
@@ -219,7 +219,7 @@ export class SourceMigration {
 			heading: entry.heading,
 			description: entry.description,
 			location: entry.location,
-			color: entry.color ?? null,
+			color: entry.color,
 			start: entry.start,
 			end: entry.end,
 			due: entry.due,
@@ -229,7 +229,7 @@ export class SourceMigration {
 			status: entry.status,
 			percentComplete: entry.percentComplete,
 			// A copy is a new task, so it starts unranked rather than sharing the original's key.
-			rank: this.keepOriginals ? null : entry.rank,
+			rank: this.keepOriginals ? undefined : entry.rank,
 			transparency: entry.transparency,
 			visibility: entry.visibility,
 			recurrence: entry.recurrence,

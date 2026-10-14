@@ -73,7 +73,7 @@ describe('busy availability in a CalDAV calendar', () => {
 		})
 
 		it('writes nothing for free availability', () => {
-			assert.deepEqual(counts(CalDAVAvailability.plan([], [availability({ transparency: null }), availability({ transparency: Transparency.Free })], calendars)), [0, 0, 0])
+			assert.deepEqual(counts(CalDAVAvailability.plan([], [availability({ transparency: undefined }), availability({ transparency: Transparency.Free })], calendars)), [0, 0, 0])
 		})
 
 		it('writes nothing for availability in a calendar it cannot write to', () => {

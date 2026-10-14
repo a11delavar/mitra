@@ -29,6 +29,7 @@ async function inMemoryOrm() {
 	const orm = await MikroORM.init({
 		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, IcsSubscription, Notion, Tempo, MitraCalendar, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
 		dbName: ':memory:',
+		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {
 			override joinColumnName(propertyName: string) {
 				return this.propertyToColumnName(propertyName)
@@ -322,7 +323,7 @@ describe('Calendar subscription sync', () => {
 		const { entries } = await poll(em, await seed(em))
 
 		const outlook = entries.find(entry => entry.uri === 'outlook@example.com')!
-		assert.equal(outlook.timeZone, null)
+		assert.equal(outlook.timeZone, undefined)
 		assert.equal(outlook.start!.toISOString(), '2026-08-11T09:00:00.000Z')
 	})
 

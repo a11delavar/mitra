@@ -128,7 +128,7 @@ describe('EntryStore', () => {
 	describe('reorder', () => {
 		const undated = { type: EntryType.Task, start: undefined, end: undefined }
 		const task = (id: string, key?: string, fields: Partial<Entry> = {}) =>
-			entry({ ...undated, id, heading: id, rank: key ? EntryRank.parse(key) : null, ...fields })
+			entry({ ...undated, id, heading: id, rank: key ? EntryRank.parse(key) : undefined, ...fields })
 		const sending = () => {
 			const sent = new Array<Record<string, string>>()
 			EntryStore.persistence = { ...fake().persistence, reorder: ranks => (sent.push(ranks), Promise.resolve()) }
@@ -165,7 +165,7 @@ describe('EntryStore', () => {
 			} finally {
 				console.error = quiet
 			}
-			assert.deepEqual([first.rank?.key, unranked.rank, moved.rank?.key], ['a3', null, 'a5'])
+			assert.deepEqual([first.rank?.key, unranked.rank, moved.rank?.key], ['a3', undefined, 'a5'])
 		})
 	})
 
@@ -580,7 +580,7 @@ describe('EntryStore', () => {
 			EntryStore.resolveScope = () => Promise.reject(new Error('must not be asked'))
 			const working = occurrence({ recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }) })
 			EntryStore.applyServerEntries([working])
-			working.recurrence = null
+			working.recurrence = undefined
 			const commit = EntryStore.commit(working)
 			await transport.respond(entry({ id: 'master' }))
 			await commit

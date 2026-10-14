@@ -132,8 +132,8 @@ describe('converting an entry to availability', () => {
 
 		assert.equal(entry.location, 'Room 1')
 		assert.equal(entry.transparency, Transparency.Busy)
-		assert.equal(entry.reminders, null)
-		assert.equal(entry.participants, null)
+		assert.equal(entry.reminders, undefined)
+		assert.equal(entry.participants, undefined)
 		assert.equal(entry.heading, 'Standup')
 	})
 
@@ -141,7 +141,7 @@ describe('converting an entry to availability', () => {
 		const entry = new Entry({ sourceId: 's', type: EntryType.Task, status: TaskStatus.Doing, percentComplete: 40 })
 		entry.type = EntryType.Availability
 		assert.equal(entry.status, undefined)
-		assert.equal(entry.percentComplete, null)
+		assert.equal(entry.percentComplete, undefined)
 	})
 
 	it('keeps location and reminders when an event becomes a task', () => {
@@ -172,6 +172,7 @@ async function inMemoryOrm() {
 	const orm = await MikroORM.init({
 		entities: [User, Identity, Integration, CalDAV, MitraCalendar, Source, Entry, Recurrence, EntryRelation, NotificationSubscription, Session],
 		dbName: ':memory:',
+		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {
 			override joinColumnName(propertyName: string) {
 				return this.propertyToColumnName(propertyName)

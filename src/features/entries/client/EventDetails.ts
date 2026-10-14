@@ -645,7 +645,7 @@ export class EntryDetailsComponent extends Component {
 			color = null
 		}
 
-		this.segment.entry.color = color ?? null
+		this.segment.entry.color = color ?? undefined
 		EntryStore.notify()
 		this.handleChange().catch(() => void 0)
 	}

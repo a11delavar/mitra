@@ -20,6 +20,7 @@ describe('Sandbox', () => {
 		orm = await MikroORM.init({
 			entities: [User, Identity, Integration, MitraCalendar, Demo, Source, Entry, Recurrence, EntryRelation, Session],
 			dbName: ':memory:',
+			forceUndefined: true,
 			namingStrategy: class extends UnderscoreNamingStrategy {
 				override joinColumnName(propertyName: string) {
 					return this.propertyToColumnName(propertyName)

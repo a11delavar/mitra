@@ -4,11 +4,11 @@ import { Participants, ParticipantRole, ParticipantStatus } from './Participant.
 
 describe('Participants', () => {
 	describe('normalize', () => {
-		it('is null for none: the tri-state clear, like reminders', () => {
-			assert.equal(Participants.normalize(undefined), null)
-			assert.equal(Participants.normalize(null), null)
-			assert.equal(Participants.normalize([]), null)
-			assert.equal(Participants.normalize([{ email: 'not-an-email' }]), null)
+		it('is none for an empty or unusable list', () => {
+			assert.equal(Participants.normalize(undefined), undefined)
+			assert.equal(Participants.normalize(null), undefined)
+			assert.equal(Participants.normalize([]), undefined)
+			assert.equal(Participants.normalize([{ email: 'not-an-email' }]), undefined)
 		})
 
 		it('lowercases and trims e-mails and drops invalid ones', () => {
@@ -112,9 +112,9 @@ describe('Participants', () => {
 			])
 		})
 
-		it('is null when nothing would change, and never displaces an existing organizer', () => {
+		it('is none when nothing would change, and never displaces an existing organizer', () => {
 			const participants = Participants.normalize([{ email: 'organizer@example.com', organizer: true }])!
-			assert.equal(participants.inviting(['ORGANIZER@example.com'], 'me@example.com'), null)
+			assert.equal(participants.inviting(['ORGANIZER@example.com'], 'me@example.com'), undefined)
 			assert.equal(participants.inviting(['second@example.com'])!.organizer?.email, 'organizer@example.com')
 		})
 	})
@@ -142,10 +142,10 @@ describe('Participants', () => {
 			])
 		})
 
-		it('is null when the role already holds, the address is unknown, or the target is the organizer', () => {
-			assert.equal(list().withRole('b@example.com', ParticipantRole.Optional), null)
-			assert.equal(list().withRole('nobody@example.com', ParticipantRole.Optional), null)
-			assert.equal(list().withRole('organizer@example.com', ParticipantRole.Optional), null)
+		it('is none when the role already holds, the address is unknown, or the target is the organizer', () => {
+			assert.equal(list().withRole('b@example.com', ParticipantRole.Optional), undefined)
+			assert.equal(list().withRole('nobody@example.com', ParticipantRole.Optional), undefined)
+			assert.equal(list().withRole('organizer@example.com', ParticipantRole.Optional), undefined)
 		})
 
 		it('exposes only invitees as removable, never the organizer', () => {
@@ -160,7 +160,7 @@ describe('Participants', () => {
 
 		it('clears the list once the last invitee goes, since a lone organizer has nothing to organize', () => {
 			const alone = Participants.normalize([{ email: 'organizer@example.com', organizer: true }, { email: 'a@example.com' }])!
-			assert.equal(alone.without('a@example.com'), null)
+			assert.equal(alone.without('a@example.com'), undefined)
 		})
 	})
 

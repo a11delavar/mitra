@@ -34,5 +34,7 @@ export function ormConfig(dbName: string) {
 			}
 		},
 		allowGlobalContext: true,
+		// The domain holds no null: an empty column loads as an absent field, which saves as NULL again.
+		forceUndefined: true,
 	})
 }

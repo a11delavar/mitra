@@ -81,7 +81,7 @@ export class TaskStatusComponent extends Component {
 
 	private readonly clearPercent = (e: Event) => {
 		e.stopPropagation()
-		this.entry.percentComplete = null
+		this.entry.percentComplete = undefined
 		if (this.entry.status === TaskStatus.Done) {
 			this.entry.status = TaskStatus.ToDo
 		}

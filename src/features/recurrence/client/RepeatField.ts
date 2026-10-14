@@ -37,8 +37,7 @@ export class RepeatField extends Component {
 	}
 
 	private commit(recurrence?: Recurrence) {
-		// `null` removes a rule, as JSON drops an `undefined` one, which the server reads as unchanged.
-		this.entry.recurrence = recurrence ?? (this.entry.recurrence ? null : undefined)
+		this.entry.recurrence = recurrence
 		this.requestUpdate()
 		this.change.dispatch()
 	}

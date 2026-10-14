@@ -20,6 +20,7 @@ import { Checklist } from './Checklist.js'
 import { type ReminderDefaults } from '../reminders/ReminderDefaults.js'
 import { type Integration } from '../../integrations/Integration.js'
 import { TimeZone } from '../time/TimeZone.js'
+import { EntryPatch } from './EntryPatch.js'
 
 export interface EntryTally {
 	readonly done: number
@@ -63,28 +64,33 @@ export class Entry {
 	get type(): EntryType { return this._type }
 	set type(value: EntryType | EntryTypeValue) {
 		this._type = EntryType.parse(value)
-		if (this._type.isTask) {
-			this.transparency = null
-		} else {
-			this.status = undefined
-			this.percentComplete = null
-			this.due = undefined
-			this.estimate = null
-		}
-		if (this._type.isAvailability) {
-			this.participants = null
-			this.reminders = null
-		}
+		this.fitType()
 		const defaults = reminderDefaults.get(this)
 		if (defaults) {
 			this.adoptDefaultReminders(defaults)
 		}
 	}
 
+	/** Drops what the type can't hold. */
+	private fitType() {
+		if (this._type.isTask) {
+			this.transparency = undefined
+		} else {
+			this.status = undefined
+			this.percentComplete = undefined
+			this.due = undefined
+			this.estimate = undefined
+		}
+		if (this._type.isAvailability) {
+			this.participants = undefined
+			this.reminders = undefined
+		}
+	}
+
 	@property({ type: 'string' }) heading = ''
 	@property({ type: 'string' }) description = ''
 	@property({ type: 'string' }) location = ''
-	@property({ type: 'string', nullable: true }) color: string | null = null
+	@property({ type: 'string', nullable: true }) color?: string
 
 	@property({ type: 'Date', nullable: true }) start?: DateTime
 	@property({ type: 'Date', nullable: true }) end?: DateTime
@@ -93,21 +99,21 @@ export class Entry {
 	@property({ type: 'Date', nullable: true }) due?: DateTime
 
 	/** A task's length in minutes while it has no start. The end is the same fact once it does, so one of the two is always empty. */
-	@property({ type: 'number', nullable: true }) estimate: number | null = null
+	@property({ type: 'number', nullable: true }) estimate?: number
 
 	@converter(TaskStatus.converter)
 	@enumType({ type: TaskStatus.Mapper, items: TaskStatus.all.map(String), nullable: true }) status?: TaskStatus
 
 	/** Task PERCENT-COMPLETE (RFC 5545 §3.8.1.8), 0-100. */
-	@property({ type: 'number', nullable: true }) percentComplete: number | null = null
+	@property({ type: 'number', nullable: true }) percentComplete?: number
 
 	/** Position in the manual order, owned by Mitra and never written to the provider. Only
 	 * `PUT /entries/ranks` changes it, so editEquals ignores it. */
 	@converter(EntryRank.converter)
-	@property({ type: EntryRank.Mapper, nullable: true }) rank: EntryRank | null = null
+	@property({ type: EntryRank.Mapper, nullable: true }) rank?: EntryRank
 
 	get progress(): number | undefined {
-		return this.percentComplete === null || this.percentComplete === undefined ? undefined : this.percentComplete / 100
+		return this.percentComplete === undefined ? undefined : this.percentComplete / 100
 	}
 
 	get checklist(): Checklist {
@@ -127,9 +133,9 @@ export class Entry {
 	}
 
 	@converter(Transparency.converter)
-	@enumType({ type: Transparency.Mapper, items: Transparency.all.map(String), nullable: true }) transparency: Transparency | null = null
+	@enumType({ type: Transparency.Mapper, items: Transparency.all.map(String), nullable: true }) transparency?: Transparency
 	@converter(Visibility.converter)
-	@enumType({ type: Visibility.Mapper, items: Visibility.all.map(String), nullable: true }) visibility: Visibility | null = null
+	@enumType({ type: Visibility.Mapper, items: Visibility.all.map(String), nullable: true }) visibility?: Visibility
 
 	/** TRANSP with its default filled in: busy for events (RFC 5545), free for availability. */
 	get showAs(): Transparency {
@@ -138,7 +144,7 @@ export class Entry {
 
 	@property({ type: 'boolean' }) allDay = false
 	@converter(EntryTimeZone.converter)
-	@property({ type: EntryTimeZone.Mapper, nullable: true }) timeZone?: EntryTimeZone | null
+	@property({ type: EntryTimeZone.Mapper, nullable: true }) timeZone?: EntryTimeZone
 
 	/** Times on whatever clock the reader's is (RFC 5545 floating), stored as if in UTC: an alarm at 7:00 anywhere. */
 	get floating() {
@@ -151,7 +157,7 @@ export class Entry {
 	}
 
 	@property({ type: 'json', nullable: true }) data?: EntryData
-	@property({ type: 'json', nullable: true }) reminders?: Array<number> | null
+	@property({ type: 'json', nullable: true }) reminders?: Array<number>
 
 	get reminderAnchor(): DateTime | undefined {
 		return this.start ?? (this.type?.isTask ? this.due : undefined)
@@ -181,18 +187,18 @@ export class Entry {
 	/** Starts the reminders from `defaults`, following them across kind changes until the user sets their own. All-day entries get none. */
 	adoptDefaultReminders(defaults: ReminderDefaults) {
 		reminderDefaults.set(this, defaults)
-		this.reminders = this.allDay || !this.reminderAnchor ? null : defaults.for(this.type)
+		this.reminders = this.allDay || !this.reminderAnchor ? undefined : defaults.for(this.type) ?? undefined
 	}
 
 	/** The user's own reminders, which no default replaces. */
 	setReminders(minutes: ReadonlyArray<number>) {
 		reminderDefaults.delete(this)
-		this.reminders = minutes.length ? [...new Set(minutes)].sort((a, b) => a - b) : null
+		this.reminders = minutes.length ? [...new Set(minutes)].sort((a, b) => a - b) : undefined
 	}
 
-	@property({ type: 'json', nullable: true }) participants?: Array<Participant> | null
+	@property({ type: 'json', nullable: true }) participants?: Array<Participant>
 
-	get participantList(): Participants | null {
+	get participantList(): Participants | undefined {
 		return Participants.normalize(this.participants)
 	}
 
@@ -218,7 +224,7 @@ export class Entry {
 	}
 
 	markAllParticipants(role: ParticipantRole) {
-		this.participants = this.participantList?.marked(role) ?? null
+		this.participants = this.participantList?.marked(role)
 	}
 
 	setParticipantRole(email: string, role: ParticipantRole): boolean {
@@ -240,16 +246,17 @@ export class Entry {
 	}
 
 	clearParticipants() {
-		this.participants = null
+		this.participants = undefined
 	}
 
 	@property({ type: 'string', nullable: true }) uid?: string
-	@embedded(() => Recurrence, { prefix: 'recurrence_', nullable: true }) recurrence?: Recurrence | null
+	@embedded(() => Recurrence, { prefix: 'recurrence_', nullable: true }) recurrence?: Recurrence
 	@property({ type: 'json', nullable: true }) exdates?: Array<number>
 	@property({ type: 'string', nullable: true, fieldName: 'recurrence_master_id' }) recurringEntryId?: string
 	@property({ type: 'Date', nullable: true }) recurrenceId?: DateTime
 	seriesStart?: DateTime
 
+	/** Unknown while absent, none while `null`: a provider may not say. */
 	relations?: Array<Relation> | null
 
 	get relationList() {
@@ -283,20 +290,6 @@ export class Entry {
 		// Calendar days, so an all-day span across a DST change still reads as whole days.
 		const { days, hours, minutes } = this.start.zonedDateTime.until(this.end.zonedDateTime, { largestUnit: 'days', smallestUnit: 'minutes' })
 		return new Intl.DurationFormat(Localizer.locales.current, { style: 'narrow' }).format({ days, hours, minutes })
-	}
-
-	/**
-	 * A request body's status, transparency, visibility and time zone as value objects. An Entry arrives with them, a plain
-	 * body (a series or a scoped edit) with their codes and ids; an unknown one reads as none.
-	 */
-	static reviveValues<T extends Partial<Pick<Entry, 'status' | 'transparency' | 'visibility' | 'timeZone'>>>(body: T): T {
-		const parse = <V>(value: unknown, of: (value: unknown) => V | undefined) => value === undefined || value === null ? value : of(value) ?? null
-		return Object.assign(body, {
-			...'status' in body ? { status: parse(body.status, TaskStatus.parse) ?? undefined } : {},
-			...'transparency' in body ? { transparency: parse(body.transparency, Transparency.parse) } : {},
-			...'visibility' in body ? { visibility: parse(body.visibility, Visibility.parse) } : {},
-			...'timeZone' in body ? { timeZone: parse(body.timeZone, EntryTimeZone.parse) } : {},
-		})
 	}
 
 	constructor(init?: Partial<Entry>) {
@@ -478,7 +471,7 @@ export class Entry {
 		this.end = allDay
 			? this.start.add({ days: Math.max(1, Math.round(TimeSpan.fromMinutes(this.estimate ?? 0).days)) })
 			: this.start.add({ minutes: this.estimate ?? durationMinutes })
-		this.estimate = null
+		this.estimate = undefined
 	}
 
 	/** Takes the dates off; the span's length stays behind as the estimate. Reminders stay only while a due anchors them. */
@@ -492,7 +485,7 @@ export class Entry {
 		this.start = undefined
 		this.end = undefined
 		if (!this.due) {
-			this.reminders = null
+			this.reminders = undefined
 		}
 	}
 
@@ -524,13 +517,30 @@ export class Entry {
 	adoptSpan(other: Entry) {
 		// Leaving the calendar drops reminders as unschedule() does, unless a due date still anchors them.
 		if (this.scheduled && !other.scheduled && !other.due) {
-			this.reminders = null
+			this.reminders = undefined
 		}
 		this.start = other.start
 		this.end = other.end
 		this.estimate = other.estimate
 		this.allDay = other.allDay
 		this.due = other.due
+	}
+
+	/** Takes over what `patch` sets, and a new entry's value where it clears. What the type can't hold goes, and an estimate a start replaced. */
+	apply(patch: EntryPatch) {
+		const cleared = new Entry()
+		for (const field of EntryPatch.fields) {
+			const value = patch[field]
+			if (value !== undefined) {
+				// Relations keep their null, which tells none from unknown.
+				Object.assign(this, { [field]: value ?? (field === 'relations' ? null : cleared[field]) })
+			}
+		}
+		this.fitType()
+		if (this.start) {
+			this.estimate = undefined
+		}
+		return this
 	}
 
 	/** Takes over everything an edit can change, as an entry kept in Mitra's own database does. */
@@ -562,7 +572,6 @@ export class Entry {
 	setTimeZone(zone: EntryTimeZone) {
 		if (!this.allDay) {
 			const from = this.timeZone?.clock ?? TimeZone.deviceId
-			// A date the entry lacks arrives as null from the wire, not undefined.
 			const rezoned = (value: DateTime | undefined) => !value ? value : new DateTime(
 				Temporal.Instant.fromEpochMilliseconds(value.valueOf())
 					.toZonedDateTimeISO(from)

@@ -391,7 +391,7 @@ describe('Notion date decoding (spanFrom)', () => {
 		assert.equal(span.allDay, true)
 		assert.equal(span.start!.toISOString(), '2026-06-02T00:00:00.000Z')
 		assert.equal(span.end!.toISOString(), '2026-06-03T00:00:00.000Z')
-		assert.equal(span.timeZone, null)
+		assert.equal(span.timeZone, undefined)
 	})
 
 	it('reads a date-only range with Notion\'s INCLUSIVE end as the exclusive next midnight', () => {
@@ -404,7 +404,7 @@ describe('Notion date decoding (spanFrom)', () => {
 		assert.equal(span.allDay, false)
 		assert.equal(span.start!.toISOString(), '2026-07-14T09:00:00.000Z')
 		assert.equal(span.end, undefined)
-		assert.equal(span.timeZone, null)
+		assert.equal(span.timeZone, undefined)
 	})
 
 	it('reads an offset date-time as its instant', () => {
@@ -420,24 +420,24 @@ describe('Notion date decoding (spanFrom)', () => {
 	})
 
 	it('reads an unset date as an undated task', () => {
-		assert.deepEqual(Notion.spanFrom(null), { start: undefined, end: undefined, allDay: false, timeZone: null })
-		assert.deepEqual(Notion.spanFrom(undefined), { start: undefined, end: undefined, allDay: false, timeZone: null })
+		assert.deepEqual(Notion.spanFrom(null), { start: undefined, end: undefined, allDay: false, timeZone: undefined })
+		assert.deepEqual(Notion.spanFrom(undefined), { start: undefined, end: undefined, allDay: false, timeZone: undefined })
 	})
 })
 
 describe('Notion date encoding (dateFrom)', () => {
 	it('writes a single all-day day date-only, with no end', () => {
-		const date = Notion.dateFrom({ start: D('2026-06-02T00:00:00Z'), end: D('2026-06-03T00:00:00Z'), allDay: true, timeZone: null })
+		const date = Notion.dateFrom({ start: D('2026-06-02T00:00:00Z'), end: D('2026-06-03T00:00:00Z'), allDay: true, timeZone: undefined })
 		assert.deepEqual(date, { start: '2026-06-02', end: null, time_zone: null })
 	})
 
 	it('writes a multi-day all-day span with the INCLUSIVE last day as end', () => {
-		const date = Notion.dateFrom({ start: D('2026-06-02T00:00:00Z'), end: D('2026-06-05T00:00:00Z'), allDay: true, timeZone: null })
+		const date = Notion.dateFrom({ start: D('2026-06-02T00:00:00Z'), end: D('2026-06-05T00:00:00Z'), allDay: true, timeZone: undefined })
 		assert.deepEqual(date, { start: '2026-06-02', end: '2026-06-04', time_zone: null })
 	})
 
 	it('writes an unzoned timed span in the Z form', () => {
-		const date = Notion.dateFrom({ start: D('2026-07-14T07:00:00Z'), end: D('2026-07-14T08:00:00Z'), allDay: false, timeZone: null })
+		const date = Notion.dateFrom({ start: D('2026-07-14T07:00:00Z'), end: D('2026-07-14T08:00:00Z'), allDay: false, timeZone: undefined })
 		assert.deepEqual(date, { start: '2026-07-14T07:00:00.000Z', end: '2026-07-14T08:00:00.000Z', time_zone: null })
 	})
 
@@ -452,11 +452,11 @@ describe('Notion date encoding (dateFrom)', () => {
 	})
 
 	it('writes an undated task as null (clearing the property)', () => {
-		assert.equal(Notion.dateFrom({ start: undefined, end: undefined, allDay: false, timeZone: null }), null)
+		assert.equal(Notion.dateFrom({ start: undefined, end: undefined, allDay: false, timeZone: undefined }), null)
 	})
 
 	it('round-trips through spanFrom in both the all-day and the zoned form', () => {
-		const allDay = { start: D('2026-06-02T00:00:00Z'), end: D('2026-06-05T00:00:00Z'), allDay: true, timeZone: null }
+		const allDay = { start: D('2026-06-02T00:00:00Z'), end: D('2026-06-05T00:00:00Z'), allDay: true, timeZone: undefined }
 		const zoned = { start: D('2026-07-14T07:00:00Z'), end: D('2026-07-14T08:00:00Z'), allDay: false, timeZone: EntryTimeZone.parse('Europe/Berlin') }
 		for (const span of [allDay, zoned]) {
 			const back = Notion.spanFrom(Notion.dateFrom(span))
@@ -545,9 +545,9 @@ describe('Notion page reads (applyPage)', () => {
 		Notion.applyPage(entry, page(), schema())
 		assert.equal(entry.description, '')
 		assert.equal(entry.location, '')
-		assert.equal(entry.color, null)
-		assert.equal(entry.reminders, null)
-		assert.equal(entry.recurrence, null)
+		assert.equal(entry.color, undefined)
+		assert.equal(entry.reminders, undefined)
+		assert.equal(entry.recurrence, undefined)
 	})
 
 	it('applies the separately-fetched body markdown as the description', () => {

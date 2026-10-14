@@ -62,9 +62,9 @@ export class CalDAVAvailability {
 			&& instant(event.start) === instant(desired.start)
 			&& instant(event.end) === instant(desired.end)
 			&& !!event.allDay === !!desired.allDay
-			&& (event.timeZone ?? null) === (desired.timeZone ?? null)
-			&& (event.transparency ?? null) === (desired.transparency ?? null)
-			&& (event.visibility ?? null) === (desired.visibility ?? null)
+			&& event.timeZone === desired.timeZone
+			&& event.transparency === desired.transparency
+			&& event.visibility === desired.visibility
 			&& (event.location || '') === (desired.location || '')
 			&& Recurrence.equal(event.recurrence, desired.recurrence)
 			&& exdates(event) === exdates(desired)

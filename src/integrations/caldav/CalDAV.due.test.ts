@@ -34,7 +34,7 @@ describe('a VTODO\'s dates', () => {
 			const times = read('DTSTART:20260602T090000Z', 'ESTIMATED-DURATION:PT2H', 'DUE:20260605T170000Z')
 			assert.equal(ms(times.end), Date.parse('2026-06-02T11:00:00Z'))
 			assert.equal(ms(times.due), Date.parse('2026-06-05T17:00:00Z'))
-			assert.equal(times.estimate, null)
+			assert.equal(times.estimate, undefined)
 		})
 
 		it('takes a DTSTART alone as a moment', () => {

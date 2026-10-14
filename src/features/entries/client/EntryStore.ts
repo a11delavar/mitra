@@ -5,6 +5,7 @@ import { type EntryPlan, type SkippedEntry } from '../../relations/EntryPlan.js'
 import { type Entry } from '../Entry.js'
 import { ApiError, createEvent, deleteEvent, deleteOccurrence, editOccurrence, rankEntries, updateEvent, updateRelations } from '../../../infrastructure/http/Api.js'
 import { EntryRank } from '../EntryRank.js'
+import { EntryPatch } from '../EntryPatch.js'
 
 export const reportSaveError = (error: unknown) =>
 	console.error('Persisting the entry failed. The edit is kept locally and retried on the next change:', error)
@@ -109,7 +110,9 @@ export class EntryStore extends Controller {
 						}
 						continue
 					}
-					const saved = entry.persisted ? await EntryStore.persistence.update(entry) : await EntryStore.persistence.create(entry)
+					// Through an occurrence only a rule edit gets here, and the rule goes to every occurrence.
+					const saved = !entry.persisted ? await EntryStore.persistence.create(entry)
+						: await EntryStore.persistence.update(entry, entry.recurringEntryId ? [...EntryPatch.shared, 'recurrence'] : undefined)
 					if (!entry.persisted) {
 						entry.id = saved.id
 						this.draft = this.draft === entry ? undefined : this.draft
@@ -451,11 +454,12 @@ export class EntryStore extends Controller {
 	static async reorder(listed: ReadonlyArray<Entry>, entry: Entry, previous?: Entry, next?: Entry): Promise<void> {
 		const before = new Map([...listed, entry].map(each => [each, each.rank]))
 		try {
-			const placed = EntryRank.tryBetween(previous?.rank, next?.rank)
+			// A neighbor without a rank (null) cannot decide one; a missing neighbor (undefined) leaves its side open.
+			const placed = EntryRank.tryBetween(previous && (previous.rank ?? null), next && (next.rank ?? null))
 			if (!placed) {
 				EntryRank.sequence(listed.length).forEach((rank, index) => listed[index]!.rank = rank)
 			}
-			entry.rank = placed ?? EntryRank.between(previous?.rank ?? undefined, next?.rank ?? undefined)
+			entry.rank = placed ?? EntryRank.between(previous?.rank, next?.rank)
 			this.notify()
 			const changed = placed ? [entry] : [...new Set([...listed, entry])]
 			// A repeating task holds its place through its series.

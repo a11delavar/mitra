@@ -169,15 +169,15 @@ export class Tempo extends Integration<TempoCredentials> {
 		entry.description = worklog.description ?? ''
 		entry.location = ''
 		entry.allDay = false
-		entry.timeZone = EntryTimeZone.parse(zone) ?? null
+		entry.timeZone = EntryTimeZone.parse(zone)
 		entry.start = start as never
 		entry.end = new Date(start.getTime() + worklog.timeSpentSeconds * 1000) as never
-		entry.percentComplete = null
-		entry.recurrence = null
-		entry.reminders = null
-		entry.participants = null
-		entry.transparency = null
-		entry.visibility = null
+		entry.percentComplete = undefined
+		entry.recurrence = undefined
+		entry.reminders = undefined
+		entry.participants = undefined
+		entry.transparency = undefined
+		entry.visibility = undefined
 		entry.data = {
 			raw: JSON.stringify(worklog),
 			etag: worklog.updatedAt,

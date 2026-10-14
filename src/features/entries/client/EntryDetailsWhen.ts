@@ -151,7 +151,7 @@ export class EntryDetailsWhen extends Component {
 	}
 
 	private readonly handleEstimateChange = (e: CustomEvent<number | undefined>) => {
-		this.entry.estimate = e.detail ?? null
+		this.entry.estimate = e.detail ?? undefined
 		this.estimateShown = false
 		this.commit()
 	}
@@ -437,7 +437,7 @@ export class EntryDetailsWhen extends Component {
 		if (!this.entry.type.isTask || !this.capabilities.estimate) {
 			return html.nothing
 		}
-		return this.entry.estimate !== null || this.estimateShown ? html`
+		return this.entry.estimate !== undefined || this.estimateShown ? html`
 			<div class="estimate row field">
 				<mitra-icon icon="hourglass"></mitra-icon>
 				<mitra-duration-field label=${t('Estimate')} ?readonly=${!this.editable}

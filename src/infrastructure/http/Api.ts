@@ -9,6 +9,7 @@ import { type RecurrenceScope } from '../../features/recurrence/Recurrence.js'
 import { Integration } from '../../integrations/Integration.js'
 import { type EntryType } from '../../features/entries/EntryType.js'
 import { type Entry } from '../../features/entries/Entry.js'
+import { EntryPatch, type EntryPatchField } from '../../features/entries/EntryPatch.js'
 import { TimeZone } from '../../features/time/TimeZone.js'
 import { EntryTimeZone } from '../../features/entries/EntryTimeZone.js'
 import { type ChangelogSection } from '../../features/about/Changelog.js'
@@ -166,7 +167,7 @@ export function updateRelations(id: string, relations: Array<Relation> | null) {
 }
 
 export function createEvent(entry: Entry) {
-	return Api.post<Entry>(`/entries?tz=${tz()}`, Object.assign(entry.clone(), {
+	return Api.post<Entry>(`/entries?tz=${tz()}`, Object.assign(EntryPatch.of(entry), {
 		timeZone: entry.timeZone ?? EntryTimeZone.parse(TimeZone.deviceId) ?? null,
 	}))
 }
@@ -283,37 +284,9 @@ export function deleteIntegration(id: string) {
 	return Api.delete(`/integrations/${id}`)
 }
 
-/**
- * These fields of `entry` as a model carries them, value objects as their codes: a plain request body is no model, so
- * no converter would run on it. `EntryPatch` replaces this.
- */
-function wireFields(entry: Entry, fields: ReadonlyArray<keyof Entry & string>) {
-	const wire = (entry as unknown as { toJSON(): Record<string, unknown> }).toJSON()
-	return Object.fromEntries(fields.map(field => [field, wire[field] ?? null]))
-}
-
-export function updateEvent(entry: Entry) {
-	if (entry.recurringEntryId) {
-		return Api.put<Entry>(`/entries/${entry.recurringEntryId}?tz=${tz()}`, {
-			heading: entry.heading,
-			description: entry.description,
-			location: entry.location,
-			color: entry.color,
-			...wireFields(entry, ['timeZone', 'transparency', 'visibility']),
-			reminders: entry.reminders ?? null,
-			participants: entry.participants ?? null,
-			...(entry.recurrence !== undefined ? { recurrence: entry.recurrence } : {}),
-		})
-	}
-	// `null` clears; an absent date is the stored one to the server, and JSON drops an undefined one.
-	return Api.put<Entry>(`/entries/${entry.id}?tz=${tz()}`, Object.assign(entry.clone(), {
-		recurrence: entry.recurrence ?? null,
-		reminders: entry.reminders ?? null,
-		participants: entry.participants ?? null,
-		start: entry.start ?? null,
-		end: entry.end ?? null,
-		due: entry.due ?? null,
-	}))
+/** Writes `fields` of the entry, or of every occurrence of a repeating one: those they all share, unless told otherwise. */
+export function updateEvent(entry: Entry, fields: ReadonlyArray<EntryPatchField> = entry.recurringEntryId ? EntryPatch.shared : EntryPatch.fields) {
+	return Api.put<Entry>(`/entries/${entry.recurringEntryId ?? entry.id}?tz=${tz()}`, EntryPatch.of(entry, fields))
 }
 
 export function deleteEvent(id: string) {
@@ -330,29 +303,16 @@ export function searchLocations(query: string, position?: { lat: number, lon: nu
 	return Api.get<Array<Partial<LocationSuggestion>>>(`/locations?${params}`).then(places => places.map(place => new LocationSuggestion(place)))
 }
 
+/** One occurrence of a repeating entry, addressed through the entry with how far a change to it reaches. */
+function occurrenceUrl(occurrence: Entry, scope: RecurrenceScope) {
+	const query = new URLSearchParams({ scope, recurrenceId: occurrence.recurrenceId!.toISOString(), tz: TimeZone.deviceId })
+	return `/entries/${occurrence.recurringEntryId}?${query}`
+}
+
 export function editOccurrence(occurrence: Entry, scope: RecurrenceScope) {
-	return Api.put<Entry>(`/entries/${occurrence.recurringEntryId}?tz=${tz()}`, {
-		scope,
-		recurrenceId: occurrence.recurrenceId,
-		sourceId: occurrence.sourceId,
-		heading: occurrence.heading,
-		description: occurrence.description,
-		location: occurrence.location,
-		color: occurrence.color,
-		// `null` clears; an absent date would fall back to the occurrence's own on the server.
-		start: occurrence.start ?? null,
-		end: occurrence.end ?? null,
-		due: occurrence.due ?? null,
-		estimate: occurrence.estimate ?? null,
-		allDay: occurrence.allDay,
-		percentComplete: occurrence.percentComplete ?? null,
-		...wireFields(occurrence, ['timeZone', 'status', 'transparency', 'visibility']),
-		reminders: occurrence.reminders ?? null,
-		participants: occurrence.participants ?? null,
-	})
+	return Api.put<Entry>(occurrenceUrl(occurrence, scope), EntryPatch.of(occurrence, EntryPatch.occurrence))
 }
 
 export function deleteOccurrence(occurrence: Entry, scope: RecurrenceScope) {
-	const query = new URLSearchParams({ scope, recurrenceId: occurrence.recurrenceId!.toISOString(), tz: TimeZone.deviceId })
-	return Api.delete(`/entries/${occurrence.recurringEntryId}?${query}`)
+	return Api.delete(occurrenceUrl(occurrence, scope))
 }

@@ -23,6 +23,7 @@ describe('recent locations', () => {
 		orm = await MikroORM.init({
 			entities: [User, Identity, Session, Integration, MitraCalendar, Source, Entry, EntryRelation, Recurrence, NotificationSubscription],
 			dbName: ':memory:',
+			forceUndefined: true,
 			namingStrategy: class extends UnderscoreNamingStrategy {
 				override joinColumnName(propertyName: string) {
 					return this.propertyToColumnName(propertyName)

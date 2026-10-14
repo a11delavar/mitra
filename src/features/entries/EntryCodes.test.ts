@@ -48,31 +48,10 @@ describe('Entry codes', () => {
 	it('crosses the wire as the codes and arrives as the instances', () => {
 		const entry = new Entry({ type: EntryType.Task, heading: 'Report', status: TaskStatus.Done, visibility: Visibility.Private })
 		const wire = wireOf(entry)
-		assert.deepEqual([wire.status, wire.transparency, wire.visibility], ['done', null, 'private'])
+		assert.deepEqual([wire.status, 'transparency' in wire, wire.visibility], ['done', false, 'private'])
 		const revived = revive<Entry>(wire)
 		assert.equal(revived.status, TaskStatus.Done)
 		assert.equal(revived.visibility, Visibility.Private)
-		assert.equal(revived.transparency, null)
-	})
-
-	describe('Entry.reviveValues', () => {
-		it('reads a plain body\'s codes as the instances, leaving what it does not carry absent', () => {
-			const body = Entry.reviveValues({ status: 'doing', transparency: 'free' } as never as Partial<Entry>)
-			assert.equal(body.status, TaskStatus.Doing)
-			assert.equal(body.transparency, Transparency.Free)
-			assert.equal('visibility' in body, false)
-		})
-
-		it('keeps a null, which clears, and reads an unknown code as none', () => {
-			const body = Entry.reviveValues({ status: 'finished', transparency: null, visibility: 'secret' } as never as Partial<Entry>)
-			assert.equal(body.status, undefined)
-			assert.equal(body.transparency, null)
-			assert.equal(body.visibility, null)
-		})
-
-		it('passes an Entry\'s instances through', () => {
-			const body = Entry.reviveValues({ visibility: Visibility.Confidential })
-			assert.equal(body.visibility, Visibility.Confidential)
-		})
+		assert.equal(revived.transparency, undefined)
 	})
 })

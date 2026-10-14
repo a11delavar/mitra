@@ -29,7 +29,7 @@ export class ParticipantsField extends Component {
 	@query('mitra-menu') private readonly menu?: Menu
 	@query('input.add') private readonly addInput?: HTMLInputElement
 
-	private get participants(): Participants | null {
+	private get participants(): Participants | undefined {
 		return this.entry.participantList
 	}
 

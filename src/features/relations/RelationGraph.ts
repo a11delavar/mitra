@@ -114,7 +114,7 @@ export class RelationGraph {
 			if (rollup?.total) {
 				return sum + rollup.progress
 			}
-			return child.percentComplete === null || child.percentComplete === undefined ? sum : sum + child.percentComplete / 100
+			return child.percentComplete === undefined ? sum : sum + child.percentComplete / 100
 		}, 0)
 		const ticked = checklist?.done ?? 0
 		const boxes = checklist?.total ?? 0

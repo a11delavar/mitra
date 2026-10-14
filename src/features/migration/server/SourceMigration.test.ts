@@ -58,6 +58,7 @@ async function inMemoryOrm() {
 	const orm = await MikroORM.init({
 		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, MitraCalendar, Minting, Limited, Failing, Source, Entry, EntryRelation, Recurrence, NotificationSubscription, Session],
 		dbName: ':memory:',
+		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {
 			override joinColumnName(propertyName: string) {
 				return this.propertyToColumnName(propertyName)
@@ -260,7 +261,7 @@ describe('SourceMigration', () => {
 
 			await (await SourceMigration.of(em, user, target.id, { targetSourceId: origin.id, keepOriginals: true })).run()
 			const [copy] = await em.find(Entry, { sourceId: origin.id })
-			assert.equal(copy!.rank, null)
+			assert.equal(copy!.rank, undefined)
 		})
 
 		it('carries the identity, so a relationship between two moved entries survives', async () => {

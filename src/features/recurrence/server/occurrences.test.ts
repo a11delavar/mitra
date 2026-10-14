@@ -181,7 +181,7 @@ describe('Occurrences', () => {
 
 		it('an unresolvable stored zone (a pre-sanitization Microsoft name) falls back to fixed UTC instead of throwing', () => {
 			const master = new Entry({
-				id: 'w', sourceId: 's', type: EntryType.Event, heading: 'Sync', timeZone: new EntryTimeZone.Mapper().convertToJSValue('W. Europe Standard Time'),
+				id: 'w', sourceId: 's', type: EntryType.Event, heading: 'Sync', timeZone: new EntryTimeZone.Mapper().convertToJSValue('W. Europe Standard Time') ?? undefined,
 				start: at('2026-10-19T07:00:00Z') as never, end: at('2026-10-19T08:00:00Z') as never,
 				recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }),
 			})
