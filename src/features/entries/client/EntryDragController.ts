@@ -20,6 +20,7 @@ import { EntryEditorIntent } from './EntryEditorIntent.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
 import type { AvailabilitySegment } from '../../availability/client/AvailabilitySegment.js'
 import { placeAllDay, placeTimed, resizePlacement, snapToGrid } from './entryPlacement.js'
+import { DayCells, type DayCell } from './DayCells.js'
 import { haptic } from '../../../design/haptics.js'
 
 type Mode = 'timed' | 'allday'
@@ -29,16 +30,6 @@ type Kind = 'create' | 'move' | 'resize' | 'relate'
 const TOUCH_HOLD_MS = 500
 const TOUCH_HOLD_TOLERANCE = 10
 const TOUCH_HOLD_FEEDBACK_MS = 15
-
-interface Cell {
-	readonly date: DateTime
-	readonly left: number
-	readonly right: number
-	readonly top: number
-	readonly bottom: number
-	readonly gridTop: number
-	readonly gridHeight: number
-}
 
 interface DragPoint {
 	readonly date: DateTime
@@ -70,7 +61,7 @@ interface Drag {
 	readonly pointerId: number
 	readonly surface: HTMLElement
 	readonly origin: { x: number, y: number }
-	readonly cells: ReadonlyArray<Cell>
+	readonly cells: DayCells
 	readonly laneBottom?: number
 	readonly unscheduledBox?: DOMRect
 	readonly gridBox?: DOMRect
@@ -162,7 +153,7 @@ export class EntryDragController extends Controller {
 			return
 		}
 		const cells = this.snapshotCells()
-		if (!cells.length) {
+		if (cells.isEmpty) {
 			return // nothing on screen to place it on
 		}
 		const common = this.commonAt(e, cells, surface)
@@ -176,7 +167,7 @@ export class EntryDragController extends Controller {
 
 	/** Snapshotted at pointer-down, so every frame stays free of DOM reads: the two boxes outside the
 	 * day cells a frame may land in, plus what the drag captures and listens on. */
-	private commonAt(e: PointerEvent, cells: ReadonlyArray<Cell>, surface: HTMLElement) {
+	private commonAt(e: PointerEvent, cells: DayCells, surface: HTMLElement) {
 		return {
 			pointerId: e.pointerId,
 			surface,
@@ -214,49 +205,23 @@ export class EntryDragController extends Controller {
 		return this.grid !== 'week' || entry.allDay ? 'allday' : 'timed'
 	}
 
-	private snapshotCells(): Array<Cell> {
+	private snapshotCells(): DayCells {
 		const cells = this.element.querySelectorAll<HTMLElement>(this.grid === 'timeline' ? '.backdrop .day' : 'mitra-day')
-		return [...cells].map(element => {
+		return new DayCells([...cells].map(element => {
 			const rect = element.getBoundingClientRect()
 			const grid = this.grid === 'timeline' ? rect : element.querySelector<HTMLElement>('.entries')?.getBoundingClientRect() ?? rect
 			return { date: new DateTime(element.dataset.date!), left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, gridTop: grid.top, gridHeight: grid.height }
-		})
+		}))
 	}
 
-	private cellAt(cells: ReadonlyArray<Cell>, x: number, y: number): Cell | undefined {
-		if (!cells.length) {
-			return undefined
-		}
-		if (this.grid === 'week' || this.grid === 'timeline') {
-			return cells.find(cell => x >= cell.left && x <= cell.right)
-				?? (x < cells[0]!.left ? cells[0]! : cells[cells.length - 1]!)
-		}
-		const inside = cells.find(cell => x >= cell.left && x <= cell.right && y >= cell.top && y <= cell.bottom)
-		if (inside) {
-			return inside
-		}
-		let nearest = cells[0]!
-		let nearestDistance = Infinity
-		for (const cell of cells) {
-			const dx = x < cell.left ? cell.left - x : x > cell.right ? x - cell.right : 0
-			const dy = y < cell.top ? cell.top - y : y > cell.bottom ? y - cell.bottom : 0
-			const distance = dx * dx + dy * dy
-			if (distance < nearestDistance) {
-				nearestDistance = distance
-				nearest = cell
-			}
-		}
-		return nearest
-	}
-
-	private minuteIn(cell: Cell, y: number): number {
+	private minuteIn(cell: DayCell, y: number): number {
 		const raw = (y - cell.gridTop) / (cell.gridHeight / 1440)
 		const snapped = Math.round(raw / EntryDragController.snapMinutes) * EntryDragController.snapMinutes
 		return Math.max(0, Math.min(1440, snapped))
 	}
 
-	private pointAt(cells: ReadonlyArray<Cell>, x: number, y: number, mode: Mode): DragPoint | undefined {
-		const cell = this.cellAt(cells, x, y)
+	private pointAt(cells: DayCells, x: number, y: number, mode: Mode): DragPoint | undefined {
+		const cell = cells.nearest(x, y)
 		return cell ? { date: cell.date, minute: mode === 'timed' ? this.minuteIn(cell, y) : 0 } : undefined
 	}
 
