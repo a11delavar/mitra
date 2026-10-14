@@ -5,6 +5,8 @@ import { DensityController } from './DensityController.js'
  * Controls vertical zoom and content pinning for the week view day grid.
  */
 export class DayDensityController extends DensityController {
+	/** Where the timed rows begin in the scrolled content, and their height at zoom 1, as last measured. */
+	private timedTop = 0
 	private available = 0
 	private anchor?: { fraction: number, clientY: number, hostTop: number }
 
@@ -25,11 +27,8 @@ export class DayDensityController extends DensityController {
 		if (available < DayDensityController.minAvailable) {
 			return
 		}
+		this.timedTop = top
 		this.available = available
-	}
-
-	private get timedTop() {
-		return this.host.clientHeight - this.available
 	}
 
 	protected apply() {

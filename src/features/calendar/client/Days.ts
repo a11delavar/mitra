@@ -99,7 +99,6 @@ export class Days extends Component {
 
 	protected override connected() {
 		super.connected()
-		this.toggleAttribute('data-lane-immediate', true)
 		this.scheduleTimeUpdate()
 	}
 
@@ -143,6 +142,7 @@ export class Days extends Component {
 			this.style.removeProperty('--time-axis-width')
 		}
 		this.updateLaneHeight()
+		this.applyScrollRange()
 	}
 
 	private allDayPlacements = new Array<{ lane: number, start: number, end: number }>()
@@ -165,9 +165,6 @@ export class Days extends Component {
 			}
 		}
 		this.style.setProperty('--_all-day-rows', `${deepest + 2}`)
-		if ((this.axisMeasured || this.hideTime) && this.allDayPlacements.length && this.hasAttribute('data-lane-immediate')) {
-			requestAnimationFrame(() => this.removeAttribute('data-lane-immediate'))
-		}
 	}
 
 	@eventListener('scroll')
@@ -184,6 +181,10 @@ export class Days extends Component {
 			@property --zone-width { syntax: '<length>'; inherits: true; initial-value: 0px; }
 			@property --zone-lane-width { syntax: '<length>'; inherits: true; initial-value: 52px; }
 			@property --_auto-fold { syntax: '<number>'; inherits: false; initial-value: 0; }
+			/* Only the host reads these, so they don't inherit: a change of an inherited one, every frame of a zoom,
+			   recalculated the style of every element in the week. */
+			@property --_week-zoom { syntax: '<number>'; inherits: false; initial-value: 1; }
+			@property --_all-day-rows { syntax: '<number>'; inherits: false; initial-value: 1; }
 
 			@container (max-width: 40rem) {
 				mitra-days { --_auto-fold: 1; }
@@ -192,8 +193,8 @@ export class Days extends Component {
 			mitra-days {
 				display: grid;
 				--_all-day-lane-height: calc(var(--_all-day-rows, 1) * (1.375rem + 1px) - 1px);
-				--grid-min-height: max(0px, calc(var(--_week-zoom, 1) * (100% - var(--header-height, 2.75rem) - var(--_all-day-lane-height) - 2px)));
-				grid-template-rows: auto var(--_all-day-lane-height) var(--grid-min-height);
+				/* The timed rows, inline rather than a variable: a variable here would inherit, and a zoom recalculate the week's style. */
+				grid-template-rows: auto var(--_all-day-lane-height) max(0px, calc(var(--_week-zoom) * (100% - var(--header-height, 2.75rem) - var(--_all-day-lane-height) - 2px)));
 				align-content: start;
 				--_days-strip-width: 100cqi;
 				--_ideal-day-width: 10rem;
@@ -205,10 +206,9 @@ export class Days extends Component {
 				min-height: 0;
 				--zone-lane-width: 4rem;
 				--zone-width: var(--zone-lane-width);
-				--_lane-height-duration: 0.18s;
-				transition: --zone-width 0.3s cubic-bezier(0.3, 0, 0.4, 1), --_all-day-lane-height var(--_lane-height-duration) ease-out;
+				/* The all-day lane's height snaps: a frame of its transition re-laid out every day. */
+				transition: --zone-width 0.3s cubic-bezier(0.3, 0, 0.4, 1);
 
-				&[data-lane-immediate] { --_lane-height-duration: 0s; }
 				--time-axis-width: calc(3.75rem + (var(--_tz-count, 1) - 1) * var(--zone-width));
 
 				&[data-alternative-zones] :is(.timezone, .axis) { touch-action: pan-y; }
@@ -244,7 +244,18 @@ export class Days extends Component {
 					grid-template-rows: subgrid;
 					scroll-snap-align: var(--scroll-snap-align);
 
-					.entries { background-color: var(--color-surface); grid-row: 3; }
+					/* The surface is the day's, beneath its entries, which are a stacking context (below), so the hour lines and
+					   connectors stay drawn between the two. The header and the lane cover its other rows. */
+					background-color: var(--color-surface);
+
+					.entries {
+						grid-row: 3;
+						/* A zoom re-lays out every day, so the days out of view skip their chips. Its paint containment makes each day
+						   a stacking context, lifted as a whole to where its chips sat: over the hour lines and connectors. */
+						content-visibility: auto;
+						contain-intrinsic-size: none;
+						z-index: 2;
+					}
 					& > .header { background-color: var(--color-background); }
 				}
 
@@ -437,7 +448,14 @@ export class Days extends Component {
 		const range = Math.max(0, this.scrollHeight - this.clientHeight)
 		if (range !== this.lastScrollRange) {
 			this.lastScrollRange = range
-			this.style.setProperty('--mitra-days-scroll-range', `${range}px`)
+			this.applyScrollRange()
+		}
+	}
+
+	/** Set on the connection layers, its only readers: set on the host, every element of the week inherited it, and a zoom changes it every frame. */
+	private applyScrollRange() {
+		for (const layer of this.querySelectorAll<HTMLElement>('mitra-entry-connections')) {
+			layer.style.setProperty('--mitra-days-scroll-range', `${this.lastScrollRange}px`)
 		}
 	}
 
@@ -467,7 +485,6 @@ export class Days extends Component {
 			.filter(segment => !EntryStore.isPreview(segment.entry))
 			.map(segment => ({ lane: laneOf(segment.entry), start: segment.dayValue!, end: segment.runEnd.dayValue! }))
 		this.style.setProperty('--_all-day-window-rows', `${laneCount + 1}`)
-		this.updateLaneHeight()
 		const lastValue = last.dayStart.valueOf()
 		const columnByDay = new Map(days.map((day, index) => [day.dayStart.valueOf(), offset + index]))
 		const columnOf = (dayValue?: number) => columnByDay.get(dayValue ?? -1) ?? 0
