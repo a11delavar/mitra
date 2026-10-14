@@ -16,12 +16,7 @@ export const orm = await MikroORM.init({
 	...(logEnabled('trace') ? { logger: (message: string) => dbLogger.verbose(message) } : {}),
 })
 
-if (process.env.MITRA_DEV === 'true') {
-	await orm.schema.update()
-	dbLogger.debug('Schema synchronized')
-} else {
-	await migrate(orm)
-}
+await migrate(orm)
 
 // Backfill missing UIDs for legacy rows using raw .ics UID when available.
 {

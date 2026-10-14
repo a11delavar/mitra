@@ -1,7 +1,7 @@
 import { Migration } from '@mikro-orm/migrations'
 
 export class Migration20260802210039_Initial extends Migration {
-	override up(): void | Promise<void> {
+	override up() {
 		this.addSql('create table `state` (`key` text not null primary key, `value` json not null);')
 
 		this.addSql('create table `user` (`id` text not null primary key, `username` text not null, `oidc_issuer` text null, `oidc_subject` text null, `oidc_email` text null, `oidc_name` text null, `oidc_picture` text null, `default_source_id` text null, `time_zones` json null, `last_seen_version` text null, constraint `user_default_source_id_foreign` foreign key (`default_source_id`) references `source` (`id`) on delete set null);')
@@ -29,7 +29,7 @@ export class Migration20260802210039_Initial extends Migration {
 		this.addSql('create unique index `entry_source_id_uri_recurrence_id_unique` on `entry` (`source_id`, `uri`, `recurrence_id`);')
 	}
 
-	override down(): void | Promise<void> {
+	override down() {
 		this.addSql('drop table if exists `state`;')
 		this.addSql('drop table if exists `user`;')
 		this.addSql('drop table if exists `session`;')

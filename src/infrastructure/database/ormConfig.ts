@@ -12,7 +12,7 @@ import { Demo } from '../../integrations/demo/Demo.js'
 import { NotificationSubscription } from '../../features/reminders/NotificationSubscription.js'
 import { Session } from '../../features/identity/server/Session.js'
 import { State } from './State.js'
-import { migrations } from './migrations/index.js'
+import { migrations, nameOf } from './migrations/index.js'
 
 /** ORM configuration shared between runtime (orm.ts) and migration CLI. */
 export function ormConfig(dbName: string) {
@@ -21,7 +21,7 @@ export function ormConfig(dbName: string) {
 		dbName,
 		extensions: [Migrator],
 		migrations: {
-			migrationsList: migrations,
+			migrationsList: migrations.map(migration => ({ name: nameOf(migration), class: migration })),
 			snapshot: false,
 		},
 		namingStrategy: class extends UnderscoreNamingStrategy {

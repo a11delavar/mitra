@@ -15,6 +15,9 @@ import { Migration20260930225647_NotificationDeviceIdentity } from './Migration2
 import { Migration20261002152021_EntryDueAndEstimate } from './Migration20261002152021_EntryDueAndEstimate.js'
 import { Migration20261003010248_EntryRank } from './Migration20261003010248_EntryRank.js'
 import { Migration20261013165004_NotificationSubscriptionLocale } from './Migration20261013165004_NotificationSubscriptionLocale.js'
+/** A migration's name as its file spells it, which keys the log: esbuild renames a class that refers to itself (`_Migration…`). */
+export const nameOf = (migration: Constructor<Migration>) => migration.name.replace(/^_/, '')
+
 /**
  * Every migration the app ships, oldest first. The backend bundles into a single file, so migrations
  * are imported explicitly rather than discovered on disk. `npm run db:migration:create` generates a

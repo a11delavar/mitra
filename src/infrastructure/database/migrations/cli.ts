@@ -16,11 +16,11 @@ class MitraMigrationGenerator extends TSMigrationGenerator {
 		)
 		let content = 'import { Migration } from \'@mikro-orm/migrations\'\n\n'
 		content += `export class ${className} extends Migration {\n`
-		content += '\toverride up(): void | Promise<void> {\n'
+		content += '\toverride up() {\n'
 		statements(diff.up).forEach(sql => content += this.createStatement(sql, 2))
 		content += '\t}\n'
 		if (diff.down.length > 0) {
-			content += '\n\toverride down(): void | Promise<void> {\n'
+			content += '\n\toverride down() {\n'
 			statements(diff.down).forEach(sql => content += this.createStatement(sql, 2))
 			content += '\t}\n'
 		}

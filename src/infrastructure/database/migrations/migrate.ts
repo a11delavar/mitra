@@ -1,7 +1,7 @@
 import { type MikroORM } from '@mikro-orm/sqlite'
 import { User } from '../../../features/identity/User.js'
 import { createLogger } from '../../logging/Logger.js'
-import { migrations } from './index.js'
+import { migrations, nameOf } from './index.js'
 
 const logger = createLogger('Database')
 
@@ -9,9 +9,10 @@ const logger = createLogger('Database')
  * Execute pending database migrations, baselining legacy pre-migration instances.
  */
 export async function migrate(orm: MikroORM) {
+	await dropEsbuildPrefixes(orm)
 	const legacy = await isPreMigrationsDatabase(orm)
 	if (legacy) {
-		await orm.migrator.getStorage().logMigration({ name: migrations[0]!.name })
+		await orm.migrator.getStorage().logMigration({ name: nameOf(migrations[0]!) })
 		logger.info('Baselined pre-migrations database: initial migration recorded as already applied')
 	}
 
@@ -30,8 +31,17 @@ export async function migrate(orm: MikroORM) {
 		await orm.schema.update()
 		const storage = orm.migrator.getStorage()
 		for (const migration of migrations.slice(1)) {
-			await storage.logMigration({ name: migration.name })
+			await storage.logMigration({ name: nameOf(migration) })
 		}
+	}
+}
+
+/** Earlier builds logged esbuild's names for the classes that refer to themselves, which a name from its file would run again. */
+async function dropEsbuildPrefixes(orm: MikroORM) {
+	const table = orm.config.get('migrations').tableName!
+	const [log] = await orm.em.getConnection().execute<Array<{ name: string }>>('select name from sqlite_master where type = \'table\' and name = ?', [table])
+	if (log) {
+		await orm.em.getConnection().execute(`update \`${table}\` set name = substr(name, 2) where substr(name, 1, 1) = '_'`)
 	}
 }
 

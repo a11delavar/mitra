@@ -6,23 +6,15 @@ import { Source } from '../../features/sources/Source.js'
 import { EntryType } from '../../features/entries/EntryType.js'
 import { ormConfig } from './ormConfig.js'
 import { migrate } from './migrations/migrate.js'
-import { migrations } from './migrations/index.js'
+import { migrations, nameOf } from './migrations/index.js'
 import { Migration20260802230147_MergeSourceTypes } from './migrations/Migration20260802230147_MergeSourceTypes.js'
 
-// The production boot path (see orm.ts): fresh installs build their schema by running the shipped
-// migrations, instances predating migrations get baselined instead of crashing on `create table`,
-// and a second boot must always be a no-op. Dev boots use `orm.schema.update()` and never touch this.
+// Every boot runs the shipped migrations: fresh databases build their schema with them, instances predating migrations
+// get baselined instead of crashing on `create table`, and a second boot is a no-op.
 
-/** A private in-memory ORM on the production config (the real entity set, naming strategy and
- * migrations list) with the schema deliberately NOT created yet. */
+/** An in-memory ORM on the real config, its schema not created yet. */
 function inMemoryOrm() {
 	return MikroORM.init(ormConfig(':memory:'))
-}
-
-async function tableNames(orm: MikroORM) {
-	// `sqlite_*` are SQLite's own bookkeeping tables (e.g. sqlite_sequence for autoincrement ids).
-	const tables = await orm.em.getConnection().execute<Array<{ name: string }>>('select name from sqlite_master where type = \'table\' and name not like \'sqlite_%\'')
-	return new Set(tables.map(table => table.name))
 }
 
 describe('migrate', () => {
@@ -32,7 +24,7 @@ describe('migrate', () => {
 			await migrate(orm)
 
 			const executed = await orm.migrator.getStorage().executed()
-			assert.deepEqual(executed, migrations.map(migration => migration.name))
+			assert.deepEqual(executed, migrations.map(nameOf))
 			assert.deepEqual(await orm.migrator.getPending(), [])
 
 			// The schema is actually usable, not just logged as such.
@@ -45,15 +37,18 @@ describe('migrate', () => {
 		}
 	})
 
-	it('produces the same tables as the dev schema sync', async () => {
+	// Constraints aside: the initial migration's CHECK on the integration discriminator stays, as dropping it rebuilds a
+	// table whose drop cascades to every source.
+	it('builds every table the entities declare, column by column', async () => {
 		const [migrated, synced] = [await inMemoryOrm(), await inMemoryOrm()]
 		try {
 			await migrate(migrated)
 			await synced.schema.update()
-
-			const migratedTables = await tableNames(migrated)
-			migratedTables.delete('mikro_orm_migrations')
-			assert.deepEqual(migratedTables, await tableNames(synced))
+			const columnsOf = async (orm: MikroORM) => {
+				const tables = await orm.em.getConnection().execute<Array<{ name: string }>>('select name from sqlite_master where type = \'table\' and name not like \'sqlite_%\' and name != \'mikro_orm_migrations\' order by name')
+				return Promise.all(tables.map(async ({ name }) => [name, await orm.em.getConnection().execute(`select name, type, "notnull" from pragma_table_info('${name}') order by name`)]))
+			}
+			assert.deepEqual(await columnsOf(migrated), await columnsOf(synced))
 		} finally {
 			await migrated.close()
 			await synced.close()
@@ -71,53 +66,43 @@ describe('migrate', () => {
 
 			await migrate(orm) // would throw 'table already exists' if the initial migration ran
 
-			assert.deepEqual(await orm.migrator.getStorage().executed(), migrations.map(migration => migration.name))
+			assert.deepEqual(await orm.migrator.getStorage().executed(), migrations.map(nameOf))
 			assert.ok(await orm.em.fork().findOne(User, { username: 'legacy' }), 'baselining must preserve existing data')
 		} finally {
 			await orm.close()
 		}
 	})
 
-	it('replays cleanly onto a database born on the CURRENT entities (a dev schema.update build)', async () => {
+	it('moves a device\'s locale out of the column named for languages', async () => {
 		const orm = await inMemoryOrm()
 		try {
-			// Dev boots build their schema from today's entities, so a dev database that later boots in
-			// production already HAS whatever the newer migrations create. `migrate` catches a failed
-			// replay and falls back to a wholesale sync, which still satisfies the baselining test above,
-			// so the replay is exercised directly here, where a failure can't be papered over. Every
-			// migration after the initial one must therefore introspect and no-op on the new shape.
-			await orm.schema.update()
-			await orm.migrator.getStorage().logMigration({ name: migrations[0]!.name })
+			const connection = orm.em.getConnection()
+			await orm.migrator.up({ to: 'Migration20261003010248_EntryRank' })
+			await connection.execute('insert into `user` (`id`, `username`) values (\'u\', \'legacy\')')
+			await connection.execute('insert into `notification_subscription` (`id`, `endpoint`, `keys`, `user_id`, `language`) values (\'s\', \'e\', \'{}\', \'u\', \'en-GB\')')
 
 			await orm.migrator.up()
 
-			assert.deepEqual(await orm.migrator.getPending(), [])
-			assert.deepEqual(await orm.migrator.getStorage().executed(), migrations.map(migration => migration.name))
+			const columns = await connection.execute<Array<{ name: string }>>('select name from pragma_table_info(\'notification_subscription\')')
+			assert.ok(!columns.some(column => column.name === 'language'))
+			assert.deepEqual(await connection.execute('select `locale` from `notification_subscription`'), [{ locale: 'en-GB' }])
 		} finally {
 			await orm.close()
 		}
 	})
 
-	it('moves a device\'s locale out of the column named for languages, also where a dev boot added the new one', async () => {
-		for (const devBoot of [false, true]) {
-			const orm = await inMemoryOrm()
-			try {
-				const connection = orm.em.getConnection()
-				await orm.migrator.up({ to: 'Migration20261003010248_EntryRank' })
-				if (devBoot) {
-					await connection.execute('alter table `notification_subscription` add column `locale` text null')
-				}
-				await connection.execute('insert into `user` (`id`, `username`) values (\'u\', \'legacy\')')
-				await connection.execute('insert into `notification_subscription` (`id`, `endpoint`, `keys`, `user_id`, `language`) values (\'s\', \'e\', \'{}\', \'u\', \'en-GB\')')
+	it('renames what earlier builds logged under esbuild\'s names, so nothing runs twice', async () => {
+		const orm = await inMemoryOrm()
+		try {
+			await migrate(orm)
+			const connection = orm.em.getConnection()
+			await connection.execute('update `mikro_orm_migrations` set name = \'_\' || name where name like \'%Device%\' or name like \'%DueAndEstimate\'')
 
-				await orm.migrator.up()
+			await migrate(orm)
 
-				const columns = await connection.execute<Array<{ name: string }>>('select name from pragma_table_info(\'notification_subscription\')')
-				assert.ok(!columns.some(column => column.name === 'language'), `devBoot: ${devBoot}`)
-				assert.deepEqual(await connection.execute('select `locale` from `notification_subscription`'), [{ locale: 'en-GB' }])
-			} finally {
-				await orm.close()
-			}
+			assert.deepEqual(await orm.migrator.getStorage().executed(), migrations.map(nameOf))
+		} finally {
+			await orm.close()
 		}
 	})
 
@@ -181,7 +166,7 @@ describe('migrate', () => {
 				{ id: 'e3', source_id: 's-solo' },
 			], 'the sibling\'s entries re-point; nothing is lost')
 
-			assert.deepEqual(await orm.migrator.getStorage().executed(), migrations.map(migration => migration.name))
+			assert.deepEqual(await orm.migrator.getStorage().executed(), migrations.map(nameOf))
 			assert.deepEqual(await orm.migrator.getPending(), [])
 		} finally {
 			await orm.close()
@@ -191,7 +176,8 @@ describe('migrate', () => {
 	it('splits merged collections back apart on migration down', async () => {
 		const orm = await inMemoryOrm()
 		try {
-			await migrate(orm)
+			// Up to the merge alone, as a rollback reverts every later migration first.
+			await orm.migrator.up({ to: nameOf(Migration20260802230147_MergeSourceTypes) })
 			const sql = (query: string) => orm.em.getConnection().execute(query)
 			await sql('insert into user (id, username) values (\'u1\', \'someone\')')
 			await sql('insert into integration (id, user_id, uri, type, credentials) values (\'i1\', \'u1\', \'caldav://example\', \'caldav\', \'{}\')')
@@ -201,7 +187,7 @@ describe('migrate', () => {
 
 			// Named, not a bare `down()`: that reverts whatever is LAST, so this stopped testing the split
 			// the day a migration was appended after the merge.
-			await orm.migrator.down({ migrations: [Migration20260802230147_MergeSourceTypes.name] })
+			await orm.migrator.down({ migrations: [nameOf(Migration20260802230147_MergeSourceTypes)] })
 
 			const sources = await sql('select id, uri, type from source order by type') as Array<{ id: string, uri: string, type: string }>
 			assert.equal(sources.length, 2, 'a both-types collection becomes an event/task sibling pair again')
