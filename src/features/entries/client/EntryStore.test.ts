@@ -887,3 +887,67 @@ describe('EntryStore', () => {
 		})
 	})
 })
+
+describe('EntryStore notifications', () => {
+	const host = () => {
+		const counter = { updates: 0, addController() { }, removeController() { }, requestUpdate() { counter.updates++ }, updateComplete: Promise.resolve(true) }
+		return counter
+	}
+	const connect = (entry?: () => Entry | undefined) => {
+		const counter = host()
+		new EntryStore(counter as never, { entry }).hostConnected()
+		counter.updates = 0
+		return counter
+	}
+
+	// One drag step used to repaint every chip of the week, which is what made dragging lag.
+	it('repaints the views and only the chips of the entry a drag step moves', () => {
+		const moved = new Entry({ id: 'moved', heading: 'Moved' })
+		const other = new Entry({ id: 'other', heading: 'Other' })
+		const view = connect()
+		const movedChip = connect(() => moved)
+		const otherChips = Array.from({ length: 50 }, () => connect(() => other))
+		const ghost = new Entry({ heading: 'Moved' })
+		EntryStore.setDragging(moved)
+		EntryStore.setPreview(ghost)
+		EntryStore.setPreview(ghost)
+		EntryStore.setPreview(undefined)
+		EntryStore.setDragging(undefined)
+		assert.equal(view.updates, 5)
+		assert.equal(movedChip.updates, 5)
+		assert.equal(otherChips.reduce((sum, chip) => sum + chip.updates, 0), 0)
+	})
+
+	it('repaints a host showing a derived value only when a drag step changes what it last rendered', () => {
+		let count = 3
+		const counter = host()
+		const store = new EntryStore(counter as never, { shows: () => count })
+		store.hostConnected()
+		store.hostUpdate()
+		counter.updates = 0
+		const ghost = new Entry({ heading: 'Ghost' })
+		EntryStore.setPreview(ghost)
+		assert.equal(counter.updates, 0)
+		count = 4
+		EntryStore.setPreview(ghost)
+		assert.equal(counter.updates, 1)
+		store.hostUpdate()
+		EntryStore.setPreview(ghost)
+		assert.equal(counter.updates, 1)
+		count = 3
+		EntryStore.notify()
+		store.hostUpdate()
+		count = 4
+		EntryStore.setPreview(undefined)
+		assert.equal(counter.updates, 3)
+		EntryStore.notify()
+		assert.equal(counter.updates, 4)
+		store.hostDisconnected()
+	})
+
+	it('repaints every host when an entry itself changes', () => {
+		const chip = connect(() => new Entry({ id: 'x', heading: 'X' }))
+		EntryStore.notify()
+		assert.equal(chip.updates, 1)
+	})
+})

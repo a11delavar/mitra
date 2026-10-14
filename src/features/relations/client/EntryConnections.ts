@@ -149,8 +149,8 @@ export class EntryConnections extends Component {
 	/** True if the platform supports scroll-driven animation timelines for cross-realm shifts. */
 	private static readonly canShift = typeof CSS !== 'undefined' && CSS.supports('animation-timeline', '--probe')
 
-	// Re-renders on store notifications, so a relation edit redraws immediately.
-	readonly store = new EntryStore(this)
+	// Re-renders on store notifications, so a relation edit redraws immediately; a drag's segments arrive from the view.
+	readonly store = new EntryStore(this, { shows: () => this.segments })
 
 	/** The chips rendered inside this layer's canvas: the anchor-bearing source of truth for which
 	 * entries participate and which slices carry the ports. */

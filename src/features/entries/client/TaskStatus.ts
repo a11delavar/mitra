@@ -40,7 +40,7 @@ export class TaskStatusComponent extends Component {
 	/** Fired after the entry's status or progress is mutated in place, so the host can persist and re-render. */
 	@event() readonly change!: EventDispatcher
 
-	readonly store = new EntryStore(this)
+	readonly store = new EntryStore(this, { entry: () => this.entry })
 
 	protected override createRenderRoot() { return this }
 

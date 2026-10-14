@@ -27,7 +27,7 @@ export class Sidebar extends Component {
 
 	@state() private tab: 'calendars' | 'planning' = (localStorage.getItem('Mitra.SidebarTab') as 'planning' | null) ?? 'calendars'
 
-	readonly store = new EntryStore(this)
+	readonly store = new EntryStore(this, { shows: () => this.planningCount })
 
 	private get planningCount() {
 		return Planning.pending

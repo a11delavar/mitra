@@ -188,9 +188,7 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 		`
 	}
 
-	private get paletteCommands() {
-		return [...sourceCommands(), ...this.commands, ...settingCommands()]
-	}
+	private readonly paletteCommands = () => [...sourceCommands(), ...this.commands, ...settingCommands()]
 
 	readonly sourcesChanged = () => {
 		this.sidebar?.requestUpdate()

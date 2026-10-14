@@ -55,6 +55,8 @@ export class Availability {
 	}
 
 	private static readonly byDay = new WeakMap<ReadonlyArray<Entry>, Map<number, ReadonlyArray<AvailabilityPlacement>>>()
+	/** The index last built, whose days keep their lists where their windows did not change: a drag elsewhere leaves them be. */
+	private static lastIndex?: Map<number, ReadonlyArray<AvailabilityPlacement>>
 
 	/**
 	 * Where each slice's label sits, from its start (0) to its end (1). A slice alone is centred. Slices that share time
@@ -103,11 +105,17 @@ export class Availability {
 			}
 			index = new Map()
 			for (const [dayValue, segments] of segmentsByDay) {
+				const before = Availability.lastIndex?.get(dayValue)
+				if (before && before.length === segments.length && before.every((placement, i) => placement.segment === segments[i])) {
+					index.set(dayValue, before)
+					continue
+				}
 				const labelled = segments.filter(segment => Availability.labelOf(segment.entry))
 				const positions = Availability.labelPositions(labelled)
 				index.set(dayValue, segments.map(segment => ({ segment, labelAt: positions[labelled.indexOf(segment)] ?? 0.5 })))
 			}
 			Availability.byDay.set(entries, index)
+			Availability.lastIndex = index
 		}
 		return index.get(date.dayStart.valueOf()) ?? Availability.none
 	}

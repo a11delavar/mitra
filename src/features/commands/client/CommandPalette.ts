@@ -14,10 +14,12 @@ export class CommandPalette extends Component {
 	 * palette from inside it is meaningless. */
 	static readonly hotkey = '/'
 
-	@property({ type: Array }) commands = new Array<Command>()
+	/** Asked for only while the palette is open: building them on every render of the page made a drag repaint it. */
+	@property({ attribute: false }) commands: () => ReadonlyArray<Command> = () => []
 
 	@event() readonly navigate!: EventDispatcher<DateTime>
 
+	@state() private open = false
 	@state() private searchTerm = ''
 	@state() private entries = new Array<Entry>()
 
@@ -31,6 +33,7 @@ export class CommandPalette extends Component {
 		this.searchTerm = ''
 		this.entries = []
 		this.search.cancel()
+		this.open = true
 		this.dialog.showModal()
 	}
 
@@ -50,8 +53,11 @@ export class CommandPalette extends Component {
 	}
 
 	private get matchingCommands() {
+		if (!this.open) {
+			return []
+		}
 		const queried = !!this.searchTerm.trim()
-		return this.commands.filter(command => command.available && (queried || command.listedWithoutQuery) && commandMatches(command, this.searchTerm))
+		return this.commands().filter(command => command.available && (queried || command.listedWithoutQuery) && commandMatches(command, this.searchTerm))
 	}
 
 	/** Entries only join the list once there is something to search for. An empty palette is a command menu. */
@@ -234,7 +240,7 @@ export class CommandPalette extends Component {
 		const commands = this.matchingCommands
 		const entries = this.matchingEntries
 		return html`
-			<dialog closedby="any">
+			<dialog closedby="any" @close=${() => this.open = false}>
 				<mitra-combobox inline activateFirst @pick=${(e: CustomEvent<Command | Entry>) => this.select(e.detail)} @dismiss=${() => this.dialog.close()}>
 					<header slot="input">
 						<mitra-icon icon="search"></mitra-icon>

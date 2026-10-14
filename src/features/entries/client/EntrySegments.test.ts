@@ -135,6 +135,34 @@ describe('EntrySegments', () => {
 		})
 	})
 
+	describe('of, across a drag', () => {
+		// A day handed its very list again is one lit skips: a drag re-renders the days it crosses, not the week.
+		it('gives a day its very list again where the step changed nothing on it', () => {
+			const days = [base, base.add({ days: 1 })]
+			const monday = new Entry({ id: 'a', heading: 'A', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
+			const tuesday = new Entry({ id: 'b', heading: 'B', start: days[1]!.add({ hours: 9 }), end: days[1]!.add({ hours: 10 }) })
+			const before = EntrySegments.of([monday, tuesday], days)
+			const [untouched, touched] = [before.timedOn(days[0]!), before.timedOn(days[1]!)]
+			const ghost = new Entry({ heading: 'B', start: days[1]!.add({ hours: 11 }), end: days[1]!.add({ hours: 12 }) })
+			duringMove(tuesday, ghost, () => {
+				const step = EntrySegments.of([monday, tuesday, ghost], days)
+				assert.equal(step.timedOn(days[0]!), untouched)
+				assert.notEqual(step.timedOn(days[1]!), touched)
+				assert.equal(step.timedOn(days[1]!).length, 2)
+			})
+		})
+
+		it('lists the ghost where it went when it moves within its day, as many segments as before', () => {
+			const entry = new Entry({ id: 'a', heading: 'A', start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
+			const first = new Entry({ heading: 'A', start: base.add({ hours: 11 }), end: base.add({ hours: 12 }) })
+			const second = new Entry({ heading: 'A', start: base.add({ hours: 13 }), end: base.add({ hours: 14 }) })
+			const days = [base]
+			duringMove(entry, first, () => EntrySegments.of([entry, first], days).timedOn(base))
+			const moved = duringMove(entry, second, () => EntrySegments.of([entry, second], days).timedOn(base))
+			assert.deepEqual(moved.map(segment => segment.entry), [entry, second])
+		})
+	})
+
 	describe('timedOn with a move ghost', () => {
 		it('renders the ghost without folding the entry it previews', () => {
 			const source = new Entry({ id: 'a', heading: 'A', start: base.add({ hours: 9 }), end: base.add({ hours: 11 }) })

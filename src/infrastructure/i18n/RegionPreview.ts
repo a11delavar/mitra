@@ -64,7 +64,7 @@ export class RegionPreview extends Component {
 			.toZonedDateTime({ timeZone: today.timeZone, plainTime: '13:05' }).epochMilliseconds)
 		const weekday = (dayOfWeek: number) => Temporal.PlainDate.from('2024-01-01').add({ days: dayOfWeek - 1 }).toLocaleString(String(locale), { weekday: 'long' })
 		const week = locale.getWeekInfo()
-		const zones = [...new Set([new Intl.DateTimeFormat().resolvedOptions().timeZone, ...RegionPreview.zones].map(id => TimeZone.of(id)))]
+		const zones = [...new Set([TimeZone.deviceId, ...RegionPreview.zones].map(id => TimeZone.of(id)))]
 			.map(zone => zone.name(locale))
 		return html`<dl>
 				<dt>${t('Date')}</dt>

@@ -13,7 +13,7 @@ export const reportSaveError = (error: unknown) =>
  * Central client store and persistence coordinator for entries.
  */
 export class EntryStore extends Controller {
-	private static readonly hosts = new Set<ReactiveControllerHost>()
+	private static readonly hosts = new Map<ReactiveControllerHost, EntryStore>()
 
 	private static readonly workingById = new Map<string, Entry>()
 	private static readonly canonicalById = new Map<string, Entry>()
@@ -42,9 +42,24 @@ export class EntryStore extends Controller {
 		]
 	}
 
+	/** Something about the entries changed, which every host may show. */
 	static notify() {
 		this.merged = undefined
-		this.hosts.forEach(host => host.requestUpdate())
+		this.hosts.forEach((_, host) => host.requestUpdate())
+	}
+
+	/**
+	 * Only where `entries` lie changed, as a drag does on every step: the views that lay them out update, and of the hosts
+	 * showing a single entry or a derived value only those it changes. Repainting every chip of the week for one moving
+	 * entry made dragging lag.
+	 */
+	static notifyMoved(...entries: ReadonlyArray<Entry | undefined>) {
+		this.merged = undefined
+		for (const [host, store] of this.hosts) {
+			if (store.movedBy(entries)) {
+				host.requestUpdate()
+			}
+		}
 	}
 
 	static isDirty(entry: Entry) {
@@ -453,8 +468,9 @@ export class EntryStore extends Controller {
 	}
 
 	static upsertDraft(entry: Entry) {
+		const previous = this.draft
 		this.draft = entry
-		this.notify()
+		this.notifyMoved(previous, entry)
 	}
 
 	static discardDraft() {
@@ -469,8 +485,9 @@ export class EntryStore extends Controller {
 
 	static setDragging(entry: Entry | undefined) {
 		if (this.dragging !== entry) {
+			const previous = this.dragging
 			this.dragging = entry
-			this.notify()
+			this.notifyMoved(previous, entry, this.preview)
 		}
 	}
 
@@ -484,8 +501,9 @@ export class EntryStore extends Controller {
 		if (this.preview === undefined && entry === undefined) {
 			return
 		}
+		const previous = this.preview
 		this.preview = entry
-		this.notify()
+		this.notifyMoved(previous, entry, this.dragging)
 	}
 
 	static isDragging(entry: Entry) {
@@ -531,8 +549,33 @@ export class EntryStore extends Controller {
 		return EntryStore.isPreview(entry)
 	}
 
+	constructor(host: ReactiveControllerHost, private readonly options: {
+		/** The one entry a host shows, as a chip does, so a drag of another leaves it be. */
+		readonly entry?: () => Entry | undefined
+		/** What a host shows of the entries, as the sidebar its badge count, so a drag that leaves it be leaves the host be. */
+		readonly shows?: () => unknown
+	} = {}) {
+		super(host as never)
+	}
+
+	/** What `shows` gave when the host last rendered. */
+	private shown?: unknown
+
+	private movedBy(entries: ReadonlyArray<Entry | undefined>) {
+		const { entry, shows } = this.options
+		if (entry) {
+			const own = entry()
+			return !!own && entries.includes(own)
+		}
+		return !shows || shows() !== this.shown
+	}
+
+	override hostUpdate() {
+		this.shown = this.options.shows?.()
+	}
+
 	override hostConnected() {
-		EntryStore.hosts.add(this.host)
+		EntryStore.hosts.set(this.host, this)
 		this.host.requestUpdate()
 	}
 

@@ -563,7 +563,7 @@ export class Entry {
 	setTimeZone(zone: string) {
 		if (!this.allDay) {
 			const from = this.floating ? 'UTC'
-				: this.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+				: this.timeZone ?? TimeZone.deviceId
 			// A date the entry lacks arrives as null from the wire, not undefined.
 			const rezoned = (value: DateTime | undefined) => !value ? value : new DateTime(
 				Temporal.Instant.fromEpochMilliseconds(value.valueOf())

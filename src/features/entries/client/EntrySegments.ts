@@ -73,31 +73,55 @@ export class EntrySegments {
 		if (cached?.entries === entries) {
 			return cached
 		}
-		const cohort = new EntrySegments(entries, days)
+		const cohort = new EntrySegments(entries, days, cached?.clustered)
 		EntrySegments.cache.set(days, cohort)
 		return cohort
 	}
 
-	constructor(readonly entries: ReadonlyArray<Entry>, readonly days: ReadonlyArray<DateTime>) { }
+	constructor(
+		readonly entries: ReadonlyArray<Entry>,
+		readonly days: ReadonlyArray<DateTime>,
+		/** Each day's clustered list with the segments it was made of, handed on to the next cohort of these days. */
+		private readonly clustered = new Map<number, { readonly members: ReadonlyArray<EntrySegment>, readonly list: ReadonlyArray<EntrySegment> }>(),
+	) { }
 
-	private _timedSegments?: ReadonlyArray<EntrySegment>
-	private get timedSegments() {
-		return this._timedSegments ??= this.entries.filter(entry => !entry.allDay).flatMap(entry => EntrySegments.for(entry))
+	private _timedByDay?: ReadonlyMap<number, ReadonlyArray<EntrySegment>>
+	private get timedByDay() {
+		if (!this._timedByDay) {
+			const byDay = new Map<number, Array<EntrySegment>>()
+			for (const entry of this.entries) {
+				if (!entry.allDay) {
+					for (const segment of EntrySegments.for(entry)) {
+						// The day `fallsOn` names: its own, else for a dateless slice its entry's start.
+						const day = segment.date ? segment.dayValue : segment.entry.start?.dayStart.valueOf()
+						if (day !== undefined) {
+							const list = byDay.get(day)
+							list ? list.push(segment) : byDay.set(day, [segment])
+						}
+					}
+				}
+			}
+			this._timedByDay = byDay
+		}
+		return this._timedByDay
 	}
 
-	private readonly timedCache = new Map<number, ReadonlyArray<EntrySegment>>()
-
-	/** Clustered timed segments for the given day. */
+	/**
+	 * Clustered timed segments for the given day. A day made of the same segments as before gets its very list back, so a
+	 * drag re-renders the days it crosses and no other.
+	 */
 	timedOn(date: DateTime): ReadonlyArray<EntrySegment> {
 		const key = date.dayStart.valueOf()
-		let segments = this.timedCache.get(key)
-		if (!segments) {
-			const day = this.timedSegments.filter(segment => segment.fallsOn(key))
-			const isOverlay = (segment: EntrySegment) => EntryStore.isPreview(segment.entry)
-			segments = [...EntrySegments.cluster(day.filter(segment => !isOverlay(segment))), ...day.filter(isOverlay)]
-			this.timedCache.set(key, segments)
+		const members = this.timedByDay.get(key) ?? []
+		const kept = this.clustered.get(key)
+		if (kept && kept.members.length === members.length && kept.members.every((segment, index) => segment === members[index])) {
+			return kept.list
 		}
-		return segments
+		// A preview is an entry of its own, so the same members are the same overlay too.
+		const isOverlay = (segment: EntrySegment) => EntryStore.isPreview(segment.entry)
+		const list = [...EntrySegments.cluster(members.filter(segment => !isOverlay(segment))), ...members.filter(isOverlay)]
+		this.clustered.set(key, { members, list })
+		return list
 	}
 
 	private _segmentsByDay?: ReadonlyMap<number, ReadonlyArray<EntrySegment>>

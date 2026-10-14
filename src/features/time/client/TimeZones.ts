@@ -6,7 +6,7 @@ import { UserTimeZones } from '../UserTimeZones.js'
 export class TimeZones {
 	/** The zone the device runs in; UTC where its system names one Intl refuses (`Etc/Unknown` on some Linux hosts). */
 	static get here() {
-		return TimeZone.parse(new Intl.DateTimeFormat().resolvedOptions().timeZone) ?? TimeZone.of('UTC')
+		return TimeZone.parse(TimeZone.deviceId) ?? TimeZone.of('UTC')
 	}
 
 	static get list() {

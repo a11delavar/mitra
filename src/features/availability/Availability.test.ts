@@ -101,6 +101,18 @@ describe('the availability labels of a day', () => {
 			assert.deepEqual(placements.map(({ segment, labelAt }) => [segment.entry.id, labelAt]), [['a', 1], ['b', 0.5], ['c', 0]])
 		})
 	})
+
+	// A day handed its very list again is one lit skips: a drag elsewhere must not re-render every day of the week.
+	it('gives a day its very list again where its windows did not change', () => {
+		const monday = new DateTime('2026-10-05T00:00:00').dayStart
+		const tuesday = monday.add({ days: 1 })
+		const window = (id: string, day: DateTime) => new Entry({ id, uid: id, sourceId: 's', type: EntryType.Availability, heading: id, start: day.add({ hours: 9 }), end: day.add({ hours: 17 }), allDay: false })
+		const [mondayWindow, tuesdayWindow] = [window('monday', monday), window('tuesday', tuesday)]
+		const before = Availability.on([mondayWindow, tuesdayWindow], monday)
+		const moved = new Entry({ id: 'moved', sourceId: 's', type: EntryType.Event, heading: 'Moved', start: tuesday.add({ hours: 10 }), end: tuesday.add({ hours: 11 }) })
+		assert.equal(Availability.on([mondayWindow, tuesdayWindow, moved], monday), before)
+		assert.notEqual(Availability.on([mondayWindow, window('other', monday)], monday), before)
+	})
 })
 
 describe('converting an entry to availability', () => {

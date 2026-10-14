@@ -16,7 +16,7 @@ import { getSource } from '../../../infrastructure/http/Api.js'
 export class AvailabilitySegment extends Component {
 	@property({ type: Object }) segment?: EntrySegment
 
-	readonly store = new EntryStore(this)
+	readonly store = new EntryStore(this, { entry: () => this.segment?.entry })
 	readonly editor = new EntryEditorAnchor(this)
 
 	@state() open = false

@@ -15,7 +15,7 @@ import { entryColors } from './entryColors.css.js'
 export class EntrySegmentComponent extends Component {
 	@queryConnectedInstances() private static readonly instances: Set<EntrySegmentComponent>
 
-	readonly store = new EntryStore(this)
+	readonly store = new EntryStore(this, { entry: () => this.segment?.entry })
 	readonly editor = new EntryEditorAnchor(this)
 
 	@property({ type: Object }) segment?: EntrySegment

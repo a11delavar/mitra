@@ -9,6 +9,7 @@ import { applyOrder, byOrder } from '../model/order.js'
 import { Integration } from '../../integrations/Integration.js'
 import { type EntryType } from '../../features/entries/EntryType.js'
 import { type Entry } from '../../features/entries/Entry.js'
+import { TimeZone } from '../../features/time/TimeZone.js'
 import { type ChangelogSection } from '../../features/about/Changelog.js'
 import { type ReleaseFolder } from '../../features/about/Release.js'
 import { type UserSettings } from '../../features/settings/UserSettings.js'
@@ -95,7 +96,7 @@ export async function setSeenVersion(version: string) {
 	return currentUser = await Api.put<User>('/user/seen-version', { version })
 }
 
-const tz = () => encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)
+const tz = () => encodeURIComponent(TimeZone.deviceId)
 
 export async function fetchUser() {
 	return currentUser = await Api.get<User>('/user')
@@ -181,7 +182,7 @@ export function getPrimarySource(type?: EntryType): Source | undefined {
 
 export function createEvent(entry: Entry) {
 	return Api.post<Entry>(`/entries?tz=${tz()}`, Object.assign(entry.clone(), {
-		timeZone: entry.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+		timeZone: entry.timeZone ?? TimeZone.deviceId,
 	}))
 }
 
@@ -426,6 +427,6 @@ export function editOccurrence(occurrence: Entry, scope: RecurrenceScope) {
 }
 
 export function deleteOccurrence(occurrence: Entry, scope: RecurrenceScope) {
-	const query = new URLSearchParams({ scope, recurrenceId: occurrence.recurrenceId!.toISOString(), tz: Intl.DateTimeFormat().resolvedOptions().timeZone })
+	const query = new URLSearchParams({ scope, recurrenceId: occurrence.recurrenceId!.toISOString(), tz: TimeZone.deviceId })
 	return Api.delete(`/entries/${occurrence.recurrenceMasterId}?${query}`)
 }

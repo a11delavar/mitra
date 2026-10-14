@@ -643,7 +643,7 @@ export class EntryDragController extends Controller {
 			}
 			case 'resize': {
 				drag.entry!.adoptSpan(built)
-				EntryStore.notify()
+				EntryStore.notifyMoved(drag.entry)
 				break
 			}
 		}

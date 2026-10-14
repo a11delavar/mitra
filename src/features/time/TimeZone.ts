@@ -2,6 +2,11 @@ import { Memoize as memoize } from 'typescript-memoize'
 import { TimeZoneName } from './TimeZoneName.js'
 import goldenZones from './goldenZones.json' with { type: 'json' }
 
+/** The device's zone as last asked, with the offset it had then. */
+let device: { readonly offset: number, readonly id: string } | undefined
+// A trip takes effect when the device is picked up again; the offset catches the ones that move the clock while it is open.
+globalThis.document?.addEventListener('visibilitychange', () => device = undefined)
+
 /**
  * An IANA time zone, as the platform has only ids (Temporal dropped `TimeZone` in 2024): one instance per zone, its
  * aliases included (`Asia/Calcutta` is `Asia/Kolkata`), which engines spell differently.
@@ -19,6 +24,18 @@ export class TimeZone {
 		// whose native engines merge zones that CLDR keeps apart (Oslo is Berlin there), unlike its polyfill.
 		const spelled = new Intl.DateTimeFormat('en', { timeZone: id }).resolvedOptions().timeZone
 		return spelled.toLowerCase() === id ? new TimeZone(spelled) : TimeZone.of(spelled)
+	}
+
+	/**
+	 * The id of the zone this device runs in, kept until its offset changes or the page shows again: Intl answers slowly
+	 * (50 µs), the offset quickly (0.15 µs).
+	 */
+	static get deviceId(): string {
+		const offset = new Date().getTimezoneOffset()
+		if (device?.offset !== offset) {
+			device = { offset, id: Intl.DateTimeFormat().resolvedOptions().timeZone }
+		}
+		return device.id
 	}
 
 	static parse(value: unknown): TimeZone | undefined {
