@@ -1,4 +1,4 @@
-import { type Clip, click, keys, press, waitFor } from '../../scripts/capture.ts'
+import { aroundEditorWith, type Clip, click, keys, openEditor, openFound, press, waitFor } from '../../scripts/capture.ts'
 import { still } from '../../scripts/scenes.ts'
 
 // The captures only 0.7's notes show, shot on the build in development.
@@ -56,6 +56,20 @@ still('time-zones', async ({ browser, open }) => {
 		const bottom = Math.min(innerHeight, Math.max(...boxes.map(box => box.bottom)) + 24)
 		return { x: Math.round(left), y: Math.round(top), width: Math.round(right - left), height: Math.round(bottom - top) }
 	`)
+})
+
+/** Chinese, in its own typeface: a repeating event's editor with its date picker open on the month, as 0.6 showed Persian. */
+still('chinese-detail', { language: 'zh' }, async ({ browser, open, text }) => {
+	await open()
+	await openFound(browser, text('Weekly Team Sync'))
+	await browser.evaluate('await document.fonts.ready')
+	// The editor's rows hide the field's own picker button and open the picker from the row, so the click lands on the segments.
+	const dateField = `${openEditor}.querySelector('.start > :is(mitra-date-field, mitra-date-time-field)')`
+	await click(browser, `${dateField}.shadowRoot.querySelector('[part=segments]')`)
+	const datePicker = `${dateField}.shadowRoot.querySelector('mitra-popover[open]')`
+	await waitFor(() => browser.evaluate<boolean>(`return !!${datePicker}`), 'the date picker')
+	await browser.evaluate('await new Promise(resolve => setTimeout(resolve, 600))')
+	return aroundEditorWith(browser, datePicker, 28)
 })
 
 /** The About dialog, open on the latest release: its notes and pictures, as the website shows them. */

@@ -140,7 +140,8 @@ await stage(async (browser, origin) => {
 		await waitFor(() => browser.evaluate<boolean>('return !!document.querySelector("mitra-time-zone-header [data-alternative]")'), 'the extra time zone column')
 		await settle(browser)
 		await shot(`time-zones-detail-${theme}`, false, await detail(browser, details.sidebar))
-		await browser.evaluate('await fetch("/api/user/time-zones", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ timeZones: [] }) })')
+		// Gone before the next theme's pass, where picking a zone already added would take it away instead.
+		await browser.evaluate(`await fetch('/api/user/time-zones/${encodeURIComponent('America/New_York')}', { method: 'DELETE' })`)
 
 		// Last, and the only one with availability shown. A tap on the label reaches the window beneath, as a reader's would.
 		await reopen(theme, { availability: true })

@@ -54,16 +54,6 @@ Add the time zones of the people you work with, as extra columns beside the hour
 
 Docs: [Time zones](../../docs/time-zones.md)
 
-## Internationalization
-Every word in Mitra can now be translated, and a change of language applies at once, without a reload. German is the first language beyond English.
-
-<picture>
-	<source media="(prefers-color-scheme: dark)" srcset="german-dark.webp">
-	<img src="german-light.webp" alt="Mitra in German">
-</picture>
-
-Docs: [Settings](../../docs/settings.md)
-
 ## Install as an app
 Install Mitra from the browser, and it opens in a window of its own, with its own icon.
 
@@ -81,6 +71,16 @@ Mitra has a logo of its own, designed by [@corruptedlotus](https://github.com/co
 	<source media="(prefers-color-scheme: dark)" srcset="logo-dark.webp">
 	<img src="logo-light.webp" alt="Mitra's logo, as the installed app's icon">
 </picture>
+
+## Internationalization
+Every word in Mitra can now be translated, and a change of language applies at once, without a reload. German is the first language beyond English.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="german-dark.webp">
+	<img src="german-light.webp" alt="Mitra in German">
+</picture>
+
+Docs: [Settings](../../docs/settings.md)
 
 ## Contributors
 - [@a11delavar](https://github.com/a11delavar)

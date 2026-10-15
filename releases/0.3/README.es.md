@@ -53,16 +53,6 @@ Añade las zonas horarias de las personas con las que trabajas, como columnas ex
 
 Docs: [Zonas horarias](../../docs/time-zones.md)
 
-## Internacionalización
-Ahora se puede traducir cada palabra de Mitra, y un cambio de idioma se aplica al instante, sin recargar. El alemán es el primer idioma además del inglés.
-
-<picture>
-	<source media="(prefers-color-scheme: dark)" srcset="german-dark.webp">
-	<img src="german-light.webp" alt="Mitra en alemán">
-</picture>
-
-Docs: [Ajustes](../../docs/settings.md)
-
 ## Instalar como aplicación
 Instala Mitra desde el navegador y se abrirá en una ventana propia, con su propio icono.
 
@@ -80,6 +70,16 @@ Mitra tiene un logotipo propio, diseñado por [@corruptedlotus](https://github.c
 	<source media="(prefers-color-scheme: dark)" srcset="logo-dark.webp">
 	<img src="logo-light.webp" alt="El logotipo de Mitra, como icono de la aplicación instalada">
 </picture>
+
+## Internacionalización
+Ahora se puede traducir cada palabra de Mitra, y un cambio de idioma se aplica al instante, sin recargar. El alemán es el primer idioma además del inglés.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="german-dark.webp">
+	<img src="german-light.webp" alt="Mitra en alemán">
+</picture>
+
+Docs: [Ajustes](../../docs/settings.md)
 
 ## Colaboradores
 - [@a11delavar](https://github.com/a11delavar)

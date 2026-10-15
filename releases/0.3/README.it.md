@@ -53,16 +53,6 @@ Aggiungi i fusi orari delle persone con cui lavori, come colonne extra accanto a
 
 Documentazione: [Fusi orari](../../docs/time-zones.md)
 
-## Internazionalizzazione
-Ogni parola in Mitra può ora essere tradotta, e un cambio di lingua si applica subito, senza ricaricare. Il tedesco è la prima lingua oltre all'inglese.
-
-<picture>
-	<source media="(prefers-color-scheme: dark)" srcset="german-dark.webp">
-	<img src="german-light.webp" alt="Mitra in tedesco">
-</picture>
-
-Documentazione: [Impostazioni](../../docs/settings.md)
-
 ## Installa come app
 Installa Mitra dal browser e si apre in una finestra tutta sua, con la sua icona.
 
@@ -80,6 +70,16 @@ Mitra ha un logo tutto suo, disegnato da [@corruptedlotus](https://github.com/co
 	<source media="(prefers-color-scheme: dark)" srcset="logo-dark.webp">
 	<img src="logo-light.webp" alt="Il logo di Mitra, come icona dell'app installata">
 </picture>
+
+## Internazionalizzazione
+Ogni parola in Mitra può ora essere tradotta, e un cambio di lingua si applica subito, senza ricaricare. Il tedesco è la prima lingua oltre all'inglese.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="german-dark.webp">
+	<img src="german-light.webp" alt="Mitra in tedesco">
+</picture>
+
+Documentazione: [Impostazioni](../../docs/settings.md)
 
 ## Collaboratori
 - [@a11delavar](https://github.com/a11delavar)

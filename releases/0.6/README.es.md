@@ -53,16 +53,6 @@ Dibuja las horas en las que trabajas, entrenas o te mantienes libre, en cualquie
 
 Docs: [Disponibilidad](../../docs/availability.md)
 
-## Calendario persa
-Mitra habla persa, y con el idioma llega su calendario: meses y semanas persas en las cabeceras y los selectores, y fechas escritas como las escribe el persa. Tus entradas se quedan donde están. Solo cambia cómo se leen.
-
-<picture>
-	<source media="(prefers-color-scheme: dark)" srcset="persian-calendar-detail-dark.webp">
-	<img src="persian-calendar-detail-light.webp" alt="El editor de entradas en persa, con su selector de fecha abierto en un mes persa">
-</picture>
-
-Docs: [Ajustes](../../docs/settings.md)
-
 ## Enlaces en una fila
 Cada enlace de la descripción o de la ubicación de una entrada se reúne en una fila Enlaces del editor, nombrado según adónde lleva: una página por su sitio, una reunión por su servicio, una nota por su aplicación. Una ubicación que es un enlace se muestra como ese enlace.
 
@@ -72,6 +62,16 @@ Cada enlace de la descripción o de la ubicación de una entrada se reúne en un
 </picture>
 
 Docs: [Enlaces](../../docs/links.md)
+
+## Calendario persa
+Mitra habla persa, y con el idioma llega su calendario: meses y semanas persas en las cabeceras y los selectores, y fechas escritas como las escribe el persa. Tus entradas se quedan donde están. Solo cambia cómo se leen.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="persian-calendar-detail-dark.webp">
+	<img src="persian-calendar-detail-light.webp" alt="El editor de entradas en persa, con su selector de fecha abierto en un mes persa">
+</picture>
+
+Docs: [Ajustes](../../docs/settings.md)
 
 ## Colaboradores
 - [@a11delavar](https://github.com/a11delavar)

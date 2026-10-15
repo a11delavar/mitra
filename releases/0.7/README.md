@@ -31,9 +31,6 @@ The time zone picker is redesigned as well. Zones that share a name and a clock 
 
 Docs: [Time zones](../../docs/time-zones.md)
 
-## Chinese
-Mitra learns Chinese, in simplified characters: the app, its sample calendar, the docs and the website, with a typeface made for it.
-
 ## Attachments
 Attach files to an entry. Calendars that can keep them, CalDAV first, carry them along.
 
@@ -44,3 +41,13 @@ You can now see what changed without leaving Mitra. The About dialog shows each 
 	<source media="(prefers-color-scheme: dark)" srcset="about-dark.webp">
 	<img src="about-light.webp" alt="The About dialog, open on a release's notes and pictures">
 </picture>
+
+## Chinese
+Mitra learns Chinese, in simplified characters: the app, its sample calendar, the docs and the website, with a typeface made for it.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="chinese-detail-dark.webp">
+	<img src="chinese-detail-light.webp" alt="The entry editor in Chinese, its date picker open on the month">
+</picture>
+
+Docs: [Settings](../../docs/settings.md)

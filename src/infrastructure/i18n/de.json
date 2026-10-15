@@ -12,6 +12,10 @@
 		"${count:pluralityNumber} Teilnehmer",
 		"${count:pluralityNumber} Teilnehmer"
 	],
+	"${count:pluralityNumber} yes": ["${count:pluralityNumber} Zusage", "${count:pluralityNumber} Zusagen"],
+	"${count:pluralityNumber} no": ["${count:pluralityNumber} Absage", "${count:pluralityNumber} Absagen"],
+	"${count:pluralityNumber} maybe": "${count:pluralityNumber} vielleicht",
+	"${count:pluralityNumber} awaiting": "${count:pluralityNumber} offen",
 	"${count:pluralityNumber} weeks": [
 		"${count:pluralityNumber} Woche",
 		"${count:pluralityNumber} Wochen"
@@ -353,6 +357,7 @@
 	"the ${ordinal} ${weekday}": "am ${ordinal} ${weekday}",
 	"the last ${weekday}": "am letzten ${weekday}",
 	"on ${date}": "am ${date}",
+	"${frequency} ${on}": "${frequency} ${on}",
 	"on ${weekday}": "am ${weekday}",
 	"on the ${ordinal}": "am ${ordinal}",
 	"on the ${ordinal} ${weekday}": "am ${ordinal} ${weekday}",
@@ -596,6 +601,7 @@
 	"This browser is blocking notifications. Allow them in its site settings to get reminders here.": "Dieser Browser blockiert Benachrichtigungen. In seinen Website-Einstellungen erlauben, um hier Erinnerungen zu erhalten.",
 	"This browser will show your reminders.": "Dieser Browser zeigt die Erinnerungen an.",
 	"Toggle.Off": "Aus",
+	"${setting}: ${value}": "${setting}: ${value}",
 	"Toggle.On": "Ein",
 	"Timed entries only": "Nur zeitgebundene Einträge",
 	"Tasks with a time only": "Nur Aufgaben mit Uhrzeit",

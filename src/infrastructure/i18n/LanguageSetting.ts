@@ -10,7 +10,7 @@ import './RegionPreview.js'
  */
 @setting()
 export class LanguageSetting extends ChoiceSetting<string> {
-	private static readonly languages: Array<LanguageCode> = ['en', 'de', 'fr', 'es', 'pt', 'it', 'fa']
+	private static readonly languages: Array<LanguageCode> = ['en', 'de', 'fr', 'es', 'pt', 'it', 'fa', 'zh']
 
 	/**
 	 * @3mo/localization speaks a `?lang=` link's language (the website's links into the demo carry one), but only while

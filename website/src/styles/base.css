@@ -3,6 +3,7 @@
 /* As the app's fonts.css: each face covers only its script's range, so a page fetches Vazirmatn only where Persian is. */
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/vazirmatn';
+@import '@fontsource-variable/noto-sans-sc';
 @import './generated/mitra.css';
 @import './generated/callouts.css';
 
@@ -30,6 +31,11 @@
 
 	accent-color: var(--color-accent);
 	scrollbar-color: color-mix(in srgb, var(--color-text) 15%, transparent) transparent;
+}
+
+/* As the app: Han characters read in Noto Sans SC on Chinese pages alone. */
+:root:lang(zh) {
+	--mitra-font: 'Inter Variable', 'Inter', 'Noto Sans SC Variable', ui-sans-serif, system-ui, sans-serif;
 }
 
 *,

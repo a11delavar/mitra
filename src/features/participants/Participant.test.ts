@@ -64,8 +64,8 @@ describe('Participants', () => {
 			assert.deepEqual(replied().counts, { yes: 2, no: 1, maybe: 1, awaiting: 2 })
 		})
 
-		it('reads like "2 yes, 1 no, 1 maybe, 2 awaiting", skipping empty groups', () => {
-			assert.equal(replied().summary, '2 yes, 1 no, 1 maybe, 2 awaiting')
+		it('reads like "2 yes, 1 no, 1 maybe, and 2 awaiting", skipping empty groups', () => {
+			assert.equal(replied().summary, '2 yes, 1 no, 1 maybe, and 2 awaiting')
 			assert.equal(Participants.normalize(replied().slice(0, 2))?.summary, '2 yes')
 		})
 	})

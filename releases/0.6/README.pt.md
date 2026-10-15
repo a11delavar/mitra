@@ -53,16 +53,6 @@ Desenhe as horas em que você trabalha, treina ou mantém livres, em qualquer ca
 
 Documentação: [Disponibilidade](../../docs/availability.md)
 
-## Calendário persa
-O Mitra fala persa, e junto com o idioma vem o seu calendário: meses e semanas persas nos cabeçalhos e nos seletores, e datas digitadas do jeito que o persa as escreve. Suas entradas continuam onde estão. Só muda a forma como elas se leem.
-
-<picture>
-	<source media="(prefers-color-scheme: dark)" srcset="persian-calendar-detail-dark.webp">
-	<img src="persian-calendar-detail-light.webp" alt="O editor de entradas em persa, com o seletor de datas aberto em um mês persa">
-</picture>
-
-Documentação: [Configurações](../../docs/settings.md)
-
 ## Links em uma só linha
 Todo link na descrição ou no local de uma entrada se reúne em uma linha Links do editor, nomeado por onde leva: uma página pelo seu site, uma reunião pelo seu serviço, uma nota pelo seu aplicativo. Um local que é um link aparece como esse link.
 
@@ -72,6 +62,16 @@ Todo link na descrição ou no local de uma entrada se reúne em uma linha Links
 </picture>
 
 Documentação: [Links](../../docs/links.md)
+
+## Calendário persa
+O Mitra fala persa, e junto com o idioma vem o seu calendário: meses e semanas persas nos cabeçalhos e nos seletores, e datas digitadas do jeito que o persa as escreve. Suas entradas continuam onde estão. Só muda a forma como elas se leem.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="persian-calendar-detail-dark.webp">
+	<img src="persian-calendar-detail-light.webp" alt="O editor de entradas em persa, com o seletor de datas aberto em um mês persa">
+</picture>
+
+Documentação: [Configurações](../../docs/settings.md)
 
 ## Colaboradores
 - [@a11delavar](https://github.com/a11delavar)

@@ -31,9 +31,6 @@ O seletor de fuso horário também foi redesenhado. Fusos com o mesmo nome e o m
 
 Documentação: [Fusos horários](../../docs/time-zones.md)
 
-## Chinês
-O Mitra aprende chinês, em caracteres simplificados: o aplicativo, seu calendário de exemplo, a documentação e o site, com uma fonte feita para ele.
-
 ## Anexos
 Anexe arquivos a uma entrada. Os calendários que podem guardá-los, o CalDAV primeiro, os levam junto.
 
@@ -44,3 +41,13 @@ Agora você pode ver o que mudou sem sair do Mitra. A janela Sobre mostra cada v
 	<source media="(prefers-color-scheme: dark)" srcset="about-dark.webp">
 	<img src="about-light.webp" alt="A caixa Sobre, aberta nas notas e nas imagens de uma versão">
 </picture>
+
+## Chinês
+O Mitra aprende chinês, em caracteres simplificados: o aplicativo, seu calendário de exemplo, a documentação e o site, com uma fonte feita para ele.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="chinese-detail-dark.webp">
+	<img src="chinese-detail-light.webp" alt="O editor de entradas em chinês, com o seletor de datas aberto no mês">
+</picture>
+
+Documentação: [Configurações](../../docs/settings.md)

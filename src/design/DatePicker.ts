@@ -161,6 +161,7 @@ export class DatePicker extends Component {
 				<div role="row">
 					${weeks[0]!.map(day => html`<span role="columnheader" aria-label=${day.format({ weekday: 'long' })}>${day.format({ weekday: 'narrow' })}</span>`)}
 				</div>
+				<!-- The day's number alone: Chinese and Japanese write 日 after it, which crowds a grid of days. -->
 				${weeks.map(week => html`
 					<div role="row">
 						${week.map(day => html`
@@ -170,7 +171,7 @@ export class DatePicker extends Component {
 								aria-label=${day.format({ dateStyle: 'full' })}
 								?data-outside=${day.month !== month.month}
 								@click=${() => this.pick.dispatch(day)}
-							>${day.format({ day: 'numeric' })}</button>
+							>${day.formatToParts({ day: 'numeric' }).find(part => part.type === 'day')?.value}</button>
 						`)}
 					</div>
 				`)}

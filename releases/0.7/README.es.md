@@ -31,9 +31,6 @@ El selector de zonas horarias también se ha rediseñado. Las zonas que comparte
 
 Docs: [Zonas horarias](../../docs/time-zones.md)
 
-## Chino
-Mitra aprende chino, en caracteres simplificados: la aplicación, su calendario de ejemplo, la documentación y el sitio web, con una tipografía hecha para él.
-
 ## Archivos adjuntos
 Adjunta archivos a una entrada. Los calendarios que pueden guardarlos, empezando por CalDAV, los llevan consigo.
 
@@ -44,3 +41,13 @@ Ahora puedes ver qué ha cambiado sin salir de Mitra. El diálogo Acerca de mues
 	<source media="(prefers-color-scheme: dark)" srcset="about-dark.webp">
 	<img src="about-light.webp" alt="El diálogo Acerca de, abierto en las notas y las imágenes de una versión">
 </picture>
+
+## Chino
+Mitra aprende chino, en caracteres simplificados: la aplicación, su calendario de ejemplo, la documentación y el sitio web, con una tipografía hecha para él.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="chinese-detail-dark.webp">
+	<img src="chinese-detail-light.webp" alt="El editor de entradas en chino, con su selector de fecha abierto en el mes">
+</picture>
+
+Docs: [Ajustes](../../docs/settings.md)

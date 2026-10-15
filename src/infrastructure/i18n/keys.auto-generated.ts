@@ -11,18 +11,17 @@ declare global {
 		"\"${heading}\" could not be copied: ${message}": unknown
 		"\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks are still open.": unknown
 		"${browser} on ${platform}": unknown
-		"${count:number} min": unknown
 		"${count:number} more": unknown
 		"${count:pluralityNumber} are availability": unknown
 		"${count:pluralityNumber} are marked as free": unknown
 		"${count:pluralityNumber} are now in both calendars": unknown
 		"${count:pluralityNumber} arrive with everything they carry": unknown
+		"${count:pluralityNumber} awaiting": unknown
 		"${count:pluralityNumber} become ${type}": unknown
 		"${count:pluralityNumber} belong to a series with edited occurrences": unknown
 		"${count:pluralityNumber} carry a progress percentage": unknown
 		"${count:pluralityNumber} carry a visibility": unknown
 		"${count:pluralityNumber} copies could not be taken back and are now in both calendars.": unknown
-		"${count:pluralityNumber} days": unknown
 		"${count:pluralityNumber} documentation changes": unknown
 		"${count:pluralityNumber} entries": unknown
 		"${count:pluralityNumber} entries added to ${name}": unknown
@@ -31,7 +30,6 @@ declare global {
 		"${count:pluralityNumber} entries moved to ${name}": unknown
 		"${count:pluralityNumber} features": unknown
 		"${count:pluralityNumber} have participants": unknown
-		"${count:pluralityNumber} hours": unknown
 		"${count:pluralityNumber} improvements": unknown
 		"${count:pluralityNumber} landed anyway and could not be taken back. Delete them in ${name} by hand.": unknown
 		"${count:pluralityNumber} lose their cancelled status": unknown
@@ -42,6 +40,8 @@ declare global {
 		"${count:pluralityNumber} lose their reminders": unknown
 		"${count:pluralityNumber} lose their time zone": unknown
 		"${count:pluralityNumber} maintenance changes": unknown
+		"${count:pluralityNumber} maybe": unknown
+		"${count:pluralityNumber} no": unknown
 		"${count:pluralityNumber} of ${total:number} entries are added": unknown
 		"${count:pluralityNumber} of ${total:number} entries are copied": unknown
 		"${count:pluralityNumber} of ${total:number} entries move": unknown
@@ -53,11 +53,12 @@ declare global {
 		"${count:pluralityNumber} selected": unknown
 		"${count:pluralityNumber} stayed in ${name}": unknown
 		"${count:pluralityNumber} stop being all-day": unknown
-		"${count:pluralityNumber} weeks": unknown
 		"${count:pluralityNumber} were left out": unknown
+		"${count:pluralityNumber} yes": unknown
 		"${done:number} of ${total:pluralityNumber} checklist items done": unknown
 		"${done:number} of ${total:pluralityNumber} steps done": unknown
 		"${done:number} of ${total:pluralityNumber} subtasks done": unknown
+		"${frequency} ${on}": unknown
 		"${from} to ${to}": unknown
 		"${n:number}nd": unknown
 		"${n:number}rd": unknown
@@ -69,6 +70,7 @@ declare global {
 		"${reason}, left out": unknown
 		"${rule} until ${date}": unknown
 		"${rule}, ${count:pluralityNumber} times": unknown
+		"${setting}: ${value}": unknown
 		"${span} before": unknown
 		"${status}. Click to toggle, Alt-click for options": unknown
 		"About": unknown
@@ -257,12 +259,16 @@ declare global {
 		"Every ${count:pluralityNumber} months": unknown
 		"Every ${count:pluralityNumber} weeks": unknown
 		"Every ${count:pluralityNumber} years": unknown
+		"Every day": unknown
 		"Every entry in ${name} is copied. The ones the chosen calendar cannot take are left out. ${name} itself is read-only and stays exactly as it is.": unknown
 		"Every entry in ${name} moves. The ones the chosen calendar cannot take stay here.": unknown
 		"Every entry is still in ${name}. Nothing was deleted.": unknown
+		"Every month": unknown
 		"Every subtask of \"${heading}\" is done, which completes ${count:pluralityNumber} more tasks above it. Mark them all as done?": unknown
 		"Every subtask of \"${heading}\" is done. Mark it as done too?": unknown
+		"Every week": unknown
 		"Every weekday": unknown
+		"Every year": unknown
 		"Everything in ${version}": unknown
 		"Everything travels intact": unknown
 		"Expand": unknown

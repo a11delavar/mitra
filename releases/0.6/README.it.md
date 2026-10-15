@@ -53,16 +53,6 @@ Disegna le ore in cui lavori, ti alleni o ti tieni libero, in qualsiasi calendar
 
 Documentazione: [Disponibilità](../../docs/availability.md)
 
-## Calendario persiano
-Mitra parla persiano, e con la lingua arriva il suo calendario: mesi e settimane persiani nelle intestazioni e nei selettori, e date scritte come le scrive il persiano. Le tue voci restano dove sono. Cambia solo il modo in cui si leggono.
-
-<picture>
-	<source media="(prefers-color-scheme: dark)" srcset="persian-calendar-detail-dark.webp">
-	<img src="persian-calendar-detail-light.webp" alt="L'editor delle voci in persiano, con il selettore di date aperto su un mese persiano">
-</picture>
-
-Documentazione: [Impostazioni](../../docs/settings.md)
-
 ## Link in una sola riga
 Ogni link nella descrizione o nel luogo di una voce si raccoglie in una riga Link dell'editor, chiamato per dove porta: una pagina dal suo sito, una riunione dal suo servizio, una nota dalla sua app. Un luogo che è un link si mostra come quel link.
 
@@ -72,6 +62,16 @@ Ogni link nella descrizione o nel luogo di una voce si raccoglie in una riga Lin
 </picture>
 
 Documentazione: [Link](../../docs/links.md)
+
+## Calendario persiano
+Mitra parla persiano, e con la lingua arriva il suo calendario: mesi e settimane persiani nelle intestazioni e nei selettori, e date scritte come le scrive il persiano. Le tue voci restano dove sono. Cambia solo il modo in cui si leggono.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="persian-calendar-detail-dark.webp">
+	<img src="persian-calendar-detail-light.webp" alt="L'editor delle voci in persiano, con il selettore di date aperto su un mese persiano">
+</picture>
+
+Documentazione: [Impostazioni](../../docs/settings.md)
 
 ## Collaboratori
 - [@a11delavar](https://github.com/a11delavar)

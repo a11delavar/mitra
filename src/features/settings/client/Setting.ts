@@ -160,7 +160,7 @@ export abstract class Setting<T> {
 export abstract class ToggleSetting extends Setting<boolean> {
 	override get verbs() {
 		return [{
-			heading: `${this.heading}: ${this.value ? t('Toggle.Off') : t('Toggle.On')}`,
+			heading: String(t('${setting}: ${value}', { setting: this.heading, value: this.value ? t('Toggle.Off') : t('Toggle.On') })),
 			apply: () => this.set(!this.value),
 		}]
 	}
@@ -180,7 +180,7 @@ export abstract class ChoiceSetting<T> extends Setting<T> {
 	override get verbs() {
 		return this.options
 			.filter(option => !Object.is(option.value, this.value))
-			.map(option => ({ heading: `${this.heading}: ${option.label}`, apply: () => this.set(option.value) }))
+			.map(option => ({ heading: String(t('${setting}: ${value}', { setting: this.heading, value: option.label })), apply: () => this.set(option.value) }))
 	}
 
 	override get control() {

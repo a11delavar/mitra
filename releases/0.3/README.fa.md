@@ -53,16 +53,6 @@ Ctrl+P را بزنید، یا روی مک ⌘P، و تایپ کنید: یک دس
 
 مستندات: [مناطق زمانی](../../docs/time-zones.md)
 
-## بین‌المللی‌سازی
-هر واژه در میترا اکنون می‌تواند ترجمه شود، و تغییر زبان بی‌درنگ و بدون بارگیری مجدد اعمال می‌شود. آلمانی اولین زبان فراتر از انگلیسی است.
-
-<picture>
-	<source media="(prefers-color-scheme: dark)" srcset="german-dark.webp">
-	<img src="german-light.webp" alt="میترا به آلمانی">
-</picture>
-
-مستندات: [تنظیمات](../../docs/settings.md)
-
 ## نصب به‌عنوان برنامه
 میترا را از مرورگر نصب کنید، و در پنجره‌ای از خودش، با نمادی از خودش باز می‌شود.
 
@@ -80,6 +70,16 @@ Ctrl+P را بزنید، یا روی مک ⌘P، و تایپ کنید: یک دس
 	<source media="(prefers-color-scheme: dark)" srcset="logo-dark.webp">
 	<img src="logo-light.webp" alt="نشان میترا، به‌عنوان نماد برنامه نصب‌شده">
 </picture>
+
+## بین‌المللی‌سازی
+هر واژه در میترا اکنون می‌تواند ترجمه شود، و تغییر زبان بی‌درنگ و بدون بارگیری مجدد اعمال می‌شود. آلمانی اولین زبان فراتر از انگلیسی است.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="german-dark.webp">
+	<img src="german-light.webp" alt="میترا به آلمانی">
+</picture>
+
+مستندات: [تنظیمات](../../docs/settings.md)
 
 ## مشارکت‌کنندگان
 - [@a11delavar](https://github.com/a11delavar)

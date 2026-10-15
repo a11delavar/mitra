@@ -53,16 +53,6 @@ Füge die Zeitzonen der Menschen hinzu, mit denen du arbeitest, als zusätzliche
 
 Doku: [Zeitzonen](../../docs/time-zones.md)
 
-## Internationalisierung
-Jedes Wort in Mitra lässt sich jetzt übersetzen, und ein Sprachwechsel gilt sofort, ohne neu zu laden. Deutsch ist die erste Sprache neben Englisch.
-
-<picture>
-	<source media="(prefers-color-scheme: dark)" srcset="german-dark.webp">
-	<img src="german-light.webp" alt="Mitra auf Deutsch">
-</picture>
-
-Doku: [Einstellungen](../../docs/settings.md)
-
 ## Als App installieren
 Installiere Mitra aus dem Browser, und es öffnet sich in einem eigenen Fenster mit eigenem Symbol.
 
@@ -80,6 +70,16 @@ Mitra hat ein eigenes Logo, entworfen von [@corruptedlotus](https://github.com/c
 	<source media="(prefers-color-scheme: dark)" srcset="logo-dark.webp">
 	<img src="logo-light.webp" alt="Mitras Logo als Symbol der installierten App">
 </picture>
+
+## Internationalisierung
+Jedes Wort in Mitra lässt sich jetzt übersetzen, und ein Sprachwechsel gilt sofort, ohne neu zu laden. Deutsch ist die erste Sprache neben Englisch.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="german-dark.webp">
+	<img src="german-light.webp" alt="Mitra auf Deutsch">
+</picture>
+
+Doku: [Einstellungen](../../docs/settings.md)
 
 ## Mitwirkende
 - [@a11delavar](https://github.com/a11delavar)

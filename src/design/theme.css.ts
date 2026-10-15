@@ -26,4 +26,9 @@ export const themeStyles = css`
 			color-scheme: dark;
 		}
 	}
+
+	/* Han characters read in Noto Sans SC only while the app speaks Chinese: a Japanese heading elsewhere keeps its own glyphs. */
+	body:lang(zh) {
+		--font-family: 'Inter Variable', 'Noto Sans SC Variable', sans-serif;
+	}
 `

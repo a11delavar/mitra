@@ -31,9 +31,6 @@ Anche la scelta del fuso orario è stata ridisegnata. I fusi che condividono nom
 
 Documentazione: [Fusi orari](../../docs/time-zones.md)
 
-## Cinese
-Mitra impara il cinese, in caratteri semplificati: l’app, il suo calendario di esempio, la documentazione e il sito, con un carattere tipografico pensato apposta.
-
 ## Allegati
 Allega file a una voce. I calendari che possono conservarli, CalDAV per primo, li portano con sé.
 
@@ -44,3 +41,13 @@ Ora puoi vedere cosa è cambiato senza lasciare Mitra. La finestra Informazioni 
 	<source media="(prefers-color-scheme: dark)" srcset="about-dark.webp">
 	<img src="about-light.webp" alt="La finestra Informazioni, aperta sulle note e sulle immagini di una release">
 </picture>
+
+## Cinese
+Mitra impara il cinese, in caratteri semplificati: l’app, il suo calendario di esempio, la documentazione e il sito, con un carattere tipografico pensato apposta.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="chinese-detail-dark.webp">
+	<img src="chinese-detail-light.webp" alt="L'editor delle voci in cinese, con il selettore di date aperto sul mese">
+</picture>
+
+Documentazione: [Impostazioni](../../docs/settings.md)

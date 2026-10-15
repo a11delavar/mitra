@@ -1,3 +1,6 @@
+// `t` and the list formatter exist once something imports the Localizer, which a bare server module may not have done.
+import '@3mo/localization'
+
 /**
  * Participant role mappings based on RFC 5545 ATTENDEE ROLE.
  */
@@ -156,13 +159,15 @@ export class Participants extends Array<Participant> {
 		return { yes, no, maybe, awaiting: this.length - yes - no - maybe }
 	}
 
-	/** Summarizes non-zero response counts (e.g. "3 yes, 1 no"). */
+	/** Summarizes non-zero response counts (e.g. "3 yes and 1 no"), as the language lists them. */
 	get summary(): string {
-		const counts = this.counts
-		return ([['yes', counts.yes], ['no', counts.no], ['maybe', counts.maybe], ['awaiting', counts.awaiting]] as const)
-			.filter(([, count]) => count > 0)
-			.map(([label, count]) => `${count} ${label}`)
-			.join(', ')
+		const { yes, no, maybe, awaiting } = this.counts
+		return [
+			!yes ? undefined : t('${count:pluralityNumber} yes', { count: yes }),
+			!no ? undefined : t('${count:pluralityNumber} no', { count: no }),
+			!maybe ? undefined : t('${count:pluralityNumber} maybe', { count: maybe }),
+			!awaiting ? undefined : t('${count:pluralityNumber} awaiting', { count: awaiting }),
+		].filter(phrase => phrase !== undefined).map(String).formatAsConjunction()
 	}
 
 	get emails(): string {

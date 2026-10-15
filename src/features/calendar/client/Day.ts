@@ -169,10 +169,21 @@ export class Day extends Component {
 
 	protected override createRenderRoot() { return this }
 
+	/** The weekday, the day and on the 1st the month, apart. A word after the month is its own (Chinese "11月"), so it stays. */
+	private get headerParts() {
+		const parts = this.date.formatToParts({ weekday: 'long', month: this.date.day === 1 ? 'short' : undefined, day: 'numeric' })
+		return parts.flatMap((part, index) => {
+			const next = parts[index + 1]
+			return part.type === 'literal' ? []
+				: part.type === 'month' && next?.type === 'literal' && /\p{L}/u.test(next.value) ? [{ ...part, value: part.value + next.value.trim() }]
+					: [part]
+		})
+	}
+
 	protected override get template() {
 		return html`
 			<div class="header" ?data-chrome=${this.columnHeader}>
-				${this.date.formatToParts({ weekday: 'long', month: this.date.day === 1 ? 'short' : undefined, day: 'numeric' }).filter(part => part.type !== 'literal').map(part => html`
+				${this.headerParts.map(part => html`
 					<span class="${part.type}" ?data-today=${this.today}>${part.value}</span>
 				`)}
 			</div>

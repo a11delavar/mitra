@@ -53,16 +53,6 @@ Dessinez les heures où vous travaillez, vous entraînez ou restez libre, dans n
 
 Documentation : [Disponibilité](../../docs/availability.md)
 
-## Calendrier persan
-Mitra parle persan, et avec la langue vient son calendrier : mois et semaines persans dans les en-têtes et les sélecteurs, et dates saisies comme le persan les écrit. Vos entrées restent où elles sont. Seule la façon de les lire change.
-
-<picture>
-	<source media="(prefers-color-scheme: dark)" srcset="persian-calendar-detail-dark.webp">
-	<img src="persian-calendar-detail-light.webp" alt="L'éditeur d'entrée en persan, son sélecteur de date ouvert sur un mois persan">
-</picture>
-
-Documentation : [Paramètres](../../docs/settings.md)
-
 ## Les liens sur une seule ligne
 Chaque lien de la description ou du lieu d'une entrée se rassemble dans une ligne Liens de l'éditeur, nommé d'après sa destination : une page par son site, une réunion par son service, une note par son application. Un lieu qui est un lien s'affiche comme ce lien.
 
@@ -72,6 +62,16 @@ Chaque lien de la description ou du lieu d'une entrée se rassemble dans une lig
 </picture>
 
 Documentation : [Liens](../../docs/links.md)
+
+## Calendrier persan
+Mitra parle persan, et avec la langue vient son calendrier : mois et semaines persans dans les en-têtes et les sélecteurs, et dates saisies comme le persan les écrit. Vos entrées restent où elles sont. Seule la façon de les lire change.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="persian-calendar-detail-dark.webp">
+	<img src="persian-calendar-detail-light.webp" alt="L'éditeur d'entrée en persan, son sélecteur de date ouvert sur un mois persan">
+</picture>
+
+Documentation : [Paramètres](../../docs/settings.md)
 
 ## Contributeurs
 - [@a11delavar](https://github.com/a11delavar)

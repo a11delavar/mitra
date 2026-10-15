@@ -53,16 +53,6 @@ Zeichne die Stunden, in denen du arbeitest, trainierst oder dir freihältst, in 
 
 Doku: [Verfügbarkeit](../../docs/availability.md)
 
-## Persischer Kalender
-Mitra spricht Persisch, und mit der Sprache kommt ihr Kalender: persische Monate und Wochen in den Kopfzeilen und den Auswahlfeldern, und Daten, die so eingegeben werden, wie man sie auf Persisch schreibt. Deine Einträge bleiben, wo sie sind. Nur wie sie sich lesen, ändert sich.
-
-<picture>
-	<source media="(prefers-color-scheme: dark)" srcset="persian-calendar-detail-dark.webp">
-	<img src="persian-calendar-detail-light.webp" alt="Der Eintragseditor auf Persisch, seine Datumsauswahl auf einem persischen Monat geöffnet">
-</picture>
-
-Doku: [Einstellungen](../../docs/settings.md)
-
 ## Links in einer Zeile
 Jeder Link aus der Beschreibung oder dem Ort eines Eintrags sammelt sich in einer Zeile Links im Editor, benannt nach seinem Ziel: eine Seite nach ihrer Website, ein Meeting nach seinem Dienst, eine Notiz nach ihrer App. Ein Ort, der ein Link ist, erscheint als dieser Link.
 
@@ -72,6 +62,16 @@ Jeder Link aus der Beschreibung oder dem Ort eines Eintrags sammelt sich in eine
 </picture>
 
 Doku: [Links](../../docs/links.md)
+
+## Persischer Kalender
+Mitra spricht Persisch, und mit der Sprache kommt ihr Kalender: persische Monate und Wochen in den Kopfzeilen und den Auswahlfeldern, und Daten, die so eingegeben werden, wie man sie auf Persisch schreibt. Deine Einträge bleiben, wo sie sind. Nur wie sie sich lesen, ändert sich.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="persian-calendar-detail-dark.webp">
+	<img src="persian-calendar-detail-light.webp" alt="Der Eintragseditor auf Persisch, seine Datumsauswahl auf einem persischen Monat geöffnet">
+</picture>
+
+Doku: [Einstellungen](../../docs/settings.md)
 
 ## Mitwirkende
 - [@a11delavar](https://github.com/a11delavar)

@@ -12,6 +12,10 @@
 		"${count:pluralityNumber} شرکت‌کننده",
 		"${count:pluralityNumber} شرکت‌کننده"
 	],
+	"${count:pluralityNumber} yes": "${count:pluralityNumber} بله",
+	"${count:pluralityNumber} no": "${count:pluralityNumber} خیر",
+	"${count:pluralityNumber} maybe": "${count:pluralityNumber} شاید",
+	"${count:pluralityNumber} awaiting": "${count:pluralityNumber} در انتظار پاسخ",
 	"${count:pluralityNumber} weeks": [
 		"${count:pluralityNumber} هفته",
 		"${count:pluralityNumber} هفته"
@@ -315,6 +319,7 @@
 	"the ${ordinal} ${weekday}": "${weekday}ٔ ${ordinal}",
 	"the last ${weekday}": "آخرین ${weekday}",
 	"on ${date}": "در ${date}",
+	"${frequency} ${on}": "${frequency} ${on}",
 	"on ${weekday}": "در ${weekday}",
 	"on the ${ordinal}": "در ${ordinal}",
 	"on the ${ordinal} ${weekday}": "${weekday}ٔ ${ordinal}",
@@ -728,6 +733,7 @@
 	"This browser is blocking notifications. Allow them in its site settings to get reminders here.": "این مرورگر ارسال اعلان‌ها را مسدود کرده است. در تنظیمات سایت مرورگر اجازه دهید تا یادآورها را اینجا دریافت کنید.",
 	"This browser will show your reminders.": "این مرورگر یادآورهای شما را نمایش خواهد داد.",
 	"Toggle.Off": "خاموش",
+	"${setting}: ${value}": "${setting}: ${value}",
 	"Toggle.On": "روشن",
 	"Timed entries only": "فقط موارد زمان‌دار",
 	"Tasks with a time only": "فقط کارهای دارای ساعت",

@@ -54,16 +54,6 @@ Draw the hours you work, train or keep free, in any calendar. They shade the wee
 
 Docs: [Availability](../../docs/availability.md)
 
-## Persian calendar
-Mitra speaks Persian, and with the language comes its calendar: Persian months and weeks in the headers and the pickers, and dates typed the way Persian writes them. Your entries stay where they are. Only the way they read changes.
-
-<picture>
-	<source media="(prefers-color-scheme: dark)" srcset="persian-calendar-detail-dark.webp">
-	<img src="persian-calendar-detail-light.webp" alt="The entry editor in Persian, its date picker open on a Persian month">
-</picture>
-
-Docs: [Settings](../../docs/settings.md)
-
 ## Links in one row
 Every link in an entry's description or location gathers in a Links row of the editor, named by where it goes: a page by its site, a meeting by its service, a note by its app. A location that is a link shows as that link.
 
@@ -73,6 +63,16 @@ Every link in an entry's description or location gathers in a Links row of the e
 </picture>
 
 Docs: [Links](../../docs/links.md)
+
+## Persian calendar
+Mitra speaks Persian, and with the language comes its calendar: Persian months and weeks in the headers and the pickers, and dates typed the way Persian writes them. Your entries stay where they are. Only the way they read changes.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="persian-calendar-detail-dark.webp">
+	<img src="persian-calendar-detail-light.webp" alt="The entry editor in Persian, its date picker open on a Persian month">
+</picture>
+
+Docs: [Settings](../../docs/settings.md)
 
 ## Contributors
 - [@a11delavar](https://github.com/a11delavar)

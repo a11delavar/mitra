@@ -31,9 +31,6 @@ Le sélecteur de fuseaux horaires a lui aussi été repensé. Les fuseaux qui pa
 
 Documentation : [Fuseaux horaires](../../docs/time-zones.md)
 
-## Chinois
-Mitra apprend le chinois, en caractères simplifiés : l’application, son agenda d’exemple, la documentation et le site, avec une police conçue pour lui.
-
 ## Pièces jointes
 Joignez des fichiers à une entrée. Les calendriers qui savent les conserver, CalDAV en tête, les emportent avec eux.
 
@@ -44,3 +41,13 @@ Vous pouvez désormais voir ce qui a changé sans quitter Mitra. La fenêtre À 
 	<source media="(prefers-color-scheme: dark)" srcset="about-dark.webp">
 	<img src="about-light.webp" alt="La boîte de dialogue À propos, ouverte sur les notes et les images d'une version">
 </picture>
+
+## Chinois
+Mitra apprend le chinois, en caractères simplifiés : l’application, son agenda d’exemple, la documentation et le site, avec une police conçue pour lui.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="chinese-detail-dark.webp">
+	<img src="chinese-detail-light.webp" alt="L'éditeur d'entrée en chinois, son sélecteur de date ouvert sur le mois">
+</picture>
+
+Documentation : [Paramètres](../../docs/settings.md)

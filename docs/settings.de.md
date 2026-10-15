@@ -30,7 +30,7 @@ Mitra merkt sich außerdem einiges pro Gerät, während du es benutzt: wie weit 
 
 **Erscheinungsbild** ist **Wie das System**, **Hell** oder **Dunkel**. **Wie das System**, der Standard, folgt dem hellen oder dunklen Modus deines Geräts.
 
-**Sprache** bietet Englisch, Deutsch, Französisch, Spanisch, Portugiesisch, Italienisch und Persisch an, jede in ihrer eigenen Sprache benannt. Die Änderung gilt sofort, ohne neu zu laden, und Persisch richtet Mitra von rechts nach links aus.
+**Sprache** bietet Englisch, Deutsch, Französisch, Spanisch, Portugiesisch, Italienisch, Persisch und Chinesisch an, jede in ihrer eigenen Sprache benannt; Chinesisch in vereinfachten Schriftzeichen. Die Änderung gilt sofort, ohne neu zu laden, und Persisch richtet Mitra von rechts nach links aus.
 
 Jede Sprache legt auch fest, wie Datum und Uhrzeit aussehen, an welchem Tag die Woche beginnt und welche Tage zum Wochenende gehören. Zunächst folgt sie der Schreibweise deines Browsers, sodass Englisch meist wie in den USA aussieht, Deutsch wie in Deutschland und Persisch wie im Iran. Der Pfeil am Ende einer Sprache klappt die Länder und Gebiete auf, in denen sie geschrieben wird, etwa das Vereinigte Königreich oder Europa für Englisch: Englisch für das Vereinigte Königreich schreibt 9 Oct 2026 und 13:00 und beginnt die Woche am Montag, für die USA schreibt es Oct 9, 2026 und 1:00 PM und beginnt am Sonntag. Wechselst du die Sprache über die Befehlspalette, bleibt dein Land, wenn die neue Sprache dort geschrieben wird. Eine Vorschau unter der Einstellung zeigt, wie Datum, Uhrzeit, Woche, Zahlen und die Namen der Zeitzonen aussehen. Ein Land ist hier keine Zeitzone: New York und Los Angeles teilen sich eines.
 

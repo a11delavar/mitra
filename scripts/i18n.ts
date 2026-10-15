@@ -15,7 +15,7 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 const srcDir = path.resolve(here, '../src')
 const i18nDir = path.resolve(srcDir, 'infrastructure/i18n')
 const keysFile = path.join(i18nDir, 'keys.auto-generated.ts')
-const dicts = ['de.json', 'fr.json', 'es.json', 'pt.json', 'it.json', 'fa.json']
+const dicts = ['de.json', 'fr.json', 'es.json', 'pt.json', 'it.json', 'fa.json', 'zh.json']
 
 const analyzeOnly = process.argv.includes('--analyze')
 

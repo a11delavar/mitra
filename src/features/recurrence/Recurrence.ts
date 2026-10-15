@@ -114,18 +114,18 @@ export class Recurrence {
 				const onWorkdays = this.byday?.length === workdays.length && workdays.every(weekday => this.byday!.includes(weekday))
 				rule = onWorkdays && this.every === 1 ? t('Every weekday')
 					: !this.byday?.length ? frequency
-						: `${frequency} ${t('on ${weekday}', { weekday: this.byday.map(weekday => weekday.format()).format() })}`
+						: Recurrence.joined(frequency, t('on ${weekday}', { weekday: this.byday.map(weekday => weekday.format()).format() }))
 				break
 			}
 			case RecurrenceFrequency.Monthly: {
 				const on = this.bymonthday ? Recurrence.monthDayLabel(this.bymonthday)
 					: this.byday?.length === 1 ? Recurrence.monthWeekdayLabel(this.byday[0]!)
 						: undefined
-				rule = on ? `${frequency} ${on}` : frequency
+				rule = on ? Recurrence.joined(frequency, on) : frequency
 				break
 			}
 			case RecurrenceFrequency.Yearly:
-				rule = this.every === 1 && start ? `${frequency} ${t('on ${date}', { date: start.formatAsAnniversary() })}` : frequency
+				rule = this.every === 1 && start ? Recurrence.joined(frequency, t('on ${date}', { date: start.formatAsAnniversary() })) : frequency
 				break
 			default:
 				rule = frequency
@@ -244,6 +244,11 @@ export class Recurrence {
 			return 'none'
 		}
 		return presets.find(preset => preset.recurrence?.equals(recurrence))?.id
+	}
+
+	/** "Every week on Thu": the language joins the two, Chinese with 的 and no space. */
+	private static joined(frequency: string, on: unknown) {
+		return String(t('${frequency} ${on}', { frequency, on: String(on) }))
 	}
 
 	/** "on the 25th" */

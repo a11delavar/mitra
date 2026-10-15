@@ -31,9 +31,6 @@ Auch die Auswahl der Zeitzonen ist neu gestaltet. Zonen mit demselben Namen und 
 
 Doku: [Zeitzonen](../../docs/time-zones.md)
 
-## Chinesisch
-Mitra lernt Chinesisch, in vereinfachten Schriftzeichen: die App, ihr Beispielkalender, die Doku und die Website, mit einer Schrift, die dafür gemacht ist.
-
 ## Anhänge
 Hänge Dateien an einen Eintrag. Kalender, die sie aufbewahren können, zuerst CalDAV, nehmen sie mit.
 
@@ -44,3 +41,13 @@ Du kannst jetzt sehen, was sich geändert hat, ohne Mitra zu verlassen. Der Dial
 	<source media="(prefers-color-scheme: dark)" srcset="about-dark.webp">
 	<img src="about-light.webp" alt="Der Dialog Über, geöffnet auf den Notizen und Bildern eines Releases">
 </picture>
+
+## Chinesisch
+Mitra lernt Chinesisch, in vereinfachten Schriftzeichen: die App, ihr Beispielkalender, die Doku und die Website, mit einer Schrift, die dafür gemacht ist.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="chinese-detail-dark.webp">
+	<img src="chinese-detail-light.webp" alt="Der Eintragseditor auf Chinesisch, seine Datumsauswahl auf dem Monat geöffnet">
+</picture>
+
+Doku: [Einstellungen](../../docs/settings.md)
