@@ -191,6 +191,8 @@ export class Mitra extends Application {
 			html {
 				overflow: hidden;
 				overscroll-behavior: none;
+				/* A page pinch begun outside a grid can't be undone inside one (the grids take pinch for density), and iOS ignores the viewport's maximum-scale for pinch. */
+				touch-action: pan-x pan-y;
 			}
 
 			${themeStyles}

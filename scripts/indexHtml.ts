@@ -94,12 +94,13 @@ export async function writeIndexHtml() {
 	].join('\n\t').replace('rel="manifest"', 'rel="manifest" crossorigin="use-credentials"')
 
 	// interactive-widget=resizes-content ensures virtual keyboards resize layout viewport for bottom sheets.
+	// maximum-scale=1 stops iOS Safari zooming into fields under 16px on focus; since iOS 10 it still allows pinch zoom.
 	fs.writeFileSync(join(distDir, 'index.html'), `
 <!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, interactive-widget=resizes-content">
 	<title>Mitra</title>
 	${head}
 	<link rel="stylesheet" href="/fonts.css">
