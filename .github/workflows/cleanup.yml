@@ -3,7 +3,7 @@ name: Cleanup GHCR
 # GHCR never garbage-collects, so two things pile up forever:
 #   • untagged manifests: multi-arch publishes leave child images, and a moved
 #     `dev` tag orphans its previous digest;
-#   • per-commit `sha-*` tags: one per push to main.
+#   • per-commit `sha-*` tags: one per push to main, and `pr-*` tags: one per pull request.
 # This prunes both. It starts in DRY-RUN: check the run summary, then set
 # `dry-run: false` once the selection looks right. `latest`, `dev` and release
 # tags (X.Y.Z / X.Y / X) are never matched.
@@ -43,4 +43,16 @@ jobs:
           image-tags: 'sha-*'
           cut-off: 1w
           keep-n-most-recent: 10
+          dry-run: true
+
+      # The `pr-*` tags, once their pull request has long been merged or closed.
+      - name: Prune Pull Request Tags
+        uses: snok/container-retention-policy@v3.1.0
+        with:
+          account: user
+          token: ${{ secrets.GITHUB_TOKEN }}
+          image-names: mitra
+          tag-selection: tagged
+          image-tags: 'pr-*'
+          cut-off: 4w
           dry-run: true
