@@ -2,7 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Entry } from '../entries/Entry.js'
-import { EntryChange } from '../entries/EntryChange.js'
+import { EntryShift } from '../entries/EntryShift.js'
 import { EntryRelations } from './EntryRelations.js'
 import { EntryType } from '../entries/EntryType.js'
 import { type RelationInit } from './Relation.js'
@@ -28,7 +28,7 @@ describe('ShiftStrategy', () => {
 		const before = entry.clone()
 		entry.start = entry.start!.add({ days })
 		entry.end = entry.end?.add({ days })
-		return EntryChange.of(entry, before)
+		return EntryShift.of(entry, before)
 	}
 
 	/** uid → the shift the plan would apply, in days. */
@@ -146,7 +146,7 @@ describe('ShiftStrategy', () => {
 			const before = b.clone()
 			b.start = day(2)
 
-			assert.deepEqual(shifts(ShiftStrategy.Minimum.plan(graph, EntryChange.of(b, before))), { a: -2 })
+			assert.deepEqual(shifts(ShiftStrategy.Minimum.plan(graph, EntryShift.of(b, before))), { a: -2 })
 		})
 
 		it('takes a shifted entry SUBTREE with it: nobody aimed at those, and leaving them strands them', () => {
@@ -192,7 +192,7 @@ describe('ShiftStrategy', () => {
 			const before = a.clone()
 			a.end = a.start!.add({ days: 3 })
 
-			assert.equal(ShiftStrategy.Maintain.plan(graph, EntryChange.of(a, before)).isEmpty, true)
+			assert.equal(ShiftStrategy.Maintain.plan(graph, EntryShift.of(a, before)).isEmpty, true)
 		})
 	})
 

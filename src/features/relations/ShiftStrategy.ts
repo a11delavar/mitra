@@ -1,5 +1,5 @@
 import type { Entry } from '../entries/Entry.js'
-import type { EntryChange } from '../entries/EntryChange.js'
+import type { EntryShift } from '../entries/EntryShift.js'
 import { EntryPlan, type PlannedWrite, type SkippedEntry } from './EntryPlan.js'
 import type { RelationEdge } from './RelationEdge.js'
 import type { RelationGraph } from './RelationGraph.js'
@@ -78,7 +78,7 @@ export abstract class ShiftStrategy {
 	abstract readonly value: string
 	abstract readonly icon: string
 	abstract format(): string
-	abstract plan(graph: RelationGraph, change: EntryChange): EntryPlan
+	abstract plan(graph: RelationGraph, change: EntryShift): EntryPlan
 }
 
 class NoShift extends ShiftStrategy {
@@ -97,7 +97,7 @@ class MinimumShift extends ShiftStrategy {
 	override readonly icon = 'waypoints'
 	override format() { return t('Keep the chain intact') }
 
-	override plan(graph: RelationGraph, change: EntryChange): EntryPlan {
+	override plan(graph: RelationGraph, change: EntryShift): EntryPlan {
 		const moved = change.entry.uid
 		if (!moved) {
 			return EntryPlan.empty
@@ -163,7 +163,7 @@ class MaintainGap extends ShiftStrategy {
 	override readonly icon = 'chevrons-right'
 	override format() { return t('Move them all by the same amount') }
 
-	override plan(graph: RelationGraph, change: EntryChange): EntryPlan {
+	override plan(graph: RelationGraph, change: EntryShift): EntryPlan {
 		const moved = change.entry.uid
 		const delta = change.delta
 		return !moved || !delta

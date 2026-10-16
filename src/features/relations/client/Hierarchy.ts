@@ -1,6 +1,6 @@
 import { type ShiftStrategy } from '../ShiftStrategy.js'
 import { EntryPlan, type PlannedWrite, type SkippedEntry } from '../EntryPlan.js'
-import { type EntryChange } from '../../entries/EntryChange.js'
+import { type EntryShift } from '../../entries/EntryShift.js'
 import { type Entry } from '../../entries/Entry.js'
 import { TaskStatus } from '../../entries/TaskStatus.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
@@ -22,7 +22,7 @@ export function subtreeSize(entry: Entry): number {
 /**
  * Resolves gesture scope across recurrence, hierarchy, and dependency axes.
  */
-export function resolveScope(entry: Entry, intent: 'edit' | 'move' | 'delete', bypass = false, hasSubtaskAction = true, change?: EntryChange): Promise<EntryScope | undefined> {
+export function resolveScope(entry: Entry, intent: 'edit' | 'move' | 'delete', bypass = false, hasSubtaskAction = true, change?: EntryShift): Promise<EntryScope | undefined> {
 	const series = !!entry.recurringEntryId
 	const subtasks = hasSubtaskAction && (intent === 'delete' || intent === 'move') ? subtreeSize(entry) : 0
 	const shifts = change && intent !== 'delete' ? Relations.shiftOptionsFor(change) : []
@@ -35,7 +35,7 @@ export function resolveScope(entry: Entry, intent: 'edit' | 'move' | 'delete', b
 /**
  * Applies shift strategy to downstream entries, excluding entries already modified.
  */
-export function shiftDependents(change: EntryChange, strategy: ShiftStrategy, already = EntryPlan.empty) {
+export function shiftDependents(change: EntryShift, strategy: ShiftStrategy, already = EntryPlan.empty) {
 	const plan = strategy.plan(Relations.graph, change).excluding(already)
 	return plan.isEmpty ? Promise.resolve(undefined) : EntryStore.applyPlan(plan)
 }

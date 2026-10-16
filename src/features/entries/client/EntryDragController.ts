@@ -2,7 +2,7 @@ import { Controller, type Component } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { type Source } from '../../sources/Source.js'
 import { EntryPlan } from '../../relations/EntryPlan.js'
-import { EntryChange } from '../EntryChange.js'
+import { EntryShift } from '../EntryShift.js'
 import { Entry } from '../Entry.js'
 import { DefaultDurationSetting } from './DefaultDurationSetting.js'
 import { SnapSetting } from './SnapSetting.js'
@@ -695,7 +695,7 @@ export class EntryDragController extends Controller {
 				entry.adoptSpan(built)
 				EntryStore.notify()
 			}
-			const change = EntryChange.of(entry, drag.before)
+			const change = EntryShift.of(entry, drag.before)
 			void Hierarchy.resolveScope(entry, isMove ? 'move' : 'edit', bypass, isMove && delta !== 0, change).then(scope => {
 				if (!scope) {
 					return EntryStore.revert(entry)

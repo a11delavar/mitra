@@ -25,6 +25,7 @@ import { ValidationError } from '../../infrastructure/validation/ValidationError
 import { TimeZone } from '../time/TimeZone.js'
 import { EntryPatch } from './EntryPatch.js'
 import { EntryOccurrences } from '../recurrence/EntryOccurrences.js'
+import { EntryChange } from './EntryChange.js'
 
 export interface EntryTally {
 	readonly done: number
@@ -549,6 +550,11 @@ export class Entry implements Validatable<Calendar> {
 		if (this.due && !ownership.holds('due')) {
 			yield new ValidationError('This calendar does not support due dates', ['due'])
 		}
+	}
+
+	/** What `patch` does to this entry, the entry itself rather than one of its occurrences. */
+	edit(patch: EntryPatch) {
+		return new EntryChange(this, new Entry().apply(EntryPatch.of(this)).apply(patch))
 	}
 
 	/** Takes over what `patch` sets, and a new entry's value where it clears. What the type can't hold goes, and an estimate a start replaced. */

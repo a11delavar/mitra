@@ -161,7 +161,8 @@ entriesRouter.put('/:id', async (req, res) => {
 		}
 	}
 
-	const incoming = new Entry().apply(EntryPatch.of(existing)).apply(patch)
+	const edit = existing.edit(patch)
+	const incoming = edit.edited
 
 	// Changing the list is the organizer's prerogative: iTIP (RFC 5546) limits everyone else to replying with their own
 	// status, so their content edits pass only while they leave it as it is.
@@ -206,36 +207,18 @@ entriesRouter.put('/:id', async (req, res) => {
 		return res.json(result)
 	}
 
-	// Move between sources or type conversion re-creates the entry (create-first, delete-after ordering).
-	if (currentSource.id !== targetSource.id || incoming.type !== existing.type) {
-		incoming.id = crypto.randomUUID()
-		incoming.uid = currentSource.uri && currentSource.uri === targetSource.uri ? crypto.randomUUID() : existing.uid
-		incoming.rank = incoming.type.isTask ? existing.rank : undefined
-		incoming.migrateTo(targetSource)
-		const created = await targetIntegration.createEntry(em, incoming)
-		try {
-			await currentIntegration.deleteEntry(em, existing)
-		} catch (error) {
-			await targetIntegration.deleteEntry(em, created).catch(() => void 0)
-			await em.flush().catch(() => void 0)
-			throw error
-		}
-		await EntryRelation.reconcile(em, created.id!, created.relations ?? EntryRelations.none)
-		await em.flush()
-		syncEmitter.emit('updated', req.user.id)
-		logger.debug(`Re-created entry ${existing.id} as ${created.type} in source ${targetSource.id} (new id ${created.id})`)
-		return res.json(created)
-	}
-
-	await targetIntegration.updateEntry(em, existing, incoming)
-	if (relations !== undefined) {
-		await EntryRelation.reconcile(em, existing.id!, relations)
-		existing.relations = relations
+	const recreated = edit.recreates
+	const saved = await edit.save(em, from, to)
+	if (recreated) {
+		await EntryRelation.reconcile(em, saved.id!, saved.relations ?? EntryRelations.none)
+	} else if (relations !== undefined) {
+		await EntryRelation.reconcile(em, saved.id!, relations)
+		saved.relations = relations
 	}
 	await em.flush()
 	syncEmitter.emit('updated', req.user.id)
-	logger.debug(`Updated entry ${existing.id} "${incoming.heading}"`)
-	return res.json(existing)
+	logger.debug(recreated ? `Re-created entry ${existing.id} as ${saved.type} in source ${targetSource.id} (new id ${saved.id})` : `Updated entry ${existing.id} "${saved.heading}"`)
+	return res.json(saved)
 })
 
 /** Marks a task done without a full entry body, for a notification's Done button. */

@@ -47,6 +47,7 @@ describe('Entries over the wire, between viewers in different zones', () => {
 	let server: Server
 	let source: Source
 	let hiddenSource: Source
+	let elsewhere: Source
 	let stored: (id: string) => Promise<{ start: number | null, end: number | null, due: number | null, exdates: string | null }>
 	let named: (heading: string) => Promise<Array<{ start: number, end: number, recurring_entry_id: string | null }>>
 	let closeOrm: () => Promise<void>
@@ -62,7 +63,8 @@ describe('Entries over the wire, between viewers in different zones', () => {
 		const integration = new MitraCalendar({ userId: user.id, uri: MitraCalendar.uri })
 		source = new Source({ integrationId: integration.id, uri: MitraCalendar.sourceUri('home'), name: 'Home', entryTypes: [EntryType.Event, EntryType.Task], enabled: true, hidden: false })
 		hiddenSource = new Source({ integrationId: integration.id, uri: MitraCalendar.sourceUri('archive'), name: 'Archive', entryTypes: [EntryType.Event, EntryType.Task], enabled: true, hidden: true })
-		em.persist([user, integration, source, hiddenSource])
+		elsewhere = new Source({ integrationId: integration.id, uri: MitraCalendar.sourceUri('work'), name: 'Work', entryTypes: [EntryType.Event, EntryType.Task], enabled: true, hidden: false })
+		em.persist([user, integration, source, hiddenSource, elsewhere])
 		await em.flush()
 
 		const connection = orm.em.getConnection()
@@ -257,6 +259,32 @@ describe('Entries over the wire, between viewers in different zones', () => {
 			assert.equal(write.status, 409)
 			const read = await fetch(`${Api.url}/entries/search?q=Holiday&tz=Europe%2FBerlin`)
 			assert.equal(read.status, 200)
+		})
+	})
+
+	describe('an entry moved or converted', () => {
+		const timed = (heading: string) => new Entry({ sourceId: source.id, type: EntryType.Event, heading, start: new DateTime('2026-07-01T09:00:00Z'), end: new DateTime('2026-07-01T10:00:00Z') })
+
+		it('is created in the other calendar under a new id, keeping its uid, and leaves the first', async () => {
+			viewIn(zones.berlin)
+			const created = await createEvent(timed('Review'))
+			created.sourceId = elsewhere.id
+			const moved = await updateEvent(created)
+			assert.notEqual(moved.id, created.id)
+			assert.equal(moved.sourceId, elsewhere.id)
+			assert.equal(moved.uid, created.uid)
+			assert.equal(await stored(created.id!), undefined)
+			assert.deepEqual(Object.values(await stored(moved.id!)).slice(0, 2), [Date.parse('2026-07-01T09:00:00Z'), Date.parse('2026-07-01T10:00:00Z')])
+		})
+
+		it('becomes a task under a new id in the same calendar', async () => {
+			viewIn(zones.berlin)
+			const created = await createEvent(timed('Write up'))
+			created.type = EntryType.Task
+			const converted = await updateEvent(created)
+			assert.notEqual(converted.id, created.id)
+			assert.equal(converted.type, EntryType.Task)
+			assert.equal(await stored(created.id!), undefined)
 		})
 	})
 })

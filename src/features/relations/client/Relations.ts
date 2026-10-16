@@ -1,7 +1,7 @@
 import { ShiftStrategy } from '../ShiftStrategy.js'
 import { RelationGraph } from '../RelationGraph.js'
 import { type EntryPlan } from '../EntryPlan.js'
-import { type EntryChange } from '../../entries/EntryChange.js'
+import { type EntryShift } from '../../entries/EntryShift.js'
 import { type Entry, type EntryRollup } from '../../entries/Entry.js'
 import { getRelationClosure } from '../../../infrastructure/http/Api.js'
 import { Calendars } from '../../sources/client/Calendars.js'
@@ -90,7 +90,7 @@ export class Relations {
 	/**
 	 * Evaluates distinct shift options for downstream entries, deduplicating equivalent plans.
 	 */
-	static shiftOptionsFor(change: EntryChange): Array<{ strategy: ShiftStrategy, plan: EntryPlan }> {
+	static shiftOptionsFor(change: EntryShift): Array<{ strategy: ShiftStrategy, plan: EntryPlan }> {
 		const options = new Array<{ strategy: ShiftStrategy, plan: EntryPlan }>()
 		for (const strategy of ShiftStrategy.all) {
 			const plan = strategy.plan(this.graph, change)
