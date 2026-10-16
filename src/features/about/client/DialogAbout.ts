@@ -42,6 +42,8 @@ export class DialogAbout extends DialogComponent {
 	@state() private current?: ChangelogSection
 	@state() private selected?: Release
 	@state() private copied = false
+	/** On a phone, whether the release fills the dialog rather than the rail. */
+	@state() private drilled = true
 
 	protected override async connected() {
 		DialogAbout.markSeen()
@@ -101,7 +103,7 @@ export class DialogAbout extends DialogComponent {
 					container: about / inline-size;
 					display: grid;
 					grid-template-columns: 15rem minmax(0, 1fr);
-					block-size: min(58rem, 90vh);
+					block-size: min(58rem, 90dvh);
 				}
 
 				/* A shallow light in the mark's gold over the rail's top. Eased in many stops, since a straight fade at so low
@@ -284,48 +286,61 @@ export class DialogAbout extends DialogComponent {
 					}
 				}
 
-				mitra-release-notes {
+				.release {
+					display: flex;
+					flex-direction: column;
 					min-block-size: 0;
-					overflow-y: auto;
-					overscroll-behavior: contain;
-					padding: 2.5rem 3rem 3rem;
 					/* The app's own canvas in the dark, white in the light: the captures sit on what they were taken on. */
 					background: light-dark(var(--color-surface), var(--color-background-seed));
-					${scrollbar};
+
+					.bar {
+						display: none;
+					}
+
+					mitra-release-notes {
+						flex: 1;
+						min-block-size: 0;
+						overflow-y: auto;
+						overscroll-behavior: contain;
+						padding: 2.5rem 3rem 3rem;
+						${scrollbar};
+					}
+
+					.empty {
+						margin: auto;
+						font-size: 0.8125rem;
+						color: var(--color-text-muted);
+					}
 				}
 
-				.empty {
-					margin: auto;
-					font-size: 0.8125rem;
-					color: var(--color-text-muted);
-				}
-
-				/* A phone stacks the rail above the release, its versions in a row. */
+				/* A phone shows the rail or the release, as Settings does its pages. The panels are the container, so only
+				   what lies inside them may change here. */
 				@container about (max-width: 40rem) {
-					.panels {
-						grid-template-columns: minmax(0, 1fr);
-						grid-template-rows: auto minmax(0, 1fr);
+					.rail, .release {
+						grid-column: 1 / -1;
+					}
+
+					.panels[data-drilled] .rail,
+					.panels:not([data-drilled]) .release {
+						display: none;
 					}
 
 					.rail {
 						border-inline-end: none;
-						border-block-end: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
-						padding-block: 1rem 0.5rem;
-						gap: 0.75rem;
 					}
 
-					.releases {
-						flex-direction: row;
-						overflow-x: auto;
-						padding-block-start: 0.5rem;
-
-						.date {
-							display: none;
+					.release {
+						.bar {
+							display: flex;
+							align-items: center;
+							/* Level with the close button, which sits over its end. */
+							padding-block-start: var(--mitra-dialog-header-inset);
+							padding-inline-start: var(--mitra-dialog-header-inset);
 						}
-					}
 
-					mitra-release-notes {
-						padding: 1.5rem 1.25rem 2rem;
+						mitra-release-notes {
+							padding: 1rem 1.25rem 2rem;
+						}
 					}
 				}
 			}
@@ -335,16 +350,21 @@ export class DialogAbout extends DialogComponent {
 	protected override get template() {
 		return html`
 			<mitra-dialog heading=''>
-				<div class="panels">
+				<div class="panels" ?data-drilled=${this.drilled}>
 					<aside class="rail">
 						${this.identityTemplate}
 						<nav class="releases" aria-label=${t('Releases')}>
 							${(this.releases ?? []).map(release => this.entryTemplate(release))}
 						</nav>
 					</aside>
-					${this.releases && !this.selected ? html`<p class="empty">${t('No release notes available')}</p>` : html`
-						<mitra-release-notes .release=${this.selected} .files=${this.folders.get(this.selected?.version ?? '')?.files ?? []}></mitra-release-notes>
-					`}
+					<section class="release">
+						<header class="bar">
+							<mitra-icon-button icon="arrow-left" label=${t('Back')} @click=${() => this.drilled = false}></mitra-icon-button>
+						</header>
+						${this.releases && !this.selected ? html`<p class="empty">${t('No release notes available')}</p>` : html`
+							<mitra-release-notes .release=${this.selected} .files=${this.folders.get(this.selected?.version ?? '')?.files ?? []}></mitra-release-notes>
+						`}
+					</section>
 				</div>
 			</mitra-dialog>
 		`
@@ -402,6 +422,7 @@ export class DialogAbout extends DialogComponent {
 	/** Another release starts at its top: the pane is the same element, so it would keep the last one's scroll. */
 	private async select(release: Release) {
 		this.selected = release
+		this.drilled = true
 		await this.updateComplete
 		this.querySelector('mitra-release-notes')?.scrollTo({ top: 0 })
 	}
