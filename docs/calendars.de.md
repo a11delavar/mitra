@@ -22,7 +22,7 @@ Ein Kalender aus einem verbundenen Konto wird beim Anbieter angelegt und gelösc
 
 ## Einen Kalender ausblenden
 
-Das Auge am Ende einer Zeile blendet die Einträge dieses Kalenders aus. Ausblenden betrifft nur, was du siehst: Der Kalender wird weiter synchronisiert, und seine Einträge sind sofort wieder da, wenn du ihn einblendest.
+Das Auge am Ende einer Zeile blendet die Einträge dieses Kalenders aus. Ausblenden betrifft nur, was du siehst: Der Kalender wird weiter synchronisiert, und seine Einträge sind sofort wieder da, wenn du ihn einblendest. Die Suche findet sie weiterhin, abgeblendet.
 
 Ausblenden schaltet einen Kalender nicht stumm, seine [Erinnerungen](reminders.md) gehen also weiter los. Um einen Kalender ganz anzuhalten, schalte ihn unter **⋯ → Bearbeiten** seines Kontos aus.
 
@@ -48,7 +48,7 @@ Ein Kalender bewegt sich nur innerhalb seines eigenen Kontos. Ein Kalender, den 
 
 ## Wohin neue Einträge kommen
 
-Der Kalender mit dem gefüllten Symbol ist dein Standard: Neue Einträge landen dort, sofern du keinen anderen wählst. Klick auf das Symbol eines Kalenders, um ihn zum Standard zu machen, und klick noch einmal auf das Symbol des Standards, um ihn zu löschen. Ohne Standard landen neue Einträge im ersten Kalender der Liste, wer einen Kalender nach oben schiebt, macht ihn also auch zum Standard. Dieselbe Auswahl gibt es unter **Einstellungen → Einträge**.
+Der Kalender mit dem gefüllten Symbol ist dein Standard: Neue Einträge landen dort, sofern du keinen anderen wählst. Klick auf das Symbol eines Kalenders, um ihn zum Standard zu machen, und klick noch einmal auf das Symbol des Standards, um ihn zu löschen. Ohne Standard, oder solange er ausgeblendet ist, landen neue Einträge im ersten angezeigten Kalender, und das gefüllte Symbol wandert dorthin; wer einen Kalender nach oben schiebt, macht ihn also auch zum Standard. Dieselbe Auswahl gibt es unter **Einstellungen → Einträge**.
 
 Neue Einträge sind Termine, es sei denn, der Kalender kann nur Aufgaben aufnehmen, wie eine Notion-Ansicht. Solange ein Eintrag neu ist, hat sein Editor einen Schalter **Termin** / **Aufgabe**. Sobald er gespeichert ist, ändere ihn mit **Typ** im Editor, solange sein Kalender die andere Art aufnehmen kann. Ein wiederkehrender Eintrag behält seinen Typ.
 

@@ -22,7 +22,7 @@ Un calendario di un account collegato si crea e si elimina presso il provider, e
 
 ## Nascondere un calendario
 
-L'occhio alla fine di una riga nasconde le voci di quel calendario. Nascondere riguarda solo ciò che vedi: il calendario continua a sincronizzarsi, e le sue voci tornano subito quando lo mostri di nuovo.
+L'occhio alla fine di una riga nasconde le voci di quel calendario. Nascondere riguarda solo ciò che vedi: il calendario continua a sincronizzarsi, e le sue voci tornano subito quando lo mostri di nuovo. La ricerca le trova comunque, attenuate.
 
 Nascondere non silenzia un calendario, quindi i suoi [promemoria](reminders.md) suonano ancora. Per fermare del tutto un calendario, disattivalo in **⋯ → Modifica** del suo account.
 
@@ -48,7 +48,7 @@ Un calendario si sposta solo all'interno del proprio account. Un calendario che 
 
 ## Dove finiscono le nuove voci
 
-Il calendario con l'icona piena è il tuo predefinito: le nuove voci vanno lì a meno che tu non ne scelga un altro. Clicca l'icona di un calendario per renderlo il predefinito, e clicca di nuovo l'icona del predefinito per toglierlo. Senza un predefinito, le nuove voci vanno nel primo calendario dell'elenco, quindi spostare un calendario in cima lo rende anche il predefinito. La stessa scelta si trova in **Impostazioni → Voci**.
+Il calendario con l'icona piena è il tuo predefinito: le nuove voci vanno lì a meno che tu non ne scelga un altro. Clicca l'icona di un calendario per renderlo il predefinito, e clicca di nuovo l'icona del predefinito per toglierlo. Senza un predefinito, o finché è nascosto, le nuove voci vanno nel primo calendario visibile, e l'icona piena passa a lui, quindi spostare un calendario in cima lo rende anche il predefinito. La stessa scelta si trova in **Impostazioni → Voci**.
 
 Le nuove voci sono eventi, a meno che il calendario non possa contenere solo attività, come una vista Notion. Finché una voce è nuova, il suo editor ha un selettore **Evento** / **Attività**. Una volta salvata, cambiala con **Tipo** nell'editor, purché il suo calendario possa contenere l'altro tipo. Una voce ricorrente mantiene il suo tipo.
 

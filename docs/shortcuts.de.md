@@ -58,7 +58,7 @@ Kürzel aus einzelnen Buchstaben lösen nie aus, während du in einem Textfeld t
 
 ## Befehlspalette
 
-Drück <kbd>/</kbd>, <kbd>Ctrl</kbd> + <kbd>K</kbd> oder <kbd>Ctrl</kbd> + <kbd>P</kbd>, um deine Einträge zu durchsuchen oder einen Befehl auszuführen; alle drei tun dasselbe. Die Suche durchsucht Titel, Beschreibungen und Orte in allen deinen Kalendern, nicht nur die Tage auf dem Bildschirm, und listet einen wiederkehrenden Eintrag einmal auf. Wenn du einen Eintrag wählst, springt Mitra zu seinem Datum und öffnet ihn. Die Befehle decken die Ansichten, die Navigation, neue Einträge, deine Kalender und deine Einstellungen ab, und jeder zeigt seine Tasten daneben, sodass du sie nebenbei lernst.
+Drück <kbd>/</kbd>, <kbd>Ctrl</kbd> + <kbd>K</kbd> oder <kbd>Ctrl</kbd> + <kbd>P</kbd>, um deine Einträge zu durchsuchen oder einen Befehl auszuführen; alle drei tun dasselbe. Die Suche durchsucht Titel, Beschreibungen und Orte in allen deinen Kalendern, nicht nur die Tage auf dem Bildschirm, und listet einen wiederkehrenden Eintrag einmal auf. Einträge in ausgeblendeten Kalendern erscheinen abgeblendet. Wenn du einen Eintrag wählst, springt Mitra zu seinem Datum und öffnet ihn, und ein ausgeblendeter Kalender wird wieder eingeblendet. Die Befehle decken die Ansichten, die Navigation, neue Einträge, deine Kalender und deine Einstellungen ab, und jeder zeigt seine Tasten daneben, sodass du sie nebenbei lernst.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/palette-detail-dark.webp">

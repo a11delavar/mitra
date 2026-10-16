@@ -58,7 +58,7 @@ Les raccourcis à une seule lettre ne se déclenchent jamais pendant que vous é
 
 ## Palette de commandes
 
-Appuyez sur <kbd>/</kbd>, <kbd>Ctrl</kbd> + <kbd>K</kbd> ou <kbd>Ctrl</kbd> + <kbd>P</kbd> pour rechercher vos entrées ou exécuter une commande ; les trois font la même chose. La recherche parcourt les titres, les descriptions et les lieux de tous vos calendriers, pas seulement les jours à l'écran, et liste une entrée récurrente une seule fois. Choisir une entrée va à sa date et l'ouvre. Les commandes couvrent les vues, la navigation, les nouvelles entrées, vos calendriers et vos paramètres, et chacune affiche ses touches à côté, pour que vous les appreniez au fur et à mesure.
+Appuyez sur <kbd>/</kbd>, <kbd>Ctrl</kbd> + <kbd>K</kbd> ou <kbd>Ctrl</kbd> + <kbd>P</kbd> pour rechercher vos entrées ou exécuter une commande ; les trois font la même chose. La recherche parcourt les titres, les descriptions et les lieux de tous vos calendriers, pas seulement les jours à l'écran, et liste une entrée récurrente une seule fois. Les entrées des calendriers masqués apparaissent estompées. Choisir une entrée va à sa date et l'ouvre, et affiche de nouveau son calendrier s'il était masqué. Les commandes couvrent les vues, la navigation, les nouvelles entrées, vos calendriers et vos paramètres, et chacune affiche ses touches à côté, pour que vous les appreniez au fur et à mesure.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/palette-detail-dark.webp">

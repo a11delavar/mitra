@@ -58,7 +58,7 @@ Single-letter shortcuts never fire while you type in a text field.
 
 ## Command palette
 
-Press <kbd>/</kbd>, <kbd>Ctrl</kbd> + <kbd>K</kbd> or <kbd>Ctrl</kbd> + <kbd>P</kbd> to search your entries or run a command; all three do the same thing. The search looks through the titles, descriptions and locations in all your calendars, not just the days on screen, and lists a repeating entry once. Choosing an entry goes to its date and opens it. The commands cover the views, navigation, new entries, your calendars and your settings, and each shows its keys beside it, so you can learn them as you go.
+Press <kbd>/</kbd>, <kbd>Ctrl</kbd> + <kbd>K</kbd> or <kbd>Ctrl</kbd> + <kbd>P</kbd> to search your entries or run a command; all three do the same thing. The search looks through the titles, descriptions and locations in all your calendars, not just the days on screen, and lists a repeating entry once. Entries in hidden calendars show dimmed. Choosing an entry goes to its date and opens it, showing its calendar again if it was hidden. The commands cover the views, navigation, new entries, your calendars and your settings, and each shows its keys beside it, so you can learn them as you go.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/palette-detail-dark.webp">

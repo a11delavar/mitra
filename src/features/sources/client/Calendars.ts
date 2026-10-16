@@ -1,4 +1,4 @@
-import { fetchIntegrations, getUser, putIntegrationOrder, putSourceOrder, restoreSourceVisibility, soloSource } from '../../../infrastructure/http/Api.js'
+import { fetchIntegrations, getUser, putIntegrationOrder, putSourceOrder, restoreSourceVisibility, soloSource, toggleSourceVisibility } from '../../../infrastructure/http/Api.js'
 import { applyOrder, byOrder } from '../../../infrastructure/model/order.js'
 import { Integration } from '../../../integrations/Integration.js'
 import { IntegrationCapabilities } from '../../../integrations/IntegrationCapabilities.js'
@@ -10,6 +10,9 @@ import { type Entry } from '../../entries/Entry.js'
 /** The user's calendars as this device knows them: the integrations and their sources, what each can hold and what it allows. */
 export class Calendars {
 	private static all = new Array<Integration>()
+
+	/** Fires `show` once {@link show} has shown a hidden calendar, for the calendar to fetch its entries. */
+	static readonly shown = new EventTarget()
 
 	/** Loads them in the user's order, each integration's sources too. */
 	static async fetch() {
@@ -99,6 +102,20 @@ export class Calendars {
 		applyOrder(Calendars.all, ids)
 		Calendars.all.sort(byOrder)
 		return putIntegrationOrder(ids)
+	}
+
+	static async setHidden(source: Source, hidden: boolean) {
+		await toggleSourceVisibility(source.id, hidden)
+		source.hidden = hidden
+	}
+
+	/** Shows the calendar if it is hidden, as an entry opens only where it renders. */
+	static async show(sourceId: string) {
+		const source = Calendars.source(sourceId)
+		if (source?.hidden) {
+			await Calendars.setHidden(source, false)
+			Calendars.shown.dispatchEvent(new Event('show'))
+		}
 	}
 
 	/** Shows this calendar alone, remembering what was visible before. */

@@ -46,7 +46,7 @@ Cada idioma decide también cómo se escriben las fechas y las horas, qué día 
 
 ## Entradas
 
-**Calendario predeterminado** es donde van los eventos y las tareas nuevos. Es la misma elección que el icono relleno de la barra lateral: consulta [dónde se guardan las entradas nuevas](calendars.md#where-new-entries-land). Sin uno, las entradas nuevas van al primer calendario que se está mostrando.
+**Calendario predeterminado** es donde van los eventos y las tareas nuevos. Es la misma elección que el icono relleno de la barra lateral: consulta [dónde se guardan las entradas nuevas](calendars.md#where-new-entries-land). Sin uno, o mientras está oculto, las entradas nuevas van al primer calendario que se está mostrando.
 
 **Duración predeterminada** es cuánto dura una entrada nueva cuando no le das una duración, por ejemplo cuando haces clic en la cuadrícula, arrastras una tarea sin programar que no tiene estimación o desactivas **Todo el día**. Va de 15 minutos a 2 horas y es de una hora a menos que la cambies.
 

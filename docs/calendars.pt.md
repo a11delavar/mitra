@@ -22,7 +22,7 @@ Um calendário de uma conta conectada é criado e excluído no provedor, e o Mit
 
 ## Ocultar um calendário
 
-O olho no fim de uma linha oculta as entradas desse calendário. Ocultar diz respeito apenas ao que você vê: o calendário continua sincronizando, e as suas entradas voltam logo que você o mostra de novo.
+O olho no fim de uma linha oculta as entradas desse calendário. Ocultar diz respeito apenas ao que você vê: o calendário continua sincronizando, e as suas entradas voltam logo que você o mostra de novo. A pesquisa continua a encontrá-las, esmaecidas.
 
 Ocultar não silencia um calendário, por isso os seus [lembretes](reminders.md) continuam disparando. Para parar um calendário por completo, desative-o em **⋯ → Editar** da sua conta.
 
@@ -48,7 +48,7 @@ Um calendário só se move dentro da sua própria conta. Um calendário que voc�
 
 ## Onde caem as novas entradas
 
-O calendário com o ícone preenchido é o seu padrão: as novas entradas vão para lá, a menos que você escolha outro. Clique no ícone de um calendário para torná-lo o padrão, e clique de novo no ícone do padrão para limpá-lo. Sem um padrão, as novas entradas vão para o primeiro calendário da lista, por isso mover um calendário para o topo também o torna o padrão. A mesma escolha está em **Configurações → Entradas**.
+O calendário com o ícone preenchido é o seu padrão: as novas entradas vão para lá, a menos que você escolha outro. Clique no ícone de um calendário para torná-lo o padrão, e clique de novo no ícone do padrão para limpá-lo. Sem um padrão, ou enquanto ele está oculto, as novas entradas vão para o primeiro calendário que está aparecendo, e o ícone preenchido passa para ele, por isso mover um calendário para o topo também o torna o padrão. A mesma escolha está em **Configurações → Entradas**.
 
 As novas entradas são eventos, a menos que o calendário só possa guardar tarefas, como uma vista do Notion. Enquanto uma entrada é nova, o seu editor tem um seletor **Evento** / **Tarefa**. Depois de salva, altere-a com **Tipo** no editor, desde que o seu calendário possa guardar o outro tipo. Uma entrada recorrente mantém o seu tipo.
 

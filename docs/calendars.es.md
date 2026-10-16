@@ -22,7 +22,7 @@ Un calendario de una cuenta conectada se crea y se elimina en el proveedor, y Mi
 
 ## Ocultar un calendario
 
-El ojo al final de una fila oculta las entradas de ese calendario. Ocultar solo afecta a lo que ves: el calendario sigue sincronizando, y sus entradas vuelven enseguida cuando lo muestras de nuevo.
+El ojo al final de una fila oculta las entradas de ese calendario. Ocultar solo afecta a lo que ves: el calendario sigue sincronizando, y sus entradas vuelven enseguida cuando lo muestras de nuevo. La búsqueda las sigue encontrando, atenuadas.
 
 Ocultar no silencia un calendario, así que sus [recordatorios](reminders.md) siguen sonando. Para detener un calendario por completo, desactívalo en **⋯ → Editar** de su cuenta.
 
@@ -48,7 +48,7 @@ Un calendario solo se mueve dentro de su propia cuenta. Un calendario que activa
 
 ## Dónde van las nuevas entradas
 
-El calendario con el icono relleno es tu calendario predeterminado: las nuevas entradas van allí salvo que elijas otro. Haz clic en el icono de un calendario para convertirlo en el predeterminado, y haz clic de nuevo en el icono del predeterminado para quitarlo. Sin calendario predeterminado, las nuevas entradas van al primer calendario de la lista, así que mover un calendario al principio también lo convierte en el predeterminado. La misma opción está en **Ajustes → Entradas**.
+El calendario con el icono relleno es tu calendario predeterminado: las nuevas entradas van allí salvo que elijas otro. Haz clic en el icono de un calendario para convertirlo en el predeterminado, y haz clic de nuevo en el icono del predeterminado para quitarlo. Sin calendario predeterminado, o mientras está oculto, las nuevas entradas van al primer calendario que se está mostrando, y el icono relleno pasa a él, así que mover un calendario al principio también lo convierte en el predeterminado. La misma opción está en **Ajustes → Entradas**.
 
 Las nuevas entradas son eventos, salvo que el calendario solo pueda contener tareas, como una vista de Notion. Mientras una entrada es nueva, su editor tiene un conmutador **Evento** / **Tarea**. Una vez guardada, cámbialo con **Tipo** en el editor, siempre que su calendario pueda contener el otro tipo. Una entrada recurrente conserva su tipo.
 

@@ -12,7 +12,7 @@ Eine **Abhängigkeit** sagt, dass ein Eintrag nicht beginnen kann, bevor ein and
 
 ## Eine Abhängigkeit hinzufügen
 
-Öffne den Eintrag, der wartet, drück auf **＋** bei **Blockiert von** und tippe einen Teil des Titels des Eintrags, der zuerst fertig sein muss. Die Suche umfasst alle deine Kalender, ein Eintrag kann also auf einen in einem anderen Kalender oder Konto warten. Der andere Eintrag führt diesen dann unter **Blockiert** auf, was nur Verknüpfungen auflistet: Du legst sie immer an dem Eintrag an, der wartet.
+Öffne den Eintrag, der wartet, drück auf **＋** bei **Blockiert von** und tippe einen Teil des Titels des Eintrags, der zuerst fertig sein muss. Die Suche umfasst alle deine Kalender, auch ausgeblendete, ein Eintrag kann also auf einen in einem anderen Kalender oder Konto warten. Einträge in ausgeblendeten Kalendern erscheinen abgeblendet. Der andere Eintrag führt diesen dann unter **Blockiert** auf, was nur Verknüpfungen auflistet: Du legst sie immer an dem Eintrag an, der wartet.
 
 Klick im Editor auf den Titel eines verknüpften Eintrags, um ihn zu öffnen, oder drück auf das **✕** daneben, um die Verknüpfung zu entfernen, von beiden Seiten aus. Mitra lehnt eine Verknüpfung ab, die im Kreis führen würde, etwa zwei Einträge, die jeweils auf den anderen warten.
 

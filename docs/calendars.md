@@ -22,7 +22,7 @@ A calendar from a connected account is created and deleted at the provider, and 
 
 ## Hide a calendar
 
-The eye at the end of a row hides that calendar's entries. Hiding is only about what you see: the calendar keeps syncing, and its entries come straight back when you show it again.
+The eye at the end of a row hides that calendar's entries. Hiding is only about what you see: the calendar keeps syncing, and its entries come straight back when you show it again. Search still finds them, dimmed.
 
 Hiding doesn't mute a calendar, so its [reminders](reminders.md) still go off. To stop a calendar entirely, turn it off under its account's **⋯ → Edit**.
 
@@ -48,7 +48,7 @@ A calendar only moves within its own account. A calendar you turn on later joins
 
 ## Where new entries land
 
-The calendar with the filled icon is your default: new entries go there unless you pick another. Click a calendar's icon to make it the default, and click the default's icon again to clear it. Without a default, new entries go to the first calendar in the list, so moving a calendar to the top also makes it the default. The same choice is under **Settings → Entries**.
+The calendar with the filled icon is your default: new entries go there unless you pick another. Click a calendar's icon to make it the default, and click the default's icon again to clear it. Without a default, or while yours is hidden, new entries go to the first calendar that's showing, and the filled icon moves there, so moving a calendar to the top also makes it the default. The same choice is under **Settings → Entries**.
 
 New entries are events, unless the calendar can only hold tasks, as a Notion view can. While an entry is new, its editor has an **Event** / **Task** switch. Once it's saved, change it with **Type** in the editor, as long as its calendar can hold the other kind. A repeating entry keeps its type.
 

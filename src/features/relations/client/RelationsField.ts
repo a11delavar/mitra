@@ -339,6 +339,15 @@ export class RelationsField extends Component {
 							text-decoration: line-through;
 							color: var(--color-text-muted);
 						}
+
+						/* In a hidden calendar: still linkable, as hiding one only changes the view. */
+						&[data-hidden] {
+							color: var(--color-text-muted);
+
+							> .glyph {
+								opacity: 0.5;
+							}
+						}
 					}
 				}
 			}
@@ -409,7 +418,7 @@ export class RelationsField extends Component {
 						` : this.suggestions.map(candidate => {
 							const color = candidate.color || Calendars.source(candidate.sourceId)?.color
 							return html`
-								<mitra-option .value=${candidate} ?data-struck=${candidate.type === EntryType.Task && candidate.done}>
+								<mitra-option .value=${candidate} ?data-struck=${candidate.type === EntryType.Task && candidate.done} ?data-hidden=${!!Calendars.source(candidate.sourceId)?.hidden}>
 									<mitra-icon class="glyph" icon=${candidate.type === EntryType.Task ? 'list-todo' : 'calendar'} style=${color ? `color: ${color};` : ''}></mitra-icon>
 									<span class="text">
 										${candidate.heading}

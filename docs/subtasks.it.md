@@ -12,7 +12,7 @@ Un'attività può avere delle **attività secondarie**: attività più piccole c
 
 ## Aggiungere un'attività secondaria
 
-Apri l'attività più piccola, premi **＋** su **Attività secondaria di** e scrivi una parte del titolo dell'attività più grande. La ricerca copre tutti i tuoi calendari. L'attività più grande la elenca poi sotto **Attività secondarie**, con il conteggio di quante sono completate, come 1/3. Il collegamento si aggiunge sempre dall'attività secondaria: la riga **Attività secondarie** dell'attività più grande si limita a elencarle.
+Apri l'attività più piccola, premi **＋** su **Attività secondaria di** e scrivi una parte del titolo dell'attività più grande. La ricerca copre tutti i tuoi calendari e attenua le voci di quelli nascosti. L'attività più grande la elenca poi sotto **Attività secondarie**, con il conteggio di quante sono completate, come 1/3. Il collegamento si aggiunge sempre dall'attività secondaria: la riga **Attività secondarie** dell'attività più grande si limita a elencarle.
 
 Ogni attività secondaria nell'elenco mostra la propria casella con il [colore del suo calendario](calendars.md#recolor), così puoi spuntarla senza lasciare l'attività più grande. Le attività secondarie completate e annullate sono barrate. Clicca su un titolo per aprire quell'attività, oppure premi la **✕** accanto per rimuovere il collegamento, da entrambi i lati. Nel calendario, una linea unisce un'attività alle sue attività secondarie quando sono entrambe in vista.
 

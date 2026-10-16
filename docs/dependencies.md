@@ -12,7 +12,7 @@ A **dependency** says that an entry can't start until another one has finished: 
 
 ## Add a dependency
 
-Open the entry that waits, press **＋** on **Blocked by** and type part of the title of the entry that has to finish first. The search covers all your calendars, so an entry can wait for one in another calendar or account. The other entry then lists this one under **Blocks**, which only lists links: you always add one from the entry that waits.
+Open the entry that waits, press **＋** on **Blocked by** and type part of the title of the entry that has to finish first. The search covers all your calendars, hidden ones too, so an entry can wait for one in another calendar or account. Entries in hidden calendars show dimmed. The other entry then lists this one under **Blocks**, which only lists links: you always add one from the entry that waits.
 
 In the editor, click a linked entry's title to open it, or press the **✕** beside it to remove the link, from either side. Mitra refuses a link that would go in a circle, such as two entries that each wait for the other.
 

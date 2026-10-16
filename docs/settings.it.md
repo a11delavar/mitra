@@ -46,7 +46,7 @@ Ogni lingua decide anche come si scrivono date e orari, in che giorno inizia la 
 
 ## Voci
 
-**Calendario predefinito** è dove vanno i nuovi eventi e le nuove attività. È la stessa scelta dell'icona piena nella barra laterale: vedi [dove finiscono le nuove voci](calendars.md#where-new-entries-land). Senza uno, le nuove voci vanno nel primo calendario visibile.
+**Calendario predefinito** è dove vanno i nuovi eventi e le nuove attività. È la stessa scelta dell'icona piena nella barra laterale: vedi [dove finiscono le nuove voci](calendars.md#where-new-entries-land). Senza uno, o finché è nascosto, le nuove voci vanno nel primo calendario visibile.
 
 **Durata predefinita** è quanto dura una nuova voce quando non le dai una durata, per esempio quando clicchi sulla griglia, trascini un'attività non pianificata senza stima o disattivi **Tutto il giorno**. Va da 15 minuti a 2 ore, ed è un'ora a meno che tu non la cambi.
 

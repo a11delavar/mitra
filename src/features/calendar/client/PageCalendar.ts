@@ -16,6 +16,7 @@ import { type CalendarView } from '../CalendarView.js'
 import { CalendarLocation, type CalendarParameters } from './CalendarLocation.js'
 import { DefaultViewSetting } from './DefaultViewSetting.js'
 import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
+import { Calendars } from '../../sources/client/Calendars.js'
 import { DialogSettings, type SettingsParameters } from '../../settings/client/DialogSettings.js'
 import { type SettingsPageId } from '../../settings/client/Setting.js'
 import { UrlSyncController } from '../../../infrastructure/routing/UrlSyncController.js'
@@ -192,6 +193,11 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 	}
 
 	private readonly paletteCommands = () => [...sourceCommands(), ...this.commands, ...settingCommands()]
+
+	@eventListener({ target: Calendars.shown, type: 'show' })
+	protected handleCalendarShown() {
+		this.sourcesChanged()
+	}
 
 	readonly sourcesChanged = () => {
 		this.sidebar?.requestUpdate()

@@ -61,11 +61,12 @@ entriesRouter.get('/search', async (req, res) => {
 	}
 
 	const em = orm.em.fork()
-	const visibleSources = await req.user.sources(em, { enabled: true, hidden: false })
+	// Hidden calendars too: hiding one is a view preference, and the browser dims what it finds there.
+	const sources = await req.user.sources(em, { enabled: true })
 
-	const integrations = new Map((await em.find(Integration, { id: { $in: visibleSources.map(source => source.integrationId) } })).map(integration => [integration.id, integration]))
-	const integrationOf = new Map(visibleSources.map(source => [source.id, integrations.get(source.integrationId)]))
-	const found = await em.find(Entry, entrySearch(visibleSources.map(source => source.id), q), { orderBy: { start: 'desc' }, limit: 20 })
+	const integrations = new Map((await em.find(Integration, { id: { $in: sources.map(source => source.integrationId) } })).map(integration => [integration.id, integration]))
+	const integrationOf = new Map(sources.map(source => [source.id, integrations.get(source.integrationId)]))
+	const found = await em.find(Entry, entrySearch(sources.map(source => source.id), q), { orderBy: { start: 'desc' }, limit: 20 })
 	// The events written for availability are background too, like availability itself.
 	const entries = found.filter(entry => !integrationOf.get(entry.sourceId)?.writtenForAvailability(entry))
 	// The browser picks each recurring entry's occurrence, past the dates its overrides take.

@@ -7,6 +7,8 @@ import { EntryEditorIntent } from './EntryEditorIntent.js'
 export interface EntryEditorHost extends ReactiveControllerHost {
 	readonly segment?: EntrySegment
 	open: boolean
+	/** Listed off the calendar with its day, as the planning list does. */
+	readonly dated?: boolean
 }
 
 /**
@@ -21,10 +23,16 @@ export class EntryEditorAnchor extends Controller {
 		super(host)
 	}
 
+	/** Whether a request for the occurrence opens here. A scheduled one is the calendar's, as `reveal` sends it there too:
+	 * a list beside it, out of view on another tab, would take the request and anchor an editor nobody sees. */
+	private claims(occurrence: EntrySegment['occurrence']) {
+		return EntryEditorIntent.shouldOpen(occurrence) && !(this.host.dated && occurrence.scheduled)
+	}
+
 	/** A view that guards its templates re-renders nothing for a request, so the surface updates itself. */
 	private readonly handleRequest = () => {
 		const occurrence = this.host.segment?.occurrence
-		if (occurrence && EntryEditorIntent.shouldOpen(occurrence)) {
+		if (occurrence && this.claims(occurrence)) {
 			this.host.requestUpdate()
 		}
 	}
@@ -51,7 +59,7 @@ export class EntryEditorAnchor extends Controller {
 			this.reported = open
 			EntryEditorIntent.setEditing(segment.entry, open)
 		}
-		if (EntryEditorIntent.shouldOpen(segment.occurrence) && !segment.hasPrevious) {
+		if (this.claims(segment.occurrence) && !segment.hasPrevious) {
 			// Reported before the request is consumed, so no display lens drops the entry in between.
 			EntryEditorIntent.setEditing(segment.entry, true)
 			this.reported = true

@@ -12,7 +12,7 @@ Une tâche peut avoir des **sous-tâches** : des tâches plus petites qui la co
 
 ## Ajouter une sous-tâche
 
-Ouvrez la plus petite tâche, appuyez sur **＋** à côté de **Sous-tâche de** et saisissez une partie du titre de la plus grande. La recherche couvre tous vos calendriers. La plus grande tâche la liste alors sous **Sous-tâches**, avec le nombre de celles qui sont terminées, par exemple 1/3. Vous ajoutez toujours le lien depuis la sous-tâche : la ligne **Sous-tâches** de la plus grande tâche ne fait que les lister.
+Ouvrez la plus petite tâche, appuyez sur **＋** à côté de **Sous-tâche de** et saisissez une partie du titre de la plus grande. La recherche couvre tous vos calendriers et estompe les entrées des calendriers masqués. La plus grande tâche la liste alors sous **Sous-tâches**, avec le nombre de celles qui sont terminées, par exemple 1/3. Vous ajoutez toujours le lien depuis la sous-tâche : la ligne **Sous-tâches** de la plus grande tâche ne fait que les lister.
 
 Chaque sous-tâche de la liste affiche sa case à cocher à la [couleur de son calendrier](calendars.md#recolor), ce qui vous permet de la cocher sans quitter la plus grande tâche. Les sous-tâches terminées et annulées sont barrées. Cliquez sur un titre pour ouvrir cette tâche, ou sur le **✕** à côté pour supprimer le lien, depuis l'un ou l'autre côté. Dans le calendrier, une ligne relie une tâche à ses sous-tâches quand les deux sont visibles.
 

@@ -12,7 +12,7 @@ Una **dipendenza** dice che una voce non può iniziare finché un'altra non è f
 
 ## Aggiungere una dipendenza
 
-Apri la voce che attende, premi **＋** su **Bloccato da** e scrivi una parte del titolo della voce che deve finire per prima. La ricerca copre tutti i tuoi calendari, quindi una voce può attendere una voce di un altro calendario o account. L'altra voce elenca poi questa sotto **Blocca**, che elenca soltanto i collegamenti: ne aggiungi sempre uno dalla voce che attende.
+Apri la voce che attende, premi **＋** su **Bloccato da** e scrivi una parte del titolo della voce che deve finire per prima. La ricerca copre tutti i tuoi calendari, anche quelli nascosti, quindi una voce può attendere una voce di un altro calendario o account. Le voci dei calendari nascosti appaiono attenuate. L'altra voce elenca poi questa sotto **Blocca**, che elenca soltanto i collegamenti: ne aggiungi sempre uno dalla voce che attende.
 
 Nell'editor, clicca sul titolo di una voce collegata per aprirla, oppure premi la **✕** accanto per rimuovere il collegamento, da entrambi i lati. Mitra rifiuta un collegamento che andrebbe in cerchio, come due voci che si attendono a vicenda.
 

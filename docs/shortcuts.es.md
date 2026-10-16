@@ -58,7 +58,7 @@ Los atajos de una sola letra nunca se activan mientras escribes en un campo de t
 
 ## Paleta de comandos
 
-Pulsa <kbd>/</kbd>, <kbd>Ctrl</kbd> + <kbd>K</kbd> o <kbd>Ctrl</kbd> + <kbd>P</kbd> para buscar tus entradas o ejecutar un comando; las tres hacen lo mismo. La búsqueda recorre los títulos, las descripciones y las ubicaciones de todos tus calendarios, no solo los días que se ven en pantalla, y lista una entrada que se repite una sola vez. Al elegir una entrada, va a su fecha y la abre. Los comandos abarcan las vistas, la navegación, las entradas nuevas, tus calendarios y tus ajustes, y cada uno muestra sus teclas al lado, para que las aprendas sobre la marcha.
+Pulsa <kbd>/</kbd>, <kbd>Ctrl</kbd> + <kbd>K</kbd> o <kbd>Ctrl</kbd> + <kbd>P</kbd> para buscar tus entradas o ejecutar un comando; las tres hacen lo mismo. La búsqueda recorre los títulos, las descripciones y las ubicaciones de todos tus calendarios, no solo los días que se ven en pantalla, y lista una entrada que se repite una sola vez. Las entradas de calendarios ocultos aparecen atenuadas. Al elegir una entrada, va a su fecha y la abre, y vuelve a mostrar su calendario si estaba oculto. Los comandos abarcan las vistas, la navegación, las entradas nuevas, tus calendarios y tus ajustes, y cada uno muestra sus teclas al lado, para que las aprendas sobre la marcha.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/palette-detail-dark.webp">

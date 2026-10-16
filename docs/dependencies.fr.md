@@ -12,7 +12,7 @@ Une **dépendance** dit qu'une entrée ne peut pas commencer avant qu'une autre 
 
 ## Ajouter une dépendance
 
-Ouvrez l'entrée qui attend, appuyez sur **＋** à côté de **Bloqué par** et saisissez une partie du titre de l'entrée qui doit se terminer d'abord. La recherche couvre tous vos calendriers : une entrée peut donc en attendre une autre située dans un autre calendrier ou un autre compte. L'autre entrée liste alors celle-ci sous **Bloque**, qui ne fait que lister les liens : vous en ajoutez toujours un depuis l'entrée qui attend.
+Ouvrez l'entrée qui attend, appuyez sur **＋** à côté de **Bloqué par** et saisissez une partie du titre de l'entrée qui doit se terminer d'abord. La recherche couvre tous vos calendriers, même masqués : une entrée peut donc en attendre une autre située dans un autre calendrier ou un autre compte. Les entrées des calendriers masqués apparaissent estompées. L'autre entrée liste alors celle-ci sous **Bloque**, qui ne fait que lister les liens : vous en ajoutez toujours un depuis l'entrée qui attend.
 
 Dans l'éditeur, cliquez sur le titre d'une entrée liée pour l'ouvrir, ou sur le **✕** à côté pour supprimer le lien, depuis l'un ou l'autre côté. Mitra refuse un lien qui ferait une boucle, comme deux entrées qui s'attendent mutuellement.
 

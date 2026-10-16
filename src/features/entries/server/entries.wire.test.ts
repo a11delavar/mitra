@@ -8,7 +8,7 @@ import { Api } from '@a11d/api'
 import { DateTime, DateTimeRange } from '@3mo/date-time'
 import '@3mo/date-time-value-constructor'
 import { ModelValueConstructor } from '@a11d/api-model-value-constructor'
-import { createEvent, deleteOccurrence, editOccurrence, fetchEvents, updateEvent } from '../../../infrastructure/http/Api.js'
+import { createEvent, deleteOccurrence, editOccurrence, fetchEvents, searchEntries, updateEvent } from '../../../infrastructure/http/Api.js'
 import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
 import { EntryTimeZone } from '../EntryTimeZone.js'
@@ -46,6 +46,7 @@ const iso = (value: { valueOf(): number } | null | undefined) => value === null 
 describe('Entries over the wire, between viewers in different zones', () => {
 	let server: Server
 	let source: Source
+	let hiddenSource: Source
 	let stored: (id: string) => Promise<{ start: number | null, end: number | null, due: number | null, exdates: string | null }>
 	let named: (heading: string) => Promise<Array<{ start: number, end: number, recurring_entry_id: string | null }>>
 	let closeOrm: () => Promise<void>
@@ -60,7 +61,8 @@ describe('Entries over the wire, between viewers in different zones', () => {
 		const user = new User({ username: 'viewer' })
 		const integration = new MitraCalendar({ userId: user.id, uri: MitraCalendar.uri })
 		source = new Source({ integrationId: integration.id, uri: MitraCalendar.sourceUri('home'), name: 'Home', entryTypes: [EntryType.Event, EntryType.Task], enabled: true, hidden: false })
-		em.persist([user, integration, source])
+		hiddenSource = new Source({ integrationId: integration.id, uri: MitraCalendar.sourceUri('archive'), name: 'Archive', entryTypes: [EntryType.Event, EntryType.Task], enabled: true, hidden: true })
+		em.persist([user, integration, source, hiddenSource])
 		await em.flush()
 
 		const connection = orm.em.getConnection()
@@ -237,6 +239,15 @@ describe('Entries over the wire, between viewers in different zones', () => {
 				const call = (await window('2026-05-25', '2026-06-15')).find(entry => entry.id === created.id)!
 				assert.deepEqual([iso(call.start), iso(call.end), call.timeZone], ['2026-06-02T07:30:00.000Z', '2026-06-02T08:00:00.000Z', EntryTimeZone.parse('Europe/Berlin')], zone)
 			}
+		})
+	})
+
+	describe('a search', () => {
+		it('finds entries in hidden calendars too', async () => {
+			viewIn(zones.berlin)
+			const start = new DateTime(Date.parse('2026-06-03T09:00:00+02:00'))
+			const archived = await createEvent(new Entry({ sourceId: hiddenSource.id, type: EntryType.Event, heading: 'Archived review', start, end: start.add({ hours: 1 }) }))
+			assert.deepEqual((await searchEntries('Archived')).map(entry => entry.id), [archived.id])
 		})
 	})
 

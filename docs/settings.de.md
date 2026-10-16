@@ -46,7 +46,7 @@ Jede Sprache legt auch fest, wie Datum und Uhrzeit aussehen, an welchem Tag die 
 
 ## Einträge
 
-**Standardkalender** ist der Ort, an dem neue Termine und Aufgaben landen. Es ist dieselbe Wahl wie das gefüllte Symbol in der Seitenleiste: siehe [wo neue Einträge landen](calendars.md#where-new-entries-land). Ohne Standardkalender landen neue Einträge im ersten Kalender, der angezeigt wird.
+**Standardkalender** ist der Ort, an dem neue Termine und Aufgaben landen. Es ist dieselbe Wahl wie das gefüllte Symbol in der Seitenleiste: siehe [wo neue Einträge landen](calendars.md#where-new-entries-land). Ohne Standardkalender, oder solange er ausgeblendet ist, landen neue Einträge im ersten Kalender, der angezeigt wird.
 
 **Standarddauer** ist, wie lange ein neuer Eintrag dauert, wenn du keine Länge angibst, zum Beispiel wenn du ins Raster klickst, eine Aufgabe ohne Schätzung hineinziehst oder **Ganztägig** ausschaltest. Sie reicht von 15 Minuten bis 2 Stunden und beträgt eine Stunde, wenn du nichts änderst.
 

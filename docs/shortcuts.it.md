@@ -58,7 +58,7 @@ Le scorciatoie a singola lettera non scattano mai mentre scrivi in un campo di t
 
 ## Tavolozza dei comandi
 
-Premi <kbd>/</kbd>, <kbd>Ctrl</kbd> + <kbd>K</kbd> o <kbd>Ctrl</kbd> + <kbd>P</kbd> per cercare tra le tue voci o eseguire un comando; tutti e tre fanno la stessa cosa. La ricerca esamina titoli, descrizioni e luoghi di tutti i tuoi calendari, non solo i giorni sullo schermo, ed elenca una voce ricorrente una sola volta. Scegliere una voce porta alla sua data e la apre. I comandi coprono le viste, la navigazione, le nuove voci, i tuoi calendari e le tue impostazioni, e ognuno mostra accanto i propri tasti, così puoi impararli strada facendo.
+Premi <kbd>/</kbd>, <kbd>Ctrl</kbd> + <kbd>K</kbd> o <kbd>Ctrl</kbd> + <kbd>P</kbd> per cercare tra le tue voci o eseguire un comando; tutti e tre fanno la stessa cosa. La ricerca esamina titoli, descrizioni e luoghi di tutti i tuoi calendari, non solo i giorni sullo schermo, ed elenca una voce ricorrente una sola volta. Le voci dei calendari nascosti appaiono attenuate. Scegliere una voce porta alla sua data e la apre, e mostra di nuovo il suo calendario se era nascosto. I comandi coprono le viste, la navigazione, le nuove voci, i tuoi calendari e le tue impostazioni, e ognuno mostra accanto i propri tasti, così puoi impararli strada facendo.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/palette-detail-dark.webp">

@@ -22,7 +22,7 @@ Un agenda d'un compte connecté est créé et supprimé chez le fournisseur, et 
 
 ## Masquer un agenda
 
-L'œil au bout d'une ligne masque les entrées de cet agenda. Masquer ne concerne que ce que vous voyez : l'agenda continue de se synchroniser, et ses entrées reviennent aussitôt quand vous l'affichez à nouveau.
+L'œil au bout d'une ligne masque les entrées de cet agenda. Masquer ne concerne que ce que vous voyez : l'agenda continue de se synchroniser, et ses entrées reviennent aussitôt quand vous l'affichez à nouveau. La recherche les trouve toujours, estompées.
 
 Masquer ne rend pas un agenda muet, donc ses [rappels](reminders.md) se déclenchent toujours. Pour arrêter complètement un agenda, désactivez-le sous **⋯ → Modifier** de son compte.
 
@@ -48,7 +48,7 @@ Un agenda ne se déplace qu'au sein de son propre compte. Un agenda que vous act
 
 ## Où arrivent les nouvelles entrées
 
-L'agenda avec l'icône pleine est votre agenda par défaut : les nouvelles entrées y vont, sauf si vous en choisissez un autre. Cliquez sur l'icône d'un agenda pour en faire l'agenda par défaut, et cliquez à nouveau sur l'icône de celui par défaut pour l'effacer. Sans agenda par défaut, les nouvelles entrées vont au premier agenda de la liste, donc déplacer un agenda en haut en fait aussi l'agenda par défaut. Le même choix se trouve sous **Paramètres → Entrées**.
+L'agenda avec l'icône pleine est votre agenda par défaut : les nouvelles entrées y vont, sauf si vous en choisissez un autre. Cliquez sur l'icône d'un agenda pour en faire l'agenda par défaut, et cliquez à nouveau sur l'icône de celui par défaut pour l'effacer. Sans agenda par défaut, ou tant qu'il est masqué, les nouvelles entrées vont au premier agenda affiché, et l'icône pleine passe sur lui, donc déplacer un agenda en haut en fait aussi l'agenda par défaut. Le même choix se trouve sous **Paramètres → Entrées**.
 
 Les nouvelles entrées sont des événements, sauf si l'agenda ne peut contenir que des tâches, comme une vue Notion. Tant qu'une entrée est nouvelle, son éditeur a un sélecteur **Événement** / **Tâche**. Une fois enregistrée, changez-la avec **Type** dans l'éditeur, tant que son agenda peut contenir l'autre genre. Une entrée récurrente garde son type.
 

@@ -46,7 +46,7 @@ Chaque langue décide aussi de l'écriture des dates et des heures, du premier j
 
 ## Entrées
 
-**Agenda par défaut** est l'endroit où vont les nouveaux événements et tâches. C'est le même choix que l'icône pleine dans la barre latérale : voir [où atterrissent les nouvelles entrées](calendars.md#where-new-entries-land). Sans agenda par défaut, les nouvelles entrées vont au premier calendrier affiché.
+**Agenda par défaut** est l'endroit où vont les nouveaux événements et tâches. C'est le même choix que l'icône pleine dans la barre latérale : voir [où atterrissent les nouvelles entrées](calendars.md#where-new-entries-land). Sans agenda par défaut, ou tant qu'il est masqué, les nouvelles entrées vont au premier calendrier affiché.
 
 **Durée par défaut** est la durée d'une nouvelle entrée quand vous ne lui en donnez pas, par exemple quand vous cliquez sur la grille, y déposez une tâche non planifiée sans estimation, ou désactivez **Toute la journée**. Elle va de 15 minutes à 2 heures, et vaut une heure sauf si vous la changez.
 

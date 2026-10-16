@@ -12,7 +12,7 @@ Uma tarefa pode ter **subtarefas**: tarefas menores que, juntas, a compõem. Uma
 
 ## Adicionar uma subtarefa
 
-Abra a tarefa menor, pressione **＋** em **Subtarefa de** e digite parte do título da tarefa maior. A pesquisa abrange todos os seus calendários. A tarefa maior então a lista em **Subtarefas**, com a contagem de quantas estão concluídas, como 1/3. O vínculo sempre é adicionado a partir da subtarefa: a linha **Subtarefas** da tarefa maior só as lista.
+Abra a tarefa menor, pressione **＋** em **Subtarefa de** e digite parte do título da tarefa maior. A pesquisa abrange todos os seus calendários e esmaece as entradas dos ocultos. A tarefa maior então a lista em **Subtarefas**, com a contagem de quantas estão concluídas, como 1/3. O vínculo sempre é adicionado a partir da subtarefa: a linha **Subtarefas** da tarefa maior só as lista.
 
 Cada subtarefa da lista mostra sua caixa de seleção na [cor do calendário](calendars.md#recolor), então você pode marcá-la sem sair da tarefa maior. As subtarefas concluídas e canceladas aparecem riscadas. Clique em um título para abrir essa tarefa, ou pressione o **✕** ao lado para remover o vínculo, de qualquer um dos lados. No calendário, uma linha liga uma tarefa às suas subtarefas quando ambas estão à vista.
 

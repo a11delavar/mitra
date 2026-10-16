@@ -12,7 +12,7 @@ Eine Aufgabe kann **Teilaufgaben** haben: kleinere Aufgaben, die zusammen sie er
 
 ## Eine Teilaufgabe hinzufügen
 
-Öffne die kleinere Aufgabe, drück auf **＋** bei **Teilaufgabe von** und tippe einen Teil des Titels der größeren Aufgabe. Die Suche umfasst alle deine Kalender. Die größere Aufgabe führt sie dann unter **Teilaufgaben** auf, mit einer Zahl, wie viele erledigt sind, etwa 1/3. Die Verknüpfung legst du immer an der Teilaufgabe an: Die Zeile **Teilaufgaben** der größeren Aufgabe listet sie nur auf.
+Öffne die kleinere Aufgabe, drück auf **＋** bei **Teilaufgabe von** und tippe einen Teil des Titels der größeren Aufgabe. Die Suche umfasst alle deine Kalender und zeigt Einträge in ausgeblendeten abgeblendet. Die größere Aufgabe führt sie dann unter **Teilaufgaben** auf, mit einer Zahl, wie viele erledigt sind, etwa 1/3. Die Verknüpfung legst du immer an der Teilaufgabe an: Die Zeile **Teilaufgaben** der größeren Aufgabe listet sie nur auf.
 
 Jede Teilaufgabe in der Liste zeigt ihr Kästchen in der [Farbe ihres Kalenders](calendars.md#recolor), sodass du sie abhaken kannst, ohne die größere Aufgabe zu verlassen. Erledigte und abgebrochene Teilaufgaben sind durchgestrichen. Klick auf einen Titel, um diese Aufgabe zu öffnen, oder drück auf das **✕** daneben, um die Verknüpfung zu entfernen, von beiden Seiten aus. Im Kalender verbindet eine Linie eine Aufgabe mit ihren Teilaufgaben, wenn beide in der Ansicht liegen.
 

@@ -71,12 +71,14 @@ export class CommandPalette extends Component {
 		return this.searchTerm.trim() ? this.entries : new Array<EntryOccurrence>()
 	}
 
-	private select(result: Command | EntryOccurrence) {
+	private async select(result: Command | EntryOccurrence) {
 		this.dialog.close()
 		if (result instanceof Command) {
 			result.dispatch()
 		} else if (result.start) {
 			this.navigate.dispatch(result.start)
+			// Asked only once its calendar shows, or a fetch without it would settle the request away.
+			await Calendars.show(result.entry.sourceId)
 			if (result.key) {
 				EntryEditorIntent.requestOpen(result.key)
 			}
@@ -221,6 +223,15 @@ export class CommandPalette extends Component {
 							color: var(--color-text-muted);
 							white-space: nowrap;
 						}
+
+						/* In a hidden calendar: found, and picking it shows the calendar again. */
+						&[data-hidden] {
+							color: var(--color-text-muted);
+
+							.swatch {
+								opacity: 0.5;
+							}
+						}
 					}
 
 					> footer {
@@ -247,7 +258,7 @@ export class CommandPalette extends Component {
 		const entries = this.matchingEntries
 		return html`
 			<dialog closedby="any" @close=${() => this.open = false}>
-				<mitra-combobox inline activateFirst @pick=${(e: CustomEvent<Command | EntryOccurrence>) => this.select(e.detail)} @dismiss=${() => this.dialog.close()}>
+				<mitra-combobox inline activateFirst @pick=${(e: CustomEvent<Command | EntryOccurrence>) => void this.select(e.detail)} @dismiss=${() => this.dialog.close()}>
 					<header slot="input">
 						<mitra-icon icon="search"></mitra-icon>
 						<input type="search" autofocus placeholder=${t('Search entries or run a command…')} aria-label=${t('Search entries or run a command…')}
@@ -270,7 +281,7 @@ export class CommandPalette extends Component {
 						${!entries.length ? html.nothing : html`
 							<span class="group">${t('Entries')}</span>
 							${entries.map(occurrence => html`
-								<mitra-option .value=${occurrence}>
+								<mitra-option .value=${occurrence} ?data-hidden=${!!Calendars.source(occurrence.entry.sourceId)?.hidden}>
 									<span class="swatch" style=${`background: ${occurrence.entry.color ?? Calendars.source(occurrence.entry.sourceId)?.color ?? 'var(--color-accent)'}`}></span>
 									<span class="heading">${occurrence.entry.heading || t('Untitled')}</span>
 									<span class="when">${CommandPalette.when(occurrence)}</span>

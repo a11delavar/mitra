@@ -1,5 +1,5 @@
 import { Component, component, html, css, property, state, event, eventListener, unsafeCSS, ifDefined } from '@a11d/lit'
-import { getMeta, getUser, instanceName, isBundleStale, refreshMetaIfStale, toggleSourceVisibility, updateSourceColor, renameSource, deleteIntegration, setDefaultSource, reimportSource, reimportIntegration, createSource } from '../infrastructure/http/Api.js'
+import { getMeta, getUser, instanceName, isBundleStale, refreshMetaIfStale, updateSourceColor, renameSource, deleteIntegration, setDefaultSource, reimportSource, reimportIntegration, createSource } from '../infrastructure/http/Api.js'
 import { Calendars } from '../features/sources/client/Calendars.js'
 import { DialogAbout } from '../features/about/client/DialogAbout.js'
 import { DialogIntegration } from '../integrations/client/DialogIntegration.js'
@@ -649,8 +649,7 @@ export class Sidebar extends Component {
 	}
 
 	private async toggleVisibility(source: Source) {
-		await toggleSourceVisibility(source.id, !source.hidden)
-		source.hidden = !source.hidden
+		await Calendars.setHidden(source, !source.hidden)
 		this.visibilityChanged()
 	}
 

@@ -46,7 +46,7 @@ Each language also decides how dates and times read, which day the week starts o
 
 ## Entries
 
-**Default Calendar** is where new events and tasks go. It's the same choice as the filled icon in the sidebar: see [where new entries land](calendars.md#where-new-entries-land). Without one, new entries go to the first calendar that's showing.
+**Default Calendar** is where new events and tasks go. It's the same choice as the filled icon in the sidebar: see [where new entries land](calendars.md#where-new-entries-land). Without one, or while it's hidden, new entries go to the first calendar that's showing.
 
 **Default Duration** is how long a new entry lasts when you don't give it a length, for example when you click the grid, drag in an unscheduled task without an estimate, or turn off **All day**. It goes from 15 minutes to 2 hours, and is an hour unless you change it.
 

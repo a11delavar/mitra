@@ -12,7 +12,7 @@ Una tarea puede tener **subtareas**: tareas más pequeñas que juntas la forman.
 
 ## Añadir una subtarea
 
-Abre la tarea más pequeña, pulsa **＋** en **Subtarea de** y escribe parte del título de la tarea más grande. La búsqueda abarca todos tus calendarios. La tarea más grande la lista entonces en **Subtareas**, con un recuento de cuántas están hechas, como 1/3. El vínculo siempre se añade desde la subtarea: la fila **Subtareas** de la tarea más grande solo las enumera.
+Abre la tarea más pequeña, pulsa **＋** en **Subtarea de** y escribe parte del título de la tarea más grande. La búsqueda abarca todos tus calendarios y atenúa las entradas de los ocultos. La tarea más grande la lista entonces en **Subtareas**, con un recuento de cuántas están hechas, como 1/3. El vínculo siempre se añade desde la subtarea: la fila **Subtareas** de la tarea más grande solo las enumera.
 
 Cada subtarea de la lista muestra su casilla con el [color de su calendario](calendars.md#recolor), así que puedes marcarla sin salir de la tarea más grande. Las subtareas hechas y canceladas aparecen tachadas. Haz clic en un título para abrir esa tarea, o pulsa la **✕** junto a ella para quitar el vínculo, desde cualquiera de los dos lados. En el calendario, una línea une una tarea con sus subtareas cuando ambas están a la vista.
 

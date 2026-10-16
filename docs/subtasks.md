@@ -12,7 +12,7 @@ A task can have **subtasks**: smaller tasks that together make it up. A subtask 
 
 ## Add a subtask
 
-Open the smaller task, press **＋** on **Subtask of** and type part of the bigger task's title. The search covers all your calendars. The bigger task then lists it under **Subtasks**, with a count of how many are done, such as 1/3. You always add the link from the subtask: the **Subtasks** row of the bigger task only lists them.
+Open the smaller task, press **＋** on **Subtask of** and type part of the bigger task's title. The search covers all your calendars, and dims the entries in hidden ones. The bigger task then lists it under **Subtasks**, with a count of how many are done, such as 1/3. You always add the link from the subtask: the **Subtasks** row of the bigger task only lists them.
 
 Each subtask in the list shows its checkbox in its [calendar's color](calendars.md#recolor), so you can tick it off without leaving the bigger task. Done and cancelled subtasks are struck through. Click a title to open that task, or press the **✕** beside it to remove the link, from either side. On the calendar, a line joins a task to its subtasks when both are in view.
 

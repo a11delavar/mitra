@@ -34,11 +34,13 @@ export class EntryLink extends Component {
 	}
 
 	/** Navigates to the entry in the calendar, or straight to its editor when it has no date. */
-	open() {
+	async open() {
 		this.closest('mitra-entry-details')?.close()
 		if (this.entry.start) {
 			this.navigate.dispatch(this.entry.start)
 		}
+		// Asked only once its calendar shows, or a fetch without it would settle the request away.
+		await Calendars.show(this.entry.sourceId)
 		EntryEditorIntent.requestOpen(this.entry.id!)
 	}
 
@@ -136,7 +138,7 @@ export class EntryLink extends Component {
 			`}
 			${!entry.id
 				? html`<span class="heading">${entry.heading}</span>`
-				: html`<button type="button" class="heading" @click=${() => this.open()}>${entry.heading}</button>`}
+				: html`<button type="button" class="heading" @click=${() => void this.open()}>${entry.heading}</button>`}
 		`
 	}
 }

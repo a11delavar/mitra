@@ -46,7 +46,7 @@ Cada idioma também decide como datas e horas são escritas, em que dia a semana
 
 ## Entradas
 
-**Calendário padrão** é onde vão os novos eventos e tarefas. É a mesma escolha do ícone preenchido na barra lateral: veja [onde as novas entradas caem](calendars.md#where-new-entries-land). Sem um, as novas entradas vão para o primeiro calendário que está aparecendo.
+**Calendário padrão** é onde vão os novos eventos e tarefas. É a mesma escolha do ícone preenchido na barra lateral: veja [onde as novas entradas caem](calendars.md#where-new-entries-land). Sem um, ou enquanto ele está oculto, as novas entradas vão para o primeiro calendário que está aparecendo.
 
 **Duração padrão** é quanto dura uma nova entrada quando você não dá a ela uma duração, por exemplo quando você clica na grade, arrasta uma tarefa sem agendamento e sem estimativa ou desativa **Dia todo**. Ela vai de 15 minutos a 2 horas e é de uma hora, a menos que você altere.
 

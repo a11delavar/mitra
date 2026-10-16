@@ -12,7 +12,7 @@ Uma **dependência** diz que uma entrada não pode começar até que outra termi
 
 ## Adicionar uma dependência
 
-Abra a entrada que espera, pressione **＋** em **Bloqueado por** e digite parte do título da entrada que precisa terminar primeiro. A pesquisa abrange todos os seus calendários, então uma entrada pode esperar por outra em outro calendário ou conta. A outra entrada então lista esta em **Bloqueia**, que só lista vínculos: você sempre adiciona um a partir da entrada que espera.
+Abra a entrada que espera, pressione **＋** em **Bloqueado por** e digite parte do título da entrada que precisa terminar primeiro. A pesquisa abrange todos os seus calendários, inclusive os ocultos, então uma entrada pode esperar por outra em outro calendário ou conta. As entradas de calendários ocultos aparecem esmaecidas. A outra entrada então lista esta em **Bloqueia**, que só lista vínculos: você sempre adiciona um a partir da entrada que espera.
 
 No editor, clique no título de uma entrada vinculada para abri-la, ou pressione o **✕** ao lado para remover o vínculo, de qualquer um dos lados. O Mitra recusa um vínculo que formaria um círculo, como duas entradas que esperam uma pela outra.
 

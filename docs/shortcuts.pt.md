@@ -58,7 +58,7 @@ Os atalhos de uma única letra nunca disparam enquanto você digita em um campo 
 
 ## Paleta de comandos
 
-Pressione <kbd>/</kbd>, <kbd>Ctrl</kbd> + <kbd>K</kbd> ou <kbd>Ctrl</kbd> + <kbd>P</kbd> para pesquisar suas entradas ou executar um comando; os três fazem a mesma coisa. A pesquisa percorre os títulos, as descrições e os locais de todos os seus calendários, não só os dias na tela, e lista uma entrada recorrente uma só vez. Escolher uma entrada vai até a data dela e a abre. Os comandos cobrem as vistas, a navegação, as novas entradas, seus calendários e suas configurações, e cada um mostra suas teclas ao lado, para você aprendê-las pelo caminho.
+Pressione <kbd>/</kbd>, <kbd>Ctrl</kbd> + <kbd>K</kbd> ou <kbd>Ctrl</kbd> + <kbd>P</kbd> para pesquisar suas entradas ou executar um comando; os três fazem a mesma coisa. A pesquisa percorre os títulos, as descrições e os locais de todos os seus calendários, não só os dias na tela, e lista uma entrada recorrente uma só vez. As entradas de calendários ocultos aparecem esmaecidas. Escolher uma entrada vai até a data dela e a abre, e volta a mostrar o calendário dela se estava oculto. Os comandos cobrem as vistas, a navegação, as novas entradas, seus calendários e suas configurações, e cada um mostra suas teclas ao lado, para você aprendê-las pelo caminho.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/palette-detail-dark.webp">
