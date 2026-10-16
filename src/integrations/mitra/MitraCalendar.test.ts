@@ -111,9 +111,9 @@ describe('MitraCalendar', () => {
 			const em = orm.em.fork()
 			const { integration, source, entry } = await seed(em)
 
-			// A separate context, like the API: populate won't refill a collection this one already holds.
+			// A separate context, like the API, which loads the calendars afresh.
 			const listing = orm.em.fork()
-			const served = await listing.findOneOrFail(MitraCalendar, { id: integration.id }, { populate: ['sources'] })
+			const served = await listing.findOneOrFail(MitraCalendar, { id: integration.id })
 			await integration.apply(em, served.editableCopy())
 			await em.flush()
 
@@ -128,7 +128,7 @@ describe('MitraCalendar', () => {
 			source.color = '#123456'
 			await em.flush()
 
-			const served = await orm.em.fork().findOneOrFail(MitraCalendar, { id: integration.id }, { populate: ['sources'] })
+			const served = await orm.em.fork().findOneOrFail(MitraCalendar, { id: integration.id })
 			const [copy] = [...served.editableCopy().sources]
 			assert.equal(copy!.importing, false)
 			assert.equal(copy!.color, '#123456')

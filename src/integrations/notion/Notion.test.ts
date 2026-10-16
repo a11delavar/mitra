@@ -569,7 +569,7 @@ describe('Notion integration model', () => {
 	const account = () => new Notion({
 		uri: 'notion://bot-1',
 		credentials: { username: 'Acme Workspace', token: 'ntn_secret' },
-		sources: [new Source({ uri: 'notion://ds-1/view-1', entryTypes: [EntryType.Task], name: 'Tasks · All', enabled: true })] as any,
+		sources: [new Source({ uri: 'notion://ds-1/view-1', entryTypes: [EntryType.Task], name: 'Tasks · All', enabled: true })],
 	})
 
 	it('declares what Notion cannot represent: the editor hides these fields', () => {

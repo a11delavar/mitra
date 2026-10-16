@@ -8,7 +8,7 @@ import { asBrowser, wireOf } from '../../infrastructure/model/wire.testing.js'
 const account = () => new GoogleCalendar({
 	uri: GoogleCalendar.uriFor('someone@gmail.com'),
 	credentials: { username: 'someone@gmail.com', refreshToken: 'grant-1' },
-	sources: [new Source({ uri: 'https://g/cal/events/', entryTypes: [EntryType.Event], name: 'Personal', enabled: true })] as any,
+	sources: [new Source({ uri: 'https://g/cal/events/', entryTypes: [EntryType.Event], name: 'Personal', enabled: true })],
 })
 
 describe('GoogleCalendar', () => {

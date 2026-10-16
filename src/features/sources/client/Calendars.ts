@@ -21,7 +21,7 @@ export class Calendars {
 
 	static adopt(integrations: Array<Integration>) {
 		for (const integration of integrations) {
-			integration.sources = [...integration.sources].sort(byOrder) as unknown as Integration['sources']
+			integration.sources = [...integration.sources].sort(byOrder)
 		}
 		Calendars.all = integrations.sort(byOrder)
 	}
@@ -94,7 +94,7 @@ export class Calendars {
 	static reorderSources(integration: Integration, ids: Array<string>) {
 		const sources = [...integration.sources]
 		applyOrder(sources, ids)
-		integration.sources = sources.sort(byOrder) as unknown as Integration['sources']
+		integration.sources = sources.sort(byOrder)
 		return putSourceOrder(ids)
 	}
 

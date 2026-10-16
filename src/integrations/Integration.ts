@@ -1,4 +1,6 @@
-import { entity, primaryKey, property, manyToOne, oneToMany, unique, Collection } from '../infrastructure/model/orm.js'
+import { converter } from '@a11d/converter'
+import { entity, primaryKey, property, manyToOne, unique } from '../infrastructure/model/orm.js'
+import { children } from '../infrastructure/model/children.js'
 import { User } from '../features/identity/User.js'
 import { Source } from '../features/sources/Source.js'
 import { Entry } from '../features/entries/Entry.js'
@@ -60,7 +62,12 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	/** Lowercase email addresses representing the user in participant lists (RFC 6638). */
 	@property({ type: 'json', nullable: true }) addresses?: Array<string>
 
-	@oneToMany(() => Source, source => source.integrationId) sources = new Collection<Source>(this)
+	/** Its calendars, as loaded or as given (a request, the browser's store). Never saved through here: a calendar is a row of its own. */
+	@children(() => Source, source => source.integrationId, { eager: true })
+	@converter({
+		construct: (value: ReadonlyArray<Source> | undefined) => value ?? [],
+		deconstruct: (value: ReadonlyArray<Source>) => [...value],
+	}) sources!: ReadonlyArray<Source>
 
 	constructor() {
 		const type = (new.target as { type?: string }).type
@@ -162,7 +169,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 			uri: this.uri,
 			credentials: { ...this.credentials },
 			// The icon reads color and import state too; without importedAt every enabled row showed a spinner.
-			sources: [...this.sources].map(source => new Source({ uri: source.uri, entryTypes: source.entryTypes, name: source.name, enabled: source.enabled, color: source.color, importedAt: source.importedAt })) as any,
+			sources: this.sources.map(source => new Source({ uri: source.uri, entryTypes: source.entryTypes, name: source.name, enabled: source.enabled, color: source.color, importedAt: source.importedAt })),
 		})
 	}
 
@@ -284,7 +291,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		this.merge(incoming)
 		const sources = await this.getSources(em, { checkDuplicate: true })
 
-		const enabledKeys = new Set([...(incoming.sources ?? [])].filter(source => source.enabled).map(source => source.uri))
+		const enabledKeys = new Set(incoming.sources.filter(source => source.enabled).map(source => source.uri))
 		for (const source of sources) {
 			source.enabled = enabledKeys.has(source.uri)
 		}

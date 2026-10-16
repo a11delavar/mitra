@@ -23,7 +23,7 @@ const refusedInDemo: RequestHandler = (_req, res, next) => isDemo
 
 integrationsRouter.get('/', async (req, res) => {
 	const em = orm.em.fork()
-	const integrations = await em.find(Integration, { userId: req.user.id }, { populate: ['sources'] })
+	const integrations = await em.find(Integration, { userId: req.user.id })
 	return res.json(integrations)
 })
 
@@ -122,9 +122,9 @@ integrationsRouter.post('/', refusedInDemo, async (req, res) => {
 	em.persist(integration)
 	await integration.apply(em, incoming)
 	syncEmitter.emit('updated', req.user.id, 'sources')
-	// Fork fresh context to populate newly created sources collection.
-	const saved = await em.fork().findOneOrFail(Integration, { id: integration.id }, { populate: ['sources'] })
-	const enabled = saved.sources.getItems().filter(source => source.enabled).length
+	// A fresh context, so its calendars are loaded as they now stand.
+	const saved = await em.fork().findOneOrFail(Integration, { id: integration.id })
+	const enabled = saved.sources.filter(source => source.enabled).length
 	logger.info(`Connected ${integration.type} integration with ${enabled} source(s) enabled`)
 	void importer.start(em, req.user.id, integration.id)
 	return res.status(201).json(saved)
@@ -175,8 +175,8 @@ integrationsRouter.put('/:id', async (req, res) => {
 	await integration.publishAvailability(em).then(() => em.flush()).catch((error: unknown) =>
 		logger.warn(`Could not bring the availability written to ${integration.toString()} in line: ${error instanceof Error ? error.message : error}`))
 	logger.debug(`Updated integration ${integration.id}`)
-	// Fork fresh context to populate newly created sources collection.
-	const saved = await em.fork().findOneOrFail(Integration, { id: integration.id }, { populate: ['sources'] })
+	// A fresh context, so its calendars are loaded as they now stand.
+	const saved = await em.fork().findOneOrFail(Integration, { id: integration.id })
 	void importer.start(em, req.user.id, integration.id)
 	return res.json(saved)
 })

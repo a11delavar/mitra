@@ -56,7 +56,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 	}
 
 	private selectType(integrationClass: IntegrationClass) {
-		this.entity = new integrationClass({ sources: [] as any })
+		this.entity = new integrationClass({ sources: [] })
 		this.calendarName = ''
 		this.discovering = false
 		this.discoveryError = undefined
@@ -81,7 +81,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 					}
 				}
 			}
-			entity.sources = sources as any
+			entity.sources = sources
 		} catch (error) {
 			if (this.entity === entity) {
 				this.discoveryError = error instanceof Error ? error.message : String(error)
@@ -110,7 +110,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 				id: this.parameters.id,
 				uri: integration.uri ?? '',
 				credentials: { username: integration.credentials?.username ?? '', password: '' },
-				sources: [...integration.sources].map(source => new Source({ uri: source.uri, entryTypes: source.entryTypes, name: source.name, enabled: source.enabled })) as any,
+				sources: integration.sources.map(source => new Source({ uri: source.uri, entryTypes: source.entryTypes, name: source.name, enabled: source.enabled })),
 			})
 			if (this.parameters.preselectSources) {
 				[...this.entity.sources].forEach(source => source.enabled = true)
