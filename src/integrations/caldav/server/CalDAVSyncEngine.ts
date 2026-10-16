@@ -12,13 +12,40 @@ import type { Integration, SyncEngine } from '../../Integration.js'
 import { CalDAV } from '../CalDAV.js'
 import { EntryRelations } from '../../../features/relations/EntryRelations.js'
 import { CalDAVAvailability } from './CalDAVAvailability.js'
+import { CalDAVConnectError, CalDAVRefusal } from './CalDAVConnectError.js'
 
 const logger = createLogger('CalDAV')
 
 /** CalDAV sync and network CRUD engine supporting CalDAV, Apple Calendar, and Google Calendar. */
 export class CalDAVSyncEngine implements SyncEngine {
 	private getClient(integration: CalDAV): ReturnType<typeof createDAVClient> {
-		return integration.client ??= createDAVClient(integration.clientParameters)
+		// A failed connection is forgotten, so the next attempt connects again rather than failing as the first did.
+		return integration.client ??= this.connect(integration).catch(error => {
+			integration.client = undefined
+			throw error
+		})
+	}
+
+	/** Connects as tsdav does, keeping what the server refused on the way, which tsdav's own error leaves out. */
+	private async connect(integration: CalDAV) {
+		const parameters = integration.clientParameters
+		let refusals: Array<CalDAVRefusal> | undefined = []
+		const keepingRefusals: typeof fetch = async (input, init) => {
+			const response = await fetch(input, init)
+			if (refusals && response.status >= 400) {
+				refusals.push(await CalDAVRefusal.of(init?.method ?? 'GET', input instanceof Request ? input.url : String(input), response))
+			}
+			return response
+		}
+		try {
+			return await createDAVClient({ ...parameters, fetch: keepingRefusals })
+		} catch (error) {
+			const error_ = new CalDAVConnectError(parameters.serverUrl, refusals, error)
+			logger.warn(`${error_.message}${refusals.length ? ` (refused: ${refusals.join(', ')})` : ''}`)
+			throw error_
+		} finally {
+			refusals = undefined
+		}
 	}
 
 	/** Discovers user calendar addresses (RFC 6638) for participant identification. */
