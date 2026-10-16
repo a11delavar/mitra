@@ -123,7 +123,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 	private async listMembers(
 		client: Awaited<ReturnType<typeof createDAVClient>>,
 		source: Source,
-	): Promise<{ changedUrls: Array<string>, deletedUrls: Array<string>, syncToken?: string, complete: boolean }> {
+	): Promise<{ changedUrls: Array<string>, deletedUrls: Array<string>, syncToken?: string, complete: boolean, etags?: ReadonlyMap<string, string> }> {
 		const members = new Map<string, 'changed' | 'deleted'>()
 		let syncToken: string | undefined = source.syncState?.syncToken || undefined
 		let complete = false
@@ -136,6 +136,9 @@ export class CalDAVSyncEngine implements SyncEngine {
 				syncToken,
 			})
 			const failure = result.find(r => (r.status ?? 200) >= 400 && r.status !== 507 && (!r.href || CalDAV.isCollectionHref(source.uri, r.href)))
+			if (failure?.status === 415) {
+				return this.listByEtags(client, source)
+			}
 			if (failure) {
 				logger.warn(`Listing "${source.name}" answered ${failure.status}, keeping the stored entries and the stored sync token`)
 				break
@@ -171,18 +174,45 @@ export class CalDAVSyncEngine implements SyncEngine {
 		}
 	}
 
+	/** Lists a collection that refuses `sync-collection` (Nextcloud's generated Deck calendars answer 415) whole, by its members' etags. */
+	private async listByEtags(
+		client: Awaited<ReturnType<typeof createDAVClient>>,
+		source: Source,
+	): Promise<{ changedUrls: Array<string>, deletedUrls: Array<string>, complete: boolean, etags?: ReadonlyMap<string, string> }> {
+		const result = await client.propfind({ url: source.uri, props: { 'd:getetag': {} }, depth: '1' })
+		const failure = result.find(r => (r.status ?? 200) >= 400 && (!r.href || CalDAV.isCollectionHref(source.uri, r.href)))
+		if (failure) {
+			logger.warn(`Listing "${source.name}" by etags answered ${failure.status}, keeping the stored entries`)
+			return { changedUrls: [], deletedUrls: [], complete: false }
+		}
+		const members = result
+			.filter(r => r.href && !CalDAV.isCollectionHref(source.uri, r.href) && (r.status ?? 200) < 400)
+			.map(r => ({ url: CalDAV.resolveMemberUrl(source.uri, r.href), etag: r.props?.getetag ? String(r.props.getetag) : undefined }))
+		return {
+			changedUrls: members.map(member => member.url),
+			deletedUrls: [],
+			complete: true,
+			etags: new Map(members.filter(member => member.etag).map(member => [member.url, member.etag!])),
+		}
+	}
+
 	async syncSourceEntries(base: Integration, em: EntityManager, source: Source): Promise<boolean> {
 		const integration = base as CalDAV
 		const client = await this.getClient(integration)
 		const remoteCalendar = { url: source.uri }
 		const priorToken = source.syncState?.syncToken
 
-		const { changedUrls, deletedUrls, syncToken: newSyncToken, complete } = await this.listMembers(client, source)
+		const { changedUrls, deletedUrls, syncToken: newSyncToken, complete, etags } = await this.listMembers(client, source)
 
 		const existingEntries = await base.syncedEntries(em, source)
 
-		const changedObjects = changedUrls.length
-			? await this.fetchObjects(client, remoteCalendar, changedUrls)
+		// A listing by etags names every member each cycle, so fetch only those whose etag moved.
+		const fetchedUrls = !etags ? changedUrls : changedUrls.filter(url => {
+			const rows = existingEntries.filter(entry => CalDAV.memberUrlsMatch(source.uri, entry.uri, url))
+			return !rows.length || rows.some(row => row.data?.etag !== etags.get(url))
+		})
+		const changedObjects = fetchedUrls.length
+			? await this.fetchObjects(client, remoteCalendar, fetchedUrls)
 			: []
 
 		if (!priorToken && complete) {

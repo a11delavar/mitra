@@ -21,8 +21,11 @@ const ics = (uid: string, summary: string) => [
 	'END:VEVENT', 'END:VCALENDAR',
 ].join('\r\n')
 
-function fakeServer(listings: ReadonlyArray<Listing>) {
+type Collection = ReadonlyArray<{ href: string, etag?: string }> | { readonly failure: number }
+
+function fakeServer(listings: ReadonlyArray<Listing>, collection: Collection = []) {
 	const tokensSent = new Array<string | undefined>()
+	let propfinds = 0
 	const multigets = new Array<Array<string>>()
 	let answered = 0
 	const client = {
@@ -40,6 +43,16 @@ function fakeServer(listings: ReadonlyArray<Listing>) {
 				...listing.members.map(member => ({ href: member.href, status: member.status ?? 200, ok: (member.status ?? 200) < 300, raw })),
 			])
 		},
+		propfind: () => {
+			propfinds++
+			if ('failure' in collection) {
+				return Promise.resolve([{ href: COLLECTION, status: collection.failure, ok: false, props: {} }])
+			}
+			return Promise.resolve([
+				{ href: COLLECTION, status: 200, ok: true, props: {} },
+				...collection.map(member => ({ href: member.href, status: 200, ok: true, props: member.etag ? { getetag: member.etag } : {} })),
+			])
+		},
 		fetchCalendarObjects: ({ objectUrls }: { objectUrls: Array<string> }) => {
 			multigets.push([...objectUrls])
 			return Promise.resolve(objectUrls.map(url => ({ url, etag: `etag-${url}`, data: ics(url, url.split('/').pop()!.replace('.ics', '')) })))
@@ -52,6 +65,7 @@ function fakeServer(listings: ReadonlyArray<Listing>) {
 		multigets,
 		integration,
 		get reports() { return tokensSent.length },
+		get propfinds() { return propfinds },
 		get fetched() { return multigets.flat() },
 	}
 }
@@ -83,13 +97,13 @@ const localEntry = (name: string) => new Entry({
 	type: EntryType.Event,
 })
 
-async function sync(listings: ReadonlyArray<Listing>, existing: ReadonlyArray<Entry> = [], syncToken?: string) {
+async function sync(listings: ReadonlyArray<Listing>, existing: ReadonlyArray<Entry> = [], syncToken?: string, collection?: Collection) {
 	const source = new Source({
 		id: 'src1', integrationId: 'i1', uri: COLLECTION, name: 'Work',
 		entryTypes: [EntryType.Event, EntryType.Task], enabled: true,
 		syncState: syncToken ? { syncToken } : undefined,
 	})
-	const server = fakeServer(listings)
+	const server = fakeServer(listings, collection)
 	const em = fakeEntityManager(existing)
 	const changed = await (server.integration as unknown as { syncSourceEntries(em: unknown, source: Source): Promise<boolean> })
 		.syncSourceEntries(em, source)
@@ -225,6 +239,66 @@ describe('CalDAV sync only reads absence as deletion off a listing it knows is c
 		const { em, changed } = await sync([{ members: [], token: 'token-1' }], entries)
 		assert.deepEqual(em.removed, entries)
 		assert.equal(changed, true)
+	})
+})
+
+describe('CalDAV sync lists a calendar that refuses sync-collection by its etags', () => {
+	const refused: ReadonlyArray<Listing> = [{ members: [], failure: 415 }]
+	const fetchedEntry = (name: string, etag: string) => {
+		const entry = localEntry(name)
+		entry.data = { etag }
+		return entry
+	}
+
+	it('imports every member and finishes the import', async () => {
+		const { em, source, propfinds } = await sync(refused, [], undefined, [
+			{ href: '/cal/a.ics', etag: `etag-${COLLECTION}a.ics` },
+			{ href: '/cal/b.ics', etag: `etag-${COLLECTION}b.ics` },
+		])
+		assert.equal(propfinds, 1)
+		assert.deepEqual(em.persisted.map(entry => entry.heading), ['a', 'b'])
+		assert.deepEqual(source.syncState, { syncToken: undefined })
+	})
+
+	it('fetches only the members whose etag moved', async () => {
+		const { fetched } = await sync(refused, [fetchedEntry('same', 'etag-1'), fetchedEntry('moved', 'etag-1')], undefined, [
+			{ href: '/cal/same.ics', etag: 'etag-1' },
+			{ href: '/cal/moved.ics', etag: 'etag-2' },
+			{ href: '/cal/new.ics', etag: 'etag-1' },
+		])
+		assert.deepEqual(fetched, [`${COLLECTION}moved.ics`, `${COLLECTION}new.ics`])
+	})
+
+	it('removes the entries the listing no longer names', async () => {
+		const [kept, gone] = [fetchedEntry('kept', 'etag-1'), fetchedEntry('gone', 'etag-1')]
+		const { em, changed } = await sync(refused, [kept, gone], undefined, [{ href: '/cal/kept.ics', etag: 'etag-1' }])
+		assert.deepEqual(em.removed, [gone])
+		assert.equal(changed, true)
+	})
+
+	it('fetches and changes nothing on a later cycle when no etag moved', async () => {
+		const { fetched, em, changed, source } = await sync(refused, [fetchedEntry('a', 'etag-1'), fetchedEntry('b', 'etag-2')], undefined, [
+			{ href: '/cal/a.ics', etag: 'etag-1' },
+			{ href: '/cal/b.ics', etag: 'etag-2' },
+		])
+		assert.deepEqual(fetched, [])
+		assert.deepEqual(em.removed, [])
+		assert.equal(changed, false)
+		assert.deepEqual(source.syncState, { syncToken: undefined })
+	})
+
+	it('fetches a member the server lists without an etag every cycle', async () => {
+		const { fetched } = await sync(refused, [fetchedEntry('bare', 'etag-1')], undefined, [{ href: '/cal/bare.ics' }])
+		assert.deepEqual(fetched, [`${COLLECTION}bare.ics`])
+	})
+
+	it('deletes nothing and leaves the import open when the listing by etags fails too', async () => {
+		const entries = [fetchedEntry('a', 'etag-1'), fetchedEntry('b', 'etag-1')]
+		const { em, source, changed, fetched } = await sync(refused, entries, undefined, { failure: 403 })
+		assert.deepEqual(em.removed, [])
+		assert.deepEqual(fetched, [])
+		assert.equal(changed, false)
+		assert.deepEqual(source.syncState, { syncToken: undefined, incomplete: true })
 	})
 })
 
