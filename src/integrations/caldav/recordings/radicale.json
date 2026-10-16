@@ -1,0 +1,1690 @@
+{
+	"version": "3.8.3",
+	"minted": {
+		"id": [
+			"b49d8de1-17c2-44d8-b6ad-7b3aa34a28e6",
+			"8aa1d2dc-df0c-4aaf-9a68-f88617187c64"
+		],
+		"token": [
+			"4f1bbd7fc08d63bb76dc3af6bdd9559f3d08eb0d39d57348cf3b1a5a6199c715",
+			"http://radicale.org/ns/sync/98074fed5054fbf0aa91030d71d382654a0ea861d1dd6a082dcda988694703be",
+			"4f45ceb5bfb623e96018c75d5a610c55ca844d1340ae6e265f3225981315e7d3",
+			"http://radicale.org/ns/sync/4bf442cfcb24303730ca836d0b027a526794c74dd9cbda32cf988d36cab164d7",
+			"d0289689882cd2a591d37627e7df9d201aa3bab28d016293c16a5b0e127d2007",
+			"http://radicale.org/ns/sync/eb009a653511c3db5765f2fcd3c3df6bdd12e4fb4bea330f3602816faaf69107",
+			"d14b3f129bbb7c77ab8dfcd0e30b3af26a496630be3ec77591862240ef001e4e",
+			"http://radicale.org/ns/sync/fe72427fc6fe84a5056e7f079f39f1662a779330930e609effaa1c300fe5697e",
+			"2e3da9960eca5a2d7d72e2ebad7c286c68020ef130f4fe3ae37d83137c8c8298",
+			"9b7bbf7202003880580cd37a277f00f636f43840a908809118f268246bec43e9",
+			"http://radicale.org/ns/sync/6dc57ee461fd9b29d314490cc8a65a35cf13fce55d765edfe3dd33dc6b21da18",
+			"58b3daa1b7eb9102a9b28f9b6d18cc623e6b0fa3aaaa321e1f7850994a5a471b",
+			"http://radicale.org/ns/sync/8fae7c2570b7cedaa5d89de39d9e746c0396251a42c06b7fe0e7221cc630e354",
+			"9f1ec684899ce18e7b9681ab4b1eab8732b9787a96e6d0e2f21e4ce038b76e53",
+			"b3d922aac644d5a94cd676c561e75bb0eb3bb8f6f486b878e1f320bb9095fe3d",
+			"f9b5d11e1c0a146a175001a54ec02736058d3ead01e87c66b2872e515a4b259e",
+			"c7c2c69b60b90810753e1093f9c52c8cded7a088d3fc758628936499430c4217",
+			"http://radicale.org/ns/sync/fbaeb123e51438af21b74eeb0d640d7439c87c5fedfa468675132923c2213364",
+			"d3c92d170733538e77861da5d6b42b00317d6129b5894fc8292dc8b73d8b7365",
+			"5a31b1029986c38a08770900bd1bded2eae39bdb1c6d0f9189264b2bebc94756",
+			"http://radicale.org/ns/sync/06cb79856980def2e0e02d05ba4b6b7ef9004f195e2f300d2231a08189ba480b"
+		],
+		"time": [
+			"Fri, 16 Oct 2026 17:17:22 GMT",
+			"Fri, 16 Oct 2026 17:17:21 GMT",
+			"Fri, 16 Oct 2026 17:17:22 GMT",
+			"Fri, 16 Oct 2026 17:17:23 GMT",
+			"Fri, 16 Oct 2026 17:17:21 GMT",
+			"20261001T000000Z",
+			"20261001T000000Z",
+			"Fri, 16 Oct 2026 17:17:22 GMT",
+			"20261016T191722",
+			"Fri, 16 Oct 2026 17:17:21 GMT",
+			"20261001T000000Z",
+			"Fri, 16 Oct 2026 17:17:21 GMT",
+			"20261001T000000Z",
+			"Fri, 16 Oct 2026 17:17:22 GMT",
+			"Fri, 16 Oct 2026 17:17:21 GMT",
+			"Fri, 16 Oct 2026 17:17:22 GMT",
+			"Fri, 16 Oct 2026 17:17:22 GMT",
+			"Fri, 16 Oct 2026 17:17:21 GMT",
+			"Fri, 16 Oct 2026 17:17:22 GMT",
+			"Fri, 16 Oct 2026 17:17:22 GMT",
+			"Fri, 16 Oct 2026 17:17:22 GMT",
+			"Fri, 16 Oct 2026 17:17:22 GMT",
+			"20261001T000000Z",
+			"20261016T191722",
+			"20261001T000000Z",
+			"Fri, 16 Oct 2026 17:17:22 GMT",
+			"20261016T191722",
+			"Fri, 16 Oct 2026 17:17:22 GMT",
+			"20261016T191722",
+			"Fri, 16 Oct 2026 17:17:22 GMT",
+			"20261016T191722",
+			"Fri, 16 Oct 2026 17:17:21 GMT",
+			"20261001T000000Z",
+			"Fri, 16 Oct 2026 17:17:21 GMT",
+			"20261001T000000Z",
+			"Fri, 16 Oct 2026 17:17:22 GMT",
+			"20261001T000000Z"
+		]
+	},
+	"exchanges": [
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:current-user-principal/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/</href><propstat><prop><current-user-principal><href>/{account}/</href></current-user-principal></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:current-user-principal/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/</href><propstat><prop><current-user-principal><href>/{account}/</href></current-user-principal></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:current-user-principal/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/</href><propstat><prop><current-user-principal><href>/{account}/</href></current-user-principal></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:current-user-principal/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/</href><propstat><prop><current-user-principal><href>/{account}/</href></current-user-principal></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:current-user-principal/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/</href><propstat><prop><current-user-principal><href>/{account}/</href></current-user-principal></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:current-user-principal/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/</href><propstat><prop><current-user-principal><href>/{account}/</href></current-user-principal></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:current-user-principal/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/</href><propstat><prop><current-user-principal><href>/{account}/</href></current-user-principal></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:current-user-principal/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/</href><propstat><prop><current-user-principal><href>/{account}/</href></current-user-principal></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:current-user-principal/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/</href><propstat><prop><current-user-principal><href>/{account}/</href></current-user-principal></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:current-user-principal/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/</href><propstat><prop><current-user-principal><href>/{account}/</href></current-user-principal></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:current-user-principal/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/</href><propstat><prop><current-user-principal><href>/{account}/</href></current-user-principal></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:current-user-principal/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/</href><propstat><prop><current-user-principal><href>/{account}/</href></current-user-principal></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/.well-known/caldav",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<d:propfind xmlns:d=\"DAV:\"> <d:prop>   <d:resourcetype/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 301,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8",
+					"location": "/"
+				},
+				"body": "Redirected to /"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/.well-known/caldav",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<d:propfind xmlns:d=\"DAV:\"> <d:prop>   <d:resourcetype/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 301,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8",
+					"location": "/"
+				},
+				"body": "Redirected to /"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/.well-known/caldav",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<d:propfind xmlns:d=\"DAV:\"> <d:prop>   <d:resourcetype/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 301,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8",
+					"location": "/"
+				},
+				"body": "Redirected to /"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/.well-known/caldav",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<d:propfind xmlns:d=\"DAV:\"> <d:prop>   <d:resourcetype/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 301,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8",
+					"location": "/"
+				},
+				"body": "Redirected to /"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/.well-known/caldav",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<d:propfind xmlns:d=\"DAV:\"> <d:prop>   <d:resourcetype/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 301,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8",
+					"location": "/"
+				},
+				"body": "Redirected to /"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/.well-known/caldav",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<d:propfind xmlns:d=\"DAV:\"> <d:prop>   <d:resourcetype/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 301,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8",
+					"location": "/"
+				},
+				"body": "Redirected to /"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/.well-known/caldav",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<d:propfind xmlns:d=\"DAV:\"> <d:prop>   <d:resourcetype/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 301,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8",
+					"location": "/"
+				},
+				"body": "Redirected to /"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/.well-known/caldav",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<d:propfind xmlns:d=\"DAV:\"> <d:prop>   <d:resourcetype/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 301,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8",
+					"location": "/"
+				},
+				"body": "Redirected to /"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/.well-known/caldav",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<d:propfind xmlns:d=\"DAV:\"> <d:prop>   <d:resourcetype/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 301,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8",
+					"location": "/"
+				},
+				"body": "Redirected to /"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/.well-known/caldav",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<d:propfind xmlns:d=\"DAV:\"> <d:prop>   <d:resourcetype/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 301,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8",
+					"location": "/"
+				},
+				"body": "Redirected to /"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/.well-known/caldav",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<d:propfind xmlns:d=\"DAV:\"> <d:prop>   <d:resourcetype/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 301,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8",
+					"location": "/"
+				},
+				"body": "Redirected to /"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/.well-known/caldav",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<d:propfind xmlns:d=\"DAV:\"> <d:prop>   <d:resourcetype/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 301,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8",
+					"location": "/"
+				},
+				"body": "Redirected to /"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-home-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-home-set><href>/{account}/</href></C:calendar-home-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-user-address-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-user-address-set><href>/{account}/</href></C:calendar-user-address-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "1"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-description/>   <c:calendar-timezone/>   <d:displayname/>   <ca:calendar-color/>   <cs:getctag/>   <d:resourcetype/>   <c:supported-calendar-component-set/>   <d:sync-token/>   <d:current-user-privilege-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:ICAL=\"http://apple.com/ns/ical/\"><response><href>/{account}/</href><propstat><prop><C:calendar-description /><C:calendar-timezone /><displayname /><ICAL:calendar-color /><CS:getctag /><C:supported-calendar-component-set /><sync-token /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><resourcetype><principal /><collection /></resourcetype><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/home/</href><propstat><prop><C:calendar-description /><C:calendar-timezone /><ICAL:calendar-color /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><displayname>Home</displayname><CS:getctag>\"{token:0}\"</CS:getctag><resourcetype><C:calendar /><collection /></resourcetype><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set><sync-token>{token:1}</sync-token><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/</href><propstat><prop><C:calendar-description /><C:calendar-timezone /><ICAL:calendar-color /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><displayname>Work</displayname><CS:getctag>\"{token:2}\"</CS:getctag><resourcetype><C:calendar /><collection /></resourcetype><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set><sync-token>{token:3}</sync-token><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-home-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-home-set><href>/{account}/</href></C:calendar-home-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-user-address-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-user-address-set><href>/{account}/</href></C:calendar-user-address-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-home-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-home-set><href>/{account}/</href></C:calendar-home-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-user-address-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-user-address-set><href>/{account}/</href></C:calendar-user-address-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "1"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-description/>   <c:calendar-timezone/>   <d:displayname/>   <ca:calendar-color/>   <cs:getctag/>   <d:resourcetype/>   <c:supported-calendar-component-set/>   <d:sync-token/>   <d:current-user-privilege-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:ICAL=\"http://apple.com/ns/ical/\"><response><href>/{account}/</href><propstat><prop><C:calendar-description /><C:calendar-timezone /><displayname /><ICAL:calendar-color /><CS:getctag /><C:supported-calendar-component-set /><sync-token /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><resourcetype><principal /><collection /></resourcetype><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/home/</href><propstat><prop><C:calendar-description /><C:calendar-timezone /><ICAL:calendar-color /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><displayname>Home</displayname><CS:getctag>\"{token:0}\"</CS:getctag><resourcetype><C:calendar /><collection /></resourcetype><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set><sync-token>{token:1}</sync-token><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/</href><propstat><prop><C:calendar-description /><C:calendar-timezone /><ICAL:calendar-color /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><displayname>Work</displayname><CS:getctag>\"{token:2}\"</CS:getctag><resourcetype><C:calendar /><collection /></resourcetype><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set><sync-token>{token:3}</sync-token><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-home-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-home-set><href>/{account}/</href></C:calendar-home-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-user-address-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-user-address-set><href>/{account}/</href></C:calendar-user-address-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "1"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-description/>   <c:calendar-timezone/>   <d:displayname/>   <ca:calendar-color/>   <cs:getctag/>   <d:resourcetype/>   <c:supported-calendar-component-set/>   <d:sync-token/>   <d:current-user-privilege-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:ICAL=\"http://apple.com/ns/ical/\"><response><href>/{account}/</href><propstat><prop><C:calendar-description /><C:calendar-timezone /><displayname /><ICAL:calendar-color /><CS:getctag /><C:supported-calendar-component-set /><sync-token /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><resourcetype><principal /><collection /></resourcetype><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/home/</href><propstat><prop><C:calendar-description /><C:calendar-timezone /><ICAL:calendar-color /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><displayname>Home</displayname><CS:getctag>\"{token:0}\"</CS:getctag><resourcetype><C:calendar /><collection /></resourcetype><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set><sync-token>{token:1}</sync-token><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/</href><propstat><prop><C:calendar-description /><C:calendar-timezone /><ICAL:calendar-color /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><displayname>Work</displayname><CS:getctag>\"{token:2}\"</CS:getctag><resourcetype><C:calendar /><collection /></resourcetype><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set><sync-token>{token:3}</sync-token><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-home-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-home-set><href>/{account}/</href></C:calendar-home-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-home-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-home-set><href>/{account}/</href></C:calendar-home-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-home-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-home-set><href>/{account}/</href></C:calendar-home-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-home-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-home-set><href>/{account}/</href></C:calendar-home-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-user-address-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-user-address-set><href>/{account}/</href></C:calendar-user-address-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "1"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-description/>   <c:calendar-timezone/>   <d:displayname/>   <ca:calendar-color/>   <cs:getctag/>   <d:resourcetype/>   <c:supported-calendar-component-set/>   <d:sync-token/>   <d:current-user-privilege-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:ICAL=\"http://apple.com/ns/ical/\"><response><href>/{account}/</href><propstat><prop><C:calendar-description /><C:calendar-timezone /><displayname /><ICAL:calendar-color /><CS:getctag /><C:supported-calendar-component-set /><sync-token /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><resourcetype><principal /><collection /></resourcetype><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/home/</href><propstat><prop><C:calendar-description /><C:calendar-timezone /><ICAL:calendar-color /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><displayname>Home</displayname><CS:getctag>\"{token:0}\"</CS:getctag><resourcetype><C:calendar /><collection /></resourcetype><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set><sync-token>{token:1}</sync-token><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/</href><propstat><prop><C:calendar-description /><C:calendar-timezone /><ICAL:calendar-color /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><displayname>Work</displayname><CS:getctag>\"{token:4}\"</CS:getctag><resourcetype><C:calendar /><collection /></resourcetype><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set><sync-token>{token:5}</sync-token><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-home-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-home-set><href>/{account}/</href></C:calendar-home-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-home-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-home-set><href>/{account}/</href></C:calendar-home-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-home-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-home-set><href>/{account}/</href></C:calendar-home-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-home-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-home-set><href>/{account}/</href></C:calendar-home-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "DELETE",
+				"path": "/{account}/home/",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 404,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8"
+				},
+				"body": "The requested resource could not be found."
+			}
+		},
+		{
+			"request": {
+				"method": "MKCALENDAR",
+				"path": "/{account}/home/",
+				"headers": {
+					"content-type": "application/xml"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\t\t\t<C:mkcalendar xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><D:set><D:prop>\t\t\t\t<D:displayname>Home</D:displayname>\t\t\t\t<C:supported-calendar-component-set><C:comp name=\"VEVENT\"/><C:comp name=\"VTODO\"/></C:supported-calendar-component-set>\t\t\t</D:prop></D:set></C:mkcalendar>"
+			},
+			"response": {
+				"status": 201,
+				"headers": {},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/home/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:supported-report-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/home/</href><propstat><prop><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/home/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:supported-report-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/home/</href><propstat><prop><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/home/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:supported-report-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/home/</href><propstat><prop><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/home/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:supported-report-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/home/</href><propstat><prop><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/home/",
+				"headers": {
+					"depth": "1"
+				},
+				"body": ""
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:RADICALE=\"http://radicale.org/ns/\"><response><href>/{account}/home/</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><RADICALE:version>3.8.3</RADICALE:version><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set><resourcetype><C:calendar /><collection /></resourcetype><owner><href>/{account}/</href></owner><getetag>\"{token:6}\"</getetag><getlastmodified>{time:0}</getlastmodified><getcontenttype>text/calendar</getcontenttype><getcontentlength>801</getcontentlength><displayname>Home</displayname><sync-token>{token:7}</sync-token><CS:getctag>\"{token:6}\"</CS:getctag><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/home/dentist.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:8}\"</getetag><getlastmodified>{time:1}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>204</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/home/{id:1}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:9}\"</getetag><getlastmodified>{time:2}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>615</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/home/",
+				"headers": {
+					"depth": "1"
+				},
+				"body": ""
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:RADICALE=\"http://radicale.org/ns/\"><response><href>/{account}/home/</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><RADICALE:version>3.8.3</RADICALE:version><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set><resourcetype><C:calendar /><collection /></resourcetype><owner><href>/{account}/</href></owner><getetag>\"{token:0}\"</getetag><getlastmodified>{time:3}</getlastmodified><getcontenttype>text/calendar</getcontenttype><getcontentlength>255</getcontentlength><displayname>Home</displayname><sync-token>{token:10}</sync-token><CS:getctag>\"{token:0}\"</CS:getctag><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/home/dentist.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:8}\"</getetag><getlastmodified>{time:4}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>204</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "REPORT",
+				"path": "/{account}/home/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:sync-collection xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:sync-level>1</d:sync-level> <d:sync-token/> <d:prop>   <d:getetag/> </d:prop>\n</d:sync-collection>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><sync-token>{token:1}</sync-token><response><href>/{account}/home/dentist.ics</href><propstat><prop><getetag>\"{token:8}\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "REPORT",
+				"path": "/{account}/home/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "1"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<c:calendar-multiget xmlns:d=\"DAV:\" xmlns:c=\"urn:ietf:params:xml:ns:caldav\"> <d:prop>   <d:getetag/>   <c:calendar-data/> </d:prop> <d:href>/{account}/home/dentist.ics</d:href>\n</c:calendar-multiget>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/home/dentist.ics</href><propstat><prop><getetag>\"{token:8}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:dentist\r\nDTSTART:20261021T090000Z\r\nDTEND:20261021T100000Z\r\nDTSTAMP:{time:5}\r\nSUMMARY:Dentist\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "REPORT",
+				"path": "/{account}/home/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:sync-collection xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:sync-level>1</d:sync-level> <d:sync-token/> <d:prop>   <d:getetag/> </d:prop>\n</d:sync-collection>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><sync-token>{token:1}</sync-token><response><href>/{account}/home/dentist.ics</href><propstat><prop><getetag>\"{token:8}\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "REPORT",
+				"path": "/{account}/home/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "1"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<c:calendar-multiget xmlns:d=\"DAV:\" xmlns:c=\"urn:ietf:params:xml:ns:caldav\"> <d:prop>   <d:getetag/>   <c:calendar-data/> </d:prop> <d:href>/{account}/home/dentist.ics</d:href>\n</c:calendar-multiget>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/home/dentist.ics</href><propstat><prop><getetag>\"{token:8}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:dentist\r\nDTSTART:20261021T090000Z\r\nDTEND:20261021T100000Z\r\nDTSTAMP:{time:6}\r\nSUMMARY:Dentist\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "DELETE",
+				"path": "/{account}/home/{id:1}.ics",
+				"headers": {
+					"if-match": "\"{token:9}\""
+				},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/{account}/home/{id:1}.ics</href><status>HTTP/1.1 200 OK</status></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/home/{id:1}.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:9}\"",
+					"last-modified": "{time:7}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:1}\r\nDTSTART;TZID=Europe/Berlin:20261024T100000\r\nDTEND;TZID=Europe/Berlin:20261024T110000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:8}\r\nSUMMARY:Retro\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "PUT",
+				"path": "/{account}/home/{id:1}.ics",
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"if-none-match": "*"
+				},
+				"body": "BEGIN:VCALENDAR\r\nPRODID:-//calendar//EN\r\nVERSION:2.0\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nEND:DAYLIGHT\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:1}\r\nDTSTAMP:{now}\r\nSUMMARY:Retro\r\nDTSTART;TZID=Europe/Berlin:20261024T100000\r\nDTEND;TZID=Europe/Berlin:20261024T110000\r\nEND:VEVENT\r\nEND:VCALENDAR"
+			},
+			"response": {
+				"status": 201,
+				"headers": {
+					"etag": "\"{token:9}\""
+				},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/home/dentist.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:8}\"",
+					"last-modified": "{time:9}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:dentist\r\nDTSTART:20261021T090000Z\r\nDTEND:20261021T100000Z\r\nDTSTAMP:{time:10}\r\nSUMMARY:Dentist\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/home/dentist.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:8}\"",
+					"last-modified": "{time:11}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:dentist\r\nDTSTART:20261021T090000Z\r\nDTEND:20261021T100000Z\r\nDTSTAMP:{time:12}\r\nSUMMARY:Dentist\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "PUT",
+				"path": "/{account}/home/dentist.ics",
+				"headers": {
+					"content-type": "text/calendar"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:dentist\r\nDTSTAMP:{now}\r\nDTSTART:20261021T090000Z\r\nDTEND:20261021T100000Z\r\nSUMMARY:Dentist\r\nEND:VEVENT\r\nEND:VCALENDAR"
+			},
+			"response": {
+				"status": 201,
+				"headers": {
+					"etag": "\"{token:8}\""
+				},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "DELETE",
+				"path": "/{account}/work/",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 404,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8"
+				},
+				"body": "The requested resource could not be found."
+			}
+		},
+		{
+			"request": {
+				"method": "MKCALENDAR",
+				"path": "/{account}/work/",
+				"headers": {
+					"content-type": "application/xml"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\t\t\t<C:mkcalendar xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><D:set><D:prop>\t\t\t\t<D:displayname>Work</D:displayname>\t\t\t\t<C:supported-calendar-component-set><C:comp name=\"VEVENT\"/><C:comp name=\"VTODO\"/></C:supported-calendar-component-set>\t\t\t</D:prop></D:set></C:mkcalendar>"
+			},
+			"response": {
+				"status": 201,
+				"headers": {},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/work/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:supported-report-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/work/</href><propstat><prop><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/work/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:supported-report-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/work/</href><propstat><prop><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/work/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:supported-report-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/work/</href><propstat><prop><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/work/",
+				"headers": {
+					"depth": "1"
+				},
+				"body": ""
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:RADICALE=\"http://radicale.org/ns/\"><response><href>/{account}/work/</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><RADICALE:version>3.8.3</RADICALE:version><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set><resourcetype><C:calendar /><collection /></resourcetype><owner><href>/{account}/</href></owner><getetag>\"{token:11}\"</getetag><getlastmodified>{time:13}</getlastmodified><getcontenttype>text/calendar</getcontenttype><getcontentlength>804</getcontentlength><displayname>Work</displayname><sync-token>{token:12}</sync-token><CS:getctag>\"{token:11}\"</CS:getctag><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:13}\"</getetag><getlastmodified>{time:14}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>204</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:14}\"</getetag><getlastmodified>{time:15}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>618</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/work/",
+				"headers": {
+					"depth": "1"
+				},
+				"body": ""
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:RADICALE=\"http://radicale.org/ns/\"><response><href>/{account}/work/</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><RADICALE:version>3.8.3</RADICALE:version><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set><resourcetype><C:calendar /><collection /></resourcetype><owner><href>/{account}/</href></owner><getetag>\"{token:4}\"</getetag><getlastmodified>{time:16}</getlastmodified><getcontenttype>text/calendar</getcontenttype><getcontentlength>818</getcontentlength><displayname>Work</displayname><sync-token>{token:5}</sync-token><CS:getctag>\"{token:4}\"</CS:getctag><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:13}\"</getetag><getlastmodified>{time:17}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>204</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:15}\"</getetag><getlastmodified>{time:18}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>632</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/work/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:supported-report-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/work/</href><propstat><prop><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/work/",
+				"headers": {
+					"depth": "1"
+				},
+				"body": ""
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:RADICALE=\"http://radicale.org/ns/\"><response><href>/{account}/work/</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><RADICALE:version>3.8.3</RADICALE:version><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set><resourcetype><C:calendar /><collection /></resourcetype><owner><href>/{account}/</href></owner><getetag>\"{token:16}\"</getetag><getlastmodified>{time:19}</getlastmodified><getcontenttype>text/calendar</getcontenttype><getcontentlength>826</getcontentlength><displayname>Work</displayname><sync-token>{token:17}</sync-token><CS:getctag>\"{token:16}\"</CS:getctag><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:18}\"</getetag><getlastmodified>{time:20}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>212</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:15}\"</getetag><getlastmodified>{time:21}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>632</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "REPORT",
+				"path": "/{account}/work/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:sync-collection xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:sync-level>1</d:sync-level> <d:sync-token/> <d:prop>   <d:getetag/> </d:prop>\n</d:sync-collection>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><sync-token>{token:3}</sync-token><response><href>/{account}/work/standup.ics</href><propstat><prop><getetag>\"{token:13}\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "REPORT",
+				"path": "/{account}/work/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "1"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<c:calendar-multiget xmlns:d=\"DAV:\" xmlns:c=\"urn:ietf:params:xml:ns:caldav\"> <d:prop>   <d:getetag/>   <c:calendar-data/> </d:prop> <d:href>/{account}/work/standup.ics</d:href>\n</c:calendar-multiget>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/work/standup.ics</href><propstat><prop><getetag>\"{token:13}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261020T090000Z\r\nDTEND:20261020T100000Z\r\nDTSTAMP:{time:22}\r\nSUMMARY:Standup\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "REPORT",
+				"path": "/{account}/work/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:sync-collection xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:sync-level>1</d:sync-level> <d:sync-token/> <d:prop>   <d:getetag/> </d:prop>\n</d:sync-collection>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><sync-token>{token:17}</sync-token><response><href>/{account}/work/standup.ics</href><propstat><prop><getetag>\"{token:18}\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><getetag>\"{token:15}\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "REPORT",
+				"path": "/{account}/work/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "1"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<c:calendar-multiget xmlns:d=\"DAV:\" xmlns:c=\"urn:ietf:params:xml:ns:caldav\"> <d:prop>   <d:getetag/>   <c:calendar-data/> </d:prop> <d:href>/{account}/work/standup.ics</d:href> <d:href>/{account}/work/{id:0}.ics</d:href>\n</c:calendar-multiget>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><getetag>\"{token:15}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:23}\r\nSUMMARY:Planning\\, rescheduled\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><getetag>\"{token:18}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261023T090000Z\r\nDTEND:20261023T100000Z\r\nDTSTAMP:{time:24}\r\nSUMMARY:Standup\\, moved\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/{id:0}.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:14}\"",
+					"last-modified": "{time:25}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:26}\r\nSUMMARY:Planning\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/{id:0}.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:15}\"",
+					"last-modified": "{time:27}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:28}\r\nSUMMARY:Planning\\, rescheduled\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/{id:0}.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:15}\"",
+					"last-modified": "{time:29}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:30}\r\nSUMMARY:Planning\\, rescheduled\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "PUT",
+				"path": "/{account}/work/{id:0}.ics",
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"if-none-match": "*"
+				},
+				"body": "BEGIN:VCALENDAR\r\nPRODID:-//calendar//EN\r\nVERSION:2.0\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nEND:DAYLIGHT\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTAMP:{now}\r\nSUMMARY:Planning\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nEND:VEVENT\r\nEND:VCALENDAR"
+			},
+			"response": {
+				"status": 201,
+				"headers": {
+					"etag": "\"{token:14}\""
+				},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "PUT",
+				"path": "/{account}/work/{id:0}.ics",
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"if-match": "\"{token:14}\""
+				},
+				"body": "BEGIN:VCALENDAR\r\nPRODID:-//calendar//EN\r\nVERSION:2.0\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nEND:DAYLIGHT\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTAMP:{now}\r\nSUMMARY:Planning\\, rescheduled\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nEND:VEVENT\r\nEND:VCALENDAR"
+			},
+			"response": {
+				"status": 204,
+				"headers": {
+					"etag": "\"{token:15}\""
+				},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/standup.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:13}\"",
+					"last-modified": "{time:31}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261020T090000Z\r\nDTEND:20261020T100000Z\r\nDTSTAMP:{time:32}\r\nSUMMARY:Standup\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/standup.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:13}\"",
+					"last-modified": "{time:33}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261020T090000Z\r\nDTEND:20261020T100000Z\r\nDTSTAMP:{time:34}\r\nSUMMARY:Standup\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/standup.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:18}\"",
+					"last-modified": "{time:35}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261023T090000Z\r\nDTEND:20261023T100000Z\r\nDTSTAMP:{time:36}\r\nSUMMARY:Standup\\, moved\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "PUT",
+				"path": "/{account}/work/standup.ics",
+				"headers": {
+					"content-type": "text/calendar"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTAMP:{now}\r\nDTSTART:20261020T090000Z\r\nDTEND:20261020T100000Z\r\nSUMMARY:Standup\r\nEND:VEVENT\r\nEND:VCALENDAR"
+			},
+			"response": {
+				"status": 201,
+				"headers": {
+					"etag": "\"{token:13}\""
+				},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "PUT",
+				"path": "/{account}/work/standup.ics",
+				"headers": {
+					"content-type": "text/calendar"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTAMP:{now}\r\nDTSTART:20261023T090000Z\r\nDTEND:20261023T100000Z\r\nSUMMARY:Standup\\, moved\r\nEND:VEVENT\r\nEND:VCALENDAR"
+			},
+			"response": {
+				"status": 204,
+				"headers": {
+					"etag": "\"{token:18}\""
+				},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/teammate/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "1"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-home-set/>   <d:resourcetype/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/teammate/</href><propstat><prop><C:calendar-home-set><href>/teammate/</href></C:calendar-home-set><resourcetype><principal /><collection /></resourcetype></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/teammate/team/</href><propstat><prop><C:calendar-home-set /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><resourcetype><C:calendar /><collection /></resourcetype></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/teammate/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "1"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-description/>   <c:calendar-timezone/>   <d:displayname/>   <ca:calendar-color/>   <cs:getctag/>   <d:resourcetype/>   <c:supported-calendar-component-set/>   <d:sync-token/>   <d:current-user-privilege-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:ICAL=\"http://apple.com/ns/ical/\"><response><href>/teammate/</href><propstat><prop><C:calendar-description /><C:calendar-timezone /><displayname /><ICAL:calendar-color /><CS:getctag /><C:supported-calendar-component-set /><sync-token /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><resourcetype><principal /><collection /></resourcetype><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/teammate/team/</href><propstat><prop><C:calendar-description /><C:calendar-timezone /><ICAL:calendar-color /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><displayname>Team</displayname><CS:getctag>\"{token:19}\"</CS:getctag><resourcetype><C:calendar /><collection /></resourcetype><C:supported-calendar-component-set><C:comp name=\"VTODO\" /><C:comp name=\"VEVENT\" /><C:comp name=\"VJOURNAL\" /></C:supported-calendar-component-set><sync-token>{token:20}</sync-token><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/teammate/team/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:supported-report-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/teammate/team/</href><propstat><prop><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		}
+	]
+}

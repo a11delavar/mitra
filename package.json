@@ -18,7 +18,8 @@
 		"i18n:analyze": "node ./scripts/i18n.ts --analyze",
 		"zones:generate": "node ./scripts/goldenZones.ts",
 		"changelog": "node ./scripts/changelog.ts",
-		"release": "node ./scripts/release.ts"
+		"release": "node ./scripts/release.ts",
+		"record:caldav": "node ./scripts/recordCalDAV.ts"
 	},
 	"devDependencies": {
 		"@a11d/eslint-config": "2.x",
