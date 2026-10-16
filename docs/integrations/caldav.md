@@ -25,6 +25,8 @@ To change the password later, open the account's **⋯** menu in the sidebar, ch
 
 Give Mitra the provider's CalDAV address, and it finds the calendars from there.
 
+If the address names a user, such as `https://<your-radicale>/<user>/`, Mitra lists that user's calendars instead of your own, as far as the server shares them with you. Connect each address separately.
+
 | Provider | Server URL |
 | --- | --- |
 | Nextcloud | `https://<your-nextcloud>/remote.php/dav` |

@@ -44,6 +44,12 @@ describe('GoogleCalendar', () => {
 		})
 	})
 
+	describe('calendarsAddress', () => {
+		it('leaves the account to discovery, its endpoint being fixed', () => {
+			assert.equal(account().calendarsAddress, undefined)
+		})
+	})
+
 	describe('syncInterval', () => {
 		it('polls more politely than the default cadence (Google quotas)', () => {
 			assert.ok(account().syncInterval >= 60_000)

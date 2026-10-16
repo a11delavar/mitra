@@ -25,6 +25,8 @@ Mitra 会导入你保留的日历，之后只要你开着 Mitra，就每 10 秒�
 
 把服务商的 CalDAV 地址告诉 Mitra，它会从那里找到所有日历。
 
+如果地址指向某个用户，例如 `https://<your-radicale>/<user>/`，Mitra 会列出该用户的日历，而不是你自己的日历，前提是服务器与你共享了这些日历。每个地址请分别连接。
+
 | 服务商 | 服务器 URL |
 | --- | --- |
 | Nextcloud | `https://<your-nextcloud>/remote.php/dav` |

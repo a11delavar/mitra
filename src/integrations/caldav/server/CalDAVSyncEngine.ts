@@ -44,11 +44,29 @@ export class CalDAVSyncEngine implements SyncEngine {
 		integration.addresses = emails.length ? [...new Set(emails)] : undefined
 	}
 
+	/** The calendar home an address names: a principal's home set, or the address itself when it holds calendars. tsdav's discovery always lands on the login's own principal. */
+	private async homeAt(client: Awaited<ReturnType<typeof createDAVClient>>, address: string): Promise<string | undefined> {
+		try {
+			const responses = await client.propfind({ url: address, props: { 'c:calendar-home-set': {}, 'd:resourcetype': {} }, depth: '1' })
+			const named = responses.find(r => CalDAV.isCollectionHref(address, r.href))?.props?.calendarHomeSet?.href
+			if (typeof named === 'string' && named) {
+				return new URL(named, address).href
+			}
+			return responses.some(r => 'calendar' in (r.props?.resourcetype ?? {})) ? address : undefined
+		} catch (error) {
+			logger.debug(`Reading ${address} as a calendar home failed (${error instanceof Error ? error.message : error}); listing the login's own calendars`)
+			return undefined
+		}
+	}
+
 	async fetchSources(base: Integration): Promise<Array<Source>> {
 		const integration = base as CalDAV
 		const client = await this.getClient(integration)
 		await this.discoverAddresses(integration)
+		const address = integration.calendarsAddress
+		const home = address ? await this.homeAt(client, address) : undefined
 		const calendars = await client.fetchCalendars({
+			...home ? { account: { accountType: 'caldav', serverUrl: home, homeUrl: home, rootUrl: home } } : {},
 			props: {
 				'c:calendar-description': {},
 				'c:calendar-timezone': {},

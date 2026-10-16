@@ -83,6 +83,11 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	/** Transient tsdav client connection instance. */
 	@converter({ out: {} }) client?: ReturnType<typeof createDAVClient>
 
+	/** The address whose calendars to list, as other clients read it; a bare host names no one, so discovery finds the login's own. */
+	get calendarsAddress(): string | undefined {
+		return URL.parse(this.uri ?? '')?.pathname.replace(/\/+$/, '') ? this.uri : undefined
+	}
+
 	get clientParameters(): Parameters<typeof createDAVClient>[0] {
 		return {
 			defaultAccountType: 'caldav',

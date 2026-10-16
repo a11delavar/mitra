@@ -25,6 +25,8 @@ Para cambiar la contraseña más adelante, abre el menú **⋯** de la cuenta en
 
 Dale a Mitra la dirección CalDAV del proveedor y él encuentra los calendarios a partir de ahí.
 
+Si la dirección nombra a un usuario, como `https://<your-radicale>/<user>/`, Mitra muestra los calendarios de ese usuario en lugar de los tuyos, en la medida en que el servidor los comparta contigo. Conecta cada dirección por separado.
+
 | Proveedor | URL del servidor |
 | --- | --- |
 | Nextcloud | `https://<your-nextcloud>/remote.php/dav` |

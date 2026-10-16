@@ -47,6 +47,9 @@ export class GoogleCalendar extends CalDAV {
 
 	override get syncInterval() { return 60_000 }
 
+	/** Its endpoint is fixed, and discovery finds the account. */
+	override get calendarsAddress() { return undefined }
+
 	override get clientParameters(): Parameters<typeof createDAVClient>[0] {
 		const clientId = process.env.MITRA_GOOGLE_CLIENT_ID
 		const clientSecret = process.env.MITRA_GOOGLE_CLIENT_SECRET
