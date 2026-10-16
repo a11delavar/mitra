@@ -1,6 +1,5 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdirSync } from 'node:fs'
 import type { AddressInfo } from 'node:net'
 import type { Server } from 'node:http'
 import express from 'express'
@@ -25,9 +24,6 @@ import { TimeZone } from '../../time/TimeZone.js'
 	All-day and timed entries between viewers in different zones, through the app's own API client, the real entry routes
 	and a database: what each viewer sees and what is stored, whichever way the dates cross the wire. A viewer is this
 	process's zone (`process.env.TZ`), which the browser's Intl and Date both follow.
-
-	The routes open the app's database module, so they are imported after its folder exists: under out_test, which every
-	run rebuilds, never the developer's data/.
 */
 
 const zones = { berlin: 'Europe/Berlin', newYork: 'America/New_York', tehran: 'Asia/Tehran', auckland: 'Pacific/Auckland' }
@@ -53,7 +49,6 @@ describe('Entries over the wire, between viewers in different zones', () => {
 	let closeOrm: () => Promise<void>
 
 	before(async () => {
-		mkdirSync(`${import.meta.dirname}/../../data`, { recursive: true })
 		const { orm } = await import('../../../infrastructure/database/orm.js')
 		await import('../../../integrations/server/registerEngines.js')
 		const { entriesRouter } = await import('./entries.js')

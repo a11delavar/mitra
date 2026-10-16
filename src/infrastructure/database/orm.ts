@@ -11,7 +11,8 @@ const dbLogger = createLogger('Database')
 
 /** The shared ORM instance, initialized once at startup. */
 export const orm = await MikroORM.init({
-	...ormConfig(`${import.meta.dirname}/../../data/database.sqlite`),
+	// `node --test` runs each test file in a process of its own (`NODE_TEST_CONTEXT`), which keeps a database of its own in memory.
+	...ormConfig(process.env.NODE_TEST_CONTEXT ? ':memory:' : `${import.meta.dirname}/../../data/database.sqlite`),
 	debug: logEnabled('trace'),
 	...(logEnabled('trace') ? { logger: (message: string) => dbLogger.verbose(message) } : {}),
 })
