@@ -136,6 +136,11 @@ export class Popover extends Component {
 		}
 	}
 
+	/** Resolves once it has finished coming or going. */
+	async settle() {
+		await Promise.allSettled(this.getAnimations().map(animation => animation.finished))
+	}
+
 	/** The element that opened it: its invoker, or the anchor it was shown at. */
 	protected opened(_source?: HTMLElement) { }
 
@@ -169,6 +174,30 @@ export class Popover extends Component {
 				position-area: block-end span-inline-end;
 				position-try-fallbacks: flip-block, flip-inline, --centered;
 				outline: none;
+			}
+
+			/* It slides out of its anchor across the gap its margin leaves, as 3MO's popover does: a position area
+			   counts only the margin facing the anchor, so a flipped one comes from the other side by itself and a
+			   centered one only fades. Contexts set the margin from outside, which only !important here outranks. */
+			@media (prefers-reduced-motion: no-preference) {
+				:host([popover]) {
+					transition: opacity 0.1s ease-in, margin 0.1s ease-in, display 0.1s allow-discrete, overlay 0.1s allow-discrete;
+				}
+
+				:host(:popover-open) {
+					transition-duration: 0.15s;
+					transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+
+					@starting-style {
+						opacity: 0;
+						margin: 0 !important;
+					}
+				}
+
+				:host([popover]:not(:popover-open)) {
+					opacity: 0;
+					margin: 0 !important;
+				}
 			}
 
 			/* A sheet's dialog carries the content; the host adds nothing where it stands. */
@@ -226,10 +255,20 @@ export class PopoverContainer extends Component {
 		}
 	}
 
+	// The popover hangs from a named anchor: the one its invoker gives it is taken away as it hides, while it still
+	// fades out. A shadow root's names are its own, so every container's trigger is its own popover's.
 	static override get styles() {
 		return css`
 			:host {
 				display: contents;
+			}
+
+			::slotted(:not([slot])) {
+				anchor-name: --mitra-popover-trigger;
+			}
+
+			::slotted([slot=popover]) {
+				position-anchor: --mitra-popover-trigger;
 			}
 		`
 	}

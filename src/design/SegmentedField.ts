@@ -147,8 +147,14 @@ export abstract class SegmentedField<T, TSegment> extends Control {
 				margin-inline-end: calc(-1 * var(--mitra-glyph-inset) + 0.125rem);
 			}
 
+			/* A named anchor rather than the one show() gives, which hiding takes away while the picker fades out. */
+			:host {
+				anchor-name: --mitra-segmented-field;
+			}
+
 			mitra-popover {
 				padding: 0.5rem;
+				position-anchor: --mitra-segmented-field;
 			}
 		`
 	}

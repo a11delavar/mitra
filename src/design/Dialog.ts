@@ -119,12 +119,40 @@ export class Dialog extends Component {
 					-webkit-app-region: no-drag;
 				}
 
+				/* Leaving plays the entrance back, quicker, while the top layer keeps it (overlay). */
 				@media (prefers-reduced-motion: no-preference) {
-					transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
+					transition: opacity 0.12s ease-in, transform 0.12s ease-in, display 0.12s allow-discrete, overlay 0.12s allow-discrete;
 
-					@starting-style {
+					&::backdrop {
+						transition: opacity 0.12s ease-in, display 0.12s allow-discrete, overlay 0.12s allow-discrete;
+					}
+
+					&:not([open]) {
 						opacity: 0;
-						transform: scale(0.95) translateY(8px);
+						transform: scale(0.97) translateY(4px);
+
+						&::backdrop {
+							opacity: 0;
+						}
+					}
+
+					&[open] {
+						transition-duration: 0.2s;
+						transition-timing-function: ease, cubic-bezier(0.2, 0.9, 0.3, 1);
+
+						@starting-style {
+							opacity: 0;
+							transform: scale(0.95) translateY(8px);
+						}
+
+						&::backdrop {
+							transition-duration: 0.2s;
+							transition-timing-function: ease;
+
+							@starting-style {
+								opacity: 0;
+							}
+						}
 					}
 				}
 			}
@@ -193,9 +221,9 @@ export class Dialog extends Component {
 						`}
 					</footer>
 				</div>
-				<!-- Dialogs go to the last top layer connected, so a closed standalone one (the editor's Repeat, its
-					reminders) must hold none: every dialog would land inside the editor, and go down with it. -->
-				${this.standalone && !this.open ? html.nothing : html`<lit-application-top-layer></lit-application-top-layer>`}
+				<!-- Dialogs go to the last top layer connected, so a closed one must hold none: one opened next would land
+					inside a standalone one (the editor's Repeat, its reminders) or one still fading out, and go down with it. -->
+				${!this.open ? html.nothing : html`<lit-application-top-layer></lit-application-top-layer>`}
 			</dialog>
 		`
 	}

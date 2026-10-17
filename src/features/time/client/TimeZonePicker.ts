@@ -64,9 +64,12 @@ export class TimeZonePicker extends Popover {
 				max-inline-size: calc(100dvw - 0.75rem);
 			}
 
+			:host {
+				flex-direction: column;
+			}
+
 			:host(:popover-open) {
 				display: flex;
-				flex-direction: column;
 			}
 
 			mitra-search-field {

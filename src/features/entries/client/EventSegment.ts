@@ -99,7 +99,8 @@ export class EntrySegmentComponent extends Component {
 		if (!entry) {
 			return
 		}
-		this.style.anchorName = this.anchorName
+		// Its own name for the connectors, and the one its editor hangs from (EventDetails).
+		this.style.anchorName = `${this.anchorName}, --mitra-entry-details`
 		this.toggleAttribute('data-draft', !entry.persisted)
 		this.toggleAttribute('data-routine', !!this.routine)
 		const recurring = this.segment!.occurrence.recurringEntry ?? entry

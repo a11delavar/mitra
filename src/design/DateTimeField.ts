@@ -80,12 +80,15 @@ export class DateTimeField extends DateField {
 			${super.styles}
 
 			/* Never narrower than both parts: short of room, it moves rather than squeezes the times. */
-			mitra-popover:popover-open {
-				display: grid;
+			mitra-popover {
 				grid-template-columns: auto auto;
 				column-gap: 0.5rem;
 				min-inline-size: max-content;
 				overflow: clip;
+
+				&:popover-open {
+					display: grid;
+				}
 			}
 
 			/* As tall as the month beside it however many times it holds, and out to the popover's edges, so that its

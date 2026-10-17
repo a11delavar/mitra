@@ -43,6 +43,12 @@ export class CommandPalette extends Component {
 		this.dialog.showModal()
 	}
 
+	// The list stays as it was while the palette fades away, and empties once it is gone.
+	private readonly handleClose = async () => {
+		await Promise.allSettled(this.dialog.getAnimations().map(animation => animation.finished))
+		this.open = this.dialog.open
+	}
+
 	/** P as in VS Code's Quick Open, K as most other palettes bind it; the shortcut sheet and the docs list both. */
 	private static readonly hotkeys = ['p', 'k']
 
@@ -123,12 +129,40 @@ export class CommandPalette extends Component {
 						background: rgba(0, 0, 0, 0.25);
 					}
 
+					/* Leaving plays the entrance back, quicker, while the top layer keeps it (overlay). */
 					@media (prefers-reduced-motion: no-preference) {
-						transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
+						transition: opacity 0.12s ease-in, transform 0.12s ease-in, display 0.12s allow-discrete, overlay 0.12s allow-discrete;
 
-						@starting-style {
+						&::backdrop {
+							transition: opacity 0.12s ease-in, display 0.12s allow-discrete, overlay 0.12s allow-discrete;
+						}
+
+						&:not([open]) {
 							opacity: 0;
-							transform: scale(0.97) translateY(-8px);
+							transform: scale(0.98) translateY(-4px);
+
+							&::backdrop {
+								opacity: 0;
+							}
+						}
+
+						&[open] {
+							transition-duration: 0.2s;
+							transition-timing-function: ease, cubic-bezier(0.2, 0.9, 0.3, 1);
+
+							@starting-style {
+								opacity: 0;
+								transform: scale(0.97) translateY(-8px);
+							}
+
+							&::backdrop {
+								transition-duration: 0.2s;
+								transition-timing-function: ease;
+
+								@starting-style {
+									opacity: 0;
+								}
+							}
 						}
 					}
 
@@ -257,7 +291,7 @@ export class CommandPalette extends Component {
 		const commands = this.matchingCommands
 		const entries = this.matchingEntries
 		return html`
-			<dialog closedby="any" @close=${() => this.open = false}>
+			<dialog closedby="any" @close=${this.handleClose}>
 				<mitra-combobox inline activateFirst @pick=${(e: CustomEvent<Command | EntryOccurrence>) => void this.select(e.detail)} @dismiss=${() => this.dialog.close()}>
 					<header slot="input">
 						<mitra-icon icon="search"></mitra-icon>

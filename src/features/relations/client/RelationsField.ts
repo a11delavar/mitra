@@ -292,10 +292,11 @@ export class RelationsField extends Component {
 					inline-size: 280px;
 					max-inline-size: calc(100dvw - 0.75rem);
 
+					flex-direction: column;
+					block-size: 180px;
+
 					&:popover-open {
 						display: flex;
-						flex-direction: column;
-						block-size: 180px;
 					}
 
 					mitra-search-field {

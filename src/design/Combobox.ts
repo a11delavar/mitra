@@ -166,10 +166,19 @@ export class Combobox<T = unknown> extends Component {
 		}
 	}
 
+	// A named anchor rather than the one show() gives, which hiding takes away while the listbox fades out.
 	static override get styles() {
 		return css`
 			:host {
 				display: contents;
+			}
+
+			::slotted([slot=input]) {
+				anchor-name: --mitra-combobox-input;
+			}
+
+			::slotted(mitra-listbox) {
+				position-anchor: --mitra-combobox-input;
 			}
 		`
 	}
@@ -220,10 +229,14 @@ export class Listbox extends Popover {
 				position-area: block-end span-inline-end;
 			}
 
-			:host(:popover-open), :host(:not([popover])) {
-				display: flex;
+			/* Laid out while closed too, so that it keeps its column as it fades away. */
+			:host {
 				flex-direction: column;
 				gap: 1px;
+			}
+
+			:host(:popover-open), :host(:not([popover])) {
+				display: flex;
 			}
 
 			:host(:not([popover])) {
@@ -241,13 +254,16 @@ export class Listbox extends Popover {
 			   subgrids; a component lists its own (--mitra-tree-columns) between the tick and the chevron. */
 			:host([data-tree]:popover-open), :host([data-tree]:not([popover])) {
 				display: grid;
+			}
+
+			:host([data-tree]) {
 				grid-template-columns: [tick] 1.5rem var(--mitra-tree-columns, [words] auto [detail] auto) [end] 1.5rem;
 				align-content: start;
 				row-gap: 1px;
 			}
 
 			/* A floating one is as wide as its widest row, so words never run under a detail: a flexible column would come out empty. */
-			:host([data-tree]:popover-open) {
+			:host([data-tree][popover]) {
 				inline-size: max-content;
 				max-inline-size: calc(100dvw - 1rem);
 			}

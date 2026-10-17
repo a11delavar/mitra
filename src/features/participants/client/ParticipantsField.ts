@@ -272,8 +272,12 @@ export class ParticipantsField extends Component {
 				}
 
 				/* Opens off its own button rather than beside the editor, as the rows' pickers do. */
+				> header mitra-popover-container > :not([slot]) {
+					anchor-name: --mitra-participants-menu;
+				}
+
 				> header mitra-menu[popover] {
-					position-anchor: auto;
+					position-anchor: --mitra-participants-menu;
 					position-area: block-end span-inline-start;
 					margin: 0.25rem 0;
 				}

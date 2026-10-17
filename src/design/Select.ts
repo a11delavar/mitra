@@ -131,7 +131,13 @@ export class Select<T = unknown> extends Control {
 				rotate: 180deg;
 			}
 
+			/* Its own anchor, as the button's reset takes away the one the combobox names. */
+			button {
+				anchor-name: --mitra-select;
+			}
+
 			mitra-listbox {
+				position-anchor: --mitra-select;
 				/* Every row leaves the selected one's tick its room, so the words stay in one column. */
 				--mitra-option-inset: 1.75rem;
 				min-inline-size: max(10rem, anchor-size(inline));

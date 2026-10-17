@@ -58,10 +58,14 @@ export class Menu extends Popover {
 				position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline, --centered;
 			}
 
-			:host(:popover-open) {
-				display: flex;
+			/* Laid out while closed too, so that it keeps its column as it fades away. */
+			:host {
 				flex-direction: column;
 				gap: 2px;
+			}
+
+			:host(:popover-open) {
+				display: flex;
 			}
 
 			::slotted(hr) {

@@ -522,7 +522,13 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 					}
 				}
 
+				/* A named anchor rather than the one show() gives, which hiding takes away while it fades out. */
+				main > header h1 {
+					anchor-name: --mitra-goto-date;
+				}
+
 				mitra-popover.goto-date {
+					position-anchor: --mitra-goto-date;
 					position-area: block-end span-inline-end;
 				}
 			}
