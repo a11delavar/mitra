@@ -155,6 +155,14 @@ export class Entry extends Entity implements Validatable<Calendar> {
 
 	get closed() { return !!this.status?.closed }
 
+	/** Drops what a calendar can't keep and is no refusal: the estimate, where none is held. */
+	fit(ownership: Pick<IntegrationOwnership, 'holds'>) {
+		if (!ownership.holds('estimate')) {
+			this.estimate = undefined
+		}
+		return this
+	}
+
 	/** Writes 100% progress on Done if the provider supports `percentComplete` (RFC 5545 §3.8.1.8). */
 	setStatus(status: TaskStatus, ownership: Pick<IntegrationOwnership, 'holds'>) {
 		this.status = status

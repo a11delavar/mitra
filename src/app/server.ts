@@ -1,8 +1,7 @@
-import express, { type ErrorRequestHandler } from 'express'
+import express from 'express'
 import path from 'path'
 import cors from 'cors'
 import '../integrations/server/registerEngines.js'
-import { NotFoundError } from '@mikro-orm/sqlite'
 import { ModelValueConstructor } from '@a11d/api-model-value-constructor'
 import { createLogger, logLevelName } from '../infrastructure/logging/Logger.js'
 import { orm } from '../infrastructure/database/orm.js'
@@ -10,17 +9,15 @@ import { isDemo } from '../infrastructure/environment.js'
 import { authMiddleware, authRouter, oidc } from '../features/identity/server/auth.js'
 import { synchronizer } from '../integrations/server/Synchronizer.js'
 import { eventsRouter } from '../infrastructure/realtime/events.js'
-import { entriesRouter } from '../features/entries/server/entries.js'
-import { integrationsRouter } from '../integrations/server/integrations.js'
+import { staleTabs } from '../features/entries/server/staleTabs.js'
+import { googleConnectRouter } from '../integrations/google/server/googleConnect.js'
 import { notionRouter } from '../integrations/notion/server/notion.js'
-import { sourcesRouter } from '../features/sources/server/sources.js'
-import { userRouter } from '../features/identity/server/user.js'
-import { locationsRouter } from '../features/locations/server/locations.js'
-import { pushRouter } from '../features/reminders/server/push.js'
+import { operationsRouter } from '../infrastructure/operations/Operation.js'
+import './operations.js'
 import { healthRouter } from '../infrastructure/http/health.js'
 import { compression, precompressed } from '../infrastructure/http/compression.js'
+import { errorHandler } from '../infrastructure/http/errorHandler.js'
 import { cacheControlOf } from '../infrastructure/http/caching.js'
-import { metaRouter } from '../features/about/server/meta.js'
 import { updateChecker } from '../features/about/server/updates.js'
 import { ReminderScheduler } from '../features/reminders/server/ReminderScheduler.js'
 import { UnusedFileDisposer } from '../features/files/server/UnusedFileDisposer.js'
@@ -83,14 +80,12 @@ app.use('/api/health', healthRouter)
 app.use(authMiddleware)
 
 app.use('/api/events', eventsRouter)
-app.use('/api/entries', entriesRouter)
-app.use('/api/integrations', integrationsRouter)
+app.use('/api/entries', staleTabs)
+app.use('/api/integrations/google', googleConnectRouter)
 app.use('/api/notion', notionRouter)
-app.use('/api/sources', sourcesRouter)
-app.use('/api/user', userRouter)
-app.use('/api/meta', metaRouter)
-app.use('/api/locations', locationsRouter)
-app.use('/api/push', pushRouter)
+// A calendar file arrives as itself, which `ImportIcs` and `PreviewIcsImport` read as the body.
+app.use('/api/sources', express.text({ type: 'text/calendar', limit: '25mb' }))
+app.use('/api', operationsRouter(() => orm.em.fork()))
 
 // Serve frontend SPA dist bundle.
 const frontendDistPath = path.resolve(import.meta.dirname, '../../dist')
@@ -99,24 +94,6 @@ app.use(express.static(frontendDistPath, { cacheControl: false, setHeaders: (res
 // The SPA fallback: any non-API path serves the shell, so deep links (/week?date=…) survive a reload.
 app.get(/(.*)/, (_, res) => res.sendFile('index.html', { root: frontendDistPath, headers: { 'Cache-Control': cacheControlOf('index.html') } }))
 
-/** Extracts HTTP error status (400-599) from Error object when present. */
-function httpStatusOf(error: unknown) {
-	const status = Number((error as { status?: unknown, statusCode?: unknown }).status ?? (error as { statusCode?: unknown }).statusCode)
-	return Number.isInteger(status) && status >= 400 && status <= 599 ? status : undefined
-}
-
-// Central error handler. Many errors at once arrive as one AggregateError, whose first answers for the status and the message.
-const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
-	const errors: Array<Error> | undefined = error instanceof AggregateError && error.errors.length ? error.errors : undefined
-	const first = errors?.[0] ?? error
-	const status = first instanceof NotFoundError ? 404 : (httpStatusOf(first) ?? 500)
-	if (status >= 500) {
-		logger.error(`${req.method} ${req.originalUrl} failed:`, error)
-	} else {
-		logger.debug(`${req.method} ${req.originalUrl} → ${status}: ${errors?.map(each => each.message).join('; ') ?? first.message}`)
-	}
-	res.status(status).json({ error: first.message, ...errors ? { errors } : {} })
-}
 app.use(errorHandler)
 
 app.listen(PORT, () => {

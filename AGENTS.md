@@ -119,6 +119,14 @@
 - `GET /entries` also carries undated entries and open tasks overdue before the window (`entries/server/entryWindow.ts`, shared by route and test), and every recurring entry once, its overrides nested (`Entry.overrides`); the browser expands them (§Recurrence & Routines).
 - Drawer tabs (`design/Tabs.ts`) always scroll LTR (panels reversed in RTL): Chromium misplaces a `view()` timeline in a scroller whose origin is its inline end.
 
+## Operations (`infrastructure/operations/`)
+- Every JSON endpoint is an operation: one class per file in its feature's `server/`, extending `Operation<Parameters, Result>`, whose `run({ em, user })` does the work and throws what it refuses. Nothing is injected: a calendar comes through the user (`user.calendar`), the emitter is a module, `this.logger` is tagged with the class name.
+- Facts are decorators: `@operation()` registers, `@label` and `@description` (`@a11d/metadata`) describe, `@http({ method, path, status })` routes and imposes `fromRequest` by its type. The base `fromRequest` merges the body, query and path, ISO dates as `DateTime`s; an operation whose body is a value of its own reads it itself.
+- `app/operations.ts` imports them in the order their routes match: a fixed path before a parameter in its place (`RankTasks` before `UpdateEntry`). They mount after the feature routers.
+- Refusals: `ValidationError` 400, `NotAllowed` 403, `NotFoundError` 404. Operations that share steps share an abstract operation (`ChangeTimeZones`). One changing the signed-in user copies the change onto `context.user`, which outlives the request.
+- Only what answers without JSON stays a router: redirects (OIDC, Google, Notion), the event stream, health, files.
+- Tests: one per operation beside it, through the API client on an `OperationServer` (`OperationServer.testing.ts`); viewers in other zones from `entries/server/viewers.testing.ts`.
+
 ## Calendar Views
 - **Weeks follow the locale** (`DateTime.weekStart`): every grid starts there, never at `dayOfWeek === 1`; a locale switch rebuilds the buffers.
 - Views: `mitra-days` (week), `mitra-weeks` (month), `mitra-months` (year), `mitra-timeline`, `mitra-table`.

@@ -4,6 +4,7 @@ import { model } from '../../infrastructure/model/model.js'
 import { entity, primaryKey, property, manyToOne, embedded, unique } from '../../infrastructure/model/orm.js'
 import { Identity, type IdentityClaims } from './Identity.js'
 import { Source } from '../sources/Source.js'
+import { type Calendar } from '../sources/Calendar.js'
 import { Integration } from '../../integrations/Integration.js'
 import { Entry } from '../entries/Entry.js'
 import { UserSettings } from '../settings/UserSettings.js'
@@ -97,6 +98,12 @@ export class User {
 		const source = await em.findOneOrFail(Source, { id })
 		await this.integration(em, source.integrationId)
 		return source
+	}
+
+	/** A calendar the user owns: the source and the integration keeping it. */
+	async calendar(em: EntityManager, sourceId: string): Promise<Calendar> {
+		const source = await this.source(em, sourceId)
+		return { source, integration: await this.integration(em, source.integrationId) }
 	}
 
 	async entry(em: EntityManager, id: string): Promise<Entry> {

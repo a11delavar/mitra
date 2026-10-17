@@ -47,8 +47,8 @@ describe('Integrations and calendars over the wire', () => {
 	before(async () => {
 		const { orm } = await import('../../infrastructure/database/orm.js')
 		await import('../../integrations/server/registerEngines.js')
-		const { integrationsRouter } = await import('../../integrations/server/integrations.js')
-		const { sourcesRouter } = await import('./server/sources.js')
+		const { operationsRouter } = await import('../../infrastructure/operations/Operation.js')
+		await import('../../app/operations.js')
 
 		const em = orm.em.fork()
 		owner = new User({ username: 'owner' })
@@ -79,8 +79,7 @@ describe('Integrations and calendars over the wire', () => {
 			next()
 		})
 		server.use(express.json({ reviver: (_key, value) => models.shallConstruct(value) ? models.construct(value) : value }))
-		server.use('/api/integrations', integrationsRouter)
-		server.use('/api/sources', sourcesRouter)
+		server.use('/api', operationsRouter(() => orm.em.fork()))
 		app = await new Promise<Server>(resolve => {
 			const listening = server.listen(0, () => resolve(listening))
 		})

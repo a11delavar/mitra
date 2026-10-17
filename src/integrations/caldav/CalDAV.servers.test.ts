@@ -66,8 +66,9 @@ describe('A CalDAV account as real servers answer it', () => {
 		process.env.TZ = 'Europe/Berlin'
 		const { orm } = await import('../../infrastructure/database/orm.ts')
 		await import('../server/registerEngines.ts')
-		const { integrationsRouter } = await import('../server/integrations.ts')
-		const { entriesRouter } = await import('../../features/entries/server/entries.ts')
+		const { staleTabs } = await import('../../features/entries/server/staleTabs.ts')
+		const { operationsRouter } = await import('../../infrastructure/operations/Operation.ts')
+		await import('../../app/operations.ts')
 		const { fileContentRouter, filesRouter } = await import('../../features/files/server/files.ts')
 		const { observeInstanceOrigin } = await import('../../infrastructure/http/instanceUrl.ts')
 
@@ -91,8 +92,8 @@ describe('A CalDAV account as real servers answer it', () => {
 		routes.use('/api/files', fileContentRouter([EntryFile]))
 		routes.use('/api/files', filesRouter)
 		routes.use(express.json({ reviver: (_key, value) => models.shallConstruct(value) ? models.construct(value) : value }))
-		routes.use('/api/integrations', integrationsRouter)
-		routes.use('/api/entries', entriesRouter)
+		routes.use('/api/entries', staleTabs)
+		routes.use('/api', operationsRouter(() => orm.em.fork()))
 		app = await new Promise<Server>(resolve => {
 			const listening = routes.listen(0, () => resolve(listening))
 		})

@@ -1,6 +1,7 @@
 import { DateTimeRange } from '@3mo/date-time'
 import { type EntityManager } from '@mikro-orm/core'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
+import { ValidationError } from '../../../infrastructure/validation/ValidationError.js'
 import { Integration } from '../../../integrations/Integration.js'
 import { type User } from '../../identity/User.js'
 import { Entry } from '../../entries/Entry.js'
@@ -14,7 +15,7 @@ const logger = createLogger('Migration')
 const FLATTEN_HORIZON_DAYS = 366
 
 /** Migration request cannot be fulfilled (e.g. invalid target or origin). */
-export class MigrationRefused extends Error { }
+export class MigrationRefused extends ValidationError { }
 
 /** Moves or copies entries in three phases: copy into the target, repoint `EntryRelation.targetUid`, delete the originals. */
 export interface MigrationOptions {
