@@ -1,11 +1,13 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { EntryRelations } from './EntryRelations.js'
-import { Relation } from './Relation.js'
+import { Relation, type RelationInit } from './Relation.js'
 import { RelationSection, RelationType } from './RelationType.js'
+import { Entry } from '../entries/Entry.js'
+import { EntryType } from '../entries/EntryType.js'
 
 describe('EntryRelations', () => {
-	const readings = (bag: EntryRelations) => bag.sections('self').map(({ section, lines }) => [section.value, ...lines.map(line => `${line.direction} ${line.otherUid}`)])
+	const readings = (bag: EntryRelations) => bag.sections('self').map(({ section, relations }) => [section.value, ...relations.map(relation => `${relation.direction} ${relation.targetUid}`)])
 
 	describe('sections', () => {
 		it('reads all four states of a hierarchy pair, whichever side authored it', () => {
@@ -26,7 +28,7 @@ describe('EntryRelations', () => {
 			const bag = EntryRelations.of([{ type: RelationType.Parent, targetUid: 'p' }, { type: RelationType.Child, targetUid: 'p', direction: 'incoming' as const }])
 			assert.deepEqual(readings(bag), [['subtask-of', 'outgoing p']])
 			// The survivor is the pointer WE own, so removing it edits this entry.
-			assert.equal(bag.lines('self')[0]!.ownerUid, undefined)
+			assert.equal(bag.shown('self')[0]!.isOutgoing, true)
 		})
 
 		it('keeps a genuine second line over the same pair: a hierarchy edge and a dependency are not echoes', () => {
@@ -60,11 +62,39 @@ describe('EntryRelations', () => {
 		})
 	})
 
-	describe('ownerUid', () => {
-		it('is none for our own row and the other entry for a derived one', () => {
+	describe('the entries at the other ends', () => {
+		const entry = (uid: string, relations: Array<RelationInit> = []) => {
+			const created = new Entry({ id: uid, sourceId: 's', uid, type: EntryType.Task, heading: uid })
+			created.relations = EntryRelations.of(relations)
+			return created
+		}
+
+		it('links each reached entry once, inside the line that first reaches it, and never one it was asked for', () => {
+			const asked = entry('asked', [{ type: RelationType.Parent, targetUid: 'parent' }])
+			const parent = entry('parent', [{ type: RelationType.Parent, targetUid: 'asked', direction: 'incoming' as const }, { type: RelationType.Parent, targetUid: 'sibling', direction: 'incoming' as const }])
+			const sibling = entry('sibling', [{ type: RelationType.Parent, targetUid: 'parent' }])
+			const byUid = new Map([asked, parent, sibling].map(each => [each.uid, each]))
+			EntryRelations.link([asked], uid => byUid.get(uid))
+
+			assert.equal(asked.relations!.all[0]!.target, parent)
+			assert.deepEqual(parent.relations!.all.map(relation => relation.target?.uid), [undefined, 'sibling'])
+			assert.equal(sibling.relations!.all[0]!.target, undefined)
+			// So the read serializes, its graph a tree.
+			assert.ok(JSON.stringify(asked).includes('"heading":"sibling"'))
+		})
+
+		it('compares and keys a line without its target, which only a read carries', () => {
+			const bare = EntryRelations.of([{ type: RelationType.Parent, targetUid: 'p' }])
+			const linked = bare.targeting(() => entry('p'))
+			assert.equal(linked.all[0]!.target?.uid, 'p')
+			assert.ok(linked.equals(bare))
+		})
+
+		it('writes the owned lines alone, without the entries a read linked in', () => {
 			const bag = EntryRelations.of([{ type: RelationType.Parent, targetUid: 'p' }, { type: RelationType.FinishToStart, targetUid: 'd', direction: 'incoming' as const }])
-			assert.equal(bag.lines('self').find(line => line.direction === 'outgoing')!.ownerUid, undefined)
-			assert.equal(bag.lines('self').find(line => line.direction === 'incoming')!.ownerUid, 'd')
+				.targeting(relation => entry(relation.targetUid))
+			const written = JSON.parse(JSON.stringify(EntryRelations.writeConverter.deconstruct!(bag, {}))) as Array<Record<string, unknown>>
+			assert.deepEqual(written.map(relation => [relation.type, relation.targetUid, relation.direction, relation.target]), [['PARENT', 'p', 'outgoing', undefined]])
 		})
 	})
 
@@ -97,7 +127,7 @@ describe('EntryRelations', () => {
 			const grown = bag.adding(RelationType.FinishToStart, 'p', 'self')
 			assert.equal(bag.writes.length, 0)
 			assert.deepEqual(grown.writes.map(relation => relation.targetUid), ['p'])
-			assert.equal(grown.lines('self').filter(line => line.direction === 'incoming').length, 1)
+			assert.equal(grown.shown('self').filter(relation => !relation.isOutgoing).length, 1)
 		})
 
 		it('ignores a self-reference, which states nothing', () => {

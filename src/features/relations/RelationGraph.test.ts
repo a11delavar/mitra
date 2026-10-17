@@ -17,6 +17,26 @@ describe('RelationGraph', () => {
 	}
 	const uids = (entries: Array<Entry>) => entries.map(found => found.uid).sort()
 
+	describe('connectedTo', () => {
+		it('reaches every entry a chain of edges joins, whichever way each points, and nothing apart from them', () => {
+			const graph = RelationGraph.of([
+				entry('grandchild', [{ type: RelationType.Parent, targetUid: 'child' }]),
+				entry('child', [{ type: RelationType.Parent, targetUid: 'parent' }]),
+				entry('sibling', [{ type: RelationType.Parent, targetUid: 'parent' }]),
+				entry('parent'),
+				entry('blocked', [{ type: RelationType.FinishToStart, targetUid: 'sibling' }]),
+				entry('apart', [{ type: RelationType.Parent, targetUid: 'elsewhere' }]),
+				entry('elsewhere'),
+			])
+			assert.deepEqual(uids(graph.connectedTo(['grandchild'])), ['blocked', 'child', 'grandchild', 'parent', 'sibling'])
+		})
+
+		it('ends on a cycle', () => {
+			const graph = RelationGraph.of([entry('a', [{ type: RelationType.Child, targetUid: 'b' }]), entry('b', [{ type: RelationType.Child, targetUid: 'a' }])])
+			assert.deepEqual(uids(graph.connectedTo(['a'])), ['a', 'b'])
+		})
+	})
+
 	describe('edges', () => {
 		it('is ONE edge when a pair is authored from both sides', () => {
 			const graph = RelationGraph.of([

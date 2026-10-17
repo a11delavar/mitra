@@ -12,7 +12,7 @@ import { ValidationError } from '../../../infrastructure/validation/ValidationEr
 import { EntryRelations } from '../../relations/EntryRelations.js'
 import { TaskStatus } from '../TaskStatus.js'
 import { entrySearch, entryWindow, everyEntry, recurringEntries, withOverrides } from './entryWindow.js'
-import { assertRelationsValid, attachRelations, relationClosure } from '../../relations/server/relations.js'
+import { assertRelationsValid, attachRelations } from '../../relations/server/relations.js'
 import { EntryRank } from '../EntryRank.js'
 import { type EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
 
@@ -75,12 +75,6 @@ entriesRouter.get('/search', async (req, res) => {
 	return res.json(entries)
 })
 
-entriesRouter.get('/relations/closure', async (req, res) => {
-	const em = orm.em.fork()
-	const entries = await relationClosure(em, req.user)
-	return res.json(entries.map(entry => entry))
-})
-
 /** Stores where the client placed tasks in the manual order, as their ranks keyed by entry id. */
 entriesRouter.put('/ranks', async (req, res) => {
 	const keys = Object.entries((req.body ?? {}) as Record<string, unknown>)
@@ -136,6 +130,7 @@ entriesRouter.post('/', async (req, res) => {
 	const created = await to.integration.createEntry(em, incoming)
 	await EntryRelation.reconcile(em, created.id!, created.relations ?? EntryRelations.none)
 	await em.flush()
+	await attachRelations(em, req.user, [created])
 	syncEmitter.emit('updated', req.user.id)
 	logger.debug(`Created ${created.type} "${created.heading}" (${created.id}) in source ${source.id}`)
 	return res.status(201).json(created)
@@ -213,9 +208,10 @@ entriesRouter.put('/:id', async (req, res) => {
 		await EntryRelation.reconcile(em, saved.id!, saved.relations ?? EntryRelations.none)
 	} else if (relations !== undefined) {
 		await EntryRelation.reconcile(em, saved.id!, relations)
-		saved.relations = relations
 	}
 	await em.flush()
+	// Read back as any read answers it, so the browser keeps the entries it reaches until its next fetch.
+	await attachRelations(em, req.user, [saved])
 	syncEmitter.emit('updated', req.user.id)
 	logger.debug(recreated ? `Re-created entry ${existing.id} as ${saved.type} in source ${targetSource.id} (new id ${saved.id})` : `Updated entry ${existing.id} "${saved.heading}"`)
 	return res.json(saved)

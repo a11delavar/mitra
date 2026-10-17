@@ -4,7 +4,7 @@ import { type DateTimeRange } from '@3mo/date-time'
 import { type User } from '../../features/identity/User.js'
 import { type Source } from '../../features/sources/Source.js'
 import { type MigrationOutcome, type MigrationPlan } from '../../features/migration/MigrationPlan.js'
-import { type EntryRelations } from '../../features/relations/EntryRelations.js'
+import { EntryRelations } from '../../features/relations/EntryRelations.js'
 import { Integration } from '../../integrations/Integration.js'
 import { type EntryType } from '../../features/entries/EntryType.js'
 import { Entry } from '../../features/entries/Entry.js'
@@ -152,11 +152,6 @@ export function searchEntries(query: string) {
 	return Api.get<Array<Entry>>(`/entries/search?q=${encodeURIComponent(query)}`)
 }
 
-/** Every entry the user's relation graph reaches, for client-side graph calculations. */
-export function getRelationClosure() {
-	return Api.get<Array<Entry>>('/entries/relations/closure')
-}
-
 /** Stores tasks' places in the manual order, as rank keys by entry id. */
 export function rankEntries(ranks: Record<string, string>) {
 	return Api.put<void>('/entries/ranks', ranks)
@@ -164,7 +159,7 @@ export function rankEntries(ranks: Record<string, string>) {
 
 /** Writes the relations an entry owns: what it reads back from others is theirs. */
 export function updateRelations(id: string, relations: EntryRelations) {
-	return Api.put<Entry>(`/entries/${id}`, { relations: relations.writes })
+	return Api.put<Entry>(`/entries/${id}`, { relations: EntryRelations.writeConverter.deconstruct!(relations, {}) })
 }
 
 export function createEvent(entry: Entry) {

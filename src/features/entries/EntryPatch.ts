@@ -87,7 +87,7 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 	@converter({ construct: (value: Partial<Recurrence> | null | undefined) => value === null ? value : Recurrence.from(value) }) recurrence?: Recurrence | null
 	reminders?: Array<number> | null
 	@converter({ construct: (value: ReadonlyArray<Partial<Participant>> | null | undefined) => value === undefined ? value : Participants.normalize(value) }) participants?: Array<Participant> | null
-	@converter({ construct: EntryRelations.parse, deconstruct: EntryRelations.converter.deconstruct }) relations?: EntryRelations
+	@converter(EntryRelations.writeConverter) relations?: EntryRelations
 
 	/** What makes the patch invalid: a field that came malformed, and with a context what the edit may not do there. */
 	*validate(context?: EntryPatchContext) {

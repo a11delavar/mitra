@@ -10,10 +10,12 @@ const MAX_DEPTH = 50
 export class RelationGraph {
 	static readonly empty = new RelationGraph([])
 
-	/** Builds the graph over entries. `relationsOf` allows passing relation rows directly (e.g. on the
-	 * server to omit rows being replaced during cycle validation). */
+	/** Builds the graph over entries and the ones their relations hold at the other ends, however deep. `relationsOf` allows
+	 * passing relation rows directly (e.g. on the server to omit rows being replaced during cycle validation). */
 	static of(entries: Iterable<Entry>, relationsOf: (entry: Entry) => EntryRelations | undefined = entry => entry.relations): RelationGraph {
-		const identified = [...entries].filter(entry => !!entry.uid)
+		// A read nests the targets as a tree, so the descent ends.
+		const withTargets = (entry: Entry): Array<Entry> => [entry, ...(relationsOf(entry)?.all ?? []).flatMap(relation => relation.target ? withTargets(relation.target) : [])]
+		const identified = [...new Set([...entries].flatMap(withTargets))].filter(entry => !!entry.uid)
 		const masters = new Set(identified.filter(entry => !entry.recurrenceId).map(entry => entry.uid!))
 		return new RelationGraph(identified.filter(entry => !entry.recurrenceId || !masters.has(entry.uid!)), relationsOf)
 	}
@@ -74,6 +76,18 @@ export class RelationGraph {
 	downstreamOf(uid: string) { return this.resolve(this.walk(this.step(uid, 'dependency', 'down'), 'dependency', 'down', uid)) }
 	/** Everything this entry waits for, transitively. */
 	upstreamOf(uid: string) { return this.resolve(this.walk(this.step(uid, 'dependency', 'up'), 'dependency', 'up', uid)) }
+
+	/** The entries joined to `uids` by any chain of edges, whichever way each points, theirs included. */
+	connectedTo(uids: Iterable<string>): Array<Entry> {
+		const reach = (frontier: ReadonlyArray<string>, visited: ReadonlySet<string>): ReadonlySet<string> => {
+			const fresh = [...new Set(frontier)].filter(uid => !visited.has(uid))
+			return !fresh.length ? visited : reach(
+				fresh.flatMap(uid => [...this.edgesFrom(uid).map(edge => edge.to), ...this.edgesTo(uid).map(edge => edge.from)]),
+				new Set([...visited, ...fresh]),
+			)
+		}
+		return this.resolve([...reach([...uids], new Set())])
+	}
 
 	/** Checks if walking upwards from candidate seeds reaches target, detecting directed cycles. */
 	reaches(family: 'hierarchy' | 'dependency', seeds: Iterable<string>, target: string): boolean {

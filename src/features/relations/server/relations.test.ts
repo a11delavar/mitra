@@ -18,7 +18,7 @@ import { AppleCalendar } from '../../../integrations/apple/AppleCalendar.js'
 import { MitraCalendar } from '../../../integrations/mitra/MitraCalendar.js'
 import { NotificationSubscription } from '../../reminders/NotificationSubscription.js'
 import { Session } from '../../identity/server/Session.js'
-import { assertRelationsValid, relationClosure } from './relations.js'
+import { assertRelationsValid, attachRelations } from './relations.js'
 
 // Tests derivation of hierarchy rollups and graph cycle handling.
 
@@ -73,8 +73,15 @@ describe('hierarchy rollup', () => {
 		return entry
 	}
 
-	/** Builds RelationGraph from relationClosure response. */
-	const closureGraph = async () => RelationGraph.of(await relationClosure(em, user))
+	/** What a read serves for the entries `uids` name (the parent alone, unless named), the rest linked into them. */
+	const served = async (...uids: Array<string>) => {
+		const entries = await em.find(Entry, { uid: { $in: uids.length ? uids : ['parent'] } })
+		await attachRelations(em, user, entries)
+		return entries
+	}
+
+	/** The graph the browser builds from a read. */
+	const closureGraph = async (...uids: Array<string>) => RelationGraph.of(await served(...uids))
 
 	async function relate(owner: Entry, type: RelationType, targetUid: string) {
 		em.persist(new EntryRelation({ entryId: owner.id!, type, targetUid }))
@@ -180,7 +187,7 @@ describe('hierarchy rollup', () => {
 		await relate(first, RelationType.Child, 'b')
 		await relate(second, RelationType.Child, 'a')
 
-		const graph = await closureGraph()
+		const graph = await closureGraph('a')
 		assert.equal(graph.rollupOf('a')?.descendants, 1)
 		assert.equal(graph.rollupOf('b')?.descendants, 1)
 	})
@@ -208,13 +215,13 @@ describe('hierarchy rollup', () => {
 		assert.equal(graph.rollupOf('parent'), undefined)
 	})
 
-	describe('the closure as a graph', () => {
+	describe('what a read links in', () => {
 		it('answers the direct parents, with their own rollups', async () => {
 			await task('parent')
 			const child = await task('a', TaskStatus.Done)
 			await relate(child, RelationType.Parent, 'parent')
 
-			const graph = await closureGraph()
+			const graph = await closureGraph('a')
 			assert.deepEqual(graph.parentsOf('a').map(found => found.uid), ['parent'])
 			assert.deepEqual(graph.rollupOf('parent'), { done: 1, total: 1, progress: 1, subtasks: { done: 1, total: 1 }, checklist: { done: 0, total: 0 }, children: 1, descendants: 1 })
 		})
@@ -231,13 +238,22 @@ describe('hierarchy rollup', () => {
 			assert.deepEqual(graph.parentsOf('parent'), [])
 		})
 
-		it('names only the entries the graph mentions: an unrelated entry is not in it', async () => {
+		it('reaches however far and whichever way the relations point, and nothing apart from them', async () => {
 			await task('parent')
 			const child = await task('a')
+			const grandchild = await task('b')
+			const sibling = await task('c')
+			const blocked = await task('d')
 			await relate(child, RelationType.Parent, 'parent')
+			await relate(grandchild, RelationType.Parent, 'a')
+			await relate(sibling, RelationType.Parent, 'parent')
+			await relate(blocked, RelationType.FinishToStart, 'c')
 			await task('unrelated')
+			const apart = await task('apart')
+			await task('elsewhere')
+			await relate(apart, RelationType.Parent, 'elsewhere')
 
-			assert.deepEqual((await relationClosure(em, user)).map(found => found.uid).sort(), ['a', 'parent'])
+			assert.deepEqual((await closureGraph('b')).entries.map(found => found.uid).sort(), ['a', 'b', 'c', 'd', 'parent'])
 		})
 
 		it('holds only the user\'s own links: another user linking to a uid they share brings no entry of theirs in', async () => {
@@ -249,7 +265,7 @@ describe('hierarchy rollup', () => {
 			em.persist([other, theirs, theirSource, theirTask, new EntryRelation({ entryId: theirTask.id!, type: RelationType.Parent, targetUid: 'shared' })])
 			await em.flush()
 
-			assert.deepEqual(await relationClosure(em, user), [])
+			assert.deepEqual((await closureGraph('shared')).entries.map(found => found.uid), ['shared'])
 		})
 
 		it('carries BOTH directions on every entry it serves, so the editor needs no second request', async () => {
@@ -257,9 +273,10 @@ describe('hierarchy rollup', () => {
 			const child = await task('a')
 			await relate(child, RelationType.Parent, 'parent')
 
-			const closure = await relationClosure(em, user)
-			const served = closure.find(found => found.uid === 'parent')!
-			assert.deepEqual(served.relations?.all.map(relation => [relation.direction, relation.type.value, relation.targetUid]), [['incoming', 'PARENT', 'a']])
+			const [read] = await served('a')
+			const parent = read!.relations!.all[0]!.target!
+			assert.equal(parent.uid, 'parent')
+			assert.deepEqual(parent.relations?.all.map(relation => [relation.direction, relation.type.value, relation.targetUid]), [['incoming', 'PARENT', 'a']])
 		})
 	})
 

@@ -2,7 +2,7 @@ import { Component, component, html, css, property, state } from '@a11d/lit'
 import { RelationType, RelationSection } from '../RelationType.js'
 import { type Relation } from '../Relation.js'
 import { EntryType } from '../../entries/EntryType.js'
-import { EntryRelations, type RelationLine } from '../EntryRelations.js'
+import { EntryRelations } from '../EntryRelations.js'
 import { type Entry } from '../../entries/Entry.js'
 import { searchEntries, updateRelations } from '../../../infrastructure/http/Api.js'
 import { Calendars } from '../../sources/client/Calendars.js'
@@ -23,9 +23,6 @@ interface Line {
 	readonly heading?: string
 	/** This line's dependency is already broken by the two entries' times (see {@link Entry.violates}). */
 	readonly violated?: boolean
-	/** The resolver hasn't answered yet, unlike a dangling pointer, which has no heading for good.
-	 * Without it every editor open would flash "Unknown entry" over valid links. */
-	readonly pending?: boolean
 	readonly remove: () => void
 }
 
@@ -77,7 +74,7 @@ export class RelationsField extends Component {
 
 	/** Renders sections for display, including empty authorable sections supported by the source provider. */
 	private get sections(): Array<{ section: RelationSection, lines: Array<Line>, addType?: RelationType }> {
-		const bySection = new Map(this.relations.sections(this.entry.uid).map(({ section, lines }) => [section, lines.map(line => this.lineOf(line))]))
+		const bySection = new Map(this.relations.sections(this.entry.uid).map(({ section, relations }) => [section, relations.map(relation => this.lineOf(relation))]))
 		// Providers without native link storage omit authoring actions, but incoming links remain visible.
 		const authorable = Calendars.ownershipOf(this.entry.sourceId).holds('relations') ? AUTHORABLE_BY_SECTION : new Map<RelationSection, RelationType>()
 		return [...new Set([...bySection.keys(), ...authorable.keys()])]
@@ -85,19 +82,18 @@ export class RelationsField extends Component {
 			.map(section => ({ section, lines: bySection.get(section) ?? [], addType: authorable.get(section) }))
 	}
 
-	private lineOf(line: RelationLine): Line {
-		const other = this.entryOf(line.otherUid)
-		const from = line.edge && this.entryOf(line.edge.from)
-		const to = line.edge && this.entryOf(line.edge.to)
+	private lineOf(relation: Relation): Line {
+		const other = this.entryOf(relation.targetUid)
+		const edge = relation.edgeOf(this.entry.uid)
+		const from = edge && this.entryOf(edge.from)
+		const to = edge && this.entryOf(edge.to)
 		return {
 			target: other,
 			heading: other?.heading,
-			// Shows pending placeholder until relation closure lands to distinguish unloaded from dangling links.
-			pending: !Relations.loaded,
-			violated: !!line.edge && !!from && !!to && line.edge.violatedBy(from, to),
-			remove: line.direction === 'outgoing'
-				? () => this.removeOutgoing(line.relation)
-				: () => { this.removeIncoming(line).catch(() => void 0) },
+			violated: !!edge && !!from && !!to && edge.violatedBy(from, to),
+			remove: relation.isOutgoing
+				? () => this.removeOutgoing(relation)
+				: () => { this.removeIncoming(relation).catch(() => void 0) },
 		}
 	}
 
@@ -113,13 +109,14 @@ export class RelationsField extends Component {
 		this.commit(() => this.entry.unrelate(relation))
 	}
 
-	private async removeIncoming(line: RelationLine) {
-		const owner = Relations.entryOf(line.ownerUid)
+	/** An incoming relation is the other entry's row, so removing it edits that entry. */
+	private async removeIncoming(incoming: Relation) {
+		const owner = Relations.entryOf(incoming.targetUid)
 		if (!owner?.id || !this.entry.uid) {
 			return
 		}
 		this.error = undefined
-		const remaining = EntryRelations.of((owner.relations?.writes ?? []).filter(relation => !(RelationType.of(relation.type) === line.type && relation.targetUid === this.entry.uid)))
+		const remaining = EntryRelations.of((owner.relations?.writes ?? []).filter(relation => !(relation.type === incoming.type && relation.targetUid === this.entry.uid)))
 		try {
 			EntryStore.adoptRelations(await updateRelations(owner.id, remaining))
 		} catch (error) {
@@ -389,7 +386,7 @@ export class RelationsField extends Component {
 						<span class="relation" ?data-violated=${line.violated}>
 							${line.target
 								? html`<mitra-entry-link .entry=${line.target}></mitra-entry-link>`
-								: html`<span class="heading unresolved">${line.pending ? '…' : t('Unknown entry')}</span>`}
+								: html`<span class="heading unresolved">${t('Unknown entry')}</span>`}
 							<mitra-icon-button size="small" icon="x" label=${t('Remove relationship')}
 								@click=${() => line.remove()}
 							></mitra-icon-button>

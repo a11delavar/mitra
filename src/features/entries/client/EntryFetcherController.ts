@@ -4,7 +4,6 @@ import { Task } from '@lit/task'
 import { fetchAllEntries, fetchEvents } from '../../../infrastructure/http/Api.js'
 import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryStore } from './EntryStore.js'
-import { Relations } from '../../relations/client/Relations.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 import { TableWindow } from '../../calendar/client/TableWindow.js'
 import type { PageCalendar } from '../../calendar/client/PageCalendar.js'
@@ -41,7 +40,6 @@ export class EntryFetcherController extends Controller {
 			this.lastContact = Date.now()
 			EntryStore.applyServerEntries(entries, window)
 			EntryEditorIntent.settle(EntryStore.occurrences)
-			void Relations.refresh().catch(() => void 0)
 		},
 	})
 

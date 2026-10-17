@@ -3,38 +3,25 @@ import { RelationGraph } from '../RelationGraph.js'
 import { type EntryPlan } from '../EntryPlan.js'
 import { type EntryShift } from '../../entries/EntryShift.js'
 import { type Entry, type EntryRollup } from '../../entries/Entry.js'
-import { getRelationClosure } from '../../../infrastructure/http/Api.js'
 import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryStore } from '../../entries/client/EntryStore.js'
 
 /**
- * Client-side relationship manager. Combines window-independent relation closure entries with
- * the live EntryStore to provide reactive graph queries and rollups.
+ * Client-side relationship manager: graph queries and rollups over the live EntryStore, whose entries' relations hold
+ * the entries they reach beyond it.
  */
 export class Relations {
-	private static closure: ReadonlyArray<Entry> = []
 	private static cached?: RelationGraph
 	/** Tracked entries reference used to invalidate cached RelationGraph on store notifications. */
 	private static cachedFor?: ReadonlyArray<Entry>
 
-	/** Indicates whether relation closure has loaded at least once to distinguish pending data from dangling links. */
-	static loaded = false
-
 	static get graph(): RelationGraph {
 		const entries = EntryStore.entries
 		if (!this.cached || this.cachedFor !== entries) {
-			this.cached = RelationGraph.of([...entries, ...this.closure])
+			this.cached = RelationGraph.of(entries)
 			this.cachedFor = entries
 		}
 		return this.cached
-	}
-
-	/** Refetches the relation closure on server update notifications. */
-	static async refresh(): Promise<void> {
-		this.closure = await getRelationClosure()
-		this.loaded = true
-		this.cached = undefined
-		EntryStore.notify()
 	}
 
 	static entryOf(uid: string | undefined) {

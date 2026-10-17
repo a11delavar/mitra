@@ -1,22 +1,13 @@
 import { type Converter } from '@a11d/converter'
-import { Relation, type RelationDirection, type RelationInit } from './Relation.js'
-import { RelationEdge } from './RelationEdge.js'
+import { Relation, type RelationInit } from './Relation.js'
+import { type RelationEdge } from './RelationEdge.js'
 import { type RelationSection, RelationType } from './RelationType.js'
-
-/** A stored {@link Relation} with derived presentation fields; `direction` picks its section and which entry owns the row. */
-export interface RelationLine {
-	readonly relation: Relation
-	readonly direction: RelationDirection
-	readonly type: RelationType
-	readonly section: RelationSection
-	readonly otherUid: string
-	readonly ownerUid?: string
-	readonly edge?: RelationEdge
-}
+import type { Entry } from '../entries/Entry.js'
 
 /**
- * An entry's relations, owned and derived; an entry holding none (`undefined`) does not know them. Views take the
- * entry's uid when asked, as it can change after its relations arrive.
+ * An entry's relations, owned and derived, each holding the entry at its other end where a read linked it; an entry
+ * holding none (`undefined`) does not know them. Views take the entry's uid when asked, as it can change after its
+ * relations arrive.
  */
 export class EntryRelations {
 	static readonly none = new EntryRelations([])
@@ -37,10 +28,32 @@ export class EntryRelations {
 		return new EntryRelations([...byKey.values()].sort((a, b) => rank(a).localeCompare(rank(b))))
 	}
 
-	/** An array on the wire; absent stays absent, as it means unknown. */
+	/** An array on the wire, the entries at the other ends inside it; absent stays absent, as it means unknown. */
 	static readonly converter: Converter<Array<RelationInit> | null | undefined, EntryRelations | undefined> = {
 		construct: value => value === undefined ? undefined : EntryRelations.of(value ?? []),
 		deconstruct: relations => relations?.all as Array<RelationInit> | undefined,
+	}
+
+	/** What a write sends and reads: the owned lines alone, without the entries a read linked into them. */
+	static readonly writeConverter: Converter<Array<RelationInit> | null | undefined, EntryRelations | undefined> = {
+		construct: value => EntryRelations.parse(value),
+		deconstruct: relations => relations?.writes.map(relation => relation.targeting(undefined)),
+	}
+
+	/**
+	 * Links into the relations of `entries` the entries at their other ends, and on from those, however far: each entry
+	 * once, inside the line that first reaches it, and none of `entries` themselves, so a read carries its graph without a
+	 * cycle. Lines to an entry already placed name it by uid alone.
+	 */
+	static link(entries: ReadonlyArray<Entry>, entryOf: (uid: string) => Entry | undefined, placed: ReadonlySet<string | undefined> = new Set(entries.map(entry => entry.uid))): void {
+		const reaching = entries.flatMap(entry => entry.relations?.all ?? []).filter(relation => !placed.has(relation.targetUid))
+		// Reversed, so the first line reaching an entry is the one the map keeps.
+		const holders = new Map(reaching.toReversed().map(relation => [relation.targetUid, relation]))
+		const targets = new Map([...holders.keys()].map(uid => [uid, entryOf(uid)] as const).filter((pair): pair is readonly [string, Entry] => !!pair[1]))
+		entries.forEach(entry => entry.relations = entry.relations?.targeting(relation => holders.get(relation.targetUid) === relation ? targets.get(relation.targetUid) : undefined))
+		if (targets.size) {
+			EntryRelations.link([...targets.values()], entryOf, new Set([...placed, ...targets.keys()]))
+		}
 	}
 
 	/** A request's relations: `null` clears them, and only owned ones are kept, so a client echoing what it read cannot
@@ -67,7 +80,7 @@ export class EntryRelations {
 		return value.every(usable) ? EntryRelations.of(value).owned : EntryRelations.invalid
 	}
 
-	private viewed?: { readonly uid: string | undefined, readonly lines: ReadonlyArray<RelationLine> }
+	private viewed?: { readonly uid: string | undefined, readonly shown: ReadonlyArray<Relation> }
 
 	private constructor(readonly all: ReadonlyArray<Relation>) { }
 
@@ -98,66 +111,42 @@ export class EntryRelations {
 		return a.length === b.length && a.every((relation, index) => relation.equals(b[index]))
 	}
 
-	/** The lines as the entry `selfUid` sees them: a relation authored at both ends shows once, as its own. */
-	lines(selfUid: string | undefined): ReadonlyArray<RelationLine> {
+	/** The relations as the entry `selfUid` shows them: one authored at both ends shows once, as its own. */
+	shown(selfUid: string | undefined): ReadonlyArray<Relation> {
 		if (this.viewed && this.viewed.uid === selfUid) {
-			return this.viewed.lines
+			return this.viewed.shown
 		}
-		const lines = new Array<RelationLine>()
-		const owned = new Set<string>()
-		for (const relation of this.all) {
-			const type = relation.type
-			const outgoing = relation.isOutgoing
-			const line: RelationLine = {
-				relation,
-				direction: relation.direction,
-				type,
-				section: outgoing ? type.section : type.inverseSection,
-				otherUid: relation.targetUid,
-				ownerUid: outgoing ? undefined : relation.targetUid,
-				// Incoming lines represent the same edge from the far end: target is owner, pointing to self.
-				edge: !selfUid ? undefined : outgoing
-					? RelationEdge.of(selfUid, relation)
-					: RelationEdge.of(relation.targetUid, { type, targetUid: selfUid, gap: relation.gap }),
-			}
-			if (outgoing) {
-				owned.add(EntryRelations.keyOf(line))
-				lines.push(line)
-				continue
-			}
-			// Redundantly authored reverse relationships (e.g. PARENT and CHILD both stored) are silenced
-			// in favor of the owned line so removals edit the locally owned pointer.
-			if (!owned.has(EntryRelations.keyOf(line))) {
-				lines.push(line)
-			}
-		}
-		this.viewed = { uid: selfUid, lines }
-		return lines
-	}
-
-	private static keyOf(line: RelationLine) {
-		return line.edge?.key ?? `${line.section.value} ${line.otherUid}`
+		const keyOf = (relation: Relation) => relation.edgeOf(selfUid)?.key ?? `${relation.section.value} ${relation.targetUid}`
+		const owned = new Set(this.writes.map(keyOf))
+		// Redundantly authored reverse relationships (e.g. PARENT and CHILD both stored) are silenced in favor of the owned
+		// one, so a removal edits the locally owned pointer.
+		const shown = this.all.filter(relation => relation.isOutgoing || !owned.has(keyOf(relation)))
+		this.viewed = { uid: selfUid, shown }
+		return shown
 	}
 
 	edges(selfUid: string | undefined): ReadonlyArray<RelationEdge> {
 		const byKey = new Map<string, RelationEdge>()
-		for (const line of this.lines(selfUid)) {
-			if (line.edge && !byKey.has(line.edge.key)) {
-				byKey.set(line.edge.key, line.edge)
+		for (const relation of this.shown(selfUid)) {
+			const edge = relation.edgeOf(selfUid)
+			if (edge && !byKey.has(edge.key)) {
+				byKey.set(edge.key, edge)
 			}
 		}
 		return [...byKey.values()]
 	}
 
-	/** Lines grouped by section in {@link RelationSection.rank} order, with owned lines preceding derived lines. */
-	sections(selfUid: string | undefined): ReadonlyArray<{ readonly section: RelationSection, readonly lines: ReadonlyArray<RelationLine> }> {
-		const bySection = new Map<RelationSection, Array<RelationLine>>()
-		for (const line of this.lines(selfUid)) {
-			bySection.set(line.section, [...bySection.get(line.section) ?? [], line])
-		}
+	/** The shown relations grouped by section in {@link RelationSection.rank} order, owned ones preceding derived ones. */
+	sections(selfUid: string | undefined): ReadonlyArray<{ readonly section: RelationSection, readonly relations: ReadonlyArray<Relation> }> {
+		const bySection = Map.groupBy(this.shown(selfUid), relation => relation.section)
 		return [...bySection.entries()]
 			.sort(([a], [b]) => a.rank - b.rank)
-			.map(([section, lines]) => ({ section, lines }))
+			.map(([section, relations]) => ({ section, relations }))
+	}
+
+	/** These relations with the entry `targetOf` names as each one's other end. */
+	targeting(targetOf: (relation: Relation) => Entry | undefined): EntryRelations {
+		return new EntryRelations(this.all.map(relation => relation.targeting(targetOf(relation))))
 	}
 
 	/** With an outgoing line to `targetUid`, never to `selfUid` itself. */
