@@ -91,7 +91,7 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 	static override get styles() {
 		return css`
 			mitra-dialog-settings {
-				--mitra-dialog-width: min(46rem, 92vw);
+				--mitra-dialog-width: min(52rem, 92vw);
 				--settings-padding: 1.25rem;
 				--mitra-dialog-header-inset: 0.5rem;
 				--settings-height: min(36rem, 80dvh);
@@ -112,12 +112,14 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 					display: flex;
 					flex-direction: column;
 					min-block-size: 0;
-					background: var(--color-background);
+					background: var(--mitra-dialog-rail);
 					border-inline-end: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
-					padding: 0.75rem 0.375rem;
+					padding: 0.625rem 0.375rem;
 
+					/* As far from the rail's edges as the pages' rows, which their list's inline padding sets in. */
 					> .search {
-						margin-block-end: 0.75rem;
+						margin-inline: 0.25rem;
+						margin-block-end: 0.625rem;
 					}
 
 					> nav {
@@ -183,7 +185,7 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 					min-block-size: 0;
 					overflow-y: auto;
 					overscroll-behavior: contain;
-					background: var(--color-surface);
+					background: var(--mitra-dialog-page);
 					padding-inline: var(--settings-padding);
 					padding-block-end: var(--settings-padding);
 					scrollbar-width: thin;
@@ -196,7 +198,7 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 						position: sticky;
 						inset-block-start: 0;
 						/* Positioned header sits over rows without explicit z-index to avoid clashing with close button */
-						background: var(--color-surface);
+						background: var(--mitra-dialog-page);
 						padding-block: 1rem 0.875rem;
 						padding-inline-end: 2rem;
 

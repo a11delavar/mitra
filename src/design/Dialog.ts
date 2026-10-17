@@ -91,6 +91,13 @@ export class Dialog extends Component {
 					var(--color-background-seed),
 					color-mix(in srgb, var(--color-background-seed), white 4.5%)
 				);
+				/* A dialog of two panes (Settings, About): a rail a shade off the app's ground, beside a page on the
+				   app's own canvas, white in the light. */
+				--mitra-dialog-rail: light-dark(
+					var(--color-background-seed),
+					color-mix(in srgb, var(--color-background-seed), white 2.5%)
+				);
+				--mitra-dialog-page: light-dark(var(--color-surface), var(--color-background-seed));
 			}
 
 			dialog {

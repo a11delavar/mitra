@@ -124,7 +124,7 @@ export class DialogAbout extends DialogComponent {
 						color-mix(in oklab, var(--gold) 38%, transparent) 40%,
 						color-mix(in oklab, var(--gold) 20%, transparent) 55%,
 						color-mix(in oklab, var(--gold) 8%, transparent) 72%,
-						transparent) no-repeat;
+						transparent) no-repeat var(--mitra-dialog-rail);
 				}
 
 				/* The instance, typeset rather than boxed, under a shallow light in the mark's gold. */
@@ -290,8 +290,8 @@ export class DialogAbout extends DialogComponent {
 					display: flex;
 					flex-direction: column;
 					min-block-size: 0;
-					/* The app's own canvas in the dark, white in the light: the captures sit on what they were taken on. */
-					background: light-dark(var(--color-surface), var(--color-background-seed));
+					/* The captures sit on what they were taken on. */
+					background: var(--mitra-dialog-page);
 
 					.bar {
 						display: none;
