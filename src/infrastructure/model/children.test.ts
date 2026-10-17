@@ -2,7 +2,8 @@ import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { MikroORM } from '@mikro-orm/sqlite'
 import { entity, primaryKey, property, manyToOne } from './orm.js'
-import { children, type SavedChild } from './children.js'
+import { children } from './children.js'
+import { Entity, identity, equality } from './Entity.js'
 
 @entity({ tableName: 'shelf' })
 class Shelf {
@@ -16,25 +17,14 @@ class Shelf {
 }
 
 @entity({ tableName: 'book' })
-class Book implements SavedChild<Book> {
-	@primaryKey({ type: 'string' }) id: string = crypto.randomUUID()
+class Book extends Entity {
+	@identity() @primaryKey({ type: 'string' }) id: string = crypto.randomUUID()
 	@manyToOne(() => Shelf, { deleteRule: 'cascade' }) shelf!: Shelf
-	@property({ type: 'string' }) title = ''
+	@equality() @property({ type: 'string' }) title = ''
 
 	constructor(init?: Partial<Book>) {
+		super()
 		Object.assign(this, init)
-	}
-
-	matches(other: Book) {
-		return other.id === this.id
-	}
-
-	take(other: Book) {
-		this.title = other.title
-	}
-
-	copy() {
-		return new Book({ title: this.title })
 	}
 }
 
@@ -89,7 +79,7 @@ describe('children', () => {
 		assert.deepEqual(titles(await reread(shelf)).sort(), ['Dune', 'Emma'])
 	})
 
-	it('save as set: a child a row matches updates it, a new one is added, the rest are removed', async () => {
+	it('save as set: a child a row is updates it, a new one is added, the rest are removed', async () => {
 		const shelf = await saved(new Book({ title: 'Dune' }), new Book({ title: 'Emma' }))
 		const em = orm.em.fork()
 		const loaded = await em.findOneOrFail(Shelf, { id: shelf.id })

@@ -2,6 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Entry } from './Entry.js'
+import { Entity } from '../../infrastructure/model/Entity.js'
 import { EntryPatch } from './EntryPatch.js'
 import { EntryType } from './EntryType.js'
 import { TaskStatus } from './TaskStatus.js'
@@ -21,6 +22,10 @@ describe('EntryPatch', () => {
 	const task = (init?: Partial<Entry>) => new Entry({ id: 't', sourceId: 's', type: EntryType.Task, heading: 'Report', start, end: start.add({ hours: 1 }), ...init })
 	/** A patch as the server receives it from the browser. */
 	const sent = (patch: EntryPatch) => revive<EntryPatch>(wireOf(patch))
+
+	it('reaches what makes two entries equal, and their relations, which have a write path of their own', () => {
+		assert.deepEqual(EntryPatch.fields.filter(field => field !== 'relations').toSorted(), Entity.fieldsOf(Entry, 'equality').toSorted())
+	})
 
 	describe('of', () => {
 		it('takes the entry\'s fields, its empty ones as cleared', () => {
@@ -86,35 +91,35 @@ describe('EntryPatch', () => {
 		})
 	})
 
-	describe('Entry.apply', () => {
+	describe('Entry.patch', () => {
 		it('keeps what the patch leaves out, clears what it nulls and sets the rest', () => {
 			const entry = task({ color: '#f00', location: 'Office', due: start.add({ days: 2 }) })
-			entry.apply(Object.assign(new EntryPatch(), { heading: 'Review', color: null, location: null, due: null }))
+			entry.patch(Object.assign(new EntryPatch(), { heading: 'Review', color: null, location: null, due: null }))
 			assert.deepEqual([entry.heading, entry.color, entry.location, entry.due, entry.start], ['Review', undefined, '', undefined, start])
 		})
 
 		it('drops what the type cannot hold', () => {
 			const entry = task({ status: TaskStatus.Done, percentComplete: 100, due: start.add({ days: 2 }) })
-			entry.apply(Object.assign(new EntryPatch(), { type: EntryType.Event, transparency: Transparency.Free }))
+			entry.patch(Object.assign(new EntryPatch(), { type: EntryType.Event, transparency: Transparency.Free }))
 			assert.deepEqual([entry.status, entry.percentComplete, entry.due, entry.transparency], [undefined, undefined, undefined, Transparency.Free])
-			entry.apply(Object.assign(new EntryPatch(), { type: EntryType.Task }))
+			entry.patch(Object.assign(new EntryPatch(), { type: EntryType.Task }))
 			assert.equal(entry.transparency, undefined)
 		})
 
 		it('drops an estimate a start stands for', () => {
 			const entry = new Entry({ type: EntryType.Task, estimate: 45 })
-			entry.apply(Object.assign(new EntryPatch(), { start, end: start.add({ minutes: 45 }), estimate: 45 }))
+			entry.patch(Object.assign(new EntryPatch(), { start, end: start.add({ minutes: 45 }), estimate: 45 }))
 			assert.equal(entry.estimate, undefined)
 		})
 
 		it('clears relations to none, which is not unknown', () => {
 			const related = task({ relations: EntryRelations.of([{ type: RelationType.Parent, targetUid: 'parent' }]) })
-			assert.equal(related.apply(EntryPatch.from({ relations: null })).relations, EntryRelations.none)
+			assert.equal(related.patch(EntryPatch.from({ relations: null })).relations, EntryRelations.none)
 		})
 
 		it('rebuilds an entry from its own patch', () => {
 			const entry = task({ status: TaskStatus.Doing, visibility: Visibility.Private, reminders: [10], color: '#0af' })
-			assert.ok(new Entry().apply(EntryPatch.of(entry)).editEquals(entry))
+			assert.ok(new Entry().patch(EntryPatch.of(entry)).equals(entry))
 		})
 	})
 })

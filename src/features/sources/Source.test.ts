@@ -23,6 +23,29 @@ describe('Source.keyOf', () => {
 	})
 })
 
+describe('Source identity', () => {
+	it('is the row: the same id with other settings, never another row at the same address', () => {
+		const stored = new Source({ id: 'row-1', integrationId: 'i', uri: 'https://dav/cal/', name: 'Mine', enabled: true })
+		assert.equal(stored.is(new Source({ id: 'row-1', uri: 'https://dav/cal/', name: 'Renamed', enabled: false })), true)
+		assert.equal(stored.is(new Source({ uri: 'https://dav/cal/', name: 'Mine' })), false)
+	})
+
+	it('tells a source as the wire delivers it, a plain object without the class', () => {
+		const stored = new Source({ id: 'row-1', uri: 'https://dav/cal/', name: 'Mine' })
+		assert.equal(stored.is(structuredClone(stored)), true)
+	})
+
+	it('clones with its row and its settings', () => {
+		const stored = new Source({ id: 'row-1', integrationId: 'i', uri: 'https://dav/cal/', name: 'Mine', color: '#123456', enabled: true, importedAt: new Date(1) })
+		const clone = stored.clone()
+		assert.notEqual(clone, stored)
+		assert.equal(clone.id, 'row-1')
+		assert.equal(clone.integrationId, 'i')
+		assert.equal(clone.equals(stored), true)
+		assert.equal(clone.importedAt?.getTime(), 1)
+	})
+})
+
 describe('Source entry types', () => {
 	const source = (kinds?: Array<EntryType>) => new Source({ uri: 'https://dav/cal/', name: 'X', ...kinds ? { entryTypes: kinds } : {} })
 

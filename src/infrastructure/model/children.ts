@@ -1,6 +1,7 @@
 import { OneToMany } from '@mikro-orm/decorators/legacy'
 import { Collection, FlushMode, type EntityClass, type EntityManager, type EventSubscriber, type OneToManyOptions } from '@mikro-orm/core'
 import { converter, definitionsOf } from '@a11d/converter'
+import { type Entity } from './Entity.js'
 
 interface State<Child extends object> {
 	rows?: Collection<Child>
@@ -29,13 +30,6 @@ function stateOf<Child extends object>(owner: object, key: string): State<Child>
  */
 export interface ChildrenCollection<Child extends object> {
 	of(children: ReadonlyArray<Child>): Iterable<Child>
-}
-
-/** A child its parent sets as a whole (`saves`): told apart from the rows by `matches`, its news taken over by `take`, copied where another parent holds it. */
-export interface SavedChild<Self> {
-	matches(other: Self): boolean
-	take(other: Self): void
-	copy(): Self
 }
 
 /** The parents whose children are saved, by class, with the keys holding them. */
@@ -73,7 +67,7 @@ function materialize<Child extends object>(owner: object, key: string, as?: () =
  */
 export function children<Owner extends object, Child extends object>(entity: () => EntityClass<Child>, mappedBy: (child: Child) => unknown, options?: Partial<OneToManyOptions<Owner, Child>> & {
 	as?: () => ChildrenCollection<Child>
-	saves?: Child extends SavedChild<Child> ? true : never
+	saves?: Child extends Entity ? true : never
 }) {
 	return (prototype: Owner, key: string) => {
 		const field = `_${key}`
@@ -105,33 +99,30 @@ export function children<Owner extends object, Child extends object>(entity: () 
 	}
 }
 
-/** Writes what `owner.<key>` was set to into its rows: a child a row matches updates it, another becomes a row (a copy where another parent's row holds its id), and the rest are removed. */
+/** Writes what `owner.<key>` was set to into its rows: a child a row `is` equates it, another becomes a row (a `copy` where another parent's row holds its id), and the rest are removed. */
 async function save(em: EntityManager, owner: object, key: string) {
-	const state = stateOf<SavedChild<object> & object>(owner, key)
+	const state = stateOf<Entity>(owner, key)
 	const given = state.given
 	if (!given) {
 		return
 	}
 	const property = em.getMetadata().find(owner.constructor as EntityClass<object>)!.properties[`_${key}` as never] as { mappedBy: string, targetMeta: { class: EntityClass<object>, primaryKeys: Array<string> } }
-	const rows = state.rows ?? Collection.create<SavedChild<object> & object>(owner, `_${key}` as never, undefined, true)
+	const rows = state.rows ?? Collection.create<Entity>(owner, `_${key}` as never, undefined, true)
 	if (!rows.isInitialized()) {
 		await rows.init()
 	}
 	const left = new Set(rows)
 	for (const child of given) {
-		const kept = [...left].find(row => row.matches(child))
+		const kept = [...left].find(row => row.is(child))
 		if (kept) {
 			left.delete(kept)
-			kept.take(child)
+			kept.equate(child)
 			continue
 		}
 		const id = property.targetMeta.primaryKeys[0]!
 		// A fresh options object each: the ORM writes into it, and a query inside a flush must not flush again.
-		const holder = await em.findOne(property.targetMeta.class, { [id]: (child as Record<string, unknown>)[id] } as never, { flushMode: FlushMode.COMMIT }) as SavedChild<object> & object | null
-		const row = holder ? holder.copy() as SavedChild<object> & object : child
-		if (holder) {
-			row.take(child)
-		}
+		const holder = await em.findOne(property.targetMeta.class, { [id]: (child as unknown as Record<string, unknown>)[id] } as never, { flushMode: FlushMode.COMMIT }) as Entity | null
+		const row = holder ? holder.copy().equate(child) : child
 		Object.assign(row, { [property.mappedBy]: owner })
 		rows.add(row)
 	}

@@ -78,12 +78,12 @@ describe('Entry', () => {
 			assert.equal(invited().canManageParticipants, false)
 		})
 
-		it('counts as editable content: editEquals compares the lists structurally', () => {
+		it('counts as editable content: equals compares the lists structurally', () => {
 			const a = invited()
 			const b = invited()
-			assert.equal(a.editEquals(b), true)
+			assert.equal(a.equals(b), true)
 			b.participants = [...b.participants!, { email: 'late@example.com' }]
-			assert.equal(a.editEquals(b), false)
+			assert.equal(a.equals(b), false)
 		})
 
 		it('invite adds pending required invitees and enlists the account as the organizer', () => {
@@ -224,7 +224,7 @@ describe('Entry', () => {
 		})
 	})
 
-	describe('editEquals', () => {
+	describe('equals', () => {
 		const base = () => new Entry({
 			id: 'a', sourceId: 's', type: EntryType.Event, heading: 'Standup', description: '',
 			start: at(0, 9), end: at(0, 10), allDay: false,
@@ -232,7 +232,7 @@ describe('Entry', () => {
 
 		it('is true for a clone', () => {
 			const e = base()
-			assert.equal(e.editEquals(e.clone()), true)
+			assert.equal(e.equals(e.clone()), true)
 		})
 
 		it('is false after a content edit', () => {
@@ -250,42 +250,42 @@ describe('Entry', () => {
 			]) {
 				const e = base()
 				edit(e)
-				assert.equal(e.editEquals(base()), false)
+				assert.equal(e.equals(base()), false)
 			}
 		})
 
 		it('ignores identity and sync bookkeeping (id, uri, data)', () => {
 			const local = base()
 			const server = new Entry({ ...base(), id: 'b', uri: '/dav/entry.ics', data: { etag: '"1"' } })
-			assert.equal(local.editEquals(server), true)
+			assert.equal(local.equals(server), true)
 		})
 
 		it('compares DateTimes by value, not identity', () => {
 			const a = new Entry({ ...base(), start: at(0, 9), end: at(0, 10) })
 			const b = new Entry({ ...base(), start: day.add({ hours: 9 }), end: day.add({ hours: 10 }) })
-			assert.equal(a.editEquals(b), true)
+			assert.equal(a.equals(b), true)
 		})
 
 		it('treats a set and an unset optional field as different', () => {
-			assert.equal(base().editEquals(new Entry({ ...base(), status: TaskStatus.ToDo })), false)
-			assert.equal(base().editEquals(new Entry({ ...base(), start: undefined, end: undefined })), false)
+			assert.equal(base().equals(new Entry({ ...base(), status: TaskStatus.ToDo })), false)
+			assert.equal(base().equals(new Entry({ ...base(), start: undefined, end: undefined })), false)
 		})
 
 		it('treats both-unset optional fields as equal', () => {
 			const a = new Entry({ sourceId: 's', type: EntryType.Task, heading: 'Task' })
 			const b = new Entry({ sourceId: 's', type: EntryType.Task, heading: 'Task' })
-			assert.equal(a.editEquals(b), true)
+			assert.equal(a.equals(b), true)
 		})
 
 		it('counts the free/busy contribution and the visibility as editable content', () => {
-			assert.equal(base().editEquals(new Entry({ ...base(), transparency: Transparency.Free })), false)
-			assert.equal(base().editEquals(new Entry({ ...base(), visibility: Visibility.Private })), false)
-			assert.equal(base().editEquals(new Entry({ ...base(), visibility: undefined })), true)
+			assert.equal(base().equals(new Entry({ ...base(), transparency: Transparency.Free })), false)
+			assert.equal(base().equals(new Entry({ ...base(), visibility: Visibility.Private })), false)
+			assert.equal(base().equals(new Entry({ ...base(), visibility: undefined })), true)
 		})
 
 		it('compares reminders by value', () => {
-			assert.equal(new Entry({ ...base(), reminders: [10, 30] }).editEquals(new Entry({ ...base(), reminders: [10, 30] })), true)
-			assert.equal(new Entry({ ...base(), reminders: [10, 30] }).editEquals(new Entry({ ...base(), reminders: [10] })), false)
+			assert.equal(new Entry({ ...base(), reminders: [10, 30] }).equals(new Entry({ ...base(), reminders: [10, 30] })), true)
+			assert.equal(new Entry({ ...base(), reminders: [10, 30] }).equals(new Entry({ ...base(), reminders: [10] })), false)
 		})
 	})
 
@@ -402,7 +402,7 @@ describe('Entry', () => {
 			assert.equal(result, e)
 			assert.equal(e.heading, 'New')
 			assert.equal(e.start!.valueOf(), at(1, 9).valueOf())
-			assert.equal(e.editEquals(incoming), true)
+			assert.equal(e.equals(incoming), true)
 		})
 
 		it('adoptSpan takes over start, end, and all-day, nothing else', () => {
@@ -421,6 +421,29 @@ describe('Entry', () => {
 			e.assign(new Entry({ id: 'a', sourceId: 's', type: EntryType.Task, heading: 'Task' }))
 			assert.equal(e.status, undefined)
 			assert.equal(e.color, undefined)
+		})
+	})
+
+	describe('is', () => {
+		it('is identity alone: the same id with other values, and never two drafts', () => {
+			const a = new Entry({ id: 'a', sourceId: 's', type: EntryType.Event, heading: 'Standup' })
+			assert.equal(a.is(new Entry({ id: 'a', sourceId: 't', type: EntryType.Task, heading: 'Renamed' })), true)
+			assert.equal(a.is(new Entry({ id: 'b', sourceId: 's', type: EntryType.Event, heading: 'Standup' })), false)
+			assert.equal(new Entry({ heading: 'Draft' }).is(new Entry({ heading: 'Draft' })), false)
+		})
+	})
+
+	describe('copy', () => {
+		it('is an equal entry, its rule included, without identity or sync bookkeeping', () => {
+			const entry = new Entry({ id: 'e', sourceId: 's', uri: '/e.ics', uid: 'original', data: { etag: '"1"' }, type: EntryType.Event, heading: 'Standup', start: at(0, 9), end: at(0, 10), recurrence: Recurrence.fromRRule('FREQ=DAILY'), exdates: [at(1, 9).valueOf()] })
+			const copy = entry.copy()
+			assert.equal(copy.equals(entry), true)
+			assert.equal(copy.recurrence, entry.recurrence)
+			assert.equal(copy.id, undefined)
+			assert.equal(copy.uri, undefined)
+			assert.equal(copy.uid, undefined)
+			assert.equal(copy.data, undefined)
+			assert.equal(copy.exdates, undefined)
 		})
 	})
 
@@ -574,7 +597,7 @@ describe('Entry', () => {
 			const e = task()
 			e.adoptSpan(task())
 			assert.equal(e.reminders, undefined)
-			assert.equal(e.editEquals(task()), true)
+			assert.equal(e.equals(task()), true)
 		})
 
 		it('adopting an unscheduled span keeps the reminders while a due anchors them', () => {
@@ -680,8 +703,8 @@ describe('Entry', () => {
 		})
 
 		it('is an edit of its own', () => {
-			assert.equal(task({ due: at(1, 17) }).editEquals(task({ due: at(2, 17) })), false)
-			assert.equal(task({ estimate: 30 }).editEquals(task({ estimate: 60 })), false)
+			assert.equal(task({ due: at(1, 17) }).equals(task({ due: at(2, 17) })), false)
+			assert.equal(task({ estimate: 30 }).equals(task({ estimate: 60 })), false)
 		})
 	})
 
@@ -753,6 +776,14 @@ describe('Entry', () => {
 			entry.relations = EntryRelations.of([{ type: RelationType.Parent, targetUid: 'child', direction: 'incoming' }])
 
 			assert.equal(entry.duplicate().relations?.isEmpty, true)
+		})
+
+		it('is a copy without the rule', () => {
+			const entry = new Entry({ id: 'e', sourceId: 's', type: EntryType.Event, heading: 'Standup', start: at(0, 9), end: at(0, 10), recurrence: Recurrence.fromRRule('FREQ=DAILY') })
+			const duplicate = entry.duplicate()
+			assert.equal(duplicate.recurrence, undefined)
+			duplicate.recurrence = entry.recurrence
+			assert.equal(duplicate.equals(entry), true)
 		})
 
 		it('still sheds identity and series membership', () => {
@@ -961,11 +992,11 @@ describe('Entry', () => {
 	})
 })
 
-describe('Entry.editEquals over a rule', () => {
+describe('Entry.equals over a rule', () => {
 	const ending = (day: string) => new Entry({ heading: 'Standup', recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, until: RecurrenceEnd.parse(day) }) })
 
 	it('tells a series apart by the day it ends', () => {
-		assert.equal(ending('2026-07-18').editEquals(ending('2026-07-18')), true)
-		assert.equal(ending('2026-07-18').editEquals(ending('2026-08-01')), false)
+		assert.equal(ending('2026-07-18').equals(ending('2026-07-18')), true)
+		assert.equal(ending('2026-07-18').equals(ending('2026-08-01')), false)
 	})
 })

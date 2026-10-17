@@ -29,7 +29,7 @@ const date = {
 }
 
 /**
- * An edit of an entry, which `Entry.apply` takes over: a field it leaves out keeps the entry's value, `null` clears it, and any
+ * An edit of an entry, which `Entry.patch` takes over: a field it leaves out keeps the entry's value, `null` clears it, and any
  * other value replaces it. Constructed from a request, it parses its fields, so a malformed one never reaches an entry.
  */
 @model('EntryPatch')

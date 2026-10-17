@@ -1,8 +1,7 @@
 import { component, html, css, state, Binder, bind, unsafeHTML, ifDefined, live } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
-import { Source } from '../../features/sources/Source.js'
 import { integrationClasses, type Integration, type IntegrationClass } from '../Integration.js'
-import { CalDAV, Notion } from '../registerIntegrations.js'
+import { Notion } from '../registerIntegrations.js'
 import { discoverSources, createIntegration, updateIntegration, fetchGoogleAvailability, connectGoogle, createSource, getMeta } from '../../infrastructure/http/Api.js'
 import { Calendars } from '../../features/sources/client/Calendars.js'
 import mitraLogo from '../mitra/logo.svg'
@@ -106,14 +105,10 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 		}
 		const integration = Calendars.integrations.find(integration => integration.id === this.parameters.id)
 		if (integration) {
-			this.entity = integration.editableCopy?.() ?? new CalDAV({
-				id: this.parameters.id,
-				uri: integration.uri ?? '',
-				credentials: { username: integration.credentials?.username ?? '', password: '' },
-				sources: integration.sources.map(source => new Source({ uri: source.uri, entryTypes: source.entryTypes, name: source.name, enabled: source.enabled })),
-			})
+			// A clone holds nothing the listed one holds, so editing here changes nothing listed.
+			this.entity = integration.clone()
 			if (this.parameters.preselectSources) {
-				[...this.entity.sources].forEach(source => source.enabled = true)
+				this.entity.sources.forEach(source => source.enabled = true)
 			}
 		}
 	}

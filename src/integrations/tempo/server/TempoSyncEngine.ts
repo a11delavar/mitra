@@ -93,7 +93,7 @@ export class TempoSyncEngine implements SyncEngine {
 				em.persist(target)
 			}
 			Tempo.applyWorklog(target, worklog, issues.get(String(worklog.issue.id)), tempo.credentials.site, Tempo.zoneOf(tempo))
-			if (!before || !before.editEquals(target)) {
+			if (!before || !before.equals(target)) {
 				changed = true
 			}
 		}

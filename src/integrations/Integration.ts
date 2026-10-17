@@ -1,6 +1,7 @@
 import { converter } from '@a11d/converter'
 import { entity, primaryKey, property, manyToOne, unique } from '../infrastructure/model/orm.js'
 import { children } from '../infrastructure/model/children.js'
+import { Entity, identity, equality } from '../infrastructure/model/Entity.js'
 import { User } from '../features/identity/User.js'
 import { Source } from '../features/sources/Source.js'
 import { Entry } from '../features/entries/Entry.js'
@@ -45,24 +46,30 @@ const syncChains = new Map<string, Promise<unknown>>()
 
 @entity({ abstract: true, discriminatorColumn: 'type' })
 @unique({ properties: ['userId', 'uri'] })
-export abstract class Integration<TCredentials extends Record<string, any> = any> {
+export abstract class Integration<TCredentials extends Record<string, any> = any> extends Entity {
+	@identity()
 	@primaryKey() id: string = crypto.randomUUID()
 
 	@manyToOne(() => User, { mapToPk: true }) userId!: string
 
+	@equality()
 	@property({ type: 'string', nullable: true }) uri?: string
 
 	@property({ type: 'string' }) type!: string
 
+	@equality()
 	@property({ type: 'json' }) credentials: TCredentials = {} as TCredentials
 
 	/** Manual sidebar display order among user's integrations (sorted asc nulls last). */
+	@equality()
 	@property({ type: 'number', nullable: true }) order?: number | null
 
 	/** Lowercase email addresses representing the user in participant lists (RFC 6638). */
+	@equality()
 	@property({ type: 'json', nullable: true }) addresses?: Array<string>
 
 	/** Its calendars, as loaded or as given (a request, the browser's store). Never saved through here: a calendar is a row of its own. */
+	@equality()
 	@children(() => Source, source => source.integrationId, { eager: true })
 	@converter({
 		construct: (value: ReadonlyArray<Source> | undefined) => value ?? [],
@@ -70,6 +77,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	}) sources!: ReadonlyArray<Source>
 
 	constructor() {
+		super()
 		const type = (new.target as { type?: string }).type
 		if (type) {
 			this.type = type
@@ -162,17 +170,6 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	/** Each provider decides which fields to keep, e.g. CalDAV keeps the stored password when `incoming` carries a blank one. */
 	abstract merge(incoming: this): void
 
-	editableCopy(): this {
-		const constructor = this.constructor as new (init?: Partial<Integration>) => this
-		return new constructor({
-			id: this.id,
-			uri: this.uri,
-			credentials: { ...this.credentials },
-			// The icon reads color and import state too; without importedAt every enabled row showed a spinner.
-			sources: this.sources.map(source => new Source({ uri: source.uri, entryTypes: source.entryTypes, name: source.name, enabled: source.enabled, color: source.color, importedAt: source.importedAt })),
-		})
-	}
-
 	/** Reconciles persisted sources with the provider, adding new ones disabled and removing obsolete ones. */
 	async getSources(em: EntityManager, options?: { checkDuplicate?: boolean }): Promise<Array<Source>> {
 		const existing = await em.find(Source, { integrationId: this.id })
@@ -185,17 +182,15 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 			}
 		}
 
-		const existingByKey = new Map(existing.map(source => [source.uri, source]))
-		const remoteKeys = new Set(remote.map(source => source.uri))
-
+		// By address: the provider's list is of calendars, not of Mitra's rows.
 		for (const source of existing) {
-			if (!remoteKeys.has(source.uri)) {
+			if (!remote.some(candidate => candidate.uri === source.uri)) {
 				em.remove(source)
 			}
 		}
 
 		return remote.map(source => {
-			const match = existingByKey.get(source.uri)
+			const match = existing.find(candidate => candidate.uri === source.uri)
 			if (!match) {
 				source.integrationId = this.id
 				source.remoteName = source.name
@@ -291,9 +286,8 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		this.merge(incoming)
 		const sources = await this.getSources(em, { checkDuplicate: true })
 
-		const enabledKeys = new Set(incoming.sources.filter(source => source.enabled).map(source => source.uri))
 		for (const source of sources) {
-			source.enabled = enabledKeys.has(source.uri)
+			source.enabled = incoming.sources.some(given => given.enabled && given.uri === source.uri)
 		}
 		await em.flush()
 	}
@@ -311,7 +305,9 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		if (!this.storesLocally(existing)) {
 			return engineFor(this).updateEntry(this, em, existing, incoming)
 		}
-		existing.adopt(incoming)
+		existing.equate(incoming)
+		// An occurrence's deletion excludes its date through the edit; the rule's other bookkeeping is the row's own.
+		existing.exdates = incoming.exdates ?? existing.exdates
 		await this.stored(em, existing)
 	}
 

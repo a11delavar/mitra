@@ -117,7 +117,7 @@ entriesRouter.post('/', async (req, res) => {
 	const source = await req.user.source(em, patch.sourceId)
 	const to = { source, integration: await em.findOneOrFail(Integration, { id: source.integrationId }) }
 
-	const incoming = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: source.defaultEntryType }).apply(patch)
+	const incoming = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: source.defaultEntryType }).patch(patch)
 	// The estimate is lost where the provider has none.
 	if (!to.integration.ownership.holds('estimate')) {
 		incoming.estimate = undefined

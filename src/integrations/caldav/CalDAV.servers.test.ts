@@ -231,14 +231,14 @@ describe('A CalDAV account as real servers answer it', () => {
 			})
 
 			it('takes a calendar on, and edits the choice again at once from what the save answered', async () => {
-				const withHome = integration.editableCopy()
+				const withHome = integration.clone()
 				ours(withHome.sources).forEach(source => source.enabled = true)
 				const saved = await updateIntegration(withHome)
 				assert.deepEqual(ours(saved.sources).map(source => source.enabled), [true, true])
 				await until(async () => (await headings(calendar('Home').id)).length === 1)
 				assert.deepEqual(await headings(calendar('Home').id), ['Dentist'])
 
-				const again = saved.editableCopy()
+				const again = saved.clone()
 				assert.deepEqual(ours(again.sources).map(source => source.enabled), [true, true])
 				const listed = (await fetchIntegrations()).find(each => each.id === integration.id)!
 				assert.equal(listed.sources.length, integration.sources.length, 'editing never adds a calendar twice')
@@ -254,7 +254,7 @@ describe('A CalDAV account as real servers answer it', () => {
 
 			it('imports a calendar that refuses to list its changes, as a Nextcloud Deck board does', { skip: !layouts[name]?.unlisted && 'the server keeps none' }, async () => {
 				const board = calendar(layouts[name]!.unlisted!)
-				const withBoard = integration.editableCopy()
+				const withBoard = integration.clone()
 				withBoard.sources.find(source => source.name === board.name)!.enabled = true
 				integration = await updateIntegration(withBoard)
 				await until(async () => (await headings(board.id)).length === 2)

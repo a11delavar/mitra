@@ -257,7 +257,7 @@ export class Notion extends Integration<NotionCredentials> {
 			}
 			Notion.applyPage(target, page, schema, { description, ...await this.relationsOf(page, schema, target.relations, isPage) })
 			applied.push(target)
-			if (!before || !before.editEquals(target) || (target.relations !== undefined && (before.relations ?? EntryRelations.none).writesDiffer(target.relations))) {
+			if (!before || !before.equals(target) || (target.relations !== undefined && (before.relations ?? EntryRelations.none).writesDiffer(target.relations))) {
 				changed = true
 			}
 		}

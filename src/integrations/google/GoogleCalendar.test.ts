@@ -56,10 +56,10 @@ describe('GoogleCalendar', () => {
 		})
 	})
 
-	describe('editableCopy', () => {
+	describe('clone', () => {
 		it('is a polymorphic copy for the edit form: same provider class, credentials as held, sources plain', () => {
 			const held = new GoogleCalendar({ ...account(), credentials: { username: 'someone@gmail.com', refreshToken: '' } })
-			const copy = held.editableCopy()
+			const copy = held.clone()
 
 			assert.ok(copy instanceof GoogleCalendar)
 			assert.equal(copy.uri, GoogleCalendar.uriFor('someone@gmail.com'))

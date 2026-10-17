@@ -599,7 +599,7 @@ describe('Notion relationships', () => {
 		assert.deepEqual((await rowsOf(em, await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p-95' }))).map(row => row.type.value), ['PARENT'])
 	})
 
-	it('reports a relation-only remote change: it sits outside editEquals, so the sync compares it itself', async () => {
+	it('reports a relation-only remote change: it sits outside equals, so the sync compares it itself', async () => {
 		const em = orm.em.fork()
 		const { integration, source, state } = await seed(em, {
 			members: { ids: ['p1'], complete: true },

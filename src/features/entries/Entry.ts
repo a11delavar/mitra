@@ -1,7 +1,7 @@
 import { DateTime } from '@3mo/date-time'
 import { converter } from '@a11d/converter'
-import { equals } from '@a11d/equals'
 import { model } from '../../infrastructure/model/model.js'
+import { Entity, identity, equality } from '../../infrastructure/model/Entity.js'
 import { entity, primaryKey, property, enum as enumType, unique, manyToOne } from '../../infrastructure/model/orm.js'
 import { EntryType, type EntryTypeValue } from './EntryType.js'
 import { TaskStatus } from './TaskStatus.js'
@@ -58,14 +58,19 @@ const reminderDefaults = new WeakMap<Entry, ReminderDefaults>()
 @model('Entry')
 @entity()
 @unique({ properties: ['sourceId', 'uri', 'recurrenceId'] })
-export class Entry implements Validatable<Calendar> {
+export class Entry extends Entity implements Validatable<Calendar> {
+	@identity()
 	@primaryKey({ type: 'string' }) id?: string
+
+	@equality()
 	@manyToOne(() => Source, { mapToPk: true, deleteRule: 'cascade' }) sourceId!: string
+
 	@property({ type: 'string', nullable: true }) uri?: string
 
 	@property({ type: EntryType.Mapper, fieldName: 'type' })
 	@converter({ type: EntryType.converter })
 	private _type!: EntryType
+	@equality()
 	get type(): EntryType { return this._type }
 	set type(value: EntryType | EntryTypeValue) {
 		this._type = EntryType.parse(value)
@@ -92,28 +97,42 @@ export class Entry implements Validatable<Calendar> {
 		}
 	}
 
+	@equality()
 	@property({ type: 'string' }) heading = ''
+
+	@equality()
 	@property({ type: 'string' }) description = ''
+
+	@equality()
 	@property({ type: 'string' }) location = ''
+
+	@equality()
 	@property({ type: 'string', nullable: true }) color?: string
 
+	@equality()
 	@Entry.date() start?: DateTime
+
+	@equality()
 	@Entry.date() end?: DateTime
 
 	/** Apart from the schedule. */
+	@equality()
 	@Entry.date() due?: DateTime
 
 	/** A task's length in minutes while it has no start. The end is the same fact once it does, so one of the two is always empty. */
+	@equality()
 	@property({ type: 'number', nullable: true }) estimate?: number
 
+	@equality()
 	@converter(TaskStatus.converter)
 	@enumType({ type: TaskStatus.Mapper, items: TaskStatus.all.map(String), nullable: true }) status?: TaskStatus
 
 	/** Task PERCENT-COMPLETE (RFC 5545 §3.8.1.8), 0-100. */
+	@equality()
 	@property({ type: 'number', nullable: true }) percentComplete?: number
 
 	/** Position in the manual order, owned by Mitra and never written to the provider. Only
-	 * `PUT /entries/ranks` changes it, so editEquals ignores it. */
+	 * `PUT /entries/ranks` changes it, so it is no part of equality. */
 	@converter(EntryRank.converter)
 	@property({ type: EntryRank.Mapper, nullable: true }) rank?: EntryRank
 
@@ -138,8 +157,11 @@ export class Entry implements Validatable<Calendar> {
 		}
 	}
 
+	@equality()
 	@converter(Transparency.converter)
 	@enumType({ type: Transparency.Mapper, items: Transparency.all.map(String), nullable: true }) transparency?: Transparency
+
+	@equality()
 	@converter(Visibility.converter)
 	@enumType({ type: Visibility.Mapper, items: Visibility.all.map(String), nullable: true }) visibility?: Visibility
 
@@ -148,7 +170,10 @@ export class Entry implements Validatable<Calendar> {
 		return this.transparency ?? (this.type?.isAvailability ? Transparency.Free : Transparency.Busy)
 	}
 
+	@equality()
 	@property({ type: 'boolean' }) allDay = false
+
+	@equality()
 	@converter(EntryTimeZone.converter)
 	@property({ type: EntryTimeZone.Mapper, nullable: true }) timeZone?: EntryTimeZone
 
@@ -163,6 +188,8 @@ export class Entry implements Validatable<Calendar> {
 	}
 
 	@property({ type: 'json', nullable: true }) data?: EntryData
+
+	@equality()
 	@property({ type: 'json', nullable: true }) reminders?: Array<number>
 
 	get reminderAnchor() {
@@ -185,6 +212,7 @@ export class Entry implements Validatable<Calendar> {
 		this.reminders = minutes.length ? [...new Set(minutes)].sort((a, b) => a - b) : undefined
 	}
 
+	@equality()
 	@property({ type: 'json', nullable: true }) participants?: Array<Participant>
 
 	get participantList(): Participants | undefined {
@@ -239,11 +267,18 @@ export class Entry implements Validatable<Calendar> {
 	}
 
 	@property({ type: 'string', nullable: true }) uid?: string
+
+	@equality()
 	@property({ type: Recurrence.Mapper, nullable: true }) recurrence?: Recurrence
-	@Entry.days() @property({ type: 'json', nullable: true }) exdates?: Array<number>
+
+	@Entry.days()
+	@property({ type: 'json', nullable: true }) exdates?: Array<number>
+
 	/** A recurring entry's overrides (RFC 5545 RECURRENCE-ID), each standing in for one of its dates; read with it, stored as rows of their own. */
 	overrides?: Array<Entry>
+
 	@property({ type: 'string', nullable: true }) recurringEntryId?: string
+
 	@Entry.date() recurrenceId?: DateTime
 
 	/** Unknown while absent, as a provider may not say; none is an empty collection. */
@@ -313,6 +348,7 @@ export class Entry implements Validatable<Calendar> {
 	}
 
 	constructor(init?: Partial<Entry>) {
+		super()
 		Object.assign(this, init)
 	}
 
@@ -367,70 +403,12 @@ export class Entry implements Validatable<Calendar> {
 		return this.recurringEntryId ?? this.id
 	}
 
-	editEquals(other: Entry) {
-		const editable = ['sourceId', 'type', 'heading', 'description', 'location', 'color', 'start', 'end', 'due', 'estimate', 'allDay', 'timeZone', 'status', 'percentComplete', 'transparency', 'visibility', 'recurrence', 'reminders', 'participants'] as const
-		return editable.every(key => Object[equals](this[key], other[key]))
-	}
-
-	clone() {
-		return new Entry({ ...this })
-	}
-
-	/** Creates a standalone copy with user-editable fields (excluding identity, sync data, and recurrence rules). */
+	/** A standalone copy: one that stands alone, without the rule, with the relationships this entry owns. */
 	duplicate() {
-		return new Entry({
-			sourceId: this.sourceId,
-			type: this.type,
-			heading: this.heading,
-			description: this.description,
-			location: this.location,
-			color: this.color,
-			start: this.start,
-			end: this.end,
-			due: this.due,
-			estimate: this.estimate,
-			allDay: this.allDay,
-			timeZone: this.timeZone,
-			status: this.status,
-			percentComplete: this.percentComplete,
-			transparency: this.transparency,
-			visibility: this.visibility,
-			reminders: this.reminders ? [...this.reminders] : this.reminders,
-			relations: this.relations?.owned,
-		})
-	}
-
-	assign(values: Entry) {
-		return Object.assign(this, {
-			id: values.id,
-			sourceId: values.sourceId,
-			uri: values.uri,
-			type: values.type,
-			heading: values.heading,
-			description: values.description,
-			location: values.location,
-			color: values.color,
-			start: values.start,
-			end: values.end,
-			due: values.due,
-			estimate: values.estimate,
-			status: values.status,
-			percentComplete: values.percentComplete,
-			rank: values.rank,
-			transparency: values.transparency,
-			visibility: values.visibility,
-			allDay: values.allDay,
-			timeZone: values.timeZone,
-			reminders: values.reminders,
-			participants: values.participants,
-			relations: values.relations,
-			data: values.data,
-			uid: values.uid,
-			recurrence: values.recurrence,
-			exdates: values.exdates,
-			recurringEntryId: values.recurringEntryId,
-			recurrenceId: values.recurrenceId,
-		})
+		const duplicate = this.copy()
+		duplicate.recurrence = undefined
+		duplicate.relations = this.relations?.owned
+		return duplicate
 	}
 
 	get multiDay() {
@@ -554,11 +532,11 @@ export class Entry implements Validatable<Calendar> {
 
 	/** What `patch` does to this entry, the entry itself rather than one of its occurrences. */
 	edit(patch: EntryPatch) {
-		return new EntryChange(this, new Entry().apply(EntryPatch.of(this)).apply(patch))
+		return new EntryChange(this, new Entry().patch(EntryPatch.of(this)).patch(patch))
 	}
 
 	/** Takes over what `patch` sets, and a new entry's value where it clears. What the type can't hold goes, and an estimate a start replaced. */
-	apply(patch: EntryPatch) {
+	patch(patch: EntryPatch) {
 		const cleared = new Entry()
 		for (const field of EntryPatch.fields) {
 			const value = patch[field]
@@ -571,26 +549,6 @@ export class Entry implements Validatable<Calendar> {
 			this.estimate = undefined
 		}
 		return this
-	}
-
-	/** Takes over everything an edit can change, as an entry kept in Mitra's own database does. */
-	adopt(edited: Entry) {
-		this.heading = edited.heading
-		this.description = edited.description
-		this.location = edited.location
-		this.color = edited.color
-		this.adoptSpan(edited)
-		this.timeZone = edited.timeZone
-		this.status = edited.status
-		this.percentComplete = edited.percentComplete
-		this.transparency = edited.transparency
-		this.visibility = edited.visibility
-		this.reminders = edited.reminders
-		this.participants = edited.participants
-		this.recurrence = edited.recurrence
-		if (edited.exdates !== undefined) {
-			this.exdates = edited.exdates
-		}
 	}
 
 	/** Excludes one occurrence of the series (RFC 5545 EXDATE). */

@@ -1,31 +1,46 @@
 import { converter } from '@a11d/converter'
 import { model } from '../../infrastructure/model/model.js'
+import { Entity, identity, equality } from '../../infrastructure/model/Entity.js'
 import { entity, primaryKey, property, manyToOne } from '../../infrastructure/model/orm.js'
 import { Integration } from '../../integrations/Integration.js'
 import { EntryType, EntryTypes } from '../entries/EntryType.js'
 
 @model('Source')
 @entity()
-export class Source {
+export class Source extends Entity {
+	@identity()
 	@primaryKey() id: string = crypto.randomUUID()
 
 	@manyToOne(() => Integration, { mapToPk: true, deleteRule: 'cascade' }) integrationId!: string
 
+	/** Its address at the provider, which a reconcile matches the provider's list by: that list knows nothing of Mitra's rows. */
 	@property({ type: 'string' }) uri!: string
 
 	/** The entry types this source can hold (RFC 4791 §5.2.3: empty accepts everything). */
+	@equality()
 	@property({ type: EntryTypes.Mapper, fieldName: 'entry_types', nullable: true })
 	@converter(EntryTypes.converter)
 	entryTypes: EntryTypes = EntryTypes.of(EntryType.Event, EntryType.Task)
 
+	@equality()
 	@property({ type: 'string' }) name!: string
 	/** Provider's baseline name for this source to differentiate local vs remote renames during reconcile. */
 	@property({ type: 'string', nullable: true }) remoteName?: string | null
+
+	@equality()
 	@property({ type: 'string', nullable: true }) color?: string
+
+	@equality()
 	@property({ type: 'boolean', fieldName: 'read_only', nullable: true }) readOnly?: boolean | null
+
+	@equality()
 	@property({ type: 'boolean' }) hidden = false
+
+	@equality()
 	@property({ type: 'boolean' }) enabled = false
+
 	/** Manual sidebar display order among the integration's sources (sorted asc nulls last). */
+	@equality()
 	@property({ type: 'number', nullable: true }) order?: number | null
 
 	get visible() {
@@ -77,10 +92,11 @@ export class Source {
 	}
 
 	constructor(init?: Partial<Source>) {
+		super()
 		Object.assign(this, init)
 	}
 
-	toString() {
+	override toString() {
 		return `source "${this.name}"`
 	}
 }

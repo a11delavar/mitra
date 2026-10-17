@@ -192,12 +192,12 @@ describe('Integrations and calendars over the wire', () => {
 		it('edits the choice of calendars, and edits it again at once from what the save answered', async () => {
 			await shown()
 			const listed = Calendars.integrations.find(integration => integration.id === subscription.id)!
-			const turnedOff = listed.editableCopy()
+			const turnedOff = listed.clone()
 			turnedOff.sources.forEach(source => source.enabled = false)
 			const saved = await updateIntegration(turnedOff)
 			assert.deepEqual(saved.sources.map(source => source.enabled), [false])
 
-			const again = saved.editableCopy()
+			const again = saved.clone()
 			assert.deepEqual(again.sources.map(source => source.enabled), [false])
 			again.sources.forEach(source => source.enabled = true)
 			const savedAgain = await updateIntegration(again)

@@ -93,6 +93,42 @@ describe('MitraCalendar', () => {
 		})
 	})
 
+	describe('updateEntry', () => {
+		it('takes the edit over in place, the dates it excludes included: an entry kept here has no provider to write to', async () => {
+			const em = orm.em.fork()
+			const { integration, entry } = await seed(em)
+			entry.exdates = [1]
+			await em.flush()
+
+			const edited = entry.clone()
+			edited.heading = 'Dentist, moved'
+			edited.exdates = [1, 2]
+			await integration.updateEntry(em, entry, edited)
+			await em.flush()
+
+			const stored = await orm.em.fork().findOneOrFail(Entry, { id: entry.id })
+			assert.equal(stored.heading, 'Dentist, moved')
+			assert.deepEqual(stored.exdates, [1, 2])
+		})
+
+		it('keeps the excluded dates an edit says nothing about', async () => {
+			const em = orm.em.fork()
+			const { integration, entry } = await seed(em)
+			entry.exdates = [1]
+			await em.flush()
+
+			const edited = entry.clone()
+			edited.exdates = undefined
+			edited.heading = 'Dentist, renamed'
+			await integration.updateEntry(em, entry, edited)
+			await em.flush()
+
+			const stored = await orm.em.fork().findOneOrFail(Entry, { id: entry.id })
+			assert.equal(stored.heading, 'Dentist, renamed')
+			assert.deepEqual(stored.exdates, [1])
+		})
+	})
+
 	describe('source reconcile', () => {
 		it('survives a reconcile, since the stored sources are the provider', async () => {
 			const em = orm.em.fork()
@@ -114,7 +150,7 @@ describe('MitraCalendar', () => {
 			// A separate context, like the API, which loads the calendars afresh.
 			const listing = orm.em.fork()
 			const served = await listing.findOneOrFail(MitraCalendar, { id: integration.id })
-			await integration.apply(em, served.editableCopy())
+			await integration.apply(em, served.clone())
 			await em.flush()
 
 			assert.equal(await em.count(Source, { integrationId: integration.id }), 1, 'the calendar survived')
@@ -129,7 +165,7 @@ describe('MitraCalendar', () => {
 			await em.flush()
 
 			const served = await orm.em.fork().findOneOrFail(MitraCalendar, { id: integration.id })
-			const [copy] = [...served.editableCopy().sources]
+			const [copy] = [...served.clone().sources]
 			assert.equal(copy!.importing, false)
 			assert.equal(copy!.color, '#123456')
 		})

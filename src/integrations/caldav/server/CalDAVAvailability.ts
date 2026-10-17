@@ -50,7 +50,7 @@ export class CalDAVAvailability {
 	}
 
 	/**
-	 * Compares only the fields {@link eventOf} sets. Not `editEquals`: a row read from the database
+	 * Compares only the fields {@link eventOf} sets. Not `equals`: a row read from the database
 	 * holds `Date`s and nulls where a fresh event holds `DateTime`s and absent fields.
 	 */
 	static matches(event: Entry, desired: Entry): boolean {

@@ -224,11 +224,11 @@ describe('Relation', () => {
 			assert.equal(subject.relations!.isEmpty, true)
 		})
 
-		it('relations do NOT participate in editEquals: they have their own write path', () => {
+		it('relations do NOT participate in equals: they have their own write path', () => {
 			const a = entry()
 			const b = entry()
 			a.relateTo(RelationType.Parent, 'p')
-			assert.equal(a.editEquals(b), true)
+			assert.equal(a.equals(b), true)
 		})
 
 		it('replaces the collection rather than mutating it, so a shared snapshot keeps its value', () => {

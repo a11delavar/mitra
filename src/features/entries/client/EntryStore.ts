@@ -136,7 +136,7 @@ export class EntryStore extends Controller {
 			return true
 		}
 		const canonical = this.canonicalById.get(entry.id!)
-		return !canonical || !entry.editEquals(canonical)
+		return !canonical || !entry.equals(canonical)
 	}
 
 	private static tracks(entry: Entry) {
@@ -198,7 +198,7 @@ export class EntryStore extends Controller {
 						this.canonicalById.set(entry.id!, sent)
 					} else {
 						this.canonicalById.set(entry.id!, saved.clone())
-						if (entry.editEquals(sent)) {
+						if (entry.equals(sent)) {
 							entry.assign(saved)
 						}
 					}
@@ -274,7 +274,7 @@ export class EntryStore extends Controller {
 		const probe = entry.clone()
 		probe.status = canonical.status
 		probe.percentComplete = canonical.percentComplete
-		return probe.editEquals(canonical) && !entry.editEquals(canonical)
+		return probe.equals(canonical) && !entry.equals(canonical)
 	}
 
 	/** Whether an unscheduled occurrence just got its start. Only that one is being planned, so it goes without asking. */
@@ -307,7 +307,7 @@ export class EntryStore extends Controller {
 			entry.uid = saved.uid
 			this.workingById.set(entry.id!, entry)
 			this.canonicalById.set(entry.id!, saved.clone())
-			if (entry.editEquals(sent)) {
+			if (entry.equals(sent)) {
 				entry.assign(saved)
 			}
 		} else {

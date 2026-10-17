@@ -618,7 +618,7 @@ describe('Notion integration model', () => {
 
 	it('is a polymorphic editable copy carrying the credentials as held', () => {
 		const held = new Notion({ ...account(), credentials: { username: 'Acme Workspace', token: '' } })
-		const copy = held.editableCopy()
+		const copy = held.clone()
 
 		assert.ok(copy instanceof Notion)
 		assert.deepEqual(copy.credentials, { username: 'Acme Workspace', token: '' })

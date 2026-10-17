@@ -736,15 +736,6 @@ describe('CalDAV all-day serialization', () => {
 		})
 	})
 
-	describe('editableCopy', () => {
-		it('keeps the identity and the credentials as held', () => {
-			const copy = new CalDAV({ uri: 'https://dav/', credentials: { username: 'u', password: '' }, sources: [] }).editableCopy()
-			assert.ok(copy instanceof CalDAV)
-			assert.equal(copy.uri, 'https://dav/')
-			assert.deepEqual(copy.credentials, { username: 'u', password: '' })
-		})
-	})
-
 	describe('fetchObjects (resilient multiget)', () => {
 		const call = (client: unknown, urls: Array<string>): Promise<Array<{ url: string }>> => (new CalDAVSyncEngine() as any).fetchObjects(client, { url: 'https://cal/' }, urls)
 

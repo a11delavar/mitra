@@ -122,9 +122,9 @@ export class EntryOccurrence {
 	edit(patch: EntryPatch, scope: EntryOccurrenceChangeScope): EntryOccurrenceChange {
 		// Absent dates are the occurrence's own, never the entry's: its start would move the rule to its first occurrence.
 		const edited = new Entry({ type: this.recurringEntry!.type })
-			.apply(EntryPatch.of(this.recurringEntry!, EntryPatch.occurrence))
-			.apply(patchOf({ start: this.start ?? null, end: this.end ?? null, due: this.due ?? null }))
-			.apply(patch)
+			.patch(EntryPatch.of(this.recurringEntry!, EntryPatch.occurrence))
+			.patch(patchOf({ start: this.start ?? null, end: this.end ?? null, due: this.due ?? null }))
+			.patch(patch)
 		switch (scope) {
 			case 'this':
 				return this.detached(edited)
@@ -141,7 +141,7 @@ export class EntryOccurrence {
 	 */
 	private detached(edited: Entry) {
 		const entry = this.recurringEntry!
-		const standalone = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: entry.type }).apply(EntryPatch.of(edited, EntryPatch.occurrence))
+		const standalone = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: entry.type }).patch(EntryPatch.of(edited, EntryPatch.occurrence))
 		return new EntryOccurrenceChange({ entry, excluded: this.recurrenceId, created: standalone })
 	}
 
@@ -158,8 +158,8 @@ export class EntryOccurrence {
 			type: entry.type,
 			exdates: this.shifted(entry.occurrences.excluded.filter(ms => ms >= recurrenceId.getTime()), edited),
 		})
-			.apply(EntryPatch.of(edited, EntryPatch.occurrence))
-			.apply(patchOf({ recurrence: rule.asContinuation(consumed).rebased(...this.days(edited)) }))
+			.patch(EntryPatch.of(edited, EntryPatch.occurrence))
+			.patch(patchOf({ recurrence: rule.asContinuation(consumed).rebased(...this.days(edited)) }))
 		return new EntryOccurrenceChange({ entry, rewritten: this.truncated, created: continuation })
 	}
 
@@ -175,8 +175,8 @@ export class EntryOccurrence {
 			type: entry.type,
 			exdates: this.shifted(entry.occurrences.excluded, edited),
 		})
-			.apply(EntryPatch.of(edited, EntryPatch.occurrence))
-			.apply(patchOf({
+			.patch(EntryPatch.of(edited, EntryPatch.occurrence))
+			.patch(patchOf({
 				start: start ?? null,
 				end: start && edited.start && edited.end ? new DateTime(start.getTime() + edited.end.getTime() - edited.start.getTime()) : null,
 				// The due keeps the offset from the anchor the edit gave it.
@@ -230,8 +230,8 @@ export class EntryOccurrence {
 	private get truncated() {
 		const entry = this.recurringEntry!
 		return new Entry({ uid: entry.uid, type: entry.type })
-			.apply(EntryPatch.of(entry, EntryPatch.occurrence))
-			.apply(patchOf({ recurrence: entry.recurrence!.endingBefore(this.recurrenceId!) }))
+			.patch(EntryPatch.of(entry, EntryPatch.occurrence))
+			.patch(patchOf({ recurrence: entry.recurrence!.endingBefore(this.recurrenceId!) }))
 	}
 
 	/**
