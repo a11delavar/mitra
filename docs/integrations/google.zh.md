@@ -78,6 +78,8 @@ Google 限制了应用调用它的频率，所以 Mitra 大约每分钟同步一
 
 所有内容的同步方式都与 [CalDAV](caldav.md#what-syncs) 相同，只有条目之间的关联除外。Google 保存日程时会丢弃关联，所以 Mitra 不在 Google 日历中提供关联功能。
 
+Google 日历中的[附件](../attachments.md)是你在 Google 日历中附加的 Google 云端硬盘文件。Mitra 会显示它们，每个都在云端硬盘中打开，但无法添加或移除：Google 只保留云端硬盘文件，会丢弃其他应用添加的附件。
+
 你在 Google 日历中标为忙碌的[可用时间](../availability.md)，会以忙碌日程的形式添加到这个日历中，让别人看到这段时间已被占用。具体方式与 [CalDAV](caldav.md#busy-availability) 中的说明相同。
 
 ## 你的 Google 令牌

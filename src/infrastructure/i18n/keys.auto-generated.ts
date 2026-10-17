@@ -32,6 +32,7 @@ declare global {
 		"${count:pluralityNumber} have participants": unknown
 		"${count:pluralityNumber} improvements": unknown
 		"${count:pluralityNumber} landed anyway and could not be taken back. Delete them in ${name} by hand.": unknown
+		"${count:pluralityNumber} lose their attachments": unknown
 		"${count:pluralityNumber} lose their cancelled status": unknown
 		"${count:pluralityNumber} lose their description": unknown
 		"${count:pluralityNumber} lose their due date": unknown
@@ -64,6 +65,7 @@ declare global {
 		"${n:number}rd": unknown
 		"${n:number}st": unknown
 		"${n:number}th": unknown
+		"${name} is larger than the ${limit} limit": unknown
 		"${names} and ${count:pluralityNumber} more": unknown
 		"${percent} complete": unknown
 		"${reason}, kept here": unknown
@@ -79,6 +81,7 @@ declare global {
 		"Account options": unknown
 		"Add ${count:pluralityNumber} entries": unknown
 		"Add ${name} to a calendar": unknown
+		"Add attachment": unknown
 		"Add Availability": unknown
 		"Add integration": unknown
 		"Add Integration": unknown
@@ -119,6 +122,7 @@ declare global {
 		"Atlassian Account": unknown
 		"Atlassian Account E-mail": unknown
 		"Atlassian API Token": unknown
+		"Attachments": unknown
 		"Automatic (${region})": unknown
 		"Availability": unknown
 		"Availability leaves the week view. It stays in its calendars, and busy availability still shows as busy to others.": unknown
@@ -291,6 +295,7 @@ declare global {
 		"Google.SharedCalendarsHint": unknown
 		"GoToDate.Keywords": unknown
 		"GoToToday.Keywords": unknown
+		"Has attachments": unknown
 		"Hide availability": unknown
 		"Hide calendar": unknown
 		"Hide column": unknown
@@ -454,6 +459,7 @@ declare global {
 		"Reminders you add are always saved; this decides whether this browser may also alert you.": unknown
 		"Remove": unknown
 		"Remove all": unknown
+		"Remove attachment": unknown
 		"Remove every participant": unknown
 		"Remove participant": unknown
 		"Remove relationship": unknown
@@ -550,6 +556,7 @@ declare global {
 		"This browser will show your reminders.": unknown
 		"this device": unknown
 		"This entry": unknown
+		"This file could not be uploaded": unknown
 		"This relationship could not be saved": unknown
 		"This relationship is not possible": unknown
 		"Time": unknown
@@ -581,6 +588,7 @@ declare global {
 		"Untitled": unknown
 		"Update available": unknown
 		"Update available: ${version}": unknown
+		"Uploading…": unknown
 		"Username": unknown
 		"Username (optional)": unknown
 		"View": unknown

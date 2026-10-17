@@ -3,6 +3,7 @@ import { converter } from '@a11d/converter'
 import { model } from '../../infrastructure/model/model.js'
 import { Entity, identity, equality } from '../../infrastructure/model/Entity.js'
 import { entity, primaryKey, property, enum as enumType, unique, manyToOne } from '../../infrastructure/model/orm.js'
+import { children } from '../../infrastructure/model/children.js'
 import { EntryType, type EntryTypeValue } from './EntryType.js'
 import { TaskStatus } from './TaskStatus.js'
 import { Transparency } from './Transparency.js'
@@ -11,6 +12,10 @@ import { EntryTimeZone } from './EntryTimeZone.js'
 import { Source } from '../sources/Source.js'
 import { Recurrence } from '../recurrence/Recurrence.js'
 import { Participants, type ParticipantRole, type Participant } from '../participants/Participant.js'
+import { EntryFiles } from './EntryFiles.js'
+import { EntryFile } from './EntryFile.js'
+import { MarkdownLinks } from '../../design/MarkdownLinks.js'
+import { EntryFileType } from './EntryFileType.js'
 import { type Relation, type RelationInit } from '../relations/Relation.js'
 import { type RelationType } from '../relations/RelationType.js'
 import { RelationEdge } from '../relations/RelationEdge.js'
@@ -94,6 +99,7 @@ export class Entry extends Entity implements Validatable<Calendar> {
 		if (this._type.isAvailability) {
 			this.participants = undefined
 			this.reminders = undefined
+			this.attachments = undefined
 		}
 	}
 
@@ -265,6 +271,43 @@ export class Entry extends Entity implements Validatable<Calendar> {
 	clearParticipants() {
 		this.participants = undefined
 	}
+
+	/** The files it carries, each as what it is to the entry (`type`) and in its place (`rank`); a list set is saved as their rows. */
+	// `EntryFiles` is read lazily: it imports `EntryFile`, which imports this module, so it may not be defined yet when this class is.
+	@equality()
+	@converter({ construct: (value: ReadonlyArray<object> | undefined) => EntryFiles.of(value), deconstruct: (files: EntryFiles) => EntryFiles.converter.deconstruct!(files, {}) })
+	@children(() => EntryFile, file => file.entry, { eager: true, orphanRemoval: true, orderBy: { rank: 'asc' }, as: () => EntryFiles, saves: true })
+	files!: EntryFiles
+
+	/** Its attachments among {@link files}; setting them replaces those and leaves its other files alone. */
+	get attachments(): EntryFiles { return this.files.ofType(EntryFileType.Attachment) }
+
+	/** Takes `file` off the entry, with what the description showed of it: a link or picture of a file no longer here would dangle. */
+	detach(file: EntryFile) {
+		this.attachments = this.attachments.without(file)
+		this.description = MarkdownLinks.without(this.description, href => file.isAt(href))
+	}
+
+	/** Whether the description embeds `file`, as a picture or a link. */
+	embeds(file: EntryFile) {
+		return MarkdownLinks.mentions(this.description, href => file.isAt(href))
+	}
+
+	/** Embeds `file` at the end of the description, a picture by its kind, else a link, by the public URL other apps read; once. */
+	embed(file: EntryFile, origin: string) {
+		if (this.embeds(file)) {
+			return
+		}
+		const reference = `${file.mimeType?.type === 'image' ? '!' : ''}[${file.displayName}](${file.url(origin)})`
+		this.description = [this.description?.trim(), reference].filter(Boolean).join('\n\n')
+	}
+
+	/** The links the description holds to anywhere but the entry's own files, which the attachments row already shows. */
+	get links() {
+		return MarkdownLinks.of(this.description).filter(link => !this.files.at(link.href))
+	}
+
+	set attachments(value: EntryFiles | undefined) { this.files = this.files.replacing(EntryFileType.Attachment, value) }
 
 	@property({ type: 'string', nullable: true }) uid?: string
 
@@ -515,6 +558,9 @@ export class Entry extends Entity implements Validatable<Calendar> {
 		}
 		if (this.participants?.length && !ownership.holds('participants')) {
 			yield new ValidationError('This calendar does not support participants', ['participants'])
+		}
+		if (this.attachments.length && !ownership.holds('attachments')) {
+			yield new ValidationError('This calendar does not support attachments', ['attachments'])
 		}
 		if (this.transparency === Transparency.Free && !ownership.holds('transparency')) {
 			yield new ValidationError('This calendar cannot mark an entry as free', ['transparency'])

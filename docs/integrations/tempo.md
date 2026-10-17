@@ -70,7 +70,7 @@ To open the issue in Jira, choose **Open in Jira** in the editor's **⋯** menu.
 
 ## What a worklog can't hold
 
-A worklog is a stretch of time on one day, booked on one issue. So a Tempo calendar holds only timed entries: no all-day entries, repeats, reminders, location, participants, relationships, busy or free, visibility or [availability](../availability.md). Mitra hides these fields on worklogs.
+A worklog is a stretch of time on one day, booked on one issue. So a Tempo calendar holds only timed entries: no all-day entries, repeats, reminders, location, participants, [attachments](../attachments.md), relationships, busy or free, visibility or [availability](../availability.md). Mitra hides these fields on worklogs.
 
 ## Troubleshooting
 

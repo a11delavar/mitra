@@ -544,25 +544,131 @@ export async function around(page: Devtools, find: string, width: number, paddin
  */
 export async function bringIntoView(page: Devtools, elements: string, room = 24) {
 	await page.evaluate(`
-		const main = document.querySelector('mitra-page-calendar main').getBoundingClientRect()
-		const elements = ${elements}
-		const shown = element => element.getBoundingClientRect().x >= main.x && element.getBoundingClientRect().right + ${room} <= innerWidth
-		const next = elements.find(element => element.getBoundingClientRect().x >= main.x)
+		const main = document.querySelector('mitra-page-calendar main')
+		const bounds = main.getBoundingClientRect()
+		const elements = ${elements}.filter(element => main.contains(element))
+		const shown = element => element.getBoundingClientRect().x - ${room} >= bounds.x && element.getBoundingClientRect().right + ${room} <= bounds.right
+		const [next] = elements
 		if (!elements.some(shown) && next) {
-			document.querySelector('mitra-days').scrollBy({ left: next.getBoundingClientRect().right + ${room} - innerWidth })
+			const { x, right } = next.getBoundingClientRect()
+			document.querySelector('mitra-days').scrollBy({ left: right + ${room} > bounds.right ? right + ${room} - bounds.right : x - ${room} - bounds.x })
 			await new Promise(resolve => setTimeout(resolve, 600))
 		}
 	`)
 }
 
-/** Opens an entry's editor from its chip on screen; the week also renders its neighbours off-screen. */
+/**
+ * An entry's chip on screen, by its heading; the week also renders its neighbours off-screen. Only the calendar's own count: in
+ * a right-to-left page the sidebar's hidden panels lie across the calendar, holding chips of their own.
+ */
+export const chipOf = (heading: string) => `[...document.querySelectorAll('mitra-entry-segment')].find(segment => {
+	const main = document.querySelector('mitra-page-calendar main')
+	const { x, right } = segment.getBoundingClientRect(), bounds = main.getBoundingClientRect()
+	return segment.textContent.includes(${JSON.stringify(heading)}) && main.contains(segment) && x >= bounds.x && right <= bounds.right
+})`
+
+/** Opens an entry's editor from its chip on screen. */
 export async function openChip(page: Devtools, heading: string) {
 	await bringIntoView(page, `[...document.querySelectorAll('mitra-entry-segment')].filter(segment => segment.textContent.includes(${JSON.stringify(heading)}))`)
-	await click(page, `[...document.querySelectorAll('mitra-entry-segment')].find(segment => {
-		const { x, right } = segment.getBoundingClientRect()
-		return segment.textContent.includes(${JSON.stringify(heading)}) && x >= document.querySelector('mitra-page-calendar main').getBoundingClientRect().x && right <= innerWidth
-	})`)
+	await click(page, chipOf(heading))
 	await editorOpened(page, heading)
+}
+
+/**
+ * The architecture the sample task drafts, sketched by hand on a transparent ground, so the guide's picture says something and
+ * sits on the editor in either theme: mid-tone ink and tinted boxes read on light and dark alike.
+ */
+function sketchPng(): Promise<Buffer> {
+	const ink = '#5b8def', accent = '#e8774a', note = '#8c96a8'
+	const font = `font-family="Segoe UI, Helvetica, Arial, sans-serif"`
+	// A box drawn by hand: each side bows a little, the same way every time.
+	const box = (x: number, y: number, w: number, h: number, label: string, sub?: string) => `
+		<path d="M${x + 6},${y + 1} Q${x + w / 2},${y - 3} ${x + w - 5},${y + 2} Q${x + w + 2},${y + h / 2} ${x + w - 3},${y + h - 2} Q${x + w / 2},${y + h + 3} ${x + 4},${y + h - 1} Q${x - 2},${y + h / 2} ${x + 6},${y + 1} Z"
+			fill="${ink}" fill-opacity="0.12" stroke="${ink}" stroke-width="3" stroke-linejoin="round"/>
+		<text x="${x + w / 2}" y="${y + (sub ? h / 2 - 2 : h / 2 + 9)}" text-anchor="middle" ${font} font-size="26" font-weight="600" fill="${ink}">${label}</text>
+		${sub ? `<text x="${x + w / 2}" y="${y + h / 2 + 26}" text-anchor="middle" ${font} font-size="19" fill="${note}">${sub}</text>` : ''}`
+	const database = (x: number, y: number, w: number, label: string) => `
+		<path d="M${x},${y + 14} C${x},${y - 6} ${x + w},${y - 6} ${x + w},${y + 14} L${x + w + 1},${y + 76} C${x + w},${y + 96} ${x},${y + 96} ${x - 1},${y + 76} Z"
+			fill="${ink}" fill-opacity="0.12" stroke="${ink}" stroke-width="3" stroke-linejoin="round"/>
+		<path d="M${x},${y + 14} C${x},${y + 32} ${x + w},${y + 32} ${x + w},${y + 14}" fill="none" stroke="${ink}" stroke-width="3"/>
+		<text x="${x + w / 2}" y="${y + 66}" text-anchor="middle" ${font} font-size="24" font-weight="600" fill="${ink}">${label}</text>`
+	const arrow = (x0: number, y0: number, x1: number, y1: number, bow = 10) => {
+		const angle = Math.atan2(y1 - y0, x1 - x0)
+		const head = (turn: number) => `${x1 - 15 * Math.cos(angle + turn)},${y1 - 15 * Math.sin(angle + turn)}`
+		return `
+		<path d="M${x0},${y0} Q${(x0 + x1) / 2 - bow * Math.sin(angle)},${(y0 + y1) / 2 + bow * Math.cos(angle)} ${x1},${y1}" fill="none" stroke="${accent}" stroke-width="3" stroke-linecap="round"/>
+		<path d="M${head(0.45)} L${x1},${y1} L${head(-0.45)}" fill="none" stroke="${accent}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`
+	}
+	const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560">
+		${box(20, 230, 170, 100, 'Clients', 'web, mobile')}
+		${box(270, 230, 170, 100, 'Gateway', 'auth, limits')}
+		${box(530, 70, 180, 84, 'Accounts')}
+		${box(530, 238, 180, 84, 'Orders')}
+		${box(530, 406, 180, 84, 'Billing')}
+		${database(800, 150, 170, 'Postgres')}
+		${box(795, 390, 180, 100, 'Queue', 'events')}
+		${arrow(192, 280, 266, 280, 6)}
+		${arrow(442, 262, 526, 116, -8)}
+		${arrow(442, 280, 526, 280, 6)}
+		${arrow(442, 298, 526, 446, 8)}
+		${arrow(712, 112, 796, 186, -6)}
+		${arrow(712, 270, 796, 222, 6)}
+		${arrow(712, 300, 792, 418, 8)}
+		${arrow(712, 448, 790, 442, 4)}
+		<text x="620" y="540" text-anchor="middle" ${font} font-size="20" font-style="italic" fill="${note}">each service scales on its own</text>
+	</svg>`
+	return sharp(Buffer.from(svg)).png().toBuffer()
+}
+
+/** What the attachments guide shows on an entry: a document, a sketch and a spreadsheet, each of a size its kind has. */
+export const sampleAttachments: ReadonlyArray<SampleAttachment> = [
+	{ name: 'Requirements.pdf', type: 'application/pdf', size: 1_420_000 },
+	{ name: 'Whiteboard sketch.png', type: 'image/png', bytes: sketchPng },
+	{ name: 'Load estimates.xlsx', type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', size: 48_000 },
+]
+
+/** A file of the guide: filler bytes of a `size`, as the store keeps one copy of equal bytes, or the real `bytes` of a picture. */
+type SampleAttachment = { name: string, type: string } & ({ size: number, bytes?: never } | { bytes: () => Promise<Buffer>, size?: never })
+
+/** The descriptions the samples had before a capture embedded a file in them, to put back. */
+const descriptionsBefore = new Map<string, string>()
+
+/**
+ * Sets the files of the sample entry headed `heading` as the editor does: each uploaded, then the entry saved with them, and the
+ * one named `embed` shown in the description as its button does. An empty list takes them away again and puts the description
+ * back, so no other capture shows them.
+ */
+export async function attachToSample(origin: string, heading: string, files: ReadonlyArray<SampleAttachment>, embed?: string) {
+	const [entry] = await (await fetch(`${origin}api/entries/search?q=${encodeURIComponent(heading)}`)).json() as Array<{ id: string, description?: string }>
+	if (!entry) {
+		throw new Error(`No sample entry "${heading}"`)
+	}
+	const uploaded = await Promise.all(files.map(async (file, index) => (await fetch(`${origin}api/files`, {
+		method: 'POST',
+		headers: { 'content-type': file.type, 'content-disposition': `attachment; filename="${file.name}"` },
+		body: file.bytes ? new Uint8Array(await file.bytes()) : new Uint8Array(file.size).fill(index + 1),
+	})).json() as Promise<object>))
+	const saved = await fetch(`${origin}api/entries/${entry.id}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ files: uploaded }) })
+	if (!saved.ok) {
+		throw new Error(`Attaching to "${heading}" answered ${saved.status}: ${await saved.text()}`)
+	}
+	const { files: held } = await saved.json() as { files?: Array<{ id: string, name: string }> }
+	const shown = embed ? held?.find(file => file.name === embed) : undefined
+	if (embed && !shown) {
+		throw new Error(`No attachment "${embed}" on "${heading}" to embed`)
+	}
+	const description = shown
+		? [entry.description, `![${shown.name}](${origin}api/files/${shown.id}/${encodeURIComponent(shown.name)})`].filter(Boolean).join('\n\n')
+		: files.length ? undefined : descriptionsBefore.get(entry.id)
+	if (description !== undefined) {
+		if (shown) {
+			descriptionsBefore.set(entry.id, entry.description ?? '')
+		}
+		const written = await fetch(`${origin}api/entries/${entry.id}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ description }) })
+		if (!written.ok) {
+			throw new Error(`Writing the description of "${heading}" answered ${written.status}: ${await written.text()}`)
+		}
+	}
 }
 
 /** Opens an entry's editor by searching for it in the command palette, wherever it is dated. */
@@ -656,7 +762,8 @@ export async function aroundEditorWith(page: Devtools, hanging: string, padding:
 	if (!rect) {
 		throw new Error(`Nothing open beside the editor: ${hanging}`)
 	}
-	const width = details.surface.width
+	// As wide as both need, at least the surface's width: an editor beside its chip spans more than the editor.
+	const width = Math.min(viewport.width, Math.max(details.surface.width, Math.round(rect.width + padding * 2)))
 	const height = Math.min(viewport.height, Math.round(rect.height + padding * 2))
 	return {
 		x: Math.min(viewport.width - width, Math.max(0, Math.round(rect.x + rect.width / 2 - width / 2))),

@@ -109,6 +109,13 @@ Cliquer sur le nom ouvre la boîte de dialogue **À propos**, qui indique la ver
 | --- | --- | --- |
 | `MITRA_PHOTON_URL` | `https://photon.komoot.io` | Le [géocodeur Photon](location.md) derrière le champ de lieu. Faites-la pointer vers votre propre instance Photon plutôt que vers celle, publique, de komoot. |
 
+### Pièces jointes
+
+| Variable | Valeur par défaut | Description |
+| --- | --- | --- |
+| `MITRA_FILE_MAX_SIZE` | `25M` | Le plus gros fichier qu'une personne peut [joindre](attachments.md) à une entrée, en octets ou avec le suffixe `k`, `M` ou `G`. Mettez-la à `0` pour désactiver l'ajout de fichiers. |
+| `MITRA_FILE_QUOTA` | *(non définie)* | La quantité totale de fichiers joints que chaque personne peut stocker, écrite de la même façon. Sans elle, il n'y a pas de limite. |
+
 ### Google Calendar
 
 Définissez les deux pour permettre de connecter [Google Calendar](integrations/google.md). Ne définir que l'ID empêche Mitra de démarrer.

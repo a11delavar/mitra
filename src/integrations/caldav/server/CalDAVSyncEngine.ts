@@ -13,6 +13,7 @@ import { CalDAV } from '../CalDAV.js'
 import { EntryRelations } from '../../../features/relations/EntryRelations.js'
 import { CalDAVAvailability } from './CalDAVAvailability.js'
 import { CalDAVConnectError, CalDAVRefusal } from './CalDAVConnectError.js'
+import { instanceOrigin } from '../../../infrastructure/http/instanceUrl.js'
 
 const logger = createLogger('CalDAV')
 
@@ -404,7 +405,8 @@ export class CalDAVSyncEngine implements SyncEngine {
 			throw new Error('Entry must have a URL and raw data to be updated via CalDAV')
 		}
 
-		const keys: Array<keyof Entry> = (['heading', 'description', 'location', 'color', 'start', 'end', 'due', 'estimate', 'status', 'percentComplete', 'transparency', 'visibility', 'allDay', 'timeZone', 'reminders', 'participants'] as const)
+		const keys: Array<keyof Entry> = (['heading', 'description', 'location', 'color', 'start', 'end', 'due', 'estimate', 'status', 'percentComplete', 'transparency', 'visibility', 'allDay', 'timeZone', 'reminders', 'participants', 'attachments'] as const)
+			.filter(key => key !== 'attachments' || integration.writesAttachments)
 			.filter(key => !Object[equals](existing[key], incoming[key]))
 
 		const recurrenceChanged = !Recurrence.equal(existing.recurrence, incoming.recurrence)
@@ -501,6 +503,10 @@ export class CalDAVSyncEngine implements SyncEngine {
 				CalDAV.writeParticipants(component, incoming.participants ?? null)
 			}
 
+			if (keys.includes('attachments')) {
+				CalDAV.writeAttachments(component, incoming.attachments, instanceOrigin())
+			}
+
 			if (relationsChanged) {
 				CalDAV.writeRelations(component, incoming.relations)
 			}
@@ -592,6 +598,9 @@ export class CalDAVSyncEngine implements SyncEngine {
 		CalDAV.writeReminders(component, entry.reminders)
 		if (entry.participants?.length) {
 			CalDAV.writeParticipants(component, entry.participants)
+		}
+		if (integration.writesAttachments) {
+			CalDAV.writeAttachments(component, entry.attachments, instanceOrigin())
 		}
 		if (integration.ownership.ownerOf('relations') === 'upstream') {
 			CalDAV.writeRelations(component, entry.relations)

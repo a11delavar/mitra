@@ -109,6 +109,13 @@ Al hacer clic en el nombre se abre el diálogo **Acerca de**, que muestra la ver
 | --- | --- | --- |
 | `MITRA_PHOTON_URL` | `https://photon.komoot.io` | El [geocodificador Photon](location.md) que hay detrás del campo de ubicación. Apúntala a tu propia instancia de Photon en lugar de la pública de komoot. |
 
+### Archivos adjuntos
+
+| Variable | Valor predeterminado | Descripción |
+| --- | --- | --- |
+| `MITRA_FILE_MAX_SIZE` | `25M` | El archivo más grande que alguien puede [adjuntar](attachments.md) a una entrada, en bytes o con el sufijo `k`, `M` o `G`. Ponla en `0` para desactivar los archivos adjuntos. |
+| `MITRA_FILE_QUOTA` | *(sin definir)* | Cuánto puede guardar cada persona en archivos adjuntos en total, escrito de la misma forma. Sin ella, no hay límite. |
+
 ### Google Calendar
 
 Define ambas para que la gente pueda conectar [Google Calendar](integrations/google.md). Si defines solo el ID, Mitra no arranca.

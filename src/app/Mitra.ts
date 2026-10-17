@@ -47,6 +47,7 @@ import { RepeatField } from '../features/recurrence/client/RepeatField.js'
 import { LocationField } from '../features/locations/client/LocationField.js'
 import { RemindersField } from '../features/reminders/client/RemindersField.js'
 import { ParticipantsField } from '../features/participants/client/ParticipantsField.js'
+import { AttachmentsField } from '../features/entries/client/AttachmentsField.js'
 import { RelationsField } from '../features/relations/client/RelationsField.js'
 import { TimeZoneHeader } from '../features/time/client/TimeZoneHeader.js'
 import '../features/time/client/TimeZonePicker.js'
@@ -262,6 +263,7 @@ export class Mitra extends Application {
 			${LocationField.styles}
 			${RemindersField.styles}
 			${ParticipantsField.styles}
+			${AttachmentsField.styles}
 			${RelationsField.styles}
 			${TimeZoneHeader.styles}
 		`

@@ -48,6 +48,7 @@ Tudo o que o Mitra guarda sobre uma entrada é sincronizado, até onde o seu ser
 - O estado e o progresso de uma tarefa.
 - [Participantes](../participants.md). Seu servidor envia os convites e recolhe as respostas.
 - [Subtarefas](../subtasks.md) e [dependências](../dependencies.md).
+- [Anexos](../attachments.md). Outros apps no mesmo calendário veem os arquivos, e o Mitra mostra os que eles adicionaram.
 
 Uma entrada recorrente continua sendo uma única série no servidor. Quando você altera uma única ocorrência, o Mitra pergunta se você quer dizer **Esta entrada**, **Esta e as seguintes entradas** ou **Todas as entradas**, e altera a série de acordo.
 

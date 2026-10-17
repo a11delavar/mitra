@@ -1,7 +1,7 @@
 ---
 title: IA, allegati, regioni e lingue
 ---
-Mitra 0.7 si adatta al tuo modo di vivere. Le date seguono il tuo paese. Il fuso orario di casa viaggia con te. E ogni versione si racconta direttamente nell'app.
+Mitra 0.7 ti permette di allegare file alle tue voci, scrive le date nel formato della tua regione, tiene con te il fuso orario di casa quando viaggi e mostra cosa è cambiato direttamente nell'app. Inoltre trascina, ingrandisce e carica più velocemente, e porta molti piccoli miglioramenti e correzioni dalla 0.6.
 
 ## IA
 Stiamo esplorando come l'IA possa aiutarti a pianificare il tuo tempo, in Mitra stesso e dagli assistenti che già usi.
@@ -32,7 +32,19 @@ Anche la scelta del fuso orario è stata ridisegnata. I fusi che condividono nom
 Documentazione: [Fusi orari](../../docs/time-zones.md)
 
 ## Allegati
-Allega file a una voce. I calendari che possono conservarli, CalDAV per primo, li portano con sé.
+Ora puoi allegare file a una voce, per esempio un biglietto, un ordine del giorno o la foto di una lavagna. Aggiungili con la graffetta nell'editor della voce, oppure trascinali sulla voce aperta. Fai clic su un file per aprirlo. Puoi anche aggiungere un file alla descrizione, dove un'immagine compare come immagine e ogni altro file come link. Se poi rimuovi il file, Mitra lo toglie anche dalla descrizione.
+
+Gli allegati si sincronizzano con il tuo calendario. In un calendario CalDAV, le altre app che usano lo stesso calendario vedono i file che alleghi, e Mitra mostra i file che hanno allegato loro. In Google Calendar, Mitra mostra i file di Google Drive allegati a un evento, ma non può aggiungerne o toglierne, perché Google conserva solo i file di Drive. Le immagini di una pagina Notion ora compaiono nella descrizione dell'attività.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="attachments-dark.webp">
+	<img src="attachments-light.webp" alt="Un'attività aperta accanto alla sua voce nella settimana, la cui graffetta mostra che porta dei file: l'editor elenca un PDF, uno schizzo e un foglio di calcolo sopra la descrizione, che mostra lo schizzo">
+</picture>
+
+> [!NOTE]
+> Mitra salva i file che alleghi nella sua cartella dei dati, quindi facendo il backup di quella cartella salvi anche i tuoi file. Puoi limitare la dimensione di un singolo file con `MITRA_FILE_MAX_SIZE`, e quanto può salvare ogni persona in totale con `MITRA_FILE_QUOTA`.
+
+Documentazione: [Allegati](../../docs/attachments.md)
 
 ## Note di rilascio nell'app
 Ora puoi vedere cosa è cambiato senza lasciare Mitra. La finestra Informazioni mostra ogni versione come fa il sito. Contiene le note e le immagini della versione che usi, insieme alle correzioni arrivate dopo. C'è anche ogni commit, ripiegato finché non ti serve.

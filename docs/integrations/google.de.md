@@ -76,7 +76,9 @@ Ein Kalender, der mit dir als **See all event details** geteilt wurde, ist in Mi
 
 ## Was synchronisiert wird
 
-Alles wird synchronisiert wie bei [CalDAV](caldav.md#what-syncs), außer den Beziehungen zwischen Einträgen. Google verwirft sie aus seiner Kopie eines Termins, deshalb bietet Mitra sie in Google-Kalendern nicht an.
+Alles wird synchronisiert wie bei [CalDAV](caldav.md#what-syncs), außer den Beziehungen zwischen Einträgen, die Google aus seiner Kopie eines Termins verwirft. Deshalb bietet Mitra sie in Google-Kalendern nicht an.
+
+[Anhänge](../attachments.md) in einem Google-Kalender sind die Google-Drive-Dateien, die du in Google Kalender anhängst. Mitra zeigt sie an, jede öffnet sich in Drive, kann aber keine hinzufügen oder entfernen: Google behält nur Drive-Dateien und verwirft einen Anhang, den eine andere App hinzufügt.
 
 [Verfügbarkeit](../availability.md), die du in einem Google-Kalender als beschäftigt markierst, wird diesem Kalender als Beschäftigt-Termin hinzugefügt, sodass andere die Zeit als belegt sehen. Das funktioniert wie bei [CalDAV](caldav.md#busy-availability) beschrieben.
 

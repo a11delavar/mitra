@@ -16,6 +16,7 @@ import { type ReleaseFolder } from '../../features/about/Release.js'
 import { type UserSettings } from '../../features/settings/UserSettings.js'
 import { type EntryOccurrenceChangeScope } from '../../features/recurrence/EntryOccurrenceChange.js'
 import { type EntryOccurrence } from '../../features/recurrence/EntryOccurrence.js'
+import { EntryFile } from '../../features/entries/EntryFile.js'
 
 @apiError()
 export class ApiError extends HttpError {
@@ -57,6 +58,8 @@ export interface InstanceMeta {
 	demo?: boolean
 	releaseUrl?: string
 	update?: { version: string, url: string, commits?: number }
+	/** The largest file in bytes (0 takes no uploads), and each account's total. */
+	files?: { maxSize: number, quota?: number }
 }
 
 let meta: InstanceMeta | undefined
@@ -287,6 +290,24 @@ export function updateEvent(entry: Entry, fields: ReadonlyArray<EntryPatchField>
 
 export function deleteEvent(id: string) {
 	return Api.delete(`/entries/${id}`)
+}
+
+/** Stores a file for an entry to refer to. The body is the file itself, its type and name on the standard headers, so it bypasses the JSON transport. */
+export async function uploadFile(file: globalThis.File) {
+	const response = await fetch(Api.url + '/files', {
+		method: 'POST',
+		credentials: 'include',
+		headers: {
+			'accept': 'application/json',
+			'content-type': file.type || 'application/octet-stream',
+			'content-disposition': `attachment; filename*=UTF-8''${encodeURIComponent(file.name)}`,
+		},
+		body: file,
+	})
+	if (response.status >= 400) {
+		await new ApiError(response).throw()
+	}
+	return EntryFile.from(await response.json())!
 }
 
 /** Location autocomplete query via backend Photon proxy. */

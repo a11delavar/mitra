@@ -39,7 +39,7 @@ The Date property is where Mitra places the task, so it's the task's schedule. I
 
 The title, the status and the date sync both ways, as all-day dates or with times. Times show in your own time zone. A task without a date waits in the **Unscheduled** list of the [Planning tab](../planning.md#the-planning-tab).
 
-A task's description is the body of its Notion page, written as Markdown, including to-do lists and callouts. When you edit the description in Mitra, Mitra replaces only what the description shows. Images, embeds, sub-pages and synced blocks stay in Notion as they are, and Mitra doesn't show them.
+A task's description is the body of its Notion page, written as Markdown, including to-do lists, callouts and pictures. When you edit the description in Mitra, Mitra replaces only what the description shows. Embeds, sub-pages and synced blocks stay in Notion as they are, and Mitra doesn't show them. A picture you added in Notion is shown in Mitra and stays in Notion as it is; after an edit from Mitra it moves above the text, as Notion lets other apps add text only after what it keeps.
 
 Relation properties that link tasks within the same database become links in Mitra, both ways. A property called "Parent task" or "Sub-tasks" makes [subtasks](../subtasks.md), one called "Blocked by" or "Depends on" makes [dependencies](../dependencies.md), and other relations appear under their own name. Relations to other databases aren't shown.
 

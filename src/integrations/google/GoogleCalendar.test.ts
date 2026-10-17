@@ -50,6 +50,15 @@ describe('GoogleCalendar', () => {
 		})
 	})
 
+	describe('attachments', () => {
+		it('holds them, as Google sends its Drive files, but takes none: Google drops any ATTACH a client writes (probed 2026-10-17)', () => {
+			const account = new GoogleCalendar({ credentials: { username: 'someone@gmail.com', refreshToken: 'grant-1' } })
+			assert.equal(account.ownership.holds('attachments'), true)
+			assert.equal(account.capabilities.entries.attach, false)
+			assert.equal(account.capabilities.entries.edit, true)
+		})
+	})
+
 	describe('syncInterval', () => {
 		it('polls more politely than the default cadence (Google quotas)', () => {
 			assert.ok(account().syncInterval >= 60_000)

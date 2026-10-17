@@ -25,6 +25,30 @@ export class MarkdownLinks {
 		return [...links].map(([href, words]) => ({ href, words }))
 	}
 
+	/** Whether any link or image goes to a destination `matches`. */
+	static mentions(markdown: string | null | undefined, matches: (href: string) => boolean): boolean {
+		let found = false
+		MarkdownLinks.marked.walkTokens(MarkdownLinks.marked.lexer(markdown ?? ''), token => {
+			found ||= (token.type === 'link' || token.type === 'image') && matches((token as Tokens.Link | Tokens.Image).href)
+		})
+		return found
+	}
+
+	/** The text without the links and images whose destination is `refused`, words and all, blank lines they leave collapsed. */
+	static without<T extends string | null | undefined>(markdown: T, refused: (href: string) => boolean): T {
+		const raws = new Set<string>()
+		MarkdownLinks.marked.walkTokens(MarkdownLinks.marked.lexer(markdown ?? ''), token => {
+			if ((token.type === 'link' || token.type === 'image') && refused((token as Tokens.Link | Tokens.Image).href)) {
+				raws.add(token.raw)
+			}
+		})
+		if (!raws.size) {
+			return markdown
+		}
+		// An image's text holds its link's, so the longer goes first.
+		return [...raws].sort((a, b) => b.length - a.length).reduce<string>((text, raw) => text.replaceAll(raw, ''), markdown!).replace(/\n{3,}/g, '\n\n').trim() as T
+	}
+
 	/** Whether the link shows its own address, which the link component then replaces with its destination's words. */
 	static isBare(link: Pick<Tokens.Link, 'raw' | 'href' | 'text'>) {
 		return !link.raw.startsWith('[') || link.text === link.href

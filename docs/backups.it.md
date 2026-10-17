@@ -6,7 +6,7 @@ description: Tutto ciò che Mitra conserva sta in una sola cartella. Fanne il ba
 Mitra tiene tutto in una sola cartella: `/app/data` dentro il container, cioè `~/mitra` sull'host se hai seguito [Per iniziare](README.md#install-mitra). Fai il backup di quella cartella e hai fatto il backup dell'intera istanza. Non c'è nessun server di database da esportare e nessun file di configurazione da cercare.
 
 > [!CAUTION]
-> Per una parte di ciò che tieni in Mitra, questa cartella è l'unica copia. Ogni voce di un [calendario Mitra](integrations/mitra.md) vive qui e da nessun'altra parte. Lo stesso vale per i tuoi account e le sessioni di accesso, le credenziali degli account collegati, le tue impostazioni, i colori, l'ordine e i nomi dei calendari, la tua [disponibilità](availability.md), l'ordine delle attività, alcuni collegamenti tra le voci e la chiave da cui dipendono i [promemoria](reminders.md) dei tuoi dispositivi. Se perdi la cartella, un provider può restituirti i suoi eventi e le sue attività, ma nient'altro.
+> Per una parte di ciò che tieni in Mitra, questa cartella è l'unica copia. Ogni voce di un [calendario Mitra](integrations/mitra.md) vive qui e da nessun'altra parte. Lo stesso vale per i tuoi account e le sessioni di accesso, le credenziali degli account collegati, le tue impostazioni, i colori, l'ordine e i nomi dei calendari, la tua [disponibilità](availability.md), l'ordine delle attività, i [file allegati](attachments.md) alle voci, alcuni collegamenti tra le voci e la chiave da cui dipendono i [promemoria](reminders.md) dei tuoi dispositivi. Se perdi la cartella, un provider può restituirti i suoi eventi e le sue attività, ma nient'altro.
 
 ## Fai il backup
 

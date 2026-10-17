@@ -325,7 +325,7 @@ export class EntrySegmentComponent extends Component {
 							}
 						}
 
-						> :is(.due, .recurring) {
+						> :is(.due, .recurring, .attachments) {
 							flex-shrink: 0;
 							font-size: 0.65rem;
 							opacity: 0.75;
@@ -523,15 +523,17 @@ export class EntrySegmentComponent extends Component {
 			`
 		}
 		const repeats = this.segment.occurrence.recurring || this.segment.entry.partOfSeries
+		const attached = this.segment.entry.attachments.length > 0
 		return html`
 			<div class="heading" ?data-meta=${meta}>
-				${!this.segment.entry.type.isTask && !meta && !repeats ? html.nothing : html`
+				${!this.segment.entry.type.isTask && !meta && !repeats && !attached ? html.nothing : html`
 					<div class="header">
 						${!this.segment.entry.type.isTask ? html.nothing : html`
 							<mitra-task-status .entry=${this.segment.entry} @pointerdown=${() => this.claim()} @keydown=${() => this.claim()} @change=${this.handleStatusChange}></mitra-task-status>
 						`}
 						${!meta ? html.nothing : this.whenTemplate}
 						${!repeats ? html.nothing : html`<mitra-icon class="recurring" icon="repeat" title=${t('Repeats')}></mitra-icon>`}
+						${!attached ? html.nothing : html`<mitra-icon class="attachments" icon="paperclip" title=${t('Has attachments')}></mitra-icon>`}
 						${!this.segment.occurrence.due ? html.nothing : html`
 							<mitra-icon class="due" icon="flag" title=${t('Due ${date}', { date: this.dueLabel })}></mitra-icon>
 						`}

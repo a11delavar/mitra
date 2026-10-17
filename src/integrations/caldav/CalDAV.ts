@@ -21,6 +21,7 @@ import { RelationType } from '../../features/relations/RelationType.js'
 import { TimeZone } from '../../features/time/TimeZone.js'
 import { Participants, ParticipantRole, ParticipantStatus, type Participant } from '../../features/participants/Participant.js'
 import { IcsTime } from './IcsTime.js'
+import { EntryFiles } from '../../features/entries/EntryFiles.js'
 
 export interface CalDAVCredentials {
 	username: string
@@ -50,11 +51,16 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	}
 
 	/** What an iCalendar resource carries (RFC 5545 and its task extensions). */
+	/** Whether `ATTACH` lines are Mitra's to write: the provider holds them and takes them, else what it sent stays as it is. */
+	get writesAttachments() {
+		return this.ownership.ownerOf('attachments') === 'upstream' && this.capabilities.entries.attach
+	}
+
 	override get ownership() {
 		return new IntegrationOwnership({
 			recurrence: 'upstream', reminders: 'upstream', location: 'upstream', description: 'upstream', percentComplete: 'upstream',
-			due: 'upstream', estimate: 'upstream', timeZone: 'upstream', participants: 'upstream', transparency: 'upstream',
-			visibility: 'upstream', relations: 'upstream', allDay: 'upstream', rank: 'mitra',
+			due: 'upstream', estimate: 'upstream', timeZone: 'upstream', participants: 'upstream', attachments: 'upstream',
+			transparency: 'upstream', visibility: 'upstream', relations: 'upstream', allDay: 'upstream', rank: 'mitra',
 		})
 	}
 
@@ -325,6 +331,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 		entry.reminders = CalDAV.remindersFrom(component)
 		entry.participants = CalDAV.participantsFrom(component, integration.addresses)
+		entry.attachments = integration.ownership.holds('attachments') ? CalDAV.attachmentsFrom(component).resolvedAgainst(entry.attachments) : undefined
 		entry.relations = integration.ownership.holds('relations') ? CalDAV.relationsFrom(component) : undefined
 
 		// An unscheduled task carries its zone on DUE.
@@ -559,6 +566,50 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 				property.setParameter('rsvp', 'TRUE')
 			}
 		}
+	}
+
+	/**
+	 * Reads `ATTACH` (RFC 5545 §3.8.1.1) with the RFC 8607 parameters. Inline `ENCODING=BASE64` lines are neither listed nor
+	 * decoded, so {@link writeAttachments} never removes a line it did not understand.
+	 */
+	static attachmentsFrom(component: ICAL.Component) {
+		return EntryFiles.of(component.getAllProperties('attach')
+			.filter(property => !CalDAV.inline(property))
+			.map(property => ({
+				sourceUrl: property.getFirstValue()?.toString(),
+				name: property.getParameter('filename')?.toString(),
+				mimeType: property.getParameter('fmttype')?.toString(),
+				size: Number(property.getParameter('size')?.toString()) || undefined,
+			})))
+	}
+
+	/**
+	 * Writes the attachments as `ATTACH` lines, keeping every line already there byte for byte, so foreign parameters
+	 * (Nextcloud's `X-NC-FILE-ID`, a server's `MANAGED-ID`) and inline binary lines survive. `origin` makes Mitra's own files absolute.
+	 */
+	static writeAttachments(component: ICAL.Component, attachments: EntryFiles | undefined, origin?: string) {
+		const desired = new Map((attachments?.all ?? []).map(file => [file.url(origin), file]))
+		const kept = new Set<string>()
+		for (const property of component.getAllProperties('attach').filter(property => !CalDAV.inline(property))) {
+			const url = property.getFirstValue()?.toString().trim() ?? ''
+			if (desired.has(url) && !kept.has(url)) {
+				kept.add(url)
+			} else {
+				component.removeProperty(property)
+			}
+		}
+		for (const [url, file] of desired) {
+			if (!kept.has(url)) {
+				const property = component.addPropertyWithValue('attach', url)
+				!file.mimeType ? void 0 : property.setParameter('fmttype', String(file.mimeType))
+				!file.name ? void 0 : property.setParameter('filename', file.name)
+				file.size === undefined ? void 0 : property.setParameter('size', String(file.size))
+			}
+		}
+	}
+
+	private static inline(property: ICAL.Property) {
+		return property.getParameter('encoding')?.toString().toUpperCase() === 'BASE64'
 	}
 
 	static relationsFrom(component: ICAL.Component): EntryRelations {

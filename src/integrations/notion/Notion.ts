@@ -426,7 +426,7 @@ export class Notion extends Integration<NotionCredentials> {
 		return blocks
 	}
 
-	/** Replaces replaceable markdown blocks in page body while preserving unsupported/embed blocks. */
+	/** Replaces replaceable markdown blocks in page body while preserving unsupported/embed blocks and the hosted pictures the text names. */
 	private async replaceBody(pageId: string, markdown: string): Promise<string> {
 		const client = this.getClient()
 		const blocks = NotionMarkdown.toBlocks(markdown)
@@ -435,10 +435,22 @@ export class Notion extends Integration<NotionCredentials> {
 				await client.deleteBlock(block.id)
 			}
 		}
-		for (let index = 0; index < blocks.length; index += Notion.maxBlocksPerWrite) {
-			await client.appendBlockChildren(pageId, blocks.slice(index, index + Notion.maxBlocksPerWrite))
+		const fresh = blocks.filter(block => !block.id)
+		for (let index = 0; index < fresh.length; index += Notion.maxBlocksPerWrite) {
+			await client.appendBlockChildren(pageId, fresh.slice(index, index + Notion.maxBlocksPerWrite))
 		}
 		return NotionMarkdown.toMarkdown(blocks)
+	}
+
+	/** The link of the file a block holds, fetched now: a Notion-hosted one is signed for an hour, so it is never stored. */
+	async fileUrlOf(blockId: string): Promise<string> {
+		const block = await this.getClient().block(blockId)
+		const content = NotionMarkdown.contentOf(block)
+		const url = content?.type === 'external' ? content.external?.url : content?.file?.url
+		if (!url) {
+			throw new Error(`Block ${blockId} holds no file`)
+		}
+		return url
 	}
 
 	static plainText(richText: Array<NotionRichText> | undefined): string {

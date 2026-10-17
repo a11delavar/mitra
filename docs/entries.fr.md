@@ -72,6 +72,7 @@ Chaque entrée a une visibilité. **Visibilité par défaut** la laisse à l'age
 - [Participants](participants.md) liste les personnes concernées et leurs réponses.
 - [Rappels](reminders.md) vous notifient avant le début de l'entrée, ou avant l'échéance d'une tâche.
 - [Liens](links.md) rassemble les liens de la description au-dessus.
+- [Pièces jointes](attachments.md) contient les fichiers joints à l'entrée.
 - **Sous-tâche de** et **Sous-tâches** construisent une arborescence de tâches ; voir [Sous-tâches](subtasks.md).
 - **Bloqué par** et **Bloque** indiquent ce qui doit se terminer d'abord ; voir [Dépendances](dependencies.md).
 

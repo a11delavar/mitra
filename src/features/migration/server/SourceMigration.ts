@@ -203,36 +203,20 @@ export class SourceMigration {
 			this.copyOf(entry, { uid: crypto.randomUUID(), recurrence: undefined, exdates: undefined, start, end, due }))
 	}
 
-	/** Creates a target entry clone, preserving content and UID (or minting fresh UID for copy), dropping origin sync data. */
+	/** A copy of `entry` for the target: its content and uid (a fresh uid where the original stays), without the origin's sync data. */
 	private copyOf(entry: Entry, overrides: Partial<Entry> = {}): Entry {
-		const copy = new Entry({
+		const copy = Object.assign(entry.copy(), {
 			id: crypto.randomUUID(),
 			uid: this.keepOriginals ? crypto.randomUUID() : entry.uid,
-			sourceId: this.target.id,
-			type: entry.type,
-			heading: entry.heading,
-			description: entry.description,
-			location: entry.location,
-			color: entry.color,
-			start: entry.start,
-			end: entry.end,
-			due: entry.due,
-			estimate: entry.estimate,
-			allDay: entry.allDay,
-			timeZone: entry.timeZone,
-			status: entry.status,
-			percentComplete: entry.percentComplete,
 			// A copy is a new task, so it starts unranked rather than sharing the original's key.
 			rank: this.keepOriginals ? undefined : entry.rank,
-			transparency: entry.transparency,
-			visibility: entry.visibility,
-			recurrence: entry.recurrence,
 			exdates: entry.recurrence?.freq ? entry.occurrences.excluded : undefined,
-			reminders: entry.reminders ? [...entry.reminders] : entry.reminders,
-			participants: entry.participants,
 			relations: entry.relations,
-			...overrides,
-		})
+		}, overrides)
+		// Lost where the target holds none or takes none, rather than kept in Mitra's row its next sync would clear.
+		if (!this.targetIntegration.ownership.holds('attachments') || !this.targetIntegration.capabilitiesFor(this.target).entries.attach) {
+			copy.attachments = undefined
+		}
 		copy.migrateTo(this.target)
 		return copy
 	}

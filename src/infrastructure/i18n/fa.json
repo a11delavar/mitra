@@ -50,6 +50,14 @@
 	"${count:number} more": "${count:number} مورد دیگر",
 	"Show fewer participants": "نمایش شرکت‌کنندگان کمتر",
 	"Remove participant": "حذف شرکت‌کننده",
+	"Attachments": "پیوست‌ها",
+	"Add attachment": "افزودن پیوست",
+	"Remove attachment": "حذف پیوست",
+	"Show in description": "نمایش در توضیحات",
+	"Uploading…": "در حال بارگذاری…",
+	"Has attachments": "دارای پیوست",
+	"This file could not be uploaded": "این فایل بارگذاری نشد",
+	"${name} is larger than the ${limit} limit": "${name} از سقف ${limit} بزرگ‌تر است",
 	"Make attendance optional": "اختیاری کردن حضور",
 	"Ask this participant to attend": "درخواست حضور از این شرکت‌کننده",
 	"Showing ${city} time. Switch to the current time zone": "در حال نمایش زمان ${city}. جابه‌جایی به منطقه زمانی کنونی",
@@ -540,6 +548,10 @@
 	"${count:pluralityNumber} lose their description": [
 		"${count:pluralityNumber} مورد توضیحات خود را از دست می‌دهد",
 		"${count:pluralityNumber} مورد توضیحات خود را از دست می‌دهند"
+	],
+	"${count:pluralityNumber} lose their attachments": [
+		"${count:pluralityNumber} مورد پیوست‌های خود را از دست می‌دهد",
+		"${count:pluralityNumber} مورد پیوست‌های خود را از دست می‌دهند"
 	],
 	"${count:pluralityNumber} lose their due date": [
 		"${count:pluralityNumber} مورد تاریخ سررسید خود را از دست می‌دهد",

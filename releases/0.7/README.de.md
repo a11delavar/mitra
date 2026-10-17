@@ -1,7 +1,7 @@
 ---
 title: KI, Anhänge, Regionen und Sprachen
 ---
-Mitra 0.7 passt sich deinem Leben an. Daten folgen deinem Land. Die Zeitzone deines Zuhauses reist mit dir. Und jedes Release erklärt sich direkt in der App.
+Mit Mitra 0.7 hängst du Dateien an deine Einträge, Daten erscheinen im Format deiner Region, die Zeitzone deines Zuhauses bleibt auf Reisen bei dir, und was sich geändert hat, siehst du direkt in der App. Außerdem zieht, zoomt und lädt Mitra schneller, und seit 0.6 sind viele kleinere Verbesserungen und Korrekturen dazugekommen.
 
 ## KI
 Wir erkunden, wie KI dir helfen kann, deine Zeit zu planen, in Mitra selbst und in den Assistenten, die du schon nutzt.
@@ -32,7 +32,19 @@ Auch die Auswahl der Zeitzonen ist neu gestaltet. Zonen mit demselben Namen und 
 Doku: [Zeitzonen](../../docs/time-zones.md)
 
 ## Anhänge
-Hänge Dateien an einen Eintrag. Kalender, die sie aufbewahren können, zuerst CalDAV, nehmen sie mit.
+Du kannst jetzt Dateien an einen Eintrag anhängen, zum Beispiel ein Ticket, eine Tagesordnung oder ein Foto vom Whiteboard. Füge sie mit der Büroklammer im Editor des Eintrags hinzu oder zieh sie auf den geöffneten Eintrag. Mit einem Klick öffnest du eine Datei. Du kannst eine Datei auch in die Beschreibung einfügen: Ein Bild erscheint dort als Bild, jede andere Datei als Link. Wenn du die Datei später entfernst, entfernt Mitra sie auch aus der Beschreibung.
+
+Anhänge werden mit deinem Kalender synchronisiert. In einem CalDAV-Kalender sehen andere Apps, die denselben Kalender nutzen, die Dateien, die du anhängst, und Mitra zeigt die Dateien, die sie angehängt haben. In Google Kalender zeigt Mitra die Google-Drive-Dateien eines Termins an, kann aber keine hinzufügen oder entfernen, weil Google nur Drive-Dateien behält. Bilder in einer Notion-Seite erscheinen jetzt in der Beschreibung der Aufgabe.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="attachments-dark.webp">
+	<img src="attachments-light.webp" alt="Eine geöffnete Aufgabe neben ihrem Eintrag in der Woche, dessen Büroklammer zeigt, dass sie Dateien trägt: Der Editor listet ein PDF, eine Skizze und eine Tabelle über der Beschreibung, die die Skizze zeigt">
+</picture>
+
+> [!NOTE]
+> Mitra speichert die Dateien, die du anhängst, in seinem Datenordner. Wenn du diesen Ordner sicherst, sicherst du also auch deine Dateien. Mit `MITRA_FILE_MAX_SIZE` begrenzt du die Größe einer einzelnen Datei, mit `MITRA_FILE_QUOTA`, wie viel jede Person insgesamt speichern darf.
+
+Doku: [Anhänge](../../docs/attachments.md)
 
 ## Release Notes in der App
 Du kannst jetzt sehen, was sich geändert hat, ohne Mitra zu verlassen. Der Dialog Über zeigt jedes Release so, wie es die Website tut. Er enthält die Notizen und Bilder der Version, die du nutzt, zusammen mit den Korrekturen, die danach kamen. Auch jeder Commit ist aufgeführt, eingeklappt, bis du ihn brauchst.

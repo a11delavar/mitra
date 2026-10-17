@@ -6,7 +6,7 @@ description: Everything Mitra stores is in one folder. Back it up with whatever 
 Mitra keeps everything in one folder: `/app/data` inside the container, which is `~/mitra` on the host if you followed [Getting started](README.md#install-mitra). Back up that folder and you've backed up the whole instance. There's no database server to dump and no config files to pick out.
 
 > [!CAUTION]
-> For some of what you keep in Mitra, this folder is the only copy. Every entry in a [Mitra calendar](integrations/mitra.md) lives here and nowhere else. So do your accounts and sign-in sessions, the credentials of connected accounts, your settings, your calendars' colors, order and names, your [availability](availability.md), your task order, some links between entries, and the key your devices' [reminders](reminders.md) depend on. If you lose the folder, a provider can give you back its events and tasks, but nothing else.
+> For some of what you keep in Mitra, this folder is the only copy. Every entry in a [Mitra calendar](integrations/mitra.md) lives here and nowhere else. So do your accounts and sign-in sessions, the credentials of connected accounts, your settings, your calendars' colors, order and names, your [availability](availability.md), your task order, the [files you attached](attachments.md) to entries, some links between entries, and the key your devices' [reminders](reminders.md) depend on. If you lose the folder, a provider can give you back its events and tasks, but nothing else.
 
 ## Back up
 

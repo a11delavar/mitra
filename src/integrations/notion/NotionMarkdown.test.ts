@@ -134,7 +134,7 @@ describe('NotionMarkdown.toMarkdown', () => {
 	it('skips blocks markdown cannot express, and whole branches hiding one', () => {
 		const blocks: Array<NotionBlock> = [
 			paragraph(text('visible')),
-			{ type: 'image', id: 'b-img' } as NotionBlock,
+			{ type: 'video', id: 'b-video' } as NotionBlock,
 			{ type: 'child_page', id: 'b-page' } as NotionBlock,
 			{
 				type: 'bulleted_list_item',
@@ -148,6 +148,30 @@ describe('NotionMarkdown.toMarkdown', () => {
 			},
 		]
 		assert.equal(NotionMarkdown.toMarkdown(blocks), 'visible')
+	})
+})
+
+describe('NotionMarkdown images', () => {
+	const image = (id: string, content: NotionBlock['image']): NotionBlock => ({ object: 'block', id, type: 'image', image: content })
+
+	it('reads an external image as a picture, and a Notion-hosted one through the route that fetches its hour-long link afresh', () => {
+		const blocks = [
+			image('b-ext', { type: 'external', external: { url: 'https://x.y/chart.png' }, caption: [text('Chart')] }),
+			image('b-file', { type: 'file', file: { url: 'https://s3.example/signed?X-Amz-Expires=3600', expiry_time: '2026-10-17T01:00:00.000Z' }, caption: [] }),
+		]
+		assert.equal(NotionMarkdown.toMarkdown(blocks), '![Chart](https://x.y/chart.png)\n\n![](/api/notion/blocks/b-file)')
+	})
+
+	it('writes a picture on its own as an external image block, and leaves a Notion-hosted one as the block it is', () => {
+		const [external, kept] = NotionMarkdown.toBlocks('![Chart](https://x.y/chart.png)\n\n![](/api/notion/blocks/b-file)')
+		assert.deepEqual(external, { type: 'image', image: { type: 'external', external: { url: 'https://x.y/chart.png' }, caption: [{ type: 'text', text: { content: 'Chart' } }] } })
+		assert.deepEqual(kept, { id: 'b-file', type: 'image', image: { type: 'file', caption: [] } })
+		assert.equal(NotionMarkdown.isReplaceable(external!), true)
+		assert.equal(NotionMarkdown.isReplaceable(kept!), false)
+	})
+
+	it('round-trips both', () => {
+		roundTrips('![Chart](https://x.y/chart.png)\n\n![](/api/notion/blocks/b-file)')
 	})
 })
 

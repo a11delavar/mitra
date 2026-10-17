@@ -6,7 +6,10 @@ import { type NotionAnnotations, type NotionBlock, type NotionBlockContent, type
  * Preserves unmapped or deeply nested blocks by replacing only verified convertible blocks.
  */
 export class NotionMarkdown {
-	private static readonly convertibleTypes = new Set(['paragraph', 'heading_1', 'heading_2', 'heading_3', 'bulleted_list_item', 'numbered_list_item', 'to_do', 'quote', 'callout', 'code', 'divider', 'table', 'table_row', 'bookmark'])
+	private static readonly convertibleTypes = new Set(['paragraph', 'heading_1', 'heading_2', 'heading_3', 'bulleted_list_item', 'numbered_list_item', 'to_do', 'quote', 'callout', 'code', 'divider', 'table', 'table_row', 'bookmark', 'image'])
+
+	/** Where a Notion-hosted picture is read from: Mitra's route, which fetches the block's hour-long link afresh each time. */
+	static readonly hostedImagePath = '/api/notion/blocks/'
 
 	static readonly containerTypes = new Set(['bulleted_list_item', 'numbered_list_item', 'to_do', 'quote', 'callout', 'table'])
 
@@ -53,9 +56,14 @@ export class NotionMarkdown {
 		return [date.start, date.end].filter(Boolean).map(value => stamp(value!)).join(' → ')
 	}
 
+	/** A picture in Notion's own store: shown, but never rewritten, as its bytes can't be sent back. */
+	static isHostedImage(block: NotionBlock): boolean {
+		return block.type === 'image' && block.image?.type !== 'external'
+	}
+
 	/** Checks whether a block and all its descendants can be safely converted to/from Markdown. */
 	static isReplaceable(block: NotionBlock): boolean {
-		if (!NotionMarkdown.convertibleTypes.has(block.type)) {
+		if (!NotionMarkdown.convertibleTypes.has(block.type) || NotionMarkdown.isHostedImage(block)) {
 			return false
 		}
 		const children = NotionMarkdown.contentOf(block)?.children
@@ -67,7 +75,7 @@ export class NotionMarkdown {
 	// --- Blocks → markdown ------------------------------------------------------------------------
 
 	static toMarkdown(blocks: Array<NotionBlock>): string {
-		return NotionMarkdown.blocksToMarkdown(blocks.filter(block => NotionMarkdown.isReplaceable(block)))
+		return NotionMarkdown.blocksToMarkdown(blocks.filter(block => NotionMarkdown.isReplaceable(block) || NotionMarkdown.isHostedImage(block)))
 	}
 
 	private static blocksToMarkdown(blocks: Array<NotionBlock>): string {
@@ -122,6 +130,10 @@ export class NotionMarkdown {
 			case 'bookmark': {
 				const caption = NotionMarkdown.runsToMarkdown(content.caption)
 				return !content.url ? undefined : `[${caption || NotionMarkdown.escape(content.url)}](${content.url})`
+			}
+			case 'image': {
+				const url = content.type === 'external' ? content.external?.url : block.id ? `${NotionMarkdown.hostedImagePath}${block.id}` : undefined
+				return !url ? undefined : `![${NotionMarkdown.runsToMarkdown(content.caption)}](${url})`
 			}
 			case 'table': {
 				const rows = children.filter(row => row.type === 'table_row').map(row =>
@@ -202,9 +214,12 @@ export class NotionMarkdown {
 				case 'paragraph': {
 					const inline = (token as Tokens.Paragraph).tokens
 					const link = inline.length === 1 && inline[0]?.type === 'link' ? inline[0] as Tokens.Link : undefined
-					blocks.push(link
-						? { type: 'bookmark', bookmark: { url: link.href, caption: link.text === link.href ? [] : NotionMarkdown.runsOf(link.tokens) } }
-						: { type: 'paragraph', paragraph: { rich_text: NotionMarkdown.runsOf(inline) } })
+					const image = inline.length === 1 && inline[0]?.type === 'image' ? inline[0] as Tokens.Image : undefined
+					blocks.push(image
+						? NotionMarkdown.imageBlock(image)
+						: link
+							? { type: 'bookmark', bookmark: { url: link.href, caption: link.text === link.href ? [] : NotionMarkdown.runsOf(link.tokens) } }
+							: { type: 'paragraph', paragraph: { rich_text: NotionMarkdown.runsOf(inline) } })
 					break
 				}
 				case 'heading': {
@@ -234,6 +249,14 @@ export class NotionMarkdown {
 			}
 		}
 		return blocks
+	}
+
+	/** A picture on its own: an external image block, or the hosted block it was read from, named by its id so a write leaves it be. */
+	private static imageBlock(image: Tokens.Image): NotionBlock {
+		const caption = image.text ? NotionMarkdown.textRuns(image.text) : []
+		return image.href.startsWith(NotionMarkdown.hostedImagePath)
+			? { id: image.href.slice(NotionMarkdown.hostedImagePath.length), type: 'image', image: { type: 'file', caption } }
+			: { type: 'image', image: { type: 'external', external: { url: image.href }, caption } }
 	}
 
 	/** Nests children inside content while depth allows; flattens remaining children as siblings when exceeded. */

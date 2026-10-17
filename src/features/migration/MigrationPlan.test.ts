@@ -2,6 +2,12 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
 import { MigrationOutcome, MigrationPlan, MigrationVerdict } from './MigrationPlan.js'
+import { Entry } from '../entries/Entry.js'
+import { EntryType } from '../entries/EntryType.js'
+import { EntryFiles } from '../entries/EntryFiles.js'
+import { Source } from '../sources/Source.js'
+import { IntegrationCapabilities } from '../../integrations/IntegrationCapabilities.js'
+import { IntegrationOwnership } from '../../integrations/IntegrationOwnership.js'
 
 const clean = () => new MigrationVerdict({ entryId: 'a', heading: 'Clean' })
 const lossy = (...losses: Array<'reminders' | 'location'>) => new MigrationVerdict({ entryId: 'b', heading: 'Lossy', losses })
@@ -52,6 +58,19 @@ describe('MigrationPlan', () => {
 		assert.deepEqual(plan().losses, [['reminders', 2], ['location', 1]])
 		assert.deepEqual(plan().blockers(false), [['recurrence', 1]])
 		assert.deepEqual(plan().blockers(true), [])
+	})
+})
+
+describe('MigrationVerdict.assess', () => {
+	const attached = () => new Entry({ id: 'a', sourceId: 'home', type: EntryType.Event, heading: 'Kickoff', attachments: EntryFiles.of([{ sourceUrl: 'https://example.com/deck.pdf' }]) })
+	const target = () => new Source({ id: 'away', uri: 'away', entryTypes: [EntryType.Event], name: 'Away' })
+	const holding = () => new IntegrationOwnership({ attachments: 'upstream' })
+
+	it('loses the attachments where the target holds none, and where it holds them but takes none', () => {
+		const assess = (capabilities: IntegrationCapabilities, ownership: IntegrationOwnership) => MigrationVerdict.assess(attached(), { target: target(), capabilities, ownership, occurrence: false }).losses
+		assert.deepEqual(assess(new IntegrationCapabilities(), new IntegrationOwnership()), ['attachments'])
+		assert.deepEqual(assess(new IntegrationCapabilities({ entries: { attach: false } }), holding()), ['attachments'])
+		assert.deepEqual(assess(new IntegrationCapabilities(), holding()), [])
 	})
 })
 

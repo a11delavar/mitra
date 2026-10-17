@@ -72,6 +72,8 @@ export class ModalSheet extends Component {
 				margin: 0;
 				padding: 0;
 				border: none;
+				/* It takes focus as the sheet opens, and spans the viewport: its ring would frame the whole screen. */
+				outline: none;
 				background: transparent;
 				color: var(--color-text);
 				overflow: clip;

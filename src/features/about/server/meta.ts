@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { isDemo, isDeveloperSystem } from '../../../infrastructure/environment.js'
 import { updateChecker } from './updates.js'
+import { FileLimits } from '../../files/server/FileLimits.js'
 import { getReleaseSources, runningReleaseUrl } from './changelog.js'
 
 export const metaRouter = Router()
@@ -19,6 +20,7 @@ metaRouter.get('/', (_req, res) => {
 		node: process.version,
 		...(isDeveloperSystem ? { development: true } : {}),
 		...(isDemo ? { demo: true } : {}),
+		files: FileLimits.fromEnv(),
 		...(runningReleaseUrl() ? { releaseUrl: runningReleaseUrl() } : {}),
 		...(updateChecker.update ? { update: updateChecker.update } : {}),
 	})

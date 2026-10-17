@@ -70,7 +70,7 @@ Pour ouvrir le ticket dans Jira, choisissez **Ouvrir dans Jira** dans le menu **
 
 ## Ce qu'un worklog ne peut pas contenir
 
-Un worklog est une plage de temps sur une journée, imputée sur un ticket. Un calendrier Tempo ne contient donc que des entrées avec horaire : pas d'entrées sur toute la journée, de répétitions, de rappels, de lieu, de participants, de relations, d'état occupé ou disponible, de visibilité ni de [disponibilité](../availability.md). Mitra masque ces champs sur les worklogs.
+Un worklog est une plage de temps sur une journée, imputée sur un ticket. Un calendrier Tempo ne contient donc que des entrées avec horaire : pas d'entrées sur toute la journée, de répétitions, de rappels, de lieu, de participants, de [pièces jointes](../attachments.md), de relations, d'état occupé ou disponible, de visibilité ni de [disponibilité](../availability.md). Mitra masque ces champs sur les worklogs.
 
 ## Dépannage
 

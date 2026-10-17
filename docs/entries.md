@@ -72,6 +72,7 @@ Every entry has a visibility. **Default visibility** leaves it to the calendar. 
 - [Participants](participants.md) lists the people involved and their replies.
 - [Reminders](reminders.md) notify you before the entry starts, or before a task's due date.
 - [Links](links.md) gathers the links in the description above it.
+- [Attachments](attachments.md) holds the files added to the entry.
 - **Subtask of** and **Subtasks** build a tree of tasks; see [Subtasks](subtasks.md).
 - **Blocked by** and **Blocks** say what has to finish first; see [Dependencies](dependencies.md).
 

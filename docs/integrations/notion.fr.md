@@ -39,7 +39,7 @@ La propriété Date est l'endroit où Mitra place la tâche : c'est donc l'hora
 
 Le titre, le statut et la date sont synchronisés dans les deux sens, comme dates sur toute la journée ou avec des heures. Les heures s'affichent dans votre propre fuseau horaire. Une tâche sans date attend dans la liste **Non planifié** de l'[onglet Planification](../planning.md#the-planning-tab).
 
-La description d'une tâche est le corps de sa page Notion, écrit en Markdown, listes de tâches et encadrés compris. Quand vous modifiez la description dans Mitra, Mitra ne remplace que ce que la description affiche. Les images, les intégrations, les sous-pages et les blocs synchronisés restent dans Notion tels quels, et Mitra ne les montre pas.
+La description d'une tâche est le corps de sa page Notion, écrit en Markdown, listes de tâches, encadrés et images compris. Quand vous modifiez la description dans Mitra, Mitra ne remplace que ce que la description affiche. Les intégrations, les sous-pages et les blocs synchronisés restent dans Notion tels quels, et Mitra ne les montre pas. Une image ajoutée dans Notion s'affiche dans Mitra et reste dans Notion telle quelle ; après une modification depuis Mitra, elle passe au-dessus du texte, car Notion ne laisse les autres applications ajouter du texte qu'après ce qu'il conserve.
 
 Les propriétés de relation qui relient des tâches au sein de la même base de données deviennent des liens dans Mitra, dans les deux sens. Une propriété nommée « Parent task » ou « Sub-tasks » crée des [sous-tâches](../subtasks.md), une nommée « Blocked by » ou « Depends on » crée des [dépendances](../dependencies.md), et les autres relations apparaissent sous leur propre nom. Les relations vers d'autres bases de données ne sont pas affichées.
 

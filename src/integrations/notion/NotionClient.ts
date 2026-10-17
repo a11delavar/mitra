@@ -73,6 +73,10 @@ export interface NotionBlockContent {
 	url?: string
 	caption?: Array<NotionRichText>
 	children?: Array<NotionBlock>
+	/** A file's place: `external` is a URL of anyone's, `file` Notion's own store, whose signed `url` dies in an hour. */
+	type?: 'external' | 'file' | 'file_upload'
+	external?: { url: string }
+	file?: { url: string, expiry_time?: string }
 }
 
 /** Page body block. */
@@ -95,6 +99,7 @@ export interface NotionBlock {
 	table?: NotionBlockContent
 	table_row?: NotionBlockContent
 	bookmark?: NotionBlockContent
+	image?: NotionBlockContent
 }
 
 /** Data source schema property configuration. */
@@ -305,6 +310,10 @@ export class NotionClient {
 		const items = await this.paginate<{ type?: string, relation?: { id?: string } }>(cursor =>
 			this.request('GET', `pages/${pageId}/properties/${propertyId}?page_size=100${cursor ? `&start_cursor=${encodeURIComponent(cursor)}` : ''}`))
 		return items.flatMap(item => item.relation?.id ? [{ id: item.relation.id }] : [])
+	}
+
+	block(blockId: string): Promise<NotionBlock> {
+		return this.request('GET', `blocks/${blockId}`)
 	}
 
 	blockChildren(blockId: string): Promise<Array<NotionBlock>> {

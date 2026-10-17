@@ -70,7 +70,7 @@ Para abrir o item no Jira, escolha **Abrir no Jira** no menu **⋯** do editor.
 
 ## O que um worklog não consegue guardar
 
-Um worklog é um intervalo de tempo num único dia, registrado em um item. Assim, um calendário do Tempo guarda apenas entradas com horário: sem entradas de dia todo, repetições, lembretes, local, participantes, relações, ocupado ou disponível, visibilidade nem [disponibilidade](../availability.md). O Mitra oculta esses campos nos worklogs.
+Um worklog é um intervalo de tempo num único dia, registrado em um item. Assim, um calendário do Tempo guarda apenas entradas com horário: sem entradas de dia todo, repetições, lembretes, local, participantes, [anexos](../attachments.md), relações, ocupado ou disponível, visibilidade nem [disponibilidade](../availability.md). O Mitra oculta esses campos nos worklogs.
 
 ## Solução de problemas
 

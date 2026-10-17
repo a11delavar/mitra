@@ -1,7 +1,7 @@
 ---
 title: AI, attachments, regions and languages
 ---
-Mitra 0.7 fits the way you live. Dates follow your country. Your home time zone travels with you. And each release explains itself right in the app.
+Mitra 0.7 lets you attach files to your entries, writes dates in your region's format, keeps your home time zone with you when you travel, and shows what changed right in the app. It also drags, zooms and loads faster, and brings many smaller improvements and fixes since 0.6.
 
 ## AI
 We are exploring how AI can help you plan your time, in Mitra itself and from the assistants you already use.
@@ -32,7 +32,19 @@ The time zone picker is redesigned as well. Zones that share a name and a clock 
 Docs: [Time zones](../../docs/time-zones.md)
 
 ## Attachments
-Attach files to an entry. Calendars that can keep them, CalDAV first, carry them along.
+You can now attach files to an entry, such as a ticket, an agenda or a photo of a whiteboard. Add them with the paperclip in the entry's editor, or drag them onto the open entry. Click a file to open it. You can also add a file to the description, where an image shows as a picture and any other file as a link. If you remove the file later, Mitra removes it from the description too.
+
+Attachments sync with your calendar. In a CalDAV calendar, other apps that use the same calendar see the files you attach, and Mitra shows the files they attached. In Google Calendar, Mitra shows the Google Drive files attached to an event, but can't add or remove any, because Google only keeps Drive files. Images in a Notion page now show up in the task's description.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="attachments-dark.webp">
+	<img src="attachments-light.webp" alt="An open task beside its entry in the week, whose paperclip shows it carries files: the editor lists a PDF, a sketch and a spreadsheet above the description, which shows the sketch">
+</picture>
+
+> [!NOTE]
+> Mitra stores the files you attach in its data folder, so backing up that folder also backs up your files. You can limit the size of a single file with `MITRA_FILE_MAX_SIZE`, and how much each person can store in total with `MITRA_FILE_QUOTA`.
+
+Docs: [Attachments](../../docs/attachments.md)
 
 ## Release notes in the app
 You can now see what changed without leaving Mitra. The About dialog shows each release the way the website does. It has the notes and pictures of the version you run, along with the fixes that came after it. Every commit is listed too, folded away until you need it.

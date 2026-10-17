@@ -39,7 +39,7 @@ La proprietà Date è il punto in cui Mitra colloca l'attività, quindi è la su
 
 Titolo, stato e data si sincronizzano in entrambe le direzioni, come date di tutto il giorno o con orario. Gli orari appaiono nel tuo fuso orario. Un'attività senza data aspetta nell'elenco **Non pianificate** della [scheda Pianificazione](../planning.md#the-planning-tab).
 
-La descrizione di un'attività è il corpo della sua pagina Notion, scritto in Markdown, comprese le liste di cose da fare e i callout. Quando modifichi la descrizione in Mitra, Mitra sostituisce solo ciò che la descrizione mostra. Immagini, embed, sottopagine e blocchi sincronizzati restano in Notion così come sono, e Mitra non li mostra.
+La descrizione di un'attività è il corpo della sua pagina Notion, scritto in Markdown, comprese le liste di cose da fare, i callout e le immagini. Quando modifichi la descrizione in Mitra, Mitra sostituisce solo ciò che la descrizione mostra. Embed, sottopagine e blocchi sincronizzati restano in Notion così come sono, e Mitra non li mostra. Un'immagine aggiunta in Notion viene mostrata in Mitra e resta in Notion così com'è; dopo una modifica da Mitra passa sopra il testo, perché Notion lascia alle altre app aggiungere testo solo dopo ciò che conserva.
 
 Le proprietà di relazione che collegano attività all'interno dello stesso database diventano collegamenti in Mitra, in entrambe le direzioni. Una proprietà chiamata «Parent task» o «Sub-tasks» crea [attività secondarie](../subtasks.md), una chiamata «Blocked by» o «Depends on» crea [dipendenze](../dependencies.md), e le altre relazioni compaiono con il loro nome. Le relazioni verso altri database non vengono mostrate.
 

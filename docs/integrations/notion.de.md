@@ -39,7 +39,7 @@ Die Date-Eigenschaft ist der Ort, an dem Mitra die Aufgabe platziert, sie ist al
 
 Titel, Status und Datum werden in beide Richtungen synchronisiert, als ganztägige Daten oder mit Uhrzeit. Uhrzeiten erscheinen in deiner eigenen Zeitzone. Eine Aufgabe ohne Datum wartet in der Liste **Ohne Termin** im [Tab Planung](../planning.md#the-planning-tab).
 
-Die Beschreibung einer Aufgabe ist der Inhalt ihrer Notion-Seite, als Markdown geschrieben, einschließlich To-do-Listen und Callouts. Wenn du die Beschreibung in Mitra bearbeitest, ersetzt Mitra nur, was die Beschreibung zeigt. Bilder, Einbettungen, Unterseiten und synchronisierte Blöcke bleiben in Notion unverändert, und Mitra zeigt sie nicht an.
+Die Beschreibung einer Aufgabe ist der Inhalt ihrer Notion-Seite, als Markdown geschrieben, einschließlich To-do-Listen, Callouts und Bildern. Wenn du die Beschreibung in Mitra bearbeitest, ersetzt Mitra nur, was die Beschreibung zeigt. Einbettungen, Unterseiten und synchronisierte Blöcke bleiben in Notion unverändert, und Mitra zeigt sie nicht an. Ein Bild, das du in Notion eingefügt hast, zeigt Mitra an, und es bleibt in Notion, wie es ist; nach einer Bearbeitung aus Mitra rückt es über den Text, denn Notion lässt andere Apps Text nur hinter dem anfügen, was es behält.
 
 Relation-Eigenschaften, die Aufgaben innerhalb derselben Datenbank verknüpfen, werden in Mitra zu Verknüpfungen, in beide Richtungen. Eine Eigenschaft namens „Parent task“ oder „Sub-tasks“ ergibt [Teilaufgaben](../subtasks.md), eine namens „Blocked by“ oder „Depends on“ ergibt [Abhängigkeiten](../dependencies.md), und andere Relationen erscheinen unter ihrem eigenen Namen. Relationen zu anderen Datenbanken werden nicht angezeigt.
 

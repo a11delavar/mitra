@@ -6,6 +6,7 @@ import { EntryPatch } from './EntryPatch.js'
 import { EntryType } from './EntryType.js'
 import { Transparency } from './Transparency.js'
 import { Visibility } from './Visibility.js'
+import { EntryFiles } from './EntryFiles.js'
 import { Source } from '../sources/Source.js'
 import { type Calendar } from '../sources/Calendar.js'
 import { Recurrence } from '../recurrence/Recurrence.js'
@@ -47,11 +48,46 @@ describe('Entry.validate', () => {
 	it('names a type the calendar cannot hold', () => {
 		assert.deepEqual(described(event().validate(calendar({ types: [EntryType.Task] }))), [['This calendar cannot hold events', ['type']]])
 	})
+
+	it('refuses files where the calendar holds none, and nothing without files', () => {
+		const attached = event({ attachments: EntryFiles.of([{ sourceUrl: 'https://example.com/plan.pdf' }]) })
+		assert.deepEqual(described(attached.validate(calendar({ lacking: ['attachments'] }))), [['This calendar does not support attachments', ['attachments']]])
+		assert.deepEqual(described(event().validate(calendar({ lacking: ['attachments'] }))), [])
+	})
+
+	it('holds an entry with attachments in a calendar that cannot take them: what is there was the provider\'s own doing', () => {
+		const attached = event({ attachments: EntryFiles.of([{ sourceUrl: 'https://drive.google.com/open?id=1AbCdEfGhIjKlMnOpQrStUvWxYz0123456' }]) })
+		assert.deepEqual(described(attached.validate(calendar({ cannot: { attach: false } }))), [])
+	})
 })
 
 describe('EntryPatch.validate', () => {
 	it('lets a calendar that cannot be written refuse a new entry', () => {
 		assert.deepEqual(described(patch({ heading: 'Talk' }).validate({ to: calendar({ cannot: { create: false } }) })), [['This calendar cannot be written to from mitra', []]])
+	})
+
+	describe('attachments where the calendar cannot take them', () => {
+		const drive = () => EntryFiles.of([{ sourceUrl: 'https://drive.google.com/open?id=1AbCdEfGhIjKlMnOpQrStUvWxYz0123456' }])
+		const google = () => calendar({ cannot: { attach: false } })
+
+		it('refuses a change of the files, and nothing else', () => {
+			const entry = event({ attachments: drive() })
+			assert.deepEqual(described(patch({ files: EntryFiles.of([]) }).validate({ entry, to: google() })), [['Attachments in this calendar cannot be changed from mitra', ['files']]])
+			assert.deepEqual(described(patch({ files: null }).validate({ entry, to: google() })), [['Attachments in this calendar cannot be changed from mitra', ['files']]])
+			assert.deepEqual(described(patch({ files: drive() }).validate({ entry, to: google() })), [])
+			assert.deepEqual(described(patch({ heading: 'Renamed' }).validate({ entry, to: google() })), [])
+		})
+
+		it('refuses creating an entry with files there', () => {
+			assert.deepEqual(described(patch({ heading: 'Talk', files: drive() }).validate({ to: google() })), [['This calendar does not take attachments', ['files']]])
+			assert.deepEqual(described(patch({ heading: 'Talk' }).validate({ to: google() })), [])
+		})
+
+		it('refuses moving an entry with files there', () => {
+			const entry = event({ attachments: drive() })
+			assert.deepEqual(described(patch({ sourceId: 'google' }).validate({ entry, from: calendar(), to: calendar({ id: 'google', cannot: { attach: false } }) })), [['This calendar does not take attachments', ['sourceId']]])
+			assert.deepEqual(described(patch({ sourceId: 'google' }).validate({ entry: event(), from: calendar(), to: calendar({ id: 'google', cannot: { attach: false } }) })), [])
+		})
 	})
 
 	it('refuses a new title where the provider owns it, but not the same one', () => {

@@ -13,8 +13,9 @@ import { centered, type Popover } from '../../../design/Popover.js'
 import { EntryDetailsSharing } from './EntryDetailsSharing.js'
 import { startedInField } from '../../../design/eventOrigin.js'
 import { editorFieldStyles } from './editorFields.css.js'
-import { MarkdownLinks } from '../../../design/MarkdownLinks.js'
 import { scrollbar } from '../../../design/scrollbar.css.js'
+import { AttachmentsField } from './AttachmentsField.js'
+import { fileDrop } from '@3mo/file-upload'
 
 @component('mitra-entry-details')
 export class EntryDetailsComponent extends Component {
@@ -62,6 +63,7 @@ export class EntryDetailsComponent extends Component {
 	@query('mitra-popover') private readonly popoverElement?: Popover
 	@query('.title') private readonly titleInput?: HTMLInputElement
 	@query('.description textarea') private readonly descriptionTextarea?: HTMLTextAreaElement
+	@query('mitra-attachments-field') private readonly attachmentsField?: AttachmentsField
 
 	private readonly handleOpenChange = async (e: CustomEvent<boolean>) => {
 		// Its segment drops it once it closes, so its exit plays out first; opened again meanwhile, it stays.
@@ -245,6 +247,13 @@ export class EntryDetailsComponent extends Component {
 								}
 							}
 						}
+					}
+
+					/* Files dragged over any of it (fileDrop) attach once dropped, so the row they land in shows it. Its border is
+					   always there, transparent, so recoloring it never moves the row. */
+					&[dragover] .attachments.field {
+						border-style: dashed;
+						border-color: var(--color-accent);
 					}
 
 					> header {
@@ -462,7 +471,7 @@ export class EntryDetailsComponent extends Component {
 	protected override get template() {
 		return !this.segment ? html.nothing : html`
 			<mitra-popover sheet @openChange=${this.handleOpenChange}>
-				<div class="editor">
+				<div class="editor" ${!this.takesFiles ? html.nothing : fileDrop({ multiple: true, handleDrop: files => this.attachmentsField?.upload(files) })}>
 					<header>
 						<div class="toolbar">
 							${this.colorTemplate}
@@ -541,7 +550,7 @@ export class EntryDetailsComponent extends Component {
 		const groups = [
 			// Rendered for an UNDATED entry too, where it shows just the way in (see EntryDetailsWhen).
 			[html`<mitra-entry-details-when .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-entry-details-when>`],
-			[this.locationTemplate, this.participantsTemplate, this.hyperlinksTemplate, this.descriptionTemplate],
+			[this.locationTemplate, this.participantsTemplate, this.hyperlinksTemplate, this.attachmentsTemplate, this.descriptionTemplate],
 			[
 				!EntryDetailsSharing.applies(entry) ? html.nothing : html`
 					<mitra-entry-details-sharing .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-entry-details-sharing>
@@ -600,6 +609,7 @@ export class EntryDetailsComponent extends Component {
 				&& (entry.status !== TaskStatus.Cancelled || capabilities.entries.cancel)
 				&& (entry.transparency !== Transparency.Free || ownership.holds('transparency'))
 				&& (!entry.visibility || ownership.holds('visibility'))
+				&& (!entry.attachments.length || (ownership.holds('attachments') && capabilities.entries.attach))
 		}
 		return !this.source?.name ? html.nothing : html`
 			<span class="source field">
@@ -646,13 +656,29 @@ export class EntryDetailsComponent extends Component {
 	 * the description would make lit rebuild the textarea being typed in.
 	 */
 	private get hyperlinksTemplate() {
-		const links = MarkdownLinks.of(this.segment!.entry.description)
+		const links = this.segment!.entry.links
 		return !this.ownership.holds('description') ? html.nothing : html`
 			<li class="hyperlinks field" ?hidden=${!links.length}>
 				<mitra-icon icon="link-2"></mitra-icon>
 				<span class="links">
 					${links.map(link => html`<mitra-link plain href=${link.href}>${link.words || html.nothing}</mitra-link>`)}
 				</span>
+			</li>
+		`
+	}
+
+	/** Whether a file can be attached here, by the row's button or dropped anywhere on the editor. */
+	private get takesFiles() {
+		return this.ownership.holds('attachments') && !this.isAvailability && this.capabilities.entries.attach && AttachmentsField.uploads
+	}
+
+	private get attachmentsTemplate() {
+		const entry = this.segment!.entry
+		// A calendar that can't take new files still shows the ones it has; only the controls go away.
+		return !this.ownership.holds('attachments') || this.isAvailability || (!entry.attachments.length && !this.takesFiles) ? html.nothing : html`
+			<li class="attachments field">
+				<mitra-icon icon="paperclip"></mitra-icon>
+				<mitra-attachments-field .entry=${entry} @change=${this.handleChange}></mitra-attachments-field>
 			</li>
 		`
 	}

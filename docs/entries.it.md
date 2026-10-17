@@ -72,6 +72,7 @@ Ogni voce ha una visibilità. **Visibilità predefinita** la lascia al calendari
 - [Partecipanti](participants.md) elenca le persone coinvolte e le loro risposte.
 - [Promemoria](reminders.md) ti avvisano prima che la voce inizi, o prima della scadenza di un'attività.
 - [Link](links.md) raccoglie i link presenti nella descrizione sopra di essa.
+- [Allegati](attachments.md) contiene i file aggiunti alla voce.
 - **Attività secondaria di** e **Attività secondarie** costruiscono un albero di attività; vedi [Attività secondarie](subtasks.md).
 - **Bloccato da** e **Blocca** dicono che cosa deve finire prima; vedi [Dipendenze](dependencies.md).
 

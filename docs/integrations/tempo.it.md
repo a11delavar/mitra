@@ -70,7 +70,7 @@ Per aprire la issue in Jira, scegli **Apri in Jira** nel menu **⋯** dell'edito
 
 ## Cosa non può contenere un worklog
 
-Un worklog è un intervallo di tempo in un giorno, registrato su una issue. Quindi un calendario Tempo contiene solo voci con orario: niente voci di tutto il giorno, ripetizioni, promemoria, luogo, partecipanti, relazioni, occupato o disponibile, visibilità né [disponibilità](../availability.md). Mitra nasconde questi campi sui worklog.
+Un worklog è un intervallo di tempo in un giorno, registrato su una issue. Quindi un calendario Tempo contiene solo voci con orario: niente voci di tutto il giorno, ripetizioni, promemoria, luogo, partecipanti, [allegati](../attachments.md), relazioni, occupato o disponibile, visibilità né [disponibilità](../availability.md). Mitra nasconde questi campi sui worklog.
 
 ## Risoluzione dei problemi
 

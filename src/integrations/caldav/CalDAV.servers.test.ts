@@ -5,10 +5,12 @@ import type { Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import express from 'express'
 import { Api } from '@a11d/api'
-import { DateTime } from '@3mo/date-time'
+import { DateTime, DateTimeRange } from '@3mo/date-time'
 import '@3mo/date-time-value-constructor'
 import { ModelValueConstructor } from '@a11d/api-model-value-constructor'
-import { createEvent, createIntegration, deleteEvent, deleteIntegration, discoverSources, fetchIntegrations, reimportIntegration, updateEvent, updateIntegration } from '../../infrastructure/http/Api.ts'
+import { createEvent, createIntegration, deleteEvent, deleteIntegration, discoverSources, fetchEvents, fetchIntegrations, reimportIntegration, updateEvent, updateIntegration, uploadFile } from '../../infrastructure/http/Api.ts'
+import { EntryFile } from '../../features/entries/EntryFile.ts'
+import { EntryFiles } from '../../features/entries/EntryFiles.ts'
 import { User } from '../../features/identity/User.ts'
 import { Source } from '../../features/sources/Source.ts'
 import { Entry } from '../../features/entries/Entry.ts'
@@ -66,6 +68,8 @@ describe('A CalDAV account as real servers answer it', () => {
 		await import('../server/registerEngines.ts')
 		const { integrationsRouter } = await import('../server/integrations.ts')
 		const { entriesRouter } = await import('../../features/entries/server/entries.ts')
+		const { fileContentRouter, filesRouter } = await import('../../features/files/server/files.ts')
+		const { observeInstanceOrigin } = await import('../../infrastructure/http/instanceUrl.ts')
 
 		const connection = orm.em.getConnection()
 		entriesIn = sourceId => connection.execute('select id, heading from entry where source_id = ?', [sourceId])
@@ -82,6 +86,10 @@ describe('A CalDAV account as real servers answer it', () => {
 			req.user = user
 			next()
 		})
+		// As server.ts has it: written links take the address requests arrive at, and uploads come before the JSON parser.
+		routes.use(observeInstanceOrigin)
+		routes.use('/api/files', fileContentRouter([EntryFile]))
+		routes.use('/api/files', filesRouter)
 		routes.use(express.json({ reviver: (_key, value) => models.shallConstruct(value) ? models.construct(value) : value }))
 		routes.use('/api/integrations', integrationsRouter)
 		routes.use('/api/entries', entriesRouter)
@@ -110,7 +118,8 @@ describe('A CalDAV account as real servers answer it', () => {
 
 	for (const name of names) {
 		let placeholders: Record<string, string> = {}
-		const recording = new HttpRecording(`${recordings}/${name}.json`, () => placeholders)
+		// A file's id, as its address and an ATTACH line name it.
+		const recording = new HttpRecording(`${recordings}/${name}.json`, () => placeholders, [/(?<=\/api\/files\/)[\w-]{22}(?=\/)/g])
 		const address = name === recorded && upstream ? new URL(upstream) : undefined
 		const version = address ? recordedVersion : recording.version
 		describe(version ? `${name} ${version}` : name, () => {
@@ -277,12 +286,68 @@ describe('A CalDAV account as real servers answer it', () => {
 				assert.deepEqual(await summaries('home'), ['Dentist'])
 			})
 
+			describe('its files', () => {
+				const october = new DateTimeRange(new DateTime('2026-10-01T00:00:00Z'), new DateTime('2026-11-01T00:00:00Z'))
+				/** The entry as a fresh listing hands it to the browser. */
+				const listed = async (heading: string) => (await fetchEvents(october)).find(entry => entry.heading === heading)!
+				const resourceOf = async (calendarName: string, summary: string) =>
+					(await resources(calendarName)).find(ics => ics.replace(/\r?\n[ \t]/g, '').includes(`SUMMARY:${summary}`))!.replace(/\r?\n[ \t]/g, '')
+				const attachLines = (ics: string) => ics.split(/\r?\n/).filter(line => line.startsWith('ATTACH'))
+				const upload = (fileName: string, content: string) => uploadFile(new globalThis.File([content], fileName, { type: 'text/plain' }))
+
+				it('writes a file attached in Mitra as an ATTACH line whose address serves the file to any app', async () => {
+					const file = await upload('agenda.txt', 'Agenda for the review')
+					const start = new DateTime('2026-10-26T10:00:00Z')
+					await createEvent(new Entry({ sourceId: calendar('Work').id, type: EntryType.Event, heading: 'Review', start, end: start.add({ hours: 1 }), attachments: EntryFiles.of([file]) }))
+					const [line] = attachLines(await resourceOf('work', 'Review'))
+					const url = /:(https?:\/\/.+)$/.exec(line!)?.[1]
+					assert.match(url!, /^http:\/\/localhost:\d+\/api\/files\/[\w-]{22}\/agenda\.txt$/)
+					const served = await fetch(url!)
+					assert.equal(served.status, 200)
+					assert.equal(await served.text(), 'Agenda for the review')
+				})
+
+				it('reads a file another app attached, and keeps its line byte for byte when Mitra edits the entry', async () => {
+					await putEvent('work', 'kickoff', 'Kickoff', 27, 'ATTACH;FMTTYPE=application/pdf;FILENAME=deck.pdf;X-NC-FILE-ID=42:https://cloud.example.com/f/42')
+					// As the server holds it, which may order a line's parameters its own way.
+					const [line] = attachLines(await resourceOf('work', 'Kickoff'))
+					assert.match(line!, /X-NC-FILE-ID=42/)
+					await reimportIntegration(integration.id)
+					await until(async () => (await headings(calendar('Work').id)).includes('Kickoff'))
+					const kickoff = await listed('Kickoff')
+					assert.deepEqual(kickoff.attachments.all.map(file => [file.name, file.sourceUrl]), [['deck.pdf', 'https://cloud.example.com/f/42']])
+
+					kickoff.heading = 'Kickoff, renamed'
+					await updateEvent(kickoff, ['heading'])
+					assert.deepEqual(attachLines(await resourceOf('work', 'Kickoff\\, renamed')), [line])
+				})
+
+				it('takes a file\'s line off upstream once it is removed in Mitra', async () => {
+					const review = await listed('Review')
+					review.attachments = review.attachments.without(review.attachments.all[0]!)
+					await updateEvent(review, ['files'])
+					assert.deepEqual(attachLines(await resourceOf('work', 'Review')), [])
+				})
+
+				it('moves an entry with a file in, its line naming a file Mitra still serves once the original is gone', async () => {
+					const file = await upload('notes.txt', 'Notes kept locally')
+					const start = new DateTime('2026-10-28T15:00:00Z')
+					const kept = await createEvent(new Entry({ sourceId: local.id, type: EntryType.Event, heading: 'Notes', start, end: start.add({ hours: 1 }), attachments: EntryFiles.of([file]) }))
+					kept.sourceId = calendar('Home').id
+					await updateEvent(kept, ['sourceId'])
+					const [line] = attachLines(await resourceOf('home', 'Notes'))
+					const served = await fetch(/:(https?:\/\/.+)$/.exec(line!)![1]!)
+					assert.equal(served.status, 200)
+					assert.equal(await served.text(), 'Notes kept locally')
+				})
+			})
+
 			it('disconnects, leaving the server\'s calendars as they are', async () => {
 				const work = calendar('Work').id
 				await deleteIntegration(integration.id)
 				assert.equal((await fetchIntegrations()).some(each => each.id === integration.id), false)
 				assert.deepEqual(await entriesIn(work), [])
-				assert.deepEqual(await summaries('work'), ['Planning, rescheduled', 'Standup, moved'])
+				assert.deepEqual(await summaries('work'), ['Kickoff, renamed', 'Planning, rescheduled', 'Review', 'Standup, moved'])
 			})
 
 			it('asked the server only what it answered when the recording was made', () => {

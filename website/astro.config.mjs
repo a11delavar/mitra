@@ -160,6 +160,7 @@ const sections = [
 			{ slug: 'dependencies' },
 			{ slug: 'participants' },
 			{ slug: 'links' },
+			{ slug: 'attachments' },
 			{ slug: 'reminders' },
 			{ slug: 'location' },
 			// The app around the features, last.

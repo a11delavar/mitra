@@ -109,6 +109,13 @@ environment:
 | --- | --- | --- |
 | `MITRA_PHOTON_URL` | `https://photon.komoot.io` | 地点字段背后的 [Photon 地理编码服务](location.md)。可以把它指向你自己的 Photon 实例，而不使用 komoot 的公共实例。 |
 
+### 附件
+
+| 变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `MITRA_FILE_MAX_SIZE` | `25M` | 一个人可以[附加](attachments.md)到条目的最大文件，以字节计，或带 `k`、`M`、`G` 后缀。设为 `0` 则关闭添加文件。 |
+| `MITRA_FILE_QUOTA` | *(未设置)* | 每个人附加的文件总共可占用的空间，写法相同。不设置则没有限制。 |
+
 ### Google 日历
 
 两个都设置后，用户才能连接 [Google 日历](integrations/google.md)。只设置 ID 会导致 Mitra 无法启动。

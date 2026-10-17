@@ -46,6 +46,7 @@
 		"@3mo/date-time": "0.11.x",
 		"@3mo/date-time-fields": "0.18.x",
 		"@3mo/date-time-value-constructor": "x",
+		"@3mo/file-upload": "0.4.x",
 		"@3mo/intersection-observer": "x",
 		"@3mo/list": "0.12.x",
 		"@3mo/localization": "x",

@@ -9,7 +9,7 @@ import { type Integration } from '../../integrations/Integration.js'
 export type MigrationBlocker = 'availability' | 'recurrence' | 'occurrence' | 'participants' | 'transparency' | 'visibility' | 'percentComplete'
 
 /** Target capability that strips an entry field on arrival. */
-export type MigrationLoss = 'reminders' | 'location' | 'description' | 'due' | 'estimate' | 'timeZone' | 'allDay' | 'cancelledStatus' | 'type'
+export type MigrationLoss = 'reminders' | 'location' | 'description' | 'attachments' | 'due' | 'estimate' | 'timeZone' | 'allDay' | 'cancelledStatus' | 'type'
 
 /** Single entry assessment (blockers and field losses). */
 @model('MigrationVerdict')
@@ -68,6 +68,9 @@ export class MigrationVerdict {
 		}
 		if (entry.description && !ownership.holds('description')) {
 			losses.push('description')
+		}
+		if (entry.attachments.length && !(ownership.holds('attachments') && capabilities.entries.attach)) {
+			losses.push('attachments')
 		}
 		if (entry.due && !ownership.holds('due')) {
 			losses.push('due')
@@ -168,6 +171,7 @@ export class MigrationPlan {
 			case 'reminders': return t('${count:pluralityNumber} lose their reminders', { count })
 			case 'location': return t('${count:pluralityNumber} lose their location', { count })
 			case 'description': return t('${count:pluralityNumber} lose their description', { count })
+			case 'attachments': return t('${count:pluralityNumber} lose their attachments', { count })
 			case 'due': return t('${count:pluralityNumber} lose their due date', { count })
 			case 'estimate': return t('${count:pluralityNumber} lose their estimate', { count })
 			case 'timeZone': return t('${count:pluralityNumber} lose their time zone', { count })

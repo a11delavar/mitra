@@ -1,9 +1,9 @@
 /// <reference types="node" />
 import { consola } from 'consola'
 import {
-	appText, around, aroundEditorWith, aroundHomeOffice, aroundOpenDialog, capture, click, detail, details, editorOpened, hideTableLocation,
+	appText, around, aroundEditorWith, aroundHomeOffice, aroundOpenDialog, attachToSample, capture, chipOf, click, detail, details, editorOpened, hideTableLocation,
 	homeOfficeIn, keys, layers, measureAxis, open, openChip, openEditor, openFound, outDirOf, pickZone, press, sampleText, scrollToMorning,
-	setLayer, settle, show, sidebarTab, stage, waitFor, type Clip, type Theme, type View,
+	sampleAttachments, setLayer, settle, show, sidebarTab, stage, waitFor, type Clip, type Theme, type View,
 } from './capture.ts'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -109,6 +109,18 @@ await stage(async (browser, origin) => {
 		await openFound(browser, sample('DA: Study Dynamic Programming'))
 		await shot(`links-detail-${theme}`, false, await around(browser, openEditor, details.surface.width, 28))
 		await press(browser, ...keys.escape())
+
+		// Monday's architecture draft with three files, the sketch shown in the description: the paperclip on its chip, and the
+		// row in its editor beside it. Taken away again after.
+		const drafted = sample('Draft New System Architecture')
+		await attachToSample(origin, drafted, sampleAttachments, 'Whiteboard sketch.png')
+		await reopen(theme)
+		await show(browser, 'week')
+		await scrollToMorning(browser)
+		await openChip(browser, drafted)
+		await shot(`attachments-detail-${theme}`, false, await aroundEditorWith(browser, chipOf(drafted), 28))
+		await press(browser, ...keys.escape())
+		await attachToSample(origin, drafted, [])
 
 		// A new entry, searched for a place and never saved: the reload below discards it, so no run's search becomes the next one's recent.
 		await press(browser, ...keys.create())

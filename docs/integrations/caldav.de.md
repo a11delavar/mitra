@@ -48,6 +48,7 @@ Alles, was Mitra zu einem Eintrag speichert, wird synchronisiert, soweit dein Se
 - Status und Fortschritt einer Aufgabe.
 - [Teilnehmende](../participants.md). Dein Server verschickt die Einladungen und sammelt die Antworten.
 - [Teilaufgaben](../subtasks.md) und [Abhängigkeiten](../dependencies.md).
+- [Anhänge](../attachments.md). Andere Apps im selben Kalender sehen die Dateien, und Mitra zeigt die, die sie angehängt haben.
 
 Ein sich wiederholender Eintrag bleibt auf dem Server eine Serie. Wenn du ein einzelnes Vorkommen änderst, fragt Mitra, ob du **Dieser Eintrag**, **Dieser und folgende Einträge** oder **Alle Einträge** meinst, und ändert die Serie entsprechend.
 

@@ -76,7 +76,9 @@ Un calendario compartido contigo como **See all event details** es de solo lectu
 
 ## Qué se sincroniza
 
-Todo se sincroniza como en [CalDAV](caldav.md#what-syncs), salvo las relaciones entre entradas. Google las elimina de su copia de un evento, así que Mitra no las ofrece en los calendarios de Google.
+Todo se sincroniza como en [CalDAV](caldav.md#what-syncs), salvo las relaciones entre entradas, que Google elimina de su copia de un evento, así que Mitra no las ofrece en los calendarios de Google.
+
+Los [archivos adjuntos](../attachments.md) de un calendario de Google son los archivos de Google Drive que adjuntas en Google Calendar. Mitra los muestra, cada uno se abre en Drive, pero no puede añadir ni quitar ninguno: Google solo conserva archivos de Drive y descarta un archivo adjunto que añada otra app.
 
 La [disponibilidad](../availability.md) que marcas como ocupada en un calendario de Google se añade a ese calendario como eventos ocupados, para que los demás vean el tiempo como no libre. Funciona como se describe para [CalDAV](caldav.md#busy-availability).
 

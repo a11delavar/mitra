@@ -1,7 +1,7 @@
 ---
 title: IA, pièces jointes, régions et langues
 ---
-Mitra 0.7 s'adapte à votre façon de vivre. Les dates suivent votre pays. Le fuseau horaire de votre domicile voyage avec vous. Et chaque version s'explique directement dans l'application.
+Mitra 0.7 vous permet de joindre des fichiers à vos entrées, écrit les dates au format de votre région, garde le fuseau horaire de votre domicile avec vous en voyage et montre ce qui a changé directement dans l'application. Il glisse, zoome et charge aussi plus vite, et apporte de nombreuses petites améliorations et corrections depuis la 0.6.
 
 ## IA
 Nous explorons comment l'IA peut vous aider à planifier votre temps, dans Mitra même et depuis les assistants que vous utilisez déjà.
@@ -32,7 +32,19 @@ Le sélecteur de fuseaux horaires a lui aussi été repensé. Les fuseaux qui pa
 Documentation : [Fuseaux horaires](../../docs/time-zones.md)
 
 ## Pièces jointes
-Joignez des fichiers à une entrée. Les calendriers qui savent les conserver, CalDAV en tête, les emportent avec eux.
+Vous pouvez maintenant joindre des fichiers à une entrée, par exemple un billet, un ordre du jour ou une photo d'un tableau blanc. Ajoutez-les avec le trombone dans l'éditeur de l'entrée, ou faites-les glisser sur l'entrée ouverte. Cliquez sur un fichier pour l'ouvrir. Vous pouvez aussi ajouter un fichier à la description, où une image s'affiche comme image et tout autre fichier comme lien. Si vous retirez le fichier plus tard, Mitra le retire aussi de la description.
+
+Les pièces jointes se synchronisent avec votre calendrier. Dans un calendrier CalDAV, les autres applications qui utilisent le même calendrier voient les fichiers que vous joignez, et Mitra affiche ceux qu'elles ont joints. Dans Google Agenda, Mitra affiche les fichiers Google Drive joints à un événement, mais ne peut ni en ajouter ni en retirer, car Google ne conserve que les fichiers Drive. Les images d'une page Notion apparaissent maintenant dans la description de la tâche.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="attachments-dark.webp">
+	<img src="attachments-light.webp" alt="Une tâche ouverte à côté de son entrée dans la semaine, dont le trombone montre qu'elle porte des fichiers : l'éditeur liste un PDF, un croquis et un tableur au-dessus de la description, qui montre le croquis">
+</picture>
+
+> [!NOTE]
+> Mitra enregistre les fichiers que vous joignez dans son dossier de données : sauvegarder ce dossier sauvegarde donc aussi vos fichiers. Vous pouvez limiter la taille d'un fichier avec `MITRA_FILE_MAX_SIZE`, et ce que chaque personne peut stocker au total avec `MITRA_FILE_QUOTA`.
+
+Documentation : [Pièces jointes](../../docs/attachments.md)
 
 ## Notes de version dans l'application
 Vous pouvez désormais voir ce qui a changé sans quitter Mitra. La fenêtre À propos montre chaque version comme le fait le site. Elle contient les notes et les images de la version que vous utilisez, ainsi que les correctifs venus ensuite. Chaque commit y figure aussi, replié jusqu'à ce que vous en ayez besoin.

@@ -42,6 +42,51 @@ class Shelf extends Entity {
 	}
 }
 
+/** A collection value object of entities, rebuilt through its `of`, as `@children` asks of one. */
+class Shelves implements Iterable<Shelf> {
+	static of(shelves: Iterable<Shelf>) {
+		return new Shelves([...shelves])
+	}
+
+	private constructor(readonly all: ReadonlyArray<Shelf>) { }
+
+	[Symbol.iterator]() {
+		return this.all[Symbol.iterator]()
+	}
+}
+
+class Library extends Entity {
+	@identity() id?: string
+	@equality() shelves = Shelves.of([])
+
+	constructor(init?: Partial<Library>) {
+		super()
+		Object.assign(this, init)
+	}
+}
+
+/** A child that points back at what holds it: bookkeeping, as whoever takes the child sets it. */
+class Page extends Entity {
+	@identity() id?: string
+	@equality() text = ''
+	holder?: Chapter
+
+	constructor(init?: Partial<Page>) {
+		super()
+		Object.assign(this, init)
+	}
+}
+
+class Chapter extends Entity {
+	@identity() id?: string
+	@equality() pages: Array<Page> = []
+
+	constructor(init?: Partial<Chapter>) {
+		super()
+		Object.assign(this, init)
+	}
+}
+
 class Hash extends Entity {
 	url?: string
 	sha?: string
@@ -145,6 +190,27 @@ describe('Entity', () => {
 			assert.equal(copy.books[0]!.equals(book()), true)
 			assert.equal(copy.books[0]!.id, undefined)
 			assert.equal(copy.unit, unit)
+		})
+
+		it('rebuilds a collection of entities through its class\'s `of`, each a clone or a copy', () => {
+			const library = new Library({ id: 'l', shelves: Shelves.of([new Shelf({ id: 's', books: [book()] })]) })
+			const clone = library.clone()
+			const copy = library.copy()
+			assert.ok(clone.shelves instanceof Shelves)
+			assert.notEqual(clone.shelves.all[0], library.shelves.all[0])
+			assert.equal(clone.shelves.all[0]!.is(library.shelves.all[0]!), true)
+			assert.equal(copy.shelves.all[0]!.id, undefined)
+			assert.equal(copy.shelves.all[0]!.books[0]!.equals(book()), true)
+		})
+
+		it('leaves out the holder a child names, which whoever takes the clone sets: an ORM puts a child into its holder\'s rows once it names it', () => {
+			const chapter = new Chapter({ id: 'c' })
+			chapter.pages = [new Page({ id: 'p', text: 'One', holder: chapter })]
+			const clone = chapter.clone()
+			assert.notEqual(clone.pages[0], chapter.pages[0])
+			assert.equal(clone.pages[0]!.holder, undefined)
+			assert.equal(chapter.pages[0]!.clone().holder, undefined)
+			assert.equal(new Page().assign(chapter.pages[0]!).holder, undefined)
 		})
 
 		it('assign and equate take the values as their own too', () => {

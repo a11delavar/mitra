@@ -61,9 +61,10 @@ const listen = (server: Server) => new Promise<string>(resolve => server.listen(
 export class HttpRecording {
 	/**
 	 * `values` maps a placeholder to what it stands for in this run (the server's address, an account), read whenever an exchange is
-	 * stored or matched, so a value known only once the test runs (an app's port) can join late.
+	 * stored or matched, so a value known only once the test runs (an app's port) can join late. `ids` finds the ids a client mints
+	 * in a shape other than a uuid, each where it stands.
 	 */
-	constructor(readonly file: string, private readonly values: () => Readonly<Record<string, string>>) { }
+	constructor(readonly file: string, private readonly values: () => Readonly<Record<string, string>>, private readonly ids: ReadonlyArray<RegExp> = []) { }
 
 	/** This run's minted values by their number; replay starts from the server's as recorded, while the client mints its ids anew. */
 	private readonly minted: Record<Minted, Array<string>> = { id: [], token: [], time: [] }
@@ -97,8 +98,10 @@ export class HttpRecording {
 				result = result.replaceAll(value, `{${placeholder}}`)
 			}
 		}
+		for (const ids of [uuids, ...this.ids]) {
+			result = result.replace(ids, id => this.placeholderOf('id', id))
+		}
 		return result
-			.replace(uuids, id => this.placeholderOf('id', id))
 			.replace(tokenProperties, (_, open: string, _name: string, token: string, close: string) => `${open}${this.placeholderOf('token', token)}${close}`)
 			.replace(timeProperties, (_, open: string, _name: string, time: string, close: string) => `${open}${this.placeholderOf('time', time)}${close}`)
 	}

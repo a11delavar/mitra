@@ -2,69 +2,154 @@
 	"version": "3.8.3",
 	"minted": {
 		"id": [
-			"b49d8de1-17c2-44d8-b6ad-7b3aa34a28e6",
-			"8aa1d2dc-df0c-4aaf-9a68-f88617187c64"
+			"2df0a61d-fe6a-4b8d-8664-90b934463c5c",
+			"fbff8f52-ca55-480d-874c-798fb7ac00d6",
+			"1e7b265b-f8f7-4303-ac10-c9c5f1ba5740",
+			"nvytO-RJKweuJxRvPk3C3A",
+			"cb807703-48ab-44e4-9b4e-cf0f89e4ed75",
+			"-3JGj2JWJUqjtpLmuZaBmg"
 		],
 		"token": [
 			"4f1bbd7fc08d63bb76dc3af6bdd9559f3d08eb0d39d57348cf3b1a5a6199c715",
-			"http://radicale.org/ns/sync/98074fed5054fbf0aa91030d71d382654a0ea861d1dd6a082dcda988694703be",
+			"http://radicale.org/ns/sync/bc1d8a6ae6042f2498912f3132db026e33f000fdeb9b36d28e4b542e5b905ef2",
 			"4f45ceb5bfb623e96018c75d5a610c55ca844d1340ae6e265f3225981315e7d3",
-			"http://radicale.org/ns/sync/4bf442cfcb24303730ca836d0b027a526794c74dd9cbda32cf988d36cab164d7",
-			"d0289689882cd2a591d37627e7df9d201aa3bab28d016293c16a5b0e127d2007",
-			"http://radicale.org/ns/sync/eb009a653511c3db5765f2fcd3c3df6bdd12e4fb4bea330f3602816faaf69107",
-			"d14b3f129bbb7c77ab8dfcd0e30b3af26a496630be3ec77591862240ef001e4e",
-			"http://radicale.org/ns/sync/fe72427fc6fe84a5056e7f079f39f1662a779330930e609effaa1c300fe5697e",
+			"http://radicale.org/ns/sync/c490be4dd823f857454e1cb4d10ab73a7dc11ddef5466889347c32b2d820db28",
+			"124d216c552208c72cda228c608a5630295860c9c8925b50fbee07e26ff7d514",
+			"http://radicale.org/ns/sync/6f260d240e63d73d070ed8445436c6d06c62b600a75eda36fe215d8d041a1451",
+			"4eeed177340180c221f17f1197c77dd4dfcbf43ee2ececda37ff3f705d2614db",
+			"http://radicale.org/ns/sync/b6eaadd19376f86a4a8136a3210309153380953a8da1e38f21f177e3e392098c",
 			"2e3da9960eca5a2d7d72e2ebad7c286c68020ef130f4fe3ae37d83137c8c8298",
-			"9b7bbf7202003880580cd37a277f00f636f43840a908809118f268246bec43e9",
-			"http://radicale.org/ns/sync/6dc57ee461fd9b29d314490cc8a65a35cf13fce55d765edfe3dd33dc6b21da18",
-			"58b3daa1b7eb9102a9b28f9b6d18cc623e6b0fa3aaaa321e1f7850994a5a471b",
-			"http://radicale.org/ns/sync/8fae7c2570b7cedaa5d89de39d9e746c0396251a42c06b7fe0e7221cc630e354",
+			"7df4f7d6bc4f9619e624e8e36fe757aaaa6f1e015b1c0f9a998da7f6a76fbe79",
+			"http://radicale.org/ns/sync/9684a88117f738a63c2391ac3a2f8d66d13bfb5642214f7c75ff547cefee656a",
+			"b4785aec4e3399e128a2abb3c40ac391ff923b34f08a5c037654b619d2dffedd",
+			"http://radicale.org/ns/sync/c90aa98ee73819ebb0adb18244b855fcbd2e5903e1b85ac68a786aaa761f46c5",
+			"3f36667238f5677ea938b570ed2f97cab8c99e9988967044457b2335e4dfa8bb",
+			"0464f0dc564d190a8ffb823d6649425d74772f35677c11af2f168d121a644035",
+			"http://radicale.org/ns/sync/9b7b8a562a5d511e77a82baac326bcd8783012e87f140852483e8c14e3df2a9c",
+			"2615e2d5b4c21becb843692ec96ec946056e1c56be645ead8a351002403775b3",
 			"9f1ec684899ce18e7b9681ab4b1eab8732b9787a96e6d0e2f21e4ce038b76e53",
-			"b3d922aac644d5a94cd676c561e75bb0eb3bb8f6f486b878e1f320bb9095fe3d",
-			"f9b5d11e1c0a146a175001a54ec02736058d3ead01e87c66b2872e515a4b259e",
-			"c7c2c69b60b90810753e1093f9c52c8cded7a088d3fc758628936499430c4217",
-			"http://radicale.org/ns/sync/fbaeb123e51438af21b74eeb0d640d7439c87c5fedfa468675132923c2213364",
+			"b26eea76f472e4ded4b816d24a340e8fa70129df2571faf04690f1795e9679fb",
+			"fbf6df7c958dae406c1744f30b274846c7c02c8adaaf357763beda280efdfae9",
+			"http://radicale.org/ns/sync/8f5206a01d65159725db51cc8419514534a126175b6f2d37dbdf46c96f90ae2c",
 			"d3c92d170733538e77861da5d6b42b00317d6129b5894fc8292dc8b73d8b7365",
+			"7f0c04d095ed7bc2f2020217740099b331aa6dc2fbb83056f1443636628547fe",
+			"a3d1c7728f02814ce7c4bd7cc8d6fdf4c60126ba294293cb6160dadd979e5839",
+			"http://radicale.org/ns/sync/77b44c28e83a961ec5ad3d37f15bb09da659b099ff3344121d2cf439c21f90ed",
+			"741d70ca56d6ab3032effe31c0c1870d448fb7684a8ae0a9a0bec3a34a623d51",
+			"a5522fbd972691fa3fa4ec61d532de5f4bac3301a7e58b92cf625fe9c3a5d0cc",
+			"http://radicale.org/ns/sync/68508da42b9bd95c987bd162b3b592d9213e8697ddb0a9bd3b9baccd1b2295d8",
+			"dc3d56675095030128e2ef0588818a168ca302191e947772479a1fff56be9956",
+			"be47be8f8e756d2a8d33f70e4d611ba64b6e6a5937c0597f18f0076e7baece31",
+			"http://radicale.org/ns/sync/e438db4306f3d4a6888d0df56dbe59296761f9f95fa7b00120dfc86488e468f8",
+			"34bf525b0b2e1a12e3466d90de2af0ff1a0db83f2e3bbc1c9b3151339c1eab38",
+			"http://radicale.org/ns/sync/f3b7bd7a226b5554c8ba0d9fd503345b046a7545dbd675c34f240d9ebd61461f",
 			"5a31b1029986c38a08770900bd1bded2eae39bdb1c6d0f9189264b2bebc94756",
-			"http://radicale.org/ns/sync/06cb79856980def2e0e02d05ba4b6b7ef9004f195e2f300d2231a08189ba480b"
+			"http://radicale.org/ns/sync/e40500f4415f1804f129c3d2ecf00fb52c3526d66612f8440e513c3ab098a71e"
 		],
 		"time": [
-			"Fri, 16 Oct 2026 17:17:22 GMT",
-			"Fri, 16 Oct 2026 17:17:21 GMT",
-			"Fri, 16 Oct 2026 17:17:22 GMT",
-			"Fri, 16 Oct 2026 17:17:23 GMT",
-			"Fri, 16 Oct 2026 17:17:21 GMT",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"Fri, 16 Oct 2026 17:53:42 GMT",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"Fri, 16 Oct 2026 17:53:42 GMT",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"Fri, 16 Oct 2026 17:53:42 GMT",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
 			"20261001T000000Z",
 			"20261001T000000Z",
-			"Fri, 16 Oct 2026 17:17:22 GMT",
-			"20261016T191722",
-			"Fri, 16 Oct 2026 17:17:21 GMT",
 			"20261001T000000Z",
-			"Fri, 16 Oct 2026 17:17:21 GMT",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"20261016T195343",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"20261016T195344",
+			"Fri, 16 Oct 2026 17:53:42 GMT",
 			"20261001T000000Z",
-			"Fri, 16 Oct 2026 17:17:22 GMT",
-			"Fri, 16 Oct 2026 17:17:21 GMT",
-			"Fri, 16 Oct 2026 17:17:22 GMT",
-			"Fri, 16 Oct 2026 17:17:22 GMT",
-			"Fri, 16 Oct 2026 17:17:21 GMT",
-			"Fri, 16 Oct 2026 17:17:22 GMT",
-			"Fri, 16 Oct 2026 17:17:22 GMT",
-			"Fri, 16 Oct 2026 17:17:22 GMT",
-			"Fri, 16 Oct 2026 17:17:22 GMT",
+			"Fri, 16 Oct 2026 17:53:42 GMT",
 			"20261001T000000Z",
-			"20261016T191722",
+			"Fri, 16 Oct 2026 17:53:42 GMT",
 			"20261001T000000Z",
-			"Fri, 16 Oct 2026 17:17:22 GMT",
-			"20261016T191722",
-			"Fri, 16 Oct 2026 17:17:22 GMT",
-			"20261016T191722",
-			"Fri, 16 Oct 2026 17:17:22 GMT",
-			"20261016T191722",
-			"Fri, 16 Oct 2026 17:17:21 GMT",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"Fri, 16 Oct 2026 17:53:42 GMT",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"Fri, 16 Oct 2026 17:53:42 GMT",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
 			"20261001T000000Z",
-			"Fri, 16 Oct 2026 17:17:21 GMT",
+			"20261016T195342",
 			"20261001T000000Z",
-			"Fri, 16 Oct 2026 17:17:22 GMT",
+			"20261001T000000Z",
+			"20261016T195342",
+			"20261016T195343",
+			"20261001T000000Z",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"20261016T195342",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"20261016T195342",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"20261016T195342",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"20261016T195342",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"20261016T195342",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"20261016T195342",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"20261016T195342",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"20261016T195343",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"20261016T195343",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"20261016T195343",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"20261016T195343",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"20261016T195343",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"20261001T000000Z",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"20261001T000000Z",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"20261001T000000Z",
+			"Fri, 16 Oct 2026 17:53:44 GMT",
+			"20261001T000000Z",
+			"Fri, 16 Oct 2026 17:53:42 GMT",
+			"20261001T000000Z",
+			"Fri, 16 Oct 2026 17:53:42 GMT",
+			"20261001T000000Z",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"20261001T000000Z",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"20261001T000000Z",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"20261001T000000Z",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
+			"20261001T000000Z",
+			"Fri, 16 Oct 2026 17:53:43 GMT",
 			"20261001T000000Z"
 		]
 	},
@@ -295,6 +380,191 @@
 					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
 				},
 				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/</href><propstat><prop><current-user-principal><href>/{account}/</href></current-user-principal></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:current-user-principal/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/</href><propstat><prop><current-user-principal><href>/{account}/</href></current-user-principal></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:current-user-principal/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/</href><propstat><prop><current-user-principal><href>/{account}/</href></current-user-principal></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:current-user-principal/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/</href><propstat><prop><current-user-principal><href>/{account}/</href></current-user-principal></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:current-user-principal/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/</href><propstat><prop><current-user-principal><href>/{account}/</href></current-user-principal></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <d:current-user-principal/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/</href><propstat><prop><current-user-principal><href>/{account}/</href></current-user-principal></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/.well-known/caldav",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<d:propfind xmlns:d=\"DAV:\"> <d:prop>   <d:resourcetype/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 301,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8",
+					"location": "/"
+				},
+				"body": "Redirected to /"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/.well-known/caldav",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<d:propfind xmlns:d=\"DAV:\"> <d:prop>   <d:resourcetype/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 301,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8",
+					"location": "/"
+				},
+				"body": "Redirected to /"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/.well-known/caldav",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<d:propfind xmlns:d=\"DAV:\"> <d:prop>   <d:resourcetype/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 301,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8",
+					"location": "/"
+				},
+				"body": "Redirected to /"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/.well-known/caldav",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<d:propfind xmlns:d=\"DAV:\"> <d:prop>   <d:resourcetype/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 301,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8",
+					"location": "/"
+				},
+				"body": "Redirected to /"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/.well-known/caldav",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<d:propfind xmlns:d=\"DAV:\"> <d:prop>   <d:resourcetype/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 301,
+				"headers": {
+					"content-type": "text/plain; charset=utf-8",
+					"location": "/"
+				},
+				"body": "Redirected to /"
 			}
 		},
 		{
@@ -914,6 +1184,101 @@
 		},
 		{
 			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-home-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-home-set><href>/{account}/</href></C:calendar-home-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-home-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-home-set><href>/{account}/</href></C:calendar-home-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-home-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-home-set><href>/{account}/</href></C:calendar-home-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-home-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-home-set><href>/{account}/</href></C:calendar-home-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "0"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:ca=\"http://apple.com/ns/ical/\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:prop>   <c:calendar-home-set/> </d:prop>\n</d:propfind>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/</href><propstat><prop><C:calendar-home-set><href>/{account}/</href></C:calendar-home-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
 				"method": "DELETE",
 				"path": "/{account}/home/",
 				"headers": {},
@@ -1056,6 +1421,24 @@
 		},
 		{
 			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/home/",
+				"headers": {
+					"depth": "1"
+				},
+				"body": ""
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:RADICALE=\"http://radicale.org/ns/\"><response><href>/{account}/home/</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><RADICALE:version>3.8.3</RADICALE:version><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set><resourcetype><C:calendar /><collection /></resourcetype><owner><href>/{account}/</href></owner><getetag>\"{token:11}\"</getetag><getlastmodified>{time:5}</getlastmodified><getcontenttype>text/calendar</getcontenttype><getcontentlength>924</getcontentlength><displayname>Home</displayname><sync-token>{token:12}</sync-token><CS:getctag>\"{token:11}\"</CS:getctag><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/home/dentist.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:8}\"</getetag><getlastmodified>{time:6}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>204</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/home/{id:4}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:13}\"</getetag><getlastmodified>{time:7}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>738</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
 				"method": "REPORT",
 				"path": "/{account}/home/",
 				"headers": {
@@ -1086,7 +1469,7 @@
 				"headers": {
 					"content-type": "text/xml; charset=utf-8"
 				},
-				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/home/dentist.ics</href><propstat><prop><getetag>\"{token:8}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:dentist\r\nDTSTART:20261021T090000Z\r\nDTEND:20261021T100000Z\r\nDTSTAMP:{time:5}\r\nSUMMARY:Dentist\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/home/dentist.ics</href><propstat><prop><getetag>\"{token:8}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:dentist\r\nDTSTART:20261021T090000Z\r\nDTEND:20261021T100000Z\r\nDTSTAMP:{time:8}\r\nSUMMARY:Dentist\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
 			}
 		},
 		{
@@ -1121,7 +1504,42 @@
 				"headers": {
 					"content-type": "text/xml; charset=utf-8"
 				},
-				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/home/dentist.ics</href><propstat><prop><getetag>\"{token:8}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:dentist\r\nDTSTART:20261021T090000Z\r\nDTEND:20261021T100000Z\r\nDTSTAMP:{time:6}\r\nSUMMARY:Dentist\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/home/dentist.ics</href><propstat><prop><getetag>\"{token:8}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:dentist\r\nDTSTART:20261021T090000Z\r\nDTEND:20261021T100000Z\r\nDTSTAMP:{time:9}\r\nSUMMARY:Dentist\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "REPORT",
+				"path": "/{account}/home/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:sync-collection xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:sync-level>1</d:sync-level> <d:sync-token/> <d:prop>   <d:getetag/> </d:prop>\n</d:sync-collection>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><sync-token>{token:10}</sync-token><response><href>/{account}/home/{id:1}.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/{account}/home/dentist.ics</href><propstat><prop><getetag>\"{token:8}\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "REPORT",
+				"path": "/{account}/home/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "1"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<c:calendar-multiget xmlns:d=\"DAV:\" xmlns:c=\"urn:ietf:params:xml:ns:caldav\"> <d:prop>   <d:getetag/>   <c:calendar-data/> </d:prop> <d:href>/{account}/home/dentist.ics</d:href>\n</c:calendar-multiget>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/home/dentist.ics</href><propstat><prop><getetag>\"{token:8}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:dentist\r\nDTSTART:20261021T090000Z\r\nDTEND:20261021T100000Z\r\nDTSTAMP:{time:10}\r\nSUMMARY:Dentist\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
 			}
 		},
 		{
@@ -1153,9 +1571,9 @@
 				"headers": {
 					"content-type": "text/calendar; charset=utf-8",
 					"etag": "\"{token:9}\"",
-					"last-modified": "{time:7}"
+					"last-modified": "{time:11}"
 				},
-				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:1}\r\nDTSTART;TZID=Europe/Berlin:20261024T100000\r\nDTEND;TZID=Europe/Berlin:20261024T110000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:8}\r\nSUMMARY:Retro\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:1}\r\nDTSTART;TZID=Europe/Berlin:20261024T100000\r\nDTEND;TZID=Europe/Berlin:20261024T110000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:12}\r\nSUMMARY:Retro\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
 			}
 		},
 		{
@@ -1179,7 +1597,7 @@
 		{
 			"request": {
 				"method": "GET",
-				"path": "/{account}/home/dentist.ics",
+				"path": "/{account}/home/{id:4}.ics",
 				"headers": {},
 				"body": ""
 			},
@@ -1187,10 +1605,28 @@
 				"status": 200,
 				"headers": {
 					"content-type": "text/calendar; charset=utf-8",
-					"etag": "\"{token:8}\"",
-					"last-modified": "{time:9}"
+					"etag": "\"{token:13}\"",
+					"last-modified": "{time:13}"
 				},
-				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:dentist\r\nDTSTART:20261021T090000Z\r\nDTEND:20261021T100000Z\r\nDTSTAMP:{time:10}\r\nSUMMARY:Dentist\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:4}\r\nDTSTART;TZID=Europe/Berlin:20261028T160000\r\nDTEND;TZID=Europe/Berlin:20261028T170000\r\nATTACH;FILENAME=notes.txt;FMTTYPE=text/plain;SIZE=18:{app}/api/files/{id:5}/notes.txt\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:14}\r\nSUMMARY:Notes\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "PUT",
+				"path": "/{account}/home/{id:4}.ics",
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"if-none-match": "*"
+				},
+				"body": "BEGIN:VCALENDAR\r\nPRODID:-//calendar//EN\r\nVERSION:2.0\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nEND:DAYLIGHT\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:4}\r\nDTSTAMP:{now}\r\nSUMMARY:Notes\r\nDTSTART;TZID=Europe/Berlin:20261028T160000\r\nDTEND;TZID=Europe/Berlin:20261028T170000\r\nATTACH;FMTTYPE=text/plain;FILENAME=notes.txt;SIZE=18:{app}/api/files/{id:5}/notes.txt\r\nEND:VEVENT\r\nEND:VCALENDAR"
+			},
+			"response": {
+				"status": 201,
+				"headers": {
+					"etag": "\"{token:13}\""
+				},
+				"body": ""
 			}
 		},
 		{
@@ -1205,9 +1641,43 @@
 				"headers": {
 					"content-type": "text/calendar; charset=utf-8",
 					"etag": "\"{token:8}\"",
-					"last-modified": "{time:11}"
+					"last-modified": "{time:15}"
 				},
-				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:dentist\r\nDTSTART:20261021T090000Z\r\nDTEND:20261021T100000Z\r\nDTSTAMP:{time:12}\r\nSUMMARY:Dentist\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:dentist\r\nDTSTART:20261021T090000Z\r\nDTEND:20261021T100000Z\r\nDTSTAMP:{time:16}\r\nSUMMARY:Dentist\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/home/dentist.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:8}\"",
+					"last-modified": "{time:17}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:dentist\r\nDTSTART:20261021T090000Z\r\nDTEND:20261021T100000Z\r\nDTSTAMP:{time:18}\r\nSUMMARY:Dentist\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/home/dentist.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:8}\"",
+					"last-modified": "{time:19}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:dentist\r\nDTSTART:20261021T090000Z\r\nDTEND:20261021T100000Z\r\nDTSTAMP:{time:20}\r\nSUMMARY:Dentist\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
 			}
 		},
 		{
@@ -1329,7 +1799,7 @@
 					"content-type": "text/xml; charset=utf-8",
 					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
 				},
-				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:RADICALE=\"http://radicale.org/ns/\"><response><href>/{account}/work/</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><RADICALE:version>3.8.3</RADICALE:version><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set><resourcetype><C:calendar /><collection /></resourcetype><owner><href>/{account}/</href></owner><getetag>\"{token:11}\"</getetag><getlastmodified>{time:13}</getlastmodified><getcontenttype>text/calendar</getcontenttype><getcontentlength>804</getcontentlength><displayname>Work</displayname><sync-token>{token:12}</sync-token><CS:getctag>\"{token:11}\"</CS:getctag><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:13}\"</getetag><getlastmodified>{time:14}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>204</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:14}\"</getetag><getlastmodified>{time:15}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>618</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:RADICALE=\"http://radicale.org/ns/\"><response><href>/{account}/work/</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><RADICALE:version>3.8.3</RADICALE:version><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set><resourcetype><C:calendar /><collection /></resourcetype><owner><href>/{account}/</href></owner><getetag>\"{token:14}\"</getetag><getlastmodified>{time:21}</getlastmodified><getcontenttype>text/calendar</getcontenttype><getcontentlength>804</getcontentlength><displayname>Work</displayname><sync-token>{token:15}</sync-token><CS:getctag>\"{token:14}\"</CS:getctag><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:16}\"</getetag><getlastmodified>{time:22}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>618</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:17}\"</getetag><getlastmodified>{time:23}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>204</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
 			}
 		},
 		{
@@ -1347,7 +1817,7 @@
 					"content-type": "text/xml; charset=utf-8",
 					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
 				},
-				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:RADICALE=\"http://radicale.org/ns/\"><response><href>/{account}/work/</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><RADICALE:version>3.8.3</RADICALE:version><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set><resourcetype><C:calendar /><collection /></resourcetype><owner><href>/{account}/</href></owner><getetag>\"{token:4}\"</getetag><getlastmodified>{time:16}</getlastmodified><getcontenttype>text/calendar</getcontenttype><getcontentlength>818</getcontentlength><displayname>Work</displayname><sync-token>{token:5}</sync-token><CS:getctag>\"{token:4}\"</CS:getctag><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:13}\"</getetag><getlastmodified>{time:17}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>204</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:15}\"</getetag><getlastmodified>{time:18}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>632</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:RADICALE=\"http://radicale.org/ns/\"><response><href>/{account}/work/</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><RADICALE:version>3.8.3</RADICALE:version><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set><resourcetype><C:calendar /><collection /></resourcetype><owner><href>/{account}/</href></owner><getetag>\"{token:4}\"</getetag><getlastmodified>{time:24}</getlastmodified><getcontenttype>text/calendar</getcontenttype><getcontentlength>818</getcontentlength><displayname>Work</displayname><sync-token>{token:5}</sync-token><CS:getctag>\"{token:4}\"</CS:getctag><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:18}\"</getetag><getlastmodified>{time:25}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>632</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:17}\"</getetag><getlastmodified>{time:26}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>204</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
 			}
 		},
 		{
@@ -1384,7 +1854,79 @@
 					"content-type": "text/xml; charset=utf-8",
 					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
 				},
-				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:RADICALE=\"http://radicale.org/ns/\"><response><href>/{account}/work/</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><RADICALE:version>3.8.3</RADICALE:version><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set><resourcetype><C:calendar /><collection /></resourcetype><owner><href>/{account}/</href></owner><getetag>\"{token:16}\"</getetag><getlastmodified>{time:19}</getlastmodified><getcontenttype>text/calendar</getcontenttype><getcontentlength>826</getcontentlength><displayname>Work</displayname><sync-token>{token:17}</sync-token><CS:getctag>\"{token:16}\"</CS:getctag><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:18}\"</getetag><getlastmodified>{time:20}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>212</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:15}\"</getetag><getlastmodified>{time:21}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>632</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:RADICALE=\"http://radicale.org/ns/\"><response><href>/{account}/work/</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><RADICALE:version>3.8.3</RADICALE:version><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set><resourcetype><C:calendar /><collection /></resourcetype><owner><href>/{account}/</href></owner><getetag>\"{token:19}\"</getetag><getlastmodified>{time:27}</getlastmodified><getcontenttype>text/calendar</getcontenttype><getcontentlength>1179</getcontentlength><displayname>Work</displayname><sync-token>{token:20}</sync-token><CS:getctag>\"{token:19}\"</CS:getctag><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:18}\"</getetag><getlastmodified>{time:28}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>632</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:21}\"</getetag><getlastmodified>{time:29}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>212</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:2}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:22}\"</getetag><getlastmodified>{time:30}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>741</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/work/",
+				"headers": {
+					"depth": "1"
+				},
+				"body": ""
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:RADICALE=\"http://radicale.org/ns/\"><response><href>/{account}/work/</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><RADICALE:version>3.8.3</RADICALE:version><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set><resourcetype><C:calendar /><collection /></resourcetype><owner><href>/{account}/</href></owner><getetag>\"{token:23}\"</getetag><getlastmodified>{time:31}</getlastmodified><getcontenttype>text/calendar</getcontenttype><getcontentlength>1411</getcontentlength><displayname>Work</displayname><sync-token>{token:24}</sync-token><CS:getctag>\"{token:23}\"</CS:getctag><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:18}\"</getetag><getlastmodified>{time:32}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>632</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:21}\"</getetag><getlastmodified>{time:33}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>212</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:2}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:22}\"</getetag><getlastmodified>{time:34}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>741</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/kickoff.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:25}\"</getetag><getlastmodified>{time:35}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>304</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/work/",
+				"headers": {
+					"depth": "1"
+				},
+				"body": ""
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:RADICALE=\"http://radicale.org/ns/\"><response><href>/{account}/work/</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><RADICALE:version>3.8.3</RADICALE:version><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set><resourcetype><C:calendar /><collection /></resourcetype><owner><href>/{account}/</href></owner><getetag>\"{token:26}\"</getetag><getlastmodified>{time:36}</getlastmodified><getcontenttype>text/calendar</getcontenttype><getcontentlength>1421</getcontentlength><displayname>Work</displayname><sync-token>{token:27}</sync-token><CS:getctag>\"{token:26}\"</CS:getctag><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:18}\"</getetag><getlastmodified>{time:37}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>632</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:21}\"</getetag><getlastmodified>{time:38}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>212</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:2}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:22}\"</getetag><getlastmodified>{time:39}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>741</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/kickoff.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:28}\"</getetag><getlastmodified>{time:40}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>314</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/work/",
+				"headers": {
+					"depth": "1"
+				},
+				"body": ""
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:RADICALE=\"http://radicale.org/ns/\"><response><href>/{account}/work/</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><RADICALE:version>3.8.3</RADICALE:version><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set><resourcetype><C:calendar /><collection /></resourcetype><owner><href>/{account}/</href></owner><getetag>\"{token:29}\"</getetag><getlastmodified>{time:41}</getlastmodified><getcontenttype>text/calendar</getcontenttype><getcontentlength>1296</getcontentlength><displayname>Work</displayname><sync-token>{token:30}</sync-token><CS:getctag>\"{token:29}\"</CS:getctag><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:18}\"</getetag><getlastmodified>{time:42}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>632</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:21}\"</getetag><getlastmodified>{time:43}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>212</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:2}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:31}\"</getetag><getlastmodified>{time:44}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>616</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/kickoff.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:28}\"</getetag><getlastmodified>{time:45}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>314</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "PROPFIND",
+				"path": "/{account}/work/",
+				"headers": {
+					"depth": "1"
+				},
+				"body": ""
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8",
+					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:RADICALE=\"http://radicale.org/ns/\"><response><href>/{account}/work/</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><RADICALE:version>3.8.3</RADICALE:version><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set><resourcetype><C:calendar /><collection /></resourcetype><owner><href>/{account}/</href></owner><getetag>\"{token:29}\"</getetag><getlastmodified>{time:46}</getlastmodified><getcontenttype>text/calendar</getcontenttype><getcontentlength>1296</getcontentlength><displayname>Work</displayname><sync-token>{token:30}</sync-token><CS:getctag>\"{token:29}\"</CS:getctag><C:supported-calendar-component-set><C:comp name=\"VEVENT\" /><C:comp name=\"VTODO\" /></C:supported-calendar-component-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:18}\"</getetag><getlastmodified>{time:47}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>632</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:21}\"</getetag><getlastmodified>{time:48}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>212</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:2}.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:31}\"</getetag><getlastmodified>{time:49}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>616</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/kickoff.ics</href><propstat><prop><principal-collection-set><href>/</href></principal-collection-set><current-user-principal><href>/{account}/</href></current-user-principal><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report></supported-report-set><resourcetype /><owner><href>/{account}/</href></owner><getetag>\"{token:28}\"</getetag><getlastmodified>{time:50}</getlastmodified><getcontenttype>text/calendar;charset=utf-8;component=VEVENT</getcontenttype><getcontentlength>314</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
 			}
 		},
 		{
@@ -1401,7 +1943,7 @@
 				"headers": {
 					"content-type": "text/xml; charset=utf-8"
 				},
-				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><sync-token>{token:3}</sync-token><response><href>/{account}/work/standup.ics</href><propstat><prop><getetag>\"{token:13}\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><sync-token>{token:3}</sync-token><response><href>/{account}/work/standup.ics</href><propstat><prop><getetag>\"{token:17}\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
 			}
 		},
 		{
@@ -1419,7 +1961,7 @@
 				"headers": {
 					"content-type": "text/xml; charset=utf-8"
 				},
-				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/work/standup.ics</href><propstat><prop><getetag>\"{token:13}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261020T090000Z\r\nDTEND:20261020T100000Z\r\nDTSTAMP:{time:22}\r\nSUMMARY:Standup\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/work/standup.ics</href><propstat><prop><getetag>\"{token:17}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261020T090000Z\r\nDTEND:20261020T100000Z\r\nDTSTAMP:{time:51}\r\nSUMMARY:Standup\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
 			}
 		},
 		{
@@ -1436,7 +1978,7 @@
 				"headers": {
 					"content-type": "text/xml; charset=utf-8"
 				},
-				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><sync-token>{token:17}</sync-token><response><href>/{account}/work/standup.ics</href><propstat><prop><getetag>\"{token:18}\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><getetag>\"{token:15}\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><sync-token>{token:32}</sync-token><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><getetag>\"{token:18}\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><getetag>\"{token:21}\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
 			}
 		},
 		{
@@ -1447,14 +1989,49 @@
 					"content-type": "text/xml;charset=UTF-8",
 					"depth": "1"
 				},
-				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<c:calendar-multiget xmlns:d=\"DAV:\" xmlns:c=\"urn:ietf:params:xml:ns:caldav\"> <d:prop>   <d:getetag/>   <c:calendar-data/> </d:prop> <d:href>/{account}/work/standup.ics</d:href> <d:href>/{account}/work/{id:0}.ics</d:href>\n</c:calendar-multiget>"
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<c:calendar-multiget xmlns:d=\"DAV:\" xmlns:c=\"urn:ietf:params:xml:ns:caldav\"> <d:prop>   <d:getetag/>   <c:calendar-data/> </d:prop> <d:href>/{account}/work/{id:0}.ics</d:href> <d:href>/{account}/work/standup.ics</d:href>\n</c:calendar-multiget>"
 			},
 			"response": {
 				"status": 207,
 				"headers": {
 					"content-type": "text/xml; charset=utf-8"
 				},
-				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><getetag>\"{token:15}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:23}\r\nSUMMARY:Planning\\, rescheduled\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><getetag>\"{token:18}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261023T090000Z\r\nDTEND:20261023T100000Z\r\nDTSTAMP:{time:24}\r\nSUMMARY:Standup\\, moved\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><getetag>\"{token:18}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:52}\r\nSUMMARY:Planning\\, rescheduled\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><getetag>\"{token:21}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261023T090000Z\r\nDTEND:20261023T100000Z\r\nDTSTAMP:{time:53}\r\nSUMMARY:Standup\\, moved\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "REPORT",
+				"path": "/{account}/work/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:sync-collection xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:d=\"DAV:\"> <d:sync-level>1</d:sync-level> <d:sync-token/> <d:prop>   <d:getetag/> </d:prop>\n</d:sync-collection>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><sync-token>{token:24}</sync-token><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><getetag>\"{token:18}\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><getetag>\"{token:21}\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:2}.ics</href><propstat><prop><getetag>\"{token:22}\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/kickoff.ics</href><propstat><prop><getetag>\"{token:25}\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+			}
+		},
+		{
+			"request": {
+				"method": "REPORT",
+				"path": "/{account}/work/",
+				"headers": {
+					"content-type": "text/xml;charset=UTF-8",
+					"depth": "1"
+				},
+				"body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<c:calendar-multiget xmlns:d=\"DAV:\" xmlns:c=\"urn:ietf:params:xml:ns:caldav\"> <d:prop>   <d:getetag/>   <c:calendar-data/> </d:prop> <d:href>/{account}/work/{id:0}.ics</d:href> <d:href>/{account}/work/standup.ics</d:href> <d:href>/{account}/work/{id:2}.ics</d:href> <d:href>/{account}/work/kickoff.ics</d:href>\n</c:calendar-multiget>"
+			},
+			"response": {
+				"status": 207,
+				"headers": {
+					"content-type": "text/xml; charset=utf-8"
+				},
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/{account}/work/kickoff.ics</href><propstat><prop><getetag>\"{token:25}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:kickoff\r\nDTSTART:20261027T090000Z\r\nDTEND:20261027T100000Z\r\nATTACH;FILENAME=deck.pdf;FMTTYPE=application/pdf;X-NC-FILE-ID=42:https://cloud.example.com/f/42\r\nDTSTAMP:{time:54}\r\nSUMMARY:Kickoff\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:0}.ics</href><propstat><prop><getetag>\"{token:18}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:55}\r\nSUMMARY:Planning\\, rescheduled\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/{id:2}.ics</href><propstat><prop><getetag>\"{token:22}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:2}\r\nDTSTART;TZID=Europe/Berlin:20261026T110000\r\nDTEND;TZID=Europe/Berlin:20261026T120000\r\nATTACH;FILENAME=agenda.txt;FMTTYPE=text/plain;SIZE=21:{app}/api/files/{id:3}/agenda.txt\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:56}\r\nSUMMARY:Review\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/{account}/work/standup.ics</href><propstat><prop><getetag>\"{token:21}\"</getetag><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261023T090000Z\r\nDTEND:20261023T100000Z\r\nDTSTAMP:{time:57}\r\nSUMMARY:Standup\\, moved\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
 			}
 		},
 		{
@@ -1468,10 +2045,10 @@
 				"status": 200,
 				"headers": {
 					"content-type": "text/calendar; charset=utf-8",
-					"etag": "\"{token:14}\"",
-					"last-modified": "{time:25}"
+					"etag": "\"{token:16}\"",
+					"last-modified": "{time:58}"
 				},
-				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:26}\r\nSUMMARY:Planning\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:59}\r\nSUMMARY:Planning\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
 			}
 		},
 		{
@@ -1485,10 +2062,10 @@
 				"status": 200,
 				"headers": {
 					"content-type": "text/calendar; charset=utf-8",
-					"etag": "\"{token:15}\"",
-					"last-modified": "{time:27}"
+					"etag": "\"{token:18}\"",
+					"last-modified": "{time:60}"
 				},
-				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:28}\r\nSUMMARY:Planning\\, rescheduled\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:61}\r\nSUMMARY:Planning\\, rescheduled\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
 			}
 		},
 		{
@@ -1502,10 +2079,78 @@
 				"status": 200,
 				"headers": {
 					"content-type": "text/calendar; charset=utf-8",
-					"etag": "\"{token:15}\"",
-					"last-modified": "{time:29}"
+					"etag": "\"{token:18}\"",
+					"last-modified": "{time:62}"
 				},
-				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:30}\r\nSUMMARY:Planning\\, rescheduled\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:63}\r\nSUMMARY:Planning\\, rescheduled\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/{id:0}.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:18}\"",
+					"last-modified": "{time:64}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:65}\r\nSUMMARY:Planning\\, rescheduled\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/{id:0}.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:18}\"",
+					"last-modified": "{time:66}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:67}\r\nSUMMARY:Planning\\, rescheduled\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/{id:0}.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:18}\"",
+					"last-modified": "{time:68}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:69}\r\nSUMMARY:Planning\\, rescheduled\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/{id:0}.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:18}\"",
+					"last-modified": "{time:70}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:71}\r\nSUMMARY:Planning\\, rescheduled\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
 			}
 		},
 		{
@@ -1521,7 +2166,7 @@
 			"response": {
 				"status": 201,
 				"headers": {
-					"etag": "\"{token:14}\""
+					"etag": "\"{token:16}\""
 				},
 				"body": ""
 			}
@@ -1532,14 +2177,238 @@
 				"path": "/{account}/work/{id:0}.ics",
 				"headers": {
 					"content-type": "text/calendar; charset=utf-8",
-					"if-match": "\"{token:14}\""
+					"if-match": "\"{token:16}\""
 				},
 				"body": "BEGIN:VCALENDAR\r\nPRODID:-//calendar//EN\r\nVERSION:2.0\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nEND:DAYLIGHT\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:0}\r\nDTSTAMP:{now}\r\nSUMMARY:Planning\\, rescheduled\r\nDTSTART;TZID=Europe/Berlin:20261022T150000\r\nDTEND;TZID=Europe/Berlin:20261022T160000\r\nEND:VEVENT\r\nEND:VCALENDAR"
 			},
 			"response": {
 				"status": 204,
 				"headers": {
-					"etag": "\"{token:15}\""
+					"etag": "\"{token:18}\""
+				},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/{id:2}.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:22}\"",
+					"last-modified": "{time:72}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:2}\r\nDTSTART;TZID=Europe/Berlin:20261026T110000\r\nDTEND;TZID=Europe/Berlin:20261026T120000\r\nATTACH;FILENAME=agenda.txt;FMTTYPE=text/plain;SIZE=21:{app}/api/files/{id:3}/agenda.txt\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:73}\r\nSUMMARY:Review\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/{id:2}.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:22}\"",
+					"last-modified": "{time:74}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:2}\r\nDTSTART;TZID=Europe/Berlin:20261026T110000\r\nDTEND;TZID=Europe/Berlin:20261026T120000\r\nATTACH;FILENAME=agenda.txt;FMTTYPE=text/plain;SIZE=21:{app}/api/files/{id:3}/agenda.txt\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:75}\r\nSUMMARY:Review\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/{id:2}.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:22}\"",
+					"last-modified": "{time:76}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:2}\r\nDTSTART;TZID=Europe/Berlin:20261026T110000\r\nDTEND;TZID=Europe/Berlin:20261026T120000\r\nATTACH;FILENAME=agenda.txt;FMTTYPE=text/plain;SIZE=21:{app}/api/files/{id:3}/agenda.txt\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:77}\r\nSUMMARY:Review\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/{id:2}.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:31}\"",
+					"last-modified": "{time:78}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:2}\r\nDTSTART;TZID=Europe/Berlin:20261026T110000\r\nDTEND;TZID=Europe/Berlin:20261026T120000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:79}\r\nSUMMARY:Review\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/{id:2}.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:31}\"",
+					"last-modified": "{time:80}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:2}\r\nDTSTART;TZID=Europe/Berlin:20261026T110000\r\nDTEND;TZID=Europe/Berlin:20261026T120000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{time:81}\r\nSUMMARY:Review\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "PUT",
+				"path": "/{account}/work/{id:2}.ics",
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"if-none-match": "*"
+				},
+				"body": "BEGIN:VCALENDAR\r\nPRODID:-//calendar//EN\r\nVERSION:2.0\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nEND:DAYLIGHT\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:2}\r\nDTSTAMP:{now}\r\nSUMMARY:Review\r\nDTSTART;TZID=Europe/Berlin:20261026T110000\r\nDTEND;TZID=Europe/Berlin:20261026T120000\r\nATTACH;FMTTYPE=text/plain;FILENAME=agenda.txt;SIZE=21:{app}/api/files/{id:3}/agenda.txt\r\nEND:VEVENT\r\nEND:VCALENDAR"
+			},
+			"response": {
+				"status": 201,
+				"headers": {
+					"etag": "\"{token:22}\""
+				},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "PUT",
+				"path": "/{account}/work/{id:2}.ics",
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"if-match": "\"{token:22}\""
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:STANDARD\r\nDTSTART:20251026T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nBEGIN:DAYLIGHT\r\nDTSTART:20250330T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nUID:{id:2}\r\nDTSTART;TZID=Europe/Berlin:20261026T110000\r\nDTEND;TZID=Europe/Berlin:20261026T120000\r\nDTSTAMP;X-VOBJ-FLOATINGTIME-ALLOWED=TRUE:{now}\r\nSUMMARY:Review\r\nEND:VEVENT\r\nEND:VCALENDAR"
+			},
+			"response": {
+				"status": 204,
+				"headers": {
+					"etag": "\"{token:31}\""
+				},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/kickoff.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:25}\"",
+					"last-modified": "{time:82}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:kickoff\r\nDTSTART:20261027T090000Z\r\nDTEND:20261027T100000Z\r\nATTACH;FILENAME=deck.pdf;FMTTYPE=application/pdf;X-NC-FILE-ID=42:https://cloud.example.com/f/42\r\nDTSTAMP:{time:83}\r\nSUMMARY:Kickoff\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/kickoff.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:28}\"",
+					"last-modified": "{time:84}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:kickoff\r\nDTSTART:20261027T090000Z\r\nDTEND:20261027T100000Z\r\nATTACH;FILENAME=deck.pdf;FMTTYPE=application/pdf;X-NC-FILE-ID=42:https://cloud.example.com/f/42\r\nDTSTAMP:{time:85}\r\nSUMMARY:Kickoff\\, renamed\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/kickoff.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:28}\"",
+					"last-modified": "{time:86}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:kickoff\r\nDTSTART:20261027T090000Z\r\nDTEND:20261027T100000Z\r\nATTACH;FILENAME=deck.pdf;FMTTYPE=application/pdf;X-NC-FILE-ID=42:https://cloud.example.com/f/42\r\nDTSTAMP:{time:87}\r\nSUMMARY:Kickoff\\, renamed\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/kickoff.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:28}\"",
+					"last-modified": "{time:88}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:kickoff\r\nDTSTART:20261027T090000Z\r\nDTEND:20261027T100000Z\r\nATTACH;FILENAME=deck.pdf;FMTTYPE=application/pdf;X-NC-FILE-ID=42:https://cloud.example.com/f/42\r\nDTSTAMP:{time:89}\r\nSUMMARY:Kickoff\\, renamed\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "PUT",
+				"path": "/{account}/work/kickoff.ics",
+				"headers": {
+					"content-type": "text/calendar"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:kickoff\r\nDTSTAMP:{now}\r\nDTSTART:20261027T090000Z\r\nDTEND:20261027T100000Z\r\nSUMMARY:Kickoff\r\nATTACH;FMTTYPE=application/pdf;FILENAME=deck.pdf;X-NC-FILE-ID=42:https://cloud.example.com/f/42\r\nEND:VEVENT\r\nEND:VCALENDAR"
+			},
+			"response": {
+				"status": 201,
+				"headers": {
+					"etag": "\"{token:25}\""
+				},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "PUT",
+				"path": "/{account}/work/kickoff.ics",
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"if-match": "\"{token:25}\""
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:kickoff\r\nDTSTART:20261027T090000Z\r\nDTEND:20261027T100000Z\r\nATTACH;FILENAME=deck.pdf;FMTTYPE=application/pdf;X-NC-FILE-ID=42:https://cloud.example.com/f/42\r\nDTSTAMP:{now}\r\nSUMMARY:Kickoff\\, renamed\r\nEND:VEVENT\r\nEND:VCALENDAR"
+			},
+			"response": {
+				"status": 204,
+				"headers": {
+					"etag": "\"{token:28}\""
 				},
 				"body": ""
 			}
@@ -1555,10 +2424,10 @@
 				"status": 200,
 				"headers": {
 					"content-type": "text/calendar; charset=utf-8",
-					"etag": "\"{token:13}\"",
-					"last-modified": "{time:31}"
+					"etag": "\"{token:17}\"",
+					"last-modified": "{time:90}"
 				},
-				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261020T090000Z\r\nDTEND:20261020T100000Z\r\nDTSTAMP:{time:32}\r\nSUMMARY:Standup\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261020T090000Z\r\nDTEND:20261020T100000Z\r\nDTSTAMP:{time:91}\r\nSUMMARY:Standup\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
 			}
 		},
 		{
@@ -1572,10 +2441,10 @@
 				"status": 200,
 				"headers": {
 					"content-type": "text/calendar; charset=utf-8",
-					"etag": "\"{token:13}\"",
-					"last-modified": "{time:33}"
+					"etag": "\"{token:17}\"",
+					"last-modified": "{time:92}"
 				},
-				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261020T090000Z\r\nDTEND:20261020T100000Z\r\nDTSTAMP:{time:34}\r\nSUMMARY:Standup\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261020T090000Z\r\nDTEND:20261020T100000Z\r\nDTSTAMP:{time:93}\r\nSUMMARY:Standup\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
 			}
 		},
 		{
@@ -1589,10 +2458,78 @@
 				"status": 200,
 				"headers": {
 					"content-type": "text/calendar; charset=utf-8",
-					"etag": "\"{token:18}\"",
-					"last-modified": "{time:35}"
+					"etag": "\"{token:21}\"",
+					"last-modified": "{time:94}"
 				},
-				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261023T090000Z\r\nDTEND:20261023T100000Z\r\nDTSTAMP:{time:36}\r\nSUMMARY:Standup\\, moved\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261023T090000Z\r\nDTEND:20261023T100000Z\r\nDTSTAMP:{time:95}\r\nSUMMARY:Standup\\, moved\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/standup.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:21}\"",
+					"last-modified": "{time:96}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261023T090000Z\r\nDTEND:20261023T100000Z\r\nDTSTAMP:{time:97}\r\nSUMMARY:Standup\\, moved\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/standup.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:21}\"",
+					"last-modified": "{time:98}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261023T090000Z\r\nDTEND:20261023T100000Z\r\nDTSTAMP:{time:99}\r\nSUMMARY:Standup\\, moved\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/standup.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:21}\"",
+					"last-modified": "{time:100}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261023T090000Z\r\nDTEND:20261023T100000Z\r\nDTSTAMP:{time:101}\r\nSUMMARY:Standup\\, moved\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/{account}/work/standup.ics",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "text/calendar; charset=utf-8",
+					"etag": "\"{token:21}\"",
+					"last-modified": "{time:102}"
+				},
+				"body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//another app//EN\r\nBEGIN:VEVENT\r\nUID:standup\r\nDTSTART:20261023T090000Z\r\nDTEND:20261023T100000Z\r\nDTSTAMP:{time:103}\r\nSUMMARY:Standup\\, moved\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
 			}
 		},
 		{
@@ -1607,7 +2544,7 @@
 			"response": {
 				"status": 201,
 				"headers": {
-					"etag": "\"{token:13}\""
+					"etag": "\"{token:17}\""
 				},
 				"body": ""
 			}
@@ -1624,7 +2561,7 @@
 			"response": {
 				"status": 204,
 				"headers": {
-					"etag": "\"{token:18}\""
+					"etag": "\"{token:21}\""
 				},
 				"body": ""
 			}
@@ -1664,7 +2601,7 @@
 					"content-type": "text/xml; charset=utf-8",
 					"dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol"
 				},
-				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:ICAL=\"http://apple.com/ns/ical/\"><response><href>/teammate/</href><propstat><prop><C:calendar-description /><C:calendar-timezone /><displayname /><ICAL:calendar-color /><CS:getctag /><C:supported-calendar-component-set /><sync-token /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><resourcetype><principal /><collection /></resourcetype><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/teammate/team/</href><propstat><prop><C:calendar-description /><C:calendar-timezone /><ICAL:calendar-color /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><displayname>Team</displayname><CS:getctag>\"{token:19}\"</CS:getctag><resourcetype><C:calendar /><collection /></resourcetype><C:supported-calendar-component-set><C:comp name=\"VTODO\" /><C:comp name=\"VEVENT\" /><C:comp name=\"VJOURNAL\" /></C:supported-calendar-component-set><sync-token>{token:20}</sync-token><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+				"body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\" xmlns:CS=\"http://calendarserver.org/ns/\" xmlns:ICAL=\"http://apple.com/ns/ical/\"><response><href>/teammate/</href><propstat><prop><C:calendar-description /><C:calendar-timezone /><displayname /><ICAL:calendar-color /><CS:getctag /><C:supported-calendar-component-set /><sync-token /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><resourcetype><principal /><collection /></resourcetype><current-user-privilege-set><privilege><read /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/teammate/team/</href><propstat><prop><C:calendar-description /><C:calendar-timezone /><ICAL:calendar-color /></prop><status>HTTP/1.1 404 Not Found</status></propstat><propstat><prop><displayname>Team</displayname><CS:getctag>\"{token:33}\"</CS:getctag><resourcetype><C:calendar /><collection /></resourcetype><C:supported-calendar-component-set><C:comp name=\"VTODO\" /><C:comp name=\"VEVENT\" /><C:comp name=\"VJOURNAL\" /></C:supported-calendar-component-set><sync-token>{token:34}</sync-token><current-user-privilege-set><privilege><read /></privilege><privilege><C:read-free-busy /></privilege><privilege><all /></privilege><privilege><write /></privilege><privilege><write-properties /></privilege><privilege><write-content /></privilege></current-user-privilege-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
 			}
 		},
 		{

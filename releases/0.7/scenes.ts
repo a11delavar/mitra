@@ -1,4 +1,7 @@
-import { aroundEditorWith, type Clip, click, keys, openEditor, openFound, press, waitFor } from '../../scripts/capture.ts'
+import {
+	aroundEditorWith, attachToSample, chipOf, type Clip, click, keys, openChip, openEditor, openFound, press, sampleAttachments,
+	scrollToMorning, show, waitFor,
+} from '../../scripts/capture.ts'
 import { still } from '../../scripts/scenes.ts'
 
 // The captures only 0.7's notes show, shot on the build in development.
@@ -70,6 +73,20 @@ still('chinese-detail', { language: 'zh' }, async ({ browser, open, text }) => {
 	await waitFor(() => browser.evaluate<boolean>(`return !!${datePicker}`), 'the date picker')
 	await browser.evaluate('await new Promise(resolve => setTimeout(resolve, 600))')
 	return aroundEditorWith(browser, datePicker, 28)
+})
+
+/**
+ * The architecture draft with three files, the sketch shown in its description: the paperclip on its chip and the row in its
+ * editor beside it, as the attachments guide shows them, kept here as 0.7 had them. The runner rebuilds the sample after it.
+ */
+still('attachments', async ({ browser, origin, open, text }) => {
+	const drafted = text('Draft New System Architecture')
+	await attachToSample(origin, drafted, sampleAttachments, 'Whiteboard sketch.png')
+	await open()
+	await show(browser, 'week')
+	await scrollToMorning(browser)
+	await openChip(browser, drafted)
+	return aroundEditorWith(browser, chipOf(drafted), 28)
 })
 
 /** The About dialog, open on the latest release: its notes and pictures, as the website shows them. */

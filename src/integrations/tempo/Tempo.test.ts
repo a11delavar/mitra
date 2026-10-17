@@ -205,7 +205,7 @@ describe('Tempo integration', () => {
 			assert.equal(ownership.holds(off), false, off)
 		}
 		assert.equal(ownership.holds('description'), true)
-		assert.deepEqual(capabilities.entries, { create: true, edit: true, delete: true, rename: false, cancel: false })
+		assert.deepEqual(capabilities.entries, { create: true, edit: true, delete: true, rename: false, cancel: false, attach: true })
 	})
 
 	it('points its external link at the Jira issue', () => {

@@ -266,6 +266,9 @@ export class Listbox extends Popover {
 			:host([data-tree][popover]) {
 				inline-size: max-content;
 				max-inline-size: calc(100dvw - 1rem);
+				/* Chrome 151 crashes the tab when a tree listbox fades out of the top layer (display and overlay transitioned) as
+				   another popover opens or its dialog closes: it leaves at once. */
+				transition: none;
 			}
 		`
 	}

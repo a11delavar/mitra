@@ -20,13 +20,17 @@ export class EntryChange {
 			await to.integration.updateEntry(em, entry, edited)
 			return entry
 		}
-		edited.id = crypto.randomUUID()
-		// Two calendars of one server share their resources' namespace, where the old uid would collide.
-		edited.uid = from.source.uri && from.source.uri === to.source.uri ? crypto.randomUUID() : entry.uid
-		edited.rank = edited.type.isTask ? entry.rank : undefined
-		edited.migrateTo(to.source)
+		// A copy, so its files are rows of their own before the provider is written: its ATTACH lines name their ids, and the old rows go with `entry`.
+		const recreated = Object.assign(edited.copy(), {
+			id: crypto.randomUUID(),
+			// Two calendars of one server share their resources' namespace, where the old uid would collide.
+			uid: from.source.uri && from.source.uri === to.source.uri ? crypto.randomUUID() : entry.uid,
+			rank: edited.type.isTask ? entry.rank : undefined,
+			relations: edited.relations,
+		})
+		recreated.migrateTo(to.source)
 		// Create first, so a failure loses nothing.
-		const created = await to.integration.createEntry(em, edited)
+		const created = await to.integration.createEntry(em, recreated)
 		try {
 			await from.integration.deleteEntry(em, entry)
 		} catch (error) {

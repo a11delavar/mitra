@@ -70,7 +70,7 @@ Um den Vorgang in Jira zu öffnen, wähle **In Jira öffnen** im **⋯**-Menü d
 
 ## Was ein Worklog nicht speichern kann
 
-Ein Worklog ist eine Zeitspanne an einem Tag, auf einen Vorgang gebucht. Ein Tempo-Kalender enthält also nur Einträge mit Uhrzeit: keine ganztägigen Einträge, Wiederholungen, Erinnerungen, Orte, Teilnehmenden, Beziehungen, kein Beschäftigt oder Verfügbar, keine Sichtbarkeit und keine [Verfügbarkeit](../availability.md). Mitra blendet diese Felder bei Worklogs aus.
+Ein Worklog ist eine Zeitspanne an einem Tag, auf einen Vorgang gebucht. Ein Tempo-Kalender enthält also nur Einträge mit Uhrzeit: keine ganztägigen Einträge, Wiederholungen, Erinnerungen, Orte, Teilnehmenden, [Anhänge](../attachments.md), Beziehungen, kein Beschäftigt oder Verfügbar, keine Sichtbarkeit und keine [Verfügbarkeit](../availability.md). Mitra blendet diese Felder bei Worklogs aus.
 
 ## Fehlerbehebung
 

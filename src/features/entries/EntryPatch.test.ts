@@ -15,6 +15,8 @@ import { ParticipantRole } from '../participants/Participant.js'
 import { RelationType } from '../relations/RelationType.js'
 import { EntryRelations } from '../relations/EntryRelations.js'
 import { Relation } from '../relations/Relation.js'
+import { EntryFiles } from './EntryFiles.js'
+import { EntryFile } from './EntryFile.js'
 import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
 
 describe('EntryPatch', () => {
@@ -120,6 +122,33 @@ describe('EntryPatch', () => {
 		it('rebuilds an entry from its own patch', () => {
 			const entry = task({ status: TaskStatus.Doing, visibility: Visibility.Private, reminders: [10], color: '#0af' })
 			assert.ok(new Entry().patch(EntryPatch.of(entry)).equals(entry))
+		})
+	})
+
+	describe('files', () => {
+		const sha256 = 'a'.repeat(64)
+		const file = EntryFile.from({ sha256, name: 'a.pdf' })!
+		const link = EntryFile.from({ sourceUrl: 'https://example.com/b.pdf' })!
+		const keys = (files: EntryFiles) => files.all.map(each => each.key)
+		const carrying = (...files: Array<EntryFile>) => task({ attachments: EntryFiles.of(files) })
+		const edited = (patch: object) => new Entry().patch(EntryPatch.of(carrying(file))).patch(EntryPatch.from(patch))
+
+		it('keeps them when left out, clears them with null or an empty list, and replaces them with a list', () => {
+			assert.deepEqual(keys(edited({ heading: 'x' }).attachments), [sha256])
+			assert.equal(edited({ files: null }).attachments.length, 0)
+			assert.equal(edited({ files: [] }).attachments.length, 0)
+			assert.deepEqual(keys(edited({ files: [{ sourceUrl: link.sourceUrl }] }).attachments), [link.key])
+		})
+
+		it('sends an entry\'s files, none as cleared, and nothing when left out', () => {
+			assert.equal(sent(EntryPatch.of(carrying(file))).files?.equals(EntryFiles.of([file])), true)
+			assert.equal(sent(EntryPatch.of(carrying())).files, null)
+			assert.equal('files' in wireOf(EntryPatch.from({ heading: 'x' })), false)
+		})
+
+		it('reach every occurrence of a repeating entry, as its description does', () => {
+			assert.ok((EntryPatch.shared as ReadonlyArray<string>).includes('files'))
+			assert.ok(EntryPatch.occurrence.includes('files'))
 		})
 	})
 })

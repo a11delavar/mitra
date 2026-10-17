@@ -72,6 +72,7 @@ Jeder Eintrag hat eine Sichtbarkeit. **Standardsichtbarkeit** überlässt es dem
 - [Teilnehmende](participants.md) listet die Beteiligten und ihre Antworten auf.
 - [Erinnerungen](reminders.md) benachrichtigen dich vor dem Beginn des Eintrags oder vor dem Fälligkeitsdatum einer Aufgabe.
 - [Links](links.md) sammelt die Links aus der Beschreibung darüber.
+- [Anhänge](attachments.md) enthält die Dateien, die dem Eintrag angehängt sind.
 - **Teilaufgabe von** und **Teilaufgaben** bauen einen Baum aus Aufgaben, siehe [Teilaufgaben](subtasks.md).
 - **Blockiert von** und **Blockiert** sagen, was zuerst fertig sein muss, siehe [Abhängigkeiten](dependencies.md).
 

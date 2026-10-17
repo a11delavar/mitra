@@ -136,11 +136,15 @@ kbd {
 /* ── Callouts: the plugin's octicon swapped for the app's lucide glyph (callouts.css) ──────── */
 
 .markdown-alert {
+	/* Pulled toward the ink: the pastels alone are too light for text on a light page. */
+	--mitra-alert-ink: color-mix(in srgb, var(--mitra-alert-color, var(--color-text)), var(--color-text) 30%);
 	margin-block: 1.25rem;
 	padding: 0.75rem 1rem;
 	border-inline-start: 2px solid var(--mitra-alert-color, var(--color-text));
 	border-radius: 6px;
 	background: color-mix(in srgb, var(--mitra-alert-color, var(--color-text)) 6%, transparent);
+	/* The text around it tinted toward the alert, as muted text is to the title. */
+	color: color-mix(in srgb, var(--mitra-alert-ink) 40%, currentColor);
 
 	& > .markdown-alert-title {
 		display: flex;
@@ -149,8 +153,7 @@ kbd {
 		margin: 0 0 0.375rem;
 		font-size: 0.875rem;
 		font-weight: 600;
-		/* Pulled toward the ink: the pastels alone are too light for text on a light page. */
-		color: color-mix(in srgb, var(--mitra-alert-color, var(--color-text)), var(--color-text) 30%);
+		color: var(--mitra-alert-ink);
 
 		& > svg {
 			display: none;

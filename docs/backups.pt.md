@@ -6,7 +6,7 @@ description: Tudo o que o Mitra guarda fica em uma única pasta. Faça backup de
 O Mitra guarda tudo em uma única pasta: `/app/data` dentro do contêiner, que é `~/mitra` no host se você seguiu os [Primeiros passos](README.md#install-mitra). Faça backup dessa pasta e você terá feito backup da instância inteira. Não há servidor de banco de dados para exportar nem arquivos de configuração para separar.
 
 > [!CAUTION]
-> Para parte do que você guarda no Mitra, esta pasta é a única cópia. Cada entrada de um [calendário do Mitra](integrations/mitra.md) vive aqui e em nenhum outro lugar. O mesmo vale para suas contas e sessões de login, as credenciais das contas conectadas, suas configurações, as cores, a ordem e os nomes dos seus calendários, sua [disponibilidade](availability.md), a ordem das suas tarefas, alguns vínculos entre entradas e a chave de que dependem os [lembretes](reminders.md) dos seus dispositivos. Se você perder a pasta, um provedor pode devolver seus eventos e tarefas, mas nada além disso.
+> Para parte do que você guarda no Mitra, esta pasta é a única cópia. Cada entrada de um [calendário do Mitra](integrations/mitra.md) vive aqui e em nenhum outro lugar. O mesmo vale para suas contas e sessões de login, as credenciais das contas conectadas, suas configurações, as cores, a ordem e os nomes dos seus calendários, sua [disponibilidade](availability.md), a ordem das suas tarefas, os [arquivos que você anexou](attachments.md) às entradas, alguns vínculos entre entradas e a chave de que dependem os [lembretes](reminders.md) dos seus dispositivos. Se você perder a pasta, um provedor pode devolver seus eventos e tarefas, mas nada além disso.
 
 ## Fazer backup
 

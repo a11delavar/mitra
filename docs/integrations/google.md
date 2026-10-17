@@ -76,7 +76,9 @@ A calendar shared with you as **See all event details** is read-only in Mitra: y
 
 ## What syncs
 
-Everything syncs as it does for [CalDAV](caldav.md#what-syncs), except relationships between entries. Google drops them from its copy of an event, so Mitra doesn't offer them on Google calendars.
+Everything syncs as it does for [CalDAV](caldav.md#what-syncs), except relationships between entries, which Google drops from its copy of an event, so Mitra doesn't offer them on Google calendars.
+
+[Attachments](../attachments.md) on a Google calendar are the Google Drive files you attach in Google Calendar. Mitra shows them, each opening in Drive, but can't add or remove any: Google keeps only Drive files and drops an attachment another app adds.
 
 [Availability](../availability.md) you mark as busy in a Google calendar is added to that calendar as busy events, so others see the time as taken. It works as described for [CalDAV](caldav.md#busy-availability).
 

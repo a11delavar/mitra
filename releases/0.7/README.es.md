@@ -1,7 +1,7 @@
 ---
 title: IA, archivos adjuntos, regiones e idiomas
 ---
-Mitra 0.7 se adapta a tu forma de vivir. Las fechas siguen a tu país. La zona horaria de casa viaja contigo. Y cada versión se explica dentro de la propia aplicación.
+Mitra 0.7 te permite adjuntar archivos a tus entradas, escribe las fechas en el formato de tu región, mantiene contigo la zona horaria de casa cuando viajas y muestra lo que ha cambiado dentro de la aplicación. Además arrastra, hace zoom y carga más rápido, y trae muchas mejoras y correcciones pequeñas desde la 0.6.
 
 ## IA
 Estamos explorando cómo puede ayudarte la IA a planificar tu tiempo, en el propio Mitra y desde los asistentes que ya usas.
@@ -32,7 +32,19 @@ El selector de zonas horarias también se ha rediseñado. Las zonas que comparte
 Docs: [Zonas horarias](../../docs/time-zones.md)
 
 ## Archivos adjuntos
-Adjunta archivos a una entrada. Los calendarios que pueden guardarlos, empezando por CalDAV, los llevan consigo.
+Ahora puedes adjuntar archivos a una entrada, como un billete, un orden del día o una foto de una pizarra. Añádelos con el clip en el editor de la entrada, o arrástralos sobre la entrada abierta. Haz clic en un archivo para abrirlo. También puedes añadir un archivo a la descripción, donde una imagen aparece como imagen y cualquier otro archivo como enlace. Si luego quitas el archivo, Mitra lo quita también de la descripción.
+
+Los archivos adjuntos se sincronizan con tu calendario. En un calendario CalDAV, otras apps que usan el mismo calendario ven los archivos que adjuntas, y Mitra muestra los archivos que ellas adjuntaron. En Google Calendar, Mitra muestra los archivos de Google Drive adjuntos a un evento, pero no puede añadir ni quitar ninguno, porque Google solo conserva archivos de Drive. Las imágenes de una página de Notion ahora aparecen en la descripción de la tarea.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="attachments-dark.webp">
+	<img src="attachments-light.webp" alt="Una tarea abierta junto a su entrada en la semana, cuyo clip muestra que lleva archivos: el editor enumera un PDF, un boceto y una hoja de cálculo sobre la descripción, que muestra el boceto">
+</picture>
+
+> [!NOTE]
+> Mitra guarda los archivos que adjuntas en su carpeta de datos, así que al hacer copia de esa carpeta también guardas tus archivos. Puedes limitar el tamaño de un solo archivo con `MITRA_FILE_MAX_SIZE`, y cuánto puede guardar cada persona en total con `MITRA_FILE_QUOTA`.
+
+Docs: [Archivos adjuntos](../../docs/attachments.md)
 
 ## Notas de versión en la aplicación
 Ahora puedes ver qué ha cambiado sin salir de Mitra. El diálogo Acerca de muestra cada versión como lo hace el sitio web. Incluye las notas y las imágenes de la versión que usas, junto con las correcciones que llegaron después. También aparece cada commit, plegado hasta que lo necesites.

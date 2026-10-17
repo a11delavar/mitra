@@ -23,6 +23,20 @@ describe('MarkdownLinks', () => {
 		])
 	})
 
+	it('strips the links and images to a destination, each with the words it was written with, leaving the rest of the text as it was', () => {
+		const text = 'Agenda: [the brief](https://example.com/brief.pdf) and [the site](https://example.com/).\n\n![the brief](https://example.com/brief.pdf)\n\nThen more.'
+		assert.equal(MarkdownLinks.without(text, href => href === 'https://example.com/brief.pdf'), 'Agenda:  and [the site](https://example.com/).\n\nThen more.')
+		assert.equal(MarkdownLinks.without(text, () => false), text)
+		assert.equal(MarkdownLinks.without('![only](https://example.com/brief.pdf)', () => true), '')
+		assert.equal(MarkdownLinks.without(undefined, () => true), undefined)
+	})
+
+	it('tells whether any link or image goes to a destination', () => {
+		assert.equal(MarkdownLinks.mentions('See ![a](https://x.y/a.png)', href => href === 'https://x.y/a.png'), true)
+		assert.equal(MarkdownLinks.mentions('See [a](https://x.y/a.png)', href => href === 'https://x.y/b.png'), false)
+		assert.equal(MarkdownLinks.mentions(undefined, () => true), false)
+	})
+
 	it('leaves prose colons and code alone', () => {
 		assert.deepEqual(hrefs('Time: 10am, note:check, `obsidian://code`\n\n```\nobsidian://fenced\n```'), [])
 	})

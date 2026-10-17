@@ -63,7 +63,8 @@ export function observeFileDrops(handler: (files: ReadonlyArray<File>) => void) 
 		}
 	})
 	window.addEventListener('drop', event => {
-		if (![...event.dataTransfer?.files ?? []].length) {
+		// Claimed on its way up, as by the entry editor attaching the files.
+		if (event.defaultPrevented || ![...event.dataTransfer?.files ?? []].length) {
 			return
 		}
 		event.preventDefault()

@@ -271,6 +271,8 @@ export class Markdown extends Component {
 					border-inline-start: 3px solid var(--callout-color);
 					border-radius: 6px;
 					background: color-mix(in srgb, var(--callout-color) 9%, transparent);
+					/* The text around it tinted toward the callout, as muted text is to the title: readable on either theme. */
+					color: color-mix(in srgb, var(--callout-color) 40%, currentColor);
 
 					&[data-type=note], &[data-type=info] { --callout-color: #4c91f0; }
 					&[data-type=tip], &[data-type=success] { --callout-color: #41b658; }

@@ -27,8 +27,15 @@ export class GoogleCalendar extends CalDAV {
 		return new URL(`${encodeURIComponent(email)}/`, GoogleCalendar.serverUrl).href
 	}
 
+	/** Google drops `RELATED-TO` and `X-` properties from its copy of an event. */
 	override get ownership() {
 		return super.ownership.without('relations', 'percentComplete')
+	}
+
+	/** Google sends its Drive attachments as `ATTACH` lines but drops any a client writes (probed 2026-10-17), and a read that lost
+	 * the line would remove the file moments after it was attached: the files are read, never changed. */
+	override get capabilities() {
+		return super.capabilities.with({ entries: { attach: false } })
 	}
 
 	@converter(withheld<GoogleCalendarCredentials>('refreshToken')) override credentials!: GoogleCalendarCredentials

@@ -72,6 +72,7 @@ Cada entrada tiene una visibilidad. **Visibilidad predeterminada** lo deja en ma
 - [Participantes](participants.md) lista a las personas implicadas y sus respuestas.
 - [Recordatorios](reminders.md) te avisan antes de que empiece la entrada, o antes de la fecha de vencimiento de una tarea.
 - [Enlaces](links.md) reúne los enlaces de la descripción que tiene encima.
+- [Archivos adjuntos](attachments.md) guarda los archivos añadidos a la entrada.
 - **Subtarea de** y **Subtareas** construyen un árbol de tareas; consulta [Subtareas](subtasks.md).
 - **Bloqueado por** y **Bloquea** indican qué tiene que terminar antes; consulta [Dependencias](dependencies.md).
 

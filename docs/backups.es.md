@@ -6,7 +6,7 @@ description: Todo lo que guarda Mitra está en una sola carpeta. Haz su copia co
 Mitra guarda todo en una sola carpeta: `/app/data` dentro del contenedor, que es `~/mitra` en el host si seguiste [Primeros pasos](README.md#install-mitra). Haz una copia de esa carpeta y habrás copiado toda la instancia. No hay un servidor de base de datos que volcar ni archivos de configuración que buscar.
 
 > [!CAUTION]
-> Para parte de lo que guardas en Mitra, esta carpeta es la única copia. Cada entrada de un [calendario de Mitra](integrations/mitra.md) vive aquí y en ningún otro sitio. Lo mismo ocurre con tus cuentas y sesiones, las credenciales de las cuentas conectadas, tus ajustes, los colores, el orden y los nombres de tus calendarios, tu [disponibilidad](availability.md), el orden de tus tareas, algunos vínculos entre entradas y la clave de la que dependen los [recordatorios](reminders.md) de tus dispositivos. Si pierdes la carpeta, un proveedor puede devolverte sus eventos y tareas, pero nada más.
+> Para parte de lo que guardas en Mitra, esta carpeta es la única copia. Cada entrada de un [calendario de Mitra](integrations/mitra.md) vive aquí y en ningún otro sitio. Lo mismo ocurre con tus cuentas y sesiones, las credenciales de las cuentas conectadas, tus ajustes, los colores, el orden y los nombres de tus calendarios, tu [disponibilidad](availability.md), el orden de tus tareas, los [archivos que adjuntaste](attachments.md) a las entradas, algunos vínculos entre entradas y la clave de la que dependen los [recordatorios](reminders.md) de tus dispositivos. Si pierdes la carpeta, un proveedor puede devolverte sus eventos y tareas, pero nada más.
 
 ## Hacer la copia
 

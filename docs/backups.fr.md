@@ -6,7 +6,7 @@ description: Tout ce que Mitra stocke se trouve dans un seul dossier. Sauvegarde
 Mitra garde tout dans un seul dossier : `/app/data` dans le conteneur, soit `~/mitra` sur l'hôte si vous avez suivi les [Premiers pas](README.md#install-mitra). Sauvegardez ce dossier et vous avez sauvegardé toute l'instance. Il n'y a ni serveur de base de données à exporter, ni fichiers de configuration à repérer.
 
 > [!CAUTION]
-> Pour une partie de ce que vous conservez dans Mitra, ce dossier est la seule copie. Chaque entrée d'un [calendrier Mitra](integrations/mitra.md) y vit, et nulle part ailleurs. Il en va de même pour vos comptes et vos sessions de connexion, les identifiants des comptes connectés, vos paramètres, les couleurs, l'ordre et les noms de vos calendriers, vos [disponibilités](availability.md), l'ordre de vos tâches, certains liens entre entrées et la clé dont dépendent les [rappels](reminders.md) de vos appareils. Si vous perdez ce dossier, un fournisseur peut vous rendre ses événements et ses tâches, mais rien d'autre.
+> Pour une partie de ce que vous conservez dans Mitra, ce dossier est la seule copie. Chaque entrée d'un [calendrier Mitra](integrations/mitra.md) y vit, et nulle part ailleurs. Il en va de même pour vos comptes et vos sessions de connexion, les identifiants des comptes connectés, vos paramètres, les couleurs, l'ordre et les noms de vos calendriers, vos [disponibilités](availability.md), l'ordre de vos tâches, les [fichiers joints](attachments.md) à vos entrées, certains liens entre entrées et la clé dont dépendent les [rappels](reminders.md) de vos appareils. Si vous perdez ce dossier, un fournisseur peut vous rendre ses événements et ses tâches, mais rien d'autre.
 
 ## Sauvegarder
 

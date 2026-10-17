@@ -16,6 +16,7 @@ import { Migration20261002152021_EntryDueAndEstimate } from './Migration20261002
 import { Migration20261003010248_EntryRank } from './Migration20261003010248_EntryRank.js'
 import { Migration20261013165004_NotificationSubscriptionLocale } from './Migration20261013165004_NotificationSubscriptionLocale.js'
 import { Migration20261014210517_RecurrenceAsRule } from './Migration20261014210517_RecurrenceAsRule.js'
+import { Migration20261016022519_Files } from './Migration20261016022519_Files.js'
 /** A migration's name as its file spells it, which keys the log: esbuild renames a class that refers to itself (`_Migration…`). */
 export const nameOf = (migration: Constructor<Migration>) => migration.name.replace(/^_/, '')
 
@@ -40,4 +41,5 @@ export const migrations: Array<Constructor<Migration>> = [
 	Migration20261003010248_EntryRank,
 	Migration20261013165004_NotificationSubscriptionLocale,
 	Migration20261014210517_RecurrenceAsRule,
+	Migration20261016022519_Files,
 ]

@@ -50,8 +50,8 @@ export class MitraCalendar extends Integration {
 	override get ownership() {
 		return new IntegrationOwnership({
 			recurrence: 'mitra', reminders: 'mitra', location: 'mitra', description: 'mitra', percentComplete: 'mitra',
-			due: 'mitra', estimate: 'mitra', timeZone: 'mitra', participants: 'mitra', transparency: 'mitra',
-			visibility: 'mitra', relations: 'mitra', allDay: 'mitra', rank: 'mitra',
+			due: 'mitra', estimate: 'mitra', timeZone: 'mitra', participants: 'mitra', attachments: 'mitra',
+			transparency: 'mitra', visibility: 'mitra', relations: 'mitra', allDay: 'mitra', rank: 'mitra',
 		})
 	}
 

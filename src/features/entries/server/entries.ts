@@ -9,6 +9,7 @@ import { EntryRelation } from '../../relations/EntryRelation.js'
 import { Entry } from '../Entry.js'
 import { EntryPatch } from '../EntryPatch.js'
 import { ValidationError } from '../../../infrastructure/validation/ValidationError.js'
+import { fileStore } from '../../files/server/FileStore.js'
 import { EntryRelations } from '../../relations/EntryRelations.js'
 import { TaskStatus } from '../TaskStatus.js'
 import { entrySearch, entryWindow, everyEntry, recurringEntries, withOverrides } from './entryWindow.js'
@@ -108,6 +109,7 @@ entriesRouter.post('/', async (req, res) => {
 	if (!patch.sourceId) {
 		throw new ValidationError('Missing sourceId', ['sourceId'])
 	}
+	const unclaimed = await fileStore.claim(req.user.id, patch.files ?? [])
 	const source = await req.user.source(em, patch.sourceId)
 	const to = { source, integration: await em.findOneOrFail(Integration, { id: source.integrationId }) }
 
@@ -117,7 +119,7 @@ entriesRouter.post('/', async (req, res) => {
 		incoming.estimate = undefined
 	}
 
-	const errors = [...patch.validate({ to }), ...incoming.validate(to)]
+	const errors = [...unclaimed, ...patch.validate({ to }), ...incoming.validate(to)]
 	if (errors.length) {
 		throw new AggregateError(errors)
 	}
@@ -144,7 +146,7 @@ entriesRouter.put('/:id', async (req, res) => {
 
 	// Validated BEFORE any integration write, since a 400 must leave the external store untouched.
 	const patch = EntryPatch.from(req.body)
-	const malformed = [...patch.validate()]
+	const malformed = [...patch.validate(), ...await fileStore.claim(req.user.id, patch.files ?? [], existing.files)]
 	if (malformed.length) {
 		throw new AggregateError(malformed)
 	}

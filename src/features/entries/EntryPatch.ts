@@ -9,6 +9,7 @@ import { EntryTimeZone } from './EntryTimeZone.js'
 import { Recurrence } from '../recurrence/Recurrence.js'
 import { Participants, type Participant } from '../participants/Participant.js'
 import { EntryRelations } from '../relations/EntryRelations.js'
+import { EntryFiles } from './EntryFiles.js'
 import { type Calendar } from '../sources/Calendar.js'
 import { type Validatable } from '../../infrastructure/validation/Validatable.js'
 import { ValidationError } from '../../infrastructure/validation/ValidationError.js'
@@ -37,11 +38,11 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 	/** The fields an edit reaches, in the order they apply. */
 	static readonly fields = [
 		'sourceId', 'type', 'heading', 'description', 'location', 'color', 'allDay', 'start', 'end', 'due', 'estimate', 'timeZone',
-		'status', 'percentComplete', 'transparency', 'visibility', 'recurrence', 'reminders', 'participants', 'relations',
+		'status', 'percentComplete', 'transparency', 'visibility', 'recurrence', 'reminders', 'participants', 'files', 'relations',
 	] as const satisfies ReadonlyArray<keyof Entry & keyof EntryPatch>
 
 	/** What an edit through one occurrence of a repeating entry changes for all of them, its rule aside. */
-	static readonly shared = ['heading', 'description', 'location', 'color', 'timeZone', 'transparency', 'visibility', 'reminders', 'participants'] as const satisfies ReadonlyArray<EntryPatchField>
+	static readonly shared = ['heading', 'description', 'location', 'color', 'timeZone', 'transparency', 'visibility', 'reminders', 'participants', 'files'] as const satisfies ReadonlyArray<EntryPatchField>
 
 	/** What an edit of one occurrence carries: neither its type nor its rule are its own. */
 	static readonly occurrence = EntryPatch.fields.filter(field => field !== 'type' && field !== 'recurrence' && field !== 'relations')
@@ -87,6 +88,8 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 	@converter({ construct: (value: Partial<Recurrence> | null | undefined) => value === null ? value : Recurrence.from(value) }) recurrence?: Recurrence | null
 	reminders?: Array<number> | null
 	@converter({ construct: (value: ReadonlyArray<Partial<Participant>> | null | undefined) => value === undefined ? value : Participants.normalize(value) }) participants?: Array<Participant> | null
+	/** None at all, `[]` as much as `null`, clears them. */
+	@converter({ construct: (value: unknown) => value === undefined || value === null ? value : EntryFiles.of(value), deconstruct: (value: EntryFiles | null | undefined) => value === undefined ? value : !value?.length ? null : EntryFiles.converter.deconstruct!(value, {}) }) files?: EntryFiles | null
 	@converter(EntryRelations.writeConverter) relations?: EntryRelations
 
 	/** What makes the patch invalid: a field that came malformed, and with a context what the edit may not do there. */
@@ -106,6 +109,9 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 			if (!target.entries.create) {
 				yield new ValidationError('This calendar cannot be written to from mitra')
 			}
+			if (this.files?.length && !target.entries.attach) {
+				yield new ValidationError('This calendar does not take attachments', ['files'])
+			}
 			return
 		}
 		const from = context.from ?? to
@@ -121,6 +127,12 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 		}
 		if (moving && !target.entries.create) {
 			yield new ValidationError('This calendar cannot be written to from mitra', ['sourceId'])
+		}
+		if (this.files !== undefined && !current.entries.attach && !(this.files ?? EntryFiles.of([])).equals(entry.attachments)) {
+			yield new ValidationError('Attachments in this calendar cannot be changed from mitra', ['files'])
+		}
+		if (moving && !target.entries.attach && (this.files === undefined ? entry.attachments : this.files ?? EntryFiles.of([])).length) {
+			yield new ValidationError('This calendar does not take attachments', ['sourceId'])
 		}
 		if (type !== entry.type && entry.partOfSeries) {
 			yield new ValidationError('A recurring entry cannot change its type', ['type'])

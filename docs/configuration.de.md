@@ -109,6 +109,13 @@ Ein Klick auf den Namen öffnet den Dialog **Über**, der die Version und den Co
 | --- | --- | --- |
 | `MITRA_PHOTON_URL` | `https://photon.komoot.io` | Der [Photon-Geocoder](location.md) hinter dem Ortsfeld. Richte sie auf deine eigene Photon-Instanz statt auf den öffentlichen Server von komoot. |
 
+### Anhänge
+
+| Variable | Standard | Beschreibung |
+| --- | --- | --- |
+| `MITRA_FILE_MAX_SIZE` | `25M` | Die größte Datei, die jemand an einen Eintrag [anhängen](attachments.md) kann, in Bytes oder mit der Endung `k`, `M` oder `G`. Mit `0` ist das Anhängen von Dateien ausgeschaltet. |
+| `MITRA_FILE_QUOTA` | *(nicht gesetzt)* | Wie viel jede Person insgesamt in angehängten Dateien speichern kann, im selben Format. Ohne sie gibt es keine Grenze. |
+
 ### Google Calendar
 
 Setz beide, damit Leute [Google Calendar](integrations/google.md) verbinden können. Wenn du nur die ID setzt, startet Mitra nicht.

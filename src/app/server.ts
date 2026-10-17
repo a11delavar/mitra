@@ -12,6 +12,7 @@ import { synchronizer } from '../integrations/server/Synchronizer.js'
 import { eventsRouter } from '../infrastructure/realtime/events.js'
 import { entriesRouter } from '../features/entries/server/entries.js'
 import { integrationsRouter } from '../integrations/server/integrations.js'
+import { notionRouter } from '../integrations/notion/server/notion.js'
 import { sourcesRouter } from '../features/sources/server/sources.js'
 import { userRouter } from '../features/identity/server/user.js'
 import { locationsRouter } from '../features/locations/server/locations.js'
@@ -22,16 +23,24 @@ import { cacheControlOf } from '../infrastructure/http/caching.js'
 import { metaRouter } from '../features/about/server/meta.js'
 import { updateChecker } from '../features/about/server/updates.js'
 import { ReminderScheduler } from '../features/reminders/server/ReminderScheduler.js'
+import { UnusedFileDisposer } from '../features/files/server/UnusedFileDisposer.js'
+import { fileContentRouter, filesRouter } from '../features/files/server/files.js'
+import { EntryFile } from '../features/entries/EntryFile.js'
+import { observeInstanceOrigin } from '../infrastructure/http/instanceUrl.js'
 
 const logger = createLogger('API')
 const PORT = Number(process.env.MITRA_PORT) || 3000
 
 synchronizer.start()
 new ReminderScheduler(orm).start()
+/** The tables holding files, which serving looks a file up in and the disposer keeps the bytes for. */
+const fileTables = [EntryFile]
+new UnusedFileDisposer(orm, fileTables).start()
 updateChecker.start()
 
 const app = express()
 app.use(cors())
+app.use(observeInstanceOrigin)
 // Before everything it covers: the API routers below and the static frontend at the bottom.
 app.use(compression())
 
@@ -50,6 +59,11 @@ app.use((req, res, next) => {
 	})
 	next()
 })
+
+// Files come first, as their bodies are raw files: `express.json()` below would swallow an uploaded .json. Serving needs no sign-in:
+// the id in the path is the capability, so the URL also works from the calendar servers and apps Mitra writes it into.
+app.use('/api/files', fileContentRouter(fileTables))
+app.use('/api/files', authMiddleware, filesRouter)
 
 // Rehydrate typed JSON into domain model instances.
 const modelConstructor = new ModelValueConstructor()
@@ -71,6 +85,7 @@ app.use(authMiddleware)
 app.use('/api/events', eventsRouter)
 app.use('/api/entries', entriesRouter)
 app.use('/api/integrations', integrationsRouter)
+app.use('/api/notion', notionRouter)
 app.use('/api/sources', sourcesRouter)
 app.use('/api/user', userRouter)
 app.use('/api/meta', metaRouter)

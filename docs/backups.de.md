@@ -6,7 +6,7 @@ description: Alles, was Mitra speichert, liegt in einem Ordner. Sichere ihn mit 
 Mitra hält alles in einem Ordner: `/app/data` im Container, auf dem Host `~/mitra`, wenn du den [Ersten Schritten](README.md#install-mitra) gefolgt bist. Sichere diesen Ordner, und du hast die ganze Instanz gesichert. Es gibt keinen Datenbankserver zu dumpen und keine Konfigurationsdateien herauszusuchen.
 
 > [!CAUTION]
-> Für einen Teil dessen, was du in Mitra aufbewahrst, ist dieser Ordner die einzige Kopie. Jeder Eintrag in einem [Mitra-Kalender](integrations/mitra.md) liegt nur hier. Ebenso deine Konten und Anmeldesitzungen, die Zugangsdaten verbundener Konten, deine Einstellungen, Farben, Reihenfolge und Namen deiner Kalender, deine [Verfügbarkeit](availability.md), die Reihenfolge deiner Aufgaben, einige Verknüpfungen zwischen Einträgen und der Schlüssel, von dem die [Erinnerungen](reminders.md) deiner Geräte abhängen. Wenn du den Ordner verlierst, kann dir ein Anbieter seine Termine und Aufgaben zurückgeben, aber sonst nichts.
+> Für einen Teil dessen, was du in Mitra aufbewahrst, ist dieser Ordner die einzige Kopie. Jeder Eintrag in einem [Mitra-Kalender](integrations/mitra.md) liegt nur hier. Ebenso deine Konten und Anmeldesitzungen, die Zugangsdaten verbundener Konten, deine Einstellungen, Farben, Reihenfolge und Namen deiner Kalender, deine [Verfügbarkeit](availability.md), die Reihenfolge deiner Aufgaben, die [Dateien, die du Einträgen angehängt hast](attachments.md), einige Verknüpfungen zwischen Einträgen und der Schlüssel, von dem die [Erinnerungen](reminders.md) deiner Geräte abhängen. Wenn du den Ordner verlierst, kann dir ein Anbieter seine Termine und Aufgaben zurückgeben, aber sonst nichts.
 
 ## Sichern
 

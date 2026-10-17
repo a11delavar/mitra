@@ -48,6 +48,7 @@ Everything Mitra stores about an entry syncs, as far as your server keeps it:
 - A task's status and progress.
 - [Participants](../participants.md). Your server sends the invitations and collects the replies.
 - [Subtasks](../subtasks.md) and [dependencies](../dependencies.md).
+- [Attachments](../attachments.md). Other apps on the same calendar see the files, and Mitra shows the ones they added.
 
 A repeating entry stays one series on the server. When you change a single occurrence, Mitra asks whether you mean **This entry**, **This and following entries** or **All entries**, and changes the series to match.
 

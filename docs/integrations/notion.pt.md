@@ -39,7 +39,7 @@ A propriedade Date é onde o Mitra coloca a tarefa, então ela é o agendamento 
 
 O título, o estado e a data são sincronizados nos dois sentidos, como datas de dia todo ou com horário. Os horários aparecem no seu próprio fuso horário. Uma tarefa sem data espera na lista **Sem agendamento** da [aba Planeamento](../planning.md#the-planning-tab).
 
-A descrição de uma tarefa é o corpo da página dela no Notion, escrito em Markdown, incluindo listas de tarefas e callouts. Quando você edita a descrição no Mitra, o Mitra substitui apenas o que a descrição mostra. Imagens, incorporações, subpáginas e blocos sincronizados permanecem no Notion como estão, e o Mitra não os mostra.
+A descrição de uma tarefa é o corpo da página dela no Notion, escrito em Markdown, incluindo listas de tarefas, callouts e imagens. Quando você edita a descrição no Mitra, o Mitra substitui apenas o que a descrição mostra. Incorporações, subpáginas e blocos sincronizados permanecem no Notion como estão, e o Mitra não os mostra. Uma imagem que você adicionou no Notion aparece no Mitra e permanece no Notion como está; depois de uma edição feita no Mitra, ela passa para cima do texto, porque o Notion só deixa outros apps acrescentarem texto depois do que ele mantém.
 
 As propriedades de relação que ligam tarefas dentro do mesmo banco de dados viram vínculos no Mitra, nos dois sentidos. Uma propriedade chamada "Parent task" ou "Sub-tasks" cria [subtarefas](../subtasks.md), uma chamada "Blocked by" ou "Depends on" cria [dependências](../dependencies.md), e as outras relações aparecem com o próprio nome. As relações com outros bancos de dados não são mostradas.
 

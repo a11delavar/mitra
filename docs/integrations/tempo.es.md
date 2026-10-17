@@ -70,7 +70,7 @@ Para abrir la incidencia en Jira, elige **Abrir en Jira** en el menú **⋯** de
 
 ## Lo que un worklog no puede guardar
 
-Un worklog es un tramo de tiempo en un día, registrado en una incidencia. Así que un calendario de Tempo guarda solo entradas con hora: no hay entradas de todo el día, repeticiones, recordatorios, ubicación, participantes, relaciones, estado ocupado o disponible, visibilidad ni [disponibilidad](../availability.md). Mitra oculta estos campos en los worklogs.
+Un worklog es un tramo de tiempo en un día, registrado en una incidencia. Así que un calendario de Tempo guarda solo entradas con hora: no hay entradas de todo el día, repeticiones, recordatorios, ubicación, participantes, [archivos adjuntos](../attachments.md), relaciones, estado ocupado o disponible, visibilidad ni [disponibilidad](../availability.md). Mitra oculta estos campos en los worklogs.
 
 ## Solución de problemas
 

@@ -99,6 +99,7 @@ interface StubState {
 	views?: Array<{ object: string, id: string, name: string, type: string }>
 	fullRelation?: Array<string>
 	relationError?: Error
+	blocks?: Record<string, NotionBlock>
 }
 
 function stubClient(state: StubState) {
@@ -132,6 +133,7 @@ function stubClient(state: StubState) {
 			return state.relationError ? Promise.reject(state.relationError) : Promise.resolve((state.fullRelation ?? []).map(id => ({ id })))
 		},
 		blockChildren: (blockId: string) => Promise.resolve(state.bodies?.[blockId] ?? []),
+		block: (blockId: string) => state.blocks?.[blockId] ? Promise.resolve(state.blocks[blockId]) : Promise.reject(new Error(`no block ${blockId}`)),
 		appendBlockChildren: (blockId: string, children: Array<NotionBlock>) => {
 			calls.appended.push({ blockId, children })
 			return Promise.resolve()
@@ -483,7 +485,7 @@ describe('Notion entry CRUD', () => {
 			bodies: {
 				p1: [
 					{ object: 'block', id: 'b-para', type: 'paragraph', paragraph: { rich_text: [{ plain_text: 'Old notes' }] } },
-					{ object: 'block', id: 'b-image', type: 'image' },
+					{ object: 'block', id: 'b-image', type: 'image', image: { type: 'file', file: { url: 'https://s3.example/signed' }, caption: [] } },
 					{ object: 'block', id: 'b-subpage', type: 'child_page', has_children: true },
 				],
 			},
@@ -494,16 +496,23 @@ describe('Notion entry CRUD', () => {
 		await em.flush()
 
 		const incoming = existing.clone()
-		incoming.description = '# New plan'
+		incoming.description = '# New plan\n\n![](/api/notion/blocks/b-image)'
 		await integration.updateEntry(em, existing, incoming)
 		await em.flush()
 
 		assert.deepEqual(calls.deletedBlocks, ['b-para'], 'only the replaceable block goes, image and sub-page stay')
 		assert.equal(calls.appended.length, 1)
-		assert.deepEqual(calls.appended[0]!.children.map(block => block.type), ['heading_1'])
+		assert.deepEqual(calls.appended[0]!.children.map(block => block.type), ['heading_1'], 'the hosted picture is the block Notion has, never appended again')
 		assert.equal(calls.updates.length, 0)
-		assert.equal(existing.description, '# New plan')
-		assert.equal(twin.description, '# New plan')
+		assert.equal(existing.description, '# New plan\n\n![](/api/notion/blocks/b-image)')
+		assert.equal(twin.description, '# New plan\n\n![](/api/notion/blocks/b-image)')
+	})
+
+	it('answers the fresh link of a Notion-hosted picture, which dies in an hour, so the browser asks each time', async () => {
+		const em = orm.em.fork()
+		const { integration } = await seed(em, { blocks: { 'b-image': { object: 'block', id: 'b-image', type: 'image', image: { type: 'file', file: { url: 'https://s3.example/signed' } } } } })
+		assert.equal(await integration.fileUrlOf('b-image'), 'https://s3.example/signed')
+		await assert.rejects(integration.fileUrlOf('b-para'))
 	})
 
 	it('rejects creating a recurring task', async () => {

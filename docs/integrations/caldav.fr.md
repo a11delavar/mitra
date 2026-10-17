@@ -48,6 +48,7 @@ Tout ce que Mitra stocke sur une entrée est synchronisé, dans la mesure où vo
 - Le statut et l'avancement d'une tâche.
 - Les [participants](../participants.md). Votre serveur envoie les invitations et collecte les réponses.
 - Les [sous-tâches](../subtasks.md) et les [dépendances](../dependencies.md).
+- Les [pièces jointes](../attachments.md). Les autres applications du même calendrier voient les fichiers, et Mitra affiche ceux qu'elles ont ajoutés.
 
 Une entrée répétée reste une seule série sur le serveur. Quand vous modifiez une seule occurrence, Mitra demande si vous visez **Cette entrée**, **Cette entrée et les suivantes** ou **Toutes les entrées**, et adapte la série en conséquence.
 
