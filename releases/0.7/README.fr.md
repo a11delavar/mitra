@@ -1,10 +1,19 @@
 ---
-title: IA, pièces jointes, régions et langues
+title: Connecteurs IA, pièces jointes, régions et langues
 ---
-Mitra 0.7 vous permet de joindre des fichiers à vos entrées, écrit les dates au format de votre région, garde le fuseau horaire de votre domicile avec vous en voyage et montre ce qui a changé directement dans l'application. Il glisse, zoome et charge aussi plus vite, et apporte de nombreuses petites améliorations et corrections depuis la 0.6.
+Mitra 0.7 fonctionne avec les assistants IA que vous utilisez déjà, pour qu'ils puissent planifier votre temps directement dans votre agenda. Vous pouvez maintenant joindre des fichiers à vos entrées, Mitra écrit les dates comme on le fait dans votre région, et le fuseau horaire de votre domicile vous suit en voyage. Mitra est désormais disponible en chinois, et vous pouvez lire ce qui a changé sans quitter l'application. Le glissement, le zoom et le chargement sont aussi plus rapides, et de nombreuses petites améliorations et corrections sont arrivées depuis la 0.6.
 
-## IA
-Nous explorons comment l'IA peut vous aider à planifier votre temps, dans Mitra même et depuis les assistants que vous utilisez déjà.
+## Connecteurs IA
+Des assistants IA comme Claude et Cursor peuvent désormais travailler avec votre agenda. Connectez-en un avec l'adresse indiquée dans Paramètres → IA, et demandez-lui ce que vous feriez sinon à la main, comme regarder votre semaine, trouver une entrée, planifier un voyage ou déplacer une réunion. Ce qu'il écrit arrive dans vos agendas comme n'importe quelle autre modification, et se synchronise à partir de là. Sur un serveur où l'on se connecte, chaque assistant reçoit son propre jeton d'accès, qui peut être limité à la lecture et révoqué à tout moment.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="connectors-dark.webp">
+	<img src="connectors-light.webp" alt="Un assistant IA inscrit dans la semaine un voyage prévu à Paris : les anciens projets s’en vont, le voyage arrive, et la tour Eiffel s’ouvre avec sa photo et son billet">
+</picture>
+
+Photo de la tour Eiffel : David McSpadden, Wikimedia Commons, CC BY 2.0.
+
+Documentation : [Connecteurs IA](../../docs/ai-connectors.md)
 
 ## Régions & langues
 Choisissez votre pays en même temps que votre langue. Mitra écrit alors les dates, les heures et les nombres comme on le fait là-bas. Votre semaine commence le jour où elle y commence, et le week-end tombe sur vos jours de repos. Un aperçu vous montre le résultat avant que vous ne décidiez. Les raccourcis clavier fonctionnent désormais aussi lorsque votre clavier tape dans une autre écriture, comme le persan.
@@ -55,7 +64,7 @@ Vous pouvez désormais voir ce qui a changé sans quitter Mitra. La fenêtre À 
 </picture>
 
 ## Chinois
-Mitra apprend le chinois, en caractères simplifiés : l’application, son agenda d’exemple, la documentation et le site, avec une police conçue pour lui.
+Mitra parle désormais chinois, écrit en caractères simplifiés. L’application, l’agenda d’exemple, la documentation et le site sont traduits, et le texte chinois s’affiche dans une police conçue pour lui.
 
 <picture>
 	<source media="(prefers-color-scheme: dark)" srcset="chinese-detail-dark.webp">

@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import { type Converter } from '@a11d/converter'
 import { Type } from '../../infrastructure/model/orm.js'
 
@@ -31,6 +32,7 @@ export class Visibility {
 	}
 
 	static readonly converter: Converter<VisibilityCode | null | undefined, Visibility | null | undefined> = {
+		schema: z.enum(Visibility.all.map(visibility => visibility.code)),
 		construct: value => value === null ? value : Visibility.parse(value),
 		deconstruct: value => value?.code ?? value as null | undefined,
 	}

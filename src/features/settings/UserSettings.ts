@@ -19,6 +19,8 @@ export class UserSettings {
 	hideDoneTasks?: boolean
 	/** Whether availability is hidden from the week view. */
 	hideAvailability?: boolean
+	/** The language the app is shown in and the region it is written in (a BCP 47 tag: `fa`, `en-GB`), on every device. */
+	locale?: string
 
 	/**
 	 * Sanitizes user settings input, dropping unknown keys and out-of-range values.
@@ -52,6 +54,13 @@ export class UserSettings {
 		}
 		if (typeof incoming.hideAvailability === 'boolean') {
 			settings.hideAvailability = incoming.hideAvailability
+		}
+		if (typeof incoming.locale === 'string' && incoming.locale.length <= 64) {
+			try {
+				settings.locale = String(new Intl.Locale(incoming.locale))
+			} catch {
+				// Not a BCP 47 tag: left out like any other value out of range.
+			}
 		}
 		return Object.keys(settings).length ? settings : undefined
 	}

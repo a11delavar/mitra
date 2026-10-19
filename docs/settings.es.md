@@ -20,9 +20,9 @@ La paleta de comandos conoce las mismas palabras y cambia la mayoría de los aju
 
 ## Tu cuenta o este dispositivo
 
-La mayoría de los ajustes pertenecen a tu cuenta y te siguen a todos los dispositivos y navegadores desde los que inicias sesión: la vista predeterminada, **Ocultar tareas completadas**, **Ocultar disponibilidad**, el calendario predeterminado, la duración predeterminada, **Ajustar a** y ambos recordatorios predeterminados.
+La mayoría de los ajustes pertenecen a tu cuenta y te siguen a todos los dispositivos y navegadores desde los que inicias sesión: el idioma, la vista predeterminada, **Ocultar tareas completadas**, **Ocultar disponibilidad**, el calendario predeterminado, la duración predeterminada, **Ajustar a** y ambos recordatorios predeterminados.
 
-Los demás pertenecen al dispositivo en el que estás, así que tu teléfono y tu portátil pueden diferir: el tema, el idioma, las líneas de conexión y si este navegador muestra notificaciones.
+Los demás pertenecen al dispositivo en el que estás, así que tu teléfono y tu portátil pueden diferir: el tema, las líneas de conexión y si este navegador muestra notificaciones.
 
 Mitra también recuerda algunas cosas en cada dispositivo a medida que lo usas: cuánto has ampliado, si la barra lateral está abierta y en qué pestaña, qué zonas horarias has plegado y el periodo que muestra la vista de tabla.
 

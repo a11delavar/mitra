@@ -11,7 +11,7 @@ import { IntegrationOwnership } from '../../../integrations/IntegrationOwnership
 import { ApiError } from '../../../infrastructure/http/Api.js'
 import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
 import { EntryRelations } from '../../relations/EntryRelations.js'
-import { type EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
+import { EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
 import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
 
 describe('EntryStore', () => {
@@ -532,7 +532,7 @@ describe('EntryStore', () => {
 		it('commits with the resolved scope; \'all\' confirms the sent state without adopting the master', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
-			EntryStore.resolveScope = () => Promise.resolve('all')
+			EntryStore.resolveScope = () => Promise.resolve(EntryOccurrenceChangeScope.All)
 			const working = occurrence()
 			EntryStore.applyServerEntries([working])
 			working.heading = 'Renamed series'
@@ -548,7 +548,7 @@ describe('EntryStore', () => {
 		it('\'this\' detaches: the instance adopts the standalone\'s identity and leaves the series', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
-			EntryStore.resolveScope = () => Promise.resolve('this')
+			EntryStore.resolveScope = () => Promise.resolve(EntryOccurrenceChangeScope.This)
 			const working = occurrence()
 			EntryStore.applyServerEntries([working])
 			working.moveStart(at(14))
@@ -611,7 +611,7 @@ describe('EntryStore', () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
 			let asked = false
-			EntryStore.resolveScope = () => (asked = true, Promise.resolve('all' as const))
+			EntryStore.resolveScope = () => (asked = true, Promise.resolve(EntryOccurrenceChangeScope.All as const))
 			const working = occurrence({ type: EntryType.Task, status: TaskStatus.ToDo })
 			EntryStore.applyServerEntries([working])
 			working.setStatus(TaskStatus.Done, new IntegrationOwnership({ percentComplete: 'upstream' }))
@@ -629,7 +629,7 @@ describe('EntryStore', () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
 			let asked = false
-			EntryStore.resolveScope = () => (asked = true, Promise.resolve('all' as const))
+			EntryStore.resolveScope = () => (asked = true, Promise.resolve(EntryOccurrenceChangeScope.All as const))
 			const working = occurrence({ type: EntryType.Task, status: TaskStatus.ToDo })
 			EntryStore.applyServerEntries([working])
 			working.percentComplete = 60
@@ -644,7 +644,7 @@ describe('EntryStore', () => {
 		it('a status change mixed with other edits still asks for a scope', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
-			EntryStore.resolveScope = () => Promise.resolve('all')
+			EntryStore.resolveScope = () => Promise.resolve(EntryOccurrenceChangeScope.All)
 			const working = occurrence({ type: EntryType.Task, status: TaskStatus.ToDo })
 			EntryStore.applyServerEntries([working])
 			working.status = TaskStatus.Done
@@ -662,7 +662,7 @@ describe('EntryStore', () => {
 			const working = occurrence()
 			EntryStore.applyServerEntries([working])
 			working.moveStart(at(14))
-			const commit = EntryStore.commit(working, 'this')
+			const commit = EntryStore.commit(working, EntryOccurrenceChangeScope.This)
 			await transport.respond(entry({ id: 'detached', recurringEntryId: undefined, start: at(14), end: at(15) }))
 			await commit
 			assert.deepEqual(transport.calls.occurrenceEdits, ['this'])
@@ -678,7 +678,7 @@ describe('EntryStore', () => {
 			const target = occurrence()
 			const sibling = occurrence({ id: 'master__2000', recurrenceId: at(11), start: at(11), end: at(12) })
 			EntryStore.applyServerEntries([target, sibling])
-			await EntryStore.delete(target, 'this')
+			await EntryStore.delete(target, EntryOccurrenceChangeScope.This)
 			assert.deepEqual([...EntryStore.entries], [sibling])
 			assert.deepEqual(transport.calls.occurrenceDeletes, ['this'])
 			assert.deepEqual(transport.calls.delete, [])
@@ -687,7 +687,7 @@ describe('EntryStore', () => {
 		it('scoped deletes drop the right local instances: \'this\'', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
-			EntryStore.resolveScope = () => Promise.resolve('this')
+			EntryStore.resolveScope = () => Promise.resolve(EntryOccurrenceChangeScope.This)
 			const first = occurrence()
 			const second = occurrence({ id: 'master__2000', recurrenceId: at(11), start: at(11), end: at(12) })
 			EntryStore.applyServerEntries([first, second])
@@ -700,7 +700,7 @@ describe('EntryStore', () => {
 		it('scoped deletes drop the right local instances: \'following\'', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
-			EntryStore.resolveScope = () => Promise.resolve('following')
+			EntryStore.resolveScope = () => Promise.resolve(EntryOccurrenceChangeScope.Following)
 			const earlier = occurrence({ id: 'master__500', recurrenceId: at(7), start: at(7), end: at(8) })
 			const target = occurrence()
 			const later = occurrence({ id: 'master__2000', recurrenceId: at(11), start: at(11), end: at(12) })
@@ -713,7 +713,7 @@ describe('EntryStore', () => {
 		it('scoped deletes drop the right local instances: \'all\'', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
-			EntryStore.resolveScope = () => Promise.resolve('all')
+			EntryStore.resolveScope = () => Promise.resolve(EntryOccurrenceChangeScope.All)
 			const first = occurrence()
 			const second = occurrence({ id: 'master__2000', recurrenceId: at(11), start: at(11), end: at(12) })
 			const unrelated = entry({ id: 'other' })
@@ -738,7 +738,7 @@ describe('EntryStore', () => {
 		it('a failed scoped delete reinstates the dropped instances and rethrows', async () => {
 			const transport = fake()
 			EntryStore.persistence = { ...transport.persistence, deleteOccurrence: () => Promise.reject(new Error('CalDAV update failed: 400 Bad Request')) }
-			EntryStore.resolveScope = () => Promise.resolve('this')
+			EntryStore.resolveScope = () => Promise.resolve(EntryOccurrenceChangeScope.This)
 			const target = occurrence()
 			const sibling = occurrence({ id: 'master__2000', recurrenceId: at(11), start: at(11), end: at(12) })
 			EntryStore.applyServerEntries([target, sibling])
@@ -750,7 +750,7 @@ describe('EntryStore', () => {
 		it('a failed whole-series delete reinstates every dropped instance', async () => {
 			const transport = fake()
 			EntryStore.persistence = { ...transport.persistence, delete: () => Promise.reject(new Error('boom')) }
-			EntryStore.resolveScope = () => Promise.resolve('all')
+			EntryStore.resolveScope = () => Promise.resolve(EntryOccurrenceChangeScope.All)
 			const first = occurrence()
 			const second = occurrence({ id: 'master__2000', recurrenceId: at(11), start: at(11), end: at(12) })
 			EntryStore.applyServerEntries([first, second])
@@ -761,7 +761,7 @@ describe('EntryStore', () => {
 		it('a scoped delete rejected with 404 stays dropped, since the series is gone server-side already', async () => {
 			const transport = fake()
 			EntryStore.persistence = { ...transport.persistence, deleteOccurrence: () => Promise.reject(Object.assign(Object.create(ApiError.prototype) as ApiError, { response: { status: 404 } })) }
-			EntryStore.resolveScope = () => Promise.resolve('this')
+			EntryStore.resolveScope = () => Promise.resolve(EntryOccurrenceChangeScope.This)
 			const target = occurrence()
 			EntryStore.applyServerEntries([target])
 			await assert.rejects(EntryStore.delete(target))

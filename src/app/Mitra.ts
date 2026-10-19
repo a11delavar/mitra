@@ -35,7 +35,10 @@ import { DialogKeyboardShortcuts } from '../features/commands/client/DialogKeybo
 import { DialogSettings } from '../features/settings/client/DialogSettings.js'
 import { SettingRow } from '../features/settings/client/SettingRow.js'
 import { NotificationDevices } from '../features/reminders/client/NotificationDevices.js'
-import { RegionPreview } from '../infrastructure/i18n/RegionPreview.js'
+import { DialogNewAccessToken } from '../features/agents/client/DialogNewAccessToken.js'
+import { DialogAccessToken } from '../features/agents/client/DialogAccessToken.js'
+import { offerToolsToBrowserAgents } from '../features/agents/client/webMcp.js'
+import { LocalePreview } from '../infrastructure/i18n/LocalePreview.js'
 import { themeStyles } from '../design/theme.css.js'
 import { focusRingStyles } from '../design/focusRing.css.js'
 import { kbdStyles } from '../design/kbd.css.js'
@@ -54,7 +57,7 @@ import '../features/time/client/TimeZonePicker.js'
 import { TimeZones } from '../features/time/client/TimeZones.js'
 import { syncPushSubscription } from '../features/reminders/client/push.js'
 import '../integrations/demo/client/language.js'
-import { LanguageSetting } from '../infrastructure/i18n/LanguageSetting.js'
+import { LocaleSetting } from '../infrastructure/i18n/LocaleSetting.js'
 import { syncThemeColor } from './pwa.js'
 import { DialogEntryScope } from '../features/entries/client/DialogEntryScope.js'
 import { DialogDeleteEntries } from '../features/entries/client/DialogDeleteEntries.js'
@@ -91,9 +94,11 @@ export class Mitra extends Application {
 		const subscribeUrl = consumeSubscribeParameter()
 		await Promise.all([Calendars.fetch(), fetchUser(), fetchMeta()])
 		// After the integrations, so a linked language switches the sample calendar too.
-		LanguageSetting.rememberLinkedLanguage()
+		LocaleSetting.followAccount()
+		LocaleSetting.rememberLinkedLanguage()
 		// Nothing waits for it: until the account has a home, home is this device's zone anyway.
 		void TimeZones.settle().catch(() => void 0)
+		void offerToolsToBrowserAgents().catch(() => void 0)
 		document.title = this.documentTitle
 		// The framework writes the title only when the page heading changes, so a language switch would keep the old name.
 		Localizer.locales.change.subscribe(() => document.title = this.documentTitle)
@@ -251,7 +256,9 @@ export class Mitra extends Application {
 			${DialogSettings.styles}
 			${SettingRow.styles}
 			${NotificationDevices.styles}
-			${RegionPreview.styles}
+			${DialogNewAccessToken.styles}
+			${DialogAccessToken.styles}
+			${LocalePreview.styles}
 			${DialogEntryScope.styles}
 			${DialogDeleteEntries.styles}
 			${DialogCompleteParent.styles}

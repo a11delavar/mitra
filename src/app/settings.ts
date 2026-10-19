@@ -1,7 +1,7 @@
 // Side-effect imports registering settings in row display order.
 // ThemeSetting executes at module evaluation to apply data-theme before first paint.
 import './ThemeSetting.js'
-import '../infrastructure/i18n/LanguageSetting.js'
+import '../infrastructure/i18n/LocaleSetting.js'
 import '../features/calendar/client/DefaultViewSetting.js'
 import '../features/entries/client/HideDoneTasksSetting.js'
 import '../features/availability/client/HideAvailabilitySetting.js'
@@ -10,5 +10,8 @@ import '../features/sources/client/DefaultSourceSetting.js'
 import '../features/entries/client/DefaultDurationSetting.js'
 import '../features/entries/client/SnapSetting.js'
 import '../features/reminders/client/NotificationsSetting.js'
+import '../features/reminders/client/DevicesSetting.js'
 import '../features/reminders/client/DefaultReminderSetting.js'
+import '../features/agents/client/McpSetting.js'
+import '../features/agents/client/AccessTokensSetting.js'
 export * from '../features/settings/client/Setting.js'

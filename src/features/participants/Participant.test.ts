@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { Participants, ParticipantRole, ParticipantStatus } from './Participant.js'
+import { Participant, Participants, ParticipantRole, ParticipantStatus } from './Participant.js'
 
 describe('Participants', () => {
 	describe('normalize', () => {
@@ -13,7 +13,7 @@ describe('Participants', () => {
 
 		it('lowercases and trims e-mails and drops invalid ones', () => {
 			assert.deepEqual([...Participants.normalize([{ email: ' Mixed.Case@Example.com ' }, { email: 'junk' }])!], [
-				{ email: 'mixed.case@example.com', role: ParticipantRole.Required, status: ParticipantStatus.NeedsAction },
+				new Participant({ email: 'mixed.case@example.com', role: ParticipantRole.Required, status: ParticipantStatus.NeedsAction }),
 			])
 		})
 
@@ -28,7 +28,7 @@ describe('Participants', () => {
 				{ email: 'a@example.com', organizer: true, name: 'A', status: ParticipantStatus.Accepted },
 				{ email: 'A@example.com', status: ParticipantStatus.Tentative },
 			])!], [
-				{ email: 'a@example.com', name: 'A', organizer: true, role: ParticipantRole.Required, status: ParticipantStatus.Tentative },
+				new Participant({ email: 'a@example.com', name: 'A', organizer: true, role: ParticipantRole.Required, status: ParticipantStatus.Tentative }),
 			])
 		})
 

@@ -8,7 +8,7 @@ import { Entry } from '../entries/Entry.js'
 import { EntryPatch } from '../entries/EntryPatch.js'
 import { RecurrenceFrequency } from './RecurrenceFrequency.js'
 import { RecurrenceWeekday } from './RecurrenceWeekday.js'
-import { type EntryOccurrenceChangeScope } from './EntryOccurrenceChange.js'
+import { EntryOccurrenceChangeScope } from './EntryOccurrenceChange.js'
 
 describe('EntryOccurrence edits', () => {
 	const D = (iso: string) => new Date(iso) as unknown as DateTime
@@ -47,7 +47,7 @@ describe('EntryOccurrence edits', () => {
 	it('\'all\' shifts the whole series by the edit\'s delta and applies the fields to the master', async () => {
 		const { calls, integration } = stub()
 		const m = master()
-		const result = await edit(m, recurrenceId, edited(), 'all').save(em, integration)
+		const result = await edit(m, recurrenceId, edited(), EntryOccurrenceChangeScope.All).save(em, integration)
 		assert.equal(result, m)
 		assert.equal(calls.updates.length, 1)
 		const { incoming } = calls.updates[0]!
@@ -59,7 +59,7 @@ describe('EntryOccurrence edits', () => {
 
 	it('\'this\' may drop the date a rule repeats from, as its occurrence leaves the rule', async () => {
 		const { calls, integration } = stub()
-		const detached = await edit(master(), recurrenceId, new Entry({ sourceId: 's', type: EntryType.Task, heading: 'Standup' }), 'this').save(em, integration)
+		const detached = await edit(master(), recurrenceId, new Entry({ sourceId: 's', type: EntryType.Task, heading: 'Standup' }), EntryOccurrenceChangeScope.This).save(em, integration)
 		assert.equal(detached.start, undefined)
 		assert.deepEqual(calls.excludes, [recurrenceId.getTime()])
 	})
@@ -77,7 +77,7 @@ describe('EntryOccurrence edits', () => {
 			sourceId: 's', type: EntryType.Event, heading: 'Standup',
 			start: D('2026-06-09T09:00:00Z'), end: D('2026-06-09T10:00:00Z'), // Jun 8 Monday → Jun 9 Tuesday
 		})
-		await edit(m, recurrenceId, movedToTuesday, 'all').save(em, integration)
+		await edit(m, recurrenceId, movedToTuesday, EntryOccurrenceChangeScope.All).save(em, integration)
 		const { incoming } = calls.updates[0]!
 		assert.equal((incoming.start as unknown as Date).toISOString(), '2026-06-02T09:00:00.000Z') // anchor +1 day
 		assert.deepEqual(incoming.recurrence!.byday?.map(String), ['TU']) // the weekly-Monday series became weekly-Tuesday
@@ -89,7 +89,7 @@ describe('EntryOccurrence edits', () => {
 			sourceId: 's', type: EntryType.Event, heading: 'Standup',
 			start: D('2026-06-09T09:00:00Z'), end: D('2026-06-09T10:00:00Z'),
 		})
-		const result = await edit(master(), recurrenceId, movedToTuesday, 'following').save(em, integration)
+		const result = await edit(master(), recurrenceId, movedToTuesday, EntryOccurrenceChangeScope.Following).save(em, integration)
 		assert.deepEqual(calls.updates[0]!.incoming.recurrence!.byday?.map(String), ['MO']) // the old half keeps its days
 		assert.deepEqual(result.recurrence!.byday?.map(String), ['TU']) // the new half repeats on its own weekday
 	})
@@ -97,7 +97,7 @@ describe('EntryOccurrence edits', () => {
 	it('\'following\' truncates the master before the occurrence and starts a continuation series at the edit', async () => {
 		const { calls, integration } = stub()
 		const m = master()
-		const result = await edit(m, recurrenceId, edited(), 'following').save(em, integration)
+		const result = await edit(m, recurrenceId, edited(), EntryOccurrenceChangeScope.Following).save(em, integration)
 		// Old half: same content, rule ending the day before June 8.
 		assert.equal(calls.updates.length, 1)
 		const truncatedRule = calls.updates[0]!.incoming.recurrence!
@@ -127,7 +127,7 @@ describe('EntryOccurrence edits', () => {
 			sourceId: 's', type: EntryType.Event, heading: 'Standup',
 			start: D('2026-06-02T10:00:00Z'), end: D('2026-06-02T11:00:00Z'), // the Jun 2 occurrence, one hour later
 		})
-		const result = await edit(m, new Date('2026-06-02T09:00:00Z'), moved, 'following').save(em, integration)
+		const result = await edit(m, new Date('2026-06-02T09:00:00Z'), moved, EntryOccurrenceChangeScope.Following).save(em, integration)
 		assert.equal(result.recurrence!.count, 9)
 		assert.equal(result.recurrence!.until, undefined)
 		// The old half is UNTIL-bounded before the split, its COUNT cleared (UNTIL alone bounds it).
@@ -141,7 +141,7 @@ describe('EntryOccurrence edits', () => {
 			sourceId: 's', type: EntryType.Event, heading: 'Standup',
 			start: D('2026-06-08T09:00:00Z'), end: D('2026-06-08T11:30:00Z'), // start untouched, 1h → 2.5h
 		})
-		await edit(master(), recurrenceId, resized, 'all').save(em, integration)
+		await edit(master(), recurrenceId, resized, EntryOccurrenceChangeScope.All).save(em, integration)
 		const { incoming } = calls.updates[0]!
 		assert.equal((incoming.start as unknown as Date).toISOString(), '2026-06-01T09:00:00.000Z') // anchor unmoved
 		assert.equal((incoming.end as unknown as Date).toISOString(), '2026-06-01T11:30:00.000Z') // every occurrence is 2.5h now
@@ -154,7 +154,7 @@ describe('EntryOccurrence edits', () => {
 			start: D('2026-06-01T09:00:00Z'), end, recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Monday] }),
 		})
 		const moment = new Entry({ sourceId: 's', type: EntryType.Task, heading: 'Water the plants', start: D('2026-06-08T09:00:00Z') })
-		await edit(task(D('2026-06-01T10:00:00Z')), recurrenceId, moment, 'all').save(em, integration)
+		await edit(task(D('2026-06-01T10:00:00Z')), recurrenceId, moment, EntryOccurrenceChangeScope.All).save(em, integration)
 		const { incoming } = calls.updates[0]!
 		assert.equal((incoming.start as unknown as Date).toISOString(), '2026-06-01T09:00:00.000Z')
 		assert.equal(incoming.end, undefined)
@@ -172,7 +172,7 @@ describe('EntryOccurrence edits', () => {
 			sourceId: 's', type: EntryType.Event, heading: 'Standup', allDay: true,
 			start: D('2026-06-08T00:00:00Z'), end: D('2026-06-09T00:00:00Z'),
 		})
-		await edit(m, recurrenceId, allDay, 'all').save(em, integration)
+		await edit(m, recurrenceId, allDay, EntryOccurrenceChangeScope.All).save(em, integration)
 		const { incoming } = calls.updates[0]!
 		assert.equal(incoming.allDay, true)
 		assert.equal((incoming.start as unknown as Date).toISOString(), '2026-06-01T00:00:00.000Z')
@@ -190,7 +190,7 @@ describe('EntryOccurrence edits', () => {
 			sourceId: 's', type: EntryType.Event, heading: 'Standup', allDay: false,
 			start: D('2026-06-08T02:00:00Z'), end: D('2026-06-08T03:00:00Z'), // dropped at 02:00, one hour
 		})
-		await edit(m, new Date('2026-06-08T00:00:00Z'), timed, 'all').save(em, integration)
+		await edit(m, new Date('2026-06-08T00:00:00Z'), timed, EntryOccurrenceChangeScope.All).save(em, integration)
 		const { incoming } = calls.updates[0]!
 		assert.equal(incoming.allDay, false)
 		assert.equal((incoming.start as unknown as Date).toISOString(), '2026-06-01T02:00:00.000Z')
@@ -209,10 +209,10 @@ describe('EntryOccurrence edits', () => {
 		const span = (init: Partial<Entry>) => new Entry({ sourceId: 's', type: EntryType.Task, heading: 'Test', ...init })
 		const apply = (incoming: Entry) => Object.assign(m, { start: incoming.start, end: incoming.end, allDay: incoming.allDay, recurrence: incoming.recurrence })
 		// 1) into the all-day lane…
-		await edit(m, new Date('2026-07-10T02:00:00Z'), span({ allDay: true, start: D('2026-07-10T00:00:00Z'), end: D('2026-07-11T00:00:00Z') }), 'all').save(em, integration)
+		await edit(m, new Date('2026-07-10T02:00:00Z'), span({ allDay: true, start: D('2026-07-10T00:00:00Z'), end: D('2026-07-11T00:00:00Z') }), EntryOccurrenceChangeScope.All).save(em, integration)
 		apply(calls.updates[0]!.incoming)
 		// 2) …and back onto the grid at 06:00, where the ghost previews the default one-hour slot.
-		await edit(m, new Date('2026-07-10T00:00:00Z'), span({ allDay: false, start: D('2026-07-10T06:00:00Z'), end: D('2026-07-10T07:00:00Z') }), 'all').save(em, integration)
+		await edit(m, new Date('2026-07-10T00:00:00Z'), span({ allDay: false, start: D('2026-07-10T06:00:00Z'), end: D('2026-07-10T07:00:00Z') }), EntryOccurrenceChangeScope.All).save(em, integration)
 		const final = calls.updates[1]!.incoming
 		assert.equal((final.start as unknown as Date).toISOString(), '2026-07-10T06:00:00.000Z')
 		assert.equal((final.end as unknown as Date).toISOString(), '2026-07-10T07:00:00.000Z') // what the preview showed
@@ -231,7 +231,7 @@ describe('EntryOccurrence edits', () => {
 			sourceId: 's', type: EntryType.Event, heading: 'Standup', allDay: true,
 			start: D('2026-07-10T00:00:00Z'), end: D('2026-07-11T00:00:00Z'), // Friday Jul 10, as days arrive
 		})
-		await edit(m, new Date('2026-07-09T22:30:00Z'), allDay, 'all').save(em, integration)
+		await edit(m, new Date('2026-07-09T22:30:00Z'), allDay, EntryOccurrenceChangeScope.All).save(em, integration)
 		const { incoming } = calls.updates[0]!
 		assert.deepEqual(incoming.recurrence!.byday?.map(String), ['FR'])
 		assert.deepEqual([incoming.start, incoming.end].map(date => (date as unknown as Date).toISOString()), ['2026-07-03T00:00:00.000Z', '2026-07-04T00:00:00.000Z'])
@@ -249,7 +249,7 @@ describe('EntryOccurrence edits', () => {
 			sourceId: 's', type: EntryType.Event, heading: 'Standup', timeZone: EntryTimeZone.parse('Europe/Berlin'),
 			start: D('2026-06-08T22:30:00Z'), end: D('2026-06-08T23:30:00Z'), // Tue Jun 9, 00:30–01:30 CEST
 		})
-		await edit(m, new Date('2026-06-08T00:00:00Z'), timed, 'all').save(em, integration)
+		await edit(m, new Date('2026-06-08T00:00:00Z'), timed, EntryOccurrenceChangeScope.All).save(em, integration)
 		const { incoming } = calls.updates[0]!
 		assert.deepEqual(incoming.recurrence!.byday?.map(String), ['TU'])
 		assert.deepEqual([incoming.allDay, ...[incoming.start, incoming.end].map(date => (date as unknown as Date).toISOString())], [false, '2026-06-01T22:30:00.000Z', '2026-06-01T23:30:00.000Z'])
@@ -269,7 +269,7 @@ describe('EntryOccurrence edits', () => {
 			sourceId: 's', type: EntryType.Event, heading: 'Standup',
 			start: D('2026-11-08T08:00:00Z'), end: D('2026-11-08T09:00:00Z'), // Sun 09:00 CET
 		})
-		await edit(m, new Date('2026-11-06T08:00:00Z'), moved, 'all').save(em, integration) // Fri 09:00 CET
+		await edit(m, new Date('2026-11-06T08:00:00Z'), moved, EntryOccurrenceChangeScope.All).save(em, integration) // Fri 09:00 CET
 		const { incoming } = calls.updates[0]!
 		assert.equal((incoming.start as unknown as Date).toISOString(), '2026-10-25T08:00:00.000Z') // Sun 09:00 CET: 09:00 stays 09:00
 		assert.deepEqual(incoming.recurrence!.byday?.map(String), ['SU'])
@@ -282,12 +282,12 @@ describe('EntryOccurrence edits', () => {
 			const { calls, integration } = stub()
 			const m = master()
 			m.exdates = [new Date('2026-06-15T09:00:00Z').getTime()]
-			await edit(m, recurrenceId, edited(), 'all').save(em, integration)
+			await edit(m, recurrenceId, edited(), EntryOccurrenceChangeScope.All).save(em, integration)
 			assert.deepEqual(calls.updates[0]!.incoming.exdates, [new Date('2026-06-15T10:00:00Z').getTime()])
 		}
 		{
 			const { calls, integration } = stub()
-			await edit(master(), recurrenceId, edited(), 'all').save(em, integration)
+			await edit(master(), recurrenceId, edited(), EntryOccurrenceChangeScope.All).save(em, integration)
 			assert.equal(calls.updates[0]!.incoming.exdates, undefined) // absent = keep, not "clear"
 		}
 	})
@@ -306,7 +306,7 @@ describe('EntryOccurrence edits', () => {
 			sourceId: 's', type: EntryType.Event, heading: 'Standup',
 			start: D('2026-10-30T08:00:00Z'), end: D('2026-10-30T09:00:00Z'), // 09:00 CET, one week later
 		})
-		await edit(m, new Date('2026-10-23T07:00:00Z'), moved, 'all').save(em, integration)
+		await edit(m, new Date('2026-10-23T07:00:00Z'), moved, EntryOccurrenceChangeScope.All).save(em, integration)
 		// 09:00 Berlin stays 09:00 Berlin: an instant shift (+7d1h) would beach it at 10:00.
 		assert.deepEqual(calls.updates[0]!.incoming.exdates, [new Date('2026-11-13T08:00:00Z').getTime()])
 	})
@@ -325,7 +325,7 @@ describe('EntryOccurrence edits', () => {
 			sourceId: 's', type: EntryType.Event, heading: 'Standup', allDay: true,
 			start: D('2026-06-09T00:00:00Z'), end: D('2026-06-10T00:00:00Z'),
 		})
-		await edit(m, new Date('2026-06-08T00:00:00Z'), moved, 'all').save(em, integration)
+		await edit(m, new Date('2026-06-08T00:00:00Z'), moved, EntryOccurrenceChangeScope.All).save(em, integration)
 		assert.deepEqual(calls.updates[0]!.incoming.exdates, [new Date('2026-06-16T00:00:00Z').getTime()])
 	})
 
@@ -336,14 +336,14 @@ describe('EntryOccurrence edits', () => {
 			new Date('2026-06-01T09:00:00Z').getTime(), // before the split, stays the old half's
 			new Date('2026-06-15T09:00:00Z').getTime(), // after it, the continuation's, at +1h
 		]
-		const result = await edit(m, recurrenceId, edited(), 'following').save(em, integration)
+		const result = await edit(m, recurrenceId, edited(), EntryOccurrenceChangeScope.Following).save(em, integration)
 		assert.equal(calls.updates[0]!.incoming.exdates, undefined) // the old half keeps its own untouched
 		assert.deepEqual(result.exdates, [new Date('2026-06-15T10:00:00Z').getTime()])
 	})
 
 	it('\'this\' excludes the occurrence and detaches it as a standalone entry', async () => {
 		const { calls, integration } = stub()
-		const result = await edit(master(), recurrenceId, edited(), 'this').save(em, integration)
+		const result = await edit(master(), recurrenceId, edited(), EntryOccurrenceChangeScope.This).save(em, integration)
 		assert.deepEqual(calls.excludes, [recurrenceId.getTime()])
 		assert.equal(calls.creates.length, 1)
 		assert.equal(result.heading, 'Edited')
@@ -355,7 +355,7 @@ describe('EntryOccurrence edits', () => {
 		it('\'this\' detaches the occurrence INTO the other calendar', async () => {
 			const here = stub()
 			const there = stub()
-			const result = await edit(master(), recurrenceId, Object.assign(edited(), { sourceId: 'other' }), 'this').save(em, here.integration, there.integration)
+			const result = await edit(master(), recurrenceId, Object.assign(edited(), { sourceId: 'other' }), EntryOccurrenceChangeScope.This).save(em, here.integration, there.integration)
 			assert.deepEqual(here.calls.excludes, [recurrenceId.getTime()], 'the occurrence still leaves the series here')
 			assert.equal(here.calls.creates.length, 0, 'and nothing is created here')
 			assert.equal(there.calls.creates.length, 1)
@@ -365,7 +365,7 @@ describe('EntryOccurrence edits', () => {
 		it('\'following\' starts the continuation there and leaves the old half where it is', async () => {
 			const here = stub()
 			const there = stub()
-			const result = await edit(master(), recurrenceId, Object.assign(edited(), { sourceId: 'other' }), 'following').save(em, here.integration, there.integration)
+			const result = await edit(master(), recurrenceId, Object.assign(edited(), { sourceId: 'other' }), EntryOccurrenceChangeScope.Following).save(em, here.integration, there.integration)
 			assert.equal(here.calls.updates.length, 1, 'the old half is truncated in place')
 			assert.equal(here.calls.updates[0]!.incoming.sourceId, 's')
 			assert.equal(there.calls.creates.length, 1)
@@ -377,7 +377,7 @@ describe('EntryOccurrence edits', () => {
 			const here = stub()
 			const there = stub()
 			const m = master()
-			const result = await edit(m, recurrenceId, Object.assign(edited(), { sourceId: 'other' }), 'all').save(em, here.integration, there.integration)
+			const result = await edit(m, recurrenceId, Object.assign(edited(), { sourceId: 'other' }), EntryOccurrenceChangeScope.All).save(em, here.integration, there.integration)
 			assert.equal(there.calls.creates.length, 1)
 			assert.deepEqual(here.calls.deletes, [m], 'the original goes, and only after the copy landed')
 			assert.equal(result.sourceId, 'other')
@@ -390,7 +390,7 @@ describe('EntryOccurrence edits', () => {
 			const here = stub()
 			const there = stub()
 			here.integration.deleteEntry = () => Promise.reject(new Error('nope'))
-			await assert.rejects(() => edit(master(), recurrenceId, Object.assign(edited(), { sourceId: 'other' }), 'all').save(em, here.integration, there.integration))
+			await assert.rejects(() => edit(master(), recurrenceId, Object.assign(edited(), { sourceId: 'other' }), EntryOccurrenceChangeScope.All).save(em, here.integration, there.integration))
 			assert.equal(there.calls.deletes.length, 1, 'the copy is compensated')
 		})
 	})
@@ -399,18 +399,18 @@ describe('EntryOccurrence edits', () => {
 		{
 			const { calls, integration } = stub()
 			const m = master()
-			await m.occurrences.at(recurrenceId).delete('all').save(em, integration)
+			await m.occurrences.at(recurrenceId).delete(EntryOccurrenceChangeScope.All).save(em, integration)
 			assert.deepEqual(calls.deletes, [m])
 		}
 		{
 			const { calls, integration } = stub()
-			await master().occurrences.at(recurrenceId).delete('following').save(em, integration)
+			await master().occurrences.at(recurrenceId).delete(EntryOccurrenceChangeScope.Following).save(em, integration)
 			assert.equal(calls.updates.length, 1)
 			assert.ok(calls.updates[0]!.incoming.recurrence!.until!.instant.valueOf() < recurrenceId.getTime())
 		}
 		{
 			const { calls, integration } = stub()
-			await master().occurrences.at(recurrenceId).delete('this').save(em, integration)
+			await master().occurrences.at(recurrenceId).delete(EntryOccurrenceChangeScope.This).save(em, integration)
 			assert.deepEqual(calls.excludes, [recurrenceId.getTime()])
 		}
 	})

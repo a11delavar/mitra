@@ -20,9 +20,9 @@ La palette de commandes connaît les mêmes mots et modifie la plupart des param
 
 ## Votre compte ou cet appareil
 
-La plupart des paramètres appartiennent à votre compte et vous suivent sur chaque appareil et chaque navigateur depuis lesquels vous vous connectez : la vue par défaut, **Masquer les tâches terminées**, **Masquer les disponibilités**, l'agenda par défaut, la durée par défaut, **Aligner sur** et les deux rappels par défaut.
+La plupart des paramètres appartiennent à votre compte et vous suivent sur chaque appareil et chaque navigateur depuis lesquels vous vous connectez : la langue, la vue par défaut, **Masquer les tâches terminées**, **Masquer les disponibilités**, l'agenda par défaut, la durée par défaut, **Aligner sur** et les deux rappels par défaut.
 
-Les autres appartiennent à l'appareil que vous utilisez, si bien que votre téléphone et votre ordinateur portable peuvent différer : le thème, la langue, les lignes de connexion, et le fait que ce navigateur affiche ou non des notifications.
+Les autres appartiennent à l'appareil que vous utilisez, si bien que votre téléphone et votre ordinateur portable peuvent différer : le thème, les lignes de connexion, et le fait que ce navigateur affiche ou non des notifications.
 
 Mitra retient aussi certaines choses sur chaque appareil au fil de votre utilisation : le niveau de zoom, l'ouverture de la barre latérale et son onglet, les fuseaux horaires que vous avez repliés, et la période que montre la vue tableau.
 

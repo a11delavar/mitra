@@ -1,4 +1,7 @@
 import { DateTimeRange } from '@3mo/date-time'
+import { description } from '@a11d/metadata'
+import { z } from 'zod'
+import { validation } from '../../../infrastructure/validation/validation.js'
 import { type EntityManager } from '@mikro-orm/core'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
 import { ValidationError } from '../../../infrastructure/validation/ValidationError.js'
@@ -18,13 +21,22 @@ const FLATTEN_HORIZON_DAYS = 366
 export class MigrationRefused extends ValidationError { }
 
 /** Moves or copies entries in three phases: copy into the target, repoint `EntryRelation.targetUid`, delete the originals. */
-export interface MigrationOptions {
-	readonly targetSourceId?: unknown
-	/** Entry IDs to migrate; undefined means all entries in the source. */
-	readonly entryIds?: unknown
-	/** If true, skip delete phase (copy instead of move). */
+/** What moving a calendar's entries asks: where they go, which of them, and whether the originals stay. */
+export class MigrationOptions {
+	@validation(z.string().min(1, 'A target calendar is required'))
+	@description('The calendar the entries go to.')
+	readonly targetSourceId!: string
+
+	@validation(z.array(z.string()).optional())
+	@description('The entries to move, by id; none moves them all.')
+	readonly entryIds?: ReadonlyArray<string>
+
+	@validation(z.boolean().optional())
+	@description('Copies rather than moves: the originals stay.')
 	readonly keepOriginals?: boolean
-	/** If true, write unrepeatable series as single occurrences instead of leaving them behind. */
+
+	@validation(z.boolean().optional())
+	@description('Writes a series the target cannot repeat as its occurrences, rather than leaving it behind.')
 	readonly flatten?: boolean
 }
 
@@ -48,14 +60,8 @@ export class SourceMigration {
 	static async of(em: EntityManager, user: User, originId: string, options: MigrationOptions): Promise<SourceMigration> {
 		const { targetSourceId, entryIds } = options
 		const keepOriginals = options.keepOriginals === true
-		if (typeof targetSourceId !== 'string' || !targetSourceId) {
-			throw new MigrationRefused('A target calendar is required')
-		}
 		if (targetSourceId === originId) {
 			throw new MigrationRefused('Entries cannot move to the calendar they are already in')
-		}
-		if (entryIds !== undefined && (!Array.isArray(entryIds) || entryIds.some(id => typeof id !== 'string'))) {
-			throw new MigrationRefused('A list of entry ids is required')
 		}
 
 		// Read-only origins permit copy, but refuse move.
@@ -111,7 +117,7 @@ export class SourceMigration {
 	}
 
 	/** Runs migration holding exclusive locks across both integrations. */
-	run(): Promise<MigrationOutcome> {
+	run() {
 		return Integration.exclusivelyAcross([this.originIntegration.id, this.targetIntegration.id], () => this.runExclusively())
 	}
 

@@ -1,6 +1,7 @@
 import { component, html, css, state, query, repeat, type PropertyValues, ifDefined, bind } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { activated } from '../../../design/activated.css.js'
+import { selected } from '../../../design/selected.css.js'
 import { focusRing } from '../../../design/focusRing.css.js'
 import { settings, settingsPage, settingsPages, type Setting, type SettingsPageId } from './Setting.js'
 import { SettingsStore } from './SettingsStore.js'
@@ -91,10 +92,10 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 	static override get styles() {
 		return css`
 			mitra-dialog-settings {
-				--mitra-dialog-width: min(52rem, 92vw);
+				--mitra-dialog-width: min(58rem, 92vw);
 				--settings-padding: 1.25rem;
 				--mitra-dialog-header-inset: 0.5rem;
-				--settings-height: min(36rem, 80dvh);
+				--settings-height: min(40rem, 85dvh);
 
 				mitra-dialog::part(dialog) {
 					padding: 0;
@@ -112,7 +113,8 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 					display: flex;
 					flex-direction: column;
 					min-block-size: 0;
-					background: var(--mitra-dialog-rail);
+					/* Unfilled: the setting cards carry the contrast, so the rail and the page are one ground. */
+					background: var(--mitra-dialog-page);
 					border-inline-end: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
 					padding: 0.625rem 0.375rem;
 
@@ -166,12 +168,10 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 						}
 
 						&[aria-current] {
-							background: color-mix(in srgb, var(--color-accent) 12%, transparent);
-							font-weight: 600;
-							color: var(--color-text);
+							${selected};
 
 							mitra-icon {
-								color: var(--color-text);
+								color: inherit;
 							}
 						}
 
@@ -236,6 +236,7 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 				.rows {
 					display: flex;
 					flex-direction: column;
+					gap: 0.625rem;
 				}
 
 				@container settings (max-width: 40rem) {

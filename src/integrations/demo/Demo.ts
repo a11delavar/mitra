@@ -4,7 +4,7 @@ import { Source } from '../../features/sources/Source.js'
 import { RelationType } from '../../features/relations/RelationType.js'
 import { Recurrence } from '../../features/recurrence/Recurrence.js'
 import { RecurrenceEnd } from '../../features/recurrence/RecurrenceEnd.js'
-import { ParticipantRole, ParticipantStatus } from '../../features/participants/Participant.js'
+import { ParticipantRole, ParticipantStatus, Participants } from '../../features/participants/Participant.js'
 import { model } from '../../infrastructure/model/model.js'
 import { integration } from '../Integration.js'
 import { MitraCalendar } from '../mitra/MitraCalendar.js'
@@ -232,11 +232,11 @@ export class Demo extends MitraCalendar {
 			start: at(pastStart, 1, 15),
 			end: at(pastStart, 1, 16),
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Tuesday] }),
-			participants: [
+			participants: Participants.normalize([
 				{ email: me, organizer: true, self: true, role: ParticipantRole.Required, status: ParticipantStatus.Accepted },
 				{ email: 'colleague1@company.com', role: ParticipantRole.Required, status: ParticipantStatus.Accepted },
 				{ email: 'colleague2@company.com', role: ParticipantRole.Required, status: ParticipantStatus.Tentative },
-			],
+			]),
 		})
 
 		// A weekday rule rather than a date, so it always lands on a work day.

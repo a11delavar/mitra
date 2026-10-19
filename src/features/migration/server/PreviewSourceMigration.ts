@@ -1,19 +1,22 @@
 import { description, label } from '@a11d/metadata'
-import { type Request } from 'express'
+import { z } from 'zod'
+import { validation } from '../../../infrastructure/validation/validation.js'
 import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
 import { type MigrationPlan } from '../MigrationPlan.js'
-import { SourceMigration, type MigrationOptions } from './SourceMigration.js'
+import { MigrationOptions, SourceMigration } from './SourceMigration.js'
 
-@operation()
+class Parameters extends MigrationOptions {
+	@validation(z.string())
+	@description('The calendar\'s id the entries come from.')
+	readonly id!: string
+}
+
+@operation(Parameters)
 @label('Preview a move between calendars')
 @description('Answers what moving or copying a calendar\'s entries into another would carry, lose, or be refused.')
 @http({ method: 'POST', path: '/sources/:id/migrate/preview' })
-export class PreviewSourceMigration extends Operation<{ readonly id: string, readonly options: MigrationOptions }, MigrationPlan> {
-	static override fromRequest(request: Request) {
-		return new PreviewSourceMigration({ id: request.params.id as string, options: request.body ?? {} })
-	}
-
-	async run({ em, user }: OperationContext): Promise<MigrationPlan> {
-		return (await SourceMigration.of(em, user, this.parameters.id, this.parameters.options)).plan()
+export class PreviewSourceMigration extends Operation<Parameters, MigrationPlan> {
+	async run({ em, user }: OperationContext) {
+		return (await SourceMigration.of(em, user, this.parameters.id, this.parameters)).plan()
 	}
 }

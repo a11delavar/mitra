@@ -1,5 +1,8 @@
-import { construct, converter } from '@a11d/converter'
+import { converter } from '@a11d/converter'
+import { description } from '@a11d/metadata'
+import { z } from 'zod'
 import { model } from '../../infrastructure/model/model.js'
+import { validation } from '../../infrastructure/validation/validation.js'
 import { Entry } from './Entry.js'
 import { EntryType } from './EntryType.js'
 import { TaskStatus } from './TaskStatus.js'
@@ -13,7 +16,7 @@ import { EntryFiles } from './EntryFiles.js'
 import { type Calendar } from '../sources/Calendar.js'
 import { type Validatable } from '../../infrastructure/validation/Validatable.js'
 import { ValidationError } from '../../infrastructure/validation/ValidationError.js'
-import { type EntryOccurrenceChangeScope } from '../recurrence/EntryOccurrenceChange.js'
+import { EntryOccurrenceChangeScope } from '../recurrence/EntryOccurrenceChange.js'
 
 /** What a patch applies to: the entry it edits (none creates one), the calendar it is in, the calendar it goes to, and how far an occurrence's edit reaches. */
 export interface EntryPatchContext {
@@ -23,11 +26,31 @@ export interface EntryPatchContext {
 	readonly scope?: EntryOccurrenceChangeScope
 }
 
-/** A date as `Entry` converts it, an all-day one by the `allDay` beside it; called at run time, as the two modules import each other. */
-const date = {
-	construct: (value: string | Date | null | undefined, data: { allDay?: boolean | null }) => value === null || value === undefined ? value : Entry.shownDay(new DateTime(value), data),
+/**
+ * A date as `Entry` converts it, an all-day one by the `allDay` beside it; called at run time, as the two modules import
+ * each other. Written as text it is an instant, a day, or a wall-clock time with its zone in brackets (RFC 9557), which
+ * Temporal reads, daylight saving included. A day comes with `allDay: true`: read alone it would be a UTC midnight.
+ */
+const date = (field: 'start' | 'end' | 'due') => ({
+	schema: z.union([z.iso.datetime({ offset: true }), z.iso.datetime({ offset: true, precision: -1 }), z.iso.date(), z.string().regex(/^\d{4}-\d{2}-\d{2}T[\d:.]+(Z|[+-]\d{2}:\d{2})?\[[^\]]+\]$/)]),
+	construct: (value: string | Date | null | undefined, data: { allDay?: boolean | null }) => {
+		if (value === null || value === undefined) {
+			return value
+		}
+		if (typeof value === 'string' && !value.includes('T') && !data.allDay) {
+			throw new ValidationError(`"${value}" is a day: send allDay: true with it, or a time with its offset or zone.`, [field])
+		}
+		if (typeof value !== 'string' || !value.endsWith(']')) {
+			return Entry.shownDay(new DateTime(value), data)
+		}
+		try {
+			return Entry.shownDay(new DateTime(Temporal.ZonedDateTime.from(value).epochMilliseconds), data)
+		} catch {
+			throw new ValidationError(`"${value}" names no time zone Mitra knows.`)
+		}
+	},
 	deconstruct: (value: Date | null | undefined, data: { allDay?: boolean | null }) => Entry.storedDay(value, data),
-}
+})
 
 /**
  * An edit of an entry, which `Entry.patch` takes over: a field it leaves out keeps the entry's value, `null` clears it, and any
@@ -60,37 +83,107 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 		return patch
 	}
 
-	/** What a request carried, as a patch. Only the fields an edit reaches are read. */
-	static from(body: unknown) {
-		if (body instanceof EntryPatch) {
-			return body
-		}
-		const sent = (body ?? {}) as Record<string, unknown>
-		return construct(EntryPatch, Object.fromEntries(EntryPatch.fields.filter(field => field in sent).map(field => [field, sent[field]])))
-	}
-
+	@validation(z.string().optional())
+	@description('The calendar\'s id. Creating without one uses the default calendar; changing it moves the entry there.')
 	sourceId?: string
-	@converter(EntryType.converter) type?: EntryType
+
+	@validation(z.custom<EntryType>(value => value instanceof EntryType).optional())
+	@description('An event happens at a time; a task is something to do, scheduled or not; availability is a window, usually repeating, when the person is free, or busy where it says so, shown behind the rest.')
+	@converter(EntryType.converter)
+	type?: EntryType
+
+	@validation(z.string().nullish())
+	@description('The title.')
 	heading?: string | null
+
+	@validation(z.string().nullish())
+	@description('Markdown. Lines like "- [ ] step" are checklist items that count toward a task\'s progress.')
 	description?: string | null
+
+	@validation(z.string().nullish())
 	location?: string | null
+
+	@validation(z.string().nullish())
 	color?: string | null
+
+	/** Days make an entry all-day where it does not say: its start's, else a due's when no start is written. */
+	@validation(z.boolean().nullish())
+	@description('Whether its dates are days rather than times; true with dates written as days.')
 	allDay?: boolean | null
-	@converter(date) start?: DateTime | null
-	@converter(date) end?: DateTime | null
-	@converter(date) due?: DateTime | null
-	@converter({ construct: EntryPatch.minutes }) estimate?: number | null
-	@converter(EntryTimeZone.converter) timeZone?: EntryTimeZone | null
-	@converter(TaskStatus.converter) status?: TaskStatus | null
-	@converter({ construct: EntryPatch.percent }) percentComplete?: number | null
-	@converter(Transparency.converter) transparency?: Transparency | null
-	@converter(Visibility.converter) visibility?: Visibility | null
-	@converter({ construct: (value: Partial<Recurrence> | null | undefined) => value === null ? value : Recurrence.from(value) }) recurrence?: Recurrence | null
+
+	@validation(z.date().nullish())
+	@description('When it starts: an instant with its offset (2027-03-02T08:00Z), a wall-clock time with its zone (2027-03-02T09:00[Europe/Berlin]), or a day (2027-03-02) for an all-day entry, which needs allDay: true beside it. null takes the dates off a task, leaving it unscheduled.')
+	@converter(date('start'))
+	start?: DateTime | null
+
+	@validation(z.date().nullish())
+	@description('When it ends, written like start. An all-day entry ends on the day after its last (2027-03-03 for one day on 2027-03-02).')
+	@converter(date('end'))
+	end?: DateTime | null
+
+	@validation(z.date().nullish())
+	@description('A task\'s due date, written like start, a day with allDay: true: the day or time it must be done by, apart from when it is scheduled.')
+	@converter(date('due'))
+	due?: DateTime | null
+
+	@validation(z.number().int().positive().nullish())
+	@description('How long an unscheduled task will take, in minutes.')
+	@converter({ construct: EntryPatch.minutes })
+	estimate?: number | null
+
+	@validation(z.custom<EntryTimeZone>(value => value instanceof EntryTimeZone).nullish())
+	@description('The IANA zone the entry is kept in (Europe/Berlin), which a repeating entry repeats in; floating for the same wall-clock time wherever one is.')
+	@converter({
+		schema: z.string(),
+		construct: (value: string | null | undefined) => {
+			const parsed = value === null || value === undefined ? value : EntryTimeZone.parse(value)
+			if (parsed === undefined && value !== undefined) {
+				throw new ValidationError(`"${value}" is not a time zone. Name an IANA zone (Europe/Berlin), or floating.`, ['timeZone'])
+			}
+			return parsed
+		},
+		deconstruct: EntryTimeZone.converter.deconstruct,
+	})
+	timeZone?: EntryTimeZone | null
+
+	@validation(z.custom<TaskStatus>(value => value instanceof TaskStatus).nullish())
+	@description('A task\'s status.')
+	@converter(TaskStatus.converter)
+	status?: TaskStatus | null
+
+	@validation(z.number().min(0).max(100).nullish())
+	@converter({ construct: EntryPatch.percent })
+	percentComplete?: number | null
+
+	@validation(z.custom<Transparency>(value => value instanceof Transparency).nullish())
+	@description('Whether the time counts as busy or free; without, an event is busy and availability free.')
+	@converter(Transparency.converter)
+	transparency?: Transparency | null
+
+	@validation(z.custom<Visibility>(value => value instanceof Visibility).nullish())
+	@converter(Visibility.converter)
+	visibility?: Visibility | null
+
+	@validation(z.custom<Recurrence>(value => value instanceof Recurrence).nullish())
+	@description('An RFC 5545 RRULE, e.g. FREQ=WEEKLY;BYDAY=MO,WE or FREQ=MONTHLY;COUNT=6. null stops it repeating.')
+	@converter(Recurrence.converter)
+	recurrence?: Recurrence | null
+
+	@validation(z.array(z.number().int()).nullish())
+	@description('Minutes before the start, or an unscheduled task\'s due, to remind at.')
 	reminders?: Array<number> | null
-	@converter({ construct: (value: ReadonlyArray<Partial<Participant>> | null | undefined) => value === undefined ? value : Participants.normalize(value) }) participants?: Array<Participant> | null
+
+	@description('The people taking part, the whole list, each by email with an optional name, role and status. The user leads it as organizer (organizer: true, self: true) by an address get_context names; only the organizer changes the list. Whether people are told is up to the provider: a CalDAV server that schedules (RFC 6638) sends the invitations, changes and cancellations, a Mitra calendar tells no one.')
+	@converter(Participants.converter)
+	participants?: Array<Participant> | null
+
 	/** None at all, `[]` as much as `null`, clears them. */
-	@converter({ construct: (value: unknown) => value === undefined || value === null ? value : EntryFiles.of(value), deconstruct: (value: EntryFiles | null | undefined) => value === undefined ? value : !value?.length ? null : EntryFiles.converter.deconstruct!(value, {}) }) files?: EntryFiles | null
-	@converter(EntryRelations.writeConverter) relations?: EntryRelations
+	@converter({ construct: (value: unknown) => value === undefined || value === null ? value : EntryFiles.of(value), deconstruct: (value: EntryFiles | null | undefined) => value === undefined ? value : !value?.length ? null : EntryFiles.converter.deconstruct!(value, {}) })
+	files?: EntryFiles | null
+
+	@description('The entry\'s own links to other entries, each by the other\'s uid: FINISHTOSTART when this entry cannot start until the other finishes, PARENT when it is a subtask of the other. The list replaces the links the entry has, so keep those it should keep; links pointing at it are the other entry\'s and are left as they are. null removes them all.')
+	@converter(EntryRelations.writeConverter)
+	relations?: EntryRelations
 
 	/** What makes the patch invalid: a field that came malformed, and with a context what the edit may not do there. */
 	*validate(context?: EntryPatchContext) {
@@ -104,6 +197,10 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 			return
 		}
 		const { entry, to, scope } = context
+		// What an occurrence's edit carries leaves them out (`EntryPatch.occurrence`): links belong to the entry as a whole.
+		if (scope && this.relations !== undefined) {
+			yield new ValidationError('Relations belong to the repeating entry as a whole, never to one of its occurrences. To relate the occurrences to each other, make them separate entries.', ['relations'])
+		}
 		const target = to.integration.capabilitiesFor(to.source)
 		if (!entry) {
 			if (!target.entries.create) {
@@ -143,10 +240,10 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 		}
 		// What the rule iterates: the start, or the due of an unscheduled task. Only an occurrence leaving the rule may drop it.
 		const anchor = entry.start ? 'start' : 'due'
-		if (scope && scope !== 'this' && entry.recurrence && this[anchor] === null) {
+		if (scope && scope !== EntryOccurrenceChangeScope.This && entry.recurrence && this[anchor] === null) {
 			yield new ValidationError('A repeating entry cannot lose the date it repeats from', [anchor])
 		}
-		if (moving && scope !== 'this' && recurrence && !to.integration.ownership.holds('recurrence')) {
+		if (moving && scope !== EntryOccurrenceChangeScope.This && recurrence && !to.integration.ownership.holds('recurrence')) {
 			yield new ValidationError('This calendar cannot hold a repeating entry', ['recurrence'])
 		}
 	}

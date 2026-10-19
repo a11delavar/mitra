@@ -20,9 +20,9 @@ Die Befehlspalette kennt dieselben Wörter und ändert die meisten Einstellungen
 
 ## Dein Konto oder dieses Gerät
 
-Die meisten Einstellungen gehören zu deinem Konto und folgen dir auf jedes Gerät und in jeden Browser, in dem du dich anmeldest: die Standardansicht, **Erledigte Aufgaben ausblenden**, **Verfügbarkeit ausblenden**, der Standardkalender, die Standarddauer, **Einrasten auf** und beide Standarderinnerungen.
+Die meisten Einstellungen gehören zu deinem Konto und folgen dir auf jedes Gerät und in jeden Browser, in dem du dich anmeldest: die Sprache, die Standardansicht, **Erledigte Aufgaben ausblenden**, **Verfügbarkeit ausblenden**, der Standardkalender, die Standarddauer, **Einrasten auf** und beide Standarderinnerungen.
 
-Die anderen gehören zum Gerät, auf dem du gerade bist, sodass sich dein Handy und dein Laptop unterscheiden können: das Erscheinungsbild, die Sprache, die Verbindungslinien und ob dieser Browser Benachrichtigungen anzeigt.
+Die anderen gehören zum Gerät, auf dem du gerade bist, sodass sich dein Handy und dein Laptop unterscheiden können: das Erscheinungsbild, die Verbindungslinien und ob dieser Browser Benachrichtigungen anzeigt.
 
 Mitra merkt sich außerdem einiges pro Gerät, während du es benutzt: wie weit du gezoomt hast, ob die Seitenleiste offen ist und auf welchem Tab, welche Zeitzonen du eingeklappt hast und den Zeitraum, den die Tabellenansicht zeigt.
 

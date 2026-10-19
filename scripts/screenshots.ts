@@ -3,7 +3,7 @@ import { consola } from 'consola'
 import {
 	appText, around, aroundEditorWith, aroundHomeOffice, aroundOpenDialog, attachToSample, capture, chipOf, click, detail, details, editorOpened, hideTableLocation,
 	homeOfficeIn, keys, layers, measureAxis, open, openChip, openEditor, openFound, outDirOf, pickZone, press, sampleText, scrollToMorning,
-	sampleAttachments, setLayer, settle, show, sidebarTab, stage, waitFor, type Clip, type Theme, type View,
+	rewriteAnswers, sampleAttachments, setLayer, settle, show, sidebarTab, stage, waitFor, capturedAt, type Clip, type Theme, type View,
 } from './capture.ts'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -25,6 +25,9 @@ const sample = (english: string) => sampleText(english, language)
 await stage(async (browser, origin) => {
 	const shot = (file: string, transparent: boolean, clip?: Clip) => capture(browser, file, transparent, clip, language)
 	const reopen = (theme: Theme, options: { availability?: boolean } = {}) => open(browser, origin, theme, { ...options, language })
+	for (const [name, scope] of [['Claude', 'write'], ['Cursor', 'read']]) {
+		await fetch(`${origin}api/user/access-tokens`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name, scope }) })
+	}
 	for (const theme of ['light', 'dark'] as Array<Theme>) {
 		await reopen(theme)
 
@@ -81,6 +84,29 @@ await stage(async (browser, origin) => {
 		await click(browser, `[...document.querySelectorAll("mitra-dialog-settings nav button.page")].find(button => button.textContent.trim() === ${JSON.stringify(ui('Notifications'))})`)
 		await shot(`notifications-detail-${theme}`, false, await aroundOpenDialog(browser, 28))
 		await press(browser, ...keys.escape())
+
+		// The AI page as a server people sign in to shows it, with its two tokens dated as if made a while back.
+		const day = 24 * 60 * 60 * 1000
+		const dated = new Map([['Claude', [12 * day, day / 12]], ['Cursor', [3 * day, undefined]]] as const)
+		const signedOut = await rewriteAnswers(browser, {
+			'/api/meta': meta => ({ ...meta, signIn: true }),
+			'/api/user/access-tokens': (tokens: Array<{ name: string }>) => tokens.map(token => {
+				const [created, used] = dated.get(token.name as 'Claude')!
+				return { ...token, createdAt: new Date(capturedAt.moment - created).toISOString(), lastUsedAt: used && new Date(capturedAt.moment - used).toISOString() }
+			}),
+		})
+		await reopen(theme)
+		await press(browser, ...keys.comma())
+		await click(browser, `[...document.querySelectorAll("mitra-dialog-settings nav button.page")].find(button => button.textContent.trim() === ${JSON.stringify(ui('AI'))})`)
+		await waitFor(() => browser.evaluate<boolean>('return document.querySelectorAll("mitra-access-tokens li").length === 2'), 'the access tokens')
+		// The address as the docs write it, not the harness's own port.
+		await browser.evaluate('document.querySelector("mitra-mcp-connection code").textContent = "https://mitra.example.com/api/mcp"')
+		await shot(`ai-connectors-detail-${theme}`, false, await aroundOpenDialog(browser, 28))
+		await press(browser, ...keys.escape())
+		await signedOut()
+		await reopen(theme)
+		await show(browser, 'week')
+		await scrollToMorning(browser)
 
 		// A series opens from its chip: the palette lists it once, at its first occurrence.
 		await openChip(browser, sample('Weekly Team Sync'))

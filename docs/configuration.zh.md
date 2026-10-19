@@ -96,6 +96,7 @@ environment:
 | `MITRA_PORT` | `3000` | 服务器监听的端口。使用 Docker 时，请改为修改端口映射的主机端；只有当进程本身必须监听其他端口时才设置它。内置的健康检查会随之调整。 |
 | `MITRA_LOG_LEVEL` | `info` | [Mitra 记录多少日志](logging.md)：`error`、`warn`、`info`、`debug` 或 `trace`。级别越往后，记录的内容越详细，每个级别都包含前面所有级别的内容。 |
 | `MITRA_UPDATE_CHECK` | *（开启）* | 设为 `off`（或 `false`、`0`、`no`）可关闭[更新检查](updates.md)。 |
+| `MITRA_MCP` | *（开启）* | 设为 `off`（或 `false`、`0`、`no`）可关闭 [AI 工具连接的地址](ai-connectors.md)。 |
 
 ### 提醒
 

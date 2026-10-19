@@ -1,13 +1,21 @@
 import { description, label } from '@a11d/metadata'
+import { z } from 'zod'
+import { validation } from '../../infrastructure/validation/validation.js'
 import { syncEmitter } from '../../infrastructure/realtime/syncEmitter.js'
 import { http, operation, Operation, type OperationContext } from '../../infrastructure/operations/Operation.js'
 
-@operation()
+class Parameters {
+	@validation(z.string())
+	@description('The integration\'s id.')
+	readonly id!: string
+}
+
+@operation(Parameters)
 @label('Disconnect an integration')
 @description('Disconnects an account and forgets its calendars and entries in Mitra, leaving them as they are at the provider.')
 @http({ method: 'DELETE', path: '/integrations/:id' })
-export class DisconnectIntegration extends Operation<{ readonly id: string }, void> {
-	async run({ em, user }: OperationContext): Promise<void> {
+export class DisconnectIntegration extends Operation<Parameters, void> {
+	async run({ em, user }: OperationContext) {
 		const integration = await user.integration(em, this.parameters.id)
 		// Its availability goes with it, so take back what was written for it first.
 		await integration.publishAvailability(em, []).catch((error: unknown) =>

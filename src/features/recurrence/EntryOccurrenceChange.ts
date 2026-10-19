@@ -3,7 +3,11 @@ import { type Entry } from '../entries/Entry.js'
 import { type Integration } from '../../integrations/Integration.js'
 
 /** Which of an entry's occurrences an edit or delete through one of them reaches. */
-export type EntryOccurrenceChangeScope = 'this' | 'following' | 'all'
+export enum EntryOccurrenceChangeScope {
+	This = 'this',
+	Following = 'following',
+	All = 'all',
+}
 
 /** What an edit or delete through an occurrence does to its recurring entry. */
 export class EntryOccurrenceChange {

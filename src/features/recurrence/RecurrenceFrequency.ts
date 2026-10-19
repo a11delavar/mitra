@@ -1,5 +1,4 @@
 import { Localizer } from '@3mo/localization'
-import { type Converter } from '@a11d/converter'
 
 export type RecurrenceFrequencyCode = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'
 
@@ -48,10 +47,5 @@ export class RecurrenceFrequency {
 
 	toString() {
 		return this.code
-	}
-
-	static readonly converter: Converter<RecurrenceFrequencyCode | undefined, RecurrenceFrequency | undefined> = {
-		construct: value => RecurrenceFrequency.parse(value),
-		deconstruct: value => value?.code,
 	}
 }

@@ -7,12 +7,14 @@ import { createLogger, logLevelName } from '../infrastructure/logging/Logger.js'
 import { orm } from '../infrastructure/database/orm.js'
 import { isDemo } from '../infrastructure/environment.js'
 import { authMiddleware, authRouter, oidc } from '../features/identity/server/auth.js'
+import { accessTokenMiddleware } from '../features/identity/server/accessTokenMiddleware.js'
 import { synchronizer } from '../integrations/server/Synchronizer.js'
 import { eventsRouter } from '../infrastructure/realtime/events.js'
 import { staleTabs } from '../features/entries/server/staleTabs.js'
 import { googleConnectRouter } from '../integrations/google/server/googleConnect.js'
 import { notionRouter } from '../integrations/notion/server/notion.js'
 import { operationsRouter } from '../infrastructure/operations/Operation.js'
+import { mcpRouter } from '../features/agents/server/mcp.js'
 import './operations.js'
 import { healthRouter } from '../infrastructure/http/health.js'
 import { compression, precompressed } from '../infrastructure/http/compression.js'
@@ -77,6 +79,8 @@ if (oidc) {
 
 // Unauthenticated health check endpoint for orchestrators.
 app.use('/api/health', healthRouter)
+// Agents sign in by their access token, and only to their endpoint.
+app.use('/api/mcp', accessTokenMiddleware)
 app.use(authMiddleware)
 
 app.use('/api/events', eventsRouter)
@@ -85,6 +89,7 @@ app.use('/api/integrations/google', googleConnectRouter)
 app.use('/api/notion', notionRouter)
 // A calendar file arrives as itself, which `ImportIcs` and `PreviewIcsImport` read as the body.
 app.use('/api/sources', express.text({ type: 'text/calendar', limit: '25mb' }))
+app.use('/api/mcp', mcpRouter)
 app.use('/api', operationsRouter(() => orm.em.fork()))
 
 // Serve frontend SPA dist bundle.

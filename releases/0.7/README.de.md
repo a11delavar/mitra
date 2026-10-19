@@ -1,10 +1,19 @@
 ---
-title: KI, Anhänge, Regionen und Sprachen
+title: KI-Konnektoren, Anhänge, Regionen und Sprachen
 ---
-Mit Mitra 0.7 hängst du Dateien an deine Einträge, Daten erscheinen im Format deiner Region, die Zeitzone deines Zuhauses bleibt auf Reisen bei dir, und was sich geändert hat, siehst du direkt in der App. Außerdem zieht, zoomt und lädt Mitra schneller, und seit 0.6 sind viele kleinere Verbesserungen und Korrekturen dazugekommen.
+Mitra 0.7 arbeitet mit den KI-Assistenten zusammen, die du schon nutzt, sodass sie deine Zeit direkt in deinem Kalender planen können. Du kannst jetzt Dateien an deine Einträge anhängen, Mitra schreibt Daten so, wie man es in deiner Region tut, und die Zeitzone deines Zuhauses bleibt auf Reisen bei dir. Mitra gibt es jetzt auch auf Chinesisch, und was sich geändert hat, liest du, ohne die App zu verlassen. Außerdem gehen Ziehen, Zoomen und Laden schneller, und seit 0.6 sind viele kleinere Verbesserungen und Korrekturen dazugekommen.
 
-## KI
-Wir erkunden, wie KI dir helfen kann, deine Zeit zu planen, in Mitra selbst und in den Assistenten, die du schon nutzt.
+## KI-Konnektoren
+KI-Assistenten wie Claude und Cursor können jetzt mit deinem Kalender arbeiten. Verbinde einen über die Adresse unter Einstellungen → KI und bitte ihn um das, was du sonst von Hand erledigen würdest, etwa deine Woche ansehen, einen Eintrag finden, eine Reise planen oder ein Treffen verschieben. Was er schreibt, landet wie jede andere Änderung in deinen Kalendern und wird von dort aus synchronisiert. Auf einem Server, an dem man sich anmeldet, bekommt jeder Assistent ein eigenes Zugriffstoken, das sich aufs Lesen beschränken und jederzeit widerrufen lässt.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="connectors-dark.webp">
+	<img src="connectors-light.webp" alt="Ein KI-Assistent trägt eine geplante Reise nach Paris in die Woche ein: Die alten Pläne verschwinden, die Reise kommt hinzu, und der Eiffelturm öffnet sich mit Foto und Ticket">
+</picture>
+
+Foto des Eiffelturms: David McSpadden, Wikimedia Commons, CC BY 2.0.
+
+Doku: [KI-Konnektoren](../../docs/ai-connectors.md)
 
 ## Regionen & Sprachen
 Wähle zusammen mit deiner Sprache dein Land. Mitra schreibt Daten, Uhrzeiten und Zahlen dann so, wie man es dort tut. Deine Woche beginnt an dem Tag, an dem sie dort beginnt, und das Wochenende fällt auf die Tage, an denen du frei hast. Eine Vorschau zeigt dir, wie alles aussehen wird, bevor du dich entscheidest. Tastenkürzel funktionieren jetzt auch, wenn deine Tastatur eine andere Schrift schreibt, etwa Persisch.
@@ -55,7 +64,7 @@ Du kannst jetzt sehen, was sich geändert hat, ohne Mitra zu verlassen. Der Dial
 </picture>
 
 ## Chinesisch
-Mitra lernt Chinesisch, in vereinfachten Schriftzeichen: die App, ihr Beispielkalender, die Doku und die Website, mit einer Schrift, die dafür gemacht ist.
+Mitra spricht jetzt Chinesisch, in vereinfachten Schriftzeichen. Die App, der Beispielkalender, die Doku und die Website sind übersetzt, und chinesischer Text erscheint in einer Schrift, die dafür gemacht ist.
 
 <picture>
 	<source media="(prefers-color-scheme: dark)" srcset="chinese-detail-dark.webp">

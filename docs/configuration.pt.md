@@ -96,6 +96,7 @@ Clicar no nome abre a caixa de diálogo **Sobre**, que mostra a versão e o comm
 | `MITRA_PORT` | `3000` | A porta em que o servidor escuta. Com o Docker, altere o lado do host do mapeamento de porta; defina esta apenas quando o próprio processo precisar escutar em outra. A verificação de integridade embutida a acompanha. |
 | `MITRA_LOG_LEVEL` | `info` | [Quanto o Mitra registra em log](logging.md): `error`, `warn`, `info`, `debug` ou `trace`. Cada nível inclui tudo o que é mais silencioso que ele. |
 | `MITRA_UPDATE_CHECK` | *(ativada)* | Defina como `off` (ou `false`, `0`, `no`) para desativar a [verificação de atualizações](updates.md). |
+| `MITRA_MCP` | *(ativada)* | Defina como `off` (ou `false`, `0`, `no`) para fechar o [endereço a que as ferramentas de IA se ligam](ai-connectors.md). |
 
 ### Lembretes
 

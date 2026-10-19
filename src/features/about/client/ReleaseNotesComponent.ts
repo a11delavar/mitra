@@ -3,16 +3,9 @@ import { Changelog, type ChangelogCategory } from '../Changelog.js'
 import { Release } from '../Release.js'
 import { ReleaseDocs, type ReleaseCapture, type ReleaseHighlight } from '../ReleaseNotes.js'
 import { releaseNotes } from '../releaseNotes.css.js'
-import { Localizer } from '@3mo/localization'
-import { docsBase, languages, localized, site, withBase } from '../../../../website/site.mjs'
+import { docsPage, onWebsite } from './website.js'
 
 const repository = 'https://github.com/a11delavar/mitra'
-/** A page of the website, in the app's language where the website has it. */
-const onWebsite = (route: string) => {
-	const language = Localizer.locales.current.language
-	return new URL(withBase(languages.includes(language) ? localized(route, language) : route), site).href
-}
-const docsPage = (page: string) => onWebsite(`/${docsBase}/${page}`)
 
 /**
  * Marked up with the website's classes so both wear `releaseNotes.css.ts`. Only the captures the build carries show

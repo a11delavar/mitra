@@ -1,16 +1,23 @@
 import { description, label } from '@a11d/metadata'
+import { z } from 'zod'
+import { validation } from '../../../infrastructure/validation/validation.js'
 import { http, operation } from '../../../infrastructure/operations/Operation.js'
 import { type TimeZone } from '../TimeZone.js'
 import { type UserTimeZones } from '../UserTimeZones.js'
-import { ChangeTimeZones } from './ChangeTimeZones.js'
+import { ChangeTimeZones, TimeZoneParameters } from './ChangeTimeZones.js'
 
-@operation()
+class Parameters extends TimeZoneParameters {
+	@validation(z.string().nullable())
+	@description('A name of the account\'s own for the zone; none takes its place\'s name again.')
+	readonly label!: string | null
+}
+
+@operation(Parameters)
 @label('Name a time zone')
 @description('Gives a kept zone a name of the account\'s own, or without one its place\'s name again.')
 @http({ method: 'PUT', path: '/user/time-zones/:id/label' })
-export class RenameTimeZone extends ChangeTimeZones {
+export class RenameTimeZone extends ChangeTimeZones<Parameters> {
 	protected change(zones: UserTimeZones, zone: TimeZone) {
-		const { label } = this.parameters
-		return zones.rename(zone, typeof label === 'string' ? label : undefined)
+		return zones.rename(zone, this.parameters.label ?? undefined)
 	}
 }

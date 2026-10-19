@@ -1,25 +1,34 @@
 import { description, label } from '@a11d/metadata'
+import { converter } from '@a11d/converter'
+import { z } from 'zod'
 import { syncEmitter } from '../../../infrastructure/realtime/syncEmitter.js'
 import { ValidationError } from '../../../infrastructure/validation/ValidationError.js'
+import { validation } from '../../../infrastructure/validation/validation.js'
 import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
 import { EntryRank } from '../EntryRank.js'
 
-@operation()
+function rankOf(key: string) {
+	try {
+		return EntryRank.parse(key)
+	} catch {
+		throw new ValidationError('Malformed rank', ['ranks'])
+	}
+}
+
+class Parameters {
+	@validation(z.array(z.tuple([z.string(), z.custom<EntryRank>(value => value instanceof EntryRank)])).min(1, 'Ranks must map entry ids to rank keys'))
+	@description('Each task\'s rank key in the manual order, by its entry id.')
+	@converter({ schema: z.record(z.string(), z.string()), construct: (written: Record<string, string>) => Object.entries(written).map(([id, key]) => [id, rankOf(key)] as const) })
+	readonly ranks!: ReadonlyArray<readonly [string, EntryRank]>
+}
+
+@operation(Parameters)
 @label('Rank tasks')
 @description('Stores where tasks stand in the manual order, as their ranks keyed by entry id. Only one-off tasks have a place of their own.')
 @http({ method: 'PUT', path: '/entries/ranks' })
-export class RankTasks extends Operation<Readonly<Record<string, unknown>>, void> {
-	async run({ em, user }: OperationContext): Promise<void> {
-		const keys = Object.entries(this.parameters)
-		if (!keys.length || keys.some(([, key]) => typeof key !== 'string')) {
-			throw new ValidationError('Ranks must map entry ids to rank keys')
-		}
-		let ranks: Array<[string, EntryRank]>
-		try {
-			ranks = keys.map(([id, key]) => [id, EntryRank.parse(key as string)])
-		} catch {
-			throw new ValidationError('Malformed rank')
-		}
+export class RankTasks extends Operation<Parameters, void> {
+	async run({ em, user }: OperationContext) {
+		const { ranks } = this.parameters
 		for (const [id, rank] of ranks) {
 			const entry = await user.entry(em, id)
 			if (!entry.type.isTask || entry.recurringEntryId) {

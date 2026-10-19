@@ -30,6 +30,14 @@ describe('EntryOccurrences', () => {
 		assert.equal(occurrences[0]!.key, 'talk')
 	})
 
+	it('finds the occurrence a request names, refusing a date the rule never takes and an entry that does not repeat', () => {
+		const standup = weekly()
+		assert.equal(standup.occurrences.existing(at('2026-10-26T09:00:00Z')).start?.toISOString(), '2026-10-26T09:00:00.000Z')
+		assert.throws(() => standup.occurrences.existing(at('2026-10-27T09:00:00Z')), /takes no place/)
+		const talk = new Entry({ id: 'talk', sourceId: 's', type: EntryType.Event, heading: 'Talk', start: at('2026-10-21T09:00:00Z'), end: at('2026-10-21T10:00:00Z') })
+		assert.throws(() => talk.occurrences.existing(at('2026-10-21T09:00:00Z')), /does not repeat/)
+	})
+
 	it('reaches any window of an endless rule', () => {
 		const dates = weekly().occurrences.within(new DateTimeRange(at('2030-01-01T00:00:00Z'), at('2030-01-15T00:00:00Z'))).map(occurrence => occurrence.start?.toISOString())
 		assert.deepEqual(dates, ['2030-01-07T09:00:00.000Z', '2030-01-14T09:00:00.000Z'])

@@ -36,6 +36,9 @@ export const define = defineFor('server')
 
 export const inject = ['scripts/injectTemporalPolyfill.ts']
 
+// The app imports `website/site.mjs`, whose own tsconfig extends Astro's, which only the website's dependencies provide.
+export const tsconfig = 'tsconfig.json'
+
 /**
  * Backend bundle configuration with native node drivers and external dependencies.
  */
@@ -50,6 +53,7 @@ export const backendOptions: BuildOptions = {
 	external: ['better-sqlite3', 'sqlite3', 'libsql', '@libsql/client', 'mariadb', 'mysql', 'mysql2', 'pg', 'oracledb', 'tedious', 'tsdav', 'web-push'],
 	inject,
 	define,
+	tsconfig,
 }
 
 /** Frontend client bundle configuration with code splitting, inlined SVG loaders and the shipped fonts. */
@@ -64,6 +68,7 @@ export const frontendOptions: BuildOptions = {
 	assetNames: 'fonts/[name]-[hash]',
 	inject: [...inject, 'scripts/injectRandomUUIDPolyfill.ts'],
 	define: defineFor('browser'),
+	tsconfig,
 }
 
 /** Service worker bundle for Web Push notifications. */
@@ -74,4 +79,5 @@ export const serviceWorkerOptions: BuildOptions = {
 	format: 'iife',
 	legalComments: 'none',
 	define: defineFor('browser'),
+	tsconfig,
 }

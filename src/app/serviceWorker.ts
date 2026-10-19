@@ -120,7 +120,8 @@ async function complete(payload: PushPayload | undefined): Promise<unknown> {
 	if (!entry) {
 		return undefined
 	}
-	const response = await post(`/api/entries/${encodeURIComponent(entry.master ?? entry.id)}/complete`, { recurrenceId: entry.recurrenceId })
+	const occurrence = entry.recurrenceId === undefined ? undefined : new Date(entry.recurrenceId).toISOString()
+	const response = await post(`/api/entries/${encodeURIComponent(entry.master ?? entry.id)}/complete`, { occurrence })
 	return response?.ok ? undefined : open(payload)
 }
 

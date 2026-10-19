@@ -50,9 +50,9 @@ describe('the occurrences of an entry', () => {
 })
 
 describe('the browser bundle', () => {
-	it('carries no sync engine, nor the protocol client only an engine talks to', async () => {
+	it('carries no sync engine, nor the protocol client only an engine talks to, nor the protocol agents speak', async () => {
 		const inputs = await inputsOf(frontendOptions)
-		for (const forbidden of ['CalDAVSyncEngine', 'node_modules/tsdav', 'TempoSyncEngine', 'TempoClient', 'JiraClient']) {
+		for (const forbidden of ['CalDAVSyncEngine', 'node_modules/tsdav', 'TempoSyncEngine', 'TempoClient', 'JiraClient', 'node_modules/@modelcontextprotocol']) {
 			assert.ok(
 				!inputs.some(input => input.includes(forbidden)),
 				`${forbidden} must not reach the browser bundle`,

@@ -96,6 +96,7 @@ Clicking the name opens the **About** dialog, which shows the version and commit
 | `MITRA_PORT` | `3000` | The port the server listens on. With Docker, change the host side of the port mapping instead; set this only when the process itself must listen elsewhere. The built-in health check follows it. |
 | `MITRA_LOG_LEVEL` | `info` | [How much Mitra logs](logging.md): `error`, `warn`, `info`, `debug` or `trace`. Each level includes everything quieter than it. |
 | `MITRA_UPDATE_CHECK` | *(on)* | Set to `off` (or `false`, `0`, `no`) to turn off the [update check](updates.md). |
+| `MITRA_MCP` | *(on)* | Set to `off` (or `false`, `0`, `no`) to close the [address AI tools connect to](ai-connectors.md). |
 
 ### Reminders
 

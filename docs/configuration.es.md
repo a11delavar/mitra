@@ -96,6 +96,7 @@ Al hacer clic en el nombre se abre el diálogo **Acerca de**, que muestra la ver
 | `MITRA_PORT` | `3000` | El puerto en el que escucha el servidor. Con Docker, cambia en su lugar el lado del anfitrión de la asignación de puertos; defínelo solo cuando el propio proceso deba escuchar en otro puerto. La comprobación de estado integrada lo sigue. |
 | `MITRA_LOG_LEVEL` | `info` | [Cuánto registra Mitra](logging.md): `error`, `warn`, `info`, `debug` o `trace`. Cada nivel incluye todo lo más silencioso que él. |
 | `MITRA_UPDATE_CHECK` | *(activada)* | Defínela como `off` (o `false`, `0`, `no`) para desactivar la [comprobación de actualizaciones](updates.md). |
+| `MITRA_MCP` | *(activada)* | Defínela como `off` (o `false`, `0`, `no`) para cerrar la [dirección a la que se conectan las herramientas de IA](ai-connectors.md). |
 
 ### Recordatorios
 

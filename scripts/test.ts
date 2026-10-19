@@ -1,6 +1,6 @@
 import esbuild from 'esbuild'
 import { glob, rm } from 'node:fs/promises'
-import { backendOptions, define, inject } from './esbuild.ts'
+import { backendOptions, define, inject, tsconfig } from './esbuild.ts'
 
 const entryPoints = new Array<string>()
 for await (const file of glob('src/**/*.test.ts')) {
@@ -23,4 +23,5 @@ await esbuild.build({
 	sourcemap: 'inline',
 	inject,
 	define,
+	tsconfig,
 })

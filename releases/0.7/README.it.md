@@ -1,10 +1,19 @@
 ---
-title: IA, allegati, regioni e lingue
+title: Connettori IA, allegati, regioni e lingue
 ---
-Mitra 0.7 ti permette di allegare file alle tue voci, scrive le date nel formato della tua regione, tiene con te il fuso orario di casa quando viaggi e mostra cosa è cambiato direttamente nell'app. Inoltre trascina, ingrandisce e carica più velocemente, e porta molti piccoli miglioramenti e correzioni dalla 0.6.
+Mitra 0.7 funziona con gli assistenti IA che già usi, così possono pianificare il tuo tempo direttamente nel tuo calendario. Ora puoi allegare file alle tue voci, Mitra scrive le date come si fa nella tua regione, e il fuso orario di casa resta con te quando viaggi. Mitra è ora disponibile in cinese, e puoi leggere cosa è cambiato senza lasciare l'app. Anche trascinare, ingrandire e caricare è più veloce, e dalla 0.6 sono arrivati molti piccoli miglioramenti e correzioni.
 
-## IA
-Stiamo esplorando come l'IA possa aiutarti a pianificare il tuo tempo, in Mitra stesso e dagli assistenti che già usi.
+## Connettori IA
+Assistenti IA come Claude e Cursor ora possono lavorare con il tuo calendario. Collegane uno con l'indirizzo che trovi in Impostazioni → IA, e chiedigli ciò che altrimenti faresti a mano, come guardare la tua settimana, trovare una voce, pianificare un viaggio o spostare una riunione. Ciò che scrive arriva nei tuoi calendari come qualsiasi altra modifica, e da lì si sincronizza. Su un server dove si accede con un account, ogni assistente riceve un proprio token di accesso, che si può limitare alla lettura e revocare in qualsiasi momento.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="connectors-dark.webp">
+	<img src="connectors-light.webp" alt="Un assistente IA inserisce nella settimana un viaggio a Parigi già pianificato: i vecchi impegni se ne vanno, arriva il viaggio e la Torre Eiffel si apre con la sua foto e il suo biglietto">
+</picture>
+
+Foto della Torre Eiffel: David McSpadden, Wikimedia Commons, CC BY 2.0.
+
+Documentazione: [Connettori IA](../../docs/ai-connectors.md)
 
 ## Regioni & lingue
 Scegli il tuo paese insieme alla tua lingua. Mitra scrive allora date, orari e numeri come si fa lì. La tua settimana inizia nel giorno in cui inizia lì, e il fine settimana cade nei tuoi giorni liberi. Un'anteprima ti mostra come apparirà tutto prima che tu decida. Le scorciatoie da tastiera ora funzionano anche quando la tua tastiera scrive in un'altra scrittura, come il persiano.
@@ -55,7 +64,7 @@ Ora puoi vedere cosa è cambiato senza lasciare Mitra. La finestra Informazioni 
 </picture>
 
 ## Cinese
-Mitra impara il cinese, in caratteri semplificati: l’app, il suo calendario di esempio, la documentazione e il sito, con un carattere tipografico pensato apposta.
+Mitra ora parla cinese, scritto in caratteri semplificati. L’app, il calendario di esempio, la documentazione e il sito sono tradotti, e il testo cinese è composto in un carattere tipografico pensato apposta.
 
 <picture>
 	<source media="(prefers-color-scheme: dark)" srcset="chinese-detail-dark.webp">

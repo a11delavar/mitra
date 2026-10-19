@@ -1,6 +1,7 @@
 import { Entry } from '../entries/Entry.js'
 import { EntryPatch } from '../entries/EntryPatch.js'
-import { EntryOccurrenceChange, type EntryOccurrenceChangeScope } from './EntryOccurrenceChange.js'
+import { EntryOccurrenceChange, EntryOccurrenceChangeScope } from './EntryOccurrenceChange.js'
+import { z } from 'zod'
 
 const patchOf = (fields: Partial<EntryPatch>) => Object.assign(new EntryPatch(), fields)
 
@@ -9,6 +10,12 @@ const patchOf = (fields: Partial<EntryPatch>) => Object.assign(new EntryPatch(),
  * holds what it shows: the one-off entry, the recurring entry, or the override standing in for this date.
  */
 export class EntryOccurrence {
+	/** An occurrence as a request names it, by its original start: an instant, or the day an all-day one is kept on (`2026-10-21`). */
+	static readonly idConverter = {
+		schema: z.union([z.iso.datetime({ offset: true }), z.iso.date()]),
+		construct: (value: string | undefined) => value === undefined ? value : new Date(value),
+	}
+
 	constructor(
 		readonly entry: Entry,
 		readonly start: DateTime | undefined,
@@ -126,9 +133,9 @@ export class EntryOccurrence {
 			.patch(patchOf({ start: this.start ?? null, end: this.end ?? null, due: this.due ?? null }))
 			.patch(patch)
 		switch (scope) {
-			case 'this':
+			case EntryOccurrenceChangeScope.This:
 				return this.detached(edited)
-			case 'following':
+			case EntryOccurrenceChangeScope.Following:
 				return this.split(edited)
 			default:
 				return this.rewritten(edited)
@@ -221,8 +228,8 @@ export class EntryOccurrence {
 	/** What deleting this occurrence changes in `scope`. */
 	delete(scope: EntryOccurrenceChangeScope): EntryOccurrenceChange {
 		const entry = this.recurringEntry!
-		return scope === 'all' ? new EntryOccurrenceChange({ entry, removed: true })
-			: scope === 'following' ? new EntryOccurrenceChange({ entry, rewritten: this.truncated })
+		return scope === EntryOccurrenceChangeScope.All ? new EntryOccurrenceChange({ entry, removed: true })
+			: scope === EntryOccurrenceChangeScope.Following ? new EntryOccurrenceChange({ entry, rewritten: this.truncated })
 				: new EntryOccurrenceChange({ entry, excluded: this.recurrenceId })
 	}
 

@@ -1,5 +1,5 @@
 import { description, label } from '@a11d/metadata'
-import { isDemo, isDeveloperSystem } from '../../../infrastructure/environment.js'
+import { isDemo, isDeveloperSystem, isMcpEnabled, isSignedIn } from '../../../infrastructure/environment.js'
 import { http, operation, Operation } from '../../../infrastructure/operations/Operation.js'
 import { FileLimits } from '../../files/server/FileLimits.js'
 import { updateChecker } from './updates.js'
@@ -10,7 +10,7 @@ const instanceName = process.env.MITRA_NAME
 
 @operation()
 @label('Read the instance')
-@description('Answers what this instance is: its name, version, mode, file limits, and an update when one is out.')
+@description('Answers what this instance is: its name, version, mode, whether people sign in and agents may connect, file limits, and an update when one is out.')
 @http({ method: 'GET', path: '/meta' })
 export class GetMeta extends Operation<object, object> {
 	run() {
@@ -22,6 +22,8 @@ export class GetMeta extends Operation<object, object> {
 			...(isDeveloperSystem ? { development: true } : {}),
 			...(isDemo ? { demo: true } : {}),
 			files: FileLimits.fromEnv(),
+			signIn: isSignedIn,
+			mcp: isMcpEnabled,
 			...(runningReleaseUrl() ? { releaseUrl: runningReleaseUrl() } : {}),
 			...(updateChecker.update ? { update: updateChecker.update } : {}),
 		})

@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import { type Converter } from '@a11d/converter'
 import { Type } from '../../infrastructure/model/orm.js'
 
@@ -42,6 +43,7 @@ export class TaskStatus {
 	}
 
 	static readonly converter: Converter<TaskStatusCode | null | undefined, TaskStatus | null | undefined> = {
+		schema: z.enum(TaskStatus.all.map(status => status.code)),
 		construct: value => value === null ? value : TaskStatus.parse(value),
 		deconstruct: value => value?.code ?? value as null | undefined,
 	}

@@ -1,10 +1,19 @@
 ---
-title: AI, attachments, regions and languages
+title: AI connectors, attachments, regions and languages
 ---
-Mitra 0.7 lets you attach files to your entries, writes dates in your region's format, keeps your home time zone with you when you travel, and shows what changed right in the app. It also drags, zooms and loads faster, and brings many smaller improvements and fixes since 0.6.
+Mitra 0.7 works with the AI assistants you already use, so they can plan your time right in your calendar. You can now attach files to your entries, Mitra writes dates the way your region does, and your home time zone stays with you when you travel. Mitra is now available in Chinese, and you can read what changed without leaving the app. Dragging, zooming and loading are faster too, and there are many smaller improvements and fixes since 0.6.
 
-## AI
-We are exploring how AI can help you plan your time, in Mitra itself and from the assistants you already use.
+## AI connectors
+AI assistants such as Claude and Cursor can now work with your calendar. Connect one with the address under Settings → AI, and ask it what you would otherwise do by hand: look at your week, find an entry, plan a trip or move a meeting. What it writes lands in your calendars like any other change, and syncs from there. On a server where people sign in, each assistant gets an access token of its own, which can be limited to reading and revoked at any time.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="connectors-dark.webp">
+	<img src="connectors-light.webp" alt="An AI assistant puts a planned trip to Paris into the week: the old plans leave, the trip arrives, and the Eiffel Tower opens with its photo and its ticket">
+</picture>
+
+Photo of the Eiffel Tower: David McSpadden, Wikimedia Commons, CC BY 2.0.
+
+Docs: [AI connectors](../../docs/ai-connectors.md)
 
 ## Regions & languages
 Choose your country along with your language. Mitra then writes dates, times and numbers the way people there do. Your week starts on the day it starts there, and the weekend falls on the days you have off. A preview shows how everything will look before you decide. Keyboard shortcuts now also work when your keyboard types another script, such as Persian.
@@ -55,7 +64,7 @@ You can now see what changed without leaving Mitra. The About dialog shows each 
 </picture>
 
 ## Chinese
-Mitra learns Chinese, in simplified characters: the app, its sample calendar, the docs and the website, with a typeface made for it.
+Mitra now speaks Chinese, written in simplified characters. The app, the sample calendar, the docs and the website are all translated, and Chinese text is set in a typeface made for it.
 
 <picture>
 	<source media="(prefers-color-scheme: dark)" srcset="chinese-detail-dark.webp">

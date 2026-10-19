@@ -96,6 +96,7 @@ Ein Klick auf den Namen öffnet den Dialog **Über**, der die Version und den Co
 | `MITRA_PORT` | `3000` | Der Port, auf dem der Server lauscht. Ändere mit Docker stattdessen die Host-Seite der Portzuordnung; setz diese Variable nur, wenn der Prozess selbst woanders lauschen muss. Der eingebaute Health-Check folgt ihr. |
 | `MITRA_LOG_LEVEL` | `info` | [Wie viel Mitra protokolliert](logging.md): `error`, `warn`, `info`, `debug` oder `trace`. Jede Stufe enthält alles, was leiser ist. |
 | `MITRA_UPDATE_CHECK` | *(an)* | Setz sie auf `off` (oder `false`, `0`, `no`), um die [Update-Prüfung](updates.md) auszuschalten. |
+| `MITRA_MCP` | *(an)* | Setz sie auf `off` (oder `false`, `0`, `no`), um die [Adresse für KI-Werkzeuge](ai-connectors.md) zu schließen. |
 
 ### Erinnerungen
 

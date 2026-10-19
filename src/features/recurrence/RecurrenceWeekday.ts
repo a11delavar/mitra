@@ -1,5 +1,4 @@
 import { Localizer } from '@3mo/localization'
-import { type Converter } from '@a11d/converter'
 
 export type RecurrenceWeekdayCode = 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA' | 'SU'
 
@@ -76,11 +75,5 @@ export class RecurrenceWeekday {
 
 	toString() {
 		return `${this.ordinal ?? ''}${this.code}`
-	}
-
-	static readonly converter: Converter<Array<string> | undefined, Array<RecurrenceWeekday> | undefined> = {
-		// An unknown code leaves a hole, which `Recurrence.valid` refuses.
-		construct: value => value?.map(code => RecurrenceWeekday.parse(code)!),
-		deconstruct: value => value?.map(String),
 	}
 }

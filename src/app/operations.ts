@@ -1,20 +1,30 @@
 /**
- * Every operation the server offers, loaded in the order they register in, which is the order every transport lists them and
- * the order their routes match in: a fixed path (`/entries/ranks`, `/integrations/order`) comes before a parameter in its place (`/entries/:id`, `/integrations/:id`).
- * Nothing else imports an operation's module.
+ * Every operation the server offers, loaded in the order they register in, which is the order every transport lists them (the
+ * agents' first tool first) and the order their routes match in: a fixed path (`/entries/ranks`, `/integrations/order`) comes
+ * before a parameter in its place (`/entries/:id`, `/integrations/:id`). Nothing else imports an operation's module.
  */
+import '../features/agents/server/GetContext.js'
+import '../features/entries/server/GetOverview.js'
 import '../features/entries/server/ListEntries.js'
 import '../features/entries/server/ListAllEntries.js'
 import '../features/entries/server/SearchEntries.js'
+import '../features/entries/server/GetEntry.js'
 import '../features/entries/server/RankTasks.js'
 import '../features/entries/server/CreateEntry.js'
+import '../features/entries/server/UpdateEntryOccurrence.js'
 import '../features/entries/server/UpdateEntry.js'
+import '../features/relations/server/RelateEntries.js'
+import '../features/relations/server/UnrelateEntries.js'
 import '../features/entries/server/CompleteTask.js'
+import '../features/entries/server/DeleteEntryOccurrence.js'
 import '../features/entries/server/DeleteEntry.js'
 import '../features/identity/server/GetUser.js'
 import '../features/identity/server/MarkVersionSeen.js'
 import '../features/identity/server/SaveSettings.js'
 import '../features/identity/server/SetDefaultCalendar.js'
+import '../features/identity/server/ListAccessTokens.js'
+import '../features/identity/server/CreateAccessToken.js'
+import '../features/identity/server/RevokeAccessToken.js'
 import '../features/time/server/SettleHomeTimeZone.js'
 import '../features/time/server/MakeHomeTimeZone.js'
 import '../features/time/server/AddTimeZone.js'

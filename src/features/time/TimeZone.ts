@@ -1,5 +1,7 @@
 import { Memoize as memoize } from 'typescript-memoize'
 import { TimeZoneName } from './TimeZoneName.js'
+import { ValidationError } from '../../infrastructure/validation/ValidationError.js'
+import { z } from 'zod'
 import goldenZones from './goldenZones.json' with { type: 'json' }
 
 /** The device's zone as last asked, with the offset it had then. */
@@ -45,6 +47,18 @@ export class TimeZone {
 	/** The zone this device runs in: the browser's, or the server process's. Intl names one it cannot tell `Etc/Unknown`. */
 	static get device() {
 		return TimeZone.parse(TimeZone.deviceId) ?? TimeZone.UTC
+	}
+
+	/** A zone as a request names it, by its IANA id, refused where Mitra knows none by that id. */
+	static readonly converter = {
+		schema: z.string(),
+		construct(value: string | undefined) {
+			const zone = value === undefined ? undefined : TimeZone.parse(value)
+			if (!zone && value !== undefined) {
+				throw new ValidationError(`"${value}" is not a time zone. Name an IANA zone (Europe/Berlin).`, ['id'])
+			}
+			return zone
+		},
 	}
 
 	static parse(value: unknown): TimeZone | undefined {

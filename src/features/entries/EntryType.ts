@@ -1,5 +1,7 @@
+import { z } from 'zod'
 import { type Converter } from '@a11d/converter'
 import { Type } from '../../infrastructure/model/orm.js'
+import { ValidationError } from '../../infrastructure/validation/ValidationError.js'
 
 export type EntryTypeValue = 'event' | 'task' | 'availability'
 
@@ -67,6 +69,7 @@ export class EntryType {
 	}
 
 	static readonly converter: Converter<EntryTypeValue | undefined, EntryType | undefined> = {
+		schema: z.enum(EntryType.all.map(type => type.value)),
 		construct: value => value === undefined ? undefined : EntryType.parse(value),
 		deconstruct: value => value?.value,
 	}
@@ -94,8 +97,16 @@ export class EntryTypes extends Array<EntryType> {
 		return EntryTypes.from(values, type => EntryType.parse(type))
 	}
 
+	/** A request naming a type Mitra does not know is refused, naming the field. */
 	static readonly converter: Converter<Array<EntryTypeValue>, ReadonlyArray<EntryType> | null | undefined> = {
-		construct: value => value === undefined ? undefined : EntryTypes.parse(value),
+		schema: z.array(z.enum(EntryType.all.map(type => type.value))),
+		construct: value => {
+			try {
+				return value === undefined ? undefined : EntryTypes.parse(value)
+			} catch (error) {
+				throw new ValidationError((error as Error).message, ['entryTypes'])
+			}
+		},
 		deconstruct: value => (value ?? []).map(type => type.value),
 	}
 

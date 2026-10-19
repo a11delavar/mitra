@@ -35,10 +35,4 @@ describe('RecurrenceFrequency', () => {
 		assert.equal(RecurrenceFrequency.Daily.formatUnit(2, new Intl.Locale('de')), 'Tage')
 		assert.equal(RecurrenceFrequency.Yearly.formatUnit(2), RecurrenceFrequency.Yearly.formatUnit(2, Localizer.locales.current))
 	})
-
-	it('crosses the wire and the database as its code', () => {
-		assert.equal(RecurrenceFrequency.converter.deconstruct!(RecurrenceFrequency.Monthly, {}), 'MONTHLY')
-		assert.equal(RecurrenceFrequency.converter.deconstruct!(undefined, {}), undefined)
-		assert.equal(RecurrenceFrequency.converter.construct!('MONTHLY', {}), RecurrenceFrequency.Monthly)
-	})
 })

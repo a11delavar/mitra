@@ -129,6 +129,14 @@ export class Devtools {
 		})
 	}
 
+	/** Every event of the given method, until the returned function is called. */
+	on<T = any>(method: string, listener: (params: T) => void) {
+		const listeners = this.listeners.get(method) ?? new Set<(params: any) => void>()
+		this.listeners.set(method, listeners)
+		listeners.add(listener)
+		return () => listeners.delete(listener)
+	}
+
 	static async connect(url: string) {
 		const socket = new WebSocket(url)
 		await new Promise<void>((resolve, reject) => {
@@ -627,6 +635,28 @@ export const sampleAttachments: ReadonlyArray<SampleAttachment> = [
 	{ name: 'Load estimates.xlsx', type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', size: 48_000 },
 ]
 
+/**
+ * Has the page read what the server answers at each path through its rewrite, until the returned function stops it: how a
+ * capture shows what this server is not, such as one people sign in to. Only GETs are rewritten.
+ */
+export async function rewriteAnswers(page: Devtools, rewrites: Record<string, (body: any) => unknown>) {
+	await page.send('Fetch.enable', { patterns: Object.keys(rewrites).map(path => ({ urlPattern: `*${path}`, requestStage: 'Response' })) })
+	const stop = page.on<{ requestId: string, request: { url: string, method: string } }>('Fetch.requestPaused', async ({ requestId, request }) => {
+		const rewrite = rewrites[new URL(request.url).pathname]
+		if (!rewrite || request.method !== 'GET') {
+			await page.send('Fetch.continueRequest', { requestId })
+			return
+		}
+		const { body, base64Encoded } = await page.send<{ body: string, base64Encoded: boolean }>('Fetch.getResponseBody', { requestId })
+		const answer = JSON.stringify(rewrite(JSON.parse(base64Encoded ? Buffer.from(body, 'base64').toString() : body)))
+		await page.send('Fetch.fulfillRequest', { requestId, responseCode: 200, responseHeaders: [{ name: 'content-type', value: 'application/json' }], body: Buffer.from(answer).toString('base64') })
+	})
+	return async () => {
+		stop()
+		await page.send('Fetch.disable')
+	}
+}
+
 /** A file of the guide: filler bytes of a `size`, as the store keeps one copy of equal bytes, or the real `bytes` of a picture. */
 type SampleAttachment = { name: string, type: string } & ({ size: number, bytes?: never } | { bytes: () => Promise<Buffer>, size?: never })
 
@@ -639,7 +669,7 @@ const descriptionsBefore = new Map<string, string>()
  * back, so no other capture shows them.
  */
 export async function attachToSample(origin: string, heading: string, files: ReadonlyArray<SampleAttachment>, embed?: string) {
-	const [entry] = await (await fetch(`${origin}api/entries/search?q=${encodeURIComponent(heading)}`)).json() as Array<{ id: string, description?: string }>
+	const [entry] = await (await fetch(`${origin}api/entries/search?query=${encodeURIComponent(heading)}`)).json() as Array<{ id: string, description?: string }>
 	if (!entry) {
 		throw new Error(`No sample entry "${heading}"`)
 	}
@@ -648,7 +678,8 @@ export async function attachToSample(origin: string, heading: string, files: Rea
 		headers: { 'content-type': file.type, 'content-disposition': `attachment; filename="${file.name}"` },
 		body: file.bytes ? new Uint8Array(await file.bytes()) : new Uint8Array(file.size).fill(index + 1),
 	})).json() as Promise<object>))
-	const saved = await fetch(`${origin}api/entries/${entry.id}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ files: uploaded }) })
+	// Typed as the browser sends an edit: a plain body keeps only what has a written form, and files have none.
+	const saved = await fetch(`${origin}api/entries/${entry.id}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ '@type': 'EntryPatch', files: uploaded }) })
 	if (!saved.ok) {
 		throw new Error(`Attaching to "${heading}" answered ${saved.status}: ${await saved.text()}`)
 	}
@@ -802,10 +833,12 @@ export interface StageOptions {
 	build?: boolean
 	/** The language the browser stands in, and the sample calendar is written in. */
 	language?: string
+	/** When the clock stands, `capturedAt`'s Thursday unless a scene needs another season. */
+	moment?: number
 }
 
 /** Builds and stages the app with the sample calendar, launches Chrome around `scene`, and takes everything down again. */
-export async function stage(scene: (browser: Devtools, origin: string) => Promise<void>, { reducedMotion: reduced = true, build = true, language = 'en' }: StageOptions = {}) {
+export async function stage(scene: (browser: Devtools, origin: string) => Promise<void>, { reducedMotion: reduced = true, build = true, language = 'en', moment = capturedAt.moment }: StageOptions = {}) {
 	const { version } = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8')) as { version: string }
 	if (build) {
 		consola.start(`Building v${version}`)
@@ -825,7 +858,6 @@ export async function stage(scene: (browser: Devtools, origin: string) => Promis
 	try {
 		stageServer(stageDir)
 		// The page's clock stands still, so every capture reads 10:20. The server's runs on from there: its sync pacing measures elapsed time.
-		const { moment } = capturedAt
 		processes.push(startServer(appPort, stageDir, clockAt(`RealDate.now() + ${moment - Date.now()}`), `http://127.0.0.1:${geocoderPort}`))
 		const origin = `http://127.0.0.1:${appPort}/`
 		await waitFor(async () => (await fetch(`${origin}api/health`)).ok, 'the app server')

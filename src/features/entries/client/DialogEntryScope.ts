@@ -4,7 +4,7 @@ import { ShiftStrategy } from '../../relations/ShiftStrategy.js'
 import { type EntryPlan } from '../../relations/EntryPlan.js'
 import { type Entry } from '../Entry.js'
 import { EntryStore } from './EntryStore.js'
-import { type EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
+import { EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
 
 export interface ShiftOption {
 	readonly strategy: ShiftStrategy
@@ -35,7 +35,7 @@ export class DialogEntryScope extends DialogComponent<EntryScopeParameters, Entr
 		return navigator.userAgent.includes('Mac') ? '⌘' : t('Ctrl')
 	}
 
-	@state() private recurrence: EntryOccurrenceChangeScope = 'this'
+	@state() private recurrence = EntryOccurrenceChangeScope.This
 	@state() private subtasks = false
 	@state() private step = 0
 
@@ -147,11 +147,11 @@ export class DialogEntryScope extends DialogComponent<EntryScopeParameters, Entr
 	private get recurrenceChoices() {
 		return html`
 			<mitra-choices>
-				<mitra-choice autofocus icon=${this.entryIcon} @click=${() => this.chooseRecurrence('this')}>${t('This entry')}</mitra-choice>
+				<mitra-choice autofocus icon=${this.entryIcon} @click=${() => this.chooseRecurrence(EntryOccurrenceChangeScope.This)}>${t('This entry')}</mitra-choice>
 				${EntryStore.occurrenceOf(this.parameters.entry).first ? html.nothing : html`
-					<mitra-choice icon="chevrons-right" @click=${() => this.chooseRecurrence('following')}>${t('This and following entries')}</mitra-choice>
+					<mitra-choice icon="chevrons-right" @click=${() => this.chooseRecurrence(EntryOccurrenceChangeScope.Following)}>${t('This and following entries')}</mitra-choice>
 				`}
-				<mitra-choice icon="repeat" @click=${() => this.chooseRecurrence('all')}>${t('All entries')}</mitra-choice>
+				<mitra-choice icon="repeat" @click=${() => this.chooseRecurrence(EntryOccurrenceChangeScope.All)}>${t('All entries')}</mitra-choice>
 			</mitra-choices>
 		`
 	}

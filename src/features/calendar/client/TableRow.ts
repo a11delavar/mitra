@@ -9,7 +9,7 @@ import { Relations } from '../../relations/client/Relations.js'
 import { Calendars } from '../../sources/client/Calendars.js'
 import { termsMatch } from '../../commands/termsMatch.js'
 import { type TableWindow } from './TableWindow.js'
-import { type EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
+import { EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
 
 /** The columns a row can be filtered by, each by one value of the row's own. */
 export const tableFacets = ['statusRank', 'typeKey', 'sourceName', 'repeats'] as const
@@ -82,7 +82,7 @@ export class TableRow {
 
 	/** What a change made through the row reaches: every occurrence it stands for, or the one it is. */
 	get scope(): EntryOccurrenceChangeScope | undefined {
-		return this.series ? 'all' : this.occurrence.recurring ? 'this' : undefined
+		return this.series ? EntryOccurrenceChangeScope.All : this.occurrence.recurring ? EntryOccurrenceChangeScope.This : undefined
 	}
 
 	get segment() { return EntrySegments.for(this.occurrence)[0]! }

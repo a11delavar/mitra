@@ -1,23 +1,29 @@
 import { description, label } from '@a11d/metadata'
+import { z } from 'zod'
+import { validation } from '../../../infrastructure/validation/validation.js'
 import { syncEmitter } from '../../../infrastructure/realtime/syncEmitter.js'
-import { ValidationError } from '../../../infrastructure/validation/ValidationError.js'
 import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
 import { type Source } from '../Source.js'
 
-@operation()
+class Parameters {
+	@validation(z.string())
+	@description('The calendar\'s id.')
+	readonly id!: string
+
+	@validation(z.string().trim().min(1, 'A name is required'))
+	@description('The calendar\'s name.')
+	readonly name!: string
+}
+
+@operation(Parameters)
 @label('Rename a calendar')
 @description('Gives a calendar a name of the user\'s own, which survives the provider\'s syncs until the provider renames it.')
 @http({ method: 'PUT', path: '/sources/:id/name' })
-export class RenameSource extends Operation<{ readonly id: string, readonly name?: unknown }, Source> {
-	async run({ em, user }: OperationContext): Promise<Source> {
+export class RenameSource extends Operation<Parameters, Source> {
+	async run({ em, user }: OperationContext) {
 		const source = await user.source(em, this.parameters.id)
 
-		const name = String(this.parameters.name ?? '').trim()
-		if (!name) {
-			throw new ValidationError('A name is required', ['name'])
-		}
-
-		source.name = name
+		source.name = this.parameters.name
 		await em.flush()
 
 		syncEmitter.emit('updated', user.id, 'sources')

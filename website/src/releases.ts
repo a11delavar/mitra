@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { createMarkdownProcessor } from '@astrojs/markdown-remark'
@@ -196,12 +197,21 @@ export class Capture {
 	}
 
 	url(theme: 'light' | 'dark') {
-		return `${base}/releases/${this.release.version}/${this.capture.file(theme, this.film ? 'mp4' : 'webp')}`
+		return this.addressOf(theme, this.film ? 'mp4' : 'webp')
 	}
 
 	/** The still under the capture's name: the capture itself, or a film's first frame, its poster. */
 	poster(theme: 'light' | 'dark') {
-		return `${base}/releases/${this.release.version}/${this.capture.file(theme)}`
+		return this.addressOf(theme, 'webp')
+	}
+
+	/**
+	 * Its address with a hash of its bytes: captures are served as immutable for a year, and one shot again keeps its name, so
+	 * only a new address reaches readers past Cloudflare's and their browser's copy.
+	 */
+	private addressOf(theme: 'light' | 'dark', extension: 'webp' | 'mp4') {
+		const hash = createHash('sha256').update(fs.readFileSync(this.path(theme, extension))).digest('hex').slice(0, 10)
+		return `${base}/releases/${this.release.version}/${this.capture.file(theme, extension)}?v=${hash}`
 	}
 
 	/** The pixel size of the light take, which the dark one shares, so the page lays the capture out before it loads. */

@@ -6,7 +6,7 @@ import { type UserSettings } from '../UserSettings.js'
 import { SettingsStore } from './SettingsStore.js'
 
 /** The dialog's pages, in the order its side panel lists them. */
-export const settingsPages = ['general', 'calendar', 'entries', 'notifications', 'administration'] as const
+export const settingsPages = ['general', 'calendar', 'entries', 'notifications', 'ai', 'administration'] as const
 
 export type SettingsPageId = typeof settingsPages[number]
 
@@ -17,6 +17,7 @@ export function settingsPage(id: SettingsPageId): { title: string, icon: string 
 		case 'calendar': return { title: t('Calendar'), icon: 'calendar-days' }
 		case 'entries': return { title: t('Entries'), icon: 'plus' }
 		case 'notifications': return { title: t('Notifications'), icon: 'bell' }
+		case 'ai': return { title: t('AI'), icon: 'cpu-ai' }
 		case 'administration': return { title: t('Administration'), icon: 'shield' }
 	}
 }

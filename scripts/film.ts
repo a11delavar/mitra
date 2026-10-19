@@ -251,7 +251,8 @@ export function encodeFilm(framesDir: string, output: string) {
 		'-framerate', String(fps), '-i', path.join(framesDir, '%04d.png'),
 		'-vf', 'scale=1800:-2:flags=lanczos',
 		// CRF 16, not the default range: at 20 the small white arrow on a dark ground rang a light fringe into its own shadow.
-		'-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '16', '-movflags', '+faststart',
+		// Tuned for flat colour and sharp edges, and given time to find them: a tenth smaller than the defaults at the same quality.
+		'-c:v', 'libx264', '-preset', 'veryslow', '-tune', 'animation', '-pix_fmt', 'yuv420p', '-crf', '16', '-movflags', '+faststart',
 		fresh,
 	], `encode ${name}`)
 	if (fs.existsSync(output) && !differs(fresh, output)) {

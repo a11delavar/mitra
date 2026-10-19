@@ -1,5 +1,6 @@
 import { Router, type Request, type RequestHandler, type Response } from 'express'
 import { User } from '../User.js'
+import { type AccessToken } from '../AccessToken.js'
 import { createLogger } from '../../../infrastructure/logging/Logger.js'
 import { orm } from '../../../infrastructure/database/orm.js'
 import { isDemo } from '../../../infrastructure/environment.js'
@@ -13,6 +14,8 @@ declare global {
 		interface Request {
 			/** The authenticated user, attached by {@link authMiddleware} before any route runs. */
 			user: User
+			/** The access token an agent signed in with (`accessTokenMiddleware`), which bounds what it may do. */
+			accessToken?: AccessToken
 		}
 	}
 }
@@ -128,7 +131,10 @@ const visitor: RequestHandler = async (req, res, next) => {
 	return next()
 }
 
-export const authMiddleware: RequestHandler = isDemo ? visitor : oidc ? session : singleUser
+const signIn = isDemo ? visitor : oidc ? session : singleUser
+
+/** Signs a request in by the instance's mode, unless an agent's access token already has (`accessTokenMiddleware`). */
+export const authMiddleware: RequestHandler = (req, res, next) => req.accessToken ? next() : signIn(req, res, next)
 
 interface Transit {
 	verifier: string

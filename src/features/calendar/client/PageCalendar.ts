@@ -24,7 +24,7 @@ import type { Sidebar } from '../../../app/Sidebar.js'
 import { windowDragHandle } from '../../../design/windowDrag.css.js'
 import { CalendarPeriod } from './CalendarPeriod.js'
 import { TableWindow } from './TableWindow.js'
-import { startedInField } from '../../../design/eventOrigin.js'
+import { startedInField, startedInOverlay } from '../../../design/eventOrigin.js'
 import { type Popover } from '../../../design/Popover.js'
 import { KeyPress } from '../../commands/KeyPress.js'
 
@@ -226,11 +226,8 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 
 	@eventListener({ target: window, type: 'keydown' })
 	protected handleKeyDown(e: KeyboardEvent) {
-		if (startedInField(e) || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) {
-			return
-		}
-
-		if (e.composedPath().some(node => node instanceof HTMLDialogElement)) {
+		// A key pressed in an open popover or dialog is its own: the date picker's arrows must not also step the week.
+		if (startedInField(e) || startedInOverlay(e) || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) {
 			return
 		}
 

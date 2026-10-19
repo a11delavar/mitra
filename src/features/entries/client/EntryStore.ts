@@ -7,7 +7,7 @@ import { ApiError, createEvent, deleteEvent, deleteOccurrence, editOccurrence, r
 import { EntryRank } from '../EntryRank.js'
 import { EntryPatch } from '../EntryPatch.js'
 import { EntryRelations } from '../../relations/EntryRelations.js'
-import { type EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
+import { EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
 import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
 import { TimeZone } from '../../time/TimeZone.js'
 
@@ -144,7 +144,7 @@ export class EntryStore extends Controller {
 	}
 
 	static resolveScope: (entry: Entry, intent: 'edit' | 'delete') => Promise<EntryOccurrenceChangeScope | undefined> =
-		() => Promise.resolve('all')
+		() => Promise.resolve(EntryOccurrenceChangeScope.All)
 
 	/** Post-save hook fired after local task completion/cancellation. */
 	static onTaskClosed: (entry: Entry) => void = () => void 0
@@ -283,7 +283,7 @@ export class EntryStore extends Controller {
 	}
 
 	private static async commitOccurrence(entry: Entry, sent: Entry, preset?: EntryOccurrenceChangeScope): Promise<boolean> {
-		const scope = preset ?? (this.completionOnlyChanged(entry) || this.schedulesOccurrence(entry) ? 'this' : await EntryStore.resolveScope(entry, 'edit'))
+		const scope = preset ?? (this.completionOnlyChanged(entry) || this.schedulesOccurrence(entry) ? EntryOccurrenceChangeScope.This : await EntryStore.resolveScope(entry, 'edit'))
 		if (!this.tracks(entry)) {
 			return false
 		}
@@ -295,7 +295,7 @@ export class EntryStore extends Controller {
 		if (!this.tracks(entry)) {
 			return false
 		}
-		if (scope === 'this') {
+		if (scope === EntryOccurrenceChangeScope.This) {
 			if (this.workingById.get(entry.id!) === entry) {
 				this.workingById.delete(entry.id!)
 				this.canonicalById.delete(entry.id!)
@@ -347,7 +347,7 @@ export class EntryStore extends Controller {
 			await pending?.catch(() => void 0)
 			this.drop(entry)
 			try {
-				if (scope === 'all') {
+				if (scope === EntryOccurrenceChangeScope.All) {
 					await EntryStore.persistence.delete(entry.recurringEntryId)
 				} else {
 					await EntryStore.persistence.deleteOccurrence(this.occurrenceOf(entry), scope)
@@ -391,7 +391,7 @@ export class EntryStore extends Controller {
 			if (sibling === entry || sibling.recurringEntryId !== masterId) {
 				continue
 			}
-			if (scope === 'all' || (scope === 'following' && (sibling.recurrenceId?.valueOf() ?? -Infinity) >= cutoff)) {
+			if (scope === EntryOccurrenceChangeScope.All || (scope === EntryOccurrenceChangeScope.Following && (sibling.recurrenceId?.valueOf() ?? -Infinity) >= cutoff)) {
 				dropped.push(this.captureAndDrop(sibling))
 			}
 		}
@@ -423,7 +423,7 @@ export class EntryStore extends Controller {
 		const failed = new Array<Entry>()
 		for (const entry of plan.deletions) {
 			const target = this.live(entry)
-			const write = target === entry && !this.tracks(target) ? EntryStore.persistence.delete(target.id!) : this.delete(target, 'all')
+			const write = target === entry && !this.tracks(target) ? EntryStore.persistence.delete(target.id!) : this.delete(target, EntryOccurrenceChangeScope.All)
 			await write.catch(() => void failed.push(entry))
 		}
 		for (const { entry, mutate } of plan.writes) {
@@ -431,7 +431,7 @@ export class EntryStore extends Controller {
 			mutate(target)
 			this.notify()
 			if (this.tracks(target)) {
-				await this.commit(target, 'all').catch(() => { this.revert(target); failed.push(entry) })
+				await this.commit(target, EntryOccurrenceChangeScope.All).catch(() => { this.revert(target); failed.push(entry) })
 			} else {
 				await EntryStore.persistence.update(target).catch(() => void failed.push(entry))
 			}

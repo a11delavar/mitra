@@ -167,6 +167,7 @@ const sections = [
 			{ slug: 'settings' },
 			{ slug: 'install-app' },
 			{ slug: 'calendar-files' },
+			{ slug: 'ai-connectors' },
 			{ slug: 'shortcuts' },
 		],
 	},

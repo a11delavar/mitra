@@ -1,4 +1,5 @@
 import { Entry } from '../entries/Entry.js'
+import { ValidationError } from '../../infrastructure/validation/ValidationError.js'
 import { TimeZone } from '../time/TimeZone.js'
 import { EntryOccurrence } from './EntryOccurrence.js'
 import { RecurrenceSet, type RecurrenceSpan } from './RecurrenceSet.js'
@@ -149,6 +150,18 @@ export class EntryOccurrences {
 	get anchored() {
 		const anchor = this.anchor
 		return !this.set || !anchor ? undefined : this.at(anchor)
+	}
+
+	/** The occurrence a request names by its original start, refused where the entry does not repeat or never takes place then. */
+	existing(recurrenceId: Date) {
+		if (!this.recurring) {
+			throw new ValidationError('This entry does not repeat', ['occurrence'])
+		}
+		const overridden = this.entry.overrides?.some(override => override.recurrenceId?.getTime() === recurrenceId.getTime())
+		if (!overridden && !this.yields(recurrenceId)) {
+			throw new ValidationError(`The entry takes no place at ${recurrenceId.toISOString()}`, ['occurrence'])
+		}
+		return this.at(recurrenceId)
 	}
 
 	/** The occurrence at `recurrenceId`, lasting as long as the entry does. */

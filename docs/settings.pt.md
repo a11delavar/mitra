@@ -20,9 +20,9 @@ A paleta de comandos conhece as mesmas palavras e altera a maioria das configura
 
 ## Sua conta ou este dispositivo
 
-A maioria das configurações pertence à sua conta e acompanha você em todos os dispositivos e navegadores em que entra: a vista padrão, **Ocultar tarefas concluídas**, **Ocultar disponibilidade**, o calendário padrão, a duração padrão, **Ajustar a** e os dois lembretes padrão.
+A maioria das configurações pertence à sua conta e acompanha você em todos os dispositivos e navegadores em que entra: o idioma, a vista padrão, **Ocultar tarefas concluídas**, **Ocultar disponibilidade**, o calendário padrão, a duração padrão, **Ajustar a** e os dois lembretes padrão.
 
-As outras pertencem ao dispositivo em que você está, então seu celular e seu notebook podem diferir: o tema, o idioma, as linhas de conexão e se este navegador mostra notificações.
+As outras pertencem ao dispositivo em que você está, então seu celular e seu notebook podem diferir: o tema, as linhas de conexão e se este navegador mostra notificações.
 
 O Mitra também lembra algumas coisas em cada dispositivo conforme você usa: o quanto você deu de zoom, se a barra lateral está aberta e em qual aba, quais fusos horários você recolheu e o período que a vista de tabela mostra.
 

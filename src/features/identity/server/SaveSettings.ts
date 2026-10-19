@@ -1,17 +1,25 @@
 import { description, label } from '@a11d/metadata'
+import { z } from 'zod'
+import { validation } from '../../../infrastructure/validation/validation.js'
 import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
 import { User } from '../User.js'
 
-@operation()
+class Parameters {
+	@validation(z.record(z.string(), z.unknown()))
+	@description('The account\'s settings, by key.')
+	readonly settings!: Readonly<Record<string, unknown>>
+}
+
+@operation(Parameters)
 @label('Save settings')
 @description('Stores the account\'s settings, keeping only what deviates from the defaults.')
 @http({ method: 'PUT', path: '/user/settings' })
-export class SaveSettings extends Operation<{ readonly settings?: unknown }, User> {
-	async run({ em, user }: OperationContext): Promise<User> {
+export class SaveSettings extends Operation<Parameters, User> {
+	async run({ em, user }: OperationContext) {
 		const stored = await em.findOneOrFail(User, { id: user.id })
 		stored.applySettings(this.parameters.settings)
 		await em.flush()
 		user.settings = stored.settings
-		return stored
+		return stored as User
 	}
 }

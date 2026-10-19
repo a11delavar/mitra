@@ -3,6 +3,9 @@ import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Entry } from './Entry.js'
 import { Entity } from '../../infrastructure/model/Entity.js'
+import { construct } from '@a11d/converter'
+import { validation } from '../../infrastructure/validation/validation.js'
+import { type ValidationError } from '../../infrastructure/validation/ValidationError.js'
 import { EntryPatch } from './EntryPatch.js'
 import { EntryType } from './EntryType.js'
 import { TaskStatus } from './TaskStatus.js'
@@ -73,23 +76,24 @@ describe('EntryPatch', () => {
 		})
 	})
 
-	describe('from', () => {
+	describe('as written', () => {
 		it('reads a plain body, only the fields an edit reaches', () => {
-			const patch = EntryPatch.from({ status: 'doing', transparency: null, scope: 'this', id: 'other' })
+			const patch = construct(EntryPatch, validation.read(EntryPatch, { status: 'doing', transparency: null, scope: 'this', id: 'other' }))
 			assert.equal(patch.status, TaskStatus.Doing)
 			assert.equal(patch.transparency, null)
 			assert.equal('scope' in patch || 'id' in patch, false)
 		})
 
 		it('clamps progress to a percentage and the estimate to whole minutes, and reads anything else as none', () => {
-			assert.deepEqual([EntryPatch.from({ percentComplete: 140 }).percentComplete, EntryPatch.from({ percentComplete: 'half' }).percentComplete], [100, null])
-			assert.deepEqual([EntryPatch.from({ estimate: 29.6 }).estimate, EntryPatch.from({ estimate: -5 }).estimate], [30, null])
+			assert.deepEqual([construct(EntryPatch, { percentComplete: 140 }).percentComplete, construct(EntryPatch, { percentComplete: 'half' }).percentComplete], [100, null])
+			assert.deepEqual([construct(EntryPatch, { estimate: 29.6 }).estimate, construct(EntryPatch, { estimate: -5 }).estimate], [30, null])
 		})
 
 		it('names each malformed field', () => {
-			const errors = [...EntryPatch.from({ relations: 'parent', recurrence: { freq: 'sometimes' } }).validate()]
-			assert.deepEqual(errors.map(error => [error.message, error.fields]), [['Invalid relations', ['relations']], ['Invalid recurrence rule', ['recurrence']]])
-			assert.deepEqual([...EntryPatch.from({ recurrence: null }).validate()], [])
+			const errors = [...construct(EntryPatch, { relations: 'parent' }).validate()]
+			assert.deepEqual(errors.map(error => [error.message, error.fields]), [['Invalid relations', ['relations']]])
+			assert.throws(() => construct(EntryPatch, { recurrence: 'FREQ=SOMETIMES' }), (error: ValidationError) => error.fields.includes('recurrence'))
+			assert.deepEqual([...construct(EntryPatch, { recurrence: null }).validate()], [])
 		})
 	})
 
@@ -116,7 +120,7 @@ describe('EntryPatch', () => {
 
 		it('clears relations to none, which is not unknown', () => {
 			const related = task({ relations: EntryRelations.of([{ type: RelationType.Parent, targetUid: 'parent' }]) })
-			assert.equal(related.patch(EntryPatch.from({ relations: null })).relations, EntryRelations.none)
+			assert.equal(related.patch(construct(EntryPatch, { relations: null })).relations, EntryRelations.none)
 		})
 
 		it('rebuilds an entry from its own patch', () => {
@@ -131,7 +135,7 @@ describe('EntryPatch', () => {
 		const link = EntryFile.from({ sourceUrl: 'https://example.com/b.pdf' })!
 		const keys = (files: EntryFiles) => files.all.map(each => each.key)
 		const carrying = (...files: Array<EntryFile>) => task({ attachments: EntryFiles.of(files) })
-		const edited = (patch: object) => new Entry().patch(EntryPatch.of(carrying(file))).patch(EntryPatch.from(patch))
+		const edited = (patch: object) => new Entry().patch(EntryPatch.of(carrying(file))).patch(construct(EntryPatch, patch))
 
 		it('keeps them when left out, clears them with null or an empty list, and replaces them with a list', () => {
 			assert.deepEqual(keys(edited({ heading: 'x' }).attachments), [sha256])
@@ -143,7 +147,7 @@ describe('EntryPatch', () => {
 		it('sends an entry\'s files, none as cleared, and nothing when left out', () => {
 			assert.equal(sent(EntryPatch.of(carrying(file))).files?.equals(EntryFiles.of([file])), true)
 			assert.equal(sent(EntryPatch.of(carrying())).files, null)
-			assert.equal('files' in wireOf(EntryPatch.from({ heading: 'x' })), false)
+			assert.equal('files' in wireOf(construct(EntryPatch, { heading: 'x' })), false)
 		})
 
 		it('reach every occurrence of a repeating entry, as its description does', () => {

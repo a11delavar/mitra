@@ -25,6 +25,7 @@
 		"@a11d/eslint-config": "2.x",
 		"@eslint/eslintrc": "3.x",
 		"@eslint/js": "10.x",
+		"@modelcontextprotocol/client": "^2.3.1",
 		"@types/compression": "1.8.x",
 		"@types/cors": "2.8.x",
 		"@types/express": "5.0.x",
@@ -65,8 +66,8 @@
 		"@a11d/equals": "x",
 		"@a11d/lit": "x",
 		"@a11d/lit-application": "x",
-		"@a11d/metadata": "0.5.x",
 		"@a11d/lit-application-native": "x",
+		"@a11d/metadata": "0.5.x",
 		"@fontsource-variable/inter": "^5.3.0",
 		"@fontsource-variable/noto-sans-sc": "^5.3.0",
 		"@fontsource-variable/vazirmatn": "^5.3.0",
@@ -76,6 +77,7 @@
 		"@mikro-orm/migrations": "7.1.5",
 		"@mikro-orm/reflection": "7.1.5",
 		"@mikro-orm/sqlite": "7.1.5",
+		"@modelcontextprotocol/server": "^2.3.1",
 		"compression": "1.8.x",
 		"consola": "^3.x",
 		"cors": "x",
@@ -87,7 +89,8 @@
 		"openid-client": "6.x",
 		"temporal-polyfill": "0.2.x",
 		"tsdav": "2.x",
-		"web-push": "3.x"
+		"web-push": "3.x",
+		"zod": "^4.6.7"
 	},
 	"engines": {
 		"node": ">=26"

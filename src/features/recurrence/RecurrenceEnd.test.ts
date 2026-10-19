@@ -61,11 +61,4 @@ describe('RecurrenceEnd', () => {
 		assert.deepEqual(end, day('2026-07-18'))
 		assert.notDeepEqual(end, day('2026-07-19'))
 	})
-
-	it('crosses the wire as its UTC midnight, as it always did, and the database as that in milliseconds', () => {
-		assert.equal(RecurrenceEnd.converter.deconstruct!(day('2026-07-18'), {}), '2026-07-18T00:00:00.000Z')
-		assert.equal(RecurrenceEnd.converter.deconstruct!(undefined, {}), undefined)
-		assert.ok(RecurrenceEnd.converter.construct!('2026-07-18T00:00:00.000Z', {})!.equals(day('2026-07-18')))
-		assert.ok(RecurrenceEnd.converter.construct!('2026-07-18', {})!.equals(day('2026-07-18')))
-	})
 })

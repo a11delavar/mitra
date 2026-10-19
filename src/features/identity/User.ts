@@ -7,6 +7,8 @@ import { Source } from '../sources/Source.js'
 import { type Calendar } from '../sources/Calendar.js'
 import { Integration } from '../../integrations/Integration.js'
 import { Entry } from '../entries/Entry.js'
+import { type EntryType } from '../entries/EntryType.js'
+import { ValidationError } from '../../infrastructure/validation/ValidationError.js'
 import { UserSettings } from '../settings/UserSettings.js'
 import { UserTimeZones } from '../time/UserTimeZones.js'
 
@@ -104,6 +106,18 @@ export class User {
 	async calendar(em: EntityManager, sourceId: string): Promise<Calendar> {
 		const source = await this.source(em, sourceId)
 		return { source, integration: await this.integration(em, source.integrationId) }
+	}
+
+	/** Where a new entry of `type` goes when none is named: the default calendar, else the first that takes it. */
+	async defaultCalendar(em: EntityManager, type?: EntryType) {
+		const integrations = await this.integrations(em)
+		const calendars = (await this.sources(em, { enabled: true })).map(source => ({ source, integration: integrations.find(integration => integration.id === source.integrationId)! }))
+		const takes = ({ source, integration }: Calendar) => integration.capabilitiesFor(source).entries.create && (!type || integration.canHold(source, type))
+		const found = calendars.find(calendar => calendar.source.id === this.defaultSourceId && takes(calendar)) ?? calendars.find(takes)
+		if (!found) {
+			throw new ValidationError('No calendar can take this entry', ['sourceId'])
+		}
+		return found
 	}
 
 	async entry(em: EntityManager, id: string): Promise<Entry> {

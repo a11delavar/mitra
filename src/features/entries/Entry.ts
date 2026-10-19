@@ -227,7 +227,8 @@ export class Entry extends Entity implements Validatable<Calendar> {
 	}
 
 	@equality()
-	@property({ type: 'json', nullable: true }) participants?: Array<Participant>
+	@property({ type: Participants.Mapper, nullable: true })
+	@converter(Participants.converter) participants?: Array<Participant>
 
 	get participantList(): Participants | undefined {
 		return Participants.normalize(this.participants)
@@ -320,7 +321,8 @@ export class Entry extends Entity implements Validatable<Calendar> {
 	@property({ type: 'string', nullable: true }) uid?: string
 
 	@equality()
-	@property({ type: Recurrence.Mapper, nullable: true }) recurrence?: Recurrence
+	@property({ type: Recurrence.Mapper, nullable: true })
+	@converter(Recurrence.converter) recurrence?: Recurrence
 
 	@Entry.days()
 	@property({ type: 'json', nullable: true }) exdates?: Array<number>
@@ -339,7 +341,7 @@ export class Entry extends Entity implements Validatable<Calendar> {
 		this.relations = (this.relations ?? EntryRelations.none).adding(type, targetUid, this.uid)
 	}
 
-	unrelate(relation: Relation) {
+	unrelate(relation: RelationInit) {
 		this.relations = (this.relations ?? EntryRelations.none).without(relation)
 	}
 
@@ -581,6 +583,12 @@ export class Entry extends Entity implements Validatable<Calendar> {
 		}
 		if (this.due && !ownership.holds('due')) {
 			yield new ValidationError('This calendar does not support due dates', ['due'])
+		}
+		if (this.relations?.writes.length && !ownership.holds('relations')) {
+			yield new ValidationError('This calendar does not support relations between entries', ['relations'])
+		}
+		if (this.start && this.end && this.end.valueOf() < this.start.valueOf()) {
+			yield new ValidationError('An entry cannot end before it starts', ['end'])
 		}
 	}
 

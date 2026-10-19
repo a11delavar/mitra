@@ -1,6 +1,5 @@
 import { Localizer } from '@3mo/localization'
 import { DateTime } from '@3mo/date-time'
-import { type Converter } from '@a11d/converter'
 import { TimeZone } from '../time/TimeZone.js'
 
 /**
@@ -68,11 +67,5 @@ export class RecurrenceEnd {
 
 	toString() {
 		return this.isoDate
-	}
-
-	/** On the wire as the instant it always was, UTC midnight, which a page loaded before reads as a date. */
-	static readonly converter: Converter<string | undefined, RecurrenceEnd | undefined> = {
-		construct: value => RecurrenceEnd.parse(value),
-		deconstruct: value => value?.instant.toISOString(),
 	}
 }

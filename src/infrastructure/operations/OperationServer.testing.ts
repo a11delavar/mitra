@@ -12,6 +12,30 @@ import { staleTabs } from '../../features/entries/server/staleTabs.js'
 import { MitraCalendar } from '../../integrations/mitra/MitraCalendar.js'
 import '../../integrations/server/registerEngines.js'
 import { errorHandler } from '../http/errorHandler.js'
+import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client'
+
+/** An entry as the API sends it, as the tests read one: dates as UTC instants, its rule as an object. */
+export interface SentEntry {
+	readonly id: string
+	readonly sourceId: string
+	readonly heading?: string
+	readonly start?: string
+	readonly end?: string
+	readonly due?: string
+	readonly allDay?: boolean
+	readonly status?: string
+	readonly occurrence?: string
+	readonly recurrence?: string
+	readonly description?: string
+	readonly location?: string
+}
+
+/** What a tool call answers: its text, its data, and whether it refused. */
+export interface ToolCall {
+	readonly isError?: boolean
+	readonly content: Array<{ readonly type: string, readonly text: string }>
+	readonly structuredContent?: Record<string, unknown>
+}
 
 /**
  * The operations' routes as the app mounts them, refusals answered as the app answers them, which a test calls through
@@ -24,6 +48,8 @@ export class OperationServer {
 		// After the test file has loaded: the database opens on import.
 		const { orm } = await import('../database/orm.js')
 		const { operationsRouter } = await import('./Operation.js')
+		const { mcpRouter } = await import('../../features/agents/server/mcp.js')
+		const { accessTokenMiddleware } = await import('../../features/identity/server/accessTokenMiddleware.js')
 		await import('../../app/operations.js')
 
 		const em = orm.em.fork()
@@ -50,6 +76,7 @@ export class OperationServer {
 		app.use(express.json({ reviver: (_key, value) => models.shallConstruct(value) ? models.construct(value) : value }))
 		app.use('/api/entries', staleTabs)
 		app.use('/api/sources', express.text({ type: 'text/calendar', limit: '25mb' }))
+		app.use('/api/mcp', accessTokenMiddleware, mcpRouter)
 		app.use('/api', operationsRouter(() => orm.em.fork()))
 		app.use(errorHandler)
 		const server = await new Promise<Server>(resolve => {
@@ -82,7 +109,28 @@ export class OperationServer {
 		return await this.execute(sql, parameters) as Array<Row>
 	}
 
+	private agent?: Client
+
+	/** Calls a tool as an agent does, through the MCP SDK's own client on the same server. */
+	async callTool(name: string, args: Record<string, unknown> = {}): Promise<ToolCall> {
+		if (!this.agent) {
+			this.agent = new Client({ name: 'test-agent', version: '1.0.0' })
+			await this.agent.connect(new StreamableHTTPClientTransport(new URL(`${Api.url}/mcp`)))
+		}
+		return await this.agent.callTool({ name, arguments: args }) as ToolCall
+	}
+
+	/** A tool's data where it answered, or what it refused as an error the test reads. */
+	async tool<Data = Record<string, unknown>>(name: string, args: Record<string, unknown> = {}): Promise<Data> {
+		const call = await this.callTool(name, args)
+		if (call.isError) {
+			throw new Error(call.content[0]?.text)
+		}
+		return call.structuredContent as Data
+	}
+
 	async close() {
+		await this.agent?.close()
 		await new Promise(resolve => this.server.close(resolve))
 		await this.closeOrm()
 	}

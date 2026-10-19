@@ -78,10 +78,12 @@ if (!shots.length) {
 	process.exit(0)
 }
 
-await stage(async (browser, origin) => {
+// A clock stands from the server's start, so a scene in another season gets a stage of its own.
+const moments = [...new Set(shots.map(({ scene }) => scene.moment))]
+for (const [index, moment] of moments.entries()) await stage(async (browser, origin) => {
 	let sample = 'en'
 	let touched = false
-	for (const { scene, theme } of shots) {
+	for (const { scene, theme } of shots.filter(({ scene }) => scene.moment === moment)) {
 		// Every shot starts from the sample calendar as seeded: a film's drag saves, and the next take found nothing left to drag.
 		if (touched || scene.language !== sample) {
 			consola.info(`The sample calendar, rebuilt in ${scene.language}`)
@@ -102,5 +104,5 @@ await stage(async (browser, origin) => {
 		await scene.make(context, file)
 		consola.success(path.basename(file))
 	}
-}, { build: !process.argv.includes('--no-build') })
+}, { build: index === 0 && !process.argv.includes('--no-build'), moment })
 weigh()

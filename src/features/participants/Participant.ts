@@ -1,5 +1,10 @@
 // `t` and the list formatter exist once something imports the Localizer, which a bare server module may not have done.
 import '@3mo/localization'
+import { type Converter } from '@a11d/converter'
+import { description } from '@a11d/metadata'
+import { z } from 'zod'
+import { Type } from '../../infrastructure/model/orm.js'
+import { validation } from '../../infrastructure/validation/validation.js'
 
 /**
  * Participant role mappings based on RFC 5545 ATTENDEE ROLE.
@@ -22,13 +27,35 @@ export enum ParticipantStatus {
 	Delegated = 'delegated',
 }
 
-export interface Participant {
-	email: string
+/** One person taking part (an ATTENDEE, RFC 5545), held as this wherever it is: in the database, on the wire, in a sync. */
+export class Participant {
+	@validation(z.email())
+	@description('Their email address.')
+	email!: string
+
+	@validation(z.string().optional())
+	@description('Their name.')
 	name?: string
+
+	@validation(z.boolean().optional())
+	@description('Whether they organize it; a list has one organizer at most.')
 	organizer?: boolean
+
+	@validation(z.enum(ParticipantRole).optional())
+	@description('How they take part; required unless said otherwise.')
 	role?: ParticipantRole
+
+	@validation(z.enum(ParticipantStatus).optional())
+	@description('Their answer; needs-action until they give one.')
 	status?: ParticipantStatus
+
+	@validation(z.boolean().optional())
+	@description('Whether they are the user.')
 	self?: boolean
+
+	constructor(init?: Partial<Participant>) {
+		Object.assign(this, init)
+	}
 }
 
 const roles = new Set<string>(Object.values(ParticipantRole))
@@ -62,14 +89,14 @@ export class Participants extends Array<Participant> {
 			const organizer: boolean = !!candidate.organizer && !hasOrganizer
 			hasOrganizer ||= organizer
 			const existing = byEmail.get(email)
-			byEmail.set(email, {
+			byEmail.set(email, new Participant({
 				email,
 				...(name || existing?.name ? { name: name || existing?.name } : {}),
 				...(organizer || existing?.organizer ? { organizer: true } : {}),
 				role: roles.has(candidate.role as string) ? candidate.role! : existing?.role ?? ParticipantRole.Required,
 				status: statuses.has(candidate.status as string) ? candidate.status! : existing?.status ?? ParticipantStatus.NeedsAction,
 				...(candidate.self || existing?.self ? { self: true } : {}),
-			})
+			}))
 		}
 		if (!byEmail.size) {
 			return undefined
@@ -77,6 +104,27 @@ export class Participants extends Array<Participant> {
 		const participants = new Participants()
 		participants.push(...byEmail.values())
 		return participants
+	}
+
+	/** On the wire as the list of its people, read through `normalize`; none at all, `[]` as much as `null`, clears it. */
+	static readonly converter: Converter<ReadonlyArray<Partial<Participant>> | null | undefined, Participants | null | undefined> = {
+		schema: z.array(validation.schemaOf(Participant)),
+		construct: value => value === undefined ? value : Participants.normalize(value) ?? null,
+	}
+
+	/** In its JSON column as the list of its people, read back as `Participant`s, which equality tells from plain objects. */
+	static readonly Mapper = class extends Type<Participants | undefined, string | null> {
+		override convertToDatabaseValue(value: Participants | null | undefined): string | null {
+			return value?.length ? JSON.stringify(value) : null
+		}
+
+		override convertToJSValue(value: unknown): Participants | undefined {
+			return Participants.normalize((typeof value === 'string' ? JSON.parse(value) : value) as ReadonlyArray<Partial<Participant>> | null)
+		}
+
+		override getColumnType(): string {
+			return 'json'
+		}
 	}
 
 	get organizer(): Participant | undefined {

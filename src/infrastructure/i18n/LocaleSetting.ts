@@ -1,15 +1,15 @@
 import { html, live } from '@a11d/lit'
 import { Localizer, type LanguageCode } from '@3mo/localization'
-import { ChoiceSetting, setting, type SettingStorage } from '../../features/settings/client/Setting.js'
+import { ChoiceSetting, setting, userStorage, type SettingStorage } from '../../features/settings/client/Setting.js'
 import { AppLocale } from './AppLocale.js'
-import './RegionPreview.js'
+import './LocalePreview.js'
 
 /**
  * The locale the app runs in, chosen as a language and, folded under it, the region it is written in: `en`, which reads
  * as the browser writes English, or `en-GB`. Applies at once, without a reload.
  */
 @setting()
-export class LanguageSetting extends ChoiceSetting<string> {
+export class LocaleSetting extends ChoiceSetting<string> {
 	private static readonly languages: Array<LanguageCode> = ['en', 'de', 'fr', 'es', 'pt', 'it', 'fa', 'zh']
 
 	/**
@@ -17,8 +17,26 @@ export class LanguageSetting extends ChoiceSetting<string> {
 	 * the address holds it, and the calendar rewrites the address at once: a supported one is kept as the choice.
 	 */
 	static rememberLinkedLanguage() {
-		if (new URLSearchParams(location.search).has('lang') && LanguageSetting.languages.includes(Localizer.locales.current.language as LanguageCode)) {
+		if (new URLSearchParams(location.search).has('lang') && LocaleSetting.languages.includes(Localizer.locales.current.language as LanguageCode)) {
 			Localizer.locales.current = Localizer.locales.current
+		}
+	}
+
+	private static readonly account = userStorage('locale')
+
+	/** The language and region this device shows, the region only where one is chosen. */
+	private static get shown() {
+		const { language } = Localizer.locales.current
+		const region = AppLocale.chosenRegion
+		return region ? `${language}-${region}` : language
+	}
+
+	/** A device shows the language and region chosen for the account, which are chosen once for every device. */
+	static followAccount() {
+		const chosen = LocaleSetting.account.read()
+		if (chosen && chosen !== LocaleSetting.shown) {
+			const locale = new Intl.Locale(chosen)
+			AppLocale.set(locale.language, locale.region)
 		}
 	}
 
@@ -30,34 +48,32 @@ export class LanguageSetting extends ChoiceSetting<string> {
 
 	readonly heading = t('Language')
 	readonly icon = 'languages'
-	readonly keywords = t('LanguageSetting.Keywords')
+	readonly keywords = t('LocaleSetting.Keywords')
 	readonly page = 'general'
 	readonly fallback = 'en'
 
+	// Kept on the account, so every device and the agents read the one choice; until there is one, the browser's language.
 	protected readonly storage: SettingStorage<string> = {
-		read: () => {
-			const { language } = Localizer.locales.current
-			const region = AppLocale.chosenRegion
-			return region ? `${language}-${region}` : language
-		},
-		write: value => {
+		read: () => LocaleSetting.account.read() ?? LocaleSetting.shown,
+		write: async value => {
 			const locale = new Intl.Locale(value ?? this.fallback)
 			AppLocale.set(locale.language, locale.region)
+			await LocaleSetting.account.write(value)
 		},
 	}
 
 	override get options() {
-		return LanguageSetting.languages.map(code => ({ value: code as string, label: LanguageSetting.label(code) }))
+		return LocaleSetting.languages.map(code => ({ value: code as string, label: LocaleSetting.label(code) }))
 	}
 
 	/** The palette switches the language alone, keeping a chosen region the new one is written in (English in Germany). */
 	override get verbs() {
 		const { language } = Localizer.locales.current
 		const region = AppLocale.chosenRegion
-		return LanguageSetting.languages
+		return LocaleSetting.languages
 			.filter(code => code !== language)
 			.map(code => ({
-				heading: `${this.heading}: ${LanguageSetting.label(code)}`,
+				heading: `${this.heading}: ${LocaleSetting.label(code)}`,
 				apply: () => this.set(region && AppLocale.regionsOf(code).includes(region) ? `${code}-${region}` : code),
 			}))
 	}
@@ -65,8 +81,8 @@ export class LanguageSetting extends ChoiceSetting<string> {
 	/** Each language and its regions, named in the app's language. */
 	private get trees() {
 		const locale = Localizer.locales.current
-		return LanguageSetting.languages.map(language => {
-			const name = LanguageSetting.label(language)
+		return LocaleSetting.languages.map(language => {
+			const name = LocaleSetting.label(language)
 			return {
 				language: language as string,
 				name,
@@ -96,6 +112,6 @@ export class LanguageSetting extends ChoiceSetting<string> {
 	}
 
 	override get details() {
-		return html`<mitra-region-preview locale=${String(Localizer.locales.current)}></mitra-region-preview>`
+		return html`<mitra-locale-preview locale=${String(Localizer.locales.current)}></mitra-locale-preview>`
 	}
 }

@@ -13,7 +13,7 @@ import { Visibility } from '../../features/entries/Visibility.js'
 import { EntryType } from '../../features/entries/EntryType.js'
 import { Source } from '../../features/sources/Source.js'
 import { Recurrence } from '../../features/recurrence/Recurrence.js'
-import { ParticipantRole, ParticipantStatus } from '../../features/participants/Participant.js'
+import { Participant, ParticipantRole, ParticipantStatus } from '../../features/participants/Participant.js'
 import { asBrowser, wireOf } from '../../infrastructure/model/wire.testing.js'
 import { RecurrenceFrequency } from '../../features/recurrence/RecurrenceFrequency.js'
 
@@ -89,9 +89,9 @@ describe('CalDAV member URLs', () => {
 				'ATTENDEE:mailto:pending@example.com',
 			])
 			assert.deepEqual([...CalDAV.participantsFrom(component, ['me@example.com'])!], [
-				{ email: 'organizer@example.com', name: 'Organizer', organizer: true, role: ParticipantRole.Required, status: ParticipantStatus.Accepted },
-				{ email: 'optional@example.com', name: 'Optional Attendee', role: ParticipantRole.Optional, status: ParticipantStatus.Tentative },
-				{ email: 'pending@example.com', role: ParticipantRole.Required, status: ParticipantStatus.NeedsAction },
+				new Participant({ email: 'organizer@example.com', name: 'Organizer', organizer: true, role: ParticipantRole.Required, status: ParticipantStatus.Accepted }),
+				new Participant({ email: 'optional@example.com', name: 'Optional Attendee', role: ParticipantRole.Optional, status: ParticipantStatus.Tentative }),
+				new Participant({ email: 'pending@example.com', role: ParticipantRole.Required, status: ParticipantStatus.NeedsAction }),
 			])
 		})
 
@@ -101,7 +101,7 @@ describe('CalDAV member URLs', () => {
 				'ATTENDEE;PARTSTAT=TENTATIVE:mailto:me@example.com',
 			])
 			assert.deepEqual([...CalDAV.participantsFrom(component, ['me@example.com'])!], [
-				{ email: 'me@example.com', organizer: true, role: ParticipantRole.Required, status: ParticipantStatus.Tentative, self: true },
+				new Participant({ email: 'me@example.com', organizer: true, role: ParticipantRole.Required, status: ParticipantStatus.Tentative, self: true }),
 			])
 		})
 
@@ -131,8 +131,8 @@ describe('CalDAV member URLs', () => {
 			]
 			CalDAV.writeParticipants(component, participants)
 			assert.deepEqual([...CalDAV.participantsFrom(component, ['me@example.com'])!], [
-				{ ...participants[0], self: true },
-				participants[1],
+				new Participant({ ...participants[0], self: true }),
+				new Participant(participants[1]),
 			])
 			assert.equal(component.getAllProperties('attendee')[1]!.getParameter('rsvp')?.toString().toUpperCase(), 'TRUE')
 		})

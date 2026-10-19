@@ -1,5 +1,4 @@
 import { description, label } from '@a11d/metadata'
-import { type Request } from 'express'
 import { syncEmitter } from '../../../infrastructure/realtime/syncEmitter.js'
 import { ValidationError } from '../../../infrastructure/validation/ValidationError.js'
 import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
@@ -7,25 +6,26 @@ import { EntryRelation } from '../../relations/EntryRelation.js'
 import { EntryRelations } from '../../relations/EntryRelations.js'
 import { assertRelationsValid, attachRelations } from '../../relations/server/relations.js'
 import { fileStore } from '../../files/server/FileStore.js'
+import { tool } from '../../agents/server/tool.js'
 import { Entry } from '../Entry.js'
 import { EntryPatch } from '../EntryPatch.js'
+import { EntryTimeZone } from '../EntryTimeZone.js'
 
-@operation()
+@operation(EntryPatch)
 @label('Create an entry')
 @description('Creates an event or a task in a calendar. A task without a start is unscheduled and waits in the planning list.')
 @http({ method: 'POST', path: '/entries', status: 201 })
+@tool({ name: 'create_entry' })
 export class CreateEntry extends Operation<EntryPatch, Entry> {
-	static override fromRequest(request: Request) {
-		return new CreateEntry(EntryPatch.from(request.body))
-	}
-
-	async run({ em, user }: OperationContext): Promise<Entry> {
+	async run({ em, user }: OperationContext) {
 		const patch = this.parameters
-		if (!patch.sourceId) {
-			throw new ValidationError('Missing sourceId', ['sourceId'])
+		const to = patch.sourceId ? await user.calendar(em, patch.sourceId) : await user.defaultCalendar(em, patch.type)
+		patch.sourceId = to.source.id
+		// Times written without a zone were read in the home zone, so the entry keeps it.
+		if (patch.timeZone === undefined && !patch.allDay && user.timeZones?.home) {
+			patch.timeZone = EntryTimeZone.parse(user.timeZones.home.zone.id)
 		}
 		const unclaimed = await fileStore.claim(user.id, patch.files ?? [])
-		const to = await user.calendar(em, patch.sourceId)
 		const incoming = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: to.source.defaultEntryType }).patch(patch).fit(to.integration.ownership)
 
 		const errors = [...unclaimed, ...patch.validate({ to }), ...incoming.validate(to)]

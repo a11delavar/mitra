@@ -4,6 +4,7 @@ import { DateTime } from '@3mo/date-time'
 import { Localizer } from '@3mo/localization'
 import en from '../../infrastructure/i18n/en.json' with { type: 'json' }
 import { Recurrence } from './Recurrence.js'
+import { type ValidationError } from '../../infrastructure/validation/ValidationError.js'
 import { RecurrenceEnd } from './RecurrenceEnd.js'
 import { RecurrenceFrequency } from './RecurrenceFrequency.js'
 import { RecurrenceWeekday } from './RecurrenceWeekday.js'
@@ -107,36 +108,17 @@ describe('Recurrence', () => {
 		})
 	})
 
-	describe('from (plain object across the wire)', () => {
-		it('reads the rule as the client sends it', () => {
-			const sent = JSON.parse(JSON.stringify(new Recurrence({ freq: RecurrenceFrequency.Weekly, interval: 2, byday: [RecurrenceWeekday.Monday, RecurrenceWeekday.Friday.nth(-1)], until: untilDay('2026-07-18') })))
-			assert.equal(sent.freq, 'WEEKLY')
-			assert.deepEqual(sent.byday, ['MO', '-1FR'])
-			assert.equal(sent.until, '2026-07-18T00:00:00.000Z')
-			const r = Recurrence.from(sent)!
-			assert.ok(r instanceof Recurrence)
-			assert.equal(r.freq, RecurrenceFrequency.Weekly)
-			assert.equal(r.byday![0], RecurrenceWeekday.Monday)
-			assert.ok(r.until!.equals(untilDay('2026-07-18')))
-			assert.equal(r.toRRule(), 'FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,-1FR;UNTIL=20260718T235959Z')
+	describe('converter', () => {
+		it('crosses the wire as its RRULE both ways, as the database keeps it', () => {
+			const rule = new Recurrence({ freq: RecurrenceFrequency.Weekly, interval: 2, byday: [RecurrenceWeekday.Monday, RecurrenceWeekday.Friday.nth(-1)], until: untilDay('2026-07-18') })
+			const written = Recurrence.converter.deconstruct!(rule, {})
+			assert.equal(written, 'FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,-1FR;UNTIL=20260718T235959Z')
+			assert.ok(Recurrence.converter.construct!(written, {})!.equals(rule))
+			assert.equal(Recurrence.converter.deconstruct!(null, {}), null)
 		})
 
-		it('reads an until sent as an instant by its UTC day', () => {
-			const r = Recurrence.from({ freq: 'WEEKLY', until: '2026-07-18T00:00:00.000Z' } as unknown as Recurrence)!
-			assert.ok(r.until!.equals(untilDay('2026-07-18')))
-		})
-
-		it('leaves an unknown frequency or weekday for `valid` to refuse', () => {
-			assert.equal(Recurrence.from({ freq: 'HOURLY' } as unknown as Recurrence)!.valid, false)
-			assert.equal(Recurrence.from({ freq: 'WEEKLY', byday: ['XX'] } as unknown as Recurrence)!.valid, false)
-			assert.equal(Recurrence.from({ freq: 'WEEKLY', byday: ['MO'] } as unknown as Recurrence)!.valid, true)
-		})
-
-		it('reads no rule from nothing, and a rule without a frequency as malformed', () => {
-			assert.equal(Recurrence.from(undefined), undefined)
-			assert.equal(Recurrence.from(null), undefined)
-			// The server's reviver turns an unknown frequency into none: refused, never read as removing the rule.
-			assert.equal(Recurrence.from({ interval: 2 })!.valid, false)
+		it('refuses a rule it cannot repeat by, naming the field', () => {
+			assert.throws(() => Recurrence.converter.construct!('FREQ=HOURLY', {}), (error: ValidationError) => error.fields.includes('recurrence'))
 		})
 	})
 

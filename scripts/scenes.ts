@@ -2,7 +2,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import sharp from 'sharp'
-import { type Clip, type Devtools, reducedMotion, rootDir, screenshot, type Theme } from './capture.ts'
+import { capturedAt, type Clip, type Devtools, reducedMotion, rootDir, screenshot, type Theme } from './capture.ts'
 import { encodeFilm, Recording } from './film.ts'
 
 // What a release's `releases/<minor>/scenes.ts` is written with. Importing the file registers its scenes, the way a test
@@ -25,6 +25,8 @@ export interface SceneContext {
 export interface SceneOptions {
 	/** The app's language, and the sample calendar's, for this scene. English by default. */
 	language?: string
+	/** When the clock stands for this scene, `capturedAt`'s by default: the sample calendar is laid out around it. */
+	moment?: number
 }
 
 const registered = new Map<string, Scene>()
@@ -38,10 +40,12 @@ export abstract class Scene {
 	abstract readonly extension: 'webp' | 'mp4'
 	readonly name: string
 	readonly language: string
+	readonly moment: number
 
 	constructor(name: string, options: SceneOptions) {
 		this.name = name
 		this.language = options.language ?? 'en'
+		this.moment = options.moment ?? capturedAt.moment
 		registered.set(name, this)
 	}
 

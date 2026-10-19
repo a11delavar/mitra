@@ -1,7 +1,8 @@
-import { DateTime } from '@3mo/date-time'
+import { type DateTime } from '@3mo/date-time'
 import { Localizer } from '@3mo/localization'
-import { converter } from '@a11d/converter'
-import { model } from '../../infrastructure/model/model.js'
+import { type Converter } from '@a11d/converter'
+import { z } from 'zod'
+import { ValidationError } from '../../infrastructure/validation/ValidationError.js'
 import { Type } from '@mikro-orm/core'
 import { RecurrenceEnd } from './RecurrenceEnd.js'
 import { RecurrenceFrequency } from './RecurrenceFrequency.js'
@@ -19,14 +20,13 @@ export interface RecurrencePreset {
  * A recurring entry's rule (RFC 5545 RRULE) by the parts Mitra edits, the others kept as written. Kept free of ical.js,
  * so it bundles into the frontend.
  */
-@model('Recurrence')
 export class Recurrence {
-	@converter(RecurrenceFrequency.converter) freq!: RecurrenceFrequency
+	freq!: RecurrenceFrequency
 	interval?: number
-	@converter(RecurrenceWeekday.converter) byday?: Array<RecurrenceWeekday>
+	byday?: Array<RecurrenceWeekday>
 	bymonthday?: number
 	count?: number
-	@converter(RecurrenceEnd.converter) until?: RecurrenceEnd
+	until?: RecurrenceEnd
 	/** The parts Mitra doesn't edit (`BYSETPOS=-1`, `BYMONTH=5`, several month days), as the rule wrote them. */
 	rest?: string
 
@@ -179,21 +179,20 @@ export class Recurrence {
 	}
 
 	/** The rule a request body carries, judged by {@link valid}, so a malformed one is refused rather than dropped. */
-	static from(data: Partial<Recurrence> | undefined | null): Recurrence | undefined {
-		if (!data) {
-			return undefined
-		}
-		return new Recurrence({
-			// An unknown frequency or weekday leaves a hole, which `valid` refuses: the server's reviver has already turned
-			// an unknown code into none, so a rule without one is still a rule, and a malformed one.
-			freq: RecurrenceFrequency.parse(data.freq)!,
-			interval: data.interval,
-			byday: data.byday?.map(weekday => RecurrenceWeekday.parse(weekday)!),
-			bymonthday: data.bymonthday,
-			count: data.count,
-			until: RecurrenceEnd.parse(data.until),
-			rest: data.rest || undefined,
-		})
+	/** On the wire as its RRULE, both ways, as the database keeps it; a rule Mitra cannot repeat by is refused. */
+	static readonly converter: Converter<string | null | undefined, Recurrence | null | undefined> = {
+		schema: z.string(),
+		construct: value => {
+			if (value === null || value === undefined) {
+				return value
+			}
+			const recurrence = typeof value === 'string' ? Recurrence.fromRRule(value.trim()) : undefined
+			if (!recurrence) {
+				throw new ValidationError(`"${value}" is not an RRULE Mitra can repeat by. Start it with FREQ=DAILY, WEEKLY, MONTHLY or YEARLY.`, ['recurrence'])
+			}
+			return recurrence
+		},
+		deconstruct: value => value === null ? null : value?.toRRule(),
 	}
 
 	/** A month day reads as one only when it is one; a list stays in `rest`. */

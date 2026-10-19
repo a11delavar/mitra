@@ -1,4 +1,5 @@
 import { type Converter } from '@a11d/converter'
+import { z } from 'zod'
 import { Relation, type RelationInit } from './Relation.js'
 import { type RelationEdge } from './RelationEdge.js'
 import { type RelationSection, RelationType } from './RelationType.js'
@@ -36,6 +37,8 @@ export class EntryRelations {
 
 	/** What a write sends and reads: the owned lines alone, without the entries a read linked into them. */
 	static readonly writeConverter: Converter<Array<RelationInit> | null | undefined, EntryRelations | undefined> = {
+		// Types stay open, as an unknown one must round-trip; a line echoed with `direction: 'incoming'` is another entry's and dropped.
+		schema: z.array(z.object({ type: z.string(), targetUid: z.string(), gap: z.string().nullish(), direction: z.enum(['outgoing', 'incoming']).optional() })),
 		construct: value => EntryRelations.parse(value),
 		deconstruct: relations => relations?.writes.map(relation => relation.targeting(undefined)),
 	}

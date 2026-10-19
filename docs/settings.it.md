@@ -20,9 +20,9 @@ La tavolozza dei comandi conosce le stesse parole e cambia la maggior parte dell
 
 ## Il tuo account o questo dispositivo
 
-La maggior parte delle impostazioni appartiene al tuo account e ti segue su ogni dispositivo e browser da cui accedi: la vista predefinita, **Nascondi le attività completate**, **Nascondi la disponibilità**, il calendario predefinito, la durata predefinita, **Allinea a** ed entrambi i promemoria predefiniti.
+La maggior parte delle impostazioni appartiene al tuo account e ti segue su ogni dispositivo e browser da cui accedi: la lingua, la vista predefinita, **Nascondi le attività completate**, **Nascondi la disponibilità**, il calendario predefinito, la durata predefinita, **Allinea a** ed entrambi i promemoria predefiniti.
 
-Le altre appartengono al dispositivo che stai usando, quindi telefono e portatile possono differire: il tema, la lingua, le linee di collegamento e se questo browser mostra le notifiche.
+Le altre appartengono al dispositivo che stai usando, quindi telefono e portatile possono differire: il tema, le linee di collegamento e se questo browser mostra le notifiche.
 
 Mitra ricorda anche alcune cose su ogni dispositivo mentre lo usi: quanto hai ingrandito, se la barra laterale è aperta e su quale scheda, quali fusi orari hai ripiegato e il periodo che mostra la vista tabella.
 

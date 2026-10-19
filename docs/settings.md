@@ -20,9 +20,9 @@ The command palette knows the same words, and changes most settings without open
 
 ## Your account or this device
 
-Most settings belong to your account and follow you to every device and browser you sign in from: the default view, **Hide done tasks**, **Hide availability**, the default calendar, the default duration, **Snap to** and both default reminders.
+Most settings belong to your account and follow you to every device and browser you sign in from: the language, the default view, **Hide done tasks**, **Hide availability**, the default calendar, the default duration, **Snap to** and both default reminders.
 
-The others belong to the device you're on, so your phone and your laptop can differ: the theme, the language, the connector lines, and whether this browser shows notifications.
+The others belong to the device you're on, so your phone and your laptop can differ: the theme, the connector lines, and whether this browser shows notifications.
 
 Mitra also remembers some things on each device as you use them: how far you've zoomed, whether the sidebar is open and on which tab, which time zones you've folded away, and the period the table view shows.
 

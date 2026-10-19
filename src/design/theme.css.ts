@@ -11,6 +11,7 @@ export const themeStyles = css`
 		--color-text: color-mix(in srgb, light-dark(black, white), var(--color-accent) 2.5%);
 		--color-text-muted: color-mix(in srgb, var(--color-text), var(--color-background) 45%);
 		--color-error: light-dark(#d1453b, #e5675e);
+		--color-success: light-dark(#2e8540, #5cbf75);
 		--color-accent: light-dark(black, white);
 		${contrastColorOf('--color-accent-text', 'var(--color-accent)')};
 		--color-border: var(--color-surface);

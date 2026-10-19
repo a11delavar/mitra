@@ -321,7 +321,7 @@ declare global {
 		"Keyboard Shortcuts": unknown
 		"KeyboardShortcuts.Keywords": unknown
 		"Language": unknown
-		"LanguageSetting.Keywords": unknown
+		"LocaleSetting.Keywords": unknown
 		"last seen ${when}": unknown
 		"Latest": unknown
 		"Latin America": unknown

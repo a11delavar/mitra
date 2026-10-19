@@ -1,19 +1,23 @@
 import { description, label } from '@a11d/metadata'
-import { ValidationError } from '../../../infrastructure/validation/ValidationError.js'
+import { z } from 'zod'
+import { validation } from '../../../infrastructure/validation/validation.js'
 import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
 import { NotificationSubscription } from '../NotificationSubscription.js'
 
 /** For the service worker, which knows a rotated subscription by its endpoint alone. */
-@operation()
+class Parameters {
+	@validation(z.string().min(1, 'Missing endpoint'))
+	@description('The push subscription\'s endpoint.')
+	readonly endpoint!: string
+}
+
+@operation(Parameters)
 @label('Unregister a device')
 @description('Stops sending reminders to a push endpoint, by the endpoint itself.')
 @http({ method: 'DELETE', path: '/push/subscription' })
-export class UnregisterDevice extends Operation<{ readonly endpoint?: string }, void> {
-	async run({ em, user }: OperationContext): Promise<void> {
+export class UnregisterDevice extends Operation<Parameters, void> {
+	async run({ em, user }: OperationContext) {
 		const { endpoint } = this.parameters
-		if (!endpoint) {
-			throw new ValidationError('Missing endpoint', ['endpoint'])
-		}
 		const subscription = await em.findOne(NotificationSubscription, { endpoint, userId: user.id })
 		if (subscription) {
 			em.remove(subscription)

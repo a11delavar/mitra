@@ -15,6 +15,7 @@ import { IntegrationCapabilities } from '../../integrations/IntegrationCapabilit
 import { type OwnedField } from '../../integrations/IntegrationOwnership.js'
 import { CalDAV } from '../../integrations/caldav/CalDAV.js'
 import { type ValidationError } from '../../infrastructure/validation/ValidationError.js'
+import { EntryOccurrenceChangeScope } from '../recurrence/EntryOccurrenceChange.js'
 
 /** A calendar holding `types`, whose integration holds every field but `lacking` and may not do `cannot`. */
 const calendar = (init: { id?: string, types?: Array<EntryType>, lacking?: Array<OwnedField>, cannot?: Partial<IntegrationCapabilities['entries']> } = {}): Calendar => {
@@ -43,6 +44,11 @@ describe('Entry.validate', () => {
 			['This calendar does not support due dates', ['due']],
 		])
 		assert.deepEqual(described(event({ transparency: Transparency.Free }).validate(calendar({ lacking: ['transparency'] }))), [['This calendar cannot mark an entry as free', ['transparency']]])
+	})
+
+	it('refuses an entry ending before it starts, and takes a moment, which ends where it starts', () => {
+		assert.deepEqual(described(event({ end: start.add({ minutes: -1 }) }).validate(calendar())), [['An entry cannot end before it starts', ['end']]])
+		assert.deepEqual(described(event({ end: start }).validate(calendar())), [])
 	})
 
 	it('names a type the calendar cannot hold', () => {
@@ -103,15 +109,15 @@ describe('EntryPatch.validate', () => {
 
 	it('keeps the date a rule repeats from, unless one occurrence leaves', () => {
 		const weekly = event({ recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })
-		for (const scope of ['all', 'following'] as const) {
+		for (const scope of [EntryOccurrenceChangeScope.All, EntryOccurrenceChangeScope.Following]) {
 			assert.deepEqual(described(patch({ start: null }).validate({ entry: weekly, to: calendar(), scope })), [
 				['An event must have a date', ['start']],
 				['A repeating entry cannot lose the date it repeats from', ['start']],
 			])
 		}
 		const rent = new Entry({ id: 'r', sourceId: 'home', type: EntryType.Task, heading: 'Pay the rent', due: start, recurrence: new Recurrence({ freq: RecurrenceFrequency.Monthly }) })
-		assert.deepEqual(described(patch({ due: null }).validate({ entry: rent, to: calendar(), scope: 'all' })), [['A repeating entry cannot lose the date it repeats from', ['due']]])
-		assert.deepEqual(described(patch({ start: null }).validate({ entry: weekly, to: calendar(), scope: 'this' })), [['An event must have a date', ['start']]])
+		assert.deepEqual(described(patch({ due: null }).validate({ entry: rent, to: calendar(), scope: EntryOccurrenceChangeScope.All })), [['A repeating entry cannot lose the date it repeats from', ['due']]])
+		assert.deepEqual(described(patch({ start: null }).validate({ entry: weekly, to: calendar(), scope: EntryOccurrenceChangeScope.This })), [['An event must have a date', ['start']]])
 	})
 
 	it('keeps a recurring entry\'s type, and its rule out of a calendar without one, unless one occurrence leaves', () => {
@@ -119,6 +125,6 @@ describe('EntryPatch.validate', () => {
 		assert.deepEqual(described(patch({ type: EntryType.Task }).validate({ entry: weekly, to: calendar() })), [['A recurring entry cannot change its type', ['type']]])
 		const away = calendar({ id: 'away', lacking: ['recurrence'] })
 		assert.deepEqual(described(patch({ sourceId: 'away' }).validate({ entry: weekly, from: calendar(), to: away })), [['This calendar cannot hold a repeating entry', ['recurrence']]])
-		assert.deepEqual(described(patch({ sourceId: 'away' }).validate({ entry: weekly, from: calendar(), to: away, scope: 'this' })), [])
+		assert.deepEqual(described(patch({ sourceId: 'away' }).validate({ entry: weekly, from: calendar(), to: away, scope: EntryOccurrenceChangeScope.This })), [])
 	})
 })

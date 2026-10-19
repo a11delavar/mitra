@@ -5,7 +5,8 @@ import { type Setting } from './Setting.js'
 import { SettingsStore } from './SettingsStore.js'
 
 /**
- * Settings row component rendering leading glyph, label with optional hint, and trailing control.
+ * A setting as a card: leading glyph, label with optional hint, and trailing control, its details below on the same
+ * columns. A list in the details (`ul`) lays its items as rows like the card's own, so a list needs no layout of its own.
  */
 @component('mitra-setting-row')
 export class SettingRow extends Component {
@@ -28,15 +29,13 @@ export class SettingRow extends Component {
 				align-items: center;
 				gap: 0.875rem;
 				padding-block: 0.625rem;
-				padding-inline: 0.5rem;
-				margin-inline: -0.5rem;
+				padding-inline: 0.875rem;
+				/* A field's tint and hairline, which every control on the card already wears. */
+				border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
 				border-radius: 8px;
+				background: color-mix(in srgb, var(--color-text) 3%, transparent);
 
-				&:not(:last-of-type) {
-					border-block-end: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
-				}
-
-				> mitra-icon {
+				> mitra-icon, .details li > mitra-icon {
 					font-size: 1.0625rem;
 					color: var(--color-text-muted);
 				}
@@ -45,7 +44,7 @@ export class SettingRow extends Component {
 					font-size: 1.0625rem;
 				}
 
-				> .text {
+				.text {
 					display: flex;
 					flex-direction: column;
 					gap: 0.125rem;
@@ -67,6 +66,7 @@ export class SettingRow extends Component {
 					display: flex;
 					align-items: center;
 					justify-content: flex-end;
+					gap: 0.5rem;
 					min-inline-size: 0;
 					${controlHeight};
 					min-block-size: var(--control-height);
@@ -81,26 +81,105 @@ export class SettingRow extends Component {
 						--switch-block-size: 1.25rem;
 					}
 
+					/* A state the browser decides, granted or refused, in the chip's shape: success's colour, or error's. */
 					.state {
-						font-size: 0.8125rem;
-						color: var(--color-text-muted);
+						--_state: var(--color-success);
+						font-size: 0.75rem;
+						padding: 0.0625rem 0.5rem;
+						border-radius: var(--border-radius);
+						color: var(--_state);
+						background: color-mix(in srgb, var(--_state) 14%, transparent);
 
 						&[data-denied] {
-							color: var(--color-error);
+							--_state: var(--color-error);
 						}
 					}
 				}
 
+				/* Below a hairline across the card, whatever they hold. */
 				> .details {
 					grid-column: 1 / -1;
-					margin-block-start: 0.625rem;
-					margin-inline-start: calc(1.375rem + 0.875rem);
+					display: flex;
+					flex-direction: column;
+					margin-inline: -0.875rem;
+					padding-inline: 0.875rem;
+					border-block-start: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+					font-size: 0.8125rem;
+
+					.note {
+						margin: 0;
+						padding-block: 0.625rem;
+						padding-inline-start: calc(1.375rem + 0.875rem);
+						color: var(--color-text-muted);
+
+						a {
+							color: var(--color-text);
+							text-decoration: underline;
+							text-underline-offset: 3px;
+							text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+
+							&:hover {
+								text-decoration-color: currentColor;
+							}
+						}
+					}
+
+					ul {
+						display: flex;
+						flex-direction: column;
+						margin: 0;
+						padding: 0;
+						list-style: none;
+
+						> li {
+							display: grid;
+							grid-template-columns: 1.375rem minmax(0, 1fr) auto;
+							align-items: center;
+							gap: 0.875rem;
+							padding-block: 0.5rem;
+							padding-inline: 0.875rem;
+							margin-inline: -0.875rem;
+
+							& + li {
+								border-block-start: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+							}
+
+							> .end {
+								display: flex;
+								align-items: center;
+								gap: 0.5rem;
+
+								> mitra-popover-container > mitra-icon-button {
+									color: var(--color-text-muted);
+									margin-block: -0.25rem;
+								}
+							}
+						}
+					}
+
+					.chip {
+						flex-shrink: 0;
+						font-size: 0.6875rem;
+						padding: 0.0625rem 0.375rem;
+						border-radius: var(--border-radius);
+						color: var(--color-text-muted);
+						background: color-mix(in srgb, var(--color-text) 8%, transparent);
+					}
+
+					code {
+						font-family: ui-monospace, 'Cascadia Code', monospace;
+						font-size: 0.75rem;
+						overflow: hidden;
+						white-space: nowrap;
+						text-overflow: ellipsis;
+						user-select: all;
+						-webkit-user-select: all;
+					}
 				}
 
 				&[focused] {
 					--focus-ring-color: var(--color-accent);
 					${ring};
-					border-block-end-color: transparent;
 				}
 
 				@container settings (max-width: 40rem) {

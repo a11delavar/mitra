@@ -64,11 +64,4 @@ describe('RecurrenceWeekday', () => {
 		assert.deepEqual(codes(RecurrenceWeekday.workdays(new Intl.Locale('fa-IR'))), ['SA', 'SU', 'MO', 'TU', 'WE', 'TH'])
 		assert.deepEqual(codes(RecurrenceWeekday.workdays(new Intl.Locale('he-IL'))), ['SU', 'MO', 'TU', 'WE', 'TH'])
 	})
-
-	it('crosses the wire and the database as its BYDAY parts', () => {
-		const weekdays = [RecurrenceWeekday.Monday, RecurrenceWeekday.Friday.nth(-1)]
-		assert.deepEqual(RecurrenceWeekday.converter.deconstruct!(weekdays, {}), ['MO', '-1FR'])
-		assert.deepEqual(RecurrenceWeekday.converter.construct!(['MO', '-1FR'], {}), weekdays)
-		assert.equal(RecurrenceWeekday.converter.deconstruct!(undefined, {}), undefined)
-	})
 })

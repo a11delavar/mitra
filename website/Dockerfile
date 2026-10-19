@@ -16,7 +16,7 @@ COPY <<'CADDYFILE' /etc/caddy/Caddyfile
 	# Astro hashes these, so a changed file always arrives under a new name.
 	@hashed path /_astro/*
 	header @hashed Cache-Control "public, max-age=31536000, immutable"
-	# A release's captures are frozen with it (see releases/), so they never change under their name either.
+	# A release's captures are addressed by a hash of their bytes (`?v=`, website/src/releases.ts), so a capture shot again arrives under a new address.
 	@frozen path /releases/*/*.webp /releases/*/*.mp4
 	header @frozen Cache-Control "public, max-age=31536000, immutable"
 	header ?Cache-Control no-cache

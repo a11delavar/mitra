@@ -14,4 +14,10 @@ describe('DeleteSource', () => {
 		assert.deepEqual((await fetchIntegrations())[0]!.sources.map(source => source.name), ['Home'])
 		await assert.rejects(countSourceEntries(work.id))
 	})
+
+	it('deletes a calendar for an agent', async () => {
+		const sandbox = await createSource(server.integration.id, { name: 'Sandbox' })
+		await server.tool('delete_calendar', { id: sandbox.id })
+		assert.deepEqual((await fetchIntegrations())[0]!.sources.map(source => source.name), ['Home'])
+	})
 })

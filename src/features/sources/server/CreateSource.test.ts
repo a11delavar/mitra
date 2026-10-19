@@ -18,4 +18,11 @@ describe('CreateSource', () => {
 	it('refuses a calendar without a name', async () => {
 		await assert.rejects(createSource(server.integration.id, { name: ' ' }))
 	})
+
+	it('creates a calendar for an agent, in an integration get_context names', async () => {
+		const { integrations } = await server.tool<{ integrations: Array<{ id: string, can: { createCalendars: boolean } }> }>('get_context')
+		assert.deepEqual(integrations.map(integration => [integration.id, integration.can.createCalendars]), [[server.integration.id, true]])
+		const sandbox = await server.tool<{ id: string, name: string }>('create_calendar', { id: server.integration.id, name: 'Sandbox' })
+		assert.equal(sandbox.name, 'Sandbox')
+	})
 })

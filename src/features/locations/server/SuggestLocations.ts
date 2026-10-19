@@ -1,4 +1,6 @@
 import { description, label } from '@a11d/metadata'
+import { z } from 'zod'
+import { validation } from '../../../infrastructure/validation/validation.js'
 import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
 import { LocationSuggestion, type PhotonFeature } from '../LocationSuggestion.js'
 import { recentLocations } from './recentLocations.js'
@@ -7,12 +9,30 @@ const PHOTON_URL = process.env.MITRA_PHOTON_URL || 'https://photon.komoot.io'
 
 const PHOTON_LANGUAGES = new Set(['en', 'de', 'fr'])
 
-@operation()
+class Parameters {
+	@validation(z.string().optional())
+	@description('What has been typed.')
+	readonly q?: string
+
+	@validation(z.string().optional())
+	@description('The language the places are named in.')
+	readonly lang?: string
+
+	@validation(z.string().optional())
+	@description('The latitude places near it come first from.')
+	readonly lat?: string
+
+	@validation(z.string().optional())
+	@description('The longitude places near it come first from.')
+	readonly lon?: string
+}
+
+@operation(Parameters)
 @label('Suggest locations')
 @description('Suggests locations for what has been typed: the user\'s recent ones, then places Photon finds, near the position given.')
 @http({ method: 'GET', path: '/locations' })
-export class SuggestLocations extends Operation<{ readonly q?: string, readonly lang?: string, readonly lat?: string, readonly lon?: string }, Array<LocationSuggestion>> {
-	async run({ em, user }: OperationContext): Promise<Array<LocationSuggestion>> {
+export class SuggestLocations extends Operation<Parameters, Array<LocationSuggestion>> {
+	async run({ em, user }: OperationContext) {
 		const { q, lang, lat, lon } = this.parameters
 		const query = q?.trim() ?? ''
 

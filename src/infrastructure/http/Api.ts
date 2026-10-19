@@ -60,6 +60,10 @@ export interface InstanceMeta {
 	update?: { version: string, url: string, commits?: number }
 	/** The largest file in bytes (0 takes no uploads), and each account's total. */
 	files?: { maxSize: number, quota?: number }
+	/** Whether people sign in, so an agent needs an access token. */
+	signIn?: boolean
+	/** Whether agents may connect over MCP (`MITRA_MCP`). */
+	mcp?: boolean
 }
 
 let meta: InstanceMeta | undefined
@@ -152,17 +156,17 @@ export function fetchAllEntries() {
 }
 
 export function searchEntries(query: string) {
-	return Api.get<Array<Entry>>(`/entries/search?q=${encodeURIComponent(query)}`)
+	return Api.get<Array<Entry>>(`/entries/search?${new URLSearchParams({ query })}`)
 }
 
 /** Stores tasks' places in the manual order, as rank keys by entry id. */
 export function rankEntries(ranks: Record<string, string>) {
-	return Api.put<void>('/entries/ranks', ranks)
+	return Api.put<void>('/entries/ranks', { ranks })
 }
 
 /** Writes the relations an entry owns: what it reads back from others is theirs. */
 export function updateRelations(id: string, relations: EntryRelations) {
-	return Api.put<Entry>(`/entries/${id}`, { relations: EntryRelations.writeConverter.deconstruct!(relations, {}) })
+	return Api.put<Entry>(`/entries/${id}`, Object.assign(new EntryPatch(), { relations }))
 }
 
 export function createEvent(entry: Entry) {
@@ -320,10 +324,10 @@ export function searchLocations(query: string, position?: { lat: number, lon: nu
 	return Api.get<Array<Partial<LocationSuggestion>>>(`/locations?${params}`).then(places => places.map(place => new LocationSuggestion(place)))
 }
 
-/** One occurrence of a repeating entry, addressed through the entry with how far a change to it reaches. */
+/** One occurrence of a repeating entry, by the date its entry stores it under, with how far a change to it reaches. */
 function occurrenceUrl(occurrence: EntryOccurrence, scope: EntryOccurrenceChangeScope) {
-	const query = new URLSearchParams({ scope, recurrenceId: occurrence.storedRecurrenceId!.toISOString() })
-	return `/entries/${occurrence.recurringEntryId}?${query}`
+	const at = encodeURIComponent(occurrence.storedRecurrenceId!.toISOString())
+	return `/entries/${encodeURIComponent(occurrence.recurringEntryId!)}/occurrences/${at}?${new URLSearchParams({ scope })}`
 }
 
 /** The date `occurrence` stands for, as its entry now has it. */

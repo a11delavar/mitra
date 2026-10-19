@@ -96,6 +96,7 @@ Fare clic sul nome apre la finestra **Informazioni**, che mostra la versione e i
 | `MITRA_PORT` | `3000` | La porta su cui il server è in ascolto. Con Docker, cambia invece il lato host della mappatura delle porte; imposta questa solo quando il processo stesso deve restare in ascolto altrove. L'health check integrato la segue. |
 | `MITRA_LOG_LEVEL` | `info` | [Quanto registra Mitra](logging.md): `error`, `warn`, `info`, `debug` o `trace`. Ogni livello include tutto ciò che è più silenzioso. |
 | `MITRA_UPDATE_CHECK` | *(attivo)* | Impostala su `off` (o `false`, `0`, `no`) per disattivare il [controllo degli aggiornamenti](updates.md). |
+| `MITRA_MCP` | *(attivo)* | Impostala su `off` (o `false`, `0`, `no`) per chiudere l'[indirizzo a cui si collegano gli strumenti di IA](ai-connectors.md). |
 
 ### Promemoria
 

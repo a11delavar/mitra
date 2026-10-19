@@ -9,7 +9,7 @@ import { Relations } from './Relations.js'
 import { DialogEntryScope, type EntryScope } from '../../entries/client/DialogEntryScope.js'
 import { DialogCompleteParent } from './DialogCompleteParent.js'
 import { DialogCloseSubtasks } from './DialogCloseSubtasks.js'
-import { type EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
+import { EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
 
 /**
  * Hierarchy actions and prompt workflows. Computations use {@link Relations} and writes execute via {@link EntryStore.applyPlan}.
@@ -27,7 +27,7 @@ export function resolveScope(entry: Entry, intent: 'edit' | 'move' | 'delete', b
 	const subtasks = hasSubtaskAction && (intent === 'delete' || intent === 'move') ? subtreeSize(entry) : 0
 	const shifts = change && intent !== 'delete' ? Relations.shiftOptionsFor(change) : []
 	if (bypass || (!series && !subtasks && shifts.length < 2)) {
-		return Promise.resolve({ recurrence: series ? 'this' as const : undefined, subtasks: false })
+		return Promise.resolve({ recurrence: series ? EntryOccurrenceChangeScope.This : undefined, subtasks: false })
 	}
 	return new DialogEntryScope({ entry, intent, series, subtasks, shifts }).confirm().catch(() => undefined)
 }

@@ -4,12 +4,12 @@ import { Localizer } from '@3mo/localization'
 import { TimeZone } from '../../features/time/TimeZone.js'
 
 /**
- * What the regional format in force changes, read the way Mitra writes it: dates, times, the week, numbers, the
- * calendar and the names of time zones. Shown under the setting, since a region's differences (Austria's "Jänner",
- * Switzerland's "1'234.5") rarely show in one sample date.
+ * What the locale in force changes, read the way Mitra writes it: dates, times, the week, numbers, the calendar and
+ * the names of time zones. Shown under the setting, since a region's differences (Austria's "Jänner", Switzerland's
+ * "1'234.5") rarely show in one sample date.
  */
-@component('mitra-region-preview')
-export class RegionPreview extends Component {
+@component('mitra-locale-preview')
+export class LocalePreview extends Component {
 	/** The tag in force, so a switch renders this again. */
 	@property() locale = ''
 
@@ -20,7 +20,7 @@ export class RegionPreview extends Component {
 
 	static override get styles() {
 		return css`
-			mitra-region-preview {
+			mitra-locale-preview {
 				display: block;
 
 				> dl {
@@ -28,9 +28,9 @@ export class RegionPreview extends Component {
 					grid-template-columns: max-content minmax(0, 1fr);
 					gap: 0.25rem 1rem;
 					margin: 0;
-					padding: 0.625rem 0.75rem;
-					border-radius: 8px;
-					background: color-mix(in srgb, var(--color-text) 4%, transparent);
+					/* On the label's column, as the setting card lays its details. */
+					padding-block-start: 0.625rem;
+					padding-inline-start: calc(1.375rem + 0.875rem);
 					font-size: 0.75rem;
 
 					> dt {
@@ -64,7 +64,7 @@ export class RegionPreview extends Component {
 			.toZonedDateTime({ timeZone: today.timeZone, plainTime: '13:05' }).epochMilliseconds)
 		const weekday = (dayOfWeek: number) => Temporal.PlainDate.from('2024-01-01').add({ days: dayOfWeek - 1 }).toLocaleString(String(locale), { weekday: 'long' })
 		const week = locale.getWeekInfo()
-		const zones = [...new Set([TimeZone.deviceId, ...RegionPreview.zones].map(id => TimeZone.of(id)))]
+		const zones = [...new Set([TimeZone.deviceId, ...LocalePreview.zones].map(id => TimeZone.of(id)))]
 			.map(zone => zone.name(locale))
 		return html`<dl>
 				<dt>${t('Date')}</dt>
@@ -87,6 +87,6 @@ export class RegionPreview extends Component {
 
 declare global {
 	interface HTMLElementTagNameMap {
-		'mitra-region-preview': RegionPreview
+		'mitra-locale-preview': LocalePreview
 	}
 }
