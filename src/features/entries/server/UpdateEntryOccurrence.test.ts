@@ -1,16 +1,13 @@
 import { describe, it, before, beforeEach, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { createEvent, editOccurrence, settleTimeZone } from '../../../infrastructure/http/Api.js'
-import { OperationServer, type SentEntry as Row } from '../../../infrastructure/operations/OperationServer.testing.js'
-import { Recurrence } from '../../recurrence/Recurrence.js'
-import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
-import type { EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
+import { Recurrence, RecurrenceFrequency, type EntryOccurrence, EntryOccurrenceChangeScope } from '#features/recurrence'
+import { createEvent, editOccurrence, settleTimeZone } from '#infrastructure/http/Api.js'
+import { OperationServer, type SentEntry as Row } from '#infrastructure/operations/OperationServer.testing.js'
 import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
 import { EntryTimeZone } from '../EntryTimeZone.js'
 import { iso, midnight, shown, utcMidnight, viewIn, zones } from './viewers.testing.js'
-import { EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
 
 describe('UpdateEntryOccurrence', () => {
 	let server: OperationServer

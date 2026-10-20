@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { Localizer } from '@3mo/localization'
-import en from '../../infrastructure/i18n/en.json' with { type: 'json' }
+import en from '#infrastructure/i18n/en.json' with { type: 'json' }
 import { RecurrenceFrequency } from './RecurrenceFrequency.js'
 
 // The plural phrases live in the English dictionary, not in their keys.

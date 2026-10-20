@@ -1,11 +1,8 @@
-import { fetchIntegrations, getUser, putIntegrationOrder, putSourceOrder, restoreSourceVisibility, soloSource, toggleSourceVisibility } from '../../../infrastructure/http/Api.js'
-import { applyOrder, byOrder } from '../../../infrastructure/model/order.js'
-import { Integration } from '../../../integrations/Integration.js'
-import { IntegrationCapabilities } from '../../../integrations/IntegrationCapabilities.js'
-import { IntegrationOwnership } from '../../../integrations/IntegrationOwnership.js'
+import type { EntryType, Entry } from '#features/entries'
+import { Integration, IntegrationCapabilities, IntegrationOwnership } from '#integrations'
+import { fetchIntegrations, getUser, putIntegrationOrder, putSourceOrder, restoreSourceVisibility, soloSource, toggleSourceVisibility } from '#infrastructure/http/Api.js'
+import { applyOrder, byOrder } from '#infrastructure/model'
 import { type Source } from '../Source.js'
-import { type EntryType } from '../../entries/EntryType.js'
-import { type Entry } from '../../entries/Entry.js'
 
 /** The user's calendars as this device knows them: the integrations and their sources, what each can hold and what it allows. */
 export class Calendars {

@@ -1,5 +1,5 @@
 import * as client from 'openid-client'
-import { createLogger } from '../../../infrastructure/logging/Logger.js'
+import { createLogger } from '#infrastructure/logging/Logger.js'
 import { type IdentityClaims } from '../Identity.js'
 const logger = createLogger('OIDC')
 

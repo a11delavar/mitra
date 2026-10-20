@@ -1,14 +1,13 @@
 import { description, label } from '@a11d/metadata'
 import { converter } from '@a11d/converter'
 import { z } from 'zod'
-import { validation } from '../../../infrastructure/validation/validation.js'
-import { syncEmitter } from '../../../infrastructure/realtime/syncEmitter.js'
-import { NotAllowed } from '../../../infrastructure/validation/NotAllowed.js'
-import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
-import { EntryType, EntryTypes } from '../../entries/EntryType.js'
+import { EntryType, EntryTypes } from '#features/entries'
+import { tool } from '#features/agents/server/tool.js'
+import { validation, NotAllowed } from '#infrastructure/validation'
+import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { Color } from '../Color.js'
 import { Source } from '../Source.js'
-import { tool } from '../../agents/server/tool.js'
 
 class Parameters {
 	@validation(z.string())

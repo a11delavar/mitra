@@ -1,7 +1,7 @@
 import { Component, component, eventListener, html } from '@a11d/lit'
 import { Task } from '@lit/task'
-import { type AccessToken } from '../../identity/AccessToken.js'
-import { ClockController } from '../../time/client/ClockController.js'
+import type { AccessToken } from '#features/identity'
+import { ClockController } from '#features/time/client/ClockController.js'
 import { accessTokenIssued, fetchAccessTokens, revokeAccessToken } from './accessTokens.js'
 
 /** The access tokens the user has given agents, laid out as its setting's list. */

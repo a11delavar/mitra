@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { TimeZone } from '#features/time/TimeZone.js'
 import { EntryTimeZone } from './EntryTimeZone.js'
-import { TimeZone } from '../time/TimeZone.js'
 
 describe('EntryTimeZone', () => {
 	it('reads a zone by its id, keeping the spelling it was written with', () => {

@@ -1,7 +1,7 @@
 import { description, label } from '@a11d/metadata'
-import { isDemo, isDeveloperSystem, isMcpEnabled, isSignedIn } from '../../../infrastructure/environment.js'
-import { http, operation, Operation } from '../../../infrastructure/operations/Operation.js'
-import { FileLimits } from '../../files/server/FileLimits.js'
+import { FileLimits } from '#features/files/server/FileLimits.js'
+import { isDemo, isDeveloperSystem, isMcpEnabled, isSignedIn } from '#infrastructure/environment.js'
+import { http, operation, Operation } from '#infrastructure/operations/Operation.js'
 import { updateChecker } from './updates.js'
 import { runningReleaseUrl } from './changelog.js'
 

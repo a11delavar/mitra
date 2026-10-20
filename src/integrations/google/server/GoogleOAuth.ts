@@ -1,5 +1,5 @@
 import * as client from 'openid-client'
-import { createLogger } from '../../../infrastructure/logging/Logger.js'
+import { createLogger } from '#infrastructure/logging/Logger.js'
 const logger = createLogger('GoogleOAuth')
 
 export interface GoogleOAuthOptions {

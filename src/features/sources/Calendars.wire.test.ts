@@ -6,14 +6,14 @@ import express from 'express'
 import { Api } from '@a11d/api'
 import '@3mo/date-time-value-constructor'
 import { ModelValueConstructor } from '@a11d/api-model-value-constructor'
-import { createIntegration, createSource, deleteIntegration, deleteSource, discoverSources, putIntegrationOrder, putSourceOrder, reimportIntegration, renameSource, toggleSourceVisibility, updateIntegration, updateSourceColor } from '../../infrastructure/http/Api.js'
+import { User } from '#features/identity'
+import { EntryType } from '#features/entries'
+import { MitraCalendar } from '#integrations/mitra/MitraCalendar.js'
+import { IcsSubscription } from '#integrations/ics/IcsSubscription.js'
+import type { Integration } from '#integrations'
+import { createIntegration, createSource, deleteIntegration, deleteSource, discoverSources, putIntegrationOrder, putSourceOrder, reimportIntegration, renameSource, toggleSourceVisibility, updateIntegration, updateSourceColor } from '#infrastructure/http/Api.js'
 import { Calendars } from './client/Calendars.js'
-import { User } from '../identity/User.js'
 import { Source } from './Source.js'
-import { EntryType } from '../entries/EntryType.js'
-import { MitraCalendar } from '../../integrations/mitra/MitraCalendar.js'
-import { IcsSubscription } from '../../integrations/ics/IcsSubscription.js'
-import type { Integration } from '../../integrations/Integration.js'
 import { Color } from './Color.js'
 
 /*
@@ -46,10 +46,10 @@ describe('Integrations and calendars over the wire', () => {
 	let closeOrm: () => Promise<void>
 
 	before(async () => {
-		const { orm } = await import('../../infrastructure/database/orm.js')
-		await import('../../integrations/server/registerEngines.js')
-		const { operationsRouter } = await import('../../infrastructure/operations/Operation.js')
-		await import('../../app/operations.js')
+		const { orm } = await import('#infrastructure/database/orm.js')
+		await import('#integrations/server/registerEngines.js')
+		const { operationsRouter } = await import('#infrastructure/operations/Operation.js')
+		await import('#app/operations.js')
 
 		const em = orm.em.fork()
 		owner = new User({ username: 'owner' })

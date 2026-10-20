@@ -1,10 +1,10 @@
 import { type MikroORM } from '@mikro-orm/sqlite'
-import { syncEmitter } from '../../infrastructure/realtime/syncEmitter.js'
-import { presence } from '../../infrastructure/realtime/presence.js'
+import { Integration } from '#integrations'
+import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { presence } from '#infrastructure/realtime/presence.js'
+import { orm } from '#infrastructure/database/orm.js'
+import { createLogger } from '#infrastructure/logging/Logger.js'
 import { SyncPacer } from './SyncPacer.js'
-import { orm } from '../../infrastructure/database/orm.js'
-import { createLogger } from '../../infrastructure/logging/Logger.js'
-import { Integration } from '../Integration.js'
 
 /**
  * Background sync daemon polling integrations for remote changes.

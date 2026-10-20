@@ -1,5 +1,5 @@
 import { type Converter } from '@a11d/converter'
-import { Type } from '../../infrastructure/model/orm.js'
+import { Type } from '#infrastructure/model'
 import { TimeZone } from './TimeZone.js'
 
 /** A zone the user keeps, with their own name for it if they gave one ("Mom"). */

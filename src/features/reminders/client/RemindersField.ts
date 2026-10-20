@@ -1,11 +1,10 @@
 import { Component, component, html, css, property, state, event, query } from '@a11d/lit'
-import { type Entry } from '../../entries/Entry.js'
-import { type EntryType } from '../../entries/EntryType.js'
-import { Calendars } from '../../sources/client/Calendars.js'
-import { EntryStore } from '../../entries/client/EntryStore.js'
+import type { Menu } from '#design'
+import type { Entry, EntryType } from '#features/entries'
+import { Calendars } from '#features/sources/client/Calendars.js'
+import { EntryStore } from '#features/entries/client/EntryStore.js'
+import '#features/time/TimeSpan.time.js'
 import { enablePushNotifications } from './push.js'
-import { type Menu } from '../../../design/Menu.js'
-import '../../time/TimeSpan.time.js'
 
 type CustomUnit = 'minutes' | 'hours' | 'days' | 'weeks'
 

@@ -1,5 +1,5 @@
 import { html } from '@a11d/lit'
-import { Setting, setting, type SettingStorage } from '../../settings/client/Setting.js'
+import { Setting, setting, type SettingStorage } from '#features/settings/client/Setting.js'
 import { enablePushNotifications, pushSupported } from './push.js'
 
 /** Browser notification permission setting. Uses browser permission state directly. */

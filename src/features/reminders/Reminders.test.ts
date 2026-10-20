@@ -1,13 +1,9 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { EntryTimeZone } from '../entries/EntryTimeZone.js'
 import { type DateTime } from '@3mo/date-time'
-import { EntryType } from '../entries/EntryType.js'
-import { Entry } from '../entries/Entry.js'
-import { TaskStatus } from '../entries/TaskStatus.js'
+import { EntryTimeZone, EntryType, Entry, TaskStatus } from '#features/entries'
+import { Recurrence, RecurrenceFrequency } from '#features/recurrence'
 import { DueReminder } from './Reminders.js'
-import { Recurrence } from '../recurrence/Recurrence.js'
-import { RecurrenceFrequency } from '../recurrence/RecurrenceFrequency.js'
 
 describe('Reminders', () => {
 	const D = (iso: string) => new Date(iso) as unknown as DateTime

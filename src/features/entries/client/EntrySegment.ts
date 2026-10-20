@@ -1,5 +1,5 @@
 import type { DateTime } from '@3mo/date-time'
-import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
+import type { EntryOccurrence } from '#features/recurrence'
 import { SnapSetting } from './SnapSetting.js'
 import { EntryStore } from './EntryStore.js'
 

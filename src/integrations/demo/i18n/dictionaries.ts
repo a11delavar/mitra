@@ -1,5 +1,5 @@
 import { Localizer, type LanguageCode } from '@3mo/localization'
-import { localizeIn } from '../../../infrastructure/i18n/dictionaries.js'
+import { localizeIn } from '#infrastructure/i18n/dictionaries.js'
 import de from './de.json' with { type: 'json' }
 import fr from './fr.json' with { type: 'json' }
 import es from './es.json' with { type: 'json' }

@@ -1,10 +1,9 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { deconstruct } from '@a11d/converter'
+import { EntryFile, EntryFileType } from '#features/entries'
 import { File } from './File.js'
 import { MimeType } from './MimeType.js'
-import { EntryFile } from '../entries/EntryFile.js'
-import { EntryFileType } from '../entries/EntryFileType.js'
 
 const id = 'AAAAAAAAAAAAAAAAAAAAAA'
 const sha256 = 'a'.repeat(64)

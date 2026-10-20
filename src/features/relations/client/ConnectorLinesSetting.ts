@@ -1,4 +1,4 @@
-import { setting, ToggleSetting, type SettingStorage } from '../../settings/client/Setting.js'
+import { setting, ToggleSetting, type SettingStorage } from '#features/settings/client/Setting.js'
 import { EntryConnections } from './EntryConnections.js'
 
 type ConnectionView = 'week' | 'month' | 'timeline'

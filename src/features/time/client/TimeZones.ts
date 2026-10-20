@@ -1,4 +1,4 @@
-import { addTimeZone, getUser, makeHomeTimeZone, removeTimeZone, renameTimeZone, settleTimeZone } from '../../../infrastructure/http/Api.js'
+import { addTimeZone, getUser, makeHomeTimeZone, removeTimeZone, renameTimeZone, settleTimeZone } from '#infrastructure/http/Api.js'
 import { TimeZone } from '../TimeZone.js'
 import { UserTimeZones } from '../UserTimeZones.js'
 

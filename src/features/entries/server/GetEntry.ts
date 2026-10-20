@@ -1,9 +1,9 @@
 import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
-import { validation } from '../../../infrastructure/validation/validation.js'
-import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
-import { attachRelations } from '../../relations/server/relations.js'
-import { tool } from '../../agents/server/tool.js'
+import { attachRelations } from '#features/relations/server/relations.js'
+import { tool } from '#features/agents/server/tool.js'
+import { validation } from '#infrastructure/validation'
+import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { type Entry } from '../Entry.js'
 import { withOverrides } from './entryWindow.js'
 

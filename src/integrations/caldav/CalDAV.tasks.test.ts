@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { TaskStatus } from '#features/entries'
 import { CalDAV } from './CalDAV.js'
-import { TaskStatus } from '../../features/entries/TaskStatus.js'
 
 describe('percentCompleteForICal', () => {
 	it('round-trips an authored percentage instead of deriving one from the status', () => {

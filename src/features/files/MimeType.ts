@@ -1,6 +1,6 @@
 import { type Converter } from '@a11d/converter'
 import { equals } from '@a11d/equals'
-import { Type } from '../../infrastructure/model/orm.js'
+import { Type } from '#infrastructure/model'
 
 const grammar = /^([a-z0-9][a-z0-9!#$&^_.+-]*)\/([a-z0-9][a-z0-9!#$&^_.+-]*)$/
 

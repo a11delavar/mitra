@@ -1,10 +1,9 @@
 import { Component, component, html, property, eventListener, live, type PropertyValues } from '@a11d/lit'
 import { type DataRecord } from '@3mo/data-grid/controller'
-import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
+import { startedInField, startedOnControl, type Checkbox } from '#design'
+import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js'
 import { type Table } from './Table.js'
 import { type TableRow } from './TableRow.js'
-import { startedInField, startedOnControl } from '../../../design/eventOrigin.js'
-import { type Checkbox } from '../../../design/Checkbox.js'
 
 /**
  * One row of the table: an element of its own so the grid's virtualization can empty it while it is

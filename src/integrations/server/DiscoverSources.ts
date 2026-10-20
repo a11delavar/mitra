@@ -1,10 +1,10 @@
 import { description, label } from '@a11d/metadata'
 import { type Request } from 'express'
-import { isDemo } from '../../infrastructure/environment.js'
-import { NotAllowed } from '../../infrastructure/validation/NotAllowed.js'
-import { http, operation, Operation, type OperationContext } from '../../infrastructure/operations/Operation.js'
-import { type Source } from '../../features/sources/Source.js'
-import { Integration, integrationClassFor } from '../Integration.js'
+import type { Source } from '#features/sources'
+import { Integration, integrationClassFor } from '#integrations'
+import { isDemo } from '#infrastructure/environment.js'
+import { NotAllowed } from '#infrastructure/validation'
+import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 
 @operation()
 @label('Discover calendars')

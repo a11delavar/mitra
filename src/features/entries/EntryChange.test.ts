@@ -1,13 +1,12 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { type EntityManager } from '@mikro-orm/core'
+import { Source, type Calendar } from '#features/sources'
+import type { Integration } from '#integrations'
 import { Entry } from './Entry.js'
 import { EntryPatch } from './EntryPatch.js'
 import { EntryType } from './EntryType.js'
 import { EntryRank } from './EntryRank.js'
-import { Source } from '../sources/Source.js'
-import { type Calendar } from '../sources/Calendar.js'
-import { type Integration } from '../../integrations/Integration.js'
 
 describe('EntryChange', () => {
 	const em = { flush: async () => { } } as unknown as EntityManager

@@ -1,6 +1,6 @@
-import { model } from '../../infrastructure/model/model.js'
-import { CalDAV } from '../caldav/CalDAV.js'
-import { integration } from '../Integration.js'
+import { CalDAV } from '#integrations/caldav/CalDAV.js'
+import { integration } from '#integrations'
+import { model } from '#infrastructure/model'
 
 /** Apple Calendar (iCloud) integration using fixed caldav.icloud.com server URL. */
 @model('AppleCalendar')

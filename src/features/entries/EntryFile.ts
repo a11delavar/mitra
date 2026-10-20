@@ -1,7 +1,6 @@
 import { converter } from '@a11d/converter'
-import { entity, property, manyToOne, unique, enum as enumType } from '../../infrastructure/model/orm.js'
-import { equality } from '../../infrastructure/model/Entity.js'
-import { File } from '../files/File.js'
+import { File } from '#features/files/File.js'
+import { entity, property, manyToOne, unique, enum as enumType, equality } from '#infrastructure/model'
 import { Entry } from './Entry.js'
 import { EntryFileType } from './EntryFileType.js'
 

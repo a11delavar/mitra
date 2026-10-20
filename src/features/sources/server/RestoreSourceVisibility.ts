@@ -1,7 +1,7 @@
 import { description, label } from '@a11d/metadata'
-import { syncEmitter } from '../../../infrastructure/realtime/syncEmitter.js'
-import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
-import { User } from '../../identity/User.js'
+import { User } from '#features/identity'
+import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 
 @operation()
 @label('Restore calendar visibility')

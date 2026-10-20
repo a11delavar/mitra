@@ -3,6 +3,22 @@
 	"license": "AGPL-3.0-only",
 	"version": "0.6.0",
 	"type": "module",
+	"imports": {
+		"#design": "./src/design/index.ts",
+		"#features/entries": "./src/features/entries/index.ts",
+		"#features/identity": "./src/features/identity/index.ts",
+		"#features/recurrence": "./src/features/recurrence/index.ts",
+		"#features/relations": "./src/features/relations/index.ts",
+		"#features/sources": "./src/features/sources/index.ts",
+		"#infrastructure/model": "./src/infrastructure/model/index.ts",
+		"#infrastructure/validation": "./src/infrastructure/validation/index.ts",
+		"#integrations": "./src/integrations/index.ts",
+		"#app/*": "./src/app/*",
+		"#design/*": "./src/design/*",
+		"#features/*": "./src/features/*",
+		"#infrastructure/*": "./src/infrastructure/*",
+		"#integrations/*": "./src/integrations/*"
+	},
 	"scripts": {
 		"start": "node ./scripts/dev.ts",
 		"test": "node ./scripts/test.ts && node --test \"out_test/**/*.test.js\"",

@@ -1,11 +1,11 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
 import { Entry } from './Entry.js'
 import { EntryType } from './EntryType.js'
 import { TaskStatus } from './TaskStatus.js'
 import { Transparency } from './Transparency.js'
 import { Visibility } from './Visibility.js'
-import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
 
 // RFC 5545's STATUS, TRANSP and CLASS: one instance per code, sent and stored as the code.
 describe('Entry codes', () => {

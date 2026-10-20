@@ -1,5 +1,5 @@
-import '../../time/TimeSpan.time.js'
-import { ChoiceSetting, setting, userStorage } from '../../settings/client/Setting.js'
+import '#features/time/TimeSpan.time.js'
+import { ChoiceSetting, setting, userStorage } from '#features/settings/client/Setting.js'
 
 /**
  * Grid snap granularity in minutes for time edits and gestures.

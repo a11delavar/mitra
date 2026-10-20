@@ -1,6 +1,6 @@
 import { description, label } from '@a11d/metadata'
 import { type Request } from 'express'
-import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
+import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { type MigrationPlan } from '../MigrationPlan.js'
 import { IcsImport } from './IcsImport.js'
 

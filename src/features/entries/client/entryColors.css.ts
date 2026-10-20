@@ -1,5 +1,5 @@
 import { css } from '@a11d/lit'
-import { contrastColorOf } from '../../../design/contrastColor.js'
+import { contrastColorOf } from '#design'
 
 /**
  * The colors an entry's surfaces derive from `--mitra-entry-segment-color`. Whatever hosts an entry's editor declares

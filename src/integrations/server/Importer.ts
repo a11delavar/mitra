@@ -1,8 +1,8 @@
 import { type EntityManager } from '@mikro-orm/sqlite'
-import { syncEmitter } from '../../infrastructure/realtime/syncEmitter.js'
-import { createLogger } from '../../infrastructure/logging/Logger.js'
-import { Source } from '../../features/sources/Source.js'
-import { Integration } from '../Integration.js'
+import { Source } from '#features/sources'
+import { Integration } from '#integrations'
+import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { createLogger } from '#infrastructure/logging/Logger.js'
 
 /**
  * Background importer draining entries for newly enabled sources without blocking the API request.

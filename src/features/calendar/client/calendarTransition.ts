@@ -1,4 +1,4 @@
-import type { EntrySegmentComponent } from '../../entries/client/EventSegment.js'
+import type { EntrySegmentComponent } from '#features/entries/client/EventSegment.js'
 
 /**
  * Scoped view transition orchestration for calendar navigation and source visibility changes.

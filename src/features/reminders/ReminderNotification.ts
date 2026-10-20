@@ -3,8 +3,8 @@
  * the entry's time, never a countdown: a shown notification is never re-rendered, and Android counts down from `timestamp`.
  */
 
-import { localizeIn } from '../../infrastructure/i18n/dictionaries.js'
-import { TimeZone } from '../time/TimeZone.js'
+import { TimeZone } from '#features/time/TimeZone.js'
+import { localizeIn } from '#infrastructure/i18n/dictionaries.js'
 
 const MINUTE = 60_000
 

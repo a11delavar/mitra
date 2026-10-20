@@ -1,6 +1,6 @@
 import { Component, component, html, css, property, state, query, event, type PropertyValues } from '@a11d/lit'
 import { DialogComponent, DialogActionKey, type ApplicationTopLayer } from '@a11d/lit-application'
-import { Mitra } from '../app/Mitra.js'
+import { Mitra } from '#app/Mitra.js'
 import './Button.js'
 import './IconButton.js'
 import { fieldChromeRestored } from './fieldChrome.css.js'

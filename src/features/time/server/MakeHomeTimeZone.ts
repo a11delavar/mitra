@@ -1,5 +1,5 @@
 import { description, label } from '@a11d/metadata'
-import { http, operation } from '../../../infrastructure/operations/Operation.js'
+import { http, operation } from '#infrastructure/operations/Operation.js'
 import { type TimeZone } from '../TimeZone.js'
 import { type UserTimeZones } from '../UserTimeZones.js'
 import { ChangeTimeZones, TimeZoneParameters } from './ChangeTimeZones.js'

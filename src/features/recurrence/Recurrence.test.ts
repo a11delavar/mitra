@@ -2,9 +2,9 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Localizer } from '@3mo/localization'
-import en from '../../infrastructure/i18n/en.json' with { type: 'json' }
+import en from '#infrastructure/i18n/en.json' with { type: 'json' }
+import type { ValidationError } from '#infrastructure/validation'
 import { Recurrence } from './Recurrence.js'
-import { type ValidationError } from '../../infrastructure/validation/ValidationError.js'
 import { RecurrenceEnd } from './RecurrenceEnd.js'
 import { RecurrenceFrequency } from './RecurrenceFrequency.js'
 import { RecurrenceWeekday } from './RecurrenceWeekday.js'

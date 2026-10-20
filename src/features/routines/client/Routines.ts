@@ -1,9 +1,9 @@
 import { type DateTime } from '@3mo/date-time'
-import { type Entry } from '../../entries/Entry.js'
-import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
-import { type EntrySegment } from '../../entries/client/EntrySegment.js'
-import { EntrySegments } from '../../entries/client/EntrySegments.js'
-import { EntryStore } from '../../entries/client/EntryStore.js'
+import type { Entry } from '#features/entries'
+import type { EntryOccurrence } from '#features/recurrence'
+import { type EntrySegment } from '#features/entries/client/EntrySegment.js'
+import { EntrySegments } from '#features/entries/client/EntrySegments.js'
+import { EntryStore } from '#features/entries/client/EntryStore.js'
 
 /** The row unit a grid view stacks: the month view a strip of weeks, the year view a strip of months. */
 export type RoutineUnit = 'week' | 'month'

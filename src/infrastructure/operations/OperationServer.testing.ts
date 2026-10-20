@@ -4,15 +4,14 @@ import express from 'express'
 import { Api } from '@a11d/api'
 import '@3mo/date-time-value-constructor'
 import { ModelValueConstructor } from '@a11d/api-model-value-constructor'
-import { User } from '../../features/identity/User.js'
-import { Source } from '../../features/sources/Source.js'
-import { Entry } from '../../features/entries/Entry.js'
-import { EntryType } from '../../features/entries/EntryType.js'
-import { staleTabs } from '../../features/entries/server/staleTabs.js'
-import { MitraCalendar } from '../../integrations/mitra/MitraCalendar.js'
-import '../../integrations/server/registerEngines.js'
-import { errorHandler } from '../http/errorHandler.js'
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client'
+import { User } from '#features/identity'
+import { Source } from '#features/sources'
+import { Entry, EntryType } from '#features/entries'
+import { staleTabs } from '#features/entries/server/staleTabs.js'
+import { MitraCalendar } from '#integrations/mitra/MitraCalendar.js'
+import '#integrations/server/registerEngines.js'
+import { errorHandler } from '#infrastructure/http/errorHandler.js'
 
 /** An entry as the API sends it, as the tests read one: dates as UTC instants, its rule as an object. */
 export interface SentEntry {
@@ -46,11 +45,11 @@ export interface ToolCall {
 export class OperationServer {
 	static async start() {
 		// After the test file has loaded: the database opens on import.
-		const { orm } = await import('../database/orm.js')
+		const { orm } = await import('#infrastructure/database/orm.js')
 		const { operationsRouter } = await import('./Operation.js')
-		const { mcpRouter } = await import('../../features/agents/server/mcp.js')
-		const { accessTokenMiddleware } = await import('../../features/identity/server/accessTokenMiddleware.js')
-		await import('../../app/operations.js')
+		const { mcpRouter } = await import('#features/agents/server/mcp.js')
+		const { accessTokenMiddleware } = await import('#features/identity/server/accessTokenMiddleware.js')
+		await import('#app/operations.js')
 
 		const em = orm.em.fork()
 		const user = new User({ username: 'account-owner' })

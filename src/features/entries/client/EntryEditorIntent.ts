@@ -1,5 +1,5 @@
+import type { EntryOccurrence } from '#features/recurrence'
 import { type Entry } from '../Entry.js'
-import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
 import { EntryStore } from './EntryStore.js'
 
 /**

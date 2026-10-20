@@ -1,15 +1,12 @@
 import { beforeEach, describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { Entry } from '../../entries/Entry.js'
-import { TaskStatus } from '../../entries/TaskStatus.js'
-import { EntryType } from '../../entries/EntryType.js'
-import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
-import { EntryStore } from '../../entries/client/EntryStore.js'
-import { Recurrence } from '../../recurrence/Recurrence.js'
+import { Entry, TaskStatus, EntryType } from '#features/entries'
+import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js'
+import { EntryStore } from '#features/entries/client/EntryStore.js'
+import { Recurrence, RecurrenceFrequency } from '#features/recurrence'
 import { TableWindow } from './TableWindow.js'
 import { TableRow, TableFilter, type TableFacet } from './TableRow.js'
-import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
 
 describe('TableRow', () => {
 	const day = new DateTime('2026-08-19T00:00:00')

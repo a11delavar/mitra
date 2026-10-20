@@ -1,7 +1,7 @@
+import { Command } from '#features/commands/Command.js'
+import { DialogSourceMigration } from '#features/migration/client/DialogSourceMigration.js'
 import { type Source } from '../Source.js'
 import { Calendars } from './Calendars.js'
-import { Command } from '../../commands/Command.js'
-import { DialogSourceMigration } from '../../migration/client/DialogSourceMigration.js'
 
 class ShowOnlySource extends Command {
 	constructor(private readonly source: Source) {

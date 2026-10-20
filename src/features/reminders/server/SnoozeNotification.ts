@@ -1,7 +1,7 @@
 import { description, label } from '@a11d/metadata'
 import { type Request } from 'express'
-import { ValidationError } from '../../../infrastructure/validation/ValidationError.js'
-import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
+import { ValidationError } from '#infrastructure/validation'
+import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { ReminderNotification } from '../ReminderNotification.js'
 import { sendTo } from './push.js'
 

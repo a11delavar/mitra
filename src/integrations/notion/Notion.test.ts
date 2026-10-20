@@ -1,17 +1,11 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { EntryTimeZone } from '../../features/entries/EntryTimeZone.js'
+import { EntryTimeZone, Entry, TaskStatus, EntryType } from '#features/entries'
+import { Source, Color } from '#features/sources'
+import { Relation, EntryRelations, RelationType } from '#features/relations'
+import { asBrowser, wireOf } from '#infrastructure/model/wire.testing.js'
 import { Notion } from './Notion.js'
-import { Entry } from '../../features/entries/Entry.js'
-import { TaskStatus } from '../../features/entries/TaskStatus.js'
-import { EntryType } from '../../features/entries/EntryType.js'
-import { Source } from '../../features/sources/Source.js'
-import { Relation } from '../../features/relations/Relation.js'
-import { EntryRelations } from '../../features/relations/EntryRelations.js'
-import { RelationType } from '../../features/relations/RelationType.js'
 import { type NotionDataSource, type NotionPage } from './NotionClient.js'
-import { asBrowser, wireOf } from '../../infrastructure/model/wire.testing.js'
-import { Color } from '../../features/sources/Color.js'
 
 type DateTime = import('@3mo/date-time').DateTime
 const D = (iso: string) => new Date(iso) as unknown as DateTime

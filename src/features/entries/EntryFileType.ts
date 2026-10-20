@@ -1,5 +1,5 @@
 import { type Converter } from '@a11d/converter'
-import { Type } from '../../infrastructure/model/orm.js'
+import { Type } from '#infrastructure/model'
 
 export type EntryFileTypeCode = 'attachment'
 

@@ -1,11 +1,11 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
 import { Entry } from './Entry.js'
 import { EntryType } from './EntryType.js'
 import { EntryFiles } from './EntryFiles.js'
 import { EntryFile } from './EntryFile.js'
 import { EntryFileType } from './EntryFileType.js'
-import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
 
 const id = 'AAAAAAAAAAAAAAAAAAAAAA'
 const sha256 = 'a'.repeat(64)

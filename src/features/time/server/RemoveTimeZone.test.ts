@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { addTimeZone, removeTimeZone, settleTimeZone } from '../../../infrastructure/http/Api.js'
-import { OperationServer } from '../../../infrastructure/operations/OperationServer.testing.js'
+import { addTimeZone, removeTimeZone, settleTimeZone } from '#infrastructure/http/Api.js'
+import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
 
 describe('RemoveTimeZone', () => {
 	let server: OperationServer

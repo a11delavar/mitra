@@ -1,9 +1,7 @@
 import { converter } from '@a11d/converter'
-import { model } from '../../infrastructure/model/model.js'
-import { Entity, identity, equality } from '../../infrastructure/model/Entity.js'
-import { entity, primaryKey, property, manyToOne } from '../../infrastructure/model/orm.js'
-import { Integration } from '../../integrations/Integration.js'
-import { EntryType, EntryTypes } from '../entries/EntryType.js'
+import { EntryType, EntryTypes } from '#features/entries'
+import { Integration } from '#integrations'
+import { model, Entity, identity, equality, entity, primaryKey, property, manyToOne } from '#infrastructure/model'
 import { Color } from './Color.js'
 
 @model('Source')

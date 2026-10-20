@@ -1,8 +1,8 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { createIntegration } from '../../infrastructure/http/Api.js'
-import { OperationServer } from '../../infrastructure/operations/OperationServer.testing.js'
-import { Demo } from '../demo/Demo.js'
+import { Demo } from '#integrations/demo/Demo.js'
+import { createIntegration } from '#infrastructure/http/Api.js'
+import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
 
 describe('ConnectIntegration', () => {
 	let server: OperationServer

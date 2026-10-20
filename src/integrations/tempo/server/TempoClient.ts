@@ -1,4 +1,4 @@
-import { createLogger } from '../../../infrastructure/logging/Logger.js'
+import { createLogger } from '#infrastructure/logging/Logger.js'
 import { type TempoWorklog } from '../Tempo.js'
 
 const logger = createLogger('Tempo')

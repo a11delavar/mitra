@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { reimportSource } from '../../../infrastructure/http/Api.js'
-import { OperationServer } from '../../../infrastructure/operations/OperationServer.testing.js'
+import { reimportSource } from '#infrastructure/http/Api.js'
+import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
 
 describe('ReimportSource', () => {
 	let server: OperationServer

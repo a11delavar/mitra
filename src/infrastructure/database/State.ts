@@ -1,5 +1,5 @@
 import { type EntityManager } from '@mikro-orm/core'
-import { entity, primaryKey, property } from '../model/orm.js'
+import { entity, primaryKey, property } from '#infrastructure/model'
 
 /** Key-value store for instance metadata and state in SQLite. */
 @entity()

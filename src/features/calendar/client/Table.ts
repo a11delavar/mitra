@@ -2,15 +2,15 @@ import { Component, component, html, css, property, state, event, eventListener,
 import { DateTime } from '@3mo/date-time'
 import { observeResize } from '@3mo/resize-observer'
 import { DataGridController, type DataGridColumn, DataGridSelectability, DataGridSelectionBehaviorOnDataChange, DataGridSortingStrategy } from '@3mo/data-grid/controller'
-import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
-import { Availability } from '../../availability/client/Availability.js'
+import { startedInField } from '#design'
+import type { EntryOccurrence } from '#features/recurrence'
+import { Availability } from '#features/availability/client/Availability.js'
 import { TableWindow } from './TableWindow.js'
 import { TableRow, TableFilter } from './TableRow.js'
 import { tableColumns, widestContentOf, hideable } from './TableColumns.js'
 import './TableRowComponent.js'
 import './TableColumnMenu.js'
 import './TableSelection.js'
-import { startedInField } from '../../../design/eventOrigin.js'
 
 /**
  * The entries of a window as rows: the same continuum the grids draw, listed for sorting, filtering

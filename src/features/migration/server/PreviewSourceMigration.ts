@@ -1,7 +1,7 @@
 import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
-import { validation } from '../../../infrastructure/validation/validation.js'
-import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
+import { validation } from '#infrastructure/validation'
+import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { type MigrationPlan } from '../MigrationPlan.js'
 import { MigrationOptions, SourceMigration } from './SourceMigration.js'
 

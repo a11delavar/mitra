@@ -1,17 +1,11 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { EntryTimeZone } from '../../../features/entries/EntryTimeZone.js'
 import { DateTime } from '@3mo/date-time'
-import { Source } from '../../../features/sources/Source.js'
-import { Entry } from '../../../features/entries/Entry.js'
-import { Transparency } from '../../../features/entries/Transparency.js'
-import { Visibility } from '../../../features/entries/Visibility.js'
-import { EntryType, EntryTypes } from '../../../features/entries/EntryType.js'
-import { Recurrence } from '../../../features/recurrence/Recurrence.js'
+import { EntryTimeZone, Entry, Transparency, Visibility, EntryType, EntryTypes } from '#features/entries'
+import { Source } from '#features/sources'
+import { Recurrence, RecurrenceFrequency, RecurrenceWeekday } from '#features/recurrence'
 import { CalDAV } from '../CalDAV.js'
 import { CalDAVAvailability } from './CalDAVAvailability.js'
-import { RecurrenceFrequency } from '../../../features/recurrence/RecurrenceFrequency.js'
-import { RecurrenceWeekday } from '../../../features/recurrence/RecurrenceWeekday.js'
 
 const calendars = new Set(['work', 'personal'])
 

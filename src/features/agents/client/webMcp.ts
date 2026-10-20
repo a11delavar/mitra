@@ -1,4 +1,4 @@
-import { getMeta } from '../../../infrastructure/http/Api.js'
+import { getMeta } from '#infrastructure/http/Api.js'
 import { mcpAddress } from './accessTokens.js'
 
 /** What WebMCP asks of a tool (`document.modelContext`, a Chromium origin trial). */

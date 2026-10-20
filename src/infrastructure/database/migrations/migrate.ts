@@ -1,6 +1,6 @@
 import { MikroORM } from '@mikro-orm/sqlite'
-import { User } from '../../../features/identity/User.js'
-import { createLogger } from '../../logging/Logger.js'
+import { User } from '#features/identity'
+import { createLogger } from '#infrastructure/logging/Logger.js'
 import { ormConfig } from '../ormConfig.js'
 import { migrations, nameOf } from './index.js'
 

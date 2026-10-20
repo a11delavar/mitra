@@ -1,10 +1,10 @@
 import { Component, component, css, html, property, state, bind } from '@a11d/lit'
-import { type EntrySegment } from '../../entries/client/EntrySegment.js'
-import { EntryEditorAnchor } from '../../entries/client/EntryEditorAnchor.js'
-import { EntryStore } from '../../entries/client/EntryStore.js'
-import { entryColors } from '../../entries/client/entryColors.css.js'
+import { type EntrySegment } from '#features/entries/client/EntrySegment.js'
+import { EntryEditorAnchor } from '#features/entries/client/EntryEditorAnchor.js'
+import { EntryStore } from '#features/entries/client/EntryStore.js'
+import { entryColors } from '#features/entries/client/entryColors.css.js'
+import { Calendars } from '#features/sources/client/Calendars.js'
 import { Availability } from './Availability.js'
-import { Calendars } from '../../sources/client/Calendars.js'
 
 /**
  * One day's slice of an availability entry: a tinted window, with its label along the day's end edge if it says something. The editor sits in the window, which is what it anchors at: the element itself has no box.

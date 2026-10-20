@@ -1,9 +1,8 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { Entry, EntryType } from '#features/entries'
+import { Integration } from '#integrations'
 import { Tempo, type TempoIssue, type TempoWorklog } from './Tempo.js'
-import { Entry } from '../../features/entries/Entry.js'
-import { EntryType } from '../../features/entries/EntryType.js'
-import { Integration } from '../Integration.js'
 
 const issue: TempoIssue = { key: 'ACME-1234', summary: 'Fix the parser' }
 const BERLIN = 'Europe/Berlin'

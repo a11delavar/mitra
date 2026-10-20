@@ -1,15 +1,13 @@
 import { component, html, css, ifDefined, state } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { Localizer } from '@3mo/localization'
-import { fetchReleases, getMeta, getUser, isBundleStale, setSeenVersion } from '../../../infrastructure/http/Api.js'
+import { activated, focusRing, scrollbar } from '#design'
+import { fetchReleases, getMeta, getUser, isBundleStale, setSeenVersion } from '#infrastructure/http/Api.js'
 import { type ChangelogSection } from '../Changelog.js'
 import { Release, type ReleaseFolder } from '../Release.js'
 import { ReleaseNotes } from '../ReleaseNotes.js'
 import { ReleaseNotesComponent } from './ReleaseNotesComponent.js'
 import { releaseColors } from '../releaseNotes.css.js'
-import { activated } from '../../../design/activated.css.js'
-import { focusRing } from '../../../design/focusRing.css.js'
-import { scrollbar } from '../../../design/scrollbar.css.js'
 const repository = 'https://github.com/a11delavar/mitra'
 
 /**

@@ -1,10 +1,8 @@
 import { describe, it } from 'node:test'
 import { DateTimeRange } from '@3mo/date-time'
 import assert from 'node:assert/strict'
-import { EntryTimeZone } from '../entries/EntryTimeZone.js'
+import { EntryTimeZone, EntryType, Entry } from '#features/entries'
 import { Recurrence } from './Recurrence.js'
-import { EntryType } from '../entries/EntryType.js'
-import { Entry } from '../entries/Entry.js'
 import { RecurrenceSet } from './RecurrenceSet.js'
 import { RecurrenceFrequency } from './RecurrenceFrequency.js'
 

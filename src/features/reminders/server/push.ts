@@ -1,8 +1,8 @@
 import webpush from 'web-push'
-import { createLogger } from '../../../infrastructure/logging/Logger.js'
-import { orm } from '../../../infrastructure/database/orm.js'
+import { createLogger } from '#infrastructure/logging/Logger.js'
+import { orm } from '#infrastructure/database/orm.js'
+import { State } from '#infrastructure/database/State.js'
 import { NotificationSubscription } from '../NotificationSubscription.js'
-import { State } from '../../../infrastructure/database/State.js'
 import type { ReminderNotification } from '../ReminderNotification.js'
 
 const logger = createLogger('Push')

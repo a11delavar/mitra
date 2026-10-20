@@ -1,4 +1,4 @@
-import { type Source } from '../features/sources/Source.js'
+import type { Source } from '#features/sources'
 
 type Init = {
 	readonly entries?: Partial<IntegrationCapabilities['entries']>

@@ -1,6 +1,6 @@
 import { type EntityManager } from '@mikro-orm/core'
-import { type Entry } from '../entries/Entry.js'
-import { type Integration } from '../../integrations/Integration.js'
+import type { Entry } from '#features/entries'
+import type { Integration } from '#integrations'
 
 /** Which of an entry's occurrences an edit or delete through one of them reaches. */
 export enum EntryOccurrenceChangeScope {

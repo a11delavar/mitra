@@ -1,14 +1,13 @@
 import { Component, component, html, css, property, event, type PropertyValues } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
-import { type Entry } from '../../entries/Entry.js'
-import { TaskStatus } from '../../entries/TaskStatus.js'
-import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
-import { EntryStore, reportSaveError } from '../../entries/client/EntryStore.js'
-import { updateEvent } from '../../../infrastructure/http/Api.js'
-import { Calendars } from '../../sources/client/Calendars.js'
+import { pressable } from '#design'
+import { type Entry, TaskStatus } from '#features/entries'
+import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js'
+import { EntryStore, reportSaveError } from '#features/entries/client/EntryStore.js'
+import { Calendars } from '#features/sources/client/Calendars.js'
+import '#features/entries/client/TaskStatus.js'
+import { updateEvent } from '#infrastructure/http/Api.js'
 import { offerFollowUps } from './Hierarchy.js'
-import '../../entries/client/TaskStatus.js'
-import { pressable } from '../../../design/pressable.css.js'
 
 /**
  * Another entry, named where one entry points at it: a task's status, which can be changed right here,

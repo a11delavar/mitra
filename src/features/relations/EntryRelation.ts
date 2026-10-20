@@ -1,9 +1,9 @@
-import { entity, primaryKey, property, manyToOne, index } from '../../infrastructure/model/orm.js'
-import { Entry } from '../entries/Entry.js'
+import type { EntityManager } from '@mikro-orm/core'
+import { Entry } from '#features/entries'
+import { entity, primaryKey, property, manyToOne, index } from '#infrastructure/model'
 import { EntryRelations } from './EntryRelations.js'
 import { Relation } from './Relation.js'
 import { RelationType } from './RelationType.js'
-import type { EntityManager } from '@mikro-orm/core'
 
 /** One row per outgoing relationship, indexed by `targetUid` for reverse queries. Target UIDs have no foreign key, so targets may dangle. */
 @entity()

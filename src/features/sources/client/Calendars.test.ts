@@ -1,10 +1,10 @@
 import { describe, it, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
+import { EntryType } from '#features/entries'
+import { MitraCalendar } from '#integrations/mitra/MitraCalendar.js'
+import { IcsSubscription } from '#integrations/ics/IcsSubscription.js'
 import { Calendars } from './Calendars.js'
 import { Source } from '../Source.js'
-import { EntryType } from '../../entries/EntryType.js'
-import { MitraCalendar } from '../../../integrations/mitra/MitraCalendar.js'
-import { IcsSubscription } from '../../../integrations/ics/IcsSubscription.js'
 
 const source = (id: string, init: Partial<Source> = {}) =>
 	new Source({ id, uri: `calendar/${id}`, name: id, entryTypes: [EntryType.Event, EntryType.Task], enabled: true, hidden: false, ...init })

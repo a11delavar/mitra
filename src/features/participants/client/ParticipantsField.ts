@@ -1,10 +1,10 @@
 import { Component, component, html, css, property, state, event, query, bind } from '@a11d/lit'
+import type { Menu } from '#design'
+import type { Entry } from '#features/entries'
+import { Calendars } from '#features/sources/client/Calendars.js'
 import { ParticipantRole, type Participants, type Participant } from '../Participant.js'
-import { type Entry } from '../../entries/Entry.js'
-import { Calendars } from '../../sources/client/Calendars.js'
 import './ParticipantAvatar.js'
 import './ParticipantFaces.js'
-import { type Menu } from '../../../design/Menu.js'
 
 /**
  * Entry editor participants field supporting batch actions, role toggling, attendee uninviting, and collapse/expand.

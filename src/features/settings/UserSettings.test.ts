@@ -1,8 +1,8 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { User } from '#features/identity'
+import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
 import { UserSettings } from './UserSettings.js'
-import { User } from '../identity/User.js'
-import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
 
 describe('UserSettings', () => {
 	describe('sanitize', () => {

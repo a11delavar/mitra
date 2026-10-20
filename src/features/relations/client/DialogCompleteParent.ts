@@ -1,6 +1,6 @@
 import { component, html, css } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
-import { type Entry } from '../../entries/Entry.js'
+import type { Entry } from '#features/entries'
 
 /**
  * Prompts whether to mark completed parent tasks when their final subtasks finish.

@@ -1,6 +1,6 @@
 import { component, html, css, state, bind } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
-import { AccessTokenScope } from '../../identity/AccessToken.js'
+import { AccessTokenScope } from '#features/identity'
 import { createAccessToken } from './accessTokens.js'
 
 /** Asks what a new access token is for and what it may do, and makes it, answering its name and the token itself. */

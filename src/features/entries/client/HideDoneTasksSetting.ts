@@ -1,5 +1,5 @@
-import { setting, ToggleSetting, userStorage, type SettingStorage } from '../../settings/client/Setting.js'
-import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
+import { setting, ToggleSetting, userStorage, type SettingStorage } from '#features/settings/client/Setting.js'
+import type { EntryOccurrence } from '#features/recurrence'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 import { EntryStore } from './EntryStore.js'
 

@@ -1,9 +1,9 @@
 import { Component, component, html, css, property, state, event, query, repeat } from '@a11d/lit'
-import { File } from '../../files/File.js'
+import { File } from '#features/files/File.js'
+import { Calendars } from '#features/sources/client/Calendars.js'
+import { getMeta, uploadFile } from '#infrastructure/http/Api.js'
 import { type EntryFile } from '../EntryFile.js'
 import { type Entry } from '../Entry.js'
-import { Calendars } from '../../sources/client/Calendars.js'
-import { getMeta, uploadFile } from '../../../infrastructure/http/Api.js'
 import { EntryStore, reportSaveError } from './EntryStore.js'
 
 /** A file on its way up to `entry`, keyed as its row will be once it is in, so the row keeps its element and never animates in twice. */

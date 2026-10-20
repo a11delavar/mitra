@@ -1,8 +1,6 @@
 import { converter } from '@a11d/converter'
-import { User } from '../identity/User.js'
-import { model } from '../../infrastructure/model/model.js'
-import { entity, primaryKey, property, manyToOne, unique } from '../../infrastructure/model/orm.js'
-import { withheld } from '../../infrastructure/model/withheld.js'
+import { User } from '#features/identity'
+import { model, entity, primaryKey, property, manyToOne, unique, withheld } from '#infrastructure/model'
 import { type DeviceFacts } from './DeviceFacts.js'
 
 type PushKeys = { p256dh: string, auth: string }

@@ -1,7 +1,6 @@
 import { Controller, type Component } from '@a11d/lit'
+import { haptic, startedInOverlay } from '#design'
 import { TimeZones } from './TimeZones.js'
-import { haptic } from '../../../design/haptics.js'
-import { startedInOverlay } from '../../../design/eventOrigin.js'
 
 /** Absent until the user folds deliberately; until then the viewport decides. */
 const STORAGE_KEY = 'Mitra.TimeZones.Folded'

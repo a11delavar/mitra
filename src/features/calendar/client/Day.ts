@@ -1,10 +1,10 @@
 import { Component, component, html, property, css, repeat, styleMap } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
-import type { EntrySegment } from '../../entries/client/EntrySegment.js'
-import { EntryStore } from '../../entries/client/EntryStore.js'
-import { Availability, type AvailabilityPlacement } from '../../availability/client/Availability.js'
-import '../../entries/client/EventSegment.js'
-import '../../availability/client/AvailabilitySegment.js'
+import type { EntrySegment } from '#features/entries/client/EntrySegment.js'
+import { EntryStore } from '#features/entries/client/EntryStore.js'
+import { Availability, type AvailabilityPlacement } from '#features/availability/client/Availability.js'
+import '#features/entries/client/EventSegment.js'
+import '#features/availability/client/AvailabilitySegment.js'
 
 @component('mitra-day')
 export class Day extends Component {

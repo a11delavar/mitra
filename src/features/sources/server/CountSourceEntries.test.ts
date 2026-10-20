@@ -1,10 +1,9 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { countSourceEntries, createEvent } from '../../../infrastructure/http/Api.js'
-import { OperationServer } from '../../../infrastructure/operations/OperationServer.testing.js'
-import { Entry } from '../../entries/Entry.js'
-import { EntryType } from '../../entries/EntryType.js'
+import { Entry, EntryType } from '#features/entries'
+import { countSourceEntries, createEvent } from '#infrastructure/http/Api.js'
+import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
 
 describe('CountSourceEntries', () => {
 	let server: OperationServer

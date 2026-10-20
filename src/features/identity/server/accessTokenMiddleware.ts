@@ -1,7 +1,7 @@
 import { type RequestHandler } from 'express'
+import { orm } from '#infrastructure/database/orm.js'
 import { User } from '../User.js'
 import { AccessToken } from '../AccessToken.js'
-import { orm } from '../../../infrastructure/database/orm.js'
 
 /**
  * Signs an agent in by the access token it sends (`Authorization: Bearer`), as the user who made it, in every mode; a token

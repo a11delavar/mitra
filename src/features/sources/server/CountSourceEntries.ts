@@ -1,8 +1,8 @@
 import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
-import { validation } from '../../../infrastructure/validation/validation.js'
-import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
-import { Entry } from '../../entries/Entry.js'
+import { Entry } from '#features/entries'
+import { validation } from '#infrastructure/validation'
+import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 
 class Parameters {
 	@validation(z.string())

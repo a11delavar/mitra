@@ -1,8 +1,6 @@
 import { converter } from '@a11d/converter'
+import { model, entity, primaryKey, property, enum as enumType, manyToOne, withheld } from '#infrastructure/model'
 import { User } from './User.js'
-import { model } from '../../infrastructure/model/model.js'
-import { entity, primaryKey, property, enum as enumType, manyToOne } from '../../infrastructure/model/orm.js'
-import { withheld } from '../../infrastructure/model/withheld.js'
 
 /** What an access token lets an agent do: read, or read and write. */
 export enum AccessTokenScope {

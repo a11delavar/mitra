@@ -1,14 +1,13 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { MikroORM, type EntityManager } from '@mikro-orm/sqlite'
+import { User } from '#features/identity'
+import { Session } from '#features/identity/server/Session.js'
+import { Source } from '#features/sources'
+import { Entry, EntryType } from '#features/entries'
+import { NotificationSubscription } from '#features/reminders/NotificationSubscription.js'
+import { MitraCalendar } from '#integrations/mitra/MitraCalendar.js'
 import { ormConfig } from './ormConfig.js'
-import { User } from '../../features/identity/User.js'
-import { Session } from '../../features/identity/server/Session.js'
-import { Source } from '../../features/sources/Source.js'
-import { Entry } from '../../features/entries/Entry.js'
-import { EntryType } from '../../features/entries/EntryType.js'
-import { NotificationSubscription } from '../../features/reminders/NotificationSubscription.js'
-import { MitraCalendar } from '../../integrations/mitra/MitraCalendar.js'
 
 const changes = (em: EntityManager) => {
 	em.getUnitOfWork().computeChangeSets()

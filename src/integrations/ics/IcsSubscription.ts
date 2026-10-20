@@ -1,9 +1,6 @@
 import { converter } from '@a11d/converter'
-import { model } from '../../infrastructure/model/model.js'
-import { Integration, integration } from '../Integration.js'
-import { IntegrationCapabilities } from '../IntegrationCapabilities.js'
-import { IntegrationOwnership } from '../IntegrationOwnership.js'
-import { withheld } from '../../infrastructure/model/withheld.js'
+import { Integration, integration, IntegrationCapabilities, IntegrationOwnership } from '#integrations'
+import { model, withheld } from '#infrastructure/model'
 
 export interface IcsFeed {
 	text: string

@@ -1,11 +1,11 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { EntryType } from '#features/entries'
+import { CalDAV } from '#integrations/caldav/CalDAV.js'
+import { IcsSubscription } from '#integrations/ics/IcsSubscription.js'
+import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
 import { Source } from './Source.js'
 import { Color } from './Color.js'
-import { CalDAV } from '../../integrations/caldav/CalDAV.js'
-import { IcsSubscription } from '../../integrations/ics/IcsSubscription.js'
-import { EntryType } from '../entries/EntryType.js'
-import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
 
 describe('Source.keyOf', () => {
 	it('is the collection URL alone: one collection is ONE source, whatever types it holds', () => {

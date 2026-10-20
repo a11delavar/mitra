@@ -1,6 +1,6 @@
 import { Localizer } from '@3mo/localization'
 import { DateTime } from '@3mo/date-time'
-import { TimeZone } from '../time/TimeZone.js'
+import { TimeZone } from '#features/time/TimeZone.js'
 
 /**
  * The last day a series runs (RFC 5545 UNTIL): a calendar day, stored as UTC midnight of it, whether it arrives as a

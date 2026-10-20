@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { MikroORM } from '@mikro-orm/sqlite'
 import { TSMigrationGenerator } from '@mikro-orm/migrations'
-import { createLogger } from '../../logging/Logger.js'
+import { createLogger } from '#infrastructure/logging/Logger.js'
 import { ormConfig } from '../ormConfig.js'
 import { migrate } from './migrate.js'
 

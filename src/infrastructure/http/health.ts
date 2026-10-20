@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { orm } from '../database/orm.js'
+import { orm } from '#infrastructure/database/orm.js'
 
 export const healthRouter = Router()
 

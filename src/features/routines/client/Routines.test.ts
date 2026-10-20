@@ -1,15 +1,10 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { Entry } from '../../entries/Entry.js'
-import { TaskStatus } from '../../entries/TaskStatus.js'
-import { EntryType } from '../../entries/EntryType.js'
-import { EntryStore } from '../../entries/client/EntryStore.js'
-import { Recurrence } from '../../recurrence/Recurrence.js'
+import { Entry, TaskStatus, EntryType } from '#features/entries'
+import { EntryStore } from '#features/entries/client/EntryStore.js'
+import { Recurrence, EntryOccurrence, RecurrenceFrequency, RecurrenceWeekday } from '#features/recurrence'
 import { Routines, type RoutineUnit } from './Routines.js'
-import { EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
-import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
-import { RecurrenceWeekday } from '../../recurrence/RecurrenceWeekday.js'
 
 describe('Routines', () => {
 	const base = new DateTime().dayStart

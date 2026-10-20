@@ -1,7 +1,7 @@
+import { EntryType } from '#features/entries'
+import { ChoiceSetting, setting, userStorage } from '#features/settings/client/Setting.js'
 import { RemindersField } from './RemindersField.js'
-import { EntryType } from '../../entries/EntryType.js'
 import { ReminderDefaults } from '../ReminderDefaults.js'
-import { ChoiceSetting, setting, userStorage } from '../../settings/client/Setting.js'
 
 /** Default reminder offset for new timed entries, per kind (null = none). */
 export abstract class ReminderSetting extends ChoiceSetting<number | null> {

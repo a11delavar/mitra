@@ -1,5 +1,5 @@
-import { setting, ToggleSetting, userStorage, type SettingStorage } from '../../settings/client/Setting.js'
-import { EntryStore } from '../../entries/client/EntryStore.js'
+import { setting, ToggleSetting, userStorage, type SettingStorage } from '#features/settings/client/Setting.js'
+import { EntryStore } from '#features/entries/client/EntryStore.js'
 
 const stored = userStorage('hideAvailability')
 

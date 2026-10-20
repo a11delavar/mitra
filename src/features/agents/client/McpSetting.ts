@@ -1,6 +1,6 @@
 import { html } from '@a11d/lit'
-import { Setting, setting, type SettingStorage } from '../../settings/client/Setting.js'
-import { getMeta } from '../../../infrastructure/http/Api.js'
+import { Setting, setting, type SettingStorage } from '#features/settings/client/Setting.js'
+import { getMeta } from '#infrastructure/http/Api.js'
 import './McpConnection.js'
 
 /** Where AI tools connect to the calendars (MCP), and the access tokens they connect with. Nothing here is a preference. */

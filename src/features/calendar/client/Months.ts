@@ -1,15 +1,15 @@
 import { Component, component, html, property, css, repeat, guard, type PropertyValues, event, styleMap, ifDefined, query } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
-import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
-import { EntrySegments } from '../../entries/client/EntrySegments.js'
-import { EntryStore } from '../../entries/client/EntryStore.js'
+import type { EntryOccurrence } from '#features/recurrence'
+import { EntrySegments } from '#features/entries/client/EntrySegments.js'
+import { EntryStore } from '#features/entries/client/EntryStore.js'
+import { EntryDragController } from '#features/entries/client/EntryDragController.js'
+import { Routines } from '#features/routines/client/Routines.js'
+import { HideDoneTasksSetting } from '#features/entries/client/HideDoneTasksSetting.js'
+import { Availability } from '#features/availability/client/Availability.js'
 import { CalendarDatesController, type CalendarMonth } from './CalendarDatesController.js'
 import { CalendarScrollController } from './CalendarScrollController.js'
-import { EntryDragController } from '../../entries/client/EntryDragController.js'
 import { MonthsDensityController } from './MonthsDensityController.js'
-import { Routines } from '../../routines/client/Routines.js'
-import { HideDoneTasksSetting } from '../../entries/client/HideDoneTasksSetting.js'
-import { Availability } from '../../availability/client/Availability.js'
 
 /**
  * Year view months strip with one row per month aligned across weekday columns.

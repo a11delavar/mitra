@@ -1,9 +1,9 @@
 import { component, html, css } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
+import { DialogSourceMigration } from '#features/migration/client/DialogSourceMigration.js'
+import { countSourceEntries, deleteSource } from '#infrastructure/http/Api.js'
 import { type Source } from '../Source.js'
-import { countSourceEntries, deleteSource } from '../../../infrastructure/http/Api.js'
 import { Calendars } from './Calendars.js'
-import { DialogSourceMigration } from '../../migration/client/DialogSourceMigration.js'
 
 /**
  * Confirmation dialog for permanently deleting a local Mitra calendar and its entries.

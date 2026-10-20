@@ -1,9 +1,7 @@
 import { type EntityManager } from '@mikro-orm/sqlite'
-import { model } from '../../infrastructure/model/model.js'
-import { Integration, integration } from '../Integration.js'
-import { IntegrationCapabilities } from '../IntegrationCapabilities.js'
-import { IntegrationOwnership } from '../IntegrationOwnership.js'
-import { type Source } from '../../features/sources/Source.js'
+import type { Source } from '#features/sources'
+import { Integration, integration, IntegrationCapabilities, IntegrationOwnership } from '#integrations'
+import { model } from '#infrastructure/model'
 
 /**
  * Local SQLite-backed integration with no external remote sync.

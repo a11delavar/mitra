@@ -1,10 +1,9 @@
 import { Component, component, html, css, property, state, event, query, bind } from '@a11d/lit'
-import { type Entry } from '../../entries/Entry.js'
-import { searchLocations } from '../../../infrastructure/http/Api.js'
-import { Calendars } from '../../sources/client/Calendars.js'
+import { LatestSearch, MarkdownLinks } from '#design'
+import type { Entry } from '#features/entries'
+import { Calendars } from '#features/sources/client/Calendars.js'
+import { searchLocations } from '#infrastructure/http/Api.js'
 import { type LocationSuggestion } from '../LocationSuggestion.js'
-import { LatestSearch } from '../../../design/Combobox.js'
-import { MarkdownLinks } from '../../../design/MarkdownLinks.js'
 import './MapLink.js'
 
 // Cached user coordinates for geocoding bias.

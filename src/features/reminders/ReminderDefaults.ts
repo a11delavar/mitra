@@ -1,4 +1,4 @@
-import { type EntryType } from '../entries/EntryType.js'
+import type { EntryType } from '#features/entries'
 
 /** The reminders a new entry starts with, per kind, in minutes before its anchor (null = none). */
 export class ReminderDefaults {

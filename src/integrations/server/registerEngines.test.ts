@@ -1,11 +1,11 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { CalDAV } from '../caldav/CalDAV.js'
-import { GoogleCalendar } from '../google/GoogleCalendar.js'
-import { AppleCalendar } from '../apple/AppleCalendar.js'
-import { Notion } from '../notion/Notion.js'
-import { Tempo } from '../tempo/Tempo.js'
-import { MitraCalendar } from '../mitra/MitraCalendar.js'
+import { CalDAV } from '#integrations/caldav/CalDAV.js'
+import { GoogleCalendar } from '#integrations/google/GoogleCalendar.js'
+import { AppleCalendar } from '#integrations/apple/AppleCalendar.js'
+import { Notion } from '#integrations/notion/Notion.js'
+import { Tempo } from '#integrations/tempo/Tempo.js'
+import { MitraCalendar } from '#integrations/mitra/MitraCalendar.js'
 import './registerEngines.js'
 
 const resolvesAnEngine = async (integration: { updateEntry(em: never, a: never, b: never): Promise<void> }) => {

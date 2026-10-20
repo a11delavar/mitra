@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { orm } from '../../../infrastructure/database/orm.js'
+import { orm } from '#infrastructure/database/orm.js'
 import { Notion } from '../Notion.js'
 
 export const notionRouter = Router()

@@ -49,7 +49,9 @@ export const backendOptions: BuildOptions = {
 	platform: 'node',
 	format: 'esm',
 	mainFields: ['module', 'main'],
-	banner: { js: 'import { createRequire as __nodeCreateRequire } from \'node:module\'; const require = __nodeCreateRequire(import.meta.url);' },
+	// A path, not `import.meta.url`: @a11d/lit-application defines `URL.prototype.path`, after which Node no longer takes a URL
+	// for one, and every test chunk evaluated after the router threw.
+	banner: { js: 'import { createRequire as __nodeCreateRequire } from \'node:module\'; const require = __nodeCreateRequire(import.meta.filename);' },
 	external: ['better-sqlite3', 'sqlite3', 'libsql', '@libsql/client', 'mariadb', 'mysql', 'mysql2', 'pg', 'oracledb', 'tedious', 'tsdav', 'web-push'],
 	inject,
 	define,

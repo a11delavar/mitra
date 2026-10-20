@@ -1,12 +1,12 @@
 import { Controller, eventListener } from '@a11d/lit'
 import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { Task } from '@lit/task'
-import { fetchAllEntries, fetchEvents } from '../../../infrastructure/http/Api.js'
-import { Calendars } from '../../sources/client/Calendars.js'
+import { Calendars } from '#features/sources/client/Calendars.js'
+import { TableWindow } from '#features/calendar/client/TableWindow.js'
+import type { PageCalendar } from '#features/calendar/client/PageCalendar.js'
+import { fetchAllEntries, fetchEvents } from '#infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
-import { TableWindow } from '../../calendar/client/TableWindow.js'
-import type { PageCalendar } from '../../calendar/client/PageCalendar.js'
 
 /** Fetches and keeps calendar entries synchronized via navigation tasks and SSE. */
 export class EntryFetcherController extends Controller {

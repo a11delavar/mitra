@@ -1,10 +1,9 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { Entry, EntryType } from '#features/entries'
 import { EntryRelations } from './EntryRelations.js'
 import { Relation, type RelationInit } from './Relation.js'
 import { RelationSection, RelationType } from './RelationType.js'
-import { Entry } from '../entries/Entry.js'
-import { EntryType } from '../entries/EntryType.js'
 
 describe('EntryRelations', () => {
 	const readings = (bag: EntryRelations) => bag.sections('self').map(({ section, relations }) => [section.value, ...relations.map(relation => `${relation.direction} ${relation.targetUid}`)])

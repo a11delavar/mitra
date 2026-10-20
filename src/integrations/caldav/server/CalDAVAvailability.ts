@@ -1,10 +1,8 @@
 import { type EntityManager } from '@mikro-orm/sqlite'
-import { Source } from '../../../features/sources/Source.js'
-import { Entry } from '../../../features/entries/Entry.js'
-import { Transparency } from '../../../features/entries/Transparency.js'
-import { EntryType } from '../../../features/entries/EntryType.js'
-import { Recurrence } from '../../../features/recurrence/Recurrence.js'
-import { createLogger } from '../../../infrastructure/logging/Logger.js'
+import { Source } from '#features/sources'
+import { Entry, Transparency, EntryType } from '#features/entries'
+import { Recurrence } from '#features/recurrence'
+import { createLogger } from '#infrastructure/logging/Logger.js'
 import { CalDAV } from '../CalDAV.js'
 
 const logger = createLogger('CalDAV')

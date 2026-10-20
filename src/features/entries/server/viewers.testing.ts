@@ -1,7 +1,7 @@
 import { DateTime, DateTimeRange } from '@3mo/date-time'
-import { fetchEvents } from '../../../infrastructure/http/Api.js'
-import { EntryOccurrences } from '../../recurrence/EntryOccurrences.js'
-import { TimeZone } from '../../time/TimeZone.js'
+import { EntryOccurrences } from '#features/recurrence'
+import { TimeZone } from '#features/time/TimeZone.js'
+import { fetchEvents } from '#infrastructure/http/Api.js'
 import { Entry } from '../Entry.js'
 
 /*

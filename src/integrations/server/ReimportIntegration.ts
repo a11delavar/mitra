@@ -1,9 +1,9 @@
 import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
-import { validation } from '../../infrastructure/validation/validation.js'
-import { syncEmitter } from '../../infrastructure/realtime/syncEmitter.js'
-import { http, operation, Operation, type OperationContext } from '../../infrastructure/operations/Operation.js'
-import { Source } from '../../features/sources/Source.js'
+import { Source } from '#features/sources'
+import { validation } from '#infrastructure/validation'
+import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { importer } from './Importer.js'
 
 class Parameters {

@@ -1,4 +1,4 @@
-import { type EntryOccurrence } from '../recurrence/EntryOccurrence.js'
+import type { EntryOccurrence } from '#features/recurrence'
 import { ReminderNotification } from './ReminderNotification.js'
 
 /**

@@ -1,6 +1,6 @@
 import { type ErrorRequestHandler } from 'express'
 import { NotFoundError } from '@mikro-orm/sqlite'
-import { createLogger } from '../logging/Logger.js'
+import { createLogger } from '#infrastructure/logging/Logger.js'
 
 const logger = createLogger('API')
 

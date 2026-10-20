@@ -1,10 +1,10 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { TimeZone } from '#features/time/TimeZone.js'
+import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
 import { Entry } from './Entry.js'
 import { EntryType } from './EntryType.js'
 import { EntryTimeZone } from './EntryTimeZone.js'
-import { TimeZone } from '../time/TimeZone.js'
-import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
 
 /*
 	What viewers in different zones see of one all-day entry, pinned before the translation between a viewer's midnights

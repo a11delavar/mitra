@@ -1,6 +1,6 @@
-import { Entry } from '../entries/Entry.js'
-import { ValidationError } from '../../infrastructure/validation/ValidationError.js'
-import { TimeZone } from '../time/TimeZone.js'
+import { Entry } from '#features/entries'
+import { TimeZone } from '#features/time/TimeZone.js'
+import { ValidationError } from '#infrastructure/validation'
 import { EntryOccurrence } from './EntryOccurrence.js'
 import { RecurrenceSet, type RecurrenceSpan } from './RecurrenceSet.js'
 

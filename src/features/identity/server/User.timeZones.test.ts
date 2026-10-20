@@ -1,9 +1,9 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { MikroORM } from '@mikro-orm/sqlite'
-import { ormConfig } from '../../../infrastructure/database/ormConfig.js'
-import { TimeZone } from '../../time/TimeZone.js'
-import { UserTimeZones } from '../../time/UserTimeZones.js'
+import { TimeZone } from '#features/time/TimeZone.js'
+import { UserTimeZones } from '#features/time/UserTimeZones.js'
+import { ormConfig } from '#infrastructure/database/ormConfig.js'
 import { User } from '../User.js'
 
 /** The account's zones as SQLite holds them, on the production entities. */

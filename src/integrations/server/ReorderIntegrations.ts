@@ -1,10 +1,10 @@
 import { NotFoundError } from '@mikro-orm/sqlite'
 import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
-import { validation } from '../../infrastructure/validation/validation.js'
-import { syncEmitter } from '../../infrastructure/realtime/syncEmitter.js'
-import { applyOrder } from '../../infrastructure/model/order.js'
-import { http, operation, Operation, type OperationContext } from '../../infrastructure/operations/Operation.js'
+import { validation } from '#infrastructure/validation'
+import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { applyOrder } from '#infrastructure/model'
+import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 
 class Parameters {
 	@validation(z.array(z.string()).min(1).refine(ids => new Set(ids).size === ids.length, 'A list of unique integration ids is required'))

@@ -1,5 +1,4 @@
-import { type Entry, type EntryRollup } from '../entries/Entry.js'
-import { TaskStatus } from '../entries/TaskStatus.js'
+import { type Entry, type EntryRollup, TaskStatus } from '#features/entries'
 import { EntryRelations } from './EntryRelations.js'
 import type { RelationEdge } from './RelationEdge.js'
 

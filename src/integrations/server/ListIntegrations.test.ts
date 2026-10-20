@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { fetchIntegrations } from '../../infrastructure/http/Api.js'
-import { OperationServer } from '../../infrastructure/operations/OperationServer.testing.js'
+import { fetchIntegrations } from '#infrastructure/http/Api.js'
+import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
 
 describe('ListIntegrations', () => {
 	let server: OperationServer

@@ -1,10 +1,10 @@
 import { description, label } from '@a11d/metadata'
 import { type Request } from 'express'
-import { syncEmitter } from '../../infrastructure/realtime/syncEmitter.js'
-import { isDemo, isDeveloperSystem } from '../../infrastructure/environment.js'
-import { NotAllowed } from '../../infrastructure/validation/NotAllowed.js'
-import { http, operation, Operation, type OperationContext } from '../../infrastructure/operations/Operation.js'
-import { Integration, integrationClassFor } from '../Integration.js'
+import { Integration, integrationClassFor } from '#integrations'
+import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { isDemo, isDeveloperSystem } from '#infrastructure/environment.js'
+import { NotAllowed } from '#infrastructure/validation'
+import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { importer } from './Importer.js'
 
 @operation()

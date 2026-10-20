@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { TimeSpan } from '@3mo/date-time'
-import { localizeIn } from '../../infrastructure/i18n/dictionaries.js'
+import { localizeIn } from '#infrastructure/i18n/dictionaries.js'
 import './TimeSpan.time.js'
 
 describe('TimeSpan.formatAsWholeUnit', () => {

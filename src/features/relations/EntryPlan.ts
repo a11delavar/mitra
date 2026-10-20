@@ -1,4 +1,4 @@
-import type { Entry } from '../entries/Entry.js'
+import type { Entry } from '#features/entries'
 
 /** Mutates an entry instance as planned. */
 export interface PlannedWrite {

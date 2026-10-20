@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto'
+import { entity, primaryKey, property, manyToOne } from '#infrastructure/model'
 import { User } from '../User.js'
-import { entity, primaryKey, property, manyToOne } from '../../../infrastructure/model/orm.js'
 
 /**
  * Represents an authenticated user session stored by token SHA-256 hash.

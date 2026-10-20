@@ -1,8 +1,8 @@
 import { description, label } from '@a11d/metadata'
-import { operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
-import { type IntegrationClass } from '../../../integrations/Integration.js'
-import { EntryType } from '../../entries/EntryType.js'
-import { TimeZone } from '../../time/TimeZone.js'
+import { EntryType } from '#features/entries'
+import { TimeZone } from '#features/time/TimeZone.js'
+import type { IntegrationClass } from '#integrations'
+import { operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { tool } from './tool.js'
 
 const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const

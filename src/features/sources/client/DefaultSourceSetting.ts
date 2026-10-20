@@ -1,7 +1,7 @@
 import { html } from '@a11d/lit'
-import { setDefaultSource } from '../../../infrastructure/http/Api.js'
+import { ChoiceSetting, setting, type SettingStorage } from '#features/settings/client/Setting.js'
+import { setDefaultSource } from '#infrastructure/http/Api.js'
 import { Calendars } from './Calendars.js'
-import { ChoiceSetting, setting, type SettingStorage } from '../../settings/client/Setting.js'
 
 /**
  * Default source calendar setting for newly created entries (syncs with primary source).

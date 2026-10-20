@@ -29,7 +29,7 @@ export default [
 		rules: {
 			'no-restricted-imports': ['error', {
 				patterns: [{
-					group: ['**/server/**', '*/server/*'],
+					regex: '^[#.].*/server(/|$)',
 					message: 'Client code must not import server code.',
 				}],
 			}],
@@ -40,7 +40,7 @@ export default [
 		rules: {
 			'no-restricted-imports': ['error', {
 				patterns: [{
-					group: ['**/client/**', '*/client/*'],
+					regex: '^[#.].*/client(/|$)',
 					message: 'Server code must not import client code.',
 				}],
 			}],
@@ -52,7 +52,7 @@ export default [
 		rules: {
 			'no-restricted-imports': ['error', {
 				patterns: [{
-					group: ['**/client/**', '*/client/*', '**/server/**', '*/server/*'],
+					regex: '^[#.].*/(client|server)(/|$)',
 					message: 'Isomorphic domain models must not import client or server code.',
 				}],
 			}],

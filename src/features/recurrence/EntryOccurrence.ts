@@ -1,7 +1,6 @@
-import { Entry } from '../entries/Entry.js'
-import { EntryPatch } from '../entries/EntryPatch.js'
-import { EntryOccurrenceChange, EntryOccurrenceChangeScope } from './EntryOccurrenceChange.js'
 import { z } from 'zod'
+import { Entry, EntryPatch } from '#features/entries'
+import { EntryOccurrenceChange, EntryOccurrenceChangeScope } from './EntryOccurrenceChange.js'
 
 const patchOf = (fields: Partial<EntryPatch>) => Object.assign(new EntryPatch(), fields)
 

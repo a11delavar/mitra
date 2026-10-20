@@ -1,13 +1,13 @@
 import { Component, component, html, css, property, state, event, live } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
+import type { SelectionGroupValue } from '#design'
+import type { Entry } from '#features/entries'
+import { Calendars } from '#features/sources/client/Calendars.js'
+import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { Recurrence, type RecurrencePreset } from '../Recurrence.js'
 import { RecurrenceFrequency } from '../RecurrenceFrequency.js'
 import { RecurrenceEnd } from '../RecurrenceEnd.js'
 import { RecurrenceWeekday } from '../RecurrenceWeekday.js'
-import { type Entry } from '../../entries/Entry.js'
-import { Calendars } from '../../sources/client/Calendars.js'
-import { EntryStore } from '../../entries/client/EntryStore.js'
-import { type SelectionGroupValue } from '../../../design/SelectionGroup.js'
 type MenuItem = RecurrencePreset & { checked: boolean }
 type MonthlyOption = { key: string, label: string }
 

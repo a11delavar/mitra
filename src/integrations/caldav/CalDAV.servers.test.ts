@@ -8,17 +8,14 @@ import { Api } from '@a11d/api'
 import { DateTime, DateTimeRange } from '@3mo/date-time'
 import '@3mo/date-time-value-constructor'
 import { ModelValueConstructor } from '@a11d/api-model-value-constructor'
-import { createEvent, createIntegration, deleteEvent, deleteIntegration, discoverSources, fetchEvents, fetchIntegrations, reimportIntegration, updateEvent, updateIntegration, uploadFile } from '../../infrastructure/http/Api.ts'
-import { EntryFile } from '../../features/entries/EntryFile.ts'
-import { EntryFiles } from '../../features/entries/EntryFiles.ts'
-import { User } from '../../features/identity/User.ts'
-import { Source } from '../../features/sources/Source.ts'
-import { Entry } from '../../features/entries/Entry.ts'
-import { EntryType } from '../../features/entries/EntryType.ts'
-import { MitraCalendar } from '../mitra/MitraCalendar.ts'
+import { EntryFile, EntryFiles, Entry, EntryType } from '#features/entries'
+import { User } from '#features/identity'
+import { Source } from '#features/sources'
+import { MitraCalendar } from '#integrations/mitra/MitraCalendar.ts'
+import type { Integration } from '#integrations'
+import { createEvent, createIntegration, deleteEvent, deleteIntegration, discoverSources, fetchEvents, fetchIntegrations, reimportIntegration, updateEvent, updateIntegration, uploadFile } from '#infrastructure/http/Api.ts'
+import { HttpRecording } from '#infrastructure/http/HttpRecording.testing.ts'
 import { CalDAV } from './CalDAV.ts'
-import type { Integration } from '../Integration.ts'
-import { HttpRecording } from '../../infrastructure/http/HttpRecording.testing.ts'
 
 /*
 	A CalDAV account end to end as real servers answer it: discovery, connecting, the import, Mitra's writes landing upstream,
@@ -64,13 +61,13 @@ describe('A CalDAV account as real servers answer it', () => {
 	before(async () => {
 		// Mitra writes an entry in the zone of the device that made it, a VTIMEZONE in the request: every run, the recording's included, is in one zone.
 		process.env.TZ = 'Europe/Berlin'
-		const { orm } = await import('../../infrastructure/database/orm.ts')
-		await import('../server/registerEngines.ts')
-		const { staleTabs } = await import('../../features/entries/server/staleTabs.ts')
-		const { operationsRouter } = await import('../../infrastructure/operations/Operation.ts')
-		await import('../../app/operations.ts')
-		const { fileContentRouter, filesRouter } = await import('../../features/files/server/files.ts')
-		const { observeInstanceOrigin } = await import('../../infrastructure/http/instanceUrl.ts')
+		const { orm } = await import('#infrastructure/database/orm.ts')
+		await import('#integrations/server/registerEngines.ts')
+		const { staleTabs } = await import('#features/entries/server/staleTabs.ts')
+		const { operationsRouter } = await import('#infrastructure/operations/Operation.ts')
+		await import('#app/operations.ts')
+		const { fileContentRouter, filesRouter } = await import('#features/files/server/files.ts')
+		const { observeInstanceOrigin } = await import('#infrastructure/http/instanceUrl.ts')
 
 		const connection = orm.em.getConnection()
 		entriesIn = sourceId => connection.execute('select id, heading from entry where source_id = ?', [sourceId])

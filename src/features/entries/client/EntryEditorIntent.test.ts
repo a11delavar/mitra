@@ -1,12 +1,11 @@
 import { beforeEach, describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
+import { Recurrence, RecurrenceFrequency } from '#features/recurrence'
 import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
-import { Recurrence } from '../../recurrence/Recurrence.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 import { EntryStore } from './EntryStore.js'
-import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
 
 describe('EntryEditorIntent', () => {
 	const day = new DateTime().dayStart

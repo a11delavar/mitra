@@ -1,7 +1,7 @@
 import { Component, component, css, html, property } from '@a11d/lit'
 import { DateTime } from '@3mo/date-time'
 import { Localizer } from '@3mo/localization'
-import { TimeZone } from '../../features/time/TimeZone.js'
+import { TimeZone } from '#features/time/TimeZone.js'
 
 /**
  * What the locale in force changes, read the way Mitra writes it: dates, times, the week, numbers, the calendar and

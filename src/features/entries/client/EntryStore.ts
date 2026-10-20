@@ -1,15 +1,12 @@
 import { Controller } from '@a11d/lit'
 import { type ReactiveControllerHost } from 'lit'
-import { Recurrence } from '../../recurrence/Recurrence.js'
-import { type EntryPlan, type SkippedEntry } from '../../relations/EntryPlan.js'
+import { Recurrence, EntryOccurrenceChangeScope, type EntryOccurrence } from '#features/recurrence'
+import { type EntryPlan, type SkippedEntry, EntryRelations } from '#features/relations'
+import { TimeZone } from '#features/time/TimeZone.js'
+import { ApiError, createEvent, deleteEvent, deleteOccurrence, editOccurrence, rankEntries, updateEvent, updateRelations } from '#infrastructure/http/Api.js'
 import { type Entry } from '../Entry.js'
-import { ApiError, createEvent, deleteEvent, deleteOccurrence, editOccurrence, rankEntries, updateEvent, updateRelations } from '../../../infrastructure/http/Api.js'
 import { EntryRank } from '../EntryRank.js'
 import { EntryPatch } from '../EntryPatch.js'
-import { EntryRelations } from '../../relations/EntryRelations.js'
-import { EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
-import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
-import { TimeZone } from '../../time/TimeZone.js'
 
 export const reportSaveError = (error: unknown) =>
 	console.error('Persisting the entry failed. The edit is kept locally and retried on the next change:', error)

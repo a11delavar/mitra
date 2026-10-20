@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { asBrowser, wireOf } from '#infrastructure/model/wire.testing.js'
 import { NotificationSubscription } from './NotificationSubscription.js'
-import { asBrowser, wireOf } from '../../infrastructure/model/wire.testing.js'
 
 describe('NotificationSubscription', () => {
 	const keys = { p256dh: 'public-key', auth: 'auth-secret' }

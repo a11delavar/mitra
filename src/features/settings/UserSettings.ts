@@ -1,4 +1,4 @@
-import { calendarViews, type CalendarView } from '../calendar/CalendarView.js'
+import { calendarViews, type CalendarView } from '#features/calendar/CalendarView.js'
 
 /**
  * Persisted contract for user preferences (`User.settings`).

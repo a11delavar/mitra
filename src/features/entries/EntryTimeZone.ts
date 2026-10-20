@@ -1,6 +1,6 @@
 import { type Converter } from '@a11d/converter'
-import { Type } from '../../infrastructure/model/orm.js'
-import { TimeZone } from '../time/TimeZone.js'
+import { TimeZone } from '#features/time/TimeZone.js'
+import { Type } from '#infrastructure/model'
 
 /**
  * The clock an entry's times are written on (RFC 5545): a zone, or floating, the reader's own wall clock. An entry

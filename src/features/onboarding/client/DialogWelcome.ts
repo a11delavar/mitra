@@ -1,6 +1,6 @@
 import { component, html, css } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
-import { instanceName } from '../../../infrastructure/http/Api.js'
+import { instanceName } from '#infrastructure/http/Api.js'
 
 /**
  * The first-run welcome: a calendar with no integrations is an empty grid, so this dialog greets the

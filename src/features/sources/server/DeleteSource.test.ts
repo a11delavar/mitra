@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { countSourceEntries, createSource, deleteSource, fetchIntegrations } from '../../../infrastructure/http/Api.js'
-import { OperationServer } from '../../../infrastructure/operations/OperationServer.testing.js'
+import { countSourceEntries, createSource, deleteSource, fetchIntegrations } from '#infrastructure/http/Api.js'
+import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
 
 describe('DeleteSource', () => {
 	let server: OperationServer

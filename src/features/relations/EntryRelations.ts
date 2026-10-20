@@ -1,9 +1,9 @@
 import { type Converter } from '@a11d/converter'
 import { z } from 'zod'
+import type { Entry } from '#features/entries'
 import { Relation, type RelationInit } from './Relation.js'
 import { type RelationEdge } from './RelationEdge.js'
 import { type RelationSection, RelationType } from './RelationType.js'
-import type { Entry } from '../entries/Entry.js'
 
 /**
  * An entry's relations, owned and derived, each holding the entry at its other end where a read linked it; an entry

@@ -1,13 +1,10 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
+import { Entry, EntryType, EntryFiles } from '#features/entries'
+import { Source } from '#features/sources'
+import { IntegrationCapabilities, IntegrationOwnership } from '#integrations'
+import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
 import { MigrationOutcome, MigrationPlan, MigrationVerdict } from './MigrationPlan.js'
-import { Entry } from '../entries/Entry.js'
-import { EntryType } from '../entries/EntryType.js'
-import { EntryFiles } from '../entries/EntryFiles.js'
-import { Source } from '../sources/Source.js'
-import { IntegrationCapabilities } from '../../integrations/IntegrationCapabilities.js'
-import { IntegrationOwnership } from '../../integrations/IntegrationOwnership.js'
 
 const clean = () => new MigrationVerdict({ entryId: 'a', heading: 'Clean' })
 const lossy = (...losses: Array<'reminders' | 'location'>) => new MigrationVerdict({ entryId: 'b', heading: 'Lossy', losses })

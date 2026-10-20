@@ -1,5 +1,5 @@
 import { Api } from '@a11d/api'
-import { type AccessToken, type AccessTokenScope } from '../../identity/AccessToken.js'
+import type { AccessToken, AccessTokenScope } from '#features/identity'
 
 /** Where agents connect, as this browser reaches the instance. */
 export const mcpAddress = () => `${location.origin}/api/mcp`

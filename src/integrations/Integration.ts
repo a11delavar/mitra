@@ -1,16 +1,12 @@
 import { converter } from '@a11d/converter'
-import { entity, primaryKey, property, manyToOne, unique } from '../infrastructure/model/orm.js'
-import { children } from '../infrastructure/model/children.js'
-import { Entity, identity, equality } from '../infrastructure/model/Entity.js'
-import { User } from '../features/identity/User.js'
-import { Source } from '../features/sources/Source.js'
-import { Entry } from '../features/entries/Entry.js'
-import { EntryType } from '../features/entries/EntryType.js'
-import { EntryRelation } from '../features/relations/EntryRelation.js'
+import { FlushMode, type EntityManager } from '@mikro-orm/core'
+import { User } from '#features/identity'
+import { Source } from '#features/sources'
+import { Entry, EntryType } from '#features/entries'
+import { EntryRelation, type EntryRelations } from '#features/relations'
+import { entity, primaryKey, property, manyToOne, unique, children, Entity, identity, equality } from '#infrastructure/model'
 import { IntegrationCapabilities } from './IntegrationCapabilities.js'
 import { IntegrationOwnership } from './IntegrationOwnership.js'
-import type { EntryRelations } from '../features/relations/EntryRelations.js'
-import { FlushMode, type EntityManager } from '@mikro-orm/core'
 
 /** Protocol sync and CRUD operations registered per integration type. */
 export interface SyncEngine {

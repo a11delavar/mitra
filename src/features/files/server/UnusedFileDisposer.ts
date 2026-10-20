@@ -1,6 +1,6 @@
 import { type EntityClass } from '@mikro-orm/core'
 import { type MikroORM } from '@mikro-orm/sqlite'
-import { createLogger } from '../../../infrastructure/logging/Logger.js'
+import { createLogger } from '#infrastructure/logging/Logger.js'
 import { type File } from '../File.js'
 import { fileStore, type FileStore } from './FileStore.js'
 

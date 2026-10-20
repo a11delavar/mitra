@@ -1,5 +1,5 @@
+import { ChoiceSetting, deviceStorage, setting, type SettingStorage } from '#features/settings/client/Setting.js'
 import { syncThemeColor } from './pwa.js'
-import { ChoiceSetting, deviceStorage, setting, type SettingStorage } from '../features/settings/client/Setting.js'
 
 export type Theme = 'system' | 'light' | 'dark'
 

@@ -1,8 +1,8 @@
-import { model } from '../../infrastructure/model/model.js'
 import { converter } from '@a11d/converter'
+import type { Entry } from '#features/entries'
+import { model } from '#infrastructure/model'
 import { RelationType, type RelationSection } from './RelationType.js'
 import { RelationEdge } from './RelationEdge.js'
-import type { Entry } from '../entries/Entry.js'
 
 /** Input shape accepted by {@link Relation.from} and {@link EntryRelations.of}. */
 export interface RelationInit {

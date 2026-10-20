@@ -1,5 +1,5 @@
 import { Localizer } from '@3mo/localization'
-import { deviceStorage } from '../../features/settings/client/Setting.js'
+import { deviceStorage } from '#features/settings/client/Setting.js'
 
 /**
  * One BCP 47 tag: its language picks the words, its region how dates, times, numbers and weeks read; without one,

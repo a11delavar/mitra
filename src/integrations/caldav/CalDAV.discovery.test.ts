@@ -1,8 +1,8 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import type { Source } from '#features/sources'
+import '#integrations/server/registerEngines.js'
 import { CalDAV } from './CalDAV.js'
-import { type Source } from '../../features/sources/Source.js'
-import '../server/registerEngines.js'
 
 describe('CalDAV source discovery lists the calendars of the address given', () => {
 	const discover = (uri: string, listing: Array<{ href: string, props?: Record<string, unknown> }> | Error) => {

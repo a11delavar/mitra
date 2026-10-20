@@ -1,15 +1,13 @@
 import { DateTime } from '@3mo/date-time'
-import { type Entry } from '../../entries/Entry.js'
-import { TaskStatus } from '../../entries/TaskStatus.js'
-import { EntrySegments } from '../../entries/client/EntrySegments.js'
-import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
-import { EntryStore } from '../../entries/client/EntryStore.js'
-import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
-import { Relations } from '../../relations/client/Relations.js'
-import { Calendars } from '../../sources/client/Calendars.js'
-import { termsMatch } from '../../commands/termsMatch.js'
+import { type Entry, TaskStatus } from '#features/entries'
+import { EntrySegments } from '#features/entries/client/EntrySegments.js'
+import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js'
+import { EntryStore } from '#features/entries/client/EntryStore.js'
+import { type EntryOccurrence, EntryOccurrenceChangeScope } from '#features/recurrence'
+import { Relations } from '#features/relations/client/Relations.js'
+import { Calendars } from '#features/sources/client/Calendars.js'
+import { termsMatch } from '#features/commands/termsMatch.js'
 import { type TableWindow } from './TableWindow.js'
-import { EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
 
 /** The columns a row can be filtered by, each by one value of the row's own. */
 export const tableFacets = ['statusRank', 'typeKey', 'sourceName', 'repeats'] as const

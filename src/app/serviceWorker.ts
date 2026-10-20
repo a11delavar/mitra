@@ -10,8 +10,8 @@
  * ORM-bound domain classes.
  */
 
-import { type PushPayload } from '../features/reminders/ReminderNotification.js'
-import { DeviceFacts } from '../features/reminders/DeviceFacts.js'
+import { type PushPayload } from '#features/reminders/ReminderNotification.js'
+import { DeviceFacts } from '#features/reminders/DeviceFacts.js'
 
 // The worker global, typed structurally: the bundle shares the frontend tsconfig (DOM lib), which
 // doesn't know the ServiceWorker globals.

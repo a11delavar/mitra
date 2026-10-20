@@ -1,6 +1,6 @@
 import { component, html, css, property, state, event, eventListener, repeat, query } from '@a11d/lit'
-import { Popover } from '../../../design/Popover.js'
-import type { SearchField } from '../../../design/TextField.js'
+import { Popover } from '#design'
+import type { SearchField } from '#design/TextField.js'
 import { TimeZoneDirectory, type TimeZoneTree } from './TimeZoneDirectory.js'
 
 /**

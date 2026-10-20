@@ -1,6 +1,6 @@
 import { createMetadataDecorator } from '@a11d/metadata'
 import { type ToolAnnotations } from '@modelcontextprotocol/server'
-import { http, type Operation } from '../../../infrastructure/operations/Operation.js'
+import { http, type Operation } from '#infrastructure/operations/Operation.js'
 
 /** How an operation is offered to agents: its tool's name, which never changes once published, and what its route cannot say. */
 export interface ToolFacts {

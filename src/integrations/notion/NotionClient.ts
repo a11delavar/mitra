@@ -1,4 +1,4 @@
-import { createLogger } from '../../infrastructure/logging/Logger.js'
+import { createLogger } from '#infrastructure/logging/Logger.js'
 
 const logger = createLogger('Notion')
 

@@ -2,8 +2,7 @@ import { afterEach, describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { Api } from '@a11d/api'
 import { DateTime } from '@3mo/date-time'
-import { Entry } from '../../features/entries/Entry.js'
-import { EntryType } from '../../features/entries/EntryType.js'
+import { Entry, EntryType } from '#features/entries'
 import { updateEvent } from './Api.js'
 
 describe('updateEvent', () => {

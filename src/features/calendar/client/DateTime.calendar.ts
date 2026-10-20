@@ -1,5 +1,5 @@
 import { DateTime } from '@3mo/date-time'
-import { TimeZone } from '../../time/TimeZone.js'
+import { TimeZone } from '#features/time/TimeZone.js'
 
 declare module '@3mo/date-time' {
 	interface DateTime {

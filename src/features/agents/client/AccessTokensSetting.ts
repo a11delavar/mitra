@@ -1,6 +1,6 @@
 import { html } from '@a11d/lit'
-import { Setting, setting, type SettingStorage } from '../../settings/client/Setting.js'
-import { getMeta } from '../../../infrastructure/http/Api.js'
+import { Setting, setting, type SettingStorage } from '#features/settings/client/Setting.js'
+import { getMeta } from '#infrastructure/http/Api.js'
 import { accessTokenIssued } from './accessTokens.js'
 import { DialogNewAccessToken } from './DialogNewAccessToken.js'
 import { DialogAccessToken } from './DialogAccessToken.js'

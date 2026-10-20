@@ -1,8 +1,8 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import type { Source } from '#features/sources'
+import '#integrations/server/registerEngines.js'
 import { CalDAV } from './CalDAV.js'
-import { type Source } from '../../features/sources/Source.js'
-import '../server/registerEngines.js'
 
 const privileges = (...names: Array<string>) => ({ privilege: names.map(name => ({ [name]: {} })) })
 

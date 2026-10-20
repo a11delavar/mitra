@@ -1,8 +1,8 @@
 import { z } from 'zod'
 import { type Converter } from '@a11d/converter'
 import { equals } from '@a11d/equals'
-import { Type } from '../../infrastructure/model/orm.js'
-import { ValidationError } from '../../infrastructure/validation/ValidationError.js'
+import { Type } from '#infrastructure/model'
+import { ValidationError } from '#infrastructure/validation'
 
 /** Hex or a color's name, as CalDAV's calendar-color and RFC 7986's COLOR write one: nothing else, as it is written into styles. */
 const grammar = /^(?:#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})|[a-z]+)$/

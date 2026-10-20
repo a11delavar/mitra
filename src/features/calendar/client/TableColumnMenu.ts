@@ -1,15 +1,12 @@
 import { Component, component, html, css, property, state, event, query, ifDefined } from '@a11d/lit'
 import { type DataGridColumn, DataGridSortingStrategy } from '@3mo/data-grid/controller'
-import { TaskStatus } from '../../entries/TaskStatus.js'
-import { EntryType } from '../../entries/EntryType.js'
-import { type Source } from '../../sources/Source.js'
-import { Calendars } from '../../sources/client/Calendars.js'
+import { type Menu, checkmark, selectedColor } from '#design'
+import { TaskStatus, EntryType } from '#features/entries'
+import type { Source } from '#features/sources'
+import { Calendars } from '#features/sources/client/Calendars.js'
 import { TableRow, TableFilter, type TableFacet } from './TableRow.js'
 import { TableWindow } from './TableWindow.js'
 import { hideable } from './TableColumns.js'
-import { type Menu } from '../../../design/Menu.js'
-import { checkmark } from '../../../design/checkmark.css.js'
-import { selectedColor } from '../../../design/selected.css.js'
 
 interface TableFilterOption {
 	readonly value: string

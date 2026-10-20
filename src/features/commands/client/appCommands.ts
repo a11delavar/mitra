@@ -1,7 +1,7 @@
+import { DialogAbout } from '#features/about/client/DialogAbout.js'
+import { DialogIntegration } from '#integrations/client/DialogIntegration.js'
+import { getMeta } from '#infrastructure/http/Api.js'
 import { command, Command } from '../Command.js'
-import { getMeta } from '../../../infrastructure/http/Api.js'
-import { DialogIntegration } from '../../../integrations/client/DialogIntegration.js'
-import { DialogAbout } from '../../about/client/DialogAbout.js'
 import { DialogKeyboardShortcuts } from './DialogKeyboardShortcuts.js'
 
 @command()

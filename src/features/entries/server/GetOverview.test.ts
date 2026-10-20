@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { createSource, settleTimeZone, toggleSourceVisibility } from '../../../infrastructure/http/Api.js'
-import { OperationServer, type SentEntry as Row } from '../../../infrastructure/operations/OperationServer.testing.js'
+import { createSource, settleTimeZone, toggleSourceVisibility } from '#infrastructure/http/Api.js'
+import { OperationServer, type SentEntry as Row } from '#infrastructure/operations/OperationServer.testing.js'
 
 describe('GetOverview', () => {
 	let server: OperationServer

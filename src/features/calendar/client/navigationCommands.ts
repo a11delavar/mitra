@@ -1,5 +1,5 @@
 import { DateTime } from '@3mo/date-time'
-import { command, Command } from '../../commands/Command.js'
+import { command, Command } from '#features/commands/Command.js'
 import { CalendarPeriod } from './CalendarPeriod.js'
 
 // @3mo/localization writes `dir` on the body, so the root element always reads as LTR.

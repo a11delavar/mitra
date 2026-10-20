@@ -1,6 +1,6 @@
 import { DialogCancelledError } from '@a11d/lit-application'
 import { Localizer } from '@3mo/localization'
-import { Mitra } from '../../app/Mitra.js'
+import { Mitra } from '#app/Mitra.js'
 import { termsMatch } from './termsMatch.js'
 import { KeyPress } from './KeyPress.js'
 

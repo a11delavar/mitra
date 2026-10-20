@@ -1,9 +1,9 @@
 import type { EntityManager, FilterQuery } from '@mikro-orm/sqlite'
-import { type User } from '../../identity/User.js'
+import type { User } from '#features/identity'
+import { Entry } from '#features/entries'
 import { RelationGraph } from '../RelationGraph.js'
 import { EntryRelations } from '../EntryRelations.js'
 import { EntryRelation } from '../EntryRelation.js'
-import { Entry } from '../../entries/Entry.js'
 
 /** `excludeEntryId` omits the updated entry's existing rows, so cycle checks test its candidate relations. */
 async function relationGraph(em: EntityManager, user: User, excludeEntryId?: string): Promise<RelationGraph> {

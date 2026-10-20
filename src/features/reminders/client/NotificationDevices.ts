@@ -1,9 +1,9 @@
 import { Component, component, html, css, state } from '@a11d/lit'
 import { Task } from '@lit/task'
+import { type TextField } from '#design/TextField.js'
+import { ClockController } from '#features/time/client/ClockController.js'
 import { type NotificationSubscription } from '../NotificationSubscription.js'
 import { currentEndpoint, fetchDevices, forgetDevice, renameDevice } from './push.js'
-import { type TextField } from '../../../design/TextField.js'
-import { ClockController } from '../../time/client/ClockController.js'
 
 /** The devices that receive the user's reminders, each renamed or removed from its menu; laid out as its setting's list. */
 @component('mitra-notification-devices')

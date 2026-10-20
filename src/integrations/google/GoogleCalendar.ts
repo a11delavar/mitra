@@ -1,9 +1,8 @@
 import { type createDAVClient } from 'tsdav'
 import { converter } from '@a11d/converter'
-import { model } from '../../infrastructure/model/model.js'
-import { CalDAV } from '../caldav/CalDAV.js'
-import { integration } from '../Integration.js'
-import { withheld } from '../../infrastructure/model/withheld.js'
+import { CalDAV } from '#integrations/caldav/CalDAV.js'
+import { integration } from '#integrations'
+import { model, withheld } from '#infrastructure/model'
 
 export interface GoogleCalendarCredentials {
 	/** Google account email. */

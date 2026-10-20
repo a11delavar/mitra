@@ -1,6 +1,5 @@
 import { Component, component, html, css, property } from '@a11d/lit'
-import { controlHeight } from '../../../design/controlHeight.css.js'
-import { ring } from '../../../design/focusRing.css.js'
+import { controlHeight, ring } from '#design'
 import { type Setting } from './Setting.js'
 import { SettingsStore } from './SettingsStore.js'
 

@@ -1,5 +1,5 @@
 import { Controller, eventListener } from '@a11d/lit'
-import type { PageCalendar } from '../../features/calendar/client/PageCalendar.js'
+import type { PageCalendar } from '#features/calendar/client/PageCalendar.js'
 
 /**
  * Keeps the page's URL in step with its state without flooding session history: writes REPLACE the

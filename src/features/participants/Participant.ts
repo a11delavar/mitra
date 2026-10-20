@@ -3,8 +3,8 @@ import '@3mo/localization'
 import { type Converter } from '@a11d/converter'
 import { description } from '@a11d/metadata'
 import { z } from 'zod'
-import { Type } from '../../infrastructure/model/orm.js'
-import { validation } from '../../infrastructure/validation/validation.js'
+import { Type } from '#infrastructure/model'
+import { validation } from '#infrastructure/validation'
 
 /**
  * Participant role mappings based on RFC 5545 ATTENDEE ROLE.

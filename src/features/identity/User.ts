@@ -1,16 +1,13 @@
 import { converter } from '@a11d/converter'
 import type { EntityManager, FilterQuery } from '@mikro-orm/core'
-import { model } from '../../infrastructure/model/model.js'
-import { entity, primaryKey, property, manyToOne, embedded, unique } from '../../infrastructure/model/orm.js'
+import { Source, type Calendar } from '#features/sources'
+import { Entry, type EntryType } from '#features/entries'
+import { UserSettings } from '#features/settings/UserSettings.js'
+import { UserTimeZones } from '#features/time/UserTimeZones.js'
+import { Integration } from '#integrations'
+import { model, entity, primaryKey, property, manyToOne, embedded, unique } from '#infrastructure/model'
+import { ValidationError } from '#infrastructure/validation'
 import { Identity, type IdentityClaims } from './Identity.js'
-import { Source } from '../sources/Source.js'
-import { type Calendar } from '../sources/Calendar.js'
-import { Integration } from '../../integrations/Integration.js'
-import { Entry } from '../entries/Entry.js'
-import { type EntryType } from '../entries/EntryType.js'
-import { ValidationError } from '../../infrastructure/validation/ValidationError.js'
-import { UserSettings } from '../settings/UserSettings.js'
-import { UserTimeZones } from '../time/UserTimeZones.js'
 
 @model('User')
 @entity()

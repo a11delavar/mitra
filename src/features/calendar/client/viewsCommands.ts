@@ -1,4 +1,4 @@
-import { command, Command } from '../../commands/Command.js'
+import { command, Command } from '#features/commands/Command.js'
 
 @command()
 export class WeekView extends Command {

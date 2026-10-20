@@ -1,14 +1,12 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import ICAL from 'ical.js'
+import { Entry, EntryType } from '#features/entries'
+import { Source } from '#features/sources'
+import { EntryRelations, RelationType } from '#features/relations'
+import { GoogleCalendar } from '#integrations/google/GoogleCalendar.js'
+import '#integrations/server/registerEngines.js'
 import { CalDAV } from './CalDAV.js'
-import { GoogleCalendar } from '../google/GoogleCalendar.js'
-import { Entry } from '../../features/entries/Entry.js'
-import { EntryType } from '../../features/entries/EntryType.js'
-import { Source } from '../../features/sources/Source.js'
-import { EntryRelations } from '../../features/relations/EntryRelations.js'
-import { RelationType } from '../../features/relations/RelationType.js'
-import '../server/registerEngines.js'
 
 describe('CalDAV relations round-trip', () => {
 	const raw = [

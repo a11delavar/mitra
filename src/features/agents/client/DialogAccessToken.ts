@@ -1,6 +1,6 @@
 import { component, html, css, state } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
-import { docsPage } from '../../about/client/website.js'
+import { docsPage } from '#features/about/client/website.js'
 import { mcpAddress } from './accessTokens.js'
 
 /** Shows a token just made, the one time it is ever shown, beside the address an agent sends it to. */

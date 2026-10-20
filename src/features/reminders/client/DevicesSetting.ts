@@ -1,6 +1,6 @@
 import { html } from '@a11d/lit'
-import { Setting, setting, type SettingStorage } from '../../settings/client/Setting.js'
-import { SettingsStore } from '../../settings/client/SettingsStore.js'
+import { Setting, setting, type SettingStorage } from '#features/settings/client/Setting.js'
+import { SettingsStore } from '#features/settings/client/SettingsStore.js'
 import { pushSupported, sendTestNotification } from './push.js'
 import './NotificationDevices.js'
 

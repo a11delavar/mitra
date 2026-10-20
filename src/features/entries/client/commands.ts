@@ -1,11 +1,11 @@
 import { DateTime } from '@3mo/date-time'
+import { ReminderSetting } from '#features/reminders/client/DefaultReminderSetting.js'
+import { Calendars } from '#features/sources/client/Calendars.js'
+import { command, Command } from '#features/commands/Command.js'
 import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
-import { ReminderSetting } from '../../reminders/client/DefaultReminderSetting.js'
-import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryStore } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
-import { command, Command } from '../../commands/Command.js'
 
 @command()
 export class CreateEntry extends Command {

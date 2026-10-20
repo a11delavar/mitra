@@ -1,10 +1,9 @@
+import type { EntryShift, Entry, EntryRollup } from '#features/entries'
+import { Calendars } from '#features/sources/client/Calendars.js'
+import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { ShiftStrategy } from '../ShiftStrategy.js'
 import { RelationGraph } from '../RelationGraph.js'
 import { type EntryPlan } from '../EntryPlan.js'
-import { type EntryShift } from '../../entries/EntryShift.js'
-import { type Entry, type EntryRollup } from '../../entries/Entry.js'
-import { Calendars } from '../../sources/client/Calendars.js'
-import { EntryStore } from '../../entries/client/EntryStore.js'
 
 /**
  * Client-side relationship manager: graph queries and rollups over the live EntryStore, whose entries' relations hold

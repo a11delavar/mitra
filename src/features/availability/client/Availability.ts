@@ -1,9 +1,9 @@
 import { type DateTime } from '@3mo/date-time'
-import { type Entry } from '../../entries/Entry.js'
-import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
-import { type EntrySegment } from '../../entries/client/EntrySegment.js'
-import { EntrySegments } from '../../entries/client/EntrySegments.js'
-import { Calendars } from '../../sources/client/Calendars.js'
+import type { Entry } from '#features/entries'
+import type { EntryOccurrence } from '#features/recurrence'
+import { type EntrySegment } from '#features/entries/client/EntrySegment.js'
+import { EntrySegments } from '#features/entries/client/EntrySegments.js'
+import { Calendars } from '#features/sources/client/Calendars.js'
 import { HideAvailabilitySetting } from './HideAvailabilitySetting.js'
 
 interface Partition {

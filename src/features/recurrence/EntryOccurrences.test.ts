@@ -1,13 +1,10 @@
 import { describe, it } from 'node:test'
 import { DateTimeRange } from '@3mo/date-time'
 import ICAL from 'ical.js'
-import { CalDAV } from '../../integrations/caldav/CalDAV.js'
 import assert from 'node:assert/strict'
+import { EntryType, Entry, EntryRank, EntryTimeZone } from '#features/entries'
+import { CalDAV } from '#integrations/caldav/CalDAV.js'
 import { Recurrence } from './Recurrence.js'
-import { EntryType } from '../entries/EntryType.js'
-import { Entry } from '../entries/Entry.js'
-import { EntryRank } from '../entries/EntryRank.js'
-import { EntryTimeZone } from '../entries/EntryTimeZone.js'
 import { RecurrenceFrequency } from './RecurrenceFrequency.js'
 
 type DateTime = import('@3mo/date-time').DateTime

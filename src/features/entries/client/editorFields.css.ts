@@ -1,7 +1,5 @@
 import { css, unsafeCSS } from '@a11d/lit'
-import { ring } from '../../../design/focusRing.css.js'
-import { activated } from '../../../design/activated.css.js'
-import { controlHeight } from '../../../design/controlHeight.css.js'
+import { ring, activated, controlHeight } from '#design'
 
 /**
  * The entry editor's rows (`.field`): borderless until hovered, lit while one of their controls is in use, the focus

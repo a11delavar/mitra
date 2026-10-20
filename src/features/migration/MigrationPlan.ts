@@ -1,9 +1,7 @@
-import { model } from '../../infrastructure/model/model.js'
-import { type Source } from '../sources/Source.js'
-import { type Entry } from '../entries/Entry.js'
-import { TaskStatus } from '../entries/TaskStatus.js'
-import { Transparency } from '../entries/Transparency.js'
-import { type Integration } from '../../integrations/Integration.js'
+import type { Source } from '#features/sources'
+import { type Entry, TaskStatus, Transparency } from '#features/entries'
+import type { Integration } from '#integrations'
+import { model } from '#infrastructure/model'
 
 /** Target capability that prevents moving an entry (evaluated up front). */
 export type MigrationBlocker = 'availability' | 'recurrence' | 'occurrence' | 'participants' | 'transparency' | 'visibility' | 'percentComplete'

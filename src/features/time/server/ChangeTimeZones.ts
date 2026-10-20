@@ -1,9 +1,9 @@
 import { description } from '@a11d/metadata'
 import { converter } from '@a11d/converter'
 import { z } from 'zod'
-import { validation } from '../../../infrastructure/validation/validation.js'
-import { Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
-import { User } from '../../identity/User.js'
+import { User } from '#features/identity'
+import { validation } from '#infrastructure/validation'
+import { Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { TimeZone } from '../TimeZone.js'
 import { UserTimeZones } from '../UserTimeZones.js'
 

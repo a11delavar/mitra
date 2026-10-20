@@ -1,8 +1,8 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { Api } from '@a11d/api'
-import { createSource, setDefaultSource, settleTimeZone } from '../../../infrastructure/http/Api.js'
-import { OperationServer } from '../../../infrastructure/operations/OperationServer.testing.js'
+import { createSource, setDefaultSource, settleTimeZone } from '#infrastructure/http/Api.js'
+import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
 
 interface Context {
 	readonly homeTimeZone: string

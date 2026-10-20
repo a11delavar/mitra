@@ -1,9 +1,9 @@
 import { type EntityManager } from '@mikro-orm/sqlite'
-import { orm } from '../../../infrastructure/database/orm.js'
-import { createLogger } from '../../../infrastructure/logging/Logger.js'
-import { Integration } from '../../../integrations/Integration.js'
-import { Source } from '../../sources/Source.js'
-import { type Entry } from '../../entries/Entry.js'
+import { Source } from '#features/sources'
+import type { Entry } from '#features/entries'
+import { Integration } from '#integrations'
+import { orm } from '#infrastructure/database/orm.js'
+import { createLogger } from '#infrastructure/logging/Logger.js'
 
 const logger = createLogger('Availability')
 

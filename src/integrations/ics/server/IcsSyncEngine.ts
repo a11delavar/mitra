@@ -1,13 +1,11 @@
 import { createHash } from 'node:crypto'
 import { type EntityManager } from '@mikro-orm/sqlite'
 import ICAL from 'ical.js'
-import { Source } from '../../../features/sources/Source.js'
-import { Entry } from '../../../features/entries/Entry.js'
-import { EntryType } from '../../../features/entries/EntryType.js'
-import { Color } from '../../../features/sources/Color.js'
-import { createLogger } from '../../../infrastructure/logging/Logger.js'
-import type { Integration, SyncEngine } from '../../Integration.js'
-import { CalDAV } from '../../caldav/CalDAV.js'
+import { Source, Color } from '#features/sources'
+import { Entry, EntryType } from '#features/entries'
+import type { Integration, SyncEngine } from '#integrations'
+import { CalDAV } from '#integrations/caldav/CalDAV.js'
+import { createLogger } from '#infrastructure/logging/Logger.js'
 import { IcsSubscription, type IcsFeed } from '../IcsSubscription.js'
 
 const logger = createLogger('Subscription')

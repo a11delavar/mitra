@@ -1,17 +1,14 @@
 import { Component, component, html, css, property, state } from '@a11d/lit'
+import { controlHeight, LatestSearch, type Popover } from '#design'
+import { EntryType, type Entry } from '#features/entries'
+import { Calendars } from '#features/sources/client/Calendars.js'
+import { EntryStore } from '#features/entries/client/EntryStore.js'
+import { searchEntries, updateRelations } from '#infrastructure/http/Api.js'
 import { RelationType, RelationSection } from '../RelationType.js'
 import { type Relation } from '../Relation.js'
-import { EntryType } from '../../entries/EntryType.js'
 import { EntryRelations } from '../EntryRelations.js'
-import { type Entry } from '../../entries/Entry.js'
-import { searchEntries, updateRelations } from '../../../infrastructure/http/Api.js'
-import { Calendars } from '../../sources/client/Calendars.js'
-import { EntryStore } from '../../entries/client/EntryStore.js'
 import { Relations } from './Relations.js'
-import { controlHeight } from '../../../design/controlHeight.css.js'
 import './EntryLink.js'
-import { LatestSearch } from '../../../design/Combobox.js'
-import { type Popover } from '../../../design/Popover.js'
 
 /** The authorable families keyed by the section their lines land in. Each section always renders as its own row with
  * its own add action, opening the picker preset to its type. */

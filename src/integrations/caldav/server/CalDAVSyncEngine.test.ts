@@ -1,10 +1,9 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { Entry, EntryType } from '#features/entries'
+import { Source } from '#features/sources'
+import '#integrations/server/registerEngines.js'
 import { CalDAV } from '../CalDAV.js'
-import '../../server/registerEngines.js'
-import { Entry } from '../../../features/entries/Entry.js'
-import { EntryType } from '../../../features/entries/EntryType.js'
-import { Source } from '../../../features/sources/Source.js'
 
 const COLLECTION = 'https://example.com/cal/'
 

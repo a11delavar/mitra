@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { settleTimeZone } from '../../../infrastructure/http/Api.js'
-import { OperationServer, type SentEntry } from '../../../infrastructure/operations/OperationServer.testing.js'
+import { settleTimeZone } from '#infrastructure/http/Api.js'
+import { OperationServer, type SentEntry } from '#infrastructure/operations/OperationServer.testing.js'
 
 type Related = SentEntry & { readonly uid: string, readonly relations: Array<{ readonly type: string, readonly targetUid: string, readonly direction?: string }> }
 

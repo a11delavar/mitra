@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { type Converter } from '@a11d/converter'
-import { Type } from '../../infrastructure/model/orm.js'
-import { ValidationError } from '../../infrastructure/validation/ValidationError.js'
+import { Type } from '#infrastructure/model'
+import { ValidationError } from '#infrastructure/validation'
 
 export type EntryTypeValue = 'event' | 'task' | 'availability'
 

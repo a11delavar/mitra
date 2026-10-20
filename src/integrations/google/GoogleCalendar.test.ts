@@ -1,9 +1,9 @@
 import { describe, it, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
+import { Source } from '#features/sources'
+import { EntryType } from '#features/entries'
+import { asBrowser, wireOf } from '#infrastructure/model/wire.testing.js'
 import { GoogleCalendar } from './GoogleCalendar.js'
-import { Source } from '../../features/sources/Source.js'
-import { EntryType } from '../../features/entries/EntryType.js'
-import { asBrowser, wireOf } from '../../infrastructure/model/wire.testing.js'
 
 const account = () => new GoogleCalendar({
 	uri: GoogleCalendar.uriFor('someone@gmail.com'),

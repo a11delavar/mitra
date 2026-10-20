@@ -1,5 +1,4 @@
-import type { Entry } from '../entries/Entry.js'
-import type { EntryShift } from '../entries/EntryShift.js'
+import type { Entry, EntryShift } from '#features/entries'
 import { EntryPlan, type PlannedWrite, type SkippedEntry } from './EntryPlan.js'
 import type { RelationEdge } from './RelationEdge.js'
 import type { RelationGraph } from './RelationGraph.js'

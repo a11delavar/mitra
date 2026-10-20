@@ -3,9 +3,9 @@ import { createMetadataDecorator } from '@a11d/metadata'
 import { ModelValueConstructor } from '@a11d/api-model-value-constructor'
 import { Router, type Request } from 'express'
 import { construct } from '@a11d/converter'
-import { validation } from '../validation/validation.js'
-import { type User } from '../../features/identity/User.js'
-import { createLogger } from '../logging/Logger.js'
+import type { User } from '#features/identity'
+import { validation } from '#infrastructure/validation'
+import { createLogger } from '#infrastructure/logging/Logger.js'
 
 /** On whose behalf an operation runs, and in which unit of work. */
 export interface OperationContext {

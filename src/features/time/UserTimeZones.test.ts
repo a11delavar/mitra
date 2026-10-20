@@ -1,9 +1,9 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { User } from '#features/identity'
+import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
 import { TimeZone } from './TimeZone.js'
 import { UserTimeZones } from './UserTimeZones.js'
-import { User } from '../identity/User.js'
-import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
 
 const BERLIN = TimeZone.of('Europe/Berlin'), LONDON = TimeZone.of('Europe/London'), TOKYO = TimeZone.of('Asia/Tokyo')
 const ids = (zones: ReadonlyArray<{ readonly zone: TimeZone }>) => zones.map(({ zone }) => zone.id)

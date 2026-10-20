@@ -1,13 +1,11 @@
 import { component, html, css, state } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { Task, TaskStatus, initialState } from '@lit/task'
-import { importIcs, previewIcsImport } from '../../../infrastructure/http/Api.js'
-import { Calendars } from '../../sources/client/Calendars.js'
+import { pressable, activated, controlHeight } from '#design'
+import { Calendars } from '#features/sources/client/Calendars.js'
+import type { Source } from '#features/sources'
+import { importIcs, previewIcsImport } from '#infrastructure/http/Api.js'
 import { MigrationPlan, type MigrationOutcome, type MigrationVerdict } from '../MigrationPlan.js'
-import { type Source } from '../../sources/Source.js'
-import { pressable } from '../../../design/pressable.css.js'
-import { activated } from '../../../design/activated.css.js'
-import { controlHeight } from '../../../design/controlHeight.css.js'
 
 const NAMED_BLOCKED = 5
 

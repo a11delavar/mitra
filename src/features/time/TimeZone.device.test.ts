@@ -1,6 +1,6 @@
-import './document.testing.js'
 import { describe, it, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
+import './document.testing.js'
 import { TimeZone } from './TimeZone.js'
 
 describe('TimeZone.deviceId', () => {

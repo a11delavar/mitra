@@ -1,4 +1,4 @@
-import { type Entry } from '../features/entries/Entry.js'
+import type { Entry } from '#features/entries'
 
 /** Who owns a field: the integration's service, so a re-import brings it back, or Mitra's own database, so deleting the integration loses it. */
 export type Owner = 'upstream' | 'mitra'

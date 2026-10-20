@@ -1,7 +1,7 @@
 import { Component, component, html, css, property } from '@a11d/lit'
+import { contrastColorOf } from '#design'
+import { Color } from '#features/sources'
 import { ParticipantStatus, Participants, type Participant } from '../Participant.js'
-import { Color } from '../../sources/Color.js'
-import { contrastColorOf } from '../../../design/contrastColor.js'
 
 /** A participant's face: their initial in the colour their address stands for, and optionally the badge of their reply. */
 @component('mitra-participant-avatar')

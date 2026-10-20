@@ -1,6 +1,6 @@
 import { describe, it, before, after } from 'node:test'
 import { Api } from '@a11d/api'
-import { OperationServer } from '../../../infrastructure/operations/OperationServer.testing.js'
+import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
 
 describe('SendTestNotification', () => {
 	let server: OperationServer

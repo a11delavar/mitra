@@ -1,7 +1,7 @@
 import { type EntityManager } from '@mikro-orm/core'
+import { Integration } from '#integrations'
+import { Demo } from '#integrations/demo/Demo.js'
 import { User } from '../User.js'
-import { Integration } from '../../../integrations/Integration.js'
-import { Demo } from '../../../integrations/demo/Demo.js'
 import { Session } from './Session.js'
 
 /** A demo visitor's throwaway account, holding the sample calendar. */

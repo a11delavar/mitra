@@ -1,7 +1,7 @@
 import dotenv from 'dotenv'
 import { MikroORM } from '@mikro-orm/sqlite'
-import { createLogger, logEnabled } from '../logging/Logger.js'
-import { Entry } from '../../features/entries/Entry.js'
+import { Entry } from '#features/entries'
+import { createLogger, logEnabled } from '#infrastructure/logging/Logger.js'
 import { ormConfig } from './ormConfig.js'
 import { migrate } from './migrations/migrate.js'
 

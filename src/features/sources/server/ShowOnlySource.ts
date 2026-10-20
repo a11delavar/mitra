@@ -1,10 +1,9 @@
 import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
-import { validation } from '../../../infrastructure/validation/validation.js'
-import { syncEmitter } from '../../../infrastructure/realtime/syncEmitter.js'
-import { ValidationError } from '../../../infrastructure/validation/ValidationError.js'
-import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
-import { User } from '../../identity/User.js'
+import { User } from '#features/identity'
+import { validation, ValidationError } from '#infrastructure/validation'
+import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 
 class Parameters {
 	@validation(z.string())

@@ -1,8 +1,8 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { createEvent, createSource, searchEntries, settleTimeZone, toggleSourceVisibility } from '../../../infrastructure/http/Api.js'
-import { OperationServer, type SentEntry as Row } from '../../../infrastructure/operations/OperationServer.testing.js'
+import { createEvent, createSource, searchEntries, settleTimeZone, toggleSourceVisibility } from '#infrastructure/http/Api.js'
+import { OperationServer, type SentEntry as Row } from '#infrastructure/operations/OperationServer.testing.js'
 import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
 

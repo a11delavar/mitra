@@ -1,13 +1,10 @@
 import { DateTime } from '@3mo/date-time'
-import { Entry } from '../../entries/Entry.js'
-import { EntryType } from '../../entries/EntryType.js'
-import { Recurrence } from '../../recurrence/Recurrence.js'
-import { RecurrenceWeekday } from '../../recurrence/RecurrenceWeekday.js'
-import { EntryStore, reportSaveError } from '../../entries/client/EntryStore.js'
-import { EntryEditorIntent } from '../../entries/client/EntryEditorIntent.js'
-import { Calendars } from '../../sources/client/Calendars.js'
-import { command, Command } from '../../commands/Command.js'
-import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
+import { Entry, EntryType } from '#features/entries'
+import { Recurrence, RecurrenceWeekday, RecurrenceFrequency } from '#features/recurrence'
+import { EntryStore, reportSaveError } from '#features/entries/client/EntryStore.js'
+import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js'
+import { Calendars } from '#features/sources/client/Calendars.js'
+import { command, Command } from '#features/commands/Command.js'
 
 const START_HOUR = 9
 const END_HOUR = 17

@@ -1,6 +1,6 @@
 import { type EntityManager } from '@mikro-orm/core'
+import type { Calendar } from '#features/sources'
 import { type Entry } from './Entry.js'
-import { type Calendar } from '../sources/Calendar.js'
 
 /**
  * What an edit of an entry itself does: an update in place, or a re-creation where no provider can follow, as for a move

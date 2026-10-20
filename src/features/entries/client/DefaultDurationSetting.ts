@@ -1,5 +1,5 @@
-import '../../time/TimeSpan.time.js'
-import { ChoiceSetting, setting, userStorage } from '../../settings/client/Setting.js'
+import '#features/time/TimeSpan.time.js'
+import { ChoiceSetting, setting, userStorage } from '#features/settings/client/Setting.js'
 
 /**
  * Default duration in minutes for new timed entries without explicit spans.

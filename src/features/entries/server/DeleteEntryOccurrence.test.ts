@@ -1,13 +1,11 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { createEvent, deleteOccurrence, settleTimeZone } from '../../../infrastructure/http/Api.js'
-import { OperationServer, type SentEntry as Row } from '../../../infrastructure/operations/OperationServer.testing.js'
-import { Recurrence } from '../../recurrence/Recurrence.js'
-import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
+import { Recurrence, RecurrenceFrequency, EntryOccurrenceChangeScope } from '#features/recurrence'
+import { createEvent, deleteOccurrence, settleTimeZone } from '#infrastructure/http/Api.js'
+import { OperationServer, type SentEntry as Row } from '#infrastructure/operations/OperationServer.testing.js'
 import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
 import { iso, midnight, shown, utcMidnight, viewIn, zones } from './viewers.testing.js'
-import { EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
 
 describe('DeleteEntryOccurrence', () => {
 	let server: OperationServer

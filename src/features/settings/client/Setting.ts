@@ -1,7 +1,7 @@
 import { html, live, type HTMLTemplateResult } from '@a11d/lit'
 import { Localizer } from '@3mo/localization'
-import { termsMatch } from '../../commands/termsMatch.js'
-import { getSettings, setSettings } from '../../../infrastructure/http/Api.js'
+import { termsMatch } from '#features/commands/termsMatch.js'
+import { getSettings, setSettings } from '#infrastructure/http/Api.js'
 import { type UserSettings } from '../UserSettings.js'
 import { SettingsStore } from './SettingsStore.js'
 

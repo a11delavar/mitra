@@ -1,10 +1,10 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import type { EntityManager } from '@mikro-orm/core'
+import { Source } from '#features/sources'
+import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
 import { User } from './User.js'
 import { Identity } from './Identity.js'
-import { Source } from '../sources/Source.js'
-import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
 
 const ISSUER = 'https://idp.example.com/realms/home'
 

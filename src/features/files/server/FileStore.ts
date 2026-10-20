@@ -4,8 +4,8 @@ import { mkdir, readdir, rename, rm, stat, unlink, utimes } from 'node:fs/promis
 import { pipeline } from 'node:stream/promises'
 import { Transform, type Readable } from 'node:stream'
 import path from 'node:path'
+import { ValidationError } from '#infrastructure/validation'
 import { File } from '../File.js'
-import { ValidationError } from '../../../infrastructure/validation/ValidationError.js'
 
 /** Thrown when an upload runs past the configured ceiling; the route answers 413. */
 export class FileTooLargeError extends Error {

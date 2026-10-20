@@ -1,5 +1,5 @@
 import { type Converter } from '@a11d/converter'
-import { Type } from '../../infrastructure/model/orm.js'
+import { Type } from '#infrastructure/model'
 
 /**
  * WHERE a relationship line groups in the editor: by EDGE semantics, not stored direction (a

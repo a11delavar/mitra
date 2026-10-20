@@ -1,12 +1,11 @@
 import { Component, component, html, css, property, event, query } from '@a11d/lit'
+import type { Slider, Menu } from '#design'
+import { Calendars } from '#features/sources/client/Calendars.js'
+import { offerToCloseSubtasks } from '#features/relations/client/Hierarchy.js'
+import { Relations } from '#features/relations/client/Relations.js'
 import { type Entry, type EntryRollup } from '../Entry.js'
 import { TaskStatus } from '../TaskStatus.js'
-import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryStore } from './EntryStore.js'
-import { offerToCloseSubtasks } from '../../relations/client/Hierarchy.js'
-import { Relations } from '../../relations/client/Relations.js'
-import { type Slider } from '../../../design/Slider.js'
-import { type Menu } from '../../../design/Menu.js'
 
 /**
  * Task completion and status control.

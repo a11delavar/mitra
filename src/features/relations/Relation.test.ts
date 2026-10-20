@@ -1,10 +1,9 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { Entry, EntryType } from '#features/entries'
 import { Relation } from './Relation.js'
 import { EntryRelations } from './EntryRelations.js'
 import { RelationSection, RelationType } from './RelationType.js'
-import { Entry } from '../entries/Entry.js'
-import { EntryType } from '../entries/EntryType.js'
 
 describe('Relation', () => {
 	describe('from: the one coercion point', () => {

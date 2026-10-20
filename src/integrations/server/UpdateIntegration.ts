@@ -1,8 +1,8 @@
 import { description, label } from '@a11d/metadata'
 import { type Request } from 'express'
-import { syncEmitter } from '../../infrastructure/realtime/syncEmitter.js'
-import { http, operation, Operation, type OperationContext } from '../../infrastructure/operations/Operation.js'
-import { Integration } from '../Integration.js'
+import { Integration } from '#integrations'
+import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { importer } from './Importer.js'
 
 @operation()

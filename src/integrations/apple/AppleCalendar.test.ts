@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
 import { AppleCalendar } from './AppleCalendar.js'
-import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
 
 describe('AppleCalendar', () => {
 	it('initializes the uri to the iCloud CalDAV endpoint', () => {

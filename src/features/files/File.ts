@@ -1,6 +1,5 @@
 import { converter } from '@a11d/converter'
-import { entity, primaryKey, property, index } from '../../infrastructure/model/orm.js'
-import { Entity, identity, equality } from '../../infrastructure/model/Entity.js'
+import { entity, primaryKey, property, index, Entity, identity, equality } from '#infrastructure/model'
 import { MimeType } from './MimeType.js'
 
 /** Base64url of 16 random bytes: the id, which is the capability that stands in for a sign-in on the serving route. */

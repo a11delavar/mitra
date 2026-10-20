@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { Source } from '#features/sources'
 import { CalDAV } from './caldav/CalDAV.js'
-import { Source } from '../features/sources/Source.js'
 
 describe('Integration', () => {
 	describe('clone', () => {

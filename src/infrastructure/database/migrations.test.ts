@@ -4,14 +4,14 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { MikroORM } from '@mikro-orm/sqlite'
-import { User } from '../../features/identity/User.js'
-import { Source } from '../../features/sources/Source.js'
-import { EntryType } from '../../features/entries/EntryType.js'
+import { User } from '#features/identity'
+import { Source } from '#features/sources'
+import { EntryType } from '#features/entries'
+import { Recurrence } from '#features/recurrence'
 import { ormConfig } from './ormConfig.js'
 import { migrate } from './migrations/migrate.js'
 import { migrations, nameOf } from './migrations/index.js'
 import { Migration20260802230147_MergeSourceTypes } from './migrations/Migration20260802230147_MergeSourceTypes.js'
-import { Recurrence } from '../../features/recurrence/Recurrence.js'
 
 // Every boot runs the shipped migrations: fresh databases build their schema with them, instances predating migrations
 // get baselined instead of crashing on `create table`, and a second boot is a no-op.

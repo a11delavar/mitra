@@ -1,8 +1,8 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client'
-import { OperationServer } from '../../../infrastructure/operations/OperationServer.testing.js'
-import { createAccessToken } from '../../identity/server/accessTokens.testing.js'
+import { createAccessToken } from '#features/identity/server/accessTokens.testing.js'
+import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
 
 describe('The MCP endpoint', () => {
 	let server: OperationServer

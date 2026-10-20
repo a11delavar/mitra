@@ -1,4 +1,4 @@
-import { embeddable, property } from '../../infrastructure/model/orm.js'
+import { embeddable, property } from '#infrastructure/model'
 
 export interface IdentityClaims {
 	sub: string

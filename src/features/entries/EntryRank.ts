@@ -1,5 +1,5 @@
 import { type Converter } from '@a11d/converter'
-import { Type } from '../../infrastructure/model/orm.js'
+import { Type } from '#infrastructure/model'
 
 /**
  * An entry's position in the manual order. There is always room for a rank between any two, so

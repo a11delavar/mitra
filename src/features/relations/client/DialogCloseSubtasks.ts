@@ -1,7 +1,6 @@
 import { component, html, css } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
-import { type Entry } from '../../entries/Entry.js'
-import { TaskStatus } from '../../entries/TaskStatus.js'
+import { type Entry, TaskStatus } from '#features/entries'
 
 /** What to do with the leftovers; `undefined` (cancelling the dialog) leaves them exactly as they are. */
 export type SubtaskClosure = TaskStatus

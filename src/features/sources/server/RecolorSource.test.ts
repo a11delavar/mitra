@@ -1,9 +1,9 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { Api } from '@a11d/api'
-import { fetchIntegrations, updateSourceColor } from '../../../infrastructure/http/Api.js'
+import { fetchIntegrations, updateSourceColor } from '#infrastructure/http/Api.js'
+import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
 import { Color } from '../Color.js'
-import { OperationServer } from '../../../infrastructure/operations/OperationServer.testing.js'
 
 describe('RecolorSource', () => {
 	let server: OperationServer

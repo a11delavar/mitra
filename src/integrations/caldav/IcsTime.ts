@@ -1,5 +1,5 @@
 import ICAL from 'ical.js'
-import { TimeZone } from '../../features/time/TimeZone.js'
+import { TimeZone } from '#features/time/TimeZone.js'
 
 /** The .ics boundary's times: the only place an `ICAL.Time` turns into an instant or back. */
 export class IcsTime {

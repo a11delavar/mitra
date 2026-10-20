@@ -1,8 +1,8 @@
 import { Component, component, html, css, property } from '@a11d/lit'
+import { contrastColorOf } from '#design'
+import { EntryType } from '#features/entries'
 import { type Source } from '../Source.js'
-import { EntryType } from '../../entries/EntryType.js'
 import { Calendars } from './Calendars.js'
-import { contrastColorOf } from '../../../design/contrastColor.js'
 
 /**
  * Renders the domain icon for a source in its assigned color.

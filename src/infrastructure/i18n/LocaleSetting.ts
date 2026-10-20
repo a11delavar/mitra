@@ -1,6 +1,6 @@
 import { html, live } from '@a11d/lit'
 import { Localizer, type LanguageCode } from '@3mo/localization'
-import { ChoiceSetting, setting, userStorage, type SettingStorage } from '../../features/settings/client/Setting.js'
+import { ChoiceSetting, setting, userStorage, type SettingStorage } from '#features/settings/client/Setting.js'
 import { AppLocale } from './AppLocale.js'
 import './LocalePreview.js'
 

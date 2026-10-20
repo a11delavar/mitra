@@ -1,4 +1,4 @@
-import { command, Command } from '../../commands/Command.js'
+import { command, Command } from '#features/commands/Command.js'
 import { settings, settingsPage, type Setting, type SettingVerb } from './Setting.js'
 
 @command()

@@ -1,5 +1,5 @@
 import { Controller, eventListener, type Component } from '@a11d/lit'
-import { startedInOverlay } from '../../../design/eventOrigin.js'
+import { startedInOverlay } from '#design'
 
 /**
  * Base controller managing zoom gesture mechanics (pinch, wheel on rail, touch gestures).

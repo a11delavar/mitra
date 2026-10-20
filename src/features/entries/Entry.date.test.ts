@@ -1,10 +1,10 @@
 import { describe, it, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
+import { TimeZone } from '#features/time/TimeZone.js'
+import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
 import { Entry } from './Entry.js'
 import { EntryType } from './EntryType.js'
-import { TimeZone } from '../time/TimeZone.js'
-import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
 
 // `Entry.date`: an entry holds an all-day day as the midnight it begins where it is shown, and the wire carries it as its UTC midnight.
 describe('Entry.date', () => {

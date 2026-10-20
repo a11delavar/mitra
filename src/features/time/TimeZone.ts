@@ -1,7 +1,7 @@
 import { Memoize as memoize } from 'typescript-memoize'
-import { TimeZoneName } from './TimeZoneName.js'
-import { ValidationError } from '../../infrastructure/validation/ValidationError.js'
 import { z } from 'zod'
+import { ValidationError } from '#infrastructure/validation'
+import { TimeZoneName } from './TimeZoneName.js'
 import goldenZones from './goldenZones.json' with { type: 'json' }
 
 /** The device's zone as last asked, with the offset it had then. */

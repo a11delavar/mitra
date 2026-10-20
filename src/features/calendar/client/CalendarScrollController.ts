@@ -1,7 +1,7 @@
 import { Controller, eventListener, type Component } from '@a11d/lit'
 import type { DateTime } from '@3mo/date-time'
-import type { Entry } from '../../entries/Entry.js'
 import { ResizeController } from '@3mo/resize-observer'
+import type { Entry } from '#features/entries'
 import type { CalendarDatesController } from './CalendarDatesController.js'
 
 /**

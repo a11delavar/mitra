@@ -1,6 +1,6 @@
 import { Component, component, html, state } from '@a11d/lit'
-import { getMeta } from '../../../infrastructure/http/Api.js'
-import { docsPage } from '../../about/client/website.js'
+import { docsPage } from '#features/about/client/website.js'
+import { getMeta } from '#infrastructure/http/Api.js'
 import { mcpAddress } from './accessTokens.js'
 
 /** Where agents connect, laid out as its setting's list, and where the documentation says how each client does. */

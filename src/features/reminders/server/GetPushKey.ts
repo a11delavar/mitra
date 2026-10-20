@@ -1,5 +1,5 @@
 import { description, label } from '@a11d/metadata'
-import { http, operation, Operation } from '../../../infrastructure/operations/Operation.js'
+import { http, operation, Operation } from '#infrastructure/operations/Operation.js'
 import { vapidPublicKey } from './push.js'
 
 @operation()

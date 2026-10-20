@@ -1,6 +1,6 @@
 import { Localizer } from '@3mo/localization'
-import { reimportIntegration, updateIntegration } from '../../../infrastructure/http/Api.js'
-import { Calendars } from '../../../features/sources/client/Calendars.js'
+import { Calendars } from '#features/sources/client/Calendars.js'
+import { reimportIntegration, updateIntegration } from '#infrastructure/http/Api.js'
 
 // The sample is written in one language, so a switch sends the new one and re-imports. A region alone changes how
 // dates read, not the words, so it rebuilds nothing.

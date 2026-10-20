@@ -1,10 +1,9 @@
 import { description, label } from '@a11d/metadata'
 import { converter } from '@a11d/converter'
 import { z } from 'zod'
-import { syncEmitter } from '../../../infrastructure/realtime/syncEmitter.js'
-import { ValidationError } from '../../../infrastructure/validation/ValidationError.js'
-import { validation } from '../../../infrastructure/validation/validation.js'
-import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
+import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { ValidationError, validation } from '#infrastructure/validation'
+import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { EntryRank } from '../EntryRank.js'
 
 function rankOf(key: string) {

@@ -1,10 +1,10 @@
 import { Component, component, html, css, unsafeCSS, property, state, repeat } from '@a11d/lit'
+import type { Entry } from '#features/entries'
+import { type EntrySegment } from '#features/entries/client/EntrySegment.js'
+import { type EntrySegmentComponent } from '#features/entries/client/EventSegment.js'
+import { Calendars } from '#features/sources/client/Calendars.js'
+import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { RelationGraph } from '../RelationGraph.js'
-import { type Entry } from '../../entries/Entry.js'
-import { type EntrySegment } from '../../entries/client/EntrySegment.js'
-import { type EntrySegmentComponent } from '../../entries/client/EventSegment.js'
-import { Calendars } from '../../sources/client/Calendars.js'
-import { EntryStore } from '../../entries/client/EntryStore.js'
 
 /** Grid placement in view-specific units (deltas and order only). */
 export interface SegmentPlacement {

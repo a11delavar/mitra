@@ -1,15 +1,13 @@
+import { type EntryShift, type Entry, TaskStatus } from '#features/entries'
+import { EntryStore } from '#features/entries/client/EntryStore.js'
+import { Calendars } from '#features/sources/client/Calendars.js'
+import { DialogEntryScope, type EntryScope } from '#features/entries/client/DialogEntryScope.js'
+import { EntryOccurrenceChangeScope } from '#features/recurrence'
 import { type ShiftStrategy } from '../ShiftStrategy.js'
 import { EntryPlan, type PlannedWrite, type SkippedEntry } from '../EntryPlan.js'
-import { type EntryShift } from '../../entries/EntryShift.js'
-import { type Entry } from '../../entries/Entry.js'
-import { TaskStatus } from '../../entries/TaskStatus.js'
-import { EntryStore } from '../../entries/client/EntryStore.js'
-import { Calendars } from '../../sources/client/Calendars.js'
 import { Relations } from './Relations.js'
-import { DialogEntryScope, type EntryScope } from '../../entries/client/DialogEntryScope.js'
 import { DialogCompleteParent } from './DialogCompleteParent.js'
 import { DialogCloseSubtasks } from './DialogCloseSubtasks.js'
-import { EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
 
 /**
  * Hierarchy actions and prompt workflows. Computations use {@link Relations} and writes execute via {@link EntryStore.applyPlan}.

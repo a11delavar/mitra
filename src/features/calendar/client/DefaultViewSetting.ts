@@ -1,5 +1,5 @@
+import { ChoiceSetting, setting, userStorage } from '#features/settings/client/Setting.js'
 import { calendarViews, type CalendarView } from '../CalendarView.js'
-import { ChoiceSetting, setting, userStorage } from '../../settings/client/Setting.js'
 
 /**
  * Initial calendar view setting (stored per user).

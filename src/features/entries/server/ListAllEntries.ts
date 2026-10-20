@@ -1,6 +1,6 @@
 import { description, label } from '@a11d/metadata'
-import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
-import { attachRelations } from '../../relations/server/relations.js'
+import { attachRelations } from '#features/relations/server/relations.js'
+import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { Entry } from '../Entry.js'
 import { everyEntry, recurringEntries } from './entryWindow.js'
 

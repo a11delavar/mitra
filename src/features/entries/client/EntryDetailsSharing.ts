@@ -1,8 +1,8 @@
 import { Component, component, html, css, property, event } from '@a11d/lit'
+import { Calendars } from '#features/sources/client/Calendars.js'
 import { type Entry } from '../Entry.js'
 import { Transparency } from '../Transparency.js'
 import { Visibility } from '../Visibility.js'
-import { Calendars } from '../../sources/client/Calendars.js'
 import { EntryStore } from './EntryStore.js'
 
 /**

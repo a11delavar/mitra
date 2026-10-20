@@ -1,6 +1,6 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { OperationServer } from '../../../infrastructure/operations/OperationServer.testing.js'
+import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
 import { listDevices, registerDevice } from './devices.testing.js'
 
 describe('ListDevices', () => {

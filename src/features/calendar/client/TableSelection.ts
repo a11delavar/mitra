@@ -1,12 +1,11 @@
 import { Component, component, html, css, property, event, type PropertyValues } from '@a11d/lit'
-import { TaskStatus } from '../../entries/TaskStatus.js'
-import { type Source } from '../../sources/Source.js'
-import { EntryStore } from '../../entries/client/EntryStore.js'
-import { DialogDeleteEntries } from '../../entries/client/DialogDeleteEntries.js'
-import { Calendars } from '../../sources/client/Calendars.js'
+import { TaskStatus, type Entry } from '#features/entries'
+import type { Source } from '#features/sources'
+import { EntryStore } from '#features/entries/client/EntryStore.js'
+import { DialogDeleteEntries } from '#features/entries/client/DialogDeleteEntries.js'
+import { Calendars } from '#features/sources/client/Calendars.js'
+import type { EntryOccurrenceChangeScope } from '#features/recurrence'
 import { type TableRow } from './TableRow.js'
-import { type Entry } from '../../entries/Entry.js'
-import { type EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
 
 /**
  * What can be done to the selected rows at once. Each row reaches what it stands for: one occurrence, as

@@ -1,10 +1,9 @@
 import { component, html, css, state } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
-import { ShiftStrategy } from '../../relations/ShiftStrategy.js'
-import { type EntryPlan } from '../../relations/EntryPlan.js'
+import { ShiftStrategy, type EntryPlan } from '#features/relations'
+import { EntryOccurrenceChangeScope } from '#features/recurrence'
 import { type Entry } from '../Entry.js'
 import { EntryStore } from './EntryStore.js'
-import { EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
 
 export interface ShiftOption {
 	readonly strategy: ShiftStrategy

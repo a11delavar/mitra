@@ -1,12 +1,12 @@
 import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
-import { validation } from '../../../infrastructure/validation/validation.js'
-import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
-import { Integration } from '../../../integrations/Integration.js'
-import { attachRelations } from '../../relations/server/relations.js'
+import { attachRelations } from '#features/relations/server/relations.js'
+import { tool } from '#features/agents/server/tool.js'
+import { Integration } from '#integrations'
+import { validation } from '#infrastructure/validation'
+import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { Entry } from '../Entry.js'
 import { entrySearch, withOverrides } from './entryWindow.js'
-import { tool } from '../../agents/server/tool.js'
 
 class Parameters {
 	@validation(z.string())
