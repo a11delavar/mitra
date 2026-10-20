@@ -24,39 +24,13 @@ export class EntryRelation {
 		return new Relation({ type: this.type, targetUid: this.targetUid, gap: this.gap ?? null })
 	}
 
-	/** Loads outgoing relations directly from rows for write-path diffing. Display paths should use {@link attach}. */
+	/** Loads outgoing relations directly from rows for write-path diffing. A read attaches both directions through the user's `RelationGraph`. */
 	static async loadFor(em: EntityManager, entries: ReadonlyArray<Entry>): Promise<void> {
 		const ids = entries.map(entry => entry.id).filter((id): id is string => !!id)
 		const rows = ids.length ? await em.find(EntryRelation, { entryId: { $in: ids } }) : []
 		const byEntry = Map.groupBy(rows, row => row.entryId)
 		for (const entry of entries) {
 			entry.relations = EntryRelations.of((byEntry.get(entry.id!) ?? []).map(row => row.relation))
-		}
-	}
-
-	/** Attaches own and incoming (derived) relations to entries scoped to viewer-accessible sources.
-	 * Occurrences inherit relations from their recurrence master. */
-	static async attach(em: EntityManager, entries: ReadonlyArray<Entry>, sourceIds: ReadonlyArray<string>): Promise<void> {
-		const idOf = (entry: Entry) => entry.recurringEntryId ?? entry.id
-		const ids = [...new Set(entries.map(idOf).filter((id): id is string => !!id))]
-		const uids = [...new Set(entries.map(entry => entry.uid).filter((uid): uid is string => !!uid))]
-		const [rows, pointing] = await Promise.all([
-			ids.length ? em.find(EntryRelation, { entryId: { $in: ids } }) : [],
-			uids.length && sourceIds.length ? em.find(EntryRelation, { targetUid: { $in: uids } }) : [],
-		])
-		const ownerIds = [...new Set(pointing.map(row => row.entryId))]
-		const owners = ownerIds.length ? await em.find(Entry, { id: { $in: ownerIds }, recurrenceId: null, sourceId: { $in: sourceIds } }) : []
-		const ownerUidById = new Map(owners.filter(owner => !!owner.uid).map(owner => [owner.id!, owner.uid!]))
-
-		const byEntry = Map.groupBy(rows, row => row.entryId)
-		const byTarget = Map.groupBy(pointing, row => row.targetUid)
-		for (const entry of entries) {
-			const id = idOf(entry)
-			const own = (id && byEntry.get(id) || []).map(row => row.relation)
-			const derived = (entry.uid && byTarget.get(entry.uid) || [])
-				.filter(row => row.entryId !== id && ownerUidById.has(row.entryId))
-				.map(row => new Relation({ type: row.type, targetUid: ownerUidById.get(row.entryId)!, gap: row.gap ?? null, direction: 'incoming' }))
-			entry.relations = EntryRelations.of([...own, ...derived])
 		}
 	}
 

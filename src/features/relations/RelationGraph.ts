@@ -1,5 +1,6 @@
 import { type Entry, type EntryRollup, TaskStatus } from '#features/entries'
 import { EntryRelations } from './EntryRelations.js'
+import { Relation } from './Relation.js'
 import type { RelationEdge } from './RelationEdge.js'
 
 /** Maximum traversal depth to prevent infinite loops from unsanitized external graph cycles. */
@@ -23,9 +24,14 @@ export class RelationGraph {
 	private readonly edgesByKey = new Map<string, RelationEdge>()
 	private readonly outgoing = new Map<string, Array<RelationEdge>>()
 	private readonly incoming = new Map<string, Array<RelationEdge>>()
+	/** The lines each entry owns, and the lines of others pointing at it, read from its side. */
+	private readonly owned = new Map<string, ReadonlyArray<Relation>>()
+	private readonly pointing = new Map<string, Array<Relation>>()
 	private readonly rollups = new Map<string, EntryRollup | undefined>()
+	private readonly relationsOf: (entry: Entry) => EntryRelations | undefined
 
 	private constructor(entries: ReadonlyArray<Entry>, relationsOf: (entry: Entry) => EntryRelations | undefined = entry => entry.relations) {
+		this.relationsOf = relationsOf
 		for (const entry of entries) {
 			// First entry per UID wins, allowing callers to overlay local working copies over fetched rows.
 			if (!this.entriesByUid.has(entry.uid!)) {
@@ -33,8 +39,15 @@ export class RelationGraph {
 			}
 		}
 		for (const entry of entries) {
+			const uid = entry.uid!
+			const relations = relationsOf(entry) ?? EntryRelations.none
+			this.owned.set(uid, [...this.owned.get(uid) ?? [], ...relations.writes])
+			for (const relation of relations.writes.filter(relation => relation.targetUid !== uid)) {
+				const incoming = new Relation({ type: relation.type, targetUid: uid, gap: relation.gap, direction: 'incoming' })
+				this.pointing.set(relation.targetUid, [...this.pointing.get(relation.targetUid) ?? [], incoming])
+			}
 			// Traverses through EntryRelations to respect line direction and prevent inverted edge creation.
-			for (const edge of (relationsOf(entry) ?? EntryRelations.none).edges(entry.uid)) {
+			for (const edge of relations.edges(uid)) {
 				if (edge.from === edge.to || this.edgesByKey.has(edge.key)) {
 					continue
 				}
@@ -55,6 +68,26 @@ export class RelationGraph {
 
 	entryOf(uid: string | undefined) {
 		return uid === undefined ? undefined : this.entriesByUid.get(uid)
+	}
+
+	/**
+	 * Gives each entry its relations as the graph holds them, its own lines and those pointing at it as incoming ones, and
+	 * links in the entries they reach, however far, each given its own (`EntryRelations.link`): what a read serves. An
+	 * override takes its recurring entry's, as they share a uid.
+	 */
+	attach(entries: ReadonlyArray<Entry>): void {
+		const uids = new Set(entries.map(entry => entry.uid).filter((uid): uid is string => !!uid))
+		const reached = this.connectedTo(uids).filter(entry => !uids.has(entry.uid!))
+		for (const entry of [...entries, ...reached]) {
+			const uid = entry.uid
+			entry.relations = EntryRelations.of(uid === undefined ? [] : [...this.owned.get(uid) ?? [], ...this.pointing.get(uid) ?? []])
+		}
+		EntryRelations.link(entries, uid => this.entryOf(uid))
+	}
+
+	/** This graph with `relations` as what `entry` owns, in place of what it holds today: what a write would make of it. */
+	replacing(entry: Entry, relations: EntryRelations): RelationGraph {
+		return RelationGraph.of([entry, ...this.entries], candidate => candidate.uid === entry.uid ? relations : this.relationsOf(candidate))
 	}
 
 	edgesFrom(uid: string): ReadonlyArray<RelationEdge> {

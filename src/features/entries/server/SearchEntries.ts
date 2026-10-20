@@ -1,6 +1,5 @@
 import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
-import { attachRelations } from '#features/relations/server/relations.js'
 import { tool } from '#features/agents/server/tool.js'
 import { Integration } from '#integrations'
 import { validation } from '#infrastructure/validation'
@@ -36,7 +35,8 @@ export class SearchEntries extends Operation<Parameters, Array<Entry>> {
 		const entries = found.filter(entry => !integrationOf.get(entry.sourceId)?.writtenForAvailability(entry))
 		// The browser picks each recurring entry's occurrence, past the dates its overrides take.
 		await withOverrides(em, entries.filter(entry => entry.recurrence))
-		await attachRelations(em, user, entries)
+		const graph = await user.relationGraph(em)
+		graph.attach(entries)
 		return entries
 	}
 }

@@ -1,16 +1,24 @@
 import { type Converter } from '@a11d/converter'
 import { z } from 'zod'
 import type { Entry } from '#features/entries'
+import { type Validatable, ValidationError } from '#infrastructure/validation'
 import { Relation, type RelationInit } from './Relation.js'
 import { type RelationEdge } from './RelationEdge.js'
+import type { RelationGraph } from './RelationGraph.js'
 import { type RelationSection, RelationType } from './RelationType.js'
+
+/** What a candidate list is judged against: the entry to hold it, and the graph of the user's relations. */
+export interface EntryRelationsContext {
+	readonly entry: Entry
+	readonly graph: RelationGraph
+}
 
 /**
  * An entry's relations, owned and derived, each holding the entry at its other end where a read linked it; an entry
  * holding none (`undefined`) does not know them. Views take the entry's uid when asked, as it can change after its
  * relations arrive.
  */
-export class EntryRelations {
+export class EntryRelations implements Validatable<EntryRelationsContext> {
 	static readonly none = new EntryRelations([])
 
 	/** What a request's unusable relations parse to, so `EntryPatch.validate` refuses them: never held by an entry. */
@@ -145,6 +153,35 @@ export class EntryRelations {
 		return [...bySection.entries()]
 			.sort(([a], [b]) => a.rank - b.rank)
 			.map(([section, relations]) => ({ section, relations }))
+	}
+
+	/** What keeps `entry` from holding these lines: availability at either end, a line to itself, or a loop closed in a family, judged on the graph as the write would leave it. */
+	*validate({ entry, graph }: EntryRelationsContext) {
+		if (this.isEmpty) {
+			return
+		}
+		if (entry.type.isAvailability || this.all.some(relation => graph.entryOf(relation.targetUid)?.type.isAvailability)) {
+			yield new ValidationError('Availability cannot be related to other entries', ['relations'])
+		}
+		const uid = entry.uid
+		if (!uid) {
+			return
+		}
+		if (this.all.some(relation => relation.targetUid === uid)) {
+			yield new ValidationError('An entry cannot relate to itself', ['relations'])
+		}
+		// Walks up from the far ends of the candidate lines: reaching the entry again closes a loop.
+		const replaced = graph.replacing(entry, this)
+		const seedsOf = (family: 'hierarchy' | 'dependency') => this.writes
+			.map(relation => relation.edgeOf(uid))
+			.filter(edge => edge?.family === family && edge.from !== uid)
+			.map(edge => edge!.from)
+		if (replaced.reaches('hierarchy', seedsOf('hierarchy'), uid)) {
+			yield new ValidationError('This would create a circular hierarchy', ['relations'])
+		}
+		if (replaced.reaches('dependency', seedsOf('dependency'), uid)) {
+			yield new ValidationError('This would create a circular dependency', ['relations'])
+		}
 	}
 
 	/** These relations with the entry `targetOf` names as each one's other end. */

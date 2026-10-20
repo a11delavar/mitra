@@ -3,12 +3,11 @@ import { z } from 'zod'
 import { tool } from '#features/agents/server/tool.js'
 import { EntryPatch } from '#features/entries'
 import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
-import { validation, ValidationError } from '#infrastructure/validation'
+import { validation } from '#infrastructure/validation'
 import { operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { EntryRelation } from '../EntryRelation.js'
 import { EntryRelations } from '../EntryRelations.js'
 import { RelationType } from '../RelationType.js'
-import { assertRelationsValid, attachRelations } from './relations.js'
 
 class Parameters {
 	@validation(z.string())
@@ -39,19 +38,16 @@ export class RelateEntries extends Operation<Parameters> {
 		const change = existing.edit(new EntryPatch())
 		change.edited.relateTo(type, other.uid!)
 		const relations = change.edited.relations ?? EntryRelations.none
-		const errors = [...Object.assign(new EntryPatch(), { relations }).validate({ entry: existing, to: calendar }), ...change.edited.validate(calendar)]
+		const errors = [...Object.assign(new EntryPatch(), { relations }).validate({ entry: existing, to: calendar }), ...change.edited.validate(calendar), ...relations.validate({ entry: existing, graph: await user.relationGraph(em, relations) })]
 		if (errors.length) {
 			throw new AggregateError(errors)
-		}
-		const relationsError = await assertRelationsValid(em, user, existing, relations)
-		if (relationsError) {
-			throw new ValidationError(relationsError, ['relations'])
 		}
 
 		const saved = await change.save(em, calendar, calendar)
 		await EntryRelation.reconcile(em, saved.id!, relations)
 		await em.flush()
-		await attachRelations(em, user, [saved])
+		const graph = await user.relationGraph(em)
+		graph.attach([saved])
 		syncEmitter.emit('updated', user.id)
 		this.logger.debug(`Related entry ${saved.id} to ${other.id} (${type})`)
 		return saved

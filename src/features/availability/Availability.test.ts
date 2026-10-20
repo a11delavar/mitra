@@ -7,8 +7,7 @@ import { Session } from '#features/identity/server/Session.js'
 import { Source } from '#features/sources'
 import { Recurrence, RecurrenceFrequency } from '#features/recurrence'
 import { Entry, TaskStatus, Transparency, EntryType, EntryTypes } from '#features/entries'
-import { EntryRelation, EntryRelations, RelationType, Relation } from '#features/relations'
-import { assertRelationsValid } from '#features/relations/server/relations.js'
+import { EntryRelation, EntryRelations, RelationGraph, RelationType } from '#features/relations'
 import { NotificationSubscription } from '#features/reminders/NotificationSubscription.js'
 import { MigrationVerdict } from '#features/migration/MigrationPlan.js'
 import { Integration, registerEngine, type SyncEngine } from '#integrations'
@@ -293,30 +292,28 @@ describe('availability and relations', () => {
 		return entry
 	}
 
+	/** What keeps `entry` from holding a PARENT line to `target`, judged on the graph of the two. */
+	const relating = (entry: Entry, target: Entry) =>
+		[...EntryRelations.of([{ type: RelationType.Parent, targetUid: target.uid! }]).validate({ entry, graph: RelationGraph.of([entry, target]) })].map(error => error.message)
+
 	it('refuses availability as the source of a relation', async () => {
 		const availability = await persist({ type: EntryType.Availability })
 		const task = await persist({ type: EntryType.Task })
 
-		const error = await assertRelationsValid(em, user, availability, EntryRelations.of([new Relation({ type: RelationType.Parent, targetUid: task.uid! })]))
-
-		assert.match(String(error), /Availability cannot be related/)
+		assert.match(String(relating(availability, task)), /Availability cannot be related/)
 	})
 
 	it('refuses availability as the target of a relation', async () => {
 		const availability = await persist({ type: EntryType.Availability })
 		const task = await persist({ type: EntryType.Task })
 
-		const error = await assertRelationsValid(em, user, task, EntryRelations.of([new Relation({ type: RelationType.Parent, targetUid: availability.uid! })]))
-
-		assert.match(String(error), /Availability cannot be related/)
+		assert.match(String(relating(task, availability)), /Availability cannot be related/)
 	})
 
 	it('allows a relation between two ordinary entries', async () => {
 		const parent = await persist({ type: EntryType.Task })
 		const child = await persist({ type: EntryType.Task })
 
-		const error = await assertRelationsValid(em, user, child, EntryRelations.of([new Relation({ type: RelationType.Parent, targetUid: parent.uid! })]))
-
-		assert.equal(error, undefined)
+		assert.deepEqual(relating(child, parent), [])
 	})
 })

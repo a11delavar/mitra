@@ -1,7 +1,6 @@
 import { description, label } from '@a11d/metadata'
 import { converter } from '@a11d/converter'
 import { z } from 'zod'
-import { attachRelations } from '#features/relations/server/relations.js'
 import { validation } from '#infrastructure/validation'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { Entry } from '../Entry.js'
@@ -30,7 +29,8 @@ export class ListEntries extends Operation<Parameters, Array<Entry>> {
 
 		// The browser expands the recurring entries itself, each once whatever the window.
 		const entries = [...rows, ...await recurringEntries(em, visibleSourceIds)]
-		await attachRelations(em, user, entries)
+		const graph = await user.relationGraph(em)
+		graph.attach(entries)
 		return entries
 	}
 }

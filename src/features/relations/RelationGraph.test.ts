@@ -330,4 +330,125 @@ describe('RelationGraph', () => {
 			assert.deepEqual(graph.childrenOf('parent'), [occurrence])
 		})
 	})
+
+	describe('attach', () => {
+		const lines = (served: Entry) => served.relations?.all.map(relation => [relation.direction, relation.type.value, relation.targetUid])
+		const fresh = (uid: string, like: Partial<Entry> = {}) => new Entry({ id: uid, sourceId: 's', uid, type: EntryType.Task, heading: uid, status: like.status, recurringEntryId: like.recurringEntryId, recurrenceId: like.recurrenceId, ...like.id ? { id: like.id } : {} })
+
+		it('gives an entry its own lines, and the lines pointing at it as incoming ones naming their owner', () => {
+			const graph = RelationGraph.of([entry('child', [{ type: RelationType.Parent, targetUid: 'parent' }]), entry('parent')])
+			const [child, parent] = [fresh('child'), fresh('parent')]
+			graph.attach([child, parent])
+			assert.deepEqual(lines(child), [['outgoing', 'PARENT', 'parent']])
+			assert.deepEqual(lines(parent), [['incoming', 'PARENT', 'child']])
+		})
+
+		it('keeps a pair authored from both sides as two lines, the own one and the incoming one', () => {
+			const graph = RelationGraph.of([
+				entry('child', [{ type: RelationType.Parent, targetUid: 'parent' }]),
+				entry('parent', [{ type: RelationType.Child, targetUid: 'child' }]),
+			])
+			const child = fresh('child')
+			graph.attach([child])
+			assert.deepEqual(lines(child), [['outgoing', 'PARENT', 'parent'], ['incoming', 'CHILD', 'parent']])
+		})
+
+		it('gives an override the relations of its recurring entry', () => {
+			const graph = RelationGraph.of([entry('series', [{ type: RelationType.Parent, targetUid: 'parent' }]), entry('parent')])
+			const override = fresh('series', { id: 'override', recurringEntryId: 'series', recurrenceId: new DateTime() })
+			graph.attach([override])
+			assert.deepEqual(lines(override), [['outgoing', 'PARENT', 'parent']])
+		})
+
+		it('leaves an entry no line names with none, which is known rather than unknown', () => {
+			const graph = RelationGraph.of([entry('child', [{ type: RelationType.Parent, targetUid: 'parent' }]), entry('parent')])
+			const apart = fresh('apart')
+			graph.attach([apart])
+			assert.equal(apart.relations?.isEmpty, true)
+		})
+
+		it('links the far end of each line in, given its own lines, so the editor needs no second request', () => {
+			const graph = RelationGraph.of([entry('child', [{ type: RelationType.Parent, targetUid: 'parent' }]), entry('parent')])
+			const child = fresh('child')
+			graph.attach([child])
+			const parent = child.relations!.all[0]!.target!
+			assert.equal(parent.uid, 'parent')
+			assert.deepEqual(lines(parent), [['incoming', 'PARENT', 'child']])
+		})
+
+		describe('what a read serves, as the browser rebuilds it', () => {
+			/** The graph the browser builds from fresh copies of `uids` served by `graph`. */
+			const served = (graph: RelationGraph, ...uids: Array<string>) => {
+				const copies = uids.map(uid => fresh(uid, graph.entryOf(uid)))
+				graph.attach(copies)
+				return RelationGraph.of(copies)
+			}
+			const childOf = (uid: string, parent = 'parent', init: Partial<Entry> = {}) => entry(uid, [{ type: RelationType.Parent, targetUid: parent }], init)
+
+			it('rolls the parent up from the children that point at it, though only the parent was served', () => {
+				const graph = RelationGraph.of([entry('parent'), childOf('a', 'parent', { status: TaskStatus.Done }), childOf('b')])
+				assert.deepEqual(served(graph, 'parent').rollupOf('parent'), { done: 1, total: 2, progress: 0.5, subtasks: { done: 1, total: 2 }, checklist: { done: 0, total: 0 }, children: 2, descendants: 2 })
+			})
+
+			it('counts a foreign-authored CHILD line the same as a PARENT one, and a pair authored from both sides once', () => {
+				const foreign = RelationGraph.of([entry('parent', [{ type: RelationType.Child, targetUid: 'a' }]), entry('a', [], { status: TaskStatus.Done })])
+				assert.deepEqual(served(foreign, 'parent').rollupOf('parent')!.subtasks, { done: 1, total: 1 })
+				const both = RelationGraph.of([entry('parent', [{ type: RelationType.Child, targetUid: 'a' }]), childOf('a')])
+				assert.deepEqual(served(both, 'parent').rollupOf('parent')!.subtasks, { done: 0, total: 1 })
+			})
+
+			it('reaches the whole subtree beneath a served entry, and its parents with their own rollups', () => {
+				const graph = RelationGraph.of([entry('parent'), childOf('a', 'parent', { status: TaskStatus.Done }), childOf('b', 'a')])
+				const fromParent = served(graph, 'parent')
+				assert.deepEqual(uids(fromParent.descendantsOf('parent')), ['a', 'b'])
+				assert.deepEqual(fromParent.rollupOf('parent')!.descendants, 2)
+				const fromChild = served(graph, 'a')
+				assert.deepEqual(uids(fromChild.parentsOf('a')), ['parent'])
+				assert.deepEqual(fromChild.rollupOf('parent')!.subtasks, { done: 1, total: 1 })
+			})
+
+			it('reaches however far and whichever way the lines point, and nothing apart from them', () => {
+				const graph = RelationGraph.of([
+					entry('parent'), childOf('a'), childOf('b', 'a'), childOf('c'),
+					entry('d', [{ type: RelationType.FinishToStart, targetUid: 'c' }]),
+					entry('unrelated'), entry('apart', [{ type: RelationType.Parent, targetUid: 'elsewhere' }]), entry('elsewhere'),
+				])
+				assert.deepEqual(uids([...served(graph, 'b').entries]), ['a', 'b', 'c', 'd', 'parent'])
+			})
+
+			it('ends on a cycle, and ignores a dangling pointer rather than counting a phantom child', () => {
+				const cyclic = RelationGraph.of([entry('a', [{ type: RelationType.Child, targetUid: 'b' }]), entry('b', [{ type: RelationType.Child, targetUid: 'a' }])])
+				assert.deepEqual([served(cyclic, 'a').rollupOf('a')!.descendants, served(cyclic, 'a').rollupOf('b')!.descendants], [1, 1])
+				const dangling = RelationGraph.of([entry('parent', [{ type: RelationType.Child, targetUid: 'never-synced' }])])
+				assert.equal(served(dangling, 'parent').rollupOf('parent'), undefined)
+			})
+		})
+	})
+
+	describe('replacing', () => {
+		it('holds the candidate lines in place of the stored ones: a write replaces what the entry holds today', () => {
+			const graph = RelationGraph.of([entry('entry', [{ type: RelationType.Child, targetUid: 'f' }]), entry('f')])
+			const replaced = graph.replacing(graph.entryOf('entry')!, EntryRelations.of([{ type: RelationType.Parent, targetUid: 'f' }]))
+			assert.deepEqual(uids(replaced.parentsOf('entry')), ['f'])
+			assert.deepEqual(replaced.childrenOf('entry'), [])
+		})
+
+		it('takes in an entry the graph does not hold yet', () => {
+			const graph = RelationGraph.of([entry('f')])
+			const replaced = graph.replacing(entry('fresh'), EntryRelations.of([{ type: RelationType.Parent, targetUid: 'f' }]))
+			assert.deepEqual(uids(replaced.parentsOf('fresh')), ['f'])
+		})
+
+		it('leaves the lines of every other entry in place, those pointing at the entry included', () => {
+			const graph = RelationGraph.of([
+				entry('a', [{ type: RelationType.Parent, targetUid: 'b' }]),
+				entry('b'),
+				entry('c', [{ type: RelationType.Parent, targetUid: 'a' }]),
+			])
+			const replaced = graph.replacing(graph.entryOf('a')!, EntryRelations.none)
+			assert.deepEqual(replaced.parentsOf('a'), [])
+			assert.deepEqual(uids(replaced.childrenOf('a')), ['c'])
+			assert.deepEqual(uids(graph.parentsOf('a')), ['b'])
+		})
+	})
 })

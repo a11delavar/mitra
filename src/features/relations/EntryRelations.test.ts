@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { Entry, EntryType } from '#features/entries'
+import { RelationGraph } from './RelationGraph.js'
 import { EntryRelations } from './EntryRelations.js'
 import { Relation, type RelationInit } from './Relation.js'
 import { RelationSection, RelationType } from './RelationType.js'
@@ -149,6 +150,64 @@ describe('EntryRelations', () => {
 
 		it('leaves an uninterpreted line out, since it constrains nothing', () => {
 			assert.deepEqual(EntryRelations.of([{ type: 'X-WAITS-FOR', targetUid: 'x' }]).edges('self'), [])
+		})
+	})
+
+	describe('validate', () => {
+		const task = (uid: string, relations: Array<RelationInit> = [], init: Partial<Entry> = {}) => {
+			const created = new Entry({ id: uid, sourceId: 's', uid, type: EntryType.Task, heading: uid, ...init })
+			created.relations = EntryRelations.of(relations)
+			return created
+		}
+		const candidates = (...pairs: Array<[RelationType, string]>) => EntryRelations.of(pairs.map(([type, targetUid]) => ({ type, targetUid })))
+		/** The messages keeping `entry` from holding `relations` among `others`, judged on the graph of all of them. */
+		const errorsOf = (entry: Entry, relations: EntryRelations, ...others: Array<Entry>) =>
+			[...relations.validate({ entry, graph: RelationGraph.of([entry, ...others]) })].map(error => error.message)
+
+		it('refuses a relationship to the entry itself, which states nothing, naming the relations field', () => {
+			const entry = task('a')
+			const errors = [...candidates([RelationType.Parent, 'a']).validate({ entry, graph: RelationGraph.of([entry]) })]
+			assert.match(errors[0]!.message, /cannot relate to itself/)
+			assert.deepEqual(errors[0]!.fields, ['relations'])
+		})
+
+		it('refuses a hierarchy that would close a loop, at any depth, and lets a dependency through there', () => {
+			const grandparent = task('grandparent')
+			const parent = task('parent', [{ type: RelationType.Parent, targetUid: 'grandparent' }])
+			const child = task('child', [{ type: RelationType.Parent, targetUid: 'parent' }])
+			assert.match(errorsOf(grandparent, candidates([RelationType.Parent, 'child']), parent, child)[0]!, /circular hierarchy/)
+			assert.deepEqual(errorsOf(grandparent, candidates([RelationType.FinishToStart, 'child']), parent, child), [])
+		})
+
+		it('refuses a dependency that would close a loop, and keeps the two families apart', () => {
+			const first = task('first')
+			const second = task('second', [{ type: RelationType.FinishToStart, targetUid: 'first' }])
+			assert.match(errorsOf(first, candidates([RelationType.FinishToStart, 'second']), second)[0]!, /circular dependency/)
+			assert.deepEqual(errorsOf(first, candidates([RelationType.Parent, 'second']), second), [])
+		})
+
+		it('judges the CANDIDATE list, not the stored one: a write replaces what the entry holds today', () => {
+			// The entry claims f as its child today; re-pointing it as f's child is legal since the write deletes that line.
+			const entry = task('entry', [{ type: RelationType.Child, targetUid: 'f' }])
+			assert.deepEqual(errorsOf(entry, candidates([RelationType.Parent, 'f']), task('f')), [])
+		})
+
+		it('does not walk a CHILD-typed candidate, which the editor never authors', () => {
+			const child = task('child', [{ type: RelationType.Parent, targetUid: 'parent' }])
+			assert.deepEqual(errorsOf(child, candidates([RelationType.Child, 'parent']), task('parent')), [])
+		})
+
+		it('passes an empty list, and an entry no uid identifies yet', () => {
+			assert.deepEqual(errorsOf(task('a'), EntryRelations.none), [])
+			const draft = new Entry({ id: 'draft', sourceId: 's', type: EntryType.Task, heading: 'draft' })
+			assert.deepEqual(errorsOf(draft, candidates([RelationType.Parent, 'a']), task('a')), [])
+		})
+
+		it('refuses availability at either end', () => {
+			const availability = task('availability', [], { type: EntryType.Availability })
+			assert.match(errorsOf(availability, candidates([RelationType.Parent, 'a']), task('a'))[0]!, /Availability cannot be related/)
+			assert.match(errorsOf(task('a'), candidates([RelationType.Parent, 'availability']), availability)[0]!, /Availability cannot be related/)
+			assert.deepEqual(errorsOf(task('a'), candidates([RelationType.Parent, 'b']), task('b')), [])
 		})
 	})
 })

@@ -3,13 +3,12 @@ import { description, label } from '@a11d/metadata'
 import { converter } from '@a11d/converter'
 import { z } from 'zod'
 import { EntryRelation, EntryRelations } from '#features/relations'
-import { assertRelationsValid, attachRelations } from '#features/relations/server/relations.js'
 import { fileStore } from '#features/files/server/FileStore.js'
 import { OrganizerOnly } from '#features/participants/OrganizerOnly.js'
 import { EntryOccurrence, EntryOccurrenceChangeScope } from '#features/recurrence'
 import { tool } from '#features/agents/server/tool.js'
 import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
-import { validation, ValidationError } from '#infrastructure/validation'
+import { validation } from '#infrastructure/validation'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { type Entry } from '../Entry.js'
 import { EntryPatch } from '../EntryPatch.js'
@@ -47,13 +46,6 @@ export class UpdateEntryOccurrence extends Operation<Parameters, Entry> {
 		if (malformed.length) {
 			throw new AggregateError(malformed)
 		}
-		if (patch.relations !== undefined) {
-			const relationsError = await assertRelationsValid(em, user, existing, patch.relations)
-			if (relationsError) {
-				throw new ValidationError(relationsError, ['relations'])
-			}
-		}
-
 		const incoming = existing.edit(patch).edited
 
 		// Changing the list is the organizer's prerogative, so content edits pass only while they leave it as it is.
@@ -64,7 +56,7 @@ export class UpdateEntryOccurrence extends Operation<Parameters, Entry> {
 		// The current calendar is owned transitively (the entry lookup above proved it); a DIFFERENT target proves its own ownership.
 		const from = await user.calendar(em, existing.sourceId)
 		const to = incoming.sourceId === existing.sourceId ? from : await user.calendar(em, incoming.sourceId)
-		const errors = [...patch.validate({ entry: existing, from, to, scope }), ...incoming.validate(to)]
+		const errors = [...patch.validate({ entry: existing, from, to, scope }), ...incoming.validate(to), ...(patch.relations === undefined ? [] : patch.relations.validate({ entry: existing, graph: await user.relationGraph(em, patch.relations) }))]
 		if (errors.length) {
 			throw new AggregateError(errors)
 		}
@@ -81,7 +73,8 @@ export class UpdateEntryOccurrence extends Operation<Parameters, Entry> {
 			result.relations = existing.relations
 		}
 		await em.flush()
-		await attachRelations(em, user, [result])
+		const graph = await user.relationGraph(em)
+		graph.attach([result])
 		syncEmitter.emit('updated', user.id)
 		this.logger.debug(`Edited occurrence of series ${existing.id} (scope '${scope}')`)
 		return result

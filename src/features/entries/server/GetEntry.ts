@@ -1,6 +1,5 @@
 import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
-import { attachRelations } from '#features/relations/server/relations.js'
 import { tool } from '#features/agents/server/tool.js'
 import { validation } from '#infrastructure/validation'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
@@ -22,7 +21,8 @@ export class GetEntry extends Operation<Parameters, Entry> {
 	async run({ em, user }: OperationContext) {
 		const entry = await user.entry(em, this.parameters.id)
 		await withOverrides(em, entry.recurrence ? [entry] : [])
-		await attachRelations(em, user, [entry])
+		const graph = await user.relationGraph(em)
+		graph.attach([entry])
 		return entry
 	}
 }

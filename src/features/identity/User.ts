@@ -2,6 +2,7 @@ import { converter } from '@a11d/converter'
 import type { EntityManager, FilterQuery } from '@mikro-orm/core'
 import { Source, type Calendar } from '#features/sources'
 import { Entry, type EntryType } from '#features/entries'
+import { EntryRelation, EntryRelations, RelationGraph } from '#features/relations'
 import { UserSettings } from '#features/settings/UserSettings.js'
 import { UserTimeZones } from '#features/time/UserTimeZones.js'
 import { Integration } from '#integrations'
@@ -121,5 +122,29 @@ export class User {
 		const entry = await em.findOneOrFail(Entry, { id })
 		await this.source(em, entry.sourceId)
 		return entry
+	}
+
+	/**
+	 * The user's relations whole, over the entries at both ends of each, and the entries `reaching` points at besides: the
+	 * graph a read serves and a candidate list is judged on. The rows of the user's own entries only: another user's link
+	 * to a uid they share is not the user's to see.
+	 */
+	async relationGraph(em: EntityManager, reaching = EntryRelations.none) {
+		const sourceIds = (await this.sources(em)).map(source => source.id)
+		if (!sourceIds.length) {
+			return RelationGraph.empty
+		}
+		const rows = await em.find(EntryRelation, { entryId: { sourceId: { $in: sourceIds } } } as FilterQuery<EntryRelation>)
+		const ownerIds = [...new Set(rows.map(row => row.entryId))]
+		const targetUids = [...new Set([...rows.map(row => row.targetUid), ...reaching.all.map(relation => relation.targetUid)])]
+		if (!ownerIds.length && !targetUids.length) {
+			return RelationGraph.empty
+		}
+		const [owners, targets] = await Promise.all([
+			ownerIds.length ? em.find(Entry, { id: { $in: ownerIds }, recurrenceId: null, sourceId: { $in: sourceIds } }) : [],
+			targetUids.length ? em.find(Entry, { uid: { $in: targetUids }, recurrenceId: null, sourceId: { $in: sourceIds } }) : [],
+		])
+		const rowsByEntry = Map.groupBy(rows, row => row.entryId)
+		return RelationGraph.of(new Set([...owners, ...targets]), entry => EntryRelations.of((rowsByEntry.get(entry.id!) ?? []).map(row => row.relation)))
 	}
 }

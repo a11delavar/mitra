@@ -2,12 +2,11 @@ import { equals } from '@a11d/equals'
 import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
 import { EntryRelation, EntryRelations } from '#features/relations'
-import { assertRelationsValid, attachRelations } from '#features/relations/server/relations.js'
 import { fileStore } from '#features/files/server/FileStore.js'
 import { OrganizerOnly } from '#features/participants/OrganizerOnly.js'
 import { tool } from '#features/agents/server/tool.js'
 import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
-import { validation, ValidationError } from '#infrastructure/validation'
+import { validation } from '#infrastructure/validation'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { type Entry } from '../Entry.js'
 import { EntryPatch } from '../EntryPatch.js'
@@ -36,13 +35,6 @@ export class UpdateEntry extends Operation<Parameters, Entry> {
 			throw new AggregateError(malformed)
 		}
 		const { relations } = patch
-		if (relations !== undefined) {
-			const relationsError = await assertRelationsValid(em, user, existing, relations)
-			if (relationsError) {
-				throw new ValidationError(relationsError, ['relations'])
-			}
-		}
-
 		const edit = existing.edit(patch)
 		const incoming = edit.edited
 
@@ -55,7 +47,7 @@ export class UpdateEntry extends Operation<Parameters, Entry> {
 		const from = await user.calendar(em, existing.sourceId)
 		const to = incoming.sourceId === existing.sourceId ? from : await user.calendar(em, incoming.sourceId)
 		// Type conversion re-creates the entry below: tasks and events cannot share a CalDAV resource (RFC 4791 §4.1).
-		const errors = [...patch.validate({ entry: existing, from, to }), ...incoming.validate(to)]
+		const errors = [...patch.validate({ entry: existing, from, to }), ...incoming.validate(to), ...(relations === undefined ? [] : relations.validate({ entry: existing, graph: await user.relationGraph(em, relations) }))]
 		if (errors.length) {
 			throw new AggregateError(errors)
 		}
@@ -70,7 +62,8 @@ export class UpdateEntry extends Operation<Parameters, Entry> {
 		}
 		await em.flush()
 		// Read back as any read answers it, so the browser keeps the entries it reaches until its next fetch.
-		await attachRelations(em, user, [saved])
+		const graph = await user.relationGraph(em)
+		graph.attach([saved])
 		syncEmitter.emit('updated', user.id)
 		this.logger.debug(recreated ? `Re-created entry ${existing.id} as ${saved.type} in source ${to.source.id} (new id ${saved.id})` : `Updated entry ${existing.id} "${saved.heading}"`)
 		return saved

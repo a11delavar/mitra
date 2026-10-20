@@ -1,7 +1,6 @@
 import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
 import { DateTime, DateTimeRange } from '@3mo/date-time'
-import { attachRelations } from '#features/relations/server/relations.js'
 import { EntryOccurrences, type EntryOccurrence } from '#features/recurrence'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { tool } from '#features/agents/server/tool.js'
@@ -70,7 +69,8 @@ export class GetOverview extends Operation<Parameters> {
 		const end = boundOf(this.parameters.end, 'end', zone)
 		const sourceIds = this.parameters.sourceIds ?? (await user.sources(em, { enabled: true })).map(source => source.id)
 		const entries = [...await em.find(Entry, entryWindow(sourceIds, start, end)), ...await recurringEntries(em, sourceIds)]
-		await attachRelations(em, user, entries)
+		const graph = await user.relationGraph(em)
+		graph.attach(entries)
 
 		const integrations = await user.integrations(em)
 		const integrationOf = new Map((await user.sources(em)).map(source => [source.id, integrations.find(integration => integration.id === source.integrationId)]))

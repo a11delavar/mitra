@@ -7,7 +7,6 @@ import { validation } from '#infrastructure/validation'
 import { operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { EntryRelation } from '../EntryRelation.js'
 import { EntryRelations } from '../EntryRelations.js'
-import { attachRelations } from './relations.js'
 
 class Parameters {
 	@validation(z.string())
@@ -46,7 +45,8 @@ export class UnrelateEntries extends Operation<Parameters> {
 		const saved = await change.save(em, calendar, calendar)
 		await EntryRelation.reconcile(em, saved.id!, relations)
 		await em.flush()
-		await attachRelations(em, user, [saved])
+		const graph = await user.relationGraph(em)
+		graph.attach([saved])
 		syncEmitter.emit('updated', user.id)
 		this.logger.debug(`Unrelated entry ${saved.id} from ${other.id} (${type})`)
 		return saved

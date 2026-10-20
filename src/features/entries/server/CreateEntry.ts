@@ -1,10 +1,8 @@
 import { description, label } from '@a11d/metadata'
 import { EntryRelation, EntryRelations } from '#features/relations'
-import { assertRelationsValid, attachRelations } from '#features/relations/server/relations.js'
 import { fileStore } from '#features/files/server/FileStore.js'
 import { tool } from '#features/agents/server/tool.js'
 import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
-import { ValidationError } from '#infrastructure/validation'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { Entry } from '../Entry.js'
 import { EntryPatch } from '../EntryPatch.js'
@@ -27,20 +25,17 @@ export class CreateEntry extends Operation<EntryPatch, Entry> {
 		const unclaimed = await fileStore.claim(user.id, patch.files ?? [])
 		const incoming = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: to.source.defaultEntryType }).patch(patch).fit(to.integration.ownership)
 
-		const errors = [...unclaimed, ...patch.validate({ to }), ...incoming.validate(to)]
+		const { relations } = incoming
+		const errors = [...unclaimed, ...patch.validate({ to }), ...incoming.validate(to), ...(relations === undefined ? [] : relations.validate({ entry: incoming, graph: await user.relationGraph(em, relations) }))]
 		if (errors.length) {
 			throw new AggregateError(errors)
-		}
-
-		const relationsError = await assertRelationsValid(em, user, incoming, incoming.relations ?? EntryRelations.none)
-		if (relationsError) {
-			throw new ValidationError(relationsError, ['relations'])
 		}
 
 		const created = await to.integration.createEntry(em, incoming)
 		await EntryRelation.reconcile(em, created.id!, created.relations ?? EntryRelations.none)
 		await em.flush()
-		await attachRelations(em, user, [created])
+		const graph = await user.relationGraph(em)
+		graph.attach([created])
 		syncEmitter.emit('updated', user.id)
 		this.logger.debug(`Created ${created.type} "${created.heading}" (${created.id}) in source ${to.source.id}`)
 		return created
