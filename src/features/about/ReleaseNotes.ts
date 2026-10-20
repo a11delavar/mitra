@@ -82,10 +82,16 @@ export class ReleaseNotes {
 		})
 	}
 
-	/** The notes with these people added to the Contributors list; anyone already named there stays as written. */
+	/** The notes with these people added to the Contributors list, each once; anyone already named there stays as written. */
 	withContributors(contributors: ReadonlyArray<ReleaseContributor>) {
-		const known = this.contributors
-		const lines = contributors.filter(person => !known.some(candidate => candidate.is(person))).map(person => person.line)
+		const known = [...this.contributors]
+		const lines = new Array<string>()
+		for (const person of contributors) {
+			if (!known.some(candidate => candidate.is(person))) {
+				known.push(person)
+				lines.push(person.line)
+			}
+		}
 		if (!lines.length) {
 			return this
 		}

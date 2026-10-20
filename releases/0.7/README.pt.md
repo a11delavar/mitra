@@ -1,7 +1,7 @@
 ---
 title: Conectores de IA, anexos, regiões e idiomas
 ---
-O Mitra 0.7 funciona com os assistentes de IA que você já usa, para que eles possam planejar o seu tempo direto no seu calendário. Agora você pode anexar arquivos às suas entradas, o Mitra escreve as datas como se faz na sua região, e o fuso horário de casa fica com você quando viaja. O Mitra agora está disponível em chinês, e você pode ler o que mudou sem sair do aplicativo. Arrastar, ampliar e carregar também ficou mais rápido, e há muitas pequenas melhorias e correções desde a 0.6.
+O Mitra 0.7 funciona com os assistentes de IA que você já usa, para que eles possam planejar o seu tempo direto no seu calendário. Agora você pode anexar arquivos às suas entradas, o Mitra escreve as datas como se faz na sua região, e o fuso horário de casa fica com você quando viaja. O Mitra agora está disponível em chinês, e você pode ler o que mudou sem sair do aplicativo. Arrastar, ampliar e carregar também ficou mais rápido, e há muitas pequenas melhorias e correções.
 
 ## Conectores de IA
 Assistentes de IA como Claude e Cursor agora podem trabalhar com o seu calendário. Conecte um com o endereço que aparece em Configurações → IA e peça a ele o que você faria à mão, como olhar a sua semana, encontrar uma entrada, planejar uma viagem ou mover uma reunião. O que ele escreve chega aos seus calendários como qualquer outra alteração e é sincronizado a partir daí. Em um servidor onde as pessoas entram com uma conta, cada assistente recebe o seu próprio token de acesso, que pode ser limitado à leitura e revogado a qualquer momento.
@@ -72,3 +72,7 @@ O Mitra agora fala chinês, escrito em caracteres simplificados. O aplicativo, o
 </picture>
 
 Documentação: [Configurações](../../docs/settings.md)
+
+## Colaboradores
+- [@a11delavar](https://github.com/a11delavar)
+- [@d8monx](https://github.com/d8monx)

@@ -23,6 +23,8 @@ const docs = (slug = '') => withBase(localized(`/${docsBase}/${slug}`, language)
 
 const release = version.split('.').slice(0, 2).join('.')
 const latest = Release.find(release, language)
+// The release in development, once its notes have a title: what comes after the one this site describes.
+const next = Release.all(language).find(candidate => candidate.state === 'draft' && candidate.version !== release && candidate.notes?.title)
 
 const layers = [
 	{
@@ -74,15 +76,27 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 
 	<section class="hero">
 		<div class="intro">
-			{/* The latest release as its row on the releases list reads, and travelling into its page the same way. */}
-			<a class="news" href={latest?.url ?? withBase(localized(`/releases/${release}/`, language))}>
-				<span class="version" style={latest?.transition('version')}>{release}</span>
-				{latest?.state === 'latest' && <b style={latest.transition('mark')}>{t('Latest')}</b>}
-				<span class="headline">
-					<span class="title" style={latest?.transition('title', 'text')} lang={latest?.translated ? undefined : languages[0]}>{latest?.notes?.title ?? t('See what is new')}</span>
-					<Icon name="arrow-right" size="0.9em" />
-				</span>
-			</a>
+			{/* The latest release as its row on the releases list reads, and travelling into its page the same way; the next one beneath it. */}
+			<nav class="news" aria-label={t('Releases')}>
+				<a class="release" href={latest?.url ?? withBase(localized(`/releases/${release}/`, language))}>
+					<span class="version" style={latest?.transition('version')}>{release}</span>
+					{latest?.state === 'latest' && <b style={latest.transition('mark')}>{t('Latest')}</b>}
+					<span class="headline">
+						<span class="title" style={latest?.transition('title', 'text')} lang={latest?.translated ? undefined : languages[0]}>{latest?.notes?.title ?? t('See what is new')}</span>
+						<Icon name="arrow-right" size="0.9em" />
+					</span>
+				</a>
+				{next && (
+					<a class="release" data-state="draft" href={next.url}>
+						<span class="version" style={next.transition('version')}>{next.version}</span>
+						<b style={next.transition('mark')}>{t('Next')}</b>
+						<span class="headline">
+							<span class="title" style={next.transition('title', 'text')} lang={next.translated ? undefined : languages[0]}>{next.notes!.title}</span>
+							<Icon name="arrow-right" size="0.9em" />
+						</span>
+					</a>
+				)}
+			</nav>
 			<h1>{t('One calendar to plan your events and tasks.')}</h1>
 			<p class="lede">{t('A self-hosted calendar that puts your tasks on the same timeline as your events. Keep your calendars in Mitra, or sync the ones you already use.')}</p>
 			<div class="actions">
@@ -326,14 +340,30 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 	}
 
 	.news {
+		display: flex;
+		flex-direction: column;
+		align-items: start;
+		gap: 0.6rem;
+		margin-block-end: 1.75rem;
+	}
+	.news .release {
 		display: inline-flex;
 		flex-wrap: wrap;
 		align-items: baseline;
 		gap: 0.25rem 0.6rem;
-		margin-block-end: 1.75rem;
 		font-size: 0.9375rem;
 		color: var(--color-text-muted);
 		text-decoration: none;
+	}
+	/* The release in development, quieter than the one people run, in the dev channel's colour as on the releases list. */
+	.news .release[data-state='draft'] {
+		font-size: 0.875rem;
+	}
+	.news .release[data-state='draft'] :is(.version, b) {
+		color: var(--release-dev);
+	}
+	.news .release[data-state='draft'] .version {
+		font-size: 1rem;
 	}
 
 	.news .version {
@@ -371,13 +401,13 @@ const shownView = `${views.map(({ name }) => `.views:has(#view-${name}:checked) 
 		transition: translate 0.15s ease;
 	}
 
-	.news:hover .title {
+	.news .release:hover .title {
 		color: var(--color-text);
 		text-decoration: underline;
 		text-underline-offset: 3px;
 	}
 
-	.news:hover .icon {
+	.news .release:hover .icon {
 		translate: 0.2rem 0;
 	}
 

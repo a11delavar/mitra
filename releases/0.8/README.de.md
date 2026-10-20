@@ -1,0 +1,25 @@
+---
+title: Routinen-Tracker, Todoist, Teilaufgaben und Fälligkeiten auf einen Blick
+---
+Mitra 0.8 hilft dir, bei den Dingen dranzubleiben, die du immer wieder tust, und zeigt, wie größere Vorhaben zusammenkommen.
+
+## Routinen-Tracker
+Mitra fasst schon jetzt zu Routinen zusammen, was du oft tust, etwa das Fitnessstudio oder einen Haarschnitt alle fünf Wochen. Jetzt bekommen sie einen eigenen Platz, an dem du die letzten Tage jeder Routine auf einen Blick siehst: wie viele du eingehalten hast und welche abgesagt oder verpasst wurden. Du kannst eine Routine umbenennen, zwei zusammengehörige zusammenführen oder Mitra sagen, dass etwas gar keine Routine ist. Routinen bleiben außerdem in der Monats- und Jahresansicht stabil, egal wie weit du scrollst, und dein KI-Konnektor kann dir sagen, wie es um sie steht.
+
+## Bessere Teilaufgaben
+Die Teilaufgaben eines Eintrags teilen sich in der Monats- und Jahresansicht eine Spur, sodass sich ein Vorhaben als eine Linie liest, in die seine kurzen Teilaufgaben eingeklappt sind. Die Tabelle ordnet Teilaufgaben unter ihrem übergeordneten Eintrag ein, und die Jahresansicht kann sie ausblenden. Der Fortschritt einer Aufgabe gewichtet jede Teilaufgabe nach ihrem Umfang, sodass ein großes Stück Arbeit mehr zählt als ein schnelles.
+
+## Fälligkeiten auf einen Blick
+Der Fälligkeitstag einer Aufgabe steht auf ihrer Fahne, und wenn du auf die Aufgabe zeigst, wird dieser Tag im Kalender markiert. Die Zeitleiste markiert ihn ebenfalls, und die Tabelle bekommt eine Spalte dafür. Eine Teilaufgabe ohne eigenes Fälligkeitsdatum übernimmt das ihres übergeordneten Eintrags.
+
+## Eigenes CSS
+Gestalte Mitra mit eigenem CSS: für dich selbst in den Einstellungen oder für alle auf deinem Server über eine Datei in seinem Datenordner. Wer den Server betreibt, bekommt in den Einstellungen einen eigenen Bereich.
+
+## Auf andere Tage duplizieren
+Wähle Tage in einem Kalender aus und kopiere einen Eintrag in einem Zug auf alle, zur selben Uhrzeit.
+
+## Todoist
+Verbinde deine Todoist-Projekte, und ihre Aufgaben stehen auf derselben Zeitleiste wie deine Termine, in beide Richtungen synchronisiert.
+
+## Mehr Sprachen
+Mitra lernt Arabisch, Russisch, Polnisch und Niederländisch. Mit jeder Version funktioniert Mitra besser in anderen Sprachen, Schriften und Kalendern. Jede neue Sprache kommt vollständig übersetzt, einschließlich der Dokumentation und der Website.

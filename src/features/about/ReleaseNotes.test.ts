@@ -106,6 +106,11 @@ describe('ReleaseNotes', () => {
 		assert.equal(ReleaseNotes.parse(notes).withContributors(authors.slice(1)).markdown, `${notes.trimEnd()}\n\n## Contributors\n- [@someone](https://github.com/someone)\n- Jane Roe\n`)
 	})
 
+	it('adds each person once, however many commits they made', () => {
+		const commits = [ReleaseContributor.ofCommit('Some One', '123+someone@users.noreply.github.com'), ReleaseContributor.ofCommit('Jane Roe', 'jane@example.com'), ReleaseContributor.ofCommit('Some One', '123+someone@users.noreply.github.com')]
+		assert.deepEqual(ReleaseNotes.parse(notes).withContributors(commits).contributors.map(person => person.name), ['@someone', 'Jane Roe'])
+	})
+
 	it('reads a translation\'s sections as the English ones in order, under its own headings', () => {
 		const translated = ReleaseNotes.parse(notes).translation(`---
 title: Fälligkeiten, Verfügbarkeit und ruhigere Erinnerungen

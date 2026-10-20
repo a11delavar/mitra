@@ -1,7 +1,7 @@
 ---
 title: Connecteurs IA, pièces jointes, régions et langues
 ---
-Mitra 0.7 fonctionne avec les assistants IA que vous utilisez déjà, pour qu'ils puissent planifier votre temps directement dans votre agenda. Vous pouvez maintenant joindre des fichiers à vos entrées, Mitra écrit les dates comme on le fait dans votre région, et le fuseau horaire de votre domicile vous suit en voyage. Mitra est désormais disponible en chinois, et vous pouvez lire ce qui a changé sans quitter l'application. Le glissement, le zoom et le chargement sont aussi plus rapides, et de nombreuses petites améliorations et corrections sont arrivées depuis la 0.6.
+Mitra 0.7 fonctionne avec les assistants IA que vous utilisez déjà, pour qu'ils puissent planifier votre temps directement dans votre agenda. Vous pouvez maintenant joindre des fichiers à vos entrées, Mitra écrit les dates comme on le fait dans votre région, et le fuseau horaire de votre domicile vous suit en voyage. Mitra est désormais disponible en chinois, et vous pouvez lire ce qui a changé sans quitter l'application. Le glissement, le zoom et le chargement sont aussi plus rapides, et de nombreuses petites améliorations et corrections sont arrivées.
 
 ## Connecteurs IA
 Des assistants IA comme Claude et Cursor peuvent désormais travailler avec votre agenda. Connectez-en un avec l'adresse indiquée dans Paramètres → IA, et demandez-lui ce que vous feriez sinon à la main, comme regarder votre semaine, trouver une entrée, planifier un voyage ou déplacer une réunion. Ce qu'il écrit arrive dans vos agendas comme n'importe quelle autre modification, et se synchronise à partir de là. Sur un serveur où l'on se connecte, chaque assistant reçoit son propre jeton d'accès, qui peut être limité à la lecture et révoqué à tout moment.
@@ -72,3 +72,7 @@ Mitra parle désormais chinois, écrit en caractères simplifiés. L’applicati
 </picture>
 
 Documentation : [Paramètres](../../docs/settings.md)
+
+## Contributeurs
+- [@a11delavar](https://github.com/a11delavar)
+- [@d8monx](https://github.com/d8monx)

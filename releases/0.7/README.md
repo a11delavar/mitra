@@ -1,7 +1,8 @@
 ---
 title: AI connectors, attachments, regions and languages
+date: 2026-10-20
 ---
-Mitra 0.7 works with the AI assistants you already use, so they can plan your time right in your calendar. You can now attach files to your entries, Mitra writes dates the way your region does, and your home time zone stays with you when you travel. Mitra is now available in Chinese, and you can read what changed without leaving the app. Dragging, zooming and loading are faster too, and there are many smaller improvements and fixes since 0.6.
+Mitra 0.7 works with the AI assistants you already use, so they can plan your time right in your calendar. You can now attach files to your entries, Mitra writes dates the way your region does, and your home time zone stays with you when you travel. Mitra is now available in Chinese, and you can read what changed without leaving the app. Dragging, zooming and loading are faster too, and there are many smaller improvements and fixes.
 
 ## AI connectors
 AI assistants such as Claude and Cursor can now work with your calendar. Connect one with the address under Settings → AI, and ask it what you would otherwise do by hand: look at your week, find an entry, plan a trip or move a meeting. What it writes lands in your calendars like any other change, and syncs from there. On a server where people sign in, each assistant gets an access token of its own, which can be limited to reading and revoked at any time.
@@ -72,3 +73,7 @@ Mitra now speaks Chinese, written in simplified characters. The app, the sample 
 </picture>
 
 Docs: [Settings](../../docs/settings.md)
+
+## Contributors
+- [@a11delavar](https://github.com/a11delavar)
+- [@d8monx](https://github.com/d8monx)

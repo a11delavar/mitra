@@ -1,7 +1,7 @@
 ---
 title: KI-Konnektoren, Anhänge, Regionen und Sprachen
 ---
-Mitra 0.7 arbeitet mit den KI-Assistenten zusammen, die du schon nutzt, sodass sie deine Zeit direkt in deinem Kalender planen können. Du kannst jetzt Dateien an deine Einträge anhängen, Mitra schreibt Daten so, wie man es in deiner Region tut, und die Zeitzone deines Zuhauses bleibt auf Reisen bei dir. Mitra gibt es jetzt auch auf Chinesisch, und was sich geändert hat, liest du, ohne die App zu verlassen. Außerdem gehen Ziehen, Zoomen und Laden schneller, und seit 0.6 sind viele kleinere Verbesserungen und Korrekturen dazugekommen.
+Mitra 0.7 arbeitet mit den KI-Assistenten zusammen, die du schon nutzt, sodass sie deine Zeit direkt in deinem Kalender planen können. Du kannst jetzt Dateien an deine Einträge anhängen, Mitra schreibt Daten so, wie man es in deiner Region tut, und die Zeitzone deines Zuhauses bleibt auf Reisen bei dir. Mitra gibt es jetzt auch auf Chinesisch, und was sich geändert hat, liest du, ohne die App zu verlassen. Außerdem gehen Ziehen, Zoomen und Laden schneller, und dazu kommen viele kleinere Verbesserungen und Korrekturen.
 
 ## KI-Konnektoren
 KI-Assistenten wie Claude und Cursor können jetzt mit deinem Kalender arbeiten. Verbinde einen über die Adresse unter Einstellungen → KI und bitte ihn um das, was du sonst von Hand erledigen würdest, etwa deine Woche ansehen, einen Eintrag finden, eine Reise planen oder ein Treffen verschieben. Was er schreibt, landet wie jede andere Änderung in deinen Kalendern und wird von dort aus synchronisiert. Auf einem Server, an dem man sich anmeldet, bekommt jeder Assistent ein eigenes Zugriffstoken, das sich aufs Lesen beschränken und jederzeit widerrufen lässt.
@@ -72,3 +72,7 @@ Mitra spricht jetzt Chinesisch, in vereinfachten Schriftzeichen. Die App, der Be
 </picture>
 
 Doku: [Einstellungen](../../docs/settings.md)
+
+## Mitwirkende
+- [@a11delavar](https://github.com/a11delavar)
+- [@d8monx](https://github.com/d8monx)
