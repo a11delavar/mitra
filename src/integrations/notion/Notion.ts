@@ -191,7 +191,6 @@ export class Notion extends Integration<NotionCredentials> {
 		const existing = await this.syncedEntries(em, source)
 		const existingByUri = new Map(existing.map(entry => [entry.uri, entry]))
 
-		await EntryRelation.loadFor(em, existing)
 		const pageIds = await this.dataSourcePageIds(em, dataSourceId, memberIds)
 		const isPage = (uid: string) => pageIds.has(uid)
 		const applied: Array<Entry> = []
@@ -251,8 +250,6 @@ export class Notion extends Integration<NotionCredentials> {
 				changed = true
 			}
 		}
-
-		await this.reconcileRelations(em, applied)
 
 		const newest = [...editedPages.values()].map(page => page.last_edited_time).sort().at(-1)
 		if (newest && (!watermark || newest > watermark)) {
@@ -368,10 +365,8 @@ export class Notion extends Integration<NotionCredentials> {
 	/** Synchronizes page updates to sibling rows representing other views of the same database. */
 	private async syncSiblingRows(em: EntityManager, written: Entry, page: NotionPage, schema: NotionSchemaIndex, description: string | undefined, isPage: (uid: string) => boolean): Promise<void> {
 		const siblings = await this.siblingRows(em, written)
-		await EntryRelation.loadFor(em, siblings)
 		for (const sibling of siblings) {
 			Notion.applyPage(sibling, page, schema, { description, localWrite: true, ...await this.relationsOf(page, schema, sibling.relations, isPage) })
-			await EntryRelation.reconcile(em, sibling.id!, sibling.relations ?? EntryRelations.none)
 		}
 	}
 

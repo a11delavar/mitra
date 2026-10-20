@@ -1,6 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { MikroORM, UnderscoreNamingStrategy, type EntityManager } from '@mikro-orm/sqlite'
+import { children } from '#infrastructure/model'
 import { Source } from '#features/sources'
 import { Entry } from '#features/entries'
 import { EntryRelation } from '#features/relations'
@@ -19,6 +20,7 @@ describe('Sandbox', () => {
 		orm = await MikroORM.init({
 			entities: [User, Identity, Integration, MitraCalendar, Demo, Source, Entry, EntryRelation, Session],
 			dbName: ':memory:',
+			subscribers: [children.subscriber],
 			forceUndefined: true,
 			namingStrategy: class extends UnderscoreNamingStrategy {
 				override joinColumnName(propertyName: string) {

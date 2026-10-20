@@ -4,7 +4,7 @@ import { MarkdownLinks } from '#design/MarkdownLinks.js'
 import { Source, Color, type Calendar } from '#features/sources'
 import { Recurrence, EntryOccurrences } from '#features/recurrence'
 import { Participants, type ParticipantRole, type Participant } from '#features/participants/Participant.js'
-import { type Relation, type RelationInit, type RelationType, RelationEdge, EntryRelations } from '#features/relations'
+import { type Relation, type RelationInit, type RelationType, RelationEdge, EntryRelation, EntryRelations } from '#features/relations'
 import { type ReminderDefaults } from '#features/reminders/ReminderDefaults.js'
 import { TimeZone } from '#features/time/TimeZone.js'
 import type { IntegrationOwnership } from '#integrations'
@@ -326,8 +326,16 @@ export class Entry extends Entity implements Validatable<Calendar> {
 
 	@Entry.date() recurrenceId?: DateTime
 
-	/** Unknown while absent, as a provider may not say; none is an empty collection. */
-	@converter(EntryRelations.converter) relations?: EntryRelations
+	/** Unknown while absent, as a provider may not say; none is an empty collection. The lines it owns are saved as rows, those pointing at it a read attaches. */
+	@converter(EntryRelations.converter)
+	@children(() => EntryRelation, row => row.entryId, {
+		eager: true,
+		orphanRemoval: true,
+		as: () => EntryRelations,
+		rows: relations => relations.writes.map(relation => EntryRelation.of(relation)),
+		unknown: true,
+		saves: true,
+	}) relations?: EntryRelations
 
 	relateTo(type: RelationType | string, targetUid: string) {
 		this.relations = (this.relations ?? EntryRelations.none).adding(type, targetUid, this.uid)

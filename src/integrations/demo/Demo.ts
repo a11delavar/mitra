@@ -1,7 +1,7 @@
 import { type EntityManager } from '@mikro-orm/sqlite'
 import { DateTime } from '@3mo/date-time'
 import { Source, Color } from '#features/sources'
-import { RelationType, EntryRelation } from '#features/relations'
+import { RelationType } from '#features/relations'
 import { Recurrence, RecurrenceEnd, RecurrenceFrequency, RecurrenceWeekday } from '#features/recurrence'
 import { ParticipantRole, ParticipantStatus, Participants } from '#features/participants/Participant.js'
 import { EntryType, Entry, EntryTimeZone, TaskStatus } from '#features/entries'
@@ -164,7 +164,7 @@ export class Demo extends MitraCalendar {
 		const uniEvent = on(university)
 		const uniTask = (init: Partial<Entry>) => on(university)({ type: EntryType.Task, ...init })
 
-		const relate = (entry: Entry, type: RelationType, target: Entry) => em.persist(new EntryRelation({ entryId: entry.id!, type, targetUid: target.uid! }))
+		const relate = (entry: Entry, type: RelationType, target: Entry) => entry.relateTo(type, target.uid!)
 
 		// ---- Availability: the week's shape, which everything below keeps to ------------------------
 		// Work on Monday, Tuesday and Wednesday afternoon, university on Wednesday morning, Thursday and Friday, the household

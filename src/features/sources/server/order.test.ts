@@ -10,13 +10,14 @@ import { GoogleCalendar } from '#integrations/google/GoogleCalendar.js'
 import { CalDAV } from '#integrations/caldav/CalDAV.js'
 import { AppleCalendar } from '#integrations/apple/AppleCalendar.js'
 import { MitraCalendar } from '#integrations/mitra/MitraCalendar.js'
-import { applyOrder, byOrder } from '#infrastructure/model'
+import { applyOrder, byOrder, children } from '#infrastructure/model'
 import { Source } from '../Source.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
 		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, MitraCalendar, Source, Entry, NotificationSubscription, Session],
 		dbName: ':memory:',
+		subscribers: [children.subscriber],
 		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {
 			override joinColumnName(propertyName: string) {

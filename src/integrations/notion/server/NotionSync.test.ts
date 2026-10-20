@@ -1,6 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { MikroORM, UnderscoreNamingStrategy, type EntityManager } from '@mikro-orm/sqlite'
+import { children } from '#infrastructure/model'
 import { User, Identity } from '#features/identity'
 import { Source } from '#features/sources'
 import { RelationType, EntryRelations, EntryRelation } from '#features/relations'
@@ -20,6 +21,7 @@ async function inMemoryOrm() {
 	const orm = await MikroORM.init({
 		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, MitraCalendar, Source, Entry, EntryRelation, NotificationSubscription, Session],
 		dbName: ':memory:',
+		subscribers: [children.subscriber],
 		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {
 			override joinColumnName(propertyName: string) {
@@ -680,7 +682,6 @@ describe('Notion relationships', () => {
 		await em.flush()
 
 		const existing = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })
-		await EntryRelation.loadFor(em, [existing])
 		const incoming = existing.clone()
 		incoming.relations = EntryRelations.of([...existing.relations?.all ?? [], { type: RelationType.FinishToStart, targetUid: 'p2' }])
 		await integration.updateEntry(em, existing, incoming)
@@ -702,7 +703,6 @@ describe('Notion relationships', () => {
 		await em.flush()
 
 		const existing = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })
-		await EntryRelation.loadFor(em, [existing])
 		const incoming = existing.clone()
 		incoming.relations = EntryRelations.none
 		await integration.updateEntry(em, existing, incoming)
@@ -722,7 +722,6 @@ describe('Notion relationships', () => {
 		await em.flush()
 
 		const existing = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })
-		await EntryRelation.loadFor(em, [existing])
 		const incoming = existing.clone()
 		incoming.relations = EntryRelations.of([{ type: RelationType.Parent, targetUid: 'caldav-uid' }])
 		await integration.updateEntry(em, existing, incoming)
@@ -805,7 +804,6 @@ describe('Notion relationships', () => {
 		await em.flush()
 
 		const existing = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })
-		await EntryRelation.loadFor(em, [existing])
 		const incoming = existing.clone()
 		incoming.relations = EntryRelations.of([{ type: RelationType.FinishToStart, targetUid: 'p2' }])
 		await integration.updateEntry(em, existing, incoming)

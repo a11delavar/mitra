@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { type EntityManager } from '@mikro-orm/core'
 import type { User } from '#features/identity'
 import { Entry } from '#features/entries'
-import { EntryRelation, EntryRelations } from '#features/relations'
+import { EntryRelation } from '#features/relations'
 import type { Source } from '#features/sources'
 import { Integration } from '#integrations'
 import { validation, ValidationError } from '#infrastructure/validation'
@@ -124,9 +124,6 @@ export class SourceMigration {
 		const taking = assessed.filter(({ verdict }) => verdict.moves(this.flatten))
 		const left = assessed.length - taking.length
 
-		// Snapshot relations before move so targetUid can be repointed in phase 2.
-		await EntryRelation.loadFor(this.em, taking.map(({ entry }) => entry))
-
 		const copied = new Array<{ original: Entry, copies: Array<Entry> }>()
 		const uids = new Map<string, string>()
 
@@ -136,7 +133,6 @@ export class SourceMigration {
 				const copies = new Array<Entry>()
 				for (const copy of this.copiesOf(entry, verdict)) {
 					const created = await this.targetIntegration.createEntry(this.em, copy)
-					await EntryRelation.reconcile(this.em, created.id!, created.relations ?? EntryRelations.none)
 					// Record old -> new UID mappings for target-minted identities on move, and fresh UIDs on copy.
 					if (entry.uid && created.uid && created.uid !== entry.uid && !verdict.flattenable) {
 						uids.set(entry.uid, created.uid)

@@ -333,8 +333,6 @@ export class CalDAVSyncEngine implements SyncEngine {
 			changed = true
 		}
 
-		await integration.reconcileRelations(em, existingEntries)
-
 		// Mark incomplete if truncated by server to keep import open for subsequent passes.
 		source.syncState = { syncToken: newSyncToken, ...complete ? {} : { incomplete: true } }
 

@@ -3,7 +3,6 @@ import { FlushMode, type EntityManager } from '@mikro-orm/core'
 import { User } from '#features/identity'
 import { Source } from '#features/sources'
 import { Entry, EntryType } from '#features/entries'
-import { EntryRelation, type EntryRelations } from '#features/relations'
 import { entity, primaryKey, property, manyToOne, unique, children, Entity, identity, equality } from '#infrastructure/model'
 import { IntegrationCapabilities } from './IntegrationCapabilities.js'
 import { IntegrationOwnership } from './IntegrationOwnership.js'
@@ -207,17 +206,6 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		})
 	}
 
-	/** Mirrors natively parsed relationships into the {@link EntryRelation} store. */
-	async reconcileRelations(em: EntityManager, entries: Iterable<Entry>): Promise<void> {
-		const byEntryId = new Map<string, EntryRelations>()
-		for (const entry of entries) {
-			if (entry.id && entry.relations !== undefined) {
-				byEntryId.set(entry.id, entry.relations)
-			}
-		}
-		await EntryRelation.reconcileAll(em, byEntryId)
-	}
-
 	/** Marks the source imported once a pass completes without truncation. @returns whether entries changed or the import completed. */
 	async syncSource(em: EntityManager, source: Source): Promise<boolean> {
 		const changed = await this.syncSourceEntries(em, source)
@@ -304,6 +292,10 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		existing.equate(incoming)
 		// An occurrence's deletion excludes its date through the edit; the rule's other bookkeeping is the row's own.
 		existing.exdates = incoming.exdates ?? existing.exdates
+		// Mitra's own: an edit carrying relations sets them, one without leaves the rows as they are.
+		if (incoming.relations !== undefined) {
+			existing.relations = incoming.relations
+		}
 		await this.stored(em, existing)
 	}
 

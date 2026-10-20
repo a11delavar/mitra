@@ -1,6 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { MikroORM, UnderscoreNamingStrategy, type EntityManager } from '@mikro-orm/sqlite'
+import { children } from '#infrastructure/model'
 import { User, Identity } from '#features/identity'
 import { Session } from '#features/identity/server/Session.js'
 import { Source } from '#features/sources'
@@ -20,6 +21,7 @@ describe('recent locations', () => {
 		orm = await MikroORM.init({
 			entities: [User, Identity, Session, Integration, MitraCalendar, Source, Entry, EntryRelation, NotificationSubscription],
 			dbName: ':memory:',
+			subscribers: [children.subscriber],
 			forceUndefined: true,
 			namingStrategy: class extends UnderscoreNamingStrategy {
 				override joinColumnName(propertyName: string) {

@@ -9,7 +9,7 @@ import { NotificationSubscription } from '#features/reminders/NotificationSubscr
 import { Session } from '#features/identity/server/Session.js'
 import { Integration, integration } from '#integrations'
 import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
-import { model } from '#infrastructure/model'
+import { model, children } from '#infrastructure/model'
 import { Importer } from './Importer.js'
 
 /** Mock multi-page provider simulating paginated/truncated sync passes. */
@@ -55,6 +55,7 @@ async function inMemoryOrm() {
 	const orm = await MikroORM.init({
 		entities: [User, Identity, Integration, PagedProvider, Source, Entry, EntryRelation, NotificationSubscription, Session],
 		dbName: ':memory:',
+		subscribers: [children.subscriber],
 		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {
 			override joinColumnName(propertyName: string) {

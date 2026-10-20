@@ -2,7 +2,6 @@ import { equals } from '@a11d/equals'
 import { description, label } from '@a11d/metadata'
 import { converter } from '@a11d/converter'
 import { z } from 'zod'
-import { EntryRelation, EntryRelations } from '#features/relations'
 import { fileStore } from '#features/files/server/FileStore.js'
 import { OrganizerOnly } from '#features/participants/OrganizerOnly.js'
 import { EntryOccurrence, EntryOccurrenceChangeScope } from '#features/recurrence'
@@ -38,8 +37,6 @@ export class UpdateEntryOccurrence extends Operation<Parameters, Entry> {
 		const patch = this.parameters
 		const { scope } = patch
 		const existing = await user.entry(em, patch.id)
-		// The stored relations, up front: the provider's diff and the response BOTH need a definite value.
-		await EntryRelation.loadFor(em, [existing])
 
 		// Validated BEFORE any integration write, since a 400 must leave the external store untouched.
 		const malformed = [...patch.validate(), ...await fileStore.claim(user.id, patch.files ?? [], existing.files)]
@@ -69,7 +66,6 @@ export class UpdateEntryOccurrence extends Operation<Parameters, Entry> {
 		const change = existing.occurrences.existing(patch.occurrence).edit(patch, scope)
 		const result = await change.save(em, from.integration, to.integration)
 		if (scope === EntryOccurrenceChangeScope.All && result !== existing) {
-			await EntryRelation.reconcile(em, result.id!, existing.relations ?? EntryRelations.none)
 			result.relations = existing.relations
 		}
 		await em.flush()

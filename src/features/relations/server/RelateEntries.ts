@@ -5,7 +5,6 @@ import { EntryPatch } from '#features/entries'
 import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
 import { validation } from '#infrastructure/validation'
 import { operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
-import { EntryRelation } from '../EntryRelation.js'
 import { EntryRelations } from '../EntryRelations.js'
 import { RelationType } from '../RelationType.js'
 
@@ -32,7 +31,6 @@ export class RelateEntries extends Operation<Parameters> {
 		const { id, type, target } = this.parameters
 		const existing = await user.entry(em, id)
 		const other = await user.entry(em, target)
-		await EntryRelation.loadFor(em, [existing])
 		const calendar = await user.calendar(em, existing.sourceId)
 
 		const change = existing.edit(new EntryPatch())
@@ -44,7 +42,6 @@ export class RelateEntries extends Operation<Parameters> {
 		}
 
 		const saved = await change.save(em, calendar, calendar)
-		await EntryRelation.reconcile(em, saved.id!, relations)
 		await em.flush()
 		const graph = await user.relationGraph(em)
 		graph.attach([saved])

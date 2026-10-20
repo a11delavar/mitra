@@ -11,6 +11,7 @@ import { GoogleCalendar } from '#integrations/google/GoogleCalendar.js'
 import { CalDAV } from '#integrations/caldav/CalDAV.js'
 import { AppleCalendar } from '#integrations/apple/AppleCalendar.js'
 import { MitraCalendar } from '#integrations/mitra/MitraCalendar.js'
+import { children } from '#infrastructure/model'
 import { RelationType } from './RelationType.js'
 import { EntryRelations } from './EntryRelations.js'
 import { EntryRelation } from './EntryRelation.js'
@@ -31,6 +32,7 @@ async function inMemoryOrm() {
 				return this.propertyToColumnName(entityName)
 			}
 		},
+		subscribers: [children.subscriber],
 		allowGlobalContext: true,
 	})
 	await orm.schema.update()
@@ -114,29 +116,39 @@ describe('EntryRelation', () => {
 		})
 	})
 
-	describe('what a WRITE path sees', () => {
-		it('loadFor yields the entry OWN rows only, so a write path can never diff against a derived line', async () => {
-			// The structural reason a provider sync cannot churn on the derived half: it never sees one.
-			const parent = await task('parent')
-			const child = await task('a')
-			await relate(child, RelationType.Parent, 'parent')
+	describe('what a flush saves', () => {
+		const stored = async (entry: Entry) => (await orm.em.fork().find(EntryRelation, { entryId: entry.id! })).map(row => `${row.type.value} ${row.targetUid}`).sort()
 
-			await EntryRelation.loadFor(em, [parent, child])
-			assert.equal(parent.relations?.isEmpty, true)
-			assert.deepEqual(child.relations?.all.map(relation => [relation.direction, relation.targetUid]), [['outgoing', 'parent']])
+		it('saves the lines an entry is set to as its rows, an incoming one never, since the other entry owns it', async () => {
+			const parent = await task('parent')
+			parent.relations = EntryRelations.of([
+				{ type: RelationType.Parent, targetUid: 'a', direction: 'incoming' },
+				{ type: RelationType.FinishToStart, targetUid: 'b' },
+			])
+			await em.flush()
+			assert.deepEqual(await stored(parent), ['FINISHTOSTART b'])
 		})
 
-		it('reconcile ignores a derived line, so omitting one can never delete the other row', async () => {
-			const parent = await task('parent')
+		it('keeps the row a line still stands for, so a read attached and flushed again changes nothing', async () => {
 			const child = await task('a')
 			await relate(child, RelationType.Parent, 'parent')
-
-			// The parent is served "a points at me"; PUTting that back must write nothing of its own.
-			await EntryRelation.reconcile(em, parent.id!, EntryRelations.of([{ type: RelationType.Parent, targetUid: 'a', direction: 'incoming' }]))
+			const [before] = await em.find(EntryRelation, { entryId: child.id! })
+			const graph = await user.relationGraph(em)
+			graph.attach([child])
 			await em.flush()
+			const [after] = await orm.em.fork().find(EntryRelation, { entryId: child.id! })
+			assert.equal(after?.id, before?.id)
+		})
 
-			assert.equal(await em.count(EntryRelation, { entryId: parent.id! }), 0)
-			assert.equal(await em.count(EntryRelation, { entryId: child.id! }), 1)
+		it('reads the stored lines on a loaded entry, unknown on one made outside the ORM, and keeps the rows of one given none', async () => {
+			const child = await task('a')
+			await relate(child, RelationType.Parent, 'parent')
+			const loaded = await orm.em.fork().findOneOrFail(Entry, { id: child.id })
+			assert.deepEqual(loaded.relations?.all.map(relation => [relation.direction, relation.targetUid]), [['outgoing', 'parent']])
+			assert.equal(new Entry({ sourceId: source.id }).relations, undefined)
+			child.relations = undefined
+			await em.flush()
+			assert.deepEqual(await stored(child), ['PARENT parent'])
 		})
 	})
 })

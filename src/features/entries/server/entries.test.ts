@@ -1,6 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { MikroORM, UnderscoreNamingStrategy, type EntityManager } from '@mikro-orm/sqlite'
+import { children } from '#infrastructure/model'
 import { DateTimeRange } from '@3mo/date-time'
 import { User, Identity } from '#features/identity'
 import { Source } from '#features/sources'
@@ -21,6 +22,7 @@ async function inMemoryOrm() {
 	const orm = await MikroORM.init({
 		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, MitraCalendar, Source, Entry, NotificationSubscription, Session],
 		dbName: ':memory:',
+		subscribers: [children.subscriber],
 		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {
 			override joinColumnName(propertyName: string) {

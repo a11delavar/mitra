@@ -1,7 +1,6 @@
 import { equals } from '@a11d/equals'
 import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
-import { EntryRelation, EntryRelations } from '#features/relations'
 import { fileStore } from '#features/files/server/FileStore.js'
 import { OrganizerOnly } from '#features/participants/OrganizerOnly.js'
 import { tool } from '#features/agents/server/tool.js'
@@ -26,8 +25,6 @@ export class UpdateEntry extends Operation<Parameters, Entry> {
 	async run({ em, user }: OperationContext) {
 		const patch = this.parameters
 		const existing = await user.entry(em, patch.id)
-		// The stored relations, up front: the provider's diff and the response BOTH need a definite value.
-		await EntryRelation.loadFor(em, [existing])
 
 		// Validated BEFORE any integration write, since a 400 must leave the external store untouched.
 		const malformed = [...patch.validate(), ...await fileStore.claim(user.id, patch.files ?? [], existing.files)]
@@ -55,11 +52,6 @@ export class UpdateEntry extends Operation<Parameters, Entry> {
 
 		const recreated = edit.recreates
 		const saved = await edit.save(em, from, to)
-		if (recreated) {
-			await EntryRelation.reconcile(em, saved.id!, saved.relations ?? EntryRelations.none)
-		} else if (relations !== undefined) {
-			await EntryRelation.reconcile(em, saved.id!, relations)
-		}
 		await em.flush()
 		// Read back as any read answers it, so the browser keeps the entries it reaches until its next fetch.
 		const graph = await user.relationGraph(em)

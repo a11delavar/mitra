@@ -1,5 +1,4 @@
 import { description, label } from '@a11d/metadata'
-import { EntryRelation, EntryRelations } from '#features/relations'
 import { fileStore } from '#features/files/server/FileStore.js'
 import { tool } from '#features/agents/server/tool.js'
 import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
@@ -32,7 +31,6 @@ export class CreateEntry extends Operation<EntryPatch, Entry> {
 		}
 
 		const created = await to.integration.createEntry(em, incoming)
-		await EntryRelation.reconcile(em, created.id!, created.relations ?? EntryRelations.none)
 		await em.flush()
 		const graph = await user.relationGraph(em)
 		graph.attach([created])

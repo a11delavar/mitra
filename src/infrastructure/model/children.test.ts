@@ -10,6 +10,7 @@ class Shelf {
 	@primaryKey({ type: 'string' }) id: string = crypto.randomUUID()
 	@children(() => Book, book => book.shelf, { eager: true, orphanRemoval: true, saves: true }) books!: ReadonlyArray<Book>
 	@children(() => Label, label => label.shelf, { eager: true }) labels!: ReadonlyArray<Label>
+	@children(() => Tag, tag => tag.shelfId, { eager: true, orphanRemoval: true, as: () => Tags, rows: tags => tags.rows, unknown: true, saves: true }) tags?: Tags
 
 	constructor(init?: Partial<Shelf>) {
 		Object.assign(this, init)
@@ -39,11 +40,41 @@ class Label {
 	}
 }
 
+/** A tag's row, told apart by its text: the domain holds the texts, never the rows. */
+@entity({ tableName: 'tag' })
+class Tag extends Entity {
+	@primaryKey({ type: 'string' }) id: string = crypto.randomUUID()
+	@manyToOne(() => Shelf, { mapToPk: true, deleteRule: 'cascade' }) shelfId!: string
+	@property({ type: 'string' }) text = ''
+
+	constructor(init?: Partial<Tag>) {
+		super()
+		Object.assign(this, init)
+	}
+
+	@identity() get key() {
+		return this.text
+	}
+}
+
+/** The texts, as the domain reads a shelf's tags. */
+class Tags {
+	static of(rows: ReadonlyArray<Tag>) {
+		return new Tags(rows.map(row => row.text))
+	}
+
+	constructor(readonly texts: ReadonlyArray<string>) { }
+
+	get rows() {
+		return this.texts.map(text => new Tag({ text }))
+	}
+}
+
 describe('children', () => {
 	let orm: MikroORM
 
 	before(async () => {
-		orm = await MikroORM.init({ entities: [Shelf, Book, Label], dbName: ':memory:', subscribers: [children.subscriber], allowGlobalContext: true, forceUndefined: true })
+		orm = await MikroORM.init({ entities: [Shelf, Book, Label, Tag], dbName: ':memory:', subscribers: [children.subscriber], allowGlobalContext: true, forceUndefined: true })
 		await orm.schema.create()
 	})
 
@@ -119,5 +150,56 @@ describe('children', () => {
 		loaded.labels = []
 		await session.flush()
 		assert.deepEqual((await reread(shelf)).labels.map(label => label.text), ['Fiction'])
+	})
+
+	describe('a collection of values kept as rows', () => {
+		const texts = (shelf: Shelf) => [...shelf.tags?.texts ?? []].sort()
+		const tagged = async (...texts: Array<string>) => {
+			const em = orm.em.fork()
+			const shelf = new Shelf({ tags: new Tags(texts) })
+			em.persist(shelf)
+			await em.flush()
+			return shelf
+		}
+
+		it('saves the rows the collection maps its values to, each naming its parent by key', async () => {
+			const shelf = await tagged('a', 'b')
+			assert.deepEqual(texts(await reread(shelf)), ['a', 'b'])
+		})
+
+		it('keeps the row a value still stands for, adds and removes the rest', async () => {
+			const shelf = await tagged('a', 'b')
+			const kept = (await orm.em.fork().findOneOrFail(Tag, { shelfId: shelf.id, text: 'b' })).id
+			const em = orm.em.fork()
+			const loaded = await em.findOneOrFail(Shelf, { id: shelf.id })
+			loaded.tags = new Tags(['b', 'c'])
+			await em.flush()
+			assert.deepEqual(texts(await reread(shelf)), ['b', 'c'])
+			assert.equal((await orm.em.fork().findOneOrFail(Tag, { shelfId: shelf.id, text: 'b' })).id, kept)
+		})
+
+		it('saves what an owner flushed earlier in the same unit is set to since', async () => {
+			const em = orm.em.fork()
+			const shelf = new Shelf()
+			em.persist(shelf)
+			await em.flush()
+			shelf.tags = new Tags(['late'])
+			shelf.books = [new Book({ title: 'Late' })]
+			await em.flush()
+			const read = await reread(shelf)
+			assert.deepEqual([texts(read), titles(read)], [['late'], ['Late']])
+		})
+
+		it('reads as unknown on an owner made outside the ORM, as none on a loaded one without rows, and keeps the rows of one given none', async () => {
+			assert.equal(new Shelf().tags, undefined)
+			const bare = await tagged()
+			assert.deepEqual((await reread(bare)).tags?.texts, [])
+			const shelf = await tagged('a')
+			const em = orm.em.fork()
+			const loaded = await em.findOneOrFail(Shelf, { id: shelf.id })
+			loaded.tags = undefined
+			await em.flush()
+			assert.deepEqual(texts(await reread(shelf)), ['a'])
+		})
 	})
 })

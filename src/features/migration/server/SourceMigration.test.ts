@@ -14,7 +14,7 @@ import { Notion } from '#integrations/notion/Notion.js'
 import { CalDAV } from '#integrations/caldav/CalDAV.js'
 import { GoogleCalendar } from '#integrations/google/GoogleCalendar.js'
 import { AppleCalendar } from '#integrations/apple/AppleCalendar.js'
-import { entity } from '#infrastructure/model'
+import { entity, children } from '#infrastructure/model'
 import { SourceMigration, MigrationRefused } from './SourceMigration.js'
 
 type DateTime = import('@3mo/date-time').DateTime
@@ -52,6 +52,7 @@ async function inMemoryOrm() {
 	const orm = await MikroORM.init({
 		entities: [User, Identity, Integration, CalDAV, GoogleCalendar, AppleCalendar, Notion, MitraCalendar, Minting, Limited, Failing, Source, Entry, EntryRelation, NotificationSubscription, Session],
 		dbName: ':memory:',
+		subscribers: [children.subscriber],
 		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {
 			override joinColumnName(propertyName: string) {

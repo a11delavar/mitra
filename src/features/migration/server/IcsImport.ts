@@ -2,7 +2,7 @@ import { type EntityManager } from '@mikro-orm/core'
 import ICAL from 'ical.js'
 import type { User } from '#features/identity'
 import { Entry } from '#features/entries'
-import { EntryRelation, EntryRelations } from '#features/relations'
+import { EntryRelation } from '#features/relations'
 import type { Source } from '#features/sources'
 import { Integration } from '#integrations'
 import { CalDAV } from '#integrations/caldav/CalDAV.js'
@@ -107,7 +107,6 @@ export class IcsImport {
 				// Converted only now: the verdicts above must judge the type the file authored.
 				entry.migrateTo(this.target)
 				const row = await this.targetIntegration.createEntry(this.em, entry)
-				await EntryRelation.reconcile(this.em, row.id!, row.relations ?? EntryRelations.none)
 				if (row.uid) {
 					uids.set(fileUid, row.uid)
 				}

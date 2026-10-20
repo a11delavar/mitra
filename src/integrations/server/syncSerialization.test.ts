@@ -8,7 +8,7 @@ import { EntryRelation } from '#features/relations'
 import { NotificationSubscription } from '#features/reminders/NotificationSubscription.js'
 import { Session } from '#features/identity/server/Session.js'
 import { Integration, integration } from '#integrations'
-import { model } from '#infrastructure/model'
+import { model, children } from '#infrastructure/model'
 
 @model('SlowProvider')
 @integration('slow-provider-test')
@@ -49,6 +49,7 @@ async function inMemoryOrm() {
 	const orm = await MikroORM.init({
 		entities: [User, Identity, Integration, SlowProvider, Source, Entry, EntryRelation, NotificationSubscription, Session],
 		dbName: ':memory:',
+		subscribers: [children.subscriber],
 		forceUndefined: true,
 		namingStrategy: class extends UnderscoreNamingStrategy {
 			override joinColumnName(propertyName: string) {
