@@ -5,7 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"start": "node ./scripts/dev.ts",
-		"test": "node ./scripts/test.ts && node --test \"out_test/**/*.js\"",
+		"test": "node ./scripts/test.ts && node --test \"out_test/**/*.test.js\"",
 		"lint": "eslint \"**/*.ts\"",
 		"typecheck": "node ./node_modules/typescript7/bin/tsc",
 		"build": "node ./scripts/build.ts",

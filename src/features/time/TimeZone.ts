@@ -6,8 +6,7 @@ import goldenZones from './goldenZones.json' with { type: 'json' }
 
 /** The device's zone as last asked, with the offset it had then. */
 let device: { readonly offset: number, readonly id: string } | undefined
-// A trip takes effect when the device is picked up again; the offset catches the ones that move the clock while it is open.
-globalThis.document?.addEventListener('visibilitychange', () => device = undefined)
+let watchingPage = false
 
 /**
  * An IANA time zone, as the platform has only ids (Temporal dropped `TimeZone` in 2024): one instance per zone, its
@@ -35,6 +34,13 @@ export class TimeZone {
 	static get deviceId(): string {
 		const offset = new Date().getTimezoneOffset()
 		if (device?.offset !== offset) {
+			if (!watchingPage) {
+				watchingPage = true
+				// A trip takes effect when the device is picked up again; the offset catches the ones that move the clock while it
+				// is open. Listened for on the first read, not at load: a split bundle runs a shared chunk before the importing
+				// file's own code, so a page a test installs is not there yet.
+				globalThis.document?.addEventListener('visibilitychange', () => device = undefined)
+			}
 			device = { offset, id: Intl.DateTimeFormat().resolvedOptions().timeZone }
 		}
 		return device.id

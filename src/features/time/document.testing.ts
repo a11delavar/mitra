@@ -1,2 +1,2 @@
-// Imported first by a test that needs a page to announce `visibilitychange`, before any module that listens for it.
+// Gives a test a page to announce `visibilitychange` on, in place before its first read of `TimeZone.deviceId` listens.
 (globalThis as { document?: EventTarget }).document ??= new EventTarget()
