@@ -11,6 +11,7 @@ import { EntryRelations } from '../../features/relations/EntryRelations.js'
 import { RelationType } from '../../features/relations/RelationType.js'
 import { type NotionDataSource, type NotionPage } from './NotionClient.js'
 import { asBrowser, wireOf } from '../../infrastructure/model/wire.testing.js'
+import { Color } from '../../features/sources/Color.js'
 
 type DateTime = import('@3mo/date-time').DateTime
 const D = (iso: string) => new Date(iso) as unknown as DateTime
@@ -539,7 +540,7 @@ describe('Notion page reads (applyPage)', () => {
 	it('clears what Notion cannot hold, so a re-import never leaves stale leftovers', () => {
 		const entry = new Entry({
 			id: 'e1', sourceId: 's1',
-			description: 'left over', location: 'somewhere', color: '#123456',
+			description: 'left over', location: 'somewhere', color: Color.parse('#123456'),
 			reminders: [30],
 		})
 		Notion.applyPage(entry, page(), schema())

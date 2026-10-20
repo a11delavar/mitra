@@ -13,6 +13,7 @@ import { RecurrenceFrequency } from '../../recurrence/RecurrenceFrequency.js'
 import { EntryRelations } from '../../relations/EntryRelations.js'
 import { EntryOccurrenceChangeScope } from '../../recurrence/EntryOccurrenceChange.js'
 import { type EntryOccurrence } from '../../recurrence/EntryOccurrence.js'
+import { Color } from '../../sources/Color.js'
 
 describe('EntryStore', () => {
 	const day = new DateTime().dayStart
@@ -395,7 +396,7 @@ describe('EntryStore', () => {
 		it('shows the copy at the drop span immediately and adopts the created identity', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
-			const original = entry({ description: 'Notes', color: '#ff0000', reminders: [30] })
+			const original = entry({ description: 'Notes', color: Color.parse('#ff0000'), reminders: [30] })
 			EntryStore.applyServerEntries([original])
 			const span = entry({ id: undefined, start: at(14), end: at(15) })
 			const duplication = EntryStore.duplicate(original, span)

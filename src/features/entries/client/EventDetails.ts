@@ -684,7 +684,7 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	private readonly handleColorChange = (e: CustomEvent<string | null>) => {
-		this.setColor(e.detail)
+		this.setColor(Color.parse(e.detail) ?? null)
 		;(e.target as HTMLElement).closest('mitra-popover')?.hide()
 	}
 
@@ -698,9 +698,9 @@ export class EntryDetailsComponent extends Component {
 						style="--dot: ${activeColor ?? 'var(--color-text-muted)'}"></mitra-button>
 					<mitra-popover slot="popover">
 						<mitra-color-picker
-							.palette=${Color.palette}
-							.value=${activeColor}
-							.resetValue=${this.source?.color}
+							.palette=${Color.palette.map(String)}
+							.value=${activeColor?.value}
+							.resetValue=${this.source?.color?.value}
 							resetLabel=${t('Reset to calendar color')}
 							@change=${this.handleColorChange}
 						></mitra-color-picker>
@@ -710,7 +710,7 @@ export class EntryDetailsComponent extends Component {
 		`
 	}
 
-	private setColor(color: string | null) {
+	private setColor(color: Color | null) {
 		if (!this.segment) {
 			return
 		}

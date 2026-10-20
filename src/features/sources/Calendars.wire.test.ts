@@ -14,6 +14,7 @@ import { EntryType } from '../entries/EntryType.js'
 import { MitraCalendar } from '../../integrations/mitra/MitraCalendar.js'
 import { IcsSubscription } from '../../integrations/ics/IcsSubscription.js'
 import type { Integration } from '../../integrations/Integration.js'
+import { Color } from './Color.js'
 
 /*
 	An account's integrations and calendars through the app's own API client and its calendar store, the real routes and a
@@ -134,9 +135,9 @@ describe('Integrations and calendars over the wire', () => {
 			await shown()
 			const garden = calendar('Garden').id
 			await renameSource(garden, 'Allotment')
-			await updateSourceColor(garden, '#336699')
+			await updateSourceColor(garden, Color.parse('#336699')!)
 			await shown()
-			assert.deepEqual([calendar('Allotment').id, calendar('Allotment').color], [garden, '#336699'])
+			assert.deepEqual([calendar('Allotment').id, calendar('Allotment').color], [garden, Color.parse('#336699')])
 		})
 
 		it('keeps the calendars in the order they were put in', async () => {

@@ -19,9 +19,10 @@ class Parameters {
 	@description('The calendar\'s name.')
 	readonly name!: string
 
-	@validation(z.string().min(1).optional())
-	@description('A CSS color; none picks one its siblings do not use.')
-	readonly color?: string
+	@validation(z.custom<Color>(value => value instanceof Color).optional())
+	@description('A color in hex (#3366cc) or by its CSS name; none picks one its siblings do not use.')
+	@converter(Color.converter)
+	readonly color?: Color
 
 	@validation(z.array(z.custom<EntryType>(value => value instanceof EntryType)).optional())
 	@description('What the calendar holds: event, task, or both.')

@@ -4,6 +4,7 @@ import { Entity, identity, equality } from '../../infrastructure/model/Entity.js
 import { entity, primaryKey, property, manyToOne } from '../../infrastructure/model/orm.js'
 import { Integration } from '../../integrations/Integration.js'
 import { EntryType, EntryTypes } from '../entries/EntryType.js'
+import { Color } from './Color.js'
 
 @model('Source')
 @entity()
@@ -28,7 +29,8 @@ export class Source extends Entity {
 	@property({ type: 'string', nullable: true }) remoteName?: string | null
 
 	@equality()
-	@property({ type: 'string', nullable: true }) color?: string
+	@converter(Color.converter)
+	@property({ type: Color.Mapper, nullable: true }) color?: Color
 
 	@equality()
 	@property({ type: 'boolean', fieldName: 'read_only', nullable: true }) readOnly?: boolean | null

@@ -10,6 +10,7 @@ import { Transparency } from './Transparency.js'
 import { Visibility } from './Visibility.js'
 import { EntryTimeZone } from './EntryTimeZone.js'
 import { Source } from '../sources/Source.js'
+import { Color } from '../sources/Color.js'
 import { Recurrence } from '../recurrence/Recurrence.js'
 import { Participants, type ParticipantRole, type Participant } from '../participants/Participant.js'
 import { EntryFiles } from './EntryFiles.js'
@@ -113,7 +114,8 @@ export class Entry extends Entity implements Validatable<Calendar> {
 	@property({ type: 'string' }) location = ''
 
 	@equality()
-	@property({ type: 'string', nullable: true }) color?: string
+	@converter(Color.converter)
+	@property({ type: Color.Mapper, nullable: true }) color?: Color
 
 	@equality()
 	@Entry.date() start?: DateTime

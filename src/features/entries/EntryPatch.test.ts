@@ -21,6 +21,7 @@ import { Relation } from '../relations/Relation.js'
 import { EntryFiles } from './EntryFiles.js'
 import { EntryFile } from './EntryFile.js'
 import { revive, wireOf } from '../../infrastructure/model/wire.testing.js'
+import { Color } from '../sources/Color.js'
 
 describe('EntryPatch', () => {
 	const start = new DateTime('2026-10-05T09:00:00Z')
@@ -99,7 +100,7 @@ describe('EntryPatch', () => {
 
 	describe('Entry.patch', () => {
 		it('keeps what the patch leaves out, clears what it nulls and sets the rest', () => {
-			const entry = task({ color: '#f00', location: 'Office', due: start.add({ days: 2 }) })
+			const entry = task({ color: Color.parse('#f00'), location: 'Office', due: start.add({ days: 2 }) })
 			entry.patch(Object.assign(new EntryPatch(), { heading: 'Review', color: null, location: null, due: null }))
 			assert.deepEqual([entry.heading, entry.color, entry.location, entry.due, entry.start], ['Review', undefined, '', undefined, start])
 		})
@@ -124,7 +125,7 @@ describe('EntryPatch', () => {
 		})
 
 		it('rebuilds an entry from its own patch', () => {
-			const entry = task({ status: TaskStatus.Doing, visibility: Visibility.Private, reminders: [10], color: '#0af' })
+			const entry = task({ status: TaskStatus.Doing, visibility: Visibility.Private, reminders: [10], color: Color.parse('#0af') })
 			assert.ok(new Entry().patch(EntryPatch.of(entry)).equals(entry))
 		})
 	})

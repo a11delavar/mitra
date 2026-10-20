@@ -25,7 +25,7 @@ export class AvailabilitySegment extends Component {
 		super.updated?.(changed)
 		const entry = this.segment?.entry
 		if (entry) {
-			this.style.setProperty('--mitra-entry-segment-color', entry.color ?? Calendars.source(entry.sourceId)?.color ?? '')
+			this.style.setProperty('--mitra-entry-segment-color', String(entry.color ?? Calendars.source(entry.sourceId)?.color ?? ''))
 			this.toggleAttribute('data-unlabelled', !Availability.labelOf(entry))
 		}
 	}

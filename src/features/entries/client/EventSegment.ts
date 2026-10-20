@@ -512,7 +512,7 @@ export class EntrySegmentComponent extends Component {
 
 		this.style.setProperty(
 			'--mitra-entry-segment-color',
-			this.segment.entry.color ?? Calendars.source(this.segment.entry.sourceId)?.color ?? '',
+			String(this.segment.entry.color ?? Calendars.source(this.segment.entry.sourceId)?.color ?? ''),
 		)
 
 		const meta = this.timed || this.showsDate

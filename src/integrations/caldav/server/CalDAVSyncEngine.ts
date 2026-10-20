@@ -111,7 +111,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 		logger.debug(`Discovered ${calendars.length} calendar(s) at ${integration.uri}`)
 		return calendars.map(cal => {
 			const name = typeof cal.displayName === 'string' ? cal.displayName : 'Untitled'
-			const color = typeof cal.calendarColor === 'string' ? cal.calendarColor : Color.get(cal.url || name).value
+			const color = Color.parse(cal.calendarColor) ?? Color.derivedFrom(cal.url || name)
 			// Absent or empty supported-calendar-component-set accepts all types (RFC 4791 §5.2.3).
 			const components = cal.components ?? []
 			const supports = (component: string) => components.length === 0 || components.includes(component)
@@ -452,7 +452,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 
 			if (keys.includes('color')) {
 				if (incoming.color) {
-					component.updatePropertyWithValue('color', incoming.color)
+					component.updatePropertyWithValue('color', incoming.color.value)
 				} else {
 					component.removeProperty('color')
 				}
@@ -586,7 +586,7 @@ export class CalDAVSyncEngine implements SyncEngine {
 			!entry.start ? void 0 : CalDAV.writeDate(comp, component, 'dtstart', entry.start, entry.allDay, { zone: entry.timeZone })
 			!entry.end ? void 0 : CalDAV.writeDate(comp, component, 'dtend', entry.end, entry.allDay, { zone: entry.timeZone })
 		}
-		!entry.color ? void 0 : component.updatePropertyWithValue('color', entry.color)
+		!entry.color ? void 0 : component.updatePropertyWithValue('color', entry.color.value)
 		!entry.recurrence ? void 0 : component.updatePropertyWithValue('rrule', ICAL.Recur.fromString(entry.recurrence.toRRule(entry.allDay)))
 		entry.exdates?.forEach(ms => CalDAV.writeDate(comp, component, 'exdate', new Date(ms), entry.allDay, { zone: entry.timeZone, append: true }))
 		if (isTask) {
@@ -627,7 +627,6 @@ export class CalDAVSyncEngine implements SyncEngine {
 		entry.uid = uid
 		entry.data ??= {}
 		entry.data.raw = iCalString
-		entry.color ||= undefined
 		const etag = response.headers?.get('etag') || response.headers?.get('Etag') || response.headers?.get('ETag')
 		if (etag) {
 			entry.data.etag = etag

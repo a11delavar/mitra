@@ -641,7 +641,7 @@ export class EntryConnections extends Component {
 
 	/** The chip's presented color: its own, else its calendar's (the same resolution EventSegment uses). */
 	private static colorOf(entry: Entry): string {
-		return entry.color || Calendars.source(entry.sourceId)?.color || 'var(--color-text)'
+		return String(entry.color ?? Calendars.source(entry.sourceId)?.color ?? 'var(--color-text)')
 	}
 
 	static override get styles() {

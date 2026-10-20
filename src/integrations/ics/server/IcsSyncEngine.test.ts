@@ -20,6 +20,7 @@ import { NotificationSubscription } from '../../../features/reminders/Notificati
 import { Session } from '../../../features/identity/server/Session.js'
 import { IcsSubscription } from '../IcsSubscription.js'
 import { IcsSyncEngine } from './IcsSyncEngine.js'
+import { Color } from '../../../features/sources/Color.js'
 
 const FEED_URL = 'https://example.com/calendar.ics'
 const BERLIN = 'Europe/Berlin'
@@ -211,7 +212,7 @@ describe('Calendar subscription discovery', () => {
 		assert.equal(integration.credentials.username, 'Team Holidays')
 		assert.equal(sources.length, 1)
 		assert.equal(sources[0]!.name, 'Team Holidays')
-		assert.equal(sources[0]!.color, '#FF5733')
+		assert.equal(sources[0]!.color, Color.parse('#ff5733'))
 		assert.equal(sources[0]!.uri, FEED_URL)
 		assert.equal(sources[0]!.enabled, false)
 		assert.deepEqual([...sources[0]!.entryTypes], [EntryType.Event, EntryType.Task])

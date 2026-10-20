@@ -54,7 +54,7 @@ export class TempoSyncEngine implements SyncEngine {
 			uri,
 			name: 'My worklogs',
 			entryTypes: [EntryType.Event],
-			color: Color.get(uri).value,
+			color: Color.derivedFrom(uri),
 			enabled: false,
 		})]
 	}

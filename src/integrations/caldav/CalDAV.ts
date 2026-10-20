@@ -14,6 +14,7 @@ import { EntryTimeZone } from '../../features/entries/EntryTimeZone.js'
 import { TaskStatus } from '../../features/entries/TaskStatus.js'
 import { Transparency } from '../../features/entries/Transparency.js'
 import { Visibility } from '../../features/entries/Visibility.js'
+import { Color } from '../../features/sources/Color.js'
 import { EntryType } from '../../features/entries/EntryType.js'
 import { Recurrence } from '../../features/recurrence/Recurrence.js'
 import { Relation, type RelationInit } from '../../features/relations/Relation.js'
@@ -304,7 +305,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	static applyComponent(entry: Entry, component: ICAL.Component, integration: Integration): void {
 		const entryType = component.name === 'vtodo' ? EntryType.Task : EntryType.Event
 		entry.type = entryType
-		entry.color = component.getFirstPropertyValue('color')?.toString() || undefined
+		entry.color = Color.parse(component.getFirstPropertyValue('color')?.toString())
 
 		const tzidOf = (name: string) => component.getFirstProperty(name)?.getParameter('tzid')?.toString()
 		if (entryType.isEvent) {

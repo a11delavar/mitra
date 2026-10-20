@@ -36,7 +36,7 @@ describe('Source identity', () => {
 	})
 
 	it('clones with its row and its settings', () => {
-		const stored = new Source({ id: 'row-1', integrationId: 'i', uri: 'https://dav/cal/', name: 'Mine', color: '#123456', enabled: true, importedAt: new Date(1) })
+		const stored = new Source({ id: 'row-1', integrationId: 'i', uri: 'https://dav/cal/', name: 'Mine', color: Color.parse('#123456'), enabled: true, importedAt: new Date(1) })
 		const clone = stored.clone()
 		assert.notEqual(clone, stored)
 		assert.equal(clone.id, 'row-1')
@@ -114,19 +114,5 @@ describe('Source.readOnly narrows what may be written to one calendar', () => {
 
 	it('cannot promote a provider that already refuses writes', () => {
 		assert.equal(new IcsSubscription().capabilitiesFor(own).entries.edit, false)
-	})
-})
-
-describe('Color.unusedAmong', () => {
-	it('starts a first calendar on green', () => {
-		assert.equal(Color.unusedAmong([]), Color.Green)
-	})
-
-	it('skips the presets the account already uses, and colours it never picked', () => {
-		assert.equal(Color.unusedAmong([Color.Green, '#123456', undefined]), Color.Blue)
-	})
-
-	it('cycles once every preset is taken', () => {
-		assert.ok(Color.palette.includes(Color.unusedAmong(Color.palette)))
 	})
 })

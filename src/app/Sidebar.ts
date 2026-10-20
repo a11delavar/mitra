@@ -639,7 +639,7 @@ export class Sidebar extends Component {
 
 	protected override createRenderRoot() { return this }
 
-	private async setSourceColor(source: Source, color: string | undefined, popover: HTMLElement) {
+	private async setSourceColor(source: Source, color: Color | undefined, popover: HTMLElement) {
 		if (color) {
 			await updateSourceColor(source.id, color)
 			source.color = color
@@ -965,7 +965,7 @@ export class Sidebar extends Component {
 						<mitra-menu-item icon="pencil" @click=${() => this.startRename(source)}>${t('Rename')}</mitra-menu-item>
 						<div class="color-row">
 							<mitra-icon icon="palette"></mitra-icon>
-							<mitra-color-picker .palette=${Color.palette} .value=${source.color} @change=${(e: CustomEvent) => this.setSourceColor(source, e.detail, (e.currentTarget as HTMLElement).closest('mitra-menu')!)}></mitra-color-picker>
+							<mitra-color-picker .palette=${Color.palette.map(String)} .value=${source.color?.value} @change=${(e: CustomEvent<string | undefined>) => this.setSourceColor(source, Color.parse(e.detail), (e.currentTarget as HTMLElement).closest('mitra-menu')!)}></mitra-color-picker>
 						</div>
 						${Calendars.canRestoreVisibility ? html`
 							<mitra-menu-item icon="eye" @click=${() => this.toggleSolo(source)}>${t('Show previously visible calendars')}</mitra-menu-item>

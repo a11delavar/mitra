@@ -3,6 +3,7 @@ import { Api, HttpError, apiError, apiAuthenticator, type ApiAuthenticator } fro
 import { type DateTimeRange } from '@3mo/date-time'
 import { type User } from '../../features/identity/User.js'
 import { type Source } from '../../features/sources/Source.js'
+import { type Color } from '../../features/sources/Color.js'
 import { type MigrationOutcome, type MigrationPlan } from '../../features/migration/MigrationPlan.js'
 import { EntryRelations } from '../../features/relations/EntryRelations.js'
 import { Integration } from '../../integrations/Integration.js'
@@ -206,8 +207,8 @@ export function deleteSource(id: string) {
 	return Api.delete(`/sources/${id}`)
 }
 
-export function updateSourceColor(id: string, color: string) {
-	return Api.put(`/sources/${id}/color`, { color })
+export function updateSourceColor(id: string, color: Color) {
+	return Api.put(`/sources/${id}/color`, { color: color.value })
 }
 
 export function renameSource(id: string, name: string) {

@@ -61,7 +61,7 @@ export class SourceIcon extends Component {
 	}
 
 	protected override get template() {
-		this.style.setProperty('--mitra-source-icon-color', this.source?.color ?? '')
+		this.style.setProperty('--mitra-source-icon-color', this.source?.color?.value ?? '')
 		this.toggleAttribute('importing', !!this.source?.importing)
 		const getIcon = () => {
 			const provider = this.icon ?? (this.source && Calendars.integrationOf(this.source.id)?.sourceIcon)

@@ -1,18 +1,21 @@
 import { description, label } from '@a11d/metadata'
+import { converter } from '@a11d/converter'
 import { z } from 'zod'
 import { validation } from '../../../infrastructure/validation/validation.js'
 import { syncEmitter } from '../../../infrastructure/realtime/syncEmitter.js'
 import { http, operation, Operation, type OperationContext } from '../../../infrastructure/operations/Operation.js'
 import { type Source } from '../Source.js'
+import { Color } from '../Color.js'
 
 class Parameters {
 	@validation(z.string())
 	@description('The calendar\'s id.')
 	readonly id!: string
 
-	@validation(z.string().min(1))
-	@description('A CSS color.')
-	readonly color!: string
+	@validation(z.custom<Color>(value => value instanceof Color))
+	@description('A color in hex (#3366cc) or by its CSS name.')
+	@converter(Color.converter)
+	readonly color!: Color
 }
 
 @operation(Parameters)

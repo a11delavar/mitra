@@ -96,7 +96,7 @@ export class IcsSyncEngine implements SyncEngine {
 		const name = calendar.getFirstPropertyValue('x-wr-calname')?.toString().trim() || IcsSyncEngine.nameFromUrl(uri)
 		integration.credentials.username = name
 
-		const color = stored?.color || calendar.getFirstPropertyValue('x-apple-calendar-color')?.toString() || Color.get(uri).value
+		const color = stored?.color ?? Color.parse(calendar.getFirstPropertyValue('x-apple-calendar-color')?.toString()) ?? Color.derivedFrom(uri)
 		const types = [
 			...components.some(component => component.name === 'vevent') ? [EntryType.Event] : [],
 			...components.some(component => component.name === 'vtodo') ? [EntryType.Task] : [],

@@ -18,6 +18,7 @@ import { TimeZone } from '../time/TimeZone.js'
 import { RecurrenceFrequency } from '../recurrence/RecurrenceFrequency.js'
 import { RecurrenceEnd } from '../recurrence/RecurrenceEnd.js'
 import { IntegrationOwnership } from '../../integrations/IntegrationOwnership.js'
+import { Color } from '../sources/Color.js'
 
 describe('Entry', () => {
 	const day = new DateTime().dayStart
@@ -242,7 +243,7 @@ describe('Entry', () => {
 				(e: Entry) => e.location = 'Berlin, Germany',
 				(e: Entry) => e.reminders = [30],
 				(e: Entry) => e.timeZone = EntryTimeZone.parse('Asia/Tehran'),
-				(e: Entry) => e.color = '#ff0000',
+				(e: Entry) => e.color = Color.parse('#ff0000'),
 				(e: Entry) => e.moveStart(at(1, 9)),
 				(e: Entry) => e.setEnd(at(0, 11)),
 				(e: Entry) => e.setAllDay(true, 60),
@@ -417,7 +418,7 @@ describe('Entry', () => {
 		})
 
 		it('assign clears fields the incoming entry lacks', () => {
-			const e = new Entry({ id: 'a', sourceId: 's', type: EntryType.Task, heading: 'Task', status: TaskStatus.Done, color: '#ff0000' })
+			const e = new Entry({ id: 'a', sourceId: 's', type: EntryType.Task, heading: 'Task', status: TaskStatus.Done, color: Color.parse('#ff0000') })
 			e.assign(new Entry({ id: 'a', sourceId: 's', type: EntryType.Task, heading: 'Task' }))
 			assert.equal(e.status, undefined)
 			assert.equal(e.color, undefined)

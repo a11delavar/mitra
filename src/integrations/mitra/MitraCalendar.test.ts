@@ -12,6 +12,7 @@ import { Integration } from '../Integration.js'
 import { IntegrationCapabilities } from '../IntegrationCapabilities.js'
 import { MitraCalendar } from './MitraCalendar.js'
 import { Demo } from '../demo/Demo.js'
+import { Color } from '../../features/sources/Color.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
@@ -161,13 +162,13 @@ describe('MitraCalendar', () => {
 		it('the copy the edit dialog shows keeps an imported calendar imported, in its color', async () => {
 			const em = orm.em.fork()
 			const { integration, source } = await seed(em)
-			source.color = '#123456'
+			source.color = Color.parse('#123456')
 			await em.flush()
 
 			const served = await orm.em.fork().findOneOrFail(MitraCalendar, { id: integration.id })
 			const [copy] = [...served.clone().sources]
 			assert.equal(copy!.importing, false)
-			assert.equal(copy!.color, '#123456')
+			assert.equal(copy!.color, Color.parse('#123456'))
 		})
 
 		it('a background sync changes nothing and reports no change', async () => {
@@ -339,7 +340,7 @@ describe('Demo', () => {
 
 		const work = await em.findOneOrFail(Source, { integrationId: demo.id, uri: Demo.sampleUri('work') })
 		work.name = 'Day job'
-		work.color = '#123456'
+		work.color = Color.parse('#123456')
 		const before = await entryIds()
 		await em.flush()
 
@@ -349,7 +350,7 @@ describe('Demo', () => {
 
 		const renamed = await em.findOneOrFail(Source, { id: work.id })
 		assert.equal(renamed.name, 'Day job', 'the calendar survived the rebuild')
-		assert.equal(renamed.color, '#123456')
+		assert.equal(renamed.color, Color.parse('#123456'))
 
 		const after = await entryIds()
 		assert.equal(await filledCalendars(), 5)

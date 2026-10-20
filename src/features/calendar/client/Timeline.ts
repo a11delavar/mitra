@@ -624,7 +624,7 @@ export class Timeline extends Component {
 					></div>
 				`)}
 				${events.map(bar => html`
-					<div class="shade" style=${styleMap({ gridColumn: `${bar.startColumn + 1} / span ${bar.span}`, '--_shade-color': bar.segment.entry.color ?? Calendars.source(bar.segment.entry.sourceId)?.color ?? '' })}></div>
+					<div class="shade" style=${styleMap({ gridColumn: `${bar.startColumn + 1} / span ${bar.span}`, '--_shade-color': String(bar.segment.entry.color ?? Calendars.source(bar.segment.entry.sourceId)?.color ?? '') })}></div>
 				`)}
 			</div>
 		`

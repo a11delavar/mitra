@@ -6,7 +6,7 @@ import { contrastColorOf } from '../../../design/contrastColor.js'
 /** A participant's face: their initial in the colour their address stands for, and optionally the badge of their reply. */
 @component('mitra-participant-avatar')
 export class ParticipantAvatar extends Component {
-	private static readonly replyBadges = new Map<ParticipantStatus, { icon: string, color: string }>([
+	private static readonly replyBadges = new Map<ParticipantStatus, { icon: string, color: Color }>([
 		[ParticipantStatus.Accepted, { icon: 'check', color: Color.Green }],
 		[ParticipantStatus.Declined, { icon: 'x', color: Color.Red }],
 		[ParticipantStatus.Tentative, { icon: 'minus', color: Color.Yellow }],
@@ -52,7 +52,7 @@ export class ParticipantAvatar extends Component {
 		const { participant } = this
 		const badge = !this.reply ? undefined : ParticipantAvatar.replyBadges.get(participant.status ?? ParticipantStatus.NeedsAction)
 		return html`
-			<mitra-avatar initial=${Participants.initialOf(participant)} color=${Color.get(participant.email).value}></mitra-avatar>
+			<mitra-avatar initial=${Participants.initialOf(participant)} color=${Color.derivedFrom(participant.email).value}></mitra-avatar>
 			${!badge ? html.nothing : html`
 				<span class="reply" style="--reply-color: ${badge.color}">
 					<mitra-icon icon=${badge.icon}></mitra-icon>

@@ -168,7 +168,7 @@ export class Notion extends Integration<NotionCredentials> {
 					uri,
 					entryTypes: [EntryType.Task],
 					name: view.name ? `${title} · ${view.name}` : title,
-					color: Color.get(uri).value,
+					color: Color.derivedFrom(uri),
 					enabled: false,
 				}))
 			}

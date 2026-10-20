@@ -14,6 +14,7 @@ import { Participants, type Participant } from '../participants/Participant.js'
 import { EntryRelations } from '../relations/EntryRelations.js'
 import { EntryFiles } from './EntryFiles.js'
 import { type Calendar } from '../sources/Calendar.js'
+import { Color } from '../sources/Color.js'
 import { type Validatable } from '../../infrastructure/validation/Validatable.js'
 import { ValidationError } from '../../infrastructure/validation/ValidationError.js'
 import { EntryOccurrenceChangeScope } from '../recurrence/EntryOccurrenceChange.js'
@@ -103,8 +104,10 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 	@validation(z.string().nullish())
 	location?: string | null
 
-	@validation(z.string().nullish())
-	color?: string | null
+	@validation(z.custom<Color>(value => value instanceof Color).nullish())
+	@description('A color in hex (#3366cc) or by its CSS name; null leaves it the color of its calendar.')
+	@converter(Color.converter)
+	color?: Color | null
 
 	/** Days make an entry all-day where it does not say: its start's, else a due's when no start is written. */
 	@validation(z.boolean().nullish())
