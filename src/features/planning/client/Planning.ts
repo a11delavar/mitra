@@ -35,11 +35,14 @@ export class Planning extends Component {
 	}
 
 	/** Visible unscheduled tasks matching current lens filters: open before finished, in the manual order,
-	 * with tasks not placed yet after the placed ones, the soonest due first, then by title. */
+	 * with tasks not placed yet after the placed ones, the soonest due first, then by title. A task not saved yet
+	 * comes last of the open ones, beside the button that added it: ordered by what is typed into it, its row
+	 * would move under the editor, which a move closes. */
 	static get unscheduled(): ReadonlyArray<EntryOccurrence> {
 		return HideDoneTasksSetting.filter(EntryStore.occurrences)
 			.filter(occurrence => !occurrence.scheduled)
 			.sort((a, b) => Number(a.entry.closed) - Number(b.entry.closed)
+				|| Number(!a.entry.persisted) - Number(!b.entry.persisted)
 				|| EntryRank.compare(a.entry.rank, b.entry.rank)
 				|| (a.due?.valueOf() ?? Infinity) - (b.due?.valueOf() ?? Infinity)
 				|| (a.entry.heading || '').localeCompare(b.entry.heading || ''))
