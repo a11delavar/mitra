@@ -52,7 +52,13 @@ Tudo o que o Mitra guarda sobre uma entrada é sincronizado, até onde o seu ser
 
 Uma entrada recorrente continua sendo uma única série no servidor. Quando você altera uma única ocorrência, o Mitra pergunta se você quer dizer **Esta entrada**, **Esta e as seguintes entradas** ou **Todas as entradas**, e altera a série de acordo.
 
-Uma tarefa mantém o agendamento, a [data de vencimento e a estimativa](../planning.md#schedule-constraints-and-planning). Se você tem curiosidade sobre como: o início é salvo como `DTSTART`, a duração do agendamento (ou a estimativa, enquanto a tarefa não está agendada) como `ESTIMATED-DURATION`, e a data de vencimento como `DUE`, então os outros aplicativos veem o início e a data de vencimento. Uma tarefa que outro aplicativo, ou uma versão antiga do Mitra, salvou com um início e um `DUE`, mas sem duração, é lida como agendada de um ao outro, sem data de vencimento.
+Uma tarefa mantém o agendamento, a [data de vencimento e a estimativa](../planning.md#schedule-constraints-and-planning). No servidor, eles são salvos assim:
+
+- O início como `DTSTART`.
+- A duração como `ESTIMATED-DURATION`: por quanto tempo a tarefa está agendada, ou a sua estimativa enquanto não tem início.
+- A data de vencimento como `DUE`.
+
+Uma tarefa com início e sem duração é um momento.
 
 Os calendários compartilhados com você apenas para visualização são marcados como somente leitura. Você ainda pode renomeá-los, mudar a cor, reordená-los e ocultá-los; veja [Calendários somente leitura](../calendars.md#read-only-calendars).
 

@@ -205,8 +205,8 @@ describe('EntryOccurrences of a synced entry', () => {
 			assert.equal(read(raw).occurrences.within(new DateTimeRange(at('2026-06-01T00:00:00Z'), at('2026-06-30T00:00:00Z'))).length, 3)
 		})
 
-		it('expands a recurring VTODO, anchored on DTSTART with the DUE duration', () => {
-			const raw = calendar(['BEGIN:VTODO', 'UID:t1', 'DTSTAMP:20260101T000000Z', 'DTSTART:20260601T090000Z', 'DUE:20260601T100000Z', 'RRULE:FREQ=DAILY', 'END:VTODO'])
+		it('expands a recurring VTODO, anchored on DTSTART with its ESTIMATED-DURATION', () => {
+			const raw = calendar(['BEGIN:VTODO', 'UID:t1', 'DTSTAMP:20260101T000000Z', 'DTSTART:20260601T090000Z', 'ESTIMATED-DURATION:PT1H', 'RRULE:FREQ=DAILY', 'END:VTODO'])
 			const occ = read(raw).occurrences.within(new DateTimeRange(at('2026-06-01T00:00:00Z'), at('2026-06-03T23:59:59Z')))
 			assert.equal(occ.length, 3)
 			assert.equal(occ[0]!.end!.getTime() - occ[0]!.start!.getTime(), 60 * 60 * 1000)

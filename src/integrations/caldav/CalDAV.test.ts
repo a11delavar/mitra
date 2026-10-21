@@ -870,7 +870,8 @@ describe('CalDAV sync ingests every type the collection holds', () => {
 			['Buy milk', EntryType.Task],
 		])
 		const task = em.persisted.find(entry => entry.type === EntryType.Task)!
-		assert.equal(task.end?.valueOf(), new Date('2026-07-06T18:00:00Z').getTime())
+		assert.equal(task.end, undefined)
+		assert.equal(task.due?.valueOf(), new Date('2026-07-06T18:00:00Z').getTime())
 		assert.equal(task.status, TaskStatus.ToDo)
 		assert.equal(em.removed.length, 0)
 	})

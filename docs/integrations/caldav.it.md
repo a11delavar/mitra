@@ -52,7 +52,13 @@ Tutto ciò che Mitra salva di una voce si sincronizza, nella misura in cui il tu
 
 Una voce ricorrente resta una sola serie sul server. Quando modifichi una singola occorrenza, Mitra ti chiede se intendi **Questa voce**, **Questa e le voci seguenti** o **Tutte le voci**, e modifica la serie di conseguenza.
 
-Un'attività mantiene la sua pianificazione, la sua [scadenza e la sua stima](../planning.md#schedule-constraints-and-planning). Se ti interessa come: l'inizio viene salvato come `DTSTART`, la durata della pianificazione (o la stima, finché l'attività non è pianificata) come `ESTIMATED-DURATION`, e la scadenza come `DUE`, così le altre app vedono l'inizio e la scadenza. Un'attività che un'altra app, o una versione precedente di Mitra, ha salvato con un inizio e un `DUE` ma senza durata viene letta come pianificata dall'uno all'altro, senza scadenza.
+Un'attività mantiene la sua pianificazione, la sua [scadenza e la sua stima](../planning.md#schedule-constraints-and-planning). Sul server vengono salvate così:
+
+- L'inizio come `DTSTART`.
+- La durata come `ESTIMATED-DURATION`: per quanto tempo l'attività è pianificata, o la sua stima finché non ha un inizio.
+- La scadenza come `DUE`.
+
+Un'attività con un inizio e senza durata è un istante.
 
 I calendari condivisi con te in sola visualizzazione sono contrassegnati come in sola lettura. Puoi comunque rinominarli, cambiarne il colore, riordinarli e nasconderli; vedi [Calendari in sola lettura](../calendars.md#read-only-calendars).
 

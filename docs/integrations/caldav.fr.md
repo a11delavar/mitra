@@ -52,7 +52,13 @@ Tout ce que Mitra stocke sur une entrée est synchronisé, dans la mesure où vo
 
 Une entrée répétée reste une seule série sur le serveur. Quand vous modifiez une seule occurrence, Mitra demande si vous visez **Cette entrée**, **Cette entrée et les suivantes** ou **Toutes les entrées**, et adapte la série en conséquence.
 
-Une tâche conserve son horaire, sa [date d'échéance et son estimation](../planning.md#schedule-constraints-and-planning). Si vous êtes curieux du comment : le début est enregistré dans `DTSTART`, la durée de l'horaire (ou l'estimation, tant que la tâche n'est pas planifiée) dans `ESTIMATED-DURATION`, et la date d'échéance dans `DUE`, de sorte que les autres applications voient le début et la date d'échéance. Une tâche qu'une autre application, ou une ancienne version de Mitra, a enregistrée avec un début et un `DUE` mais sans durée est lue comme planifiée de l'un à l'autre, sans date d'échéance.
+Une tâche conserve son horaire, sa [date d'échéance et son estimation](../planning.md#schedule-constraints-and-planning). Sur le serveur, elles sont enregistrées ainsi :
+
+- Le début dans `DTSTART`.
+- La durée dans `ESTIMATED-DURATION` : le temps pour lequel la tâche est planifiée, ou son estimation tant qu'elle n'a pas de début.
+- La date d'échéance dans `DUE`.
+
+Une tâche avec un début et sans durée est un instant.
 
 Les calendriers partagés avec vous en lecture seule sont marqués comme tels. Vous pouvez quand même les renommer, les recolorer, les réordonner et les masquer ; voir [Calendriers en lecture seule](../calendars.md#read-only-calendars).
 

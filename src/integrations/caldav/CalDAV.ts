@@ -347,8 +347,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 	}
 
 	/**
-	 * ESTIMATED-DURATION is the span from DTSTART once there is one, else the estimate. Without it, DTSTART and DUE
-	 * are a legacy block, so DUE reads as its end rather than a due date.
+	 * Each property means one thing whatever else is there: DTSTART the start, DUE the due date, ESTIMATED-DURATION the
+	 * span from DTSTART once there is one, else the estimate. DTSTART with DUE and no length is a moment with a due date,
+	 * as Mitra writes one and as other task servers spell a planned day with a deadline; never a block spanning the two.
 	 */
 	static taskTimesFrom(component: ICAL.Component): TaskTimes {
 		const tzidOf = (name: string) => component.getFirstProperty(name)?.getParameter('tzid')?.toString()
@@ -359,18 +360,16 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		const duration = component.getFirstPropertyValue('estimated-duration') as ICAL.Duration | null
 		const length = duration && !duration.isNegative && duration.toSeconds() > 0 ? duration : undefined
 		const allDay = !!(dtstart ?? dueValue)?.isDate
-		if (!start) {
-			return { start: undefined, end: undefined, due, estimate: length ? Math.round(length.toSeconds() / 60) : undefined, allDay }
-		}
-		if (length) {
-			// RFC 5545 §3.3.6: days and weeks are calendar days, the time parts exact, so a P1D across a DST change
-			// keeps the wall clock. Floating and UTC times are both held as UTC instants, where the two agree.
-			const zone = !allDay && IcsTime.resolvableZone(tzidOf('dtstart')) ? tzidOf('dtstart')! : 'UTC'
-			const end = Temporal.Instant.fromEpochMilliseconds(start.valueOf()).toZonedDateTimeISO(zone)
+		// RFC 5545 §3.3.6: days and weeks are calendar days, the time parts exact, so a P1D across a DST change keeps
+		// the wall clock. Floating and UTC times are both held as UTC instants, where the two agree.
+		const zone = !allDay && IcsTime.resolvableZone(tzidOf('dtstart')) ? tzidOf('dtstart')! : 'UTC'
+		const end = start && length
+			? new Date(Temporal.Instant.fromEpochMilliseconds(start.valueOf()).toZonedDateTimeISO(zone)
 				.add({ weeks: length.weeks, days: length.days, hours: length.hours, minutes: length.minutes, seconds: length.seconds })
-			return { start, end: new Date(end.epochMilliseconds) as Entry['end'], due, estimate: undefined, allDay }
-		}
-		return { start, end: due, due: undefined, estimate: undefined, allDay }
+				.epochMilliseconds) as Entry['end']
+			: undefined
+		const estimate = !start && length ? Math.round(length.toSeconds() / 60) : undefined
+		return { start, end, due, estimate, allDay }
 	}
 
 	/**

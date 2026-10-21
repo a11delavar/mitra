@@ -52,7 +52,13 @@ Alles, was Mitra zu einem Eintrag speichert, wird synchronisiert, soweit dein Se
 
 Ein sich wiederholender Eintrag bleibt auf dem Server eine Serie. Wenn du ein einzelnes Vorkommen änderst, fragt Mitra, ob du **Dieser Eintrag**, **Dieser und folgende Einträge** oder **Alle Einträge** meinst, und ändert die Serie entsprechend.
 
-Eine Aufgabe behält ihren Termin, ihr [Fälligkeitsdatum und ihre Schätzung](../planning.md#schedule-constraints-and-planning). Falls du dich fragst, wie: Der Beginn wird als `DTSTART` gespeichert, die Länge des Termins (oder die Schätzung, solange die Aufgabe keinen Termin hat) als `ESTIMATED-DURATION` und das Fälligkeitsdatum als `DUE`, sodass andere Apps Beginn und Fälligkeitsdatum sehen. Eine Aufgabe, die eine andere App oder eine ältere Mitra-Version mit Beginn und `DUE`, aber ohne Länge gespeichert hat, wird als von einem zum anderen geplant gelesen, ohne Fälligkeitsdatum.
+Eine Aufgabe behält ihren Termin, ihr [Fälligkeitsdatum und ihre Schätzung](../planning.md#schedule-constraints-and-planning). Auf dem Server werden sie so gespeichert:
+
+- Der Beginn als `DTSTART`.
+- Die Länge als `ESTIMATED-DURATION`: wie lange die Aufgabe eingeplant ist, oder ihre Schätzung, solange sie keinen Beginn hat.
+- Das Fälligkeitsdatum als `DUE`.
+
+Eine Aufgabe mit Beginn und ohne Länge ist ein Zeitpunkt.
 
 Kalender, die nur zum Ansehen mit dir geteilt wurden, sind als schreibgeschützt markiert. Du kannst sie trotzdem umbenennen, umfärben, umsortieren und ausblenden; siehe [Schreibgeschützte Kalender](../calendars.md#read-only-calendars).
 

@@ -52,7 +52,13 @@ Todo lo que Mitra guarda de una entrada se sincroniza, en la medida en que tu se
 
 Una entrada recurrente sigue siendo una sola serie en el servidor. Cuando cambias una única repetición, Mitra pregunta si te refieres a **Esta entrada**, **Esta y las siguientes entradas** o **Todas las entradas**, y cambia la serie en consecuencia.
 
-Una tarea conserva su programación, su [fecha de vencimiento y su estimación](../planning.md#schedule-constraints-and-planning). Si te da curiosidad cómo: el inicio se guarda como `DTSTART`, la duración de la programación (o la estimación, mientras la tarea está sin programar) como `ESTIMATED-DURATION`, y la fecha de vencimiento como `DUE`, de modo que otras aplicaciones ven el inicio y la fecha de vencimiento. Una tarea que otra aplicación, o una versión anterior de Mitra, guardó con un inicio y un `DUE` pero sin duración se lee como programada del uno al otro, sin fecha de vencimiento.
+Una tarea conserva su programación, su [fecha de vencimiento y su estimación](../planning.md#schedule-constraints-and-planning). En el servidor se guardan así:
+
+- El inicio como `DTSTART`.
+- La duración como `ESTIMATED-DURATION`: cuánto tiempo está programada la tarea, o su estimación mientras no tiene inicio.
+- La fecha de vencimiento como `DUE`.
+
+Una tarea con inicio y sin duración es un momento.
 
 Los calendarios que han compartido contigo solo para ver se marcan como de solo lectura. Aun así puedes renombrarlos, cambiarles el color, reordenarlos y ocultarlos; consulta [Calendarios de solo lectura](../calendars.md#read-only-calendars).
 

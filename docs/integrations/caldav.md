@@ -52,7 +52,13 @@ Everything Mitra stores about an entry syncs, as far as your server keeps it:
 
 A repeating entry stays one series on the server. When you change a single occurrence, Mitra asks whether you mean **This entry**, **This and following entries** or **All entries**, and changes the series to match.
 
-A task keeps its schedule, its [due date and its estimate](../planning.md#schedule-constraints-and-planning). If you're curious how: the start is saved as `DTSTART`, the length of the schedule (or the estimate, while the task is unscheduled) as `ESTIMATED-DURATION`, and the due date as `DUE`, so other apps see the start and the due date. A task that another app, or an older version of Mitra, saved with a start and a `DUE` but no length is read as scheduled from the one to the other, with no due date.
+A task keeps its schedule, its [due date and its estimate](../planning.md#schedule-constraints-and-planning). On the server they are saved as:
+
+- The start as `DTSTART`.
+- The length as `ESTIMATED-DURATION`: how long the task is scheduled for, or its estimate while it has no start.
+- The due date as `DUE`.
+
+A task with a start and no length is a moment.
 
 Calendars shared with you to view only are marked read-only. You can still rename, recolor, reorder and hide them; see [Read-only calendars](../calendars.md#read-only-calendars).
 

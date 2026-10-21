@@ -22,11 +22,18 @@ const ms = (value: Date | undefined) => value?.valueOf()
 
 describe('a VTODO\'s dates', () => {
 	describe('reading', () => {
-		it('takes DTSTART and DUE without ESTIMATED-DURATION as the block mitra used to write, with no deadline', () => {
-			const times = read('DTSTART:20260602T090000Z', 'DUE:20260602T100000Z')
+		it('takes DTSTART and DUE without ESTIMATED-DURATION as a moment with a deadline, as a Mitra moment is written', () => {
+			const times = read('DTSTART:20260602T090000Z', 'DUE:20260605T170000Z')
 			assert.equal(ms(times.start), Date.parse('2026-06-02T09:00:00Z'))
-			assert.equal(ms(times.end), Date.parse('2026-06-02T10:00:00Z'))
-			assert.equal(times.due, undefined)
+			assert.equal(times.end, undefined)
+			assert.equal(ms(times.due), Date.parse('2026-06-05T17:00:00Z'))
+		})
+
+		it('takes a DUE equal to DTSTART as a moment due at that time, never a zero-length block', () => {
+			const times = read('DTSTART:20260602T090000Z', 'DUE:20260602T090000Z')
+			assert.equal(ms(times.start), Date.parse('2026-06-02T09:00:00Z'))
+			assert.equal(times.end, undefined)
+			assert.equal(ms(times.due), Date.parse('2026-06-02T09:00:00Z'))
 		})
 
 		it('takes ESTIMATED-DURATION as the block, so DUE is the deadline', () => {
@@ -121,25 +128,35 @@ describe('a VTODO\'s dates', () => {
 			assert.equal(ms(times.end), ms(fields.end))
 			assert.equal(ms(times.due), ms(fields.due))
 		})
+
+		it('round-trips a moment with a deadline, which is written without a length', () => {
+			const fields = { start: D('2026-06-02T09:00:00Z'), end: undefined, due: D('2026-06-05T17:00:00Z') }
+			const raw = written(fields)
+			assert.doesNotMatch(raw, /ESTIMATED-DURATION/)
+			const times = CalDAV.taskTimesFrom(componentOf(raw))
+			assert.equal(ms(times.start), ms(fields.start))
+			assert.equal(times.end, undefined)
+			assert.equal(ms(times.due), ms(fields.due))
+		})
 	})
 
-	it('drops the deadline a legacy block never had on its next edit', async () => {
+	it('keeps the deadline of a moment through an edit', async () => {
 		const dav = new CalDAV({ credentials: { username: 'u', password: 'p' } })
 		;(dav as unknown as { client: unknown }).client = Promise.resolve({
 			updateCalendarObject: () => Promise.resolve({ ok: true, headers: { get: () => null } }),
 		})
 		const em = { find: () => Promise.resolve([]), findOne: () => Promise.resolve(new Source({ id: 's', integrationId: 'i', uri: 'https://example.com/cal/', entryTypes: [EntryType.Task], name: 'Cal' })) } as never
-		const raw = vtodo('DTSTART:20260602T090000Z', 'DUE:20260602T100000Z')
+		const raw = vtodo('DTSTART:20260602T090000Z', 'DUE:20260605T170000Z')
 		const existing = new Entry({
 			id: 't1', sourceId: 's', type: EntryType.Task, heading: 'Report', uri: 'https://example.com/cal/t1.ics',
-			start: D('2026-06-02T09:00:00Z'), end: D('2026-06-02T10:00:00Z'), data: { raw },
+			start: D('2026-06-02T09:00:00Z'), due: D('2026-06-05T17:00:00Z'), data: { raw },
 		})
-		const incoming = new Entry({ ...existing, start: D('2026-06-02T13:00:00Z'), end: D('2026-06-02T14:00:00Z') } as Partial<Entry>)
+		const incoming = new Entry({ ...existing, start: D('2026-06-02T13:00:00Z') } as Partial<Entry>)
 
 		await dav.updateEntry(em, existing, incoming)
 
 		assert.match(existing.data!.raw!, /DTSTART:20260602T130000Z/)
-		assert.match(existing.data!.raw!, /ESTIMATED-DURATION:PT1H/)
-		assert.doesNotMatch(existing.data!.raw!, /DUE/)
+		assert.doesNotMatch(existing.data!.raw!, /ESTIMATED-DURATION/)
+		assert.match(existing.data!.raw!, /DUE:20260605T170000Z/)
 	})
 })
