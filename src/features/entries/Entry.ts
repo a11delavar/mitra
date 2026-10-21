@@ -46,6 +46,9 @@ export interface EntryData {
 	localWriteAt?: number
 }
 
+/** What says how an entry's dates travel, read from the entry or from what the wire carries of it: days, or a floating wall clock. */
+export type EntryClock = { readonly allDay?: boolean | null, readonly timeZone?: unknown }
+
 export const MINIMUM_DURATION_MINUTES = 15
 
 /** The defaults an entry's reminders still follow, until the user sets their own. Kept off the entry so it is never persisted, cloned or sent. */
@@ -364,12 +367,10 @@ export class Entry extends Entity implements Validatable<Calendar> {
 		return new Intl.DurationFormat(Localizer.locales.current, { style: 'narrow' }).format({ days, hours, minutes })
 	}
 
-	/** The zone this runtime shows an all-day entry's days in: the browser's own; none on the server, which keeps them as stored. */
-	static dayZone = (): TimeZone | undefined => mitra.runtime === 'browser' ? TimeZone.device : undefined
-
 	/**
-	 * The entry holds an all-day date as the midnight that begins its day in `dayZone`, the wire as that day's UTC midnight.
-	 * The conversion reads `allDay` from the same entry, so it runs only at the wire, whatever order the fields come in.
+	 * The entry holds an all-day date as the midnight that begins its day in `TimeZone.local`, and a floating time as the instant its
+	 * wall clock reads there; the wire carries the day's UTC midnight and the wall clock as if in UTC. The conversion reads
+	 * `allDay` and `timeZone` from the same entry, so it runs only at the wire, whatever order the fields come in.
 	 */
 	static date(options: { persist?: boolean } = {}): PropertyDecorator {
 		return (prototype, key) => {
@@ -380,24 +381,35 @@ export class Entry extends Entity implements Validatable<Calendar> {
 		}
 	}
 
-	/** A list of all-day dates, as {@link date} converts one. */
+	/** A list of dates, as {@link date} converts one. */
 	static days(): PropertyDecorator {
 		return converter({
-			construct: (value: ReadonlyArray<number> | null | undefined, data: { allDay?: boolean | null }) => value?.map(ms => Entry.shownDay(new Date(ms), data)!.valueOf()),
-			deconstruct: (value: ReadonlyArray<number> | null | undefined, data: { allDay?: boolean | null }) => value?.map(ms => Entry.storedDay(new Date(ms), data)!.valueOf()),
+			construct: (value: ReadonlyArray<number> | null | undefined, data: EntryClock) => value?.map(ms => Entry.shownDay(new Date(ms), data)!.valueOf()),
+			deconstruct: (value: ReadonlyArray<number> | null | undefined, data: EntryClock) => value?.map(ms => Entry.storedDay(new Date(ms), data)!.valueOf()),
 		})
 	}
 
-	/** A day the wire carries as its UTC midnight, as the midnight that begins it in `dayZone`. */
-	static shownDay(value: Date | string | null | undefined, data: { allDay?: boolean | null }) {
-		const zone = Entry.dayZone()
-		return !data.allDay || !zone || !value ? value : new DateTime(zone.midnightOf(TimeZone.UTC.dayOf(new Date(value))).getTime())
+	/** Whether the dates of `data`, an entry or what the wire carries of one, are a floating wall clock's. */
+	private static floats(data: EntryClock) {
+		return !data.allDay && !!EntryTimeZone.parse(data.timeZone)?.floating
 	}
 
-	/** The day a midnight in `dayZone` begins, as the UTC midnight the wire carries. */
-	static storedDay(value: Date | string | null | undefined, data: { allDay?: boolean | null }) {
-		const zone = Entry.dayZone()
-		return !data.allDay || !zone || !value ? value : TimeZone.UTC.midnightOf(zone.dayOf(new Date(value)))
+	/** A date the wire carries, as `TimeZone.local` holds it: a day as the midnight that begins it there, a floating time at its wall clock there. */
+	static shownDay(value: Date | string | null | undefined, data: EntryClock) {
+		const zone = TimeZone.local
+		return !zone || !value ? value
+			: data.allDay ? new DateTime(zone.midnightOf(TimeZone.UTC.dayOf(new Date(value))).getTime())
+				: Entry.floats(data) ? new DateTime(zone.atWallClockOf(new Date(value), TimeZone.UTC).getTime())
+					: value
+	}
+
+	/** A date `TimeZone.local` holds, as the wire carries it: a day as its UTC midnight, a floating time's wall clock as if in UTC. */
+	static storedDay(value: Date | string | null | undefined, data: EntryClock) {
+		const zone = TimeZone.local
+		return !zone || !value ? value
+			: data.allDay ? TimeZone.UTC.midnightOf(zone.dayOf(new Date(value)))
+				: Entry.floats(data) ? TimeZone.UTC.atWallClockOf(new Date(value), zone)
+					: value
 	}
 
 	constructor(init?: Partial<Entry>) {
@@ -621,12 +633,13 @@ export class Entry extends Entity implements Validatable<Calendar> {
 	/** Re-zones entry while keeping wall-clock time. */
 	setTimeZone(zone: EntryTimeZone) {
 		if (!this.allDay) {
-			const from = this.timeZone?.clock ?? TimeZone.deviceId
+			const clockOf = (timeZone: EntryTimeZone) => timeZone.floating ? TimeZone.localOrDefault.id : timeZone.clock
+			const from = this.timeZone ? clockOf(this.timeZone) : TimeZone.deviceId
 			const rezoned = (value: DateTime | undefined) => !value ? value : new DateTime(
 				Temporal.Instant.fromEpochMilliseconds(value.valueOf())
 					.toZonedDateTimeISO(from)
 					.toPlainDateTime()
-					.toZonedDateTime(zone.clock, { disambiguation: 'compatible' })
+					.toZonedDateTime(clockOf(zone), { disambiguation: 'compatible' })
 					.epochMilliseconds,
 			)
 			this.start = rezoned(this.start)

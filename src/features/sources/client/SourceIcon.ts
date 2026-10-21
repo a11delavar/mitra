@@ -62,11 +62,13 @@ export class SourceIcon extends Component {
 
 	protected override get template() {
 		this.style.setProperty('--mitra-source-icon-color', this.source?.color?.value ?? '')
-		this.toggleAttribute('importing', !!this.source?.importing)
+		// A connect dialog's copy counts a ticked source as importing, though nothing imports until it is saved.
+		const importing = !!this.source && !!Calendars.source(this.source.id)?.importing
+		this.toggleAttribute('importing', importing)
 		const getIcon = () => {
 			const provider = this.icon ?? (this.source && Calendars.integrationOf(this.source.id)?.sourceIcon)
 			switch (true) {
-				case !!this.source?.importing:
+				case importing:
 					return 'loader-circle'
 				case !!provider:
 					return provider

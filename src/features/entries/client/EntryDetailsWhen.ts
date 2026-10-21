@@ -49,7 +49,7 @@ export class EntryDetailsWhen extends Component {
 	protected override createRenderRoot() { return this }
 
 	private get zone(): string {
-		return this.entry.floating ? 'UTC'
+		return this.entry.floating ? TimeZone.localOrDefault.id
 			: this.showEventZone ? this.entry.zone?.id ?? TimeZones.here.id
 				: TimeZones.here.id
 	}

@@ -1,4 +1,4 @@
-import { Entry } from '#features/entries'
+import { type Entry } from '#features/entries'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { ValidationError } from '#infrastructure/validation'
 import { EntryOccurrence } from './EntryOccurrence.js'
@@ -46,14 +46,14 @@ export class EntryOccurrences {
 	}
 
 	/**
-	 * The zone the entry repeats in, never the runtime's. All-day dates are midnights in `Entry.dayZone` (UTC but in the
-	 * browser), and an entry without a zone (a UTC DTSTART recurs at fixed instants, RFC 5545 §3.8.5.3), a floating one or
-	 * one in a zone no longer known iterates in UTC.
+	 * The zone the entry repeats in, never the runtime's. All-day dates and floating wall clocks are held in `TimeZone.local`
+	 * (UTC but in the browser); an entry without a zone (a UTC DTSTART recurs at fixed instants, RFC 5545 §3.8.5.3) or one
+	 * in a zone no longer known iterates in the default.
 	 */
 	get zone(): TimeZone {
-		return this.entry.allDay ? Entry.dayZone() ?? TimeZone.UTC
-			: !this.entry.timeZone ? TimeZone.UTC
-				: TimeZone.parse(this.entry.timeZone.clock) ?? TimeZone.UTC
+		return this.entry.allDay || this.entry.floating
+			? TimeZone.localOrDefault
+			: this.entry.timeZone?.zone ?? TimeZone.default
 	}
 
 	/** Whether a rule yields them, rather than the entry's own dates. */

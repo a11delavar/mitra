@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { TimeZone } from '#features/time/TimeZone.js'
+import { holdLocalIn } from '#features/time/TimeZone.testing.js'
 import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
 import { Entry } from './Entry.js'
 import { EntryType } from './EntryType.js'
@@ -17,12 +18,11 @@ type DateField = keyof Dates
 
 /** Runs `action` where days are read in `zone`, as a browser there does; none is the server, which keeps them as stored. */
 const readingDaysIn = <T>(zone: string | undefined, action: () => T): T => {
-	const previous = Entry.dayZone
-	Entry.dayZone = () => TimeZone.parse(zone)
+	const restore = holdLocalIn(TimeZone.parse(zone))
 	try {
 		return action()
 	} finally {
-		Entry.dayZone = previous
+		restore()
 	}
 }
 

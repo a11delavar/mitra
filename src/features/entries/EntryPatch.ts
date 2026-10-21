@@ -7,7 +7,7 @@ import { EntryRelations } from '#features/relations'
 import { type Calendar, Color } from '#features/sources'
 import { model } from '#infrastructure/model'
 import { validation, type Validatable, ValidationError } from '#infrastructure/validation'
-import { Entry } from './Entry.js'
+import { Entry, type EntryClock } from './Entry.js'
 import { EntryType } from './EntryType.js'
 import { TaskStatus } from './TaskStatus.js'
 import { Transparency } from './Transparency.js'
@@ -24,13 +24,13 @@ export interface EntryPatchContext {
 }
 
 /**
- * A date as `Entry` converts it, an all-day one by the `allDay` beside it; called at run time, as the two modules import
+ * A date as `Entry` converts it, an all-day or floating one by the `allDay` and `timeZone` beside it; called at run time, as the two modules import
  * each other. Written as text it is an instant, a day, or a wall-clock time with its zone in brackets (RFC 9557), which
  * Temporal reads, daylight saving included. A day comes with `allDay: true`: read alone it would be a UTC midnight.
  */
 const date = (field: 'start' | 'end' | 'due') => ({
 	schema: z.union([z.iso.datetime({ offset: true }), z.iso.datetime({ offset: true, precision: -1 }), z.iso.date(), z.string().regex(/^\d{4}-\d{2}-\d{2}T[\d:.]+(Z|[+-]\d{2}:\d{2})?\[[^\]]+\]$/)]),
-	construct: (value: string | Date | null | undefined, data: { allDay?: boolean | null }) => {
+	construct: (value: string | Date | null | undefined, data: EntryClock) => {
 		if (value === null || value === undefined) {
 			return value
 		}
@@ -46,7 +46,7 @@ const date = (field: 'start' | 'end' | 'due') => ({
 			throw new ValidationError(`"${value}" names no time zone Mitra knows.`)
 		}
 	},
-	deconstruct: (value: Date | null | undefined, data: { allDay?: boolean | null }) => Entry.storedDay(value, data),
+	deconstruct: (value: Date | null | undefined, data: EntryClock) => Entry.storedDay(value, data),
 })
 
 /**
@@ -67,11 +67,12 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 	/** What an edit of one occurrence carries: neither its type nor its rule are its own. */
 	static readonly occurrence = EntryPatch.fields.filter(field => field !== 'type' && field !== 'recurrence' && field !== 'relations')
 
-	/** The given fields of `entry` as they stand, an empty one as cleared. A date brings `allDay`, which tells how it travels. */
+	/** The given fields of `entry` as they stand, an empty one as cleared. A date brings what tells how it travels: `allDay`, and a floating entry's zone. */
 	static of(entry: Entry, fields: ReadonlyArray<EntryPatchField> = EntryPatch.fields) {
 		const patch = new EntryPatch()
 		const dated = fields.some(field => field === 'start' || field === 'end' || field === 'due')
-		for (const field of dated && !fields.includes('allDay') ? ['allDay' as const, ...fields] : fields) {
+		const travelling = !dated ? [] : (entry.floating ? ['allDay', 'timeZone'] as const : ['allDay'] as const).filter(field => !fields.includes(field))
+		for (const field of [...travelling, ...fields]) {
 			// Relations have a none of their own, an empty collection, so absent ones are unknown and stay out.
 			if (field !== 'relations' || entry.relations !== undefined) {
 				Object.assign(patch, { [field]: entry[field] ?? null })
