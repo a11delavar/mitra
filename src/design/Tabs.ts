@@ -48,18 +48,21 @@ export class Tabs extends Component {
 			?.scrollIntoView({ behavior: 'instant', inline: 'start', block: 'nearest' })
 	}
 
-	private readonly handleScrollEnd = () => {
-		const panels = this.panelElements
-		const start = this.panels?.getBoundingClientRect().left
-		if (!panels.length || start === undefined) {
-			return
-		}
-		const offset = (panel: Element) => Math.abs(panel.getBoundingClientRect().left - start)
-		const nearest = panels.reduce((best, panel) => offset(panel) < offset(best) ? panel : best)
-		if (nearest.name && nearest.name !== this.selected) {
-			this.selected = nearest.name
-			this.selectedChange.dispatch(nearest.name)
+	/** Selects the panel the strip rests on, however it got there: a swipe, the keyboard, a find in the page. */
+	private follow(name: string | null | undefined) {
+		if (name && name !== this.selected) {
+			this.selected = name
+			this.selectedChange.dispatch(name)
 			this.sync()
+		}
+	}
+
+	// The panel whose start the strip rests on is the one shown. Read on every scroll, since Chrome's find in the page
+	// jumps the strip with a bare `scroll`: no `scrollend` and no snap events.
+	private readonly handleScroll = () => {
+		const start = this.panels?.getBoundingClientRect().left
+		if (start !== undefined) {
+			this.follow(this.panelElements.find(panel => Math.abs(panel.getBoundingClientRect().left - start) < 1)?.name)
 		}
 	}
 
@@ -152,7 +155,7 @@ export class Tabs extends Component {
 			<div part="tablist" role="tablist" @click=${this.handleClick} @keydown=${this.handleKeyDown}>
 				<slot name="tab"></slot>
 			</div>
-			<div part="panels" @scrollend=${this.handleScrollEnd}>
+			<div part="panels" @scroll=${this.handleScroll}>
 				<slot></slot>
 			</div>
 		`
