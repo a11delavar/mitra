@@ -7,6 +7,7 @@ import { Source, Color } from '#features/sources'
 import { Entry, EntryType } from '#features/entries'
 import { EntryRelation } from '#features/relations'
 import { TimeZone } from '#features/time/TimeZone.js'
+import { UserTimeZones } from '#features/time/UserTimeZones.js'
 import { Integration, IntegrationCapabilities } from '#integrations'
 import { Demo } from '#integrations/demo/Demo.js'
 import { MitraCalendar } from './MitraCalendar.js'
@@ -274,11 +275,12 @@ describe('Demo', () => {
 	after(async () => { await orm.close(true) })
 
 	let em: EntityManager
+	let user: User
 	let demo: Demo
 
 	beforeEach(async () => {
 		em = orm.em.fork()
-		const user = new User({ username: `demo-${++users}` })
+		user = new User({ username: `demo-${++users}` })
 		demo = new Demo({ userId: user.id })
 		em.persist([user, demo])
 		await em.flush()
@@ -367,6 +369,32 @@ describe('Demo', () => {
 		const timed = (await em.find(Entry, { sourceId: { $in: sources.map(source => source.id) } })).filter(entry => entry.start && !entry.allDay)
 		assert.ok(timed.some(entry => entry.recurrence))
 		assert.deepEqual([...new Set(timed.map(entry => entry.timeZone?.id))], [TimeZone.deviceId])
+	})
+
+	it('seeds in the account’s home zone, so the day and its hours are the visitor’s, and rebuilds when that changes', async () => {
+		const kiritimati = TimeZone.of('Pacific/Kiritimati')
+		user.timeZones = UserTimeZones.none.settle(kiritimati)
+		await em.flush()
+		await demo.getSources(em)
+		await em.flush()
+		await demo.syncEntries(em)
+		await em.flush()
+
+		const sources = await em.find(Source, { integrationId: demo.id })
+		const entries = () => em.find(Entry, { sourceId: { $in: sources.map(source => source.id) } })
+		const timed = (await entries()).filter(entry => entry.start && !entry.allDay)
+		assert.deepEqual([...new Set(timed.map(entry => entry.timeZone?.id))], [kiritimati.id])
+		// The fixture keeps its days within 07:00–19:00, read in the visitor's zone.
+		const hours = timed.map(entry => Temporal.Instant.fromEpochMilliseconds(entry.start!.valueOf()).toZonedDateTimeISO(kiritimati.id).hour)
+		assert.ok(hours.every(hour => hour >= 7 && hour <= 19), `hours ${[...new Set(hours)].join(', ')}`)
+		assert.ok(timed.some(entry => entry.recurrence))
+
+		assert.equal(await demo.syncEntries(em), false, 'the same day in the same zone')
+		user.timeZones = user.timeZones!.makeHome(TimeZone.of('Pacific/Honolulu'))
+		await em.flush()
+		assert.equal(await demo.syncEntries(em), true, 'a new home zone rebuilds')
+		await em.flush()
+		assert.deepEqual([...new Set((await entries()).filter(entry => entry.start && !entry.allDay).map(entry => entry.timeZone?.id))], ['Pacific/Honolulu'])
 	})
 
 	it('is written in the language it is given, calendars included, and rewritten when that changes', async () => {

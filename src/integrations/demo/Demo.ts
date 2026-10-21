@@ -5,6 +5,7 @@ import { RelationType } from '#features/relations'
 import { Recurrence, RecurrenceEnd, RecurrenceFrequency, RecurrenceWeekday } from '#features/recurrence'
 import { ParticipantRole, ParticipantStatus, Participants } from '#features/participants/Participant.js'
 import { EntryType, Entry, EntryTimeZone, TaskStatus } from '#features/entries'
+import { User } from '#features/identity'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { integration } from '#integrations'
 import { MitraCalendar } from '#integrations/mitra/MitraCalendar.js'
@@ -38,8 +39,11 @@ export class Demo extends MitraCalendar {
 		return `mitra://sample/${slug}`
 	}
 
-	/** Hourly, enough to notice the day changing. */
-	override get syncInterval() { return 60 * 60 * 1000 }
+	/**
+	 * Paced by presence alone: the sample follows the account's home zone, which the first device settles moments after
+	 * a sandbox opens, and the check for a stale seed is a string compare.
+	 */
+	override get syncInterval() { return 0 }
 
 	/** The language the sample data is written in. A sandbox gets the visitor's on arrival; a switch in the app sends a new one. */
 	get language(): string {
@@ -53,9 +57,18 @@ export class Demo extends MitraCalendar {
 		}
 	}
 
-	/** What the stored data was seeded for: a new day or a new language rebuilds it. */
-	private seedOf(today: DateTime) {
-		return `${today.year}-${today.month}-${today.day} ${this.language}`
+	/**
+	 * The zone the sample is read in: the account's home, which the app settles from the first device once it runs; a
+	 * sandbox opens on the document request, where no zone travels, so until then the server's.
+	 */
+	private async zoneOf(em: EntityManager): Promise<TimeZone> {
+		const user = await em.findOne(User, { id: this.userId })
+		return user?.timeZones?.home?.zone ?? TimeZone.device
+	}
+
+	/** What the stored data was seeded for: a new day, language or zone rebuilds it. */
+	private seedOf(today: DateTime, zone: TimeZone) {
+		return `${today.year}-${today.month}-${today.day} ${this.language} ${zone.id}`
 	}
 
 	/** Adds back missing sample calendars and keeps everything already stored. */
@@ -89,8 +102,10 @@ export class Demo extends MitraCalendar {
 	}
 
 	private async reseedIfStale(em: EntityManager): Promise<boolean> {
-		const today = new DateTime()
-		if (this.credentials?.seededFor === this.seedOf(today)) {
+		const zone = await this.zoneOf(em)
+		// Today in the visitor's zone: a `DateTime` keeps its zone through every `add`, `with` and `dayStart`, so the whole fixture follows.
+		const today = DateTime.from(Date.now(), undefined, zone.id).dayStart
+		if (this.credentials?.seededFor === this.seedOf(today, zone)) {
 			return false
 		}
 
@@ -106,8 +121,8 @@ export class Demo extends MitraCalendar {
 
 		this.addresses = [me]
 		// The sidebar heads an account with its username; the sample one reads like any connected account.
-		this.credentials = { ...this.credentials, username: me, seededFor: this.seedOf(today) }
-		this.seed(em, sources, today, t)
+		this.credentials = { ...this.credentials, username: me, seededFor: this.seedOf(today, zone) }
+		this.seed(em, sources, today, t, zone)
 		return true
 	}
 
@@ -127,7 +142,7 @@ export class Demo extends MitraCalendar {
 		}
 	}
 
-	private seed(em: EntityManager, sources: ReadonlyArray<Source>, today: DateTime, t: (key: string) => string) {
+	private seed(em: EntityManager, sources: ReadonlyArray<Source>, today: DateTime, t: (key: string) => string, zone: TimeZone) {
 		const calendar = (slug: string) => sources.find(source => source.uri === Demo.sampleUri(slug))!
 
 		const personal = calendar('personal')
@@ -144,12 +159,12 @@ export class Demo extends MitraCalendar {
 		const pastStart = mondayOf(todayStart.subtract({ years: 2 }))
 
 		const at = (base: DateTime, dayOffset: number, hour: number, minute = 0) => base.add({ days: dayOffset }).with({ hour, minute })
-		const allDayStart = (base: DateTime, dayOffset: number) => TimeZone.UTC.midnightOf(TimeZone.device.dayOf(base.add({ days: dayOffset }))) as DateTime
+		const allDayStart = (base: DateTime, dayOffset: number) => TimeZone.UTC.midnightOf(zone.dayOf(base.add({ days: dayOffset }))) as DateTime
 
 		// In the zone `at` reads its hours in, as the app writes every entry it makes: without one, a rule repeats at fixed instants.
-		const zone = EntryTimeZone.parse(TimeZone.deviceId)
+		const entryZone = EntryTimeZone.of(zone)
 		const on = (source: Source) => (init: Partial<Entry>) => {
-			const entry = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: source.defaultEntryType, timeZone: zone, ...init, sourceId: source.id })
+			const entry = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: source.defaultEntryType, timeZone: entryZone, ...init, sourceId: source.id })
 			em.persist(entry)
 			return entry
 		}
