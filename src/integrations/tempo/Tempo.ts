@@ -41,6 +41,7 @@ export interface TempoIssue {
 @integration('tempo')
 export class Tempo extends Integration<TempoCredentials> {
 	static readonly label: string = 'Tempo'
+	static override readonly docs: string | undefined = 'integrations/tempo'
 	static readonly logo: string = 'tempo'
 	static readonly description: string = 'The hours you book on Jira issues'
 

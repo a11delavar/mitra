@@ -295,6 +295,7 @@ declare global {
 		"Google.SharedCalendarsHint": unknown
 		"GoToDate.Keywords": unknown
 		"GoToToday.Keywords": unknown
+		"Guide": unknown
 		"Has attachments": unknown
 		"Hide availability": unknown
 		"Hide calendar": unknown

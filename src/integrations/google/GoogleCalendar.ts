@@ -16,6 +16,7 @@ export interface GoogleCalendarCredentials {
 @integration('google')
 export class GoogleCalendar extends CalDAV {
 	static override readonly label: string = 'Google Calendar'
+	static override readonly docs: string | undefined = 'integrations/google'
 	static override readonly logo: string = 'google'
 	static override readonly description: string = 'The calendars of your Google account'
 

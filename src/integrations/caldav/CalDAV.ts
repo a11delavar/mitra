@@ -29,6 +29,7 @@ type TaskTimes = Pick<Entry, 'start' | 'end' | 'due' | 'estimate' | 'allDay'>
 @integration('caldav')
 export class CalDAV extends Integration<CalDAVCredentials> {
 	static readonly label: string = 'CalDAV'
+	static override readonly docs: string | undefined = 'integrations/caldav'
 	static readonly logo: string = 'caldav'
 	static readonly description: string = 'Any CalDAV server, like Nextcloud, Fastmail or Radicale'
 

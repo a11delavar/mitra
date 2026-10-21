@@ -44,6 +44,7 @@ export interface NotionRelationProperty {
 @integration('notion')
 export class Notion extends Integration<NotionCredentials> {
 	static readonly label: string = 'Notion'
+	static override readonly docs: string | undefined = 'integrations/notion'
 	static readonly logo: string = 'notion'
 	static readonly description: string = 'The task databases of your workspace'
 

@@ -22,6 +22,7 @@ export interface IcsSubscriptionCredentials {
 @integration('ics')
 export class IcsSubscription extends Integration<IcsSubscriptionCredentials> {
 	static readonly label: string = 'Calendar Subscription'
+	static override readonly docs: string | undefined = 'integrations/subscriptions'
 	static readonly logo: string = 'ics'
 	static readonly description: string = 'Any calendar link (webcal:// or .ics)'
 

@@ -1,6 +1,10 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import { Source } from '#features/sources'
+import { integrationClasses } from '#integrations'
+import '#integrations/registerIntegrations.js'
 import { CalDAV } from './caldav/CalDAV.js'
 
 describe('Integration', () => {
@@ -20,6 +24,16 @@ describe('Integration', () => {
 			copy.sources.forEach(source => source.enabled = false)
 			assert.equal(held.credentials.password, '')
 			assert.equal(held.sources[0]!.enabled, true)
+		})
+	})
+
+	describe('docs', () => {
+		it('names a page of the documentation for every integration people can connect', () => {
+			const missing = integrationClasses()
+				.filter(integrationClass => !integrationClass.developmentOnly)
+				.filter(integrationClass => !integrationClass.docs || !existsSync(join('docs', `${integrationClass.docs}.md`)))
+				.map(integrationClass => integrationClass.type)
+			assert.deepEqual(missing, [])
 		})
 	})
 })

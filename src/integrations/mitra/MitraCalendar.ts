@@ -11,6 +11,7 @@ import { model } from '#infrastructure/model'
 @integration('mitra')
 export class MitraCalendar extends Integration {
 	static readonly label: string = 'Mitra'
+	static override readonly docs: string | undefined = 'integrations/mitra'
 	static readonly logo: string = 'mitra'
 	static readonly description: string = 'Calendars stored in Mitra itself, no account needed'
 	static override readonly onePerUser: boolean = true

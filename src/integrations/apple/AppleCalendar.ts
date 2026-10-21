@@ -7,6 +7,7 @@ import { model } from '#infrastructure/model'
 @integration('apple')
 export class AppleCalendar extends CalDAV {
 	static override readonly label: string = 'Apple Calendar'
+	static override readonly docs: string | undefined = 'integrations/apple'
 	static override readonly logo: string = 'apple'
 	static override readonly description: string = 'The calendars of your iCloud account'
 
