@@ -256,7 +256,8 @@ export class PopoverContainer extends Component {
 	}
 
 	// The popover hangs from a named anchor: the one its invoker gives it is taken away as it hides, while it still
-	// fades out. A shadow root's names are its own, so every container's trigger is its own popover's.
+	// fades out. A shadow root's names are its own, so every container's trigger is its own popover's. Important,
+	// since any page rule beats `::slotted`, and a trigger styled with `all: unset` would lose its name.
 	static override get styles() {
 		return css`
 			:host {
@@ -264,11 +265,11 @@ export class PopoverContainer extends Component {
 			}
 
 			::slotted(:not([slot])) {
-				anchor-name: --mitra-popover-trigger;
+				anchor-name: --mitra-popover-trigger !important;
 			}
 
 			::slotted([slot=popover]) {
-				position-anchor: --mitra-popover-trigger;
+				position-anchor: --mitra-popover-trigger !important;
 			}
 		`
 	}
