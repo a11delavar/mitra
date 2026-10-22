@@ -15,6 +15,26 @@ export class Source extends Entity {
 	/** Its address at the provider, which a reconcile matches the provider's list by: that list knows nothing of Mitra's rows. */
 	@property({ type: 'string' }) uri!: string
 
+	/** Whether two addresses name one calendar: providers vary the percent-encoding (`%40` or `@`) and the trailing slash. */
+	static sameAddress(a: string, b: string) {
+		return Source.addressKey(a) === Source.addressKey(b)
+	}
+
+	private static addressKey(uri: string) {
+		let decoded = uri
+		try {
+			decoded = decodeURIComponent(uri)
+		} catch {
+			// A malformed escape compares as written.
+		}
+		return decoded.replace(/\/+$/, '')
+	}
+
+	/** Whether this calendar is the one at `uri`, however the provider spells it. */
+	isAt(uri: string) {
+		return Source.sameAddress(this.uri, uri)
+	}
+
 	/** The entry types this source can hold (RFC 4791 §5.2.3: empty accepts everything). */
 	@equality()
 	@property({ type: EntryTypes.Mapper, fieldName: 'entry_types', nullable: true })

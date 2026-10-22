@@ -4,6 +4,7 @@ import { User } from '#features/identity'
 import { Source } from '#features/sources'
 import { Entry, EntryType } from '#features/entries'
 import { entity, primaryKey, property, manyToOne, unique, children, Entity, identity, equality } from '#infrastructure/model'
+import { createLogger } from '#infrastructure/logging/Logger.js'
 import { IntegrationCapabilities } from './IntegrationCapabilities.js'
 import { IntegrationOwnership } from './IntegrationOwnership.js'
 
@@ -51,6 +52,8 @@ function engineFor(integration: Integration): AnySyncEngine {
 
 /** In-flight sync chains serialized per integration id to prevent concurrent duplicate imports. */
 const syncChains = new Map<string, Promise<unknown>>()
+
+const logger = createLogger('Integration')
 
 @entity({ abstract: true, discriminatorColumn: 'type' })
 @unique({ properties: ['userId', 'uri'] })
@@ -188,7 +191,10 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	/** Each provider decides which fields to keep, e.g. CalDAV keeps the stored password when `incoming` carries a blank one. */
 	abstract merge(incoming: this): void
 
-	/** Reconciles persisted sources with the provider, adding new ones disabled and removing obsolete ones. */
+	/**
+	 * Reconciles persisted sources with the provider, adding new ones disabled and removing obsolete ones, matched by
+	 * address however the provider spells it. A listing of none keeps them all, and every change is logged.
+	 */
 	async getSources(em: EntityManager, options?: { checkDuplicate?: boolean }): Promise<Array<Source>> {
 		const existing = await em.find(Source, { integrationId: this.id })
 		const remote = await this.fetchSources(existing)
@@ -200,20 +206,33 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 			}
 		}
 
+		// An account that had calendars and lists none answered in error: Google signs in with an access token that expires
+		// hourly, and a refused listing reads as no calendars. Removing them would take their entries along.
+		if (!remote.length && existing.length) {
+			logger.warn(`${this.toString()} listed no calendars; keeping its ${existing.length} stored calendar(s)`)
+			return existing
+		}
+
 		// By address: the provider's list is of calendars, not of Mitra's rows.
 		for (const source of existing) {
-			if (!remote.some(candidate => candidate.uri === source.uri)) {
+			if (!remote.some(candidate => source.isAt(candidate.uri))) {
+				logger.info(`Removed calendar "${source.name}" (${source.uri}) from ${this.toString()}: the provider no longer lists it`)
 				em.remove(source)
 			}
 		}
 
 		return remote.map(source => {
-			const match = existing.find(candidate => candidate.uri === source.uri)
+			const match = existing.find(candidate => candidate.isAt(source.uri))
 			if (!match) {
 				source.integrationId = this.id
 				source.remoteName = source.name
 				em.persist(source)
+				logger.info(`Added calendar "${source.name}" (${source.uri}) to ${this.toString()}, ${source.enabled ? 'on' : 'off'}`)
 				return source
+			}
+			if (match.uri !== source.uri) {
+				logger.info(`Calendar "${match.name}" of ${this.toString()} is now at ${source.uri}, formerly ${match.uri}`)
+				match.uri = source.uri
 			}
 			if (source.entryTypes.length) {
 				match.entryTypes = source.entryTypes
