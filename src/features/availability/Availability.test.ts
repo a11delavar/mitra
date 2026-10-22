@@ -11,7 +11,7 @@ import { Entry, TaskStatus, Transparency, EntryType, EntryTypes } from '#feature
 import { EntryRelation, EntryRelations, RelationGraph, RelationType } from '#features/relations'
 import { NotificationSubscription } from '#features/reminders/NotificationSubscription.js'
 import { MigrationVerdict } from '#features/migration/MigrationPlan.js'
-import { Integration, registerEngine, type SyncEngine } from '#integrations'
+import { Integration, registerEngine, type SourceSyncEngine } from '#integrations'
 import { CalDAV } from '#integrations/caldav/CalDAV.js'
 import { MitraCalendar } from '#integrations/mitra/MitraCalendar.js'
 import { Notion } from '#integrations/notion/Notion.js'
@@ -186,7 +186,7 @@ async function inMemoryOrm() {
 }
 
 const written = new Array<string>()
-const recorder: SyncEngine = {
+const recorder: SourceSyncEngine = {
 	fetchSources: () => Promise.resolve([]),
 	syncSourceEntries: () => Promise.resolve(false),
 	createEntry: (_integration, _em, entry) => { written.push(`create ${entry.heading}`); return Promise.resolve(entry) },

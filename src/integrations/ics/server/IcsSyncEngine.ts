@@ -3,7 +3,7 @@ import { type EntityManager } from '@mikro-orm/sqlite'
 import ICAL from 'ical.js'
 import { Source, Color } from '#features/sources'
 import { Entry, EntryType } from '#features/entries'
-import type { Integration, SyncEngine } from '#integrations'
+import type { Integration, SourceSyncEngine } from '#integrations'
 import { CalDAV } from '#integrations/caldav/CalDAV.js'
 import { createLogger } from '#infrastructure/logging/Logger.js'
 import { IcsSubscription, type IcsFeed } from '../IcsSubscription.js'
@@ -18,7 +18,7 @@ const fetchTimeoutMs = 30_000
  * Sync engine for {@link IcsSubscription}: fetches remote feeds via conditional GET
  * and maps components to entries using {@link CalDAV.applyComponent}.
  */
-export class IcsSyncEngine implements SyncEngine {
+export class IcsSyncEngine implements SourceSyncEngine {
 	private fetchFeed(integration: IcsSubscription, validators?: { etag?: string, lastModified?: string }): Promise<IcsFeed> {
 		return integration.feed ??= this.get(integration, validators)
 	}

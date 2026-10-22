@@ -1,7 +1,7 @@
 import { type EntityManager } from '@mikro-orm/sqlite'
 import { Source, Color } from '#features/sources'
 import { Entry, EntryType } from '#features/entries'
-import type { Integration, SyncEngine } from '#integrations'
+import type { Integration, SourceSyncEngine } from '#integrations'
 import { createLogger } from '#infrastructure/logging/Logger.js'
 import { Tempo, type TempoIssue } from '../Tempo.js'
 import { TempoClient, TempoRequestError, type TempoWorklogInput } from './TempoClient.js'
@@ -18,7 +18,7 @@ interface TempoSyncState {
 /**
  * Sync engine implementation for Tempo Timesheets and Jira Cloud.
  */
-export class TempoSyncEngine implements SyncEngine {
+export class TempoSyncEngine implements SourceSyncEngine {
 	private static readonly watermarkOverlapMs = 60_000
 
 	private tempo(integration: Tempo): TempoClient {

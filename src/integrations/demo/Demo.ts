@@ -83,12 +83,12 @@ export class Demo extends MitraCalendar {
 	}
 
 	/**
-	 * Both the importer and the sync daemon call this. Seeding covers every source at once,
+	 * Both the importer and the sync daemon reach this, once per calendar. Seeding covers every source at once,
 	 * so only the first call of a new day does any work.
 	 */
-	override async syncSource(em: EntityManager, source: Source): Promise<boolean> {
+	protected override async syncSourceEntries(em: EntityManager, source: Source): Promise<boolean> {
 		const reseeded = await this.reseedIfStale(em)
-		return await super.syncSource(em, source) || reseeded
+		return await super.syncSourceEntries(em, source) || reseeded
 	}
 
 	/** Re-import rebuilds the sample data. */

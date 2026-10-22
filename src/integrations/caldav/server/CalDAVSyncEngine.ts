@@ -6,7 +6,7 @@ import { Source, Color } from '#features/sources'
 import { Entry, EntryType } from '#features/entries'
 import { Recurrence } from '#features/recurrence'
 import { EntryRelations } from '#features/relations'
-import type { Integration, SyncEngine } from '#integrations'
+import type { Integration, SourceSyncEngine } from '#integrations'
 import { createLogger } from '#infrastructure/logging/Logger.js'
 import { instanceOrigin } from '#infrastructure/http/instanceUrl.js'
 import { CalDAV } from '../CalDAV.js'
@@ -16,7 +16,7 @@ import { CalDAVConnectError, CalDAVRefusal } from './CalDAVConnectError.js'
 const logger = createLogger('CalDAV')
 
 /** CalDAV sync and network CRUD engine supporting CalDAV, Apple Calendar, and Google Calendar. */
-export class CalDAVSyncEngine implements SyncEngine {
+export class CalDAVSyncEngine implements SourceSyncEngine {
 	private getClient(integration: CalDAV): ReturnType<typeof createDAVClient> {
 		// A failed connection is forgotten, so the next attempt connects again rather than failing as the first did.
 		return integration.client ??= this.connect(integration).catch(error => {

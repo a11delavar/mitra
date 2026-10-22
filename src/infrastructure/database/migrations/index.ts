@@ -18,6 +18,7 @@ import { Migration20261013165004_NotificationSubscriptionLocale } from './Migrat
 import { Migration20261014210517_RecurrenceAsRule } from './Migration20261014210517_RecurrenceAsRule.js'
 import { Migration20261016022519_Files } from './Migration20261016022519_Files.js'
 import { Migration20261018141348_AccessTokens } from './Migration20261018141348_AccessTokens.js'
+import { Migration20261019123509_IntegrationSyncState } from './Migration20261019123509_IntegrationSyncState.js'
 /** A migration's name as its file spells it, which keys the log: esbuild renames a class that refers to itself (`_Migration…`). */
 export const nameOf = (migration: Constructor<Migration>) => migration.name.replace(/^_/, '')
 
@@ -44,4 +45,5 @@ export const migrations: Array<Constructor<Migration>> = [
 	Migration20261014210517_RecurrenceAsRule,
 	Migration20261016022519_Files,
 	Migration20261018141348_AccessTokens,
+	Migration20261019123509_IntegrationSyncState,
 ]

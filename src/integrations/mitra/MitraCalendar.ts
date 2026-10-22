@@ -58,7 +58,7 @@ export class MitraCalendar extends Integration {
 		return Promise.resolve([...existing ?? []])
 	}
 
-	protected override syncSourceEntries(): Promise<boolean> {
+	protected override syncSourceEntries(_em: EntityManager, _source: Source): Promise<boolean> {
 		return Promise.resolve(false)
 	}
 
