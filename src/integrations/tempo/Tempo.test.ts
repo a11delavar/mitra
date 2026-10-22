@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { Entry, EntryType } from '#features/entries'
+import { Entry, EntryType, TaskStatus } from '#features/entries'
 import { Integration } from '#integrations'
 import { Tempo, type TempoIssue, type TempoWorklog } from './Tempo.js'
 
@@ -204,7 +204,7 @@ describe('Tempo integration', () => {
 			assert.equal(ownership.holds(off), false, off)
 		}
 		assert.equal(ownership.holds('description'), true)
-		assert.deepEqual(capabilities.entries, { create: true, edit: true, delete: true, rename: false, cancel: false, attach: true })
+		assert.deepEqual(capabilities.entries, { create: true, edit: true, delete: true, rename: false, statuses: [TaskStatus.ToDo, TaskStatus.Doing, TaskStatus.Done], attach: true })
 	})
 
 	it('points its external link at the Jira issue', () => {

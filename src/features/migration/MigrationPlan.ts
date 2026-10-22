@@ -7,7 +7,7 @@ import { model } from '#infrastructure/model'
 export type MigrationBlocker = 'availability' | 'recurrence' | 'occurrence' | 'participants' | 'transparency' | 'visibility' | 'percentComplete'
 
 /** Target capability that strips an entry field on arrival. */
-export type MigrationLoss = 'reminders' | 'location' | 'description' | 'attachments' | 'due' | 'estimate' | 'timeZone' | 'allDay' | 'cancelledStatus' | 'type'
+export type MigrationLoss = 'reminders' | 'location' | 'description' | 'attachments' | 'due' | 'estimate' | 'timeZone' | 'allDay' | 'doingStatus' | 'cancelledStatus' | 'type'
 
 /** Single entry assessment (blockers and field losses). */
 @model('MigrationVerdict')
@@ -83,7 +83,10 @@ export class MigrationVerdict {
 		if (entry.allDay && !ownership.holds('allDay')) {
 			losses.push('allDay')
 		}
-		if (entry.status === TaskStatus.Cancelled && !capabilities.entries.cancel) {
+		if (entry.status === TaskStatus.Doing && !capabilities.entries.statuses.includes(TaskStatus.Doing)) {
+			losses.push('doingStatus')
+		}
+		if (entry.status === TaskStatus.Cancelled && !capabilities.entries.statuses.includes(TaskStatus.Cancelled)) {
 			losses.push('cancelledStatus')
 		}
 		if (!target.supportsEntryType(entry.type)) {
@@ -174,6 +177,7 @@ export class MigrationPlan {
 			case 'estimate': return t('${count:pluralityNumber} lose their estimate', { count })
 			case 'timeZone': return t('${count:pluralityNumber} lose their time zone', { count })
 			case 'allDay': return t('${count:pluralityNumber} stop being all-day', { count })
+			case 'doingStatus': return t('${count:pluralityNumber} go back to To Do', { count })
 			case 'cancelledStatus': return t('${count:pluralityNumber} lose their cancelled status', { count })
 			case 'type': return t('${count:pluralityNumber} become ${type}', { count, type: target.defaultEntryType.formatPlural() })
 		}

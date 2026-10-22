@@ -497,6 +497,7 @@
 	"${count:pluralityNumber} entries arrive, the flattened series included": ["Chega ${count:pluralityNumber} entrada, incluindo as séries desdobradas", "Chegam ${count:pluralityNumber} entradas, incluindo as séries desdobradas"],
 	"${count:pluralityNumber} entries moved to ${name}": ["${count:pluralityNumber} entrada movida para ${name}", "${count:pluralityNumber} entradas movidas para ${name}"],
 	"${count:pluralityNumber} have participants": ["${count:pluralityNumber} tem participantes", "${count:pluralityNumber} têm participantes"],
+	"${count:pluralityNumber} go back to To Do": ["${count:pluralityNumber} volta a «A fazer»", "${count:pluralityNumber} voltam a «A fazer»"],
 	"${count:pluralityNumber} lose their cancelled status": ["${count:pluralityNumber} perde o estado «cancelada»", "${count:pluralityNumber} perdem o estado «cancelada»"],
 	"${count:pluralityNumber} lose their description": ["${count:pluralityNumber} perde a descrição", "${count:pluralityNumber} perdem a descrição"],
 	"${count:pluralityNumber} lose their attachments": ["${count:pluralityNumber} perde os anexos", "${count:pluralityNumber} perdem os anexos"],

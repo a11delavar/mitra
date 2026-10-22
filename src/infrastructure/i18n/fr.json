@@ -497,6 +497,7 @@
 	"${count:pluralityNumber} entries arrive, the flattened series included": ["${count:pluralityNumber} entrée arrive, séries aplaties comprises", "${count:pluralityNumber} entrées arrivent, séries aplaties comprises"],
 	"${count:pluralityNumber} entries moved to ${name}": ["${count:pluralityNumber} entrée déplacée vers ${name}", "${count:pluralityNumber} entrées déplacées vers ${name}"],
 	"${count:pluralityNumber} have participants": ["${count:pluralityNumber} a des participants", "${count:pluralityNumber} ont des participants"],
+	"${count:pluralityNumber} go back to To Do": ["${count:pluralityNumber} repasse à « À faire »", "${count:pluralityNumber} repassent à « À faire »"],
 	"${count:pluralityNumber} lose their cancelled status": ["${count:pluralityNumber} perd son statut « annulé »", "${count:pluralityNumber} perdent leur statut « annulé »"],
 	"${count:pluralityNumber} lose their description": ["${count:pluralityNumber} perd sa description", "${count:pluralityNumber} perdent leur description"],
 	"${count:pluralityNumber} lose their attachments": ["${count:pluralityNumber} perd ses pièces jointes", "${count:pluralityNumber} perdent leurs pièces jointes"],

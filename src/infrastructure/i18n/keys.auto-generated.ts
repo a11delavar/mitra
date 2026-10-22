@@ -29,6 +29,7 @@ declare global {
 		"${count:pluralityNumber} entries copied to ${name}": unknown
 		"${count:pluralityNumber} entries moved to ${name}": unknown
 		"${count:pluralityNumber} features": unknown
+		"${count:pluralityNumber} go back to To Do": unknown
 		"${count:pluralityNumber} have participants": unknown
 		"${count:pluralityNumber} improvements": unknown
 		"${count:pluralityNumber} landed anyway and could not be taken back. Delete them in ${name} by hand.": unknown
@@ -77,6 +78,8 @@ declare global {
 		"${status}. Click to toggle, Alt-click for options": unknown
 		"About": unknown
 		"About.Keywords": unknown
+		"Access": unknown
+		"Access tokens": unknown
 		"Account": unknown
 		"Account options": unknown
 		"Add ${count:pluralityNumber} entries": unknown
@@ -96,8 +99,11 @@ declare global {
 		"Added to ${name}": unknown
 		"Adding ${count:pluralityNumber} entries…": unknown
 		"AddIntegration.Keywords": unknown
+		"Address": unknown
 		"Administration": unknown
 		"After": unknown
+		"AI": unknown
+		"AI connectors": unknown
 		"All day": unknown
 		"All entries": unknown
 		"All entries in this calendar will be deleted too. This can't be undone.": unknown
@@ -153,6 +159,7 @@ declare global {
 		"Choose a time": unknown
 		"Choose the calendar the entries of this file are added to. The ones it cannot take are left out. The file itself stays untouched.": unknown
 		"Choose your sources": unknown
+		"Claude, Cursor and other AI tools can read and change your calendars through this address, over the Model Context Protocol (MCP).": unknown
 		"Clear custom progress": unknown
 		"Clear filter": unknown
 		"Clear selection": unknown
@@ -184,15 +191,20 @@ declare global {
 		"Copy every entry into another calendar": unknown
 		"Copy instead": unknown
 		"Copy participants' emails": unknown
+		"Copy the address": unknown
+		"Copy the token": unknown
+		"Copy this token now: it is shown only once.": unknown
 		"Copy to ${name}": unknown
 		"Copy Version": unknown
 		"Copying ${count:pluralityNumber} entries…": unknown
 		"CopyVersion.Keywords": unknown
+		"Could not load your access tokens.": unknown
 		"Could not load your devices.": unknown
 		"Create": unknown
 		"Create and move entries right on the grid. Every change syncs back to its source.": unknown
 		"Create Entry": unknown
 		"CreateAvailability.Keywords": unknown
+		"created ${date}": unknown
 		"CreateEntry.Keywords": unknown
 		"Ctrl": unknown
 		"Current time zone": unknown
@@ -263,16 +275,12 @@ declare global {
 		"Every ${count:pluralityNumber} months": unknown
 		"Every ${count:pluralityNumber} weeks": unknown
 		"Every ${count:pluralityNumber} years": unknown
-		"Every day": unknown
 		"Every entry in ${name} is copied. The ones the chosen calendar cannot take are left out. ${name} itself is read-only and stays exactly as it is.": unknown
 		"Every entry in ${name} moves. The ones the chosen calendar cannot take stay here.": unknown
 		"Every entry is still in ${name}. Nothing was deleted.": unknown
-		"Every month": unknown
 		"Every subtask of \"${heading}\" is done, which completes ${count:pluralityNumber} more tasks above it. Mark them all as done?": unknown
 		"Every subtask of \"${heading}\" is done. Mark it as done too?": unknown
-		"Every week": unknown
 		"Every weekday": unknown
-		"Every year": unknown
 		"Everything in ${version}": unknown
 		"Everything travels intact": unknown
 		"Expand": unknown
@@ -305,6 +313,7 @@ declare global {
 		"HideDoneTasksSetting.Keywords": unknown
 		"Home": unknown
 		"hours": unknown
+		"How to connect": unknown
 		"Ics.UrlHint": unknown
 		"Importing entries…": unknown
 		"Improvements": unknown
@@ -321,13 +330,14 @@ declare global {
 		"Keyboard Shortcuts": unknown
 		"KeyboardShortcuts.Keywords": unknown
 		"Language": unknown
-		"LocaleSetting.Keywords": unknown
 		"last seen ${when}": unknown
+		"last used ${date}": unknown
 		"Latest": unknown
 		"Latin America": unknown
 		"Leave the originals here and add a copy over there": unknown
 		"Leave them here": unknown
 		"Light": unknown
+		"LocaleSetting.Keywords": unknown
 		"Location": unknown
 		"Make attendance optional": unknown
 		"Make attendance optional for everyone": unknown
@@ -338,6 +348,7 @@ declare global {
 		"Mark as cancelled": unknown
 		"Mark as done": unknown
 		"Match the system": unknown
+		"McpSetting.Keywords": unknown
 		"minutes": unknown
 		"Mitra": unknown
 		"Mitra.Hint": unknown
@@ -369,9 +380,11 @@ declare global {
 		"Navigation": unknown
 		"never": unknown
 		"Never": unknown
+		"never used": unknown
 		"New calendar": unknown
 		"New dev build: ${count:pluralityNumber} commits ahead": unknown
 		"New task": unknown
+		"New token": unknown
 		"Next": unknown
 		"Next 12 months": unknown
 		"Next 30 days": unknown
@@ -381,6 +394,7 @@ declare global {
 		"Next Week": unknown
 		"Next Year": unknown
 		"NextPeriod.Keywords": unknown
+		"No access tokens yet.": unknown
 		"No date": unknown
 		"No device is registered for reminders yet.": unknown
 		"No entries in this period": unknown
@@ -410,6 +424,7 @@ declare global {
 		"on the ${ordinal} ${weekday}": unknown
 		"on the last ${weekday}": unknown
 		"One calendar to plan your events and tasks": unknown
+		"One for each connection, so you can revoke each on its own": unknown
 		"Only Show ${name}": unknown
 		"Only show this calendar": unknown
 		"Only the organizer can change participants": unknown
@@ -430,6 +445,7 @@ declare global {
 		"Password (optional)": unknown
 		"Past 30 days": unknown
 		"Patches": unknown
+		"People do not sign in to this Mitra, so connectors need no token. Anyone who can reach this address can use it.": unknown
 		"Pick the calendars and task lists to show. Recolor, rename or hide them in the sidebar anytime.": unknown
 		"Plan your days": unknown
 		"Planned": unknown
@@ -444,8 +460,10 @@ declare global {
 		"Progress": unknown
 		"Public": unknown
 		"Re-import entries": unknown
+		"Read and write": unknown
 		"Read every enabled calendar of this account again from the start": unknown
 		"Read on mitracal.com": unknown
+		"Read only": unknown
 		"Read this calendar again from the start": unknown
 		"read-only": unknown
 		"Refactors": unknown
@@ -479,6 +497,7 @@ declare global {
 		"Reset columns": unknown
 		"Reset to calendar color": unknown
 		"Reset to default color": unknown
+		"Revoke this token": unknown
 		"Sample calendars filled with generated data, rebuilt daily": unknown
 		"Save": unknown
 		"scroll": unknown
@@ -499,6 +518,7 @@ declare global {
 		"Show as busy or free": unknown
 		"Show calendar": unknown
 		"Show fewer participants": unknown
+		"Show in description": unknown
 		"Show only one calendar, or bring the rest back": unknown
 		"Show previously visible calendars": unknown
 		"Show Previously Visible Calendars": unknown
@@ -576,6 +596,7 @@ declare global {
 		"Toggle.Off": unknown
 		"Toggle.On": unknown
 		"ToggleSidebar.Keywords": unknown
+		"Token": unknown
 		"Tomorrow": unknown
 		"Type": unknown
 		"unchanged": unknown
@@ -604,10 +625,12 @@ declare global {
 		"weeks": unknown
 		"WeekView.Keywords": unknown
 		"Welcome to ${name}": unknown
+		"What it is for, like Laptop or Claude": unknown
 		"What's New": unknown
 		"WhatsNew.Keywords": unknown
 		"When": unknown
 		"Where new events and tasks are created": unknown
+		"Where your reminders arrive": unknown
 		"Workspace": unknown
 		"World": unknown
 		"Year": unknown

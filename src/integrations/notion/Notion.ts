@@ -79,7 +79,7 @@ export class Notion extends Integration<NotionCredentials> {
 
 	/** No availability: it is edited with this provider's capabilities, and would not repeat. No due or estimate: the one date property is the schedule. */
 	override get capabilities() {
-		return new IntegrationCapabilities({ entries: { cancel: false }, availability: false })
+		return new IntegrationCapabilities({ entries: { statuses: [TaskStatus.ToDo, TaskStatus.Doing, TaskStatus.Done] }, availability: false })
 	}
 
 	override get ownership() {

@@ -27,8 +27,9 @@ export class TaskStatusComponent extends Component {
 		if (status === TaskStatus.Done || status === TaskStatus.Cancelled) {
 			return status
 		}
+		// Progress reads as Doing only where a task can be Doing; a calendar of two states shows it To Do.
 		const progress = Relations.progressOf(this.entry)
-		if (progress !== undefined && progress > 0 && progress < 1) {
+		if (progress !== undefined && progress > 0 && progress < 1 && Calendars.capabilitiesOf(this.entry.sourceId).entries.statuses.includes(TaskStatus.Doing)) {
 			return TaskStatus.Doing
 		}
 		return status
@@ -59,6 +60,11 @@ export class TaskStatusComponent extends Component {
 	}
 
 	@query('mitra-menu') private readonly menu?: Menu
+
+	/** The statuses the calendar can keep: one of two states (open, done) keeps neither Doing nor Cancelled. */
+	private get offered() {
+		return Calendars.capabilitiesOf(this.entry.sourceId).entries.statuses
+	}
 
 	private commit(status: TaskStatus) {
 		if (this.entry.status === status) {
@@ -365,7 +371,7 @@ export class TaskStatusComponent extends Component {
 				`}
 			</button>
 			<mitra-menu>
-				${TaskStatus.all.filter(status => status !== TaskStatus.Cancelled || Calendars.capabilitiesOf(this.entry.sourceId).entries.cancel).map(status => html`
+				${this.offered.map(status => html`
 					<mitra-menu-item type="radio" icon=${status.icon} ?selected=${status === this.status} @click=${this.pick(status)}>${status.format()}</mitra-menu-item>
 				`)}
 				${this.progressSectionTemplate}
