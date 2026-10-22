@@ -78,11 +78,11 @@ export class EntryDetailsWhen extends Component {
 		if (this.entry.start) {
 			this.entry.moveStart(value)
 		} else if (timed) {
-			this.entry.scheduleAt(value, false, DefaultDurationSetting.current)
+			this.entry.scheduleAt(value, false, DefaultDurationSetting.current).fit(this.ownership)
 		} else {
 			// An estimate shorter than a day asks for hours, so the task gets a time; anything else takes the whole day.
 			const hours = !!this.entry.estimate && TimeSpan.fromMinutes(this.entry.estimate).days < 1
-			this.entry.scheduleAt(hours ? value.with({ hour: 9 }) : value, !hours, DefaultDurationSetting.current)
+			this.entry.scheduleAt(hours ? value.with({ hour: 9 }) : value, !hours, DefaultDurationSetting.current).fit(this.ownership)
 		}
 		this.commit()
 	}
@@ -417,8 +417,12 @@ export class EntryDetailsWhen extends Component {
 	}
 
 	/** The end, which a task may go without: then it is a moment, and its row only offers one. */
+	/** Where the calendar holds no length (a free Todoist account), a timed entry is a moment and an all-day one a single day. */
 	private get endTemplate() {
 		const { entry } = this
+		if (!this.ownership.holds('end')) {
+			return html.nothing
+		}
 		const end = entry.point ? undefined : entry.allDay ? entry.inclusiveEnd : entry.effectiveEnd
 		return end || this.endShown
 			? this.momentTemplate({

@@ -83,7 +83,7 @@ export class Notion extends Integration<NotionCredentials> {
 	}
 
 	override get ownership() {
-		return new IntegrationOwnership({ description: 'upstream', relations: 'upstream', allDay: 'upstream', rank: 'mitra' })
+		return new IntegrationOwnership({ end: 'upstream', description: 'upstream', relations: 'upstream', allDay: 'upstream', rank: 'mitra' })
 	}
 
 	override get canConnect() {

@@ -49,7 +49,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 	override get ownership() {
 		return new IntegrationOwnership({
-			recurrence: 'upstream', reminders: 'upstream', location: 'upstream', description: 'upstream', percentComplete: 'upstream',
+			end: 'upstream', recurrence: 'upstream', reminders: 'upstream', location: 'upstream', description: 'upstream', percentComplete: 'upstream',
 			due: 'upstream', estimate: 'upstream', timeZone: 'upstream', participants: 'upstream', attachments: 'upstream',
 			transparency: 'upstream', visibility: 'upstream', relations: 'upstream', allDay: 'upstream', rank: 'mitra',
 		})

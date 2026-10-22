@@ -540,7 +540,7 @@ export class EntrySegmentComponent extends Component {
 				<span class="label">${this.segment.entry.heading || (this.segment.entry.persisted ? '' : t('Draft'))}</span>
 			</div>
 			${this.segment.allDay || !this.segment.entry.location ? html.nothing : this.locationTemplate}
-			${!this.resize || !this.segment.entry.persisted || !Calendars.capabilitiesOf(this.segment.entry.sourceId).entries.edit ? html.nothing : html`
+			${!this.resize || !this.segment.entry.persisted || !Calendars.capabilitiesOf(this.segment.entry.sourceId).entries.edit || !Calendars.ownershipOf(this.segment.entry.sourceId).holds('end') ? html.nothing : html`
 				<div class="resize-start"></div>
 				<div class="resize-end"></div>
 			`}

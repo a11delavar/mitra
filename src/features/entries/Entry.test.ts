@@ -532,6 +532,22 @@ describe('Entry', () => {
 		})
 	})
 
+	describe('fit', () => {
+		const at = (iso: string) => new Date(iso) as never
+		const span = () => new Entry({ type: EntryType.Task, heading: 'Paint', start: at('2026-11-02T09:00:00Z'), end: at('2026-11-02T10:00:00Z'), estimate: 30 })
+
+		it('drops a length where the calendar holds none: a timed entry becomes a moment, an all-day one keeps its first day', () => {
+			assert.equal(span().fit(new IntegrationOwnership({ estimate: 'upstream' })).end, undefined)
+			const days = new Entry({ type: EntryType.Task, heading: 'Trip', allDay: true, start: at('2026-11-02T00:00:00Z'), end: at('2026-11-05T00:00:00Z') })
+			assert.equal(days.fit(new IntegrationOwnership()).end?.toISOString(), '2026-11-03T00:00:00.000Z')
+		})
+
+		it('keeps what the calendar holds, and drops an estimate it does not', () => {
+			const kept = span().fit(new IntegrationOwnership({ end: 'upstream' }))
+			assert.deepEqual([kept.end?.toISOString(), kept.estimate], ['2026-11-02T10:00:00.000Z', undefined])
+		})
+	})
+
 	describe('scheduling', () => {
 		const task = (fields = {}) => new Entry({ type: EntryType.Task, heading: 'Write the report', ...fields })
 

@@ -150,10 +150,17 @@ export class Entry extends Entity implements Validatable<Calendar> {
 
 	get closed() { return !!this.status?.closed }
 
-	/** Drops what a calendar can't keep and is no refusal: the estimate, where none is held. */
+	/**
+	 * Drops what a calendar can't keep and is no refusal: the estimate, where none is held, and a length, where no end is: a
+	 * timed entry becomes a moment, an all-day one keeps its first day.
+	 */
 	fit(ownership: Pick<IntegrationOwnership, 'holds'>) {
 		if (!ownership.holds('estimate')) {
 			this.estimate = undefined
+		}
+		if (!ownership.holds('end') && this.start) {
+			const zone = TimeZone.localOrDefault
+			this.end = !this.allDay ? undefined : new DateTime(zone.midnightOf(zone.dayOf(new Date(this.start.valueOf())).add({ days: 1 })).getTime())
 		}
 		return this
 	}
@@ -518,6 +525,7 @@ export class Entry extends Entity implements Validatable<Calendar> {
 			? this.start.add({ days: Math.max(1, Math.round(TimeSpan.fromMinutes(this.estimate ?? 0).days)) })
 			: this.start.add({ minutes: this.estimate ?? durationMinutes })
 		this.estimate = undefined
+		return this
 	}
 
 	/** Takes the dates off; the span's length stays behind as the estimate. Reminders stay only while a due anchors them. */

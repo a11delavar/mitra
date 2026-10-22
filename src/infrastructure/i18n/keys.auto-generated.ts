@@ -37,6 +37,7 @@ declare global {
 		"${count:pluralityNumber} lose their cancelled status": unknown
 		"${count:pluralityNumber} lose their description": unknown
 		"${count:pluralityNumber} lose their due date": unknown
+		"${count:pluralityNumber} lose their end date": unknown
 		"${count:pluralityNumber} lose their estimate": unknown
 		"${count:pluralityNumber} lose their location": unknown
 		"${count:pluralityNumber} lose their reminders": unknown

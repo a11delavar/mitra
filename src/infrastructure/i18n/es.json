@@ -502,6 +502,7 @@
 	"${count:pluralityNumber} lose their description": ["${count:pluralityNumber} pierde su descripción", "${count:pluralityNumber} pierden su descripción"],
 	"${count:pluralityNumber} lose their attachments": ["${count:pluralityNumber} pierde sus archivos adjuntos", "${count:pluralityNumber} pierden sus archivos adjuntos"],
 	"${count:pluralityNumber} lose their due date": ["${count:pluralityNumber} pierde su fecha de vencimiento", "${count:pluralityNumber} pierden su fecha de vencimiento"],
+	"${count:pluralityNumber} lose their end date": ["${count:pluralityNumber} pierde su fecha de fin", "${count:pluralityNumber} pierden su fecha de fin"],
 	"${count:pluralityNumber} lose their estimate": ["${count:pluralityNumber} pierde su estimación", "${count:pluralityNumber} pierden su estimación"],
 	"${count:pluralityNumber} lose their location": ["${count:pluralityNumber} pierde su ubicación", "${count:pluralityNumber} pierden su ubicación"],
 	"${count:pluralityNumber} lose their reminders": ["${count:pluralityNumber} pierde sus recordatorios", "${count:pluralityNumber} pierden sus recordatorios"],

@@ -502,6 +502,7 @@
 	"${count:pluralityNumber} lose their cancelled status": "${count:pluralityNumber} 个条目会失去“已取消”状态",
 	"${count:pluralityNumber} lose their description": "${count:pluralityNumber} 个条目会失去描述",
 	"${count:pluralityNumber} lose their due date": "${count:pluralityNumber} 个条目会失去截止日期",
+	"${count:pluralityNumber} lose their end date": "${count:pluralityNumber} 个条目会失去结束时间",
 	"${count:pluralityNumber} lose their estimate": "${count:pluralityNumber} 个条目会失去预估时长",
 	"${count:pluralityNumber} lose their location": "${count:pluralityNumber} 个条目会失去地点",
 	"${count:pluralityNumber} lose their reminders": "${count:pluralityNumber} 个条目会失去提醒",

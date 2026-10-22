@@ -1,5 +1,6 @@
 import type { Source } from '#features/sources'
 import { type Entry, TaskStatus, Transparency } from '#features/entries'
+import { TimeZone } from '#features/time/TimeZone.js'
 import type { Integration } from '#integrations'
 import { model } from '#infrastructure/model'
 
@@ -7,11 +8,17 @@ import { model } from '#infrastructure/model'
 export type MigrationBlocker = 'availability' | 'recurrence' | 'occurrence' | 'participants' | 'transparency' | 'visibility' | 'percentComplete'
 
 /** Target capability that strips an entry field on arrival. */
-export type MigrationLoss = 'reminders' | 'location' | 'description' | 'attachments' | 'due' | 'estimate' | 'timeZone' | 'allDay' | 'doingStatus' | 'cancelledStatus' | 'type'
+export type MigrationLoss = 'reminders' | 'location' | 'description' | 'attachments' | 'end' | 'due' | 'estimate' | 'timeZone' | 'allDay' | 'doingStatus' | 'cancelledStatus' | 'type'
 
 /** Single entry assessment (blockers and field losses). */
 @model('MigrationVerdict')
 export class MigrationVerdict {
+	/** The days an all-day span covers, counted where its days are kept. */
+	private static daysOf(start: Date, end: Date) {
+		const zone = TimeZone.localOrDefault
+		return zone.dayOf(start).until(zone.dayOf(end)).days
+	}
+
 	entryId = ''
 	heading = ''
 	blockers = new Array<MigrationBlocker>()
@@ -69,6 +76,10 @@ export class MigrationVerdict {
 		}
 		if (entry.attachments.length && !(ownership.holds('attachments') && capabilities.entries.attach)) {
 			losses.push('attachments')
+		}
+		// Where no length is held, a timed entry becomes a moment and an all-day one its first day.
+		if (entry.start && entry.end && !ownership.holds('end') && (!entry.allDay || MigrationVerdict.daysOf(entry.start, entry.end) > 1)) {
+			losses.push('end')
 		}
 		if (entry.due && !ownership.holds('due')) {
 			losses.push('due')
@@ -173,6 +184,7 @@ export class MigrationPlan {
 			case 'location': return t('${count:pluralityNumber} lose their location', { count })
 			case 'description': return t('${count:pluralityNumber} lose their description', { count })
 			case 'attachments': return t('${count:pluralityNumber} lose their attachments', { count })
+			case 'end': return t('${count:pluralityNumber} lose their end date', { count })
 			case 'due': return t('${count:pluralityNumber} lose their due date', { count })
 			case 'estimate': return t('${count:pluralityNumber} lose their estimate', { count })
 			case 'timeZone': return t('${count:pluralityNumber} lose their time zone', { count })

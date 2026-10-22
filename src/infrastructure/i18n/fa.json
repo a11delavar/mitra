@@ -586,6 +586,10 @@
 		"${count:pluralityNumber} مورد تاریخ سررسید خود را از دست می‌دهد",
 		"${count:pluralityNumber} مورد تاریخ سررسید خود را از دست می‌دهند"
 	],
+	"${count:pluralityNumber} lose their end date": [
+		"${count:pluralityNumber} مورد تاریخ پایان خود را از دست می‌دهد",
+		"${count:pluralityNumber} مورد تاریخ پایان خود را از دست می‌دهند"
+	],
 	"${count:pluralityNumber} lose their estimate": [
 		"${count:pluralityNumber} مورد تخمین خود را از دست می‌دهد",
 		"${count:pluralityNumber} مورد تخمین خود را از دست می‌دهند"

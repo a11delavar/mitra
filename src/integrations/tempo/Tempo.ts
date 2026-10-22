@@ -87,7 +87,7 @@ export class Tempo extends Integration<TempoCredentials> {
 	}
 
 	override get ownership() {
-		return new IntegrationOwnership({ description: 'upstream', due: 'upstream', estimate: 'upstream', rank: 'mitra' })
+		return new IntegrationOwnership({ end: 'upstream', description: 'upstream', due: 'upstream', estimate: 'upstream', rank: 'mitra' })
 	}
 
 	override externalLink(entry: Entry) {

@@ -32,7 +32,7 @@ export class IcsSubscription extends Integration<IcsSubscriptionCredentials> {
 	/** What a feed's iCalendar carries, but links: a feed's relations point at entries it may not hold. */
 	override get ownership() {
 		return new IntegrationOwnership({
-			recurrence: 'upstream', reminders: 'upstream', location: 'upstream', description: 'upstream', percentComplete: 'upstream',
+			end: 'upstream', recurrence: 'upstream', reminders: 'upstream', location: 'upstream', description: 'upstream', percentComplete: 'upstream',
 			due: 'upstream', estimate: 'upstream', timeZone: 'upstream', participants: 'upstream', attachments: 'upstream',
 			transparency: 'upstream', visibility: 'upstream', allDay: 'upstream', rank: 'mitra',
 		})
