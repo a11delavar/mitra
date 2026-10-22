@@ -29,7 +29,17 @@ Mitra 已经会把你经常做的事归为例行事项，比如去健身房，�
 在日历上选择多个日期，一次把一个条目复制到所有这些日期，时间保持不变。
 
 ## Todoist
-连接你的 Todoist 项目，它们的任务会和你的日程出现在同一条时间线上，并双向同步。
+连接你的 Todoist 项目，它们的任务会和你的日程出现在同一条时间线上，并双向同步。每个项目都会成为一个日历，沿用它在 Todoist 中的颜色。任务的日期、时长和最后期限会成为它的时间安排、长度和截止日期。在 Todoist 中重复的任务显示在它的下一个日期。在 Mitra 中完成它，它会像在 Todoist 中一样推到下一个日期。优先级、标签和分区保持不变。
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="todoist-dark.webp">
+	<img src="todoist-light.webp" alt="“添加集成”对话框，指针停在其他服务之间的 Todoist 上">
+</picture>
+
+文档：[Todoist](../../docs/integrations/todoist.md)
 
 ## 更多语言
 Mitra 正在学习阿拉伯语、俄语、波兰语和荷兰语。每个版本都让 Mitra 在其他语言、文字和历法中运行得更好。每种新语言都会完整翻译，包括文档和网站。
+
+## 贡献者
+- [@jkngale](https://github.com/jkngale)：Todoist 集成的基础工作

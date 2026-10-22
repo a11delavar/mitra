@@ -65,8 +65,8 @@ Was oft wiederkehrt, etwa ein tägliches Training, erscheint in der Monats- und 
 
 ## Welche Kalender sich wiederholen können
 
-[In Mitra gespeicherte Kalender](integrations/mitra.md) und [Kalenderserver](integrations/caldav.md), Google und Apple eingeschlossen, nehmen wiederkehrende Einträge auf. [Notion](integrations/notion.md)- und [Tempo](integrations/tempo.md)-Kalender können das nicht, deshalb hat ihr Editor keine Zeile **Wiederholung**, und der Editor einer Serie bietet sie nicht als ihren Kalender an.
+[In Mitra gespeicherte Kalender](integrations/mitra.md) und [Kalenderserver](integrations/caldav.md), Google und Apple eingeschlossen, nehmen wiederkehrende Einträge auf. [Notion](integrations/notion.md)-, [Todoist](integrations/todoist.md)- und [Tempo](integrations/tempo.md)-Kalender können das nicht, deshalb hat ihr Editor keine Zeile **Wiederholung**, und der Editor einer Serie bietet sie nicht als ihren Kalender an. Eine Aufgabe, die sich in Todoist wiederholt, erscheint an ihrem nächsten Datum: Erledigst du sie, rückt sie wie in Todoist auf das darauffolgende Datum, und ihre Regel änderst du weiterhin in Todoist.
 
 Wenn du [alle Einträge eines Kalenders](calendars.md#move-or-copy-every-entry-to-another-calendar) in einen verschiebst, der sich nicht wiederholen kann, fragt Mitra, was mit den wiederkehrenden geschehen soll. **Hier lassen** behält sie, wo sie sind. **In einzelne Einträge auflösen** schreibt jede Wiederholung im kommenden Jahr als eigenen Eintrag, der sich nicht mehr wiederholt.
 
-[Verfügbarkeit](availability.md) ist ebenfalls ein wiederkehrender Eintrag und beginnt wöchentlich. Aus demselben Grund kann sie nicht in Notion- oder Tempo-Kalendern liegen.
+[Verfügbarkeit](availability.md) ist ebenfalls ein wiederkehrender Eintrag und beginnt wöchentlich. Aus demselben Grund kann sie nicht in Notion-, Todoist- oder Tempo-Kalendern liegen.

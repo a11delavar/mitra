@@ -41,7 +41,7 @@ No calendário, o contorno da caixa de seleção de uma tarefa vai se preenchend
 
 Uma tarefa sem subtarefas e sem lista de verificação pode ter um progresso definido por você. Clique com o botão direito na caixa de seleção, ou clique com <kbd>Alt</kbd>, e arraste **Progresso** em passos de 5%. Em 100%, a tarefa passa a **Concluído**. Abaixo de 100%, uma tarefa concluída volta para **Em andamento**, ou para **A fazer** em 0%. O **✕** ao lado do valor o limpa.
 
-O calendário precisa ser capaz de guardar o progresso: os [servidores de calendário](integrations/caldav.md), o [Apple Calendar](integrations/apple.md) e os [calendários do Mitra](integrations/mitra.md) conseguem. O Google Calendar, o Notion e o Tempo não conseguem, então as tarefas deles não têm o controle **Progresso**.
+O calendário precisa ser capaz de guardar o progresso: os [servidores de calendário](integrations/caldav.md), o [Apple Calendar](integrations/apple.md) e os [calendários do Mitra](integrations/mitra.md) conseguem. O Google Calendar, o Notion, o Todoist e o Tempo não conseguem, então as tarefas deles não têm o controle **Progresso**.
 
 ## Concluir uma árvore de tarefas
 
@@ -61,5 +61,6 @@ Quando você arrasta uma tarefa com subtarefas para outro horário, o Mitra perg
 Um vínculo é salvo com a subtarefa, no calendário da própria entrada. Os [servidores de calendário](integrations/caldav.md), o [Apple Calendar](integrations/apple.md) e os [calendários do Mitra](integrations/mitra.md) guardam qualquer vínculo, e em um servidor de calendário ele é escrito no formato padrão de calendário, para que outros aplicativos que usam o mesmo calendário possam lê-lo.
 
 - No [Notion](integrations/notion.md), um vínculo para uma tarefa do mesmo banco de dados vai para a propriedade de relação correspondente, como "Parent task". O Mitra guarda por conta própria os vínculos para qualquer outra coisa.
+- No [Todoist](integrations/todoist.md), um pai que seja uma tarefa da mesma conta do Todoist também é salvo no Todoist, o que move a subtarefa para o projeto do pai. O Mitra guarda por conta própria os vínculos para qualquer outra coisa.
 - O [Google Calendar](integrations/google.md) descarta vínculos, então uma entrada de um calendário do Google não pode ter um pai. Entradas de outros calendários ainda podem vincular a ela.
 - As [subscrições de calendário](integrations/subscriptions.md) são somente leitura, e o [Tempo](integrations/tempo.md) não tem vínculos.

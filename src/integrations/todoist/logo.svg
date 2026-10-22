@@ -1,0 +1,7 @@
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+	<mask id="todoist-ticks">
+		<rect width="24" height="24" fill="#fff"/>
+		<path d="M6 8.4 9.6 10.4 18 5.6M6 12.4 9.6 14.4 18 9.6M6 16.4 9.6 18.4 18 13.6" fill="none" stroke="#000" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+	</mask>
+	<rect x="1.5" y="1.5" width="21" height="21" rx="5" fill="currentColor" mask="url(#todoist-ticks)"/>
+</svg>

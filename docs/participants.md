@@ -18,7 +18,7 @@ When the entry is in a calendar from a [calendar server](integrations/caldav.md)
 
 In a [Mitra calendar](integrations/mitra.md), there's no server behind the calendar, so the list is only a record of who is involved. Nobody is invited, and no replies come in.
 
-[Notion](integrations/notion.md) and [Tempo](integrations/tempo.md) calendars can't hold participants, so their entries have no participants row. In a [calendar subscription](integrations/subscriptions.md), you can see the participants but not change them, since the calendar is read-only.
+[Notion](integrations/notion.md), [Todoist](integrations/todoist.md) and [Tempo](integrations/tempo.md) calendars can't hold participants, so their entries have no participants row. In a [calendar subscription](integrations/subscriptions.md), you can see the participants but not change them, since the calendar is read-only.
 
 ## Add people
 
@@ -59,5 +59,5 @@ On an entry someone else organized, you can't add, remove or change people: the 
 - If everyone stays awaiting and no invitation arrived, the entry is in a Mitra calendar, or its calendar server doesn't send invitations. To check the server, invite the same people from the provider's own app.
 - If a reply came in but its badge didn't change, wait for Mitra's next sync, since replies arrive through the calendar server.
 - If there's no way to add people, someone else organizes the entry, or the calendar is read-only.
-- If the entry has no participants row, its calendar can't hold participants, as in Notion and Tempo.
+- If the entry has no participants row, its calendar can't hold participants, as in Notion, Todoist and Tempo.
 - If a meeting room is missing from the list, that's on purpose: rooms and equipment aren't people, so Mitra leaves them out.

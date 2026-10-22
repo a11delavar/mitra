@@ -18,7 +18,7 @@ Quand l'entrée est dans un calendrier d'un [serveur de calendrier](integrations
 
 Dans un [calendrier Mitra](integrations/mitra.md), il n'y a aucun serveur derrière le calendrier : la liste n'est donc qu'un relevé des personnes concernées. Personne n'est invité et aucune réponse n'arrive.
 
-Les calendriers [Notion](integrations/notion.md) et [Tempo](integrations/tempo.md) ne peuvent pas contenir de participants, leurs entrées n'ont donc pas de ligne de participants. Dans un [abonnement à un calendrier](integrations/subscriptions.md), vous voyez les participants mais ne pouvez pas les modifier, puisque le calendrier est en lecture seule.
+Les calendriers [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) et [Tempo](integrations/tempo.md) ne peuvent pas contenir de participants, leurs entrées n'ont donc pas de ligne de participants. Dans un [abonnement à un calendrier](integrations/subscriptions.md), vous voyez les participants mais ne pouvez pas les modifier, puisque le calendrier est en lecture seule.
 
 ## Ajouter des personnes
 
@@ -59,5 +59,5 @@ Sur une entrée organisée par quelqu'un d'autre, vous ne pouvez ni ajouter, ni 
 - Si tout le monde reste en attente et qu'aucune invitation n'est arrivée, l'entrée est dans un calendrier Mitra, ou son serveur de calendrier n'envoie pas d'invitations. Pour vérifier le serveur, invitez les mêmes personnes depuis l'application propre au fournisseur.
 - Si une réponse est arrivée mais que sa pastille n'a pas changé, attendez la prochaine synchronisation de Mitra, car les réponses arrivent par le serveur de calendrier.
 - S'il n'y a aucun moyen d'ajouter des personnes, quelqu'un d'autre organise l'entrée, ou le calendrier est en lecture seule.
-- Si l'entrée n'a pas de ligne de participants, son calendrier ne peut pas en contenir, comme dans Notion et Tempo.
+- Si l'entrée n'a pas de ligne de participants, son calendrier ne peut pas en contenir, comme dans Notion, Todoist et Tempo.
 - Si une salle de réunion manque dans la liste, c'est voulu : les salles et le matériel ne sont pas des personnes, et Mitra les laisse de côté.

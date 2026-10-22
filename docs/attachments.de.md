@@ -39,7 +39,7 @@ Kalender von einem [CalDAV-Server](integrations/caldav.md) und von [Apple Calend
 
 Eine Datei kann auch in der Beschreibung erscheinen: Die Bild- oder Link-Schaltfläche in ihrer Zeile fügt sie am Ende des Textes ein, als Bild bei Bildern und als Link bei allem anderen. Wird der Anhang entfernt, verschwindet auch das.
 
-In einem [Google-Kalender](integrations/google.md) sind die Anhänge die Google-Drive-Dateien, die in Google Kalender angehängt wurden: Mitra zeigt sie an, kann aber keine hinzufügen oder entfernen. Kalender von [Notion](integrations/notion.md) und [Tempo](integrations/tempo.md) haben keine Zeile für Anhänge. Wenn du einen Eintrag mit Anhängen in einen davon verschiebst, gehen seine Dateien verloren, und Mitra sagt es dir, bevor etwas verschoben wird.
+In einem [Google-Kalender](integrations/google.md) sind die Anhänge die Google-Drive-Dateien, die in Google Kalender angehängt wurden: Mitra zeigt sie an, kann aber keine hinzufügen oder entfernen. Kalender von [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) und [Tempo](integrations/tempo.md) haben keine Zeile für Anhänge. Wenn du einen Eintrag mit Anhängen in einen davon verschiebst, gehen seine Dateien verloren, und Mitra sagt es dir, bevor etwas verschoben wird.
 
 > [!NOTE]
 > Anhänge, die andere Apps hinzugefügt haben, erscheinen auch in Mitra, auch Dateien, die dein Kalenderserver selbst speichert und die sich mit der eigenen Adresse dieses Servers öffnen. Mitra lässt Anhänge, die es nicht erkennt, genau so, wie sie sind, sodass das Bearbeiten eines Eintrags in Mitra nie die Anhänge einer anderen App verändert.

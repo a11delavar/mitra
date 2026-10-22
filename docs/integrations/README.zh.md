@@ -1,6 +1,6 @@
 ---
 title: 集成
-description: 把日历直接存在 Mitra 中，或者连接 CalDAV、Google 日历、Apple 日历、日历订阅、Notion 和 Tempo，并了解同步的工作方式。
+description: 把日历直接存在 Mitra 中，或者连接 CalDAV、Google 日历、Apple 日历、日历订阅、Notion、Todoist 和 Tempo，并了解同步的工作方式。
 sidebar:
   label: 概览
 ---
@@ -24,6 +24,7 @@ sidebar:
 | [Apple 日历](apple.md) | iCloud 账户中的日历 | 无需设置 |
 | [日历订阅](subscriptions.md) | 公开发布的 `webcal://` 或 `.ics` 订阅源，只读 | 无需设置 |
 | [Notion](notion.md) | Notion 数据库视图中的任务 | 无需设置 |
+| [Todoist](todoist.md) | 你的 Todoist 项目中的任务 | 无需设置 |
 | [Tempo](tempo.md) | 你在 Jira 工作项上登记的工时 | 无需设置 |
 
 每家服务商能存的内容各不相同。比如 Notion 任务不能重复，Tempo 工时记录没有地点。日历存不了的字段，Mitra 会直接隐藏，这样你输入的内容就不会在下次同步时消失。
@@ -37,11 +38,11 @@ sidebar:
 | | Mitra 打开时 | 无人打开时 |
 | --- | --- | --- |
 | CalDAV 和 Apple 日历 | 每 10 秒 | 每 5 分钟 |
-| Google 日历、Notion 和 Tempo | 约每分钟一次 | 每 5 分钟 |
+| Google 日历、Notion、Todoist 和 Tempo | 约每分钟一次 | 每 5 分钟 |
 | 日历订阅 | 每 15 分钟 | 每 15 分钟 |
 | Mitra 日历 | 无需同步 | 无需同步 |
 
-Google、Notion 和 Tempo 限制了应用调用它们的频率，所以同步慢一些。打开 Mitra 时，所有到了同步时间的账号会立即同步，因此不需要什么刷新按钮。
+Google、Notion、Todoist 和 Tempo 限制了应用调用它们的频率，所以同步慢一些。打开 Mitra 时，所有到了同步时间的账号会立即同步，因此不需要什么刷新按钮。
 
 改动是双向的。你新建、编辑、移动或删除条目时，Mitra 会把改动写回条目所属的日历。某个账号同步失败不会耽误其他账号：Mitra 会在一分钟后重试。
 

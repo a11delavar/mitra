@@ -18,7 +18,7 @@ description: "چگونه فیلد مکان جاها را پیشنهاد می‌�
 
 وقتی میترا روی انگلیسی، آلمانی یا فرانسوی تنظیم شده باشد، Photon جاها را به همان زبان نام می‌برد، و در غیر این صورت به زبان محلی.
 
-تقویم‌های [Notion](integrations/notion.md) و [Tempo](integrations/tempo.md) مکان ندارند، بنابراین موارد آن‌ها فیلد مکان ندارند.
+تقویم‌های [Notion](integrations/notion.md)، [Todoist](integrations/todoist.md) و [Tempo](integrations/tempo.md) مکان ندارند، بنابراین موارد آن‌ها فیلد مکان ندارند.
 
 ## حریم خصوصی
 

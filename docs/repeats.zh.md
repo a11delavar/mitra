@@ -65,8 +65,8 @@ description: 让条目重复，修改或删除其中一次或整个重复条目�
 
 ## 哪些日历支持重复
 
-[Mitra 日历](integrations/mitra.md)和[日历服务器](integrations/caldav.md)（包括 Google 和 Apple）都支持重复条目。[Notion](integrations/notion.md) 和 [Tempo](integrations/tempo.md) 日历不支持，所以它们的编辑器中没有**重复**这一行，重复条目的编辑器也不会把它们列为可选的日历。
+[Mitra 日历](integrations/mitra.md)和[日历服务器](integrations/caldav.md)（包括 Google 和 Apple）都支持重复条目。[Notion](integrations/notion.md)、[Todoist](integrations/todoist.md) 和 [Tempo](integrations/tempo.md) 日历不支持，所以它们的编辑器中没有**重复**这一行，重复条目的编辑器也不会把它们列为可选的日历。在 Todoist 中重复的任务显示在它的下一个日期：标为完成后，它会像在 Todoist 中一样移到再下一个日期，它的重复规则仍在 Todoist 中修改。
 
 当你把一个日历中的[所有条目移到](calendars.md#move-or-copy-every-entry-to-another-calendar)一个不支持重复的日历时，Mitra 会问你如何处理重复条目。**留在这里**会把它们留在原处。**拆分为单独的条目**会把未来一年中的每一次都写成一个不再重复的独立条目。
 
-[可用时间](availability.md)也是一种重复条目，默认每周重复。出于同样的原因，它不能放在 Notion 或 Tempo 日历中。
+[可用时间](availability.md)也是一种重复条目，默认每周重复。出于同样的原因，它不能放在 Notion、Todoist 或 Tempo 日历中。

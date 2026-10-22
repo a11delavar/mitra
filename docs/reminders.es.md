@@ -16,7 +16,7 @@ Abre una entrada y pulsa **＋** en su fila de recordatorios, la de la campana. 
 
 Un recordatorio cuenta hacia atrás desde el inicio de la entrada o, para una tarea sin inicio, desde su fecha límite. La primera vez que añades uno, tu navegador pregunta si Mitra puede mostrar notificaciones. Si dices que no, el recordatorio se guarda igualmente con la entrada.
 
-Una entrada que se repite te avisa en cada repetición. Las tareas que marcaste como hechas o canceladas se quedan en silencio, pero un calendario que ocultas no: para silenciarlo, desactívalo en **⋯ → Editar** de su cuenta. Los calendarios de [Notion](integrations/notion.md) y [Tempo](integrations/tempo.md) no pueden contener recordatorios.
+Una entrada que se repite te avisa en cada repetición. Las tareas que marcaste como hechas o canceladas se quedan en silencio, pero un calendario que ocultas no: para silenciarlo, desactívalo en **⋯ → Editar** de su cuenta. Los calendarios de [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) y [Tempo](integrations/tempo.md) no pueden contener recordatorios.
 
 ## Recordatorios predeterminados
 

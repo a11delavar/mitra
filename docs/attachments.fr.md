@@ -39,7 +39,7 @@ Les calendriers d'un [serveur CalDAV](integrations/caldav.md) et d'[Apple Calend
 
 Un fichier peut aussi apparaître dans la description : le bouton image ou lien de sa ligne l'ajoute à la fin du texte, en image pour les images et en lien pour le reste. Retirer la pièce jointe retire cela aussi.
 
-Dans un [calendrier Google](integrations/google.md), les pièces jointes sont les fichiers Google Drive joints dans Google Agenda : Mitra les affiche, mais ne peut ni en ajouter ni en retirer. Les calendriers [Notion](integrations/notion.md) et [Tempo](integrations/tempo.md) n'ont pas de ligne de pièces jointes. Déplacer une entrée avec des pièces jointes vers l'un d'eux en perd les fichiers, et Mitra vous le dit avant que quoi que ce soit ne bouge.
+Dans un [calendrier Google](integrations/google.md), les pièces jointes sont les fichiers Google Drive joints dans Google Agenda : Mitra les affiche, mais ne peut ni en ajouter ni en retirer. Les calendriers [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) et [Tempo](integrations/tempo.md) n'ont pas de ligne de pièces jointes. Déplacer une entrée avec des pièces jointes vers l'un d'eux en perd les fichiers, et Mitra vous le dit avant que quoi que ce soit ne bouge.
 
 > [!NOTE]
 > Les pièces jointes ajoutées par d'autres applications apparaissent aussi dans Mitra, y compris les fichiers que votre serveur d'agenda stocke lui-même, qui s'ouvrent avec l'adresse propre à ce serveur. Mitra laisse telles quelles les pièces jointes qu'il ne reconnaît pas : modifier une entrée dans Mitra ne change donc jamais les pièces jointes d'une autre application.

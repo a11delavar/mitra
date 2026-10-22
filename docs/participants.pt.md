@@ -18,7 +18,7 @@ Quando a entrada está em um calendário de um [servidor de calendário](integra
 
 Em um [calendário do Mitra](integrations/mitra.md), não há servidor por trás do calendário, então a lista é apenas um registro de quem está envolvido. Ninguém é convidado e nenhuma resposta chega.
 
-Os calendários do [Notion](integrations/notion.md) e do [Tempo](integrations/tempo.md) não guardam participantes, então as entradas deles não têm a linha de participantes. Em uma [subscrição de calendário](integrations/subscriptions.md), você pode ver os participantes, mas não alterá-los, já que o calendário é somente leitura.
+Os calendários do [Notion](integrations/notion.md), do [Todoist](integrations/todoist.md) e do [Tempo](integrations/tempo.md) não guardam participantes, então as entradas deles não têm a linha de participantes. Em uma [subscrição de calendário](integrations/subscriptions.md), você pode ver os participantes, mas não alterá-los, já que o calendário é somente leitura.
 
 ## Adicionar pessoas
 
@@ -59,5 +59,5 @@ Em uma entrada organizada por outra pessoa, você não pode adicionar, remover n
 - Se todos continuam aguardando e nenhum convite chegou, a entrada está em um calendário do Mitra, ou o servidor de calendário dela não envia convites. Para verificar o servidor, convide as mesmas pessoas pelo aplicativo do próprio provedor.
 - Se uma resposta chegou mas o emblema não mudou, espere a próxima sincronização do Mitra, já que as respostas chegam pelo servidor de calendário.
 - Se não há como adicionar pessoas, outra pessoa organiza a entrada, ou o calendário é somente leitura.
-- Se a entrada não tem a linha de participantes, o calendário dela não guarda participantes, como no Notion e no Tempo.
+- Se a entrada não tem a linha de participantes, o calendário dela não guarda participantes, como no Notion, no Todoist e no Tempo.
 - Se uma sala de reunião não aparece na lista, é de propósito: salas e equipamentos não são pessoas, então o Mitra os deixa de fora.

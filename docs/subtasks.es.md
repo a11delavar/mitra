@@ -41,7 +41,7 @@ En el calendario, el contorno de la casilla de una tarea se va llenando a medida
 
 Una tarea sin subtareas ni lista de comprobación puede llevar un progreso que fijas tú. Haz clic derecho en su casilla, o <kbd>Alt</kbd> + clic, y arrastra **Progreso** en pasos del 5 %. Al 100 %, la tarea pasa a **Hecho**. Por debajo del 100 %, una tarea hecha vuelve a **En progreso**, o a **Por hacer** al 0 %. La **✕** junto al valor lo borra.
 
-El calendario tiene que poder guardar el progreso: los [servidores de calendario](integrations/caldav.md), [Apple Calendar](integrations/apple.md) y los [calendarios de Mitra](integrations/mitra.md) pueden. Google Calendar, Notion y Tempo no, así que sus tareas no tienen el control deslizante **Progreso**.
+El calendario tiene que poder guardar el progreso: los [servidores de calendario](integrations/caldav.md), [Apple Calendar](integrations/apple.md) y los [calendarios de Mitra](integrations/mitra.md) pueden. Google Calendar, Notion, Todoist y Tempo no, así que sus tareas no tienen el control deslizante **Progreso**.
 
 ## Terminar un árbol de tareas
 
@@ -61,5 +61,6 @@ Cuando arrastras una tarea con subtareas a otro momento, Mitra pregunta **¿Move
 Un vínculo se guarda con la subtarea, en el calendario de esa entrada. Los [servidores de calendario](integrations/caldav.md), [Apple Calendar](integrations/apple.md) y los [calendarios de Mitra](integrations/mitra.md) admiten cualquier vínculo, y en un servidor de calendario se escribe en el formato estándar de calendario, así que otras aplicaciones que usen el mismo calendario pueden leerlo.
 
 - En [Notion](integrations/notion.md), un vínculo a una tarea de la misma base de datos va a la propiedad de relación correspondiente, como "Parent task". Mitra guarda por sí mismo los vínculos a cualquier otra cosa.
+- En [Todoist](integrations/todoist.md), un padre que sea una tarea de la misma cuenta de Todoist también se guarda en Todoist, lo que mueve la subtarea al proyecto de su padre. Mitra guarda por sí mismo los vínculos a cualquier otra cosa.
 - [Google Calendar](integrations/google.md) descarta los vínculos, así que una entrada de un calendario de Google no puede tener un padre. Las entradas de otros calendarios sí pueden vincularse a ella.
 - Las [suscripciones a calendarios](integrations/subscriptions.md) son de solo lectura, y [Tempo](integrations/tempo.md) no tiene vínculos.

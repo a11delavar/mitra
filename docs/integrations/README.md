@@ -1,6 +1,6 @@
 ---
 title: Integrations
-description: Keep calendars in Mitra itself, or connect CalDAV, Google Calendar, Apple Calendar, calendar subscriptions, Notion and Tempo, and see how syncing works.
+description: Keep calendars in Mitra itself, or connect CalDAV, Google Calendar, Apple Calendar, calendar subscriptions, Notion, Todoist and Tempo, and see how syncing works.
 sidebar:
   label: Overview
 ---
@@ -24,6 +24,7 @@ To add either, choose **Add Integration** at the foot of the sidebar.
 | [Apple Calendar](apple.md) | The calendars of an iCloud account | None |
 | [Calendar subscriptions](subscriptions.md) | A published `webcal://` or `.ics` feed, read-only | None |
 | [Notion](notion.md) | Tasks from Notion database views | None |
+| [Todoist](todoist.md) | The tasks of your Todoist projects | None |
 | [Tempo](tempo.md) | The hours you book on Jira issues | None |
 
 Each provider stores different things. Notion tasks can't repeat, for example, and a Tempo worklog has no location. Mitra hides the fields a calendar can't store, so nothing you type disappears on the next sync.
@@ -37,11 +38,11 @@ After that, the server syncs in the background on its own. It checks more often 
 | | While Mitra is open | While nobody has it open |
 | --- | --- | --- |
 | CalDAV and Apple Calendar | every 10 seconds | every 5 minutes |
-| Google Calendar, Notion and Tempo | about once a minute | every 5 minutes |
+| Google Calendar, Notion, Todoist and Tempo | about once a minute | every 5 minutes |
 | Calendar subscriptions | every 15 minutes | every 15 minutes |
 | Mitra calendars | nothing to sync | nothing to sync |
 
-Google, Notion and Tempo limit how often apps may call them, which is why they're slower. When you open Mitra, every account that's due syncs straight away, so there's no refresh button to press.
+Google, Notion, Todoist and Tempo limit how often apps may call them, which is why they're slower. When you open Mitra, every account that's due syncs straight away, so there's no refresh button to press.
 
 Changes go both ways. When you create, edit, move or delete an entry, Mitra writes it back to the calendar it belongs to. One account failing doesn't hold up the others: Mitra tries it again a minute later.
 

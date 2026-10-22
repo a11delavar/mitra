@@ -16,7 +16,7 @@ Eine Erinnerung weist dich vorab auf einen Termin oder eine Aufgabe hin, als Ben
 
 Eine Erinnerung zählt vom Beginn des Eintrags zurück oder, bei einer Aufgabe ohne Beginn, von ihrem Fälligkeitsdatum. Beim ersten Hinzufügen fragt dein Browser, ob Mitra Benachrichtigungen anzeigen darf. Sagst du nein, wird die Erinnerung trotzdem beim Eintrag gespeichert.
 
-Ein wiederkehrender Eintrag erinnert dich für jedes Vorkommen. Aufgaben, die du als erledigt oder abgebrochen markiert hast, bleiben still, ein ausgeblendeter Kalender aber nicht: Um einen stummzuschalten, schalte ihn unter **⋯ → Bearbeiten** seines Kontos aus. [Notion](integrations/notion.md)- und [Tempo](integrations/tempo.md)-Kalender können keine Erinnerungen aufnehmen.
+Ein wiederkehrender Eintrag erinnert dich für jedes Vorkommen. Aufgaben, die du als erledigt oder abgebrochen markiert hast, bleiben still, ein ausgeblendeter Kalender aber nicht: Um einen stummzuschalten, schalte ihn unter **⋯ → Bearbeiten** seines Kontos aus. [Notion](integrations/notion.md)-, [Todoist](integrations/todoist.md)- und [Tempo](integrations/tempo.md)-Kalender können keine Erinnerungen aufnehmen.
 
 ## Standarderinnerungen
 

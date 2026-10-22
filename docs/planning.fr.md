@@ -130,3 +130,4 @@ Chaque modification est enregistrée directement dans l'agenda auquel la tâche 
 - Les **calendriers stockés dans Mitra** prennent en charge tout ce qui figure sur cette page.
 - Les **[serveurs de calendrier](integrations/caldav.md)** prennent tout en charge aussi. Les autres applications qui utilisent le même agenda voient le début et l'échéance de la tâche.
 - **[Notion](integrations/notion.md)** prend en charge les planifications, mais pas les contraintes, car une base de données Notion ne contient qu'une seule date par tâche.
+- **[Todoist](integrations/todoist.md)** prend tout en charge : la date d'une tâche est sa planification, sa durée l'estimation et sa date limite l'échéance. Todoist ne conserve les dates limites que dans ses formules Pro et Business, et seulement leur jour.

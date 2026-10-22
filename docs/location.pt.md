@@ -18,7 +18,7 @@ As sugestões favorecem lugares perto de você. Na primeira vez que você clica 
 
 O Photon dá nome aos lugares em inglês, alemão ou francês quando o Mitra está configurado em um desses idiomas e, nos demais casos, no idioma local.
 
-Os calendários do [Notion](integrations/notion.md) e do [Tempo](integrations/tempo.md) não têm local, então as entradas deles não têm o campo de local.
+Os calendários do [Notion](integrations/notion.md), do [Todoist](integrations/todoist.md) e do [Tempo](integrations/tempo.md) não têm local, então as entradas deles não têm o campo de local.
 
 ## Privacidade
 

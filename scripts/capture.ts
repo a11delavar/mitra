@@ -640,7 +640,8 @@ export const sampleAttachments: ReadonlyArray<SampleAttachment> = [
  * capture shows what this server is not, such as one people sign in to. Only GETs are rewritten.
  */
 export async function rewriteAnswers(page: Devtools, rewrites: Record<string, (body: any) => unknown>) {
-	await page.send('Fetch.enable', { patterns: Object.keys(rewrites).map(path => ({ urlPattern: `*${path}`, requestStage: 'Response' })) })
+	// The pattern runs on past the path, as a read asks with a query (`/api/entries?start=…`); the path itself is matched below.
+	await page.send('Fetch.enable', { patterns: Object.keys(rewrites).map(path => ({ urlPattern: `*${path}*`, requestStage: 'Response' })) })
 	const stop = page.on<{ requestId: string, request: { url: string, method: string } }>('Fetch.requestPaused', async ({ requestId, request }) => {
 		const rewrite = rewrites[new URL(request.url).pathname]
 		if (!rewrite || request.method !== 'GET') {

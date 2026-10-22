@@ -41,7 +41,7 @@ description: 把任务拆分成子任务或清单，跟踪进度，并一次性�
 
 没有子任务也没有清单的任务，可以由你自己设置进度。右键点击它的复选框，或者按住 <kbd>Alt</kbd> 点击，然后以 5% 为步长拖动**进度**。达到 100% 时，任务会变为**完成**。低于 100% 时，已完成的任务会回到**进行中**，降到 0% 则回到**待办**。数值旁边的 **✕** 可以清除进度。
 
-日历必须能够保存进度：[日历服务器](integrations/caldav.md)、[Apple 日历](integrations/apple.md)和 [Mitra 日历](integrations/mitra.md)都可以。Google 日历、Notion 和 Tempo 不行，所以它们的任务没有**进度**滑块。
+日历必须能够保存进度：[日历服务器](integrations/caldav.md)、[Apple 日历](integrations/apple.md)和 [Mitra 日历](integrations/mitra.md)都可以。Google 日历、Notion、Todoist 和 Tempo 不行，所以它们的任务没有**进度**滑块。
 
 ## 完成整棵任务树
 
@@ -61,5 +61,6 @@ description: 把任务拆分成子任务或清单，跟踪进度，并一次性�
 关联保存在子任务上，也就是子任务自己所在的日历中。[日历服务器](integrations/caldav.md)、[Apple 日历](integrations/apple.md)和 [Mitra 日历](integrations/mitra.md)可以保存任意关联；在日历服务器上，关联会以标准日历格式写入，所以使用同一日历的其他应用也能读取。
 
 - 在 [Notion](integrations/notion.md) 中，指向同一数据库内任务的关联会写入对应的关系属性，例如“Parent task”。指向其他内容的关联由 Mitra 自己保存。
+- 在 [Todoist](integrations/todoist.md) 中，如果父任务是同一 Todoist 账号中的任务，它也会保存到 Todoist，子任务随之移到父任务所在的项目。指向其他内容的关联由 Mitra 自己保存。
 - [Google 日历](integrations/google.md)会丢弃关联，所以 Google 日历中的条目不能设置父任务。不过其他日历中的条目仍然可以关联到它。
 - [日历订阅](integrations/subscriptions.md)是只读的，[Tempo](integrations/tempo.md) 则不支持关联。

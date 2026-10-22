@@ -44,7 +44,7 @@ The type can't change on a repeating entry, or in a calendar that holds only one
 
 **Delete** removes the entry. While the editor is open, <kbd>Delete</kbd> or <kbd>Backspace</kbd> does too, as long as you're not typing in a field. If the entry repeats or has subtasks, Mitra asks which ones you mean.
 
-An entry from Notion or Tempo also offers **Open in Notion** or **Open in Jira**, which opens it where it came from.
+An entry from Notion, Todoist or Tempo also offers **Open in Notion**, **Open in Todoist** or **Open in Jira**, which opens it where it came from.
 
 ## Title and time
 

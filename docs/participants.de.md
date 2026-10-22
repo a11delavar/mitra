@@ -18,7 +18,7 @@ Liegt der Eintrag in einem Kalender von einem [Kalenderserver](integrations/cald
 
 In einem [Mitra-Kalender](integrations/mitra.md) steckt kein Server hinter dem Kalender, die Liste ist also nur ein Verzeichnis der Beteiligten. Niemand wird eingeladen, und es kommen keine Antworten.
 
-[Notion](integrations/notion.md)- und [Tempo](integrations/tempo.md)-Kalender können keine Teilnehmenden aufnehmen, ihre Einträge haben deshalb keine Zeile für Teilnehmende. In einem [Kalenderabonnement](integrations/subscriptions.md) siehst du die Teilnehmenden, kannst sie aber nicht ändern, da der Kalender schreibgeschützt ist.
+[Notion](integrations/notion.md)-, [Todoist](integrations/todoist.md)- und [Tempo](integrations/tempo.md)-Kalender können keine Teilnehmenden aufnehmen, ihre Einträge haben deshalb keine Zeile für Teilnehmende. In einem [Kalenderabonnement](integrations/subscriptions.md) siehst du die Teilnehmenden, kannst sie aber nicht ändern, da der Kalender schreibgeschützt ist.
 
 ## Personen hinzufügen
 
@@ -59,5 +59,5 @@ Bei einem Eintrag, den jemand anderes organisiert hat, kannst du Personen nicht 
 - Wenn alle ausstehend bleiben und keine Einladung ankam, liegt der Eintrag in einem Mitra-Kalender, oder sein Kalenderserver verschickt keine Einladungen. Um den Server zu prüfen, lade dieselben Personen über die eigene App des Anbieters ein.
 - Wenn eine Antwort kam, ihr Abzeichen sich aber nicht geändert hat, warte auf die nächste Synchronisierung von Mitra, denn Antworten kommen über den Kalenderserver.
 - Wenn es keine Möglichkeit gibt, Personen hinzuzufügen, organisiert jemand anderes den Eintrag, oder der Kalender ist schreibgeschützt.
-- Wenn der Eintrag keine Zeile für Teilnehmende hat, kann sein Kalender keine Teilnehmenden aufnehmen, wie bei Notion und Tempo.
+- Wenn der Eintrag keine Zeile für Teilnehmende hat, kann sein Kalender keine Teilnehmenden aufnehmen, wie bei Notion, Todoist und Tempo.
 - Wenn ein Besprechungsraum in der Liste fehlt, ist das Absicht: Räume und Geräte sind keine Personen, deshalb lässt Mitra sie weg.

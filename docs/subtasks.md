@@ -41,7 +41,7 @@ On the calendar, the outline of a task's checkbox fills up as it progresses. Poi
 
 A task with no subtasks and no checklist can carry a progress you set yourself. Right-click its checkbox, or <kbd>Alt</kbd>-click it, and drag **Progress** in steps of 5%. At 100%, the task becomes **Done**. Below 100%, a done task goes back to **Doing**, or to **To Do** at 0%. The **✕** beside the value clears it.
 
-The calendar has to be able to store progress: [calendar servers](integrations/caldav.md), [Apple Calendar](integrations/apple.md) and [Mitra calendars](integrations/mitra.md) can. Google Calendar, Notion and Tempo can't, so their tasks have no **Progress** slider.
+The calendar has to be able to store progress: [calendar servers](integrations/caldav.md), [Apple Calendar](integrations/apple.md) and [Mitra calendars](integrations/mitra.md) can. Google Calendar, Notion, Todoist and Tempo can't, so their tasks have no **Progress** slider.
 
 ## Finish a tree of tasks
 
@@ -61,5 +61,6 @@ When you drag a task with subtasks to another time, Mitra asks **Move subtasks t
 A link is saved with the subtask, in that entry's own calendar. [Calendar servers](integrations/caldav.md), [Apple Calendar](integrations/apple.md) and [Mitra calendars](integrations/mitra.md) hold any link, and on a calendar server it's written in the standard calendar format, so other apps using the same calendar can read it.
 
 - In [Notion](integrations/notion.md), a link to a task in the same database goes into the matching relation property, such as "Parent task". Mitra keeps links to anything else itself.
+- In [Todoist](integrations/todoist.md), a parent that is a task of the same Todoist account is saved in Todoist too, which moves the subtask into its parent's project. Mitra keeps links to anything else itself.
 - [Google Calendar](integrations/google.md) drops links, so an entry in a Google calendar can't be given a parent. Entries in other calendars can still link to it.
 - [Calendar subscriptions](integrations/subscriptions.md) are read-only, and [Tempo](integrations/tempo.md) has no links.

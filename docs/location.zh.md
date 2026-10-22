@@ -18,7 +18,7 @@ description: 地点栏如何推荐地点、会把什么发送到哪里，以及�
 
 如果 Mitra 设置为英语、德语或法语，Photon 会用对应的语言显示地名；设置为其他语言时，则使用当地语言的地名。
 
-[Notion](integrations/notion.md) 和 [Tempo](integrations/tempo.md) 日历没有地点，所以它们的条目也没有地点栏。
+[Notion](integrations/notion.md)、[Todoist](integrations/todoist.md) 和 [Tempo](integrations/tempo.md) 日历没有地点，所以它们的条目也没有地点栏。
 
 ## 隐私
 

@@ -18,7 +18,7 @@ Las sugerencias favorecen los lugares cercanos a ti. La primera vez que haces cl
 
 Photon nombra los lugares en inglés, alemán o francés cuando Mitra está configurado en uno de ellos y, en caso contrario, en el idioma local.
 
-Los calendarios de [Notion](integrations/notion.md) y [Tempo](integrations/tempo.md) no tienen ubicación, así que sus entradas no tienen campo de ubicación.
+Los calendarios de [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) y [Tempo](integrations/tempo.md) no tienen ubicación, así que sus entradas no tienen campo de ubicación.
 
 ## Privacidad
 

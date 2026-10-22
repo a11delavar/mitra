@@ -18,7 +18,7 @@ I suggerimenti favoriscono i posti vicini a te. La prima volta che clicchi nel c
 
 Photon nomina i posti in inglese, tedesco o francese quando Mitra è impostato su una di queste lingue, e nella lingua locale altrimenti.
 
-I calendari [Notion](integrations/notion.md) e [Tempo](integrations/tempo.md) non hanno un luogo, quindi le loro voci non hanno il campo del luogo.
+I calendari [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) e [Tempo](integrations/tempo.md) non hanno un luogo, quindi le loro voci non hanno il campo del luogo.
 
 ## Privacy
 

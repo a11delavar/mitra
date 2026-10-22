@@ -24,7 +24,7 @@ docker compose up -d
 
 ## چه چیزی باید روی سرور راه‌اندازی شود
 
-تقریباً هیچ چیز. افراد [تقویم‌های میترا](integrations/mitra.md)، [CalDAV](integrations/caldav.md)، [تقویم اپل](integrations/apple.md)، [اشتراک‌های تقویم](integrations/subscriptions.md)، [Notion](integrations/notion.md) و [Tempo](integrations/tempo.md) را خودشان در برنامه اضافه می‌کنند.
+تقریباً هیچ چیز. افراد [تقویم‌های میترا](integrations/mitra.md)، [CalDAV](integrations/caldav.md)، [تقویم اپل](integrations/apple.md)، [اشتراک‌های تقویم](integrations/subscriptions.md)، [Notion](integrations/notion.md)، [Todoist](integrations/todoist.md) و [Tempo](integrations/tempo.md) را خودشان در برنامه اضافه می‌کنند.
 
 دو چیز به اعتبارنامه‌هایی نیاز دارند که ابتدا باید نزد کس دیگری ثبت کنید: [تقویم گوگل](integrations/google.md) (`MITRA_GOOGLE_*`) و [ورود به حساب](sso.md) (`MITRA_OIDC_*`).
 

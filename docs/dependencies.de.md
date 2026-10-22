@@ -46,5 +46,6 @@ Wenn ein Eintrag als Teil einer Kette verschoben wird, wandern seine Teilaufgabe
 Eine Verknüpfung wird bei dem Eintrag gespeichert, der wartet, im eigenen Kalender dieses Eintrags. [Kalenderserver](integrations/caldav.md), [Apple Calendar](integrations/apple.md) und [Mitra-Kalender](integrations/mitra.md) nehmen jede Verknüpfung auf, und auf einem Kalenderserver wird sie im Standard-Kalenderformat geschrieben, sodass andere Apps, die denselben Kalender nutzen, sie lesen können.
 
 - In [Notion](integrations/notion.md) kommt eine Verknüpfung zu einer Aufgabe in derselben Datenbank in die passende Relationseigenschaft, etwa „Blocked by“. Verknüpfungen zu allem anderen behält Mitra selbst.
+- [Todoist](integrations/todoist.md) kennt keine Abhängigkeiten, deshalb behält Mitra sie selbst. Sie gehen verloren, wenn du das Konto trennst oder den Kalender neu importierst.
 - [Google Calendar](integrations/google.md) verwirft Verknüpfungen, deshalb lässt sich einem Eintrag in einem Google-Kalender nichts geben, worauf er wartet. Einträge in anderen Kalendern können weiterhin auf ihn verweisen.
 - [Kalenderabonnements](integrations/subscriptions.md) sind schreibgeschützt, und [Tempo](integrations/tempo.md) kennt keine Verknüpfungen.

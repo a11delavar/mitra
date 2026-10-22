@@ -39,7 +39,7 @@ Calendars from a [CalDAV server](integrations/caldav.md) and [Apple Calendar](in
 
 A file can also appear in the description: the picture or link button on its row adds it at the end of the text, as a picture for images and a link for the rest. Removing the attachment removes that too.
 
-In a [Google calendar](integrations/google.md), the attachments are the Google Drive files attached in Google Calendar: Mitra shows them but can't add or remove any. [Notion](integrations/notion.md) and [Tempo](integrations/tempo.md) calendars have no attachments row. Moving an entry with attachments into any of these drops its files, and Mitra tells you before anything moves.
+In a [Google calendar](integrations/google.md), the attachments are the Google Drive files attached in Google Calendar: Mitra shows them but can't add or remove any. [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) and [Tempo](integrations/tempo.md) calendars have no attachments row. Moving an entry with attachments into any of these drops its files, and Mitra tells you before anything moves.
 
 > [!NOTE]
 > Attachments that other apps added show up in Mitra too, including files your calendar server stores itself, which open with that server's own address. Mitra leaves the attachments it doesn't recognize exactly as they are, so editing an entry in Mitra never changes another app's attachments.

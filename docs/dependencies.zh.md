@@ -46,5 +46,6 @@ description: 让一个条目等另一个条目完成后再开始，在日历上�
 关联保存在需要等待的条目上，也就是该条目自己所在的日历中。[日历服务器](integrations/caldav.md)、[Apple 日历](integrations/apple.md)和 [Mitra 日历](integrations/mitra.md)可以保存任意关联；在日历服务器上，关联会以标准日历格式写入，所以使用同一日历的其他应用也能读取。
 
 - 在 [Notion](integrations/notion.md) 中，指向同一数据库内任务的关联会写入对应的关系属性，例如“Blocked by”。指向其他内容的关联由 Mitra 自己保存。
+- [Todoist](integrations/todoist.md) 没有依赖关系，所以由 Mitra 自己保存。如果你断开账号或重新导入日历，这些依赖关系就会丢失。
 - [Google 日历](integrations/google.md)会丢弃关联，所以 Google 日历中的条目不能设置前置条目。不过其他日历中的条目仍然可以关联到它。
 - [日历订阅](integrations/subscriptions.md)是只读的，[Tempo](integrations/tempo.md) 则不支持关联。

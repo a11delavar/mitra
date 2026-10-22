@@ -49,7 +49,7 @@ description: زمانی را که برای کار، درس یا هر چیز دی
 
 هر تقویمی که بتوانید به آن مورد اضافه کنید می‌تواند زمان در دسترس داشته باشد، از جمله تقویم‌های [میترا](integrations/mitra.md). این‌ها نمی‌توانند:
 
-- تقویم‌های [Notion](integrations/notion.md) و [Tempo](integrations/tempo.md)، چون موارد آن‌ها تکرار نمی‌شوند.
+- تقویم‌های [Notion](integrations/notion.md)، [Todoist](integrations/todoist.md) و [Tempo](integrations/tempo.md)، چون موارد آن‌ها تکرار نمی‌شوند.
 - تقویم‌های فقط‌خواندنی، مثل [اشتراک‌های تقویم](integrations/subscriptions.md).
 
 زمان در دسترس همراه تقویمش می‌ماند. حذف تقویم، یا قطع اتصال حسابی که به آن تعلق دارد، زمان در دسترس آن را هم حذف می‌کند.

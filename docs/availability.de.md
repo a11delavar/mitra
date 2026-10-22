@@ -49,7 +49,7 @@ Das Auge eines Kalenders in der Seitenleiste blendet seine Verfügbarkeit zusamm
 
 Jeder Kalender, dem du Einträge hinzufügen kannst, kann Verfügbarkeit enthalten, auch [Mitra](integrations/mitra.md)-Kalender. Diese nicht:
 
-- [Notion](integrations/notion.md)- und [Tempo](integrations/tempo.md)-Kalender, da sich ihre Einträge nicht wiederholen können.
+- [Notion](integrations/notion.md)-, [Todoist](integrations/todoist.md)- und [Tempo](integrations/tempo.md)-Kalender, da sich ihre Einträge nicht wiederholen können.
 - Schreibgeschützte Kalender, etwa [Kalenderabonnements](integrations/subscriptions.md).
 
 Verfügbarkeit bleibt bei ihrem Kalender. Wenn du den Kalender löschst oder das Konto trennst, zu dem er gehört, wird auch seine Verfügbarkeit gelöscht.

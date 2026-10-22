@@ -24,7 +24,7 @@ docker compose up -d
 
 ## Cosa va configurato sul server
 
-Quasi nulla. Le persone aggiungono da sé, nell'app, i [calendari Mitra](integrations/mitra.md), [CalDAV](integrations/caldav.md), [Apple Calendar](integrations/apple.md), gli [abbonamenti a calendari](integrations/subscriptions.md), [Notion](integrations/notion.md) e [Tempo](integrations/tempo.md).
+Quasi nulla. Le persone aggiungono da sé, nell'app, i [calendari Mitra](integrations/mitra.md), [CalDAV](integrations/caldav.md), [Apple Calendar](integrations/apple.md), gli [abbonamenti a calendari](integrations/subscriptions.md), [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) e [Tempo](integrations/tempo.md).
 
 Due cose richiedono credenziali che devi prima registrare presso qualcun altro: [Google Calendar](integrations/google.md) (`MITRA_GOOGLE_*`) e l'[accesso con account](sso.md) (`MITRA_OIDC_*`).
 

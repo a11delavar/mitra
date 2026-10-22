@@ -23,6 +23,7 @@
 	"Ics.UrlHint": "Paste a calendar link: a webcal:// address or one ending in .ics. Subscriptions are read-only: they show what the calendar publishes, and mitra never writes back to it.",
 	"Notion.TokenHint": "Create an integration at notion.so/profile/integrations, share your task databases with it (··· → Connections), then paste its secret here. A database needs a Status and a Date property. Its views become sources.",
 	"Tempo.TokenHint": "Create an API token in Tempo (Settings → Data Access → API integration) and an Atlassian API token at id.atlassian.com. Tempo holds the hours, Jira names the issues. Both are needed.",
+	"Todoist.TokenHint": "In Todoist, open Settings → Integrations → Developer, copy your API token and paste it here. Each of your projects becomes a calendar of tasks.",
 	"ShowOnlySource.Keywords": "calendar source solo focus hide others only visible",
 	"ShowPreviouslyVisibleSources.Keywords": "calendar source restore unsolo back all visible again",
 	"WeekView.Keywords": "switch",

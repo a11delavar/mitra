@@ -44,7 +44,7 @@ El tipo no se puede cambiar en una entrada recurrente, ni en un calendario que s
 
 **Eliminar** quita la entrada. Mientras el editor está abierto, <kbd>Delete</kbd> o <kbd>Backspace</kbd> también lo hace, siempre que no estés escribiendo en un campo. Si la entrada se repite o tiene subtareas, Mitra pregunta a cuáles te refieres.
 
-Una entrada de Notion o Tempo también ofrece **Abrir en Notion** o **Abrir en Jira**, que la abre donde se originó.
+Una entrada de Notion, Todoist o Tempo también ofrece **Abrir en Notion**, **Abrir en Todoist** o **Abrir en Jira**, que la abre donde se originó.
 
 ## Título y hora
 

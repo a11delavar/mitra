@@ -1,0 +1,1443 @@
+{
+	"minted": {
+		"id": [
+			"db9747b7-8036-4078-bab8-d57f6eefa1eb",
+			"7a58028b-2dc7-4164-b8fe-2df21fb83a35",
+			"99a97f1c-decf-437d-bc79-25f4ebbae37f",
+			"f7af579e-6a8f-4cec-a4f3-3cca32acb5fc",
+			"4cda9072-25bc-4f5f-b36e-fb2de9ffee8a",
+			"dcca3d36-4c07-46f5-a67d-32758059f1f8",
+			"7e1ee2cf-f2b2-4ee4-b15a-146c13a38bd9",
+			"648b2f83-fe82-4a8d-a9b0-59f8cd3d29d6",
+			"3389e0f6-a3a8-4899-a7fa-f67bf00e12fa",
+			"af600a19-bdd2-46bc-8284-e31f20e9b240",
+			"7597ee82-15e5-428a-94e5-14c3f974dab2",
+			"0a8fe046-d8b4-4705-94af-a9c1ee060975",
+			"1ab2ae81-e5ce-4bea-be3c-69bb0dadf816",
+			"4bf34374-51ea-4b06-b505-bb9dc9d3ccca",
+			"98fd6251-b09c-4f37-ac9e-cb3c968c198d",
+			"44951fe2-6d57-4d83-be4e-c7354fa11199",
+			"e6029d09-57f8-4ae8-930d-57e6ad5bcced",
+			"cf1d2a58-9c8f-4556-9982-5c7eac0f792c",
+			"7043493c-6a6a-43c1-806d-5cfbc80f0250",
+			"7482954d-853d-4fe7-832c-8db5c8640761",
+			"c4eee915-865b-4073-9c08-317bd7d4fc19",
+			"de1ed924-603a-49d0-9fad-7d574bdd6901",
+			"30e6731c-23a4-4a5a-892e-d39a69cd09d2",
+			"f90bb05c-81e8-4954-908f-acfef6574266",
+			"10c167be-ee88-4a28-8aea-461d92b770c1",
+			"40024b04-9292-462e-aa54-669759ab301e",
+			"3edb2147-060c-4895-a6a0-62988929d763",
+			"c7b838ba-ae77-4714-8089-e2fae0e6346d",
+			"a44a8154-83b7-408c-9484-d014d208161a",
+			"b4e01600-0da8-4f23-984e-72f6e4c8ebf7",
+			"5bffc90f-18c9-4290-87f6-6b036aeac523",
+			"cde41812-dc18-4f0a-85e8-6e9d2eaeb880",
+			"54ff705a-14b6-4d12-a026-ebf5afa443b5",
+			"6b475353-179d-43a3-8579-2386387abe55",
+			"adc91067-ab75-4b81-aae5-66154018257d",
+			"1177a830-d81b-41c5-be5d-e8b3eb390fb7",
+			"664f5911-857f-4700-8a9b-a29f938975cb",
+			"6c765896-a49c-4647-92fa-907576fa19b9",
+			"0d2a70ac-84ae-40bc-bb0d-341585cf9f35",
+			"003fbeb6-518d-4901-a065-af04a1121615",
+			"7237d9a9-d9d8-4c35-8a2a-11c4a3390c3a",
+			"c83ce1bc-73c3-4745-834a-049b5f2269a0",
+			"25cd6c96-5808-4493-af0a-b5a313a9ddfe",
+			"678e4abf-7e56-40cd-98bc-f94e6ff479b1",
+			"1f445d31-09dd-4b0b-bd63-109061f348d6",
+			"f58c1100-e1a2-4109-9b19-92197db19b52",
+			"bf53e1d6-49a3-4121-90a7-fa1a28da1dc8",
+			"fd7c85e9-b782-42e3-905e-8c1e9a8eb710",
+			"3604ac00-7f73-4c21-9a5f-f92c116b0bd5",
+			"eb769805-8d84-497f-9505-4f94099ff425",
+			"9068eb84-5630-489c-a798-a9d337909fb5",
+			"3d7ab515-6514-40f6-a252-c470925a7e66",
+			"436c7d22-e8be-4c17-a1d5-85534c085403",
+			"f92d3f55-5848-47b0-ac1e-46fd330b9fb1",
+			"0cf51d49-bd20-4764-a55a-dca3ca6ac552",
+			"eb910e52-16e4-467c-a395-6256b75dcf2f",
+			"aebd2009-f28f-417e-92de-a393c7b167c8",
+			"fdc3d223-90ef-4654-bb48-6d441562c277",
+			"d77119d4-12f8-4cd5-b858-2af64c54354d",
+			"60c45b04-0b27-4eb8-8408-9b5f41d2a6ed",
+			"8cd2c571-8dcd-4e86-94a2-aa8c4b07c9f7",
+			"fdf1bea5-9abf-49c4-a73a-242dddd6ceee",
+			"9813631d-ec35-4cf5-b425-b10c91ba46fe"
+		],
+		"token": [
+			"2eaqubVIc696gx0G",
+			"ef15930f-2ee1-92cb-538f-659bff0dac70",
+			"1xdzU6cqWs5n00a8",
+			"a0c00acc-856a-ed0e-7213-1ce4061fcb44",
+			"7EtGWnalJ_Se0a67enAbyBlN814bGGVbSFU-jw56wPzGaYq_cso4OBe4x6LV8x1gwoR8TYCOvAKycNIntBcGMopSJbJmZgP0lx3WWzRZvMIazLq",
+			"El1NtsZJVvWOhq2dZRgUvdnull1WlTR0pd6u7zSpIsAckq8qHToBmqbJnEzTGTWEA7MZUs-kQQUmfgj5rn-yvGoI3Ib-3UCKsYtr0466JXGo4lu",
+			"1lylxF2d1O7WwQgg",
+			"5sdgzQ9XlsAtywgo",
+			"3alhaJ2aM62f7o1h",
+			"3fslkT2FJ0yjv9NI",
+			"1radsU7NFFKw5s9j",
+			"3rxqdL4xUlZ4WQqG",
+			"1sxsbJ77fJjRl3ei",
+			"7updzI8EIrj2pIVd",
+			"5pduzR0AK3A1pTPy",
+			"9szdgLI7OCSm34XZ",
+			"3onnfN9lh3BSO5iN",
+			"8ykvrI4sJnz06bcY",
+			"6kesbG7yiInjNqLW",
+			"4ukbqZ9RDEnikLKZ",
+			"2wpzaI82HjOxJuja",
+			"6366bb39-e120-b7e9-5fcb-0b27f5a347e5",
+			"59f9cc03-a3dc-d06c-92f3-8bf11f886a19",
+			"8kzs95qwQd8hlP28",
+			"9bav52P7TziTXN75",
+			"5tfz70BOMoLii8s5",
+			"2gjh04NhKa637tq3",
+			"0hysS46506Am2pkN",
+			"7qhkE2CjPKajMPn6",
+			"9uokRgsT49hV2AwU",
+			"tLEWUBEKctKxGyNULQ_lw06R7JGIpMiqkkXQ2ygpaBLJA2EieHiYUqR0zepVNk8N0i0YlKsJdCGvP_OtoeEhDvSTO0IOjpfgfCJFf5kxma2aN3A",
+			"0kmdpP170eUnzhuw",
+			"lQzCiMdz8yGxFDJKEo3mBfsalb4pi0Z6d74V3_NDI8NMZLub0_qjm4LJ8SATsbhwAq-V0xzn1-rEhjmMscs6eGYJEPRSG48DPQ1FT0UWoCZjwnI",
+			"KF0PHwCreKqQWoV8ULB1tYagOGq3rVa-bGBkzkc5kcUl_qgNSaiz3vUZEj4551qqa7UCxwAEYRSg-zVVtSsg7PYGUcOKTVsFN_HEzJK-6CVLSgS",
+			"UfghWAUcfmhRr77OBfwPNSTWVqt6M-T3fagwCqEGsHpIk6p9jQddXoPeuaDsgWnj9AkCfyw0MGbaraI5h6YMbjL7N0wwY5lqFFLbdk-H1fxwV4G",
+			"sMaqasqosGv-A0WknoGnymRT0e5KH1YwpZLrJ5b5F8NaKATaqQEm4Ns-ElqB1YPF72vrShmfIu6T4QSOc_qRmPjrq7XdY6tF4E7PkqkMFA7W4Lf",
+			"4GJJDLKrrC3S0WOpx0n4IGK3ttMauOO_fM2Xm4jleFZ8Hj5xkQ7r0UQA3s-YAl1h2_i9ZETK3PxZVmCEzXfKNJPZZZWhI3u0E_Rjwjzyhz5FTKq",
+			"H_fBAO-zQASI3t91QiigB8LTp-yyRWM2_CUxz6KUFtdKRL2lgtyHWVgA8XbmrQLCcVi4ZM3qE9nC09dEoc1xLBViSqHTND6aEo_2KiRp9tsmero",
+			"cNc_oPP_qzEFN4eOmtL7ELyXtIroE3jHKGagMC5A6c4m8FHtOeeDqzqcEydBGkxb_KJlrOeBZldZVsx2kklyxEQIUlY6FVxWVvyo2CWr6cZXj4x",
+			"v0mcXjsbvptIt6wzMkz2HZfQoKe31ySyBb1gtSagOSNis6G9-Oea7B5sfAzCF0tSKssIKXfxzgdvKxzmxv5wah-_2i4u3JaPhgBFByPISPWT_dN",
+			"1rqXEGw75Kxhf_XBfNyYIpBI_hFVqn1EDV2n_LCituYq8c4ub1a3uva4q-RanijqZxXw6eJTjMjE7nvRgTL7WAEqvbOnhMphyTZLJn9DuYhkgbD",
+			"Sbmo0kh6SaBYsP2acommJMK8RW5BdEGUpLuwhPk18C3PJmgKXJRW8-lOZanOwkDW5OR3I_cLPx1jeKsIOnNoRuwhDDRtBia967yT36Ztm8jA1lN",
+			"EK5Xg7NA14aSQCfQdE4EjZD8oxXKBW6087KJwvR6PuIVZFoUvo3JSqo7xhVqooHBGPGt1-1fY4CnElznq5Ah9E2bJqdDgyMRuJ3bDbV0pFq5PLe",
+			"N7BBr2QQ9669Zc1ptOmDkH9-61wYUh-m_ow-v3SKa5xbvK1M5j_QY1vA27ROCakZTqaR6YGbj0NJ6uF9T8ZdTKxK6b-dY-9Pd4WbCUVnBcwiUdt",
+			"1gigcsESfW8g7c7F",
+			"1510982535280251",
+			"girVus6GeK94qEeVa1KodBOm1ykn0EXKoBnV2rTTAGuHzZMQgsA7IZ52TW5JfbGzp_tl-wtjpYBBa5tGO4asfaNPoODaMqTGpNBhgp9_sIVu5of",
+			"5xtwaze5Lws6w1co",
+			"cJ46sJ_XWDywyhsfGSoSvtnbhHc1dJSkjkyz79ClkA3ayuEdWfHlY4B8hQd5vbRUtRI-bveVb6kP1QZAeoIesMLlc7cbF9Ca-ly_DFOboQvRvvE",
+			"7facokFzyOr1Hh2x",
+			"TTov_55trhbbcUVdQ-A2tPPzhhWh7GSDwD7UVjLyW4kNIO7wcfcpMuG8UkTRTuR8AG8RXgrcErFBa_grmcDQB2VtvS3dEHla7iHeikA0grCT_HL",
+			"vt9Ft0Rgewbd0y4jvwWt5sI8B3DUYunAmT4JAnqJVm9tfBiPTWWHMBwH6QQ_4CNGbSwTl5Vs8qKmVnU_w5nRN4SyBLbikTpKIhKgwsD6qRptQD5",
+			"ElXe2nDQdjfOXmmfiSPQBaBb_YOq23H6RzO2QUieGw6Dwg8IdwN-ADohTn0DXIsDqjRShDPiGdYgVImXApcnC_g87KCUVZCwjvX6BKpzuwF0U_e",
+			"lzvtq6-G7Jk_Kz33zMdxQY1PsmcUwYBSlvEpLHbnLSkefhxmTI-2z8wvC_4LyqHmFgelEy1kkk_ooULpRVU4dHNpADAP4LeVjZyK3xLMoqTNWET",
+			"yOOA2mmg6uZQBczHmaBpswnAIn_C8a8LSNvCulifyZpofcmgHoIDMy-R4Nm6immuINxffum7ZDBuXBRlGOrDe0Vh7AKDq8nt7CUaHiLpowwaY4b",
+			"3qbfBofzkAw7kvdA",
+			"1810660197",
+			"9952110854"
+		],
+		"time": [
+			"2026-10-20T23:28:28.252201Z",
+			"2026-10-20T23:28:28.252217Z",
+			"2026-10-21T00:29:07.031690Z",
+			"2026-10-21T00:29:39.382630Z",
+			"2026-10-20T23:28:28.252201Z",
+			"2026-10-20T23:28:28.252217Z",
+			"2026-10-21T00:29:07.031690Z",
+			"2026-10-21T00:29:39.382630Z",
+			"2026-10-21T02:07:53.322611Z",
+			"2026-10-21T02:07:53.322627Z",
+			"2026-10-21T02:07:53.477001Z",
+			"2026-10-21T02:07:53.477016Z",
+			"2026-10-28T01:58:38.000000Z",
+			"2026-10-20T23:28:27.950671Z",
+			"2026-10-20T23:28:28.252201Z",
+			"2026-10-20T23:28:28.252217Z",
+			"2026-10-21T00:29:07.031690Z",
+			"2026-10-21T00:29:39.382630Z",
+			"2026-10-21T02:07:53.322611Z",
+			"2026-10-21T02:07:53.322627Z",
+			"2026-10-21T02:07:53.477001Z",
+			"2026-10-21T02:07:53.477016Z",
+			"2026-10-28T01:58:38.000000Z",
+			"2026-10-20T23:28:27.950671Z",
+			"2026-10-20T23:28:28.252201Z",
+			"2026-10-20T23:28:28.252217Z",
+			"2026-10-21T00:29:07.031690Z",
+			"2026-10-21T00:29:39.382630Z",
+			"2026-10-21T02:07:53.322611Z",
+			"2026-10-21T02:07:53.322627Z",
+			"2026-10-21T02:07:53.477001Z",
+			"2026-10-21T02:07:53.477016Z",
+			"2026-10-28T01:58:38.000000Z",
+			"2026-10-20T23:28:27.950671Z",
+			"2026-10-21T00:17:31.515128Z",
+			"2026-10-21T00:18:46.606482Z",
+			"2026-10-21T00:18:20.829890Z",
+			"2026-10-21T00:18:51.337572Z",
+			"2026-10-21T00:18:20.976818Z",
+			"2026-10-21T00:18:20.976837Z",
+			"2026-10-21T00:18:21.117160Z",
+			"2026-10-21T00:18:21.117178Z",
+			"2026-10-21T00:29:12.753317Z",
+			"2026-10-21T00:29:26.185901Z",
+			"2026-10-21T00:29:14.763902Z",
+			"2026-10-21T00:29:32.852447Z",
+			"2026-10-21T00:33:59.958242Z",
+			"2026-10-21T00:34:19.738156Z",
+			"2026-10-21T02:07:53.907271Z",
+			"2026-10-21T02:07:53.907288Z",
+			"2026-10-21T02:07:53.718618Z",
+			"2026-10-21T02:07:53.718637Z",
+			"2026-10-21T02:07:54.804100Z",
+			"2026-10-21T02:07:54.804118Z",
+			"2026-10-21T02:07:54.494250Z",
+			"2026-10-21T02:07:54.494269Z",
+			"2026-10-21T02:07:54.057031Z",
+			"2026-10-21T02:07:54.057048Z",
+			"2026-10-21T02:07:54.341566Z",
+			"2026-10-21T02:07:54.341585Z",
+			"2026-10-21T02:07:54.197535Z",
+			"2026-10-21T02:07:54.197553Z",
+			"2026-10-21T02:07:54.657233Z",
+			"2026-10-21T02:07:54.657247Z",
+			"2026-10-21T02:07:55.717862Z",
+			"2026-10-21T02:07:55.717882Z",
+			"2026-10-21T02:07:55.863650Z",
+			"2026-10-21T02:07:55.863667Z",
+			"2026-10-21T02:07:55.394832Z",
+			"2026-10-21T02:07:55.394850Z",
+			"2026-10-21T02:07:55.563298Z",
+			"2026-10-21T02:07:55.563316Z",
+			"2026-10-20T23:28:28.252201Z",
+			"2026-10-20T23:28:28.252217Z",
+			"2026-10-21T00:29:07.031690Z",
+			"2026-10-21T00:29:39.382630Z",
+			"2026-10-21T02:07:53.322611Z",
+			"2026-10-21T02:07:53.322627Z",
+			"2026-10-21T02:07:53.477001Z",
+			"2026-10-21T02:07:53.477016Z",
+			"2026-10-28T01:58:38.000000Z",
+			"2026-10-20T23:28:27.950671Z",
+			"2026-10-21T02:07:53.718618Z",
+			"2026-10-21T02:08:13.527439Z",
+			"2026-10-21T02:07:53.907271Z",
+			"2026-10-21T02:08:17.478889Z",
+			"2026-10-21T02:07:54.197535Z",
+			"2026-10-21T02:08:33.484786Z",
+			"2026-10-21T02:07:54.804100Z",
+			"2026-10-21T02:07:54.804118Z",
+			"2026-10-21T02:08:05.479824Z",
+			"2026-10-21T02:08:05.479845Z",
+			"2026-10-21T02:07:54.057031Z",
+			"2026-10-21T02:08:54.601024Z",
+			"2026-10-21T02:07:54.657233Z",
+			"2026-10-21T02:08:54.747030Z",
+			"2026-10-21T02:08:54.752635Z",
+			"1970-01-01T00:00:00.000000Z",
+			"2026-10-21T02:07:54.341566Z",
+			"2026-10-21T02:08:46.060464Z",
+			"2026-10-21T02:08:55.511178Z",
+			"2026-10-21T02:08:55.511194Z",
+			"2026-10-20T23:28:28.252201Z",
+			"2026-10-20T23:28:28.252217Z",
+			"2026-10-21T00:29:07.031690Z",
+			"2026-10-21T00:29:39.382630Z",
+			"2026-10-21T02:07:53.322611Z",
+			"2026-10-21T02:07:53.322627Z",
+			"2026-10-28T01:58:38.000000Z",
+			"2026-10-20T23:28:27.950671Z",
+			"2026-10-20T23:28:28.252201Z",
+			"2026-10-20T23:28:28.252217Z",
+			"2026-10-21T00:29:07.031690Z",
+			"2026-10-21T00:29:39.382630Z",
+			"2026-10-21T02:07:53.322611Z",
+			"2026-10-21T02:07:53.322627Z",
+			"2026-10-28T01:58:38.000000Z",
+			"2026-10-20T23:28:27.950671Z",
+			"2026-10-21T02:08:59.807457Z",
+			"2026-10-21T02:09:00.125827Z",
+			"2026-10-21T02:09:00.141904Z",
+			"1970-01-01T00:00:00.000000Z",
+			"1970-01-01T00:00:00.000000Z",
+			"2026-10-21T00:17:31.515128Z",
+			"2026-10-21T00:18:46.606482Z",
+			"2026-10-21T00:18:20.829890Z",
+			"2026-10-21T00:18:51.337572Z",
+			"2026-10-21T00:18:20.976818Z",
+			"2026-10-21T00:18:20.976837Z",
+			"2026-10-21T00:18:21.117160Z",
+			"2026-10-21T00:18:21.117178Z",
+			"2026-10-21T00:29:12.753317Z",
+			"2026-10-21T00:29:26.185901Z",
+			"2026-10-21T00:29:14.763902Z",
+			"2026-10-21T00:29:32.852447Z",
+			"2026-10-21T00:33:59.958242Z",
+			"2026-10-21T00:34:19.738156Z",
+			"2026-10-21T02:07:53.907271Z",
+			"2026-10-21T02:08:17.478889Z",
+			"2026-10-21T02:07:53.718618Z",
+			"2026-10-21T02:08:13.527439Z",
+			"2026-10-21T02:07:54.804100Z",
+			"2026-10-21T02:07:54.804118Z",
+			"2026-10-21T02:07:54.494250Z",
+			"2026-10-21T02:07:54.494269Z",
+			"2026-10-21T02:07:54.057031Z",
+			"2026-10-21T02:08:54.601024Z",
+			"2026-10-21T02:07:54.197535Z",
+			"2026-10-21T02:08:33.484786Z",
+			"2026-10-21T02:07:55.717862Z",
+			"2026-10-21T02:07:55.717882Z",
+			"2026-10-21T02:07:55.863650Z",
+			"2026-10-21T02:07:55.863667Z",
+			"2026-10-21T02:07:55.394832Z",
+			"2026-10-21T02:07:55.394850Z",
+			"2026-10-21T02:07:55.563298Z",
+			"2026-10-21T02:07:55.563316Z",
+			"2026-10-21T02:07:53.718618Z",
+			"2026-10-21T02:08:13.527439Z",
+			"2026-10-21T02:07:53.907271Z",
+			"2026-10-21T02:08:17.478889Z",
+			"2026-10-21T02:07:54.197535Z",
+			"2026-10-21T02:08:33.484786Z",
+			"2026-10-21T02:07:54.494250Z",
+			"2026-10-21T02:07:54.494269Z",
+			"2026-10-21T02:07:54.804100Z",
+			"2026-10-21T02:07:54.804118Z",
+			"2026-10-21T02:07:55.394832Z",
+			"2026-10-21T02:07:55.394850Z",
+			"2026-10-21T02:07:55.563298Z",
+			"2026-10-21T02:07:55.563316Z",
+			"2026-10-21T02:07:55.717862Z",
+			"2026-10-21T02:07:55.717882Z",
+			"2026-10-21T02:07:55.863650Z",
+			"2026-10-21T02:07:55.863667Z",
+			"2026-10-21T02:07:54.057031Z",
+			"2026-10-21T02:08:54.601024Z",
+			"2026-10-21T02:07:53.718618Z",
+			"2026-10-21T02:08:09.269642Z",
+			"2026-10-21T02:07:53.718618Z",
+			"2026-10-21T02:08:09.269642Z",
+			"2026-10-21T02:07:53.718618Z",
+			"2026-10-21T02:08:13.527439Z",
+			"2026-10-21T02:07:53.718618Z",
+			"2026-10-21T02:08:13.527439Z",
+			"2026-10-21T02:07:53.907271Z",
+			"2026-10-21T02:08:17.478889Z",
+			"2026-10-21T02:07:53.907271Z",
+			"2026-10-21T02:08:17.478889Z",
+			"2026-10-21T02:07:54.804100Z",
+			"2026-10-21T02:07:54.804118Z",
+			"2026-10-21T02:07:54.804100Z",
+			"2026-10-21T02:07:54.804118Z",
+			"2026-10-21T02:08:05.479824Z",
+			"2026-10-21T02:08:05.479845Z",
+			"2026-10-21T02:08:05.479824Z",
+			"2026-10-21T02:08:05.479845Z",
+			"2026-10-21T02:08:05.479824Z",
+			"2026-10-21T02:08:05.479845Z",
+			"2026-10-21T02:08:05.479824Z",
+			"2026-10-21T02:08:05.479845Z",
+			"2026-10-21T02:08:59.807457Z",
+			"2026-10-21T02:09:00.125827Z",
+			"2026-10-21T02:09:00.141904Z",
+			"2026-10-21T02:08:59.807457Z",
+			"2026-10-21T02:09:00.125827Z",
+			"2026-10-21T02:09:00.141904Z",
+			"2026-10-21T02:09:04.757153Z",
+			"2026-10-21T02:09:04.757168Z",
+			"2026-10-21T02:09:04.757153Z",
+			"2026-10-21T02:09:04.757168Z",
+			"2026-10-21T02:07:54.057031Z",
+			"2026-10-21T02:08:25.521305Z",
+			"2026-10-21T02:08:25.526968Z",
+			"2026-10-21T02:07:54.057031Z",
+			"2026-10-21T02:08:25.521305Z",
+			"2026-10-21T02:08:25.526968Z",
+			"2026-10-21T02:07:54.057031Z",
+			"2026-10-21T02:08:29.622604Z",
+			"2026-10-21T02:07:54.057031Z",
+			"2026-10-21T02:08:29.622604Z",
+			"2026-10-21T02:07:54.341566Z",
+			"2026-10-21T02:08:37.397028Z",
+			"2026-10-21T02:07:54.341566Z",
+			"2026-10-21T02:08:37.397028Z",
+			"2026-10-21T02:07:54.341566Z",
+			"2026-10-21T02:08:46.060464Z",
+			"2026-10-21T02:07:54.341566Z",
+			"2026-10-21T02:08:46.060464Z",
+			"2026-10-21T02:07:54.197535Z",
+			"2026-10-21T02:07:54.197553Z",
+			"2026-10-21T02:07:54.197535Z",
+			"2026-10-21T02:08:21.701255Z",
+			"2026-10-21T02:07:54.197535Z",
+			"2026-10-21T02:08:21.701255Z",
+			"2026-10-21T02:07:54.197535Z",
+			"2026-10-21T02:08:33.484786Z",
+			"2026-10-21T02:07:54.197535Z",
+			"2026-10-21T02:08:33.484786Z",
+			"2026-10-21T02:07:54.967836Z",
+			"2026-10-21T02:07:55.161825Z",
+			"2026-10-21T02:07:55.175952Z",
+			"2026-10-21T00:33:17.918121Z",
+			"2026-10-21T00:34:33.915000Z",
+			"2026-10-21T00:34:34.419342Z",
+			"2026-10-21T02:08:59.807457Z",
+			"2026-10-21T02:09:00.125827Z",
+			"2026-10-21T02:09:00.141904Z",
+			"2026-10-21T02:07:54.657233Z",
+			"2026-10-21T02:08:54.747030Z",
+			"2026-10-21T02:08:54.752635Z",
+			"2026-10-21T00:33:17.918121Z",
+			"2026-10-21T00:34:33.915000Z",
+			"2026-10-21T00:34:34.419342Z"
+		]
+	},
+	"exchanges": [
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"sync_token\":\"*\",\"resource_types\":[\"projects\",\"labels\"]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:07:50Z\",\"labels\":[{\"color\":\"charcoal\",\"id\":\"{token:56}\",\"is_deleted\":false,\"is_favorite\":false,\"item_order\":1,\"name\":\"{secret}\",\"order_key\":\"a0\"}],\"projects\":[{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":0,\"color\":\"charcoal\",\"created_at\":\"{time:0}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:0}\",\"inbox_project\":true,\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"Inbox\",\"order_key\":\"a0\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:1}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:1}\",\"view_style\":\"list\"},{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":0,\"color\":\"charcoal\",\"created_at\":\"{time:2}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:2}\",\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"{secret}\",\"order_key\":\"a1\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:3}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:3}\",\"view_style\":\"list\"}],\"sync_status\":{},\"sync_token\":\"{token:4}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"sync_token\":\"*\",\"resource_types\":[\"user_plan_limits\"]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:07:51Z\",\"sync_status\":{},\"sync_token\":\"{token:4}\",\"temp_id_mapping\":{},\"user_plan_limits\":{\"current\":{\"activity_log\":true,\"activity_log_limit\":-1,\"advanced_permissions\":true,\"automatic_backups\":true,\"calendar_feeds\":true,\"calendar_layout\":true,\"comments\":true,\"completed_tasks\":true,\"custom_app_icon\":true,\"customization_color\":true,\"deadlines\":true,\"durations\":true,\"email_ai_forwarding\":true,\"email_forwarding\":true,\"filters\":true,\"labels\":true,\"max_calendar_accounts\":1,\"max_collaborators\":5,\"max_filters\":150,\"max_folders_per_workspace\":25,\"max_free_workspaces_created\":1,\"max_guests_per_workspace\":25,\"max_labels\":500,\"max_live_notifications\":500,\"max_monthly_capture\":1000,\"max_monthly_ramble\":1000,\"max_projects\":300,\"max_projects_joined\":500,\"max_reminders_location\":300,\"max_reminders_time\":700,\"max_sections\":20,\"max_tasks\":300,\"max_user_templates\":100,\"plan_name\":\"pro\",\"project_icons\":true,\"project_insights_light\":true,\"reminders\":true,\"reminders_at_due\":true,\"templates\":true,\"upload_limit_mb\":100,\"uploads\":true,\"weekly_trends\":true},\"next\":null}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"uuid\":\"{id:0}\",\"type\":\"project_add\",\"temp_id\":\"{id:1}\",\"args\":{\"name\":\"Mitra Home\",\"color\":\"berry_red\"}},{\"uuid\":\"{id:2}\",\"type\":\"project_add\",\"temp_id\":\"{id:3}\",\"args\":{\"name\":\"Errands\",\"parent_id\":\"{id:1}\"}},{\"uuid\":\"{id:4}\",\"type\":\"label_add\",\"temp_id\":\"{id:5}\",\"args\":{\"name\":\"mitra-bills\"}},{\"uuid\":\"{id:6}\",\"type\":\"item_add\",\"temp_id\":\"{id:7}\",\"args\":{\"project_id\":\"{id:1}\",\"content\":\"Pay rent\",\"due\":{\"date\":\"2026-11-02\"},\"priority\":4,\"labels\":[\"mitra-bills\"]}},{\"uuid\":\"{id:8}\",\"type\":\"item_add\",\"temp_id\":\"{id:9}\",\"args\":{\"project_id\":\"{id:1}\",\"content\":\"Call the plumber\",\"due\":{\"date\":\"2026-11-03T16:00:00\",\"timezone\":null}}},{\"uuid\":\"{id:10}\",\"type\":\"item_add\",\"temp_id\":\"{id:11}\",\"args\":{\"project_id\":\"{id:1}\",\"content\":\"Standup\",\"due\":{\"date\":\"2026-11-04T14:00:00Z\",\"timezone\":\"America/New_York\"}}},{\"uuid\":\"{id:12}\",\"type\":\"item_add\",\"temp_id\":\"{id:13}\",\"args\":{\"project_id\":\"{id:1}\",\"content\":\"Water the plants\",\"due\":{\"string\":\"every monday at 9am\",\"lang\":\"en\"}}},{\"uuid\":\"{id:14}\",\"type\":\"item_add\",\"temp_id\":\"{id:15}\",\"args\":{\"project_id\":\"{id:1}\",\"content\":\"Buy groceries\",\"description\":\"From the **market**\\n\\n- [ ] oat milk\\n- [x] bread\"}},{\"uuid\":\"{id:16}\",\"type\":\"item_add\",\"temp_id\":\"{id:17}\",\"args\":{\"project_id\":\"{id:1}\",\"content\":\"Paint the hallway\"}},{\"uuid\":\"{id:18}\",\"type\":\"item_add\",\"temp_id\":\"{id:19}\",\"args\":{\"project_id\":\"{id:1}\",\"content\":\"Pick a color\",\"parent_id\":\"{id:17}\"}},{\"uuid\":\"{id:20}\",\"type\":\"item_add\",\"temp_id\":\"{id:21}\",\"args\":{\"project_id\":\"{id:3}\",\"content\":\"Fetch the parcel\"}},{\"uuid\":\"{id:22}\",\"type\":\"item_add\",\"temp_id\":\"{id:23}\",\"args\":{\"project_id\":\"{id:1}\",\"content\":\"Old chore\"}},{\"uuid\":\"{id:24}\",\"type\":\"item_close\",\"args\":{\"id\":\"{id:23}\"}},{\"uuid\":\"{id:25}\",\"type\":\"item_add\",\"temp_id\":\"{id:26}\",\"args\":{\"project_id\":\"{id:1}\",\"content\":\"File taxes\",\"deadline\":{\"date\":\"2026-11-30\"}}},{\"uuid\":\"{id:27}\",\"type\":\"item_add\",\"temp_id\":\"{id:28}\",\"args\":{\"project_id\":\"{id:1}\",\"content\":\"Workshop\",\"due\":{\"date\":\"2026-11-05T13:00:00Z\",\"timezone\":\"Europe/Berlin\"},\"duration\":{\"amount\":90,\"unit\":\"minute\"}}},{\"uuid\":\"{id:29}\",\"type\":\"item_add\",\"temp_id\":\"{id:30}\",\"args\":{\"project_id\":\"{id:1}\",\"content\":\"Write the report\",\"duration\":{\"amount\":45,\"unit\":\"minute\"}}},{\"uuid\":\"{id:31}\",\"type\":\"item_add\",\"temp_id\":\"{id:32}\",\"args\":{\"project_id\":\"{id:1}\",\"content\":\"Trip\",\"due\":{\"date\":\"2026-11-10\"},\"duration\":{\"amount\":3,\"unit\":\"day\"}}}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:07:55Z\",\"sync_status\":{\"{id:24}\":\"ok\",\"{id:12}\":\"ok\",\"{id:22}\":\"ok\",\"{id:8}\":\"ok\",\"{id:25}\":\"ok\",\"{id:4}\":\"ok\",\"{id:18}\":\"ok\",\"{id:10}\":\"ok\",\"{id:6}\":\"ok\",\"{id:14}\":\"ok\",\"{id:2}\":\"ok\",\"{id:29}\":\"ok\",\"{id:20}\":\"ok\",\"{id:27}\":\"ok\",\"{id:31}\":\"ok\",\"{id:0}\":\"ok\",\"{id:16}\":\"ok\"},\"sync_token\":\"{token:5}\",\"temp_id_mapping\":{\"{id:11}\":\"{token:6}\",\"{id:26}\":\"{token:7}\",\"{id:15}\":\"{token:8}\",\"{id:13}\":\"{token:9}\",\"{id:32}\":\"{token:10}\",\"{id:30}\":\"{token:11}\",\"{id:7}\":\"{token:12}\",\"{id:19}\":\"{token:13}\",\"{id:1}\":\"{token:14}\",\"{id:28}\":\"{token:15}\",\"{id:9}\":\"{token:16}\",\"{id:17}\":\"{token:17}\",\"{id:5}\":\"{token:57}\",\"{id:21}\":\"{token:18}\",\"{id:3}\":\"{token:19}\",\"{id:23}\":\"{token:20}\"}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"sync_token\":\"*\",\"resource_types\":[\"user\",\"user_plan_limits\",\"projects\"]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:07:57Z\",\"projects\":[{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":0,\"color\":\"charcoal\",\"created_at\":\"{time:4}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:0}\",\"inbox_project\":true,\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"Inbox\",\"order_key\":\"a0\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:1}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:5}\",\"view_style\":\"list\"},{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":0,\"color\":\"charcoal\",\"created_at\":\"{time:6}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:2}\",\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"{secret}\",\"order_key\":\"a1\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:3}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:7}\",\"view_style\":\"list\"},{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":1,\"color\":\"berry_red\",\"created_at\":\"{time:8}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:14}\",\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"Mitra Home\",\"order_key\":\"a2qqL\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:21}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:9}\",\"view_style\":\"list\"},{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":1,\"color\":\"charcoal\",\"created_at\":\"{time:10}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:19}\",\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"Errands\",\"order_key\":\"a2IgP\",\"parent_id\":\"{token:14}\",\"public_access\":false,\"public_key\":\"{token:22}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:11}\",\"view_style\":\"list\"}],\"sync_status\":{},\"sync_token\":\"{token:5}\",\"temp_id_mapping\":{},\"user\":{\"activated_user\":false,\"auto_reminder\":30,\"business_account_id\":null,\"capture_sessions_usage\":{\"current_count\":1,\"limit\":1000,\"remaining\":999,\"reset_date\":\"2026-11-01T00:00:00+00:00\"},\"daily_goal\":5,\"date_format\":0,\"days_off\":[6,7],\"deleted_at\":null,\"email\":\"{email}\",\"feature_identifier\":\"{secret}\",\"features\":{\"beta\":0,\"dateist_inline_disabled\":false,\"dateist_lang\":null,\"global.teams\":true,\"has_push_reminders\":true,\"karma_disabled\":false,\"karma_vacation\":false,\"kisa_consent_timestamp\":null,\"restriction\":3},\"free_trial_expires_at\":\"{time:12}\",\"full_name\":\"{name}\",\"getting_started_guide_projects\":null,\"has_consented_to_ai_training\":null,\"has_magic_number\":false,\"has_password\":false,\"has_started_a_trial\":true,\"id\":\"{account}\",\"image_id\":null,\"inbox_project_id\":\"{token:0}\",\"is_celebrations_enabled\":true,\"is_deleted\":false,\"is_onboarded\":false,\"is_premium\":true,\"joinable_workspace\":null,\"joined_at\":\"{time:13}\",\"karma\":650,\"karma_trend\":\"up\",\"lang\":\"en\",\"mfa_enabled\":false,\"next_week\":1,\"onboarded_dated_tasks_created\":true,\"onboarded_desktop_accessed\":true,\"onboarded_mobile_accessed\":false,\"onboarded_tasks_completed\":true,\"onboarding_completed\":true,\"onboarding_initiated\":true,\"onboarding_level\":\"beginner\",\"onboarding_persona\":\"organic\",\"onboarding_role\":null,\"onboarding_started\":false,\"onboarding_team_mode\":null,\"onboarding_use_cases\":[\"solo\"],\"premium_status\":\"current_personal_plan\",\"premium_until\":\"2026-10-28T01:58:38.000000Z\",\"ramble_sessions_usage\":{\"current_count\":1,\"limit\":1000,\"remaining\":999,\"reset_date\":\"2026-11-01T00:00:00+00:00\"},\"share_limit\":5,\"sort_order\":0,\"start_day\":1,\"start_page\":\"inbox\",\"status\":null,\"team_inbox_id\":null,\"theme_appearance\":\"system\",\"theme_id\":\"0\",\"time_format\":0,\"token\":\"{secret}\",\"tz_info\":{\"gmt_string\":\"+02:00\",\"hours\":2,\"is_dst\":1,\"minutes\":0,\"timezone\":\"Europe/Berlin\"},\"unique_prefix\":13,\"urgent_reminder_device\":null,\"verification_status\":\"verified\",\"websocket_url\":\"{secret}\",\"weekend_start_day\":6,\"weekly_goal\":30},\"user_plan_limits\":{\"current\":{\"activity_log\":true,\"activity_log_limit\":-1,\"advanced_permissions\":true,\"automatic_backups\":true,\"calendar_feeds\":true,\"calendar_layout\":true,\"comments\":true,\"completed_tasks\":true,\"custom_app_icon\":true,\"customization_color\":true,\"deadlines\":true,\"durations\":true,\"email_ai_forwarding\":true,\"email_forwarding\":true,\"filters\":true,\"labels\":true,\"max_calendar_accounts\":1,\"max_collaborators\":5,\"max_filters\":150,\"max_folders_per_workspace\":25,\"max_free_workspaces_created\":1,\"max_guests_per_workspace\":25,\"max_labels\":500,\"max_live_notifications\":500,\"max_monthly_capture\":1000,\"max_monthly_ramble\":1000,\"max_projects\":300,\"max_projects_joined\":500,\"max_reminders_location\":300,\"max_reminders_time\":700,\"max_sections\":20,\"max_tasks\":300,\"max_user_templates\":100,\"plan_name\":\"pro\",\"project_icons\":true,\"project_insights_light\":true,\"reminders\":true,\"reminders_at_due\":true,\"templates\":true,\"upload_limit_mb\":100,\"uploads\":true,\"weekly_trends\":true},\"next\":null}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"sync_token\":\"*\",\"resource_types\":[\"user\",\"user_plan_limits\",\"projects\"]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:07:58Z\",\"projects\":[{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":0,\"color\":\"charcoal\",\"created_at\":\"{time:14}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:0}\",\"inbox_project\":true,\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"Inbox\",\"order_key\":\"a0\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:1}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:15}\",\"view_style\":\"list\"},{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":0,\"color\":\"charcoal\",\"created_at\":\"{time:16}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:2}\",\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"{secret}\",\"order_key\":\"a1\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:3}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:17}\",\"view_style\":\"list\"},{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":1,\"color\":\"berry_red\",\"created_at\":\"{time:18}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:14}\",\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"Mitra Home\",\"order_key\":\"a2qqL\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:21}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:19}\",\"view_style\":\"list\"},{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":1,\"color\":\"charcoal\",\"created_at\":\"{time:20}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:19}\",\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"Errands\",\"order_key\":\"a2IgP\",\"parent_id\":\"{token:14}\",\"public_access\":false,\"public_key\":\"{token:22}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:21}\",\"view_style\":\"list\"}],\"sync_status\":{},\"sync_token\":\"{token:5}\",\"temp_id_mapping\":{},\"user\":{\"activated_user\":false,\"auto_reminder\":30,\"business_account_id\":null,\"capture_sessions_usage\":{\"current_count\":1,\"limit\":1000,\"remaining\":999,\"reset_date\":\"2026-11-01T00:00:00+00:00\"},\"daily_goal\":5,\"date_format\":0,\"days_off\":[6,7],\"deleted_at\":null,\"email\":\"{email}\",\"feature_identifier\":\"{secret}\",\"features\":{\"beta\":0,\"dateist_inline_disabled\":false,\"dateist_lang\":null,\"global.teams\":true,\"has_push_reminders\":true,\"karma_disabled\":false,\"karma_vacation\":false,\"kisa_consent_timestamp\":null,\"restriction\":3},\"free_trial_expires_at\":\"{time:22}\",\"full_name\":\"{name}\",\"getting_started_guide_projects\":null,\"has_consented_to_ai_training\":null,\"has_magic_number\":false,\"has_password\":false,\"has_started_a_trial\":true,\"id\":\"{account}\",\"image_id\":null,\"inbox_project_id\":\"{token:0}\",\"is_celebrations_enabled\":true,\"is_deleted\":false,\"is_onboarded\":false,\"is_premium\":true,\"joinable_workspace\":null,\"joined_at\":\"{time:23}\",\"karma\":650,\"karma_trend\":\"up\",\"lang\":\"en\",\"mfa_enabled\":false,\"next_week\":1,\"onboarded_dated_tasks_created\":true,\"onboarded_desktop_accessed\":true,\"onboarded_mobile_accessed\":false,\"onboarded_tasks_completed\":true,\"onboarding_completed\":true,\"onboarding_initiated\":true,\"onboarding_level\":\"beginner\",\"onboarding_persona\":\"organic\",\"onboarding_role\":null,\"onboarding_started\":false,\"onboarding_team_mode\":null,\"onboarding_use_cases\":[\"solo\"],\"premium_status\":\"current_personal_plan\",\"premium_until\":\"2026-10-28T01:58:38.000000Z\",\"ramble_sessions_usage\":{\"current_count\":1,\"limit\":1000,\"remaining\":999,\"reset_date\":\"2026-11-01T00:00:00+00:00\"},\"share_limit\":5,\"sort_order\":0,\"start_day\":1,\"start_page\":\"inbox\",\"status\":null,\"team_inbox_id\":null,\"theme_appearance\":\"system\",\"theme_id\":\"0\",\"time_format\":0,\"token\":\"{secret}\",\"tz_info\":{\"gmt_string\":\"+02:00\",\"hours\":2,\"is_dst\":1,\"minutes\":0,\"timezone\":\"Europe/Berlin\"},\"unique_prefix\":13,\"urgent_reminder_device\":null,\"verification_status\":\"verified\",\"websocket_url\":\"{secret}\",\"weekend_start_day\":6,\"weekly_goal\":30},\"user_plan_limits\":{\"current\":{\"activity_log\":true,\"activity_log_limit\":-1,\"advanced_permissions\":true,\"automatic_backups\":true,\"calendar_feeds\":true,\"calendar_layout\":true,\"comments\":true,\"completed_tasks\":true,\"custom_app_icon\":true,\"customization_color\":true,\"deadlines\":true,\"durations\":true,\"email_ai_forwarding\":true,\"email_forwarding\":true,\"filters\":true,\"labels\":true,\"max_calendar_accounts\":1,\"max_collaborators\":5,\"max_filters\":150,\"max_folders_per_workspace\":25,\"max_free_workspaces_created\":1,\"max_guests_per_workspace\":25,\"max_labels\":500,\"max_live_notifications\":500,\"max_monthly_capture\":1000,\"max_monthly_ramble\":1000,\"max_projects\":300,\"max_projects_joined\":500,\"max_reminders_location\":300,\"max_reminders_time\":700,\"max_sections\":20,\"max_tasks\":300,\"max_user_templates\":100,\"plan_name\":\"pro\",\"project_icons\":true,\"project_insights_light\":true,\"reminders\":true,\"reminders_at_due\":true,\"templates\":true,\"upload_limit_mb\":100,\"uploads\":true,\"weekly_trends\":true},\"next\":null}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"sync_token\":\"*\",\"resource_types\":[\"user\",\"user_plan_limits\",\"projects\"]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:07:59Z\",\"projects\":[{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":0,\"color\":\"charcoal\",\"created_at\":\"{time:24}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:0}\",\"inbox_project\":true,\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"Inbox\",\"order_key\":\"a0\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:1}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:25}\",\"view_style\":\"list\"},{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":0,\"color\":\"charcoal\",\"created_at\":\"{time:26}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:2}\",\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"{secret}\",\"order_key\":\"a1\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:3}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:27}\",\"view_style\":\"list\"},{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":1,\"color\":\"berry_red\",\"created_at\":\"{time:28}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:14}\",\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"Mitra Home\",\"order_key\":\"a2qqL\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:21}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:29}\",\"view_style\":\"list\"},{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":1,\"color\":\"charcoal\",\"created_at\":\"{time:30}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:19}\",\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"Errands\",\"order_key\":\"a2IgP\",\"parent_id\":\"{token:14}\",\"public_access\":false,\"public_key\":\"{token:22}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:31}\",\"view_style\":\"list\"}],\"sync_status\":{},\"sync_token\":\"{token:5}\",\"temp_id_mapping\":{},\"user\":{\"activated_user\":false,\"auto_reminder\":30,\"business_account_id\":null,\"capture_sessions_usage\":{\"current_count\":1,\"limit\":1000,\"remaining\":999,\"reset_date\":\"2026-11-01T00:00:00+00:00\"},\"daily_goal\":5,\"date_format\":0,\"days_off\":[6,7],\"deleted_at\":null,\"email\":\"{email}\",\"feature_identifier\":\"{secret}\",\"features\":{\"beta\":0,\"dateist_inline_disabled\":false,\"dateist_lang\":null,\"global.teams\":true,\"has_push_reminders\":true,\"karma_disabled\":false,\"karma_vacation\":false,\"kisa_consent_timestamp\":null,\"restriction\":3},\"free_trial_expires_at\":\"{time:32}\",\"full_name\":\"{name}\",\"getting_started_guide_projects\":null,\"has_consented_to_ai_training\":null,\"has_magic_number\":false,\"has_password\":false,\"has_started_a_trial\":true,\"id\":\"{account}\",\"image_id\":null,\"inbox_project_id\":\"{token:0}\",\"is_celebrations_enabled\":true,\"is_deleted\":false,\"is_onboarded\":false,\"is_premium\":true,\"joinable_workspace\":null,\"joined_at\":\"{time:33}\",\"karma\":650,\"karma_trend\":\"up\",\"lang\":\"en\",\"mfa_enabled\":false,\"next_week\":1,\"onboarded_dated_tasks_created\":true,\"onboarded_desktop_accessed\":true,\"onboarded_mobile_accessed\":false,\"onboarded_tasks_completed\":true,\"onboarding_completed\":true,\"onboarding_initiated\":true,\"onboarding_level\":\"beginner\",\"onboarding_persona\":\"organic\",\"onboarding_role\":null,\"onboarding_started\":false,\"onboarding_team_mode\":null,\"onboarding_use_cases\":[\"solo\"],\"premium_status\":\"current_personal_plan\",\"premium_until\":\"2026-10-28T01:58:38.000000Z\",\"ramble_sessions_usage\":{\"current_count\":1,\"limit\":1000,\"remaining\":999,\"reset_date\":\"2026-11-01T00:00:00+00:00\"},\"share_limit\":5,\"sort_order\":0,\"start_day\":1,\"start_page\":\"inbox\",\"status\":null,\"team_inbox_id\":null,\"theme_appearance\":\"system\",\"theme_id\":\"0\",\"time_format\":0,\"token\":\"{secret}\",\"tz_info\":{\"gmt_string\":\"+02:00\",\"hours\":2,\"is_dst\":1,\"minutes\":0,\"timezone\":\"Europe/Berlin\"},\"unique_prefix\":13,\"urgent_reminder_device\":null,\"verification_status\":\"verified\",\"websocket_url\":\"{secret}\",\"weekend_start_day\":6,\"weekly_goal\":30},\"user_plan_limits\":{\"current\":{\"activity_log\":true,\"activity_log_limit\":-1,\"advanced_permissions\":true,\"automatic_backups\":true,\"calendar_feeds\":true,\"calendar_layout\":true,\"comments\":true,\"completed_tasks\":true,\"custom_app_icon\":true,\"customization_color\":true,\"deadlines\":true,\"durations\":true,\"email_ai_forwarding\":true,\"email_forwarding\":true,\"filters\":true,\"labels\":true,\"max_calendar_accounts\":1,\"max_collaborators\":5,\"max_filters\":150,\"max_folders_per_workspace\":25,\"max_free_workspaces_created\":1,\"max_guests_per_workspace\":25,\"max_labels\":500,\"max_live_notifications\":500,\"max_monthly_capture\":1000,\"max_monthly_ramble\":1000,\"max_projects\":300,\"max_projects_joined\":500,\"max_reminders_location\":300,\"max_reminders_time\":700,\"max_sections\":20,\"max_tasks\":300,\"max_user_templates\":100,\"plan_name\":\"pro\",\"project_icons\":true,\"project_insights_light\":true,\"reminders\":true,\"reminders_at_due\":true,\"templates\":true,\"upload_limit_mb\":100,\"uploads\":true,\"weekly_trends\":true},\"next\":null}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"sync_token\":\"*\",\"resource_types\":[\"items\"]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:08:01Z\",\"items\":[{\"added_at\":\"{time:34}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":1,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"{secret}\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-10-23\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"23 Oct\",\"timezone\":null},\"duration\":null,\"id\":\"{token:23}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a2qdg\",\"parent_id\":null,\"postponed_count\":1,\"priority\":1,\"project_id\":\"{token:0}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:35}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:36}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":2,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"{secret}\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-10-24\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"24 Oct\",\"timezone\":null},\"duration\":null,\"id\":\"{token:24}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a3oO9\",\"parent_id\":null,\"postponed_count\":1,\"priority\":1,\"project_id\":\"{token:0}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:37}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:38}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":3,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"{secret}\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-10-23\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"23 Oct\",\"timezone\":null},\"duration\":null,\"id\":\"{token:25}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a43rE\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:0}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:39}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:40}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":4,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"{secret}\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-10-24\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"24 Oct\",\"timezone\":null},\"duration\":null,\"id\":\"{token:26}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a55yO\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:0}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:41}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:42}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":1,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"{secret}\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:27}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a2K2D\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:2}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:43}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:44}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":2,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"{secret}\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:28}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a3lbC\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:2}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:45}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:46}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":6,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":1,\"content\":\"{secret}\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-11-16T09:00:00\",\"is_recurring\":true,\"lang\":\"en\",\"string\":\"every other monday at 9am\",\"timezone\":null},\"duration\":null,\"id\":\"{token:29}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[\"home\"],\"note_count\":0,\"order_key\":\"a77aM\",\"parent_id\":null,\"postponed_count\":0,\"priority\":3,\"project_id\":\"{token:0}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:47}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:48}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":2,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Call the plumber\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-11-03T16:00:00\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"2026-11-03 16:00\",\"timezone\":null},\"duration\":null,\"id\":\"{token:16}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a3nAv\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:49}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:50}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":1,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Pay rent\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-11-02\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"2026-11-02\",\"timezone\":null},\"duration\":null,\"id\":\"{token:12}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[\"mitra-bills\"],\"note_count\":0,\"order_key\":\"a23Hp\",\"parent_id\":null,\"postponed_count\":0,\"priority\":4,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:51}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:52}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":1,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Fetch the parcel\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:18}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a2N1x\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:19}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:53}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:54}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":6,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Paint the hallway\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:17}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a7xGW\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:55}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:56}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":3,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Standup\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-11-04T14:00:00Z\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"2026-11-04 09:00\",\"timezone\":\"America/New_York\"},\"duration\":null,\"id\":\"{token:6}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a44jv\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:57}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:58}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":5,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Buy groceries\",\"day_order\":-1,\"deadline\":null,\"description\":\"From the **market**\\n\\n- [ ] oat milk\\n- [x] bread\",\"due\":null,\"duration\":null,\"id\":\"{token:8}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a6j08\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:59}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:60}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":4,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Water the plants\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-10-26T09:00:00\",\"is_recurring\":true,\"lang\":\"en\",\"string\":\"every monday at 9am\",\"timezone\":null},\"duration\":null,\"id\":\"{token:9}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a5gEt\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:61}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:62}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":1,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Pick a color\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:13}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a2Ark\",\"parent_id\":\"{token:17}\",\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:63}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:64}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":9,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Write the report\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":{\"amount\":45,\"unit\":\"minute\"},\"id\":\"{token:11}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"aBwJy\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:65}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:66}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":10,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Trip\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-11-10\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"2026-11-10\",\"timezone\":null},\"duration\":{\"amount\":3,\"unit\":\"day\"},\"id\":\"{token:10}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"aCAz4\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:67}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:68}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":7,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"File taxes\",\"day_order\":-1,\"deadline\":{\"date\":\"2026-11-30\",\"lang\":\"en\"},\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:7}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a9OtS\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:69}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:70}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":8,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Workshop\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-11-05T13:00:00Z\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"2026-11-05 14:00\",\"timezone\":\"Europe/Berlin\"},\"duration\":{\"amount\":90,\"unit\":\"minute\"},\"id\":\"{token:15}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"aAGjR\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:71}\",\"user_id\":\"{account}\"}],\"sync_status\":{},\"sync_token\":\"{token:5}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"type\":\"item_add\",\"temp_id\":\"{id:33}\",\"args\":{\"content\":\"Plan the week\",\"description\":\"Look **ahead**\",\"project_id\":\"{token:14}\",\"due\":{\"date\":\"2026-11-06T10:00:00\",\"timezone\":null},\"deadline\":{\"date\":\"2026-11-07\"},\"duration\":{\"amount\":60,\"unit\":\"minute\"}},\"uuid\":\"{id:34}\"}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:08:05Z\",\"sync_status\":{\"{id:34}\":\"ok\"},\"sync_token\":\"{token:30}\",\"temp_id_mapping\":{\"{id:33}\":\"{token:31}\"}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"type\":\"item_update\",\"args\":{\"id\":\"{token:12}\",\"content\":\"Pay the rent\"},\"uuid\":\"{id:35}\"}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:08:09Z\",\"sync_status\":{\"{id:35}\":\"ok\"},\"sync_token\":\"{token:32}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"type\":\"item_update\",\"args\":{\"id\":\"{token:12}\",\"due\":{\"date\":\"2026-11-02T08:00:00Z\",\"timezone\":\"Europe/Madrid\"}},\"uuid\":\"{id:36}\"}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:08:13Z\",\"sync_status\":{\"{id:36}\":\"ok\"},\"sync_token\":\"{token:33}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"type\":\"item_update\",\"args\":{\"id\":\"{token:16}\",\"due\":{\"date\":\"2026-11-04\",\"timezone\":null}},\"uuid\":\"{id:37}\"}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:08:17Z\",\"sync_status\":{\"{id:37}\":\"ok\"},\"sync_token\":\"{token:34}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"type\":\"item_update\",\"args\":{\"id\":\"{token:9}\",\"due\":{\"date\":\"2026-10-27T09:00:00\",\"timezone\":null,\"string\":\"every monday at 9am\",\"lang\":\"en\",\"is_recurring\":true}},\"uuid\":\"{id:38}\"}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:08:21Z\",\"sync_status\":{\"{id:38}\":\"ok\"},\"sync_token\":\"{token:35}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"type\":\"item_close\",\"args\":{\"id\":\"{token:6}\"},\"uuid\":\"{id:39}\"}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:08:25Z\",\"sync_status\":{\"{id:39}\":\"ok\"},\"sync_token\":\"{token:36}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"type\":\"item_uncomplete\",\"args\":{\"id\":\"{token:6}\"},\"uuid\":\"{id:40}\"}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:08:29Z\",\"sync_status\":{\"{id:40}\":\"ok\"},\"sync_token\":\"{token:37}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"type\":\"item_close\",\"args\":{\"id\":\"{token:9}\"},\"uuid\":\"{id:41}\"}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:08:33Z\",\"sync_status\":{\"{id:41}\":\"ok\"},\"sync_token\":\"{token:38}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"type\":\"item_move\",\"args\":{\"id\":\"{token:8}\",\"parent_id\":\"{token:17}\"},\"uuid\":\"{id:42}\"}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:08:37Z\",\"sync_status\":{\"{id:42}\":\"ok\"},\"sync_token\":\"{token:39}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"type\":\"item_move\",\"args\":{\"id\":\"{token:18}\",\"parent_id\":\"{token:17}\"},\"uuid\":\"{id:43}\"}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:08:42Z\",\"sync_status\":{\"{id:43}\":\"ok\"},\"sync_token\":\"{token:40}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"type\":\"item_move\",\"args\":{\"id\":\"{token:8}\",\"project_id\":\"{token:14}\"},\"uuid\":\"{id:44}\"}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:08:46Z\",\"sync_status\":{\"{id:44}\":\"ok\"},\"sync_token\":\"{token:41}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"type\":\"item_move\",\"args\":{\"id\":\"{token:31}\",\"project_id\":\"{token:19}\"},\"uuid\":\"{id:45}\"}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:08:50Z\",\"sync_status\":{\"{id:45}\":\"ok\"},\"sync_token\":\"{token:42}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"uuid\":\"{id:46}\",\"type\":\"item_update\",\"args\":{\"id\":\"{token:6}\",\"content\":\"Standup, moved\",\"due\":{\"date\":\"2026-11-04T15:00:00Z\",\"timezone\":\"America/New_York\"}}},{\"uuid\":\"{id:47}\",\"type\":\"item_close\",\"args\":{\"id\":\"{token:13}\"}},{\"uuid\":\"{id:48}\",\"type\":\"item_delete\",\"args\":{\"id\":\"{token:20}\"}},{\"uuid\":\"{id:49}\",\"type\":\"item_move\",\"args\":{\"id\":\"{token:8}\",\"project_id\":\"{token:19}\"}},{\"uuid\":\"{id:50}\",\"type\":\"item_add\",\"temp_id\":\"{id:51}\",\"args\":{\"project_id\":\"{token:14}\",\"content\":\"Call the bank\"}}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:08:55Z\",\"sync_status\":{\"{id:48}\":\"ok\",\"{id:50}\":\"ok\",\"{id:46}\":\"ok\",\"{id:49}\":\"ok\",\"{id:47}\":\"ok\"},\"sync_token\":\"{token:43}\",\"temp_id_mapping\":{\"{id:51}\":\"{token:44}\"}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"sync_token\":\"*\",\"resource_types\":[\"user\",\"user_plan_limits\",\"projects\"]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:08:56Z\",\"projects\":[{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":0,\"color\":\"charcoal\",\"created_at\":\"{time:72}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:0}\",\"inbox_project\":true,\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"Inbox\",\"order_key\":\"a0\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:1}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:73}\",\"view_style\":\"list\"},{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":0,\"color\":\"charcoal\",\"created_at\":\"{time:74}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:2}\",\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"{secret}\",\"order_key\":\"a1\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:3}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:75}\",\"view_style\":\"list\"},{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":1,\"color\":\"berry_red\",\"created_at\":\"{time:76}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:14}\",\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"Mitra Home\",\"order_key\":\"a2qqL\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:21}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:77}\",\"view_style\":\"list\"},{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":1,\"color\":\"charcoal\",\"created_at\":\"{time:78}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:19}\",\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"Errands\",\"order_key\":\"a2IgP\",\"parent_id\":\"{token:14}\",\"public_access\":false,\"public_key\":\"{token:22}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:79}\",\"view_style\":\"list\"}],\"sync_status\":{},\"sync_token\":\"{token:43}\",\"temp_id_mapping\":{},\"user\":{\"activated_user\":false,\"auto_reminder\":30,\"business_account_id\":null,\"capture_sessions_usage\":{\"current_count\":1,\"limit\":1000,\"remaining\":999,\"reset_date\":\"2026-11-01T00:00:00+00:00\"},\"daily_goal\":5,\"date_format\":0,\"days_off\":[6,7],\"deleted_at\":null,\"email\":\"{email}\",\"feature_identifier\":\"{secret}\",\"features\":{\"beta\":0,\"dateist_inline_disabled\":false,\"dateist_lang\":null,\"global.teams\":true,\"has_push_reminders\":true,\"karma_disabled\":false,\"karma_vacation\":false,\"kisa_consent_timestamp\":null,\"restriction\":3},\"free_trial_expires_at\":\"{time:80}\",\"full_name\":\"{name}\",\"getting_started_guide_projects\":null,\"has_consented_to_ai_training\":null,\"has_magic_number\":false,\"has_password\":false,\"has_started_a_trial\":true,\"id\":\"{account}\",\"image_id\":null,\"inbox_project_id\":\"{token:0}\",\"is_celebrations_enabled\":true,\"is_deleted\":false,\"is_onboarded\":false,\"is_premium\":true,\"joinable_workspace\":null,\"joined_at\":\"{time:81}\",\"karma\":650,\"karma_trend\":\"up\",\"lang\":\"en\",\"mfa_enabled\":false,\"next_week\":1,\"onboarded_dated_tasks_created\":true,\"onboarded_desktop_accessed\":true,\"onboarded_mobile_accessed\":false,\"onboarded_tasks_completed\":true,\"onboarding_completed\":true,\"onboarding_initiated\":true,\"onboarding_level\":\"beginner\",\"onboarding_persona\":\"organic\",\"onboarding_role\":null,\"onboarding_started\":false,\"onboarding_team_mode\":null,\"onboarding_use_cases\":[\"solo\"],\"premium_status\":\"current_personal_plan\",\"premium_until\":\"2026-10-28T01:58:38.000000Z\",\"ramble_sessions_usage\":{\"current_count\":1,\"limit\":1000,\"remaining\":999,\"reset_date\":\"2026-11-01T00:00:00+00:00\"},\"share_limit\":5,\"sort_order\":0,\"start_day\":1,\"start_page\":\"inbox\",\"status\":null,\"team_inbox_id\":null,\"theme_appearance\":\"system\",\"theme_id\":\"0\",\"time_format\":0,\"token\":\"{secret}\",\"tz_info\":{\"gmt_string\":\"+02:00\",\"hours\":2,\"is_dst\":1,\"minutes\":0,\"timezone\":\"Europe/Berlin\"},\"unique_prefix\":13,\"urgent_reminder_device\":null,\"verification_status\":\"verified\",\"websocket_url\":\"{secret}\",\"weekend_start_day\":6,\"weekly_goal\":30},\"user_plan_limits\":{\"current\":{\"activity_log\":true,\"activity_log_limit\":-1,\"advanced_permissions\":true,\"automatic_backups\":true,\"calendar_feeds\":true,\"calendar_layout\":true,\"comments\":true,\"completed_tasks\":true,\"custom_app_icon\":true,\"customization_color\":true,\"deadlines\":true,\"durations\":true,\"email_ai_forwarding\":true,\"email_forwarding\":true,\"filters\":true,\"labels\":true,\"max_calendar_accounts\":1,\"max_collaborators\":5,\"max_filters\":150,\"max_folders_per_workspace\":25,\"max_free_workspaces_created\":1,\"max_guests_per_workspace\":25,\"max_labels\":500,\"max_live_notifications\":500,\"max_monthly_capture\":1000,\"max_monthly_ramble\":1000,\"max_projects\":300,\"max_projects_joined\":500,\"max_reminders_location\":300,\"max_reminders_time\":700,\"max_sections\":20,\"max_tasks\":300,\"max_user_templates\":100,\"plan_name\":\"pro\",\"project_icons\":true,\"project_insights_light\":true,\"reminders\":true,\"reminders_at_due\":true,\"templates\":true,\"upload_limit_mb\":100,\"uploads\":true,\"weekly_trends\":true},\"next\":null}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"sync_token\":\"{token:5}\",\"resource_types\":[\"items\"]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":false,\"items\":[{\"added_at\":\"{time:82}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":1,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Pay the rent\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-11-02T08:00:00Z\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"2026-11-02 09:00\",\"timezone\":\"Europe/Madrid\"},\"duration\":null,\"id\":\"{token:12}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[\"mitra-bills\"],\"note_count\":0,\"order_key\":\"a23Hp\",\"parent_id\":null,\"postponed_count\":1,\"priority\":4,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:83}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:84}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":2,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Call the plumber\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-11-04\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"2026-11-04\",\"timezone\":null},\"duration\":null,\"id\":\"{token:16}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a3nAv\",\"parent_id\":null,\"postponed_count\":1,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:85}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:86}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":4,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":1,\"content\":\"Water the plants\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-11-02T09:00:00\",\"is_recurring\":true,\"lang\":\"en\",\"string\":\"every monday at 9am\",\"timezone\":null},\"duration\":null,\"id\":\"{token:9}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a5gEt\",\"parent_id\":null,\"postponed_count\":1,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:87}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:88}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":3,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Fetch the parcel\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:18}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a4S1a\",\"parent_id\":\"{token:17}\",\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:89}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:90}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":1,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Plan the week\",\"day_order\":-1,\"deadline\":{\"date\":\"2026-11-07\",\"lang\":\"en\"},\"description\":\"Look **ahead**\",\"due\":{\"date\":\"2026-11-06T10:00:00\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"2026-11-06 10:00\",\"timezone\":null},\"duration\":{\"amount\":60,\"unit\":\"minute\"},\"id\":\"{token:31}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a2uX4\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:19}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:91}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:92}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":12,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":1,\"content\":\"Standup, moved\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-11-04T15:00:00Z\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"2026-11-04 10:00\",\"timezone\":\"America/New_York\"},\"duration\":null,\"id\":\"{token:6}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"aE8hz\",\"parent_id\":null,\"postponed_count\":1,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:93}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:94}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":true,\"child_order\":1,\"completed_at\":\"{time:95}\",\"completed_by_uid\":\"{account}\",\"completed_count\":1,\"content\":\"Pick a color\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:13}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a2Ark\",\"parent_id\":\"{token:17}\",\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:96}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:97}\",\"added_by_uid\":null,\"assigned_by_uid\":null,\"checked\":false,\"child_order\":0,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:20}\",\"is_collapsed\":false,\"is_deleted\":true,\"labels\":[],\"note_count\":0,\"order_key\":null,\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:45}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":null,\"user_id\":\"{account}\"},{\"added_at\":\"{time:98}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":2,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Buy groceries\",\"day_order\":-1,\"deadline\":null,\"description\":\"From the **market**\\n\\n- [ ] oat milk\\n- [x] bread\",\"due\":null,\"duration\":null,\"id\":\"{token:8}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a3RlO\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:19}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:99}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:100}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":13,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Call the bank\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:44}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"aFtC7\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:101}\",\"user_id\":\"{account}\"}],\"sync_status\":{},\"sync_token\":\"{token:43}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"type\":\"item_add\",\"temp_id\":\"{id:52}\",\"args\":{\"content\":\"Return the books\",\"description\":\"\",\"project_id\":\"{token:14}\"},\"uuid\":\"{id:53}\"},{\"type\":\"item_close\",\"args\":{\"id\":\"{id:52}\"},\"uuid\":\"{id:54}\"}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:09:00Z\",\"sync_status\":{\"{id:54}\":\"ok\",\"{id:53}\":\"ok\"},\"sync_token\":\"{token:46}\",\"temp_id_mapping\":{\"{id:52}\":\"{token:47}\"}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"type\":\"item_add\",\"temp_id\":\"{id:55}\",\"args\":{\"content\":\"Retro\",\"description\":\"\",\"project_id\":\"{token:14}\"},\"uuid\":\"{id:56}\"}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:09:04Z\",\"sync_status\":{\"{id:56}\":\"ok\"},\"sync_token\":\"{token:48}\",\"temp_id_mapping\":{\"{id:55}\":\"{token:49}\"}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"type\":\"item_delete\",\"args\":{\"id\":\"{token:49}\"},\"uuid\":\"{id:57}\"}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:09:08Z\",\"sync_status\":{\"{id:57}\":\"ok\"},\"sync_token\":\"{token:50}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"uuid\":\"{id:58}\",\"type\":\"item_delete\",\"args\":{\"id\":\"{token:44}\"}}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:09:11Z\",\"sync_status\":{\"{id:58}\":\"ok\"},\"sync_token\":\"{token:51}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"type\":\"item_delete\",\"args\":{\"id\":\"{token:44}\"},\"uuid\":\"{id:59}\"}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:09:12Z\",\"sync_status\":{\"{id:59}\":\"ok\"},\"sync_token\":\"{token:52}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"uuid\":\"{id:60}\",\"type\":\"project_archive\",\"args\":{\"id\":\"{token:19}\"}}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:09:14Z\",\"sync_status\":{\"{id:60}\":\"ok\"},\"sync_token\":\"{token:53}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"sync_token\":\"*\",\"resource_types\":[\"user\",\"user_plan_limits\",\"projects\"]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:09:15Z\",\"projects\":[{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":0,\"color\":\"charcoal\",\"created_at\":\"{time:102}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:0}\",\"inbox_project\":true,\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"Inbox\",\"order_key\":\"a0\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:1}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:103}\",\"view_style\":\"list\"},{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":0,\"color\":\"charcoal\",\"created_at\":\"{time:104}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:2}\",\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"{secret}\",\"order_key\":\"a1\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:3}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:105}\",\"view_style\":\"list\"},{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":1,\"color\":\"berry_red\",\"created_at\":\"{time:106}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:14}\",\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"Mitra Home\",\"order_key\":\"a2qqL\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:21}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:107}\",\"view_style\":\"list\"}],\"sync_status\":{},\"sync_token\":\"{token:53}\",\"temp_id_mapping\":{},\"user\":{\"activated_user\":false,\"auto_reminder\":30,\"business_account_id\":null,\"capture_sessions_usage\":{\"current_count\":1,\"limit\":1000,\"remaining\":999,\"reset_date\":\"2026-11-01T00:00:00+00:00\"},\"daily_goal\":5,\"date_format\":0,\"days_off\":[6,7],\"deleted_at\":null,\"email\":\"{email}\",\"feature_identifier\":\"{secret}\",\"features\":{\"beta\":0,\"dateist_inline_disabled\":false,\"dateist_lang\":null,\"global.teams\":true,\"has_push_reminders\":true,\"karma_disabled\":false,\"karma_vacation\":false,\"kisa_consent_timestamp\":null,\"restriction\":3},\"free_trial_expires_at\":\"{time:108}\",\"full_name\":\"{name}\",\"getting_started_guide_projects\":null,\"has_consented_to_ai_training\":null,\"has_magic_number\":false,\"has_password\":false,\"has_started_a_trial\":true,\"id\":\"{account}\",\"image_id\":null,\"inbox_project_id\":\"{token:0}\",\"is_celebrations_enabled\":true,\"is_deleted\":false,\"is_onboarded\":false,\"is_premium\":true,\"joinable_workspace\":null,\"joined_at\":\"{time:109}\",\"karma\":650,\"karma_trend\":\"up\",\"lang\":\"en\",\"mfa_enabled\":false,\"next_week\":1,\"onboarded_dated_tasks_created\":true,\"onboarded_desktop_accessed\":true,\"onboarded_mobile_accessed\":false,\"onboarded_tasks_completed\":true,\"onboarding_completed\":true,\"onboarding_initiated\":true,\"onboarding_level\":\"beginner\",\"onboarding_persona\":\"organic\",\"onboarding_role\":null,\"onboarding_started\":false,\"onboarding_team_mode\":null,\"onboarding_use_cases\":[\"solo\"],\"premium_status\":\"current_personal_plan\",\"premium_until\":\"2026-10-28T01:58:38.000000Z\",\"ramble_sessions_usage\":{\"current_count\":1,\"limit\":1000,\"remaining\":999,\"reset_date\":\"2026-11-01T00:00:00+00:00\"},\"share_limit\":5,\"sort_order\":0,\"start_day\":1,\"start_page\":\"inbox\",\"status\":null,\"team_inbox_id\":null,\"theme_appearance\":\"system\",\"theme_id\":\"0\",\"time_format\":0,\"token\":\"{secret}\",\"tz_info\":{\"gmt_string\":\"+02:00\",\"hours\":2,\"is_dst\":1,\"minutes\":0,\"timezone\":\"Europe/Berlin\"},\"unique_prefix\":13,\"urgent_reminder_device\":null,\"verification_status\":\"verified\",\"websocket_url\":\"{secret}\",\"weekend_start_day\":6,\"weekly_goal\":30},\"user_plan_limits\":{\"current\":{\"activity_log\":true,\"activity_log_limit\":-1,\"advanced_permissions\":true,\"automatic_backups\":true,\"calendar_feeds\":true,\"calendar_layout\":true,\"comments\":true,\"completed_tasks\":true,\"custom_app_icon\":true,\"customization_color\":true,\"deadlines\":true,\"durations\":true,\"email_ai_forwarding\":true,\"email_forwarding\":true,\"filters\":true,\"labels\":true,\"max_calendar_accounts\":1,\"max_collaborators\":5,\"max_filters\":150,\"max_folders_per_workspace\":25,\"max_free_workspaces_created\":1,\"max_guests_per_workspace\":25,\"max_labels\":500,\"max_live_notifications\":500,\"max_monthly_capture\":1000,\"max_monthly_ramble\":1000,\"max_projects\":300,\"max_projects_joined\":500,\"max_reminders_location\":300,\"max_reminders_time\":700,\"max_sections\":20,\"max_tasks\":300,\"max_user_templates\":100,\"plan_name\":\"pro\",\"project_icons\":true,\"project_insights_light\":true,\"reminders\":true,\"reminders_at_due\":true,\"templates\":true,\"upload_limit_mb\":100,\"uploads\":true,\"weekly_trends\":true},\"next\":null}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"sync_token\":\"*\",\"resource_types\":[\"user\",\"user_plan_limits\",\"projects\"]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:09:16Z\",\"projects\":[{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":0,\"color\":\"charcoal\",\"created_at\":\"{time:110}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:0}\",\"inbox_project\":true,\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"Inbox\",\"order_key\":\"a0\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:1}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:111}\",\"view_style\":\"list\"},{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":0,\"color\":\"charcoal\",\"created_at\":\"{time:112}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:2}\",\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"{secret}\",\"order_key\":\"a1\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:3}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:113}\",\"view_style\":\"list\"},{\"access\":{\"configuration\":{},\"visibility\":\"restricted\"},\"can_assign_tasks\":false,\"can_comment\":true,\"child_order\":1,\"color\":\"berry_red\",\"created_at\":\"{time:114}\",\"creator_uid\":\"{account}\",\"default_order\":0,\"default_order_key\":null,\"description\":\"\",\"icon\":null,\"id\":\"{token:14}\",\"is_archived\":false,\"is_collapsed\":false,\"is_deleted\":false,\"is_favorite\":false,\"is_frozen\":false,\"is_shared\":false,\"name\":\"Mitra Home\",\"order_key\":\"a2qqL\",\"parent_id\":null,\"public_access\":false,\"public_key\":\"{token:21}\",\"role\":\"CREATOR\",\"updated_at\":\"{time:115}\",\"view_style\":\"list\"}],\"sync_status\":{},\"sync_token\":\"{token:53}\",\"temp_id_mapping\":{},\"user\":{\"activated_user\":false,\"auto_reminder\":30,\"business_account_id\":null,\"capture_sessions_usage\":{\"current_count\":1,\"limit\":1000,\"remaining\":999,\"reset_date\":\"2026-11-01T00:00:00+00:00\"},\"daily_goal\":5,\"date_format\":0,\"days_off\":[6,7],\"deleted_at\":null,\"email\":\"{email}\",\"feature_identifier\":\"{secret}\",\"features\":{\"beta\":0,\"dateist_inline_disabled\":false,\"dateist_lang\":null,\"global.teams\":true,\"has_push_reminders\":true,\"karma_disabled\":false,\"karma_vacation\":false,\"kisa_consent_timestamp\":null,\"restriction\":3},\"free_trial_expires_at\":\"{time:116}\",\"full_name\":\"{name}\",\"getting_started_guide_projects\":null,\"has_consented_to_ai_training\":null,\"has_magic_number\":false,\"has_password\":false,\"has_started_a_trial\":true,\"id\":\"{account}\",\"image_id\":null,\"inbox_project_id\":\"{token:0}\",\"is_celebrations_enabled\":true,\"is_deleted\":false,\"is_onboarded\":false,\"is_premium\":true,\"joinable_workspace\":null,\"joined_at\":\"{time:117}\",\"karma\":650,\"karma_trend\":\"up\",\"lang\":\"en\",\"mfa_enabled\":false,\"next_week\":1,\"onboarded_dated_tasks_created\":true,\"onboarded_desktop_accessed\":true,\"onboarded_mobile_accessed\":false,\"onboarded_tasks_completed\":true,\"onboarding_completed\":true,\"onboarding_initiated\":true,\"onboarding_level\":\"beginner\",\"onboarding_persona\":\"organic\",\"onboarding_role\":null,\"onboarding_started\":false,\"onboarding_team_mode\":null,\"onboarding_use_cases\":[\"solo\"],\"premium_status\":\"current_personal_plan\",\"premium_until\":\"2026-10-28T01:58:38.000000Z\",\"ramble_sessions_usage\":{\"current_count\":1,\"limit\":1000,\"remaining\":999,\"reset_date\":\"2026-11-01T00:00:00+00:00\"},\"share_limit\":5,\"sort_order\":0,\"start_day\":1,\"start_page\":\"inbox\",\"status\":null,\"team_inbox_id\":null,\"theme_appearance\":\"system\",\"theme_id\":\"0\",\"time_format\":0,\"token\":\"{secret}\",\"tz_info\":{\"gmt_string\":\"+02:00\",\"hours\":2,\"is_dst\":1,\"minutes\":0,\"timezone\":\"Europe/Berlin\"},\"unique_prefix\":13,\"urgent_reminder_device\":null,\"verification_status\":\"verified\",\"websocket_url\":\"{secret}\",\"weekend_start_day\":6,\"weekly_goal\":30},\"user_plan_limits\":{\"current\":{\"activity_log\":true,\"activity_log_limit\":-1,\"advanced_permissions\":true,\"automatic_backups\":true,\"calendar_feeds\":true,\"calendar_layout\":true,\"comments\":true,\"completed_tasks\":true,\"custom_app_icon\":true,\"customization_color\":true,\"deadlines\":true,\"durations\":true,\"email_ai_forwarding\":true,\"email_forwarding\":true,\"filters\":true,\"labels\":true,\"max_calendar_accounts\":1,\"max_collaborators\":5,\"max_filters\":150,\"max_folders_per_workspace\":25,\"max_free_workspaces_created\":1,\"max_guests_per_workspace\":25,\"max_labels\":500,\"max_live_notifications\":500,\"max_monthly_capture\":1000,\"max_monthly_ramble\":1000,\"max_projects\":300,\"max_projects_joined\":500,\"max_reminders_location\":300,\"max_reminders_time\":700,\"max_sections\":20,\"max_tasks\":300,\"max_user_templates\":100,\"plan_name\":\"pro\",\"project_icons\":true,\"project_insights_light\":true,\"reminders\":true,\"reminders_at_due\":true,\"templates\":true,\"upload_limit_mb\":100,\"uploads\":true,\"weekly_trends\":true},\"next\":null}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"sync_token\":\"{token:43}\",\"resource_types\":[\"items\"]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":false,\"items\":[{\"added_at\":\"{time:118}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":true,\"child_order\":14,\"completed_at\":\"{time:119}\",\"completed_by_uid\":\"{account}\",\"completed_count\":1,\"content\":\"Return the books\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:47}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"aGOFE\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:120}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:121}\",\"added_by_uid\":null,\"assigned_by_uid\":null,\"checked\":false,\"child_order\":0,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:49}\",\"is_collapsed\":false,\"is_deleted\":true,\"labels\":[],\"note_count\":0,\"order_key\":null,\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:45}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":null,\"user_id\":\"{account}\"},{\"added_at\":\"{time:122}\",\"added_by_uid\":null,\"assigned_by_uid\":null,\"checked\":false,\"child_order\":0,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:44}\",\"is_collapsed\":false,\"is_deleted\":true,\"labels\":[],\"note_count\":0,\"order_key\":null,\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:45}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":null,\"user_id\":\"{account}\"}],\"sync_status\":{},\"sync_token\":\"{token:53}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"sync_token\":\"*\",\"resource_types\":[\"items\"]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:09:19Z\",\"items\":[{\"added_at\":\"{time:123}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":1,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"{secret}\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-10-23\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"23 Oct\",\"timezone\":null},\"duration\":null,\"id\":\"{token:23}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a2qdg\",\"parent_id\":null,\"postponed_count\":1,\"priority\":1,\"project_id\":\"{token:0}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:124}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:125}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":2,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"{secret}\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-10-24\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"24 Oct\",\"timezone\":null},\"duration\":null,\"id\":\"{token:24}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a3oO9\",\"parent_id\":null,\"postponed_count\":1,\"priority\":1,\"project_id\":\"{token:0}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:126}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:127}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":3,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"{secret}\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-10-23\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"23 Oct\",\"timezone\":null},\"duration\":null,\"id\":\"{token:25}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a43rE\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:0}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:128}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:129}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":4,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"{secret}\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-10-24\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"24 Oct\",\"timezone\":null},\"duration\":null,\"id\":\"{token:26}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a55yO\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:0}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:130}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:131}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":1,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"{secret}\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:27}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a2K2D\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:2}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:132}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:133}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":2,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"{secret}\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:28}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a3lbC\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:2}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:134}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:135}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":6,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":1,\"content\":\"{secret}\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-11-16T09:00:00\",\"is_recurring\":true,\"lang\":\"en\",\"string\":\"every other monday at 9am\",\"timezone\":null},\"duration\":null,\"id\":\"{token:29}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[\"home\"],\"note_count\":0,\"order_key\":\"a77aM\",\"parent_id\":null,\"postponed_count\":0,\"priority\":3,\"project_id\":\"{token:0}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:136}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:137}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":2,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Call the plumber\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-11-04\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"2026-11-04\",\"timezone\":null},\"duration\":null,\"id\":\"{token:16}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a3nAv\",\"parent_id\":null,\"postponed_count\":1,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:138}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:139}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":1,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Pay the rent\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-11-02T08:00:00Z\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"2026-11-02 09:00\",\"timezone\":\"Europe/Madrid\"},\"duration\":null,\"id\":\"{token:12}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[\"mitra-bills\"],\"note_count\":0,\"order_key\":\"a23Hp\",\"parent_id\":null,\"postponed_count\":1,\"priority\":4,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:140}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:141}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":3,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Fetch the parcel\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:18}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a4S1a\",\"parent_id\":\"{token:17}\",\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:142}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:143}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":6,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Paint the hallway\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:17}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a7xGW\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:144}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:145}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":12,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":1,\"content\":\"Standup, moved\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-11-04T15:00:00Z\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"2026-11-04 10:00\",\"timezone\":\"America/New_York\"},\"duration\":null,\"id\":\"{token:6}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"aE8hz\",\"parent_id\":null,\"postponed_count\":1,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:146}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:147}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":4,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":1,\"content\":\"Water the plants\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-11-02T09:00:00\",\"is_recurring\":true,\"lang\":\"en\",\"string\":\"every monday at 9am\",\"timezone\":null},\"duration\":null,\"id\":\"{token:9}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a5gEt\",\"parent_id\":null,\"postponed_count\":1,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:148}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:149}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":9,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Write the report\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":{\"amount\":45,\"unit\":\"minute\"},\"id\":\"{token:11}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"aBwJy\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:150}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:151}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":10,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Trip\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-11-10\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"2026-11-10\",\"timezone\":null},\"duration\":{\"amount\":3,\"unit\":\"day\"},\"id\":\"{token:10}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"aCAz4\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:152}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:153}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":7,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"File taxes\",\"day_order\":-1,\"deadline\":{\"date\":\"2026-11-30\",\"lang\":\"en\"},\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:7}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a9OtS\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:154}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:155}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":false,\"child_order\":8,\"completed_at\":null,\"completed_by_uid\":null,\"completed_count\":0,\"content\":\"Workshop\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-11-05T13:00:00Z\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"2026-11-05 14:00\",\"timezone\":\"Europe/Berlin\"},\"duration\":{\"amount\":90,\"unit\":\"minute\"},\"id\":\"{token:15}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"aAGjR\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:156}\",\"user_id\":\"{account}\"}],\"sync_status\":{},\"sync_token\":\"{token:53}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/api/v1/sync",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"commands\":[{\"uuid\":\"{id:61}\",\"type\":\"project_delete\",\"args\":{\"id\":\"{token:14}\"}},{\"uuid\":\"{id:62}\",\"type\":\"label_delete\",\"args\":{\"id\":\"{token:57}\"}}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"full_sync\":true,\"full_sync_date_utc\":\"2026-10-21T02:09:23Z\",\"sync_status\":{\"{id:62}\":\"ok\",\"{id:61}\":\"ok\"},\"sync_token\":\"{token:54}\",\"temp_id_mapping\":{}}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks?project_id={token:14}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"results\":[{\"user_id\":\"{account}\",\"id\":\"{token:12}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[\"mitra-bills\"],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:157}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:158}\",\"due\":{\"date\":\"2026-11-02T08:00:00Z\",\"timezone\":\"Europe/Madrid\",\"string\":\"2026-11-02 09:00\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":4,\"child_order\":1,\"order_key\":\"a23Hp\",\"content\":\"Pay the rent\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":1},{\"user_id\":\"{account}\",\"id\":\"{token:16}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:159}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:160}\",\"due\":{\"date\":\"2026-11-04\",\"timezone\":null,\"string\":\"2026-11-04\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":1,\"child_order\":2,\"order_key\":\"a3nAv\",\"content\":\"Call the plumber\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":1},{\"user_id\":\"{account}\",\"id\":\"{token:9}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:161}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:162}\",\"due\":{\"date\":\"2026-11-02T09:00:00\",\"timezone\":null,\"string\":\"every monday at 9am\",\"lang\":\"en\",\"is_recurring\":true},\"priority\":1,\"child_order\":4,\"order_key\":\"a5gEt\",\"content\":\"Water the plants\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":1,\"postponed_count\":1},{\"user_id\":\"{account}\",\"id\":\"{token:17}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:163}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:164}\",\"due\":null,\"priority\":1,\"child_order\":6,\"order_key\":\"a7xGW\",\"content\":\"Paint the hallway\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0},{\"user_id\":\"{account}\",\"id\":\"{token:18}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":\"{token:17}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:165}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:166}\",\"due\":null,\"priority\":1,\"child_order\":3,\"order_key\":\"a4S1a\",\"content\":\"Fetch the parcel\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0},{\"user_id\":\"{account}\",\"id\":\"{token:7}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":{\"date\":\"2026-11-30\",\"lang\":\"en\"},\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:167}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:168}\",\"due\":null,\"priority\":1,\"child_order\":7,\"order_key\":\"a9OtS\",\"content\":\"File taxes\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0},{\"user_id\":\"{account}\",\"id\":\"{token:15}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":{\"amount\":90,\"unit\":\"minute\"},\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:169}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:170}\",\"due\":{\"date\":\"2026-11-05T13:00:00Z\",\"timezone\":\"Europe/Berlin\",\"string\":\"2026-11-05 14:00\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":1,\"child_order\":8,\"order_key\":\"aAGjR\",\"content\":\"Workshop\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0},{\"user_id\":\"{account}\",\"id\":\"{token:11}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":{\"amount\":45,\"unit\":\"minute\"},\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:171}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:172}\",\"due\":null,\"priority\":1,\"child_order\":9,\"order_key\":\"aBwJy\",\"content\":\"Write the report\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0},{\"user_id\":\"{account}\",\"id\":\"{token:10}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":{\"amount\":3,\"unit\":\"day\"},\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:173}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:174}\",\"due\":{\"date\":\"2026-11-10\",\"timezone\":null,\"string\":\"2026-11-10\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":1,\"child_order\":10,\"order_key\":\"aCAz4\",\"content\":\"Trip\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0},{\"user_id\":\"{account}\",\"id\":\"{token:6}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:175}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:176}\",\"due\":{\"date\":\"2026-11-04T15:00:00Z\",\"timezone\":\"America/New_York\",\"string\":\"2026-11-04 10:00\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":1,\"child_order\":12,\"order_key\":\"aE8hz\",\"content\":\"Standup, moved\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":1,\"postponed_count\":1}],\"next_cursor\":null}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:12}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:12}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[\"mitra-bills\"],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:177}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:178}\",\"due\":{\"date\":\"2026-11-02\",\"timezone\":null,\"string\":\"2026-11-02\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":4,\"child_order\":1,\"order_key\":\"a23Hp\",\"content\":\"Pay the rent\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:12}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:12}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[\"mitra-bills\"],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:179}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:180}\",\"due\":{\"date\":\"2026-11-02\",\"timezone\":null,\"string\":\"2026-11-02\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":4,\"child_order\":1,\"order_key\":\"a23Hp\",\"content\":\"Pay the rent\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:12}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:12}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[\"mitra-bills\"],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:181}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:182}\",\"due\":{\"date\":\"2026-11-02T08:00:00Z\",\"timezone\":\"Europe/Madrid\",\"string\":\"2026-11-02 09:00\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":4,\"child_order\":1,\"order_key\":\"a23Hp\",\"content\":\"Pay the rent\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":1}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:12}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:12}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[\"mitra-bills\"],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:183}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:184}\",\"due\":{\"date\":\"2026-11-02T08:00:00Z\",\"timezone\":\"Europe/Madrid\",\"string\":\"2026-11-02 09:00\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":4,\"child_order\":1,\"order_key\":\"a23Hp\",\"content\":\"Pay the rent\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":1}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:16}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:16}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:185}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:186}\",\"due\":{\"date\":\"2026-11-04\",\"timezone\":null,\"string\":\"2026-11-04\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":1,\"child_order\":2,\"order_key\":\"a3nAv\",\"content\":\"Call the plumber\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":1}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:16}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:16}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:187}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:188}\",\"due\":{\"date\":\"2026-11-04\",\"timezone\":null,\"string\":\"2026-11-04\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":1,\"child_order\":2,\"order_key\":\"a3nAv\",\"content\":\"Call the plumber\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":1}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:18}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:18}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":\"{token:17}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:189}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:190}\",\"due\":null,\"priority\":1,\"child_order\":3,\"order_key\":\"a4S1a\",\"content\":\"Fetch the parcel\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:18}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:18}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":\"{token:17}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:191}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:192}\",\"due\":null,\"priority\":1,\"child_order\":3,\"order_key\":\"a4S1a\",\"content\":\"Fetch the parcel\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:31}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:31}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":{\"date\":\"2026-11-07\",\"lang\":\"en\"},\"duration\":{\"amount\":60,\"unit\":\"minute\"},\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:193}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:194}\",\"due\":{\"date\":\"2026-11-06T10:00:00\",\"timezone\":null,\"string\":\"2026-11-06 10:00\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":1,\"child_order\":11,\"order_key\":\"aD16x\",\"content\":\"Plan the week\",\"description\":\"Look **ahead**\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:31}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:31}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":{\"date\":\"2026-11-07\",\"lang\":\"en\"},\"duration\":{\"amount\":60,\"unit\":\"minute\"},\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:195}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:196}\",\"due\":{\"date\":\"2026-11-06T10:00:00\",\"timezone\":null,\"string\":\"2026-11-06 10:00\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":1,\"child_order\":11,\"order_key\":\"aD16x\",\"content\":\"Plan the week\",\"description\":\"Look **ahead**\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:31}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:31}\",\"project_id\":\"{token:19}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":{\"date\":\"2026-11-07\",\"lang\":\"en\"},\"duration\":{\"amount\":60,\"unit\":\"minute\"},\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:197}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:198}\",\"due\":{\"date\":\"2026-11-06T10:00:00\",\"timezone\":null,\"string\":\"2026-11-06 10:00\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":1,\"child_order\":1,\"order_key\":\"a2uX4\",\"content\":\"Plan the week\",\"description\":\"Look **ahead**\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:31}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:31}\",\"project_id\":\"{token:19}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":{\"date\":\"2026-11-07\",\"lang\":\"en\"},\"duration\":{\"amount\":60,\"unit\":\"minute\"},\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:199}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:200}\",\"due\":{\"date\":\"2026-11-06T10:00:00\",\"timezone\":null,\"string\":\"2026-11-06 10:00\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":1,\"child_order\":1,\"order_key\":\"a2uX4\",\"content\":\"Plan the week\",\"description\":\"Look **ahead**\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:47}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:47}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":true,\"is_deleted\":false,\"added_at\":\"{time:201}\",\"completed_at\":\"{time:202}\",\"completed_by_uid\":\"{account}\",\"updated_at\":\"{time:203}\",\"due\":null,\"priority\":1,\"child_order\":14,\"order_key\":\"aGOFE\",\"content\":\"Return the books\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":1,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:47}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:47}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":true,\"is_deleted\":false,\"added_at\":\"{time:204}\",\"completed_at\":\"{time:205}\",\"completed_by_uid\":\"{account}\",\"updated_at\":\"{time:206}\",\"due\":null,\"priority\":1,\"child_order\":14,\"order_key\":\"aGOFE\",\"content\":\"Return the books\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":1,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:49}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:49}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:207}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:208}\",\"due\":null,\"priority\":1,\"child_order\":14,\"order_key\":\"aHdnn\",\"content\":\"Retro\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:49}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:49}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:209}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:210}\",\"due\":null,\"priority\":1,\"child_order\":14,\"order_key\":\"aHdnn\",\"content\":\"Retro\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:49}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 404,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"error\":\"Task not found\",\"error_code\":478,\"error_extra\":{\"event_id\":\"5658c1791eb147c4870e31ccfc071d14\",\"retry_after\":4},\"error_tag\":\"NOT_FOUND\",\"http_code\":404}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:6}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:6}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":true,\"is_deleted\":false,\"added_at\":\"{time:211}\",\"completed_at\":\"{time:212}\",\"completed_by_uid\":\"{account}\",\"updated_at\":\"{time:213}\",\"due\":{\"date\":\"2026-11-04T14:00:00Z\",\"timezone\":\"America/New_York\",\"string\":\"2026-11-04 09:00\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":1,\"child_order\":3,\"order_key\":\"a44jv\",\"content\":\"Standup\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":1,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:6}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:6}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":true,\"is_deleted\":false,\"added_at\":\"{time:214}\",\"completed_at\":\"{time:215}\",\"completed_by_uid\":\"{account}\",\"updated_at\":\"{time:216}\",\"due\":{\"date\":\"2026-11-04T14:00:00Z\",\"timezone\":\"America/New_York\",\"string\":\"2026-11-04 09:00\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":1,\"child_order\":3,\"order_key\":\"a44jv\",\"content\":\"Standup\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":1,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:6}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:6}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:217}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:218}\",\"due\":{\"date\":\"2026-11-04T14:00:00Z\",\"timezone\":\"America/New_York\",\"string\":\"2026-11-04 09:00\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":1,\"child_order\":12,\"order_key\":\"aE8hz\",\"content\":\"Standup\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":1,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:6}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:6}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:219}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:220}\",\"due\":{\"date\":\"2026-11-04T14:00:00Z\",\"timezone\":\"America/New_York\",\"string\":\"2026-11-04 09:00\",\"lang\":\"en\",\"is_recurring\":false},\"priority\":1,\"child_order\":12,\"order_key\":\"aE8hz\",\"content\":\"Standup\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":1,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:8}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:8}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":\"{token:17}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:221}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:222}\",\"due\":null,\"priority\":1,\"child_order\":2,\"order_key\":\"a3Wsf\",\"content\":\"Buy groceries\",\"description\":\"From the **market**\\n\\n- [ ] oat milk\\n- [x] bread\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:8}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:8}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":\"{token:17}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:223}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:224}\",\"due\":null,\"priority\":1,\"child_order\":2,\"order_key\":\"a3Wsf\",\"content\":\"Buy groceries\",\"description\":\"From the **market**\\n\\n- [ ] oat milk\\n- [x] bread\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:8}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:8}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:225}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:226}\",\"due\":null,\"priority\":1,\"child_order\":13,\"order_key\":\"aFoee\",\"content\":\"Buy groceries\",\"description\":\"From the **market**\\n\\n- [ ] oat milk\\n- [x] bread\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:8}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:8}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:227}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:228}\",\"due\":null,\"priority\":1,\"child_order\":13,\"order_key\":\"aFoee\",\"content\":\"Buy groceries\",\"description\":\"From the **market**\\n\\n- [ ] oat milk\\n- [x] bread\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:9}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:9}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:229}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:230}\",\"due\":{\"date\":\"2026-10-26T09:00:00\",\"timezone\":null,\"string\":\"every monday at 9am\",\"lang\":\"en\",\"is_recurring\":true},\"priority\":1,\"child_order\":4,\"order_key\":\"a5gEt\",\"content\":\"Water the plants\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":0}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:9}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:9}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:231}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:232}\",\"due\":{\"date\":\"2026-10-27T09:00:00\",\"timezone\":null,\"string\":\"every monday at 9am\",\"lang\":\"en\",\"is_recurring\":true},\"priority\":1,\"child_order\":4,\"order_key\":\"a5gEt\",\"content\":\"Water the plants\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":1}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:9}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:9}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:233}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:234}\",\"due\":{\"date\":\"2026-10-27T09:00:00\",\"timezone\":null,\"string\":\"every monday at 9am\",\"lang\":\"en\",\"is_recurring\":true},\"priority\":1,\"child_order\":4,\"order_key\":\"a5gEt\",\"content\":\"Water the plants\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":0,\"postponed_count\":1}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:9}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:9}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:235}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:236}\",\"due\":{\"date\":\"2026-11-02T09:00:00\",\"timezone\":null,\"string\":\"every monday at 9am\",\"lang\":\"en\",\"is_recurring\":true},\"priority\":1,\"child_order\":4,\"order_key\":\"a5gEt\",\"content\":\"Water the plants\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":1,\"postponed_count\":1}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/{token:9}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"user_id\":\"{account}\",\"id\":\"{token:9}\",\"project_id\":\"{token:14}\",\"section_id\":null,\"parent_id\":null,\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"responsible_uid\":null,\"labels\":[],\"deadline\":null,\"duration\":null,\"is_collapsed\":false,\"checked\":false,\"is_deleted\":false,\"added_at\":\"{time:237}\",\"completed_at\":null,\"completed_by_uid\":null,\"updated_at\":\"{time:238}\",\"due\":{\"date\":\"2026-11-02T09:00:00\",\"timezone\":null,\"string\":\"every monday at 9am\",\"lang\":\"en\",\"is_recurring\":true},\"priority\":1,\"child_order\":4,\"order_key\":\"a5gEt\",\"content\":\"Water the plants\",\"description\":\"\",\"note_count\":0,\"day_order\":-1,\"completed_count\":1,\"postponed_count\":1}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/completed/by_completion_date?since={now}&until={now}&limit=200",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"items\":[{\"added_at\":\"{time:239}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":true,\"child_order\":7,\"completed_at\":\"{time:240}\",\"completed_by_uid\":\"{account}\",\"completed_count\":1,\"content\":\"Old chore\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:20}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a8GKn\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:241}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:242}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":true,\"child_order\":5,\"completed_at\":\"{time:243}\",\"completed_by_uid\":\"{account}\",\"completed_count\":1,\"content\":\"{secret}\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-10-22T16:00:00\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"22 Oct 16:00\",\"timezone\":null},\"duration\":null,\"id\":\"{token:55}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a6EQ7\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:0}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:244}\",\"user_id\":\"{account}\"}]}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/api/v1/tasks/completed/by_completion_date?since={now}&until={now}&limit=200",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"items\":[{\"added_at\":\"{time:245}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":true,\"child_order\":14,\"completed_at\":\"{time:246}\",\"completed_by_uid\":\"{account}\",\"completed_count\":1,\"content\":\"Return the books\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:47}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"aGOFE\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:247}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:248}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":true,\"child_order\":1,\"completed_at\":\"{time:249}\",\"completed_by_uid\":\"{account}\",\"completed_count\":1,\"content\":\"Pick a color\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":null,\"duration\":null,\"id\":\"{token:13}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a2Ark\",\"parent_id\":\"{token:17}\",\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:14}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:250}\",\"user_id\":\"{account}\"},{\"added_at\":\"{time:251}\",\"added_by_uid\":\"{account}\",\"assigned_by_uid\":null,\"checked\":true,\"child_order\":5,\"completed_at\":\"{time:252}\",\"completed_by_uid\":\"{account}\",\"completed_count\":1,\"content\":\"{secret}\",\"day_order\":-1,\"deadline\":null,\"description\":\"\",\"due\":{\"date\":\"2026-10-22T16:00:00\",\"is_recurring\":false,\"lang\":\"en\",\"string\":\"22 Oct 16:00\",\"timezone\":null},\"duration\":null,\"id\":\"{token:55}\",\"is_collapsed\":false,\"is_deleted\":false,\"labels\":[],\"note_count\":0,\"order_key\":\"a6EQ7\",\"parent_id\":null,\"postponed_count\":0,\"priority\":1,\"project_id\":\"{token:0}\",\"responsible_uid\":null,\"section_id\":null,\"updated_at\":\"{time:253}\",\"user_id\":\"{account}\"}]}"
+			}
+		}
+	]
+}

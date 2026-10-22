@@ -65,8 +65,8 @@ Ce qui se répète souvent, comme un entraînement quotidien, s'affiche comme un
 
 ## Quels agendas peuvent se répéter
 
-Les [calendriers stockés dans Mitra](integrations/mitra.md) et les [serveurs de calendrier](integrations/caldav.md), Google et Apple compris, contiennent des entrées récurrentes. Les agendas [Notion](integrations/notion.md) et [Tempo](integrations/tempo.md) ne le peuvent pas, donc leur éditeur n'a pas de ligne **Répétition**, et l'éditeur d'une série ne les propose pas comme agenda.
+Les [calendriers stockés dans Mitra](integrations/mitra.md) et les [serveurs de calendrier](integrations/caldav.md), Google et Apple compris, contiennent des entrées récurrentes. Les agendas [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) et [Tempo](integrations/tempo.md) ne le peuvent pas, donc leur éditeur n'a pas de ligne **Répétition**, et l'éditeur d'une série ne les propose pas comme agenda. Une tâche qui se répète dans Todoist s'affiche à sa prochaine date : la marquer comme terminée la fait passer à la date suivante, comme le fait Todoist, et sa règle se modifie toujours dans Todoist.
 
 Quand vous [déplacez toutes les entrées d'un agenda](calendars.md#move-or-copy-every-entry-to-another-calendar) vers un agenda qui ne peut pas se répéter, Mitra demande quoi faire des entrées récurrentes. **Les laisser ici** les garde où elles sont. **Convertir en entrées uniques** écrit chaque occurrence de l'année à venir comme une entrée distincte qui ne se répète plus.
 
-La [disponibilité](availability.md) est aussi une entrée récurrente, et commence hebdomadaire. Pour la même raison, elle ne peut pas vivre dans les agendas Notion ou Tempo.
+La [disponibilité](availability.md) est aussi une entrée récurrente, et commence hebdomadaire. Pour la même raison, elle ne peut pas vivre dans les agendas Notion, Todoist ou Tempo.

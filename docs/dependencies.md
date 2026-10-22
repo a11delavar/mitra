@@ -46,5 +46,6 @@ When an entry moves as part of a chain, its subtasks move with it. Repeating ent
 A link is saved with the entry that waits, in that entry's own calendar. [Calendar servers](integrations/caldav.md), [Apple Calendar](integrations/apple.md) and [Mitra calendars](integrations/mitra.md) hold any link, and on a calendar server it's written in the standard calendar format, so other apps using the same calendar can read it.
 
 - In [Notion](integrations/notion.md), a link to a task in the same database goes into the matching relation property, such as "Blocked by". Mitra keeps links to anything else itself.
+- [Todoist](integrations/todoist.md) has no dependencies, so Mitra keeps them itself. They're lost if you disconnect the account or re-import the calendar.
 - [Google Calendar](integrations/google.md) drops links, so an entry in a Google calendar can't be given something to wait for. Entries in other calendars can still link to it.
 - [Calendar subscriptions](integrations/subscriptions.md) are read-only, and [Tempo](integrations/tempo.md) has no links.

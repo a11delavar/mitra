@@ -46,5 +46,6 @@ Quand une entrée se déplace avec sa chaîne, ses sous-tâches la suivent. Les 
 Un lien est enregistré avec l'entrée qui attend, dans le calendrier propre à cette entrée. Les [serveurs de calendrier](integrations/caldav.md), [Apple Calendar](integrations/apple.md) et les [calendriers Mitra](integrations/mitra.md) conservent n'importe quel lien, et sur un serveur de calendrier il est écrit dans le format de calendrier standard, que les autres applications utilisant le même calendrier peuvent donc lire.
 
 - Dans [Notion](integrations/notion.md), un lien vers une tâche de la même base de données va dans la propriété de relation correspondante, comme « Blocked by ». Mitra conserve lui-même les liens vers tout le reste.
+- [Todoist](integrations/todoist.md) n'a pas de dépendances, Mitra les conserve donc lui-même. Elles sont perdues si vous déconnectez le compte ou réimportez le calendrier.
 - [Google Calendar](integrations/google.md) abandonne les liens : une entrée d'un calendrier Google ne peut donc pas recevoir d'entrée à attendre. Les entrées d'autres calendriers peuvent toujours s'y lier.
 - Les [abonnements à un calendrier](integrations/subscriptions.md) sont en lecture seule, et [Tempo](integrations/tempo.md) n'a pas de liens.

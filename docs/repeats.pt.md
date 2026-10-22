@@ -65,8 +65,8 @@ Algo que se repete com frequência, como um treino diário, aparece como uma [ro
 
 ## Que calendários podem se repetir
 
-Os [calendários guardados no Mitra](integrations/mitra.md) e os [servidores de calendário](integrations/caldav.md), incluindo o Google e a Apple, guardam entradas recorrentes. Os calendários do [Notion](integrations/notion.md) e do [Tempo](integrations/tempo.md) não podem, por isso o seu editor não tem uma linha **Repetir**, e o editor de uma série não os oferece como o seu calendário.
+Os [calendários guardados no Mitra](integrations/mitra.md) e os [servidores de calendário](integrations/caldav.md), incluindo o Google e a Apple, guardam entradas recorrentes. Os calendários do [Notion](integrations/notion.md), do [Todoist](integrations/todoist.md) e do [Tempo](integrations/tempo.md) não podem, por isso o seu editor não tem uma linha **Repetir**, e o editor de uma série não os oferece como o seu calendário. Uma tarefa que se repete no Todoist aparece na sua próxima data: marcá-la como concluída a leva para a data seguinte, como o Todoist faz, e a regra dela continua sendo alterada no Todoist.
 
 Quando você [move todas as entradas de um calendário](calendars.md#move-or-copy-every-entry-to-another-calendar) para um que não pode se repetir, o Mitra pergunta o que fazer com as recorrentes. **Deixá-las aqui** as mantém onde estão. **Desdobrar em entradas individuais** escreve cada ocorrência do próximo ano como uma entrada separada que deixa de se repetir.
 
-A [disponibilidade](availability.md) também é uma entrada recorrente, e começa semanal. Pela mesma razão, não pode ficar em calendários do Notion ou do Tempo.
+A [disponibilidade](availability.md) também é uma entrada recorrente, e começa semanal. Pela mesma razão, não pode ficar em calendários do Notion, do Todoist ou do Tempo.

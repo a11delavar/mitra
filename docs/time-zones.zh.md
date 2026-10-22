@@ -40,6 +40,7 @@ Mitra 按你所在的时区显示时间，也就是你的设备当前设置的�
 
 - **Mitra 日历**、[日历服务器](integrations/caldav.md)和 [Google 日历](integrations/google.md)会保存每个条目的时区，其他应用也能看到。Mitra 日历和日历服务器也会保存各地相同的时间；Google 日历没有这种时间，所以把这样的条目移到那里时，它会被固定到一个时区。
 - **[Notion](integrations/notion.md)** 没有时区的概念。它的时间按你的时区显示，编辑器中也没有时区这一行。
+- **[Todoist](integrations/todoist.md)** 会保存每个任务的时区，Todoist 所说的浮动时间则保存为[各地时间相同](#same-time-everywhere)。
 - **[Tempo](integrations/tempo.md)** 按你 Jira 个人资料中的时区读取工时记录，编辑器中同样没有时区这一行。
 - **[日历订阅](integrations/subscriptions.md)** 是只读的：你可以查看条目的时区，也可以在两种时间之间切换，但不能修改时区。
 

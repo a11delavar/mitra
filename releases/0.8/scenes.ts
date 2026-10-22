@@ -1,4 +1,4 @@
-import { aroundEditorWith, bringIntoView, click, editorOpened, openEditor, screenshot, scrollToMorning, waitFor } from '../../scripts/capture.ts'
+import { aroundEditorWith, aroundOpenDialog, appText, bringIntoView, click, editorOpened, openEditor, screenshot, scrollToMorning, waitFor } from '../../scripts/capture.ts'
 import { still } from '../../scripts/scenes.ts'
 
 // The captures only 0.8's notes show, shot on the build in development.
@@ -22,4 +22,17 @@ still('same-time', async ({ browser, open, text }) => {
 	}
 	await screenshot(browser)
 	return aroundEditorWith(browser, picker, 28)
+})
+
+/** The Add integration dialog, the pointer resting on Todoist. */
+still('todoist', async ({ browser, open, language }) => {
+	const ui = (english: string) => appText(english, language)
+	await open()
+	await click(browser, `[...document.querySelectorAll("mitra-sidebar .action")].find(button => button.textContent.trim() === ${JSON.stringify(ui('Add Integration'))})`)
+	const todoist = `[...document.querySelectorAll("mitra-dialog-integration button.type")].find(button => button.querySelector(".name")?.textContent.trim() === ${JSON.stringify(ui('Todoist'))})`
+	await waitFor(() => browser.evaluate<boolean>(`return !!${todoist}`), 'Todoist among the integrations')
+	const point = await browser.evaluate<{ x: number, y: number }>(`const { x, y, width, height } = ${todoist}.getBoundingClientRect(); return { x: x + width / 2, y: y + height / 2 }`)
+	await browser.send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point, button: 'none' })
+	await browser.evaluate('await new Promise(resolve => setTimeout(resolve, 400))')
+	return aroundOpenDialog(browser, 28)
 })

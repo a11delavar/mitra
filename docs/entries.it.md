@@ -44,7 +44,7 @@ Il tipo non si può cambiare in una voce ricorrente, né in un calendario che co
 
 **Elimina** rimuove la voce. Mentre l'editor è aperto lo fanno anche <kbd>Delete</kbd> o <kbd>Backspace</kbd>, purché tu non stia scrivendo in un campo. Se la voce si ripete o ha attività secondarie, Mitra chiede a quali ti riferisci.
 
-Una voce di Notion o Tempo offre anche **Apri in Notion** o **Apri in Jira**, che la apre dove ha avuto origine.
+Una voce di Notion, Todoist o Tempo offre anche **Apri in Notion**, **Apri in Todoist** o **Apri in Jira**, che la apre dove ha avuto origine.
 
 ## Titolo e orario
 

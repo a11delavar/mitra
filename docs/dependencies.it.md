@@ -46,5 +46,6 @@ Quando una voce si sposta come parte di una catena, le sue attività secondarie 
 Un collegamento viene salvato con la voce che attende, nel calendario di quella voce. I [server di calendario](integrations/caldav.md), [Apple Calendar](integrations/apple.md) e i [calendari Mitra](integrations/mitra.md) conservano qualsiasi collegamento, e su un server di calendario viene scritto nel formato standard dei calendari, così le altre app che usano lo stesso calendario possono leggerlo.
 
 - In [Notion](integrations/notion.md), un collegamento a un'attività dello stesso database va nella proprietà di relazione corrispondente, come «Blocked by». Mitra conserva da sé i collegamenti a qualsiasi altra cosa.
+- [Todoist](integrations/todoist.md) non ha dipendenze, quindi Mitra le conserva da sé. Si perdono se scolleghi l'account o reimporti il calendario.
 - [Google Calendar](integrations/google.md) scarta i collegamenti, quindi a una voce di un calendario Google non si può assegnare qualcosa da attendere. Le voci di altri calendari possono comunque collegarsi a essa.
 - Gli [abbonamenti a un calendario](integrations/subscriptions.md) sono di sola lettura, e [Tempo](integrations/tempo.md) non ha collegamenti.

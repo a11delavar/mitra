@@ -41,7 +41,7 @@ Dans le calendrier, le contour de la case à cocher d'une tâche se remplit à m
 
 Une tâche sans sous-tâches ni liste de contrôle peut porter une progression que vous réglez vous-même. Faites un clic droit sur sa case à cocher, ou un clic avec <kbd>Alt</kbd>, et faites glisser **Progression** par pas de 5 %. À 100 %, la tâche passe à **Terminé**. Sous 100 %, une tâche terminée repasse à **En cours**, ou à **À faire** à 0 %. Le **✕** à côté de la valeur l'efface.
 
-Le calendrier doit pouvoir stocker la progression : c'est le cas des [serveurs de calendrier](integrations/caldav.md), de [Apple Calendar](integrations/apple.md) et des [calendriers Mitra](integrations/mitra.md). Google Calendar, Notion et Tempo ne le peuvent pas, leurs tâches n'ont donc pas de curseur **Progression**.
+Le calendrier doit pouvoir stocker la progression : c'est le cas des [serveurs de calendrier](integrations/caldav.md), de [Apple Calendar](integrations/apple.md) et des [calendriers Mitra](integrations/mitra.md). Google Calendar, Notion, Todoist et Tempo ne le peuvent pas, leurs tâches n'ont donc pas de curseur **Progression**.
 
 ## Terminer une arborescence de tâches
 
@@ -61,5 +61,6 @@ Quand vous faites glisser une tâche avec des sous-tâches vers un autre moment,
 Un lien est enregistré avec la sous-tâche, dans le calendrier propre à cette entrée. Les [serveurs de calendrier](integrations/caldav.md), [Apple Calendar](integrations/apple.md) et les [calendriers Mitra](integrations/mitra.md) conservent n'importe quel lien, et sur un serveur de calendrier il est écrit dans le format de calendrier standard, que les autres applications utilisant le même calendrier peuvent donc lire.
 
 - Dans [Notion](integrations/notion.md), un lien vers une tâche de la même base de données va dans la propriété de relation correspondante, comme « Parent task ». Mitra conserve lui-même les liens vers tout le reste.
+- Dans [Todoist](integrations/todoist.md), un parent qui est une tâche du même compte Todoist est aussi enregistré dans Todoist, ce qui déplace la sous-tâche dans le projet de son parent. Mitra conserve lui-même les liens vers tout le reste.
 - [Google Calendar](integrations/google.md) abandonne les liens : une entrée d'un calendrier Google ne peut donc pas recevoir de parent. Les entrées d'autres calendriers peuvent toujours s'y lier.
 - Les [abonnements à un calendrier](integrations/subscriptions.md) sont en lecture seule, et [Tempo](integrations/tempo.md) n'a pas de liens.

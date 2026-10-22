@@ -16,7 +16,7 @@ description: 为日程和任务添加提醒，设置新条目默认带的提醒�
 
 提醒从条目的开始时间往前算；如果任务没有开始时间，就从截止日期往前算。第一次添加提醒时，浏览器会询问是否允许 Mitra 显示通知。即使你选择不允许，提醒也照样会保存在条目里。
 
-重复条目的每一次都会提醒你。已完成或已取消的任务不会再提醒，但隐藏的日历仍会提醒：要让某个日历不再提醒，请在它所属账号的 **⋯ → 编辑** 中把它关掉。[Notion](integrations/notion.md) 和 [Tempo](integrations/tempo.md) 日历不支持提醒。
+重复条目的每一次都会提醒你。已完成或已取消的任务不会再提醒，但隐藏的日历仍会提醒：要让某个日历不再提醒，请在它所属账号的 **⋯ → 编辑** 中把它关掉。[Notion](integrations/notion.md)、[Todoist](integrations/todoist.md) 和 [Tempo](integrations/tempo.md) 日历不支持提醒。
 
 ## 默认提醒
 

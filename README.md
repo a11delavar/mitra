@@ -35,7 +35,7 @@ Want to look around first? **[Try the demo](https://demo.mitracal.com)**: you ge
 ## Features
 
 - Events and tasks on one timeline, in week, month, year, timeline and table views. Drag to create, move and resize anything.
-- Calendars stored in Mitra itself, with no account behind them, or synced both ways with CalDAV, Google Calendar, Apple Calendar, Notion and Tempo. Published calendar feeds come in as read-only subscriptions.
+- Calendars stored in Mitra itself, with no account behind them, or synced both ways with CalDAV, Google Calendar, Apple Calendar, Notion, Todoist and Tempo. Published calendar feeds come in as read-only subscriptions.
 - Planning: tasks without a date wait in the Planning tab with a due date and an estimate, until you drag them into your week.
 - Availability, subtasks and dependencies, files attached to entries, reminders as push notifications, guest lists with replies, and a command palette for the keyboard.
 - AI connectors: Claude, Cursor and other AI tools can read and plan your calendars over the Model Context Protocol (MCP).

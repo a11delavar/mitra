@@ -130,3 +130,4 @@ Cada alteração é salva diretamente no calendário a que a tarefa pertence.
 - Os **calendários guardados no Mitra** suportam tudo o que está nesta página.
 - Os **[servidores de calendário](integrations/caldav.md)** também suportam tudo. Os outros aplicativos que usam o mesmo calendário veem o início e a data de vencimento da tarefa.
 - O **[Notion](integrations/notion.md)** suporta agendamentos, mas não restrições, porque uma base de dados do Notion guarda uma única data para cada tarefa.
+- O **[Todoist](integrations/todoist.md)** suporta tudo: a data de uma tarefa é o seu agendamento, a duração a estimativa e o prazo a data de vencimento. O Todoist guarda prazos apenas nos planos Pro e Business, e apenas o dia deles.

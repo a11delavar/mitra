@@ -29,7 +29,17 @@ Cambia el estilo de Mitra con tu propio CSS: para ti en Ajustes, o para todos en
 Elige días en un calendario y copia una entrada en todos ellos a la vez, a la misma hora.
 
 ## Todoist
-Conecta tus proyectos de Todoist y sus tareas estarán en la misma línea de tiempo que tus eventos, sincronizadas en ambos sentidos.
+Conecta tus proyectos de Todoist y sus tareas estarán en la misma línea de tiempo que tus eventos, sincronizadas en ambos sentidos. Cada proyecto se convierte en un calendario con su color de Todoist. La fecha, la duración y la fecha límite de una tarea pasan a ser su programación, su duración y su fecha de vencimiento. Una tarea que se repite en Todoist aparece en su próxima fecha, y completarla en Mitra la pasa a la fecha siguiente, como hace Todoist. La prioridad, las etiquetas y las secciones quedan como están.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="todoist-dark.webp">
+	<img src="todoist-light.webp" alt="El diálogo Añadir integración, con el puntero sobre Todoist entre los demás proveedores">
+</picture>
+
+Docs: [Todoist](../../docs/integrations/todoist.md)
 
 ## Más idiomas
 Mitra está aprendiendo árabe, ruso, polaco y neerlandés. Con cada versión, Mitra funciona mejor en otros idiomas, escrituras y calendarios. Cada idioma nuevo llega traducido por completo, incluidos la documentación y el sitio web.
+
+## Colaboradores
+- [@jkngale](https://github.com/jkngale): las bases para Todoist

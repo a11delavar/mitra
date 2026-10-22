@@ -65,8 +65,8 @@ Qualcosa che si ripete spesso, come un allenamento quotidiano, compare come [rou
 
 ## Quali calendari possono ripetere
 
-I [calendari salvati in Mitra](integrations/mitra.md) e i [server di calendario](integrations/caldav.md), compresi Google e Apple, contengono voci ricorrenti. I calendari [Notion](integrations/notion.md) e [Tempo](integrations/tempo.md) no, quindi il loro editor non ha la riga **Ripeti**, e l'editor di una serie non li offre come suo calendario.
+I [calendari salvati in Mitra](integrations/mitra.md) e i [server di calendario](integrations/caldav.md), compresi Google e Apple, contengono voci ricorrenti. I calendari [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) e [Tempo](integrations/tempo.md) no, quindi il loro editor non ha la riga **Ripeti**, e l'editor di una serie non li offre come suo calendario. Un'attività che si ripete in Todoist compare alla sua prossima data: segnarla come fatta la sposta alla data successiva, come fa Todoist, e la sua regola si cambia sempre in Todoist.
 
 Quando [sposti ogni voce di un calendario](calendars.md#move-or-copy-every-entry-to-another-calendar) in uno che non può ripetere, Mitra chiede che cosa fare delle voci ricorrenti. **Lasciarle qui** le tiene dove sono. **Espandi in voci singole** scrive ogni occorrenza dell'anno a venire come voce separata che non si ripete più.
 
-Anche la [disponibilità](availability.md) è una voce ricorrente, e parte come settimanale. Per lo stesso motivo non può stare nei calendari Notion o Tempo.
+Anche la [disponibilità](availability.md) è una voce ricorrente, e parte come settimanale. Per lo stesso motivo non può stare nei calendari Notion, Todoist o Tempo.

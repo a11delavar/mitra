@@ -49,7 +49,7 @@ L'occhio di un calendario nella barra laterale nasconde la sua disponibilità in
 
 Qualsiasi calendario in cui puoi aggiungere voci può contenere disponibilità, compresi i calendari [Mitra](integrations/mitra.md). Questi no:
 
-- I calendari [Notion](integrations/notion.md) e [Tempo](integrations/tempo.md), perché le loro voci non possono ripetersi.
+- I calendari [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) e [Tempo](integrations/tempo.md), perché le loro voci non possono ripetersi.
 - I calendari di sola lettura, come gli [abbonamenti a un calendario](integrations/subscriptions.md).
 
 La disponibilità resta con il suo calendario. Eliminare il calendario, o scollegare l'account a cui appartiene, elimina anche la sua disponibilità.

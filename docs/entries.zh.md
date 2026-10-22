@@ -44,7 +44,7 @@ description: 打开条目编辑器，了解日程或任务可以包含的全部�
 
 **删除**会删除条目。编辑器打开时，只要你没有在输入框中打字，按 <kbd>Delete</kbd> 或 <kbd>Backspace</kbd> 也能删除。如果条目会重复或者有子任务，Mitra 会问你要删除哪些。
 
-来自 Notion 或 Tempo 的条目还提供**在 Notion 中打开**或**在 Jira 中打开**，可以在它原本所在的地方打开它。
+来自 Notion、Todoist 或 Tempo 的条目还提供**在 Notion 中打开**、**在 Todoist 中打开**或**在 Jira 中打开**，可以在它原本所在的地方打开它。
 
 ## 标题和时间
 

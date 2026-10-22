@@ -65,8 +65,8 @@ Something that repeats often, like a daily workout, shows as a [routine](routine
 
 ## Which calendars can repeat
 
-[Calendars stored in Mitra](integrations/mitra.md) and [calendar servers](integrations/caldav.md), Google and Apple included, hold repeating entries. [Notion](integrations/notion.md) and [Tempo](integrations/tempo.md) calendars can't, so their editor has no **Repeat** row, and a series' editor doesn't offer them as its calendar.
+[Calendars stored in Mitra](integrations/mitra.md) and [calendar servers](integrations/caldav.md), Google and Apple included, hold repeating entries. [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) and [Tempo](integrations/tempo.md) calendars can't, so their editor has no **Repeat** row, and a series' editor doesn't offer them as its calendar. A task that repeats in Todoist shows at its next date: completing it moves it on to the date after, as Todoist does, and its rule stays Todoist's to change.
 
 When you [move every entry of a calendar](calendars.md#move-or-copy-every-entry-to-another-calendar) into one that can't repeat, Mitra asks what to do with the repeating ones. **Leave them here** keeps them where they are. **Flatten into single entries** writes out every occurrence in the coming year as a separate entry that no longer repeats.
 
-[Availability](availability.md) is a repeating entry too, and starts out weekly. For the same reason, it can't live in Notion or Tempo calendars.
+[Availability](availability.md) is a repeating entry too, and starts out weekly. For the same reason, it can't live in Notion, Todoist or Tempo calendars.

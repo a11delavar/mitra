@@ -17,6 +17,7 @@ const providers = [
 	{ id: 'google', name: 'Google Calendar', doc: 'integrations/google' },
 	{ id: 'apple', name: 'Apple Calendar', doc: 'integrations/apple' },
 	{ id: 'notion', name: 'Notion', doc: 'integrations/notion' },
+	{ id: 'todoist', name: 'Todoist', doc: 'integrations/todoist' },
 	{ id: 'tempo', name: 'Tempo', doc: 'integrations/tempo' },
 	{ id: 'ics', name: t('Subscriptions'), doc: 'integrations/subscriptions' },
 ]
@@ -44,14 +45,14 @@ const marks = providers.map(provider => {
 </ul>
 
 <style>
-	/* The built-in card stands beside the six providers, which sit three, three or two across so a
-	   row is never left with one card on its own. */
+	/* The built-in card stands beside the seven providers, which sit four and three across, or two
+	   across with the last one spanning the row, so a row is never left with one card on its own. */
 	.marks {
 		list-style: none;
 		margin: 0;
 		padding: 0;
 		display: grid;
-		grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+		grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr));
 		gap: 0.75rem;
 	}
 
@@ -61,7 +62,7 @@ const marks = providers.map(provider => {
 
 	@media (width < 64rem) {
 		.marks {
-			grid-template-columns: repeat(3, minmax(0, 1fr));
+			grid-template-columns: repeat(4, minmax(0, 1fr));
 		}
 
 		.built {
@@ -73,6 +74,11 @@ const marks = providers.map(provider => {
 	@media (width < 34rem) {
 		.marks {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		/* After the built-in card, an odd count of providers leaves the last one alone. */
+		li:last-child:nth-child(even) {
+			grid-column: 1 / -1;
 		}
 	}
 

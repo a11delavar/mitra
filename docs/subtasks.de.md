@@ -41,7 +41,7 @@ Im Kalender füllt sich der Rand des Kästchens einer Aufgabe, während sie vora
 
 Eine Aufgabe ohne Teilaufgaben und ohne Checkliste kann einen Fortschritt tragen, den du selbst setzt. Klick ihr Kästchen mit rechts an oder mit <kbd>Alt</kbd>-Klick und zieh **Fortschritt** in 5-%-Schritten. Bei 100 % wird die Aufgabe **Fertig**. Unter 100 % geht eine erledigte Aufgabe zurück auf **In Arbeit**, bei 0 % auf **Zu erledigen**. Das **✕** neben dem Wert löscht ihn.
 
-Der Kalender muss den Fortschritt speichern können: [Kalenderserver](integrations/caldav.md), [Apple Calendar](integrations/apple.md) und [Mitra-Kalender](integrations/mitra.md) können das. Google Calendar, Notion und Tempo können es nicht, ihre Aufgaben haben also keinen **Fortschritt**-Regler.
+Der Kalender muss den Fortschritt speichern können: [Kalenderserver](integrations/caldav.md), [Apple Calendar](integrations/apple.md) und [Mitra-Kalender](integrations/mitra.md) können das. Google Calendar, Notion, Todoist und Tempo können es nicht, ihre Aufgaben haben also keinen **Fortschritt**-Regler.
 
 ## Einen Aufgabenbaum abschließen
 
@@ -61,5 +61,6 @@ Wenn du eine Aufgabe mit Teilaufgaben auf eine andere Zeit ziehst, fragt Mitra *
 Eine Verknüpfung wird bei der Teilaufgabe gespeichert, im eigenen Kalender dieses Eintrags. [Kalenderserver](integrations/caldav.md), [Apple Calendar](integrations/apple.md) und [Mitra-Kalender](integrations/mitra.md) nehmen jede Verknüpfung auf, und auf einem Kalenderserver wird sie im Standard-Kalenderformat geschrieben, sodass andere Apps, die denselben Kalender nutzen, sie lesen können.
 
 - In [Notion](integrations/notion.md) kommt eine Verknüpfung zu einer Aufgabe in derselben Datenbank in die passende Relationseigenschaft, etwa „Übergeordnete Aufgabe“. Verknüpfungen zu allem anderen behält Mitra selbst.
+- In [Todoist](integrations/todoist.md) wird ein übergeordneter Eintrag, der eine Aufgabe desselben Todoist-Kontos ist, auch in Todoist gespeichert, was die Teilaufgabe in das Projekt ihres übergeordneten Eintrags verschiebt. Verknüpfungen zu allem anderen behält Mitra selbst.
 - [Google Calendar](integrations/google.md) verwirft Verknüpfungen, deshalb lässt sich einem Eintrag in einem Google-Kalender kein übergeordneter Eintrag geben. Einträge in anderen Kalendern können weiterhin auf ihn verweisen.
 - [Kalenderabonnements](integrations/subscriptions.md) sind schreibgeschützt, und [Tempo](integrations/tempo.md) kennt keine Verknüpfungen.

@@ -65,8 +65,8 @@ Algo que se repite a menudo, como un entrenamiento diario, se muestra como una [
 
 ## Qué calendarios pueden repetir
 
-Los [calendarios guardados en Mitra](integrations/mitra.md) y los [servidores de calendario](integrations/caldav.md), incluidos Google y Apple, contienen entradas recurrentes. Los calendarios de [Notion](integrations/notion.md) y [Tempo](integrations/tempo.md) no pueden, así que su editor no tiene fila **Repetir**, y el editor de una serie no los ofrece como su calendario.
+Los [calendarios guardados en Mitra](integrations/mitra.md) y los [servidores de calendario](integrations/caldav.md), incluidos Google y Apple, contienen entradas recurrentes. Los calendarios de [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) y [Tempo](integrations/tempo.md) no pueden, así que su editor no tiene fila **Repetir**, y el editor de una serie no los ofrece como su calendario. Una tarea que se repite en Todoist aparece en su próxima fecha: marcarla como hecha la pasa a la fecha siguiente, como hace Todoist, y su regla se sigue cambiando en Todoist.
 
 Cuando [mueves todas las entradas de un calendario](calendars.md#move-or-copy-every-entry-to-another-calendar) a uno que no puede repetir, Mitra pregunta qué hacer con las recurrentes. **Dejarlas aquí** las mantiene donde están. **Desplegar en entradas sueltas** escribe cada ocurrencia del próximo año como una entrada separada que ya no se repite.
 
-La [disponibilidad](availability.md) también es una entrada recurrente, y empieza siendo semanal. Por la misma razón, no puede estar en calendarios de Notion o Tempo.
+La [disponibilidad](availability.md) también es una entrada recurrente, y empieza siendo semanal. Por la misma razón, no puede estar en calendarios de Notion, Todoist o Tempo.

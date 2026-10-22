@@ -24,7 +24,7 @@ docker compose up -d
 
 ## 服务器上需要设置什么
 
-几乎什么都不用。[Mitra 日历](integrations/mitra.md)、[CalDAV](integrations/caldav.md)、[Apple 日历](integrations/apple.md)、[日历订阅](integrations/subscriptions.md)、[Notion](integrations/notion.md) 和 [Tempo](integrations/tempo.md) 都由用户自己在应用中添加。
+几乎什么都不用。[Mitra 日历](integrations/mitra.md)、[CalDAV](integrations/caldav.md)、[Apple 日历](integrations/apple.md)、[日历订阅](integrations/subscriptions.md)、[Notion](integrations/notion.md)、[Todoist](integrations/todoist.md) 和 [Tempo](integrations/tempo.md) 都由用户自己在应用中添加。
 
 只有两项需要你先到别处注册凭据：[Google 日历](integrations/google.md)（`MITRA_GOOGLE_*`）和[登录](sso.md)（`MITRA_OIDC_*`）。
 

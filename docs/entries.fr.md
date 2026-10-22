@@ -44,7 +44,7 @@ Le type ne peut pas changer pour une entrée récurrente, ni dans un agenda qui 
 
 **Supprimer** retire l'entrée. Tant que l'éditeur est ouvert, <kbd>Delete</kbd> ou <kbd>Backspace</kbd> fait de même, tant que vous ne saisissez pas de texte dans un champ. Si l'entrée est récurrente ou a des sous-tâches, Mitra demande lesquelles vous visez.
 
-Une entrée venant de Notion ou de Tempo propose aussi **Ouvrir dans Notion** ou **Ouvrir dans Jira**, qui l'ouvre là où elle a été créée.
+Une entrée venant de Notion, de Todoist ou de Tempo propose aussi **Ouvrir dans Notion**, **Ouvrir dans Todoist** ou **Ouvrir dans Jira**, qui l'ouvre là où elle a été créée.
 
 ## Titre et heure
 

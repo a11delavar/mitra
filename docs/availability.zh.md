@@ -49,7 +49,7 @@ description: 在对应的日历中标出你留给工作、学习或其他事情�
 
 任何你可以添加条目的日历都可以保存可用时间，包括 [Mitra](integrations/mitra.md) 日历。以下日历不行：
 
-- [Notion](integrations/notion.md) 和 [Tempo](integrations/tempo.md) 日历，因为它们的条目不能重复。
+- [Notion](integrations/notion.md)、[Todoist](integrations/todoist.md) 和 [Tempo](integrations/tempo.md) 日历，因为它们的条目不能重复。
 - 只读日历，比如[日历订阅](integrations/subscriptions.md)。
 
 可用时间始终跟着它的日历。删除这个日历，或者断开它所属的账号，它的可用时间也会一并删除。

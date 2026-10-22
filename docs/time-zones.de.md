@@ -40,6 +40,7 @@ Wählst du für so einen Eintrag eine Zone, bekommt er diese Zone und behält se
 
 - **In Mitra gespeicherte Kalender**, [Kalenderserver](integrations/caldav.md) und [Google Calendar](integrations/google.md) behalten die Zeitzone jedes Eintrags, und andere Apps sehen sie. Mitra und Kalenderserver behalten auch Zeiten, die überall dieselben sind; Google Calendar kennt keine, deshalb bekommt so ein Eintrag dort eine feste Zone.
 - **[Notion](integrations/notion.md)** kennt keine Zeitzonen. Seine Zeiten erscheinen in deiner, und der Editor hat keine Zeile für die Zeitzone.
+- **[Todoist](integrations/todoist.md)** behält die Zeitzone jeder Aufgabe oder [überall dieselbe Uhrzeit](#same-time-everywhere) für das, was Todoist eine schwebende Zeit nennt.
 - **[Tempo](integrations/tempo.md)** liest Arbeitszeiten in der Zeitzone deines Jira-Profils, und der Editor hat ebenfalls keine Zeile für die Zeitzone.
 - **[Abonnements](integrations/subscriptions.md)** sind schreibgeschützt: Du kannst die Zone eines Eintrags sehen und zwischen den beiden Zeiten wechseln, aber sie nicht ändern.
 

@@ -18,7 +18,7 @@ Quando la voce è in un calendario di un [server di calendario](integrations/cal
 
 In un [calendario Mitra](integrations/mitra.md) non c'è nessun server dietro il calendario, quindi l'elenco è solo un registro di chi è coinvolto. Nessuno viene invitato e non arrivano risposte.
 
-I calendari [Notion](integrations/notion.md) e [Tempo](integrations/tempo.md) non possono contenere partecipanti, quindi le loro voci non hanno la riga dei partecipanti. In un [abbonamento a un calendario](integrations/subscriptions.md) puoi vedere i partecipanti ma non modificarli, perché il calendario è di sola lettura.
+I calendari [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) e [Tempo](integrations/tempo.md) non possono contenere partecipanti, quindi le loro voci non hanno la riga dei partecipanti. In un [abbonamento a un calendario](integrations/subscriptions.md) puoi vedere i partecipanti ma non modificarli, perché il calendario è di sola lettura.
 
 ## Aggiungere persone
 
@@ -59,5 +59,5 @@ In una voce organizzata da qualcun altro non puoi aggiungere, rimuovere o modifi
 - Se tutti restano in attesa e non è arrivato nessun invito, la voce è in un calendario Mitra, oppure il suo server di calendario non invia inviti. Per verificare il server, invita le stesse persone dall'app del provider.
 - Se è arrivata una risposta ma il suo badge non è cambiato, attendi la prossima sincronizzazione di Mitra, perché le risposte arrivano tramite il server di calendario.
 - Se non c'è modo di aggiungere persone, la voce è organizzata da qualcun altro, oppure il calendario è di sola lettura.
-- Se la voce non ha la riga dei partecipanti, il suo calendario non può contenere partecipanti, come in Notion e Tempo.
+- Se la voce non ha la riga dei partecipanti, il suo calendario non può contenere partecipanti, come in Notion, Todoist e Tempo.
 - Se una sala riunioni manca dall'elenco, è voluto: sale e attrezzature non sono persone, quindi Mitra le esclude.

@@ -569,6 +569,7 @@ declare global {
 		"The originals stay exactly where they are": unknown
 		"The step dragging and resizing land on": unknown
 		"The task databases of your workspace": unknown
+		"The tasks of your Todoist projects": unknown
 		"Their copies landed but the originals could not be deleted. Delete them here by hand.": unknown
 		"Theme": unknown
 		"ThemeSetting.Keywords": unknown
@@ -595,6 +596,10 @@ declare global {
 		"Title": unknown
 		"To Do": unknown
 		"Today": unknown
+		"Todoist": unknown
+		"Todoist account": unknown
+		"Todoist API Token": unknown
+		"Todoist.TokenHint": unknown
 		"Toggle sidebar": unknown
 		"Toggle Sidebar": unknown
 		"Toggle.Off": unknown

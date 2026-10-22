@@ -130,3 +130,4 @@ Mitra 按整天计算，所以今天上午到期的任务要到明天才算逾�
 - **Mitra 日历**支持本页介绍的所有功能。
 - **[日历服务器](integrations/caldav.md)** 同样全部支持。使用同一日历的其他应用能看到任务的开始时间和截止日期。
 - **[Notion](integrations/notion.md)** 支持时间安排，但不支持约束条件，因为 Notion 数据库中的每个任务只有一个日期。
+- **[Todoist](integrations/todoist.md)** 全部支持：任务的日期就是它的时间安排，时长就是预估时长，最后期限就是截止日期。Todoist 只在 Pro 和 Business 套餐中保存最后期限，而且只精确到天。

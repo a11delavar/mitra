@@ -130,3 +130,4 @@ Cada cambio se guarda directamente en el calendario al que pertenece la tarea.
 - Los **calendarios guardados en Mitra** admiten todo lo de esta página.
 - Los **[servidores de calendario](integrations/caldav.md)** también admiten todo. Otras aplicaciones que usan el mismo calendario ven el inicio y la fecha de vencimiento de la tarea.
 - **[Notion](integrations/notion.md)** admite programaciones, pero no restricciones, porque una base de datos de Notion guarda una única fecha para cada tarea.
+- **[Todoist](integrations/todoist.md)** admite todo: la fecha de una tarea es su programación, su duración la estimación y su fecha límite la fecha de vencimiento. Todoist guarda las fechas límite solo en sus planes Pro y Business, y solo su día.

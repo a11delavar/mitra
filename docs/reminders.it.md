@@ -16,7 +16,7 @@ Apri una voce e premi **＋** sulla sua riga dei promemoria, quella con la campa
 
 Un promemoria conta a ritroso dall'inizio della voce o, per un'attività senza inizio, dalla sua data di scadenza. La prima volta che ne aggiungi uno, il browser chiede se Mitra può mostrare notifiche. Se rispondi di no, il promemoria viene comunque salvato con la voce.
 
-Una voce ricorrente ti ricorda ogni occorrenza. Le attività che hai segnato come fatte o annullate restano in silenzio, ma un calendario che nascondi no: per silenziarlo, disattivalo in **⋯ → Modifica** del suo account. I calendari [Notion](integrations/notion.md) e [Tempo](integrations/tempo.md) non possono contenere promemoria.
+Una voce ricorrente ti ricorda ogni occorrenza. Le attività che hai segnato come fatte o annullate restano in silenzio, ma un calendario che nascondi no: per silenziarlo, disattivalo in **⋯ → Modifica** del suo account. I calendari [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) e [Tempo](integrations/tempo.md) non possono contenere promemoria.
 
 ## Promemoria predefiniti
 

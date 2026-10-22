@@ -35,7 +35,8 @@
 		"zones:generate": "node ./scripts/goldenZones.ts",
 		"changelog": "node ./scripts/changelog.ts",
 		"release": "node ./scripts/release.ts",
-		"record:caldav": "node ./scripts/recordCalDAV.ts"
+		"record:caldav": "node ./scripts/recordCalDAV.ts",
+		"record:todoist": "node ./scripts/test.ts && node --test out_test/integrations/todoist/Todoist.accounts.test.js"
 	},
 	"devDependencies": {
 		"@a11d/eslint-config": "2.x",

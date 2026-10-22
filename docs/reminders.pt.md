@@ -16,7 +16,7 @@ Abra uma entrada e pressione **＋** na linha de lembretes, a que tem o sino. Es
 
 Um lembrete conta a partir do início da entrada ou, para uma tarefa sem início, a partir da data de vencimento. Na primeira vez que você adiciona um, o navegador pergunta se o Mitra pode mostrar notificações. Se você disser não, o lembrete continua salvo com a entrada.
 
-Uma entrada recorrente avisa você a cada ocorrência. Tarefas que você marcou como concluídas ou canceladas ficam em silêncio, mas um calendário que você oculta não: para silenciar um, desative-o em **⋯ → Editar** da conta dele. Os calendários do [Notion](integrations/notion.md) e do [Tempo](integrations/tempo.md) não guardam lembretes.
+Uma entrada recorrente avisa você a cada ocorrência. Tarefas que você marcou como concluídas ou canceladas ficam em silêncio, mas um calendário que você oculta não: para silenciar um, desative-o em **⋯ → Editar** da conta dele. Os calendários do [Notion](integrations/notion.md), do [Todoist](integrations/todoist.md) e do [Tempo](integrations/tempo.md) não guardam lembretes.
 
 ## Lembretes padrão
 

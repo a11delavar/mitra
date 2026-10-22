@@ -16,7 +16,7 @@ Ouvrez une entrée et appuyez sur **＋** sur sa ligne de rappels, celle avec la
 
 Un rappel se compte à rebours depuis le début de l'entrée ou, pour une tâche sans début, depuis son échéance. La première fois que vous en ajoutez un, votre navigateur demande si Mitra peut afficher des notifications. Si vous refusez, le rappel est tout de même enregistré avec l'entrée.
 
-Une entrée récurrente vous rappelle chaque occurrence. Les tâches que vous avez marquées comme terminées ou annulées restent silencieuses, mais un calendrier que vous masquez, non : pour en faire taire un, désactivez-le sous **⋯ → Modifier** de son compte. Les calendriers [Notion](integrations/notion.md) et [Tempo](integrations/tempo.md) ne peuvent pas contenir de rappels.
+Une entrée récurrente vous rappelle chaque occurrence. Les tâches que vous avez marquées comme terminées ou annulées restent silencieuses, mais un calendrier que vous masquez, non : pour en faire taire un, désactivez-le sous **⋯ → Modifier** de son compte. Les calendriers [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) et [Tempo](integrations/tempo.md) ne peuvent pas contenir de rappels.
 
 ## Rappels par défaut
 

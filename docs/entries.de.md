@@ -44,7 +44,7 @@ Der Typ lässt sich bei einem wiederkehrenden Eintrag nicht ändern, ebenso weni
 
 **Löschen** entfernt den Eintrag. Solange der Editor offen ist, tun das auch <kbd>Delete</kbd> oder <kbd>Backspace</kbd>, sofern du nicht gerade in einem Feld tippst. Wiederholt sich der Eintrag oder hat er Teilaufgaben, fragt Mitra, welche du meinst.
 
-Ein Eintrag aus Notion oder Tempo bietet außerdem **In Notion öffnen** oder **In Jira öffnen**, was ihn dort öffnet, wo er herkommt.
+Ein Eintrag aus Notion, Todoist oder Tempo bietet außerdem **In Notion öffnen**, **In Todoist öffnen** oder **In Jira öffnen**, was ihn dort öffnet, wo er herkommt.
 
 ## Titel und Zeit
 

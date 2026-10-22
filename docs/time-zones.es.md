@@ -40,6 +40,7 @@ Elegir una zona para una entrada así le da esa zona y conserva sus horas de rel
 
 - Los **calendarios guardados en Mitra**, los [servidores de calendario](integrations/caldav.md) y [Google Calendar](integrations/google.md) conservan la zona horaria de cada entrada, y otras aplicaciones la ven. Mitra y los servidores de calendario también conservan las horas que son las mismas en todas partes; Google Calendar no las tiene, así que una entrada así que llevas allí queda fijada a una zona.
 - **[Notion](integrations/notion.md)** no tiene zonas horarias. Sus horas se muestran en la tuya, y el editor no tiene fila de zona horaria.
+- **[Todoist](integrations/todoist.md)** conserva la zona horaria de cada tarea, o [la misma hora en todas partes](#same-time-everywhere) para lo que Todoist llama hora flotante.
 - **[Tempo](integrations/tempo.md)** lee los registros de trabajo en la zona horaria de tu perfil de Jira, y el editor tampoco tiene fila de zona horaria.
 - Las **[suscripciones](integrations/subscriptions.md)** son de solo lectura: puedes ver la zona de una entrada y alternar entre las dos horas, pero no cambiarla.
 

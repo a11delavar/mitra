@@ -130,3 +130,4 @@ Jede Änderung wird direkt in dem Kalender gespeichert, zu dem die Aufgabe gehö
 - **In Mitra gespeicherte Kalender** unterstützen alles auf dieser Seite.
 - **[Kalenderserver](integrations/caldav.md)** unterstützen ebenfalls alles. Andere Apps, die denselben Kalender nutzen, sehen Beginn und Fälligkeitsdatum der Aufgabe.
 - **[Notion](integrations/notion.md)** unterstützt Termine, aber keine Vorgaben, weil eine Notion-Datenbank für jede Aufgabe nur ein einziges Datum enthält.
+- **[Todoist](integrations/todoist.md)** unterstützt alles: Das Datum einer Aufgabe ist ihr Termin, ihre Dauer die Schätzung und ihre Deadline das Fälligkeitsdatum. Todoist speichert Deadlines nur in seinen Tarifen Pro und Business, und nur ihren Tag.

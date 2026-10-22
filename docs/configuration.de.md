@@ -24,7 +24,7 @@ docker compose up -d
 
 ## Was auf dem Server eingerichtet werden muss
 
-Fast nichts. Nutzer fügen [Mitra-Kalender](integrations/mitra.md), [CalDAV](integrations/caldav.md), [Apple Calendar](integrations/apple.md), [Kalenderabonnements](integrations/subscriptions.md), [Notion](integrations/notion.md) und [Tempo](integrations/tempo.md) selbst in der App hinzu.
+Fast nichts. Nutzer fügen [Mitra-Kalender](integrations/mitra.md), [CalDAV](integrations/caldav.md), [Apple Calendar](integrations/apple.md), [Kalenderabonnements](integrations/subscriptions.md), [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) und [Tempo](integrations/tempo.md) selbst in der App hinzu.
 
 Zwei Dinge brauchen Zugangsdaten, die du zuerst bei jemand anderem registrierst: [Google Calendar](integrations/google.md) (`MITRA_GOOGLE_*`) und die [Anmeldung](sso.md) (`MITRA_OIDC_*`).
 

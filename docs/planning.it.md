@@ -130,3 +130,4 @@ Ogni modifica viene salvata direttamente nel calendario a cui appartiene l'attiv
 - I **calendari salvati in Mitra** supportano tutto ciò che c'è in questa pagina.
 - I **[server di calendario](integrations/caldav.md)** supportano tutto allo stesso modo. Le altre app che usano lo stesso calendario vedono l'inizio e la scadenza dell'attività.
 - **[Notion](integrations/notion.md)** supporta le pianificazioni, ma non i vincoli, perché un database Notion contiene una sola data per ogni attività.
+- **[Todoist](integrations/todoist.md)** supporta tutto: la data di un'attività è la sua pianificazione, la sua durata la stima e la sua deadline la data di scadenza. Todoist conserva le deadline solo nei piani Pro e Business, e solo il loro giorno.

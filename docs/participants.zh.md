@@ -18,7 +18,7 @@ Mitra 自己从不发送邮件。添加参与者之后会发生什么，取决�
 
 在 [Mitra 日历](integrations/mitra.md)中，日历背后没有服务器，所以参与者名单只是记录有哪些人参与。不会邀请任何人，也不会收到回复。
 
-[Notion](integrations/notion.md) 和 [Tempo](integrations/tempo.md) 日历无法保存参与者，所以它们的条目没有参与者这一行。在[日历订阅](integrations/subscriptions.md)中，你能看到参与者，但不能修改，因为这个日历是只读的。
+[Notion](integrations/notion.md)、[Todoist](integrations/todoist.md) 和 [Tempo](integrations/tempo.md) 日历无法保存参与者，所以它们的条目没有参与者这一行。在[日历订阅](integrations/subscriptions.md)中，你能看到参与者，但不能修改，因为这个日历是只读的。
 
 ## 添加参与者
 
@@ -59,5 +59,5 @@ Mitra 会显示每个人的回复，但不会替你发送回复。要接受或�
 - 如果所有人都一直没有回复，也没有人收到邀请，说明条目在 Mitra 日历中，或者它所在的日历服务器不发送邀请。要检查服务器，可以用服务提供商自己的应用邀请同样的人试试。
 - 如果收到了回复，但徽标没有变化，请等待 Mitra 的下一次同步，因为回复是经由日历服务器传来的。
 - 如果无法添加参与者，说明这个条目由别人组织，或者日历是只读的。
-- 如果条目没有参与者这一行，说明它所在的日历无法保存参与者，比如 Notion 和 Tempo。
+- 如果条目没有参与者这一行，说明它所在的日历无法保存参与者，比如 Notion、Todoist 和 Tempo。
 - 如果名单中没有会议室，这是有意为之：会议室和设备不是人，所以 Mitra 不会列出它们。

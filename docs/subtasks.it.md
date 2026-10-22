@@ -41,7 +41,7 @@ Nel calendario, il contorno della casella di un'attività si riempie man mano ch
 
 Un'attività senza attività secondarie e senza elenco di controllo può avere un avanzamento impostato da te. Fai clic con il tasto destro sulla sua casella, oppure <kbd>Alt</kbd>-clic, e trascina **Avanzamento** a passi del 5%. Al 100%, l'attività diventa **Fatto**. Sotto il 100%, un'attività completata torna a **In corso**, o a **Da fare** allo 0%. La **✕** accanto al valore lo cancella.
 
-Il calendario deve poter memorizzare l'avanzamento: i [server di calendario](integrations/caldav.md), [Apple Calendar](integrations/apple.md) e i [calendari Mitra](integrations/mitra.md) possono. Google Calendar, Notion e Tempo no, quindi le loro attività non hanno il cursore **Avanzamento**.
+Il calendario deve poter memorizzare l'avanzamento: i [server di calendario](integrations/caldav.md), [Apple Calendar](integrations/apple.md) e i [calendari Mitra](integrations/mitra.md) possono. Google Calendar, Notion, Todoist e Tempo no, quindi le loro attività non hanno il cursore **Avanzamento**.
 
 ## Concludere un albero di attività
 
@@ -61,5 +61,6 @@ Quando trascini un'attività con attività secondarie su un altro orario, Mitra 
 Un collegamento viene salvato con l'attività secondaria, nel calendario di quella voce. I [server di calendario](integrations/caldav.md), [Apple Calendar](integrations/apple.md) e i [calendari Mitra](integrations/mitra.md) conservano qualsiasi collegamento, e su un server di calendario viene scritto nel formato standard dei calendari, così le altre app che usano lo stesso calendario possono leggerlo.
 
 - In [Notion](integrations/notion.md), un collegamento a un'attività dello stesso database va nella proprietà di relazione corrispondente, come «Parent task». Mitra conserva da sé i collegamenti a qualsiasi altra cosa.
+- In [Todoist](integrations/todoist.md), un'attività principale che è un'attività dello stesso account Todoist viene salvata anche in Todoist, il che sposta l'attività secondaria nel progetto della sua attività principale. Mitra conserva da sé i collegamenti a qualsiasi altra cosa.
 - [Google Calendar](integrations/google.md) scarta i collegamenti, quindi a una voce di un calendario Google non si può assegnare un'attività principale. Le voci di altri calendari possono comunque collegarsi a essa.
 - Gli [abbonamenti a un calendario](integrations/subscriptions.md) sono di sola lettura, e [Tempo](integrations/tempo.md) non ha collegamenti.

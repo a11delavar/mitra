@@ -49,7 +49,7 @@ A calendar's eye in the sidebar hides its availability along with its events and
 
 Any calendar you can add entries to can hold availability, including [Mitra](integrations/mitra.md) calendars. These can't:
 
-- [Notion](integrations/notion.md) and [Tempo](integrations/tempo.md) calendars, since their entries can't repeat.
+- [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) and [Tempo](integrations/tempo.md) calendars, since their entries can't repeat.
 - Read-only calendars, such as [calendar subscriptions](integrations/subscriptions.md).
 
 Availability stays with its calendar. Deleting the calendar, or disconnecting the account it belongs to, deletes its availability too.

@@ -39,7 +39,7 @@ Os calendários de um [servidor CalDAV](integrations/caldav.md) e do [Apple Cale
 
 Um arquivo também pode aparecer na descrição: o botão de imagem ou de link na linha dele o acrescenta ao fim do texto, como imagem para imagens e como link para o resto. Remover o anexo remove isso também.
 
-Em um [calendário do Google](integrations/google.md), os anexos são os arquivos do Google Drive anexados no Google Agenda: o Mitra os mostra, mas não pode adicionar nem remover nenhum. Os calendários do [Notion](integrations/notion.md) e do [Tempo](integrations/tempo.md) não têm linha de anexos. Mover uma entrada com anexos para um deles perde os arquivos, e o Mitra avisa antes de mover qualquer coisa.
+Em um [calendário do Google](integrations/google.md), os anexos são os arquivos do Google Drive anexados no Google Agenda: o Mitra os mostra, mas não pode adicionar nem remover nenhum. Os calendários do [Notion](integrations/notion.md), do [Todoist](integrations/todoist.md) e do [Tempo](integrations/tempo.md) não têm linha de anexos. Mover uma entrada com anexos para um deles perde os arquivos, e o Mitra avisa antes de mover qualquer coisa.
 
 > [!NOTE]
 > Anexos que outros apps adicionaram também aparecem no Mitra, incluindo arquivos que o seu próprio servidor de calendário guarda, que abrem com o endereço desse servidor. O Mitra deixa exatamente como estão os anexos que não reconhece, então editar uma entrada no Mitra nunca muda os anexos de outro app.

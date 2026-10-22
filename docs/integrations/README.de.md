@@ -1,6 +1,6 @@
 ---
 title: Integrationen
-description: Halte Kalender in Mitra selbst oder verbinde CalDAV, Google Calendar, Apple Calendar, Kalenderabonnements, Notion und Tempo, und sieh, wie das Synchronisieren funktioniert.
+description: Halte Kalender in Mitra selbst oder verbinde CalDAV, Google Calendar, Apple Calendar, Kalenderabonnements, Notion, Todoist und Tempo, und sieh, wie das Synchronisieren funktioniert.
 sidebar:
   label: Übersicht
 ---
@@ -24,6 +24,7 @@ Um eines von beiden hinzuzufügen, wähle unten in der Seitenleiste **Integratio
 | [Apple Calendar](apple.md) | Die Kalender eines iCloud-Kontos | Keine |
 | [Kalenderabonnements](subscriptions.md) | Ein veröffentlichter `webcal://`- oder `.ics`-Feed, schreibgeschützt | Keine |
 | [Notion](notion.md) | Aufgaben aus Ansichten von Notion-Datenbanken | Keine |
+| [Todoist](todoist.md) | Die Aufgaben deiner Todoist-Projekte | Keine |
 | [Tempo](tempo.md) | Die Stunden, die du auf Jira-Vorgänge buchst | Keine |
 
 Jeder Anbieter speichert andere Dinge. Notion-Aufgaben können sich zum Beispiel nicht wiederholen, und ein Tempo-Worklog hat keinen Ort. Mitra blendet die Felder aus, die ein Kalender nicht speichern kann, damit beim nächsten Synchronisieren nichts verschwindet, was du eingegeben hast.
@@ -37,11 +38,11 @@ Danach synchronisiert der Server von selbst im Hintergrund. Er prüft häufiger,
 | | Solange Mitra offen ist | Solange niemand es offen hat |
 | --- | --- | --- |
 | CalDAV und Apple Calendar | alle 10 Sekunden | alle 5 Minuten |
-| Google Calendar, Notion und Tempo | etwa einmal pro Minute | alle 5 Minuten |
+| Google Calendar, Notion, Todoist und Tempo | etwa einmal pro Minute | alle 5 Minuten |
 | Kalenderabonnements | alle 15 Minuten | alle 15 Minuten |
 | Mitra-Kalender | nichts zu synchronisieren | nichts zu synchronisieren |
 
-Google, Notion und Tempo begrenzen, wie oft Apps sie aufrufen dürfen, deshalb sind sie langsamer. Wenn du Mitra öffnest, synchronisiert sofort jedes Konto, das an der Reihe ist, einen Knopf zum Aktualisieren gibt es also nicht.
+Google, Notion, Todoist und Tempo begrenzen, wie oft Apps sie aufrufen dürfen, deshalb sind sie langsamer. Wenn du Mitra öffnest, synchronisiert sofort jedes Konto, das an der Reihe ist, einen Knopf zum Aktualisieren gibt es also nicht.
 
 Änderungen laufen in beide Richtungen. Wenn du einen Eintrag anlegst, bearbeitest, verschiebst oder löschst, schreibt Mitra das in den Kalender zurück, zu dem er gehört. Ein Konto, das ausfällt, hält die anderen nicht auf: Mitra versucht es eine Minute später erneut.
 

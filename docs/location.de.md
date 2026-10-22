@@ -18,7 +18,7 @@ Die Vorschläge bevorzugen Orte in deiner Nähe. Wenn du zum ersten Mal ins Feld
 
 Photon nennt Orte auf Englisch, Deutsch oder Französisch, wenn Mitra auf eine dieser Sprachen eingestellt ist, sonst in der Landessprache.
 
-Kalender von [Notion](integrations/notion.md) und [Tempo](integrations/tempo.md) haben keinen Ort, deshalb haben ihre Einträge kein Ortsfeld.
+Kalender von [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) und [Tempo](integrations/tempo.md) haben keinen Ort, deshalb haben ihre Einträge kein Ortsfeld.
 
 ## Datenschutz
 

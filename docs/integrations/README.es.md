@@ -1,6 +1,6 @@
 ---
 title: Integraciones
-description: Guarda calendarios en el propio Mitra o conecta CalDAV, Google Calendar, Calendario de Apple, suscripciones a calendarios, Notion y Tempo, y descubre cómo funciona la sincronización.
+description: Guarda calendarios en el propio Mitra o conecta CalDAV, Google Calendar, Calendario de Apple, suscripciones a calendarios, Notion, Todoist y Tempo, y descubre cómo funciona la sincronización.
 sidebar:
   label: Resumen
 ---
@@ -24,6 +24,7 @@ Para añadir cualquiera de las dos, elige **Añadir integración** al pie de la 
 | [Calendario de Apple](apple.md) | Los calendarios de una cuenta de iCloud | Ninguna |
 | [Suscripciones a calendarios](subscriptions.md) | Un feed `webcal://` o `.ics` publicado, de solo lectura | Ninguna |
 | [Notion](notion.md) | Tareas de las vistas de bases de datos de Notion | Ninguna |
+| [Todoist](todoist.md) | Las tareas de tus proyectos de Todoist | Ninguna |
 | [Tempo](tempo.md) | Las horas que registras en incidencias de Jira | Ninguna |
 
 Cada proveedor guarda cosas distintas. Las tareas de Notion no pueden repetirse, por ejemplo, y un registro de horas de Tempo no tiene ubicación. Mitra oculta los campos que un calendario no puede guardar, así que nada de lo que escribas desaparece en la siguiente sincronización.
@@ -37,11 +38,11 @@ Después, el servidor sincroniza en segundo plano por su cuenta. Comprueba con m
 | | Con Mitra abierto | Sin nadie que lo tenga abierto |
 | --- | --- | --- |
 | CalDAV y Calendario de Apple | cada 10 segundos | cada 5 minutos |
-| Google Calendar, Notion y Tempo | cerca de una vez por minuto | cada 5 minutos |
+| Google Calendar, Notion, Todoist y Tempo | cerca de una vez por minuto | cada 5 minutos |
 | Suscripciones a calendarios | cada 15 minutos | cada 15 minutos |
 | Calendarios de Mitra | nada que sincronizar | nada que sincronizar |
 
-Google, Notion y Tempo limitan cada cuánto pueden llamarles las aplicaciones, por eso son más lentos. Al abrir Mitra, todas las cuentas que toca sincronizar lo hacen de inmediato, así que no hay botón de actualizar que pulsar.
+Google, Notion, Todoist y Tempo limitan cada cuánto pueden llamarles las aplicaciones, por eso son más lentos. Al abrir Mitra, todas las cuentas que toca sincronizar lo hacen de inmediato, así que no hay botón de actualizar que pulsar.
 
 Los cambios van en ambas direcciones. Cuando creas, editas, mueves o eliminas una entrada, Mitra la escribe de vuelta en el calendario al que pertenece. Que una cuenta falle no retrasa a las demás: Mitra lo reintenta un minuto después.
 

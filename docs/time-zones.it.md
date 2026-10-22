@@ -40,6 +40,7 @@ Scegliere un fuso per una voce di questo tipo le dà quel fuso e mantiene i suoi
 
 - I **calendari salvati in Mitra**, i [server di calendario](integrations/caldav.md) e [Google Calendar](integrations/google.md) conservano il fuso orario di ogni voce, e le altre app lo vedono. Mitra e i server di calendario conservano anche gli orari che sono gli stessi ovunque; Google Calendar non li ha, quindi una voce così spostata lì viene fissata a un fuso.
 - **[Notion](integrations/notion.md)** non ha fusi orari. I suoi orari compaiono nel tuo, e l'editor non ha la riga del fuso orario.
+- **[Todoist](integrations/todoist.md)** conserva il fuso orario di ogni attività, o [la stessa ora ovunque](#same-time-everywhere) per ciò che Todoist chiama orario fluttuante.
 - **[Tempo](integrations/tempo.md)** legge i registri di lavoro nel fuso orario del tuo profilo Jira, e anche qui l'editor non ha la riga del fuso orario.
 - Gli **[Abbonamenti](integrations/subscriptions.md)** sono di sola lettura: puoi vedere il fuso di una voce e passare tra i due orari, ma non cambiarlo.
 

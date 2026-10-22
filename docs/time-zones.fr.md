@@ -40,6 +40,7 @@ Choisir un fuseau pour une telle entrée lui donne ce fuseau et conserve ses heu
 
 - Les **calendriers stockés dans Mitra**, les [serveurs de calendrier](integrations/caldav.md) et [Google Calendar](integrations/google.md) conservent le fuseau horaire de chaque entrée, et les autres applications le voient. Mitra et les serveurs de calendrier gardent aussi les heures qui sont les mêmes partout ; Google Calendar n'en a pas, donc une telle entrée déplacée là-bas est fixée à un fuseau.
 - **[Notion](integrations/notion.md)** n'a pas de fuseaux horaires. Ses heures s'affichent dans le vôtre, et l'éditeur n'a pas de ligne de fuseau horaire.
+- **[Todoist](integrations/todoist.md)** conserve le fuseau horaire de chaque tâche, ou [la même heure partout](#same-time-everywhere) pour ce que Todoist appelle une heure flottante.
 - **[Tempo](integrations/tempo.md)** lit les journaux de travail dans le fuseau horaire de votre profil Jira, et l'éditeur n'a pas non plus de ligne de fuseau horaire.
 - Les **[Abonnements](integrations/subscriptions.md)** sont en lecture seule : vous pouvez voir le fuseau d'une entrée et basculer entre les deux heures, mais pas le modifier.
 

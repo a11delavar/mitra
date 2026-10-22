@@ -49,7 +49,7 @@ O olho de um calendário na barra lateral oculta a disponibilidade dele junto co
 
 Qualquer calendário em que você possa adicionar entradas pode guardar disponibilidade, incluindo os calendários do [Mitra](integrations/mitra.md). Estes não podem:
 
-- Os calendários do [Notion](integrations/notion.md) e do [Tempo](integrations/tempo.md), já que as entradas deles não se repetem.
+- Os calendários do [Notion](integrations/notion.md), do [Todoist](integrations/todoist.md) e do [Tempo](integrations/tempo.md), já que as entradas deles não se repetem.
 - Os calendários somente leitura, como as [subscrições de calendário](integrations/subscriptions.md).
 
 A disponibilidade fica com o seu calendário. Excluir o calendário, ou desconectar a conta a que ele pertence, exclui também a disponibilidade.

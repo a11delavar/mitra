@@ -46,5 +46,6 @@ Quando uma entrada se move como parte de uma cadeia, as subtarefas dela se movem
 Um vínculo é salvo com a entrada que espera, no calendário da própria entrada. Os [servidores de calendário](integrations/caldav.md), o [Apple Calendar](integrations/apple.md) e os [calendários do Mitra](integrations/mitra.md) guardam qualquer vínculo, e em um servidor de calendário ele é escrito no formato padrão de calendário, para que outros aplicativos que usam o mesmo calendário possam lê-lo.
 
 - No [Notion](integrations/notion.md), um vínculo para uma tarefa do mesmo banco de dados vai para a propriedade de relação correspondente, como "Blocked by". O Mitra guarda por conta própria os vínculos para qualquer outra coisa.
+- O [Todoist](integrations/todoist.md) não tem dependências, então o Mitra as guarda por conta própria. Elas se perdem se você desconectar a conta ou reimportar o calendário.
 - O [Google Calendar](integrations/google.md) descarta vínculos, então uma entrada de um calendário do Google não pode ter algo pelo que esperar. Entradas de outros calendários ainda podem vincular a ela.
 - As [subscrições de calendário](integrations/subscriptions.md) são somente leitura, e o [Tempo](integrations/tempo.md) não tem vínculos.

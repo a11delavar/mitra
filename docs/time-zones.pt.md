@@ -40,6 +40,7 @@ Escolher um fuso para uma entrada dessas lhe dá esse fuso e mantém os seus hor
 
 - Os **calendários guardados no Mitra**, os [servidores de calendário](integrations/caldav.md) e o [Google Calendar](integrations/google.md) guardam o fuso horário de cada entrada, e os outros aplicativos o veem. O Mitra e os servidores de calendário também guardam horários que são os mesmos em todo lugar; o Google Calendar não os tem, então uma entrada assim movida para lá fica presa a um fuso.
 - O **[Notion](integrations/notion.md)** não tem fusos horários. Os seus horários aparecem no seu fuso, e o editor não tem linha de fuso horário.
+- O **[Todoist](integrations/todoist.md)** guarda o fuso horário de cada tarefa, ou [o mesmo horário em todo lugar](#same-time-everywhere) para o que o Todoist chama de horário flutuante.
 - O **[Tempo](integrations/tempo.md)** lê os registros de trabalho no fuso horário do seu perfil do Jira, e o editor também não tem linha de fuso horário.
 - As **[Assinaturas](integrations/subscriptions.md)** são somente leitura: você pode ver o fuso de uma entrada e alternar entre os dois horários, mas não alterá-lo.
 

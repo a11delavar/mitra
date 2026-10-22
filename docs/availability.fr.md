@@ -49,7 +49,7 @@ L'œil d'un calendrier dans la barre latérale masque ses disponibilités avec s
 
 Tout calendrier auquel vous pouvez ajouter des entrées peut contenir des disponibilités, y compris les calendriers [Mitra](integrations/mitra.md). Ceux-ci ne le peuvent pas :
 
-- Les calendriers [Notion](integrations/notion.md) et [Tempo](integrations/tempo.md), puisque leurs entrées ne peuvent pas se répéter.
+- Les calendriers [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) et [Tempo](integrations/tempo.md), puisque leurs entrées ne peuvent pas se répéter.
 - Les calendriers en lecture seule, comme les [abonnements à un calendrier](integrations/subscriptions.md).
 
 Une disponibilité reste avec son calendrier. Supprimer le calendrier, ou déconnecter le compte auquel il appartient, supprime aussi ses disponibilités.

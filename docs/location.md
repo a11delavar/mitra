@@ -18,7 +18,7 @@ Suggestions favour places near you. The first time you click into the field, you
 
 Photon names places in English, German or French when Mitra is set to one of them, and in the local language otherwise.
 
-[Notion](integrations/notion.md) and [Tempo](integrations/tempo.md) calendars have no location, so their entries have no location field.
+[Notion](integrations/notion.md), [Todoist](integrations/todoist.md) and [Tempo](integrations/tempo.md) calendars have no location, so their entries have no location field.
 
 ## Privacy
 

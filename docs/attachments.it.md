@@ -39,7 +39,7 @@ I calendari di un [server CalDAV](integrations/caldav.md) e di [Apple Calendar](
 
 Un file può comparire anche nella descrizione: il pulsante immagine o link nella sua riga lo aggiunge in fondo al testo, come immagine per le immagini e come link per il resto. Rimuovendo l'allegato, sparisce anche quello.
 
-In un [calendario Google](integrations/google.md), gli allegati sono i file di Google Drive allegati in Google Calendar: Mitra li mostra, ma non può aggiungerne o toglierne. I calendari di [Notion](integrations/notion.md) e [Tempo](integrations/tempo.md) non hanno la riga degli allegati. Spostare una voce con allegati in uno di questi ne perde i file, e Mitra te lo dice prima che si sposti qualcosa.
+In un [calendario Google](integrations/google.md), gli allegati sono i file di Google Drive allegati in Google Calendar: Mitra li mostra, ma non può aggiungerne o toglierne. I calendari di [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) e [Tempo](integrations/tempo.md) non hanno la riga degli allegati. Spostare una voce con allegati in uno di questi ne perde i file, e Mitra te lo dice prima che si sposti qualcosa.
 
 > [!NOTE]
 > Anche gli allegati aggiunti da altre app compaiono in Mitra, compresi i file che il tuo server di calendario conserva da sé, che si aprono con l'indirizzo di quel server. Mitra lascia esattamente come sono gli allegati che non riconosce, così modificare una voce in Mitra non cambia mai gli allegati di un'altra app.

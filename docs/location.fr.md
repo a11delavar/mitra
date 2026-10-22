@@ -18,7 +18,7 @@ Les suggestions favorisent les endroits proches de vous. La première fois que v
 
 Photon nomme les endroits en anglais, en allemand ou en français quand Mitra est réglé sur l'une de ces langues, et dans la langue locale sinon.
 
-Les calendriers [Notion](integrations/notion.md) et [Tempo](integrations/tempo.md) n'ont pas de lieu, leurs entrées n'ont donc pas de champ de lieu.
+Les calendriers [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) et [Tempo](integrations/tempo.md) n'ont pas de lieu, leurs entrées n'ont donc pas de champ de lieu.
 
 ## Confidentialité
 

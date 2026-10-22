@@ -130,3 +130,4 @@ Every change is saved straight to the calendar the task belongs to.
 - **Calendars stored in Mitra** support everything on this page.
 - **[Calendar servers](integrations/caldav.md)** support everything too. Other apps using the same calendar see the task's start and due date.
 - **[Notion](integrations/notion.md)** supports schedules, but no constraints, because a Notion database holds a single date for each task.
+- **[Todoist](integrations/todoist.md)** supports everything: a task's date is its schedule, its duration the estimate and its deadline the due date. Todoist keeps deadlines only on its Pro and Business plans, and only their day.

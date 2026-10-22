@@ -16,7 +16,7 @@ Open an entry and press **＋** on its reminders row, the one with the bell. Pic
 
 A reminder counts back from the entry's start, or, for a task without a start, from its due date. The first time you add one, your browser asks whether Mitra may show notifications. If you say no, the reminder is still saved with the entry.
 
-A repeating entry reminds you for each occurrence. Tasks you've marked done or cancelled stay silent, but a calendar you hide doesn't: to silence one, turn it off under its account's **⋯ → Edit**. [Notion](integrations/notion.md) and [Tempo](integrations/tempo.md) calendars can't hold reminders.
+A repeating entry reminds you for each occurrence. Tasks you've marked done or cancelled stay silent, but a calendar you hide doesn't: to silence one, turn it off under its account's **⋯ → Edit**. [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) and [Tempo](integrations/tempo.md) calendars can't hold reminders.
 
 ## Default reminders
 

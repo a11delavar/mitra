@@ -18,7 +18,7 @@ Cuando la entrada está en un calendario de un [servidor de calendario](integrat
 
 En un [calendario de Mitra](integrations/mitra.md) no hay ningún servidor detrás del calendario, así que la lista es solo un registro de quién está implicado. Nadie recibe invitación y no llegan respuestas.
 
-Los calendarios de [Notion](integrations/notion.md) y [Tempo](integrations/tempo.md) no pueden contener participantes, así que sus entradas no tienen fila de participantes. En una [suscripción a un calendario](integrations/subscriptions.md) puedes ver a los participantes pero no cambiarlos, porque el calendario es de solo lectura.
+Los calendarios de [Notion](integrations/notion.md), [Todoist](integrations/todoist.md) y [Tempo](integrations/tempo.md) no pueden contener participantes, así que sus entradas no tienen fila de participantes. En una [suscripción a un calendario](integrations/subscriptions.md) puedes ver a los participantes pero no cambiarlos, porque el calendario es de solo lectura.
 
 ## Añadir personas
 
@@ -59,5 +59,5 @@ En una entrada que organizó otra persona, no puedes añadir, quitar ni cambiar 
 - Si todos siguen pendientes y no llegó ninguna invitación, la entrada está en un calendario de Mitra, o su servidor de calendario no envía invitaciones. Para comprobar el servidor, invita a las mismas personas desde la propia aplicación del proveedor.
 - Si llegó una respuesta pero su insignia no cambió, espera a la siguiente sincronización de Mitra, ya que las respuestas llegan a través del servidor de calendario.
 - Si no hay forma de añadir personas, otra persona organiza la entrada o el calendario es de solo lectura.
-- Si la entrada no tiene fila de participantes, su calendario no puede contener participantes, como en Notion y Tempo.
+- Si la entrada no tiene fila de participantes, su calendario no puede contener participantes, como en Notion, Todoist y Tempo.
 - Si falta una sala de reuniones en la lista, es a propósito: las salas y el equipamiento no son personas, así que Mitra los deja fuera.
