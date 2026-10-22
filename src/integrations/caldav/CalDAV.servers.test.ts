@@ -117,7 +117,7 @@ describe('A CalDAV account as real servers answer it', () => {
 	for (const name of names) {
 		let placeholders: Record<string, string> = {}
 		// A file's id, as its address and an ATTACH line name it.
-		const recording = new HttpRecording(`${recordings}/${name}.json`, () => placeholders, [/(?<=\/api\/files\/)[\w-]{22}(?=\/)/g])
+		const recording = new HttpRecording(`${recordings}/${name}.json`, () => placeholders, { ids: [/(?<=\/api\/files\/)[\w-]{22}(?=\/)/g] })
 		const address = name === recorded && upstream ? new URL(upstream) : undefined
 		const version = address ? recordedVersion : recording.version
 		describe(version ? `${name} ${version}` : name, () => {
