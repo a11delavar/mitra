@@ -74,6 +74,7 @@
 	"${count:pluralityNumber} lose their location": ["${count:pluralityNumber} loses its location", "${count:pluralityNumber} lose their location"],
 	"${count:pluralityNumber} lose their reminders": ["${count:pluralityNumber} loses its reminders", "${count:pluralityNumber} lose their reminders"],
 	"${count:pluralityNumber} lose their time zone": ["${count:pluralityNumber} loses its time zone", "${count:pluralityNumber} lose their time zone"],
+	"${count:pluralityNumber} get a fixed time zone": ["${count:pluralityNumber} gets a fixed time zone", "${count:pluralityNumber} get a fixed time zone"],
 	"${count:pluralityNumber} arrive with everything they carry": ["${count:pluralityNumber} arrives with everything it carries", "${count:pluralityNumber} arrive with everything they carry"],
 	"${count:pluralityNumber} are availability": ["${count:pluralityNumber} is availability", "${count:pluralityNumber} are availability"],
 	"${count:pluralityNumber} repeat": ["${count:pluralityNumber} repeats", "${count:pluralityNumber} repeat"],

@@ -9,7 +9,7 @@ Una voce può anche avere un fuso orario tutto suo, come un volo che parte alle 
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/time-zone-detail-dark.webp">
-  <img src="../assets/screenshots/time-zone-detail-light.webp" alt="L'editor di una nuova voce con il fuso orario impostato su GMT+4 Dubai, che mostra le 11:00 a Dubai, mentre la voce sta alle 9:00 nella settimana di Berlino sullo sfondo" />
+  <img src="../assets/screenshots/time-zone-detail-light.webp" alt="L'editor di una nuova voce con il fuso orario impostato su GMT+1 Lisbona, che mostra le 11:00 a Lisbona, mentre la voce sta alle 12:00 nella settimana di Berlino sullo sfondo" />
 </picture>
 
 ## Il fuso orario di una voce
@@ -30,15 +30,15 @@ Quando il fuso di una voce è diverso dal tuo, l'editor mostra i suoi orari nel 
 
 Puoi modificare gli orari in entrambi i modi. Per cambiare il fuso stesso, passa prima all'ora della voce.
 
-### Orari sull'orologio da parete
+### Stessa ora ovunque
 
-Alcune voci arrivano da altre app senza alcun fuso orario e mostrano **Orologio da parete (nessun fuso orario)**. I loro orari non appartengono ad alcun luogo: una sveglia alle 7:00 vale per le 7:00 ovunque tu sia, e l'editor la mostra alle 7:00 in ogni fuso orario. I suoi promemoria suonano a quell'ora dell'orologio su ogni dispositivo.
+Alcune voci arrivano da altre app senza alcun fuso orario e mostrano **Stessa ora ovunque**. I loro orari non appartengono ad alcun luogo: una sveglia alle 7:00 vale per le 7:00 ovunque tu sia, e l'editor la mostra alle 7:00 in ogni fuso orario. I suoi promemoria suonano a quell'ora dell'orologio su ogni dispositivo.
 
-Scegliere un fuso per una voce di questo tipo le dà quel fuso e mantiene i suoi orari sull'orologio. Non può tornare a essere una voce sull'orologio da parete.
+Scegliere un fuso per una voce di questo tipo le dà quel fuso e mantiene i suoi orari sull'orologio. In un calendario che conserva questi orari, qualsiasi voce può averne uno: scegli **Stessa ora ovunque** in cima all'elenco, e anche così i suoi orari restano.
 
 ### Quali calendari lo supportano
 
-- I **calendari salvati in Mitra**, i [server di calendario](integrations/caldav.md) e [Google Calendar](integrations/google.md) conservano il fuso orario di ogni voce, e le altre app lo vedono.
+- I **calendari salvati in Mitra**, i [server di calendario](integrations/caldav.md) e [Google Calendar](integrations/google.md) conservano il fuso orario di ogni voce, e le altre app lo vedono. Mitra e i server di calendario conservano anche gli orari che sono gli stessi ovunque; Google Calendar non li ha, quindi una voce così spostata lì viene fissata a un fuso.
 - **[Notion](integrations/notion.md)** non ha fusi orari. I suoi orari compaiono nel tuo, e l'editor non ha la riga del fuso orario.
 - **[Tempo](integrations/tempo.md)** legge i registri di lavoro nel fuso orario del tuo profilo Jira, e anche qui l'editor non ha la riga del fuso orario.
 - Gli **[Abbonamenti](integrations/subscriptions.md)** sono di sola lettura: puoi vedere il fuso di una voce e passare tra i due orari, ma non cambiarlo.

@@ -161,9 +161,9 @@ await stage(async (browser, origin) => {
 		await reopen(theme)
 		await press(browser, ...keys.create())
 		await waitFor(() => browser.evaluate<boolean>(`return !!${openEditor}`), 'the editor of a new entry')
-		// 11:00 in Dubai is 9:00 in Berlin: the entry, and its editor with it, stay in the part of the day on screen.
+		// 11:00 in Lisbon is 12:00 in Berlin: the entry, and its editor with it, stay in the part of the day on screen.
 		await click(browser, `${openEditor}.querySelector('.zone-label')`)
-		await pickZone(browser, 'Dubai')
+		await pickZone(browser, 'Lisbon')
 		await waitFor(() => browser.evaluate<boolean>(`return !!${openEditor}.querySelector('.lens')`), 'the time zone switch')
 		await settle(browser)
 		await browser.evaluate('await new Promise(resolve => setTimeout(resolve, 600))')

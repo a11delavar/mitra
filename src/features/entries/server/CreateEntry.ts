@@ -1,11 +1,11 @@
 import { description, label } from '@a11d/metadata'
 import { fileStore } from '#features/files/server/FileStore.js'
 import { tool } from '#features/agents/server/tool.js'
+import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { Entry } from '../Entry.js'
 import { EntryPatch } from '../EntryPatch.js'
-import { EntryTimeZone } from '../EntryTimeZone.js'
 
 @operation(EntryPatch)
 @label('Create an entry')

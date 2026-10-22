@@ -6,6 +6,16 @@ Mitra 0.8 te ayuda a mantener las cosas que haces una y otra vez, y muestra cóm
 ## Seguimiento de rutinas
 Mitra ya agrupa en rutinas lo que haces a menudo, como ir al gimnasio o cortarte el pelo cada cinco semanas. Ahora tienen un lugar propio, donde ves de un vistazo los últimos días de cada rutina: cuántos cumpliste y cuáles cancelaste o te saltaste. Puedes cambiar el nombre de una rutina, unir dos que van juntas o decirle a Mitra que algo no es una rutina. Las rutinas también se mantienen estables en las vistas de mes y año por mucho que te desplaces, y tu conector de IA puede decirte cómo van.
 
+## La misma hora en todas partes
+Algunas cosas no dependen de tu zona horaria: la medicación de las 7:30 es a las 7:30, en casa o de viaje. Elige **La misma hora en todas partes** al principio de las zonas horarias de una entrada, y se queda a esa hora estés donde estés, marcada con un globo tachado. Las entradas que llegan de otras aplicaciones sin zona horaria también lo muestran. Antes de que muevas una a un calendario que no tiene esas horas, como Google Calendar, Mitra te avisa de que recibirá una zona horaria fija.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="same-time-dark.webp">
+	<img src="same-time-light.webp" alt="El editor de una entrada en la medicación de la mañana, con sus zonas horarias abiertas en La misma hora en todas partes">
+</picture>
+
+Docs: [La misma hora en todas partes](../../docs/time-zones.md#same-time-everywhere)
+
 ## Mejores subtareas
 Las subtareas de una entrada comparten un carril en las vistas de mes y año, así que un proyecto se lee como una sola línea, con sus subtareas cortas plegadas dentro. La tabla anida las subtareas bajo su entrada principal, y la vista de año puede ocultarlas. El progreso de una tarea pondera cada subtarea según su tamaño, así que un trabajo largo cuenta más que uno rápido.
 

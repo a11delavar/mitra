@@ -62,7 +62,7 @@
 	"Ask this participant to attend": "درخواست حضور از این شرکت‌کننده",
 	"Showing ${city} time. Switch to the current time zone": "در حال نمایش زمان ${city}. جابه‌جایی به منطقه زمانی کنونی",
 	"Showing the current time zone. Switch to ${city} time": "در حال نمایش منطقه زمانی کنونی. جابه‌جایی به زمان ${city}",
-	"Wall clock (no time zone)": "ساعت دیواری (بدون منطقه زمانی)",
+	"Same time everywhere": "همه‌جا همان ساعت",
 	"Current time zone. Switch to ${city} time to change the zone": "منطقه زمانی کنونی. برای تغییر منطقه، به زمان ${city} بروید",
 	"After": "بعد",
 	"All day": "تمام‌روز",
@@ -607,6 +607,7 @@
 		"${count:pluralityNumber} مورد منطقه زمانی خود را از دست می‌دهد",
 		"${count:pluralityNumber} مورد منطقه زمانی خود را از دست می‌دهند"
 	],
+	"${count:pluralityNumber} get a fixed time zone": ["${count:pluralityNumber} مورد یک منطقه زمانی ثابت می‌گیرد", "${count:pluralityNumber} مورد یک منطقه زمانی ثابت می‌گیرند"],
 	"${count:pluralityNumber} arrive with everything they carry": [
 		"${count:pluralityNumber} مورد با تمام اطلاعات خود منتقل می‌شود",
 		"${count:pluralityNumber} مورد با تمام اطلاعات خود منتقل می‌شوند"

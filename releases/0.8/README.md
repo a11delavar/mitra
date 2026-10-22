@@ -6,6 +6,16 @@ Mitra 0.8 helps you keep up the things you do again and again, and shows how big
 ## Routine tracker
 Mitra already gathers the things you do often, such as the gym or a haircut every five weeks, into routines. Now they get a place of their own, where you see each routine's recent days at a glance: how many you kept, and which you cancelled or missed. You can rename a routine, merge two that belong together, or tell Mitra that something isn't a routine at all. Routines also stay steady in the month and year views however far you scroll, and your AI connector can tell you how they are going.
 
+## Same time everywhere
+Some things don't depend on your time zone: medication at 7:30 is at 7:30, at home or when you travel. Choose **Same time everywhere** at the top of an entry's time zones, and it stays at that hour wherever you are, marked with a crossed-out globe. Entries that come from other apps without a time zone show it too. Before you move one to a calendar that has no such times, such as Google Calendar, Mitra tells you it will get a fixed time zone.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="same-time-dark.webp">
+	<img src="same-time-light.webp" alt="An entry's editor on the morning medication, its time zones open on Same time everywhere">
+</picture>
+
+Docs: [Same time everywhere](../../docs/time-zones.md#same-time-everywhere)
+
 ## Better subtasks
 An entry's subtasks share a lane in the month and year views, so a project reads as one line, with its short subtasks folded into it. The table nests subtasks under their parent, and the year view can hide them. A task's progress weighs each subtask by its size, so a long piece of work counts for more than a quick one.
 

@@ -30,8 +30,7 @@ export class TimeZoneHeader extends Component {
 	}
 
 	/** A pick adds or removes a column; the device's zone and home stay. */
-	private readonly toggle = (id: string) => {
-		const zone = TimeZone.of(id)
+	private readonly toggle = (zone: TimeZone) => {
 		if (zone.equals(TimeZones.here) || TimeZones.list.isHome(zone)) {
 			return
 		}
@@ -160,12 +159,12 @@ export class TimeZoneHeader extends Component {
 						color: var(--color-text);
 					}
 
-					/* Folds its column with the axis hours (see [data-foreign] in Days.ts for why a definite
-					   max-inline-size lets the auto track follow): clipped and unpadded to reach zero, faded by the width ratio. */
+					/* Folds its column with the axis hours, exactly as wide as the lane (see [data-foreign] in Days.ts): clipped
+					   and unpadded to reach zero, faded by the width ratio. */
 					&[data-alternative] {
-						max-inline-size: var(--zone-width);
+						inline-size: var(--zone-width);
 						overflow: clip;
-						/* Padding is never reduced to honour a max-inline-size, so each side takes at most half the
+						/* Padding is never reduced to honour an inline-size, so each side takes at most half the
 						   width, or the fold would stall at 0.5rem. */
 						padding-inline: min(0.25rem, calc(var(--zone-width) / 2));
 						opacity: clamp(0, tan(atan2(var(--zone-width), var(--zone-lane-width))), 1);
@@ -212,10 +211,8 @@ export class TimeZoneHeader extends Component {
 				${this.menuTemplate(here, false)}
 			</mitra-popover-container>
 			<mitra-time-zone-picker
-				.selected=${[here.id, ...zones.map(({ zone }) => zone.id)]}
-				home=${TimeZones.home.id}
-				here=${here.id}
-				@pick=${(e: CustomEvent<string>) => this.toggle(e.detail)}
+				.selected=${[here, ...zones.map(({ zone }) => zone)]}
+				@pick=${(e: CustomEvent<TimeZone>) => this.toggle(e.detail)}
 			></mitra-time-zone-picker>
 		`
 	}

@@ -3,10 +3,10 @@ import assert from 'node:assert/strict'
 import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { holdLocalIn } from '#features/time/TimeZone.testing.js'
+import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
 import { Entry } from './Entry.js'
 import { EntryType } from './EntryType.js'
-import { EntryTimeZone } from './EntryTimeZone.js'
 import { EntryPatch } from './EntryPatch.js'
 
 // `Entry.date`: an entry holds an all-day day as the midnight it begins where it is shown, and the wire carries it as its UTC midnight.

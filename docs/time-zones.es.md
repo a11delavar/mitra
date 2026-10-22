@@ -9,7 +9,7 @@ Una entrada también puede tener una zona horaria propia, como un vuelo que sale
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/time-zone-detail-dark.webp">
-  <img src="../assets/screenshots/time-zone-detail-light.webp" alt="El editor de una entrada nueva con su zona horaria en GMT+4 Dubái, que muestra las 11:00 en Dubái, mientras la entrada está a las 9:00 en la semana de Berlín que hay detrás" />
+  <img src="../assets/screenshots/time-zone-detail-light.webp" alt="El editor de una entrada nueva con su zona horaria en GMT+1 Lisboa, que muestra las 11:00 en Lisboa, mientras la entrada está a las 12:00 en la semana de Berlín que hay detrás" />
 </picture>
 
 ## La zona horaria de una entrada
@@ -30,15 +30,15 @@ Cuando la zona de una entrada difiere de la tuya, el editor muestra sus horas en
 
 Puedes editar las horas de cualquiera de las dos formas. Para cambiar la zona en sí, cambia primero a la hora de la entrada.
 
-### Horas de reloj de pared
+### La misma hora en todas partes
 
-Algunas entradas llegan de otras aplicaciones sin ninguna zona horaria, y muestran **Reloj de pared (sin zona horaria)**. Sus horas no pertenecen a ningún lugar: una alarma a las 7:00 está pensada para las 7:00 estés donde estés, y el editor la muestra a las 7:00 en todas las zonas horarias. Sus recordatorios suenan a esa hora del reloj en cada dispositivo.
+Algunas entradas llegan de otras aplicaciones sin ninguna zona horaria, y muestran **La misma hora en todas partes**. Sus horas no pertenecen a ningún lugar: una alarma a las 7:00 está pensada para las 7:00 estés donde estés, y el editor la muestra a las 7:00 en todas las zonas horarias. Sus recordatorios suenan a esa hora del reloj en cada dispositivo.
 
-Elegir una zona para una entrada así le da esa zona y conserva sus horas de reloj. No puede volver a ser una entrada de reloj de pared.
+Elegir una zona para una entrada así le da esa zona y conserva sus horas de reloj. En un calendario que conserva esas horas, cualquier entrada puede tener una: elige **La misma hora en todas partes** al principio de la lista, y sus horas también se conservan.
 
 ### Qué calendarios lo admiten
 
-- Los **calendarios guardados en Mitra**, los [servidores de calendario](integrations/caldav.md) y [Google Calendar](integrations/google.md) conservan la zona horaria de cada entrada, y otras aplicaciones la ven.
+- Los **calendarios guardados en Mitra**, los [servidores de calendario](integrations/caldav.md) y [Google Calendar](integrations/google.md) conservan la zona horaria de cada entrada, y otras aplicaciones la ven. Mitra y los servidores de calendario también conservan las horas que son las mismas en todas partes; Google Calendar no las tiene, así que una entrada así que llevas allí queda fijada a una zona.
 - **[Notion](integrations/notion.md)** no tiene zonas horarias. Sus horas se muestran en la tuya, y el editor no tiene fila de zona horaria.
 - **[Tempo](integrations/tempo.md)** lee los registros de trabajo en la zona horaria de tu perfil de Jira, y el editor tampoco tiene fila de zona horaria.
 - Las **[suscripciones](integrations/subscriptions.md)** son de solo lectura: puedes ver la zona de una entrada y alternar entre las dos horas, pero no cambiarla.

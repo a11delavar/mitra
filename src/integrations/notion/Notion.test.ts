@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { EntryTimeZone, Entry, TaskStatus, EntryType } from '#features/entries'
+import { Entry, TaskStatus, EntryType } from '#features/entries'
+import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { Source, Color } from '#features/sources'
 import { Relation, EntryRelations, RelationType } from '#features/relations'
 import { asBrowser, wireOf } from '#infrastructure/model/wire.testing.js'

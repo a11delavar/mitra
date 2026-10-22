@@ -9,7 +9,7 @@ An entry can also have a time zone of its own, such as a flight that leaves at 9
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/time-zone-detail-dark.webp">
-  <img src="../assets/screenshots/time-zone-detail-light.webp" alt="A new entry's editor with its time zone set to GMT+4 Dubai, showing 11:00 in Dubai, while the entry sits at 9:00 on the Berlin week behind it" />
+  <img src="../assets/screenshots/time-zone-detail-light.webp" alt="A new entry's editor with its time zone set to GMT+1 Lisbon, showing 11:00 in Lisbon, while the entry sits at 12:00 on the Berlin week behind it" />
 </picture>
 
 ## An entry's time zone
@@ -30,15 +30,15 @@ When an entry's zone differs from yours, the editor shows its times in your zone
 
 You can edit the times either way. To change the zone itself, switch to the entry's time first.
 
-### Wall clock times
+### Same time everywhere
 
-Some entries come from other apps without any time zone, and show **Wall clock (no time zone)**. Their times belong to no place: an alarm at 7:00 is meant at 7:00 wherever you are, and the editor shows it at 7:00 in every time zone. Its reminders go off at that clock time on each device.
+Some entries come from other apps without any time zone, and show **Same time everywhere**. Their times belong to no place: an alarm at 7:00 is meant at 7:00 wherever you are, and the editor shows it at 7:00 in every time zone. Its reminders go off at that clock time on each device.
 
-Picking a zone for such an entry gives it that zone and keeps its clock times. It can't become a wall clock entry again.
+Picking a zone for such an entry gives it that zone and keeps its clock times. On a calendar that keeps such times, any entry can have one: pick **Same time everywhere** at the top of the list, and its clock times stay too.
 
 ### Which calendars support this
 
-- **Calendars stored in Mitra**, [calendar servers](integrations/caldav.md) and [Google Calendar](integrations/google.md) keep each entry's time zone, and other apps see it.
+- **Calendars stored in Mitra**, [calendar servers](integrations/caldav.md) and [Google Calendar](integrations/google.md) keep each entry's time zone, and other apps see it. Mitra and calendar servers also keep times that are the same everywhere; Google Calendar has none, so moving such an entry there fixes it to a zone.
 - **[Notion](integrations/notion.md)** has no time zones. Its times show in yours, and the editor has no time zone row.
 - **[Tempo](integrations/tempo.md)** reads worklogs in the time zone of your Jira profile, and the editor has no time zone row either.
 - **[Subscriptions](integrations/subscriptions.md)** are read-only: you can see an entry's zone and switch between the two times, but not change it.

@@ -4,7 +4,8 @@ import { Source, Color } from '#features/sources'
 import { RelationType } from '#features/relations'
 import { Recurrence, RecurrenceEnd, RecurrenceFrequency, RecurrenceWeekday } from '#features/recurrence'
 import { ParticipantRole, ParticipantStatus, Participants } from '#features/participants/Participant.js'
-import { EntryType, Entry, EntryTimeZone, TaskStatus } from '#features/entries'
+import { EntryType, Entry, TaskStatus } from '#features/entries'
+import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { User } from '#features/identity'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { integration } from '#integrations'
@@ -160,6 +161,8 @@ export class Demo extends MitraCalendar {
 		const pastStart = mondayOf(todayStart.subtract({ years: 2 }))
 
 		const at = (base: DateTime, dayOffset: number, hour: number, minute = 0) => base.add({ days: dayOffset }).with({ hour, minute })
+		// A time without a zone is stored as its wall clock read as UTC, the same hour wherever it is shown.
+		const floatingAt = (base: DateTime, dayOffset: number, hour: number, minute = 0) => new DateTime(TimeZone.UTC.atWallClockOf(at(base, dayOffset, hour, minute), zone).getTime())
 		const allDayStart = (base: DateTime, dayOffset: number) => TimeZone.UTC.midnightOf(zone.dayOf(base.add({ days: dayOffset }))) as DateTime
 
 		// In the zone `at` reads its hours in, as the app writes every entry it makes: without one, a rule repeats at fixed instants.
@@ -203,19 +206,21 @@ export class Demo extends MitraCalendar {
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Monday, RecurrenceWeekday.Wednesday, RecurrenceWeekday.Friday] }),
 		})
 
-		// A moment, not a span: a task with a start and no end, every morning. Taken until yesterday, as a series
-		// split there would leave it; the two share a heading, so they pool into one routine.
-		const firstDoseToday = at(todayStart, 0, 7, 30)
+		// A moment, not a span: a task with a start and no end, every morning, at 7:30 wherever its taker is (no time zone).
+		// Taken until yesterday, as a series split there would leave it; the two share a heading, so they pool into one routine.
+		const firstDoseToday = floatingAt(todayStart, 0, 7, 30)
 		personalTask({
 			heading: t('💊 Morning Meds'),
 			status: TaskStatus.Done,
-			start: at(pastStart, 0, 7, 30),
+			start: floatingAt(pastStart, 0, 7, 30),
+			timeZone: EntryTimeZone.floating,
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily, until: RecurrenceEnd.before(firstDoseToday) }),
 		})
 		personalTask({
 			heading: t('💊 Morning Meds'),
 			status: TaskStatus.ToDo,
 			start: firstDoseToday,
+			timeZone: EntryTimeZone.floating,
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }),
 		})
 

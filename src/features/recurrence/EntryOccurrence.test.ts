@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { EntryTimeZone, EntryType, Entry, EntryPatch } from '#features/entries'
+import { EntryType, Entry, EntryPatch } from '#features/entries'
+import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import type { Integration } from '#integrations'
 import { Recurrence } from './Recurrence.js'
 import { RecurrenceFrequency } from './RecurrenceFrequency.js'

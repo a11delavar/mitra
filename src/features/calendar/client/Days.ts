@@ -58,6 +58,8 @@ export class Days extends Component {
 			return this.days[Math.min(Math.max(0, centerColumn), this.days.length - 1)]
 		},
 		equivalent: (a, b) => a.dayStart.equals(b.dayStart),
+		// The zone lane anchors the date itself while it moves; an offset read meanwhile is a day the narrowing passed.
+		suspended: () => this.zoneLane.moving,
 		// Today is arrived at at the time it is now, any other day at its middle.
 		arrival: date => {
 			const target = date.dayStart.equals(new DateTime().dayStart)
@@ -70,7 +72,7 @@ export class Days extends Component {
 
 	protected readonly entryDrag = new EntryDragController(this)
 	protected readonly density = new DayDensityController(this)
-	protected readonly zoneLane: TimeZoneLaneController = new TimeZoneLaneController(this)
+	protected readonly zoneLane: TimeZoneLaneController = new TimeZoneLaneController(this, settled => void this.scrolling.anchor().then(() => settled && this.updateLaneHeight()))
 	private get segments() { return EntrySegments.of(HideDoneTasksSetting.filter(Availability.outside(this.occurrences)), this.dates.window.days) }
 
 	/** `undefined` is the anchor, here, which comes last. */
@@ -78,7 +80,11 @@ export class Days extends Component {
 		return [...TimeZones.besides, undefined]
 	}
 
-	private timeAxisWidth = 60
+	/** The axis' width as CSS lays it out this frame, a moving zone lane included, where a measurement is a frame behind. */
+	private get timeAxisWidth() {
+		return parseFloat(getComputedStyle(this).getPropertyValue('--time-axis-width')) || 0
+	}
+
 	private axisMeasured = false
 
 	private readonly updateHeaderSize = ([entry]: ResizeObserverEntry[]) => {
@@ -88,20 +94,55 @@ export class Days extends Component {
 			this.style.setProperty('--header-height', `${height}px`)
 		}
 		const width = entry?.borderBoxSize?.[0]?.inlineSize ?? target?.offsetWidth
-		if (width) {
-			this.timeAxisWidth = width
-			this.style.setProperty('--time-axis-width', `${width}px`)
-			this.axisMeasured = true
-			void this.scrolling.anchor()
-			this.updateLaneHeight()
+		if (!width) {
+			return
 		}
+		// The lane's columns are CSS's own, so a fold changes nothing measured here and the days follow it in the same frame.
+		const lane = (this.timeZoneColumns.length - 1) * (parseFloat(getComputedStyle(this).getPropertyValue('--zone-width')) || 0)
+		const rest = width - lane
+		// Within layout's rounding of the lane's columns, nothing changed.
+		if (Math.abs(rest - this.axisRest) < 0.5 && this.axisMeasured) {
+			return
+		}
+		this.axisRest = rest
+		this.style.setProperty('--_axis-rest', `${rest}px`)
+		this.axisMeasured = true
+		void this.scrolling.anchor()
+		this.updateLaneHeight()
 	}
+
+	private axisRest = 0
 
 	private timeTimeout?: ReturnType<typeof setTimeout>
 
 	protected override connected() {
 		super.connected()
 		this.scheduleTimeUpdate()
+		void document.fonts.ready.then(() => this.measureLane(true))
+	}
+
+	private laneLabels = ''
+
+	/**
+	 * The zone lane opens as wide as its widest label, a time or a zone's name, as CSS must know its columns' width
+	 * (`--time-axis-width`). Measured only when the labels' text changes, and once the fonts are in.
+	 */
+	private measureLane(force = false) {
+		const labels = [...this.querySelectorAll<HTMLElement>('.axis > .hour[data-foreign], mitra-time-zone-header .zone[data-alternative]')]
+		const texts = labels.map(label => label.textContent).join('|')
+		if (!labels.length || (!force && texts === this.laneLabels)) {
+			return
+		}
+		this.laneLabels = texts
+		// A label's text keeps its width however narrow the folding lane makes its box.
+		const range = document.createRange()
+		let widest = 0
+		for (const label of labels) {
+			range.selectNodeContents(label)
+			widest = Math.max(widest, range.getBoundingClientRect().width)
+		}
+		// With its padding open: 0.5rem at a time's end, 0.25rem on either side of a name.
+		this.style.setProperty('--zone-lane-width', `calc(${Math.ceil(widest)}px + 0.5rem)`)
 	}
 
 	private scheduleTimeUpdate() {
@@ -140,11 +181,10 @@ export class Days extends Component {
 		this.style.setProperty('--_days-length', this.days.length.toString())
 		this.style.setProperty('--_tz-count', this.timeZoneColumns.length.toString())
 		this.toggleAttribute('data-alternative-zones', this.timeZoneColumns.length > 1)
-		if (this.hideTime) {
-			this.style.removeProperty('--time-axis-width')
-		}
 		this.updateLaneHeight()
 		this.applyScrollRange()
+		// The header renders its names after this.
+		void this.querySelector('mitra-time-zone-header')?.updateComplete.then(() => this.measureLane())
 	}
 
 	private allDayPlacements = new Array<{ lane: number, start: number, end: number }>()
@@ -171,7 +211,10 @@ export class Days extends Component {
 
 	@eventListener('scroll')
 	protected handleScroll() {
-		this.updateLaneHeight()
+		// Measured once the zone lane comes to rest: in between, every frame's scroll laid the week out a second time.
+		if (!this.zoneLane.moving) {
+			this.updateLaneHeight()
+		}
 	}
 
 	static override get styles() {
@@ -206,12 +249,14 @@ export class Days extends Component {
 				gap: 1px;
 				height: 100%;
 				min-height: 0;
+				/* Until measured, which sets it to the widest label (measureLane). */
 				--zone-lane-width: 4rem;
 				--zone-width: var(--zone-lane-width);
 				/* The all-day lane's height snaps: a frame of its transition re-laid out every day. */
 				transition: --zone-width 0.3s cubic-bezier(0.3, 0, 0.4, 1);
 
-				--time-axis-width: calc(3.75rem + (var(--_tz-count, 1) - 1) * var(--zone-width));
+				/* What never folds (the controls, the anchor zone, the gaps) is measured; the lane's columns are its width each. */
+				--time-axis-width: calc(var(--_axis-rest, 3.75rem) + (var(--_tz-count, 1) - 1) * var(--zone-width));
 
 				&[data-alternative-zones] :is(.timezone, .axis) { touch-action: pan-y; }
 				&[data-zones-folded] { --zone-width: 0px; }
@@ -374,10 +419,12 @@ export class Days extends Component {
 							padding-inline-end: 0.5rem;
 							transform: translateY(-50%);
 
+							/* Exactly as wide as the lane, as is its header label, so the column is too and the axis' width is CSS's
+							   own (--time-axis-width): sized to their text, the days followed a measurement a frame behind. */
 							&[data-foreign] {
 								opacity: calc(0.55 * clamp(0, tan(atan2(var(--zone-width), var(--zone-lane-width))), 1));
 								box-sizing: border-box;
-								max-inline-size: var(--zone-width);
+								inline-size: var(--zone-width);
 								overflow: clip;
 								padding-inline-end: min(0.5rem, var(--zone-width));
 							}

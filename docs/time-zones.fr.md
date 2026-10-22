@@ -9,7 +9,7 @@ Une entrée peut aussi avoir son propre fuseau horaire, comme un vol qui part à
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/time-zone-detail-dark.webp">
-  <img src="../assets/screenshots/time-zone-detail-light.webp" alt="L'éditeur d'une nouvelle entrée dont le fuseau horaire est GMT+4 Dubaï, affichant 11:00 à Dubaï, tandis que l'entrée se trouve à 9:00 sur la semaine de Berlin derrière lui" />
+  <img src="../assets/screenshots/time-zone-detail-light.webp" alt="L'éditeur d'une nouvelle entrée dont le fuseau horaire est GMT+1 Lisbonne, affichant 11:00 à Lisbonne, tandis que l'entrée se trouve à 12:00 sur la semaine de Berlin derrière lui" />
 </picture>
 
 ## Le fuseau horaire d'une entrée
@@ -30,15 +30,15 @@ Quand le fuseau d'une entrée diffère du vôtre, l'éditeur affiche ses heures 
 
 Vous pouvez modifier les heures dans les deux cas. Pour changer le fuseau lui-même, passez d'abord à l'heure de l'entrée.
 
-### Heures d'horloge murale
+### Même heure partout
 
-Certaines entrées viennent d'autres applications sans aucun fuseau horaire, et affichent **Horloge murale (pas de fuseau horaire)**. Leurs heures n'appartiennent à aucun lieu : une alarme à 7 h 00 est prévue à 7 h 00 où que vous soyez, et l'éditeur l'affiche à 7 h 00 dans chaque fuseau horaire. Ses rappels se déclenchent à cette heure d'horloge sur chaque appareil.
+Certaines entrées viennent d'autres applications sans aucun fuseau horaire, et affichent **Même heure partout**. Leurs heures n'appartiennent à aucun lieu : une alarme à 7 h 00 est prévue à 7 h 00 où que vous soyez, et l'éditeur l'affiche à 7 h 00 dans chaque fuseau horaire. Ses rappels se déclenchent à cette heure d'horloge sur chaque appareil.
 
-Choisir un fuseau pour une telle entrée lui donne ce fuseau et conserve ses heures d'horloge. Elle ne peut pas redevenir une entrée à horloge murale.
+Choisir un fuseau pour une telle entrée lui donne ce fuseau et conserve ses heures d'horloge. Dans un calendrier qui garde ces heures, n'importe quelle entrée peut en avoir une : choisissez **Même heure partout** en haut de la liste, et ses heures d'horloge restent aussi.
 
 ### Quels agendas le prennent en charge
 
-- Les **calendriers stockés dans Mitra**, les [serveurs de calendrier](integrations/caldav.md) et [Google Calendar](integrations/google.md) conservent le fuseau horaire de chaque entrée, et les autres applications le voient.
+- Les **calendriers stockés dans Mitra**, les [serveurs de calendrier](integrations/caldav.md) et [Google Calendar](integrations/google.md) conservent le fuseau horaire de chaque entrée, et les autres applications le voient. Mitra et les serveurs de calendrier gardent aussi les heures qui sont les mêmes partout ; Google Calendar n'en a pas, donc une telle entrée déplacée là-bas est fixée à un fuseau.
 - **[Notion](integrations/notion.md)** n'a pas de fuseaux horaires. Ses heures s'affichent dans le vôtre, et l'éditeur n'a pas de ligne de fuseau horaire.
 - **[Tempo](integrations/tempo.md)** lit les journaux de travail dans le fuseau horaire de votre profil Jira, et l'éditeur n'a pas non plus de ligne de fuseau horaire.
 - Les **[Abonnements](integrations/subscriptions.md)** sont en lecture seule : vous pouvez voir le fuseau d'une entrée et basculer entre les deux heures, mais pas le modifier.

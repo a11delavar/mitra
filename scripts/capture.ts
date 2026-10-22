@@ -842,7 +842,7 @@ export async function stage(scene: (browser: Devtools, origin: string) => Promis
 	const { version } = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8')) as { version: string }
 	if (build) {
 		consola.start(`Building v${version}`)
-		execSync('npm run build', { cwd: rootDir, stdio: 'inherit', env: { ...process.env, MITRA_VERSION: `v${version}` } })
+		execSync('npm run build -- --no-compress', { cwd: rootDir, stdio: 'inherit', env: { ...process.env, MITRA_VERSION: `v${version}` } })
 	}
 
 	fs.mkdirSync(outDir, { recursive: true })

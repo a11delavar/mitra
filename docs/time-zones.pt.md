@@ -9,7 +9,7 @@ Uma entrada também pode ter um fuso horário próprio, como um voo que parte à
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/time-zone-detail-dark.webp">
-  <img src="../assets/screenshots/time-zone-detail-light.webp" alt="O editor de uma nova entrada com o fuso horário definido como GMT+4 Dubai, mostrando 11:00 em Dubai, enquanto a entrada fica às 9:00 na semana de Berlim ao fundo" />
+  <img src="../assets/screenshots/time-zone-detail-light.webp" alt="O editor de uma nova entrada com o fuso horário definido como GMT+1 Lisboa, mostrando 11:00 em Lisboa, enquanto a entrada fica às 12:00 na semana de Berlim ao fundo" />
 </picture>
 
 ## O fuso horário de uma entrada
@@ -30,15 +30,15 @@ Quando o fuso de uma entrada difere do seu, o editor mostra os horários dela no
 
 Você pode editar os horários de qualquer uma das formas. Para alterar o fuso em si, mude primeiro para o horário da entrada.
 
-### Horários de relógio de parede
+### Mesmo horário em todo lugar
 
-Algumas entradas vêm de outros aplicativos sem nenhum fuso horário e mostram **Relógio de parede (sem fuso horário)**. Os seus horários não pertencem a lugar nenhum: um alarme às 7:00 vale para as 7:00 onde quer que você esteja, e o editor o mostra às 7:00 em todos os fusos horários. Os seus lembretes disparam nesse horário de relógio em cada dispositivo.
+Algumas entradas vêm de outros aplicativos sem nenhum fuso horário e mostram **Mesmo horário em todo lugar**. Os seus horários não pertencem a lugar nenhum: um alarme às 7:00 vale para as 7:00 onde quer que você esteja, e o editor o mostra às 7:00 em todos os fusos horários. Os seus lembretes disparam nesse horário de relógio em cada dispositivo.
 
-Escolher um fuso para uma entrada dessas lhe dá esse fuso e mantém os seus horários de relógio. Ela não pode voltar a ser uma entrada de relógio de parede.
+Escolher um fuso para uma entrada dessas lhe dá esse fuso e mantém os seus horários de relógio. Num calendário que guarda esses horários, qualquer entrada pode ter um: escolha **Mesmo horário em todo lugar** no topo da lista, e os seus horários também se mantêm.
 
 ### Que calendários suportam isto
 
-- Os **calendários guardados no Mitra**, os [servidores de calendário](integrations/caldav.md) e o [Google Calendar](integrations/google.md) guardam o fuso horário de cada entrada, e os outros aplicativos o veem.
+- Os **calendários guardados no Mitra**, os [servidores de calendário](integrations/caldav.md) e o [Google Calendar](integrations/google.md) guardam o fuso horário de cada entrada, e os outros aplicativos o veem. O Mitra e os servidores de calendário também guardam horários que são os mesmos em todo lugar; o Google Calendar não os tem, então uma entrada assim movida para lá fica presa a um fuso.
 - O **[Notion](integrations/notion.md)** não tem fusos horários. Os seus horários aparecem no seu fuso, e o editor não tem linha de fuso horário.
 - O **[Tempo](integrations/tempo.md)** lê os registros de trabalho no fuso horário do seu perfil do Jira, e o editor também não tem linha de fuso horário.
 - As **[Assinaturas](integrations/subscriptions.md)** são somente leitura: você pode ver o fuso de uma entrada e alternar entre os dois horários, mas não alterá-lo.

@@ -29,6 +29,7 @@ declare global {
 		"${count:pluralityNumber} entries copied to ${name}": unknown
 		"${count:pluralityNumber} entries moved to ${name}": unknown
 		"${count:pluralityNumber} features": unknown
+		"${count:pluralityNumber} get a fixed time zone": unknown
 		"${count:pluralityNumber} go back to To Do": unknown
 		"${count:pluralityNumber} have participants": unknown
 		"${count:pluralityNumber} improvements": unknown
@@ -500,6 +501,7 @@ declare global {
 		"Reset to calendar color": unknown
 		"Reset to default color": unknown
 		"Revoke this token": unknown
+		"Same time everywhere": unknown
 		"Sample calendars filled with generated data, rebuilt daily": unknown
 		"Save": unknown
 		"scroll": unknown
@@ -618,7 +620,6 @@ declare global {
 		"View on GitHub": unknown
 		"Views": unknown
 		"Visibility": unknown
-		"Wall clock (no time zone)": unknown
 		"Week": unknown
 		"Week ${week:number}": unknown
 		"Week View": unknown

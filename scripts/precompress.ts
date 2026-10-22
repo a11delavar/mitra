@@ -36,3 +36,10 @@ export async function precompress(directory = distDir) {
 	const total = (key: 'source' | 'br') => results.reduce((sum, result) => sum + (result[key] ?? 0), 0)
 	return { files: results.filter(result => result.saved > 0).length, raw: total('source'), brotli: total('br') }
 }
+
+/** Removes what an earlier precompression left, which the server would serve over a newer build. */
+export async function removePrecompressed(directory = distDir) {
+	const entries = await fs.readdir(directory, { recursive: true, withFileTypes: true })
+	const compressed = entries.filter(entry => entry.isFile() && /\.(br|gz)$/.test(entry.name) && path.extname(entry.name.slice(0, -3)).toLowerCase() in PRECOMPRESSABLE)
+	await Promise.all(compressed.map(entry => fs.rm(path.join(entry.parentPath, entry.name))))
+}

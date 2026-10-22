@@ -2,11 +2,11 @@ import { describe, it, before, beforeEach, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Recurrence, RecurrenceFrequency, type EntryOccurrence, EntryOccurrenceChangeScope } from '#features/recurrence'
+import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { createEvent, editOccurrence, settleTimeZone } from '#infrastructure/http/Api.js'
 import { OperationServer, type SentEntry as Row } from '#infrastructure/operations/OperationServer.testing.js'
 import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
-import { EntryTimeZone } from '../EntryTimeZone.js'
 import { iso, midnight, shown, utcMidnight, viewIn, zones } from './viewers.testing.js'
 
 describe('UpdateEntryOccurrence', () => {

@@ -6,6 +6,16 @@ Mitra 0.8 hilft dir, bei den Dingen dranzubleiben, die du immer wieder tust, und
 ## Routinen-Tracker
 Mitra fasst schon jetzt zu Routinen zusammen, was du oft tust, etwa das Fitnessstudio oder einen Haarschnitt alle fünf Wochen. Jetzt bekommen sie einen eigenen Platz, an dem du die letzten Tage jeder Routine auf einen Blick siehst: wie viele du eingehalten hast und welche abgesagt oder verpasst wurden. Du kannst eine Routine umbenennen, zwei zusammengehörige zusammenführen oder Mitra sagen, dass etwas gar keine Routine ist. Routinen bleiben außerdem in der Monats- und Jahresansicht stabil, egal wie weit du scrollst, und dein KI-Konnektor kann dir sagen, wie es um sie steht.
 
+## Überall dieselbe Uhrzeit
+Manches hängt nicht von deiner Zeitzone ab: Ein Medikament um 7:30 Uhr ist um 7:30 Uhr dran, zu Hause wie auf Reisen. Wähle oben in den Zeitzonen eines Eintrags **Überall dieselbe Uhrzeit**, und er bleibt bei dieser Uhrzeit, wo du auch bist, markiert mit einem durchgestrichenen Globus. Einträge, die ohne Zeitzone aus anderen Apps kommen, zeigen es ebenfalls. Bevor du einen davon in einen Kalender verschiebst, der solche Zeiten nicht kennt, etwa Google Calendar, sagt dir Mitra, dass er eine feste Zeitzone bekommt.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="same-time-dark.webp">
+	<img src="same-time-light.webp" alt="Der Editor eines Eintrags beim Morgenmedikament, seine Zeitzonen geöffnet auf Überall dieselbe Uhrzeit">
+</picture>
+
+Doku: [Überall dieselbe Uhrzeit](../../docs/time-zones.md#same-time-everywhere)
+
 ## Bessere Teilaufgaben
 Die Teilaufgaben eines Eintrags teilen sich in der Monats- und Jahresansicht eine Spur, sodass sich ein Vorhaben als eine Linie liest, in die seine kurzen Teilaufgaben eingeklappt sind. Die Tabelle ordnet Teilaufgaben unter ihrem übergeordneten Eintrag ein, und die Jahresansicht kann sie ausblenden. Der Fortschritt einer Aufgabe gewichtet jede Teilaufgabe nach ihrem Umfang, sodass ein großes Stück Arbeit mehr zählt als ein schnelles.
 

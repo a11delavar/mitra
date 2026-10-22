@@ -1,12 +1,12 @@
 import { Component, component, html, css, property, state, event, query, ifDefined } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
 import { controlHeight, type DateField, type DurationField } from '#design'
-import { type TimeZonePicker } from '#features/time/client/TimeZonePicker.js'
+import { type TimeZonePicker, type TimeZoneChoice } from '#features/time/client/TimeZonePicker.js'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { TimeZones } from '#features/time/client/TimeZones.js'
 import { Calendars } from '#features/sources/client/Calendars.js'
-import { EntryTimeZone } from '../EntryTimeZone.js'
-import { type Entry } from '../Entry.js'
+import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
+import { Entry } from '../Entry.js'
 import { EntryStore } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 import { DefaultDurationSetting } from './DefaultDurationSetting.js'
@@ -174,14 +174,15 @@ export class EntryDetailsWhen extends Component {
 
 	private get zoneLabel(): string {
 		if (this.entry.floating) {
-			return t('Wall clock (no time zone)')
+			return t('Same time everywhere')
 		}
 		const name = (this.foreignZone && this.showEventZone ? this.foreignZone : TimeZones.here).name()
 		return `${name.offset} ${name.city}`
 	}
 
+	/** The viewer's own zone, or none, blends in: the icon tells a floating time apart. */
 	private get zoneIsPrimary(): boolean {
-		return !this.entry.floating && !(this.foreignZone && this.showEventZone)
+		return !(this.foreignZone && this.showEventZone)
 	}
 
 	private get zoneTitle(): string {
@@ -189,7 +190,7 @@ export class EntryDetailsWhen extends Component {
 			return t('Current time zone. Switch to ${city} time to change the zone', { city: this.foreignZone.name().city })
 		}
 		if (this.entry.floating) {
-			return t('Wall clock (no time zone)')
+			return t('Same time everywhere')
 		}
 		const zone = this.entry.zone
 		const name = zone?.name()
@@ -207,10 +208,10 @@ export class EntryDetailsWhen extends Component {
 		this.showEventZone = !this.showEventZone
 	}
 
-	private readonly handleZonePick = (e: CustomEvent<string>) => {
-		const zone = TimeZone.of(e.detail)
-		this.entry.setTimeZone(EntryTimeZone.of(zone))
-		this.showEventZone = !zone.equals(TimeZones.here)
+	private readonly handleZonePick = (e: CustomEvent<TimeZoneChoice>) => {
+		const choice = e.detail
+		this.entry.setTimeZone(choice instanceof EntryTimeZone ? choice : EntryTimeZone.of(choice))
+		this.showEventZone = !(choice instanceof EntryTimeZone) && !choice.equals(TimeZones.here)
 		this.commit()
 	}
 
@@ -466,7 +467,7 @@ export class EntryDetailsWhen extends Component {
 	private get zoneTemplate() {
 		return html`
 			<div class="row field">
-				<mitra-icon icon="globe"></mitra-icon>
+				<mitra-icon icon=${this.entry.floating ? 'globe-off' : 'globe'}></mitra-icon>
 				<div class="zone">
 					<button class="zone-label" ?disabled=${this.zoneReadonly}
 						?data-placeholder=${this.zoneIsPrimary}
@@ -484,9 +485,8 @@ export class EntryDetailsWhen extends Component {
 						`}
 				</div>
 				<mitra-time-zone-picker
-					.selected=${this.entry.zone?.id ?? TimeZones.here.id}
-					home=${TimeZones.home.id}
-					here=${TimeZones.here.id}
+					.selected=${this.entry.floating ? EntryTimeZone.floating : this.entry.zone ?? TimeZones.here}
+					?floatable=${this.entry.floating || Calendars.capabilitiesOf(this.entry.sourceId).entries.floating}
 					@pick=${this.handleZonePick}
 				></mitra-time-zone-picker>
 			</div>

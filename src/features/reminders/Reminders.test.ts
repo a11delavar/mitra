@@ -1,7 +1,8 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { type DateTime } from '@3mo/date-time'
-import { EntryTimeZone, EntryType, Entry, TaskStatus } from '#features/entries'
+import { EntryType, Entry, TaskStatus } from '#features/entries'
+import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { Recurrence, RecurrenceFrequency } from '#features/recurrence'
 import { DueReminder } from './Reminders.js'
 

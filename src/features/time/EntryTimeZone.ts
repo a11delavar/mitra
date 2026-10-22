@@ -1,5 +1,5 @@
 import { type Converter } from '@a11d/converter'
-import { TimeZone } from '#features/time/TimeZone.js'
+import { TimeZone } from './TimeZone.js'
 import { Type } from '#infrastructure/model'
 
 /**

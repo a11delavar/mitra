@@ -3,7 +3,8 @@ import { converter } from '@a11d/converter'
 import { equals } from '@a11d/equals'
 import { EntryRelations, type Relation, RelationType, EntryRelation } from '#features/relations'
 import { Source, Color } from '#features/sources'
-import { Entry, EntryTimeZone, TaskStatus, EntryType } from '#features/entries'
+import { Entry, TaskStatus, EntryType } from '#features/entries'
+import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { User } from '#features/identity'
 import { Integration, integration, IntegrationCapabilities, IntegrationOwnership } from '#integrations'
@@ -80,7 +81,7 @@ export class Notion extends Integration<NotionCredentials> {
 
 	/** No availability: it is edited with this provider's capabilities, and would not repeat. No due or estimate: the one date property is the schedule. */
 	override get capabilities() {
-		return new IntegrationCapabilities({ entries: { statuses: [TaskStatus.ToDo, TaskStatus.Doing, TaskStatus.Done] }, availability: false })
+		return new IntegrationCapabilities({ entries: { statuses: [TaskStatus.ToDo, TaskStatus.Doing, TaskStatus.Done], floating: false }, availability: false })
 	}
 
 	override get ownership() {

@@ -9,7 +9,7 @@ Ein Eintrag kann außerdem eine eigene Zeitzone haben, etwa ein Flug, der um 9:0
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/time-zone-detail-dark.webp">
-  <img src="../assets/screenshots/time-zone-detail-light.webp" alt="Der Editor eines neuen Eintrags mit der Zeitzone GMT+4 Dubai, der 11:00 Uhr in Dubai zeigt, während der Eintrag in der Berliner Woche dahinter um 9:00 Uhr liegt" />
+  <img src="../assets/screenshots/time-zone-detail-light.webp" alt="Der Editor eines neuen Eintrags mit der Zeitzone GMT+1 Lissabon, der 11:00 Uhr in Lissabon zeigt, während der Eintrag in der Berliner Woche dahinter um 12:00 Uhr liegt" />
 </picture>
 
 ## Die Zeitzone eines Eintrags
@@ -30,15 +30,15 @@ Weicht die Zone eines Eintrags von deiner ab, zeigt der Editor seine Zeiten in d
 
 Du kannst die Zeiten auf beide Arten bearbeiten. Um die Zone selbst zu ändern, wechsle zuerst zur Zeit des Eintrags.
 
-### Wanduhrzeiten
+### Überall dieselbe Uhrzeit
 
-Manche Einträge kommen ohne Zeitzone aus anderen Apps und zeigen **Wanduhrzeit (keine Zeitzone)**. Ihre Zeiten gehören zu keinem Ort: Ein Wecker um 7:00 Uhr ist überall um 7:00 Uhr gemeint, und der Editor zeigt ihn in jeder Zeitzone um 7:00 Uhr. Seine Erinnerungen gehen auf jedem Gerät zu dieser Uhrzeit los.
+Manche Einträge kommen ohne Zeitzone aus anderen Apps und zeigen **Überall dieselbe Uhrzeit**. Ihre Zeiten gehören zu keinem Ort: Ein Wecker um 7:00 Uhr ist überall um 7:00 Uhr gemeint, und der Editor zeigt ihn in jeder Zeitzone um 7:00 Uhr. Seine Erinnerungen gehen auf jedem Gerät zu dieser Uhrzeit los.
 
-Wählst du für so einen Eintrag eine Zone, bekommt er diese Zone und behält seine Uhrzeiten. Er kann nicht wieder zu einem Eintrag mit Wanduhrzeit werden.
+Wählst du für so einen Eintrag eine Zone, bekommt er diese Zone und behält seine Uhrzeiten. In einem Kalender, der solche Zeiten behält, kann jeder Eintrag eine bekommen: Wähle oben in der Liste **Überall dieselbe Uhrzeit**, und auch dann bleiben seine Uhrzeiten.
 
 ### Welche Kalender das unterstützen
 
-- **In Mitra gespeicherte Kalender**, [Kalenderserver](integrations/caldav.md) und [Google Calendar](integrations/google.md) behalten die Zeitzone jedes Eintrags, und andere Apps sehen sie.
+- **In Mitra gespeicherte Kalender**, [Kalenderserver](integrations/caldav.md) und [Google Calendar](integrations/google.md) behalten die Zeitzone jedes Eintrags, und andere Apps sehen sie. Mitra und Kalenderserver behalten auch Zeiten, die überall dieselben sind; Google Calendar kennt keine, deshalb bekommt so ein Eintrag dort eine feste Zone.
 - **[Notion](integrations/notion.md)** kennt keine Zeitzonen. Seine Zeiten erscheinen in deiner, und der Editor hat keine Zeile für die Zeitzone.
 - **[Tempo](integrations/tempo.md)** liest Arbeitszeiten in der Zeitzone deines Jira-Profils, und der Editor hat ebenfalls keine Zeile für die Zeitzone.
 - **[Abonnements](integrations/subscriptions.md)** sind schreibgeschützt: Du kannst die Zone eines Eintrags sehen und zwischen den beiden Zeiten wechseln, aber sie nicht ändern.

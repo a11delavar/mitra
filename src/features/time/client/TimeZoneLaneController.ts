@@ -28,10 +28,12 @@ interface Drag {
 /**
  * Folds the time axis' other zone columns (the anchor never folds), by a rail drag that follows the pointer or by the
  * header's chevron. The width is one registered length, `--zone-width`, transitioned or driven per frame; until the
- * user folds deliberately, the container query in Days.ts decides through `--_auto-fold`.
+ * user folds deliberately, the container query in Days.ts decides through `--_auto-fold`. While the lane moves, the host
+ * `follow`s it every frame, `settled` on the last: the days narrow or widen with it, and their scroll offset must keep
+ * the same date in view.
  */
 export class TimeZoneLaneController extends Controller {
-	constructor(protected override readonly host: Component) {
+	constructor(protected override readonly host: Component, private readonly follow: (settled: boolean) => void) {
 		super(host)
 	}
 
@@ -43,6 +45,13 @@ export class TimeZoneLaneController extends Controller {
 	private drag?: Drag
 	private observer?: ResizeObserver
 	private resolved = false
+	private transitioning = false
+	private following = false
+
+	/** Until a frame after the last `follow`, whose scroll would otherwise be read back as a date. */
+	get moving() {
+		return this.following || this.transitioning || !!this.drag?.claimed
+	}
 
 	private static get storedPreference(): boolean | undefined {
 		try {
@@ -75,6 +84,9 @@ export class TimeZoneLaneController extends Controller {
 		this.resolved = false
 		this.reflect()
 		this.host.addEventListener('pointerdown', this.onPointerDown)
+		for (const type of ['transitionrun', 'transitionend', 'transitioncancel'] as const) {
+			this.host.addEventListener(type, this.handleTransition)
+		}
 		// Only tells when the container query's verdict may have changed (a rotation, a resize, the sidebar).
 		this.observer = new ResizeObserver(() => this.resolveAuto())
 		this.observer.observe(this.host)
@@ -82,6 +94,9 @@ export class TimeZoneLaneController extends Controller {
 
 	override hostDisconnected() {
 		this.host.removeEventListener('pointerdown', this.onPointerDown)
+		for (const type of ['transitionrun', 'transitionend', 'transitioncancel'] as const) {
+			this.host.removeEventListener(type, this.handleTransition)
+		}
 		this.observer?.disconnect()
 		this.observer = undefined
 		this.release()
@@ -129,6 +144,28 @@ export class TimeZoneLaneController extends Controller {
 			// Storage unavailable, so the fold just doesn't survive a reload.
 		}
 		this.reflect()
+	}
+
+	private readonly handleTransition = (e: TransitionEvent) => {
+		if (e.target !== this.host || e.propertyName !== '--zone-width') {
+			return
+		}
+		this.transitioning = e.type === 'transitionrun'
+		this.followFrames()
+	}
+
+	/** Once per frame while the lane moves, and once more on the frame it stops. */
+	private followFrames() {
+		if (this.following) {
+			return
+		}
+		this.following = true
+		const step = () => {
+			const settled = !this.transitioning && !this.drag?.claimed
+			this.follow(settled)
+			requestAnimationFrame(settled ? () => this.following = false : step)
+		}
+		requestAnimationFrame(step)
 	}
 
 	private reflect() {
@@ -193,6 +230,7 @@ export class TimeZoneLaneController extends Controller {
 			drag.claimed = true
 			this.host.setPointerCapture(drag.pointerId)
 			this.host.toggleAttribute('data-zones-immediate', true)
+			this.followFrames()
 		}
 		// The LANE follows the pointer 1:1, so each of its columns takes an n-th of the travel.
 		this.moveTo(Math.min(this.openWidth, Math.max(0, drag.startWidth + travel / this.zoneCount)))

@@ -368,7 +368,11 @@ describe('Demo', () => {
 		const sources = await em.find(Source, { integrationId: demo.id })
 		const timed = (await em.find(Entry, { sourceId: { $in: sources.map(source => source.id) } })).filter(entry => entry.start && !entry.allDay)
 		assert.ok(timed.some(entry => entry.recurrence))
-		assert.deepEqual([...new Set(timed.map(entry => entry.timeZone?.id))], [TimeZone.deviceId])
+		assert.deepEqual([...new Set(timed.filter(entry => !entry.floating).map(entry => entry.timeZone?.id))], [TimeZone.deviceId])
+		// The morning meds are the same hour wherever their taker is: no zone, their wall clock kept as UTC.
+		const floating = timed.filter(entry => entry.floating)
+		assert.deepEqual([...new Set(floating.map(entry => entry.heading))], ['💊 Morning Meds'])
+		assert.ok(floating.every(entry => [entry.start!.getUTCHours(), entry.start!.getUTCMinutes()].join(':') === '7:30'))
 	})
 
 	it('seeds in the account’s home zone, so the day and its hours are the visitor’s, and rebuilds when that changes', async () => {
@@ -382,7 +386,7 @@ describe('Demo', () => {
 
 		const sources = await em.find(Source, { integrationId: demo.id })
 		const entries = () => em.find(Entry, { sourceId: { $in: sources.map(source => source.id) } })
-		const timed = (await entries()).filter(entry => entry.start && !entry.allDay)
+		const timed = (await entries()).filter(entry => entry.start && !entry.allDay && !entry.floating)
 		assert.deepEqual([...new Set(timed.map(entry => entry.timeZone?.id))], [kiritimati.id])
 		// The fixture keeps its days within 07:00–19:00, read in the visitor's zone.
 		const hours = timed.map(entry => Temporal.Instant.fromEpochMilliseconds(entry.start!.valueOf()).toZonedDateTimeISO(kiritimati.id).hour)
@@ -394,7 +398,7 @@ describe('Demo', () => {
 		await em.flush()
 		assert.equal(await demo.syncEntries(em), true, 'a new home zone rebuilds')
 		await em.flush()
-		assert.deepEqual([...new Set((await entries()).filter(entry => entry.start && !entry.allDay).map(entry => entry.timeZone?.id))], ['Pacific/Honolulu'])
+		assert.deepEqual([...new Set((await entries()).filter(entry => entry.start && !entry.allDay && !entry.floating).map(entry => entry.timeZone?.id))], ['Pacific/Honolulu'])
 	})
 
 	it('is written in the language it is given, calendars included, and rewritten when that changes', async () => {

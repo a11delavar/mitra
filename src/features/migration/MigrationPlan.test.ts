@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { Entry, EntryType, EntryFiles } from '#features/entries'
+import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { Source } from '#features/sources'
 import { IntegrationCapabilities, IntegrationOwnership } from '#integrations'
 import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
@@ -80,6 +81,14 @@ describe('MigrationVerdict.assess', () => {
 		assert.equal(losesEnd(task({ allDay: true, start: at('2026-11-02T00:00:00Z'), end: at('2026-11-03T00:00:00Z') })), false, 'a single day stays one')
 		assert.equal(losesEnd(task({ allDay: true, start: at('2026-11-02T00:00:00Z'), end: at('2026-11-05T00:00:00Z') })), true)
 		assert.equal(losesEnd(task({ start: at('2026-11-02T09:00:00Z'), end: at('2026-11-02T10:00:00Z') }), new IntegrationOwnership({ end: 'upstream' })), false)
+	})
+
+	it('fixes a floating time to a zone where the target keeps none, and names no zone it never had', () => {
+		const pill = (timeZone: EntryTimeZone) => new Entry({ id: 'p', sourceId: 'home', type: EntryType.Event, heading: 'Pill', start: new Date('2026-11-02T08:00:00Z') as never, timeZone })
+		const losses = (entry: Entry, floating: boolean) => MigrationVerdict.assess(entry, { target: target(), capabilities: new IntegrationCapabilities({ entries: { floating } }), ownership: new IntegrationOwnership({ timeZone: 'upstream' }), occurrence: false }).losses
+		assert.deepEqual(losses(pill(EntryTimeZone.floating), false), ['floating'])
+		assert.deepEqual(losses(pill(EntryTimeZone.floating), true), [])
+		assert.deepEqual(losses(pill(EntryTimeZone.parse('Europe/Berlin')!), false), [], 'a time in a zone keeps it')
 	})
 })
 

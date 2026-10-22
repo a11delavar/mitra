@@ -1,5 +1,5 @@
 import type { Source } from '#features/sources'
-import { type Entry, TaskStatus, Transparency } from '#features/entries'
+import { Entry, TaskStatus, Transparency } from '#features/entries'
 import { TimeZone } from '#features/time/TimeZone.js'
 import type { Integration } from '#integrations'
 import { model } from '#infrastructure/model'
@@ -8,7 +8,7 @@ import { model } from '#infrastructure/model'
 export type MigrationBlocker = 'availability' | 'recurrence' | 'occurrence' | 'participants' | 'transparency' | 'visibility' | 'percentComplete'
 
 /** Target capability that strips an entry field on arrival. */
-export type MigrationLoss = 'reminders' | 'location' | 'description' | 'attachments' | 'end' | 'due' | 'estimate' | 'timeZone' | 'allDay' | 'doingStatus' | 'cancelledStatus' | 'type'
+export type MigrationLoss = 'reminders' | 'location' | 'description' | 'attachments' | 'end' | 'due' | 'estimate' | 'timeZone' | 'floating' | 'allDay' | 'doingStatus' | 'cancelledStatus' | 'type'
 
 /** Single entry assessment (blockers and field losses). */
 @model('MigrationVerdict')
@@ -87,9 +87,12 @@ export class MigrationVerdict {
 		if (entry.estimate !== undefined && !ownership.holds('estimate')) {
 			losses.push('estimate')
 		}
-		// Floating time zone is not a named zone, so it has no zone loss.
+		// A floating time is no named zone, so it has no zone loss, but a calendar without wall clocks fixes it to one.
 		if (entry.timeZone && !entry.timeZone.floating && !ownership.holds('timeZone')) {
 			losses.push('timeZone')
+		}
+		if (entry.floating && !capabilities.entries.floating) {
+			losses.push('floating')
 		}
 		if (entry.allDay && !ownership.holds('allDay')) {
 			losses.push('allDay')
@@ -188,6 +191,7 @@ export class MigrationPlan {
 			case 'due': return t('${count:pluralityNumber} lose their due date', { count })
 			case 'estimate': return t('${count:pluralityNumber} lose their estimate', { count })
 			case 'timeZone': return t('${count:pluralityNumber} lose their time zone', { count })
+			case 'floating': return t('${count:pluralityNumber} get a fixed time zone', { count })
 			case 'allDay': return t('${count:pluralityNumber} stop being all-day', { count })
 			case 'doingStatus': return t('${count:pluralityNumber} go back to To Do', { count })
 			case 'cancelledStatus': return t('${count:pluralityNumber} lose their cancelled status', { count })
