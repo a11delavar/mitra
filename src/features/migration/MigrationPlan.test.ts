@@ -69,6 +69,18 @@ describe('MigrationVerdict.assess', () => {
 		assert.deepEqual(assess(new IntegrationCapabilities({ entries: { attach: false } }), holding()), ['attachments'])
 		assert.deepEqual(assess(new IntegrationCapabilities(), holding()), [])
 	})
+
+	it('loses a length where the target holds none: a timed span its end, an all-day one the days past its first', () => {
+		const task = (init: Partial<Entry>) => new Entry({ id: 't', sourceId: 'home', type: EntryType.Task, heading: 'Paint', ...init })
+		const at = (iso: string) => new Date(iso) as never
+		const losesEnd = (entry: Entry, ownership = new IntegrationOwnership({ allDay: 'upstream' })) =>
+			MigrationVerdict.assess(entry, { target: new Source({ id: 'away', uri: 'away', entryTypes: [EntryType.Task], name: 'Away' }), capabilities: new IntegrationCapabilities(), ownership, occurrence: false }).losses.includes('end')
+		assert.equal(losesEnd(task({ start: at('2026-11-02T09:00:00Z'), end: at('2026-11-02T10:00:00Z') })), true)
+		assert.equal(losesEnd(task({ start: at('2026-11-02T09:00:00Z') })), false, 'a moment has none to lose')
+		assert.equal(losesEnd(task({ allDay: true, start: at('2026-11-02T00:00:00Z'), end: at('2026-11-03T00:00:00Z') })), false, 'a single day stays one')
+		assert.equal(losesEnd(task({ allDay: true, start: at('2026-11-02T00:00:00Z'), end: at('2026-11-05T00:00:00Z') })), true)
+		assert.equal(losesEnd(task({ start: at('2026-11-02T09:00:00Z'), end: at('2026-11-02T10:00:00Z') }), new IntegrationOwnership({ end: 'upstream' })), false)
+	})
 })
 
 describe('the wire', () => {

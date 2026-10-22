@@ -50,7 +50,7 @@ export class UpdateEntry extends Operation<Parameters, Entry> {
 		}
 		incoming.fit(to.integration.ownership)
 
-		const recreated = edit.recreates
+		const recreated = edit.recreates(from, to)
 		const saved = await edit.save(em, from, to)
 		await em.flush()
 		// Read back as any read answers it, so the browser keeps the entries it reaches until its next fetch.

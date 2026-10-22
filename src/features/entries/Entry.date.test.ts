@@ -1,23 +1,28 @@
 import { describe, it, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
-import { DateTime } from '@3mo/date-time'
+import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { TimeZone } from '#features/time/TimeZone.js'
+import { holdLocalIn } from '#features/time/TimeZone.testing.js'
 import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
 import { Entry } from './Entry.js'
 import { EntryType } from './EntryType.js'
+import { EntryTimeZone } from './EntryTimeZone.js'
+import { EntryPatch } from './EntryPatch.js'
 
 // `Entry.date`: an entry holds an all-day day as the midnight it begins where it is shown, and the wire carries it as its UTC midnight.
 describe('Entry.date', () => {
-	const serverDays = Entry.dayZone
+	let restore: (() => void) | undefined
 	const processZone = process.env.TZ
 	afterEach(() => {
-		Entry.dayZone = serverDays
+		restore?.()
+		restore = undefined
 		process.env.TZ = processZone
 	})
 
 	/** Shows days in `zone` as a browser there does, whose DateTimes are in that zone too. */
 	const showIn = (zone: string | undefined) => {
-		Entry.dayZone = () => TimeZone.parse(zone)
+		restore?.()
+		restore = holdLocalIn(TimeZone.parse(zone))
 		process.env.TZ = zone ?? processZone
 	}
 	const midnight = (day: string, zone: string) => new DateTime(TimeZone.of(zone).midnightOf(Temporal.PlainDate.from(day)).getTime())
@@ -121,13 +126,57 @@ describe('Entry.date', () => {
 		assert.deepEqual([iso(arrived.start), iso(arrived.recurrenceId), arrived.exdates], [iso(entry.start), iso(entry.recurrenceId), entry.exdates])
 	})
 
+	describe('a floating time, a wall clock in no zone', () => {
+		const alarm = (init: Partial<Entry> = {}) => new Entry({ type: EntryType.Task, heading: 'Alarm', timeZone: EntryTimeZone.floating, ...init })
+		const atWallClock = (wallClock: string, zone: string) => new DateTime(Temporal.PlainDateTime.from(wallClock).toZonedDateTime(zone).epochMilliseconds)
+
+		it('arrives at its wall clock where it is shown, so every view places it there, and travels back as if in UTC', () => {
+			for (const zone of ['Europe/Berlin', 'Asia/Tehran', 'America/New_York']) {
+				showIn(zone)
+				const arrived = revive<Entry>({ '@type': 'Entry', start: '2026-10-03T10:00:00.000Z', end: '2026-10-03T11:00:00.000Z', timeZone: 'floating' })
+				assert.deepEqual([arrived.start!.hour, arrived.start!.minute, arrived.end!.hour], [10, 0, 11], zone)
+				assert.deepEqual([wire(arrived).start, wire(arrived).end], ['2026-10-03T10:00:00.000Z', '2026-10-03T11:00:00.000Z'], zone)
+			}
+		})
+
+		it('repeats at its wall clock where it is shown, across a change of daylight saving there', () => {
+			showIn('Europe/Berlin')
+			const arrived = revive<Entry>({ '@type': 'Entry', type: 'task', start: '2026-10-24T09:00:00.000Z', timeZone: 'floating', recurrence: 'FREQ=DAILY;COUNT=3' })
+			const window = new DateTimeRange(new DateTime(Date.parse('2026-10-24T00:00:00Z')), new DateTime(Date.parse('2026-10-27T00:00:00Z')))
+			assert.deepEqual([...arrived.occurrences.within(window)].map(occurrence => occurrence.start!.hour), [9, 9, 9])
+		})
+
+		it('keeps its clock times when it takes a zone where it is shown', () => {
+			showIn('Europe/Berlin')
+			const entry = alarm({ start: atWallClock('2026-10-03T10:00', 'Europe/Berlin') })
+			entry.setTimeZone(EntryTimeZone.parse('Asia/Tokyo')!)
+			assert.equal(iso(entry.start), '2026-10-03T01:00:00.000Z')
+			assert.equal(wire(entry).start, '2026-10-03T01:00:00.000Z')
+		})
+
+		it('brings its zone along in an edit of its dates, which tells how they travel', () => {
+			showIn('Asia/Tehran')
+			const entry = alarm({ start: atWallClock('2026-10-03T07:00', 'Asia/Tehran') })
+			const patch = wireOf(EntryPatch.of(entry, ['start'])) as { start?: string, timeZone?: string }
+			assert.deepEqual([patch.start, patch.timeZone], ['2026-10-03T07:00:00.000Z', 'floating'])
+			assert.equal('timeZone' in (wireOf(EntryPatch.of(new Entry({ start: entry.start }), ['start'])) as object), false, 'a zoned edit stays as it was')
+		})
+
+		it('is kept as stored on the server', () => {
+			showIn(undefined)
+			const arrived = revive<Entry>({ '@type': 'Entry', start: '2026-10-03T10:00:00.000Z', timeZone: 'floating' })
+			assert.equal(iso(arrived.start), '2026-10-03T10:00:00.000Z')
+		})
+	})
+
 	it('shows days in the device\'s zone in the browser, and in none on the server', () => {
 		const runtime = mitra as { runtime: string }
-		Entry.dayZone = serverDays
-		assert.equal(Entry.dayZone(), undefined)
+		restore?.()
+		restore = undefined
+		assert.equal(TimeZone.local, undefined)
 		runtime.runtime = 'browser'
 		try {
-			assert.equal(Entry.dayZone(), TimeZone.device)
+			assert.equal(TimeZone.local, TimeZone.device)
 		} finally {
 			runtime.runtime = 'server'
 		}

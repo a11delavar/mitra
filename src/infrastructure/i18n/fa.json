@@ -567,6 +567,10 @@
 		"${count:pluralityNumber} مورد دارای شرکت‌کننده است",
 		"${count:pluralityNumber} مورد دارای شرکت‌کننده هستند"
 	],
+	"${count:pluralityNumber} go back to To Do": [
+		"${count:pluralityNumber} مورد به «برای انجام» برمی‌گردد",
+		"${count:pluralityNumber} مورد به «برای انجام» برمی‌گردند"
+	],
 	"${count:pluralityNumber} lose their cancelled status": [
 		"${count:pluralityNumber} مورد وضعیت لغوشده خود را از دست می‌دهد",
 		"${count:pluralityNumber} مورد وضعیت لغوشده خود را از دست می‌دهند"
@@ -582,6 +586,10 @@
 	"${count:pluralityNumber} lose their due date": [
 		"${count:pluralityNumber} مورد تاریخ سررسید خود را از دست می‌دهد",
 		"${count:pluralityNumber} مورد تاریخ سررسید خود را از دست می‌دهند"
+	],
+	"${count:pluralityNumber} lose their end date": [
+		"${count:pluralityNumber} مورد تاریخ پایان خود را از دست می‌دهد",
+		"${count:pluralityNumber} مورد تاریخ پایان خود را از دست می‌دهند"
 	],
 	"${count:pluralityNumber} lose their estimate": [
 		"${count:pluralityNumber} مورد تخمین خود را از دست می‌دهد",

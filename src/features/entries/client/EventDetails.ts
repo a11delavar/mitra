@@ -603,7 +603,8 @@ export class EntryDetailsComponent extends Component {
 			return capabilities.entries.create
 				&& (!entry.type.isAvailability || capabilities.availability)
 				&& (!entry.partOfSeries || ownership.holds('recurrence'))
-				&& (entry.status !== TaskStatus.Cancelled || capabilities.entries.cancel)
+				&& (!entry.due || ownership.holds('due'))
+				&& (!entry.status || capabilities.entries.statuses.includes(entry.status))
 				&& (entry.transparency !== Transparency.Free || ownership.holds('transparency'))
 				&& (!entry.visibility || ownership.holds('visibility'))
 				&& (!entry.attachments.length || (ownership.holds('attachments') && capabilities.entries.attach))

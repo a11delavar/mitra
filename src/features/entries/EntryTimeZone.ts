@@ -33,7 +33,7 @@ export class EntryTimeZone {
 		return this.floating ? undefined : TimeZone.parse(this.id)
 	}
 
-	/** Where its wall clock is read: its zone, or UTC for floating times, which are stored as if in UTC. */
+	/** Where its wall clock is read as stored: its zone, or UTC for floating times; the browser holds those in `TimeZone.local`. */
 	get clock(): string {
 		return this.floating ? 'UTC' : this.id
 	}

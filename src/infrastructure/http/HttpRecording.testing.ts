@@ -13,7 +13,8 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 	What differs between runs is replaced by placeholders before an exchange is stored or compared: the values a test names
 	(the server's address, its account), the times a client stamps on what it writes, and what either side mints. Minted
 	values are numbered in the order the traffic first names them, and the file keeps what each was: ids, which the client
-	mints anew in every run, and the server's tokens (ETags, sync tokens) and times, which replay hands back as recorded.
+	mints anew in every run, the server's times, and its tokens (ETags, sync tokens, ids), each made up anew in its shape so
+	the file keeps none of an account's own, which replay hands back as recorded.
 	Exchanges are kept by request, each request's answers in the order they came, as a client sends some at once and they
 	land in either order. So a recording made again changes in those lists, while its exchanges change only where the
 	traffic does.
@@ -58,13 +59,26 @@ const readBody = (message: IncomingMessage) => new Promise<string>((resolve, rej
 
 const listen = (server: Server) => new Promise<string>(resolve => server.listen(0, () => resolve(`http://localhost:${(server.address() as AddressInfo).port}`)))
 
+/**
+ * Where a server's format keeps what differs between runs, each pattern matching the value alone: ids a client mints, tokens the
+ * server mints and a client hands back, the times it stamps, values a client sends anew every run (`{now}`), and secrets never kept.
+ */
+export interface HttpRecordingFormat {
+	readonly ids?: ReadonlyArray<RegExp>
+	readonly tokens?: ReadonlyArray<RegExp>
+	readonly times?: ReadonlyArray<RegExp>
+	readonly stamps?: ReadonlyArray<RegExp>
+	readonly secrets?: ReadonlyArray<RegExp>
+	/** Takes out of an answer what the account holds besides the test's own, before it is stored. */
+	readonly redact?: (body: string) => string
+}
+
 export class HttpRecording {
 	/**
 	 * `values` maps a placeholder to what it stands for in this run (the server's address, an account), read whenever an exchange is
-	 * stored or matched, so a value known only once the test runs (an app's port) can join late. `ids` finds the ids a client mints
-	 * in a shape other than a uuid, each where it stands.
+	 * stored or matched, so a value known only once the test runs (an app's port) can join late. `format` finds the rest.
 	 */
-	constructor(readonly file: string, private readonly values: () => Readonly<Record<string, string>>, private readonly ids: ReadonlyArray<RegExp> = []) { }
+	constructor(readonly file: string, private readonly values: () => Readonly<Record<string, string>>, private readonly format: HttpRecordingFormat = {}) { }
 
 	/** This run's minted values by their number; replay starts from the server's as recorded, while the client mints its ids anew. */
 	private readonly minted: Record<Minted, Array<string>> = { id: [], token: [], time: [] }
@@ -90,7 +104,10 @@ export class HttpRecording {
 		return `{${kind}:${known >= 0 ? known : this.minted[kind].push(value) - 1}}`
 	}
 
-	/** Unfolded first: iCalendar folds lines at 75 octets, which may split a value, and where depends on how long the values are. */
+	/**
+	 * Unfolded first: iCalendar folds lines at 75 octets, which may split a value, and where depends on how long the values are. A
+	 * format's tokens go before the uuids, as a server may mint some in that shape.
+	 */
 	private toPlaceholders(text: string) {
 		let result = text.replace(/\r?\n[ \t]/g, '')
 		for (const [placeholder, value] of Object.entries(this.values()).sort(([, a], [, b]) => b.length - a.length)) {
@@ -98,12 +115,27 @@ export class HttpRecording {
 				result = result.replaceAll(value, `{${placeholder}}`)
 			}
 		}
-		for (const ids of [uuids, ...this.ids]) {
+		for (const secret of this.format.secrets ?? []) {
+			result = result.replace(secret, '{secret}')
+		}
+		for (const tokens of this.format.tokens ?? []) {
+			result = result.replace(tokens, token => this.placeholderOf('token', token))
+		}
+		for (const ids of [uuids, ...this.format.ids ?? []]) {
 			result = result.replace(ids, id => this.placeholderOf('id', id))
 		}
-		return result
+		result = result
 			.replace(tokenProperties, (_, open: string, _name: string, token: string, close: string) => `${open}${this.placeholderOf('token', token)}${close}`)
 			.replace(timeProperties, (_, open: string, _name: string, time: string, close: string) => `${open}${this.placeholderOf('time', time)}${close}`)
+		for (const times of this.format.times ?? []) {
+			result = result.replace(times, time => this.placeholderOf('time', time))
+		}
+		return result
+	}
+
+	/** What a client sends that changes with every run, as `{now}`. */
+	private withoutStamps(text: string) {
+		return (this.format.stamps ?? []).reduce((result, stamps) => result.replace(stamps, '{now}'), text.replace(timestamps, '$1$2{now}'))
 	}
 
 	private headerToPlaceholders(name: string, value: string) {
@@ -128,9 +160,9 @@ export class HttpRecording {
 		const headers = Object.fromEntries(requestHeaders.filter(name => message.headers[name] !== undefined).map(name => [name, this.headerToPlaceholders(name, String(message.headers[name]))]))
 		return {
 			method: message.method ?? 'GET',
-			path: this.toPlaceholders(message.url ?? '/'),
+			path: this.toPlaceholders(this.withoutStamps(message.url ?? '/')),
 			headers,
-			body: this.toPlaceholders(body.replace(timestamps, '$1$2{now}')),
+			body: this.toPlaceholders(this.withoutStamps(body)),
 		}
 	}
 
@@ -139,7 +171,7 @@ export class HttpRecording {
 		return {
 			status,
 			headers: Object.fromEntries(Object.entries(headers).map(([name, value]) => [name, this.headerToPlaceholders(name, value)])),
-			body: this.toPlaceholders(body.replace(/\r?\n[ \t]/g, '').replace(timestamps, (_, name: string, separator: string, time: string) => `${name}${separator}${this.placeholderOf('time', time)}`)),
+			body: this.toPlaceholders((this.format.redact?.(body) ?? body).replace(/\r?\n[ \t]/g, '').replace(timestamps, (_, name: string, separator: string, time: string) => `${name}${separator}${this.placeholderOf('time', time)}`)),
 		}
 	}
 
@@ -154,14 +186,41 @@ export class HttpRecording {
 			}
 			return `{${kind}:${numbers[kind].get(Number(number))}}`
 		})
-		return { version, minted, exchanges: JSON.parse(renumbered) as Array<HttpExchange> }
+		const taken = new Set(minted.token)
+		return { version, minted: { ...minted, token: minted.token.map(token => HttpRecording.madeUp(token, taken)) }, exchanges: JSON.parse(renumbered) as Array<HttpExchange> }
 	}
 
-	/** Proxies to `target`, the real server, recording every exchange; `close()` writes the recording, naming the server's `version`. */
-	async record(target: string, version?: string) {
+	/**
+	 * A server's token kept as one made up in its shape, every character of the same kind (case, digit, a uuid's hex), so the
+	 * patterns that found it still do and the file holds none of the account's own ids. Replay hands back what the file keeps.
+	 */
+	private static madeUp(value: string, taken: Set<string>) {
+		const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+		const pick = (alphabet: string) => alphabet[crypto.getRandomValues(new Uint32Array(1))[0]! % alphabet.length]!
+		let made: string
+		do {
+			made = [...value].map(character => uuid && /[0-9a-f]/i.test(character) ? pick('0123456789abcdef')
+				: /[a-z]/.test(character) ? pick('abcdefghijklmnopqrstuvwxyz')
+					: /[A-Z]/.test(character) ? pick('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+						: /\d/.test(character) ? pick('0123456789')
+							: character).join('')
+		} while (made === value || taken.has(made))
+		taken.add(made)
+		return made
+	}
+
+	/**
+	 * Proxies to `target`, the real server, recording every exchange; `close()` writes the recording, naming the server's `version`.
+	 * Requests start at least `pace` milliseconds apart, for a service that limits how fast an account may ask.
+	 */
+	async record(target: string, version?: string, pace = 0) {
 		const exchanges = new Array<HttpExchange>()
+		let turn = Promise.resolve()
 		const server = createServer(async (incoming, outgoing) => {
 			const raw = await readBody(incoming)
+			const mine = turn.then(() => new Promise<void>(resolve => setTimeout(resolve, pace)))
+			turn = mine
+			await mine
 			const request = this.requestOf(incoming, raw)
 			const forwarded = Object.fromEntries(Object.entries(incoming.headers).filter(([name]) => !['host', 'content-length', 'connection'].includes(name)).map(([name, value]) => [name, String(value)]))
 			// The client follows a redirect itself, so it is recorded as the server sent it.

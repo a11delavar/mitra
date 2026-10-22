@@ -3,7 +3,7 @@ import type { Entry } from '#features/entries'
 /** Who owns a field: the integration's service, so a re-import brings it back, or Mitra's own database, so deleting the integration loses it. */
 export type Owner = 'upstream' | 'mitra'
 
-export type OwnedField = keyof Entry & ('recurrence' | 'reminders' | 'location' | 'description' | 'percentComplete' | 'due' | 'estimate'
+export type OwnedField = keyof Entry & ('end' | 'recurrence' | 'reminders' | 'location' | 'description' | 'percentComplete' | 'due' | 'estimate'
 	| 'timeZone' | 'participants' | 'attachments' | 'transparency' | 'visibility' | 'relations' | 'allDay' | 'rank')
 
 /** Which fields of its entries an integration holds, and who owns each: a field nobody owns is one its calendars don't hold. */

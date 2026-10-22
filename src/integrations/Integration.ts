@@ -7,11 +7,10 @@ import { entity, primaryKey, property, manyToOne, unique, children, Entity, iden
 import { IntegrationCapabilities } from './IntegrationCapabilities.js'
 import { IntegrationOwnership } from './IntegrationOwnership.js'
 
-/** Protocol sync and CRUD operations registered per integration type. */
+/** Protocol sync and CRUD operations registered per integration type, which reads its changes as one of the two below. */
 export interface SyncEngine {
 	/** Fetches remote sources, optionally passing existing persisted sources for conditional requests. */
 	fetchSources(integration: Integration, existing?: ReadonlyArray<Source>): Promise<Array<Source>>
-	syncSourceEntries(integration: Integration, em: EntityManager, source: Source): Promise<boolean>
 	createEntry(integration: Integration, em: EntityManager, entry: Entry): Promise<Entry>
 	updateEntry(integration: Integration, em: EntityManager, existing: Entry, incoming: Entry): Promise<void>
 	deleteEntry(integration: Integration, em: EntityManager, entry: Entry): Promise<void>
@@ -22,13 +21,27 @@ export interface SyncEngine {
 	publishAvailability?(integration: Integration, em: EntityManager, entries: ReadonlyArray<Entry>, of?: ReadonlyArray<Entry>): Promise<boolean>
 }
 
-const engines = new Map<string, SyncEngine>()
+/** An engine whose provider tells its changes per calendar (a CalDAV sync token, a Notion watermark), read one calendar at a time. */
+export interface SourceSyncEngine extends SyncEngine {
+	/** @returns whether any entry of the calendar changed. */
+	syncSourceEntries(integration: Integration, em: EntityManager, source: Source): Promise<boolean>
+}
 
-export function registerEngine(type: string, engine: SyncEngine) {
+/** An engine whose provider tells its changes per account (Todoist's sync token), read for every enabled calendar at once. */
+export interface AccountSyncEngine extends SyncEngine {
+	/** @returns whether any entry changed. */
+	syncAccountEntries(integration: Integration, em: EntityManager, sources: ReadonlyArray<Source>): Promise<boolean>
+}
+
+type AnySyncEngine = SourceSyncEngine | AccountSyncEngine
+
+const engines = new Map<string, AnySyncEngine>()
+
+export function registerEngine(type: string, engine: AnySyncEngine) {
 	engines.set(type, engine)
 }
 
-function engineFor(integration: Integration): SyncEngine {
+function engineFor(integration: Integration): AnySyncEngine {
 	const engine = engines.get(integration.type)
 	if (!engine) {
 		throw new Error(`No sync engine registered for integration type '${integration.type}'. See integrations/server/registerEngines.ts. This only ever runs server-side, after that file's import.`)
@@ -62,6 +75,10 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	/** Lowercase email addresses representing the user in participant lists (RFC 6638). */
 	@equality()
 	@property({ type: 'json', nullable: true }) addresses?: Array<string>
+
+	/** Where the provider's account-wide changes were last read up to. Never on the wire. */
+	@converter({ in: {}, out: {} })
+	@property({ type: 'json', nullable: true }) syncState?: Record<string, any>
 
 	/** Its calendars, as loaded or as given (a request, the browser's store). Never saved through here: a calendar is a row of its own. */
 	@equality()
@@ -160,9 +177,12 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		return engineFor(this).fetchSources(this, existing)
 	}
 
-	/** @returns whether any entry changed. A subclass with no engine (Notion, Mitra) overrides this. */
+	/**
+	 * @returns whether any entry changed. A subclass with no engine (Notion, Mitra) overrides this. Reached only through
+	 * {@link syncSources}, which sends an account engine the other way.
+	 */
 	protected syncSourceEntries(em: EntityManager, source: Source): Promise<boolean> {
-		return engineFor(this).syncSourceEntries(this, em, source)
+		return (engineFor(this) as SourceSyncEngine).syncSourceEntries(this, em, source)
 	}
 
 	/** Each provider decides which fields to keep, e.g. CalDAV keeps the stored password when `incoming` carries a blank one. */
@@ -209,20 +229,32 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		})
 	}
 
-	/** Marks the source imported once a pass completes without truncation. @returns whether entries changed or the import completed. */
-	async syncSource(em: EntityManager, source: Source): Promise<boolean> {
-		const changed = await this.syncSourceEntries(em, source)
-		const imported = !source.syncState?.incomplete && source.markImported()
-		return changed || imported
+	/** One calendar's pass, the importer's. @returns whether entries changed or an import completed. */
+	syncSource(em: EntityManager, source: Source): Promise<boolean> {
+		return this.syncSources(em, [source])
 	}
 
-	/** @returns whether anything worth republishing happened. */
+	/** Every enabled calendar's pass, the synchronizer's. @returns whether anything worth republishing happened. */
 	async syncEntries(em: EntityManager): Promise<boolean> {
+		return this.syncSources(em, await em.find(Source, { integrationId: this.id, enabled: true }))
+	}
+
+	/**
+	 * Where the two kinds of engine part: an account engine reads every enabled calendar whichever were asked for, so an
+	 * import of one project imports them all. A calendar is marked imported once its pass completes without truncation.
+	 */
+	private async syncSources(em: EntityManager, requested: ReadonlyArray<Source>): Promise<boolean> {
+		const imported = (source: Source) => !source.syncState?.incomplete && source.markImported()
+		const engine = engines.get(this.type)
+		if (engine && 'syncAccountEntries' in engine) {
+			const sources = await em.find(Source, { integrationId: this.id, enabled: true })
+			const changed = await engine.syncAccountEntries(this, em, sources)
+			return sources.map(imported).some(Boolean) || changed
+		}
 		let changed = false
-		for (const source of await em.find(Source, { integrationId: this.id, enabled: true })) {
-			if (await this.syncSource(em, source)) {
-				changed = true
-			}
+		for (const source of requested) {
+			const read = await this.syncSourceEntries(em, source)
+			changed = imported(source) || read || changed
 		}
 		return changed
 	}

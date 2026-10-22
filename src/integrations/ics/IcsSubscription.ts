@@ -27,13 +27,13 @@ export class IcsSubscription extends Integration<IcsSubscriptionCredentials> {
 	static readonly description: string = 'Any calendar link (webcal:// or .ics)'
 
 	override get capabilities() {
-		return new IntegrationCapabilities({ entries: { create: false, edit: false, delete: false, rename: false, cancel: false, attach: false } })
+		return new IntegrationCapabilities({ entries: { create: false, edit: false, delete: false, rename: false, attach: false } })
 	}
 
 	/** What a feed's iCalendar carries, but links: a feed's relations point at entries it may not hold. */
 	override get ownership() {
 		return new IntegrationOwnership({
-			recurrence: 'upstream', reminders: 'upstream', location: 'upstream', description: 'upstream', percentComplete: 'upstream',
+			end: 'upstream', recurrence: 'upstream', reminders: 'upstream', location: 'upstream', description: 'upstream', percentComplete: 'upstream',
 			due: 'upstream', estimate: 'upstream', timeZone: 'upstream', participants: 'upstream', attachments: 'upstream',
 			transparency: 'upstream', visibility: 'upstream', allDay: 'upstream', rank: 'mitra',
 		})

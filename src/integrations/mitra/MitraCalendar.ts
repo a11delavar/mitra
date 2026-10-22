@@ -48,7 +48,7 @@ export class MitraCalendar extends Integration {
 	/** Every field, all of them its own. */
 	override get ownership() {
 		return new IntegrationOwnership({
-			recurrence: 'mitra', reminders: 'mitra', location: 'mitra', description: 'mitra', percentComplete: 'mitra',
+			end: 'mitra', recurrence: 'mitra', reminders: 'mitra', location: 'mitra', description: 'mitra', percentComplete: 'mitra',
 			due: 'mitra', estimate: 'mitra', timeZone: 'mitra', participants: 'mitra', attachments: 'mitra',
 			transparency: 'mitra', visibility: 'mitra', relations: 'mitra', allDay: 'mitra', rank: 'mitra',
 		})
@@ -59,7 +59,7 @@ export class MitraCalendar extends Integration {
 		return Promise.resolve([...existing ?? []])
 	}
 
-	protected override syncSourceEntries(): Promise<boolean> {
+	protected override syncSourceEntries(_em: EntityManager, _source: Source): Promise<boolean> {
 		return Promise.resolve(false)
 	}
 

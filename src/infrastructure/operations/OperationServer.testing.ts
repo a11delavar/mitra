@@ -7,8 +7,9 @@ import { ModelValueConstructor } from '@a11d/api-model-value-constructor'
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client'
 import { User } from '#features/identity'
 import { Source } from '#features/sources'
-import { Entry, EntryType } from '#features/entries'
+import { EntryType } from '#features/entries'
 import { staleTabs } from '#features/entries/server/staleTabs.js'
+import { holdLocalIn } from '#features/time/TimeZone.testing.js'
 import { MitraCalendar } from '#integrations/mitra/MitraCalendar.js'
 import '#integrations/server/registerEngines.js'
 import { errorHandler } from '#infrastructure/http/errorHandler.js'
@@ -63,11 +64,10 @@ export class OperationServer {
 		app.use((req, res, next) => {
 			req.user = user
 			// From parsing the body on, this is the server; the viewer is back once the response is out.
-			const viewer = Entry.dayZone
-			Entry.dayZone = () => undefined
+			const restoreViewer = holdLocalIn(undefined)
 			const end = res.end.bind(res) as (...parameters: Array<unknown>) => typeof res
 			res.end = ((...parameters: Array<unknown>) => {
-				Entry.dayZone = viewer
+				restoreViewer()
 				return end(...parameters)
 			}) as typeof res.end
 			next()

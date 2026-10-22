@@ -1,5 +1,5 @@
 import { converter } from '@a11d/converter'
-import { type Entry, EntryType, EntryTimeZone } from '#features/entries'
+import { type Entry, EntryType, EntryTimeZone, TaskStatus } from '#features/entries'
 import { Integration, integration, IntegrationCapabilities, IntegrationOwnership } from '#integrations'
 import { model, withheld } from '#infrastructure/model'
 import { type TempoClient } from './server/TempoClient.js'
@@ -84,11 +84,11 @@ export class Tempo extends Integration<TempoCredentials> {
 
 	/** No availability: it is edited with this provider's capabilities, and would not repeat. */
 	override get capabilities() {
-		return new IntegrationCapabilities({ entries: { rename: false, cancel: false }, availability: false })
+		return new IntegrationCapabilities({ entries: { rename: false, statuses: [TaskStatus.ToDo, TaskStatus.Doing, TaskStatus.Done] }, availability: false })
 	}
 
 	override get ownership() {
-		return new IntegrationOwnership({ description: 'upstream', due: 'upstream', estimate: 'upstream', rank: 'mitra' })
+		return new IntegrationOwnership({ end: 'upstream', description: 'upstream', due: 'upstream', estimate: 'upstream', rank: 'mitra' })
 	}
 
 	override externalLink(entry: Entry) {

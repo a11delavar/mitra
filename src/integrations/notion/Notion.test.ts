@@ -574,7 +574,7 @@ describe('Notion integration model', () => {
 		assert.deepEqual(unsupported, ['due', 'estimate', 'location', 'participants', 'percentComplete', 'recurrence', 'reminders', 'timeZone', 'transparency', 'visibility'])
 		assert.equal(ownership.ownerOf('description'), 'upstream')
 		assert.equal(ownership.ownerOf('relations'), 'upstream')
-		assert.deepEqual([capabilities.availability, capabilities.entries.cancel], [false, false])
+		assert.deepEqual([capabilities.availability, capabilities.entries.statuses.includes(TaskStatus.Cancelled)], [false, false])
 		assert.deepEqual(capabilities.sources, { create: false, delete: false })
 	})
 

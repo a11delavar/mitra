@@ -1,8 +1,8 @@
 import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { EntryOccurrences } from '#features/recurrence'
 import { TimeZone } from '#features/time/TimeZone.js'
+import { holdLocalIn } from '#features/time/TimeZone.testing.js'
 import { fetchEvents } from '#infrastructure/http/Api.js'
-import { Entry } from '../Entry.js'
 
 /*
 	Viewers in different zones, for the entries' tests: a viewer is this process's zone (`process.env.TZ`), which the
@@ -14,7 +14,7 @@ export const zones = { berlin: 'Europe/Berlin', newYork: 'America/New_York', teh
 /** Makes this process a viewer in `zone`, reading days there as a browser does. */
 export const viewIn = (zone: string) => {
 	process.env.TZ = zone
-	Entry.dayZone = () => TimeZone.of(zone)
+	holdLocalIn(TimeZone.of(zone))
 }
 
 /** The midnight that begins `day` where this process is. */

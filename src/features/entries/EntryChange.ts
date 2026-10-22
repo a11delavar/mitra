@@ -4,19 +4,22 @@ import { type Entry } from './Entry.js'
 
 /**
  * What an edit of an entry itself does: an update in place, or a re-creation where no provider can follow, as for a move
- * to another calendar or between event and task (a CalDAV resource holds one kind, RFC 4791 §4.1).
+ * to another calendar or between event and task (a CalDAV resource holds one kind, RFC 4791 §4.1). A provider that moves
+ * entries between its own calendars (`entries.move`) keeps them in place, with what Mitra does not show.
  */
 export class EntryChange {
 	constructor(readonly entry: Entry, readonly edited: Entry) { }
 
-	get recreates() {
-		return this.edited.sourceId !== this.entry.sourceId || this.edited.type !== this.entry.type
+	recreates(from: Calendar, to: Calendar) {
+		const moved = this.edited.sourceId !== this.entry.sourceId
+		const movesInPlace = from.integration.id === to.integration.id && to.integration.capabilities.entries.move
+		return this.edited.type !== this.entry.type || (moved && !movesInPlace)
 	}
 
 	/** Writes the edit, a re-created entry into `to`. Answers with the entry as it now stands. */
 	async save(em: EntityManager, from: Calendar, to: Calendar): Promise<Entry> {
 		const { entry, edited } = this
-		if (!this.recreates) {
+		if (!this.recreates(from, to)) {
 			await to.integration.updateEntry(em, entry, edited)
 			return entry
 		}

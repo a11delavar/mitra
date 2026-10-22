@@ -46,6 +46,22 @@ export class TimeZone {
 		return device.id
 	}
 
+	static get default() {
+		return TimeZone.UTC
+	}
+
+	/**
+	 * Where this runtime holds what has no zone of its own, an all-day date and a floating time (RFC 5545's local date and time):
+	 * the device's in the browser; none on the server, which keeps them as stored.
+	 */
+	static get local(): TimeZone | undefined {
+		return mitra.runtime === 'browser' ? TimeZone.device : undefined
+	}
+
+	static get localOrDefault() {
+		return TimeZone.local ?? TimeZone.default
+	}
+
 	static get UTC() {
 		return TimeZone.of('UTC')
 	}
@@ -96,6 +112,12 @@ export class TimeZone {
 		const wall = (value: Date) => Temporal.Instant.fromEpochMilliseconds(value.getTime()).toZonedDateTimeISO(this.id).toPlainDateTime()
 		const distance = wall(from).until(wall(to))
 		return new Date(wall(instant).add(distance).toZonedDateTime(this.id, { disambiguation: 'compatible' }).epochMilliseconds)
+	}
+
+	/** The instant whose wall clock here reads what `instant`'s does in `elsewhere`: a floating time, held in one zone and read in another. */
+	atWallClockOf(instant: Date, elsewhere: TimeZone) {
+		const wall = Temporal.Instant.fromEpochMilliseconds(instant.getTime()).toZonedDateTimeISO(elsewhere.id).toPlainDateTime()
+		return new Date(wall.toZonedDateTime(this.id, { disambiguation: 'compatible' }).epochMilliseconds)
 	}
 
 	/** Minutes ahead of UTC at `at`. */
