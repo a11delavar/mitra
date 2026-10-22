@@ -32,6 +32,8 @@ export class Link extends Component {
 	@property() href = ''
 	/** In the text's own colour until hovered, for a row such as the location, where an accent would shout. */
 	@property({ type: Boolean, reflect: true }) plain = false
+	/** In place of the glyph for its kind, after the words, which already say what it leads to: how it opens (`arrow-up-right`). */
+	@property() icon?: string
 
 	static override get styles() {
 		return css`
@@ -64,6 +66,10 @@ export class Link extends Component {
 				font-size: 0.9em;
 				vertical-align: -0.125em;
 				margin-inline-end: 0.25em;
+
+				&[data-trailing] {
+					margin-inline: 0.125em 0;
+				}
 			}
 
 			:host([plain]) {
@@ -128,7 +134,9 @@ export class Link extends Component {
 		const { icon, label, title } = Link.appearanceOf(url)
 		const web = url.protocol === 'http:' || url.protocol === 'https:'
 		// Built from parts: whitespace between the anchor's tags would render inside it, underlined.
-		const content = [html`<mitra-icon icon=${icon}></mitra-icon>`, html`<slot>${label}</slot>`]
+		const content = this.icon
+			? [html`<slot>${label}</slot>`, html`<mitra-icon icon=${this.icon} data-trailing></mitra-icon>`]
+			: [html`<mitra-icon icon=${icon}></mitra-icon>`, html`<slot>${label}</slot>`]
 		return html`<a href=${this.href} title=${title ?? this.href} rel="noopener noreferrer" target=${web ? '_blank' : '_self'}>${content}</a>`
 	}
 }

@@ -182,19 +182,6 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 						margin: 0;
 						font-size: 0.8125rem;
 						color: var(--color-text-muted);
-
-						.guide {
-							/* Flex drops the space between word and arrow, which the underline would otherwise run across. */
-							display: inline-flex;
-							align-items: center;
-							gap: 0.125rem;
-							color: var(--color-text);
-							text-underline-offset: 0.2em;
-
-							mitra-icon {
-								font-size: 0.875em;
-							}
-						}
 					}
 
 					.error {
@@ -206,12 +193,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 
 				> mitra-dialog > .guide {
 					margin-inline-end: auto;
-					color: var(--color-text-muted);
-				}
-
-				/* A hint that links the guide already says where it is, so the footer leaves it out. */
-				&:has(.hint .guide) > mitra-dialog > .guide {
-					display: none;
+					font-size: 0.8125rem;
 				}
 
 				.sources {
@@ -276,10 +258,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 				`}
 				${!this.entity ? this.typesTemplate : this.detailsTemplate}
 				${!this.entity || !this.guide ? html.nothing : html`
-					<mitra-button slot="footer" class="guide" variant="plain" href=${this.guide} target="_blank">
-						<mitra-icon icon="book-open"></mitra-icon>
-						${t('Guide')}
-					</mitra-button>
+					<mitra-link slot="footer" class="guide" icon="arrow-up-right" href=${this.guide}>${t('Guide')}</mitra-link>
 				`}
 			</mitra-dialog>
 		`
@@ -345,24 +324,9 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 		return docs ? docsPage(docs) : undefined
 	}
 
-	/** A hint ends on the guide, which the footer then leaves out. */
-	private hintTemplate(text: string) {
-		return html`
-			<p class="hint">
-				${text}
-				${!this.guide ? html.nothing : html`
-					<a class="guide" href=${this.guide} target="_blank" rel="noreferrer">
-						${t('Guide')}
-						<mitra-icon icon="arrow-up-right"></mitra-icon>
-					</a>
-				`}
-			</p>
-		`
-	}
-
 	private get mitraTemplate() {
 		return html`
-			${this.hintTemplate(t('Mitra.Hint'))}
+			<p class="hint">${t('Mitra.Hint')}</p>
 			${this.isEdit ? html.nothing : html`
 				<mitra-text-field label=${t('Calendar name')} placeholder=${t('Calendar')} ${bind(this, 'calendarName', { event: 'input' })}></mitra-text-field>
 			`}
@@ -371,7 +335,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 
 	private get demoTemplate() {
 		return html`
-			${this.hintTemplate(t('Demo.Hint'))}
+			<p class="hint">${t('Demo.Hint')}</p>
 			${this.connectTemplate}
 		`
 	}
@@ -388,7 +352,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 	private get icsTemplate() {
 		const { bind } = this.binder
 		return html`
-			${!this.isEdit ? this.hintTemplate(t('Ics.UrlHint')) : html`
+			${!this.isEdit ? html`<p class="hint">${t('Ics.UrlHint')}</p>` : html`
 				<mitra-text-field label=${t('Calendar')} readonly .value=${this.entity!.credentials.username ?? ''}></mitra-text-field>
 			`}
 			<mitra-text-field label=${t('Calendar URL')} ${bind({ keyPath: 'uri' })} ?readonly=${this.isEdit} placeholder="https://example.com/calendar.ics"></mitra-text-field>
@@ -422,9 +386,9 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 		` : 'error' in availability ? html`
 			<p class="error">${availability.error}</p>
 		` : !availability.configured ? html`
-			${this.hintTemplate(t('Google.ConfigurationHint'))}
+			<p class="hint">${t('Google.ConfigurationHint')}</p>
 		` : html`
-			${this.hintTemplate(t('Google.ConsentHint'))}
+			<p class="hint">${t('Google.ConsentHint')}</p>
 			${this.sharedCalendarsHint}
 			<mitra-button class="connect" @click=${() => connectGoogle()}>${t('Continue with Google')}</mitra-button>
 		`
@@ -445,7 +409,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 			${this.isEdit ? html`
 				<mitra-text-field label=${t('Workspace')} readonly .value=${this.entity!.credentials.username ?? ''}></mitra-text-field>
 			` : html`
-				${this.hintTemplate(t('Notion.TokenHint'))}
+				<p class="hint">${t('Notion.TokenHint')}</p>
 			`}
 			<mitra-text-field label=${t('Integration Token')} type="password" ${bind({ keyPath: 'credentials.token' })} placeholder=${this.isEdit ? t('unchanged') : 'ntn_…'}></mitra-text-field>
 			${this.connectTemplate}
@@ -458,7 +422,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 			${this.isEdit ? html`
 				<mitra-text-field label=${t('Atlassian Account')} readonly .value=${this.entity!.credentials.username ?? ''}></mitra-text-field>
 			` : html`
-				${this.hintTemplate(t('Tempo.TokenHint'))}
+				<p class="hint">${t('Tempo.TokenHint')}</p>
 			`}
 			<mitra-text-field label=${t('Site URL')} ${bind({ keyPath: 'credentials.site' })} ?readonly=${this.isEdit} placeholder="https://example.atlassian.net"></mitra-text-field>
 			<mitra-text-field label=${t('Tempo API Token')} type="password" ${bind({ keyPath: 'credentials.token' })} placeholder=${this.isEdit ? t('unchanged') : ''}></mitra-text-field>
