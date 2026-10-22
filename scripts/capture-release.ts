@@ -96,7 +96,7 @@ for (const [index, moment] of moments.entries()) await stage(async (browser, ori
 			origin,
 			theme,
 			language: scene.language,
-			open: options => open(browser, origin, theme, { ...options, language: scene.language }),
+			open: options => open(browser, origin, theme, { ...options, language: scene.language, locale: scene.locale }),
 			text: english => sampleText(english, scene.language),
 		}
 		const file = output(scene.name, theme)

@@ -41,5 +41,10 @@ Documentation : [Todoist](../../docs/integrations/todoist.md)
 ## Plus de langues
 Mitra apprend l'arabe, le russe, le polonais et le néerlandais. À chaque version, Mitra fonctionne mieux dans d'autres langues, écritures et calendriers. Chaque nouvelle langue arrive entièrement traduite, documentation et site web compris.
 
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="arabic-week-dark.webp">
+	<img src="arabic-week-light.webp" alt="La vue semaine en arabe, disposée de droite à gauche, avec un événement ouvert dans l'éditeur">
+</picture>
+
 ## Contributeurs
 - [@jkngale](https://github.com/jkngale) : les bases pour Todoist

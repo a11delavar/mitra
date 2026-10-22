@@ -127,6 +127,12 @@ export abstract class SegmentedField<T, TSegment> extends Control {
 					border-radius: 0.2rem;
 					padding-inline: 1px;
 
+					/* The controller isolates each numeric segment, and isolates are neutral to the bidi algorithm, so in a
+					   right-to-left group ("3:00 م") the hour and minute swapped. Filled digits join the run as text would. */
+					&:not([data-placeholder]) {
+						unicode-bidi: normal;
+					}
+
 					&:focus {
 						background: color-mix(in srgb, var(--color-accent) 40%, transparent);
 					}

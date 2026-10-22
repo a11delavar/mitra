@@ -25,6 +25,8 @@ export interface SceneContext {
 export interface SceneOptions {
 	/** The app's language, and the sample calendar's, for this scene. English by default. */
 	language?: string
+	/** The locale the app runs in, where the region changes the picture (`ar-EG` writes Arabic-Indic digits); the language's own by default. */
+	locale?: string
 	/** When the clock stands for this scene, `capturedAt`'s by default: the sample calendar is laid out around it. */
 	moment?: number
 }
@@ -40,11 +42,13 @@ export abstract class Scene {
 	abstract readonly extension: 'webp' | 'mp4'
 	readonly name: string
 	readonly language: string
+	readonly locale: string | undefined
 	readonly moment: number
 
 	constructor(name: string, options: SceneOptions) {
 		this.name = name
 		this.language = options.language ?? 'en'
+		this.locale = options.locale
 		this.moment = options.moment ?? capturedAt.moment
 		registered.set(name, this)
 	}

@@ -411,13 +411,13 @@ export async function detail(page: Devtools, size: { width: number, height: numb
  * from its own state. Every open states it, so one scene's Persian never reaches the next. English is stored as the
  * captures' full locale: a bare language would take its region from the browser, and with it the week's first day.
  */
-export async function open(page: Devtools, origin: string, theme: Theme, { availability = false, language = 'en' } = {}) {
+export async function open(page: Devtools, origin: string, theme: Theme, { availability = false, language = 'en', locale = localeOf(language) } = {}) {
 	await page.send('Page.navigate', { url: origin })
 	await waitFor(() => page.evaluate<boolean>('return !!document.querySelector("mitra-page-calendar")'), 'the app to boot')
 	await showAvailability(page, availability)
 	await page.evaluate(`
 		localStorage.setItem('Mitra.Appearance.Theme', ${JSON.stringify(JSON.stringify(theme))})
-		localStorage.setItem('Localizer.Language', ${JSON.stringify(JSON.stringify(localeOf(language)))})
+		localStorage.setItem('Localizer.Language', ${JSON.stringify(JSON.stringify(locale))})
 		// Zoom the day grid past "the whole day at once" so entries read at their working size,
 		// what the app opens on at a comfortable window, rather than the squeezed 24-hour fit.
 		localStorage.setItem('Mitra.WeekZoom', '2')

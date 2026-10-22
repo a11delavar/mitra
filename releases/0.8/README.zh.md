@@ -41,5 +41,10 @@ Mitra 已经会把你经常做的事归为例行事项，比如去健身房，�
 ## 更多语言
 Mitra 正在学习阿拉伯语、俄语、波兰语和荷兰语。每个版本都让 Mitra 在其他语言、文字和历法中运行得更好。每种新语言都会完整翻译，包括文档和网站。
 
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="arabic-week-dark.webp">
+	<img src="arabic-week-light.webp" alt="阿拉伯语界面的周视图，从右到左排列，编辑器中打开着一个日程">
+</picture>
+
 ## 贡献者
 - [@jkngale](https://github.com/jkngale)：Todoist 集成的基础工作

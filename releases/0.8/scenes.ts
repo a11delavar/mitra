@@ -1,4 +1,6 @@
-import { aroundEditorWith, aroundOpenDialog, appText, bringIntoView, click, editorOpened, openEditor, screenshot, scrollToMorning, waitFor } from '../../scripts/capture.ts'
+import {
+	aroundEditorWith, aroundOpenDialog, appText, bringIntoView, chipOf, click, editorOpened, openChip, openEditor, screenshot, scrollToMorning, show, waitFor,
+} from '../../scripts/capture.ts'
 import { still } from '../../scripts/scenes.ts'
 
 // The captures only 0.8's notes show, shot on the build in development.
@@ -35,4 +37,15 @@ still('todoist', async ({ browser, open, language }) => {
 	await browser.send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point, button: 'none' })
 	await browser.evaluate('await new Promise(resolve => setTimeout(resolve, 400))')
 	return aroundOpenDialog(browser, 28)
+})
+
+/** Arabic as Egypt writes it, right to left in Arabic-Indic digits: the week starting on Saturday, a repeating event open in its editor beside its chip. */
+still('arabic-week', { language: 'ar', locale: 'ar-EG' }, async ({ browser, open, text }) => {
+	await open()
+	await show(browser, 'week')
+	await scrollToMorning(browser)
+	await browser.evaluate('await document.fonts.ready')
+	const heading = text('Weekly Team Sync')
+	await openChip(browser, heading)
+	return aroundEditorWith(browser, chipOf(heading), 28)
 })

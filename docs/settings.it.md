@@ -30,7 +30,7 @@ Mitra ricorda anche alcune cose su ogni dispositivo mentre lo usi: quanto hai in
 
 **Tema** è **Come il sistema**, **Chiaro** o **Scuro**. **Come il sistema**, il valore predefinito, segue la modalità chiara o scura del tuo dispositivo.
 
-**Lingua** offre inglese, tedesco, francese, spagnolo, portoghese, italiano, persiano e cinese, ciascuno scritto nella propria lingua; il cinese è scritto in caratteri semplificati. La modifica si applica subito, senza ricaricare, e il persiano dispone Mitra da destra a sinistra.
+**Lingua** offre inglese, tedesco, francese, spagnolo, portoghese, italiano, persiano, cinese, polacco, olandese, arabo e russo, ciascuno scritto nella propria lingua; il cinese è scritto in caratteri semplificati. La modifica si applica subito, senza ricaricare, e sia il persiano sia l'arabo dispongono Mitra da destra a sinistra.
 
 Ogni lingua decide anche come si scrivono date e orari, in che giorno inizia la settimana e quali giorni sono il fine settimana. All'inizio segue come il tuo browser scrive la lingua, quindi l'inglese di solito si scrive come negli Stati Uniti, il tedesco come in Germania e il persiano come in Iran. La freccia in fondo a una lingua apre i paesi e le aree in cui si scrive, come il Regno Unito o l'Europa per l'inglese: l'inglese del Regno Unito scrive 9 Oct 2026 e 13:00 e fa iniziare le settimane di lunedì, quello degli Stati Uniti scrive Oct 9, 2026 e 1:00 PM e le fa iniziare di domenica. Cambiando lingua dalla tavolozza dei comandi il tuo paese resta se la nuova lingua si scrive lì. Un'anteprima sotto l'impostazione mostra come si scrivono date, orari, settimana, numeri e nomi dei fusi orari. Un paese qui non è un fuso orario: New York e Los Angeles ne condividono uno.
 
