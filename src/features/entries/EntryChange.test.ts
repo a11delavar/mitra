@@ -2,7 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { type EntityManager } from '@mikro-orm/core'
 import { Source, type Calendar } from '#features/sources'
-import type { Integration } from '#integrations'
+import { type Integration, IntegrationCapabilities } from '#integrations'
 import { Entry } from './Entry.js'
 import { EntryPatch } from './EntryPatch.js'
 import { EntryType } from './EntryType.js'
@@ -14,9 +14,11 @@ describe('EntryChange', () => {
 	const task = () => new Entry({ id: 'task', uid: 'task-uid', sourceId: 'here', type: EntryType.Task, heading: 'Report', rank: EntryRank.first })
 
 	/** A calendar recording what was written to it, failing deletes when asked to. */
-	const calendar = (id: string, uri: string, { failDelete = false } = {}) => {
+	const calendar = (id: string, uri: string, { failDelete = false, integrationId = id, capabilities = new IntegrationCapabilities() } = {}) => {
 		const log = new Array<string>()
 		const integration = {
+			id: integrationId,
+			capabilities,
 			createEntry: (_em: EntityManager, entry: Entry) => (log.push(`create ${entry.heading}`), Promise.resolve(entry)),
 			updateEntry: (_em: EntityManager, _entry: Entry, edited: Entry) => (log.push(`update ${edited.heading}`), Promise.resolve()),
 			deleteEntry: (_em: EntityManager, entry: Entry) => {
@@ -34,9 +36,21 @@ describe('EntryChange', () => {
 		const here = calendar('here', 'https://dav/here/')
 		const entry = task()
 		const edit = entry.edit(patchOf({ heading: 'Final report' }))
-		assert.equal(edit.recreates, false)
+		assert.equal(edit.recreates(here.calendar, here.calendar), false)
 		assert.equal(await edit.save(em, here.calendar, here.calendar), entry)
 		assert.deepEqual(here.log, ['update Final report'])
+	})
+
+	it('moves in place between calendars of a provider that moves its own entries', async () => {
+		const capabilities = new IntegrationCapabilities({ entries: { move: true } })
+		const here = calendar('here', 'todoist://project/1', { integrationId: 'account', capabilities })
+		const there = calendar('there', 'todoist://project/2', { integrationId: 'account', capabilities })
+		const entry = task()
+		const edit = entry.edit(patchOf({ sourceId: 'there' }))
+		assert.equal(edit.recreates(here.calendar, there.calendar), false)
+		assert.equal(await edit.save(em, here.calendar, there.calendar), entry)
+		assert.deepEqual(there.log, ['update Report'])
+		assert.deepEqual(here.log, [])
 	})
 
 	it('re-creates what moves to another calendar, keeping its uid and rank, then deletes the original', async () => {
@@ -44,7 +58,7 @@ describe('EntryChange', () => {
 		const there = calendar('there', 'https://other/there/')
 		const entry = task()
 		const edit = entry.edit(patchOf({ sourceId: 'there' }))
-		assert.equal(edit.recreates, true)
+		assert.equal(edit.recreates(here.calendar, there.calendar), true)
 		const saved = await edit.save(em, here.calendar, there.calendar)
 		assert.notEqual(saved.id, 'task')
 		assert.equal(saved.uid, 'task-uid')

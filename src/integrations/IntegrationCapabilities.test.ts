@@ -6,7 +6,7 @@ import { IntegrationCapabilities } from './IntegrationCapabilities.js'
 describe('IntegrationCapabilities', () => {
 	it('takes every write to entries and holds availability, but makes no calendars, unless it says otherwise', () => {
 		const capabilities = new IntegrationCapabilities()
-		assert.deepEqual(capabilities.entries, { create: true, edit: true, delete: true, rename: true, statuses: TaskStatus.all, attach: true })
+		assert.deepEqual(capabilities.entries, { create: true, edit: true, delete: true, rename: true, statuses: TaskStatus.all, attach: true, move: false })
 		assert.deepEqual(capabilities.sources, { create: false, delete: false })
 		assert.equal(capabilities.availability, true)
 	})
@@ -25,7 +25,7 @@ describe('IntegrationCapabilities', () => {
 
 	it('can write nothing in a read-only source', () => {
 		const readOnly = new IntegrationCapabilities({ sources: { create: true, delete: true } }).in({ readOnly: true })
-		assert.deepEqual(readOnly.entries, { create: false, edit: false, delete: false, rename: false, statuses: TaskStatus.all, attach: false })
+		assert.deepEqual(readOnly.entries, { create: false, edit: false, delete: false, rename: false, statuses: TaskStatus.all, attach: false, move: false })
 		assert.deepEqual(readOnly.sources, { create: true, delete: false })
 		const writable = new IntegrationCapabilities()
 		assert.equal(writable.in({ readOnly: false }), writable)
