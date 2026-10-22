@@ -122,6 +122,9 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	/** False when connecting finds nothing, so the first source is created instead. */
 	static readonly discoversSources: boolean = true
 
+	/** Its page of the documentation (`integrations/apple`), which the dialog connecting it links. */
+	static readonly docs: string | undefined = undefined
+
 	/** Returns effective capabilities for a specific source, masking write capabilities if read-only. */
 	capabilitiesFor(source: Pick<Source, 'readOnly'> | undefined) {
 		return this.capabilities.in(source)
@@ -404,6 +407,7 @@ export interface IntegrationClass extends IntegrationConstructor {
 	readonly onePerUser: boolean
 	readonly developmentOnly: boolean
 	readonly discoversSources: boolean
+	readonly docs: string | undefined
 }
 
 const registeredIntegrations = new Map<string, IntegrationClass>()

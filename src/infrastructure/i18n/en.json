@@ -18,7 +18,7 @@
 	"Mitra.Hint": "These calendars are stored on this Mitra server, so there's no account to sign in to and they show up on every device you use. You can move their entries to a connected account at any time.",
 	"Demo.Hint": "Five sample calendars filled with events and tasks around today, so there is something to look at. They are rebuilt every day, so anything you change in them is eventually replaced.",
 	"Google.ConsentHint": "You will be redirected to Google to grant access to your calendars, then choose here which of them to show.",
-	"Google.ConfigurationHint": "Google Calendar is not configured on this server. Set the MITRA_GOOGLE_CLIENT_ID and MITRA_GOOGLE_CLIENT_SECRET environment variables (see the README).",
+	"Google.ConfigurationHint": "Google Calendar is not configured on this server. Set the MITRA_GOOGLE_CLIENT_ID and MITRA_GOOGLE_CLIENT_SECRET environment variables.",
 	"Google.SharedCalendarsHint": "Calendars other people shared with you appear here only after you tick them at",
 	"Ics.UrlHint": "Paste a calendar link: a webcal:// address or one ending in .ics. Subscriptions are read-only: they show what the calendar publishes, and mitra never writes back to it.",
 	"Notion.TokenHint": "Create an integration at notion.so/profile/integrations, share your task databases with it (··· → Connections), then paste its secret here. A database needs a Status and a Date property. Its views become sources.",

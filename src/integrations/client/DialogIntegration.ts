@@ -2,6 +2,7 @@ import { component, html, css, state, Binder, bind, unsafeHTML, ifDefined, live 
 import { DialogComponent } from '@a11d/lit-application'
 import '#design/TextField.js'
 import { pressable } from '#design'
+import { docsPage } from '#features/about/client/website.js'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import { integrationClasses, type Integration, type IntegrationClass } from '#integrations'
 import { Notion } from '#integrations/registerIntegrations.js'
@@ -190,6 +191,11 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 					}
 				}
 
+				> mitra-dialog > .guide {
+					margin-inline-end: auto;
+					font-size: 0.8125rem;
+				}
+
 				.sources {
 					display: flex;
 					flex-direction: column;
@@ -251,6 +257,9 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 					></mitra-icon-button>
 				`}
 				${!this.entity ? this.typesTemplate : this.detailsTemplate}
+				${!this.entity || !this.guide ? html.nothing : html`
+					<mitra-link slot="footer" class="guide" icon="arrow-up-right" href=${this.guide}>${t('Guide')}</mitra-link>
+				`}
 			</mitra-dialog>
 		`
 	}
@@ -308,6 +317,11 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 			case 'tempo': return this.tempoTemplate
 			default: return this.caldavTemplate
 		}
+	}
+
+	private get guide() {
+		const docs = this.integrationClass?.docs
+		return docs ? docsPage(docs) : undefined
 	}
 
 	private get mitraTemplate() {

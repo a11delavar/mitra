@@ -19,6 +19,7 @@ const me = 'demo@mitracal.com'
 @integration('demo')
 export class Demo extends MitraCalendar {
 	static override readonly label: string = 'Demo'
+	static override readonly docs: string | undefined = undefined
 	static override readonly logo: string = 'demo'
 	static override readonly description: string = 'Sample calendars filled with generated data, rebuilt daily'
 	static override readonly developmentOnly: boolean = true

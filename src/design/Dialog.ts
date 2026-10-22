@@ -184,7 +184,20 @@ export class Dialog extends Component {
 					font-weight: 600;
 				}
 
+				/* The way back and the X are plain: their glyphs, not their boxes, line up with the content's edges. */
+				::slotted([slot=leading]) {
+					margin-inline-start: calc(-1 * var(--mitra-glyph-inset));
+				}
+
+				> mitra-icon-button {
+					margin-inline-end: calc(-1 * var(--mitra-glyph-inset));
+				}
+
 				&[data-headingless] {
+					> mitra-icon-button {
+						margin-inline-end: 0;
+					}
+
 					position: absolute;
 					inset-block-start: var(--mitra-dialog-header-inset, 0);
 					inset-inline-end: var(--mitra-dialog-header-inset, 0);
@@ -199,6 +212,7 @@ export class Dialog extends Component {
 
 			.footer {
 				display: flex;
+				align-items: center;
 				justify-content: flex-end;
 				gap: 0.5rem;
 
