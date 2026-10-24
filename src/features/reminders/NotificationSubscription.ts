@@ -2,7 +2,7 @@ import { converter } from '@a11d/converter'
 import type { EntityManager } from '@mikro-orm/core'
 import { User } from '#features/identity'
 import { TimeZone } from '#features/time/TimeZone.js'
-import { model, entity, primaryKey, property, manyToOne, unique, withheld } from '#infrastructure/model'
+import { model, entity, primaryKey, property, manyToOne, unique, withheld, instant } from '#infrastructure/model'
 import { type DeviceFacts } from './DeviceFacts.js'
 
 type PushKeys = { p256dh: string, auth: string }
@@ -40,6 +40,7 @@ export class NotificationSubscription {
 	@property({ type: 'string', nullable: true }) browser?: string
 	@property({ type: 'boolean', nullable: true }) mobile?: boolean
 
+	@converter(instant)
 	@property({ type: 'Date', nullable: true }) lastSeenAt?: Date
 
 	constructor(init?: Partial<NotificationSubscription>) {

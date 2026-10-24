@@ -1,5 +1,5 @@
 import { converter } from '@a11d/converter'
-import { model, entity, primaryKey, property, enum as enumType, manyToOne, withheld } from '#infrastructure/model'
+import { model, entity, primaryKey, property, enum as enumType, manyToOne, withheld, instant } from '#infrastructure/model'
 import { User } from './User.js'
 
 /** What an access token lets an agent do: read, or read and write. */
@@ -41,7 +41,9 @@ export class AccessToken {
 	@manyToOne(() => User, { mapToPk: true, deleteRule: 'cascade' }) userId!: string
 	@property({ type: 'string' }) name!: string
 	@enumType({ items: () => AccessTokenScope }) scope!: AccessTokenScope
+	@converter(instant)
 	@property({ type: 'Date' }) createdAt!: Date
+	@converter(instant)
 	@property({ type: 'Date', nullable: true }) lastUsedAt?: Date
 
 	constructor(init?: Partial<AccessToken>) {

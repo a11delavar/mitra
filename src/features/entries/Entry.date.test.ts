@@ -1,6 +1,7 @@
 import { describe, it, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime, DateTimeRange } from '@3mo/date-time'
+import { Api } from '@a11d/api'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { holdLocalIn } from '#features/time/TimeZone.testing.js'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
@@ -60,11 +61,40 @@ describe('Entry.date', () => {
 		assert.equal(wire(holiday({ start: null as never })).start, null)
 	})
 
-	it('passes everything through on the server, which keeps days as stored', () => {
+	it('passes the instant through on the server, which keeps days as stored, as a date', () => {
 		showIn(undefined)
 		const entry = holiday({ start: new Date('2026-06-02T00:00:00Z') as never })
 		assert.equal(wire(entry).start, '2026-06-02T00:00:00.000Z')
-		assert.equal(revive<Entry>(wire(entry)).start, '2026-06-02T00:00:00.000Z' as never)
+		const revived = revive<Entry>(wire(entry))
+		assert.ok(revived.start instanceof Date)
+		assert.equal(iso(revived.start), '2026-06-02T00:00:00.000Z')
+	})
+
+	// The browser revives no dates on its own: a reviver matching any text that holds a timestamp mangled descriptions.
+	describe('across the wire with no date reviver, as the browser parses it', () => {
+		/** A response as `@a11d/api` parses it, through whatever value constructors are registered. */
+		const responseOf = <T>(body: unknown) => JSON.parse(JSON.stringify(body), (_key, value) =>
+			[...(Api as unknown as { valueConstructors: Set<{ shallConstruct(value: unknown): boolean, construct(value: unknown): unknown }> }).valueConstructors]
+				.find(constructor => constructor.shallConstruct(value))?.construct(value) ?? value) as T
+
+		it('reads a timed entry\'s dates from their text', () => {
+			showIn('Asia/Tehran')
+			const at = new DateTime(Date.parse('2026-06-02T09:30:00Z'))
+			const arrived = responseOf<Entry>(wireOf(new Entry({ type: EntryType.Event, heading: 'Call', start: at, end: new DateTime(at.getTime() + 3_600_000) })))
+			assert.ok(arrived.start instanceof DateTime)
+			assert.ok(arrived.end instanceof DateTime)
+			assert.equal(iso(arrived.start), '2026-06-02T09:30:00.000Z')
+			assert.equal(iso(arrived.end), '2026-06-02T10:30:00.000Z')
+		})
+
+		it('keeps text that holds a timestamp as text', () => {
+			showIn('Europe/Berlin')
+			const note = 'Moved from 2026-10-14T16:30:00Z, see the thread'
+			const arrived = responseOf<Entry>(wireOf(new Entry({ type: EntryType.Event, heading: '2026-10-14T16:30:00Z', description: note, location: 'Room 2026-10-14T16:30Z' })))
+			assert.equal(arrived.heading, '2026-10-14T16:30:00Z')
+			assert.equal(arrived.description, note)
+			assert.equal(arrived.location, 'Room 2026-10-14T16:30Z')
+		})
 	})
 
 	it('reads the flag from the entry it converts, whatever order the fields come in', () => {
