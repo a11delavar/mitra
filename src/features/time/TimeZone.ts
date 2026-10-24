@@ -120,6 +120,11 @@ export class TimeZone {
 		return new Date(wall.toZonedDateTime(this.id, { disambiguation: 'compatible' }).epochMilliseconds)
 	}
 
+	/** `instant` moved by `duration` on the wall clock here, so a week after 09:00 is 09:00 whatever the clock did between. */
+	add(instant: Date, ...duration: Parameters<Temporal.ZonedDateTime['add']>): Date {
+		return new Date(Temporal.Instant.fromEpochMilliseconds(instant.getTime()).toZonedDateTimeISO(this.id).add(...duration).epochMilliseconds)
+	}
+
 	/** Minutes ahead of UTC at `at`. */
 	offsetAt(at = new Date()) {
 		return Temporal.Instant.fromEpochMilliseconds(at.getTime()).toZonedDateTimeISO(this.id).offsetNanoseconds / 60_000_000_000

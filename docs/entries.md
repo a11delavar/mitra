@@ -42,6 +42,8 @@ The type can't change on a repeating entry, or in a calendar that holds only one
 
 **Duplicate** makes a copy in the same calendar and opens it. Holding <kbd>Alt</kbd> while you drag an entry makes a copy where you drop it.
 
+**Duplicate to other days…** puts a copy on several days at once, for work that falls on days no repeat could name, such as the 1st, 3rd and 17th. Click each day you want on the calendar it shows, then **Duplicate to 3 days**. Each copy keeps the entry's time of day and is an entry of its own. To choose a run of days, hold <kbd>Shift</kbd> while you click the last one. The days the entry already takes up have a dot and can't be chosen.
+
 **Delete** removes the entry. While the editor is open, <kbd>Delete</kbd> or <kbd>Backspace</kbd> does too, as long as you're not typing in a field. If the entry repeats or has subtasks, Mitra asks which ones you mean.
 
 An entry from Notion, Todoist or Tempo also offers **Open in Notion**, **Open in Todoist** or **Open in Jira**, which opens it where it came from.

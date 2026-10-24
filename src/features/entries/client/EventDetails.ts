@@ -10,6 +10,7 @@ import { Transparency } from '../Transparency.js'
 import type { EntrySegment } from './EntrySegment.js'
 import { EntryStore, reportSaveError } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
+import { DialogDuplicateDays } from './DialogDuplicateDays.js'
 import { EntryDetailsSharing } from './EntryDetailsSharing.js'
 import { editorFieldStyles } from './editorFields.css.js'
 import { AttachmentsField } from './AttachmentsField.js'
@@ -114,6 +115,24 @@ export class EntryDetailsComponent extends Component {
 		return EntryStore.duplicate(entry)
 			.then(copy => EntryEditorIntent.requestOpen(copy.id!))
 			.catch(error => console.error('Duplicating the entry failed, so nothing was added:', error))
+	}
+
+	/** Copies the entry to each day the dialog is told, one create apiece, so a copy that fails drops alone. */
+	private readonly handleDuplicateToDays = async () => {
+		const entry = this.segment!.entry
+		const spans = await new DialogDuplicateDays({ entry }).confirm().catch(() => undefined)
+		if (!spans) {
+			return
+		}
+		this.close()
+		await Promise.all(spans.map(span => EntryStore.duplicate(entry, span)
+			.catch(error => console.error('Duplicating the entry failed, so that copy was not added:', error))))
+	}
+
+	/** A date to copy along: a start, or an unscheduled task's due. Availability repeats by its rule instead. */
+	private get duplicatesToDays() {
+		const { entry } = this.segment!
+		return (!!entry.start || !!entry.due) && !entry.type.isAvailability
 	}
 
 	private static readonly appleKeyboard = /Mac|iPhone|iPad/.test(navigator.platform)
@@ -487,6 +506,9 @@ export class EntryDetailsComponent extends Component {
 													<kbd>${EntryDetailsComponent.altKey}</kbd>
 													<span class="word">${t('drag')}</span>
 												</mitra-menu-item>
+												${!this.duplicatesToDays ? html.nothing : html`
+													<mitra-menu-item icon="copy-plus" @click=${this.handleDuplicateToDays}>${t('Duplicate to other days…')}</mitra-menu-item>
+												`}
 											`}
 											${!this.capabilities.entries.delete ? html.nothing : html`
 												<mitra-menu-item icon="trash-2" variant="danger" @click=${(e: MouseEvent) => void this.handleDelete(EntryDetailsComponent.bypassesScope(e))}>

@@ -26,7 +26,14 @@ Dzień terminu zadania widnieje na jego fladze, a gdy wskażesz zadanie, ten dzi
 Zmień wygląd aplikacji Mitra za pomocą własnych stylów CSS: dla siebie w Ustawieniach albo dla wszystkich na twoim serwerze za pomocą pliku w jego folderze danych. Osoba, która zarządza serwerem, ma w Ustawieniach osobną sekcję.
 
 ## Duplikowanie na inne dni
-Zaznacz dni w kalendarzu i skopiuj na nie wpis za jednym razem, o tej samej porze dnia.
+Niektóre rzeczy wypadają w dni, których żadne powtarzanie nie opisze. Skierowanie na osiem zabiegów fizjoterapii rozkłada się na wolne terminy gabinetu, a klient rezerwuje cię na 3., 9. i 17. Dodaj pierwszy, wybierz **Duplikuj na inne dni** w jego menu ⋯ i zaznacz pozostałe w dwóch pokazanych miesiącach. Przytrzymaj Shift, aby wybrać od razu kilka dni z rzędu. Każdy dzień dostaje kopię o tej samej godzinie, osobny wpis, który możesz przesunąć lub zmienić jak każdy inny.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="duplicate-days-dark.webp">
+	<img src="duplicate-days-light.webp" alt="Okno Duplikuj na inne dni dla wizyty u fizjoterapeuty, z siedmioma kolejnymi wizytami wybranymi w październiku i listopadzie">
+</picture>
+
+Dokumentacja: [Duplikowanie na inne dni](../../docs/entries.md#the--menu)
 
 ## Todoist
 Połącz swoje projekty w Todoist, a ich zadania znajdą się na tej samej osi czasu co twoje wydarzenia i będą synchronizowane w obie strony. Każdy projekt staje się kalendarzem w swoim kolorze z Todoist. Data, czas trwania i deadline zadania stają się jego zaplanowanym czasem, długością i terminem. Zadanie cykliczne z Todoist pojawia się pod swoją najbliższą datą, a gdy ukończysz je w aplikacji Mitra, przesuwa się na kolejną, tak jak w Todoist. Priorytety, etykiety i sekcje pozostają bez zmian.

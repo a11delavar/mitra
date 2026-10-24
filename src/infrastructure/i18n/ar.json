@@ -290,6 +290,17 @@
 	"Open link": "فتح الرابط",
 	"Join ${service}": "الانضمام إلى ${service}",
 	"Duplicate an entry": "إنشاء نسخة من عنصر",
+	"Duplicate to other days…": "إنشاء نسخ في أيام أخرى…",
+	"Duplicate to other days": "إنشاء نسخ في أيام أخرى",
+	"Duplicate to ${count:pluralityNumber} days": [
+		"إنشاء نسخ في ${count:pluralityNumber} يوم",
+		"إنشاء نسخة في يوم واحد",
+		"إنشاء نسخ في يومين",
+		"إنشاء نسخ في ${count:pluralityNumber} أيام",
+		"إنشاء نسخ في ${count:pluralityNumber} يومًا",
+		"إنشاء نسخ في ${count:pluralityNumber} يوم"
+	],
+	"Hold Shift to choose a run of days": "اضغط مع الاستمرار على Shift لاختيار أيام متتالية",
 	"Edit": "تعديل",
 	"Edit integration": "تعديل التكامل",
 	"Edit repeating entry": "تعديل العنصر المتكرر",

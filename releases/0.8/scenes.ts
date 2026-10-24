@@ -39,6 +39,34 @@ still('todoist', async ({ browser, open, language }) => {
 	return aroundOpenDialog(browser, 28)
 })
 
+/**
+ * Next Tuesday's physiotherapy in Duplicate to other days, the seven sessions the practice handed out after it chosen across
+ * October and November. A month's buttons are its days in order, as the neighbours' days are blank cells: no date is read.
+ */
+still('duplicate-days', async ({ browser, open, text }) => {
+	await open()
+	await browser.evaluate(`
+		const calendar = document.querySelector('mitra-page-calendar')
+		calendar.step(1)
+		await calendar.updateComplete
+	`)
+	const heading = text('Physiotherapy')
+	await waitFor(() => browser.evaluate<boolean>(`return !!${chipOf(heading)}`), 'the physiotherapy session')
+	// An evening session lies below the hours the captures open on.
+	await browser.evaluate(`${chipOf(heading)}.scrollIntoView({ block: 'center' }); await new Promise(resolve => setTimeout(resolve, 600))`)
+	await openChip(browser, heading)
+	await click(browser, `${openEditor}.querySelector('mitra-icon-button[icon="more-horizontal"]')`)
+	await click(browser, `[...document.querySelectorAll('mitra-menu-item')].find(item => item.getAttribute('icon') === 'copy-plus')`)
+	const grids = `document.querySelector('mitra-dialog-duplicate-days mitra-date-picker')?.shadowRoot.querySelectorAll('[role=grid]')`
+	await waitFor(() => browser.evaluate<boolean>(`return ${grids}?.length === 2`), 'the duplicate dialog')
+	const sessions = [[0, 9], [0, 14], [0, 16], [0, 21], [0, 26], [0, 29], [1, 4]] as const
+	for (const [month, day] of sessions) {
+		await click(browser, `${grids}[${month}].querySelectorAll('button')[${day - 1}]`)
+	}
+	await waitFor(() => browser.evaluate<boolean>(`return document.querySelector('mitra-dialog-duplicate-days mitra-date-picker').value.length === ${sessions.length}`), 'the sessions chosen')
+	return aroundOpenDialog(browser, 28)
+})
+
 /** Arabic as Egypt writes it, right to left in Arabic-Indic digits: the week starting on Saturday, a repeating event open in its editor beside its chip. */
 still('arabic-week', { language: 'ar', locale: 'ar-EG' }, async ({ browser, open, text }) => {
 	await open()

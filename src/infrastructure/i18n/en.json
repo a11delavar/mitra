@@ -92,6 +92,7 @@
 	"${count:pluralityNumber} landed anyway and could not be taken back. Delete them in ${name} by hand.": ["${count:pluralityNumber} landed anyway and could not be taken back. Delete it in ${name} by hand.", "${count:pluralityNumber} landed anyway and could not be taken back. Delete them in ${name} by hand."],
 	"MoveSourceEntries.Keywords": "move copy migrate transfer entries calendar source empty consolidate merge",
 	"Copy ${count:pluralityNumber} entries": ["Copy ${count:pluralityNumber} entry", "Copy ${count:pluralityNumber} entries"],
+	"Duplicate to ${count:pluralityNumber} days": ["Duplicate to ${count:pluralityNumber} day", "Duplicate to ${count:pluralityNumber} days"],
 	"ConnectorLines.Keywords": "connector lines arrows dependencies relations subtasks draw",
 	"DefaultDurationSetting.Keywords": "duration length default minutes hour long meeting",
 	"DefaultReminderSetting.Keywords": "reminder notification default minutes before alarm alert",

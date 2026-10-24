@@ -26,7 +26,14 @@ Il giorno di scadenza di un'attività appare sulla sua bandierina, e puntando l'
 Cambia lo stile di Mitra con un CSS tutto tuo: per te nelle Impostazioni, o per tutti sul tuo server tramite un file nella sua cartella dei dati. Chi gestisce il server ha una sezione tutta sua nelle Impostazioni.
 
 ## Duplica in altri giorni
-Scegli dei giorni su un calendario e copia una voce su tutti in una volta, alla stessa ora.
+Alcune cose cadono in giorni che nessuna ripetizione sa descrivere. Una prescrizione di otto sedute di fisioterapia si incastra negli orari liberi dello studio, e un cliente ti prenota per il 3, il 9 e il 17. Aggiungi la prima, scegli **Duplica in altri giorni** nel suo menu ⋯ e segna le altre sui due mesi mostrati. Tieni premuto Maiusc per scegliere più giorni di fila in una volta. Ogni giorno riceve una copia alla stessa ora, una voce a sé che puoi spostare o modificare come qualsiasi altra.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="duplicate-days-dark.webp">
+	<img src="duplicate-days-light.webp" alt="La finestra Duplica in altri giorni di una seduta di fisioterapia, con altre sette sedute scelte tra ottobre e novembre">
+</picture>
+
+Documentazione: [Duplica in altri giorni](../../docs/entries.md#the--menu)
 
 ## Todoist
 Collega i tuoi progetti Todoist, e le loro attività stanno sulla stessa linea temporale dei tuoi eventi, sincronizzate in entrambe le direzioni. Ogni progetto diventa un calendario con il suo colore di Todoist. La data, la durata e la scadenza di un'attività diventano la sua pianificazione, la sua durata e la sua data di scadenza. Un'attività che si ripete in Todoist appare alla sua prossima data, e completarla in Mitra la porta alla data successiva, come fa Todoist. Priorità, etichette e sezioni restano come sono.

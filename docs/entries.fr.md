@@ -42,6 +42,8 @@ Le type ne peut pas changer pour une entrée récurrente, ni dans un agenda qui 
 
 **Dupliquer** fait une copie dans le même agenda et l'ouvre. Maintenir <kbd>Alt</kbd> en faisant glisser une entrée en crée une copie là où vous la déposez.
 
+**Dupliquer sur d'autres jours…** place une copie sur plusieurs jours à la fois, pour un travail qui tombe des jours qu'aucune répétition ne sait décrire, comme le 1er, le 3 et le 17. Cliquez sur chaque jour voulu dans le calendrier qui s'affiche, puis sur **Dupliquer sur 3 jours**. Chaque copie garde l'heure de l'entrée et devient une entrée à part entière. Pour choisir plusieurs jours d'affilée, maintenez <kbd>Maj</kbd> en cliquant sur le dernier. Les jours que l'entrée occupe déjà portent un point et ne peuvent pas être choisis.
+
 **Supprimer** retire l'entrée. Tant que l'éditeur est ouvert, <kbd>Delete</kbd> ou <kbd>Backspace</kbd> fait de même, tant que vous ne saisissez pas de texte dans un champ. Si l'entrée est récurrente ou a des sous-tâches, Mitra demande lesquelles vous visez.
 
 Une entrée venant de Notion, de Todoist ou de Tempo propose aussi **Ouvrir dans Notion**, **Ouvrir dans Todoist** ou **Ouvrir dans Jira**, qui l'ouvre là où elle a été créée.

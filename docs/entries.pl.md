@@ -42,6 +42,8 @@ Typu nie można zmienić we wpisie cyklicznym ani w kalendarzu, który obsługuj
 
 **Duplikuj** tworzy kopię w tym samym kalendarzu i ją otwiera. Jeśli podczas przeciągania wpisu przytrzymasz <kbd>Alt</kbd>, kopia powstanie tam, gdzie go upuścisz.
 
+**Duplikuj na inne dni…** umieszcza kopię na kilku dniach naraz, dla pracy w dni, których żadne powtarzanie nie opisze, na przykład 1., 3. i 17. W kalendarzu, który się pojawi, kliknij każdy potrzebny dzień, a potem **Duplikuj na 3 dni**. Każda kopia zachowuje godzinę wpisu i jest osobnym wpisem. Aby wybrać kilka dni z rzędu, przytrzymaj <kbd>Shift</kbd>, klikając ostatni z nich. Dni, które wpis już zajmuje, mają kropkę i nie można ich wybrać.
+
 **Usuń** usuwa wpis. Gdy edytor jest otwarty, to samo robią klawisze <kbd>Delete</kbd> i <kbd>Backspace</kbd>, o ile nie piszesz akurat w polu tekstowym. Jeśli wpis się powtarza albo ma podzadania, Mitra zapyta, o które chodzi.
 
 Wpis z Notion, Todoist lub Tempo ma też polecenie **Otwórz w aplikacji Notion**, **Otwórz w aplikacji Todoist** lub **Otwórz w aplikacji Jira**, które otwiera go tam, skąd pochodzi.

@@ -26,7 +26,14 @@ De vervaldatum van een taak staat op zijn vlaggetje, en als je de taak aanwijst,
 Geef Mitra een eigen uiterlijk met je eigen CSS: voor jezelf in Instellingen, of voor iedereen op je server via een bestand in de gegevensmap. Wie de server beheert, krijgt daarvoor een eigen sectie in Instellingen.
 
 ## Dupliceren naar andere dagen
-Kies dagen op een kalender en kopieer een item in één keer naar al die dagen, op hetzelfde tijdstip.
+Sommige dingen vallen op dagen die geen herhaling kan beschrijven. Een verwijzing voor acht fysiotherapiesessies wordt verdeeld over de vrije plekken van de praktijk, en een klant boekt je voor de 3e, de 9e en de 17e. Voeg de eerste toe, kies **Naar andere dagen dupliceren** in het ⋯-menu en vink de rest aan in de twee maanden die verschijnen. Houd Shift ingedrukt om een reeks dagen in één keer te kiezen. Elke dag krijgt een kopie op hetzelfde tijdstip, een eigen item dat je net als elk ander kunt verplaatsen of wijzigen.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="duplicate-days-dark.webp">
+	<img src="duplicate-days-light.webp" alt="Het venster Naar andere dagen dupliceren voor een fysiotherapiesessie, met nog zeven sessies gekozen in oktober en november">
+</picture>
+
+Documentatie: [Dupliceren naar andere dagen](../../docs/entries.md#the--menu)
 
 ## Todoist
 Verbind je Todoist-projecten, en hun taken staan op dezelfde tijdlijn als je afspraken, in beide richtingen gesynchroniseerd. Elk project wordt een agenda in zijn kleur uit Todoist. De datum, duur en deadline van een taak worden het tijdvak, de lengte en de vervaldatum. Een taak die in Todoist terugkeert, staat op zijn volgende datum. Rond je hem af in Mitra, dan schuift hij door, net als in Todoist. Prioriteit, labels en secties blijven zoals ze zijn.

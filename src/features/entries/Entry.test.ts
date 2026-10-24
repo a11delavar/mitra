@@ -10,6 +10,7 @@ import { TimeZone } from '#features/time/TimeZone.js'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { IntegrationOwnership } from '#integrations'
 import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
+import { holdLocalIn } from '#features/time/TimeZone.testing.js'
 import { Entry } from './Entry.js'
 import { TaskStatus } from './TaskStatus.js'
 import { Transparency } from './Transparency.js'
@@ -807,6 +808,75 @@ describe('Entry', () => {
 			assert.equal(copy.id, undefined)
 			assert.equal(copy.uid, undefined)
 			assert.equal(copy.recurringEntryId, undefined)
+		})
+	})
+
+	describe('spanOn', () => {
+		const berlin = TimeZone.of('Europe/Berlin')
+		const inBerlin = (wall: string) => new DateTime(Temporal.ZonedDateTime.from(`${wall}[Europe/Berlin]`).epochMilliseconds)
+		const on = (iso: string) => Temporal.PlainDate.from(iso)
+
+		it('keeps the wall-clock time across a clock change', () => {
+			const entry = new Entry({ timeZone: EntryTimeZone.of(berlin), start: inBerlin('2026-10-20T09:00'), end: inBerlin('2026-10-20T10:30') })
+			const span = entry.spanOn(on('2026-10-27'), berlin)
+			assert.equal(span.start!.valueOf(), inBerlin('2026-10-27T09:00').valueOf())
+			assert.equal(span.end!.valueOf(), inBerlin('2026-10-27T10:30').valueOf())
+		})
+
+		it('reads the day where the reader is, and moves the time on the entry\'s own clock', () => {
+			// 23:30 in Berlin is the next morning in Tokyo, so two days on in Tokyo is two days on in Berlin.
+			const entry = new Entry({ timeZone: EntryTimeZone.of(berlin), start: inBerlin('2026-10-20T23:30'), end: inBerlin('2026-10-21T00:30') })
+			const span = entry.spanOn(on('2026-10-23'), TimeZone.of('Asia/Tokyo'))
+			assert.equal(span.start!.valueOf(), inBerlin('2026-10-22T23:30').valueOf())
+		})
+
+		it('keeps an entry without a zone at its reader\'s time', () => {
+			const entry = new Entry({ start: inBerlin('2026-10-20T09:00'), end: inBerlin('2026-10-20T10:00') })
+			assert.equal(entry.spanOn(on('2026-10-27'), berlin).start!.valueOf(), inBerlin('2026-10-27T09:00').valueOf())
+		})
+
+		it('keeps an all-day entry\'s days', () => {
+			const restore = holdLocalIn(berlin)
+			try {
+				const entry = new Entry({ allDay: true, start: inBerlin('2026-10-20T00:00'), end: inBerlin('2026-10-22T00:00') })
+				const span = entry.spanOn(on('2026-10-27'), berlin)
+				assert.equal(span.allDay, true)
+				assert.equal(span.start!.valueOf(), inBerlin('2026-10-27T00:00').valueOf())
+				assert.equal(span.end!.valueOf(), inBerlin('2026-10-29T00:00').valueOf())
+			} finally {
+				restore()
+			}
+		})
+
+		it('keeps a floating time on the wall clock it is held at', () => {
+			const restore = holdLocalIn(berlin)
+			try {
+				const entry = new Entry({ timeZone: EntryTimeZone.floating, start: inBerlin('2026-10-20T09:00'), end: inBerlin('2026-10-20T10:00') })
+				assert.equal(entry.spanOn(on('2026-10-27'), berlin).start!.valueOf(), inBerlin('2026-10-27T09:00').valueOf())
+			} finally {
+				restore()
+			}
+		})
+
+		it('leaves a scheduled task\'s due where it is', () => {
+			const due = inBerlin('2026-10-30T17:00')
+			const task = new Entry({ type: EntryType.Task, timeZone: EntryTimeZone.of(berlin), start: inBerlin('2026-10-20T09:00'), end: inBerlin('2026-10-20T10:00'), due })
+			assert.equal(task.spanOn(on('2026-10-22'), berlin).due!.valueOf(), due.valueOf())
+		})
+
+		it('moves an unscheduled task\'s due, which is its date, and keeps its estimate', () => {
+			const task = new Entry({ type: EntryType.Task, timeZone: EntryTimeZone.of(berlin), due: inBerlin('2026-10-20T17:00'), estimate: 45 })
+			const span = task.spanOn(on('2026-10-22'), berlin)
+			assert.equal(span.start, undefined)
+			assert.equal(span.due!.valueOf(), inBerlin('2026-10-22T17:00').valueOf())
+			assert.equal(span.estimate, 45)
+		})
+
+		it('moves a moment without giving it an end', () => {
+			const moment = new Entry({ type: EntryType.Task, timeZone: EntryTimeZone.of(berlin), start: inBerlin('2026-10-20T10:00') })
+			const span = moment.spanOn(on('2026-10-21'), berlin)
+			assert.equal(span.start!.valueOf(), inBerlin('2026-10-21T10:00').valueOf())
+			assert.equal(span.end, undefined)
 		})
 	})
 

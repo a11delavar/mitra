@@ -48,6 +48,7 @@ import { TimeZones } from '#features/time/client/TimeZones.js'
 import { syncPushSubscription } from '#features/reminders/client/push.js'
 import { DialogEntryScope } from '#features/entries/client/DialogEntryScope.js'
 import { DialogDeleteEntries } from '#features/entries/client/DialogDeleteEntries.js'
+import { DialogDuplicateDays } from '#features/entries/client/DialogDuplicateDays.js'
 import { DialogCompleteParent } from '#features/relations/client/DialogCompleteParent.js'
 import { DialogCloseSubtasks } from '#features/relations/client/DialogCloseSubtasks.js'
 import { DialogRelationFailed } from '#features/relations/client/DialogRelationFailed.js'
@@ -256,6 +257,7 @@ export class Mitra extends Application {
 			${LocalePreview.styles}
 			${DialogEntryScope.styles}
 			${DialogDeleteEntries.styles}
+			${DialogDuplicateDays.styles}
 			${DialogCompleteParent.styles}
 			${DialogCloseSubtasks.styles}
 			${DialogRelationFailed.styles}

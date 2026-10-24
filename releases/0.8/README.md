@@ -26,7 +26,14 @@ A task's due day shows on its flag, and pointing at the task marks that day in t
 Restyle Mitra with CSS of your own: for yourself in Settings, or for everyone on your server through a file in its data folder. Whoever runs the server gets a section of their own in Settings.
 
 ## Duplicate to other days
-Pick days on a calendar and copy an entry onto all of them at once, at the same time of day.
+Some things happen on days no repeat can describe. A prescription for eight physiotherapy sessions lands wherever the practice has a free slot, and a client books you for the 3rd, the 9th and the 17th. Add the first one, choose **Duplicate to other days** in its ⋯ menu, and tick the rest on the two months it shows. Hold Shift to take a run of days at once. Each day gets a copy at the same time, an entry of its own that you can move or change like any other.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="duplicate-days-dark.webp">
+	<img src="duplicate-days-light.webp" alt="The Duplicate to other days dialog on a physiotherapy session, seven more sessions chosen in October and November">
+</picture>
+
+Docs: [Duplicate to other days](../../docs/entries.md#the--menu)
 
 ## Todoist
 Connect your Todoist projects, and their tasks sit on the same timeline as your events, synced both ways. Each project becomes a calendar in its Todoist color. A task's date, duration and deadline become its schedule, its length and its due date. A task that repeats in Todoist shows at its next date, and completing it in Mitra moves it on, as Todoist does. Priority, labels and sections stay as they are.

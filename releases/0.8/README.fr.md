@@ -26,7 +26,14 @@ Le jour d'échéance d'une tâche s'affiche sur son drapeau, et pointer la tâch
 Modifiez l'apparence de Mitra avec votre propre CSS : pour vous dans les Paramètres, ou pour tout le monde sur votre serveur grâce à un fichier dans son dossier de données. Qui administre le serveur dispose d'une section à lui dans les Paramètres.
 
 ## Dupliquer sur d'autres jours
-Choisissez des jours dans un calendrier et copiez une entrée sur tous à la fois, à la même heure.
+Certaines choses tombent des jours qu'aucune répétition ne sait décrire. Une ordonnance de huit séances de kinésithérapie se cale sur les créneaux libres du cabinet, et un client vous réserve le 3, le 9 et le 17. Ajoutez la première, choisissez **Dupliquer sur d'autres jours** dans son menu ⋯ et cochez les autres sur les deux mois affichés. Maintenez Maj pour choisir plusieurs jours d'affilée d'un coup. Chaque jour reçoit une copie à la même heure, une entrée à part entière que vous pouvez déplacer ou modifier comme n'importe quelle autre.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="duplicate-days-dark.webp">
+	<img src="duplicate-days-light.webp" alt="La boîte de dialogue Dupliquer sur d'autres jours d'une séance de kinésithérapie, sept autres séances choisies en octobre et novembre">
+</picture>
+
+Documentation : [Dupliquer sur d'autres jours](../../docs/entries.md#the--menu)
 
 ## Todoist
 Connectez vos projets Todoist, et leurs tâches prennent place sur la même chronologie que vos événements, synchronisées dans les deux sens. Chaque projet devient un calendrier avec sa couleur de Todoist. La date, la durée et l'échéance d'une tâche deviennent sa planification, sa durée et sa date d'échéance. Une tâche récurrente dans Todoist apparaît à sa prochaine date, et la terminer dans Mitra la fait passer à la date suivante, comme le fait Todoist. La priorité, les étiquettes et les sections restent telles quelles.

@@ -42,6 +42,8 @@ Het type kan niet veranderen bij een terugkerend item, of in een agenda die maar
 
 **Dupliceren** maakt een kopie in dezelfde agenda en opent die. Houd je <kbd>Alt</kbd> ingedrukt terwijl je een item sleept, dan maak je een kopie op de plek waar je het neerzet.
 
+**Naar andere dagen dupliceren…** zet in één keer een kopie op meerdere dagen, voor werk op dagen die geen herhaling kan beschrijven, zoals de 1e, 3e en 17e. Klik in de agenda die verschijnt op elke dag die je wilt en daarna op **Naar 3 dagen dupliceren**. Elke kopie houdt de tijd van het item en is een eigen item. Wil je een reeks dagen kiezen, houd dan <kbd>Shift</kbd> ingedrukt terwijl je op de laatste klikt. De dagen die het item al beslaat hebben een stip en kun je niet kiezen.
+
 **Verwijderen** verwijdert het item. Zolang de editor open is, kan dat ook met <kbd>Delete</kbd> of <kbd>Backspace</kbd>, mits je niet in een veld aan het typen bent. Herhaalt het item zich of heeft het subtaken, dan vraagt Mitra welke je bedoelt.
 
 Een item uit Notion, Todoist of Tempo biedt ook **Openen in Notion**, **Openen in Todoist** of **Openen in Jira**, waarmee je het opent waar het vandaan komt.

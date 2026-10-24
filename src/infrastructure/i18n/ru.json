@@ -254,6 +254,15 @@
 	"Open link": "Открыть ссылку",
 	"Join ${service}": "Присоединиться: ${service}",
 	"Duplicate an entry": "Дублировать запись",
+	"Duplicate to other days…": "Дублировать на другие дни…",
+	"Duplicate to other days": "Дублировать на другие дни",
+	"Duplicate to ${count:pluralityNumber} days": [
+		"Дублировать на ${count:pluralityNumber} день",
+		"Дублировать на ${count:pluralityNumber} дня",
+		"Дублировать на ${count:pluralityNumber} дней",
+		"Дублировать на ${count:pluralityNumber} дня"
+	],
+	"Hold Shift to choose a run of days": "Удерживайте Shift, чтобы выбрать несколько дней подряд",
 	"Edit": "Изменить",
 	"Edit integration": "Изменить интеграцию",
 	"Edit repeating entry": "Изменить повторяющуюся запись",

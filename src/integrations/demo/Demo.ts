@@ -291,6 +291,14 @@ export class Demo extends MitraCalendar {
 			end: at(thisWeekMonday, 0, 15),
 		})
 
+		// The first of the sessions a prescription holds, on the dates a practice hands out: what Duplicate to other days is for.
+		// After today+4, so the week the app opens on stays as it was.
+		personalEvent({
+			heading: t('Physiotherapy'),
+			start: at(nextWeekMonday, 1, 17, 30),
+			end: at(nextWeekMonday, 1, 18, 15),
+		})
+
 		personalEvent({
 			heading: t('Dinner with friends'),
 			start: at(nextWeekMonday, 4, 19),

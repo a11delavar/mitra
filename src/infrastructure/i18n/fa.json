@@ -137,6 +137,13 @@
 	"Open link": "باز کردن پیوند",
 	"Join ${service}": "پیوستن به ${service}",
 	"Duplicate an entry": "ایجاد نسخه مشابه از یک مورد",
+	"Duplicate to other days…": "تکثیر در روزهای دیگر…",
+	"Duplicate to other days": "تکثیر در روزهای دیگر",
+	"Duplicate to ${count:pluralityNumber} days": [
+		"تکثیر در ${count:pluralityNumber} روز",
+		"تکثیر در ${count:pluralityNumber} روز"
+	],
+	"Hold Shift to choose a run of days": "برای انتخاب چند روز پشت سر هم، کلید Shift را نگه دارید",
 	"Edit": "ویرایش",
 	"Edit integration": "ویرایش یکپارچه‌سازی",
 	"Edit repeating entry": "ویرایش مورد تکرارشونده",

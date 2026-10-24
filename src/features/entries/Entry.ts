@@ -567,6 +567,24 @@ export class Entry extends Entity implements Validatable<Calendar> {
 			&& this.end?.valueOf() === other.end?.valueOf()
 	}
 
+	/**
+	 * Its span on `day`, a day as `zone` reads them: moved by whole days on the clock its times are written on, so 09:00
+	 * stays 09:00 across a clock change. The due moves along only where it is the entry's date, on an unscheduled task.
+	 */
+	spanOn(day: Temporal.PlainDate, zone: TimeZone) {
+		const days = zone.dayOf((this.start ?? this.due)!).until(day).days
+		// Without a zone of its own, an entry's times are its reader's, as the views show them.
+		const clock = this.allDay || this.timeZone ? this.occurrences.zone : zone
+		const moved = (date: DateTime | undefined) => date && new DateTime(clock.add(date, { days }).getTime())
+		return new Entry({
+			allDay: this.allDay,
+			start: moved(this.start),
+			end: moved(this.end),
+			estimate: this.estimate,
+			due: this.start ? this.due : moved(this.due),
+		})
+	}
+
 	/** The span, with the estimate that stands for it while there is none and the due, whose form follows the span's precision. */
 	adoptSpan(other: Entry) {
 		// Leaving the calendar drops reminders as unschedule() does, unless a due date still anchors them.

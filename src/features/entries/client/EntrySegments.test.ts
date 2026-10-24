@@ -6,7 +6,8 @@ import { EntrySegments } from './EntrySegments.js'
 import { EntryStore } from './EntryStore.js'
 
 describe('EntrySegments', () => {
-	const base = new DateTime().dayStart
+	// Weeks from any clock change: the tests count hours across days, which a 23- or 25-hour day would shift.
+	const base = new DateTime('2026-08-19T00:00:00')
 	const shown = (entries: ReadonlyArray<Entry>) => entries.map(entry => entry.occurrences.single)
 
 	const duringMove = <T>(source: Entry | undefined, ghost: Entry, act: () => T): T => {

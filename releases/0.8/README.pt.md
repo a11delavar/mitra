@@ -26,7 +26,14 @@ O dia de vencimento de uma tarefa aparece na sua bandeira, e apontar para a tare
 Mude o visual do Mitra com o seu próprio CSS: para você nas Configurações, ou para todos no seu servidor por meio de um arquivo na pasta de dados dele. Quem administra o servidor ganha uma seção própria nas Configurações.
 
 ## Duplicar em outros dias
-Escolha dias num calendário e copie uma entrada para todos eles de uma vez, no mesmo horário.
+Algumas coisas acontecem em dias que nenhuma repetição consegue descrever. Uma receita de oito sessões de fisioterapia se encaixa nos horários livres da clínica, e um cliente reserva você para os dias 3, 9 e 17. Adicione a primeira, escolha **Duplicar em outros dias** no menu ⋯ dela e marque as demais nos dois meses exibidos. Segure Shift para escolher vários dias seguidos de uma vez. Cada dia recebe uma cópia no mesmo horário, uma entrada própria que você pode mover ou alterar como qualquer outra.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="duplicate-days-dark.webp">
+	<img src="duplicate-days-light.webp" alt="A caixa de diálogo Duplicar em outros dias de uma sessão de fisioterapia, com mais sete sessões escolhidas em outubro e novembro">
+</picture>
+
+Documentação: [Duplicar em outros dias](../../docs/entries.md#the--menu)
 
 ## Todoist
 Conecte os seus projetos do Todoist, e as tarefas deles ficam na mesma linha do tempo que os seus eventos, sincronizadas nos dois sentidos. Cada projeto vira um calendário com a sua cor do Todoist. A data, a duração e o prazo de uma tarefa passam a ser o seu agendamento, a sua duração e a sua data de vencimento. Uma tarefa que se repete no Todoist aparece na sua próxima data, e concluí-la no Mitra a passa para a data seguinte, como o Todoist faz. A prioridade, as etiquetas e as seções continuam como estão.

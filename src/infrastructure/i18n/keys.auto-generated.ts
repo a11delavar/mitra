@@ -259,6 +259,9 @@ declare global {
 		"Due date": unknown
 		"Duplicate": unknown
 		"Duplicate an entry": unknown
+		"Duplicate to ${count:pluralityNumber} days": unknown
+		"Duplicate to other days": unknown
+		"Duplicate to other days…": unknown
 		"Duration": unknown
 		"Edit": unknown
 		"Edit entry": unknown
@@ -314,6 +317,7 @@ declare global {
 		"Hide the other time zones": unknown
 		"HideAvailabilitySetting.Keywords": unknown
 		"HideDoneTasksSetting.Keywords": unknown
+		"Hold Shift to choose a run of days": unknown
 		"Home": unknown
 		"hours": unknown
 		"How to connect": unknown

@@ -42,6 +42,8 @@ El tipo no se puede cambiar en una entrada recurrente, ni en un calendario que s
 
 **Duplicar** hace una copia en el mismo calendario y la abre. Mantener pulsada <kbd>Alt</kbd> mientras arrastras una entrada hace una copia donde la sueltes.
 
+**Duplicar en otros días…** pone una copia en varios días a la vez, para trabajo en días que ninguna repetición puede describir, como el 1, el 3 y el 17. Haz clic en cada día que quieras del calendario que aparece y luego en **Duplicar en 3 días**. Cada copia conserva la hora de la entrada y es una entrada propia. Para elegir varios días seguidos, mantén pulsado <kbd>Mayús</kbd> al hacer clic en el último. Los días que la entrada ya ocupa llevan un punto y no se pueden elegir.
+
 **Eliminar** quita la entrada. Mientras el editor está abierto, <kbd>Delete</kbd> o <kbd>Backspace</kbd> también lo hace, siempre que no estés escribiendo en un campo. Si la entrada se repite o tiene subtareas, Mitra pregunta a cuáles te refieres.
 
 Una entrada de Notion, Todoist o Tempo también ofrece **Abrir en Notion**, **Abrir en Todoist** o **Abrir en Jira**, que la abre donde se originó.

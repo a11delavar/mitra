@@ -42,6 +42,8 @@ Il tipo non si può cambiare in una voce ricorrente, né in un calendario che co
 
 **Duplica** crea una copia nello stesso calendario e la apre. Tenendo premuto <kbd>Alt</kbd> mentre trascini una voce, ne crei una copia dove la rilasci.
 
+**Duplica in altri giorni…** mette una copia su più giorni in una volta, per un lavoro che cade in giorni che nessuna ripetizione sa descrivere, come l'1, il 3 e il 17. Fai clic su ogni giorno che vuoi nel calendario che appare, poi su **Duplica in 3 giorni**. Ogni copia mantiene l'orario della voce ed è una voce a sé. Per scegliere più giorni di fila, tieni premuto <kbd>Maiusc</kbd> mentre fai clic sull'ultimo. I giorni che la voce occupa già hanno un punto e non si possono scegliere.
+
 **Elimina** rimuove la voce. Mentre l'editor è aperto lo fanno anche <kbd>Delete</kbd> o <kbd>Backspace</kbd>, purché tu non stia scrivendo in un campo. Se la voce si ripete o ha attività secondarie, Mitra chiede a quali ti riferisci.
 
 Una voce di Notion, Todoist o Tempo offre anche **Apri in Notion**, **Apri in Todoist** o **Apri in Jira**, che la apre dove ha avuto origine.

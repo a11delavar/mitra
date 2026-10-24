@@ -26,7 +26,14 @@ Der Fälligkeitstag einer Aufgabe steht auf ihrer Fahne, und wenn du auf die Auf
 Gestalte Mitra mit eigenem CSS: für dich selbst in den Einstellungen oder für alle auf deinem Server über eine Datei in seinem Datenordner. Wer den Server betreibt, bekommt in den Einstellungen einen eigenen Bereich.
 
 ## Auf andere Tage duplizieren
-Wähle Tage in einem Kalender aus und kopiere einen Eintrag in einem Zug auf alle, zur selben Uhrzeit.
+Manches findet an Tagen statt, die keine Wiederholung beschreiben kann. Ein Rezept über acht Physiotherapie-Termine verteilt sich auf die freien Zeiten der Praxis, und ein Kunde bucht dich für den 3., 9. und 17. Lege den ersten Termin an, wähle in seinem ⋯-Menü **Auf andere Tage duplizieren** und wähle die übrigen in den zwei angezeigten Monaten aus. Halte die Umschalttaste gedrückt, um mehrere Tage am Stück zu wählen. Jeder Tag bekommt eine Kopie zur selben Uhrzeit, einen eigenen Eintrag, den du wie jeden anderen verschieben oder ändern kannst.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="duplicate-days-dark.webp">
+	<img src="duplicate-days-light.webp" alt="Der Dialog „Auf andere Tage duplizieren“ für eine Physiotherapie, sieben weitere Termine im Oktober und November gewählt">
+</picture>
+
+Doku: [Auf andere Tage duplizieren](../../docs/entries.md#the--menu)
 
 ## Todoist
 Verbinde deine Todoist-Projekte, und ihre Aufgaben stehen auf derselben Zeitleiste wie deine Termine, in beide Richtungen synchronisiert. Jedes Projekt wird zu einem Kalender in seiner Farbe aus Todoist. Datum, Dauer und Deadline einer Aufgabe werden zu ihrem Termin, ihrer Länge und ihrem Fälligkeitsdatum. Eine Aufgabe, die sich in Todoist wiederholt, erscheint an ihrem nächsten Datum, und wenn du sie in Mitra erledigst, rückt sie weiter, wie in Todoist. Priorität, Labels und Abschnitte bleiben, wie sie sind.

@@ -42,6 +42,8 @@ Der Typ lässt sich bei einem wiederkehrenden Eintrag nicht ändern, ebenso weni
 
 **Duplizieren** macht eine Kopie im selben Kalender und öffnet sie. Hältst du beim Ziehen eines Eintrags <kbd>Alt</kbd> gedrückt, entsteht eine Kopie dort, wo du ihn ablegst.
 
+**Auf andere Tage duplizieren…** legt auf einmal eine Kopie auf mehrere Tage, für Arbeit an Tagen, die keine Wiederholung beschreiben kann, etwa am 1., 3. und 17. Klick im Kalender, der sich öffnet, jeden gewünschten Tag an und dann **Auf 3 Tage duplizieren**. Jede Kopie behält die Uhrzeit des Eintrags und ist ein eigener Eintrag. Für mehrere Tage am Stück hältst du beim Klick auf den letzten <kbd>Umschalt</kbd> gedrückt. Die Tage, die der Eintrag schon belegt, tragen einen Punkt und lassen sich nicht wählen.
+
 **Löschen** entfernt den Eintrag. Solange der Editor offen ist, tun das auch <kbd>Delete</kbd> oder <kbd>Backspace</kbd>, sofern du nicht gerade in einem Feld tippst. Wiederholt sich der Eintrag oder hat er Teilaufgaben, fragt Mitra, welche du meinst.
 
 Ein Eintrag aus Notion, Todoist oder Tempo bietet außerdem **In Notion öffnen**, **In Todoist öffnen** oder **In Jira öffnen**, was ihn dort öffnet, wo er herkommt.
