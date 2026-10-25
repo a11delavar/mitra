@@ -22,8 +22,8 @@ W widokach miesiąca i roku podzadania dzielą jeden pas ze swoim wpisem, więc 
 ## Terminy na pierwszy rzut oka
 Dzień terminu zadania widnieje na jego fladze, a gdy wskażesz zadanie, ten dzień zostaje zaznaczony w kalendarzu. Oś czasu też go zaznacza, a tabela ma na niego osobną kolumnę. Podzadanie bez własnego terminu przejmuje termin zadania nadrzędnego.
 
-## Własny CSS
-Zmień wygląd aplikacji Mitra za pomocą własnych stylów CSS: dla siebie w Ustawieniach albo dla wszystkich na twoim serwerze za pomocą pliku w jego folderze danych. Osoba, która zarządza serwerem, ma w Ustawieniach osobną sekcję.
+## Personalizacja
+Nadaj każdemu kalendarzowi jeden z dwóch nowych kolorów albo dowolny własny. Zmień nazwę nagłówka konta dwukrotnym kliknięciem i ukryj wszystkie jego kalendarze naraz. Do całej reszty zmień wygląd aplikacji Mitra za pomocą własnych stylów CSS: dla siebie w Ustawieniach albo dla wszystkich na twoim serwerze za pomocą pliku w jego folderze danych. Osoba, która zarządza serwerem, ma w Ustawieniach osobną sekcję.
 
 ## Duplikowanie na inne dni
 Niektóre rzeczy wypadają w dni, których żadne powtarzanie nie opisze. Skierowanie na osiem zabiegów fizjoterapii rozkłada się na wolne terminy gabinetu, a klient rezerwuje cię na 3., 9. i 17. Dodaj pierwszy, wybierz **Duplikuj na inne dni** w jego menu ⋯ i zaznacz pozostałe w dwóch pokazanych miesiącach. Przytrzymaj Shift, aby wybrać od razu kilka dni z rzędu. Każdy dzień dostaje kopię o tej samej godzinie, osobny wpis, który możesz przesunąć lub zmienić jak każdy inny.

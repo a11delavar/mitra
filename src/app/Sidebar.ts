@@ -625,6 +625,8 @@ export class Sidebar extends Component {
 				   Only the sidebar's own: an entry editor opened from the Planning tab carries its menu in here. */
 				:is(.integrations, .account) mitra-menu {
 					margin: 0;
+					/* The menu sits inside its row in the DOM, so the row's grab cursor reached its gaps. */
+					cursor: auto;
 					position-area: inline-end span-block-end;
 					position-try-fallbacks: flip-block;
 

@@ -22,8 +22,8 @@ An entry's subtasks share a lane in the month and year views, so a project reads
 ## Due dates at a glance
 A task's due day shows on its flag, and pointing at the task marks that day in the calendar. The timeline marks it too, and the table gets a column for it. A subtask without a due date of its own takes its parent's.
 
-## Custom CSS
-Restyle Mitra with CSS of your own: for yourself in Settings, or for everyone on your server through a file in its data folder. Whoever runs the server gets a section of their own in Settings.
+## Personalization
+Give each calendar one of two more colors, or any color you like. Rename an account's heading by double-clicking it, and hide all of its calendars at once. For everything beyond that, restyle Mitra with CSS of your own: for yourself in Settings, or for everyone on your server through a file in its data folder. Whoever runs the server gets a section of their own in Settings.
 
 ## Duplicate to other days
 Some things happen on days no repeat can describe. A prescription for eight physiotherapy sessions lands wherever the practice has a free slot, and a client books you for the 3rd, the 9th and the 17th. Add the first one, choose **Duplicate to other days** in its ⋯ menu, and tick the rest on the two months it shows. Hold Shift to take a run of days at once. Each day gets a copy at the same time, an entry of its own that you can move or change like any other.

@@ -312,6 +312,7 @@
 	"Repository": "Repositorio",
 	"Reset to calendar color": "Restablecer al color del calendario",
 	"Reset to default color": "Restablecer al color predeterminado",
+	"Custom color": "Color personalizado",
 	"Save": "Guardar",
 	"Search entries or run a command…": "Buscar entradas o ejecutar un comando…",
 	"Search or run a command (${hotkey})": "Buscar o ejecutar un comando (${hotkey})",

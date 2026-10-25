@@ -491,6 +491,7 @@
 	"Repository": "المستودع",
 	"Reset to calendar color": "إعادة التعيين إلى لون التقويم",
 	"Reset to default color": "إعادة التعيين إلى اللون الافتراضي",
+	"Custom color": "لون مخصص",
 	"Save": "حفظ",
 	"Search entries or run a command…": "البحث في العناصر أو تشغيل أمر…",
 	"Search or run a command (${hotkey})": "البحث أو تشغيل أمر (${hotkey})",

@@ -22,8 +22,8 @@ Les sous-tâches d'une entrée partagent une même ligne dans les vues mois et a
 ## Les échéances en un coup d'œil
 Le jour d'échéance d'une tâche s'affiche sur son drapeau, et pointer la tâche marque ce jour dans le calendrier. La chronologie le marque aussi, et le tableau gagne une colonne pour lui. Une sous-tâche sans date d'échéance propre prend celle de son parent.
 
-## CSS personnalisé
-Modifiez l'apparence de Mitra avec votre propre CSS : pour vous dans les Paramètres, ou pour tout le monde sur votre serveur grâce à un fichier dans son dossier de données. Qui administre le serveur dispose d'une section à lui dans les Paramètres.
+## Personnalisation
+Donnez à chaque calendrier l'une de deux nouvelles couleurs, ou la couleur de votre choix. Renommez l'en-tête d'un compte d'un double-clic et masquez tous ses calendriers d'un coup. Pour tout le reste, modifiez l'apparence de Mitra avec votre propre CSS : pour vous dans les Paramètres, ou pour tout le monde sur votre serveur grâce à un fichier dans son dossier de données. Qui administre le serveur dispose d'une section à lui dans les Paramètres.
 
 ## Dupliquer sur d'autres jours
 Certaines choses tombent des jours qu'aucune répétition ne sait décrire. Une ordonnance de huit séances de kinésithérapie se cale sur les créneaux libres du cabinet, et un client vous réserve le 3, le 9 et le 17. Ajoutez la première, choisissez **Dupliquer sur d'autres jours** dans son menu ⋯ et cochez les autres sur les deux mois affichés. Maintenez Maj pour choisir plusieurs jours d'affilée d'un coup. Chaque jour reçoit une copie à la même heure, une entrée à part entière que vous pouvez déplacer ou modifier comme n'importe quelle autre.

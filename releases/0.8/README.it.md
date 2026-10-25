@@ -22,8 +22,8 @@ Le attività secondarie di una voce condividono una corsia nelle viste mese e an
 ## Scadenze a colpo d'occhio
 Il giorno di scadenza di un'attività appare sulla sua bandierina, e puntando l'attività quel giorno viene segnato nel calendario. Anche la cronologia lo segna, e la tabella ha una colonna apposita. Un'attività secondaria senza una data di scadenza propria prende quella della sua voce principale.
 
-## CSS personalizzato
-Cambia lo stile di Mitra con un CSS tutto tuo: per te nelle Impostazioni, o per tutti sul tuo server tramite un file nella sua cartella dei dati. Chi gestisce il server ha una sezione tutta sua nelle Impostazioni.
+## Personalizzazione
+Dai a ogni calendario uno di due nuovi colori, o il colore che preferisci. Rinomina l'intestazione di un account con un doppio clic e nascondi tutti i suoi calendari in una volta. Per tutto il resto, cambia lo stile di Mitra con un CSS tutto tuo: per te nelle Impostazioni, o per tutti sul tuo server tramite un file nella sua cartella dei dati. Chi gestisce il server ha una sezione tutta sua nelle Impostazioni.
 
 ## Duplica in altri giorni
 Alcune cose cadono in giorni che nessuna ripetizione sa descrivere. Una prescrizione di otto sedute di fisioterapia si incastra negli orari liberi dello studio, e un cliente ti prenota per il 3, il 9 e il 17. Aggiungi la prima, scegli **Duplica in altri giorni** nel suo menu ⋯ e segna le altre sui due mesi mostrati. Tieni premuto Maiusc per scegliere più giorni di fila in una volta. Ogni giorno riceve una copia alla stessa ora, una voce a sé che puoi spostare o modificare come qualsiasi altra.

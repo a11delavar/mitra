@@ -451,6 +451,7 @@
 	"Repository": "Репозиторий",
 	"Reset to calendar color": "Вернуть цвет календаря",
 	"Reset to default color": "Вернуть цвет по умолчанию",
+	"Custom color": "Свой цвет",
 	"Save": "Сохранить",
 	"Search entries or run a command…": "Поиск записей и команд…",
 	"Search or run a command (${hotkey})": "Поиск и команды (${hotkey})",

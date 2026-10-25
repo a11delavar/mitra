@@ -351,6 +351,7 @@
 	"Repository": "Repository",
 	"Reset to calendar color": "Agendakleur herstellen",
 	"Reset to default color": "Standaardkleur herstellen",
+	"Custom color": "Aangepaste kleur",
 	"Save": "Opslaan",
 	"Search entries or run a command…": "Items zoeken of een opdracht uitvoeren…",
 	"Search or run a command (${hotkey})": "Zoeken of een opdracht uitvoeren (${hotkey})",

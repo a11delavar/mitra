@@ -352,6 +352,7 @@
 	"Repository": "代码仓库",
 	"Reset to calendar color": "恢复为日历颜色",
 	"Reset to default color": "恢复默认颜色",
+	"Custom color": "自定义颜色",
 	"Save": "保存",
 	"Search entries or run a command…": "搜索条目或运行命令…",
 	"Search or run a command (${hotkey})": "搜索或运行命令（${hotkey}）",

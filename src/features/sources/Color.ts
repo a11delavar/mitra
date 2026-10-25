@@ -14,18 +14,22 @@ export class Color {
 	static readonly Red = Color.parse('#eb5a5a')!
 	static readonly Orange = Color.parse('#e58b4b')!
 	static readonly Yellow = Color.parse('#f9c344')!
+	static readonly Lime = Color.parse('#b5cf55')!
 	static readonly Green = Color.parse('#63d18d')!
 	static readonly Blue = Color.parse('#51ace3')!
 	static readonly Purple = Color.parse('#9b61f9')!
+	static readonly Pink = Color.parse('#e887b6')!
 	static readonly Grey = Color.parse('#b4b4b4')!
 
 	static readonly palette: ReadonlyArray<Color> = [
 		Color.Red,
 		Color.Orange,
 		Color.Yellow,
+		Color.Lime,
 		Color.Green,
 		Color.Blue,
 		Color.Purple,
+		Color.Pink,
 		Color.Grey,
 	]
 

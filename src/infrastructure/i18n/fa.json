@@ -330,6 +330,7 @@
 	"Repository": "مخزن",
 	"Reset to calendar color": "بازنشانی به رنگ تقویم",
 	"Reset to default color": "بازنشانی به رنگ پیش‌فرض",
+	"Custom color": "رنگ دلخواه",
 	"Save": "ذخیره",
 	"Search entries or run a command…": "جستجوی موارد یا اجرای یک دستور…",
 	"Search or run a command (${hotkey})": "جستجو یا اجرای دستور (${hotkey})",

@@ -22,8 +22,8 @@ Las subtareas de una entrada comparten un carril en las vistas de mes y año, as
 ## Vencimientos de un vistazo
 El día de vencimiento de una tarea aparece en su bandera, y al señalar la tarea se marca ese día en el calendario. El cronograma también lo marca, y la tabla gana una columna para él. Una subtarea sin fecha de vencimiento propia toma la de su entrada principal.
 
-## CSS personalizado
-Cambia el estilo de Mitra con tu propio CSS: para ti en Ajustes, o para todos en tu servidor con un archivo en su carpeta de datos. Quien administra el servidor tiene una sección propia en Ajustes.
+## Personalización
+Da a cada calendario uno de dos colores más, o el color que quieras. Cambia el nombre del encabezado de una cuenta con un doble clic y oculta todos sus calendarios a la vez. Para todo lo demás, cambia el estilo de Mitra con tu propio CSS: para ti en Ajustes, o para todos en tu servidor con un archivo en su carpeta de datos. Quien administra el servidor tiene una sección propia en Ajustes.
 
 ## Duplicar en otros días
 Algunas cosas ocurren en días que ninguna repetición puede describir. Una receta de ocho sesiones de fisioterapia se reparte entre los huecos libres de la consulta, y un cliente te reserva el 3, el 9 y el 17. Añade la primera, elige **Duplicar en otros días** en su menú ⋯ y marca las demás en los dos meses que aparecen. Mantén pulsado Mayús para elegir varios días seguidos de una vez. Cada día recibe una copia a la misma hora, una entrada propia que puedes mover o cambiar como cualquier otra.

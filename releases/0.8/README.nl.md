@@ -22,8 +22,8 @@ De subtaken van een item delen in de maand- en jaarweergave één rij, zodat een
 ## Vervaldatums in één oogopslag
 De vervaldatum van een taak staat op zijn vlaggetje, en als je de taak aanwijst, wordt die dag in de agenda gemarkeerd. De tijdlijn markeert hem ook, en de tabel krijgt er een eigen kolom voor. Een subtaak zonder eigen vervaldatum neemt die van de bovenliggende taak over.
 
-## Eigen CSS
-Geef Mitra een eigen uiterlijk met je eigen CSS: voor jezelf in Instellingen, of voor iedereen op je server via een bestand in de gegevensmap. Wie de server beheert, krijgt daarvoor een eigen sectie in Instellingen.
+## Personalisatie
+Geef elke agenda een van twee nieuwe kleuren, of een kleur naar keuze. Hernoem de kop van een account met een dubbelklik en verberg al zijn agenda's in één keer. Voor al het andere geef je Mitra een eigen uiterlijk met je eigen CSS: voor jezelf in Instellingen, of voor iedereen op je server via een bestand in de gegevensmap. Wie de server beheert, krijgt daarvoor een eigen sectie in Instellingen.
 
 ## Dupliceren naar andere dagen
 Sommige dingen vallen op dagen die geen herhaling kan beschrijven. Een verwijzing voor acht fysiotherapiesessies wordt verdeeld over de vrije plekken van de praktijk, en een klant boekt je voor de 3e, de 9e en de 17e. Voeg de eerste toe, kies **Naar andere dagen dupliceren** in het ⋯-menu en vink de rest aan in de twee maanden die verschijnen. Houd Shift ingedrukt om een reeks dagen in één keer te kiezen. Elke dag krijgt een kopie op hetzelfde tijdstip, een eigen item dat je net als elk ander kunt verplaatsen of wijzigen.

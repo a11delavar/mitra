@@ -211,6 +211,7 @@ declare global {
 		"Ctrl": unknown
 		"Current time zone": unknown
 		"Current time zone. Switch to ${city} time to change the zone": unknown
+		"Custom color": unknown
 		"Custom range": unknown
 		"Custom…": unknown
 		"Dark": unknown

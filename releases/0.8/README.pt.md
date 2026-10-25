@@ -22,8 +22,8 @@ As subtarefas de uma entrada dividem uma faixa nas visualizações de mês e ano
 ## Vencimentos de relance
 O dia de vencimento de uma tarefa aparece na sua bandeira, e apontar para a tarefa marca esse dia no calendário. A linha do tempo também o marca, e a tabela ganha uma coluna para ele. Uma subtarefa sem data de vencimento própria usa a da sua entrada principal.
 
-## CSS personalizado
-Mude o visual do Mitra com o seu próprio CSS: para você nas Configurações, ou para todos no seu servidor por meio de um arquivo na pasta de dados dele. Quem administra o servidor ganha uma seção própria nas Configurações.
+## Personalização
+Dê a cada calendário uma de duas novas cores, ou a cor que quiser. Renomeie o cabeçalho de uma conta com um clique duplo e oculte todos os calendários dela de uma vez. Para todo o resto, mude o visual do Mitra com o seu próprio CSS: para você nas Configurações, ou para todos no seu servidor por meio de um arquivo na pasta de dados dele. Quem administra o servidor ganha uma seção própria nas Configurações.
 
 ## Duplicar em outros dias
 Algumas coisas acontecem em dias que nenhuma repetição consegue descrever. Uma receita de oito sessões de fisioterapia se encaixa nos horários livres da clínica, e um cliente reserva você para os dias 3, 9 e 17. Adicione a primeira, escolha **Duplicar em outros dias** no menu ⋯ dela e marque as demais nos dois meses exibidos. Segure Shift para escolher vários dias seguidos de uma vez. Cada dia recebe uma cópia no mesmo horário, uma entrada própria que você pode mover ou alterar como qualquer outra.
