@@ -351,7 +351,7 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 				: t('Every entry in ${name} is copied. The ones the chosen calendar cannot take are left out. ${name} itself is read-only and stays exactly as it is.', { name: this.source.name })}</p>
 			<ul class="targets">
 				${targets.map(({ integration, sources }) => html`
-					<li class="account">${integration.credentials?.username || integration.type}</li>
+					<li class="account">${integration.title}</li>
 					${sources.map(source => html`
 						<li>
 							<button @click=${() => this.target = source}>

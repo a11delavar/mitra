@@ -68,8 +68,17 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 
 	@property({ type: 'string' }) type!: string
 
+	/** A name of the user's own, for two accounts signed in as the same person. Only renaming writes it, never a save from the dialog. */
+	@equality()
+	@property({ type: 'string', nullable: true }) name?: string
+
 	@equality()
 	@property({ type: 'json' }) credentials: TCredentials = {} as TCredentials
+
+	/** How it is named wherever it is shown: the user's name for it, else the account it signs in as, else the provider. */
+	get title() {
+		return this.name || this.credentials?.username || String(t((this.constructor as IntegrationClass).label ?? this.type))
+	}
 
 	/** Manual sidebar display order among user's integrations (sorted asc nulls last). */
 	@equality()

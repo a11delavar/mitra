@@ -638,7 +638,7 @@ export class EntryDetailsComponent extends Component {
 						.map(integration => ({ integration, sources: [...integration.sources].filter(source => source.id === entry.sourceId || (source.enabled && canMoveTo(source))) }))
 						.filter(({ sources }) => sources.length)
 						.map(({ integration, sources }) => html`
-							<mitra-option-group label=${integration.credentials?.username || integration.type}>
+							<mitra-option-group label=${integration.title}>
 								${sources.map(source => html`
 									<mitra-option .value=${source} label=${source.name}>
 										<mitra-source-icon .source=${source}></mitra-source-icon>

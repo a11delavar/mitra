@@ -1,7 +1,7 @@
 import { Component, component, html, css, property, state, event, eventListener, unsafeCSS, ifDefined } from '@a11d/lit'
 import { ReorderabilityController, ReorderabilityState } from '@3mo/reorderability'
 import { MediaQueryController } from '@3mo/media-query-observer'
-import { RenameSource, RecolorSource, CreateSource, ReimportSource, SetDefaultCalendar, DisconnectIntegration, ReimportIntegration } from '#operations'
+import { RenameSource, RecolorSource, CreateSource, ReimportSource, SetDefaultCalendar, DisconnectIntegration, ReimportIntegration, RenameIntegration } from '#operations'
 import { focusRing, windowDragHandle, scrollbar } from '#design'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import { DialogAbout } from '#features/about/client/DialogAbout.js'
@@ -12,7 +12,7 @@ import { EntryStore } from '#features/entries/client/EntryStore.js'
 import type { Entry } from '#features/entries'
 import { Planning } from '#features/planning/client/Planning.js'
 import { DialogIntegration } from '#integrations/client/DialogIntegration.js'
-import { integrationClasses, type Integration } from '#integrations'
+import type { Integration } from '#integrations'
 import { getMeta, getUser, instanceName, isBundleStale, keepUser, refreshMetaIfStale } from '#infrastructure/http/Api.js'
 import { canInstall, promptInstall, onInstallAvailabilityChange } from './pwa.js'
 
@@ -555,18 +555,6 @@ export class Sidebar extends Component {
 						text-overflow: ellipsis;
 						font-size: 0.8125rem;
 						color: var(--color-text);
-
-						/* Inline rename: the same label becomes an editable field in place. Let it scroll rather
-						   than ellipsis-clip while typing, and give it a field-like outline. */
-						&[contenteditable=plaintext-only] {
-							cursor: text;
-							user-select: text;
-							-webkit-user-select: text;
-							text-overflow: clip;
-							outline: 1px solid var(--color-accent, var(--color-text-muted));
-							outline-offset: 2px;
-							border-radius: 2px;
-						}
 					}
 
 					.actions {
@@ -584,6 +572,18 @@ export class Sidebar extends Component {
 							}
 						}
 					}
+				}
+
+				/* Inline rename of a calendar or an integration: the same label becomes an editable field in place.
+				   Let it scroll rather than ellipsis-clip while typing, and give it a field-like outline. */
+				:is(.name, .title)[data-rename-id][contenteditable=plaintext-only] {
+					cursor: text;
+					user-select: text;
+					-webkit-user-select: text;
+					text-overflow: clip;
+					outline: 1px solid var(--color-accent, var(--color-text-muted));
+					outline-offset: 2px;
+					border-radius: 2px;
 				}
 
 				/* The grabbed row/block lifts above its gliding siblings on an opaque backing, after the
@@ -699,11 +699,11 @@ export class Sidebar extends Component {
 
 	@state() private renamingId?: string
 
-	/** Enter inline rename mode for the given source. */
-	private async startRename(source: Source) {
-		this.renamingId = source.id
+	/** Enters the inline rename of the calendar or integration with this id. */
+	private async startRename(id: string) {
+		this.renamingId = id
 		await this.updateComplete
-		const el = this.querySelector<HTMLElement>(`.name[data-rename-id="${source.id}"]`)
+		const el = this.querySelector<HTMLElement>(`[data-rename-id="${id}"]`)
 		if (!el) {
 			return
 		}
@@ -711,33 +711,46 @@ export class Sidebar extends Component {
 		getSelection()?.selectAllChildren(el)
 	}
 
-	private handleRenameKeydown(e: KeyboardEvent, source: Source) {
+	private handleRenameKeydown(e: KeyboardEvent, text: string) {
 		if (e.key === 'Enter') {
 			e.preventDefault();
 			(e.target as HTMLElement).blur()
 		} else if (e.key === 'Escape') {
 			e.preventDefault()
-			this.cancelRename(source, e.target as HTMLElement)
+			this.renamingId = undefined;
+			(e.target as HTMLElement).textContent = text
 		}
 	}
 
-	/** Persist edited source name on blur. */
-	private async commitRename(source: Source, el: HTMLElement) {
-		if (this.renamingId !== source.id) {
+	/** Persists the edited name on blur; `rename` answers whether it took it, else the label goes back to `text`. */
+	private async commitRename(id: string, el: HTMLElement, text: string, rename: (name: string) => Promise<boolean>) {
+		if (this.renamingId !== id) {
 			return
 		}
 		this.renamingId = undefined
 		const name = (el.textContent ?? '').trim()
-		if (name && name !== source.name) {
-			await RenameSource.call({ id: source.id, name })
-			source.name = name
+		if (name === text || !await rename(name)) {
+			el.textContent = text
 		}
 		this.requestUpdate()
 	}
 
-	private cancelRename(source: Source, el: HTMLElement) {
-		this.renamingId = undefined
-		el.textContent = source.name
+	private async renameSource(source: Source, name: string) {
+		if (!name) {
+			return false
+		}
+		await RenameSource.call({ id: source.id, name })
+		source.name = name
+		return true
+	}
+
+	/** A blank name gives the integration back its account's. */
+	private async renameIntegration(integration: Integration, name: string) {
+		if (!name && !integration.name) {
+			return false
+		}
+		integration.name = (await RenameIntegration.call({ id: integration.id, name })).name
+		return true
 	}
 
 	/** Check whether the source is the default target for new entries. */
@@ -779,18 +792,11 @@ export class Sidebar extends Component {
 		this.requestUpdate()
 	}
 
-	/** Shift source order by delta within its integration. */
-	/** Falls back to the integration name when there is no account, like Mitra. */
-	private integrationTitle(integration: Integration) {
-		const label = integrationClasses().find(integrationClass => integrationClass.type === integration.type)?.label
-		return integration.credentials?.username || (label ? String(t(label)) : integration.type)
-	}
-
 	private async addSource(integration: Integration) {
 		const source = await CreateSource.call({ id: integration.id, name: String(t('Calendar')) })
 		await Calendars.fetch()
 		this.sourcesChange.dispatch()
-		await this.startRename(source)
+		await this.startRename(source.id)
 	}
 
 	private async removeSource(source: Source) {
@@ -830,9 +836,9 @@ export class Sidebar extends Component {
 		return html`
 			<div class="integrations">
 				${Calendars.integrations.map((i, index, integrations) => html`
-					<div class="integration" ${this.integrationsReorder.item({ index, handle: '.title' })}>
+					<div class="integration" ${this.integrationsReorder.item({ index, handle: '.title', disabled: this.renamingId === i.id })}>
 						<header ?data-hidden=${this.hidesEvery(i)}>
-							<span class="title">${this.integrationTitle(i)}</span>
+							${this.renamableTemplate('title', i.id, i.title, name => this.renameIntegration(i, name))}
 							<span class="actions">
 								<mitra-popover-container>
 									<mitra-icon-button size="small" icon="more-horizontal" label=${t('Integration options')}></mitra-icon-button>
@@ -840,6 +846,7 @@ export class Sidebar extends Component {
 										${!i.capabilities.sources.create ? html.nothing : html`
 											<mitra-menu-item icon="plus" @click=${() => void this.addSource(i)}>${t('New calendar')}</mitra-menu-item>
 										`}
+										<mitra-menu-item icon="text-cursor-input" @click=${() => this.startRename(i.id)}>${t('Rename')}</mitra-menu-item>
 										<mitra-menu-item icon="pencil" @click=${() => this.openDialog(i.id)}>${t('Edit')}</mitra-menu-item>
 										<mitra-menu-item icon="arrow-up" ?disabled=${index === 0} @click=${() => this.moveIntegration(i.id, -1)}>${t('Move up')}</mitra-menu-item>
 										<mitra-menu-item icon="arrow-down" ?disabled=${index === integrations.length - 1} @click=${() => this.moveIntegration(i.id, 1)}>${t('Move down')}</mitra-menu-item>
@@ -868,7 +875,7 @@ export class Sidebar extends Component {
 										title=${this.defaultHint(source)}>
 										<mitra-source-icon .source=${source} ?selected=${this.isDefault(source)}></mitra-source-icon>
 									</button>
-									${this.getNameTemplate(source)}
+									${this.renamableTemplate('name', source.id, source.name, name => this.renameSource(source, name))}
 									${this.getActionsTemplate(i, source, sourceIndex, sources.length)}
 								</div>
 						`)}
@@ -980,17 +987,22 @@ export class Sidebar extends Component {
 		`
 	}
 
-	private getNameTemplate(source: Source) {
+	/**
+	 * A label renamed in place. Its text is a property, never a child part: typing into the editable label
+	 * deleted the markers lit keeps around a child part, and every later render or rename of it went nowhere.
+	 */
+	private renamableTemplate(className: string, id: string, text: string, rename: (name: string) => Promise<boolean>) {
 		return html`
-			<div
-				class="name"
-				data-rename-id=${source.id}
-				title=${`${source.name}\n${t('Double-click to rename')}`}
-				contenteditable=${this.renamingId === source.id ? 'plaintext-only' : 'false'}
-				@dblclick=${() => this.startRename(source)}
-				@keydown=${(e: KeyboardEvent) => this.handleRenameKeydown(e, source)}
-				@blur=${(e: Event) => this.commitRename(source, e.target as HTMLElement)}
-			>${source.name}</div>
+			<span
+				class=${className}
+				data-rename-id=${id}
+				title=${`${text}\n${t('Double-click to rename')}`}
+				contenteditable=${this.renamingId === id ? 'plaintext-only' : 'false'}
+				.textContent=${text}
+				@dblclick=${() => this.startRename(id)}
+				@keydown=${(e: KeyboardEvent) => this.handleRenameKeydown(e, text)}
+				@blur=${(e: Event) => this.commitRename(id, e.target as HTMLElement, text, rename)}
+			></span>
 		`
 	}
 
@@ -1000,7 +1012,7 @@ export class Sidebar extends Component {
 				<mitra-popover-container>
 					<mitra-icon-button size="small" icon="more-horizontal" label=${t('Calendar options')}></mitra-icon-button>
 					<mitra-menu slot="popover">
-						<mitra-menu-item icon="pencil" @click=${() => this.startRename(source)}>${t('Rename')}</mitra-menu-item>
+						<mitra-menu-item icon="pencil" @click=${() => this.startRename(source.id)}>${t('Rename')}</mitra-menu-item>
 						<div class="color-row">
 							<mitra-icon icon="palette"></mitra-icon>
 							<mitra-color-picker .palette=${Color.palette.map(String)} .value=${source.color?.value} @change=${(e: CustomEvent<string | undefined>) => this.setSourceColor(source, Color.parse(e.detail), (e.currentTarget as HTMLElement).closest('mitra-menu')!)}></mitra-color-picker>

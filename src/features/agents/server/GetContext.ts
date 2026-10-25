@@ -39,6 +39,7 @@ export class GetContext extends Operation {
 			...readingOf(new Intl.Locale(user.settings?.locale ?? 'en'), zone),
 			integrations: integrations.map(integration => ({
 				id: integration.id,
+				name: integration.title,
 				provider: (integration.constructor as IntegrationClass).label,
 				addresses: integration.addresses ?? [],
 				can: { createCalendars: integration.capabilities.sources.create },

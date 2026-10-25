@@ -306,7 +306,7 @@ export class DialogIcsImport extends DialogComponent<{ readonly fileName: string
 			<p class="hint">${t('Choose the calendar the entries of this file are added to. The ones it cannot take are left out. The file itself stays untouched.')}</p>
 			<ul class="targets">
 				${targets.map(({ integration, sources }) => html`
-					<li class="account">${integration.credentials?.username || integration.type}</li>
+					<li class="account">${integration.title}</li>
 					${sources.map(source => html`
 						<li>
 							<button @click=${() => this.target = source}>

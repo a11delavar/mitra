@@ -285,6 +285,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 		const entity = this.entity!
 		return html`
 			<form class="content" @submit=${(e: Event) => e.preventDefault()}>
+				${this.descriptionTemplate}
 				${this.panelTemplate}
 
 				${!entity.sources.length ? html.nothing : html`
@@ -309,6 +310,15 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 		`
 	}
 
+	/** What the integration is, above everything the dialog asks of it. */
+	private get descriptionTemplate() {
+		switch (this.entity!.type) {
+			case 'mitra': return html`<p class="hint">${t('Mitra.Hint')}</p>`
+			case 'demo': return html`<p class="hint">${t('Demo.Hint')}</p>`
+			default: return html.nothing
+		}
+	}
+
 	private get panelTemplate() {
 		switch (this.entity!.type) {
 			case 'mitra': return this.mitraTemplate
@@ -329,19 +339,13 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 	}
 
 	private get mitraTemplate() {
-		return html`
-			<p class="hint">${t('Mitra.Hint')}</p>
-			${this.isEdit ? html.nothing : html`
-				<mitra-text-field label=${t('Calendar name')} placeholder=${t('Calendar')} ${bind(this, 'calendarName', { event: 'input' })}></mitra-text-field>
-			`}
+		return this.isEdit ? html.nothing : html`
+			<mitra-text-field label=${t('Calendar name')} placeholder=${t('Calendar')} ${bind(this, 'calendarName', { event: 'input' })}></mitra-text-field>
 		`
 	}
 
 	private get demoTemplate() {
-		return html`
-			<p class="hint">${t('Demo.Hint')}</p>
-			${this.connectTemplate}
-		`
+		return this.connectTemplate
 	}
 
 	private get appleTemplate() {
