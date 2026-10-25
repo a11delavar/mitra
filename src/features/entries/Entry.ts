@@ -1,7 +1,7 @@
 import { DateTime } from '@3mo/date-time'
 import { converter } from '@a11d/converter'
 import { MarkdownLinks } from '#design/MarkdownLinks.js'
-import { Source, Color, type Calendar } from '#features/sources'
+import { Source, Color } from '#features/sources'
 import { Recurrence, EntryOccurrences } from '#features/recurrence'
 import { Participants, type ParticipantRole, type Participant } from '#features/participants/Participant.js'
 import { type Relation, type RelationInit, type RelationType, RelationEdge, EntryRelation, EntryRelations } from '#features/relations'
@@ -9,7 +9,7 @@ import { type ReminderDefaults } from '#features/reminders/ReminderDefaults.js'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import type { IntegrationOwnership } from '#integrations'
-import { model, Entity, identity, equality, entity, primaryKey, property, enum as enumType, unique, manyToOne, children } from '#infrastructure/model'
+import { model, Entity, identity, equality, entity, primaryKey, property, enum as enumType, unique, manyToOne, children, include } from '#infrastructure/model'
 import { type Validatable, ValidationError } from '#infrastructure/validation'
 import { EntryType, type EntryTypeValue } from './EntryType.js'
 import { TaskStatus } from './TaskStatus.js'
@@ -57,7 +57,7 @@ const reminderDefaults = new WeakMap<Entry, ReminderDefaults>()
 @model('Entry')
 @entity()
 @unique({ properties: ['sourceId', 'uri', 'recurrenceId'] })
-export class Entry extends Entity implements Validatable<Calendar> {
+export class Entry extends Entity implements Validatable<Source> {
 	@identity()
 	@primaryKey({ type: 'string' }) id?: string
 
@@ -109,6 +109,12 @@ export class Entry extends Entity implements Validatable<Calendar> {
 	@equality()
 	@converter(Color.converter)
 	@property({ type: Color.Mapper, nullable: true }) color?: Color
+
+	/** The calendar it is in, whose integration answers what it can do and hold: it moves through {@link sourceId}. */
+	@include(() => Source, 'sourceId') source!: Source
+
+	/** Its own color, else its calendar's. */
+	get effectiveColor() { return this.color ?? this.source.color }
 
 	@equality()
 	@Entry.date() start?: DateTime
@@ -598,10 +604,10 @@ export class Entry extends Entity implements Validatable<Calendar> {
 		this.due = other.due
 	}
 
-	/** What keeps the entry out of `calendar`: a type it can't hold, and every fact it can't store. */
-	*validate({ source, integration }: Calendar) {
-		const { ownership } = integration
-		if (!integration.canHold(source, this.type)) {
+	/** What keeps the entry out of `source`: a type it can't hold, and every fact it can't store. */
+	*validate(source: Source) {
+		const { ownership } = source
+		if (!source.canHold(this.type)) {
 			yield new ValidationError(`This calendar cannot hold ${this.type.isTask ? 'tasks' : this.type.isAvailability ? 'availability' : 'events'}`, ['type'])
 		}
 		if (this.participants?.length && !ownership.holds('participants')) {

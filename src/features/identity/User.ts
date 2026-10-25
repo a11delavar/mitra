@@ -1,6 +1,6 @@
 import { converter } from '@a11d/converter'
 import type { EntityManager, FilterQuery } from '@mikro-orm/core'
-import { Source, type Calendar } from '#features/sources'
+import { Source } from '#features/sources'
 import { Entry, type EntryType } from '#features/entries'
 import { EntryRelation, EntryRelations, RelationGraph } from '#features/relations'
 import { UserSettings } from '#features/settings/UserSettings.js'
@@ -100,18 +100,11 @@ export class User {
 		return source
 	}
 
-	/** A calendar the user owns: the source and the integration keeping it. */
-	async calendar(em: EntityManager, sourceId: string): Promise<Calendar> {
-		const source = await this.source(em, sourceId)
-		return { source, integration: await this.integration(em, source.integrationId) }
-	}
-
 	/** Where a new entry of `type` goes when none is named: the default calendar, else the first that takes it. */
-	async defaultCalendar(em: EntityManager, type?: EntryType) {
-		const integrations = await this.integrations(em)
-		const calendars = (await this.sources(em, { enabled: true })).map(source => ({ source, integration: integrations.find(integration => integration.id === source.integrationId)! }))
-		const takes = ({ source, integration }: Calendar) => integration.capabilitiesFor(source).entries.create && (!type || integration.canHold(source, type))
-		const found = calendars.find(calendar => calendar.source.id === this.defaultSourceId && takes(calendar)) ?? calendars.find(takes)
+	async defaultSource(em: EntityManager, type?: EntryType) {
+		const sources = await this.sources(em, { enabled: true })
+		const takes = (source: Source) => source.capabilities.entries.create && (!type || source.canHold(type))
+		const found = sources.find(source => source.id === this.defaultSourceId && takes(source)) ?? sources.find(takes)
 		if (!found) {
 			throw new ValidationError('No calendar can take this entry', ['sourceId'])
 		}

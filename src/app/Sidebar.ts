@@ -1036,7 +1036,7 @@ export class Sidebar extends Component {
 							<mitra-menu-item icon="hard-drive-download" title=${t('Read this calendar again from the start')}
 								@click=${() => void ReimportSource.call({ id: source.id }).catch(() => void 0)}>${t('Re-import entries')}</mitra-menu-item>
 						`}
-						${!Calendars.capabilitiesOf(source.id).sources.delete ? html.nothing : html`
+						${!source.capabilities.sources.delete ? html.nothing : html`
 							<mitra-menu-item icon="trash-2" variant="danger" title=${t('Delete this calendar and every entry in it')}
 								@click=${() => void this.removeSource(source)}>${t('Delete calendar')}</mitra-menu-item>
 						`}

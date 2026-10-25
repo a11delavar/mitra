@@ -1,7 +1,6 @@
 import { bind, component, html, css, state, type PropertyValues } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { DateTime, DateTimeRange } from '@3mo/date-time'
-import { Calendars } from '#features/sources/client/Calendars.js'
 import { TimeZones } from '#features/time/client/TimeZones.js'
 import { type Entry } from '../Entry.js'
 import { entryColors } from './entryColors.css.js'
@@ -116,7 +115,7 @@ export class DialogDuplicateDays extends DialogComponent<{ readonly entry: Entry
 		const { entry } = this.parameters
 		const count = this.days.length
 		return html`
-			<mitra-dialog style=${`--mitra-entry-segment-color: ${String(entry.color ?? Calendars.source(entry.sourceId)?.color ?? '')}`}
+			<mitra-dialog style=${`--mitra-entry-segment-color: ${String(entry.effectiveColor ?? '')}`}
 				heading=${t('Duplicate to other days')}
 				primaryButtonText=${count ? t('Duplicate to ${count:pluralityNumber} days', { count }) : t('Duplicate')}
 				?primaryButtonDisabled=${!count}

@@ -148,7 +148,7 @@ export class EntryDragController extends Controller {
 	}
 
 	private beginExternal(entry: Entry, segment: EntrySegmentComponent, surface: HTMLElement, e: PointerEvent, options?: { held?: boolean }) {
-		if (this.drag || !entry.persisted || !Calendars.capabilitiesOf(entry.sourceId).entries.edit) {
+		if (this.drag || !entry.persisted || !entry.source.capabilities.entries.edit) {
 			return
 		}
 		const cells = this.snapshotCells()
@@ -232,7 +232,7 @@ export class EntryDragController extends Controller {
 			return new Entry({ ...base, start, end, allDay: true })
 		}
 		const { start, end } = Schedule.timed(anchor.date.dayStart.add({ minutes: anchor.minute }), current.date.dayStart.add({ minutes: current.minute }), EntryDragController.snapMinutes)
-		const ownership = Calendars.ownershipOf(drag.source!.id)
+		const ownership = drag.source!.ownership
 		const created = new Entry({ ...base, start, end, allDay: false }).fit(ownership)
 		if (ownership.holds('reminders')) {
 			created.adoptDefaultReminders(ReminderSetting.defaults)
@@ -246,13 +246,13 @@ export class EntryDragController extends Controller {
 		if (!before.start || (!before.end && !before.point)) {
 			const placed = before.clone()
 			placed.scheduleAt(mode === 'allday' ? current.date : current.date.dayStart.add({ minutes: current.minute }), mode === 'allday', DefaultDurationSetting.current)
-			return placed.fit(Calendars.ownershipOf(placed.sourceId))
+			return placed.fit(placed.source.ownership)
 		}
 		if (drag.laneBottom !== undefined && (mode === 'allday') !== before.allDay) {
 			const converted = before.clone()
 			converted.setAllDay(mode === 'allday', DefaultDurationSetting.current)
 			converted.moveStart(mode === 'allday' ? current.date.dayStart : current.date.dayStart.add({ minutes: current.minute }))
-			return converted.fit(Calendars.ownershipOf(converted.sourceId))
+			return converted.fit(converted.source.ownership)
 		}
 		if (drag.mode === 'allday') {
 			const days = Math.round((current.date.dayStart.valueOf() - drag.anchor!.date.dayStart.valueOf()) / 86_400_000)
@@ -427,7 +427,7 @@ export class EntryDragController extends Controller {
 		if (segment) {
 			// A tap still has to open the editor of an entry whose provider mitra may only read, so the
 			// bar is on beginning a drag, not on handling the pointer at all.
-			if (!occurrence?.entry.persisted || !Calendars.capabilitiesOf(occurrence.entry.sourceId).entries.edit) {
+			if (!occurrence?.entry.persisted || !occurrence.entry.source.capabilities.entries.edit) {
 				return
 			}
 			const entry = EntryStore.editable(occurrence)
@@ -446,7 +446,7 @@ export class EntryDragController extends Controller {
 		const availability = target.closest('mitra-availability-segment') as AvailabilitySegment | null
 		const mode = this.createModeAt(target)
 		const source = mode ? Calendars.primary(this.createType) : undefined
-		if (!mode || !source || !Calendars.capabilitiesOf(source.id).entries.create) {
+		if (!mode || !source || !source.capabilities.entries.create) {
 			// Nothing can be created here, so open the availability right away.
 			if (availability) {
 				availability.open = true
@@ -675,7 +675,7 @@ export class EntryDragController extends Controller {
 				EntryStore.notify()
 				return
 			}
-			if (drag.kind === 'move' && e.altKey && Calendars.capabilitiesOf(entry.sourceId).entries.create) {
+			if (drag.kind === 'move' && e.altKey && entry.source.capabilities.entries.create) {
 				this.teardown(e.pointerId)
 				EntryStore.setPreview(undefined)
 				EntryStore.setDragging(undefined)

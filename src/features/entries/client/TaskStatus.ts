@@ -1,6 +1,5 @@
 import { Component, component, html, css, property, event, query } from '@a11d/lit'
 import type { Slider, Menu } from '#design'
-import { Calendars } from '#features/sources/client/Calendars.js'
 import { offerToCloseSubtasks } from '#features/relations/client/Hierarchy.js'
 import { Relations } from '#features/relations/client/Relations.js'
 import { type Entry, type EntryRollup } from '../Entry.js'
@@ -29,7 +28,7 @@ export class TaskStatusComponent extends Component {
 		}
 		// Progress reads as Doing only where a task can be Doing; a calendar of two states shows it To Do.
 		const progress = Relations.progressOf(this.entry)
-		if (progress !== undefined && progress > 0 && progress < 1 && Calendars.capabilitiesOf(this.entry.sourceId).entries.statuses.includes(TaskStatus.Doing)) {
+		if (progress !== undefined && progress > 0 && progress < 1 && this.entry.source.capabilities.entries.statuses.includes(TaskStatus.Doing)) {
 			return TaskStatus.Doing
 		}
 		return status
@@ -63,7 +62,7 @@ export class TaskStatusComponent extends Component {
 
 	/** The statuses the calendar can keep: one of two states (open, done) keeps neither Doing nor Cancelled. */
 	private get offered() {
-		return Calendars.capabilitiesOf(this.entry.sourceId).entries.statuses
+		return this.entry.source.capabilities.entries.statuses ?? []
 	}
 
 	private commit(status: TaskStatus) {
@@ -71,7 +70,7 @@ export class TaskStatusComponent extends Component {
 			this.menu?.hide()
 			return
 		}
-		this.entry.setStatus(status, Calendars.ownershipOf(this.entry.sourceId))
+		this.entry.setStatus(status, this.entry.source.ownership)
 		this.menu?.hide()
 		this.requestUpdate()
 		this.change.dispatch()
@@ -310,7 +309,7 @@ export class TaskStatusComponent extends Component {
 			`
 		}
 
-		if (!Calendars.ownershipOf(this.entry.sourceId).holds('percentComplete')) {
+		if (!this.entry.source.ownership.holds('percentComplete')) {
 			return html.nothing
 		}
 
@@ -350,7 +349,7 @@ export class TaskStatusComponent extends Component {
 		const showsProgressDial = this.status === TaskStatus.Doing || (progress !== undefined && progress > 0 && progress < 1 && this.status !== TaskStatus.Done && this.status !== TaskStatus.Cancelled)
 		const percent = progress !== undefined ? Math.round(progress * 100) : 50
 
-		const editable = Calendars.capabilitiesOf(this.entry.sourceId).entries.edit
+		const editable = this.entry.source.capabilities.entries.edit
 
 		return html`
 			<button class="status-button" aria-label=${name} ?disabled=${!editable}

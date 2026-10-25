@@ -51,15 +51,15 @@ export class UpdateEntryOccurrence extends Operation<Parameters, Entry> {
 		}
 
 		// The current calendar is owned transitively (the entry lookup above proved it); a DIFFERENT target proves its own ownership.
-		const from = await user.calendar(em, existing.sourceId)
-		const to = incoming.sourceId === existing.sourceId ? from : await user.calendar(em, incoming.sourceId)
+		const from = await user.source(em, existing.sourceId)
+		const to = incoming.sourceId === existing.sourceId ? from : await user.source(em, incoming.sourceId)
 		const errors = [...patch.validate({ entry: existing, from, to, scope }), ...incoming.validate(to), ...(patch.relations === undefined ? [] : patch.relations.validate({ entry: existing, graph: await user.relationGraph(em, patch.relations) }))]
 		if (errors.length) {
 			throw new AggregateError(errors)
 		}
 
 		// The estimate is lost where the calendar has none, off the patch the occurrence's edit applies.
-		if (!to.integration.ownership.holds('estimate')) {
+		if (!to.ownership.holds('estimate')) {
 			patch.estimate = null
 		}
 

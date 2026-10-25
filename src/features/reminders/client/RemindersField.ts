@@ -1,7 +1,6 @@
 import { Component, component, html, css, property, state, event, query } from '@a11d/lit'
 import type { Menu } from '#design'
 import type { Entry, EntryType } from '#features/entries'
-import { Calendars } from '#features/sources/client/Calendars.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import '#features/time/TimeSpan.time.js'
 import { enablePushNotifications } from './push.js'
@@ -155,7 +154,7 @@ export class RemindersField extends Component {
 	}
 
 	protected override get template() {
-		const editable = Calendars.capabilitiesOf(this.entry.sourceId).entries.edit
+		const editable = this.entry.source.capabilities.entries.edit
 		return !this.entry?.reminderAnchor ? html.nothing : html`
 			${!this.reminders.length ? html`
 				<span class="placeholder">${t('Reminders')}</span>

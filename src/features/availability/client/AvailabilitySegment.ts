@@ -3,7 +3,6 @@ import { type EntrySegment } from '#features/entries/client/EntrySegment.js'
 import { EntryEditorAnchor } from '#features/entries/client/EntryEditorAnchor.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { entryColors } from '#features/entries/client/entryColors.css.js'
-import { Calendars } from '#features/sources/client/Calendars.js'
 import { Availability } from './Availability.js'
 
 /**
@@ -25,7 +24,7 @@ export class AvailabilitySegment extends Component {
 		super.updated?.(changed)
 		const entry = this.segment?.entry
 		if (entry) {
-			this.style.setProperty('--mitra-entry-segment-color', String(entry.color ?? Calendars.source(entry.sourceId)?.color ?? ''))
+			this.style.setProperty('--mitra-entry-segment-color', String(entry.effectiveColor ?? ''))
 			this.toggleAttribute('data-unlabelled', !Availability.labelOf(entry))
 		}
 	}

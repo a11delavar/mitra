@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { type EntityManager } from '@mikro-orm/core'
-import { Source, type Calendar } from '#features/sources'
+import { Source } from '#features/sources'
 import { type Integration, IntegrationCapabilities } from '#integrations'
 import { Entry } from './Entry.js'
 import { EntryPatch } from './EntryPatch.js'
@@ -29,7 +29,7 @@ describe('EntryChange', () => {
 				return Promise.resolve()
 			},
 		} as unknown as Integration
-		return { log, calendar: { source: new Source({ id, uri, name: id, entryTypes: [EntryType.Event, EntryType.Task] }), integration } satisfies Calendar }
+		return { log, calendar: Object.assign(new Source({ id, uri, name: id, integrationId, entryTypes: [EntryType.Event, EntryType.Task] }), { integration }) }
 	}
 
 	it('updates in place what stays in its calendar and keeps its type', async () => {

@@ -1,5 +1,4 @@
 import type { EntryShift, Entry, EntryRollup } from '#features/entries'
-import { Calendars } from '#features/sources/client/Calendars.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { ShiftStrategy } from '../ShiftStrategy.js'
 import { RelationGraph } from '../RelationGraph.js'
@@ -63,7 +62,7 @@ export class Relations {
 		if (!predecessor.relatable || !dependent.relatable || predecessor.uid === dependent.uid) {
 			return false
 		}
-		if (!Calendars.ownershipOf(dependent.sourceId).holds('relations')) {
+		if (!dependent.source.ownership.holds('relations')) {
 			return false
 		}
 		const coupled = (from: Entry, to: Entry) => this.graph.edgesFrom(from.uid!).some(edge => edge.family === 'dependency' && edge.to === to.uid)

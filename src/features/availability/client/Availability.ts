@@ -3,7 +3,6 @@ import type { Entry } from '#features/entries'
 import type { EntryOccurrence } from '#features/recurrence'
 import { type EntrySegment } from '#features/entries/client/EntrySegment.js'
 import { EntrySegments } from '#features/entries/client/EntrySegments.js'
-import { Calendars } from '#features/sources/client/Calendars.js'
 import { HideAvailabilitySetting } from './HideAvailabilitySetting.js'
 
 interface Partition {
@@ -32,7 +31,7 @@ export class Availability {
 		let partition = Availability.partitions.get(occurrences)
 		if (!partition) {
 			const availability = occurrences.filter(({ entry }) => entry.type.isAvailability)
-			const shown = ({ entry }: EntryOccurrence) => !entry.type.isAvailability && !Calendars.integrationOf(entry.sourceId)?.writtenForAvailability(entry)
+			const shown = ({ entry }: EntryOccurrence) => !entry.type.isAvailability && !entry.source.integration.writtenForAvailability(entry)
 			const rest = occurrences.filter(shown)
 			partition = { availability, rest: rest.length === occurrences.length ? occurrences : rest }
 			Availability.partitions.set(occurrences, partition)

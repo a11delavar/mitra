@@ -2,7 +2,6 @@ import { component, html, property, Component, css, state, bind, queryConnectedI
 import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { contrastColorOf, MarkdownLinks, Link } from '#design'
 import { type RoutineRun } from '#features/routines/client/Routines.js'
-import { Calendars } from '#features/sources/client/Calendars.js'
 import { TaskStatus } from '../TaskStatus.js'
 import { type EntrySegment } from './EntrySegment.js'
 import { EntrySegments } from './EntrySegments.js'
@@ -510,7 +509,7 @@ export class EntrySegmentComponent extends Component {
 
 		this.style.setProperty(
 			'--mitra-entry-segment-color',
-			String(this.segment.entry.color ?? Calendars.source(this.segment.entry.sourceId)?.color ?? ''),
+			String(this.segment.entry.effectiveColor ?? ''),
 		)
 
 		const meta = this.timed || this.showsDate
@@ -540,7 +539,7 @@ export class EntrySegmentComponent extends Component {
 				<span class="label">${this.segment.entry.heading || (this.segment.entry.persisted ? '' : t('Draft'))}</span>
 			</div>
 			${this.segment.allDay || !this.segment.entry.location ? html.nothing : this.locationTemplate}
-			${!this.resize || !this.segment.entry.persisted || !Calendars.capabilitiesOf(this.segment.entry.sourceId).entries.edit || !Calendars.ownershipOf(this.segment.entry.sourceId).holds('end') ? html.nothing : html`
+			${!this.resize || !this.segment.entry.persisted || !this.segment.entry.source.capabilities.entries.edit || !this.segment.entry.source.ownership.holds('end') ? html.nothing : html`
 				<div class="resize-start"></div>
 				<div class="resize-end"></div>
 			`}

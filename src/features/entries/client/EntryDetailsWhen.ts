@@ -4,7 +4,6 @@ import { controlHeight, type DateField, type DurationField } from '#design'
 import { type TimeZonePicker, type TimeZoneChoice } from '#features/time/client/TimeZonePicker.js'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { TimeZones } from '#features/time/client/TimeZones.js'
-import { Calendars } from '#features/sources/client/Calendars.js'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { Entry } from '../Entry.js'
 import { EntryStore } from './EntryStore.js'
@@ -216,11 +215,11 @@ export class EntryDetailsWhen extends Component {
 	}
 
 	private get editable() {
-		return Calendars.capabilitiesOf(this.entry.sourceId).entries.edit
+		return this.entry.source.capabilities.entries.edit
 	}
 
 	private get ownership() {
-		return Calendars.ownershipOf(this.entry.sourceId)
+		return this.entry.source.ownership
 	}
 
 	static override get styles() {
@@ -486,7 +485,7 @@ export class EntryDetailsWhen extends Component {
 				</div>
 				<mitra-time-zone-picker
 					.selected=${this.entry.floating ? EntryTimeZone.floating : this.entry.zone ?? TimeZones.here}
-					?floatable=${this.entry.floating || Calendars.capabilitiesOf(this.entry.sourceId).entries.floating}
+					?floatable=${this.entry.floating || this.entry.source.capabilities.entries.floating}
 					@pick=${this.handleZonePick}
 				></mitra-time-zone-picker>
 			</div>

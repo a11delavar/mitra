@@ -32,7 +32,7 @@ export class GetContext extends Operation {
 		const zone = user.timeZones?.home?.zone ?? TimeZone.UTC
 		const integrations = await user.integrations(em)
 		const sources = await user.sources(em, { enabled: true })
-		const defaults = await Promise.all(EntryType.all.map(async type => ({ type, sourceId: (await user.defaultCalendar(em, type).catch(() => undefined))?.source.id })))
+		const defaults = await Promise.all(EntryType.all.map(async type => ({ type, sourceId: (await user.defaultSource(em, type).catch(() => undefined))?.id })))
 		return {
 			now: Temporal.Now.zonedDateTimeISO(zone.id).toString({ timeZoneName: 'never', smallestUnit: 'minute' }),
 			homeTimeZone: zone.id,

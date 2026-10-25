@@ -17,12 +17,12 @@ class Parameters {
 @http({ method: 'POST', path: '/sources/:id/reimport', status: 202 })
 export class ReimportSource extends Operation<Parameters, void> {
 	async run({ em, user }: OperationContext) {
-		const { source, integration } = await user.calendar(em, this.parameters.id)
+		const source = await user.source(em, this.parameters.id)
 
-		await integration.reimportSource(em, source)
+		await source.integration.reimportSource(em, source)
 
 		syncEmitter.emit('updated', user.id, 'sources')
-		void importer.start(em, user.id, integration.id)
+		void importer.start(em, user.id, source.integrationId)
 		this.logger.info(`Re-importing source "${source.name}" (${source.id})`)
 	}
 }

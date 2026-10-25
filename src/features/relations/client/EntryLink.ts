@@ -126,17 +126,15 @@ export class EntryLink extends Component {
 	}
 
 	protected override get template() {
-		const { entry } = this
-		const color = entry.color || Calendars.source(entry.sourceId)?.color
 		return html`
-			${entry.type.isTask ? html`
-				<mitra-task-status style=${color ? `color: ${color};` : ''} .entry=${entry} @change=${() => this.handleStatusChange()}></mitra-task-status>
+			${this.entry.type.isTask ? html`
+				<mitra-task-status style=${this.entry.effectiveColor ? `color: ${this.entry.effectiveColor};` : ''} .entry=${this.entry} @change=${() => this.handleStatusChange()}></mitra-task-status>
 			` : html`
-				<mitra-icon class="glyph" icon="calendar" style=${color ? `color: ${color};` : ''}></mitra-icon>
+				<mitra-icon class="glyph" icon="calendar" style=${this.entry.effectiveColor ? `color: ${this.entry.effectiveColor};` : ''}></mitra-icon>
 			`}
-			${!entry.id
-				? html`<span class="heading">${entry.heading}</span>`
-				: html`<button type="button" class="heading" @click=${() => void this.open()}>${entry.heading}</button>`}
+			${!this.entry.id
+				? html`<span class="heading">${this.entry.heading}</span>`
+				: html`<button type="button" class="heading" @click=${() => void this.open()}>${this.entry.heading}</button>`}
 		`
 	}
 }

@@ -2,7 +2,6 @@ import { Component, component, html, css, unsafeCSS, property, state, repeat } f
 import type { Entry } from '#features/entries'
 import { type EntrySegment } from '#features/entries/client/EntrySegment.js'
 import { type EntrySegmentComponent } from '#features/entries/client/EventSegment.js'
-import { Calendars } from '#features/sources/client/Calendars.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { RelationGraph } from '../RelationGraph.js'
 
@@ -641,7 +640,7 @@ export class EntryConnections extends Component {
 
 	/** The chip's presented color: its own, else its calendar's (the same resolution EventSegment uses). */
 	private static colorOf(entry: Entry): string {
-		return String(entry.color ?? Calendars.source(entry.sourceId)?.color ?? 'var(--color-text)')
+		return String(entry.effectiveColor ?? 'var(--color-text)')
 	}
 
 	static override get styles() {

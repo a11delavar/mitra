@@ -15,9 +15,9 @@ describe('Calendars', () => {
 
 	beforeEach(() => {
 		local = new MitraCalendar({ id: 'local', order: 1, uri: 'mitra://local' })
-		local.sources = [source('work', { order: 2 }), source('home', { order: 1 }), source('archive', { enabled: false, order: 3 }), source('hidden', { hidden: true, order: 4 })] as never
+		local.sources = [source('work', { integrationId: 'local', order: 2 }), source('home', { integrationId: 'local', order: 1 }), source('archive', { integrationId: 'local', enabled: false, order: 3 }), source('hidden', { integrationId: 'local', hidden: true, order: 4 })] as never
 		feed = new IcsSubscription({ id: 'feed', order: 0, uri: 'https://example.com/holidays.ics' })
-		feed.sources = [source('holidays', { readOnly: true, entryTypes: [EntryType.Event] })] as never
+		feed.sources = [source('holidays', { integrationId: 'feed', readOnly: true, entryTypes: [EntryType.Event] })] as never
 		Calendars.adopt([local, feed])
 	})
 
@@ -34,9 +34,8 @@ describe('Calendars', () => {
 
 	it('finds a source and the integration it belongs to', () => {
 		assert.equal(Calendars.source('work')?.name, 'work')
-		assert.equal(Calendars.integrationOf('work'), local)
+		assert.equal(Calendars.source('work')?.integration, local)
 		assert.equal(Calendars.source('gone'), undefined)
-		assert.equal(Calendars.integrationOf('gone'), undefined)
 	})
 
 	it('puts a new entry in the first visible calendar that can hold it, absent a default', () => {
@@ -45,8 +44,8 @@ describe('Calendars', () => {
 	})
 
 	it('turns writes off for a read-only source', () => {
-		assert.equal(Calendars.capabilitiesOf('holidays').entries.create, false)
-		assert.equal(Calendars.capabilitiesOf('work').entries.create, true)
+		assert.equal(Calendars.source('holidays')?.capabilities.entries.create, false)
+		assert.equal(Calendars.source('work')?.capabilities.entries.create, true)
 	})
 
 	it('copies entries out where another calendar takes them, and moves them only where they can also be deleted', () => {

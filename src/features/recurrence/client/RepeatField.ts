@@ -2,7 +2,6 @@ import { Component, component, html, css, property, state, event, live } from '@
 import { type DateTime } from '@3mo/date-time'
 import type { SelectionGroupValue } from '#design'
 import type { Entry } from '#features/entries'
-import { Calendars } from '#features/sources/client/Calendars.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { Recurrence, type RecurrencePreset } from '../Recurrence.js'
 import { RecurrenceFrequency } from '../RecurrenceFrequency.js'
@@ -243,7 +242,7 @@ export class RepeatField extends Component {
 	protected override get template() {
 		return !this.entry?.start && !this.entry?.due ? html.nothing : html`
 			<!-- No rule means nothing is chosen here, so "Does not repeat" reads as a placeholder rather than as a value. -->
-			<mitra-select label=${t('Repeat')} .placeholder=${!this.entry.recurrence} ?disabled=${!Calendars.capabilitiesOf(this.entry.sourceId).entries.edit}
+			<mitra-select label=${t('Repeat')} .placeholder=${!this.entry.recurrence} ?disabled=${!this.entry.source.capabilities.entries.edit}
 				.value=${live(this.menuItems.find(item => item.checked)?.id ?? 'none')}
 				@change=${this.handleSelect}
 			>

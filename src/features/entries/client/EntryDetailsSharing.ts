@@ -1,5 +1,4 @@
 import { Component, component, html, css, property, event } from '@a11d/lit'
-import { Calendars } from '#features/sources/client/Calendars.js'
 import { type Entry } from '../Entry.js'
 import { Transparency } from '../Transparency.js'
 import { Visibility } from '../Visibility.js'
@@ -21,11 +20,11 @@ export class EntryDetailsSharing extends Component {
 	protected override createRenderRoot() { return this }
 
 	private get capabilities() {
-		return Calendars.capabilitiesOf(this.entry.sourceId)
+		return this.entry.source.capabilities
 	}
 
 	private get ownership() {
-		return Calendars.ownershipOf(this.entry.sourceId)
+		return this.entry.source.ownership
 	}
 
 	private get showsTransparency() {
@@ -33,11 +32,11 @@ export class EntryDetailsSharing extends Component {
 	}
 
 	private static showsTransparency(entry: Entry) {
-		return !entry.type.isTask && Calendars.ownershipOf(entry.sourceId).holds('transparency')
+		return !entry.type.isTask && entry.source.ownership.holds('transparency')
 	}
 
 	static applies(entry: Entry) {
-		return EntryDetailsSharing.showsTransparency(entry) || !!Calendars.ownershipOf(entry.sourceId).holds('visibility')
+		return EntryDetailsSharing.showsTransparency(entry) || !!entry.source.ownership.holds('visibility')
 	}
 
 	private commit() {

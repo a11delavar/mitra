@@ -1,8 +1,10 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { EntryType } from '#features/entries'
+import { Integration } from '#integrations'
 import { CalDAV } from '#integrations/caldav/CalDAV.js'
 import { IcsSubscription } from '#integrations/ics/IcsSubscription.js'
+import { include } from '#infrastructure/model'
 import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
 import { Source } from './Source.js'
 import { Color } from './Color.js'
@@ -114,5 +116,24 @@ describe('Source.readOnly narrows what may be written to one calendar', () => {
 
 	it('cannot promote a provider that already refuses writes', () => {
 		assert.equal(new IcsSubscription().capabilitiesFor(own).entries.edit, false)
+	})
+})
+
+describe('the integration of a source', () => {
+	const feed = new IcsSubscription({ id: 'feed', uri: 'https://example.com/holidays.ics' })
+	const holidays = () => new Source({ uri: 'https://example.com/holidays.ics', name: 'Holidays', integrationId: 'feed', entryTypes: [EntryType.Event] })
+
+	it('is found by its id where the browser keeps integrations, and answers for the source', () => {
+		include.from(Integration, id => id === feed.id ? feed : undefined)
+		const source = holidays()
+		assert.equal(source.integration, feed)
+		assert.equal(source.capabilities.entries.edit, false)
+	})
+
+	it('never travels nor is cloned along, as it is another entity', () => {
+		const source = Object.assign(holidays(), { integration: feed })
+		assert.equal(source.integration, feed)
+		assert.equal('integration' in wireOf(source), false)
+		assert.equal('integration' in structuredClone(source), false)
 	})
 })

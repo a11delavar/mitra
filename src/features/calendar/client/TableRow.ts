@@ -5,7 +5,6 @@ import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { type EntryOccurrence, EntryOccurrenceChangeScope } from '#features/recurrence'
 import { Relations } from '#features/relations/client/Relations.js'
-import { Calendars } from '#features/sources/client/Calendars.js'
 import { termsMatch } from '#features/commands/termsMatch.js'
 import { type TableWindow } from './TableWindow.js'
 
@@ -94,7 +93,7 @@ export class TableRow {
 	get when() { return (this.occurrence.start ?? this.occurrence.end)?.valueOf() }
 	get statusRank() { return !this.entry.type.isTask ? undefined : TableRow.statusRanks.get(this.entry.status ?? TaskStatus.ToDo) }
 	get typeKey() { return this.entry.type.value }
-	get source() { return Calendars.source(this.entry.sourceId) }
+	get source() { return this.entry.source }
 	get sourceName() { return this.source?.name ?? '' }
 	get location() { return this.entry.location }
 	get repeats() {

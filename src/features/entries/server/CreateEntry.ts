@@ -15,14 +15,14 @@ import { EntryPatch } from '../EntryPatch.js'
 export class CreateEntry extends Operation<EntryPatch, Entry> {
 	async run({ em, user }: OperationContext) {
 		const patch = this.parameters
-		const to = patch.sourceId ? await user.calendar(em, patch.sourceId) : await user.defaultCalendar(em, patch.type)
-		patch.sourceId = to.source.id
+		const to = patch.sourceId ? await user.source(em, patch.sourceId) : await user.defaultSource(em, patch.type)
+		patch.sourceId = to.id
 		// Times written without a zone were read in the home zone, so the entry keeps it.
 		if (patch.timeZone === undefined && !patch.allDay && user.timeZones?.home) {
 			patch.timeZone = EntryTimeZone.parse(user.timeZones.home.zone.id)
 		}
 		const unclaimed = await fileStore.claim(user.id, patch.files ?? [])
-		const incoming = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: to.source.defaultEntryType }).patch(patch).fit(to.integration.ownership)
+		const incoming = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: to.defaultEntryType }).patch(patch).fit(to.ownership)
 
 		const { relations } = incoming
 		const errors = [...unclaimed, ...patch.validate({ to }), ...incoming.validate(to), ...(relations === undefined ? [] : relations.validate({ entry: incoming, graph: await user.relationGraph(em, relations) }))]
@@ -35,7 +35,7 @@ export class CreateEntry extends Operation<EntryPatch, Entry> {
 		const graph = await user.relationGraph(em)
 		graph.attach([created])
 		syncEmitter.emit('updated', user.id)
-		this.logger.debug(`Created ${created.type} "${created.heading}" (${created.id}) in source ${to.source.id}`)
+		this.logger.debug(`Created ${created.type} "${created.heading}" (${created.id}) in source ${to.id}`)
 		return created
 	}
 }

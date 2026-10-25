@@ -1,6 +1,5 @@
 import { Component, component, html, css, property, state, event, query, repeat } from '@a11d/lit'
 import { File } from '#features/files/File.js'
-import { Calendars } from '#features/sources/client/Calendars.js'
 import { getMeta, uploadFile } from '#infrastructure/http/Api.js'
 import { type EntryFile } from '../EntryFile.js'
 import { type Entry } from '../Entry.js'
@@ -57,12 +56,12 @@ export class AttachmentsField extends Component {
 	@query('input[type=file]') private readonly filePicker?: HTMLInputElement
 
 	private get canEdit() {
-		return Calendars.capabilitiesOf(this.entry.sourceId).entries.attach
+		return this.entry.source.capabilities.entries.attach
 	}
 
 	/** Whether a file can be embedded in the description: one the calendar holds and lets Mitra edit. */
 	private get canEmbed() {
-		return Calendars.capabilitiesOf(this.entry.sourceId).entries.edit && Calendars.ownershipOf(this.entry.sourceId).holds('description')
+		return this.entry.source.capabilities.entries.edit && this.entry.source.ownership.holds('description')
 	}
 
 	private readonly embedFile = (file: EntryFile) => {

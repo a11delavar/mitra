@@ -41,14 +41,14 @@ export class UpdateEntry extends Operation<Parameters, Entry> {
 		}
 
 		// The current calendar is owned transitively (the entry lookup above proved it); a DIFFERENT target proves its own ownership.
-		const from = await user.calendar(em, existing.sourceId)
-		const to = incoming.sourceId === existing.sourceId ? from : await user.calendar(em, incoming.sourceId)
+		const from = await user.source(em, existing.sourceId)
+		const to = incoming.sourceId === existing.sourceId ? from : await user.source(em, incoming.sourceId)
 		// Type conversion re-creates the entry below: tasks and events cannot share a CalDAV resource (RFC 4791 §4.1).
 		const errors = [...patch.validate({ entry: existing, from, to }), ...incoming.validate(to), ...(relations === undefined ? [] : relations.validate({ entry: existing, graph: await user.relationGraph(em, relations) }))]
 		if (errors.length) {
 			throw new AggregateError(errors)
 		}
-		incoming.fit(to.integration.ownership)
+		incoming.fit(to.ownership)
 
 		const recreated = edit.recreates(from, to)
 		const saved = await edit.save(em, from, to)
@@ -57,7 +57,7 @@ export class UpdateEntry extends Operation<Parameters, Entry> {
 		const graph = await user.relationGraph(em)
 		graph.attach([saved])
 		syncEmitter.emit('updated', user.id)
-		this.logger.debug(recreated ? `Re-created entry ${existing.id} as ${saved.type} in source ${to.source.id} (new id ${saved.id})` : `Updated entry ${existing.id} "${saved.heading}"`)
+		this.logger.debug(recreated ? `Re-created entry ${existing.id} as ${saved.type} in source ${to.id} (new id ${saved.id})` : `Updated entry ${existing.id} "${saved.heading}"`)
 		return saved
 	}
 }

@@ -1,9 +1,9 @@
 import { ListIntegrations, ReorderIntegrations, ReorderSources, SetSourceVisibility, ShowOnlySource, RestoreSourceVisibility } from '#operations'
 import type { EntryType, Entry } from '#features/entries'
-import { Integration, IntegrationCapabilities, IntegrationOwnership } from '#integrations'
+import { Integration } from '#integrations'
 import { getUser, keepUser } from '#infrastructure/http/Api.js'
-import { applyOrder, byOrder } from '#infrastructure/model'
-import { type Source } from '../Source.js'
+import { applyOrder, byOrder, include } from '#infrastructure/model'
+import { Source } from '../Source.js'
 
 /** The user's calendars as this device knows them: the integrations and their sources, what each can hold and what it allows. */
 export class Calendars {
@@ -29,12 +29,12 @@ export class Calendars {
 	}
 
 	static get sources(): Array<Source> {
-		return Calendars.all.flatMap(integration => [...integration.sources])
+		return Calendars.all.flatMap(integration => integration.sources)
 	}
 
 	/** Where entries can live. Unlike the visible ones, these include hidden calendars. */
 	static enabled(integration?: Integration): Array<Source> {
-		return (integration ? [...integration.sources] : Calendars.sources).filter(source => source.enabled)
+		return (integration?.sources ?? Calendars.sources).filter(source => source.enabled)
 	}
 
 	static get visible(): Array<Source> {
@@ -45,8 +45,8 @@ export class Calendars {
 		return Calendars.sources.find(source => source.id === id)
 	}
 
-	static integrationOf(sourceId: string) {
-		return Calendars.all.find(integration => [...integration.sources].some(source => source.id === sourceId))
+	static integration(id: string) {
+		return Calendars.all.find(integration => integration.id === id)
 	}
 
 	/** The id of the calendar the user chose as default, if any. */
@@ -56,37 +56,22 @@ export class Calendars {
 
 	/** Where a new entry goes: the default calendar while visible and able to hold `type`, else the first that is. */
 	static primary(type?: EntryType): Source | undefined {
-		const candidates = Calendars.visible.filter(source => !type || Calendars.canHold(source, type))
+		const candidates = Calendars.visible.filter(source => !type || source.canHold(type))
 		return candidates.find(source => source.id === Calendars.defaultId) ?? candidates[0]
-	}
-
-	/** The provider's capabilities, with writes off for a read-only source. */
-	static capabilitiesOf(sourceId: string): IntegrationCapabilities {
-		return (Calendars.integrationOf(sourceId)?.capabilities ?? new IntegrationCapabilities()).in(Calendars.source(sourceId))
-	}
-
-	/** Which fields the source's entries hold, and who owns each. */
-	static ownershipOf(sourceId: string): IntegrationOwnership {
-		return Calendars.integrationOf(sourceId)?.ownership ?? new IntegrationOwnership()
-	}
-
-	/** Whether entries of `type` can live in `source`, which for availability also takes the provider's say. */
-	static canHold(source: Source, type: EntryType) {
-		return Calendars.integrationOf(source.id)?.canHold(source, type) ?? source.supportsEntryType(type)
 	}
 
 	/** Where an entry can be opened outside Mitra, if anywhere. */
 	static externalLinkOf(entry: Entry): { url: string, label?: string } | undefined {
 		const url = Integration.externalUrlOf(entry)
-		return Calendars.integrationOf(entry.sourceId)?.externalLink?.(entry) ?? (url ? { url } : undefined)
+		return entry.source.integration.externalLink(entry) ?? (url ? { url } : undefined)
 	}
 
 	static canCopyEntriesOut(source: Source) {
-		return Calendars.enabled().some(other => other.id !== source.id && Calendars.capabilitiesOf(other.id).entries.create)
+		return Calendars.enabled().some(other => other.id !== source.id && other.capabilities.entries.create)
 	}
 
 	static canMoveEntriesOut(source: Source) {
-		return Calendars.canCopyEntriesOut(source) && Calendars.capabilitiesOf(source.id).entries.delete
+		return Calendars.canCopyEntriesOut(source) && source.capabilities.entries.delete
 	}
 
 	static reorderSources(integration: Integration, ids: Array<string>) {
@@ -137,3 +122,6 @@ export class Calendars {
 		await Calendars.fetch()
 	}
 }
+
+include.from(Integration, id => Calendars.integration(id))
+include.from(Source, id => Calendars.source(id))

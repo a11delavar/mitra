@@ -1,5 +1,5 @@
 import { type EntityManager } from '@mikro-orm/core'
-import type { Calendar } from '#features/sources'
+import type { Source } from '#features/sources'
 import { type Entry } from './Entry.js'
 
 /**
@@ -10,14 +10,14 @@ import { type Entry } from './Entry.js'
 export class EntryChange {
 	constructor(readonly entry: Entry, readonly edited: Entry) { }
 
-	recreates(from: Calendar, to: Calendar) {
+	recreates(from: Source, to: Source) {
 		const moved = this.edited.sourceId !== this.entry.sourceId
-		const movesInPlace = from.integration.id === to.integration.id && to.integration.capabilities.entries.move
+		const movesInPlace = from.integrationId === to.integrationId && to.integration.capabilities.entries.move
 		return this.edited.type !== this.entry.type || (moved && !movesInPlace)
 	}
 
 	/** Writes the edit, a re-created entry into `to`. Answers with the entry as it now stands. */
-	async save(em: EntityManager, from: Calendar, to: Calendar): Promise<Entry> {
+	async save(em: EntityManager, from: Source, to: Source): Promise<Entry> {
 		const { entry, edited } = this
 		if (!this.recreates(from, to)) {
 			await to.integration.updateEntry(em, entry, edited)
@@ -27,11 +27,11 @@ export class EntryChange {
 		const recreated = Object.assign(edited.copy(), {
 			id: crypto.randomUUID(),
 			// Two calendars of one server share their resources' namespace, where the old uid would collide.
-			uid: from.source.uri && from.source.uri === to.source.uri ? crypto.randomUUID() : entry.uid,
+			uid: from.uri && from.uri === to.uri ? crypto.randomUUID() : entry.uid,
 			rank: edited.type.isTask ? entry.rank : undefined,
 			relations: edited.relations,
 		})
-		recreated.migrateTo(to.source)
+		recreated.migrateTo(to)
 		// Create first, so a failure loses nothing.
 		const created = await to.integration.createEntry(em, recreated)
 		try {

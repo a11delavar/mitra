@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { Recurrence, EntryOccurrenceChangeScope } from '#features/recurrence'
 import { Participants, type Participant } from '#features/participants/Participant.js'
 import { EntryRelations } from '#features/relations'
-import { type Calendar, Color } from '#features/sources'
+import { type Source, Color } from '#features/sources'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { model } from '#infrastructure/model'
@@ -19,8 +19,8 @@ import { EntryFiles } from './EntryFiles.js'
 /** What a patch applies to: the entry it edits (none creates one), the calendar it is in, the calendar it goes to, and how far an occurrence's edit reaches. */
 export interface EntryPatchContext {
 	readonly entry?: Entry
-	readonly from?: Calendar
-	readonly to: Calendar
+	readonly from?: Source
+	readonly to: Source
 	readonly scope?: EntryOccurrenceChangeScope
 }
 
@@ -207,7 +207,7 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 		if (scope && this.relations !== undefined) {
 			yield new ValidationError('Relations belong to the repeating entry as a whole, never to one of its occurrences. To relate the occurrences to each other, make them separate entries.', ['relations'])
 		}
-		const target = to.integration.capabilitiesFor(to.source)
+		const target = to.capabilities
 		if (!entry) {
 			if (!target.entries.create) {
 				yield new ValidationError('This calendar cannot be written to from mitra')
@@ -218,8 +218,8 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 			return
 		}
 		const from = context.from ?? to
-		const current = from.integration.capabilitiesFor(from.source)
-		const moving = to.source.id !== from.source.id
+		const current = from.capabilities
+		const moving = to.id !== from.id
 		const type = this.type ?? entry.type
 		const recurrence = this.recurrence === undefined ? entry.recurrence : this.recurrence
 		if (!current.entries.edit) {
@@ -249,7 +249,7 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 		if (scope && scope !== EntryOccurrenceChangeScope.This && entry.recurrence && this[anchor] === null) {
 			yield new ValidationError('A repeating entry cannot lose the date it repeats from', [anchor])
 		}
-		if (moving && scope !== EntryOccurrenceChangeScope.This && recurrence && !to.integration.ownership.holds('recurrence')) {
+		if (moving && scope !== EntryOccurrenceChangeScope.This && recurrence && !to.ownership.holds('recurrence')) {
 			yield new ValidationError('This calendar cannot hold a repeating entry', ['recurrence'])
 		}
 	}

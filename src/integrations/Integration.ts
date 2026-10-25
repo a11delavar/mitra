@@ -95,10 +95,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	/** Its calendars, as loaded or as given (a request, the browser's store). Never saved through here: a calendar is a row of its own. */
 	@equality()
 	@children(() => Source, source => source.integrationId, { eager: true })
-	@converter({
-		construct: (value: ReadonlyArray<Source> | undefined) => value ?? [],
-		deconstruct: (value: ReadonlyArray<Source>) => [...value],
-	}) sources!: ReadonlyArray<Source>
+	@converter({ construct: (value: ReadonlyArray<Source> | undefined) => value ?? [] }) sources!: ReadonlyArray<Source>
 
 	constructor() {
 		super()

@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { Source, type Calendar } from '#features/sources'
+import { Source } from '#features/sources'
 import { Recurrence, RecurrenceFrequency, EntryOccurrenceChangeScope } from '#features/recurrence'
 import { IntegrationCapabilities, type OwnedField } from '#integrations'
 import { CalDAV } from '#integrations/caldav/CalDAV.js'
@@ -14,12 +14,12 @@ import { Visibility } from './Visibility.js'
 import { EntryFiles } from './EntryFiles.js'
 
 /** A calendar holding `types`, whose integration holds every field but `lacking` and may not do `cannot`. */
-const calendar = (init: { id?: string, types?: Array<EntryType>, lacking?: Array<OwnedField>, cannot?: Partial<IntegrationCapabilities['entries']> } = {}): Calendar => {
+const calendar = (init: { id?: string, types?: Array<EntryType>, lacking?: Array<OwnedField>, cannot?: Partial<IntegrationCapabilities['entries']> } = {}) => {
 	const integration = new class extends CalDAV {
 		override get capabilities() { return new IntegrationCapabilities({ entries: init.cannot }) }
 		override get ownership() { return super.ownership.without(...init.lacking ?? []) }
 	}()
-	return { source: new Source({ id: init.id ?? 'home', uri: init.id ?? 'home', entryTypes: init.types ?? [EntryType.Event, EntryType.Task], name: 'Home' }), integration }
+	return Object.assign(new Source({ id: init.id ?? 'home', uri: init.id ?? 'home', entryTypes: init.types ?? [EntryType.Event, EntryType.Task], name: 'Home' }), { integration })
 }
 const described = (errors: Iterable<ValidationError>) => [...errors].map(error => [error.message, error.fields])
 const start = new DateTime('2026-10-05T09:00:00Z')

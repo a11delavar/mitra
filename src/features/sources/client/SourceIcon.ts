@@ -66,7 +66,7 @@ export class SourceIcon extends Component {
 		const importing = !!this.source && !!Calendars.source(this.source.id)?.importing
 		this.toggleAttribute('importing', importing)
 		const getIcon = () => {
-			const provider = this.icon ?? (this.source && Calendars.integrationOf(this.source.id)?.sourceIcon)
+			const provider = this.icon ?? this.source?.integration.sourceIcon
 			switch (true) {
 				case importing:
 					return 'loader-circle'

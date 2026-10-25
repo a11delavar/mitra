@@ -46,7 +46,7 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 		return Calendars.integrations
 			.map(integration => ({
 				integration,
-				sources: [...integration.sources].filter(source => source.id !== this.source.id && source.enabled && Calendars.capabilitiesOf(source.id).entries.create),
+				sources: integration.sources.filter(source => source.id !== this.source.id && source.enabled && source.capabilities.entries.create),
 			}))
 			.filter(({ sources }) => sources.length)
 	}

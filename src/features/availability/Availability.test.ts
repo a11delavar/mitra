@@ -107,7 +107,8 @@ describe('the availability labels of a day', () => {
 		const window = (id: string, day: DateTime) => shown(new Entry({ id, uid: id, sourceId: 's', type: EntryType.Availability, heading: id, start: day.add({ hours: 9 }), end: day.add({ hours: 17 }), allDay: false }))
 		const [mondayWindow, tuesdayWindow] = [window('monday', monday), window('tuesday', tuesday)]
 		const before = Availability.on([mondayWindow, tuesdayWindow], monday)
-		const moved = shown(new Entry({ id: 'moved', sourceId: 's', type: EntryType.Event, heading: 'Moved', start: tuesday.add({ hours: 10 }), end: tuesday.add({ hours: 11 }) }))
+		const calendar = Object.assign(new Source({ id: 's', integrationId: 'local' }), { integration: new MitraCalendar({ id: 'local' }) })
+		const moved = shown(new Entry({ id: 'moved', sourceId: 's', source: calendar, type: EntryType.Event, heading: 'Moved', start: tuesday.add({ hours: 10 }), end: tuesday.add({ hours: 11 }) }))
 		assert.equal(Availability.on([mondayWindow, tuesdayWindow, moved], monday), before)
 		assert.notEqual(Availability.on([mondayWindow, window('other', monday)], monday), before)
 	})

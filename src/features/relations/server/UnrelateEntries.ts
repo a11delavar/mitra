@@ -30,17 +30,17 @@ export class UnrelateEntries extends Operation<Parameters> {
 		const { id, type, target } = this.parameters
 		const existing = await user.entry(em, id)
 		const other = await user.entry(em, target)
-		const calendar = await user.calendar(em, existing.sourceId)
+		const source = await user.source(em, existing.sourceId)
 
 		const change = existing.edit(new EntryPatch())
 		change.edited.unrelate({ type, targetUid: other.uid })
 		const relations = change.edited.relations ?? EntryRelations.none
-		const errors = [...Object.assign(new EntryPatch(), { relations }).validate({ entry: existing, to: calendar })]
+		const errors = [...Object.assign(new EntryPatch(), { relations }).validate({ entry: existing, to: source })]
 		if (errors.length) {
 			throw new AggregateError(errors)
 		}
 
-		const saved = await change.save(em, calendar, calendar)
+		const saved = await change.save(em, source, source)
 		await em.flush()
 		const graph = await user.relationGraph(em)
 		graph.attach([saved])

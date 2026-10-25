@@ -2,7 +2,6 @@ import { Component, component, html, css, property, state, event, query, bind } 
 import { SuggestLocations } from '#operations'
 import { LatestSearch, MarkdownLinks } from '#design'
 import type { Entry } from '#features/entries'
-import { Calendars } from '#features/sources/client/Calendars.js'
 import { LocationSuggestion } from '../LocationSuggestion.js'
 import './MapLink.js'
 
@@ -48,7 +47,7 @@ export class LocationField extends Component {
 	@query('textarea') private readonly field?: HTMLTextAreaElement
 
 	private get editable() {
-		return Calendars.capabilitiesOf(this.entry?.sourceId ?? '').entries.edit
+		return !!this.entry?.source.capabilities.entries.edit
 	}
 
 	private readonly edit = (e: Event) => {

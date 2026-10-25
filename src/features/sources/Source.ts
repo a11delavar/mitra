@@ -1,7 +1,7 @@
 import { converter } from '@a11d/converter'
 import { EntryType, EntryTypes } from '#features/entries'
 import { Integration } from '#integrations'
-import { model, Entity, identity, equality, entity, primaryKey, property, manyToOne } from '#infrastructure/model'
+import { model, Entity, identity, equality, entity, primaryKey, property, manyToOne, include } from '#infrastructure/model'
 import { Color } from './Color.js'
 
 @model('Source')
@@ -11,6 +11,18 @@ export class Source extends Entity {
 	@primaryKey() id: string = crypto.randomUUID()
 
 	@manyToOne(() => Integration, { mapToPk: true, deleteRule: 'cascade' }) integrationId!: string
+
+	/** The integration keeping it, to read from: it moves through {@link integrationId}. */
+	@include(() => Integration, 'integrationId') integration!: Integration
+
+	/** What Mitra may do with what it holds: its integration's, its writes off where it is read-only. */
+	get capabilities() { return this.integration.capabilitiesFor(this) }
+
+	/** Which entry fields it holds, and who owns each. */
+	get ownership() { return this.integration.ownership }
+
+	/** Whether it can hold an entry of `type`, which its integration may narrow. */
+	canHold(type: EntryType) { return this.integration.canHold(this, type) }
 
 	/** Its address at the provider, which a reconcile matches the provider's list by: that list knows nothing of Mitra's rows. */
 	@property({ type: 'string' }) uri!: string

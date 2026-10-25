@@ -349,8 +349,7 @@ describe('Todoist sync', () => {
 			account.add(...tasks)
 			const connected = await connect(account)
 			await connected.sync()
-			const { em, integration, sourceOf } = connected
-			const calendar = (name: string) => ({ source: sourceOf(name), integration })
+			const { em, integration } = connected
 			const edit = async (uri: string, change: (incoming: Entry) => void) => {
 				const existing = (await connected.entryOf(uri))!
 				const incoming = existing.clone()
@@ -360,7 +359,7 @@ describe('Todoist sync', () => {
 				await em.flush()
 				return existing
 			}
-			return { ...connected, calendar, edit }
+			return { ...connected, edit }
 		}
 
 		it('creates a task in its calendar\'s project and takes what Todoist made of it', async () => {
@@ -416,9 +415,9 @@ describe('Todoist sync', () => {
 		})
 
 		it('moves a task to another project in place, keeping its entry and what Mitra does not show', async () => {
-			const { em, account, calendar, entryOf, sourceOf } = await synced(task('t1', 'inbox', { priority: 4 }))
+			const { em, account, entryOf, sourceOf } = await synced(task('t1', 'inbox', { priority: 4 }))
 			const existing = (await entryOf('t1'))!
-			const saved = await existing.edit(Object.assign(new EntryPatch(), { sourceId: sourceOf('Work').id })).save(em, calendar('Inbox'), calendar('Work'))
+			const saved = await existing.edit(Object.assign(new EntryPatch(), { sourceId: sourceOf('Work').id })).save(em, sourceOf('Inbox'), sourceOf('Work'))
 			await em.flush()
 			assert.equal(saved, existing)
 			assert.equal(saved.sourceId, sourceOf('Work').id)

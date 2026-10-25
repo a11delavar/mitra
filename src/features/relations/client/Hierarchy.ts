@@ -1,6 +1,5 @@
 import { type EntryShift, type Entry, TaskStatus } from '#features/entries'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
-import { Calendars } from '#features/sources/client/Calendars.js'
 import { DialogEntryScope, type EntryScope } from '#features/entries/client/DialogEntryScope.js'
 import { EntryOccurrenceChangeScope } from '#features/recurrence'
 import { type ShiftStrategy } from '../ShiftStrategy.js'
@@ -77,7 +76,7 @@ export async function offerToCloseSubtasks(entry: Entry) {
 	await run(EntryPlan.of({
 		writes: outstanding.map(child => ({
 			entry: child,
-			mutate: (target: Entry) => target.setStatus(closure, Calendars.ownershipOf(target.sourceId)),
+			mutate: (target: Entry) => target.setStatus(closure, target.source.ownership),
 		})),
 	}))
 }
@@ -95,7 +94,7 @@ async function offerToCompleteParents(closed: Entry) {
 		// Deepest first so intermediate states remain valid.
 		writes: parents.map(parent => ({
 			entry: parent,
-			mutate: (target: Entry) => target.setStatus(TaskStatus.Done, Calendars.ownershipOf(target.sourceId)),
+			mutate: (target: Entry) => target.setStatus(TaskStatus.Done, target.source.ownership),
 		})),
 	}))
 }

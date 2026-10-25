@@ -315,8 +315,8 @@ export class CommandPalette extends Component {
 						${!entries.length ? html.nothing : html`
 							<span class="group">${t('Entries')}</span>
 							${entries.map(occurrence => html`
-								<mitra-option .value=${occurrence} ?data-hidden=${!!Calendars.source(occurrence.entry.sourceId)?.hidden}>
-									<span class="swatch" style=${`background: ${occurrence.entry.color ?? Calendars.source(occurrence.entry.sourceId)?.color ?? 'var(--color-accent)'}`}></span>
+								<mitra-option .value=${occurrence} ?data-hidden=${!!occurrence.entry.source.hidden}>
+									<span class="swatch" style=${`background: ${occurrence.entry.effectiveColor ?? 'var(--color-accent)'}`}></span>
 									<span class="heading">${occurrence.entry.heading || t('Untitled')}</span>
 									<span class="when">${CommandPalette.when(occurrence)}</span>
 								</mitra-option>

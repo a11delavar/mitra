@@ -39,22 +39,6 @@ export class EntryDetailsComponent extends Component {
 
 	readonly store = new EntryStore(this)
 
-	private get source() {
-		return this.segment?.entry.sourceId ? Calendars.source(this.segment.entry.sourceId) : undefined
-	}
-
-	private get capabilities() {
-		return Calendars.capabilitiesOf(this.segment!.entry.sourceId)
-	}
-
-	private get ownership() {
-		return Calendars.ownershipOf(this.segment!.entry.sourceId)
-	}
-
-	private get isAvailability() {
-		return this.segment!.entry.type.isAvailability
-	}
-
 	protected override createRenderRoot() { return this }
 
 	/** Its popover, which is anchored at the segment, centered where it has no room, and a sheet on a phone. */
@@ -144,7 +128,7 @@ export class EntryDetailsComponent extends Component {
 		if (e.key !== 'Delete' && e.key !== 'Backspace') {
 			return
 		}
-		if (!this.open || startedInField(e) || e.altKey || e.isComposing || !this.capabilities.entries.delete) {
+		if (!this.open || startedInField(e) || e.altKey || e.isComposing || !this.segment!.entry.source.capabilities.entries.delete) {
 			return
 		}
 		e.preventDefault()
@@ -167,8 +151,8 @@ export class EntryDetailsComponent extends Component {
 
 	private get hasMenu() {
 		return !!Calendars.externalLinkOf(this.segment!.entry)
-			|| (this.segment!.entry.persisted && this.capabilities.entries.create)
-			|| this.capabilities.entries.delete
+			|| (this.segment!.entry.persisted && this.segment!.entry.source.capabilities.entries.create)
+			|| this.segment!.entry.source.capabilities.entries.delete
 	}
 
 	private readonly binder = new Binder(this, 'segment')
@@ -500,7 +484,7 @@ export class EntryDetailsComponent extends Component {
 										<mitra-icon-button label=${t('Options')} icon="more-horizontal"></mitra-icon-button>
 										<mitra-menu slot="popover">
 											${this.externalLinkTemplate}
-											${!this.segment.entry.persisted || !this.capabilities.entries.create ? html.nothing : html`
+											${!this.segment.entry.persisted || !this.segment!.entry.source.capabilities.entries.create ? html.nothing : html`
 												<mitra-menu-item icon="copy" @click=${this.handleDuplicate}>
 													${t('Duplicate')}
 													<kbd>${EntryDetailsComponent.altKey}</kbd>
@@ -510,7 +494,7 @@ export class EntryDetailsComponent extends Component {
 													<mitra-menu-item icon="copy-plus" @click=${this.handleDuplicateToDays}>${t('Duplicate to other days…')}</mitra-menu-item>
 												`}
 											`}
-											${!this.capabilities.entries.delete ? html.nothing : html`
+											${!this.segment!.entry.source.capabilities.entries.delete ? html.nothing : html`
 												<mitra-menu-item icon="trash-2" variant="danger" @click=${(e: MouseEvent) => void this.handleDelete(EntryDetailsComponent.bypassesScope(e))}>
 													${t('Delete')}
 													<kbd>${EntryDetailsComponent.appleKeyboard ? '⌫' : 'Del'}</kbd>
@@ -542,7 +526,7 @@ export class EntryDetailsComponent extends Component {
 					<mitra-task-status .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-task-status>
 				`}
 				<input class="title field" placeholder=${t('Title')}
-					?readonly=${!this.capabilities.entries.edit || (entry.persisted && !this.capabilities.entries.rename)}
+					?readonly=${!this.segment!.entry.source.capabilities.entries.edit || (entry.persisted && !this.segment!.entry.source.capabilities.entries.rename)}
 					?data-struck=${entry.status === TaskStatus.Done || entry.status === TaskStatus.Cancelled}
 					${this.bind('entry.heading', 'input')} @change=${this.handleChange}>
 			</div>
@@ -576,7 +560,7 @@ export class EntryDetailsComponent extends Component {
 				`,
 				this.remindersTemplate,
 			],
-			[this.isAvailability ? html.nothing : html`<mitra-relations-field .entry=${entry}></mitra-relations-field>`],
+			[this.segment!.entry.type.isAvailability ? html.nothing : html`<mitra-relations-field .entry=${entry}></mitra-relations-field>`],
 		]
 		return groups
 			.map(rows => rows.filter(row => row !== html.nothing))
@@ -585,10 +569,10 @@ export class EntryDetailsComponent extends Component {
 
 	private get entryTypeTemplate() {
 		const entry = this.segment!.entry
-		const source = this.source
+		const source = this.segment?.entry.source
 		// Its own type always, so a type that can't change still shows, disabled, rather than vanishing.
-		const types = EntryType.all.filter(type => type === entry.type || (!!source && Calendars.canHold(source, type)))
-		const fixed = !this.capabilities.entries.edit || types.length < 2 || entry.partOfSeries
+		const types = EntryType.all.filter(type => type === entry.type || (!!source && source.canHold(type)))
+		const fixed = !this.segment!.entry.source.capabilities.entries.edit || types.length < 2 || entry.partOfSeries
 		const handleTypeChange = (e: CustomEvent<EntryTypeValue>) => {
 			entry.type = e.detail
 			EntryStore.notify()
@@ -620,8 +604,8 @@ export class EntryDetailsComponent extends Component {
 		}
 		const entry = this.segment!.entry
 		const canMoveTo = (target: Source) => {
-			const capabilities = Calendars.capabilitiesOf(target.id)
-			const ownership = Calendars.ownershipOf(target.id)
+			const capabilities = target.capabilities
+			const ownership = target.ownership
 			return capabilities.entries.create
 				&& (!entry.type.isAvailability || capabilities.availability)
 				&& (!entry.partOfSeries || ownership.holds('recurrence'))
@@ -631,11 +615,11 @@ export class EntryDetailsComponent extends Component {
 				&& (!entry.visibility || ownership.holds('visibility'))
 				&& (!entry.attachments.length || (ownership.holds('attachments') && capabilities.entries.attach))
 		}
-		return !this.source?.name ? html.nothing : html`
+		return !this.segment?.entry.source?.name ? html.nothing : html`
 			<span class="source field">
-				<mitra-select label=${t('Calendar')} ?disabled=${!this.capabilities.entries.edit} .value=${this.source} @change=${handleSourceChange}>
+				<mitra-select label=${t('Calendar')} ?disabled=${!this.segment!.entry.source.capabilities.entries.edit} .value=${this.segment?.entry.source} @change=${handleSourceChange}>
 					${Calendars.integrations
-						.map(integration => ({ integration, sources: [...integration.sources].filter(source => source.id === entry.sourceId || (source.enabled && canMoveTo(source))) }))
+						.map(integration => ({ integration, sources: integration.sources.filter(source => source.id === entry.sourceId || (source.enabled && canMoveTo(source))) }))
 						.filter(({ sources }) => sources.length)
 						.map(({ integration, sources }) => html`
 							<mitra-option-group label=${integration.title}>
@@ -653,7 +637,7 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	private get locationTemplate() {
-		return !this.ownership.holds('location') ? html.nothing : html`
+		return !this.segment!.entry.source.ownership.holds('location') ? html.nothing : html`
 			<li class="location field">
 				<mitra-icon icon="map-pin"></mitra-icon>
 				<mitra-location-field .entry=${this.segment!.entry} @change=${this.handleChange}></mitra-location-field>
@@ -662,7 +646,7 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	private get participantsTemplate() {
-		return !this.ownership.holds('participants') || this.isAvailability ? html.nothing : html`
+		return !this.segment!.entry.source.ownership.holds('participants') || this.segment!.entry.type.isAvailability ? html.nothing : html`
 			<li class="participants field">
 				<mitra-icon icon="users"></mitra-icon>
 				<mitra-participants-field .entry=${this.segment!.entry} @change=${this.handleChange}></mitra-participants-field>
@@ -677,7 +661,7 @@ export class EntryDetailsComponent extends Component {
 	 */
 	private get hyperlinksTemplate() {
 		const links = this.segment!.entry.links
-		return !this.ownership.holds('description') ? html.nothing : html`
+		return !this.segment!.entry.source.ownership.holds('description') ? html.nothing : html`
 			<li class="hyperlinks field" ?hidden=${!links.length}>
 				<mitra-icon icon="link-2"></mitra-icon>
 				<span class="links">
@@ -689,13 +673,13 @@ export class EntryDetailsComponent extends Component {
 
 	/** Whether a file can be attached here, by the row's button or dropped anywhere on the editor. */
 	private get takesFiles() {
-		return this.ownership.holds('attachments') && !this.isAvailability && this.capabilities.entries.attach && AttachmentsField.uploads
+		return this.segment!.entry.source.ownership.holds('attachments') && !this.segment!.entry.type.isAvailability && this.segment!.entry.source.capabilities.entries.attach && AttachmentsField.uploads
 	}
 
 	private get attachmentsTemplate() {
 		const entry = this.segment!.entry
 		// A calendar that can't take new files still shows the ones it has; only the controls go away.
-		return !this.ownership.holds('attachments') || this.isAvailability || (!entry.attachments.length && !this.takesFiles) ? html.nothing : html`
+		return !this.segment!.entry.source.ownership.holds('attachments') || this.segment!.entry.type.isAvailability || (!entry.attachments.length && !this.takesFiles) ? html.nothing : html`
 			<li class="attachments field">
 				<mitra-icon icon="paperclip"></mitra-icon>
 				<mitra-attachments-field .entry=${entry} @change=${this.handleChange}></mitra-attachments-field>
@@ -710,17 +694,17 @@ export class EntryDetailsComponent extends Component {
 
 	private get colorTemplate() {
 		const entry = this.segment?.entry
-		const activeColor = entry?.color || this.source?.color
+		const activeColor = entry?.effectiveColor
 		return !entry ? html.nothing : html`
 			<span class="color">
 				<mitra-popover-container>
-					<mitra-button class="dot" label=${t('Color')} ?disabled=${!this.capabilities.entries.edit}
+					<mitra-button class="dot" label=${t('Color')} ?disabled=${!this.segment!.entry.source.capabilities.entries.edit}
 						style="--dot: ${activeColor ?? 'var(--color-text-muted)'}"></mitra-button>
 					<mitra-popover slot="popover">
 						<mitra-color-picker
 							.palette=${Color.palette.map(String)}
 							.value=${activeColor?.value}
-							.resetValue=${this.source?.color?.value}
+							.resetValue=${this.segment?.entry.source?.color?.value}
 							resetLabel=${t('Reset to calendar color')}
 							@change=${this.handleColorChange}
 						></mitra-color-picker>
@@ -735,7 +719,7 @@ export class EntryDetailsComponent extends Component {
 			return
 		}
 
-		if (color === this.source?.color) {
+		if (color === this.segment?.entry.source?.color) {
 			color = null
 		}
 
@@ -745,7 +729,7 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	private get remindersTemplate() {
-		return !this.segment!.entry.reminderAnchor || !this.ownership.holds('reminders') || this.isAvailability ? html.nothing : html`
+		return !this.segment!.entry.reminderAnchor || !this.segment!.entry.source.ownership.holds('reminders') || this.segment!.entry.type.isAvailability ? html.nothing : html`
 			<li class="reminders field">
 				<mitra-icon icon="bell"></mitra-icon>
 				<mitra-reminders-field .entry=${this.segment!.entry} @change=${this.handleChange}></mitra-reminders-field>
@@ -763,7 +747,7 @@ export class EntryDetailsComponent extends Component {
 
 	private get descriptionTemplate() {
 		const editDescription = (e: Event) => {
-			if (!this.capabilities.entries.edit || e.composedPath().some(node => node instanceof HTMLAnchorElement || node instanceof HTMLInputElement)) {
+			if (!this.segment!.entry.source.capabilities.entries.edit || e.composedPath().some(node => node instanceof HTMLAnchorElement || node instanceof HTMLInputElement)) {
 				return
 			}
 			this.editingDescription = true
@@ -773,7 +757,7 @@ export class EntryDetailsComponent extends Component {
 				textarea?.setSelectionRange(textarea.value.length, textarea.value.length)
 			})
 		}
-		return !this.ownership.holds('description') ? html.nothing : html`
+		return !this.segment!.entry.source.ownership.holds('description') ? html.nothing : html`
 			<li class="description field">
 				<mitra-icon icon="align-left"></mitra-icon>
 				${this.editingDescription ? html`
@@ -783,12 +767,12 @@ export class EntryDetailsComponent extends Component {
 						@blur=${() => this.editingDescription = false}
 					></textarea>
 				` : html`
-					<div class="rendered" tabindex=${this.capabilities.entries.edit ? '0' : '-1'} @focus=${editDescription} @click=${editDescription}>
+					<div class="rendered" tabindex=${this.segment!.entry.source.capabilities.entries.edit ? '0' : '-1'} @focus=${editDescription} @click=${editDescription}>
 						${!this.segment!.entry.description ? html`
 							<div class="placeholder">${t('Description')}</div>
 							` : html`
 								<mitra-markdown .value=${this.segment!.entry.description}
-									?interactive=${this.capabilities.entries.edit}
+									?interactive=${this.segment!.entry.source.capabilities.entries.edit}
 									@check=${this.handleChecklistToggle}
 								></mitra-markdown>
 						`}

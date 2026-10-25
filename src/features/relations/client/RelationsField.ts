@@ -2,7 +2,6 @@ import { Component, component, html, css, property, state } from '@a11d/lit'
 import { SearchEntries, UpdateEntry } from '#operations'
 import { controlHeight, LatestSearch, type Popover } from '#design'
 import { EntryType, type Entry } from '#features/entries'
-import { Calendars } from '#features/sources/client/Calendars.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { RelationType, RelationSection } from '../RelationType.js'
 import { type Relation } from '../Relation.js'
@@ -73,7 +72,7 @@ export class RelationsField extends Component {
 	private get sections(): Array<{ section: RelationSection, lines: Array<Line>, addType?: RelationType }> {
 		const bySection = new Map(this.relations.sections(this.entry.uid).map(({ section, relations }) => [section, relations.map(relation => this.lineOf(relation))]))
 		// Providers without native link storage omit authoring actions, but incoming links remain visible.
-		const authorable = Calendars.ownershipOf(this.entry.sourceId).holds('relations') ? AUTHORABLE_BY_SECTION : new Map<RelationSection, RelationType>()
+		const authorable = this.entry.source.ownership.holds('relations') ? AUTHORABLE_BY_SECTION : new Map<RelationSection, RelationType>()
 		return [...new Set([...bySection.keys(), ...authorable.keys()])]
 			.sort((a, b) => a.rank - b.rank)
 			.map(section => ({ section, lines: bySection.get(section) ?? [], addType: authorable.get(section) }))
@@ -411,9 +410,9 @@ export class RelationsField extends Component {
 						${this.pendingType !== type || !this.suggestions.length ? html`
 							<span class="hint" data-hint>${this.searchedQuery ? t('No matching entries') : t('Search for an event or task to link')}</span>
 						` : this.suggestions.map(candidate => {
-							const color = candidate.color || Calendars.source(candidate.sourceId)?.color
+							const color = candidate.effectiveColor
 							return html`
-								<mitra-option .value=${candidate} ?data-struck=${candidate.type === EntryType.Task && candidate.done} ?data-hidden=${!!Calendars.source(candidate.sourceId)?.hidden}>
+								<mitra-option .value=${candidate} ?data-struck=${candidate.type === EntryType.Task && candidate.done} ?data-hidden=${!!candidate.source.hidden}>
 									<mitra-icon class="glyph" icon=${candidate.type === EntryType.Task ? 'list-todo' : 'calendar'} style=${color ? `color: ${color};` : ''}></mitra-icon>
 									<span class="text">
 										${candidate.heading}
