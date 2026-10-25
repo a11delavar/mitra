@@ -1,10 +1,10 @@
 import { component, html, css, state } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { Task, TaskStatus, initialState } from '@lit/task'
+import { PreviewIcsImport, ImportIcs } from '#operations'
 import { pressable, activated, controlHeight } from '#design'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import type { Source } from '#features/sources'
-import { importIcs, previewIcsImport } from '#infrastructure/http/Api.js'
 import { MigrationPlan, type MigrationOutcome, type MigrationVerdict } from '../MigrationPlan.js'
 
 const NAMED_BLOCKED = 5
@@ -16,12 +16,12 @@ export class DialogIcsImport extends DialogComponent<{ readonly fileName: string
 
 	private readonly preview = new Task(this, {
 		args: () => [this.target?.id] as const,
-		task: ([targetId]) => !targetId ? initialState : previewIcsImport(targetId, this.parameters.ics),
+		task: ([targetId]) => !targetId ? initialState : PreviewIcsImport.call({ id: targetId, ics: this.parameters.ics }),
 	})
 
 	private readonly importer = new Task(this, {
 		autoRun: false,
-		task: () => importIcs(this.target!.id, this.parameters.ics),
+		task: () => ImportIcs.call({ id: this.target!.id, ics: this.parameters.ics }),
 	})
 
 	protected override createRenderRoot() { return this }

@@ -17,8 +17,11 @@ function rankOf(key: string) {
 class Parameters {
 	@validation(z.array(z.tuple([z.string(), z.custom<EntryRank>(value => value instanceof EntryRank)])).min(1, 'Ranks must map entry ids to rank keys'))
 	@description('Each task\'s rank key in the manual order, by its entry id.')
-	@converter({ schema: z.record(z.string(), z.string()), construct: (written: Record<string, string>) => Object.entries(written).map(([id, key]) => [id, rankOf(key)] as const) })
-	readonly ranks!: ReadonlyArray<readonly [string, EntryRank]>
+	@converter({
+		schema: z.record(z.string(), z.string()),
+		construct: (written: Record<string, string>) => Object.entries(written).map(([id, key]) => [id, rankOf(key)] as const),
+		deconstruct: (ranks: ReadonlyArray<readonly [string, EntryRank]>) => Object.fromEntries(ranks.map(([id, rank]) => [id, rank.key])),
+	}) readonly ranks!: ReadonlyArray<readonly [string, EntryRank]>
 }
 
 @operation(Parameters)

@@ -8,14 +8,22 @@ import { Api } from '@a11d/api'
 import { DateTime } from '@3mo/date-time'
 import '@3mo/date-time-value-constructor'
 import { ModelValueConstructor } from '@a11d/api-model-value-constructor'
-import { Entry, EntryType, TaskStatus } from '#features/entries'
+import { Entry, EntryType, TaskStatus, EntryPatch } from '#features/entries'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { User } from '#features/identity'
 import { EntryRelations, RelationType } from '#features/relations'
 import { Color, Source } from '#features/sources'
+import { CreateEntry } from '#features/entries/server/CreateEntry.ts'
+import { UpdateEntry } from '#features/entries/server/UpdateEntry.ts'
+import { DeleteEntry } from '#features/entries/server/DeleteEntry.ts'
+import { ListAllEntries } from '#features/entries/server/ListAllEntries.ts'
 import { MitraCalendar } from '#integrations/mitra/MitraCalendar.ts'
 import { Integration } from '#integrations'
-import { createEvent, createIntegration, deleteEvent, deleteIntegration, discoverSources, fetchAllEntries, fetchIntegrations, reimportIntegration, updateEvent } from '#infrastructure/http/Api.ts'
+import { ListIntegrations } from '#integrations/server/ListIntegrations.ts'
+import { ConnectIntegration } from '#integrations/server/ConnectIntegration.ts'
+import { DisconnectIntegration } from '#integrations/server/DisconnectIntegration.ts'
+import { DiscoverSources } from '#integrations/server/DiscoverSources.ts'
+import { ReimportIntegration } from '#integrations/server/ReimportIntegration.ts'
 import { HttpRecording } from '#infrastructure/http/HttpRecording.testing.ts'
 import { Todoist, type TodoistDue, type TodoistTask } from './Todoist.ts'
 import { TodoistClient } from './server/TodoistClient.ts'
@@ -84,7 +92,7 @@ describe('A Todoist account as Todoist answers it', () => {
 		const { orm } = await import('#infrastructure/database/orm.ts')
 		await import('#integrations/server/registerEngines.ts')
 		const { staleTabs } = await import('#features/entries/server/staleTabs.ts')
-		const { operationsRouter } = await import('#infrastructure/operations/Operation.ts')
+		const { operationsRouter } = await import('#infrastructure/operations/server/operationsRouter.ts')
 		await import('#app/operations.ts')
 
 		const connection = orm.em.getConnection()
@@ -180,7 +188,7 @@ describe('A Todoist account as Todoist answers it', () => {
 			}
 			const taskOf = async (id: string) => (await call<TodoistTask>(`tasks/${id}`)).body
 			const headings = async (sourceId: string) => (await entriesIn(sourceId)).map(entry => entry.heading).sort()
-			const entryOf = async (heading: string) => (await fetchAllEntries()).find(entry => entry.heading === heading)!
+			const entryOf = async (heading: string) => (await ListAllEntries.call()).find(entry => entry.heading === heading)!
 
 			const until = async (condition: () => Promise<boolean>, ms = 60_000) => {
 				const deadline = Date.now() + ms
@@ -273,7 +281,7 @@ describe('A Todoist account as Todoist answers it', () => {
 			const credentials = () => ({ username: '', token: apiToken, timeZone: '', deadlines: false, durations: false })
 
 			it('discovers the account\'s projects, the Inbox first and a nested one under its parent\'s name, all turned off', async () => {
-				const discovered = await discoverSources(new Todoist({ credentials: credentials() }))
+				const discovered = await DiscoverSources.call({ integration: new Todoist({ credentials: credentials() }) })
 				assert.equal(discovered[0]!.name, 'Inbox')
 				assert.deepEqual(ours(discovered).map(source => source.name), [HOME, `${HOME} · ${ERRANDS}`])
 				assert.ok(discovered.every(source => source instanceof Source && !source.enabled))
@@ -281,8 +289,8 @@ describe('A Todoist account as Todoist answers it', () => {
 			})
 
 			it('connects with the projects chosen, learning the account and its plan, and imports only their tasks', async () => {
-				const discovered = await discoverSources(new Todoist({ credentials: credentials() }))
-				integration = await createIntegration(new Todoist({ credentials: credentials(), sources: discovered.map(source => Object.assign(source, { enabled: source.name.startsWith(HOME) })) })) as Todoist
+				const discovered = await DiscoverSources.call({ integration: new Todoist({ credentials: credentials() }) })
+				integration = await ConnectIntegration.call({ integration: new Todoist({ credentials: credentials(), sources: discovered.map(source => Object.assign(source, { enabled: source.name.startsWith(HOME) })) }) }) as Todoist
 				assert.equal(integration.uri, Todoist.accountUri(placeholders.account!))
 				assert.deepEqual([integration.credentials.username, integration.credentials.deadlines, integration.credentials.durations], [placeholders.email, pro, pro])
 
@@ -331,11 +339,11 @@ describe('A Todoist account as Todoist answers it', () => {
 
 			it('writes a task made in Mitra into its project, with only what the plan holds', async () => {
 				const start = new DateTime('2026-11-06T10:00:00Z')
-				const created = await createEvent(new Entry({
+				const created = await CreateEntry.call(EntryPatch.creating(new Entry({
 					sourceId: home().id, type: EntryType.Task, heading: 'Plan the week', description: 'Look **ahead**',
 					start, end: start.add({ hours: 1 }), timeZone: EntryTimeZone.floating,
 					...pro ? { due: new DateTime('2026-11-07T17:00:00Z') } : {},
-				}))
+				})))
 				ids.week = created.uri!
 				const upstream = await taskOf(created.uri!)
 				assert.deepEqual([upstream.content, upstream.description, upstream.project_id], ['Plan the week', 'Look **ahead**', ids.home])
@@ -346,14 +354,14 @@ describe('A Todoist account as Todoist answers it', () => {
 			})
 
 			it('refuses a due date where the plan has no deadlines', { skip: pro && 'the plan has them' }, async () => {
-				await assert.rejects(createEvent(new Entry({ sourceId: home().id, type: EntryType.Task, heading: 'Never written', due: new DateTime('2026-11-07T00:00:00Z'), allDay: true })))
+				await assert.rejects(CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: home().id, type: EntryType.Task, heading: 'Never written', due: new DateTime('2026-11-07T00:00:00Z'), allDay: true }))))
 				assert.ok(!(await headings(home().id)).includes('Never written'))
 			})
 
 			it('writes an edit as only what changed, leaving priority and labels as Todoist has them', async () => {
 				const rent = await entryOf('Pay rent')
 				rent.heading = 'Pay the rent'
-				await updateEvent(rent, ['heading'])
+				await UpdateEntry.call({ ...EntryPatch.of(rent, ['heading']), id: rent.id! })
 				const upstream = await taskOf(ids.rent!)
 				assert.deepEqual([upstream.content, upstream.priority, upstream.labels], ['Pay the rent', 4, [LABEL]])
 			})
@@ -361,13 +369,13 @@ describe('A Todoist account as Todoist answers it', () => {
 			it('moves a date between a day, a time fixed in a zone and a floating one', async () => {
 				const rent = await entryOf('Pay the rent')
 				Object.assign(rent, { allDay: false, start: new DateTime('2026-11-02T08:00:00Z'), end: undefined, timeZone: EntryTimeZone.parse('Europe/Madrid') })
-				await updateEvent(rent, ['start', 'end', 'allDay', 'timeZone'])
+				await UpdateEntry.call({ ...EntryPatch.of(rent, ['start', 'end', 'allDay', 'timeZone']), id: rent.id! })
 				const fixed = (await taskOf(ids.rent!)).due!
 				assert.deepEqual([instantOf(fixed), fixed.timezone], ['2026-11-02T08:00:00.000Z', 'Europe/Madrid'])
 
 				const plumber = await entryOf('Call the plumber')
 				Object.assign(plumber, { allDay: true, start: new DateTime('2026-11-04T00:00:00Z'), end: new DateTime('2026-11-05T00:00:00Z'), timeZone: undefined })
-				await updateEvent(plumber, ['start', 'end', 'allDay', 'timeZone'])
+				await UpdateEntry.call({ ...EntryPatch.of(plumber, ['start', 'end', 'allDay', 'timeZone']), id: plumber.id! })
 				const day = (await taskOf(ids.plumber!)).due!
 				assert.deepEqual([day.date, day.timezone], ['2026-11-04', null])
 				assert.deepEqual([(await entryOf('Call the plumber')).allDay, iso((await entryOf('Call the plumber')).start)], [true, '2026-11-04T00:00:00.000Z'])
@@ -377,7 +385,7 @@ describe('A Todoist account as Todoist answers it', () => {
 				const water = await entryOf('Water the plants')
 				const moved = water.start!.add({ days: 1 })
 				water.start = moved
-				await updateEvent(water, ['start', 'end'])
+				await UpdateEntry.call({ ...EntryPatch.of(water, ['start', 'end']), id: water.id! })
 				const due = (await taskOf(ids.water!)).due!
 				assert.deepEqual([due.is_recurring, due.string, due.lang, instantOf(due)], [true, 'every monday at 9am', 'en', moved.toISOString()])
 			})
@@ -385,12 +393,12 @@ describe('A Todoist account as Todoist answers it', () => {
 			it('completes a task and opens it again', async () => {
 				const standup = await entryOf('Standup')
 				standup.status = TaskStatus.Done
-				await updateEvent(standup, ['status'])
+				await UpdateEntry.call({ ...EntryPatch.of(standup, ['status']), id: standup.id! })
 				assert.equal((await taskOf(ids.standup!)).checked, true)
 				assert.equal((await entryOf('Standup')).status, TaskStatus.Done)
 
 				standup.status = TaskStatus.ToDo
-				await updateEvent(standup, ['status'])
+				await UpdateEntry.call({ ...EntryPatch.of(standup, ['status']), id: standup.id! })
 				assert.equal((await taskOf(ids.standup!)).checked, false)
 			})
 
@@ -398,7 +406,7 @@ describe('A Todoist account as Todoist answers it', () => {
 				const water = await entryOf('Water the plants')
 				const before = water.start!
 				water.status = TaskStatus.Done
-				const saved = await updateEvent(water, ['status'])
+				const saved = await UpdateEntry.call({ ...EntryPatch.of(water, ['status']), id: water.id! })
 				const due = (await taskOf(ids.water!)).due!
 				assert.equal(saved.status, TaskStatus.ToDo)
 				assert.equal(iso(saved.start), instantOf(due))
@@ -409,19 +417,19 @@ describe('A Todoist account as Todoist answers it', () => {
 			it('makes a task a subtask of another, which brings one from another project along, and lets it go again', async () => {
 				const groceries = await entryOf('Buy groceries')
 				groceries.relateTo(RelationType.Parent, ids.hallway!)
-				await updateEvent(groceries, ['relations'])
+				await UpdateEntry.call({ ...EntryPatch.of(groceries, ['relations']), id: groceries.id! })
 				assert.equal((await taskOf(ids.groceries!)).parent_id, ids.hallway)
 
 				const parcel = await entryOf('Fetch the parcel')
 				parcel.relateTo(RelationType.Parent, ids.hallway!)
-				await updateEvent(parcel, ['relations'])
+				await UpdateEntry.call({ ...EntryPatch.of(parcel, ['relations']), id: parcel.id! })
 				assert.equal((await taskOf(ids.parcel!)).project_id, ids.home, 'Todoist moves a subtask to its parent')
 				assert.deepEqual(await headings(errands().id), [])
 				assert.ok((await headings(home().id)).includes('Fetch the parcel'))
 
 				const freed = await entryOf('Buy groceries')
 				freed.relations = EntryRelations.none
-				await updateEvent(freed, ['relations'])
+				await UpdateEntry.call({ ...EntryPatch.of(freed, ['relations']), id: freed.id! })
 				const upstream = await taskOf(ids.groceries!)
 				assert.deepEqual([upstream.parent_id, upstream.project_id], [null, ids.home])
 			})
@@ -429,7 +437,7 @@ describe('A Todoist account as Todoist answers it', () => {
 			it('moves a task to another project in place', async () => {
 				const week = await entryOf('Plan the week')
 				week.sourceId = errands().id
-				await updateEvent(week, ['sourceId'])
+				await UpdateEntry.call({ ...EntryPatch.of(week, ['sourceId']), id: week.id! })
 				assert.equal((await taskOf(ids.week!)).project_id, ids.errands)
 				const moved = await entryOf('Plan the week')
 				assert.deepEqual([moved.id, moved.sourceId], [week.id, errands().id], 'the same entry')
@@ -454,15 +462,15 @@ describe('A Todoist account as Todoist answers it', () => {
 			})
 
 			it('creates a task that is already done', async () => {
-				const done = await createEvent(new Entry({ sourceId: home().id, type: EntryType.Task, heading: 'Return the books', status: TaskStatus.Done }))
+				const done = await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: home().id, type: EntryType.Task, heading: 'Return the books', status: TaskStatus.Done })))
 				assert.equal(done.status, TaskStatus.Done)
 				assert.equal((await taskOf(done.uri!)).checked, true)
 			})
 
 			it('moves an entry from a calendar Mitra keeps into a project', async () => {
-				const kept = await createEvent(new Entry({ sourceId: local.id, type: EntryType.Task, heading: 'Retro' }))
+				const kept = await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: local.id, type: EntryType.Task, heading: 'Retro' })))
 				kept.sourceId = home().id
-				await updateEvent(kept, ['sourceId'])
+				await UpdateEntry.call({ ...EntryPatch.of(kept, ['sourceId']), id: kept.id! })
 				assert.deepEqual(await headings(local.id), [])
 				const moved = await entryOf('Retro')
 				assert.equal((await taskOf(moved.uri!)).project_id, ids.home)
@@ -470,26 +478,26 @@ describe('A Todoist account as Todoist answers it', () => {
 			})
 
 			it('deletes a task in Todoist, and takes one Todoist no longer has as deleted', async () => {
-				await deleteEvent((await entryOf('Retro')).id!)
+				await DeleteEntry.call({ id: (await entryOf('Retro')).id! })
 				assert.equal((await call(`tasks/${ids.retro}`)).status, 404)
 
 				await commands({ type: 'item_delete', args: { id: ids.bank } })
-				await deleteEvent((await entryOf('Call the bank')).id!)
+				await DeleteEntry.call({ id: (await entryOf('Call the bank')).id! })
 				assert.ok(!(await headings(home().id)).includes('Call the bank'))
 			})
 
 			it('lets go of a project archived in Todoist, and of its tasks', async () => {
 				await commands({ type: 'project_archive', args: { id: ids.errands } })
 				// As the edit dialog's Refresh asks: through the account already connected.
-				const discovered = await discoverSources(integration)
+				const discovered = await DiscoverSources.call({ integration })
 				assert.deepEqual(ours(discovered).map(source => source.name), [HOME])
 				await syncNow(integration.id)
-				integration = (await fetchIntegrations()).find(each => each.id === integration.id) as Todoist
+				integration = (await ListIntegrations.call()).find(each => each.id === integration.id) as Todoist
 				assert.deepEqual(ours(integration.sources).map(source => source.name), [HOME])
 			})
 
 			it('imports again from scratch, the done tasks of the last weeks included', async () => {
-				await reimportIntegration(integration.id)
+				await ReimportIntegration.call({ id: integration.id })
 				await until(async () => (await headings(home().id)).includes('Return the books'))
 				const done = (await entriesIn(home().id)).filter(entry => entry.status === TaskStatus.Done.code).map(entry => entry.heading).sort()
 				assert.deepEqual(done, ['Pick a color', 'Return the books'])
@@ -498,7 +506,7 @@ describe('A Todoist account as Todoist answers it', () => {
 
 			it('disconnects, leaving the projects as they are', async () => {
 				const homeId = home().id
-				await deleteIntegration(integration.id)
+				await DisconnectIntegration.call({ id: integration.id })
 				assert.deepEqual(await entriesIn(homeId), [])
 				const { body } = await call<{ results: Array<TodoistTask> }>(`tasks?project_id=${ids.home}`)
 				assert.ok(body.results.some(task => task.content === 'Pay the rent'))

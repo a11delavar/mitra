@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { renameSource } from '#infrastructure/http/Api.js'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
+import { RenameSource } from './RenameSource.js'
 
 describe('RenameSource', () => {
 	let server: OperationServer
@@ -9,10 +9,11 @@ describe('RenameSource', () => {
 	after(() => server.close())
 
 	it('gives a calendar a name of the user\'s own', async () => {
-		assert.equal((await renameSource(server.source.id, ' Personal ')).name, 'Personal')
+		const source = await RenameSource.call({ id: server.source.id, name: ' Personal ' })
+		assert.equal(source.name, 'Personal')
 	})
 
 	it('refuses a blank name', async () => {
-		await assert.rejects(renameSource(server.source.id, ' '))
+		await assert.rejects(RenameSource.call({ id: server.source.id, name: ' ' }))
 	})
 })

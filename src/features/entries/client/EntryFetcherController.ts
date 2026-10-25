@@ -1,10 +1,10 @@
 import { Controller, eventListener } from '@a11d/lit'
 import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { Task } from '@lit/task'
+import { ListEntries, ListAllEntries } from '#operations'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import { TableWindow } from '#features/calendar/client/TableWindow.js'
 import type { PageCalendar } from '#features/calendar/client/PageCalendar.js'
-import { fetchAllEntries, fetchEvents } from '#infrastructure/http/Api.js'
 import { EntryStore } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 
@@ -34,7 +34,7 @@ export class EntryFetcherController extends Controller {
 		},
 		task: async () => {
 			const window = this.window
-			return { entries: await (window ? fetchEvents(window) : fetchAllEntries()), window }
+			return { entries: await (window ? ListEntries.call({ start: window.start!, end: window.end! }) : ListAllEntries.call()), window }
 		},
 		onComplete: ({ entries, window }) => {
 			this.lastContact = Date.now()

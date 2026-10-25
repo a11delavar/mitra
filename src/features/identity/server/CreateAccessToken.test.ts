@@ -1,7 +1,8 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
-import { createAccessToken } from './accessTokens.testing.js'
+import { CreateAccessToken } from './CreateAccessToken.js'
+import { AccessTokenScope } from '../AccessToken.js'
 
 describe('CreateAccessToken', () => {
 	let server: OperationServer
@@ -9,7 +10,7 @@ describe('CreateAccessToken', () => {
 	after(() => server.close())
 
 	it('answers the token this once, keeping only its hash, which it never sends', async () => {
-		const { accessToken, token } = await createAccessToken('  Laptop  ', 'read')
+		const { accessToken, token } = await CreateAccessToken.call({ name: '  Laptop  ', scope: AccessTokenScope.Read })
 		assert.match(token, /^mitra_[0-9a-f]{64}$/)
 		assert.equal(accessToken.name, 'Laptop')
 		assert.equal(accessToken.scope, 'read')
@@ -19,7 +20,7 @@ describe('CreateAccessToken', () => {
 	})
 
 	it('refuses a token without a name, or with a scope it does not know', async () => {
-		await assert.rejects(createAccessToken(' ', 'read'))
-		await assert.rejects(createAccessToken('Laptop', 'admin' as never))
+		await assert.rejects(CreateAccessToken.call({ name: ' ', scope: AccessTokenScope.Read }))
+		await assert.rejects(CreateAccessToken.call({ name: 'Laptop', scope: 'admin' as never }))
 	})
 })

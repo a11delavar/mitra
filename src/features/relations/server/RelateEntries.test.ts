@@ -1,6 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { settleTimeZone } from '#infrastructure/http/Api.js'
+import { TimeZone } from '#features/time/TimeZone.js'
+import { SettleHomeTimeZone } from '#features/time/server/SettleHomeTimeZone.js'
 import { OperationServer, type SentEntry } from '#infrastructure/operations/OperationServer.testing.js'
 
 type Related = SentEntry & { readonly uid: string, readonly relations: Array<{ readonly type: string, readonly targetUid: string, readonly direction?: string }> }
@@ -9,7 +10,7 @@ describe('RelateEntries', () => {
 	let server: OperationServer
 	before(async () => {
 		server = await OperationServer.start()
-		await settleTimeZone('Europe/Berlin')
+		await SettleHomeTimeZone.call({ id: TimeZone.of('Europe/Berlin') })
 	})
 	after(() => server.close())
 

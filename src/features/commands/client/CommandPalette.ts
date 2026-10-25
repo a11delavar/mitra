@@ -1,12 +1,12 @@
 import { Component, component, html, css, property, state, query, event, eventListener } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
+import { SearchEntries } from '#operations'
 import { LatestSearch } from '#design'
 import type { Entry } from '#features/entries'
 import type { EntryOccurrence } from '#features/recurrence'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js'
-import { searchEntries } from '#infrastructure/http/Api.js'
 import { commandMatches, Command } from '../Command.js'
 import { KeyPress } from '../KeyPress.js'
 
@@ -29,7 +29,7 @@ export class CommandPalette extends Component {
 	@query('dialog') private readonly dialog!: HTMLDialogElement
 
 	/** Each entry as the occurrence standing for it now. */
-	private readonly search = new LatestSearch(async (term: string) => (await searchEntries(term).catch(() => new Array<Entry>()))
+	private readonly search = new LatestSearch(async (term: string) => (await SearchEntries.call({ query: term }).catch(() => new Array<Entry>()))
 		.map(entry => entry.occurrences.standing(TimeZone.deviceId))
 		.filter(occurrence => !!occurrence))
 

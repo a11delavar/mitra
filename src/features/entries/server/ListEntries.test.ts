@@ -3,8 +3,9 @@ import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Recurrence, RecurrenceFrequency } from '#features/recurrence'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
-import { createEvent } from '#infrastructure/http/Api.js'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
+import { CreateEntry } from './CreateEntry.js'
+import { EntryPatch } from '../EntryPatch.js'
 import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
 import { fetched, iso, midnight, shown, utcMidnight, viewIn, zones } from './viewers.testing.js'
@@ -16,7 +17,7 @@ describe('ListEntries', () => {
 
 	it('brings an all-day entry to every viewer on the same days, at their own midnights', async () => {
 		viewIn(zones.berlin)
-		const { id } = await createEvent(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Holiday', allDay: true, start: midnight('2026-06-02'), end: midnight('2026-06-05') }))
+		const { id } = await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Holiday', allDay: true, start: midnight('2026-06-02'), end: midnight('2026-06-05') })))
 		for (const zone of Object.values(zones)) {
 			viewIn(zone)
 			const holiday = (await fetched('2026-05-25', '2026-06-15')).find(entry => entry.id === id)!
@@ -28,7 +29,7 @@ describe('ListEntries', () => {
 	it('brings a timed entry to every viewer at the same instant, in the zone it was written in', async () => {
 		viewIn(zones.berlin)
 		const start = new DateTime(Date.parse('2026-06-02T09:30:00+02:00'))
-		const { id } = await createEvent(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Call', start, end: start.add({ minutes: 30 }) }))
+		const { id } = await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Call', start, end: start.add({ minutes: 30 }) })))
 		for (const zone of Object.values(zones)) {
 			viewIn(zone)
 			const call = (await fetched('2026-05-25', '2026-06-15')).find(entry => entry.id === id)!
@@ -38,7 +39,7 @@ describe('ListEntries', () => {
 
 	it('brings an all-day series, which every viewer expands to the same days', async () => {
 		viewIn(zones.tehran)
-		const { id } = await createEvent(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Market', allDay: true, start: midnight('2026-07-06'), end: midnight('2026-07-07'), recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) }))
+		const { id } = await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Market', allDay: true, start: midnight('2026-07-06'), end: midnight('2026-07-07'), recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })))
 		for (const zone of Object.values(zones)) {
 			viewIn(zone)
 			const occurrences = (await shown('2026-07-01', '2026-07-25')).filter(occurrence => occurrence.recurringEntryId === id)

@@ -6,7 +6,6 @@ import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js
 import { EntryStore, reportSaveError } from '#features/entries/client/EntryStore.js'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import '#features/entries/client/TaskStatus.js'
-import { updateEvent } from '#infrastructure/http/Api.js'
 import { offerFollowUps } from './Hierarchy.js'
 
 /**
@@ -58,7 +57,7 @@ export class EntryLink extends Component {
 			EntryStore.notify()
 		}
 		const saved = tracked ?? target
-		await (tracked ? EntryStore.commit(tracked) : updateEvent(target)).catch(reportSaveError)
+		await (tracked ? EntryStore.commit(tracked) : EntryStore.persistence.update(target)).catch(reportSaveError)
 		// Direct API writes bypass EntryStore.onTaskClosed, so the follow-up offers are made here.
 		if (saved.closed) {
 			offerFollowUps(saved).catch(() => void 0)

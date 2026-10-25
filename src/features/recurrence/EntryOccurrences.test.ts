@@ -2,7 +2,7 @@ import { describe, it } from 'node:test'
 import { DateTimeRange } from '@3mo/date-time'
 import ICAL from 'ical.js'
 import assert from 'node:assert/strict'
-import { EntryType, Entry, EntryRank } from '#features/entries'
+import { EntryType, Entry, EntryRank, EntryFiles } from '#features/entries'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { CalDAV } from '#integrations/caldav/CalDAV.js'
 import { Recurrence } from './Recurrence.js'
@@ -66,6 +66,12 @@ describe('EntryOccurrences', () => {
 		const override = second.override()
 		assert.deepEqual([override.id, override.recurringEntryId, override.recurrenceId?.toISOString(), override.start?.toISOString(), override.heading], [second.key, 'standup', '2026-10-26T09:00:00.000Z', '2026-10-26T09:00:00.000Z', 'Standup'])
 		assert.equal(override.occurrences.recurring, false)
+	})
+
+	it('carries the files of its recurring entry, as saving it writes them for every occurrence', () => {
+		const standup = Object.assign(weekly(), { attachments: EntryFiles.of([{ sourceUrl: 'https://example.com/agenda.pdf' }]) })
+		const override = standup.occurrences.at(at('2026-10-26T09:00:00Z')).override()
+		assert.equal(override.attachments.equals(standup.attachments), true)
 	})
 
 	// RFC 5545 §3.8.5.3: a start written in UTC repeats at fixed instants, as every other client reads such an entry.

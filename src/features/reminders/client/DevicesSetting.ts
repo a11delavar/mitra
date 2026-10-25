@@ -1,7 +1,8 @@
 import { html } from '@a11d/lit'
+import { SendTestNotification } from '#operations'
 import { Setting, setting, type SettingStorage } from '#features/settings/client/Setting.js'
 import { SettingsStore } from '#features/settings/client/SettingsStore.js'
-import { pushSupported, sendTestNotification } from './push.js'
+import { pushSupported } from './push.js'
 import './NotificationDevices.js'
 
 /** The devices reminders arrive on, once this browser shows them: a test sent to them all, and each one listed. Nothing here is a preference. */
@@ -28,7 +29,7 @@ export class DevicesSetting extends Setting<undefined> {
 	}
 
 	private async test(kind: 'event' | 'task') {
-		await sendTestNotification(kind)
+		await SendTestNotification.call({ kind })
 		DevicesSetting.sent = kind
 		SettingsStore.notify()
 	}

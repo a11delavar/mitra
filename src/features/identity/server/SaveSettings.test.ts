@@ -1,7 +1,8 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { fetchUser, setSettings } from '#infrastructure/http/Api.js'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
+import { GetUser } from './GetUser.js'
+import { SaveSettings } from './SaveSettings.js'
 
 describe('SaveSettings', () => {
 	let server: OperationServer
@@ -9,8 +10,8 @@ describe('SaveSettings', () => {
 	after(() => server.close())
 
 	it('stores the settings, dropping what no setting knows', async () => {
-		await setSettings({ snapMinutes: 15, hideDoneTasks: true, unknown: 'dropped' } as never)
-		assert.deepEqual({ ...(await fetchUser()).settings }, { snapMinutes: 15, hideDoneTasks: true })
+		await SaveSettings.call({ settings: { snapMinutes: 15, hideDoneTasks: true, unknown: 'dropped' } as never })
+		assert.deepEqual({ ...(await GetUser.call()).settings }, { snapMinutes: 15, hideDoneTasks: true })
 		assert.deepEqual({ ...server.user.settings }, { snapMinutes: 15, hideDoneTasks: true })
 	})
 })

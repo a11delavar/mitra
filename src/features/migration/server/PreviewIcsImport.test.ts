@@ -1,7 +1,8 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { countSourceEntries, previewIcsImport } from '#infrastructure/http/Api.js'
+import { CountSourceEntries } from '#features/sources/server/CountSourceEntries.js'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
+import { PreviewIcsImport } from './PreviewIcsImport.js'
 
 const ics = [
 	'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Mitra//Test//EN',
@@ -15,11 +16,11 @@ describe('PreviewIcsImport', () => {
 	after(() => server.close())
 
 	it('previews a calendar file\'s import without importing it', async () => {
-		assert.ok(await previewIcsImport(server.source.id, ics))
-		assert.equal(await countSourceEntries(server.source.id), 0)
+		assert.ok(await PreviewIcsImport.call({ id: server.source.id, ics }))
+		assert.equal(await CountSourceEntries.call({ id: server.source.id }), 0)
 	})
 
 	it('refuses an empty file', async () => {
-		await assert.rejects(previewIcsImport(server.source.id, ' '))
+		await assert.rejects(PreviewIcsImport.call({ id: server.source.id, ics: ' ' }))
 	})
 })

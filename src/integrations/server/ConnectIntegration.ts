@@ -1,21 +1,16 @@
 import { description, label } from '@a11d/metadata'
-import { type Request } from 'express'
 import { Integration, integrationClassFor } from '#integrations'
 import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
-import { isDemo, isDeveloperSystem } from '#infrastructure/environment.js'
 import { NotAllowed } from '#infrastructure/validation'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
+import { isDemo, isDeveloperSystem } from '#infrastructure/environment.js'
 import { importer } from './Importer.js'
 
 @operation()
 @label('Connect an integration')
 @description('Connects an account with the calendars chosen, and imports their entries in the background.')
-@http({ method: 'POST', path: '/integrations', status: 201 })
+@http({ method: 'POST', path: '/integrations', status: 201, body: 'integration' })
 export class ConnectIntegration extends Operation<{ readonly integration: Integration }, Integration> {
-	static override fromRequest(request: Request) {
-		return new ConnectIntegration({ integration: request.body as Integration })
-	}
-
 	async run({ em, user }: OperationContext): Promise<Integration> {
 		if (isDemo) {
 			throw new NotAllowed('Connecting accounts is turned off in the demo')

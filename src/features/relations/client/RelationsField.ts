@@ -1,9 +1,9 @@
 import { Component, component, html, css, property, state } from '@a11d/lit'
+import { SearchEntries, UpdateEntry } from '#operations'
 import { controlHeight, LatestSearch, type Popover } from '#design'
 import { EntryType, type Entry } from '#features/entries'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
-import { searchEntries, updateRelations } from '#infrastructure/http/Api.js'
 import { RelationType, RelationSection } from '../RelationType.js'
 import { type Relation } from '../Relation.js'
 import { EntryRelations } from '../EntryRelations.js'
@@ -47,7 +47,7 @@ export class RelationsField extends Component {
 	/** A terminal save rejection (self-reference/cycle → 400) surfaced inline; cleared on interaction. */
 	@state() private error?: string
 
-	private readonly search = new LatestSearch((query: string) => query ? searchEntries(query).catch(() => new Array<Entry>()) : Promise.resolve(new Array<Entry>()), 250)
+	private readonly search = new LatestSearch((query: string) => query ? SearchEntries.call({ query }).catch(() => new Array<Entry>()) : Promise.resolve(new Array<Entry>()), 250)
 
 	/** Target entries by uid, for naming owned lines: fed by the fetched view and by picked
 	 * suggestions, so a just-added line has its name before any refetch. */
@@ -115,7 +115,7 @@ export class RelationsField extends Component {
 		this.error = undefined
 		const remaining = EntryRelations.of((owner.relations?.writes ?? []).filter(relation => !(relation.type === incoming.type && relation.targetUid === this.entry.uid)))
 		try {
-			EntryStore.adoptRelations(await updateRelations(owner.id, remaining))
+			EntryStore.adoptRelations(await UpdateEntry.call({ id: owner.id, relations: remaining }))
 		} catch (error) {
 			this.error = error instanceof Error ? error.message : String(error)
 		}

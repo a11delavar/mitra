@@ -95,3 +95,6 @@ validation.errorsIn = function *(instance: object) {
 		}
 	}
 }
+
+/** Whether `constructor` or a class it extends declares `key`, by its schema or its converter. */
+validation.declares = (constructor: Constructor<object>, key: string) => schemasOf(constructor).has(key) || definitionsOf(constructor).has(key)

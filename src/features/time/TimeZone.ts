@@ -81,6 +81,7 @@ export class TimeZone {
 			}
 			return zone
 		},
+		deconstruct: (zone: TimeZone | undefined) => zone?.id,
 	}
 
 	static parse(value: unknown): TimeZone | undefined {

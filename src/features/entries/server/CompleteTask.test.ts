@@ -2,8 +2,11 @@ import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Recurrence, RecurrenceFrequency } from '#features/recurrence'
-import { createEvent, settleTimeZone } from '#infrastructure/http/Api.js'
+import { TimeZone } from '#features/time/TimeZone.js'
+import { SettleHomeTimeZone } from '#features/time/server/SettleHomeTimeZone.js'
 import { OperationServer, type SentEntry as Row } from '#infrastructure/operations/OperationServer.testing.js'
+import { CreateEntry } from './CreateEntry.js'
+import { EntryPatch } from '../EntryPatch.js'
 import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
 
@@ -18,7 +21,7 @@ describe('CompleteTask', () => {
 	const status = async (id: string) => (await server.query<{ status: string | null }>('select status from entry where id = ?', [id]))[0]?.status
 
 	it('marks a task done, and a second tap writes nothing more', async () => {
-		const task = await createEvent(timed('Send the invoice', { type: EntryType.Task }))
+		const task = await CreateEntry.call(EntryPatch.creating(timed('Send the invoice', { type: EntryType.Task })))
 		assert.equal((await complete(task.id!)).status, 200)
 		assert.equal(await status(task.id!), 'done')
 		assert.equal((await complete(task.id!)).status, 200)
@@ -26,7 +29,7 @@ describe('CompleteTask', () => {
 	})
 
 	it('marks one occurrence of a repeating task done alone, the rest still to come', async () => {
-		const series = await createEvent(timed('Water the plants', { type: EntryType.Task, recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily, count: 3 }) }))
+		const series = await CreateEntry.call(EntryPatch.creating(timed('Water the plants', { type: EntryType.Task, recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily, count: 3 }) })))
 		const answer = await complete(series.id!, { occurrence: '2026-07-02T09:00:00Z' })
 		assert.equal(answer.status, 200)
 		const detached = await answer.json() as { id: string }
@@ -36,21 +39,21 @@ describe('CompleteTask', () => {
 	})
 
 	it('refuses an event, which has nothing to complete', async () => {
-		const event = await createEvent(timed('Lunch'))
+		const event = await CreateEntry.call(EntryPatch.creating(timed('Lunch')))
 		const answer = await complete(event.id!)
 		assert.equal(answer.status, 400)
 		assert.deepEqual(await answer.json(), { error: 'Only a task can be completed' })
 	})
 
 	it('refuses a repeating task without its occurrence, which would close it for good', async () => {
-		const series = await createEvent(timed('Stretch', { type: EntryType.Task, recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily, count: 3 }) }))
+		const series = await CreateEntry.call(EntryPatch.creating(timed('Stretch', { type: EntryType.Task, recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily, count: 3 }) })))
 		const answer = await complete(series.id!)
 		assert.equal(answer.status, 400)
 		assert.notEqual(await status(series.id!), 'done')
 	})
 
 	describe('as a tool', () => {
-		before(() => settleTimeZone('Europe/Berlin'))
+		before(() => SettleHomeTimeZone.call({ id: TimeZone.of('Europe/Berlin') }))
 
 		it('completes a task, and one occurrence of a repeating task alone, which it names', async () => {
 			const task = await server.tool<Row>('create_entry', { heading: 'Renew the passport', type: 'task' })

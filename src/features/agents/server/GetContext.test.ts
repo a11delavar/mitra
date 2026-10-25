@@ -1,7 +1,10 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { Api } from '@a11d/api'
-import { createSource, setDefaultSource, settleTimeZone } from '#infrastructure/http/Api.js'
+import { TimeZone } from '#features/time/TimeZone.js'
+import { SettleHomeTimeZone } from '#features/time/server/SettleHomeTimeZone.js'
+import { SetDefaultCalendar } from '#features/identity/server/SetDefaultCalendar.js'
+import { SaveSettings } from '#features/identity/server/SaveSettings.js'
+import { CreateSource } from '#features/sources/server/CreateSource.js'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
 
 interface Context {
@@ -21,9 +24,9 @@ describe('GetContext', () => {
 	after(() => server.close())
 
 	it('names the home zone, and the calendars with what each holds and the types each takes when no calendar is named', async () => {
-		await settleTimeZone('Europe/Berlin')
-		const work = await createSource(server.integration.id, { name: 'Work' })
-		await setDefaultSource(work.id)
+		await SettleHomeTimeZone.call({ id: TimeZone.of('Europe/Berlin') })
+		const work = await CreateSource.call({ id: server.integration.id, name: 'Work' })
+		await SetDefaultCalendar.call({ sourceId: work.id })
 		const context = await server.tool<Context>('get_context')
 		assert.equal(context.homeTimeZone, 'Europe/Berlin')
 		assert.match(context.now, /[+-]\d{2}:\d{2}$/)
@@ -34,7 +37,7 @@ describe('GetContext', () => {
 	})
 
 	it('says how the user reads dates, by the language and region chosen in the settings', async () => {
-		await Api.put('/user/settings', { settings: { locale: 'fa-IR' } })
+		await SaveSettings.call({ settings: { locale: 'fa-IR' } })
 		const context = await server.tool<Context>('get_context')
 		assert.deepEqual([context.locale, context.calendar, context.weekStart, context.weekend], ['fa-IR', 'persian', 'saturday', ['friday']])
 		assert.match(context.today.date, /^\d{4}-\d{2}-\d{2}$/)

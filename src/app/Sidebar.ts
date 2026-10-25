@@ -1,6 +1,7 @@
 import { Component, component, html, css, property, state, event, eventListener, unsafeCSS, ifDefined } from '@a11d/lit'
 import { ReorderabilityController, ReorderabilityState } from '@3mo/reorderability'
 import { MediaQueryController } from '@3mo/media-query-observer'
+import { RenameSource, RecolorSource, CreateSource, ReimportSource, SetDefaultCalendar, DisconnectIntegration, ReimportIntegration } from '#operations'
 import { focusRing, windowDragHandle, scrollbar } from '#design'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import { DialogAbout } from '#features/about/client/DialogAbout.js'
@@ -12,7 +13,7 @@ import type { Entry } from '#features/entries'
 import { Planning } from '#features/planning/client/Planning.js'
 import { DialogIntegration } from '#integrations/client/DialogIntegration.js'
 import { integrationClasses, type Integration } from '#integrations'
-import { getMeta, getUser, instanceName, isBundleStale, refreshMetaIfStale, updateSourceColor, renameSource, deleteIntegration, setDefaultSource, reimportSource, reimportIntegration, createSource } from '#infrastructure/http/Api.js'
+import { getMeta, getUser, instanceName, isBundleStale, keepUser, refreshMetaIfStale } from '#infrastructure/http/Api.js'
 import { canInstall, promptInstall, onInstallAvailabilityChange } from './pwa.js'
 
 @component('mitra-sidebar')
@@ -638,7 +639,7 @@ export class Sidebar extends Component {
 
 	private async setSourceColor(source: Source, color: Color | undefined, popover: HTMLElement) {
 		if (color) {
-			await updateSourceColor(source.id, color)
+			await RecolorSource.call({ id: source.id, color })
 			source.color = color
 			this.requestUpdate()
 		}
@@ -698,7 +699,7 @@ export class Sidebar extends Component {
 		this.renamingId = undefined
 		const name = (el.textContent ?? '').trim()
 		if (name && name !== source.name) {
-			await renameSource(source.id, name)
+			await RenameSource.call({ id: source.id, name })
 			source.name = name
 		}
 		this.requestUpdate()
@@ -733,7 +734,7 @@ export class Sidebar extends Component {
 		if (this.isDefault(source) && !stored) {
 			return
 		}
-		await setDefaultSource(stored ? undefined : source.id)
+		await keepUser(SetDefaultCalendar.call({ sourceId: stored ? null : source.id }))
 		this.requestUpdate()
 	}
 
@@ -743,7 +744,7 @@ export class Sidebar extends Component {
 	}
 
 	private async removeIntegration(id: string) {
-		await deleteIntegration(id)
+		await DisconnectIntegration.call({ id })
 		await Calendars.fetch()
 		this.requestUpdate()
 	}
@@ -756,7 +757,7 @@ export class Sidebar extends Component {
 	}
 
 	private async addSource(integration: Integration) {
-		const source = await createSource(integration.id, { name: String(t('Calendar')) })
+		const source = await CreateSource.call({ id: integration.id, name: String(t('Calendar')) })
 		await Calendars.fetch()
 		this.sourcesChange.dispatch()
 		await this.startRename(source)
@@ -813,7 +814,7 @@ export class Sidebar extends Component {
 									<mitra-menu-item icon="arrow-down" ?disabled=${index === integrations.length - 1} @click=${() => this.moveIntegration(i.id, 1)}>${t('Move down')}</mitra-menu-item>
 									${!i.reimportable ? html.nothing : html`
 										<mitra-menu-item icon="hard-drive-download" title=${t('Read every enabled calendar of this account again from the start')}
-											@click=${() => void reimportIntegration(i.id).catch(() => void 0)}>${t('Re-import entries')}</mitra-menu-item>
+											@click=${() => void ReimportIntegration.call({ id: i.id }).catch(() => void 0)}>${t('Re-import entries')}</mitra-menu-item>
 									`}
 									<mitra-menu-item icon="trash-2" variant="danger" @click=${() => this.removeIntegration(i.id)}>${t('Delete')}</mitra-menu-item>
 								</mitra-menu>
@@ -979,7 +980,7 @@ export class Sidebar extends Component {
 						`}
 						${!integration.reimportable ? html.nothing : html`
 							<mitra-menu-item icon="hard-drive-download" title=${t('Read this calendar again from the start')}
-								@click=${() => void reimportSource(source.id).catch(() => void 0)}>${t('Re-import entries')}</mitra-menu-item>
+								@click=${() => void ReimportSource.call({ id: source.id }).catch(() => void 0)}>${t('Re-import entries')}</mitra-menu-item>
 						`}
 						${!Calendars.capabilitiesOf(source.id).sources.delete ? html.nothing : html`
 							<mitra-menu-item icon="trash-2" variant="danger" title=${t('Delete this calendar and every entry in it')}

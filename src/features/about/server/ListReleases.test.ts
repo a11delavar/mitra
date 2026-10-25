@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { fetchReleases } from '#infrastructure/http/Api.js'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
+import { ListReleases } from './ListReleases.js'
 
 describe('ListReleases', () => {
 	let server: OperationServer
@@ -9,7 +9,7 @@ describe('ListReleases', () => {
 	after(() => server.close())
 
 	it('answers the changelog\'s sections and the release folders', async () => {
-		const { sections, folders } = await fetchReleases()
+		const { sections, folders } = await ListReleases.call()
 		assert.ok(Array.isArray(sections))
 		assert.ok(Array.isArray(folders))
 	})

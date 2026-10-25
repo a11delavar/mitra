@@ -1,7 +1,8 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { countSourceEntries, importIcs } from '#infrastructure/http/Api.js'
+import { CountSourceEntries } from '#features/sources/server/CountSourceEntries.js'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
+import { ImportIcs } from './ImportIcs.js'
 
 const ics = [
 	'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Mitra//Test//EN',
@@ -15,11 +16,11 @@ describe('ImportIcs', () => {
 	after(() => server.close())
 
 	it('imports a calendar file\'s entries into a calendar', async () => {
-		await importIcs(server.source.id, ics)
-		assert.equal(await countSourceEntries(server.source.id), 1)
+		await ImportIcs.call({ id: server.source.id, ics })
+		assert.equal(await CountSourceEntries.call({ id: server.source.id }), 1)
 	})
 
 	it('refuses an empty file', async () => {
-		await assert.rejects(importIcs(server.source.id, ' '))
+		await assert.rejects(ImportIcs.call({ id: server.source.id, ics: ' ' }))
 	})
 })

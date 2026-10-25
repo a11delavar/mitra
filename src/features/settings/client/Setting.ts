@@ -1,7 +1,8 @@
 import { html, live, type HTMLTemplateResult } from '@a11d/lit'
 import { Localizer } from '@3mo/localization'
+import { SaveSettings } from '#operations'
 import { termsMatch } from '#features/commands/termsMatch.js'
-import { getSettings, setSettings } from '#infrastructure/http/Api.js'
+import { getSettings, keepUser } from '#infrastructure/http/Api.js'
 import { type UserSettings } from '../UserSettings.js'
 import { SettingsStore } from './SettingsStore.js'
 
@@ -39,7 +40,7 @@ export function userStorage<K extends keyof UserSettings>(key: K): SettingStorag
 			} else {
 				settings[key] = value
 			}
-			await setSettings(settings)
+			await keepUser(SaveSettings.call({ settings }))
 		},
 	}
 }

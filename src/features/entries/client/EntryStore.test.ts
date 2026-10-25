@@ -35,7 +35,7 @@ describe('EntryStore', () => {
 				delete: (id: string) => (calls.delete.push(id), Promise.resolve()),
 				editOccurrence: (occurrence: EntryOccurrence, scope: EntryOccurrenceChangeScope) => (calls.occurrenceEdits.push(scope), request(occurrence.entry)),
 				deleteOccurrence: (_occurrence: EntryOccurrence, scope: EntryOccurrenceChangeScope) => (calls.occurrenceDeletes.push(scope), Promise.resolve()),
-				reorder: (_ranks: Record<string, string>) => Promise.resolve(),
+				reorder: (_ranks: ReadonlyArray<readonly [string, EntryRank]>) => Promise.resolve(),
 			},
 			async respond(saved?: Entry) {
 				while (!settlers.length) {
@@ -131,7 +131,7 @@ describe('EntryStore', () => {
 		const task = (id: string, key?: string, fields: Partial<Entry> = {}) =>
 			entry({ ...undated, id, heading: id, rank: key ? EntryRank.parse(key) : undefined, ...fields })
 		const sending = () => {
-			const sent = new Array<Record<string, string>>()
+			const sent = new Array<ReadonlyArray<readonly [string, EntryRank]>>()
 			EntryStore.persistence = { ...fake().persistence, reorder: ranks => (sent.push(ranks), Promise.resolve()) }
 			return sent
 		}
@@ -142,7 +142,7 @@ describe('EntryStore', () => {
 
 			await EntryStore.reorder([rent, passport], rent, passport, undefined)
 
-			assert.deepEqual(Object.keys(sent[0]!), ['series'])
+			assert.deepEqual(sent[0]!.map(([id]) => id), ['series'])
 			assert.ok(passport.rank!.isBefore(rent.rank!))
 		})
 
@@ -152,7 +152,7 @@ describe('EntryStore', () => {
 
 			await EntryStore.reorder([first, unranked, moved], moved, first, unranked)
 
-			assert.deepEqual(Object.keys(sent[0]!).sort(), ['first', 'moved', 'unranked'])
+			assert.deepEqual(sent[0]!.map(([id]) => id).sort(), ['first', 'moved', 'unranked'])
 			assert.ok(first.rank!.isBefore(moved.rank!) && moved.rank!.isBefore(unranked.rank!))
 		})
 

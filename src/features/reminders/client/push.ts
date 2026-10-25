@@ -1,4 +1,4 @@
-import { Api } from '@a11d/api'
+import { GetPushKey, RegisterDevice, RemoveDevice } from '#operations'
 import { DeviceFacts } from '../DeviceFacts.js'
 import { type NotificationSubscription } from '../NotificationSubscription.js'
 
@@ -14,13 +14,15 @@ export function pushSupported() {
 
 async function subscribe(): Promise<PushSubscription> {
 	const registration = await navigator.serviceWorker.register('/sw.js')
-	const { key } = await Api.get<{ key: string }>('/push/key')
+	const { key } = await GetPushKey.call()
 	const subscription = await registration.pushManager.subscribe({
 		userVisibleOnly: true,
 		applicationServerKey: base64UrlToBytes(key) as BufferSource,
 	})
-	await Api.post('/push/subscription', {
-		...subscription.toJSON(),
+	const { endpoint, keys } = subscription.toJSON()
+	await RegisterDevice.call({
+		endpoint: endpoint!,
+		keys: { p256dh: keys!.p256dh!, auth: keys!.auth! },
 		timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 		locale: String(Localizer.locales.current),
 		...DeviceFacts.current(),
@@ -57,23 +59,9 @@ export async function currentEndpoint(): Promise<string | undefined> {
 	return subscription?.endpoint
 }
 
-export function fetchDevices() {
-	return Api.get<Array<NotificationSubscription>>('/push/subscriptions')
-}
-
-/** Sends a real reminder for a made-up entry of the given kind to every registered device. */
-export function sendTestNotification(kind: 'event' | 'task') {
-	return Api.post('/push/test', { kind })
-}
-
-/** An empty name restores the one the browser reports. */
-export function renameDevice(id: string, name: string) {
-	return Api.put<NotificationSubscription>(`/push/subscriptions/${id}/name`, { name })
-}
-
 /** Also unsubscribes this browser when it is the device removed. */
 export async function forgetDevice(device: NotificationSubscription) {
-	await Api.delete(`/push/subscriptions/${device.id}`)
+	await RemoveDevice.call({ id: device.id })
 	if (await currentEndpoint() === device.endpoint) {
 		const registration = await navigator.serviceWorker.getRegistration()
 		await (await registration?.pushManager.getSubscription())?.unsubscribe()

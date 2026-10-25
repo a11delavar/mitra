@@ -1,8 +1,13 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { createEvent, createSource, settleTimeZone, updateEvent } from '#infrastructure/http/Api.js'
+import { TimeZone } from '#features/time/TimeZone.js'
+import { SettleHomeTimeZone } from '#features/time/server/SettleHomeTimeZone.js'
+import { CreateSource } from '#features/sources/server/CreateSource.js'
 import { OperationServer, type SentEntry as Row } from '#infrastructure/operations/OperationServer.testing.js'
+import { CreateEntry } from './CreateEntry.js'
+import { UpdateEntry } from './UpdateEntry.js'
+import { EntryPatch } from '../EntryPatch.js'
 import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
 import { fetched, iso, midnight, utcMidnight, viewIn, zones } from './viewers.testing.js'
@@ -18,16 +23,16 @@ describe('UpdateEntry', () => {
 	describe('an all-day entry', () => {
 		it('keeps its days through an edit elsewhere, and moves by a whole day where its viewer moves it', async () => {
 			viewIn(zones.berlin)
-			const { id } = await createEvent(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Holiday', allDay: true, start: midnight('2026-06-02'), end: midnight('2026-06-05') }))
+			const { id } = await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Holiday', allDay: true, start: midnight('2026-06-02'), end: midnight('2026-06-05') })))
 
 			viewIn(zones.newYork)
 			const holiday = (await fetched('2026-05-25', '2026-06-15')).find(entry => entry.id === id)!
 			holiday.heading = 'Long weekend'
-			await updateEvent(holiday)
+			await UpdateEntry.call({ ...EntryPatch.of(holiday), id: holiday.id! })
 			assert.deepEqual(Object.values((await stored(id!))!), [utcMidnight('2026-06-02'), utcMidnight('2026-06-05')])
 
 			holiday.start = midnight('2026-06-03')
-			const moved = await updateEvent(holiday)
+			const moved = await UpdateEntry.call({ ...EntryPatch.of(holiday), id: holiday.id! })
 			assert.equal(iso(moved.start), iso(midnight('2026-06-03')))
 			assert.deepEqual(Object.values((await stored(id!))!), [utcMidnight('2026-06-03'), utcMidnight('2026-06-05')])
 
@@ -40,10 +45,10 @@ describe('UpdateEntry', () => {
 	describe('an entry moved or converted', () => {
 		it('is created in the other calendar under a new id, keeping its uid, and leaves the first', async () => {
 			viewIn(zones.berlin)
-			const work = await createSource(server.integration.id, { name: 'Work' })
-			const created = await createEvent(timed('Review'))
+			const work = await CreateSource.call({ id: server.integration.id, name: 'Work' })
+			const created = await CreateEntry.call(EntryPatch.creating(timed('Review')))
 			created.sourceId = work.id
-			const moved = await updateEvent(created)
+			const moved = await UpdateEntry.call({ ...EntryPatch.of(created), id: created.id! })
 			assert.notEqual(moved.id, created.id)
 			assert.equal(moved.sourceId, work.id)
 			assert.equal(moved.uid, created.uid)
@@ -53,9 +58,9 @@ describe('UpdateEntry', () => {
 
 		it('becomes a task under a new id in the same calendar', async () => {
 			viewIn(zones.berlin)
-			const created = await createEvent(timed('Write up'))
+			const created = await CreateEntry.call(EntryPatch.creating(timed('Write up')))
 			created.type = EntryType.Task
-			const converted = await updateEvent(created)
+			const converted = await UpdateEntry.call({ ...EntryPatch.of(created), id: created.id! })
 			assert.notEqual(converted.id, created.id)
 			assert.equal(converted.type, EntryType.Task)
 			assert.equal(await stored(created.id!), undefined)
@@ -63,7 +68,7 @@ describe('UpdateEntry', () => {
 	})
 
 	describe('as a tool', () => {
-		before(() => settleTimeZone('Europe/Berlin'))
+		before(() => SettleHomeTimeZone.call({ id: TimeZone.of('Europe/Berlin') }))
 
 		it('changes an entry, its times read in the home zone', async () => {
 			const created = await server.tool<Row>('create_entry', { heading: 'Draft review', start: '2027-03-03T14:00[Europe/Berlin]', end: '2027-03-03T15:00[Europe/Berlin]' })
@@ -72,7 +77,7 @@ describe('UpdateEntry', () => {
 		})
 
 		it('moves an entry to another calendar, naming the entry\'s new id', async () => {
-			const projects = await createSource(server.integration.id, { name: 'Projects' })
+			const projects = await CreateSource.call({ id: server.integration.id, name: 'Projects' })
 			const created = await server.tool<Row>('create_entry', { heading: 'Kickoff', start: '2027-03-04T10:00[Europe/Berlin]', end: '2027-03-04T11:00[Europe/Berlin]' })
 			const moved = await server.tool<Row>('update_entry', { id: created.id, sourceId: projects.id })
 			assert.notEqual(moved.id, created.id)

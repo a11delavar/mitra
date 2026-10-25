@@ -13,6 +13,7 @@
 		"#infrastructure/model": "./src/infrastructure/model/index.ts",
 		"#infrastructure/validation": "./src/infrastructure/validation/index.ts",
 		"#integrations": "./src/integrations/index.ts",
+		"#operations": "./src/app/operations.ts",
 		"#app/*": "./src/app/*",
 		"#design/*": "./src/design/*",
 		"#features/*": "./src/features/*",

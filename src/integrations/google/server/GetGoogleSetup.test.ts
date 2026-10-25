@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { fetchGoogleAvailability } from '#infrastructure/http/Api.js'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
+import { GetGoogleSetup } from './GetGoogleSetup.js'
 
 describe('GetGoogleSetup', () => {
 	let server: OperationServer
@@ -9,6 +9,6 @@ describe('GetGoogleSetup', () => {
 	after(() => server.close())
 
 	it('answers that Google is not set up without its client id and secret', async () => {
-		assert.deepEqual(await fetchGoogleAvailability(), { configured: false })
+		assert.deepEqual(await GetGoogleSetup.call(), { configured: false })
 	})
 })

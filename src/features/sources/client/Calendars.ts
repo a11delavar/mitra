@@ -1,6 +1,7 @@
+import { ListIntegrations, ReorderIntegrations, ReorderSources, SetSourceVisibility, ShowOnlySource, RestoreSourceVisibility } from '#operations'
 import type { EntryType, Entry } from '#features/entries'
 import { Integration, IntegrationCapabilities, IntegrationOwnership } from '#integrations'
-import { fetchIntegrations, getUser, putIntegrationOrder, putSourceOrder, restoreSourceVisibility, soloSource, toggleSourceVisibility } from '#infrastructure/http/Api.js'
+import { getUser, keepUser } from '#infrastructure/http/Api.js'
 import { applyOrder, byOrder } from '#infrastructure/model'
 import { type Source } from '../Source.js'
 
@@ -13,7 +14,7 @@ export class Calendars {
 
 	/** Loads them in the user's order, each integration's sources too. */
 	static async fetch() {
-		Calendars.adopt(await fetchIntegrations())
+		Calendars.adopt(await ListIntegrations.call())
 	}
 
 	static adopt(integrations: Array<Integration>) {
@@ -92,17 +93,17 @@ export class Calendars {
 		const sources = [...integration.sources]
 		applyOrder(sources, ids)
 		integration.sources = sources.sort(byOrder)
-		return putSourceOrder(ids)
+		return ReorderSources.call({ ids })
 	}
 
 	static reorderIntegrations(ids: Array<string>) {
 		applyOrder(Calendars.all, ids)
 		Calendars.all.sort(byOrder)
-		return putIntegrationOrder(ids)
+		return ReorderIntegrations.call({ ids })
 	}
 
 	static async setHidden(source: Source, hidden: boolean) {
-		await toggleSourceVisibility(source.id, hidden)
+		await SetSourceVisibility.call({ id: source.id, hidden })
 		source.hidden = hidden
 	}
 
@@ -117,7 +118,7 @@ export class Calendars {
 
 	/** Shows this calendar alone, remembering what was visible before. */
 	static async solo(sourceId: string) {
-		await soloSource(sourceId)
+		await keepUser(ShowOnlySource.call({ id: sourceId }))
 		await Calendars.fetch()
 	}
 
@@ -127,7 +128,7 @@ export class Calendars {
 	}
 
 	static async restoreVisibility() {
-		await restoreSourceVisibility()
+		await keepUser(RestoreSourceVisibility.call())
 		await Calendars.fetch()
 	}
 }

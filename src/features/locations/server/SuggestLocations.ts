@@ -5,8 +5,6 @@ import { http, operation, Operation, type OperationContext } from '#infrastructu
 import { LocationSuggestion, type PhotonFeature } from '../LocationSuggestion.js'
 import { recentLocations } from './recentLocations.js'
 
-const PHOTON_URL = process.env.MITRA_PHOTON_URL || 'https://photon.komoot.io'
-
 const PHOTON_LANGUAGES = new Set(['en', 'de', 'fr'])
 
 class Parameters {
@@ -41,7 +39,7 @@ export class SuggestLocations extends Operation<Parameters, Array<LocationSugges
 			return recents
 		}
 
-		const url = new URL('/api', PHOTON_URL)
+		const url = new URL('/api', process.env.MITRA_PHOTON_URL || 'https://photon.komoot.io')
 		url.searchParams.set('q', query)
 		url.searchParams.set('limit', '6')
 		if (lang && PHOTON_LANGUAGES.has(lang)) {

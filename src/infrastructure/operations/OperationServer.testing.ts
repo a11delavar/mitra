@@ -13,6 +13,8 @@ import { holdLocalIn } from '#features/time/TimeZone.testing.js'
 import { MitraCalendar } from '#integrations/mitra/MitraCalendar.js'
 import '#integrations/server/registerEngines.js'
 import { errorHandler } from '#infrastructure/http/errorHandler.js'
+// The browser's client, whose error an operation's call throws.
+import '#infrastructure/http/Api.js'
 
 /** An entry as the API sends it, as the tests read one: dates as UTC instants, its rule as an object. */
 export interface SentEntry {
@@ -47,7 +49,7 @@ export class OperationServer {
 	static async start() {
 		// After the test file has loaded: the database opens on import.
 		const { orm } = await import('#infrastructure/database/orm.js')
-		const { operationsRouter } = await import('./Operation.js')
+		const { operationsRouter } = await import('./server/operationsRouter.js')
 		const { mcpRouter } = await import('#features/agents/server/mcp.js')
 		const { accessTokenMiddleware } = await import('#features/identity/server/accessTokenMiddleware.js')
 		await import('#app/operations.js')

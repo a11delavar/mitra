@@ -1,10 +1,10 @@
 import { component, html, css, state } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { Task, TaskStatus, initialState } from '@lit/task'
+import { PreviewSourceMigration, MigrateSource } from '#operations'
 import { pressable, activated, controlHeight } from '#design'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import type { Source } from '#features/sources'
-import { migrateSourceEntries, previewSourceMigration } from '#infrastructure/http/Api.js'
 import { MigrationPlan, type MigrationOutcome, type MigrationVerdict } from '../MigrationPlan.js'
 
 const NAMED_BLOCKED = 5
@@ -18,12 +18,13 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 
 	private readonly preview = new Task(this, {
 		args: () => [this.target?.id] as const,
-		task: ([targetId]) => !targetId ? initialState : previewSourceMigration(this.source.id, targetId, !this.canMove),
+		task: ([targetId]) => !targetId ? initialState : PreviewSourceMigration.call({ id: this.source.id, targetSourceId: targetId, keepOriginals: !this.canMove }),
 	})
 
 	private readonly migration = new Task(this, {
 		autoRun: false,
-		task: () => migrateSourceEntries(this.source.id, {
+		task: () => MigrateSource.call({
+			id: this.source.id,
 			targetSourceId: this.target!.id,
 			flatten: this.flatten === true,
 			keepOriginals: this.keepOriginals,

@@ -1,5 +1,7 @@
-import type { BuildOptions } from 'esbuild'
+import type { BuildOptions, Plugin } from 'esbuild'
+import type TypeScript from 'typescript'
 import { join } from 'path'
+import { readFile } from 'fs/promises'
 import { execSync } from 'child_process'
 
 export const distDir = 'dist'
@@ -58,6 +60,33 @@ export const backendOptions: BuildOptions = {
 	tsconfig,
 }
 
+/**
+ * The browser loads operations to call them and never runs one, so it takes each without the body of its `run`: what only
+ * `run` imported is then unused, and esbuild drops it, server modules and all. `bundles.test.ts` holds the bundle to that.
+ */
+const operationsWithoutRun: Plugin = {
+	name: 'operations-without-run',
+	setup(build) {
+		build.onLoad({ filter: /[\\/]src[\\/].*\.ts$/ }, async ({ path }) => {
+			const source = await readFile(path, 'utf8')
+			if (!source.includes('@operation(')) {
+				return undefined
+			}
+			const { default: ts } = await import('typescript')
+			const bodies = new Array<TypeScript.Block>()
+			const visit = (node: TypeScript.Node) => {
+				if (ts.isMethodDeclaration(node) && node.name.getText() === 'run' && node.body) {
+					bodies.push(node.body)
+				}
+				ts.forEachChild(node, visit)
+			}
+			visit(ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true))
+			const contents = bodies.reduceRight((text, body) => `${text.slice(0, body.getStart())}{ throw new Error('An operation runs on the server') }${text.slice(body.end)}`, source)
+			return { contents, loader: 'ts' }
+		})
+	},
+}
+
 /** Frontend client bundle configuration with code splitting, inlined SVG loaders and the shipped fonts. */
 export const frontendOptions: BuildOptions = {
 	entryPoints: [{ in: './src/app/client.ts', out: 'index' }, { in: './src/app/fonts.css', out: 'fonts' }],
@@ -71,6 +100,7 @@ export const frontendOptions: BuildOptions = {
 	inject: [...inject, 'scripts/injectRandomUUIDPolyfill.ts'],
 	define: defineFor('browser'),
 	tsconfig,
+	plugins: [operationsWithoutRun],
 }
 
 /** Service worker bundle for Web Push notifications. */

@@ -1,8 +1,12 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { createEvent, deleteEvent, settleTimeZone } from '#infrastructure/http/Api.js'
+import { TimeZone } from '#features/time/TimeZone.js'
+import { SettleHomeTimeZone } from '#features/time/server/SettleHomeTimeZone.js'
 import { OperationServer, type SentEntry as Row } from '#infrastructure/operations/OperationServer.testing.js'
+import { CreateEntry } from './CreateEntry.js'
+import { DeleteEntry } from './DeleteEntry.js'
+import { EntryPatch } from '../EntryPatch.js'
 import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
 import { viewIn, zones } from './viewers.testing.js'
@@ -16,14 +20,14 @@ describe('DeleteEntry', () => {
 
 	it('deletes an entry whole, and a second delete finds nothing', async () => {
 		viewIn(zones.berlin)
-		const errand = await createEvent(new Entry({ sourceId: server.source.id, type: EntryType.Task, heading: 'Cancelled errand', start: new DateTime('2026-07-01T09:00:00Z'), end: new DateTime('2026-07-01T10:00:00Z') }))
-		await deleteEvent(errand.id!)
+		const errand = await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: server.source.id, type: EntryType.Task, heading: 'Cancelled errand', start: new DateTime('2026-07-01T09:00:00Z'), end: new DateTime('2026-07-01T10:00:00Z') })))
+		await DeleteEntry.call({ id: errand.id! })
 		assert.equal(await stored(errand.id!), undefined)
-		await assert.rejects(deleteEvent(errand.id!))
+		await assert.rejects(DeleteEntry.call({ id: errand.id! }))
 	})
 
 	describe('as a tool', () => {
-		before(() => settleTimeZone('Europe/Berlin'))
+		before(() => SettleHomeTimeZone.call({ id: TimeZone.of('Europe/Berlin') }))
 
 		it('deletes a repeating entry with every occurrence', async () => {
 			const series = await server.tool<Row>('create_entry', { heading: 'Standup', start: '2027-03-01T09:00[Europe/Berlin]', end: '2027-03-01T09:15[Europe/Berlin]', recurrence: 'FREQ=DAILY' })

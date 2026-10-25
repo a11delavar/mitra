@@ -11,9 +11,20 @@ import { EntryType } from '#features/entries'
 import { MitraCalendar } from '#integrations/mitra/MitraCalendar.js'
 import { IcsSubscription } from '#integrations/ics/IcsSubscription.js'
 import type { Integration } from '#integrations'
-import { createIntegration, createSource, deleteIntegration, deleteSource, discoverSources, putIntegrationOrder, putSourceOrder, reimportIntegration, renameSource, toggleSourceVisibility, updateIntegration, updateSourceColor } from '#infrastructure/http/Api.js'
+import { ConnectIntegration } from '#integrations/server/ConnectIntegration.js'
+import { DisconnectIntegration } from '#integrations/server/DisconnectIntegration.js'
+import { DiscoverSources } from '#integrations/server/DiscoverSources.js'
+import { ReimportIntegration } from '#integrations/server/ReimportIntegration.js'
+import { ReorderIntegrations } from '#integrations/server/ReorderIntegrations.js'
+import { UpdateIntegration } from '#integrations/server/UpdateIntegration.js'
+import { CreateSource } from './server/CreateSource.js'
+import { SetSourceVisibility } from './server/SetSourceVisibility.js'
+import { DeleteSource } from './server/DeleteSource.js'
+import { RecolorSource } from './server/RecolorSource.js'
+import { ReorderSources } from './server/ReorderSources.js'
 import { Calendars } from './client/Calendars.js'
 import { Source } from './Source.js'
+import { RenameSource } from './server/RenameSource.js'
 import { Color } from './Color.js'
 
 /*
@@ -48,7 +59,7 @@ describe('Integrations and calendars over the wire', () => {
 	before(async () => {
 		const { orm } = await import('#infrastructure/database/orm.js')
 		await import('#integrations/server/registerEngines.js')
-		const { operationsRouter } = await import('#infrastructure/operations/Operation.js')
+		const { operationsRouter } = await import('#infrastructure/operations/server/operationsRouter.js')
 		await import('#app/operations.js')
 
 		const em = orm.em.fork()
@@ -126,7 +137,7 @@ describe('Integrations and calendars over the wire', () => {
 		})
 
 		it('creates a calendar, which the next listing shows', async () => {
-			const created = await createSource(mitra().id, { name: 'Garden' })
+			const created = await CreateSource.call({ id: mitra().id, name: 'Garden' })
 			assert.equal(created.name, 'Garden')
 			assert.deepEqual((await shown())[0]!.calendars.sort(), ['Garden', 'Home', 'Work'])
 		})
@@ -134,8 +145,8 @@ describe('Integrations and calendars over the wire', () => {
 		it('renames and recolors a calendar', async () => {
 			await shown()
 			const garden = calendar('Garden').id
-			await renameSource(garden, 'Allotment')
-			await updateSourceColor(garden, Color.parse('#336699')!)
+			await RenameSource.call({ id: garden, name: 'Allotment' })
+			await RecolorSource.call({ id: garden, color: Color.parse('#336699')! })
 			await shown()
 			assert.deepEqual([calendar('Allotment').id, calendar('Allotment').color], [garden, Color.parse('#336699')])
 		})
@@ -143,24 +154,24 @@ describe('Integrations and calendars over the wire', () => {
 		it('keeps the calendars in the order they were put in', async () => {
 			await shown()
 			const reversed = [...mitra().sources].reverse()
-			await putSourceOrder(reversed.map(source => source.id))
+			await ReorderSources.call({ ids: reversed.map(source => source.id) })
 			assert.deepEqual((await shown())[0]!.calendars, reversed.map(source => source.name))
 		})
 
 		it('hides and shows a calendar, which stays where entries may live', async () => {
 			await shown()
-			await toggleSourceVisibility(calendar('Work').id, true)
+			await SetSourceVisibility.call({ id: calendar('Work').id, hidden: true })
 			await shown()
 			assert.equal(calendar('Work').hidden, true)
 			assert.ok(Calendars.enabled().some(source => source.name === 'Work'))
-			await toggleSourceVisibility(calendar('Work').id, false)
+			await SetSourceVisibility.call({ id: calendar('Work').id, hidden: false })
 			await shown()
 			assert.equal(calendar('Work').hidden, false)
 		})
 
 		it('deletes a calendar, which the next listing leaves out', async () => {
 			await shown()
-			await deleteSource(calendar('Allotment').id)
+			await DeleteSource.call({ id: calendar('Allotment').id })
 			assert.deepEqual((await shown())[0]!.calendars.sort(), ['Home', 'Work'])
 		})
 	})
@@ -169,14 +180,14 @@ describe('Integrations and calendars over the wire', () => {
 		let subscription: Integration
 
 		it('discovers the feed\'s calendar', async () => {
-			const discovered = await discoverSources(new IcsSubscription({ uri: feedUrl }))
+			const discovered = await DiscoverSources.call({ integration: new IcsSubscription({ uri: feedUrl }) })
 			assert.equal(discovered.length, 1)
 			assert.ok(discovered[0] instanceof Source)
 		})
 
 		it('connects with the calendars chosen, then imports their entries in the background', async () => {
-			const discovered = await discoverSources(new IcsSubscription({ uri: feedUrl }))
-			subscription = await createIntegration(new IcsSubscription({ uri: feedUrl, sources: discovered.map(source => Object.assign(source, { enabled: true })) }))
+			const discovered = await DiscoverSources.call({ integration: new IcsSubscription({ uri: feedUrl }) })
+			subscription = await ConnectIntegration.call({ integration: new IcsSubscription({ uri: feedUrl, sources: discovered.map(source => Object.assign(source, { enabled: true })) }) })
 			assert.ok(subscription instanceof IcsSubscription)
 			assert.equal(subscription.sources.length, 1)
 			assert.equal(subscription.sources[0]!.enabled, true)
@@ -194,13 +205,13 @@ describe('Integrations and calendars over the wire', () => {
 			const listed = Calendars.integrations.find(integration => integration.id === subscription.id)!
 			const turnedOff = listed.clone()
 			turnedOff.sources.forEach(source => source.enabled = false)
-			const saved = await updateIntegration(turnedOff)
+			const saved = await UpdateIntegration.call({ id: turnedOff.id, integration: turnedOff })
 			assert.deepEqual(saved.sources.map(source => source.enabled), [false])
 
 			const again = saved.clone()
 			assert.deepEqual(again.sources.map(source => source.enabled), [false])
 			again.sources.forEach(source => source.enabled = true)
-			const savedAgain = await updateIntegration(again)
+			const savedAgain = await UpdateIntegration.call({ id: again.id, integration: again })
 			assert.deepEqual(savedAgain.sources.map(source => source.enabled), [true])
 
 			await shown()
@@ -214,21 +225,21 @@ describe('Integrations and calendars over the wire', () => {
 
 		it('re-imports, reading the feed afresh', async () => {
 			feedBody = feedOf(['Retro', 'Offsite', 'Party'])
-			await reimportIntegration(subscription.id)
+			await ReimportIntegration.call({ id: subscription.id })
 			await until(async () => await entriesIn(subscription.sources[0]!.id) === 3)
 		})
 
 		it('keeps the integrations in the order they were put in', async () => {
 			await shown()
 			const reversed = [...Calendars.integrations].reverse().map(integration => integration.id)
-			await putIntegrationOrder(reversed)
+			await ReorderIntegrations.call({ ids: reversed })
 			await shown()
 			assert.deepEqual(Calendars.integrations.map(integration => integration.id), reversed)
 		})
 
 		it('disconnects, its calendars and their entries going with it', async () => {
 			const sourceId = subscription.sources[0]!.id
-			await deleteIntegration(subscription.id)
+			await DisconnectIntegration.call({ id: subscription.id })
 			assert.deepEqual(await shown(), [{ type: 'mitra', calendars: [...mitra().sources].map(source => source.name) }])
 			assert.equal(await entriesIn(sourceId), 0)
 		})
@@ -250,7 +261,7 @@ describe('Integrations and calendars over the wire', () => {
 			await shown()
 			const theirs = calendar('Private').id
 			current = owner
-			await assert.rejects(() => renameSource(theirs, 'Taken'))
+			await assert.rejects(() => RenameSource.call({ id: theirs, name: 'Taken' }))
 			current = stranger
 			try {
 				await shown()

@@ -1,8 +1,12 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { Recurrence, RecurrenceFrequency, EntryOccurrenceChangeScope } from '#features/recurrence'
-import { createEvent, deleteOccurrence, settleTimeZone } from '#infrastructure/http/Api.js'
+import { TimeZone } from '#features/time/TimeZone.js'
+import { SettleHomeTimeZone } from '#features/time/server/SettleHomeTimeZone.js'
 import { OperationServer, type SentEntry as Row } from '#infrastructure/operations/OperationServer.testing.js'
+import { CreateEntry } from './CreateEntry.js'
+import { DeleteEntryOccurrence } from './DeleteEntryOccurrence.js'
+import { EntryPatch } from '../EntryPatch.js'
 import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
 import { iso, midnight, shown, utcMidnight, viewIn, zones } from './viewers.testing.js'
@@ -16,11 +20,11 @@ describe('DeleteEntryOccurrence', () => {
 
 	it('deletes the occurrence of an all-day series its viewer points at, by the day it falls on', async () => {
 		viewIn(zones.tehran)
-		const { id } = await createEvent(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Market', allDay: true, start: midnight('2026-07-06'), end: midnight('2026-07-07'), recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) }))
+		const { id } = await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Market', allDay: true, start: midnight('2026-07-06'), end: midnight('2026-07-07'), recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })))
 
 		viewIn(zones.newYork)
 		const [, , third] = (await shown('2026-07-01', '2026-07-25')).filter(occurrence => occurrence.recurringEntryId === id)
-		await deleteOccurrence(third!, EntryOccurrenceChangeScope.This)
+		await DeleteEntryOccurrence.call({ id: third!.recurringEntryId!, occurrence: third!.storedRecurrenceId!, scope: EntryOccurrenceChangeScope.This })
 		assert.deepEqual(await exdates(id!), [utcMidnight('2026-07-20')])
 
 		viewIn(zones.auckland)
@@ -29,7 +33,7 @@ describe('DeleteEntryOccurrence', () => {
 	})
 
 	describe('as a tool', () => {
-		before(() => settleTimeZone('Europe/Berlin'))
+		before(() => SettleHomeTimeZone.call({ id: TimeZone.of('Europe/Berlin') }))
 
 		it('deletes an occurrence and every later one, the earlier ones kept', async () => {
 			const series = await server.tool<Row>('create_entry', { heading: 'Water plants', type: 'task', start: '2027-03-01T08:00[Europe/Berlin]', estimate: 15, recurrence: 'FREQ=WEEKLY;BYDAY=MO' })

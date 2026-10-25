@@ -6,6 +6,7 @@ import { Participants, type Participant } from '#features/participants/Participa
 import { EntryRelations } from '#features/relations'
 import { type Calendar, Color } from '#features/sources'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
+import { TimeZone } from '#features/time/TimeZone.js'
 import { model } from '#infrastructure/model'
 import { validation, type Validatable, ValidationError } from '#infrastructure/validation'
 import { Entry, type EntryClock } from './Entry.js'
@@ -79,6 +80,11 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 			}
 		}
 		return patch
+	}
+
+	/** The patch creating `entry` where it was drafted: a time without a zone of its own is in the device's, never the account's home. */
+	static creating(entry: Entry) {
+		return Object.assign(EntryPatch.of(entry), { timeZone: entry.timeZone ?? EntryTimeZone.parse(TimeZone.deviceId) ?? null })
 	}
 
 	@validation(z.string().optional())

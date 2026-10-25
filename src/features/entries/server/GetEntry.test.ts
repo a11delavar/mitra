@@ -1,8 +1,11 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { createEvent, settleTimeZone } from '#infrastructure/http/Api.js'
+import { TimeZone } from '#features/time/TimeZone.js'
+import { SettleHomeTimeZone } from '#features/time/server/SettleHomeTimeZone.js'
 import { OperationServer, type SentEntry as Row } from '#infrastructure/operations/OperationServer.testing.js'
+import { CreateEntry } from './CreateEntry.js'
+import { EntryPatch } from '../EntryPatch.js'
 import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
 
@@ -12,7 +15,7 @@ describe('GetEntry', () => {
 	after(() => server.close())
 
 	it('answers one entry as stored', async () => {
-		const created = await createEvent(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Dentist', location: 'Main Street 1', start: new DateTime('2026-07-01T09:00:00Z'), end: new DateTime('2026-07-01T10:00:00Z') }))
+		const created = await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Dentist', location: 'Main Street 1', start: new DateTime('2026-07-01T09:00:00Z'), end: new DateTime('2026-07-01T10:00:00Z') })))
 		const answer = await fetch(`${server.url}/entries/${created.id}`)
 		assert.equal(answer.status, 200)
 		assert.deepEqual(await answer.json().then(entry => [(entry as Entry).id, (entry as Entry).location]), [created.id, 'Main Street 1'])
@@ -23,7 +26,7 @@ describe('GetEntry', () => {
 	})
 
 	describe('as a tool', () => {
-		before(() => settleTimeZone('Europe/Berlin'))
+		before(() => SettleHomeTimeZone.call({ id: TimeZone.of('Europe/Berlin') }))
 
 		it('reads an entry whole, a repeating one with its rule', async () => {
 			const parcel = await server.tool<Row>('create_entry', { heading: 'Pick up parcel', type: 'task', due: '2027-03-05T18:00[Europe/Berlin]', description: 'At the corner shop', location: 'Main Street 1' })

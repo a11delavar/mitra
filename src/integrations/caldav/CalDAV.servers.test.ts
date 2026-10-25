@@ -8,12 +8,22 @@ import { Api } from '@a11d/api'
 import { DateTime, DateTimeRange } from '@3mo/date-time'
 import '@3mo/date-time-value-constructor'
 import { ModelValueConstructor } from '@a11d/api-model-value-constructor'
-import { EntryFile, EntryFiles, Entry, EntryType } from '#features/entries'
+import { EntryFile, EntryFiles, Entry, EntryType, EntryPatch } from '#features/entries'
 import { User } from '#features/identity'
 import { Source } from '#features/sources'
+import { CreateEntry } from '#features/entries/server/CreateEntry.ts'
+import { UpdateEntry } from '#features/entries/server/UpdateEntry.ts'
+import { DeleteEntry } from '#features/entries/server/DeleteEntry.ts'
+import { ListEntries } from '#features/entries/server/ListEntries.ts'
 import { MitraCalendar } from '#integrations/mitra/MitraCalendar.ts'
 import type { Integration } from '#integrations'
-import { createEvent, createIntegration, deleteEvent, deleteIntegration, discoverSources, fetchEvents, fetchIntegrations, reimportIntegration, updateEvent, updateIntegration, uploadFile } from '#infrastructure/http/Api.ts'
+import { ListIntegrations } from '#integrations/server/ListIntegrations.ts'
+import { ConnectIntegration } from '#integrations/server/ConnectIntegration.ts'
+import { DisconnectIntegration } from '#integrations/server/DisconnectIntegration.ts'
+import { DiscoverSources } from '#integrations/server/DiscoverSources.ts'
+import { ReimportIntegration } from '#integrations/server/ReimportIntegration.ts'
+import { UpdateIntegration } from '#integrations/server/UpdateIntegration.ts'
+import { uploadFile } from '#infrastructure/http/Api.ts'
 import { HttpRecording } from '#infrastructure/http/HttpRecording.testing.ts'
 import { CalDAV } from './CalDAV.ts'
 
@@ -64,7 +74,7 @@ describe('A CalDAV account as real servers answer it', () => {
 		const { orm } = await import('#infrastructure/database/orm.ts')
 		await import('#integrations/server/registerEngines.ts')
 		const { staleTabs } = await import('#features/entries/server/staleTabs.ts')
-		const { operationsRouter } = await import('#infrastructure/operations/Operation.ts')
+		const { operationsRouter } = await import('#infrastructure/operations/server/operationsRouter.ts')
 		await import('#app/operations.ts')
 		const { fileContentRouter, filesRouter } = await import('#features/files/server/files.ts')
 		const { observeInstanceOrigin } = await import('#infrastructure/http/instanceUrl.ts')
@@ -208,19 +218,19 @@ describe('A CalDAV account as real servers answer it', () => {
 			const calendar = (calendarName: string) => integration.sources.find(source => source.name === calendarName)!
 
 			it('discovers the account\'s calendars by their names', async () => {
-				const discovered = await discoverSources(new CalDAV({ uri: uri(), credentials }))
+				const discovered = await DiscoverSources.call({ integration: new CalDAV({ uri: uri(), credentials }) })
 				assert.deepEqual(ours(discovered).map(source => source.name), ['Home', 'Work'])
 				assert.ok(discovered.every(source => source instanceof Source))
 			})
 
 			it('lists the calendars of another user\'s address the server shares, not the account\'s own', { skip: !layouts[name]?.elsewhere && 'the server shares none by address' }, async () => {
-				const discovered = await discoverSources(new CalDAV({ uri: `${server}${layouts[name]!.elsewhere}`, credentials }))
+				const discovered = await DiscoverSources.call({ integration: new CalDAV({ uri: `${server}${layouts[name]!.elsewhere}`, credentials }) })
 				assert.deepEqual(discovered.map(source => source.name), ['Team'])
 			})
 
 			it('connects with the calendars chosen and imports only theirs', async () => {
-				const discovered = await discoverSources(new CalDAV({ uri: uri(), credentials }))
-				integration = await createIntegration(new CalDAV({ uri: uri(), credentials, sources: discovered.map(source => Object.assign(source, { enabled: source.name === 'Work' })) }))
+				const discovered = await DiscoverSources.call({ integration: new CalDAV({ uri: uri(), credentials }) })
+				integration = await ConnectIntegration.call({ integration: new CalDAV({ uri: uri(), credentials, sources: discovered.map(source => Object.assign(source, { enabled: source.name === 'Work' })) }) })
 				assert.deepEqual(ours(integration.sources).map(source => [source.name, source.enabled]), [['Home', false], ['Work', true]])
 				await until(async () => (await headings(calendar('Work').id)).length === 1)
 				assert.deepEqual(await headings(calendar('Work').id), ['Standup'])
@@ -229,32 +239,32 @@ describe('A CalDAV account as real servers answer it', () => {
 
 			it('writes an event made in Mitra into the calendar, and its edits after it', async () => {
 				const start = new DateTime('2026-10-22T13:00:00Z')
-				const created = await createEvent(new Entry({ sourceId: calendar('Work').id, type: EntryType.Event, heading: 'Planning', start, end: start.add({ hours: 1 }) }))
+				const created = await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: calendar('Work').id, type: EntryType.Event, heading: 'Planning', start, end: start.add({ hours: 1 }) })))
 				assert.deepEqual(await summaries('work'), ['Planning', 'Standup'])
 
 				created.heading = 'Planning, rescheduled'
-				await updateEvent(created, ['heading'])
+				await UpdateEntry.call({ ...EntryPatch.of(created, ['heading']), id: created.id! })
 				assert.deepEqual(await summaries('work'), ['Planning, rescheduled', 'Standup'])
 			})
 
 			it('takes a calendar on, and edits the choice again at once from what the save answered', async () => {
 				const withHome = integration.clone()
 				ours(withHome.sources).forEach(source => source.enabled = true)
-				const saved = await updateIntegration(withHome)
+				const saved = await UpdateIntegration.call({ id: withHome.id, integration: withHome })
 				assert.deepEqual(ours(saved.sources).map(source => source.enabled), [true, true])
 				await until(async () => (await headings(calendar('Home').id)).length === 1)
 				assert.deepEqual(await headings(calendar('Home').id), ['Dentist'])
 
 				const again = saved.clone()
 				assert.deepEqual(ours(again.sources).map(source => source.enabled), [true, true])
-				const listed = (await fetchIntegrations()).find(each => each.id === integration.id)!
+				const listed = (await ListIntegrations.call()).find(each => each.id === integration.id)!
 				assert.equal(listed.sources.length, integration.sources.length, 'editing never adds a calendar twice')
 				integration = listed
 			})
 
 			it('reads what another app changed upstream once it imports again', async () => {
 				await putEvent('work', 'standup', 'Standup, moved', 23)
-				await reimportIntegration(integration.id)
+				await ReimportIntegration.call({ id: integration.id })
 				await until(async () => (await headings(calendar('Work').id)).includes('Standup, moved'))
 				assert.deepEqual(await headings(calendar('Work').id), ['Planning, rescheduled', 'Standup, moved'])
 			})
@@ -263,16 +273,16 @@ describe('A CalDAV account as real servers answer it', () => {
 				const board = calendar(layouts[name]!.unlisted!)
 				const withBoard = integration.clone()
 				withBoard.sources.find(source => source.name === board.name)!.enabled = true
-				integration = await updateIntegration(withBoard)
+				integration = await UpdateIntegration.call({ id: withBoard.id, integration: withBoard })
 				await until(async () => (await headings(board.id)).length === 2)
 				assert.deepEqual(await headings(board.id), ['List : To do', 'Write the announcement'])
 			})
 
 			it('moves an entry from a calendar Mitra keeps into the CalDAV calendar', async () => {
 				const start = new DateTime('2026-10-24T08:00:00Z')
-				const kept = await createEvent(new Entry({ sourceId: local.id, type: EntryType.Event, heading: 'Retro', start, end: start.add({ hours: 1 }) }))
+				const kept = await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: local.id, type: EntryType.Event, heading: 'Retro', start, end: start.add({ hours: 1 }) })))
 				kept.sourceId = calendar('Home').id
-				await updateEvent(kept, ['sourceId'])
+				await UpdateEntry.call({ ...EntryPatch.of(kept, ['sourceId']), id: kept.id! })
 				assert.deepEqual(await headings(local.id), [])
 				assert.deepEqual(await headings(calendar('Home').id), ['Dentist', 'Retro'])
 				assert.deepEqual(await summaries('home'), ['Dentist', 'Retro'])
@@ -280,14 +290,14 @@ describe('A CalDAV account as real servers answer it', () => {
 
 			it('deletes an entry upstream', async () => {
 				const [retro] = (await entriesIn(calendar('Home').id)).filter(entry => entry.heading === 'Retro')
-				await deleteEvent(retro!.id)
+				await DeleteEntry.call({ id: retro!.id })
 				assert.deepEqual(await summaries('home'), ['Dentist'])
 			})
 
 			describe('its files', () => {
 				const october = new DateTimeRange(new DateTime('2026-10-01T00:00:00Z'), new DateTime('2026-11-01T00:00:00Z'))
 				/** The entry as a fresh listing hands it to the browser. */
-				const listed = async (heading: string) => (await fetchEvents(october)).find(entry => entry.heading === heading)!
+				const listed = async (heading: string) => (await ListEntries.call({ start: october.start!, end: october.end! })).find(entry => entry.heading === heading)!
 				const resourceOf = async (calendarName: string, summary: string) =>
 					(await resources(calendarName)).find(ics => ics.replace(/\r?\n[ \t]/g, '').includes(`SUMMARY:${summary}`))!.replace(/\r?\n[ \t]/g, '')
 				const attachLines = (ics: string) => ics.split(/\r?\n/).filter(line => line.startsWith('ATTACH'))
@@ -296,7 +306,7 @@ describe('A CalDAV account as real servers answer it', () => {
 				it('writes a file attached in Mitra as an ATTACH line whose address serves the file to any app', async () => {
 					const file = await upload('agenda.txt', 'Agenda for the review')
 					const start = new DateTime('2026-10-26T10:00:00Z')
-					await createEvent(new Entry({ sourceId: calendar('Work').id, type: EntryType.Event, heading: 'Review', start, end: start.add({ hours: 1 }), attachments: EntryFiles.of([file]) }))
+					await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: calendar('Work').id, type: EntryType.Event, heading: 'Review', start, end: start.add({ hours: 1 }), attachments: EntryFiles.of([file]) })))
 					const [line] = attachLines(await resourceOf('work', 'Review'))
 					const url = /:(https?:\/\/.+)$/.exec(line!)?.[1]
 					assert.match(url!, /^http:\/\/localhost:\d+\/api\/files\/[\w-]{22}\/agenda\.txt$/)
@@ -310,29 +320,29 @@ describe('A CalDAV account as real servers answer it', () => {
 					// As the server holds it, which may order a line's parameters its own way.
 					const [line] = attachLines(await resourceOf('work', 'Kickoff'))
 					assert.match(line!, /X-NC-FILE-ID=42/)
-					await reimportIntegration(integration.id)
+					await ReimportIntegration.call({ id: integration.id })
 					await until(async () => (await headings(calendar('Work').id)).includes('Kickoff'))
 					const kickoff = await listed('Kickoff')
 					assert.deepEqual(kickoff.attachments.all.map(file => [file.name, file.sourceUrl]), [['deck.pdf', 'https://cloud.example.com/f/42']])
 
 					kickoff.heading = 'Kickoff, renamed'
-					await updateEvent(kickoff, ['heading'])
+					await UpdateEntry.call({ ...EntryPatch.of(kickoff, ['heading']), id: kickoff.id! })
 					assert.deepEqual(attachLines(await resourceOf('work', 'Kickoff\\, renamed')), [line])
 				})
 
 				it('takes a file\'s line off upstream once it is removed in Mitra', async () => {
 					const review = await listed('Review')
 					review.attachments = review.attachments.without(review.attachments.all[0]!)
-					await updateEvent(review, ['files'])
+					await UpdateEntry.call({ ...EntryPatch.of(review, ['files']), id: review.id! })
 					assert.deepEqual(attachLines(await resourceOf('work', 'Review')), [])
 				})
 
 				it('moves an entry with a file in, its line naming a file Mitra still serves once the original is gone', async () => {
 					const file = await upload('notes.txt', 'Notes kept locally')
 					const start = new DateTime('2026-10-28T15:00:00Z')
-					const kept = await createEvent(new Entry({ sourceId: local.id, type: EntryType.Event, heading: 'Notes', start, end: start.add({ hours: 1 }), attachments: EntryFiles.of([file]) }))
+					const kept = await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: local.id, type: EntryType.Event, heading: 'Notes', start, end: start.add({ hours: 1 }), attachments: EntryFiles.of([file]) })))
 					kept.sourceId = calendar('Home').id
-					await updateEvent(kept, ['sourceId'])
+					await UpdateEntry.call({ ...EntryPatch.of(kept, ['sourceId']), id: kept.id! })
 					const [line] = attachLines(await resourceOf('home', 'Notes'))
 					const served = await fetch(/:(https?:\/\/.+)$/.exec(line!)![1]!)
 					assert.equal(served.status, 200)
@@ -342,8 +352,8 @@ describe('A CalDAV account as real servers answer it', () => {
 
 			it('disconnects, leaving the server\'s calendars as they are', async () => {
 				const work = calendar('Work').id
-				await deleteIntegration(integration.id)
-				assert.equal((await fetchIntegrations()).some(each => each.id === integration.id), false)
+				await DisconnectIntegration.call({ id: integration.id })
+				assert.equal((await ListIntegrations.call()).some(each => each.id === integration.id), false)
 				assert.deepEqual(await entriesIn(work), [])
 				assert.deepEqual(await summaries('work'), ['Kickoff, renamed', 'Planning, rescheduled', 'Review', 'Standup, moved'])
 			})

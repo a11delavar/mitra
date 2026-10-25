@@ -23,7 +23,7 @@ await esbuild.build({
 	mainFields: ['module', 'main'],
 	// createRequire shim for CJS dependencies with dynamic requires in ESM test bundle.
 	banner: backendOptions.banner,
-	external: ['tsdav', 'better-sqlite3', 'esbuild'],
+	external: ['tsdav', 'better-sqlite3', 'esbuild', 'typescript'],
 	sourcemap: 'linked',
 	inject,
 	define,

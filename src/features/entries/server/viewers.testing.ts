@@ -2,7 +2,7 @@ import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { EntryOccurrences } from '#features/recurrence'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { holdLocalIn } from '#features/time/TimeZone.testing.js'
-import { fetchEvents } from '#infrastructure/http/Api.js'
+import { ListEntries } from './ListEntries.js'
 
 /*
 	Viewers in different zones, for the entries' tests: a viewer is this process's zone (`process.env.TZ`), which the
@@ -27,7 +27,7 @@ export const iso = (value: { valueOf(): number } | null | undefined) => value ==
 export const range = (from: string, to: string) => new DateTimeRange(midnight(from), midnight(to))
 
 /** The window's entries as stored, as this viewer fetches them. */
-export const fetched = (from: string, to: string) => fetchEvents(range(from, to))
+export const fetched = (from: string, to: string) => ListEntries.call({ start: range(from, to).start!, end: range(from, to).end! })
 
 /** The window as the views show it: each entry's occurrences there. */
 export const shown = async (from: string, to: string) => {

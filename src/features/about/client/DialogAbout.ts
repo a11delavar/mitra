@@ -1,8 +1,9 @@
 import { component, html, css, ifDefined, state } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { Localizer } from '@3mo/localization'
+import { MarkVersionSeen, ListReleases } from '#operations'
 import { activated, focusRing, scrollbar } from '#design'
-import { fetchReleases, getMeta, getUser, isBundleStale, setSeenVersion } from '#infrastructure/http/Api.js'
+import { getMeta, getUser, isBundleStale, keepUser } from '#infrastructure/http/Api.js'
 import { type ChangelogSection } from '../Changelog.js'
 import { Release, type ReleaseFolder } from '../Release.js'
 import { ReleaseNotes } from '../ReleaseNotes.js'
@@ -30,7 +31,7 @@ export class DialogAbout extends DialogComponent {
 		if (getUser()?.hasSeen(DialogAbout.runningVersion)) {
 			return
 		}
-		setSeenVersion(DialogAbout.runningVersion)
+		keepUser(MarkVersionSeen.call({ version: DialogAbout.runningVersion }))
 			.then(() => document.querySelector('mitra-sidebar')?.requestUpdate())
 			.catch(() => void 0)
 	}
@@ -45,7 +46,7 @@ export class DialogAbout extends DialogComponent {
 
 	protected override async connected() {
 		DialogAbout.markSeen()
-		const { sections, folders } = await fetchReleases().catch(() => ({ sections: new Array<ChangelogSection>(), folders: new Array<ReleaseFolder>() }))
+		const { sections, folders } = await ListReleases.call().catch(() => ({ sections: new Array<ChangelogSection>(), folders: new Array<ReleaseFolder>() }))
 		this.folders = new Map(folders.map(folder => [folder.version, folder]))
 		this.current = sections.find(section => section.current)
 		this.releases = Release.list(sections, new Map(folders.map(folder => [folder.version, DialogAbout.notesOf(folder)])))

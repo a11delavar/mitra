@@ -1,5 +1,4 @@
 import { description, label } from '@a11d/metadata'
-import { type Request } from 'express'
 import { Integration } from '#integrations'
 import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
@@ -8,12 +7,8 @@ import { importer } from './Importer.js'
 @operation()
 @label('Change an integration')
 @description('Changes an account\'s credentials and which of its calendars are turned on, importing those turned on in the background.')
-@http({ method: 'PUT', path: '/integrations/:id' })
+@http({ method: 'PUT', path: '/integrations/:id', body: 'integration' })
 export class UpdateIntegration extends Operation<{ readonly id: string, readonly integration: Integration }, Integration> {
-	static override fromRequest(request: Request) {
-		return new UpdateIntegration({ id: request.params.id as string, integration: request.body as Integration })
-	}
-
 	async run({ em, user }: OperationContext): Promise<Integration> {
 		const integration = await user.integration(em, this.parameters.id)
 		await integration.apply(em, this.parameters.integration)

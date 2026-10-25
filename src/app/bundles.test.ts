@@ -1,5 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import esbuild from 'esbuild'
 import { backendOptions, frontendOptions, serviceWorkerOptions } from '../../scripts/esbuild.ts'
 
@@ -50,6 +51,18 @@ describe('the occurrences of an entry', () => {
 })
 
 describe('the browser bundle', () => {
+	it('takes the operations it calls without their run, so nothing only the server has comes along', async () => {
+		const inputs = await inputsOf(frontendOptions)
+		assert.ok(inputs.some(input => input.endsWith('features/entries/server/UpdateEntry.ts')), 'the browser calls its operations')
+		// What operations declare at load: the tool decorator, and the bases their classes and parameters extend.
+		const declared = ['features/agents/server/tool.ts', 'features/time/server/ChangeTimeZones.ts', 'features/migration/server/SourceMigration.ts']
+		const strays = inputs.filter(input => input.includes('/server/') && !declared.some(each => input.endsWith(each)) && !readFileSync(input, 'utf8').includes('@operation('))
+		assert.deepEqual(strays, [], 'only operations and what they declare at load reach the browser from server/')
+		for (const forbidden of ['node_modules/express', 'node_modules/@mikro-orm/sqlite', 'node_modules/@mikro-orm/knex', 'node_modules/web-push']) {
+			assert.ok(!inputs.some(input => input.includes(forbidden)), `${forbidden} must not reach the browser with an operation`)
+		}
+	})
+
 	it('carries no sync engine, nor the protocol client only an engine talks to, nor the protocol agents speak', async () => {
 		const inputs = await inputsOf(frontendOptions)
 		for (const forbidden of ['CalDAVSyncEngine', 'node_modules/tsdav', 'TempoSyncEngine', 'TempoClient', 'JiraClient', 'TodoistSyncEngine', 'TodoistClient', 'node_modules/@modelcontextprotocol']) {

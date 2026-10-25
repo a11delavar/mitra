@@ -1,8 +1,12 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client'
-import { createAccessToken } from '#features/identity/server/accessTokens.testing.js'
+import { AccessTokenScope } from '#features/identity'
+import { CreateAccessToken } from '#features/identity/server/CreateAccessToken.js'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
+
+/** The tools' names, as a set: the protocol gives their order no meaning. */
+const names = (tools: ReadonlyArray<{ readonly name: string }>) => new Set(tools.map(tool => tool.name))
 
 describe('The MCP endpoint', () => {
 	let server: OperationServer
@@ -17,15 +21,15 @@ describe('The MCP endpoint', () => {
 		await server.close()
 	})
 
-	it('lists the operations that offer a tool, in the order they register, what their routes say among their hints', async () => {
+	it('lists the operations that offer a tool, what their routes say among their hints', async () => {
 		const { tools } = await agent.listTools()
-		assert.deepEqual(tools.map(tool => tool.name), [
+		assert.deepEqual(names(tools), new Set([
 			'get_context', 'get_overview', 'search_entries', 'get_entry',
 			'create_entry', 'update_entry_occurrence', 'update_entry', 'relate_entries', 'unrelate_entries', 'complete_task', 'delete_entry_occurrence', 'delete_entry',
 			'create_calendar', 'delete_calendar',
-		])
-		assert.deepEqual(tools.filter(tool => tool.annotations?.readOnlyHint).map(tool => tool.name), ['get_context', 'get_overview', 'search_entries', 'get_entry'])
-		assert.deepEqual(tools.filter(tool => tool.annotations?.destructiveHint).map(tool => tool.name), ['delete_entry_occurrence', 'delete_entry', 'delete_calendar'])
+		]))
+		assert.deepEqual(names(tools.filter(tool => tool.annotations?.readOnlyHint)), new Set(['get_context', 'get_overview', 'search_entries', 'get_entry']))
+		assert.deepEqual(names(tools.filter(tool => tool.annotations?.destructiveHint)), new Set(['delete_entry_occurrence', 'delete_entry', 'delete_calendar']))
 		assert.ok(tools.every(tool => tool.title && tool.description))
 	})
 
@@ -56,12 +60,12 @@ describe('The MCP endpoint', () => {
 	})
 
 	it('offers an agent whose token only reads the tools that only read, and notes when a token was last used', async () => {
-		const { token } = await createAccessToken('Laptop', 'read')
+		const { token } = await CreateAccessToken.call({ name: 'Laptop', scope: AccessTokenScope.Read })
 		const reader = new Client({ name: 'reader', version: '1.0.0' })
 		await reader.connect(new StreamableHTTPClientTransport(new URL(`${server.url}/mcp`), { requestInit: { headers: { authorization: `Bearer ${token}` } } }))
 		const { tools } = await reader.listTools()
 		await reader.close()
-		assert.deepEqual(tools.map(tool => tool.name), ['get_context', 'get_overview', 'search_entries', 'get_entry'])
+		assert.deepEqual(names(tools), new Set(['get_context', 'get_overview', 'search_entries', 'get_entry']))
 		const [row] = await server.query<{ last_used_at: unknown }>('select last_used_at from access_token')
 		assert.ok(row?.last_used_at)
 	})

@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { fetchIntegrations } from '#infrastructure/http/Api.js'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
+import { ListIntegrations } from './ListIntegrations.js'
 
 describe('ListIntegrations', () => {
 	let server: OperationServer
@@ -9,7 +9,7 @@ describe('ListIntegrations', () => {
 	after(() => server.close())
 
 	it('lists the user\'s integrations with their calendars', async () => {
-		const integrations = await fetchIntegrations()
+		const integrations = await ListIntegrations.call()
 		assert.deepEqual(integrations.map(integration => [integration.id, integration.sources.map(source => source.name)]), [[server.integration.id, ['Home']]])
 	})
 })

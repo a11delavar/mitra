@@ -1,5 +1,6 @@
 import { component, html, css, state, Binder, bind, unsafeHTML, ifDefined, live } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
+import { CreateSource, DiscoverSources, ConnectIntegration, UpdateIntegration, GetGoogleSetup } from '#operations'
 import '#design/TextField.js'
 import { pressable } from '#design'
 import { docsPage } from '#features/about/client/website.js'
@@ -15,7 +16,7 @@ import icsLogo from '#integrations/ics/logo.svg'
 import notionLogo from '#integrations/notion/logo.svg'
 import tempoLogo from '#integrations/tempo/logo.svg'
 import todoistLogo from '#integrations/todoist/logo.svg'
-import { discoverSources, createIntegration, updateIntegration, fetchGoogleAvailability, connectGoogle, createSource, getMeta } from '#infrastructure/http/Api.js'
+import { connectGoogle, getMeta } from '#infrastructure/http/Api.js'
 
 const logos: Record<string, string> = {
 	mitra: mitraLogo,
@@ -69,7 +70,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 		this.discovering = true
 		this.discoveryError = undefined
 		try {
-			const sources = await discoverSources(entity)
+			const sources = await DiscoverSources.call({ integration: entity })
 			if (this.entity !== entity) {
 				return
 			}
@@ -101,7 +102,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 			if (this.parameters.prefill) {
 				this.entity = this.parameters.prefill
 			}
-			fetchGoogleAvailability()
+			GetGoogleSetup.call()
 				.then(availability => this.googleAvailability = availability)
 				.catch((error: Error) => this.googleAvailability = { error: error.message })
 			return
@@ -466,12 +467,12 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 	protected override async primaryAction() {
 		// Nothing was discovered, so create the first calendar through the regular source endpoint.
 		if (!this.discoversSources && !this.isEdit) {
-			const integration = await createIntegration(this.entity!)
-			await createSource(integration.id, { name: this.calendarName.trim() || String(t('Calendar')) })
+			const integration = await ConnectIntegration.call({ integration: this.entity! })
+			await CreateSource.call({ id: integration.id, name: this.calendarName.trim() || String(t('Calendar')) })
 			await Calendars.fetch()
 			return integration
 		}
-		const integration = this.isEdit ? await updateIntegration(this.entity!) : await createIntegration(this.entity!)
+		const integration = this.isEdit ? await UpdateIntegration.call({ id: this.entity!.id, integration: this.entity! }) : await ConnectIntegration.call({ integration: this.entity! })
 		await Calendars.fetch()
 		return integration
 	}

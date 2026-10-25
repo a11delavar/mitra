@@ -1,8 +1,9 @@
 import { Component, component, eventListener, html } from '@a11d/lit'
 import { Task } from '@lit/task'
+import { ListAccessTokens, RevokeAccessToken } from '#operations'
 import type { AccessToken } from '#features/identity'
 import { ClockController } from '#features/time/client/ClockController.js'
-import { accessTokenIssued, fetchAccessTokens, revokeAccessToken } from './accessTokens.js'
+import { accessTokenIssued } from './accessTokens.js'
 
 /** The access tokens the user has given agents, laid out as its setting's list. */
 @component('mitra-access-tokens')
@@ -11,7 +12,7 @@ export class AccessTokenList extends Component {
 
 	private readonly tokens = new Task(this, {
 		args: () => [] as const,
-		task: () => fetchAccessTokens(),
+		task: () => ListAccessTokens.call(),
 	})
 
 	protected override createRenderRoot() { return this }
@@ -22,7 +23,7 @@ export class AccessTokenList extends Component {
 	}
 
 	private async revoke(accessToken: AccessToken) {
-		await revokeAccessToken(accessToken.id)
+		await RevokeAccessToken.call({ id: accessToken.id })
 		await this.tokens.run()
 	}
 

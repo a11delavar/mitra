@@ -1,7 +1,8 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { deleteIntegration, fetchIntegrations } from '#infrastructure/http/Api.js'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
+import { ListIntegrations } from './ListIntegrations.js'
+import { DisconnectIntegration } from './DisconnectIntegration.js'
 
 describe('DisconnectIntegration', () => {
 	let server: OperationServer
@@ -9,7 +10,7 @@ describe('DisconnectIntegration', () => {
 	after(() => server.close())
 
 	it('disconnects an integration with its calendars', async () => {
-		await deleteIntegration(server.integration.id)
-		assert.deepEqual(await fetchIntegrations(), [])
+		await DisconnectIntegration.call({ id: server.integration.id })
+		assert.deepEqual(await ListIntegrations.call(), [])
 	})
 })

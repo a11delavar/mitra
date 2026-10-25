@@ -3,9 +3,9 @@ import assert from 'node:assert/strict'
 import { Api } from '@a11d/api'
 import { DateTime } from '@3mo/date-time'
 import { Entry, EntryType } from '#features/entries'
-import { updateEvent } from './Api.js'
+import { EntryStore } from './EntryStore.js'
 
-describe('updateEvent', () => {
+describe('EntryStore.persistence.update', () => {
 	const put = Api.put
 	afterEach(() => Api.put = put)
 
@@ -16,7 +16,7 @@ describe('updateEvent', () => {
 			body = payload
 			return Promise.resolve(entry)
 		}) as typeof Api.put
-		void updateEvent(entry)
+		void EntryStore.persistence.update(entry)
 		return body!
 	}
 

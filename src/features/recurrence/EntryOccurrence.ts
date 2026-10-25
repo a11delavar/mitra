@@ -263,6 +263,7 @@ export class EntryOccurrence {
 			timeZone: entry.timeZone,
 			reminders: entry.reminders,
 			participants: entry.participants,
+			files: entry.files,
 			relations: entry.relations,
 			start: this.start,
 			end: this.end,

@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { fetchUser } from '#infrastructure/http/Api.js'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
+import { GetUser } from './GetUser.js'
 
 describe('GetUser', () => {
 	let server: OperationServer
@@ -9,7 +9,7 @@ describe('GetUser', () => {
 	after(() => server.close())
 
 	it('answers the signed-in user', async () => {
-		const user = await fetchUser()
+		const user = await GetUser.call()
 		assert.deepEqual([user.id, user.username], [server.user.id, 'account-owner'])
 	})
 })

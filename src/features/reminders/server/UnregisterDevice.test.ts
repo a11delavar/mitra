@@ -2,7 +2,8 @@ import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { Api } from '@a11d/api'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
-import { listDevices, registerDevice } from './devices.testing.js'
+import { registerDevice } from './devices.testing.js'
+import { ListDevices } from './ListDevices.js'
 
 describe('UnregisterDevice', () => {
 	let server: OperationServer
@@ -12,7 +13,7 @@ describe('UnregisterDevice', () => {
 	it('removes a device by its endpoint', async () => {
 		await registerDevice('https://push.example/phone')
 		await Api.delete(`/push/subscription?endpoint=${encodeURIComponent('https://push.example/phone')}`)
-		assert.deepEqual(await listDevices(), [])
+		assert.deepEqual(await ListDevices.call(), [])
 	})
 
 	it('refuses a request without an endpoint', async () => {

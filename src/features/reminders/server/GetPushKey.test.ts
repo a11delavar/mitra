@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { Api } from '@a11d/api'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
+import { GetPushKey } from './GetPushKey.js'
 
 describe('GetPushKey', () => {
 	let server: OperationServer
@@ -9,8 +9,8 @@ describe('GetPushKey', () => {
 	after(() => server.close())
 
 	it('answers the instance\'s public push key, the same every time', async () => {
-		const { key } = await Api.get<{ key: string }>('/push/key')
+		const { key } = await GetPushKey.call()
 		assert.ok(key.length > 40)
-		assert.equal((await Api.get<{ key: string }>('/push/key')).key, key)
+		assert.equal((await GetPushKey.call()).key, key)
 	})
 })

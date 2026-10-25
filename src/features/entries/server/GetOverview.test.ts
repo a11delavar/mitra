@@ -1,6 +1,9 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { createSource, settleTimeZone, toggleSourceVisibility } from '#infrastructure/http/Api.js'
+import { TimeZone } from '#features/time/TimeZone.js'
+import { SettleHomeTimeZone } from '#features/time/server/SettleHomeTimeZone.js'
+import { CreateSource } from '#features/sources/server/CreateSource.js'
+import { SetSourceVisibility } from '#features/sources/server/SetSourceVisibility.js'
 import { OperationServer, type SentEntry as Row } from '#infrastructure/operations/OperationServer.testing.js'
 
 describe('GetOverview', () => {
@@ -9,7 +12,7 @@ describe('GetOverview', () => {
 	after(() => server.close())
 
 	describe('as a tool', () => {
-		before(() => settleTimeZone('Europe/Berlin'))
+		before(() => SettleHomeTimeZone.call({ id: TimeZone.of('Europe/Berlin') }))
 
 		const listed = (from: string, to: string) => server.tool<{ entries: Array<Row>, availability: Array<Row>, overdue: Array<Row>, unscheduled: Array<Row> }>('get_overview', { start: from, end: to })
 
@@ -38,8 +41,8 @@ describe('GetOverview', () => {
 		})
 
 		it('reads every calendar, those hidden in the app included', async () => {
-			const hidden = await createSource(server.integration.id, { name: 'Hobbies' })
-			await toggleSourceVisibility(hidden.id, true)
+			const hidden = await CreateSource.call({ id: server.integration.id, name: 'Hobbies' })
+			await SetSourceVisibility.call({ id: hidden.id, hidden: true })
 			await server.tool('create_entry', { heading: 'Volleyball', sourceId: hidden.id, start: '2027-08-02T19:00[Europe/Berlin]', end: '2027-08-02T21:00[Europe/Berlin]' })
 			assert.ok((await listed('2027-08-02', '2027-08-02')).entries.some(row => row.heading === 'Volleyball'))
 		})

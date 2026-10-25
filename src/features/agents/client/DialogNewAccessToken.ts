@@ -1,7 +1,7 @@
 import { component, html, css, state, bind } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
+import { CreateAccessToken } from '#operations'
 import { AccessTokenScope } from '#features/identity'
-import { createAccessToken } from './accessTokens.js'
 
 /** Asks what a new access token is for and what it may do, and makes it, answering its name and the token itself. */
 @component('mitra-dialog-new-access-token')
@@ -41,7 +41,7 @@ export class DialogNewAccessToken extends DialogComponent<void, { readonly name:
 
 	protected override async primaryAction() {
 		const name = this.tokenName.trim()
-		const { token } = await createAccessToken(name, this.tokenScope)
+		const { token } = await CreateAccessToken.call({ name, scope: this.tokenScope })
 		return { name, token }
 	}
 }

@@ -1,7 +1,7 @@
 import { component, html, css } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
+import { CountSourceEntries, DeleteSource } from '#operations'
 import { DialogSourceMigration } from '#features/migration/client/DialogSourceMigration.js'
-import { countSourceEntries, deleteSource } from '#infrastructure/http/Api.js'
 import { type Source } from '../Source.js'
 import { Calendars } from './Calendars.js'
 
@@ -12,11 +12,11 @@ import { Calendars } from './Calendars.js'
 export class DialogSourceDeletion extends DialogComponent<{ readonly source: Source }, boolean> {
 	/** Asks first only if the calendar has entries to lose. */
 	static async confirmAndDelete(source: Source) {
-		const hasEntries = await countSourceEntries(source.id) > 0
+		const hasEntries = await CountSourceEntries.call({ id: source.id }) > 0
 		if (hasEntries && await new DialogSourceDeletion({ source }).confirm().catch(() => false) !== true) {
 			return false
 		}
-		await deleteSource(source.id)
+		await DeleteSource.call({ id: source.id })
 		await Calendars.fetch()
 		return true
 	}

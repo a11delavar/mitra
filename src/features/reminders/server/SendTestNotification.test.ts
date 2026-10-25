@@ -1,6 +1,6 @@
 import { describe, it, before, after } from 'node:test'
-import { Api } from '@a11d/api'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
+import { SendTestNotification } from './SendTestNotification.js'
 
 describe('SendTestNotification', () => {
 	let server: OperationServer
@@ -8,6 +8,6 @@ describe('SendTestNotification', () => {
 	after(() => server.close())
 
 	it('accepts a rehearsal, which reaches no one without a device', async () => {
-		await Api.post('/push/test', { kind: 'task' })
+		await SendTestNotification.call({ kind: 'task' })
 	})
 })

@@ -1,7 +1,10 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { createSource, fetchIntegrations, restoreSourceVisibility, soloSource } from '#infrastructure/http/Api.js'
+import { ListIntegrations } from '#integrations/server/ListIntegrations.js'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
+import { CreateSource } from './CreateSource.js'
+import { RestoreSourceVisibility } from './RestoreSourceVisibility.js'
+import { ShowOnlySource } from './ShowOnlySource.js'
 
 describe('RestoreSourceVisibility', () => {
 	let server: OperationServer
@@ -9,15 +12,15 @@ describe('RestoreSourceVisibility', () => {
 	after(() => server.close())
 
 	it('shows the calendars as they were before one was shown alone', async () => {
-		const work = await createSource(server.integration.id, { name: 'Work' })
-		await soloSource(work.id)
-		await restoreSourceVisibility()
-		assert.deepEqual((await fetchIntegrations())[0]!.sources.map(source => source.hidden), [false, false])
+		const work = await CreateSource.call({ id: server.integration.id, name: 'Work' })
+		await ShowOnlySource.call({ id: work.id })
+		await RestoreSourceVisibility.call()
+		assert.deepEqual((await ListIntegrations.call())[0]!.sources.map(source => source.hidden), [false, false])
 		assert.equal(server.user.previouslyHiddenSourceIds, undefined)
 	})
 
 	it('leaves the calendars as they are when none was shown alone', async () => {
-		await restoreSourceVisibility()
-		assert.deepEqual((await fetchIntegrations())[0]!.sources.map(source => source.hidden), [false, false])
+		await RestoreSourceVisibility.call()
+		assert.deepEqual((await ListIntegrations.call())[0]!.sources.map(source => source.hidden), [false, false])
 	})
 })

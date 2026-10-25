@@ -3,8 +3,12 @@ import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Recurrence, RecurrenceFrequency, type EntryOccurrence, EntryOccurrenceChangeScope } from '#features/recurrence'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
-import { createEvent, editOccurrence, settleTimeZone } from '#infrastructure/http/Api.js'
+import { TimeZone } from '#features/time/TimeZone.js'
+import { SettleHomeTimeZone } from '#features/time/server/SettleHomeTimeZone.js'
 import { OperationServer, type SentEntry as Row } from '#infrastructure/operations/OperationServer.testing.js'
+import { CreateEntry } from './CreateEntry.js'
+import { UpdateEntryOccurrence } from './UpdateEntryOccurrence.js'
+import { EntryPatch } from '../EntryPatch.js'
 import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
 import { iso, midnight, shown, utcMidnight, viewIn, zones } from './viewers.testing.js'
@@ -15,18 +19,21 @@ describe('UpdateEntryOccurrence', () => {
 	after(() => server.close())
 
 	const stored = async (id: string) => (await server.query<{ start: number | null, end: number | null, exdates: string | null }>('select start, end, exdates from entry where id = ?', [id]))[0]
+	/** Writes the date `occurrence` stands for, as the browser does. */
+	const edit = (occurrence: EntryOccurrence, scope: EntryOccurrenceChangeScope) =>
+		UpdateEntryOccurrence.call({ ...EntryPatch.of(occurrence.entry, EntryPatch.occurrence), id: occurrence.recurringEntryId!, occurrence: occurrence.storedRecurrenceId!, scope })
 	const named = (heading: string) => server.query<{ start: number, end: number, recurring_entry_id: string | null }>('select start, end, recurring_entry_id from entry where heading = ?', [heading])
 
 	describe('an occurrence of an all-day series', () => {
 		it('becomes an entry of its own on the day its viewer points at, which the series then skips', async () => {
 			viewIn(zones.tehran)
-			const { id } = await createEvent(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Market', allDay: true, start: midnight('2026-07-06'), end: midnight('2026-07-07'), recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) }))
+			const { id } = await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Market', allDay: true, start: midnight('2026-07-06'), end: midnight('2026-07-07'), recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })))
 
 			viewIn(zones.newYork)
 			const [, second] = (await shown('2026-07-01', '2026-07-25')).filter(occurrence => occurrence.recurringEntryId === id)
 			const edited = second!.override()
 			edited.heading = 'Night market'
-			await editOccurrence(second!.recurringEntry!.occurrences.overriddenBy(edited), EntryOccurrenceChangeScope.This)
+			await edit(second!.recurringEntry!.occurrences.overriddenBy(edited), EntryOccurrenceChangeScope.This)
 			assert.deepEqual((await named('Night market')).map(row => [row.start, row.end, row.recurring_entry_id]), [[utcMidnight('2026-07-13'), utcMidnight('2026-07-14'), null]])
 			assert.deepEqual(JSON.parse((await stored(id!))!.exdates ?? '[]'), [utcMidnight('2026-07-13')])
 
@@ -41,7 +48,7 @@ describe('UpdateEntryOccurrence', () => {
 		beforeEach(() => viewIn(zones.berlin))
 		const berlin = (wall: string) => Date.parse(Temporal.PlainDateTime.from(wall).toZonedDateTime('Europe/Berlin').toInstant().toString())
 		const daily = async (heading: string, init: Partial<Entry>) => {
-			const created = await createEvent(new Entry({ sourceId: server.source.id, type: EntryType.Event, ...init, heading, recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily, count: 5 }) }))
+			const created = await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: server.source.id, type: EntryType.Event, ...init, heading, recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily, count: 5 }) })))
 			const dates = () => shown('2026-11-01', '2026-11-12').then(occurrences => occurrences.filter(occurrence => occurrence.entry.heading === heading || occurrence.recurringEntryId === created.id))
 			return { created, dates }
 		}
@@ -55,14 +62,14 @@ describe('UpdateEntryOccurrence', () => {
 		it('moves every date to the hour it was dropped at, each on its own day', async () => {
 			const { dates } = await daily('Into the hours', { allDay: true, start: midnight('2026-11-02'), end: midnight('2026-11-03') })
 			const [, , third] = await dates()
-			await editOccurrence(dragged(third!, false, new DateTime(berlin('2026-11-04T17:45'))), EntryOccurrenceChangeScope.All)
+			await edit(dragged(third!, false, new DateTime(berlin('2026-11-04T17:45'))), EntryOccurrenceChangeScope.All)
 			assert.deepEqual((await dates()).map(occurrence => [occurrence.entry.allDay, iso(occurrence.start)]), ['02', '03', '04', '05', '06'].map(day => [false, new Date(berlin(`2026-11-${day}T17:45`)).toISOString()]))
 		})
 
 		it('keeps the dates before the one dragged with those after it', async () => {
 			const { dates } = await daily('Split into the hours', { allDay: true, start: midnight('2026-11-02'), end: midnight('2026-11-03') })
 			const [, , third] = await dates()
-			await editOccurrence(dragged(third!, false, new DateTime(berlin('2026-11-04T06:00'))), EntryOccurrenceChangeScope.Following)
+			await edit(dragged(third!, false, new DateTime(berlin('2026-11-04T06:00'))), EntryOccurrenceChangeScope.Following)
 			assert.deepEqual((await dates()).map(occurrence => [occurrence.entry.allDay, iso(occurrence.start)]), [
 				[true, iso(midnight('2026-11-02'))],
 				[true, iso(midnight('2026-11-03'))],
@@ -75,7 +82,7 @@ describe('UpdateEntryOccurrence', () => {
 			const { created, dates } = await daily('Into the lane', { start, end: start.add({ hours: 1 }), timeZone: EntryTimeZone.parse('Asia/Tehran') })
 			const [, , third] = await dates()
 			const probe = third!.override(); probe.setAllDay(true, 60)
-			await editOccurrence(dragged(third!, true, midnight('2026-11-04')), EntryOccurrenceChangeScope.All)
+			await edit(dragged(third!, true, midnight('2026-11-04')), EntryOccurrenceChangeScope.All)
 			assert.deepEqual(Object.values((await stored(created.id!))!).slice(0, 2), [utcMidnight('2026-11-02'), utcMidnight('2026-11-03')])
 			assert.deepEqual((await dates()).map(occurrence => iso(occurrence.start)), ['02', '03', '04', '05', '06'].map(day => iso(midnight(`2026-11-${day}`))))
 		})
@@ -84,7 +91,7 @@ describe('UpdateEntryOccurrence', () => {
 	describe('as a tool', () => {
 		let series: string
 		before(async () => {
-			await settleTimeZone('Europe/Berlin')
+			await SettleHomeTimeZone.call({ id: TimeZone.of('Europe/Berlin') })
 			series = (await server.tool<Row>('create_entry', { heading: 'Water plants', type: 'task', start: '2027-03-01T08:00[Europe/Berlin]', estimate: 15, recurrence: 'FREQ=WEEKLY;BYDAY=MO' })).id
 		})
 

@@ -1,9 +1,12 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { Entry, EntryType } from '#features/entries'
-import { countSourceEntries, createEvent, createSource, migrateSourceEntries } from '#infrastructure/http/Api.js'
+import { Entry, EntryType, EntryPatch } from '#features/entries'
+import { CreateEntry } from '#features/entries/server/CreateEntry.js'
+import { CreateSource } from '#features/sources/server/CreateSource.js'
+import { CountSourceEntries } from '#features/sources/server/CountSourceEntries.js'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
+import { MigrateSource } from './MigrateSource.js'
 
 describe('MigrateSource', () => {
 	let server: OperationServer
@@ -11,18 +14,18 @@ describe('MigrateSource', () => {
 	after(() => server.close())
 
 	it('moves a calendar\'s entries into another', async () => {
-		const work = await createSource(server.integration.id, { name: 'Work' })
-		await createEvent(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Standup', start: new DateTime('2026-07-01T09:00:00Z'), end: new DateTime('2026-07-01T09:15:00Z') }))
-		await migrateSourceEntries(server.source.id, { targetSourceId: work.id, flatten: false, keepOriginals: false })
-		assert.equal(await countSourceEntries(server.source.id), 0)
-		assert.equal(await countSourceEntries(work.id), 1)
+		const work = await CreateSource.call({ id: server.integration.id, name: 'Work' })
+		await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Standup', start: new DateTime('2026-07-01T09:00:00Z'), end: new DateTime('2026-07-01T09:15:00Z') })))
+		await MigrateSource.call({ id: server.source.id, targetSourceId: work.id, flatten: false, keepOriginals: false })
+		assert.equal(await CountSourceEntries.call({ id: server.source.id }), 0)
+		assert.equal(await CountSourceEntries.call({ id: work.id }), 1)
 	})
 
 	it('copies them, keeping the originals', async () => {
-		const copies = await createSource(server.integration.id, { name: 'Copies' })
-		await createEvent(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Review', start: new DateTime('2026-07-02T09:00:00Z'), end: new DateTime('2026-07-02T10:00:00Z') }))
-		await migrateSourceEntries(server.source.id, { targetSourceId: copies.id, flatten: false, keepOriginals: true })
-		assert.equal(await countSourceEntries(server.source.id), 1)
-		assert.equal(await countSourceEntries(copies.id), 1)
+		const copies = await CreateSource.call({ id: server.integration.id, name: 'Copies' })
+		await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Review', start: new DateTime('2026-07-02T09:00:00Z'), end: new DateTime('2026-07-02T10:00:00Z') })))
+		await MigrateSource.call({ id: server.source.id, targetSourceId: copies.id, flatten: false, keepOriginals: true })
+		assert.equal(await CountSourceEntries.call({ id: server.source.id }), 1)
+		assert.equal(await CountSourceEntries.call({ id: copies.id }), 1)
 	})
 })

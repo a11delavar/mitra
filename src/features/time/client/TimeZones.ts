@@ -1,4 +1,5 @@
-import { addTimeZone, getUser, makeHomeTimeZone, removeTimeZone, renameTimeZone, settleTimeZone } from '#infrastructure/http/Api.js'
+import { AddTimeZone, RemoveTimeZone, RenameTimeZone, MakeHomeTimeZone, SettleHomeTimeZone } from '#operations'
+import { getUser, keepUser } from '#infrastructure/http/Api.js'
 import { TimeZone } from '../TimeZone.js'
 import { UserTimeZones } from '../UserTimeZones.js'
 
@@ -24,25 +25,25 @@ export class TimeZones {
 	}
 
 	static add(zone: TimeZone) {
-		return addTimeZone(zone.id)
+		return keepUser(AddTimeZone.call({ id: zone }))
 	}
 
 	static remove(zone: TimeZone) {
-		return removeTimeZone(zone.id)
+		return keepUser(RemoveTimeZone.call({ id: zone }))
 	}
 
 	static rename(zone: TimeZone, label: string | undefined) {
-		return renameTimeZone(zone.id, label)
+		return keepUser(RenameTimeZone.call({ id: zone, label: label ?? null }))
 	}
 
 	static makeHome(zone: TimeZone) {
-		return makeHomeTimeZone(zone.id)
+		return keepUser(MakeHomeTimeZone.call({ id: zone }))
 	}
 
 	/** Gives the account its home on its first start anywhere. */
 	static async settle() {
 		if (!TimeZones.list.home) {
-			await settleTimeZone(TimeZones.here.id)
+			await keepUser(SettleHomeTimeZone.call({ id: TimeZones.here }))
 		}
 	}
 }

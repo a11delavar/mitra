@@ -1,12 +1,13 @@
 import { Controller } from '@a11d/lit'
 import { type ReactiveControllerHost } from 'lit'
+import { CreateEntry, UpdateEntry, UpdateEntryOccurrence, DeleteEntry, DeleteEntryOccurrence, RankTasks } from '#operations'
 import { Recurrence, EntryOccurrenceChangeScope, type EntryOccurrence } from '#features/recurrence'
 import { type EntryPlan, type SkippedEntry, EntryRelations } from '#features/relations'
 import { TimeZone } from '#features/time/TimeZone.js'
-import { ApiError, createEvent, deleteEvent, deleteOccurrence, editOccurrence, rankEntries, updateEvent, updateRelations } from '#infrastructure/http/Api.js'
+import { ApiError } from '#infrastructure/http/Api.js'
 import { type Entry } from '../Entry.js'
 import { EntryRank } from '../EntryRank.js'
-import { EntryPatch } from '../EntryPatch.js'
+import { EntryPatch, type EntryPatchField } from '../EntryPatch.js'
 
 export const reportSaveError = (error: unknown) =>
 	console.error('Persisting the entry failed. The edit is kept locally and retried on the next change:', error)
@@ -28,7 +29,21 @@ export class EntryStore extends Controller {
 	/** The window the entries were fetched for, whose dates the recurring ones yield; none for every entry once. */
 	private static window?: DateTimeRange
 
-	static persistence = { create: createEvent, update: updateEvent, delete: deleteEvent, editOccurrence, deleteOccurrence, reorder: rankEntries }
+	/** How the store writes to the server, which a test replaces. */
+	static persistence = {
+		create: (entry: Entry) => CreateEntry.call(EntryPatch.creating(entry)),
+		/** Writes `fields` of the entry, or of every occurrence of a repeating one: those they all share, unless told otherwise. */
+		update: (entry: Entry, fields: ReadonlyArray<EntryPatchField> = entry.recurringEntryId ? EntryPatch.shared : EntryPatch.fields) =>
+			UpdateEntry.call({ ...EntryPatch.of(entry, fields), id: entry.recurringEntryId ?? entry.id! }),
+		delete: (id: string) => DeleteEntry.call({ id }),
+		/** The date `occurrence` stands for, by the date its entry stores it under, with how far the change reaches. */
+		editOccurrence: (occurrence: EntryOccurrence, scope: EntryOccurrenceChangeScope) =>
+			UpdateEntryOccurrence.call({ ...EntryPatch.of(occurrence.entry, EntryPatch.occurrence), id: occurrence.recurringEntryId!, occurrence: occurrence.storedRecurrenceId!, scope }),
+		deleteOccurrence: (occurrence: EntryOccurrence, scope: EntryOccurrenceChangeScope) =>
+			DeleteEntryOccurrence.call({ id: occurrence.recurringEntryId!, occurrence: occurrence.storedRecurrenceId!, scope }),
+		/** Stores tasks' places in the manual order. */
+		reorder: (ranks: ReadonlyArray<readonly [string, EntryRank]>) => RankTasks.call({ ranks }),
+	}
 
 	/** A drag only ever moves the span, so a ghost occupying the source's is a second copy of it, even when both are dateless. */
 	private static get shownPreview(): Entry | undefined {
@@ -235,7 +250,7 @@ export class EntryStore extends Controller {
 			return
 		}
 		try {
-			this.adoptRelations(await updateRelations(id, owner.relations ?? EntryRelations.none))
+			this.adoptRelations(await UpdateEntry.call({ id, relations: owner.relations ?? EntryRelations.none }))
 		} catch (error) {
 			owner.relations = before
 			this.notify()
@@ -521,7 +536,7 @@ export class EntryStore extends Controller {
 			this.notify()
 			const changed = placed ? [entry] : [...new Set([...listed, entry])]
 			// A repeating task holds its place through its series.
-			await EntryStore.persistence.reorder(Object.fromEntries(changed.map(each => [each.masterId!, each.rank!.key])))
+			await EntryStore.persistence.reorder(changed.map(each => [each.masterId!, each.rank!] as const))
 		} catch (error) {
 			before.forEach((rank, each) => each.rank = rank)
 			this.notify()

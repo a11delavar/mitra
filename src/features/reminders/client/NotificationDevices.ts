@@ -1,9 +1,10 @@
 import { Component, component, html, css, state } from '@a11d/lit'
 import { Task } from '@lit/task'
+import { ListDevices, RenameDevice } from '#operations'
 import { type TextField } from '#design/TextField.js'
 import { ClockController } from '#features/time/client/ClockController.js'
 import { type NotificationSubscription } from '../NotificationSubscription.js'
-import { currentEndpoint, fetchDevices, forgetDevice, renameDevice } from './push.js'
+import { currentEndpoint, forgetDevice } from './push.js'
 
 /** The devices that receive the user's reminders, each renamed or removed from its menu; laid out as its setting's list. */
 @component('mitra-notification-devices')
@@ -18,7 +19,7 @@ export class NotificationDevices extends Component {
 		args: () => [] as const,
 		task: async () => ({
 			endpoint: await currentEndpoint(),
-			devices: await fetchDevices(),
+			devices: await ListDevices.call(),
 		}),
 	})
 
@@ -76,7 +77,8 @@ export class NotificationDevices extends Component {
 		if (name === (device.name ?? '')) {
 			return
 		}
-		await renameDevice(device.id, name)
+		// An empty name restores the one the browser reports.
+		await RenameDevice.call({ id: device.id, name })
 		await this.devices.run()
 	}
 

@@ -18,7 +18,10 @@ import { Visibility } from './Visibility.js'
 import { EntryType } from './EntryType.js'
 
 describe('Entry', () => {
-	const day = new DateTime().dayStart
+	// A day of 24 hours, as the tests add hours to it: today breaks them twice a year.
+	const day = new DateTime('2026-10-14T00:00:00')
+	// What is overdue is read against now.
+	const today = new DateTime().dayStart
 
 	describe('multiDay', () => {
 		it('is false within a single day', () => {
@@ -697,8 +700,8 @@ describe('Entry', () => {
 		})
 
 		it('makes a task overdue once its day has gone by, even with a block still ahead', () => {
-			assert.equal(task({ start: at(5, 9), end: at(5, 10), due: day.subtract({ days: 1 }) }).overdue, true)
-			assert.equal(task({ start: day.subtract({ days: 3 }), end: day.subtract({ days: 3 }).add({ hours: 1 }), due: at(2, 17) }).overdue, false)
+			assert.equal(task({ start: today.add({ days: 5, hours: 9 }), end: today.add({ days: 5, hours: 10 }), due: today.subtract({ days: 1 }) }).overdue, true)
+			assert.equal(task({ start: today.subtract({ days: 3 }), end: today.subtract({ days: 3 }).add({ hours: 1 }), due: today.add({ days: 2, hours: 17 }) }).overdue, false)
 		})
 
 		it('belongs to tasks only', () => {
@@ -946,40 +949,40 @@ describe('Entry', () => {
 	describe('overdue', () => {
 		const task = (init: Partial<Entry>) => new Entry({ type: EntryType.Task, ...init })
 
-		it('is true for an open task whose day has passed', () => {
-			assert.equal(task({ start: day.subtract({ days: 3 }), end: day.subtract({ days: 3 }).add({ hours: 1 }) }).overdue, true)
+		it('is true for an open task whose today has passed', () => {
+			assert.equal(task({ start: today.subtract({ days: 3 }), end: today.subtract({ days: 3 }).add({ hours: 1 }) }).overdue, true)
 		})
 
-		it('is false while the task still belongs to the current day', () => {
-			assert.equal(task({ start: day.add({ hours: 9 }), end: day.add({ hours: 10 }) }).overdue, false)
+		it('is false while the task still belongs to the current today', () => {
+			assert.equal(task({ start: today.add({ hours: 9 }), end: today.add({ hours: 10 }) }).overdue, false)
 		})
 
 		it('is false once the outcome is decided', () => {
-			const dates = { start: day.subtract({ days: 3 }), end: day.subtract({ days: 3 }).add({ hours: 1 }) }
+			const dates = { start: today.subtract({ days: 3 }), end: today.subtract({ days: 3 }).add({ hours: 1 }) }
 			assert.equal(task({ ...dates, status: TaskStatus.Done }).overdue, false)
 			assert.equal(task({ ...dates, status: TaskStatus.Cancelled }).overdue, false)
 			assert.equal(task({ ...dates, status: TaskStatus.Doing }).overdue, true)
 		})
 
-		it('counts an all-day task from its last day, not its exclusive end', () => {
-			assert.equal(task({ start: day, end: day.add({ days: 1 }), allDay: true }).overdue, false)
-			assert.equal(task({ start: day.subtract({ days: 1 }), end: day, allDay: true }).overdue, true)
+		it('counts an all-today task from its last today, not its exclusive end', () => {
+			assert.equal(task({ start: today, end: today.add({ days: 1 }), allDay: true }).overdue, false)
+			assert.equal(task({ start: today.subtract({ days: 1 }), end: today, allDay: true }).overdue, true)
 		})
 
 		it('falls back to the start when the task has no due date', () => {
-			assert.equal(task({ start: day.subtract({ days: 1 }) }).overdue, true)
-			assert.equal(task({ start: day }).overdue, false)
+			assert.equal(task({ start: today.subtract({ days: 1 }) }).overdue, true)
+			assert.equal(task({ start: today }).overdue, false)
 		})
 
 		it('is false for a repeating task, whose next turn settles the missed one', () => {
-			const dates = { start: day.subtract({ days: 3 }), end: day.subtract({ days: 3 }).add({ hours: 1 }) }
+			const dates = { start: today.subtract({ days: 3 }), end: today.subtract({ days: 3 }).add({ hours: 1 }) }
 			assert.equal(task({ ...dates, recurringEntryId: 'master' }).overdue, false)
 			assert.equal(task({ ...dates, recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) }).overdue, false)
 		})
 
 		it('is false for an undated task and for events', () => {
 			assert.equal(task({ heading: 'someday' }).overdue, false)
-			assert.equal(new Entry({ type: EntryType.Event, start: day.subtract({ days: 3 }), end: day.subtract({ days: 3 }) }).overdue, false)
+			assert.equal(new Entry({ type: EntryType.Event, start: today.subtract({ days: 3 }), end: today.subtract({ days: 3 }) }).overdue, false)
 		})
 	})
 

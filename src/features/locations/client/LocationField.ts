@@ -1,9 +1,9 @@
 import { Component, component, html, css, property, state, event, query, bind } from '@a11d/lit'
+import { SuggestLocations } from '#operations'
 import { LatestSearch, MarkdownLinks } from '#design'
 import type { Entry } from '#features/entries'
 import { Calendars } from '#features/sources/client/Calendars.js'
-import { searchLocations } from '#infrastructure/http/Api.js'
-import { type LocationSuggestion } from '../LocationSuggestion.js'
+import { LocationSuggestion } from '../LocationSuggestion.js'
 import './MapLink.js'
 
 // Cached user coordinates for geocoding bias.
@@ -39,7 +39,9 @@ export class LocationField extends Component {
 	@state() open = false
 	@state() private editing = false
 
-	private readonly search = new LatestSearch((query: string) => searchLocations(query, position).catch(() => new Array<LocationSuggestion>()), 250)
+	private readonly search = new LatestSearch((query: string) => SuggestLocations.call({ q: query, lang: Localizer.locales.current.language, lat: position && String(position.lat), lon: position && String(position.lon) })
+		.then(places => places.map(place => new LocationSuggestion(place)))
+		.catch(() => new Array<LocationSuggestion>()), 250)
 
 	protected override createRenderRoot() { return this }
 
