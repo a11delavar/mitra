@@ -476,10 +476,29 @@ export class Sidebar extends Component {
 						user-select: none;
 					}
 
-					> mitra-popover-container > mitra-icon-button {
+					/* The same bargain as a source row's: both actions wait for the heading to be reached for,
+					   and the eye, last, stays while every calendar under it is hidden. */
+					.actions {
 						grid-column: 4;
-						justify-self: end;
+						display: flex;
+						align-items: center;
+						gap: 0.125rem;
+
+						mitra-icon-button {
+							color: var(--color-text-muted);
+							transition: opacity 0.15s ease;
+
+							@media (hover: hover) {
+								opacity: 0;
+							}
+						}
 					}
+
+					&:hover, &:focus-within, &:has(mitra-menu:popover-open) {
+						.actions mitra-icon-button { opacity: 1; }
+					}
+
+					&[data-hidden] .actions .eye-icon { opacity: 1; }
 				}
 
 				.sources > .source {
@@ -579,7 +598,7 @@ export class Sidebar extends Component {
 
 				/* The trailing icon buttons bleed their glyph inset back out, so it is the GLYPHS that land on the
 				   trailing edge. Aligning the boxes instead leaves every icon a few pixels short of the text above. */
-				.integration > header > mitra-popover-container > mitra-icon-button, :is(.integrations, .account) .actions > mitra-icon-button:last-child, .account > mitra-icon-button:last-child {
+				.integration > header > .actions > mitra-popover-container:last-child > mitra-icon-button, :is(.integrations, .account) .actions > mitra-icon-button:last-child, .account > mitra-icon-button:last-child {
 					margin-inline-end: calc(-1 * var(--mitra-glyph-inset));
 				}
 
@@ -648,6 +667,17 @@ export class Sidebar extends Component {
 
 	private async toggleVisibility(source: Source) {
 		await Calendars.setHidden(source, !source.hidden)
+		this.visibilityChanged()
+	}
+
+	/** Whether every calendar of the integration is hidden, which turns its eye into the way back. */
+	private hidesEvery(integration: Integration) {
+		const sources = Calendars.enabled(integration)
+		return sources.length > 0 && sources.every(source => source.hidden)
+	}
+
+	private async toggleIntegrationVisibility(integration: Integration) {
+		await Calendars.setAllHidden(Calendars.enabled(integration), !this.hidesEvery(integration))
 		this.visibilityChanged()
 	}
 
@@ -801,24 +831,34 @@ export class Sidebar extends Component {
 			<div class="integrations">
 				${Calendars.integrations.map((i, index, integrations) => html`
 					<div class="integration" ${this.integrationsReorder.item({ index, handle: '.title' })}>
-						<header>
+						<header ?data-hidden=${this.hidesEvery(i)}>
 							<span class="title">${this.integrationTitle(i)}</span>
-							<mitra-popover-container>
-								<mitra-icon-button size="small" icon="more-horizontal" label=${t('Integration options')}></mitra-icon-button>
-								<mitra-menu slot="popover">
-									${!i.capabilities.sources.create ? html.nothing : html`
-										<mitra-menu-item icon="plus" @click=${() => void this.addSource(i)}>${t('New calendar')}</mitra-menu-item>
-									`}
-									<mitra-menu-item icon="pencil" @click=${() => this.openDialog(i.id)}>${t('Edit')}</mitra-menu-item>
-									<mitra-menu-item icon="arrow-up" ?disabled=${index === 0} @click=${() => this.moveIntegration(i.id, -1)}>${t('Move up')}</mitra-menu-item>
-									<mitra-menu-item icon="arrow-down" ?disabled=${index === integrations.length - 1} @click=${() => this.moveIntegration(i.id, 1)}>${t('Move down')}</mitra-menu-item>
-									${!i.reimportable ? html.nothing : html`
-										<mitra-menu-item icon="hard-drive-download" title=${t('Read every enabled calendar of this account again from the start')}
-											@click=${() => void ReimportIntegration.call({ id: i.id }).catch(() => void 0)}>${t('Re-import entries')}</mitra-menu-item>
-									`}
-									<mitra-menu-item icon="trash-2" variant="danger" @click=${() => this.removeIntegration(i.id)}>${t('Delete')}</mitra-menu-item>
-								</mitra-menu>
-							</mitra-popover-container>
+							<span class="actions">
+								<mitra-popover-container>
+									<mitra-icon-button size="small" icon="more-horizontal" label=${t('Integration options')}></mitra-icon-button>
+									<mitra-menu slot="popover">
+										${!i.capabilities.sources.create ? html.nothing : html`
+											<mitra-menu-item icon="plus" @click=${() => void this.addSource(i)}>${t('New calendar')}</mitra-menu-item>
+										`}
+										<mitra-menu-item icon="pencil" @click=${() => this.openDialog(i.id)}>${t('Edit')}</mitra-menu-item>
+										<mitra-menu-item icon="arrow-up" ?disabled=${index === 0} @click=${() => this.moveIntegration(i.id, -1)}>${t('Move up')}</mitra-menu-item>
+										<mitra-menu-item icon="arrow-down" ?disabled=${index === integrations.length - 1} @click=${() => this.moveIntegration(i.id, 1)}>${t('Move down')}</mitra-menu-item>
+										${!i.reimportable ? html.nothing : html`
+											<mitra-menu-item icon="hard-drive-download" title=${t('Read every enabled calendar of this account again from the start')}
+												@click=${() => void ReimportIntegration.call({ id: i.id }).catch(() => void 0)}>${t('Re-import entries')}</mitra-menu-item>
+										`}
+										<mitra-menu-item icon="trash-2" variant="danger" @click=${() => this.removeIntegration(i.id)}>${t('Delete')}</mitra-menu-item>
+									</mitra-menu>
+								</mitra-popover-container>
+								${!Calendars.enabled(i).length ? html.nothing : html`
+									<mitra-icon-button size="small"
+										class="eye-icon"
+										icon=${this.hidesEvery(i) ? 'eye-off' : 'eye'}
+										label=${this.hidesEvery(i) ? t('Show all calendars') : t('Hide all calendars')}
+										@click=${() => this.toggleIntegrationVisibility(i)}
+									></mitra-icon-button>
+								`}
+							</span>
 						</header>
 						<div class="sources">
 							${Calendars.enabled(i).map((source, sourceIndex, sources) => html`

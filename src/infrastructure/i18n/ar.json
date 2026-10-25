@@ -366,6 +366,8 @@
 	"Todoist API Token": "رمز API في Todoist",
 	"Todoist.TokenHint": "في Todoist، افتح Settings → Integrations → Developer، وانسخ رمز API الخاص بك ثم الصقه هنا. يصبح كل مشروع من مشاريعك تقويمًا لمهامه.",
 	"Hide calendar": "إخفاء التقويم",
+	"Hide all calendars": "إخفاء كل التقويمات",
+	"Show all calendars": "إظهار كل التقويمات",
 	"Alt+click to show only this one": "Alt+نقر لإظهار هذا التقويم فقط",
 	"Alt+click to show the previously visible ones": "Alt+نقر لإظهار التقويمات التي كانت ظاهرة",
 	"ShowPreviouslyVisibleSources.Keywords": "تقويم مصدر استعادة إظهار الكل مرة أخرى ظاهر رجوع",

@@ -194,6 +194,8 @@
 	"Todoist API Token": "Jeton d'API Todoist",
 	"Todoist.TokenHint": "Dans Todoist, ouvrez Paramètres → Intégrations → Développeur, copiez votre jeton d'API et collez-le ici. Chacun de vos projets devient un calendrier de tâches.",
 	"Hide calendar": "Masquer le calendrier",
+	"Hide all calendars": "Masquer tous les calendriers",
+	"Show all calendars": "Afficher tous les calendriers",
 	"Alt+click to show only this one": "Alt+clic pour n'afficher que celui-ci",
 	"Alt+click to show the previously visible ones": "Alt+clic pour afficher les calendriers précédemment visibles",
 	"ShowPreviouslyVisibleSources.Keywords": "calendrier source restaurer retour tous visibles à nouveau",

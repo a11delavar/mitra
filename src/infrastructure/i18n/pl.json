@@ -233,6 +233,8 @@
 	"Todoist API Token": "Token API Todoist",
 	"Todoist.TokenHint": "W Todoist otwórz Ustawienia → Integracje → Programista, skopiuj swój token API i wklej go tutaj. Każdy twój projekt stanie się kalendarzem z zadaniami.",
 	"Hide calendar": "Ukryj kalendarz",
+	"Hide all calendars": "Ukryj wszystkie kalendarze",
+	"Show all calendars": "Pokaż wszystkie kalendarze",
 	"Alt+click to show only this one": "Kliknij z Alt, aby pokazać tylko ten kalendarz",
 	"Alt+click to show the previously visible ones": "Kliknij z Alt, aby pokazać kalendarze widoczne wcześniej",
 	"ShowPreviouslyVisibleSources.Keywords": "kalendarz źródło zrodlo przywróć przywroc wróć wroc wszystkie znowu widoczne",

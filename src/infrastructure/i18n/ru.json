@@ -328,6 +328,8 @@
 	"Todoist API Token": "API-токен Todoist",
 	"Todoist.TokenHint": "Откройте в Todoist «Настройки» → «Интеграции» → «Разработчик», скопируйте API-токен и вставьте его сюда. Каждый ваш проект станет календарём с задачами.",
 	"Hide calendar": "Скрыть календарь",
+	"Hide all calendars": "Скрыть все календари",
+	"Show all calendars": "Показать все календари",
 	"Alt+click to show only this one": "Нажмите с Alt, чтобы показать только этот календарь",
 	"Alt+click to show the previously visible ones": "Нажмите с Alt, чтобы снова показать ранее видимые календари",
 	"ShowPreviouslyVisibleSources.Keywords": "календарь источник восстановить вернуть все снова показать видимые calendar source restore unsolo back all visible again",

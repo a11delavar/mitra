@@ -194,6 +194,8 @@
 	"Todoist API Token": "Token de API de Todoist",
 	"Todoist.TokenHint": "En Todoist, abre Configuración → Integraciones → Desarrollador, copia tu token de API y pégalo aquí. Cada uno de tus proyectos se convierte en un calendario de tareas.",
 	"Hide calendar": "Ocultar calendario",
+	"Hide all calendars": "Ocultar todos los calendarios",
+	"Show all calendars": "Mostrar todos los calendarios",
 	"Alt+click to show only this one": "Alt+clic para mostrar solo este",
 	"Alt+click to show the previously visible ones": "Alt+clic para mostrar los anteriormente visibles",
 	"ShowPreviouslyVisibleSources.Keywords": "calendario fuente restaurar volver todos visibles de nuevo",

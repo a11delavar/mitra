@@ -310,6 +310,7 @@ declare global {
 		"GoToToday.Keywords": unknown
 		"Guide": unknown
 		"Has attachments": unknown
+		"Hide all calendars": unknown
 		"Hide availability": unknown
 		"Hide calendar": unknown
 		"Hide column": unknown
@@ -523,6 +524,7 @@ declare global {
 		"Server URL": unknown
 		"Set as the default for new entries": unknown
 		"Settings": unknown
+		"Show all calendars": unknown
 		"Show as busy or free": unknown
 		"Show calendar": unknown
 		"Show fewer participants": unknown

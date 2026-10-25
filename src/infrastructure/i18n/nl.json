@@ -233,6 +233,8 @@
 	"Todoist API Token": "Todoist-API-token",
 	"Todoist.TokenHint": "Open in Todoist Instellingen → Integraties → Ontwikkelaar, kopieer je API-token en plak het hier. Elk van je projecten wordt een agenda met taken.",
 	"Hide calendar": "Agenda verbergen",
+	"Hide all calendars": "Alle agenda's verbergen",
+	"Show all calendars": "Alle agenda's weergeven",
 	"Alt+click to show only this one": "Alt+klik om alleen deze weer te geven",
 	"Alt+click to show the previously visible ones": "Alt+klik om de eerder zichtbare agenda's weer te geven",
 	"ShowPreviouslyVisibleSources.Keywords": "agenda bron herstellen terug alle weer zichtbaar eerder",

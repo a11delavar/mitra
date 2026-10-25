@@ -209,6 +209,8 @@
 	"Todoist API Token": "توکن API Todoist",
 	"Todoist.TokenHint": "در Todoist، تنظیمات → یکپارچه‌سازی‌ها → توسعه‌دهنده را باز کنید، توکن API خود را کپی کنید و اینجا جای‌گذاری کنید. هر یک از پروژه‌های شما به تقویمی از کارها تبدیل می‌شود.",
 	"Hide calendar": "پنهان کردن تقویم",
+	"Hide all calendars": "پنهان کردن همه تقویم‌ها",
+	"Show all calendars": "نمایش همه تقویم‌ها",
 	"Alt+click to show only this one": "Alt+کلیک برای نمایش فقط این تقویم",
 	"Alt+click to show the previously visible ones": "Alt+کلیک برای نمایش تقویم‌های قبلاً قابل‌مشاهده",
 	"ShowPreviouslyVisibleSources.Keywords": "تقویم منبع بازیابی بازگشت نمایش همه دوباره قابل مشاهده",

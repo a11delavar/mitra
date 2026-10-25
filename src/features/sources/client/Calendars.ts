@@ -107,6 +107,11 @@ export class Calendars {
 		source.hidden = hidden
 	}
 
+	/** Hides or shows each of the calendars, sending only those that change. */
+	static async setAllHidden(sources: ReadonlyArray<Source>, hidden: boolean) {
+		await Promise.all(sources.filter(source => source.hidden !== hidden).map(source => Calendars.setHidden(source, hidden)))
+	}
+
 	/** Shows the calendar if it is hidden, as an entry opens only where it renders. */
 	static async show(sourceId: string) {
 		const source = Calendars.source(sourceId)

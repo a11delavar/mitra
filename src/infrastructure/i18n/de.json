@@ -245,6 +245,8 @@
 	"Todoist API Token": "Todoist-API-Token",
 	"Todoist.TokenHint": "Öffne in Todoist Einstellungen → Integrationen → Entwickler, kopiere dein API-Token und füge es hier ein. Jedes deiner Projekte wird zu einem Kalender mit Aufgaben.",
 	"Hide calendar": "Kalender ausblenden",
+	"Hide all calendars": "Alle Kalender ausblenden",
+	"Show all calendars": "Alle Kalender einblenden",
 	"Alt+click to show only this one": "Alt-Klick, um nur diesen Kalender anzuzeigen",
 	"Alt+click to show the previously visible ones": "Alt-Klick, um die zuvor sichtbaren Kalender anzuzeigen",
 	"ShowPreviouslyVisibleSources.Keywords": "kalender quelle wiederherstellen zurück alle wieder sichtbar",
