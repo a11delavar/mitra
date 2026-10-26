@@ -19,7 +19,7 @@ class Parameters {
 @tool({ name: 'delete_calendar' })
 export class DeleteSource extends Operation<Parameters, void> {
 	async run({ em, user }: OperationContext) {
-		const source = await user.source(em, this.parameters.id)
+		const source = await user.getSource(em, this.parameters.id)
 		if (!source.capabilities.sources.delete) {
 			throw new NotAllowed('This calendar cannot be deleted from mitra')
 		}

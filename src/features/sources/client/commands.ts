@@ -60,7 +60,7 @@ class ShowPreviouslyVisibleSources extends Command {
 
 /** The per-calendar verbs as they stand right now. */
 export function sourceCommands(): Array<Command> {
-	const sources = Calendars.integrations.flatMap(integration => Calendars.enabled(integration))
+	const sources = Calendars.integrations.flatMap(integration => integration.enabledSources)
 	return [
 		...Calendars.canRestoreVisibility ? [new ShowPreviouslyVisibleSources()] : [],
 		...sources.length < 2 ? [] : sources.map(source => new ShowOnlySource(source)),

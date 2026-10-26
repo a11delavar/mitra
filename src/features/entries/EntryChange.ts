@@ -1,25 +1,69 @@
+import { equals } from '@a11d/equals'
 import { type EntityManager } from '@mikro-orm/core'
-import type { Source } from '#features/sources'
+import type { RelationGraph } from '#features/relations'
+import { OrganizerOnly } from '#features/participants/OrganizerOnly.js'
+import type { EntryOccurrenceChangeScope } from '#features/recurrence'
+import type { Validatable } from '#infrastructure/validation'
 import { type Entry } from './Entry.js'
+import { type EntryPatch } from './EntryPatch.js'
+
+export interface EntryChangeContext {
+	readonly graph?: RelationGraph
+	readonly scope?: EntryOccurrenceChangeScope
+}
 
 /**
- * What an edit of an entry itself does: an update in place, or a re-creation where no provider can follow, as for a move
- * to another calendar or between event and task (a CalDAV resource holds one kind, RFC 4791 §4.1). A provider that moves
- * entries between its own calendars (`entries.move`) keeps them in place, with what Mitra does not show.
+ * What a write of an entry does: a creation (`source.create`, without an `entry`), an update in place, or a re-creation
+ * where no provider can follow, as for a move to another calendar or between event and task (a CalDAV resource holds one
+ * kind, RFC 4791 §4.1). A provider that moves entries between its own calendars (`entries.move`) keeps them in place,
+ * with what Mitra does not show.
  */
-export class EntryChange {
-	constructor(readonly entry: Entry, readonly edited: Entry) { }
+export class EntryChange implements Validatable<EntryChangeContext> {
+	constructor(readonly entry: Entry | undefined, readonly edited: Entry, readonly patch: EntryPatch) { }
 
-	recreates(from: Source, to: Source) {
-		const moved = this.edited.sourceId !== this.entry.sourceId
-		const movesInPlace = from.integrationId === to.integrationId && to.integration.capabilities.entries.move
-		return this.edited.type !== this.entry.type || (moved && !movesInPlace)
+	/** The calendar the entry is in, or for a creation the one it goes to. */
+	get from() {
+		return (this.entry ?? this.edited).source
 	}
 
-	/** Writes the edit, a re-created entry into `to`. Answers with the entry as it now stands. */
-	async save(em: EntityManager, from: Source, to: Source): Promise<Entry> {
-		const { entry, edited } = this
-		if (!this.recreates(from, to)) {
+	/** The calendar the edit leaves it in, which whoever makes the change sets once it is proved the user's (`user.source`). */
+	get to() {
+		return this.edited.source
+	}
+
+	/** Whether it is written as a new entry rather than in place. */
+	get recreates() {
+		const moved = this.edited.sourceId !== this.entry?.sourceId
+		const movesInPlace = this.from.integrationId === this.to.integrationId && this.to.integration.capabilities.entries.move
+		return this.edited.type !== this.entry?.type || (moved && !movesInPlace)
+	}
+
+	/**
+	 * What refuses the change, judged before any provider is written, as a refusal must leave it untouched: who may change
+	 * the participants, what the patch may do here and in `scope`, what the calendar can hold, and where the relations would
+	 * lead, on the `graph` `user.getRelationGraph(em, patch.relations)` gives where the patch carries them.
+	 */
+	*validate({ graph, scope }: EntryChangeContext = {}) {
+		const { entry, edited, patch } = this
+		// Changing the list is the organizer's prerogative, so content edits pass only while they leave it as it is.
+		if (entry && !Object[equals](edited.participants, entry.participants) && !entry.canManageParticipants) {
+			yield new OrganizerOnly('Only the organizer can modify participants', ['participants'])
+		}
+		yield* patch.validate({ entry, from: this.from, to: this.to, scope })
+		yield* edited.validate()
+		if (patch.relations !== undefined && graph) {
+			yield* patch.relations.validate({ entry: entry ?? edited, graph })
+		}
+	}
+
+	/** Writes the edit, fitted to its calendar, a new or re-created entry into the calendar it goes to. Answers with the entry as it now stands. */
+	async save(em: EntityManager): Promise<Entry> {
+		const { entry, edited, from, to } = this
+		edited.fit()
+		if (!entry) {
+			return to.integration.createEntry(em, edited)
+		}
+		if (!this.recreates) {
 			await to.integration.updateEntry(em, entry, edited)
 			return entry
 		}

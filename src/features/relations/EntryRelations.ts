@@ -160,7 +160,7 @@ export class EntryRelations implements Validatable<EntryRelationsContext> {
 		if (this.isEmpty) {
 			return
 		}
-		if (entry.type.isAvailability || this.all.some(relation => graph.entryOf(relation.targetUid)?.type.isAvailability)) {
+		if (entry.type.isAvailability || this.all.some(relation => graph.getEntry(relation.targetUid)?.type.isAvailability)) {
 			yield new ValidationError('Availability cannot be related to other entries', ['relations'])
 		}
 		const uid = entry.uid

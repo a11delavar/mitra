@@ -1,5 +1,5 @@
 import { converter } from '@a11d/converter'
-import { EntryType, EntryTypes, Entry } from '#features/entries'
+import { EntryType, EntryTypes, Entry, EntryChange, type EntryPatch } from '#features/entries'
 import { ReminderDefaults } from '#features/reminders/ReminderDefaults.js'
 import { Integration } from '#integrations'
 import { model, Entity, identity, equality, entity, primaryKey, property, manyToOne, include } from '#infrastructure/model'
@@ -35,6 +35,11 @@ export class Source extends Entity {
 			entry.reminders = ReminderDefaults.current?.for(entry)
 		}
 		return entry
+	}
+
+	/** A new entry here as `patch` writes it: a change from nothing, judged and saved as an edit is (`entry.edit`). */
+	create(patch: EntryPatch) {
+		return new EntryChange(undefined, this.draft({ id: crypto.randomUUID(), uid: crypto.randomUUID() }).patch(patch).fit(), patch)
 	}
 
 	/** Its address at the provider, which a reconcile matches the provider's list by: that list knows nothing of Mitra's rows. */

@@ -66,7 +66,7 @@ export class RelationGraph {
 		return [...this.entriesByUid.values()]
 	}
 
-	entryOf(uid: string | undefined) {
+	getEntry(uid: string | undefined) {
 		return uid === undefined ? undefined : this.entriesByUid.get(uid)
 	}
 
@@ -77,12 +77,12 @@ export class RelationGraph {
 	 */
 	attach(entries: ReadonlyArray<Entry>): void {
 		const uids = new Set(entries.map(entry => entry.uid).filter((uid): uid is string => !!uid))
-		const reached = this.connectedTo(uids).filter(entry => !uids.has(entry.uid!))
+		const reached = this.getConnected(uids).filter(entry => !uids.has(entry.uid!))
 		for (const entry of [...entries, ...reached]) {
 			const uid = entry.uid
 			entry.relations = EntryRelations.of(uid === undefined ? [] : [...this.owned.get(uid) ?? [], ...this.pointing.get(uid) ?? []])
 		}
-		EntryRelations.link(entries, uid => this.entryOf(uid))
+		EntryRelations.link(entries, uid => this.getEntry(uid))
 	}
 
 	/** This graph with `relations` as what `entry` owns, in place of what it holds today: what a write would make of it. */
@@ -90,31 +90,31 @@ export class RelationGraph {
 		return RelationGraph.of([entry, ...this.entries], candidate => candidate.uid === entry.uid ? relations : this.relationsOf(candidate))
 	}
 
-	edgesFrom(uid: string): ReadonlyArray<RelationEdge> {
+	getEdgesFrom(uid: string): ReadonlyArray<RelationEdge> {
 		return this.outgoing.get(uid) ?? []
 	}
 
-	edgesTo(uid: string): ReadonlyArray<RelationEdge> {
+	getEdgesTo(uid: string): ReadonlyArray<RelationEdge> {
 		return this.incoming.get(uid) ?? []
 	}
 
-	childrenOf(uid: string) { return this.resolve(this.step(uid, 'hierarchy', 'down')) }
-	parentsOf(uid: string) { return this.resolve(this.step(uid, 'hierarchy', 'up')) }
-	dependentsOf(uid: string) { return this.resolve(this.step(uid, 'dependency', 'down')) }
-	predecessorsOf(uid: string) { return this.resolve(this.step(uid, 'dependency', 'up')) }
+	getChildren(uid: string) { return this.resolve(this.step(uid, 'hierarchy', 'down')) }
+	getParents(uid: string) { return this.resolve(this.step(uid, 'hierarchy', 'up')) }
+	getDependents(uid: string) { return this.resolve(this.step(uid, 'dependency', 'down')) }
+	getPredecessors(uid: string) { return this.resolve(this.step(uid, 'dependency', 'up')) }
 
-	descendantsOf(uid: string) { return this.resolve(this.walk(this.step(uid, 'hierarchy', 'down'), 'hierarchy', 'down', uid)) }
-	ancestorsOf(uid: string) { return this.resolve(this.walk(this.step(uid, 'hierarchy', 'up'), 'hierarchy', 'up', uid)) }
-	downstreamOf(uid: string) { return this.resolve(this.walk(this.step(uid, 'dependency', 'down'), 'dependency', 'down', uid)) }
+	getDescendants(uid: string) { return this.resolve(this.walk(this.step(uid, 'hierarchy', 'down'), 'hierarchy', 'down', uid)) }
+	getAncestors(uid: string) { return this.resolve(this.walk(this.step(uid, 'hierarchy', 'up'), 'hierarchy', 'up', uid)) }
+	getDownstream(uid: string) { return this.resolve(this.walk(this.step(uid, 'dependency', 'down'), 'dependency', 'down', uid)) }
 	/** Everything this entry waits for, transitively. */
-	upstreamOf(uid: string) { return this.resolve(this.walk(this.step(uid, 'dependency', 'up'), 'dependency', 'up', uid)) }
+	getUpstream(uid: string) { return this.resolve(this.walk(this.step(uid, 'dependency', 'up'), 'dependency', 'up', uid)) }
 
 	/** The entries joined to `uids` by any chain of edges, whichever way each points, theirs included. */
-	connectedTo(uids: Iterable<string>): Array<Entry> {
+	getConnected(uids: Iterable<string>): Array<Entry> {
 		const reach = (frontier: ReadonlyArray<string>, visited: ReadonlySet<string>): ReadonlySet<string> => {
 			const fresh = [...new Set(frontier)].filter(uid => !visited.has(uid))
 			return !fresh.length ? visited : reach(
-				fresh.flatMap(uid => [...this.edgesFrom(uid).map(edge => edge.to), ...this.edgesTo(uid).map(edge => edge.from)]),
+				fresh.flatMap(uid => [...this.getEdgesFrom(uid).map(edge => edge.to), ...this.getEdgesTo(uid).map(edge => edge.from)]),
 				new Set([...visited, ...fresh]),
 			)
 		}
@@ -127,7 +127,7 @@ export class RelationGraph {
 	}
 
 	/** Subtasks and description checklist items weigh equally; cancelled subtasks are excluded. */
-	rollupOf(uid: string | undefined, visiting = new Set<string>()): EntryRollup | undefined {
+	getRollup(uid: string | undefined, visiting = new Set<string>()): EntryRollup | undefined {
 		if (uid === undefined || visiting.has(uid)) {
 			return undefined
 		}
@@ -135,9 +135,9 @@ export class RelationGraph {
 			return this.rollups.get(uid)
 		}
 		visiting.add(uid)
-		const subject = this.entryOf(uid)
+		const subject = this.getEntry(uid)
 		const checklist = subject?.type.isTask ? subject.checklist : undefined
-		const children = this.childrenOf(uid)
+		const children = this.getChildren(uid)
 		if (!children.length && !checklist?.total) {
 			this.rollups.set(uid, undefined)
 			return undefined
@@ -148,7 +148,7 @@ export class RelationGraph {
 			if (child.status === TaskStatus.Done) {
 				return sum + 1
 			}
-			const rollup = this.rollupOf(child.uid, new Set(visiting))
+			const rollup = this.getRollup(child.uid, new Set(visiting))
 			if (rollup?.total) {
 				return sum + rollup.progress
 			}
@@ -164,15 +164,15 @@ export class RelationGraph {
 			subtasks: { done, total: tasks.length },
 			checklist: { done: ticked, total: boxes },
 			children: children.length,
-			descendants: this.descendantsOf(uid).length,
+			descendants: this.getDescendants(uid).length,
 		}
 		this.rollups.set(uid, rollup)
 		return rollup
 	}
 
 	/** Ancestors that completing this entry completes, deepest first: each needs every non-cancelled task child closed and its checklist ticked. */
-	ancestorsCompletedBy(uid: string | undefined): Array<Entry> {
-		const subject = this.entryOf(uid)
+	getAncestorsCompletedBy(uid: string | undefined): Array<Entry> {
+		const subject = this.getEntry(uid)
 		if (!subject) {
 			return []
 		}
@@ -182,11 +182,11 @@ export class RelationGraph {
 		for (let depth = 0; depth < MAX_DEPTH && frontier.length; depth++) {
 			const next = new Array<Entry>()
 			for (const node of frontier) {
-				for (const parent of this.parentsOf(node.uid!)) {
+				for (const parent of this.getParents(node.uid!)) {
 					if (!parent.open || closing.has(parent)) {
 						continue
 					}
-					const children = this.childrenOf(parent.uid!).filter(child => child.type.isTask && child.status !== TaskStatus.Cancelled)
+					const children = this.getChildren(parent.uid!).filter(child => child.type.isTask && child.status !== TaskStatus.Cancelled)
 					if (!children.length || !children.every(child => child.closed || closing.has(child))) {
 						continue
 					}
@@ -227,8 +227,8 @@ export class RelationGraph {
 
 	private step(uid: string, family: 'hierarchy' | 'dependency', towards: 'up' | 'down'): Array<string> {
 		return towards === 'down'
-			? this.edgesFrom(uid).filter(edge => edge.family === family).map(edge => edge.to)
-			: this.edgesTo(uid).filter(edge => edge.family === family).map(edge => edge.from)
+			? this.getEdgesFrom(uid).filter(edge => edge.family === family).map(edge => edge.to)
+			: this.getEdgesTo(uid).filter(edge => edge.family === family).map(edge => edge.from)
 	}
 
 	private resolve(uids: ReadonlyArray<string>): Array<Entry> {

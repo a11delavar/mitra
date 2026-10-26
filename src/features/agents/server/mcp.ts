@@ -4,6 +4,7 @@ import { description, label } from '@a11d/metadata'
 import { McpServer, createMcpHandler, type CallToolResult } from '@modelcontextprotocol/server'
 import { z } from 'zod'
 import { NotFoundError } from '@mikro-orm/sqlite'
+import { User } from '#features/identity'
 import { orm } from '#infrastructure/database/orm.js'
 import { isDemo, isMcpEnabled } from '#infrastructure/environment.js'
 import { operation, type OperationContext } from '#infrastructure/operations/Operation.js'
@@ -100,7 +101,9 @@ mcpRouter.all('/', async (req, res) => {
 		}
 	}
 	const request = new Request(`${req.protocol}://${req.get('host')}${req.originalUrl}`, { method: req.method, headers })
-	const context: OperationContext = { em: orm.em.fork(), user: req.user }
+	const em = orm.em.fork()
+	// The user as this request's manager holds it, so a change to it flushes with the rest: `req.user` outlives the request.
+	const context: OperationContext = { em, user: await em.findOneOrFail(User, { id: req.user.id }) }
 	const response = await handler.fetch(request, {
 		parsedBody: req.method === 'POST' ? req.body : undefined,
 		authInfo: { token: '', clientId: 'mitra', scopes: [], extra: { context, writes: req.accessToken?.writes ?? true } },

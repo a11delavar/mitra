@@ -21,7 +21,7 @@ class Parameters {
 @http({ method: 'PUT', path: '/integrations/:id/name' })
 export class RenameIntegration extends Operation<Parameters, Integration> {
 	async run({ em, user }: OperationContext) {
-		const integration = await user.integration(em, this.parameters.id)
+		const integration = await user.getIntegration(em, this.parameters.id)
 
 		integration.name = this.parameters.name || undefined
 		await em.flush()

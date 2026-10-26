@@ -1,5 +1,6 @@
 import type { EntityManager } from '@mikro-orm/sqlite'
 import { Router } from 'express'
+import { User } from '#features/identity'
 import { http, operation, type HttpFacts } from '../Operation.js'
 
 /** Where a path's segments are parameters (`/entries/:id` is `[0, 0, 1]`), so a fixed one sorts before a parameter in its place. */
@@ -21,7 +22,9 @@ export function operationsRouter(em: () => EntityManager) {
 	})
 	for (const { each, facts } of routed.sort((a, b) => bySpecificity(a.facts, b.facts))) {
 		router[facts.method.toLowerCase() as Lowercase<HttpFacts['method']>](facts.path, async (req, res) => {
-			const result = await each.fromRequest!(req).run({ em: em(), user: req.user })
+			const manager = em()
+			// The user as this request's manager holds it, so a change to it flushes with the rest: `req.user` outlives the request.
+			const result = await each.fromRequest!(req).run({ em: manager, user: await manager.findOneOrFail(User, { id: req.user.id }) })
 			return result === undefined ? res.status(facts.status ?? 204).end() : res.status(facts.status ?? 200).json(result)
 		})
 	}

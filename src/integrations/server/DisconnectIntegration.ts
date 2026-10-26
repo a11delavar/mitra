@@ -16,7 +16,7 @@ class Parameters {
 @http({ method: 'DELETE', path: '/integrations/:id' })
 export class DisconnectIntegration extends Operation<Parameters, void> {
 	async run({ em, user }: OperationContext) {
-		const integration = await user.integration(em, this.parameters.id)
+		const integration = await user.getIntegration(em, this.parameters.id)
 		// Its availability goes with it, so take back what was written for it first.
 		await integration.publishAvailability(em, []).catch((error: unknown) =>
 			this.logger.warn(`Could not take back the availability written to ${integration.toString()}: ${error instanceof Error ? error.message : error}`))

@@ -1,5 +1,5 @@
 /** Apply index order from `ids` to items, setting unlisted items to null. */
-export function applyOrder(rows: Array<{ id: string, order?: number | null }>, ids: ReadonlyArray<string>): void {
+export function applyOrder(rows: ReadonlyArray<{ id: string, order?: number | null }>, ids: ReadonlyArray<string>): void {
 	const position = new Map(ids.map((id, index) => [id, index]))
 	for (const row of rows) {
 		row.order = position.get(row.id) ?? null

@@ -15,7 +15,7 @@ export class DefaultSourceSetting extends ChoiceSetting<string> {
 	readonly page = 'entries'
 	override get hint() { return t('Where new events and tasks are created') }
 
-	get fallback() { return Calendars.primary()?.id ?? '' }
+	get fallback() { return Calendars.getPrimary()?.id ?? '' }
 
 	protected readonly storage: SettingStorage<string> = {
 		read: () => Calendars.defaultId,
@@ -30,6 +30,6 @@ export class DefaultSourceSetting extends ChoiceSetting<string> {
 	}
 
 	override get glyph() {
-		return html`<mitra-source-icon .source=${Calendars.source(this.value)}></mitra-source-icon>`
+		return html`<mitra-source-icon .source=${Calendars.getSource(this.value)}></mitra-source-icon>`
 	}
 }

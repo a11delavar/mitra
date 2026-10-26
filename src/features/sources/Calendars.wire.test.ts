@@ -163,7 +163,7 @@ describe('Integrations and calendars over the wire', () => {
 			await SetSourceVisibility.call({ id: calendar('Work').id, hidden: true })
 			await shown()
 			assert.equal(calendar('Work').hidden, true)
-			assert.ok(Calendars.enabled().some(source => source.name === 'Work'))
+			assert.ok(Calendars.enabled.some(source => source.name === 'Work'))
 			await SetSourceVisibility.call({ id: calendar('Work').id, hidden: false })
 			await shown()
 			assert.equal(calendar('Work').hidden, false)

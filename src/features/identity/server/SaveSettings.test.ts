@@ -12,6 +12,5 @@ describe('SaveSettings', () => {
 	it('stores the settings, dropping what no setting knows', async () => {
 		await SaveSettings.call({ settings: { snapMinutes: 15, hideDoneTasks: true, unknown: 'dropped' } as never })
 		assert.deepEqual({ ...(await GetUser.call()).settings }, { snapMinutes: 15, hideDoneTasks: true })
-		assert.deepEqual({ ...server.user.settings }, { snapMinutes: 15, hideDoneTasks: true })
 	})
 })

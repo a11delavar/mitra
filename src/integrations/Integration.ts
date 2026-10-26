@@ -97,6 +97,11 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 	@children(() => Source, source => source.integrationId, { eager: true })
 	@converter({ construct: (value: ReadonlyArray<Source> | undefined) => value ?? [] }) sources!: ReadonlyArray<Source>
 
+	/** Its calendars where entries can live, hidden ones included. */
+	get enabledSources() {
+		return this.sources.filter(source => source.enabled)
+	}
+
 	constructor() {
 		super()
 		const type = (new.target as { type?: string }).type

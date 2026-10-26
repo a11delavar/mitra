@@ -16,7 +16,6 @@ import { MitraCalendar } from '#integrations/mitra/MitraCalendar.js'
 import { EntryType } from '../EntryType.js'
 import { Entry } from '../Entry.js'
 import { TaskStatus } from '../TaskStatus.js'
-import { entrySearch, entryWindow, everyEntry, recurringEntries, withOverrides } from './entryWindow.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
@@ -50,15 +49,16 @@ async function seedUser(em: EntityManager, username: string, term: string, sourc
 }
 
 /** What search finds, each entry as the occurrence the browser picks for it at `now`. */
-async function searchEntries(em: EntityManager, sourceIds: Array<string>, q: string, now = new Date()) {
-	const entries = await em.find(Entry, entrySearch(sourceIds, q), { orderBy: { start: 'desc' }, limit: 20 })
-	await withOverrides(em, entries.filter(entry => entry.recurrence))
+async function searchEntries(em: EntityManager, user: User, q: string, now = new Date()) {
+	const entries = await user.filterEntries(em, { search: q, sources: visible, limit: 20 })
 	return entries.map(entry => entry.occurrences.standing('UTC', now)).filter(occurrence => !!occurrence)
 }
 
-function windowedEntries(em: EntityManager, sourceIds: Array<string>, start: Date, end: Date) {
-	return em.find(Entry, entryWindow(sourceIds, start, end))
+function windowedEntries(em: EntityManager, user: User, start: Date, end: Date) {
+	return user.filterEntries(em, { range: new DateTimeRange(start, end), sources: visible })
 }
+
+const visible = { enabled: true, hidden: false }
 
 describe('entries ownership scoping', () => {
 	let orm: MikroORM
@@ -72,10 +72,10 @@ describe('entries ownership scoping', () => {
 			const alice = await seedUser(em, 'alice', 'standup')
 			const bob = await seedUser(em, 'bob', 'standup')
 
-			const aliceSources = await alice.user.sources(em, { enabled: true, hidden: false })
+			const aliceSources = await alice.user.filterSources(em, { enabled: true, hidden: false })
 			assert.deepEqual(aliceSources.map(source => source.id), [alice.source.id])
 
-			const bobSources = await bob.user.sources(em, { enabled: true, hidden: false })
+			const bobSources = await bob.user.filterSources(em, { enabled: true, hidden: false })
 			assert.deepEqual(bobSources.map(source => source.id), [bob.source.id])
 		})
 
@@ -86,7 +86,7 @@ describe('entries ownership scoping', () => {
 			em.persist(hidden)
 			await em.flush()
 
-			const visible = await user.sources(em, { enabled: true, hidden: false })
+			const visible = await user.filterSources(em, { enabled: true, hidden: false })
 			assert.deepEqual(visible.map(source => source.id), [visibleSource.id])
 		})
 	})
@@ -97,21 +97,17 @@ describe('entries ownership scoping', () => {
 			const alice = await seedUser(em, 'search-alice', 'roadmap')
 			await seedUser(em, 'search-bob', 'roadmap')
 
-			const visibleSources = await alice.user.sources(em, { enabled: true, hidden: false })
-			const results = await searchEntries(em, visibleSources.map(source => source.id), 'roadmap')
+			const results = await searchEntries(em, alice.user, 'roadmap')
 
 			assert.deepEqual(results.map(occurrence => occurrence.key), [alice.entry.id])
 		})
 
-		it('regression: a bare em.find(Source, …) leaks another user\'s entries into the results', async () => {
+		it('reaches nothing through another user\'s calendar, even named by its id', async () => {
 			const em = orm.em.fork()
 			const alice = await seedUser(em, 'leak-alice', 'secret-project')
 			const bob = await seedUser(em, 'leak-bob', 'secret-project')
 
-			const bareSources = await em.find(Source, { enabled: true, hidden: false })
-			const leaked = await searchEntries(em, bareSources.map(source => source.id), 'secret-project')
-
-			assert.deepEqual(new Set(leaked.map(occurrence => occurrence.key)), new Set([alice.entry.id, bob.entry.id]))
+			assert.deepEqual(await alice.user.filterEntries(em, { search: 'secret-project', sources: { id: { $in: [bob.source.id] } } }), [])
 		})
 	})
 })
@@ -134,18 +130,17 @@ describe('GET /entries/search finds a series as one occurrence', () => {
 		})
 		em.persist(master)
 		await em.flush()
-		const sourceIds = (await user.sources(em, { enabled: true, hidden: false })).map(s => s.id)
-		const [found, ...rest] = await searchEntries(em, sourceIds, 'Team sync', now)
+		const [found, ...rest] = await searchEntries(em, user, 'Team sync', now)
 		assert.equal(rest.length, 0)
-		return { em, sourceIds, master, found: found! }
+		return { em, user, master, found: found! }
 	}
 
 	it('as the next one from now, under the id its window mints — the id the editor intent opens', async () => {
-		const { em, sourceIds, master, found } = await weekly('search-series')
+		const { em, user, master, found } = await weekly('search-series')
 		assert.equal(found.start?.toISOString(), '2026-09-29T12:00:00.000Z')
 		assert.equal(found.recurringEntryId, master.id)
 
-		const window = EntryOccurrences.inWindow(await recurringEntries(em, sourceIds), new DateTimeRange(new Date('2026-09-28T00:00:00Z'), new Date('2026-10-05T00:00:00Z')))
+		const window = EntryOccurrences.inWindow(await user.filterEntries(em, { where: { recurrence: { $ne: null } } }), new DateTimeRange(new Date('2026-09-28T00:00:00Z'), new Date('2026-10-05T00:00:00Z')))
 		assert.deepEqual(window.filter(occurrence => occurrence.key === found.key).map(occurrence => occurrence.start?.valueOf()), [found.start?.valueOf()])
 	})
 
@@ -160,14 +155,14 @@ describe('GET /entries/search finds a series as one occurrence', () => {
 	})
 
 	it('passes over an excluded or overridden date, which the window does not render as an occurrence', async () => {
-		const { em, sourceIds, master } = await weekly('search-overridden', { exdates: [new Date('2026-09-29T12:00:00Z').getTime()] })
+		const { em, user, master } = await weekly('search-overridden', { exdates: [new Date('2026-09-29T12:00:00Z').getTime()] })
 		em.persist(new Entry({
 			id: crypto.randomUUID(), sourceId: master.sourceId, type: EntryType.Event, heading: 'Moved sync',
 			start: new Date('2026-10-07T15:00:00Z') as never, end: new Date('2026-10-07T16:00:00Z') as never,
 			recurringEntryId: master.id, recurrenceId: new Date('2026-10-06T12:00:00Z') as never,
 		}))
 		await em.flush()
-		const [found] = await searchEntries(em, sourceIds, 'Team sync', now)
+		const [found] = await searchEntries(em, user, 'Team sync', now)
 		assert.equal(found!.start?.toISOString(), '2026-10-13T12:00:00.000Z')
 	})
 })
@@ -193,8 +188,7 @@ describe('GET /entries carries the overdue backlog in every window', () => {
 		em.persist([untouched, started, dueOnly])
 		await em.flush()
 
-		const sourceIds = (await user.sources(em, { enabled: true, hidden: false })).map(s => s.id)
-		const found = (await windowedEntries(em, sourceIds, ...june)).map(entry => entry.id)
+		const found = (await windowedEntries(em, user, ...june)).map(entry => entry.id)
 
 		assert.ok(found.includes(untouched.id))
 		assert.ok(found.includes(started.id))
@@ -211,8 +205,7 @@ describe('GET /entries carries the overdue backlog in every window', () => {
 		em.persist([done, cancelled, event])
 		await em.flush()
 
-		const sourceIds = (await user.sources(em, { enabled: true, hidden: false })).map(s => s.id)
-		const found = (await windowedEntries(em, sourceIds, ...june)).map(entry => entry.id)
+		const found = (await windowedEntries(em, user, ...june)).map(entry => entry.id)
 
 		assert.ok(!found.includes(done.id))
 		assert.ok(!found.includes(cancelled.id))
@@ -226,8 +219,7 @@ describe('GET /entries carries the overdue backlog in every window', () => {
 		em.persist(later)
 		await em.flush()
 
-		const sourceIds = (await user.sources(em, { enabled: true, hidden: false })).map(s => s.id)
-		const found = (await windowedEntries(em, sourceIds, ...june)).map(entry => entry.id)
+		const found = (await windowedEntries(em, user, ...june)).map(entry => entry.id)
 
 		assert.ok(!found.includes(later.id))
 	})
@@ -246,9 +238,8 @@ describe('GET /entries carries the undated rows in every window', () => {
 		em.persist(undated)
 		await em.flush()
 
-		const sourceIds = (await user.sources(em, { enabled: true, hidden: false })).map(s => s.id)
-		const june = await windowedEntries(em, sourceIds, new Date('2026-06-01T00:00:00Z'), new Date('2026-06-30T00:00:00Z'))
-		const december = await windowedEntries(em, sourceIds, new Date('2026-12-01T00:00:00Z'), new Date('2026-12-31T00:00:00Z'))
+		const june = await windowedEntries(em, user, new Date('2026-06-01T00:00:00Z'), new Date('2026-06-30T00:00:00Z'))
+		const december = await windowedEntries(em, user, new Date('2026-12-01T00:00:00Z'), new Date('2026-12-31T00:00:00Z'))
 
 		assert.ok(june.some(entry => entry.id === undated.id))
 		assert.ok(december.some(entry => entry.id === undated.id))
@@ -264,9 +255,8 @@ describe('GET /entries carries the undated rows in every window', () => {
 		em.persist(dated)
 		await em.flush()
 
-		const sourceIds = (await user.sources(em, { enabled: true, hidden: false })).map(s => s.id)
-		const june = await windowedEntries(em, sourceIds, new Date('2026-06-01T00:00:00Z'), new Date('2026-06-30T00:00:00Z'))
-		const december = await windowedEntries(em, sourceIds, new Date('2026-12-01T00:00:00Z'), new Date('2026-12-31T00:00:00Z'))
+		const june = await windowedEntries(em, user, new Date('2026-06-01T00:00:00Z'), new Date('2026-06-30T00:00:00Z'))
+		const december = await windowedEntries(em, user, new Date('2026-12-01T00:00:00Z'), new Date('2026-12-31T00:00:00Z'))
 
 		assert.ok(june.some(entry => entry.id === dated.id))
 		assert.ok(!december.some(entry => entry.id === dated.id))
@@ -281,8 +271,7 @@ describe('GET /entries carries the undated rows in every window', () => {
 		em.persist([hers, his])
 		await em.flush()
 
-		const sourceIds = (await alice.user.sources(em, { enabled: true, hidden: false })).map(s => s.id)
-		const window = await windowedEntries(em, sourceIds, new Date('2026-06-01T00:00:00Z'), new Date('2026-06-30T00:00:00Z'))
+		const window = await windowedEntries(em, alice.user, new Date('2026-06-01T00:00:00Z'), new Date('2026-06-30T00:00:00Z'))
 
 		assert.ok(window.some(entry => entry.id === hers.id))
 		assert.ok(!window.some(entry => entry.id === his.id))
@@ -295,9 +284,8 @@ describe('GET /entries/all lists every entry once', () => {
 	before(async () => { orm = await inMemoryOrm() })
 	after(async () => { await orm.close(true) })
 
-	async function everything(em: EntityManager, user: User) {
-		const sourceIds = (await user.sources(em, { enabled: true, hidden: false })).map(s => s.id)
-		return [...await em.find(Entry, everyEntry(sourceIds)), ...await recurringEntries(em, sourceIds)]
+	function everything(em: EntityManager, user: User) {
+		return user.filterEntries(em, { sources: visible })
 	}
 
 	it('reaches entries of any date, undated ones included', async () => {

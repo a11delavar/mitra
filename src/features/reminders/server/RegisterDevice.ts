@@ -60,9 +60,7 @@ export class RegisterDevice extends Operation<Registration, NotificationSubscrip
 			browser: trimmed(browser, 64),
 			mobile: mobile ?? undefined,
 		})
-		const previous = previousEndpoint && previousEndpoint !== endpoint
-			? await em.findOne(NotificationSubscription, { endpoint: previousEndpoint, userId: user.id })
-			: null
+		const [previous] = previousEndpoint && previousEndpoint !== endpoint ? await user.filterDevices(em, { endpoint: previousEndpoint }) : []
 		if (previous) {
 			subscription.succeed(previous)
 			em.remove(previous)

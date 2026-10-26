@@ -1,6 +1,5 @@
 import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
-import { Source } from '#features/sources'
 import { validation } from '#infrastructure/validation'
 import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
@@ -18,8 +17,8 @@ class Parameters {
 @http({ method: 'POST', path: '/integrations/:id/reimport', status: 202 })
 export class ReimportIntegration extends Operation<Parameters, void> {
 	async run({ em, user }: OperationContext) {
-		const integration = await user.integration(em, this.parameters.id)
-		const sources = await em.find(Source, { integrationId: integration.id, enabled: true })
+		const integration = await user.getIntegration(em, this.parameters.id)
+		const sources = integration.enabledSources
 		for (const source of sources) {
 			await integration.reimportSource(em, source)
 		}

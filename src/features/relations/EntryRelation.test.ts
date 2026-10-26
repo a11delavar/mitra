@@ -91,7 +91,7 @@ describe('EntryRelation', () => {
 			const child = await task('a')
 			await relate(child, RelationType.Parent, 'parent')
 
-			const graph = await user.relationGraph(em)
+			const graph = await user.getRelationGraph(em)
 			graph.attach([parent])
 			assert.deepEqual(parent.relations?.all.map(relation => [relation.direction, relation.type.value, relation.targetUid]), [['incoming', 'PARENT', 'a']])
 			assert.deepEqual(parent.relations?.all[0]?.target?.relations?.all.map(relation => [relation.direction, relation.targetUid]), [['outgoing', 'parent']])
@@ -101,18 +101,18 @@ describe('EntryRelation', () => {
 			await task('shared')
 			await strangersTaskPointingAt('shared')
 
-			const graph = await user.relationGraph(em)
+			const graph = await user.getRelationGraph(em)
 			assert.deepEqual(graph.entries.map(entry => entry.uid), [])
-			assert.equal(graph.rollupOf('shared'), undefined)
+			assert.equal(graph.getRollup('shared'), undefined)
 		})
 
 		it('reaches the entries the candidate relations name, though no row holds them yet', async () => {
 			await task('a')
 			await task('apart')
 
-			const graph = await user.relationGraph(em, EntryRelations.of([{ type: RelationType.Parent, targetUid: 'a' }]))
-			assert.equal(graph.entryOf('a')?.uid, 'a')
-			assert.equal(graph.entryOf('apart'), undefined)
+			const graph = await user.getRelationGraph(em, EntryRelations.of([{ type: RelationType.Parent, targetUid: 'a' }]))
+			assert.equal(graph.getEntry('a')?.uid, 'a')
+			assert.equal(graph.getEntry('apart'), undefined)
 		})
 	})
 
@@ -133,7 +133,7 @@ describe('EntryRelation', () => {
 			const child = await task('a')
 			await relate(child, RelationType.Parent, 'parent')
 			const [before] = await em.find(EntryRelation, { entryId: child.id! })
-			const graph = await user.relationGraph(em)
+			const graph = await user.getRelationGraph(em)
 			graph.attach([child])
 			await em.flush()
 			const [after] = await orm.em.fork().find(EntryRelation, { entryId: child.id! })

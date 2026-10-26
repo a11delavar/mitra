@@ -36,7 +36,7 @@ class Parameters {
 @tool({ name: 'create_calendar' })
 export class CreateSource extends Operation<Parameters, Source> {
 	async run({ em, user }: OperationContext) {
-		const integration = await user.integration(em, this.parameters.id)
+		const integration = await user.getIntegration(em, this.parameters.id)
 		if (!integration.capabilities.sources.create) {
 			throw new NotAllowed('This integration cannot create calendars from mitra')
 		}
@@ -44,12 +44,11 @@ export class CreateSource extends Operation<Parameters, Source> {
 		// Only pass entryTypes when given: undefined would overwrite Source's default.
 		const { name, entryTypes } = this.parameters
 
-		const siblings = await em.find(Source, { integrationId: integration.id })
 		const source = new Source({
 			name,
 			enabled: true,
 			hidden: false,
-			color: this.parameters.color ?? Color.unusedAmong(siblings.map(sibling => sibling.color)),
+			color: this.parameters.color ?? Color.unusedAmong(integration.sources.map(sibling => sibling.color)),
 			...entryTypes ? { entryTypes } : {},
 		})
 		await integration.createSource(em, source)

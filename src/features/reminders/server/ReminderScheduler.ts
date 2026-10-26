@@ -2,7 +2,6 @@ import { type EntityManager, type MikroORM } from '@mikro-orm/sqlite'
 import { DateTimeRange } from '@3mo/date-time'
 import { Source } from '#features/sources'
 import { Entry } from '#features/entries'
-import { withOverrides } from '#features/entries/server/entryWindow.js'
 import { EntryOccurrences, type EntryOccurrence } from '#features/recurrence'
 import '#features/time/TimeSpan.time.js'
 import { Integration } from '#integrations'
@@ -147,5 +146,14 @@ export class ReminderScheduler {
 	private async observerZones(em: EntityManager): Promise<Map<string, string>> {
 		const subscriptions = await em.find(NotificationSubscription, {}, { orderBy: { lastSeenAt: 'asc' } })
 		return new Map(subscriptions.filter(subscription => subscription.timeZone).map(subscription => [subscription.userId, subscription.timeZone!]))
+	}
+}
+
+/** Reads each recurring entry's overrides into it. */
+async function withOverrides(em: EntityManager, entries: ReadonlyArray<Entry>) {
+	const overrides = entries.length ? await em.find(Entry, { recurringEntryId: { $in: entries.map(entry => entry.id!) } }) : []
+	const byEntry = Map.groupBy(overrides, override => override.recurringEntryId!)
+	for (const entry of entries) {
+		entry.overrides = byEntry.get(entry.id!)
 	}
 }

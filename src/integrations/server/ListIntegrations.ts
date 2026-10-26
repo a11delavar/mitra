@@ -7,7 +7,7 @@ import { http, operation, Operation, type OperationContext } from '#infrastructu
 @description('Lists the accounts the user connected, each with its calendars.')
 @http({ method: 'GET', path: '/integrations' })
 export class ListIntegrations extends Operation<object, Array<Integration>> {
-	run({ em, user }: OperationContext): Promise<Array<Integration>> {
-		return em.find(Integration, { userId: user.id })
+	run({ em, user }: OperationContext) {
+		return user.getIntegrations(em)
 	}
 }

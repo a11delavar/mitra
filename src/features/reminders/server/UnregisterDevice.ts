@@ -2,7 +2,6 @@ import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
 import { validation } from '#infrastructure/validation'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
-import { NotificationSubscription } from '../NotificationSubscription.js'
 
 /** For the service worker, which knows a rotated subscription by its endpoint alone. */
 class Parameters {
@@ -18,7 +17,7 @@ class Parameters {
 export class UnregisterDevice extends Operation<Parameters, void> {
 	async run({ em, user }: OperationContext) {
 		const { endpoint } = this.parameters
-		const subscription = await em.findOne(NotificationSubscription, { endpoint, userId: user.id })
+		const [subscription] = await user.filterDevices(em, { endpoint })
 		if (subscription) {
 			em.remove(subscription)
 			await em.flush()

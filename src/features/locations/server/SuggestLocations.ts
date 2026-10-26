@@ -34,7 +34,7 @@ export class SuggestLocations extends Operation<Parameters, Array<LocationSugges
 		const { q, lang, lat, lon } = this.parameters
 		const query = q?.trim() ?? ''
 
-		const recents = await recentLocations(em, (await user.sources(em)).map(source => source.id), query)
+		const recents = await recentLocations(em, user, query)
 		if (query.length < 2) {
 			return recents
 		}

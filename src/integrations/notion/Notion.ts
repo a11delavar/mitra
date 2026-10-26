@@ -317,8 +317,8 @@ export class Notion extends Integration<NotionCredentials> {
 		em.persist(entry)
 		// A moved entry's new page id: the links of this account's user follow it.
 		if (previousUid && previousUid !== entry.uid) {
-			const sources = await (await em.findOneOrFail(User, { id: this.userId })).sources(em)
-			await EntryRelation.repoint(em, new Map([[previousUid, entry.uid!]]), sources.map(source => source.id))
+			const sources = await (await em.findOneOrFail(User, { id: this.userId })).getSources(em)
+			await EntryRelation.repoint(em, new Map([[previousUid, entry.uid!]]), { sourceId: { $in: sources.map(source => source.id) } })
 		}
 		return entry
 	}

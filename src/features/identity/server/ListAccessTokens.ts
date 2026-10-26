@@ -8,6 +8,6 @@ import { AccessToken } from '../AccessToken.js'
 @http({ method: 'GET', path: '/user/access-tokens' })
 export class ListAccessTokens extends Operation<object, Array<AccessToken>> {
 	run({ em, user }: OperationContext) {
-		return em.find(AccessToken, { userId: user.id }, { orderBy: { createdAt: 'desc' } })
+		return user.getAccessTokens(em)
 	}
 }

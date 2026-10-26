@@ -15,28 +15,26 @@ import { EntryPatch } from '../EntryPatch.js'
 export class CreateEntry extends Operation<EntryPatch, Entry> {
 	async run({ em, user }: OperationContext) {
 		const patch = this.parameters
-		const to = patch.sourceId ? await user.source(em, patch.sourceId) : await user.defaultSource(em, patch.type)
+		const to = patch.sourceId ? await user.getSource(em, patch.sourceId) : await user.getDefaultSource(em, patch.type)
 		patch.sourceId = to.id
 		// Times written without a zone were read in the home zone, so the entry keeps it.
 		if (patch.timeZone === undefined && !patch.allDay && user.timeZones?.home) {
 			patch.timeZone = EntryTimeZone.parse(user.timeZones.home.zone.id)
 		}
-		const unclaimed = await fileStore.claim(user.id, patch.files ?? [])
-		const incoming = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: to.defaultEntryType, source: to }).patch(patch).fit()
+		const change = to.create(patch)
 		// A create naming no reminders starts with the account's, as the browser's drafts do; `null` names none.
-		if (patch.reminders === undefined && incoming.holds('reminders')) {
-			incoming.reminders = user.reminderDefaults.for(incoming)
+		if (patch.reminders === undefined && change.edited.holds('reminders')) {
+			change.edited.reminders = user.reminderDefaults.for(change.edited)
 		}
-
-		const { relations } = incoming
-		const errors = [...unclaimed, ...patch.validate({ to }), ...incoming.validate(), ...(relations === undefined ? [] : relations.validate({ entry: incoming, graph: await user.relationGraph(em, relations) }))]
+		const reached = patch.relations && await user.getRelationGraph(em, patch.relations)
+		const errors = [...await fileStore.claim(user.id, patch.files ?? []), ...change.validate({ graph: reached })]
 		if (errors.length) {
 			throw new AggregateError(errors)
 		}
 
-		const created = await to.integration.createEntry(em, incoming)
+		const created = await change.save(em)
 		await em.flush()
-		const graph = await user.relationGraph(em)
+		const graph = await user.getRelationGraph(em)
 		graph.attach([created])
 		syncEmitter.emit('updated', user.id)
 		this.logger.debug(`Created ${created.type} "${created.heading}" (${created.id}) in source ${to.id}`)

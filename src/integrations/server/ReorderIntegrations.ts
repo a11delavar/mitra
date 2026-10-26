@@ -19,7 +19,7 @@ class Parameters {
 export class ReorderIntegrations extends Operation<Parameters, void> {
 	async run({ em, user }: OperationContext) {
 		const { ids } = this.parameters
-		const integrations = await user.integrations(em)
+		const integrations = await user.getIntegrations(em)
 		const owned = new Set(integrations.map(integration => integration.id))
 		if (ids.some(id => !owned.has(id))) {
 			throw new NotFoundError('Unknown integration')

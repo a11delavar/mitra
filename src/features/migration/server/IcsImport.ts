@@ -32,7 +32,6 @@ export class IcsImport {
 	private constructor(
 		private readonly em: EntityManager,
 		readonly target: Source,
-		private readonly targetIntegration: Integration,
 		private readonly entities: ReadonlyArray<IcsEntity>,
 	) { }
 
@@ -44,9 +43,8 @@ export class IcsImport {
 		if (ics.length > maxIcsBytes) {
 			throw new MigrationRefused('The file is too large to import')
 		}
-		const target = await user.source(em, targetId)
-		const integration = await em.findOneOrFail(Integration, { id: target.integrationId })
-		if (!integration.capabilitiesFor(target).entries.create) {
+		const target = await user.getSource(em, targetId)
+		if (!target.capabilities.entries.create) {
 			throw new MigrationRefused('This calendar cannot be written to from mitra')
 		}
 
@@ -64,7 +62,7 @@ export class IcsImport {
 		const entities = [...groups].map(([fileUid, components]): IcsEntity => {
 			const master = components.find(component => !CalDAV.recurrenceProps(component).recurrenceId) ?? components[0]!
 			const entry = new Entry({ id: crypto.randomUUID(), sourceId: target.id, source: target })
-			CalDAV.applyComponent(entry, master, integration)
+			CalDAV.applyComponent(entry, master, target.integration)
 			entry.uid = crypto.randomUUID()
 			return { entry, fileUid, occurrence: components.some(component => !!CalDAV.recurrenceProps(component).recurrenceId) }
 		})
@@ -72,7 +70,7 @@ export class IcsImport {
 			throw new MigrationRefused('The file contains no events or tasks')
 		}
 
-		return new IcsImport(em, target, integration, entities)
+		return new IcsImport(em, target, entities)
 	}
 
 	/** Fidelity preview of what the import would add, modify, or leave out. */
@@ -87,7 +85,7 @@ export class IcsImport {
 
 	/** Runs the import holding the target integration's exclusive lock. */
 	run(): Promise<MigrationOutcome> {
-		return Integration.exclusively(this.targetIntegration.id, () => this.runExclusively())
+		return Integration.exclusively(this.target.integration.id, () => this.runExclusively())
 	}
 
 	private async runExclusively(): Promise<MigrationOutcome> {
@@ -101,7 +99,7 @@ export class IcsImport {
 			try {
 				// Converted only now: the verdicts above must judge the type the file authored.
 				entry.migrateTo(this.target)
-				const row = await this.targetIntegration.createEntry(this.em, entry)
+				const row = await this.target.integration.createEntry(this.em, entry)
 				if (row.uid) {
 					uids.set(fileUid, row.uid)
 				}
@@ -138,7 +136,7 @@ export class IcsImport {
 			failedEntry: failed?.heading ?? null,
 		})
 		for (const row of created) {
-			await this.targetIntegration.deleteEntry(this.em, row).catch(() => outcome.duplicates++)
+			await this.target.integration.deleteEntry(this.em, row).catch(() => outcome.duplicates++)
 		}
 		await this.em.flush().catch(() => void 0)
 		logger.error(`Import into ${this.target} aborted at "${failed?.heading ?? ''}". ${outcome.duplicates} entries could not be taken back: ${outcome.failure}`)

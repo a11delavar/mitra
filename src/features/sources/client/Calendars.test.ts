@@ -27,31 +27,31 @@ describe('Calendars', () => {
 	})
 
 	it('tells where entries can live from what is shown, hidden calendars holding entries too', () => {
-		assert.deepEqual(Calendars.enabled().map(source => source.id), ['holidays', 'home', 'work', 'hidden'])
-		assert.deepEqual(Calendars.enabled(local).map(source => source.id), ['home', 'work', 'hidden'])
+		assert.deepEqual(Calendars.enabled.map(source => source.id), ['holidays', 'home', 'work', 'hidden'])
+		assert.deepEqual(local.enabledSources.map(source => source.id), ['home', 'work', 'hidden'])
 		assert.deepEqual(Calendars.visible.map(source => source.id), ['holidays', 'home', 'work'])
 	})
 
 	it('finds a source and the integration it belongs to', () => {
-		assert.equal(Calendars.source('work')?.name, 'work')
-		assert.equal(Calendars.source('work')?.integration, local)
-		assert.equal(Calendars.source('gone'), undefined)
+		assert.equal(Calendars.getSource('work')?.name, 'work')
+		assert.equal(Calendars.getSource('work')?.integration, local)
+		assert.equal(Calendars.getSource('gone'), undefined)
 	})
 
 	it('puts a new entry in the first visible calendar that can take and hold it, absent a default, never a read-only one', () => {
-		assert.equal(Calendars.primary()?.id, 'home')
-		assert.equal(Calendars.primary(EntryType.Task)?.id, 'home')
+		assert.equal(Calendars.getPrimary()?.id, 'home')
+		assert.equal(Calendars.getPrimary(EntryType.Task)?.id, 'home')
 	})
 
 	it('turns writes off for a read-only source', () => {
-		assert.equal(Calendars.source('holidays')?.capabilities.entries.create, false)
-		assert.equal(Calendars.source('work')?.capabilities.entries.create, true)
+		assert.equal(Calendars.getSource('holidays')?.capabilities.entries.create, false)
+		assert.equal(Calendars.getSource('work')?.capabilities.entries.create, true)
 	})
 
 	it('copies entries out where another calendar takes them, and moves them only where they can also be deleted', () => {
-		assert.equal(Calendars.canCopyEntriesOut(Calendars.source('holidays')!), true)
-		assert.equal(Calendars.canMoveEntriesOut(Calendars.source('holidays')!), false)
-		assert.equal(Calendars.canMoveEntriesOut(Calendars.source('work')!), true)
+		assert.equal(Calendars.canCopyEntriesOut(Calendars.getSource('holidays')!), true)
+		assert.equal(Calendars.canMoveEntriesOut(Calendars.getSource('holidays')!), false)
+		assert.equal(Calendars.canMoveEntriesOut(Calendars.getSource('work')!), true)
 	})
 
 	it('reorders sources and integrations in place', async () => {

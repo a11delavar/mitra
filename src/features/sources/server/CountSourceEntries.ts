@@ -16,7 +16,7 @@ class Parameters {
 @http({ method: 'GET', path: '/sources/:id/entries/count' })
 export class CountSourceEntries extends Operation<Parameters, number> {
 	async run({ em, user }: OperationContext) {
-		const source = await user.source(em, this.parameters.id)
+		const source = await user.getSource(em, this.parameters.id)
 		return em.count(Entry, { sourceId: source.id })
 	}
 }

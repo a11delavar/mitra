@@ -32,7 +32,7 @@ export class RankTasks extends Operation<Parameters, void> {
 	async run({ em, user }: OperationContext) {
 		const { ranks } = this.parameters
 		for (const [id, rank] of ranks) {
-			const entry = await user.entry(em, id)
+			const entry = await user.getEntry(em, id)
 			if (!entry.type.isTask || entry.recurringEntryId) {
 				throw new ValidationError('Only tasks have a manual order')
 			}

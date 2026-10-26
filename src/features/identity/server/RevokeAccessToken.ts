@@ -2,7 +2,6 @@ import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
 import { validation } from '#infrastructure/validation'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
-import { AccessToken } from '../AccessToken.js'
 
 class Parameters {
 	@validation(z.string())
@@ -16,7 +15,7 @@ class Parameters {
 @http({ method: 'DELETE', path: '/user/access-tokens/:id' })
 export class RevokeAccessToken extends Operation<Parameters, void> {
 	async run({ em, user }: OperationContext) {
-		const accessToken = await em.findOne(AccessToken, { id: this.parameters.id, userId: user.id })
+		const [accessToken] = await user.filterAccessTokens(em, { id: this.parameters.id })
 		if (accessToken) {
 			em.remove(accessToken)
 			await em.flush()

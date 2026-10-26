@@ -1,8 +1,6 @@
-import { equals } from '@a11d/equals'
 import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
 import { fileStore } from '#features/files/server/FileStore.js'
-import { OrganizerOnly } from '#features/participants/OrganizerOnly.js'
 import { tool } from '#features/agents/server/tool.js'
 import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
 import { validation } from '#infrastructure/validation'
@@ -24,41 +22,24 @@ class Parameters extends EntryPatch {
 export class UpdateEntry extends Operation<Parameters, Entry> {
 	async run({ em, user }: OperationContext) {
 		const patch = this.parameters
-		const existing = await user.entry(em, patch.id)
-
-		// Validated BEFORE any integration write, since a 400 must leave the external store untouched.
-		const malformed = [...patch.validate(), ...await fileStore.claim(user.id, patch.files ?? [], existing.files)]
-		if (malformed.length) {
-			throw new AggregateError(malformed)
-		}
-		const { relations } = patch
-		const edit = existing.edit(patch)
-		const incoming = edit.edited
-
-		// Changing the list is the organizer's prerogative, so content edits pass only while they leave it as it is.
-		if (!Object[equals](incoming.participants, existing.participants) && !existing.canManageParticipants) {
-			throw new OrganizerOnly('Only the organizer can modify participants', ['participants'])
-		}
-
-		// Its own calendar came with the entry, owned transitively; a DIFFERENT target proves its own ownership.
-		const from = existing.source
-		const to = incoming.sourceId === existing.sourceId ? from : await user.source(em, incoming.sourceId)
-		incoming.source = to
-		// Type conversion re-creates the entry below: tasks and events cannot share a CalDAV resource (RFC 4791 §4.1).
-		const errors = [...patch.validate({ entry: existing, from, to }), ...incoming.validate(), ...(relations === undefined ? [] : relations.validate({ entry: existing, graph: await user.relationGraph(em, relations) }))]
+		const existing = await user.getEntry(em, patch.id)
+		const change = existing.edit(patch)
+		// The calendar it ends up in comes through the user, which proves it theirs.
+		change.edited.source = await user.getSource(em, change.edited.sourceId)
+		const reached = patch.relations && await user.getRelationGraph(em, patch.relations)
+		const errors = [...await fileStore.claim(user.id, patch.files ?? [], existing.files), ...change.validate({ graph: reached })]
 		if (errors.length) {
 			throw new AggregateError(errors)
 		}
-		incoming.fit()
 
-		const recreated = edit.recreates(from, to)
-		const saved = await edit.save(em, from, to)
+		const { recreates } = change
+		const saved = await change.save(em)
 		await em.flush()
 		// Read back as any read answers it, so the browser keeps the entries it reaches until its next fetch.
-		const graph = await user.relationGraph(em)
+		const graph = await user.getRelationGraph(em)
 		graph.attach([saved])
 		syncEmitter.emit('updated', user.id)
-		this.logger.debug(recreated ? `Re-created entry ${existing.id} as ${saved.type} in source ${to.id} (new id ${saved.id})` : `Updated entry ${existing.id} "${saved.heading}"`)
+		this.logger.debug(recreates ? `Re-created entry ${existing.id} as ${saved.type} in source ${saved.sourceId} (new id ${saved.id})` : `Updated entry ${existing.id} "${saved.heading}"`)
 		return saved
 	}
 }

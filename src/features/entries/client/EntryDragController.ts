@@ -435,7 +435,7 @@ export class EntryDragController extends Controller {
 		// Create on empty grid / lane / cell. A drag over availability still creates; a tap opens the availability.
 		const availability = target.closest('mitra-availability-segment') as AvailabilitySegment | null
 		const mode = this.createModeAt(target)
-		const source = mode ? Calendars.primary(this.createType) : undefined
+		const source = mode ? Calendars.getPrimary(this.createType) : undefined
 		if (!mode || !source) {
 			// Nothing can be created here, so open the availability right away.
 			if (availability) {

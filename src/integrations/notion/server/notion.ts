@@ -7,7 +7,7 @@ export const notionRouter = Router()
 /** A picture in Notion's own store has a link signed for an hour, so the browser is sent to a fresh one each time it asks. */
 notionRouter.get('/blocks/:blockId', async (req, res) => {
 	const em = orm.em.fork()
-	const accounts = (await req.user.integrations(em)).filter((integration): integration is Notion => integration instanceof Notion)
+	const accounts = (await req.user.getIntegrations(em)).filter((integration): integration is Notion => integration instanceof Notion)
 	for (const account of accounts) {
 		try {
 			const url = await account.fileUrlOf(req.params.blockId)

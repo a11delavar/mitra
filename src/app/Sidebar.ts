@@ -66,7 +66,7 @@ export class Sidebar extends Component {
 					if (!current) {
 						return
 					}
-					const ids = Calendars.enabled(current).map(source => source.id)
+					const ids = current.enabledSources.map(source => source.id)
 					this.commitOrder(ids, source, destination, () => Calendars.reorderSources(current, ids))
 				},
 			})
@@ -674,12 +674,12 @@ export class Sidebar extends Component {
 
 	/** Whether every calendar of the integration is hidden, which turns its eye into the way back. */
 	private hidesEvery(integration: Integration) {
-		const sources = Calendars.enabled(integration)
+		const sources = integration.enabledSources
 		return sources.length > 0 && sources.every(source => source.hidden)
 	}
 
 	private async toggleIntegrationVisibility(integration: Integration) {
-		await Calendars.setAllHidden(Calendars.enabled(integration), !this.hidesEvery(integration))
+		await Calendars.setAllHidden(integration.enabledSources, !this.hidesEvery(integration))
 		this.visibilityChanged()
 	}
 
@@ -757,7 +757,7 @@ export class Sidebar extends Component {
 
 	/** Check whether the source is the default target for new entries. */
 	private isDefault(source: Source) {
-		return Calendars.primary()?.id === source.id
+		return Calendars.getPrimary()?.id === source.id
 	}
 
 	/** Tooltip hint for source default marker. */
@@ -809,7 +809,7 @@ export class Sidebar extends Component {
 	}
 
 	private moveSource(integration: Integration, source: Source, delta: number) {
-		const ids = Calendars.enabled(integration).map(source => source.id)
+		const ids = integration.enabledSources.map(source => source.id)
 		const index = ids.indexOf(source.id)
 		this.commitOrder(ids, index, index + delta, () => Calendars.reorderSources(integration, ids))
 	}
@@ -859,7 +859,7 @@ export class Sidebar extends Component {
 										<mitra-menu-item icon="trash-2" variant="danger" @click=${() => this.removeIntegration(i.id)}>${t('Delete')}</mitra-menu-item>
 									</mitra-menu>
 								</mitra-popover-container>
-								${!Calendars.enabled(i).length ? html.nothing : html`
+								${!i.enabledSources.length ? html.nothing : html`
 									<mitra-icon-button size="small"
 										class="eye-icon"
 										icon=${this.hidesEvery(i) ? 'eye-off' : 'eye'}
@@ -870,7 +870,7 @@ export class Sidebar extends Component {
 							</span>
 						</header>
 						<div class="sources">
-							${Calendars.enabled(i).map((source, sourceIndex, sources) => html`
+							${i.enabledSources.map((source, sourceIndex, sources) => html`
 								<div class="source" ${this.sourcesReorderOf(i).item({ index: sourceIndex })} ?data-hidden=${source.hidden}>
 									<button class="marker"
 										@click=${() => this.toggleDefault(source)}

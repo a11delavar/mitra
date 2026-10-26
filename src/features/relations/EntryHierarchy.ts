@@ -29,30 +29,30 @@ export class EntryHierarchy {
 	}
 
 	get children() {
-		return this.around((graph, uid) => graph.childrenOf(uid))
+		return this.around((graph, uid) => graph.getChildren(uid))
 	}
 
 	get parents() {
-		return this.around((graph, uid) => graph.parentsOf(uid))
+		return this.around((graph, uid) => graph.getParents(uid))
 	}
 
 	get descendants() {
-		return this.around((graph, uid) => graph.descendantsOf(uid))
+		return this.around((graph, uid) => graph.getDescendants(uid))
 	}
 
 	/** What must finish before it. */
 	get predecessors() {
-		return this.around((graph, uid) => graph.predecessorsOf(uid))
+		return this.around((graph, uid) => graph.getPredecessors(uid))
 	}
 
 	/** The ancestors that completing this one completes, deepest first. */
 	get completedAncestors() {
-		return this.graph.ancestorsCompletedBy(this.entry.uid)
+		return this.graph.getAncestorsCompletedBy(this.entry.uid)
 	}
 
 	/** Its subtasks and checklist items added up, where it has any. */
 	get rollup() {
-		return this.graph.rollupOf(this.entry.uid)
+		return this.graph.getRollup(this.entry.uid)
 	}
 
 	/** The rollup's progress, else the entry's own. */
@@ -67,7 +67,7 @@ export class EntryHierarchy {
 		if (!predecessor.relatable || !dependent.relatable || predecessor.uid === dependent.uid || !dependent.holds('relations')) {
 			return false
 		}
-		const coupled = (from: Entry, to: Entry) => this.graph.edgesFrom(from.uid!).some(edge => edge.family === 'dependency' && edge.to === to.uid)
+		const coupled = (from: Entry, to: Entry) => this.graph.getEdgesFrom(from.uid!).some(edge => edge.family === 'dependency' && edge.to === to.uid)
 		if (coupled(predecessor, dependent) || coupled(dependent, predecessor)) {
 			return false
 		}

@@ -17,7 +17,7 @@ class Parameters {
 @http({ method: 'POST', path: '/sources/:id/reimport', status: 202 })
 export class ReimportSource extends Operation<Parameters, void> {
 	async run({ em, user }: OperationContext) {
-		const source = await user.source(em, this.parameters.id)
+		const source = await user.getSource(em, this.parameters.id)
 
 		await source.integration.reimportSource(em, source)
 

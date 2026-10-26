@@ -23,7 +23,7 @@ export class CreateAvailability extends Command {
 
 	override execute() {
 		const { calendar } = this
-		const target = Calendars.primary(EntryType.Availability)
+		const target = Calendars.getPrimary(EntryType.Availability)
 		if (!target) {
 			return
 		}

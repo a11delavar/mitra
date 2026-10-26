@@ -22,10 +22,8 @@ export abstract class ChangeTimeZones<Parameters extends TimeZoneParameters = Ti
 	protected abstract change(zones: UserTimeZones, zone: TimeZone): UserTimeZones
 
 	async run({ em, user }: OperationContext) {
-		const stored = await em.findOneOrFail(User, { id: user.id })
-		stored.timeZones = this.change(stored.timeZones ?? UserTimeZones.none, this.parameters.id)
+		user.timeZones = this.change(user.timeZones ?? UserTimeZones.none, this.parameters.id)
 		await em.flush()
-		user.timeZones = stored.timeZones
-		return stored
+		return user
 	}
 }

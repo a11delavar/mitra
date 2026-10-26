@@ -21,7 +21,7 @@ class Parameters {
 @http({ method: 'PUT', path: '/sources/:id/visibility' })
 export class SetSourceVisibility extends Operation<Parameters, Source> {
 	async run({ em, user }: OperationContext) {
-		const source = await user.source(em, this.parameters.id)
+		const source = await user.getSource(em, this.parameters.id)
 
 		source.hidden = this.parameters.hidden
 		await em.flush()

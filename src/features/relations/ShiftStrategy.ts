@@ -28,7 +28,7 @@ function roundedFor(entry: Entry, milliseconds: number) {
 function planOf(graph: RelationGraph, shifts: ReadonlyMap<string, number>): EntryPlan {
 	const carried = new Map(shifts)
 	for (const [uid, milliseconds] of shifts) {
-		for (const descendant of graph.descendantsOf(uid)) {
+		for (const descendant of graph.getDescendants(uid)) {
 			if (descendant.uid && !carried.has(descendant.uid)) {
 				carried.set(descendant.uid, milliseconds)
 			}
@@ -38,7 +38,7 @@ function planOf(graph: RelationGraph, shifts: ReadonlyMap<string, number>): Entr
 	const writes = new Array<PlannedWrite & { at: number }>()
 	const skipped = new Array<SkippedEntry>()
 	for (const [uid, milliseconds] of carried) {
-		const entry = graph.entryOf(uid)
+		const entry = graph.getEntry(uid)
 		if (!entry || !milliseconds) {
 			continue // a dangling pointer moves nothing
 		}
@@ -104,7 +104,7 @@ class MinimumShift extends ShiftStrategy {
 		const shifts = new Map<string, number>()
 		const at = (uid: string, boundary: { valueOf(): number }) => boundary.valueOf() + (shifts.get(uid) ?? 0)
 		const deficitOf = (edge: RelationEdge, dependent: Entry) => {
-			const predecessor = graph.entryOf(edge.from)
+			const predecessor = graph.getEntry(edge.from)
 			const current = edge.coupling && dependent.boundaryOf(edge.coupling.to)
 			const required = predecessor && edge.requiredBoundaryOf(predecessor)
 			return !predecessor || !current || !required ? 0 : at(edge.from, required) - at(edge.to, current)
@@ -113,14 +113,14 @@ class MinimumShift extends ShiftStrategy {
 			shifts.set(entry.uid!, (shifts.get(entry.uid!) ?? 0) + milliseconds)
 		}
 
-		const downstream = graph.downstreamOf(moved)
-		const upstream = graph.upstreamOf(moved)
+		const downstream = graph.getDownstream(moved)
+		const upstream = graph.getUpstream(moved)
 		for (let pass = 0; pass < MAX_PASSES; pass++) {
 			let moving = false
 
 			// Forwards: move downstream dependents by deficit to clear broken couplings.
 			for (const node of downstream) {
-				const edges = graph.edgesTo(node.uid!).filter(edge => edge.family === 'dependency')
+				const edges = graph.getEdgesTo(node.uid!).filter(edge => edge.family === 'dependency')
 				if (!edges.some(edge => edge.from === moved || shifts.has(edge.from))) {
 					continue
 				}
@@ -136,8 +136,8 @@ class MinimumShift extends ShiftStrategy {
 				if (node.uid !== moved && !shifts.has(node.uid!)) {
 					continue
 				}
-				for (const edge of graph.edgesTo(node.uid!)) {
-					const predecessor = edge.family === 'dependency' && edge.from !== moved ? graph.entryOf(edge.from) : undefined
+				for (const edge of graph.getEdgesTo(node.uid!)) {
+					const predecessor = edge.family === 'dependency' && edge.from !== moved ? graph.getEntry(edge.from) : undefined
 					const deficit = predecessor ? deficitOf(edge, node) : 0
 					if (predecessor && deficit > 0) {
 						move(predecessor, -roundedFor(predecessor, deficit))
@@ -167,7 +167,7 @@ class MaintainGap extends ShiftStrategy {
 		const delta = change.delta
 		return !moved || !delta
 			? EntryPlan.empty
-			: planOf(graph, new Map([...graph.upstreamOf(moved), ...graph.downstreamOf(moved)].map(entry => [entry.uid!, delta])))
+			: planOf(graph, new Map([...graph.getUpstream(moved), ...graph.getDownstream(moved)].map(entry => [entry.uid!, delta])))
 	}
 }
 

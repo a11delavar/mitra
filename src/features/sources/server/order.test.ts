@@ -111,7 +111,7 @@ describe('sidebar manual order', () => {
 		const alice = await seedUser(em, 'alice', ['a'])
 		const bob = await seedUser(em, 'bob', ['b'])
 		const ids = [alice.sources[0]!.id, bob.sources[0]!.id]
-		const resolved = await alice.user.sources(em, { id: { $in: ids } })
+		const resolved = await alice.user.filterSources(em, { id: { $in: ids } })
 		assert.equal(resolved.length, 1) // fewer than requested, which the route 404s exactly this
 		assert.equal(resolved[0]!.id, alice.sources[0]!.id)
 	})

@@ -10,7 +10,7 @@ import { importer } from './Importer.js'
 @http({ method: 'PUT', path: '/integrations/:id', body: 'integration' })
 export class UpdateIntegration extends Operation<{ readonly id: string, readonly integration: Integration }, Integration> {
 	async run({ em, user }: OperationContext): Promise<Integration> {
-		const integration = await user.integration(em, this.parameters.id)
+		const integration = await user.getIntegration(em, this.parameters.id)
 		await integration.apply(em, this.parameters.integration)
 		syncEmitter.emit('updated', user.id, 'sources')
 		// A calendar turned off takes back the busy availability written to it; one turned on gets it once its import completes.

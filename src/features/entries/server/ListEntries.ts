@@ -1,10 +1,10 @@
 import { description, label } from '@a11d/metadata'
 import { converter } from '@a11d/converter'
+import { DateTimeRange } from '@3mo/date-time'
 import { z } from 'zod'
 import { validation } from '#infrastructure/validation'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { Entry } from '../Entry.js'
-import { entryWindow, recurringEntries } from './entryWindow.js'
 
 class Parameters {
 	@validation(z.date())
@@ -21,16 +21,8 @@ class Parameters {
 @description('Lists the entries of a window in the visible calendars: the one-off ones in it, the undated ones and the open tasks left behind before it, and every recurring entry once, its overrides with it.')
 @http({ method: 'GET', path: '/entries' })
 export class ListEntries extends Operation<Parameters, Array<Entry>> {
-	async run({ em, user }: OperationContext) {
-		const { start, end } = this.parameters
-		const visibleSourceIds = (await user.sources(em, { enabled: true, hidden: false })).map(source => source.id)
-
-		const rows = await em.find(Entry, entryWindow(visibleSourceIds, start, end))
-
+	run({ em, user }: OperationContext) {
 		// The browser expands the recurring entries itself, each once whatever the window.
-		const entries = [...rows, ...await recurringEntries(em, visibleSourceIds)]
-		const graph = await user.relationGraph(em)
-		graph.attach(entries)
-		return entries
+		return user.filterEntries(em, { range: new DateTimeRange(this.parameters.start, this.parameters.end), sources: { enabled: true, hidden: false } })
 	}
 }

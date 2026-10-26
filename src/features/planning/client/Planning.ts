@@ -58,7 +58,7 @@ export class Planning extends Component {
 	}
 
 	private static get target(): Source | undefined {
-		return Calendars.primary(EntryType.Task)
+		return Calendars.getPrimary(EntryType.Task)
 	}
 
 	static get canAdd() {

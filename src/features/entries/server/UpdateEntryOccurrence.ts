@@ -1,9 +1,7 @@
-import { equals } from '@a11d/equals'
 import { description, label } from '@a11d/metadata'
 import { converter } from '@a11d/converter'
 import { z } from 'zod'
 import { fileStore } from '#features/files/server/FileStore.js'
-import { OrganizerOnly } from '#features/participants/OrganizerOnly.js'
 import { EntryOccurrence, EntryOccurrenceChangeScope } from '#features/recurrence'
 import { tool } from '#features/agents/server/tool.js'
 import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
@@ -36,41 +34,28 @@ export class UpdateEntryOccurrence extends Operation<Parameters, Entry> {
 	async run({ em, user }: OperationContext) {
 		const patch = this.parameters
 		const { scope } = patch
-		const existing = await user.entry(em, patch.id)
-
-		// Validated BEFORE any integration write, since a 400 must leave the external store untouched.
-		const malformed = [...patch.validate(), ...await fileStore.claim(user.id, patch.files ?? [], existing.files)]
-		if (malformed.length) {
-			throw new AggregateError(malformed)
-		}
-		const incoming = existing.edit(patch).edited
-
-		// Changing the list is the organizer's prerogative, so content edits pass only while they leave it as it is.
-		if (!Object[equals](incoming.participants, existing.participants) && !existing.canManageParticipants) {
-			throw new OrganizerOnly('Only the organizer can modify participants', ['participants'])
-		}
-
-		// Its own calendar came with the entry, owned transitively; a DIFFERENT target proves its own ownership.
-		const from = existing.source
-		const to = incoming.sourceId === existing.sourceId ? from : await user.source(em, incoming.sourceId)
-		incoming.source = to
-		const errors = [...patch.validate({ entry: existing, from, to, scope }), ...incoming.validate(), ...(patch.relations === undefined ? [] : patch.relations.validate({ entry: existing, graph: await user.relationGraph(em, patch.relations) }))]
+		const existing = await user.getEntry(em, patch.id)
+		// Judged as an edit of the repeating entry, whose occurrence the change below then writes.
+		const change = existing.edit(patch)
+		// The calendar it ends up in comes through the user, which proves it theirs.
+		change.edited.source = await user.getSource(em, change.edited.sourceId)
+		const reached = patch.relations && await user.getRelationGraph(em, patch.relations)
+		const errors = [...await fileStore.claim(user.id, patch.files ?? [], existing.files), ...change.validate({ graph: reached, scope })]
 		if (errors.length) {
 			throw new AggregateError(errors)
 		}
 
 		// The estimate is lost where the calendar has none, off the patch the occurrence's edit applies.
-		if (!to.ownership.holds('estimate')) {
+		if (!change.to.ownership.holds('estimate')) {
 			patch.estimate = null
 		}
 
-		const change = existing.occurrences.existing(patch.occurrence).edit(patch, scope)
-		const result = await change.save(em, from.integration, to.integration)
+		const result = await existing.occurrences.existing(patch.occurrence).edit(patch, scope).save(em, change.from.integration, change.to.integration)
 		if (scope === EntryOccurrenceChangeScope.All && result !== existing) {
 			result.relations = existing.relations
 		}
 		await em.flush()
-		const graph = await user.relationGraph(em)
+		const graph = await user.getRelationGraph(em)
 		graph.attach([result])
 		syncEmitter.emit('updated', user.id)
 		this.logger.debug(`Edited occurrence of series ${existing.id} (scope '${scope}')`)

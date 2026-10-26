@@ -690,7 +690,7 @@ export class Entry extends Entity implements Validatable {
 
 	/** What `patch` does to this entry, the entry itself rather than one of its occurrences. The copy keeps the calendar, unless the patch moves it. */
 	edit(patch: EntryPatch) {
-		return new EntryChange(this, new Entry({ source: this.source }).patch(EntryPatch.of(this)).patch(patch))
+		return new EntryChange(this, new Entry({ source: this.source }).patch(EntryPatch.of(this)).patch(patch), patch)
 	}
 
 	/** Takes over what `patch` sets, and a new entry's value where it clears. What the type can't hold goes, and an estimate a start replaced. */

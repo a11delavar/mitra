@@ -9,17 +9,15 @@ import { http, operation, Operation, type OperationContext } from '#infrastructu
 @http({ method: 'PUT', path: '/sources/restore-visibility' })
 export class RestoreSourceVisibility extends Operation<object, User> {
 	async run({ em, user }: OperationContext): Promise<User> {
-		const stored = await em.findOneOrFail(User, { id: user.id })
-		if (!stored.previouslyHiddenSourceIds) {
-			return stored
+		if (!user.previouslyHiddenSourceIds) {
+			return user
 		}
 
-		stored.restorePreviousVisibility(await user.sources(em, { enabled: true }))
+		user.restorePreviousVisibility(await user.filterSources(em, { enabled: true }))
 		await em.flush()
 
-		user.previouslyHiddenSourceIds = undefined
 		syncEmitter.emit('updated', user.id, 'sources')
 		this.logger.debug('Restored the visibility from before the solo')
-		return stored
+		return user
 	}
 }

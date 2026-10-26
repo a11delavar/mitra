@@ -480,7 +480,7 @@ export class Timeline extends Component {
 			${this.headerTemplate(events)}
 			${this.backdropTemplate(events)}
 			${this.entriesTemplate(rows, placed)}
-			${!Calendars.primary(EntryType.Task) ? html.nothing : html`
+			${!Calendars.getPrimary(EntryType.Task) ? html.nothing : html`
 				<div class="create" title=${t('New task')}>
 					<div class="row"></div>
 				</div>

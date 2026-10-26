@@ -24,7 +24,7 @@ class Parameters {
 @http({ method: 'PUT', path: '/sources/:id/color' })
 export class RecolorSource extends Operation<Parameters, Source> {
 	async run({ em, user }: OperationContext) {
-		const source = await user.source(em, this.parameters.id)
+		const source = await user.getSource(em, this.parameters.id)
 
 		source.color = this.parameters.color
 		await em.flush()

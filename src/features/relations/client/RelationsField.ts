@@ -63,8 +63,8 @@ export class RelationsField extends Component {
 
 	/** The entries a line's endpoints name (this entry itself, a resolved target, or the owner of a
 	 * derived line), so a coupling can be judged from either side by the same expression. */
-	private entryOf(uid: string): Entry | undefined {
-		return uid === this.entry.uid ? this.entry : EntryStore.graph.entryOf(uid) ?? this.resolvedByUid.get(uid)
+	private getEntry(uid: string): Entry | undefined {
+		return uid === this.entry.uid ? this.entry : EntryStore.graph.getEntry(uid) ?? this.resolvedByUid.get(uid)
 	}
 
 	/** Renders sections for display, including empty authorable sections supported by the source provider. */
@@ -78,10 +78,10 @@ export class RelationsField extends Component {
 	}
 
 	private lineOf(relation: Relation): Line {
-		const other = this.entryOf(relation.targetUid)
+		const other = this.getEntry(relation.targetUid)
 		const edge = relation.edgeOf(this.entry.uid)
-		const from = edge && this.entryOf(edge.from)
-		const to = edge && this.entryOf(edge.to)
+		const from = edge && this.getEntry(edge.from)
+		const to = edge && this.getEntry(edge.to)
 		return {
 			target: other,
 			heading: other?.heading,
@@ -106,7 +106,7 @@ export class RelationsField extends Component {
 
 	/** An incoming relation is the other entry's row, so removing it edits that entry. */
 	private async removeIncoming(incoming: Relation) {
-		const owner = EntryStore.graph.entryOf(incoming.targetUid)
+		const owner = EntryStore.graph.getEntry(incoming.targetUid)
 		if (!owner?.id || !this.entry.uid) {
 			return
 		}

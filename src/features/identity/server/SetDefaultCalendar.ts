@@ -18,12 +18,10 @@ export class SetDefaultCalendar extends Operation<Parameters, User> {
 	async run({ em, user }: OperationContext) {
 		const { sourceId } = this.parameters
 		if (sourceId !== null) {
-			await user.source(em, sourceId)
+			await user.getSource(em, sourceId)
 		}
-		const stored = await em.findOneOrFail(User, { id: user.id })
-		stored.defaultSourceId = sourceId ?? undefined
+		user.defaultSourceId = sourceId ?? undefined
 		await em.flush()
-		user.defaultSourceId = stored.defaultSourceId
-		return stored as User
+		return user
 	}
 }

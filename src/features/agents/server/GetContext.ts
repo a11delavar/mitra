@@ -30,9 +30,9 @@ function readingOf(locale: Intl.Locale, zone: TimeZone) {
 export class GetContext extends Operation {
 	async run({ em, user }: OperationContext) {
 		const zone = user.timeZones?.home?.zone ?? TimeZone.UTC
-		const integrations = await user.integrations(em)
-		const sources = await user.sources(em, { enabled: true })
-		const defaults = await Promise.all(EntryType.all.map(async type => ({ type, sourceId: (await user.defaultSource(em, type).catch(() => undefined))?.id })))
+		const integrations = await user.getIntegrations(em)
+		const sources = await user.filterSources(em, { enabled: true })
+		const defaults = await Promise.all(EntryType.all.map(async type => ({ type, sourceId: (await user.getDefaultSource(em, type).catch(() => undefined))?.id })))
 		return {
 			now: Temporal.Now.zonedDateTimeISO(zone.id).toString({ timeZoneName: 'never', smallestUnit: 'minute' }),
 			homeTimeZone: zone.id,

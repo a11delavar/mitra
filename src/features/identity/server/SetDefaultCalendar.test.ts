@@ -1,6 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
+import { GetUser } from './GetUser.js'
 import { SetDefaultCalendar } from './SetDefaultCalendar.js'
 
 describe('SetDefaultCalendar', () => {
@@ -10,7 +11,7 @@ describe('SetDefaultCalendar', () => {
 
 	it('sets the default calendar and clears it', async () => {
 		assert.equal((await SetDefaultCalendar.call({ sourceId: server.source.id })).defaultSourceId, server.source.id)
-		assert.equal(server.user.defaultSourceId, server.source.id)
+		assert.equal((await GetUser.call()).defaultSourceId, server.source.id)
 		assert.equal((await SetDefaultCalendar.call({ sourceId: null })).defaultSourceId, undefined)
 	})
 

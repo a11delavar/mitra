@@ -21,7 +21,7 @@ class Parameters {
 @http({ method: 'PUT', path: '/sources/:id/name' })
 export class RenameSource extends Operation<Parameters, Source> {
 	async run({ em, user }: OperationContext) {
-		const source = await user.source(em, this.parameters.id)
+		const source = await user.getSource(em, this.parameters.id)
 
 		source.name = this.parameters.name
 		await em.flush()

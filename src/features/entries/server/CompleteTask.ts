@@ -8,7 +8,6 @@ import { validation, ValidationError } from '#infrastructure/validation'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { type Entry } from '../Entry.js'
 import { EntryPatch } from '../EntryPatch.js'
-import { TaskStatus } from '../TaskStatus.js'
 
 class Parameters {
 	@validation(z.string())
@@ -29,26 +28,26 @@ class Parameters {
 export class CompleteTask extends Operation<Parameters, Entry> {
 	async run({ em, user }: OperationContext) {
 		const { id, occurrence } = this.parameters
-		const existing = await user.entry(em, id)
-		const { capabilities, integration } = existing.source
-
-		if (!existing.type?.isTask) {
+		const existing = await user.getEntry(em, id)
+		if (!existing.type.isTask) {
 			throw new ValidationError('Only a task can be completed')
 		}
-		if (!capabilities.entries.edit) {
-			throw new ValidationError('This calendar cannot be edited from mitra')
+
+		const completed = existing.clone()
+		completed.done = true
+		const change = existing.edit(EntryPatch.of(completed, ['status', 'percentComplete']))
+		// An occurrence detaches like a 'this' edit.
+		const scope = existing.recurrence?.freq ? EntryOccurrenceChangeScope.This : undefined
+		const errors = [
+			...scope && !occurrence ? [new ValidationError('This task repeats: name the occurrence to complete', ['occurrence'])] : [],
+			...change.validate({ scope }),
+		]
+		if (errors.length) {
+			throw new AggregateError(errors)
 		}
 
-		const done = existing.clone()
-		done.status = TaskStatus.Done
-
-		// An occurrence detaches like a 'this' edit.
-		if (existing.recurrence?.freq) {
-			if (!occurrence) {
-				throw new ValidationError('This task repeats: name the occurrence to complete', ['occurrence'])
-			}
-			const change = existing.occurrences.existing(occurrence).edit(EntryPatch.of(done, ['status', 'percentComplete']), EntryOccurrenceChangeScope.This)
-			const detached = await change.save(em, integration)
+		if (scope && occurrence) {
+			const detached = await existing.occurrences.existing(occurrence).edit(change.patch, EntryOccurrenceChangeScope.This).save(em, change.from.integration)
 			await em.flush()
 			syncEmitter.emit('updated', user.id)
 			this.logger.debug(`Completed occurrence ${occurrence.toISOString()} of series ${existing.id} "${existing.heading}"`)
@@ -56,11 +55,11 @@ export class CompleteTask extends Operation<Parameters, Entry> {
 		}
 
 		// A second tap must not write to the provider again.
-		if (done.status === existing.status && done.percentComplete === existing.percentComplete) {
+		if (change.edited.status === existing.status && change.edited.percentComplete === existing.percentComplete) {
 			return existing
 		}
 
-		await integration.updateEntry(em, existing, done)
+		await change.save(em)
 		await em.flush()
 		syncEmitter.emit('updated', user.id)
 		this.logger.debug(`Completed task ${existing.id} "${existing.heading}"`)

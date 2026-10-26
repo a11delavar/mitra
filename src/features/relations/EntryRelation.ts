@@ -1,4 +1,4 @@
-import type { EntityManager } from '@mikro-orm/core'
+import type { EntityManager, FilterQuery } from '@mikro-orm/core'
 import { Entry } from '#features/entries'
 import { Entity, entity, primaryKey, property, manyToOne, index, identity } from '#infrastructure/model'
 import { Relation } from './Relation.js'
@@ -38,13 +38,13 @@ export class EntryRelation extends Entity {
 	}
 
 	/**
-	 * Points the rows of entries in `sourceIds` (only those of `entryIds`, when given) from the old UIDs of entries that
+	 * Points the rows of the entries `owners` names (only those of `entryIds`, when given) from the old UIDs of entries that
 	 * moved to their new ones. Never another user's: a calendar two users share gives both the very same UIDs.
 	 */
-	static async repoint(em: EntityManager, uids: ReadonlyMap<string, string>, sourceIds: ReadonlyArray<string>, entryIds?: ReadonlyArray<string>): Promise<void> {
+	static async repoint(em: EntityManager, uids: ReadonlyMap<string, string>, owners: FilterQuery<Entry>, entryIds?: ReadonlyArray<string>): Promise<void> {
 		const rows = uids.size ? await em.find(EntryRelation, { targetUid: { $in: [...uids.keys()] }, ...entryIds ? { entryId: { $in: [...entryIds] } } : {} }) : []
 		const ownerIds = [...new Set(rows.map(row => row.entryId))]
-		const owned = new Set(ownerIds.length ? (await em.find(Entry, { id: { $in: ownerIds }, sourceId: { $in: [...sourceIds] } })).map(entry => entry.id) : [])
+		const owned = new Set(ownerIds.length ? (await em.find(Entry, { $and: [{ id: { $in: ownerIds } }, owners] })).map(entry => entry.id) : [])
 		for (const row of rows.filter(row => owned.has(row.entryId))) {
 			row.targetUid = uids.get(row.targetUid)!
 		}

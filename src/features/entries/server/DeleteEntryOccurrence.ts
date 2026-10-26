@@ -30,16 +30,15 @@ class Parameters {
 export class DeleteEntryOccurrence extends Operation<Parameters, void> {
 	async run({ em, user }: OperationContext) {
 		const { scope } = this.parameters
-		const entry = await user.entry(em, this.parameters.id)
-		const { capabilities, integration } = entry.source
-		if (!capabilities.entries.delete) {
+		const entry = await user.getEntry(em, this.parameters.id)
+		if (!entry.deletable) {
 			throw new ValidationError('Entries in this calendar cannot be deleted from mitra')
 		}
 		const occurrence = entry.occurrences.existing(this.parameters.occurrence)
 		if (scope === EntryOccurrenceChangeScope.All) {
-			await integration.deleteEntry(em, entry)
+			await entry.source.integration.deleteEntry(em, entry)
 		} else {
-			await occurrence.delete(scope).save(em, integration)
+			await occurrence.delete(scope).save(em, entry.source.integration)
 		}
 		await em.flush()
 		syncEmitter.emit('updated', user.id)

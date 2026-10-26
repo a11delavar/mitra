@@ -17,10 +17,8 @@ class Parameters {
 export class MarkVersionSeen extends Operation<Parameters, User> {
 	async run({ em, user }: OperationContext) {
 		const { version } = this.parameters
-		const stored = await em.findOneOrFail(User, { id: user.id })
-		stored.lastSeenVersion = version
+		user.lastSeenVersion = version
 		await em.flush()
-		user.lastSeenVersion = stored.lastSeenVersion
-		return stored as User
+		return user
 	}
 }

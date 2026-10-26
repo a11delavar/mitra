@@ -16,10 +16,8 @@ class Parameters {
 @http({ method: 'PUT', path: '/user/settings' })
 export class SaveSettings extends Operation<Parameters, User> {
 	async run({ em, user }: OperationContext) {
-		const stored = await em.findOneOrFail(User, { id: user.id })
-		stored.applySettings(this.parameters.settings)
+		user.applySettings(this.parameters.settings)
 		await em.flush()
-		user.settings = stored.settings
-		return stored as User
+		return user
 	}
 }

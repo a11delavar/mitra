@@ -49,7 +49,7 @@ describe('recent locations', () => {
 			start: new Date(Date.UTC(2026, 9, 1 + index, 9)) as never, end: new Date(Date.UTC(2026, 9, 1 + index, 10)) as never,
 		}))])
 		await em.flush()
-		return [source.id]
+		return user
 	}
 
 	it('suggests only the places the user has been, never another user\'s', async () => {
@@ -71,6 +71,6 @@ describe('recent locations', () => {
 
 	it('suggests nothing for a user without a calendar', async () => {
 		await userAt('Office')
-		assert.deepEqual(await recentLocations(em, [], ''), [])
+		assert.deepEqual(await recentLocations(em, new User({ username: crypto.randomUUID() }), ''), [])
 	})
 })

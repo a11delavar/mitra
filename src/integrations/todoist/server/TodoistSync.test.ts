@@ -417,7 +417,9 @@ describe('Todoist sync', () => {
 		it('moves a task to another project in place, keeping its entry and what Mitra does not show', async () => {
 			const { em, account, entryOf, sourceOf } = await synced(task('t1', 'inbox', { priority: 4 }))
 			const existing = (await entryOf('t1'))!
-			const saved = await existing.edit(Object.assign(new EntryPatch(), { sourceId: sourceOf('Work').id })).save(em, sourceOf('Inbox'), sourceOf('Work'))
+			const change = existing.edit(Object.assign(new EntryPatch(), { sourceId: sourceOf('Work').id }))
+			change.edited.source = sourceOf('Work')
+			const saved = await change.save(em)
 			await em.flush()
 			assert.equal(saved, existing)
 			assert.equal(saved.sourceId, sourceOf('Work').id)

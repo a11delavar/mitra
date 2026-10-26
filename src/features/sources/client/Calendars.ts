@@ -33,19 +33,19 @@ export class Calendars {
 	}
 
 	/** Where entries can live. Unlike the visible ones, these include hidden calendars. */
-	static enabled(integration?: Integration): Array<Source> {
-		return (integration?.sources ?? Calendars.sources).filter(source => source.enabled)
+	static get enabled(): Array<Source> {
+		return Calendars.sources.filter(source => source.enabled)
 	}
 
 	static get visible(): Array<Source> {
 		return Calendars.sources.filter(source => source.visible)
 	}
 
-	static source(id: string) {
+	static getSource(id: string) {
 		return Calendars.sources.find(source => source.id === id)
 	}
 
-	static integration(id: string) {
+	static getIntegration(id: string) {
 		return Calendars.all.find(integration => integration.id === id)
 	}
 
@@ -55,7 +55,7 @@ export class Calendars {
 	}
 
 	/** Where a new entry goes: the default calendar while visible, writable and able to hold `type`, else the first that is. */
-	static primary(type?: EntryType): Source | undefined {
+	static getPrimary(type?: EntryType): Source | undefined {
 		const candidates = Calendars.visible.filter(source => source.writable && (!type || source.canHold(type)))
 		return candidates.find(source => source.id === Calendars.defaultId) ?? candidates[0]
 	}
@@ -93,7 +93,7 @@ export class Calendars {
 
 	/** Shows the calendar if it is hidden, as an entry opens only where it renders. */
 	static async show(sourceId: string) {
-		const source = Calendars.source(sourceId)
+		const source = Calendars.getSource(sourceId)
 		if (source?.hidden) {
 			await Calendars.setHidden(source, false)
 			Calendars.shown.dispatchEvent(new Event('show'))
@@ -117,5 +117,5 @@ export class Calendars {
 	}
 }
 
-include.from(Integration, id => Calendars.integration(id))
-include.from(Source, id => Calendars.source(id))
+include.from(Integration, id => Calendars.getIntegration(id))
+include.from(Source, id => Calendars.getSource(id))

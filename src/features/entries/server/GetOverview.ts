@@ -1,13 +1,11 @@
 import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
-import { DateTime, DateTimeRange } from '@3mo/date-time'
+import { DateTimeRange } from '@3mo/date-time'
 import { EntryOccurrences, type EntryOccurrence } from '#features/recurrence'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { tool } from '#features/agents/server/tool.js'
 import { validation } from '#infrastructure/validation'
 import { operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
-import { Entry } from '../Entry.js'
-import { entryWindow, recurringEntries } from './entryWindow.js'
 
 /** A bound of the overview as written: an instant as it is, a day from its start or through its end in `zone`. */
 function boundOf(value: string, field: 'start' | 'end', zone: TimeZone) {
@@ -67,19 +65,14 @@ export class GetOverview extends Operation<Parameters> {
 		const zone = user.timeZones?.home?.zone ?? TimeZone.UTC
 		const start = boundOf(this.parameters.start, 'start', zone)
 		const end = boundOf(this.parameters.end, 'end', zone)
-		const sourceIds = this.parameters.sourceIds ?? (await user.sources(em, { enabled: true })).map(source => source.id)
-		const entries = [...await em.find(Entry, entryWindow(sourceIds, start, end)), ...await recurringEntries(em, sourceIds)]
-		const graph = await user.relationGraph(em)
-		graph.attach(entries)
-
-		const integrations = await user.integrations(em)
-		const integrationOf = new Map((await user.sources(em)).map(source => [source.id, integrations.find(integration => integration.id === source.integrationId)]))
+		const range = new DateTimeRange(start, end)
+		const entries = await user.filterEntries(em, { range, sources: this.parameters.sourceIds ? { id: { $in: [...this.parameters.sourceIds] } } : { enabled: true } })
 		// Repeating entries unrolled as the browser unrolls them, without the busy copies a provider holds of availability.
 		const occurrences = [
 			...entries.filter(entry => !entry.recurrence).map(entry => entry.occurrences.single),
-			...EntryOccurrences.inWindow(entries.filter(entry => entry.recurrence), new DateTimeRange(new DateTime(start.getTime()), new DateTime(end.getTime()))),
+			...EntryOccurrences.inWindow(entries.filter(entry => entry.recurrence), range),
 		]
-			.filter(({ entry }) => !integrationOf.get(entry.sourceId)?.writtenForAvailability(entry))
+			.filter(({ entry }) => !entry.source.integration.writtenForAvailability(entry))
 			.sort((a, b) => startOf(a) - startOf(b))
 
 		const parts = Map.groupBy(occurrences.slice(0, maximumEntries), occurrence => partOf(occurrence, start, end, zone))

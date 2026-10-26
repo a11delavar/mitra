@@ -2,7 +2,6 @@ import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
 import { validation } from '#infrastructure/validation'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
-import { NotificationSubscription } from '../NotificationSubscription.js'
 
 class Parameters {
 	@validation(z.string())
@@ -16,7 +15,7 @@ class Parameters {
 @http({ method: 'DELETE', path: '/push/subscriptions/:id' })
 export class RemoveDevice extends Operation<Parameters, void> {
 	async run({ em, user }: OperationContext) {
-		const subscription = await em.findOne(NotificationSubscription, { id: this.parameters.id, userId: user.id })
+		const [subscription] = await user.filterDevices(em, { id: this.parameters.id })
 		if (subscription) {
 			em.remove(subscription)
 			await em.flush()

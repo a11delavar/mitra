@@ -15,7 +15,7 @@ export class CreateEntry extends Command {
 
 	override execute() {
 		const { calendar } = this
-		const source = Calendars.primary()
+		const source = Calendars.getPrimary()
 		if (!source) {
 			return
 		}

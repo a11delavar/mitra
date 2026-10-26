@@ -1,4 +1,3 @@
-import { NotFoundError } from '@mikro-orm/sqlite'
 import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
 import { validation } from '#infrastructure/validation'
@@ -22,10 +21,7 @@ class Parameters {
 @http({ method: 'PUT', path: '/push/subscriptions/:id/name' })
 export class RenameDevice extends Operation<Parameters, NotificationSubscription> {
 	async run({ em, user }: OperationContext) {
-		const subscription = await em.findOne(NotificationSubscription, { id: this.parameters.id, userId: user.id })
-		if (!subscription) {
-			throw new NotFoundError('No such device')
-		}
+		const subscription = await user.getDevice(em, this.parameters.id)
 		subscription.rename(trimmed(this.parameters.name, 60))
 		await em.flush()
 		return subscription

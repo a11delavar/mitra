@@ -4,7 +4,6 @@ import { z } from 'zod'
 import { type EntityManager } from '@mikro-orm/core'
 import type { User } from '#features/identity'
 import { Entry } from '#features/entries'
-import { EntryRelation } from '#features/relations'
 import type { Source } from '#features/sources'
 import { Integration } from '#integrations'
 import { validation, ValidationError } from '#infrastructure/validation'
@@ -44,9 +43,7 @@ export class SourceMigration {
 		/** Who moves the entries: only their links are theirs to repoint. */
 		private readonly user: User,
 		readonly origin: Source,
-		private readonly originIntegration: Integration,
 		readonly target: Source,
-		private readonly targetIntegration: Integration,
 		private readonly entries: ReadonlyArray<Entry>,
 		/** Masters in the origin that have single-occurrence override rows. */
 		private readonly overriddenMasterIds: ReadonlySet<string>,
@@ -63,15 +60,11 @@ export class SourceMigration {
 		}
 
 		// Read-only origins permit copy, but refuse move.
-		const [origin, target] = [await user.source(em, originId), await user.source(em, targetSourceId)]
-		const [originIntegration, targetIntegration] = await Promise.all([
-			em.findOneOrFail(Integration, { id: origin.integrationId }),
-			em.findOneOrFail(Integration, { id: target.integrationId }),
-		])
-		if (!keepOriginals && !originIntegration.capabilitiesFor(origin).entries.delete) {
+		const [origin, target] = [await user.getSource(em, originId), await user.getSource(em, targetSourceId)]
+		if (!keepOriginals && !origin.capabilities.entries.delete) {
 			throw new MigrationRefused('Entries in this calendar cannot be deleted from mitra, so they can only be copied out of it')
 		}
-		if (!targetIntegration.capabilitiesFor(target).entries.create) {
+		if (!target.capabilities.entries.create) {
 			throw new MigrationRefused('This calendar cannot be written to from mitra')
 		}
 
@@ -85,7 +78,7 @@ export class SourceMigration {
 		const overrides = await em.find(Entry, { sourceId: origin.id, recurringEntryId: { $ne: null } })
 		const overriddenMasterIds = new Set(overrides.map(override => override.recurringEntryId!))
 
-		return new SourceMigration(em, user, origin, originIntegration, target, targetIntegration, entries, overriddenMasterIds, keepOriginals, options.flatten === true)
+		return new SourceMigration(em, user, origin, target, entries, overriddenMasterIds, keepOriginals, options.flatten === true)
 	}
 
 	/** Fidelity preview of what the migration would move, modify, or block. */
@@ -113,7 +106,7 @@ export class SourceMigration {
 
 	/** Runs migration holding exclusive locks across both integrations. */
 	run() {
-		return Integration.exclusivelyAcross([this.originIntegration.id, this.targetIntegration.id], () => this.runExclusively())
+		return Integration.exclusivelyAcross([this.origin.integration.id, this.target.integration.id], () => this.runExclusively())
 	}
 
 	private async runExclusively(): Promise<MigrationOutcome> {
@@ -129,7 +122,7 @@ export class SourceMigration {
 			try {
 				const copies = new Array<Entry>()
 				for (const copy of this.copiesOf(entry, verdict)) {
-					const created = await this.targetIntegration.createEntry(this.em, copy)
+					const created = await this.target.integration.createEntry(this.em, copy)
 					// Record old -> new UID mappings for target-minted identities on move, and fresh UIDs on copy.
 					if (entry.uid && created.uid && created.uid !== entry.uid && !verdict.flattenable) {
 						uids.set(entry.uid, created.uid)
@@ -152,8 +145,7 @@ export class SourceMigration {
 		// Moves rewrite all matching target references; copies scope repointing to the copied set.
 		if (uids.size) {
 			const copyIds = copied.flatMap(({ copies }) => copies.map(copy => copy.id!))
-			const sourceIds = (await this.user.sources(this.em)).map(source => source.id)
-			await EntryRelation.repoint(this.em, uids, sourceIds, this.keepOriginals ? copyIds : undefined)
+			await this.user.repointRelations(this.em, uids, this.keepOriginals ? copyIds : undefined)
 			await this.em.flush()
 		}
 
@@ -162,7 +154,7 @@ export class SourceMigration {
 		if (!this.keepOriginals) {
 			for (const { original } of copied) {
 				try {
-					await this.originIntegration.deleteEntry(this.em, original)
+					await this.origin.integration.deleteEntry(this.em, original)
 					outcome.moved++
 				} catch (error) {
 					outcome.duplicates++
@@ -184,7 +176,7 @@ export class SourceMigration {
 		})
 		for (const { copies } of copied) {
 			for (const copy of copies) {
-				await this.targetIntegration.deleteEntry(this.em, copy).catch(() => outcome.duplicates++)
+				await this.target.integration.deleteEntry(this.em, copy).catch(() => outcome.duplicates++)
 			}
 		}
 		await this.em.flush().catch(() => void 0)
@@ -212,7 +204,7 @@ export class SourceMigration {
 			relations: entry.relations,
 		}, overrides)
 		// Lost where the target holds none or takes none, rather than kept in Mitra's row its next sync would clear.
-		if (!this.targetIntegration.ownership.holds('attachments') || !this.targetIntegration.capabilitiesFor(this.target).entries.attach) {
+		if (!this.target.ownership.holds('attachments') || !this.target.capabilities.entries.attach) {
 			copy.attachments = undefined
 		}
 		copy.migrateTo(this.target)
