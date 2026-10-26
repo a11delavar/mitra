@@ -3,11 +3,12 @@ import { DialogComponent } from '@a11d/lit-application'
 import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { TimeZones } from '#features/time/client/TimeZones.js'
 import { type Entry } from '../Entry.js'
+import type { EntrySpan } from '../EntrySpan.js'
 import { entryColors } from './entryColors.css.js'
 
 /** Asks which days an entry is copied to, answering the span of each copy: the same times on every day chosen. */
 @component('mitra-dialog-duplicate-days')
-export class DialogDuplicateDays extends DialogComponent<{ readonly entry: Entry }, ReadonlyArray<Entry>> {
+export class DialogDuplicateDays extends DialogComponent<{ readonly entry: Entry }, ReadonlyArray<EntrySpan>> {
 	/** Where days are read, as the views read them, floating times included: the browser holds those on its own wall clock. */
 	private readonly zone = TimeZones.here
 

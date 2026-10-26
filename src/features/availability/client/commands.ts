@@ -1,5 +1,5 @@
 import { DateTime } from '@3mo/date-time'
-import { Entry, EntryType } from '#features/entries'
+import { EntryType } from '#features/entries'
 import { Recurrence, RecurrenceWeekday, RecurrenceFrequency } from '#features/recurrence'
 import { EntryStore, reportSaveError } from '#features/entries/client/EntryStore.js'
 import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js'
@@ -24,7 +24,7 @@ export class CreateAvailability extends Command {
 	override execute() {
 		const { calendar } = this
 		const target = Calendars.primary(EntryType.Availability)
-		if (!target || !target.capabilities.entries.create) {
+		if (!target) {
 			return
 		}
 
@@ -32,10 +32,8 @@ export class CreateAvailability extends Command {
 		const first = !EntryStore.entries.some(entry => entry.type.isAvailability && entry.sourceId === target.id)
 		const days = first ? RecurrenceWeekday.workdays() : [RecurrenceWeekday.of(today)]
 		const start = today.firstOccurrenceOn(days).with({ hour: START_HOUR })
-		const entry = new Entry({
-			sourceId: target.id,
+		const entry = target.draft({
 			type: EntryType.Availability,
-			heading: '',
 			start,
 			end: start.with({ hour: END_HOUR }),
 			allDay: false,

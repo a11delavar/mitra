@@ -7,6 +7,11 @@ import { IntegrationCapabilities, IntegrationOwnership } from '#integrations'
 import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
 import { MigrationOutcome, MigrationPlan, MigrationVerdict } from './MigrationPlan.js'
 
+/** `target` as a calendar of an integration allowing `capabilities` and holding what `ownership` says. */
+const into = (target: Source, capabilities: IntegrationCapabilities, ownership: IntegrationOwnership) => Object.assign(target, {
+	integration: { id: target.integrationId, ownership, capabilitiesFor: (source: Source) => capabilities.in(source), canHold: (source: Source, type: EntryType) => source.supportsEntryType(type) } as never,
+})
+
 const clean = () => new MigrationVerdict({ entryId: 'a', heading: 'Clean' })
 const lossy = (...losses: Array<'reminders' | 'location'>) => new MigrationVerdict({ entryId: 'b', heading: 'Lossy', losses })
 const blocked = (blocker: 'participants' | 'recurrence', occurrences: number | null = null) =>
@@ -59,13 +64,13 @@ describe('MigrationPlan', () => {
 	})
 })
 
-describe('MigrationVerdict.assess', () => {
+describe('MigrationVerdict.of', () => {
 	const attached = () => new Entry({ id: 'a', sourceId: 'home', type: EntryType.Event, heading: 'Kickoff', attachments: EntryFiles.of([{ sourceUrl: 'https://example.com/deck.pdf' }]) })
 	const target = () => new Source({ id: 'away', uri: 'away', entryTypes: [EntryType.Event], name: 'Away' })
 	const holding = () => new IntegrationOwnership({ attachments: 'upstream' })
 
 	it('loses the attachments where the target holds none, and where it holds them but takes none', () => {
-		const assess = (capabilities: IntegrationCapabilities, ownership: IntegrationOwnership) => MigrationVerdict.assess(attached(), { target: target(), capabilities, ownership, occurrence: false }).losses
+		const assess = (capabilities: IntegrationCapabilities, ownership: IntegrationOwnership) => MigrationVerdict.of(attached(), into(target(), capabilities, ownership)).losses
 		assert.deepEqual(assess(new IntegrationCapabilities(), new IntegrationOwnership()), ['attachments'])
 		assert.deepEqual(assess(new IntegrationCapabilities({ entries: { attach: false } }), holding()), ['attachments'])
 		assert.deepEqual(assess(new IntegrationCapabilities(), holding()), [])
@@ -75,7 +80,7 @@ describe('MigrationVerdict.assess', () => {
 		const task = (init: Partial<Entry>) => new Entry({ id: 't', sourceId: 'home', type: EntryType.Task, heading: 'Paint', ...init })
 		const at = (iso: string) => new Date(iso) as never
 		const losesEnd = (entry: Entry, ownership = new IntegrationOwnership({ allDay: 'upstream' })) =>
-			MigrationVerdict.assess(entry, { target: new Source({ id: 'away', uri: 'away', entryTypes: [EntryType.Task], name: 'Away' }), capabilities: new IntegrationCapabilities(), ownership, occurrence: false }).losses.includes('end')
+			MigrationVerdict.of(entry, into(new Source({ id: 'away', uri: 'away', entryTypes: [EntryType.Task], name: 'Away' }), new IntegrationCapabilities(), ownership)).losses.includes('end')
 		assert.equal(losesEnd(task({ start: at('2026-11-02T09:00:00Z'), end: at('2026-11-02T10:00:00Z') })), true)
 		assert.equal(losesEnd(task({ start: at('2026-11-02T09:00:00Z') })), false, 'a moment has none to lose')
 		assert.equal(losesEnd(task({ allDay: true, start: at('2026-11-02T00:00:00Z'), end: at('2026-11-03T00:00:00Z') })), false, 'a single day stays one')
@@ -85,7 +90,7 @@ describe('MigrationVerdict.assess', () => {
 
 	it('fixes a floating time to a zone where the target keeps none, and names no zone it never had', () => {
 		const pill = (timeZone: EntryTimeZone) => new Entry({ id: 'p', sourceId: 'home', type: EntryType.Event, heading: 'Pill', start: new Date('2026-11-02T08:00:00Z') as never, timeZone })
-		const losses = (entry: Entry, floating: boolean) => MigrationVerdict.assess(entry, { target: target(), capabilities: new IntegrationCapabilities({ entries: { floating } }), ownership: new IntegrationOwnership({ timeZone: 'upstream' }), occurrence: false }).losses
+		const losses = (entry: Entry, floating: boolean) => MigrationVerdict.of(entry, into(target(), new IntegrationCapabilities({ entries: { floating } }), new IntegrationOwnership({ timeZone: 'upstream' }))).losses
 		assert.deepEqual(losses(pill(EntryTimeZone.floating), false), ['floating'])
 		assert.deepEqual(losses(pill(EntryTimeZone.floating), true), [])
 		assert.deepEqual(losses(pill(EntryTimeZone.parse('Europe/Berlin')!), false), [], 'a time in a zone keeps it')

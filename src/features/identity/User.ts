@@ -4,6 +4,7 @@ import { Source } from '#features/sources'
 import { Entry, type EntryType } from '#features/entries'
 import { EntryRelation, EntryRelations, RelationGraph } from '#features/relations'
 import { UserSettings } from '#features/settings/UserSettings.js'
+import { ReminderDefaults } from '#features/reminders/ReminderDefaults.js'
 import { UserTimeZones } from '#features/time/UserTimeZones.js'
 import { Integration } from '#integrations'
 import { model, entity, primaryKey, property, manyToOne, embedded, unique } from '#infrastructure/model'
@@ -57,6 +58,11 @@ export class User {
 		return !!this.lastSeenVersion && !this.hasSeen(version)
 	}
 
+	/** The reminders a new entry of the user's starts with. */
+	get reminderDefaults() {
+		return ReminderDefaults.of(this.settings)
+	}
+
 	applySettings(settings: unknown): void {
 		this.settings = UserSettings.sanitize(settings)
 	}
@@ -103,7 +109,7 @@ export class User {
 	/** Where a new entry of `type` goes when none is named: the default calendar, else the first that takes it. */
 	async defaultSource(em: EntityManager, type?: EntryType) {
 		const sources = await this.sources(em, { enabled: true })
-		const takes = (source: Source) => source.capabilities.entries.create && (!type || source.canHold(type))
+		const takes = (source: Source) => source.writable && (!type || source.canHold(type))
 		const found = sources.find(source => source.id === this.defaultSourceId && takes(source)) ?? sources.find(takes)
 		if (!found) {
 			throw new ValidationError('No calendar can take this entry', ['sourceId'])

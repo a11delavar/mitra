@@ -3,7 +3,8 @@ import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Recurrence, RecurrenceFrequency, EntryOccurrenceChangeScope, type EntryOccurrence } from '#features/recurrence'
 import { EntryRelations } from '#features/relations'
-import { Color } from '#features/sources'
+import { EntryReminders } from '#features/reminders/EntryReminders.js'
+import { Color, Source } from '#features/sources'
 import { IntegrationOwnership } from '#integrations'
 import { ApiError } from '#infrastructure/http/Api.js'
 import { Entry } from '../Entry.js'
@@ -393,15 +394,15 @@ describe('EntryStore', () => {
 		it('shows the copy at the drop span immediately and adopts the created identity', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
-			const original = entry({ description: 'Notes', color: Color.parse('#ff0000'), reminders: [30] })
+			const original = entry({ description: 'Notes', color: Color.parse('#ff0000'), reminders: EntryReminders.normalize([30]) })
 			EntryStore.applyServerEntries([original])
 			const span = entry({ id: undefined, start: at(14), end: at(15) })
-			const duplication = EntryStore.duplicate(original, span)
+			const duplication = EntryStore.duplicate(original, span.span)
 			const copy = EntryStore.entries.find(e => e !== original)!
 			assert.equal(copy.persisted, false)
 			assert.equal(copy.heading, 'Standup')
 			assert.equal(copy.description, 'Notes')
-			assert.deepEqual(copy.reminders, [30])
+			assert.deepEqual(copy.reminders, EntryReminders.normalize([30]))
 			assert.equal(copy.start!.valueOf(), at(14).valueOf())
 			assert.equal(original.start!.valueOf(), at(9).valueOf())
 			assert.equal(EntryStore.isDirty(original), false)
@@ -421,7 +422,7 @@ describe('EntryStore', () => {
 				recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }),
 			})
 			EntryStore.applyServerEntries([occurrence])
-			const duplication = EntryStore.duplicate(occurrence, entry({ id: undefined, start: at(14), end: at(15) }))
+			const duplication = EntryStore.duplicate(occurrence, entry({ id: undefined, start: at(14), end: at(15) }).span)
 			const copy = EntryStore.entries.find(e => e !== occurrence)!
 			assert.equal(copy.heading, 'Standup')
 			assert.equal(copy.recurrence, undefined)
@@ -454,7 +455,7 @@ describe('EntryStore', () => {
 			EntryStore.persistence = transport.persistence
 			const untitled = entry({ heading: '' })
 			EntryStore.applyServerEntries([untitled])
-			const duplication = EntryStore.duplicate(untitled, entry({ id: undefined, start: at(14), end: at(15) }))
+			const duplication = EntryStore.duplicate(untitled, entry({ id: undefined, start: at(14), end: at(15) }).span)
 			const copy = EntryStore.entries.find(e => e !== untitled)!
 			await transport.respond(new Entry({ ...copy.clone(), id: 'copy' }))
 			await duplication
@@ -466,7 +467,7 @@ describe('EntryStore', () => {
 			EntryStore.persistence = transport.persistence
 			const original = entry()
 			EntryStore.applyServerEntries([original])
-			const rejection = assert.rejects(EntryStore.duplicate(original, entry({ id: undefined, start: at(14), end: at(15) })))
+			const rejection = assert.rejects(EntryStore.duplicate(original, entry({ id: undefined, start: at(14), end: at(15) }).span))
 			assert.equal(EntryStore.entries.length, 2)
 			await transport.fail(new Error('offline'))
 			await rejection
@@ -612,7 +613,8 @@ describe('EntryStore', () => {
 			EntryStore.resolveScope = () => (asked = true, Promise.resolve(EntryOccurrenceChangeScope.All as const))
 			const working = occurrence({ type: EntryType.Task, status: TaskStatus.ToDo })
 			EntryStore.applyServerEntries([working])
-			working.setStatus(TaskStatus.Done, new IntegrationOwnership({ percentComplete: 'upstream' }))
+			working.source = Object.assign(new Source({ id: 's', integrationId: 'i' }), { integration: { id: 'i', ownership: new IntegrationOwnership({ percentComplete: 'upstream' }) } as never })
+			working.status = TaskStatus.Done
 			const commit = EntryStore.commit(working)
 			await transport.respond(entry({ id: 'detached', type: EntryType.Task, status: TaskStatus.Done, percentComplete: 100 }))
 			await commit

@@ -3,7 +3,6 @@ import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { DataGridColumn } from '@3mo/data-grid/controller'
 import { MarkdownLinks } from '#design'
 import { type Entry, TaskStatus } from '#features/entries'
-import { Relations } from '#features/relations/client/Relations.js'
 import '#features/participants/client/ParticipantFaces.js'
 import '#features/relations/client/EntryLink.js'
 import '#features/locations/client/MapLink.js'
@@ -45,7 +44,7 @@ function span(row: TableRow) {
 
 /** The first few faces, the rest counted; the list itself is the editor's. */
 function participants(entry: Entry) {
-	const list = entry.participantList ?? []
+	const list = entry.participants ?? []
 	return html`
 		<mitra-participant-faces .participants=${list.slice(0, 3)} title=${list.map(participant => participant.name || participant.email).join(', ')}></mitra-participant-faces>
 		${list.length <= 3 ? html.nothing : html`<span class="more">+${list.length - 3}</span>`}
@@ -76,7 +75,7 @@ function status(entry: Entry) {
 	if (!entry.type.isTask) {
 		return text('')
 	}
-	const progress = Relations.progressOf(entry)
+	const progress = entry.hierarchy.progress
 	const underway = progress !== undefined && progress > 0 && progress < 1
 	return text(`${(entry.status ?? TaskStatus.ToDo).format()}${!underway ? '' : ` · ${Math.round(progress * 100).formatAsPercent()}`}`)
 }
@@ -102,8 +101,8 @@ export const tableColumns = (): Array<DataGridColumn<TableRow>> => [
 	column('repeats', t('Repeats'), { hidden: true }),
 	column('participants', t('Participants'), { getContentTemplate: (_, row) => participants(row.entry) }),
 	column('reminders', t('Reminders'), { hidden: true, getContentTemplate: (_, row) => reminders(row.entry) }),
-	column('subtaskOf', t('Subtask of'), { getContentTemplate: (_, row) => links(Relations.parentsOf(row.entry)) }),
-	column('blockedBy', t('Blocked by'), { getContentTemplate: (_, row) => links(!row.entry.uid ? [] : Relations.graph.predecessorsOf(row.entry.uid)) }),
+	column('subtaskOf', t('Subtask of'), { getContentTemplate: (_, row) => links(row.entry.hierarchy.parents) }),
+	column('blockedBy', t('Blocked by'), { getContentTemplate: (_, row) => links(row.entry.hierarchy.predecessors) }),
 	column('description', t('Description'), { hidden: true }),
 ]
 

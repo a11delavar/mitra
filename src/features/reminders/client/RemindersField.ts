@@ -3,6 +3,7 @@ import type { Menu } from '#design'
 import type { Entry, EntryType } from '#features/entries'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import '#features/time/TimeSpan.time.js'
+import { EntryReminders } from '../EntryReminders.js'
 import { enablePushNotifications } from './push.js'
 
 type CustomUnit = 'minutes' | 'hours' | 'days' | 'weeks'
@@ -43,10 +44,6 @@ export class RemindersField extends Component {
 
 	@query('mitra-menu') private readonly menu?: Menu
 
-	private get reminders(): Array<number> {
-		return this.entry.reminders ?? []
-	}
-
 	private fireLabel(minutes: number): string {
 		const anchor = this.entry.reminderAnchor!
 		const fireAt = anchor.subtract({ minutes })
@@ -58,15 +55,15 @@ export class RemindersField extends Component {
 		}).format(fireAt)
 	}
 
-	private commit(reminders: Array<number>) {
-		this.entry.setReminders(reminders)
+	private commit(reminders: EntryReminders | undefined) {
+		this.entry.reminders = reminders
 		this.requestUpdate()
 		this.change.dispatch()
 	}
 
 	private add(minutes: number) {
-		const first = !this.reminders.length
-		this.commit([...this.reminders, minutes])
+		const first = !this.entry.reminders
+		this.commit((this.entry.reminders ?? new EntryReminders()).adding(minutes))
 		if (first) {
 			enablePushNotifications().catch(() => void 0)
 		}
@@ -154,11 +151,10 @@ export class RemindersField extends Component {
 	}
 
 	protected override get template() {
-		const editable = this.entry.source.capabilities.entries.edit
 		return !this.entry?.reminderAnchor ? html.nothing : html`
-			${!this.reminders.length ? html`
+			${!this.entry.reminders ? html`
 				<span class="placeholder">${t('Reminders')}</span>
-			` : this.reminders.map(minutes => html`
+			` : this.entry.reminders.map(minutes => html`
 				<div class="reminder">
 					<span>
 						${minutes !== 0
@@ -167,18 +163,18 @@ export class RemindersField extends Component {
 								? html`${t('At the time of the task')} <span class="detail">${this.fireLabel(0)}</span>`
 								: html`${t('At start')} <span class="detail">${t('of event at ${time}', { time: this.fireLabel(minutes) })}</span>`}
 					</span>
-					${!editable ? html.nothing : html`
+					${!this.entry.editable ? html.nothing : html`
 						<mitra-icon-button size="small" icon="x" label=${t('Remove reminder')}
-							@click=${() => this.commit(this.reminders.filter(other => other !== minutes))}
+							@click=${() => this.commit(this.entry.reminders?.without(minutes))}
 						></mitra-icon-button>
 					`}
 				</div>
 			`)}
-			${!editable ? html.nothing : html`
+			${!this.entry.editable ? html.nothing : html`
 				<mitra-popover-container>
 					<mitra-icon-button size="small" class="add" icon="plus" label=${t('Add reminder')}></mitra-icon-button>
 					<mitra-menu slot="popover">
-						${RemindersField.presets.filter(minutes => !this.reminders.includes(minutes)).map(minutes => html`
+						${RemindersField.presets.filter(minutes => !this.entry.reminders?.includes(minutes)).map(minutes => html`
 							<mitra-menu-item @click=${() => this.add(minutes)}>${RemindersField.labelOf(minutes, this.entry.type)}</mitra-menu-item>
 						`)}
 						<mitra-menu-item class="custom" @click=${this.openCustomDialog}>${t('Custom…')}</mitra-menu-item>

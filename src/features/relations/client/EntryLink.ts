@@ -1,7 +1,7 @@
 import { Component, component, html, css, property, event, type PropertyValues } from '@a11d/lit'
 import { type DateTime } from '@3mo/date-time'
 import { pressable } from '#design'
-import { type Entry, TaskStatus } from '#features/entries'
+import { type Entry } from '#features/entries'
 import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js'
 import { EntryStore, reportSaveError } from '#features/entries/client/EntryStore.js'
 import { Calendars } from '#features/sources/client/Calendars.js'
@@ -21,14 +21,9 @@ export class EntryLink extends Component {
 
 	protected override createRenderRoot() { return this }
 
-	private get struck() {
-		const { entry } = this
-		return entry.type.isTask && (entry.done || entry.status === TaskStatus.Done || entry.status === TaskStatus.Cancelled)
-	}
-
 	protected override willUpdate(changed: PropertyValues<this>) {
 		super.willUpdate(changed)
-		this.toggleAttribute('data-struck', this.struck)
+		this.toggleAttribute('data-struck', this.entry.closed)
 	}
 
 	/** Navigates to the entry in the calendar, or straight to its editor when it has no date. */

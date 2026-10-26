@@ -63,7 +63,7 @@ export class IcsImport {
 
 		const entities = [...groups].map(([fileUid, components]): IcsEntity => {
 			const master = components.find(component => !CalDAV.recurrenceProps(component).recurrenceId) ?? components[0]!
-			const entry = new Entry({ id: crypto.randomUUID(), sourceId: target.id })
+			const entry = new Entry({ id: crypto.randomUUID(), sourceId: target.id, source: target })
 			CalDAV.applyComponent(entry, master, integration)
 			entry.uid = crypto.randomUUID()
 			return { entry, fileUid, occurrence: components.some(component => !!CalDAV.recurrenceProps(component).recurrenceId) }
@@ -81,13 +81,8 @@ export class IcsImport {
 		return new MigrationPlan({ total: verdicts.length, verdicts: verdicts.filter(verdict => !verdict.clean) })
 	}
 
-	private verdictFor({ entry, occurrence }: IcsEntity): MigrationVerdict {
-		return MigrationVerdict.assess(entry, {
-			target: this.target,
-			capabilities: this.targetIntegration.capabilitiesFor(this.target),
-			ownership: this.targetIntegration.ownership,
-			occurrence,
-		})
+	private verdictFor({ entry, occurrence }: IcsEntity) {
+		return MigrationVerdict.of(entry, this.target, { occurrence })
 	}
 
 	/** Runs the import holding the target integration's exclusive lock. */

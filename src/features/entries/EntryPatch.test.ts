@@ -3,7 +3,8 @@ import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { construct } from '@a11d/converter'
 import { Recurrence, RecurrenceFrequency } from '#features/recurrence'
-import { ParticipantRole } from '#features/participants/Participant.js'
+import { ParticipantRole, Participants } from '#features/participants/Participant.js'
+import { EntryReminders } from '#features/reminders/EntryReminders.js'
 import { RelationType, EntryRelations, Relation } from '#features/relations'
 import { Color } from '#features/sources'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
@@ -63,7 +64,7 @@ describe('EntryPatch', () => {
 		it('carries a rule, participants and relations as the server reads them', () => {
 			const patch = sent(EntryPatch.of(task({
 				recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }),
-				participants: [{ email: 'Organizer@Example.com', organizer: true, role: ParticipantRole.Required }],
+				participants: Participants.normalize([{ email: 'Organizer@Example.com', organizer: true, role: ParticipantRole.Required }]),
 				relations: EntryRelations.of([new Relation({ type: RelationType.Parent, targetUid: 'parent' })]),
 			}), ['recurrence', 'participants', 'relations']))
 			assert.equal(patch.recurrence?.freq, RecurrenceFrequency.Weekly)
@@ -121,7 +122,7 @@ describe('EntryPatch', () => {
 		})
 
 		it('rebuilds an entry from its own patch', () => {
-			const entry = task({ status: TaskStatus.Doing, visibility: Visibility.Private, reminders: [10], color: Color.parse('#0af') })
+			const entry = task({ status: TaskStatus.Doing, visibility: Visibility.Private, reminders: EntryReminders.normalize([10]), color: Color.parse('#0af') })
 			assert.ok(new Entry().patch(EntryPatch.of(entry)).equals(entry))
 		})
 	})

@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { Entry, EntryType, TaskStatus } from '#features/entries'
+import { EntryReminders } from '#features/reminders/EntryReminders.js'
 import { Integration } from '#integrations'
 import { Tempo, type TempoIssue, type TempoWorklog } from './Tempo.js'
 
@@ -125,7 +126,7 @@ describe('Tempo entry mapping', () => {
 	})
 
 	it('clears what Tempo cannot hold, so a migrated row keeps nothing of its old provider', () => {
-		const entry = new Entry({ sourceId: 's1', location: 'Berlin', reminders: [30], description: 'notes' })
+		const entry = new Entry({ sourceId: 's1', location: 'Berlin', reminders: EntryReminders.normalize([30]), description: 'notes' })
 		Tempo.applyWorklog(entry, worklog(), issue, 'https://acme.atlassian.net', BERLIN)
 
 		assert.equal(entry.location, '')

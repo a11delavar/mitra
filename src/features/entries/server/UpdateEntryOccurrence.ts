@@ -50,10 +50,11 @@ export class UpdateEntryOccurrence extends Operation<Parameters, Entry> {
 			throw new OrganizerOnly('Only the organizer can modify participants', ['participants'])
 		}
 
-		// The current calendar is owned transitively (the entry lookup above proved it); a DIFFERENT target proves its own ownership.
-		const from = await user.source(em, existing.sourceId)
+		// Its own calendar came with the entry, owned transitively; a DIFFERENT target proves its own ownership.
+		const from = existing.source
 		const to = incoming.sourceId === existing.sourceId ? from : await user.source(em, incoming.sourceId)
-		const errors = [...patch.validate({ entry: existing, from, to, scope }), ...incoming.validate(to), ...(patch.relations === undefined ? [] : patch.relations.validate({ entry: existing, graph: await user.relationGraph(em, patch.relations) }))]
+		incoming.source = to
+		const errors = [...patch.validate({ entry: existing, from, to, scope }), ...incoming.validate(), ...(patch.relations === undefined ? [] : patch.relations.validate({ entry: existing, graph: await user.relationGraph(em, patch.relations) }))]
 		if (errors.length) {
 			throw new AggregateError(errors)
 		}

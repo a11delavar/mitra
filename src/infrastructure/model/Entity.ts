@@ -4,6 +4,7 @@ import { equals } from '@a11d/equals'
 export type EntityFieldRole = 'identity' | 'equality'
 
 const declarations = new WeakMap<object, Record<EntityFieldRole, Array<string>>>()
+const carriages = new WeakMap<object, Array<readonly [member: string, key: string]>>()
 
 function declare(role: EntityFieldRole): PropertyDecorator {
 	return (prototype, key) => {
@@ -22,6 +23,11 @@ export const identity = () => declare('identity')
 /** Part of what makes two entities equal, and all a copy carries. */
 export const equality = () => declare('equality')
 
+/** A member that goes wherever `key` is taken, as it is, never copied: the entity an id names (`@include`). */
+export const carried = (key: string): PropertyDecorator => (prototype, member) => {
+	carriages.set(prototype, [...carriages.get(prototype) ?? [], [String(member), key]])
+}
+
 type Init<Self> = new (init: Partial<Self>) => Self
 
 const valuesOf = (entity: object) => entity as Record<string, unknown>
@@ -36,7 +42,9 @@ function deep(value: unknown, entity: (nested: Entity) => Entity): unknown {
 		return entity(value)
 	}
 	if (Array.isArray(value)) {
-		return value.map(item => deep(item, entity))
+		const items = value.map(item => deep(item, entity))
+		// An array of its own kind (`Participants`, `EntryTypes`) stays one, though `map` may answer a plain array (its species).
+		return value.constructor === Array ? items : (value.constructor as ArrayConstructor).from(items)
 	}
 	if (value === null || typeof value !== 'object') {
 		return value
@@ -76,6 +84,15 @@ export abstract class Entity {
 		return Entity.fieldsOf(this.constructor as typeof Entity, role)
 	}
 
+	/** The carried members of this entity's class, each with the key it follows. */
+	private carried() {
+		const members = new Array<readonly [member: string, key: string]>()
+		for (let prototype = Object.getPrototypeOf(this) as object | null; prototype && prototype !== Object.prototype; prototype = Object.getPrototypeOf(prototype)) {
+			members.push(...carriages.get(prototype) ?? [])
+		}
+		return members
+	}
+
 	/** Whether `other` is this one: the same identity, which this one has. The other may be a plain object, as the wire delivers one. */
 	is(other: this): boolean {
 		const fields = this.fields('identity')
@@ -112,9 +129,15 @@ export abstract class Entity {
 		return Object.assign(this, this.taken(other, this.fields('equality'), nested => nested.clone()))
 	}
 
-	/** The given fields of `source`, each as a copy takes it: deep through the fields of equality, the rest {@link bookkept}. */
+	/** The given fields of `source`, each as a copy takes it: deep through the fields of equality, the rest {@link bookkept}, and a carried member with its key. */
 	private taken(source: this, fields: ReadonlyArray<string>, nested: (entity: Entity) => Entity) {
 		const equality = new Set(this.fields('equality'))
-		return Object.fromEntries(fields.map(field => [field, equality.has(field) ? deep(valuesOf(source)[field], nested) : bookkept(valuesOf(source)[field])])) as Partial<this>
+		const taken = Object.fromEntries(fields.map(field => [field, equality.has(field) ? deep(valuesOf(source)[field], nested) : bookkept(valuesOf(source)[field])]))
+		for (const [member, key] of this.carried()) {
+			if (fields.includes(key)) {
+				taken[member] = valuesOf(source)[member]
+			}
+		}
+		return taken as Partial<this>
 	}
 }

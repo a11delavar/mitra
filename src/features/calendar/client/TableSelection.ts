@@ -22,19 +22,16 @@ export class TableSelection extends Component {
 
 	/** A series has no one status to set: each occurrence keeps its own. */
 	private static editable({ entry, series }: TableRow) {
-		return !series && entry.type.isTask && entry.source.capabilities.entries.edit
+		return !series && entry.type.isTask && entry.editable
 	}
 
 	private static deletable({ entry }: TableRow) {
-		return entry.persisted && entry.source.capabilities.entries.delete
+		return entry.persisted && entry.deletable
 	}
 
-	/** An occurrence cannot change its type on the way, so it only moves where its type is at home, and a whole series only where it can repeat. */
+	/** A row moves where its entry can go; one occurrence leaves its rule behind, a whole series takes it along. */
 	private static movable(row: TableRow, to: Source) {
-		const { entry } = row
-		return TableSelection.deletable(row) && entry.sourceId !== to.id
-			&& (!entry.partOfSeries || to.supportsEntryType(entry.type))
-			&& (!row.series || to.ownership.holds('recurrence'))
+		return TableSelection.deletable(row) && row.entry.canMoveTo(to, { occurrence: !row.series })
 	}
 
 	/**
@@ -54,7 +51,7 @@ export class TableSelection extends Component {
 
 	private setStatus(status: TaskStatus) {
 		const rows = this.rows.filter(row => TableSelection.editable(row) && row.entry.status !== status)
-		void TableSelection.write(rows, entry => entry.setStatus(status, entry.source.ownership), entry => EntryStore.commit(entry))
+		void TableSelection.write(rows, entry => { entry.status = status }, entry => EntryStore.commit(entry))
 	}
 
 	private moveTo(source: Source) {
@@ -129,7 +126,6 @@ export class TableSelection extends Component {
 				mitra-menu {
 					position-area: block-end span-inline-end;
 				}
-
 			}
 		`
 	}
@@ -138,8 +134,7 @@ export class TableSelection extends Component {
 
 	protected override get template() {
 		const rows = this.shown
-		const destinations = Calendars.enabled().filter(source => !source.readOnly && source.capabilities.entries.create
-			&& rows.some(row => TableSelection.movable(row, source)))
+		const destinations = Calendars.sources.filter(source => rows.some(row => TableSelection.movable(row, source)))
 		return html`
 			<span class="count">${t('${count:pluralityNumber} selected', { count: rows.length })}</span>
 			${!rows.some(TableSelection.editable) ? html.nothing : [TaskStatus.ToDo, TaskStatus.Done, TaskStatus.Cancelled].map(status => html`

@@ -30,8 +30,7 @@ export class CompleteTask extends Operation<Parameters, Entry> {
 	async run({ em, user }: OperationContext) {
 		const { id, occurrence } = this.parameters
 		const existing = await user.entry(em, id)
-		const source = await user.source(em, existing.sourceId)
-		const { capabilities, integration } = source
+		const { capabilities, integration } = existing.source
 
 		if (!existing.type?.isTask) {
 			throw new ValidationError('Only a task can be completed')
@@ -41,7 +40,7 @@ export class CompleteTask extends Operation<Parameters, Entry> {
 		}
 
 		const done = existing.clone()
-		done.setStatus(TaskStatus.Done, source.ownership)
+		done.status = TaskStatus.Done
 
 		// An occurrence detaches like a 'this' edit.
 		if (existing.recurrence?.freq) {

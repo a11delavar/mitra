@@ -1,5 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { EntryReminders } from '#features/reminders/EntryReminders.js'
 import ICAL from 'ical.js'
 import { CalDAV } from './CalDAV.js'
 
@@ -16,7 +17,7 @@ describe('reminders (VALARM)', () => {
 		.map(trigger => `${trigger!.getFirstValue()}${trigger!.getParameter('related') ? ';END' : ''}`)
 
 	it('reads a start-relative trigger as minutes before', () => {
-		assert.deepEqual(CalDAV.remindersFrom(component('vevent', ['DTSTART:20260101T090000Z'], [['TRIGGER:-PT30M']])), [30])
+		assert.deepEqual(CalDAV.remindersFrom(component('vevent', ['DTSTART:20260101T090000Z'], [['TRIGGER:-PT30M']])), EntryReminders.normalize([30]))
 	})
 
 	it('ignores absolute, after-start and EMAIL alarms', () => {
@@ -30,7 +31,7 @@ describe('reminders (VALARM)', () => {
 	})
 
 	it('reads a due-only task\'s END-anchored alarm, its only possible anchor', () => {
-		assert.deepEqual(CalDAV.remindersFrom(component('vtodo', ['DUE:20260101T090000Z'], [['TRIGGER;RELATED=END:-PT30M']])), [30])
+		assert.deepEqual(CalDAV.remindersFrom(component('vtodo', ['DUE:20260101T090000Z'], [['TRIGGER;RELATED=END:-PT30M']])), EntryReminders.normalize([30]))
 	})
 
 	it('still ignores an END-anchored alarm when the component also has a start', () => {
@@ -41,7 +42,7 @@ describe('reminders (VALARM)', () => {
 		const owner = component('vtodo', ['DUE:20260101T090000Z'])
 		CalDAV.writeReminders(owner, [30])
 		assert.deepEqual(triggersOf(owner), ['-PT30M;END'])
-		assert.deepEqual(CalDAV.remindersFrom(owner), [30])
+		assert.deepEqual(CalDAV.remindersFrom(owner), EntryReminders.normalize([30]))
 	})
 
 	it('leaves START implicit when the component has a start', () => {

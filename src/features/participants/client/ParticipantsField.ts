@@ -1,7 +1,7 @@
 import { Component, component, html, css, property, state, event, query, bind } from '@a11d/lit'
 import type { Menu } from '#design'
 import type { Entry } from '#features/entries'
-import { ParticipantRole, type Participants, type Participant } from '../Participant.js'
+import { ParticipantRole, type Participant } from '../Participant.js'
 import './ParticipantAvatar.js'
 import './ParticipantFaces.js'
 
@@ -28,17 +28,8 @@ export class ParticipantsField extends Component {
 	@query('mitra-menu') private readonly menu?: Menu
 	@query('input.add') private readonly addInput?: HTMLInputElement
 
-	private get participants(): Participants | undefined {
-		return this.entry.participantList
-	}
-
 	private get displayed(): Array<Participant> {
-		return this.participants?.organizerFirst ?? []
-	}
-
-	/** Whether the current user can manage participants (requires write access and organizer status). */
-	private get canManage() {
-		return this.entry.source.capabilities.entries.edit && this.entry.canManageParticipants
+		return this.entry.participants?.organizerFirst ?? []
 	}
 
 	private get ownAddress(): string | undefined {
@@ -58,7 +49,7 @@ export class ParticipantsField extends Component {
 	}
 
 	private readonly copyEmails = () => {
-		navigator.clipboard.writeText(this.participants?.emails ?? '').catch(() => void 0)
+		navigator.clipboard.writeText(this.entry.participants?.emails ?? '').catch(() => void 0)
 	}
 
 	private markAll(role: ParticipantRole) {
@@ -67,7 +58,7 @@ export class ParticipantsField extends Component {
 	}
 
 	private readonly removeAll = () => {
-		this.entry.clearParticipants()
+		this.entry.participants = undefined
 		this.changed()
 	}
 
@@ -285,11 +276,11 @@ export class ParticipantsField extends Component {
 	}
 
 	protected override get template() {
-		const empty = !this.participants?.length
+		const empty = !this.entry.participants?.length
 		return !this.entry ? html.nothing : html`
 			${this.headerTemplate}
 			${this.peopleTemplate}
-			${!this.canManage || !(empty || this.adding) ? html.nothing : this.addTemplate(empty)}
+			${!this.entry.canEdit('participants') || !(empty || this.adding) ? html.nothing : this.addTemplate(empty)}
 		`
 	}
 
@@ -311,18 +302,17 @@ export class ParticipantsField extends Component {
 	}
 
 	private get headerTemplate() {
-		const participants = this.participants
-		return !participants?.length ? html.nothing : html`
+		return !this.entry.participants?.length ? html.nothing : html`
 			<header>
 				<div class="count">
-					<span>${t('${count:pluralityNumber} participants', { count: participants.length })}</span>
-					<span class="summary">${participants.summary}</span>
+					<span>${t('${count:pluralityNumber} participants', { count: this.entry.participants.length })}</span>
+					<span class="summary">${this.entry.participants.summary}</span>
 				</div>
 				<mitra-popover-container>
 					<mitra-icon-button size="small" label=${t('Participant options')} icon="more-horizontal"></mitra-icon-button>
 					${this.menuTemplate}
 				</mitra-popover-container>
-				${!this.canManage ? html.nothing : html`
+				${!this.entry.canEdit('participants') ? html.nothing : html`
 					<mitra-icon-button size="small" label=${t('Add participant')} icon="plus" @click=${this.startAdding}></mitra-icon-button>
 				`}
 			</header>
@@ -330,16 +320,16 @@ export class ParticipantsField extends Component {
 	}
 
 	private get menuTemplate() {
-		const gate = this.canManage ? undefined : t('Only the organizer can change participants')
+		const gate = this.entry.canEdit('participants') ? undefined : t('Only the organizer can change participants')
 		return html`
 			<mitra-menu slot="popover">
-				<mitra-menu-item icon="mail" href=${this.participants!.mailto}>${t('Email participants')}</mitra-menu-item>
+				<mitra-menu-item icon="mail" href=${this.entry.participants!.mailto}>${t('Email participants')}</mitra-menu-item>
 				<mitra-menu-item icon="copy" @click=${this.copyEmails}>${t('Copy participants\' emails')}</mitra-menu-item>
-				<mitra-menu-item icon="user-check" ?disabled=${!this.canManage} title=${gate ?? t('Ask everyone to attend')}
+				<mitra-menu-item icon="user-check" ?disabled=${!this.entry.canEdit('participants')} title=${gate ?? t('Ask everyone to attend')}
 					@click=${() => this.markAll(ParticipantRole.Required)}>${t('Mark all required')}</mitra-menu-item>
-				<mitra-menu-item icon="user-minus" ?disabled=${!this.canManage} title=${gate ?? t('Make attendance optional for everyone')}
+				<mitra-menu-item icon="user-minus" ?disabled=${!this.entry.canEdit('participants')} title=${gate ?? t('Make attendance optional for everyone')}
 					@click=${() => this.markAll(ParticipantRole.Optional)}>${t('Mark all optional')}</mitra-menu-item>
-				<mitra-menu-item icon="user-x" variant="danger" ?disabled=${!this.canManage} title=${gate ?? t('Remove every participant')}
+				<mitra-menu-item icon="user-x" variant="danger" ?disabled=${!this.entry.canEdit('participants')} title=${gate ?? t('Remove every participant')}
 					@click=${this.removeAll}>${t('Remove all')}</mitra-menu-item>
 			</mitra-menu>
 		`
@@ -382,7 +372,7 @@ export class ParticipantsField extends Component {
 					<span class="email">${participant.email}</span>
 					${!detail ? html.nothing : html`<span class="detail">${detail}</span>`}
 				</div>
-				${!this.canManage || participant.organizer ? html.nothing : html`
+				${!this.entry.canEdit('participants') || participant.organizer ? html.nothing : html`
 					<div class="actions">
 						<mitra-icon-button size="small" icon=${optional ? 'user-check' : 'user-minus'}
 							label=${optional ? t('Ask this participant to attend') : t('Make attendance optional')}

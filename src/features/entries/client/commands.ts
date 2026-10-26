@@ -1,8 +1,6 @@
 import { DateTime } from '@3mo/date-time'
-import { ReminderSetting } from '#features/reminders/client/DefaultReminderSetting.js'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import { command, Command } from '#features/commands/Command.js'
-import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
 import { EntryStore } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
@@ -18,7 +16,7 @@ export class CreateEntry extends Command {
 	override execute() {
 		const { calendar } = this
 		const source = Calendars.primary()
-		if (!source || !source.capabilities.entries.create) {
+		if (!source) {
 			return
 		}
 		const now = new DateTime()
@@ -30,17 +28,7 @@ export class CreateEntry extends Command {
 			calendar.setView('week')
 		}
 		calendar.navigatingDate = now
-		const draft = new Entry({
-			sourceId: source.id,
-			type: timelineTask ? EntryType.Task : source.defaultEntryType,
-			heading: '',
-			start,
-			end: start.add({ hours: 1 }),
-			allDay: false,
-		})
-		if (source.ownership.holds('reminders')) {
-			draft.adoptDefaultReminders(ReminderSetting.defaults)
-		}
+		const draft = source.draft({ type: timelineTask ? EntryType.Task : source.defaultEntryType, start, end: start.add({ hours: 1 }), allDay: false })
 		EntryStore.upsertDraft(draft)
 		EntryEditorIntent.openDraft(draft)
 	}

@@ -1,5 +1,6 @@
 import { EntryType } from '#features/entries'
 import { ChoiceSetting, setting, userStorage } from '#features/settings/client/Setting.js'
+import { getSettings } from '#infrastructure/http/Api.js'
 import { RemindersField } from './RemindersField.js'
 import { ReminderDefaults } from '../ReminderDefaults.js'
 
@@ -7,11 +8,6 @@ import { ReminderDefaults } from '../ReminderDefaults.js'
 export abstract class ReminderSetting extends ChoiceSetting<number | null> {
 	/** Supported reminder offsets in minutes (null = none). */
 	static readonly choices: Array<number | null> = [null, 0, 5, 10, 30, 60, 1440]
-
-	/** Both kinds' defaults as the user has chosen them. */
-	static get defaults() {
-		return new ReminderDefaults(new DefaultReminderSetting().value, new DefaultTaskReminderSetting().value)
-	}
 
 	readonly icon = 'bell'
 	readonly page = 'notifications'
@@ -29,7 +25,7 @@ export class DefaultReminderSetting extends ReminderSetting {
 	readonly heading = t('Default event reminder')
 	readonly keywords = t('DefaultReminderSetting.Keywords')
 	override get hint() { return t('Timed entries only') }
-	readonly fallback: number | null = 30
+	readonly fallback = ReminderDefaults.standard.event
 	protected readonly storage = userStorage('defaultReminderMinutes')
 }
 
@@ -39,7 +35,8 @@ export class DefaultTaskReminderSetting extends ReminderSetting {
 	readonly heading = t('Default task reminder')
 	readonly keywords = t('DefaultTaskReminderSetting.Keywords')
 	override get hint() { return t('Tasks with a time only') }
-	/** A task is done at its time, so it reminds at that time rather than ahead of it. */
-	readonly fallback: number | null = 0
+	readonly fallback = ReminderDefaults.standard.task
 	protected readonly storage = userStorage('defaultTaskReminderMinutes')
 }
+
+ReminderDefaults.from(() => ReminderDefaults.of(getSettings()))

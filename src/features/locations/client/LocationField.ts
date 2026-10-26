@@ -46,12 +46,8 @@ export class LocationField extends Component {
 
 	@query('textarea') private readonly field?: HTMLTextAreaElement
 
-	private get editable() {
-		return !!this.entry?.source.capabilities.entries.edit
-	}
-
 	private readonly edit = (e: Event) => {
-		if (!this.editable || e.composedPath().some(node => node instanceof HTMLAnchorElement)) {
+		if (!this.entry?.editable || e.composedPath().some(node => node instanceof HTMLAnchorElement)) {
 			return
 		}
 		this.editing = true
@@ -174,7 +170,7 @@ export class LocationField extends Component {
 		const link = MarkdownLinks.sole(this.entry?.location)
 		if (link && !this.editing) {
 			return html`
-				<div class="link" tabindex=${this.editable ? '0' : '-1'} @focus=${this.edit} @click=${this.edit}>
+				<div class="link" tabindex=${this.entry?.editable ? '0' : '-1'} @focus=${this.edit} @click=${this.edit}>
 					<mitra-link plain href=${link}></mitra-link>
 				</div>
 			`
@@ -183,7 +179,7 @@ export class LocationField extends Component {
 			<mitra-combobox ?open=${bind(this, 'open')}
 				@pick=${(e: CustomEvent<LocationSuggestion>) => this.pick(e.detail)} @keydown=${this.handleKeyDown}>
 				<textarea slot="input" rows="1" placeholder=${t('Location')} aria-label=${t('Location')} autocomplete="off" spellcheck="false"
-					?readonly=${!this.editable}
+					?readonly=${!this.entry?.editable}
 					.value=${this.entry?.location ?? ''}
 					@focus=${this.handleFocus}
 					@input=${this.handleInput}

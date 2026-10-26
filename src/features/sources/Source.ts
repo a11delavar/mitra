@@ -1,5 +1,6 @@
 import { converter } from '@a11d/converter'
-import { EntryType, EntryTypes } from '#features/entries'
+import { EntryType, EntryTypes, Entry } from '#features/entries'
+import { ReminderDefaults } from '#features/reminders/ReminderDefaults.js'
 import { Integration } from '#integrations'
 import { model, Entity, identity, equality, entity, primaryKey, property, manyToOne, include } from '#infrastructure/model'
 import { Color } from './Color.js'
@@ -23,6 +24,18 @@ export class Source extends Entity {
 
 	/** Whether it can hold an entry of `type`, which its integration may narrow. */
 	canHold(type: EntryType) { return this.integration.canHold(this, type) }
+
+	/** Whether new entries can go here: enabled, and its integration creating them where it is not read-only. */
+	get writable() { return this.enabled && this.capabilities.entries.create }
+
+	/** A new entry here, of its default type unless `init` names one, fitted to what it holds, with the account's default reminders where it keeps them. */
+	draft(init: Partial<Entry> = {}) {
+		const entry = new Entry({ sourceId: this.id, source: this, type: this.defaultEntryType, heading: '', ...init }).fit()
+		if (entry.holds('reminders')) {
+			entry.reminders = ReminderDefaults.current?.for(entry)
+		}
+		return entry
+	}
 
 	/** Its address at the provider, which a reconcile matches the provider's list by: that list knows nothing of Mitra's rows. */
 	@property({ type: 'string' }) uri!: string

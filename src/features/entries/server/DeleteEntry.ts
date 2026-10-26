@@ -19,7 +19,7 @@ class Parameters {
 export class DeleteEntry extends Operation<Parameters, void> {
 	async run({ em, user }: OperationContext) {
 		const entry = await user.entry(em, this.parameters.id)
-		const { capabilities, integration } = await user.source(em, entry.sourceId)
+		const { capabilities, integration } = entry.source
 		if (!capabilities.entries.delete) {
 			throw new ValidationError('Entries in this calendar cannot be deleted from mitra')
 		}

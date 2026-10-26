@@ -183,7 +183,7 @@ export class RelationGraph {
 			const next = new Array<Entry>()
 			for (const node of frontier) {
 				for (const parent of this.parentsOf(node.uid!)) {
-					if (!parent.type.isTask || parent.closed || closing.has(parent)) {
+					if (!parent.open || closing.has(parent)) {
 						continue
 					}
 					const children = this.childrenOf(parent.uid!).filter(child => child.type.isTask && child.status !== TaskStatus.Cancelled)

@@ -83,7 +83,7 @@ export class ReminderScheduler {
 				],
 			})
 			const masters = await em.find(Entry, { sourceId: { $in: enabledSourceIds }, reminders: { $ne: null }, recurrence: { $ne: null } })
-			const horizon = Math.max(0, ...masters.flatMap(master => master.reminders ?? [])) * MINUTE
+			const horizon = Math.max(0, ...masters.map(master => master.reminders?.earliest ?? 0)) * MINUTE
 			await withOverrides(em, masters)
 			const occurrences = [
 				...rows.map(row => row.occurrences.single),

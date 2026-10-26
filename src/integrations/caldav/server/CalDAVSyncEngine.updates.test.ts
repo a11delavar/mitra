@@ -45,10 +45,11 @@ describe('updating a CalDAV entry', () => {
 			id: crypto.randomUUID(), sourceId: 'work', uri: `${COLLECTION}rent.ics`, uid: 'rent', type: EntryType.Task,
 			heading: 'Pay the rent', status: TaskStatus.ToDo,
 			data: { raw: calendar('BEGIN:VTODO', 'UID:rent', 'SUMMARY:Pay the rent', 'DTSTAMP:20260101T000000Z', 'STATUS:NEEDS-ACTION', 'END:VTODO'), etag: '"etag-0"' },
+			source: Object.assign(new Source({ id: 'work', integrationId: integration.id }), { integration }),
 		})
 		task.exdates = null as never
 		const done = task.clone()
-		done.setStatus(TaskStatus.Done, new CalDAV().ownership)
+		done.status = TaskStatus.Done
 
 		await integration.updateEntry(database(), task, done)
 

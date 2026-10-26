@@ -4,6 +4,7 @@ import { Entry, TaskStatus, EntryType } from '#features/entries'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { Source, Color } from '#features/sources'
 import { Relation, EntryRelations, RelationType } from '#features/relations'
+import { EntryReminders } from '#features/reminders/EntryReminders.js'
 import { asBrowser, wireOf } from '#infrastructure/model/wire.testing.js'
 import { Notion } from './Notion.js'
 import { type NotionDataSource, type NotionPage } from './NotionClient.js'
@@ -536,7 +537,7 @@ describe('Notion page reads (applyPage)', () => {
 		const entry = new Entry({
 			id: 'e1', sourceId: 's1',
 			description: 'left over', location: 'somewhere', color: Color.parse('#123456'),
-			reminders: [30],
+			reminders: EntryReminders.normalize([30]),
 		})
 		Notion.applyPage(entry, page(), schema())
 		assert.equal(entry.description, '')

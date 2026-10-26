@@ -3,12 +3,13 @@ import { converter } from '@a11d/converter'
 import { MarkdownLinks } from '#design/MarkdownLinks.js'
 import { Source, Color } from '#features/sources'
 import { Recurrence, EntryOccurrences } from '#features/recurrence'
-import { Participants, type ParticipantRole, type Participant } from '#features/participants/Participant.js'
-import { type Relation, type RelationInit, type RelationType, RelationEdge, EntryRelation, EntryRelations } from '#features/relations'
-import { type ReminderDefaults } from '#features/reminders/ReminderDefaults.js'
+import { Participants, type ParticipantRole } from '#features/participants/Participant.js'
+import { type Relation, type RelationInit, type RelationType, RelationEdge, EntryRelation, EntryRelations, EntryHierarchy } from '#features/relations'
+import { ReminderDefaults } from '#features/reminders/ReminderDefaults.js'
+import { EntryReminders } from '#features/reminders/EntryReminders.js'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
-import type { IntegrationOwnership } from '#integrations'
+import type { OwnedField } from '#integrations'
 import { model, Entity, identity, equality, entity, primaryKey, property, enum as enumType, unique, manyToOne, children, include } from '#infrastructure/model'
 import { type Validatable, ValidationError } from '#infrastructure/validation'
 import { EntryType, type EntryTypeValue } from './EntryType.js'
@@ -22,6 +23,7 @@ import { EntryRank } from './EntryRank.js'
 import { Checklist } from './Checklist.js'
 import { EntryPatch } from './EntryPatch.js'
 import { EntryChange } from './EntryChange.js'
+import { EntrySpan } from './EntrySpan.js'
 
 export interface EntryTally {
 	readonly done: number
@@ -51,13 +53,10 @@ export type EntryClock = { readonly allDay?: boolean | null, readonly timeZone?:
 
 export const MINIMUM_DURATION_MINUTES = 15
 
-/** The defaults an entry's reminders still follow, until the user sets their own. Kept off the entry so it is never persisted, cloned or sent. */
-const reminderDefaults = new WeakMap<Entry, ReminderDefaults>()
-
 @model('Entry')
 @entity()
 @unique({ properties: ['sourceId', 'uri', 'recurrenceId'] })
-export class Entry extends Entity implements Validatable<Source> {
+export class Entry extends Entity implements Validatable {
 	@identity()
 	@primaryKey({ type: 'string' }) id?: string
 
@@ -71,29 +70,26 @@ export class Entry extends Entity implements Validatable<Source> {
 	private _type!: EntryType
 	@equality()
 	get type(): EntryType { return this._type }
+	/** Reminders still on the account's defaults follow them to the new kind's. */
 	set type(value: EntryType | EntryTypeValue) {
+		const defaults = this._type && ReminderDefaults.current
+		const following = !!defaults && defaults.gave(this)
 		this._type = EntryType.parse(value)
 		this.fitType()
-		const defaults = reminderDefaults.get(this)
-		if (defaults) {
-			this.adoptDefaultReminders(defaults)
+		if (following) {
+			this.reminders = defaults.for(this)
 		}
 	}
 
 	/** Drops what the type can't hold. */
 	private fitType() {
-		if (this._type.isTask) {
-			this.transparency = undefined
-		} else {
+		if (!this._type.isTask) {
 			this.status = undefined
-			this.percentComplete = undefined
-			this.due = undefined
-			this.estimate = undefined
 		}
-		if (this._type.isAvailability) {
-			this.participants = undefined
-			this.reminders = undefined
-			this.attachments = undefined
+		for (const field of ['transparency', 'percentComplete', 'due', 'estimate', 'participants', 'reminders', 'attachments'] as const) {
+			if (!this._type.holds(field)) {
+				this[field] = undefined
+			}
 		}
 	}
 
@@ -116,6 +112,46 @@ export class Entry extends Entity implements Validatable<Source> {
 	/** Its own color, else its calendar's. */
 	get effectiveColor() { return this.color ?? this.source.color }
 
+	/** Whether its calendar lets Mitra change it. */
+	get editable() { return this.source.capabilities.entries.edit }
+
+	/** Whether its calendar lets Mitra delete it. */
+	get deletable() { return this.source.capabilities.entries.delete }
+
+	/** Whether a copy of it can be made into its calendar: one that is saved, where entries can be created. */
+	get copyable() { return this.persisted && this.source.capabilities.entries.create }
+
+	/** Whether it has `field` here: one its type has, kept by its calendar. */
+	holds(field: OwnedField) { return this.type.holds(field) && this.source.ownership.holds(field) }
+
+	/** Whether `field` can be changed here: held and editable; the heading only renamed where the provider allows it, files only attached where they are taken, participants only by the organizer. */
+	canEdit(field: OwnedField | 'heading') {
+		if (!this.editable) {
+			return false
+		}
+		switch (field) {
+			case 'heading': return !this.persisted || this.source.capabilities.entries.rename
+			case 'attachments': return this.holds(field) && this.source.capabilities.entries.attach
+			case 'participants': return this.holds(field) && this.canManageParticipants
+			default: return this.holds(field)
+		}
+	}
+
+	/** The statuses it can take here: none for an event, and no Doing or Cancelled in a calendar of two states. */
+	get statuses(): ReadonlyArray<TaskStatus> { return this.type.isTask ? this.source.capabilities.entries.statuses : [] }
+
+	/** The types it can take here, its own always, so a type that cannot change still shows. */
+	get types() { return EntryType.all.filter(type => type === this.type || this.source.canHold(type)) }
+
+	/** Whether its type can change: where the calendar holds another and it is no part of a series. */
+	get convertible() { return this.editable && this.types.length > 1 && !this.partOfSeries }
+
+	/** Whether its time can be a wall clock: it already is, or its calendar keeps one. */
+	get floatable() { return this.floating || this.source.capabilities.entries.floating }
+
+	/** Where it can be opened outside Mitra, if anywhere. */
+	get externalLink() { return this.source.integration.externalLink(this) }
+
 	@equality()
 	@Entry.date() start?: DateTime
 
@@ -130,9 +166,18 @@ export class Entry extends Entity implements Validatable<Source> {
 	@equality()
 	@property({ type: 'number', nullable: true }) estimate?: number
 
+	@converter({ status: TaskStatus.converter })
+	@enumType({ type: TaskStatus.Mapper, fieldName: 'status', items: TaskStatus.all.map(String), nullable: true }) private _status?: TaskStatus
+
 	@equality()
-	@converter(TaskStatus.converter)
-	@enumType({ type: TaskStatus.Mapper, items: TaskStatus.all.map(String), nullable: true }) status?: TaskStatus
+	get status() { return this._status }
+	/** A task ticked off reads as fully done where its calendar keeps progress (RFC 5545 §3.8.1.8); one given a status before it knows its calendar keeps what it was given. */
+	set status(value) {
+		this._status = value
+		if (value === TaskStatus.Done && (this.source as Source | undefined)?.ownership.holds('percentComplete')) {
+			this.percentComplete = 100
+		}
+	}
 
 	/** Task PERCENT-COMPLETE (RFC 5545 §3.8.1.8), 0-100. */
 	@equality()
@@ -146,6 +191,15 @@ export class Entry extends Entity implements Validatable<Source> {
 	get progress(): number | undefined {
 		return this.percentComplete === undefined ? undefined : this.percentComplete / 100
 	}
+	/** The progress a task was given, its status following (RFC 5545 §3.8.1.8): full progress closes it, less reopens a done one as Doing where the calendar has it, none clears it. Upstream writes `percentComplete` itself, after the status, so only this couples the two. */
+	set progress(value) {
+		this.percentComplete = value === undefined ? undefined : Math.round(value * 100)
+		if (this.percentComplete === 100) {
+			this.status = TaskStatus.Done
+		} else if (this.done) {
+			this.status = this.percentComplete && this.statuses.includes(TaskStatus.Doing) ? TaskStatus.Doing : TaskStatus.ToDo
+		}
+	}
 
 	get checklist(): Checklist {
 		return Checklist.of(this.description)
@@ -156,11 +210,15 @@ export class Entry extends Entity implements Validatable<Source> {
 
 	get closed() { return !!this.status?.closed }
 
+	/** A task still to do: not an event, and not closed. */
+	get open() { return !!this.type?.isTask && !this.closed }
+
 	/**
 	 * Drops what a calendar can't keep and is no refusal: the estimate, where none is held, and a length, where no end is: a
 	 * timed entry becomes a moment, an all-day one keeps its first day.
 	 */
-	fit(ownership: Pick<IntegrationOwnership, 'holds'>) {
+	fit() {
+		const { ownership } = this.source
 		if (!ownership.holds('estimate')) {
 			this.estimate = undefined
 		}
@@ -169,14 +227,6 @@ export class Entry extends Entity implements Validatable<Source> {
 			this.end = !this.allDay ? undefined : new DateTime(zone.midnightOf(zone.dayOf(new Date(this.start.valueOf())).add({ days: 1 })).getTime())
 		}
 		return this
-	}
-
-	/** Writes 100% progress on Done if the provider supports `percentComplete` (RFC 5545 §3.8.1.8). */
-	setStatus(status: TaskStatus, ownership: Pick<IntegrationOwnership, 'holds'>) {
-		this.status = status
-		if (status === TaskStatus.Done && ownership.holds('percentComplete')) {
-			this.percentComplete = 100
-		}
 	}
 
 	@equality()
@@ -212,7 +262,8 @@ export class Entry extends Entity implements Validatable<Source> {
 	@property({ type: 'json', nullable: true }) data?: EntryData
 
 	@equality()
-	@property({ type: 'json', nullable: true }) reminders?: Array<number>
+	@property({ type: EntryReminders.Mapper, nullable: true })
+	@converter(EntryReminders.converter) reminders?: EntryReminders
 
 	get reminderAnchor() {
 		return this.occurrences.single.reminderAnchor
@@ -222,40 +273,17 @@ export class Entry extends Entity implements Validatable<Source> {
 		return this.occurrences.single.remindersAnchorToEnd
 	}
 
-	/** Starts the reminders from `defaults`, following them across kind changes until the user sets their own. All-day entries get none. */
-	adoptDefaultReminders(defaults: ReminderDefaults) {
-		reminderDefaults.set(this, defaults)
-		this.reminders = this.allDay || !this.reminderAnchor ? undefined : defaults.for(this.type) ?? undefined
-	}
-
-	/** The user's own reminders, which no default replaces. */
-	setReminders(minutes: ReadonlyArray<number>) {
-		reminderDefaults.delete(this)
-		this.reminders = minutes.length ? [...new Set(minutes)].sort((a, b) => a - b) : undefined
-	}
-
 	@equality()
 	@property({ type: Participants.Mapper, nullable: true })
-	@converter(Participants.converter) participants?: Array<Participant>
+	@converter(Participants.converter) participants?: Participants
 
-	get participantList(): Participants | undefined {
-		return Participants.normalize(this.participants)
-	}
-
-	get organizer(): Participant | undefined {
-		return this.participants?.find(participant => participant.organizer)
-	}
-
-	get hasParticipants() {
-		return !!this.participants?.length
-	}
-
+	/** Whether the account may change who takes part: without an organizer (its own entry), or as the organizer (RFC 5546). */
 	get canManageParticipants() {
-		return this.participantList?.manageable ?? true
+		return this.participants?.manageable ?? true
 	}
 
 	invite(emails: ReadonlyArray<string>, ownAddress?: string): boolean {
-		const invited = (this.participantList ?? new Participants()).inviting(emails, ownAddress)
+		const invited = (this.participants ?? new Participants()).inviting(emails, ownAddress)
 		if (!invited) {
 			return false
 		}
@@ -264,11 +292,11 @@ export class Entry extends Entity implements Validatable<Source> {
 	}
 
 	markAllParticipants(role: ParticipantRole) {
-		this.participants = this.participantList?.marked(role)
+		this.participants = this.participants?.marked(role)
 	}
 
 	setParticipantRole(email: string, role: ParticipantRole): boolean {
-		const marked = this.participantList?.withRole(email, role)
+		const marked = this.participants?.withRole(email, role)
 		if (!marked) {
 			return false
 		}
@@ -277,16 +305,11 @@ export class Entry extends Entity implements Validatable<Source> {
 	}
 
 	removeParticipant(email: string): boolean {
-		const list = this.participantList
-		if (!list?.invitee(email)) {
+		if (!this.participants?.invitee(email)) {
 			return false
 		}
-		this.participants = list.without(email)
+		this.participants = this.participants.without(email)
 		return true
-	}
-
-	clearParticipants() {
-		this.participants = undefined
 	}
 
 	/** The files it carries, each as what it is to the entry (`type`) and in its place (`rank`); a list set is saved as their rows. */
@@ -435,6 +458,11 @@ export class Entry extends Entity implements Validatable<Source> {
 		return this.id !== undefined
 	}
 
+	/** A draft nothing was typed into, which is never saved: availability needs no title. */
+	get blank() {
+		return !this.persisted && !this.heading?.trim() && !this.type.isAvailability
+	}
+
 	get relatable() {
 		return this.persisted && !!this.uid
 	}
@@ -479,6 +507,11 @@ export class Entry extends Entity implements Validatable<Source> {
 	/** The row that holds what a whole series shares: its master, or the entry itself when it stands alone. */
 	get masterId() {
 		return this.recurringEntryId ?? this.id
+	}
+
+	/** Where it stands among the other entries: its subtasks, parents and predecessors, and what they add up to. */
+	get hierarchy() {
+		return new EntryHierarchy(this)
 	}
 
 	/** A standalone copy: one that stands alone, without the rule, with the relationships this entry owns. */
@@ -562,15 +595,15 @@ export class Entry extends Entity implements Validatable<Source> {
 
 	migrateTo(source: Source) {
 		this.sourceId = source.id
+		this.source = source
 		if (!source.supportsEntryType(this.type)) {
 			this.type = source.defaultEntryType
 		}
 	}
 
-	spanEquals(other: Entry) {
-		return this.allDay === other.allDay
-			&& this.start?.valueOf() === other.start?.valueOf()
-			&& this.end?.valueOf() === other.end?.valueOf()
+	/** Where it lies: its schedule and the constraints beside it, apart from the entry. */
+	get span() {
+		return new EntrySpan(this)
 	}
 
 	/**
@@ -582,7 +615,7 @@ export class Entry extends Entity implements Validatable<Source> {
 		// Without a zone of its own, an entry's times are its reader's, as the views show them.
 		const clock = this.allDay || this.timeZone ? this.occurrences.zone : zone
 		const moved = (date: DateTime | undefined) => date && new DateTime(clock.add(date, { days }).getTime())
-		return new Entry({
+		return new EntrySpan({
 			allDay: this.allDay,
 			start: moved(this.start),
 			end: moved(this.end),
@@ -591,54 +624,73 @@ export class Entry extends Entity implements Validatable<Source> {
 		})
 	}
 
-	/** The span, with the estimate that stands for it while there is none and the due, whose form follows the span's precision. */
-	adoptSpan(other: Entry) {
+	/** Takes `span` over: the schedule, the estimate that stands for it while there is none, and the due, whose form follows its precision. */
+	adopt(span: EntrySpan) {
 		// Leaving the calendar drops reminders as unschedule() does, unless a due date still anchors them.
-		if (this.scheduled && !other.scheduled && !other.due) {
+		if (this.scheduled && !span.start && !span.due) {
 			this.reminders = undefined
 		}
-		this.start = other.start
-		this.end = other.end
-		this.estimate = other.estimate
-		this.allDay = other.allDay
-		this.due = other.due
+		this.start = span.start
+		this.end = span.end
+		this.estimate = span.estimate
+		this.allDay = span.allDay
+		this.due = span.due
 	}
 
-	/** What keeps the entry out of `source`: a type it can't hold, and every fact it can't store. */
-	*validate(source: Source) {
-		const { ownership } = source
+	/** What keeps the entry out of its calendar: a type it can't hold, and every fact it can't store. */
+	*validate() {
+		const { source } = this
 		if (!source.canHold(this.type)) {
 			yield new ValidationError(`This calendar cannot hold ${this.type.isTask ? 'tasks' : this.type.isAvailability ? 'availability' : 'events'}`, ['type'])
 		}
-		if (this.participants?.length && !ownership.holds('participants')) {
+		if (this.recurrence?.freq && !source.ownership.holds('recurrence')) {
+			yield new ValidationError('This calendar cannot hold a repeating entry', ['recurrence'])
+		}
+		if (this.participants?.length && !source.ownership.holds('participants')) {
 			yield new ValidationError('This calendar does not support participants', ['participants'])
 		}
-		if (this.attachments.length && !ownership.holds('attachments')) {
+		if (this.attachments.length && !source.ownership.holds('attachments')) {
 			yield new ValidationError('This calendar does not support attachments', ['attachments'])
 		}
-		if (this.transparency === Transparency.Free && !ownership.holds('transparency')) {
+		if (this.transparency === Transparency.Free && !source.ownership.holds('transparency')) {
 			yield new ValidationError('This calendar cannot mark an entry as free', ['transparency'])
 		}
-		if (this.visibility && !ownership.holds('visibility')) {
+		if (this.visibility && !source.ownership.holds('visibility')) {
 			yield new ValidationError('This calendar does not support visibility', ['visibility'])
 		}
-		if (this.percentComplete !== undefined && !ownership.holds('percentComplete')) {
+		if (this.percentComplete !== undefined && !source.ownership.holds('percentComplete')) {
 			yield new ValidationError('This calendar does not support task progress', ['percentComplete'])
 		}
-		if (this.due && !ownership.holds('due')) {
+		if (this.due && !source.ownership.holds('due')) {
 			yield new ValidationError('This calendar does not support due dates', ['due'])
 		}
-		if (this.relations?.writes.length && !ownership.holds('relations')) {
+		if (this.relations?.writes.length && !source.ownership.holds('relations')) {
 			yield new ValidationError('This calendar does not support relations between entries', ['relations'])
+		}
+		if (this.status && !source.capabilities.entries.statuses.includes(this.status)) {
+			yield new ValidationError(this.status === TaskStatus.Doing ? 'This calendar cannot hold a task in progress' : 'This calendar cannot hold a cancelled task', ['status'])
 		}
 		if (this.start && this.end && this.end.valueOf() < this.start.valueOf()) {
 			yield new ValidationError('An entry cannot end before it starts', ['end'])
 		}
 	}
 
-	/** What `patch` does to this entry, the entry itself rather than one of its occurrences. */
+	/**
+	 * Whether it can move into `target`: another calendar that takes new entries and refuses nothing it carries. Its type may
+	 * change on the way unless it repeats, and one `occurrence` leaving its rule behind needs no calendar that repeats.
+	 */
+	canMoveTo(target: Source, { occurrence = false } = {}) {
+		if (!target.writable || target.id === this.sourceId) {
+			return false
+		}
+		const allowed = [...(this.partOfSeries ? [] : ['type']), ...(occurrence ? ['recurrence'] : [])]
+		const moved = Object.assign(this.clone(), { sourceId: target.id, source: target })
+		return ![...moved.validate()].some(error => !error.fields.some(field => allowed.includes(field)))
+	}
+
+	/** What `patch` does to this entry, the entry itself rather than one of its occurrences. The copy keeps the calendar, unless the patch moves it. */
 	edit(patch: EntryPatch) {
-		return new EntryChange(this, new Entry().patch(EntryPatch.of(this)).patch(patch))
+		return new EntryChange(this, new Entry({ source: this.source }).patch(EntryPatch.of(this)).patch(patch))
 	}
 
 	/** Takes over what `patch` sets, and a new entry's value where it clears. What the type can't hold goes, and an estimate a start replaced. */

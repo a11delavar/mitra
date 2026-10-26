@@ -1,7 +1,6 @@
 import { Component, component, html, css, property, event, query } from '@a11d/lit'
 import type { Slider, Menu } from '#design'
 import { offerToCloseSubtasks } from '#features/relations/client/Hierarchy.js'
-import { Relations } from '#features/relations/client/Relations.js'
 import { type Entry, type EntryRollup } from '../Entry.js'
 import { TaskStatus } from '../TaskStatus.js'
 import { EntryStore } from './EntryStore.js'
@@ -23,23 +22,23 @@ export class TaskStatusComponent extends Component {
 
 	private get status() {
 		const status = this.entry?.status ?? TaskStatus.ToDo
-		if (status === TaskStatus.Done || status === TaskStatus.Cancelled) {
+		if (status.closed) {
 			return status
 		}
 		// Progress reads as Doing only where a task can be Doing; a calendar of two states shows it To Do.
-		const progress = Relations.progressOf(this.entry)
-		if (progress !== undefined && progress > 0 && progress < 1 && this.entry.source.capabilities.entries.statuses.includes(TaskStatus.Doing)) {
+		const progress = this.entry.hierarchy.progress
+		if (progress !== undefined && progress > 0 && progress < 1 && this.entry.statuses.includes(TaskStatus.Doing)) {
 			return TaskStatus.Doing
 		}
 		return status
 	}
 
 	private get progress() {
-		return this.status === TaskStatus.Done ? 1 : Relations.progressOf(this.entry)
+		return this.status === TaskStatus.Done ? 1 : this.entry.hierarchy.progress
 	}
 
 	private get progressLabel() {
-		const rollup = Relations.rollupOf(this.entry)
+		const rollup = this.entry.hierarchy.rollup
 		if (rollup?.total) {
 			return TaskStatusComponent.summarize(rollup)
 		}
@@ -60,17 +59,12 @@ export class TaskStatusComponent extends Component {
 
 	@query('mitra-menu') private readonly menu?: Menu
 
-	/** The statuses the calendar can keep: one of two states (open, done) keeps neither Doing nor Cancelled. */
-	private get offered() {
-		return this.entry.source.capabilities.entries.statuses ?? []
-	}
-
 	private commit(status: TaskStatus) {
 		if (this.entry.status === status) {
 			this.menu?.hide()
 			return
 		}
-		this.entry.setStatus(status, this.entry.source.ownership)
+		this.entry.status = status
 		this.menu?.hide()
 		this.requestUpdate()
 		this.change.dispatch()
@@ -85,23 +79,14 @@ export class TaskStatusComponent extends Component {
 
 	private readonly clearPercent = (e: Event) => {
 		e.stopPropagation()
-		this.entry.percentComplete = undefined
-		if (this.entry.status === TaskStatus.Done) {
-			this.entry.status = TaskStatus.ToDo
-		}
+		this.entry.progress = undefined
 		this.requestUpdate()
 		this.change.dispatch()
 	}
 
 	private readonly handleSliderInput = (e: Event) => {
 		e.stopPropagation()
-		const val = (e.target as Slider).value
-		this.entry.percentComplete = val
-		if (val === 100 && this.entry.status !== TaskStatus.Done) {
-			this.entry.status = TaskStatus.Done
-		} else if (val < 100 && this.entry.status === TaskStatus.Done) {
-			this.entry.status = val > 0 ? TaskStatus.Doing : TaskStatus.ToDo
-		}
+		this.entry.progress = (e.target as Slider).value / 100
 		this.requestUpdate()
 		this.change.dispatch()
 	}
@@ -113,7 +98,7 @@ export class TaskStatusComponent extends Component {
 			this.menu?.toggle(e.currentTarget as HTMLElement)
 			return
 		}
-		this.commit(this.status === TaskStatus.Done ? TaskStatus.ToDo : TaskStatus.Done)
+		this.commit(this.entry.done ? TaskStatus.ToDo : TaskStatus.Done)
 	}
 
 	private readonly onContextMenu = (e: MouseEvent) => {
@@ -279,7 +264,7 @@ export class TaskStatusComponent extends Component {
 	}
 
 	private get progressSectionTemplate() {
-		const rollup = Relations.rollupOf(this.entry)
+		const rollup = this.entry.hierarchy.rollup
 		if (rollup?.total) {
 			// RFC 5545 §3.8.1.8: a completed task reads 100%.
 			const value = Math.round((this.progress ?? rollup.progress) * 100)
@@ -309,7 +294,7 @@ export class TaskStatusComponent extends Component {
 			`
 		}
 
-		if (!this.entry.source.ownership.holds('percentComplete')) {
+		if (!this.entry.holds('percentComplete')) {
 			return html.nothing
 		}
 
@@ -346,14 +331,12 @@ export class TaskStatusComponent extends Component {
 		const readout = this.progressLabel
 		const name = readout ? `${this.status.format()} (${readout})` : this.status.format()
 		const progress = this.progress
-		const showsProgressDial = this.status === TaskStatus.Doing || (progress !== undefined && progress > 0 && progress < 1 && this.status !== TaskStatus.Done && this.status !== TaskStatus.Cancelled)
+		const showsProgressDial = this.status === TaskStatus.Doing || (progress !== undefined && progress > 0 && progress < 1 && !this.status.closed)
 		const percent = progress !== undefined ? Math.round(progress * 100) : 50
 
-		const editable = this.entry.source.capabilities.entries.edit
-
 		return html`
-			<button class="status-button" aria-label=${name} ?disabled=${!editable}
-				title=${editable ? t('${status}. Click to toggle, Alt-click for options', { status: name }) : name}
+			<button class="status-button" aria-label=${name} ?disabled=${!this.entry.editable}
+				title=${this.entry.editable ? t('${status}. Click to toggle, Alt-click for options', { status: name }) : name}
 				@click=${this.onToggle}
 				@contextmenu=${this.onContextMenu}>
 				${showsProgressDial ? html`
@@ -370,7 +353,7 @@ export class TaskStatusComponent extends Component {
 				`}
 			</button>
 			<mitra-menu>
-				${this.offered.map(status => html`
+				${this.entry.statuses.map(status => html`
 					<mitra-menu-item type="radio" icon=${status.icon} ?selected=${status === this.status} @click=${this.pick(status)}>${status.format()}</mitra-menu-item>
 				`)}
 				${this.progressSectionTemplate}

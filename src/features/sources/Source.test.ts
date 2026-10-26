@@ -1,6 +1,8 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { EntryType } from '#features/entries'
+import { ReminderDefaults } from '#features/reminders/ReminderDefaults.js'
+import { EntryReminders } from '#features/reminders/EntryReminders.js'
 import { Integration } from '#integrations'
 import { CalDAV } from '#integrations/caldav/CalDAV.js'
 import { IcsSubscription } from '#integrations/ics/IcsSubscription.js'
@@ -130,10 +132,48 @@ describe('the integration of a source', () => {
 		assert.equal(source.capabilities.entries.edit, false)
 	})
 
-	it('never travels nor is cloned along, as it is another entity', () => {
+	it('never travels, nor rides a structured clone, as it is kept off the instance', () => {
 		const source = Object.assign(holidays(), { integration: feed })
 		assert.equal(source.integration, feed)
 		assert.equal('integration' in wireOf(source), false)
 		assert.equal('integration' in structuredClone(source), false)
+	})
+
+	it('comes along with a clone, as the id does; a copy, which leaves the id of its holder, leaves it too', () => {
+		const source = Object.assign(holidays(), { integration: feed })
+		assert.equal(source.clone().integration, feed)
+		assert.equal(source.copy().integration, undefined)
+	})
+
+	it('gives way once the id names another integration', () => {
+		const source = Object.assign(holidays(), { integration: feed })
+		source.integrationId = 'other'
+		assert.equal(source.integration, undefined)
+	})
+})
+
+describe('a new entry in a source', () => {
+	const home = (init?: Partial<Source>) => Object.assign(new Source({ id: 'home', uri: 'home', name: 'Home', integrationId: 'dav', enabled: true, entryTypes: [EntryType.Event, EntryType.Task], ...init }), { integration: new CalDAV({ id: 'dav' }) })
+	const start = new Date('2026-11-02T09:00:00Z') as never
+
+	it('is writable where it is enabled and its integration creates, never where it is read-only', () => {
+		assert.equal(home().writable, true)
+		assert.equal(home({ enabled: false }).writable, false)
+		assert.equal(home({ readOnly: true }).writable, false)
+	})
+
+	it('drafts an untitled entry of its default type there, with default reminders where it keeps them', () => {
+		ReminderDefaults.from(() => new ReminderDefaults(30, 0))
+		const draft = home().draft({ start, end: new Date('2026-11-02T10:00:00Z') as never })
+		ReminderDefaults.from(undefined)
+		assert.deepEqual([draft.sourceId, draft.source.id, draft.type, draft.heading, draft.reminders], ['home', 'home', EntryType.Event, '', EntryReminders.normalize([30])])
+		assert.equal(home().draft({ type: EntryType.Task }).type, EntryType.Task)
+	})
+
+	it('is blank while nothing is typed into it, though availability needs no title', () => {
+		assert.equal(home().draft({ heading: ' ' }).blank, true)
+		assert.equal(home().draft({ heading: 'Standup' }).blank, false)
+		assert.equal(home().draft({ type: EntryType.Availability }).blank, false)
+		assert.equal(home().draft({ id: 'saved' }).blank, false)
 	})
 })

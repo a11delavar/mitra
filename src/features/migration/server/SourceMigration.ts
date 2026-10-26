@@ -94,12 +94,9 @@ export class SourceMigration {
 		return new MigrationPlan({ total: verdicts.length, verdicts: verdicts.filter(verdict => !verdict.clean) })
 	}
 
-	/** Computes blockers and field losses for an entry based on target capabilities. */
-	private verdictFor(entry: Entry): MigrationVerdict {
-		return MigrationVerdict.assess(entry, {
-			target: this.target,
-			capabilities: this.targetIntegration.capabilitiesFor(this.target),
-			ownership: this.targetIntegration.ownership,
+	/** What moving the entry would do, an entry entangled with edited occurrences blocked. */
+	private verdictFor(entry: Entry) {
+		return MigrationVerdict.of(entry, this.target, {
 			occurrence: !!entry.recurrenceId || (!!entry.id && this.overriddenMasterIds.has(entry.id)),
 			occurrences: () => this.occurrencesOf(entry)?.length ?? null,
 		})

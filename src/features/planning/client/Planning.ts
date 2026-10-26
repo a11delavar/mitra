@@ -54,7 +54,7 @@ export class Planning extends Component {
 	}
 
 	private static reorderable({ entry }: EntryOccurrence) {
-		return !entry.closed && entry.persisted
+		return entry.open && entry.persisted
 	}
 
 	private static get target(): Source | undefined {
@@ -70,7 +70,7 @@ export class Planning extends Component {
 		if (!source) {
 			return
 		}
-		const draft = new Entry({ sourceId: source.id, type: EntryType.Task, heading: '' })
+		const draft = source.draft({ type: EntryType.Task })
 		EntryStore.upsertDraft(draft)
 		EntryEditorIntent.openDraft(draft)
 	}

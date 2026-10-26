@@ -4,6 +4,8 @@ import { MikroORM, UnderscoreNamingStrategy, type EntityManager } from '@mikro-o
 import { Identity, User } from '#features/identity'
 import { Session } from '#features/identity/server/Session.js'
 import { Entry, TaskStatus, Transparency, EntryType, EntryRank } from '#features/entries'
+import { Participants } from '#features/participants/Participant.js'
+import { EntryReminders } from '#features/reminders/EntryReminders.js'
 import { EntryRelation, RelationType } from '#features/relations'
 import { Recurrence } from '#features/recurrence'
 import { NotificationSubscription } from '#features/reminders/NotificationSubscription.js'
@@ -112,7 +114,7 @@ describe('SourceMigration', () => {
 			const { user, origin, target } = await seed(em, Limited)
 			em.persist([
 				entryIn(origin, { heading: 'clean' }),
-				entryIn(origin, { heading: 'noisy', reminders: [30] }),
+				entryIn(origin, { heading: 'noisy', reminders: EntryReminders.normalize([30]) }),
 			])
 			await em.flush()
 
@@ -140,7 +142,7 @@ describe('SourceMigration', () => {
 			const { user, origin, target } = await seed(em, Limited)
 			em.persist([
 				entryIn(origin, { heading: 'weekly', recurrence: Recurrence.fromRRule('FREQ=WEEKLY;COUNT=3') }),
-				entryIn(origin, { heading: 'meeting', participants: [{ email: 'organizer@example.com' }] as never }),
+				entryIn(origin, { heading: 'meeting', participants: Participants.normalize([{ email: 'organizer@example.com' }]) }),
 			])
 			await em.flush()
 

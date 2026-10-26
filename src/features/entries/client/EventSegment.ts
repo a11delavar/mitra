@@ -38,7 +38,7 @@ export class EntrySegmentComponent extends Component {
 					i.selected = open
 				}
 			})
-			if (!open && !entry.persisted && !entry.heading?.trim()) {
+			if (!open && entry.blank) {
 				EntryStore.discardDraft()
 			}
 		},
@@ -106,10 +106,9 @@ export class EntrySegmentComponent extends Component {
 		this.toggleAttribute('drag-source', this.store.isDragSource(entry))
 		if (entry.type.isTask) {
 			this.setAttribute('data-status', (entry.status ?? TaskStatus.ToDo).code)
-			const progress = entry.progress
-			if (progress !== undefined) {
+			if (entry.progress !== undefined) {
 				this.setAttribute('data-progress', '')
-				this.style.setProperty('--mitra-entry-progress', `${Math.round(progress * 100)}%`)
+				this.style.setProperty('--mitra-entry-progress', `${Math.round(entry.progress * 100)}%`)
 			} else {
 				this.removeAttribute('data-progress')
 				this.style.removeProperty('--mitra-entry-progress')
@@ -519,17 +518,16 @@ export class EntrySegmentComponent extends Component {
 				${this.detailsTemplate}
 			`
 		}
-		const repeats = this.segment.occurrence.recurring || this.segment.entry.partOfSeries
 		const attached = this.segment.entry.attachments.length > 0
 		return html`
 			<div class="heading" ?data-meta=${meta}>
-				${!this.segment.entry.type.isTask && !meta && !repeats && !attached ? html.nothing : html`
+				${!this.segment.entry.type.isTask && !meta && !this.segment.occurrence.repeats && !attached ? html.nothing : html`
 					<div class="header">
 						${!this.segment.entry.type.isTask ? html.nothing : html`
 							<mitra-task-status .entry=${this.segment.entry} @pointerdown=${() => this.claim()} @keydown=${() => this.claim()} @change=${this.handleStatusChange}></mitra-task-status>
 						`}
 						${!meta ? html.nothing : this.whenTemplate}
-						${!repeats ? html.nothing : html`<mitra-icon class="recurring" icon="repeat" title=${t('Repeats')}></mitra-icon>`}
+						${!this.segment.occurrence.repeats ? html.nothing : html`<mitra-icon class="recurring" icon="repeat" title=${t('Repeats')}></mitra-icon>`}
 						${!attached ? html.nothing : html`<mitra-icon class="attachments" icon="paperclip" title=${t('Has attachments')}></mitra-icon>`}
 						${!this.segment.occurrence.due ? html.nothing : html`
 							<mitra-icon class="due" icon="flag" title=${t('Due ${date}', { date: this.dueLabel })}></mitra-icon>
@@ -539,7 +537,7 @@ export class EntrySegmentComponent extends Component {
 				<span class="label">${this.segment.entry.heading || (this.segment.entry.persisted ? '' : t('Draft'))}</span>
 			</div>
 			${this.segment.allDay || !this.segment.entry.location ? html.nothing : this.locationTemplate}
-			${!this.resize || !this.segment.entry.persisted || !this.segment.entry.source.capabilities.entries.edit || !this.segment.entry.source.ownership.holds('end') ? html.nothing : html`
+			${!this.resize || !this.segment.entry.persisted || !this.segment.entry.canEdit('end') ? html.nothing : html`
 				<div class="resize-start"></div>
 				<div class="resize-end"></div>
 			`}

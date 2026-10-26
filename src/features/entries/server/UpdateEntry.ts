@@ -40,15 +40,16 @@ export class UpdateEntry extends Operation<Parameters, Entry> {
 			throw new OrganizerOnly('Only the organizer can modify participants', ['participants'])
 		}
 
-		// The current calendar is owned transitively (the entry lookup above proved it); a DIFFERENT target proves its own ownership.
-		const from = await user.source(em, existing.sourceId)
+		// Its own calendar came with the entry, owned transitively; a DIFFERENT target proves its own ownership.
+		const from = existing.source
 		const to = incoming.sourceId === existing.sourceId ? from : await user.source(em, incoming.sourceId)
+		incoming.source = to
 		// Type conversion re-creates the entry below: tasks and events cannot share a CalDAV resource (RFC 4791 §4.1).
-		const errors = [...patch.validate({ entry: existing, from, to }), ...incoming.validate(to), ...(relations === undefined ? [] : relations.validate({ entry: existing, graph: await user.relationGraph(em, relations) }))]
+		const errors = [...patch.validate({ entry: existing, from, to }), ...incoming.validate(), ...(relations === undefined ? [] : relations.validate({ entry: existing, graph: await user.relationGraph(em, relations) }))]
 		if (errors.length) {
 			throw new AggregateError(errors)
 		}
-		incoming.fit(to.ownership)
+		incoming.fit()
 
 		const recreated = edit.recreates(from, to)
 		const saved = await edit.save(em, from, to)

@@ -8,10 +8,12 @@ import { Session } from '#features/identity/server/Session.js'
 import { Source } from '#features/sources'
 import { Recurrence, RecurrenceFrequency } from '#features/recurrence'
 import { Entry, TaskStatus, Transparency, EntryType, EntryTypes } from '#features/entries'
+import { Participants } from '#features/participants/Participant.js'
+import { EntryReminders } from '#features/reminders/EntryReminders.js'
 import { EntryRelation, EntryRelations, RelationGraph, RelationType } from '#features/relations'
 import { NotificationSubscription } from '#features/reminders/NotificationSubscription.js'
 import { MigrationVerdict } from '#features/migration/MigrationPlan.js'
-import { Integration, registerEngine, type SourceSyncEngine } from '#integrations'
+import { Integration, registerEngine, type SourceSyncEngine, type IntegrationCapabilities } from '#integrations'
 import { CalDAV } from '#integrations/caldav/CalDAV.js'
 import { MitraCalendar } from '#integrations/mitra/MitraCalendar.js'
 import { Notion } from '#integrations/notion/Notion.js'
@@ -121,8 +123,8 @@ describe('converting an entry to availability', () => {
 		const entry = new Entry({
 			sourceId: 's', type: EntryType.Event, heading: 'Standup',
 			start: day.add({ hours: 9 }), end: day.add({ hours: 10 }),
-			location: 'Room 1', transparency: Transparency.Busy, reminders: [10],
-			participants: [{ email: 'organizer@example.com', organizer: true }],
+			location: 'Room 1', transparency: Transparency.Busy, reminders: EntryReminders.normalize([10]),
+			participants: Participants.normalize([{ email: 'organizer@example.com', organizer: true }]),
 		})
 
 		entry.type = EntryType.Availability
@@ -142,17 +144,17 @@ describe('converting an entry to availability', () => {
 	})
 
 	it('keeps location and reminders when an event becomes a task', () => {
-		const entry = new Entry({ sourceId: 's', type: EntryType.Event, location: 'Room 1', reminders: [10] })
+		const entry = new Entry({ sourceId: 's', type: EntryType.Event, location: 'Room 1', reminders: EntryReminders.normalize([10]) })
 		entry.type = EntryType.Task
 		assert.equal(entry.location, 'Room 1')
-		assert.deepEqual(entry.reminders, [10])
+		assert.deepEqual(entry.reminders, EntryReminders.normalize([10]))
 	})
 })
 
 describe('moving availability to a calendar', () => {
 	const availability = new Entry({ id: 'a', heading: 'Working hours', type: EntryType.Availability, recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })
-	const assess = (capabilities: Integration['capabilities']) =>
-		MigrationVerdict.assess(availability, { target: new Source(), capabilities, ownership: new CalDAV().ownership, occurrence: false, occurrences: () => 52 })
+	const assess = (capabilities: IntegrationCapabilities) =>
+		MigrationVerdict.of(availability, Object.assign(new Source(), { integration: { ownership: new CalDAV().ownership, capabilitiesFor: (source: Source) => capabilities.in(source), canHold: (source: Source, type: EntryType) => source.supportsEntryType(type) && capabilities.availability } as never }), { occurrences: () => 52 })
 
 	it('is clean where the provider takes part', () => {
 		assert.equal(assess(new CalDAV().capabilities).clean, true)

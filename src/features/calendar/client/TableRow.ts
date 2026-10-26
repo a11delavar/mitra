@@ -4,7 +4,6 @@ import { EntrySegments } from '#features/entries/client/EntrySegments.js'
 import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { type EntryOccurrence, EntryOccurrenceChangeScope } from '#features/recurrence'
-import { Relations } from '#features/relations/client/Relations.js'
 import { termsMatch } from '#features/commands/termsMatch.js'
 import { type TableWindow } from './TableWindow.js'
 
@@ -106,10 +105,10 @@ export class TableRow {
 		return !start || !end ? undefined : Math.round((end.valueOf() - start.valueOf()) / 60_000)
 	}
 
-	get participants() { return this.entry.participantList?.length || undefined }
+	get participants() { return this.entry.participants?.length || undefined }
 	get reminders() { return this.entry.reminders?.length || undefined }
-	get subtaskOf() { return TableRow.headingsOf(Relations.parentsOf(this.entry)) }
-	get blockedBy() { return !this.entry.uid ? '' : TableRow.headingsOf(Relations.graph.predecessorsOf(this.entry.uid)) }
+	get subtaskOf() { return TableRow.headingsOf(this.entry.hierarchy.parents) }
+	get blockedBy() { return TableRow.headingsOf(this.entry.hierarchy.predecessors) }
 
 	private static headingsOf(entries: ReadonlyArray<Entry>) {
 		return entries.map(entry => entry.heading).join(', ')
@@ -127,7 +126,7 @@ export class TableRow {
 			case 'statusRank': return !entry.type.isTask ? TableRow.noStatus : (entry.status ?? TaskStatus.ToDo).code
 			case 'typeKey': return entry.type.value
 			case 'sourceName': return entry.sourceId
-			case 'repeats': return this.occurrence.recurring || entry.partOfSeries ? 'repeating' : 'once'
+			case 'repeats': return this.occurrence.repeats ? 'repeating' : 'once'
 		}
 	}
 

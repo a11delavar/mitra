@@ -1,5 +1,5 @@
 import { ListIntegrations, ReorderIntegrations, ReorderSources, SetSourceVisibility, ShowOnlySource, RestoreSourceVisibility } from '#operations'
-import type { EntryType, Entry } from '#features/entries'
+import type { EntryType } from '#features/entries'
 import { Integration } from '#integrations'
 import { getUser, keepUser } from '#infrastructure/http/Api.js'
 import { applyOrder, byOrder, include } from '#infrastructure/model'
@@ -54,20 +54,14 @@ export class Calendars {
 		return getUser()?.defaultSourceId ?? undefined
 	}
 
-	/** Where a new entry goes: the default calendar while visible and able to hold `type`, else the first that is. */
+	/** Where a new entry goes: the default calendar while visible, writable and able to hold `type`, else the first that is. */
 	static primary(type?: EntryType): Source | undefined {
-		const candidates = Calendars.visible.filter(source => !type || source.canHold(type))
+		const candidates = Calendars.visible.filter(source => source.writable && (!type || source.canHold(type)))
 		return candidates.find(source => source.id === Calendars.defaultId) ?? candidates[0]
 	}
 
-	/** Where an entry can be opened outside Mitra, if anywhere. */
-	static externalLinkOf(entry: Entry): { url: string, label?: string } | undefined {
-		const url = Integration.externalUrlOf(entry)
-		return entry.source.integration.externalLink(entry) ?? (url ? { url } : undefined)
-	}
-
 	static canCopyEntriesOut(source: Source) {
-		return Calendars.enabled().some(other => other.id !== source.id && other.capabilities.entries.create)
+		return Calendars.sources.some(other => other.id !== source.id && other.writable)
 	}
 
 	static canMoveEntriesOut(source: Source) {

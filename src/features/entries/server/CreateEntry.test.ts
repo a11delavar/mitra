@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { SettleHomeTimeZone } from '#features/time/server/SettleHomeTimeZone.js'
+import { SaveSettings } from '#features/identity/server/SaveSettings.js'
 import { OperationServer, type SentEntry as Row } from '#infrastructure/operations/OperationServer.testing.js'
 import { CreateEntry } from './CreateEntry.js'
 import { EntryPatch } from '../EntryPatch.js'
@@ -70,6 +71,16 @@ describe('CreateEntry', () => {
 
 		it('refuses a day without allDay, which would be a UTC midnight', async () => {
 			assert.match((await server.callTool('create_entry', { heading: 'Send the postcards', type: 'task', due: '2027-03-05' })).content[0]!.text, /^due: "2027-03-05" is a day: send allDay: true/)
+		})
+
+		it('starts an entry naming no reminders with the account\'s, and one naming none with none', async () => {
+			type Reminded = Row & { reminders?: Array<number> }
+			const at = { start: '2027-03-09T09:00[Europe/Berlin]', end: '2027-03-09T10:00[Europe/Berlin]' }
+			assert.deepEqual((await server.tool<Reminded>('create_entry', { heading: 'Standup', ...at })).reminders, [30])
+			assert.equal((await server.tool<Reminded>('create_entry', { heading: 'Standup', ...at, reminders: [] })).reminders, undefined)
+			await SaveSettings.call({ settings: { defaultReminderMinutes: 10 } })
+			assert.deepEqual((await server.tool<Reminded>('create_entry', { heading: 'Standup', ...at })).reminders, [10])
+			await SaveSettings.call({ settings: {} })
 		})
 
 		it('writes the people taking part, the user leading as organizer', async () => {

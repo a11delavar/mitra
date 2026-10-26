@@ -2,13 +2,13 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Recurrence, RecurrenceFrequency, RecurrenceEnd } from '#features/recurrence'
-import { ParticipantRole } from '#features/participants/Participant.js'
+import { ParticipantRole, Participants } from '#features/participants/Participant.js'
 import { Source, Color } from '#features/sources'
 import { EntryRelations, RelationType } from '#features/relations'
-import { ReminderDefaults } from '#features/reminders/ReminderDefaults.js'
+import { EntryReminders } from '#features/reminders/EntryReminders.js'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
-import { IntegrationOwnership } from '#integrations'
+import { IntegrationOwnership, IntegrationCapabilities } from '#integrations'
 import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
 import { holdLocalIn } from '#features/time/TimeZone.testing.js'
 import { Entry } from './Entry.js'
@@ -22,6 +22,10 @@ describe('Entry', () => {
 	const day = new DateTime('2026-10-14T00:00:00')
 	// What is overdue is read against now.
 	const today = new DateTime().dayStart
+	/** A calendar whose integration holds what `ownership` says and allows what `capabilities` say, for an entry with `sourceId: 'c'`. */
+	const holding = (ownership: IntegrationOwnership, capabilities = new IntegrationCapabilities()) => Object.assign(new Source({ id: 'c', integrationId: 'i' }), {
+		integration: { id: 'i', ownership, capabilitiesFor: (source: Source) => capabilities.in(source), canHold: (source: Source, type: EntryType) => source.supportsEntryType(type) } as never,
+	})
 
 	describe('multiDay', () => {
 		it('is false within a single day', () => {
@@ -61,21 +65,21 @@ describe('Entry', () => {
 
 	describe('participants', () => {
 		const invited = () => new Entry({
-			participants: [
+			participants: Participants.normalize([
 				{ email: 'organizer@example.com', organizer: true },
 				{ email: 'me@example.com', self: true },
-			],
+			]),
 		})
 
 		it('surfaces the organizer from the list', () => {
-			assert.equal(invited().organizer?.email, 'organizer@example.com')
-			assert.equal(new Entry({}).organizer, undefined)
+			assert.equal(invited().participants?.organizer?.email, 'organizer@example.com')
+			assert.equal(new Entry({}).participants?.organizer, undefined)
 		})
 
 		it('is manageable without an organizer (one\'s own entry) or as the organizer, per iTIP (RFC 5546)', () => {
 			assert.equal(new Entry({}).canManageParticipants, true)
-			assert.equal(new Entry({ participants: [{ email: 'a@example.com' }] }).canManageParticipants, true)
-			assert.equal(new Entry({ participants: [{ email: 'me@example.com', organizer: true, self: true }] }).canManageParticipants, true)
+			assert.equal(new Entry({ participants: Participants.normalize([{ email: 'a@example.com' }]) }).canManageParticipants, true)
+			assert.equal(new Entry({ participants: Participants.normalize([{ email: 'me@example.com', organizer: true, self: true }]) }).canManageParticipants, true)
 			assert.equal(invited().canManageParticipants, false)
 		})
 
@@ -83,7 +87,7 @@ describe('Entry', () => {
 			const a = invited()
 			const b = invited()
 			assert.equal(a.equals(b), true)
-			b.participants = [...b.participants!, { email: 'late@example.com' }]
+			b.participants = Participants.normalize([...b.participants!, { email: 'late@example.com' }])
 			assert.equal(a.equals(b), false)
 		})
 
@@ -100,7 +104,7 @@ describe('Entry', () => {
 			const entry = invited()
 			assert.equal(entry.invite(['ME@example.com'], 'me@example.com'), false)
 			assert.equal(entry.invite(['second@example.com']), true)
-			assert.equal(entry.organizer?.email, 'organizer@example.com')
+			assert.equal(entry.participants?.organizer?.email, 'organizer@example.com')
 		})
 
 		it('invite replaces the list, and the previous array (a clone may share it) is untouched', () => {
@@ -127,11 +131,11 @@ describe('Entry', () => {
 
 		it('removeParticipant uninvites one, refuses the organizer, and clears the list with the last invitee', () => {
 			const entry = new Entry({
-				participants: [
+				participants: Participants.normalize([
 					{ email: 'organizer@example.com', organizer: true },
 					{ email: 'a@example.com' },
 					{ email: 'b@example.com' },
-				],
+				]),
 			})
 			assert.equal(entry.removeParticipant('organizer@example.com'), false)
 			assert.equal(entry.removeParticipant('A@example.com'), true)
@@ -141,11 +145,11 @@ describe('Entry', () => {
 			assert.equal(entry.removeParticipant('b@example.com'), false)
 		})
 
-		it('clearParticipants returns the entry to a plain private one', () => {
-			const entry = invited()
-			entry.clearParticipants()
-			assert.equal(entry.participants, undefined)
-			assert.equal(entry.hasParticipants, false)
+		it('stays a list of participants through a copy and a clone, and is a plain private one again without', () => {
+			const entry = new Entry({ type: EntryType.Event, participants: invited().participants })
+			assert.ok(entry.copy().participants instanceof Participants && entry.clone().participants instanceof Participants)
+			assert.equal(entry.copy().participants?.organizer?.email, 'organizer@example.com')
+			entry.participants = undefined
 			assert.equal(entry.canManageParticipants, true)
 		})
 	})
@@ -241,7 +245,7 @@ describe('Entry', () => {
 				(e: Entry) => e.heading = 'Renamed',
 				(e: Entry) => e.description = 'Notes',
 				(e: Entry) => e.location = 'Berlin, Germany',
-				(e: Entry) => e.reminders = [30],
+				(e: Entry) => e.reminders = EntryReminders.normalize([30]),
 				(e: Entry) => e.timeZone = EntryTimeZone.parse('Asia/Tehran'),
 				(e: Entry) => e.color = Color.parse('#ff0000'),
 				(e: Entry) => e.moveStart(at(1, 9)),
@@ -285,8 +289,8 @@ describe('Entry', () => {
 		})
 
 		it('compares reminders by value', () => {
-			assert.equal(new Entry({ ...base(), reminders: [10, 30] }).equals(new Entry({ ...base(), reminders: [10, 30] })), true)
-			assert.equal(new Entry({ ...base(), reminders: [10, 30] }).equals(new Entry({ ...base(), reminders: [10] })), false)
+			assert.equal(new Entry({ ...base(), reminders: EntryReminders.normalize([10, 30]) }).equals(new Entry({ ...base(), reminders: EntryReminders.normalize([10, 30]) })), true)
+			assert.equal(new Entry({ ...base(), reminders: EntryReminders.normalize([10, 30]) }).equals(new Entry({ ...base(), reminders: EntryReminders.normalize([10]) })), false)
 		})
 	})
 
@@ -359,12 +363,12 @@ describe('Entry', () => {
 		})
 
 		it('keeps everything else: the span and content survive the flip both ways', () => {
-			const draft = new Entry({ sourceId: 's', type: EntryType.Event, heading: 'Draft', start: at(0, 9), end: at(0, 10), reminders: [30] })
+			const draft = new Entry({ sourceId: 's', type: EntryType.Event, heading: 'Draft', start: at(0, 9), end: at(0, 10), reminders: EntryReminders.normalize([30]) })
 			draft.type = EntryType.Task
 			draft.type = EntryType.Event
 			assert.equal(draft.start!.valueOf(), at(0, 9).valueOf())
 			assert.equal(draft.end!.valueOf(), at(0, 10).valueOf())
-			assert.deepEqual(draft.reminders, [30])
+			assert.deepEqual(draft.reminders, EntryReminders.normalize([30]))
 		})
 	})
 
@@ -406,10 +410,10 @@ describe('Entry', () => {
 			assert.equal(e.equals(incoming), true)
 		})
 
-		it('adoptSpan takes over start, end, and all-day, nothing else', () => {
+		it('adopt takes over start, end, and all-day, nothing else', () => {
 			const e = new Entry({ id: 'a', heading: 'Mine', start: at(0, 9), end: at(0, 10), allDay: false })
 			const other = new Entry({ id: 'b', heading: 'Other', start: day, end: day.add({ hours: 24 }), allDay: true })
-			e.adoptSpan(other)
+			e.adopt(other.span)
 			assert.equal(e.start!.valueOf(), day.valueOf())
 			assert.equal(e.end!.valueOf(), day.add({ hours: 24 }).valueOf())
 			assert.equal(e.allDay, true)
@@ -538,16 +542,16 @@ describe('Entry', () => {
 
 	describe('fit', () => {
 		const at = (iso: string) => new Date(iso) as never
-		const span = () => new Entry({ type: EntryType.Task, heading: 'Paint', start: at('2026-11-02T09:00:00Z'), end: at('2026-11-02T10:00:00Z'), estimate: 30 })
+		const span = (ownership: IntegrationOwnership) => new Entry({ type: EntryType.Task, heading: 'Paint', start: at('2026-11-02T09:00:00Z'), end: at('2026-11-02T10:00:00Z'), estimate: 30, sourceId: 'c', source: holding(ownership) })
 
 		it('drops a length where the calendar holds none: a timed entry becomes a moment, an all-day one keeps its first day', () => {
-			assert.equal(span().fit(new IntegrationOwnership({ estimate: 'upstream' })).end, undefined)
-			const days = new Entry({ type: EntryType.Task, heading: 'Trip', allDay: true, start: at('2026-11-02T00:00:00Z'), end: at('2026-11-05T00:00:00Z') })
-			assert.equal(days.fit(new IntegrationOwnership()).end?.toISOString(), '2026-11-03T00:00:00.000Z')
+			assert.equal(span(new IntegrationOwnership({ estimate: 'upstream' })).fit().end, undefined)
+			const days = new Entry({ type: EntryType.Task, heading: 'Trip', allDay: true, start: at('2026-11-02T00:00:00Z'), end: at('2026-11-05T00:00:00Z'), sourceId: 'c', source: holding(new IntegrationOwnership()) })
+			assert.equal(days.fit().end?.toISOString(), '2026-11-03T00:00:00.000Z')
 		})
 
 		it('keeps what the calendar holds, and drops an estimate it does not', () => {
-			const kept = span().fit(new IntegrationOwnership({ end: 'upstream' }))
+			const kept = span(new IntegrationOwnership({ end: 'upstream' })).fit()
 			assert.deepEqual([kept.end?.toISOString(), kept.estimate], ['2026-11-02T10:00:00.000Z', undefined])
 		})
 	})
@@ -604,25 +608,25 @@ describe('Entry', () => {
 		})
 
 		it('adopting an unscheduled span drops reminders with it, mirroring unschedule', () => {
-			const e = task({ start: at(0, 9), end: at(0, 10), reminders: [10] })
-			e.adoptSpan(task())
+			const e = task({ start: at(0, 9), end: at(0, 10), reminders: EntryReminders.normalize([10]) })
+			e.adopt(task().span)
 			assert.equal(e.scheduled, false)
 			assert.equal(e.reminders, undefined)
 		})
 
 		it('adopting a span between unscheduled entries leaves reminders untouched', () => {
 			const e = task()
-			e.adoptSpan(task())
+			e.adopt(task().span)
 			assert.equal(e.reminders, undefined)
 			assert.equal(e.equals(task()), true)
 		})
 
 		it('adopting an unscheduled span keeps the reminders while a due anchors them', () => {
-			const e = task({ start: at(0, 9), end: at(0, 10), due: at(2, 17), reminders: [30] })
+			const e = task({ start: at(0, 9), end: at(0, 10), due: at(2, 17), reminders: EntryReminders.normalize([30]) })
 			const cleared = e.clone()
 			cleared.unschedule()
-			e.adoptSpan(cleared)
-			assert.deepEqual(e.reminders, [30])
+			e.adopt(cleared.span)
+			assert.deepEqual(e.reminders, EntryReminders.normalize([30]))
 		})
 
 		describe('the estimate and the end are one fact', () => {
@@ -665,7 +669,7 @@ describe('Entry', () => {
 				const e = task({ allDay: true, due: day.add({ days: 3 }) })
 				const placed = e.clone()
 				placed.scheduleAt(at(1, 14), false, 60)
-				e.adoptSpan(placed)
+				e.adopt(placed.span)
 				assert.equal(e.allDay, false)
 				assert.equal(e.due!.valueOf(), at(3, 17).valueOf())
 			})
@@ -674,18 +678,18 @@ describe('Entry', () => {
 				const e = task({ start: at(0, 9), end: at(0, 10) })
 				const cleared = e.clone()
 				cleared.unschedule()
-				e.adoptSpan(cleared)
+				e.adopt(cleared.span)
 				assert.equal(e.start, undefined)
 				assert.equal(e.estimate, 60)
 			})
 		})
 
 		it('unscheduling keeps the reminders while a due anchors them', () => {
-			const withDue = task({ start: at(0, 9), end: at(0, 10), due: at(2, 17), reminders: [30] })
+			const withDue = task({ start: at(0, 9), end: at(0, 10), due: at(2, 17), reminders: EntryReminders.normalize([30]) })
 			withDue.unschedule()
-			assert.deepEqual(withDue.reminders, [30])
+			assert.deepEqual(withDue.reminders, EntryReminders.normalize([30]))
 			assert.equal(withDue.reminderAnchor?.valueOf(), at(2, 17).valueOf())
-			const without = task({ start: at(0, 9), end: at(0, 10), reminders: [30] })
+			const without = task({ start: at(0, 9), end: at(0, 10), reminders: EntryReminders.normalize([30]) })
 			without.unschedule()
 			assert.equal(without.reminders, undefined)
 		})
@@ -932,20 +936,6 @@ describe('Entry', () => {
 		})
 	})
 
-	describe('spanEquals', () => {
-		it('is true only when both ends and the all-day flag match', () => {
-			const span = { start: day.add({ hours: 9 }), end: day.add({ hours: 10 }) }
-			assert.equal(new Entry(span).spanEquals(new Entry(span)), true)
-			assert.equal(new Entry(span).spanEquals(new Entry({ ...span, end: day.add({ hours: 11 }) })), false)
-			assert.equal(new Entry(span).spanEquals(new Entry({ ...span, allDay: true })), false)
-		})
-
-		it('treats two undated entries as the same span', () => {
-			assert.equal(new Entry({ heading: 'a' }).spanEquals(new Entry({ heading: 'b' })), true)
-			assert.equal(new Entry({ heading: 'a' }).spanEquals(new Entry({ start: day })), false)
-		})
-	})
-
 	describe('overdue', () => {
 		const task = (init: Partial<Entry>) => new Entry({ type: EntryType.Task, ...init })
 
@@ -1002,78 +992,102 @@ describe('Entry', () => {
 		})
 	})
 
-	describe('setStatus', () => {
-		const task = (init?: Partial<Entry>) => new Entry({ type: EntryType.Task, status: TaskStatus.ToDo, ...init })
+	describe('what its calendar allows', () => {
+		const everything = new IntegrationOwnership({ due: 'upstream', estimate: 'upstream', transparency: 'upstream', participants: 'upstream', attachments: 'upstream', description: 'upstream', end: 'upstream' })
+		const task = (ownership = everything, capabilities?: IntegrationCapabilities, init?: Partial<Entry>) => new Entry({ id: 't', type: EntryType.Task, heading: 'Paint', sourceId: 'c', source: holding(ownership, capabilities), ...init })
+
+		it('holds a field its type has and its calendar keeps', () => {
+			assert.equal(task().holds('due'), true)
+			assert.equal(task().holds('transparency'), false)
+			assert.equal(task(new IntegrationOwnership()).holds('due'), false)
+			assert.equal(task(everything, undefined, { type: EntryType.Event }).holds('transparency'), true)
+			assert.equal(task(everything, undefined, { type: EntryType.Availability }).holds('participants'), false)
+		})
+
+		it('can edit what it holds where the calendar is written, the heading only where it is renamed, files only where they are taken', () => {
+			assert.equal(task().canEdit('due'), true)
+			assert.equal(task().canEdit('heading'), true)
+			assert.equal(task(everything, new IntegrationCapabilities({ entries: { rename: false } })).canEdit('heading'), false)
+			assert.equal(task(everything, new IntegrationCapabilities({ entries: { rename: false } }), { id: undefined }).canEdit('heading'), true)
+			assert.equal(task(everything, new IntegrationCapabilities({ entries: { attach: false } })).canEdit('attachments'), false)
+			assert.equal(task(everything, new IntegrationCapabilities({ entries: { edit: false } })).canEdit('due'), false)
+		})
+
+		it('is editable, deletable and copyable as its calendar says, a draft never copyable', () => {
+			const readOnly = new IntegrationCapabilities({ entries: { edit: false, delete: false, create: false } })
+			assert.deepEqual([task().editable, task().deletable, task().copyable], [true, true, true])
+			assert.deepEqual([task(everything, readOnly).editable, task(everything, readOnly).deletable, task(everything, readOnly).copyable], [false, false, false])
+			assert.equal(task(everything, undefined, { id: undefined }).copyable, false)
+		})
+
+		it('offers the statuses of its calendar to a task alone, and the types the calendar holds beside its own', () => {
+			assert.deepEqual(task().statuses, TaskStatus.all)
+			assert.deepEqual(task(everything, undefined, { type: EntryType.Event }).statuses, [])
+			assert.deepEqual(task().types, EntryType.all)
+			assert.equal(task().convertible, true)
+			assert.equal(task(everything, undefined, { recurringEntryId: 'r' }).convertible, false)
+		})
+	})
+
+	describe('open', () => {
+		it('is a task not yet closed, never an event', () => {
+			assert.equal(new Entry({ type: EntryType.Task, status: TaskStatus.Doing }).open, true)
+			assert.equal(new Entry({ type: EntryType.Task, status: TaskStatus.Done }).open, false)
+			assert.equal(new Entry({ type: EntryType.Task, status: TaskStatus.Cancelled }).open, false)
+			assert.equal(new Entry({ type: EntryType.Event }).open, false)
+		})
+	})
+
+	describe('progress', () => {
+		const held = new IntegrationOwnership({ percentComplete: 'upstream' })
+		const task = (init?: Partial<Entry>, capabilities?: IntegrationCapabilities) => new Entry({ type: EntryType.Task, status: TaskStatus.ToDo, sourceId: 'c', source: holding(held, capabilities), ...init })
+
+		it('closes a task at full progress', () => {
+			const entry = task({ percentComplete: 40, status: TaskStatus.Doing })
+			entry.progress = 1
+			assert.deepEqual([entry.status, entry.percentComplete], [TaskStatus.Done, 100])
+		})
+
+		it('reopens a done task below full progress, as Doing where the calendar has it, else To Do', () => {
+			const entry = task({ status: TaskStatus.Done, percentComplete: 100 })
+			entry.progress = 0.6
+			assert.deepEqual([entry.status, entry.percentComplete], [TaskStatus.Doing, 60])
+			const twoStates = task({ status: TaskStatus.Done, percentComplete: 100 }, new IntegrationCapabilities({ entries: { statuses: [TaskStatus.ToDo, TaskStatus.Done] } }))
+			twoStates.progress = 0.6
+			assert.deepEqual([twoStates.status, twoStates.percentComplete], [TaskStatus.ToDo, 60])
+		})
+
+		it('clears the progress and reopens a done task as To Do', () => {
+			const entry = task({ status: TaskStatus.Done, percentComplete: 100 })
+			entry.progress = undefined
+			assert.deepEqual([entry.status, entry.percentComplete], [TaskStatus.ToDo, undefined])
+			const doing = task({ status: TaskStatus.Doing, percentComplete: 30 })
+			doing.progress = undefined
+			assert.deepEqual([doing.status, doing.percentComplete], [TaskStatus.Doing, undefined])
+		})
+	})
+
+	describe('status', () => {
+		const task = (ownership: IntegrationOwnership, init?: Partial<Entry>) => new Entry({ type: EntryType.Task, status: TaskStatus.ToDo, sourceId: 'c', source: holding(ownership), ...init })
 
 		it('records full progress on done where the provider can hold it', () => {
-			const entry = task()
-			entry.setStatus(TaskStatus.Done, new IntegrationOwnership({ percentComplete: 'upstream' }))
+			const entry = task(new IntegrationOwnership({ percentComplete: 'upstream' }))
+			entry.status = TaskStatus.Done
 			assert.equal(entry.status, TaskStatus.Done)
 			assert.equal(entry.percentComplete, 100)
 		})
 
 		it('leaves progress unstated where the provider cannot', () => {
-			const entry = task()
-			entry.setStatus(TaskStatus.Done, new IntegrationOwnership())
+			const entry = task(new IntegrationOwnership())
+			entry.status = TaskStatus.Done
 			assert.equal(entry.percentComplete, undefined)
 		})
 
 		it('keeps the progress a cancelled task already had', () => {
-			const entry = task({ status: TaskStatus.Doing, percentComplete: 40 })
-			entry.setStatus(TaskStatus.Cancelled, new IntegrationOwnership({ percentComplete: 'upstream' }))
+			const entry = task(new IntegrationOwnership({ percentComplete: 'upstream' }), { status: TaskStatus.Doing, percentComplete: 40 })
+			entry.status = TaskStatus.Cancelled
 			assert.equal(entry.status, TaskStatus.Cancelled)
 			assert.equal(entry.percentComplete, 40)
-		})
-	})
-
-	describe('default reminders', () => {
-		const defaults = new ReminderDefaults(30, 0)
-		const timed = (type: EntryType) => new Entry({ type, start: day.add({ hours: 10 }), end: day.add({ hours: 11 }) })
-
-		it('starts each kind with its own default', () => {
-			const event = timed(EntryType.Event)
-			event.adoptDefaultReminders(defaults)
-			const task = timed(EntryType.Task)
-			task.adoptDefaultReminders(defaults)
-			assert.deepEqual(event.reminders, [30])
-			assert.deepEqual(task.reminders, [0])
-		})
-
-		it('gives an all-day entry none', () => {
-			const entry = new Entry({ type: EntryType.Event, start: day, end: day.add({ days: 1 }), allDay: true })
-			entry.adoptDefaultReminders(defaults)
-			assert.equal(entry.reminders, undefined)
-		})
-
-		it('re-picks the default when the kind changes', () => {
-			const entry = timed(EntryType.Event)
-			entry.adoptDefaultReminders(defaults)
-			entry.type = EntryType.Task
-			assert.deepEqual(entry.reminders, [0])
-		})
-
-		it('keeps reminders the user set across a kind change', () => {
-			const entry = timed(EntryType.Event)
-			entry.adoptDefaultReminders(defaults)
-			entry.setReminders([30])
-			entry.type = EntryType.Task
-			assert.deepEqual(entry.reminders, [30])
-		})
-
-		it('leaves a copy with the reminders it was given', () => {
-			const entry = timed(EntryType.Event)
-			entry.adoptDefaultReminders(defaults)
-			const copy = entry.clone()
-			copy.type = EntryType.Task
-			assert.deepEqual(copy.reminders, [30])
-		})
-
-		it('stores reminders the user sets once each, in order', () => {
-			const entry = timed(EntryType.Event)
-			entry.setReminders([30, 5, 30])
-			assert.deepEqual(entry.reminders, [5, 30])
-			entry.setReminders([])
-			assert.equal(entry.reminders, undefined)
 		})
 	})
 })

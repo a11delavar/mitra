@@ -31,12 +31,12 @@ export class RelateEntries extends Operation<Parameters> {
 		const { id, type, target } = this.parameters
 		const existing = await user.entry(em, id)
 		const other = await user.entry(em, target)
-		const source = await user.source(em, existing.sourceId)
+		const { source } = existing
 
 		const change = existing.edit(new EntryPatch())
 		change.edited.relateTo(type, other.uid!)
 		const relations = change.edited.relations ?? EntryRelations.none
-		const errors = [...Object.assign(new EntryPatch(), { relations }).validate({ entry: existing, to: source }), ...change.edited.validate(source), ...relations.validate({ entry: existing, graph: await user.relationGraph(em, relations) })]
+		const errors = [...Object.assign(new EntryPatch(), { relations }).validate({ entry: existing, to: source }), ...change.edited.validate(), ...relations.validate({ entry: existing, graph: await user.relationGraph(em, relations) })]
 		if (errors.length) {
 			throw new AggregateError(errors)
 		}

@@ -20,7 +20,7 @@ export class HideDoneTasksSetting extends ToggleSetting {
 	/** Whether a surface draws this occurrence. Closed tasks remain visible while their editor is active. */
 	static shows(occurrence: EntryOccurrence, hidden = HideDoneTasksSetting.current) {
 		const { entry } = occurrence
-		return !hidden || !entry.type.isTask || !entry.closed || EntryEditorIntent.holds(occurrence)
+		return !hidden || !entry.closed || EntryEditorIntent.holds(occurrence)
 	}
 
 	private static readonly filtered = new WeakMap<ReadonlyArray<EntryOccurrence>, { hidden: boolean, result: ReadonlyArray<EntryOccurrence> }>()

@@ -6,7 +6,6 @@ import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { RelationType, RelationSection } from '../RelationType.js'
 import { type Relation } from '../Relation.js'
 import { EntryRelations } from '../EntryRelations.js'
-import { Relations } from './Relations.js'
 import './EntryLink.js'
 
 /** The authorable families keyed by the section their lines land in. Each section always renders as its own row with
@@ -65,14 +64,14 @@ export class RelationsField extends Component {
 	/** The entries a line's endpoints name (this entry itself, a resolved target, or the owner of a
 	 * derived line), so a coupling can be judged from either side by the same expression. */
 	private entryOf(uid: string): Entry | undefined {
-		return uid === this.entry.uid ? this.entry : Relations.entryOf(uid) ?? this.resolvedByUid.get(uid)
+		return uid === this.entry.uid ? this.entry : EntryStore.graph.entryOf(uid) ?? this.resolvedByUid.get(uid)
 	}
 
 	/** Renders sections for display, including empty authorable sections supported by the source provider. */
 	private get sections(): Array<{ section: RelationSection, lines: Array<Line>, addType?: RelationType }> {
 		const bySection = new Map(this.relations.sections(this.entry.uid).map(({ section, relations }) => [section, relations.map(relation => this.lineOf(relation))]))
 		// Providers without native link storage omit authoring actions, but incoming links remain visible.
-		const authorable = this.entry.source.ownership.holds('relations') ? AUTHORABLE_BY_SECTION : new Map<RelationSection, RelationType>()
+		const authorable = this.entry.holds('relations') ? AUTHORABLE_BY_SECTION : new Map<RelationSection, RelationType>()
 		return [...new Set([...bySection.keys(), ...authorable.keys()])]
 			.sort((a, b) => a.rank - b.rank)
 			.map(section => ({ section, lines: bySection.get(section) ?? [], addType: authorable.get(section) }))
@@ -107,7 +106,7 @@ export class RelationsField extends Component {
 
 	/** An incoming relation is the other entry's row, so removing it edits that entry. */
 	private async removeIncoming(incoming: Relation) {
-		const owner = Relations.entryOf(incoming.targetUid)
+		const owner = EntryStore.graph.entryOf(incoming.targetUid)
 		if (!owner?.id || !this.entry.uid) {
 			return
 		}
@@ -348,10 +347,6 @@ export class RelationsField extends Component {
 		`
 	}
 
-	private get rollup() {
-		return Relations.rollupOf(this.entry)
-	}
-
 	/** Synchronizes data-empty attribute with rendered sections for popover separator styling. */
 	protected override updated() {
 		this.toggleAttribute('data-empty', !this.sections.length)
@@ -373,9 +368,9 @@ export class RelationsField extends Component {
 				<mitra-icon icon=${section.icon}></mitra-icon>
 				<div class="lines">
 					<span class="kind">${section.format()}</span>
-					${section !== RelationSection.Subtasks || !this.rollup?.subtasks.total ? html.nothing : html`
-						<span class="tally" title=${t('${done:number} of ${total:pluralityNumber} subtasks done', this.rollup.subtasks)}>
-							${this.rollup.subtasks.done.format()}/${this.rollup.subtasks.total.format()}
+					${section !== RelationSection.Subtasks || !this.entry.hierarchy.rollup?.subtasks.total ? html.nothing : html`
+						<span class="tally" title=${t('${done:number} of ${total:pluralityNumber} subtasks done', this.entry.hierarchy.rollup.subtasks)}>
+							${this.entry.hierarchy.rollup.subtasks.done.format()}/${this.entry.hierarchy.rollup.subtasks.total.format()}
 						</span>
 					`}
 					${lines.map(line => html`

@@ -77,11 +77,11 @@ export class EntryDetailsWhen extends Component {
 		if (this.entry.start) {
 			this.entry.moveStart(value)
 		} else if (timed) {
-			this.entry.scheduleAt(value, false, DefaultDurationSetting.current).fit(this.ownership)
+			this.entry.scheduleAt(value, false, DefaultDurationSetting.current).fit()
 		} else {
 			// An estimate shorter than a day asks for hours, so the task gets a time; anything else takes the whole day.
 			const hours = !!this.entry.estimate && TimeSpan.fromMinutes(this.entry.estimate).days < 1
-			this.entry.scheduleAt(hours ? value.with({ hour: 9 }) : value, !hours, DefaultDurationSetting.current).fit(this.ownership)
+			this.entry.scheduleAt(hours ? value.with({ hour: 9 }) : value, !hours, DefaultDurationSetting.current).fit()
 		}
 		this.commit()
 	}
@@ -163,12 +163,11 @@ export class EntryDetailsWhen extends Component {
 	@query('.estimate > mitra-duration-field') private readonly estimateField?: DurationField
 
 	private get foreignZone(): TimeZone | undefined {
-		const zone = this.entry.zone
-		return zone && !zone.equals(TimeZones.here) ? zone : undefined
+		return this.entry.zone && !this.entry.zone.equals(TimeZones.here) ? this.entry.zone : undefined
 	}
 
 	private get zoneReadonly(): boolean {
-		return !this.editable || (!!this.foreignZone && !this.showEventZone)
+		return !this.entry.editable || (!!this.foreignZone && !this.showEventZone)
 	}
 
 	private get zoneLabel(): string {
@@ -191,8 +190,7 @@ export class EntryDetailsWhen extends Component {
 		if (this.entry.floating) {
 			return t('Same time everywhere')
 		}
-		const zone = this.entry.zone
-		const name = zone?.name()
+		const name = this.entry.zone?.name()
 		return !name ? t('Time zone') : `${name.city}, ${name.long} (${name.offset})`
 	}
 
@@ -212,14 +210,6 @@ export class EntryDetailsWhen extends Component {
 		this.entry.setTimeZone(choice instanceof EntryTimeZone ? choice : EntryTimeZone.of(choice))
 		this.showEventZone = !(choice instanceof EntryTimeZone) && !choice.equals(TimeZones.here)
 		this.commit()
-	}
-
-	private get editable() {
-		return this.entry.source.capabilities.entries.edit
-	}
-
-	private get ownership() {
-		return this.entry.source.ownership
 	}
 
 	static override get styles() {
@@ -350,8 +340,8 @@ export class EntryDetailsWhen extends Component {
 			${this.startTemplate}
 			${this.entry.start ? this.endTemplate : this.estimateTemplate}
 			${this.dueTemplate}
-			${this.entry.allDay || !dated || !this.ownership.holds('timeZone') ? html.nothing : this.zoneTemplate}
-			${!dated || !this.ownership.holds('recurrence') ? html.nothing : html`
+			${this.entry.allDay || !dated || !this.entry.holds('timeZone') ? html.nothing : this.zoneTemplate}
+			${!dated || !this.entry.holds('recurrence') ? html.nothing : html`
 				<div class="row field">
 					<mitra-icon icon="repeat"></mitra-icon>
 					<mitra-repeat-field .entry=${this.entry} @change=${() => this.commit()}></mitra-repeat-field>
@@ -362,7 +352,7 @@ export class EntryDetailsWhen extends Component {
 
 	/** Switches every moment of the entry between days and times at once. */
 	private get allDayTemplate() {
-		return !this.editable || !this.ownership.holds('allDay') || this.entry.type.isAvailability ? html.nothing : html`
+		return !this.entry.canEdit('allDay') ? html.nothing : html`
 			<mitra-icon-button size="small" class="precision" icon="clock-fading" label=${t('All day')}
 				?pressed=${this.entry.allDay} @click=${this.toggleAllDay}
 			></mitra-icon-button>
@@ -372,7 +362,7 @@ export class EntryDetailsWhen extends Component {
 	/** An empty field is timed once the entry has any date to take the precision from; a day picked into it takes `defaultTime`. */
 	private momentTemplate({ kind, icon, label, value, handleChange, remove, defaultTime, impliedDate }: Moment) {
 		const actions = html`
-			${!remove || !this.editable ? html.nothing : html`
+			${!remove || !this.entry.editable ? html.nothing : html`
 				<mitra-icon-button size="small" class="remove" icon="x" label=${remove.label} title=${remove.title ?? remove.label} @click=${remove.handler}></mitra-icon-button>
 			`}
 			${!value ? html.nothing : this.allDayTemplate}
@@ -383,9 +373,9 @@ export class EntryDetailsWhen extends Component {
 			<div class="${kind} row field">
 				<mitra-icon icon=${icon}></mitra-icon>
 				${timed ? html`
-					<mitra-date-time-field label=${label} timeZone=${this.zone} defaultTime=${ifDefined(defaultTime)} .impliedDate=${impliedDate} ?readonly=${!this.editable} .value=${value} @change=${change}>${actions}</mitra-date-time-field>
+					<mitra-date-time-field label=${label} timeZone=${this.zone} defaultTime=${ifDefined(defaultTime)} .impliedDate=${impliedDate} ?readonly=${!this.entry.editable} .value=${value} @change=${change}>${actions}</mitra-date-time-field>
 				` : html`
-					<mitra-date-field label=${label} timeZone=${this.zone} .impliedDate=${impliedDate} ?readonly=${!this.editable} .value=${value} @change=${change}>${actions}</mitra-date-field>
+					<mitra-date-field label=${label} timeZone=${this.zone} .impliedDate=${impliedDate} ?readonly=${!this.entry.editable} .value=${value} @change=${change}>${actions}</mitra-date-field>
 				`}
 			</div>
 		`
@@ -407,7 +397,7 @@ export class EntryDetailsWhen extends Component {
 				kind: 'start', icon: 'clock-arrow-right', label: t('Start date'), value: start, handleChange: this.handleStartChange, defaultTime: '09:00',
 				remove: !start || !this.entry.unschedulable ? undefined : { label: t('Remove the date'), title: t('Remove the date. The task moves to Unscheduled'), handler: this.removeStart },
 			})
-			: this.editable ? this.placeholderTemplate('start', 'clock-arrow-right', t('Start date'), this.addStart)
+			: this.entry.editable ? this.placeholderTemplate('start', 'clock-arrow-right', t('Start date'), this.addStart)
 				: html`
 					<div class="start row field">
 						<mitra-icon icon="clock-arrow-right"></mitra-icon>
@@ -420,7 +410,7 @@ export class EntryDetailsWhen extends Component {
 	/** Where the calendar holds no length (a free Todoist account), a timed entry is a moment and an all-day one a single day. */
 	private get endTemplate() {
 		const { entry } = this
-		if (!this.ownership.holds('end')) {
+		if (!entry.holds('end')) {
 			return html.nothing
 		}
 		const end = entry.point ? undefined : entry.allDay ? entry.inclusiveEnd : entry.effectiveEnd
@@ -430,29 +420,29 @@ export class EntryDetailsWhen extends Component {
 				impliedDate: entry.start,
 				remove: !end || !entry.type.isTask ? undefined : { label: t('Remove the end date'), handler: this.removeEnd },
 			})
-			: !this.editable ? html.nothing
+			: !this.entry.editable ? html.nothing
 				: this.placeholderTemplate('end', 'clock-arrow-left', t('End date'), this.addEnd)
 	}
 
 	/** A task with no start: its estimate, where the end goes once it has one. */
 	private get estimateTemplate() {
-		if (!this.entry.type.isTask || !this.ownership.holds('estimate')) {
+		if (!this.entry.holds('estimate')) {
 			return html.nothing
 		}
 		return this.entry.estimate !== undefined || this.estimateShown ? html`
 			<div class="estimate row field">
 				<mitra-icon icon="hourglass"></mitra-icon>
-				<mitra-duration-field label=${t('Estimate')} ?readonly=${!this.editable}
+				<mitra-duration-field label=${t('Estimate')} ?readonly=${!this.entry.editable}
 					.presets=${EntryDetailsWhen.estimates} .value=${this.entry.estimate ?? undefined} @change=${this.handleEstimateChange}
 				></mitra-duration-field>
 			</div>
-		` : !this.editable ? html.nothing
+		` : !this.entry.editable ? html.nothing
 			: this.placeholderTemplate('estimate', 'hourglass', t('Estimate'), this.addEstimate)
 	}
 
 	private get dueTemplate() {
 		const { due } = this.entry
-		if (!this.entry.type.isTask || !this.ownership.holds('due') || (!due && !this.editable)) {
+		if (!this.entry.holds('due') || (!due && !this.entry.editable)) {
 			return html.nothing
 		}
 		return due || this.dueShown
@@ -485,7 +475,7 @@ export class EntryDetailsWhen extends Component {
 				</div>
 				<mitra-time-zone-picker
 					.selected=${this.entry.floating ? EntryTimeZone.floating : this.entry.zone ?? TimeZones.here}
-					?floatable=${this.entry.floating || this.entry.source.capabilities.entries.floating}
+					?floatable=${this.entry.floatable}
 					@pick=${this.handleZonePick}
 				></mitra-time-zone-picker>
 			</div>

@@ -22,10 +22,14 @@ export class CreateEntry extends Operation<EntryPatch, Entry> {
 			patch.timeZone = EntryTimeZone.parse(user.timeZones.home.zone.id)
 		}
 		const unclaimed = await fileStore.claim(user.id, patch.files ?? [])
-		const incoming = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: to.defaultEntryType }).patch(patch).fit(to.ownership)
+		const incoming = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), type: to.defaultEntryType, source: to }).patch(patch).fit()
+		// A create naming no reminders starts with the account's, as the browser's drafts do; `null` names none.
+		if (patch.reminders === undefined && incoming.holds('reminders')) {
+			incoming.reminders = user.reminderDefaults.for(incoming)
+		}
 
 		const { relations } = incoming
-		const errors = [...unclaimed, ...patch.validate({ to }), ...incoming.validate(to), ...(relations === undefined ? [] : relations.validate({ entry: incoming, graph: await user.relationGraph(em, relations) }))]
+		const errors = [...unclaimed, ...patch.validate({ to }), ...incoming.validate(), ...(relations === undefined ? [] : relations.validate({ entry: incoming, graph: await user.relationGraph(em, relations) }))]
 		if (errors.length) {
 			throw new AggregateError(errors)
 		}

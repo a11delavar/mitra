@@ -38,8 +38,8 @@ describe('Calendars', () => {
 		assert.equal(Calendars.source('gone'), undefined)
 	})
 
-	it('puts a new entry in the first visible calendar that can hold it, absent a default', () => {
-		assert.equal(Calendars.primary()?.id, 'holidays')
+	it('puts a new entry in the first visible calendar that can take and hold it, absent a default, never a read-only one', () => {
+		assert.equal(Calendars.primary()?.id, 'home')
 		assert.equal(Calendars.primary(EntryType.Task)?.id, 'home')
 	})
 

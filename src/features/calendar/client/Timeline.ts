@@ -488,10 +488,6 @@ export class Timeline extends Component {
 		`
 	}
 
-	private static isPlanned({ entry, scheduled }: EntryOccurrence) {
-		return entry.type === EntryType.Task && scheduled && !entry.closed
-	}
-
 	private static rowKey(occurrence: EntryOccurrence) {
 		const { entry } = occurrence
 		return entry.uid
@@ -522,9 +518,9 @@ export class Timeline extends Component {
 	}
 
 	private get rows(): Array<TimelineRow> {
-		const bars = new Map(this.bars(Timeline.isPlanned).map(bar => [bar.segment.occurrence, bar]))
+		const bars = new Map(this.bars(occurrence => occurrence.planned).map(bar => [bar.segment.occurrence, bar]))
 		const byKey = new Map<string, TimelineRow>()
-		for (const occurrence of Timeline.withinRoutineHorizon(this.occurrences.filter(Timeline.isPlanned))) {
+		for (const occurrence of Timeline.withinRoutineHorizon(this.occurrences.filter(occurrence => occurrence.planned))) {
 			const key = Timeline.rowKey(occurrence)
 			const bar = bars.get(occurrence)
 			const { entry } = occurrence

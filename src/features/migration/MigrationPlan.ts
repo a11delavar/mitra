@@ -1,24 +1,17 @@
 import type { Source } from '#features/sources'
-import { Entry, TaskStatus, Transparency } from '#features/entries'
+import { type Entry, TaskStatus, Transparency } from '#features/entries'
 import { TimeZone } from '#features/time/TimeZone.js'
-import type { Integration } from '#integrations'
 import { model } from '#infrastructure/model'
 
-/** Target capability that prevents moving an entry (evaluated up front). */
+/** What keeps an entry out of a calendar altogether. */
 export type MigrationBlocker = 'availability' | 'recurrence' | 'occurrence' | 'participants' | 'transparency' | 'visibility' | 'percentComplete'
 
-/** Target capability that strips an entry field on arrival. */
+/** What an entry loses on arriving in a calendar that does not keep it. */
 export type MigrationLoss = 'reminders' | 'location' | 'description' | 'attachments' | 'end' | 'due' | 'estimate' | 'timeZone' | 'floating' | 'allDay' | 'doingStatus' | 'cancelledStatus' | 'type'
 
-/** Single entry assessment (blockers and field losses). */
+/** What moving one entry into a calendar would do to it: what blocks it, what it loses there. */
 @model('MigrationVerdict')
 export class MigrationVerdict {
-	/** The days an all-day span covers, counted where its days are kept. */
-	private static daysOf(start: Date, end: Date) {
-		const zone = TimeZone.localOrDefault
-		return zone.dayOf(start).until(zone.dayOf(end)).days
-	}
-
 	entryId = ''
 	heading = ''
 	blockers = new Array<MigrationBlocker>()
@@ -30,15 +23,19 @@ export class MigrationVerdict {
 		Object.assign(this, init)
 	}
 
-	/** Assesses one entry against a target's capabilities. `occurrence` marks entries entangled with
-	 * edited occurrences; `occurrences` is read lazily, only when recurrence actually blocks. */
-	static assess(entry: Entry, { target, capabilities, ownership, occurrence, occurrences }: {
-		target: Source
-		capabilities: Integration['capabilities']
-		ownership: Integration['ownership']
-		occurrence: boolean
-		occurrences?: () => number | null
-	}): MigrationVerdict {
+	/** The days an all-day span covers, counted where its days are kept. */
+	private static daysOf(start: Date, end: Date) {
+		const zone = TimeZone.localOrDefault
+		return zone.dayOf(start).until(zone.dayOf(end)).days
+	}
+
+	/**
+	 * What moving `entry` into `target` would do: what keeps it out, and what it loses there. `occurrence` marks an entry entangled
+	 * with edited occurrences, which only a migration knows; `occurrences` counts the dates a flattened series would become, read
+	 * only where its recurrence blocks.
+	 */
+	static of(entry: Entry, target: Source, { occurrence = false, occurrences }: { occurrence?: boolean, occurrences?: () => number | null } = {}) {
+		const { capabilities, ownership } = target
 		const blockers = new Array<MigrationBlocker>()
 		const losses = new Array<MigrationLoss>()
 
@@ -108,7 +105,7 @@ export class MigrationVerdict {
 		}
 
 		return new MigrationVerdict({
-			entryId: entry.id!,
+			entryId: entry.id ?? '',
 			heading: entry.heading,
 			blockers,
 			losses,

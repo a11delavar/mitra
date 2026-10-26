@@ -3,15 +3,14 @@ import { DateTime } from '@3mo/date-time'
 import { haptic } from '#design'
 import type { Source } from '#features/sources'
 import { EntryPlan, RelationType } from '#features/relations'
-import { ReminderSetting } from '#features/reminders/client/DefaultReminderSetting.js'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import * as Hierarchy from '#features/relations/client/Hierarchy.js'
-import { Relations } from '#features/relations/client/Relations.js'
 import { type ConnectionAim, type EntryConnections } from '#features/relations/client/EntryConnections.js'
 import { DialogRelationFailed } from '#features/relations/client/DialogRelationFailed.js'
 import type { AvailabilitySegment } from '#features/availability/client/AvailabilitySegment.js'
 import { EntryShift } from '../EntryShift.js'
 import { Entry } from '../Entry.js'
+import { EntrySpan } from '../EntrySpan.js'
 import { DefaultDurationSetting } from './DefaultDurationSetting.js'
 import { SnapSetting } from './SnapSetting.js'
 import { EntryType } from '../EntryType.js'
@@ -19,7 +18,6 @@ import { EntryStore } from './EntryStore.js'
 import { type EntrySegment } from './EntrySegment.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 import type { EntrySegmentComponent } from './EventSegment.js'
-import { Schedule } from './Schedule.js'
 import { DayCells, type DayCell } from './DayCells.js'
 
 type Mode = 'timed' | 'allday'
@@ -94,8 +92,7 @@ export class EntryDragController extends Controller {
 
 	/** Where a chip listed outside the grid is held: by its own start, so the drop lands it on the pointer. */
 	private static grabOf(entry: Entry): DragPoint | undefined {
-		const start = entry.start
-		return !start ? undefined : { date: start.dayStart, minute: Math.round((start.valueOf() - start.dayStart.valueOf()) / 60_000) }
+		return !entry.start ? undefined : { date: entry.start.dayStart, minute: Math.round((entry.start.valueOf() - entry.start.dayStart.valueOf()) / 60_000) }
 	}
 
 	private static unscheduledBox() {
@@ -148,7 +145,7 @@ export class EntryDragController extends Controller {
 	}
 
 	private beginExternal(entry: Entry, segment: EntrySegmentComponent, surface: HTMLElement, e: PointerEvent, options?: { held?: boolean }) {
-		if (this.drag || !entry.persisted || !entry.source.capabilities.entries.edit) {
+		if (this.drag || !entry.persisted || !entry.editable) {
 			return
 		}
 		const cells = this.snapshotCells()
@@ -226,18 +223,11 @@ export class EntryDragController extends Controller {
 
 	private buildCreate(anchor: DragPoint, current: DragPoint): Entry {
 		const drag = this.drag!
-		const base = { sourceId: drag.source!.id, type: this.createType ?? drag.source!.defaultEntryType, heading: '' }
-		if (drag.mode === 'allday') {
-			const { start, end } = Schedule.allDay(anchor.date, current.date)
-			return new Entry({ ...base, start, end, allDay: true })
-		}
-		const { start, end } = Schedule.timed(anchor.date.dayStart.add({ minutes: anchor.minute }), current.date.dayStart.add({ minutes: current.minute }), EntryDragController.snapMinutes)
-		const ownership = drag.source!.ownership
-		const created = new Entry({ ...base, start, end, allDay: false }).fit(ownership)
-		if (ownership.holds('reminders')) {
-			created.adoptDefaultReminders(ReminderSetting.defaults)
-		}
-		return created
+		const type = this.createType ?? drag.source!.defaultEntryType
+		const { start, end, allDay } = drag.mode === 'allday'
+			? EntrySpan.allDay(anchor.date, current.date)
+			: EntrySpan.timed(anchor.date.dayStart.add({ minutes: anchor.minute }), current.date.dayStart.add({ minutes: current.minute }), EntryDragController.snapMinutes)
+		return drag.source!.draft({ type, start, end, allDay })
 	}
 
 	private buildMove(current: DragPoint, mode: Mode): Entry | undefined {
@@ -246,13 +236,13 @@ export class EntryDragController extends Controller {
 		if (!before.start || (!before.end && !before.point)) {
 			const placed = before.clone()
 			placed.scheduleAt(mode === 'allday' ? current.date : current.date.dayStart.add({ minutes: current.minute }), mode === 'allday', DefaultDurationSetting.current)
-			return placed.fit(placed.source.ownership)
+			return placed.fit()
 		}
 		if (drag.laneBottom !== undefined && (mode === 'allday') !== before.allDay) {
 			const converted = before.clone()
 			converted.setAllDay(mode === 'allday', DefaultDurationSetting.current)
 			converted.moveStart(mode === 'allday' ? current.date.dayStart : current.date.dayStart.add({ minutes: current.minute }))
-			return converted.fit(converted.source.ownership)
+			return converted.fit()
 		}
 		if (drag.mode === 'allday') {
 			const days = Math.round((current.date.dayStart.valueOf() - drag.anchor!.date.dayStart.valueOf()) / 86_400_000)
@@ -260,7 +250,7 @@ export class EntryDragController extends Controller {
 		}
 		const grabMs = drag.anchor!.date.dayStart.add({ minutes: drag.anchor!.minute }).valueOf()
 		const currentMs = current.date.dayStart.add({ minutes: current.minute }).valueOf()
-		const { start, end } = new Schedule(before.start, before.end).movedBy(currentMs - grabMs, EntryDragController.snapMinutes)
+		const { start, end } = before.span.movedBy(currentMs - grabMs, EntryDragController.snapMinutes)
 		return new Entry({ ...before, start, end })
 	}
 
@@ -286,7 +276,7 @@ export class EntryDragController extends Controller {
 			return undefined
 		}
 		const dragged = before.allDay ? current.date : current.date.dayStart.add({ minutes: current.minute })
-		const { start, end } = Schedule.resized(before, drag.edge!, dragged, EntryDragController.snapMinutes)
+		const { start, end } = before.span.resized(drag.edge!, dragged, EntryDragController.snapMinutes)
 		return new Entry({ ...before, start, end })
 	}
 
@@ -427,7 +417,7 @@ export class EntryDragController extends Controller {
 		if (segment) {
 			// A tap still has to open the editor of an entry whose provider mitra may only read, so the
 			// bar is on beginning a drag, not on handling the pointer at all.
-			if (!occurrence?.entry.persisted || !occurrence.entry.source.capabilities.entries.edit) {
+			if (!occurrence?.entry.persisted || !occurrence.entry.editable) {
 				return
 			}
 			const entry = EntryStore.editable(occurrence)
@@ -446,7 +436,7 @@ export class EntryDragController extends Controller {
 		const availability = target.closest('mitra-availability-segment') as AvailabilitySegment | null
 		const mode = this.createModeAt(target)
 		const source = mode ? Calendars.primary(this.createType) : undefined
-		if (!mode || !source || !source.capabilities.entries.create) {
+		if (!mode || !source) {
 			// Nothing can be created here, so open the availability right away.
 			if (availability) {
 				availability.open = true
@@ -520,7 +510,7 @@ export class EntryDragController extends Controller {
 		const source = drawing.from.entry
 		const chip = (document.elementFromPoint(x, y)?.closest('mitra-entry-segment') ?? undefined) as EntrySegmentComponent | undefined
 		const candidate = chip?.segment?.entry
-		const valid = !!candidate && Relations.canBlock(source, candidate)
+		const valid = !!candidate && source.hierarchy.canBlock(candidate)
 		if (chip !== drawing.hovered) {
 			drawing.hovered?.removeAttribute('data-connect')
 			drawing.hovered = chip
@@ -592,7 +582,7 @@ export class EntryDragController extends Controller {
 		switch (drag.kind) {
 			case 'create': {
 				const draft = drag.gestureDraft ??= built
-				draft.adoptSpan(built)
+				draft.adopt(built.span)
 				EntryStore.upsertDraft(draft)
 				break
 			}
@@ -600,15 +590,15 @@ export class EntryDragController extends Controller {
 				const preview = drag.preview ??= new Entry({ ...built, id: undefined })
 				// Frames keep landing on the same snapped spot while the pointer stays in it, and
 				// repainting every chip to redraw an identical ghost is what made dragging drag.
-				if (EntryStore.previewing(preview) && preview.spanEquals(built)) {
+				if (EntryStore.previewing(preview) && preview.span.equals(built.span)) {
 					break
 				}
-				preview.adoptSpan(built)
+				preview.adopt(built.span)
 				EntryStore.setPreview(preview)
 				break
 			}
 			case 'resize': {
-				drag.entry!.adoptSpan(built)
+				drag.entry!.adopt(built.span)
 				EntryStore.notifyMoved(drag.entry)
 				break
 			}
@@ -650,7 +640,7 @@ export class EntryDragController extends Controller {
 			this.teardown(e.pointerId)
 			if (built) {
 				const draft = drag.gestureDraft ?? built
-				draft.adoptSpan(built)
+				draft.adopt(built.span)
 				EntryStore.upsertDraft(draft)
 				EntryEditorIntent.openDraft(draft)
 			} else {
@@ -671,16 +661,16 @@ export class EntryDragController extends Controller {
 				this.teardown(e.pointerId)
 				EntryStore.setPreview(undefined)
 				EntryStore.setDragging(undefined)
-				entry.adoptSpan(drag.before)
+				entry.adopt(drag.before!.span)
 				EntryStore.notify()
 				return
 			}
-			if (drag.kind === 'move' && e.altKey && entry.source.capabilities.entries.create) {
+			if (drag.kind === 'move' && e.altKey && entry.copyable) {
 				this.teardown(e.pointerId)
 				EntryStore.setPreview(undefined)
 				EntryStore.setDragging(undefined)
 				if (built) {
-					EntryStore.duplicate(entry, built).catch(() => void 0)
+					EntryStore.duplicate(entry, built.span).catch(() => void 0)
 				}
 				return
 			}
@@ -692,7 +682,7 @@ export class EntryDragController extends Controller {
 			EntryStore.setPreview(undefined)
 			EntryStore.setDragging(undefined)
 			if (built) {
-				entry.adoptSpan(built)
+				entry.adopt(built.span)
 				EntryStore.notify()
 			}
 			const change = EntryShift.of(entry, drag.before)
@@ -738,7 +728,7 @@ export class EntryDragController extends Controller {
 				break
 			case 'resize':
 				EntryStore.setDragging(undefined)
-				drag.entry!.adoptSpan(drag.before!)
+				drag.entry!.adopt(drag.before!.span)
 				EntryStore.notify()
 				break
 		}

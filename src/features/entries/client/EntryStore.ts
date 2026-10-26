@@ -2,7 +2,7 @@ import { Controller } from '@a11d/lit'
 import { type ReactiveControllerHost } from 'lit'
 import { CreateEntry, UpdateEntry, UpdateEntryOccurrence, DeleteEntry, DeleteEntryOccurrence, RankTasks } from '#operations'
 import { Recurrence, EntryOccurrenceChangeScope, type EntryOccurrence } from '#features/recurrence'
-import { type EntryPlan, type SkippedEntry, EntryRelations } from '#features/relations'
+import { type EntryPlan, type SkippedEntry, EntryRelations, RelationGraph, EntryHierarchy } from '#features/relations'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { ApiError } from '#infrastructure/http/Api.js'
 import { type Entry } from '../Entry.js'
@@ -25,6 +25,7 @@ export class EntryStore extends Controller {
 
 	private static merged?: ReadonlyArray<Entry>
 	private static composed?: ReadonlyArray<EntryOccurrence>
+	private static graphOf?: { readonly entries: ReadonlyArray<Entry>, readonly graph: RelationGraph }
 	private static dragging?: Entry
 	/** The window the entries were fetched for, whose dates the recurring ones yield; none for every entry once. */
 	private static window?: DateTimeRange
@@ -47,7 +48,7 @@ export class EntryStore extends Controller {
 
 	/** A drag only ever moves the span, so a ghost occupying the source's is a second copy of it, even when both are dateless. */
 	private static get shownPreview(): Entry | undefined {
-		return this.preview && this.dragging && this.preview.spanEquals(this.dragging) ? undefined : this.preview
+		return this.preview && this.dragging && this.preview.span.equals(this.dragging.span) ? undefined : this.preview
 	}
 
 	static get entries(): ReadonlyArray<Entry> {
@@ -65,6 +66,15 @@ export class EntryStore extends Controller {
 	 */
 	static get occurrences(): ReadonlyArray<EntryOccurrence> {
 		return this.composed ??= this.compose()
+	}
+
+	/** The relations among every entry held, which each entry's hierarchy reads; rebuilt once the entries change. */
+	static get graph(): RelationGraph {
+		const entries = this.entries
+		if (this.graphOf?.entries !== entries) {
+			this.graphOf = { entries, graph: RelationGraph.of(entries) }
+		}
+		return this.graphOf.graph
 	}
 
 	private static compose() {
@@ -167,7 +177,7 @@ export class EntryStore extends Controller {
 		if (pending) {
 			return pending
 		}
-		if (!entry.persisted && !entry.heading?.trim() && !entry.type.isAvailability) {
+		if (entry.blank) {
 			return Promise.resolve()
 		}
 		// With nothing to send, the run below never awaits, so its `finally` would clear the slot before
@@ -226,7 +236,7 @@ export class EntryStore extends Controller {
 				this.notify()
 			}
 			// Successful transition into closed state; runs outside finally so failed saves never prompt.
-			if (!wasClosed && entry.type.isTask && entry.closed && this.tracks(entry)) {
+			if (!wasClosed && entry.closed && this.tracks(entry)) {
 				this.onTaskClosed(entry)
 			}
 		})()
@@ -330,9 +340,9 @@ export class EntryStore extends Controller {
 	}
 
 	/** Creates a standalone copy of an entry and persists it. */
-	static async duplicate(entry: Entry, span: Entry = entry): Promise<Entry> {
+	static async duplicate(entry: Entry, span = entry.span): Promise<Entry> {
 		const duplicate = entry.duplicate()
-		duplicate.adoptSpan(span)
+		duplicate.adopt(span)
 		this.duplicates.add(duplicate)
 		this.notify()
 		try {
@@ -551,10 +561,7 @@ export class EntryStore extends Controller {
 	}
 
 	static discardDraft() {
-		if (this.draft?.heading?.trim()) {
-			return
-		}
-		if (this.draft) {
+		if (this.draft?.blank) {
 			this.draft = undefined
 			this.notify()
 		}
@@ -666,3 +673,5 @@ export class EntryStore extends Controller {
 		EntryStore.hosts.delete(this.host)
 	}
 }
+
+EntryHierarchy.from(() => EntryStore.graph)

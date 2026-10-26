@@ -3,12 +3,14 @@ import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
 import { Source } from '#features/sources'
 import { Recurrence, RecurrenceFrequency, EntryOccurrenceChangeScope } from '#features/recurrence'
+import { Participants } from '#features/participants/Participant.js'
 import { IntegrationCapabilities, type OwnedField } from '#integrations'
 import { CalDAV } from '#integrations/caldav/CalDAV.js'
 import type { ValidationError } from '#infrastructure/validation'
 import { Entry } from './Entry.js'
 import { EntryPatch } from './EntryPatch.js'
 import { EntryType } from './EntryType.js'
+import { TaskStatus } from './TaskStatus.js'
 import { Transparency } from './Transparency.js'
 import { Visibility } from './Visibility.js'
 import { EntryFiles } from './EntryFiles.js'
@@ -22,44 +24,77 @@ const calendar = (init: { id?: string, types?: Array<EntryType>, lacking?: Array
 	return Object.assign(new Source({ id: init.id ?? 'home', uri: init.id ?? 'home', entryTypes: init.types ?? [EntryType.Event, EntryType.Task], name: 'Home' }), { integration })
 }
 const described = (errors: Iterable<ValidationError>) => [...errors].map(error => [error.message, error.fields])
+/** What `source` refuses of `entry` once the entry is in it. */
+const refusals = (entry: Entry, source: Source) => described(Object.assign(entry, { sourceId: source.id, source }).validate())
 const start = new DateTime('2026-10-05T09:00:00Z')
 const event = (init?: Partial<Entry>) => new Entry({ id: 'e', sourceId: 'home', type: EntryType.Event, heading: 'Talk', start, end: start.add({ hours: 1 }), ...init })
 const patch = (init: Partial<EntryPatch>) => Object.assign(new EntryPatch(), init)
 
 describe('Entry.validate', () => {
 	it('finds nothing wrong with an entry the calendar can store', () => {
-		assert.deepEqual(described(event({ transparency: Transparency.Free, visibility: Visibility.Private }).validate(calendar())), [])
+		assert.deepEqual(refusals(event({ transparency: Transparency.Free, visibility: Visibility.Private }), calendar()), [])
 	})
 
 	it('names every fact the calendar cannot store, each with its field', () => {
-		const task = new Entry({ type: EntryType.Task, heading: 'Report', visibility: Visibility.Private, percentComplete: 0, due: start, participants: [{ email: 'organizer@example.com', organizer: true }] })
-		assert.deepEqual(described(task.validate(calendar({ lacking: ['participants', 'visibility', 'percentComplete', 'due'] }))), [
+		const task = new Entry({ type: EntryType.Task, heading: 'Report', visibility: Visibility.Private, percentComplete: 0, due: start, participants: Participants.normalize([{ email: 'organizer@example.com', organizer: true }]) })
+		assert.deepEqual(refusals(task, calendar({ lacking: ['participants', 'visibility', 'percentComplete', 'due'] })), [
 			['This calendar does not support participants', ['participants']],
 			['This calendar does not support visibility', ['visibility']],
 			['This calendar does not support task progress', ['percentComplete']],
 			['This calendar does not support due dates', ['due']],
 		])
-		assert.deepEqual(described(event({ transparency: Transparency.Free }).validate(calendar({ lacking: ['transparency'] }))), [['This calendar cannot mark an entry as free', ['transparency']]])
+		assert.deepEqual(refusals(event({ transparency: Transparency.Free }), calendar({ lacking: ['transparency'] })), [['This calendar cannot mark an entry as free', ['transparency']]])
+	})
+
+	it('refuses a repeating entry where the calendar holds no rule, and a task in a state the calendar has not', () => {
+		const repeating = event({ recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }) })
+		assert.deepEqual(refusals(repeating, calendar({ lacking: ['recurrence'] })), [['This calendar cannot hold a repeating entry', ['recurrence']]])
+		const doing = new Entry({ type: EntryType.Task, heading: 'Report', status: TaskStatus.Doing })
+		assert.deepEqual(refusals(doing, calendar({ cannot: { statuses: [TaskStatus.ToDo, TaskStatus.Done] } })), [['This calendar cannot hold a task in progress', ['status']]])
+		assert.deepEqual(refusals(doing, calendar()), [])
 	})
 
 	it('refuses an entry ending before it starts, and takes a moment, which ends where it starts', () => {
-		assert.deepEqual(described(event({ end: start.add({ minutes: -1 }) }).validate(calendar())), [['An entry cannot end before it starts', ['end']]])
-		assert.deepEqual(described(event({ end: start }).validate(calendar())), [])
+		assert.deepEqual(refusals(event({ end: start.add({ minutes: -1 }) }), calendar()), [['An entry cannot end before it starts', ['end']]])
+		assert.deepEqual(refusals(event({ end: start }), calendar()), [])
 	})
 
 	it('names a type the calendar cannot hold', () => {
-		assert.deepEqual(described(event().validate(calendar({ types: [EntryType.Task] }))), [['This calendar cannot hold events', ['type']]])
+		assert.deepEqual(refusals(event(), calendar({ types: [EntryType.Task] })), [['This calendar cannot hold events', ['type']]])
 	})
 
 	it('refuses files where the calendar holds none, and nothing without files', () => {
 		const attached = event({ attachments: EntryFiles.of([{ sourceUrl: 'https://example.com/plan.pdf' }]) })
-		assert.deepEqual(described(attached.validate(calendar({ lacking: ['attachments'] }))), [['This calendar does not support attachments', ['attachments']]])
-		assert.deepEqual(described(event().validate(calendar({ lacking: ['attachments'] }))), [])
+		assert.deepEqual(refusals(attached, calendar({ lacking: ['attachments'] })), [['This calendar does not support attachments', ['attachments']]])
+		assert.deepEqual(refusals(event(), calendar({ lacking: ['attachments'] })), [])
 	})
 
 	it('holds an entry with attachments in a calendar that cannot take them: what is there was the provider\'s own doing', () => {
 		const attached = event({ attachments: EntryFiles.of([{ sourceUrl: 'https://drive.google.com/open?id=1AbCdEfGhIjKlMnOpQrStUvWxYz0123456' }]) })
-		assert.deepEqual(described(attached.validate(calendar({ cannot: { attach: false } }))), [])
+		assert.deepEqual(refusals(attached, calendar({ cannot: { attach: false } })), [])
+	})
+})
+
+describe('Entry.canMoveTo', () => {
+	const away = (init: Parameters<typeof calendar>[0] = {}) => Object.assign(calendar({ id: 'away', ...init }), { enabled: true })
+
+	it('moves into another enabled calendar that takes new entries and refuses nothing it carries', () => {
+		assert.equal(event().canMoveTo(away()), true)
+		assert.equal(event().canMoveTo(Object.assign(calendar(), { enabled: true })), false, 'not into its own')
+		assert.equal(event().canMoveTo(calendar({ id: 'away' })), false, 'not into a disabled one')
+		assert.equal(event().canMoveTo(away({ cannot: { create: false } })), false)
+		assert.equal(event({ visibility: Visibility.Private }).canMoveTo(away({ lacking: ['visibility'] })), false)
+	})
+
+	it('changes its type on the way where it must, unless it repeats', () => {
+		assert.equal(event().canMoveTo(away({ types: [EntryType.Task] })), true)
+		assert.equal(event({ recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }) }).canMoveTo(away({ types: [EntryType.Task] })), false)
+	})
+
+	it('lets one occurrence leave its rule behind into a calendar that holds none, never the whole series', () => {
+		const repeating = event({ recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }) })
+		assert.equal(repeating.canMoveTo(away({ lacking: ['recurrence'] })), false)
+		assert.equal(repeating.canMoveTo(away({ lacking: ['recurrence'] }), { occurrence: true }), true)
 	})
 })
 

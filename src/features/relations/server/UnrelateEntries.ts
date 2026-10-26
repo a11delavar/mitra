@@ -30,7 +30,7 @@ export class UnrelateEntries extends Operation<Parameters> {
 		const { id, type, target } = this.parameters
 		const existing = await user.entry(em, id)
 		const other = await user.entry(em, target)
-		const source = await user.source(em, existing.sourceId)
+		const { source } = existing
 
 		const change = existing.edit(new EntryPatch())
 		change.edited.unrelate({ type, targetUid: other.uid })

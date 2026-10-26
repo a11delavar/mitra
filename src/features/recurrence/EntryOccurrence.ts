@@ -65,6 +65,16 @@ export class EntryOccurrence {
 		return !!this.start
 	}
 
+	/** An open task with a schedule: what the timeline lists. */
+	get planned() {
+		return this.scheduled && this.entry.open
+	}
+
+	/** A date of a rule: one a rule yields, or one of an entry that carries or belongs to a rule. */
+	get repeats() {
+		return this.recurring || this.entry.partOfSeries
+	}
+
 	/** A task planned at a moment only, with no end. */
 	get point() {
 		return !!this.entry.type?.isTask && !!this.start && !this.end
@@ -115,7 +125,7 @@ export class EntryOccurrence {
 	/** Compared by day. A recurring task is never behind: its next occurrence settles a missed one. */
 	get overdue() {
 		const { entry } = this
-		if (!entry.type?.isTask || entry.closed || this.recurring || entry.partOfSeries) {
+		if (!entry.open || this.recurring || entry.partOfSeries) {
 			return false
 		}
 		return !!this.lastDay && this.lastDay.isBefore(new DateTime().dayStart)

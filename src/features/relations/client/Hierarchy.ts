@@ -4,7 +4,6 @@ import { DialogEntryScope, type EntryScope } from '#features/entries/client/Dial
 import { EntryOccurrenceChangeScope } from '#features/recurrence'
 import { type ShiftStrategy } from '../ShiftStrategy.js'
 import { EntryPlan, type PlannedWrite, type SkippedEntry } from '../EntryPlan.js'
-import { Relations } from './Relations.js'
 import { DialogCompleteParent } from './DialogCompleteParent.js'
 import { DialogCloseSubtasks } from './DialogCloseSubtasks.js'
 
@@ -12,17 +11,13 @@ import { DialogCloseSubtasks } from './DialogCloseSubtasks.js'
  * Hierarchy actions and prompt workflows. Computations use {@link Relations} and writes execute via {@link EntryStore.applyPlan}.
  */
 
-export function subtreeSize(entry: Entry): number {
-	return Relations.descendantsOf(entry).length
-}
-
 /**
  * Resolves gesture scope across recurrence, hierarchy, and dependency axes.
  */
 export function resolveScope(entry: Entry, intent: 'edit' | 'move' | 'delete', bypass = false, hasSubtaskAction = true, change?: EntryShift): Promise<EntryScope | undefined> {
 	const series = !!entry.recurringEntryId
-	const subtasks = hasSubtaskAction && (intent === 'delete' || intent === 'move') ? subtreeSize(entry) : 0
-	const shifts = change && intent !== 'delete' ? Relations.shiftOptionsFor(change) : []
+	const subtasks = hasSubtaskAction && (intent === 'delete' || intent === 'move') ? entry.hierarchy.descendants.length : 0
+	const shifts = change && intent !== 'delete' ? entry.hierarchy.shiftOptions(change) : []
 	if (bypass || (!series && !subtasks && shifts.length < 2)) {
 		return Promise.resolve({ recurrence: series ? EntryOccurrenceChangeScope.This : undefined, subtasks: false })
 	}
@@ -33,7 +28,7 @@ export function resolveScope(entry: Entry, intent: 'edit' | 'move' | 'delete', b
  * Applies shift strategy to downstream entries, excluding entries already modified.
  */
 export function shiftDependents(change: EntryShift, strategy: ShiftStrategy, already = EntryPlan.empty) {
-	const plan = strategy.plan(Relations.graph, change).excluding(already)
+	const plan = strategy.plan(EntryStore.graph, change).excluding(already)
 	return plan.isEmpty ? Promise.resolve(undefined) : EntryStore.applyPlan(plan)
 }
 
@@ -65,7 +60,7 @@ export async function offerFollowUps(entry: Entry) {
 
 /** Prompts to close remaining open direct subtasks when a parent task is closed. */
 export async function offerToCloseSubtasks(entry: Entry) {
-	const outstanding = Relations.childrenOf(entry).filter(child => child.type.isTask && !child.closed)
+	const outstanding = entry.hierarchy.children.filter(child => child.open)
 	if (!outstanding.length) {
 		return
 	}
@@ -76,14 +71,14 @@ export async function offerToCloseSubtasks(entry: Entry) {
 	await run(EntryPlan.of({
 		writes: outstanding.map(child => ({
 			entry: child,
-			mutate: (target: Entry) => target.setStatus(closure, target.source.ownership),
+			mutate: (target: Entry) => { target.status = closure },
 		})),
 	}))
 }
 
 /** Prompts to complete ancestor tasks when completing the final subtask resolves them. */
 async function offerToCompleteParents(closed: Entry) {
-	const parents = Relations.ancestorsCompletedBy(closed)
+	const parents = closed.hierarchy.completedAncestors
 	if (!parents.length) {
 		return
 	}
@@ -94,7 +89,7 @@ async function offerToCompleteParents(closed: Entry) {
 		// Deepest first so intermediate states remain valid.
 		writes: parents.map(parent => ({
 			entry: parent,
-			mutate: (target: Entry) => target.setStatus(TaskStatus.Done, target.source.ownership),
+			mutate: (target: Entry) => { target.status = TaskStatus.Done },
 		})),
 	}))
 }
@@ -114,7 +109,7 @@ async function run(plan: EntryPlan) {
 /** Deletes an entry and optionally its subtree in deepest-first order. */
 export async function deleteScoped(entry: Entry, scope: EntryScope) {
 	if (scope.subtasks) {
-		await EntryStore.applyPlan(EntryPlan.of({ deletions: [...Relations.descendantsOf(entry)].reverse() }))
+		await EntryStore.applyPlan(EntryPlan.of({ deletions: [...entry.hierarchy.descendants].reverse() }))
 	}
 	return EntryStore.delete(entry, scope.recurrence)
 }
@@ -127,7 +122,7 @@ export async function shiftSubtree(entry: Entry, deltaMs: number): Promise<Entry
 	}
 	const writes = new Array<PlannedWrite>()
 	const skipped = new Array<SkippedEntry>()
-	for (const descendant of Relations.descendantsOf(entry)) {
+	for (const descendant of entry.hierarchy.descendants) {
 		if (!descendant.start) {
 			skipped.push({ entry: descendant, reason: 'undated' })
 			continue

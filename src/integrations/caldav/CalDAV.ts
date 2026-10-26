@@ -10,6 +10,7 @@ import { Color } from '#features/sources'
 import { Recurrence } from '#features/recurrence'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { Participants, ParticipantRole, ParticipantStatus, type Participant } from '#features/participants/Participant.js'
+import { EntryReminders } from '#features/reminders/EntryReminders.js'
 import { Integration, integration, IntegrationOwnership } from '#integrations'
 import { model, withheld } from '#infrastructure/model'
 import { buildVTimezone } from './vtimezone.js'
@@ -461,7 +462,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		return component.getFirstProperty('dtstart') ? 'START' : 'END'
 	}
 
-	static remindersFrom(component: ICAL.Component): Array<number> | undefined {
+	static remindersFrom(component: ICAL.Component) {
 		const anchor = CalDAV.reminderAnchorOf(component)
 		const minutes = component.getAllSubcomponents('valarm').flatMap(alarm => {
 			const trigger = alarm.getFirstProperty('trigger')
@@ -476,7 +477,7 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			const seconds = duration.toSeconds()
 			return seconds > 0 ? [] : [Math.round(-seconds / 60)]
 		})
-		return minutes.length ? [...new Set(minutes)].sort((a, b) => a - b) : undefined
+		return EntryReminders.normalize(minutes)
 	}
 
 	private static readonly icalRole = new BidirectionalMap<ParticipantRole, string>([

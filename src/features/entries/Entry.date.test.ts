@@ -98,7 +98,7 @@ describe('Entry.date', () => {
 			showIn(zone)
 			const timed = new Entry({ type: EntryType.Task, heading: 'Holiday', start: at('2026-06-04T07:00:00Z'), end: at('2026-06-04T08:00:00Z') })
 			const adopting = allDayCopy()
-			adopting.adoptSpan(timed)
+			adopting.adopt(timed.span)
 			const assigned = allDayCopy()
 			assigned.assign(timed)
 			for (const entry of [adopting, assigned]) {

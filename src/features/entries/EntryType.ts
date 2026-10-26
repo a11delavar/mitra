@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { OwnedField } from '#integrations'
 import { type Converter } from '@a11d/converter'
 import { Type } from '#infrastructure/model'
 import { ValidationError } from '#infrastructure/validation'
@@ -40,6 +41,16 @@ export class EntryType {
 
 	get isAvailability() {
 		return this === EntryType.Availability
+	}
+
+	/** Whether an entry of this type has `field`: a task alone has a due, an estimate and progress, and no transparency; availability has no participants, reminders, attachments or relations, and is never a day. */
+	holds(field: OwnedField) {
+		switch (field) {
+			case 'due': case 'estimate': case 'percentComplete': return this.isTask
+			case 'transparency': return !this.isTask
+			case 'participants': case 'reminders': case 'attachments': case 'relations': case 'allDay': return !this.isAvailability
+			default: return true
+		}
 	}
 
 	format() {

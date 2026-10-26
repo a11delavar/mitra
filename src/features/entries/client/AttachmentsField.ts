@@ -55,15 +55,6 @@ export class AttachmentsField extends Component {
 
 	@query('input[type=file]') private readonly filePicker?: HTMLInputElement
 
-	private get canEdit() {
-		return this.entry.source.capabilities.entries.attach
-	}
-
-	/** Whether a file can be embedded in the description: one the calendar holds and lets Mitra edit. */
-	private get canEmbed() {
-		return this.entry.source.capabilities.entries.edit && this.entry.source.ownership.holds('description')
-	}
-
 	private readonly embedFile = (file: EntryFile) => {
 		this.entry.embed(file, location.origin)
 		this.changed()
@@ -75,7 +66,7 @@ export class AttachmentsField extends Component {
 	}
 
 	private get canUpload() {
-		return this.canEdit && AttachmentsField.uploads
+		return this.entry.canEdit('attachments') && AttachmentsField.uploads
 	}
 
 	protected override updated(...parameters: Parameters<Component['updated']>) {
@@ -381,10 +372,10 @@ export class AttachmentsField extends Component {
 						${!size ? html.nothing : html`<span class="size">${size}</span>`}
 					</a>
 				`}
-				${!this.canEmbed || pending || leaving || this.entry.embeds(file!) ? html.nothing : html`
+				${!this.entry.canEdit('description') || pending || leaving || this.entry.embeds(file!) ? html.nothing : html`
 					<mitra-icon-button size="small" label=${t('Show in description')} icon=${file!.mimeType?.type === 'image' ? 'image' : 'link'} @click=${() => this.embedFile(file!)}></mitra-icon-button>
 				`}
-				${!this.canEdit || pending || leaving ? html.nothing : html`
+				${!this.entry.canEdit('attachments') || pending || leaving ? html.nothing : html`
 					<mitra-icon-button size="small" label=${t('Remove attachment')} icon="x" @click=${() => this.removeAttachment(file!)}></mitra-icon-button>
 				`}
 			</div>
