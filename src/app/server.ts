@@ -5,7 +5,7 @@ import '#integrations/server/registerEngines.js'
 import { ModelValueConstructor } from '@a11d/api-model-value-constructor'
 import { createLogger, logLevelName } from '#infrastructure/logging/Logger.js'
 import { orm } from '#infrastructure/database/orm.js'
-import { isDemo } from '#infrastructure/environment.js'
+import { environment } from '#infrastructure/server/Environment.js'
 import { authMiddleware, authRouter, oidc } from '#features/identity/server/auth.js'
 import { accessTokenMiddleware } from '#features/identity/server/accessTokenMiddleware.js'
 import { synchronizer } from '#integrations/server/Synchronizer.js'
@@ -28,7 +28,6 @@ import { EntryFile } from '#features/entries'
 import { observeInstanceOrigin } from '#infrastructure/http/instanceUrl.js'
 
 const logger = createLogger('API')
-const PORT = Number(process.env.MITRA_PORT) || 3000
 
 synchronizer.start()
 new ReminderScheduler(orm).start()
@@ -71,7 +70,7 @@ app.use(express.json({ reviver: (_key, value) => modelConstructor.shallConstruct
 if (oidc) {
 	app.use('/auth', authRouter)
 	logger.info(`Multi-user mode: OIDC against ${oidc.issuer} (redirect URI ${oidc.redirectUri})`)
-} else if (isDemo) {
+} else if (environment.demo) {
 	logger.info('Demo mode: every visitor gets a sandbox with the sample calendar')
 } else {
 	logger.info('Single-user mode: no authentication (set MITRA_OIDC_ISSUER to enable multi-user sign-in)')
@@ -101,7 +100,7 @@ app.get(/(.*)/, (_, res) => res.sendFile('index.html', { root: frontendDistPath,
 
 app.use(errorHandler)
 
-app.listen(PORT, () => {
-	logger.info(`Mitra ${mitra.version}: backend API running on http://localhost:${PORT}`)
+app.listen(environment.port, () => {
+	logger.info(`Mitra ${mitra.version}: backend API running on http://localhost:${environment.port}`)
 	logger.info(`Log level: ${logLevelName} (set MITRA_LOG_LEVEL=debug for per-request detail, trace for SQL)`)
 })

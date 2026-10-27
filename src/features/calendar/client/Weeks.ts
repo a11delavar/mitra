@@ -6,7 +6,6 @@ import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { EntryConnections } from '#features/relations/client/EntryConnections.js'
 import { EntryDragController } from '#features/entries/client/EntryDragController.js'
 import { Routines, type RoutineRun } from '#features/routines/client/Routines.js'
-import { HideDoneTasksSetting } from '#features/entries/client/HideDoneTasksSetting.js'
 import { Availability } from '#features/availability/client/Availability.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { CalendarScrollController } from './CalendarScrollController.js'
@@ -33,7 +32,7 @@ export class Weeks extends Component {
 	private get days(): Array<DateTime> { return this.buffer.days }
 	private get routines(): Routines { return Routines.of(Availability.outside(this.occurrences), this.buffer.window.days, 'week') }
 
-	private get segments(): EntrySegments { return EntrySegments.of(HideDoneTasksSetting.filter(this.routines.kept), this.buffer.window.days) }
+	private get segments(): EntrySegments { return EntrySegments.of(this.routines.kept, this.buffer.window.days) }
 
 	private weekLayouts: { cohort?: Routines, byWeek: Map<number, RenderedWeek> } = { byWeek: new Map() }
 

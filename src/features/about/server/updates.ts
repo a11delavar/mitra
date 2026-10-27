@@ -1,4 +1,5 @@
 import { createLogger } from '#infrastructure/logging/Logger.js'
+import { environment } from '#infrastructure/server/Environment.js'
 import { type Channel, Version } from '../Version.js'
 const logger = createLogger('Updates')
 
@@ -16,7 +17,10 @@ type FetchJson = (url: string) => Promise<any>
  * Background checker polling GitHub for available Mitra updates.
  */
 export class UpdateChecker {
-	static readonly initialDelay = process.env.MITRA_DEV === 'true' ? 2 * 1000 : 3 * 60 * 1000
+	static get initialDelay() {
+		return environment.developer ? 2 * 1000 : 3 * 60 * 1000
+	}
+
 	static readonly interval = 6 * 60 * 60 * 1000
 
 	update?: UpdateInfo
@@ -33,7 +37,7 @@ export class UpdateChecker {
 	}
 
 	private get enabled() {
-		return !['off', 'false', '0', 'no'].includes(process.env.MITRA_UPDATE_CHECK?.toLowerCase() ?? '')
+		return environment.updateCheck
 	}
 
 	start() {

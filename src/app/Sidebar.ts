@@ -13,7 +13,7 @@ import type { Entry } from '#features/entries'
 import { Planning } from '#features/planning/client/Planning.js'
 import { DialogIntegration } from '#integrations/client/DialogIntegration.js'
 import type { Integration } from '#integrations'
-import { getMeta, getUser, instanceName, isBundleStale, keepUser, refreshMetaIfStale } from '#infrastructure/http/Api.js'
+import { session } from '#infrastructure/http/PageSession.js'
 import { canInstall, promptInstall, onInstallAvailabilityChange } from './pwa.js'
 
 @component('mitra-sidebar')
@@ -105,7 +105,7 @@ export class Sidebar extends Component {
 	@eventListener({ target: document, type: 'visibilitychange' })
 	protected async refreshMeta() {
 		if (document.visibilityState === 'visible') {
-			await refreshMetaIfStale()
+			await session.refreshInstanceIfStale()
 			this.requestUpdate()
 		}
 	}
@@ -779,7 +779,7 @@ export class Sidebar extends Component {
 		if (this.isDefault(source) && !stored) {
 			return
 		}
-		await keepUser(SetDefaultCalendar.call({ sourceId: stored ? null : source.id }))
+		await session.keepUser(SetDefaultCalendar.call({ sourceId: stored ? null : source.id }))
 		this.requestUpdate()
 	}
 
@@ -827,10 +827,10 @@ export class Sidebar extends Component {
 
 	/** Update availability tooltip text. */
 	private get updateHint() {
-		if (isBundleStale()) {
+		if (session.instance.stale) {
 			return t('Reload to finish updating')
 		}
-		const update = getMeta()?.update
+		const update = session.instance.update
 		return !update ? undefined : t('Update available: ${version}', { version: update.version })
 	}
 
@@ -885,7 +885,7 @@ export class Sidebar extends Component {
 					</div>
 			`)}
 			</div>
-			${getMeta()?.demo ? html.nothing : html`
+			${session.instance.demo ? html.nothing : html`
 				<mitra-button class="action" @click=${() => this.openDialog()}>
 					<mitra-icon icon="plus"></mitra-icon>
 					${t('Add Integration')}
@@ -910,7 +910,7 @@ export class Sidebar extends Component {
 
 	protected override get template() {
 		return !this.narrow.matches ? this.navTemplate : html`
-			<mitra-modal-sheet placement="inline-start" label=${instanceName()} ?open=${this.open}
+			<mitra-modal-sheet placement="inline-start" label=${session.instance.displayName} ?open=${this.open}
 				@openChange=${(e: CustomEvent<boolean>) => e.detail !== this.open && this.openChange.dispatch(e.detail)}
 			>${this.navTemplate}</mitra-modal-sheet>
 		`
@@ -924,7 +924,7 @@ export class Sidebar extends Component {
 						<img src="/android-chrome-192x192.png" alt="">
 						${!this.updateHint ? '' : html`<span class="dot"></span>`}
 					</span>
-					<span class="name">${instanceName()}</span>
+					<span class="name">${session.instance.displayName}</span>
 					<span class="version">
 						<span class="label">${this.versionLabel}</span>
 						${this.updateHint || !DialogAbout.hasNews ? html.nothing : html`<span class="news-dot" title=${t('What\'s New')}></span>`}
@@ -938,7 +938,7 @@ export class Sidebar extends Component {
 					<mitra-tab-panel name="planning">${this.planningTemplate}</mitra-tab-panel>
 				</mitra-tabs>
 				<div class="footer">
-					${getUser()?.identity ? html.nothing : html`
+					${session.user?.identity ? html.nothing : html`
 						<mitra-button class="action" title=${t('Settings')} @click=${() => this.settingsClick.dispatch()}>
 							<mitra-icon icon="settings"></mitra-icon>
 							${t('Settings')}
@@ -968,7 +968,7 @@ export class Sidebar extends Component {
 
 	/** User account footer for multi-user mode. */
 	private get accountTemplate() {
-		const identity = getUser()?.identity
+		const identity = session.user?.identity
 		return !identity ? html.nothing : html`
 			<div class="account">
 				<mitra-avatar src=${ifDefined(identity.picture ?? undefined)}></mitra-avatar>

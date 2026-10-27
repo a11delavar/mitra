@@ -1,6 +1,6 @@
 import { html } from '@a11d/lit'
 import { Setting, setting, type SettingStorage } from '#features/settings/client/Setting.js'
-import { getMeta } from '#infrastructure/http/Api.js'
+import { session } from '#infrastructure/http/PageSession.js'
 import './McpConnection.js'
 
 /** Where AI tools connect to the calendars (MCP), and the access tokens they connect with. Nothing here is a preference. */
@@ -15,7 +15,7 @@ export class McpSetting extends Setting<undefined> {
 	protected readonly storage: SettingStorage<undefined> = { read: () => undefined, write: () => undefined }
 
 	/** The operator can turn agents off (`MITRA_MCP`), and the demo never takes them. */
-	override get applies() { return getMeta()?.mcp !== false && !getMeta()?.demo }
+	override get applies() { return session.instance.mcp !== false && !session.instance.demo }
 
 	override get hint() {
 		return t('Claude, Cursor and other AI tools can read and change your calendars through this address, over the Model Context Protocol (MCP).')

@@ -1,7 +1,7 @@
 import { ListIntegrations, ReorderIntegrations, ReorderSources, SetSourceVisibility, ShowOnlySource, RestoreSourceVisibility } from '#operations'
 import type { EntryType } from '#features/entries'
 import { Integration } from '#integrations'
-import { getUser, keepUser } from '#infrastructure/http/Api.js'
+import { session } from '#infrastructure/http/PageSession.js'
 import { applyOrder, byOrder, include } from '#infrastructure/model'
 import { Source } from '../Source.js'
 
@@ -51,7 +51,7 @@ export class Calendars {
 
 	/** The id of the calendar the user chose as default, if any. */
 	static get defaultId(): string | undefined {
-		return getUser()?.defaultSourceId ?? undefined
+		return session.user?.defaultSourceId ?? undefined
 	}
 
 	/** Where a new entry goes: the default calendar while visible, writable and able to hold `type`, else the first that is. */
@@ -102,17 +102,17 @@ export class Calendars {
 
 	/** Shows this calendar alone, remembering what was visible before. */
 	static async solo(sourceId: string) {
-		await keepUser(ShowOnlySource.call({ id: sourceId }))
+		await session.keepUser(ShowOnlySource.call({ id: sourceId }))
 		await Calendars.fetch()
 	}
 
 	/** Whether a solo is on, which `restoreVisibility` ends. */
 	static get canRestoreVisibility() {
-		return !!getUser()?.previouslyHiddenSourceIds
+		return !!session.user?.previouslyHiddenSourceIds
 	}
 
 	static async restoreVisibility() {
-		await keepUser(RestoreSourceVisibility.call())
+		await session.keepUser(RestoreSourceVisibility.call())
 		await Calendars.fetch()
 	}
 }

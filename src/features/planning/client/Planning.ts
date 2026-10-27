@@ -7,7 +7,6 @@ import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js'
 import { EntrySegments } from '#features/entries/client/EntrySegments.js'
 import { EntryDragController } from '#features/entries/client/EntryDragController.js'
-import { HideDoneTasksSetting } from '#features/entries/client/HideDoneTasksSetting.js'
 import type { EntryOccurrence } from '#features/recurrence'
 import type { EntrySegmentComponent } from '#features/entries/client/EventSegment.js'
 
@@ -29,7 +28,7 @@ export class Planning extends Component {
 	 * too would only read as a second copy of the entry already here.
 	 */
 	static get overdue(): ReadonlyArray<EntryOccurrence> {
-		return EntryStore.occurrences
+		return EntryStore.shown
 			.filter(occurrence => occurrence.overdue && !EntryStore.previewing(occurrence.entry))
 			.sort((a, b) => a.lastDay!.valueOf() - b.lastDay!.valueOf())
 	}
@@ -39,7 +38,7 @@ export class Planning extends Component {
 	 * comes last of the open ones, beside the button that added it: ordered by what is typed into it, its row
 	 * would move under the editor, which a move closes. */
 	static get unscheduled(): ReadonlyArray<EntryOccurrence> {
-		return HideDoneTasksSetting.filter(EntryStore.occurrences)
+		return EntryStore.shown
 			.filter(occurrence => !occurrence.scheduled)
 			.sort((a, b) => Number(a.entry.closed) - Number(b.entry.closed)
 				|| Number(!a.entry.persisted) - Number(!b.entry.persisted)

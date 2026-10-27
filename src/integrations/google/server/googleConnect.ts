@@ -4,16 +4,18 @@ import { Integration } from '#integrations'
 import { orm } from '#infrastructure/database/orm.js'
 import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
 import { createLogger } from '#infrastructure/logging/Logger.js'
-import { isDemo } from '#infrastructure/environment.js'
+import { environment } from '#infrastructure/server/Environment.js'
 import { GoogleCalendar } from '../GoogleCalendar.js'
 import { GoogleOAuth } from './GoogleOAuth.js'
 
 const logger = createLogger('Integrations')
 
-export const googleOAuth = GoogleOAuth.fromEnv()
+export const googleOAuth = GoogleOAuth.of(environment)
+
+GoogleCalendar.from(() => environment.google)
 
 /** Keeps strangers' credentials off a demo box, and the box from fetching the URLs they type. */
-const refusedInDemo: RequestHandler = (_req, res, next) => isDemo
+const refusedInDemo: RequestHandler = (_req, res, next) => environment.demo
 	? res.status(403).json({ error: 'Connecting accounts is turned off in the demo' })
 	: next()
 

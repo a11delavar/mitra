@@ -1,5 +1,6 @@
 import * as client from 'openid-client'
 import { createLogger } from '#infrastructure/logging/Logger.js'
+import type { Environment } from '#infrastructure/server/Environment.js'
 const logger = createLogger('GoogleOAuth')
 
 export interface GoogleOAuthOptions {
@@ -13,20 +14,9 @@ export class GoogleOAuth {
 	static readonly issuer = 'https://accounts.google.com'
 	static readonly scope = 'openid email https://www.googleapis.com/auth/calendar'
 
-	static fromEnv(env: NodeJS.ProcessEnv = process.env): GoogleOAuth | undefined {
-		const clientId = env.MITRA_GOOGLE_CLIENT_ID
-		if (!clientId) {
-			return undefined
-		}
-		const clientSecret = env.MITRA_GOOGLE_CLIENT_SECRET
-		if (!clientSecret) {
-			throw new Error('MITRA_GOOGLE_CLIENT_ID is set but MITRA_GOOGLE_CLIENT_SECRET is missing')
-		}
-		return new GoogleOAuth({
-			clientId,
-			clientSecret,
-			baseUrl: env.MITRA_URL ? new URL(env.MITRA_URL) : undefined,
-		})
+	/** The flow, where the operator configured a client. */
+	static of({ google, url }: Environment) {
+		return google && new GoogleOAuth({ ...google, baseUrl: url })
 	}
 
 	constructor(readonly options: GoogleOAuthOptions) { }

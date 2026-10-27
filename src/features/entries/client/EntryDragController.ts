@@ -4,14 +4,13 @@ import { haptic } from '#design'
 import type { Source } from '#features/sources'
 import { EntryPlan, RelationType } from '#features/relations'
 import { Calendars } from '#features/sources/client/Calendars.js'
-import * as Hierarchy from '#features/relations/client/Hierarchy.js'
+import { hierarchy } from '#features/relations/client/Hierarchy.js'
 import { type ConnectionAim, type EntryConnections } from '#features/relations/client/EntryConnections.js'
 import { DialogRelationFailed } from '#features/relations/client/DialogRelationFailed.js'
 import type { AvailabilitySegment } from '#features/availability/client/AvailabilitySegment.js'
 import { EntryShift } from '../EntryShift.js'
 import { Entry } from '../Entry.js'
 import { EntrySpan } from '../EntrySpan.js'
-import { DefaultDurationSetting } from './DefaultDurationSetting.js'
 import { SnapSetting } from './SnapSetting.js'
 import { EntryType } from '../EntryType.js'
 import { EntryStore } from './EntryStore.js'
@@ -235,12 +234,12 @@ export class EntryDragController extends Controller {
 		const before = drag.before!
 		if (!before.start || (!before.end && !before.point)) {
 			const placed = before.clone()
-			placed.scheduleAt(mode === 'allday' ? current.date : current.date.dayStart.add({ minutes: current.minute }), mode === 'allday', DefaultDurationSetting.current)
+			placed.scheduleAt(mode === 'allday' ? current.date : current.date.dayStart.add({ minutes: current.minute }), mode === 'allday')
 			return placed.fit()
 		}
 		if (drag.laneBottom !== undefined && (mode === 'allday') !== before.allDay) {
 			const converted = before.clone()
-			converted.setAllDay(mode === 'allday', DefaultDurationSetting.current)
+			converted.setAllDay(mode === 'allday')
 			converted.moveStart(mode === 'allday' ? current.date.dayStart : current.date.dayStart.add({ minutes: current.minute }))
 			return converted.fit()
 		}
@@ -686,13 +685,13 @@ export class EntryDragController extends Controller {
 				EntryStore.notify()
 			}
 			const change = EntryShift.of(entry, drag.before)
-			void Hierarchy.resolveScope(entry, isMove ? 'move' : 'edit', bypass, isMove && delta !== 0, change).then(scope => {
+			void hierarchy.resolveScope(entry, isMove ? 'move' : 'edit', bypass, isMove && delta !== 0, change).then(scope => {
 				if (!scope) {
 					return EntryStore.revert(entry)
 				}
 				return EntryStore.commit(entry, scope.recurrence)
-					.then(() => scope.subtasks && delta !== 0 ? Hierarchy.shiftSubtree(entry, delta) : EntryPlan.empty)
-					.then(subtree => scope.shift ? Hierarchy.shiftDependents(change, scope.shift, subtree) : undefined)
+					.then(() => scope.subtasks && delta !== 0 ? hierarchy.shiftSubtree(entry, delta) : EntryPlan.empty)
+					.then(subtree => scope.shift ? hierarchy.shiftDependents(change, scope.shift, subtree) : undefined)
 					.catch(() => EntryStore.revert(entry))
 			})
 		} else {

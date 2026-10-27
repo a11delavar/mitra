@@ -1,6 +1,7 @@
 import { Component, component, html, css, property, state, event, query, repeat } from '@a11d/lit'
 import { File } from '#features/files/File.js'
-import { getMeta, uploadFile } from '#infrastructure/http/Api.js'
+import { uploadFile } from '#infrastructure/http/Api.js'
+import { session } from '#infrastructure/http/PageSession.js'
 import { type EntryFile } from '../EntryFile.js'
 import { type Entry } from '../Entry.js'
 import { EntryStore, reportSaveError } from './EntryStore.js'
@@ -62,7 +63,7 @@ export class AttachmentsField extends Component {
 
 	/** Whether this instance takes uploads at all: off when its size limit is zero, as on the public demo. */
 	static get uploads() {
-		return getMeta()?.files?.maxSize !== 0
+		return session.instance.files?.maxSize !== 0
 	}
 
 	private get canUpload() {
@@ -127,7 +128,7 @@ export class AttachmentsField extends Component {
 	readonly upload = async (files: Iterable<globalThis.File> | null) => {
 		const entry = this.entry
 		this.failure = undefined
-		const maxSize = getMeta()?.files?.maxSize
+		const maxSize = session.instance.files?.maxSize
 		const accepted = [...files ?? []].filter(file => {
 			const fits = maxSize === undefined || file.size <= maxSize
 			if (!fits) {

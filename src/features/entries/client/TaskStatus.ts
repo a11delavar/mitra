@@ -1,6 +1,6 @@
 import { Component, component, html, css, property, event, query } from '@a11d/lit'
 import type { Slider, Menu } from '#design'
-import { offerToCloseSubtasks } from '#features/relations/client/Hierarchy.js'
+import { hierarchy } from '#features/relations/client/Hierarchy.js'
 import { type Entry, type EntryRollup } from '../Entry.js'
 import { TaskStatus } from '../TaskStatus.js'
 import { EntryStore } from './EntryStore.js'
@@ -74,7 +74,7 @@ export class TaskStatusComponent extends Component {
 	private readonly closeOutSubtasks = (e: Event) => {
 		e.stopPropagation()
 		this.menu?.hide()
-		void offerToCloseSubtasks(this.entry).catch(() => void 0)
+		void hierarchy.offerToCloseSubtasks(this.entry).catch(() => void 0)
 	}
 
 	private readonly clearPercent = (e: Event) => {

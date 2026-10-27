@@ -2,7 +2,7 @@ import { Router, type Request, type RequestHandler, type Response } from 'expres
 import { languages } from '#integrations/demo/i18n/dictionaries.js'
 import { createLogger } from '#infrastructure/logging/Logger.js'
 import { orm } from '#infrastructure/database/orm.js'
-import { isDemo } from '#infrastructure/environment.js'
+import { environment } from '#infrastructure/server/Environment.js'
 import { User } from '../User.js'
 import { type AccessToken } from '../AccessToken.js'
 import { Oidc } from './Oidc.js'
@@ -22,7 +22,7 @@ declare global {
 
 const logger = createLogger('Auth')
 
-export const oidc = isDemo ? undefined : Oidc.fromEnv()
+export const oidc = Oidc.of(environment)
 
 async function findOrSeedDefaultUser(): Promise<User> {
 	const existing = await orm.em.findOne(User, { username: User.default.username })
@@ -36,7 +36,7 @@ async function findOrSeedDefaultUser(): Promise<User> {
 	return user
 }
 
-const defaultUser = oidc && process.env.MITRA_DEV !== 'true'
+const defaultUser = oidc && !environment.developer
 	? undefined
 	: await findOrSeedDefaultUser()
 
@@ -56,7 +56,7 @@ export function cookie(req: Request, name: string): string | undefined {
 	return undefined
 }
 
-const secureCookies = /^https:/i.test(process.env.MITRA_URL ?? '')
+const secureCookies = environment.url?.protocol === 'https:'
 
 function setSessionCookie(res: Response, token: string) {
 	res.cookie(Session.cookie, token, { httpOnly: true, sameSite: 'lax', secure: secureCookies, maxAge: Session.lifetime, path: '/' })
@@ -131,7 +131,7 @@ const visitor: RequestHandler = async (req, res, next) => {
 	return next()
 }
 
-const signIn = isDemo ? visitor : oidc ? session : singleUser
+const signIn = environment.demo ? visitor : oidc ? session : singleUser
 
 /** Signs a request in by the instance's mode, unless an agent's access token already has (`accessTokenMiddleware`). */
 export const authMiddleware: RequestHandler = (req, res, next) => req.accessToken ? next() : signIn(req, res, next)

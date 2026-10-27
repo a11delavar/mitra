@@ -122,7 +122,7 @@ describe('EntrySegments', () => {
 		it('re-slices after an in-place all-day flip', () => {
 			const entry = new Entry({ start: base.add({ hours: 9 }), end: base.add({ hours: 10 }) })
 			const before = EntrySegments.for(entry.occurrences.single)
-			entry.setAllDay(true, 60)
+			entry.setAllDay(true)
 			assert.notEqual(EntrySegments.for(entry.occurrences.single)[0], before[0])
 			assert.equal(EntrySegments.for(entry.occurrences.single)[0]!.allDay, true)
 		})

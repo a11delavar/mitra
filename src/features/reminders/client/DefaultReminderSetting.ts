@@ -1,6 +1,6 @@
 import { EntryType } from '#features/entries'
 import { ChoiceSetting, setting, userStorage } from '#features/settings/client/Setting.js'
-import { getSettings } from '#infrastructure/http/Api.js'
+import { session } from '#infrastructure/http/PageSession.js'
 import { RemindersField } from './RemindersField.js'
 import { ReminderDefaults } from '../ReminderDefaults.js'
 
@@ -39,4 +39,4 @@ export class DefaultTaskReminderSetting extends ReminderSetting {
 	protected readonly storage = userStorage('defaultTaskReminderMinutes')
 }
 
-ReminderDefaults.from(() => ReminderDefaults.of(getSettings()))
+ReminderDefaults.from(() => ReminderDefaults.of(session.settings))

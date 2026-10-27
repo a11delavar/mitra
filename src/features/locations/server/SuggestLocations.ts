@@ -2,6 +2,7 @@ import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
 import { validation } from '#infrastructure/validation'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
+import { environment } from '#infrastructure/server/Environment.js'
 import { LocationSuggestion, type PhotonFeature } from '../LocationSuggestion.js'
 import { recentLocations } from './recentLocations.js'
 
@@ -39,7 +40,7 @@ export class SuggestLocations extends Operation<Parameters, Array<LocationSugges
 			return recents
 		}
 
-		const url = new URL('/api', process.env.MITRA_PHOTON_URL || 'https://photon.komoot.io')
+		const url = new URL('/api', environment.photon)
 		url.searchParams.set('q', query)
 		url.searchParams.set('limit', '6')
 		if (lang && PHOTON_LANGUAGES.has(lang)) {

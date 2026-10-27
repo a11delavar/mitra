@@ -54,7 +54,7 @@ describe('UpdateEntryOccurrence', () => {
 		}
 		const dragged = (occurrence: EntryOccurrence, allDay: boolean, start: DateTime) => {
 			const edited = occurrence.override()
-			edited.setAllDay(allDay, 60)
+			edited.setAllDay(allDay)
 			edited.moveStart(start)
 			return occurrence.recurringEntry!.occurrences.overriddenBy(edited)
 		}
@@ -81,7 +81,7 @@ describe('UpdateEntryOccurrence', () => {
 			const start = new DateTime(Date.parse('2026-11-02T06:00:00+03:30'))
 			const { created, dates } = await daily('Into the lane', { start, end: start.add({ hours: 1 }), timeZone: EntryTimeZone.parse('Asia/Tehran') })
 			const [, , third] = await dates()
-			const probe = third!.override(); probe.setAllDay(true, 60)
+			const probe = third!.override(); probe.setAllDay(true)
 			await edit(dragged(third!, true, midnight('2026-11-04')), EntryOccurrenceChangeScope.All)
 			assert.deepEqual(Object.values((await stored(created.id!))!).slice(0, 2), [utcMidnight('2026-11-02'), utcMidnight('2026-11-03')])
 			assert.deepEqual((await dates()).map(occurrence => iso(occurrence.start)), ['02', '03', '04', '05', '06'].map(day => iso(midnight(`2026-11-${day}`))))

@@ -5,7 +5,6 @@ import { EntrySegments } from '#features/entries/client/EntrySegments.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { EntryDragController } from '#features/entries/client/EntryDragController.js'
 import { Routines } from '#features/routines/client/Routines.js'
-import { HideDoneTasksSetting } from '#features/entries/client/HideDoneTasksSetting.js'
 import { Availability } from '#features/availability/client/Availability.js'
 import { CalendarDatesController, type CalendarMonth } from './CalendarDatesController.js'
 import { CalendarScrollController } from './CalendarScrollController.js'
@@ -31,7 +30,7 @@ export class Months extends Component {
 
 	private get routines(): Routines { return Routines.of(Availability.outside(this.occurrences), this.buffer.window.days, 'month') }
 
-	private get segments(): EntrySegments { return EntrySegments.of(HideDoneTasksSetting.filter(this.routines.kept), this.buffer.window.days) }
+	private get segments(): EntrySegments { return EntrySegments.of(this.routines.kept, this.buffer.window.days) }
 
 	private get columns() { return 31 + this.navigatingDate.daysInWeek - 1 }
 

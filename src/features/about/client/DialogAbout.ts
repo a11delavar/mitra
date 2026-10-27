@@ -3,7 +3,7 @@ import { DialogComponent } from '@a11d/lit-application'
 import { Localizer } from '@3mo/localization'
 import { MarkVersionSeen, ListReleases } from '#operations'
 import { activated, focusRing, scrollbar } from '#design'
-import { getMeta, getUser, isBundleStale, keepUser } from '#infrastructure/http/Api.js'
+import { session } from '#infrastructure/http/PageSession.js'
 import { type ChangelogSection } from '../Changelog.js'
 import { Release, type ReleaseFolder } from '../Release.js'
 import { ReleaseNotes } from '../ReleaseNotes.js'
@@ -18,20 +18,20 @@ const repository = 'https://github.com/a11delavar/mitra'
 @component('mitra-dialog-about')
 export class DialogAbout extends DialogComponent {
 	static get runningVersion() {
-		return getMeta()?.version ?? mitra.version
+		return session.instance.version
 	}
 
 	/** Whether the running release is news to the user, which the sidebar marks with a dot. */
 	static get hasNews() {
-		return !!getUser()?.hasMissed(DialogAbout.runningVersion)
+		return !!session.user?.hasMissed(DialogAbout.runningVersion)
 	}
 
 	/** Records the running release as seen, which takes the dot away. */
 	static markSeen() {
-		if (getUser()?.hasSeen(DialogAbout.runningVersion)) {
+		if (session.user?.hasSeen(DialogAbout.runningVersion)) {
 			return
 		}
-		keepUser(MarkVersionSeen.call({ version: DialogAbout.runningVersion }))
+		session.keepUser(MarkVersionSeen.call({ version: DialogAbout.runningVersion }))
 			.then(() => document.querySelector('mitra-sidebar')?.requestUpdate())
 			.catch(() => void 0)
 	}
@@ -66,7 +66,7 @@ export class DialogAbout extends DialogComponent {
 	}
 
 	private get meta() {
-		return getMeta()
+		return session.instance
 	}
 
 	private get version() {
@@ -395,7 +395,7 @@ export class DialogAbout extends DialogComponent {
 	}
 
 	private get updateTemplate() {
-		if (isBundleStale()) {
+		if (session.instance.stale) {
 			return html`<mitra-button class="update" variant="primary" @click=${() => location.reload()}>${t('Reload to finish updating')}</mitra-button>`
 		}
 		const update = this.meta?.update

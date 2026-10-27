@@ -1,13 +1,16 @@
 import { type EntityManager } from '@mikro-orm/core'
 import { Integration } from '#integrations'
 import { Demo } from '#integrations/demo/Demo.js'
+import { environment } from '#infrastructure/server/Environment.js'
 import { User } from '../User.js'
 import { Session } from './Session.js'
 
 /** A demo visitor's throwaway account, holding the sample calendar. */
 export class Sandbox {
 	/** Past it (`MITRA_DEMO_CAP`), opening a sandbox evicts the oldest; a visitor is never turned away. */
-	static readonly cap = Number(process.env.MITRA_DEMO_CAP) || 1000
+	static get cap() {
+		return environment.demoCap
+	}
 
 	/** A sandbox lives this long from the visit that opened it; a visitor still there gets a fresh one. */
 	static readonly lifetime = 24 * 60 * 60 * 1000

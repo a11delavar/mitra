@@ -3,7 +3,7 @@ import { fileDrop } from '@3mo/file-upload'
 import { centered, type Popover, startedInField, scrollbar } from '#design'
 import { type Source, Color } from '#features/sources'
 import { Calendars } from '#features/sources/client/Calendars.js'
-import * as Hierarchy from '#features/relations/client/Hierarchy.js'
+import { hierarchy } from '#features/relations/client/Hierarchy.js'
 import { type EntryTypeValue } from '../EntryType.js'
 import type { EntrySegment } from './EntrySegment.js'
 import { EntryStore, reportSaveError } from './EntryStore.js'
@@ -78,12 +78,12 @@ export class EntryDetailsComponent extends Component {
 
 	private readonly handleDelete = async (bypass: boolean) => {
 		const entry = this.segment!.entry
-		const scope = await Hierarchy.resolveScope(entry, 'delete', bypass)
+		const scope = await hierarchy.resolveScope(entry, 'delete', bypass)
 		if (!scope) {
 			return
 		}
 		this.close()
-		return Hierarchy.deleteScoped(entry, scope).catch(error =>
+		return hierarchy.deleteScoped(entry, scope).catch(error =>
 			console.error('Deleting the entry failed, so it was restored in the view:', error))
 	}
 

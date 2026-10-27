@@ -79,14 +79,11 @@ describe('GoogleCalendar', () => {
 	})
 
 	describe('clientParameters', () => {
-		const env = { clientId: process.env.MITRA_GOOGLE_CLIENT_ID, clientSecret: process.env.MITRA_GOOGLE_CLIENT_SECRET }
 		beforeEach(() => {
-			process.env.MITRA_GOOGLE_CLIENT_ID = 'client-id'
-			process.env.MITRA_GOOGLE_CLIENT_SECRET = 'client-secret'
+			GoogleCalendar.from(() => ({ clientId: 'client-id', clientSecret: 'client-secret' }))
 		})
 		afterEach(() => {
-			env.clientId === undefined ? delete process.env.MITRA_GOOGLE_CLIENT_ID : process.env.MITRA_GOOGLE_CLIENT_ID = env.clientId
-			env.clientSecret === undefined ? delete process.env.MITRA_GOOGLE_CLIENT_SECRET : process.env.MITRA_GOOGLE_CLIENT_SECRET = env.clientSecret
+			GoogleCalendar.from(() => undefined)
 		})
 
 		it('speaks OAuth against the fixed Google endpoint, not the per-account uri', () => {
@@ -109,7 +106,7 @@ describe('GoogleCalendar', () => {
 		})
 
 		it('fails loudly when the deployment is not configured', () => {
-			delete process.env.MITRA_GOOGLE_CLIENT_ID
+			GoogleCalendar.from(() => undefined)
 			assert.throws(() => (account() as any).clientParameters, /MITRA_GOOGLE_CLIENT_ID/)
 		})
 	})

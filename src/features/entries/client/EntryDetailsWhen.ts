@@ -8,7 +8,7 @@ import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { Entry } from '../Entry.js'
 import { EntryStore } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
-import { DefaultDurationSetting } from './DefaultDurationSetting.js'
+import { ScheduleDefaults } from '../ScheduleDefaults.js'
 
 type Moment = {
 	readonly kind: 'start' | 'end' | 'due'
@@ -77,11 +77,11 @@ export class EntryDetailsWhen extends Component {
 		if (this.entry.start) {
 			this.entry.moveStart(value)
 		} else if (timed) {
-			this.entry.scheduleAt(value, false, DefaultDurationSetting.current).fit()
+			this.entry.scheduleAt(value, false).fit()
 		} else {
 			// An estimate shorter than a day asks for hours, so the task gets a time; anything else takes the whole day.
 			const hours = !!this.entry.estimate && TimeSpan.fromMinutes(this.entry.estimate).days < 1
-			this.entry.scheduleAt(hours ? value.with({ hour: 9 }) : value, !hours, DefaultDurationSetting.current).fit()
+			this.entry.scheduleAt(hours ? ScheduleDefaults.current.timeOn(value) : value, !hours).fit()
 		}
 		this.commit()
 	}
@@ -104,7 +104,7 @@ export class EntryDetailsWhen extends Component {
 	}
 
 	private readonly toggleAllDay = () => {
-		this.entry.setAllDay(!this.entry.allDay, DefaultDurationSetting.current)
+		this.entry.setAllDay(!this.entry.allDay)
 		this.commit()
 	}
 
@@ -121,7 +121,7 @@ export class EntryDetailsWhen extends Component {
 		if (this.entry.allDay) {
 			await this.openField(() => this.endShown = true, () => this.endField)
 		} else {
-			this.entry.setEnd(this.entry.start!.add({ minutes: DefaultDurationSetting.current }))
+			this.entry.setEnd(this.entry.start!.add({ minutes: ScheduleDefaults.current.duration }))
 			this.commit()
 		}
 	}

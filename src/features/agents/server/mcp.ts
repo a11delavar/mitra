@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { NotFoundError } from '@mikro-orm/sqlite'
 import { User } from '#features/identity'
 import { orm } from '#infrastructure/database/orm.js'
-import { isDemo, isMcpEnabled } from '#infrastructure/environment.js'
+import { environment } from '#infrastructure/server/Environment.js'
 import { operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { validation, ValidationError } from '#infrastructure/validation'
 import { tool, type ToolOperationClass } from './tool.js'
@@ -81,11 +81,11 @@ function refusalOf(error: unknown): string | undefined {
 export const mcpRouter = Router()
 
 mcpRouter.all('/', async (req, res) => {
-	if (!isMcpEnabled) {
+	if (!environment.mcp) {
 		res.status(404).json({ error: 'Agents are turned off on this instance (MITRA_MCP)' })
 		return
 	}
-	if (isDemo) {
+	if (environment.demo) {
 		res.status(403).json({ error: 'Agents cannot connect to the demo' })
 		return
 	}

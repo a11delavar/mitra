@@ -6,7 +6,7 @@ import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js
 import { EntryStore, reportSaveError } from '#features/entries/client/EntryStore.js'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import '#features/entries/client/TaskStatus.js'
-import { offerFollowUps } from './Hierarchy.js'
+import { hierarchy } from './Hierarchy.js'
 
 /**
  * Another entry, named where one entry points at it: a task's status, which can be changed right here,
@@ -53,9 +53,9 @@ export class EntryLink extends Component {
 		}
 		const saved = tracked ?? target
 		await (tracked ? EntryStore.commit(tracked) : EntryStore.persistence.update(target)).catch(reportSaveError)
-		// Direct API writes bypass EntryStore.onTaskClosed, so the follow-up offers are made here.
-		if (saved.closed) {
-			offerFollowUps(saved).catch(() => void 0)
+		// A target the store does not hold is written past it, so no one listening hears it close: the follow-ups are offered here.
+		if (!tracked && saved.closed) {
+			hierarchy.offerFollowUps(saved).catch(() => void 0)
 		}
 		this.requestUpdate()
 	}

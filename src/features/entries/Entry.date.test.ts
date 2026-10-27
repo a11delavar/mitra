@@ -109,9 +109,9 @@ describe('Entry.date', () => {
 		it('when all-day turns off and on, the due becoming 17:00 of its day and then its day again', () => {
 			showIn(zone)
 			const entry = holiday({ start: midnight('2026-06-02', zone), end: midnight('2026-06-03', zone), due: midnight('2026-06-05', zone) })
-			entry.setAllDay(false, 60)
+			entry.setAllDay(false)
 			assert.deepEqual([iso(entry.start), iso(entry.end), iso(entry.due)], ['2026-06-02T13:00:00.000Z', '2026-06-02T14:00:00.000Z', '2026-06-05T21:00:00.000Z'])
-			entry.setAllDay(true, 60)
+			entry.setAllDay(true)
 			assert.deepEqual([wire(entry).start, wire(entry).end, wire(entry).due], ['2026-06-02T00:00:00.000Z', '2026-06-03T00:00:00.000Z', '2026-06-05T00:00:00.000Z'])
 		})
 	})

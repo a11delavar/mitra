@@ -4,6 +4,12 @@ import { CalDAV } from '#integrations/caldav/CalDAV.js'
 import { integration } from '#integrations'
 import { model, withheld } from '#infrastructure/model'
 
+/** The OAuth client the operator registered with Google (`MITRA_GOOGLE_CLIENT_ID`, `MITRA_GOOGLE_CLIENT_SECRET`). */
+export interface GoogleClient {
+	readonly clientId: string
+	readonly clientSecret: string
+}
+
 export interface GoogleCalendarCredentials {
 	/** Google account email. */
 	username: string
@@ -60,12 +66,19 @@ export class GoogleCalendar extends CalDAV {
 	/** Its endpoint is fixed, and discovery finds the account. */
 	override get calendarsAddress() { return undefined }
 
+	private static client: () => GoogleClient | undefined = () => undefined
+
+	/** Where the server's accounts find the OAuth client they connect with, which only the server knows. */
+	static from(client: () => GoogleClient | undefined) {
+		GoogleCalendar.client = client
+	}
+
 	override get clientParameters(): Parameters<typeof createDAVClient>[0] {
-		const clientId = process.env.MITRA_GOOGLE_CLIENT_ID
-		const clientSecret = process.env.MITRA_GOOGLE_CLIENT_SECRET
-		if (!clientId || !clientSecret) {
+		const google = GoogleCalendar.client()
+		if (!google) {
 			throw new Error('Google Calendar requires MITRA_GOOGLE_CLIENT_ID and MITRA_GOOGLE_CLIENT_SECRET to be configured')
 		}
+		const { clientId, clientSecret } = google
 		return {
 			defaultAccountType: 'caldav',
 			authMethod: 'Oauth',

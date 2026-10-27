@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { type EntityClass } from '@mikro-orm/core'
 import { orm } from '#infrastructure/database/orm.js'
 import { createLogger } from '#infrastructure/logging/Logger.js'
+import { environment } from '#infrastructure/server/Environment.js'
 import { File } from '../File.js'
 import { MimeType } from '../MimeType.js'
 import { FileTooLargeError, fileStore } from './FileStore.js'
@@ -80,7 +81,7 @@ function rangeOf(header: string | undefined, size: number): { start: number, end
 export const filesRouter = Router()
 
 filesRouter.post('/', async (req, res) => {
-	const limits = FileLimits.fromEnv()
+	const limits = FileLimits.of(environment)
 	if (!limits.uploads) {
 		return res.status(403).json({ error: 'Uploads are disabled on this instance' })
 	}

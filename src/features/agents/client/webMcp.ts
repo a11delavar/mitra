@@ -1,4 +1,4 @@
-import { getMeta } from '#infrastructure/http/Api.js'
+import { session } from '#infrastructure/http/PageSession.js'
 import { mcpAddress } from './accessTokens.js'
 
 /** What WebMCP asks of a tool (`document.modelContext`, a Chromium origin trial). */
@@ -58,7 +58,7 @@ async function request<Result>(method: string, params?: object) {
  */
 export async function offerToolsToBrowserAgents() {
 	const modelContext = (document as { modelContext?: ModelContext }).modelContext
-	if (!modelContext || getMeta()?.mcp === false || getMeta()?.demo) {
+	if (!modelContext || session.instance.mcp === false || session.instance.demo) {
 		return
 	}
 	const { tools } = await request<{ tools: ReadonlyArray<ListedTool> }>('tools/list')

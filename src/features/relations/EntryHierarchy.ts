@@ -1,9 +1,10 @@
 // By file, not the barrel: Entry imports this class, and TypeScript 7 drops the member from Entry in a file that also imports this one directly.
 import type { Entry } from '#features/entries/Entry.js'
 import type { EntryShift } from '#features/entries/EntryShift.js'
+import { TaskStatus } from '#features/entries/TaskStatus.js'
 import { RelationGraph } from './RelationGraph.js'
 import { ShiftStrategy } from './ShiftStrategy.js'
-import type { EntryPlan } from './EntryPlan.js'
+import { EntryPlan, type PlannedWrite, type SkippedEntry } from './EntryPlan.js'
 
 /**
  * Where an entry stands among the others: its subtasks and parents, what they add up to, what must finish before it and what
@@ -72,6 +73,54 @@ export class EntryHierarchy {
 			return false
 		}
 		return !this.graph.reaches('dependency', [predecessor.uid!], dependent.uid!)
+	}
+
+	/** Its subtree moved by `milliseconds`: the dated descendants, the undated ones skipped. */
+	planShift(milliseconds: number) {
+		if (!milliseconds) {
+			return EntryPlan.empty
+		}
+		const writes = new Array<PlannedWrite>()
+		const skipped = new Array<SkippedEntry>()
+		for (const descendant of this.descendants) {
+			if (!descendant.start) {
+				skipped.push({ entry: descendant, reason: 'undated' })
+				continue
+			}
+			writes.push({
+				entry: descendant,
+				mutate: (target: Entry) => {
+					target.start = target.start?.add({ milliseconds })
+					target.end = target.end?.add({ milliseconds })
+				},
+			})
+		}
+		return EntryPlan.of({ writes, skipped })
+	}
+
+	/** Its subtree deleted, deepest first. */
+	planDeletion() {
+		return EntryPlan.of({ deletions: [...this.descendants].reverse() })
+	}
+
+	/** Its open subtasks closed as `status`, as closing it offers. */
+	planClosing(status: TaskStatus) {
+		return EntryPlan.of({
+			writes: this.children.filter(child => child.open).map(child => ({
+				entry: child,
+				mutate: (target: Entry) => { target.status = status },
+			})),
+		})
+	}
+
+	/** The parents completing it completes, done, deepest first so each state between stays valid. */
+	planCompletion() {
+		return EntryPlan.of({
+			writes: this.completedAncestors.map(parent => ({
+				entry: parent,
+				mutate: (target: Entry) => { target.status = TaskStatus.Done },
+			})),
+		})
 	}
 
 	/** The distinct ways its dependents could follow `change`, none where every strategy agrees. */

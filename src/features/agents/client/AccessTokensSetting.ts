@@ -1,6 +1,6 @@
 import { html } from '@a11d/lit'
 import { Setting, setting, type SettingStorage } from '#features/settings/client/Setting.js'
-import { getMeta } from '#infrastructure/http/Api.js'
+import { session } from '#infrastructure/http/PageSession.js'
 import { accessTokenIssued } from './accessTokens.js'
 import { DialogNewAccessToken } from './DialogNewAccessToken.js'
 import { DialogAccessToken } from './DialogAccessToken.js'
@@ -18,7 +18,7 @@ export class AccessTokensSetting extends Setting<undefined> {
 	protected readonly storage: SettingStorage<undefined> = { read: () => undefined, write: () => undefined }
 
 	override get applies() {
-		const meta = getMeta()
+		const meta = session.instance
 		return meta?.mcp !== false && !meta?.demo && !!meta?.signIn
 	}
 

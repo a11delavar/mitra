@@ -25,10 +25,7 @@ export class HideDoneTasksSetting extends ToggleSetting {
 
 	private static readonly filtered = new WeakMap<ReadonlyArray<EntryOccurrence>, { hidden: boolean, result: ReadonlyArray<EntryOccurrence> }>()
 
-	/**
-	 * Filters occurrences for display, memoized on input array identity.
-	 * Returns input untouched when lens is disabled.
-	 */
+	/** Filters occurrences for display, memoized on input array identity, and untouched while the lens is off. */
 	static filter(occurrences: ReadonlyArray<EntryOccurrence>, hidden = HideDoneTasksSetting.current): ReadonlyArray<EntryOccurrence> {
 		const cached = HideDoneTasksSetting.filtered.get(occurrences)
 		if (cached?.hidden === hidden) {
@@ -57,3 +54,5 @@ export class HideDoneTasksSetting extends ToggleSetting {
 		},
 	}
 }
+
+EntryStore.showing(occurrences => HideDoneTasksSetting.filter(occurrences))

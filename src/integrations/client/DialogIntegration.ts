@@ -16,7 +16,8 @@ import icsLogo from '#integrations/ics/logo.svg'
 import notionLogo from '#integrations/notion/logo.svg'
 import tempoLogo from '#integrations/tempo/logo.svg'
 import todoistLogo from '#integrations/todoist/logo.svg'
-import { connectGoogle, getMeta } from '#infrastructure/http/Api.js'
+import { connectGoogle } from '#infrastructure/http/Api.js'
+import { session } from '#infrastructure/http/PageSession.js'
 
 const logos: Record<string, string> = {
 	mitra: mitraLogo,
@@ -54,7 +55,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 	private get offeredClasses(): Array<IntegrationClass> {
 		const connected = new Set(Calendars.integrations.map(integration => integration.type))
 		return integrationClasses().filter(integrationClass =>
-			(!integrationClass.developmentOnly || !!getMeta()?.development)
+			(!integrationClass.developmentOnly || !!session.instance.development)
 			&& !(integrationClass.onePerUser && connected.has(integrationClass.type)))
 	}
 

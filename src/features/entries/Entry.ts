@@ -12,6 +12,7 @@ import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import type { OwnedField } from '#integrations'
 import { model, Entity, identity, equality, entity, primaryKey, property, enum as enumType, unique, manyToOne, children, include } from '#infrastructure/model'
 import { type Validatable, ValidationError } from '#infrastructure/validation'
+import { ScheduleDefaults } from './ScheduleDefaults.js'
 import { EntryType, type EntryTypeValue } from './EntryType.js'
 import { TaskStatus } from './TaskStatus.js'
 import { Transparency } from './Transparency.js'
@@ -556,13 +557,13 @@ export class Entry extends Entity implements Validatable {
 		}
 	}
 
-	/** Schedules an unscheduled entry for as long as its estimate, else `durationMinutes` (a day when all-day). */
-	scheduleAt(start: DateTime, allDay: boolean, durationMinutes: number) {
-		this.setAllDay(allDay, durationMinutes)
+	/** Schedules an unscheduled entry for as long as its estimate, else the default length (a day when all-day). */
+	scheduleAt(start: DateTime, allDay: boolean) {
+		this.setAllDay(allDay)
 		this.start = allDay ? start.dayStart : start
 		this.end = allDay
 			? this.start.add({ days: Math.max(1, Math.round(TimeSpan.fromMinutes(this.estimate ?? 0).days)) })
-			: this.start.add({ minutes: this.estimate ?? durationMinutes })
+			: this.start.add({ minutes: this.estimate ?? ScheduleDefaults.current.duration })
 		this.estimate = undefined
 		return this
 	}
@@ -734,19 +735,20 @@ export class Entry extends Entity implements Validatable {
 	}
 
 	/** Switches every date of the entry between days and times. A due keeps its day, and turns timed at the end of the working day. */
-	setAllDay(allDay: boolean, durationMinutes: number) {
+	setAllDay(allDay: boolean) {
 		if (allDay === this.allDay) {
 			return
 		}
+		const defaults = ScheduleDefaults.current
 		if (this.due) {
-			this.due = allDay ? this.due.dayStart : this.due.dayStart.with({ hour: 17 })
+			this.due = allDay ? this.due.dayStart : defaults.dueOn(this.due)
 		}
 		this.allDay = allDay
 		if (!this.start) {
 			return
 		}
 		if (!this.end) {
-			this.start = allDay ? this.start.dayStart : this.start.dayStart.with({ hour: 9 })
+			this.start = allDay ? this.start.dayStart : defaults.timeOn(this.start)
 			return
 		}
 		if (allDay) {
@@ -755,9 +757,9 @@ export class Entry extends Entity implements Validatable {
 			this.start = firstDay
 			this.end = (lastDay.valueOf() > firstDay.valueOf() ? lastDay : firstDay).add({ days: 1 })
 		} else {
-			const at = this.start.dayStart.with({ hour: 9 })
+			const at = defaults.timeOn(this.start)
 			this.start = at
-			this.end = at.add({ minutes: durationMinutes })
+			this.end = at.add({ minutes: defaults.duration })
 		}
 	}
 }

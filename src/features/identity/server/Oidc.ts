@@ -1,5 +1,6 @@
 import * as client from 'openid-client'
 import { createLogger } from '#infrastructure/logging/Logger.js'
+import type { Environment } from '#infrastructure/server/Environment.js'
 import { type IdentityClaims } from '../Identity.js'
 const logger = createLogger('OIDC')
 
@@ -15,27 +16,9 @@ export interface OidcOptions {
  * OpenID Connect relying party client handling Authorization Code + PKCE flows.
  */
 export class Oidc {
-	/** Creates an OIDC client from environment variables, returning undefined in single-user mode. */
-	static fromEnv(env: NodeJS.ProcessEnv = process.env): Oidc | undefined {
-		const issuer = env.MITRA_OIDC_ISSUER
-		if (!issuer) {
-			return undefined
-		}
-		const clientId = env.MITRA_OIDC_CLIENT_ID
-		const url = env.MITRA_URL
-		if (!clientId) {
-			throw new Error('MITRA_OIDC_ISSUER is set but MITRA_OIDC_CLIENT_ID is missing')
-		}
-		if (!url) {
-			throw new Error('MITRA_OIDC_ISSUER is set but MITRA_URL (the app\'s external URL, e.g. https://mitra.example.com) is missing')
-		}
-		return new Oidc({
-			issuer,
-			clientId,
-			clientSecret: env.MITRA_OIDC_CLIENT_SECRET || undefined,
-			baseUrl: new URL(url),
-			scope: env.MITRA_OIDC_SCOPES || 'openid profile email',
-		})
+	/** The client people sign in through, none in single-user mode or a demo. */
+	static of({ oidc, url }: Environment) {
+		return oidc && new Oidc({ ...oidc, baseUrl: url! })
 	}
 
 	constructor(readonly options: OidcOptions) { }

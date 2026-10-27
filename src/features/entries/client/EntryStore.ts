@@ -68,6 +68,18 @@ export class EntryStore extends Controller {
 		return this.composed ??= this.compose()
 	}
 
+	/** What the surfaces draw of the occurrences: every one, but what a registered lens keeps out ({@link EntryStore.showing}). */
+	static get shown(): ReadonlyArray<EntryOccurrence> {
+		return this.lens(this.occurrences)
+	}
+
+	private static lens = (occurrences: ReadonlyArray<EntryOccurrence>) => occurrences
+
+	/** Registers what keeps occurrences out of every surface, as the hide-done setting does; search and rollups still see them. */
+	static showing(lens: (occurrences: ReadonlyArray<EntryOccurrence>) => ReadonlyArray<EntryOccurrence>) {
+		this.lens = lens
+	}
+
 	/** The relations among every entry held, which each entry's hierarchy reads; rebuilt once the entries change. */
 	static get graph(): RelationGraph {
 		const entries = this.entries
@@ -168,8 +180,13 @@ export class EntryStore extends Controller {
 	static resolveScope: (entry: Entry, intent: 'edit' | 'delete') => Promise<EntryOccurrenceChangeScope | undefined> =
 		() => Promise.resolve(EntryOccurrenceChangeScope.All)
 
-	/** Post-save hook fired after local task completion/cancellation. */
-	static onTaskClosed: (entry: Entry) => void = () => void 0
+	private static readonly closings = new Set<(entry: Entry) => void>()
+
+	/** Calls `listener` once a task the store saves closes, after the server took it; answers how to stop. */
+	static whenTaskCloses(listener: (entry: Entry) => void) {
+		this.closings.add(listener)
+		return () => void this.closings.delete(listener)
+	}
 
 	/** Persists local changes, chaining in-flight updates and resolving recurrence scope. */
 	static commit(entry: Entry, scope?: EntryOccurrenceChangeScope): Promise<void> {
@@ -237,7 +254,7 @@ export class EntryStore extends Controller {
 			}
 			// Successful transition into closed state; runs outside finally so failed saves never prompt.
 			if (!wasClosed && entry.closed && this.tracks(entry)) {
-				this.onTaskClosed(entry)
+				this.closings.forEach(listener => listener(entry))
 			}
 		})()
 		this.inflight.set(entry, run)
@@ -627,6 +644,10 @@ export class EntryStore extends Controller {
 		return EntryStore.occurrences
 	}
 
+	get shown() {
+		return EntryStore.shown
+	}
+
 	isDragging(entry: Entry) {
 		return EntryStore.isDragging(entry)
 	}
@@ -649,7 +670,7 @@ export class EntryStore extends Controller {
 	}
 
 	/** What `shows` gave when the host last rendered. */
-	private shown?: unknown
+	private lastShown?: unknown
 
 	private movedBy(entries: ReadonlyArray<Entry | undefined>) {
 		const { entry, shows } = this.options
@@ -657,11 +678,11 @@ export class EntryStore extends Controller {
 			const own = entry()
 			return !!own && entries.includes(own)
 		}
-		return !shows || shows() !== this.shown
+		return !shows || shows() !== this.lastShown
 	}
 
 	override hostUpdate() {
-		this.shown = this.options.shows?.()
+		this.lastShown = this.options.shows?.()
 	}
 
 	override hostConnected() {

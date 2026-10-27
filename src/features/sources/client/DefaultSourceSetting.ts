@@ -1,7 +1,7 @@
 import { html } from '@a11d/lit'
 import { SetDefaultCalendar } from '#operations'
 import { ChoiceSetting, setting, type SettingStorage } from '#features/settings/client/Setting.js'
-import { keepUser } from '#infrastructure/http/Api.js'
+import { session } from '#infrastructure/http/PageSession.js'
 import { Calendars } from './Calendars.js'
 
 /**
@@ -20,7 +20,7 @@ export class DefaultSourceSetting extends ChoiceSetting<string> {
 	protected readonly storage: SettingStorage<string> = {
 		read: () => Calendars.defaultId,
 		write: async value => {
-			await keepUser(SetDefaultCalendar.call({ sourceId: value ?? null }))
+			await session.keepUser(SetDefaultCalendar.call({ sourceId: value ?? null }))
 			document.querySelector('mitra-sidebar')?.requestUpdate()
 		},
 	}

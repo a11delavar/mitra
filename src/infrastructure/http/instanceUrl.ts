@@ -1,4 +1,5 @@
 import { type RequestHandler } from 'express'
+import { environment } from '../server/Environment.js'
 
 /**
  * The instance's public origin, needed wherever mitra hands its own URL to somebody else (an
@@ -7,20 +8,8 @@ import { type RequestHandler } from 'express'
  */
 let observed: string | undefined
 
-function configured(): string | undefined {
-	const url = process.env.MITRA_URL?.trim()
-	if (!url) {
-		return undefined
-	}
-	try {
-		return new URL(url).origin
-	} catch {
-		return undefined
-	}
-}
-
 export function instanceOrigin(): string | undefined {
-	return configured() ?? observed
+	return environment.url?.origin ?? observed
 }
 
 /** Remembers the address requests arrive at, so background writes can still build absolute URLs. */

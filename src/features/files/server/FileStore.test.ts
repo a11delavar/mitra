@@ -4,6 +4,7 @@ import { mkdtemp, rm, readdir } from 'node:fs/promises'
 import { Readable } from 'node:stream'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { Environment } from '#infrastructure/server/Environment.js'
 import { FileTooLargeError, FileStore } from './FileStore.js'
 import { FileLimits } from './FileLimits.js'
 
@@ -60,21 +61,21 @@ describe('FileStore', () => {
 
 describe('FileLimits', () => {
 	it('reads byte sizes with the suffixes the docs advertise', () => {
-		assert.equal(FileLimits.bytesOf('25M'), 25 * 1024 * 1024)
-		assert.equal(FileLimits.bytesOf('512k'), 512 * 1024)
-		assert.equal(FileLimits.bytesOf('1G'), 1024 ** 3)
-		assert.equal(FileLimits.bytesOf('2048'), 2048)
-		assert.equal(FileLimits.bytesOf('nonsense'), undefined)
-		assert.equal(FileLimits.bytesOf(undefined), undefined)
+		assert.equal(Environment.bytesOf('25M'), 25 * 1024 * 1024)
+		assert.equal(Environment.bytesOf('512k'), 512 * 1024)
+		assert.equal(Environment.bytesOf('1G'), 1024 ** 3)
+		assert.equal(Environment.bytesOf('2048'), 2048)
+		assert.equal(Environment.bytesOf('nonsense'), undefined)
+		assert.equal(Environment.bytesOf(undefined), undefined)
 	})
 
 	it('defaults to 25 MB and no quota', () => {
-		assert.deepEqual(FileLimits.fromEnv({}).toJSON(), { maxSize: 25 * 1024 * 1024 })
-		assert.deepEqual(FileLimits.fromEnv({ MITRA_FILE_MAX_SIZE: '2M', MITRA_FILE_QUOTA: '20M' }).toJSON(), { maxSize: 2 * 1024 * 1024, quota: 20 * 1024 * 1024 })
+		assert.deepEqual(FileLimits.of(new Environment({})).toJSON(), { maxSize: 25 * 1024 * 1024 })
+		assert.deepEqual(FileLimits.of(new Environment({ MITRA_FILE_MAX_SIZE: '2M', MITRA_FILE_QUOTA: '20M' })).toJSON(), { maxSize: 2 * 1024 * 1024, quota: 20 * 1024 * 1024 })
 	})
 
 	it('takes no uploads on a public demo, whatever the size limit says', () => {
-		const demo = FileLimits.fromEnv({ MITRA_DEMO: 'true', MITRA_FILE_MAX_SIZE: '2M' })
+		const demo = FileLimits.of(new Environment({ MITRA_DEMO: 'true', MITRA_FILE_MAX_SIZE: '2M' }))
 		assert.equal(demo.maxSize, 0)
 		assert.equal(demo.uploads, false)
 	})

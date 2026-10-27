@@ -2,7 +2,7 @@ import { html, live, type HTMLTemplateResult } from '@a11d/lit'
 import { Localizer } from '@3mo/localization'
 import { SaveSettings } from '#operations'
 import { termsMatch } from '#features/commands/termsMatch.js'
-import { getSettings, keepUser } from '#infrastructure/http/Api.js'
+import { session } from '#infrastructure/http/PageSession.js'
 import { type UserSettings } from '../UserSettings.js'
 import { SettingsStore } from './SettingsStore.js'
 
@@ -32,15 +32,15 @@ export interface SettingStorage<T> {
 /** Per-user server storage in `User.settings` JSON column. */
 export function userStorage<K extends keyof UserSettings>(key: K): SettingStorage<Exclude<UserSettings[K], undefined>> {
 	return {
-		read: () => getSettings()[key] as Exclude<UserSettings[K], undefined> | undefined,
+		read: () => session.settings[key] as Exclude<UserSettings[K], undefined> | undefined,
 		async write(value) {
-			const settings = { ...getSettings() }
+			const settings = { ...session.settings }
 			if (value === undefined) {
 				delete settings[key]
 			} else {
 				settings[key] = value
 			}
-			await keepUser(SaveSettings.call({ settings }))
+			await session.keepUser(SaveSettings.call({ settings }))
 		},
 	}
 }

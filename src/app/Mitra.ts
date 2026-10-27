@@ -56,19 +56,19 @@ import { EntryDetailsWhen } from '#features/entries/client/EntryDetailsWhen.js'
 import { EntryDetailsSharing } from '#features/entries/client/EntryDetailsSharing.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { ScrollDeviceController } from '#features/calendar/client/ScrollDeviceController.js'
-import { installHierarchyPrompts, resolveRecurrenceScope } from '#features/relations/client/Hierarchy.js'
+import { hierarchy } from '#features/relations/client/Hierarchy.js'
 import { DialogIntegration } from '#integrations/client/DialogIntegration.js'
 import { IcsSubscription } from '#integrations/ics/IcsSubscription.js'
 import '#integrations/demo/client/language.js'
-import { fetchMeta, fetchUser, getUser, instanceName } from '#infrastructure/http/Api.js'
+import { session } from '#infrastructure/http/PageSession.js'
 import { LocalePreview } from '#infrastructure/i18n/LocalePreview.js'
 import { LocaleSetting } from '#infrastructure/i18n/LocaleSetting.js'
 import { Sidebar } from './Sidebar.js'
 import { consumeSubscribeParameter, observeFileDrops, observeLaunches } from './launch.js'
 import { syncThemeColor } from './pwa.js'
 
-EntryStore.resolveScope = resolveRecurrenceScope
-installHierarchyPrompts()
+EntryStore.resolveScope = (entry, intent) => hierarchy.resolveRecurrenceScope(entry, intent)
+hierarchy.listen()
 
 @application()
 @component('mitra-application')
@@ -88,7 +88,7 @@ export class Mitra extends Application {
 		Mitra.trackFocusModality()
 		const pendingIntegrationId = Mitra.consumePendingIntegrationParameter()
 		const subscribeUrl = consumeSubscribeParameter()
-		await Promise.all([Calendars.fetch(), fetchUser(), fetchMeta()])
+		await Promise.all([Calendars.fetch(), session.fetchUser(), session.fetchInstance()])
 		// After the integrations, so a linked language switches the sample calendar too.
 		LocaleSetting.followAccount()
 		LocaleSetting.rememberLinkedLanguage()
@@ -100,7 +100,7 @@ export class Mitra extends Application {
 		Localizer.locales.change.subscribe(() => document.title = this.documentTitle)
 		syncPushSubscription()
 		syncThemeColor()
-		if (getUser() && !getUser()?.lastSeenVersion) {
+		if (session.user && !session.user?.lastSeenVersion) {
 			DialogAbout.markSeen()
 		}
 		await super.initialized()
@@ -148,7 +148,7 @@ export class Mitra extends Application {
 	}
 
 	protected override get documentTitle() {
-		return [this.pageHeading, instanceName()].filter(Boolean).join(' | ')
+		return [this.pageHeading, session.instance.displayName].filter(Boolean).join(' | ')
 	}
 
 	private static trackFocusModality() {

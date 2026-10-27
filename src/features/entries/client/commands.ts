@@ -2,6 +2,7 @@ import { DateTime } from '@3mo/date-time'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import { command, Command } from '#features/commands/Command.js'
 import { EntryType } from '../EntryType.js'
+import { ScheduleDefaults } from '../ScheduleDefaults.js'
 import { EntryStore } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 
@@ -28,7 +29,7 @@ export class CreateEntry extends Command {
 			calendar.setView('week')
 		}
 		calendar.navigatingDate = now
-		const draft = source.draft({ type: timelineTask ? EntryType.Task : source.defaultEntryType, start, end: start.add({ hours: 1 }), allDay: false })
+		const draft = source.draft({ type: timelineTask ? EntryType.Task : source.defaultEntryType, start, end: start.add({ minutes: ScheduleDefaults.current.duration }), allDay: false })
 		EntryStore.upsertDraft(draft)
 		EntryEditorIntent.openDraft(draft)
 	}

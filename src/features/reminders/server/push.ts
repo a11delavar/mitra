@@ -2,6 +2,7 @@ import webpush from 'web-push'
 import { createLogger } from '#infrastructure/logging/Logger.js'
 import { orm } from '#infrastructure/database/orm.js'
 import { State } from '#infrastructure/database/State.js'
+import { environment } from '#infrastructure/server/Environment.js'
 import { NotificationSubscription } from '../NotificationSubscription.js'
 import type { ReminderNotification } from '../ReminderNotification.js'
 
@@ -24,7 +25,7 @@ async function vapidKeys(): Promise<VapidKeys> {
 const vapid = await vapidKeys()
 
 export const vapidPublicKey = vapid.publicKey
-webpush.setVapidDetails(process.env.MITRA_VAPID_SUBJECT || 'mailto:mitra@localhost', vapid.publicKey, vapid.privateKey)
+webpush.setVapidDetails(environment.vapidSubject, vapid.publicKey, vapid.privateKey)
 
 /** Renders the notification for each device the user registered, in that device's locale and zone. */
 export async function sendTo(userId: string, notification: ReminderNotification): Promise<void> {

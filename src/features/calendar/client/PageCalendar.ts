@@ -568,35 +568,35 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 						${choose(this.view, [
 							['week', () => html`
 								<mitra-days
-									.occurrences=${this.store.occurrences}
+									.occurrences=${this.store.shown}
 									.navigatingDate=${bind(this, 'navigatingDate', { event: 'navigate' })}
 									.stepping=${this.stepping}
 								></mitra-days>
 							`],
 							['month', () => html`
 								<mitra-weeks
-									.occurrences=${this.store.occurrences}
+									.occurrences=${this.store.shown}
 									.navigatingDate=${bind(this, 'navigatingDate', { event: 'navigate' })}
 									@switchToWeek=${() => this.setView('week')}
 								></mitra-weeks>
 							`],
 							['year', () => html`
 								<mitra-months
-									.occurrences=${this.store.occurrences}
+									.occurrences=${this.store.shown}
 									.navigatingDate=${bind(this, 'navigatingDate', { event: 'navigate' })}
 									@switchToMonth=${() => this.setView('month')}
 								></mitra-months>
 							`],
 							['timeline', () => html`
 								<mitra-timeline
-									.occurrences=${this.store.occurrences}
+									.occurrences=${this.store.shown}
 									.navigatingDate=${bind(this, 'navigatingDate', { event: 'navigate' })}
 									.stepping=${this.stepping}
 								></mitra-timeline>
 							`],
 							['table', () => html`
 								<mitra-table
-									.occurrences=${this.store.occurrences}
+									.occurrences=${this.store.shown}
 									.navigatingDate=${this.navigatingDate}
 									@windowChange=${() => this.requestUpdate()}
 								></mitra-table>

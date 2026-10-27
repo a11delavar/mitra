@@ -8,7 +8,6 @@ import type { EntryOccurrence } from '#features/recurrence'
 import { EntrySegments } from '#features/entries/client/EntrySegments.js'
 import { type EntrySegment } from '#features/entries/client/EntrySegment.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
-import { HideDoneTasksSetting } from '#features/entries/client/HideDoneTasksSetting.js'
 import { Availability } from '#features/availability/client/Availability.js'
 import { EntryConnections, type SegmentPlacement } from '#features/relations/client/EntryConnections.js'
 import { EntryDragController } from '#features/entries/client/EntryDragController.js'
@@ -73,7 +72,7 @@ export class Days extends Component {
 	protected readonly entryDrag = new EntryDragController(this)
 	protected readonly density = new DayDensityController(this)
 	protected readonly zoneLane: TimeZoneLaneController = new TimeZoneLaneController(this, settled => void this.scrolling.anchor().then(() => settled && this.updateLaneHeight()))
-	private get segments() { return EntrySegments.of(HideDoneTasksSetting.filter(Availability.outside(this.occurrences)), this.dates.window.days) }
+	private get segments() { return EntrySegments.of(Availability.outside(this.occurrences), this.dates.window.days) }
 
 	/** `undefined` is the anchor, here, which comes last. */
 	private get timeZoneColumns(): Array<UserTimeZone | undefined> {

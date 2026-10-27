@@ -1,158 +1,117 @@
-import { type EntryShift, type Entry, TaskStatus } from '#features/entries'
+import { type EntryShift, type Entry } from '#features/entries'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { DialogEntryScope, type EntryScope } from '#features/entries/client/DialogEntryScope.js'
 import { EntryOccurrenceChangeScope } from '#features/recurrence'
 import { type ShiftStrategy } from '../ShiftStrategy.js'
-import { EntryPlan, type PlannedWrite, type SkippedEntry } from '../EntryPlan.js'
+import { EntryPlan } from '../EntryPlan.js'
 import { DialogCompleteParent } from './DialogCompleteParent.js'
 import { DialogCloseSubtasks } from './DialogCloseSubtasks.js'
 
 /**
- * Hierarchy actions and prompt workflows. Computations use {@link Relations} and writes execute via {@link EntryStore.applyPlan}.
+ * What a gesture on an entry asks and pulls along in the browser: the scope it reaches across its series, subtree and
+ * dependents, and the follow-ups offered once a task closes. The plans are the entry's own (`entry.hierarchy`); this asks
+ * about them and applies them through the store.
  */
+export class Hierarchy {
+	/** How many plans of its own are being applied, so the tasks they close offer nothing again. */
+	private applying = 0
 
-/**
- * Resolves gesture scope across recurrence, hierarchy, and dependency axes.
- */
-export function resolveScope(entry: Entry, intent: 'edit' | 'move' | 'delete', bypass = false, hasSubtaskAction = true, change?: EntryShift): Promise<EntryScope | undefined> {
-	const series = !!entry.recurringEntryId
-	const subtasks = hasSubtaskAction && (intent === 'delete' || intent === 'move') ? entry.hierarchy.descendants.length : 0
-	const shifts = change && intent !== 'delete' ? entry.hierarchy.shiftOptions(change) : []
-	if (bypass || (!series && !subtasks && shifts.length < 2)) {
-		return Promise.resolve({ recurrence: series ? EntryOccurrenceChangeScope.This : undefined, subtasks: false })
-	}
-	return new DialogEntryScope({ entry, intent, series, subtasks, shifts }).confirm().catch(() => undefined)
-}
+	/** The entries whose follow-ups are being offered, so a second closing asks no second time. */
+	private readonly offering = new Set<string>()
 
-/**
- * Applies shift strategy to downstream entries, excluding entries already modified.
- */
-export function shiftDependents(change: EntryShift, strategy: ShiftStrategy, already = EntryPlan.empty) {
-	const plan = strategy.plan(EntryStore.graph, change).excluding(already)
-	return plan.isEmpty ? Promise.resolve(undefined) : EntryStore.applyPlan(plan)
-}
-
-// --- Follow-up offers ---------------------------------------------------------------------------------
-
-/** Depth of active plan application, preventing recursive follow-up prompts. */
-let applying = 0
-
-/** Set of entry IDs currently prompting to avoid duplicate dialogs. */
-const offering = new Set<string>()
-
-const targetIdOf = (entry: Entry) => entry.recurringEntryId ?? entry.id
-
-/** Prompts follow-up actions (subtask closure downwards, then parent completion upwards) when a task is closed. */
-export async function offerFollowUps(entry: Entry) {
-	const id = targetIdOf(entry)
-	if (!id || !entry.type.isTask || offering.has(id)) {
-		return
-	}
-	offering.add(id)
-	try {
-		// Downwards first so parent prompts don't query a tree in the middle of resolving.
-		await offerToCloseSubtasks(entry)
-		await offerToCompleteParents(entry)
-	} finally {
-		offering.delete(id)
-	}
-}
-
-/** Prompts to close remaining open direct subtasks when a parent task is closed. */
-export async function offerToCloseSubtasks(entry: Entry) {
-	const outstanding = entry.hierarchy.children.filter(child => child.open)
-	if (!outstanding.length) {
-		return
-	}
-	const closure = await new DialogCloseSubtasks({ entry, outstanding: outstanding.length }).confirm().catch(() => undefined)
-	if (!closure) {
-		return
-	}
-	await run(EntryPlan.of({
-		writes: outstanding.map(child => ({
-			entry: child,
-			mutate: (target: Entry) => { target.status = closure },
-		})),
-	}))
-}
-
-/** Prompts to complete ancestor tasks when completing the final subtask resolves them. */
-async function offerToCompleteParents(closed: Entry) {
-	const parents = closed.hierarchy.completedAncestors
-	if (!parents.length) {
-		return
-	}
-	if (!await new DialogCompleteParent({ parents }).confirm().catch(() => undefined)) {
-		return
-	}
-	await run(EntryPlan.of({
-		// Deepest first so intermediate states remain valid.
-		writes: parents.map(parent => ({
-			entry: parent,
-			mutate: (target: Entry) => { target.status = TaskStatus.Done },
-		})),
-	}))
-}
-
-/** Executes an offer's EntryPlan with prompt re-entrancy tracking. */
-async function run(plan: EntryPlan) {
-	applying++
-	try {
-		return await EntryStore.applyPlan(plan)
-	} finally {
-		applying--
-	}
-}
-
-// --- Hierarchy-scoped gestures ------------------------------------------------------------------------
-
-/** Deletes an entry and optionally its subtree in deepest-first order. */
-export async function deleteScoped(entry: Entry, scope: EntryScope) {
-	if (scope.subtasks) {
-		await EntryStore.applyPlan(EntryPlan.of({ deletions: [...entry.hierarchy.descendants].reverse() }))
-	}
-	return EntryStore.delete(entry, scope.recurrence)
-}
-
-/** Shifts dated subtree entries by time delta. Undated subtasks are recorded as skipped. Answers the
- * plan it applied, so a following consequence of the same gesture can leave those entries alone. */
-export async function shiftSubtree(entry: Entry, deltaMs: number): Promise<EntryPlan> {
-	if (!deltaMs) {
-		return EntryPlan.empty
-	}
-	const writes = new Array<PlannedWrite>()
-	const skipped = new Array<SkippedEntry>()
-	for (const descendant of entry.hierarchy.descendants) {
-		if (!descendant.start) {
-			skipped.push({ entry: descendant, reason: 'undated' })
-			continue
-		}
-		writes.push({
-			entry: descendant,
-			mutate: (target: Entry) => {
-				target.start = target.start?.add({ milliseconds: deltaMs })
-				target.end = target.end?.add({ milliseconds: deltaMs })
-			},
+	/** Offers the follow-ups whenever a task the store saves closes; answers how to stop. */
+	listen() {
+		return EntryStore.whenTaskCloses(entry => {
+			if (this.applying === 0) {
+				void this.offerFollowUps(entry).catch(() => void 0)
+			}
 		})
 	}
-	const plan = EntryPlan.of({ writes, skipped })
-	await EntryStore.applyPlan(plan)
-	return plan
-}
 
-/** Injects hierarchy follow-up prompts into EntryStore task completion lifecycle. */
-export function installHierarchyPrompts() {
-	EntryStore.onTaskClosed = entry => {
-		if (applying === 0) {
-			void offerFollowUps(entry).catch(() => void 0)
+	/** Resolves gesture scope across recurrence, hierarchy, and dependency axes. */
+	resolveScope(entry: Entry, intent: 'edit' | 'move' | 'delete', bypass = false, hasSubtaskAction = true, change?: EntryShift): Promise<EntryScope | undefined> {
+		const series = !!entry.recurringEntryId
+		const subtasks = hasSubtaskAction && (intent === 'delete' || intent === 'move') ? entry.hierarchy.descendants.length : 0
+		const shifts = change && intent !== 'delete' ? entry.hierarchy.shiftOptions(change) : []
+		if (bypass || (!series && !subtasks && shifts.length < 2)) {
+			return Promise.resolve({ recurrence: series ? EntryOccurrenceChangeScope.This : undefined, subtasks: false })
+		}
+		return new DialogEntryScope({ entry, intent, series, subtasks, shifts }).confirm().catch(() => undefined)
+	}
+
+	/** Resolves recurrence scope without hierarchy options for single-entry mutations. */
+	resolveRecurrenceScope(entry: Entry, intent: 'edit' | 'delete'): Promise<EntryOccurrenceChangeScope | undefined> {
+		return new DialogEntryScope({ entry, intent, series: true, subtasks: 0 })
+			.confirm()
+			.catch(() => undefined)
+			.then(scope => scope?.recurrence)
+	}
+
+	/** Applies shift strategy to downstream entries, excluding entries already modified. */
+	shiftDependents(change: EntryShift, strategy: ShiftStrategy, already = EntryPlan.empty) {
+		const plan = strategy.plan(EntryStore.graph, change).excluding(already)
+		return plan.isEmpty ? Promise.resolve(undefined) : EntryStore.applyPlan(plan)
+	}
+
+	/** Moves the entry's dated subtree by `milliseconds`, answering the plan applied, so a following consequence of the same gesture can leave those entries alone. */
+	async shiftSubtree(entry: Entry, milliseconds: number) {
+		const plan = entry.hierarchy.planShift(milliseconds)
+		await EntryStore.applyPlan(plan)
+		return plan
+	}
+
+	/** Deletes an entry, and its subtree first where the scope reaches it. */
+	async deleteScoped(entry: Entry, scope: EntryScope) {
+		if (scope.subtasks) {
+			await EntryStore.applyPlan(entry.hierarchy.planDeletion())
+		}
+		return EntryStore.delete(entry, scope.recurrence)
+	}
+
+	/** Offers what closing a task leads to: closing its open subtasks, then completing the parents it completes. */
+	async offerFollowUps(entry: Entry) {
+		const id = entry.recurringEntryId ?? entry.id
+		if (!id || !entry.type.isTask || this.offering.has(id)) {
+			return
+		}
+		this.offering.add(id)
+		try {
+			// Downwards first, so the parents' offer reads a tree no longer changing.
+			await this.offerToCloseSubtasks(entry)
+			await this.offerToCompleteParents(entry)
+		} finally {
+			this.offering.delete(id)
+		}
+	}
+
+	/** Offers to close the open subtasks of a closed task. */
+	async offerToCloseSubtasks(entry: Entry) {
+		const outstanding = entry.hierarchy.children.filter(child => child.open).length
+		if (!outstanding) {
+			return
+		}
+		const status = await new DialogCloseSubtasks({ entry, outstanding }).confirm().catch(() => undefined)
+		if (status) {
+			await this.apply(entry.hierarchy.planClosing(status))
+		}
+	}
+
+	/** Offers to complete the parents that completing this subtask completes. */
+	private async offerToCompleteParents(closed: Entry) {
+		const parents = closed.hierarchy.completedAncestors
+		if (parents.length && await new DialogCompleteParent({ parents }).confirm().catch(() => undefined)) {
+			await this.apply(closed.hierarchy.planCompletion())
+		}
+	}
+
+	private async apply(plan: EntryPlan) {
+		this.applying++
+		try {
+			return await EntryStore.applyPlan(plan)
+		} finally {
+			this.applying--
 		}
 	}
 }
 
-/** Resolves recurrence scope without hierarchy options for single-entry mutations. */
-export function resolveRecurrenceScope(entry: Entry, intent: 'edit' | 'delete'): Promise<EntryOccurrenceChangeScope | undefined> {
-	return new DialogEntryScope({ entry, intent, series: true, subtasks: 0 })
-		.confirm()
-		.catch(() => undefined)
-		.then(scope => scope?.recurrence)
-}
+export const hierarchy = new Hierarchy()

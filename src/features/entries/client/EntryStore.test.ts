@@ -58,13 +58,13 @@ describe('EntryStore', () => {
 
 	const originalPersistence = EntryStore.persistence
 	const originalResolveScope = EntryStore.resolveScope
-	const originalOnTaskClosed = EntryStore.onTaskClosed
+	const listening = new Array<() => void>()
 
 	beforeEach(() => {
 		EntryStore.reset()
 		EntryStore.persistence = originalPersistence
 		EntryStore.resolveScope = originalResolveScope
-		EntryStore.onTaskClosed = originalOnTaskClosed
+		listening.splice(0).forEach(stop => stop())
 	})
 
 	describe('entries (merged view)', () => {
@@ -814,12 +814,12 @@ describe('EntryStore', () => {
 		})
 	})
 
-	describe('onTaskClosed', () => {
+	describe('whenTaskCloses', () => {
 		const task = (init?: Partial<Entry>) => entry({ type: EntryType.Task, status: TaskStatus.ToDo, ...init })
 
 		const watch = () => {
 			const closed = new Array<Entry>()
-			EntryStore.onTaskClosed = entry => void closed.push(entry)
+			listening.push(EntryStore.whenTaskCloses(entry => void closed.push(entry)))
 			return closed
 		}
 

@@ -3,7 +3,7 @@ import type { Source } from '#features/sources'
 import { Integration, integrationClassFor } from '#integrations'
 import { NotAllowed } from '#infrastructure/validation'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
-import { isDemo } from '#infrastructure/environment.js'
+import { environment } from '#infrastructure/server/Environment.js'
 
 @operation()
 @label('Discover calendars')
@@ -12,7 +12,7 @@ import { isDemo } from '#infrastructure/environment.js'
 export class DiscoverSources extends Operation<{ readonly integration: Integration }, Array<Source>> {
 	async run({ em, user }: OperationContext): Promise<Array<Source>> {
 		// Keeps strangers' credentials off a demo box, and the box from fetching the URLs they type.
-		if (isDemo) {
+		if (environment.demo) {
 			throw new NotAllowed('Connecting accounts is turned off in the demo')
 		}
 		const incoming = this.parameters.integration

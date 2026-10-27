@@ -3,7 +3,7 @@ import { Integration, integrationClassFor } from '#integrations'
 import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
 import { NotAllowed } from '#infrastructure/validation'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
-import { isDemo, isDeveloperSystem } from '#infrastructure/environment.js'
+import { environment } from '#infrastructure/server/Environment.js'
 import { importer } from './Importer.js'
 
 @operation()
@@ -12,11 +12,11 @@ import { importer } from './Importer.js'
 @http({ method: 'POST', path: '/integrations', status: 201, body: 'integration' })
 export class ConnectIntegration extends Operation<{ readonly integration: Integration }, Integration> {
 	async run({ em, user }: OperationContext): Promise<Integration> {
-		if (isDemo) {
+		if (environment.demo) {
 			throw new NotAllowed('Connecting accounts is turned off in the demo')
 		}
 		const incoming = this.parameters.integration
-		if (integrationClassFor(incoming.type).developmentOnly && !isDeveloperSystem) {
+		if (integrationClassFor(incoming.type).developmentOnly && !environment.developer) {
 			throw new NotAllowed('This integration is only available on a development system')
 		}
 		const integration: Integration = new (integrationClassFor(incoming.type))({ userId: user.id })
