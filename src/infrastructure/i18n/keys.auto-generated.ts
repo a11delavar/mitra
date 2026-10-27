@@ -576,6 +576,7 @@ declare global {
 		"The originals stay exactly where they are": unknown
 		"The step dragging and resizing land on": unknown
 		"The task databases of your workspace": unknown
+		"The tasks of your TickTick lists": unknown
 		"The tasks of your Todoist projects": unknown
 		"Their copies landed but the originals could not be deleted. Delete them here by hand.": unknown
 		"Theme": unknown
@@ -591,6 +592,10 @@ declare global {
 		"This file could not be uploaded": unknown
 		"This relationship could not be saved": unknown
 		"This relationship is not possible": unknown
+		"TickTick": unknown
+		"TickTick account": unknown
+		"TickTick API Token": unknown
+		"TickTick.TokenHint": unknown
 		"Time": unknown
 		"Time zone": unknown
 		"Time zone names": unknown

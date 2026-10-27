@@ -1,0 +1,2138 @@
+{
+	"minted": {
+		"id": [],
+		"token": [
+			"3lvew1969t58vx1294101b21",
+			"7rrgc2315l44255fn0f1538p",
+			"0ntnl1260m02888kd8t504p7",
+			"7czpy51a9p48k739653474o1",
+			"j3pik6up",
+			"6bcsk3545m67dc4568097cdp",
+			"q5mts8ao",
+			"5iwlm6400z90403ox6b055ka",
+			"gjk2ypem",
+			"4uens7869k44h760601366g3",
+			"q6j3pkz4",
+			"1irns9181w3742154039938h",
+			"w4amiexw",
+			"7lauj55s3m647r250m891tcm",
+			"5nork66i3e067w323k550spf",
+			"1jscq89f9f076b096d116fua",
+			"4rrayuui",
+			"9lsxv99r1v88zh8733600y20",
+			"4qhkx76a5g260n121c019udg",
+			"mp1gb4wk",
+			"lqck0sfd",
+			"dy34squ7",
+			"rbaowh7u",
+			"fbro1b3a",
+			"q0eg8rvo",
+			"v5lt82jq",
+			"7dx300gl",
+			"3oaib03g6w24f26759693mx0",
+			"ux7vqtar",
+			"7fn6iqb4",
+			"4r7apms3",
+			"nnbqj4ml",
+			"9zvrq75e5k49562zs1u667j1",
+			"hwy4unzo",
+			"5zmhv15y5c33376567373n13",
+			"ssqxtm26",
+			"6yhkn6j37g68073mw9b55y6e",
+			"iywyt3fv",
+			"5odhx6uj2f69k4274678187i",
+			"m7swlyue",
+			"48cq05d2",
+			"upf99s9x",
+			"x68mauhr",
+			"9o3stjcp",
+			"7znyrzzl",
+			"8amcy8700z20yj5329638db6",
+			"x1b5pmix",
+			"hs6072lf",
+			"r32t9rwx",
+			"378479829",
+			"1nmjg2380y64cn2780269mz3",
+			"7cqn5xui",
+			"94d47udv",
+			"6thbb0402d52389464082c85",
+			"42dck6dl",
+			"jnclgtxw",
+			"7xpan3887v70q136536963g5",
+			"02aluaf2",
+			"7z348aaz",
+			"v4pam51t",
+			"u29ib7er",
+			"u06oxr7j",
+			"6bshf4179o38t01678934h16",
+			"fx2ozdjp"
+		],
+		"time": [
+			"2026-10-26T23:41:46.850+0000",
+			"2026-10-26T23:41:46.850+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:41:42.834+0000",
+			"2026-10-26T23:41:42.834+0000",
+			"2026-10-26T23:41:45.643+0000",
+			"2026-10-26T23:41:45.643+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:48.105+0000",
+			"2026-10-26T23:41:48.105+0000",
+			"2026-10-26T23:41:50.566+0000",
+			"2026-10-26T23:41:49.320+0000",
+			"2026-10-26T23:41:50.569+0000",
+			"2026-10-26T23:41:50.558+0000",
+			"2026-10-26T23:42:58.807+0000",
+			"2026-10-26T23:41:45.643+0000",
+			"2026-10-26T23:42:52.644+0000",
+			"2026-10-26T23:42:44.988+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:41:42.834+0000",
+			"2026-10-26T23:41:42.834+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:46.850+0000",
+			"2026-10-26T23:41:46.850+0000",
+			"2026-10-26T23:43:09.797+0000",
+			"2026-10-26T23:41:49.320+0000",
+			"2026-10-26T23:43:22.236+0000",
+			"2026-10-26T23:43:22.236+0000",
+			"2026-10-26T23:42:58.807+0000",
+			"2026-10-26T23:41:45.643+0000",
+			"2026-10-26T23:42:52.644+0000",
+			"2026-10-26T23:42:44.988+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:41:42.834+0000",
+			"2026-10-26T23:41:42.834+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:46.850+0000",
+			"2026-10-26T23:41:46.850+0000",
+			"2026-10-26T23:43:09.797+0000",
+			"2026-10-26T23:41:49.320+0000",
+			"2026-10-26T23:43:22.236+0000",
+			"2026-10-26T23:43:22.236+0000",
+			"2026-10-26T23:42:58.807+0000",
+			"2026-10-26T23:41:45.643+0000",
+			"2026-10-26T23:42:52.644+0000",
+			"2026-10-26T23:42:44.988+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:41:42.834+0000",
+			"2026-10-26T23:41:42.834+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:46.850+0000",
+			"2026-10-26T23:41:46.850+0000",
+			"2026-10-26T23:43:09.797+0000",
+			"2026-10-26T23:41:49.320+0000",
+			"2026-10-26T23:42:58.807+0000",
+			"2026-10-26T23:41:45.643+0000",
+			"2026-10-26T23:42:52.644+0000",
+			"2026-10-26T23:42:44.988+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:41:42.834+0000",
+			"2026-10-26T23:41:42.834+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:46.850+0000",
+			"2026-10-26T23:41:46.850+0000",
+			"2026-10-26T23:43:09.797+0000",
+			"2026-10-26T23:41:49.320+0000",
+			"2026-10-26T23:41:46.850+0000",
+			"2026-10-26T23:41:46.850+0000",
+			"2026-10-26T23:41:46.850+0000",
+			"2026-10-26T23:41:46.850+0000",
+			"2026-10-26T23:41:48.105+0000",
+			"2026-10-26T23:41:48.105+0000",
+			"2026-10-26T23:41:48.105+0000",
+			"2026-10-26T23:41:48.105+0000",
+			"2026-10-26T23:43:06.147+0000",
+			"2026-10-26T23:41:48.105+0000",
+			"2026-10-26T23:43:06.147+0000",
+			"2026-10-26T23:41:48.105+0000",
+			"2026-10-26T23:43:09.800+0000",
+			"2026-10-26T23:41:48.105+0000",
+			"2026-10-26T23:43:09.800+0000",
+			"2026-10-26T23:41:48.105+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:42:22.342+0000",
+			"2026-10-26T23:42:22.342+0000",
+			"2026-10-26T23:42:22.342+0000",
+			"2026-10-26T23:42:22.342+0000",
+			"2026-10-26T23:41:42.834+0000",
+			"2026-10-26T23:41:42.834+0000",
+			"2026-10-26T23:41:42.834+0000",
+			"2026-10-26T23:41:42.834+0000",
+			"2026-10-26T23:43:34.317+0000",
+			"2026-10-26T23:43:34.319+0000",
+			"2026-10-26T23:43:33.127+0000",
+			"2026-10-26T23:43:34.317+0000",
+			"2026-10-26T23:43:34.319+0000",
+			"2026-10-26T23:43:33.127+0000",
+			"2026-10-26T23:43:38.272+0000",
+			"2026-10-26T23:43:38.272+0000",
+			"2026-10-26T23:43:38.272+0000",
+			"2026-10-26T23:43:38.272+0000",
+			"2026-10-26T23:42:44.986+0000",
+			"2026-10-26T23:42:44.988+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:42:44.986+0000",
+			"2026-10-26T23:42:44.988+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:42:44.986+0000",
+			"2026-10-26T23:42:44.988+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:42:44.986+0000",
+			"2026-10-26T23:42:44.988+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:42:52.644+0000",
+			"2026-10-26T23:42:44.988+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:42:52.644+0000",
+			"2026-10-26T23:42:44.988+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:42:52.644+0000",
+			"2026-10-26T23:42:44.988+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:41:45.643+0000",
+			"2026-10-26T23:41:45.643+0000",
+			"2026-10-26T23:41:45.643+0000",
+			"2026-10-26T23:41:45.643+0000",
+			"2026-10-26T23:42:58.807+0000",
+			"2026-10-26T23:41:45.643+0000",
+			"2026-10-26T23:42:58.807+0000",
+			"2026-10-26T23:41:45.643+0000",
+			"2026-10-26T23:41:54.206+0000",
+			"2026-10-26T23:41:54.206+0000",
+			"2026-10-26T23:43:13.472+0000",
+			"2026-10-26T23:42:22.342+0000",
+			"2026-10-26T23:43:21.036+0000",
+			"2026-10-26T23:41:48.105+0000",
+			"2026-10-26T23:41:54.206+0000",
+			"2026-10-26T23:41:54.206+0000",
+			"2026-10-26T23:43:13.472+0000",
+			"2026-10-26T23:42:22.342+0000",
+			"2026-10-26T23:43:21.036+0000",
+			"2026-10-26T23:41:48.105+0000",
+			"2026-10-26T23:41:54.206+0000",
+			"2026-10-26T23:41:54.206+0000",
+			"2026-10-26T23:43:13.472+0000",
+			"2026-10-26T23:42:22.342+0000",
+			"2026-10-26T23:43:13.472+0000",
+			"2026-10-26T23:42:22.342+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:42.834+0000",
+			"2026-10-26T23:41:42.834+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:41:45.643+0000",
+			"2026-10-26T23:41:45.643+0000",
+			"2026-10-26T23:41:46.850+0000",
+			"2026-10-26T23:41:46.850+0000",
+			"2026-10-26T23:41:48.105+0000",
+			"2026-10-26T23:41:48.105+0000",
+			"2026-10-26T23:41:49.320+0000",
+			"2026-10-26T23:41:49.320+0000",
+			"2026-10-26T23:41:50.569+0000",
+			"2026-10-26T23:41:50.558+0000",
+			"2026-10-26T23:41:51.788+0000",
+			"2026-10-26T23:41:51.788+0000",
+			"2026-10-26T23:41:53.005+0000",
+			"2026-10-26T23:41:53.005+0000",
+			"2026-10-26T23:41:54.206+0000",
+			"2026-10-26T23:41:54.206+0000",
+			"2026-10-26T23:41:55.403+0000",
+			"2026-10-26T23:41:55.403+0000",
+			"2026-10-26T23:41:56.607+0000",
+			"2026-10-26T23:41:56.607+0000",
+			"2026-10-26T23:42:22.342+0000",
+			"2026-10-26T23:42:22.342+0000",
+			"2026-10-26T23:43:22.236+0000",
+			"2026-10-26T23:43:22.236+0000",
+			"2026-10-26T23:43:33.127+0000",
+			"2026-10-26T23:43:33.127+0000",
+			"2026-10-26T23:43:38.272+0000",
+			"2026-10-26T23:43:38.272+0000",
+			"2026-10-26T23:41:46.850+0000",
+			"2026-10-26T23:41:46.850+0000",
+			"2026-10-26T23:41:48.105+0000",
+			"2026-10-26T23:41:48.105+0000",
+			"2026-10-26T23:43:06.147+0000",
+			"2026-10-26T23:41:48.105+0000",
+			"2026-10-26T23:43:09.800+0000",
+			"2026-10-26T23:41:48.105+0000",
+			"2026-10-26T23:41:59.032+0000",
+			"2026-10-26T23:41:53.005+0000",
+			"2026-10-26T23:41:53.005+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:41.594+0000",
+			"2026-10-26T23:41:42.834+0000",
+			"2026-10-26T23:41:42.834+0000",
+			"2026-10-26T23:42:44.986+0000",
+			"2026-10-26T23:42:44.988+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:42:52.644+0000",
+			"2026-10-26T23:42:44.988+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:42:52.644+0000",
+			"2026-10-26T23:42:44.988+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:42:52.644+0000",
+			"2026-10-26T23:42:44.988+0000",
+			"2026-10-26T23:41:44.354+0000",
+			"2026-10-26T23:41:45.643+0000",
+			"2026-10-26T23:41:45.643+0000",
+			"2026-10-26T23:41:57.800+0000",
+			"2026-10-26T23:41:57.802+0000",
+			"2026-10-26T23:41:51.788+0000",
+			"2026-10-26T23:43:18.636+0000",
+			"2026-10-26T23:43:18.638+0000",
+			"2026-10-26T23:41:50.558+0000",
+			"2026-10-26T23:42:58.801+0000",
+			"2026-10-26T23:42:58.801+0000",
+			"2026-10-26T23:41:45.643+0000",
+			"2026-10-26T23:43:34.317+0000",
+			"2026-10-26T23:43:34.319+0000",
+			"2026-10-26T23:43:33.127+0000",
+			"2026-10-26T23:43:18.636+0000",
+			"2026-10-26T23:43:18.638+0000",
+			"2026-10-26T23:41:50.558+0000",
+			"2026-10-26T23:42:58.801+0000",
+			"2026-10-26T23:42:58.801+0000",
+			"2026-10-26T23:41:45.643+0000",
+			"2026-10-26T23:41:59.032+0000",
+			"2026-10-26T23:41:53.005+0000",
+			"2026-10-26T23:41:53.005+0000",
+			"2026-10-26T23:41:59.032+0000",
+			"2026-10-26T23:41:53.005+0000",
+			"2026-10-26T23:41:53.005+0000",
+			"2026-10-26T23:41:59.032+0000",
+			"2026-10-26T23:41:53.005+0000",
+			"2026-10-26T23:41:53.005+0000",
+			"2026-10-26T23:43:13.472+0000",
+			"2026-10-26T23:43:21.036+0000"
+		]
+	},
+	"exchanges": [
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/preference",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"timeZone\":\"Europe/Berlin\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/preference",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"timeZone\":\"Europe/Berlin\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/preference",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"timeZone\":\"Europe/Berlin\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[]"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[{\"id\":\"{token:0}\",\"name\":\"Mitra Home\",\"color\":\"#F18181\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"TASK\"},{\"id\":\"{token:1}\",\"name\":\"Mitra Errands\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"TASK\"},{\"id\":\"{token:2}\",\"name\":\"Mitra Notes\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"NOTE\"}]"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[{\"id\":\"{token:0}\",\"name\":\"Mitra Home\",\"color\":\"#F18181\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"TASK\"},{\"id\":\"{token:1}\",\"name\":\"Mitra Errands\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"TASK\"},{\"id\":\"{token:2}\",\"name\":\"Mitra Notes\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"NOTE\"}]"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[{\"id\":\"{token:0}\",\"name\":\"Mitra Home\",\"color\":\"#F18181\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"TASK\"},{\"id\":\"{token:1}\",\"name\":\"Mitra Errands\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"TASK\"},{\"id\":\"{token:2}\",\"name\":\"Mitra Notes\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"NOTE\"}]"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[{\"id\":\"{token:0}\",\"name\":\"Mitra Home\",\"color\":\"#F18181\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"TASK\"},{\"id\":\"{token:1}\",\"name\":\"Mitra Errands\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"TASK\"},{\"id\":\"{token:2}\",\"name\":\"Mitra Notes\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"NOTE\"}]"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/project",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"name\":\"Mitra Home\",\"color\":\"#F18181\",\"kind\":\"TASK\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:0}\",\"name\":\"Mitra Home\",\"color\":\"#F18181\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"TASK\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/project",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"name\":\"Mitra Errands\",\"kind\":\"TASK\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:1}\",\"name\":\"Mitra Errands\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"TASK\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/project",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"name\":\"Mitra Notes\",\"kind\":\"NOTE\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:2}\",\"name\":\"Mitra Notes\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"NOTE\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "DELETE",
+				"path": "/open/v1/project/{token:0}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/data",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"project\":{\"id\":\"{token:0}\",\"name\":\"Mitra Home\",\"color\":\"#F18181\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"TASK\"},\"tasks\":[{\"id\":\"{token:3}\",\"projectId\":\"{token:0}\",\"sortOrder\":-5497558138880,\"title\":\"See the dentist\",\"startDate\":\"2026-11-06T09:00:00.000+0000\",\"dueDate\":\"2026-11-06T09:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"reminders\":[\"TRIGGER:PT0S\",\"TRIGGER:-PT15M\"],\"status\":0,\"tags\":[],\"etag\":\"{token:4}\",\"etimestamp\":1793058106851,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:0}\",\"createdTime\":\"{time:1}\"},{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"sortOrder\":-3298534883328,\"title\":\"Standup\",\"startDate\":\"2026-11-04T14:00:00.000+0000\",\"dueDate\":\"2026-11-04T14:00:00.000+0000\",\"timeZone\":\"America/New_York\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"etag\":\"{token:6}\",\"etimestamp\":1793058104355,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:2}\",\"createdTime\":\"{time:3}\"},{\"id\":\"{token:7}\",\"projectId\":\"{token:0}\",\"sortOrder\":-2199023255552,\"title\":\"Call the plumber\",\"startDate\":\"2026-11-03T15:00:00.000+0000\",\"dueDate\":\"2026-11-03T15:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":true,\"status\":0,\"tags\":[],\"etag\":\"{token:8}\",\"etimestamp\":1793058102836,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:4}\",\"createdTime\":\"{time:5}\"},{\"id\":\"{token:9}\",\"projectId\":\"{token:0}\",\"sortOrder\":-4398046511104,\"title\":\"Water the plants\",\"startDate\":\"2026-11-02T08:00:00.000+0000\",\"dueDate\":\"2026-11-02T08:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"repeatFlag\":\"RRULE:FREQ=WEEKLY;BYDAY=MO\",\"repeatFrom\":\"2\",\"status\":0,\"tags\":[],\"etag\":\"{token:10}\",\"etimestamp\":1793058105644,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:6}\",\"createdTime\":\"{time:7}\"},{\"id\":\"{token:11}\",\"projectId\":\"{token:0}\",\"sortOrder\":-1099511627776,\"title\":\"Pay rent\",\"startDate\":\"2026-11-01T23:00:00.000+0000\",\"dueDate\":\"2026-11-01T23:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":true,\"priority\":5,\"isFloating\":false,\"status\":0,\"tags\":[\"mitra-bills\"],\"etag\":\"{token:12}\",\"etimestamp\":1793058101597,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:8}\",\"createdTime\":\"{time:9}\"},{\"id\":\"{token:13}\",\"projectId\":\"{token:0}\",\"sortOrder\":-6597069766656,\"title\":\"Buy groceries\",\"desc\":\"From the **market**\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"items\":[{\"id\":\"{token:14}\",\"status\":0,\"title\":\"Oat milk\",\"sortOrder\":0,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"},{\"id\":\"{token:15}\",\"status\":1,\"title\":\"Bread\",\"sortOrder\":0,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"}],\"tags\":[],\"etag\":\"{token:16}\",\"etimestamp\":1793058108112,\"kind\":\"CHECKLIST\",\"modifiedTime\":\"{time:10}\",\"createdTime\":\"{time:11}\"},{\"id\":\"{token:17}\",\"projectId\":\"{token:0}\",\"sortOrder\":-7696581394432,\"title\":\"Paint the hallway\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"childIds\":[\"{token:18}\"],\"etag\":\"{token:19}\",\"etimestamp\":1793058110566,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:12}\",\"createdTime\":\"{time:13}\"},{\"id\":\"{token:18}\",\"projectId\":\"{token:0}\",\"sortOrder\":-8796093022208,\"title\":\"Pick a color\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"parentId\":\"{token:17}\",\"etag\":\"{token:20}\",\"etimestamp\":1793058110569,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:14}\",\"createdTime\":\"{time:15}\"}],\"columns\":[]}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/data",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"project\":{\"id\":\"{token:0}\",\"name\":\"Mitra Home\",\"color\":\"#F18181\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"TASK\"},\"tasks\":[{\"id\":\"{token:9}\",\"projectId\":\"{token:0}\",\"sortOrder\":-4398046511104,\"title\":\"Water the plants\",\"startDate\":\"2026-11-09T08:00:00.000+0000\",\"dueDate\":\"2026-11-09T08:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"progress\":0,\"isFloating\":false,\"repeatFlag\":\"RRULE:FREQ=WEEKLY;BYDAY=MO\",\"repeatFrom\":\"2\",\"status\":0,\"etag\":\"{token:21}\",\"etimestamp\":1793058178809,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:16}\",\"createdTime\":\"{time:17}\"},{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"sortOrder\":-3298534883328,\"title\":\"Standup, moved\",\"startDate\":\"2026-11-04T15:00:00.000+0000\",\"dueDate\":\"2026-11-04T15:00:00.000+0000\",\"timeZone\":\"America/New_York\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:18}\",\"status\":0,\"etag\":\"{token:22}\",\"etimestamp\":1793058197415,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:19}\",\"createdTime\":\"{time:20}\"},{\"id\":\"{token:7}\",\"projectId\":\"{token:0}\",\"sortOrder\":-2199023255552,\"title\":\"Call the plumber\",\"startDate\":\"2026-11-03T23:00:00.000+0000\",\"dueDate\":\"2026-11-03T23:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":true,\"priority\":0,\"isFloating\":false,\"status\":0,\"etag\":\"{token:23}\",\"etimestamp\":1793058153869,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:21}\",\"createdTime\":\"{time:22}\"},{\"id\":\"{token:11}\",\"projectId\":\"{token:0}\",\"sortOrder\":-1099511627776,\"title\":\"Pay the rent\",\"startDate\":\"2026-11-02T08:00:00.000+0000\",\"dueDate\":\"2026-11-02T08:00:00.000+0000\",\"timeZone\":\"Europe/Madrid\",\"isAllDay\":false,\"priority\":5,\"isFloating\":false,\"status\":0,\"tags\":[\"mitra-bills\"],\"etag\":\"{token:24}\",\"etimestamp\":1793058150192,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:23}\",\"createdTime\":\"{time:24}\"},{\"id\":\"{token:3}\",\"projectId\":\"{token:0}\",\"sortOrder\":-5497558138880,\"title\":\"See the dentist\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"etag\":\"{token:25}\",\"etimestamp\":1793058157643,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:25}\",\"createdTime\":\"{time:26}\"},{\"id\":\"{token:17}\",\"projectId\":\"{token:0}\",\"sortOrder\":-7696581394432,\"title\":\"Paint the hallway\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"childIds\":[\"{token:18}\"],\"etag\":\"{token:26}\",\"etimestamp\":1793058189797,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:27}\",\"createdTime\":\"{time:28}\"},{\"id\":\"{token:27}\",\"projectId\":\"{token:0}\",\"sortOrder\":-14293651161088,\"title\":\"Call the bank\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"etag\":\"{token:28}\",\"etimestamp\":1793058202238,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:29}\",\"createdTime\":\"{time:30}\"}],\"columns\":[]}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/data",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"project\":{\"id\":\"{token:0}\",\"name\":\"Mitra Home\",\"color\":\"#F18181\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"TASK\"},\"tasks\":[{\"id\":\"{token:9}\",\"projectId\":\"{token:0}\",\"sortOrder\":-4398046511104,\"title\":\"Water the plants\",\"startDate\":\"2026-11-09T08:00:00.000+0000\",\"dueDate\":\"2026-11-09T08:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"progress\":0,\"isFloating\":false,\"repeatFlag\":\"RRULE:FREQ=WEEKLY;BYDAY=MO\",\"repeatFrom\":\"2\",\"status\":0,\"etag\":\"{token:21}\",\"etimestamp\":1793058178809,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:31}\",\"createdTime\":\"{time:32}\"},{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"sortOrder\":-3298534883328,\"title\":\"Standup, moved\",\"startDate\":\"2026-11-04T15:00:00.000+0000\",\"dueDate\":\"2026-11-04T15:00:00.000+0000\",\"timeZone\":\"America/New_York\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:33}\",\"status\":0,\"etag\":\"{token:22}\",\"etimestamp\":1793058197415,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:34}\",\"createdTime\":\"{time:35}\"},{\"id\":\"{token:7}\",\"projectId\":\"{token:0}\",\"sortOrder\":-2199023255552,\"title\":\"Call the plumber\",\"startDate\":\"2026-11-03T23:00:00.000+0000\",\"dueDate\":\"2026-11-03T23:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":true,\"priority\":0,\"isFloating\":false,\"status\":0,\"etag\":\"{token:23}\",\"etimestamp\":1793058153869,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:36}\",\"createdTime\":\"{time:37}\"},{\"id\":\"{token:11}\",\"projectId\":\"{token:0}\",\"sortOrder\":-1099511627776,\"title\":\"Pay the rent\",\"startDate\":\"2026-11-02T08:00:00.000+0000\",\"dueDate\":\"2026-11-02T08:00:00.000+0000\",\"timeZone\":\"Europe/Madrid\",\"isAllDay\":false,\"priority\":5,\"isFloating\":false,\"status\":0,\"tags\":[\"mitra-bills\"],\"etag\":\"{token:24}\",\"etimestamp\":1793058150192,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:38}\",\"createdTime\":\"{time:39}\"},{\"id\":\"{token:3}\",\"projectId\":\"{token:0}\",\"sortOrder\":-5497558138880,\"title\":\"See the dentist\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"etag\":\"{token:25}\",\"etimestamp\":1793058157643,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:40}\",\"createdTime\":\"{time:41}\"},{\"id\":\"{token:17}\",\"projectId\":\"{token:0}\",\"sortOrder\":-7696581394432,\"title\":\"Paint the hallway\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"childIds\":[\"{token:18}\"],\"etag\":\"{token:26}\",\"etimestamp\":1793058189797,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:42}\",\"createdTime\":\"{time:43}\"},{\"id\":\"{token:27}\",\"projectId\":\"{token:0}\",\"sortOrder\":-14293651161088,\"title\":\"Call the bank\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"etag\":\"{token:28}\",\"etimestamp\":1793058202238,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:44}\",\"createdTime\":\"{time:45}\"}],\"columns\":[]}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/data",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"project\":{\"id\":\"{token:0}\",\"name\":\"Mitra Home\",\"color\":\"#F18181\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"TASK\"},\"tasks\":[{\"id\":\"{token:9}\",\"projectId\":\"{token:0}\",\"sortOrder\":-4398046511104,\"title\":\"Water the plants\",\"startDate\":\"2026-11-09T08:00:00.000+0000\",\"dueDate\":\"2026-11-09T08:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"progress\":0,\"isFloating\":false,\"repeatFlag\":\"RRULE:FREQ=WEEKLY;BYDAY=MO\",\"repeatFrom\":\"2\",\"status\":0,\"etag\":\"{token:21}\",\"etimestamp\":1793058178809,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:46}\",\"createdTime\":\"{time:47}\"},{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"sortOrder\":-3298534883328,\"title\":\"Standup, moved\",\"startDate\":\"2026-11-04T15:00:00.000+0000\",\"dueDate\":\"2026-11-04T15:00:00.000+0000\",\"timeZone\":\"America/New_York\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:48}\",\"status\":0,\"etag\":\"{token:22}\",\"etimestamp\":1793058197415,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:49}\",\"createdTime\":\"{time:50}\"},{\"id\":\"{token:7}\",\"projectId\":\"{token:0}\",\"sortOrder\":-2199023255552,\"title\":\"Call the plumber\",\"startDate\":\"2026-11-03T23:00:00.000+0000\",\"dueDate\":\"2026-11-03T23:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":true,\"priority\":0,\"isFloating\":false,\"status\":0,\"etag\":\"{token:23}\",\"etimestamp\":1793058153869,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:51}\",\"createdTime\":\"{time:52}\"},{\"id\":\"{token:11}\",\"projectId\":\"{token:0}\",\"sortOrder\":-1099511627776,\"title\":\"Pay the rent\",\"startDate\":\"2026-11-02T08:00:00.000+0000\",\"dueDate\":\"2026-11-02T08:00:00.000+0000\",\"timeZone\":\"Europe/Madrid\",\"isAllDay\":false,\"priority\":5,\"isFloating\":false,\"status\":0,\"tags\":[\"mitra-bills\"],\"etag\":\"{token:24}\",\"etimestamp\":1793058150192,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:53}\",\"createdTime\":\"{time:54}\"},{\"id\":\"{token:3}\",\"projectId\":\"{token:0}\",\"sortOrder\":-5497558138880,\"title\":\"See the dentist\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"etag\":\"{token:25}\",\"etimestamp\":1793058157643,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:55}\",\"createdTime\":\"{time:56}\"},{\"id\":\"{token:17}\",\"projectId\":\"{token:0}\",\"sortOrder\":-7696581394432,\"title\":\"Paint the hallway\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"childIds\":[\"{token:18}\"],\"etag\":\"{token:26}\",\"etimestamp\":1793058189797,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:57}\",\"createdTime\":\"{time:58}\"}],\"columns\":[]}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/data",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"project\":{\"id\":\"{token:0}\",\"name\":\"Mitra Home\",\"color\":\"#F18181\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"TASK\"},\"tasks\":[{\"id\":\"{token:9}\",\"projectId\":\"{token:0}\",\"sortOrder\":-4398046511104,\"title\":\"Water the plants\",\"startDate\":\"2026-11-09T08:00:00.000+0000\",\"dueDate\":\"2026-11-09T08:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"progress\":0,\"isFloating\":false,\"repeatFlag\":\"RRULE:FREQ=WEEKLY;BYDAY=MO\",\"repeatFrom\":\"2\",\"status\":0,\"etag\":\"{token:21}\",\"etimestamp\":1793058178809,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:59}\",\"createdTime\":\"{time:60}\"},{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"sortOrder\":-3298534883328,\"title\":\"Standup, moved\",\"startDate\":\"2026-11-04T15:00:00.000+0000\",\"dueDate\":\"2026-11-04T15:00:00.000+0000\",\"timeZone\":\"America/New_York\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:61}\",\"status\":0,\"etag\":\"{token:22}\",\"etimestamp\":1793058197415,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:62}\",\"createdTime\":\"{time:63}\"},{\"id\":\"{token:7}\",\"projectId\":\"{token:0}\",\"sortOrder\":-2199023255552,\"title\":\"Call the plumber\",\"startDate\":\"2026-11-03T23:00:00.000+0000\",\"dueDate\":\"2026-11-03T23:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":true,\"priority\":0,\"isFloating\":false,\"status\":0,\"etag\":\"{token:23}\",\"etimestamp\":1793058153869,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:64}\",\"createdTime\":\"{time:65}\"},{\"id\":\"{token:11}\",\"projectId\":\"{token:0}\",\"sortOrder\":-1099511627776,\"title\":\"Pay the rent\",\"startDate\":\"2026-11-02T08:00:00.000+0000\",\"dueDate\":\"2026-11-02T08:00:00.000+0000\",\"timeZone\":\"Europe/Madrid\",\"isAllDay\":false,\"priority\":5,\"isFloating\":false,\"status\":0,\"tags\":[\"mitra-bills\"],\"etag\":\"{token:24}\",\"etimestamp\":1793058150192,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:66}\",\"createdTime\":\"{time:67}\"},{\"id\":\"{token:3}\",\"projectId\":\"{token:0}\",\"sortOrder\":-5497558138880,\"title\":\"See the dentist\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"etag\":\"{token:25}\",\"etimestamp\":1793058157643,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:68}\",\"createdTime\":\"{time:69}\"},{\"id\":\"{token:17}\",\"projectId\":\"{token:0}\",\"sortOrder\":-7696581394432,\"title\":\"Paint the hallway\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"childIds\":[\"{token:18}\"],\"etag\":\"{token:26}\",\"etimestamp\":1793058189797,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:70}\",\"createdTime\":\"{time:71}\"}],\"columns\":[]}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/members",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[{\"username\":\"{email}\",\"displayName\":\"{email}\",\"self\":true}]"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/members",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[{\"username\":\"{email}\",\"displayName\":\"{email}\",\"self\":true}]"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/members",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[{\"username\":\"{email}\",\"displayName\":\"{email}\",\"self\":true}]"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:3}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:3}\",\"projectId\":\"{token:0}\",\"sortOrder\":-5497558138880,\"title\":\"See the dentist\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"etag\":\"{token:25}\",\"etimestamp\":1793058157643,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:72}\",\"createdTime\":\"{time:73}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:3}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:3}\",\"projectId\":\"{token:0}\",\"sortOrder\":-5497558138880,\"title\":\"See the dentist\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"etag\":\"{token:25}\",\"etimestamp\":1793058157643,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:74}\",\"createdTime\":\"{time:75}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:13}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:13}\",\"projectId\":\"{token:0}\",\"sortOrder\":-6597069766656,\"title\":\"Buy groceries\",\"desc\":\"From the **market**\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"items\":[{\"id\":\"{token:14}\",\"status\":1,\"title\":\"Oat milk\",\"sortOrder\":0,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"},{\"id\":\"{token:15}\",\"status\":1,\"title\":\"Bread\",\"sortOrder\":1,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"}],\"etag\":\"{token:29}\",\"etimestamp\":1793058182520,\"kind\":\"CHECKLIST\",\"modifiedTime\":\"{time:76}\",\"createdTime\":\"{time:77}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:13}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:13}\",\"projectId\":\"{token:0}\",\"sortOrder\":-6597069766656,\"title\":\"Buy groceries\",\"desc\":\"From the **market**\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"items\":[{\"id\":\"{token:14}\",\"status\":1,\"title\":\"Oat milk\",\"sortOrder\":0,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"},{\"id\":\"{token:15}\",\"status\":1,\"title\":\"Bread\",\"sortOrder\":1,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"}],\"etag\":\"{token:29}\",\"etimestamp\":1793058182520,\"kind\":\"CHECKLIST\",\"modifiedTime\":\"{time:78}\",\"createdTime\":\"{time:79}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:13}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:13}\",\"projectId\":\"{token:0}\",\"sortOrder\":-6597069766656,\"title\":\"Buy groceries\",\"desc\":\"From the **market**\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"items\":[{\"id\":\"{token:14}\",\"status\":1,\"title\":\"Oat milk\",\"sortOrder\":0,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"},{\"id\":\"{token:15}\",\"status\":1,\"title\":\"Bread\",\"sortOrder\":1,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"}],\"parentId\":\"{token:17}\",\"etag\":\"{token:30}\",\"etimestamp\":1793058186147,\"kind\":\"CHECKLIST\",\"modifiedTime\":\"{time:80}\",\"createdTime\":\"{time:81}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:13}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:13}\",\"projectId\":\"{token:0}\",\"sortOrder\":-6597069766656,\"title\":\"Buy groceries\",\"desc\":\"From the **market**\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"items\":[{\"id\":\"{token:14}\",\"status\":1,\"title\":\"Oat milk\",\"sortOrder\":0,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"},{\"id\":\"{token:15}\",\"status\":1,\"title\":\"Bread\",\"sortOrder\":1,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"}],\"parentId\":\"{token:17}\",\"etag\":\"{token:30}\",\"etimestamp\":1793058186147,\"kind\":\"CHECKLIST\",\"modifiedTime\":\"{time:82}\",\"createdTime\":\"{time:83}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:13}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:13}\",\"projectId\":\"{token:0}\",\"sortOrder\":-6597069766656,\"title\":\"Buy groceries\",\"desc\":\"From the **market**\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"items\":[{\"id\":\"{token:14}\",\"status\":1,\"title\":\"Oat milk\",\"sortOrder\":0,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"},{\"id\":\"{token:15}\",\"status\":1,\"title\":\"Bread\",\"sortOrder\":1,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"}],\"etag\":\"{token:31}\",\"etimestamp\":1793058189800,\"kind\":\"CHECKLIST\",\"modifiedTime\":\"{time:84}\",\"createdTime\":\"{time:85}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:13}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:13}\",\"projectId\":\"{token:0}\",\"sortOrder\":-6597069766656,\"title\":\"Buy groceries\",\"desc\":\"From the **market**\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"items\":[{\"id\":\"{token:14}\",\"status\":1,\"title\":\"Oat milk\",\"sortOrder\":0,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"},{\"id\":\"{token:15}\",\"status\":1,\"title\":\"Bread\",\"sortOrder\":1,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"}],\"etag\":\"{token:31}\",\"etimestamp\":1793058189800,\"kind\":\"CHECKLIST\",\"modifiedTime\":\"{time:86}\",\"createdTime\":\"{time:87}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/project/{token:0}/task/{token:18}/complete",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "DELETE",
+				"path": "/open/v1/project/{token:0}/task/{token:32}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/project/{token:0}/task/{token:32}/complete",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:11}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:11}\",\"projectId\":\"{token:0}\",\"sortOrder\":-1099511627776,\"title\":\"Pay the rent\",\"startDate\":\"2026-11-01T23:00:00.000+0000\",\"dueDate\":\"2026-11-01T23:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":true,\"priority\":5,\"isFloating\":false,\"status\":0,\"tags\":[\"mitra-bills\"],\"etag\":\"{token:33}\",\"etimestamp\":1793058146239,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:88}\",\"createdTime\":\"{time:89}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:11}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:11}\",\"projectId\":\"{token:0}\",\"sortOrder\":-1099511627776,\"title\":\"Pay the rent\",\"startDate\":\"2026-11-01T23:00:00.000+0000\",\"dueDate\":\"2026-11-01T23:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":true,\"priority\":5,\"isFloating\":false,\"status\":0,\"tags\":[\"mitra-bills\"],\"etag\":\"{token:33}\",\"etimestamp\":1793058146239,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:90}\",\"createdTime\":\"{time:91}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:11}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:11}\",\"projectId\":\"{token:0}\",\"sortOrder\":-1099511627776,\"title\":\"Pay the rent\",\"startDate\":\"2026-11-02T08:00:00.000+0000\",\"dueDate\":\"2026-11-02T08:00:00.000+0000\",\"timeZone\":\"Europe/Madrid\",\"isAllDay\":false,\"priority\":5,\"isFloating\":false,\"status\":0,\"tags\":[\"mitra-bills\"],\"etag\":\"{token:24}\",\"etimestamp\":1793058150192,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:92}\",\"createdTime\":\"{time:93}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:11}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:11}\",\"projectId\":\"{token:0}\",\"sortOrder\":-1099511627776,\"title\":\"Pay the rent\",\"startDate\":\"2026-11-02T08:00:00.000+0000\",\"dueDate\":\"2026-11-02T08:00:00.000+0000\",\"timeZone\":\"Europe/Madrid\",\"isAllDay\":false,\"priority\":5,\"isFloating\":false,\"status\":0,\"tags\":[\"mitra-bills\"],\"etag\":\"{token:24}\",\"etimestamp\":1793058150192,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:94}\",\"createdTime\":\"{time:95}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:34}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:34}\",\"projectId\":\"{token:0}\",\"sortOrder\":-12094627905536,\"title\":\"Plan the week\",\"content\":\"Look **ahead**\",\"startDate\":\"2026-11-06T09:00:00.000+0000\",\"dueDate\":\"2026-11-06T09:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":true,\"status\":0,\"tags\":[],\"etag\":\"{token:35}\",\"etimestamp\":1793058142343,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:96}\",\"createdTime\":\"{time:97}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:34}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:34}\",\"projectId\":\"{token:0}\",\"sortOrder\":-12094627905536,\"title\":\"Plan the week\",\"content\":\"Look **ahead**\",\"startDate\":\"2026-11-06T09:00:00.000+0000\",\"dueDate\":\"2026-11-06T09:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":true,\"status\":0,\"tags\":[],\"etag\":\"{token:35}\",\"etimestamp\":1793058142343,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:98}\",\"createdTime\":\"{time:99}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:7}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:7}\",\"projectId\":\"{token:0}\",\"sortOrder\":-2199023255552,\"title\":\"Call the plumber\",\"startDate\":\"2026-11-03T23:00:00.000+0000\",\"dueDate\":\"2026-11-03T23:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":true,\"priority\":0,\"isFloating\":false,\"status\":0,\"etag\":\"{token:23}\",\"etimestamp\":1793058153869,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:100}\",\"createdTime\":\"{time:101}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:7}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:7}\",\"projectId\":\"{token:0}\",\"sortOrder\":-2199023255552,\"title\":\"Call the plumber\",\"startDate\":\"2026-11-03T23:00:00.000+0000\",\"dueDate\":\"2026-11-03T23:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":true,\"priority\":0,\"isFloating\":false,\"status\":0,\"etag\":\"{token:23}\",\"etimestamp\":1793058153869,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:102}\",\"createdTime\":\"{time:103}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "DELETE",
+				"path": "/open/v1/project/{token:0}/task/{token:27}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "DELETE",
+				"path": "/open/v1/project/{token:0}/task/{token:27}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:36}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:36}\",\"projectId\":\"{token:0}\",\"sortOrder\":-15393162788864,\"title\":\"Return the books\",\"content\":\"\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:104}\",\"status\":2,\"etag\":\"{token:37}\",\"etimestamp\":1793058214319,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:105}\",\"createdTime\":\"{time:106}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:36}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:36}\",\"projectId\":\"{token:0}\",\"sortOrder\":-15393162788864,\"title\":\"Return the books\",\"content\":\"\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:107}\",\"status\":2,\"etag\":\"{token:37}\",\"etimestamp\":1793058214319,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:108}\",\"createdTime\":\"{time:109}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/project/{token:0}/task/{token:36}/complete",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "DELETE",
+				"path": "/open/v1/project/{token:0}/task/{token:38}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:38}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:38}\",\"projectId\":\"{token:0}\",\"sortOrder\":-16492674416640,\"title\":\"Retro\",\"content\":\"\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"etag\":\"{token:39}\",\"etimestamp\":1793058218273,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:110}\",\"createdTime\":\"{time:111}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:38}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:38}\",\"projectId\":\"{token:0}\",\"sortOrder\":-16492674416640,\"title\":\"Retro\",\"content\":\"\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"etag\":\"{token:39}\",\"etimestamp\":1793058218273,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:112}\",\"createdTime\":\"{time:113}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:5}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"sortOrder\":-3298534883328,\"title\":\"Standup\",\"startDate\":\"2026-11-04T14:00:00.000+0000\",\"dueDate\":\"2026-11-04T14:00:00.000+0000\",\"timeZone\":\"America/New_York\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:114}\",\"status\":2,\"etag\":\"{token:40}\",\"etimestamp\":1793058164988,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:115}\",\"createdTime\":\"{time:116}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:5}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"sortOrder\":-3298534883328,\"title\":\"Standup\",\"startDate\":\"2026-11-04T14:00:00.000+0000\",\"dueDate\":\"2026-11-04T14:00:00.000+0000\",\"timeZone\":\"America/New_York\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:117}\",\"status\":2,\"etag\":\"{token:40}\",\"etimestamp\":1793058164988,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:118}\",\"createdTime\":\"{time:119}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:5}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"sortOrder\":-3298534883328,\"title\":\"Standup\",\"startDate\":\"2026-11-04T14:00:00.000+0000\",\"dueDate\":\"2026-11-04T14:00:00.000+0000\",\"timeZone\":\"America/New_York\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:120}\",\"status\":0,\"etag\":\"{token:41}\",\"etimestamp\":1793058168592,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:121}\",\"createdTime\":\"{time:122}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:5}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"sortOrder\":-3298534883328,\"title\":\"Standup\",\"startDate\":\"2026-11-04T14:00:00.000+0000\",\"dueDate\":\"2026-11-04T14:00:00.000+0000\",\"timeZone\":\"America/New_York\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:123}\",\"status\":0,\"etag\":\"{token:41}\",\"etimestamp\":1793058168592,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:124}\",\"createdTime\":\"{time:125}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:5}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"sortOrder\":-3298534883328,\"title\":\"Standup\",\"startDate\":\"2026-11-04T14:00:00.000+0000\",\"dueDate\":\"2026-11-04T14:00:00.000+0000\",\"timeZone\":\"America/New_York\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:126}\",\"status\":-1,\"etag\":\"{token:42}\",\"etimestamp\":1793058172646,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:127}\",\"createdTime\":\"{time:128}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:5}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"sortOrder\":-3298534883328,\"title\":\"Standup\",\"startDate\":\"2026-11-04T14:00:00.000+0000\",\"dueDate\":\"2026-11-04T14:00:00.000+0000\",\"timeZone\":\"America/New_York\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:129}\",\"status\":-1,\"etag\":\"{token:42}\",\"etimestamp\":1793058172646,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:130}\",\"createdTime\":\"{time:131}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:5}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"sortOrder\":-3298534883328,\"title\":\"Standup\",\"startDate\":\"2026-11-04T14:00:00.000+0000\",\"dueDate\":\"2026-11-04T14:00:00.000+0000\",\"timeZone\":\"America/New_York\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:132}\",\"status\":0,\"etag\":\"{token:43}\",\"etimestamp\":1793058176346,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:133}\",\"createdTime\":\"{time:134}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/project/{token:0}/task/{token:5}/complete",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:9}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:9}\",\"projectId\":\"{token:0}\",\"sortOrder\":-4398046511104,\"title\":\"Water the plants\",\"startDate\":\"2026-11-03T08:00:00.000+0000\",\"dueDate\":\"2026-11-03T08:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"repeatFlag\":\"RRULE:FREQ=WEEKLY;BYDAY=MO\",\"repeatFrom\":\"2\",\"status\":0,\"etag\":\"{token:44}\",\"etimestamp\":1793058161284,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:135}\",\"createdTime\":\"{time:136}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:9}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:9}\",\"projectId\":\"{token:0}\",\"sortOrder\":-4398046511104,\"title\":\"Water the plants\",\"startDate\":\"2026-11-03T08:00:00.000+0000\",\"dueDate\":\"2026-11-03T08:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"repeatFlag\":\"RRULE:FREQ=WEEKLY;BYDAY=MO\",\"repeatFrom\":\"2\",\"status\":0,\"etag\":\"{token:44}\",\"etimestamp\":1793058161284,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:137}\",\"createdTime\":\"{time:138}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:9}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:9}\",\"projectId\":\"{token:0}\",\"sortOrder\":-4398046511104,\"title\":\"Water the plants\",\"startDate\":\"2026-11-09T08:00:00.000+0000\",\"dueDate\":\"2026-11-09T08:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"progress\":0,\"isFloating\":false,\"repeatFlag\":\"RRULE:FREQ=WEEKLY;BYDAY=MO\",\"repeatFrom\":\"2\",\"status\":0,\"etag\":\"{token:21}\",\"etimestamp\":1793058178809,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:139}\",\"createdTime\":\"{time:140}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:0}/task/{token:9}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:9}\",\"projectId\":\"{token:0}\",\"sortOrder\":-4398046511104,\"title\":\"Water the plants\",\"startDate\":\"2026-11-09T08:00:00.000+0000\",\"dueDate\":\"2026-11-09T08:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"progress\":0,\"isFloating\":false,\"repeatFlag\":\"RRULE:FREQ=WEEKLY;BYDAY=MO\",\"repeatFrom\":\"2\",\"status\":0,\"etag\":\"{token:21}\",\"etimestamp\":1793058178809,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:141}\",\"createdTime\":\"{time:142}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/project/{token:0}/task/{token:9}/complete",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "DELETE",
+				"path": "/open/v1/project/{token:1}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:1}/data",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"project\":{\"id\":\"{token:1}\",\"name\":\"Mitra Errands\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"TASK\"},\"tasks\":[{\"id\":\"{token:45}\",\"projectId\":\"{token:1}\",\"sortOrder\":-1099511627776,\"title\":\"Fetch the parcel\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"etag\":\"{token:46}\",\"etimestamp\":1793058114208,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:143}\",\"createdTime\":\"{time:144}\"}],\"columns\":[]}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:1}/data",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"project\":{\"id\":\"{token:1}\",\"name\":\"Mitra Errands\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"TASK\"},\"tasks\":[{\"id\":\"{token:34}\",\"projectId\":\"{token:1}\",\"sortOrder\":-12094627905536,\"title\":\"Plan the week\",\"content\":\"Look **ahead**\",\"startDate\":\"2026-11-06T09:00:00.000+0000\",\"dueDate\":\"2026-11-06T09:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":true,\"status\":0,\"tags\":[],\"etag\":\"{token:47}\",\"etimestamp\":1793058193472,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:145}\",\"createdTime\":\"{time:146}\"},{\"id\":\"{token:13}\",\"projectId\":\"{token:1}\",\"sortOrder\":-6597069766656,\"title\":\"Buy groceries\",\"desc\":\"From the **market**\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"items\":[{\"id\":\"{token:14}\",\"status\":1,\"title\":\"Oat milk\",\"sortOrder\":0,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"},{\"id\":\"{token:15}\",\"status\":1,\"title\":\"Bread\",\"sortOrder\":1,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"}],\"etag\":\"{token:48}\",\"etimestamp\":1793058201036,\"kind\":\"CHECKLIST\",\"modifiedTime\":\"{time:147}\",\"createdTime\":\"{time:148}\"},{\"id\":\"{token:45}\",\"projectId\":\"{token:1}\",\"sortOrder\":-1099511627776,\"title\":\"Fetch the parcel\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"etag\":\"{token:46}\",\"etimestamp\":1793058114208,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:149}\",\"createdTime\":\"{time:150}\"}],\"columns\":[]}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:1}/data",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"project\":{\"id\":\"{token:1}\",\"name\":\"Mitra Errands\",\"sortOrder\":0,\"viewMode\":\"list\",\"kind\":\"TASK\"},\"tasks\":[{\"id\":\"{token:34}\",\"projectId\":\"{token:1}\",\"sortOrder\":-12094627905536,\"title\":\"Plan the week\",\"content\":\"Look **ahead**\",\"startDate\":\"2026-11-06T09:00:00.000+0000\",\"dueDate\":\"2026-11-06T09:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":true,\"status\":0,\"tags\":[],\"etag\":\"{token:47}\",\"etimestamp\":1793058193472,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:151}\",\"createdTime\":\"{time:152}\"},{\"id\":\"{token:13}\",\"projectId\":\"{token:1}\",\"sortOrder\":-6597069766656,\"title\":\"Buy groceries\",\"desc\":\"From the **market**\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"items\":[{\"id\":\"{token:14}\",\"status\":1,\"title\":\"Oat milk\",\"sortOrder\":0,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"},{\"id\":\"{token:15}\",\"status\":1,\"title\":\"Bread\",\"sortOrder\":1,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"}],\"etag\":\"{token:48}\",\"etimestamp\":1793058201036,\"kind\":\"CHECKLIST\",\"modifiedTime\":\"{time:153}\",\"createdTime\":\"{time:154}\"},{\"id\":\"{token:45}\",\"projectId\":\"{token:1}\",\"sortOrder\":-1099511627776,\"title\":\"Fetch the parcel\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"etag\":\"{token:46}\",\"etimestamp\":1793058114208,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:155}\",\"createdTime\":\"{time:156}\"}],\"columns\":[]}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:1}/task/{token:34}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:34}\",\"projectId\":\"{token:1}\",\"sortOrder\":-12094627905536,\"title\":\"Plan the week\",\"content\":\"Look **ahead**\",\"startDate\":\"2026-11-06T09:00:00.000+0000\",\"dueDate\":\"2026-11-06T09:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":true,\"status\":0,\"tags\":[],\"etag\":\"{token:47}\",\"etimestamp\":1793058193472,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:157}\",\"createdTime\":\"{time:158}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/{token:1}/task/{token:34}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:34}\",\"projectId\":\"{token:1}\",\"sortOrder\":-12094627905536,\"title\":\"Plan the week\",\"content\":\"Look **ahead**\",\"startDate\":\"2026-11-06T09:00:00.000+0000\",\"dueDate\":\"2026-11-06T09:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":true,\"status\":0,\"tags\":[],\"etag\":\"{token:47}\",\"etimestamp\":1793058193472,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:159}\",\"createdTime\":\"{time:160}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "DELETE",
+				"path": "/open/v1/project/{token:2}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/group",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[]"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/group",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[]"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/group",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[]"
+			}
+		},
+		{
+			"request": {
+				"method": "GET",
+				"path": "/open/v1/project/group",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[]"
+			}
+		},
+		{
+			"request": {
+				"method": "DELETE",
+				"path": "/open/v1/project/inbox{token:49}/task/{token:50}",
+				"headers": {},
+				"body": ""
+			},
+			"response": {
+				"status": 200,
+				"headers": {},
+				"body": ""
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectId\":\"{token:0}\",\"title\":\"Pay rent\",\"isAllDay\":true,\"startDate\":\"2026-11-01T23:00:00+0000\",\"dueDate\":\"2026-11-01T23:00:00+0000\",\"timeZone\":\"Europe/Berlin\",\"priority\":5,\"tags\":[\"mitra-bills\"]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:11}\",\"projectId\":\"{token:0}\",\"sortOrder\":-1099511627776,\"title\":\"Pay rent\",\"startDate\":\"2026-11-01T23:00:00.000+0000\",\"dueDate\":\"2026-11-01T23:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":true,\"priority\":5,\"isFloating\":false,\"status\":0,\"tags\":[\"mitra-bills\"],\"etag\":\"{token:12}\",\"etimestamp\":1793058101597,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:161}\",\"createdTime\":\"{time:162}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectId\":\"{token:0}\",\"title\":\"Call the plumber\",\"isAllDay\":false,\"isFloating\":true,\"startDate\":\"2026-11-03T15:00:00+0000\",\"dueDate\":\"2026-11-03T15:00:00+0000\",\"timeZone\":\"Europe/Berlin\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:7}\",\"projectId\":\"{token:0}\",\"sortOrder\":-2199023255552,\"title\":\"Call the plumber\",\"startDate\":\"2026-11-03T15:00:00.000+0000\",\"dueDate\":\"2026-11-03T15:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":true,\"status\":0,\"tags\":[],\"etag\":\"{token:8}\",\"etimestamp\":1793058102836,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:163}\",\"createdTime\":\"{time:164}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectId\":\"{token:0}\",\"title\":\"Standup\",\"isAllDay\":false,\"startDate\":\"2026-11-04T14:00:00+0000\",\"dueDate\":\"2026-11-04T14:00:00+0000\",\"timeZone\":\"America/New_York\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"sortOrder\":-3298534883328,\"title\":\"Standup\",\"startDate\":\"2026-11-04T14:00:00.000+0000\",\"dueDate\":\"2026-11-04T14:00:00.000+0000\",\"timeZone\":\"America/New_York\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"etag\":\"{token:6}\",\"etimestamp\":1793058104355,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:165}\",\"createdTime\":\"{time:166}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectId\":\"{token:0}\",\"title\":\"Water the plants\",\"isAllDay\":false,\"startDate\":\"2026-11-02T08:00:00+0000\",\"dueDate\":\"2026-11-02T08:00:00+0000\",\"timeZone\":\"Europe/Berlin\",\"repeatFlag\":\"RRULE:FREQ=WEEKLY;BYDAY=MO\",\"repeatFrom\":\"2\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:9}\",\"projectId\":\"{token:0}\",\"sortOrder\":-4398046511104,\"title\":\"Water the plants\",\"startDate\":\"2026-11-02T08:00:00.000+0000\",\"dueDate\":\"2026-11-02T08:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"repeatFlag\":\"RRULE:FREQ=WEEKLY;BYDAY=MO\",\"repeatFrom\":\"2\",\"status\":0,\"tags\":[],\"etag\":\"{token:10}\",\"etimestamp\":1793058105644,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:167}\",\"createdTime\":\"{time:168}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectId\":\"{token:0}\",\"title\":\"See the dentist\",\"isAllDay\":false,\"startDate\":\"2026-11-06T09:00:00+0000\",\"dueDate\":\"2026-11-06T09:00:00+0000\",\"timeZone\":\"Europe/Berlin\",\"reminders\":[\"TRIGGER:PT0S\",\"TRIGGER:-PT15M\"]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:3}\",\"projectId\":\"{token:0}\",\"sortOrder\":-5497558138880,\"title\":\"See the dentist\",\"startDate\":\"2026-11-06T09:00:00.000+0000\",\"dueDate\":\"2026-11-06T09:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"reminders\":[\"TRIGGER:PT0S\",\"TRIGGER:-PT15M\"],\"status\":0,\"tags\":[],\"etag\":\"{token:4}\",\"etimestamp\":1793058106851,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:169}\",\"createdTime\":\"{time:170}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectId\":\"{token:0}\",\"title\":\"Buy groceries\",\"kind\":\"CHECKLIST\",\"desc\":\"From the **market**\",\"items\":[{\"title\":\"Oat milk\",\"status\":0},{\"title\":\"Bread\",\"status\":1}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:13}\",\"projectId\":\"{token:0}\",\"sortOrder\":-6597069766656,\"title\":\"Buy groceries\",\"desc\":\"From the **market**\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"items\":[{\"id\":\"{token:14}\",\"status\":0,\"title\":\"Oat milk\",\"sortOrder\":0,\"timeZone\":\"Europe/Berlin\"},{\"id\":\"{token:15}\",\"status\":1,\"title\":\"Bread\",\"sortOrder\":0,\"timeZone\":\"Europe/Berlin\"}],\"tags\":[],\"etag\":\"{token:16}\",\"etimestamp\":1793058108112,\"kind\":\"CHECKLIST\",\"modifiedTime\":\"{time:171}\",\"createdTime\":\"{time:172}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectId\":\"{token:0}\",\"title\":\"Paint the hallway\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:17}\",\"projectId\":\"{token:0}\",\"sortOrder\":-7696581394432,\"title\":\"Paint the hallway\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"etag\":\"{token:51}\",\"etimestamp\":1793058109322,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:173}\",\"createdTime\":\"{time:174}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectId\":\"{token:0}\",\"title\":\"Pick a color\",\"parentId\":\"{token:17}\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:18}\",\"projectId\":\"{token:0}\",\"sortOrder\":-8796093022208,\"title\":\"Pick a color\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"parentId\":\"{token:17}\",\"etag\":\"{token:20}\",\"etimestamp\":1793058110569,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:175}\",\"createdTime\":\"{time:176}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectId\":\"{token:0}\",\"title\":\"Old chore\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:32}\",\"projectId\":\"{token:0}\",\"sortOrder\":-9895604649984,\"title\":\"Old chore\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"etag\":\"{token:52}\",\"etimestamp\":1793058111796,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:177}\",\"createdTime\":\"{time:178}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectId\":\"{token:0}\",\"title\":\"Skip the gym\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:53}\",\"projectId\":\"{token:0}\",\"sortOrder\":-10995116277760,\"title\":\"Skip the gym\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"etag\":\"{token:54}\",\"etimestamp\":1793058113010,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:179}\",\"createdTime\":\"{time:180}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectId\":\"{token:1}\",\"title\":\"Fetch the parcel\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:45}\",\"projectId\":\"{token:1}\",\"sortOrder\":-1099511627776,\"title\":\"Fetch the parcel\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"etag\":\"{token:46}\",\"etimestamp\":1793058114208,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:181}\",\"createdTime\":\"{time:182}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectId\":\"inbox\",\"title\":\"Inbox idea\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:50}\",\"projectId\":\"inbox{token:49}\",\"sortOrder\":-5497558138880,\"title\":\"Inbox idea\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"etag\":\"{token:55}\",\"etimestamp\":1793058115403,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:183}\",\"createdTime\":\"{time:184}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectId\":\"{token:2}\",\"title\":\"A note\",\"content\":\"Plain text\",\"kind\":\"NOTE\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:56}\",\"projectId\":\"{token:2}\",\"sortOrder\":-1099511627776,\"title\":\"A note\",\"content\":\"Plain text\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"etag\":\"{token:57}\",\"etimestamp\":1793058116609,\"kind\":\"NOTE\",\"modifiedTime\":\"{time:185}\",\"createdTime\":\"{time:186}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectId\":\"{token:0}\",\"title\":\"Plan the week\",\"content\":\"Look **ahead**\",\"isAllDay\":false,\"isFloating\":true,\"timeZone\":\"Europe/Berlin\",\"reminders\":[],\"startDate\":\"2026-11-06T09:00:00+0000\",\"dueDate\":\"2026-11-06T09:00:00+0000\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:34}\",\"projectId\":\"{token:0}\",\"sortOrder\":-12094627905536,\"title\":\"Plan the week\",\"content\":\"Look **ahead**\",\"startDate\":\"2026-11-06T09:00:00.000+0000\",\"dueDate\":\"2026-11-06T09:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":true,\"status\":0,\"tags\":[],\"etag\":\"{token:35}\",\"etimestamp\":1793058142343,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:187}\",\"createdTime\":\"{time:188}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectId\":\"{token:0}\",\"title\":\"Call the bank\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:27}\",\"projectId\":\"{token:0}\",\"sortOrder\":-14293651161088,\"title\":\"Call the bank\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"etag\":\"{token:28}\",\"etimestamp\":1793058202238,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:189}\",\"createdTime\":\"{time:190}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectId\":\"{token:0}\",\"title\":\"Return the books\",\"content\":\"\",\"reminders\":[]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:36}\",\"projectId\":\"{token:0}\",\"sortOrder\":-15393162788864,\"title\":\"Return the books\",\"content\":\"\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"etag\":\"{token:58}\",\"etimestamp\":1793058213129,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:191}\",\"createdTime\":\"{time:192}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectId\":\"{token:0}\",\"title\":\"Retro\",\"content\":\"\",\"reminders\":[]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:38}\",\"projectId\":\"{token:0}\",\"sortOrder\":-16492674416640,\"title\":\"Retro\",\"content\":\"\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"tags\":[],\"etag\":\"{token:39}\",\"etimestamp\":1793058218273,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:193}\",\"createdTime\":\"{time:194}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/{token:3}",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"id\":\"{token:3}\",\"projectId\":\"{token:0}\",\"reminders\":[],\"startDate\":null,\"dueDate\":null}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:3}\",\"projectId\":\"{token:0}\",\"sortOrder\":-5497558138880,\"title\":\"See the dentist\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"etag\":\"{token:25}\",\"etimestamp\":1793058157643,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:195}\",\"createdTime\":\"{time:196}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/{token:13}",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"id\":\"{token:13}\",\"projectId\":\"{token:0}\",\"items\":[{\"id\":\"{token:14}\",\"title\":\"Oat milk\",\"status\":1,\"sortOrder\":0},{\"id\":\"{token:15}\",\"title\":\"Bread\",\"status\":1,\"sortOrder\":1}]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:13}\",\"projectId\":\"{token:0}\",\"sortOrder\":-6597069766656,\"title\":\"Buy groceries\",\"desc\":\"From the **market**\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"items\":[{\"id\":\"{token:14}\",\"status\":1,\"title\":\"Oat milk\",\"sortOrder\":0,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"},{\"id\":\"{token:15}\",\"status\":1,\"title\":\"Bread\",\"sortOrder\":1,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"}],\"etag\":\"{token:29}\",\"etimestamp\":1793058182520,\"kind\":\"CHECKLIST\",\"modifiedTime\":\"{time:197}\",\"createdTime\":\"{time:198}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/{token:13}",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"id\":\"{token:13}\",\"projectId\":\"{token:0}\",\"parentId\":\"{token:17}\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:13}\",\"projectId\":\"{token:0}\",\"sortOrder\":-6597069766656,\"title\":\"Buy groceries\",\"desc\":\"From the **market**\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"items\":[{\"id\":\"{token:14}\",\"status\":1,\"title\":\"Oat milk\",\"sortOrder\":0,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"},{\"id\":\"{token:15}\",\"status\":1,\"title\":\"Bread\",\"sortOrder\":1,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"}],\"parentId\":\"{token:17}\",\"etag\":\"{token:30}\",\"etimestamp\":1793058186147,\"kind\":\"CHECKLIST\",\"modifiedTime\":\"{time:199}\",\"createdTime\":\"{time:200}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/{token:13}",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"id\":\"{token:13}\",\"projectId\":\"{token:0}\",\"parentId\":\"\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:13}\",\"projectId\":\"{token:0}\",\"sortOrder\":-6597069766656,\"title\":\"Buy groceries\",\"desc\":\"From the **market**\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"status\":0,\"items\":[{\"id\":\"{token:14}\",\"status\":1,\"title\":\"Oat milk\",\"sortOrder\":0,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"},{\"id\":\"{token:15}\",\"status\":1,\"title\":\"Bread\",\"sortOrder\":1,\"isAllDay\":false,\"timeZone\":\"Europe/Berlin\"}],\"etag\":\"{token:31}\",\"etimestamp\":1793058189800,\"kind\":\"CHECKLIST\",\"modifiedTime\":\"{time:201}\",\"createdTime\":\"{time:202}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/{token:53}",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"id\":\"{token:53}\",\"projectId\":\"{token:0}\",\"status\":-1}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:53}\",\"projectId\":\"{token:0}\",\"sortOrder\":-10995116277760,\"title\":\"Skip the gym\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:203}\",\"status\":-1,\"etag\":\"{token:59}\",\"etimestamp\":1793058119034,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:204}\",\"createdTime\":\"{time:205}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/{token:11}",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"id\":\"{token:11}\",\"projectId\":\"{token:0}\",\"title\":\"Pay the rent\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:11}\",\"projectId\":\"{token:0}\",\"sortOrder\":-1099511627776,\"title\":\"Pay the rent\",\"startDate\":\"2026-11-01T23:00:00.000+0000\",\"dueDate\":\"2026-11-01T23:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":true,\"priority\":5,\"isFloating\":false,\"status\":0,\"tags\":[\"mitra-bills\"],\"etag\":\"{token:33}\",\"etimestamp\":1793058146239,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:206}\",\"createdTime\":\"{time:207}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/{token:11}",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"id\":\"{token:11}\",\"projectId\":\"{token:0}\",\"isAllDay\":false,\"isFloating\":false,\"startDate\":\"2026-11-02T08:00:00+0000\",\"dueDate\":\"2026-11-02T08:00:00+0000\",\"timeZone\":\"Europe/Madrid\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:11}\",\"projectId\":\"{token:0}\",\"sortOrder\":-1099511627776,\"title\":\"Pay the rent\",\"startDate\":\"2026-11-02T08:00:00.000+0000\",\"dueDate\":\"2026-11-02T08:00:00.000+0000\",\"timeZone\":\"Europe/Madrid\",\"isAllDay\":false,\"priority\":5,\"isFloating\":false,\"status\":0,\"tags\":[\"mitra-bills\"],\"etag\":\"{token:24}\",\"etimestamp\":1793058150192,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:208}\",\"createdTime\":\"{time:209}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/{token:7}",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"id\":\"{token:7}\",\"projectId\":\"{token:0}\",\"isAllDay\":true,\"isFloating\":false,\"startDate\":\"2026-11-03T23:00:00+0000\",\"dueDate\":\"2026-11-03T23:00:00+0000\",\"timeZone\":\"Europe/Berlin\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:7}\",\"projectId\":\"{token:0}\",\"sortOrder\":-2199023255552,\"title\":\"Call the plumber\",\"startDate\":\"2026-11-03T23:00:00.000+0000\",\"dueDate\":\"2026-11-03T23:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":true,\"priority\":0,\"isFloating\":false,\"status\":0,\"etag\":\"{token:23}\",\"etimestamp\":1793058153869,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:210}\",\"createdTime\":\"{time:211}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/{token:5}",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"status\":0}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"sortOrder\":-3298534883328,\"title\":\"Standup\",\"startDate\":\"2026-11-04T14:00:00.000+0000\",\"dueDate\":\"2026-11-04T14:00:00.000+0000\",\"timeZone\":\"America/New_York\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:212}\",\"status\":0,\"etag\":\"{token:41}\",\"etimestamp\":1793058168592,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:213}\",\"createdTime\":\"{time:214}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/{token:5}",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"status\":-1}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"sortOrder\":-3298534883328,\"title\":\"Standup\",\"startDate\":\"2026-11-04T14:00:00.000+0000\",\"dueDate\":\"2026-11-04T14:00:00.000+0000\",\"timeZone\":\"America/New_York\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:215}\",\"status\":-1,\"etag\":\"{token:42}\",\"etimestamp\":1793058172646,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:216}\",\"createdTime\":\"{time:217}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/{token:5}",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"status\":0}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"sortOrder\":-3298534883328,\"title\":\"Standup\",\"startDate\":\"2026-11-04T14:00:00.000+0000\",\"dueDate\":\"2026-11-04T14:00:00.000+0000\",\"timeZone\":\"America/New_York\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:218}\",\"status\":0,\"etag\":\"{token:43}\",\"etimestamp\":1793058176346,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:219}\",\"createdTime\":\"{time:220}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/{token:5}",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"title\":\"Standup, moved\",\"isAllDay\":false,\"startDate\":\"2026-11-04T15:00:00+0000\",\"dueDate\":\"2026-11-04T15:00:00+0000\",\"timeZone\":\"America/New_York\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:5}\",\"projectId\":\"{token:0}\",\"sortOrder\":-3298534883328,\"title\":\"Standup, moved\",\"startDate\":\"2026-11-04T15:00:00.000+0000\",\"dueDate\":\"2026-11-04T15:00:00.000+0000\",\"timeZone\":\"America/New_York\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:221}\",\"status\":0,\"etag\":\"{token:22}\",\"etimestamp\":1793058197415,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:222}\",\"createdTime\":\"{time:223}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/{token:9}",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"id\":\"{token:9}\",\"projectId\":\"{token:0}\",\"isAllDay\":false,\"isFloating\":false,\"startDate\":\"2026-11-03T08:00:00+0000\",\"dueDate\":\"2026-11-03T08:00:00+0000\",\"timeZone\":\"Europe/Berlin\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "{\"id\":\"{token:9}\",\"projectId\":\"{token:0}\",\"sortOrder\":-4398046511104,\"title\":\"Water the plants\",\"startDate\":\"2026-11-03T08:00:00.000+0000\",\"dueDate\":\"2026-11-03T08:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"repeatFlag\":\"RRULE:FREQ=WEEKLY;BYDAY=MO\",\"repeatFrom\":\"2\",\"status\":0,\"etag\":\"{token:44}\",\"etimestamp\":1793058161284,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:224}\",\"createdTime\":\"{time:225}\"}"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/completed",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectIds\":[\"{token:0}\"],\"startDate\":\"{now}\",\"endDate\":\"{now}\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[{\"id\":\"{token:32}\",\"projectId\":\"{token:0}\",\"sortOrder\":-9895604649984,\"title\":\"Old chore\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:226}\",\"status\":2,\"etag\":\"{token:60}\",\"etimestamp\":1793058117802,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:227}\",\"createdTime\":\"{time:228}\"}]"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/completed",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectIds\":[\"{token:1}\"],\"startDate\":\"{now}\",\"endDate\":\"{now}\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[]"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/completed",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectIds\":[\"{token:0}\"],\"startDate\":\"{now}\",\"endDate\":\"{now}\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[{\"id\":\"{token:18}\",\"projectId\":\"{token:0}\",\"sortOrder\":-8796093022208,\"title\":\"Pick a color\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:229}\",\"status\":2,\"parentId\":\"{token:17}\",\"etag\":\"{token:61}\",\"etimestamp\":1793058198638,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:230}\",\"createdTime\":\"{time:231}\"},{\"id\":\"{token:62}\",\"projectId\":\"{token:0}\",\"sortOrder\":-13194139533312,\"title\":\"Water the plants\",\"startDate\":\"2026-11-03T08:00:00.000+0000\",\"dueDate\":\"2026-11-03T08:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:232}\",\"status\":2,\"etag\":\"{token:63}\",\"etimestamp\":1793058178801,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:233}\",\"createdTime\":\"{time:234}\"}]"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/completed",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectIds\":[\"{token:1}\"],\"startDate\":\"{now}\",\"endDate\":\"{now}\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[]"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/completed",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectIds\":[\"{token:0}\"],\"startDate\":\"{now}\",\"endDate\":\"{now}\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[{\"id\":\"{token:36}\",\"projectId\":\"{token:0}\",\"sortOrder\":-15393162788864,\"title\":\"Return the books\",\"content\":\"\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:235}\",\"status\":2,\"etag\":\"{token:37}\",\"etimestamp\":1793058214319,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:236}\",\"createdTime\":\"{time:237}\"},{\"id\":\"{token:18}\",\"projectId\":\"{token:0}\",\"sortOrder\":-8796093022208,\"title\":\"Pick a color\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:238}\",\"status\":2,\"parentId\":\"{token:17}\",\"etag\":\"{token:61}\",\"etimestamp\":1793058198638,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:239}\",\"createdTime\":\"{time:240}\"},{\"id\":\"{token:62}\",\"projectId\":\"{token:0}\",\"sortOrder\":-13194139533312,\"title\":\"Water the plants\",\"startDate\":\"2026-11-03T08:00:00.000+0000\",\"dueDate\":\"2026-11-03T08:00:00.000+0000\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:241}\",\"status\":2,\"etag\":\"{token:63}\",\"etimestamp\":1793058178801,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:242}\",\"createdTime\":\"{time:243}\"}]"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/completed",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectIds\":[\"{token:1}\"],\"startDate\":\"{now}\",\"endDate\":\"{now}\"}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[]"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/filter",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectIds\":[\"{token:0}\"],\"status\":[-1]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[{\"id\":\"{token:53}\",\"projectId\":\"{token:0}\",\"sortOrder\":-10995116277760,\"title\":\"Skip the gym\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:244}\",\"status\":-1,\"etag\":\"{token:59}\",\"etimestamp\":1793058119034,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:245}\",\"createdTime\":\"{time:246}\"}]"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/filter",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectIds\":[\"{token:1}\"],\"status\":[-1]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[]"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/filter",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectIds\":[\"{token:0}\"],\"status\":[-1]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[{\"id\":\"{token:53}\",\"projectId\":\"{token:0}\",\"sortOrder\":-10995116277760,\"title\":\"Skip the gym\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:247}\",\"status\":-1,\"etag\":\"{token:59}\",\"etimestamp\":1793058119034,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:248}\",\"createdTime\":\"{time:249}\"}]"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/filter",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectIds\":[\"{token:1}\"],\"status\":[-1]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[]"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/filter",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectIds\":[\"{token:0}\"],\"status\":[-1]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[{\"id\":\"{token:53}\",\"projectId\":\"{token:0}\",\"sortOrder\":-10995116277760,\"title\":\"Skip the gym\",\"timeZone\":\"Europe/Berlin\",\"isAllDay\":false,\"priority\":0,\"isFloating\":false,\"completedTime\":\"{time:250}\",\"status\":-1,\"etag\":\"{token:59}\",\"etimestamp\":1793058119034,\"kind\":\"TEXT\",\"modifiedTime\":\"{time:251}\",\"createdTime\":\"{time:252}\"}]"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/filter",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "{\"projectIds\":[\"{token:1}\"],\"status\":[-1]}"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[]"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/move",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "[{\"fromProjectId\":\"{token:0}\",\"toProjectId\":\"{token:1}\",\"taskId\":\"{token:34}\"}]"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[{\"id\":\"{token:34}\",\"isAllDay\":false,\"isFloating\":false,\"etag\":\"{token:47}\",\"etimestamp\":1793058193472,\"modifiedTime\":\"{time:253}\"}]"
+			}
+		},
+		{
+			"request": {
+				"method": "POST",
+				"path": "/open/v1/task/move",
+				"headers": {
+					"content-type": "application/json"
+				},
+				"body": "[{\"fromProjectId\":\"{token:0}\",\"toProjectId\":\"{token:1}\",\"taskId\":\"{token:13}\"}]"
+			},
+			"response": {
+				"status": 200,
+				"headers": {
+					"content-type": "application/json;charset=UTF-8"
+				},
+				"body": "[{\"id\":\"{token:13}\",\"isAllDay\":false,\"isFloating\":false,\"etag\":\"{token:48}\",\"etimestamp\":1793058201036,\"modifiedTime\":\"{time:254}\"}]"
+			}
+		}
+	]
+}
