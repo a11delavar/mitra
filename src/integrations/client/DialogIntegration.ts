@@ -16,6 +16,7 @@ import icsLogo from '#integrations/ics/logo.svg'
 import notionLogo from '#integrations/notion/logo.svg'
 import tempoLogo from '#integrations/tempo/logo.svg'
 import todoistLogo from '#integrations/todoist/logo.svg'
+import ticktickLogo from '#integrations/ticktick/logo.svg'
 import { connectGoogle, getMeta } from '#infrastructure/http/Api.js'
 
 const logos: Record<string, string> = {
@@ -26,6 +27,7 @@ const logos: Record<string, string> = {
 	ics: icsLogo,
 	notion: notionLogo,
 	todoist: todoistLogo,
+	ticktick: ticktickLogo,
 	tempo: tempoLogo,
 	demo: demoLogo,
 }
@@ -328,6 +330,7 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 			case 'ics': return this.icsTemplate
 			case 'notion': return this.notionTemplate
 			case 'todoist': return this.todoistTemplate
+			case 'ticktick': return this.ticktickTemplate
 			case 'tempo': return this.tempoTemplate
 			default: return this.caldavTemplate
 		}
@@ -433,6 +436,19 @@ export class DialogIntegration extends DialogComponent<{ readonly id?: string, r
 				<p class="hint">${t('Todoist.TokenHint')}</p>
 			`}
 			<mitra-text-field label=${t('Todoist API Token')} type="password" ${bind({ keyPath: 'credentials.token' })} placeholder=${this.isEdit ? t('unchanged') : ''}></mitra-text-field>
+			${this.connectTemplate}
+		`
+	}
+
+	private get ticktickTemplate() {
+		const { bind } = this.binder
+		return html`
+			${this.isEdit ? html`
+				<mitra-text-field label=${t('TickTick account')} readonly .value=${this.entity!.credentials.username ?? ''}></mitra-text-field>
+			` : html`
+				<p class="hint">${t('TickTick.TokenHint')}</p>
+			`}
+			<mitra-text-field label=${t('TickTick API Token')} type="password" ${bind({ keyPath: 'credentials.token' })} placeholder=${this.isEdit ? t('unchanged') : ''}></mitra-text-field>
 			${this.connectTemplate}
 		`
 	}
