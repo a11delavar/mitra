@@ -26,7 +26,7 @@ export class CreateEntry extends Operation<EntryPatch, Entry> {
 		if (patch.reminders === undefined && change.edited.holds('reminders')) {
 			change.edited.reminders = user.reminderDefaults.for(change.edited)
 		}
-		const reached = patch.relations && await user.getRelationGraph(em, patch.relations)
+		const reached = patch.relations && await user.getRelationGraph(em, change.related)
 		const errors = [...await fileStore.claim(user.id, patch.files ?? []), ...change.validate({ graph: reached })]
 		if (errors.length) {
 			throw new AggregateError(errors)
@@ -34,7 +34,7 @@ export class CreateEntry extends Operation<EntryPatch, Entry> {
 
 		const created = await change.save(em)
 		await em.flush()
-		const graph = await user.getRelationGraph(em)
+		const graph = await user.getRelationGraph(em, [created.uid])
 		graph.attach([created])
 		syncEmitter.emit('updated', user.id)
 		this.logger.debug(`Created ${created.type} "${created.heading}" (${created.id}) in source ${to.id}`)

@@ -32,14 +32,14 @@ export class UnrelateEntries extends Operation<Parameters> {
 		const other = await user.getEntry(em, target)
 
 		const change = existing.edit(Object.assign(new EntryPatch(), { relations: (existing.relations ?? EntryRelations.none).without({ type, targetUid: other.uid }) }))
-		const errors = [...change.validate({ graph: await user.getRelationGraph(em, change.patch.relations) })]
+		const errors = [...change.validate({ graph: await user.getRelationGraph(em, change.related) })]
 		if (errors.length) {
 			throw new AggregateError(errors)
 		}
 
 		const saved = await change.save(em)
 		await em.flush()
-		const graph = await user.getRelationGraph(em)
+		const graph = await user.getRelationGraph(em, [saved.uid])
 		graph.attach([saved])
 		syncEmitter.emit('updated', user.id)
 		this.logger.debug(`Unrelated entry ${saved.id} from ${other.id} (${type})`)

@@ -38,10 +38,15 @@ export class EntryChange implements Validatable<EntryChangeContext> {
 		return this.edited.type !== this.entry?.type || (moved && !movesInPlace)
 	}
 
+	/** The entries the relations' check reads around, by uid: this one's, and those its candidate lines name. */
+	get related() {
+		return [(this.entry ?? this.edited).uid, ...this.patch.relations?.all.map(relation => relation.targetUid) ?? []]
+	}
+
 	/**
 	 * What refuses the change, judged before any provider is written, as a refusal must leave it untouched: who may change
 	 * the participants, what the patch may do here and in `scope`, what the calendar can hold, and where the relations would
-	 * lead, on the `graph` `user.getRelationGraph(em, patch.relations)` gives where the patch carries them.
+	 * lead, on the `graph` `user.getRelationGraph(em, change.related)` gives where the patch carries them.
 	 */
 	*validate({ graph, scope }: EntryChangeContext = {}) {
 		const { entry, edited, patch } = this

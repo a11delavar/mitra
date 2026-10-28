@@ -160,7 +160,7 @@ export class User {
 		for (const entry of recurring) {
 			entry.overrides = byEntry.get(entry.id!)
 		}
-		const graph = await this.getRelationGraph(em)
+		const graph = await this.getRelationGraph(em, entries.map(entry => entry.uid))
 		graph.attach(entries)
 		return entries
 	}
@@ -229,22 +229,39 @@ export class User {
 	}
 
 	/**
-	 * The user's relations whole, over the entries at both ends of each, and the entries `reaching` points at besides: the
-	 * graph a read serves and a candidate list is judged on. The rows of the user's own entries only: another user's link
-	 * to a uid they share is not the user's to see.
+	 * The user's relations around the entries `around` names by uid: every link that connects to them, however far, both
+	 * directions, with the entries at its ends, the graph a read attaches and a candidate list is judged on. Read outward a
+	 * step at a time, never the user's every link, and only the user's own: another user's link to a uid they share is not theirs.
 	 */
-	async getRelationGraph(em: EntityManager, reaching = EntryRelations.none) {
-		const rows = await em.find(EntryRelation, { entryId: this.inCalendars() } as FilterQuery<EntryRelation>)
-		const ownerIds = [...new Set(rows.map(row => row.entryId))]
-		const targetUids = [...new Set([...rows.map(row => row.targetUid), ...reaching.all.map(relation => relation.targetUid)])]
-		if (!ownerIds.length && !targetUids.length) {
-			return RelationGraph.empty
+	async getRelationGraph(em: EntityManager, around: Iterable<string | undefined>) {
+		const entries = new Map<string, Entry>()
+		const rows = new Set<EntryRelation>()
+		const seen = new Set<string>()
+		let frontier = [...new Set(around)].filter((uid): uid is string => !!uid)
+		while (frontier.length) {
+			frontier.forEach(uid => seen.add(uid))
+			const unread = frontier.filter(uid => !entries.has(uid))
+			const found = unread.length ? await em.find(Entry, { $and: [{ uid: { $in: unread }, recurrenceId: null }, this.inCalendars()] }) : []
+			found.forEach(entry => entries.set(entry.uid!, entry))
+			const expanding = frontier.flatMap(uid => entries.get(uid) ?? [])
+			const [owned, pointing] = await Promise.all([
+				expanding.length ? em.find(EntryRelation, { entryId: { $in: expanding.map(entry => entry.id!) } }) : [],
+				em.find(EntryRelation, { targetUid: { $in: frontier }, entryId: this.inCalendars() } as FilterQuery<EntryRelation>),
+			])
+			const ids = new Set([...entries.values()].map(entry => entry.id))
+			const ownerIds = [...new Set(pointing.map(row => row.entryId))].filter(id => !ids.has(id))
+			const owners = ownerIds.length ? await em.find(Entry, { $and: [{ id: { $in: ownerIds }, recurrenceId: null }, this.inCalendars()] }) : []
+			owners.forEach(entry => entries.set(entry.uid!, entry))
+			const reached = new Set<string>()
+			for (const row of [...owned, ...pointing]) {
+				rows.add(row)
+				reached.add(row.targetUid)
+			}
+			const ownerUids = new Map([...entries.values()].map(entry => [entry.id!, entry.uid!]))
+			pointing.forEach(row => reached.add(ownerUids.get(row.entryId) ?? ''))
+			frontier = [...reached].filter(uid => uid && !seen.has(uid))
 		}
-		const [owners, targets] = await Promise.all([
-			ownerIds.length ? em.find(Entry, { $and: [{ id: { $in: ownerIds }, recurrenceId: null }, this.inCalendars()] }) : [],
-			targetUids.length ? em.find(Entry, { $and: [{ uid: { $in: targetUids }, recurrenceId: null }, this.inCalendars()] }) : [],
-		])
 		const rowsByEntry = Map.groupBy(rows, row => row.entryId)
-		return RelationGraph.of(new Set([...owners, ...targets]), entry => EntryRelations.of((rowsByEntry.get(entry.id!) ?? []).map(row => row.relation)))
+		return RelationGraph.of(new Set(entries.values()), entry => EntryRelations.of((rowsByEntry.get(entry.id!) ?? []).map(row => row.relation)))
 	}
 }

@@ -91,18 +91,20 @@ describe('EntryRelation', () => {
 			const child = await task('a')
 			await relate(child, RelationType.Parent, 'parent')
 
-			const graph = await user.getRelationGraph(em)
+			const graph = await user.getRelationGraph(em, [parent.uid])
 			graph.attach([parent])
 			assert.deepEqual(parent.relations?.all.map(relation => [relation.direction, relation.type.value, relation.targetUid]), [['incoming', 'PARENT', 'a']])
 			assert.deepEqual(parent.relations?.all[0]?.target?.relations?.all.map(relation => [relation.direction, relation.targetUid]), [['outgoing', 'parent']])
 		})
 
 		it('never holds another user\'s row, even one pointing at a uid they share', async () => {
-			await task('shared')
+			const shared = await task('shared')
 			await strangersTaskPointingAt('shared')
 
-			const graph = await user.getRelationGraph(em)
-			assert.deepEqual(graph.entries.map(entry => entry.uid), [])
+			const graph = await user.getRelationGraph(em, ['shared'])
+			graph.attach([shared])
+			assert.deepEqual(graph.entries.map(entry => entry.uid), ['shared'])
+			assert.deepEqual(shared.relations?.all, [])
 			assert.equal(graph.getRollup('shared'), undefined)
 		})
 
@@ -110,9 +112,22 @@ describe('EntryRelation', () => {
 			await task('a')
 			await task('apart')
 
-			const graph = await user.getRelationGraph(em, EntryRelations.of([{ type: RelationType.Parent, targetUid: 'a' }]))
+			const graph = await user.getRelationGraph(em, ['a'])
 			assert.equal(graph.getEntry('a')?.uid, 'a')
 			assert.equal(graph.getEntry('apart'), undefined)
+		})
+
+		it('reads every link connected to what it is asked about, however far either way, and none apart from it', async () => {
+			const [, middle, bottom, after, apart, alsoApart] = await Promise.all(['top', 'middle', 'bottom', 'after', 'apart', 'also-apart'].map(task))
+			await relate(middle!, RelationType.Parent, 'top')
+			await relate(bottom!, RelationType.Parent, 'middle')
+			await relate(after!, RelationType.FinishToStart, 'top')
+			await relate(alsoApart!, RelationType.Parent, 'apart')
+
+			const graph = await user.getRelationGraph(em, [bottom!.uid])
+			assert.deepEqual(graph.entries.map(entry => entry.uid).sort(), ['after', 'bottom', 'middle', 'top'])
+			assert.ok(graph.reaches('hierarchy', ['bottom'], 'top'))
+			assert.equal(graph.getEntry(apart!.uid!), undefined)
 		})
 	})
 
@@ -133,7 +148,7 @@ describe('EntryRelation', () => {
 			const child = await task('a')
 			await relate(child, RelationType.Parent, 'parent')
 			const [before] = await em.find(EntryRelation, { entryId: child.id! })
-			const graph = await user.getRelationGraph(em)
+			const graph = await user.getRelationGraph(em, [child.uid])
 			graph.attach([child])
 			await em.flush()
 			const [after] = await orm.em.fork().find(EntryRelation, { entryId: child.id! })
