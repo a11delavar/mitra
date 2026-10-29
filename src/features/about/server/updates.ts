@@ -1,5 +1,6 @@
 import { createLogger } from '#infrastructure/logging/Logger.js'
 import { environment } from '#infrastructure/server/Environment.js'
+import { BackgroundJob } from '#infrastructure/server/BackgroundJob.js'
 import { type Channel, Version } from '../Version.js'
 const logger = createLogger('Updates')
 
@@ -49,10 +50,7 @@ export class UpdateChecker {
 			logger.debug(`Update checks skipped: '${this.version}' names no update channel (dirty tree or unversioned build)`)
 			return
 		}
-		setTimeout(() => {
-			this.tick()
-			setInterval(() => this.tick(), UpdateChecker.interval).unref()
-		}, UpdateChecker.initialDelay).unref()
+		new BackgroundJob(logger, { every: UpdateChecker.interval, after: UpdateChecker.initialDelay }, () => this.tick()).start()
 	}
 
 	private async tick() {

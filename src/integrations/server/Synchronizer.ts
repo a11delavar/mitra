@@ -4,6 +4,7 @@ import { updates } from '#infrastructure/realtime/Updates.js'
 import { presence } from '#infrastructure/realtime/presence.js'
 import { orm } from '#infrastructure/database/orm.js'
 import { createLogger } from '#infrastructure/logging/Logger.js'
+import { BackgroundJob } from '#infrastructure/server/BackgroundJob.js'
 import { SyncPacer } from './SyncPacer.js'
 
 /**
@@ -16,8 +17,8 @@ export class Synchronizer {
 
 	private readonly pacer = new SyncPacer(presence)
 
-	private chain = Promise.resolve()
-	private pending = 0
+	/** One cycle at a time: a user coming online queues one of their own after the one running. */
+	private readonly job = new BackgroundJob(this.logger, { every: Synchronizer.resolution }, () => this.cycle())
 
 	constructor(private readonly orm: MikroORM) { }
 
@@ -25,22 +26,11 @@ export class Synchronizer {
 		this.logger.info(`Started synchronizer. Will poll watched integrations every ${SyncPacer.activeInterval / 1000}s, unwatched ones every ${SyncPacer.idleInterval / 60_000}min.`)
 		presence.onOnline(userId => {
 			this.logger.debug(`User ${userId} came online, syncing now, then polling every ${SyncPacer.activeInterval / 1000}s while connected`)
-			this.syncSafely({ userId })
+			void this.job.run(() => this.cycle({ userId }))
 		})
 		presence.onOffline(userId =>
 			this.logger.debug(`User ${userId} went offline, polling relaxes to every ${SyncPacer.idleInterval / 60_000}min`))
-		this.syncSafely()
-		setInterval(() => {
-			if (!this.pending) {
-				this.syncSafely()
-			}
-		}, Synchronizer.resolution)
-	}
-
-	private syncSafely(options?: { userId?: string }) {
-		this.pending++
-		const run = this.chain.then(() => this.cycle(options)).finally(() => this.pending--)
-		this.chain = run.catch(error => this.logger.error('Sync failed:', error))
+		this.job.start()
 	}
 
 	private async cycle({ userId }: { userId?: string } = {}) {

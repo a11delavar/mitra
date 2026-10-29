@@ -4,6 +4,7 @@ import '#features/time/TimeSpan.time.js'
 import { createLogger } from '#infrastructure/logging/Logger.js'
 import { localizeIn } from '#infrastructure/i18n/dictionaries.js'
 import { State } from '#infrastructure/database/State.js'
+import { BackgroundJob } from '#infrastructure/server/BackgroundJob.js'
 import { DueReminder } from '../Reminders.js'
 import { NotificationSubscription } from '../NotificationSubscription.js'
 import { sendTo } from './push.js'
@@ -24,17 +25,16 @@ export class ReminderScheduler {
 	private static readonly interval = 60_000
 	private static readonly watermarkStateKey = 'reminder.watermark'
 
-	private ticking = false
-
 	/** In-flight timers keyed by `entryId|minutes|fireAt`. */
 	private readonly dispatched = new Map<string, number>()
+
+	private readonly job = new BackgroundJob(this.logger, { every: ReminderScheduler.interval }, () => this.tick())
 
 	constructor(private readonly orm: MikroORM) { }
 
 	start() {
 		this.logger.info(`Started reminder scheduler. Will check every ${ReminderScheduler.interval / 1000}s.`)
-		this.tick()
-		setInterval(() => this.tick(), ReminderScheduler.interval)
+		this.job.start()
 	}
 
 	private async readWatermark(): Promise<Date | undefined> {
@@ -47,48 +47,38 @@ export class ReminderScheduler {
 	}
 
 	private async tick() {
-		if (this.ticking) {
-			return
+		const now = new Date()
+		const persisted = (await this.readWatermark())?.getTime() ?? now.getTime()
+		const watermark = new Date(Math.max(persisted, now.getTime() - CLAMP))
+		if (persisted < watermark.getTime()) {
+			this.logger.warn(`Skipped reminders due between ${new Date(persisted).toISOString()} and ${watermark.toISOString()}: too far behind to still be useful.`)
 		}
-		this.ticking = true
-		try {
-			const now = new Date()
-			const persisted = (await this.readWatermark())?.getTime() ?? now.getTime()
-			const watermark = new Date(Math.max(persisted, now.getTime() - CLAMP))
-			if (persisted < watermark.getTime()) {
-				this.logger.warn(`Skipped reminders due between ${new Date(persisted).toISOString()} and ${watermark.toISOString()}: too far behind to still be useful.`)
-			}
-			const until = new Date(now.getTime() + ReminderScheduler.interval)
+		const until = new Date(now.getTime() + ReminderScheduler.interval)
 
-			const em = this.orm.em.fork()
-			// Only those with a device are reminded, each where their device was seen last.
-			const devices = Map.groupBy(await em.find(NotificationSubscription, {}, { orderBy: { lastSeenAt: 'desc' } }), device => device.userId)
-			let scheduled = 0
-			for (const user of await em.find(User, { id: { $in: [...devices.keys()] } })) {
-				const zone = devices.get(user.id)!.find(device => device.timeZone)?.timeZone
-				for (const reminder of await DueReminder.of(em, user, watermark, until, zone)) {
-					const key = `${reminder.occurrence.key}|${reminder.minutes}|${reminder.fireAt}`
-					if (this.dispatched.has(key)) {
-						continue
-					}
-					this.dispatched.set(key, reminder.fireAt)
-					this.schedule(user.id, reminder, now.getTime())
-					scheduled++
+		const em = this.orm.em.fork()
+		// Only those with a device are reminded, each where their device was seen last.
+		const devices = Map.groupBy(await em.find(NotificationSubscription, {}, { orderBy: { lastSeenAt: 'desc' } }), device => device.userId)
+		let scheduled = 0
+		for (const user of await em.find(User, { id: { $in: [...devices.keys()] } })) {
+			const zone = devices.get(user.id)!.find(device => device.timeZone)?.timeZone
+			for (const reminder of await DueReminder.of(em, user, watermark, until, zone)) {
+				const key = `${reminder.occurrence.key}|${reminder.minutes}|${reminder.fireAt}`
+				if (this.dispatched.has(key)) {
+					continue
 				}
+				this.dispatched.set(key, reminder.fireAt)
+				this.schedule(user.id, reminder, now.getTime())
+				scheduled++
 			}
-			this.logger.debug(`Tick: window (${watermark.toISOString()}, ${until.toISOString()}]: ${scheduled} reminder(s) scheduled`)
+		}
+		this.logger.debug(`Tick: window (${watermark.toISOString()}, ${until.toISOString()}]: ${scheduled} reminder(s) scheduled`)
 
-			// Advance watermark only to `now` so unexecuted timers in `(now, until]` remain recoverable on crash.
-			await this.writeWatermark(now)
-			for (const [key, fireAt] of this.dispatched) {
-				if (fireAt <= now.getTime()) {
-					this.dispatched.delete(key)
-				}
+		// Advance watermark only to `now` so unexecuted timers in `(now, until]` remain recoverable on crash.
+		await this.writeWatermark(now)
+		for (const [key, fireAt] of this.dispatched) {
+			if (fireAt <= now.getTime()) {
+				this.dispatched.delete(key)
 			}
-		} catch (error) {
-			this.logger.error('Reminder tick failed:', error)
-		} finally {
-			this.ticking = false
 		}
 	}
 

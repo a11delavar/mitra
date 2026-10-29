@@ -1,6 +1,7 @@
 import { type EntityClass } from '@mikro-orm/core'
 import { type MikroORM } from '@mikro-orm/sqlite'
 import { createLogger } from '#infrastructure/logging/Logger.js'
+import { BackgroundJob } from '#infrastructure/server/BackgroundJob.js'
 import { type File } from '../File.js'
 import { fileStore, type FileStore } from './FileStore.js'
 
@@ -14,18 +15,16 @@ export class UnusedFileDisposer {
 	static readonly graceMs = 24 * 60 * 60 * 1000
 	static readonly intervalMs = 60 * 60 * 1000
 
-	private timer?: ReturnType<typeof setInterval>
+	private readonly job = new BackgroundJob(logger, { every: UnusedFileDisposer.intervalMs }, () => this.dispose())
 
 	constructor(private readonly orm: MikroORM, private readonly tables: ReadonlyArray<EntityClass<File>>, private readonly store: FileStore = fileStore) { }
 
 	start() {
-		void this.dispose()
-		this.timer = setInterval(() => void this.dispose(), UnusedFileDisposer.intervalMs)
-		this.timer.unref?.()
+		this.job.start()
 	}
 
 	stop() {
-		clearInterval(this.timer)
+		this.job.stop()
 	}
 
 	/** @returns how many files went. */
