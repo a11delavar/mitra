@@ -2,7 +2,7 @@ import { description, label } from '@a11d/metadata'
 import { converter } from '@a11d/converter'
 import { z } from 'zod'
 import { validation } from '#infrastructure/validation'
-import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { updates } from '#infrastructure/realtime/Updates.js'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { type Source } from '../Source.js'
 import { Color } from '../Color.js'
@@ -22,6 +22,7 @@ class Parameters {
 @label('Recolor a calendar')
 @description('Gives a calendar another color, which Mitra keeps as its own.')
 @http({ method: 'PUT', path: '/sources/:id/color' })
+@updates('sources')
 export class RecolorSource extends Operation<Parameters, Source> {
 	async run({ em, user }: OperationContext) {
 		const source = await user.getSource(em, this.parameters.id)
@@ -29,7 +30,6 @@ export class RecolorSource extends Operation<Parameters, Source> {
 		source.color = this.parameters.color
 		await em.flush()
 
-		syncEmitter.emit('updated', user.id, 'sources')
 		this.logger.debug(`Source ${source.id} recoloured to ${source.color}`)
 		return source
 	}

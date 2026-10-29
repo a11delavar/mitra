@@ -1,8 +1,8 @@
 import { description, label } from '@a11d/metadata'
 import { converter } from '@a11d/converter'
 import { z } from 'zod'
-import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
 import { ValidationError, validation } from '#infrastructure/validation'
+import { updates } from '#infrastructure/realtime/Updates.js'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { EntryRank } from '../EntryRank.js'
 
@@ -28,6 +28,7 @@ class Parameters {
 @label('Rank tasks')
 @description('Stores where tasks stand in the manual order, as their ranks keyed by entry id. Only one-off tasks have a place of their own.')
 @http({ method: 'PUT', path: '/entries/ranks' })
+@updates('entries')
 export class RankTasks extends Operation<Parameters, void> {
 	async run({ em, user }: OperationContext) {
 		const { ranks } = this.parameters
@@ -39,7 +40,6 @@ export class RankTasks extends Operation<Parameters, void> {
 			entry.rank = rank
 		}
 		await em.flush()
-		syncEmitter.emit('updated', user.id)
 		this.logger.debug(`Ranked ${ranks.length} task(s)`)
 	}
 }

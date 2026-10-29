@@ -1,6 +1,6 @@
 import { type MikroORM } from '@mikro-orm/sqlite'
 import { Integration } from '#integrations'
-import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { updates } from '#infrastructure/realtime/Updates.js'
 import { presence } from '#infrastructure/realtime/presence.js'
 import { orm } from '#infrastructure/database/orm.js'
 import { createLogger } from '#infrastructure/logging/Logger.js'
@@ -77,7 +77,7 @@ export class Synchronizer {
 		}
 		// Scope to sources so clients reconcile source states and clear import spinners.
 		for (const changedUserId of changedUsers) {
-			syncEmitter.emit('updated', changedUserId, 'sources')
+			updates.dispatch(changedUserId, 'sources')
 		}
 	}
 }

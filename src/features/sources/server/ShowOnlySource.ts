@@ -2,7 +2,7 @@ import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
 import { User } from '#features/identity'
 import { validation, ValidationError } from '#infrastructure/validation'
-import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { updates } from '#infrastructure/realtime/Updates.js'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 
 class Parameters {
@@ -15,6 +15,7 @@ class Parameters {
 @label('Show only one calendar')
 @description('Hides every calendar but one, keeping the visibility from before so it can be restored.')
 @http({ method: 'PUT', path: '/sources/:id/solo' })
+@updates('sources')
 export class ShowOnlySource extends Operation<Parameters, User> {
 	async run({ em, user }: OperationContext) {
 		const source = await user.getSource(em, this.parameters.id)
@@ -24,7 +25,6 @@ export class ShowOnlySource extends Operation<Parameters, User> {
 		user.showOnly(await user.filterSources(em, { enabled: true }), source.id)
 		await em.flush()
 
-		syncEmitter.emit('updated', user.id, 'sources')
 		this.logger.debug(`Source ${source.id} is now the only one shown`)
 		return user
 	}

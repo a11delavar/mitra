@@ -1,7 +1,7 @@
 import { type EntityManager } from '@mikro-orm/sqlite'
 import { Source } from '#features/sources'
 import { Integration } from '#integrations'
-import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { updates } from '#infrastructure/realtime/Updates.js'
 import { createLogger } from '#infrastructure/logging/Logger.js'
 
 /**
@@ -61,7 +61,7 @@ export class Importer {
 				this.logger.warn(`Import of ${source.toString()} failed, the synchronizer retries it:`, error)
 				return
 			}
-			syncEmitter.emit('updated', userId, 'sources')
+			updates.dispatch(userId, 'sources')
 			if (source.importing && pass >= Importer.maxPasses) {
 				this.logger.warn(`Stopped importing ${source.toString()} after ${pass} passes, it never came back quiet`)
 				return

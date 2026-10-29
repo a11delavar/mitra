@@ -1,7 +1,7 @@
 import { description, label } from '@a11d/metadata'
 import { Integration, integrationClassFor } from '#integrations'
-import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
 import { NotAllowed } from '#infrastructure/validation'
+import { updates } from '#infrastructure/realtime/Updates.js'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { environment } from '#infrastructure/server/Environment.js'
 import { importer } from './Importer.js'
@@ -10,6 +10,7 @@ import { importer } from './Importer.js'
 @label('Connect an integration')
 @description('Connects an account with the calendars chosen, and imports their entries in the background.')
 @http({ method: 'POST', path: '/integrations', status: 201, body: 'integration' })
+@updates('sources')
 export class ConnectIntegration extends Operation<{ readonly integration: Integration }, Integration> {
 	async run({ em, user }: OperationContext): Promise<Integration> {
 		if (environment.demo) {
@@ -22,7 +23,6 @@ export class ConnectIntegration extends Operation<{ readonly integration: Integr
 		const integration: Integration = new (integrationClassFor(incoming.type))({ userId: user.id })
 		em.persist(integration)
 		await integration.apply(em, incoming)
-		syncEmitter.emit('updated', user.id, 'sources')
 		// A fresh context, so its calendars are loaded as they now stand.
 		const saved = await em.fork().findOneOrFail(Integration, { id: integration.id })
 		const enabled = saved.sources.filter(source => source.enabled).length

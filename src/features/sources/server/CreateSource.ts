@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { EntryType, EntryTypes } from '#features/entries'
 import { tool } from '#features/agents/server/tool.js'
 import { validation, NotAllowed } from '#infrastructure/validation'
-import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { updates } from '#infrastructure/realtime/Updates.js'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { Color } from '../Color.js'
 import { Source } from '../Source.js'
@@ -34,6 +34,7 @@ class Parameters {
 @description('Creates a calendar in an integration that can make one, with a name, and optionally a color and the entry types it holds.')
 @http({ method: 'POST', path: '/integrations/:id/sources', status: 201 })
 @tool({ name: 'create_calendar' })
+@updates('sources')
 export class CreateSource extends Operation<Parameters, Source> {
 	async run({ em, user }: OperationContext) {
 		const integration = await user.getIntegration(em, this.parameters.id)
@@ -54,7 +55,6 @@ export class CreateSource extends Operation<Parameters, Source> {
 		await integration.createSource(em, source)
 		await em.flush()
 
-		syncEmitter.emit('updated', user.id, 'sources')
 		this.logger.info(`Created source "${source.name}" (${source.id}) in integration ${integration.id}`)
 		return source
 	}

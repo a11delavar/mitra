@@ -2,8 +2,8 @@ import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
 import { fileStore } from '#features/files/server/FileStore.js'
 import { tool } from '#features/agents/server/tool.js'
-import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
 import { validation } from '#infrastructure/validation'
+import { updates } from '#infrastructure/realtime/Updates.js'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { type Entry } from '../Entry.js'
 import { EntryPatch } from '../EntryPatch.js'
@@ -19,6 +19,7 @@ class Parameters extends EntryPatch {
 @description('Changes an entry itself: a one-off entry, or a repeating entry as a whole, its rule and what every occurrence shares. One occurrence is changed on its own, with how far the change reaches. Fields left out keep their value; null clears one. A move to another calendar, or between event and task, gives the entry a new id.')
 @http({ method: 'PUT', path: '/entries/:id' })
 @tool({ name: 'update_entry' })
+@updates('entries')
 export class UpdateEntry extends Operation<Parameters, Entry> {
 	async run({ em, user }: OperationContext) {
 		const patch = this.parameters
@@ -38,7 +39,6 @@ export class UpdateEntry extends Operation<Parameters, Entry> {
 		// Read back as any read answers it, so the browser keeps the entries it reaches until its next fetch.
 		const graph = await user.getRelationGraph(em, [saved.uid])
 		graph.attach([saved])
-		syncEmitter.emit('updated', user.id)
 		this.logger.debug(recreates ? `Re-created entry ${existing.id} as ${saved.type} in source ${saved.sourceId} (new id ${saved.id})` : `Updated entry ${existing.id} "${saved.heading}"`)
 		return saved
 	}

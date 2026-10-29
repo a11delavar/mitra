@@ -2,7 +2,7 @@ import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
 import type { Integration } from '#integrations'
 import { validation } from '#infrastructure/validation'
-import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { updates } from '#infrastructure/realtime/Updates.js'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 
 class Parameters {
@@ -19,6 +19,7 @@ class Parameters {
 @label('Rename an integration')
 @description('Gives an integration a name of the user\'s own, shown in place of the account it signs in as.')
 @http({ method: 'PUT', path: '/integrations/:id/name' })
+@updates('sources')
 export class RenameIntegration extends Operation<Parameters, Integration> {
 	async run({ em, user }: OperationContext) {
 		const integration = await user.getIntegration(em, this.parameters.id)
@@ -26,7 +27,6 @@ export class RenameIntegration extends Operation<Parameters, Integration> {
 		integration.name = this.parameters.name || undefined
 		await em.flush()
 
-		syncEmitter.emit('updated', user.id, 'sources')
 		this.logger.debug(`Integration ${integration.id} renamed to "${integration.title}"`)
 		return integration
 	}

@@ -3,8 +3,8 @@ import { converter } from '@a11d/converter'
 import { z } from 'zod'
 import { EntryOccurrence, EntryOccurrenceChangeScope } from '#features/recurrence'
 import { tool } from '#features/agents/server/tool.js'
-import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
 import { validation, ValidationError } from '#infrastructure/validation'
+import { updates } from '#infrastructure/realtime/Updates.js'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { type Entry } from '../Entry.js'
 import { EntryPatch } from '../EntryPatch.js'
@@ -25,6 +25,7 @@ class Parameters {
 @description('Marks a task done. A repeating task is done one occurrence at a time: that occurrence leaves the repeating entry as an entry of its own, done, with a new id, which this answers; change it from then on with update_entry. The rest are still to come.')
 @http({ method: 'POST', path: '/entries/:id/complete' })
 @tool({ name: 'complete_task', annotations: { idempotentHint: true } })
+@updates('entries')
 export class CompleteTask extends Operation<Parameters, Entry> {
 	async run({ em, user }: OperationContext) {
 		const { id, occurrence } = this.parameters
@@ -49,7 +50,6 @@ export class CompleteTask extends Operation<Parameters, Entry> {
 		if (scope && occurrence) {
 			const detached = await existing.occurrences.existing(occurrence).edit(change.patch, EntryOccurrenceChangeScope.This).save(em, change.from.integration)
 			await em.flush()
-			syncEmitter.emit('updated', user.id)
 			this.logger.debug(`Completed occurrence ${occurrence.toISOString()} of series ${existing.id} "${existing.heading}"`)
 			return detached
 		}
@@ -61,7 +61,6 @@ export class CompleteTask extends Operation<Parameters, Entry> {
 
 		await change.save(em)
 		await em.flush()
-		syncEmitter.emit('updated', user.id)
 		this.logger.debug(`Completed task ${existing.id} "${existing.heading}"`)
 		return existing
 	}

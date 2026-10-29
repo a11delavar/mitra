@@ -8,6 +8,7 @@ import { User } from '#features/identity'
 import { orm } from '#infrastructure/database/orm.js'
 import { environment } from '#infrastructure/server/Environment.js'
 import { operation, type OperationContext } from '#infrastructure/operations/Operation.js'
+import { updates } from '#infrastructure/realtime/Updates.js'
 import { validation, ValidationError } from '#infrastructure/validation'
 import { tool, type ToolOperationClass } from './tool.js'
 
@@ -36,7 +37,12 @@ const handler = createMcpHandler(({ authInfo }) => {
 		const parameters = operation.parametersOf(each)
 		const inputSchema = parameters ? validation.schemaOf(parameters) : z.object({})
 		server.registerTool(facts.name, { title: label.get(each), description: description.get(each), inputSchema, annotations },
-			(input: Record<string, unknown>) => toolResultOf(() => offered.fromValues(input).run(context)))
+			(input: Record<string, unknown>) => toolResultOf(async () => {
+				const operation = offered.fromValues(input)
+				const result = await operation.run(context)
+				updates.dispatchFor(operation, context.user)
+				return result
+			}))
 	}
 	return server
 }, { responseMode: 'json' })

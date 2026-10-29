@@ -4,8 +4,8 @@ import { z } from 'zod'
 import { fileStore } from '#features/files/server/FileStore.js'
 import { EntryOccurrence, EntryOccurrenceChangeScope } from '#features/recurrence'
 import { tool } from '#features/agents/server/tool.js'
-import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
 import { validation } from '#infrastructure/validation'
+import { updates } from '#infrastructure/realtime/Updates.js'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { type Entry } from '../Entry.js'
 import { EntryPatch } from '../EntryPatch.js'
@@ -30,6 +30,7 @@ class Parameters extends EntryPatch {
 @description('Changes one occurrence of a repeating entry, and with its scope the ones after it or all of them. Fields left out keep the occurrence\'s value; null clears one. Changed alone, the occurrence becomes an entry of its own, with an id of its own.')
 @http({ method: 'PUT', path: '/entries/:id/occurrences/:occurrence' })
 @tool({ name: 'update_entry_occurrence', annotations: { idempotentHint: false } })
+@updates('entries')
 export class UpdateEntryOccurrence extends Operation<Parameters, Entry> {
 	async run({ em, user }: OperationContext) {
 		const patch = this.parameters
@@ -57,7 +58,6 @@ export class UpdateEntryOccurrence extends Operation<Parameters, Entry> {
 		await em.flush()
 		const graph = await user.getRelationGraph(em, [result.uid])
 		graph.attach([result])
-		syncEmitter.emit('updated', user.id)
 		this.logger.debug(`Edited occurrence of series ${existing.id} (scope '${scope}')`)
 		return result
 	}

@@ -2,7 +2,7 @@ import { description, label } from '@a11d/metadata'
 import { fileStore } from '#features/files/server/FileStore.js'
 import { tool } from '#features/agents/server/tool.js'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
-import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { updates } from '#infrastructure/realtime/Updates.js'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { Entry } from '../Entry.js'
 import { EntryPatch } from '../EntryPatch.js'
@@ -12,6 +12,7 @@ import { EntryPatch } from '../EntryPatch.js'
 @description('Creates an event or a task in a calendar. A task without a start is unscheduled and waits in the planning list.')
 @http({ method: 'POST', path: '/entries', status: 201 })
 @tool({ name: 'create_entry' })
+@updates('entries')
 export class CreateEntry extends Operation<EntryPatch, Entry> {
 	async run({ em, user }: OperationContext) {
 		const patch = this.parameters
@@ -36,7 +37,6 @@ export class CreateEntry extends Operation<EntryPatch, Entry> {
 		await em.flush()
 		const graph = await user.getRelationGraph(em, [created.uid])
 		graph.attach([created])
-		syncEmitter.emit('updated', user.id)
 		this.logger.debug(`Created ${created.type} "${created.heading}" (${created.id}) in source ${to.id}`)
 		return created
 	}

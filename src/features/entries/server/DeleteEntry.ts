@@ -1,8 +1,8 @@
 import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
 import { tool } from '#features/agents/server/tool.js'
-import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
 import { validation, ValidationError } from '#infrastructure/validation'
+import { updates } from '#infrastructure/realtime/Updates.js'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 
 class Parameters {
@@ -16,6 +16,7 @@ class Parameters {
 @description('Deletes an entry, a repeating entry with every occurrence. Occurrences are deleted on their own, with how far the deletion reaches.')
 @http({ method: 'DELETE', path: '/entries/:id' })
 @tool({ name: 'delete_entry' })
+@updates('entries')
 export class DeleteEntry extends Operation<Parameters, void> {
 	async run({ em, user }: OperationContext) {
 		const entry = await user.getEntry(em, this.parameters.id)
@@ -24,7 +25,6 @@ export class DeleteEntry extends Operation<Parameters, void> {
 		}
 		await entry.source.integration.deleteEntry(em, entry)
 		await em.flush()
-		syncEmitter.emit('updated', user.id)
 		this.logger.debug(`Deleted entry ${entry.id} "${entry.heading}"`)
 	}
 }

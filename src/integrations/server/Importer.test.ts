@@ -8,7 +8,7 @@ import { EntryRelation } from '#features/relations'
 import { NotificationSubscription } from '#features/reminders/NotificationSubscription.js'
 import { Session } from '#features/identity/server/Session.js'
 import { Integration, integration } from '#integrations'
-import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { updates } from '#infrastructure/realtime/Updates.js'
 import { model, children } from '#infrastructure/model'
 import { Importer } from './Importer.js'
 
@@ -134,10 +134,13 @@ describe('importing a source', () => {
 				published++
 			}
 		}
-		syncEmitter.on('updated', listener)
+		const unsubscribe = updates.subscribe(listener)
 
-		await new Importer().start(em, userId, integrationId)
-		syncEmitter.off('updated', listener)
+		try {
+			await new Importer().start(em, userId, integrationId)
+		} finally {
+			unsubscribe()
+		}
 
 		assert.equal(published, 2)
 	})

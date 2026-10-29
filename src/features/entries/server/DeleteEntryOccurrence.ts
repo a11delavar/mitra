@@ -3,8 +3,8 @@ import { converter } from '@a11d/converter'
 import { z } from 'zod'
 import { EntryOccurrence, EntryOccurrenceChangeScope } from '#features/recurrence'
 import { tool } from '#features/agents/server/tool.js'
-import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
 import { validation, ValidationError } from '#infrastructure/validation'
+import { updates } from '#infrastructure/realtime/Updates.js'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 
 class Parameters {
@@ -27,6 +27,7 @@ class Parameters {
 @description('Deletes one occurrence of a repeating entry, and with its scope the ones after it too, or all of them.')
 @http({ method: 'DELETE', path: '/entries/:id/occurrences/:occurrence' })
 @tool({ name: 'delete_entry_occurrence' })
+@updates('entries')
 export class DeleteEntryOccurrence extends Operation<Parameters, void> {
 	async run({ em, user }: OperationContext) {
 		const { scope } = this.parameters
@@ -41,7 +42,6 @@ export class DeleteEntryOccurrence extends Operation<Parameters, void> {
 			await occurrence.delete(scope).save(em, entry.source.integration)
 		}
 		await em.flush()
-		syncEmitter.emit('updated', user.id)
 		this.logger.debug(`Deleted occurrence of series ${entry.id} (scope '${scope}')`)
 	}
 }

@@ -2,8 +2,8 @@ import { NotFoundError } from '@mikro-orm/sqlite'
 import { description, label } from '@a11d/metadata'
 import { z } from 'zod'
 import { validation, ValidationError } from '#infrastructure/validation'
-import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
 import { applyOrder } from '#infrastructure/model'
+import { updates } from '#infrastructure/realtime/Updates.js'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 
 class Parameters {
@@ -16,6 +16,7 @@ class Parameters {
 @label('Reorder calendars')
 @description('Puts an integration\'s calendars in the order of the ids given.')
 @http({ method: 'PUT', path: '/sources/order' })
+@updates('sources')
 export class ReorderSources extends Operation<Parameters, void> {
 	async run({ em, user }: OperationContext) {
 		const { ids } = this.parameters
@@ -28,7 +29,6 @@ export class ReorderSources extends Operation<Parameters, void> {
 		}
 		applyOrder(sources[0]!.integration.sources, ids)
 		await em.flush()
-		syncEmitter.emit('updated', user.id, 'sources')
 		this.logger.debug(`Reordered ${ids.length} source(s)`)
 	}
 }

@@ -2,7 +2,7 @@ import { Router, type Request, type RequestHandler } from 'express'
 import { cookie } from '#features/identity/server/auth.js'
 import { Integration } from '#integrations'
 import { orm } from '#infrastructure/database/orm.js'
-import { syncEmitter } from '#infrastructure/realtime/syncEmitter.js'
+import { updates } from '#infrastructure/realtime/Updates.js'
 import { createLogger } from '#infrastructure/logging/Logger.js'
 import { environment } from '#infrastructure/server/Environment.js'
 import { GoogleCalendar } from '../GoogleCalendar.js'
@@ -71,7 +71,7 @@ googleConnectRouter.get('/callback', async (req, res) => {
 		await em.flush()
 	}).catch(error =>
 		logger.warn(`Connected ${integration.toString()}, but calendar discovery failed: ${error instanceof Error ? error.message : error}`))
-	syncEmitter.emit('updated', req.user.id, 'sources')
+	updates.dispatch(req.user.id, 'sources')
 	logger.info(`Connected ${integration.toString()}`)
 	return res.redirect(`/?integration=${integration.id}`)
 })
