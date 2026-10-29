@@ -28,13 +28,9 @@ export class AccessTokensSetting extends Setting<undefined> {
 
 	/** Made in one dialog and shown, once, in the next; the list behind has it as soon as it exists. */
 	private async create() {
-		try {
-			const issued = await new DialogNewAccessToken().confirm()
-			window.dispatchEvent(new Event(accessTokenIssued))
-			await new DialogAccessToken(issued).confirm()
-		} catch {
-			// Cancelled.
-		}
+		const issued = await new DialogNewAccessToken().confirm()
+		window.dispatchEvent(new Event(accessTokenIssued))
+		await new DialogAccessToken(issued).confirm()
 	}
 
 	override get control() {

@@ -1,4 +1,4 @@
-import { component, css } from '@a11d/lit'
+import { component, css, eventListener } from '@a11d/lit'
 import { Application, application, DialogCancelledError } from '@a11d/lit-application'
 import { Localizer } from '@3mo/localization'
 import { themeStyles, focusRingStyles, kbdStyles, Choices, Choice, windowDragStyles, Markdown } from '#design'
@@ -84,6 +84,14 @@ export class Mitra extends Application {
 		return this.querySelector('mitra-page-calendar')!
 	}
 
+	/** Dismissing a dialog rejects its `confirm()` to end what opened it; one nothing awaits ends here, as no failure. */
+	@eventListener({ target: window, type: 'unhandledrejection' })
+	protected absorbDismissal(event: PromiseRejectionEvent) {
+		if (event.reason instanceof DialogCancelledError) {
+			event.preventDefault()
+		}
+	}
+
 	protected override async initialized() {
 		Mitra.trackFocusModality()
 		const pendingIntegrationId = Mitra.consumePendingIntegrationParameter()
@@ -129,7 +137,6 @@ export class Mitra extends Application {
 			return
 		}
 		await new DialogIntegration({ prefill: new IcsSubscription({ uri: normalized }) }).confirm()
-			.catch(Mitra.absorbCancellation)
 		document.querySelector('mitra-sidebar')?.requestUpdate()
 	}
 

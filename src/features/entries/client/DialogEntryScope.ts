@@ -40,6 +40,10 @@ export class DialogEntryScope extends DialogComponent<EntryScopeParameters, Entr
 
 	protected override createRenderRoot() { return this }
 
+	protected override cancellationAction() {
+		return undefined
+	}
+
 	private get questions() {
 		return [
 			...this.parameters.series ? ['recurrence' as const] : [],

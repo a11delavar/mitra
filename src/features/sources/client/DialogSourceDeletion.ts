@@ -13,7 +13,7 @@ export class DialogSourceDeletion extends DialogComponent<{ readonly source: Sou
 	/** Asks first only if the calendar has entries to lose. */
 	static async confirmAndDelete(source: Source) {
 		const hasEntries = await CountSourceEntries.call({ id: source.id }) > 0
-		if (hasEntries && await new DialogSourceDeletion({ source }).confirm().catch(() => false) !== true) {
+		if (hasEntries && await new DialogSourceDeletion({ source }).confirm() !== true) {
 			return false
 		}
 		await DeleteSource.call({ id: source.id })
@@ -22,6 +22,10 @@ export class DialogSourceDeletion extends DialogComponent<{ readonly source: Sou
 	}
 
 	protected override createRenderRoot() { return this }
+
+	protected override cancellationAction() {
+		return false
+	}
 
 	static override get styles() {
 		return css`
@@ -40,7 +44,7 @@ export class DialogSourceDeletion extends DialogComponent<{ readonly source: Sou
 
 	private async migrate() {
 		this.close(false)
-		await new DialogSourceMigration({ source: this.parameters.source }).confirm().catch(() => void 0)
+		await new DialogSourceMigration({ source: this.parameters.source }).confirm()
 	}
 
 	protected override get template() {

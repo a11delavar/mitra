@@ -628,7 +628,7 @@ export class EntryDragController extends Controller {
 				EntryStore.commitRelations(target, () => target.relateTo(RelationType.FinishToStart, source.uid!))
 					.catch((error: unknown) => new DialogRelationFailed({
 						message: error instanceof Error ? error.message : t('This relationship is not possible'),
-					}).confirm().catch(() => void 0))
+					}).confirm())
 			}
 			return
 		}

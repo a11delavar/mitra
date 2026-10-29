@@ -13,6 +13,10 @@ export type SubtaskClosure = TaskStatus
 export class DialogCloseSubtasks extends DialogComponent<{ readonly entry: Entry, readonly outstanding: number }, SubtaskClosure | undefined> {
 	protected override createRenderRoot() { return this }
 
+	protected override cancellationAction() {
+		return undefined
+	}
+
 	/** The parent's own closed state leads, since it is the likelier answer, and leading means it is
 	 * the card that takes focus, not a preselected radio. */
 	private get options(): ReadonlyArray<SubtaskClosure> {

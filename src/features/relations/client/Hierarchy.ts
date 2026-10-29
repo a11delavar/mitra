@@ -36,14 +36,13 @@ export class Hierarchy {
 		if (bypass || (!series && !subtasks && shifts.length < 2)) {
 			return Promise.resolve({ recurrence: series ? EntryOccurrenceChangeScope.This : undefined, subtasks: false })
 		}
-		return new DialogEntryScope({ entry, intent, series, subtasks, shifts }).confirm().catch(() => undefined)
+		return new DialogEntryScope({ entry, intent, series, subtasks, shifts }).confirm()
 	}
 
 	/** Resolves recurrence scope without hierarchy options for single-entry mutations. */
 	resolveRecurrenceScope(entry: Entry, intent: 'edit' | 'delete'): Promise<EntryOccurrenceChangeScope | undefined> {
 		return new DialogEntryScope({ entry, intent, series: true, subtasks: 0 })
 			.confirm()
-			.catch(() => undefined)
 			.then(scope => scope?.recurrence)
 	}
 
@@ -90,7 +89,7 @@ export class Hierarchy {
 		if (!outstanding) {
 			return
 		}
-		const status = await new DialogCloseSubtasks({ entry, outstanding }).confirm().catch(() => undefined)
+		const status = await new DialogCloseSubtasks({ entry, outstanding }).confirm()
 		if (status) {
 			await this.apply(entry.hierarchy.planClosing(status))
 		}
@@ -99,7 +98,7 @@ export class Hierarchy {
 	/** Offers to complete the parents that completing this subtask completes. */
 	private async offerToCompleteParents(closed: Entry) {
 		const parents = closed.hierarchy.completedAncestors
-		if (parents.length && await new DialogCompleteParent({ parents }).confirm().catch(() => undefined)) {
+		if (parents.length && await new DialogCompleteParent({ parents }).confirm()) {
 			await this.apply(closed.hierarchy.planCompletion())
 		}
 	}

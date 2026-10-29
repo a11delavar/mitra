@@ -22,6 +22,10 @@ export class DialogWelcome extends DialogComponent<void, boolean | undefined> {
 
 	protected override createRenderRoot() { return this }
 
+	protected override cancellationAction() {
+		return undefined
+	}
+
 	static override get styles() {
 		return css`
 			mitra-dialog-welcome {

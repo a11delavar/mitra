@@ -126,7 +126,7 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 			EntryEditorIntent.requestOpen(location.selected)
 		}
 		if (location.settings && !this.settingsPage) {
-			void this.openSettings({ page: location.settings }).catch(() => undefined)
+			void this.openSettings({ page: location.settings })
 		}
 	}
 

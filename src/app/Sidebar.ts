@@ -1029,7 +1029,7 @@ export class Sidebar extends Component {
 						${!Calendars.canCopyEntriesOut(source) ? html.nothing : html`
 							<mitra-menu-item icon="folder-input"
 								title=${Calendars.canMoveEntriesOut(source) ? t('Move or copy every entry into another calendar') : t('Copy every entry into another calendar')}
-								@click=${() => void new DialogSourceMigration({ source }).confirm().catch(() => void 0)}
+								@click=${() => new DialogSourceMigration({ source }).confirm()}
 							>${Calendars.canMoveEntriesOut(source) ? t('Move entries to…') : t('Copy entries to…')}</mitra-menu-item>
 						`}
 						${!integration.reimportable ? html.nothing : html`

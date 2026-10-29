@@ -6,6 +6,10 @@ import { DialogComponent } from '@a11d/lit-application'
 export class DialogDeleteEntries extends DialogComponent<{ readonly count: number, readonly series?: number }, boolean> {
 	protected override createRenderRoot() { return this }
 
+	protected override cancellationAction() {
+		return false
+	}
+
 	static override get styles() {
 		return css`
 			mitra-dialog-delete-entries {

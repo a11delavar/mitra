@@ -10,6 +10,10 @@ import type { Entry } from '#features/entries'
 export class DialogCompleteParent extends DialogComponent<{ readonly parents: ReadonlyArray<Entry> }, boolean | undefined> {
 	protected override createRenderRoot() { return this }
 
+	protected override cancellationAction() {
+		return undefined
+	}
+
 	static override get styles() {
 		return css`
 			mitra-dialog-complete-parent {

@@ -102,10 +102,7 @@ export class EntryDetailsComponent extends Component {
 	/** Copies the entry to each day the dialog is told, one create apiece, so a copy that fails drops alone. */
 	private readonly handleDuplicateToDays = async () => {
 		const entry = this.segment!.entry
-		const spans = await new DialogDuplicateDays({ entry }).confirm().catch(() => undefined)
-		if (!spans) {
-			return
-		}
+		const spans = await new DialogDuplicateDays({ entry }).confirm()
 		this.close()
 		await Promise.all(spans.map(span => EntryStore.duplicate(entry, span)
 			.catch(error => console.error('Duplicating the entry failed, so that copy was not added:', error))))

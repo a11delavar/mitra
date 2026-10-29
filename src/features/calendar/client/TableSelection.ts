@@ -62,7 +62,7 @@ export class TableSelection extends Component {
 	async delete() {
 		const rows = this.rows.filter(TableSelection.deletable)
 		const series = rows.filter(row => row.series).length
-		if (!rows.length || !await new DialogDeleteEntries({ count: rows.length, series }).confirm().catch(() => false)) {
+		if (!rows.length || !await new DialogDeleteEntries({ count: rows.length, series }).confirm()) {
 			return
 		}
 		this.clear.dispatch()

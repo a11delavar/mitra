@@ -239,6 +239,10 @@ export class DialogTimeZoneRename extends DialogComponent<{ readonly zone: TimeZ
 	protected override primaryAction() {
 		return this.label.trim()
 	}
+
+	protected override cancellationAction() {
+		return undefined
+	}
 }
 
 declare global {
