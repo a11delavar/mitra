@@ -143,7 +143,7 @@ export class ReminderScheduler {
 	}
 
 	/** Resolve each user's latest observed device time zone. */
-	private async observerZones(em: EntityManager): Promise<Map<string, string>> {
+	private async observerZones(em: EntityManager) {
 		const subscriptions = await em.find(NotificationSubscription, {}, { orderBy: { lastSeenAt: 'asc' } })
 		return new Map(subscriptions.filter(subscription => subscription.timeZone).map(subscription => [subscription.userId, subscription.timeZone!]))
 	}

@@ -3,6 +3,7 @@ import { DateTimeRange } from '@3mo/date-time'
 import assert from 'node:assert/strict'
 import { EntryType, Entry } from '#features/entries'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
+import { TimeZone } from '#features/time/TimeZone.js'
 import { Recurrence } from './Recurrence.js'
 import { RecurrenceSet } from './RecurrenceSet.js'
 import { RecurrenceFrequency } from './RecurrenceFrequency.js'
@@ -42,7 +43,7 @@ describe('RecurrenceSet', () => {
 
 		it('keeps the wall clock across a DST flip: 09:00 Berlin stays 09:00', () => {
 			// Berlin leaves DST on Oct 25 2026: the UTC instant must shift from 07:00Z to 08:00Z.
-			const occ = RecurrenceSet.fromRule('FREQ=WEEKLY', berlinNineAm, undefined, [], 'Europe/Berlin')!
+			const occ = RecurrenceSet.fromRule('FREQ=WEEKLY', berlinNineAm, undefined, [], TimeZone.of('Europe/Berlin'))!
 				.within(at('2026-10-19T00:00:00Z'), at('2026-10-27T23:59:59Z'))
 			assert.deepEqual(occ.map(o => o.start.toISOString()), [
 				'2026-10-19T07:00:00.000Z', // still CEST: 09:00 = 07:00Z
@@ -66,7 +67,7 @@ describe('RecurrenceSet', () => {
 			// A timed entry authored with timeZone 'UTC' serializes as a bare-Z DTSTART (no TZID), which
 			// syncs back as timeZone null: both must mean the same fixed-instant expansion.
 			const window = [at('2026-10-19T00:00:00Z'), at('2026-10-27T23:59:59Z')] as const
-			const explicit = RecurrenceSet.fromRule('FREQ=WEEKLY', at('2026-10-19T07:00:00Z'), undefined, [], 'UTC')!.within(...window)
+			const explicit = RecurrenceSet.fromRule('FREQ=WEEKLY', at('2026-10-19T07:00:00Z'), undefined, [], TimeZone.of('UTC'))!.within(...window)
 			const none = RecurrenceSet.fromRule('FREQ=WEEKLY', at('2026-10-19T07:00:00Z'), undefined)!.within(...window)
 			assert.deepEqual(explicit.map(o => o.start.toISOString()), none.map(o => o.start.toISOString()))
 		})
@@ -94,7 +95,7 @@ describe('RecurrenceSet', () => {
 
 		it('half-hour zones expand at their own wall clock', () => {
 			// 09:00 Tehran (UTC+3:30, no DST since 2022) = 05:30Z, year-round.
-			const occ = RecurrenceSet.fromRule('FREQ=WEEKLY', at('2026-07-06T05:30:00Z'), undefined, [], 'Asia/Tehran')!
+			const occ = RecurrenceSet.fromRule('FREQ=WEEKLY', at('2026-07-06T05:30:00Z'), undefined, [], TimeZone.of('Asia/Tehran'))!
 				.within(at('2026-12-01T00:00:00Z'), at('2026-12-08T23:59:59Z'))
 			assert.equal(occ[0]!.start.toISOString(), '2026-12-07T05:30:00.000Z')
 		})

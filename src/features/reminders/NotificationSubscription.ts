@@ -1,5 +1,6 @@
 import { converter } from '@a11d/converter'
 import { User } from '#features/identity'
+import { TimeZone } from '#features/time/TimeZone.js'
 import { model, entity, primaryKey, property, manyToOne, unique, withheld } from '#infrastructure/model'
 import { type DeviceFacts } from './DeviceFacts.js'
 
@@ -20,7 +21,8 @@ export class NotificationSubscription {
 	@property({ type: 'string', nullable: true }) name?: string | null
 
 	/** The device's zone, which floating reminders resolve in. */
-	@property({ type: 'string', nullable: true }) timeZone?: string | null
+	@converter(TimeZone.converter)
+	@property({ type: TimeZone.Mapper, nullable: true }) timeZone?: TimeZone
 
 	/** The app's locale on this device (a BCP 47 tag), which its notifications are written and formatted in. */
 	@property({ type: 'string', nullable: true }) locale?: string | null
@@ -45,7 +47,7 @@ export class NotificationSubscription {
 		}
 		this.userId = userId
 		this.keys = registration.keys
-		this.timeZone = registration.timeZone ?? null
+		this.timeZone = TimeZone.parse(registration.timeZone)
 		this.locale = NotificationSubscription.localeOf(registration.locale) ?? this.locale ?? null
 		this.platform = registration.platform ?? null
 		this.browser = registration.browser ?? null

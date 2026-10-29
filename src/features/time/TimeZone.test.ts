@@ -17,6 +17,14 @@ describe('TimeZone', () => {
 		assert.equal(TimeZone.parse(42), undefined)
 		assert.equal(TimeZone.parse(''), undefined)
 		assert.equal(TimeZone.parse('Asia/Tokyo'), TimeZone.of('Asia/Tokyo'))
+		assert.equal(TimeZone.parse(TimeZone.of('Asia/Tokyo')), TimeZone.of('Asia/Tokyo'))
+	})
+
+	it('keeps a zone in its column as its id, and reads it back as the zone', () => {
+		const mapper = new TimeZone.Mapper()
+		assert.equal(mapper.convertToDatabaseValue(TimeZone.of('Asia/Tokyo')), 'Asia/Tokyo')
+		assert.equal(mapper.convertToJSValue('Asia/Tokyo'), TimeZone.of('Asia/Tokyo'))
+		assert.equal(mapper.convertToDatabaseValue(undefined), null)
 	})
 
 	it('equals its aliases but not a zone with the same clock', () => {

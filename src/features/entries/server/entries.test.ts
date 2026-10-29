@@ -6,6 +6,7 @@ import { DateTimeRange } from '@3mo/date-time'
 import { User, Identity } from '#features/identity'
 import { Source } from '#features/sources'
 import { Recurrence, EntryOccurrences, RecurrenceFrequency } from '#features/recurrence'
+import { TimeZone } from '#features/time/TimeZone.js'
 import { NotificationSubscription } from '#features/reminders/NotificationSubscription.js'
 import { Session } from '#features/identity/server/Session.js'
 import { Integration } from '#integrations'
@@ -51,7 +52,7 @@ async function seedUser(em: EntityManager, username: string, term: string, sourc
 /** What search finds, each entry as the occurrence the browser picks for it at `now`. */
 async function searchEntries(em: EntityManager, user: User, q: string, now = new Date()) {
 	const entries = await user.filterEntries(em, { search: q, sources: visible, limit: 20 })
-	return entries.map(entry => entry.occurrences.standing('UTC', now)).filter(occurrence => !!occurrence)
+	return entries.map(entry => entry.occurrences.standing(TimeZone.UTC, now)).filter(occurrence => !!occurrence)
 }
 
 function windowedEntries(em: EntityManager, user: User, start: Date, end: Date) {

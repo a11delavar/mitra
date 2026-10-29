@@ -30,7 +30,7 @@ export class CommandPalette extends Component {
 
 	/** Each entry as the occurrence standing for it now. */
 	private readonly search = new LatestSearch(async (term: string) => (await SearchEntries.call({ query: term }).catch(() => new Array<Entry>()))
-		.map(entry => entry.occurrences.standing(TimeZone.deviceId))
+		.map(entry => entry.occurrences.standing(TimeZone.device))
 		.filter(occurrence => !!occurrence))
 
 	protected override createRenderRoot() { return this }

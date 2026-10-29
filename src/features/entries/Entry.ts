@@ -718,13 +718,13 @@ export class Entry extends Entity implements Validatable {
 	/** Re-zones entry while keeping wall-clock time. */
 	setTimeZone(zone: EntryTimeZone) {
 		if (!this.allDay) {
-			const clockOf = (timeZone: EntryTimeZone) => timeZone.floating ? TimeZone.localOrDefault.id : timeZone.clock
-			const from = this.timeZone ? clockOf(this.timeZone) : TimeZone.deviceId
+			const clockOf = (timeZone: EntryTimeZone) => timeZone.floating ? TimeZone.localOrDefault : timeZone.clock
+			const from = this.timeZone ? clockOf(this.timeZone) : TimeZone.device
 			const rezoned = (value: DateTime | undefined) => !value ? value : new DateTime(
 				Temporal.Instant.fromEpochMilliseconds(value.valueOf())
-					.toZonedDateTimeISO(from)
+					.toZonedDateTimeISO(from.id)
 					.toPlainDateTime()
-					.toZonedDateTime(clockOf(zone), { disambiguation: 'compatible' })
+					.toZonedDateTime(clockOf(zone).id, { disambiguation: 'compatible' })
 					.epochMilliseconds,
 			)
 			this.start = rezoned(this.start)

@@ -72,7 +72,7 @@ export class EntryOccurrences {
 		if (!anchor || !entry.recurrence || entry.recurringEntryId) {
 			return undefined
 		}
-		return RecurrenceSet.fromRule(entry.recurrence.toRRule(entry.allDay), anchor, entry.start ? entry.end : undefined, entry.exdates ?? [], this.zone.id)
+		return RecurrenceSet.fromRule(entry.recurrence.toRRule(entry.allDay), anchor, entry.start ? entry.end : undefined, entry.exdates ?? [], this.zone)
 	}
 
 	/** The occurrences starting at or after `after`. */
@@ -130,14 +130,13 @@ export class EntryOccurrences {
 	}
 
 	/** The occurrence standing for the entry at `now`: its own, else the one in progress or next, an unscheduled task's current one in `zone`. */
-	standing(zone: string, now = new Date()) {
+	standing(zone: TimeZone, now = new Date()) {
 		return !this.set ? this.single : this.entry.start ? this.nearest(now) : this.current(zone, now)
 	}
 
 	/** An unscheduled task's occurrence the viewer has to do next: the first whose due day has not gone by in `zone`. */
-	current(zone: string, now = new Date()) {
-		const here = TimeZone.of(zone)
-		const today = (this.entry.allDay ? this.zone : here).midnightOf(here.dayOf(now))
+	current(zone: TimeZone, now = new Date()) {
+		const today = (this.entry.allDay ? this.zone : zone).midnightOf(zone.dayOf(now))
 		return this.from(today).next().value
 	}
 

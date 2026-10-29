@@ -34,8 +34,8 @@ export class EntryTimeZone {
 	}
 
 	/** Where its wall clock is read as stored: its zone, or UTC for floating times; the browser holds those in `TimeZone.local`. */
-	get clock(): string {
-		return this.floating ? 'UTC' : this.id
+	get clock() {
+		return this.floating ? TimeZone.UTC : TimeZone.of(this.id)
 	}
 
 	/** The same clock, whichever spelling of a zone each was written with. */

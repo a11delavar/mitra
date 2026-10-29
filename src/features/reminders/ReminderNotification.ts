@@ -58,7 +58,7 @@ export interface PushPayload {
 export interface Reader {
 	/** A BCP 47 tag: its language picks the words, the whole tag the clock and the date order. */
 	locale?: string | null
-	timeZone?: string | null
+	timeZone?: TimeZone
 }
 
 type Localize = ReturnType<typeof localizeIn>
@@ -130,7 +130,7 @@ export class ReminderNotification {
 			tag: facts.tag,
 			timestamp: facts.timestamp,
 			actions,
-			url: this.link(reader.timeZone ?? undefined),
+			url: this.link(reader.timeZone),
 			facts,
 		}
 	}
@@ -142,9 +142,9 @@ export class ReminderNotification {
 			return ''
 		}
 		const locale = reader.locale ?? undefined
-		const readerZone = reader.timeZone ?? undefined
+		const readerZone = reader.timeZone
 		// All-day and floating values encode wall-clock time as UTC; only the reader's "today" is read in their zone.
-		const zone = when.allDay || when.floating ? 'UTC' : readerZone
+		const zone = when.allDay || when.floating ? TimeZone.UTC : readerZone
 		const day = this.dayPhrase(at, now, zone, readerZone, locale, t)
 		const clock = when.allDay ? t('All day') : this.clockPhrase(when, zone, locale)
 		// An all-day task due today reads "Due Today"; a timed one just "Due 10:00".
@@ -155,7 +155,7 @@ export class ReminderNotification {
 	}
 
 	/** The calendar URL with the entry's day and the entry selected, as the page writes it itself. */
-	private link(timeZone: string | undefined): string {
+	private link(timeZone: TimeZone | undefined): string {
 		const { entry, when } = this.facts
 		const at = ReminderNotification.anchorOf(when)
 		if (!entry) {
@@ -163,7 +163,7 @@ export class ReminderNotification {
 		}
 		const parameters = new URLSearchParams()
 		if (at !== undefined) {
-			parameters.set('date', (when!.allDay || when!.floating ? TimeZone.UTC : TimeZone.parse(timeZone) ?? TimeZone.device).dayOf(new Date(at)).toString())
+			parameters.set('date', (when!.allDay || when!.floating ? TimeZone.UTC : timeZone ?? TimeZone.device).dayOf(new Date(at)).toString())
 		}
 		parameters.set('selected', entry.id)
 		return `/?${parameters}`
@@ -175,9 +175,9 @@ export class ReminderNotification {
 	}
 
 	/** Empty for today, else "Tomorrow", "Yesterday" or the date. */
-	private dayPhrase(at: number, now: number, zone: string | undefined, readerZone: string | undefined, locale: string | undefined, t: Localize): string {
-		const target = (TimeZone.parse(zone) ?? TimeZone.device).dayOf(new Date(at))
-		const today = (TimeZone.parse(readerZone) ?? TimeZone.device).dayOf(new Date(now))
+	private dayPhrase(at: number, now: number, zone: TimeZone | undefined, readerZone: TimeZone | undefined, locale: string | undefined, t: Localize): string {
+		const target = (zone ?? TimeZone.device).dayOf(new Date(at))
+		const today = (readerZone ?? TimeZone.device).dayOf(new Date(now))
 		if (target.equals(today)) {
 			return ''
 		}
@@ -187,11 +187,11 @@ export class ReminderNotification {
 		if (target.equals(today.subtract({ days: 1 }))) {
 			return t('Yesterday')
 		}
-		return new Intl.DateTimeFormat(locale, { timeZone: zone, weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(at))
+		return new Intl.DateTimeFormat(locale, { timeZone: zone?.id, weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(at))
 	}
 
-	private clockPhrase(when: PushWhen, zone: string | undefined, locale: string | undefined): string {
-		const format = new Intl.DateTimeFormat(locale, { timeZone: zone, timeStyle: 'short' })
+	private clockPhrase(when: PushWhen, zone: TimeZone | undefined, locale: string | undefined): string {
+		const format = new Intl.DateTimeFormat(locale, { timeZone: zone?.id, timeStyle: 'short' })
 		return when.start !== undefined && when.end !== undefined && when.end > when.start
 			? format.formatRange(new Date(when.start), new Date(when.end))
 			: format.format(new Date(ReminderNotification.anchorOf(when)!))

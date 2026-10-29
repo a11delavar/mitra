@@ -1,4 +1,5 @@
 import type { EntryOccurrence } from '#features/recurrence'
+import type { TimeZone } from '#features/time/TimeZone.js'
 import { ReminderNotification } from './ReminderNotification.js'
 
 /**
@@ -9,7 +10,7 @@ const MINUTE = 60_000
 
 export class DueReminder {
 	/** The reminders of `occurrences` due within `(watermark, until]`, floating times read in the zone `zoneOf` gives. */
-	static within(occurrences: ReadonlyArray<EntryOccurrence>, watermark: Date, until: Date, zoneOf?: (occurrence: EntryOccurrence) => string | undefined): Array<DueReminder> {
+	static within(occurrences: ReadonlyArray<EntryOccurrence>, watermark: Date, until: Date, zoneOf?: (occurrence: EntryOccurrence) => TimeZone | undefined): Array<DueReminder> {
 		return occurrences.flatMap(occurrence => {
 			const { entry } = occurrence
 			// A closed task keeps its reminders, so they must be skipped here.

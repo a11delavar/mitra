@@ -44,7 +44,7 @@ describe('NotificationSubscription', () => {
 			registered.register('u', { keys, platform: 'Android' })
 			registered.register('u', { keys })
 			assert.equal(registered.platform, null)
-			assert.equal(registered.timeZone, null)
+			assert.equal(registered.timeZone, undefined)
 		})
 	})
 

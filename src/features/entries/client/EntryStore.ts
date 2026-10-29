@@ -105,7 +105,7 @@ export class EntryStore extends Controller {
 			if (window && entry.start) {
 				return entry.occurrences.within(window, overrides)
 			}
-			const occurrence = !window ? entry.occurrences.anchored : entry.occurrences.current(TimeZone.deviceId)
+			const occurrence = !window ? entry.occurrences.anchored : entry.occurrences.current(TimeZone.device)
 			const override = overrides.find(override => override.recurrenceId?.getTime() === occurrence?.recurrenceId?.getTime())
 			return !occurrence ? [] : [override ? entry.occurrences.overriddenBy(override) : occurrence]
 		})

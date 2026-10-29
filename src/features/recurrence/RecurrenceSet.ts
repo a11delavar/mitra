@@ -1,17 +1,18 @@
 import ICAL from 'ical.js'
+import { TimeZone } from '#features/time/TimeZone.js'
 
 // A recurring entry repeats at a wall-clock time in its zone, 09:00 staying 09:00 across DST: ical.js iterates floating
 // times and Temporal turns them into instants.
 
-function wallAnchor(instant: Date, zone: string): ICAL.Time {
-	const zoned = Temporal.Instant.fromEpochMilliseconds(instant.getTime()).toZonedDateTimeISO(zone)
+function wallAnchor(instant: Date, zone: TimeZone): ICAL.Time {
+	const zoned = Temporal.Instant.fromEpochMilliseconds(instant.getTime()).toZonedDateTimeISO(zone.id)
 	return ICAL.Time.fromData({ year: zoned.year, month: zoned.month, day: zoned.day, hour: zoned.hour, minute: zoned.minute, second: zoned.second })
 }
 
 /** `compatible` resolves a DST gap forward and an overlap to its first reading, as calendars do. */
-function wallToInstantMs(time: ICAL.Time, zone: string): number {
+function wallToInstantMs(time: ICAL.Time, zone: TimeZone): number {
 	return Temporal.PlainDateTime.from({ year: time.year, month: time.month, day: time.day, hour: time.hour, minute: time.minute, second: time.second })
-		.toZonedDateTime(zone, { disambiguation: 'compatible' }).epochMilliseconds
+		.toZonedDateTime(zone.id, { disambiguation: 'compatible' }).epochMilliseconds
 }
 
 export interface RecurrenceSpan {
@@ -21,7 +22,7 @@ export interface RecurrenceSpan {
 
 /** The dates a rule generates from its anchor, less its exclusions (RFC 5545 §3.8.5), yielded lazily in order. */
 export class RecurrenceSet implements Iterable<RecurrenceSpan> {
-	static fromRule(rrule: string, start: Date, end: Date | undefined, exdates: ReadonlyArray<number> = [], zone = 'UTC'): RecurrenceSet | undefined {
+	static fromRule(rrule: string, start: Date, end: Date | undefined, exdates: ReadonlyArray<number> = [], zone = TimeZone.UTC): RecurrenceSet | undefined {
 		let rule: ICAL.Recur
 		try {
 			rule = ICAL.Recur.fromString(rrule)
@@ -39,7 +40,7 @@ export class RecurrenceSet implements Iterable<RecurrenceSpan> {
 		private readonly anchor: ICAL.Time,
 		private readonly durationMs: number,
 		private readonly exdates: ReadonlySet<number>,
-		private readonly zone: string,
+		private readonly zone: TimeZone,
 	) { }
 
 	/** Every start the rule generates, exclusions included. */

@@ -1,8 +1,9 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { TimeZone } from '#features/time/TimeZone.js'
 import { ReminderNotification, type ReminderFacts, type Reader } from './ReminderNotification.js'
 
-const BERLIN = 'Europe/Berlin'
+const BERLIN = TimeZone.of('Europe/Berlin')
 
 /** 2026-09-08 10:00 in Berlin. */
 const start = Date.UTC(2026, 8, 8, 8, 0)
@@ -46,7 +47,7 @@ describe('ReminderNotification', () => {
 		})
 
 		it('reads the clock in the reader\'s zone and language', () => {
-			assert.equal(plain(notification({}).for({ locale: 'de', timeZone: 'Asia/Tehran' }, start).body), '11:30–12:30 Uhr')
+			assert.equal(plain(notification({}).for({ locale: 'de', timeZone: TimeZone.of('Asia/Tehran') }, start).body), '11:30–12:30 Uhr')
 		})
 
 		it('formats by the reader\'s region, in their language\'s words', () => {
@@ -76,11 +77,11 @@ describe('ReminderNotification', () => {
 			const midnight = Date.UTC(2026, 8, 8)
 			const facts = { when: { start: midnight, end: midnight + 24 * hour, allDay: true }, timestamp: midnight }
 			assert.equal(body(facts, midnight - hour), 'All day')
-			assert.equal(body(facts, midnight - 5 * hour, { locale: 'en', timeZone: 'America/New_York' }), 'Tomorrow · All day')
+			assert.equal(body(facts, midnight - 5 * hour, { locale: 'en', timeZone: TimeZone.of('America/New_York') }), 'Tomorrow · All day')
 		})
 
 		it('reads a floating entry as the wall clock it was written as', () => {
-			assert.equal(body({ when: { start, end: start + hour, floating: true } }, start, { locale: 'en', timeZone: 'America/New_York' }), '8:00 – 9:00 AM')
+			assert.equal(body({ when: { start, end: start + hour, floating: true } }, start, { locale: 'en', timeZone: TimeZone.of('America/New_York') }), '8:00 – 9:00 AM')
 		})
 
 		it('calls a due-only task due, and names its day unless that day is today', () => {
@@ -143,7 +144,7 @@ describe('ReminderNotification', () => {
 		})
 
 		it('takes the day from the reader, so a late-evening reminder does not open yesterday', () => {
-			assert.equal(url({ entry: { id: 'abc' } }, 'Pacific/Auckland'), '/?date=2026-09-08&selected=abc')
+			assert.equal(url({ entry: { id: 'abc' } }, TimeZone.of('Pacific/Auckland')), '/?date=2026-09-08&selected=abc')
 		})
 
 		it('falls back to the calendar itself with no entry to open', () => {

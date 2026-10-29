@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { Entry, EntryPatch } from '#features/entries'
+import { TimeZone } from '#features/time/TimeZone.js'
 import { EntryOccurrenceChange, EntryOccurrenceChangeScope } from './EntryOccurrenceChange.js'
 
 const patchOf = (fields: Partial<EntryPatch>) => Object.assign(new EntryPatch(), fields)
@@ -113,13 +114,9 @@ export class EntryOccurrence {
 	}
 
 	/** Floating times resolve in the observer's `zone`. */
-	reminderAnchorInstant(zone?: string): number | undefined {
-		const anchor = this.reminderAnchor?.getTime()
-		if (anchor === undefined || !this.entry.floating || !zone) {
-			return anchor
-		}
-		return Temporal.Instant.fromEpochMilliseconds(anchor).toZonedDateTimeISO('UTC').toPlainDateTime()
-			.toZonedDateTime(zone, { disambiguation: 'compatible' }).epochMilliseconds
+	reminderAnchorInstant(zone?: TimeZone) {
+		const anchor = this.reminderAnchor
+		return !anchor || !this.entry.floating || !zone ? anchor?.getTime() : zone.atWallClockOf(anchor, TimeZone.UTC).getTime()
 	}
 
 	/** Compared by day. A recurring task is never behind: its next occurrence settles a missed one. */

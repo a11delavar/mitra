@@ -24,10 +24,10 @@ describe('EntryTimeZone', () => {
 	it('reads the wall clock in its zone, a floating one as if in UTC', () => {
 		assert.equal(EntryTimeZone.floating.floating, true)
 		assert.equal(EntryTimeZone.floating.zone, undefined)
-		assert.equal(EntryTimeZone.floating.clock, 'UTC')
+		assert.equal(EntryTimeZone.floating.clock, TimeZone.UTC)
 		const tehran = EntryTimeZone.parse('Asia/Tehran')!
 		assert.equal(tehran.floating, false)
-		assert.equal(tehran.clock, 'Asia/Tehran')
+		assert.equal(tehran.clock, TimeZone.of('Asia/Tehran'))
 	})
 
 	it('is the same clock whichever spelling each was written with, and floating only as floating', () => {

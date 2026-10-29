@@ -275,7 +275,7 @@ export class Todoist extends Integration<TodoistCredentials> {
 		const timeZone = zoned || due.timezone ? EntryTimeZone.parse(due.timezone) : EntryTimeZone.floating
 		const start = zoned
 			? new Date(Temporal.Instant.from(due.date).epochMilliseconds)
-			: Todoist.instantOf(Temporal.PlainDateTime.from(due.date), timeZone?.clock ?? 'UTC')
+			: Todoist.instantOf(Temporal.PlainDateTime.from(due.date), timeZone?.clock.id ?? 'UTC')
 		return {
 			start: start as never,
 			end: minutes ? new Date(start.getTime() + minutes * 60_000) as never : undefined,
@@ -293,7 +293,7 @@ export class Todoist extends Integration<TodoistCredentials> {
 		const day = Temporal.PlainDate.from(deadline.date)
 		return (schedule.allDay
 			? TimeZone.UTC.midnightOf(day)
-			: Todoist.instantOf(day.toPlainDateTime({ hour: 17 }), schedule.timeZone?.clock ?? zone)) as never
+			: Todoist.instantOf(day.toPlainDateTime({ hour: 17 }), schedule.timeZone?.clock.id ?? zone)) as never
 	}
 
 	/**
@@ -394,7 +394,7 @@ export class Todoist extends Integration<TodoistCredentials> {
 	/** The due date's day on the schedule's clock. Todoist keeps no time on a deadline, so a due time is lost. */
 	static deadlineFrom(entry: Pick<Entry, 'due' | 'allDay' | 'timeZone'>, zone: string) {
 		const due = entry.due as Date | undefined
-		return !due ? null : { date: (entry.allDay ? TimeZone.UTC : TimeZone.of(entry.timeZone?.clock ?? zone)).dayOf(due).toString() }
+		return !due ? null : { date: (entry.allDay ? TimeZone.UTC : (entry.timeZone?.clock ?? TimeZone.of(zone))).dayOf(due).toString() }
 	}
 
 	/** The parent Todoist can hold: a task of the account. Todoist moves a subtask into its parent's project. */

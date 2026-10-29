@@ -1,5 +1,6 @@
 import { Memoize as memoize } from 'typescript-memoize'
 import { z } from 'zod'
+import { Type } from '#infrastructure/model'
 import { ValidationError } from '#infrastructure/validation'
 import { TimeZoneName } from './TimeZoneName.js'
 import goldenZones from './goldenZones.json' with { type: 'json' }
@@ -84,7 +85,25 @@ export class TimeZone {
 		deconstruct: (zone: TimeZone | undefined) => zone?.id,
 	}
 
+	/** Keeps a zone as its id; one the platform no longer knows reads as none. */
+	static readonly Mapper = class extends Type<TimeZone | undefined, string | null> {
+		override convertToDatabaseValue(value: TimeZone | string | null | undefined) {
+			return TimeZone.parse(value)?.id ?? null
+		}
+
+		override convertToJSValue(value: TimeZone | string | null | undefined) {
+			return TimeZone.parse(value)
+		}
+
+		override getColumnType() {
+			return 'text'
+		}
+	}
+
 	static parse(value: unknown): TimeZone | undefined {
+		if (value instanceof TimeZone) {
+			return value
+		}
 		try {
 			return typeof value === 'string' && value ? TimeZone.of(value) : undefined
 		} catch {

@@ -4,6 +4,7 @@ import ICAL from 'ical.js'
 import assert from 'node:assert/strict'
 import { EntryType, Entry, EntryRank, EntryFiles } from '#features/entries'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
+import { TimeZone } from '#features/time/TimeZone.js'
 import { CalDAV } from '#integrations/caldav/CalDAV.js'
 import { Recurrence } from './Recurrence.js'
 import { RecurrenceFrequency } from './RecurrenceFrequency.js'
@@ -112,10 +113,10 @@ describe('a repeating task with a due', () => {
 	it('is current until the end of its due day where the viewer is', () => {
 		// 1 Apr at 08:00 in Auckland is still 31 Mar in Honolulu.
 		const now = new Date('2026-03-31T19:00:00Z')
-		assert.equal(rent().occurrences.current('Pacific/Auckland', now)?.due?.toISOString(), '2026-04-01T00:00:00.000Z')
-		assert.equal(rent().occurrences.current('Pacific/Honolulu', now)?.due?.toISOString(), '2026-04-01T00:00:00.000Z')
-		assert.equal(rent().occurrences.current('Pacific/Auckland', new Date('2026-04-01T12:00:00Z'))?.due?.toISOString(), '2026-05-01T00:00:00.000Z')
-		assert.equal(rent().occurrences.current('Pacific/Honolulu', new Date('2026-04-01T12:00:00Z'))?.due?.toISOString(), '2026-04-01T00:00:00.000Z')
+		assert.equal(rent().occurrences.current(TimeZone.of('Pacific/Auckland'), now)?.due?.toISOString(), '2026-04-01T00:00:00.000Z')
+		assert.equal(rent().occurrences.current(TimeZone.of('Pacific/Honolulu'), now)?.due?.toISOString(), '2026-04-01T00:00:00.000Z')
+		assert.equal(rent().occurrences.current(TimeZone.of('Pacific/Auckland'), new Date('2026-04-01T12:00:00Z'))?.due?.toISOString(), '2026-05-01T00:00:00.000Z')
+		assert.equal(rent().occurrences.current(TimeZone.of('Pacific/Honolulu'), new Date('2026-04-01T12:00:00Z'))?.due?.toISOString(), '2026-04-01T00:00:00.000Z')
 	})
 
 	it('yields unscheduled occurrences, each owed on its own day', () => {
