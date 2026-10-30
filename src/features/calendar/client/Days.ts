@@ -13,9 +13,11 @@ import { EntryConnections, type SegmentPlacement } from '#features/relations/cli
 import { EntryDragController } from '#features/entries/client/EntryDragController.js'
 import { TimeZoneLaneController } from '#features/time/client/TimeZoneLaneController.js'
 import { TimeZones } from '#features/time/client/TimeZones.js'
+import { SettingsStore } from '#features/settings/client/SettingsStore.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { CalendarScrollController } from './CalendarScrollController.js'
 import { DayDensityController } from './DayDensityController.js'
+import { WholeWeekSetting } from './WholeWeekSetting.js'
 
 @component('mitra-days')
 export class Days extends Component {
@@ -45,8 +47,10 @@ export class Days extends Component {
 			if (!first || !(columnWidth > 0)) {
 				return undefined
 			}
-			const index = Math.round((date.dayStart.valueOf() - first.dayStart.valueOf()) / 86_400_000)
-			return (index - centerColumns) * columnWidth
+			// Whole weeks rest on the week's first day, any other layout on the date in its middle.
+			const whole = WholeWeekSetting.current
+			const index = Math.round(((whole ? date.weekStart : date).dayStart.valueOf() - first.dayStart.valueOf()) / 86_400_000)
+			return (index - (whole ? 0 : centerColumns)) * columnWidth
 		},
 		dateAt: offset => {
 			const { columnWidth, centerColumns } = this.metrics
@@ -56,7 +60,7 @@ export class Days extends Component {
 			const centerColumn = Math.round(offset / columnWidth) + centerColumns
 			return this.days[Math.min(Math.max(0, centerColumn), this.days.length - 1)]
 		},
-		equivalent: (a, b) => a.dayStart.equals(b.dayStart),
+		equivalent: (a, b) => WholeWeekSetting.current ? a.weekStart.dayStart.equals(b.weekStart.dayStart) : a.dayStart.equals(b.dayStart),
 		// The zone lane anchors the date itself while it moves; an offset read meanwhile is a day the narrowing passed.
 		suspended: () => this.zoneLane.moving,
 		// Today is arrived at at the time it is now, any other day at its middle.
@@ -71,6 +75,7 @@ export class Days extends Component {
 
 	protected readonly entryDrag = new EntryDragController(this)
 	protected readonly density = new DayDensityController(this)
+	protected readonly settings = new SettingsStore(this)
 	protected readonly zoneLane: TimeZoneLaneController = new TimeZoneLaneController(this, settled => void this.scrolling.anchor().then(() => settled && this.updateLaneHeight()))
 	private get segments() { return EntrySegments.of(Availability.outside(this.occurrences), this.dates.window.days) }
 
@@ -174,7 +179,8 @@ export class Days extends Component {
 		if (props.has('navigatingDate') && this.navigatingDate !== this.dates.navigatingDate) {
 			this.scrolling.navigate(this.navigatingDate, { arrive: !this.stepping })
 		}
-		if (props.has('hideTime')) {
+		if (props.has('hideTime') || this.hasAttribute('data-whole-week') !== WholeWeekSetting.current) {
+			this.toggleAttribute('data-whole-week', WholeWeekSetting.current)
 			void this.scrolling.anchor()
 		}
 		this.style.setProperty('--_days-length', this.days.length.toString())
@@ -274,6 +280,16 @@ export class Days extends Component {
 				&[hideTime] {
 					--time-axis-width: 0px;
 					--zone-width: 0px;
+				}
+
+				/* Seven columns however wide, snapping to the week's first day only. */
+				&[data-whole-week] {
+					--_day-width: calc((var(--_days-strip-width) - var(--time-axis-width) + 1px) / 7 - 1px);
+
+					mitra-day {
+						scroll-snap-align: none;
+						&[data-week-start] { scroll-snap-align: start; }
+					}
 				}
 
 				> .canvas {
@@ -641,6 +657,7 @@ export class Days extends Component {
 
 	private get dateTemplate() {
 		const todayValue = new DateTime().dayStart.valueOf()
+		const weekStart = CalendarDatesController.sampleWeek[0]!.dayOfWeek
 		const { days, offset } = this.dates.window
 		return html`
 			${repeat(days, day => day.dayStart.toISOString(), (day, index) => html`
@@ -652,6 +669,7 @@ export class Days extends Component {
 					.entries=${this.segments.timedOn(day)}
 					.availability=${Availability.on(this.occurrences, day)}
 					?today=${day.dayStart.valueOf() === todayValue}
+					?data-week-start=${day.dayOfWeek === weekStart}
 				></mitra-day>
 			`)}
 		`

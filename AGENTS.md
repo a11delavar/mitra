@@ -151,6 +151,7 @@
 
 ## Calendar Views
 - **Weeks follow the locale** (`DateTime.weekStart`): every grid starts there, never at `dayOfWeek === 1`; a locale switch rebuilds the buffers.
+- **Whole weeks** (`WholeWeekSetting`, per device): the week view lays out seven columns over its width and snaps only to the week's first day (`mitra-day[data-week-start]`), where it anchors a date.
 - Views: `mitra-days` (week), `mitra-weeks` (month), `mitra-months` (year), `mitra-timeline`, `mitra-table`.
 - **`EntrySegments`**: `for(occurrence)` memoizes per-day segments; `timedOn(day)` clusters; `runsIn` reads a per-cohort day index; lane packing is unbounded, overflow clipped behind a fade; ties order by heading (`laneOrder`), never arrival. Cache `.dayValue` in hot loops.
 - **Drag** (`EntryDragController`): create, move, resize (0.25rem handles). Nearness snapping (`DayCells`: hairline boundaries assign to adjacent cell) gated by `places()` (grid minus sidebar). Moves preserve grab offset (planning chips anchor at start). Never `setPreview` an unchanged span (`span.equals`) to avoid per-frame repaints. Drag steps notify via `EntryStore.notifyMoved` (views, chips, and badge/connector hosts), never `notify()`; unchanged day segment lists are reused so Lit skips rendering. Local draft in `EntryStore.draft` (id 0).

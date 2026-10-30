@@ -99,6 +99,7 @@
 	"DefaultTaskReminderSetting.Keywords": "reminder notification task default due time alarm when",
 	"DefaultSourceSetting.Keywords": "default calendar source target new entries created",
 	"DefaultViewSetting.Keywords": "view start startup default week month year timeline opens table",
+	"WholeWeekSetting.Keywords": "whole week seven days start monday columns width fixed",
 	"HideDoneTasksSetting.Keywords": "hide done completed cancelled closed tasks finished declutter",
 	"LocaleSetting.Keywords": "language translation locale region english german french format country date time clock 24-hour 12-hour week start first day",
 	"NotificationsSetting.Keywords": "notifications push permission browser allow reminders alerts",

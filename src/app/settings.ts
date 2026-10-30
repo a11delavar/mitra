@@ -3,6 +3,7 @@
 import './ThemeSetting.js'
 import '#infrastructure/i18n/LocaleSetting.js'
 import '#features/calendar/client/DefaultViewSetting.js'
+import '#features/calendar/client/WholeWeekSetting.js'
 import '#features/entries/client/HideDoneTasksSetting.js'
 import '#features/availability/client/HideAvailabilitySetting.js'
 import '#features/relations/client/ConnectorLinesSetting.js'
