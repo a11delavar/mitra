@@ -10,7 +10,7 @@ import { Color } from '#features/sources'
 import { Recurrence } from '#features/recurrence'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { Participants, ParticipantRole, ParticipantStatus, type Participant } from '#features/participants/Participant.js'
-import { EntryReminders } from '#features/reminders/EntryReminders.js'
+import { EntryReminder, EntryReminders } from '#features/reminders/EntryReminders.js'
 import { Integration, integration, IntegrationOwnership } from '#integrations'
 import { model, withheld } from '#infrastructure/model'
 import { buildVTimezone } from './vtimezone.js'
@@ -485,20 +485,20 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 	static remindersFrom(component: ICAL.Component) {
 		const anchor = CalDAV.reminderAnchorOf(component)
-		const minutes = component.getAllSubcomponents('valarm').flatMap(alarm => {
+		const reminders = component.getAllSubcomponents('valarm').flatMap(alarm => {
 			const trigger = alarm.getFirstProperty('trigger')
 			const duration = trigger?.getFirstValue() as { toSeconds?(): number } | null
 			if (
-				alarm.getFirstPropertyValue('action')?.toString().toUpperCase() === 'EMAIL'
-				|| !trigger || typeof duration?.toSeconds !== 'function'
+				!trigger || typeof duration?.toSeconds !== 'function'
 				|| (trigger.getParameter('related')?.toString().toUpperCase() || 'START') !== anchor
 			) {
 				return []
 			}
 			const seconds = duration.toSeconds()
-			return seconds > 0 ? [] : [Math.round(-seconds / 60)]
+			const email = alarm.getFirstPropertyValue('action')?.toString().toUpperCase() === 'EMAIL'
+			return seconds > 0 ? [] : [new EntryReminder(Math.round(-seconds / 60), email)]
 		})
-		return EntryReminders.normalize(minutes)
+		return EntryReminders.normalize(reminders)
 	}
 
 	private static readonly icalRole = new BidirectionalMap<ParticipantRole, string>([
@@ -660,18 +660,20 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
-	static writeReminders(component: ICAL.Component, reminders: Array<number> | undefined | null) {
+	static writeReminders(component: ICAL.Component, reminders: ReadonlyArray<EntryReminder> | undefined | null) {
 		const anchor = CalDAV.reminderAnchorOf(component)
 		for (const alarm of component.getAllSubcomponents('valarm')) {
 			const related = alarm.getFirstProperty('trigger')?.getParameter('related')?.toString().toUpperCase() || 'START'
-			if (alarm.getFirstPropertyValue('action')?.toString().toUpperCase() !== 'EMAIL' && related === anchor) {
+			if (related === anchor) {
 				component.removeSubcomponent(alarm)
 			}
 		}
-		for (const minutes of reminders ?? []) {
+		for (const { minutes, email } of reminders ?? []) {
 			const alarm = new ICAL.Component('valarm')
-			alarm.updatePropertyWithValue('action', 'DISPLAY')
-			alarm.updatePropertyWithValue('description', 'Reminder')
+			alarm.updatePropertyWithValue('action', email ? 'EMAIL' : 'DISPLAY')
+			// An EMAIL alarm's own SUMMARY and DESCRIPTION would be the email's subject and text (RFC 5545), so
+			// it has none and the server sending it takes the entry's title and description, kept current as they change.
+			email ? void 0 : alarm.updatePropertyWithValue('description', 'Reminder')
 			const trigger = alarm.updatePropertyWithValue('trigger', ICAL.Duration.fromSeconds(-minutes * 60))
 			if (anchor === 'END') {
 				trigger.setParameter('related', 'END')
