@@ -150,6 +150,9 @@ export class Entry extends Entity implements Validatable {
 	/** Whether its time can be a wall clock: it already is, or its calendar keeps one. */
 	get floatable() { return this.floating || this.source.capabilities.entries.floating }
 
+	/** Whether a reminder can arrive by email, which the calendar's server sends where it keeps the reminders. */
+	get emailsReminders() { return this.source.ownership.ownerOf('reminders') === 'upstream' }
+
 	/** Where it can be opened outside Mitra, if anywhere. */
 	get externalLink() { return this.source.integration.externalLink(this) }
 

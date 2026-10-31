@@ -176,7 +176,7 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 	@converter(Recurrence.converter)
 	recurrence?: Recurrence | null
 
-	@description('Minutes before the start, or an unscheduled task\'s due, to remind at. Creating without them gives the user\'s default reminders; an empty list gives none.')
+	@description('Minutes before the start, or an unscheduled task\'s due, to remind at; `{ minutes, email: true }` has the calendar\'s server email it instead. Creating without them gives the user\'s default reminders; an empty list gives none.')
 	@converter(EntryReminders.converter)
 	reminders?: EntryReminders | null
 
