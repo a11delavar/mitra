@@ -68,7 +68,7 @@ function location(value: string) {
 }
 
 function reminders(entry: Entry) {
-	return text((entry.reminders ?? []).map(minutes => minutes === 0 ? t('At start') : TimeSpan.fromMinutes(minutes).formatAsWholeUnit()).join(', '))
+	return text((entry.reminders ?? []).map(({ minutes }) => minutes === 0 ? t('At start') : TimeSpan.fromMinutes(minutes).formatAsWholeUnit()).join(', '))
 }
 
 function status(entry: Entry) {

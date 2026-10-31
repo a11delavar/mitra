@@ -21,8 +21,10 @@ export class DueReminder {
 			if (anchor === undefined) {
 				return []
 			}
+			// The calendar's server sends the email ones.
 			return entry.reminders
-				.map(minutes => new DueReminder(occurrence, minutes, anchor))
+				.filter(reminder => !reminder.email)
+				.map(({ minutes }) => new DueReminder(occurrence, minutes, anchor))
 				.filter(({ fireAt }) => fireAt > watermark.getTime() && fireAt <= until.getTime())
 		})
 	}

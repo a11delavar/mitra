@@ -480,6 +480,8 @@ declare global {
 		"Related to": unknown
 		"Releases": unknown
 		"Reload to finish updating": unknown
+		"Remind by email": unknown
+		"Remind by notification": unknown
 		"Reminder": unknown
 		"Reminder notifications": unknown
 		"Reminders": unknown

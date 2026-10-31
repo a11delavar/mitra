@@ -300,6 +300,8 @@
 	"Private": "私密",
 	"Confidential": "机密",
 	"Remove": "移除",
+	"Remind by email": "通过电子邮件提醒",
+	"Remind by notification": "通过通知提醒",
 	"Remove reminder": "移除提醒",
 	"Devices": "设备",
 	"Where your reminders arrive": "你的提醒送达的设备",
