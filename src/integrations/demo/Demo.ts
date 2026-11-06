@@ -4,7 +4,7 @@ import { Source, Color } from '#features/sources'
 import { RelationType } from '#features/relations'
 import { Recurrence, RecurrenceEnd, RecurrenceFrequency, RecurrenceWeekday } from '#features/recurrence'
 import { ParticipantRole, ParticipantStatus, Participants } from '#features/participants/Participant.js'
-import { EntryType, Entry, TaskStatus } from '#features/entries'
+import { EntryType, Entry, EntryStatus } from '#features/entries'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { User } from '#features/identity'
 import { TimeZone } from '#features/time/TimeZone.js'
@@ -211,14 +211,14 @@ export class Demo extends MitraCalendar {
 		const firstDoseToday = floatingAt(todayStart, 0, 7, 30)
 		personalTask({
 			heading: t('💊 Morning Meds'),
-			status: TaskStatus.Done,
+			status: EntryStatus.Done,
 			start: floatingAt(pastStart, 0, 7, 30),
 			timeZone: EntryTimeZone.floating,
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily, until: RecurrenceEnd.before(firstDoseToday) }),
 		})
 		personalTask({
 			heading: t('💊 Morning Meds'),
-			status: TaskStatus.ToDo,
+			status: EntryStatus.ToDo,
 			start: firstDoseToday,
 			timeZone: EntryTimeZone.floating,
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }),
@@ -257,18 +257,18 @@ export class Demo extends MitraCalendar {
 			heading: t('Submit Expense Report'),
 			start: at(pastStart, 0, 16),
 			end: at(pastStart, 0, 16, 30),
-			status: TaskStatus.ToDo,
+			status: EntryStatus.ToDo,
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Monthly, byday: [RecurrenceWeekday.Monday.nth(1)] }),
 		})
 
-		workTask({ heading: t('Draft New System Architecture'), status: TaskStatus.ToDo, start: at(thisWeekMonday, 0, 9), end: at(thisWeekMonday, 0, 12) })
+		workTask({ heading: t('Draft New System Architecture'), status: EntryStatus.ToDo, start: at(thisWeekMonday, 0, 9), end: at(thisWeekMonday, 0, 12) })
 		workEvent({ heading: t('Team Retro'), start: at(nextWeekMonday, 0, 11), end: at(nextWeekMonday, 0, 12) })
 
 		// The work days' one link, from Tuesday morning down into Wednesday afternoon through the clear band below it.
 		// Planned for Tuesday, owed by Friday noon: the schedule and the due are two facts.
 		const prepQ3 = workTask({
 			heading: t('Prepare Q3 Presentation'),
-			status: TaskStatus.Doing,
+			status: EntryStatus.Doing,
 			start: at(thisWeekMonday, 1, 9),
 			end: at(thisWeekMonday, 1, 12),
 			due: at(thisWeekMonday, 4, 12),
@@ -310,7 +310,7 @@ export class Demo extends MitraCalendar {
 		// Saturday's household time holds the chores: the groceries, then the clear-out, one part of it a subtask of its own.
 		const declutter = upkeepTask({
 			heading: t('Declutter the Flat'),
-			status: TaskStatus.Doing,
+			status: EntryStatus.Doing,
 			start: at(thisWeekMonday, 5, 13, 30),
 			end: at(thisWeekMonday, 5, 15, 30),
 			description: [
@@ -323,7 +323,7 @@ export class Demo extends MitraCalendar {
 		})
 		const cellar = upkeepTask({
 			heading: t('Clear Out the Cellar'),
-			status: TaskStatus.Done,
+			status: EntryStatus.Done,
 			start: at(thisWeekMonday, 5, 11, 30),
 			end: at(thisWeekMonday, 5, 12, 30),
 		})
@@ -335,7 +335,7 @@ export class Demo extends MitraCalendar {
 			heading: t('🛒 Grocery Shopping'),
 			start: at(pastStart, 5, 10),
 			end: at(pastStart, 5, 11),
-			status: TaskStatus.ToDo,
+			status: EntryStatus.ToDo,
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Saturday] }),
 		})
 
@@ -344,14 +344,14 @@ export class Demo extends MitraCalendar {
 			heading: t('Deep Clean Apartment'),
 			start: at(pastStart, 5, 17),
 			end: at(pastStart, 5, 19),
-			status: TaskStatus.ToDo,
+			status: EntryStatus.ToDo,
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Monthly, bymonthday: 15 }),
 		})
 
 		// Owed every month and never planned: the series repeats its due, and the planning list shows the one coming up.
 		upkeepTask({
 			heading: t('Pay the rent'),
-			status: TaskStatus.ToDo,
+			status: EntryStatus.ToDo,
 			allDay: true,
 			due: allDayStart(todayStart.subtract({ years: 2 }).with({ day: 1 }), 0),
 			estimate: 15,
@@ -413,15 +413,15 @@ export class Demo extends MitraCalendar {
 		// The university days' chain. It must stay in the CURRENT week, since the app opens on today−2…today+4.
 		// Wednesday morning's step curves down into Thursday afternoon's, Thursday morning's drops straight into it,
 		// and the exam on Friday morning rises from it through the clear band between: a connector is swallowed by any chip in its way.
-		const algoPrep1 = uniTask({ heading: t('DA: Study Graphs and Trees'), status: TaskStatus.Done, start: at(thisWeekMonday, 2, 9), end: at(thisWeekMonday, 2, 12) })
+		const algoPrep1 = uniTask({ heading: t('DA: Study Graphs and Trees'), status: EntryStatus.Done, start: at(thisWeekMonday, 2, 9), end: at(thisWeekMonday, 2, 12) })
 		const algoPrep2 = uniTask({
 			heading: t('DA: Study Dynamic Programming'),
-			status: TaskStatus.Doing,
+			status: EntryStatus.Doing,
 			start: at(thisWeekMonday, 3, 9),
 			end: at(thisWeekMonday, 3, 12),
 			description: t('Lecture notes are in [my vault](obsidian://open?vault=University&file=Dynamic%20Programming).'),
 		})
-		const algoPrep3 = uniTask({ heading: t('DA: Solve Practice Exam'), status: TaskStatus.ToDo, start: at(thisWeekMonday, 3, 14), end: at(thisWeekMonday, 3, 15, 30) })
+		const algoPrep3 = uniTask({ heading: t('DA: Solve Practice Exam'), status: EntryStatus.ToDo, start: at(thisWeekMonday, 3, 14), end: at(thisWeekMonday, 3, 15, 30) })
 
 		const algoExam = uniEvent({
 			heading: t('Exam: Data Structures & Algorithms'),
@@ -450,8 +450,8 @@ export class Demo extends MitraCalendar {
 			end: at(month6Start, 4, 12),
 		})
 
-		const calcPrep1 = uniTask({ heading: t('AC: Review Integrals'), status: TaskStatus.ToDo, start: at(month6Start, 2, 14), end: at(month6Start, 2, 17) })
-		const calcPrep2 = uniTask({ heading: t('AC: Study Multivariable Calculus'), status: TaskStatus.ToDo, start: at(month6Start, 3, 9), end: at(month6Start, 3, 12) })
+		const calcPrep1 = uniTask({ heading: t('AC: Review Integrals'), status: EntryStatus.ToDo, start: at(month6Start, 2, 14), end: at(month6Start, 2, 17) })
+		const calcPrep2 = uniTask({ heading: t('AC: Study Multivariable Calculus'), status: EntryStatus.ToDo, start: at(month6Start, 3, 9), end: at(month6Start, 3, 12) })
 		relate(calcPrep2, RelationType.FinishToStart, calcPrep1)
 		relate(advCalcExam, RelationType.FinishToStart, calcPrep2)
 
@@ -460,30 +460,30 @@ export class Demo extends MitraCalendar {
 		const past = (weeks: number, dayOffset: number, hour: number, minute = 0) => at(thisWeekMonday.subtract({ days: weeks * 7 }), dayOffset, hour, minute)
 
 		// Two weeks back, not one: the parent's all-day band would otherwise sit in the opening window.
-		const writeMigScript = workTask({ heading: t('Write Migration Script'), status: TaskStatus.Done, start: past(2, 0, 9), end: past(2, 0, 15) })
-		const testMig = workTask({ heading: t('Test Database Migration'), status: TaskStatus.Done, start: past(2, 1, 9), end: past(2, 1, 14) })
+		const writeMigScript = workTask({ heading: t('Write Migration Script'), status: EntryStatus.Done, start: past(2, 0, 9), end: past(2, 0, 15) })
+		const testMig = workTask({ heading: t('Test Database Migration'), status: EntryStatus.Done, start: past(2, 1, 9), end: past(2, 1, 14) })
 		const execMig = workEvent({ heading: t('Execute Database Migration'), start: past(2, 2, 9), end: past(2, 2, 11) })
 		relate(testMig, RelationType.FinishToStart, writeMigScript)
 		relate(execMig, RelationType.FinishToStart, testMig)
 
 		const migrationProject = workTask({
 			heading: t('Database Migration'),
-			status: TaskStatus.Doing,
+			status: EntryStatus.Doing,
 			start: past(2, 0, 0),
 			end: past(2, 7, 12),
 			allDay: true,
 		})
-		const migrationSignOff = workTask({ heading: t('Sign Off Migration Rollback Plan'), status: TaskStatus.ToDo, start: past(1, 1, 11), end: past(1, 1, 12) })
+		const migrationSignOff = workTask({ heading: t('Sign Off Migration Rollback Plan'), status: EntryStatus.ToDo, start: past(1, 1, 11), end: past(1, 1, 12) })
 		relate(writeMigScript, RelationType.Parent, migrationProject)
 		relate(testMig, RelationType.Parent, migrationProject)
 		relate(migrationSignOff, RelationType.Parent, migrationProject)
 
-		workTask({ heading: t('Close the Q2 books'), status: TaskStatus.Done, start: past(1, 1, 9), end: past(1, 1, 12) })
-		workTask({ heading: t('Review the security audit'), status: TaskStatus.Done, start: past(3, 1, 14), end: past(3, 1, 16) })
-		workTask({ heading: t('Rewrite the onboarding doc'), status: TaskStatus.Done, start: past(4, 0, 10), end: past(4, 0, 15) })
-		uniTask({ heading: t('DA: Read chapters 1-4'), status: TaskStatus.Done, start: past(3, 3, 9), end: past(3, 3, 12) })
-		upkeepTask({ heading: t('Service the bike'), status: TaskStatus.Done, start: past(5, 5, 11), end: past(5, 5, 13) })
-		personalTask({ heading: t('Return the parcel'), status: TaskStatus.Cancelled, start: past(4, 4, 16), end: past(4, 4, 17) })
+		workTask({ heading: t('Close the Q2 books'), status: EntryStatus.Done, start: past(1, 1, 9), end: past(1, 1, 12) })
+		workTask({ heading: t('Review the security audit'), status: EntryStatus.Done, start: past(3, 1, 14), end: past(3, 1, 16) })
+		workTask({ heading: t('Rewrite the onboarding doc'), status: EntryStatus.Done, start: past(4, 0, 10), end: past(4, 0, 15) })
+		uniTask({ heading: t('DA: Read chapters 1-4'), status: EntryStatus.Done, start: past(3, 3, 9), end: past(3, 3, 12) })
+		upkeepTask({ heading: t('Service the bike'), status: EntryStatus.Done, start: past(5, 5, 11), end: past(5, 5, 13) })
+		personalTask({ heading: t('Return the parcel'), status: EntryStatus.Cancelled, start: past(4, 4, 16), end: past(4, 4, 17) })
 
 		// Overdue beyond the fetch window, where the planning list is the only surface that reaches it.
 		upkeepTask({ heading: t('Renew the tenancy insurance'), start: past(40, 1, 10), end: past(40, 1, 11) })
@@ -492,7 +492,7 @@ export class Demo extends MitraCalendar {
 
 		// How long each takes is all a planner needs; one is owed by a date.
 		workTask({ heading: t('Draft the hiring plan'), estimate: 120 })
-		workTask({ heading: t('Reply to the vendor quote'), status: TaskStatus.Doing, estimate: 30 })
+		workTask({ heading: t('Reply to the vendor quote'), status: EntryStatus.Doing, estimate: 30 })
 		personalTask({ heading: t('Renew the passport') })
 		uniTask({ heading: t('Pick a thesis topic'), allDay: true, due: allDayStart(nextWeekMonday, 11), estimate: 2 * 24 * 60 })
 	}

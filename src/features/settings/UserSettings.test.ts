@@ -47,6 +47,7 @@ describe('UserSettings', () => {
 
 		it('keeps a lens turned back off, so the choice reads as made rather than never taken', () => {
 			assert.deepEqual(UserSettings.sanitize({ hideDoneTasks: false }), { hideDoneTasks: false })
+			assert.deepEqual(UserSettings.sanitize({ hideCancelled: true }), { hideCancelled: true })
 		})
 
 		it('keeps an explicit null reminder, and tells it from an absent one', () => {

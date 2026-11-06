@@ -1,7 +1,7 @@
 import { converter } from '@a11d/converter'
 import { equals } from '@a11d/equals'
 import { Source, Color } from '#features/sources'
-import { type Entry, EntryType, TaskStatus } from '#features/entries'
+import { type Entry, EntryType, EntryStatus } from '#features/entries'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { EntryRelations, RelationType } from '#features/relations'
 import { TimeZone } from '#features/time/TimeZone.js'
@@ -167,7 +167,7 @@ export class Todoist extends Integration<TodoistCredentials> {
 
 	/** Tasks move between projects in place. Two states only, open and done, so no Doing and no Cancelled; no files of Mitra's, no availability. */
 	override get capabilities() {
-		return new IntegrationCapabilities({ entries: { statuses: [TaskStatus.ToDo, TaskStatus.Done], attach: false, move: true }, availability: false })
+		return new IntegrationCapabilities({ entries: { statuses: [EntryStatus.ToDo, EntryStatus.Done], attach: false, move: true }, availability: false })
 	}
 
 	/**
@@ -317,7 +317,7 @@ export class Todoist extends Integration<TodoistCredentials> {
 		entry.uid = task.id
 		entry.heading = task.content || 'Untitled Task'
 		entry.description = task.description ?? ''
-		entry.status = task.checked ? TaskStatus.Done : TaskStatus.ToDo
+		entry.status = task.checked ? EntryStatus.Done : EntryStatus.ToDo
 		entry.start = schedule.start
 		entry.end = schedule.end
 		// Without a schedule, the precision is the deadline's, a day.

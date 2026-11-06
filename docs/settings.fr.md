@@ -20,7 +20,7 @@ La palette de commandes connaît les mêmes mots et modifie la plupart des param
 
 ## Votre compte ou cet appareil
 
-La plupart des paramètres appartiennent à votre compte et vous suivent sur chaque appareil et chaque navigateur depuis lesquels vous vous connectez : la langue, la vue par défaut, **Masquer les tâches terminées**, **Masquer les disponibilités**, l'agenda par défaut, la durée par défaut, **Aligner sur** et les deux rappels par défaut.
+La plupart des paramètres appartiennent à votre compte et vous suivent sur chaque appareil et chaque navigateur depuis lesquels vous vous connectez : la langue, la vue par défaut, **Masquer les tâches terminées**, **Masquer les éléments annulés**, **Masquer les disponibilités**, l'agenda par défaut, la durée par défaut, **Aligner sur** et les deux rappels par défaut.
 
 Les autres appartiennent à l'appareil que vous utilisez, si bien que votre téléphone et votre ordinateur portable peuvent différer : le thème, les lignes de connexion, et le fait que ce navigateur affiche ou non des notifications.
 
@@ -38,7 +38,7 @@ Chaque langue décide aussi de l'écriture des dates et des heures, du premier j
 
 **Vue par défaut** est la vue sur laquelle Mitra s'ouvre : **Semaine**, sauf si vous choisissez **Mois**, **Année**, **Chronologie** ou **Tableau**.
 
-**Masquer les tâches terminées** retire les tâches terminées et annulées des vues semaine, mois et année et de l'onglet Planification. La recherche les trouve toujours, elles comptent toujours dans la progression de leur parent, et la vue tableau les liste toujours. Une tâche que vous avez ouverte reste visible jusqu'à ce que vous la fermiez.
+**Masquer les tâches terminées** retire les tâches terminées des vues semaine, mois et année et de l'onglet Planification, et **Masquer les éléments annulés** fait de même pour les tâches et les événements annulés. La recherche les trouve toujours, elles comptent toujours dans la progression de leur parent, et la vue tableau les liste toujours. Une tâche que vous avez ouverte reste visible jusqu'à ce que vous la fermiez.
 
 **Masquer les disponibilités** retire les [disponibilités](availability.md) de la vue semaine. Elles restent dans leurs calendriers, et une disponibilité occupée apparaît toujours comme occupée aux autres.
 

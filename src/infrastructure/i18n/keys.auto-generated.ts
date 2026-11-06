@@ -77,6 +77,7 @@ declare global {
 		"${rule}, ${count:pluralityNumber} times": unknown
 		"${setting}: ${value}": unknown
 		"${span} before": unknown
+		"${status}. Click for options": unknown
 		"${status}. Click to toggle, Alt-click for options": unknown
 		"About": unknown
 		"About.Keywords": unknown
@@ -151,6 +152,7 @@ declare global {
 		"Calendars": unknown
 		"Calendars stored in Mitra itself, no account needed": unknown
 		"Cancelled": unknown
+		"Cancelled tasks and events leave the calendar. Search still finds them, and a cancelled task still counts towards progress.": unknown
 		"Change ${name}…": unknown
 		"Checking what the calendar can take…": unknown
 		"Checking what would be copied…": unknown
@@ -175,6 +177,7 @@ declare global {
 		"Commands": unknown
 		"Commit": unknown
 		"Confidential": unknown
+		"Confirmed": unknown
 		"Connect": unknown
 		"Connect an account": unknown
 		"Connecting…": unknown
@@ -250,7 +253,7 @@ declare global {
 		"Does not repeat": unknown
 		"Doing": unknown
 		"Done": unknown
-		"Done and cancelled tasks leave the calendar. Search still finds them, and they still count towards progress.": unknown
+		"Done tasks leave the calendar. Search still finds them, and they still count towards progress.": unknown
 		"Double-click to rename": unknown
 		"Draft": unknown
 		"drag": unknown
@@ -314,10 +317,12 @@ declare global {
 		"Hide all calendars": unknown
 		"Hide availability": unknown
 		"Hide calendar": unknown
+		"Hide cancelled": unknown
 		"Hide column": unknown
 		"Hide done tasks": unknown
 		"Hide the other time zones": unknown
 		"HideAvailabilitySetting.Keywords": unknown
+		"HideCancelledSetting.Keywords": unknown
 		"HideDoneTasksSetting.Keywords": unknown
 		"Hold Shift to choose a run of days": unknown
 		"Home": unknown
@@ -357,6 +362,7 @@ declare global {
 		"Mark as cancelled": unknown
 		"Mark as done": unknown
 		"Match the system": unknown
+		"Maybe": unknown
 		"McpSetting.Keywords": unknown
 		"minutes": unknown
 		"Mitra": unknown
@@ -411,7 +417,6 @@ declare global {
 		"No matches": unknown
 		"No matching entries": unknown
 		"No release notes available": unknown
-		"No status": unknown
 		"None": unknown
 		"Nothing from the file was added.": unknown
 		"Nothing is deleted here until its copy has landed": unknown

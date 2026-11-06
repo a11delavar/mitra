@@ -31,7 +31,7 @@ Il campo di **ricerca** confronta ogni parola che scrivi con il titolo, il luogo
 Clicca sull'intestazione di una colonna per il suo menu:
 
 - **Ordina in modo crescente** o **Ordina in modo decrescente**. Scegli di nuovo quello attivo per rimuoverlo. Tieni premuto <kbd>Shift</kbd> per ordinare per più colonne.
-- Il **filtro** della colonna, dove ce l'ha: togli la spunta ai valori da escludere. Tieni premuto <kbd>Alt</kbd> per tenere solo quello su cui clicchi. **Senza stato** nel filtro **Stato** rappresenta gli eventi, quindi togliendo la spunta si elencano solo le attività.
+- Il **filtro** della colonna, dove ce l'ha: togli la spunta ai valori da escludere. Tieni premuto <kbd>Alt</kbd> per tenere solo quello su cui clicchi.
 - **Nascondi colonna**, che toglie anche il filtro della colonna.
 
 Le colonne **Stato**, **Calendario**, **Tipo** e **Si ripete** possono filtrare, e **Quando** contiene l'intervallo di giorni. Un imbuto accanto a un'intestazione mostra che la colonna sta escludendo delle righe. **Titolo** e **Quando** non si possono nascondere.

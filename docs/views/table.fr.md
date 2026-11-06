@@ -31,7 +31,7 @@ Le champ de **recherche** compare chaque mot saisi au titre, au lieu, à la desc
 Cliquez sur l'en-tête d'une colonne pour son menu :
 
 - **Trier par ordre croissant** ou **Trier par ordre décroissant**. Choisissez à nouveau celui qui est actif pour le retirer. Maintenez <kbd>Shift</kbd> pour trier sur plusieurs colonnes.
-- Le **filtre** de la colonne, quand elle en a un : décochez les valeurs à exclure. Maintenez <kbd>Alt</kbd> pour ne garder que celle sur laquelle vous cliquez. Dans le filtre **Statut**, **Sans statut** représente les événements, donc le décocher ne liste que les tâches.
+- Le **filtre** de la colonne, quand elle en a un : décochez les valeurs à exclure. Maintenez <kbd>Alt</kbd> pour ne garder que celle sur laquelle vous cliquez.
 - **Masquer la colonne**, qui lève aussi le filtre de la colonne.
 
 Les colonnes **Statut**, **Agenda**, **Type** et **Se répète** peuvent filtrer, et **Quand** contient la période de jours. Un entonnoir à côté d'un en-tête indique que la colonne exclut des lignes. **Titre** et **Quand** ne peuvent pas être masquées.

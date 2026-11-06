@@ -2,7 +2,7 @@ import { describe, it, before, after, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { MikroORM, UnderscoreNamingStrategy, type EntityManager } from '@mikro-orm/sqlite'
 import { children } from '#infrastructure/model'
-import { Entry, TaskStatus, EntryType } from '#features/entries'
+import { Entry, EntryStatus, EntryType } from '#features/entries'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { User, Identity } from '#features/identity'
 import { Source, Color } from '#features/sources'
@@ -311,7 +311,7 @@ describe('Calendar subscription sync', () => {
 
 		const task = entries.find(entry => entry.uri === 'task@example.com')!
 		assert.equal(task.type, EntryType.Task)
-		assert.equal(task.status, TaskStatus.ToDo)
+		assert.equal(task.status, EntryStatus.ToDo)
 		assert.equal(task.percentComplete, 25)
 	})
 

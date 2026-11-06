@@ -14,7 +14,7 @@ import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
 import { Entry } from './Entry.js'
 import { EntryPatch } from './EntryPatch.js'
 import { EntryType } from './EntryType.js'
-import { TaskStatus } from './TaskStatus.js'
+import { EntryStatus } from './EntryStatus.js'
 import { Transparency } from './Transparency.js'
 import { Visibility } from './Visibility.js'
 import { EntryFiles } from './EntryFiles.js'
@@ -32,9 +32,9 @@ describe('EntryPatch', () => {
 
 	describe('of', () => {
 		it('takes the entry\'s fields, its empty ones as cleared', () => {
-			const patch = EntryPatch.of(task({ status: TaskStatus.Doing }))
+			const patch = EntryPatch.of(task({ status: EntryStatus.Doing }))
 			assert.equal(patch.heading, 'Report')
-			assert.equal(patch.status, TaskStatus.Doing)
+			assert.equal(patch.status, EntryStatus.Doing)
 			assert.equal(patch.due, null)
 			assert.equal(patch.color, null)
 		})
@@ -52,12 +52,12 @@ describe('EntryPatch', () => {
 	describe('across the wire', () => {
 		it('arrives with its values, the clearing nulls and nothing it left out', () => {
 			const zone = EntryTimeZone.parse('Asia/Tehran')
-			const patch = sent(EntryPatch.of(task({ status: TaskStatus.Done, transparency: Transparency.Free, visibility: Visibility.Private, timeZone: zone }), ['start', 'due', 'status', 'transparency', 'visibility', 'timeZone']))
+			const patch = sent(EntryPatch.of(task({ status: EntryStatus.Done, transparency: Transparency.Free, visibility: Visibility.Private, timeZone: zone }), ['start', 'due', 'status', 'transparency', 'visibility', 'timeZone']))
 			assert.ok(patch instanceof EntryPatch)
 			assert.ok(patch.start instanceof DateTime)
 			assert.equal(patch.start!.valueOf(), start.valueOf())
 			assert.equal(patch.due, null)
-			assert.deepEqual([patch.status, patch.transparency, patch.visibility, patch.timeZone], [TaskStatus.Done, Transparency.Free, Visibility.Private, zone])
+			assert.deepEqual([patch.status, patch.transparency, patch.visibility, patch.timeZone], [EntryStatus.Done, Transparency.Free, Visibility.Private, zone])
 			assert.equal(patch.heading, undefined)
 		})
 
@@ -77,7 +77,7 @@ describe('EntryPatch', () => {
 	describe('as written', () => {
 		it('reads a plain body, only the fields an edit reaches', () => {
 			const patch = construct(EntryPatch, validation.read(EntryPatch, { status: 'doing', transparency: null, scope: 'this', id: 'other' }))
-			assert.equal(patch.status, TaskStatus.Doing)
+			assert.equal(patch.status, EntryStatus.Doing)
 			assert.equal(patch.transparency, null)
 			assert.equal('scope' in patch || 'id' in patch, false)
 		})
@@ -103,7 +103,7 @@ describe('EntryPatch', () => {
 		})
 
 		it('drops what the type cannot hold', () => {
-			const entry = task({ status: TaskStatus.Done, percentComplete: 100, due: start.add({ days: 2 }) })
+			const entry = task({ status: EntryStatus.Done, percentComplete: 100, due: start.add({ days: 2 }) })
 			entry.patch(Object.assign(new EntryPatch(), { type: EntryType.Event, transparency: Transparency.Free }))
 			assert.deepEqual([entry.status, entry.percentComplete, entry.due, entry.transparency], [undefined, undefined, undefined, Transparency.Free])
 			entry.patch(Object.assign(new EntryPatch(), { type: EntryType.Task }))
@@ -122,7 +122,7 @@ describe('EntryPatch', () => {
 		})
 
 		it('rebuilds an entry from its own patch', () => {
-			const entry = task({ status: TaskStatus.Doing, visibility: Visibility.Private, reminders: EntryReminders.normalize([10]), color: Color.parse('#0af') })
+			const entry = task({ status: EntryStatus.Doing, visibility: Visibility.Private, reminders: EntryReminders.normalize([10]), color: Color.parse('#0af') })
 			assert.ok(new Entry().patch(EntryPatch.of(entry)).equals(entry))
 		})
 	})

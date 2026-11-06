@@ -34,7 +34,7 @@ import { NotificationDevices } from '#features/reminders/client/NotificationDevi
 import { DialogNewAccessToken } from '#features/agents/client/DialogNewAccessToken.js'
 import { DialogAccessToken } from '#features/agents/client/DialogAccessToken.js'
 import { offerToolsToBrowserAgents } from '#features/agents/client/webMcp.js'
-import { TaskStatusComponent } from '#features/entries/client/TaskStatus.js'
+import { EntryStatusComponent } from '#features/entries/client/EntryStatus.js'
 import { SourceIcon } from '#features/sources/client/SourceIcon.js'
 import { RepeatField } from '#features/recurrence/client/RepeatField.js'
 import { LocationField } from '#features/locations/client/LocationField.js'
@@ -268,7 +268,7 @@ export class Mitra extends Application {
 			${DialogCompleteParent.styles}
 			${DialogCloseSubtasks.styles}
 			${DialogRelationFailed.styles}
-			${TaskStatusComponent.styles}
+			${EntryStatusComponent.styles}
 			${SourceIcon.styles}
 			${RepeatField.styles}
 			${LocationField.styles}

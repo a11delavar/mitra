@@ -6,7 +6,7 @@ import { User, Identity } from '#features/identity'
 import { Source } from '#features/sources'
 import { RelationType, EntryRelations, EntryRelation } from '#features/relations'
 import { Recurrence, RecurrenceFrequency } from '#features/recurrence'
-import { EntryType, Entry, TaskStatus } from '#features/entries'
+import { EntryType, Entry, EntryStatus } from '#features/entries'
 import { NotificationSubscription } from '#features/reminders/NotificationSubscription.js'
 import { Session } from '#features/identity/server/Session.js'
 import { Integration } from '#integrations'
@@ -194,8 +194,8 @@ describe('Notion sync', () => {
 
 		const entries = await em.find(Entry, { sourceId: source.id }, { orderBy: { heading: 'desc' } })
 		assert.deepEqual(entries.map(e => [e.uri, e.heading, e.status, e.type]), [
-			['p1', 'Write the report', TaskStatus.Doing, EntryType.Task],
-			['p2', 'File taxes', TaskStatus.Done, EntryType.Task],
+			['p1', 'Write the report', EntryStatus.Doing, EntryType.Task],
+			['p2', 'File taxes', EntryStatus.Done, EntryType.Task],
 		])
 		assert.equal((entries[0]!.start as unknown as Date).toISOString(), '2026-07-15T00:00:00.000Z')
 		assert.equal(source.syncState?.lastEditedAfter, '2026-07-11T09:00:00.000Z')
@@ -225,7 +225,7 @@ describe('Notion sync', () => {
 		assert.equal(await sync(integration, em, source), true)
 		const entry = await em.findOneOrFail(Entry, { sourceId: source.id, uri: 'p1' })
 		assert.equal(entry.heading, 'Draft the plan v2')
-		assert.equal(entry.status, TaskStatus.Done)
+		assert.equal(entry.status, EntryStatus.Done)
 	})
 
 	it('removes rows whose pages left the view (trashed or filtered out)', async () => {
@@ -412,7 +412,7 @@ describe('Notion entry CRUD', () => {
 			viewFilter: { property: 'area', select: { equals: 'University' } },
 			createEcho: page('page-new', { title: 'Read chapter 3', editedAt: '2026-07-14T12:00:00.000Z' }),
 		})
-		const entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Read chapter 3', status: TaskStatus.ToDo })
+		const entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Read chapter 3', status: EntryStatus.ToDo })
 		await integration.createEntry(em, entry)
 		const created = calls.updates.find(u => u.pageId === '(create)')!
 		assert.deepEqual(created.properties['Area'], { select: { name: 'University' } })
@@ -433,7 +433,7 @@ describe('Notion entry CRUD', () => {
 			Area: { id: 'area', name: 'Area', type: 'relation' },
 		} })
 		;(integration as any).dataSources = undefined
-		const entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Read chapter 3', status: TaskStatus.ToDo })
+		const entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Read chapter 3', status: EntryStatus.ToDo })
 		await integration.createEntry(em, entry)
 		const created = calls.updates.find(u => u.pageId === '(create)')!
 		assert.deepEqual(created.properties['Area'], { relation: [{ id: 'university-page-id' }] })
@@ -445,7 +445,7 @@ describe('Notion entry CRUD', () => {
 			viewFilter: { property: 'st', status: { equals: 'Done' } },
 			createEcho: page('page-new', { editedAt: '2026-07-14T12:00:00.000Z' }),
 		})
-		const entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Start reading', status: TaskStatus.ToDo })
+		const entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Start reading', status: EntryStatus.ToDo })
 		await integration.createEntry(em, entry)
 		const created = calls.updates.find(u => u.pageId === '(create)')!
 		assert.deepEqual(created.properties['Status'], { status: { id: 'o-todo' } })
@@ -455,7 +455,7 @@ describe('Notion entry CRUD', () => {
 		const em = orm.em.fork()
 		const { integration, source, calls } = await seed(em, { createEcho: page('page-new', { editedAt: '2026-07-14T12:00:00.000Z' }) })
 		;(integration as any).client.view = () => Promise.reject(new Error('view fetch hiccup'))
-		const entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Resilient', status: TaskStatus.ToDo })
+		const entry = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Resilient', status: EntryStatus.ToDo })
 		const created = await integration.createEntry(em, entry)
 		assert.equal(created.uri, 'page-new')
 		const create = calls.updates.find(u => u.pageId === '(create)')!
@@ -486,8 +486,8 @@ describe('Notion entry CRUD', () => {
 				],
 			},
 		})
-		const existing = new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: 'p1', type: EntryType.Task, heading: 'Task p1', status: TaskStatus.ToDo, description: 'Old notes' })
-		const twin = new Entry({ id: crypto.randomUUID(), sourceId: sibling.id, uri: 'p1', type: EntryType.Task, heading: 'Task p1', status: TaskStatus.ToDo, description: 'Old notes' })
+		const existing = new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: 'p1', type: EntryType.Task, heading: 'Task p1', status: EntryStatus.ToDo, description: 'Old notes' })
+		const twin = new Entry({ id: crypto.randomUUID(), sourceId: sibling.id, uri: 'p1', type: EntryType.Task, heading: 'Task p1', status: EntryStatus.ToDo, description: 'Old notes' })
 		em.persist([existing, twin])
 		await em.flush()
 
@@ -523,12 +523,12 @@ describe('Notion entry CRUD', () => {
 		const { integration, source, sibling, calls } = await seed(em, {
 			updateEcho: page('p1', { title: 'Renamed', status: 'o-doing', editedAt: '2026-07-14T12:00:00.000Z' }),
 		})
-		const existing = new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: 'p1', type: EntryType.Task, heading: 'Original', status: TaskStatus.Doing })
-		const twin = new Entry({ id: crypto.randomUUID(), sourceId: sibling.id, uri: 'p1', type: EntryType.Task, heading: 'Original', status: TaskStatus.Doing })
+		const existing = new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: 'p1', type: EntryType.Task, heading: 'Original', status: EntryStatus.Doing })
+		const twin = new Entry({ id: crypto.randomUUID(), sourceId: sibling.id, uri: 'p1', type: EntryType.Task, heading: 'Original', status: EntryStatus.Doing })
 		em.persist([existing, twin])
 		await em.flush()
 
-		const incoming = new Entry({ sourceId: source.id, type: EntryType.Task, heading: 'Renamed', status: TaskStatus.Doing })
+		const incoming = new Entry({ sourceId: source.id, type: EntryType.Task, heading: 'Renamed', status: EntryStatus.Doing })
 		await integration.updateEntry(em, existing, incoming)
 		await em.flush()
 
@@ -540,7 +540,7 @@ describe('Notion entry CRUD', () => {
 	it('does not call Notion at all when nothing mapped changed', async () => {
 		const em = orm.em.fork()
 		const { integration, source, calls } = await seed(em, {})
-		const existing = new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: 'p1', type: EntryType.Task, heading: 'Same', status: TaskStatus.ToDo })
+		const existing = new Entry({ id: crypto.randomUUID(), sourceId: source.id, uri: 'p1', type: EntryType.Task, heading: 'Same', status: EntryStatus.ToDo })
 		em.persist(existing)
 		await em.flush()
 		await integration.updateEntry(em, existing, existing.clone())
@@ -739,7 +739,7 @@ describe('Notion relationships', () => {
 		await sync(integration, em, source)
 		await em.flush()
 
-		const draft = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'New task', status: TaskStatus.ToDo })
+		const draft = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'New task', status: EntryStatus.ToDo })
 		draft.relations = EntryRelations.of([{ type: RelationType.Parent, targetUid: 'p2' }])
 		const created = await integration.createEntry(em, draft)
 		await em.flush()
@@ -754,7 +754,7 @@ describe('Notion relationships', () => {
 		const { integration, source } = await seed(em, {
 			createEcho: page('p-created', { editedAt: '2026-07-14T12:00:00.000Z' }),
 		})
-		const moved = new Entry({ id: crypto.randomUUID(), uid: 'travelling-uid', sourceId: source.id, type: EntryType.Task, heading: 'Moved', status: TaskStatus.ToDo })
+		const moved = new Entry({ id: crypto.randomUUID(), uid: 'travelling-uid', sourceId: source.id, type: EntryType.Task, heading: 'Moved', status: EntryStatus.ToDo })
 		const pointer = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), sourceId: source.id, type: EntryType.Task, heading: 'Points at it' })
 		em.persist([moved, pointer])
 		em.persist(new EntryRelation({ entryId: pointer.id!, type: RelationType.FinishToStart, targetUid: 'travelling-uid' }))
@@ -773,7 +773,7 @@ describe('Notion relationships', () => {
 			createEcho: page('p-created', { editedAt: '2026-07-14T12:00:00.000Z' }),
 		})
 		const other = await seed(em, {})
-		const moved = new Entry({ id: crypto.randomUUID(), uid: 'shared-uid', sourceId: source.id, type: EntryType.Task, heading: 'Moved', status: TaskStatus.ToDo })
+		const moved = new Entry({ id: crypto.randomUUID(), uid: 'shared-uid', sourceId: source.id, type: EntryType.Task, heading: 'Moved', status: EntryStatus.ToDo })
 		const theirs = new Entry({ id: crypto.randomUUID(), uid: crypto.randomUUID(), sourceId: other.source.id, type: EntryType.Task, heading: 'Theirs' })
 		em.persist([moved, theirs, new EntryRelation({ entryId: theirs.id!, type: RelationType.FinishToStart, targetUid: 'shared-uid' })])
 		await em.flush()

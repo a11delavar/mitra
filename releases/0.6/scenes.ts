@@ -37,8 +37,8 @@ still('checklist', async ({ browser, open, text }) => {
 	await waitFor(() => browser.evaluate<boolean>(`return !!${openEditor}`), 'the editor of the task')
 	await settle(browser)
 	// Alt opens the status menu, as a right click does; a plain click would tick the task off.
-	await click(browser, `${openEditor}.querySelector('mitra-task-status button.status-button')`, 1)
-	const menu = `${openEditor}.querySelector('mitra-task-status mitra-menu')`
+	await click(browser, `${openEditor}.querySelector('mitra-entry-status button.status-button')`, 1)
+	const menu = `${openEditor}.querySelector('mitra-entry-status mitra-menu')`
 	await waitFor(() => browser.evaluate<boolean>(`return !!${menu}?.matches('[open]')`), 'the status menu')
 	await browser.evaluate('await new Promise(resolve => setTimeout(resolve, 600))')
 	// Close on what the highlight is about: the task, its checklist, its subtask and the menu counting them.

@@ -45,6 +45,8 @@ Wil je de vraag overslaan en alleen deze herhaling wijzigen, houd dan <kbd>Ctrl<
 
 Bij een paar wijzigingen komt de vraag nooit. Een herhaling van een taak als klaar markeren geldt alleen voor die herhaling, en dat geldt ook voor het inplannen van één herhaling van een taak die zich op zijn vervaldatum herhaalt.
 
+Een herhaling van een afspraak kun je ook annuleren in plaats van verwijderen; ze blijft dan doorgestreept in de agenda. Zie [Afspraakstatus](entries.md#event-status).
+
 ## Gewijzigde en verwijderde herhalingen
 
 Een herhaling die je met **Dit item** wijzigt, verlaat de reeks en wordt een zelfstandig item. De reeks slaat die datum over, zodat hij nooit dubbel verschijnt, en latere wijzigingen aan de hele reeks hebben er geen invloed meer op.

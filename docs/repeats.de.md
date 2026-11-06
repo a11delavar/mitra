@@ -45,6 +45,8 @@ Um die Frage zu überspringen und nur diese Wiederholung zu ändern, halte beim 
 
 Einige Änderungen fragen nie. Eine Wiederholung einer Aufgabe als fertig zu markieren, gilt nur für diese Wiederholung, und ebenso, eine einzelne Wiederholung einer Aufgabe zu planen, die sich nach ihrem Fälligkeitsdatum wiederholt.
 
+Die Wiederholung eines Termins lässt sich auch absagen statt löschen; sie bleibt dann durchgestrichen im Kalender. Siehe [Terminstatus](entries.md#event-status).
+
 ## Geänderte und gelöschte Wiederholungen
 
 Eine Wiederholung, die du mit **Dieser Eintrag** änderst, verlässt die Serie und wird zu einem eigenen Eintrag. Die Serie überspringt ihr Datum, sie erscheint also nie doppelt, und spätere Änderungen an der ganzen Serie erreichen sie nicht.

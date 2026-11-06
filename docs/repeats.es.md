@@ -45,6 +45,8 @@ Para saltarte la pregunta y cambiar solo esta ocurrencia, mantén pulsada <kbd>C
 
 Algunos cambios nunca preguntan. Marcar como hecha una ocurrencia de tarea se aplica solo a esa ocurrencia, y lo mismo ocurre al programar una ocurrencia de una tarea que se repite por su fecha de vencimiento.
 
+Una ocurrencia de un evento también se puede cancelar en lugar de eliminarla, y así se queda tachada en el calendario. Consulta [Estado del evento](entries.md#event-status).
+
 ## Ocurrencias cambiadas y eliminadas
 
 Una ocurrencia que cambias con **Esta entrada** sale de la serie y se convierte en una entrada propia. La serie omite su fecha, así que nunca aparece dos veces, y los cambios posteriores en toda la serie no la alcanzan.

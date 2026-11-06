@@ -487,6 +487,10 @@ export class CalDAVSyncEngine implements SourceSyncEngine {
 				CalDAV.writeTransparency(component, incoming.transparency)
 			}
 
+			if (!isTask && keys.includes('status')) {
+				CalDAV.writeEventStatus(component, incoming.status)
+			}
+
 			if (keys.includes('visibility')) {
 				CalDAV.writeVisibility(component, incoming.visibility)
 			}
@@ -587,8 +591,9 @@ export class CalDAVSyncEngine implements SourceSyncEngine {
 		entry.exdates?.forEach(ms => CalDAV.writeDate(comp, component, 'exdate', new Date(ms), entry.allDay, { zone: entry.timeZone, append: true }))
 		if (isTask) {
 			CalDAV.writeTaskStatus(component, entry.status, entry.percentComplete)
-		} else if (entry.transparency) {
-			CalDAV.writeTransparency(component, entry.transparency)
+		} else {
+			!entry.transparency ? void 0 : CalDAV.writeTransparency(component, entry.transparency)
+			!entry.status ? void 0 : CalDAV.writeEventStatus(component, entry.status)
 		}
 		!entry.visibility ? void 0 : CalDAV.writeVisibility(component, entry.visibility)
 		CalDAV.writeReminders(component, entry.reminders)

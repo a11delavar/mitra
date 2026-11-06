@@ -45,6 +45,8 @@ Aby pominąć to pytanie i zmienić tylko to jedno wystąpienie, przytrzymaj <kb
 
 Przy niektórych zmianach Mitra nigdy nie pyta. Oznaczenie wystąpienia zadania jako gotowego dotyczy tylko tego wystąpienia, podobnie jak zaplanowanie jednego wystąpienia zadania, które powtarza się według terminu.
 
+Wystąpienie wydarzenia można też anulować zamiast usuwać; zostaje wtedy w kalendarzu przekreślone. Zobacz [Status wydarzenia](entries.md#event-status).
+
 ## Zmienione i usunięte wystąpienia
 
 Wystąpienie zmienione opcją **Ten wpis** opuszcza serię i staje się osobnym wpisem. Seria pomija jego datę, więc nigdy nie wyświetla się ono dwa razy, a późniejsze zmiany całej serii do niego nie docierają.

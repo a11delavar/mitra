@@ -20,7 +20,7 @@ Die Befehlspalette kennt dieselben Wörter und ändert die meisten Einstellungen
 
 ## Dein Konto oder dieses Gerät
 
-Die meisten Einstellungen gehören zu deinem Konto und folgen dir auf jedes Gerät und in jeden Browser, in dem du dich anmeldest: die Sprache, die Standardansicht, **Erledigte Aufgaben ausblenden**, **Verfügbarkeit ausblenden**, der Standardkalender, die Standarddauer, **Einrasten auf** und beide Standarderinnerungen.
+Die meisten Einstellungen gehören zu deinem Konto und folgen dir auf jedes Gerät und in jeden Browser, in dem du dich anmeldest: die Sprache, die Standardansicht, **Erledigte Aufgaben ausblenden**, **Abgebrochenes ausblenden**, **Verfügbarkeit ausblenden**, der Standardkalender, die Standarddauer, **Einrasten auf** und beide Standarderinnerungen.
 
 Die anderen gehören zum Gerät, auf dem du gerade bist, sodass sich dein Handy und dein Laptop unterscheiden können: das Erscheinungsbild, die Verbindungslinien und ob dieser Browser Benachrichtigungen anzeigt.
 
@@ -38,7 +38,7 @@ Jede Sprache legt auch fest, wie Datum und Uhrzeit aussehen, an welchem Tag die 
 
 **Standardansicht** ist die Ansicht, mit der Mitra sich öffnet: **Woche**, außer du wählst **Monat**, **Jahr**, **Zeitleiste** oder **Tabelle**.
 
-**Erledigte Aufgaben ausblenden** nimmt erledigte und abgebrochene Aufgaben aus der Wochen-, Monats- und Jahresansicht und aus dem Tab Planung. Die Suche findet sie weiterhin, sie zählen weiter zum Fortschritt ihrer übergeordneten Aufgabe, und die Tabellenansicht listet sie weiterhin. Eine Aufgabe, die du geöffnet hast, bleibt sichtbar, bis du sie schließt.
+**Erledigte Aufgaben ausblenden** nimmt erledigte Aufgaben aus der Wochen-, Monats- und Jahresansicht und aus dem Tab Planung, und **Abgebrochenes ausblenden** tut dasselbe mit abgebrochenen Aufgaben und abgesagten Terminen. Die Suche findet sie weiterhin, sie zählen weiter zum Fortschritt ihrer übergeordneten Aufgabe, und die Tabellenansicht listet sie weiterhin. Eine Aufgabe, die du geöffnet hast, bleibt sichtbar, bis du sie schließt.
 
 **Verfügbarkeit ausblenden** nimmt die [Verfügbarkeit](availability.md) aus der Wochenansicht. Sie bleibt in ihren Kalendern, und belegte Verfügbarkeit erscheint für andere weiterhin als belegt.
 

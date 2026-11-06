@@ -31,7 +31,7 @@ Das **Suchfeld** gleicht jedes Wort, das du eingibst, mit Titel, Ort, Beschreibu
 Klick auf die Überschrift einer Spalte für ihr Menü:
 
 - **Aufsteigend sortieren** oder **Absteigend sortieren**. Wähle die aktive Option noch einmal, um sie zu entfernen. Halte <kbd>Shift</kbd> gedrückt, um nach mehreren Spalten zu sortieren.
-- Der **Filter** der Spalte, wo es einen gibt: Entferne das Häkchen bei den Werten, die du auslassen willst. Halte <kbd>Alt</kbd> gedrückt, um nur den einen zu behalten, auf den du klickst. **Ohne Status** im Filter von **Status** steht für Termine, entfernst du das Häkchen, werden also nur Aufgaben aufgelistet.
+- Der **Filter** der Spalte, wo es einen gibt: Entferne das Häkchen bei den Werten, die du auslassen willst. Halte <kbd>Alt</kbd> gedrückt, um nur den einen zu behalten, auf den du klickst.
 - **Spalte ausblenden**, was auch den Filter der Spalte aufhebt.
 
 Die Spalten **Status**, **Kalender**, **Typ** und **Wiederholt sich** können filtern, und **Wann** enthält den Zeitraum. Ein Trichter neben einer Überschrift zeigt, dass die Spalte Zeilen auslässt. **Titel** und **Wann** lassen sich nicht ausblenden.

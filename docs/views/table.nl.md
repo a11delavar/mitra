@@ -31,7 +31,7 @@ Het **zoekveld** zoekt elk woord dat je typt in de titel, de locatie, de beschri
 Klik op de kop van een kolom voor het menu van die kolom:
 
 - **Oplopend sorteren** of **Aflopend sorteren**. Kies de actieve sortering nog een keer om die op te heffen. Houd <kbd>Shift</kbd> ingedrukt om op meerdere kolommen te sorteren.
-- Het **filter** van de kolom, als die er een heeft: vink de waarden uit die je wilt weglaten. Houd <kbd>Alt</kbd> ingedrukt om alleen de waarde te houden waarop je klikt. **Geen status** in het filter **Status** staat voor afspraken, dus als je die uitvinkt, zie je alleen nog taken.
+- Het **filter** van de kolom, als die er een heeft: vink de waarden uit die je wilt weglaten. Houd <kbd>Alt</kbd> ingedrukt om alleen de waarde te houden waarop je klikt.
 - **Kolom verbergen**, waarmee je ook het filter van de kolom opheft.
 
 De kolommen **Status**, **Agenda**, **Type** en **Wordt herhaald** kunnen filteren, en **Wanneer** bevat de periode. Een trechter naast een kop laat zien dat de kolom rijen weglaat. **Titel** en **Wanneer** kun je niet verbergen.

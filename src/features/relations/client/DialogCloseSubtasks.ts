@@ -1,9 +1,9 @@
 import { component, html, css } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
-import { type Entry, TaskStatus } from '#features/entries'
+import { type Entry, EntryStatus, EntryType } from '#features/entries'
 
 /** What to do with the leftovers; `undefined` (cancelling the dialog) leaves them exactly as they are. */
-export type SubtaskClosure = TaskStatus
+export type SubtaskClosure = EntryStatus
 
 /**
  * Prompts whether to mark remaining open subtasks as Done or Cancelled when their parent task is closed.
@@ -20,13 +20,13 @@ export class DialogCloseSubtasks extends DialogComponent<{ readonly entry: Entry
 	/** The parent's own closed state leads, since it is the likelier answer, and leading means it is
 	 * the card that takes focus, not a preselected radio. */
 	private get options(): ReadonlyArray<SubtaskClosure> {
-		return this.parameters.entry.status === TaskStatus.Cancelled
-			? [TaskStatus.Cancelled, TaskStatus.Done]
-			: [TaskStatus.Done, TaskStatus.Cancelled]
+		return this.parameters.entry.status === EntryStatus.Cancelled
+			? [EntryStatus.Cancelled, EntryStatus.Done]
+			: [EntryStatus.Done, EntryStatus.Cancelled]
 	}
 
 	private label(closure: SubtaskClosure) {
-		return closure === TaskStatus.Done ? t('Mark as done') : t('Mark as cancelled')
+		return closure === EntryStatus.Done ? t('Mark as done') : t('Mark as cancelled')
 	}
 
 	static override get styles() {
@@ -51,7 +51,7 @@ export class DialogCloseSubtasks extends DialogComponent<{ readonly entry: Entry
 				})}</p>
 				<mitra-choices>
 					${this.options.map((closure, index) => html`
-						<mitra-choice ?autofocus=${index === 0} icon=${closure.icon} @click=${() => this.close(closure)}>${this.label(closure)}</mitra-choice>
+						<mitra-choice ?autofocus=${index === 0} icon=${closure.iconFor(EntryType.Task)} @click=${() => this.close(closure)}>${this.label(closure)}</mitra-choice>
 					`)}
 				</mitra-choices>
 			</mitra-dialog>

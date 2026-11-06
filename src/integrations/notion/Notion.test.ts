@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { Entry, TaskStatus, EntryType } from '#features/entries'
+import { Entry, EntryStatus, EntryType } from '#features/entries'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { Source, Color } from '#features/sources'
 import { Relation, EntryRelations, RelationType } from '#features/relations'
@@ -97,18 +97,18 @@ describe('Notion.schemaIndexOf', () => {
 
 	it('maps every status option to its group\'s task status', () => {
 		const index = schema()
-		assert.equal(index.statusByOption.get('o-not-started'), TaskStatus.ToDo)
-		assert.equal(index.statusByOption.get('o-doing'), TaskStatus.Doing)
-		assert.equal(index.statusByOption.get('o-done'), TaskStatus.Done)
-		assert.equal(index.statusByOption.get('o-shipped'), TaskStatus.Done)
+		assert.equal(index.statusByOption.get('o-not-started'), EntryStatus.ToDo)
+		assert.equal(index.statusByOption.get('o-doing'), EntryStatus.Doing)
+		assert.equal(index.statusByOption.get('o-done'), EntryStatus.Done)
+		assert.equal(index.statusByOption.get('o-shipped'), EntryStatus.Done)
 	})
 
 	it('writes each status as its group\'s FIRST option', () => {
 		const index = schema()
-		assert.equal(index.optionByStatus.get(TaskStatus.ToDo), 'o-not-started')
-		assert.equal(index.optionByStatus.get(TaskStatus.Doing), 'o-doing')
-		assert.equal(index.optionByStatus.get(TaskStatus.Done), 'o-done')
-		assert.equal(index.optionByStatus.get(TaskStatus.Cancelled), undefined)
+		assert.equal(index.optionByStatus.get(EntryStatus.ToDo), 'o-not-started')
+		assert.equal(index.optionByStatus.get(EntryStatus.Doing), 'o-doing')
+		assert.equal(index.optionByStatus.get(EntryStatus.Done), 'o-done')
+		assert.equal(index.optionByStatus.get(EntryStatus.Cancelled), undefined)
 	})
 
 	it('falls back to group POSITION when a group arrives under a non-canonical name', () => {
@@ -119,9 +119,9 @@ describe('Notion.schemaIndexOf', () => {
 			{ id: 'g3', name: 'Finished', option_ids: ['o-done'] },
 		]
 		const index = Notion.schemaIndexOf(source)!
-		assert.equal(index.statusByOption.get('o-not-started'), TaskStatus.ToDo)
-		assert.equal(index.statusByOption.get('o-doing'), TaskStatus.Doing)
-		assert.equal(index.statusByOption.get('o-done'), TaskStatus.Done)
+		assert.equal(index.statusByOption.get('o-not-started'), EntryStatus.ToDo)
+		assert.equal(index.statusByOption.get('o-doing'), EntryStatus.Doing)
+		assert.equal(index.statusByOption.get('o-done'), EntryStatus.Done)
 	})
 
 	it('disqualifies a database without a status property (not a task database)', () => {
@@ -469,7 +469,7 @@ describe('Notion property writes (propertiesFrom)', () => {
 	const entry = (init?: Partial<Entry>) => new Entry({
 		type: EntryType.Task,
 		heading: 'Ship the release',
-		status: TaskStatus.Done,
+		status: EntryStatus.Done,
 		start: D('2026-07-15T00:00:00Z'),
 		end: D('2026-07-16T00:00:00Z'),
 		allDay: true,
@@ -494,13 +494,13 @@ describe('Notion property writes (propertiesFrom)', () => {
 	})
 
 	it('rejects the cancelled status, since Notion has no group for it', () => {
-		assert.throws(() => Notion.propertiesFrom(entry({ status: TaskStatus.Cancelled }), schema()), /cancelled/)
+		assert.throws(() => Notion.propertiesFrom(entry({ status: EntryStatus.Cancelled }), schema()), /cancelled/)
 	})
 
 	it('rejects a status whose group has no options to write', () => {
 		const source = dataSource()
 		source.properties['Status']!.status!.groups[1] = { id: 'g-doing', name: 'In progress', option_ids: [] }
-		assert.throws(() => Notion.propertiesFrom(entry({ status: TaskStatus.Doing }), Notion.schemaIndexOf(source)!), /no option/)
+		assert.throws(() => Notion.propertiesFrom(entry({ status: EntryStatus.Doing }), Notion.schemaIndexOf(source)!), /no option/)
 	})
 })
 
@@ -511,7 +511,7 @@ describe('Notion page reads (applyPage)', () => {
 		assert.equal(entry.type, EntryType.Task)
 		assert.equal(entry.uri, 'page-1')
 		assert.equal(entry.heading, 'Ship the release')
-		assert.equal(entry.status, TaskStatus.Doing)
+		assert.equal(entry.status, EntryStatus.Doing)
 		assert.equal(entry.allDay, true)
 		assert.equal((entry.start as unknown as Date).toISOString(), '2026-07-15T00:00:00.000Z')
 		assert.deepEqual(entry.data, { etag: '2026-07-14T10:00:00.000Z', url: 'https://www.notion.so/page-1' })
@@ -522,7 +522,7 @@ describe('Notion page reads (applyPage)', () => {
 		const shipped = page()
 		shipped.properties['Status'] = { type: 'status', status: { id: 'o-shipped', name: 'Shipped' } }
 		Notion.applyPage(entry, shipped, schema())
-		assert.equal(entry.status, TaskStatus.Done)
+		assert.equal(entry.status, EntryStatus.Done)
 	})
 
 	it('falls back to To Do for a missing or unknown status option', () => {
@@ -530,7 +530,7 @@ describe('Notion page reads (applyPage)', () => {
 		const statusless = page()
 		statusless.properties['Status'] = { type: 'status', status: null }
 		Notion.applyPage(entry, statusless, schema())
-		assert.equal(entry.status, TaskStatus.ToDo)
+		assert.equal(entry.status, EntryStatus.ToDo)
 	})
 
 	it('clears what Notion cannot hold, so a re-import never leaves stale leftovers', () => {
@@ -576,7 +576,7 @@ describe('Notion integration model', () => {
 		assert.deepEqual(unsupported, ['due', 'estimate', 'location', 'participants', 'percentComplete', 'recurrence', 'reminders', 'timeZone', 'transparency', 'visibility'])
 		assert.equal(ownership.ownerOf('description'), 'upstream')
 		assert.equal(ownership.ownerOf('relations'), 'upstream')
-		assert.deepEqual([capabilities.availability, capabilities.entries.statuses.includes(TaskStatus.Cancelled)], [false, false])
+		assert.deepEqual([capabilities.availability, capabilities.entries.statuses.includes(EntryStatus.Cancelled)], [false, false])
 		assert.deepEqual(capabilities.sources, { create: false, delete: false })
 	})
 

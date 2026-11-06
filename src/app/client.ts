@@ -6,7 +6,7 @@ import '#infrastructure/i18n/index.js'
 // Theme setting applied at module scope before UI component imports.
 import './settings.js'
 import '#design'
-import '#features/entries/client/TaskStatus.js'
+import '#features/entries/client/EntryStatus.js'
 import '#features/recurrence/client/RepeatField.js'
 import '#features/locations/client/LocationField.js'
 import '#features/reminders/client/RemindersField.js'

@@ -20,7 +20,7 @@ La paleta de comandos conoce las mismas palabras y cambia la mayoría de los aju
 
 ## Tu cuenta o este dispositivo
 
-La mayoría de los ajustes pertenecen a tu cuenta y te siguen a todos los dispositivos y navegadores desde los que inicias sesión: el idioma, la vista predeterminada, **Ocultar tareas completadas**, **Ocultar disponibilidad**, el calendario predeterminado, la duración predeterminada, **Ajustar a** y ambos recordatorios predeterminados.
+La mayoría de los ajustes pertenecen a tu cuenta y te siguen a todos los dispositivos y navegadores desde los que inicias sesión: el idioma, la vista predeterminada, **Ocultar tareas completadas**, **Ocultar lo cancelado**, **Ocultar disponibilidad**, el calendario predeterminado, la duración predeterminada, **Ajustar a** y ambos recordatorios predeterminados.
 
 Los demás pertenecen al dispositivo en el que estás, así que tu teléfono y tu portátil pueden diferir: el tema, las líneas de conexión y si este navegador muestra notificaciones.
 
@@ -38,7 +38,7 @@ Cada idioma decide también cómo se escriben las fechas y las horas, qué día 
 
 **Vista predeterminada** es la vista en la que se abre Mitra: **Semana**, a menos que elijas **Mes**, **Año**, **Cronograma** o **Tabla**.
 
-**Ocultar tareas completadas** quita las tareas hechas y canceladas de las vistas de semana, mes y año y de la pestaña Planificación. La búsqueda sigue encontrándolas, siguen contando para el progreso de su tarea padre y la vista de tabla sigue enumerándolas. Una tarea que tienes abierta permanece a la vista hasta que la cierras.
+**Ocultar tareas completadas** quita las tareas hechas de las vistas de semana, mes y año y de la pestaña Planificación, y **Ocultar lo cancelado** hace lo mismo con las tareas y los eventos cancelados. La búsqueda sigue encontrándolas, siguen contando para el progreso de su tarea padre y la vista de tabla sigue enumerándolas. Una tarea que tienes abierta permanece a la vista hasta que la cierras.
 
 **Ocultar disponibilidad** quita la [disponibilidad](availability.md) de la vista de semana. Se queda en sus calendarios, y la disponibilidad ocupada sigue apareciendo como ocupada para los demás.
 

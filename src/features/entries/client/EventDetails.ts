@@ -145,7 +145,8 @@ export class EntryDetailsComponent extends Component {
 	}
 
 	private get hasMenu() {
-		return !!this.segment!.entry.externalLink || this.segment!.entry.copyable || this.segment!.entry.deletable
+		const { entry } = this.segment!
+		return !!entry.externalLink || entry.copyable || entry.deletable
 	}
 
 	private readonly binder = new Binder(this, 'segment')
@@ -314,7 +315,7 @@ export class EntryDetailsComponent extends Component {
 							column-gap: 0.5rem;
 							align-items: center;
 
-							> mitra-task-status {
+							> mitra-entry-status {
 								grid-column: 1;
 								font-size: 0.95rem;
 							}
@@ -515,8 +516,8 @@ export class EntryDetailsComponent extends Component {
 		const entry = this.segment!.entry
 		return html`
 			<div class="title-row">
-				${!entry.type.isTask ? html.nothing : html`
-					<mitra-task-status .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-task-status>
+				${!entry.statuses.length ? html.nothing : html`
+					<mitra-entry-status .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-entry-status>
 				`}
 				<input class="title field" placeholder=${t('Title')}
 					?readonly=${!entry.canEdit('heading')}

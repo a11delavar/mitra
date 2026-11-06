@@ -1,7 +1,7 @@
 ---
-title: Suivi des routines, Todoist, sous-tâches et échéances en un coup d'œil
+title: Suivi des routines, Todoist, statut des événements et échéances en un coup d'œil
 ---
-Mitra 0.8 vous aide à tenir les choses que vous faites encore et encore, et montre comment les plus grands travaux s'assemblent.
+Mitra 0.8 vous aide à tenir les choses que vous faites encore et encore, et garde une trace de ce qui n'a pas eu lieu.
 
 ## Suivi des routines
 Mitra regroupe déjà en routines ce que vous faites souvent, comme la salle de sport ou une coupe de cheveux toutes les cinq semaines. Elles ont désormais une place à elles, où vous voyez d'un coup d'œil les derniers jours de chaque routine : combien vous en avez tenu, et lesquels ont été annulés ou manqués. Vous pouvez renommer une routine, fusionner deux routines qui vont ensemble, ou indiquer à Mitra que quelque chose n'est pas une routine. Les routines restent aussi stables dans les vues mois et année, aussi loin que vous fassiez défiler, et votre connecteur IA peut vous dire où elles en sont.
@@ -16,11 +16,18 @@ Certaines choses ne dépendent pas de votre fuseau horaire : un médicament à 7
 
 Documentation : [Même heure partout](../../docs/time-zones.md#same-time-everywhere)
 
-## De meilleures sous-tâches
-Les sous-tâches d'une entrée partagent une même ligne dans les vues mois et année, si bien qu'un projet se lit comme un seul trait, ses courtes sous-tâches repliées dedans. Le tableau range les sous-tâches sous leur parent, et la vue année peut les masquer. La progression d'une tâche pondère chaque sous-tâche selon sa taille, si bien qu'un long travail compte davantage qu'un travail rapide.
+## Statut d'un événement
+Un événement a désormais son propre statut, comme une tâche : **Confirmé**, **Peut-être** ou **Annulé**. Un événement annulé garde sa place, barré, pour garder une trace de ce qui n'a pas eu lieu, et vos routines le comptent. Un peut-être reste estompé jusqu'à ce que vous décidiez. Le statut se synchronise avec les autres applications CalDAV, et le tableau l'affiche à côté de celui des tâches. **Masquer les tâches terminées** ne masque plus que les tâches terminées, et le nouveau **Masquer les éléments annulés** masque les tâches et les événements annulés.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="event-status-dark.webp">
+	<img src="event-status-light.webp" alt="L'éditeur d'un événement, son menu de statut ouvert sur Confirmé, Peut-être et Annulé">
+</picture>
+
+Documentation : [Statut d'un événement](../../docs/entries.md#event-status)
 
 ## Les échéances en un coup d'œil
-Le jour d'échéance d'une tâche s'affiche sur son drapeau, et pointer la tâche marque ce jour dans le calendrier. La chronologie le marque aussi, et le tableau gagne une colonne pour lui. Une sous-tâche sans date d'échéance propre prend celle de son parent.
+Le jour d'échéance d'une tâche s'affiche sur son drapeau, et pointer la tâche marque ce jour dans le calendrier. La chronologie le marque aussi, et le tableau gagne une colonne pour lui.
 
 ## Personnalisation
 Donnez à chaque calendrier l'une de deux nouvelles couleurs, ou la couleur de votre choix. Renommez l'en-tête d'un compte d'un double-clic et masquez tous ses calendriers d'un coup. Pour tout le reste, modifiez l'apparence de Mitra avec votre propre CSS : pour vous dans les Paramètres, ou pour tout le monde sur votre serveur grâce à un fichier dans son dossier de données. Qui administre le serveur dispose d'une section à lui dans les Paramètres.

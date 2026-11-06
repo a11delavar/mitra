@@ -31,7 +31,7 @@ O campo de **pesquisa** compara cada palavra que você digita com o título, o l
 Clique no cabeçalho de uma coluna para abrir o seu menu:
 
 - **Ordenar de forma crescente** ou **Ordenar de forma decrescente**. Escolha de novo a que está ativa para removê-la. Segure <kbd>Shift</kbd> para ordenar por várias colunas.
-- O **filtro** da coluna, quando tem um: desmarque os valores a deixar de fora. Segure <kbd>Alt</kbd> para manter apenas aquele em que você clicar. O **Sem estado** do filtro de **Estado** representa os eventos, por isso desmarcá-lo lista apenas tarefas.
+- O **filtro** da coluna, quando tem um: desmarque os valores a deixar de fora. Segure <kbd>Alt</kbd> para manter apenas aquele em que você clicar.
 - **Ocultar coluna**, que também retira o filtro da coluna.
 
 As colunas **Estado**, **Calendário**, **Tipo** e **Repete-se** podem filtrar, e **Quando** guarda o intervalo de dias. Um funil ao lado de um cabeçalho mostra que a coluna está deixando linhas de fora. **Título** e **Quando** não podem ser ocultadas.

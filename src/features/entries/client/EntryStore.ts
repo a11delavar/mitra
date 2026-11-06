@@ -252,8 +252,8 @@ export class EntryStore extends Controller {
 				this.inflight.delete(entry)
 				this.notify()
 			}
-			// Successful transition into closed state; runs outside finally so failed saves never prompt.
-			if (!wasClosed && entry.closed && this.tracks(entry)) {
+			// A task's transition into closed state; runs outside finally so failed saves never prompt.
+			if (!wasClosed && entry.closed && entry.type.isTask && this.tracks(entry)) {
 				this.closings.forEach(listener => listener(entry))
 			}
 		})()

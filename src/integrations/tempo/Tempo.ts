@@ -1,5 +1,5 @@
 import { converter } from '@a11d/converter'
-import { type Entry, EntryType, TaskStatus } from '#features/entries'
+import { type Entry, EntryType, EntryStatus } from '#features/entries'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { Integration, integration, IntegrationCapabilities, IntegrationOwnership } from '#integrations'
 import { model, withheld } from '#infrastructure/model'
@@ -85,7 +85,7 @@ export class Tempo extends Integration<TempoCredentials> {
 
 	/** No availability: it is edited with this provider's capabilities, and would not repeat. */
 	override get capabilities() {
-		return new IntegrationCapabilities({ entries: { rename: false, statuses: [TaskStatus.ToDo, TaskStatus.Doing, TaskStatus.Done], floating: false }, availability: false })
+		return new IntegrationCapabilities({ entries: { rename: false, statuses: [EntryStatus.ToDo, EntryStatus.Doing, EntryStatus.Done], floating: false }, availability: false })
 	}
 
 	override get ownership() {

@@ -77,3 +77,17 @@ still('arabic-week', { language: 'ar', locale: 'ar-EG' }, async ({ browser, open
 	await openChip(browser, heading)
 	return aroundEditorWith(browser, chipOf(heading), 28)
 })
+
+/** The weekly sync open in its editor, its status menu open on Confirmed, Maybe and Cancelled. */
+still('event-status', async ({ browser, open, text }) => {
+	await open()
+	await show(browser, 'week')
+	await scrollToMorning(browser)
+	const heading = text('Weekly Team Sync')
+	await openChip(browser, heading)
+	await click(browser, `${openEditor}.querySelector('mitra-entry-status button.status-button')`)
+	const menu = `${openEditor}.querySelector('mitra-entry-status mitra-menu')`
+	await waitFor(() => browser.evaluate<boolean>(`return ${menu}?.getBoundingClientRect().width > 0`), 'the status menu')
+	await browser.evaluate('await new Promise(resolve => setTimeout(resolve, 400))')
+	return aroundEditorWith(browser, menu, 28)
+})

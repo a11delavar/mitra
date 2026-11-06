@@ -31,7 +31,7 @@ Pole **wyszukiwania** porównuje każde wpisane słowo z tytułem, lokalizacją,
 Kliknij nagłówek kolumny, aby otworzyć jej menu:
 
 - **Sortuj rosnąco** lub **Sortuj malejąco**. Wybierz aktywną opcję jeszcze raz, aby wyłączyć sortowanie. Przytrzymaj <kbd>Shift</kbd>, aby sortować według kilku kolumn.
-- **Filtr** kolumny, jeśli kolumna go ma: odznacz wartości, które chcesz pominąć. Przytrzymaj <kbd>Alt</kbd>, aby zostawić tylko klikniętą wartość. Opcja **Bez statusu** w filtrze kolumny **Status** oznacza wydarzenia, więc jej odznaczenie pozostawia same zadania.
+- **Filtr** kolumny, jeśli kolumna go ma: odznacz wartości, które chcesz pominąć. Przytrzymaj <kbd>Alt</kbd>, aby zostawić tylko klikniętą wartość.
 - **Ukryj kolumnę**, co usuwa też filtr tej kolumny.
 
 Filtrować można kolumny **Status**, **Kalendarz**, **Typ** i **Powtarza się**, a kolumna **Kiedy** określa zakres dni. Lejek obok nagłówka oznacza, że kolumna ukrywa część wierszy. Kolumn **Tytuł** i **Kiedy** nie można ukryć.

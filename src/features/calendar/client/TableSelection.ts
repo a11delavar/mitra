@@ -1,5 +1,5 @@
 import { Component, component, html, css, property, event, type PropertyValues } from '@a11d/lit'
-import { TaskStatus, type Entry } from '#features/entries'
+import { EntryStatus, EntryType, type Entry } from '#features/entries'
 import type { Source } from '#features/sources'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { DialogDeleteEntries } from '#features/entries/client/DialogDeleteEntries.js'
@@ -49,7 +49,7 @@ export class TableSelection extends Component {
 		}))
 	}
 
-	private setStatus(status: TaskStatus) {
+	private setStatus(status: EntryStatus) {
 		const rows = this.rows.filter(row => TableSelection.editable(row) && row.entry.status !== status)
 		void TableSelection.write(rows, entry => { entry.status = status }, entry => EntryStore.commit(entry))
 	}
@@ -137,9 +137,9 @@ export class TableSelection extends Component {
 		const destinations = Calendars.sources.filter(source => rows.some(row => TableSelection.movable(row, source)))
 		return html`
 			<span class="count">${t('${count:pluralityNumber} selected', { count: rows.length })}</span>
-			${!rows.some(TableSelection.editable) ? html.nothing : [TaskStatus.ToDo, TaskStatus.Done, TaskStatus.Cancelled].map(status => html`
+			${!rows.some(TableSelection.editable) ? html.nothing : [EntryStatus.ToDo, EntryStatus.Done, EntryStatus.Cancelled].map(status => html`
 				<mitra-button @click=${() => this.setStatus(status)}>
-					<mitra-icon icon=${status.icon}></mitra-icon>
+					<mitra-icon icon=${status.iconFor(EntryType.Task)}></mitra-icon>
 					${status.format()}
 				</mitra-button>
 			`)}

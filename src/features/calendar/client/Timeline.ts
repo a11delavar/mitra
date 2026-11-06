@@ -423,7 +423,7 @@ export class Timeline extends Component {
 							overflow: visible !important;
 						}
 
-						mitra-task-status {
+						mitra-entry-status {
 							display: inline-flex !important;
 						}
 					}

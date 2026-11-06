@@ -60,6 +60,12 @@ A task has a checkbox before its title, and one of four statuses: **To Do**, **D
 
 Done and cancelled tasks are struck through. A calendar without a cancelled status, like Notion, leaves **Cancelled** out of the menu. A task with subtasks or a checklist shows its progress in the checkbox; see [Subtasks](subtasks.md#progress).
 
+## Event status
+
+An event has a status glyph before its title, in the editor and on the calendar: **Confirmed**, **Maybe** or **Cancelled**. Click it to pick one. A cancelled event stays on your calendar, called off instead of deleted: it is struck through in every view and keeps its place, and **Confirmed** brings it back. If it repeats, Mitra asks whether you mean this occurrence, the following ones or all of them.
+
+Other calendar apps read the cancellation too. Apple Calendar, Thunderbird and Nextcloud strike the event through, and an event cancelled in one of them shows struck through in Mitra. Mitra calendars and CalDAV calendars keep it, and a subscription shows what its feed cancelled. Google, Notion and Tempo calendars don't hold it, so they don't offer it.
+
 ## Busy or free and visibility
 
 The row with the eye says what other people learn from the entry when they look at your calendar.

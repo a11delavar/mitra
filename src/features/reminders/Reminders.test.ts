@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { type DateTime } from '@3mo/date-time'
-import { EntryType, Entry, TaskStatus } from '#features/entries'
+import { EntryType, Entry, EntryStatus } from '#features/entries'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { Recurrence, RecurrenceFrequency } from '#features/recurrence'
@@ -79,9 +79,15 @@ describe('Reminders', () => {
 
 		it('says nothing about a task the user already closed', () => {
 			const start = D('2026-07-06T09:31:00Z')
-			assert.equal(DueReminder.within([task({ start, reminders: EntryReminders.normalize([30]), status: TaskStatus.Done })], watermark, now).length, 0)
-			assert.equal(DueReminder.within([task({ start, reminders: EntryReminders.normalize([30]), status: TaskStatus.Cancelled })], watermark, now).length, 0)
-			assert.equal(DueReminder.within([task({ start, reminders: EntryReminders.normalize([30]), status: TaskStatus.Doing })], watermark, now).length, 1)
+			assert.equal(DueReminder.within([task({ start, reminders: EntryReminders.normalize([30]), status: EntryStatus.Done })], watermark, now).length, 0)
+			assert.equal(DueReminder.within([task({ start, reminders: EntryReminders.normalize([30]), status: EntryStatus.Cancelled })], watermark, now).length, 0)
+			assert.equal(DueReminder.within([task({ start, reminders: EntryReminders.normalize([30]), status: EntryStatus.Doing })], watermark, now).length, 1)
+		})
+
+		it('says nothing about a cancelled event either: it is not happening', () => {
+			const start = D('2026-07-06T09:31:00Z')
+			assert.equal(DueReminder.within([entry({ start, reminders: EntryReminders.normalize([30]), status: EntryStatus.Cancelled })], watermark, now).length, 0)
+			assert.equal(DueReminder.within([entry({ start, reminders: EntryReminders.normalize([30]), status: EntryStatus.Confirmed })], watermark, now).length, 1)
 		})
 
 		it('builds the notification of the occurrence it is due for', () => {

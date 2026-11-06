@@ -1,5 +1,5 @@
 import type { Source } from '#features/sources'
-import { type Entry, TaskStatus, Transparency } from '#features/entries'
+import { type Entry, EntryStatus, Transparency } from '#features/entries'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { model } from '#infrastructure/model'
 
@@ -94,10 +94,10 @@ export class MigrationVerdict {
 		if (entry.allDay && !ownership.holds('allDay')) {
 			losses.push('allDay')
 		}
-		if (entry.status === TaskStatus.Doing && !capabilities.entries.statuses.includes(TaskStatus.Doing)) {
+		if (entry.status === EntryStatus.Doing && !capabilities.entries.statuses.includes(EntryStatus.Doing)) {
 			losses.push('doingStatus')
 		}
-		if (entry.status === TaskStatus.Cancelled && !capabilities.entries.statuses.includes(TaskStatus.Cancelled)) {
+		if (entry.status === EntryStatus.Cancelled && !capabilities.entries.statuses.includes(EntryStatus.Cancelled)) {
 			losses.push('cancelledStatus')
 		}
 		if (!target.supportsEntryType(entry.type)) {

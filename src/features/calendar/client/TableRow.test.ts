@@ -1,7 +1,7 @@
 import { beforeEach, describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { Entry, TaskStatus, EntryType } from '#features/entries'
+import { Entry, EntryStatus, EntryType } from '#features/entries'
 import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { Recurrence, RecurrenceFrequency } from '#features/recurrence'
@@ -13,7 +13,7 @@ describe('TableRow', () => {
 	const entry = (init?: Partial<Entry>) => new Entry({
 		id: 'a', sourceId: 's', type: EntryType.Event, heading: 'Standup', start: day.add({ hours: 9 }), end: day.add({ hours: 10 }), ...init,
 	})
-	const task = (init?: Partial<Entry>) => entry({ id: 'b', type: EntryType.Task, status: TaskStatus.ToDo, ...init })
+	const task = (init?: Partial<Entry>) => entry({ id: 'b', type: EntryType.Task, status: EntryStatus.ToDo, ...init })
 	/** A one-off entry as the table lists it. */
 	const shown = (entry: Entry) => entry.occurrences.single
 	const leaving = (key: TableFacet, ...values: Array<string>) => new TableFilter().excluding(key, new Set(values))
@@ -39,12 +39,17 @@ describe('TableRow', () => {
 		assert.equal(TableRow.for(shown(task({ start: undefined, end: undefined }))).when, undefined)
 	})
 
-	it('ranks task statuses in their order and leaves events unranked', () => {
-		assert.equal(TableRow.for(shown(task())).statusRank, 0)
-		assert.equal(TableRow.for(shown(task({ status: TaskStatus.Doing }))).statusRank, 1)
-		assert.equal(TableRow.for(shown(task({ status: TaskStatus.Done }))).statusRank, 2)
-		assert.equal(TableRow.for(shown(task({ status: TaskStatus.Cancelled }))).statusRank, 3)
-		assert.equal(TableRow.for(shown(entry())).statusRank, undefined)
+	it('ranks statuses in their order, an event without one as confirmed', () => {
+		const ranks = [
+			task(),
+			task({ status: EntryStatus.Doing }),
+			task({ status: EntryStatus.Done }),
+			entry(),
+			entry({ status: EntryStatus.Tentative }),
+			entry({ status: EntryStatus.Cancelled }),
+		].map(entry => TableRow.for(shown(entry)).statusRank)
+		assert.deepEqual(ranks, [0, 1, 2, 3, 4, 5])
+		assert.equal(TableRow.for(shown(entry())).status, EntryStatus.Confirmed)
 	})
 
 	it('measures the duration in minutes and leaves an undated row without one', () => {
@@ -68,16 +73,17 @@ describe('TableRow', () => {
 			assert.equal(TableRow.for(shown(task())).matches('', leaving('typeKey', 'task')), false)
 		})
 
-		it('files an event under no status, so a status filter can keep or drop events too', () => {
-			assert.equal(TableRow.for(shown(entry())).facet('statusRank'), TableRow.noStatus)
-			assert.equal(TableRow.for(shown(entry())).matches('', leaving('statusRank', TaskStatus.Done.code)), true)
-			assert.equal(TableRow.for(shown(entry())).matches('', leaving('statusRank', TableRow.noStatus)), false)
-			assert.equal(TableRow.for(shown(task({ status: TaskStatus.Done }))).matches('', leaving('statusRank', TaskStatus.Done.code)), false)
-			assert.equal(TableRow.for(shown(task())).matches('', leaving('statusRank', TaskStatus.Done.code, TaskStatus.Cancelled.code)), true)
+		it('files an event under its own status', () => {
+			assert.equal(TableRow.for(shown(entry())).facet('statusRank'), EntryStatus.Confirmed.code)
+			assert.equal(TableRow.for(shown(entry())).matches('', leaving('statusRank', EntryStatus.Done.code)), true)
+			assert.equal(TableRow.for(shown(entry())).matches('', leaving('statusRank', EntryStatus.Confirmed.code)), false)
+			assert.equal(TableRow.for(shown(entry({ status: EntryStatus.Cancelled }))).matches('', leaving('statusRank', EntryStatus.Cancelled.code)), false)
+			assert.equal(TableRow.for(shown(task({ status: EntryStatus.Done }))).matches('', leaving('statusRank', EntryStatus.Done.code)), false)
+			assert.equal(TableRow.for(shown(task())).matches('', leaving('statusRank', EntryStatus.Done.code, EntryStatus.Cancelled.code)), true)
 		})
 
 		it('reads a task without a status as to do', () => {
-			assert.equal(TableRow.for(shown(task({ status: undefined }))).facet('statusRank'), TaskStatus.ToDo.code)
+			assert.equal(TableRow.for(shown(task({ status: undefined }))).facet('statusRank'), EntryStatus.ToDo.code)
 		})
 
 		it('filters by calendar and by whether the entry repeats', () => {

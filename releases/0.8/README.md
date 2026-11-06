@@ -1,7 +1,7 @@
 ---
-title: Routine tracker, Todoist, subtasks and due dates at a glance
+title: Routine tracker, Todoist, event status and due dates at a glance
 ---
-Mitra 0.8 helps you keep up the things you do again and again, and shows how bigger pieces of work come together.
+Mitra 0.8 helps you keep up the things you do again and again, and keeps a record of what didn't happen.
 
 ## Routine tracker
 Mitra already gathers the things you do often, such as the gym or a haircut every five weeks, into routines. Now they get a place of their own, where you see each routine's recent days at a glance: how many you kept, and which you cancelled or missed. You can rename a routine, merge two that belong together, or tell Mitra that something isn't a routine at all. Routines also stay steady in the month and year views however far you scroll, and your AI connector can tell you how they are going.
@@ -16,11 +16,18 @@ Some things don't depend on your time zone: medication at 7:30 is at 7:30, at ho
 
 Docs: [Same time everywhere](../../docs/time-zones.md#same-time-everywhere)
 
-## Better subtasks
-An entry's subtasks share a lane in the month and year views, so a project reads as one line, with its short subtasks folded into it. The table nests subtasks under their parent, and the year view can hide them. A task's progress weighs each subtask by its size, so a long piece of work counts for more than a quick one.
+## Event status
+An event now has a status of its own, as a task does: **Confirmed**, **Maybe** or **Cancelled**. A cancelled event keeps its place, struck through, so you keep a record of what didn't happen, and your routines count it. A maybe is faded until you decide. The status syncs with other CalDAV apps, and the table lists it beside the tasks'. **Hide done tasks** now hides done tasks alone, and the new **Hide cancelled** hides cancelled tasks and events.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="event-status-dark.webp">
+	<img src="event-status-light.webp" alt="An event's editor with its status menu open on Confirmed, Maybe and Cancelled">
+</picture>
+
+Docs: [Event status](../../docs/entries.md#event-status)
 
 ## Due dates at a glance
-A task's due day shows on its flag, and pointing at the task marks that day in the calendar. The timeline marks it too, and the table gets a column for it. A subtask without a due date of its own takes its parent's.
+A task's due day shows on its flag, and pointing at the task marks that day in the calendar. The timeline marks it too, and the table gets a column for it.
 
 ## Personalization
 Give each calendar one of two more colors, or any color you like. Rename an account's heading by double-clicking it, and hide all of its calendars at once. For everything beyond that, restyle Mitra with CSS of your own: for yourself in Settings, or for everyone on your server through a file in its data folder. Whoever runs the server gets a section of their own in Settings.

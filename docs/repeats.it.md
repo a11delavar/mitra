@@ -45,6 +45,8 @@ Per saltare la domanda e modificare solo questa occorrenza, tieni premuto <kbd>C
 
 Alcune modifiche non chiedono mai nulla. Segnare come fatta un'occorrenza di un'attività vale solo per quell'occorrenza, e lo stesso vale per la pianificazione di una singola occorrenza di un'attività che si ripete in base alla data di scadenza.
 
+Un’occorrenza di un evento si può anche annullare invece di eliminarla, e resta così barrata nel calendario. Vedi [Stato dell'evento](entries.md#event-status).
+
 ## Occorrenze modificate ed eliminate
 
 Un'occorrenza che modifichi con **Questa voce** lascia la serie e diventa una voce a sé. La serie salta la sua data, così non compare mai due volte, e le modifiche successive all'intera serie non la raggiungono.

@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { Entry, TaskStatus, EntryType } from '#features/entries'
+import { Entry, EntryStatus, EntryType } from '#features/entries'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { Recurrence, EntryOccurrence, RecurrenceFrequency, RecurrenceWeekday } from '#features/recurrence'
 import { Routines, type RoutineUnit } from './Routines.js'
@@ -212,7 +212,7 @@ describe('Routines', () => {
 		})
 
 		it('collapses a routine whose every occurrence in the window was checked off and detached', () => {
-			const pills = Array.from({ length: 30 }, (_, index) => detached('Pills', index, 'cal', { type: EntryType.Task, status: TaskStatus.Done }))
+			const pills = Array.from({ length: 30 }, (_, index) => detached('Pills', index, 'cal', { type: EntryType.Task, status: EntryStatus.Done }))
 			for (const unit of ['month', 'week'] as const) {
 				const cohort = Routines.of(pills, days(500), unit)
 				assert.equal(pills.every(entry => cohort.collapses(entry)), true)

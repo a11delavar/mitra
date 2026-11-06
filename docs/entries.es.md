@@ -60,6 +60,12 @@ Una tarea tiene una casilla antes de su título y uno de cuatro estados: **Por h
 
 Las tareas hechas y canceladas aparecen tachadas. Un calendario sin estado cancelado, como Notion, omite **Cancelado** del menú. Una tarea con subtareas o una lista de comprobación muestra su progreso en la casilla; consulta [Subtareas](subtasks.md#progress).
 
+## Estado del evento
+
+Un evento tiene un símbolo de estado antes de su título, en el editor y en el calendario: **Confirmado**, **Quizá** o **Cancelado**. Haz clic en él para elegir uno. Un evento cancelado se queda en tu calendario, cancelado en vez de eliminado: aparece tachado en todas las vistas y conserva su lugar, y **Confirmado** lo devuelve. Si se repite, Mitra pregunta si te refieres a esta ocurrencia, a las siguientes o a todas.
+
+Otras aplicaciones de calendario también leen la cancelación. Apple Calendar, Thunderbird y Nextcloud tachan el evento, y un evento cancelado en una de ellas aparece tachado en Mitra. Los calendarios de Mitra y los calendarios CalDAV la guardan, y una suscripción muestra lo que su fuente canceló. Los calendarios de Google, Notion y Tempo no la guardan, así que no la ofrecen.
+
 ## Ocupado o disponible y visibilidad
 
 La fila del ojo indica lo que otras personas saben de la entrada cuando miran tu calendario.

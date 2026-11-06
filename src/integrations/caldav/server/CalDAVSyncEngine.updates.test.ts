@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { Entry, TaskStatus, Transparency, EntryType, EntryTypes } from '#features/entries'
+import { Entry, EntryStatus, Transparency, EntryType, EntryTypes } from '#features/entries'
 import { Recurrence, RecurrenceFrequency, RecurrenceWeekday } from '#features/recurrence'
 import { Source } from '#features/sources'
 import '#integrations/server/registerEngines.js'
@@ -43,19 +43,19 @@ describe('updating a CalDAV entry', () => {
 		const { integration, puts } = account()
 		const task = new Entry({
 			id: crypto.randomUUID(), sourceId: 'work', uri: `${COLLECTION}rent.ics`, uid: 'rent', type: EntryType.Task,
-			heading: 'Pay the rent', status: TaskStatus.ToDo,
+			heading: 'Pay the rent', status: EntryStatus.ToDo,
 			data: { raw: calendar('BEGIN:VTODO', 'UID:rent', 'SUMMARY:Pay the rent', 'DTSTAMP:20260101T000000Z', 'STATUS:NEEDS-ACTION', 'END:VTODO'), etag: '"etag-0"' },
 			source: Object.assign(new Source({ id: 'work', integrationId: integration.id }), { integration }),
 		})
 		task.exdates = null as never
 		const done = task.clone()
-		done.status = TaskStatus.Done
+		done.status = EntryStatus.Done
 
 		await integration.updateEntry(database(), task, done)
 
 		assert.equal(puts.length, 1)
 		assert.match(puts[0]!, /STATUS:COMPLETED/)
-		assert.equal(task.status, TaskStatus.Done)
+		assert.equal(task.status, EntryStatus.Done)
 	})
 
 	it('leaves the entry as it was when the server refuses the change, so nothing it never stored is taken for stored', async () => {

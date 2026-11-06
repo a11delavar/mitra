@@ -14,7 +14,7 @@ import { model, Entity, identity, equality, entity, primaryKey, property, enum a
 import { type Validatable, ValidationError } from '#infrastructure/validation'
 import { ScheduleDefaults } from './ScheduleDefaults.js'
 import { EntryType, type EntryTypeValue } from './EntryType.js'
-import { TaskStatus } from './TaskStatus.js'
+import { EntryStatus } from './EntryStatus.js'
 import { Transparency } from './Transparency.js'
 import { Visibility } from './Visibility.js'
 import { EntryFiles } from './EntryFiles.js'
@@ -84,7 +84,7 @@ export class Entry extends Entity implements Validatable {
 
 	/** Drops what the type can't hold. */
 	private fitType() {
-		if (!this._type.isTask) {
+		if (this.status && !this.status.appliesTo(this._type)) {
 			this.status = undefined
 		}
 		for (const field of ['transparency', 'percentComplete', 'due', 'estimate', 'participants', 'reminders', 'attachments'] as const) {
@@ -138,8 +138,8 @@ export class Entry extends Entity implements Validatable {
 		}
 	}
 
-	/** The statuses it can take here: none for an event, and no Doing or Cancelled in a calendar of two states. */
-	get statuses(): ReadonlyArray<TaskStatus> { return this.type.isTask ? this.source.capabilities.entries.statuses : [] }
+	/** The statuses it can take here: its type's that its calendar holds, so no Doing or Cancelled in a calendar of two states, and none for availability. */
+	get statuses(): ReadonlyArray<EntryStatus> { return this.source.capabilities.entries.statuses.filter(status => status.appliesTo(this.type)) }
 
 	/** The types it can take here, its own always, so a type that cannot change still shows. */
 	get types() { return EntryType.all.filter(type => type === this.type || this.source.canHold(type)) }
@@ -167,15 +167,15 @@ export class Entry extends Entity implements Validatable {
 	@equality()
 	@property({ type: 'number', nullable: true }) estimate?: number
 
-	@converter({ status: TaskStatus.converter })
-	@enumType({ type: TaskStatus.Mapper, fieldName: 'status', items: TaskStatus.all.map(String), nullable: true }) private _status?: TaskStatus
+	@converter({ status: EntryStatus.converter })
+	@enumType({ type: EntryStatus.Mapper, fieldName: 'status', items: EntryStatus.all.map(String), nullable: true }) private _status?: EntryStatus
 
 	@equality()
 	get status() { return this._status }
 	/** A task ticked off reads as fully done where its calendar keeps progress (RFC 5545 §3.8.1.8); one given a status before it knows its calendar keeps what it was given. */
 	set status(value) {
 		this._status = value
-		if (value === TaskStatus.Done && (this.source as Source | undefined)?.ownership.holds('percentComplete')) {
+		if (value === EntryStatus.Done && (this.source as Source | undefined)?.ownership.holds('percentComplete')) {
 			this.percentComplete = 100
 		}
 	}
@@ -196,9 +196,9 @@ export class Entry extends Entity implements Validatable {
 	set progress(value) {
 		this.percentComplete = value === undefined ? undefined : Math.round(value * 100)
 		if (this.percentComplete === 100) {
-			this.status = TaskStatus.Done
+			this.status = EntryStatus.Done
 		} else if (this.done) {
-			this.status = this.percentComplete && this.statuses.includes(TaskStatus.Doing) ? TaskStatus.Doing : TaskStatus.ToDo
+			this.status = this.percentComplete && this.statuses.includes(EntryStatus.Doing) ? EntryStatus.Doing : EntryStatus.ToDo
 		}
 	}
 
@@ -206,13 +206,17 @@ export class Entry extends Entity implements Validatable {
 		return Checklist.of(this.description)
 	}
 
-	get done() { return this.status === TaskStatus.Done }
-	set done(value) { this.status = value ? TaskStatus.Done : TaskStatus.ToDo }
+	get done() { return this.status === EntryStatus.Done }
+	set done(value) { this.status = value ? EntryStatus.Done : EntryStatus.ToDo }
 
+	/** Nothing left to do or to happen: a done or cancelled task, a cancelled event. No reminder of it fires. */
 	get closed() { return !!this.status?.closed }
 
 	/** A task still to do: not an event, and not closed. */
 	get open() { return !!this.type?.isTask && !this.closed }
+
+	/** Called off, task or event: it keeps its place, struck through. */
+	get cancelled() { return this.status === EntryStatus.Cancelled }
 
 	/**
 	 * Drops what a calendar can't keep and is no refusal: the estimate, where none is held, and a length, where no end is: a
@@ -668,8 +672,10 @@ export class Entry extends Entity implements Validatable {
 		if (this.relations?.writes.length && !source.ownership.holds('relations')) {
 			yield new ValidationError('This calendar does not support relations between entries', ['relations'])
 		}
-		if (this.status && !source.capabilities.entries.statuses.includes(this.status)) {
-			yield new ValidationError(this.status === TaskStatus.Doing ? 'This calendar cannot hold a task in progress' : 'This calendar cannot hold a cancelled task', ['status'])
+		if (this.status && !this.status.appliesTo(this.type)) {
+			yield new ValidationError(`${this.type.isTask ? 'A task' : this.type.isEvent ? 'An event' : 'Availability'} cannot be ${this.status.code}`, ['status'])
+		} else if (this.status && !source.capabilities.entries.statuses.includes(this.status)) {
+			yield new ValidationError(this.status === EntryStatus.Doing ? 'This calendar cannot hold a task in progress' : this.status === EntryStatus.Cancelled ? `This calendar cannot hold a cancelled ${this.type.isTask ? 'task' : 'event'}` : 'This calendar cannot hold an event\'s status', ['status'])
 		}
 		if (this.start && this.end && this.end.valueOf() < this.start.valueOf()) {
 			yield new ValidationError('An entry cannot end before it starts', ['end'])

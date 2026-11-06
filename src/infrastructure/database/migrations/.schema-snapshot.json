@@ -545,6 +545,8 @@
             "todo",
             "doing",
             "done",
+            "confirmed",
+            "tentative",
             "cancelled"
           ],
           "mappedType": "enum"
@@ -696,8 +698,8 @@
       "checks": [
         {
           "name": "entry_status_check",
-          "expression": "`status` in ('todo', 'doing', 'done', 'cancelled')",
-          "definition": "check (`status` in ('todo', 'doing', 'done', 'cancelled'))",
+          "expression": "`status` in ('todo', 'doing', 'done', 'confirmed', 'tentative', 'cancelled')",
+          "definition": "check (`status` in ('todo', 'doing', 'done', 'confirmed', 'tentative', 'cancelled'))",
           "columnName": "status"
         },
         {

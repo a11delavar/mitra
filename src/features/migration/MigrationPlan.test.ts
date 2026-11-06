@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { Entry, EntryType, EntryFiles } from '#features/entries'
+import { Entry, EntryType, EntryFiles, EntryStatus } from '#features/entries'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { Source } from '#features/sources'
 import { IntegrationCapabilities, IntegrationOwnership } from '#integrations'
@@ -94,6 +94,13 @@ describe('MigrationVerdict.of', () => {
 		assert.deepEqual(losses(pill(EntryTimeZone.floating), false), ['floating'])
 		assert.deepEqual(losses(pill(EntryTimeZone.floating), true), [])
 		assert.deepEqual(losses(pill(EntryTimeZone.parse('Europe/Berlin')!), false), [], 'a time in a zone keeps it')
+	})
+
+	it('loses the cancellation of an event where the target holds no cancelled event', () => {
+		const cancelled = new Entry({ id: 'c', sourceId: 'home', type: EntryType.Event, heading: 'Volleyball', status: EntryStatus.Cancelled })
+		const assess = (capabilities: IntegrationCapabilities) => MigrationVerdict.of(cancelled, into(target(), capabilities, new IntegrationOwnership())).losses
+		assert.deepEqual(assess(new IntegrationCapabilities({ entries: { statuses: [] } })), ['cancelledStatus'])
+		assert.deepEqual(assess(new IntegrationCapabilities()), [])
 	})
 })
 

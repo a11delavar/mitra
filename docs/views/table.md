@@ -31,7 +31,7 @@ The **search** field matches every word you type against the title, the location
 Click a column's heading for its menu:
 
 - **Sort ascending** or **Sort descending**. Choose the active one again to remove it. Hold <kbd>Shift</kbd> to sort by several columns.
-- The column's **filter**, where it has one: untick the values to leave out. Hold <kbd>Alt</kbd> to keep just the one you click. The **Status** filter's **No status** stands for events, so unticking it lists tasks alone.
+- The column's **filter**, where it has one: untick the values to leave out. Hold <kbd>Alt</kbd> to keep just the one you click.
 - **Hide column**, which also lifts the column's filter.
 
 The **Status**, **Calendar**, **Type** and **Repeats** columns can filter, and **When** holds the span of days. A funnel beside a heading shows the column is leaving rows out. **Title** and **When** cannot be hidden.

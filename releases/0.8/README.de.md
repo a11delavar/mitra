@@ -1,7 +1,7 @@
 ---
-title: Routinen-Tracker, Todoist, Teilaufgaben und Fälligkeiten auf einen Blick
+title: Routinen-Tracker, Todoist, Terminstatus und Fälligkeiten auf einen Blick
 ---
-Mitra 0.8 hilft dir, bei den Dingen dranzubleiben, die du immer wieder tust, und zeigt, wie größere Vorhaben zusammenkommen.
+Mitra 0.8 hilft dir, bei den Dingen dranzubleiben, die du immer wieder tust, und hält fest, was nicht stattgefunden hat.
 
 ## Routinen-Tracker
 Mitra fasst schon jetzt zu Routinen zusammen, was du oft tust, etwa das Fitnessstudio oder einen Haarschnitt alle fünf Wochen. Jetzt bekommen sie einen eigenen Platz, an dem du die letzten Tage jeder Routine auf einen Blick siehst: wie viele du eingehalten hast und welche abgesagt oder verpasst wurden. Du kannst eine Routine umbenennen, zwei zusammengehörige zusammenführen oder Mitra sagen, dass etwas gar keine Routine ist. Routinen bleiben außerdem in der Monats- und Jahresansicht stabil, egal wie weit du scrollst, und dein KI-Konnektor kann dir sagen, wie es um sie steht.
@@ -16,11 +16,18 @@ Manches hängt nicht von deiner Zeitzone ab: Ein Medikament um 7:30 Uhr ist um 7
 
 Doku: [Überall dieselbe Uhrzeit](../../docs/time-zones.md#same-time-everywhere)
 
-## Bessere Teilaufgaben
-Die Teilaufgaben eines Eintrags teilen sich in der Monats- und Jahresansicht eine Spur, sodass sich ein Vorhaben als eine Linie liest, in die seine kurzen Teilaufgaben eingeklappt sind. Die Tabelle ordnet Teilaufgaben unter ihrem übergeordneten Eintrag ein, und die Jahresansicht kann sie ausblenden. Der Fortschritt einer Aufgabe gewichtet jede Teilaufgabe nach ihrem Umfang, sodass ein großes Stück Arbeit mehr zählt als ein schnelles.
+## Terminstatus
+Ein Termin hat jetzt einen eigenen Status, wie eine Aufgabe: **Bestätigt**, **Vielleicht** oder **Abgebrochen**. Ein abgesagter Termin behält seinen Platz, durchgestrichen, sodass festgehalten bleibt, was nicht stattgefunden hat, und deine Routinen zählen ihn mit. Ein Vielleicht bleibt blass, bis du dich entscheidest. Der Status wird mit anderen CalDAV-Apps abgeglichen, und die Tabelle zeigt ihn neben dem der Aufgaben. **Erledigte Aufgaben ausblenden** blendet jetzt nur erledigte Aufgaben aus, und das neue **Abgebrochenes ausblenden** blendet abgebrochene Aufgaben und Termine aus.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="event-status-dark.webp">
+	<img src="event-status-light.webp" alt="Der Editor eines Termins mit geöffnetem Statusmenü: Bestätigt, Vielleicht und Abgebrochen">
+</picture>
+
+Doku: [Terminstatus](../../docs/entries.md#event-status)
 
 ## Fälligkeiten auf einen Blick
-Der Fälligkeitstag einer Aufgabe steht auf ihrer Fahne, und wenn du auf die Aufgabe zeigst, wird dieser Tag im Kalender markiert. Die Zeitleiste markiert ihn ebenfalls, und die Tabelle bekommt eine Spalte dafür. Eine Teilaufgabe ohne eigenes Fälligkeitsdatum übernimmt das ihres übergeordneten Eintrags.
+Der Fälligkeitstag einer Aufgabe steht auf ihrer Fahne, und wenn du auf die Aufgabe zeigst, wird dieser Tag im Kalender markiert. Die Zeitleiste markiert ihn ebenfalls, und die Tabelle bekommt eine Spalte dafür.
 
 ## Personalisierung
 Gib jedem Kalender eine von zwei weiteren Farben oder eine ganz eigene. Benenne die Überschrift eines Kontos per Doppelklick um und blende alle seine Kalender auf einmal aus. Für alles Weitere gestalte Mitra mit eigenem CSS: für dich selbst in den Einstellungen oder für alle auf deinem Server über eine Datei in seinem Datenordner. Wer den Server betreibt, bekommt in den Einstellungen einen eigenen Bereich.

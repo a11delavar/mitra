@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { MikroORM, UnderscoreNamingStrategy, type EntityManager } from '@mikro-orm/sqlite'
 import { Identity, User } from '#features/identity'
 import { Session } from '#features/identity/server/Session.js'
-import { Entry, TaskStatus, Transparency, EntryType, EntryRank } from '#features/entries'
+import { Entry, EntryStatus, Transparency, EntryType, EntryRank } from '#features/entries'
 import { Participants } from '#features/participants/Participant.js'
 import { EntryReminders } from '#features/reminders/EntryReminders.js'
 import { EntryRelation, RelationType } from '#features/relations'
@@ -181,7 +181,7 @@ describe('SourceMigration', () => {
 			em.persist([
 				entryIn(origin, { heading: 'weekly', recurrence: Recurrence.fromRRule('FREQ=WEEKLY;COUNT=3') }),
 				entryIn(origin, { heading: 'free', transparency: Transparency.Free }),
-				entryIn(origin, { heading: 'done', type: EntryType.Task, status: TaskStatus.Cancelled }),
+				entryIn(origin, { heading: 'done', type: EntryType.Task, status: EntryStatus.Cancelled }),
 			])
 			await em.flush()
 

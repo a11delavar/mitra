@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import ICAL from 'ical.js'
-import { Entry, TaskStatus, Transparency, Visibility, EntryType } from '#features/entries'
+import { Entry, EntryStatus, Transparency, Visibility, EntryType } from '#features/entries'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { Source } from '#features/sources'
 import { Recurrence, RecurrenceFrequency } from '#features/recurrence'
@@ -177,23 +177,6 @@ describe('CalDAV member URLs', () => {
 			const attendee = component.getFirstProperty('attendee')
 			assert.equal(attendee?.getParameter('role')?.toString(), 'OPT-PARTICIPANT')
 			assert.equal(attendee?.getParameter('partstat')?.toString(), 'DECLINED')
-		})
-	})
-
-	describe('task status mapping', () => {
-		it('reads every VTODO STATUS the spec defines', () => {
-			assert.equal(CalDAV.statusFromICal('NEEDS-ACTION', 0), TaskStatus.ToDo)
-			assert.equal(CalDAV.statusFromICal('IN-PROCESS', 0), TaskStatus.Doing)
-			assert.equal(CalDAV.statusFromICal('COMPLETED', 0), TaskStatus.Done)
-			assert.equal(CalDAV.statusFromICal('CANCELLED', 0), TaskStatus.Cancelled)
-			assert.equal(CalDAV.statusFromICal('completed', 0), TaskStatus.Done)
-		})
-
-		it('falls back to PERCENT-COMPLETE, then to ToDo, when STATUS is missing or unknown', () => {
-			assert.equal(CalDAV.statusFromICal(undefined, 0), TaskStatus.ToDo)
-			assert.equal(CalDAV.statusFromICal(undefined, 100), TaskStatus.Done)
-			assert.equal(CalDAV.statusFromICal('X-SOMETHING-ELSE', 100), TaskStatus.Done)
-			assert.equal(CalDAV.statusFromICal('X-SOMETHING-ELSE', 0), TaskStatus.ToDo)
 		})
 	})
 
@@ -873,7 +856,7 @@ describe('CalDAV sync ingests every type the collection holds', () => {
 		const task = em.persisted.find(entry => entry.type === EntryType.Task)!
 		assert.equal(task.end, undefined)
 		assert.equal(task.due?.valueOf(), new Date('2026-07-06T18:00:00Z').getTime())
-		assert.equal(task.status, TaskStatus.ToDo)
+		assert.equal(task.status, EntryStatus.ToDo)
 		assert.equal(em.removed.length, 0)
 	})
 

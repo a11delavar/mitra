@@ -12,7 +12,7 @@ import { model } from '#infrastructure/model'
 import { validation, type Validatable, ValidationError } from '#infrastructure/validation'
 import { Entry, type EntryClock } from './Entry.js'
 import { EntryType } from './EntryType.js'
-import { TaskStatus } from './TaskStatus.js'
+import { EntryStatus } from './EntryStatus.js'
 import { Transparency } from './Transparency.js'
 import { Visibility } from './Visibility.js'
 import { EntryFiles } from './EntryFiles.js'
@@ -153,10 +153,10 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 	})
 	timeZone?: EntryTimeZone | null
 
-	@validation(z.custom<TaskStatus>(value => value instanceof TaskStatus).nullish())
-	@description('A task\'s status.')
-	@converter(TaskStatus.converter)
-	status?: TaskStatus | null
+	@validation(z.custom<EntryStatus>(value => value instanceof EntryStatus).nullish())
+	@description('A task\'s: todo, doing, done or cancelled. An event\'s: tentative, confirmed or cancelled. Cancel an event, or one occurrence of it, with cancelled: it stays on the calendar, struck through, and null restores it.')
+	@converter(EntryStatus.converter)
+	status?: EntryStatus | null
 
 	@validation(z.number().min(0).max(100).nullish())
 	@converter({ construct: EntryPatch.percent })

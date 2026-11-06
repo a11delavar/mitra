@@ -11,6 +11,7 @@ import { UpdateEntryOccurrence } from './UpdateEntryOccurrence.js'
 import { EntryPatch } from '../EntryPatch.js'
 import { Entry } from '../Entry.js'
 import { EntryType } from '../EntryType.js'
+import { EntryStatus } from '../EntryStatus.js'
 import { iso, midnight, shown, utcMidnight, viewIn, zones } from './viewers.testing.js'
 
 describe('UpdateEntryOccurrence', () => {
@@ -85,6 +86,25 @@ describe('UpdateEntryOccurrence', () => {
 			await edit(dragged(third!, true, midnight('2026-11-04')), EntryOccurrenceChangeScope.All)
 			assert.deepEqual(Object.values((await stored(created.id!))!).slice(0, 2), [utcMidnight('2026-11-02'), utcMidnight('2026-11-03')])
 			assert.deepEqual((await dates()).map(occurrence => iso(occurrence.start)), ['02', '03', '04', '05', '06'].map(day => iso(midnight(`2026-11-${day}`))))
+		})
+	})
+
+	describe('cancelling one occurrence of a recurring event', () => {
+		it('keeps it on its date as a cancelled entry of its own, and the other dates as they were', async () => {
+			viewIn(zones.berlin)
+			const start = new DateTime('2026-09-03T17:00:00.000Z')
+			const { id } = await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: 'Volleyball', start, end: start.add({ hours: 2 }), recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, count: 4 }) })))
+			const dates = async () => (await shown('2026-09-01', '2026-09-30')).filter(occurrence => occurrence.recurringEntryId === id || occurrence.entry.heading === 'Volleyball')
+			const [, second] = await dates()
+			const edited = second!.override()
+			edited.status = EntryStatus.Cancelled
+			await edit(second!.recurringEntry!.occurrences.overriddenBy(edited), EntryOccurrenceChangeScope.This)
+
+			const rows = await server.query<{ start: number, status: string | null }>('select start, status from entry where heading = ? order by start', ['Volleyball'])
+			assert.deepEqual(rows.map(row => [new Date(row.start).toISOString(), row.status]), [['2026-09-03T17:00:00.000Z', null], ['2026-09-10T17:00:00.000Z', 'cancelled']])
+			assert.deepEqual((await dates()).map(occurrence => [iso(occurrence.start), occurrence.entry.cancelled]).sort(), [
+				['2026-09-03T17:00:00.000Z', false], ['2026-09-10T17:00:00.000Z', true], ['2026-09-17T17:00:00.000Z', false], ['2026-09-24T17:00:00.000Z', false],
+			])
 		})
 	})
 

@@ -1,7 +1,7 @@
 ---
-title: Acompanhamento de rotinas, Todoist, subtarefas e vencimentos de relance
+title: Acompanhamento de rotinas, Todoist, estado dos eventos e vencimentos de relance
 ---
-O Mitra 0.8 ajuda você a manter as coisas que faz de novo e de novo, e mostra como os trabalhos maiores se encaixam.
+O Mitra 0.8 ajuda você a manter as coisas que faz de novo e de novo, e guarda o registro do que não aconteceu.
 
 ## Acompanhamento de rotinas
 O Mitra já reúne em rotinas o que você faz com frequência, como a academia ou um corte de cabelo a cada cinco semanas. Agora elas ganham um lugar próprio, onde você vê de relance os últimos dias de cada rotina: quantos você cumpriu e quais cancelou ou perdeu. Você pode renomear uma rotina, juntar duas que andam juntas ou dizer ao Mitra que algo não é uma rotina. As rotinas também ficam estáveis nas visualizações de mês e ano, por mais que você role, e o seu conector de IA pode dizer como elas estão indo.
@@ -16,11 +16,18 @@ Algumas coisas não dependem do seu fuso horário: o remédio das 7:30 é às 7:
 
 Documentação: [Mesmo horário em todo lugar](../../docs/time-zones.md#same-time-everywhere)
 
-## Subtarefas melhores
-As subtarefas de uma entrada dividem uma faixa nas visualizações de mês e ano, então um projeto se lê como uma só linha, com as subtarefas curtas recolhidas dentro dela. A tabela aninha as subtarefas sob a sua entrada principal, e a visualização de ano pode ocultá-las. O progresso de uma tarefa pesa cada subtarefa pelo seu tamanho, então um trabalho longo conta mais do que um rápido.
+## Estado do evento
+Um evento agora tem um estado próprio, como uma tarefa: **Confirmado**, **Talvez** ou **Cancelado**. Um evento cancelado mantém o seu lugar, riscado, para você guardar o registro do que não aconteceu, e as suas rotinas o contam. Um talvez fica esmaecido até você decidir. O estado é sincronizado com outros apps CalDAV, e a tabela o mostra ao lado do das tarefas. **Ocultar tarefas concluídas** agora oculta só as tarefas concluídas, e o novo **Ocultar cancelados** oculta tarefas e eventos cancelados.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="event-status-dark.webp">
+	<img src="event-status-light.webp" alt="O editor de um evento com o menu de estado aberto: Confirmado, Talvez e Cancelado">
+</picture>
+
+Documentação: [Estado do evento](../../docs/entries.md#event-status)
 
 ## Vencimentos de relance
-O dia de vencimento de uma tarefa aparece na sua bandeira, e apontar para a tarefa marca esse dia no calendário. A linha do tempo também o marca, e a tabela ganha uma coluna para ele. Uma subtarefa sem data de vencimento própria usa a da sua entrada principal.
+O dia de vencimento de uma tarefa aparece na sua bandeira, e apontar para a tarefa marca esse dia no calendário. A linha do tempo também o marca, e a tabela ganha uma coluna para ele.
 
 ## Personalização
 Dê a cada calendário uma de duas novas cores, ou a cor que quiser. Renomeie o cabeçalho de uma conta com um clique duplo e oculte todos os calendários dela de uma vez. Para todo o resto, mude o visual do Mitra com o seu próprio CSS: para você nas Configurações, ou para todos no seu servidor por meio de um arquivo na pasta de dados dele. Quem administra o servidor ganha uma seção própria nas Configurações.

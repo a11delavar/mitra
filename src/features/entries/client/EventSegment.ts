@@ -2,7 +2,7 @@ import { component, html, property, Component, css, state, bind, queryConnectedI
 import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { contrastColorOf, MarkdownLinks, Link } from '#design'
 import { type RoutineRun } from '#features/routines/client/Routines.js'
-import { TaskStatus } from '../TaskStatus.js'
+import { EntryStatus } from '../EntryStatus.js'
 import { type EntrySegment } from './EntrySegment.js'
 import { EntrySegments } from './EntrySegments.js'
 import { EntryStore, reportSaveError } from './EntryStore.js'
@@ -104,8 +104,9 @@ export class EntrySegmentComponent extends Component {
 		this.title = !this.routine ? '' : [entry.heading, recurring.recurrence?.describe(recurring.start ?? recurring.due)].filter(Boolean).join(' · ')
 		this.toggleAttribute('dragging', this.store.isDragging(entry) || this.store.isPreview(entry))
 		this.toggleAttribute('drag-source', this.store.isDragSource(entry))
+		const status = entry.status ?? (entry.type.isTask ? EntryStatus.ToDo : undefined)
+		status ? this.setAttribute('data-status', status.code) : this.removeAttribute('data-status')
 		if (entry.type.isTask) {
-			this.setAttribute('data-status', (entry.status ?? TaskStatus.ToDo).code)
 			if (entry.progress !== undefined) {
 				this.setAttribute('data-progress', '')
 				this.style.setProperty('--mitra-entry-progress', `${Math.round(entry.progress * 100)}%`)
@@ -114,7 +115,6 @@ export class EntrySegmentComponent extends Component {
 				this.style.removeProperty('--mitra-entry-progress')
 			}
 		} else {
-			this.removeAttribute('data-status')
 			this.removeAttribute('data-progress')
 			this.style.removeProperty('--mitra-entry-progress')
 		}
@@ -302,7 +302,7 @@ export class EntrySegmentComponent extends Component {
 						align-items: center;
 						min-width: 0;
 
-						> mitra-task-status {
+						> mitra-entry-status {
 							flex-shrink: 0;
 							block-size: var(--header-line);
 							inline-size: var(--header-line);
@@ -366,7 +366,11 @@ export class EntrySegmentComponent extends Component {
 					}
 				}
 
-				&[data-status=${unsafeCSS(TaskStatus.Done)}], &[data-status=${unsafeCSS(TaskStatus.Cancelled)}] {
+				&[data-status=${unsafeCSS(EntryStatus.Tentative)}] > .heading > .label {
+					opacity: 0.6;
+				}
+
+				&[data-status=${unsafeCSS(EntryStatus.Done)}], &[data-status=${unsafeCSS(EntryStatus.Cancelled)}] {
 					& > .heading > .label {
 						opacity: 0.6;
 						text-decoration: line-through;
@@ -519,12 +523,14 @@ export class EntrySegmentComponent extends Component {
 			`
 		}
 		const attached = this.segment.entry.attachments.length > 0
+		// An event wears its glyph once its status says more than that it takes place; a task its checkbox always.
+		const statused = this.segment.entry.type.isTask || (!!this.segment.entry.status && this.segment.entry.status !== EntryStatus.Confirmed)
 		return html`
 			<div class="heading" ?data-meta=${meta}>
-				${!this.segment.entry.type.isTask && !meta && !this.segment.occurrence.repeats && !attached ? html.nothing : html`
+				${!statused && !meta && !this.segment.occurrence.repeats && !attached ? html.nothing : html`
 					<div class="header">
-						${!this.segment.entry.type.isTask ? html.nothing : html`
-							<mitra-task-status .entry=${this.segment.entry} @pointerdown=${() => this.claim()} @keydown=${() => this.claim()} @change=${this.handleStatusChange}></mitra-task-status>
+						${!statused ? html.nothing : html`
+							<mitra-entry-status .entry=${this.segment.entry} @pointerdown=${() => this.claim()} @keydown=${() => this.claim()} @change=${this.handleStatusChange}></mitra-entry-status>
 						`}
 						${!meta ? html.nothing : this.whenTemplate}
 						${!this.segment.occurrence.repeats ? html.nothing : html`<mitra-icon class="recurring" icon="repeat" title=${t('Repeats')}></mitra-icon>`}

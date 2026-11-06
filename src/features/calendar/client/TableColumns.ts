@@ -2,7 +2,7 @@ import { html, type HTMLTemplateResult } from '@a11d/lit'
 import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { DataGridColumn } from '@3mo/data-grid/controller'
 import { MarkdownLinks } from '#design'
-import { type Entry, TaskStatus } from '#features/entries'
+import { type Entry } from '#features/entries'
 import '#features/participants/client/ParticipantFaces.js'
 import '#features/relations/client/EntryLink.js'
 import '#features/locations/client/MapLink.js'
@@ -71,13 +71,10 @@ function reminders(entry: Entry) {
 	return text((entry.reminders ?? []).map(minutes => minutes === 0 ? t('At start') : TimeSpan.fromMinutes(minutes).formatAsWholeUnit()).join(', '))
 }
 
-function status(entry: Entry) {
-	if (!entry.type.isTask) {
-		return text('')
-	}
-	const progress = entry.hierarchy.progress
+function status(row: TableRow) {
+	const progress = row.entry.hierarchy.progress
 	const underway = progress !== undefined && progress > 0 && progress < 1
-	return text(`${(entry.status ?? TaskStatus.ToDo).format()}${!underway ? '' : ` · ${Math.round(progress * 100).formatAsPercent()}`}`)
+	return text(`${row.status.format()}${!underway ? '' : ` · ${Math.round(progress * 100).formatAsPercent()}`}`)
 }
 
 /** A table makes them once: the grid controller syncs its definitions again for every new array. */
@@ -94,7 +91,7 @@ export const tableColumns = (): Array<DataGridColumn<TableRow>> => [
 			${text(row.sourceName)}
 		`,
 	}),
-	column('statusRank', t('Status'), { getContentTemplate: (_, row) => status(row.entry) }),
+	column('statusRank', t('Status'), { getContentTemplate: (_, row) => status(row) }),
 	column('durationMinutes', t('Duration'), { alignment: 'end', hidden: true, getContentTemplate: (_, row) => text(row.entry.duration) }),
 	column('typeKey', t('Type'), { hidden: true, getContentTemplate: (_, row) => text(row.entry.type.format()) }),
 	column('location', t('Location'), { getContentTemplate: (_, row) => location(row.location) }),

@@ -16,7 +16,7 @@ import { AppleCalendar } from '#integrations/apple/AppleCalendar.js'
 import { MitraCalendar } from '#integrations/mitra/MitraCalendar.js'
 import { EntryType } from '../EntryType.js'
 import { Entry } from '../Entry.js'
-import { TaskStatus } from '../TaskStatus.js'
+import { EntryStatus } from '../EntryStatus.js'
 
 async function inMemoryOrm() {
 	const orm = await MikroORM.init({
@@ -184,7 +184,7 @@ describe('GET /entries carries the overdue backlog in every window', () => {
 		const { user, source } = await seedUser(em, 'backlog', 'anything')
 		const [from, to] = [new Date('2021-03-02T09:00:00Z') as never, new Date('2021-03-02T10:00:00Z') as never]
 		const untouched = task(source.id, 'Untouched', { start: from, end: to })
-		const started = task(source.id, 'Started', { start: from, end: to, status: TaskStatus.Doing })
+		const started = task(source.id, 'Started', { start: from, end: to, status: EntryStatus.Doing })
 		const dueOnly = task(source.id, 'No due date', { start: from })
 		em.persist([untouched, started, dueOnly])
 		await em.flush()
@@ -200,8 +200,8 @@ describe('GET /entries carries the overdue backlog in every window', () => {
 		const em = orm.em.fork()
 		const { user, source } = await seedUser(em, 'settled', 'anything')
 		const [from, to] = [new Date('2021-03-02T09:00:00Z') as never, new Date('2021-03-02T10:00:00Z') as never]
-		const done = task(source.id, 'Done', { start: from, end: to, status: TaskStatus.Done })
-		const cancelled = task(source.id, 'Cancelled', { start: from, end: to, status: TaskStatus.Cancelled })
+		const done = task(source.id, 'Done', { start: from, end: to, status: EntryStatus.Done })
+		const cancelled = task(source.id, 'Cancelled', { start: from, end: to, status: EntryStatus.Cancelled })
 		const event = new Entry({ id: crypto.randomUUID(), sourceId: source.id, type: EntryType.Event, heading: 'Last year', start: from, end: to })
 		em.persist([done, cancelled, event])
 		await em.flush()

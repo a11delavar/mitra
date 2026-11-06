@@ -79,7 +79,7 @@ export class Planning extends Component {
 			return
 		}
 		const target = e.target as HTMLElement
-		if (target.closest('mitra-entry-details') || target.closest('mitra-task-status')) {
+		if (target.closest('mitra-entry-details') || target.closest('mitra-entry-status')) {
 			return
 		}
 		const segment = target.closest('mitra-entry-segment') as EntrySegmentComponent | null

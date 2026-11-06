@@ -13,7 +13,7 @@ export class DueReminder {
 	static within(occurrences: ReadonlyArray<EntryOccurrence>, watermark: Date, until: Date, zoneOf?: (occurrence: EntryOccurrence) => TimeZone | undefined): Array<DueReminder> {
 		return occurrences.flatMap(occurrence => {
 			const { entry } = occurrence
-			// A closed task keeps its reminders, so they must be skipped here.
+			// A closed entry (a done or cancelled task, a cancelled event) keeps its reminders, so they must be skipped here.
 			if (!entry.reminders?.length || entry.closed) {
 				return []
 			}

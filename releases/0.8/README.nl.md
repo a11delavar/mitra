@@ -1,7 +1,7 @@
 ---
-title: Routinetracker, Todoist, subtaken en vervaldatums in één oogopslag
+title: Routinetracker, Todoist, afspraakstatus en vervaldatums in één oogopslag
 ---
-Mitra 0.8 helpt je vol te houden wat je steeds weer doet, en laat zien hoe grotere klussen samen vorm krijgen.
+Mitra 0.8 helpt je vol te houden wat je steeds weer doet, en houdt bij wat niet is doorgegaan.
 
 ## Routinetracker
 Mitra bundelt de dingen die je vaak doet al tot routines, zoals de sportschool of elke vijf weken naar de kapper. Nu krijgen ze een eigen plek, waar je van elke routine de laatste keren in één oogopslag ziet: hoe vaak het je is gelukt, en welke keren je hebt geannuleerd of gemist. Je kunt een routine een andere naam geven, twee routines die bij elkaar horen samenvoegen, of Mitra laten weten dat iets helemaal geen routine is. Routines blijven in de maand- en jaarweergave ook rustig staan, hoe ver je ook scrolt, en je AI-connector kan je vertellen hoe het ermee gaat.
@@ -16,11 +16,18 @@ Sommige dingen hangen niet af van je tijdzone: medicijnen om 7:30 neem je om 7:3
 
 Documentatie: [Overal dezelfde tijd](../../docs/time-zones.md#same-time-everywhere)
 
-## Betere subtaken
-De subtaken van een item delen in de maand- en jaarweergave één rij, zodat een project als één lijn te lezen is, met de korte subtaken erin opgenomen. De tabel toont subtaken onder hun bovenliggende taak, en de jaarweergave kan ze verbergen. De voortgang van een taak houdt rekening met hoe groot elke subtaak is, zodat een lange klus zwaarder weegt dan een snelle.
+## Afspraakstatus
+Een afspraak heeft nu een eigen status, net als een taak: **Bevestigd**, **Misschien** of **Geannuleerd**. Een geannuleerde afspraak houdt haar plek, doorgestreept, zodat je bijhoudt wat niet is doorgegaan, en je routines tellen haar mee. Een misschien blijft vaag tot je beslist. De status wordt gesynchroniseerd met andere CalDAV-apps, en de tabel toont hem naast die van de taken. **Afgeronde taken verbergen** verbergt nu alleen afgeronde taken, en het nieuwe **Geannuleerd verbergen** verbergt geannuleerde taken en afspraken.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="event-status-dark.webp">
+	<img src="event-status-light.webp" alt="De editor van een afspraak met het statusmenu open: Bevestigd, Misschien en Geannuleerd">
+</picture>
+
+Documentatie: [Afspraakstatus](../../docs/entries.md#event-status)
 
 ## Vervaldatums in één oogopslag
-De vervaldatum van een taak staat op zijn vlaggetje, en als je de taak aanwijst, wordt die dag in de agenda gemarkeerd. De tijdlijn markeert hem ook, en de tabel krijgt er een eigen kolom voor. Een subtaak zonder eigen vervaldatum neemt die van de bovenliggende taak over.
+De vervaldatum van een taak staat op zijn vlaggetje, en als je de taak aanwijst, wordt die dag in de agenda gemarkeerd. De tijdlijn markeert hem ook, en de tabel krijgt er een eigen kolom voor.
 
 ## Personalisatie
 Geef elke agenda een van twee nieuwe kleuren, of een kleur naar keuze. Hernoem de kop van een account met een dubbelklik en verberg al zijn agenda's in één keer. Voor al het andere geef je Mitra een eigen uiterlijk met je eigen CSS: voor jezelf in Instellingen, of voor iedereen op je server via een bestand in de gegevensmap. Wie de server beheert, krijgt daarvoor een eigen sectie in Instellingen.

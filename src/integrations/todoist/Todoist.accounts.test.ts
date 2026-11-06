@@ -8,7 +8,7 @@ import { Api } from '@a11d/api'
 import { DateTime } from '@3mo/date-time'
 import '@3mo/date-time-value-constructor'
 import { ModelValueConstructor } from '@a11d/api-model-value-constructor'
-import { Entry, EntryType, TaskStatus, EntryPatch } from '#features/entries'
+import { Entry, EntryType, EntryStatus, EntryPatch } from '#features/entries'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { User } from '#features/identity'
 import { EntryRelations, RelationType } from '#features/relations'
@@ -324,7 +324,7 @@ describe('A Todoist account as Todoist answers it', () => {
 				assert.deepEqual([groceries.start, groceries.description], [undefined, 'From the **market**\n\n- [ ] oat milk\n- [x] bread'])
 				const color = await entryOf('Pick a color')
 				assert.deepEqual(color.relations?.writes.map(relation => [relation.type, relation.targetUid]), [[RelationType.Parent, ids.hallway]])
-				assert.equal((await entryOf('Old chore')).status, TaskStatus.Done)
+				assert.equal((await entryOf('Old chore')).status, EntryStatus.Done)
 			})
 
 			it('reads a deadline as the due date and a duration as the end, or as the estimate without a date', { skip: !pro && 'the plan holds neither' }, async () => {
@@ -392,12 +392,12 @@ describe('A Todoist account as Todoist answers it', () => {
 
 			it('completes a task and opens it again', async () => {
 				const standup = await entryOf('Standup')
-				standup.status = TaskStatus.Done
+				standup.status = EntryStatus.Done
 				await UpdateEntry.call({ ...EntryPatch.of(standup, ['status']), id: standup.id! })
 				assert.equal((await taskOf(ids.standup!)).checked, true)
-				assert.equal((await entryOf('Standup')).status, TaskStatus.Done)
+				assert.equal((await entryOf('Standup')).status, EntryStatus.Done)
 
-				standup.status = TaskStatus.ToDo
+				standup.status = EntryStatus.ToDo
 				await UpdateEntry.call({ ...EntryPatch.of(standup, ['status']), id: standup.id! })
 				assert.equal((await taskOf(ids.standup!)).checked, false)
 			})
@@ -405,10 +405,10 @@ describe('A Todoist account as Todoist answers it', () => {
 			it('completes a repeating task as Todoist does: it moves on to its next date, open', async () => {
 				const water = await entryOf('Water the plants')
 				const before = water.start!
-				water.status = TaskStatus.Done
+				water.status = EntryStatus.Done
 				const saved = await UpdateEntry.call({ ...EntryPatch.of(water, ['status']), id: water.id! })
 				const due = (await taskOf(ids.water!)).due!
-				assert.equal(saved.status, TaskStatus.ToDo)
+				assert.equal(saved.status, EntryStatus.ToDo)
 				assert.equal(iso(saved.start), instantOf(due))
 				assert.ok(saved.start!.valueOf() > before.valueOf(), 'its next date')
 				assert.equal(due.string, 'every monday at 9am')
@@ -458,12 +458,12 @@ describe('A Todoist account as Todoist answers it', () => {
 				const homeNow = await headings(home().id)
 				assert.ok(homeNow.includes('Call the bank') && homeNow.includes('Standup, moved') && !homeNow.includes('Old chore'))
 				assert.equal(iso((await entryOf('Standup, moved')).start), '2026-11-04T15:00:00.000Z')
-				assert.equal((await entryOf('Pick a color')).status, TaskStatus.Done)
+				assert.equal((await entryOf('Pick a color')).status, EntryStatus.Done)
 			})
 
 			it('creates a task that is already done', async () => {
-				const done = await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: home().id, type: EntryType.Task, heading: 'Return the books', status: TaskStatus.Done })))
-				assert.equal(done.status, TaskStatus.Done)
+				const done = await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: home().id, type: EntryType.Task, heading: 'Return the books', status: EntryStatus.Done })))
+				assert.equal(done.status, EntryStatus.Done)
 				assert.equal((await taskOf(done.uri!)).checked, true)
 			})
 
@@ -499,7 +499,7 @@ describe('A Todoist account as Todoist answers it', () => {
 			it('imports again from scratch, the done tasks of the last weeks included', async () => {
 				await ReimportIntegration.call({ id: integration.id })
 				await until(async () => (await headings(home().id)).includes('Return the books'))
-				const done = (await entriesIn(home().id)).filter(entry => entry.status === TaskStatus.Done.code).map(entry => entry.heading).sort()
+				const done = (await entriesIn(home().id)).filter(entry => entry.status === EntryStatus.Done.code).map(entry => entry.heading).sort()
 				assert.deepEqual(done, ['Pick a color', 'Return the books'])
 				assert.ok(!(await headings(home().id)).includes('Old chore'), 'a deleted task stays gone')
 			})

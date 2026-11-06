@@ -45,6 +45,8 @@ Pour éviter la question et ne changer que cette occurrence, maintenez <kbd>Ctrl
 
 Quelques changements ne demandent jamais rien. Marquer une occurrence de tâche comme terminée s'applique à cette seule occurrence, et planifier une occurrence d'une tâche qui se répète selon son échéance aussi.
 
+Une occurrence d’un événement peut aussi être annulée au lieu d’être supprimée : elle reste alors barrée dans le calendrier. Voir [Statut d'un événement](entries.md#event-status).
+
 ## Occurrences modifiées et supprimées
 
 Une occurrence que vous modifiez avec **Cette entrée** quitte la série et devient une entrée à part entière. La série saute sa date, donc elle ne s'affiche jamais deux fois, et les modifications ultérieures de toute la série ne l'atteignent pas.

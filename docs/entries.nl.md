@@ -60,6 +60,12 @@ Een taak heeft een selectievakje voor de titel en een van vier statussen: **Te d
 
 Afgeronde en geannuleerde taken worden doorgestreept. Een agenda zonder de status geannuleerd, zoals Notion, laat **Geannuleerd** weg uit het menu. Een taak met subtaken of een checklist toont de voortgang in het selectievakje; zie [Subtaken](subtasks.md#progress).
 
+## Afspraakstatus
+
+Een afspraak heeft vóór haar titel een statussymbool, in de editor en in de agenda: **Bevestigd**, **Misschien** of **Geannuleerd**. Klik erop om er een te kiezen. Een geannuleerde afspraak blijft in je agenda, geannuleerd in plaats van verwijderd: ze wordt in elke weergave doorgestreept en houdt haar plek, en **Bevestigd** brengt haar terug. Als ze zich herhaalt, vraagt Mitra of je deze herhaling, de volgende of alle bedoelt.
+
+Andere agenda-apps lezen de annulering ook. Apple Agenda, Thunderbird en Nextcloud strepen de afspraak door, en een afspraak die in een van hen is geannuleerd, staat in Mitra doorgestreept. Mitra-agenda's en CalDAV-agenda's bewaren de annulering, en een abonnement toont wat de feed heeft geannuleerd. Google-, Notion- en Tempo-agenda's bewaren haar niet, dus daar ontbreekt de optie.
+
 ## Bezet of vrij, en zichtbaarheid
 
 De regel met het oog bepaalt wat anderen over het item te weten komen als ze in je agenda kijken.

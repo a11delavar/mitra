@@ -60,6 +60,12 @@ Une tâche a une case à cocher avant son titre, et l'un de quatre statuts : **
 
 Les tâches terminées et annulées sont barrées. Un agenda sans statut annulé, comme Notion, retire **Annulé** du menu. Une tâche avec des sous-tâches ou une liste de contrôle affiche sa progression dans la case ; voir [Sous-tâches](subtasks.md#progress).
 
+## Statut d'un événement
+
+Un événement a un symbole de statut avant son titre, dans l’éditeur et sur le calendrier : **Confirmé**, **Peut-être** ou **Annulé**. Clique dessus pour en choisir un. Un événement annulé reste dans ton calendrier, annulé plutôt que supprimé : il est barré dans toutes les vues et garde sa place, et **Confirmé** le fait revenir. S’il se répète, Mitra demande si tu parles de cette occurrence, des suivantes ou de toutes.
+
+Les autres applications de calendrier lisent aussi l’annulation. Apple Calendrier, Thunderbird et Nextcloud barrent l’événement, et un événement annulé dans l’une d’elles apparaît barré dans Mitra. Les calendriers Mitra et les calendriers CalDAV la conservent, et un abonnement montre ce que son flux a annulé. Les calendriers Google, Notion et Tempo ne la conservent pas, ils ne la proposent donc pas.
+
 ## Occupé ou disponible et visibilité
 
 La ligne avec l'œil indique ce que les autres personnes apprennent de l'entrée quand elles regardent votre calendrier.

@@ -7,7 +7,7 @@ import { User, Identity } from '#features/identity'
 import { Session } from '#features/identity/server/Session.js'
 import { Source } from '#features/sources'
 import { Recurrence, RecurrenceFrequency } from '#features/recurrence'
-import { Entry, TaskStatus, Transparency, EntryType, EntryTypes } from '#features/entries'
+import { Entry, EntryStatus, Transparency, EntryType, EntryTypes } from '#features/entries'
 import { Participants } from '#features/participants/Participant.js'
 import { EntryReminders } from '#features/reminders/EntryReminders.js'
 import { EntryRelation, EntryRelations, RelationGraph, RelationType } from '#features/relations'
@@ -137,7 +137,7 @@ describe('converting an entry to availability', () => {
 	})
 
 	it('drops the task fields', () => {
-		const entry = new Entry({ sourceId: 's', type: EntryType.Task, status: TaskStatus.Doing, percentComplete: 40 })
+		const entry = new Entry({ sourceId: 's', type: EntryType.Task, status: EntryStatus.Doing, percentComplete: 40 })
 		entry.type = EntryType.Availability
 		assert.equal(entry.status, undefined)
 		assert.equal(entry.percentComplete, undefined)

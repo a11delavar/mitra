@@ -2,7 +2,7 @@ import { converter } from '@a11d/converter'
 import type { DateTimeRange } from '@3mo/date-time'
 import { NotFoundError, type EntityManager, type FilterQuery } from '@mikro-orm/core'
 import { Source } from '#features/sources'
-import { Entry, EntryType, TaskStatus } from '#features/entries'
+import { Entry, EntryType, EntryStatus } from '#features/entries'
 import { EntryRelation, EntryRelations, RelationGraph } from '#features/relations'
 import { NotificationSubscription } from '#features/reminders/NotificationSubscription.js'
 import { UserSettings } from '#features/settings/UserSettings.js'
@@ -169,7 +169,7 @@ export class User {
 		// Cast because `_type` is private. No status at all counts as open.
 		const openTask = {
 			_type: EntryType.Task,
-			$or: [{ status: null }, { status: { $nin: [TaskStatus.Done, TaskStatus.Cancelled] } }],
+			$or: [{ status: null }, { status: { $nin: [EntryStatus.Done, EntryStatus.Cancelled] } }],
 		} as unknown as FilterQuery<Entry>
 		return {
 			$or: [

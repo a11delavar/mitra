@@ -2,7 +2,7 @@ import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { MikroORM } from '@mikro-orm/sqlite'
 import { User } from '#features/identity'
-import { Entry, TaskStatus, EntryType, EntryPatch } from '#features/entries'
+import { Entry, EntryStatus, EntryType, EntryPatch } from '#features/entries'
 import { EntryRelations, RelationType } from '#features/relations'
 import '#integrations/server/registerEngines.js'
 import { ormConfig } from '#infrastructure/database/ormConfig.js'
@@ -191,9 +191,9 @@ describe('Todoist sync', () => {
 
 			assert.equal(await sync(), true)
 			assert.deepEqual((await entries()).map(entry => [entry.uri, entry.sourceId, entry.status]), [
-				['t1', sourceOf('Inbox').id, TaskStatus.ToDo],
-				['t2', sourceOf('Work').id, TaskStatus.ToDo],
-				['t4', sourceOf('Work').id, TaskStatus.Done],
+				['t1', sourceOf('Inbox').id, EntryStatus.ToDo],
+				['t2', sourceOf('Work').id, EntryStatus.ToDo],
+				['t4', sourceOf('Work').id, EntryStatus.Done],
 			])
 			assert.deepEqual(account.taskReads, ['*'], 'two calendars, one read')
 			assert.ok(sources.filter(source => source.enabled).every(source => source.importedAt))
@@ -281,7 +281,7 @@ describe('Todoist sync', () => {
 			account.change(task('t1', 'inbox', { checked: true }))
 			account.change(task('t2', 'work', { is_deleted: true }))
 			await sync()
-			assert.equal((await entryOf('t1'))?.status, TaskStatus.Done)
+			assert.equal((await entryOf('t1'))?.status, EntryStatus.Done)
 			assert.deepEqual((await entries()).map(entry => entry.uri), ['t1'])
 		})
 
@@ -317,7 +317,7 @@ describe('Todoist sync', () => {
 			await sync()
 
 			assert.deepEqual(account.taskReads, ['*', '*'])
-			assert.deepEqual((await entries()).map(entry => [entry.uri, entry.status]), [['t1', TaskStatus.ToDo], ['t3', TaskStatus.Done]])
+			assert.deepEqual((await entries()).map(entry => [entry.uri, entry.status]), [['t1', EntryStatus.ToDo], ['t3', EntryStatus.Done]])
 			assert.ok(sourceOf('Inbox').importedAt)
 		})
 	})
@@ -364,10 +364,10 @@ describe('Todoist sync', () => {
 
 		it('creates a task in its calendar\'s project and takes what Todoist made of it', async () => {
 			const { em, account, integration, sourceOf } = await synced()
-			const entry = new Entry({ id: 'draft', sourceId: sourceOf('Work').id, type: EntryType.Task, heading: 'Book travel', description: '', status: TaskStatus.Done })
+			const entry = new Entry({ id: 'draft', sourceId: sourceOf('Work').id, type: EntryType.Task, heading: 'Book travel', description: '', status: EntryStatus.Done })
 			const created = await integration.createEntry(em, entry)
 			assert.equal(created.uri, 'new-1')
-			assert.equal(created.status, TaskStatus.Done)
+			assert.equal(created.status, EntryStatus.Done)
 			assert.deepEqual(account.commands.map(command => command.type), ['item_add', 'item_close'])
 			assert.equal((account.commands[0]!.args as { project_id: string }).project_id, 'work')
 		})
@@ -386,8 +386,8 @@ describe('Todoist sync', () => {
 		it('keeps an edit Todoist took though reading it back fails, so a repeating task is completed once', async () => {
 			const { account, edit } = await synced(task('t1', 'work', { due: { date: '2026-10-19', timezone: null, string: 'every monday', lang: 'en', is_recurring: true } }))
 			account.failsReadBack = true
-			const entry = await edit('t1', incoming => incoming.status = TaskStatus.Done)
-			assert.equal(entry.status, TaskStatus.Done)
+			const entry = await edit('t1', incoming => incoming.status = EntryStatus.Done)
+			assert.equal(entry.status, EntryStatus.Done)
 			assert.deepEqual(account.commands.map(command => command.type), ['item_close'])
 			assert.equal(account.tasks.get('t1')!.due!.date, '2026-10-26')
 		})
@@ -402,15 +402,15 @@ describe('Todoist sync', () => {
 
 		it('completes a repeating task as Todoist does: it comes back open at its next date', async () => {
 			const { edit } = await synced(task('t1', 'work', { due: { date: '2026-10-19', timezone: null, string: 'every monday', lang: 'en', is_recurring: true } }))
-			const entry = await edit('t1', incoming => incoming.status = TaskStatus.Done)
-			assert.equal(entry.status, TaskStatus.ToDo)
+			const entry = await edit('t1', incoming => incoming.status = EntryStatus.Done)
+			assert.equal(entry.status, EntryStatus.ToDo)
 			assert.equal((entry.start as Date | undefined)?.toISOString(), '2026-10-26T00:00:00.000Z')
 		})
 
 		it('completes and reopens a one-off task', async () => {
 			const { account, edit } = await synced(task('t1', 'work'))
-			assert.equal((await edit('t1', incoming => incoming.status = TaskStatus.Done)).status, TaskStatus.Done)
-			assert.equal((await edit('t1', incoming => incoming.status = TaskStatus.ToDo)).status, TaskStatus.ToDo)
+			assert.equal((await edit('t1', incoming => incoming.status = EntryStatus.Done)).status, EntryStatus.Done)
+			assert.equal((await edit('t1', incoming => incoming.status = EntryStatus.ToDo)).status, EntryStatus.ToDo)
 			assert.deepEqual(account.commands.map(command => command.type), ['item_close', 'item_uncomplete'])
 		})
 

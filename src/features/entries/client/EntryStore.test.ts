@@ -8,7 +8,7 @@ import { Color, Source } from '#features/sources'
 import { IntegrationOwnership } from '#integrations'
 import { ApiError } from '#infrastructure/http/Api.js'
 import { Entry } from '../Entry.js'
-import { TaskStatus } from '../TaskStatus.js'
+import { EntryStatus } from '../EntryStatus.js'
 import { EntryType } from '../EntryType.js'
 import { EntryRank } from '../EntryRank.js'
 import { EntryStore } from './EntryStore.js'
@@ -594,15 +594,15 @@ describe('EntryStore', () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
 			EntryStore.resolveScope = () => Promise.reject(new Error('must not be asked'))
-			const working = occurrence({ type: EntryType.Task, status: TaskStatus.ToDo })
+			const working = occurrence({ type: EntryType.Task, status: EntryStatus.ToDo })
 			EntryStore.applyServerEntries([working])
-			working.status = TaskStatus.Done
+			working.status = EntryStatus.Done
 			const commit = EntryStore.commit(working)
-			await transport.respond(entry({ id: 'detached', type: EntryType.Task, status: TaskStatus.Done }))
+			await transport.respond(entry({ id: 'detached', type: EntryType.Task, status: EntryStatus.Done }))
 			await commit
 			assert.deepEqual(transport.calls.occurrenceEdits, ['this'])
 			assert.equal(working.recurringEntryId, undefined)
-			assert.equal(working.status, TaskStatus.Done)
+			assert.equal(working.status, EntryStatus.Done)
 			assert.equal(EntryStore.isDirty(working), false)
 		})
 
@@ -611,12 +611,12 @@ describe('EntryStore', () => {
 			EntryStore.persistence = transport.persistence
 			let asked = false
 			EntryStore.resolveScope = () => (asked = true, Promise.resolve(EntryOccurrenceChangeScope.All as const))
-			const working = occurrence({ type: EntryType.Task, status: TaskStatus.ToDo })
+			const working = occurrence({ type: EntryType.Task, status: EntryStatus.ToDo })
 			EntryStore.applyServerEntries([working])
 			working.source = Object.assign(new Source({ id: 's', integrationId: 'i' }), { integration: { id: 'i', ownership: new IntegrationOwnership({ percentComplete: 'upstream' }) } as never })
-			working.status = TaskStatus.Done
+			working.status = EntryStatus.Done
 			const commit = EntryStore.commit(working)
-			await transport.respond(entry({ id: 'detached', type: EntryType.Task, status: TaskStatus.Done, percentComplete: 100 }))
+			await transport.respond(entry({ id: 'detached', type: EntryType.Task, status: EntryStatus.Done, percentComplete: 100 }))
 			await commit
 			assert.equal(asked, false)
 			assert.deepEqual(transport.calls.occurrenceEdits, ['this'])
@@ -630,11 +630,11 @@ describe('EntryStore', () => {
 			EntryStore.persistence = transport.persistence
 			let asked = false
 			EntryStore.resolveScope = () => (asked = true, Promise.resolve(EntryOccurrenceChangeScope.All as const))
-			const working = occurrence({ type: EntryType.Task, status: TaskStatus.ToDo })
+			const working = occurrence({ type: EntryType.Task, status: EntryStatus.ToDo })
 			EntryStore.applyServerEntries([working])
 			working.percentComplete = 60
 			const commit = EntryStore.commit(working)
-			await transport.respond(entry({ id: 'detached', type: EntryType.Task, status: TaskStatus.ToDo, percentComplete: 60 }))
+			await transport.respond(entry({ id: 'detached', type: EntryType.Task, status: EntryStatus.ToDo, percentComplete: 60 }))
 			await commit
 			assert.equal(asked, false)
 			assert.deepEqual(transport.calls.occurrenceEdits, ['this'])
@@ -645,12 +645,12 @@ describe('EntryStore', () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
 			EntryStore.resolveScope = () => Promise.resolve(EntryOccurrenceChangeScope.All)
-			const working = occurrence({ type: EntryType.Task, status: TaskStatus.ToDo })
+			const working = occurrence({ type: EntryType.Task, status: EntryStatus.ToDo })
 			EntryStore.applyServerEntries([working])
-			working.status = TaskStatus.Done
+			working.status = EntryStatus.Done
 			working.heading = 'Renamed series'
 			const commit = EntryStore.commit(working)
-			await transport.respond(entry({ id: 'master', type: EntryType.Task, status: TaskStatus.Done, heading: 'Renamed series' }))
+			await transport.respond(entry({ id: 'master', type: EntryType.Task, status: EntryStatus.Done, heading: 'Renamed series' }))
 			await commit
 			assert.deepEqual(transport.calls.occurrenceEdits, ['all'])
 		})
@@ -803,9 +803,9 @@ describe('EntryStore', () => {
 		it('a task status edit follows the same derive-commit cycle', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
-			const working = entry({ type: EntryType.Task, status: TaskStatus.ToDo })
+			const working = entry({ type: EntryType.Task, status: EntryStatus.ToDo })
 			EntryStore.applyServerEntries([working])
-			working.status = TaskStatus.Done
+			working.status = EntryStatus.Done
 			assert.equal(EntryStore.isDirty(working), true)
 			const commit = EntryStore.commit(working)
 			await transport.respond()
@@ -815,7 +815,7 @@ describe('EntryStore', () => {
 	})
 
 	describe('whenTaskCloses', () => {
-		const task = (init?: Partial<Entry>) => entry({ type: EntryType.Task, status: TaskStatus.ToDo, ...init })
+		const task = (init?: Partial<Entry>) => entry({ type: EntryType.Task, status: EntryStatus.ToDo, ...init })
 
 		const watch = () => {
 			const closed = new Array<Entry>()
@@ -829,7 +829,7 @@ describe('EntryStore', () => {
 			const closed = watch()
 			const working = task()
 			EntryStore.applyServerEntries([working])
-			working.status = TaskStatus.Done
+			working.status = EntryStatus.Done
 			const commit = EntryStore.commit(working)
 			assert.deepEqual(closed, [])
 			await transport.respond()
@@ -843,7 +843,7 @@ describe('EntryStore', () => {
 			const closed = watch()
 			const working = task()
 			EntryStore.applyServerEntries([working])
-			working.status = TaskStatus.Cancelled
+			working.status = EntryStatus.Cancelled
 			const commit = EntryStore.commit(working)
 			await transport.respond()
 			await commit
@@ -854,7 +854,7 @@ describe('EntryStore', () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence
 			const closed = watch()
-			const working = task({ status: TaskStatus.Done })
+			const working = task({ status: EntryStatus.Done })
 			EntryStore.applyServerEntries([working])
 			working.heading = 'Renamed'
 			const commit = EntryStore.commit(working)
@@ -869,7 +869,7 @@ describe('EntryStore', () => {
 			const closed = watch()
 			const working = task()
 			EntryStore.applyServerEntries([working])
-			working.status = TaskStatus.Done
+			working.status = EntryStatus.Done
 			const commit = EntryStore.commit(working).catch(() => void 0)
 			await transport.fail(new Error('nope'))
 			await commit

@@ -20,7 +20,7 @@ La tavolozza dei comandi conosce le stesse parole e cambia la maggior parte dell
 
 ## Il tuo account o questo dispositivo
 
-La maggior parte delle impostazioni appartiene al tuo account e ti segue su ogni dispositivo e browser da cui accedi: la lingua, la vista predefinita, **Nascondi le attività completate**, **Nascondi la disponibilità**, il calendario predefinito, la durata predefinita, **Allinea a** ed entrambi i promemoria predefiniti.
+La maggior parte delle impostazioni appartiene al tuo account e ti segue su ogni dispositivo e browser da cui accedi: la lingua, la vista predefinita, **Nascondi le attività completate**, **Nascondi annullati**, **Nascondi la disponibilità**, il calendario predefinito, la durata predefinita, **Allinea a** ed entrambi i promemoria predefiniti.
 
 Le altre appartengono al dispositivo che stai usando, quindi telefono e portatile possono differire: il tema, le linee di collegamento e se questo browser mostra le notifiche.
 
@@ -38,7 +38,7 @@ Ogni lingua decide anche come si scrivono date e orari, in che giorno inizia la 
 
 **Vista predefinita** è la vista su cui si apre Mitra: **Settimana**, a meno che tu non scelga **Mese**, **Anno**, **Cronologia** o **Tabella**.
 
-**Nascondi le attività completate** toglie le attività fatte e annullate dalle viste settimana, mese e anno e dalla scheda Pianificazione. La ricerca le trova ancora, contano ancora per l'avanzamento della loro attività principale e la vista tabella le elenca ancora. Un'attività che hai aperta resta in vista finché non la chiudi.
+**Nascondi le attività completate** toglie le attività fatte dalle viste settimana, mese e anno e dalla scheda Pianificazione, e **Nascondi annullati** fa lo stesso con le attività e gli eventi annullati. La ricerca le trova ancora, contano ancora per l'avanzamento della loro attività principale e la vista tabella le elenca ancora. Un'attività che hai aperta resta in vista finché non la chiudi.
 
 **Nascondi la disponibilità** toglie la [disponibilità](availability.md) dalla vista settimana. Resta nei suoi calendari, e la disponibilità occupata appare ancora occupata agli altri.
 

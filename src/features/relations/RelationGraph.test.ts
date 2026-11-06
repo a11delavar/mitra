@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DateTime } from '@3mo/date-time'
-import { Entry, TaskStatus, EntryType } from '#features/entries'
+import { Entry, EntryStatus, EntryType } from '#features/entries'
 import type { RelationInit } from './Relation.js'
 import { EntryRelations } from './EntryRelations.js'
 import { RelationGraph } from './RelationGraph.js'
@@ -181,17 +181,17 @@ describe('RelationGraph', () => {
 		})
 
 		it('counts done over total, with cancelled work out of the denominator', () => {
-			const rollup = parentOf(childOf('a', { status: TaskStatus.Done }), childOf('b'), childOf('c', { status: TaskStatus.Cancelled })).getRollup('parent')
+			const rollup = parentOf(childOf('a', { status: EntryStatus.Done }), childOf('b'), childOf('c', { status: EntryStatus.Cancelled })).getRollup('parent')
 			assert.deepEqual([rollup!.done, rollup!.total, rollup!.children], [1, 2, 3])
 		})
 
 		it('groups an event child but never counts it, since an event has no status', () => {
-			const rollup = parentOf(childOf('a', { status: TaskStatus.Done }), childOf('e', { type: EntryType.Event, start: new DateTime() })).getRollup('parent')
+			const rollup = parentOf(childOf('a', { status: EntryStatus.Done }), childOf('e', { type: EntryType.Event, start: new DateTime() })).getRollup('parent')
 			assert.deepEqual([rollup!.done, rollup!.total, rollup!.children], [1, 1, 2])
 		})
 
 		it('weights each child by its OWN progress: authored, or its own rollup', () => {
-			const authored = parentOf(childOf('a', { status: TaskStatus.Done }), childOf('b', { percentComplete: 50 })).getRollup('parent')
+			const authored = parentOf(childOf('a', { status: EntryStatus.Done }), childOf('b', { percentComplete: 50 })).getRollup('parent')
 			assert.equal(authored!.progress, 0.75)
 
 			// A grandchild half-done moves its parent's number, which moves the grandparent's.
@@ -233,7 +233,7 @@ describe('RelationGraph', () => {
 			it('adds them to the subtasks rather than averaging the two sides', () => {
 				const graph = RelationGraph.of([
 					entry('parent', [], { description: boxes }),
-					childOf('a', { status: TaskStatus.Done }),
+					childOf('a', { status: EntryStatus.Done }),
 					childOf('b'),
 				])
 				const rollup = graph.getRollup('parent')
@@ -254,7 +254,7 @@ describe('RelationGraph', () => {
 	})
 
 	describe('ancestorsCompletedBy', () => {
-		const done = { status: TaskStatus.Done }
+		const done = { status: EntryStatus.Done }
 		const chainGraph = () => RelationGraph.of([
 			entry('parent'),
 			entry('child1', [{ type: RelationType.Parent, targetUid: 'parent' }], done),
@@ -283,7 +283,7 @@ describe('RelationGraph', () => {
 		it('leaves cancelled siblings out of the reckoning, as the rollup does', () => {
 			const graph = RelationGraph.of([
 				entry('parent'),
-				entry('cancelled', [{ type: RelationType.Parent, targetUid: 'parent' }], { status: TaskStatus.Cancelled }),
+				entry('cancelled', [{ type: RelationType.Parent, targetUid: 'parent' }], { status: EntryStatus.Cancelled }),
 				entry('last', [{ type: RelationType.Parent, targetUid: 'parent' }], done),
 			])
 			assert.deepEqual(graph.getAncestorsCompletedBy('last').map(found => found.uid), ['parent'])
@@ -386,19 +386,19 @@ describe('RelationGraph', () => {
 			const childOf = (uid: string, parent = 'parent', init: Partial<Entry> = {}) => entry(uid, [{ type: RelationType.Parent, targetUid: parent }], init)
 
 			it('rolls the parent up from the children that point at it, though only the parent was served', () => {
-				const graph = RelationGraph.of([entry('parent'), childOf('a', 'parent', { status: TaskStatus.Done }), childOf('b')])
+				const graph = RelationGraph.of([entry('parent'), childOf('a', 'parent', { status: EntryStatus.Done }), childOf('b')])
 				assert.deepEqual(served(graph, 'parent').getRollup('parent'), { done: 1, total: 2, progress: 0.5, subtasks: { done: 1, total: 2 }, checklist: { done: 0, total: 0 }, children: 2, descendants: 2 })
 			})
 
 			it('counts a foreign-authored CHILD line the same as a PARENT one, and a pair authored from both sides once', () => {
-				const foreign = RelationGraph.of([entry('parent', [{ type: RelationType.Child, targetUid: 'a' }]), entry('a', [], { status: TaskStatus.Done })])
+				const foreign = RelationGraph.of([entry('parent', [{ type: RelationType.Child, targetUid: 'a' }]), entry('a', [], { status: EntryStatus.Done })])
 				assert.deepEqual(served(foreign, 'parent').getRollup('parent')!.subtasks, { done: 1, total: 1 })
 				const both = RelationGraph.of([entry('parent', [{ type: RelationType.Child, targetUid: 'a' }]), childOf('a')])
 				assert.deepEqual(served(both, 'parent').getRollup('parent')!.subtasks, { done: 0, total: 1 })
 			})
 
 			it('reaches the whole subtree beneath a served entry, and its parents with their own rollups', () => {
-				const graph = RelationGraph.of([entry('parent'), childOf('a', 'parent', { status: TaskStatus.Done }), childOf('b', 'a')])
+				const graph = RelationGraph.of([entry('parent'), childOf('a', 'parent', { status: EntryStatus.Done }), childOf('b', 'a')])
 				const fromParent = served(graph, 'parent')
 				assert.deepEqual(uids(fromParent.getDescendants('parent')), ['a', 'b'])
 				assert.deepEqual(fromParent.getRollup('parent')!.descendants, 2)

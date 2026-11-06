@@ -1,7 +1,7 @@
 import { Component, component, html, css, property, state, event, query, ifDefined } from '@a11d/lit'
 import { type DataGridColumn, DataGridSortingStrategy } from '@3mo/data-grid/controller'
 import { type Menu, checkmark, selectedColor } from '#design'
-import { TaskStatus, EntryType } from '#features/entries'
+import { EntryStatus, EntryType } from '#features/entries'
 import type { Source } from '#features/sources'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import { TableRow, TableFilter, type TableFacet } from './TableRow.js'
@@ -30,10 +30,7 @@ export class TableColumnMenu extends Component {
 
 	private static options(facet: TableFacet): Array<TableFilterOption> {
 		switch (facet) {
-			case 'statusRank': return [
-				...TaskStatus.all.map(status => ({ value: status.code, label: status.format(), icon: status.icon })),
-				{ value: TableRow.noStatus, label: t('No status') },
-			]
+			case 'statusRank': return EntryStatus.all.map(status => ({ value: status.code, label: status.format(), icon: status.iconFor(EntryType.Task) || status.iconFor(EntryType.Event) }))
 			case 'typeKey': return EntryType.all.filter(type => !type.isAvailability).map(type => ({ value: type.value, label: type.format() }))
 			case 'sourceName': return Calendars.visible.map(source => ({ value: source.id, label: source.name, source }))
 			case 'repeats': return [

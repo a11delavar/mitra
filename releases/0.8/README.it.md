@@ -1,7 +1,7 @@
 ---
-title: Monitoraggio delle routine, Todoist, attività secondarie e scadenze a colpo d'occhio
+title: Monitoraggio delle routine, Todoist, stato degli eventi e scadenze a colpo d'occhio
 ---
-Mitra 0.8 ti aiuta a mantenere le cose che fai ancora e ancora, e mostra come si compongono i lavori più grandi.
+Mitra 0.8 ti aiuta a mantenere le cose che fai ancora e ancora, e tiene traccia di ciò che non è successo.
 
 ## Monitoraggio delle routine
 Mitra raccoglie già in routine le cose che fai spesso, come la palestra o un taglio di capelli ogni cinque settimane. Ora hanno un posto tutto loro, dove vedi a colpo d'occhio gli ultimi giorni di ogni routine: quanti ne hai rispettati e quali hai annullato o saltato. Puoi rinominare una routine, unirne due che vanno insieme, o dire a Mitra che qualcosa non è una routine. Le routine restano anche stabili nelle viste mese e anno, per quanto tu scorra, e il tuo connettore IA può dirti come stanno andando.
@@ -16,11 +16,18 @@ Alcune cose non dipendono dal tuo fuso orario: la medicina delle 7:30 si prende 
 
 Documentazione: [Stessa ora ovunque](../../docs/time-zones.md#same-time-everywhere)
 
-## Attività secondarie migliori
-Le attività secondarie di una voce condividono una corsia nelle viste mese e anno, così un progetto si legge come una sola linea, con le sue attività secondarie brevi raccolte al suo interno. La tabella annida le attività secondarie sotto la loro voce principale, e la vista anno può nasconderle. L'avanzamento di un'attività pesa ogni attività secondaria in base alla sua dimensione, così un lavoro lungo conta più di uno rapido.
+## Stato dell'evento
+Un evento ora ha uno stato tutto suo, come un'attività: **Confermato**, **Forse** o **Annullato**. Un evento annullato mantiene il suo posto, barrato, così resta traccia di ciò che non è successo, e le tue routine lo contano. Un forse resta sbiadito finché non decidi. Lo stato si sincronizza con le altre app CalDAV, e la tabella lo mostra accanto a quello delle attività. **Nascondi le attività completate** ora nasconde solo le attività completate, e il nuovo **Nascondi annullati** nasconde attività ed eventi annullati.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="event-status-dark.webp">
+	<img src="event-status-light.webp" alt="L'editor di un evento con il menu dello stato aperto: Confermato, Forse e Annullato">
+</picture>
+
+Documentazione: [Stato dell'evento](../../docs/entries.md#event-status)
 
 ## Scadenze a colpo d'occhio
-Il giorno di scadenza di un'attività appare sulla sua bandierina, e puntando l'attività quel giorno viene segnato nel calendario. Anche la cronologia lo segna, e la tabella ha una colonna apposita. Un'attività secondaria senza una data di scadenza propria prende quella della sua voce principale.
+Il giorno di scadenza di un'attività appare sulla sua bandierina, e puntando l'attività quel giorno viene segnato nel calendario. Anche la cronologia lo segna, e la tabella ha una colonna apposita.
 
 ## Personalizzazione
 Dai a ogni calendario uno di due nuovi colori, o il colore che preferisci. Rinomina l'intestazione di un account con un doppio clic e nascondi tutti i suoi calendari in una volta. Per tutto il resto, cambia lo stile di Mitra con un CSS tutto tuo: per te nelle Impostazioni, o per tutti sul tuo server tramite un file nella sua cartella dei dati. Chi gestisce il server ha una sezione tutta sua nelle Impostazioni.

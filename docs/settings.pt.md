@@ -20,7 +20,7 @@ A paleta de comandos conhece as mesmas palavras e altera a maioria das configura
 
 ## Sua conta ou este dispositivo
 
-A maioria das configurações pertence à sua conta e acompanha você em todos os dispositivos e navegadores em que entra: o idioma, a vista padrão, **Ocultar tarefas concluídas**, **Ocultar disponibilidade**, o calendário padrão, a duração padrão, **Ajustar a** e os dois lembretes padrão.
+A maioria das configurações pertence à sua conta e acompanha você em todos os dispositivos e navegadores em que entra: o idioma, a vista padrão, **Ocultar tarefas concluídas**, **Ocultar cancelados**, **Ocultar disponibilidade**, o calendário padrão, a duração padrão, **Ajustar a** e os dois lembretes padrão.
 
 As outras pertencem ao dispositivo em que você está, então seu celular e seu notebook podem diferir: o tema, as linhas de conexão e se este navegador mostra notificações.
 
@@ -38,7 +38,7 @@ Cada idioma também decide como datas e horas são escritas, em que dia a semana
 
 **Vista padrão** é a vista em que o Mitra abre: **Semana**, a menos que você escolha **Mês**, **Ano**, **Linha do tempo** ou **Tabela**.
 
-**Ocultar tarefas concluídas** tira as tarefas concluídas e canceladas das vistas de semana, mês e ano e da aba Planeamento. A pesquisa ainda as encontra, elas ainda contam para o progresso da tarefa pai, e a vista de tabela ainda as lista. Uma tarefa que você tem aberta fica à vista até você fechá-la.
+**Ocultar tarefas concluídas** tira as tarefas concluídas das vistas de semana, mês e ano e da aba Planeamento, e **Ocultar cancelados** faz o mesmo com as tarefas e os eventos cancelados. A pesquisa ainda as encontra, elas ainda contam para o progresso da tarefa pai, e a vista de tabela ainda as lista. Uma tarefa que você tem aberta fica à vista até você fechá-la.
 
 **Ocultar disponibilidade** tira a [disponibilidade](availability.md) da vista de semana. Ela continua nos seus calendários, e a disponibilidade ocupada ainda aparece como ocupada para os outros.
 

@@ -20,7 +20,7 @@ Paleta poleceń zna te same słowa i zmienia większość ustawień bez otwieran
 
 ## Twoje konto czy to urządzenie
 
-Większość ustawień należy do twojego konta i towarzyszy ci na każdym urządzeniu i w każdej przeglądarce, w której się logujesz: język, domyślny widok, **Ukryj gotowe zadania**, **Ukryj dostępność**, domyślny kalendarz, domyślny czas trwania, **Przyciągaj do** i oba domyślne przypomnienia.
+Większość ustawień należy do twojego konta i towarzyszy ci na każdym urządzeniu i w każdej przeglądarce, w której się logujesz: język, domyślny widok, **Ukryj gotowe zadania**, **Ukryj anulowane**, **Ukryj dostępność**, domyślny kalendarz, domyślny czas trwania, **Przyciągaj do** i oba domyślne przypomnienia.
 
 Pozostałe należą do urządzenia, z którego korzystasz, więc na telefonie i laptopie mogą się różnić: motyw, linie połączeń oraz to, czy ta przeglądarka pokazuje powiadomienia.
 
@@ -38,7 +38,7 @@ Każdy język decyduje też o tym, jak wyglądają daty i godziny, od którego d
 
 **Domyślny widok** to widok, w którym otwiera się Mitra: **Tydzień**, chyba że wybierzesz **Miesiąc**, **Rok**, **Oś czasu** lub **Tabela**.
 
-**Ukryj gotowe zadania** usuwa gotowe i anulowane zadania z widoku tygodnia, miesiąca i roku oraz z karty Planowanie. Wyszukiwanie nadal je znajduje, wciąż wliczają się do postępu zadania nadrzędnego, a widok tabeli nadal je wyświetla. Zadanie, które masz otwarte, pozostaje widoczne, dopóki go nie zamkniesz.
+**Ukryj gotowe zadania** usuwa gotowe zadania z widoku tygodnia, miesiąca i roku oraz z karty Planowanie, a **Ukryj anulowane** robi to samo z anulowanymi zadaniami i wydarzeniami. Wyszukiwanie nadal je znajduje, wciąż wliczają się do postępu zadania nadrzędnego, a widok tabeli nadal je wyświetla. Zadanie, które masz otwarte, pozostaje widoczne, dopóki go nie zamkniesz.
 
 **Ukryj dostępność** usuwa [dostępność](availability.md) z widoku tygodnia. Zostaje ona w swoich kalendarzach, a dostępność oznaczona jako zajęta nadal jest widoczna dla innych jako zajęty czas.
 

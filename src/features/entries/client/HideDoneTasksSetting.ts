@@ -1,39 +1,26 @@
 import { setting, ToggleSetting, userStorage, type SettingStorage } from '#features/settings/client/Setting.js'
 import type { EntryOccurrence } from '#features/recurrence'
-import { EntryEditorIntent } from './EntryEditorIntent.js'
+import { EntryLens } from './EntryLens.js'
 import { EntryStore } from './EntryStore.js'
 
 const stored = userStorage('hideDoneTasks')
 
-/**
- * Lens keeping closed tasks out of the surfaces that draw them.
- * The entries stay fetched and whole: search, progress rollups and the sync engine never see the lens.
- */
+/** Lens keeping done tasks out of the surfaces that draw them; cancelled ones are {@link HideCancelledSetting}'s. */
 @setting()
 export class HideDoneTasksSetting extends ToggleSetting {
 	private static readonly default = false
+	private static readonly lens = new EntryLens(entry => entry.done)
 
 	static get current(): boolean {
 		return stored.read() ?? HideDoneTasksSetting.default
 	}
 
-	/** Whether a surface draws this occurrence. Closed tasks remain visible while their editor is active. */
 	static shows(occurrence: EntryOccurrence, hidden = HideDoneTasksSetting.current) {
-		const { entry } = occurrence
-		return !hidden || !entry.closed || EntryEditorIntent.holds(occurrence)
+		return HideDoneTasksSetting.lens.shows(occurrence, hidden)
 	}
 
-	private static readonly filtered = new WeakMap<ReadonlyArray<EntryOccurrence>, { hidden: boolean, result: ReadonlyArray<EntryOccurrence> }>()
-
-	/** Filters occurrences for display, memoized on input array identity, and untouched while the lens is off. */
-	static filter(occurrences: ReadonlyArray<EntryOccurrence>, hidden = HideDoneTasksSetting.current): ReadonlyArray<EntryOccurrence> {
-		const cached = HideDoneTasksSetting.filtered.get(occurrences)
-		if (cached?.hidden === hidden) {
-			return cached.result
-		}
-		const result = !hidden ? occurrences : occurrences.filter(occurrence => HideDoneTasksSetting.shows(occurrence, hidden))
-		HideDoneTasksSetting.filtered.set(occurrences, { hidden, result })
-		return result
+	static filter(occurrences: ReadonlyArray<EntryOccurrence>, hidden = HideDoneTasksSetting.current) {
+		return HideDoneTasksSetting.lens.filter(occurrences, hidden)
 	}
 
 	readonly heading = t('Hide done tasks')
@@ -43,7 +30,7 @@ export class HideDoneTasksSetting extends ToggleSetting {
 	readonly fallback = HideDoneTasksSetting.default
 
 	override get hint() {
-		return t('Done and cancelled tasks leave the calendar. Search still finds them, and they still count towards progress.')
+		return t('Done tasks leave the calendar. Search still finds them, and they still count towards progress.')
 	}
 
 	protected readonly storage: SettingStorage<boolean> = {

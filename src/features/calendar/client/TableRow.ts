@@ -1,5 +1,5 @@
 import { DateTime } from '@3mo/date-time'
-import { type Entry, TaskStatus } from '#features/entries'
+import { type Entry, EntryStatus } from '#features/entries'
 import { EntrySegments } from '#features/entries/client/EntrySegments.js'
 import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
@@ -58,16 +58,6 @@ export class TableRow {
 		return (tableFacets as ReadonlyArray<string>).includes(key)
 	}
 
-	/** What the status column files an event under: it has no status at all. */
-	static readonly noStatus = 'none'
-
-	private static readonly statusRanks = new Map<TaskStatus, number>([
-		[TaskStatus.ToDo, 0],
-		[TaskStatus.Doing, 1],
-		[TaskStatus.Done, 2],
-		[TaskStatus.Cancelled, 3],
-	])
-
 	private constructor(readonly occurrence: EntryOccurrence, readonly series: boolean) { }
 
 	/** What it shows. */
@@ -90,7 +80,9 @@ export class TableRow {
 	get headingKey() { return this.entry.heading.toLocaleLowerCase() }
 	/** The When column shows the span and sorts by where it begins: its start, or a due-only task's due. */
 	get when() { return (this.occurrence.start ?? this.occurrence.end)?.valueOf() }
-	get statusRank() { return !this.entry.type.isTask ? undefined : TableRow.statusRanks.get(this.entry.status ?? TaskStatus.ToDo) }
+	/** The status the Status column shows: one without any stands where its kind does, a task to do and an event confirmed. */
+	get status() { return this.entry.status ?? (this.entry.type.isTask ? EntryStatus.ToDo : EntryStatus.Confirmed) }
+	get statusRank() { return EntryStatus.all.indexOf(this.status) }
 	get typeKey() { return this.entry.type.value }
 	get source() { return this.entry.source }
 	get sourceName() { return this.source?.name ?? '' }
@@ -123,7 +115,7 @@ export class TableRow {
 	facet(key: TableFacet): string {
 		const { entry } = this
 		switch (key) {
-			case 'statusRank': return !entry.type.isTask ? TableRow.noStatus : (entry.status ?? TaskStatus.ToDo).code
+			case 'statusRank': return this.status.code
 			case 'typeKey': return entry.type.value
 			case 'sourceName': return entry.sourceId
 			case 'repeats': return this.occurrence.repeats ? 'repeating' : 'once'

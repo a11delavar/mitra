@@ -31,7 +31,7 @@ El campo de **búsqueda** compara cada palabra que escribes con el título, la u
 Haz clic en el encabezado de una columna para ver su menú:
 
 - **Orden ascendente** u **Orden descendente**. Elige de nuevo el activo para quitarlo. Mantén pulsada <kbd>Shift</kbd> para ordenar por varias columnas.
-- El **filtro** de la columna, si lo tiene: desmarca los valores que quieras dejar fuera. Mantén pulsada <kbd>Alt</kbd> para conservar solo el que pulses. **Sin estado** en el filtro de **Estado** representa los eventos, así que al desmarcarlo se listan solo las tareas.
+- El **filtro** de la columna, si lo tiene: desmarca los valores que quieras dejar fuera. Mantén pulsada <kbd>Alt</kbd> para conservar solo el que pulses.
 - **Ocultar columna**, que también retira el filtro de la columna.
 
 Las columnas **Estado**, **Calendario**, **Tipo** y **Se repite** pueden filtrar, y **Cuándo** contiene el periodo de días. Un embudo junto a un encabezado indica que la columna deja filas fuera. **Título** y **Cuándo** no se pueden ocultar.

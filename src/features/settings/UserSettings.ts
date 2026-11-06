@@ -15,8 +15,10 @@ export class UserSettings {
 	defaultReminderMinutes?: number | null
 	/** Lead time in minutes before a task's anchor for its default reminder (0 = at the time, null = none). */
 	defaultTaskReminderMinutes?: number | null
-	/** Whether closed tasks (done or cancelled) are hidden from calendar views. */
+	/** Whether done tasks are hidden from calendar views. */
 	hideDoneTasks?: boolean
+	/** Whether cancelled tasks and events are hidden from calendar views. */
+	hideCancelled?: boolean
 	/** Whether availability is hidden from the week view. */
 	hideAvailability?: boolean
 	/** The language the app is shown in and the region it is written in (a BCP 47 tag: `fa`, `en-GB`), on every device. */
@@ -51,6 +53,9 @@ export class UserSettings {
 		}
 		if (typeof incoming.hideDoneTasks === 'boolean') {
 			settings.hideDoneTasks = incoming.hideDoneTasks
+		}
+		if (typeof incoming.hideCancelled === 'boolean') {
+			settings.hideCancelled = incoming.hideCancelled
 		}
 		if (typeof incoming.hideAvailability === 'boolean') {
 			settings.hideAvailability = incoming.hideAvailability

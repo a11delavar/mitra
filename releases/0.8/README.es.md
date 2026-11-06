@@ -1,7 +1,7 @@
 ---
-title: Seguimiento de rutinas, Todoist, subtareas y vencimientos de un vistazo
+title: Seguimiento de rutinas, Todoist, estado de eventos y vencimientos de un vistazo
 ---
-Mitra 0.8 te ayuda a mantener las cosas que haces una y otra vez, y muestra cómo encajan los trabajos más grandes.
+Mitra 0.8 te ayuda a mantener las cosas que haces una y otra vez, y guarda constancia de lo que no llegó a pasar.
 
 ## Seguimiento de rutinas
 Mitra ya agrupa en rutinas lo que haces a menudo, como ir al gimnasio o cortarte el pelo cada cinco semanas. Ahora tienen un lugar propio, donde ves de un vistazo los últimos días de cada rutina: cuántos cumpliste y cuáles cancelaste o te saltaste. Puedes cambiar el nombre de una rutina, unir dos que van juntas o decirle a Mitra que algo no es una rutina. Las rutinas también se mantienen estables en las vistas de mes y año por mucho que te desplaces, y tu conector de IA puede decirte cómo van.
@@ -16,11 +16,18 @@ Algunas cosas no dependen de tu zona horaria: la medicación de las 7:30 es a la
 
 Docs: [La misma hora en todas partes](../../docs/time-zones.md#same-time-everywhere)
 
-## Mejores subtareas
-Las subtareas de una entrada comparten un carril en las vistas de mes y año, así que un proyecto se lee como una sola línea, con sus subtareas cortas plegadas dentro. La tabla anida las subtareas bajo su entrada principal, y la vista de año puede ocultarlas. El progreso de una tarea pondera cada subtarea según su tamaño, así que un trabajo largo cuenta más que uno rápido.
+## Estado del evento
+Un evento tiene ahora un estado propio, como una tarea: **Confirmado**, **Quizá** o **Cancelado**. Un evento cancelado conserva su lugar, tachado, así guardas constancia de lo que no llegó a pasar, y tus rutinas lo cuentan. Un quizá aparece atenuado hasta que decidas. El estado se sincroniza con otras apps CalDAV, y la tabla lo muestra junto al de las tareas. **Ocultar tareas completadas** ahora oculta solo las tareas completadas, y el nuevo **Ocultar lo cancelado** oculta las tareas y los eventos cancelados.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="event-status-dark.webp">
+	<img src="event-status-light.webp" alt="El editor de un evento con su menú de estado abierto: Confirmado, Quizá y Cancelado">
+</picture>
+
+Docs: [Estado del evento](../../docs/entries.md#event-status)
 
 ## Vencimientos de un vistazo
-El día de vencimiento de una tarea aparece en su bandera, y al señalar la tarea se marca ese día en el calendario. El cronograma también lo marca, y la tabla gana una columna para él. Una subtarea sin fecha de vencimiento propia toma la de su entrada principal.
+El día de vencimiento de una tarea aparece en su bandera, y al señalar la tarea se marca ese día en el calendario. El cronograma también lo marca, y la tabla gana una columna para él.
 
 ## Personalización
 Da a cada calendario uno de dos colores más, o el color que quieras. Cambia el nombre del encabezado de una cuenta con un doble clic y oculta todos sus calendarios a la vez. Para todo lo demás, cambia el estilo de Mitra con tu propio CSS: para ti en Ajustes, o para todos en tu servidor con un archivo en su carpeta de datos. Quien administra el servidor tiene una sección propia en Ajustes.

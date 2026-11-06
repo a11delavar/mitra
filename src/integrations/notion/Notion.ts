@@ -3,7 +3,7 @@ import { converter } from '@a11d/converter'
 import { equals } from '@a11d/equals'
 import { EntryRelations, type Relation, RelationType, EntryRelation } from '#features/relations'
 import { Source, Color } from '#features/sources'
-import { Entry, TaskStatus, EntryType } from '#features/entries'
+import { Entry, EntryStatus, EntryType } from '#features/entries'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { User } from '#features/identity'
@@ -27,9 +27,9 @@ export interface NotionSchemaIndex {
 	titleProperty: string
 	statusProperty: string
 	dateProperty: string
-	statusByOption: ReadonlyMap<string, TaskStatus>
-	/** TaskStatus → first option id in group. */
-	optionByStatus: ReadonlyMap<TaskStatus, string>
+	statusByOption: ReadonlyMap<string, EntryStatus>
+	/** EntryStatus → first option id in group. */
+	optionByStatus: ReadonlyMap<EntryStatus, string>
 	/** Self-referencing relation properties mapped to RelationType. */
 	relationProperties: ReadonlyArray<NotionRelationProperty>
 }
@@ -81,7 +81,7 @@ export class Notion extends Integration<NotionCredentials> {
 
 	/** No availability: it is edited with this provider's capabilities, and would not repeat. No due or estimate: the one date property is the schedule. */
 	override get capabilities() {
-		return new IntegrationCapabilities({ entries: { statuses: [TaskStatus.ToDo, TaskStatus.Doing, TaskStatus.Done], floating: false }, availability: false })
+		return new IntegrationCapabilities({ entries: { statuses: [EntryStatus.ToDo, EntryStatus.Doing, EntryStatus.Done], floating: false }, availability: false })
 	}
 
 	override get ownership() {
@@ -444,12 +444,12 @@ export class Notion extends Integration<NotionCredentials> {
 		return (richText ?? []).map(run => NotionMarkdown.textOf(run)).join('')
 	}
 
-	private static taskStatusOfGroup(name: string | undefined, index: number, count: number): TaskStatus {
+	private static taskStatusOfGroup(name: string | undefined, index: number, count: number): EntryStatus {
 		switch (name?.toLowerCase()) {
-			case 'to-do': return TaskStatus.ToDo
-			case 'in progress': return TaskStatus.Doing
-			case 'complete': return TaskStatus.Done
-			default: return index === 0 ? TaskStatus.ToDo : index === count - 1 ? TaskStatus.Done : TaskStatus.Doing
+			case 'to-do': return EntryStatus.ToDo
+			case 'in progress': return EntryStatus.Doing
+			case 'complete': return EntryStatus.Done
+			default: return index === 0 ? EntryStatus.ToDo : index === count - 1 ? EntryStatus.Done : EntryStatus.Doing
 		}
 	}
 
@@ -477,8 +477,8 @@ export class Notion extends Integration<NotionCredentials> {
 			return undefined
 		}
 
-		const statusByOption = new Map<string, TaskStatus>()
-		const optionByStatus = new Map<TaskStatus, string>()
+		const statusByOption = new Map<string, EntryStatus>()
+		const optionByStatus = new Map<EntryStatus, string>()
 		const groups = status.status.groups ?? []
 		groups.forEach((group, index) => {
 			const taskStatus = Notion.taskStatusOfGroup(group.name, index, groups.length)
@@ -704,7 +704,7 @@ export class Notion extends Integration<NotionCredentials> {
 			properties[schema.titleProperty] = { title: [{ text: { content: entry.heading } }] }
 		}
 		if (include.status && entry.status !== undefined) {
-			if (entry.status === TaskStatus.Cancelled) {
+			if (entry.status === EntryStatus.Cancelled) {
 				throw new Error('Notion does not support the cancelled task status')
 			}
 			const optionId = schema.optionByStatus.get(entry.status)
@@ -727,7 +727,7 @@ export class Notion extends Integration<NotionCredentials> {
 		entry.relations = options && 'relations' in options ? options.relations : Notion.relationsFrom(page, schema)
 		entry.heading = Notion.plainText(page.properties[schema.titleProperty]?.title) || 'Untitled Task'
 		const option = page.properties[schema.statusProperty]?.status
-		entry.status = (option?.id ? schema.statusByOption.get(option.id) : undefined) ?? TaskStatus.ToDo
+		entry.status = (option?.id ? schema.statusByOption.get(option.id) : undefined) ?? EntryStatus.ToDo
 		const span = Notion.spanFrom(page.properties[schema.dateProperty]?.date)
 		entry.start = span.start
 		entry.end = span.end

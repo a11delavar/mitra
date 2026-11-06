@@ -1,4 +1,4 @@
-import { type Entry, type EntryRollup, TaskStatus } from '#features/entries'
+import { type Entry, type EntryRollup, EntryStatus } from '#features/entries'
 import { EntryRelations } from './EntryRelations.js'
 import { Relation } from './Relation.js'
 import type { RelationEdge } from './RelationEdge.js'
@@ -142,10 +142,10 @@ export class RelationGraph {
 			this.rollups.set(uid, undefined)
 			return undefined
 		}
-		const tasks = children.filter(child => child.type.isTask && child.status !== TaskStatus.Cancelled)
-		const done = tasks.filter(child => child.status === TaskStatus.Done).length
+		const tasks = children.filter(child => child.type.isTask && child.status !== EntryStatus.Cancelled)
+		const done = tasks.filter(child => child.status === EntryStatus.Done).length
 		const progressSum = tasks.reduce((sum, child) => {
-			if (child.status === TaskStatus.Done) {
+			if (child.status === EntryStatus.Done) {
 				return sum + 1
 			}
 			const rollup = this.getRollup(child.uid, new Set(visiting))
@@ -186,7 +186,7 @@ export class RelationGraph {
 					if (!parent.open || closing.has(parent)) {
 						continue
 					}
-					const children = this.getChildren(parent.uid!).filter(child => child.type.isTask && child.status !== TaskStatus.Cancelled)
+					const children = this.getChildren(parent.uid!).filter(child => child.type.isTask && child.status !== EntryStatus.Cancelled)
 					if (!children.length || !children.every(child => child.closed || closing.has(child))) {
 						continue
 					}

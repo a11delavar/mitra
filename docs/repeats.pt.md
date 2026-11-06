@@ -45,6 +45,8 @@ Para pular a pergunta e alterar apenas esta ocorrência, segure <kbd>Ctrl</kbd> 
 
 Algumas alterações nunca perguntam. Marcar uma ocorrência de tarefa como concluída se aplica apenas a essa ocorrência, e o mesmo vale para agendar uma ocorrência de uma tarefa que se repete pela sua data de vencimento.
 
+Uma ocorrência de um evento também pode ser cancelada em vez de excluída, e assim fica riscada no calendário. Veja [Estado do evento](entries.md#event-status).
+
 ## Ocorrências alteradas e excluídas
 
 Uma ocorrência que você altera com **Esta entrada** sai da série e se torna uma entrada própria. A série pula a sua data, de modo que ela nunca aparece duas vezes, e as alterações posteriores à série inteira não a alcançam.

@@ -45,6 +45,8 @@ To skip the question and change only this occurrence, hold <kbd>Ctrl</kbd> (<kbd
 
 A few changes never ask. Marking a task occurrence done applies to that occurrence alone, and so does scheduling one occurrence of a task that repeats by its due date.
 
+An occurrence of an event can also be cancelled instead of deleted, which keeps it on the calendar, struck through. See [Event status](entries.md#event-status).
+
 ## Changed and deleted occurrences
 
 An occurrence you change with **This entry** leaves the series and becomes an entry of its own. The series skips its date, so it never shows twice, and later changes to the whole series don't reach it.

@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { Entry, EntryType, TaskStatus } from '#features/entries'
+import { Entry, EntryType, EntryStatus } from '#features/entries'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { EntryRelations, RelationType } from '#features/relations'
 import { Color } from '#features/sources'
@@ -178,7 +178,7 @@ describe('Todoist tasks', () => {
 		assert.equal(existing.type, EntryType.Task)
 		assert.equal(existing.heading, 'Prepare the launch')
 		assert.equal(existing.description, 'Check the **final** list')
-		assert.equal(existing.status, TaskStatus.Done)
+		assert.equal(existing.status, EntryStatus.Done)
 		assert.equal(existing.uid, 'task-1')
 		assert.equal(existing.data?.url, 'https://app.todoist.com/app/task/task-1')
 	})
@@ -199,11 +199,11 @@ describe('Todoist tasks', () => {
 	it('closes and reopens, after the fields change', () => {
 		const { existing, incoming } = read()
 		incoming.heading = 'Done now'
-		incoming.status = TaskStatus.Done
+		incoming.status = EntryStatus.Done
 		assert.deepEqual(commandsFor(existing, incoming).map(command => command.type), ['item_update', 'item_close'])
 
 		const { existing: done, incoming: reopened } = read({ checked: true })
-		reopened.status = TaskStatus.ToDo
+		reopened.status = EntryStatus.ToDo
 		assert.deepEqual(commandsFor(done, reopened), [{ type: 'item_uncomplete', args: { id: 'task-1' } }])
 	})
 
@@ -213,7 +213,7 @@ describe('Todoist tasks', () => {
 	})
 
 	it('adds a task with what it holds, and closes it in the same request when it is done', () => {
-		const entry = new Entry({ type: EntryType.Task, heading: 'Book travel', description: '', start: at('2026-10-13T16:30:00Z'), end: at('2026-10-13T17:15:00Z'), timeZone: EntryTimeZone.parse(MADRID), status: TaskStatus.Done })
+		const entry = new Entry({ type: EntryType.Task, heading: 'Book travel', description: '', start: at('2026-10-13T16:30:00Z'), end: at('2026-10-13T17:15:00Z'), timeZone: EntryTimeZone.parse(MADRID), status: EntryStatus.Done })
 		entry.relateTo(RelationType.Parent, 'task-9')
 		assert.deepEqual(Todoist.addCommandsFor(entry, { projectId: 'project-1', tempId: 'temp-1', ownership: account().ownership, context }), [
 			{
@@ -299,7 +299,7 @@ describe('Todoist projects', () => {
 describe('Todoist account', () => {
 	it('can do what Todoist can: no tasks in progress or cancelled, no files of Mitra\'s, no availability', () => {
 		const { capabilities } = account()
-		assert.deepEqual(capabilities.entries.statuses, [TaskStatus.ToDo, TaskStatus.Done])
+		assert.deepEqual(capabilities.entries.statuses, [EntryStatus.ToDo, EntryStatus.Done])
 		assert.equal(capabilities.entries.attach, false)
 		assert.equal(capabilities.availability, false)
 		assert.equal(capabilities.entries.move, true, 'a task moves between projects in place')

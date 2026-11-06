@@ -1,7 +1,7 @@
 ---
-title: Śledzenie rutyn, Todoist, podzadania i terminy na pierwszy rzut oka
+title: Śledzenie rutyn, Todoist, status wydarzeń i terminy na pierwszy rzut oka
 ---
-Mitra 0.8 pomaga ci wytrwać w tym, co robisz regularnie, i pokazuje, jak większe przedsięwzięcia składają się w całość.
+Mitra 0.8 pomaga ci wytrwać w tym, co robisz regularnie, i zapisuje, co się nie odbyło.
 
 ## Śledzenie rutyn
 Mitra już wcześniej zbierała w rutyny to, co robisz często, na przykład siłownię albo strzyżenie co pięć tygodni. Teraz rutyny mają własne miejsce, w którym na pierwszy rzut oka widzisz ostatnie dni każdej z nich: ile razy się udało, a które wystąpienia zostały anulowane lub pominięte. Możesz zmienić nazwę rutyny, połączyć dwie, które do siebie należą, albo zaznaczyć, że coś wcale nie jest rutyną. W widokach miesiąca i roku rutyny wyglądają tak samo bez względu na to, jak daleko przewiniesz, a twój konektor AI potrafi podsumować, jak ci idą.
@@ -16,11 +16,18 @@ Niektóre rzeczy nie zależą od strefy czasowej: lek o 7:30 bierzesz o 7:30, w 
 
 Dokumentacja: [Wszędzie ta sama godzina](../../docs/time-zones.md#same-time-everywhere)
 
-## Lepsze podzadania
-W widokach miesiąca i roku podzadania dzielą jeden pas ze swoim wpisem, więc projekt widać jako jedną linię, w którą wpisują się jego krótkie podzadania. Tabela zagnieżdża podzadania pod zadaniem nadrzędnym, a widok roku potrafi je ukryć. Postęp zadania uwzględnia wielkość każdego podzadania, więc długie podzadanie liczy się bardziej niż szybkie.
+## Status wydarzenia
+Wydarzenie ma teraz własny status, tak jak zadanie: **Potwierdzone**, **Być może** lub **Anulowane**. Anulowane wydarzenie zachowuje swoje miejsce, przekreślone, więc zostaje ślad tego, co się nie odbyło, a twoje rutyny je liczą. Wydarzenie oznaczone jako być może jest przygaszone, dopóki nie zdecydujesz. Status synchronizuje się z innymi aplikacjami CalDAV, a tabela pokazuje go obok statusu zadań. **Ukryj gotowe zadania** ukrywa teraz tylko gotowe zadania, a nowe **Ukryj anulowane** ukrywa anulowane zadania i wydarzenia.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="event-status-dark.webp">
+	<img src="event-status-light.webp" alt="Edytor wydarzenia z otwartym menu statusu: Potwierdzone, Być może i Anulowane">
+</picture>
+
+Dokumentacja: [Status wydarzenia](../../docs/entries.md#event-status)
 
 ## Terminy na pierwszy rzut oka
-Dzień terminu zadania widnieje na jego fladze, a gdy wskażesz zadanie, ten dzień zostaje zaznaczony w kalendarzu. Oś czasu też go zaznacza, a tabela ma na niego osobną kolumnę. Podzadanie bez własnego terminu przejmuje termin zadania nadrzędnego.
+Dzień terminu zadania widnieje na jego fladze, a gdy wskażesz zadanie, ten dzień zostaje zaznaczony w kalendarzu. Oś czasu też go zaznacza, a tabela ma na niego osobną kolumnę.
 
 ## Personalizacja
 Nadaj każdemu kalendarzowi jeden z dwóch nowych kolorów albo dowolny własny. Zmień nazwę nagłówka konta dwukrotnym kliknięciem i ukryj wszystkie jego kalendarze naraz. Do całej reszty zmień wygląd aplikacji Mitra za pomocą własnych stylów CSS: dla siebie w Ustawieniach albo dla wszystkich na twoim serwerze za pomocą pliku w jego folderze danych. Osoba, która zarządza serwerem, ma w Ustawieniach osobną sekcję.

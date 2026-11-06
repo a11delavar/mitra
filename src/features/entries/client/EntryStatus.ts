@@ -2,15 +2,15 @@ import { Component, component, html, css, property, event, query } from '@a11d/l
 import type { Slider, Menu } from '#design'
 import { hierarchy } from '#features/relations/client/Hierarchy.js'
 import { type Entry, type EntryRollup } from '../Entry.js'
-import { TaskStatus } from '../TaskStatus.js'
+import { EntryStatus } from '../EntryStatus.js'
 import { EntryStore } from './EntryStore.js'
 
 /**
- * Task completion and status control.
- * Renders an interactive checkbox icon with anchored status and progress menu.
+ * The status control of an entry: a task's checkbox, ticked by a click, with its statuses and progress in a menu; an
+ * event's glyph, whose click opens the menu of its statuses, since there is nothing to tick.
  */
-@component('mitra-task-status')
-export class TaskStatusComponent extends Component {
+@component('mitra-entry-status')
+export class EntryStatusComponent extends Component {
 	@property({ type: Object }) entry!: Entry
 
 	/** Fired after the entry's status or progress is mutated in place, so the host can persist and re-render. */
@@ -20,27 +20,34 @@ export class TaskStatusComponent extends Component {
 
 	protected override createRenderRoot() { return this }
 
+	private get task() {
+		return this.entry?.type.isTask ?? false
+	}
+
+	/** The status shown: an event with none is on, a task with none to do, and a task in progress reads as Doing where its calendar has it. */
 	private get status() {
-		const status = this.entry?.status ?? TaskStatus.ToDo
-		if (status.closed) {
+		const status = this.entry?.status ?? (this.task ? EntryStatus.ToDo : EntryStatus.Confirmed)
+		if (!this.task || status.closed) {
 			return status
 		}
-		// Progress reads as Doing only where a task can be Doing; a calendar of two states shows it To Do.
 		const progress = this.entry.hierarchy.progress
-		if (progress !== undefined && progress > 0 && progress < 1 && this.entry.statuses.includes(TaskStatus.Doing)) {
-			return TaskStatus.Doing
+		if (progress !== undefined && progress > 0 && progress < 1 && this.entry.statuses.includes(EntryStatus.Doing)) {
+			return EntryStatus.Doing
 		}
 		return status
 	}
 
 	private get progress() {
-		return this.status === TaskStatus.Done ? 1 : this.entry.hierarchy.progress
+		return !this.task ? undefined : this.status === EntryStatus.Done ? 1 : this.entry.hierarchy.progress
 	}
 
 	private get progressLabel() {
+		if (!this.task) {
+			return undefined
+		}
 		const rollup = this.entry.hierarchy.rollup
 		if (rollup?.total) {
-			return TaskStatusComponent.summarize(rollup)
+			return EntryStatusComponent.summarize(rollup)
 		}
 		const progress = this.progress
 		return progress === undefined ? undefined : t('${percent} complete', { percent: Math.round(progress * 100).formatAsPercent() })
@@ -59,12 +66,14 @@ export class TaskStatusComponent extends Component {
 
 	@query('mitra-menu') private readonly menu?: Menu
 
-	private commit(status: TaskStatus) {
-		if (this.entry.status === status) {
+	/** Sets the status; an event's Confirmed is its none, as an event without STATUS takes place, so nothing is written for it. */
+	private commit(status: EntryStatus) {
+		const value = !this.task && status === EntryStatus.Confirmed ? undefined : status
+		if (this.entry.status === value) {
 			this.menu?.hide()
 			return
 		}
-		this.entry.status = status
+		this.entry.status = value
 		this.menu?.hide()
 		this.requestUpdate()
 		this.change.dispatch()
@@ -94,11 +103,11 @@ export class TaskStatusComponent extends Component {
 	private readonly onToggle = (e: MouseEvent) => {
 		e.stopPropagation()
 		e.preventDefault()
-		if (e.altKey) {
+		if (e.altKey || !this.task) {
 			this.menu?.toggle(e.currentTarget as HTMLElement)
 			return
 		}
-		this.commit(this.entry.done ? TaskStatus.ToDo : TaskStatus.Done)
+		this.commit(this.entry.done ? EntryStatus.ToDo : EntryStatus.Done)
 	}
 
 	private readonly onContextMenu = (e: MouseEvent) => {
@@ -107,7 +116,7 @@ export class TaskStatusComponent extends Component {
 		this.menu?.toggle(e.currentTarget as HTMLElement)
 	}
 
-	private readonly pick = (status: TaskStatus) => (e: Event) => {
+	private readonly pick = (status: EntryStatus) => (e: Event) => {
 		e.stopPropagation()
 		this.commit(status)
 	}
@@ -123,7 +132,7 @@ export class TaskStatusComponent extends Component {
 				}
 			}
 
-			mitra-task-status {
+			mitra-entry-status {
 				display: inline-flex;
 				flex-shrink: 0;
 				position: relative;
@@ -264,12 +273,15 @@ export class TaskStatusComponent extends Component {
 	}
 
 	private get progressSectionTemplate() {
+		if (!this.task) {
+			return html.nothing
+		}
 		const rollup = this.entry.hierarchy.rollup
 		if (rollup?.total) {
 			// RFC 5545 §3.8.1.8: a completed task reads 100%.
 			const value = Math.round((this.progress ?? rollup.progress) * 100)
 			const leftover = this.entry.closed && rollup.subtasks.done < rollup.subtasks.total
-			const summary = TaskStatusComponent.summarize(rollup)
+			const summary = EntryStatusComponent.summarize(rollup)
 			return html`
 				<div class="progress-section subtasks">
 					<div class="progress-header">
@@ -322,7 +334,7 @@ export class TaskStatusComponent extends Component {
 	}
 
 	protected override get template() {
-		if (!this.entry?.type.isTask) {
+		if (!this.entry?.statuses.length) {
 			return html.nothing
 		}
 
@@ -331,12 +343,14 @@ export class TaskStatusComponent extends Component {
 		const readout = this.progressLabel
 		const name = readout ? `${this.status.format()} (${readout})` : this.status.format()
 		const progress = this.progress
-		const showsProgressDial = this.status === TaskStatus.Doing || (progress !== undefined && progress > 0 && progress < 1 && !this.status.closed)
+		const showsProgressDial = this.status === EntryStatus.Doing || (progress !== undefined && progress > 0 && progress < 1 && !this.status.closed)
 		const percent = progress !== undefined ? Math.round(progress * 100) : 50
+		const hint = this.task ? t('${status}. Click to toggle, Alt-click for options', { status: name }) : t('${status}. Click for options', { status: name })
+		const title = this.entry.editable ? hint : name
 
 		return html`
 			<button class="status-button" aria-label=${name} ?disabled=${!this.entry.editable}
-				title=${this.entry.editable ? t('${status}. Click to toggle, Alt-click for options', { status: name }) : name}
+				title=${title}
 				@click=${this.onToggle}
 				@contextmenu=${this.onContextMenu}>
 				${showsProgressDial ? html`
@@ -349,12 +363,12 @@ export class TaskStatusComponent extends Component {
 						<line x1="8" y1="12" x2="16" y2="12" stroke-width="2"/>
 					</svg>
 				` : html`
-					<mitra-icon icon=${this.status.icon}></mitra-icon>
+					<mitra-icon icon=${this.status.iconFor(this.entry.type)}></mitra-icon>
 				`}
 			</button>
 			<mitra-menu>
 				${this.entry.statuses.map(status => html`
-					<mitra-menu-item type="radio" icon=${status.icon} ?selected=${status === this.status} @click=${this.pick(status)}>${status.format()}</mitra-menu-item>
+					<mitra-menu-item type="radio" icon=${status.iconFor(this.entry.type)} ?selected=${status === this.status} @click=${this.pick(status)}>${status.format()}</mitra-menu-item>
 				`)}
 				${this.progressSectionTemplate}
 			</mitra-menu>
@@ -364,6 +378,6 @@ export class TaskStatusComponent extends Component {
 
 declare global {
 	interface HTMLElementTagNameMap {
-		'mitra-task-status': TaskStatusComponent
+		'mitra-entry-status': EntryStatusComponent
 	}
 }

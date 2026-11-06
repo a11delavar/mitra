@@ -1,5 +1,5 @@
 export * from './EntryType.js'
-export * from './TaskStatus.js'
+export * from './EntryStatus.js'
 export * from './Transparency.js'
 export * from './Visibility.js'
 export * from './EntryFileType.js'

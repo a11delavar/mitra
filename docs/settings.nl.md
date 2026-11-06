@@ -20,7 +20,7 @@ Het opdrachtenpalet kent dezelfde woorden en wijzigt de meeste instellingen zond
 
 ## Je account of dit apparaat
 
-De meeste instellingen horen bij je account en gaan mee naar elk apparaat en elke browser waarop je inlogt: de taal, de standaardweergave, **Afgeronde taken verbergen**, **Beschikbaarheid verbergen**, de standaardagenda, de standaardduur, **Uitlijnen op** en beide standaardherinneringen.
+De meeste instellingen horen bij je account en gaan mee naar elk apparaat en elke browser waarop je inlogt: de taal, de standaardweergave, **Afgeronde taken verbergen**, **Geannuleerd verbergen**, **Beschikbaarheid verbergen**, de standaardagenda, de standaardduur, **Uitlijnen op** en beide standaardherinneringen.
 
 De andere horen bij het apparaat dat je gebruikt, zodat je telefoon en je laptop kunnen verschillen: het thema, de verbindingslijnen en of deze browser meldingen toont.
 
@@ -38,7 +38,7 @@ Elke taal bepaalt ook hoe datums en tijden eruitzien, op welke dag de week begin
 
 **Standaardweergave** is de weergave waarmee Mitra opent: **Week**, tenzij je **Maand**, **Jaar**, **Tijdlijn** of **Tabel** kiest.
 
-**Afgeronde taken verbergen** haalt taken die klaar of geannuleerd zijn weg uit de week-, maand- en jaarweergave en het tabblad Planning. Zoeken vindt ze nog steeds, ze tellen nog mee voor de voortgang van hun bovenliggende taak, en de tabelweergave toont ze nog. Een taak die je open hebt, blijft zichtbaar tot je hem sluit.
+**Afgeronde taken verbergen** haalt taken die klaar zijn weg uit de week-, maand- en jaarweergave en het tabblad Planning, en **Geannuleerd verbergen** doet hetzelfde met geannuleerde taken en afspraken. Zoeken vindt ze nog steeds, ze tellen nog mee voor de voortgang van hun bovenliggende taak, en de tabelweergave toont ze nog. Een taak die je open hebt, blijft zichtbaar tot je hem sluit.
 
 **Beschikbaarheid verbergen** haalt [beschikbaarheid](availability.md) weg uit de weekweergave. Ze blijft in haar agenda's staan, en bezette beschikbaarheid blijft voor anderen als bezet zichtbaar.
 

@@ -4,7 +4,7 @@ import '@a11d/bidirectional-map'
 import { type createDAVClient } from 'tsdav'
 import ICAL from 'ical.js'
 import { EntryRelations, Relation, type RelationInit, RelationType } from '#features/relations'
-import { Entry, TaskStatus, Transparency, Visibility, EntryType, EntryFiles } from '#features/entries'
+import { Entry, EntryStatus, Transparency, Visibility, EntryType, EntryFiles } from '#features/entries'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { Color } from '#features/sources'
 import { Recurrence } from '#features/recurrence'
@@ -100,36 +100,40 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
-	private static readonly icalTaskStatus = new BidirectionalMap<TaskStatus, string>([
-		[TaskStatus.ToDo, 'NEEDS-ACTION'],
-		[TaskStatus.Doing, 'IN-PROCESS'],
-		[TaskStatus.Done, 'COMPLETED'],
-		[TaskStatus.Cancelled, 'CANCELLED'],
+	/** STATUS's words for the statuses, a VTODO's and a VEVENT's, CANCELLED shared. */
+	private static readonly icalStatus = new BidirectionalMap<EntryStatus, string>([
+		[EntryStatus.ToDo, 'NEEDS-ACTION'],
+		[EntryStatus.Doing, 'IN-PROCESS'],
+		[EntryStatus.Done, 'COMPLETED'],
+		[EntryStatus.Cancelled, 'CANCELLED'],
+		[EntryStatus.Tentative, 'TENTATIVE'],
+		[EntryStatus.Confirmed, 'CONFIRMED'],
 	])
 
-	static statusFromICal(status: string | undefined, percentComplete: number): TaskStatus {
-		return CalDAV.icalTaskStatus.getKey(status?.toUpperCase() ?? '')
-			?? (percentComplete >= 100 ? TaskStatus.Done : TaskStatus.ToDo)
+	/** A task's STATUS, PERCENT-COMPLETE standing in where it is missing, unknown or an event's. */
+	static statusFromICal(status: string | undefined, percentComplete: number): EntryStatus {
+		const read = CalDAV.icalStatus.getKey(status?.toUpperCase() ?? '')
+		return read?.appliesTo(EntryType.Task) ? read : percentComplete >= 100 ? EntryStatus.Done : EntryStatus.ToDo
 	}
 
 	/** Computes PERCENT-COMPLETE for iCalendar (RFC 5545 §3.8.1.8). */
-	static percentCompleteForICal(status: TaskStatus | undefined, percentComplete: number | null | undefined): number | undefined {
-		if ((status ?? TaskStatus.ToDo) === TaskStatus.Done) {
+	static percentCompleteForICal(status: EntryStatus | undefined, percentComplete: number | null | undefined): number | undefined {
+		if ((status ?? EntryStatus.ToDo) === EntryStatus.Done) {
 			return 100
 		}
 		return percentComplete === null || percentComplete === undefined ? undefined : Math.min(100, Math.max(0, Math.round(percentComplete)))
 	}
 
-	static writeTaskStatus(component: ICAL.Component, status: TaskStatus | undefined, percentComplete: number | null | undefined) {
-		const effective = status ?? TaskStatus.ToDo
-		component.updatePropertyWithValue('status', CalDAV.icalTaskStatus.get(effective))
+	static writeTaskStatus(component: ICAL.Component, status: EntryStatus | undefined, percentComplete: number | null | undefined) {
+		const effective = status ?? EntryStatus.ToDo
+		component.updatePropertyWithValue('status', CalDAV.icalStatus.get(effective))
 		const percent = CalDAV.percentCompleteForICal(effective, percentComplete)
 		if (percent === undefined) {
 			component.removeProperty('percent-complete')
 		} else {
 			component.updatePropertyWithValue('percent-complete', percent)
 		}
-		if (effective === TaskStatus.Done) {
+		if (effective === EntryStatus.Done) {
 			component.updatePropertyWithValue('completed', ICAL.Time.now())
 		} else {
 			component.removeProperty('completed')
@@ -149,6 +153,20 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 
 	static transparencyFromICal(transparency: string | undefined): Transparency | undefined {
 		return CalDAV.icalTransparency.getKey(transparency?.toUpperCase() ?? '')
+	}
+
+	/** An event's STATUS: none where it has none, or names a task's. */
+	static eventStatusFromICal(status: string | undefined): EntryStatus | undefined {
+		const read = CalDAV.icalStatus.getKey(status?.toUpperCase() ?? '')
+		return read?.appliesTo(EntryType.Event) ? read : undefined
+	}
+
+	static writeEventStatus(component: ICAL.Component, status: EntryStatus | null | undefined) {
+		if (status) {
+			component.updatePropertyWithValue('status', CalDAV.icalStatus.get(status)!)
+		} else {
+			component.removeProperty('status')
+		}
 	}
 
 	static visibilityFromICal(visibility: string | undefined): Visibility | undefined {
@@ -310,6 +328,9 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 			entry.end = IcsTime.instantFrom(event.endDate ?? event.startDate, tzidOf('dtend') ?? tzidOf('dtstart')) as any || undefined
 			entry.allDay = event.startDate?.isDate ?? false
 			entry.transparency = CalDAV.transparencyFromICal(component.getFirstPropertyValue('transp')?.toString())
+			// Google holds no statuses until a recording says what its CalDAV does with a cancelled event.
+			const status = CalDAV.eventStatusFromICal(component.getFirstPropertyValue('status')?.toString())
+			entry.status = status && integration.capabilities.entries.statuses.includes(status) ? status : undefined
 		} else {
 			const value = (name: string) => component.getFirstPropertyValue(name) as any
 			entry.heading = value('summary')?.toString() || 'Untitled Task'

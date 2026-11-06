@@ -1,7 +1,7 @@
 // By file, not the barrel: Entry imports this class, and TypeScript 7 drops the member from Entry in a file that also imports this one directly.
 import type { Entry } from '#features/entries/Entry.js'
 import type { EntryShift } from '#features/entries/EntryShift.js'
-import { TaskStatus } from '#features/entries/TaskStatus.js'
+import { EntryStatus } from '#features/entries/EntryStatus.js'
 import { RelationGraph } from './RelationGraph.js'
 import { ShiftStrategy } from './ShiftStrategy.js'
 import { EntryPlan, type PlannedWrite, type SkippedEntry } from './EntryPlan.js'
@@ -104,7 +104,7 @@ export class EntryHierarchy {
 	}
 
 	/** Its open subtasks closed as `status`, as closing it offers. */
-	planClosing(status: TaskStatus) {
+	planClosing(status: EntryStatus) {
 		return EntryPlan.of({
 			writes: this.children.filter(child => child.open).map(child => ({
 				entry: child,
@@ -118,7 +118,7 @@ export class EntryHierarchy {
 		return EntryPlan.of({
 			writes: this.completedAncestors.map(parent => ({
 				entry: parent,
-				mutate: (target: Entry) => { target.status = TaskStatus.Done },
+				mutate: (target: Entry) => { target.status = EntryStatus.Done },
 			})),
 		})
 	}
