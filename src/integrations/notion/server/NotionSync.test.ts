@@ -860,7 +860,7 @@ describe('Integration source reconciliation (name preservation)', () => {
 		const { integration, source } = await seed(em, {})
 
 		source.name = 'My custom name'
-		source.remoteName = null
+		source.remoteName = undefined
 		await em.flush()
 
 		await integration.getSources(em)

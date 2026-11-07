@@ -118,7 +118,7 @@ export class CalDAVSyncEngine implements SourceSyncEngine {
 				...supports('VTODO') ? [EntryType.Task] : [],
 			]
 			const writable = CalDAV.writableFromPrivileges((cal as { projectedProps?: Record<string, unknown> }).projectedProps?.currentUserPrivilegeSet)
-			return new Source({ uri: cal.url, entryTypes: types, name, color, enabled: false, readOnly: writable === false ? true : null })
+			return new Source({ uri: cal.url, entryTypes: types, name, color, enabled: false, readOnly: writable === false ? true : undefined })
 		}).filter(source => source.entryTypes.length > 0)
 	}
 

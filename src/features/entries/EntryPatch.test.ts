@@ -82,9 +82,11 @@ describe('EntryPatch', () => {
 			assert.equal('scope' in patch || 'id' in patch, false)
 		})
 
-		it('clamps progress to a percentage and the estimate to whole minutes, and reads anything else as none', () => {
-			assert.deepEqual([construct(EntryPatch, { percentComplete: 140 }).percentComplete, construct(EntryPatch, { percentComplete: 'half' }).percentComplete], [100, null])
-			assert.deepEqual([construct(EntryPatch, { estimate: 29.6 }).estimate, construct(EntryPatch, { estimate: -5 }).estimate], [30, null])
+		it('takes progress and the estimate as whole numbers, and refuses what is no whole percentage or no length rather than clearing it', () => {
+			assert.deepEqual([construct(EntryPatch, { percentComplete: 40 }).percentComplete, construct(EntryPatch, { estimate: 30 }).estimate], [40, 30])
+			for (const malformed of [{ percentComplete: 140 }, { percentComplete: 39.6 }, { percentComplete: 'half' }, { estimate: -5 }, { estimate: 0 }, { estimate: 29.6 }]) {
+				assert.throws(() => validation.read(EntryPatch, malformed), AggregateError)
+			}
 		})
 
 		it('names each malformed field', () => {

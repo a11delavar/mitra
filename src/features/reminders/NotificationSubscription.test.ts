@@ -36,14 +36,14 @@ describe('NotificationSubscription', () => {
 			const registered = subscription()
 			registered.register('someone-else', { keys })
 			assert.equal(registered.userId, 'someone-else')
-			assert.equal(registered.name, null)
+			assert.equal(registered.name, undefined)
 		})
 
 		it('clears facts the device no longer reports', () => {
 			const registered = subscription()
 			registered.register('u', { keys, platform: 'Android' })
 			registered.register('u', { keys })
-			assert.equal(registered.platform, null)
+			assert.equal(registered.platform, undefined)
 			assert.equal(registered.timeZone, undefined)
 		})
 	})
@@ -59,7 +59,7 @@ describe('NotificationSubscription', () => {
 	it('falls back to the reported name when renamed to nothing', () => {
 		const renamed = subscription()
 		renamed.rename(undefined)
-		assert.equal(renamed.name, null)
+		assert.equal(renamed.name, undefined)
 	})
 
 	describe('crossing the API', () => {

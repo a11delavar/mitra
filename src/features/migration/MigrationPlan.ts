@@ -15,8 +15,8 @@ export class MigrationVerdict {
 	heading = ''
 	blockers = new Array<MigrationBlocker>()
 	losses = new Array<MigrationLoss>()
-	/** Number of single occurrences if flattened; null if unexpandable. */
-	occurrences: number | null = null
+	/** How many dates a flattened series would become; none where it cannot be expanded. */
+	occurrences?: number
 
 	constructor(init?: Partial<MigrationVerdict>) {
 		Object.assign(this, init)
@@ -67,7 +67,7 @@ export class MigrationVerdict {
 			heading: entry.heading,
 			blockers,
 			losses,
-			occurrences: !blockers.includes('recurrence') ? null : occurrences?.() ?? null,
+			occurrences: !blockers.includes('recurrence') ? undefined : occurrences?.() ?? undefined,
 		})
 	}
 
@@ -78,7 +78,7 @@ export class MigrationVerdict {
 
 	/** True if entry is blocked only by recurrence and can be flattened. */
 	get flattenable() {
-		return this.occurrences !== null && this.blockers.includes('recurrence')
+		return this.occurrences !== undefined && this.blockers.includes('recurrence')
 	}
 
 	blockersUnder(flatten: boolean) {
@@ -181,14 +181,14 @@ export class MigrationOutcome {
 	created = 0
 	left = 0
 	duplicates = 0
-	failure: string | null = null
-	failedEntry: string | null = null
+	failure?: string
+	failedEntry?: string
 
 	constructor(init?: Partial<MigrationOutcome>) {
 		Object.assign(this, init)
 	}
 
 	get aborted() {
-		return this.failure !== null
+		return this.failure !== undefined
 	}
 }

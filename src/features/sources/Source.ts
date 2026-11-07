@@ -74,14 +74,14 @@ export class Source extends Entity {
 	@equality()
 	@property({ type: 'string' }) name!: string
 	/** Provider's baseline name for this source to differentiate local vs remote renames during reconcile. */
-	@property({ type: 'string', nullable: true }) remoteName?: string | null
+	@property({ type: 'string', nullable: true }) remoteName?: string
 
 	@equality()
 	@converter(Color.converter)
 	@property({ type: Color.Mapper, nullable: true }) color?: Color
 
 	@equality()
-	@property({ type: 'boolean', fieldName: 'read_only', nullable: true }) readOnly?: boolean | null
+	@property({ type: 'boolean', fieldName: 'read_only', nullable: true }) readOnly?: boolean
 
 	@equality()
 	@property({ type: 'boolean' }) hidden = false
@@ -91,14 +91,14 @@ export class Source extends Entity {
 
 	/** Manual sidebar display order among the integration's sources (sorted asc nulls last). */
 	@equality()
-	@property({ type: 'number', nullable: true }) order?: number | null
+	@property({ type: 'number', nullable: true }) order?: number
 
 	get visible() {
 		return this.enabled && !this.hidden
 	}
 
-	/** Timestamp when source finished initial import (null while importing). */
-	@property({ type: 'Date', nullable: true }) importedAt?: Date | null
+	/** When its first import finished; none while it imports. */
+	@property({ type: 'Date', nullable: true }) importedAt?: Date
 
 	get importing() {
 		return this.enabled && !this.importedAt
@@ -106,7 +106,7 @@ export class Source extends Entity {
 
 	/** Resets import timestamp and sync state for full re-import. */
 	awaitImport() {
-		this.importedAt = null
+		this.importedAt = undefined
 		this.syncState = undefined
 	}
 

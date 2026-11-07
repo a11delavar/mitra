@@ -172,7 +172,7 @@ export class SourceMigration {
 		const outcome = new MigrationOutcome({
 			left: left + copied.length + (failed ? 1 : 0),
 			failure: SourceMigration.messageOf(error),
-			failedEntry: failed?.heading ?? null,
+			failedEntry: failed?.heading,
 		})
 		for (const { copies } of copied) {
 			for (const copy of copies) {

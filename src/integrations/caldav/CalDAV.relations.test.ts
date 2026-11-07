@@ -29,10 +29,10 @@ describe('CalDAV relations round-trip', () => {
 	it('parses every RELTYPE opaquely, defaulting a bare RELATED-TO to PARENT (RFC 5545 §3.2.15)', () => {
 		const relations = CalDAV.relationsFrom(component())
 		assert.deepEqual(relations?.all.map(relation => [relation.type, relation.targetUid, relation.gap]), [
-			[RelationType.Child, 'child-uid', null],
+			[RelationType.Child, 'child-uid', undefined],
 			[RelationType.FinishToStart, 'predecessor-uid', 'PT1D'],
-			[RelationType.Parent, 'bare-parent-uid', null],
-			[RelationType.of('X-DUPLICATE-OF'), 'duplicate-uid', null],
+			[RelationType.Parent, 'bare-parent-uid', undefined],
+			[RelationType.of('X-DUPLICATE-OF'), 'duplicate-uid', undefined],
 		])
 	})
 

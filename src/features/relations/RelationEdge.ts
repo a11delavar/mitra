@@ -20,7 +20,7 @@ export class RelationEdge {
 		if (!targetUid) {
 			return undefined
 		}
-		const gap = relation.gap ?? null
+		const gap = relation.gap ?? undefined
 		const hierarchy = type.hierarchyEdge(ownerUid, targetUid)
 		if (hierarchy) {
 			return new RelationEdge('hierarchy', hierarchy.parent, hierarchy.child, type, gap)
@@ -35,18 +35,18 @@ export class RelationEdge {
 		readonly to: string,
 		readonly type: RelationType,
 		/** RFC 9253 lead/lag ISO-8601 duration string. */
-		readonly gap: string | null,
+		readonly gap: string | undefined,
 	) { }
 
-	/** Parsed lead/lag duration (positive = lag, negative = lead); null when absent or invalid. */
-	get lag(): Temporal.Duration | null {
-		if (this.gap === null) {
-			return null
+	/** Parsed lead/lag duration (positive = lag, negative = lead); none when absent or invalid. */
+	get lag() {
+		if (this.gap === undefined) {
+			return undefined
 		}
 		try {
 			return Temporal.Duration.from(this.gap)
 		} catch {
-			return null
+			return undefined
 		}
 	}
 
@@ -58,7 +58,7 @@ export class RelationEdge {
 			return undefined
 		}
 		const lag = this.lag
-		return this.gap !== null && !lag ? undefined : lag ? boundary.add(lag) : boundary
+		return this.gap !== undefined && !lag ? undefined : lag ? boundary.add(lag) : boundary
 	}
 
 	/** Direction-normalized pair identity, used to deduplicate edges gathered from both endpoints. */

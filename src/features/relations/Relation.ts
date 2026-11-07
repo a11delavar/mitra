@@ -26,8 +26,8 @@ export class Relation {
 	@converter({ type: RelationType.converter })
 	type!: RelationType
 	targetUid!: string
-	/** RFC 9253 GAP lead/lag duration string. Always null when absent so serialized and constructed instances match. */
-	gap: string | null = null
+	/** RFC 9253 GAP lead/lag duration string. Left off when absent, so serialized and constructed instances match. */
+	gap?: string
 	/** Direction perspective. Temporal types lack reverse RFC equivalents, so reverse readings are
 	 * modeled as incoming lines of the same relation type rather than distinct inverted types. */
 	direction: RelationDirection = 'outgoing'
@@ -48,7 +48,7 @@ export class Relation {
 		return !raw || !targetUid ? undefined : new Relation({
 			type: RelationType.of(raw),
 			targetUid,
-			gap: init.gap?.trim() || null,
+			...init.gap?.trim() ? { gap: init.gap.trim() } : {},
 			direction: init.direction ?? 'outgoing',
 			target: init.target,
 		})

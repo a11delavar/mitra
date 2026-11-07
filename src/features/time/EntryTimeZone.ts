@@ -1,6 +1,8 @@
 import { type Converter } from '@a11d/converter'
-import { TimeZone } from './TimeZone.js'
+import { z } from 'zod'
 import { Type } from '#infrastructure/model'
+import { ValidationError } from '#infrastructure/validation'
+import { TimeZone } from './TimeZone.js'
 
 /**
  * The clock an entry's times are written on (RFC 5545): a zone, or floating, the reader's own wall clock. An entry
@@ -10,12 +12,21 @@ import { Type } from '#infrastructure/model'
 export class EntryTimeZone {
 	static readonly floating = new EntryTimeZone('floating')
 
-	/** A zone from its id, or floating; anything else is none. */
+	/** A zone from its id, or floating; none where none is given; anything else is refused rather than read as none. */
 	static parse(value: unknown): EntryTimeZone | undefined {
-		return value instanceof EntryTimeZone ? value
-			: value === EntryTimeZone.floating.id ? EntryTimeZone.floating
-				: TimeZone.parse(value) ? new EntryTimeZone(value as string)
-					: undefined
+		if (value === null || value === undefined) {
+			return undefined
+		}
+		if (value instanceof EntryTimeZone) {
+			return value
+		}
+		if (value === EntryTimeZone.floating.id) {
+			return EntryTimeZone.floating
+		}
+		if (TimeZone.parse(value)) {
+			return new EntryTimeZone(value as string)
+		}
+		throw new ValidationError(`"${String(value)}" is not a time zone. Name an IANA zone (Europe/Berlin), or floating.`, ['timeZone'])
 	}
 
 	static of(zone: TimeZone) {
@@ -47,9 +58,11 @@ export class EntryTimeZone {
 		return this.id
 	}
 
+	/** The wire's null is a cleared zone, absent is none given; an unknown one is refused. */
 	static readonly converter: Converter<string | null | undefined, EntryTimeZone | null | undefined> = {
-		construct: value => value === null ? value : EntryTimeZone.parse(value) ?? (value === undefined ? undefined : null),
-		deconstruct: value => value?.id ?? value as null | undefined,
+		schema: z.string(),
+		construct: value => value === null ? null : EntryTimeZone.parse(value),
+		deconstruct: value => value?.id,
 	}
 
 	static readonly Mapper = class extends Type<EntryTimeZone | null, string | null> {
@@ -58,7 +71,11 @@ export class EntryTimeZone {
 		}
 
 		override convertToJSValue(value: EntryTimeZone | string | null | undefined) {
-			return EntryTimeZone.parse(value) ?? null
+			try {
+				return EntryTimeZone.parse(value) ?? null
+			} catch {
+				return null
+			}
 		}
 
 		override getColumnType() {

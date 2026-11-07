@@ -18,20 +18,20 @@ export class NotificationSubscription {
 	@property({ type: 'json' })
 	@converter(withheld<PushKeys>('p256dh', 'auth')) keys!: PushKeys
 
-	@property({ type: 'string', nullable: true }) name?: string | null
+	@property({ type: 'string', nullable: true }) name?: string
 
 	/** The device's zone, which floating reminders resolve in. */
 	@converter(TimeZone.converter)
 	@property({ type: TimeZone.Mapper, nullable: true }) timeZone?: TimeZone
 
 	/** The app's locale on this device (a BCP 47 tag), which its notifications are written and formatted in. */
-	@property({ type: 'string', nullable: true }) locale?: string | null
+	@property({ type: 'string', nullable: true }) locale?: string
 
-	@property({ type: 'string', nullable: true }) platform?: string | null
-	@property({ type: 'string', nullable: true }) browser?: string | null
-	@property({ type: 'boolean', nullable: true }) mobile?: boolean | null
+	@property({ type: 'string', nullable: true }) platform?: string
+	@property({ type: 'string', nullable: true }) browser?: string
+	@property({ type: 'boolean', nullable: true }) mobile?: boolean
 
-	@property({ type: 'Date', nullable: true }) lastSeenAt?: Date | null
+	@property({ type: 'Date', nullable: true }) lastSeenAt?: Date
 
 	constructor(init?: Partial<NotificationSubscription>) {
 		Object.assign(this, init)
@@ -43,15 +43,15 @@ export class NotificationSubscription {
 	 */
 	register(userId: string, registration: DeviceFacts & { keys: PushKeys, timeZone?: string, locale?: string }) {
 		if (this.userId && this.userId !== userId) {
-			this.name = null
+			this.name = undefined
 		}
 		this.userId = userId
 		this.keys = registration.keys
 		this.timeZone = TimeZone.parse(registration.timeZone)
-		this.locale = NotificationSubscription.localeOf(registration.locale) ?? this.locale ?? null
-		this.platform = registration.platform ?? null
-		this.browser = registration.browser ?? null
-		this.mobile = registration.mobile ?? null
+		this.locale = NotificationSubscription.localeOf(registration.locale) ?? this.locale
+		this.platform = registration.platform
+		this.browser = registration.browser
+		this.mobile = registration.mobile
 		this.lastSeenAt = new Date()
 	}
 
@@ -75,6 +75,6 @@ export class NotificationSubscription {
 
 	/** An empty name falls back to what the browser reports. */
 	rename(name: string | undefined) {
-		this.name = name || null
+		this.name = name || undefined
 	}
 }

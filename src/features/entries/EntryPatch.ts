@@ -136,22 +136,11 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 
 	@validation(z.number().int().positive().nullish())
 	@description('How long an unscheduled task will take, in minutes.')
-	@converter({ construct: EntryPatch.minutes })
 	estimate?: number | null
 
 	@validation(z.custom<EntryTimeZone>(value => value instanceof EntryTimeZone).nullish())
 	@description('The IANA zone the entry is kept in (Europe/Berlin), which a repeating entry repeats in; floating for the same wall-clock time wherever one is.')
-	@converter({
-		schema: z.string(),
-		construct: (value: string | null | undefined) => {
-			const parsed = value === null || value === undefined ? value : EntryTimeZone.parse(value)
-			if (parsed === undefined && value !== undefined) {
-				throw new ValidationError(`"${value}" is not a time zone. Name an IANA zone (Europe/Berlin), or floating.`, ['timeZone'])
-			}
-			return parsed
-		},
-		deconstruct: EntryTimeZone.converter.deconstruct,
-	})
+	@converter(EntryTimeZone.converter)
 	timeZone?: EntryTimeZone | null
 
 	@validation(z.custom<EntryStatus>(value => value instanceof EntryStatus).nullish())
@@ -159,9 +148,8 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 	@converter(EntryStatus.converter)
 	status?: EntryStatus | null
 
-	@validation(z.number().min(0).max(100).nullish())
-	@converter({ construct: EntryPatch.percent })
-	percentComplete?: number | null
+	/** RFC 5545 §3.8.1.8: a whole percentage. */
+	@validation(z.number().int().min(0).max(100).nullish()) percentComplete?: number | null
 
 	@validation(z.custom<Transparency>(value => value instanceof Transparency).nullish())
 	@description('Whether the time counts as busy or free; without, an event is busy and availability free.')
@@ -254,16 +242,6 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 		if (moving && scope !== EntryOccurrenceChangeScope.This && recurrence && !to.ownership.holds('recurrence')) {
 			yield whereUnsupported.fieldOf(Entry, 'recurrence').error!
 		}
-	}
-
-	/** A whole, positive number of minutes, else none. */
-	private static minutes(value: unknown) {
-		return value === undefined ? value : typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.round(value) : null
-	}
-
-	/** A percentage clamped to 0-100 (RFC 5545 §3.8.1.8), else none. */
-	private static percent(value: unknown) {
-		return value === undefined ? value : typeof value === 'number' && Number.isFinite(value) ? Math.min(100, Math.max(0, Math.round(value))) : null
 	}
 }
 

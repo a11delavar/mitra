@@ -13,12 +13,13 @@ describe('EntryTimeZone', () => {
 		assert.equal(EntryTimeZone.of(TimeZone.of('Europe/Berlin')).id, TimeZone.of('Europe/Berlin').id)
 	})
 
-	it('reads floating as the one floating clock, and anything else as none', () => {
+	it('reads floating as the one floating clock, none as none, and refuses anything else', () => {
 		assert.equal(EntryTimeZone.parse('floating'), EntryTimeZone.floating)
-		assert.equal(EntryTimeZone.parse('W. Europe Standard Time'), undefined)
-		assert.equal(EntryTimeZone.parse(''), undefined)
 		assert.equal(EntryTimeZone.parse(null), undefined)
-		assert.equal(EntryTimeZone.parse(7), undefined)
+		assert.equal(EntryTimeZone.parse(undefined), undefined)
+		for (const unknown of ['W. Europe Standard Time', '', 7]) {
+			assert.throws(() => EntryTimeZone.parse(unknown), /not a time zone/)
+		}
 	})
 
 	it('reads the wall clock in its zone, a floating one as if in UTC', () => {
@@ -39,13 +40,13 @@ describe('EntryTimeZone', () => {
 		assert.ok(!EntryTimeZone.parse('UTC')!.equals(null))
 	})
 
-	it('crosses the wire and the column as its id, an unknown one as none', () => {
+	it('crosses the wire as its id, refusing one it does not know, and the column as its id, an unknown one as none', () => {
 		const { converter } = EntryTimeZone
 		const mapper = new EntryTimeZone.Mapper()
 		assert.equal(converter.deconstruct!(EntryTimeZone.parse('Asia/Kolkata'), {}), 'Asia/Kolkata')
-		assert.equal(converter.deconstruct!(null, {}), null)
+		assert.equal(converter.deconstruct!(undefined, {}), undefined)
 		assert.equal(converter.construct!('floating', {}), EntryTimeZone.floating)
-		assert.equal(converter.construct!('Mars/Olympus', {}), null)
+		assert.throws(() => converter.construct!('Mars/Olympus', {}), /not a time zone/)
 		assert.equal(converter.construct!(null, {}), null)
 		assert.equal(converter.construct!(undefined, {}), undefined)
 		assert.equal(mapper.convertToDatabaseValue(EntryTimeZone.parse('Asia/Kolkata')), 'Asia/Kolkata')

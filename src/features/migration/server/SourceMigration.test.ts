@@ -231,7 +231,7 @@ describe('SourceMigration', () => {
 
 			assert.equal(outcome.moved, 2)
 			assert.equal(outcome.created, 2)
-			assert.equal(outcome.failure, null)
+			assert.equal(outcome.failure, undefined)
 			assert.equal(await em.count(Entry, { sourceId: origin.id }), 0)
 			assert.deepEqual((await em.find(Entry, { sourceId: target.id })).map(entry => entry.heading).sort(), ['one', 'two'])
 		})

@@ -45,9 +45,9 @@ describe('CalDAV discovery marks a shared calendar read-only', () => {
 		const sources = await (dav as unknown as { fetchSources(): Promise<Array<Source>> }).fetchSources()
 
 		assert.deepEqual(sources.map(source => [source.name, source.readOnly]), [
-			['Mine', null],
+			['Mine', undefined],
 			['Shared with me', true],
-			['No ACL support', null],
+			['No ACL support', undefined],
 		])
 	})
 

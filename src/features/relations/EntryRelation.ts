@@ -34,7 +34,7 @@ export class EntryRelation extends Entity {
 	}
 
 	get relation(): Relation {
-		return new Relation({ type: this.type, targetUid: this.targetUid, gap: this.gap ?? null })
+		return new Relation({ type: this.type, targetUid: this.targetUid, ...this.gap ? { gap: this.gap } : {} })
 	}
 
 	/**

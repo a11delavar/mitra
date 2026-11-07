@@ -14,7 +14,7 @@ const into = (target: Source, capabilities: IntegrationCapabilities, ownership: 
 
 const clean = () => new MigrationVerdict({ entryId: 'a', heading: 'Clean' })
 const lossy = (...losses: Array<'reminders' | 'location'>) => new MigrationVerdict({ entryId: 'b', heading: 'Lossy', losses })
-const blocked = (blocker: 'participants' | 'recurrence', occurrences: number | null = null) =>
+const blocked = (blocker: 'participants' | 'recurrence', occurrences?: number) =>
 	new MigrationVerdict({ entryId: 'c', heading: 'Blocked', blockers: [blocker], occurrences })
 
 describe('MigrationVerdict', () => {
@@ -26,7 +26,7 @@ describe('MigrationVerdict', () => {
 
 	it('is flattenable only when recurrence is the blocker AND the rule expanded', () => {
 		assert.equal(blocked('recurrence', 12).flattenable, true)
-		assert.equal(blocked('recurrence', null).flattenable, false)
+		assert.equal(blocked('recurrence').flattenable, false)
 		assert.equal(blocked('participants', 12).flattenable, false)
 	})
 

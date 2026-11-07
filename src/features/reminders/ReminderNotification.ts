@@ -57,7 +57,7 @@ export interface PushPayload {
 /** The device a notification is rendered for. */
 export interface Reader {
 	/** A BCP 47 tag: its language picks the words, the whole tag the clock and the date order. */
-	locale?: string | null
+	locale?: string
 	timeZone?: TimeZone
 }
 

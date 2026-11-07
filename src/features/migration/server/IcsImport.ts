@@ -133,7 +133,7 @@ export class IcsImport {
 		const outcome = new MigrationOutcome({
 			left: this.entities.length,
 			failure: error instanceof Error ? error.message : String(error),
-			failedEntry: failed?.heading ?? null,
+			failedEntry: failed?.heading,
 		})
 		for (const row of created) {
 			await this.target.integration.deleteEntry(this.em, row).catch(() => outcome.duplicates++)

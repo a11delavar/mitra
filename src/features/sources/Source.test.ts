@@ -112,7 +112,7 @@ describe('Source.readOnly narrows what may be written to one calendar', () => {
 
 	it('leaves a calendar of your own exactly as the provider left it', () => {
 		assert.equal(new CalDAV().capabilitiesFor(own).entries.edit, true)
-		assert.equal(new CalDAV().capabilitiesFor(new Source({ uri: 'u', name: 'n', readOnly: null })).entries.edit, true)
+		assert.equal(new CalDAV().capabilitiesFor(new Source({ uri: 'u', name: 'n', readOnly: undefined })).entries.edit, true)
 		assert.equal(new CalDAV().capabilitiesFor(undefined).entries.edit, true)
 	})
 

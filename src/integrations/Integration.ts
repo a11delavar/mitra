@@ -82,7 +82,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 
 	/** Manual sidebar display order among user's integrations (sorted asc nulls last). */
 	@equality()
-	@property({ type: 'number', nullable: true }) order?: number | null
+	@property({ type: 'number', nullable: true }) order?: number
 
 	/** Lowercase email addresses representing the user in participant lists (RFC 6638). */
 	@equality()
@@ -249,7 +249,7 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 				match.entryTypes = source.entryTypes
 			}
 			match.readOnly = source.readOnly
-			if (match.remoteName === null || match.remoteName === undefined) {
+			if (match.remoteName === undefined) {
 				match.remoteName = source.name
 			} else if (source.name !== match.remoteName) {
 				match.name = source.name

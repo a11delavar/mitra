@@ -11,7 +11,7 @@ describe('Relation', () => {
 			const relation = Relation.from({ type: ' finishtostart ', targetUid: ' target ', gap: '  ' })!
 			assert.equal(relation.type, RelationType.FinishToStart)
 			assert.equal(relation.targetUid, 'target')
-			assert.equal(relation.gap, null)
+			assert.equal(relation.gap, undefined)
 			assert.equal(relation.direction, 'outgoing')
 			assert.equal(relation.isOutgoing, true)
 		})
@@ -54,8 +54,8 @@ describe('Relation', () => {
 				{ type: 'PARENT', targetUid: 'b', gap: 'PT1D' }, // same pair, DIFFERENT gap, a distinct relationship
 			]).all
 			assert.deepEqual(normalized.map(relation => [relation.type, relation.targetUid, relation.gap]), [
-				[RelationType.FinishToStart, 'a', null],
-				[RelationType.Parent, 'b', null],
+				[RelationType.FinishToStart, 'a', undefined],
+				[RelationType.Parent, 'b', undefined],
 				[RelationType.Parent, 'b', 'PT1D'],
 			])
 		})
@@ -69,7 +69,7 @@ describe('Relation', () => {
 		it('keeps gap as an opaque string, normalizing absence to null', () => {
 			const normalized = EntryRelations.of([{ type: 'FINISHTOSTART', targetUid: 'a', gap: ' PT30M ' }]).all
 			assert.equal(normalized[0]!.gap, 'PT30M')
-			assert.equal(EntryRelations.of([{ type: 'PARENT', targetUid: 'b' }]).all[0]!.gap, null)
+			assert.equal(EntryRelations.of([{ type: 'PARENT', targetUid: 'b' }]).all[0]!.gap, undefined)
 		})
 	})
 

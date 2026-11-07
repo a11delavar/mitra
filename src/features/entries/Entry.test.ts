@@ -477,11 +477,10 @@ describe('Entry', () => {
 			assert.ok(timed('Asia/Calcutta').zone!.equals(TimeZone.of('Asia/Kolkata')))
 		})
 
-		it('is none for an all-day, a floating, a zoneless or an unknown zone', () => {
+		it('is none for an all-day, a floating or a zoneless one', () => {
 			assert.equal(new Entry({ allDay: true, timeZone: EntryTimeZone.parse('Europe/Berlin') }).zone, undefined)
 			assert.equal(timed('floating').zone, undefined)
 			assert.equal(timed(null).zone, undefined)
-			assert.equal(timed('Mars/Olympus').zone, undefined)
 		})
 
 		it('follows a change of zone', () => {
