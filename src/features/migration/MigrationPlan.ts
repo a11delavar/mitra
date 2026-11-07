@@ -1,6 +1,5 @@
 import type { Source } from '#features/sources'
-import { type Entry, EntryStatus, Transparency } from '#features/entries'
-import { TimeZone } from '#features/time/TimeZone.js'
+import { Entry, EntryStatus, whereUnsupported } from '#features/entries'
 import { model } from '#infrastructure/model'
 
 /** What keeps an entry out of a calendar altogether. */
@@ -23,19 +22,13 @@ export class MigrationVerdict {
 		Object.assign(this, init)
 	}
 
-	/** The days an all-day span covers, counted where its days are kept. */
-	private static daysOf(start: Date, end: Date) {
-		const zone = TimeZone.localOrDefault
-		return zone.dayOf(start).until(zone.dayOf(end)).days
-	}
-
 	/**
 	 * What moving `entry` into `target` would do: what keeps it out, and what it loses there. `occurrence` marks an entry entangled
 	 * with edited occurrences, which only a migration knows; `occurrences` counts the dates a flattened series would become, read
 	 * only where its recurrence blocks.
 	 */
 	static of(entry: Entry, target: Source, { occurrence = false, occurrences }: { occurrence?: boolean, occurrences?: () => number | null } = {}) {
-		const { capabilities, ownership } = target
+		const { capabilities } = target
 		const blockers = new Array<MigrationBlocker>()
 		const losses = new Array<MigrationLoss>()
 
@@ -45,54 +38,19 @@ export class MigrationVerdict {
 		if (occurrence) {
 			blockers.push('occurrence')
 		}
-		if (entry.recurrence?.freq && !ownership.holds('recurrence')) {
-			blockers.push('recurrence')
+		for (const field of whereUnsupported.fieldsOf(Entry)) {
+			if (field.move === 'block' && field.unsupportedIn(target, entry)) {
+				blockers.push(field.name as MigrationBlocker)
+			} else if (field.move === 'drop' && field.unsupportedIn(target, entry)) {
+				losses.push(field.name as MigrationLoss)
+			}
 		}
-		if (entry.participants?.length && !ownership.holds('participants')) {
-			blockers.push('participants')
-		}
-		// Only 'Free' transparency is a blocker; default opaque is preserved implicitly.
-		if (entry.transparency === Transparency.Free && !ownership.holds('transparency')) {
-			blockers.push('transparency')
-		}
-		if (entry.visibility && !ownership.holds('visibility')) {
-			blockers.push('visibility')
-		}
-		if (entry.percentComplete !== undefined && !ownership.holds('percentComplete')) {
-			blockers.push('percentComplete')
-		}
-
-		if (entry.reminders?.length && !ownership.holds('reminders')) {
-			losses.push('reminders')
-		}
-		if (entry.location && !ownership.holds('location')) {
-			losses.push('location')
-		}
-		if (entry.description && !ownership.holds('description')) {
-			losses.push('description')
-		}
-		if (entry.attachments.length && !(ownership.holds('attachments') && capabilities.entries.attach)) {
+		// A calendar may keep attachments yet drop those written to it, as Google does.
+		if (entry.attachments.length && target.ownership.holds('attachments') && !capabilities.entries.attach) {
 			losses.push('attachments')
-		}
-		// Where no length is held, a timed entry becomes a moment and an all-day one its first day.
-		if (entry.start && entry.end && !ownership.holds('end') && (!entry.allDay || MigrationVerdict.daysOf(entry.start, entry.end) > 1)) {
-			losses.push('end')
-		}
-		if (entry.due && !ownership.holds('due')) {
-			losses.push('due')
-		}
-		if (entry.estimate !== undefined && !ownership.holds('estimate')) {
-			losses.push('estimate')
-		}
-		// A floating time is no named zone, so it has no zone loss, but a calendar without wall clocks fixes it to one.
-		if (entry.timeZone && !entry.timeZone.floating && !ownership.holds('timeZone')) {
-			losses.push('timeZone')
 		}
 		if (entry.floating && !capabilities.entries.floating) {
 			losses.push('floating')
-		}
-		if (entry.allDay && !ownership.holds('allDay')) {
-			losses.push('allDay')
 		}
 		if (entry.status === EntryStatus.Doing && !capabilities.entries.statuses.includes(EntryStatus.Doing)) {
 			losses.push('doingStatus')

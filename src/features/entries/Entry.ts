@@ -25,6 +25,7 @@ import { Checklist } from './Checklist.js'
 import { EntryPatch } from './EntryPatch.js'
 import { EntryChange } from './EntryChange.js'
 import { EntrySpan } from './EntrySpan.js'
+import { whereUnsupported } from './whereUnsupported.js'
 
 export interface EntryTally {
 	readonly done: number
@@ -82,7 +83,10 @@ export class Entry extends Entity implements Validatable {
 		}
 	}
 
-	/** Drops what the type can't hold. */
+	/**
+	 * Drops what the type can't hold. A type without days leaves the dates as they are, as a day read as a time would be a
+	 * midnight, and one without relations leaves them for the write to judge, as unknown relations keep their rows.
+	 */
 	private fitType() {
 		if (this.status && !this.status.appliesTo(this._type)) {
 			this.status = undefined
@@ -98,9 +102,11 @@ export class Entry extends Entity implements Validatable {
 	@property({ type: 'string' }) heading = ''
 
 	@equality()
+	@whereUnsupported({ save: 'drop', move: 'drop' })
 	@property({ type: 'string' }) description = ''
 
 	@equality()
+	@whereUnsupported({ save: 'drop', move: 'drop' })
 	@property({ type: 'string' }) location = ''
 
 	@equality()
@@ -157,14 +163,28 @@ export class Entry extends Entity implements Validatable {
 	@Entry.date() start?: DateTime
 
 	@equality()
+	// Where no length is held, a timed entry becomes a moment and an all-day one its first day, which loses nothing of a single day.
+	@whereUnsupported({
+		save: 'drop',
+		move: 'drop',
+		when: entry => {
+			if (!entry.start || !entry.end) {
+				return false
+			}
+			const zone = TimeZone.localOrDefault
+			return !entry.allDay || zone.dayOf(entry.start).until(zone.dayOf(entry.end)).days > 1
+		},
+	})
 	@Entry.date() end?: DateTime
 
 	/** Apart from the schedule. */
 	@equality()
+	@whereUnsupported({ save: { throw: 'This calendar does not support due dates' }, move: 'drop' })
 	@Entry.date() due?: DateTime
 
 	/** A task's length in minutes while it has no start. The end is the same fact once it does, so one of the two is always empty. */
 	@equality()
+	@whereUnsupported({ save: 'drop', move: 'drop' })
 	@property({ type: 'number', nullable: true }) estimate?: number
 
 	@converter({ status: EntryStatus.converter })
@@ -182,6 +202,7 @@ export class Entry extends Entity implements Validatable {
 
 	/** Task PERCENT-COMPLETE (RFC 5545 §3.8.1.8), 0-100. */
 	@equality()
+	@whereUnsupported({ save: { throw: 'This calendar does not support task progress' }, move: 'block' })
 	@property({ type: 'number', nullable: true }) percentComplete?: number
 
 	/** Position in the manual order, owned by Mitra and never written to the provider. Only
@@ -235,10 +256,13 @@ export class Entry extends Entity implements Validatable {
 	}
 
 	@equality()
+	// Busy is every calendar's default, so only free counts.
+	@whereUnsupported({ save: { throw: 'This calendar cannot mark an entry as free' }, move: 'block', when: entry => entry.transparency === Transparency.Free })
 	@converter(Transparency.converter)
 	@enumType({ type: Transparency.Mapper, items: Transparency.all.map(String), nullable: true }) transparency?: Transparency
 
 	@equality()
+	@whereUnsupported({ save: { throw: 'This calendar does not support visibility' }, move: 'block' })
 	@converter(Visibility.converter)
 	@enumType({ type: Visibility.Mapper, items: Visibility.all.map(String), nullable: true }) visibility?: Visibility
 
@@ -248,9 +272,12 @@ export class Entry extends Entity implements Validatable {
 	}
 
 	@equality()
+	@whereUnsupported({ save: 'drop', move: 'drop' })
 	@property({ type: 'boolean' }) allDay = false
 
 	@equality()
+	// A floating time names no zone, so it loses none: a calendar without wall clocks fixes it to one instead.
+	@whereUnsupported({ save: 'drop', move: 'drop', when: entry => !!entry.timeZone && !entry.timeZone.floating })
 	@converter(EntryTimeZone.converter)
 	@property({ type: EntryTimeZone.Mapper, nullable: true }) timeZone?: EntryTimeZone
 
@@ -267,6 +294,7 @@ export class Entry extends Entity implements Validatable {
 	@property({ type: 'json', nullable: true }) data?: EntryData
 
 	@equality()
+	@whereUnsupported({ save: 'drop', move: 'drop' })
 	@property({ type: EntryReminders.Mapper, nullable: true })
 	@converter(EntryReminders.converter) reminders?: EntryReminders
 
@@ -279,6 +307,7 @@ export class Entry extends Entity implements Validatable {
 	}
 
 	@equality()
+	@whereUnsupported({ save: { throw: 'This calendar does not support participants' }, move: 'block' })
 	@property({ type: Participants.Mapper, nullable: true })
 	@converter(Participants.converter) participants?: Participants
 
@@ -325,6 +354,7 @@ export class Entry extends Entity implements Validatable {
 	files!: EntryFiles
 
 	/** Its attachments among {@link files}; setting them replaces those and leaves its other files alone. */
+	@whereUnsupported({ save: { throw: 'This calendar does not support attachments' }, move: 'drop' })
 	get attachments(): EntryFiles { return this.files.ofType(EntryFileType.Attachment) }
 
 	/** Takes `file` off the entry, with what the description showed of it: a link or picture of a file no longer here would dangle. */
@@ -357,6 +387,7 @@ export class Entry extends Entity implements Validatable {
 	@property({ type: 'string', nullable: true }) uid?: string
 
 	@equality()
+	@whereUnsupported({ save: { throw: 'This calendar cannot hold a repeating entry' }, move: 'block' })
 	@property({ type: Recurrence.Mapper, nullable: true })
 	@converter(Recurrence.converter) recurrence?: Recurrence
 
@@ -371,6 +402,8 @@ export class Entry extends Entity implements Validatable {
 	@Entry.date() recurrenceId?: DateTime
 
 	/** Unknown while absent, as a provider may not say; none is an empty collection. The lines it owns are saved as rows, those pointing at it a read attaches. */
+	// Only the lines it owns count; a move repoints them rather than judging them.
+	@whereUnsupported({ save: { throw: 'This calendar does not support relations between entries' }, when: entry => !!entry.relations?.writes.length })
 	@converter(EntryRelations.converter)
 	@children(() => EntryRelation, row => row.entryId, {
 		eager: true,
@@ -648,29 +681,11 @@ export class Entry extends Entity implements Validatable {
 		if (!source.canHold(this.type)) {
 			yield new ValidationError(`This calendar cannot hold ${this.type.isTask ? 'tasks' : this.type.isAvailability ? 'availability' : 'events'}`, ['type'])
 		}
-		if (this.recurrence?.freq && !source.ownership.holds('recurrence')) {
-			yield new ValidationError('This calendar cannot hold a repeating entry', ['recurrence'])
-		}
-		if (this.participants?.length && !source.ownership.holds('participants')) {
-			yield new ValidationError('This calendar does not support participants', ['participants'])
-		}
-		if (this.attachments.length && !source.ownership.holds('attachments')) {
-			yield new ValidationError('This calendar does not support attachments', ['attachments'])
-		}
-		if (this.transparency === Transparency.Free && !source.ownership.holds('transparency')) {
-			yield new ValidationError('This calendar cannot mark an entry as free', ['transparency'])
-		}
-		if (this.visibility && !source.ownership.holds('visibility')) {
-			yield new ValidationError('This calendar does not support visibility', ['visibility'])
-		}
-		if (this.percentComplete !== undefined && !source.ownership.holds('percentComplete')) {
-			yield new ValidationError('This calendar does not support task progress', ['percentComplete'])
-		}
-		if (this.due && !source.ownership.holds('due')) {
-			yield new ValidationError('This calendar does not support due dates', ['due'])
-		}
-		if (this.relations?.writes.length && !source.ownership.holds('relations')) {
-			yield new ValidationError('This calendar does not support relations between entries', ['relations'])
+		for (const field of whereUnsupported.fieldsOf(Entry)) {
+			const { error } = field
+			if (error && field.unsupportedIn(source, this)) {
+				yield error
+			}
 		}
 		if (this.status && !this.status.appliesTo(this.type)) {
 			yield new ValidationError(`${this.type.isTask ? 'A task' : this.type.isEvent ? 'An event' : 'Availability'} cannot be ${this.status.code}`, ['status'])

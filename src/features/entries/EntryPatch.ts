@@ -11,6 +11,7 @@ import { TimeZone } from '#features/time/TimeZone.js'
 import { model } from '#infrastructure/model'
 import { validation, type Validatable, ValidationError } from '#infrastructure/validation'
 import { Entry, type EntryClock } from './Entry.js'
+import { whereUnsupported } from './whereUnsupported.js'
 import { EntryType } from './EntryType.js'
 import { EntryStatus } from './EntryStatus.js'
 import { Transparency } from './Transparency.js'
@@ -251,7 +252,7 @@ export class EntryPatch implements Validatable<EntryPatchContext | undefined> {
 			yield new ValidationError('A repeating entry cannot lose the date it repeats from', [anchor])
 		}
 		if (moving && scope !== EntryOccurrenceChangeScope.This && recurrence && !to.ownership.holds('recurrence')) {
-			yield new ValidationError('This calendar cannot hold a repeating entry', ['recurrence'])
+			yield whereUnsupported.fieldOf(Entry, 'recurrence').error!
 		}
 	}
 

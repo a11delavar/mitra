@@ -253,33 +253,16 @@ export class EntryOccurrence {
 	 */
 	override() {
 		const entry = this.recurringEntry!
-		return new Entry({
+		return Object.assign(new Entry().equate(entry), {
 			id: this.key,
-			sourceId: entry.sourceId,
-			type: entry.type,
-			heading: entry.heading,
-			description: entry.description,
-			location: entry.location,
-			color: entry.color,
-			status: entry.status,
-			percentComplete: entry.percentComplete,
+			uid: entry.uid,
 			rank: entry.rank,
-			transparency: entry.transparency,
-			visibility: entry.visibility,
-			allDay: entry.allDay,
-			timeZone: entry.timeZone,
-			reminders: entry.reminders,
-			participants: entry.participants,
-			files: entry.files,
 			relations: entry.relations,
+			recurringEntryId: entry.id,
+			recurrenceId: this.recurrenceId,
 			start: this.start,
 			end: this.end,
 			due: this.due,
-			estimate: entry.estimate,
-			uid: entry.uid,
-			recurrence: entry.recurrence,
-			recurringEntryId: entry.id,
-			recurrenceId: this.recurrenceId,
 		})
 	}
 }

@@ -1,32 +1,20 @@
 import { equals } from '@a11d/equals'
+import { createMetadataDecorator } from '@a11d/metadata'
 
 /** What a field is to its entity: part of what tells it apart, or part of what makes two equal. A field with neither role is bookkeeping. */
 export type EntityFieldRole = 'identity' | 'equality'
 
-const declarations = new WeakMap<object, Record<EntityFieldRole, Array<string>>>()
-const carriages = new WeakMap<object, Array<readonly [member: string, key: string]>>()
-
-function declare(role: EntityFieldRole): PropertyDecorator {
-	return (prototype, key) => {
-		let roles = declarations.get(prototype)
-		if (!roles) {
-			roles = { identity: [], equality: [] }
-			declarations.set(prototype, roles)
-		}
-		roles[role].push(String(key))
-	}
-}
+const roles = { identity: createMetadataDecorator('identity'), equality: createMetadataDecorator('equality') }
+const carriage = createMetadataDecorator('carried')
 
 /** Part of what tells the entity apart from every other: a draft without one is only itself. On a getter, an identity computed from other fields. */
-export const identity = () => declare('identity')
+export const identity = () => roles.identity(true)
 
 /** Part of what makes two entities equal, and all a copy carries. */
-export const equality = () => declare('equality')
+export const equality = () => roles.equality(true)
 
 /** A member that goes wherever `key` is taken, as it is, never copied: the entity an id names (`@include`). */
-export const carried = (key: string): PropertyDecorator => (prototype, member) => {
-	carriages.set(prototype, [...carriages.get(prototype) ?? [], [String(member), key]])
-}
+export const carried = (key: string) => carriage(key)
 
 type Init<Self> = new (init: Partial<Self>) => Self
 
@@ -73,11 +61,7 @@ function bookkept(value: unknown) {
 export abstract class Entity {
 	/** The fields of `role` on `type`, a base class's first. */
 	static fieldsOf(type: abstract new (...args: never) => Entity, role: EntityFieldRole): ReadonlyArray<string> {
-		const fields = new Array<string>()
-		for (let prototype = type.prototype as object | null; prototype && prototype !== Object.prototype; prototype = Object.getPrototypeOf(prototype)) {
-			fields.unshift(...declarations.get(prototype)?.[role] ?? [])
-		}
-		return fields
+		return [...roles[role].keys(type as Constructor<Entity>)]
 	}
 
 	private fields(role: EntityFieldRole) {
@@ -86,11 +70,8 @@ export abstract class Entity {
 
 	/** The carried members of this entity's class, each with the key it follows. */
 	private carried() {
-		const members = new Array<readonly [member: string, key: string]>()
-		for (let prototype = Object.getPrototypeOf(this) as object | null; prototype && prototype !== Object.prototype; prototype = Object.getPrototypeOf(prototype)) {
-			members.push(...carriages.get(prototype) ?? [])
-		}
-		return members
+		const type = this.constructor as Constructor<Entity>
+		return [...carriage.keys(type)].map(member => [member, carriage.get(type, member) as string] as const)
 	}
 
 	/** Whether `other` is this one: the same identity, which this one has. The other may be a plain object, as the wire delivers one. */

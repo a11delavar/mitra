@@ -38,10 +38,10 @@ describe('Entry.validate', () => {
 	it('names every fact the calendar cannot store, each with its field', () => {
 		const task = new Entry({ type: EntryType.Task, heading: 'Report', visibility: Visibility.Private, percentComplete: 0, due: start, participants: Participants.normalize([{ email: 'organizer@example.com', organizer: true }]) })
 		assert.deepEqual(refusals(task, calendar({ lacking: ['participants', 'visibility', 'percentComplete', 'due'] })), [
-			['This calendar does not support participants', ['participants']],
-			['This calendar does not support visibility', ['visibility']],
-			['This calendar does not support task progress', ['percentComplete']],
 			['This calendar does not support due dates', ['due']],
+			['This calendar does not support task progress', ['percentComplete']],
+			['This calendar does not support visibility', ['visibility']],
+			['This calendar does not support participants', ['participants']],
 		])
 		assert.deepEqual(refusals(event({ transparency: Transparency.Free }), calendar({ lacking: ['transparency'] })), [['This calendar cannot mark an entry as free', ['transparency']]])
 	})

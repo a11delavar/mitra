@@ -1,4 +1,4 @@
-import { description } from '@a11d/metadata'
+import { createMetadataDecorator, description } from '@a11d/metadata'
 import { definitionsOf } from '@a11d/converter'
 import { z } from 'zod'
 import { ValidationError } from './ValidationError.js'
@@ -12,7 +12,7 @@ declare module '@a11d/converter' {
 	}
 }
 
-const declared = new WeakMap<object, Map<string, z.ZodType>>()
+const declared = createMetadataDecorator('validation')
 const described = new WeakMap<object, z.ZodObject>()
 
 /**
@@ -20,29 +20,12 @@ const described = new WeakMap<object, z.ZodObject>()
  * instance is judged by its members' (`validation.errorsIn`), each failure a `ValidationError` naming its member.
  */
 export function validation(schema: z.ZodType) {
-	return (prototype: object, key: string) => {
-		const schemas = declared.get(prototype.constructor) ?? new Map<string, z.ZodType>()
-		declared.set(prototype.constructor, schemas.set(key, schema))
-	}
-}
-
-/** The classes from `constructor` up, each of which may declare members. */
-function *lineOf(constructor: Constructor<object>) {
-	for (let each: object | null = constructor; each !== null && each !== Object && each !== Function.prototype; each = Object.getPrototypeOf(each) as object | null) {
-		yield each as Constructor<object>
-	}
+	return declared(schema)
 }
 
 /** Every member's schema, a class's own over its base's. */
-function schemasOf(constructor: Constructor<object>) {
-	const schemas = new Map<string, z.ZodType>()
-	for (const each of [...lineOf(constructor)].reverse()) {
-		for (const [key, schema] of declared.get(each) ?? []) {
-			schemas.set(key, schema)
-		}
-	}
-	return schemas
-}
+const schemasOf = (constructor: Constructor<object>) =>
+	new Map([...declared.keys(constructor)].map(key => [key, declared.get(constructor, key) as z.ZodType]))
 
 /**
  * The members as whoever writes them sees them, each described by its `@description`: a member whose converter names a
@@ -68,7 +51,7 @@ validation.schemaOf = (constructor: Constructor<object>) => {
 			if (converter?.schema && (!member || member.safeParse(undefined).success)) {
 				written = written.optional()
 			}
-			const words = [...lineOf(constructor)].map(each => description.get(each, key) as string | undefined).find(Boolean)
+			const words = description.get(constructor, key) as string | undefined
 			shape[key] = words ? written.describe(words) : written
 		}
 		schema = z.object(shape)
