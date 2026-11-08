@@ -1,5 +1,5 @@
 import { ListIntegrations, ReorderIntegrations, ReorderSources, SetSourceVisibility, ShowOnlySource, RestoreSourceVisibility } from '#operations'
-import type { EntryType } from '#features/entries'
+import { EntryType } from '#features/entries'
 import { Integration } from '#integrations'
 import { session } from '#infrastructure/http/PageSession.js'
 import { PageState } from '#infrastructure/http/PageState.js'
@@ -60,6 +60,11 @@ export class Calendars {
 	static getPrimary(type?: EntryType): Source | undefined {
 		const candidates = Calendars.visible.filter(source => source.writable && (!type || source.canHold(type)))
 		return candidates.find(source => source.id === Calendars.defaultId) ?? candidates[0]
+	}
+
+	/** Where a new task goes, as the planning list and the timeline add one. */
+	static get taskTarget() {
+		return Calendars.getPrimary(EntryType.Task)
 	}
 
 	static canCopyEntriesOut(source: Source) {

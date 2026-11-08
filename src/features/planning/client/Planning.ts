@@ -1,6 +1,5 @@
 import { Component, component, html, css, repeat, unsafeCSS, eventListener } from '@a11d/lit'
 import { ReorderabilityController, ReorderabilityState } from '@3mo/reorderability'
-import type { Source } from '#features/sources'
 import { EntryType, Entry, EntryRank } from '#features/entries'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
@@ -56,16 +55,12 @@ export class Planning extends Component {
 		return entry.open && entry.persisted
 	}
 
-	private static get target(): Source | undefined {
-		return Calendars.getPrimary(EntryType.Task)
-	}
-
 	static get canAdd() {
-		return !!Planning.target
+		return !!Calendars.taskTarget
 	}
 
 	static add() {
-		const source = Planning.target
+		const source = Calendars.taskTarget
 		if (!source) {
 			return
 		}

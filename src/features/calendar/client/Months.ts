@@ -251,7 +251,7 @@ export class Months extends Component {
 		const { days: windowDays } = this.buffer.window
 		const firstValue = windowDays[0]?.dayStart.valueOf() ?? 0
 		const lastValue = windowDays.at(-1)?.dayStart.valueOf() ?? 0
-		const todayValue = new DateTime().dayStart.valueOf()
+		const todayValue = CalendarDatesController.today.valueOf()
 		const week = CalendarDatesController.sampleWeek
 
 		return html`

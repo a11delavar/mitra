@@ -62,7 +62,7 @@ export class Days extends Component {
 		suspended: () => this.zoneLane.moving,
 		// Today is arrived at at the time it is now, any other day at its middle.
 		arrival: date => {
-			const target = date.dayStart.equals(new DateTime().dayStart)
+			const target = date.dayStart.equals(CalendarDatesController.today)
 				? this.renderRoot.querySelector('.overlays > .now')
 				: this.renderRoot.querySelector(`[data-date="${date.dayStart.toISOString()}"]`)
 			const box = target?.getBoundingClientRect()
@@ -534,7 +534,8 @@ export class Days extends Component {
 		if (!first || !last) {
 			return html.nothing
 		}
-		const runs = this.segments.runsIn(first, last, occurrence => occurrence.allDay)
+		const bars = this.segments.runsAcross(days, occurrence => occurrence.allDay, offset)
+		const runs = bars.map(bar => bar.segment)
 		const slots = this.segments.allDaySlots
 		const laneCount = runs.reduce((count, segment) => EntryStore.pending.isPreview(segment.entry) ? count : Math.max(count, (slots.get(segment.occurrence) ?? -1) + 1), 0)
 		const laneOf = (occurrence: EntryOccurrence) => Math.min(slots.get(occurrence) ?? laneCount, laneCount)
@@ -543,14 +544,6 @@ export class Days extends Component {
 			.map(segment => ({ lane: laneOf(segment.occurrence), start: segment.dayValue!, end: segment.runEnd.dayValue! }))
 		this.style.setProperty('--_all-day-window-rows', `${laneCount + 1}`)
 		const lastValue = last.dayStart.valueOf()
-		const columnByDay = new Map(days.map((day, index) => [day.dayStart.valueOf(), offset + index]))
-		const columnOf = (dayValue?: number) => columnByDay.get(dayValue ?? -1) ?? 0
-		const bars = runs.map(segment => {
-			const startColumn = columnOf(segment.dayValue)
-			const clippedRight = segment.runEnd.dayValue! > lastValue
-			const endColumn = clippedRight ? offset + days.length - 1 : columnOf(segment.runEnd.dayValue)
-			return { segment, startColumn, endColumn, clippedRight }
-		})
 		const placements = new Map(runs.map(segment => [segment, {
 			start: Math.round(segment.dayValue! / 86_400_000),
 			end: Math.round(Math.min(segment.runEnd.dayValue ?? segment.dayValue!, lastValue) / 86_400_000),
@@ -564,7 +557,7 @@ export class Days extends Component {
 				${days.map((_, index) => html`<div class="day" style="grid-column: ${offset + index + 1};"></div>`)}
 				${repeat(bars, bar => EntryStore.identityOf(bar.segment.occurrence), bar => html`
 					<mitra-entry-segment
-						style=${styleMap({ gridColumn: `${bar.startColumn + 1} / span ${bar.endColumn - bar.startColumn + 1}`, gridRow: `${laneOf(bar.segment.occurrence) + 1}` })}
+						style=${styleMap({ gridColumn: `${bar.startColumn + 1} / span ${bar.span}`, gridRow: `${laneOf(bar.segment.occurrence) + 1}` })}
 						resize="inline"
 						?has-previous=${bar.segment.hasPrevious}
 						?has-next=${bar.clippedRight}
@@ -641,7 +634,7 @@ export class Days extends Component {
 	}
 
 	private get dateTemplate() {
-		const todayValue = new DateTime().dayStart.valueOf()
+		const todayValue = CalendarDatesController.today.valueOf()
 		const { days, offset } = this.dates.window
 		return html`
 			${repeat(days, day => day.dayStart.toISOString(), (day, index) => html`

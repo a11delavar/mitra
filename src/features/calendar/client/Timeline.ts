@@ -480,7 +480,7 @@ export class Timeline extends Component {
 			${this.headerTemplate(events)}
 			${this.backdropTemplate(events)}
 			${this.entriesTemplate(rows, placed)}
-			${!Calendars.getPrimary(EntryType.Task) ? html.nothing : html`
+			${!Calendars.taskTarget ? html.nothing : html`
 				<div class="create" title=${t('New task')}>
 					<div class="row"></div>
 				</div>
@@ -549,15 +549,7 @@ export class Timeline extends Component {
 		if (!first || !last) {
 			return []
 		}
-		const lastValue = last.dayStart.valueOf()
-		const columnByDay = new Map(days.map((day, index) => [day.dayStart.valueOf(), index]))
-		const columnOf = (dayValue?: number) => columnByDay.get(dayValue ?? -1) ?? 0
-		return this.segments.runsIn(first, last, accept).map(segment => {
-			const startColumn = columnOf(segment.dayValue)
-			const clippedRight = segment.runEnd.dayValue! > lastValue
-			const endColumn = clippedRight ? days.length - 1 : columnOf(segment.runEnd.dayValue)
-			return { segment, startColumn, span: endColumn - startColumn + 1, clippedRight }
-		})
+		return this.segments.runsAcross(days, accept)
 	}
 
 	private barTemplate(bar: TimelineBar, row?: number) {
@@ -574,7 +566,7 @@ export class Timeline extends Component {
 
 	private headerTemplate(events: Array<TimelineBar>) {
 		const { days, offset } = this.dates.window
-		const todayValue = new DateTime().dayStart.valueOf()
+		const todayValue = CalendarDatesController.today.valueOf()
 		const weekStart = CalendarDatesController.sampleWeek[0]!.dayOfWeek
 		const months = new Array<{ column: number, span: number, label: string }>()
 		for (const [index, day] of days.entries()) {
@@ -608,7 +600,7 @@ export class Timeline extends Component {
 
 	private backdropTemplate(events: Array<TimelineBar>) {
 		const { days, offset } = this.dates.window
-		const todayValue = new DateTime().dayStart.valueOf()
+		const todayValue = CalendarDatesController.today.valueOf()
 		return html`
 			<div class="backdrop">
 				${repeat(days, day => day.dayStart.toISOString(), (day, index) => html`

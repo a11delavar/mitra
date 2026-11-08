@@ -187,6 +187,27 @@ export class EntrySegments {
 		return a.entry.heading.localeCompare(b.entry.heading) || String(a.key).localeCompare(String(b.key))
 	}
 
+	/**
+	 * The runs `accept` takes across `days`, as {@link runsIn} has them, each placed on the columns of the days it crosses,
+	 * `offset` the first day's: where it starts, how many it spans, and whether it goes on past the last day shown.
+	 */
+	runsAcross(days: ReadonlyArray<DateTime>, accept: (occurrence: EntryOccurrence) => boolean, offset = 0) {
+		const first = days[0]
+		const last = days.at(-1)
+		if (!first || !last) {
+			return []
+		}
+		const lastValue = last.dayStart.valueOf()
+		const columnByDay = new Map(days.map((day, index) => [day.dayStart.valueOf(), offset + index]))
+		const columnOf = (dayValue?: number) => columnByDay.get(dayValue ?? -1) ?? 0
+		return this.runsIn(first, last, accept).map(segment => {
+			const startColumn = columnOf(segment.dayValue)
+			const clippedRight = segment.runEnd.dayValue! > lastValue
+			const endColumn = clippedRight ? offset + days.length - 1 : columnOf(segment.runEnd.dayValue)
+			return { segment, startColumn, span: endColumn - startColumn + 1, clippedRight }
+		})
+	}
+
 	monthWeek(week: ReadonlyArray<DateTime>): MonthWeek {
 		const weekStart = week[0]!
 		const weekEnd = week[week.length - 1]!

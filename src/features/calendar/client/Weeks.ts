@@ -300,7 +300,7 @@ export class Weeks extends Component {
 	protected override createRenderRoot() { return this }
 
 	protected override get template() {
-		const today = new DateTime().dayStart
+		const today = CalendarDatesController.today
 		const todayValue = today.valueOf()
 		const monthValue = this.bufferNavigatingDate.monthStart.dayStart.valueOf()
 		const daysInWeek = this.navigatingDate.daysInWeek
