@@ -245,77 +245,27 @@ describe('Recurrence', () => {
 
 	describe('describe', () => {
 		it('describes the common rules', () => {
-			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Daily }).describe(), 'Every day')
-			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Monday, RecurrenceWeekday.Tuesday, RecurrenceWeekday.Wednesday, RecurrenceWeekday.Thursday, RecurrenceWeekday.Friday] }).describe(), 'Every weekday')
-			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Thursday] }).describe(), 'Every week on Thu')
-			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Weekly, interval: 2, byday: [RecurrenceWeekday.Monday, RecurrenceWeekday.Wednesday] }).describe(), 'Every 2 weeks on Mon and Wed')
-			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Monthly, bymonthday: 25 }).describe(), 'Every month on the 25th')
-			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Monthly, byday: [RecurrenceWeekday.Thursday.nth(-1)] }).describe(), 'Every month on the last Thu')
-			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Monthly, byday: [RecurrenceWeekday.Thursday.nth(4)] }).describe(), 'Every month on the 4th Thu')
+			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Daily }).format(), 'Every day')
+			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Monday, RecurrenceWeekday.Tuesday, RecurrenceWeekday.Wednesday, RecurrenceWeekday.Thursday, RecurrenceWeekday.Friday] }).format(), 'Every weekday')
+			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Thursday] }).format(), 'Every week on Thu')
+			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Weekly, interval: 2, byday: [RecurrenceWeekday.Monday, RecurrenceWeekday.Wednesday] }).format(), 'Every 2 weeks on Mon and Wed')
+			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Monthly, bymonthday: 25 }).format(), 'Every month on the 25th')
+			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Monthly, byday: [RecurrenceWeekday.Thursday.nth(-1)] }).format(), 'Every month on the last Thu')
+			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Monthly, byday: [RecurrenceWeekday.Thursday.nth(4)] }).format(), 'Every month on the 4th Thu')
 			// Without an ordinal, every Thursday of the month (RFC 5545 BYDAY).
-			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Monthly, byday: [RecurrenceWeekday.Thursday] }).describe(), 'Every month on Thu')
-			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Yearly }).describe(thu), 'Every year on Jun 25')
-			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Monthly, interval: 3 }).describe(), 'Every 3 months')
+			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Monthly, byday: [RecurrenceWeekday.Thursday] }).format(), 'Every month on Thu')
+			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Yearly }).format(thu), 'Every year on Jun 25')
+			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Monthly, interval: 3 }).format(), 'Every 3 months')
 		})
 
 		it('keeps an interval on a weekday rule', () => {
-			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Weekly, interval: 2, byday: [RecurrenceWeekday.Monday, RecurrenceWeekday.Tuesday, RecurrenceWeekday.Wednesday, RecurrenceWeekday.Thursday, RecurrenceWeekday.Friday] }).describe(), 'Every 2 weeks on Mon, Tue, Wed, Thu, and Fri')
+			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Weekly, interval: 2, byday: [RecurrenceWeekday.Monday, RecurrenceWeekday.Tuesday, RecurrenceWeekday.Wednesday, RecurrenceWeekday.Thursday, RecurrenceWeekday.Friday] }).format(), 'Every 2 weeks on Mon, Tue, Wed, Thu, and Fri')
 		})
 
 		it('appends the end clause', () => {
-			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Thursday], until: untilDay('2026-07-18') }).describe(), 'Every week on Thu until Jul 18')
-			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Daily, count: 10 }).describe(), 'Every day, 10 times')
-			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Daily, count: 1 }).describe(), 'Every day, once')
-		})
-	})
-
-	describe('presets', () => {
-		it('derives the quick presets from the start date', () => {
-			const byId = new Map(Recurrence.presets(thu).map(p => [p.id, p]))
-			assert.equal(byId.get('weekly')?.recurrence?.toRRule(), 'FREQ=WEEKLY;BYDAY=TH')
-			assert.equal(byId.get('weekly')?.detail, 'on Thu')
-			assert.equal(byId.get('biweekly')?.recurrence?.toRRule(), 'FREQ=WEEKLY;INTERVAL=2;BYDAY=TH')
-			assert.equal(byId.get('monthly-day')?.recurrence?.toRRule(), 'FREQ=MONTHLY;BYMONTHDAY=25')
-			assert.equal(byId.get('monthly-weekday')?.recurrence?.toRRule(), 'FREQ=MONTHLY;BYDAY=4TH')
-			assert.equal(byId.get('monthly-weekday')?.detail, 'on the 4th Thu')
-			// Jun 25 2026 is the last Thursday, so "the last Thu" is also offered.
-			assert.equal(byId.get('monthly-last')?.recurrence?.toRRule(), 'FREQ=MONTHLY;BYDAY=-1TH')
-			assert.equal(byId.get('none')?.recurrence, undefined)
-		})
-
-		// RFC 5545 counts BYMONTHDAY and the nth weekday in Gregorian months, whichever calendar the language shows.
-		it('counts month days in ISO under a Persian display calendar', () => {
-			// Thu 1 Oct 2026 in Tehran is the 9th of Mehr 1405, the 2nd Thursday of Mehr but the 1st of October.
-			const mehr9 = DateTime.from(Date.parse('2026-10-01T09:00:00+03:30'), 'persian', 'Asia/Tehran')
-			assert.equal(mehr9.day, 9)
-			assert.equal(mehr9.recurrenceDate.toString(), '2026-10-01')
-			const byId = new Map(Recurrence.presets(mehr9).map(p => [p.id, p]))
-			assert.equal(byId.get('monthly-day')?.recurrence?.toRRule(), 'FREQ=MONTHLY;BYMONTHDAY=1')
-			assert.equal(byId.get('monthly-weekday')?.recurrence?.toRRule(), 'FREQ=MONTHLY;BYDAY=1TH')
-			assert.equal(byId.get('yearly')?.detail, 'on Oct 1')
-			// Thu 29 Oct 2026, the last Thursday of October, is the 7th of Aban, nowhere near the end of a Persian month.
-			const aban7 = DateTime.from(Date.parse('2026-10-29T09:00:00+03:30'), 'persian', 'Asia/Tehran')
-			assert.ok(Recurrence.presets(aban7).some(p => p.id === 'monthly-last'))
-		})
-
-		it('omits the "last weekday" preset when the date is not the last such weekday', () => {
-			// Thu 11 Jun 2026 is the 2nd Thursday, not the last.
-			const ids = Recurrence.presets(new DateTime('2026-06-11T09:00:00')).map(p => p.id)
-			assert.ok(!ids.includes('monthly-last'))
-			assert.ok(ids.includes('monthly-weekday'))
-		})
-	})
-
-	describe('matchedPresetId', () => {
-		const presets = Recurrence.presets(thu)
-
-		it('matches a preset regardless of part order', () => {
-			assert.equal(Recurrence.matchedPresetId(presets, Recurrence.fromRRule('BYDAY=TH;FREQ=WEEKLY')), 'weekly')
-			assert.equal(Recurrence.matchedPresetId(presets, undefined), 'none')
-		})
-
-		it('treats a bounded variant of a preset as custom (no preset match)', () => {
-			assert.equal(Recurrence.matchedPresetId(presets, Recurrence.fromRRule('FREQ=WEEKLY;BYDAY=TH;UNTIL=20260718T235959Z')), undefined)
+			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Thursday], until: untilDay('2026-07-18') }).format(), 'Every week on Thu until Jul 18')
+			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Daily, count: 10 }).format(), 'Every day, 10 times')
+			assert.equal(new Recurrence({ freq: RecurrenceFrequency.Daily, count: 1 }).format(), 'Every day, once')
 		})
 	})
 

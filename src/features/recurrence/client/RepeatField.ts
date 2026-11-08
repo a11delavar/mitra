@@ -3,10 +3,12 @@ import { type DateTime } from '@3mo/date-time'
 import type { SelectionGroupValue } from '#design'
 import type { Entry } from '#features/entries'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
-import { Recurrence, type RecurrencePreset } from '../Recurrence.js'
+import { Recurrence } from '../Recurrence.js'
 import { RecurrenceFrequency } from '../RecurrenceFrequency.js'
 import { RecurrenceEnd } from '../RecurrenceEnd.js'
 import { RecurrenceWeekday } from '../RecurrenceWeekday.js'
+import { RecurrencePreset } from './RecurrencePreset.js'
+
 type MenuItem = RecurrencePreset & { checked: boolean }
 type MonthlyOption = { key: string, label: string }
 
@@ -37,7 +39,7 @@ export class RepeatField extends Component {
 	}
 
 	private get currentLabel(): string {
-		return this.entry.recurrence ? this.entry.recurrence.describe(this.start) : t('Does not repeat')
+		return this.entry.recurrence ? this.entry.recurrence.format(this.start) : t('Does not repeat')
 	}
 
 	private commit(recurrence?: Recurrence) {
@@ -47,8 +49,8 @@ export class RepeatField extends Component {
 	}
 
 	private get menuItems(): Array<MenuItem> {
-		const presets = Recurrence.presets(this.start)
-		const selectedId = Recurrence.matchedPresetId(presets, this.entry.recurrence)
+		const presets = RecurrencePreset.of(this.start)
+		const selectedId = RecurrencePreset.chosenIn(presets, this.entry.recurrence)
 		const items: Array<MenuItem> = presets.map(preset => ({ ...preset, checked: preset.id === selectedId }))
 		if (this.entry.recurrence && !selectedId) {
 			items.push({ id: 'current', label: this.currentLabel, recurrence: this.entry.recurrence, checked: true })
@@ -118,16 +120,13 @@ export class RepeatField extends Component {
 	}
 
 	private get monthlyOptions(): Array<MonthlyOption> {
-		const weekday = RecurrenceWeekday.of(this.start)
-		const recurrenceDate = this.start.recurrenceDate
-		const weekOfMonth = Math.floor((recurrenceDate.day - 1) / 7) + 1
-		const monthday = this.draft!.bymonthday ?? recurrenceDate.day
+		const monthday = this.draft!.bymonthday ?? this.start.recurrenceDate.day
 		const options: Array<MonthlyOption> = [
 			{ key: 'monthday', label: t('the ${ordinal}', { ordinal: Recurrence.ordinal(monthday) }) },
-			this.monthlyOption(weekday.nth(weekOfMonth)),
+			this.monthlyOption(this.start.weekdayOfMonth),
 		]
-		if (recurrenceDate.day + 7 > recurrenceDate.daysInMonth) {
-			options.push(this.monthlyOption(weekday.nth(-1)))
+		if (this.start.lastWeekdayOfMonth) {
+			options.push(this.monthlyOption(RecurrenceWeekday.of(this.start).nth(-1)))
 		}
 		// A rule from elsewhere ("2nd Tue") may name a day the start doesn't.
 		const mode = this.monthlyMode

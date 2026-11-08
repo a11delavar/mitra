@@ -9,13 +9,6 @@ import { RecurrenceFrequency } from './RecurrenceFrequency.js'
 import { RecurrenceWeekday } from './RecurrenceWeekday.js'
 import './DateTime.recurrence.js'
 
-export interface RecurrencePreset {
-	readonly id: string
-	readonly label: string
-	readonly detail?: string
-	readonly recurrence?: Recurrence
-}
-
 /**
  * A recurring entry's rule (RFC 5545 RRULE) by the parts Mitra edits, the others kept as written. Kept free of ical.js,
  * so it bundles into the frontend.
@@ -105,7 +98,7 @@ export class Recurrence {
 	}
 
 	/** "Every week on Thu until Jul 18". */
-	describe(start?: DateTime): string {
+	format(start?: DateTime) {
 		const frequency = this.freq.format(this.every)
 		let rule: string
 		switch (this.freq) {
@@ -213,36 +206,8 @@ export class Recurrence {
 		}
 	}
 
-	static presets(start: DateTime): Array<RecurrencePreset> {
-		const weekday = RecurrenceWeekday.of(start)
-		const workdays = RecurrenceWeekday.workdays()
-		const on = String(t('on ${weekday}', { weekday: weekday.format() }))
-		const day = start.recurrenceDate
-		const dayOfMonth = day.day
-		const weekOfMonth = Math.floor((dayOfMonth - 1) / 7) + 1
-		const isLastWeekdayOfMonth = dayOfMonth + 7 > day.daysInMonth
-		return [
-			{ id: 'none', label: String(t('Does not repeat')) },
-			{ id: 'daily', label: RecurrenceFrequency.Daily.format(), recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }) },
-			{ id: 'weekday', label: String(t('Every weekday')), detail: `${workdays[0]!.format()} – ${workdays.at(-1)!.format()}`, recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: workdays }) },
-			{ id: 'weekly', label: RecurrenceFrequency.Weekly.format(), detail: on, recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [weekday] }) },
-			{ id: 'biweekly', label: RecurrenceFrequency.Weekly.format(2), detail: on, recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, interval: 2, byday: [weekday] }) },
-			{ id: 'monthly-day', label: RecurrenceFrequency.Monthly.format(), detail: Recurrence.monthDayLabel(dayOfMonth), recurrence: new Recurrence({ freq: RecurrenceFrequency.Monthly, bymonthday: dayOfMonth }) },
-			{ id: 'monthly-weekday', label: RecurrenceFrequency.Monthly.format(), detail: Recurrence.monthWeekdayLabel(weekday.nth(weekOfMonth)), recurrence: new Recurrence({ freq: RecurrenceFrequency.Monthly, byday: [weekday.nth(weekOfMonth)] }) },
-			...(isLastWeekdayOfMonth ? [{ id: 'monthly-last', label: RecurrenceFrequency.Monthly.format(), detail: Recurrence.monthWeekdayLabel(weekday.nth(-1)), recurrence: new Recurrence({ freq: RecurrenceFrequency.Monthly, byday: [weekday.nth(-1)] }) }] : []),
-			{ id: 'yearly', label: RecurrenceFrequency.Yearly.format(), detail: String(t('on ${date}', { date: start.formatAsAnniversary() })), recurrence: new Recurrence({ freq: RecurrenceFrequency.Yearly }) },
-		]
-	}
-
 	static defaultFor(start: DateTime): Recurrence {
 		return new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.of(start)] })
-	}
-
-	static matchedPresetId(presets: ReadonlyArray<RecurrencePreset>, recurrence?: Recurrence | null): string | undefined {
-		if (!recurrence) {
-			return 'none'
-		}
-		return presets.find(preset => preset.recurrence?.equals(recurrence))?.id
 	}
 
 	/** "Every week on Thu": the language joins the two, Chinese with 的 and no space. */

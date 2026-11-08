@@ -12,6 +12,10 @@ declare module '@3mo/date-time' {
 	interface DateTime {
 		/** The date a series starting here repeats by, in ISO. */
 		readonly recurrenceDate: Temporal.PlainDate
+		/** Which of its month's weekdays it is, as a monthly rule names it: the 2nd Tuesday is `2TU`. */
+		readonly weekdayOfMonth: RecurrenceWeekday
+		/** Whether it is its month's last day of its weekday, which a monthly rule names `-1TU`. */
+		readonly lastWeekdayOfMonth: boolean
 		/** That date as a yearly series names it, in Gregorian months ("Oct 1"). */
 		formatAsAnniversary(): string
 		/** The first day from here on that falls on one of `days`, where a recurrence on them first occurs: RFC 5545 counts the start as an occurrence whatever BYDAY says. */
@@ -22,6 +26,18 @@ declare module '@3mo/date-time' {
 Object.defineProperties(DateTime.prototype, {
 	recurrenceDate: {
 		get(this: DateTime) { return TimeZone.of(this.timeZone).dayOf(this) },
+	},
+	weekdayOfMonth: {
+		get(this: DateTime) {
+			const day = this.recurrenceDate
+			return RecurrenceWeekday.of(this).nth(Math.ceil(day.day / day.daysInWeek))
+		},
+	},
+	lastWeekdayOfMonth: {
+		get(this: DateTime) {
+			const day = this.recurrenceDate
+			return day.add({ weeks: 1 }).month !== day.month
+		},
 	},
 	formatAsAnniversary: {
 		value(this: DateTime) { return this.format({ month: 'short', day: 'numeric', calendar: 'gregory' }) },

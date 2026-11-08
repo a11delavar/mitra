@@ -89,7 +89,7 @@ export class TableRow {
 	get location() { return this.entry.location }
 	get repeats() {
 		const recurring = this.occurrence.recurringEntry ?? this.entry
-		return recurring.recurrence?.describe(recurring.start ?? recurring.due) ?? ''
+		return recurring.recurrence?.format(recurring.start ?? recurring.due) ?? ''
 	}
 
 	get durationMinutes() {
