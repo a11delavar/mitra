@@ -4,7 +4,7 @@ import type { EntryOccurrence } from '#features/recurrence'
 import { EntrySegments, type MonthWeek } from '#features/entries/client/EntrySegments.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { EntryConnections } from '#features/relations/client/EntryConnections.js'
-import { EntryDragController } from '#features/entries/client/EntryDragController.js'
+import { EntryGestureController } from '#features/entries/client/gestures/EntryGestureController.js'
 import { Routines, type RoutineRun } from '#features/routines/client/Routines.js'
 import { Availability } from '#features/availability/client/Availability.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
@@ -25,7 +25,7 @@ export class Weeks extends Component {
 	@property({ type: Array }) occurrences = new Array<EntryOccurrence>()
 
 	private readonly buffer: CalendarDatesController = new CalendarDatesController(this, { radiusDays: 77, shiftDays: 14 })
-	protected readonly entryDrag = new EntryDragController(this, 'month')
+	protected readonly entryGestures = new EntryGestureController(this, 'month')
 	protected readonly density = new WeeksDensityController(this)
 
 	private get bufferNavigatingDate(): DateTime { return this.buffer.navigatingDate }

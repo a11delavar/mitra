@@ -3,7 +3,7 @@ import { DateTime } from '@3mo/date-time'
 import type { EntryOccurrence } from '#features/recurrence'
 import { EntrySegments } from '#features/entries/client/EntrySegments.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
-import { EntryDragController } from '#features/entries/client/EntryDragController.js'
+import { EntryGestureController } from '#features/entries/client/gestures/EntryGestureController.js'
 import { Routines } from '#features/routines/client/Routines.js'
 import { Availability } from '#features/availability/client/Availability.js'
 import { CalendarDatesController, type CalendarMonth } from './CalendarDatesController.js'
@@ -22,7 +22,7 @@ export class Months extends Component {
 	@property({ type: Array }) occurrences = new Array<EntryOccurrence>()
 
 	private readonly buffer: CalendarDatesController = new CalendarDatesController(this, { radiusDays: 300, shiftDays: 28, triggerWeeks: 52, bufferWeeks: 520 })
-	protected readonly entryDrag = new EntryDragController(this, 'year')
+	protected readonly entryGestures = new EntryGestureController(this, 'year')
 	protected readonly density = new MonthsDensityController(this)
 
 	@query('.corner') private readonly corner?: HTMLElement

@@ -9,7 +9,7 @@ import { Availability } from './Availability.js'
  * One day's slice of an availability entry: a tinted window, with its label along the day's end edge if it says something. The editor sits in the window, which is what it anchors at: the element itself has no box.
  *
  * It has no click handler of its own: the grid captures the pointer for its create gesture, so
- * `EntryDragController` turns a tap into {@link open}, just as it does for chips. A drag across it still creates an entry.
+ * `EntryGestureController` turns a tap into {@link open}, just as it does for chips. A drag across it still creates an entry.
  */
 @component('mitra-availability-segment')
 export class AvailabilitySegment extends Component {

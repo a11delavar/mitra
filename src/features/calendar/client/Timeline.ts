@@ -9,7 +9,7 @@ import { Availability } from '#features/availability/client/Availability.js'
 import { type EntrySegment } from '#features/entries/client/EntrySegment.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { EntryConnections } from '#features/relations/client/EntryConnections.js'
-import { EntryDragController } from '#features/entries/client/EntryDragController.js'
+import { EntryGestureController } from '#features/entries/client/gestures/EntryGestureController.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { CalendarScrollController } from './CalendarScrollController.js'
 import { TimelineDensityController } from './TimelineDensityController.js'
@@ -45,7 +45,7 @@ export class Timeline extends Component {
 	@property({ type: Array }) occurrences = new Array<EntryOccurrence>()
 
 	private readonly dates: CalendarDatesController = new CalendarDatesController(this, { radiusDays: 120, shiftDays: 21 })
-	protected readonly entryDrag = new EntryDragController(this, 'timeline')
+	protected readonly entryGestures = new EntryGestureController(this, 'timeline')
 	protected readonly density = new TimelineDensityController(this)
 
 	private get days(): Array<DateTime> { return this.dates.days }

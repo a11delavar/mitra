@@ -47,6 +47,11 @@ export class EntrySpan {
 		return new EntrySpan({ ...this, start: start.add({ milliseconds: shift }), end: this.end?.add({ milliseconds: shift }) })
 	}
 
+	/** Moved by whole `days`, each date keeping its time of day. */
+	movedByDays(days: number) {
+		return new EntrySpan({ ...this, start: this.start?.add({ days }), end: this.end?.add({ days }) })
+	}
+
 	/** With one edge dragged to `dragged`, which may cross the other. */
 	resized(edge: 'start' | 'end', dragged: DateTime, minimumMinutes: number) {
 		const resized = this.allDay

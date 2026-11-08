@@ -10,7 +10,7 @@ import { type EntrySegment } from '#features/entries/client/EntrySegment.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { Availability } from '#features/availability/client/Availability.js'
 import { EntryConnections, type SegmentPlacement } from '#features/relations/client/EntryConnections.js'
-import { EntryDragController } from '#features/entries/client/EntryDragController.js'
+import { EntryGestureController } from '#features/entries/client/gestures/EntryGestureController.js'
 import { TimeZoneLaneController } from '#features/time/client/TimeZoneLaneController.js'
 import { TimeZones } from '#features/time/client/TimeZones.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
@@ -69,7 +69,7 @@ export class Days extends Component {
 		},
 	})
 
-	protected readonly entryDrag = new EntryDragController(this)
+	protected readonly entryGestures = new EntryGestureController(this)
 	protected readonly density = new DayDensityController(this)
 	protected readonly zoneLane: TimeZoneLaneController = new TimeZoneLaneController(this, settled => void this.scrolling.anchor().then(() => settled && this.updateLaneHeight()))
 	private get segments() { return EntrySegments.of(Availability.outside(this.occurrences), this.dates.window.days) }

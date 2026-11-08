@@ -6,7 +6,7 @@ import { Calendars } from '#features/sources/client/Calendars.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js'
 import { EntrySegments } from '#features/entries/client/EntrySegments.js'
-import { EntryDragController } from '#features/entries/client/EntryDragController.js'
+import { EntryGestureController } from '#features/entries/client/gestures/EntryGestureController.js'
 import type { EntryOccurrence } from '#features/recurrence'
 import type { EntrySegmentComponent } from '#features/entries/client/EventSegment.js'
 
@@ -94,7 +94,7 @@ export class Planning extends Component {
 			this.held = { occurrence, segment, bounds: section.getBoundingClientRect() }
 			return
 		}
-		EntryDragController.beginExternal(EntryStore.editable(occurrence), segment, this, e)
+		EntryGestureController.beginExternal(EntryStore.editable(occurrence), segment, this, e)
 	}
 
 	/** `from` and `to` index into {@link unscheduled}. */
@@ -120,7 +120,7 @@ export class Planning extends Component {
 		}
 		this.held = undefined
 		this.reorder.abandon()
-		EntryDragController.beginExternal(EntryStore.editable(held.occurrence), held.segment, this, e, { held: true })
+		EntryGestureController.beginExternal(EntryStore.editable(held.occurrence), held.segment, this, e, { held: true })
 	}
 
 	private static near(bounds: DOMRect, e: PointerEvent) {
