@@ -57,6 +57,13 @@ describe('TableRow', () => {
 		assert.equal(TableRow.for(shown(task({ start: undefined, end: undefined }))).durationMinutes, undefined)
 	})
 
+	it('reads the duration as days, hours and minutes, an all-day span across a DST change as whole days', () => {
+		const format = (parts: { days?: number, hours?: number, minutes?: number }) => new Intl.DurationFormat(Localizer.locales.current, { style: 'narrow' }).format(parts)
+		assert.equal(TableRow.for(shown(entry({ end: day.add({ days: 1, hours: 11, minutes: 30 }) }))).duration, format({ days: 1, hours: 2, minutes: 30 }))
+		const start = DateTime.from(Date.parse('2026-10-23T22:00:00Z'), 'iso8601', 'Europe/Berlin')
+		assert.equal(TableRow.for(shown(entry({ allDay: true, start, end: start.add({ days: 2 }) }))).duration, format({ days: 2 }))
+	})
+
 	it('takes the first line of the description', () => {
 		assert.equal(TableRow.for(shown(entry({ description: '\n  \nBring the slides\nand the cable' }))).description, 'Bring the slides')
 	})

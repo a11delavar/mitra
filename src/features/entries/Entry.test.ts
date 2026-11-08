@@ -763,19 +763,6 @@ describe('Entry', () => {
 		})
 	})
 
-	describe('duration', () => {
-		const format = (parts: { days?: number, hours?: number, minutes?: number }) => new Intl.DurationFormat(Localizer.locales.current, { style: 'narrow' }).format(parts)
-
-		it('splits a span into days, hours and minutes', () => {
-			assert.equal(new Entry({ start: at(0, 10), end: at(1, 12, 30) }).duration, format({ days: 1, hours: 2, minutes: 30 }))
-		})
-
-		it('reads an all-day span across a DST change as whole days', () => {
-			const start = DateTime.from(Date.parse('2026-10-23T22:00:00Z'), 'iso8601', 'Europe/Berlin')
-			assert.equal(new Entry({ allDay: true, start, end: start.add({ days: 2 }) }).duration, format({ days: 2 }))
-		})
-	})
-
 	describe('a moment', () => {
 		const point = () => new Entry({ type: EntryType.Task, heading: 'Take the pills', start: at(0, 10) })
 

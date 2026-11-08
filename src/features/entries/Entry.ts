@@ -431,16 +431,6 @@ export class Entry extends Entity implements Validatable {
 		return which === 'start' ? this.start : this.end ?? this.start
 	}
 
-	get duration() {
-		if (!this.start || !this.end) {
-			return undefined
-		}
-
-		// Calendar days, so an all-day span across a DST change still reads as whole days.
-		const { days, hours, minutes } = this.start.zonedDateTime.until(this.end.zonedDateTime, { largestUnit: 'days', smallestUnit: 'minutes' })
-		return new Intl.DurationFormat(Localizer.locales.current, { style: 'narrow' }).format({ days, hours, minutes })
-	}
-
 	/**
 	 * The entry holds an all-day date as the midnight that begins its day in `TimeZone.local`, and a floating time as the instant its
 	 * wall clock reads there; the wire carries the day's UTC midnight and the wall clock as if in UTC. The conversion reads

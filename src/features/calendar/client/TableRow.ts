@@ -92,6 +92,16 @@ export class TableRow {
 		return recurring.recurrence?.format(recurring.start ?? recurring.due) ?? ''
 	}
 
+	/** How long it lasts, in calendar days, so an all-day span across a DST change still reads as whole days. */
+	get duration() {
+		const { start, end } = this.occurrence
+		if (!start || !end) {
+			return undefined
+		}
+		const { days, hours, minutes } = start.zonedDateTime.until(end.zonedDateTime, { largestUnit: 'days', smallestUnit: 'minutes' })
+		return new Intl.DurationFormat(Localizer.locales.current, { style: 'narrow' }).format({ days, hours, minutes })
+	}
+
 	get durationMinutes() {
 		const { start, end } = this.occurrence
 		return !start || !end ? undefined : Math.round((end.valueOf() - start.valueOf()) / 60_000)

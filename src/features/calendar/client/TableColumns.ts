@@ -92,7 +92,7 @@ export const tableColumns = (): Array<DataGridColumn<TableRow>> => [
 		`,
 	}),
 	column('statusRank', t('Status'), { getContentTemplate: (_, row) => status(row) }),
-	column('durationMinutes', t('Duration'), { alignment: 'end', hidden: true, getContentTemplate: (_, row) => text(row.entry.duration) }),
+	column('durationMinutes', t('Duration'), { alignment: 'end', hidden: true, getContentTemplate: (_, row) => text(row.duration) }),
 	column('typeKey', t('Type'), { hidden: true, getContentTemplate: (_, row) => text(row.entry.type.format()) }),
 	column('location', t('Location'), { getContentTemplate: (_, row) => location(row.location) }),
 	column('repeats', t('Repeats'), { hidden: true }),
