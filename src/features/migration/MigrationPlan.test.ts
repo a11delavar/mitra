@@ -5,7 +5,7 @@ import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { Source } from '#features/sources'
 import { IntegrationCapabilities, IntegrationOwnership } from '#integrations'
 import { revive, wireOf } from '#infrastructure/model/wire.testing.js'
-import { MigrationOutcome, MigrationPlan, MigrationVerdict } from './MigrationPlan.js'
+import { MigrationOutcome, MigrationPlan, MigrationVerdict, MigrationBlocker, MigrationLoss } from './MigrationPlan.js'
 
 /** `target` as a calendar of an integration allowing `capabilities` and holding what `ownership` says. */
 const into = (target: Source, capabilities: IntegrationCapabilities, ownership: IntegrationOwnership) => Object.assign(target, {
@@ -13,38 +13,38 @@ const into = (target: Source, capabilities: IntegrationCapabilities, ownership: 
 })
 
 const clean = () => new MigrationVerdict({ entryId: 'a', heading: 'Clean' })
-const lossy = (...losses: Array<'reminders' | 'location'>) => new MigrationVerdict({ entryId: 'b', heading: 'Lossy', losses })
-const blocked = (blocker: 'participants' | 'recurrence', occurrences?: number) =>
+const lossy = (...losses: Array<MigrationLoss>) => new MigrationVerdict({ entryId: 'b', heading: 'Lossy', losses })
+const blocked = (blocker: MigrationBlocker, occurrences?: number) =>
 	new MigrationVerdict({ entryId: 'c', heading: 'Blocked', blockers: [blocker], occurrences })
 
 describe('MigrationVerdict', () => {
 	it('is clean only with nothing to report', () => {
 		assert.equal(clean().clean, true)
-		assert.equal(lossy('reminders').clean, false)
-		assert.equal(blocked('participants').clean, false)
+		assert.equal(lossy(MigrationLoss.Reminders).clean, false)
+		assert.equal(blocked(MigrationBlocker.Participants).clean, false)
 	})
 
 	it('is flattenable only when recurrence is the blocker AND the rule expanded', () => {
-		assert.equal(blocked('recurrence', 12).flattenable, true)
-		assert.equal(blocked('recurrence').flattenable, false)
-		assert.equal(blocked('participants', 12).flattenable, false)
+		assert.equal(blocked(MigrationBlocker.Recurrence, 12).flattenable, true)
+		assert.equal(blocked(MigrationBlocker.Recurrence).flattenable, false)
+		assert.equal(blocked(MigrationBlocker.Participants, 12).flattenable, false)
 	})
 
 	it('lifts the recurrence blocker under flattening, and nothing else', () => {
-		assert.equal(blocked('recurrence', 3).moves(false), false)
-		assert.equal(blocked('recurrence', 3).moves(true), true)
-		assert.equal(blocked('participants').moves(true), false)
+		assert.equal(blocked(MigrationBlocker.Recurrence, 3).moves(false), false)
+		assert.equal(blocked(MigrationBlocker.Recurrence, 3).moves(true), true)
+		assert.equal(blocked(MigrationBlocker.Participants).moves(true), false)
 	})
 
 	it('counts a flattened series as the entries it becomes, and everything else as one', () => {
-		assert.equal(blocked('recurrence', 3).creations(true), 3)
-		assert.equal(blocked('recurrence', 3).creations(false), 0)
+		assert.equal(blocked(MigrationBlocker.Recurrence, 3).creations(true), 3)
+		assert.equal(blocked(MigrationBlocker.Recurrence, 3).creations(false), 0)
 		assert.equal(clean().creations(false), 1)
 	})
 })
 
 describe('MigrationPlan', () => {
-	const plan = () => new MigrationPlan({ total: 10, verdicts: [lossy('reminders'), lossy('reminders', 'location'), blocked('recurrence', 4)] })
+	const plan = () => new MigrationPlan({ total: 10, verdicts: [lossy(MigrationLoss.Reminders), lossy(MigrationLoss.Reminders, MigrationLoss.Location), blocked(MigrationBlocker.Recurrence, 4)] })
 
 	it('reads the clean entries as the remainder, since they are never listed', () => {
 		assert.equal(plan().cleanCount, 7)
@@ -58,8 +58,8 @@ describe('MigrationPlan', () => {
 	})
 
 	it('tallies each loss and each remaining reason, most-common first', () => {
-		assert.deepEqual(plan().losses, [['reminders', 2], ['location', 1]])
-		assert.deepEqual(plan().blockers(false), [['recurrence', 1]])
+		assert.deepEqual(plan().losses, [[MigrationLoss.Reminders, 2], [MigrationLoss.Location, 1]])
+		assert.deepEqual(plan().blockers(false), [[MigrationBlocker.Recurrence, 1]])
 		assert.deepEqual(plan().blockers(true), [])
 	})
 })
@@ -71,8 +71,8 @@ describe('MigrationVerdict.of', () => {
 
 	it('loses the attachments where the target holds none, and where it holds them but takes none', () => {
 		const assess = (capabilities: IntegrationCapabilities, ownership: IntegrationOwnership) => MigrationVerdict.of(attached(), into(target(), capabilities, ownership)).losses
-		assert.deepEqual(assess(new IntegrationCapabilities(), new IntegrationOwnership()), ['attachments'])
-		assert.deepEqual(assess(new IntegrationCapabilities({ entries: { attach: false } }), holding()), ['attachments'])
+		assert.deepEqual(assess(new IntegrationCapabilities(), new IntegrationOwnership()), [MigrationLoss.Attachments])
+		assert.deepEqual(assess(new IntegrationCapabilities({ entries: { attach: false } }), holding()), [MigrationLoss.Attachments])
 		assert.deepEqual(assess(new IntegrationCapabilities(), holding()), [])
 	})
 
@@ -80,7 +80,7 @@ describe('MigrationVerdict.of', () => {
 		const task = (init: Partial<Entry>) => new Entry({ id: 't', sourceId: 'home', type: EntryType.Task, heading: 'Paint', ...init })
 		const at = (iso: string) => new Date(iso) as never
 		const losesEnd = (entry: Entry, ownership = new IntegrationOwnership({ allDay: 'upstream' })) =>
-			MigrationVerdict.of(entry, into(new Source({ id: 'away', uri: 'away', entryTypes: [EntryType.Task], name: 'Away' }), new IntegrationCapabilities(), ownership)).losses.includes('end')
+			MigrationVerdict.of(entry, into(new Source({ id: 'away', uri: 'away', entryTypes: [EntryType.Task], name: 'Away' }), new IntegrationCapabilities(), ownership)).losses.includes(MigrationLoss.End)
 		assert.equal(losesEnd(task({ start: at('2026-11-02T09:00:00Z'), end: at('2026-11-02T10:00:00Z') })), true)
 		assert.equal(losesEnd(task({ start: at('2026-11-02T09:00:00Z') })), false, 'a moment has none to lose')
 		assert.equal(losesEnd(task({ allDay: true, start: at('2026-11-02T00:00:00Z'), end: at('2026-11-03T00:00:00Z') })), false, 'a single day stays one')
@@ -91,7 +91,7 @@ describe('MigrationVerdict.of', () => {
 	it('fixes a floating time to a zone where the target keeps none, and names no zone it never had', () => {
 		const pill = (timeZone: EntryTimeZone) => new Entry({ id: 'p', sourceId: 'home', type: EntryType.Event, heading: 'Pill', start: new Date('2026-11-02T08:00:00Z') as never, timeZone })
 		const losses = (entry: Entry, floating: boolean) => MigrationVerdict.of(entry, into(target(), new IntegrationCapabilities({ entries: { floating } }), new IntegrationOwnership({ timeZone: 'upstream' }))).losses
-		assert.deepEqual(losses(pill(EntryTimeZone.floating), false), ['floating'])
+		assert.deepEqual(losses(pill(EntryTimeZone.floating), false), [MigrationLoss.Floating])
 		assert.deepEqual(losses(pill(EntryTimeZone.floating), true), [])
 		assert.deepEqual(losses(pill(EntryTimeZone.parse('Europe/Berlin')!), false), [], 'a time in a zone keeps it')
 	})
@@ -99,14 +99,14 @@ describe('MigrationVerdict.of', () => {
 	it('loses the cancellation of an event where the target holds no cancelled event', () => {
 		const cancelled = new Entry({ id: 'c', sourceId: 'home', type: EntryType.Event, heading: 'Volleyball', status: EntryStatus.Cancelled })
 		const assess = (capabilities: IntegrationCapabilities) => MigrationVerdict.of(cancelled, into(target(), capabilities, new IntegrationOwnership())).losses
-		assert.deepEqual(assess(new IntegrationCapabilities({ entries: { statuses: [] } })), ['cancelledStatus'])
+		assert.deepEqual(assess(new IntegrationCapabilities({ entries: { statuses: [] } })), [MigrationLoss.CancelledStatus])
 		assert.deepEqual(assess(new IntegrationCapabilities()), [])
 	})
 })
 
 describe('the wire', () => {
 	it('revives a plan into its class, verdicts included', () => {
-		const revived = revive<MigrationPlan>(wireOf(new MigrationPlan({ total: 2, verdicts: [blocked('recurrence', 4)] })))
+		const revived = revive<MigrationPlan>(wireOf(new MigrationPlan({ total: 2, verdicts: [blocked(MigrationBlocker.Recurrence, 4)] })))
 		assert.ok(revived instanceof MigrationPlan)
 		assert.ok(revived.verdicts[0] instanceof MigrationVerdict)
 		assert.equal(revived.movingCount(true), 2)

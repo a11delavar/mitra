@@ -12,7 +12,7 @@ import { Participants } from '#features/participants/Participant.js'
 import { EntryReminders } from '#features/reminders/EntryReminders.js'
 import { EntryRelation, EntryRelations, RelationGraph, RelationType } from '#features/relations'
 import { NotificationSubscription } from '#features/reminders/NotificationSubscription.js'
-import { MigrationVerdict } from '#features/migration/MigrationPlan.js'
+import { MigrationVerdict, MigrationBlocker } from '#features/migration/MigrationPlan.js'
 import { Integration, registerEngine, type SourceSyncEngine, type IntegrationCapabilities } from '#integrations'
 import { CalDAV } from '#integrations/caldav/CalDAV.js'
 import { MitraCalendar } from '#integrations/mitra/MitraCalendar.js'
@@ -162,7 +162,7 @@ describe('moving availability to a calendar', () => {
 
 	it('is blocked where it does not, even when flattening would get the series in', () => {
 		const verdict = assess(new Notion().capabilities)
-		assert.equal(verdict.blockers.includes('availability'), true)
+		assert.equal(verdict.blockers.includes(MigrationBlocker.Availability), true)
 		assert.equal(verdict.moves(true), false)
 	})
 })

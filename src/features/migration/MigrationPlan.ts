@@ -1,20 +1,129 @@
+import { converter, type Converter } from '@a11d/converter'
+import { z } from 'zod'
 import type { Source } from '#features/sources'
-import { Entry, EntryStatus, whereUnsupported } from '#features/entries'
+import { Entry, EntryStatus, whereUnsupported, type UnsupportedField } from '#features/entries'
 import { model } from '#infrastructure/model'
 
-/** What keeps an entry out of a calendar altogether. */
-export type MigrationBlocker = 'availability' | 'recurrence' | 'occurrence' | 'participants' | 'transparency' | 'visibility' | 'percentComplete'
+/** Each by its name on the wire, one instance a name, so a tally counts them by identity. */
+const named = <T extends { readonly name: string }>(all: () => ReadonlyArray<T>): Converter<ReadonlyArray<string> | undefined, Array<T> | undefined> => ({
+	schema: z.array(z.string()),
+	construct: names => names?.flatMap(name => all().filter(each => each.name === name)),
+	deconstruct: values => values?.map(value => value.name),
+})
 
-/** What an entry loses on arriving in a calendar that does not keep it. */
-export type MigrationLoss = 'reminders' | 'location' | 'description' | 'attachments' | 'end' | 'due' | 'estimate' | 'timeZone' | 'floating' | 'allDay' | 'doingStatus' | 'cancelledStatus' | 'type'
+/** What keeps an entry out of a calendar altogether, told as how many it keeps out. */
+export class MigrationBlocker {
+	static readonly Availability = new MigrationBlocker('availability')
+	static readonly Recurrence = new MigrationBlocker('recurrence')
+	static readonly Occurrence = new MigrationBlocker('occurrence')
+	static readonly Participants = new MigrationBlocker('participants')
+	static readonly Transparency = new MigrationBlocker('transparency')
+	static readonly Visibility = new MigrationBlocker('visibility')
+	static readonly PercentComplete = new MigrationBlocker('percentComplete')
+
+	static readonly all: ReadonlyArray<MigrationBlocker> = [
+		MigrationBlocker.Availability, MigrationBlocker.Recurrence, MigrationBlocker.Occurrence, MigrationBlocker.Participants,
+		MigrationBlocker.Transparency, MigrationBlocker.Visibility, MigrationBlocker.PercentComplete,
+	]
+
+	static readonly converter = named(() => MigrationBlocker.all)
+
+	/** The blocker a field a calendar does not support declares, by its name. */
+	static of(field: UnsupportedField) {
+		return MigrationBlocker.all.find(blocker => blocker.name === field.name)!
+	}
+
+	private constructor(readonly name: string) { }
+
+	format(count: number) {
+		return String(this.phrase(count))
+	}
+
+	private phrase(count: number) {
+		switch (this) {
+			case MigrationBlocker.Availability: return t('${count:pluralityNumber} are availability', { count })
+			case MigrationBlocker.Recurrence: return t('${count:pluralityNumber} repeat', { count })
+			case MigrationBlocker.Occurrence: return t('${count:pluralityNumber} belong to a series with edited occurrences', { count })
+			case MigrationBlocker.Participants: return t('${count:pluralityNumber} have participants', { count })
+			case MigrationBlocker.Transparency: return t('${count:pluralityNumber} are marked as free', { count })
+			case MigrationBlocker.Visibility: return t('${count:pluralityNumber} carry a visibility', { count })
+			case MigrationBlocker.PercentComplete: return t('${count:pluralityNumber} carry a progress percentage', { count })
+			default: return this.name
+		}
+	}
+
+	toString() {
+		return this.name
+	}
+}
+
+/** What an entry loses on arriving in a calendar that does not keep it, told as how many lose it there. */
+export class MigrationLoss {
+	static readonly Reminders = new MigrationLoss('reminders')
+	static readonly Location = new MigrationLoss('location')
+	static readonly Description = new MigrationLoss('description')
+	static readonly Attachments = new MigrationLoss('attachments')
+	static readonly End = new MigrationLoss('end')
+	static readonly Due = new MigrationLoss('due')
+	static readonly Estimate = new MigrationLoss('estimate')
+	static readonly TimeZone = new MigrationLoss('timeZone')
+	static readonly Floating = new MigrationLoss('floating')
+	static readonly AllDay = new MigrationLoss('allDay')
+	static readonly DoingStatus = new MigrationLoss('doingStatus')
+	static readonly CancelledStatus = new MigrationLoss('cancelledStatus')
+	static readonly Type = new MigrationLoss('type')
+
+	static readonly all: ReadonlyArray<MigrationLoss> = [
+		MigrationLoss.Reminders, MigrationLoss.Location, MigrationLoss.Description, MigrationLoss.Attachments, MigrationLoss.End,
+		MigrationLoss.Due, MigrationLoss.Estimate, MigrationLoss.TimeZone, MigrationLoss.Floating, MigrationLoss.AllDay,
+		MigrationLoss.DoingStatus, MigrationLoss.CancelledStatus, MigrationLoss.Type,
+	]
+
+	static readonly converter = named(() => MigrationLoss.all)
+
+	/** The loss a field a calendar does not support declares, by its name. */
+	static of(field: UnsupportedField) {
+		return MigrationLoss.all.find(loss => loss.name === field.name)!
+	}
+
+	private constructor(readonly name: string) { }
+
+	/** How many lose it in `target`, whose default type a converted entry takes. */
+	format(count: number, target: Source) {
+		return String(this.phrase(count, target))
+	}
+
+	private phrase(count: number, target: Source) {
+		switch (this) {
+			case MigrationLoss.Reminders: return t('${count:pluralityNumber} lose their reminders', { count })
+			case MigrationLoss.Location: return t('${count:pluralityNumber} lose their location', { count })
+			case MigrationLoss.Description: return t('${count:pluralityNumber} lose their description', { count })
+			case MigrationLoss.Attachments: return t('${count:pluralityNumber} lose their attachments', { count })
+			case MigrationLoss.End: return t('${count:pluralityNumber} lose their end date', { count })
+			case MigrationLoss.Due: return t('${count:pluralityNumber} lose their due date', { count })
+			case MigrationLoss.Estimate: return t('${count:pluralityNumber} lose their estimate', { count })
+			case MigrationLoss.TimeZone: return t('${count:pluralityNumber} lose their time zone', { count })
+			case MigrationLoss.Floating: return t('${count:pluralityNumber} get a fixed time zone', { count })
+			case MigrationLoss.AllDay: return t('${count:pluralityNumber} stop being all-day', { count })
+			case MigrationLoss.DoingStatus: return t('${count:pluralityNumber} go back to To Do', { count })
+			case MigrationLoss.CancelledStatus: return t('${count:pluralityNumber} lose their cancelled status', { count })
+			case MigrationLoss.Type: return t('${count:pluralityNumber} become ${type}', { count, type: target.defaultEntryType.formatPlural() })
+			default: return this.name
+		}
+	}
+
+	toString() {
+		return this.name
+	}
+}
 
 /** What moving one entry into a calendar would do to it: what blocks it, what it loses there. */
 @model('MigrationVerdict')
 export class MigrationVerdict {
 	entryId = ''
 	heading = ''
-	blockers = new Array<MigrationBlocker>()
-	losses = new Array<MigrationLoss>()
+	@converter(MigrationBlocker.converter) blockers = new Array<MigrationBlocker>()
+	@converter(MigrationLoss.converter) losses = new Array<MigrationLoss>()
 	/** How many dates a flattened series would become; none where it cannot be expanded. */
 	occurrences?: number
 
@@ -33,33 +142,33 @@ export class MigrationVerdict {
 		const losses = new Array<MigrationLoss>()
 
 		if (entry.type.isAvailability && !capabilities.availability) {
-			blockers.push('availability')
+			blockers.push(MigrationBlocker.Availability)
 		}
 		if (occurrence) {
-			blockers.push('occurrence')
+			blockers.push(MigrationBlocker.Occurrence)
 		}
 		for (const field of whereUnsupported.fieldsOf(Entry)) {
 			if (field.move === 'block' && field.unsupportedIn(target, entry)) {
-				blockers.push(field.name as MigrationBlocker)
+				blockers.push(MigrationBlocker.of(field))
 			} else if (field.move === 'drop' && field.unsupportedIn(target, entry)) {
-				losses.push(field.name as MigrationLoss)
+				losses.push(MigrationLoss.of(field))
 			}
 		}
 		// A calendar may keep attachments yet drop those written to it, as Google does.
 		if (entry.attachments.length && target.ownership.holds('attachments') && !capabilities.entries.attach) {
-			losses.push('attachments')
+			losses.push(MigrationLoss.Attachments)
 		}
 		if (entry.floating && !capabilities.entries.floating) {
-			losses.push('floating')
+			losses.push(MigrationLoss.Floating)
 		}
 		if (entry.status === EntryStatus.Doing && !capabilities.entries.statuses.includes(EntryStatus.Doing)) {
-			losses.push('doingStatus')
+			losses.push(MigrationLoss.DoingStatus)
 		}
 		if (entry.status === EntryStatus.Cancelled && !capabilities.entries.statuses.includes(EntryStatus.Cancelled)) {
-			losses.push('cancelledStatus')
+			losses.push(MigrationLoss.CancelledStatus)
 		}
 		if (!target.supportsEntryType(entry.type)) {
-			losses.push('type')
+			losses.push(MigrationLoss.Type)
 		}
 
 		return new MigrationVerdict({
@@ -67,7 +176,7 @@ export class MigrationVerdict {
 			heading: entry.heading,
 			blockers,
 			losses,
-			occurrences: !blockers.includes('recurrence') ? undefined : occurrences?.() ?? undefined,
+			occurrences: !blockers.includes(MigrationBlocker.Recurrence) ? undefined : occurrences?.() ?? undefined,
 		})
 	}
 
@@ -78,11 +187,11 @@ export class MigrationVerdict {
 
 	/** True if entry is blocked only by recurrence and can be flattened. */
 	get flattenable() {
-		return this.occurrences !== undefined && this.blockers.includes('recurrence')
+		return this.occurrences !== undefined && this.blockers.includes(MigrationBlocker.Recurrence)
 	}
 
 	blockersUnder(flatten: boolean) {
-		return flatten && this.flattenable ? this.blockers.filter(blocker => blocker !== 'recurrence') : this.blockers
+		return flatten && this.flattenable ? this.blockers.filter(blocker => blocker !== MigrationBlocker.Recurrence) : this.blockers
 	}
 
 	moves(flatten: boolean) {
@@ -133,38 +242,6 @@ export class MigrationPlan {
 	/** Tally of blockers across verdicts, sorted descending. */
 	blockers(flatten: boolean) {
 		return MigrationPlan.tally(this.blocked(flatten).flatMap(verdict => verdict.blockersUnder(flatten)))
-	}
-
-	/** Human-readable label for a field loss count (frontend-only). */
-	static lossLabel(loss: MigrationLoss, count: number, target: Source): string {
-		switch (loss) {
-			case 'reminders': return t('${count:pluralityNumber} lose their reminders', { count })
-			case 'location': return t('${count:pluralityNumber} lose their location', { count })
-			case 'description': return t('${count:pluralityNumber} lose their description', { count })
-			case 'attachments': return t('${count:pluralityNumber} lose their attachments', { count })
-			case 'end': return t('${count:pluralityNumber} lose their end date', { count })
-			case 'due': return t('${count:pluralityNumber} lose their due date', { count })
-			case 'estimate': return t('${count:pluralityNumber} lose their estimate', { count })
-			case 'timeZone': return t('${count:pluralityNumber} lose their time zone', { count })
-			case 'floating': return t('${count:pluralityNumber} get a fixed time zone', { count })
-			case 'allDay': return t('${count:pluralityNumber} stop being all-day', { count })
-			case 'doingStatus': return t('${count:pluralityNumber} go back to To Do', { count })
-			case 'cancelledStatus': return t('${count:pluralityNumber} lose their cancelled status', { count })
-			case 'type': return t('${count:pluralityNumber} become ${type}', { count, type: target.defaultEntryType.formatPlural() })
-		}
-	}
-
-	/** Human-readable label for a blocker count (frontend-only). */
-	static blockerLabel(blocker: MigrationBlocker, count: number): string {
-		switch (blocker) {
-			case 'availability': return t('${count:pluralityNumber} are availability', { count })
-			case 'recurrence': return t('${count:pluralityNumber} repeat', { count })
-			case 'occurrence': return t('${count:pluralityNumber} belong to a series with edited occurrences', { count })
-			case 'participants': return t('${count:pluralityNumber} have participants', { count })
-			case 'transparency': return t('${count:pluralityNumber} are marked as free', { count })
-			case 'visibility': return t('${count:pluralityNumber} carry a visibility', { count })
-			case 'percentComplete': return t('${count:pluralityNumber} carry a progress percentage', { count })
-		}
 	}
 
 	private static tally<T>(values: ReadonlyArray<T>) {

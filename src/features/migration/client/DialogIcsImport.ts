@@ -371,14 +371,14 @@ export class DialogIcsImport extends DialogComponent<{ readonly fileName: string
 				${plan.losses.map(([loss, count]) => html`
 					<li class="loss">
 						<mitra-icon icon="minus"></mitra-icon>
-						${MigrationPlan.lossLabel(loss, count, this.target!)}
+						${loss.format(count, this.target!)}
 					</li>
 				`)}
 				${plan.blockers(false).map(([blocker, count]) => html`
 					<li class="blocked">
 						<mitra-icon icon="ban"></mitra-icon>
 						<span>
-							${t('${reason}, left out', { reason: MigrationPlan.blockerLabel(blocker, count) })}
+							${t('${reason}, left out', { reason: blocker.format(count) })}
 							${!blocked.length ? html.nothing : this.namesTemplate(blocked)}
 						</span>
 					</li>

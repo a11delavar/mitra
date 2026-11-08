@@ -17,6 +17,7 @@ import { CalDAV } from '#integrations/caldav/CalDAV.js'
 import { GoogleCalendar } from '#integrations/google/GoogleCalendar.js'
 import { AppleCalendar } from '#integrations/apple/AppleCalendar.js'
 import { entity, children } from '#infrastructure/model'
+import { MigrationBlocker, MigrationLoss } from '../MigrationPlan.js'
 import { SourceMigration, MigrationRefused } from './SourceMigration.js'
 
 type DateTime = import('@3mo/date-time').DateTime
@@ -123,7 +124,7 @@ describe('SourceMigration', () => {
 			assert.equal(plan.total, 2)
 			assert.equal(plan.cleanCount, 1)
 			assert.deepEqual(plan.verdicts.map(verdict => verdict.heading), ['noisy'])
-			assert.deepEqual(plan.losses, [['reminders', 1]])
+			assert.deepEqual(plan.losses, [[MigrationLoss.Reminders, 1]])
 		})
 
 		it('names a due and an estimate the target cannot keep', async () => {
@@ -135,7 +136,7 @@ describe('SourceMigration', () => {
 
 			const plan = (await SourceMigration.of(em, user, origin.id, { targetSourceId: target.id })).plan()
 
-			assert.deepEqual(plan.losses.map(([loss]) => loss).sort(), ['due', 'estimate'])
+			assert.deepEqual(plan.losses.map(([loss]) => loss.name).sort(), ['due', 'estimate'])
 		})
 
 		it('refuses what the per-entry route would refuse, one line per reason', async () => {
@@ -149,7 +150,7 @@ describe('SourceMigration', () => {
 			const plan = (await SourceMigration.of(em, user, origin.id, { targetSourceId: target.id })).plan()
 
 			assert.equal(plan.movingCount(false), 0)
-			assert.deepEqual(plan.blockers(false).map(([blocker]) => blocker).sort(), ['participants', 'recurrence'])
+			assert.deepEqual(plan.blockers(false).map(([blocker]) => blocker.name).sort(), ['participants', 'recurrence'])
 		})
 
 		it('counts what a series would become, so the flatten choice can state its price', async () => {
@@ -173,7 +174,7 @@ describe('SourceMigration', () => {
 			const plan = (await SourceMigration.of(em, user, origin.id, { targetSourceId: target.id })).plan()
 
 			assert.equal(plan.movingCount(false), 0)
-			assert.deepEqual(plan.blockers(false), [['occurrence', 2]])
+			assert.deepEqual(plan.blockers(false), [[MigrationBlocker.Occurrence, 2]])
 		})
 
 		it('reads a full-capability target as no reason to hold anything back', async () => {

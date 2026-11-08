@@ -17,6 +17,7 @@ import { IcsSubscription } from '#integrations/ics/IcsSubscription.js'
 import { Notion } from '#integrations/notion/Notion.js'
 import { Tempo } from '#integrations/tempo/Tempo.js'
 import { MitraCalendar } from '#integrations/mitra/MitraCalendar.js'
+import { MigrationBlocker, MigrationLoss } from '../MigrationPlan.js'
 import { MigrationRefused } from './SourceMigration.js'
 import { IcsImport } from './IcsImport.js'
 
@@ -196,7 +197,7 @@ describe('Calendar file import', () => {
 
 		const plan = icsImport.plan()
 		assert.equal(plan.total, 1)
-		assert.deepEqual(plan.verdicts[0]!.blockers, ['occurrence'])
+		assert.deepEqual(plan.verdicts[0]!.blockers, [MigrationBlocker.Occurrence])
 
 		const outcome = await icsImport.run()
 		assert.equal(outcome.created, 0)
@@ -209,7 +210,7 @@ describe('Calendar file import', () => {
 		const { user, source } = await seed(em, { entryTypes: [EntryType.Event] })
 		const icsImport = await IcsImport.of(em, user, source.id, file(TASK))
 
-		assert.deepEqual(icsImport.plan().verdicts[0]!.losses, ['type'])
+		assert.deepEqual(icsImport.plan().verdicts[0]!.losses, [MigrationLoss.Type])
 
 		await icsImport.run()
 		const [entry] = await em.find(Entry, { sourceId: source.id })

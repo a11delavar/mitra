@@ -441,7 +441,7 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 				${plan.losses.map(([loss, count]) => html`
 					<li class="loss">
 						<mitra-icon icon="minus"></mitra-icon>
-						${MigrationPlan.lossLabel(loss, count, this.target!)}
+						${loss.format(count, this.target!)}
 					</li>
 				`)}
 				${plan.blockers(flatten).map(([blocker, count]) => html`
@@ -449,8 +449,8 @@ export class DialogSourceMigration extends DialogComponent<{ readonly source: So
 						<mitra-icon icon="ban"></mitra-icon>
 						<span>
 							${this.canMove
-								? t('${reason}, kept here', { reason: MigrationPlan.blockerLabel(blocker, count) })
-								: t('${reason}, left out', { reason: MigrationPlan.blockerLabel(blocker, count) })}
+								? t('${reason}, kept here', { reason: blocker.format(count) })
+								: t('${reason}, left out', { reason: blocker.format(count) })}
 							${!blocked.length ? html.nothing : this.namesTemplate(blocked)}
 						</span>
 					</li>
