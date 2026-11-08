@@ -39,7 +39,7 @@ export class EntrySegmentComponent extends Component {
 				}
 			})
 			if (!open && entry.blank) {
-				EntryStore.discardDraft()
+				EntryStore.pending.discardDraft()
 			}
 		},
 	}) open = false
@@ -102,8 +102,8 @@ export class EntrySegmentComponent extends Component {
 		this.toggleAttribute('data-routine', !!this.routine)
 		const recurring = this.segment!.occurrence.recurringEntry ?? entry
 		this.title = !this.routine ? '' : [entry.heading, recurring.recurrence?.describe(recurring.start ?? recurring.due)].filter(Boolean).join(' · ')
-		this.toggleAttribute('dragging', this.store.isDragging(entry) || this.store.isPreview(entry))
-		this.toggleAttribute('drag-source', this.store.isDragSource(entry))
+		this.toggleAttribute('dragging', this.store.pending.isDragging(entry) || this.store.pending.isPreview(entry))
+		this.toggleAttribute('drag-source', this.store.pending.isDragSource(entry))
 		const status = entry.status ?? (entry.type.isTask ? EntryStatus.ToDo : undefined)
 		status ? this.setAttribute('data-status', status.code) : this.removeAttribute('data-status')
 		if (entry.type.isTask) {

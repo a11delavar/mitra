@@ -30,7 +30,7 @@ export class CreateEntry extends Command {
 		}
 		calendar.navigatingDate = now
 		const draft = source.draft({ type: timelineTask ? EntryType.Task : source.defaultEntryType, start, end: start.add({ minutes: ScheduleDefaults.current.duration }), allDay: false })
-		EntryStore.upsertDraft(draft)
+		EntryStore.pending.upsertDraft(draft)
 		EntryEditorIntent.openDraft(draft)
 	}
 }

@@ -119,8 +119,8 @@ export class EntrySegments {
 			return kept.list
 		}
 		// A preview is an entry of its own, so the same members are the same overlay too.
-		const isOverlay = (segment: EntrySegment) => EntryStore.isPreview(segment.entry)
-		const list = [...EntrySegments.cluster(members.filter(segment => !isOverlay(segment))), ...members.filter(isOverlay)]
+		const previewed = (segment: EntrySegment) => EntryStore.pending.isPreview(segment.entry)
+		const list = [...EntrySegments.cluster(members.filter(segment => !previewed(segment))), ...members.filter(previewed)]
 		this.clustered.set(key, { members, list })
 		return list
 	}
@@ -229,7 +229,7 @@ export class EntrySegments {
 			if (!dates.length) {
 				continue
 			}
-			(EntryStore.isPreview(occurrence.entry) ? previewDates : datesByOccurrence).set(occurrence, dates)
+			(EntryStore.pending.isPreview(occurrence.entry) ? previewDates : datesByOccurrence).set(occurrence, dates)
 		}
 
 		const ordered = [...datesByOccurrence.keys()].sort(EntrySegments.laneOrder)
@@ -247,7 +247,7 @@ export class EntrySegments {
 			slots.set(occurrence, slot)
 		}
 
-		const dragged = EntryStore.dragSource
+		const dragged = EntryStore.pending.dragSource
 		const source = dragged && ordered.find(occurrence => occurrence.entry === dragged)
 		const vacatingSlot = source ? slots.get(source) : undefined
 		const vacating = new Set(source ? datesByOccurrence.get(source) ?? [] : [])

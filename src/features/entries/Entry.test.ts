@@ -27,6 +27,24 @@ describe('Entry', () => {
 		integration: { id: 'i', ownership, capabilitiesFor: (source: Source) => capabilities.in(source), canHold: (source: Source, type: EntryType) => source.supportsEntryType(type) } as never,
 	})
 
+	describe('editsOnlyThisOccurrence', () => {
+		const occurrence = (init?: Partial<Entry>) => new Entry({ id: 'r__1', recurringEntryId: 'r', type: EntryType.Task, heading: 'Water plants', start: day, end: day.add({ hours: 1 }), ...init })
+
+		it('reaches this occurrence alone where only its completion changed', () => {
+			const before = occurrence()
+			assert.equal(occurrence({ status: EntryStatus.Done }).editsOnlyThisOccurrence(before), true)
+		})
+
+		it('reaches this occurrence alone where an unscheduled one got its start', () => {
+			assert.equal(occurrence().editsOnlyThisOccurrence(occurrence({ start: undefined, end: undefined })), true)
+		})
+
+		it('asks where anything else changed, and never of an entry standing alone', () => {
+			assert.equal(occurrence({ heading: 'Water the plants' }).editsOnlyThisOccurrence(occurrence()), false)
+			assert.equal(new Entry({ id: 'e', start: day }).editsOnlyThisOccurrence(new Entry({ id: 'e' })), false)
+		})
+	})
+
 	describe('multiDay', () => {
 		it('is false within a single day', () => {
 			assert.equal(new Entry({ start: day.add({ hours: 9 }), end: day.add({ hours: 17 }) }).multiDay, false)

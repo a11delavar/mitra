@@ -492,7 +492,7 @@ export class Timeline extends Component {
 		const { entry } = occurrence
 		return entry.uid
 			? `${entry.uid}:${occurrence.recurrenceId?.valueOf() ?? ''}`
-			: occurrence.key ?? (EntryStore.isPreview(entry) ? 'preview' : 'draft')
+			: occurrence.key ?? (EntryStore.pending.isPreview(entry) ? 'preview' : 'draft')
 	}
 
 	private static withinRoutineHorizon(occurrences: ReadonlyArray<EntryOccurrence>): Array<EntryOccurrence> {

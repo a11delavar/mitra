@@ -343,7 +343,7 @@ export class EntryDragController extends Controller {
 				this.apply(built)
 			}
 		} else {
-			EntryStore.setDragging(drag.entry)
+			EntryStore.pending.setDragging(drag.entry)
 		}
 	}
 
@@ -485,7 +485,7 @@ export class EntryDragController extends Controller {
 			}
 			drag.moved = true
 			if (drag.kind === 'move' || drag.kind === 'resize') {
-				EntryStore.setDragging(drag.entry)
+				EntryStore.pending.setDragging(drag.entry)
 			}
 		}
 		if (drag.kind === 'relate') {
@@ -498,7 +498,7 @@ export class EntryDragController extends Controller {
 		} else if (drag.kind === 'move' && drag.preview) {
 			// Nothing under the pointer to place it on, so take the ghost away rather than leave it
 			// at the last spot that had one, and stop repainting the grid behind it.
-			EntryStore.setPreview(undefined)
+			EntryStore.pending.setPreview(undefined)
 		}
 	}
 
@@ -582,18 +582,18 @@ export class EntryDragController extends Controller {
 			case 'create': {
 				const draft = drag.gestureDraft ??= built
 				draft.adopt(built.span)
-				EntryStore.upsertDraft(draft)
+				EntryStore.pending.upsertDraft(draft)
 				break
 			}
 			case 'move': {
 				const preview = drag.preview ??= new Entry({ ...built, id: undefined })
 				// Frames keep landing on the same snapped spot while the pointer stays in it, and
 				// repainting every chip to redraw an identical ghost is what made dragging drag.
-				if (EntryStore.previewing(preview) && preview.span.equals(built.span)) {
+				if (EntryStore.pending.previewing(preview) && preview.span.equals(built.span)) {
 					break
 				}
 				preview.adopt(built.span)
-				EntryStore.setPreview(preview)
+				EntryStore.pending.setPreview(preview)
 				break
 			}
 			case 'resize': {
@@ -640,10 +640,10 @@ export class EntryDragController extends Controller {
 			if (built) {
 				const draft = drag.gestureDraft ?? built
 				draft.adopt(built.span)
-				EntryStore.upsertDraft(draft)
+				EntryStore.pending.upsertDraft(draft)
 				EntryEditorIntent.openDraft(draft)
 			} else {
-				EntryStore.discardDraft()
+				EntryStore.pending.discardDraft()
 				// Pointer capture swallows the click, so the tap is handled here.
 				if (availability) {
 					availability.open = true
@@ -658,32 +658,31 @@ export class EntryDragController extends Controller {
 			// Nowhere to put it: take the entry back rather than keep the last frame's placement.
 			if (!built && drag.before) {
 				this.teardown(e.pointerId)
-				EntryStore.setPreview(undefined)
-				EntryStore.setDragging(undefined)
+				EntryStore.pending.setPreview(undefined)
+				EntryStore.pending.setDragging(undefined)
 				entry.adopt(drag.before!.span)
 				EntryStore.notify()
 				return
 			}
 			if (drag.kind === 'move' && e.altKey && entry.copyable) {
 				this.teardown(e.pointerId)
-				EntryStore.setPreview(undefined)
-				EntryStore.setDragging(undefined)
+				EntryStore.pending.setPreview(undefined)
+				EntryStore.pending.setDragging(undefined)
 				if (built) {
 					EntryStore.duplicate(entry, built.span).catch(() => void 0)
 				}
 				return
 			}
-			// Planning one occurrence of an unscheduled series can only mean that one.
-			const bypass = e.ctrlKey || e.metaKey || (!!entry.recurringEntryId && !drag.before?.start)
 			const delta = built?.start && entry.start ? built.start.valueOf() - entry.start.valueOf() : 0
 			const isMove = drag.kind === 'move'
 			this.teardown(e.pointerId)
-			EntryStore.setPreview(undefined)
-			EntryStore.setDragging(undefined)
+			EntryStore.pending.setPreview(undefined)
+			EntryStore.pending.setDragging(undefined)
 			if (built) {
 				entry.adopt(built.span)
 				EntryStore.notify()
 			}
+			const bypass = e.ctrlKey || e.metaKey || entry.editsOnlyThisOccurrence(drag.before)
 			const change = EntryShift.of(entry, drag.before)
 			void hierarchy.resolveScope(entry, isMove ? 'move' : 'edit', bypass, isMove && delta !== 0, change).then(scope => {
 				if (!scope) {
@@ -697,7 +696,7 @@ export class EntryDragController extends Controller {
 		} else {
 			const segment = drag.kind === 'move' ? drag.grabbedSegment : undefined
 			this.teardown(e.pointerId)
-			EntryStore.setDragging(undefined)
+			EntryStore.pending.setDragging(undefined)
 			if (segment) {
 				segment.open = true
 			}
@@ -719,14 +718,14 @@ export class EntryDragController extends Controller {
 				this.clearDraft(drag.drawing!)
 				break
 			case 'create':
-				EntryStore.discardDraft()
+				EntryStore.pending.discardDraft()
 				break
 			case 'move':
-				EntryStore.setPreview(undefined)
-				EntryStore.setDragging(undefined)
+				EntryStore.pending.setPreview(undefined)
+				EntryStore.pending.setDragging(undefined)
 				break
 			case 'resize':
-				EntryStore.setDragging(undefined)
+				EntryStore.pending.setDragging(undefined)
 				drag.entry!.adopt(drag.before!.span)
 				EntryStore.notify()
 				break

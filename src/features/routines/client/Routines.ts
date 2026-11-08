@@ -102,7 +102,7 @@ export class Routines {
 		for (const occurrence of this.occurrences) {
 			const { entry } = occurrence
 			// Preview ghosts must render as bars for drag feedback.
-			if (!occurrence.start || EntryStore.isPreview(entry)) {
+			if (!occurrence.start || EntryStore.pending.isPreview(entry)) {
 				continue
 			}
 			const day = occurrence.start.dayStart.valueOf()
@@ -147,7 +147,7 @@ export class Routines {
 	/** Whether this occurrence collapses to routine marks. Previews never collapse. */
 	collapses(occurrence: EntryOccurrence): boolean {
 		void this.collapsed // populates detached/collapsedRecurring during resolution
-		if (EntryStore.isPreview(occurrence.entry)) {
+		if (EntryStore.pending.isPreview(occurrence.entry)) {
 			return false
 		}
 		return occurrence.recurringEntryId ? this.collapsedRecurring.has(occurrence.recurringEntryId) : this.detached.has(occurrence)

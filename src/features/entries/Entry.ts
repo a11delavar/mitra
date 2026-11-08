@@ -542,6 +542,28 @@ export class Entry extends Entity implements Validatable {
 		return EntryOccurrences.of(this)
 	}
 
+	/**
+	 * Whether an edit of this occurrence since `before` reaches it alone, so no one is asked how far: only its completion
+	 * changed, or an unscheduled one got its start, as only that one is being planned.
+	 */
+	editsOnlyThisOccurrence(before: Entry | undefined) {
+		if (!this.recurringEntryId) {
+			return false
+		}
+		const completed = !!before && before.equals(Object.assign(this.clone(), { status: before.status, percentComplete: before.percentComplete })) && !before.equals(this)
+		const planned = !!this.start && !before?.start
+		return completed || planned
+	}
+
+	/** Becomes `saved`, the entry an edit of this occurrence alone made of it: one of its own, standing in for no date of a recurring entry. */
+	leaveSeries(saved: Entry) {
+		this.id = saved.id
+		this.uid = saved.uid
+		this.recurringEntryId = undefined
+		this.recurrenceId = undefined
+		this.recurrence = undefined
+	}
+
 	/** The row that holds what a whole series shares: its master, or the entry itself when it stands alone. */
 	get masterId() {
 		return this.recurringEntryId ?? this.id

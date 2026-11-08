@@ -42,4 +42,4 @@ export class HideDoneTasksSetting extends ToggleSetting {
 	}
 }
 
-EntryStore.showing(occurrences => HideDoneTasksSetting.filter(occurrences))
+EntryStore.lenses.add(occurrences => HideDoneTasksSetting.filter(occurrences))

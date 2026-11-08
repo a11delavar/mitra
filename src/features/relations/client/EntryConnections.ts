@@ -206,7 +206,7 @@ export class EntryConnections extends Component {
 
 	private get connectorEdges(): Array<ConnectorEdge> {
 		const segments = this.segments.filter(segment =>
-			segment.entry.persisted && !!segment.entry.uid && segment.dayValue !== undefined && !EntryStore.isPreview(segment.entry))
+			segment.entry.persisted && !!segment.entry.uid && segment.dayValue !== undefined && !EntryStore.pending.isPreview(segment.entry))
 		const byEntry = new Map<Entry, Array<EntrySegment>>()
 		const byUid = new Map<string, Array<Entry>>()
 		for (const segment of segments) {
@@ -564,7 +564,7 @@ export class EntryConnections extends Component {
 
 	private get handleSegment(): EntrySegment | undefined {
 		const entry = this.draft?.from.entry ?? this.hovered?.entry
-		if (!entry?.relatable || EntryStore.isDragging(entry)) {
+		if (!entry?.relatable || EntryStore.pending.isDragging(entry)) {
 			return undefined
 		}
 		const end = this.endSliceOf(entry)

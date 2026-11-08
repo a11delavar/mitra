@@ -59,7 +59,7 @@ export class EntrySegment {
 	}
 
 	get id() {
-		return `${this.occurrence.key ?? (EntryStore.isPreview(this.entry) ? 'preview' : 'draft')}-${this.dayValue ?? 0}`
+		return `${this.occurrence.key ?? (EntryStore.pending.isPreview(this.entry) ? 'preview' : 'draft')}-${this.dayValue ?? 0}`
 	}
 
 	fallsOn(dayValue: number) {

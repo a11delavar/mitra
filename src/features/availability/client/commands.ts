@@ -42,7 +42,7 @@ export class CreateAvailability extends Command {
 
 		calendar.setView('week')
 		calendar.navigatingDate = start
-		EntryStore.upsertDraft(entry)
+		EntryStore.pending.upsertDraft(entry)
 		// Opened by id: a saved series master only reaches the calendar as its expanded occurrences.
 		EntryStore.commit(entry)
 			.then(() => entry.id && EntryEditorIntent.requestOpen(entry.id))

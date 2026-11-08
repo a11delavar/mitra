@@ -42,4 +42,4 @@ export class HideCancelledSetting extends ToggleSetting {
 	}
 }
 
-EntryStore.showing(occurrences => HideCancelledSetting.filter(occurrences))
+EntryStore.lenses.add(occurrences => HideCancelledSetting.filter(occurrences))

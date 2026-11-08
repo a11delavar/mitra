@@ -137,13 +137,13 @@ describe('Routines', () => {
 		it('ignores a move ghost, so a dragged instance is not counted twice', () => {
 			const instances = series('gym', daily(2), cadence(daily(2), 13))
 			const ghost = shown(new Entry({ heading: 'Gym', start: base.add({ days: 40, hours: 9 }), end: base.add({ days: 40, hours: 10 }), recurrence: daily(2), recurringEntryId: 'gym' }))
-			EntryStore.setPreview(ghost.entry)
+			EntryStore.pending.setPreview(ghost.entry)
 			try {
 				const cohort = Routines.of([...instances, ghost], days(500), 'month')
 				assert.equal(cohort.collapses(instances[0]!), true)
 				assert.equal(cohort.kept.includes(ghost), true)
 			} finally {
-				EntryStore.setPreview(undefined)
+				EntryStore.pending.setPreview(undefined)
 			}
 		})
 	})
@@ -294,13 +294,13 @@ describe('Routines', () => {
 
 		it('never pools a move ghost', () => {
 			const loose = detached('Gym', 51)
-			EntryStore.setPreview(loose.entry)
+			EntryStore.pending.setPreview(loose.entry)
 			try {
 				const cohort = Routines.of([...gym(), loose], days(500), 'month')
 				assert.equal(cohort.collapses(loose), false)
 				assert.equal(cohort.kept.includes(loose), true)
 			} finally {
-				EntryStore.setPreview(undefined)
+				EntryStore.pending.setPreview(undefined)
 			}
 		})
 

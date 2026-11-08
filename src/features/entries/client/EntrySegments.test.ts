@@ -11,13 +11,13 @@ describe('EntrySegments', () => {
 	const shown = (entries: ReadonlyArray<Entry>) => entries.map(entry => entry.occurrences.single)
 
 	const duringMove = <T>(source: Entry | undefined, ghost: Entry, act: () => T): T => {
-		EntryStore.setDragging(source)
-		EntryStore.setPreview(ghost)
+		EntryStore.pending.setDragging(source)
+		EntryStore.pending.setPreview(ghost)
 		try {
 			return act()
 		} finally {
-			EntryStore.setPreview(undefined)
-			EntryStore.setDragging(undefined)
+			EntryStore.pending.setPreview(undefined)
+			EntryStore.pending.setDragging(undefined)
 		}
 	}
 
@@ -111,11 +111,11 @@ describe('EntrySegments', () => {
 		it('keys a create draft and a move ghost distinctly', () => {
 			const draft = new Entry({})
 			const ghost = new Entry({})
-			EntryStore.setPreview(ghost)
+			EntryStore.pending.setPreview(ghost)
 			try {
 				assert.notEqual(EntrySegments.for(draft.occurrences.single)[0]!.id, EntrySegments.for(ghost.occurrences.single)[0]!.id)
 			} finally {
-				EntryStore.setPreview(undefined)
+				EntryStore.pending.setPreview(undefined)
 			}
 		})
 
@@ -169,14 +169,14 @@ describe('EntrySegments', () => {
 		it('renders the ghost without folding the entry it previews', () => {
 			const source = new Entry({ id: 'a', heading: 'A', start: base.add({ hours: 9 }), end: base.add({ hours: 11 }) })
 			const ghost = new Entry({ heading: 'A', start: base.add({ hours: 10 }), end: base.add({ hours: 12 }) })
-			EntryStore.setPreview(ghost)
+			EntryStore.pending.setPreview(ghost)
 			try {
 				const segments = EntrySegments.of(shown([source, ghost]), [base]).timedOn(base)
 				assert.equal(segments.length, 2)
 				assert.deepEqual(segments.find(s => s.entry === source)!.overlap, { slot: 0, total: 1, span: 1, inset: 0 })
 				assert.equal(segments.find(s => s.entry === ghost)!.overlap, undefined)
 			} finally {
-				EntryStore.setPreview(undefined)
+				EntryStore.pending.setPreview(undefined)
 			}
 		})
 	})

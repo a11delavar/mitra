@@ -535,10 +535,10 @@ export class Days extends Component {
 		}
 		const runs = this.segments.runsIn(first, last, occurrence => occurrence.allDay)
 		const slots = this.segments.allDaySlots
-		const laneCount = runs.reduce((count, segment) => EntryStore.isPreview(segment.entry) ? count : Math.max(count, (slots.get(segment.occurrence) ?? -1) + 1), 0)
+		const laneCount = runs.reduce((count, segment) => EntryStore.pending.isPreview(segment.entry) ? count : Math.max(count, (slots.get(segment.occurrence) ?? -1) + 1), 0)
 		const laneOf = (occurrence: EntryOccurrence) => Math.min(slots.get(occurrence) ?? laneCount, laneCount)
 		this.allDayPlacements = runs
-			.filter(segment => !EntryStore.isPreview(segment.entry))
+			.filter(segment => !EntryStore.pending.isPreview(segment.entry))
 			.map(segment => ({ lane: laneOf(segment.occurrence), start: segment.dayValue!, end: segment.runEnd.dayValue! }))
 		this.style.setProperty('--_all-day-window-rows', `${laneCount + 1}`)
 		const lastValue = last.dayStart.valueOf()

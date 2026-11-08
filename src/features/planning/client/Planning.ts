@@ -29,7 +29,7 @@ export class Planning extends Component {
 	 */
 	static get overdue(): ReadonlyArray<EntryOccurrence> {
 		return EntryStore.shown
-			.filter(occurrence => occurrence.overdue && !EntryStore.previewing(occurrence.entry))
+			.filter(occurrence => occurrence.overdue && !EntryStore.pending.previewing(occurrence.entry))
 			.sort((a, b) => a.lastDay!.valueOf() - b.lastDay!.valueOf())
 	}
 
@@ -70,7 +70,7 @@ export class Planning extends Component {
 			return
 		}
 		const draft = source.draft({ type: EntryType.Task })
-		EntryStore.upsertDraft(draft)
+		EntryStore.pending.upsertDraft(draft)
 		EntryEditorIntent.openDraft(draft)
 	}
 
