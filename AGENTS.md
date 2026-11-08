@@ -213,7 +213,7 @@
 - Reminders count back from `Entry.reminderAnchor` (start, else due for unscheduled tasks); `unschedule()` clears them unless a due remains; closed tasks never fire. CalDAV TRIGGER is `START`, or `END` against DUE for unscheduled tasks (`CalDAV.reminderAnchorOf`).
 - The server renders each notification per device (`ReminderNotification.for`) in its `locale` and `timeZone`, via `localizeIn`; the worker only shows it. The body states the time, never a countdown. At most 2 buttons; Done posts `/entries/:id/complete`.
 - Push sets `TTL` (anchor + 5 min) and `urgency: 'high'`; `icon` goes to Android only.
-- `ReminderScheduler` claims `(watermark, now + interval]`, sets exact timers, persists the watermark, dedupes in memory. Floating times resolve in the device's last zone.
+- `ReminderScheduler` claims `(watermark, now + interval]`, sets exact timers, persists the watermark, dedupes in memory; it reads each user's through `DueReminder.of(em, user, watermark, until, zone)` (over `user.filterEntries`), only for the users who have a device, never every tenant's rows. Floating times resolve in the device's last zone.
 - Devices are listed under Settings → Notifications; `register` keeps the user's `name`; a rotated subscription inherits name and locale (`succeed`). The page re-registers on a locale change.
 
 ## Participants

@@ -109,13 +109,13 @@ describe('Reminders', () => {
 			const floating = () => entry({ start: D('2026-07-06T09:31:00Z'), reminders: EntryReminders.normalize([30]), timeZone: EntryTimeZone.floating })
 
 			it('resolves the wall clock in the observer zone', () => {
-				const due = DueReminder.within([floating()], new Date('2026-07-06T07:00:00Z'), new Date('2026-07-06T07:01:00Z'), () => TimeZone.of('Europe/Berlin'))
+				const due = DueReminder.within([floating()], new Date('2026-07-06T07:00:00Z'), new Date('2026-07-06T07:01:00Z'), TimeZone.of('Europe/Berlin'))
 				assert.equal(due.length, 1)
 				assert.equal(due[0]!.fireAt, Date.parse('2026-07-06T07:01:00Z'))
 			})
 
 			it('does not fire at the stored instant for that observer', () => {
-				assert.equal(DueReminder.within([floating()], watermark, now, () => TimeZone.of('Europe/Berlin')).length, 0)
+				assert.equal(DueReminder.within([floating()], watermark, now, TimeZone.of('Europe/Berlin')).length, 0)
 			})
 
 			it('falls back to the stored instant when no zone is known', () => {
@@ -124,7 +124,7 @@ describe('Reminders', () => {
 
 			it('leaves an all-day span alone, since those are floating DAYS, not wall clocks', () => {
 				const allDay = entry({ start: D('2026-07-06T09:31:00Z'), reminders: EntryReminders.normalize([30]), timeZone: EntryTimeZone.floating, allDay: true })
-				assert.equal(DueReminder.within([allDay], watermark, now, () => TimeZone.of('Europe/Berlin')).length, 1)
+				assert.equal(DueReminder.within([allDay], watermark, now, TimeZone.of('Europe/Berlin')).length, 1)
 			})
 		})
 	})

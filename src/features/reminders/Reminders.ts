@@ -1,4 +1,7 @@
-import type { EntryOccurrence } from '#features/recurrence'
+import type { EntityManager } from '@mikro-orm/core'
+import { DateTimeRange } from '@3mo/date-time'
+import type { User } from '#features/identity'
+import { EntryOccurrences, type EntryOccurrence } from '#features/recurrence'
 import type { TimeZone } from '#features/time/TimeZone.js'
 import { ReminderNotification } from './ReminderNotification.js'
 
@@ -9,15 +12,35 @@ import { ReminderNotification } from './ReminderNotification.js'
 const MINUTE = 60_000
 
 export class DueReminder {
-	/** The reminders of `occurrences` due within `(watermark, until]`, floating times read in the zone `zoneOf` gives. */
-	static within(occurrences: ReadonlyArray<EntryOccurrence>, watermark: Date, until: Date, zoneOf?: (occurrence: EntryOccurrence) => TimeZone | undefined): Array<DueReminder> {
+	/** How far a stored floating time, its wall clock as if in UTC, may lie from its instant. */
+	private static readonly floatingSlack = 14 * 60 * MINUTE
+
+	/**
+	 * The reminders of `user`'s entries in enabled calendars due within `(watermark, until]`, a floating time read in `zone`,
+	 * where their device last was. A repeating entry's dates are read as far past `until` as its earliest reminder reaches.
+	 */
+	static async of(em: EntityManager, user: User, watermark: Date, until: Date, zone?: TimeZone) {
+		const sources = { enabled: true }
+		const after = new Date(watermark.getTime() - DueReminder.floatingSlack)
+		const once = await user.filterEntries(em, { sources, where: { reminders: { $ne: null }, recurrence: null, $or: [{ start: { $gt: after } }, { start: null, due: { $gt: after } }] } })
+		const recurring = await user.filterEntries(em, { sources, where: { reminders: { $ne: null }, recurrence: { $ne: null } } })
+		const reach = Math.max(0, ...recurring.map(entry => entry.reminders?.earliest ?? 0)) * MINUTE
+		const occurrences = [
+			...once.map(entry => entry.occurrences.single),
+			...EntryOccurrences.inWindow(recurring, new DateTimeRange(watermark, new Date(until.getTime() + reach))),
+		]
+		return DueReminder.within(occurrences, watermark, until, zone)
+	}
+
+	/** The reminders of `occurrences` due within `(watermark, until]`, floating times read in `zone`, where their reader is. */
+	static within(occurrences: ReadonlyArray<EntryOccurrence>, watermark: Date, until: Date, zone?: TimeZone): Array<DueReminder> {
 		return occurrences.flatMap(occurrence => {
 			const { entry } = occurrence
 			// A closed entry (a done or cancelled task, a cancelled event) keeps its reminders, so they must be skipped here.
 			if (!entry.reminders?.length || entry.closed) {
 				return []
 			}
-			const anchor = occurrence.reminderAnchorInstant(zoneOf?.(occurrence))
+			const anchor = occurrence.reminderAnchorInstant(zone)
 			if (anchor === undefined) {
 				return []
 			}
