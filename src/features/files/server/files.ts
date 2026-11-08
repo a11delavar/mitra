@@ -5,7 +5,8 @@ import { createLogger } from '#infrastructure/logging/Logger.js'
 import { environment } from '#infrastructure/server/Environment.js'
 import { File } from '../File.js'
 import { MimeType } from '../MimeType.js'
-import { FileTooLargeError, fileStore } from './FileStore.js'
+import { NotAllowed, ValidationError } from '#infrastructure/validation'
+import { StorageFull, fileStore } from './FileStore.js'
 import { FileLimits } from './FileLimits.js'
 
 const logger = createLogger('Files')
@@ -77,33 +78,28 @@ function rangeOf(header: string | undefined, size: number): { start: number, end
 	return start > end || start >= size ? 'unsatisfiable' : { start, end }
 }
 
-/** Receives uploads: the body is the file itself, its type and name on the standard headers, as RFC 8607 has them. */
+/**
+ * Receives uploads: the body is the file itself, its type and name on the standard headers, as RFC 8607 has them, streamed to
+ * disk rather than read as an operation's parameters. What it refuses it throws, as an operation does.
+ */
 export const filesRouter = Router()
 
 filesRouter.post('/', async (req, res) => {
 	const limits = FileLimits.of(environment)
 	if (!limits.uploads) {
-		return res.status(403).json({ error: 'Uploads are disabled on this instance' })
+		throw new NotAllowed('Uploads are disabled on this instance')
 	}
 	if (!limits.allowsMore(await fileStore.usageOf(req.user.id))) {
-		return res.status(507).json({ error: 'File storage is full' })
+		throw new StorageFull()
 	}
 
 	const name = File.nameFrom(req.get('content-disposition'))
 	const mimeType = MimeType.parse(req.get('content-type')) ?? MimeType.octetStream
 
-	const bytes = await fileStore.put(req.user.id, req, limits.maxSize).catch((error: unknown) => {
-		if (error instanceof FileTooLargeError) {
-			return error
-		}
-		throw error
-	})
-	if (bytes instanceof FileTooLargeError) {
-		return res.status(413).json({ error: `This file is larger than the ${Math.round(limits.maxSize / 1024 / 1024)} MB limit` })
-	}
+	const bytes = await fileStore.put(req.user.id, req, limits.maxSize)
 	if (!bytes.size) {
 		await fileStore.delete(req.user.id, bytes.sha256)
-		return res.status(400).json({ error: 'The file is empty' })
+		throw new ValidationError('The file is empty', ['file'])
 	}
 
 	logger.debug(`Stored ${bytes.size} bytes (${mimeType}) for user ${req.user.id}`)

@@ -12,13 +12,11 @@ export interface OidcOptions {
 	scope: string
 }
 
-/**
- * OpenID Connect relying party client handling Authorization Code + PKCE flows.
- */
-export class Oidc {
+/** OpenID Connect relying party client handling Authorization Code + PKCE flows: the protocol alone, which `Oidc` signs people in through. */
+export class OidcClient {
 	/** The client people sign in through, none in single-user mode or a demo. */
 	static of({ oidc, url }: Environment) {
-		return oidc && new Oidc({ ...oidc, baseUrl: url! })
+		return oidc && new OidcClient({ ...oidc, baseUrl: url! })
 	}
 
 	constructor(readonly options: OidcOptions) { }

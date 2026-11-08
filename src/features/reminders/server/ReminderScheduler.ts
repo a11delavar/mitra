@@ -7,7 +7,7 @@ import { State } from '#infrastructure/database/State.js'
 import { BackgroundJob } from '#infrastructure/server/BackgroundJob.js'
 import { DueReminder } from '../Reminders.js'
 import { NotificationSubscription } from '../NotificationSubscription.js'
-import { sendTo } from './push.js'
+import { push } from './Push.js'
 
 /**
  * Periodic reminder tick scheduler. Scans upcoming reminders in `(watermark, now + interval]` window,
@@ -67,7 +67,7 @@ export class ReminderScheduler {
 					continue
 				}
 				this.dispatched.set(key, reminder.fireAt)
-				this.schedule(user.id, reminder, now.getTime())
+				this.schedule(user, reminder, now.getTime())
 				scheduled++
 			}
 		}
@@ -83,12 +83,12 @@ export class ReminderScheduler {
 	}
 
 	/** Schedule exact timer for reminder delivery. */
-	private schedule(userId: string, reminder: DueReminder, now: number) {
+	private schedule(user: User, reminder: DueReminder, now: number) {
 		const { occurrence: { entry }, minutes, fireAt } = reminder
 		const notification = reminder.notification()
 		const send = () => {
 			this.logger.info(`Reminder: "${entry.heading}" ${minutes ? `in ${TimeSpan.fromMinutes(minutes).formatAsWholeUnit(localizeIn('en'))}` : 'now'}`)
-			sendTo(userId, notification).catch(error => this.logger.warn('Reminder delivery failed:', error instanceof Error ? error.message : error))
+			push.send(user, notification).catch(error => this.logger.warn('Reminder delivery failed:', error instanceof Error ? error.message : error))
 		}
 		const delay = fireAt - now
 		if (delay <= 0) {

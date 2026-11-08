@@ -6,7 +6,8 @@ import { ModelValueConstructor } from '@a11d/api-model-value-constructor'
 import { createLogger, logLevelName } from '#infrastructure/logging/Logger.js'
 import { orm } from '#infrastructure/database/orm.js'
 import { environment } from '#infrastructure/server/Environment.js'
-import { authMiddleware, authRouter, oidc } from '#features/identity/server/auth.js'
+import { Session } from '#features/identity/server/Session.js'
+import { Authentication } from '#features/identity/server/Authentication.js'
 import { accessTokenMiddleware } from '#features/identity/server/accessTokenMiddleware.js'
 import { synchronizer } from '#integrations/server/Synchronizer.js'
 import { eventsRouter } from '#infrastructure/realtime/events.js'
@@ -28,6 +29,9 @@ import { EntryFile } from '#features/entries'
 import { observeInstanceOrigin } from '#infrastructure/http/instanceUrl.js'
 
 const logger = createLogger('API')
+
+await Session.sweep(orm.em.fork())
+const authentication = await Authentication.of(orm.em.fork(), environment)
 
 synchronizer.start()
 new ReminderScheduler(orm).start()
@@ -61,26 +65,23 @@ app.use((req, res, next) => {
 // Files come first, as their bodies are raw files: `express.json()` below would swallow an uploaded .json. Serving needs no sign-in:
 // the id in the path is the capability, so the URL also works from the calendar servers and apps Mitra writes it into.
 app.use('/api/files', fileContentRouter(fileTables))
-app.use('/api/files', authMiddleware, filesRouter)
+app.use('/api/files', authentication.middleware, filesRouter)
 
 // Rehydrate typed JSON into domain model instances.
 const modelConstructor = new ModelValueConstructor()
 app.use(express.json({ reviver: (_key, value) => modelConstructor.shallConstruct(value) ? modelConstructor.construct(value) : value }))
 
-if (oidc) {
-	app.use('/auth', authRouter)
-	logger.info(`Multi-user mode: OIDC against ${oidc.issuer} (redirect URI ${oidc.redirectUri})`)
-} else if (environment.demo) {
-	logger.info('Demo mode: every visitor gets a sandbox with the sample calendar')
-} else {
-	logger.info('Single-user mode: no authentication (set MITRA_OIDC_ISSUER to enable multi-user sign-in)')
+// Only a provider's sign-in has routes of its own: its round trip at `/auth`.
+const { router } = authentication
+if (router) {
+	app.use('/auth', router)
 }
 
 // Unauthenticated health check endpoint for orchestrators.
 app.use('/api/health', healthRouter)
 // Agents sign in by their access token, and only to their endpoint.
 app.use('/api/mcp', accessTokenMiddleware)
-app.use(authMiddleware)
+app.use(authentication.middleware)
 
 app.use('/api/events', eventsRouter)
 app.use('/api/entries', staleTabs)

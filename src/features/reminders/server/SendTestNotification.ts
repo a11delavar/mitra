@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { validation } from '#infrastructure/validation'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { ReminderNotification } from '../ReminderNotification.js'
-import { sendTo } from './push.js'
+import { push } from './Push.js'
 
 class Parameters {
 	@validation(z.enum(['event', 'task']).optional())
@@ -17,6 +17,6 @@ class Parameters {
 @http({ method: 'POST', path: '/push/test', status: 202 })
 export class SendTestNotification extends Operation<Parameters, void> {
 	async run({ user }: OperationContext) {
-		await sendTo(user.id, ReminderNotification.rehearsal(this.parameters.kind ?? 'event', Date.now()))
+		await push.send(user, ReminderNotification.rehearsal(this.parameters.kind ?? 'event', Date.now()))
 	}
 }

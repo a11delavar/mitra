@@ -3,7 +3,6 @@ import { z } from 'zod'
 import { validation } from '#infrastructure/validation'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { NotificationSubscription } from '../NotificationSubscription.js'
-import { trimmed } from './push.js'
 
 class Parameters {
 	@validation(z.string())
@@ -22,7 +21,7 @@ class Parameters {
 export class RenameDevice extends Operation<Parameters, NotificationSubscription> {
 	async run({ em, user }: OperationContext) {
 		const subscription = await user.getDevice(em, this.parameters.id)
-		subscription.rename(trimmed(this.parameters.name, 60))
+		subscription.rename(this.parameters.name ?? undefined)
 		await em.flush()
 		return subscription
 	}

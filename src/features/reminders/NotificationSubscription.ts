@@ -1,4 +1,5 @@
 import { converter } from '@a11d/converter'
+import type { EntityManager } from '@mikro-orm/core'
 import { User } from '#features/identity'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { model, entity, primaryKey, property, manyToOne, unique, withheld } from '#infrastructure/model'
@@ -10,6 +11,14 @@ type PushKeys = { p256dh: string, auth: string }
 @entity()
 @unique({ properties: ['endpoint'] })
 export class NotificationSubscription {
+	/**
+	 * The subscription at `endpoint`, whoever's it is: a browser signed in to by another user registers the same endpoint,
+	 * which then becomes theirs (`register`).
+	 */
+	static at(em: EntityManager, endpoint: string) {
+		return em.findOne(NotificationSubscription, { endpoint })
+	}
+
 	@primaryKey({ type: 'string' }) id!: string
 	@manyToOne(() => User, { mapToPk: true, deleteRule: 'cascade' }) userId!: string
 	@property({ type: 'string' }) endpoint!: string
@@ -37,6 +46,11 @@ export class NotificationSubscription {
 		Object.assign(this, init)
 	}
 
+	/** What a device reports, as it is kept: trimmed, at most `max` characters, none when blank. */
+	private static textOf(value: string | undefined, max: number) {
+		return value?.trim().slice(0, max) || undefined
+	}
+
 	/**
 	 * Restamps what the device reports on every registration, leaving the user's `name` alone. A browser signed in to by
 	 * another user becomes theirs, as its endpoint is unique, but the name the previous user gave it does not.
@@ -49,8 +63,8 @@ export class NotificationSubscription {
 		this.keys = registration.keys
 		this.timeZone = TimeZone.parse(registration.timeZone)
 		this.locale = NotificationSubscription.localeOf(registration.locale) ?? this.locale
-		this.platform = registration.platform
-		this.browser = registration.browser
+		this.platform = NotificationSubscription.textOf(registration.platform, 64)
+		this.browser = NotificationSubscription.textOf(registration.browser, 64)
 		this.mobile = registration.mobile
 		this.lastSeenAt = new Date()
 	}
@@ -75,6 +89,6 @@ export class NotificationSubscription {
 
 	/** An empty name falls back to what the browser reports. */
 	rename(name: string | undefined) {
-		this.name = name || undefined
+		this.name = NotificationSubscription.textOf(name, 60)
 	}
 }

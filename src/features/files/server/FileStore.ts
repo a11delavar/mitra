@@ -7,11 +7,21 @@ import path from 'node:path'
 import { ValidationError } from '#infrastructure/validation'
 import { File } from '../File.js'
 
-/** Thrown when an upload runs past the configured ceiling; the route answers 413. */
-export class FileTooLargeError extends Error {
-	readonly status = 413
+/** An upload past the configured ceiling, answered 413. */
+export class FileTooLargeError extends ValidationError {
+	static override readonly status = 413
+
 	constructor(readonly limit: number) {
-		super(`The file exceeds the ${limit} byte limit`)
+		super(`This file is larger than the ${Math.round(limit / 1024 / 1024)} MB limit`, ['file'])
+	}
+}
+
+/** An upload past what the account may store, answered 507. */
+export class StorageFull extends ValidationError {
+	static override readonly status = 507
+
+	constructor() {
+		super('File storage is full', ['file'])
 	}
 }
 

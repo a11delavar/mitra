@@ -132,6 +132,18 @@ export class User {
 		return found
 	}
 
+	/** The one local account single-user mode signs every request in as, made on first use. */
+	static async local(em: EntityManager) {
+		const existing = await em.findOne(User, { username: User.default.username })
+		if (existing) {
+			return existing
+		}
+		const user = User.default
+		em.persist(user)
+		await em.flush()
+		return user
+	}
+
 	async getEntry(em: EntityManager, id: string): Promise<Entry> {
 		const entry = await em.findOneOrFail(Entry, { id })
 		await this.getSource(em, entry.sourceId)

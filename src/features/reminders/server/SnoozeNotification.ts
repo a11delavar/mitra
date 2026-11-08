@@ -3,7 +3,7 @@ import { type Request } from 'express'
 import { ValidationError } from '#infrastructure/validation'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { ReminderNotification } from '../ReminderNotification.js'
-import { sendTo } from './push.js'
+import { push } from './Push.js'
 
 @operation()
 @label('Snooze a notification')
@@ -21,9 +21,8 @@ export class SnoozeNotification extends Operation<{ readonly facts: unknown }, v
 			throw new ValidationError('Missing notification facts')
 		}
 		this.logger.info(`Snoozing "${notification.facts.heading}" for ${ReminderNotification.snoozeMinutes} minutes`)
-		const userId = user.id
 		setTimeout(
-			() => sendTo(userId, notification).catch(error => this.logger.warn('Snoozed re-send failed:', error instanceof Error ? error.message : error)),
+			() => push.send(user, notification).catch(error => this.logger.warn('Snoozed re-send failed:', error instanceof Error ? error.message : error)),
 			ReminderNotification.snoozeMinutes * 60_000,
 		)
 		return Promise.resolve()

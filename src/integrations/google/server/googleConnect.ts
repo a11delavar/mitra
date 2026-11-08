@@ -1,5 +1,5 @@
 import { Router, type Request, type RequestHandler } from 'express'
-import { cookie } from '#features/identity/server/auth.js'
+import { Cookie } from '#features/identity/server/Cookie.js'
 import { Integration } from '#integrations'
 import { orm } from '#infrastructure/database/orm.js'
 import { updates } from '#infrastructure/realtime/Updates.js'
@@ -49,7 +49,7 @@ googleConnectRouter.get('/callback', async (req, res) => {
 		logger.info(`Google consent was not granted: ${req.query.error}`)
 		return res.redirect('/')
 	}
-	const raw = cookie(req, googleTransitCookie)
+	const raw = new Cookie(googleTransitCookie).readIn(req)
 	if (!raw || !googleOAuth) {
 		return res.redirect('/')
 	}

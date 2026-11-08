@@ -3,7 +3,6 @@ import { z } from 'zod'
 import { validation } from '#infrastructure/validation'
 import { http, operation, Operation, type OperationContext } from '#infrastructure/operations/Operation.js'
 import { NotificationSubscription } from '../NotificationSubscription.js'
-import { trimmed } from './push.js'
 
 class Registration {
 	@validation(z.string().min(1, 'Missing subscription endpoint or keys'))
@@ -50,14 +49,14 @@ class Registration {
 export class RegisterDevice extends Operation<Registration, NotificationSubscription> {
 	async run({ em, user }: OperationContext) {
 		const { endpoint, previousEndpoint, keys, timeZone, locale, language, platform, browser, mobile } = this.parameters
-		const existing = await em.findOne(NotificationSubscription, { endpoint })
+		const existing = await NotificationSubscription.at(em, endpoint)
 		const subscription = existing ?? new NotificationSubscription({ id: crypto.randomUUID(), endpoint })
 		subscription.register(user.id, {
 			keys: { p256dh: keys.p256dh, auth: keys.auth },
-			timeZone: trimmed(timeZone, 64),
+			timeZone: timeZone ?? undefined,
 			locale: locale ?? language ?? undefined,
-			platform: trimmed(platform, 64),
-			browser: trimmed(browser, 64),
+			platform: platform ?? undefined,
+			browser: browser ?? undefined,
 			mobile: mobile ?? undefined,
 		})
 		const [previous] = previousEndpoint && previousEndpoint !== endpoint ? await user.filterDevices(em, { endpoint: previousEndpoint }) : []

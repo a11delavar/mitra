@@ -21,7 +21,7 @@ export class Sandbox {
 	 * The sample calendar is written in `language`, the visitor's browser language on arrival; a switch in Settings rewrites it.
 	 * The session is written with the sandbox: one without it would read as expired to a concurrent visitor's eviction.
 	 */
-	static async open(em: EntityManager, language?: string): Promise<{ user: User, token: string }> {
+	static async open(em: EntityManager, language?: string) {
 		await Sandbox.evict(em, Sandbox.cap - 1)
 		const user = new User({ username: `${Sandbox.usernamePrefix}${crypto.randomUUID()}` })
 		const demo = new Demo({ userId: user.id })
@@ -35,17 +35,19 @@ export class Sandbox {
 		return { user, token }
 	}
 
-	/** Evicts every sandbox past its lifetime, then the oldest down to `count`. @returns how many were evicted. */
-	static async evict(em: EntityManager, count: number): Promise<number> {
+	/** Every sandbox, each as old as its session: they are issued together, and a session only renews past half its 30 days. */
+	static async all(em: EntityManager) {
 		const users = await em.find(User, { username: { $like: `${Sandbox.usernamePrefix}%` } })
 		const sessions = await em.find(Session, { userId: { $in: users.map(user => user.id) } })
-		// A sandbox is as old as its session: they are issued together, and a session only renews past half its 30 days.
 		const openedAt = new Map(sessions.map(session => [session.userId, session.expiresAt.getTime() - Session.lifetime]))
-		const byAge = users
-			.map(user => user.id)
-			.sort((a, b) => (openedAt.get(a) ?? 0) - (openedAt.get(b) ?? 0))
-		const expired = byAge.filter(id => (openedAt.get(id) ?? 0) <= Date.now() - Sandbox.lifetime).length
-		const evicted = byAge.slice(0, Math.max(expired, users.length - count))
+		return users.map(user => new Sandbox(user, openedAt.get(user.id) ?? 0))
+	}
+
+	/** Evicts every sandbox past its lifetime, then the oldest down to `count`. @returns how many were evicted. */
+	static async evict(em: EntityManager, count: number) {
+		const byAge = (await Sandbox.all(em)).sort((a, b) => a.openedAt - b.openedAt)
+		const expired = byAge.filter(sandbox => sandbox.expired).length
+		const evicted = byAge.slice(0, Math.max(expired, byAge.length - count)).map(sandbox => sandbox.user.id)
 		if (!evicted.length) {
 			return 0
 		}
@@ -53,5 +55,11 @@ export class Sandbox {
 		await em.nativeDelete(Integration, { userId: { $in: evicted } })
 		await em.nativeDelete(User, { id: { $in: evicted } })
 		return evicted.length
+	}
+
+	private constructor(readonly user: User, readonly openedAt: number) { }
+
+	get expired() {
+		return this.openedAt <= Date.now() - Sandbox.lifetime
 	}
 }
