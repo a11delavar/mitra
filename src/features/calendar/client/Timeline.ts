@@ -8,7 +8,7 @@ import { EntrySegments } from '#features/entries/client/EntrySegments.js'
 import { Availability } from '#features/availability/client/Availability.js'
 import { type EntrySegment } from '#features/entries/client/EntrySegment.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
-import { EntryConnections } from '#features/relations/client/EntryConnections.js'
+import { ConnectorLinesSetting } from '#features/relations/client/ConnectorLinesSetting.js'
 import { EntryGestureController } from '#features/entries/client/gestures/EntryGestureController.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { CalendarScrollController } from './CalendarScrollController.js'
@@ -641,7 +641,7 @@ export class Timeline extends Component {
 					</div>
 				`)}
 				${repeat(placed, bar => bar.segment.id, bar => this.barTemplate(bar, bar.row))}
-				${!EntryConnections.isEnabledFor('timeline') ? html.nothing : html`
+				${!ConnectorLinesSetting.showsIn('timeline') ? html.nothing : html`
 					<mitra-entry-connections
 						.segments=${placed.map(bar => bar.segment)}
 						.placement=${new Map(placed.map(bar => [bar.segment, { start: bar.startColumn, end: bar.startColumn + bar.span - 1, rank: bar.row }] as const))}

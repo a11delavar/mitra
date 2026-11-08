@@ -1,7 +1,7 @@
 import { component, html, css, state, query, repeat, type PropertyValues, ifDefined, bind } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { activated, selected, focusRing } from '#design'
-import { settings, settingsPage, settingsPages, type Setting, type SettingsPageId } from './Setting.js'
+import { deviceStorage, settings, settingsPage, settingsPages, type Setting, type SettingsPageId } from './Setting.js'
 import { SettingsStore } from './SettingsStore.js'
 import { type SettingRow } from './SettingRow.js'
 
@@ -23,11 +23,10 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 
 	@query('mitra-setting-row[focused]') private readonly focusedRow?: SettingRow
 
-	private static readonly lastPageKey = 'Mitra.Settings.Page'
+	private static readonly keptPage = deviceStorage<SettingsPageId>('Mitra.Settings.Page')
 
 	static get lastPage(): SettingsPageId {
-		const stored = localStorage.getItem(DialogSettings.lastPageKey) as SettingsPageId | null
-		return stored && settingsPages.includes(stored) ? stored : 'general'
+		return DialogSettings.pageOf(DialogSettings.keptPage.read()) ?? 'general'
 	}
 
 	static pageOf(value: string | undefined) {
@@ -53,7 +52,7 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 	private setPage(page: SettingsPageId) {
 		this.page = page
 		this.drilled = true
-		localStorage.setItem(DialogSettings.lastPageKey, page)
+		DialogSettings.keptPage.write(page)
 		this.parameters.pageChange?.(page)
 	}
 

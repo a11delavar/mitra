@@ -9,7 +9,8 @@ import { EntrySegments } from '#features/entries/client/EntrySegments.js'
 import { type EntrySegment } from '#features/entries/client/EntrySegment.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { Availability } from '#features/availability/client/Availability.js'
-import { EntryConnections, type SegmentPlacement } from '#features/relations/client/EntryConnections.js'
+import { type SegmentPlacement } from '#features/relations/client/EntryConnections.js'
+import { ConnectorLinesSetting } from '#features/relations/client/ConnectorLinesSetting.js'
 import { EntryGestureController } from '#features/entries/client/gestures/EntryGestureController.js'
 import { TimeZoneLaneController } from '#features/time/client/TimeZoneLaneController.js'
 import { TimeZones } from '#features/time/client/TimeZones.js'
@@ -516,7 +517,7 @@ export class Days extends Component {
 	}
 
 	private get connectionsTemplate() {
-		return !EntryConnections.isEnabledFor('week') ? html.nothing : html`
+		return !ConnectorLinesSetting.showsIn('week') ? html.nothing : html`
 			<mitra-entry-connections draft-host
 				.segments=${[...this.laneSegments, ...this.dates.window.days.flatMap(day => this.segments.timedOn(day))]}
 				.placement=${this.lanePlacement}
@@ -570,7 +571,7 @@ export class Days extends Component {
 						.segment=${bar.segment}
 					></mitra-entry-segment>
 				`)}
-				${!EntryConnections.isEnabledFor('week') ? html.nothing : html`
+				${!ConnectorLinesSetting.showsIn('week') ? html.nothing : html`
 					<mitra-entry-connections .segments=${runs} .placement=${placements}></mitra-entry-connections>
 				`}
 			</div>

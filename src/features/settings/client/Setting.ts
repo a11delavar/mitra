@@ -1,8 +1,8 @@
 import { html, live, type HTMLTemplateResult } from '@a11d/lit'
-import { Localizer } from '@3mo/localization'
 import { SaveSettings } from '#operations'
 import { termsMatch } from '#features/commands/termsMatch.js'
 import { session } from '#infrastructure/http/PageSession.js'
+import { LocalizedRegistry } from '#infrastructure/i18n/LocalizedRegistry.js'
 import { type UserSettings } from '../UserSettings.js'
 import { SettingsStore } from './SettingsStore.js'
 
@@ -45,22 +45,34 @@ export function userStorage<K extends keyof UserSettings>(key: K): SettingStorag
 	}
 }
 
-/** Per-device local storage under `Mitra.<Area>.<Thing>` key. */
+/**
+ * Per-device local storage under `Mitra.<Area>.<Thing>` key, for every preference a device keeps, a setting's or a view's
+ * own. A value kept as plain text before reads as itself, and a browser refusing storage keeps nothing rather than failing.
+ */
 export function deviceStorage<T>(key: string): SettingStorage<T> {
 	return {
 		read() {
-			const stored = localStorage.getItem(key)
+			let stored: string | null
 			try {
-				return stored === null ? undefined : JSON.parse(stored) as T
+				stored = localStorage.getItem(key)
 			} catch {
 				return undefined
 			}
+			try {
+				return stored === null ? undefined : JSON.parse(stored) as T
+			} catch {
+				return stored as T
+			}
 		},
 		write(value) {
-			if (value === undefined) {
-				localStorage.removeItem(key)
-			} else {
-				localStorage.setItem(key, JSON.stringify(value))
+			try {
+				if (value === undefined) {
+					localStorage.removeItem(key)
+				} else {
+					localStorage.setItem(key, JSON.stringify(value))
+				}
+			} catch {
+				// Storage refused: the preference lasts until the page reloads.
 			}
 		},
 	}
@@ -72,21 +84,14 @@ export interface SettingVerb {
 	apply(): unknown
 }
 
-type SettingConstructor = new () => Setting<unknown>
-
-const registeredSettings = new Array<SettingConstructor>()
+const registry = new LocalizedRegistry<Setting<unknown>>()
 
 /** Registers a {@link Setting} class in page display order. */
-export const setting = () => (constructor: SettingConstructor) => { registeredSettings.push(constructor) }
-
-let instances: Array<Setting<unknown>> | undefined
-
-// Rebuild cached instances when language changes.
-Localizer.locales.change.subscribe(() => instances = undefined)
+export const setting = () => (constructor: new () => Setting<unknown>) => registry.add(constructor)
 
 /** Every setting this build offers, as live instances. */
-export function settings(): ReadonlyArray<Setting<unknown>> {
-	return instances ??= registeredSettings.map(constructor => new constructor())
+export function settings() {
+	return registry.all
 }
 
 /**

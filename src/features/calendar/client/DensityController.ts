@@ -1,5 +1,6 @@
 import { Controller, eventListener, type Component } from '@a11d/lit'
 import { startedInOverlay } from '#design'
+import { deviceStorage, type SettingStorage } from '#features/settings/client/Setting.js'
 
 /**
  * Base controller managing zoom gesture mechanics (pinch, wheel on rail, touch gestures).
@@ -9,6 +10,7 @@ export abstract class DensityController extends Controller {
 	private target: number
 	private frame?: number
 	private pinch?: { startDistance: number, startZoom: number }
+	private readonly kept: SettingStorage<number>
 
 	constructor(
 		protected override readonly host: Component,
@@ -22,7 +24,8 @@ export abstract class DensityController extends Controller {
 		},
 	) {
 		super(host)
-		this.zoom = this.target = this.clamp(Number(localStorage.getItem(options.storageKey)) || options.initial || options.min)
+		this.kept = deviceStorage<number>(options.storageKey)
+		this.zoom = this.target = this.clamp(Number(this.kept.read()) || options.initial || options.min)
 	}
 
 	private pointerOf(point: { clientX: number, clientY: number }) {
@@ -39,7 +42,7 @@ export abstract class DensityController extends Controller {
 	}
 
 	private settle() {
-		localStorage.setItem(this.options.storageKey, String(this.zoom))
+		this.kept.write(this.zoom)
 		this.settled()
 	}
 

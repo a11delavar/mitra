@@ -1,9 +1,10 @@
 import { Controller, type Component } from '@a11d/lit'
 import { haptic, startedInOverlay } from '#design'
+import { deviceStorage } from '#features/settings/client/Setting.js'
 import { TimeZones } from './TimeZones.js'
 
 /** Absent until the user folds deliberately; until then the viewport decides. */
-const STORAGE_KEY = 'Mitra.TimeZones.Folded'
+const kept = deviceStorage<boolean>('Mitra.TimeZones.Folded')
 
 /** Inline travel (px) before a press on the rail reads as a fold gesture rather than a tap or a scroll. */
 const CLAIM_DISTANCE = 8
@@ -53,13 +54,8 @@ export class TimeZoneLaneController extends Controller {
 		return this.following || this.transitioning || !!this.drag?.claimed
 	}
 
-	private static get storedPreference(): boolean | undefined {
-		try {
-			const stored = localStorage.getItem(STORAGE_KEY)
-			return stored === null ? undefined : stored === 'true'
-		} catch {
-			return undefined
-		}
+	private static get storedPreference() {
+		return kept.read()
 	}
 
 	get folded() {
@@ -138,11 +134,7 @@ export class TimeZoneLaneController extends Controller {
 
 	private commit(folded: boolean) {
 		this.preference = folded
-		try {
-			localStorage.setItem(STORAGE_KEY, String(folded))
-		} catch {
-			// Storage unavailable, so the fold just doesn't survive a reload.
-		}
+		kept.write(folded)
 		this.reflect()
 	}
 

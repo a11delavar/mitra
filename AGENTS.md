@@ -180,7 +180,7 @@
 - One route (`PageCalendar`, `/:view`), overlays and filters as query parameters (`?date=`, `?selected=`, `?settings=`); `CalendarLocation` parses and writes them; today is omitted.
 - `PageCalendar` is the only writer: it derives `url` from live state and restores from the address bar, never from `parameters` (the router hands back the first navigation's).
 - `UrlSyncController` replaces, never pushes (100 ms debounce, flushed on `pagehide`), and skips writes when nothing changed.
-- Device preferences (zoom, sidebar, folding, the table's window) live in `localStorage`, out of URLs.
+- Device preferences (zoom, sidebar, folding, the table's window, the settings page) live in `localStorage`, out of URLs, each through `deviceStorage(key)`, never `localStorage` itself: a value kept as plain text before reads as itself, and a browser refusing storage keeps nothing rather than failing.
 - The server's SPA fallback must be `res.sendFile('index.html', { root })`: without `root`, a dotted path (a `.claude` worktree) 404s.
 
 ## View Transitions
@@ -195,7 +195,7 @@
 - **Keys** (`PageCalendar.handleKeyDown`): ignore fields, IME composition, chords and anything pressed in an open popover or dialog (`startedInOverlay`). Read keys through `KeyPress`, never `e.key` alone: the typed letter on Latin layouts (AZERTY, QWERTZ), the physical key where a layout types another script (Persian).
 
 ## Settings
-- One class per preference beside its feature (`Setting.ts`); `app/settings.ts` only orders them. Settings own defaults and options; domain code takes preferences as parameters. The server bundle excludes client settings (`bundles.test.ts`).
+- One class per preference beside its feature (`Setting.ts`); `app/settings.ts` only orders them. Settings and commands register in one `LocalizedRegistry` each, which rebuilds their instances on a language change; a setting owns its storage (`ConnectorLinesSetting.showsIn(view)`), never a component's statics. Settings own defaults and options; domain code takes preferences as parameters. The server bundle excludes client settings (`bundles.test.ts`).
 - Storage: `userStorage` (`User.settings`) or `deviceStorage`; only deviations are stored (`undefined` removes, `null` is an explicit none). `UserSettings` sanitizes without importing settings.
 - Each setting is a card (a field's tint and hairline, `SettingRow`) beside an unfilled rail. `details` renders below a hairline in the same card; a `ul` there lays items on the card's own columns (glyph, `.text` with `.label`/`.hint`, `.end` with a `.chip` and an options `mitra-menu`), so a list needs no layout of its own. A list with an action is a setting of its own, the action its control (`DevicesSetting`, `AccessTokensSetting`); something made and shown once is a dialog pair, never a popover or an inline row. Relative times tick through `ClockController`.
 - Scroll containers need inline padding, or they clip focus rings. Settings add palette verbs (`settingCommands()`). The dialog is searchable, two-pane, opened from the sidebar, the palette or Ctrl+, (`PageCalendar.openSettings()`).

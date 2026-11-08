@@ -11,6 +11,7 @@ import { type Source, Color } from '#features/sources'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import type { Entry } from '#features/entries'
 import { Planning } from '#features/planning/client/Planning.js'
+import { deviceStorage } from '#features/settings/client/Setting.js'
 import { DialogIntegration } from '#integrations/client/DialogIntegration.js'
 import type { Integration } from '#integrations'
 import { session } from '#infrastructure/http/PageSession.js'
@@ -24,7 +25,9 @@ export class Sidebar extends Component {
 	@event({ bubbles: true, composed: true }) readonly settingsClick!: EventDispatcher
 	@property({ type: Boolean, reflect: true }) open = false
 
-	@state() private tab: 'calendars' | 'planning' = (localStorage.getItem('Mitra.SidebarTab') as 'planning' | null) ?? 'calendars'
+	private static readonly keptTab = deviceStorage<'calendars' | 'planning'>('Mitra.SidebarTab')
+
+	@state() private tab = Sidebar.keptTab.read() ?? 'calendars'
 
 	readonly store = new EntryStore(this, { shows: () => this.planningCount })
 
@@ -34,7 +37,7 @@ export class Sidebar extends Component {
 
 	private setTab(tab: 'calendars' | 'planning') {
 		this.tab = tab
-		localStorage.setItem('Mitra.SidebarTab', tab)
+		Sidebar.keptTab.write(tab)
 	}
 
 	/** Turns to the planning list and brings `entry`'s row into view there. */

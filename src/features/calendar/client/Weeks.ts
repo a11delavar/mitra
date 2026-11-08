@@ -3,7 +3,7 @@ import { DateTime } from '@3mo/date-time'
 import type { EntryOccurrence } from '#features/recurrence'
 import { EntrySegments, type MonthWeek } from '#features/entries/client/EntrySegments.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
-import { EntryConnections } from '#features/relations/client/EntryConnections.js'
+import { ConnectorLinesSetting } from '#features/relations/client/ConnectorLinesSetting.js'
 import { EntryGestureController } from '#features/entries/client/gestures/EntryGestureController.js'
 import { Routines, type RoutineRun } from '#features/routines/client/Routines.js'
 import { Availability } from '#features/availability/client/Availability.js'
@@ -343,7 +343,7 @@ export class Weeks extends Component {
 						${repeat(rendered, item => item.week[0]!.dayStart.toISOString(), item =>
 							guard([item, todayValue, monthValue], () => this.weekTemplate(item, today)))}
 						${!weeks.length ? html.nothing : html`<div style="grid-row: ${weeks.length};"></div>`}
-						${!EntryConnections.isEnabledFor('month') ? html.nothing : html`
+						${!ConnectorLinesSetting.showsIn('month') ? html.nothing : html`
 							<mitra-entry-connections draft-host
 								.segments=${rendered.flatMap(item => item.bars.map(bar => bar.segment))}
 								.placement=${new Map(rendered.flatMap(item => item.bars.map(bar => [bar.segment, {

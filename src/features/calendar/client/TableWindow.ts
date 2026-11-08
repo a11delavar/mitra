@@ -1,4 +1,5 @@
 import { DateTime, DateTimeRange } from '@3mo/date-time'
+import { deviceStorage } from '#features/settings/client/Setting.js'
 import './DateTime.calendar.js'
 
 export const tableWindowPresets = ['past30', 'today', 'next7', 'next30', 'next12', 'all'] as const
@@ -41,21 +42,15 @@ export class TableWindow {
 		return !first || !last || Number.isNaN(first.valueOf()) || Number.isNaN(last.valueOf()) ? undefined : TableWindow.between(first, last)
 	}
 
+	private static readonly kept = deviceStorage<string>(TableWindow.key)
+
 	static get current(): TableWindow {
-		try {
-			return TableWindow.chosen ??= TableWindow.parse(localStorage.getItem(TableWindow.key)) ?? TableWindow.default
-		} catch {
-			return TableWindow.chosen ??= TableWindow.default
-		}
+		return TableWindow.chosen ??= TableWindow.parse(TableWindow.kept.read()) ?? TableWindow.default
 	}
 
 	static set current(window: TableWindow) {
 		TableWindow.chosen = window
-		try {
-			localStorage.setItem(TableWindow.key, window.key)
-		} catch {
-			// The window is a convenience; without storage the table opens on the default again.
-		}
+		TableWindow.kept.write(window.key)
 	}
 
 	private constructor(

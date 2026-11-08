@@ -1,31 +1,25 @@
 import { DialogCancelledError } from '@a11d/lit-application'
-import { Localizer } from '@3mo/localization'
 import { Mitra } from '#app/Mitra.js'
+import { LocalizedRegistry } from '#infrastructure/i18n/LocalizedRegistry.js'
 import { termsMatch } from './termsMatch.js'
 import { KeyPress } from './KeyPress.js'
 
 /** Where a keyed command appears in the shortcut sheet's grouping. */
 export type CommandGroup = 'views' | 'navigation' | 'entries' | 'general' | (string & {})
 
-type CommandConstructor = new () => Command
-
-const registeredCommands = new Array<CommandConstructor>()
+const registry = new LocalizedRegistry<Command>()
 
 /** Registers a {@link Command} class. Registration order IS display order: the palette lists and
- * the interceptor matches in the order the classes evaluate (see commands/index.ts). */
-export const command = () => (constructor: CommandConstructor) => { registeredCommands.push(constructor) }
+ * the interceptor matches in the order the classes evaluate (see app/commands.ts). */
+export const command = () => (constructor: new () => Command) => registry.add(constructor)
 
-export function commands(): ReadonlyArray<CommandConstructor> {
-	return registeredCommands
+export function commands() {
+	return registry.classes
 }
 
-let instances: Array<Command> | undefined
-
-Localizer.locales.change.subscribe(() => instances = undefined)
-
 /** The registry as live instances, one per verb. */
-export function commandInstances(): ReadonlyArray<Command> {
-	return instances ??= registeredCommands.map(constructor => new constructor())
+export function commandInstances() {
+	return registry.all
 }
 
 /** Facts are readonly fields (rebuilt on a language change); live state uses getters. */

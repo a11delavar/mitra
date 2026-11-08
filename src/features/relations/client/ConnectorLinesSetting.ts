@@ -1,12 +1,21 @@
-import { setting, ToggleSetting, type SettingStorage } from '#features/settings/client/Setting.js'
-import { EntryConnections } from './EntryConnections.js'
+import { setting, ToggleSetting, deviceStorage, type SettingStorage } from '#features/settings/client/Setting.js'
+import { EntryStore } from '#features/entries/client/EntryStore.js'
 
 type ConnectionView = 'week' | 'month' | 'timeline'
 
 /**
  * Relationship connector line overlay visibility toggle per calendar view.
  */
-abstract class ConnectorLinesSetting extends ToggleSetting {
+export abstract class ConnectorLinesSetting extends ToggleSetting {
+	/** Whether `view` draws its connector lines. */
+	static showsIn(view: ConnectionView) {
+		switch (view) {
+			case 'week': return new WeekConnectorLinesSetting().value
+			case 'month': return new MonthConnectorLinesSetting().value
+			case 'timeline': return new TimelineConnectorLinesSetting().value
+		}
+	}
+
 	constructor(private readonly view: ConnectionView) {
 		super()
 	}
@@ -16,9 +25,16 @@ abstract class ConnectorLinesSetting extends ToggleSetting {
 	readonly page = 'calendar'
 	readonly fallback = true
 
-	protected readonly storage: SettingStorage<boolean> = {
-		read: () => EntryConnections.isEnabledFor(this.view),
-		write: value => EntryConnections.setEnabledFor(this.view, value),
+	/** The views read it as they draw, so a change redraws them. */
+	protected get storage(): SettingStorage<boolean> {
+		const kept = deviceStorage<boolean>(`Mitra.Connections.${this.view}`)
+		return {
+			read: () => kept.read(),
+			write: value => {
+				kept.write(value)
+				EntryStore.notify()
+			},
+		}
 	}
 }
 
