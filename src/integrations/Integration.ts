@@ -350,6 +350,22 @@ export abstract class Integration<TCredentials extends Record<string, any> = any
 		return entry
 	}
 
+	/**
+	 * Takes `original` over from `from` as `replacement`, created here first so a failure loses nothing; where the original
+	 * cannot go, the copy goes again rather than leave the entry twice.
+	 */
+	async recreate(em: EntityManager, replacement: Entry, original: Entry, from: Integration) {
+		const created = await this.createEntry(em, replacement)
+		try {
+			await from.deleteEntry(em, original)
+		} catch (error) {
+			await this.deleteEntry(em, created).catch(() => void 0)
+			await em.flush().catch(() => void 0)
+			throw error
+		}
+		return created
+	}
+
 	async updateEntry(em: EntityManager, existing: Entry, incoming: Entry): Promise<void> {
 		if (!this.storesLocally(existing)) {
 			return engineFor(this).updateEntry(this, em, existing, incoming)

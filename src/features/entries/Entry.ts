@@ -233,6 +233,9 @@ export class Entry extends Entity implements Validatable {
 	/** Nothing left to do or to happen: a done or cancelled task, a cancelled event. No reminder of it fires. */
 	get closed() { return !!this.status?.closed }
 
+	/** Its status as shown: where none was ever set, a task to do and an event confirmed. */
+	get effectiveStatus() { return this.status ?? (this.type?.isTask ? EntryStatus.ToDo : EntryStatus.Confirmed) }
+
 	/** A task still to do: not an event, and not closed. */
 	get open() { return !!this.type?.isTask && !this.closed }
 

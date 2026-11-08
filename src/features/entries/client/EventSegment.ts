@@ -104,8 +104,7 @@ export class EntrySegmentComponent extends Component {
 		this.title = !this.routine ? '' : [entry.heading, recurring.recurrence?.format(recurring.start ?? recurring.due)].filter(Boolean).join(' · ')
 		this.toggleAttribute('dragging', this.store.pending.isDragging(entry) || this.store.pending.isPreview(entry))
 		this.toggleAttribute('drag-source', this.store.pending.isDragSource(entry))
-		const status = entry.status ?? (entry.type.isTask ? EntryStatus.ToDo : undefined)
-		status ? this.setAttribute('data-status', status.code) : this.removeAttribute('data-status')
+		this.setAttribute('data-status', entry.effectiveStatus.code)
 		if (entry.type.isTask) {
 			if (entry.progress !== undefined) {
 				this.setAttribute('data-progress', '')

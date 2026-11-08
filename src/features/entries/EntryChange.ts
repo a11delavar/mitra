@@ -81,15 +81,6 @@ export class EntryChange implements Validatable<EntryChangeContext> {
 			relations: edited.relations,
 		})
 		recreated.migrateTo(to)
-		// Create first, so a failure loses nothing.
-		const created = await to.integration.createEntry(em, recreated)
-		try {
-			await from.integration.deleteEntry(em, entry)
-		} catch (error) {
-			await to.integration.deleteEntry(em, created).catch(() => void 0)
-			await em.flush().catch(() => void 0)
-			throw error
-		}
-		return created
+		return to.integration.recreate(em, recreated, entry, from.integration)
 	}
 }

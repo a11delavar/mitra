@@ -68,7 +68,7 @@ export class Hierarchy {
 
 	/** Offers what closing a task leads to: closing its open subtasks, then completing the parents it completes. */
 	async offerFollowUps(entry: Entry) {
-		const id = entry.recurringEntryId ?? entry.id
+		const id = entry.masterId
 		if (!id || !entry.type.isTask || this.offering.has(id)) {
 			return
 		}

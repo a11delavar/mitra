@@ -39,7 +39,7 @@ export class EntryStore extends Controller {
 		create: (entry: Entry) => CreateEntry.call(EntryPatch.creating(entry)),
 		/** Writes `fields` of the entry, or of every occurrence of a repeating one: those they all share, unless told otherwise. */
 		update: (entry: Entry, fields: ReadonlyArray<EntryPatchField> = entry.recurringEntryId ? EntryPatch.shared : EntryPatch.fields) =>
-			UpdateEntry.call({ ...EntryPatch.of(entry, fields), id: entry.recurringEntryId ?? entry.id! }),
+			UpdateEntry.call({ ...EntryPatch.of(entry, fields), id: entry.masterId! }),
 		delete: (id: string) => DeleteEntry.call({ id }),
 		/** The date `occurrence` stands for, by the date its entry stores it under, with how far the change reaches. */
 		editOccurrence: (occurrence: EntryOccurrence, scope: EntryOccurrenceChangeScope) =>
@@ -272,7 +272,7 @@ export class EntryStore extends Controller {
 		const before = owner.relations
 		mutate()
 		this.notify()
-		const id = owner.recurringEntryId ?? owner.id
+		const id = owner.masterId
 		if (!id) {
 			return
 		}

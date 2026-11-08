@@ -49,7 +49,7 @@ describe('TableRow', () => {
 			entry({ status: EntryStatus.Cancelled }),
 		].map(entry => TableRow.for(shown(entry)).statusRank)
 		assert.deepEqual(ranks, [0, 1, 2, 3, 4, 5])
-		assert.equal(TableRow.for(shown(entry())).status, EntryStatus.Confirmed)
+		assert.equal(TableRow.for(shown(entry())).facet('statusRank'), EntryStatus.Confirmed.code)
 	})
 
 	it('measures the duration in minutes and leaves an undated row without one', () => {

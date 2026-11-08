@@ -36,15 +36,7 @@ export class EntryOccurrenceChange {
 			await from.excludeOccurrence(em, entry, excluded)
 		}
 		if (rewritten && rewritten.sourceId !== entry.sourceId) {
-			// Create first, so a failure loses nothing.
-			const moved = await to.createEntry(em, rewritten)
-			try {
-				await from.deleteEntry(em, entry)
-			} catch (error) {
-				await to.deleteEntry(em, moved).catch(() => void 0)
-				throw error
-			}
-			return moved
+			return to.recreate(em, rewritten, entry, from)
 		}
 		if (rewritten) {
 			await from.updateEntry(em, entry, rewritten)

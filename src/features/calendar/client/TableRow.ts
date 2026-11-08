@@ -80,9 +80,7 @@ export class TableRow {
 	get headingKey() { return this.entry.heading.toLocaleLowerCase() }
 	/** The When column shows the span and sorts by where it begins: its start, or a due-only task's due. */
 	get when() { return (this.occurrence.start ?? this.occurrence.end)?.valueOf() }
-	/** The status the Status column shows: one without any stands where its kind does, a task to do and an event confirmed. */
-	get status() { return this.entry.status ?? (this.entry.type.isTask ? EntryStatus.ToDo : EntryStatus.Confirmed) }
-	get statusRank() { return EntryStatus.all.indexOf(this.status) }
+	get statusRank() { return EntryStatus.all.indexOf(this.entry.effectiveStatus) }
 	get typeKey() { return this.entry.type.value }
 	get source() { return this.entry.source }
 	get sourceName() { return this.source?.name ?? '' }
@@ -125,7 +123,7 @@ export class TableRow {
 	facet(key: TableFacet): string {
 		const { entry } = this
 		switch (key) {
-			case 'statusRank': return this.status.code
+			case 'statusRank': return entry.effectiveStatus.code
 			case 'typeKey': return entry.type.value
 			case 'sourceName': return entry.sourceId
 			case 'repeats': return this.occurrence.repeats ? 'repeating' : 'once'

@@ -26,12 +26,12 @@ export class EntryStatusComponent extends Component {
 
 	/** The status shown: an event with none is on, a task with none to do, and a task in progress reads as Doing where its calendar has it. */
 	private get status() {
-		const status = this.entry?.status ?? (this.task ? EntryStatus.ToDo : EntryStatus.Confirmed)
+		const status = this.entry.effectiveStatus
 		if (!this.task || status.closed) {
 			return status
 		}
-		const progress = this.entry.hierarchy.progress
-		if (progress !== undefined && progress > 0 && progress < 1 && this.entry.statuses.includes(EntryStatus.Doing)) {
+		// Progress reads as Doing only where a task can be Doing; a calendar of two states shows it To Do.
+		if (this.entry.hierarchy.partlyDone && this.entry.statuses.includes(EntryStatus.Doing)) {
 			return EntryStatus.Doing
 		}
 		return status
@@ -343,7 +343,7 @@ export class EntryStatusComponent extends Component {
 		const readout = this.progressLabel
 		const name = readout ? `${this.status.format()} (${readout})` : this.status.format()
 		const progress = this.progress
-		const showsProgressDial = this.status === EntryStatus.Doing || (progress !== undefined && progress > 0 && progress < 1 && !this.status.closed)
+		const showsProgressDial = this.status === EntryStatus.Doing || (this.entry.hierarchy.partlyDone && !this.status.closed)
 		const percent = progress !== undefined ? Math.round(progress * 100) : 50
 		const hint = this.task ? t('${status}. Click to toggle, Alt-click for options', { status: name }) : t('${status}. Click for options', { status: name })
 		const title = this.entry.editable ? hint : name

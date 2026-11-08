@@ -394,7 +394,7 @@ export class EntryDetailsWhen extends Component {
 		const { start } = this.entry
 		return start || this.startShown
 			? this.momentTemplate({
-				kind: 'start', icon: 'clock-arrow-right', label: t('Start date'), value: start, handleChange: this.handleStartChange, defaultTime: '09:00',
+				kind: 'start', icon: 'clock-arrow-right', label: t('Start date'), value: start, handleChange: this.handleStartChange, defaultTime: ScheduleDefaults.current.startClock,
 				remove: !start || !this.entry.unschedulable ? undefined : { label: t('Remove the date'), title: t('Remove the date. The task moves to Unscheduled'), handler: this.removeStart },
 			})
 			: this.entry.editable ? this.placeholderTemplate('start', 'clock-arrow-right', t('Start date'), this.addStart)
@@ -447,7 +447,7 @@ export class EntryDetailsWhen extends Component {
 		}
 		return due || this.dueShown
 			? this.momentTemplate({
-				kind: 'due', icon: 'flag', label: t('Due date'), value: due, handleChange: this.handleDueChange, defaultTime: '17:00',
+				kind: 'due', icon: 'flag', label: t('Due date'), value: due, handleChange: this.handleDueChange, defaultTime: ScheduleDefaults.current.dueClock,
 				remove: !due || this.entry.partOfSeries ? undefined : { label: t('Remove the due date'), handler: this.removeDue },
 			})
 			: this.placeholderTemplate('due', 'flag', t('Due date'), this.addDue)

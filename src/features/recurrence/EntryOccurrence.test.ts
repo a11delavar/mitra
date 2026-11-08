@@ -2,7 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { EntryType, Entry, EntryPatch } from '#features/entries'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
-import type { Integration } from '#integrations'
+import { Integration } from '#integrations'
 import { Recurrence } from './Recurrence.js'
 import { RecurrenceFrequency } from './RecurrenceFrequency.js'
 import { RecurrenceWeekday } from './RecurrenceWeekday.js'
@@ -24,11 +24,12 @@ describe('EntryOccurrence edits', () => {
 			createEntry: (_em: never, entry: Entry) => (calls.creates.push(entry), Promise.resolve(entry)),
 			deleteEntry: (_em: never, entry: Entry) => (calls.deletes.push(entry), Promise.resolve()),
 			excludeOccurrence: (_em: never, _master: Entry, recurrenceId: Date) => (calls.excludes.push(recurrenceId.getTime()), Promise.resolve()),
+			recreate: Integration.prototype.recreate,
 		} as unknown as Integration
 		return { calls, integration }
 	}
 
-	const em = {} as never
+	const em = { flush: () => Promise.resolve() } as never
 	/** `edited` is the occurrence as the edit leaves it. */
 	const edit = (entry: Entry, recurrenceId: Date, edited: Entry, scope: EntryOccurrenceChangeScope) => entry.occurrences.at(recurrenceId).edit(EntryPatch.of(edited, EntryPatch.occurrence), scope)
 	const master = () => new Entry({

@@ -29,13 +29,30 @@ export class ScheduleDefaults {
 	/** `duration`: the minutes a new timed entry lasts. */
 	constructor(readonly duration: number) { }
 
+	/** The hours the working day begins and ends at, which a day's entry, a due date and new availability take. */
+	readonly workday = { start: 9, end: 17 } as const
+
 	/** The time a day's entry takes when it gains one: the start of the working day. */
 	timeOn(day: DateTime) {
-		return day.dayStart.with({ hour: 9 })
+		return day.dayStart.with({ hour: this.workday.start })
 	}
 
 	/** The time a due date on `day` takes when it gains one: the end of the working day. */
 	dueOn(day: DateTime) {
-		return day.dayStart.with({ hour: 17 })
+		return day.dayStart.with({ hour: this.workday.end })
+	}
+
+	/** The start of the working day as a time field writes it ("09:00"). */
+	get startClock() {
+		return ScheduleDefaults.clockOf(this.workday.start)
+	}
+
+	/** The end of the working day as a time field writes it ("17:00"). */
+	get dueClock() {
+		return ScheduleDefaults.clockOf(this.workday.end)
+	}
+
+	private static clockOf(hour: number) {
+		return `${String(hour).padStart(2, '0')}:00`
 	}
 }

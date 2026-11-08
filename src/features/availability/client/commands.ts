@@ -1,13 +1,10 @@
 import { DateTime } from '@3mo/date-time'
-import { EntryType } from '#features/entries'
+import { EntryType, ScheduleDefaults } from '#features/entries'
 import { Recurrence, RecurrenceWeekday, RecurrenceFrequency } from '#features/recurrence'
 import { EntryStore, reportSaveError } from '#features/entries/client/EntryStore.js'
 import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import { command, Command } from '#features/commands/Command.js'
-
-const START_HOUR = 9
-const END_HOUR = 17
 
 /**
  * Adds availability to the default calendar: working hours from Monday to Friday if it has none yet, otherwise a
@@ -31,11 +28,12 @@ export class CreateAvailability extends Command {
 		const today = new DateTime()
 		const first = !EntryStore.entries.some(entry => entry.type.isAvailability && entry.sourceId === target.id)
 		const days = first ? RecurrenceWeekday.workdays() : [RecurrenceWeekday.of(today)]
-		const start = today.firstOccurrenceOn(days).with({ hour: START_HOUR })
+		const { workday } = ScheduleDefaults.current
+		const start = today.firstOccurrenceOn(days).with({ hour: workday.start })
 		const entry = target.draft({
 			type: EntryType.Availability,
 			start,
-			end: start.with({ hour: END_HOUR }),
+			end: start.with({ hour: workday.end }),
 			allDay: false,
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: days }),
 		})

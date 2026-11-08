@@ -53,9 +53,6 @@ export class RelationsField extends Component {
 
 	protected override createRenderRoot() { return this }
 
-	/** Relationships live on the series MASTER: an occurrence reads/edits its master's. */
-	private get targetId() { return this.entry.recurringEntryId ?? this.entry.id }
-
 	/** Both directions, already bucketed and silenced; read paths attach the derived half, so nothing is fetched. */
 	private get relations() {
 		return this.entry.relations ?? EntryRelations.none
@@ -151,7 +148,7 @@ export class RelationsField extends Component {
 		const related = new Set(this.relations.all.filter(relation => RelationType.of(relation.type).family === family).map(relation => relation.targetUid))
 		this.suggestions = results.filter(candidate =>
 			!!candidate.uid // uid-less rows can't be pointed at
-			&& candidate.uid !== this.entry.uid && candidate.id !== this.targetId
+			&& candidate.uid !== this.entry.uid && candidate.id !== this.entry.masterId
 			&& !candidate.recurrenceId // an override row stands behind its master
 			&& !related.has(candidate.uid))
 		this.searchedQuery = query

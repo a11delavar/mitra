@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { type EntityManager } from '@mikro-orm/core'
 import { Source } from '#features/sources'
 import { Participants } from '#features/participants/Participant.js'
-import { type Integration, IntegrationCapabilities, IntegrationOwnership } from '#integrations'
+import { Integration, IntegrationCapabilities, IntegrationOwnership } from '#integrations'
 import { Entry } from './Entry.js'
 import { EntryPatch } from './EntryPatch.js'
 import { EntryType } from './EntryType.js'
@@ -32,6 +32,7 @@ describe('EntryChange', () => {
 				log.push(`delete ${entry.id}`)
 				return Promise.resolve()
 			},
+			recreate: Integration.prototype.recreate,
 		} as unknown as Integration
 		return { log, calendar: Object.assign(new Source({ id, uri, name: id, integrationId, entryTypes: [EntryType.Event, EntryType.Task] }), { integration }) }
 	}

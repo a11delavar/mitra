@@ -71,10 +71,9 @@ function reminders(entry: Entry) {
 	return text((entry.reminders ?? []).map(minutes => minutes === 0 ? t('At start') : TimeSpan.fromMinutes(minutes).formatAsWholeUnit()).join(', '))
 }
 
-function status(row: TableRow) {
-	const progress = row.entry.hierarchy.progress
-	const underway = progress !== undefined && progress > 0 && progress < 1
-	return text(`${row.status.format()}${!underway ? '' : ` · ${Math.round(progress * 100).formatAsPercent()}`}`)
+function status(entry: Entry) {
+	const { partlyDone, progress } = entry.hierarchy
+	return text(`${entry.effectiveStatus.format()}${!partlyDone ? '' : ` · ${Math.round(progress! * 100).formatAsPercent()}`}`)
 }
 
 /** A table makes them once: the grid controller syncs its definitions again for every new array. */
@@ -91,7 +90,7 @@ export const tableColumns = (): Array<DataGridColumn<TableRow>> => [
 			${text(row.sourceName)}
 		`,
 	}),
-	column('statusRank', t('Status'), { getContentTemplate: (_, row) => status(row) }),
+	column('statusRank', t('Status'), { getContentTemplate: (_, row) => status(row.entry) }),
 	column('durationMinutes', t('Duration'), { alignment: 'end', hidden: true, getContentTemplate: (_, row) => text(row.duration) }),
 	column('typeKey', t('Type'), { hidden: true, getContentTemplate: (_, row) => text(row.entry.type.format()) }),
 	column('location', t('Location'), { getContentTemplate: (_, row) => location(row.location) }),

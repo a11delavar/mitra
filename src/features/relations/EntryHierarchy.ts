@@ -62,6 +62,12 @@ export class EntryHierarchy {
 		return rollup?.total ? rollup.progress : this.entry.progress
 	}
 
+	/** Whether it is partly done: some of it, by its subtasks and checklist or its own progress, and not all. */
+	get partlyDone() {
+		const { progress } = this
+		return progress !== undefined && progress > 0 && progress < 1
+	}
+
 	/** Whether this one can block `dependent`: both saved, the dependent's calendar keeping relations, and no dependency between the two yet, either way, direct or through others. */
 	canBlock(dependent: Entry) {
 		const predecessor = this.entry
