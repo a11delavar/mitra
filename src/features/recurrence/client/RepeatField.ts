@@ -23,6 +23,8 @@ export class RepeatField extends Component {
 
 	@event() readonly change!: EventDispatcher
 
+	readonly store = new EntryStore(this, { entry: () => this.entry })
+
 	@state() private draft?: Recurrence
 
 	// Kept while the other end is chosen, so switching back restores them.

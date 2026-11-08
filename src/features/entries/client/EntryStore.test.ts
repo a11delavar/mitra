@@ -1,6 +1,6 @@
 import { beforeEach, describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { DateTime } from '@3mo/date-time'
+import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { Recurrence, RecurrenceFrequency, EntryOccurrenceChangeScope, type EntryOccurrence } from '#features/recurrence'
 import { EntryRelations } from '#features/relations'
 import { EntryReminders } from '#features/reminders/EntryReminders.js'
@@ -604,6 +604,44 @@ describe('EntryStore', () => {
 			assert.equal(working.recurringEntryId, undefined)
 			assert.equal(working.status, EntryStatus.Done)
 			assert.equal(EntryStore.isDirty(working), false)
+		})
+
+		describe('a date ticked off through the views', () => {
+			const tomorrow = at(9).add({ days: 1 })
+			const recurring = () => entry({ id: 'master', uid: 'uid', type: EntryType.Task, status: EntryStatus.ToDo, recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }) })
+			const onTomorrow = () => EntryStore.occurrences.filter(shown => shown.start?.equals(tomorrow))
+
+			/** Ticks tomorrow's date off as a chip does, answering as the server does: an entry of its own, the date excluded from the rule. */
+			const tick = async () => {
+				const transport = fake()
+				EntryStore.persistence = transport.persistence
+				EntryStore.applyServerEntries([recurring()], new DateTimeRange(day, day.add({ days: 3 })))
+				const [date] = onTomorrow()
+				const identity = EntryStore.identityOf(date!)
+				const working = EntryStore.editable(date!)
+				working.done = true
+				const commit = EntryStore.commit(working)
+				const detached = new Entry({ ...working.clone(), id: 'detached', uid: 'detached-uid', recurringEntryId: undefined, recurrenceId: undefined, recurrence: undefined })
+				await transport.respond(detached)
+				await commit
+				return { identity, working, detached }
+			}
+
+			it('shows the date once, as the entry it became, before the server\'s entries arrive', async () => {
+				const { working } = await tick()
+				assert.deepEqual(onTomorrow().map(shown => shown.entry), [working])
+				assert.equal(EntryStore.isDirty(EntryStore.entries.find(held => held.id === 'master')!), false)
+			})
+
+			it('keeps the chip the date had, so an editor open on it stays, and after the server\'s entries arrive', async () => {
+				const { identity, working, detached } = await tick()
+				assert.equal(EntryStore.identityOf(onTomorrow()[0]!), identity)
+				const excluded = recurring()
+				excluded.exclude(tomorrow)
+				EntryStore.applyServerEntries([excluded, detached], new DateTimeRange(day, day.add({ days: 3 })))
+				assert.deepEqual(onTomorrow().map(shown => shown.entry), [working])
+				assert.equal(EntryStore.identityOf(onTomorrow()[0]!), identity)
+			})
 		})
 
 		it('ticking a task off bypasses the scope dialog even though the closure also writes progress', async () => {

@@ -1,7 +1,7 @@
 import { Component, component, html, css, property } from '@a11d/lit'
 import { controlHeight, ring } from '#design'
+import { PageState } from '#infrastructure/http/PageState.js'
 import { type Setting } from './Setting.js'
-import { SettingsStore } from './SettingsStore.js'
 
 /**
  * A setting as a card: leading glyph, label with optional hint, and trailing control, its details below on the same
@@ -16,7 +16,7 @@ export class SettingRow extends Component {
 
 	override role = 'listitem'
 
-	readonly store = new SettingsStore(this)
+	readonly store = new PageState(this)
 
 	protected override createRenderRoot() { return this }
 

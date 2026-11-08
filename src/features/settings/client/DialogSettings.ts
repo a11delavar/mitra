@@ -1,8 +1,8 @@
 import { component, html, css, state, query, repeat, type PropertyValues, ifDefined, bind } from '@a11d/lit'
 import { DialogComponent } from '@a11d/lit-application'
 import { activated, selected, focusRing } from '#design'
+import { PageState } from '#infrastructure/http/PageState.js'
 import { deviceStorage, settings, settingsPage, settingsPages, type Setting, type SettingsPageId } from './Setting.js'
-import { SettingsStore } from './SettingsStore.js'
 import { type SettingRow } from './SettingRow.js'
 
 export interface SettingsParameters {
@@ -19,7 +19,7 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 	/** Single-pane drilldown state for narrow viewports. */
 	@state() private drilled = false
 
-	readonly store = new SettingsStore(this)
+	readonly store = new PageState(this)
 
 	@query('mitra-setting-row[focused]') private readonly focusedRow?: SettingRow
 

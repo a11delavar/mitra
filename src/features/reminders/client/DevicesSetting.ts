@@ -1,7 +1,7 @@
 import { html } from '@a11d/lit'
 import { SendTestNotification } from '#operations'
 import { Setting, setting, type SettingStorage } from '#features/settings/client/Setting.js'
-import { SettingsStore } from '#features/settings/client/SettingsStore.js'
+import { PageState } from '#infrastructure/http/PageState.js'
 import { pushSupported } from './push.js'
 import './NotificationDevices.js'
 
@@ -31,7 +31,7 @@ export class DevicesSetting extends Setting<undefined> {
 	private async test(kind: 'event' | 'task') {
 		await SendTestNotification.call({ kind })
 		DevicesSetting.sent = kind
-		SettingsStore.notify()
+		PageState.changed()
 	}
 
 	override get control() {

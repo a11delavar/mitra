@@ -120,13 +120,11 @@ export class Mitra extends Application {
 		observeFileDrops(files => void Mitra.addCalendarFiles(files))
 		if (pendingIntegrationId) {
 			await new DialogIntegration({ id: pendingIntegrationId, preselectSources: true }).confirm()
-			document.querySelector('mitra-sidebar')?.requestUpdate()
 		} else if (subscribeUrl) {
 			await Mitra.subscribe(subscribeUrl)
 		} else if (!Calendars.integrations.length) {
 			if (await new DialogWelcome().confirm()) {
 				await new DialogIntegration({}).confirm()
-				document.querySelector('mitra-sidebar')?.requestUpdate()
 			}
 		}
 	}
@@ -137,7 +135,6 @@ export class Mitra extends Application {
 			return
 		}
 		await new DialogIntegration({ prefill: new IcsSubscription({ uri: normalized }) }).confirm()
-		document.querySelector('mitra-sidebar')?.requestUpdate()
 	}
 
 	private static async addCalendarFiles(files: ReadonlyArray<File>) {

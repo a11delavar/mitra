@@ -224,6 +224,15 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 		this.gotoDate.querySelector('mitra-date-picker')?.focus()
 	}
 
+	/** Ctrl+, opens the settings from anywhere, a field included, unless they are open already. */
+	@eventListener({ target: window, type: 'keydown' })
+	protected handleSettingsKey(e: KeyboardEvent) {
+		if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key === ',' && !this.settingsPage) {
+			e.preventDefault()
+			void this.openSettings()
+		}
+	}
+
 	@eventListener({ target: window, type: 'keydown' })
 	protected handleKeyDown(e: KeyboardEvent) {
 		// A key pressed in an open popover or dialog is its own: the date picker's arrows must not also step the week.

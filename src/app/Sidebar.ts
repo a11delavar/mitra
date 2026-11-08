@@ -15,6 +15,7 @@ import { deviceStorage } from '#features/settings/client/Setting.js'
 import { DialogIntegration } from '#integrations/client/DialogIntegration.js'
 import type { Integration } from '#integrations'
 import { session } from '#infrastructure/http/PageSession.js'
+import { PageState } from '#infrastructure/http/PageState.js'
 import { canInstall, promptInstall, onInstallAvailabilityChange } from './pwa.js'
 
 @component('mitra-sidebar')
@@ -30,6 +31,7 @@ export class Sidebar extends Component {
 	@state() private tab = Sidebar.keptTab.read() ?? 'calendars'
 
 	readonly store = new EntryStore(this, { shows: () => this.planningCount })
+	readonly pageState = new PageState(this)
 
 	private get planningCount() {
 		return Planning.pending
@@ -959,14 +961,6 @@ export class Sidebar extends Component {
 				</div>
 			</nav>
 		`
-	}
-
-	@eventListener({ target: window, type: 'keydown' })
-	protected handleSettingsHotkey(e: KeyboardEvent) {
-		if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key === ',' && !document.querySelector('mitra-dialog-settings')) {
-			e.preventDefault()
-			this.settingsClick.dispatch()
-		}
 	}
 
 	/** User account footer for multi-user mode. */

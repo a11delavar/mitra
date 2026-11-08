@@ -31,9 +31,7 @@ export class DialogAbout extends DialogComponent {
 		if (session.user?.hasSeen(DialogAbout.runningVersion)) {
 			return
 		}
-		session.keepUser(MarkVersionSeen.call({ version: DialogAbout.runningVersion }))
-			.then(() => document.querySelector('mitra-sidebar')?.requestUpdate())
-			.catch(() => void 0)
+		session.keepUser(MarkVersionSeen.call({ version: DialogAbout.runningVersion })).catch(() => void 0)
 	}
 
 	@state() private releases?: Array<Release>

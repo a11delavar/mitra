@@ -3,8 +3,8 @@ import { SaveSettings } from '#operations'
 import { termsMatch } from '#features/commands/termsMatch.js'
 import { session } from '#infrastructure/http/PageSession.js'
 import { LocalizedRegistry } from '#infrastructure/i18n/LocalizedRegistry.js'
+import { PageState } from '#infrastructure/http/PageState.js'
 import { type UserSettings } from '../UserSettings.js'
-import { SettingsStore } from './SettingsStore.js'
 
 /** The dialog's pages, in the order its side panel lists them. */
 export const settingsPages = ['general', 'calendar', 'entries', 'notifications', 'ai', 'administration'] as const
@@ -145,7 +145,7 @@ export abstract class Setting<T> {
 		} catch (error) {
 			console.error(`Saving the "${this.heading}" setting failed:`, error)
 		}
-		SettingsStore.notify()
+		PageState.changed()
 	}
 
 	/** Verbs contributed by this setting to the command palette. */

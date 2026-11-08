@@ -247,6 +247,7 @@
 - `mitra-link` (`design/Link.ts`) names a bare address by host, meeting service or app (its own tables).
 
 ## Sidebar
+- What a page shows beside the entries re-renders through `PageState` (`infrastructure/http/PageState.ts`): a setting's change, the calendars `Calendars` adopts, hides or reorders, and the account `session` keeps all call `PageState.changed()`, so no store reaches for a component (`querySelector('mitra-sidebar')`) to update it. An entry the store does not hold is saved through `EntryStore.saveUntracked`, so closing it reaches `whenTaskCloses` like any other. Ctrl+, is the page's (`PageCalendar.handleSettingsKey`).
 - `mitra-source-icon` reads everything from its `.source`, never mirrored properties. One grid (`.integrations`, `--sidebar-gap`) aligns every row and heading; other source lists reproduce it. `scrollbar-gutter: stable`. The default calendar is `Calendars.getPrimary()`, the first visible writable one where the chosen one is not. `Calendars` (`sources/client/`) is the client's store of integrations and sources, registered for `@include`, so `entry.source` and `source.integration` are the ones it holds now; `entry.effectiveColor` is an entry's own colour, else its calendar's.
 
 ## Website (`website/`)

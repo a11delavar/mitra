@@ -21,7 +21,6 @@ export class DefaultSourceSetting extends ChoiceSetting<string> {
 		read: () => Calendars.defaultId,
 		write: async value => {
 			await session.keepUser(SetDefaultCalendar.call({ sourceId: value ?? null }))
-			document.querySelector('mitra-sidebar')?.requestUpdate()
 		},
 	}
 

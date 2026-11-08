@@ -2,6 +2,7 @@ import { GetUser, GetMeta } from '#operations'
 import type { User } from '#features/identity'
 import { Instance } from '#features/about/Instance.js'
 import type { UserSettings } from '#features/settings/UserSettings.js'
+import { PageState } from './PageState.js'
 
 /**
  * What this page learned of the server it talks to: who is signed in, kept from what the last change answered, and what the
@@ -23,13 +24,15 @@ export class PageSession {
 		return this.user?.settings ?? {}
 	}
 
-	async fetchUser() {
-		return this.user = await GetUser.call()
+	fetchUser() {
+		return this.keepUser(GetUser.call())
 	}
 
 	/** Keeps the user a change answers with as the signed-in one, which `user` reads until the next. */
 	async keepUser(answer: Promise<User>) {
-		return this.user = await answer
+		this.user = await answer
+		PageState.changed()
+		return this.user
 	}
 
 	/** Asks the server again; one that does not answer leaves what it said before. */

@@ -6,7 +6,6 @@ import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js
 import { EntryStore, reportSaveError } from '#features/entries/client/EntryStore.js'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import '#features/entries/client/EntryStatus.js'
-import { hierarchy } from './Hierarchy.js'
 
 /**
  * Another entry, named where one entry points at it: a task's status, which can be changed right here,
@@ -51,12 +50,7 @@ export class EntryLink extends Component {
 			tracked.percentComplete = target.percentComplete
 			EntryStore.notify()
 		}
-		const saved = tracked ?? target
-		await (tracked ? EntryStore.commit(tracked) : EntryStore.persistence.update(target)).catch(reportSaveError)
-		// A target the store does not hold is written past it, so no one listening hears it close: the follow-ups are offered here.
-		if (!tracked && saved.closed) {
-			hierarchy.offerFollowUps(saved).catch(() => void 0)
-		}
+		await (tracked ? EntryStore.commit(tracked) : EntryStore.saveUntracked(target)).catch(reportSaveError)
 		this.requestUpdate()
 	}
 

@@ -2,6 +2,7 @@ import { ListIntegrations, ReorderIntegrations, ReorderSources, SetSourceVisibil
 import type { EntryType } from '#features/entries'
 import { Integration } from '#integrations'
 import { session } from '#infrastructure/http/PageSession.js'
+import { PageState } from '#infrastructure/http/PageState.js'
 import { applyOrder, byOrder, include } from '#infrastructure/model'
 import { Source } from '../Source.js'
 
@@ -22,6 +23,7 @@ export class Calendars {
 			integration.sources = [...integration.sources].sort(byOrder)
 		}
 		Calendars.all = integrations.sort(byOrder)
+		PageState.changed()
 	}
 
 	static get integrations(): Array<Integration> {
@@ -72,18 +74,21 @@ export class Calendars {
 		const sources = [...integration.sources]
 		applyOrder(sources, ids)
 		integration.sources = sources.sort(byOrder)
+		PageState.changed()
 		return ReorderSources.call({ ids })
 	}
 
 	static reorderIntegrations(ids: Array<string>) {
 		applyOrder(Calendars.all, ids)
 		Calendars.all.sort(byOrder)
+		PageState.changed()
 		return ReorderIntegrations.call({ ids })
 	}
 
 	static async setHidden(source: Source, hidden: boolean) {
 		await SetSourceVisibility.call({ id: source.id, hidden })
 		source.hidden = hidden
+		PageState.changed()
 	}
 
 	/** Hides or shows each of the calendars, sending only those that change. */

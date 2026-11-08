@@ -100,11 +100,16 @@ export class EntryStore extends Controller {
 
 	/**
 	 * What keeps an occurrence the same chip across renders: a date its rule yields by its key, which an override taking the
-	 * date over keeps, anything else by its entry, whose dates a drag changes. The drag's preview is a chip of its own.
+	 * date over keeps, and so does the entry it becomes on leaving the recurring entry; anything else by its entry, whose
+	 * dates a drag changes. The drag's preview is a chip of its own.
 	 */
 	static identityOf(occurrence: EntryOccurrence): unknown {
-		return occurrence.recurring && !this.pending.isPreview(occurrence.entry) ? occurrence.key : occurrence.entry
+		return this.tookOver.get(occurrence.entry)
+			?? (occurrence.recurring && !this.pending.isPreview(occurrence.entry) ? occurrence.key : occurrence.entry)
 	}
+
+	/** The key of the date each entry that left its recurring entry took over, whose chip it keeps, with an editor open on it. */
+	private static readonly tookOver = new WeakMap<Entry, string>()
 
 	/** The occurrence `entry` shows: its own, or for an override the date of its recurring entry it takes over. */
 	static occurrenceOf(entry: Entry) {
@@ -173,6 +178,14 @@ export class EntryStore extends Controller {
 	static whenTaskCloses(listener: (entry: Entry) => void) {
 		this.closings.add(listener)
 		return () => void this.closings.delete(listener)
+	}
+
+	/** Saves an entry the store does not hold, as a linked one outside the window is, telling who listens once it closed. */
+	static async saveUntracked(entry: Entry) {
+		await EntryStore.persistence.update(entry)
+		if (entry.closed) {
+			this.closings.forEach(listener => listener(entry))
+		}
 	}
 
 	/** Persists local changes, chaining in-flight updates and resolving recurrence scope. */
@@ -300,7 +313,8 @@ export class EntryStore extends Controller {
 			this.revert(entry)
 			return false
 		}
-		const saved = await EntryStore.persistence.editOccurrence(this.occurrenceOf(entry), scope)
+		const occurrence = this.occurrenceOf(entry)
+		const saved = await EntryStore.persistence.editOccurrence(occurrence, scope)
 		if (!this.tracks(entry)) {
 			return false
 		}
@@ -309,6 +323,11 @@ export class EntryStore extends Controller {
 				this.workingById.delete(entry.id!)
 				this.canonicalById.delete(entry.id!)
 			}
+			// As the server did: the rule yields the date no more, and the entry keeps the chip the date had.
+			const recurringEntryId = entry.recurringEntryId!
+			this.workingById.get(recurringEntryId)?.exclude(occurrence.recurrenceId!)
+			this.canonicalById.get(recurringEntryId)?.exclude(occurrence.recurrenceId!)
+			this.tookOver.set(entry, occurrence.key!)
 			entry.leaveSeries(saved)
 			this.workingById.set(entry.id!, entry)
 			this.canonicalById.set(entry.id!, saved.clone())
