@@ -6,8 +6,10 @@ import { unsafeCSS } from '@a11d/lit'
  */
 export const selectedColor = unsafeCSS('color-mix(in srgb, var(--color-accent) 70%, var(--color-text))')
 
+export const selectedBackground = unsafeCSS('color-mix(in srgb, var(--color-accent) 14%, transparent)')
+
 export const selected = unsafeCSS(`
-	background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+	background: ${selectedBackground};
 	color: ${selectedColor};
 	font-weight: 600;
 `)

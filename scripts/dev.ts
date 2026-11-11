@@ -4,7 +4,10 @@ import { backendOptions, frontendOptions, resolveVersion, serviceWorkerOptions }
 import { writeIndexHtml } from './indexHtml.ts'
 import { writeReleaseAssets } from './releaseAssets.ts'
 
-spawn('npm', ['run', 'typecheck', '--', '--watch'], { stdio: 'inherit', shell: true })
+// The type checker's watcher holds gigabytes, so it runs only when asked (`npm start -- --typecheck`).
+if (process.argv.includes('--typecheck')) {
+	spawn('npm', ['run', 'typecheck', '--', '--watch'], { stdio: 'inherit', shell: true })
+}
 
 // Build, watch, and run backend with dev fixtures.
 const backendContext = await esbuild.context({ ...backendOptions, sourcemap: 'inline' })
