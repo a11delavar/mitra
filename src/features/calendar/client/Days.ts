@@ -243,7 +243,7 @@ export class Days extends Component {
 				align-content: start;
 				--_days-strip-width: 100cqi;
 				--_ideal-day-width: 10rem;
-				--_visible-days: max(3, round(down, tan(atan2(var(--_days-strip-width) - var(--time-axis-width), var(--_ideal-day-width))), 1));
+				--_visible-days: max(1, round(down, tan(atan2(var(--_days-strip-width) - var(--time-axis-width), var(--_ideal-day-width))), 1));
 				--_day-width: max(4rem, calc((var(--_days-strip-width) - var(--time-axis-width) + 1px) / var(--_visible-days) - 1px));
 				grid-template-columns: auto repeat(var(--_tz-count, 1), auto) repeat(var(--_days-length, 1), var(--_day-width));
 				gap: 1px;
