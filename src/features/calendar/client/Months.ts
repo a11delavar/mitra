@@ -21,7 +21,7 @@ export class Months extends Component {
 	@property({ type: Object }) navigatingDate = new DateTime()
 	@property({ type: Array }) occurrences = new Array<EntryOccurrence>()
 
-	private readonly buffer: CalendarDatesController = new CalendarDatesController(this, { radiusDays: 300, shiftDays: 28, triggerWeeks: 52, bufferWeeks: 520 })
+	private readonly buffer: CalendarDatesController = new CalendarDatesController(this, { radiusDays: 300, shiftDays: 28, triggerWeeks: 52, bufferWeeks: 520, rows: 'month' })
 	protected readonly entryGestures = new EntryGestureController(this, 'year')
 	protected readonly density = new MonthsDensityController(this)
 

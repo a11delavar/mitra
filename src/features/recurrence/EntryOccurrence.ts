@@ -257,6 +257,7 @@ export class EntryOccurrence {
 			id: this.key,
 			uid: entry.uid,
 			rank: entry.rank,
+			routineId: entry.routineId,
 			relations: entry.relations,
 			recurringEntryId: entry.id,
 			recurrenceId: this.recurrenceId,

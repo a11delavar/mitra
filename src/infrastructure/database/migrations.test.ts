@@ -305,4 +305,21 @@ describe('migrate', () => {
 			await orm.close()
 		}
 	})
+	it('makes room for routines, and asks for the entries already there to be placed once the server starts', async () => {
+		const orm = await inMemoryOrm()
+		try {
+			const connection = orm.em.getConnection()
+			await orm.migrator.up()
+			const columnsOf = async (table: string) => (await connection.execute(`select name from pragma_table_info('${table}')`) as Array<{ name: string }>).map(column => column.name)
+			assert.deepEqual(await columnsOf('routine'), ['id', 'source_id', 'name', 'dissolved'])
+			assert.ok((await columnsOf('entry')).includes('routine_id') && (await columnsOf('entry')).includes('routine_declined'))
+			assert.deepEqual(await connection.execute('select `key` from `state` where `key` like \'backfill:%\''), [{ key: 'backfill:recognize-stored-entries' }])
+
+			await orm.migrator.down({ migrations: ['Migration20261112090000_Routines'] })
+			assert.ok(!(await columnsOf('entry')).some(column => column === 'routine_id' || column === 'routine_declined'))
+			assert.deepEqual(await columnsOf('routine'), [])
+		} finally {
+			await orm.close()
+		}
+	})
 })

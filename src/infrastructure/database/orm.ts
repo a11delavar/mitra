@@ -4,6 +4,8 @@ import { Entry } from '#features/entries'
 import { createLogger, logEnabled } from '#infrastructure/logging/Logger.js'
 import { ormConfig } from './ormConfig.js'
 import { migrate } from './migrations/migrate.js'
+import { Backfill } from './Backfill.js'
+import { backfills } from './backfills.js'
 
 dotenv.config({ path: `${import.meta.dirname}/.env`, quiet: true })
 
@@ -18,6 +20,7 @@ export const orm = await MikroORM.init({
 })
 
 await migrate(orm)
+await Backfill.runAsked(orm, backfills)
 
 // Backfill missing UIDs for legacy rows using raw .ics UID when available.
 {

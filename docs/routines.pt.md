@@ -19,14 +19,19 @@ Na vista de ano, em que cada dia é pequeno, as rotinas são o que mais aparece:
 
 ## O que vira rotina
 
-As entradas formam uma rotina quando estão no mesmo calendário, têm o mesmo título e ocorrem com frequência suficiente:
+As entradas formam uma rotina quando estão no mesmo calendário e têm o mesmo título. O Mitra reconhece uma rotina quando as entradas são salvas ou sincronizadas, e a mantém.
 
-- Na vista de mês, mais de uma vez por semana. Algo semanal continua sendo uma barra.
-- Na vista de ano, mais ou menos a cada cinco semanas ou com mais frequência, então entradas semanais e mensais também viram marcas.
+- Uma entrada recorrente é uma rotina desde o início, não importa com que frequência se repita, desde que tenha pelo menos quatro datas.
+- Entradas que não se repetem formam uma assim que houver pelo menos quatro delas e elas aparecerem mais ou menos a cada cinco semanas ou com mais frequência, ou mantiverem um ritmo regular, como uma vez por ano. Assim, entradas separadas chamadas "Corrida" formam uma rotina como uma série diária formaria.
 
-Também é preciso haver pelo menos quatro delas à vista.
+Calendários que você só pode ler, como as assinaturas, não formam rotinas.
 
-As entradas não precisam se repetir para formar uma rotina. Entradas separadas chamadas "Corrida" no mesmo calendário formam uma única rotina, como uma série diária formaria. Uma ocorrência que você moveu sozinha continua fazendo parte da sua rotina, como uma marca no novo dia. Entradas sem título nunca se agrupam com outras, só com o resto da própria série.
+Depois que uma entrada pertence a uma rotina, ela continua nela: quando você a renomeia, a marca como concluída, move uma das suas ocorrências ou a move para outro calendário. Entradas posteriores com o mesmo título se juntam a ela, por mais distantes que estejam umas das outras. Uma cópia em outro calendário passa a fazer parte da rotina daquele calendário com o seu título. Uma entrada sem título nunca se junta a outras; se for recorrente, ela é uma rotina por si só.
+
+A frequência de uma rotina decide como as vistas a mostram:
+
+- Na vista de mês, uma rotina que aparece mais de uma vez por semana é mostrada como marcas. Algo semanal continua sendo uma barra.
+- Na vista de ano, uma rotina que aparece mais ou menos a cada cinco semanas ou com mais frequência é mostrada como marcas, então as semanais e mensais também. Uma mais rara, como um aniversário, continua sendo uma barra.
 
 ## Usar uma rotina
 

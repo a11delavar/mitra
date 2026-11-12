@@ -24,7 +24,7 @@ export class Weeks extends Component {
 	@property({ type: Object }) navigatingDate = new DateTime()
 	@property({ type: Array }) occurrences = new Array<EntryOccurrence>()
 
-	private readonly buffer: CalendarDatesController = new CalendarDatesController(this, { radiusDays: 77, shiftDays: 14 })
+	private readonly buffer: CalendarDatesController = new CalendarDatesController(this, { radiusDays: 77, shiftDays: 14, rows: 'week' })
 	protected readonly entryGestures = new EntryGestureController(this, 'month')
 	protected readonly density = new WeeksDensityController(this)
 

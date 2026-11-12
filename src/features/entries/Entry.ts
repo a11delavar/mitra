@@ -9,6 +9,7 @@ import { ReminderDefaults } from '#features/reminders/ReminderDefaults.js'
 import { EntryReminders } from '#features/reminders/EntryReminders.js'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
+import { Routine } from '#features/routines/Routine.js'
 import type { OwnedField } from '#integrations'
 import { model, Entity, identity, equality, entity, primaryKey, property, enum as enumType, unique, manyToOne, children, include } from '#infrastructure/model'
 import { type Validatable, ValidationError } from '#infrastructure/validation'
@@ -209,6 +210,23 @@ export class Entry extends Entity implements Validatable {
 	 * `PUT /entries/ranks` changes it, so it is no part of equality. */
 	@converter(EntryRank.converter)
 	@property({ type: EntryRank.Mapper, nullable: true }) rank?: EntryRank
+
+	/** The routine it belongs to, Mitra's own and kept whatever happens to the entry: no part of equality, nor of a copy. */
+	@manyToOne(() => Routine, { mapToPk: true, nullable: true, deleteRule: 'set null' }) routineId?: string
+
+	/** Taken out of every routine by its person, so recognition leaves it in none. */
+	@property({ type: 'boolean', nullable: true }) routineDeclined?: boolean
+
+	/** The title a routine tells it by, which entries of one routine share. */
+	get routineTitle() {
+		return Routine.titleOf(this.heading)
+	}
+
+	/** The day it starts, or is due, in `zone`. An all-day entry's and a floating time's is the one written, wherever it is read. */
+	dayIn(zone: TimeZone) {
+		const date = this.start ?? this.due
+		return date && (this.allDay || this.floating ? TimeZone.localOrDefault : zone).dayOf(date)
+	}
 
 	get progress(): number | undefined {
 		return this.percentComplete === undefined ? undefined : this.percentComplete / 100

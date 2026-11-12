@@ -1,10 +1,11 @@
 import { Controller, eventListener } from '@a11d/lit'
 import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { Task } from '@lit/task'
-import { ListEntries, ListAllEntries } from '#operations'
+import { ListEntries, ListAllEntries, ListRoutines } from '#operations'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import { TableWindow } from '#features/calendar/client/TableWindow.js'
 import type { PageCalendar } from '#features/calendar/client/PageCalendar.js'
+import { RoutineStore } from '#features/routines/client/RoutineStore.js'
 import { EntryStore } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
 
@@ -34,10 +35,18 @@ export class EntryFetcherController extends Controller {
 		},
 		task: async () => {
 			const window = this.window
-			return { entries: await (window ? ListEntries.call({ start: window.start!, end: window.end! }) : ListAllEntries.call()), window }
+			// The routines beside the entries of a window, whose views collapse them; every entry at once is a table's, which collapses none.
+			const [entries, routines] = await Promise.all([
+				window ? ListEntries.call({ start: window.start!, end: window.end! }) : ListAllEntries.call(),
+				window ? ListRoutines.call() : undefined,
+			])
+			return { entries, routines, window }
 		},
-		onComplete: ({ entries, window }) => {
+		onComplete: ({ entries, routines, window }) => {
 			this.lastContact = Date.now()
+			if (routines) {
+				RoutineStore.apply(routines)
+			}
 			EntryStore.applyServerEntries(entries, window)
 			EntryEditorIntent.settle(EntryStore.occurrences)
 		},

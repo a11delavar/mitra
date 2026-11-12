@@ -19,6 +19,17 @@ describe('EntryOccurrences', () => {
 		start: at('2026-10-19T09:00:00Z'), end: at('2026-10-19T09:15:00Z'), recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }),
 	})
 
+	it('counts its dates: one, those a rule that ends yields, without end where it has none, none undated', () => {
+		const counted = (init: Partial<Entry>) => new Entry({ sourceId: 's', type: EntryType.Task, start: at('2026-10-19T09:00:00Z'), ...init }).occurrences.count
+		assert.equal(counted({}), 1)
+		assert.equal(counted({ start: undefined, due: at('2026-10-19T09:00:00Z') }), 1)
+		assert.equal(counted({ start: undefined }), 0)
+		assert.equal(counted({ recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) }), Infinity)
+		assert.equal(counted({ recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, count: 3 }) }), 3)
+		assert.equal(counted({ recurrence: Recurrence.fromRRule('FREQ=WEEKLY;UNTIL=20261102T090000Z') }), 3)
+		assert.equal(counted({ recurrence: Recurrence.fromRRule('FREQ=WEEKLY;UNTIL=20261109T090000Z') }), 4)
+	})
+
 	it('yields a one-off entry once, with its own dates', () => {
 		const talk = new Entry({ id: 'talk', sourceId: 's', type: EntryType.Event, heading: 'Talk', start: at('2026-10-21T09:00:00Z'), end: at('2026-10-21T10:00:00Z') })
 		const occurrences = talk.occurrences.within(new DateTimeRange(at('2026-10-01T00:00:00Z'), at('2026-11-01T00:00:00Z')))
@@ -132,6 +143,12 @@ describe('a repeating task with a due', () => {
 		const series = rent()
 		series.rank = EntryRank.parse('a3')
 		assert.equal(series.occurrences.at(new Date('2026-04-01T00:00:00Z')).override().rank?.key, 'a3')
+	})
+
+	it('keeps its series in its routine', () => {
+		const series = rent()
+		series.routineId = 'rent-routine'
+		assert.equal(series.occurrences.at(new Date('2026-04-01T00:00:00Z')).override().routineId, 'rent-routine')
 	})
 
 	it('keeps the due at its offset from a scheduled occurrence', () => {

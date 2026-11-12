@@ -19,14 +19,19 @@ Dans la vue année, où chaque jour est petit, les routines sont ce que vous voy
 
 ## Ce qui devient une routine
 
-Des entrées forment une routine quand elles sont dans le même calendrier, portent le même titre et reviennent assez souvent :
+Des entrées forment une routine lorsqu'elles sont dans le même calendrier et portent le même titre. Mitra reconnaît une routine quand les entrées sont enregistrées ou synchronisées, et la conserve.
 
-- Dans la vue mois, plus d'une fois par semaine. Ce qui est hebdomadaire reste une barre.
-- Dans la vue année, environ toutes les cinq semaines ou plus souvent, si bien que les entrées hebdomadaires et mensuelles deviennent aussi des marques.
+- Une entrée récurrente est une routine dès le départ, quelle que soit sa fréquence, à condition d'avoir au moins quatre dates.
+- Des entrées qui ne se répètent pas en forment une dès qu'il y en a au moins quatre et qu'elles reviennent environ toutes les cinq semaines ou plus souvent, ou qu'elles gardent un rythme régulier, par exemple une fois par an. Ainsi, des entrées séparées appelées « Course » forment une routine comme le ferait une série quotidienne.
 
-Il faut aussi au moins quatre entrées dans la période affichée.
+Les calendriers que vous pouvez seulement lire, comme les abonnements, ne forment aucune routine.
 
-Les entrées n'ont pas besoin d'être récurrentes pour former une routine. Des entrées distinctes intitulées « Course » dans le même calendrier forment une seule routine, comme le ferait une série quotidienne. Une occurrence que vous avez déplacée seule reste dans sa routine, sous forme de marque sur son nouveau jour. Les entrées sans titre ne se regroupent jamais avec d'autres, seulement avec le reste de leur propre série.
+Une fois qu'une entrée appartient à une routine, elle y reste : quand vous la renommez, la cochez, déplacez une de ses occurrences ou la déplacez dans un autre calendrier. Les entrées ultérieures portant le même titre la rejoignent, quel que soit l'écart entre elles. Une copie dans un autre calendrier rejoint la routine de ce calendrier qui porte son titre. Une entrée sans titre ne se joint jamais à d'autres ; si elle est récurrente, elle forme une routine à elle seule.
+
+La fréquence d'une routine décide de la façon dont les vues l'affichent :
+
+- Dans la vue mois, une routine qui revient plus d'une fois par semaine s'affiche en marques. Ce qui est hebdomadaire reste une barre.
+- Dans la vue année, une routine qui revient environ toutes les cinq semaines ou plus souvent s'affiche en marques, les hebdomadaires et mensuelles comprises. Une routine plus rare, comme un anniversaire, reste une barre.
 
 ## Utiliser une routine
 

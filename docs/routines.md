@@ -19,14 +19,19 @@ In the year view, where every day is small, routines are what you see most: each
 
 ## What becomes a routine
 
-Entries form a routine when they're in the same calendar, have the same title, and come often enough:
+Entries form a routine when they're in the same calendar and have the same title. Mitra recognizes a routine as entries are saved or synced, and keeps it.
 
-- In the month view, more often than once a week. Something weekly stays a bar.
-- In the year view, about every five weeks or more often, so weekly and monthly entries become marks too.
+- A repeating entry is a routine from the start, however often it repeats, as long as it has at least four dates.
+- Entries that don't repeat become one once there are at least four of them, and they come about every five weeks or more often, or keep a regular rhythm, such as once a year. So separate entries called "Run" make a routine just as a daily series does.
 
-There also have to be at least four of them in view.
+Calendars you can only read, such as subscriptions, form no routines.
 
-Entries don't have to repeat to form a routine. Separate entries called "Run" in the same calendar make one routine, the same as a daily series would. An occurrence you moved on its own stays part of its routine, as a mark on its new day. Entries without a title never group with others, only with the rest of their own series.
+Once an entry belongs to a routine, it stays there: when you rename it, tick it off, move one of its occurrences or move it to another calendar. Later entries with the same title join it, however far apart they come. A copy in another calendar becomes part of that calendar's routine with its title. An entry without a title never joins others; a repeating one is a routine by itself.
+
+How often a routine comes decides how the views draw it:
+
+- In the month view, a routine that comes more often than once a week shows as marks. Something weekly stays a bar.
+- In the year view, a routine that comes about every five weeks or more often shows as marks, so weekly and monthly ones do too. A rarer one, such as a birthday, stays a bar.
 
 ## Use a routine
 

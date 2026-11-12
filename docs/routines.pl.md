@@ -19,14 +19,19 @@ W widoku roku, w którym każdy dzień jest mały, rutyny widać najwyraźniej: 
 
 ## Co staje się rutyną
 
-Wpisy tworzą rutynę, gdy są w tym samym kalendarzu, mają ten sam tytuł i występują wystarczająco często:
+Wpisy tworzą rutynę, gdy są w tym samym kalendarzu i mają ten sam tytuł. Mitra rozpoznaje rutynę, gdy wpisy są zapisywane lub synchronizowane, i ją zapamiętuje.
 
-- W widoku miesiąca: częściej niż raz w tygodniu. Wpis cotygodniowy pozostaje paskiem.
-- W widoku roku: mniej więcej co pięć tygodni lub częściej, więc znacznikami stają się też wpisy cotygodniowe i comiesięczne.
+- Wpis cykliczny jest rutyną od początku, niezależnie od tego, jak często się powtarza, o ile ma co najmniej cztery daty.
+- Wpisy, które się nie powtarzają, stają się rutyną, gdy jest ich co najmniej cztery i występują mniej więcej co pięć tygodni lub częściej albo zachowują regularny rytm, na przykład raz w roku. Dlatego osobne wpisy o tytule „Bieganie” tworzą rutynę tak samo jak codzienna seria.
 
-Dodatkowo w widoku muszą być widoczne co najmniej cztery takie wpisy.
+Kalendarze, które możesz tylko odczytywać, takie jak subskrypcje, nie tworzą rutyn.
 
-Wpisy nie muszą się powtarzać, aby utworzyć rutynę. Osobne wpisy o tytule „Bieganie” w tym samym kalendarzu tworzą jedną rutynę, tak samo jak codzienny wpis cykliczny. Wystąpienie przeniesione osobno pozostaje częścią swojej rutyny, jako znacznik w nowym dniu. Wpisy bez tytułu nigdy nie łączą się z innymi wpisami, tylko z pozostałymi wystąpieniami własnej serii.
+Gdy wpis należy już do rutyny, pozostaje w niej: gdy zmienisz jego nazwę, odhaczysz go, przeniesiesz jedno z jego wystąpień albo przeniesiesz go do innego kalendarza. Późniejsze wpisy o tym samym tytule dołączają do niej, bez względu na to, jak daleko są od siebie. Kopia w innym kalendarzu dołącza ze swoim tytułem do rutyny tamtego kalendarza. Wpis bez tytułu nigdy nie łączy się z innymi; jeśli jest cykliczny, sam tworzy rutynę.
+
+To, jak często rutyna występuje, decyduje o tym, jak pokazują ją widoki:
+
+- W widoku miesiąca rutyna występująca częściej niż raz w tygodniu wyświetla się jako znaczniki. Wpis cotygodniowy pozostaje paskiem.
+- W widoku roku rutyna występująca mniej więcej co pięć tygodni lub częściej wyświetla się jako znaczniki, więc także cotygodniowe i comiesięczne. Rzadsza, na przykład urodziny, pozostaje paskiem.
 
 ## Korzystanie z rutyny
 

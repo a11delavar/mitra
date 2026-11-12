@@ -19,14 +19,19 @@ In de jaarweergave, waar elke dag klein is, zijn routines het eerste wat je ziet
 
 ## Wat een routine wordt
 
-Items vormen samen een routine als ze in dezelfde agenda staan, dezelfde titel hebben en vaak genoeg voorkomen:
+Items vormen samen een routine als ze in dezelfde agenda staan en dezelfde titel hebben. Mitra herkent een routine zodra items worden opgeslagen of gesynchroniseerd, en onthoudt haar.
 
-- In de maandweergave: vaker dan eens per week. Wat wekelijks terugkomt, blijft een balk.
-- In de jaarweergave: ongeveer eens per vijf weken of vaker, zodat ook wekelijkse en maandelijkse items markeringen worden.
+- Een terugkerend item is meteen een routine, hoe vaak het ook terugkeert, zolang het minstens vier datums heeft.
+- Items die niet terugkeren, worden er een zodra er minstens vier zijn en ze ongeveer eens per vijf weken of vaker voorkomen, of een vast ritme aanhouden, zoals eens per jaar. Zo vormen losse items met de titel ‘Hardlopen’ net zo goed een routine als een dagelijkse reeks.
 
-Bovendien moeten er minstens vier in beeld zijn.
+Agenda's die je alleen kunt lezen, zoals abonnementen, vormen geen routines.
 
-Items hoeven niet terug te keren om een routine te vormen. Losse items met de titel ‘Hardlopen’ in dezelfde agenda vormen samen één routine, net als een dagelijkse reeks dat zou doen. Een herhaling die je afzonderlijk hebt verplaatst, blijft bij haar routine horen, als markering op haar nieuwe dag. Items zonder titel worden nooit met andere items gegroepeerd, alleen met de rest van hun eigen reeks.
+Hoort een item eenmaal bij een routine, dan blijft het daar: als je het hernoemt, afvinkt, een van zijn herhalingen verplaatst of het naar een andere agenda verplaatst. Latere items met dezelfde titel sluiten zich erbij aan, hoe ver ze ook uit elkaar liggen. Een kopie in een andere agenda gaat met haar titel bij de routine van die agenda horen. Een item zonder titel sluit zich nooit bij andere aan; een terugkerend item is op zichzelf een routine.
+
+Hoe vaak een routine voorkomt, bepaalt hoe de weergaven haar tonen:
+
+- In de maandweergave verschijnt een routine die vaker dan eens per week voorkomt als markeringen. Wat wekelijks terugkomt, blijft een balk.
+- In de jaarweergave verschijnt een routine die ongeveer eens per vijf weken of vaker voorkomt als markeringen, dus ook wekelijkse en maandelijkse. Een zeldzamere, zoals een verjaardag, blijft een balk.
 
 ## Een routine gebruiken
 

@@ -169,6 +169,13 @@ export class EntryOccurrences {
 		return this.occurrenceOf({ start: recurrenceId, end: new Date(recurrenceId.getTime() + span) })
 	}
 
+	/** How many dates the entry has: its own one, or those its rule yields, without end where the rule has none. None undated. */
+	get count() {
+		const { recurrence, start, due } = this.entry
+		return !recurrence?.freq ? Number(!!(start ?? due))
+			: recurrence.count ?? (recurrence.until ? this.generatedBefore(new Date(8.64e15)) : Infinity)
+	}
+
 	/** Blind to exclusions, as RFC 5545 counts COUNT before EXDATEs prune the set. */
 	generatedBefore(instant: Date) {
 		return this.set?.generatedBefore(instant) ?? 0

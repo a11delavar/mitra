@@ -78,6 +78,8 @@ export class EntryChange implements Validatable<EntryChangeContext> {
 			// Two calendars of one server share their resources' namespace, where the old uid would collide.
 			uid: from.uri && from.uri === to.uri ? crypto.randomUUID() : entry.uid,
 			rank: edited.type.isTask ? entry.rank : undefined,
+			routineId: entry.routineId,
+			routineDeclined: entry.routineDeclined,
 			relations: edited.relations,
 		})
 		recreated.migrateTo(to)

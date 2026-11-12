@@ -63,7 +63,7 @@ export class CalendarDatesController extends Controller {
 
 	constructor(
 		protected override readonly host: Component,
-		private readonly rendering: { radiusDays: number, shiftDays: number, triggerWeeks?: number, bufferWeeks?: number } = { radiusDays: 35, shiftDays: 7 },
+		private readonly rendering: { radiusDays: number, shiftDays: number, triggerWeeks?: number, bufferWeeks?: number, rows?: 'week' | 'month' } = { radiusDays: 35, shiftDays: 7 },
 	) {
 		super(host)
 	}
@@ -134,9 +134,23 @@ export class CalendarDatesController extends Controller {
 		if (!this._window) {
 			const first = this._days[0]
 			const center = !first ? 0 : Math.round((this._navigatingDate.dayStart.valueOf() - first.valueOf()) / 86_400_000)
-			const start = Math.max(0, center - this.rendering.radiusDays)
+			let start = Math.max(0, center - this.rendering.radiusDays)
+			let end = Math.min(this._days.length, center + this.rendering.radiusDays + 1)
+			// Whole rows: a row cut at the window's edge drew only some of its days, and filled in as the window slid.
+			if (this.rendering.rows === 'week') {
+				const { daysInWeek } = this._navigatingDate
+				start -= start % daysInWeek
+				end = Math.min(this._days.length, Math.ceil(end / daysInWeek) * daysInWeek)
+			} else if (this.rendering.rows === 'month') {
+				while (start > 0 && this._days[start - 1]!.month === this._days[start]!.month) {
+					start--
+				}
+				while (end < this._days.length && this._days[end]!.month === this._days[end - 1]!.month) {
+					end++
+				}
+			}
 			this._window = {
-				days: this._days.slice(start, Math.min(this._days.length, center + this.rendering.radiusDays + 1)),
+				days: this._days.slice(start, end),
 				offset: start,
 				centerValue: this._navigatingDate.dayStart.valueOf(),
 			}

@@ -8,6 +8,8 @@ import { NotificationSubscription } from '#features/reminders/NotificationSubscr
 import { UserSettings } from '#features/settings/UserSettings.js'
 import { ReminderDefaults } from '#features/reminders/ReminderDefaults.js'
 import { UserTimeZones } from '#features/time/UserTimeZones.js'
+import { TimeZone } from '#features/time/TimeZone.js'
+import { Routine } from '#features/routines/Routine.js'
 import { Integration } from '#integrations'
 import { model, entity, primaryKey, property, manyToOne, embedded, unique } from '#infrastructure/model'
 import { ValidationError } from '#infrastructure/validation'
@@ -175,6 +177,13 @@ export class User {
 		const graph = await this.getRelationGraph(em, entries.map(entry => entry.uid))
 		graph.attach(entries)
 		return entries
+	}
+
+	/** The routines of the user's enabled calendars that were not dissolved, each told how often it comes. */
+	async getRoutines(em: EntityManager) {
+		const routines = await em.find(Routine, { $and: [{ dissolved: null }, this.inCalendars({ enabled: true }) as FilterQuery<Routine>] })
+		await Routine.measure(em, routines, this.timeZones?.home?.zone ?? TimeZone.default)
+		return routines
 	}
 
 	private static inRange({ start, end }: DateTimeRange): FilterQuery<Entry> {

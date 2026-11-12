@@ -27,6 +27,29 @@ describe('Entry', () => {
 		integration: { id: 'i', ownership, capabilitiesFor: (source: Source) => capabilities.in(source), canHold: (source: Source, type: EntryType) => source.supportsEntryType(type) } as never,
 	})
 
+	describe('as a routine reads it', () => {
+		it('is told by its heading in lower case, without the space around it, in any script, and by none when blank', () => {
+			assert.equal(new Entry({ heading: '  Gym ' }).routineTitle, 'gym')
+			assert.equal(new Entry({ heading: 'ÜBUNG' }).routineTitle, new Entry({ heading: 'Übung' }).routineTitle)
+			assert.equal(new Entry({ heading: '   ' }).routineTitle, undefined)
+		})
+
+		it('falls on the day it starts, or is due, where its person is at home', () => {
+			const berlin = TimeZone.of('Europe/Berlin')
+			const late = new DateTime('2026-03-02T23:30:00Z')
+			assert.equal(String(new Entry({ start: late }).dayIn(berlin)), '2026-03-03')
+			assert.equal(String(new Entry({ start: late }).dayIn(TimeZone.UTC)), '2026-03-02')
+			assert.equal(String(new Entry({ type: EntryType.Task, due: late }).dayIn(berlin)), '2026-03-03')
+			assert.equal(new Entry({ type: EntryType.Task }).dayIn(berlin), undefined)
+		})
+
+		it('falls on the day written where it is a day or a floating time, wherever its person is', () => {
+			const auckland = TimeZone.of('Pacific/Auckland')
+			assert.equal(String(new Entry({ allDay: true, start: new DateTime('2026-03-02T00:00:00Z') }).dayIn(auckland)), '2026-03-02')
+			assert.equal(String(new Entry({ timeZone: EntryTimeZone.floating, start: new DateTime('2026-03-02T23:30:00Z') }).dayIn(auckland)), '2026-03-02')
+		})
+	})
+
 	describe('editsOnlyThisOccurrence', () => {
 		const occurrence = (init?: Partial<Entry>) => new Entry({ id: 'r__1', recurringEntryId: 'r', type: EntryType.Task, heading: 'Water plants', start: day, end: day.add({ hours: 1 }), ...init })
 

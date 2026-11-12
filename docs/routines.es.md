@@ -19,14 +19,19 @@ En la vista de año, donde cada día es pequeño, las rutinas son lo que más se
 
 ## Qué se convierte en rutina
 
-Las entradas forman una rutina cuando están en el mismo calendario, tienen el mismo título y se repiten con la frecuencia suficiente:
+Las entradas forman una rutina cuando están en el mismo calendario y tienen el mismo título. Mitra reconoce una rutina cuando las entradas se guardan o se sincronizan, y la conserva.
 
-- En la vista de mes, más a menudo que una vez por semana. Lo que ocurre cada semana sigue siendo una barra.
-- En la vista de año, más o menos cada cinco semanas o con más frecuencia, de modo que las entradas semanales y mensuales también se convierten en marcas.
+- Una entrada que se repite es una rutina desde el principio, sea cual sea su frecuencia, siempre que tenga al menos cuatro fechas.
+- Las entradas que no se repiten forman una en cuanto hay al menos cuatro y aparecen más o menos cada cinco semanas o con más frecuencia, o mantienen un ritmo regular, como una vez al año. Así, varias entradas separadas llamadas «Correr» forman una rutina igual que una serie diaria.
 
-Además, tiene que haber al menos cuatro a la vista.
+Los calendarios que solo puedes leer, como las suscripciones, no forman rutinas.
 
-Las entradas no tienen que repetirse para formar una rutina. Varias entradas sueltas llamadas «Correr» en el mismo calendario forman una sola rutina, igual que lo haría una serie diaria. Una repetición que moviste por separado sigue formando parte de su rutina, como una marca en su nuevo día. Las entradas sin título nunca se agrupan con otras, solo con el resto de su propia serie.
+Una vez que una entrada pertenece a una rutina, se queda en ella: cuando la renombras, la marcas como hecha, mueves una de sus ocurrencias o la mueves a otro calendario. Las entradas posteriores con el mismo título se unen a ella, por muy separadas que estén. Una copia en otro calendario pasa a la rutina de ese calendario con su título. Una entrada sin título nunca se une a otras; si se repite, es una rutina por sí sola.
+
+La frecuencia de una rutina decide cómo la muestran las vistas:
+
+- En la vista de mes, una rutina que aparece más de una vez por semana se muestra como marcas. Algo semanal sigue siendo una barra.
+- En la vista de año, una rutina que aparece más o menos cada cinco semanas o con más frecuencia se muestra como marcas, así que también las semanales y mensuales. Una menos frecuente, como un cumpleaños, sigue siendo una barra.
 
 ## Usar una rutina
 

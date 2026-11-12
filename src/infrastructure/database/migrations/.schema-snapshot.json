@@ -493,6 +493,40 @@
           "enumItems": [],
           "mappedType": "json"
         },
+        "routine_declined": {
+          "name": "routine_declined",
+          "type": "integer",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "routine_id": {
+          "name": "routine_id",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
         "source_id": {
           "name": "source_id",
           "type": "text",
@@ -664,6 +698,16 @@
       "indexes": [
         {
           "columnNames": [
+            "routine_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "entry_routine_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
             "source_id"
           ],
           "composite": false,
@@ -717,6 +761,18 @@
       ],
       "triggers": [],
       "foreignKeys": {
+        "entry_routine_id_foreign": {
+          "columnNames": [
+            "routine_id"
+          ],
+          "constraintName": "entry_routine_id_foreign",
+          "localTableName": "entry",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "routine",
+          "deleteRule": "set null"
+        },
         "entry_source_id_foreign": {
           "columnNames": [
             "source_id"
@@ -1608,6 +1664,118 @@
             "id"
           ],
           "referencedTableName": "user",
+          "deleteRule": "cascade"
+        }
+      },
+      "comment": null
+    },
+    {
+      "name": "routine",
+      "columns": {
+        "dissolved": {
+          "name": "dissolved",
+          "type": "integer",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "source_id": {
+          "name": "source_id",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "primary",
+          "primary": true,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "source_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "routine_source_id_index",
+          "primary": false,
+          "unique": false
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {
+        "routine_source_id_foreign": {
+          "columnNames": [
+            "source_id"
+          ],
+          "constraintName": "routine_source_id_foreign",
+          "localTableName": "routine",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "source",
           "deleteRule": "cascade"
         }
       },

@@ -19,14 +19,19 @@ In der Jahresansicht, in der jeder Tag klein ist, sind Routinen das, was du am m
 
 ## Was zur Routine wird
 
-Einträge bilden eine Routine, wenn sie im selben Kalender liegen, denselben Titel haben und oft genug vorkommen:
+Einträge bilden eine Routine, wenn sie im selben Kalender liegen und denselben Titel haben. Mitra erkennt eine Routine, wenn Einträge gespeichert oder synchronisiert werden, und behält sie.
 
-- In der Monatsansicht öfter als einmal pro Woche. Etwas Wöchentliches bleibt ein Balken.
-- In der Jahresansicht etwa alle fünf Wochen oder öfter, sodass auch wöchentliche und monatliche Einträge zu Markierungen werden.
+- Ein wiederkehrender Eintrag ist von Anfang an eine Routine, egal wie oft er sich wiederholt, sofern er mindestens vier Termine hat.
+- Einträge, die sich nicht wiederholen, werden zur Routine, sobald es mindestens vier davon gibt und sie etwa alle fünf Wochen oder öfter vorkommen oder einen regelmäßigen Rhythmus halten, etwa einmal im Jahr. So ergeben einzelne Einträge namens „Laufen“ eine Routine, genau wie eine tägliche Serie.
 
-Außerdem müssen mindestens vier davon in der Ansicht liegen.
+Kalender, die du nur lesen kannst, etwa Abonnements, bilden keine Routinen.
 
-Die Einträge müssen sich nicht wiederholen, um eine Routine zu bilden. Einzelne Einträge namens „Laufen“ im selben Kalender ergeben eine Routine, genau wie eine tägliche Serie. Ein Vorkommen, das du einzeln verschoben hast, bleibt Teil seiner Routine, als Markierung an seinem neuen Tag. Einträge ohne Titel gruppieren sich nie mit anderen, nur mit dem Rest ihrer eigenen Serie.
+Gehört ein Eintrag einmal zu einer Routine, bleibt er dabei: wenn du ihn umbenennst, abhakst, eine seiner Wiederholungen verschiebst oder ihn in einen anderen Kalender verschiebst. Spätere Einträge mit demselben Titel kommen dazu, egal wie weit sie auseinanderliegen. Eine Kopie in einem anderen Kalender gehört dort zur Routine mit ihrem Titel. Ein Eintrag ohne Titel schließt sich nie anderen an; ein wiederkehrender ist für sich allein eine Routine.
+
+Wie oft eine Routine vorkommt, entscheidet, wie die Ansichten sie zeigen:
+
+- In der Monatsansicht erscheint eine Routine als Markierungen, wenn sie öfter als einmal pro Woche vorkommt. Etwas Wöchentliches bleibt ein Balken.
+- In der Jahresansicht erscheint eine Routine als Markierungen, wenn sie etwa alle fünf Wochen oder öfter vorkommt, also auch wöchentliche und monatliche. Eine seltenere, etwa ein Geburtstag, bleibt ein Balken.
 
 ## Eine Routine nutzen
 

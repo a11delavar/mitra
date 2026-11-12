@@ -28,6 +28,13 @@ export class EntryOccurrenceChange {
 	/** Writes the change, an entry for another calendar into `to`. Answers with the entry the occurrence now belongs to. */
 	async save(em: EntityManager, from: Integration, to = from): Promise<Entry> {
 		const { entry, rewritten, excluded, created, removed } = this
+		// What an occurrence's edit makes out of the recurring entry stays in its routine, or out of them all, whatever the edit made of its title.
+		for (const made of [rewritten, created]) {
+			if (made) {
+				made.routineId = entry.routineId
+				made.routineDeclined = entry.routineDeclined
+			}
+		}
 		if (removed) {
 			await from.deleteEntry(em, entry)
 			return entry

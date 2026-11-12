@@ -19,14 +19,19 @@ Nella vista annuale, dove ogni giorno è piccolo, le routine sono ciò che vedi 
 
 ## Cosa diventa una routine
 
-Le voci formano una routine quando sono nello stesso calendario, hanno lo stesso titolo e capitano abbastanza spesso:
+Le voci formano una routine quando sono nello stesso calendario e hanno lo stesso titolo. Mitra riconosce una routine quando le voci vengono salvate o sincronizzate, e la conserva.
 
-- Nella vista mensile, più di una volta a settimana. Qualcosa di settimanale resta una barra.
-- Nella vista annuale, circa ogni cinque settimane o più spesso, quindi anche le voci settimanali e mensili diventano segni.
+- Una voce ricorrente è una routine fin dall'inizio, per quanto spesso si ripeta, purché abbia almeno quattro date.
+- Le voci che non si ripetono ne formano una non appena ce ne sono almeno quattro e si presentano circa ogni cinque settimane o più spesso, oppure mantengono un ritmo regolare, per esempio una volta all'anno. Così voci separate chiamate «Corsa» formano una routine proprio come una serie giornaliera.
 
-Devono inoltre essercene almeno quattro in vista.
+I calendari che puoi solo leggere, come gli abbonamenti, non formano routine.
 
-Le voci non devono per forza ripetersi per formare una routine. Voci separate chiamate «Corsa» nello stesso calendario formano una sola routine, proprio come farebbe una serie giornaliera. Un'occorrenza che hai spostato da sola resta parte della sua routine, come segno sul suo nuovo giorno. Le voci senza titolo non si raggruppano mai con altre, solo con il resto della propria serie.
+Una volta che una voce appartiene a una routine, ci resta: quando la rinomini, la spunti, sposti una delle sue occorrenze o la sposti in un altro calendario. Le voci successive con lo stesso titolo vi si aggiungono, per quanto distanti siano tra loro. Una copia in un altro calendario entra nella routine di quel calendario con il suo titolo. Una voce senza titolo non si unisce mai ad altre; se è ricorrente, è una routine da sola.
+
+La frequenza di una routine decide come la mostrano le viste:
+
+- Nella vista mensile, una routine che si presenta più di una volta a settimana appare come segni. Qualcosa di settimanale resta una barra.
+- Nella vista annuale, una routine che si presenta circa ogni cinque settimane o più spesso appare come segni, quindi anche quelle settimanali e mensili. Una più rara, come un compleanno, resta una barra.
 
 ## Usare una routine
 

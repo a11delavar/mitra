@@ -7,6 +7,8 @@ import { Entry, EntryFile } from '#features/entries'
 import { NotificationSubscription } from '#features/reminders/NotificationSubscription.js'
 import { Session } from '#features/identity/server/Session.js'
 import { File } from '#features/files/File.js'
+import { Routine } from '#features/routines/Routine.js'
+import { RoutineSubscriber } from '#features/routines/server/RoutineSubscriber.js'
 import { Integration } from '#integrations'
 import { MitraCalendar, CalDAV, GoogleCalendar, AppleCalendar, IcsSubscription, Notion, Todoist, Tempo } from '#integrations/registerIntegrations.js'
 import { Demo } from '#integrations/demo/Demo.js'
@@ -17,8 +19,8 @@ import { migrations, nameOf } from './migrations/index.js'
 /** ORM configuration shared between runtime (orm.ts) and migration CLI. */
 export function ormConfig(dbName: string) {
 	return defineConfig({
-		entities: [User, Identity, Integration, MitraCalendar, Demo, CalDAV, GoogleCalendar, AppleCalendar, IcsSubscription, Notion, Todoist, Tempo, Source, Entry, EntryRelation, NotificationSubscription, Session, AccessToken, File, EntryFile, State],
-		subscribers: [children.subscriber],
+		entities: [User, Identity, Integration, MitraCalendar, Demo, CalDAV, GoogleCalendar, AppleCalendar, IcsSubscription, Notion, Todoist, Tempo, Source, Entry, EntryRelation, NotificationSubscription, Session, AccessToken, File, EntryFile, Routine, State],
+		subscribers: [children.subscriber, RoutineSubscriber],
 		dbName,
 		extensions: [Migrator],
 		migrations: {

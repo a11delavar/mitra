@@ -200,6 +200,9 @@ export class SourceMigration {
 			uid: this.keepOriginals ? crypto.randomUUID() : entry.uid,
 			// A copy is a new task, so it starts unranked rather than sharing the original's key.
 			rank: this.keepOriginals ? undefined : entry.rank,
+			// A copy is recognized in its calendar by its title; a move keeps its routine.
+			routineId: this.keepOriginals ? undefined : entry.routineId,
+			routineDeclined: this.keepOriginals ? undefined : entry.routineDeclined,
 			exdates: entry.recurrence?.freq ? entry.occurrences.excluded : undefined,
 			relations: entry.relations,
 		}, overrides)
