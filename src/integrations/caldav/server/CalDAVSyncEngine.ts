@@ -122,6 +122,9 @@ export class CalDAVSyncEngine implements SourceSyncEngine {
 		}).filter(source => source.entryTypes.length > 0)
 	}
 
+	/** tsdav fetches only addresses containing `.ics` unless told otherwise, and Stalwart names what it made over JMAP without an extension. */
+	private static readonly anyMember = (url: string) => Boolean(url)
+
 	private static readonly multigetBatchSize = 100
 
 	private async fetchObjects(
@@ -143,14 +146,14 @@ export class CalDAVSyncEngine implements SourceSyncEngine {
 		objectUrls: Array<string>,
 	): Promise<Awaited<ReturnType<typeof client.fetchCalendarObjects>>> {
 		try {
-			return await client.fetchCalendarObjects({ calendar, objectUrls })
+			return await client.fetchCalendarObjects({ calendar, objectUrls, urlFilter: CalDAVSyncEngine.anyMember })
 		} catch (error) {
 			logger.warn(`Multiget of ${objectUrls.length} object(s) from ${calendar.url} failed (${error instanceof Error ? error.message : error}); refetching individually and skipping any that are gone`)
 			const objects: Awaited<ReturnType<typeof client.fetchCalendarObjects>> = []
 			let skipped = 0
 			for (const url of objectUrls) {
 				try {
-					objects.push(...await client.fetchCalendarObjects({ calendar, objectUrls: [url] }))
+					objects.push(...await client.fetchCalendarObjects({ calendar, objectUrls: [url], urlFilter: CalDAVSyncEngine.anyMember }))
 				} catch {
 					skipped++
 					logger.debug(`Skipped unfetchable object ${url}`)
@@ -364,7 +367,7 @@ export class CalDAVSyncEngine implements SourceSyncEngine {
 
 	private async refetchResource(integration: CalDAV, entry: Entry): Promise<{ raw: string, etag?: string } | undefined> {
 		const client = await this.getClient(integration)
-		const objects = await client.fetchCalendarObjects({ calendar: { url: new URL('.', entry.uri).href }, objectUrls: [entry.uri!] })
+		const objects = await client.fetchCalendarObjects({ calendar: { url: new URL('.', entry.uri).href }, objectUrls: [entry.uri!], urlFilter: CalDAVSyncEngine.anyMember })
 		return objects[0]?.data ? { raw: objects[0].data, etag: objects[0].etag || undefined } : undefined
 	}
 

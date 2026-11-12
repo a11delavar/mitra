@@ -52,9 +52,11 @@ function fakeServer(listings: ReadonlyArray<Listing>, collection: Collection = [
 				...collection.map(member => ({ href: member.href, status: 200, ok: true, props: member.etag ? { getetag: member.etag } : {} })),
 			])
 		},
-		fetchCalendarObjects: ({ objectUrls }: { objectUrls: Array<string> }) => {
-			multigets.push([...objectUrls])
-			return Promise.resolve(objectUrls.map(url => ({ url, etag: `etag-${url}`, data: ics(url, url.split('/').pop()!.replace('.ics', '')) })))
+		// tsdav's own default filter, which drops every address without `.ics` unless the caller passes its own.
+		fetchCalendarObjects: ({ objectUrls, urlFilter = url => url.includes('.ics') }: { objectUrls: Array<string>, urlFilter?: (url: string) => boolean }) => {
+			const fetched = objectUrls.filter(urlFilter)
+			multigets.push(fetched)
+			return Promise.resolve(fetched.map(url => ({ url, etag: `etag-${url}`, data: ics(url, url.split('/').pop()!.replace('.ics', '')) })))
 		},
 	}
 	const integration = new CalDAV({ credentials: { username: 'u', password: 'p' } })
@@ -330,5 +332,12 @@ describe('CalDAV multiget batching', () => {
 		const { multigets, fetched } = await sync([{ members, token: 'token-1' }])
 		assert.deepEqual(multigets.map(batch => batch.length), [100, 100, 50])
 		assert.equal(new Set(fetched).size, 250)
+	})
+})
+
+describe('CalDAV sync reads members whatever their address ends in', () => {
+	it('imports a member named without .ics, as Stalwart names what it made over JMAP', async () => {
+		const { em } = await sync([{ members: [{ href: '/cal/aB3dE5fG7h' }, { href: '/cal/b.ics' }], token: 'token-1' }])
+		assert.deepEqual(em.persisted.map(entry => entry.heading), ['aB3dE5fG7h', 'b'])
 	})
 })
