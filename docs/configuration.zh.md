@@ -76,7 +76,7 @@ Mitra 根据它生成 Google 日历和登录的回调地址；如果它以 `http
 
 ## 给你的实例命名
 
-`MITRA_NAME` 会替换侧边栏和浏览器标签页中的“Mitra”：
+`MITRA_NAME` 会替换侧边栏、浏览器标签页和[安装后的应用](install-app.md)中的“Mitra”：
 
 ```yaml
 environment:
@@ -92,7 +92,7 @@ environment:
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
 | `MITRA_URL` | *（未设置）* | 用户访问 Mitra 的[公开地址](#set-the-public-url)，比如 `https://mitra.example.com`。登录和 Google 日历的回调地址，以及 Cookie 是否安全，都取决于它。在 localhost 上试用时可选，使用[登录](sso.md)时必填，使用 [Google 日历](integrations/google.md)或任何公开服务器时建议设置。 |
-| `MITRA_NAME` | *（Mitra，按每个人的语言显示）* | 显示在侧边栏和浏览器标签页中的[名称](#name-your-instance)。[安装后的应用](install-app.md)仍叫“Mitra”。 |
+| `MITRA_NAME` | *（Mitra，按每个人的语言显示）* | 显示在侧边栏、浏览器标签页和安装后的应用中的[名称](#name-your-instance)。 |
 | `MITRA_PORT` | `3000` | 服务器监听的端口。使用 Docker 时，请改为修改端口映射的主机端；只有当进程本身必须监听其他端口时才设置它。内置的健康检查会随之调整。 |
 | `MITRA_LOG_LEVEL` | `info` | [Mitra 记录多少日志](logging.md)：`error`、`warn`、`info`、`debug` 或 `trace`。级别越往后，记录的内容越详细，每个级别都包含前面所有级别的内容。 |
 | `MITRA_UPDATE_CHECK` | *（开启）* | 设为 `off`（或 `false`、`0`、`no`）可关闭[更新检查](updates.md)。 |

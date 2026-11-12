@@ -76,7 +76,7 @@ Mitra ne ricava gli indirizzi di ritorno per Google Calendar e per l'accesso con
 
 ## Dare un nome alla tua istanza
 
-`MITRA_NAME` sostituisce «Mitra» nella barra laterale e nella scheda del browser:
+`MITRA_NAME` sostituisce «Mitra» nella barra laterale, nella scheda del browser e nell'[app installata](install-app.md):
 
 ```yaml
 environment:
@@ -92,7 +92,7 @@ Fare clic sul nome apre la finestra **Informazioni**, che mostra la versione e i
 | Variabile | Predefinito | Descrizione |
 | --- | --- | --- |
 | `MITRA_URL` | *(non impostata)* | L'[indirizzo pubblico](#set-the-public-url) a cui le persone raggiungono Mitra, come `https://mitra.example.com`. Da esso derivano gli indirizzi di ritorno per l'accesso con account e Google Calendar, e se i cookie sono sicuri. Facoltativa finché provi Mitra su localhost, obbligatoria per l'[accesso con account](sso.md), e consigliata per [Google Calendar](integrations/google.md) e per qualsiasi server pubblico. |
-| `MITRA_NAME` | *(Mitra, nella lingua di ciascuno)* | Il [nome](#name-your-instance) mostrato nella barra laterale e nella scheda del browser. L'[app installata](install-app.md) resta «Mitra». |
+| `MITRA_NAME` | *(Mitra, nella lingua di ciascuno)* | Il [nome](#name-your-instance) mostrato nella barra laterale, nella scheda del browser e nell'app installata. |
 | `MITRA_PORT` | `3000` | La porta su cui il server è in ascolto. Con Docker, cambia invece il lato host della mappatura delle porte; imposta questa solo quando il processo stesso deve restare in ascolto altrove. L'health check integrato la segue. |
 | `MITRA_LOG_LEVEL` | `info` | [Quanto registra Mitra](logging.md): `error`, `warn`, `info`, `debug` o `trace`. Ogni livello include tutto ciò che è più silenzioso. |
 | `MITRA_UPDATE_CHECK` | *(attivo)* | Impostala su `off` (o `false`, `0`, `no`) per disattivare il [controllo degli aggiornamenti](updates.md). |

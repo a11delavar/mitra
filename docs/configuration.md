@@ -76,7 +76,7 @@ Mitra builds the return addresses for Google Calendar and sign-in from it, and m
 
 ## Name your instance
 
-`MITRA_NAME` replaces "Mitra" in the sidebar and the browser tab:
+`MITRA_NAME` replaces "Mitra" in the sidebar, the browser tab and the [installed app](install-app.md):
 
 ```yaml
 environment:
@@ -92,7 +92,7 @@ Clicking the name opens the **About** dialog, which shows the version and commit
 | Variable | Default | Description |
 | --- | --- | --- |
 | `MITRA_URL` | *(unset)* | The [public address](#set-the-public-url) people reach Mitra at, such as `https://mitra.example.com`. Return addresses for sign-in and Google Calendar, and whether cookies are secure, come from it. Optional while you try Mitra on localhost, required for [sign-in](sso.md), and recommended for [Google Calendar](integrations/google.md) and any public server. |
-| `MITRA_NAME` | *(Mitra, in each person's language)* | The [name](#name-your-instance) shown in the sidebar and the browser tab. The [installed app](install-app.md) stays "Mitra". |
+| `MITRA_NAME` | *(Mitra, in each person's language)* | The [name](#name-your-instance) shown in the sidebar, the browser tab and the installed app. |
 | `MITRA_PORT` | `3000` | The port the server listens on. With Docker, change the host side of the port mapping instead; set this only when the process itself must listen elsewhere. The built-in health check follows it. |
 | `MITRA_LOG_LEVEL` | `info` | [How much Mitra logs](logging.md): `error`, `warn`, `info`, `debug` or `trace`. Each level includes everything quieter than it. |
 | `MITRA_UPDATE_CHECK` | *(on)* | Set to `off` (or `false`, `0`, `no`) to turn off the [update check](updates.md). |

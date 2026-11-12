@@ -1,5 +1,6 @@
 import express from 'express'
 import path from 'path'
+import fs from 'fs'
 import cors from 'cors'
 import '#integrations/server/registerEngines.js'
 import { ModelValueConstructor } from '@a11d/api-model-value-constructor'
@@ -94,6 +95,15 @@ app.use('/api', operationsRouter(() => orm.em.fork()))
 
 // Serve frontend SPA dist bundle.
 const frontendDistPath = path.resolve(import.meta.dirname, '../../dist')
+// The manifest is built once as "Mitra", so an installed app takes the operator's name only when it is served.
+if (environment.name) {
+	const manifest = JSON.parse(fs.readFileSync(path.join(frontendDistPath, 'manifest.webmanifest'), 'utf8'))
+	const named = JSON.stringify({ ...manifest, name: environment.name, short_name: environment.name })
+	app.get('/manifest.webmanifest', (_, res) => res
+		.type('application/manifest+json')
+		.setHeader('Cache-Control', cacheControlOf('manifest.webmanifest'))
+		.send(named))
+}
 app.use(precompressed(frontendDistPath))
 app.use(express.static(frontendDistPath, { cacheControl: false, setHeaders: (res, file) => res.setHeader('Cache-Control', cacheControlOf(file)) }))
 // The SPA fallback: any non-API path serves the shell, so deep links (/week?date=…) survive a reload.

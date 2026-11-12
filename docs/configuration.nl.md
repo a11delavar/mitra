@@ -76,7 +76,7 @@ Mitra bouwt hiermee de redirect-URL's voor Google Agenda en voor inloggen, en ma
 
 ## Je installatie een naam geven
 
-`MITRA_NAME` vervangt ‘Mitra’ in de zijbalk en op het browsertabblad:
+`MITRA_NAME` vervangt ‘Mitra’ in de zijbalk, op het browsertabblad en in de [geïnstalleerde app](install-app.md):
 
 ```yaml
 environment:
@@ -92,7 +92,7 @@ Klik je op de naam, dan opent het venster **Over**, met de versie en de commit d
 | Variabele | Standaard | Beschrijving |
 | --- | --- | --- |
 | `MITRA_URL` | *(niet ingesteld)* | Het [openbare adres](#set-the-public-url) waarop mensen Mitra bereiken, zoals `https://mitra.example.com`. De redirect-URL's voor inloggen en Google Agenda, en of cookies beveiligd zijn, worden hiervan afgeleid. Optioneel zolang je Mitra op localhost uitprobeert, verplicht voor [inloggen](sso.md), en aanbevolen voor [Google Agenda](integrations/google.md) en elke openbare server. |
-| `MITRA_NAME` | *(Mitra, in de taal van elke gebruiker)* | De [naam](#name-your-instance) in de zijbalk en op het browsertabblad. De [geïnstalleerde app](install-app.md) blijft ‘Mitra’ heten. |
+| `MITRA_NAME` | *(Mitra, in de taal van elke gebruiker)* | De [naam](#name-your-instance) in de zijbalk, op het browsertabblad en in de geïnstalleerde app. |
 | `MITRA_PORT` | `3000` | De poort waarop de server luistert. Wijzig bij Docker liever de hostkant van de poorttoewijzing; stel deze variabele alleen in als het proces zelf op een andere poort moet luisteren. De ingebouwde statuscontrole volgt hem. |
 | `MITRA_LOG_LEVEL` | `info` | [Hoeveel Mitra logt](logging.md): `error`, `warn`, `info`, `debug` of `trace`. Elk niveau bevat alles van de stillere niveaus. |
 | `MITRA_UPDATE_CHECK` | *(aan)* | Stel in op `off` (of `false`, `0`, `no`) om de [controle op updates](updates.md) uit te schakelen. |

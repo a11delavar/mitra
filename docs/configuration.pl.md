@@ -76,7 +76,7 @@ Na jego podstawie Mitra tworzy adresy zwrotne dla Kalendarza Google i logowania,
 
 ## Nazwij swoją instancję
 
-`MITRA_NAME` zastępuje nazwę „Mitra” w panelu bocznym i na karcie przeglądarki:
+`MITRA_NAME` zastępuje nazwę „Mitra” w panelu bocznym, na karcie przeglądarki i w [zainstalowanej aplikacji](install-app.md):
 
 ```yaml
 environment:
@@ -92,7 +92,7 @@ Kliknięcie nazwy otwiera okno **O aplikacji**, które pokazuje uruchomioną wer
 | Zmienna | Domyślnie | Opis |
 | --- | --- | --- |
 | `MITRA_URL` | *(nieustawiona)* | [Publiczny adres](#set-the-public-url), pod którym użytkownicy otwierają aplikację Mitra, na przykład `https://mitra.example.com`. Wynikają z niego adresy zwrotne logowania i Kalendarza Google oraz to, czy pliki cookie są bezpieczne. Opcjonalna, dopóki testujesz aplikację Mitra na localhost, wymagana do [logowania](sso.md) i zalecana dla [Kalendarza Google](integrations/google.md) oraz każdego publicznego serwera. |
-| `MITRA_NAME` | *(Mitra, w języku każdego użytkownika)* | [Nazwa](#name-your-instance) wyświetlana w panelu bocznym i na karcie przeglądarki. [Zainstalowana aplikacja](install-app.md) pozostaje „Mitra”. |
+| `MITRA_NAME` | *(Mitra, w języku każdego użytkownika)* | [Nazwa](#name-your-instance) wyświetlana w panelu bocznym, na karcie przeglądarki i w zainstalowanej aplikacji. |
 | `MITRA_PORT` | `3000` | Port, na którym nasłuchuje serwer. W Dockerze zmień raczej port po stronie hosta w mapowaniu portów; tę zmienną ustawiaj tylko wtedy, gdy sam proces musi nasłuchiwać na innym porcie. Wbudowana kontrola stanu się do niej dostosowuje. |
 | `MITRA_LOG_LEVEL` | `info` | [Ile Mitra zapisuje w logach](logging.md): `error`, `warn`, `info`, `debug` lub `trace`. Każdy poziom obejmuje wszystko, co zapisują poziomy cichsze od niego. |
 | `MITRA_UPDATE_CHECK` | *(włączone)* | Ustaw `off` (albo `false`, `0`, `no`), aby wyłączyć [sprawdzanie aktualizacji](updates.md). |
