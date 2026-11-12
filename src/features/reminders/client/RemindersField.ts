@@ -126,6 +126,11 @@ export class RemindersField extends Component {
 						margin-block: -0.25rem;
 						opacity: 0;
 						transition: opacity 0.15s ease;
+
+						/* An email reminder says so without hovering. */
+						&.kind[data-email] {
+							opacity: 1;
+						}
 					}
 
 					&:hover > mitra-icon-button,
@@ -154,7 +159,7 @@ export class RemindersField extends Component {
 		return !this.entry?.reminderAnchor ? html.nothing : html`
 			${!this.entry.reminders ? html`
 				<span class="placeholder">${t('Reminders')}</span>
-			` : this.entry.reminders.map(minutes => html`
+			` : this.entry.reminders.map(({ minutes, email }) => html`
 				<div class="reminder">
 					<span>
 						${minutes !== 0
@@ -163,6 +168,12 @@ export class RemindersField extends Component {
 								? html`${t('At the time of the task')} <span class="detail">${this.fireLabel(0)}</span>`
 								: html`${t('At start')} <span class="detail">${t('of event at ${time}', { time: this.fireLabel(minutes) })}</span>`}
 					</span>
+					${!this.entry.editable || !(email || this.entry.emailsReminders) ? html.nothing : html`
+						<mitra-icon-button size="small" class="kind" ?data-email=${email} icon=${email ? 'mail' : 'bell'}
+							label=${email ? t('Remind by notification') : t('Remind by email')}
+							@click=${() => this.commit(this.entry.reminders?.toggled(minutes))}
+						></mitra-icon-button>
+					`}
 					${!this.entry.editable ? html.nothing : html`
 						<mitra-icon-button size="small" icon="x" label=${t('Remove reminder')}
 							@click=${() => this.commit(this.entry.reminders?.without(minutes))}
@@ -174,7 +185,7 @@ export class RemindersField extends Component {
 				<mitra-popover-container>
 					<mitra-icon-button size="small" class="add" icon="plus" label=${t('Add reminder')}></mitra-icon-button>
 					<mitra-menu slot="popover">
-						${RemindersField.presets.filter(minutes => !this.entry.reminders?.includes(minutes)).map(minutes => html`
+						${RemindersField.presets.filter(minutes => !this.entry.reminders?.some(reminder => reminder.minutes === minutes)).map(minutes => html`
 							<mitra-menu-item @click=${() => this.add(minutes)}>${RemindersField.labelOf(minutes, this.entry.type)}</mitra-menu-item>
 						`)}
 						<mitra-menu-item class="custom" @click=${this.openCustomDialog}>${t('Custom…')}</mitra-menu-item>
