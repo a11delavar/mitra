@@ -101,6 +101,8 @@ export class SettingRow extends Component {
 					display: flex;
 					flex-direction: column;
 					margin-inline: -0.875rem;
+					/* Its rows and notes pad themselves, so the card's own padding below them would double. */
+					margin-block-end: -0.625rem;
 					padding-inline: 0.875rem;
 					border-block-start: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
 					font-size: 0.8125rem;

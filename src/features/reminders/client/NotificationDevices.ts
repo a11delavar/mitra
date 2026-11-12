@@ -40,8 +40,9 @@ export class NotificationDevices extends Component {
 		return browser ?? platform ?? t('Unknown device')
 	}
 
+	// A string, never t()'s fresh object: the clock renders every second, and a new object would reset the field being typed in.
 	private name(device: NotificationSubscription) {
-		return device.name || this.reportedName(device)
+		return device.name || String(this.reportedName(device))
 	}
 
 	// A text field replaces the label: making a lit-rendered label contenteditable breaks lit's next update.
@@ -73,7 +74,7 @@ export class NotificationDevices extends Component {
 		}
 		this.renamingId = undefined
 		const typed = field.value.trim()
-		const name = typed === this.reportedName(device) ? '' : typed
+		const name = typed === String(this.reportedName(device)) ? '' : typed
 		if (name === (device.name ?? '')) {
 			return
 		}
@@ -84,11 +85,14 @@ export class NotificationDevices extends Component {
 
 	static override get styles() {
 		return css`
-			/* Exactly the label's line, so opening the rename moves nothing. */
+			/* Exactly the label it replaces, without a ring: the caret alone says it is being renamed. */
 			mitra-notification-devices mitra-text-field {
 				--control-height: 1lh;
 				--mitra-field-padding: 0;
+				--mitra-field-ring: transparent;
 				margin-inline-start: -1px;
+				font-size: 0.875rem;
+				font-weight: 500;
 			}
 		`
 	}
@@ -109,7 +113,7 @@ export class NotificationDevices extends Component {
 			<li>
 				<mitra-icon icon=${device.mobile ? 'smartphone' : 'monitor'}></mitra-icon>
 				<span class="text">
-					${this.renamingId !== device.id ? html`<span class="label">${this.name(device)}</span>` : html`
+					${this.renamingId !== device.id ? html`<span class="label" @dblclick=${() => this.startRename(device)}>${this.name(device)}</span>` : html`
 						<mitra-text-field plain data-rename-id=${device.id} maxlength="60"
 							.value=${this.name(device)} aria-label=${t('Rename this device')}
 							@keydown=${(e: KeyboardEvent) => this.handleRenameKeydown(e)}
