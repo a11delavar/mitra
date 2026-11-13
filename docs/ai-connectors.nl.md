@@ -69,6 +69,7 @@ Een verbonden tool werkt met je agenda's zoals jij dat in Mitra doet. De tool ka
 
 - een dag of een week bekijken, met wat achterstallig is en wat nog niet is ingepland
 - items opzoeken en ze volledig lezen
+- zien hoe je [routines](routines.md) gaan: hoeveel van hun laatste herhalingen je hebt gedaan, geannuleerd of gemist, en op welke weekdag ze erbij inschieten, zodat je kunt vragen ‘Hoe gaat het met de sportschool?’
 - items maken, wijzigen, afronden en verwijderen, en bij een terugkerend item één herhaling of alle herhalingen
 - mensen uitnodigen in agenda's die [deelnemers](participants.md) bijhouden; of ze daarvan bericht krijgen, hangt af van de aanbieder
 - items aan elkaar koppelen als [afhankelijkheden](dependencies.md) en [subtaken](subtasks.md)

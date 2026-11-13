@@ -70,7 +70,7 @@ export class GetOverview extends Operation<Parameters> {
 		// Repeating entries unrolled as the browser unrolls them, without the busy copies a provider holds of availability.
 		const occurrences = [
 			...entries.filter(entry => !entry.recurrence).map(entry => entry.occurrences.single),
-			...EntryOccurrences.inWindow(entries.filter(entry => entry.recurrence), range),
+			...EntryOccurrences.within(entries.filter(entry => entry.recurrence), range),
 		]
 			.filter(({ entry }) => !entry.source.integration.writtenForAvailability(entry))
 			.sort((a, b) => startOf(a) - startOf(b))

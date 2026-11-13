@@ -32,5 +32,5 @@ export const fetched = (from: string, to: string) => ListEntries.call({ start: r
 /** The window as the views show it: each entry's occurrences there. */
 export const shown = async (from: string, to: string) => {
 	const entries = await fetched(from, to)
-	return [...entries.filter(entry => !entry.recurrence).map(entry => entry.occurrences.single), ...EntryOccurrences.inWindow(entries, range(from, to))]
+	return [...entries.filter(entry => !entry.recurrence).map(entry => entry.occurrences.single), ...EntryOccurrences.within(entries.filter(entry => entry.recurrence), range(from, to))]
 }

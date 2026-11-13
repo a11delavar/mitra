@@ -36,7 +36,7 @@ export class RoutineRecognition {
 		if (entries.some(entry => entry.recurrence?.freq)) {
 			return true
 		}
-		const days = entries.flatMap(entry => entry.dayIn(zone) ?? [])
+		const days = entries.flatMap(entry => entry.occurrences.single.dayIn(zone) ?? [])
 		const cadence = RoutineCadence.between(days)
 		return !!cadence && (cadence.collapsesIn('month') || cadence.keptBy(days))
 	}
@@ -53,7 +53,8 @@ export class RoutineRecognition {
 
 	/** Those an entry would found a routine with: the ones wearing its title in its calendar, or itself alone where it repeats untitled. */
 	private static poolOf(entry: Entry) {
-		return entry.routineTitle ? RoutineRecognition.wearing(entry.sourceId, entry.routineTitle) : entry.recurrence?.freq ? entry.id : undefined
+		const title = Routine.titleOf(entry.heading)
+		return title ? RoutineRecognition.wearing(entry.sourceId, title) : entry.recurrence?.freq ? entry.id : undefined
 	}
 
 	private constructor(private readonly em: EntityManager) { }
@@ -76,7 +77,8 @@ export class RoutineRecognition {
 		const routines = await this.routinesWearing([...new Set(entries.map(entry => entry.sourceId))], written)
 		const joined = new Array<Entry>()
 		for (const entry of entries) {
-			const routineId = entry.routineTitle && routines.get(RoutineRecognition.wearing(entry.sourceId, entry.routineTitle))
+			const title = Routine.titleOf(entry.heading)
+			const routineId = title && routines.get(RoutineRecognition.wearing(entry.sourceId, title))
 			if (routineId) {
 				entry.routineId = routineId
 				joined.push(entry)
@@ -160,7 +162,7 @@ export class RoutineRecognition {
 		)
 		const wearers = [
 			...stored.map(row => ({ sourceId: row.source_id, title: Routine.titleOf(row.heading), routineId: row.routine_id, latest: row.latest ?? -Infinity })),
-			...written.filter(entry => entry.routineId).map(entry => ({ sourceId: entry.sourceId, title: entry.routineTitle, routineId: entry.routineId!, latest: (entry.start ?? entry.due)?.getTime() ?? -Infinity })),
+			...written.filter(entry => entry.routineId).map(entry => ({ sourceId: entry.sourceId, title: Routine.titleOf(entry.heading), routineId: entry.routineId!, latest: (entry.start ?? entry.due)?.getTime() ?? -Infinity })),
 		].sort((a, b) => a.latest - b.latest)
 		return new Map(wearers.flatMap(({ sourceId, title, routineId }) => title ? [[RoutineRecognition.wearing(sourceId, title), routineId] as const] : []))
 	}
@@ -170,7 +172,7 @@ export class RoutineRecognition {
 	 * of that title the calendar holds, compared here, and only those entries are then read.
 	 */
 	private async storedSharingTitlesWith(entries: ReadonlyArray<Entry>) {
-		const titled = entries.filter(entry => entry.routineTitle)
+		const titled = entries.filter(entry => Routine.titleOf(entry.heading))
 		const wanted = new Set(titled.map(entry => RoutineRecognition.poolOf(entry)))
 		const sourceIds = [...new Set(titled.map(entry => entry.sourceId))]
 		const spellings = !sourceIds.length ? [] : await this.rows<{ source_id: string, heading: string }>(

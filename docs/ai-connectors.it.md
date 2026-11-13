@@ -69,6 +69,7 @@ Uno strumento collegato lavora con i tuoi calendari come faresti tu in Mitra. Pu
 
 - guardare un giorno o una settimana, con ciò che è scaduto e ciò che è ancora non pianificato
 - trovare voci e leggerle per intero
+- vedere come vanno le tue [routine](routines.md): quante delle loro ultime occorrenze hai rispettato, annullato o saltato, e in quale giorno della settimana cedono, così puoi chiedere «Come va con la palestra?»
 - creare, modificare, completare ed eliminare voci, una singola occorrenza di una voce ricorrente o tutte
 - invitare persone dove il calendario accoglie [partecipanti](participants.md); se vengono avvisate dipende dal provider
 - collegare voci come [dipendenze](dependencies.md) e [attività secondarie](subtasks.md)

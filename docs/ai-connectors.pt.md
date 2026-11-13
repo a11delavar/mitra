@@ -69,6 +69,7 @@ Uma ferramenta conectada trabalha com seus calendários como você faria no Mitr
 
 - olhar um dia ou uma semana, com o que está em atraso e o que ainda está sem agendamento
 - encontrar entradas e lê-las por inteiro
+- ver como vão as suas [rotinas](routines.md): quantas das últimas ocorrências você cumpriu, cancelou ou perdeu, e em que dia da semana elas falham, para que você possa perguntar "Como vai a academia?"
 - criar, alterar, concluir e excluir entradas, uma só ocorrência de uma entrada recorrente ou todas
 - convidar pessoas onde o calendário guarda [participantes](participants.md); se elas são avisadas depende do provedor
 - relacionar entradas como [dependências](dependencies.md) e [subtarefas](subtasks.md)

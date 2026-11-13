@@ -66,7 +66,8 @@ export class LocalePreview extends Component {
 		const week = locale.getWeekInfo()
 		const zones = [...new Set([TimeZone.deviceId, ...LocalePreview.zones].map(id => TimeZone.of(id)))]
 			.map(zone => zone.name(locale))
-		return html`<dl>
+		return html`
+			<dl style='margin-bottom: 0.5rem'>
 				<dt>${t('Date')}</dt>
 				<dd>${sample.format({ dateStyle: 'full' })} · ${sample.format({ year: 'numeric', month: '2-digit', day: '2-digit' })}</dd>
 				<dt>${t('Time')}</dt>
@@ -81,7 +82,8 @@ export class LocalePreview extends Component {
 				<dd>${new Intl.DisplayNames([locale], { type: 'calendar' }).of(DateTime.getCalendar()) ?? ''}</dd>
 				<dt>${t('Time zone names')}</dt>
 				<dd class="zones">${zones.map(zone => html`<span><span class="city">${zone.city}</span> ${zone.short}</span>`)}</dd>
-			</dl>`
+			</dl>
+		`
 	}
 }
 

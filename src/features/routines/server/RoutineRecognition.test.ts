@@ -261,7 +261,7 @@ describe('RoutineRecognition', () => {
 		it('counts the days where the person is at home: four late evenings in Berlin are four days, in whatever zone the server is', () => {
 			// Two before and two after midnight UTC, on four Berlin days a week apart each.
 			const late = [0, 7, 14, 21].map(days => on(days, { start: new DateTime('2026-03-02T22:30:00Z').add({ days }) }))
-			assert.deepEqual(late.map(entry => String(entry.dayIn(berlin))), ['2026-03-02', '2026-03-09', '2026-03-16', '2026-03-23'])
+			assert.deepEqual(late.map(entry => String(entry.occurrences.single.dayIn(berlin))), ['2026-03-02', '2026-03-09', '2026-03-16', '2026-03-23'])
 			assert.equal(founds(...late), true)
 		})
 	})

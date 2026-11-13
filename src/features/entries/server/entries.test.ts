@@ -141,7 +141,7 @@ describe('GET /entries/search finds a series as one occurrence', () => {
 		assert.equal(found.start?.toISOString(), '2026-09-29T12:00:00.000Z')
 		assert.equal(found.recurringEntryId, master.id)
 
-		const window = EntryOccurrences.inWindow(await user.filterEntries(em, { where: { recurrence: { $ne: null } } }), new DateTimeRange(new Date('2026-09-28T00:00:00Z'), new Date('2026-10-05T00:00:00Z')))
+		const window = EntryOccurrences.within(await user.filterEntries(em, { where: { recurrence: { $ne: null } } }), new DateTimeRange(new Date('2026-09-28T00:00:00Z'), new Date('2026-10-05T00:00:00Z')))
 		assert.deepEqual(window.filter(occurrence => occurrence.key === found.key).map(occurrence => occurrence.start?.valueOf()), [found.start?.valueOf()])
 	})
 

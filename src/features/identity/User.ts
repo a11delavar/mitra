@@ -179,11 +179,24 @@ export class User {
 		return entries
 	}
 
-	/** The routines of the user's enabled calendars that were not dissolved, each told how often it comes. */
+	/** The routines of the user's enabled calendars that were not dissolved, each told how often it comes and the titles its entries wear. */
 	async getRoutines(em: EntityManager) {
 		const routines = await em.find(Routine, { $and: [{ dissolved: null }, this.inCalendars({ enabled: true }) as FilterQuery<Routine>] })
 		await Routine.measure(em, routines, this.timeZones?.home?.zone ?? TimeZone.default)
 		return routines
+	}
+
+	/**
+	 * The entries of `routines`, as stored: each recurring one whole with its overrides inside it, an override naming a
+	 * routine as an entry of its own too. With `since`, the others only from that instant on.
+	 */
+	getRoutineEntries(em: EntityManager, routines: ReadonlyArray<Routine>, { since }: { since?: Date } = {}) {
+		return !routines.length ? Promise.resolve([]) : this.filterEntries(em, {
+			where: {
+				routineId: { $in: routines.map(routine => routine.id) },
+				...since ? { $or: [{ recurrence: { $ne: null } }, { start: { $gte: since } }, { start: null, due: { $gte: since } }] } : {},
+			},
+		})
 	}
 
 	private static inRange({ start, end }: DateTimeRange): FilterQuery<Entry> {

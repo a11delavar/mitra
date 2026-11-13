@@ -69,6 +69,7 @@ Połączone narzędzie pracuje z twoimi kalendarzami tak, jak ty w aplikacji Mit
 
 - przejrzeć dzień albo tydzień razem z tym, co zaległe, i tym, co wciąż niezaplanowane
 - znaleźć wpisy i odczytać je w całości
+- sprawdzić, jak idą twoje [rutyny](routines.md): ile z ich ostatnich wystąpień zostało wykonanych, anulowanych lub pominiętych i w który dzień tygodnia najczęściej odpadają, więc możesz zapytać „Jak idzie siłownia?”
 - tworzyć, zmieniać, kończyć i usuwać wpisy, w przypadku wpisu cyklicznego jedno wystąpienie albo wszystkie
 - zapraszać osoby tam, gdzie kalendarz przechowuje [uczestników](participants.md); to, czy dostaną powiadomienie, zależy od dostawcy
 - łączyć wpisy jako [zależności](dependencies.md) i [podzadania](subtasks.md)

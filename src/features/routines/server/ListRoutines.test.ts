@@ -24,6 +24,12 @@ describe('ListRoutines', () => {
 		return (await ListRoutines.call()).find(routine => routine.id === routineId)
 	}
 
+	it('names the titles a routine\'s members wear, the newest first, as they spell them', async () => {
+		const first = await create('Gym', { recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })
+		await CreateEntry.call(EntryPatch.creating(new Entry({ sourceId: server.source.id, type: EntryType.Event, heading: ' gym ', start: start.add({ days: 3 }), end: start.add({ days: 3, hours: 1 }) })))
+		assert.deepEqual((await listed(first))!.titles, ['gym', 'Gym'])
+	})
+
 	it('lists a routine with its calendar and how often it comes, read off its members: a daily rule every day', async () => {
 		const stretch = (await listed(await create('Stretch', { recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }) })))!
 		assert.ok(stretch instanceof Routine)

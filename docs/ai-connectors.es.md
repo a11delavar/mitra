@@ -69,6 +69,7 @@ Una herramienta conectada trabaja con tus calendarios como lo harías tú en Mit
 
 - mirar un día o una semana, con lo que está vencido y lo que sigue sin programar
 - encontrar entradas y leerlas completas
+- ver cómo van tus [rutinas](routines.md): cuántas de sus últimas repeticiones cumpliste, cancelaste o te saltaste, y qué día de la semana fallan, para que puedas preguntar «¿Cómo voy con el gimnasio?»
 - crear, cambiar, completar y eliminar entradas, una sola ocurrencia de una entrada recurrente o todas
 - invitar a personas donde el calendario admite [participantes](participants.md); que se les avise depende del proveedor
 - relacionar entradas como [dependencias](dependencies.md) y [subtareas](subtasks.md)

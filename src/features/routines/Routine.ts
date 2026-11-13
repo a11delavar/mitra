@@ -22,24 +22,25 @@ export class Routine extends Entity {
 	}
 
 	/**
-	 * Tells each of `routines` how often it comes, on the days of `zone`: its members' rules beside the cadence of those
-	 * that are entries of their own, an override standing in for a date its rule already counts. Read off the members'
-	 * dates and rules alone: the views ask on every refresh, and building every member into an entry took ten to twenty
-	 * times as long.
+	 * Tells each of `routines` how often it comes, on the days of `zone` (its members' rules beside the cadence of those
+	 * that are entries of their own), and the titles its members wear. An override stands in for a date its rule already
+	 * counts. Read off the members' few columns alone: the views ask on every refresh, and building every member into an
+	 * entry took ten to twenty times as long.
 	 */
 	static async measure(em: EntityManager, routines: ReadonlyArray<Routine>, zone: TimeZone) {
 		const members = !routines.length ? [] : await em.getConnection().execute(
-			`select routine_id, coalesce(start, due) as date, all_day, time_zone, recurrence from entry where recurring_entry_id is null and routine_id in (${routines.map(() => '?').join(', ')})`,
+			`select routine_id, heading, coalesce(start, due) as date, all_day, time_zone, recurrence from entry where recurring_entry_id is null and routine_id in (${routines.map(() => '?').join(', ')}) order by date desc`,
 			routines.map(routine => routine.id),
 			'all',
 			em.getTransactionContext(),
-		) as Array<{ routine_id: string, date: number | null, all_day: number | null, time_zone: string | null, recurrence: string | null }>
+		) as Array<{ routine_id: string, heading: string | null, date: number | null, all_day: number | null, time_zone: string | null, recurrence: string | null }>
 		const byRoutine = Map.groupBy(members, member => member.routine_id)
 		for (const routine of routines) {
 			const own = byRoutine.get(routine.id) ?? []
 			const days = own.flatMap(member => member.recurrence || member.date === null ? []
 				: (member.all_day || member.time_zone === EntryTimeZone.floating.id ? TimeZone.UTC : zone).dayOf(new Date(member.date)))
 			routine.cadence = RoutineCadence.of(own.flatMap(member => member.recurrence ? Recurrence.fromRRule(member.recurrence)?.strideDays ?? [] : []), RoutineCadence.between(days))
+			routine.titles = [...new Set(own.flatMap(member => member.heading?.trim() || []))]
 		}
 	}
 
@@ -58,8 +59,11 @@ export class Routine extends Entity {
 	@equality()
 	@property({ type: 'boolean', nullable: true }) dissolved?: boolean
 
-	/** How often it comes. Told as it is listed (`Routine.measure`), never stored. */
+	/** How often it comes. Told as it is listed (`Routine.measure`), as `titles` are, never stored. */
 	@converter(RoutineCadence.converter) cadence?: RoutineCadence
+
+	/** The titles its members wear, the newest first, as they spell them. Told as it is listed, never stored. */
+	titles?: ReadonlyArray<string>
 
 	constructor(init?: Partial<Routine>) {
 		super()

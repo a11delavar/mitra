@@ -69,6 +69,7 @@ A connected tool works with your calendars as you would in Mitra. It can:
 
 - look at a day or a week, with what's overdue and what's still unscheduled
 - find entries and read them in full
+- see how your [routines](routines.md) are going: how many of their last occurrences you kept, cancelled or missed, and the weekday they slip on, so you can ask "How is the gym going?"
 - create, change, complete and delete entries, one occurrence of a repeating entry or all of them
 - invite people where the calendar holds [participants](participants.md); whether they're told depends on the provider
 - relate entries as [dependencies](dependencies.md) and [subtasks](subtasks.md)

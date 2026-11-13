@@ -69,6 +69,7 @@ Ein verbundenes Werkzeug arbeitet mit deinen Kalendern, wie du es in Mitra tun w
 
 - einen Tag oder eine Woche ansehen, samt dem, was überfällig ist und was noch ohne Termin ist
 - Einträge finden und vollständig lesen
+- sehen, wie es um deine [Routinen](routines.md) steht: wie viele ihrer letzten Wiederholungen du eingehalten, abgesagt oder verpasst hast und an welchem Wochentag sie ausfallen, sodass du fragen kannst: „Wie läuft es mit dem Fitnessstudio?“
 - Einträge anlegen, ändern, erledigen und löschen, bei einem wiederkehrenden Eintrag eine einzelne Wiederholung oder alle
 - Leute einladen, wo der Kalender [Teilnehmende](participants.md) aufnimmt; ob sie davon erfahren, hängt vom Anbieter ab
 - Einträge als [Abhängigkeiten](dependencies.md) und [Teilaufgaben](subtasks.md) verknüpfen

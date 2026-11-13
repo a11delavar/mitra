@@ -217,17 +217,6 @@ export class Entry extends Entity implements Validatable {
 	/** Taken out of every routine by its person, so recognition leaves it in none. */
 	@property({ type: 'boolean', nullable: true }) routineDeclined?: boolean
 
-	/** The title a routine tells it by, which entries of one routine share. */
-	get routineTitle() {
-		return Routine.titleOf(this.heading)
-	}
-
-	/** The day it starts, or is due, in `zone`. An all-day entry's and a floating time's is the one written, wherever it is read. */
-	dayIn(zone: TimeZone) {
-		const date = this.start ?? this.due
-		return date && (this.allDay || this.floating ? TimeZone.localOrDefault : zone).dayOf(date)
-	}
-
 	get progress(): number | undefined {
 		return this.percentComplete === undefined ? undefined : this.percentComplete / 100
 	}

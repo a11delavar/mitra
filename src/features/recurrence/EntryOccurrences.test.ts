@@ -8,6 +8,7 @@ import { TimeZone } from '#features/time/TimeZone.js'
 import { CalDAV } from '#integrations/caldav/CalDAV.js'
 import { Recurrence } from './Recurrence.js'
 import { RecurrenceFrequency } from './RecurrenceFrequency.js'
+import { EntryOccurrences } from './EntryOccurrences.js'
 
 type DateTime = import('@3mo/date-time').DateTime
 const D = (iso: string) => new Date(iso) as unknown as DateTime
@@ -17,6 +18,31 @@ describe('EntryOccurrences', () => {
 	const weekly = () => new Entry({
 		id: 'standup', sourceId: 's', type: EntryType.Event, heading: 'Standup',
 		start: at('2026-10-19T09:00:00Z'), end: at('2026-10-19T09:15:00Z'), recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }),
+	})
+
+	it('unrolls several entries in a window into their dates in order, one-off and recurring alike, overrides in place', () => {
+		const standup = weekly()
+		const moved = new Entry({ id: 'moved', sourceId: 's', type: EntryType.Event, heading: 'Standup', start: at('2026-10-27T15:00:00Z'), end: at('2026-10-27T15:15:00Z'), recurringEntryId: 'standup', recurrenceId: at('2026-10-26T09:00:00Z') })
+		standup.overrides = [moved]
+		const talk = new Entry({ id: 'talk', sourceId: 's', type: EntryType.Event, heading: 'Talk', start: at('2026-10-21T09:00:00Z'), end: at('2026-10-21T10:00:00Z') })
+		const later = new Entry({ id: 'later', sourceId: 's', type: EntryType.Event, heading: 'Later', start: at('2026-12-01T09:00:00Z'), end: at('2026-12-01T10:00:00Z') })
+		const dates = EntryOccurrences.within([talk, standup, later], new DateTimeRange(at('2026-10-19T00:00:00Z'), at('2026-11-01T00:00:00Z')))
+		assert.deepEqual(dates.map(occurrence => [occurrence.entry.id, occurrence.start?.toISOString()]), [
+			['standup', '2026-10-19T09:00:00.000Z'],
+			['talk', '2026-10-21T09:00:00.000Z'],
+			['moved', '2026-10-27T15:00:00.000Z'],
+		])
+	})
+
+	it('falls on the day of the zone it is read in, a day or a floating time on the day written', () => {
+		const berlin = TimeZone.of('Europe/Berlin')
+		const auckland = TimeZone.of('Pacific/Auckland')
+		const dayOf = (init: Partial<Entry>, zone: TimeZone) => String(new Entry({ sourceId: 's', type: EntryType.Task, ...init }).occurrences.single.dayIn(zone))
+		assert.equal(dayOf({ start: at('2026-03-02T23:30:00Z') }, berlin), '2026-03-03')
+		assert.equal(dayOf({ due: at('2026-03-02T23:30:00Z') }, TimeZone.UTC), '2026-03-02')
+		assert.equal(dayOf({ allDay: true, start: at('2026-03-02T00:00:00Z') }, auckland), '2026-03-02')
+		assert.equal(dayOf({ timeZone: EntryTimeZone.floating, start: at('2026-03-02T23:30:00Z') }, auckland), '2026-03-02')
+		assert.equal(new Entry({ sourceId: 's', type: EntryType.Task }).occurrences.single.dayIn(berlin), undefined)
 	})
 
 	it('counts its dates: one, those a rule that ends yields, without end where it has none, none undated', () => {

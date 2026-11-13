@@ -69,6 +69,7 @@ Un outil connecté travaille avec vos agendas comme vous le feriez dans Mitra. I
 
 - regarder un jour ou une semaine, avec ce qui est en retard et ce qui n'est pas encore planifié
 - trouver des entrées et les lire en entier
+- voir où en sont vos [routines](routines.md) : combien de leurs dernières occurrences vous avez tenues, annulées ou manquées, et le jour de la semaine où elles flanchent, pour que vous puissiez demander « Où en est la salle de sport ? »
 - créer, modifier, terminer et supprimer des entrées, une seule occurrence d'une entrée récurrente ou toutes
 - inviter des personnes là où l'agenda accepte des [participants](participants.md) ; qu'elles soient prévenues dépend du fournisseur
 - relier des entrées en [dépendances](dependencies.md) et en [sous-tâches](subtasks.md)

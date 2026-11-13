@@ -128,6 +128,12 @@ export class EntryOccurrence {
 		return !!this.lastDay && this.lastDay.isBefore(new DateTime().dayStart)
 	}
 
+	/** The day it starts, or is due, in `zone`. An all-day date's and a floating time's is the one written, wherever it is read. */
+	dayIn(zone: TimeZone) {
+		const date = this.start ?? this.due
+		return date && (this.entry.allDay || this.entry.floating ? TimeZone.localOrDefault : zone).dayOf(date)
+	}
+
 	/**
 	 * What editing this occurrence changes in `scope`: 'this' detaches it, 'following' splits the rule here, 'all' rewrites
 	 * the entry. A calendar in the patch moves what the scope reaches.

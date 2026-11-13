@@ -27,7 +27,7 @@ export class DueReminder {
 		const reach = Math.max(0, ...recurring.map(entry => entry.reminders?.earliest ?? 0)) * MINUTE
 		const occurrences = [
 			...once.map(entry => entry.occurrences.single),
-			...EntryOccurrences.inWindow(recurring, new DateTimeRange(watermark, new Date(until.getTime() + reach))),
+			...EntryOccurrences.within(recurring, new DateTimeRange(watermark, new Date(until.getTime() + reach))),
 		]
 		return DueReminder.within(occurrences, watermark, until, zone)
 	}

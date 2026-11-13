@@ -24,11 +24,11 @@ describe('The MCP endpoint', () => {
 	it('lists the operations that offer a tool, what their routes say among their hints', async () => {
 		const { tools } = await agent.listTools()
 		assert.deepEqual(names(tools), new Set([
-			'get_context', 'get_overview', 'search_entries', 'get_entry',
+			'get_context', 'get_overview', 'get_routines', 'search_entries', 'get_entry',
 			'create_entry', 'update_entry_occurrence', 'update_entry', 'relate_entries', 'unrelate_entries', 'complete_task', 'delete_entry_occurrence', 'delete_entry',
 			'create_calendar', 'delete_calendar',
 		]))
-		assert.deepEqual(names(tools.filter(tool => tool.annotations?.readOnlyHint)), new Set(['get_context', 'get_overview', 'search_entries', 'get_entry']))
+		assert.deepEqual(names(tools.filter(tool => tool.annotations?.readOnlyHint)), new Set(['get_context', 'get_overview', 'get_routines', 'search_entries', 'get_entry']))
 		assert.deepEqual(names(tools.filter(tool => tool.annotations?.destructiveHint)), new Set(['delete_entry_occurrence', 'delete_entry', 'delete_calendar']))
 		assert.ok(tools.every(tool => tool.title && tool.description))
 	})
@@ -65,7 +65,7 @@ describe('The MCP endpoint', () => {
 		await reader.connect(new StreamableHTTPClientTransport(new URL(`${server.url}/mcp`), { requestInit: { headers: { authorization: `Bearer ${token}` } } }))
 		const { tools } = await reader.listTools()
 		await reader.close()
-		assert.deepEqual(names(tools), new Set(['get_context', 'get_overview', 'search_entries', 'get_entry']))
+		assert.deepEqual(names(tools), new Set(['get_context', 'get_overview', 'get_routines', 'search_entries', 'get_entry']))
 		const [row] = await server.query<{ last_used_at: unknown }>('select last_used_at from access_token')
 		assert.ok(row?.last_used_at)
 	})

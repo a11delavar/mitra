@@ -9,9 +9,10 @@ import { RecurrenceSet, type RecurrenceSpan } from './RecurrenceSet.js'
  * gives them, endless for a rule without an end. Pure, so the server and the browser expand alike.
  */
 export class EntryOccurrences {
-	/** Recurring entries' occurrences in `window`. */
-	static inWindow(entries: ReadonlyArray<Entry>, window: DateTimeRange): Array<EntryOccurrence> {
-		return entries.flatMap(entry => !entry.occurrences.recurring ? [] : entry.occurrences.within(window))
+	/** The occurrences of `entries` overlapping `window` in order, one-off and recurring alike: each entry's own `within`, together. */
+	static within(entries: ReadonlyArray<Entry>, window: DateTimeRange): Array<EntryOccurrence> {
+		const startOf = (occurrence: EntryOccurrence) => (occurrence.start ?? occurrence.due)!.valueOf()
+		return entries.flatMap(entry => entry.occurrences.within(window)).sort((a, b) => startOf(a) - startOf(b))
 	}
 
 	/** Cached on the entry by what it reads, so asking again costs nothing until the rule or the dates change. */
