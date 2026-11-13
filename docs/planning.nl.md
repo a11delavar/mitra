@@ -23,11 +23,11 @@ Mitra houdt twee soorten tijdinformatie over een taak uit elkaar.
 
 Tijdvak en randvoorwaarden zijn allebei optioneel. Een taak kan een vervaldatum hebben zonder tijdvak, een tijdvak zonder vervaldatum, allebei of geen van beide.
 
-Een voorbeeld: een presentatie moet vrijdag om 12:00 klaar zijn, en je plant dinsdagochtend in om hem voor te bereiden. De weergaven tonen de taak op dinsdag, en een vlaggetje ernaast laat zien dat hij een vervaldatum heeft.
+Een voorbeeld: een presentatie moet klaar zijn als woensdag om 14:00 het planningsoverleg begint, en je plant dinsdagochtend in om hem voor te bereiden. De weergaven tonen de taak op dinsdag, en een vlaggetje ernaast laat zien dat hij een vervaldatum heeft.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/due-detail-dark.webp">
-  <img src="../assets/screenshots/due-detail-light.webp" alt="Een taak die dinsdag van 9:00 tot 12:00 is ingepland, met een vervaldatum op vrijdag om 12:00" />
+  <img src="../assets/screenshots/due-detail-light.webp" alt="Een taak die dinsdag van 9:00 tot 12:00 is ingepland, met een vervaldatum op woensdag om 14:00" />
 </picture>
 
 ## Het tabblad Planning
@@ -55,7 +55,7 @@ Mitra bewaart de volgorde zelf, dus andere apps zien hem niet.
 
 Open de taak, druk op **Vervaldatum** en kies een dag. Wil je de vervaldatum weghalen, druk dan op de **✕** ernaast.
 
-Een taak met een vervaldatum toont een vlaggetje, in de weergaven en in het tabblad Planning. Inplannen, uit de agenda halen of verplaatsen verandert de vervaldatum nooit.
+Een taak met een vervaldatum toont een vlaggetje, in de weergaven en in het tabblad Planning. Bij een ingeplande taak noemt de vlag ook de vervaldatum, zo kort mogelijk: de tijd als die op dezelfde dag valt, de weekdag binnen de komende week, en anders de datum. De vlag wordt rood en gevuld als de taak pas na de vervaldatum eindigt. Wijs in de week- of maandweergave of op de tijdlijn een taak aan, en de taak rekt zich uit tot de vervaldatum. De tijdlijn markeert de vervaldatum ook op de rij van elke taak. Inplannen, uit de agenda halen of verplaatsen verandert de vervaldatum nooit.
 
 Een taak voor de hele dag moet op een bepaalde dag af zijn. Wil je er een tijd aan geven, zet dan **Hele dag** uit aan het eind van de vervaldatum; die knop verschijnt zodra je op die regel staat. Daarmee krijgt de hele taak tijden, en de vervaldatum wordt 17:00 op dezelfde dag. Die tijd kun je daarna aanpassen.
 

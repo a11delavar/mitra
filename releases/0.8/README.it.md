@@ -27,7 +27,14 @@ Un evento ora ha uno stato tutto suo, come un'attività: **Confermato**, **Forse
 Documentazione: [Stato dell'evento](../../docs/entries.md#event-status)
 
 ## Scadenze a colpo d'occhio
-Il giorno di scadenza di un'attività appare sulla sua bandierina, e puntando l'attività quel giorno viene segnato nel calendario. Anche la cronologia lo segna, e la tabella ha una colonna apposita.
+Un'attività pianificata ora mostra la sua scadenza direttamente sulla bandierina, come un'ora, un giorno della settimana o una data, a seconda di quanto è vicina. Punta un'attività nella vista settimana o mese, o sulla cronologia, e si allunga fino alla sua scadenza, così vedi quanto margine ti resta. Se hai pianificato un'attività in modo che finisca dopo la scadenza, la bandierina diventa rossa. E la tabella ha una nuova colonna per le scadenze.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="due-stretch-dark.webp">
+	<img src="due-stretch-light.webp" alt="Puntando l'attività di martedì, si allunga fino alla sua data di scadenza, quando inizia la riunione di pianificazione di mercoledì">
+</picture>
+
+Documentazione: [Impostare una data di scadenza](../../docs/planning.md#set-a-due-date)
 
 ## Personalizzazione
 Dai a ogni calendario uno di due nuovi colori, o il colore che preferisci. Rinomina l'intestazione di un account con un doppio clic e nascondi tutti i suoi calendari in una volta. Per tutto il resto, cambia lo stile di Mitra con un CSS tutto tuo: per te nelle Impostazioni, o per tutti sul tuo server tramite un file nella sua cartella dei dati. Chi gestisce il server ha una sezione tutta sua nelle Impostazioni.

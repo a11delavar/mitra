@@ -38,7 +38,7 @@ As colunas **Estado**, **Calendário**, **Tipo** e **Repete-se** podem filtrar, 
 
 ## Colunas
 
-A tabela começa com **Título**, **Quando**, **Calendário**, **Estado**, **Local**, **Participantes**, **Subtarefa de** e **Bloqueado por**. O botão no fim da linha de cabeçalhos mostra as outras (**Duração**, **Tipo**, **Repete-se**, **Lembretes** e **Descrição**), e **Redefinir colunas** restaura as predefinições.
+A tabela começa com **Título**, **Quando**, **Calendário**, **Estado**, **Local**, **Participantes**, **Subtarefa de** e **Bloqueado por**. O botão no fim da linha de cabeçalhos mostra as outras (**Data de vencimento**, **Duração**, **Tipo**, **Repete-se**, **Lembretes** e **Descrição**), e **Redefinir colunas** restaura as predefinições.
 
 Cada coluna tem a largura do seu conteúdo. Arraste um cabeçalho para mover a sua coluna, e a sua borda para redimensioná-la; clique duas vezes na borda para ajustar de novo a coluna ao seu conteúdo.
 

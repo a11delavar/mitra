@@ -23,11 +23,11 @@ Mitra rozróżnia dwa rodzaje informacji o czasie zadania.
 
 Ani zaplanowany czas, ani ograniczenia nie są obowiązkowe. Zadanie może mieć termin bez zaplanowanego czasu, zaplanowany czas bez terminu, jedno i drugie albo żadnego z nich.
 
-Przykład: prezentację trzeba oddać w piątek w południe, a na jej przygotowanie rezerwujesz wtorkowe przedpołudnie. Widoki pokazują zadanie we wtorek, a mała flaga obok informuje, że ma ono termin.
+Przykład: prezentację trzeba oddać, zanim w środę o 14:00 zacznie się spotkanie planistyczne, a na jej przygotowanie rezerwujesz wtorkowe przedpołudnie. Widoki pokazują zadanie we wtorek, a mała flaga obok informuje, że ma ono termin.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/due-detail-dark.webp">
-  <img src="../assets/screenshots/due-detail-light.webp" alt="Zadanie zaplanowane na wtorek od 9:00 do 12:00 z terminem w piątek w południe" />
+  <img src="../assets/screenshots/due-detail-light.webp" alt="Zadanie zaplanowane na wtorek od 9:00 do 12:00 z terminem w środę o 14:00" />
 </picture>
 
 ## Karta Planowanie
@@ -55,7 +55,7 @@ Kolejność przechowuje sama aplikacja Mitra, więc inne aplikacje jej nie widz�
 
 Otwórz zadanie, naciśnij **Termin** i wybierz dzień. Aby usunąć termin, naciśnij **✕** obok niego.
 
-Zadanie z terminem ma małą flagę, zarówno w widokach, jak i na karcie Planowanie. Ani zaplanowanie zadania, ani cofnięcie zaplanowania, ani przeniesienie go nigdy nie zmienia jego terminu.
+Zadanie z terminem ma małą flagę, zarówno w widokach, jak i na karcie Planowanie. Przy zaplanowanym zadaniu flaga podaje też termin, najkrócej jak się da: godzinę, jeśli termin przypada tego samego dnia, dzień tygodnia w ciągu najbliższego tygodnia, a w pozostałych przypadkach datę. Flaga staje się czerwona i wypełniona, gdy zadanie ma się skończyć po terminie. Wskaż zadanie w widoku tygodnia lub miesiąca albo na osi czasu, a zadanie rozciągnie się do swojego terminu. Oś czasu zaznacza też termin w wierszu każdego zadania. Ani zaplanowanie zadania, ani cofnięcie zaplanowania, ani przeniesienie go nigdy nie zmienia jego terminu.
 
 Termin zadania całodniowego to sam dzień, bez godziny. Aby dodać do niego godzinę, wyłącz **Cały dzień** na końcu wiersza terminu; przełącznik widać, gdy jesteś w tym wierszu. Całe zadanie dostaje wtedy godziny, a jego termin przypada na 17:00 tego samego dnia. Tę godzinę możesz potem zmienić.
 

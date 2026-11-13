@@ -188,22 +188,21 @@ export class EntrySegments {
 	}
 
 	/**
-	 * The runs `accept` takes across `days`, as {@link runsIn} has them, each placed on the columns of the days it crosses,
-	 * `offset` the first day's: where it starts, how many it spans, and whether it goes on past the last day shown.
+	 * The runs `accept` takes across `days`, as {@link runsIn} has them, each placed on the columns `columnOf` gives the days
+	 * it crosses: where it starts, how many it spans, and whether it goes on past the last day shown.
 	 */
-	runsAcross(days: ReadonlyArray<DateTime>, accept: (occurrence: EntryOccurrence) => boolean, offset = 0) {
+	runsAcross(days: ReadonlyArray<DateTime>, accept: (occurrence: EntryOccurrence) => boolean, columnOf: (day: DateTime) => number | undefined) {
 		const first = days[0]
 		const last = days.at(-1)
 		if (!first || !last) {
 			return []
 		}
 		const lastValue = last.dayStart.valueOf()
-		const columnByDay = new Map(days.map((day, index) => [day.dayStart.valueOf(), offset + index]))
-		const columnOf = (dayValue?: number) => columnByDay.get(dayValue ?? -1) ?? 0
+		const lastColumn = columnOf(last) ?? 0
 		return this.runsIn(first, last, accept).map(segment => {
-			const startColumn = columnOf(segment.dayValue)
+			const startColumn = columnOf(segment.date!) ?? 0
 			const clippedRight = segment.runEnd.dayValue! > lastValue
-			const endColumn = clippedRight ? offset + days.length - 1 : columnOf(segment.runEnd.dayValue)
+			const endColumn = clippedRight ? lastColumn : columnOf(segment.runEnd.date!) ?? 0
 			return { segment, startColumn, span: endColumn - startColumn + 1, clippedRight }
 		})
 	}

@@ -38,7 +38,7 @@ Filtrować można kolumny **Status**, **Kalendarz**, **Typ** i **Powtarza się**
 
 ## Kolumny
 
-Na początku tabela ma kolumny **Tytuł**, **Kiedy**, **Kalendarz**, **Status**, **Lokalizacja**, **Uczestnicy**, **Zadanie nadrzędne** i **Blokowany przez**. Przycisk na końcu wiersza nagłówków pokazuje pozostałe (**Czas trwania**, **Typ**, **Powtarza się**, **Przypomnienia** i **Opis**), a **Przywróć kolumny** przywraca układ domyślny.
+Na początku tabela ma kolumny **Tytuł**, **Kiedy**, **Kalendarz**, **Status**, **Lokalizacja**, **Uczestnicy**, **Zadanie nadrzędne** i **Blokowany przez**. Przycisk na końcu wiersza nagłówków pokazuje pozostałe (**Termin**, **Czas trwania**, **Typ**, **Powtarza się**, **Przypomnienia** i **Opis**), a **Przywróć kolumny** przywraca układ domyślny.
 
 Każda kolumna jest tak szeroka jak jej zawartość. Przeciągnij nagłówek, aby przenieść kolumnę, albo jego krawędź, aby zmienić jej szerokość. Kliknij krawędź dwukrotnie, aby z powrotem dopasować kolumnę do zawartości.
 

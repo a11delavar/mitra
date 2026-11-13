@@ -80,6 +80,7 @@ export class TableRow {
 	get headingKey() { return this.entry.heading.toLocaleLowerCase() }
 	/** The When column shows the span and sorts by where it begins: its start, or a due-only task's due. */
 	get when() { return (this.occurrence.start ?? this.occurrence.end)?.valueOf() }
+	get due() { return this.occurrence.due?.valueOf() }
 	get statusRank() { return EntryStatus.all.indexOf(this.entry.effectiveStatus) }
 	get typeKey() { return this.entry.type.value }
 	get source() { return this.entry.source }

@@ -265,13 +265,13 @@ export class Demo extends MitraCalendar {
 		workEvent({ heading: t('Team Retro'), start: at(nextWeekMonday, 0, 11), end: at(nextWeekMonday, 0, 12) })
 
 		// The work days' one link, from Tuesday morning down into Wednesday afternoon through the clear band below it.
-		// Planned for Tuesday, owed by Friday noon: the schedule and the due are two facts.
+		// Planned for Tuesday, owed when Wednesday's meeting starts: the schedule and the due are two facts.
 		const prepQ3 = workTask({
 			heading: t('Prepare Q3 Presentation'),
 			status: EntryStatus.Doing,
 			start: at(thisWeekMonday, 1, 9),
 			end: at(thisWeekMonday, 1, 12),
-			due: at(thisWeekMonday, 4, 12),
+			due: at(thisWeekMonday, 2, 14),
 			description: t('Start from the [quarterly deck template](https://example.com/templates/quarterly-deck).'),
 		})
 

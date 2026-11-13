@@ -283,6 +283,7 @@
 	"Estimate": "Оценка времени",
 	"Remove the due date": "Убрать срок",
 	"Due ${date}": "Срок: ${date}",
+	"Due ${date}, before its scheduled end": "Срок: ${date}, раньше запланированного окончания",
 	"Ends": "Окончание",
 	"Weekdays": "Дни недели",
 	"Frequency": "Частота",

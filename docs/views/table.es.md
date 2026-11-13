@@ -38,7 +38,7 @@ Las columnas **Estado**, **Calendario**, **Tipo** y **Se repite** pueden filtrar
 
 ## Columnas
 
-La tabla empieza con **Título**, **Cuándo**, **Calendario**, **Estado**, **Ubicación**, **Participantes**, **Subtarea de** y **Bloqueado por**. El botón al final de la fila de encabezados muestra las demás (**Duración**, **Tipo**, **Se repite**, **Recordatorios** y **Descripción**), y **Restablecer columnas** devuelve los valores predeterminados.
+La tabla empieza con **Título**, **Cuándo**, **Calendario**, **Estado**, **Ubicación**, **Participantes**, **Subtarea de** y **Bloqueado por**. El botón al final de la fila de encabezados muestra las demás (**Fecha de vencimiento**, **Duración**, **Tipo**, **Se repite**, **Recordatorios** y **Descripción**), y **Restablecer columnas** devuelve los valores predeterminados.
 
 Cada columna es tan ancha como su contenido. Arrastra un encabezado para mover su columna, y su borde para cambiar su tamaño; haz doble clic en el borde para ajustar de nuevo la columna a su contenido.
 

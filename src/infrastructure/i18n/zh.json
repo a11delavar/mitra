@@ -189,6 +189,7 @@
 	"Estimate": "预估时长",
 	"Remove the due date": "移除截止日期",
 	"Due ${date}": "截止：${date}",
+	"Due ${date}, before its scheduled end": "截止：${date}，早于安排的结束时间",
 	"Ends": "结束",
 	"Weekdays": "星期",
 	"Frequency": "频率",

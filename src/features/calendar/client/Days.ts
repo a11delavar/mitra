@@ -17,6 +17,7 @@ import { TimeZones } from '#features/time/client/TimeZones.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { CalendarScrollController } from './CalendarScrollController.js'
 import { DayDensityController } from './DayDensityController.js'
+import { DueMark } from './DueMark.js'
 
 @component('mitra-days')
 export class Days extends Component {
@@ -338,6 +339,17 @@ export class Days extends Component {
 
 					> .day { grid-row: 1 / -1; background-color: var(--color-surface); }
 
+					/* A task's way to its due starts beneath the task's rounded end, so the two join without a notch. */
+					> mitra-due-mark {
+						> .gap {
+							margin-inline-start: -0.25rem;
+						}
+
+						&[data-late] > .gap {
+							margin-inline: 0 -0.25rem;
+						}
+					}
+
 					mitra-entry-segment {
 						margin-top: 0 !important;
 						flex-direction: row !important;
@@ -443,6 +455,25 @@ export class Days extends Component {
 						   gesture, an availability window). */
 						.hour { border-top: var(--border); grid-column: 1 / -1; z-index: 1; pointer-events: none; }
 
+						/* A task's way to its due, placed by its minutes as the chips are, beneath them as the hour lines are. */
+						> mitra-due-mark {
+							/* The due line spans exactly the rails it closes. */
+							> :is(.gap, .line) {
+								grid-row: 1;
+								align-self: start;
+								margin-inline: 0.125rem 0.5rem;
+							}
+
+							> .gap {
+								top: calc(var(--_from) * 100% / 1440);
+								block-size: calc((var(--_to) - var(--_from)) * 100% / 1440);
+							}
+
+							> .line {
+								top: calc(var(--_at) * 100% / 1440);
+							}
+						}
+
 						.now {
 							grid-column: 1 / -1;
 							display: grid;
@@ -534,7 +565,7 @@ export class Days extends Component {
 		if (!first || !last) {
 			return html.nothing
 		}
-		const bars = this.segments.runsAcross(days, occurrence => occurrence.allDay, offset)
+		const bars = this.segments.runsAcross(days, occurrence => occurrence.allDay, day => this.dates.columnOf(day))
 		const runs = bars.map(bar => bar.segment)
 		const slots = this.segments.allDaySlots
 		const laneCount = runs.reduce((count, segment) => EntryStore.pending.isPreview(segment.entry) ? count : Math.max(count, (slots.get(segment.occurrence) ?? -1) + 1), 0)
@@ -555,6 +586,8 @@ export class Days extends Component {
 		return html`
 			<div class="all-day">
 				${days.map((_, index) => html`<div class="day" style="grid-column: ${offset + index + 1};"></div>`)}
+				<mitra-due-mark .view=${this} .draw=${(occurrence: EntryOccurrence) => !occurrence.allDay ? html.nothing
+					: DueMark.along(occurrence, laneOf(occurrence), days, day => this.dates.columnOf(day))}></mitra-due-mark>
 				${repeat(bars, bar => EntryStore.identityOf(bar.segment.occurrence), bar => html`
 					<mitra-entry-segment
 						style=${styleMap({ gridColumn: `${bar.startColumn + 1} / span ${bar.span}`, gridRow: `${laneOf(bar.segment.occurrence) + 1}` })}
@@ -621,6 +654,9 @@ export class Days extends Component {
 						if (i === 0) return html.nothing
 						return html`<div class="hour" style="--_at: ${i * 60};"></div>`
 					})}
+
+					<mitra-due-mark .view=${this} .draw=${(occurrence: EntryOccurrence) => occurrence.allDay ? html.nothing
+						: DueMark.down(occurrence, this.dates.window.days, day => this.dates.columnOf(day))}></mitra-due-mark>
 
 					${todayIndex === -1 ? html.nothing : html`
 						<div class="now" style="--_at: ${currentMinute};">

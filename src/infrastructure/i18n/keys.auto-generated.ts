@@ -259,6 +259,7 @@ declare global {
 		"drag": unknown
 		"Drag onto another entry to make it wait for this one": unknown
 		"Due ${date}": unknown
+		"Due ${date}, before its scheduled end": unknown
 		"Due ${when}": unknown
 		"Due date": unknown
 		"Duplicate": unknown

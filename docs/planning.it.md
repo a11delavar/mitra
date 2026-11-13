@@ -23,11 +23,11 @@ Mitra distingue due tipi di informazioni sul tempo di un'attività.
 
 Né la pianificazione né i vincoli sono obbligatori. Un'attività può avere una data di scadenza e nessuna pianificazione, una pianificazione e nessuna data di scadenza, entrambe, o nessuna delle due.
 
-Per esempio, una presentazione scade venerdì a mezzogiorno, e tu pianifichi martedì mattina per prepararla. Le viste mostrano l'attività martedì, e una piccola bandierina accanto mostra che ha una data di scadenza.
+Per esempio, una presentazione scade quando inizia la riunione di pianificazione di mercoledì alle 14:00, e tu pianifichi martedì mattina per prepararla. Le viste mostrano l'attività martedì, e una piccola bandierina accanto mostra che ha una data di scadenza.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/due-detail-dark.webp">
-  <img src="../assets/screenshots/due-detail-light.webp" alt="Un'attività pianificata per martedì dalle 9:00 alle 12:00, con una data di scadenza venerdì a mezzogiorno" />
+  <img src="../assets/screenshots/due-detail-light.webp" alt="Un'attività pianificata per martedì dalle 9:00 alle 12:00, con una data di scadenza mercoledì alle 14:00" />
 </picture>
 
 ## La scheda Pianificazione
@@ -55,7 +55,7 @@ Mitra tiene l'ordine per sé, quindi le altre app non lo vedono.
 
 Apri l'attività, premi **Data di scadenza** e scegli un giorno. Per rimuovere la data di scadenza, premi la **✕** accanto a essa.
 
-Un'attività con una data di scadenza mostra una piccola bandierina, nelle viste e nella scheda Pianificazione. Pianificare, rimuovere dalla pianificazione o spostare l'attività non cambia mai la sua data di scadenza.
+Un'attività con una data di scadenza mostra una piccola bandierina, nelle viste e nella scheda Pianificazione. Su un'attività pianificata, la bandierina indica anche la data di scadenza nel modo più breve possibile: l'ora se scade lo stesso giorno, il giorno della settimana entro la settimana successiva, altrimenti la data. La bandierina diventa rossa e piena quando l'attività è pianificata per finire dopo la sua data di scadenza. Punta un'attività nella vista settimanale o mensile, o nella cronologia, e si allunga fino alla sua data di scadenza. La cronologia segna anche la data di scadenza sulla riga di ogni attività. Pianificare, rimuovere dalla pianificazione o spostare l'attività non cambia mai la sua data di scadenza.
 
 Un'attività di tutto il giorno scade in un giorno. Per darle un'ora, disattiva **Tutto il giorno** alla fine della data di scadenza, che compare finché sei su di essa. Questo dà degli orari all'intera attività, quindi la sua data di scadenza diventa le 17:00 dello stesso giorno, che puoi cambiare.
 

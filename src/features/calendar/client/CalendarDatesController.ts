@@ -108,6 +108,16 @@ export class CalendarDatesController extends Controller {
 
 	get days() { return this._days }
 
+	private _columns?: { readonly days: ReadonlyArray<DateTime>, readonly byDay: ReadonlyMap<number, number> }
+
+	/** The buffer's column `day` falls in, if any: kept by each day's midnight and built again only when the buffer moves. */
+	columnOf(day: DateTime) {
+		if (this._columns?.days !== this._days) {
+			this._columns = { days: this._days, byDay: new Map(this._days.map((day, index) => [day.dayStart.valueOf(), index])) }
+		}
+		return this._columns.byDay.get(day.dayStart.valueOf())
+	}
+
 	private _months?: { readonly days: ReadonlyArray<DateTime>, readonly months: ReadonlyArray<CalendarMonth> }
 
 	/** Buffer days grouped into consecutive CalendarMonth rows. */

@@ -27,7 +27,14 @@ Un evento tiene ahora un estado propio, como una tarea: **Confirmado**, **Quizá
 Docs: [Estado del evento](../../docs/entries.md#event-status)
 
 ## Vencimientos de un vistazo
-El día de vencimiento de una tarea aparece en su bandera, y al señalar la tarea se marca ese día en el calendario. El cronograma también lo marca, y la tabla gana una columna para él.
+Una tarea programada ahora muestra en su propia bandera cuándo vence, como una hora, un día de la semana o una fecha, según lo pronto que sea. Señala una tarea en la vista de semana o de mes, o en el cronograma, y se estira hasta su fecha de vencimiento, para que veas cuánto margen te queda. Si programaste una tarea para terminar después de su vencimiento, la bandera se vuelve roja. Y la tabla tiene una columna nueva para las fechas de vencimiento.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="due-stretch-dark.webp">
+	<img src="due-stretch-light.webp" alt="Al señalar la tarea del martes, se estira hasta su fecha de vencimiento, cuando empieza la reunión de planificación del miércoles">
+</picture>
+
+Docs: [Fijar una fecha de vencimiento](../../docs/planning.md#set-a-due-date)
 
 ## Personalización
 Da a cada calendario uno de dos colores más, o el color que quieras. Cambia el nombre del encabezado de una cuenta con un doble clic y oculta todos sus calendarios a la vez. Para todo lo demás, cambia el estilo de Mitra con tu propio CSS: para ti en Ajustes, o para todos en tu servidor con un archivo en su carpeta de datos. Quien administra el servidor tiene una sección propia en Ajustes.

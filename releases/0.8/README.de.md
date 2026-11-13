@@ -27,7 +27,14 @@ Ein Termin hat jetzt einen eigenen Status, wie eine Aufgabe: **Bestätigt**, **V
 Doku: [Terminstatus](../../docs/entries.md#event-status)
 
 ## Fälligkeiten auf einen Blick
-Der Fälligkeitstag einer Aufgabe steht auf ihrer Fahne, und wenn du auf die Aufgabe zeigst, wird dieser Tag im Kalender markiert. Die Zeitleiste markiert ihn ebenfalls, und die Tabelle bekommt eine Spalte dafür.
+Eine geplante Aufgabe zeigt jetzt direkt auf ihrer Fahne, wann sie fällig ist, je nachdem wie bald als Uhrzeit, Wochentag oder Datum. Zeigst du in der Wochen- oder Monatsansicht oder in der Zeitleiste auf eine Aufgabe, streckt sie sich bis zu ihrem Fälligkeitsdatum, und du siehst, wie viel Luft noch bleibt. Hast du eine Aufgabe so geplant, dass sie erst nach ihrem Fälligkeitsdatum fertig wird, wird die Fahne rot. Und die Tabelle hat eine neue Spalte für Fälligkeitsdaten.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="due-stretch-dark.webp">
+	<img src="due-stretch-light.webp" alt="Der Zeiger auf der Aufgabe vom Dienstag streckt sie bis zu ihrem Fälligkeitsdatum, wenn am Mittwoch die Planungsbesprechung beginnt">
+</picture>
+
+Doku: [Ein Fälligkeitsdatum setzen](../../docs/planning.md#set-a-due-date)
 
 ## Personalisierung
 Gib jedem Kalender eine von zwei weiteren Farben oder eine ganz eigene. Benenne die Überschrift eines Kontos per Doppelklick um und blende alle seine Kalender auf einmal aus. Für alles Weitere gestalte Mitra mit eigenem CSS: für dich selbst in den Einstellungen oder für alle auf deinem Server über eine Datei in seinem Datenordner. Wer den Server betreibt, bekommt in den Einstellungen einen eigenen Bereich.

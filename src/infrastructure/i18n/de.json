@@ -200,6 +200,7 @@
 	"Estimate": "Schätzung",
 	"Remove the due date": "Fälligkeitsdatum entfernen",
 	"Due ${date}": "Fällig ${date}",
+	"Due ${date}, before its scheduled end": "Fällig ${date}, vor dem geplanten Ende",
 	"Ends": "Endet",
 	"Weekdays": "Wochentage",
 	"Frequency": "Häufigkeit",

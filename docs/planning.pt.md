@@ -23,11 +23,11 @@ O Mitra separa dois tipos de informação sobre o tempo de uma tarefa.
 
 Nem o agendamento nem as restrições são obrigatórios. Uma tarefa pode ter data de vencimento e nenhum agendamento, um agendamento e nenhuma data de vencimento, ambos, ou nenhum.
 
-Por exemplo, uma apresentação vence na sexta-feira ao meio-dia, e você agenda a terça-feira de manhã para prepará-la. As vistas mostram a tarefa na terça-feira, e uma pequena bandeira ao lado indica que ela tem uma data de vencimento.
+Por exemplo, uma apresentação vence quando começa a reunião de planejamento de quarta-feira às 14:00, e você agenda a terça-feira de manhã para prepará-la. As vistas mostram a tarefa na terça-feira, e uma pequena bandeira ao lado indica que ela tem uma data de vencimento.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/due-detail-dark.webp">
-  <img src="../assets/screenshots/due-detail-light.webp" alt="Uma tarefa agendada para terça-feira das 9:00 às 12:00, com data de vencimento na sexta-feira ao meio-dia" />
+  <img src="../assets/screenshots/due-detail-light.webp" alt="Uma tarefa agendada para terça-feira das 9:00 às 12:00, com data de vencimento na quarta-feira às 14:00" />
 </picture>
 
 ## A aba Planeamento
@@ -55,7 +55,7 @@ O Mitra guarda a ordem por conta própria, por isso os outros aplicativos não a
 
 Abra a tarefa, pressione **Data de vencimento** e escolha um dia. Para remover a data de vencimento, pressione o **✕** ao lado dela.
 
-Uma tarefa com data de vencimento mostra uma pequena bandeira, nas vistas e na aba Planeamento. Agendar, desagendar ou mover a tarefa nunca altera a sua data de vencimento.
+Uma tarefa com data de vencimento mostra uma pequena bandeira, nas vistas e na aba Planeamento. Numa tarefa agendada, a bandeira também indica a data de vencimento da forma mais breve possível: a hora, se vence no mesmo dia, o dia da semana, se vence na semana seguinte, e a data nos restantes casos. A bandeira fica vermelha e preenchida quando a tarefa está agendada para terminar depois da sua data de vencimento. Aponte para uma tarefa na vista semanal ou mensal, ou na linha do tempo, e ela estende-se até à sua data de vencimento. A linha do tempo também marca a data de vencimento na linha de cada tarefa. Agendar, desagendar ou mover a tarefa nunca altera a sua data de vencimento.
 
 Uma tarefa de dia todo vence em um dia. Para dar-lhe um horário, desative **Dia todo** no fim da data de vencimento, que aparece enquanto você está nela. Isso dá horários à tarefa inteira, de modo que a sua data de vencimento passa a ser 17:00 do mesmo dia, o que você pode alterar.
 

@@ -321,6 +321,7 @@
 	"Estimate": "الوقت المقدر",
 	"Remove the due date": "إزالة تاريخ الاستحقاق",
 	"Due ${date}": "الاستحقاق: ${date}",
+	"Due ${date}, before its scheduled end": "الاستحقاق: ${date}، قبل نهايتها المجدولة",
 	"Ends": "ينتهي",
 	"Weekdays": "أيام الأسبوع",
 	"Frequency": "معدل التكرار",

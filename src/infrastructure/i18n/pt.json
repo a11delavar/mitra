@@ -149,6 +149,7 @@
 	"Estimate": "Estimativa",
 	"Remove the due date": "Remover a data de vencimento",
 	"Due ${date}": "Vence ${date}",
+	"Due ${date}, before its scheduled end": "Vence ${date}, antes do fim agendado",
 	"Ends": "Termina",
 	"Weekdays": "Dias da semana",
 	"Frequency": "Frequência",

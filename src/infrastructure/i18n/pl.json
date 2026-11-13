@@ -188,6 +188,7 @@
 	"Estimate": "Szacowany czas",
 	"Remove the due date": "Usuń termin",
 	"Due ${date}": "Termin: ${date}",
+	"Due ${date}, before its scheduled end": "Termin: ${date}, przed zaplanowanym końcem",
 	"Ends": "Kończy się",
 	"Weekdays": "Dni tygodnia",
 	"Frequency": "Częstotliwość",

@@ -1,6 +1,7 @@
 import {
-	aroundEditorWith, aroundOpenDialog, appText, bringIntoView, chipOf, click, editorOpened, openChip, openEditor, screenshot, scrollToMorning, show, waitFor,
+	aroundEditorWith, aroundOpenDialog, appText, bringIntoView, chipOf, click, type Clip, editorOpened, openChip, openEditor, screenshot, scrollToMorning, show, waitFor,
 } from '../../scripts/capture.ts'
+import { middleOf } from '../../scripts/film.ts'
 import { still } from '../../scripts/scenes.ts'
 
 // The captures only 0.8's notes show, shot on the build in development.
@@ -90,4 +91,36 @@ still('event-status', async ({ browser, open, text }) => {
 	await waitFor(() => browser.evaluate<boolean>(`return ${menu}?.getBoundingClientRect().width > 0`), 'the status menu')
 	await browser.evaluate('await new Promise(resolve => setTimeout(resolve, 400))')
 	return aroundEditorWith(browser, menu, 28)
+})
+
+/** Monday evening, so Tuesday's deck is still ahead and the now line stays out of the picture. */
+const mondayEvening = Date.parse('2026-09-28T18:00:00+02:00')
+
+/**
+ * Tuesday's deck pointed at in the week: it stretches from its end through the night into Wednesday, where its due line
+ * meets the planning meeting it is for. Only those two days from 8:30 to 15:00, so little else is in the picture. A still:
+ * the grow crosses a whole day in a blink, and a crop this close shows only a slice of it.
+ */
+still('due-stretch', { moment: mondayEvening }, async ({ browser, open, text }) => {
+	await open()
+	await show(browser, 'week')
+	const deck = chipOf(text('Prepare Q3 Presentation'))
+	const meeting = chipOf(text('Q3 Planning Strategy'))
+	await waitFor(() => browser.evaluate<boolean>(`return !!${deck} && !!${meeting}`), 'the deck and its meeting')
+	// 8:30 just below the all-day lane, and the two days from their headings down to 15:00.
+	const clip = await browser.evaluate<Clip>(`
+		const scroller = document.querySelector('mitra-days')
+		const days = [${deck}.closest('mitra-day'), ${meeting}.closest('mitra-day')].map(day => day.getBoundingClientRect())
+		const hours = () => ${deck}.closest('mitra-day').querySelector('.entries').getBoundingClientRect()
+		const hour = hours().height / 24
+		scroller.scrollTop += hours().top + 8.5 * hour - scroller.querySelector('.all-day').getBoundingClientRect().bottom
+		await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+		const top = scroller.getBoundingClientRect().top
+		const left = Math.min(...days.map(day => day.left))
+		const right = Math.max(...days.map(day => day.right))
+		return { x: Math.round(left), y: Math.round(top), width: Math.round(right - left), height: Math.round(hours().top + 15 * hour - top) }
+	`)
+	await browser.send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...await middleOf(browser, deck), button: 'none' })
+	await waitFor(() => browser.evaluate<boolean>('return !!document.querySelector("mitra-due-mark .line")'), 'the deck stretched to its due')
+	return clip
 })

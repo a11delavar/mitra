@@ -38,7 +38,7 @@ The **Status**, **Calendar**, **Type** and **Repeats** columns can filter, and *
 
 ## Columns
 
-The table starts with **Title**, **When**, **Calendar**, **Status**, **Location**, **Participants**, **Subtask of** and **Blocked by**. The button at the end of the heading row shows the others (**Duration**, **Type**, **Repeats**, **Reminders** and **Description**), and **Reset columns** puts the defaults back.
+The table starts with **Title**, **When**, **Calendar**, **Status**, **Location**, **Participants**, **Subtask of** and **Blocked by**. The button at the end of the heading row shows the others (**Due date**, **Duration**, **Type**, **Repeats**, **Reminders** and **Description**), and **Reset columns** puts the defaults back.
 
 Every column is as wide as its content. Drag a heading to move its column, and its edge to resize it; double-click the edge to fit the column to its content again.
 

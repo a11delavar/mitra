@@ -27,7 +27,14 @@ Un événement a désormais son propre statut, comme une tâche : **Confirmé**,
 Documentation : [Statut d'un événement](../../docs/entries.md#event-status)
 
 ## Les échéances en un coup d'œil
-Le jour d'échéance d'une tâche s'affiche sur son drapeau, et pointer la tâche marque ce jour dans le calendrier. La chronologie le marque aussi, et le tableau gagne une colonne pour lui.
+Une tâche planifiée affiche désormais son échéance directement sur son drapeau, sous forme d'heure, de jour de la semaine ou de date, selon qu'elle est proche ou non. Pointez une tâche dans la vue semaine ou mois, ou sur la chronologie, et elle s'étire jusqu'à son échéance, pour que vous voyiez la marge qu'il vous reste. Si vous avez planifié une tâche pour finir après son échéance, le drapeau devient rouge. Et le tableau a une nouvelle colonne pour les échéances.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="due-stretch-dark.webp">
+	<img src="due-stretch-light.webp" alt="Pointer la tâche du mardi l'étire jusqu'à son échéance, au début de la réunion de planification du mercredi">
+</picture>
+
+Documentation : [Fixer une échéance](../../docs/planning.md#set-a-due-date)
 
 ## Personnalisation
 Donnez à chaque calendrier l'une de deux nouvelles couleurs, ou la couleur de votre choix. Renommez l'en-tête d'un compte d'un double-clic et masquez tous ses calendriers d'un coup. Pour tout le reste, modifiez l'apparence de Mitra avec votre propre CSS : pour vous dans les Paramètres, ou pour tout le monde sur votre serveur grâce à un fichier dans son dossier de données. Qui administre le serveur dispose d'une section à lui dans les Paramètres.

@@ -2,6 +2,7 @@ import { component, html, property, Component, css, state, bind, queryConnectedI
 import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { contrastColorOf, MarkdownLinks, Link } from '#design'
 import { type RoutineRun } from '#features/routines/client/Routines.js'
+import '#features/calendar/client/DateTime.calendar.js'
 import { EntryStatus } from '../EntryStatus.js'
 import { type EntrySegment } from './EntrySegment.js'
 import { EntrySegments } from './EntrySegments.js'
@@ -209,6 +210,11 @@ export class EntrySegmentComponent extends Component {
 					--segment-bg: var(--mitra-entry-segment-color);
 					background-color: var(--segment-bg);
 					${contrastColorOf('color', 'var(--mitra-entry-segment-color)')};
+
+					/* Red on the calendar's own colour can't be read: the filled flag alone says it here. */
+					> .heading > .header > .due[data-late] {
+						color: inherit;
+					}
 				}
 
 				&[data-connect=reject] {
@@ -328,6 +334,23 @@ export class EntrySegmentComponent extends Component {
 
 							@container (max-height: 2rem) and (max-width: 7rem) {
 								display: none;
+							}
+						}
+
+						> .due {
+							display: inline-flex;
+							align-items: center;
+							gap: 0.125rem;
+							white-space: nowrap;
+
+							/* The day goes before the flag does, so a narrow chip keeps the flag beside its time. */
+							@container (max-width: 8rem) {
+								> span { display: none; }
+							}
+
+							&[data-late] {
+								color: var(--color-error);
+								opacity: 1;
 							}
 						}
 
@@ -468,11 +491,27 @@ export class EntrySegmentComponent extends Component {
 		}
 	}
 
-	private get dueLabel() {
+	/**
+	 * The flag, filled once the schedule runs past the due, beside the due as seen from this chip's day. Nothing beside it
+	 * where the chip ends at the due, or has no day of its own (the Planning tab's, whose date is the due).
+	 */
+	private get dueTemplate() {
 		const { occurrence } = this.segment!
-		return occurrence.due!.format(occurrence.allDay
-			? { weekday: 'short', day: 'numeric', month: 'short' }
-			: { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
+		const due = occurrence.due!
+		const day = occurrence.start && (this.segment!.date ?? occurrence.start)
+		return guard([due.valueOf(), day?.dayStart.valueOf(), occurrence.start && occurrence.inclusiveEnd.valueOf(), occurrence.allDay, String(Localizer.locales.current)], () => {
+			const late = occurrence.scheduledPastDue
+			const label = !day || due.equals(occurrence.inclusiveEnd) ? undefined : due.formatAsSeenFrom(day, !occurrence.allDay)
+			const date = due.format(occurrence.allDay
+				? { weekday: 'short', day: 'numeric', month: 'short' }
+				: { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
+			return html`
+				<span class="due" ?data-late=${late} title=${late ? t('Due ${date}, before its scheduled end', { date }) : t('Due ${date}', { date })}>
+					<mitra-icon icon="flag" ?fill=${late}></mitra-icon>
+					${!label ? html.nothing : html`<span>${label}</span>`}
+				</span>
+			`
+		})
 	}
 
 	/** What the entry spans: its hours when it has them, otherwise the days it occupies. */
@@ -534,9 +573,7 @@ export class EntrySegmentComponent extends Component {
 						${!meta ? html.nothing : this.whenTemplate}
 						${!this.segment.occurrence.repeats ? html.nothing : html`<mitra-icon class="recurring" icon="repeat" title=${t('Repeats')}></mitra-icon>`}
 						${!attached ? html.nothing : html`<mitra-icon class="attachments" icon="paperclip" title=${t('Has attachments')}></mitra-icon>`}
-						${!this.segment.occurrence.due ? html.nothing : html`
-							<mitra-icon class="due" icon="flag" title=${t('Due ${date}', { date: this.dueLabel })}></mitra-icon>
-						`}
+						${!this.segment.occurrence.due ? html.nothing : this.dueTemplate}
 					</div>
 				`}
 				<span class="label">${this.segment.entry.heading || (this.segment.entry.persisted ? '' : t('Draft'))}</span>

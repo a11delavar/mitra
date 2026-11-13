@@ -13,6 +13,7 @@ import { EntryGestureController } from '#features/entries/client/gestures/EntryG
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { CalendarScrollController } from './CalendarScrollController.js'
 import { TimelineDensityController } from './TimelineDensityController.js'
+import { DueMark } from './DueMark.js'
 
 interface TimelineBar {
 	readonly segment: EntrySegment
@@ -428,6 +429,28 @@ export class Timeline extends Component {
 						}
 					}
 
+					/* Beneath the chips, whose titles run on past their bars and over it. The outline's edge and height, so it closes the way to it. */
+					> .due {
+						position: relative;
+						z-index: 0;
+						pointer-events: none;
+						align-self: center;
+						block-size: calc(var(--row-height) - 0.375rem);
+						inline-size: 0;
+						margin-inline-start: calc(var(--_at) * 100% / 1440);
+						border-inline-start: 1px dashed color-mix(in srgb, var(--_color) 75%, transparent);
+						&[data-late] { --_color: var(--color-error); }
+					}
+
+					/* The pointed task's way from its bar to its tick: its own columns, cut to the times at either end. */
+					> mitra-due-mark {
+						> .gap {
+							align-self: center;
+							block-size: calc(var(--row-height) - 0.375rem);
+							margin-inline: calc(var(--_from) / var(--_span) * 100%) calc((1 - var(--_to)) / var(--_span) * 100%);
+						}
+					}
+
 					> .empty {
 						grid-column: 1 / -1;
 						grid-row: 1;
@@ -549,7 +572,7 @@ export class Timeline extends Component {
 		if (!first || !last) {
 			return []
 		}
-		return this.segments.runsAcross(days, accept)
+		return this.segments.runsAcross(days, accept, day => this.dates.columnOf(day))
 	}
 
 	private barTemplate(bar: TimelineBar, row?: number) {
@@ -561,6 +584,37 @@ export class Timeline extends Component {
 				?has-next=${bar.clippedRight}
 				.segment=${bar.segment}
 			></mitra-entry-segment>
+		`
+	}
+
+	/** The pointed task's way to its due on its own row, from its bar to its tick. */
+	private dueGapTemplate(occurrence: EntryOccurrence, placed: ReadonlyArray<PlacedBar>) {
+		const gap = occurrence.dueGap
+		const bar = placed.find(bar => bar.segment.occurrence === occurrence)
+		const from = gap && this.dates.columnOf(gap.start!)
+		const to = gap && this.dates.columnOf(gap.end!)
+		if (!gap || !bar || from === undefined || to === undefined) {
+			return html.nothing
+		}
+		const fractionOf = (date: DateTime) => (date.hour * 60 + date.minute) / 1440
+		return DueMark.across({
+			row: bar.row - 1,
+			columns: [from, to],
+			style: { '--_from': `${fractionOf(gap.start!)}`, '--_to': `${fractionOf(gap.end!)}`, '--_span': `${to - from + 1}` },
+		})
+	}
+
+	/** A tick on the bar's row where its task is due, at the time it is due, a due without one at the end of its day. */
+	private dueTemplate({ segment: { occurrence }, row }: PlacedBar) {
+		const { due, entry } = occurrence
+		const column = !due || due.equals(occurrence.inclusiveEnd) ? undefined : this.dates.columnOf(due)
+		return column === undefined ? html.nothing : html`
+			<div class="due" ?data-late=${occurrence.scheduledPastDue} style=${styleMap({
+				gridRow: `${row}`,
+				gridColumn: `${column + 1}`,
+				'--_at': `${occurrence.allDay ? 1440 : due!.hour * 60 + due!.minute}`,
+				'--_color': String(entry.effectiveColor ?? ''),
+			})}></div>
 		`
 	}
 
@@ -632,7 +686,9 @@ export class Timeline extends Component {
 						</button>
 					</div>
 				`)}
+				<mitra-due-mark .view=${this} .draw=${(occurrence: EntryOccurrence) => this.dueGapTemplate(occurrence, placed)}></mitra-due-mark>
 				${repeat(placed, bar => bar.segment.id, bar => this.barTemplate(bar, bar.row))}
+				${placed.map(bar => this.dueTemplate(bar))}
 				${!ConnectorLinesSetting.showsIn('timeline') ? html.nothing : html`
 					<mitra-entry-connections
 						.segments=${placed.map(bar => bar.segment)}

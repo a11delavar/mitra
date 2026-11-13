@@ -38,7 +38,7 @@ Le colonne **Stato**, **Calendario**, **Tipo** e **Si ripete** possono filtrare,
 
 ## Colonne
 
-La tabella parte con **Titolo**, **Quando**, **Calendario**, **Stato**, **Luogo**, **Partecipanti**, **Attività secondaria di** e **Bloccato da**. Il pulsante in fondo alla riga di intestazione mostra le altre (**Durata**, **Tipo**, **Si ripete**, **Promemoria** e **Descrizione**), e **Ripristina colonne** rimette quelle predefinite.
+La tabella parte con **Titolo**, **Quando**, **Calendario**, **Stato**, **Luogo**, **Partecipanti**, **Attività secondaria di** e **Bloccato da**. Il pulsante in fondo alla riga di intestazione mostra le altre (**Data di scadenza**, **Durata**, **Tipo**, **Si ripete**, **Promemoria** e **Descrizione**), e **Ripristina colonne** rimette quelle predefinite.
 
 Ogni colonna è larga quanto il suo contenuto. Trascina un'intestazione per spostare la sua colonna, e il suo bordo per ridimensionarla; fai doppio clic sul bordo per adattare di nuovo la colonna al suo contenuto.
 

@@ -23,11 +23,11 @@ Mitra separates two kinds of information about a task's time.
 
 Neither the schedule nor the constraints are required. A task can have a due date and no schedule, a schedule and no due date, both, or neither.
 
-For example, a presentation is due on Friday at noon, and you schedule Tuesday morning to prepare it. The views show the task on Tuesday, and a small flag beside it shows that it has a due date.
+For example, a presentation is due when Wednesday's planning meeting starts at 14:00, and you schedule Tuesday morning to prepare it. The views show the task on Tuesday, and a small flag beside it shows that it has a due date.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/due-detail-dark.webp">
-  <img src="../assets/screenshots/due-detail-light.webp" alt="A task scheduled for Tuesday from 9:00 to 12:00, with a due date on Friday at noon" />
+  <img src="../assets/screenshots/due-detail-light.webp" alt="A task scheduled for Tuesday from 9:00 to 12:00, with a due date on Wednesday at 14:00" />
 </picture>
 
 ## The Planning tab
@@ -55,7 +55,7 @@ Mitra keeps the order itself, so other apps don't see it.
 
 Open the task, press **Due date** and pick a day. To remove the due date, press the **✕** beside it.
 
-A task with a due date shows a small flag, in the views and in the Planning tab. Scheduling, unscheduling or moving the task never changes its due date.
+A task with a due date shows a small flag, in the views and in the Planning tab. On a scheduled task, the flag also names the due date as briefly as it can: its time if it's due the same day, its weekday within the coming week, and its date otherwise. The flag turns red and filled when the task is scheduled to end after its due date. Point at a task in the week or month view, or on the timeline, and it stretches to its due date. The timeline also marks the due date on each task's row. Scheduling, unscheduling or moving the task never changes its due date.
 
 An all-day task is due on a day. To give it a time, turn off **All day** at the end of the due date, which shows while you're on it. That gives the whole task times, so its due date becomes 17:00 on the same day, which you can change.
 

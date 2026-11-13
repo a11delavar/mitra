@@ -9,7 +9,7 @@ import '#features/locations/client/MapLink.js'
 import '#features/time/TimeSpan.time.js'
 import { type TableRow } from './TableRow.js'
 
-type TableColumnKey = 'heading' | 'when' | 'statusRank' | 'durationMinutes' | 'sourceName' | 'typeKey' | 'location' | 'repeats' | 'participants' | 'reminders' | 'subtaskOf' | 'blockedBy' | 'description'
+type TableColumnKey = 'heading' | 'when' | 'due' | 'statusRank' | 'durationMinutes' | 'sourceName' | 'typeKey' | 'location' | 'repeats' | 'participants' | 'reminders' | 'subtaskOf' | 'blockedBy' | 'description'
 
 /** A cell's text, cut short where the column is narrower. */
 const text = (value: unknown) => html`<span class="text">${value ?? ''}</span>`
@@ -40,6 +40,11 @@ function span(row: TableRow) {
 		return text(t('From ${date}', { date: start.format(dateFormat(start, start, timed)) }))
 	}
 	return text((timed ? new DateTimeRange(start, occurrence.effectiveEnd) : new DateTimeRange(start.dayStart, last)).format(dateFormat(start, last, timed)))
+}
+
+/** The due as the When column says a date. */
+function due({ occurrence }: TableRow) {
+	return text(occurrence.due?.format(dateFormat(occurrence.due, occurrence.due, !occurrence.allDay)))
 }
 
 /** The first few faces, the rest counted; the list itself is the editor's. */
@@ -84,6 +89,7 @@ export const tableColumns = (): Array<DataGridColumn<TableRow>> => [
 		getContentTemplate: (_, row) => html`<mitra-entry-segment .segment=${row.segment}></mitra-entry-segment>`,
 	}),
 	column('when', t('When'), { getContentTemplate: (_, row) => span(row) }),
+	column('due', t('Due date'), { hidden: true, getContentTemplate: (_, row) => due(row) }),
 	column('sourceName', t('Calendar'), {
 		getContentTemplate: (_, row) => html`
 			<mitra-source-icon .source=${row.source}></mitra-source-icon>

@@ -38,7 +38,7 @@ De kolommen **Status**, **Agenda**, **Type** en **Wordt herhaald** kunnen filter
 
 ## Kolommen
 
-De tabel begint met **Titel**, **Wanneer**, **Agenda**, **Status**, **Locatie**, **Deelnemers**, **Subtaak van** en **Geblokkeerd door**. Met de knop aan het einde van de koprij voeg je de andere toe (**Duur**, **Type**, **Wordt herhaald**, **Herinneringen** en **Beschrijving**), en **Kolommen herstellen** zet de standaardkolommen terug.
+De tabel begint met **Titel**, **Wanneer**, **Agenda**, **Status**, **Locatie**, **Deelnemers**, **Subtaak van** en **Geblokkeerd door**. Met de knop aan het einde van de koprij voeg je de andere toe (**Vervaldatum**, **Duur**, **Type**, **Wordt herhaald**, **Herinneringen** en **Beschrijving**), en **Kolommen herstellen** zet de standaardkolommen terug.
 
 Elke kolom is zo breed als de inhoud. Sleep een kop om de kolom te verplaatsen, en sleep de rand om hem breder of smaller te maken. Dubbelklik op de rand om de kolom weer passend te maken voor de inhoud.
 

@@ -10,6 +10,7 @@ import { Availability } from '#features/availability/client/Availability.js'
 import { CalendarDatesController } from './CalendarDatesController.js'
 import { CalendarScrollController } from './CalendarScrollController.js'
 import { WeeksDensityController } from './WeeksDensityController.js'
+import { DueMark } from './DueMark.js'
 
 type RenderedWeek = { week: ReadonlyArray<DateTime>, row: number, runs: ReadonlyArray<RoutineRun> } & MonthWeek
 
@@ -232,6 +233,14 @@ export class Weeks extends Component {
 						container-type: size;
 					}
 
+					/* A task's way to its due fills its days, beneath the entries; the flag waits at the due day's foot. */
+					> mitra-due-mark {
+						> .gap {
+							align-items: flex-end;
+							padding-block-end: 0.25rem;
+						}
+					}
+
 					> .entries {
 						grid-column: 1 / -1;
 						grid-row: 2;
@@ -359,6 +368,30 @@ export class Weeks extends Component {
 		`
 	}
 
+	/**
+	 * A task's way to its due in one week row: the days of it the task doesn't cover itself, whole, beneath every entry, as
+	 * other entries fill the task's lane on them. The flag sits on the due day; rows further from the task grow later.
+	 */
+	private dueTemplate(occurrence: EntryOccurrence, week: ReadonlyArray<DateTime>) {
+		const gap = occurrence.dueGap
+		if (!gap) {
+			return html.nothing
+		}
+		// A gap means a start, and with it an end.
+		const start = occurrence.start!.dayStart
+		const end = occurrence.inclusiveEnd.dayStart
+		const days = DueMark.daysIn(gap, week).filter(day => day.dayStart.isBefore(start) || day.dayStart.isAfter(end))
+		if (!days.length) {
+			return html.nothing
+		}
+		const rowOf = (day: DateTime) => Math.floor((this.buffer.columnOf(day) ?? 0) / week.length)
+		return DueMark.across({
+			columns: [week.indexOf(days[0]!), week.indexOf(days.at(-1)!)],
+			step: Math.abs(rowOf(week[0]!) - rowOf(start)),
+			flag: days.some(day => day.dayStart.equals(occurrence.due!.dayStart)),
+		})
+	}
+
 	private weekTemplate({ week, row, bars, runs }: RenderedWeek, today: DateTime) {
 		const columnByDay = new Map(week.map((day, index) => [day.dayStart.valueOf(), index]))
 		const columnOf = (dayValue: number) => columnByDay.get(dayValue) ?? 0
@@ -382,6 +415,7 @@ export class Weeks extends Component {
 						?data-with-background=${day.month === this.bufferNavigatingDate.month}>
 					</mitra-day>
 				`)}
+				<mitra-due-mark .view=${this} .draw=${(occurrence: EntryOccurrence) => this.dueTemplate(occurrence, week)}></mitra-due-mark>
 				<div class="entries">
 					${repeat(bars, bar => EntryStore.identityOf(bar.segment.occurrence), bar => html`
 						<mitra-entry-segment

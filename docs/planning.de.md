@@ -23,11 +23,11 @@ Mitra trennt zwei Arten von Angaben zur Zeit einer Aufgabe.
 
 Weder Termin noch Vorgaben sind Pflicht. Eine Aufgabe kann ein Fälligkeitsdatum ohne Termin haben, einen Termin ohne Fälligkeitsdatum, beides oder nichts.
 
-Ein Beispiel: Eine Präsentation ist am Freitag um 12 Uhr fällig, und du planst den Dienstagvormittag für die Vorbereitung ein. Die Ansichten zeigen die Aufgabe am Dienstag, und eine kleine Flagge daneben zeigt, dass sie ein Fälligkeitsdatum hat.
+Ein Beispiel: Eine Präsentation ist fällig, wenn am Mittwoch um 14 Uhr die Planungsbesprechung beginnt, und du planst den Dienstagvormittag für die Vorbereitung ein. Die Ansichten zeigen die Aufgabe am Dienstag, und eine kleine Flagge daneben zeigt, dass sie ein Fälligkeitsdatum hat.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/due-detail-dark.webp">
-  <img src="../assets/screenshots/due-detail-light.webp" alt="Eine Aufgabe am Dienstag von 9:00 bis 12:00 Uhr mit Fälligkeitsdatum am Freitag um 12 Uhr" />
+  <img src="../assets/screenshots/due-detail-light.webp" alt="Eine Aufgabe am Dienstag von 9:00 bis 12:00 Uhr mit Fälligkeitsdatum am Mittwoch um 14 Uhr" />
 </picture>
 
 ## Der Tab Planung
@@ -55,7 +55,7 @@ Die Reihenfolge verwaltet Mitra selbst, andere Apps sehen sie nicht.
 
 Öffne die Aufgabe, drück auf **Fälligkeitsdatum** und wähle einen Tag. Um das Fälligkeitsdatum zu entfernen, drück auf das **✕** daneben.
 
-Eine Aufgabe mit Fälligkeitsdatum zeigt eine kleine Flagge, in den Ansichten und im Tab Planung. Einplanen, Ausplanen oder Verschieben der Aufgabe ändert ihr Fälligkeitsdatum nie.
+Eine Aufgabe mit Fälligkeitsdatum zeigt eine kleine Flagge, in den Ansichten und im Tab Planung. Bei einer eingeplanten Aufgabe nennt die Flagge das Fälligkeitsdatum so knapp wie möglich: die Uhrzeit, wenn sie am selben Tag fällig ist, den Wochentag innerhalb der kommenden Woche, sonst das Datum. Die Flagge wird rot und gefüllt, wenn die Aufgabe erst nach ihrem Fälligkeitsdatum enden soll. Zeig in der Wochen- oder Monatsansicht oder in der Zeitleiste auf eine Aufgabe, und sie streckt sich bis zu ihrem Fälligkeitsdatum. Die Zeitleiste markiert das Fälligkeitsdatum außerdem in der Zeile jeder Aufgabe. Einplanen, Ausplanen oder Verschieben der Aufgabe ändert ihr Fälligkeitsdatum nie.
 
 Eine ganztägige Aufgabe ist an einem Tag fällig. Um ihr eine Uhrzeit zu geben, schalte am Ende des Fälligkeitsdatums **Ganztägig** aus, was angezeigt wird, solange du darauf bist. Damit bekommt die ganze Aufgabe Uhrzeiten, ihr Fälligkeitsdatum wird also 17:00 Uhr am selben Tag, was du ändern kannst.
 

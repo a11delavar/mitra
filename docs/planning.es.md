@@ -23,11 +23,11 @@ Mitra separa dos tipos de información sobre el tiempo de una tarea.
 
 Ni la programación ni las restricciones son obligatorias. Una tarea puede tener fecha de vencimiento y ninguna programación, una programación y ninguna fecha de vencimiento, ambas, o ninguna.
 
-Por ejemplo, una presentación vence el viernes a mediodía, y programas el martes por la mañana para prepararla. Las vistas muestran la tarea el martes, y una pequeña bandera a su lado indica que tiene fecha de vencimiento.
+Por ejemplo, una presentación vence cuando empieza la reunión de planificación del miércoles a las 14:00, y programas el martes por la mañana para prepararla. Las vistas muestran la tarea el martes, y una pequeña bandera a su lado indica que tiene fecha de vencimiento.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/due-detail-dark.webp">
-  <img src="../assets/screenshots/due-detail-light.webp" alt="Una tarea programada para el martes de 9:00 a 12:00, con una fecha de vencimiento el viernes a mediodía" />
+  <img src="../assets/screenshots/due-detail-light.webp" alt="Una tarea programada para el martes de 9:00 a 12:00, con una fecha de vencimiento el miércoles a las 14:00" />
 </picture>
 
 ## La pestaña Planificación
@@ -55,7 +55,7 @@ Mitra guarda el orden por sí mismo, así que otras aplicaciones no lo ven.
 
 Abre la tarea, pulsa **Fecha de vencimiento** y elige un día. Para quitar la fecha de vencimiento, pulsa la **✕** a su lado.
 
-Una tarea con fecha de vencimiento muestra una pequeña bandera, en las vistas y en la pestaña Planificación. Programar, desprogramar o mover la tarea nunca cambia su fecha de vencimiento.
+Una tarea con fecha de vencimiento muestra una pequeña bandera, en las vistas y en la pestaña Planificación. En una tarea programada, la bandera también indica la fecha de vencimiento de la forma más breve posible: la hora si vence el mismo día, el día de la semana si vence en la semana siguiente, y la fecha en los demás casos. La bandera aparece roja y rellena cuando la tarea está programada para terminar después de su fecha de vencimiento. Señala una tarea en la vista semanal o mensual, o en el cronograma, y se extiende hasta su fecha de vencimiento. El cronograma también marca la fecha de vencimiento en la fila de cada tarea. Programar, desprogramar o mover la tarea nunca cambia su fecha de vencimiento.
 
 Una tarea de todo el día vence en un día. Para darle una hora, desactiva **Todo el día** al final de la fecha de vencimiento, que aparece mientras estás en ella. Eso da horas a toda la tarea, así que su fecha de vencimiento pasa a ser las 17:00 del mismo día, que puedes cambiar.
 

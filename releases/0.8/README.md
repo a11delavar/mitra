@@ -27,7 +27,14 @@ An event now has a status of its own, as a task does: **Confirmed**, **Maybe** o
 Docs: [Event status](../../docs/entries.md#event-status)
 
 ## Due dates at a glance
-A task's due day shows on its flag, and pointing at the task marks that day in the calendar. The timeline marks it too, and the table gets a column for it.
+A scheduled task now shows when it's due right on its flag, as a time, a weekday or a date, depending on how soon it is. Point at a task in the week or month view, or on the timeline, and it stretches out to its due date, so you can see how much room is left. If you've scheduled a task to finish after it's due, the flag turns red. And the table has a new column for due dates.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="due-stretch-dark.webp">
+	<img src="due-stretch-light.webp" alt="Pointing at Tuesday's task stretches it to its due date, when Wednesday's planning meeting starts">
+</picture>
+
+Docs: [Planning](../../docs/planning.md#set-a-due-date)
 
 ## Personalization
 Give each calendar one of two more colors, or any color you like. Rename an account's heading by double-clicking it, and hide all of its calendars at once. For everything beyond that, restyle Mitra with CSS of your own: for yourself in Settings, or for everyone on your server through a file in its data folder. Whoever runs the server gets a section of their own in Settings.

@@ -134,6 +134,25 @@ export class EntryOccurrence {
 		return date && (this.entry.allDay || this.entry.floating ? TimeZone.localOrDefault : zone).dayOf(date)
 	}
 
+	/** Whether its schedule ends after its due date, however far off both are. */
+	get scheduledPastDue() {
+		return !!this.due && !!this.start && this.inclusiveEnd.isAfter(this.due)
+	}
+
+	/**
+	 * The time between its schedule and its due date: from its end to the due, or, scheduled past its due, from the due to its
+	 * start. None where the due falls within the schedule. A due day lasts until its end.
+	 */
+	get dueGap() {
+		if (!this.due || !this.start) {
+			return undefined
+		}
+		const due = this.allDay ? this.due.dayStart.add({ days: 1 }) : this.due
+		return due.isAfter(this.effectiveEnd) ? new DateTimeRange(this.effectiveEnd, due)
+			: due.isBefore(this.start) ? new DateTimeRange(due, this.start)
+				: undefined
+	}
+
 	/**
 	 * What editing this occurrence changes in `scope`: 'this' detaches it, 'following' splits the rule here, 'all' rewrites
 	 * the entry. A calendar in the patch moves what the scope reaches.

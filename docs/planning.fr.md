@@ -23,11 +23,11 @@ Mitra distingue deux sortes d'informations sur le temps d'une tâche.
 
 Ni la planification ni les contraintes ne sont obligatoires. Une tâche peut avoir une échéance et pas de planification, une planification et pas d'échéance, les deux, ou aucune.
 
-Par exemple, une présentation est due vendredi à midi, et vous planifiez mardi matin pour la préparer. Les vues affichent la tâche le mardi, et un petit drapeau à côté montre qu'elle a une échéance.
+Par exemple, une présentation est due au début de la réunion de planification du mercredi à 14:00, et vous planifiez mardi matin pour la préparer. Les vues affichent la tâche le mardi, et un petit drapeau à côté montre qu'elle a une échéance.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/due-detail-dark.webp">
-  <img src="../assets/screenshots/due-detail-light.webp" alt="Une tâche planifiée mardi de 9:00 à 12:00, avec une échéance vendredi à midi" />
+  <img src="../assets/screenshots/due-detail-light.webp" alt="Une tâche planifiée mardi de 9:00 à 12:00, avec une échéance mercredi à 14:00" />
 </picture>
 
 ## L'onglet Planification
@@ -55,7 +55,7 @@ Mitra conserve l'ordre lui-même, donc les autres applications ne le voient pas.
 
 Ouvrez la tâche, appuyez sur **Date d'échéance** et choisissez un jour. Pour retirer l'échéance, appuyez sur le **✕** à côté.
 
-Une tâche avec une échéance affiche un petit drapeau, dans les vues et dans l'onglet Planification. Planifier, déplanifier ou déplacer la tâche ne change jamais son échéance.
+Une tâche avec une échéance affiche un petit drapeau, dans les vues et dans l'onglet Planification. Sur une tâche planifiée, le drapeau indique aussi l'échéance le plus brièvement possible : son heure si elle tombe le même jour, son jour de la semaine dans la semaine à venir, et sa date sinon. Le drapeau devient rouge et plein quand la tâche est planifiée pour finir après son échéance. Pointez une tâche dans la vue semaine ou mois, ou dans la chronologie, et elle s'étire jusqu'à son échéance. La chronologie marque aussi l'échéance sur la ligne de chaque tâche. Planifier, déplanifier ou déplacer la tâche ne change jamais son échéance.
 
 Une tâche de toute la journée est due un jour donné. Pour lui donner une heure, désactivez **Toute la journée** à la fin de l'échéance, qui s'affiche tant que vous êtes dessus. Cela donne des heures à toute la tâche, donc son échéance devient 17 h 00 le même jour, ce que vous pouvez modifier.
 

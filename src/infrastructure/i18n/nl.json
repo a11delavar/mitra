@@ -188,6 +188,7 @@
 	"Estimate": "Geschatte duur",
 	"Remove the due date": "Vervaldatum verwijderen",
 	"Due ${date}": "Uiterlijk ${date}",
+	"Due ${date}, before its scheduled end": "Uiterlijk ${date}, vóór het geplande einde",
 	"Ends": "Eindigt",
 	"Weekdays": "Weekdagen",
 	"Frequency": "Frequentie",

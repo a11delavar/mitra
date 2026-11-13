@@ -742,6 +742,27 @@ describe('Entry', () => {
 			assert.equal(task({ start: today.subtract({ days: 3 }), end: today.subtract({ days: 3 }).add({ hours: 1 }), due: today.add({ days: 2, hours: 17 }) }).overdue, false)
 		})
 
+		it('is scheduled past only by a schedule ending after it', () => {
+			const pastDue = (fields: Partial<Entry>) => task(fields).occurrences.single.scheduledPastDue
+			assert.equal(pastDue({ start: at(2, 9), end: at(2, 12), due: at(1, 17) }), true)
+			assert.equal(pastDue({ start: at(1, 9), end: at(1, 17), due: at(1, 17) }), false)
+			assert.equal(pastDue({ allDay: true, start: at(1, 0), end: at(2, 0), due: at(1, 0) }), false)
+			assert.equal(pastDue({ due: day.subtract({ days: 1 }) }), false)
+		})
+
+		it('leaves a gap between its schedule and its due, either way round', () => {
+			const gap = (fields: Partial<Entry>) => {
+				const range = task(fields).occurrences.single.dueGap
+				return range && [range.start!.valueOf(), range.end!.valueOf()]
+			}
+			assert.deepEqual(gap({ start: at(1, 9), end: at(1, 12), due: at(4, 12) }), [at(1, 12).valueOf(), at(4, 12).valueOf()])
+			assert.deepEqual(gap({ start: at(2, 9), end: at(2, 12), due: at(1, 11) }), [at(1, 11).valueOf(), at(2, 9).valueOf()])
+			assert.equal(gap({ start: at(1, 9), end: at(1, 12), due: at(1, 10) }), undefined)
+			assert.equal(gap({ due: at(4, 12) }), undefined)
+			// A due day lasts until its end, as an all-day schedule does.
+			assert.deepEqual(gap({ allDay: true, start: at(1, 0), end: at(3, 0), due: at(4, 0) }), [at(3, 0).valueOf(), at(5, 0).valueOf()])
+		})
+
 		it('belongs to tasks only', () => {
 			const e = task({ due: at(1, 17), estimate: 30 })
 			e.type = EntryType.Event

@@ -27,7 +27,14 @@ Wydarzenie ma teraz własny status, tak jak zadanie: **Potwierdzone**, **Być mo
 Dokumentacja: [Status wydarzenia](../../docs/entries.md#event-status)
 
 ## Terminy na pierwszy rzut oka
-Dzień terminu zadania widnieje na jego fladze, a gdy wskażesz zadanie, ten dzień zostaje zaznaczony w kalendarzu. Oś czasu też go zaznacza, a tabela ma na niego osobną kolumnę.
+Zaplanowane zadanie pokazuje teraz termin wprost na swojej fladze, jako godzinę, dzień tygodnia albo datę, zależnie od tego, jak blisko jest. Wskaż zadanie w widoku tygodnia lub miesiąca albo na osi czasu, a rozciągnie się do swojego terminu, więc od razu widać, ile zostało zapasu. Jeśli zaplanujesz zadanie tak, że skończy się po terminie, flaga zrobi się czerwona. A tabela ma nową kolumnę z terminami.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="due-stretch-dark.webp">
+	<img src="due-stretch-light.webp" alt="Wskazanie wtorkowego zadania rozciąga je do terminu, gdy w środę zaczyna się spotkanie planistyczne">
+</picture>
+
+Dokumentacja: [Ustawianie terminu](../../docs/planning.md#set-a-due-date)
 
 ## Personalizacja
 Nadaj każdemu kalendarzowi jeden z dwóch nowych kolorów albo dowolny własny. Zmień nazwę nagłówka konta dwukrotnym kliknięciem i ukryj wszystkie jego kalendarze naraz. Do całej reszty zmień wygląd aplikacji Mitra za pomocą własnych stylów CSS: dla siebie w Ustawieniach albo dla wszystkich na twoim serwerze za pomocą pliku w jego folderze danych. Osoba, która zarządza serwerem, ma w Ustawieniach osobną sekcję.

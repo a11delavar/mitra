@@ -149,6 +149,7 @@
 	"Estimate": "Stima",
 	"Remove the due date": "Rimuovi la data di scadenza",
 	"Due ${date}": "Scadenza ${date}",
+	"Due ${date}, before its scheduled end": "Scadenza ${date}, prima della fine pianificata",
 	"Ends": "Termina",
 	"Weekdays": "Giorni della settimana",
 	"Frequency": "Frequenza",

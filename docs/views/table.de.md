@@ -38,7 +38,7 @@ Die Spalten **Status**, **Kalender**, **Typ** und **Wiederholt sich** können fi
 
 ## Spalten
 
-Die Tabelle beginnt mit **Titel**, **Wann**, **Kalender**, **Status**, **Ort**, **Teilnehmer**, **Teilaufgabe von** und **Blockiert von**. Die Schaltfläche am Ende der Kopfzeile zeigt die anderen (**Dauer**, **Typ**, **Wiederholt sich**, **Erinnerungen** und **Beschreibung**), und **Spalten zurücksetzen** stellt die Voreinstellung wieder her.
+Die Tabelle beginnt mit **Titel**, **Wann**, **Kalender**, **Status**, **Ort**, **Teilnehmer**, **Teilaufgabe von** und **Blockiert von**. Die Schaltfläche am Ende der Kopfzeile zeigt die anderen (**Fälligkeitsdatum**, **Dauer**, **Typ**, **Wiederholt sich**, **Erinnerungen** und **Beschreibung**), und **Spalten zurücksetzen** stellt die Voreinstellung wieder her.
 
 Jede Spalte ist so breit wie ihr Inhalt. Zieh eine Überschrift, um ihre Spalte zu verschieben, und ihren Rand, um die Breite zu ändern. Doppelklick auf den Rand passt die Spalte wieder an ihren Inhalt an.
 

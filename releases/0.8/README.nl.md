@@ -27,7 +27,14 @@ Een afspraak heeft nu een eigen status, net als een taak: **Bevestigd**, **Missc
 Documentatie: [Afspraakstatus](../../docs/entries.md#event-status)
 
 ## Vervaldatums in één oogopslag
-De vervaldatum van een taak staat op zijn vlaggetje, en als je de taak aanwijst, wordt die dag in de agenda gemarkeerd. De tijdlijn markeert hem ook, en de tabel krijgt er een eigen kolom voor.
+Een ingeplande taak laat nu op zijn vlaggetje zien wanneer hij klaar moet zijn, als tijd, weekdag of datum, afhankelijk van hoe snel dat is. Wijs een taak aan in de week- of maandweergave, of op de tijdlijn, en hij rekt zich uit tot zijn vervaldatum, zodat je ziet hoeveel ruimte je nog hebt. Heb je een taak zo ingepland dat hij pas na zijn vervaldatum af is, dan wordt het vlaggetje rood. En de tabel heeft een nieuwe kolom voor vervaldatums.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="due-stretch-dark.webp">
+	<img src="due-stretch-light.webp" alt="Wie de taak van dinsdag aanwijst, rekt hem uit tot zijn vervaldatum, als woensdag het planningsoverleg begint">
+</picture>
+
+Documentatie: [Een vervaldatum instellen](../../docs/planning.md#set-a-due-date)
 
 ## Personalisatie
 Geef elke agenda een van twee nieuwe kleuren, of een kleur naar keuze. Hernoem de kop van een account met een dubbelklik en verberg al zijn agenda's in één keer. Voor al het andere geef je Mitra een eigen uiterlijk met je eigen CSS: voor jezelf in Instellingen, of voor iedereen op je server via een bestand in de gegevensmap. Wie de server beheert, krijgt daarvoor een eigen sectie in Instellingen.

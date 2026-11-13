@@ -15,6 +15,7 @@ import { ParticipantFaces } from '#features/participants/client/ParticipantFaces
 import { EntryLink } from '#features/relations/client/EntryLink.js'
 import { MapLink } from '#features/locations/client/MapLink.js'
 import { Day } from '#features/calendar/client/Day.js'
+import { DueMark } from '#features/calendar/client/DueMark.js'
 import { EntrySegmentComponent } from '#features/entries/client/EventSegment.js'
 import { AvailabilitySegment } from '#features/availability/client/AvailabilitySegment.js'
 import { EntryConnections } from '#features/relations/client/EntryConnections.js'
@@ -240,6 +241,7 @@ export class Mitra extends Application {
 			${EntryLink.styles}
 			${MapLink.styles}
 			${Day.styles}
+			${DueMark.styles}
 			${EntrySegmentComponent.styles}
 			${AvailabilitySegment.styles}
 			${EntryConnections.styles}

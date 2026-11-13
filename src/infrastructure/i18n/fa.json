@@ -164,6 +164,7 @@
 	"Estimate": "تخمین",
 	"Remove the due date": "حذف تاریخ سررسید",
 	"Due ${date}": "سررسید ${date}",
+	"Due ${date}, before its scheduled end": "سررسید ${date}، پیش از پایان زمان‌بندی‌شده",
 	"Ends": "پایان می‌یابد",
 	"Weekdays": "روزهای کاری",
 	"Frequency": "تواتر",

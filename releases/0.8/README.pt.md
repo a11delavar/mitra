@@ -27,7 +27,14 @@ Um evento agora tem um estado próprio, como uma tarefa: **Confirmado**, **Talve
 Documentação: [Estado do evento](../../docs/entries.md#event-status)
 
 ## Vencimentos de relance
-O dia de vencimento de uma tarefa aparece na sua bandeira, e apontar para a tarefa marca esse dia no calendário. A linha do tempo também o marca, e a tabela ganha uma coluna para ele.
+Uma tarefa agendada agora mostra na própria bandeira quando vence, como uma hora, um dia da semana ou uma data, conforme a proximidade. Aponte para uma tarefa na visualização de semana ou de mês, ou na linha do tempo, e ela se estica até a data de vencimento, para você ver quanta folga ainda tem. Se você agendou uma tarefa para terminar depois do vencimento, a bandeira fica vermelha. E a tabela tem uma coluna nova para as datas de vencimento.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="due-stretch-dark.webp">
+	<img src="due-stretch-light.webp" alt="Apontar para a tarefa de terça-feira a estica até a sua data de vencimento, quando começa a reunião de planejamento de quarta-feira">
+</picture>
+
+Documentação: [Definir uma data de vencimento](../../docs/planning.md#set-a-due-date)
 
 ## Personalização
 Dê a cada calendário uma de duas novas cores, ou a cor que quiser. Renomeie o cabeçalho de uma conta com um clique duplo e oculte todos os calendários dela de uma vez. Para todo o resto, mude o visual do Mitra com o seu próprio CSS: para você nas Configurações, ou para todos no seu servidor por meio de um arquivo na pasta de dados dele. Quem administra o servidor ganha uma seção própria nas Configurações.

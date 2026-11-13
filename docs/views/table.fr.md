@@ -38,7 +38,7 @@ Les colonnes **Statut**, **Agenda**, **Type** et **Se répète** peuvent filtrer
 
 ## Colonnes
 
-Le tableau commence avec **Titre**, **Quand**, **Agenda**, **Statut**, **Lieu**, **Participants**, **Sous-tâche de** et **Bloqué par**. Le bouton à la fin de la ligne d'en-tête affiche les autres (**Durée**, **Type**, **Se répète**, **Rappels** et **Description**), et **Réinitialiser les colonnes** rétablit celles par défaut.
+Le tableau commence avec **Titre**, **Quand**, **Agenda**, **Statut**, **Lieu**, **Participants**, **Sous-tâche de** et **Bloqué par**. Le bouton à la fin de la ligne d'en-tête affiche les autres (**Date d'échéance**, **Durée**, **Type**, **Se répète**, **Rappels** et **Description**), et **Réinitialiser les colonnes** rétablit celles par défaut.
 
 Chaque colonne est aussi large que son contenu. Faites glisser un en-tête pour déplacer sa colonne, et son bord pour la redimensionner ; double-cliquez sur le bord pour ajuster à nouveau la colonne à son contenu.
 
