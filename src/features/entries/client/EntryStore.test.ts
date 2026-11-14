@@ -234,6 +234,22 @@ describe('EntryStore', () => {
 			assert.equal(transport.calls.create, 0)
 		})
 
+		it('lets the next edit save after a save that failed before its request', async () => {
+			const transport = fake()
+			EntryStore.persistence = { ...transport.persistence, update: () => { throw new RangeError('Invalid time value') } }
+			const working = entry()
+			EntryStore.applyServerEntries([working])
+			working.moveStart(at(14))
+			await assert.rejects(EntryStore.commit(working), /Invalid time value/)
+			EntryStore.persistence = transport.persistence
+			working.moveStart(at(16))
+			const commit = EntryStore.commit(working)
+			assert.equal(transport.calls.update, 1)
+			await transport.respond()
+			await commit
+			assert.equal(EntryStore.isDirty(working), false)
+		})
+
 		it('coalesces: commits while a save is in flight share its chain', async () => {
 			const transport = fake()
 			EntryStore.persistence = transport.persistence

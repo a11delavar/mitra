@@ -197,12 +197,11 @@ export class EntryStore extends Controller {
 		if (entry.blank) {
 			return Promise.resolve()
 		}
-		// With nothing to send, the run below never awaits, so its `finally` would clear the slot before
-		// `inflight.set` filled it, and the settled promise would swallow every later commit.
 		if (!this.tracks(entry) || !this.isDirty(entry)) {
 			return Promise.resolve()
 		}
 		const wasClosed = entry.persisted && (this.canonicalById.get(entry.id!)?.closed ?? false)
+		let settled = false
 		const run = (async () => {
 			try {
 				while (this.tracks(entry) && this.isDirty(entry)) {
@@ -249,6 +248,7 @@ export class EntryStore extends Controller {
 				}
 				throw error
 			} finally {
+				settled = true
 				this.inflight.delete(entry)
 				this.notify()
 			}
@@ -257,7 +257,11 @@ export class EntryStore extends Controller {
 				this.closings.forEach(listener => listener(entry))
 			}
 		})()
-		this.inflight.set(entry, run)
+		// A run that never awaited (nothing to send, or a throw before the first request) has settled by now,
+		// and its slot would turn away every later commit.
+		if (!settled) {
+			this.inflight.set(entry, run)
+		}
 		return run
 	}
 
