@@ -11,12 +11,16 @@ import { type Source, Color } from '#features/sources'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import type { Entry } from '#features/entries'
 import { Planning } from '#features/planning/client/Planning.js'
+import { RoutineStore } from '#features/routines/client/RoutineStore.js'
+import '#features/routines/client/RoutinesTab.js'
 import { deviceStorage } from '#features/settings/client/Setting.js'
 import { DialogIntegration } from '#integrations/client/DialogIntegration.js'
 import type { Integration } from '#integrations'
 import { session } from '#infrastructure/http/PageSession.js'
 import { PageState } from '#infrastructure/http/PageState.js'
 import { canInstall, promptInstall, onInstallAvailabilityChange } from './pwa.js'
+
+type SidebarTab = 'calendars' | 'planning' | 'routines'
 
 @component('mitra-sidebar')
 export class Sidebar extends Component {
@@ -26,20 +30,34 @@ export class Sidebar extends Component {
 	@event({ bubbles: true, composed: true }) readonly settingsClick!: EventDispatcher
 	@property({ type: Boolean, reflect: true }) open = false
 
-	private static readonly keptTab = deviceStorage<'calendars' | 'planning'>('Mitra.SidebarTab')
+	private static readonly keptTab = deviceStorage<SidebarTab>('Mitra.SidebarTab')
 
 	@state() private tab = Sidebar.keptTab.read() ?? 'calendars'
 
 	readonly store = new EntryStore(this, { shows: () => this.planningCount })
+	readonly routines = new RoutineStore(this)
 	readonly pageState = new PageState(this)
 
 	private get planningCount() {
 		return Planning.pending
 	}
 
-	private setTab(tab: 'calendars' | 'planning') {
+	private setTab(tab: SidebarTab) {
 		this.tab = tab
 		Sidebar.keptTab.write(tab)
+	}
+
+	// The routines' entries are fetched only while their tab is read.
+	protected override willUpdate(changed: Map<PropertyKey, unknown>) {
+		super.willUpdate?.(changed)
+		if (changed.has('tab')) {
+			RoutineStore.showing = this.tab === 'routines'
+		}
+	}
+
+	/** Turns to the routines. */
+	showRoutines() {
+		this.setTab('routines')
 	}
 
 	/** Turns to the planning list and brings `entry`'s row into view there. */
@@ -135,7 +153,7 @@ export class Sidebar extends Component {
 				/* Only the three lengths that two distant rules must agree on live here. The source list's
 				   columns are laid out by ONE grid the rows subscribe to (see .integrations), not by an
 				   arithmetic of per-element paddings. */
-				--sidebar-width: 16rem;
+				--sidebar-width: 22rem;
 				--sidebar-inset: 0.5rem;
 				/* Source list column gap and row content inset, aligning headings across tabs. */
 				--sidebar-gap: 0.5rem;
@@ -402,14 +420,25 @@ export class Sidebar extends Component {
 				}
 
 				mitra-tab-panel > .integrations,
-				mitra-tab-panel > mitra-planning {
+				mitra-tab-panel > mitra-planning,
+				mitra-tab-panel > mitra-routines {
 					flex: 1;
 					min-height: 0;
 				}
 
-				/* Align the planning headings with the account headings grid column. */
+				/* Planning's and the routines' headings, counts and cards share one edge on each side, the account
+				   headings' gap in from the panel. The thumb's lane is reserved whether or not it shows, so the cards
+				   never move by its width, and it lies inside that gap: reaching past the panel instead, as the source
+				   list does, would widen the last panel and throw the tabs' position off. */
 				mitra-tab-panel > mitra-planning > section > header {
-					padding-inline-start: var(--sidebar-gap);
+					padding-inline: var(--sidebar-gap);
+				}
+
+				mitra-tab-panel > mitra-planning > section > .entries,
+				mitra-tab-panel > mitra-routines {
+					${scrollbar};
+					padding-inline: var(--sidebar-gap) calc(var(--sidebar-gap) - var(--scrollbar-width));
+					scrollbar-gutter: stable;
 				}
 
 				mitra-tab-panel > .action {
@@ -935,12 +964,17 @@ export class Sidebar extends Component {
 						${this.updateHint || !DialogAbout.hasNews ? html.nothing : html`<span class="news-dot" title=${t('What\'s New')}></span>`}
 					</span>
 				</button>
-				<mitra-tabs .selected=${this.tab} @selectedChange=${(e: CustomEvent<string>) => this.setTab(e.detail as 'calendars' | 'planning')}>
+				<mitra-tabs .selected=${this.tab} @selectedChange=${(e: CustomEvent<string>) => this.setTab(e.detail as SidebarTab)}>
 					<mitra-tab name="calendars" icon="calendar-days">${t('Calendars')}</mitra-tab>
 					<mitra-tab-panel name="calendars">${this.calendarsTemplate}</mitra-tab-panel>
 
 					<mitra-tab name="planning" icon="list-todo" .badge=${this.planningCount}>${t('Planning')}</mitra-tab>
 					<mitra-tab-panel name="planning">${this.planningTemplate}</mitra-tab-panel>
+
+					<mitra-tab name="routines" icon="repeat" .badge=${RoutineStore.dueToday}>${t('Routines')}</mitra-tab>
+					<mitra-tab-panel name="routines">
+						<mitra-routines></mitra-routines>
+					</mitra-tab-panel>
 				</mitra-tabs>
 				<div class="footer">
 					${session.user?.identity ? html.nothing : html`

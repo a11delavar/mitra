@@ -56,6 +56,9 @@ import { DialogRelationFailed } from '#features/relations/client/DialogRelationF
 import { EntryDetailsWhen } from '#features/entries/client/EntryDetailsWhen.js'
 import { EntryDetailsSharing } from '#features/entries/client/EntryDetailsSharing.js'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
+import { RoutinesTab } from '#features/routines/client/RoutinesTab.js'
+import { RoutineRow } from '#features/routines/client/RoutineRow.js'
+import { RoutineDetails } from '#features/routines/client/RoutineDetails.js'
 import { ScrollDeviceController } from '#features/calendar/client/ScrollDeviceController.js'
 import { hierarchy } from '#features/relations/client/Hierarchy.js'
 import { DialogIntegration } from '#integrations/client/DialogIntegration.js'
@@ -229,6 +232,9 @@ export class Mitra extends Application {
 			${CommandPalette.styles}
 			${Sidebar.styles}
 			${Planning.styles}
+			${RoutinesTab.styles}
+			${RoutineRow.styles}
+			${RoutineDetails.styles}
 			${Weeks.styles}
 			${Months.styles}
 			${Days.styles}

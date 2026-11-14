@@ -46,7 +46,7 @@ export class GetRoutines extends Operation<Parameters> {
 				sourceId: routine.sourceId,
 				cadence: routine.cadence?.days,
 				rule: tightest?.recurrence?.toRRule(tightest.allDay),
-				since: dates.since?.toString(),
+				since: routine.since,
 				kept: dates.kept(last),
 				of: dates.settled(last),
 				slips: dates.slipsAfter(zone.dayOf(now).subtract({ years: 1 })),

@@ -57,6 +57,13 @@ export class RoutineCadence {
 
 	constructor(readonly days: number) { }
 
+	/** How often it comes in words, for a routine no rule describes. */
+	format() {
+		return String(this.days < 7
+			? t('About every ${count:pluralityNumber} days', { count: Math.max(1, Math.round(this.days)) })
+			: t('About every ${count:pluralityNumber} weeks', { count: Math.round(this.days / 7) }))
+	}
+
 	/** Whether it comes more often than a row of `unit`, where its dates are then marks rather than bars. */
 	collapsesIn(unit: RoutineUnit) {
 		const { days, slack } = RoutineCadence.rows[unit]

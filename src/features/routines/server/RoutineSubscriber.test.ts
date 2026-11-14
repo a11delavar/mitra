@@ -71,4 +71,21 @@ describe('RoutineSubscriber', () => {
 		assert.ok(other.routineId)
 		assert.deepEqual(await Promise.all(swims.slice(1).map(swim => stored(swim.id!))), [other.routineId, other.routineId])
 	})
+
+	it('removes a routine once no entry names it: its last entry removed, or moved to another routine', async () => {
+		const routines = async () => (await orm.em.getConnection().execute<Array<{ id: string }>>('select id from routine')).map(row => row.id)
+		const em = orm.em.fork()
+		const yoga = event('Yoga', start, { recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }) })
+		const pilates = event('Pilates', start, { recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }) })
+		em.persist([yoga, pilates])
+		await em.flush()
+		const [yogaRoutine, pilatesRoutine] = [yoga.routineId!, pilates.routineId!]
+		yoga.routineId = pilatesRoutine
+		await em.flush()
+		assert.ok(!(await routines()).includes(yogaRoutine))
+		assert.ok((await routines()).includes(pilatesRoutine))
+		em.remove([yoga, pilates])
+		await em.flush()
+		assert.ok(!(await routines()).includes(pilatesRoutine))
+	})
 })

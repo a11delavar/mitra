@@ -65,10 +65,6 @@ describe('RoutineEntryOccurrences, read off RoutineEntries', () => {
 		assert.equal(of(...sundays.slice(1), ...mondays).slipsAfter(yearAgo), undefined)
 	})
 
-	it('starts with its first entry\'s first date', () => {
-		assert.equal(String(of(task('2026-10-17T06:00:00Z'), task('2025-03-02T06:00:00Z')).since), '2025-03-02')
-	})
-
 	it('names among a routine\'s entries the recurring one with the tightest rule', () => {
 		const daily = event('2026-10-13T16:00:00Z', { id: 'daily', recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }) })
 		assert.equal(RoutineEntries.of([event('2026-10-12T16:00:00Z', { id: 'weekly', recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) }), daily]).tightest, daily)
@@ -76,6 +72,6 @@ describe('RoutineEntryOccurrences, read off RoutineEntries', () => {
 
 	it('has nothing to tell of entries without a date', () => {
 		const dates = of(task('2026-10-17T06:00:00Z', { start: undefined }))
-		assert.deepEqual([dates.last(14), dates.next, dates.since, dates.kept(14)], [[], undefined, undefined, 0])
+		assert.deepEqual([dates.last(14), dates.next, dates.kept(14)], [[], undefined, 0])
 	})
 })

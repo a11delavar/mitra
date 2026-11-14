@@ -1,7 +1,7 @@
 import { Controller, eventListener } from '@a11d/lit'
 import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { Task } from '@lit/task'
-import { ListEntries, ListAllEntries, ListRoutines } from '#operations'
+import { ListEntries, ListAllEntries, ListRoutineEntries, ListRoutines } from '#operations'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import { TableWindow } from '#features/calendar/client/TableWindow.js'
 import type { PageCalendar } from '#features/calendar/client/PageCalendar.js'
@@ -36,16 +36,18 @@ export class EntryFetcherController extends Controller {
 		task: async () => {
 			const window = this.window
 			// The routines beside the entries of a window, whose views collapse them; every entry at once is a table's, which collapses none.
-			const [entries, routines] = await Promise.all([
+			// While the Routines tab reads them, their entries too, as an entry changed here may change their dates.
+			const [entries, routines, routineEntries] = await Promise.all([
 				window ? ListEntries.call({ start: window.start!, end: window.end! }) : ListAllEntries.call(),
-				window ? ListRoutines.call() : undefined,
+				window || RoutineStore.showing ? ListRoutines.call() : undefined,
+				RoutineStore.showing ? ListRoutineEntries.call(RoutineStore.query) : undefined,
 			])
-			return { entries, routines, window }
+			return { entries, routines, routineEntries, window }
 		},
-		onComplete: ({ entries, routines, window }) => {
+		onComplete: ({ entries, routines, routineEntries, window }) => {
 			this.lastContact = Date.now()
 			if (routines) {
-				RoutineStore.apply(routines)
+				RoutineStore.adopt(routines, routineEntries)
 			}
 			EntryStore.applyServerEntries(entries, window)
 			EntryEditorIntent.settle(EntryStore.occurrences)

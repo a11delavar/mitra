@@ -1,4 +1,4 @@
-import { FlushMode, type EventSubscriber } from '@mikro-orm/core'
+import { FlushMode, type EntityManager, type EventSubscriber } from '@mikro-orm/core'
 import { Entry } from '#features/entries'
 import { Recurrence } from '#features/recurrence'
 import { Routine } from '../Routine.js'
@@ -35,5 +35,34 @@ export const RoutineSubscriber: EventSubscriber = {
 			}
 		}
 		await RoutineRecognition.of(em).place(written, removed)
+		await dropEmptied(em, written, removed, entry => original(entry, 'routineId', 'routine_id') as string | undefined)
 	},
+}
+
+/**
+ * Removes the routines this flush leaves without an entry: those its removed entries named, and those its written entries
+ * left. A routine is its entries; without one it has nothing to show and nothing to tell a new entry by.
+ */
+async function dropEmptied(em: EntityManager, written: ReadonlyArray<Entry>, removed: ReadonlySet<unknown>, previousOf: (entry: Entry) => string | undefined) {
+	const leaving = [...removed].filter((entity): entity is Entry => entity instanceof Entry)
+	const left = new Set([...leaving.map(entry => entry.routineId), ...written.map(previousOf)].flatMap(id => id ?? []))
+	for (const entry of written) {
+		left.delete(entry.routineId ?? '')
+	}
+	if (!left.size) {
+		return
+	}
+	// The stored entries that still name them, apart from those this flush removes or rewrites; read as rows, so the flush loads no entry.
+	const passing = [...leaving, ...written].flatMap(entry => entry.id ?? [])
+	const list = (values: ReadonlyArray<unknown>) => values.map(() => '?').join(', ')
+	const kept = await em.getConnection().execute(
+		`select distinct routine_id from entry where routine_id in (${list([...left])})${passing.length ? ` and id not in (${list(passing)})` : ''}`,
+		[...left, ...passing],
+		'all',
+		em.getTransactionContext(),
+	) as Array<{ routine_id: string }>
+	const emptied = [...left].filter(id => !kept.some(row => row.routine_id === id))
+	if (emptied.length) {
+		em.remove(await em.find(Routine, { id: { $in: emptied } }, { flushMode: FlushMode.COMMIT }))
+	}
 }

@@ -12,6 +12,8 @@ declare global {
 		"\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks are still open.": unknown
 		"${browser} on ${platform}": unknown
 		"${count:number} more": unknown
+		"${count:number} of ${total:number}": unknown
+		"${count:number} of ${total:number} kept": unknown
 		"${count:pluralityNumber} are availability": unknown
 		"${count:pluralityNumber} are marked as free": unknown
 		"${count:pluralityNumber} are now in both calendars": unknown
@@ -80,6 +82,8 @@ declare global {
 		"${status}. Click for options": unknown
 		"${status}. Click to toggle, Alt-click for options": unknown
 		"About": unknown
+		"About every ${count:pluralityNumber} days": unknown
+		"About every ${count:pluralityNumber} weeks": unknown
 		"About.Keywords": unknown
 		"Access": unknown
 		"Access tokens": unknown
@@ -254,6 +258,7 @@ declare global {
 		"Doing": unknown
 		"Done": unknown
 		"Done tasks leave the calendar. Search still finds them, and they still count towards progress.": unknown
+		"Done today": unknown
 		"Double-click to rename": unknown
 		"Draft": unknown
 		"drag": unknown
@@ -342,11 +347,14 @@ declare global {
 		"Keep": unknown
 		"Keep the calendar": unknown
 		"Keep the chain intact": unknown
+		"kept": unknown
 		"Keyboard Shortcuts": unknown
 		"KeyboardShortcuts.Keywords": unknown
 		"Language": unknown
+		"Last ${count:number}": unknown
 		"last seen ${when}": unknown
 		"last used ${date}": unknown
+		"Later": unknown
 		"Latest": unknown
 		"Latin America": unknown
 		"Leave the originals here and add a copy over there": unknown
@@ -459,6 +467,7 @@ declare global {
 		"Password": unknown
 		"Password (optional)": unknown
 		"Past 30 days": unknown
+		"Past year": unknown
 		"Patches": unknown
 		"People do not sign in to this Mitra, so connectors need no token. Anyone who can reach this address can use it.": unknown
 		"Pick the calendars and task lists to show. Recolor, rename or hide them in the sidebar anytime.": unknown
@@ -513,6 +522,7 @@ declare global {
 		"Reset to calendar color": unknown
 		"Reset to default color": unknown
 		"Revoke this token": unknown
+		"Routines": unknown
 		"Same time everywhere": unknown
 		"Sample calendars filled with generated data, rebuilt daily": unknown
 		"Save": unknown
@@ -535,6 +545,7 @@ declare global {
 		"Show as busy or free": unknown
 		"Show calendar": unknown
 		"Show fewer participants": unknown
+		"Show in calendar": unknown
 		"Show in description": unknown
 		"Show only one calendar, or bring the rest back": unknown
 		"Show previously visible calendars": unknown
@@ -545,8 +556,11 @@ declare global {
 		"Shown above the time axis. Leave empty to use the automatic name.": unknown
 		"ShowOnlySource.Keywords": unknown
 		"ShowPreviouslyVisibleSources.Keywords": unknown
+		"ShowRoutines.Keywords": unknown
 		"Sign out": unknown
+		"Since ${date}": unknown
 		"Site URL": unknown
+		"Slips most on": unknown
 		"Snap to": unknown
 		"SnapSetting.Keywords": unknown
 		"Snooze ${count} min": unknown
@@ -609,6 +623,7 @@ declare global {
 		"Title": unknown
 		"To Do": unknown
 		"Today": unknown
+		"today still open": unknown
 		"Todoist": unknown
 		"Todoist account": unknown
 		"Todoist API Token": unknown
@@ -647,6 +662,7 @@ declare global {
 		"WeekView.Keywords": unknown
 		"Welcome to ${name}": unknown
 		"What it is for, like Laptop or Claude": unknown
+		"What you keep doing shows up here: an entry that repeats, or four entries with one title.": unknown
 		"What's New": unknown
 		"WhatsNew.Keywords": unknown
 		"When": unknown

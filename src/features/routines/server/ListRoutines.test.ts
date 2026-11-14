@@ -30,6 +30,12 @@ describe('ListRoutines', () => {
 		assert.deepEqual((await listed(first))!.titles, ['gym', 'Gym'])
 	})
 
+	it('tells the day of a routine\'s first date, a rule\'s start or its first entry of its own', async () => {
+		const later = await create('Swim', { start: start.add({ days: 40 }), end: start.add({ days: 40, hours: 1 }), recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly }) })
+		await create('Swim')
+		assert.equal((await listed(later))!.since, '2026-03-02')
+	})
+
 	it('lists a routine with its calendar and how often it comes, read off its members: a daily rule every day', async () => {
 		const stretch = (await listed(await create('Stretch', { recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }) })))!
 		assert.ok(stretch instanceof Routine)

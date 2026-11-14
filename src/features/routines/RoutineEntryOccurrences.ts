@@ -59,11 +59,6 @@ export class RoutineEntryOccurrences {
 		return this.settledOccurrences.slice(-count).filter(occurrence => this.statusOf(occurrence) === RoutineEntryOccurrenceStatus.Kept).length
 	}
 
-	/** The day of its first date. */
-	get since() {
-		return this.occurrences[0]?.dayIn(this.zone)
-	}
-
 	/** The weekday (ISO, Monday 1) with the most missed or cancelled dates after `from`, where three or more fell on it. */
 	slipsAfter(from: Temporal.PlainDate) {
 		const settled = this.settledOccurrences

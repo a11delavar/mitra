@@ -62,6 +62,12 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 		}
 	}
 
+	/** Opens the sidebar on the routines. */
+	showRoutines() {
+		this.sidebarOpen = true
+		this.sidebar?.showRoutines()
+	}
+
 	readonly toggleSidebar = () => {
 		this.sidebarOpen = !this.sidebarOpen
 		if (this.mediaController.matches) {

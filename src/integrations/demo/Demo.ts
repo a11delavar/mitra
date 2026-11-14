@@ -1,10 +1,11 @@
 import { type EntityManager } from '@mikro-orm/sqlite'
-import { DateTime } from '@3mo/date-time'
+import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { Source, Color } from '#features/sources'
 import { RelationType } from '#features/relations'
-import { Recurrence, RecurrenceEnd, RecurrenceFrequency, RecurrenceWeekday } from '#features/recurrence'
+import { Recurrence, RecurrenceFrequency, RecurrenceWeekday } from '#features/recurrence'
 import { ParticipantRole, ParticipantStatus, Participants } from '#features/participants/Participant.js'
 import { EntryType, Entry, EntryStatus } from '#features/entries'
+import { Routine } from '#features/routines/Routine.js'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
 import { User } from '#features/identity'
 import { TimeZone } from '#features/time/TimeZone.js'
@@ -185,6 +186,45 @@ export class Demo extends MitraCalendar {
 
 		const relate = (entry: Entry, type: RelationType, target: Entry) => entry.relateTo(type, target.uid!)
 
+		const past = (weeks: number, dayOffset: number, hour: number, minute = 0) => at(thisWeekMonday.subtract({ days: weeks * 7 }), dayOffset, hour, minute)
+
+		/**
+		 * What became of each past date of a recurring `entry`, written as the app leaves it: a task's date ticked off or called
+		 * off leaves its series as an entry of its own, as the tick does; an event called off stays as an override, struck
+		 * through; a date deleted is excluded from the rule and counts for nothing. An event took place unless it was called
+		 * off, and a task left open past its day was missed.
+		 */
+		const history = (entry: Entry, fateOf: (day: Temporal.PlainDate) => 'kept' | 'missed' | 'cancelled' | 'deleted') => {
+			const source = sources.find(source => source.id === entry.sourceId)!
+			const dates = entry.occurrences.within(new DateTimeRange((entry.start ?? entry.due)!, todayStart.subtract({ milliseconds: 1 })), [])
+			for (const occurrence of dates) {
+				const date = occurrence.start ?? occurrence.due!
+				const fate = fateOf((entry.allDay || entry.floating ? TimeZone.UTC : zone).dayOf(date))
+				if (fate === 'deleted') {
+					entry.exclude(occurrence.recurrenceId!)
+				} else if (!entry.type.isTask && fate === 'cancelled') {
+					on(source)({ type: entry.type, heading: entry.heading, uid: entry.uid, allDay: entry.allDay, timeZone: entry.timeZone, start: occurrence.start, end: occurrence.end, recurringEntryId: entry.id, recurrenceId: occurrence.recurrenceId, status: EntryStatus.Cancelled })
+				} else if (entry.type.isTask && fate !== 'missed') {
+					entry.exclude(occurrence.recurrenceId!)
+					// One owed by a day is done on that day, so the planning list is not full of ticked bills.
+					on(source)({ type: EntryType.Task, heading: entry.heading, status: fate === 'kept' ? EntryStatus.Done : EntryStatus.Cancelled, allDay: entry.allDay, timeZone: entry.timeZone, start: date, end: occurrence.end ?? (entry.allDay ? date.add({ days: 1 }) : undefined), due: occurrence.due })
+				}
+			}
+		}
+		/** A chance in [0, 1) for one day of one routine, the same on every reseed, so its record does not reshuffle daily. */
+		const chance = (key: string, day: Temporal.PlainDate) => {
+			let hash = 2166136261
+			for (const character of `${key}:${day}`) {
+				hash = Math.imul(hash ^ character.charCodeAt(0), 16777619)
+			}
+			return (hash >>> 0) / 2 ** 32
+		}
+		/** The fate a day draws: below the first share missed (or deleted, for an event), up to the second cancelled. */
+		const odds = (key: string, missed: number, cancelled: number, gone: 'missed' | 'deleted' = 'missed') => (day: Temporal.PlainDate) => {
+			const roll = chance(key, day)
+			return roll < missed ? gone : roll < missed + cancelled ? 'cancelled' : 'kept'
+		}
+
 		// ---- Availability: the week's shape, which everything below keeps to ------------------------
 		// Work on Monday, Tuesday and Wednesday afternoon, university on Wednesday morning, Thursday and Friday, the household
 		// on Saturday. Unnamed, as availability usually is: its calendar's color already says what it is for. Only
@@ -199,37 +239,43 @@ export class Demo extends MitraCalendar {
 
 		// ---- Rhythm: one entry per habit, no more ---------------------------------------------------
 
-		hobbyEvent({
+		// Skipped often, as a gym is: a session dropped is deleted, now and then one is called off; more on Fridays and in the
+		// dark months, and none at all over two weeks of summer holiday and between the years.
+		history(hobbyEvent({
 			heading: t('💪 Gym'),
 			start: at(pastStart, 0, 8),
 			end: at(pastStart, 0, 9),
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Monday, RecurrenceWeekday.Wednesday, RecurrenceWeekday.Friday] }),
+		}), day => {
+			const holiday = (day.month === 8 && day.day >= 4 && day.day <= 17) || (day.month === 12 && day.day >= 22) || (day.month === 1 && day.day <= 2)
+			const skip = 0.14 + (day.dayOfWeek === 5 ? 0.12 : 0) + ([11, 12, 1, 2].includes(day.month) ? 0.1 : 0)
+			return holiday ? 'deleted' : odds('gym', skip, 0.05, 'deleted')(day)
 		})
 
-		// A moment, not a span: a task with a start and no end, every morning, at 7:30 wherever its taker is (no time zone).
-		// Taken until yesterday, as a series split there would leave it; the two share a heading, so they pool into one routine.
-		const firstDoseToday = floatingAt(todayStart, 0, 7, 30)
-		personalTask({
-			heading: t('💊 Morning Meds'),
-			status: EntryStatus.Done,
-			start: floatingAt(pastStart, 0, 7, 30),
-			timeZone: EntryTimeZone.floating,
-			recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily, until: RecurrenceEnd.before(firstDoseToday) }),
-		})
-		personalTask({
+		// A moment, not a span: a task with a start and no end, every morning at 7:30 wherever its taker is (no time zone),
+		// taken for two years, about one morning in twenty-five forgotten and one in fifty skipped on purpose.
+		history(personalTask({
 			heading: t('💊 Morning Meds'),
 			status: EntryStatus.ToDo,
-			start: firstDoseToday,
+			start: floatingAt(pastStart, 0, 7, 30),
 			timeZone: EntryTimeZone.floating,
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Daily }),
-		})
+		}), odds('meds', 0.04, 0.02))
 
-		hobbyEvent({
+		// Called off now and then, kept on the calendar struck through; a session skipped is deleted, and the club pauses in August.
+		history(hobbyEvent({
 			heading: t('🏐 Volleyball'),
 			start: at(pastStart, 3, 18),
 			end: at(pastStart, 3, 19, 30),
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Thursday] }),
-		})
+		}), day => day.month === 8 ? 'deleted' : odds('volleyball', 0.07, 0.09, 'deleted')(day))
+
+		// Four one-off entries, about five weeks apart but never exactly, as a salon hands out its slots, make a routine
+		// without a rule; the fifth is coming up.
+		for (const [days, hour, minute] of [[-137, 17, 0], [-101, 17, 30], [-63, 18, 0], [-29, 16, 30], [4, 17, 0]] as const) {
+			const start = at(nextWeekMonday, days, hour, minute)
+			personalEvent({ heading: t('💇 Haircut'), start, end: start.add({ minutes: 45 }) })
+		}
 
 		personalEvent({
 			heading: t('Therapy'),
@@ -240,7 +286,8 @@ export class Demo extends MitraCalendar {
 
 		// ---- Work (Blue) -------------------------------------------------------------------------
 
-		workEvent({
+		// Rarely called off, and skipped between the years.
+		history(workEvent({
 			heading: t('Weekly Team Sync'),
 			start: at(pastStart, 1, 15),
 			end: at(pastStart, 1, 16),
@@ -250,16 +297,16 @@ export class Demo extends MitraCalendar {
 				{ email: 'colleague1@company.com', role: ParticipantRole.Required, status: ParticipantStatus.Accepted },
 				{ email: 'colleague2@company.com', role: ParticipantRole.Required, status: ParticipantStatus.Tentative },
 			]),
-		})
+		}), day => (day.month === 12 && day.day >= 22) || (day.month === 1 && day.day <= 2) ? 'deleted' : odds('sync', 0, 0.04)(day))
 
-		// A weekday rule rather than a date, so it always lands on a work day.
-		workTask({
+		// A weekday rule rather than a date, so it always lands on a work day; forgotten now and then.
+		history(workTask({
 			heading: t('Submit Expense Report'),
 			start: at(pastStart, 0, 16),
 			end: at(pastStart, 0, 16, 30),
 			status: EntryStatus.ToDo,
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Monthly, byday: [RecurrenceWeekday.Monday.nth(1)] }),
-		})
+		}), odds('expenses', 0.09, 0))
 
 		workTask({ heading: t('Draft New System Architecture'), status: EntryStatus.ToDo, start: at(thisWeekMonday, 0, 9), end: at(thisWeekMonday, 0, 12) })
 		workEvent({ heading: t('Team Retro'), start: at(nextWeekMonday, 0, 11), end: at(nextWeekMonday, 0, 12) })
@@ -331,35 +378,38 @@ export class Demo extends MitraCalendar {
 
 		// ---- Upkeep (Grey) -----------------------------------------------------------------------
 
-		upkeepTask({
+		// Since some months, the odd Saturday missed, or called off when away.
+		history(upkeepTask({
 			heading: t('🛒 Grocery Shopping'),
-			start: at(pastStart, 5, 10),
-			end: at(pastStart, 5, 11),
+			start: past(34, 5, 10),
+			end: past(34, 5, 11),
 			status: EntryStatus.ToDo,
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Saturday] }),
-		})
+		}), odds('groceries', 0.07, 0.04))
 
-		// Evening: a monthly entry lands on whatever weekday its date falls on.
-		upkeepTask({
+		// Evening: a monthly entry lands on whatever weekday its date falls on. Some months put off and missed, some deleted outright.
+		history(upkeepTask({
 			heading: t('Deep Clean Apartment'),
 			start: at(pastStart, 5, 17),
 			end: at(pastStart, 5, 19),
 			status: EntryStatus.ToDo,
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Monthly, bymonthday: 15 }),
-		})
+		}), day => chance('clean-gone', day) < 0.12 ? 'deleted' : odds('clean', 0.15, 0)(day))
 
-		// Owed every month and never planned: the series repeats its due, and the planning list shows the one coming up.
-		upkeepTask({
+		// Owed every month and never planned: the series repeats its due, and the planning list shows the one coming up. Paid
+		// every time but the odd once.
+		history(upkeepTask({
 			heading: t('Pay the rent'),
 			status: EntryStatus.ToDo,
 			allDay: true,
 			due: allDayStart(todayStart.subtract({ years: 2 }).with({ day: 1 }), 0),
 			estimate: 15,
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Monthly, bymonthday: 1 }),
-		})
+		}), odds('rent', 0.03, 0))
 
-		// Months out: a yearly entry anchored near today lands in the opening week, on whatever weekday the date falls.
-		const pastMonth3Start = mondayOf(todayStart.add({ months: 3 })).subtract({ years: 2 })
+		// Months out: a yearly entry anchored near today lands in the opening week, on whatever weekday the date falls. Five
+		// years of it, every one kept.
+		const pastMonth3Start = mondayOf(todayStart.add({ months: 3 })).subtract({ years: 5 })
 		upkeepEvent({
 			heading: t('Car Inspection'),
 			start: at(pastMonth3Start, 1, 9),
@@ -436,8 +486,12 @@ export class Demo extends MitraCalendar {
 		const month6Start = mondayOf(todayStart.add({ months: 6 }))
 		const pastMonth6Start = month6Start.subtract({ years: 2 })
 
+		// Repeats, so recognition would make it a routine; its person said it is none, which keeps it out of the tab.
+		const notARoutine = new Routine({ sourceId: university.id, dissolved: true })
+		em.persist(notARoutine)
 		uniEvent({
 			heading: t('Exam Phase'),
+			routineId: notARoutine.id,
 			start: allDayStart(pastMonth6Start, 0),
 			end: allDayStart(pastMonth6Start, 12),
 			allDay: true,
@@ -456,8 +510,6 @@ export class Demo extends MitraCalendar {
 		relate(advCalcExam, RelationType.FinishToStart, calcPrep2)
 
 		// ---- History -----------------------------------------------------------------------------
-
-		const past = (weeks: number, dayOffset: number, hour: number, minute = 0) => at(thisWeekMonday.subtract({ days: weeks * 7 }), dayOffset, hour, minute)
 
 		// Two weeks back, not one: the parent's all-day band would otherwise sit in the opening window.
 		const writeMigScript = workTask({ heading: t('Write Migration Script'), status: EntryStatus.Done, start: past(2, 0, 9), end: past(2, 0, 15) })

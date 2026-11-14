@@ -78,6 +78,9 @@ await stage(async (browser, origin) => {
 		// Back to Calendars afterwards: the tab is remembered, and the next theme's reload would open on Planning.
 		await click(browser, sidebarTab('planning'))
 		await shot(`planning-detail-${theme}`, false, { x: 0, y: 0, ...details.sidebar })
+		await click(browser, sidebarTab('routines'))
+		await waitFor(() => browser.evaluate<boolean>('return document.querySelectorAll("mitra-routine-row").length > 0'), 'the routines')
+		await shot(`routines-detail-${theme}`, false, { x: 0, y: 0, ...details.sidebar })
 		await click(browser, sidebarTab('calendars'))
 
 		await press(browser, ...keys.comma())

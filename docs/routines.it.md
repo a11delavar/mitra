@@ -1,9 +1,9 @@
 ---
 title: Routine
-description: "Come le viste mensile e annuale mostrano ciò che fai spesso, come un allenamento quotidiano, con piccoli segni invece di una barra ciascuno."
+description: "Come Mitra tiene il conto di ciò che fai spesso, come una medicina quotidiana o la palestra, e lo mostra come piccoli segni nelle viste mese e anno."
 ---
 
-Alcune cose accadono così spesso che una barra per ciascuna riempirebbe un mese di copie: un allenamento quotidiano, le medicine, uno standup nei giorni feriali. Nelle viste mensile e annuale, Mitra le disegna invece come una **routine**: una linea sottile sotto i giorni, con un segno su ogni giorno in cui la routine ha luogo.
+Alcune cose accadono così spesso che una barra per ciascuna riempirebbe un mese di copie: un allenamento quotidiano, le medicine, uno standup nei giorni feriali. Nelle viste mensile e annuale, Mitra le disegna invece come una **routine**: una linea sottile sotto i giorni, con un segno su ogni giorno in cui la routine ha luogo. La scheda **Routine** nella barra laterale tiene il conto di come è andata ogni routine.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/month-detail-dark.webp">
@@ -32,6 +32,31 @@ La frequenza di una routine decide come la mostrano le viste:
 
 - Nella vista mensile, una routine che si presenta più di una volta a settimana appare come segni. Qualcosa di settimanale resta una barra.
 - Nella vista annuale, una routine che si presenta circa ogni cinque settimane o più spesso appare come segni, quindi anche quelle settimanali e mensili. Una più rara, come un compleanno, resta una barra.
+
+## La scheda Routine
+
+Apri **Routine** nella barra laterale, accanto a Calendari e Pianificazione, oppure scrivine il nome nella tavolozza dei comandi. **Oggi** mostra le routine di oggi, nell’ordine del loro orario, e **Più tardi** le altre, secondo la prossima data. Ogni riga mostra il nome della routine, quando si presenta e una striscia delle sue ultime 14 occorrenze, con quante ne hai rispettate.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/routines-detail-dark.webp">
+  <img src="../assets/screenshots/routines-detail-light.webp" alt="La scheda Routine nella barra laterale, ogni routine con le sue ultime occorrenze e quante sono state rispettate" />
+</picture>
+
+Ogni casella della striscia è un’occorrenza:
+
+- Una casella piena è stata rispettata: un evento che si è svolto, o un’attività che hai spuntato.
+- Una casella vuota è stata saltata: un’attività rimasta aperta dopo il suo giorno.
+- Un trattino è stato annullato, e conta come non rispettato, come una saltata.
+- Una casella cerchiata è quella di oggi, ancora aperta.
+- Una casella tenue è un giorno in cui non si presenta.
+
+Mitra conta solo ciò che è nel tuo calendario. Un’occorrenza che elimini sparisce e non conta, quindi per tenere traccia di una sessione saltata annullala invece di eliminarla; vedi [Stato dell'evento](entries.md#event-status). Gli eventi non hanno nulla da spuntare: un evento si è svolto a meno che non sia stato annullato.
+
+Lo stato di oggi sta alla fine della riga di una routine: la casella di un’attività, che la spunta come quella del calendario, e quello di un evento una volta annullato, così puoi cambiarlo di nuovo. Il badge della scheda conta le attività di routine ancora aperte oggi. Un calendario che nascondi toglie le sue routine dalla scheda.
+
+## Il dettaglio di una routine
+
+Fai clic su una riga per vedere di più: da quando esiste la routine, le sue ultime settimane come griglia di giorni, quante delle ultime e dell’ultimo anno hai rispettato, e il giorno della settimana in cui cede più spesso. Il suo menu **⋯** offre **Fatto oggi** per un’attività, **Annullato** per annullare l’occorrenza di oggi e **Mostra nel calendario** per aprire la successiva.
 
 ## Usare una routine
 
